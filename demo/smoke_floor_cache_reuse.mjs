@@ -130,9 +130,11 @@ await page.evaluate(async (fixture) => {
     document.body.appendChild(host);
     const fresh = document.createElement('houseplan-card');
     fresh.setConfig({ type: 'custom:houseplan-card', floor: spaceId });
-    host.appendChild(fresh);
+    // `hass` before the element connects, as Lovelace hands it over: a warm
+    // slot freed long ago revalidates from the server in connectedCallback.
     fresh.hass = hass;
-    const deadline = performance.now() + 9000;
+    host.appendChild(fresh);
+    const deadline = performance.now() + 15000;
     while (performance.now() < deadline && !(fresh._loadOk && fresh._booting === false
       && fresh._cfgRev === rev && fresh._spaceModel()?.id === spaceId)) {
       await new Promise((done) => setTimeout(done, 30));
@@ -241,6 +243,8 @@ const ac1 = await page.evaluate(async () => {
 
 /** Real pointer drag of the Resize handle at plan point (x, y) to plan x `toX`. */
 const dragHandle = async ({ x, y, toX, steps = 3, end = 'up' }) => {
+  // A mode change moves the stage; plan coordinates hold only after it ends.
+  await page.waitForFunction(() => !window.__card._modeTransitionBusy, null, { timeout: 15000 });
   const gesture = await page.evaluate(([x, y, toX]) => {
     const root = window.__card.renderRoot;
     const handle = [...root.querySelectorAll('.rszhandle:not(.rszcorner)')].find((node) =>
@@ -264,6 +268,20 @@ const dragHandle = async ({ x, y, toX, steps = 3, end = 'up' }) => {
   }
   await page.mouse.move(gesture.x, gesture.y);
   await page.mouse.down();
+  // The press must start a Resize session; otherwise say what it hit.
+  const began = await page.evaluate(([px, py]) => {
+    const card = window.__card;
+    if (card._resize.dragging) return true;
+    const hit = card.renderRoot.elementFromPoint?.(px, py) || document.elementFromPoint(px, py);
+    return { hit: hit ? `${hit.tagName}.${hit.getAttribute('class') || ''}` : null, tool: card._tool,
+      busy: card._modeTransitionBusy, toast: card._toast || null };
+  }, [gesture.x, gesture.y]);
+  if (began !== true) {
+    console.log(`diagnostic resize press ${x},${y}: ${JSON.stringify(began)}`);
+    await page.mouse.up();
+    await page.evaluate(() => window.__hp814.settled());
+    return false;
+  }
   for (let step = 1; step <= steps; step++) {
     await page.mouse.move(gesture.x + ((gesture.toX - gesture.x) * step) / steps, gesture.y, { steps: 2 });
     await page.evaluate(() => window.__hp814.frames());
@@ -405,48 +423,83 @@ await page.mouse.up();
 await page.evaluate(() => window.__hp814.settled());
 ac3.gestureAfterServerPush = await heldGesture(gardenWall, 'escape');
 // ---- AC1: a Resize commit whose WS write is held, then rejected --------------
+// Every config write is parked in a page slot (`held`) until the smoke rejects
+// or releases it. Node waits for the slot with waitForFunction, not inside one
+// evaluate: a slow runner spends seconds in the debounce and the write's own
+// physical recheck. No parked write is a failed check with its diagnostics.
 await page.evaluate(async () => {
   const card = window.__card;
-  // Hold every config write until the smoke releases or rejects it.
   const base = card.hass;
   const held = [];
-  window.__hp814.held = held;
-  card.hass = { ...base, callWS: (message) => message.type !== 'houseplan/config/set' ? base.callWS(message)
-    : new Promise((resolve, reject) => held.push({ resolve: () => resolve(base.callWS(message)), reject })) };
+  const holding = { ...base, callWS: (message) => (message.type !== 'houseplan/config/set' ? base.callWS(message)
+    : new Promise((resolve, reject) => held.push({ resolve: () => resolve(base.callWS(message)), reject }))) };
+  Object.assign(window.__hp814, { held, holding });
+  card.hass = holding;
   await window.__hpTest.setMode('view');
   await window.__hpTest.switchSpace('f1');
   window.__hp814.ac1Before = window.__hp814.look();
   await window.__hpTest.setMode('plan');
   await window.__hpTest.setTool('resize');
   window.__hp814.ac1Rev = card._cfgRev;
+  window.__hp814.ac1History = card._geometryHistory.size;
+  window.__hp814.ac1Room = JSON.stringify(card._serverCfg.spaces.find((space) => space.id === 'f1').rooms[0].poly);
 });
-const ac1Committed = await dragHandle({ x: 500, y: 325, toX: 450 });
-Object.assign(ac1, await page.evaluate(async (committed) => {
+ac1.heldCommitDragged = await dragHandle({ x: 500, y: 325, toX: 450 });
+const writeHeld = await page.waitForFunction(() => window.__hp814.held.length > 0, null, { timeout: 15000 })
+  .then(() => true, () => false);
+const heldState = await page.evaluate(() => {
   const card = window.__card;
-  const { look, sameAsFresh, held, settled } = window.__hp814;
-  const out = { heldCommitDragged: committed };
-  const deadline = performance.now() + 3000;
-  while (!held.length && performance.now() < deadline) await new Promise((done) => setTimeout(done, 20));
-  out.theWriteIsHeld = held.length === 1 && card._cfgRev === window.__hp814.ac1Rev;
-  await window.__hpTest.setMode('view');
-  const local = look();
-  out.beforeTheAckTheCommitIsShown = local.index !== window.__hp814.ac1Before.index;
-  out.beforeTheAckItIsTheFreshCards = await sameAsFresh();
-  // The server rejects the write: the card rolls the geometry back.
-  held.shift().reject(Object.assign(new Error('rejected by the smoke'), { code: 'invalid' }));
-  const until = performance.now() + 5000;
-  while ((card._writesPending > 0 || card._saveConfigDebounced.pending()) && performance.now() < until)
-    await new Promise((done) => setTimeout(done, 20));
-  await settled();
-  await settled();
-  const restored = look();
-  out.theRejectionRestoresTheGeometry = restored.index === window.__hp814.ac1Before.index
-    && restored.sun === window.__hp814.ac1Before.sun;
-  out.afterTheRejectionItIsTheFreshCards = await sameAsFresh();
+  const room = JSON.stringify(card._serverCfg.spaces.find((space) => space.id === 'f1').rooms[0].poly);
+  return {
+    writes: window.__hp814.held.length, revUnchanged: card._cfgRev === window.__hp814.ac1Rev,
+    committed: room !== window.__hp814.ac1Room, history: card._geometryHistory.size - window.__hp814.ac1History,
+    writesPending: card._writesPending, debouncePending: card._saveConfigDebounced.pending(),
+    hassReplaced: card.hass !== window.__hp814.holding, dragging: card._resize.dragging, toast: card._toast || null,
+  };
+});
+ac1.theWriteIsHeld = writeHeld && heldState.writes === 1 && heldState.revUnchanged ? true : heldState;
+if (ac1.theWriteIsHeld !== true) console.log(`diagnostic ac1 held write: ${JSON.stringify(heldState)}`);
+if (writeHeld) {
+  Object.assign(ac1, await page.evaluate(async () => {
+    const { look, sameAsFresh, held } = window.__hp814;
+    await window.__hpTest.setMode('view');
+    const local = look();
+    window.__hp814.ac1Local = local;
+    const out = {
+      beforeTheAckTheCommitIsShown: local.index !== window.__hp814.ac1Before.index,
+      beforeTheAckItIsTheFreshCards: await sameAsFresh(),
+    };
+    // The server rejects the write: the card rolls the geometry back.
+    held.shift().reject(Object.assign(new Error('rejected by the smoke'), { code: 'invalid' }));
+    return out;
+  }));
+  ac1.theRejectedWriteSettles = await page.waitForFunction(() => window.__card._writesPending === 0
+    && !window.__card._saveConfigDebounced.pending(), null, { timeout: 15000 }).then(() => true, () => false);
+  Object.assign(ac1, await page.evaluate(async () => {
+    const { look, sameAsFresh, settled } = window.__hp814;
+    await settled();
+    await settled();
+    const restored = look();
+    return {
+      theRejectionRestoresTheGeometry: restored.index === window.__hp814.ac1Before.index
+        && restored.sun === window.__hp814.ac1Before.sun,
+      afterTheRejectionItIsTheFreshCards: await sameAsFresh(),
+    };
+  }));
+} else {
+  Object.assign(ac1, {
+    beforeTheAckTheCommitIsShown: false, beforeTheAckItIsTheFreshCards: ['no held write'],
+    theRejectedWriteSettles: false, theRejectionRestoresTheGeometry: false,
+    afterTheRejectionItIsTheFreshCards: ['no held write'],
+  });
+}
+// Release whatever is still parked and stop holding: the rest of the smoke writes normally.
+await page.evaluate(async () => {
+  const card = window.__card;
+  for (const write of window.__hp814.held.splice(0)) write.resolve();
   card.hass = { ...window.__mkHass(), states: { ...card.hass.states } };
-  await settled();
-  return out;
-}, ac1Committed));
+  await window.__hp814.settled();
+});
 
 checkAll(ac1, {
   fixtureIsTheFreshCards: [],
@@ -501,7 +554,7 @@ const ac7 = await page.evaluate(async () => {
   const hp = window.__hpTest;
   const { sameAsFresh, builds, grew, settled } = window.__hp814;
   const out = {};
-  let card = window.__card;
+  const card = window.__card;
   const pools = (host = card) => [host._physicalBodiesPool.size, host._openingTunnelPool.size];
   await hp.setMode('view');
   await hp.switchSpace('f1');
@@ -540,19 +593,28 @@ const ac7 = await page.evaluate(async () => {
   card.remove();
   const next = document.createElement('houseplan-card');
   next.setConfig(config);
-  parent.appendChild(next);
   next.hass = hass;
+  parent.appendChild(next);
   window.__card = next;
-  card = next;
-  const ready = performance.now() + 9000;
-  while (!(card._loadOk && card._booting === false && card._spaceModel()) && performance.now() < ready)
-    await new Promise((done) => setTimeout(done, 30));
-  await settled();
-  out.remountHasItsOwnBoundedPools = card._physicalBodiesPool !== oldPools[0]
-    && card._openingTunnelPool !== oldPools[1] && pools().every((size) => size <= 8);
-  out.remountIsTheFreshCards = await sameAsFresh();
+  window.__hp814.oldPools = oldPools;
   return out;
 });
+// The remounted card boots on its own clock: poll it from Node.
+ac7.remountBoots = await page.waitForFunction(() => {
+  const card = window.__card;
+  return card._loadOk && card._booting === false && !!card._spaceModel();
+}, null, { timeout: 15000 }).then(() => true, () => false);
+Object.assign(ac7, await page.evaluate(async () => {
+  const card = window.__card;
+  const { sameAsFresh, settled } = window.__hp814;
+  const [bodies, tunnels] = window.__hp814.oldPools;
+  await settled();
+  return {
+    remountHasItsOwnBoundedPools: card._physicalBodiesPool !== bodies && card._openingTunnelPool !== tunnels
+      && card._physicalBodiesPool.size <= 8 && card._openingTunnelPool.size <= 8,
+    remountIsTheFreshCards: await sameAsFresh(),
+  };
+}));
 checkAll(ac7, {
   replacementIsTheFreshCards: [],
   modeRoundTripBuildsNoBodiesOrTunnels: { physicalBodies: 0, openingTunnel: 0 },
