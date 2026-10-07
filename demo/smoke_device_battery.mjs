@@ -3,7 +3,7 @@
  * route layering has its own raster witness in smoke_device_battery_zigbee.
  */
 import { launch, check, checkAll, finish } from './serve.mjs';
-import { batteryColorPixels, batteryGeometry, batteryMdiIcon, installBatteryFixture, patchBatteryMarker, setBatteryState } from './helpers/device-battery-fixture.mjs';
+import { batteryColorPixels, batteryGeometry, batteryInputProbe, batteryMdiIcon, batteryPointerReachedPlan, captureBatteryPointerDown, installBatteryFixture, patchBatteryMarker, setBatteryState } from './helpers/device-battery-fixture.mjs';
 
 const { page, browser } = await launch({ width: 1200, height: 900 }, 1, [], { hasTouch: true });
 const out = {};
@@ -220,8 +220,10 @@ try {
   out.hiddenLedRestoresBattery = true;
 
   // A point outside the old shell is visually occupied, but is not a new click target.
-  const inert = await batteryGeometry(page);
-  const point = { x: inert.battery.x + inert.battery.width / 2, y: inert.battery.y + inert.battery.height / 2 };
+  const desktopInput = await batteryInputProbe(page);
+  out.desktopBatteryFrameIsPassive = desktopInput.passive;
+  out.desktopBatteryPointIsVisibleAndOutsideOldHitArea = desktopInput.visible && desktopInput.outsideOldHitArea;
+  const point = desktopInput.point;
   out.batteryDoesNotExpandHitCapsule = await page.evaluate(point => {
     const root = window.__card.shadowRoot;
     const target = root.elementFromPoint(point.x, point.y);
@@ -229,13 +231,19 @@ try {
       && !root.querySelector('[data-id="d_temp"] .device-battery [tabindex]')
       && !root.querySelector('[data-id="d_temp"] .device-battery [title]');
   }, point);
+  const mouseEvents = await captureBatteryPointerDown(page);
   await page.mouse.click(point.x, point.y);
+  out.trustedMouseStartsThroughBattery = batteryPointerReachedPlan(await mouseEvents(), 'mouse');
+  await page.evaluate(() => window.__hpTest.settled());
   out.batteryClickDoesNotOpenCard = await page.evaluate(() => !window.__card.shadowRoot
     .querySelector('hp-dialog[data-kind="info"],hp-dialog[data-kind="marker"]'));
 
   const flat = await batteryGeometry(page);
   await page.evaluate(async () => { await window.__hpTest.setVolumetricView(true); });
   const iso = await batteryGeometry(page);
+  const isoInput = await batteryInputProbe(page);
+  out.isoBatteryFrameIsPassive = isoInput.passive;
+  out.isoBatteryPointIsVisibleAndOutsideOldHitArea = isoInput.visible && isoInput.outsideOldHitArea;
   out.isoKeepsScreenFacingBattery = iso.battery.x > iso.shell.right
     && Math.abs(iso.battery.width - iso.battery.height) <= 0.8
     && Math.abs(iso.battery.y + iso.battery.height / 2 - iso.shell.y - iso.shell.height / 2) <= 0.8;
@@ -248,8 +256,11 @@ try {
   await page.setViewportSize({ width: 430, height: 820 });
   await page.evaluate(() => window.__hpTest.settled());
   const mobile = await batteryGeometry(page);
-  const touchPoint = { x: mobile.battery.x + mobile.battery.width / 2,
-    y: mobile.battery.y + mobile.battery.height / 2 };
+  const mobileInput = await batteryInputProbe(page);
+  out.mobileBatteryFrameIsPassive = mobileInput.passive;
+  out.mobileBatteryPointIsVisibleAndOutsideOldHitArea = mobileInput.visible && mobileInput.outsideOldHitArea;
+  const touchPoint = mobileInput.point;
+  const touchEvents = await captureBatteryPointerDown(page);
   const cdp = await page.context().newCDPSession(page);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...touchPoint, id: 1 }] });
   for (let step = 1; step <= 5; step++) {
@@ -258,10 +269,18 @@ try {
     ] });
   }
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  out.trustedTouchStartsThroughBattery = batteryPointerReachedPlan(await touchEvents(), 'touch');
+  await cdp.detach();
   await page.evaluate(() => window.__hpTest.settled());
   const panned = await batteryGeometry(page);
   out.touchPanStartsThroughBattery = Math.hypot(panned.core.x - mobile.core.x, panned.core.y - mobile.core.y) > 15;
   out.touchPanDoesNotOpenInfo = await page.evaluate(() => !window.__card.shadowRoot.querySelector('hp-dialog[data-kind="info"]'));
+  // Positive control: no-dialog checks cannot pass merely because the scene
+  // stopped accepting input. Re-measure after the pan and use a trusted click.
+  await page.mouse.click(panned.core.x + panned.core.width / 2, panned.core.y + panned.core.height / 2);
+  await page.waitForFunction(() => window.__card.shadowRoot.querySelector('hp-dialog[data-kind="info"]'));
+  out.coreStillOpensInfoAfterBatteryPan = true;
+  await page.evaluate(() => window.__hpTest.close(undefined, { via: 'cancel' }));
   checkAll(out);
 } catch (error) {
   check('batterySmokeCompleted', false);

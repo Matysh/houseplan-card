@@ -71,6 +71,73 @@ export async function batteryGeometry(page, id = 'd_temp') {
   }, id);
 }
 
+/** #815: inspect the interactive card, not the static card's subtree-wide ban.
+ * The hidden-battery control rules out the marker's invisible 44px hit floor.
+ */
+export async function batteryInputProbe(page, id = 'd_temp') {
+  return page.evaluate(async id => {
+    const root = window.__card.shadowRoot;
+    const marker = root.querySelector(`[data-hp="device"][data-id="${id}"]`);
+    const battery = marker?.querySelector('.device-battery');
+    const icon = battery?.querySelector('ha-icon.device-battery-icon');
+    const frame = battery?.getBoundingClientRect();
+    const shell = marker?.querySelector('.device-shell-frame')?.getBoundingClientRect();
+    if (!frame || !shell || !icon) return { visible: false, passive: false, outsideOldHitArea: false };
+    const point = { x: frame.x + frame.width / 2, y: frame.y + frame.height / 2 };
+    const passive = getComputedStyle(battery).pointerEvents === 'none'
+      && getComputedStyle(icon).pointerEvents === 'none';
+    const visible = frame.width > 0 && frame.height > 0
+      && frame.left >= 0 && frame.top >= 0 && frame.right < innerWidth && frame.bottom < innerHeight
+      && frame.left > shell.right && getComputedStyle(battery).visibility === 'visible'
+      && document.elementFromPoint(point.x, point.y) === window.__card;
+    const mode = window.__card._serverCfg.settings?.show_device_battery;
+    let outsideOldHitArea = false;
+    try {
+      await window.__hpTest.setServerConfig(cfg => ({ ...cfg,
+        settings: { ...cfg.settings, show_device_battery: false },
+      }));
+      const target = root.elementFromPoint(point.x, point.y);
+      outsideOldHitArea = !!target && !target.closest('[data-hp="device"]');
+    } finally {
+      await window.__hpTest.setServerConfig(cfg => ({ ...cfg,
+        settings: { ...cfg.settings, show_device_battery: mode },
+      }));
+    }
+    const restored = root.querySelector(`[data-hp="device"][data-id="${id}"] .device-battery`)
+      ?.getBoundingClientRect();
+    return { point, passive, outsideOldHitArea, visible: visible && !!restored
+      && Math.abs(restored.x - frame.x) < 0.5 && Math.abs(restored.y - frame.y) < 0.5
+      && Math.abs(restored.width - frame.width) < 0.5 && Math.abs(restored.height - frame.height) < 0.5 };
+  }, id);
+}
+
+/** Observe actual browser input; do not manufacture PointerEvents for this AC. */
+export async function captureBatteryPointerDown(page) {
+  await page.evaluate(() => {
+    const root = window.__card.shadowRoot;
+    const events = [];
+    const listener = event => {
+      const path = event.composedPath().filter(node => node instanceof Element);
+      events.push({ trusted: event.isTrusted, pointerType: event.pointerType,
+        plan: path.includes(root.querySelector('.stage')),
+        battery: path.some(node => node.matches('.device-battery,.device-battery-icon')),
+        device: path.some(node => node.matches('[data-hp="device"]')) });
+    };
+    root.addEventListener('pointerdown', listener, true);
+    window.__batteryPointerCapture = () => {
+      root.removeEventListener('pointerdown', listener, true);
+      delete window.__batteryPointerCapture;
+      return events;
+    };
+  });
+  return () => page.evaluate(() => window.__batteryPointerCapture());
+}
+
+export function batteryPointerReachedPlan(events, pointerType) {
+  return events.length === 1 && events[0].trusted === true && events[0].plan === true
+    && events[0].pointerType === pointerType && events[0].battery === false && events[0].device === false;
+}
+
 /** Owner-approved MDI mapping, independently pinned from the production renderer. */
 const BATTERY_MDI_ICONS = {
   normal: 'mdi:battery', warning: 'mdi:battery-30',
