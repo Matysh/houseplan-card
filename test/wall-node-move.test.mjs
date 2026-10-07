@@ -36,6 +36,18 @@ test('screen hit ambiguity has no arbitrary node choice', () => {
   const s = floor([wall('a', [0, 0], [0.004, 0.004])]);
   assert.deepEqual(pickWallNode(structuralWallNodes(s), [0, 0], 0.001), { node: null, ambiguous: true });
 });
+
+test('ordinary five/six-ray nodes move every endpoint, preserving mixed thickness and far ends', () => {
+  const ends = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0.25], [0.25, -1]];
+  const thickness = [0, 15, 25, 100, 25, 15];
+  for (const count of [5, 6]) {
+    const source = floor(ends.slice(0, count).map((b, i) => wall(`ray-${i}`, [0, 0], b, thickness[i])));
+    const frozen = structuredClone(source), p = plan(source, [0, 0]), target = [-0.1, -0.1];
+    const moved = applyNodeMove(p, target, null); assert.equal(moved.ok, true);
+    assert.deepEqual(moved.space.partitions, source.partitions.map(w => ({ ...w, a: target })));
+    assert.deepEqual(source, frozen);
+  }
+});
 test('a node cannot merge into a foreign endpoint or create a new T contact', () => {
   const s = floor([wall('moving', [0, 0], [1, 0]), wall('foreign', [0.25, 0.25], [0.25, 1])]);
   const p = plan(s, [0, 0]);

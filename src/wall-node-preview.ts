@@ -40,7 +40,10 @@ export function nodeMoveLocalSpaces(before: NodeMoveSpace, next: NodeMoveSpace):
   const cm = Number(before.cell_cm) || 5;
   const pad = (Math.max(0, ...oldWalls.map(w => w.cm), ...newWalls.map(w => w.cm)) + 5) / cm * GRID_STEP_N;
   const region = bounds(points, pad);
-  const roomIds = new Set([...before.rooms, ...next.rooms].filter(r => r.poly?.length
+  const rooms = [...before.rooms, ...next.rooms], bodies = [...oldWalls, ...newWalls];
+  const roomBoxes = new Map(rooms.filter(r => r.poly?.length).map(r => [r, bounds(r.poly!, pad)]));
+  const bodyBoxes = new Map(bodies.map(w => [w, bounds([w.a, w.b], pad)]));
+  const roomIds = new Set(rooms.filter(r => r.poly?.length
     && overlap(bounds(r.poly), region)).map(r => r.id));
   const bodyIds = new Set([...oldWalls, ...newWalls].filter(w => changedIds.has(w.id)
     || overlap(bounds([w.a, w.b], w.cm / cm * GRID_STEP_N), region)).map(w => w.id));
@@ -51,25 +54,28 @@ export function nodeMoveLocalSpaces(before: NodeMoveSpace, next: NodeMoveSpace):
   let grew = true;
   while (grew) {
     grew = false;
-    for (const r of [...before.rooms, ...next.rooms]) if (r.id && r.poly?.length && !addedRooms.has(r.id)
-        && (roomIds.has(r.id) || boxes.some(box => overlap(bounds(r.poly!, pad), box)))) {
+    for (const r of rooms) if (r.id && r.poly?.length && !addedRooms.has(r.id)
+        && (roomIds.has(r.id) || boxes.some(box => overlap(roomBoxes.get(r)!, box)))) {
       roomIds.add(r.id); addedRooms.add(r.id); grew = true;
       for (const version of [before, next]) for (const own of version.rooms.filter(o => o.id === r.id)) {
-        if (own.poly?.length) boxes.push(bounds(own.poly, pad));
+        if (own.poly?.length) boxes.push(roomBoxes.get(own)!);
         for (const id of own.wall_ids || []) bodyIds.add(id);
       }
     }
-    for (const w of [...oldWalls, ...newWalls]) if (!addedBodies.has(w.id)
-        && (bodyIds.has(w.id) || boxes.some(box => overlap(bounds([w.a, w.b], pad), box)))) {
+    for (const w of bodies) if (!addedBodies.has(w.id)
+        && (bodyIds.has(w.id) || boxes.some(box => overlap(bodyBoxes.get(w)!, box)))) {
       bodyIds.add(w.id); addedBodies.add(w.id); grew = true;
-      for (const version of [oldWalls, newWalls]) for (const own of version.filter(o => o.id === w.id)) boxes.push(bounds([own.a, own.b], pad));
+      for (const version of [oldWalls, newWalls]) for (const own of version.filter(o => o.id === w.id)) boxes.push(bodyBoxes.get(own)!);
     }
   }
   const select = (space: NodeMoveSpace): NodeMoveSpace => ({ ...space,
     rooms: space.rooms.filter(r => roomIds.has(r.id)),
     wall_segments: space.wall_segments?.filter(w => bodyIds.has(w.id)),
     partitions: space.partitions?.filter(w => bodyIds.has(w.id)),
-    walls: space.walls?.filter(w => !w.a || !w.b || boxes.some(box => overlap(bounds([w.a!, w.b!], pad), box))),
+    walls: space.walls?.filter(w => {
+      if (!w.a || !w.b) return true;
+      const own = bounds([w.a, w.b], pad); return boxes.some(box => overlap(own, box));
+    }),
     wall_columns: Array.isArray(space.wall_columns) ? space.wall_columns.filter((column: { center: number[]; cm: number }) =>
       !Array.isArray(column.center) || boxes.some(box => overlap(bounds([column.center], column.cm / cm * GRID_STEP_N), box))) : space.wall_columns,
     openings: space.openings?.filter(o => o.host ? bodyIds.has(o.host.id) : boxes.some(box => overlap(bounds([[o.x, o.y]]), box))),

@@ -14,14 +14,16 @@ function setup() {
   const listeners = new Set(), add = window.addEventListener.bind(window), remove = window.removeEventListener.bind(window);
   window.addEventListener = (type, listener) => { if (type === 'pagehide') listeners.add(listener); add(type, listener); };
   window.removeEventListener = (type, listener) => { if (type === 'pagehide') listeners.delete(listener); remove(type, listener); };
-  let paintResolve, paint = Promise.resolve(), fail = false;
+  let paintResolve, paint = Promise.resolve(), fail = false, retireOnWrite = false;
+  const changes = [];
   const port = { context: () => context, config: () => cfg,
     screenPoint: ev => [ev.clientX, ev.clientY], unitsPerPixel: () => 0.0001,
     stage: () => stage, root: () => ({ querySelectorAll: () => [] }),
     document: { defaultView: window }, text: key => key, toast: text => toasts.push(text),
-    changed: () => {}, validate: () => true, paintOpportunity: () => paint,
+    changed: () => changes.push([editor.busy, recorded.length]), validate: () => true, paintOpportunity: () => paint,
     write: async h => {
       writes.push(h); if (fail) throw new Error('refused');
+      if (retireOnWrite) { context.revision++; editor.paint(); }
       const nodes = structuralWallNodes(h.beforeSpace), node = nodes.find(n => n.point.every((v, i) => v === h.intent.point[i]));
       const r = applyNodeMove(prepareNodeMove(h.beforeSpace, node, nodes), h.intent.target, h.intent.axis);
       return { ...cfg, spaces: [r.space] };
@@ -30,9 +32,9 @@ function setup() {
   const ev = (type, x = 0, y = 0, patch = {}) => ({ type, pointerId: 1, pointerType: 'mouse',
     isPrimary: true, button: 0, clientX: x, clientY: y, composedPath: () => [stage],
     preventDefault() {}, stopImmediatePropagation() {}, ...patch });
-  return { cfg, context, capture, editor, ev, writes, recorded, toasts, window, listeners,
+  return { cfg, context, capture, editor, ev, writes, recorded, toasts, window, listeners, changes,
     holdPaint: () => { paint = new Promise(resolve => { paintResolve = resolve; }); },
-    finishPaint: () => paintResolve(), refuse: () => { fail = true; } };
+    finishPaint: () => paintResolve(), refuse: () => { fail = true; }, retireAtWrite: () => { retireOnWrite = true; } };
 }
 const settle = () => new Promise(resolve => setImmediate(resolve));
 
@@ -48,6 +50,14 @@ test('queued release flushes the last move and waits for paint before any write/
   assert.equal(s.writes.length, 1); assert.equal(s.recorded.length, 1);
   assert.equal(s.editor.dragging, false); assert.equal(s.capture.size, 0);
   s.editor.dispose();
+});
+
+test('own revision adoption before history record still refreshes the enabled Undo toolbar', async () => {
+  const s = setup(); s.retireAtWrite();
+  s.editor.guardEvent(s.ev('pointerdown')); s.editor.guardEvent(s.ev('pointermove', 0.25, 0.3));
+  s.editor.guardEvent(s.ev('pointerup')); await settle();
+  assert.equal(s.recorded.length, 1); assert.equal(s.editor.busy, false);
+  assert.deepEqual(s.changes.at(-1), [false, 1]); s.editor.dispose();
 });
 test('cancel kills queued move, release and delayed activation; new down re-arms', async () => {
   const s = setup();

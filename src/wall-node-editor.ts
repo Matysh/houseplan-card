@@ -173,7 +173,12 @@ export class WallNodeEditor {
       this.port.record(history.beforeSpace, after, history.intent);
     } catch {
       this.port.toast(this.port.text('node_move_invalid', { reason: this.port.text('toast.geometry_unsafe') }));
-    } finally { this.busy = false; this.cancel(); }
+    } finally {
+      this.busy = false;
+      // Own config adoption may already have retired the preview before record.
+      // History/toolbar still need their post-ack frame after that early cancel.
+      if (!this.cancel()) this.port.changed();
+    }
   }
 
   applyHistory(history: NodeMoveHistory): boolean {

@@ -90,6 +90,8 @@ await page.mouse.up();
 await page.waitForFunction(() => !window.__card._editorRuntime.nodeMove.busy && window.__card._geometryHistory.size === 1,
   { timeout: 10000 }).catch(async error => { console.error('node release diagnostics', await inspect(), writes); throw error; });
 check('one accepted move is one atomic node write', writes.length, 1);
+check('toolbar Undo becomes enabled for the accepted node command', await page.evaluate(() =>
+  window.__card.renderRoot.querySelector('[data-hp="toolbar"] ha-icon[icon="mdi:undo-variant"]').closest('button').disabled), false);
 check('committed geometry equals the visible preview', server.spaces[0].partitions, during.preview.partitions);
 check('fixed-end door distance preserved', Math.abs(Math.hypot(server.spaces[0].openings[0].x - 0.6,
   server.spaces[0].openings[0].y - 0.4) - 0.1) < 1e-8);

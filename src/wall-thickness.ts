@@ -7,6 +7,7 @@
  * centreline.
  */
 import { union, difference, intersection } from 'polyclip-ts';
+import { unionLocalWallGeometry, intersectLocalWallGeometry, subtractLocalWallGeometry } from './wall-local-boolean';
 import { polygonArea, roomPoly, roomEdges, sharedBoundary, paperRoomShapes } from './logic';
 import { NEAR_AXIS_MAX_DEGREES } from './near-axis';
 import { LATTICE_NOISE_STEPS } from './coordinate-canonicalization';
@@ -2782,7 +2783,7 @@ export function innerContourForRoom(
   );
   if (roomWallGeometry) {
     try {
-      const floor = difference(closedRing(pr.poly) as any, roomWallGeometry);
+      const floor = subtractLocalWallGeometry(closedRing(pr.poly) as any, roomWallGeometry);
       const contour = largestOuterContour(floor);
       if (contour) return contour;
     } catch {
@@ -3311,7 +3312,7 @@ function exteriorEnvelopeGeometry(
     .filter((p): p is number[][] => !!p && p.length >= 3);
   if (!polys.length) return null;
   let centre: any = union(closedRing(polys[0]) as any);
-  for (let i = 1; i < polys.length; i++) centre = union(centre, closedRing(polys[i]) as any);
+  for (let i = 1; i < polys.length; i++) centre = unionLocalWallGeometry(centre, closedRing(polys[i]) as any);
 
   const intervals = wallIntervals(
     rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
@@ -3328,7 +3329,7 @@ function exteriorEnvelopeGeometry(
     const inset = insetContour(profile.poly, profile.offsets, multiWallNodes);
     if (!outset || !inset) continue;
     const piece = difference(closedRing(outset) as any, closedRing(inset) as any);
-    shell = shell ? union(shell, piece) : piece;
+    shell = shell ? unionLocalWallGeometry(shell, piece) : piece;
   }
   return {
     centre,
@@ -3743,7 +3744,7 @@ export function wallBodiesGeometry(
     for (const ring of roomRings) {
       try {
         const piece = bodyOf(ring);
-        body = body ? union(body, piece) : piece;
+        body = body ? unionLocalWallGeometry(body, piece) : piece;
       } catch {
         // An acute child contour may be invalid for boolean subtraction. The
         // interval pass below still supplies its physical wall without letting
@@ -3760,8 +3761,8 @@ export function wallBodiesGeometry(
         rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
       )) {
         try {
-          const piece = intersection(closedRing(edge.quad) as any, exterior.centre);
-          body = body ? union(body, piece) : piece;
+          const piece = intersectLocalWallGeometry(closedRing(edge.quad) as any, exterior.centre);
+          body = body ? unionLocalWallGeometry(body, piece) : piece;
         } catch {
           // A valid per-room ring may already own this interval. If neither
           // representation is usable the final result fails closed below.
@@ -3772,7 +3773,7 @@ export function wallBodiesGeometry(
     // owned by different contours at a virtual T. Add only those missing
     // junction pieces, then let physical openings cut through them as usual.
     corePhase = 'junctions';
-    body = unionJunctionPatches(body, junctions, coordScale);
+    body = unionJunctionPatches(body, junctions, coordScale, unionLocalWallGeometry);
     corePhase = 'facade-clip';
     if (body && exterior) body = intersection(body, exterior.centre);
     corePhase = 'exterior-shell';
@@ -3835,9 +3836,9 @@ export function wallBodiesGeometry(
       for (const piece of corners.fans) {
         try {
           let ring: any = [closedRing(piece)];
-          if (bound) ring = intersection(ring, bound);
+          if (bound) ring = intersectLocalWallGeometry(ring, bound);
           if (!ring?.length) continue;
-          body = body ? union(body, ring) : ring;
+          body = body ? unionLocalWallGeometry(body, ring) : ring;
         } catch {
           // A degenerate piece must not take the whole node down; the rest
           // still stands on its own.
@@ -3885,7 +3886,7 @@ export function wallBodiesGeometry(
     const isolated: WallGeometryComponent[] = [];
     let degradedExtraCount = 0;
     const mergeExtra = operations.mergeExtra
-      || ((primary: any, extra: any) => primary ? union(primary, extra) : extra);
+      || ((primary: any, extra: any) => primary ? unionLocalWallGeometry(primary, extra) : extra);
     for (let index = 0; index < extraBodies.length; index++) {
       const extra = extraBodies[index];
       if (extra.length < 3 || !extra.every((point) => point.length >= 2

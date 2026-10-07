@@ -16,6 +16,13 @@ measures real pointer-to-validated-DOM/paint latency and drag-window Long Tasks
 fixture fingerprint in the report). This is not a 25 ms full-frame or 60 fps
 claim. Keep the accepted 16 ms candidate-p95 and 150 ms / 3 / 300 ms Long Task
 limits; existing performance/bundle ceilings and golden baselines are unchanged.
+The large fixture includes two actually adjoining rooms, not only isolated
+corners. Terminal reporting separates wire wait, non-network wall time and
+Chromium main-thread `Performance.TaskDuration` CPU using `threadTicks`.
+The same CPU clock measures the complete pointerdown dispatch. Baseline reuse
+is gesture-local; every changed candidate still pays for its physical geometry
+and junction guards. Disconnected-room clipping is checked against the original
+boolean operations, including touching, holes, nesting and bridging components.
 The X-axis hint is rendered locally: a generic card toast after capture would
 schedule an unnecessary full-floor render inside the drag window.
 

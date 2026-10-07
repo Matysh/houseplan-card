@@ -37,6 +37,7 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeMoveHistory
 ): WallNodeEditor {
   const language = () => langOf(host.hass, host._config?.language);
   let geometry: { source: NodeMoveSpace; candidate: NodeMoveSpace; before: NodePreviewGeometry; next: NodePreviewGeometry } | null = null;
+  let baselineGeometry: { source: NodeMoveSpace; signature: string; value: NodePreviewGeometry; config: ServerConfig } | null = null;
   const editor = new WallNodeEditor({
     document: host.renderRoot.ownerDocument,
     context: () => ({ enabled: host._mode === 'plan' && host._tool === 'select'
@@ -51,16 +52,19 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeMoveHistory
       : host._t(key as I18nKey, params),
     toast: text => host._showToast(text),
     changed: () => { if (editor.dragging) { commitHouseplanEditor(host); editor.paint(); }
-      else { geometry = null; host.requestUpdate(); } },
+      else { geometry = null; baselineGeometry = null; host.requestUpdate(); } },
     validate: (space, before) => {
       if (!host._serverCfg) return false;
       if (geometry?.candidate === space && geometry.source === before) return geometry.next.safe;
       try {
         const [localBefore, localNext] = nodeMoveLocalSpaces(before, space);
         const config = { ...host._serverCfg, spaces: [localNext] };
-        const baseline = { ...host._serverCfg, spaces: [localBefore] };
-        const old = buildNodePreview(localBefore), next = buildNodePreview(localNext);
-        next.safe &&= !callbacks.introduced(config, baseline, space.id).length;
+        const signature = JSON.stringify(localBefore);
+        if (!baselineGeometry || baselineGeometry.source !== before || baselineGeometry.signature !== signature)
+          baselineGeometry = { source: before, signature, value: buildNodePreview(localBefore),
+            config: { ...host._serverCfg, spaces: [localBefore] } };
+        const old = baselineGeometry.value, next = buildNodePreview(localNext);
+        next.safe &&= !callbacks.introduced(config, baselineGeometry.config, space.id).length;
         geometry = { source: before, candidate: space, before: old, next };
         return next.safe;
       }

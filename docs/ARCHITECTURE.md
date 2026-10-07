@@ -22,6 +22,12 @@ Every live paint rechecks its frozen context before constructing SVG groups;
 mode/floor/revision adoption retires capture and masks before the settled render.
 `editor-shared` isolates shared lazy helpers so the editor entry retains its
 named API on both its normal import and its opaque immutable-URL retry.
+The write terminal refreshes history controls even when its own revision
+adoption already retired the live preview before the command was recorded.
+The frozen local baseline retains its geometry and guard carrier for one
+gesture. `wall-local-boolean` keeps disconnected canonical components out of
+repeated clipping sweeps; touching bounds still invoke the original boolean
+library. These are exact broad-phase exclusions, not relaxed wall limits.
 
 ## Styles (#266)
 
