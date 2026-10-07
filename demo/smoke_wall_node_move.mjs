@@ -124,4 +124,8 @@ await page.mouse.move(collapsed.x, collapsed.y); await page.waitForFunction(() =
 await page.mouse.up(); await page.waitForFunction(() => !window.__card._editorRuntime.nodeMove.dragging);
 check('invalid last release never saves the older valid candidate', [writes.length, server], [count, accepted]);
 check('invalid release creates no history entry', (await inspect()).size, 1);
+const acceptedRevision = revision;
+await page.keyboard.press('Escape'); await page.evaluate(() => window.__hpTest.settled());
+check('idle Esc after accepted move/Redo is not Undo and makes no write',
+  [writes.length, server, revision, (await inspect()).size], [count, accepted, acceptedRevision, 1]);
 await finish(browser, { writes: writes.length });

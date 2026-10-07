@@ -503,6 +503,31 @@ quantised to the same step, measured from the wall's first corner:**
 | openings, placed and dragged | `snapToWall(..., { step, length })` |
 | split tool's points ON a wall | `snapPointAlongPoly` |
 
+**NODE-MOVE — constrained hybrid (#803, Plan / Select only):**
+
+| Element | Resolver |
+| --- | --- |
+| a saved endpoint, shared room corner, T/X junction | `resolveNodeMoveSnap`: frozen original axes and exact incident-wall H/V goals before the free grid fallback |
+
+Within 12 CSS pixels, choose the nearest compatible goal; ties prefer an
+original axis, then horizontal, then vertical, then the stable wall ID. Two
+equal goals on the same wall use the anchor's numeric `(x,y)` order, never its
+stored a/b order. A frozen axis/carrier quantises **only the longitudinal
+offset**, measured from its stable wall's fixed end; never round X/Y again
+after projection. An exact compatible H/V goal outranks that quantisation.
+With no eligible constraint, the usual `1/240` XY grid is the fallback.
+
+A T must stay on its original passing axis. An X chooses the nearest original
+axis on first unambiguous movement and freezes it for the gesture; an initial
+tie is a no-op. Finite carrier ends, intervening junctions, thickness boundaries
+and opening intervals/jambs are barriers, not snap destinations that can be
+jumped. Distinct hit nodes less than 8 CSS pixels apart request zoom; exact
+coincident endpoints are one physical node. Coordinate identity still uses the
+existing positional tolerance. For grouping noisy atom directions and counting
+their owned rays, TS/Python share one angular predicate
+`abs(cross(unit,unit)) <= sqrt(2e-9 - 1e-18)`; an axis cannot borrow rays from
+another axis. This does not round, merge or globally straighten saved geometry.
+
 The Walls tool adds one architectural resolver before the free grid fallback.
 Within a 12 CSS-pixel hit zone, exact endpoints win over wall axes. Two distinct
 endpoints that are less than the live 8 CSS-pixel distinguishability threshold

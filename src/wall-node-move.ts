@@ -37,6 +37,10 @@ export type NodeMoveReason = 'unsupported_junction' | 'invalid' | 'opening_block
 export type NodeMoveResult = { ok: true; space: NodeMoveSpace; changed: boolean; affected: string[] }
   | { ok: false; reason: NodeMoveReason };
 const EPS = 1e-9;
+// Positional EPS is not an angular tolerance. Use the same signed angular
+// predicate for grouping and ray ownership (the former dot-ray tolerance).
+const DIRECTION_EPS = Math.sqrt(2 * EPS - EPS * EPS);
+const parallel = (a: NodePoint, b: NodePoint): boolean => Math.abs(cross(a, b)) <= DIRECTION_EPS;
 // Match Python's Unicode code-point ordering, not the browser/OS locale.
 const compare = (a: string, b: string): number => {
   const left = Array.from(a), right = Array.from(b);
@@ -94,31 +98,37 @@ export function structuralWallNodes(space: NodeMoveSpace): WallNode[] {
     const p = intersection(walls[i], walls[j]); if (p) add(p);
   }
   return [...points].sort(([a], [b]) => compare(a, b)).map(([id, p]) => {
-    const incident = walls.filter(w => onWall(p, w));
+    const incident = walls.filter(w => onWall(p, w)).sort((a, b) => compare(wallRef(a), wallRef(b)));
     const axes: NodeAxis[] = [];
-    const rays: NodePoint[] = [];
+    const rays = new Map<NodeAxis, NodePoint[]>();
     for (const w of incident) {
       const d = axisDirection(w);
-      let axis = axes.find(a => Math.abs(cross(a.direction, d)) < EPS);
-      if (!axis) { axis = { key: wallRef(w), direction: d, walls: [], passing: false }; axes.push(axis); }
+      let axis = axes.find(a => parallel(a.direction, d));
+      if (!axis) {
+        axis = { key: wallRef(w), direction: d, walls: [], passing: false };
+        axes.push(axis); rays.set(axis, []);
+      }
       axis.walls.push(w);
       for (const end of [w.a, w.b]) if (!sameNodePoint(end, p)) {
         const ray = unit(sub(end, p));
-        if (!rays.some(r => dot(r, ray) > 1 - EPS)) rays.push(ray);
+        const owned = rays.get(axis)!;
+        if (!owned.some(r => parallel(r, ray) && dot(r, ray) > 0)) owned.push(ray);
       }
     }
     for (const axis of axes) {
       axis.walls.sort((a, b) => compare(wallRef(a), wallRef(b)));
       axis.key = wallRef(axis.walls[0]);
-      axis.passing = rays.some(r => dot(r, axis.direction) > 1 - EPS)
-        && rays.some(r => dot(r, axis.direction) < -1 + EPS);
+      const owned = rays.get(axis)!;
+      axis.passing = owned.some(r => dot(r, axis.direction) > 0)
+        && owned.some(r => dot(r, axis.direction) < 0);
     }
     axes.sort((a, b) => compare(a.key, b.key));
-    const passing = axes.filter(a => a.passing).length, branches = rays.length - 2 * passing;
-    const supported = rays.length <= 6 && ((passing === 0 && branches >= 1)
+    const valence = [...rays.values()].reduce((count, owned) => count + owned.length, 0);
+    const passing = axes.filter(a => a.passing).length, branches = valence - 2 * passing;
+    const supported = valence <= 6 && ((passing === 0 && branches >= 1)
       || (passing === 1 && branches <= 1) || (passing === 2 && branches === 0));
     return { key: id, point: p, walls: incident, axes, passing, branches,
-      valence: rays.length, supported };
+      valence, supported };
   });
 }
 
@@ -154,16 +164,17 @@ export function resolveNodeMoveSnap(
       return { point: point(n.point), axis: null, guide: null };
     carrier = ranked[0].a;
   }
-  const goals: Array<{ p: NodePoint; priority: number; id: string; guide: NodeSnap['guide'] }> = [];
+  const goals: Array<{ p: NodePoint; priority: number; id: string; anchor: NodePoint; guide: NodeSnap['guide'] }> = [];
   const project = (origin: NodePoint, d: NodePoint): NodePoint => {
     const t = dot(sub(raw, origin), d);
     return [origin[0] + t * d[0], origin[1] + t * d[1]];
   };
-  const fixedEnds = n.walls.flatMap(w => [w.a, w.b].filter(p => !sameNodePoint(p, n.point)));
+  const fixedEnds = n.walls.flatMap(w => [w.a, w.b].filter(p => !sameNodePoint(p, n.point))
+    .map(fixed => ({ fixed, id: wallRef(w) })));
   if (!carrier) for (const a of n.axes) goals.push({
-    p: project(n.point, a.direction), priority: 0, id: a.key, guide: 'axis',
+    p: project(n.point, a.direction), priority: 0, id: a.key, anchor: n.point, guide: 'axis',
   });
-  fixedEnds.forEach((fixed, i) => {
+  fixedEnds.forEach(({ fixed, id }) => {
     for (const [component, priority, guide] of [[1, 1, 'horizontal'], [0, 2, 'vertical']] as const) {
       if (carrier) {
         const d = carrier.direction[component];
@@ -171,15 +182,16 @@ export function resolveNodeMoveSnap(
         const t = (fixed[component] - n.point[component]) / d;
         const p: NodePoint = [n.point[0] + t * carrier.direction[0], n.point[1] + t * carrier.direction[1]];
         p[component] = fixed[component];
-        goals.push({ p, priority, id: String(i), guide });
+        goals.push({ p, priority, id, anchor: fixed, guide });
       } else {
         const p = point(raw); p[component] = fixed[component];
-        goals.push({ p, priority, id: String(i), guide });
+        goals.push({ p, priority, id, anchor: fixed, guide });
       }
     }
   });
   const eligible = goals.filter(g => length(g.p, raw) <= 12 * unitsPerPx)
-    .sort((a, b) => length(a.p, raw) - length(b.p, raw) || a.priority - b.priority || compare(a.id, b.id));
+    .sort((a, b) => length(a.p, raw) - length(b.p, raw) || a.priority - b.priority || compare(a.id, b.id)
+      || a.anchor[0] - b.anchor[0] || a.anchor[1] - b.anchor[1]);
   const goal = eligible[0];
   if (goal && goal.priority > 0) return { point: goal.p, axis: carrier?.key || null, guide: goal.guide };
   const axis = carrier || (goal ? n.axes.find(a => a.key === goal.id) : undefined);

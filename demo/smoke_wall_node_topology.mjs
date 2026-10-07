@@ -220,6 +220,9 @@ assert.equal(await page.evaluate(() => window.__card._editorRuntime.nodeMove.dra
 capability = true; refused = true; await mount(cycle.cfg); await drag(cycle.point, cycle.target); await page.mouse.up(); await idle();
 assert.deepEqual(server, cycle.cfg); assert.equal(await page.evaluate(() => window.__card._geometryHistory.size), 0);
 refused = false; await mount(cycle.cfg);
-await page.evaluate(async () => { await window.__hpTest.setMode('view'); });
-assert.equal(await page.evaluate(() => window.__card.renderRoot.querySelectorAll('.hp-node-handle').length), 0);
+for (const mode of ['view', 'devices', 'decor']) { // decor is the Background editor's internal mode
+  await page.evaluate(async mode => { await window.__hpTest.setMode(mode); }, mode);
+  assert.equal(await page.evaluate(() => window.__card.renderRoot.querySelectorAll('.hp-node-handle').length), 0,
+    `${mode}: no wall-node handles`);
+}
 await finish(browser, { scenarios: scenarios.length, cycles: 100, writes });

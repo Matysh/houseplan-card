@@ -10,7 +10,9 @@ from custom_components.houseplan.validation import (
 )
 from custom_components.houseplan.wall_node_move import (
     NodeMoveError,
+    _classify,
     node_move_candidate,
+    node_move_host_baseline,
 )
 from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
 
@@ -109,3 +111,77 @@ def test_whole_carrier_opening_is_a_swept_barrier(sign):
         operation["target"] = [sign * magnitude, 0]
         with pytest.raises(NodeMoveError, match="opening_blocked"):
             node_move_candidate(before, "f", operation)
+
+
+@pytest.mark.parametrize("x", [False, True])
+@pytest.mark.parametrize("reverse", [False, True])
+def test_noisy_atomized_t_x_classification_and_exact_inverse(x, reverse):
+    before = fixture()
+    walls = [wall("h-a", [-0.012772885, -0.004954131], [0, 0]),
+             wall("h-b", [0, 0], [0.014078099, 0.005460506])]
+    if x:
+        walls.append(wall("v-a", [0.003709279, -0.009286616], [0, 0]))
+    walls.append(wall("v-b", [0, 0], [-0.003709205, 0.009286646]))
+    if reverse:
+        walls = [dict(w, a=w["b"], b=w["a"]) for w in reversed(walls)]
+    before["spaces"][0].update(partitions=walls, openings=[])
+    before, _ = commit_wall_segment_model(before)
+    frozen = copy.deepcopy(before)
+    operation = {"point": [0, 0], "target": [0.00319322125, 0.00123853275],
+                 "axis": "partition:h-a", "split_ids": {}}
+    after = node_move_candidate(before, "f", operation)
+    assert before == frozen
+    assert node_move_candidate(after, "f", operation, "undo", before["spaces"][0]) == before
+
+
+def test_foreign_infinite_carrier_point_is_allowed_but_connectivity_exchange_is_not():
+    before = fixture()
+    before["spaces"][0].update(openings=[], partitions=[wall("h", [-1, 0], [1, 0]),
+        wall("b", [0, 0], [0, 1]), wall("foreign", [2, 0], [2, 1])])
+    operation = {"point": [0, 0], "target": [0.25, 0], "axis": "partition:h", "split_ids": {}}
+    after = node_move_candidate(before, "f", operation)
+    assert after["spaces"][0]["partitions"][2] == before["spaces"][0]["partitions"][2]
+    before["spaces"][0]["partitions"] = [wall("a", [0, 0], [1, 0]),
+        wall("b", [0, 0], [0, 1]), wall("foreign", [0.5, 0], [0.5, -0.25])]
+    frozen = copy.deepcopy(before)
+    with pytest.raises(NodeMoveError):
+        node_move_candidate(before, "f", {**operation, "target": [1, -1], "axis": None})
+    assert before == frozen
+
+
+@pytest.mark.parametrize("angle, expected", [(0.00004, (2, 1)), (0.00005, (3, 0))])
+def test_shared_angular_boundary_does_not_borrow_rays(angle, expected):
+    import math
+    walls = [dict(w, kind="partition") for w in [wall("a", [-1, 0], [0, 0]),
+        wall("b", [0, 0], [math.cos(angle), math.sin(angle)]), wall("v", [0, 0], [0, 1])]]
+    for variant in [walls, [dict(w, a=w["b"], b=w["a"]) for w in reversed(walls)]]:
+        _, axes, passing = _classify(variant, [0, 0])
+        assert (len(axes), passing) == expected
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+def test_independent_host_ledger_accepts_only_original_interval_child_and_inverse(reverse):
+    before = fixture()
+    if reverse:
+        w = before["spaces"][0]["partitions"][1]
+        w["a"], w["b"] = w["b"], w["a"]
+        before["spaces"][0]["openings"][0]["host"]["t"] = 0.175
+    # Extra preallocated carrier child ID must not authorize a carrier rehost.
+    operation = {**intent(), "split_ids": {"partition:v": "new-v", "partition:h": "new-h"}}
+    before["spaces"][0]["openings"].append({"id": "carrier", "type": "door", "x": -.65,
+        "y": 0, "angle": 0, "length": .1, "host": {"kind": "partition", "id": "h", "t": .175}})
+    after = node_move_candidate(before, "f", operation)
+    adjusted = node_move_host_baseline(before, after, "f", operation)
+    validate_partition_opening_hosts(after, adjusted)
+    inverse = node_move_host_baseline(after, before, "f", operation, "undo", before["spaces"][0])
+    validate_partition_opening_hosts(before, inverse)
+    for oid, identity in [("door", "v" if after["spaces"][0]["openings"][0]["host"]["id"] == "new-v" else "new-v"),
+                          ("carrier", "new-h")]:
+        tampered = copy.deepcopy(after)
+        next(o for o in tampered["spaces"][0]["openings"] if o["id"] == oid)["host"]["id"] = identity
+        with pytest.raises(NodeMoveError):
+            node_move_host_baseline(before, tampered, "f", operation)
+    tampered = copy.deepcopy(before)
+    tampered["spaces"][0]["openings"][0]["host"]["id"] = "h"
+    with pytest.raises(NodeMoveError):
+        node_move_host_baseline(after, tampered, "f", operation, "undo", before["spaces"][0])

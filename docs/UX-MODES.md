@@ -168,6 +168,27 @@ tabs, the editor-close reserve, zoom and one gear whose menu holds the rest.
 
 ## Plan — geometry and appearance of the space
 
+- **Select** also moves wall nodes (#803): a saved endpoint, shared room corner
+  or supported T/X intersection has a `grab` cursor; capture uses `grabbing`.
+  The 12 CSS-pixel node hit wins there, while dragging a wall body outside it
+  retains the existing rigid move. Nearby distinct nodes that cannot be
+  distinguished request zoom instead of choosing arbitrarily.
+- During a node drag the affected old node, walls and openings are hidden and
+  their complete proposed positions are translucent; unaffected geometry stays
+  normal. Esc before release cancels the whole gesture, including late move/up
+  events. Valid release is one atomic save and one Undo step; Undo/Redo restores
+  exact IDs, geometry and opening hosts. Esc after a completed save is not Undo.
+- A T slides on its original passing wall. An X freezes one original carrier
+  and bends its transverse wall at the new node without moving the far ends.
+  Doors/windows keep their physical distance from the fixed end; an unsafe
+  interval, collision or unsupported complex through-junction refuses the whole
+  edit. Frozen-axis / H/V / longitudinal-grid magnets follow CANVAS.md §9.3.
+- Node handles and capture exist only in Plan / Select with write permission,
+  never in other Plan tools, View, Devices, Background, read-only or kiosk.
+  This is desktop mouse/keyboard editing; touch does not start a node move and
+  a second pointer/pinch cancels it without saving. Tool, mode, floor, revision,
+  permission and lifecycle changes also cancel unfinished gestures.
+
 - Toolbar tools: **Walls** (one continuous chain with its session wall-thickness
   field, default 15 cm — docs/WALL-THICKNESS.md §6), Delete room, Merge, Split,
   Resize, Column,

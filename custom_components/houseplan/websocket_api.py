@@ -137,7 +137,7 @@ from .virtual_lights import (
     async_toggle_virtual_light,
     async_virtual_light_snapshot,
 )
-from .wall_node_move import NodeMoveError, node_move_candidate
+from .wall_node_move import NodeMoveError, node_move_candidate, node_move_host_baseline
 from .wall_segment_model import (
     WALL_SEGMENT_MODEL_VERSION,
     WallSegmentMigrationError,
@@ -1860,18 +1860,10 @@ async def ws_wall_node_move(hass: HomeAssistant, connection, msg: dict[str, Any]
             validate_wall_model_transition(candidate, previous)
             candidate = CONFIG_SCHEMA(candidate)
             validate_opening_passages(candidate, previous)
-            # The operation above has already proved the ONLY authorized host
-            # delta, including an inverse X split. Recheck the resulting hosts
-            # independently with strict jamb margins; config/set gets no bypass.
-            proved_baseline = copy.deepcopy(previous)
-            after_spaces = {s["id"]: s for s in candidate.get("spaces", [])}
-            for old_space in proved_baseline.get("spaces", []):
-                after_openings = {o["id"]: o for o in after_spaces.get(old_space["id"], {}).get("openings", [])}
-                for old_opening in old_space.get("openings", []):
-                    after_host = after_openings.get(old_opening["id"], {}).get("host")
-                    old_host = old_opening.get("host")
-                    if old_host and after_host and old_host["kind"] == after_host["kind"] == "partition":
-                        old_host["id"] = after_host["id"]
+            # A separate original-geometry ledger proves the allowed host IDs;
+            # it never copies authority from the candidate. Then strict jambs.
+            proved_baseline = node_move_host_baseline(previous, candidate, msg["space_id"],
+                msg["intent"], msg["direction"], msg.get("before_space"))
             validate_partition_opening_hosts(candidate, proved_baseline)
             counts = validate_junction_limits(candidate, previous)
             return candidate, counts

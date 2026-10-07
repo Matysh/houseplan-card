@@ -40,6 +40,14 @@ for `model-invariants --config`; no user home is copied into fixtures.
 `python tests_backend/wall_node_parity.py` executes the common TS/Python
 fixture matrix, including atomized unsupported junctions, opening intervals,
 and independently proven inverse operations (not an optional skipped test).
+The matrix includes realistic off-grid noisy T/X atoms and reversed endpoints,
+an unrelated collinear node beyond the finite carrier, and a forbidden exchange
+of two edges' connectivity at the same foreign point. Pure guards cover the
+shared angular boundary and stable wall-ID / same-wall anchor snap ties.
+The real HA negative host test injects a planner defect rehosting an unrelated
+opening to a geometrically identical foreign partition: the independent ledger
+must refuse with unchanged config, revision and events. No mutation run is
+needed during development; register the guards and use `mutation-gate --check`.
 The Select-only module is a second-level lazy import, with an additional
 14 KiB gzip guard (`node scripts/node-editor-bundle-budget.mjs`); it does not
 change any existing graph ceiling or load in cold View/other tools. The

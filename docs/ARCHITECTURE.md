@@ -16,8 +16,10 @@ writers. Remote paper, fills and masonry stay in the settled DOM; old local
 geometry is masked out, not dimmed behind the ghost. Preview never replaces
 the authoritative config, model cache or recovery snapshot. The backend mirror
 `wall_node_move.py` derives the delta and independently proves an inverse before
-Undo; `config/set` keeps its existing host protection. Details: WALL-THICKNESS.md
-and CONFIG-COMPATIBILITY.md.
+Undo; a separate original-interval/midpoint ledger proves the only allowed
+host-ID changes before strict partition-jamb validation, without copying
+authority from the candidate. `config/set` keeps its existing host protection.
+Details: CANVAS.md, UX-MODES.md, WALL-THICKNESS.md and CONFIG-COMPATIBILITY.md.
 Every live paint rechecks its frozen context before constructing SVG groups;
 mode/floor/revision adoption retires capture and masks before the settled render.
 `editor-shared` isolates shared lazy helpers so the editor entry retains its

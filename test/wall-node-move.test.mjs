@@ -37,6 +37,70 @@ test('screen hit ambiguity has no arbitrary node choice', () => {
   assert.deepEqual(pickWallNode(structuralWallNodes(s), [0, 0], 0.001), { node: null, ambiguous: true });
 });
 
+test('noisy atomized T/X use one consistent angular classifier, independent of order and a/b', () => {
+  const h = [wall('h-a', [-0.012772885, -0.004954131], [0, 0]),
+    wall('h-b', [0, 0], [0.014078099, 0.005460506])];
+  const v = [wall('v-a', [0.003709279, -0.009286616], [0, 0]),
+    wall('v-b', [0, 0], [-0.003709205, 0.009286646])];
+  for (const x of [false, true]) for (const reversed of [false, true]) {
+    const walls = [...h, ...(x ? v : [v[1]])];
+    const source = floor(reversed ? walls.reverse().map(w => ({ ...w, a: w.b, b: w.a })) : walls);
+    const frozen = structuredClone(source), p = plan(source, [0, 0]);
+    assert.deepEqual([p.node.axes.length, p.node.passing, p.node.branches, p.node.valence, p.node.supported],
+      x ? [2, 2, 0, 4, true] : [2, 1, 1, 3, true]);
+    const moved = applyNodeMove(p, [0.00319322125, 0.00123853275], 'partition:h-a');
+    assert.equal(moved.ok, true);
+    for (const w of source.partitions) {
+      const after = moved.space.partitions.find(a => a.id === w.id);
+      const end = w.a.some(v => v !== 0) ? 'a' : 'b';
+      assert.deepEqual(after[end], w[end], 'fixed far end');
+    }
+    assert.deepEqual(source, frozen);
+  }
+  // Just inside/outside the shared angular boundary. Rays cannot be borrowed
+  // from another axis even for a non-transitive chain of close directions.
+  for (const angle of [0.00004, 0.00005]) {
+    const p = plan(floor([wall('a', [-1, 0], [0, 0]),
+      wall('b', [0, 0], [Math.cos(angle), Math.sin(angle)]), wall('v', [0, 0], [0, 1])]), [0, 0]);
+    assert.deepEqual([p.node.axes.length, p.node.passing, p.node.branches],
+      angle < 0.000045 ? [2, 1, 1] : [3, 0, 3]);
+  }
+  const chain = [wall('a', [-1, 0], [0, 0]),
+    wall('b', [0, 0], [Math.cos(.00004), Math.sin(.00004)]),
+    wall('c', [-Math.cos(.00008), -Math.sin(.00008)], [0, 0])];
+  for (const walls of [chain, chain.slice().reverse().map(w => ({ ...w, a: w.b, b: w.a }))]) {
+    const p = plan(floor(walls), [0, 0]);
+    assert.deepEqual([p.node.axes.length, p.node.passing, p.node.branches, p.node.valence], [2, 1, 1, 3]);
+  }
+});
+
+test('equal-distance H/V snap ties use stable wall ID then a/b-independent anchor', () => {
+  const walls = [wall('h', [-10, -10], [10, 10]), wall('v', [5, -5], [-5, 5])];
+  const expected = { point: [5, 5], axis: 'partition:h', guide: 'horizontal' };
+  for (const reversed of [false, true]) {
+    const source = floor(reversed ? walls.slice().reverse().map(w => ({ ...w, a: w.b, b: w.a })) : walls);
+    assert.deepEqual(resolveNodeMoveSnap(plan(source, [0, 0]), [0, 0], 1, 'partition:h'), expected);
+  }
+  const tied = [wall('z', [0, 0], [.05, -.05]), wall('a', [0, 0], [.05, .05])];
+  for (const walls of [tied, tied.slice().reverse().map(w => ({ ...w, a: w.b, b: w.a }))])
+    assert.deepEqual(resolveNodeMoveSnap(plan(floor(walls), [0, 0]), [.5, 0], .01, null),
+      { point: [.5, .05], axis: null, guide: 'horizontal' });
+});
+
+test('carrier ignores foreign nodes beyond its finite interval; foreign connectivity cannot exchange edges', () => {
+  const s = floor([wall('h', [-1, 0], [1, 0]), wall('b', [0, 0], [0, 1]),
+    wall('foreign', [2, 0], [2, 1])]);
+  const frozen = structuredClone(s), result = applyNodeMove(plan(s, [0, 0]), [.25, 0], 'partition:h');
+  assert.equal(result.ok, true); assert.deepEqual(result.space.partitions[2], s.partitions[2]);
+  assert.deepEqual(s, frozen);
+  const exchange = floor([wall('a', [0, 0], [1, 0]), wall('b', [0, 0], [0, 1]),
+    wall('foreign', [.5, 0], [.5, -.25])]);
+  const unchanged = structuredClone(exchange);
+  // The old physical foreign point stays [.5,0], but would switch a -> b.
+  assert.deepEqual(applyNodeMove(plan(exchange, [0, 0]), [1, -1], null), { ok: false, reason: 'invalid' });
+  assert.deepEqual(exchange, unchanged);
+});
+
 test('ordinary five/six-ray nodes move every endpoint, preserving mixed thickness and far ends', () => {
   const ends = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0.25], [0.25, -1]];
   const thickness = [0, 15, 25, 100, 25, 15];

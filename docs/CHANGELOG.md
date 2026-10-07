@@ -64,6 +64,9 @@
   avoid repeatedly clipping distant, disconnected rooms during local edits
   ([#803](https://github.com/Matysh/houseplan-card/issues/803)). The card and panel
   keep their reload message if an update removes an extra shared chunk.
+  Noisy previously split T/X walls remain movable; equal-distance snap choices
+  no longer depend on endpoint ordering. A second server check independently
+  rejects unrelated opening-host changes.
 
 ## v1.80.0-beta.7 — 2026-10-07
 

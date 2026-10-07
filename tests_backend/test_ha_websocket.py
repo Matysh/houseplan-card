@@ -134,6 +134,51 @@ async def test_issue_803_node_protocol_apply_undo_redo_conflict_and_acl(
     assert reloaded["rev"] == redo["result"]["rev"]
 
 
+async def test_issue_803_second_host_identity_gate_rejects_foreign_rehost(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A future planner defect must not bypass the independent identity gate."""
+    from custom_components.houseplan import websocket_api as api
+    from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    source = {"spaces": [{"id": "f", "title": "Floor", "view_box": [0, 0, 1, 1], "rooms": [],
+        "partitions": [{"id": "h", "a": [-1, 0], "b": [1, 0], "cm": 0},
+                       {"id": "v", "a": [0, -1], "b": [0, 1], "cm": 25},
+                       {"id": "z", "a": [2, 0], "b": [2, 1], "cm": 25},
+                       {"id": "z-copy", "a": [2, 0], "b": [2, 1], "cm": 25}],
+        "openings": [{"id": "foreign", "type": "door", "x": 2, "y": .5, "length": .1,
+                      "angle": -90, "host": {"kind": "partition", "id": "z", "t": .5}}]}],
+        "markers": [], "settings": {}}
+    source, _ = commit_wall_segment_model(source)
+    await client.send_json_auto_id({"type": "houseplan/config/set", "config": source, "expected_rev": 0})
+    assert (await client.receive_json())["success"]
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    before = (await client.receive_json())["result"]
+    planner = api.node_move_candidate
+
+    def defective_planner(*args, **kwargs):
+        candidate = planner(*args, **kwargs)
+        candidate["spaces"][0]["openings"][0]["host"]["id"] = "z-copy"
+        return candidate
+
+    monkeypatch.setattr(api, "node_move_candidate", defective_planner)
+    events = []
+    unsubscribe = hass.bus.async_listen("houseplan_config_updated", lambda event: events.append(event.data))
+    await client.send_json_auto_id({"type": "houseplan/wall/node_move", "space_id": "f",
+        "expected_rev": before["rev"], "intent": {"point": [0, 0], "target": [.25, 0],
+            "axis": "partition:h", "split_ids": {"partition:v": "new-v"}}})
+    refused = await client.receive_json()
+    assert not refused["success"] and refused["error"]["code"] == "node_move_invalid", refused
+    await hass.async_block_till_done()
+    assert events == []
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    after = (await client.receive_json())["result"]
+    assert after["rev"] == before["rev"] and after["config"] == before["config"]
+    unsubscribe()
+
+
 async def test_config_get_advertises_radar_only_while_coordinator_is_ready(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
 ) -> None:
