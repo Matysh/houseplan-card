@@ -27,7 +27,7 @@ export function renderSpaceSettingsDialog(this: HouseplanEditorRuntime): Templat
     renderServerPlans: (dialog) => this._renderServerPlans(dialog),
     save: () => this._saveSpaceDialog(),
     skipImport: () => this._skipImport(),
-    deleteSpace: () => this._deleteSpace(),
+    deleteSpace: (withDevices) => this._deleteSpace(withDevices),
     copySpace: () => openSpaceCopyDialog(this.host),
   });
   return html`<hp-dialog .hass=${this.host.hass} data-kind="space" form-shell wide

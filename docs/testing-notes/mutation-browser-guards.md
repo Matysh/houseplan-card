@@ -35,9 +35,9 @@ that transition events alone prove disposal.
 | Browser harness integrity | 3 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 47 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 53 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
-| Responsive DOM layout | 39 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 117 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **263 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Responsive DOM layout | 41 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
+| Custom-element and HA browser lifecycle | 119 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **267 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -259,6 +259,8 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 - `warm-dialog-drops-transferred-baseline`
 - `warm-resume-collapses-pending-header`
 - `warm-memo-publishes-torn-header-stage-pair`
+- `space-delete-block-stays-out-of-view`
+- `space-delete-block-leaves-focus-behind`
 
 ### Custom-element and HA browser lifecycle
 
@@ -405,3 +407,5 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `zigbee-topology-solid-route-dashed`
 - `zigbee-topology-unknown-casing-removed`
 - `zigbee-topology-unrelated-markers-raised`
+- `space-delete-with-devices-drops-the-flag`
+- `space-delete-with-devices-ignores-a-moved-plan`

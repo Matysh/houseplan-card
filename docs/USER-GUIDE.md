@@ -624,12 +624,25 @@ the saved plan must first be repaired, a separate warning explains that
 **Optimize plans** will change the whole plan; cancelling that warning writes
 nothing.
 
-Deleting a space is blocked while any active device still points to the space,
-one of its rooms or a saved position on it, provided another space remains.
-Move or delete those devices first; then the confirmed delete removes the
-space-owned layout. The sole remaining space can still be deleted after
-confirmation: affected devices keep their bindings, icons, actions and settings
-but become unplaced. Plan images and attachments are not deleted automatically.
+Deleting a space is blocked while any active device — hidden ones included —
+still points to the space, one of its rooms or a saved position on it, provided
+another space remains. **Delete** then scrolls the dialog to the warning and
+moves focus to it, every time it is pressed. Either move or delete those
+devices first — then the confirmed delete removes the space-owned layout — or
+press **Delete space with devices** in the warning. One confirmation names the
+space and the number of devices (and, when there are any, how many of them are
+hidden); after it the space and those devices are deleted in a single write.
+Each device goes exactly as with **Delete** in its own dialog: it leaves the
+plan, its position, attachments and robot trail are removed, and its binding
+appears in **Devices → Available again**. Nothing changes in Home Assistant.
+Cancel writes nothing; there is no undo after the write — only a
+[backup](#20-storage-multiple-cards-and-backups) brings the space and the
+devices back. If the plan changed after the
+confirmation, nothing is deleted and the warning shows the current number.
+
+The sole remaining space can still be deleted after confirmation: affected
+devices keep their bindings, icons, actions and settings but become unplaced.
+Its plan image and their attachments are not deleted automatically.
 
 ![Room card with temperature, LQI and light state](images/08-room-card.png)
 

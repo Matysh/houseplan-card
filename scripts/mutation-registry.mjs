@@ -13375,6 +13375,52 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'space-delete-block-stays-out-of-view',
+    guard: 'node demo/smoke_space_delete_with_devices.mjs',
+    because: 'a blocked Delete must bring the warning into the visible part of the dialog body at '
+      + '1000×700 and 375×812, again after a manual scroll up; only measured boxes of the real '
+      + 'dialog shell prove it (#819 AC1)',
+    patches: [{
+      file: 'src/editors/space-form.ts',
+      find: "  warning?.scrollIntoView({ block: 'nearest' });\n",
+      replace: '  void warning;\n',
+    }],
+  },
+  {
+    id: 'space-delete-block-leaves-focus-behind',
+    guard: 'node demo/smoke_space_delete_with_devices.mjs',
+    because: 'focus has to land on the warning inside the card shadow root, behind the modal '
+      + 'dialog, every time Delete ends blocked; document focus exists only in a browser (#819 AC1)',
+    patches: [{
+      file: 'src/editors/space-form.ts',
+      find: '  warning?.focus({ preventScroll: true });\n',
+      replace: '  void warning;\n',
+    }],
+  },
+  {
+    id: 'space-delete-with-devices-drops-the-flag',
+    guard: 'node demo/smoke_space_delete_with_devices.mjs',
+    because: 'the warning button, the shared danger confirmation and the post-write adoption '
+      + 'must end in one space/delete with remove_markers, a toast and bindings in «Available '
+      + 'again» — a complete card state transition (#819 AC2)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '        ...(removeMarkers ? { remove_markers: true } : {}),\n',
+      replace: '        ...({}),\n',
+    }],
+  },
+  {
+    id: 'space-delete-with-devices-ignores-a-moved-plan',
+    guard: 'node demo/smoke_space_delete_with_devices.mjs',
+    because: 'devices added while the confirmation is open were never confirmed: nothing may be '
+      + 'written and the warning shows the current count, not busy (#819 AC4, card side)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '    if (removeMarkers ? `${currentDependencies.markerIds}` !== `${dependencies.markerIds}`\n',
+      replace: '    if (removeMarkers ? false\n',
+    }],
+  },
+  {
     id: 'plan-optimize-skips-active-marker-id-invariant',
     guard: 'node scripts/backend-test-guard.mjs '
       + 'plan_optimize_rejects_duplicate_active_marker_ids '

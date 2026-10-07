@@ -644,6 +644,15 @@ export const SMOKE_LINKS = [
       + 'surfaces do not expose the pure helper names at runtime',
   },
   {
+    // #819: the smoke presses the dialog's buttons; it never names the
+    // runtime method or the helpers behind them.
+    symbols: ['_deleteSpace', 'revealSpaceDeleteBlocker', 'hiddenDependencyCount'],
+    smokes: ['smoke_space_delete_with_devices.mjs'],
+    because: 'the smoke clicks Delete and «Delete space with devices» and observes the warning '
+      + 'scrolled into view and focused at two viewports, the confirmation text with N and K, '
+      + 'and the one space/delete request with remove_markers',
+  },
+  {
     // #242: pure placement is called inside shared SVG/Iso renderers, while
     // browser smokes can only inspect the resulting transforms and bases.
     symbols: ['openingSymbolOffset'],

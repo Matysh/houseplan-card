@@ -375,6 +375,8 @@ export interface CalloutOptions {
   action?: TemplateResult | typeof nothing;
   role?: 'status' | 'alert' | 'note';
   id?: string;
+  /** Может принять фокус программно (`tabindex="-1"`), вне порядка Tab. */
+  focusable?: boolean;
 }
 
 /**
@@ -382,8 +384,9 @@ export interface CalloutOptions {
  * уезжает. Это не пояснение к настройке, а сигнал, что прямо сейчас что-то
  * сломано или изменится при сохранении.
  */
-export function callout({ text, kind = 'info', icon, action, role, id }: CalloutOptions): TemplateResult {
-  return html`<div id=${id ?? nothing} class="hpf-callout ${kind === 'warning' ? 'hpf-warning' : ''}" role=${role ?? nothing}>
+export function callout({ text, kind = 'info', icon, action, role, id, focusable }: CalloutOptions): TemplateResult {
+  return html`<div id=${id ?? nothing} class="hpf-callout ${kind === 'warning' ? 'hpf-warning' : ''}" role=${role ?? nothing}
+    tabindex=${focusable ? '-1' : nothing}>
     <ha-icon icon=${icon ?? (kind === 'warning' ? 'mdi:alert-outline' : 'mdi:information-outline')}></ha-icon>
     <p>${text}${action ? html` ${action}` : nothing}</p>
   </div>`;

@@ -63,12 +63,28 @@ export interface SpaceFormPort {
   renderServerPlans(d: SpaceDialogState): TemplateResult;
   save(): void | Promise<void>;
   skipImport(): void;
-  /** Только редактор: онбординг создаёт, а не правит. */
-  deleteSpace?(): void | Promise<void>;
+  /** Только редактор: онбординг создаёт, а не правит. `withDevices` — #819. */
+  deleteSpace?(withDevices?: boolean): void | Promise<void>;
   copySpace?(): void;
 }
 
 const set = (port: SpaceFormPort, next: SpaceDialogState): void => { port.host._spaceDialog = next; };
+
+/**
+ * #819: «Удалить» ended blocked — the first time, again after the body was
+ * scrolled away, or after the server's `space_in_use`. The warning is the last
+ * thing in a long body, so bring it fully into view and put focus on it. One
+ * helper for both runtimes; the scroll is instant, so nothing animates.
+ */
+export async function revealSpaceDeleteBlocker(
+  host: Pick<HouseplanEditorHostPort, 'renderRoot' | 'updateComplete'>,
+): Promise<void> {
+  await host.updateComplete;
+  // Either runtime's form may be on screen; only one space dialog ever is.
+  const warning = (host.renderRoot as ParentNode).querySelector<HTMLElement>('[id$="-delete-blocked"]');
+  warning?.scrollIntoView({ block: 'nearest' });
+  warning?.focus({ preventScroll: true });
+}
 
 /**
  * Новые строки диалогов живут в ленивом словаре `i18n/settings` (приём
@@ -143,7 +159,15 @@ export function renderSpaceForm(port: SpaceFormPort): SpaceFormParts {
       ${renderRoomCards(port, d, id)}
       ${renderSunAndLight(port, d, id, problemFor)}
       ${d.deleteBlockers
-        ? callout({ kind: 'warning', role: 'alert', text: t('space.delete_blocked', { n: String(d.deleteBlockers) }) })
+        ? callout({
+          kind: 'warning', role: 'alert', id: id('delete-blocked'), focusable: true,
+          text: t('space.delete_blocked', { n: String(d.deleteBlockers) }),
+          // #819: the way out of the block, right where it is explained.
+          action: port.deleteSpace
+            ? html`<br><button class="btn danger" ?disabled=${d.busy} @click=${() => port.deleteSpace!(true)}>${
+              st('space.delete_with_devices')}</button>`
+            : nothing,
+        })
         : nothing}
     </div>`,
     footer: html`<div class="row dialog-action-footer hpf-footer hpf-footer-space" slot="footer">

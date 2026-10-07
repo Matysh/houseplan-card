@@ -202,7 +202,9 @@ import {
 import { resolveZeroWalls, zeroWallHasOpening, zeroWallStyleOf } from './zero-walls';
 import { snapNearAxisEndpoint } from './near-axis';
 import type { SpaceReferenceRepairContext } from './space-reference-repair';
-import { collectSpaceMarkerDependencies, spaceDeletionMessage } from './space-deletion';
+import { collectSpaceMarkerDependencies, hiddenDependencyCount, spaceDeletionMessage } from './space-deletion';
+import { settingsCopy } from './editors/settings-copy';
+import { revealSpaceDeleteBlocker } from './editors/space-form';
 import {
   checkSpacePhysicalGeometry, checkOptimizeGeometry, geometryOpenCuts, geometryOpenings,
   geometryPartitionOpeningCuts, spacePhysicalGeometryFingerprint,
@@ -8267,7 +8269,7 @@ public async _saveSpaceDialog(): Promise<void> {
     }
   }
 
-public async _deleteSpace(): Promise<void> {
+public async _deleteSpace(withDevices = false): Promise<void> {
     const d = this.host._spaceDialog;
     if (!d || d.mode !== 'edit') return;
     const serverCfg = this.host._serverCfg;
@@ -8278,18 +8280,27 @@ public async _deleteSpace(): Promise<void> {
     );
     const deletingLastSpace = serverCfg.spaces.length === 1
       && serverCfg.spaces[0]?.id === d.spaceId;
-    if (dependencies.count && !deletingLastSpace) {
+    // #819: «with devices» deletes exactly the blocking set the user confirms.
+    const removeMarkers = withDevices && dependencies.count > 0 && !deletingLastSpace;
+    if (dependencies.count && !deletingLastSpace && !removeMarkers) {
       this.host._spaceDialog = { ...d, deleteBlockers: dependencies.count };
+      void revealSpaceDeleteBlocker(this.host);
       return;
     }
     if (!sp) return;
     const spaceId = d.spaceId!;
+    const { st } = settingsCopy(this.host);
+    const hidden = hiddenDependencyCount(serverCfg, dependencies.markerIds);
+    const body = this.host._t('confirm.delete_space_body');
     const accepted = await this.host._confirmDanger({
       key: 'delete-space',
       kind: 'destructive',
       title: this.host._t('confirm.delete_space_title'),
-      message: spaceDeletionMessage(this.host._t('confirm.delete_space_body'),
-        this.host._t('confirm.delete_space_vac_routes'), dependencies.routeCount),
+      message: spaceDeletionMessage(removeMarkers
+        ? `${body} ${st('space.delete_devices_body', { n: dependencies.count })}${
+          hidden ? ` ${st('space.delete_devices_hidden', { k: hidden })}` : ''}`
+        : body,
+      this.host._t('confirm.delete_space_vac_routes'), dependencies.routeCount),
       objectName: sp.title,
       confirmLabel: this.host._t('btn.delete'),
       cancelLabel: this.host._t('btn.cancel'),
@@ -8305,10 +8316,13 @@ public async _deleteSpace(): Promise<void> {
     );
     const currentlyDeletingLastSpace = currentConfig.spaces.length === 1
       && currentConfig.spaces[0]?.id === spaceId;
-    if (currentDependencies.count && !currentlyDeletingLastSpace) {
+    // #819 AC4: the plan moved under the confirmation — nothing is deleted.
+    if (removeMarkers ? `${currentDependencies.markerIds}` !== `${dependencies.markerIds}`
+      : currentDependencies.count && !currentlyDeletingLastSpace) {
       this.host._spaceDialog = {
         ...currentDialog, deleteBlockers: currentDependencies.count,
       };
+      void revealSpaceDeleteBlocker(this.host);
       return;
     }
     this.host._spaceDialog = { ...currentDialog, deleteBlockers: 0, busy: true };
@@ -8321,6 +8335,8 @@ public async _deleteSpace(): Promise<void> {
         space_id: spaceId,
         expected_config_rev: this.host._cfgRev,
         expected_layout_rev: this.host._layoutRev,
+        // Only when asked: an older integration refuses an unknown key.
+        ...(removeMarkers ? { remove_markers: true } : {}),
       });
       const [configResponse, layoutResponse] = await Promise.all([
         this.host._getAuthoritativeConfig(),
@@ -8351,6 +8367,7 @@ public async _deleteSpace(): Promise<void> {
           busy: false,
           deleteBlockers: stillLastSpace ? 0 : refreshed.count,
         };
+        if (!stillLastSpace && refreshed.count) void revealSpaceDeleteBlocker(this.host);
       }
       this.host._showToast(this.host._t('toast.delete_failed', { err: this.host._errText(e) }));
     }

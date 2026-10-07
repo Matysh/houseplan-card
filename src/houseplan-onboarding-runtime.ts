@@ -29,7 +29,9 @@ import { zeroWallStyleOf } from './zero-walls';
 import type { HouseplanEditorHostPort } from './houseplan-editor-runtime';
 // #600: форма и границы шага сетки — из одного модуля с редактором; прежняя
 // локальная копия констант и `strictNumber` нарушала «одно число — один источник».
-import { CELL_CM_MAX, CELL_CM_MIN, renderSpaceForm } from './editors/space-form';
+import {
+  CELL_CM_MAX, CELL_CM_MIN, renderSpaceForm, revealSpaceDeleteBlocker,
+} from './editors/space-form';
 
 const BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
@@ -423,6 +425,7 @@ export class HouseplanOnboardingRuntime {
       && serverConfig.spaces[0]?.id === dialog.spaceId;
     if (dependencies.count && !deletingLastSpace) {
       this.host._spaceDialog = { ...dialog, deleteBlockers: dependencies.count };
+      void revealSpaceDeleteBlocker(this.host);
       return;
     }
     const spaceId = dialog.spaceId!;
@@ -450,6 +453,7 @@ export class HouseplanOnboardingRuntime {
       this.host._spaceDialog = {
         ...currentDialog, deleteBlockers: currentDependencies.count,
       };
+      void revealSpaceDeleteBlocker(this.host);
       return;
     }
     this.host._spaceDialog = { ...currentDialog, deleteBlockers: 0, busy: true };
@@ -503,6 +507,7 @@ export class HouseplanOnboardingRuntime {
           busy: false,
           deleteBlockers: stillLastSpace ? 0 : refreshed.count,
         };
+        if (!stillLastSpace && refreshed.count) void revealSpaceDeleteBlocker(this.host);
       }
       this.host._showToast(this.host._t('toast.delete_failed', {
         err: this.host._errText(error),

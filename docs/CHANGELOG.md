@@ -14,6 +14,16 @@
   Incoming-only devices can still show it; stale/error statuses and the overall
   snapshot status are unchanged ([#816](https://github.com/Matysh/houseplan-card/issues/816)).
 
+- Space settings: pressing **Delete** on a space that devices still use now
+  scrolls the dialog to the warning and moves focus to it, instead of leaving
+  it below the edge so the button seemed to do nothing. The warning has a new
+  **Delete space with devices** button: one confirmation names the space and
+  the number of devices, hidden ones counted separately, and the space and
+  its devices are then deleted in one write. The devices go exactly as with
+  **Delete** in their own dialog — position, attachments and robot trail are
+  removed and the bindings appear in **Devices → Available again**; Home
+  Assistant is not changed. If the plan changed after the confirmation,
+  nothing is deleted ([#819](https://github.com/Matysh/houseplan-card/issues/819)).
 - Kiosk: holding an empty spot of the plan with a mouse now opens **This
   screen's sizes** every time. After the first hold the next one used to zoom
   the plan instead of opening the dialog, and the plan stopped showing device
