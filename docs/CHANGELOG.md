@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.80.0-beta.8 — 2026-10-08
+
 - Deleting a space now actually removes the robot-map assignments pointing
   into it, as the confirmation already promised. The dock and other maps stay
   unchanged; a rejected deletion removes no assignments

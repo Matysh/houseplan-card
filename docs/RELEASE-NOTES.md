@@ -1,20 +1,18 @@
-<!-- release: v1.80.0-beta.7 -->
+<!-- release: v1.80.0-beta.8 -->
 
 ## Основное
 
-- Zigbee-связи: снимок карты считается устаревшим только через час, а линии и стрелки связей проходят поверх индикаторов заряда; в 2.5D устройство на другом конце связи больше не перечёркивается линией ([#808](https://github.com/Matysh/houseplan-card/issues/808), [#809](https://github.com/Matysh/houseplan-card/issues/809)).
-- Радар присутствия: в «Настроить на плане» снова виден контур выбранной комнаты, и отметки ложатся точно туда, куда нажали ([#774](https://github.com/Matysh/houseplan-card/issues/774)).
-- Киоск и карточка пространства: «Размеры на этом экране» открываются без загрузки редактора, а при правке плана с другого устройства двери и маркеры больше не меняют вид без причины ([#763](https://github.com/Matysh/houseplan-card/issues/763), [#764](https://github.com/Matysh/houseplan-card/issues/764)).
+- Редактор плана: перемещайте узлы стен в «Выбрать» с полупрозрачным предпросмотром, магнитами, отменой Esc и Undo/Redo. На больших планах повторное переключение этажей и изменение комнат используют уже подготовленную геометрию ([#803](https://github.com/Matysh/houseplan-card/issues/803), [#814](https://github.com/Matysh/houseplan-card/issues/814)).
+- При повторной установке можно восстановить прежние планы или начать заново, сохранив архив. Пространство можно удалить вместе с устройствами; связанные назначения карт робота тоже удаляются ([#820](https://github.com/Matysh/houseplan-card/issues/820), [#819](https://github.com/Matysh/houseplan-card/issues/819), [#822](https://github.com/Matysh/houseplan-card/issues/822)).
+- В подсказке батарейного устройства виден заряд; Incomplete data больше не показывается у Zigbee-координатора или устройства с известной исходящей связью ([#817](https://github.com/Matysh/houseplan-card/issues/817), [#816](https://github.com/Matysh/houseplan-card/issues/816)).
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Zigbee links: a map snapshot turns stale only after an hour, and link lines and arrows pass over battery indicators; in 2.5D the device at the other end of a link is no longer crossed by the line ([#808](https://github.com/Matysh/houseplan-card/issues/808), [#809](https://github.com/Matysh/houseplan-card/issues/809)).
-- Presence radar: **Configure on plan** shows the selected room's outline again, and every mark lands exactly where it is clicked ([#774](https://github.com/Matysh/houseplan-card/issues/774)).
-- Kiosk and space card: **This screen's sizes** opens without loading the editor, and editing the plan from another device no longer changes doors or markers that did not change ([#763](https://github.com/Matysh/houseplan-card/issues/763), [#764](https://github.com/Matysh/houseplan-card/issues/764)).
+- Plan editor: move wall nodes in Select with a translucent preview, snapping, Esc cancellation and Undo/Redo. Large plans reuse prepared geometry when revisiting floors and resizing rooms ([#803](https://github.com/Matysh/houseplan-card/issues/803), [#814](https://github.com/Matysh/houseplan-card/issues/814)).
+- Reinstallation offers restoring previous plans or starting fresh while keeping an archive. A space can be deleted together with its devices; associated robot-map assignments are removed too ([#820](https://github.com/Matysh/houseplan-card/issues/820), [#819](https://github.com/Matysh/houseplan-card/issues/819), [#822](https://github.com/Matysh/houseplan-card/issues/822)).
+- Battery-powered device tooltips show charge; Incomplete data is hidden for Zigbee coordinators and devices with a known outgoing link ([#817](https://github.com/Matysh/houseplan-card/issues/817), [#816](https://github.com/Matysh/houseplan-card/issues/816)).
 - Small fixes and improvements.
 
-Сообщество / Community: [Telegram](https://t.me/ha_houseplan)
-
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.80.0-beta.7/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.80.0-beta.7/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.80.0-beta.8/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.80.0-beta.8/docs/CHANGELOG.md)
