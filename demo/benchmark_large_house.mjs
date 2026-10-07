@@ -48,8 +48,11 @@ const requiresIsoStructuralBuildCounter = requiresIsometric
   && readFileSync(resolve(targetRoot, 'src/houseplan-card.ts'), 'utf8')
     .includes('private _isoStructuralBuildCount');
 // #769: a candidate must count its floor-cache builds; a base without them is not judged.
-const requiresFloorCacheBuildCounters = readFileSync(resolve(targetRoot, 'src/houseplan-card.ts'), 'utf8')
-  .includes('private _floorCacheBuilds');
+const cardSource = readFileSync(resolve(targetRoot, 'src/houseplan-card.ts'), 'utf8');
+const requiresFloorCacheBuildCounters = cardSource.includes('private _floorCacheBuilds');
+// #814: a target that pools its bodies and tunnels per floor has both judged at zero.
+const requiresFloorBodyPools = cardSource.includes('private _physicalBodiesPool')
+  && cardSource.includes('private _openingTunnelPool');
 const requiresPlanSnap = planSnap && existsSync(resolve(targetRoot, 'src/plan-snap-overlay.ts'));
 const requiresWallFace = planSnap && existsSync(resolve(targetRoot, 'src/wall-face-graph.ts'));
 const requiresInteraction = interaction && existsSync(resolve(targetRoot, 'src/live-viewport.ts'));
@@ -140,7 +143,7 @@ try {
       fixture, sample, cardContract, isometric, requiresIsometric, planSnap, requiresPlanSnap,
       requiresWallFace, interaction, requiresInteraction, stage3Dense, requireStage3,
       requiresIsoStructuralBuildCounter, requiresStairs, profile, backdrop,
-      requiresFloorCacheBuildCounters,
+      requiresFloorCacheBuildCounters, requiresFloorBodyPools,
     }) => {
       const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
       const until = async (predicate, timeout = 10000) => {
@@ -1270,10 +1273,29 @@ try {
       const switchCycleBuildsAfter = isoStructuralBuildCount(card);
       const switchCycleVerdict = guard.judge({
         before: switchCycleFloorBuildsBefore, after: guard.builds(card), switches: switchCycleSwitches,
-        isoBefore: switchCycleBuildsBefore, isoAfter: switchCycleBuildsAfter,
+        isoBefore: switchCycleBuildsBefore, isoAfter: switchCycleBuildsAfter, pooled: requiresFloorBodyPools,
       });
       if (!switchCycleVerdict.ok)
         throw new Error(`${profile} switchCycle built a floor inside the window: ${switchCycleVerdict.failures.join(', ')}`);
+      // #814: the cost of a warm lookup (key + hit) on the shown floor, untimed
+      // and outside every Long Task window: the opening wall index key reads
+      // rooms, walls and cuts afresh; the bodies key is the floor record key.
+      const keyCost = (() => {
+        const space = card._spaceModel?.();
+        const cuts = typeof card._openCuts === 'function' ? card._openCuts() : null;
+        const perCall = (read) => {
+          if (!space || typeof read !== 'function') return null;
+          read();
+          const started = performance.now();
+          for (let index = 0; index < 50; index++) read();
+          return Number(((performance.now() - started) / 50).toFixed(4));
+        };
+        return {
+          openingWallIndexMs: perCall(cuts && card._openingWallIndexFor
+            && (() => card._openingWallIndexFor(space, cuts))),
+          physicalBodiesMs: perCall(card._physicalBodiesR && (() => card._physicalBodiesR(space))),
+        };
+      })();
 
       // #743 structural probe, untimed and outside every Long Task window: six
       // warm switches round the floors (the cycle ended on the last floor, so
@@ -1341,8 +1363,10 @@ try {
         switchCycleMs: switchCycle.ms,
         switchCycleBuilds: {
           supported: switchCycleVerdict.supported,
+          pooled: requiresFloorBodyPools,
           families: switchCycleVerdict.builds,
           caches: { before: switchCycleCachesBefore, after: switchCycleCachesAfter },
+          keyCost,
         },
         longTasks: {
           load: loadLongTaskResult,
@@ -1393,7 +1417,7 @@ try {
       isometric, requiresIsometric, planSnap, requiresPlanSnap, requiresWallFace,
       interaction, requiresInteraction, stage3Dense, requireStage3,
       requiresIsoStructuralBuildCounter, requiresStairs, profile, backdrop,
-      requiresFloorCacheBuildCounters,
+      requiresFloorCacheBuildCounters, requiresFloorBodyPools,
     });
     // #520: диагностика печатается в лог прогона и в запись не попадает.
     const { bootDiag, ...measured } = row;

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
-  floorGeometryKeyReader, floorRecordKeyMemo, openingWallIndexKey, physicalBodiesKey,
+  floorGeometryKeyReader, floorPoolEntry, floorRecordKeyMemo, openingWallIndexKey, physicalBodiesKey,
   sunGeometryKey, WALL_UNION_POOL_LIMIT, wallUnionKey, wallUnionPoolEntry, writeWallUnionPool,
 } from '../test-build/floor-geometry-key.js';
 import { lightGeometryFingerprint } from '../test-build/glow-scene.js';
@@ -97,6 +97,49 @@ test('#769 AC8: one format of the union and bodies keys, the pool bound and its 
   writeWallUnionPool(pool, { key: 'k2', value: 'again' });
   assert.deepEqual([...pool.keys()].at(-1), 'k2', 'a rewrite is the most recent');
   assert.equal(pool.size, WALL_UNION_POOL_LIMIT);
+});
+
+// #814: the per-floor pools of physical bodies and opening tunnels.
+test('#814 AC2: a bounded pool per floor — a hit refreshes recency, an evicting miss builds', () => {
+  const builds = [];
+  const entry = (key) => () => { builds.push(key); return { key, value: `built ${key}` }; };
+  const pool = new Map();
+  let active = null;
+  const show = (key) => (active = floorPoolEntry(pool, active, key, entry(key)));
+  for (const key of ['f1', 'f2', 'f3']) show(key);
+  assert.deepEqual(builds, ['f1', 'f2', 'f3'], 'a cold floor is built once');
+  for (let index = 0; index < 12; index++) show(`f${(index % 3) + 1}`);
+  assert.deepEqual(builds, ['f1', 'f2', 'f3'], 'twelve warm switches build nothing');
+  for (let index = 4; index <= 9; index++) show(`f${index}`);
+  assert.equal(pool.size, WALL_UNION_POOL_LIMIT);
+  assert.deepEqual([...pool.keys()], ['f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9'],
+    'the least recent floor leaves the full pool first');
+  show('f2');
+  assert.deepEqual([...pool.keys()].at(-1), 'f2', 'a hit is the most recent');
+  const sized = pool.size;
+  show('f1');
+  assert.deepEqual(builds.slice(-1), ['f1'], 'a miss in the full pool builds, and the counter sees it');
+  assert.equal(pool.size, sized, '… while the size stays the same');
+  assert.equal(pool.has('f3'), false, 'f3, now the least recent, was evicted');
+});
+
+test('#814 AC2: the active entry answers first; re-keying it never renames a pooled record', () => {
+  const pool = new Map();
+  let builds = 0;
+  const build = (key) => () => { builds++; return { key, all: [[[0, 0]]] }; };
+  const stored = floorPoolEntry(pool, null, 'stored', build('stored'));
+  assert.notEqual(stored, pool.get('stored'), 'the caller holds a copy');
+  assert.equal(stored.all, pool.get('stored').all, '… of the same immutable value');
+  // Resize re-keys the current entry for its preview record (_rszAcceptPreview).
+  stored.key = 'preview';
+  assert.equal(floorPoolEntry(pool, stored, 'preview', build('preview')), stored, 'the preview is a hit');
+  assert.equal(builds, 1);
+  assert.deepEqual([...pool.keys()], ['stored'], 'a preview never enters the pool');
+  assert.equal(pool.get('stored').key, 'stored', 'the pooled record keeps its key');
+  const back = floorPoolEntry(pool, stored, 'stored', build('stored'));
+  assert.equal(builds, 1, 'the stored floor is still warm');
+  assert.equal(back.key, 'stored');
+  assert.equal(back.all, stored.all);
 });
 
 /** A one-slot memo by `key`, counting its builds: what the card does with a key. */

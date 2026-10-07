@@ -104,6 +104,27 @@ test('#769: the size snapshot reads the real size of the opening wall index', ()
   };
   assert.deepEqual(floorCacheSnapshot(card), {
     cleanFloor: 1, glowClip: 0, wallUnion: 1, wallUnionPool: 2, innerContour: 0,
-    openingTunnel: 0, openingWallIndex: 3, isoGeometry: 0, planSnapGeometry: 0, wallFaceGraph: 0,
+    openingTunnel: 0, openingTunnelPool: 0, physicalBodiesPool: 0,
+    openingWallIndex: 3, isoGeometry: 0, planSnapGeometry: 0, wallFaceGraph: 0,
   });
+  assert.equal(floorCacheSnapshot({
+    ...card, _openingTunnelPool: new Map([[1, 1]]), _physicalBodiesPool: new Map([[1, 1], [2, 2]]),
+  }).physicalBodiesPool, 2, '#814: the per-floor pools are reported by their size');
+});
+
+test('#814 AC2: a card that pools bodies and tunnels has both judged at zero', () => {
+  const before = counters();
+  const twelve = counters({ physicalBodies: 5 + 12, openingTunnel: 5 + 12 });
+  assert.equal(judgeSwitchCycle({ before, after: twelve, switches: 12 }).ok, true,
+    'a base before #814: single-slot, reported');
+  const verdict = judgeSwitchCycle({ before, after: twelve, switches: 12, pooled: true });
+  assert.equal(verdict.ok, false, 'the old single-slot storage fails a pooled card by its counters');
+  assert.deepEqual(verdict.failures, ['physical bodies +12', 'opening tunnel +12']);
+  assert.deepEqual(judgeSwitchCycle({ before, after: counters({ openingTunnel: 6 }), switches: 12, pooled: true })
+    .failures, ['opening tunnel +1'], 'one evicting miss is enough');
+  const warm = judgeSwitchCycle({ before, after: counters(), switches: 12, pooled: true });
+  assert.equal(warm.ok, true);
+  assert.equal(warm.builds.physicalBodies, 0);
+  assert.deepEqual(judgeSwitchCycle({ before, after: counters({ lightPhysicalBodies: 3 + 12 }), switches: 12,
+    pooled: true }).failures, [], 'light physical bodies stay reported');
 });

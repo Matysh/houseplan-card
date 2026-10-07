@@ -12,6 +12,10 @@
  * build inside the window fails. Reported families are single-slot by design
  * and rebuild on a floor switch: at most one build per switch. A comparison
  * bundle without the counters reads `null` and is not judged.
+ *
+ * #814: a card that pools its physical bodies and opening tunnels per floor
+ * (`pooled`, read by the runner from the target source) has those two families
+ * judged too; a base before #814 keeps them reported.
  */
 
 /** Cache sizes the guard used to compare, now a diagnostic of the report. */
@@ -25,6 +29,9 @@ export function floorCacheSnapshot(card) {
     wallUnionPool: card._wallUnionPool?.size ?? 0,
     innerContour: card._innerContourCache?.size ?? 0,
     openingTunnel: card._openingTunnelCache ? 1 : 0,
+    // #814: the per-floor pools (≤ 8); 0 for a base without them.
+    openingTunnelPool: card._openingTunnelPool?.size ?? 0,
+    physicalBodiesPool: card._physicalBodiesPool?.size ?? 0,
     // #769: the index is a Map; a truthiness check read 1 forever.
     openingWallIndex: card._openingWallIndexCache?.size ?? 0,
     isoGeometry: card._isoGeometryCache?.size ?? 0,
@@ -42,11 +49,12 @@ export function floorCacheBuilds(card) {
 /**
  * The decision. `before`/`after` are `floorCacheBuilds` around the window,
  * `switches` the number of floor switches in it, `isoBefore`/`isoAfter` the
- * 2.5D `_isoStructuralBuildCount` (`null` when the bundle has none).
+ * 2.5D `_isoStructuralBuildCount` (`null` when the bundle has none), `pooled`
+ * whether the card pools its bodies and tunnels (#814).
  * Returns `{ ok, supported, builds, failures }`; each failure names the family
  * and its growth.
  */
-export function judgeSwitchCycle({ before, after, switches, isoBefore = null, isoAfter = null }) {
+export function judgeSwitchCycle({ before, after, switches, isoBefore = null, isoAfter = null, pooled = false }) {
   const judged = {
     wallUnion: 'wall union',
     innerContour: 'inner contour',
@@ -55,11 +63,9 @@ export function judgeSwitchCycle({ before, after, switches, isoBefore = null, is
     lightBarrier: 'light barrier',
     glowClip: 'glow clip',
   };
-  const reported = {
-    physicalBodies: 'physical bodies',
-    openingTunnel: 'opening tunnel',
-    lightPhysicalBodies: 'light physical bodies',
-  };
+  const perFloor = { physicalBodies: 'physical bodies', openingTunnel: 'opening tunnel' };
+  if (pooled) Object.assign(judged, perFloor);
+  const reported = { ...(pooled ? {} : perFloor), lightPhysicalBodies: 'light physical bodies' };
   const failures = [];
   const supported = !!before && !!after && typeof before === 'object' && typeof after === 'object';
   let builds = null;

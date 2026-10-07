@@ -25,7 +25,11 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
     '_dtMeasure',
     '_dtMove',
     '_dtStart',
+    // #814: the key cost of a warm lookup (`switchCycleBuilds.keyCost`).
+    '_openCuts',
+    '_openingWallIndexFor',
     '_openSettingsDialog',
+    '_physicalBodiesR',
     '_pickSpace',
     '_pos',
     '_renderBody',
@@ -34,6 +38,7 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
     '_rszMove',
     '_rszRooms',
     '_setMode',
+    '_spaceModel',
     '_viewOr',
   ]),
   fields: Object.freeze([
@@ -73,6 +78,8 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
     '_wallUnionPool', '_innerContourCache',
     // #769: the #735 guard judges these build counters; a base without them reads null.
     '_floorCacheBuilds',
+    // #814: the per-floor pools of bodies and tunnels; a base without them reads 0.
+    '_physicalBodiesPool', '_openingTunnelPool',
   ]),
   // #649: members that only comparison bundles own. The benchmark feature-probes
   // them (`typeof card._setProjection === 'function'`); the current card no
@@ -133,6 +140,8 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
     _wallFaceGraphCache: 'array',
     _wallUnionPool: 'map',
     _floorCacheBuilds: 'object',
+    _physicalBodiesPool: 'map',
+    _openingTunnelPool: 'map',
   }),
 });
 

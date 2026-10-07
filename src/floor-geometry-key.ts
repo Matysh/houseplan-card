@@ -25,7 +25,7 @@
  * in-place edit without a new epoch shows on the next epoch, as it always did
  * for these caches.
  */
-import { lruWrite } from './card-runtime';
+import { lruRead, lruWrite } from './card-runtime';
 import { lightGeometryFingerprint } from './glow-scene';
 import { roomPoly } from './logic';
 import { contentFingerprint } from './visual-continuity';
@@ -132,6 +132,27 @@ export function writeWallUnionPool<T>(
 ): WallUnionPoolEntry<T> {
   lruWrite(pool, entry.key, entry, WALL_UNION_POOL_LIMIT);
   return entry;
+}
+
+/**
+ * #814: the entry of `key` in a per-floor pool of the card (physical bodies,
+ * opening tunnels), bounded like the union pool. `active` is the card's current
+ * entry (`_physicalBodiesCache`, `_openingTunnelCache`); its own key answers
+ * first, so the Resize preview that re-keys it in place stays a hit without
+ * entering the pool. Otherwise a pooled entry, or `build()` written as the most
+ * recent — a full pool evicts the least recent floor. Any read of a pooled key
+ * refreshes its recency. The caller gets a copy: re-keying it never renames a
+ * pooled record.
+ */
+export function floorPoolEntry<T extends { key: string }>(
+  pool: Map<string, T>, active: T | null, key: string, build: () => T,
+): T {
+  const pooled = lruRead(pool, key);
+  if (active?.key === key) return active;
+  if (pooled.hit) return { ...pooled.value };
+  const entry = build();
+  lruWrite(pool, key, entry, WALL_UNION_POOL_LIMIT);
+  return { ...entry };
 }
 
 /**

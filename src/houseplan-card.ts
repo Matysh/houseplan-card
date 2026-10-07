@@ -275,7 +275,7 @@ import type { DecorShape, DecorStyle } from './editors/decor/types';
 import { StairViewRuntime, type StairViewHostPort } from './stairs-view';
 import { cleanFloorForRoom, type CleanFloorResult } from './clean-floor';
 import {
-  floorGeometryKeyReader, openingWallIndexKey, physicalBodiesKey, sunGeometryKey, wallUnionKey,
+  floorGeometryKeyReader, floorPoolEntry, openingWallIndexKey, physicalBodiesKey, sunGeometryKey, wallUnionKey,
   wallUnionPoolEntry, writeWallUnionPool, type FloorKeySource, type SunWindow,
 } from './floor-geometry-key';
 import {
@@ -1802,6 +1802,8 @@ export class HouseplanCard extends LitElement {
     key: string;
     value: Array<OpeningTunnelGeometry | null>;
   } | null = null;
+  /** #814: recently shown floors' tunnels and bodies stay warm (≤ 8, floor-geometry-key.ts). */
+  private _openingTunnelPool = new Map<string, NonNullable<HouseplanCard['_openingTunnelCache']>>();
   /** A few consumers use intentionally different open-cut projections in one
    * frame. Keep a tiny keyed pool so hit-testing cannot evict placement data
    * (and vice versa) on every pointer move. */
@@ -1816,10 +1818,17 @@ export class HouseplanCard extends LitElement {
   private _hiddenWallDiagnosticCache: {
     key: string; value: HiddenWallDiagnosticGeometry;
   } | null = null;
-  private _physicalBodiesCache: {
+  private _physicalBodiesEntry: {
     key: string; partitions: number[][][];
     columns: number[][][]; patches: number[][][]; all: number[][][];
   } | null = null;
+  private _physicalBodiesPool = new Map<string, NonNullable<HouseplanCard['_physicalBodiesEntry']>>();
+  /** The editor's current bodies (re-keyed by Resize); clearing it clears the pool. */
+  private get _physicalBodiesCache() { return this._physicalBodiesEntry; }
+  private set _physicalBodiesCache(value) {
+    this._physicalBodiesEntry = value;
+    if (!value) this._physicalBodiesPool.clear();
+  }
   /** Light cuts are type/floor-specific and differ from drawn masonry, but HA
    * state ticks must not rebuild independent-wall topology. */
   private _lightPhysicalBodiesCache: { key: string; all: number[][][] } | null = null;
@@ -9038,16 +9047,14 @@ export class HouseplanCard extends LitElement {
       .map((opening) => `${opening.x},${opening.y},${opening.angle},${opening.length}`).join(';');
     const wallIndex = this._openingWallIndexFor(space, openCuts);
     const cacheKey = `${wallIndex.key}|${geometryFingerprint}`;
-    if (!this._openingTunnelCache || this._openingTunnelCache.key !== cacheKey) {
-      this._floorCacheBuilds.openingTunnel++;
-      this._openingTunnelCache = {
-        key: cacheKey,
-        value: openingTunnelGeometriesFromIndex(wallIndex.value, geometryInputs),
-      };
-    }
+    const tunnels = this._openingTunnelCache = floorPoolEntry(this._openingTunnelPool, this._openingTunnelCache,
+      cacheKey, () => {
+        this._floorCacheBuilds.openingTunnel++;
+        return { key: cacheKey, value: openingTunnelGeometriesFromIndex(wallIndex.value, geometryInputs) };
+      });
     return renderOpeningTunnelFills({
       openings: this._openingsR,
-      geometries: this._openingTunnelCache.value,
+      geometries: tunnels.value,
       fillsByRoomId: roomFills.byId,
       idPrefix: `${space.id}-${layer}`,
       groupClass: layer === 'data' ? 'opening-tunnels' : 'opening-tunnels glow-base-tunnels',
@@ -9520,14 +9527,13 @@ export class HouseplanCard extends LitElement {
   private _physicalBodiesR(space: SpaceModel | undefined = this._spaceModel()): number[][][] {
     if (!space) return [];
     const key = physicalBodiesKey(this._floorKey(space.id), this._cellCm, this._gridPitch);
-    if (this._physicalBodiesCache?.key === key) return this._physicalBodiesCache.all;
-    this._floorCacheBuilds.physicalBodies++;
-    const frame = physicalBodyParts(
-      space, this._cellCm, this._gridPitch, this._gridPitch * 0.0002,
-      this._partitionOpeningCuts(space),
-    );
-    this._physicalBodiesCache = { key, ...frame };
-    return frame.all;
+    return (this._physicalBodiesCache = floorPoolEntry(this._physicalBodiesPool, this._physicalBodiesCache, key, () => {
+      this._floorCacheBuilds.physicalBodies++;
+      return { key, ...physicalBodyParts(
+        space, this._cellCm, this._gridPitch, this._gridPitch * 0.0002,
+        this._partitionOpeningCuts(space),
+      ) };
+    })).all;
   }
 
   /** Per-record bodies remain the editor/furniture identity surface. */
