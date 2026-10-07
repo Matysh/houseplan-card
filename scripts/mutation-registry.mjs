@@ -231,6 +231,15 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'node-host-ledger-rejects-raw-legacy-catalogue',
+    guard: 'node scripts/backend-test-guard.mjs legacy_room_input tests_backend/test_wall_node_move.py',
+    because: '#803 AC11: the independent ledger must read-normalise legacy room-wall identities without writing the source',
+    patches: [{ file: 'custom_components/houseplan/wall_node_move.py',
+      find: '    current, _ = commit_wall_segment_model(current)',
+      replace: '    current = copy.deepcopy(current)  # mutant: skip legacy read normalization',
+    }],
+  },
+  {
     id: 'node-carrier-blocks-infinite-foreign-line',
     guard: 'node --test --test-name-pattern="carrier ignores foreign" test/wall-node-move.test.mjs',
     because: '#803 M4: a foreign node beyond the finite carrier cannot block a legal short slide',

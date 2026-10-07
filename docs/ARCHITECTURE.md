@@ -19,6 +19,8 @@ the authoritative config, model cache or recovery snapshot. The backend mirror
 Undo; a separate original-interval/midpoint ledger proves the only allowed
 host-ID changes before strict partition-jamb validation, without copying
 authority from the candidate. `config/set` keeps its existing host protection.
+The ledger read-normalises a copy of the durable legacy input before deriving
+structural identities, just as the first proof does; it never migrates on hover.
 Details: CANVAS.md, UX-MODES.md, WALL-THICKNESS.md and CONFIG-COMPATIBILITY.md.
 Every live paint rechecks its frozen context before constructing SVG groups;
 mode/floor/revision adoption retires capture and masks before the settled render.

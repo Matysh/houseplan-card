@@ -35,6 +35,10 @@ current canonical document, including every foreign/unknown field. Ordinary
 `config/set` still cannot rehost a partition opening. No receipt, node graph or
 new model version is persisted. Hover/preview/cancel of legacy plans are read-only;
 only an accepted operation crosses the existing materialization barrier.
+The independent host-ID ledger also read-normalises a copy of the original
+durable record before deriving wall identities. It does not mistake an absent
+legacy wall catalogue for a missing node, or trust the candidate's host IDs:
+only original transverse-X interval/midpoint lineage permits a changed ID.
 
 The Voluptuous schema in `custom_components/houseplan/validation.py` is the only
 owner of the persisted config/layout shape. `scripts/dump-config-schema.py`

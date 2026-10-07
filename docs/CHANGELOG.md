@@ -68,6 +68,7 @@
   no longer depend on endpoint ordering. A second server check independently
   rejects unrelated opening-host changes.
   Exact intersections of an original axis and H/V remain exact after snapping.
+  The independent host check also accepts old plans without a saved wall catalogue.
 
 ## v1.80.0-beta.7 — 2026-10-07
 

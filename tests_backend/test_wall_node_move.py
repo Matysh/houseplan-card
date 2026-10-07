@@ -185,3 +185,16 @@ def test_independent_host_ledger_accepts_only_original_interval_child_and_invers
     tampered["spaces"][0]["openings"][0]["host"]["id"] = "h"
     with pytest.raises(NodeMoveError):
         node_move_host_baseline(after, tampered, "f", operation, "undo", before["spaces"][0])
+
+
+def test_independent_host_ledger_accepts_legacy_room_input_without_mutating_it():
+    legacy = {"spaces": [{"id": "f", "title": "Floor", "view_box": [0, 0, 1, 1],
+        "rooms": [{"id": "room", "name": "Room", "poly": [[0, 0], [1, 0], [1, 1], [0, 1]]}],
+        "future": {"exact": "legacy"}}], "markers": [], "settings": {}}
+    frozen = copy.deepcopy(legacy)
+    operation = {"point": [0, 0], "target": [-.25, 0], "axis": None, "split_ids": {}}
+    candidate = node_move_candidate(legacy, "f", operation)
+    baseline = node_move_host_baseline(legacy, candidate, "f", operation)
+    assert legacy == frozen
+    assert baseline == commit_wall_segment_model(legacy)[0]
+    assert candidate["spaces"][0]["future"] == legacy["spaces"][0]["future"]

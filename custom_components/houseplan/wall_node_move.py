@@ -326,6 +326,10 @@ def node_move_host_baseline(current: dict[str, Any], candidate: dict[str, Any], 
     first proof establishes before_space; this ledger checks the inverse IDs.
     Returning an identity-adjusted baseline leaves strict jamb validation intact.
     """
+    # The durable legacy record may not yet contain a structural catalogue.
+    # Normalize a COPY with the same read-compatible identity model as the first
+    # proof; raw legacy absence is not evidence of a missing node or new host.
+    current, _ = commit_wall_segment_model(current)
     old_spaces = {s["id"]: s for s in current.get("spaces", [])}
     new_spaces = {s["id"]: s for s in candidate.get("spaces", [])}
     if old_spaces.keys() != new_spaces.keys() or direction not in {"apply", "undo"}:
