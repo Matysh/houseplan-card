@@ -225,7 +225,7 @@
 | #663 | [CODE-REVIEW-663-r3.md](CODE-REVIEW-663-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
 | #662 | [SPEC-REVIEW-662-r1.md](SPEC-REVIEW-662-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | «Входящие» не существует в UI, и текущая классификация каталога кладёт неразмещённую ле…; «Не скоуп» отсутствует внутри формального ## ТЗ | `src/device-inbox.ts` `USER-GUIDE.ru.md` `docs/USER-GUIDE.ru.md` `demo/smoke_led_strip_bind.mjs` `device-inbox.ts` `SPEC-REVIEW-661-r1.md` |
 | #662 | [SPEC-REVIEW-662-r2.md](SPEC-REVIEW-662-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
-| #662 | [SPEC-REVIEW-662-r3.md](SPEC-REVIEW-662-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 2 | — | — |
+| #662 | [SPEC-REVIEW-662-r3.md](SPEC-REVIEW-662-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 2 | радиус по умолчанию: ТЗ дизайнера противоречит решению 12, расхождение не названо; AC14 и раздел «Скоуп» называют документы, удалённые #679 | `TZ-issue-662-LED-strips.md` `docs/design/662-led-strips/TZ-issue-662-LED-strips.md` `docs/design/662-led-strips/README.md` `docs/TESTING-DEMO.md` `docs/reviews/CODE-REVIEW-679-r1.md` `LIGHT.md` `DEVICE-LIGHT-SETTINGS-MATRIX.ru.md` `TESTING-DEMO.md` |
 | #662 | [SPEC-REVIEW-662-r4.md](SPEC-REVIEW-662-r4.md) | spec · r4 | 🟢 зелёный | 0 | 0 | — | — |
 | #661 | [SPEC-REVIEW-661-r1.md](SPEC-REVIEW-661-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #661 | [CODE-REVIEW-661-r1.md](CODE-REVIEW-661-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
@@ -237,7 +237,7 @@
 | #659 | [CODE-REVIEW-659-r2.md](CODE-REVIEW-659-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #658 | [CODE-REVIEW-658-r1.md](CODE-REVIEW-658-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #657 | [CODE-REVIEW-657-r1.md](CODE-REVIEW-657-r1.md) | code · r1 | 🔴 красный | 1 | 0 | после fast-forward слияния (dev не двигался за время ревью) docs/reviews/INDEX.md остаё… | `docs/reviews/INDEX.md` `test/reviews-index.test.mjs` `_process.yml` `merge-candidate.mjs` `test/merge-candidate.test.mjs` `scripts/reviews-index.mjs` |
-| #657 | [CODE-REVIEW-657-r2.md](CODE-REVIEW-657-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | из r1 — проверка закрытия | `scripts/merge-candidate.mjs` `PROCESS.md` `mutation-registry.mjs` `INDEX.md` |
+| #657 | [CODE-REVIEW-657-r2.md](CODE-REVIEW-657-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #656 | [CODE-REVIEW-656-r1.md](CODE-REVIEW-656-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #655 | [SPEC-REVIEW-655-r1.md](SPEC-REVIEW-655-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #655 | [CODE-REVIEW-655-r1.md](CODE-REVIEW-655-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | защитный flush_lock в VirtualLightController не имеет собственного доказательства (в ск… | `custom_components/houseplan/virtual_lights.py` `store.py` `__init__.py` |
@@ -268,8 +268,8 @@
 | #643 | [CODE-REVIEW-643-r1.md](CODE-REVIEW-643-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #642 | [SPEC-REVIEW-642-r1.md](SPEC-REVIEW-642-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #642 | [CODE-REVIEW-642-r1.md](CODE-REVIEW-642-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
-| #642 | [CODE-REVIEW-642-r2.md](CODE-REVIEW-642-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | Идентичность дерева коду, который уже разобрал r1; Что именно принёс второй ребейз (до 7bb55c2a) — не заявление, а diff; Полный построчный разбор диффа origin/dev...HEAD (72 файла); Гейты — что унаследовано, что перепрогнано лично на этом SHA | — |
-| #642 | [CODE-REVIEW-642-r3.md](CODE-REVIEW-642-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | Идентичность дерева коду, который разобрали r1 и r2; Что именно принёс третий ребейз — не заявление, а diff; Гейты — что унаследовано из Validate CI на этом точном SHA, что перепрогнано лично | — |
+| #642 | [CODE-REVIEW-642-r2.md](CODE-REVIEW-642-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | Что именно принёс второй ребейз (до 7bb55c2a) — не заявление, а diff; Полный построчный разбор диффа origin/dev...HEAD (72 файла) | — |
+| #642 | [CODE-REVIEW-642-r3.md](CODE-REVIEW-642-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | Что именно принёс третий ребейз — не заявление, а diff | — |
 | #641 | [CODE-REVIEW-641-r1.md](CODE-REVIEW-641-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | нет исполняемого автотеста на ключевой guard в accept.mjs | `accept.mjs` `demo/golden/accept.mjs` `test/golden-wsl-artifact.test.mjs` `wsl-attestation.json` `test/golden-capture-provenance.test.mjs` `scripts/mutation-registry.mjs` `scripts/golden-wsl-artifact.mjs` |
 | #641 | [CODE-REVIEW-641-r2.md](CODE-REVIEW-641-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #640 | [SPEC-REVIEW-640-r1.md](SPEC-REVIEW-640-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | AC3 называет browser-smoke «unit»-тестом | `demo/smoke_furniture_lazy_art.mjs` |
