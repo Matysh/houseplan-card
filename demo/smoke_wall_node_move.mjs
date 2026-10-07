@@ -110,6 +110,18 @@ console.log('node raster probes', JSON.stringify({ points, pixels }));
 check('raster: original affected wall is absent in preview', delta(pixels[0][0], pixels[1][0]) > 8 && delta(pixels[1][0], pixels[2][0]) < 5);
 check('raster: new physical wall is translucent, not an opaque copy', pixels[1][1].reduce((a, b) => a + b) > pixels[2][1].reduce((a, b) => a + b) + 8);
 check('raster: unaffected floor pixels stay unchanged', delta(pixels[0][2], pixels[1][2]) < 2 && delta(pixels[1][2], pixels[2][2]) < 2);
+const beforeIdleEsc = structuredClone(server), beforeIdleRevision = revision;
+await page.keyboard.press('Escape'); await page.evaluate(() => window.__hpTest.settled());
+check('Esc after accepted commit leaves geometry, revision and history intact',
+  [server, revision, writes.length, (await inspect()).size], [beforeIdleEsc, beforeIdleRevision, 1, 1]);
+await page.waitForFunction(() => !window.__card._modeTransitionBusy);
+// Real keyboard activation has no new pointerdown. A retired node click-tail
+// must not swallow this unrelated header button (nor the next toolbar action).
+await page.locator('houseplan-card').locator('[data-hp="mode-tab"][data-mode="plan"]').focus();
+await page.keyboard.press('Enter');
+await page.waitForFunction(() => window.__card._mode === 'plan');
+await page.evaluate(() => window.__hpTest.setTool('select'));
+await page.waitForFunction(() => !window.__card._modeTransitionBusy && window.__card.renderRoot.querySelector('.hp-node-handle'));
 await page.keyboard.press('Control+z');
 await page.waitForFunction(() => !window.__card._editorRuntime.nodeMove.busy && window.__card._geometryHistory.size === 0);
 check('Undo restores exact starting catalogue/openings', server, initial);

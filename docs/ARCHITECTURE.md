@@ -38,6 +38,8 @@ repeated clipping sweeps; touching bounds still invoke the original boolean
 library. These are exact broad-phase exclusions, not relaxed wall limits.
 Snap arbitration keeps its winning axis guide but preserves an exact compatible
 non-parallel H/V point instead of moving it with longitudinal quantisation.
+Retired click-tail suppression checks stage ancestry and permits keyboard
+clicks (`detail=0`); it cannot immobilise header/toolbar controls after a drag.
 
 ## Styles (#266)
 

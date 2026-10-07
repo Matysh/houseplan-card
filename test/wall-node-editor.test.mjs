@@ -30,7 +30,7 @@ function setup() {
     }, record: (...args) => recorded.push(args), historyFailed: () => {} };
   const editor = new WallNodeEditor(port);
   const ev = (type, x = 0, y = 0, patch = {}) => ({ type, pointerId: 1, pointerType: 'mouse',
-    isPrimary: true, button: 0, clientX: x, clientY: y, composedPath: () => [stage],
+    isPrimary: true, button: 0, detail: 1, clientX: x, clientY: y, composedPath: () => [stage],
     preventDefault() {}, stopImmediatePropagation() {}, ...patch });
   return { cfg, context, capture, editor, ev, writes, recorded, toasts, window, listeners, changes,
     holdPaint: () => { paint = new Promise(resolve => { paintResolve = resolve; }); },
@@ -78,6 +78,20 @@ test('last invalid candidate cannot commit the previous valid preview', async ()
   s.editor.guardEvent(s.ev('pointerup')); await settle();
   assert.equal(s.writes.length, 0); assert.equal(s.recorded.length, 0);
   assert.equal(s.editor.dragging, false); s.editor.dispose();
+});
+
+test('retired node tail blocks only compatible stage clicks, not keyboard or toolbar activation', async () => {
+  for (const commit of [false, true]) {
+    const s = setup(); s.editor.guardEvent(s.ev('pointerdown'));
+    s.editor.guardEvent(s.ev('pointermove', .25, .3));
+    if (commit) { s.editor.guardEvent(s.ev('pointerup')); await settle(); } else s.editor.cancel();
+    assert.equal(s.editor.guardEvent(s.ev('click', 0, 0, { detail: 0 })), false, 'keyboard click inside stage');
+    assert.equal(s.editor.guardEvent(s.ev('click', 0, 0, { composedPath: () => [{ toolbar: true }] })), false,
+      'unrelated toolbar click outside stage');
+    assert.equal(s.editor.guardEvent(s.ev('click')), true, 'late compatible click still suppressed');
+    assert.equal(s.writes.length, Number(commit)); assert.equal(s.recorded.length, Number(commit));
+    s.editor.dispose();
+  }
 });
 test('external revision while final paint awaits wins, without restoring frozen config', async () => {
   const s = setup(); s.holdPaint(); s.editor.guardEvent(s.ev('pointerdown'));

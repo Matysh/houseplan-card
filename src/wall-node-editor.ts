@@ -75,7 +75,8 @@ export class WallNodeEditor {
   /** Invoked by the existing capture-phase input owner, ahead of wall bodies. */
   guardEvent(event: Event): boolean {
     if (event.type === 'click' || event.type === 'contextmenu') {
-      if (!this.tail) return false;
+      if (!this.tail || !event.composedPath().includes(this.port.stage()!)) return false;
+      if (event.type === 'click' && (event as MouseEvent).detail === 0) return false;
       event.preventDefault(); event.stopImmediatePropagation(); return true;
     }
     const ev = event as PointerEvent;

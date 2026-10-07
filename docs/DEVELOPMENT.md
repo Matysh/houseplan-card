@@ -54,6 +54,10 @@ exact source immutability. Register these guards and use `mutation-gate --check`
 do not execute mutants during development.
 Before pushing Python edits, also run the CI ruff subset: paired collections
 use explicit `zip(..., strict=True)` so an incomplete proof cannot be truncated.
+The mouse smoke also exits after a saved node, re-enters Plan with a real Enter
+activation (no intervening pointerdown), and still performs exact Undo/Redo.
+The pure tail witness distinguishes keyboard and outside-stage controls from
+the cancelled gesture's late pointer-compatible stage click.
 The Select-only module is a second-level lazy import, with an additional
 14 KiB gzip guard (`node scripts/node-editor-bundle-budget.mjs`); it does not
 change any existing graph ceiling or load in cold View/other tools. The

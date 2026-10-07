@@ -178,6 +178,9 @@ tabs, the editor-close reserve, zoom and one gear whose menu holds the rest.
   normal. Esc before release cancels the whole gesture, including late move/up
   events. Valid release is one atomic save and one Undo step; Undo/Redo restores
   exact IDs, geometry and opening hosts. Esc after a completed save is not Undo.
+  Suppression of the gesture's trailing click is limited to pointer-compatible
+  clicks on the stage; unrelated header/toolbar and keyboard activations remain
+  usable without requiring another mouse press first.
 - A T slides on its original passing wall. An X freezes one original carrier
   and bends its transverse wall at the new node without moving the far ends.
   Doors/windows keep their physical distance from the fixed end; an unsafe
