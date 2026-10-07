@@ -15066,6 +15066,49 @@ const MUTANT_DEFINITIONS = [
       replace: '    preserve_summary_panel_namespace(candidate, previous)',
     }],
   },
+  {
+    id: 'editor-styles-adoption-dropped-from-runtime',
+    guard: 'node demo/smoke_editor_styles_lazy.mjs',
+    because: '#805 AC3: the editor sheets are adopted in the runtime constructor, before install, '
+      + 'so the first frame of every editor surface is styled; without that call the cold View is '
+      + 'unchanged and only the computed style of editor surfaces in Chromium shows the loss',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '    if (!adoptEditorStyles(host)) void host.updateComplete.then(() => adoptEditorStyles(host));\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'editor-styles-adopted-once-per-page',
+    guard: 'node demo/smoke_editor_styles_lazy.mjs',
+    because: '#805 AC5: adoption is accounted per shadow root; a page-wide "already adopted" flag '
+      + 'leaves the second card and the warm-remounted card without editor styles — a lifecycle '
+      + 'of real custom elements and their roots',
+    patches: [{
+      file: 'src/editor-style-adoption.ts',
+      find: '  if (adoptedRoots.has(root)) return true;',
+      replace: '  if (adoptedRoots.has(documentSheets)) return true;',
+    }, {
+      file: 'src/editor-style-adoption.ts',
+      find: '  adoptedRoots.add(root);',
+      replace: '  adoptedRoots.add(documentSheets);',
+    }],
+  },
+  {
+    id: 'editor-styles-btn-moved-lazy',
+    guard: 'node --test test/editor-dialog-styles.test.mjs',
+    because: '#805 AC6: .btn styles View controls (header, kiosk, View dialogs); moving it into the '
+      + 'lazy editor sheet leaves the cold View unstyled, and the ownership test names it',
+    patches: [{
+      file: 'src/styles/dialogs.styles.ts',
+      find: '    .btn {\n      display: inline-flex;\n      align-items: center;\n      gap: var(--sp-3);\n      border: 1px solid var(--hp-line);',
+      replace: '    .btn-moved {\n      display: inline-flex;\n      align-items: center;\n      gap: var(--sp-3);\n      border: 1px solid var(--hp-line);',
+    }, {
+      file: 'src/styles/editor-dialogs.styles.ts',
+      find: 'export const editorDialogsStyles = css`\n',
+      replace: 'export const editorDialogsStyles = css`\n    .btn {\n      display: inline-flex;\n      align-items: center;\n    }\n',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

@@ -33,11 +33,11 @@ that transition events alone prove disposal.
 | --- | ---: | --- |
 | Performance threshold | 4 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 3 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
-| Paint, cascade and layer composition | 44 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
+| Paint, cascade and layer composition | 45 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 50 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 39 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 111 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **251 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 112 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **253 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -107,6 +107,11 @@ routes in both themes and at minimum/default/maximum plan zoom. Unknown-LQI
 outlines must scale with the plan, including live CSS projection; known-LQI
 parent routes must retain the same line/arrow color as local routes.
 
+`editor-styles-adoption-dropped-from-runtime` (#805) observes, from a MutationObserver
+on the card's shadow root, the computed style of each editor surface's control element
+in the very first frame it exists; without the adoption in the runtime constructor the
+cold View is unchanged and no source-level check sees the unstyled editor.
+
 - `daycycle-outline-not-promoted`
 - `daycycle-outline-promoted-on-inner-paper`
 - `daycycle-static-outline-promoted-on-inner-paper`
@@ -114,6 +119,7 @@ parent routes must retain the same line/arrow color as local routes.
 - `device-keyboard-bypasses-click-path`
 - `device-long-value-ellipsis-restored`
 - `device-unavailable-hover-restored`
+- `editor-styles-adoption-dropped-from-runtime`
 - `glow-entry-initial-opacity-skipped`
 - `golden-filled-tunnel-removed`
 - `golden-lamp-out-of-reach`
@@ -265,6 +271,11 @@ host renders mid-drag (a Home Assistant state change): the bodies re-keyed on ev
 accepted frame and the union drawn for the preview record are compared with a fresh card
 built from that record.
 
+`editor-styles-adopted-once-per-page` (#805) needs two real `houseplan-card` elements
+and a warm remount on one page: per-root accounting of the editor sheets shows only as
+the second root's adoptedStyleSheets and computed styles. The fake-root unit test pins
+the same accounting; the smoke proves it on Lit's own roots.
+
 The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition.
 
 - `accepted-marker-rolled-back-by-layout-failure`
@@ -302,6 +313,7 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `device-position-cancel-routed-to-commit`
 - `discovery-reset-writes-a-copy`
 - `editor-neutral-escape-does-not-exit`
+- `editor-styles-adopted-once-per-page`
 - `empty-space-cleanup-disabled`
 - `fixed-floor-transition-guard-bypassed`
 - `floor-cache-counter-skips-evicting-miss`

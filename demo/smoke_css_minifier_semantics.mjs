@@ -99,6 +99,8 @@ const out = await page.evaluate(async (input) => {
   return result;
 }, pairs);
 
+// #805: the editor's lazy dialog sheet ships minified too; it lives in src/styles/ on purpose.
+out.lazyEditorDialogSheetCompared = pairs.some((pair) => pair.label === 'src/styles/editor-dialogs.styles.ts');
 console.log(JSON.stringify({ ...out, mismatches: out.mismatches }, null, 1));
 checkAll(out, {
   filesCompared: out.filesCompared,

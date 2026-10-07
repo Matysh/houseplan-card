@@ -465,6 +465,19 @@ export const SMOKE_LINKS = [
       + 'localized reload panel instead of dying silently (#353)',
   },
   {
+    symbols: ['adoptEditorStyles', 'editorDialogsStyles', 'editorSecondaryStyles'],
+    files: [
+      'src/styles/editor-dialogs.styles.ts', 'src/editor-style-adoption.ts',
+      'src/editor-secondary.styles.ts', 'src/styles/dialogs.styles.ts',
+    ],
+    smokes: ['smoke_editor_styles_lazy.mjs'],
+    because: '#805: the cold View, kiosk, space card and onboarding roots must hold no editor-only '
+      + 'rule while every editor surface is styled in the first frame it appears in, in the '
+      + 'canonical cascade slots, once per root (two cards, warm remount, disconnect, retry, '
+      + 'foreign build); the smoke reads adoptedStyleSheets and computed styles of the production '
+      + 'bundle and names neither the adoption function nor the sheets',
+  },
+  {
     symbols: ['_kioskDialog', '_renderKioskDialog', '_saveKioskScale', 'saveScale'],
     smokes: ['smoke_kiosk_scale_no_editor.mjs'],
     because: '#763: a cold kiosk opens the per-screen size dialog with a real 3 s touch hold and '
