@@ -56,7 +56,8 @@ Never add a user's complete exported home configuration to the test fixtures.
 ## Space deletion map-route regression (#822)
 
 Run `pytest tests_backend/test_ha_space_delete_routes.py` in the pinned HA
-environment. Its real WS client verifies the committed pair and revision
+environment. Its real WS client covers ordinary and `remove_markers` deletion
+and both last-space variants, verifying the committed pair and revision
 increments, unchanged dock/other routes, refusal snapshots and explicit `[]`
 beside retained legacy calibration. The pure compatibility cases preserve
 absent/null routes and older unrelated orphans. A TS preview alone cannot

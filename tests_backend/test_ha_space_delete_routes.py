@@ -94,18 +94,22 @@ async def _delete(client, before: tuple[dict, dict], **overrides) -> dict:
     return await client.receive_json()
 
 
+@pytest.mark.parametrize("remove_markers", [False, True])
 async def test_issue_822_space_delete_commits_only_its_routes(
-    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, remove_markers: bool,
 ) -> None:
-    client, before = await _seed(hass, hass_ws_client, _config())
+    client, before = await _seed(hass, hass_ws_client, _config(blocked=remove_markers))
     config_events, layout_events = [], []
     hass.bus.async_listen("houseplan_config_updated", lambda event: config_events.append(event.data))
     hass.bus.async_listen("houseplan_layout_updated", lambda event: layout_events.append(event.data))
-    deleted = await _delete(client, before)
+    deleted = await _delete(client, before, **({"remove_markers": True} if remove_markers else {}))
     assert deleted["success"], deleted
+    assert deleted["result"]["removed_markers"] == (["blocker"] if remove_markers else [])
     config, layout = await _read_pair(client)
     expected = copy.deepcopy(before[0]["config"])
     expected["spaces"] = [space for space in expected["spaces"] if space["id"] != "f1"]
+    if remove_markers:
+        expected["markers"] = [marker for marker in expected["markers"] if marker["id"] != "blocker"]
     for marker in expected["markers"]:
         marker["vacuum"]["map_routes"] = [
             route for route in marker["vacuum"]["map_routes"] if route["space"] != "f1"
@@ -138,12 +142,14 @@ async def test_issue_822_refused_delete_preserves_routes_and_revisions(
     assert await _read_pair(client) == before
 
 
+@pytest.mark.parametrize("remove_markers", [False, True])
 async def test_issue_822_last_space_keeps_explicit_empty_routes(
-    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, remove_markers: bool,
 ) -> None:
     client, before = await _seed(hass, hass_ws_client, _config(last=True))
-    deleted = await _delete(client, before)
+    deleted = await _delete(client, before, **({"remove_markers": True} if remove_markers else {}))
     assert deleted["success"], deleted
+    assert deleted["result"]["removed_markers"] == []
     config, layout = await _read_pair(client)
     expected = copy.deepcopy(before[0]["config"])
     expected["spaces"] = []
