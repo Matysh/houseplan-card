@@ -13,6 +13,7 @@
 | #820 | [CODE-REVIEW-820-r1.md](CODE-REVIEW-820-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #819 | [SPEC-REVIEW-819-r1.md](SPEC-REVIEW-819-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | отсутствуют обязательные разделы «риски» и «откат» (§7.1) | `docs/reviews/SPEC-REVIEW-814-r1.md` |
 | #819 | [SPEC-REVIEW-819-r2.md](SPEC-REVIEW-819-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #819 | [CODE-REVIEW-819-r1.md](CODE-REVIEW-819-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #817 | [CODE-REVIEW-817-r1.md](CODE-REVIEW-817-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | одно число, два источника форматирования в одной подсказке | `src/live-hover.ts` `src/device-presentation.ts` `src/device-value-badge.ts` `test/device-battery-tip.test.mjs` `demo/helpers/device-battery-fixture.mjs` `docs/USER-GUIDE.ru.md` |
 | #817 | [CODE-REVIEW-817-r2.md](CODE-REVIEW-817-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #816 | [CODE-REVIEW-816-r1.md](CODE-REVIEW-816-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
