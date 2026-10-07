@@ -196,6 +196,11 @@ export function resolveNodeMoveSnap(
   if (goal && goal.priority > 0) return { point: goal.p, axis: carrier?.key || null, guide: goal.guide };
   const axis = carrier || (goal ? n.axes.find(a => a.key === goal.id) : undefined);
   if (axis) {
+    // Preserve a point intersection of compatible constraints, even when the
+    // original-axis guide wins the tie. A parallel H/V line is not a point.
+    const exact = goal && eligible.find(g => g.priority > 0 && sameNodePoint(g.p, goal.p)
+      && Math.abs(axis.direction[g.guide === 'horizontal' ? 1 : 0]) > EPS);
+    if (exact) return { point: exact.p, axis: carrier?.key || null, guide: 'axis' };
     const origin = sameNodePoint(axis.walls[0].a, n.point) ? axis.walls[0].b : axis.walls[0].a;
     const t = Math.round(dot(sub(raw, origin), axis.direction) / GRID_STEP_N) * GRID_STEP_N;
     return { point: [origin[0] + t * axis.direction[0], origin[1] + t * axis.direction[1]],

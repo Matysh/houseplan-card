@@ -87,6 +87,20 @@ test('equal-distance H/V snap ties use stable wall ID then a/b-independent ancho
       { point: [.5, .05], axis: null, guide: 'horizontal' });
 });
 
+test('an exact original-axis and H/V intersection outranks longitudinal quantisation', () => {
+  for (const vertical of [false, true]) {
+    const swap = p => vertical ? [p[1], p[0]] : p;
+    const source = floor([wall('a', [0, 0], swap([1, 0])), wall('b', [0, 0], swap([.503, 1]))]);
+    const p = plan(source, [0, 0]), target = swap([.503, 0]);
+    const snap = resolveNodeMoveSnap(p, target, .001, null);
+    assert.deepEqual(snap, { point: target, axis: null, guide: 'axis' });
+    assert.equal(applyNodeMove(p, snap.point, snap.axis).ok, true);
+    // Parallel/coincident H/V is not a second point constraint: grid remains.
+    const single = plan(floor([source.partitions[0]]), [0, 0]);
+    assert.notDeepEqual(resolveNodeMoveSnap(single, target, .001, null).point, target);
+  }
+});
+
 test('carrier ignores foreign nodes beyond its finite interval; foreign connectivity cannot exchange edges', () => {
   const s = floor([wall('h', [-1, 0], [1, 0]), wall('b', [0, 0], [0, 1]),
     wall('foreign', [2, 0], [2, 1])]);

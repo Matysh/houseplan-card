@@ -210,6 +210,15 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'node-snap-rounds-exact-constraint-intersection',
+    guard: 'node --test --test-name-pattern="exact original-axis" test/wall-node-move.test.mjs',
+    because: '#803 AC3: an exact axis/HV point survives quantisation; parallel H/V alone must still quantise',
+    patches: [{ file: 'src/wall-node-move.ts',
+      find: "    if (exact) return { point: exact.p, axis: carrier?.key || null, guide: 'axis' };",
+      replace: '    void exact; // mutant: quantise the exact point intersection',
+    }],
+  },
+  {
     id: 'node-wire-host-ledger-is-circular',
     guard: 'node scripts/backend-test-guard.mjs issue_803_second_host_identity_gate tests_backend/test_ha_websocket.py',
     because: '#803 M3: real HA rejects a geometrically valid foreign rehost even if the first planner returns it',

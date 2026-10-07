@@ -516,6 +516,9 @@ stored a/b order. A frozen axis/carrier quantises **only the longitudinal
 offset**, measured from its stable wall's fixed end; never round X/Y again
 after projection. An exact compatible H/V goal outranks that quantisation.
 With no eligible constraint, the usual `1/240` XY grid is the fallback.
+An exact point shared by the winning original-axis goal and a non-parallel H/V
+goal is retained without longitudinal rounding, even with the axis guide still
+active. A coincident/parallel H/V line alone is not such a point constraint.
 
 A T must stay on its original passing axis. An X chooses the nearest original
 axis on first unambiguous movement and freezes it for the gesture; an initial

@@ -44,6 +44,8 @@ The matrix includes realistic off-grid noisy T/X atoms and reversed endpoints,
 an unrelated collinear node beyond the finite carrier, and a forbidden exchange
 of two edges' connectivity at the same foreign point. Pure guards cover the
 shared angular boundary and stable wall-ID / same-wall anchor snap ties.
+The exact-axis/HV witness includes horizontal and vertical original axes at
+off-grid `.503`, plus parallel-only goals that must retain grid quantisation.
 The real HA negative host test injects a planner defect rehosting an unrelated
 opening to a geometrically identical foreign partition: the independent ledger
 must refuse with unchanged config, revision and events. No mutation run is

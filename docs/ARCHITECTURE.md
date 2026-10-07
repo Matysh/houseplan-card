@@ -34,6 +34,8 @@ The frozen local baseline retains its geometry and guard carrier for one
 gesture. `wall-local-boolean` keeps disconnected canonical components out of
 repeated clipping sweeps; touching bounds still invoke the original boolean
 library. These are exact broad-phase exclusions, not relaxed wall limits.
+Snap arbitration keeps its winning axis guide but preserves an exact compatible
+non-parallel H/V point instead of moving it with longitudinal quantisation.
 
 ## Styles (#266)
 
