@@ -13,7 +13,10 @@ the isolated live roots, `wall-node-preview.ts` renders the local complete-body
 closure through production masonry/inner-contour/opening functions, and
 `wall-node-write.ts` serializes the dedicated server operation with existing
 writers. Remote paper, fills and masonry stay in the settled DOM; old local
-geometry is masked out, not dimmed behind the ghost. Preview never replaces
+geometry is masked out, not dimmed behind the ghost. All three ghost masks share
+one bounds/backing template; old affected-wall selection and handle coordinates
+are computed once per pass, retaining the same pixels within the raw bundle budget.
+Preview never replaces
 the authoritative config, model cache or recovery snapshot. The backend mirror
 `wall_node_move.py` derives the delta and independently proves an inverse before
 Undo; a separate original-interval/midpoint ledger proves the only allowed

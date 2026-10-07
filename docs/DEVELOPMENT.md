@@ -63,6 +63,9 @@ The Select-only module is a second-level lazy import, with an additional
 change any existing graph ceiling or load in cold View/other tools. The
 intentional raw-bundle/coupling increments are recorded in issue #803 and
 `monolith-baseline.json`, not hidden by widening ratchet bands.
+After integrating #814, shared ghost mask/point templates and one affected-wall
+selection remove duplicate emitted code; neither the accepted baseline nor its
+bands change. Re-run both node raster smokes and the floor-cache-reuse smoke.
 Shared tools/queue/live-editor/identity helpers have an explicit `editor-shared` chunk:
 otherwise Rollup adds internal exports to the runtime and its opaque retry URL
 can lose the named fingerprint/constructor API. Both cold retry smokes must pass.

@@ -37,6 +37,13 @@ interface Session {
   moved: boolean; released: boolean; outline: boolean;
 }
 
+/** Identical mask bounds/backing for every local ghost pass. */
+const nodeMask = (id: string, paths: unknown): TemplateResult => svg`<mask id=${id} maskUnits="objectBoundingBox"
+  x="-10%" y="-10%" width="120%" height="120%" style="mask-type:luminance">
+  <rect x="-5000000" y="-5000000" width="10000000" height="10000000" fill="white"/>${paths}</mask>`;
+const nodePointText = (point: readonly number[]): string => point.map(v => v * NORM_W).join(' ');
+const nodeMasonrySelector = '.wallbodies, .room-outline, .seg, .zerowall, .plan-snap-overlay, .hidden-wall-diagnostic, .physical-chrome, .physical-hit';
+
 export class WallNodeEditor {
   private session: Session | null = null;
   private cache: { space: string; identity: string; nodes: WallNode[]; source: NodeMoveSpace } | null = null;
@@ -211,14 +218,12 @@ export class WallNodeEditor {
     if (!data) return nothing;
     const s = this.session, p = s?.moved ? s.target : null;
     const unitPx = this.port.unitsPerPixel() * NORM_W;
-    const toPath = (points: number[][]): string => `M${points.map(p => p.map(v => v * NORM_W).join(' ')).join('L')}Z`;
-    const affected = s?.candidate ? structuralNodeWalls(s.candidate).filter(w => s.affected.includes(`${w.kind}:${w.id}`)
-      || Object.values(s.plan.splitIds).includes(w.id)) : s?.moved ? s.plan.node.walls.filter(w =>
-        sameNodePoint(w.a, s.plan.node.point) || sameNodePoint(w.b, s.plan.node.point)
-        || !s.plan.node.axes.find(a => a.key === s.axis)?.walls.some(c => c.id === w.id && c.kind === w.kind)) : [];
+    const toPath = (points: number[][]): string => `M${points.map(nodePointText).join('L')}Z`;
     const oldAffected = s?.moved ? s.plan.node.walls.filter(w =>
       sameNodePoint(w.a, s.plan.node.point) || sameNodePoint(w.b, s.plan.node.point)
       || !s.plan.node.axes.find(a => a.key === s.axis)?.walls.some(c => c.id === w.id && c.kind === w.kind)) : [];
+    const affected = s?.candidate ? structuralNodeWalls(s.candidate).filter(w => s.affected.includes(`${w.kind}:${w.id}`)
+      || Object.values(s.plan.splitIds).includes(w.id)) : oldAffected;
     const strips = (s?.outline || !s?.candidate ? oldAffected : affected).map(w => {
       const dx = w.b[0] - w.a[0], dy = w.b[1] - w.a[1], len = Math.hypot(dx, dy);
       const half = Math.max(w.cm / (data.source.cell_cm || 5) * GRID_STEP_N / 2, this.port.unitsPerPixel() * 2);
@@ -228,21 +233,22 @@ export class WallNodeEditor {
       return [[ax + ox, ay + oy], [bx + ox, by + oy], [bx - ox, by - oy], [ax - ox, ay - oy]];
     });
     return svg`<g class="hp-node-layer" data-hp-node-state=${s ? s.invalid ? 'invalid' : s.moved ? 'preview' : 'captured' : 'idle'}>
-      ${live && s?.moved ? svg`<defs><mask id="hp-node-ghost-mask" maskUnits="objectBoundingBox" x="-10%" y="-10%" width="120%" height="120%" style="mask-type:luminance">
-        <rect x="-5000000" y="-5000000" width="10000000" height="10000000" fill="white"/>
-        ${strips.map(poly => svg`<path d=${toPath(poly)} fill=${s?.candidate && !s.outline ? '#808080' : 'black'}/>`)}
-      </mask></defs>` : nothing}
-      ${(live && s ? [s.plan.node] : data.nodes).map(n => svg`<circle class="hp-node-handle" data-node=${n.key}
-        cx=${(s?.plan.node.key === n.key && p ? p[0] : n.point[0]) * NORM_W}
-        cy=${(s?.plan.node.key === n.key && p ? p[1] : n.point[1]) * NORM_W}
+      ${live && s?.moved ? svg`<defs>${nodeMask('hp-node-ghost-mask',
+        strips.map(poly => svg`<path d=${toPath(poly)} fill=${s?.candidate && !s.outline ? '#808080' : 'black'}/>`))}</defs>` : nothing}
+      ${(live && s ? [s.plan.node] : data.nodes).map(n => {
+        const active = s?.plan.node.key === n.key;
+        const point = active && p ? p : n.point;
+        const x = point[0] * NORM_W, y = point[1] * NORM_W;
+        return svg`<circle class="hp-node-handle" data-node=${n.key}
+        cx=${x} cy=${y}
         r=${unitPx * 12} fill="transparent" style=${`cursor:${s ? 'grabbing' : n.supported && ctx.api ? 'grab' : 'not-allowed'}`}
         ><title>${this.port.text(!ctx.api ? 'node_move_update_required' : !n.supported ? 'node_move_unsupported_junction' : 'node_move_hint')}</title></circle>
-        <circle data-node=${n.key} pointer-events="none" cx=${(s?.plan.node.key === n.key && p ? p[0] : n.point[0]) * NORM_W}
-        cy=${(s?.plan.node.key === n.key && p ? p[1] : n.point[1]) * NORM_W} r=${unitPx * 3}
-        fill=${s?.invalid && s.plan.node.key === n.key ? '#e35d45' : 'var(--primary-color, #03a9f4)'} opacity=${s?.moved && s.plan.node.key === n.key ? '.5' : '1'}/>`)}
+        <circle data-node=${n.key} pointer-events="none" cx=${x} cy=${y} r=${unitPx * 3}
+        fill=${s?.invalid && active ? '#e35d45' : 'var(--primary-color, #03a9f4)'} opacity=${s?.moved && active ? '.5' : '1'}/>`;
+      })}
       ${s?.moved && s.invalid && (!s.candidate || s.outline) ? oldAffected.map(w => svg`<path
         d=${`M${[w.a, s.target, w.b].filter((_, i) => i === 1 || !sameNodePoint(i === 0 ? w.a : w.b, s.plan.node.point))
-          .map(p => p.map(v => v * NORM_W).join(' ')).join('L')}`}
+          .map(nodePointText).join('L')}`}
         fill="none" stroke="#e35d45" stroke-opacity=".5" stroke-width="2" vector-effect="non-scaling-stroke" pointer-events="none"/>`) : nothing}
       ${s?.invalid ? svg`<text x=${s.target[0] * NORM_W + unitPx * 16} y=${s.target[1] * NORM_W}
         fill="#e35d45" font-size=${unitPx * 12} pointer-events="none">${this.port.text(`node_move_${s.invalid}`)}</text>` : nothing}
@@ -288,24 +294,18 @@ export class WallNodeEditor {
     }
     const scene = s.candidate ? this.port.scene?.(s.candidate, s.plan.source) : null;
     s.outline = !!s.invalid && !scene;
-    const mask = (id: string, d: string): TemplateResult => svg`<mask id=${id} maskUnits="objectBoundingBox"
-      x="-10%" y="-10%" width="120%" height="120%" style="mask-type:luminance">
-      <rect x="-5000000" y="-5000000" width="10000000" height="10000000" fill="white"/>
-      <path d=${d} fill="black" fill-rule="evenodd"/>
-    </mask>`;
     render(scene?.paper || nothing, this.liveRoots[0]);
     render(scene?.rooms || nothing, this.liveRoots[1]);
-    render(svg`<defs>${scene ? svg`<mask id="hp-node-old-walls-mask" maskUnits="objectBoundingBox"
-      x="-10%" y="-10%" width="120%" height="120%" style="mask-type:luminance">
-      <rect x="-5000000" y="-5000000" width="10000000" height="10000000" fill="white"/>
+    render(svg`<defs>${scene ? nodeMask('hp-node-old-walls-mask', svg`
       <path d=${scene.oldWallsD} fill="black" fill-rule="evenodd"/>
       <path d=${scene.oldPaperD} fill="black" fill-rule="evenodd"/>
       ${scene.oldZeroD.map(d => svg`<path d=${d}
-        stroke="black" stroke-width="4" vector-effect="non-scaling-stroke"/>`)}</mask>` : nothing}
-      ${scene ? mask('hp-node-old-paper-mask', scene.oldPaperD) : nothing}</defs>${scene?.walls || nothing}${this.render(true)}`, this.liveRoots[2]);
+        stroke="black" stroke-width="4" vector-effect="non-scaling-stroke"/>`)}`) : nothing}
+      ${scene ? nodeMask('hp-node-old-paper-mask', svg`<path d=${scene.oldPaperD} fill="black" fill-rule="evenodd"/>`)
+        : nothing}</defs>${scene?.walls || nothing}${this.render(true)}`, this.liveRoots[2]);
     const oldZero = scene?.oldZeroD || s.plan.node.walls.filter(w => w.cm === 0).map(w =>
-      `M${w.a.map(v => v * NORM_W).join(' ')}L${w.b.map(v => v * NORM_W).join(' ')}`);
-    const elements = root.querySelectorAll<SVGElement>(`.hp-node-layer [data-node="${s.plan.node.key}"], .wallbodies, .room-outline, .seg, .zerowall, .zero-wall, .plan-snap-overlay, .hidden-wall-diagnostic, .physical-chrome, .physical-hit, .hp-paperg, [data-hp="room"], .openinglayer [data-hp="opening"]`);
+      `M${nodePointText(w.a)}L${nodePointText(w.b)}`);
+    const elements = root.querySelectorAll<SVGElement>(`.hp-node-layer [data-node="${s.plan.node.key}"], ${nodeMasonrySelector}, .zero-wall, .hp-paperg, [data-hp="room"], .openinglayer [data-hp="opening"]`);
     for (const element of elements) {
       if (element.closest('[data-hp-node-live]')) continue;
       this.touched.push({ element, mask: element.style.mask, opacity: element.style.opacity, transition: element.style.transition });
@@ -321,7 +321,7 @@ export class WallNodeEditor {
         if (scene.openingIds.includes(element.dataset.id || '')) element.style.opacity = '0';
       } else if (scene) element.style.mask = element.matches('.hp-paperg')
         ? 'url(#hp-node-old-paper-mask)' : 'url(#hp-node-old-walls-mask)';
-      else if (s.moved && element.matches('.wallbodies, .room-outline, .seg, .zerowall, .plan-snap-overlay, .hidden-wall-diagnostic, .physical-chrome, .physical-hit')) element.style.mask = 'url(#hp-node-ghost-mask)';
+      else if (s.moved && element.matches(nodeMasonrySelector)) element.style.mask = 'url(#hp-node-ghost-mask)';
       else if (s.moved && element.matches('[data-hp="opening"]') && s.plan.source.openings?.some(o => o.id === element.dataset.id
         && o.host && s.plan.node.walls.some(w => w.id === o.host?.id))) element.style.opacity = '0';
     }
