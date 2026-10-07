@@ -34,6 +34,7 @@ import './hp-help';
 import type { AuthoritativeConfigResponse } from './version-recovery-card';
 import type { ConfigAdoption, GatedAdoptionInput, GatedAdoptionResult } from './config-adoption';
 import './hp-device-preview'; import './hp-zigbee-topology-settings';
+import { adoptEditorStyles } from './editor-style-adoption'; // #805: after the CSS-bearing elements — shared gzip context
 import {
   EXCLUDED_DOMAINS, DEFAULT_ICON_RULES, compileIconRules, isValidPattern, iconFor,
   type IconRule, type CompiledIconRule,
@@ -828,6 +829,8 @@ export class HouseplanEditorRuntime {
   /** #642: «Оптимизировать планы» — свой модуль с узким портом, не делегаты карточки. */
   public readonly optimizePlans: OptimizePlansDialog;
   public constructor(public readonly host: HouseplanEditorHostPort) {
+    // #805: editor-only CSS, adopted at the loader's create() — before install, so before any editor frame.
+    if (!adoptEditorStyles(host)) void host.updateComplete.then(() => adoptEditorStyles(host));
     const owner = host;
     this.roomGear = new RoomGearDragController({
       mode: () => owner._mode, spaceId: () => owner._space,

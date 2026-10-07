@@ -661,7 +661,16 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // lazy editor to 242 382 B gzip. The old ceiling + band left only 475 B, below
 // the existing 500-B noise guard. This centre leaves 1 018 B; neither the band
 // nor the absolute initial-View budget changes (issue records the measurement).
-export const LAZY_EDITOR_GZIP_CEILING = 245_076;
+// #805: CSS only the editor renders (233 editor-only rules of `dialogs`, minus 3
+// never-applied declarations, and the contextual tray sheet) left the first
+// frame for the editor runtime chunk, which adopts it.
+// One toolchain, base a106b717 → this commit of #805: initial View 303 046 →
+// 298 552 B gzip (Δinitial −4 494), lazy editor 245 076 → 250 460 B gzip
+// (Δeditor +5 384, within the owner-accepted +6 000) — CSS compresses worse
+// outside the big chunk's dictionary. Same requests, no new chunk. Recalculated
+// once by the centre rule, fact + 1 000; the band and every initial-View
+// ceiling and budget are unchanged (`ratchets tighten` lowers the initial one).
+export const LAZY_EDITOR_GZIP_CEILING = 251_460;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

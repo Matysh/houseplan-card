@@ -114,7 +114,8 @@ test('Help is lazy, ordered after settings, and owns the single About/Guide surf
   const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
   const runtime = readFileSync(new URL('../src/houseplan-editor-runtime.ts', import.meta.url), 'utf8');
   const styles = readFileSync(new URL('../src/styles/plan.styles.ts', import.meta.url), 'utf8');
-  const dialogStyles = readFileSync(new URL('../src/styles/dialogs.styles.ts', import.meta.url), 'utf8');
+  // #805: the support form's rules ride with the lazy editor runtime.
+  const dialogStyles = readFileSync(new URL('../src/styles/editor-dialogs.styles.ts', import.meta.url), 'utf8');
   const header = card.slice(card.indexOf('<div class="zoomctl">'), card.indexOf('</div>\n        ${this._canEdit'));
   assert.ok(header.indexOf('_openSettingsDialog') < header.indexOf('_openSupportDialog'));
   assert.ok(header.indexOf('_openSettingsDialog') < header.indexOf('_openPdfDialog'));

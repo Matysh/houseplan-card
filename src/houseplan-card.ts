@@ -140,7 +140,6 @@ import { type WallFaceRepairProposal } from './wall-face-repair';
 import { LightSegment } from './light-visibility';
 import './space-card';
 import { cardStyles } from './styles';
-import { editorSecondaryStyles } from './editor-secondary.styles';
 import { type EditorSecondaryCopy, type EditorToolbarGroup } from './editor-secondary';
 import {
   fitInSquare, planRect, spaceModels, contentFrame, contentItems, spaceFrame, spaceCenter,
@@ -12988,7 +12987,7 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._renderRoomDialog();
   }
 
-  static styles = [cardStyles, editorSecondaryStyles];
+  static styles = [cardStyles]; // #805: editor-only sheets come with the editor runtime (src/editor-style-adoption.ts)
 }
 
 if (!customElements.get('houseplan-card')) {
