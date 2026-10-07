@@ -33,10 +33,10 @@ const currentProductionMembers = (contract) => new Set([
 
 test('large-house benchmark declares every private card member it consumes', () => {
   const declared = declaredMembers(LARGE_HOUSE_CARD_CONTRACT);
-  assert.deepEqual(
-    directCardMembers('demo/benchmark_large_house.mjs').filter((name) => !declared.has(name)),
-    [],
-  );
+  // #769: the switch-cycle guard module reads the card on the runner's behalf.
+  for (const file of ['demo/benchmark_large_house.mjs', 'demo/performance/switch-cycle-guard.mjs']) {
+    assert.deepEqual(directCardMembers(file).filter((name) => !declared.has(name)), [], file);
+  }
 });
 
 test('every measured large-house card preloads its own lazy editor runtime (#380)', () => {

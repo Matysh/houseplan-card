@@ -14605,6 +14605,18 @@ const MUTANT_DEFINITIONS = [
       replace: '    const key = `${id}|`; // mutant: no content fingerprint\n',
     }],
   },
+  // #769: сторож #735 судит счётчики построений; промах с вытеснением тоже построение.
+  {
+    id: 'floor-cache-counter-skips-evicting-miss',
+    guard: 'node demo/smoke_floor_geometry_cache.mjs',
+    because: '#769 AC7: a union built on a miss that evicts from the full pool must count; a counter '
+      + 'that skips that branch leaves the #735 guard as blind as the size snapshot it replaced',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '        this._floorCacheBuilds.wallUnion++;\n',
+      replace: '        if (this._wallUnionPool.size < 8) this._floorCacheBuilds.wallUnion++; // mutant: not on an evicting miss\n',
+    }],
+  },
   // #769: сводная площадь — пофлорное мемо по ключу записи этажа, а не по эпохе.
   {
     id: 'summary-area-key-global-epoch',

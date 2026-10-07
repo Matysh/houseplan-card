@@ -25,6 +25,8 @@ export function cleanFloorForRoom(input: {
   physicalBodies(space: SpaceModel): number[][][];
   /** Test seam (#669): the stair subtraction behind `area`. */
   areaMinusStairs?: StairAreaFn;
+  /** #769: called once per real build (a miss), never on a hit. */
+  onBuild?: () => void;
 }): CleanFloorResult {
   const { room, floor, space } = input;
   if (!space) return {
@@ -36,6 +38,7 @@ export function cleanFloorForRoom(input: {
     const cached = lruRead(input.cache, key);
     if (cached.hit) return cached.value;
   }
+  input.onBuild?.();
   const xs = floor.map((point) => point[0]);
   const ys = floor.map((point) => point[1]);
   const box = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];

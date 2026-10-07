@@ -14,6 +14,7 @@ import {
   LARGE_HOUSE_CARD_CONTRACT,
 } from './performance/card-contract.mjs';
 import { attributeResizeLongTask } from './performance/resize-attribution.mjs';
+import { floorCacheBuilds, floorCacheSnapshot, judgeSwitchCycle } from './performance/switch-cycle-guard.mjs';
 import {
   ISOMETRIC_STAGE3_DENSE_PROFILE,
   makeIsometricStage3DenseFixture,
@@ -43,6 +44,9 @@ const requiresIsometric = isometric && existsSync(resolve(targetRoot, 'src/iso-p
 const requiresIsoStructuralBuildCounter = requiresIsometric
   && readFileSync(resolve(targetRoot, 'src/houseplan-card.ts'), 'utf8')
     .includes('private _isoStructuralBuildCount');
+// #769: a candidate must count its floor-cache builds; a base without them is not judged.
+const requiresFloorCacheBuildCounters = readFileSync(resolve(targetRoot, 'src/houseplan-card.ts'), 'utf8')
+  .includes('private _floorCacheBuilds');
 const requiresPlanSnap = planSnap && existsSync(resolve(targetRoot, 'src/plan-snap-overlay.ts'));
 const requiresWallFace = planSnap && existsSync(resolve(targetRoot, 'src/wall-face-graph.ts'));
 const requiresInteraction = interaction && existsSync(resolve(targetRoot, 'src/live-viewport.ts'));
@@ -110,6 +114,10 @@ await page.addScriptTag({
 await page.addScriptTag({
   content: `window.__hpAttributeResizeLongTask = ${attributeResizeLongTask.toString()};`,
 });
+await page.addScriptTag({
+  content: `window.__hpSwitchCycleGuard = { snapshot: ${floorCacheSnapshot.toString()}, `
+    + `builds: ${floorCacheBuilds.toString()}, judge: ${judgeSwitchCycle.toString()} };`,
+});
 const chromium = await browser.version();
 let buildFingerprint;
 try {
@@ -127,6 +135,7 @@ try {
       fixture, sample, cardContract, isometric, requiresIsometric, planSnap, requiresPlanSnap,
       requiresWallFace, interaction, requiresInteraction, stage3Dense, requireStage3,
       requiresIsoStructuralBuildCounter, requiresStairs, profile, backdrop,
+      requiresFloorCacheBuildCounters,
     }) => {
       const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
       const until = async (predicate, timeout = 10000) => {
@@ -197,20 +206,13 @@ try {
         await frame();
         return true;
       };
+      // #769: one size snapshot (demo/performance/switch-cycle-guard.mjs). The
+      // budgeted cacheEntries/cacheGrowth keep the opening wall index as the
+      // presence flag their `openingWallIndex: 1` ceilings were set on; its
+      // real size is in the switch-cycle diagnostic.
+      const guard = window.__hpSwitchCycleGuard;
       const cacheSnapshot = (card) => ({
-        cleanFloor: card._cleanFloorCache?.size ?? 0,
-        glowClip: card._glowClipCache?.size ?? 0,
-        wallUnion: card._wallUnionCache ? 1 : 0,
-        // #744: the union is pooled per floor, and the inner contours are the
-        // second structural cache of a floor visit; 0/1 above cannot see a
-        // cold floor whose union is rebuilt while its clean floor stays warm.
-        wallUnionPool: card._wallUnionPool?.size ?? 0,
-        innerContour: card._innerContourCache?.size ?? 0,
-        openingTunnel: card._openingTunnelCache ? 1 : 0,
-        openingWallIndex: card._openingWallIndexCache ? 1 : 0,
-        isoGeometry: card._isoGeometryCache?.size ?? 0,
-        planSnapGeometry: card._planSnapGeometryCache ? 1 : 0,
-        wallFaceGraph: card._wallFaceGraphCache?.length ?? 0,
+        ...guard.snapshot(card), openingWallIndex: card._openingWallIndexCache ? 1 : 0,
       });
       const isoStructuralBuildCount = (card) => Number.isFinite(card._isoStructuralBuildCount)
         ? card._isoStructuralBuildCount : null;
@@ -1246,10 +1248,14 @@ try {
       await card.updateComplete;
       await frame();
 
-      const switchCycleCachesBefore = cacheSnapshot(card);
+      const switchCycleCachesBefore = guard.snapshot(card);
       const switchCycleBuildsBefore = isoStructuralBuildCount(card);
+      const switchCycleFloorBuildsBefore = guard.builds(card);
+      if (requiresFloorCacheBuildCounters && !switchCycleFloorBuildsBefore)
+        throw new Error(`${profile} floor-cache build counters are absent`);
+      const switchCycleSwitches = 12;
       const switchCycle = await duration(async () => {
-        for (let index = 0; index < 12; index++) {
+        for (let index = 0; index < switchCycleSwitches; index++) {
           card._pickSpace(`perf-floor-${(index % fixture.counts.floors) + 1}`);
           await card.updateComplete;
           // A user cannot produce twelve tab clicks in one JavaScript task.
@@ -1258,19 +1264,19 @@ try {
           await new Promise((done) => setTimeout(done, 0));
         }
       });
-      // #735 guard: a warmed cycle builds nothing. Any grown hot cache or a
-      // structural 2.5D build inside the window means a cold floor visit
-      // leaked back into switchCycleMs. Caches an older base lacks read as 0
-      // and cannot grow; its build counter is null and is not judged.
-      const switchCycleCachesAfter = cacheSnapshot(card);
+      // #735 guard on build counters (#769): a warmed cycle builds nothing in
+      // the pooled families and at most one single-slot build per switch; no
+      // structural 2.5D build either. Sizes are only a diagnostic: a cold
+      // build in a full LRU evicts and leaves every size as it was. A base
+      // without the counters reads null and is not judged.
+      const switchCycleCachesAfter = guard.snapshot(card);
       const switchCycleBuildsAfter = isoStructuralBuildCount(card);
-      const switchCycleBuilt = Object.keys(switchCycleCachesAfter)
-        .filter((key) => switchCycleCachesAfter[key] > switchCycleCachesBefore[key])
-        .map((key) => `${key} +${switchCycleCachesAfter[key] - switchCycleCachesBefore[key]}`);
-      if (switchCycleBuildsBefore != null && switchCycleBuildsAfter !== switchCycleBuildsBefore)
-        switchCycleBuilt.push(`isoStructuralBuilds +${switchCycleBuildsAfter - switchCycleBuildsBefore}`);
-      if (switchCycleBuilt.length)
-        throw new Error(`${profile} switchCycle built a floor inside the window: ${switchCycleBuilt.join(', ')}`);
+      const switchCycleVerdict = guard.judge({
+        before: switchCycleFloorBuildsBefore, after: guard.builds(card), switches: switchCycleSwitches,
+        isoBefore: switchCycleBuildsBefore, isoAfter: switchCycleBuildsAfter,
+      });
+      if (!switchCycleVerdict.ok)
+        throw new Error(`${profile} switchCycle built a floor inside the window: ${switchCycleVerdict.failures.join(', ')}`);
 
       // #743 structural probe, untimed and outside every Long Task window: six
       // warm switches round the floors (the cycle ended on the last floor, so
@@ -1336,6 +1342,11 @@ try {
         panZoomMs: panZoom.ms,
         settingsDialogMs: settingsDialog.ms,
         switchCycleMs: switchCycle.ms,
+        switchCycleBuilds: {
+          supported: switchCycleVerdict.supported,
+          families: switchCycleVerdict.builds,
+          caches: { before: switchCycleCachesBefore, after: switchCycleCachesAfter },
+        },
         longTasks: {
           load: loadLongTaskResult,
           ...(viewToggle ? { viewToggle: viewToggle.longTasks } : {}),
@@ -1385,6 +1396,7 @@ try {
       isometric, requiresIsometric, planSnap, requiresPlanSnap, requiresWallFace,
       interaction, requiresInteraction, stage3Dense, requireStage3,
       requiresIsoStructuralBuildCounter, requiresStairs, profile, backdrop,
+      requiresFloorCacheBuildCounters,
     });
     // #520: диагностика печатается в лог прогона и в запись не попадает.
     const { bootDiag, ...measured } = row;

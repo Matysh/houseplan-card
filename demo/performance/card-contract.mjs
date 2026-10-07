@@ -71,6 +71,8 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
     // #744: the #735 switch-cycle guard counts the union pool and the inner
     // contours; a comparison bundle without them reads 0.
     '_wallUnionPool', '_innerContourCache',
+    // #769: the #735 guard judges these build counters; a base without them reads null.
+    '_floorCacheBuilds',
   ]),
   // #649: members that only comparison bundles own. The benchmark feature-probes
   // them (`typeof card._setProjection === 'function'`); the current card no
@@ -130,6 +132,7 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
     _tool: 'string',
     _wallFaceGraphCache: 'array',
     _wallUnionPool: 'map',
+    _floorCacheBuilds: 'object',
   }),
 });
 

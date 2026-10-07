@@ -67,8 +67,8 @@ high-tail guard rather than a population estimate:
 - space switch, HA state update, pan/zoom and opening the settings dialog;
 - a shared-wall room-resize preview which is cancelled before persistence;
 - a twelve-switch navigation cycle; since #735 every fixture floor is visited
-  once before its window, and a floor build inside the window (any grown hot
-  cache or a 2.5D structural build) fails the sample;
+  once before its window, and a floor build inside the window (counted by the
+  card since #769, see below, or a 2.5D structural build) fails the sample;
 - Long Tasks for every measured window;
 - heap growth after four additional navigation rounds with forced GC;
 - hot-cache size and growth after the same warmed cycles.
@@ -89,6 +89,37 @@ diagnostics showed the median falling by roughly 1.6–2.8 times (for example
 on both sides of the change are recorded in #735. Budgets and `hardMaxMs` did
 not change in #735; #747 then brought the `switchCycleMs` ceilings down to the
 warmed level (see "CI contracts" below).
+
+Issue #769 moved the #735 guard from cache sizes to build counters. A cold
+build in a full LRU evicts one entry and leaves every size as it was, so the
+size guard was blind once a pool filled up; and its opening wall index read
+`card._openingWallIndexCache ? 1 : 0` of a `Map`, which is always 1. The card
+now counts the real builds of each floor-geometry cache in its miss branch
+(`_floorCacheBuilds`; never on a hit, a recency refresh, a resize seed or
+alias, or a clear), and one pure decision judges the window
+(`demo/performance/switch-cycle-guard.mjs`, shared with
+`demo/smoke_floor_geometry_cache.mjs` and `test/switch-cycle-guard.test.mjs`):
+
+- judged families keep every floor warm, so any build fails the sample and the
+  message names the family and its growth: the wall union pool, inner
+  contours, clean floors, the opening wall index, light barriers and Glow
+  clips. 2.5D is still judged by `_isoStructuralBuildCount`;
+- reported families are single-slot by design and rebuild on a floor switch:
+  physical bodies, opening tunnels and light physical bodies. Each fails only
+  above one build per switch (12 in the window).
+
+Each row reports `switchCycleBuilds: { supported, families, caches }`: the
+growth per family (`null` when unsupported) and, as a diagnostic, the size
+snapshot before and after the window with the real size of the opening wall
+index. A comparison bundle without the counters reads `null` and is not
+judged; a candidate whose source declares them must expose them. The budgeted
+`cacheEntries`/`cacheGrowth` keep the opening wall index as the presence flag
+their `openingWallIndex: 1` ceilings were set on (budgets are #770's). The
+family lists come from one counted sample of every `large-house*` profile and
+`isometric-stage3-dense-v1` on the dev base with the counters (#769, 7 Oct
+2026): every judged family 0, physical bodies and opening tunnels 12 of 12,
+light physical bodies 0, no structural 2.5D build, every size unchanged. No
+family had to move to the reported list.
 
 Issue #743 adds `large-house-isometric-backdrop-v1`, the 2.5D twin of
 `large-house-isometric-v1` with a loaded plan picture on every floor. Before it

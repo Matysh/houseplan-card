@@ -36,8 +36,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 44 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 50 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 39 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 108 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **248 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 109 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **249 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -256,6 +256,11 @@ dialog, post-reconciliation runtime wiring, history, asynchronous `config/set` a
 reload. Pure lineage-helper tests cannot prove that the editor actually settles
 residual-owned IDs before the strict wall-model barrier or rolls rejected writes back.
 
+`floor-cache-counter-skips-evicting-miss` (#769) needs the real card cycling floors
+through its tabs with a full union pool: only the rendered floor switch reaches the
+miss branch that evicts, and the witness compares the build counter with the whole
+size snapshot of the same card.
+
 The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition.
 
 - `accepted-marker-rolled-back-by-layout-failure`
@@ -295,6 +300,7 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `editor-neutral-escape-does-not-exit`
 - `empty-space-cleanup-disabled`
 - `fixed-floor-transition-guard-bypassed`
+- `floor-cache-counter-skips-evicting-miss`
 - `floor-geometry-key-global-epoch`
 - `floor-geometry-key-ignores-content`
 - `french-locale-wrong-dictionary`

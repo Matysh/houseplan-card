@@ -19,6 +19,11 @@
 //      scene that replaces it whenever the host renders mid-drag (an entity
 //      state change from Home Assistant, a toast expiring) and draws the
 //      preview record through the floor-geometry caches.
+// #769 AC7 a planted cold build the size guard cannot see: the union pool is
+//      full (8), `garden`'s union is gone while its contours and clean floors
+//      stay warm. A four-switch cycle builds exactly that union — the build
+//      counter grows by one, it evicts one entry, every size stays — and the
+//      #735 switch-cycle decision names the wall union.
 //
 // The independent card is the oracle: a new `houseplan-card` given the same
 // config through its own `config/get`, with nothing in its caches to reuse.
@@ -27,8 +32,14 @@
 // Assistant stub (a service call delivers the new entity state).
 import { launch, checkAll, finish } from './serve.mjs';
 import { fixtureWallKey } from './fixtures/wall-key.mjs';
+import { floorCacheBuilds, floorCacheSnapshot, judgeSwitchCycle } from './performance/switch-cycle-guard.mjs';
 
 const { page, browser } = await launch({ width: 1100, height: 850 });
+// #769: the same snapshot, counters and decision as the benchmark's #735 guard.
+await page.addScriptTag({
+  content: `window.__hpSwitchCycleGuard = { snapshot: ${floorCacheSnapshot.toString()}, `
+    + `builds: ${floorCacheBuilds.toString()}, judge: ${judgeSwitchCycle.toString()} };`,
+});
 
 /** Every edge of every room once, as a real wall record of `cm`. */
 const wallsOf = (rooms, cm, overrides = {}) => {
@@ -192,8 +203,13 @@ const res = await page.evaluate(async (fixture) => {
   out.ac1TheEditLeavesGardenRecordAlone = gardenRecord() === gardenRecordBefore;
 
   const beforeVisit = sizes();
+  const buildsBeforeVisit = window.__hpSwitchCycleGuard.builds(card);
   await hp.switchSpace('garden');
   const afterVisit = sizes();
+  const buildsAfterVisit = window.__hpSwitchCycleGuard.builds(card);
+  // #769: the same visit by the build counters, which a full LRU cannot hide.
+  out.ac1GardenVisitBuildsNothingByCounter = Object.fromEntries(['wallUnion', 'innerContour', 'cleanFloor']
+    .map((family) => [family, buildsAfterVisit[family] - buildsBeforeVisit[family]]));
   diag.ac1 = { beforeVisit, afterVisit, gardenBodiesKey, after: card._physicalBodiesCache?.key };
   out.ac1GardenVisitBuildsNoWallUnion = afterVisit.wallUnionPool - beforeVisit.wallUnionPool;
   out.ac1GardenVisitBuildsNoContour = afterVisit.innerContour - beforeVisit.innerContour;
@@ -373,7 +389,55 @@ if (gesture) {
   }
 }
 
+// ======== AC7 (#769): a cold union in a full pool, every size unchanged =======
+Object.assign(checks, await page.evaluate(async () => {
+  const card = window.__card;
+  const hp = window.__hpTest;
+  const guard = window.__hpSwitchCycleGuard;
+  const out = {};
+  await hp.setMode('view');
+  await hp.switchSpace('garden');
+  const gardenKey = card._wallUnionCache?.key;
+  await hp.switchSpace('f1');
+  const f1Key = card._wallUnionCache?.key;
+  const pool = card._wallUnionPool;
+  out.ac7BothFloorsPooled = !!gardenKey && !!f1Key && pool.has(gardenKey) && pool.has(f1Key);
+  // The planted state of the contract (#769 AC7): no product path evicts one
+  // floor's union while its contours stay warm on a two-floor plan, so the pool
+  // is filled by hand. Read-only everywhere else.
+  pool.delete(gardenKey); // private-ok: #769 AC7 planted eviction of garden's union
+  for (let filler = 0; pool.size < 8; filler++) {
+    pool.set(`filler-${filler}`, { key: `filler-${filler}`, value: null }); // private-ok: #769 AC7 fills the LRU to its limit
+  }
+  const f1Entry = pool.get(f1Key);
+  pool.delete(f1Key); // private-ok: #769 AC7 keeps the shown floor most recent
+  pool.set(f1Key, f1Entry); // private-ok: #769 AC7 keeps the shown floor most recent
+  out.ac7PoolFullWithoutGarden = pool.size === 8 && !pool.has(gardenKey) && pool.has(f1Key);
+  const sizesBefore = guard.snapshot(card);
+  const buildsBefore = guard.builds(card);
+  const switches = 4;
+  for (let index = 0; index < switches; index++) await hp.switchSpace(index % 2 ? 'f1' : 'garden');
+  const sizesAfter = guard.snapshot(card);
+  const buildsAfter = guard.builds(card);
+  const verdict = guard.judge({ before: buildsBefore, after: buildsAfter, switches });
+  out.ac7TheCycleBuildsTheUnionOnce = buildsAfter.wallUnion - buildsBefore.wallUnion;
+  out.ac7ItsContoursAndFloorsStayWarm = [
+    buildsAfter.innerContour - buildsBefore.innerContour, buildsAfter.cleanFloor - buildsBefore.cleanFloor,
+  ];
+  out.ac7TheUnionIsBackAndOneEntryEvicted = pool.has(gardenKey) && pool.size === 8;
+  out.ac7EverySizeStays = JSON.stringify(sizesAfter) === JSON.stringify(sizesBefore);
+  // The guard before #769: green, nothing grew.
+  out.ac7TheSizeGuardSeesNothing = Object.keys(sizesAfter).filter((key) => sizesAfter[key] > sizesBefore[key]);
+  out.ac7TheDecisionNamesTheWallUnion = verdict.failures;
+  return out;
+}));
+
 checkAll(checks, {
+  ac1GardenVisitBuildsNothingByCounter: { wallUnion: 0, innerContour: 0, cleanFloor: 0 },
+  ac7TheCycleBuildsTheUnionOnce: 1,
+  ac7ItsContoursAndFloorsStayWarm: [0, 0],
+  ac7TheSizeGuardSeesNothing: [],
+  ac7TheDecisionNamesTheWallUnion: ['wall union +1'],
   ac1GardenVisitBuildsNoWallUnion: 0,
   ac1GardenVisitBuildsNoContour: 0,
   ac1GardenVisitBuildsNoCleanFloor: 0,

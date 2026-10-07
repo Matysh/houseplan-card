@@ -247,19 +247,23 @@ test('#735 switchCycle times warmed navigation and fails on a floor build inside
   assert.match(warmup,
     /for \(let floor = 1; floor <= fixture\.counts\.floors; floor\+\+\) \{\s*card\._pickSpace\(`perf-floor-\$\{floor\}`\);\s*await card\.updateComplete;\s*await frame\(\);\s*\}/,
     'every fixture floor must be visited once before the switchCycle window');
+  // #769: the guard reads the build counters; the size snapshot stays a diagnostic.
   assert.match(warmup,
-    /card\._pickSpace\('perf-floor-2'\);\s*await card\.updateComplete;\s*await frame\(\);\s*const switchCycleCachesBefore = cacheSnapshot\(card\);\s*const switchCycleBuildsBefore = isoStructuralBuildCount\(card\);\s*$/,
+    /card\._pickSpace\('perf-floor-2'\);\s*await card\.updateComplete;\s*await frame\(\);\s*const switchCycleCachesBefore = guard\.snapshot\(card\);\s*const switchCycleBuildsBefore = isoStructuralBuildCount\(card\);\s*const switchCycleFloorBuildsBefore = guard\.builds\(card\);\s*if \(requiresFloorCacheBuildCounters && !switchCycleFloorBuildsBefore\)\s*throw new Error\(`\$\{profile\} floor-cache build counters are absent`\);\s*const switchCycleSwitches = 12;\s*$/,
     'the cycle must still start from floor 2 with the guard snapshot taken last');
   assert.ok(!warmup.includes('duration(') && !warmup.includes('startLongTaskWindow('),
     'the warm-up must stay outside every timed and Long Task window');
   const afterCycle = runner.slice(cycleStart, runner.indexOf('await forceGc();', cycleStart));
   for (const contract of [
-    'const switchCycleCachesAfter = cacheSnapshot(card);',
+    'const switchCycleCachesAfter = guard.snapshot(card);',
     'const switchCycleBuildsAfter = isoStructuralBuildCount(card);',
-    'switchCycleCachesAfter[key] > switchCycleCachesBefore[key]',
-    'switchCycleBuildsBefore != null && switchCycleBuildsAfter !== switchCycleBuildsBefore',
+    'before: switchCycleFloorBuildsBefore, after: guard.builds(card), switches: switchCycleSwitches,',
+    'isoBefore: switchCycleBuildsBefore, isoAfter: switchCycleBuildsAfter,',
+    'if (!switchCycleVerdict.ok)',
     '${profile} switchCycle built a floor inside the window: ',
   ]) assert.ok(afterCycle.includes(contract), `missing #735 switchCycle guard: ${contract}`);
+  assert.match(runner, /for \(let index = 0; index < switchCycleSwitches; index\+\+\) \{\s*card\._pickSpace/,
+    'the judged number of switches is the number the window makes');
 });
 
 test('#347: a rewritten before forces the full run instead of guessing the range', () => {

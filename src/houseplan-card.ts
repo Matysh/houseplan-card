@@ -1785,6 +1785,14 @@ export class HouseplanCard extends LitElement {
   /** Observable Stage 4 performance seam: increments only for a real
    * structural LRU miss, never for HA/theme/hover/opening-state paint. */
   private _isoStructuralBuildCount = 0;
+  /** #769: real builds of each floor-geometry cache, counted in the miss branch
+   * only — never on a hit, a recency refresh, a resize seed or alias, or a
+   * clear. The #735 switch-cycle guard (demo/performance/switch-cycle-guard.mjs)
+   * and the floor-cache smoke judge them; nothing in the product reads them. */
+  private _floorCacheBuilds = {
+    wallUnion: 0, innerContour: 0, cleanFloor: 0, openingWallIndex: 0, lightBarrier: 0,
+    glowClip: 0, physicalBodies: 0, openingTunnel: 0, lightPhysicalBodies: 0,
+  };
   private _isoFallback = new Set<string>();
   private _openingTunnelCache: {
     key: string;
@@ -8811,6 +8819,7 @@ export class HouseplanCard extends LitElement {
         // called by many room consumers in one render.
         const openCuts = this._openCuts();
         const openings = this._roomWallOpeningInputs();
+        this._floorCacheBuilds.wallUnion++;
         const value = wallBodiesUnionPath(
           space.rooms, walls, openCuts, openings,
           this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, extras,
@@ -8853,6 +8862,7 @@ export class HouseplanCard extends LitElement {
     // #744: one answer per floor content (a resize preview is its own record).
     const cached = lruRead(this._innerContourCache, key);
     if (cached.hit) return cached.value;
+    this._floorCacheBuilds.innerContour++;
     const value = innerContourForRoom(
       space.rooms, roomId, this._spaceWalls, openCuts,
       this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
@@ -8987,6 +8997,7 @@ export class HouseplanCard extends LitElement {
       // entry retains derived wall/tunnel geometry.
       lruWrite(this._openingWallIndexCache, key, value, 4);
     } else {
+      this._floorCacheBuilds.openingWallIndex++;
       value = buildOpeningWallIndex(
         space.rooms, this._spaceWalls, openCuts,
         this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
@@ -9025,6 +9036,7 @@ export class HouseplanCard extends LitElement {
     const wallIndex = this._openingWallIndexFor(space, openCuts);
     const cacheKey = `${wallIndex.key}|${geometryFingerprint}`;
     if (!this._openingTunnelCache || this._openingTunnelCache.key !== cacheKey) {
+      this._floorCacheBuilds.openingTunnel++;
       this._openingTunnelCache = {
         key: cacheKey,
         value: openingTunnelGeometriesFromIndex(wallIndex.value, geometryInputs),
@@ -9506,6 +9518,7 @@ export class HouseplanCard extends LitElement {
     if (!space) return [];
     const key = `${this._floorKey(space.id)}|${this._cellCm}|${this._gridPitch}`;
     if (this._physicalBodiesCache?.key === key) return this._physicalBodiesCache.all;
+    this._floorCacheBuilds.physicalBodies++;
     const frame = physicalBodyParts(
       space, this._cellCm, this._gridPitch, this._gridPitch * 0.0002,
       this._partitionOpeningCuts(space),
@@ -9532,6 +9545,7 @@ export class HouseplanCard extends LitElement {
       resizePreview: !!this._resize?.preview,
       cache: this._cleanFloorCache,
       physicalBodies: (model) => this._physicalBodiesR(model),
+      onBuild: () => { this._floorCacheBuilds.cleanFloor++; },
     });
   }
 
@@ -10372,6 +10386,7 @@ export class HouseplanCard extends LitElement {
       this._lightBarrierCache = pooled.value;
       return pooled.value.value;
     }
+    this._floorCacheBuilds.lightBarrier++;
     const value = buildLightBarrierScene({
       space,
       revision,
@@ -10384,6 +10399,7 @@ export class HouseplanCard extends LitElement {
       sharedWallGeometry: this._wallUnionGeometry(),
       physicalBodies: (partitionCuts, lightPhysicalKey) => {
         if (this._lightPhysicalBodiesCache?.key !== lightPhysicalKey) {
+          this._floorCacheBuilds.lightPhysicalBodies++;
           this._lightPhysicalBodiesCache = {
             key: lightPhysicalKey,
             all: physicalBodyParts(
@@ -10464,6 +10480,7 @@ export class HouseplanCard extends LitElement {
       if (cachedClip.hit) {
         geometry = cachedClip.value;
       } else {
+        this._floorCacheBuilds.glowClip++;
         // The entire light model, in two lines: what can this lamp see, and
         // where is there floor to light. Doorways, gates and dashed zero walls are
         // simply missing from `occluders`, so light crosses them without any
