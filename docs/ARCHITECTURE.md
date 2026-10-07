@@ -18,6 +18,10 @@ the authoritative config, model cache or recovery snapshot. The backend mirror
 `wall_node_move.py` derives the delta and independently proves an inverse before
 Undo; `config/set` keeps its existing host protection. Details: WALL-THICKNESS.md
 and CONFIG-COMPATIBILITY.md.
+Every live paint rechecks its frozen context before constructing SVG groups;
+mode/floor/revision adoption retires capture and masks before the settled render.
+`editor-shared` isolates shared lazy helpers so the editor entry retains its
+named API on both its normal import and its opaque immutable-URL retry.
 
 ## Styles (#266)
 

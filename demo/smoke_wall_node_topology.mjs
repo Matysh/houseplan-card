@@ -24,10 +24,10 @@ const scenarios = [
   { name: 'zero', cfg: config([wall('zero', [.2, .2], [.8, .2], 0)]),
     point: [.2, .2], target: [.25, .4], old: [.4, .2], changed: [.525, .3] },
 ];
-let server, revision = 1, capability = true, refused = false, writes = 0;
+let server, revision = 1, capability = true, canWrite = true, refused = false, writes = 0;
 const { page, browser } = await launch({ width: 1180, height: 920 });
 await page.exposeFunction('topologyWire', message => {
-  if (message.type === 'houseplan/config/get') return { config: structuredClone(server), rev: revision, can_write: true,
+  if (message.type === 'houseplan/config/get') return { config: structuredClone(server), rev: revision, can_write: canWrite,
     ...(capability ? { wall_node_move_api: 1 } : {}) };
   if (message.type === 'houseplan/layout/get') return { layout: {}, rev: 1 };
   if (message.type !== 'houseplan/wall/node_move') return null;
@@ -45,6 +45,12 @@ const mount = async cfg => {
   server = structuredClone(cfg); revision++;
   await page.evaluate(() => {
     const hass = window.__mkHass(), old = hass.callWS.bind(hass);
+    const subscribe = hass.connection.subscribeEvents.bind(hass.connection);
+    hass.connection = { ...hass.connection, subscribeEvents: async (callback, type) => {
+      if (type !== 'houseplan_config_updated') return subscribe(callback, type);
+      window.__nodeServerEvent = callback;
+      return () => { if (window.__nodeServerEvent === callback) window.__nodeServerEvent = null; };
+    } };
     hass.devices = {}; hass.entities = {}; hass.states = {};
     hass.callWS = async m => m.type.endsWith('registry/list') ? [] : (await window.topologyWire(m)) ?? old(m);
     const card = document.createElement('houseplan-card'); card.setConfig({ type: 'custom:houseplan-card', language: 'en' });
@@ -102,6 +108,30 @@ for (const scenario of scenarios) {
   mkdirSync('artifacts/803-node', { recursive: true });
   writeFileSync(`artifacts/803-node/${scenario.name}-committed.json`, JSON.stringify(accepted));
   await mount(accepted); assert.deepEqual(await page.evaluate(() => window.__card._serverCfg), accepted, 'reload exact');
+  if (scenario.name === 'shared') {
+    const planBodies = await page.evaluate(() => [...window.__card.renderRoot.querySelectorAll('.wallbody-fill')].map(p => p.getAttribute('d')));
+    assert.ok(planBodies.length > 0);
+    await page.evaluate(() => window.__hpTest.setMode('view'));
+    assert.deepEqual(await page.evaluate(() => [...window.__card.renderRoot.querySelectorAll('.wallbody-fill')].map(p => p.getAttribute('d'))), planBodies,
+      'committed Plan and View use the same physical wall body');
+    await page.evaluate(() => {
+      const card = document.createElement('houseplan-space-card'); card.id = 'node-static';
+      card.setConfig({ type: 'custom:houseplan-space-card', space: 'topology', title: '' });
+      card.hass = window.__card.hass; document.body.appendChild(card);
+    });
+    await page.waitForFunction(() => document.querySelector('#node-static')?.renderRoot.querySelector('.hp-static-stage svg'));
+    assert.deepEqual(await page.evaluate(() => document.querySelector('#node-static')._snap.config), accepted,
+      'static renderer adopts exact committed IDs/polygons/hosts');
+    assert.equal(await page.evaluate(() => document.querySelector('#node-static').renderRoot.querySelectorAll('.hp-node-handle').length), 0);
+    await page.evaluate(() => document.querySelector('#node-static').remove());
+    await mount({ ...accepted, settings: { ...accepted.settings, volumetric_view: true } });
+    await page.evaluate(() => window.__hpTest.setMode('view'));
+    await page.waitForFunction(() => window.__card.renderRoot.querySelector('.stage.projection-iso .iso-wall-top'));
+    assert.deepEqual(await page.evaluate(() => window.__card._serverCfg.spaces), accepted.spaces,
+      '2.5D draws committed geometry, without modifying its carrier');
+    assert.equal(await page.evaluate(() => window.__card.renderRoot.querySelectorAll('.hp-node-handle').length), 0);
+    console.log('committed shared node: Plan/View body parity + static exact model + real 2.5D walls passed');
+  }
   console.log(`${scenario.name}: before/during/after/cancel + Undo/Redo/reload passed`);
 }
 // 100 repeated terminals, including accepted moves and Undo. Only a bounded
@@ -120,6 +150,67 @@ for (let i = 0; i < 100; i++) {
 }
 assert.deepEqual(server, cycle.cfg);
 console.log('100 cancel/commit cycles: live roots/masks/session retired; cache bounded');
+// Actual captured mouse + DOM lifecycle/input terminals. The second touch is
+// dispatched (not a trusted OS touch); capture loss is the browser's own event.
+for (const terminal of ['pointercancel', 'lostcapture', 'second-pointer', 'pagehide', 'tool', 'mode', 'floor', 'disconnect', 'revision', 'acl']) {
+  const cfg = structuredClone(cycle.cfg);
+  if (terminal === 'floor') cfg.spaces.push({ ...structuredClone(cfg.spaces[0]), id: 'other', title: 'Other' });
+  await mount(cfg); await drag(cycle.point, cycle.target);
+  const countBefore = writes, revisionBefore = revision;
+  if (terminal === 'revision' || terminal === 'acl') {
+    revision++;
+    if (terminal === 'acl') canWrite = false;
+    else server.spaces[0].future.external = 'preserved';
+    await page.evaluate(rev => window.__nodeServerEvent({ event_type: 'houseplan_config_updated', data: { rev } }), revision);
+    await page.waitForFunction(rev => window.__card._cfgRev === rev, revision);
+  } else await page.evaluate(async terminal => {
+    const card = window.__card, stage = card._stageEl, pointer = card._editorRuntime.nodeMove.activePointerId;
+    if (terminal === 'pointercancel') stage.dispatchEvent(new PointerEvent('pointercancel', { pointerId: pointer, bubbles: true, composed: true }));
+    if (terminal === 'lostcapture') stage.releasePointerCapture(pointer);
+    if (terminal === 'second-pointer') stage.dispatchEvent(new PointerEvent('pointerdown', {
+      pointerId: pointer + 1, pointerType: 'touch', isPrimary: false, bubbles: true, composed: true }));
+    if (terminal === 'pagehide') window.dispatchEvent(new PageTransitionEvent('pagehide'));
+    if (terminal === 'tool') await window.__hpTest.setTool('resize');
+    if (terminal === 'mode') await window.__hpTest.setMode('view');
+    if (terminal === 'floor') await window.__hpTest.switchSpace('other');
+    if (terminal === 'disconnect') { const host = card.parentNode; card.remove(); host.appendChild(card); }
+  }, terminal);
+  await page.mouse.move(950, 700); await page.mouse.up();
+  await page.evaluate(() => window.__hpTest.settled());
+  assert.equal(writes, countBefore, `${terminal}: no write from terminal or tail`);
+  assert.equal(revision, revisionBefore + Number(terminal === 'revision' || terminal === 'acl'));
+  assert.equal(await page.evaluate(() => window.__card._geometryHistory.size), 0, `${terminal}: no history`);
+  assert.equal(await page.evaluate(() => !!window.__card._editorRuntime?.nodeMove?.dragging), false);
+  assert.equal(await page.evaluate(() => window.__card.renderRoot.querySelectorAll('[data-hp-node-live]').length), 0);
+  assert.deepEqual(server, terminal === 'revision' ? { ...cfg, spaces: [{ ...cfg.spaces[0], future: { intact: true, external: 'preserved' } }] } : cfg);
+  canWrite = true;
+}
+console.log('10 lifecycle/context terminals: no capture tail write/history, external data preserved');
+// X plus an extra endpoint is intentionally unsupported, with a localized
+// reason and no capture/preview/history/server mutation.
+const unsupported = config([wall('h', [.1, .5], [.9, .5]), wall('v', [.5, .1], [.5, .9]), wall('extra', [.5, .5], [.8, .8])]);
+await mount(unsupported);
+const unsupportedStart = await screen([.5, .5]), unsupportedWrites = writes;
+await page.mouse.move(unsupportedStart.x, unsupportedStart.y); await page.mouse.down();
+assert.equal(await page.evaluate(() => !!window.__card._editorRuntime.nodeMove.dragging), false);
+assert.equal(await page.evaluate(() => window.__card._stageEl.hasPointerCapture(1)), false);
+await page.mouse.up(); await page.evaluate(() => window.__hpTest.settled());
+assert.equal(await page.evaluate(() => window.__card._toast),
+  'This complex through-junction cannot be moved. T and X junctions without extra branches are supported.');
+assert.equal(writes, unsupportedWrites); assert.deepEqual(server, unsupported);
+assert.equal(await page.evaluate(() => window.__card._geometryHistory.size), 0);
+assert.equal(await page.evaluate(() => window.__card.renderRoot.querySelectorAll('[data-hp-node-live]').length), 0);
+// Legacy input remains legacy on read/hover/preview/cancel; only its isolated
+// gesture snapshot materializes IDs. JSON export/import also retains unknowns.
+const legacy = structuredClone(cycle.cfg); delete legacy.spaces[0].wall_segments;
+await mount(legacy); const legacyBefore = await page.evaluate(() => structuredClone(window.__card._serverCfg));
+const legacyWrites = writes; await drag(cycle.point, cycle.target);
+await page.waitForTimeout(700); await page.keyboard.press('Escape'); await page.mouse.up();
+assert.deepEqual(await page.evaluate(() => window.__card._serverCfg), legacyBefore);
+assert.deepEqual(server, legacy); assert.equal(writes, legacyWrites);
+await mount(JSON.parse(JSON.stringify(legacy))); assert.deepEqual(server, legacy);
+console.log('unsupported X+branch and legacy preview/cancel/import guards passed');
+await mount(cycle.cfg);
 // Undo during drag cancels the gesture, not the older completed command.
 await drag(cycle.point, cycle.target); await page.keyboard.press('Control+z'); await page.mouse.up(); await idle();
 assert.deepEqual(server, cycle.cfg);

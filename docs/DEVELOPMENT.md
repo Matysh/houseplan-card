@@ -21,7 +21,8 @@ schedule an unnecessary full-floor render inside the drag window.
 
 `smoke_wall_node_topology.mjs` compares shared/T/X/zero before/during/after/cancel
 pixels, exact Undo/Redo/reload, capability/refusal and 100 accepted/cancelled
-cycles. Its committed synthetic exports live in ignored `artifacts/803-node/`
+cycles, plus terminal/context events, unsupported X+branch and legacy cancellation.
+Its committed synthetic exports live in ignored `artifacts/803-node/`
 for `model-invariants --config`; no user home is copied into fixtures.
 `python tests_backend/wall_node_parity.py` executes the common TS/Python
 fixture matrix, including atomized unsupported junctions, opening intervals,
@@ -31,6 +32,9 @@ The Select-only module is a second-level lazy import, with an additional
 change any existing graph ceiling or load in cold View/other tools. The
 intentional raw-bundle/coupling increments are recorded in issue #803 and
 `monolith-baseline.json`, not hidden by widening ratchet bands.
+Shared tools/queue/live-editor/identity helpers have an explicit `editor-shared` chunk:
+otherwise Rollup adds internal exports to the runtime and its opaque retry URL
+can lose the named fingerprint/constructor API. Both cold retry smokes must pass.
 
 ## Device battery icons (#792)
 

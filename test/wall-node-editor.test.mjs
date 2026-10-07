@@ -77,6 +77,21 @@ test('external revision while final paint awaits wins, without restoring frozen 
   assert.equal(s.writes.length, 0); assert.deepEqual(s.cfg.spaces[0].partitions[0].a, [0.5, 0.5]);
   s.editor.dispose();
 });
+
+test('a paint after context adoption cancels before touching detached live groups', () => {
+  for (const change of ['disabled', 'space', 'revision', 'api']) {
+    const s = setup(); s.editor.guardEvent(s.ev('pointerdown'));
+    if (change === 'disabled') s.context.enabled = false;
+    if (change === 'space') s.context.space = 'other';
+    if (change === 'revision') s.context.revision++;
+    if (change === 'api') s.context.api = false;
+    // The fake root deliberately has no querySelector: reaching DOM construction
+    // instead of retiring the stale session fails, even without a browser.
+    assert.doesNotThrow(() => s.editor.paint());
+    assert.equal(s.editor.dragging, false); assert.equal(s.capture.size, 0);
+    assert.equal(s.writes.length, 0); s.editor.dispose();
+  }
+});
 for (const terminal of ['pointercancel', 'lostpointercapture', 'second-pointer', 'pagehide', 'floor', 'permission']) {
   test(`${terminal} aborts without a write/history entry and clears capture`, async () => {
     const s = setup(); s.editor.guardEvent(s.ev('pointerdown'));

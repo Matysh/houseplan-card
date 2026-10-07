@@ -62,7 +62,7 @@ async def test_issue_803_node_protocol_apply_undo_redo_conflict_and_acl(
     """Real registration/store/ACL and revision lock; no private WS invocation."""
     from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
 
-    await _setup(hass)
+    entry = await _setup(hass)
     client = await hass_ws_client(hass)
     source = {"spaces": [{"id": "f", "title": "Floor", "view_box": [0, 0, 1, 1], "rooms": [],
         "partitions": [{"id": "h", "a": [-1, 0], "b": [1, 0], "cm": 0},
@@ -78,12 +78,18 @@ async def test_issue_803_node_protocol_apply_undo_redo_conflict_and_acl(
     snapshot = (await client.receive_json())["result"]
     assert snapshot["wall_node_move_api"] == 1
     before = snapshot["config"]["spaces"][0]
+    events = []
+    unsubscribe = hass.bus.async_listen("houseplan_config_updated", lambda event: events.append(event.data))
     operation = {"point": [0, 0], "target": [0.25, 0], "axis": "partition:h",
                  "split_ids": {"partition:v": "partition-00000000-0000-4000-8000-000000000001"}}
     message = {"type": "houseplan/wall/node_move", "space_id": "f", "intent": operation,
                "expected_rev": snapshot["rev"]}
-    await client.send_json_auto_id(message)
-    applied = await client.receive_json()
+    contender = await hass_ws_client(hass)
+    await asyncio.gather(client.send_json_auto_id(dict(message)), contender.send_json_auto_id(dict(message)))
+    answers = await asyncio.gather(client.receive_json(), contender.receive_json())
+    applied = next(answer for answer in answers if answer["success"])
+    rejected = next(answer for answer in answers if not answer["success"])
+    assert rejected["error"]["code"] == "conflict", answers
     assert applied["success"], applied
     after = applied["result"]["config"]
     assert len(after["spaces"][0]["partitions"]) == 3
@@ -115,6 +121,17 @@ async def test_issue_803_node_protocol_apply_undo_redo_conflict_and_acl(
     redo = await client.receive_json()
     assert redo["success"], redo
     assert redo["result"]["config"] == after
+    await hass.async_block_till_done()
+    assert [event["rev"] for event in events] == [snapshot["rev"] + i for i in (1, 2, 3)]
+    unsubscribe()
+    # Persisted catalogue/hosts survive a real integration unload/reload.
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    reloaded = (await client.receive_json())["result"]
+    assert reloaded["config"] == after
+    assert reloaded["rev"] == redo["result"]["rev"]
 
 
 async def test_config_get_advertises_radar_only_while_coordinator_is_ready(

@@ -264,6 +264,10 @@ export class WallNodeEditor {
   paint(): void {
     this.restorePaint();
     const s = this.session; if (!s) { this.clearLive(); return; }
+    // Context adoption can run updated() before Select's next render. Retire
+    // before constructing live groups: render(true) may otherwise cancel and
+    // remove the very group that the outer Lit render is about to target.
+    if (!this.current(s)) { this.cancel(); return; }
     const root = this.port.root();
     const svgRoot = root.querySelector<SVGSVGElement>('svg.plan-svg'); if (!svgRoot) return;
     if (this.liveRoots.some(r => !r.isConnected)) this.clearLive();

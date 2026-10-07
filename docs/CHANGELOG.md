@@ -58,7 +58,8 @@
   original-axis and horizontal/vertical snapping, Esc cancellation and Undo/Redo.
   T junctions slide along their carrier; X junctions bend the transverse wall
   while retaining its far ends. Doors and windows retain their distance from
-  the fixed end; unsafe moves are refused atomically
+  the fixed end; unsafe moves are refused atomically. Changing the tool, floor
+  or editing permissions also cancels a pending move safely
   ([#803](https://github.com/Matysh/houseplan-card/issues/803)).
 
 ## v1.80.0-beta.7 — 2026-10-07

@@ -54,6 +54,12 @@ const inspect = () => page.evaluate(() => ({
 }));
 const start = await screen([0.2, 0.4]), target = await screen([0.25, 0.55]);
 const baselineFrame = await page.screenshot();
+const durableState = () => page.evaluate(() => ({
+  cache: localStorage.getItem('houseplan_card_cfg_v1'), epoch: window.__card._cfgEpoch,
+  revision: window.__card._cfgRev, pending: window.__card._saveConfigDebounced.pending(),
+  physicalWrites: [...window.__card._pendingPhysicalWrites],
+}));
+const durableBefore = await durableState();
 await page.mouse.move(start.x, start.y); await page.mouse.down();
 await page.mouse.move(target.x, target.y, { steps: 6 });
 await page.waitForFunction(() => window.__card.renderRoot.querySelector('[data-hp-node-live="2"] .hp-node-layer')?.dataset.hpNodeState === 'preview');
@@ -63,6 +69,9 @@ check('authoritative config is isolated while dragging', JSON.stringify(during.c
 check('no history or writes while dragging', [during.size, writes.length], [0, 0]);
 check('old physical body is locally removed', during.mask?.includes('hp-node-old-walls-mask'));
 check('new node actually follows pointer', during.preview.partitions[0].a[1] > 0.5);
+await page.waitForTimeout(1200); // beyond the ordinary config-save debounce
+check('held preview never enters cache/recovery/epoch/pending writers', await durableState(), durableBefore);
+check('held preview remains unsaved', [writes.length, (await inspect()).config], [0, initial]);
 await page.keyboard.press('Escape'); await page.mouse.move(target.x + 30, target.y + 30); await page.mouse.up();
 await page.evaluate(async () => { await window.__card.updateComplete; });
 check('Esc and trailing move/up create no writes', writes.length, 0);
@@ -105,4 +114,12 @@ check('Undo restores exact starting catalogue/openings', server, initial);
 await page.keyboard.press('Control+Shift+z');
 await page.waitForFunction(() => !window.__card._editorRuntime.nodeMove.busy && window.__card._geometryHistory.size === 1);
 check('Redo uses the same server-owned operation', writes.map(w => w.direction), ['apply', 'undo', 'apply']);
+const accepted = structuredClone(server), count = writes.length;
+const movedStart = await screen(server.spaces[0].partitions[0].a), valid = await screen([0.27, 0.54]), collapsed = await screen([0.6, 0.4]);
+await page.mouse.move(movedStart.x, movedStart.y); await page.mouse.down();
+await page.mouse.move(valid.x, valid.y); await page.waitForFunction(() => window.__card._editorRuntime.nodeMove.preview !== null);
+await page.mouse.move(collapsed.x, collapsed.y); await page.waitForFunction(() => window.__card._editorRuntime.nodeMove.invalid !== null);
+await page.mouse.up(); await page.waitForFunction(() => !window.__card._editorRuntime.nodeMove.dragging);
+check('invalid last release never saves the older valid candidate', [writes.length, server], [count, accepted]);
+check('invalid release creates no history entry', (await inspect()).size, 1);
 await finish(browser, { writes: writes.length });
