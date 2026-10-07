@@ -399,6 +399,29 @@ publish, 1 % move and under 1 % other; a synthetic 30 ms stall placed before the
 moved `otherMs` by 30.8 ms and the same stall inside `measure` moved `labelsMs`
 by about 28 ms, the other phases staying put.
 
+**Product causes, left for a product task.** Point 3 of the #778 brief asks to
+hand a concrete product optimization to a product task. The owner's directive
+for the wave of 2026-10-06 forbids filing new issues while it runs, so the two
+candidates are recorded here and in the owner's findings document of that wave
+(F23) for triage; nothing in `src/**` changes in #778, and the ceiling stays.
+
+- *Labels, about 24 % of the task.* `_rszEdgeLabels`
+  (`src/houseplan-editor-runtime.ts`) computes the live area as
+  `geometryArea(floorMinusBodies(floor, physical))`, so every projected step
+  unions all physical bodies of the floor again (polyclip-ts), twice per step
+  with two resized rooms. The bodies do not change during a gesture: the union
+  could be cached for the floor and configuration epoch of the gesture.
+- *Live preflight, about 70 %.* `_checkSpacePhysicalGeometry` →
+  `wallBodiesGeometry` rebuilds the masonry union (about 45 % of the task) and
+  the junction patches (about 14 %) of the whole floor for every candidate;
+  BigNumber arithmetic inside polyclip-ts is about 29 % of the self time, with
+  minor collections. A preflight limited to the walls the candidate touches is
+  the larger, riskier change (geometry, `track:ask`).
+
+The shares come from a local Chrome CPU profile and trace of the interaction
+profile (Chromium 141, diagnostic only); a product task re-measures them on CI
+with `interactionDiagnostics.resizeLongTask`.
+
 ## Private card contract
 
 The candidate benchmark runner is also executed against the base bundle, so
