@@ -8409,7 +8409,7 @@ const MUTANT_DEFINITIONS = [
       + 'фасад на вогнутой вершине',
     patches: [{
       file: 'src/wall-thickness.ts',
-      find: '          if (bound) ring = intersection(ring, bound);',
+      find: '          if (bound) ring = intersectLocalWallGeometry(ring, bound);',
       replace: '          void bound;',
     }],
   },

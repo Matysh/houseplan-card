@@ -76,6 +76,32 @@ test('T moves its endpoint branch only and cannot skip a foreign node or carrier
   for (const x of [0.5, 0.75, 1, 2]) assert.equal(applyNodeMove(p, [x, 0], axis).ok, false);
   assert.deepEqual(s.partitions[1].a, [0, 0]);
 });
+
+test('snap axes stay frozen through deformation, release outside 12px and ignore endpoint orientation', () => {
+  const source = floor([wall('a', [0, 0], [1, 1]), wall('b', [0, 0], [1, -0.5])]);
+  const normal = plan(source, [0, 0]);
+  const reverse = plan(floor(source.partitions.map(w => ({ ...w, a: w.b, b: w.a }))), [0, 0]);
+  const first = resolveNodeMoveSnap(normal, [.25, .251], .001, null);
+  assert.equal(applyNodeMove(normal, first.point, first.axis).ok, true);
+  for (const zoom of [.0001, .001]) for (const raw of [[-.25, -.249], [1.0005, .34], [.34, 1.0005]]) {
+    const snap = resolveNodeMoveSnap(normal, raw, zoom, null);
+    assert.deepEqual(resolveNodeMoveSnap(reverse, raw, zoom, null), snap);
+    if (raw[0] < 0) assert.equal(snap.point[0], snap.point[1], 'original diagonal, not the deformed other arm');
+    else if (raw[0] > 1) { assert.equal(snap.point[0], 1); assert.equal(snap.guide, 'vertical'); }
+    else { assert.equal(snap.point[1], 1); assert.equal(snap.guide, 'horizontal'); }
+  }
+  assert.equal(resolveNodeMoveSnap(normal, [.251, .27], .001, null).guide, null);
+  assert.deepEqual(source.partitions[0].a, [0, 0]);
+});
+
+test('X refuses an initial axis tie and never switches its chosen carrier during the gesture', () => {
+  const p = plan(floor([wall('h', [-1, 0], [1, 0]), wall('v', [0, -1], [0, 1])]), [0, 0]);
+  assert.deepEqual(resolveNodeMoveSnap(p, [.2, .2], .001, null), { point: [0, 0], axis: null, guide: null });
+  const first = resolveNodeMoveSnap(p, [.2, .01], .001, null);
+  assert.equal(first.axis, 'partition:h');
+  const next = resolveNodeMoveSnap(p, [.01, .2], .001, first.axis);
+  assert.equal(next.axis, first.axis); assert.equal(next.point[1], 0);
+});
 test('X bend keeps far ends and original-midpoint lineage, no fresh preview IDs', () => {
   for (const splitY of [0, 0.5, -0.5]) {
     const s = floor([wall('h', [-1, splitY], [1, splitY]), wall('v', [0, -1], [0, 1])]);
