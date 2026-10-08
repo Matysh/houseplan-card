@@ -7,6 +7,10 @@ movement, the 3 s hold, release over Close, delayed unowned clicks and fresh
 Close/Reset/Enter/Space. The delayed click is dispatched intentionally and is
 not claimed as trusted input. The existing full smoke still covers pan, pinch,
 cancel, lost capture, blur, remount, no lazy editor request and rejected chunk.
+The outside-kiosk editor control subscribes to the chunk request before clicking
+the public mode tab, then awaits both that event and the installed runtime.
+Loader-ready in the page does not synchronise Playwright's host-side request
+counter; do not replace this barrier with a fixed sleep.
 `test/touch-gesture-click-guard.test.mjs` executes the matching/foreign terminal,
 remaining contact, capture-loss and keyboard negatives cheaply. Modal takeover
 can release implicit capture before the physical touch lifts: do not treat that

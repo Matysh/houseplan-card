@@ -575,9 +575,17 @@ await kiosk.page.evaluate((selector) => {
   document.querySelector(selector).remove();
   window.__card.setAttribute('data-smoke', 'main');
 }, KIOSK);
+// Subscribe before the action: the page's loader and Playwright's request
+// stream are separate event queues. A ready runtime alone is not a barrier
+// for the host-side counter (the full #831 smoke exposed that old race).
+const editorRequest = kiosk.page.waitForEvent('request', {
+  predicate: request => isRuntime(request.url()), timeout: 9000,
+});
 await kiosk.page.locator('[data-smoke="main"] [data-hp="mode-tab"][data-mode="plan"]').click();
+await editorRequest;
 await kiosk.page.waitForFunction(() => window.__card._mode === 'plan'
-  && window.__card._editorRuntimeLoader.state === 'ready', null, { timeout: 9000 });
+  && window.__card._editorRuntimeLoader.state === 'ready' && !!window.__card._editorRuntime,
+null, { timeout: 9000 });
 out.editorEntryOutsideKioskLoadsChunk = same(1, kiosk.chunk.requests);
 
 // (3) Negative probe: the network refuses the editor chunk. The kiosk dialog
