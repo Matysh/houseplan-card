@@ -9,6 +9,7 @@ import { applyNodeMove, pickWallNode, prepareNodeMove, resolveNodeMoveSnap, stru
   type NodeMoveSpace, type NodePoint, type WallNode, type NodeMoveReason } from './wall-node-move';
 import type { ServerConfig } from './types';
 import type { NodePreviewScene } from './wall-node-preview';
+import { VISUAL_MITRE_LIMIT } from './wall-thickness';
 
 export interface NodeMoveHistory { beforeSpace: NodeMoveSpace; intent: NodeMoveIntent; direction: 'apply' | 'undo' }
 export interface NodeEditorContext { enabled: boolean; space: string; revision: number; api: boolean }
@@ -50,6 +51,8 @@ export class WallNodeEditor {
   private tail = false;
   private touched: { element: SVGElement; mask: string; opacity: string; transition: string }[] = [];
   private liveRoots: SVGGElement[] = [];
+  private sourceGhost: SVGGElement | null = null;
+  private sourceCoverage: { axis: string | null; unitPx: number; old: string[]; fixed: string[] } | null = null;
   private listening = true;
   public busy = false;
   private readonly pagehide = (): void => { this.cancel(); };
@@ -128,6 +131,20 @@ export class WallNodeEditor {
       axis: null, target: [...hit.node!.point], guide: null, candidate: null,
       affected: [], invalid: null, moved: false, released: false, outline: false };
     try { stage.setPointerCapture(ev.pointerId); } catch { this.session = null; return true; }
+    // Freeze the already-presented production masonry once, before any live
+    // candidate. This also preserves real opening cuts when no candidate can
+    // be built. No room fill, opening symbol or editor handle is cloned.
+    const ghost = this.sourceGhost = this.port.document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    ghost.classList.add('hp-node-source');
+    ghost.style.opacity = '.35';
+    ghost.style.mask = 'url(#hp-node-source-mask)';
+    const selector = '.wallbodies, .room-outline, .seg, .zerowall, .zero-walls, .plan-snap-overlay';
+    for (const element of this.port.root().querySelectorAll<SVGElement>(selector))
+      if (!element.closest('[data-hp-node-live]') && !element.parentElement?.closest(selector)) {
+      const clone = element.cloneNode(true) as SVGElement;
+      if (clone.matches('.plan-snap-overlay')) for (const marker of clone.querySelectorAll('circle')) marker.remove();
+      ghost.appendChild(clone);
+    }
     stage.style.cursor = 'grabbing';
     // The X-axis prompt belongs to the bounded live layer. A card toast here
     // schedules a full-floor render after capture, inside the drag window.
@@ -204,7 +221,8 @@ export class WallNodeEditor {
     this.session = null; this.cache = null; this.tail = true;
     s.capture.style.cursor = '';
     try { if (s.capture.hasPointerCapture(s.pointer)) s.capture.releasePointerCapture(s.pointer); } catch { /* detached */ }
-    this.restorePaint(); this.clearLive(); this.port.changed(); return true;
+    this.restorePaint(); this.clearLive(); this.sourceGhost = null; this.sourceCoverage = null;
+    this.port.changed(); return true;
   }
   dispose(): void { this.cancel(); this.cache = null; this.clearLive(); this.listening = false;
     this.port.document.defaultView?.removeEventListener('pagehide', this.pagehide); }
@@ -217,27 +235,52 @@ export class WallNodeEditor {
     const data = this.session ? { source: this.session.plan.source, nodes: this.session.plan.nodes } : this.nodes();
     if (!data) return nothing;
     const s = this.session, p = s?.moved ? s.target : null;
-    const unitPx = this.port.unitsPerPixel() * NORM_W;
+    const units = this.port.unitsPerPixel(), unitPx = units * NORM_W;
     const toPath = (points: number[][]): string => `M${points.map(nodePointText).join('L')}Z`;
     const oldAffected = s?.moved ? s.plan.node.walls.filter(w =>
       sameNodePoint(w.a, s.plan.node.point) || sameNodePoint(w.b, s.plan.node.point)
       || !s.plan.node.axes.find(a => a.key === s.axis)?.walls.some(c => c.id === w.id && c.kind === w.kind)) : [];
     const affected = s?.candidate ? structuralNodeWalls(s.candidate).filter(w => s.affected.includes(`${w.kind}:${w.id}`)
       || Object.values(s.plan.splitIds).includes(w.id)) : oldAffected;
-    const strips = (s?.outline || !s?.candidate ? oldAffected : affected).map(w => {
+    const joinHalf = Math.max(0, ...oldAffected.map(w => w.cm / (data.source.cell_cm || 5) * GRID_STEP_N / 2));
+    const stripsFor = (walls: typeof oldAffected, capEnds: boolean): number[][][] => walls.map(w => {
       const dx = w.b[0] - w.a[0], dy = w.b[1] - w.a[1], len = Math.hypot(dx, dy);
-      const half = Math.max(w.cm / (data.source.cell_cm || 5) * GRID_STEP_N / 2, this.port.unitsPerPixel() * 2);
-      const ox = -dy / len * half, oy = dx / len * half, cap = half;
+      const half = Math.max(w.cm / (data.source.cell_cm || 5) * GRID_STEP_N / 2, units * 2);
+      const ox = -dy / len * half, oy = dx / len * half;
+      const cap = capEnds ? Math.max(half, joinHalf) * VISUAL_MITRE_LIMIT : 0;
       const ax = w.a[0] - dx / len * cap, ay = w.a[1] - dy / len * cap;
       const bx = w.b[0] + dx / len * cap, by = w.b[1] + dy / len * cap;
       return [[ax + ox, ay + oy], [bx + ox, by + oy], [bx - ox, by - oy], [ax - ox, ay - oy]];
     });
+    const strips = stripsFor(s?.outline || !s?.candidate ? oldAffected : affected, true);
+    // An unchanged carrier/neighbour keeps its ordinary pixels, including
+    // where its body overlaps an old arm. Only the changed source is ghosted.
+    if (live && s?.moved && (!this.sourceCoverage || this.sourceCoverage.axis !== s.axis
+        || this.sourceCoverage.unitPx !== unitPx)) {
+      const oldStrips = stripsFor(oldAffected, true);
+      const boxes = oldStrips.map(poly => [Math.min(...poly.map(p => p[0])), Math.min(...poly.map(p => p[1])),
+        Math.max(...poly.map(p => p[0])), Math.max(...poly.map(p => p[1]))]);
+      const fixed = structuralNodeWalls(data.source).filter(w => {
+        if (oldAffected.some(a => a.id === w.id && a.kind === w.kind)) return false;
+        const half = Math.max(w.cm / (data.source.cell_cm || 5) * GRID_STEP_N / 2, units * 2);
+        return boxes.some(b => Math.min(w.a[0], w.b[0]) - half <= b[2] && Math.max(w.a[0], w.b[0]) + half >= b[0]
+          && Math.min(w.a[1], w.b[1]) - half <= b[3] && Math.max(w.a[1], w.b[1]) + half >= b[1]);
+      });
+      this.sourceCoverage = { axis: s.axis, unitPx, old: oldStrips.map(toPath), fixed: stripsFor(fixed, false).map(toPath) };
+    }
+    const coverage = this.sourceCoverage;
     return svg`<g class="hp-node-layer" data-hp-node-state=${s ? s.invalid ? 'invalid' : s.moved ? 'preview' : 'captured' : 'idle'}>
-      ${live && s?.moved ? svg`<defs>${nodeMask('hp-node-ghost-mask',
-        strips.map(poly => svg`<path d=${toPath(poly)} fill=${s?.candidate && !s.outline ? '#808080' : 'black'}/>`))}</defs>` : nothing}
+      ${live && s?.moved ? svg`<defs>${nodeMask('hp-node-ghost-mask', svg`
+          ${strips.map(poly => svg`<path d=${toPath(poly)} fill=${s.candidate && !s.outline ? '#808080' : 'black'}/>`)}
+          ${coverage?.fixed.map(d => svg`<path d=${d} fill="white"/>`)}`)}
+        <mask id="hp-node-source-mask" maskUnits="userSpaceOnUse" x="-5000000" y="-5000000"
+          width="10000000" height="10000000" style="mask-type:luminance">
+          ${coverage?.old.map(d => svg`<path d=${d} fill="white"/>`)}
+          ${coverage?.fixed.map(d => svg`<path d=${d} fill="black"/>`)}
+        </mask></defs>` : nothing}
       ${(live && s ? [s.plan.node] : data.nodes).map(n => {
         const active = s?.plan.node.key === n.key;
-        const point = active && p ? p : n.point;
+        const point = live && active && p ? p : n.point;
         const x = point[0] * NORM_W, y = point[1] * NORM_W;
         return svg`<circle class="hp-node-handle" data-node=${n.key}
         cx=${x} cy=${y}
@@ -246,16 +289,16 @@ export class WallNodeEditor {
         <circle data-node=${n.key} pointer-events="none" cx=${x} cy=${y} r=${unitPx * 3}
         fill=${s?.invalid && active ? '#e35d45' : 'var(--primary-color, #03a9f4)'} opacity=${s?.moved && active ? '.5' : '1'}/>`;
       })}
-      ${s?.moved && s.invalid && (!s.candidate || s.outline) ? oldAffected.map(w => svg`<path
+      ${live && s?.moved && s.invalid && (!s.candidate || s.outline) ? oldAffected.map(w => svg`<path
         d=${`M${[w.a, s.target, w.b].filter((_, i) => i === 1 || !sameNodePoint(i === 0 ? w.a : w.b, s.plan.node.point))
           .map(nodePointText).join('L')}`}
         fill="none" stroke="#e35d45" stroke-opacity=".5" stroke-width="2" vector-effect="non-scaling-stroke" pointer-events="none"/>`) : nothing}
-      ${s?.invalid ? svg`<text x=${s.target[0] * NORM_W + unitPx * 16} y=${s.target[1] * NORM_W}
+      ${live && s?.invalid ? svg`<text x=${s.target[0] * NORM_W + unitPx * 16} y=${s.target[1] * NORM_W}
         fill="#e35d45" font-size=${unitPx * 12} pointer-events="none">${this.port.text(`node_move_${s.invalid}`)}</text>` : nothing}
-      ${s?.plan.node.passing === 2 && !s.axis ? svg`<text x=${s.target[0] * NORM_W + unitPx * 16}
+      ${live && s?.plan.node.passing === 2 && !s.axis ? svg`<text x=${s.target[0] * NORM_W + unitPx * 16}
         y=${s.target[1] * NORM_W} fill="var(--primary-text-color)" font-size=${unitPx * 12}
         pointer-events="none">${this.port.text('node_move_choose_axis')}</text>` : nothing}
-      ${s?.moved && s.guide ? svg`<line class="hp-node-guide" pointer-events="none" stroke="var(--primary-color, #03a9f4)" stroke-dasharray="4 4"
+      ${live && s?.moved && s.guide ? svg`<line class="hp-node-guide" pointer-events="none" stroke="var(--primary-color, #03a9f4)" stroke-dasharray="4 4"
         stroke-width="1" vector-effect="non-scaling-stroke" x1=${s.plan.node.point[0] * NORM_W} y1=${s.plan.node.point[1] * NORM_W}
         x2=${s.target[0] * NORM_W} y2=${s.target[1] * NORM_W}/>` : nothing}
     </g>`;
@@ -302,14 +345,14 @@ export class WallNodeEditor {
       ${scene.oldZeroD.map(d => svg`<path d=${d}
         stroke="black" stroke-width="4" vector-effect="non-scaling-stroke"/>`)}`) : nothing}
       ${scene ? nodeMask('hp-node-old-paper-mask', svg`<path d=${scene.oldPaperD} fill="black" fill-rule="evenodd"/>`)
-        : nothing}</defs>${scene?.walls || nothing}${this.render(true)}`, this.liveRoots[2]);
+        : nothing}</defs>${s.moved ? this.sourceGhost : nothing}${scene?.walls || nothing}${this.render(true)}`, this.liveRoots[2]);
     const oldZero = scene?.oldZeroD || s.plan.node.walls.filter(w => w.cm === 0).map(w =>
       `M${nodePointText(w.a)}L${nodePointText(w.b)}`);
-    const elements = root.querySelectorAll<SVGElement>(`.hp-node-layer [data-node="${s.plan.node.key}"], ${nodeMasonrySelector}, .zero-wall, .hp-paperg, [data-hp="room"], .openinglayer [data-hp="opening"]`);
+    const elements = root.querySelectorAll<SVGElement>(`.hp-node-layer [data-node="${s.plan.node.key}"], .plan-snap-node[cx="${s.plan.node.point[0] * NORM_W}"][cy="${s.plan.node.point[1] * NORM_W}"], ${nodeMasonrySelector}, .zero-wall, .hp-paperg, [data-hp="room"], .openinglayer [data-hp="opening"]`);
     for (const element of elements) {
       if (element.closest('[data-hp-node-live]')) continue;
       this.touched.push({ element, mask: element.style.mask, opacity: element.style.opacity, transition: element.style.transition });
-      if (element.closest('.hp-node-layer')) element.style.opacity = '0';
+      if (element.closest('.hp-node-layer') || element.matches('.plan-snap-node')) element.style.opacity = '0';
       else if (element.matches('.zero-wall')) {
         const a = `${element.getAttribute('x1')} ${element.getAttribute('y1')}`;
         const b = `${element.getAttribute('x2')} ${element.getAttribute('y2')}`;

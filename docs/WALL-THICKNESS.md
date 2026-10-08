@@ -31,12 +31,19 @@ pixels). Diagonal quantization is longitudinal, from the fixed end, never a
 second x/y rounding. Foreign connections, carrier-order swaps, collapsed edges
 and openings crossing the old or new bend are refused. Openings preserve width,
 settings and physical distance from their fixed far end, not their old host t.
+An old finite fixed endpoint contact stays legal when formerly collinear walls
+become angled (#828). Proven split children inherit only their parent's existing
+contacts; this grants no new crossing, overlap, connection or infinite-line contact.
 
 The live local component includes complete changed owners and far-end physical
 neighbours. It uses production boolean geometry and junction guards; unchanged
-remote components never enter the pointer pass. Old affected masonry,
-architectural axes and symbols are removed before the translucent candidate is
-painted. Invalid latest positions never commit a previous valid frame. Paper,
+remote components never enter the geometry pointer pass. Settled affected masonry
+is masked, and one frozen source body/hatch/axis/zero-line layer is painted at .35
+above candidate paper/fills, below the translucent candidate (#828). It keeps
+original opening cuts, never old opening symbols or active handles; unchanged
+neighbours retain ordinary pixels. Source coverage survives invalid candidates,
+and every transient has one live owner through full Lit/hass frames. Invalid
+latest positions never commit a previous valid frame. Paper,
 room fills and opening cuts use that same candidate. Pointerup flushes the queue
 and allows the final frame to paint before writing the whole atomic delta.
 

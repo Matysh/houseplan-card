@@ -1,5 +1,7 @@
 """#803 local delta and inverse proofs, including forged clients."""
 import copy
+import json
+from pathlib import Path
 
 import pytest
 
@@ -34,6 +36,44 @@ def intent():
     return {"point": [0, 0], "target": [0.25, 0], "axis": "partition:h", "split_ids": {"partition:v": "new-v"}}
 
 
+@pytest.mark.parametrize("reversed_ends", [False, True])
+@pytest.mark.parametrize("zero", [False, True])
+def test_828_fixed_contacts_and_new_contact_negatives(reversed_ends, zero):
+    cases = json.loads((Path(__file__).parents[1] / "test/fixtures/803-wall-node-parity.json").read_text())
+    for case in (c for c in cases if c["name"].startswith("828-")):
+        walls = copy.deepcopy(case["walls"])
+        if zero:
+            for w in walls:
+                w["cm"] = 0
+        if reversed_ends:
+            walls.reverse()
+            for w in walls:
+                w["a"], w["b"] = w["b"], w["a"]
+        before = commit_wall_segment_model({"spaces": [{"id": "f", "title": "Floor", "view_box": [0, 0, 1, 1],
+            "rooms": [], "partitions": walls}],
+            "markers": [], "settings": {}})[0]
+        operation = {"point": case["point"], "target": case["target"], "axis": case["axis"],
+                     "split_ids": {"partition:v": "new-v"} if case["axis"] else {}}
+        frozen = copy.deepcopy(before)
+        if not case["ok"]:
+            with pytest.raises(NodeMoveError):
+                node_move_candidate(before, "f", operation)
+        else:
+            after = node_move_candidate(before, "f", operation)
+            assert CONFIG_SCHEMA(after) == after
+            for w in before["spaces"][0]["partitions"]:
+                if w["id"].startswith("far"):
+                    assert next(p for p in after["spaces"][0]["partitions"] if p["id"] == w["id"]) == w
+            restored = node_move_candidate(after, "f", operation, "undo", before["spaces"][0])
+            assert restored == before
+            assert node_move_candidate(restored, "f", operation) == after
+            if case["name"].startswith("828-X"):
+                for allocation in [{"partition:v": "far"}, {"partition:far": "new-v"}]:
+                    with pytest.raises(NodeMoveError):
+                        node_move_candidate(before, "f", {**operation, "split_ids": allocation})
+        assert before == frozen
+
+
 def test_x_apply_inverse_and_redo_are_exact_and_ordinary_set_remains_strict():
     before = fixture()
     frozen = copy.deepcopy(before)
@@ -49,6 +89,21 @@ def test_x_apply_inverse_and_redo_are_exact_and_ordinary_set_remains_strict():
     restored = node_move_candidate(after, "f", intent(), "undo", before["spaces"][0])
     assert restored == before
     assert node_move_candidate(restored, "f", intent()) == after
+
+
+def test_828_room_wall_fixed_collinear_contact_preserves_foreign_room():
+    before = commit_wall_segment_model({"spaces": [{"id": "f", "title": "Floor", "view_box": [0, 0, 1, 1], "rooms": [
+        {"id": "one", "name": "One", "poly": [[0, 0], [1, 0], [1, 1], [0, 1]]},
+        {"id": "foreign", "name": "Foreign", "poly": [[1, 1], [2, 1], [2, 2], [1, 2]]},
+    ]}], "markers": [], "settings": {}})[0]
+    for w in before["spaces"][0]["wall_segments"]:
+        w["cm"] = 25
+    before = commit_wall_segment_model(before)[0]
+    operation = {"point": [0, 1], "target": [-0.25, 0.75], "axis": None, "split_ids": {}}
+    after = node_move_candidate(before, "f", operation)
+    assert CONFIG_SCHEMA(after) == after
+    assert after["spaces"][0]["rooms"][1] == before["spaces"][0]["rooms"][1]
+    assert node_move_candidate(after, "f", operation, "undo", before["spaces"][0]) == before
 
 
 @pytest.mark.parametrize("change", ["far_end", "opening", "metadata", "room", "split_identity"])

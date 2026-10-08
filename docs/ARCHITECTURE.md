@@ -12,10 +12,17 @@ freezes the structural graph, `wall-node-editor.ts` owns capture/cancel and
 the isolated live roots, `wall-node-preview.ts` renders the local complete-body
 closure through production masonry/inner-contour/opening functions, and
 `wall-node-write.ts` serializes the dedicated server operation with existing
-writers. Remote paper, fills and masonry stay in the settled DOM; old local
-geometry is masked out, not dimmed behind the ghost. All three ghost masks share
-one bounds/backing template; old affected-wall selection and handle coordinates
-are computed once per pass, retaining the same pixels within the raw bundle budget.
+writers. Remote paper, fills and masonry stay in the settled DOM. #828 gives
+every transient warning, guide, X prompt and active handle one live owner;
+the full Lit scene owns only stationary handles. At pointerdown the already
+presented production masonry/axes/zero lines are frozen once (without room
+fills, opening symbols or snap handles). One .35 source layer above candidate
+paper/fills and below candidate masonry clips that snapshot to changed old
+arms, retaining opening cuts and ordinary unchanged neighbours. Its coverage
+is gesture-local and reused while the target moves; even an unbuildable
+candidate can show the source. Cancel/commit/context retirement releases it.
+Old settled local geometry remains masked out so it cannot duplicate either
+source or candidate. These masks do not rebuild full-floor geometry per pointer.
 Preview never replaces
 the authoritative config, model cache or recovery snapshot. The backend mirror
 `wall_node_move.py` derives the delta and independently proves an inverse before

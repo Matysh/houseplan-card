@@ -1,8 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { applyNodeMove, pickWallNode, prepareNodeMove, resolveNodeMoveSnap,
-  structuralWallNodes } from '../test-build/wall-node-move.js';
+  structuralWallNodes, structuralNodeWalls } from '../test-build/wall-node-move.js';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
+import { buildNodePreview } from '../test-build/wall-node-preview.js';
+import { readFileSync } from 'node:fs';
+import { increasedViolations, junctionLimitViolations } from '../test-build/junction-limits.js';
 
 const wall = (id, a, b, cm = 0) => ({ id, a, b, cm });
 const floor = partitions => ({ id: 'f', rooms: [], wall_segments: [], partitions });
@@ -10,6 +13,36 @@ const plan = (s, p, splitIds = {}) => {
   const nodes = structuralWallNodes(s), n = nodes.find(n => Math.hypot(n.point[0] - p[0], n.point[1] - p[1]) < 1e-8);
   assert.ok(n, `node ${p}`); return prepareNodeMove(s, n, nodes, splitIds);
 };
+test('828 preserves finite fixed contacts with collinear neighbours and proven X children', () => {
+  const cases = JSON.parse(readFileSync(new URL('./fixtures/803-wall-node-parity.json', import.meta.url)))
+    .filter(c => c.name.startsWith('828-'));
+  for (const c of cases) for (const reversed of [false, true]) for (const zero of [false, true]) {
+    const walls = c.walls.map(w => ({ ...w, cm: zero ? 0 : w.cm }));
+    const source = floor(reversed ? walls.reverse().map(w => ({ ...w, a: w.b, b: w.a })) : walls);
+    const frozen = structuredClone(source);
+    const result = applyNodeMove(plan(source, c.point, { 'partition:v': 'new-v' }), c.target, c.axis);
+    assert.equal(result.ok, c.ok, `${c.name} reversed=${reversed} zero=${zero}`);
+    assert.deepEqual(source, frozen);
+    if (result.ok) {
+      assert.equal(buildNodePreview(result.space).safe, true, `${c.name}: physical geometry`);
+      const limits = space => junctionLimitViolations({ spaces: [space] }, 'f', structuralNodeWalls(space));
+      assert.deepEqual(increasedViolations(limits(result.space), limits(source)), [], 'no introduced junction violations');
+      for (const old of source.partitions.filter(w => w.id.startsWith('far')))
+        assert.deepEqual(result.space.partitions.find(w => w.id === old.id), old, 'foreign far neighbour stays exact');
+      if (c.name.startsWith('828-X')) for (const allocation of [{ 'partition:v': 'far' }, { 'partition:far': 'new-v' }])
+        assert.equal(applyNodeMove(plan(source, c.point, allocation), c.target, c.axis).ok, false, 'no forged parent or colliding split ID');
+    }
+  }
+  const cfg = commitWallSegmentModel({ spaces: [{ id: 'f', rooms: [
+    { id: 'one', poly: [[0, 0], [1, 0], [1, 1], [0, 1]] },
+    { id: 'foreign', poly: [[1, 1], [2, 1], [2, 2], [1, 2]] },
+  ] }], markers: [], settings: {} }).config;
+  for (const w of cfg.spaces[0].wall_segments) w.cm = 25;
+  const source = commitWallSegmentModel(cfg).config.spaces[0];
+  const result = applyNodeMove(plan(source, [0, 1]), [-.25, .75], null);
+  assert.equal(result.ok, true); assert.equal(buildNodePreview(result.space).safe, true);
+  assert.deepEqual(result.space.rooms[1], source.rooms[1], 'foreign room retains polygon and IDs');
+});
 test('classification uses unique physical rays and the complete r2 matrix', () => {
   const rays = count => Array.from({ length: count }, (_, i) =>
     wall(String(i), [0, 0], [Math.cos(i * 0.41), Math.sin(i * 0.41)]));

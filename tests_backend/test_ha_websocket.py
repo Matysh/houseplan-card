@@ -56,8 +56,9 @@ async def _access_token_for_group(hass: HomeAssistant, group_id: str) -> str:
     return hass.auth.async_create_access_token(refresh_token)
 
 
+@pytest.mark.parametrize("fixed_neighbours", [False, True])
 async def test_issue_803_node_protocol_apply_undo_redo_conflict_and_acl(
-    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, fixed_neighbours: bool,
 ) -> None:
     """Real registration/store/ACL and revision lock; no private WS invocation."""
     from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
@@ -70,6 +71,11 @@ async def test_issue_803_node_protocol_apply_undo_redo_conflict_and_acl(
         "openings": [{"id": "door", "type": "door", "x": 0, "y": 0.65, "length": 0.1, "angle": -90,
                       "host": {"kind": "partition", "id": "v", "t": 0.825}}]}],
         "markers": [], "settings": {}}
+    if fixed_neighbours:
+        source["spaces"][0]["partitions"].extend([
+            {"id": "far-a", "a": [0, -1], "b": [-0.5, -1], "cm": 15},
+            {"id": "far-b", "a": [0, 1], "b": [0.5, 1], "cm": 0},
+        ])
     source, _ = commit_wall_segment_model(source)
     await client.send_json_auto_id({"type": "houseplan/config/set", "config": source, "expected_rev": 0})
     saved = await client.receive_json()
@@ -92,7 +98,7 @@ async def test_issue_803_node_protocol_apply_undo_redo_conflict_and_acl(
     assert rejected["error"]["code"] == "conflict", answers
     assert applied["success"], applied
     after = applied["result"]["config"]
-    assert len(after["spaces"][0]["partitions"]) == 3
+    assert len(after["spaces"][0]["partitions"]) == 3 + 2 * fixed_neighbours
     assert after["spaces"][0]["openings"][0]["host"]["id"] == operation["split_ids"]["partition:v"]
     await client.send_json_auto_id(message)
     stale = await client.receive_json()

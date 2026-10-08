@@ -9,6 +9,16 @@ Pure geometry/input/write-queue witnesses are `test/wall-node-*.test.mjs`;
 the independent proof and real HA registration/CAS/ACL path are exercised by
 `tests_backend/test_wall_node_move.py` and the #803 test in `test_ha_websocket.py`.
 
+#828 adds `node demo/smoke_wall_node_reliability.mjs`: invalid A → unrelated
+hass/full Lit ticks → invalid B → valid C, X prompts/guides, plus a pixel-alpha
+oracle for the frozen .35 source (valid/invalid, light/dark, positive/zero/mixed,
+opening cuts and a shared room corner). Hiding the source with CSS supplies an
+independent raster background; reading its opacity alone is not evidence.
+`803-wall-node-parity.json` includes finite fixed collinear contacts, proven X
+children with far neighbours and true new crossing/contact/overlap negatives.
+The real HA protocol matrix now also has fixed neighbours on both X far ends.
+No private home export is committed; synthetic frames go to `artifacts/828-node/`.
+
 `node demo/benchmark_wall_node_drag.mjs` measures the frozen-graph candidate
 pass on 200 synthetic rooms. `node demo/benchmark_wall_node_browser.mjs`
 measures real pointer-to-validated-DOM/paint latency and drag-window Long Tasks

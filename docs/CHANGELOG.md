@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Plan / Select: moving a wall node no longer rejects an unchanged far-end
+  connection merely because formerly straight walls become angled. Live
+  preview and warnings no longer stick or duplicate after HA updates. The
+  original walls stay visible at 35% opacity while dragging, including hatch
+  and opening cuts, with one active handle; cancel and Undo/Redo remain atomic
+  ([#828](https://github.com/Matysh/houseplan-card/issues/828)).
+
 ## v1.80.0-beta.8 — 2026-10-08
 
 - Deleting a space now actually removes the robot-map assignments pointing

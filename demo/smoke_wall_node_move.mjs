@@ -107,7 +107,7 @@ const pixels = await page.evaluate(async ({ frames, points }) => {
 }, { frames: [baselineFrame, ghostFrame, committedFrame].map(f => f.toString('base64')), points });
 const delta = (a, b) => Math.max(...a.map((v, i) => Math.abs(v - b[i])));
 console.log('node raster probes', JSON.stringify({ points, pixels }));
-check('raster: original affected wall is absent in preview', delta(pixels[0][0], pixels[1][0]) > 8 && delta(pixels[1][0], pixels[2][0]) < 5);
+check('raster: original affected wall is a translucent source ghost', delta(pixels[0][0], pixels[1][0]) > 8 && delta(pixels[1][0], pixels[2][0]) > 5);
 check('raster: new physical wall is translucent, not an opaque copy', pixels[1][1].reduce((a, b) => a + b) > pixels[2][1].reduce((a, b) => a + b) + 8);
 check('raster: unaffected floor pixels stay unchanged', delta(pixels[0][2], pixels[1][2]) < 2 && delta(pixels[1][2], pixels[2][2]) < 2);
 const beforeIdleEsc = structuredClone(server), beforeIdleRevision = revision;

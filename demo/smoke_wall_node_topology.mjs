@@ -98,8 +98,8 @@ for (const scenario of scenarios) {
   assert.deepEqual(server.spaces[0].rooms, preview.rooms);
   const after = await pixels(await page.screenshot({ animations: 'disabled' }), await probes());
   if (scenario.name !== 'zero') {
-    assert.ok(difference(before[0], ghost[0]) > 5, `${scenario.name}: old wall removed`);
-    assert.ok(difference(ghost[0], after[0]) < 2, `${scenario.name}: no old ghost duplicate`);
+    assert.ok(difference(before[0], ghost[0]) > 5, `${scenario.name}: old wall translucent`);
+    assert.ok(difference(ghost[0], after[0]) > 2, `${scenario.name}: source ghost retires on commit`);
     assert.ok(difference(ghost[1], after[1]) > 2, `${scenario.name}: candidate translucent before commit`);
   }
   await page.keyboard.press('Control+z'); await idle(); assert.deepEqual(server, scenario.cfg);

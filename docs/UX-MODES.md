@@ -173,8 +173,10 @@ tabs, the editor-close reserve, zoom and one gear whose menu holds the rest.
   The 12 CSS-pixel node hit wins there, while dragging a wall body outside it
   retains the existing rigid move. Nearby distinct nodes that cannot be
   distinguished request zoom instead of choosing arbitrarily.
-- During a node drag the affected old node, walls and openings are hidden and
-  their complete proposed positions are translucent; unaffected geometry stays
+- During a node drag the affected old walls remain visible at .35 opacity,
+  including their hatch/axes and opening cuts; old opening symbols and active
+  handles are hidden. One complete proposed position remains translucent;
+  full hass/Lit frames never add a settled preview copy (#828). Unaffected geometry stays
   normal. Esc before release cancels the whole gesture, including late move/up
   events. Valid release is one atomic save and one Undo step; Undo/Redo restores
   exact IDs, geometry and opening hosts. Esc after a completed save is not Undo.

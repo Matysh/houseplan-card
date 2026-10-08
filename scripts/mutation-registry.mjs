@@ -131,10 +131,70 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'node-preview-retains-original-body',
     guard: 'node demo/smoke_wall_node_move.mjs',
-    because: '#803 AC5: the real pointer raster must remove the old affected wall, not merely add a translucent new copy',
+    because: '#828: the real pointer raster replaces settled affected masonry with one .35 source ghost, not an opaque old body',
     patches: [{ file: 'src/wall-node-editor.ts',
       find: ": 'url(#hp-node-old-walls-mask)';",
       replace: ": ''; // mutant: leave the old masonry visible",
+    }],
+  },
+  {
+    id: 'node-source-ghost-opaque',
+    guard: 'node demo/smoke_wall_node_reliability.mjs',
+    because: '#828 AC5: Chromium pixels prove .35 compositing above candidate paper/fills, '
+      + 'in valid/invalid, positive/zero/mixed and light/dark scenes; attributes alone cannot',
+    patches: [{ file: 'src/wall-node-editor.ts',
+      find: "    ghost.style.opacity = '.35';",
+      replace: "    ghost.style.opacity = '1';",
+    }],
+  },
+  {
+    id: 'node-invalid-warning-settled-copy',
+    guard: 'node demo/smoke_wall_node_reliability.mjs',
+    because: '#828 AC4: full hass/Lit ticks during a captured pointer must not retain a second '
+      + 'warning across invalid A / invalid B / valid C; a pure template has no live DOM lifecycle',
+    patches: [{ file: 'src/wall-node-editor.ts',
+      find: '${live && s?.invalid ? svg`<text',
+      replace: '${s?.invalid ? svg`<text',
+    }],
+  },
+  {
+    id: 'node-guide-settled-copy',
+    guard: 'node demo/smoke_wall_node_reliability.mjs',
+    because: '#828 AC4: actual X carrier drag and full hass/Lit tick must present one current '
+      + 'guide, not a settled duplicate in the mounted SVG',
+    patches: [{ file: 'src/wall-node-editor.ts',
+      find: '${live && s?.moved && s.guide ? svg`<line class="hp-node-guide"',
+      replace: '${s?.moved && s.guide ? svg`<line class="hp-node-guide"',
+    }],
+  },
+  {
+    id: 'node-axis-prompt-settled-copy',
+    guard: 'node demo/smoke_wall_node_reliability.mjs',
+    because: '#828 AC4: captured X before movement survives real full hass/Lit ticks with '
+      + 'exactly one choose-axis prompt; the browser owns the settled/live roots',
+    patches: [{ file: 'src/wall-node-editor.ts',
+      find: '${live && s?.plan.node.passing === 2 && !s.axis ? svg`<text',
+      replace: '${s?.plan.node.passing === 2 && !s.axis ? svg`<text',
+    }],
+  },
+  {
+    id: 'node-finite-old-collinear-contact-refused',
+    guard: 'node --test --test-name-pattern="828 preserves finite" test/wall-node-move.test.mjs',
+    because: '#828 AC1/2: finite fixed old endpoint remains a junction after turning, including '
+      + 'proven X children; new contacts/crossings/extensions still refuse',
+    patches: [{ file: 'src/wall-node-move.ts',
+      find: '        || [oldA.a, oldA.b].find(p => sameNodePoint(p, hit) && onWall(p, oldB)) : null;',
+      replace: '        || null : null;',
+    }],
+  },
+  {
+    id: 'node-backend-child-loses-proven-parent',
+    guard: 'node scripts/backend-test-guard.mjs 828_fixed_contacts tests_backend/test_wall_node_move.py',
+    because: '#828 AC2: the independent Python proof must retain a new X child far contact '
+      + 'via its derived parent only, while forged parent allocations and collisions still refuse',
+    patches: [{ file: 'custom_components/houseplan/wall_node_move.py',
+      find: '            old_a = old_by_ref.get(parent_refs.get(_ref(a), _ref(a)))',
+      replace: '            old_a = old_by_ref.get(_ref(a))',
     }],
   },
   {

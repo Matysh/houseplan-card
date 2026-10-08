@@ -30,6 +30,13 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/wall-node-editor.ts', 'src/wall-node-move.ts'],
+    smokes: ['smoke_wall_node_reliability.mjs'],
+    because: '#828: a captured real pointer survives full hass/Lit frames with one current '
+      + 'warning/guide/X prompt and a pixel-proven frozen .35 source above candidate fills; '
+      + 'the smoke observes SVG and pixels rather than naming the private ownership/coverage helpers',
+  },
+  {
     symbols: ['selectWallFaceLineage', 'settleWallFaceLineage'],
     smokes: ['smoke_wall_face_lineage.mjs'],
     because: '#804: a partial partition carrier is promoted through the production room dialog, '

@@ -320,9 +320,13 @@ export function applyNodeMove(plan: NodeMovePlan, target: NodePoint, axisKey: st
         || !originalIncident.has(parentRefs.get(wallRef(b)) || wallRef(b))))
       return { ok: false, reason: 'invalid' };
     if (hit && !sameNodePoint(hit, target)) {
-      const oldA = oldByRef.get(wallRef(a));
-      const oldB = oldByRef.get(wallRef(b));
-      const previous = oldA && oldB ? intersection(oldA, oldB) : null;
+      const oldA = oldByRef.get(parentRefs.get(wallRef(a)) || wallRef(a));
+      const oldB = oldByRef.get(parentRefs.get(wallRef(b)) || wallRef(b));
+      // A split child inherits its parent's fixed contacts. Collinear old
+      // walls have no non-parallel intersection, but their unchanged finite
+      // common endpoint is still a pre-existing junction, not a new crossing.
+      const previous = oldA && oldB ? intersection(oldA, oldB)
+        || [oldA.a, oldA.b].find(p => sameNodePoint(p, hit) && onWall(p, oldB)) : null;
       if (!previous || !sameNodePoint(hit, previous)) return { ok: false, reason: 'invalid' };
     }
     // Collinear contact/overlap cannot silently merge or connect nodes either.
@@ -332,7 +336,8 @@ export function applyNodeMove(plan: NodeMovePlan, target: NodePoint, axisKey: st
             || !originalIncident.has(parentRefs.get(wallRef(b)) || wallRef(b))))
         return { ok: false, reason: 'invalid' };
       for (const p of [a.a, a.b]) if (onWall(p, b) && !sameNodePoint(p, target)) {
-        const oldA = oldByRef.get(wallRef(a)), oldB = oldByRef.get(wallRef(b));
+        const oldA = oldByRef.get(parentRefs.get(wallRef(a)) || wallRef(a));
+        const oldB = oldByRef.get(parentRefs.get(wallRef(b)) || wallRef(b));
         if (!oldA || !oldB || ![oldA.a, oldA.b].some(q => sameNodePoint(q, p) && onWall(q, oldB)))
           return { ok: false, reason: 'invalid' };
       }

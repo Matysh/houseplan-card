@@ -19,7 +19,8 @@ function setup() {
   const port = { context: () => context, config: () => cfg,
     screenPoint: ev => [ev.clientX, ev.clientY], unitsPerPixel: () => 0.0001,
     stage: () => stage, root: () => ({ querySelectorAll: () => [] }),
-    document: { defaultView: window }, text: key => key, toast: text => toasts.push(text),
+    document: { defaultView: window, createElementNS: () => ({ style: {}, classList: { add() {} }, appendChild() {} }) },
+    text: key => key, toast: text => toasts.push(text),
     changed: () => changes.push([editor.busy, recorded.length]), validate: () => true, paintOpportunity: () => paint,
     write: async h => {
       writes.push(h); if (fail) throw new Error('refused');
@@ -156,6 +157,7 @@ test('100 accepted/cancelled gestures leave one listener and no transient state;
     assert.equal(s.listeners.size, 1); assert.equal(s.capture.size, 0);
     assert.equal(s.editor.preview, null); assert.equal(s.editor.cache, null);
     assert.equal(s.editor.touched.length, 0); assert.equal(s.editor.liveRoots.length, 0);
+    assert.equal(s.editor.sourceGhost, null); assert.equal(s.editor.sourceCoverage, null);
   }
   assert.equal(s.writes.length, 50); s.editor.dispose(); assert.equal(s.listeners.size, 0);
 });

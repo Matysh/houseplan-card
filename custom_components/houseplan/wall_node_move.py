@@ -252,14 +252,21 @@ def move_node_space(source: dict[str, Any], intent: dict[str, Any]) -> dict[str,
             if a is b or pair in checked:
                 continue
             checked.add(pair)
-            old_a, old_b = old_by_ref.get(_ref(a)), old_by_ref.get(_ref(b))
+            old_a = old_by_ref.get(parent_refs.get(_ref(a), _ref(a)))
+            old_b = old_by_ref.get(parent_refs.get(_ref(b), _ref(b)))
             hit = _intersection(a, b)
             if hit is not None and _same(hit, target) and (
                     parent_refs.get(_ref(a), _ref(a)) not in incident_by_ref
                     or parent_refs.get(_ref(b), _ref(b)) not in incident_by_ref):
                 raise NodeMoveError()
             if hit is not None and not _same(hit, target):
-                previous = _intersection(old_a, old_b) if old_a and old_b else None
+                # Preserve a parent's fixed junction when its child is new,
+                # including a formerly collinear finite common endpoint.
+                previous = None
+                if old_a and old_b:
+                    previous = _intersection(old_a, old_b) or next(
+                        (end for end in [old_a["a"], old_a["b"]]
+                         if _same(end, hit) and _on(end, old_b)), None)
                 if previous is None or not _same(hit, previous):
                     raise NodeMoveError()
             if hit is None and abs(_cross(_sub(a["b"], a["a"]), _sub(b["b"], b["a"]))) <= EPS:
