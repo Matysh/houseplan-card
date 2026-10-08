@@ -391,6 +391,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'zigbee-arrow-copy-under-value-badge',
+    guard: 'node demo/smoke_device_battery_zigbee.mjs',
+    because: '#829 AC1: only rasterised overlap proves that the arrowhead paints over the value badge '
+      + 'of the neighbour and of the hovered endpoint, which rise above the base route layer as whole markers.',
+    patches: [{
+      file: 'src/hp-zigbee-topology-overlay.ts',
+      find: '        <g clip-path="url(#hp-zigbee-badge-clip)">${routes(true, true)}</g>\n',
+      replace: '',
+    }],
+  },
+  {
     id: 'battery-setting-backend-accepts-string',
     guard: 'node scripts/backend-test-guard.mjs battery tests_backend/test_settings_device_battery.py',
     because: '#792 AC9, #807: the display preference stays a strict boolean or the exact '

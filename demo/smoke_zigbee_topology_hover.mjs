@@ -529,10 +529,14 @@ for (const theme of ['light', 'dark']) {
           const cores = [...overlay.shadowRoot.querySelectorAll('.link-core,.parent-route')];
           const arrows = [...overlay.shadowRoot.querySelectorAll('.route-arrow')];
           const casings = [...overlay.shadowRoot.querySelectorAll('.link-casing')];
+          // Every route draws a line and an arrow in the base layer and in the
+          // #808 battery copy, plus the arrow alone in the #829 badge copy.
+          const routes = overlay.shadowRoot
+            .querySelectorAll('[data-hp="zigbee-topology-line"],[data-hp="zigbee-topology-parent-line"]').length;
           const key = `${kind}_${zoomName}_${lqi ?? 'unknown'}`;
           out[`${key}_requestedZoom`] = Math.abs(card._zoom - zoom) < 0.000001
             && Math.abs(overlay.zoom - zoom) < 0.000001;
-          out[`${key}_lineAndArrowColor`] = cores.length > 0 && arrows.length === cores.length
+          out[`${key}_lineAndArrowColor`] = routes > 0 && cores.length === 2 * routes && arrows.length === 3 * routes
             && cores.every((line) => getComputedStyle(line).stroke === expected)
             && arrows.every((arrow) => getComputedStyle(arrow).fill === expected);
           out[`${key}_solid`] = [...cores, ...arrows, ...casings]

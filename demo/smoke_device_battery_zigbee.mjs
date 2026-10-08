@@ -6,6 +6,8 @@
  * #813 AC5: keyboard focus in 2.5D lifts an ordinary marker to the hover layer
  * (5) and never pulls a Zigbee endpoint, the #809 neighbour included, off 8;
  * focusing starts no scan, no service and no dialog.
+ * #829 AC1: the arrowhead paints over the value badge of the neighbour and of
+ * the hovered endpoint, Flat and 2.5D; the line beyond it stays under the badge.
  * Controls hide only the rendered test layer for a differential raster probe.
  * Registry, settings, provider fetch and hover enter through public surfaces.
  */
@@ -362,6 +364,134 @@ try {
       || JSON.stringify(calls);
   });
   await page.evaluate(() => window.__card.shadowRoot.activeElement?.blur());
+  await page.mouse.move(10, 10);
+  // #829 AC1: the parent endpoint d_leak shows a value badge on the side that
+  // faces its child d_light1, so the arrowhead of their local link lands on
+  // that badge: a neighbour endpoint's badge while d_light1 is hovered, the
+  // hovered endpoint's own badge while d_leak is. Inside the shared area the
+  // arrow pixels must paint over the badge, in Flat and 2.5D; the line beyond
+  // the arrowhead stays under the badge as before.
+  await page.evaluate(async () => {
+    await window.__hpTest.setServerConfig(cfg => ({ ...cfg,
+      markers: cfg.markers.map(marker => marker.id === 'd_leak' ? { ...marker, value_badge: { enabled: true,
+        source: { kind: 'entity_attribute', entity_id: 'binary_sensor.sink_leak', attribute: 'linkquality' },
+        position: 'left' } } : marker) }));
+    await window.__hpTest.settled();
+  });
+  await page.waitForFunction(() => window.__card.shadowRoot
+    .querySelector('[data-hp="device"][data-id="d_leak"] .value-badge.pos-left.available'));
+  for (const iso of [false, true]) {
+    const mode = iso ? 'iso' : 'flat';
+    await page.evaluate(iso => window.__hpTest.setVolumetricView(iso), iso);
+    for (const [hovered, role, direction] of [['d_light1', 'Neighbour', 'toward-neighbor'],
+      ['d_leak', 'Own', 'toward-origin']]) {
+      await page.mouse.move(10, 10);
+      await page.waitForFunction(() => !window.__card.shadowRoot.querySelector('hp-zigbee-topology-overlay')
+        ?.shadowRoot?.querySelector('[data-hp="zigbee-topology-arrow"]'));
+      await hoverCore(hovered);
+      await page.waitForFunction(direction => window.__card.shadowRoot.querySelector('hp-zigbee-topology-overlay')
+        ?.shadowRoot?.querySelector(`[data-hp="zigbee-topology-arrow"][data-direction="${direction}"]`), direction);
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      const geometry = await page.evaluate(() => {
+        const root = window.__card.shadowRoot;
+        root.querySelector('[data-hp-live-tip]')?.style.setProperty('visibility', 'hidden');
+        const overlay = root.querySelector('hp-zigbee-topology-overlay');
+        const layer = overlay.getBoundingClientRect();
+        const sx = layer.width / overlay.clientWidth, sy = layer.height / overlay.clientHeight;
+        const toViewport = (x, y) => ({ x: layer.left + x * sx, y: layer.top + y * sy });
+        const polygon = overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-arrow"]');
+        const line = overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-line"]');
+        const badge = root.querySelector('[data-hp="device"][data-id="d_leak"] .value-badge').getBoundingClientRect();
+        const fill = polygon.getAttribute('fill').match(/\d+/g).map(Number);
+        const radius = Number.parseFloat(getComputedStyle(root
+          .querySelector('[data-hp="device"][data-id="d_leak"] .value-badge')).borderTopLeftRadius);
+        return {
+          arrow: polygon.getAttribute('points').trim().split(/\s+/)
+            .map(pair => pair.split(',').map(Number)).map(([x, y]) => toViewport(x, y)),
+          line: [toViewport(Number(line.getAttribute('x1')), Number(line.getAttribute('y1'))),
+            toViewport(Number(line.getAttribute('x2')), Number(line.getAttribute('y2')))],
+          badge: { x: badge.x, y: badge.y, right: badge.right, bottom: badge.bottom,
+            width: badge.width, height: badge.height,
+            radius: Number.isFinite(radius) ? Math.min(radius, badge.height / 2) : badge.height / 2 },
+          fill,
+        };
+      });
+      const shot = name => page.screenshot({ animations: 'disabled',
+        path: fileURLToPath(new URL(`${mode}-badge-${role.toLowerCase()}-${name}.png`, artifacts)) });
+      const active = await shot('active');
+      await page.evaluate(() => {
+        for (const layer of window.__card.shadowRoot.querySelector('hp-zigbee-topology-overlay').shadowRoot
+          .querySelectorAll('[data-hp^="zigbee-topology-lines"]')) layer.style.visibility = 'hidden';
+      });
+      const routesHidden = await shot('routes-hidden-control');
+      await page.evaluate(() => {
+        const root = window.__card.shadowRoot;
+        for (const layer of root.querySelector('hp-zigbee-topology-overlay').shadowRoot
+          .querySelectorAll('[data-hp^="zigbee-topology-lines"]')) layer.style.removeProperty('visibility');
+        root.querySelector('[data-hp-live-tip]')?.style.removeProperty('visibility');
+      });
+      const evidence = await page.evaluate(async ({ active, routesHidden, arrow, line, badge, fill }) => {
+        const decode = async data => {
+          const bitmap = await createImageBitmap(await (await fetch(`data:image/png;base64,${data}`)).blob());
+          const canvas = new OffscreenCanvas(bitmap.width, bitmap.height), ctx = canvas.getContext('2d');
+          ctx.drawImage(bitmap, 0, 0);
+          return ctx.getImageData(0, 0, bitmap.width, bitmap.height);
+        };
+        const [a, hidden] = await Promise.all([decode(active), decode(routesHidden)]);
+        const at = (image, x, y) => {
+          const index = (Math.floor(y * devicePixelRatio) * image.width + Math.floor(x * devicePixelRatio)) * 4;
+          return [image.data[index], image.data[index + 1], image.data[index + 2]];
+        };
+        const changed = (first, second) => first.some((value, index) => Math.abs(value - second[index]) > 12);
+        const arrowInk = pixel => pixel.every((value, index) => Math.abs(value - fill[index]) <= 40);
+        // Signed distance inside the arrowhead (positive inside, either winding).
+        const area = (arrow[1].x - arrow[0].x) * (arrow[2].y - arrow[0].y)
+          - (arrow[1].y - arrow[0].y) * (arrow[2].x - arrow[0].x);
+        const inArrow = (x, y, margin) => arrow.every((p, index) => {
+          const q = arrow[(index + 1) % 3];
+          const length = Math.hypot(q.x - p.x, q.y - p.y);
+          return Math.sign(area) * ((q.x - p.x) * (y - p.y) - (q.y - p.y) * (x - p.x)) / length >= margin;
+        });
+        // The badge's own rounded box (a pill in Flat, a rounded tile in
+        // 2.5D), inset past its anti-aliased edge: a sample there is on badge ink.
+        const inBadge = (x, y, inset) => {
+          const left = badge.x + inset, right = badge.right - inset, top = badge.y + inset, bottom = badge.bottom - inset;
+          const radius = Math.max(0, Math.min(badge.radius - inset, (right - left) / 2, (bottom - top) / 2));
+          if (x < left || x > right || y < top || y > bottom) return false;
+          const cx = Math.max(left + radius, Math.min(x, right - radius));
+          const cy = Math.max(top + radius, Math.min(y, bottom - radius));
+          return (x - cx) ** 2 + (y - cy) ** 2 <= radius ** 2;
+        };
+        let shared = 0, arrowOver = 0;
+        const xs = arrow.map(point => point.x), ys = arrow.map(point => point.y);
+        for (let y = Math.floor(Math.min(...ys)); y <= Math.ceil(Math.max(...ys)); y++) {
+          for (let x = Math.floor(Math.min(...xs)); x <= Math.ceil(Math.max(...xs)); x++) {
+            const px = x + 0.5, py = y + 0.5;
+            if (!inArrow(px, py, 1) || !inBadge(px, py, 1.5)) continue;
+            shared++;
+            const painted = at(a, px, py);
+            if (changed(painted, at(hidden, px, py)) && arrowInk(painted)) arrowOver++;
+          }
+        }
+        const [p, q] = line, length = Math.hypot(q.x - p.x, q.y - p.y), seen = new Set();
+        let lineSamples = 0, lineShows = 0;
+        for (let step = 0; step <= length * 2; step++) {
+          const x = p.x + (q.x - p.x) * step / (length * 2), y = p.y + (q.y - p.y) * step / (length * 2);
+          const key = `${Math.floor(x)},${Math.floor(y)}`;
+          if (seen.has(key) || !inBadge(x, y, 2) || inArrow(x, y, -3)) continue;
+          seen.add(key);
+          lineSamples++;
+          if (changed(at(a, x, y), at(hidden, x, y))) lineShows++;
+        }
+        return { shared, arrowOver, lineSamples, lineShows,
+          arrowOverBadge: shared >= 10 && arrowOver / shared >= 0.9,
+          lineUnderBadge: lineSamples >= 6 && lineShows <= 1 };
+      }, { active: active.toString('base64'), routesHidden: routesHidden.toString('base64'), ...geometry });
+      console.log(`Battery Zigbee ${mode} value badge (${role.toLowerCase()} endpoint) evidence:`, evidence, geometry);
+      out[`${mode}_arrowPaintsOver${role}ValueBadge`] = evidence.arrowOverBadge;
+      out[`${mode}_lineStaysUnder${role}ValueBadge`] = evidence.lineUnderBadge;
+    }
+  }
   await page.mouse.move(10, 10);
   checkAll(out);
 } catch (error) {

@@ -305,7 +305,10 @@ registry scan. Zigbee routes and captions have separate stacking levels: endpoin
 remain above routes, captions remain above their batteries. Endpoint markers rise
 above the route layer as a whole, battery included, so a route copy one level
 higher is clipped to their battery frames: routes paint over batteries without
-covering cores (#808). A topology snapshot is labelled stale after an hour.
+covering cores (#808). Endpoint value badges get the same treatment for
+arrowheads only: an arrowhead copy in that layer is clipped to the badge frames,
+measured in the same layout frame, so arrows paint over badges while lines stay
+under them (#829). A topology snapshot is labelled stale after an hour.
 
 Attachments are staged in `up_*`, promoted into `<config>/houseplan/files/<id>/`
 on Save and served by signed `/api/houseplan/content/files/…` URLs (Integration

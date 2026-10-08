@@ -333,6 +333,13 @@ export const SMOKE_LINKS = [
       + 'cleanup across leave, touch, editor and non-admin boundaries',
   },
   {
+    symbols: ['_clipRouteCopies'],
+    smokes: ['smoke_device_battery_zigbee.mjs'],
+    because: 'the #808/#829 raster probes prove, against routes-hidden controls, that the clipped '
+      + 'route copy paints over endpoint battery ink and the arrowhead copy over endpoint value '
+      + 'badges in Flat and 2.5D; the smoke never names the private clip method',
+  },
+  {
     symbols: [
       'beginVacuumRouteDraft', 'chooseVacuumRouteSpace', 'commitVacuumRouteDraft',
       'VacuumRouteDraft', 'VacuumMapsHost', 'VacuumMapsCardHost',
