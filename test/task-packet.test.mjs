@@ -391,7 +391,7 @@ test('#707 AC10: обязательные проверки с основания
   }
   assert.ok(!commands(checksOf({ changedFiles: ['src/wall-merge.ts'] })).some((c) => c.includes('junction_parity')));
   const golden = (over, labels) => checksOf(over, labels).find((c) => c.command.includes('ci:golden'));
-  assert.match(golden({ diff: RENDER }).reason, /^рекомендовано, если сдвиг кадров намерен/, 'ci:golden — при visual/render');
+  assert.match(golden({ diff: RENDER }).reason, /^поставит конвейер на S7 \(#827\)/, 'ci:golden — при visual/render');
   assert.match(golden({ diff: RENDER }, ['ci:golden']).reason, /^стоит/);
   assert.equal(golden({ diff: STYLE }), undefined, 'visual/ui — без ci:golden');
   assert.equal(golden({ diff: DIFF('src/render/paper-scene.ts', '  // stroke-width: 2') }), undefined, 'только комментарии — без ci:golden');

@@ -256,3 +256,62 @@ test('#697: ci:full/ci:golden — лёгкий push-прогон не доказ
   assert.equal((await validateGate({ ref: 'issue/1', sha: SHA, ops: light.ops, mutants: false, wait: false })).result, 'green');
   assert.deepEqual(light.dispatched, []);
 });
+
+// ---------- #827 AC4: full из шага трека при visual/render ----------
+
+const FULL_JOBS = jobsOf('smoke', 'smoke_done', 'golden', 'performance_smoke');
+
+/** Gh с полными и лёгкими доказательствами: `full`, итог golden — по строке прогона. */
+function fullProofOps({ snapshots }) {
+  const fake = fakeOps({ snapshots });
+  fake.ops.proof = async (row) => {
+    const full = row.full === true;
+    const golden = row.golden ?? 'success';
+    const proof = buildCiProof({
+      candidateSha: SHA, candidateTree: TREE, runId: row.databaseId, attempt: row.attempt ?? 1, event: row.event,
+      requestedFull: full,
+      needs: {
+        preflight: { result: 'success' },
+        changes: { result: 'success', outputs: { heavy: 'false', mutants_requested: 'false', frontend: 'true', backend: 'false', integration: 'false' } },
+        reuse: { result: 'success', outputs: {} },
+        frontend: { result: 'success' },
+        ...(full ? {
+          smoke: { result: 'success' }, smoke_done: { result: 'success' },
+          golden: { result: golden }, performance_smoke: { result: 'success' },
+        } : {}),
+      },
+    });
+    const jobs = [...BASE_JOBS, ...OTHER_JOBS, ...(full ? FULL_JOBS.map((job) => (job.name === jobsOf('golden')[0].name ? { ...job, conclusion: golden } : job)) : [])];
+    return { proof, jobs, reuseRuns: new Map() };
+  };
+  return fake;
+}
+
+test('#827 AC4: visual/render на S7 — лёгкий proof не принимается, совместимый полный не повторяется, красный golden возвращает', async () => {
+  const { decideTrack } = await import('../scripts/process-track.mjs');
+  const diff = 'diff --git a/src/live-hover.ts b/src/live-hover.ts\n--- a/src/live-hover.ts\n+++ b/src/live-hover.ts\n@@ -68,0 +69 @@\n+  const line = t(\'tip.battery_percent\');\n';
+  const decision = decideTrack({ stage: 'code', branch: 'issue/1-x', labels: ['track:show', 'S7-code-review'], diff });
+  assert.equal(decision.golden, 'add');
+  const gate = (fake) => validateGate({ ref: 'issue/1-x', sha: SHA, ops: fake.ops, mutants: decision.mutants, full: decision.full, wait: false, pollMs: 1000 });
+  // Лёгкий push-прогон на материале — не доказательство: гейт диспатчит full=true.
+  const push = run({ event: 'push', databaseId: 7, url: 'https://run/push' });
+  const started = run({ databaseId: 8, status: 'in_progress', conclusion: null, full: true });
+  const light = fullProofOps({ snapshots: [[push], [push], [push, started]] });
+  const pending = await gate(light);
+  assert.equal(pending.result, 'pending');
+  assert.deepEqual(light.dispatched, ['issue/1-x:light:full']);
+  // Совместимый полный прогон на том же материале уже есть — принимается без нового dispatch.
+  const complete = fullProofOps({ snapshots: [[push, run({ databaseId: 9, full: true })]] });
+  assert.equal((await gate(complete)).result, 'green');
+  assert.deepEqual(complete.dispatched, [], 'полное доказательство не дублируется');
+  // Полный прогон с красным golden — задача возвращается автору до ревью.
+  const red = fullProofOps({ snapshots: [[run({ databaseId: 10, full: true, golden: 'failure', conclusion: 'failure' })]] });
+  assert.equal((await gate(red)).result, 'failed');
+  assert.deepEqual(red.dispatched, []);
+  // Контроль: без render (touch) full=false — лёгкий push-прогон по-прежнему доказательство.
+  const touch = decideTrack({ stage: 'code', branch: 'issue/1-x', labels: ['track:show'], diff: diff.replaceAll('src/live-hover.ts', 'src/pointer-modality.ts') });
+  assert.deepEqual({ golden: touch.golden, full: touch.full }, { golden: 'none', full: false });
+  const plain = fullProofOps({ snapshots: [[push]] });
+  assert.equal((await validateGate({ ref: 'issue/1-x', sha: SHA, ops: plain.ops, mutants: false, full: touch.full, wait: false })).result, 'green');
+  assert.deepEqual(plain.dispatched, []);
+});

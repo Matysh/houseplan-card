@@ -15,8 +15,9 @@
  * его основание, рамки ship, риск по изменённым участкам (#707), повышение
  * ship → show, заметку риска для промпта ревью и строку риска для комментария
  * слияния ship. Печатает `track=`, `mutants=`, `full=`, `ship=`, `raise=`,
- * `basis=`, `risk=`; те же поля и многострочные `risk_note`/`ship_risk` пишет в
- * `$GITHUB_OUTPUT`; при `raise=true` кладёт тело комментария в `<out>/raise.md`.
+ * `golden=`, `basis=`, `risk=`; те же поля и многострочные `risk_note`/`ship_risk`
+ * пишет в `$GITHUB_OUTPUT`; при `raise=true` кладёт тело комментария в
+ * `<out>/raise.md`, при `golden=add` (#827) — в `<out>/golden.md`.
  * Bash шага только исполняет: логики трека в нём нет. С #726 там же
  * `confirmed=` и многострочная `route_note` — заметка маршрута для промпта.
  *
@@ -32,7 +33,10 @@
  *
  * Мутантов в разработке нет ни на одном треке (#709) — `mutants` всегда
  * `false`. Полный набор (смоки, golden, perf) на ветке задачи — только меткам
- * `ci:full` и `ci:golden` (#697): риск, включая `visual`, его не заказывает.
+ * `ci:full` и `ci:golden` (#697). Метку `ci:golden` при визуальном риске в пути
+ * отрисовки плана (`visual`, область `render`) ставит сам шаг трека на S7 — до
+ * выбора Validate на материале (#827, F48); прочий риск, включая `visual` без
+ * `render`, полного набора не заказывает.
  * Рамки ship механические намеренно: по ним конвейер сливает задачу без ревью
  * модели, и решать их «на глаз» некому.
  */
@@ -301,7 +305,9 @@ export function riskNote({ track, confirmed = false, risk, labels = [] } = {}) {
     for (const cls of raising) lines.push(`- ${riskClassLine(risk, cls)}`);
   }
   if (risk.visual?.render && !labels.includes('ci:golden')) {
-    lines.push('Визуальный риск в пути отрисовки плана без ci:golden — если задача меняет вид, нужен ci:golden (PROCESS.md §8); иначе запиши в «чего не проверял».');
+    // #827: метку в этом случае ставит конвейер до выбора Validate — ревью
+    // начинается уже после golden на этом материале.
+    lines.push('Визуальный риск в пути отрисовки плана: конвейер поставил ci:golden (#827), и Validate на этом материале прогнал golden. Сверь: сдвига кадров нет либо он намерен и принят в задаче (PROCESS.md §3 п.13, §5.1).');
     lines.push(`- ${riskClassLine(risk, 'visual')}`);
   }
   return lines.slice(0, RISK_NOTE_LINE_LIMIT).join('\n');
@@ -318,6 +324,23 @@ export function shipRiskText({ risk, confirmed = false } = {}) {
     ? 'Риск по участкам (трек подтверждён владельцем, не повышен)'
     : 'Риск по участкам (visual ship не повышает)';
   return `${head}: ${risk.classes.map((cls) => riskClassLine(risk, cls)).join(' · ')}\n<!-- hp:ship-risk classes=${risk.classes.join(',')} -->`;
+}
+
+/**
+ * Комментарий шага трека, поставившего `ci:golden` (#827): причина — классом
+ * и путями, последствие — какой Validate теперь доказательство. Машинная
+ * строка `hp:golden-added` — последней.
+ */
+export function goldenComment({ risk = null, runUrl = '' } = {}) {
+  const parts = [
+    '**Конвейер поставил `ci:golden` (#827).** Изменённые участки — путь отрисовки плана (класс `visual`, область `render`, PROCESS.md §5.1):',
+    `- ${riskClassLine(risk, 'visual')}`,
+    'Ревью и слияние этого захода — только после Validate с golden на этом материале (`full=true`): лёгкий Validate без golden доказательством не считается. Совместимое полное доказательство на том же материале переиспользуется, а не повторяется.',
+    'Сдвиг кадров, если он намерен, задача принимает сама (PROCESS.md §3 п.13); ненамеренный покажет красный golden до ревью. Прочие метки не меняются.',
+  ];
+  if (runUrl) parts.push(`[Прогон](${runUrl}).`);
+  parts.push('<!-- hp:golden-added -->');
+  return `${parts.join('\n\n')}\n`;
 }
 
 /** Комментарий повышения ship → show: рамки и риск одним комментарием. */
@@ -350,6 +373,11 @@ export function decideTrack({
   const base = resolveTrack({ labels, files });
   const code = stage === 'code' && Boolean(branch);
   const risk = code ? classifyRisk(diff) : emptyRisk();
+  // #827 (F48): визуальный риск в пути отрисовки без `ci:golden` — метку ставит
+  // конвейер, и полный набор выбирается уже по ней. Стоящая метка — не повод
+  // для второго комментария: повтор события ничего не добавляет.
+  const goldenAdd = code && Boolean(risk.visual?.render) && !labels.includes('ci:golden');
+  const golden = goldenAdd ? 'add' : (labels.includes('ci:golden') ? 'present' : 'none');
   const origin = trackOrigin({ labels, comments, owner, infrastructure: base.infrastructure });
   let { track } = base;
   let ship = false; let raise = false; let comment = ''; let violations = [];
@@ -367,7 +395,8 @@ export function decideTrack({
   const reasons = [violations.length && 'рамки ship', raise && risk.raising.length && `риск ${risk.raising.join(', ')}`].filter(Boolean);
   const basis = raise ? `повышен конвейером с ship (${reasons.join(' и ')}); было: ${origin.basis}` : origin.basis;
   return {
-    track, mutants: base.mutants, full: base.full, infrastructure: base.infrastructure, ship, raise, comment, violations,
+    track, mutants: base.mutants, full: base.full || goldenAdd, infrastructure: base.infrastructure, ship, raise, comment, violations,
+    golden, goldenComment: goldenAdd ? goldenComment({ risk, runUrl }) : '',
     risk, confirmed, basis, warning: origin.warning,
     note: code && !ship ? riskNote({ track, confirmed, risk, labels }) : '',
     // #726: на ship модель не зовётся — заметка маршрута не нужна.
@@ -586,11 +615,15 @@ if (isMainModule(import.meta.url)) {
       });
       mkdirSync(out, { recursive: true });
       if (decision.raise) writeFileSync(join(out, 'raise.md'), decision.comment);
+      // #827: тело комментария о поставленной ci:golden — только когда шаг её ставит.
+      rmSync(join(out, 'golden.md'), { force: true });
+      if (decision.golden === 'add') writeFileSync(join(out, 'golden.md'), decision.goldenComment);
       const basis = `${decision.basis}${decision.warning ? ` · внимание: ${decision.warning}` : ''}`;
       // #726: `confirmed` — для шага решения по вердикту (owner-question).
       const lines = [
         `track=${decision.track}`, `mutants=${decision.mutants}`, `full=${decision.full}`, `ship=${decision.ship}`,
-        `raise=${decision.raise}`, `confirmed=${decision.confirmed}`, `basis=${basis}`, `risk=${decision.risk.classes.join(',')}`,
+        `raise=${decision.raise}`, `confirmed=${decision.confirmed}`, `golden=${decision.golden}`, `basis=${basis}`,
+        `risk=${decision.risk.classes.join(',')}`,
       ];
       for (const line of lines) console.log(line);
       if (decision.violations.length) console.log(`violations=${decision.violations.join('; ')}`);
@@ -605,7 +638,7 @@ if (isMainModule(import.meta.url)) {
         appendFileSync(process.env.GITHUB_OUTPUT, `${lines.join('\n')}\n${block('risk_note', decision.note)}${block('route_note', decision.routeNote)}${block('ship_risk', decision.shipRisk)}`);
       }
       if (process.env.GITHUB_STEP_SUMMARY) {
-        appendFileSync(process.env.GITHUB_STEP_SUMMARY, `- трек **${decision.track}** · основание: ${basis} · риск по участкам: ${decision.risk.classes.join(', ') || 'нет'} · полный набор: ${decision.full} · слияние без модели: ${decision.ship}${decision.raise ? ' · повышен ship → show' : ''}\n`);
+        appendFileSync(process.env.GITHUB_STEP_SUMMARY, `- трек **${decision.track}** · основание: ${basis} · риск по участкам: ${decision.risk.classes.join(', ') || 'нет'} · полный набор: ${decision.full} · слияние без модели: ${decision.ship}${decision.raise ? ' · повышен ship → show' : ''}${decision.golden === 'add' ? ' · ci:golden поставлен конвейером (visual/render)' : ''}\n`);
       }
     } else if (command === 'route') {
       // #726: шаг «Решение по вердикту» — один вызов на заход модели.

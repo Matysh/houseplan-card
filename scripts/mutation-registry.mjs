@@ -16123,6 +16123,28 @@ const MUTANT_DEFINITIONS = [
       replace: "    'device-visual', 'device-face'].map(src), // mutant: #816/#817 paths dropped",
     }],
   },
+  {
+    id: 'track-step-never-adds-golden',
+    guard: 'node --test --test-name-pattern="#827 AC4" test/process-track.test.mjs',
+    because: '#827 AC4: render risk without ci:golden must select a golden Validate on the material '
+      + 'before model review; never adding it lets a light Validate start the review again',
+    patches: [{
+      file: 'scripts/process-track.mjs',
+      find: "  const goldenAdd = code && Boolean(risk.visual?.render) && !labels.includes('ci:golden');",
+      replace: '  const goldenAdd = false; // mutant: render risk reaches review on a light Validate',
+    }],
+  },
+  {
+    id: 'track-workflow-ignores-golden-flag',
+    guard: 'node --test --test-name-pattern="#827 AC4" test/process-track.test.mjs',
+    because: '#827 AC4: the script decides golden=add, the workflow step must apply it; printing the '
+      + 'flag without the label leaves the issue without ci:golden while Validate already ran full',
+    patches: [{
+      file: '.github/workflows/_process.yml',
+      find: '            gh issue edit "$NUM" --repo "${{ github.repository }}" --add-label ci:golden\n',
+      replace: '            : # mutant: the label is never added\n',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

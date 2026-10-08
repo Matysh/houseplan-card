@@ -454,6 +454,13 @@ jobs:
       # `ship_risk`) скрипт пишет в GITHUB_OUTPUT сам. Скрипт — из снимка dev
       # (#765): show/ship до ревью не ребейзятся, и ветка, отставшая от dev, его
       # может ещё не нести.
+      #
+      # #827 (F48): визуальный риск в пути отрисовки плана без `ci:golden` —
+      # тот же вызов отвечает `golden=add` и `full=true`; bash ставит метку и
+      # пишет причину с путями до выбора Validate на материале. Стоящая метка
+      # флага не даёт (повтор события ничего не добавляет), прочие метки не
+      # трогаются, а событие `labeled` с `ci:golden` раунда не запускает —
+      # конвейер будят только S4/S7.
       - name: "Трек задачи и рамки ship (#696)"
         id: track
         env:
@@ -481,6 +488,11 @@ jobs:
             gh issue edit "$NUM" --repo "${{ github.repository }}" \
               --add-label track:show --remove-label track:ship
             echo "track:ship -> track:show"
+          fi
+          if printf '%s\n' "$out" | grep -qx 'golden=add'; then
+            gh issue edit "$NUM" --repo "${{ github.repository }}" --add-label ci:golden
+            gh issue comment "$NUM" --repo "${{ github.repository }}" --body-file "$RUNNER_TEMP/track/golden.md"
+            echo "+ci:golden: визуальный риск в пути отрисовки (#827)"
           fi
 
       # Ревьюер обязан смотреть тот же код, который уедет в dev (#257). Раньше
@@ -785,7 +797,8 @@ jobs:
           BRANCH: ${{ steps.branch.outputs.name }}
           SHA: ${{ steps.material.outputs.sha }}
           MUTANTS: ${{ steps.track.outputs.mutants }}
-          # #697: `ci:full`/`ci:golden` — полный набор на материале.
+          # #697: `ci:full`/`ci:golden` — полный набор на материале; #827:
+          # `ci:golden` мог поставить шаг трека по визуальному риску.
           FULL: ${{ steps.track.outputs.full }}
           TOOLS: ${{ steps.tools.outputs.dir }}
         run: |

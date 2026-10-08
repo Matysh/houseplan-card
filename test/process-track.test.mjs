@@ -667,8 +667,9 @@ test('#707 AC5: заметка риска ревьюеру show/ask', () => {
   assert.doesNotMatch(confirmedNote, /Medium/);
   assert.match(riskNote({ track: 'ask', risk }), /Трек ask: сверь, что каждый класс ниже покрыт AC ТЗ/);
   const render = classifyRisk(diffOf([{ path: 'src/render/paper-scene.ts', add: [[3, '  const scale = 2;']] }]));
-  assert.match(riskNote({ track: 'show', risk: render }), /Визуальный риск в пути отрисовки плана без ci:golden — если задача меняет вид, нужен ci:golden/);
-  assert.doesNotMatch(riskNote({ track: 'show', risk: render, labels: ['ci:golden'] }), /ci:golden —/);
+  // #827: без метки её ставит конвейер — ревьюер сверяет сдвиг кадров, а не просит метку.
+  assert.match(riskNote({ track: 'show', risk: render }), /Визуальный риск в пути отрисовки плана: конвейер поставил ci:golden \(#827\), и Validate на этом материале прогнал golden/);
+  assert.doesNotMatch(riskNote({ track: 'show', risk: render, labels: ['ci:golden'] }), /ci:golden/);
   assert.equal(riskNote({ track: 'show', risk: classifyRisk(VISUAL) }), '', 'visual/ui — ни вопроса трека, ни golden');
   assert.equal(riskNote({ track: 'show', risk: classifyRisk('') }), '');
   const everything = classifyRisk(diffOf(RISK_CLASSES.map((_, i) => ({
@@ -807,8 +808,12 @@ test('#707 AC4: шаг трека в _process.yml — один вызов, ко�
   assert.match(run, /--comments="\$comments" --owner="\$OWNER"/);
   const step = workflow.slice(workflow.indexOf(TRACK_STEP), workflow.indexOf('      - name: Привести ветку к dev\n'));
   assert.match(step, /OWNER: \$\{\{ github\.repository_owner \}\}/, 'владелец — владелец репозитория');
-  assert.equal((run.match(/gh issue edit/g) || []).length, 1, 'метки меняются в одном месте');
-  assert.ok(run.indexOf('gh issue edit') > run.indexOf("grep -qx 'raise=true'"), 'метки — только по флагу повышения');
+  // #827: метки меняются только по флагам скрипта — повышения и ci:golden.
+  const edits = [...run.matchAll(/gh issue edit/g)].map((m) => m.index);
+  assert.equal(edits.length, 2, 'повышение трека и ci:golden');
+  assert.ok(edits[0] > run.indexOf("grep -qx 'raise=true'") && edits[0] < run.indexOf("grep -qx 'golden=add'"), 'смена трека — только по флагу повышения');
+  assert.ok(edits[1] > run.indexOf("grep -qx 'golden=add'"), 'ci:golden — только по флагу скрипта');
+  assert.doesNotMatch(run.slice(run.indexOf("grep -qx 'golden=add'")), /--remove-label/, 'ci:golden ничего не снимает');
   // Выходы prepare: заметка — в промпт Review, строка риска — в комментарий слияния.
   const prepare = workflow.slice(workflow.indexOf('\n  prepare:'), workflow.indexOf('    steps:', workflow.indexOf('\n  prepare:')));
   assert.match(prepare, /risk_note: \$\{\{ steps\.track\.outputs\.risk_note \}\}/);
@@ -818,10 +823,11 @@ test('#707 AC4: шаг трека в _process.yml — один вызов, ко�
   const decide = workflow.slice(workflow.indexOf(DECIDE_STEP), workflow.indexOf('      - name: dev ушёл вперёд'));
   assert.match(decide, /SHIP_RISK: \$\{\{ needs\.prepare\.outputs\.ship_risk \}\}/);
   assert.match(decide, /\n\s+\$\{SHIP_RISK\}\n\n\s+<!-- hp:ship-merge material=\$MATERIAL -->\n/, 'строка риска — в комментарии слияния, маркер прежний');
-  // `full` — только из меток: гейт берёт его у шага трека, скрипт — у resolveTrack.
+  // `full` — из меток: гейт берёт его у шага трека, скрипт — у resolveTrack и
+  // у ci:golden, которую сам ставит при visual/render (#827).
   const gate = workflow.slice(workflow.indexOf('      - name: Validate на материале\n'), workflow.indexOf('      - name: Validate идёт — раунд продолжит событие\n'));
   assert.match(gate, /FULL: \$\{\{ steps\.track\.outputs\.full \}\}/);
-  assert.equal(decideTrack({ stage: 'code', branch: 'b', labels: ['track:show'], diff: RISKY }).full, false, 'риск полного набора не заказывает');
+  assert.equal(decideTrack({ stage: 'code', branch: 'b', labels: ['track:show'], diff: RISKY }).full, false, 'риск вне render полного набора не заказывает');
 });
 
 // Окружение git без GIT_* родителя и без глобального конфига.
@@ -899,7 +905,8 @@ function trackSandbox(t, { change, base = () => {} }) {
     'fi',
     'case "$1 $2" in',
     '  "issue view") if [ -f "$FAKE_DIR/comments.json" ]; then cat "$FAKE_DIR/comments.json"; exit 0; fi; echo "gh: API недоступен" >&2; exit 1 ;;',
-    '  "issue comment") while [ $# -gt 0 ]; do if [ "$1" = "--body-file" ]; then cp "$2" "$FAKE_DIR/comment.md"; fi; shift; done ;;',
+    // #827: шаг трека может написать два комментария (повышение и ci:golden) — копятся оба.
+    '  "issue comment") while [ $# -gt 0 ]; do if [ "$1" = "--body-file" ]; then cat "$2" >> "$FAKE_DIR/comment.md"; fi; shift; done ;;',
     '  "issue edit") ;;',
     '  *) echo "unexpected gh $*" >&2; exit 97 ;;',
     'esac',
@@ -1048,6 +1055,9 @@ test('#755 AC3: шаг трека на настоящем bash — ship с уд�
   assert.match(raised.stdout, /^raise=true$/m);
   assert.equal(raised.output.track, 'show');
   assert.match(raised.comment, /- perf: src\/iso-scene-render\.ts:5 \(удалена\) · участок iso-scene-render/);
+  // #827: iso-scene-render — путь отрисовки: тот же шаг ставит и ci:golden, вторым комментарием.
+  assert.match(raised.comment, /\*\*Конвейер поставил `ci:golden` \(#827\)\.\*\*[^]*- visual \(render\): src\/iso-scene-render\.ts:5 \(удалена\)/);
+  assert.equal(raised.output.full, 'true');
 });
 
 test('#707 AC4: шаг трека на настоящем bash — комментарии недоступны, этап spec, show', async (t) => {
@@ -1070,6 +1080,109 @@ test('#707 AC4: шаг трека на настоящем bash — коммен�
   assert.equal(show.output.track, 'show');
   assert.equal(show.calls.length, 1, 'show не трогает меток');
   assert.match(show.output.risk_note, /- touch: src\/pointer-modality\.ts:3/);
+});
+
+// ---------- #827 AC4: visual/render на S7 ставит ci:golden до выбора Validate ----------
+
+const RENDER = diffOf([{ path: 'src/live-hover.ts', add: [[69, "  const line = t('tip.battery_percent', { value: reading.value });"]] }]);
+const s7render = (over = {}) => decideTrack({
+  stage: 'code', branch: 'issue/7-x', labels: ['track:show', 'S7-code-review', 'P2', 'bug'], files: ['src/live-hover.ts'],
+  numstat: [{ added: 1, deleted: 0, path: 'src/live-hover.ts' }], nameStatus: [{ status: 'M', path: 'src/live-hover.ts' }],
+  diff: RENDER, comments: [], owner: 'Matysh', runUrl: 'https://run/9', ...over,
+});
+
+test('#827 AC4: шаг трека ставит ci:golden при visual/render — полный набор, причина с путями, один раз', () => {
+  const added = s7render();
+  assert.equal(added.golden, 'add');
+  assert.equal(added.full, true, 'Validate на материале выбирается уже полным');
+  assert.equal(added.mutants, false, 'мутантов в разработке по-прежнему нет (#709)');
+  assert.equal(added.track, 'show', 'трек по визуальному риску не меняется');
+  assert.match(added.goldenComment, /^\*\*Конвейер поставил `ci:golden` \(#827\)\.\*\* Изменённые участки — путь отрисовки плана/);
+  assert.match(added.goldenComment, /- visual \(render\): src\/live-hover\.ts:69 · участок live-hover \(render\)/);
+  assert.match(added.goldenComment, /лёгкий Validate без golden доказательством не считается/);
+  assert.match(added.goldenComment, /Совместимое полное доказательство на том же материале переиспользуется, а не повторяется/);
+  assert.match(added.goldenComment, /\[Прогон\]\(https:\/\/run\/9\)\.\n\n<!-- hp:golden-added -->\n$/);
+  assert.match(added.note, /конвейер поставил ci:golden \(#827\)/);
+  // Повтор события: метка уже стоит — ни флага, ни комментария; полный набор — по метке.
+  const again = s7render({ labels: ['track:show', 'S7-code-review', 'P2', 'bug', 'ci:golden'] });
+  assert.deepEqual({ golden: again.golden, full: again.full, comment: again.goldenComment }, { golden: 'present', full: true, comment: '' });
+  assert.doesNotMatch(again.note, /ci:golden/);
+  // ci:full полный набор и так даёт, но контракт метки ci:golden (приёмка кадров в задаче) — тот же.
+  assert.equal(s7render({ labels: ['track:ask', 'ci:full'] }).golden, 'add');
+  // ship: visual ship не повышает, но слияние без модели тоже ждёт golden на материале.
+  const ship = s7render({ labels: ['track:ship', 'S7-code-review'] });
+  assert.deepEqual({ ship: ship.ship, raise: ship.raise, golden: ship.golden, full: ship.full }, { ship: true, raise: false, golden: 'add', full: true });
+  // Контроль: ui без render, touch, этап spec, нет ветки — прежнее поведение.
+  for (const [name, quiet] of [
+    ['visual/ui', s7render({ diff: VISUAL, files: ['src/styles/plan.styles.ts'] })], ['touch', s7render({ diff: RISKY })],
+    ['spec', s7render({ stage: 'spec' })], ['без ветки', s7render({ branch: '' })],
+  ]) {
+    assert.deepEqual({ golden: quiet.golden, full: quiet.full, comment: quiet.goldenComment }, { golden: 'none', full: false, comment: '' }, name);
+  }
+});
+
+test('#827 AC4: событие labeled с ci:golden раунда не запускает — конвейер будят только S4/S7', async () => {
+  const { readFileSync: read } = await import('node:fs');
+  // Условие вычисляется, а не ищется регуляркой: `if:` job как выражение Actions.
+  const condition = (text, job) => {
+    const at = text.indexOf(`\n  ${job}:\n`);
+    assert.ok(at >= 0, job);
+    const m = /\n    if: (.+)\n/.exec(text.slice(at));
+    assert.ok(m, `${job}: if`);
+    return (label) => {
+      const js = m[1].replaceAll('github.event.label.name', JSON.stringify(label)).replaceAll(' == ', ' === ').replaceAll(' != ', ' !== ');
+      assert.match(js, /^[\s"'\w:=!|&()-]+$/, `разбираемое выражение: ${m[1]}`);
+      return Function(`return (${js});`)();
+    };
+  };
+  const caller = condition(read(join(dirname(WORKFLOW), 'process.yml'), 'utf8'), 'dev');
+  const guard = condition(read(WORKFLOW, 'utf8'), 'guard');
+  for (const label of ['ci:golden', 'ci:full', 'track:show', 'P2']) {
+    assert.equal(caller(label), false, `${label}: вызов тела`);
+    assert.equal(guard(label), false, `${label}: guard`);
+  }
+  for (const label of ['S7-code-review', 'S4-spec-review']) {
+    assert.equal(caller(label), true, label);
+    assert.equal(guard(label), true, label);
+  }
+});
+
+const renderChange = (work) => writeFileSync(join(work, 'src', 'live-hover.ts'),
+  "export const batteryLine = (t, value) => t('tip.battery_percent', { value });\n");
+
+test('#827 AC4: шаг трека на настоящем bash — ci:golden до Validate, повтор события ничего не добавляет', async (t) => {
+  if (!hasTools()) { t.skip('bash/tar/git недоступны'); return; }
+  const { readFileSync: read } = await import('node:fs');
+  const run = runnable(read(WORKFLOW, 'utf8'), TRACK_STEP);
+  const box = trackSandbox(t, { change: renderChange });
+  box.comments([]);
+  const labels = 'track:ask,S7-code-review,P2,bug';
+  const first = box.run(run, trackEnv(labels));
+  assert.equal(first.status, 0, first.stderr);
+  assert.match(first.stdout, /^golden=add$/m);
+  assert.deepEqual(first.calls, [
+    'issue view 7 --repo o/r --json comments',
+    'issue edit 7 --repo o/r --add-label ci:golden',
+    `issue comment 7 --repo o/r --body-file ${join(dirname(box.work), 'runner', 'track', 'golden.md')}`,
+  ], 'метка добавляется одна, ничего не снимается');
+  assert.deepEqual({ full: first.output.full, golden: first.output.golden, mutants: first.output.mutants, track: first.output.track },
+    { full: 'true', golden: 'add', mutants: 'false', track: 'ask' }, 'гейт материала получает full=true из того же шага');
+  assert.match(first.comment, /- visual \(render\): src\/live-hover\.ts:1 · участок live-hover \(render\)/);
+  assert.match(first.comment, /<!-- hp:golden-added -->/);
+  assert.match(first.summary, /ci:golden поставлен конвейером \(visual\/render\)/);
+  // Раунд, разбуженный завершением Validate (или повтор S7): метка уже стоит.
+  const again = box.run(run, trackEnv(`${labels},ci:golden`));
+  assert.equal(again.status, 0, again.stderr);
+  assert.deepEqual(again.calls, ['issue view 7 --repo o/r --json comments'], 'ни второй метки, ни второго комментария');
+  assert.deepEqual({ full: again.output.full, golden: again.output.golden }, { full: 'true', golden: 'present' });
+  assert.equal(again.comment, '');
+  // Стиль интерфейса без render — прежнее: ни метки, ни полного набора.
+  const ui = trackSandbox(t, { change: (work) => writeFileSync(join(work, 'src', 'styles', 'plan.styles.ts'), 'export const css = `\n  .x { color: blue; }\n`;\n') });
+  ui.comments([]);
+  const plain = ui.run(run, trackEnv('track:show,S7-code-review'));
+  assert.equal(plain.status, 0, plain.stderr);
+  assert.deepEqual(plain.calls, ['issue view 7 --repo o/r --json comments']);
+  assert.deepEqual({ full: plain.output.full, golden: plain.output.golden }, { full: 'false', golden: 'none' });
 });
 
 // ---------- #726: маршрут вердикта — reclassify, вопрос владельцу, немедленный review-4 ----------

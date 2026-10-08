@@ -252,7 +252,7 @@ export function riskConsequence({ track, confirmed = false, risk } = {}) {
 /**
  * Обязательные проверки «команда · основание» (#707, §8). `ci:golden` — только
  * при визуальном риске в пути отрисовки: CSS интерфейса, комментарии и тесты
- * кадров плана не двигают.
+ * кадров плана не двигают. Без метки её ставит конвейер на S7 (#827).
  */
 export function requiredChecks({ risk = null, changedFiles = [], smokes = null, labels = [] } = {}) {
   const out = [{ command: '`npm run gate:small`', reason: 'всегда (§8)' }];
@@ -276,9 +276,11 @@ export function requiredChecks({ risk = null, changedFiles = [], smokes = null, 
   const mirrors = changedFiles.filter((file) => JUNCTION_MIRRORS.includes(file));
   if (mirrors.length) out.push({ command: `\`${JUNCTION_PARITY}\``, reason: `junction parity: изменено зеркало ${mirrors.join(', ')} (§8)` });
   if (risk?.visual?.render) {
+    // #827: без метки её ставит конвейер на S7 до выбора Validate — автору
+    // остаётся знать, что ревью начнётся после golden на материале.
     out.push({ command: 'метка `ci:golden`', reason: labels.includes('ci:golden')
       ? 'стоит: golden на ветке и приёмка сдвинутых кадров в задаче (§5.1)'
-      : 'рекомендовано, если сдвиг кадров намерен: визуальный риск в пути отрисовки (§5.1, §8)' });
+      : 'поставит конвейер на S7 (#827): визуальный риск в пути отрисовки — ревью после Validate с golden (§5.1, §8)' });
   }
   return out;
 }
