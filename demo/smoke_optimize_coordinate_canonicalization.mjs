@@ -141,15 +141,22 @@ const out = await page.evaluate(async () => {
     && !card.renderRoot.querySelector('hp-dialog .btn.on');
   card._alignDialog = null; await card.updateComplete;
 
-  card._serverCfg = null; card._layout = {};
-  card._cfgContentFingerprint = ''; card._layoutContentFingerprint = '';
-  card._loadOk = false;
-  await card._loadFromServer();
-  card._editorRuntime.optimizePlans.open(); await card.updateComplete;
-  result.coldReloadIsExactNoOp = card._alignDialog?.changed === false
-    && card._alignDialog.report.latticeCoordinatesCanonicalized === 0
-    && !card.renderRoot.querySelector('hp-dialog .btn.on');
-  card._alignDialog = null; await card.updateComplete;
+  // #824: a cold card really loads; clearing a live card's private fields can
+  // race its already-running automatic intake, whose duplicate read coalesces.
+  const cold = document.createElement('houseplan-card');
+  cold.setConfig({ type: 'custom:houseplan-card', floor: 'noisy', title: 'Cold canonical fixture' });
+  cold.hass = card.hass;
+  document.body.append(cold);
+  const deadline = performance.now() + 6000;
+  while ((!cold._loadOk || cold._booting) && performance.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 16));
+  }
+  await cold._ensureEditorRuntime();
+  cold._editorRuntime.optimizePlans.open(); await cold.updateComplete;
+  result.coldReloadIsExactNoOp = cold._loadOk && cold._alignDialog?.changed === false
+    && cold._alignDialog.report.latticeCoordinatesCanonicalized === 0
+    && !cold.renderRoot.querySelector('hp-dialog .btn.on');
+  cold.remove();
 
   await card._undoPlanOptimization(); await card.updateComplete;
   result.undoUsesServerSnapshot = sent.filter((type) => type === 'houseplan/plan/optimize_undo').length === 1;

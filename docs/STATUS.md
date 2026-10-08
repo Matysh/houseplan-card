@@ -32,6 +32,8 @@ reject replaced/detached/navigated responses and late write authority. A real
 paint timeout keeps the geometry's matching device candidate, not an old door
 projection, without blessing a complete frame or starting a retry loop.
 Canonical: `WARM-REMOUNT.md` §5.1. Readonly/input, golden and bundle ratchets remain.
+Existing static parity and cold-optimization fixtures now use authoritative
+server setup and a distinct cold element, not private loaded-state injection.
 
 Mutation witness readiness (#830): node browser guards explicitly compile their
 model fixtures in a fresh worktree; the cheap readiness check includes smoke

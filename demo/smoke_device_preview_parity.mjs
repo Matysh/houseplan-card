@@ -124,10 +124,9 @@ const res = await page.evaluate(async () => {
       position: 'bottom',
     },
   };
-  c._serverCfg.markers = [
-    ...(c._serverCfg.markers || []).filter((marker) => marker.id !== 'd_temp'),
-    persistedBadge,
-  ];
+  await window.__hpTest.setServerConfig((cfg) => {
+    cfg.markers = [...(cfg.markers || []).filter((marker) => marker.id !== 'd_temp'), persistedBadge];
+  });
   c._regSignature = '';
   c._maybeRebuildDevices();
   c._setMode('view');
@@ -149,22 +148,13 @@ const res = await page.evaluate(async () => {
   await customElements.whenDefined('houseplan-space-card');
   const card = document.createElement('houseplan-space-card');
   card.setConfig({ type: 'custom:houseplan-space-card', space: 'f1' });
-  // A real static card reads the latest complete server/cache snapshot. Inject
-  // that same revision explicitly here so this smoke compares renderers, not
-  // the demo server's intentionally non-persistent websocket fixture.
-  card._snap = {
-    config: structuredClone(c._serverCfg),
-    rev: c._cfgRev,
-    configFingerprint: `fixture-${c._cfgRev}`,
-    layout: structuredClone(c._layout),
-    layoutRev: c._layoutRev,
-    layoutFingerprint: `fixture-${c._layoutRev}`,
-  };
-  card._loadedOnce = true;
+  // #824: compare the same authoritative fixture through real static loading,
+  // not a seeded private snapshot that bypasses attach revalidation.
   card.hass = c.hass;
   document.body.appendChild(card);
   const started = Date.now();
-  while (!card.renderRoot?.querySelector('.hp-static-stage') && Date.now() - started < 6000) await wait(60);
+  while ((!card._loadedOnce || !card.renderRoot?.querySelector('.hp-static-stage'))
+    && Date.now() - started < 6000) await wait(60);
   await card.updateComplete;
   const staticNode = card.renderRoot.querySelector('.dev[data-id="d_light1"]');
   const staticFace = face(staticNode);

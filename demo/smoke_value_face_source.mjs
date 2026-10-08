@@ -108,19 +108,16 @@ const res = await page.evaluate(async () => {
   ]);
 
   await customElements.whenDefined('houseplan-space-card');
+  // Publish the fixture through the demo server before its real attach read.
+  await window.__hpTest.setServerConfig(structuredClone(c._serverCfg));
+  await window.__hpTest.setLayout(structuredClone(c._layout));
   const staticCard = document.createElement('houseplan-space-card');
   staticCard.setConfig({ type: 'custom:houseplan-space-card', space: item().space });
-  staticCard._snap = {
-    config: structuredClone(c._serverCfg), rev: c._cfgRev,
-    configFingerprint: `fixture-${c._cfgRev}`,
-    layout: structuredClone(c._layout), layoutRev: c._layoutRev,
-    layoutFingerprint: `fixture-${c._layoutRev}`,
-  };
-  staticCard._loadedOnce = true;
   staticCard.hass = c.hass;
   document.body.appendChild(staticCard);
   const started = Date.now();
-  while (!staticCard.renderRoot?.querySelector('.hp-static-stage') && Date.now() - started < 6000) {
+  while ((!staticCard._loadedOnce || !staticCard.renderRoot?.querySelector('.hp-static-stage'))
+    && Date.now() - started < 6000) {
     await wait(60);
   }
   await staticCard.updateComplete;

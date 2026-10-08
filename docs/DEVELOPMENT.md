@@ -164,6 +164,10 @@ static identity, kiosk/touch smokes and golden verification without accepting
 new baselines. Preserve fixed-floor selection, readonly static input and bundle
 ratchets; six browser mutation declarations are inventoried and two pure
 controller guards stay cheap. Execute only `mutation-gate --check` locally.
+Static parity fixtures publish config/layout through `__hpTest` before mounting;
+do not bypass authoritative attach with `_snap`/`_loadedOnce` writes. The
+coordinate-canonicalization cold oracle mounts a distinct card and waits for
+its real load, rather than clearing a live card while its intake is pending.
 
 Read `docs/TOUCH-SUPPORT.md` before changing interaction code.
 
