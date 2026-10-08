@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Plan: accepting a geometry edit no longer lets a shared coordinate tuple
+  overwrite another room or floor during wall-model adoption. Subsequent
+  edits and Undo/Redo retain the accepted geometry and wall IDs
+  ([#826](https://github.com/Matysh/houseplan-card/issues/826)).
 - View: embedded space cards refresh missed plan/device-position changes on
   return. A long return before Home Assistant is ready now waits safely;
   rapidly repeated reconnections no longer accept obsolete responses.

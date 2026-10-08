@@ -1,4 +1,4 @@
-// #500 AC4: the four post-write adoptions — space/delete from both runtimes,
+// #500/#826: the reachable post-write adoptions — editor space/delete,
 // Optimize Undo and Import apply — pass the same backdrop readiness gate as a
 // reload before the structure is replaced, and take config/layout revisions
 // from the re-read `config/get`/`layout/get`, never from the write reply.
@@ -9,9 +9,7 @@ import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const out = await page.evaluate(async () => {
   const card = window.__card;
-  await card._ensureOnboardingRuntime();
   const editor = card._editorRuntime;
-  const onboarding = card._onboardingRuntime;
   const adoption = card._adoption;
   const result = {};
 
@@ -127,10 +125,18 @@ const out = await page.evaluate(async () => {
     busy: false, saved: [],
   });
 
-  for (const [name, runtime] of [['onboardingDelete', onboarding], ['editorDelete', editor]]) {
+  const deleteFromUi = async () => {
+    await card.updateComplete;
+    const button = card.renderRoot.querySelector('hp-dialog[data-kind="space"] .dialog-action-danger button');
+    if (!button) throw new Error('reachable editor Delete control is absent');
+    button.click();
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    await card.updateComplete;
+  };
+  for (const name of ['editorDelete']) {
     await reset(name);
     card._spaceDialog = spaceDialog('beta');
-    await runtime._deleteSpace();
+    await deleteFromUi();
     // the write reply carried cfgRev 11; the concurrent client moved it to 12
     verdict(name, {
       [`${name}RevisionNotFromDeleteReply`]: card._cfgRev === 12 && server.cfgRev === 12,
@@ -161,10 +167,10 @@ const out = await page.evaluate(async () => {
   });
 
   assetReady = false;
-  for (const [name, runtime] of [['onboardingDelete', onboarding], ['editorDelete', editor]]) {
+  for (const name of ['editorDelete']) {
     await reset(`${name}-refused`);
     card._spaceDialog = spaceDialog('beta');
-    await runtime._deleteSpace();
+    await deleteFromUi();
     refusedVerdict(name, { [`${name}RefusedReleasesDialog`]: card._spaceDialog?.busy === false });
   }
   await reset('optimizeUndo-refused');

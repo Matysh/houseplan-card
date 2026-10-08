@@ -451,7 +451,7 @@ def test_issue_819_space_delete_target_matches_the_card_fixture(case: dict) -> N
     assert _space_marker_dependencies(config, layout, case["spaceId"]) == case["dependencies"]
 
     target_config, target_layout, dependencies, removed_layout, removed_markers = (
-        _space_delete_target(config, layout, case["spaceId"], remove_markers=True)
+        _space_delete_target(config, layout, case["spaceId"], remove_markers=case.get("removeMarkers", True))
     )
 
     assert removed_markers == case["removedMarkers"]
@@ -580,6 +580,9 @@ async def test_issue_819_space_delete_with_markers_is_one_authoritative_write(
     strips = {strip["id"]: strip for strip in final["config"]["spaces"][0]["led_strips"]}
     assert strips["strip"]["marker"] is None and strips["strip"]["active"] is True
     assert strips["kept_strip"]["marker"] == "keeper"
+    remaining = final["config"]["spaces"][0]
+    assert remaining["stairs"] == case["configAfter"]["spaces"][0]["stairs"]
+    assert by_id["keeper"]["vacuum"] == case["configAfter"]["markers"][1]["vacuum"]
     assert final["config"]["settings"]["marker_area_snapshot"] == {
         "keeper": {"binding": "entity:switch.keeper", "area": "bedroom"},
     }
@@ -638,6 +641,7 @@ async def test_issue_819_last_space_ignores_the_flag(
         "expected_rev": 0,
     })
     config_set = await client.receive_json()
+    assert config_set["success"], config_set
     await client.send_json_auto_id({
         "type": "houseplan/layout/set", "layout": copy.deepcopy(case["layout"]),
     })
@@ -653,6 +657,43 @@ async def test_issue_819_last_space_ignores_the_flag(
     await client.send_json_auto_id({"type": "houseplan/config/get"})
     final = (await client.receive_json())["result"]["config"]
     assert final["spaces"] == [] and final["markers"] == case["configAfter"]["markers"]
+
+
+async def test_issue_826_absent_space_delete_preserves_dangling_references(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, monkeypatch,
+) -> None:
+    """The endpoint rejects absent targets before candidate cleanup or storage."""
+    from custom_components.houseplan.store import get_data
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    case, config_rev, layout_rev, _ = await _seed_space_delete_with_markers(hass, client)
+    runtime = get_data(hass)
+    config = copy.deepcopy(case["config"])
+    config["spaces"][1]["stairs"][0]["target_space_id"] = "missing"
+    keeper = next(marker for marker in config["markers"] if marker["id"] == "keeper")
+    keeper["vacuum"]["map_routes"][0]["space"] = "missing"
+    await runtime.config_store.async_save({"config": config, "rev": config_rev})
+    before_config = copy.deepcopy(await runtime.config_store.async_load())
+    before_layout = copy.deepcopy(await runtime.store.async_load())
+    writes: list[dict] = []
+
+    async def unexpected_write(value: dict) -> None:
+        writes.append(copy.deepcopy(value))
+
+    monkeypatch.setattr(runtime.config_store, "async_save", unexpected_write)
+    monkeypatch.setattr(runtime.store, "async_save", unexpected_write)
+    for remove_markers in (False, True):
+        await client.send_json_auto_id({
+            "type": "houseplan/space/delete", "space_id": "missing",
+            "expected_config_rev": config_rev, "expected_layout_rev": layout_rev,
+            "remove_markers": remove_markers,
+        })
+        rejected = await client.receive_json()
+        assert not rejected["success"] and rejected["error"]["code"] == "space_not_found"
+        assert await runtime.config_store.async_load() == before_config
+        assert await runtime.store.async_load() == before_layout
+    assert writes == []
 
 
 async def test_layout_roundtrip(hass: HomeAssistant, hass_ws_client: WebSocketGenerator) -> None:

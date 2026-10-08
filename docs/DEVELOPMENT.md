@@ -109,14 +109,34 @@ pre-feature reference. Raw dist moves from 2705833 to 2712880 bytes; only that
 size baseline is recalibrated, not coupling or runtime-performance limits.
 Optional eager-code/style extraction is tracked separately in #805, not done here.
 
-## Space deletion completion (#819)
+## Space deletion completion (#819/#826)
 
-`src/editors/space-delete.ts` owns the post-confirmation path for editor and
-onboarding. Keep confirmation text in the callers and preserve the onboarding
-lazy boundary (the host port is a type-only import). Re-resolve the current
+`src/editors/space-delete.ts` owns the editor's post-confirmation path.
+Keep confirmation text in the caller and the host port type-only. Onboarding
+only creates/imports spaces: its form port has no Delete and no delete adapter.
+The card delegates Delete to the editor runtime; `space-settings-dialog.ts`
+passes that callback to `space-form.ts`, which renders the actual control.
+Re-resolve the current
 dialog/target before writing, retain the confirmed-marker-set guard, flush and
 await pending writes before reading revisions, and adopt the authoritative
 re-read bodies. Asset-wait is still owned by the scheduled reload.
+
+`createSpaceDeletionCandidate` mirrors successful server deletion, including
+nullable incoming stair targets, and leaves absent targets unchanged (the WS
+endpoint rejects them before its pure candidate). The shared fixture covers
+ordinary/bulk, blocked, last-space and missing-space cases; server atomicity,
+rights, conflict and route-removal proofs remain independent.
+
+Wall-model adoption copies only scalar leaf arrays, not the whole live model.
+Point identity is not a gesture contract; root, rooms, partitions and catalog
+records keep their id-based references and candidate property order. Run
+`node --test test/wall-adoption-alias.test.mjs` after compilation and
+`node demo/smoke_wall_adoption_alias.mjs` on a fresh demo bundle for two real
+Resize commits with a foreign alias, opening-host preservation and exact
+Undo/Redo. Its `--json-model` control has independent JSON points. The existing
+real-plan pointer smoke also accepts `--alias-ownership` for the initial
+materialization edge. These are commit-boundary copies, not a new full clone
+on every pointermove; no ownership cache or schema migration is introduced.
 
 After the test build, run `node --test test/space-delete-dialog.test.mjs
 test/space-deletion.test.mjs` for the shared path and TS/Python mirror. Run

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "about": "#819: deleting a space together with the markers that block it. Shared by test/space-deletion.test.mjs (createSpaceDeletionCandidate, deletePlanMarkers) and tests_backend/test_ha_websocket.py (_space_delete_target, the pair houseplan/space/delete commits) so the card and the server count and delete the same markers. Stairs and robot map routes are left out on purpose: the two candidates treat them differently today.",
+  "about": "#819/#826: the same TS/Python space-delete candidate, including stair links, robot map routes and unknown fields. The authoritative endpoint also covers rejected/absent targets without writes.",
   "cases": [
     {
       "name": "hidden, space, room and position dependencies go like the device dialog's Delete",
@@ -14,6 +14,10 @@
           {
             "id": "f2", "title": "Upstairs", "view_box": [0, 0, 1, 1], "plan_url": null,
             "rooms": [{ "id": "r2", "name": "Bedroom", "poly": [[0, 0], [1, 0], [1, 1], [0, 1]] }],
+            "stairs": [
+              { "id": "incoming", "kind": "straight", "x": 0.2, "y": 0.2, "length": 0.2, "width": 0.1, "angle": 0, "direction": "forward", "target_space_id": "f1", "future": { "keep": 7 } },
+              { "id": "foreign", "kind": "straight", "x": 0.4, "y": 0.2, "length": 0.2, "width": 0.1, "angle": 0, "direction": "forward", "target_space_id": "f2" }
+            ],
             "led_strips": [
               { "id": "strip", "points": [[0.1, 0.1], [0.5, 0.1]], "marker": "hidden_room", "active": false },
               { "id": "kept_strip", "points": [[0.1, 0.5], [0.5, 0.5]], "marker": "keeper", "active": true }
@@ -32,6 +36,10 @@
           {
             "id": "keeper", "binding": "entity:switch.keeper", "space": "f2", "room_id": "r2",
             "controls": ["marker:by_layout", "light.kitchen", "marker:keeper_light"],
+            "vacuum": { "source": "camera.robot", "map_routes": [
+              { "id": "deleted-map", "source": "camera.robot", "map_id": "1", "space": "f1", "calibration": [1, 0, 0, 0, 1, 0], "future": 8 },
+              { "id": "kept-map", "source": "camera.robot", "map_id": "2", "space": "f2", "calibration": [1, 0, 0, 0, 1, 0], "future": 9 }
+            ] },
             "pdfs": [{ "name": "Wiring", "url": "/houseplan_files/files/keeper/wiring.pdf" }]
           },
           { "id": "keeper_light", "binding": "entity:light.keeper", "space": "f2", "is_light": true, "controls": ["marker:by_space"] }
@@ -61,6 +69,10 @@
           {
             "id": "f2", "title": "Upstairs", "view_box": [0, 0, 1, 1], "plan_url": null,
             "rooms": [{ "id": "r2", "name": "Bedroom", "poly": [[0, 0], [1, 0], [1, 1], [0, 1]] }],
+            "stairs": [
+              { "id": "incoming", "kind": "straight", "x": 0.2, "y": 0.2, "length": 0.2, "width": 0.1, "angle": 0, "direction": "forward", "target_space_id": null, "future": { "keep": 7 } },
+              { "id": "foreign", "kind": "straight", "x": 0.4, "y": 0.2, "length": 0.2, "width": 0.1, "angle": 0, "direction": "forward", "target_space_id": "f2" }
+            ],
             "led_strips": [
               { "id": "strip", "points": [[0.1, 0.1], [0.5, 0.1]], "marker": null, "active": true },
               { "id": "kept_strip", "points": [[0.1, 0.5], [0.5, 0.5]], "marker": "keeper", "active": true }
@@ -72,6 +84,9 @@
           {
             "id": "keeper", "binding": "entity:switch.keeper", "space": "f2", "room_id": "r2",
             "controls": ["light.kitchen", "marker:keeper_light"],
+            "vacuum": { "source": "camera.robot", "map_routes": [
+              { "id": "kept-map", "source": "camera.robot", "map_id": "2", "space": "f2", "calibration": [1, 0, 0, 0, 1, 0], "future": 9 }
+            ] },
             "pdfs": [{ "name": "Wiring", "url": "/houseplan_files/files/keeper/wiring.pdf" }]
           },
           { "id": "keeper_light", "binding": "entity:light.keeper", "space": "f2", "is_light": true, "controls": null },
@@ -101,7 +116,7 @@
         ],
         "markers": [
           { "id": "direct", "binding": "entity:sensor.direct", "space": "only", "room_id": "room", "name": "Kept" },
-          { "id": "hidden", "binding": "virtual", "hidden": true, "name": "Hidden" }
+          { "id": "hidden", "binding": "virtual", "hidden": true, "name": "Hidden", "vacuum": { "source": "camera.robot", "map_routes": [{ "id": "last-map", "source": "camera.robot", "map_id": "1", "space": "only", "calibration": [1, 0, 0, 0, 1, 0], "future": 3 }] } }
         ],
         "settings": {}
       },
@@ -116,11 +131,83 @@
         "spaces": [],
         "markers": [
           { "id": "direct", "binding": "entity:sensor.direct", "name": "Kept" },
-          { "id": "hidden", "binding": "virtual", "hidden": true, "name": "Hidden" }
+          { "id": "hidden", "binding": "virtual", "hidden": true, "name": "Hidden", "vacuum": { "source": "camera.robot", "map_routes": [] } }
         ],
         "settings": {}
       },
       "layoutAfter": {}
+    },
+    {
+      "name": "ordinary unoccupied deletion clears only incoming stairs and map routes",
+      "spaceId": "old",
+      "removeMarkers": false,
+      "config": {
+        "spaces": [
+          { "id": "old", "rooms": [] },
+          { "id": "kept", "rooms": [], "stairs": [
+            { "id": "incoming", "target_space_id": "old", "future": { "keep": 1 } },
+            { "id": "foreign", "target_space_id": "elsewhere" },
+            { "id": "unbound", "target_space_id": null },
+            { "id": "legacy", "future": 2 }
+          ] },
+          { "id": "no-stairs", "rooms": [], "future": 3 }
+        ],
+        "markers": [{ "id": "robot", "space": "kept", "vacuum": { "future": 4, "map_routes": [
+          { "id": "incoming", "space": "old", "future": 5 },
+          { "id": "foreign", "space": "kept", "future": 6 }
+        ] } }],
+        "future": { "keep": 7 }
+      },
+      "layout": { "robot": { "s": "kept", "x": 0.2, "y": 0.3 } },
+      "dependencies": [], "hiddenCount": 0, "removedMarkers": [],
+      "configAfter": {
+        "spaces": [
+          { "id": "kept", "rooms": [], "stairs": [
+            { "id": "incoming", "target_space_id": null, "future": { "keep": 1 } },
+            { "id": "foreign", "target_space_id": "elsewhere" },
+            { "id": "unbound", "target_space_id": null },
+            { "id": "legacy", "future": 2 }
+          ] },
+          { "id": "no-stairs", "rooms": [], "future": 3 }
+        ],
+        "markers": [{ "id": "robot", "space": "kept", "vacuum": { "future": 4, "map_routes": [
+          { "id": "foreign", "space": "kept", "future": 6 }
+        ] } }],
+        "future": { "keep": 7 }
+      },
+      "layoutAfter": { "robot": { "s": "kept", "x": 0.2, "y": 0.3 } }
+    },
+    {
+      "name": "blocked ordinary deletion does not clear stairs or routes",
+      "spaceId": "old", "removeMarkers": false,
+      "config": {
+        "spaces": [{ "id": "old", "rooms": [] }, { "id": "kept", "rooms": [], "stairs": [{ "id": "incoming", "target_space_id": "old", "future": 1 }] }],
+        "markers": [{ "id": "blocking", "space": "old", "vacuum": { "map_routes": [{ "id": "map", "space": "old", "future": 2 }] } }]
+      },
+      "layout": { "blocking": { "s": "old", "x": 0.2, "y": 0.3 } },
+      "dependencies": ["blocking"], "hiddenCount": 0, "removedMarkers": [],
+      "configAfter": {
+        "spaces": [{ "id": "old", "rooms": [] }, { "id": "kept", "rooms": [], "stairs": [{ "id": "incoming", "target_space_id": "old", "future": 1 }] }],
+        "markers": [{ "id": "blocking", "space": "old", "vacuum": { "map_routes": [{ "id": "map", "space": "old", "future": 2 }] } }]
+      },
+      "layoutAfter": { "blocking": { "s": "old", "x": 0.2, "y": 0.3 } }
+    },
+    {
+      "name": "absent target leaves the pair unchanged",
+      "spaceId": "missing", "removeMarkers": true,
+      "config": {
+        "spaces": [{ "id": "kept", "rooms": [], "stairs": [{ "id": "foreign", "target_space_id": "elsewhere", "future": 1 }] }],
+        "markers": [{ "id": "robot", "space": "kept", "vacuum": { "map_routes": [{ "id": "map", "space": "kept", "future": 2 }] } }],
+        "future": 3
+      },
+      "layout": { "robot": { "s": "kept", "x": 0.2, "y": 0.3 } },
+      "dependencies": [], "hiddenCount": 0, "removedMarkers": [],
+      "configAfter": {
+        "spaces": [{ "id": "kept", "rooms": [], "stairs": [{ "id": "foreign", "target_space_id": "elsewhere", "future": 1 }] }],
+        "markers": [{ "id": "robot", "space": "kept", "vacuum": { "map_routes": [{ "id": "map", "space": "kept", "future": 2 }] } }],
+        "future": 3
+      },
+      "layoutAfter": { "robot": { "s": "kept", "x": 0.2, "y": 0.3 } }
     }
   ]
 }

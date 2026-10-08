@@ -30,6 +30,12 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['adoptWallSegmentModelCandidateInPlace'],
+    smokes: ['smoke_wall_adoption_alias.mjs'],
+    because: '#826: two native Resize commits and Undo/Redo must preserve an aliased untouched '
+      + 'floor and opening hosts; the smoke observes saved config/IDs rather than calling the adopter',
+  },
+  {
     files: ['src/wall-node-editor.ts', 'src/wall-node-move.ts'],
     smokes: ['smoke_wall_node_reliability.mjs'],
     because: '#828: a captured real pointer survives full hass/Lit frames with one current '

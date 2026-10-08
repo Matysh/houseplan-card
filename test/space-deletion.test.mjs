@@ -175,7 +175,7 @@ const withMarkers = JSON.parse(readFileSync(
 ));
 
 test('#819 паритет с сервером на общей фикстуре', () => {
-  assert.equal(withMarkers.cases.length, 2);
+  assert.equal(withMarkers.cases.length, 5);
   for (const fixture of withMarkers.cases) {
     const config = structuredClone(fixture.config);
     const layout = structuredClone(fixture.layout);
@@ -183,7 +183,7 @@ test('#819 паритет с сервером на общей фикстуре',
     assert.deepEqual(report.markerIds, fixture.dependencies, `${fixture.name}: скрытые и tombstone — как на сервере`);
     assert.equal(hiddenDependencyCount(config, report.markerIds), fixture.hiddenCount, fixture.name);
 
-    const result = createSpaceDeletionCandidate(config, layout, fixture.spaceId, true);
+    const result = createSpaceDeletionCandidate(config, layout, fixture.spaceId, fixture.removeMarkers ?? true);
     assert.deepEqual(result.removedMarkers, fixture.removedMarkers, fixture.name);
     assert.deepEqual(result.config, fixture.configAfter, fixture.name);
     assert.deepEqual(result.layout, fixture.layoutAfter, fixture.name);
@@ -199,4 +199,19 @@ test('#819 без флага занятое пространство по-пре
   assert.deepEqual(result.removedMarkers, []);
   assert.deepEqual(result.config, fixture.config);
   assert.deepEqual(result.layout, fixture.layout);
+});
+
+test('#826 absent target never cleans dangling stairs, maps or placements', () => {
+  const config = {
+    spaces: [{ id: 'kept', rooms: [], stairs: [{ id: 's', target_space_id: 'missing', future: 7 }] }],
+    markers: [{ id: 'robot', space: 'missing', vacuum: { map_routes: [{ id: 'map', space: 'missing' }] } }],
+  };
+  const layout = { robot: { s: 'missing', x: .2, y: .3 } };
+  for (const removeMarkers of [false, true]) {
+    const before = JSON.stringify([config, layout]);
+    const result = createSpaceDeletionCandidate(config, layout, 'missing', removeMarkers);
+    assert.equal(JSON.stringify([result.config, result.layout]), before, 'missing target is an unchanged candidate');
+    assert.deepEqual(result.removedMarkers, []);
+    assert.equal(JSON.stringify([config, layout]), before, 'inputs remain immutable');
+  }
 });

@@ -130,6 +130,9 @@ export function createSpaceDeletionCandidate(
   const config = clone(configIn);
   const layout = clone(layoutIn || {});
   const spaces = config.spaces || [];
+  if (!spaces.some((item: { id?: unknown }) => item?.id === spaceId)) {
+    return { config, layout, dependencies: collectSpaceMarkerDependencies(config, layout, spaceId), removedMarkers: [] };
+  }
   const deletingLastSpace = spaces.length === 1 && spaces[0]?.id === spaceId;
   // #819: the markers go first (never the last space's — it detaches them),
   // and the #244 rule below then finds nothing in use.
@@ -144,6 +147,11 @@ export function createSpaceDeletionCandidate(
     (space?.rooms || []).map((room: any) => String(room?.id || '')).filter(Boolean),
   );
   config.spaces = (config.spaces || []).filter((item: any) => item?.id !== spaceId);
+  for (const remaining of config.spaces as { stairs?: { target_space_id?: string | null }[] }[]) {
+    for (const stair of remaining.stairs || []) {
+      if (stair?.target_space_id === spaceId) stair.target_space_id = null;
+    }
+  }
   for (const marker of config.markers || []) {
     const markerOwnsPosition = typeof marker?.id === 'string'
       && layout?.[marker.id]?.s === spaceId;

@@ -9,15 +9,24 @@ const fixture = JSON.parse(readFileSync(
   'utf8',
 ));
 const { page, browser } = await launch({ width: 1180, height: 920 });
+const aliasOwnership = process.argv.includes('--alias-ownership');
+let sourceConfig = { spaces: [fixture.space], markers: [], settings: {} };
+if (aliasOwnership) {
+  sourceConfig.spaces.push({ id: 'alias-floor', title: 'Untouched floor', cell_cm: fixture.space.cell_cm,
+    rooms: [
+      { id: 'alias-large', name: 'Large', poly: [[0, 0], [1, 0], [1, 1], [0, 1]] },
+      { id: 'alias-small', name: 'Small', poly: [[1, .5], [2, .5], [2, 1], [1, 1]] },
+    ] });
+}
 
-await page.evaluate(async (space) => {
+await page.evaluate(async (sourceConfig) => {
   const previous = window.__card;
   const hass = window.__mkHass();
   const callWS = hass.callWS.bind(hass);
   window.__resizeWrites = [];
   hass.callWS = async (message) => {
     if (message.type === 'houseplan/config/get') {
-      return { config: { spaces: [structuredClone(space)], markers: [], settings: {} }, rev: 1, can_write: true };
+      return { config: structuredClone(sourceConfig), rev: 1, can_write: true };
     }
     if (message.type === 'houseplan/layout/get') return { layout: {}, rev: 1 };
     if (message.type === 'houseplan/config/set') {
@@ -32,7 +41,7 @@ await page.evaluate(async (space) => {
   document.getElementById('host').appendChild(card);
   window.__card = card;
   card.hass = hass;
-}, fixture.space);
+}, sourceConfig);
 
 await page.waitForFunction(() => {
   const card = window.__card;
@@ -57,6 +66,27 @@ await page.waitForFunction(() => window.__card.renderRoot.querySelectorAll('.rsz
 await page.waitForFunction(() => !window.__card._modeTransitionBusy);
 await page.evaluate(() => new Promise((resolve) =>
   requestAnimationFrame(() => requestAnimationFrame(resolve))));
+
+if (aliasOwnership) {
+  check('resize_pointer.alias_setup_preserves_equal_geometry', await page.evaluate(() => {
+    const card = window.__card, other = card._serverCfg.spaces.find(space => space.id === 'alias-floor');
+    const point = other.rooms[0].poly[2];
+    const before = JSON.stringify(other.rooms);
+    // private-ok: #826 fixture changes ownership only, not point values. A JSON
+    // copy here would erase the regression; the real commit must separate it.
+    other.rooms[1].poly[3] = point;
+    window.__aliasSpaceRef = other; window.__aliasRoomRefs = [...other.rooms];
+    const runtime = card._editorRuntime;
+    const introduced = runtime._junctionLimitsIntroduced.bind(runtime);
+    // private-ok: #826 read-only observer at the existing last pre-adoption
+    // proof. It delegates the real guard, never supplies its result.
+    runtime._junctionLimitsIntroduced = (candidate, ...args) => {
+      window.__aliasExpected = JSON.stringify(candidate.spaces.find(space => space.id === 'alias-floor').rooms);
+      return introduced(candidate, ...args);
+    };
+    return JSON.stringify(other.rooms) === before && other.rooms[1].poly[3] === point;
+  }));
+}
 
 await page.evaluate(() => {
   window.__resizePointerId = null;
@@ -172,6 +202,22 @@ if (target) {
       && afterSegments.every((segment) => beforeById.get(segment.id)?.cm === segment.cm);
   }), true);
 
+  if (aliasOwnership) {
+    const exact = await page.evaluate(() => {
+      const other = window.__card._serverCfg.spaces.find(space => space.id === 'alias-floor');
+      return JSON.stringify(other.rooms) === window.__aliasExpected
+        && other === window.__aliasSpaceRef && other.rooms.every((room, index) => room === window.__aliasRoomRefs[index]);
+    });
+    check('resize_pointer.alias_unrelated_floor_and_refs_unchanged', exact);
+    check('resize_pointer.alias_adoption_equals_validated_write', await page.evaluate(() => {
+      const card = window.__card, written = window.__resizeWrites.at(-1)?.config;
+      return !!written && JSON.stringify(card._serverCfg.spaces) === JSON.stringify(written.spaces);
+    }));
+    if (process.argv.includes('--alias-red-witness')) {
+      await finish(browser, { aliasOwnership: true }); process.exit(process.exitCode || 0);
+    }
+  }
+
   const migratedBefore = await page.evaluate(() => {
     const command = window.__card._geometryHistory._undo.at(-1);
     const state = command?.before;
@@ -261,6 +307,7 @@ if (target) {
     window.__card._wallUnionGeometry() === window.__resizeWallUnionBefore), true);
   await page.waitForTimeout(650);
   check('resize_pointer.capture_loss_zero_extra_write', await page.evaluate(() => window.__resizeWrites.length), writesBefore + 2);
+
 }
 
 await finish(browser, { done: true });

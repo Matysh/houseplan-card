@@ -77,6 +77,42 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'wall-adoption-mutates-shared-point-owners',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/wall-adoption-alias.test.mjs',
+    because: '#826: scalar-array identity is not a gesture contract; shared points must adopt '
+      + 'each owner\'s immutable candidate values while root and id-bearing references survive.',
+    patches: [{
+      file: 'src/wall-segment-model.ts',
+      find: "      if (next.every((item) => item === null || typeof item !== 'object')) return next.slice();\n",
+      replace: '      // mutant: reuse a scalar tuple shared by different owners\n',
+    }],
+  },
+  {
+    id: 'space-delete-mirror-keeps-incoming-stairs',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#819 паритет" test/space-deletion.test.mjs',
+    because: '#826: the shared TS/Python fixture requires nullable incoming targets without '
+      + 'rewriting foreign stair settings, map routes or unknown fields.',
+    patches: [{
+      file: 'src/space-deletion.ts',
+      find: '      if (stair?.target_space_id === spaceId) stair.target_space_id = null;\n',
+      replace: '      // mutant: keep the deleted target\n',
+    }],
+  },
+  {
+    id: 'space-delete-mirror-cleans-an-absent-target',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#826 absent target" test/space-deletion.test.mjs',
+    because: '#826: the server rejects missing targets before cleanup; a mirror must not delete '
+      + 'dangling placements, maps or stair targets when no space can be deleted.',
+    patches: [{
+      file: 'src/space-deletion.ts',
+      find: '  if (!spaces.some((item: { id?: unknown }) => item?.id === spaceId)) {',
+      replace: '  if (false) {',
+    }],
+  },
+  {
     id: 'space-reattach-skips-authoritative-read',
     guard: 'node demo/smoke_view_recovery.mjs',
     because: '#824 AC1 crosses real custom-element detach/attach and missed HA events: '

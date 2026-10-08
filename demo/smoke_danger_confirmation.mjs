@@ -229,16 +229,24 @@ const out = await page.evaluate(async () => {
   card._writeChain = Promise.resolve();
   // #500: the delete path re-reads and adopts through the one gated entry; keep it inert here.
   card._adoptAuthoritative = async () => ({ status: 'adopted', spaceChanged: false });
-  for (const [name, runtime] of [['editor', editor], ['onboarding', onboarding]]) {
+  const deleteFromUi = async () => {
+    await card.updateComplete;
+    const button = card.renderRoot.querySelector('hp-dialog[data-kind="space"] .dialog-action-danger button');
+    if (!button) throw new Error('reachable editor Delete control is absent');
+    button.click();
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    await card.updateComplete;
+  };
+  for (const name of ['editor']) {
     card._space = 'another-space';
     card._serverCfg = { spaces: [baseSpace()], markers: [], settings: {} };
     setPlanDialog();
     decision = false;
     const before = wsCalls.filter((call) => call.type === 'houseplan/space/delete').length;
-    await runtime._deleteSpace();
+    await deleteFromUi();
     const cancelSafe = wsCalls.filter((call) => call.type === 'houseplan/space/delete').length === before;
     decision = true;
-    await runtime._deleteSpace();
+    await deleteFromUi();
     result[`${name}SpaceCancelAccept`] = cancelSafe
       && wsCalls.filter((call) => call.type === 'houseplan/space/delete').length === before + 1;
   }

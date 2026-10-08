@@ -356,6 +356,13 @@ revision. Model and lineage: [`WALL-THICKNESS.md`](WALL-THICKNESS.md) §1;
 migrations and stale-client guard: [`CONFIG-COMPATIBILITY.md`](CONFIG-COMPATIBILITY.md)
 (model v8–v10); rationale: [`adr/282-wall-geometry-representation.md`](adr/282-wall-geometry-representation.md).
 
+The validated candidate is adopted in place only at the commit boundary (#826).
+Root and id-bearing editor records retain identity; scalar arrays receive their
+own shallow copy so shared point tuples cannot overwrite another owner during
+recursive adoption. Values and property order match the candidate exactly;
+the candidate is never mutated. This is not a full live-model clone or new
+pointermove work, and array identity without an id is not a gesture guarantee.
+
 Room-face acceptance uses `wall-face-lineage.ts` to choose provisional carriers
 and settle only new-room hints against the partitions left after reconciliation
 (#804). A residual keeps its identity without colliding with the promoted room
@@ -451,11 +458,16 @@ consults marker tombstones. The `.oplock` badge never toggles a lock
 
 ## Integration WS API
 
-Space deletion from editor and onboarding shares `editors/space-delete.ts`
-after confirmation (#819). Each caller retains its own confirmation copy;
+Space deletion from the editor uses `editors/space-delete.ts`
+after confirmation (#819/#826). The caller retains its confirmation copy;
 the shared path re-resolves the dialog/space and confirmed marker set, flushes
 pending writes, then adopts re-read config/layout rather than the delete reply.
 This lazy module imports the editor host only as a type, never the editor runtime.
+The card delegates to the editor; the space-settings form port supplies Delete.
+Onboarding supplies only create/import controls, not a deletion port/adapter.
+The TS pure mirror clears only incoming stair targets after an actual accepted
+deletion, matching Python; blocked or absent targets cause no cleanup. The WS
+endpoint rejects an absent target before calling its pure candidate.
 
 `space/delete` filters explicit vacuum map routes to the deleted space inside
 `_space_delete_candidate` (#822), before the existing paired commit. It keeps

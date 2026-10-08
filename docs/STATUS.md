@@ -20,10 +20,18 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.80.0-beta.8** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.79.0` |
 | Latest prerelease tag | `v1.80.0-beta.8` |
-| Tests | Node unit 3872 · pure backend 460 · HA-harness backend 353 · browser smokes 311 (`npm run inventory`) |
+| Tests | Node unit 3875 · pure backend 460 · HA-harness backend 354 · browser smokes 312 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Configuration candidates (#826): in-place wall adoption gives scalar arrays
+their own candidate values, retaining root and id-bearing gesture objects.
+Native Resize regression covers an untouched aliased floor, repeat commits
+and exact Undo/Redo; ordinary JSON remains a control. The space-delete mirror
+clears incoming stair links like the server and refuses cleanup of absent
+targets. The unreachable onboarding delete adapter is removed; the editor's
+lazy completion path and creation/import onboarding remain. No model migration.
 
 View recovery (#824): same-element static attach revalidates authoritative
 config/layout after missed events; a full long return waits for usable HA and
@@ -49,9 +57,9 @@ entry files. The server angular witness selects the unrounded boundary as well
 as canonicalized noisy T/X operations. IDs and mutation patches are retained;
 development runs only clean guards and static checks, not mutations.
 
-Space deletion (#819): editor and onboarding share one lazy post-confirmation
+Space deletion (#819/#826): the editor uses one lazy post-confirmation
 completion path, preserving target/marker-set fences, authoritative adoption
-and error recovery. Confirmation copy remains in each caller; bundle ratchets
+and error recovery. Confirmation copy remains in the caller; bundle ratchets
 are unchanged. Direct shared-handler tests complement the two-viewport smoke
 and backend pair-write/parity tests.
 

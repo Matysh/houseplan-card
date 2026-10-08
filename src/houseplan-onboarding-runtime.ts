@@ -20,8 +20,6 @@ import {
   initialSpaceDisplayDraft,
 } from './space-dialog';
 import { rememberSpaceDialogBaseline, spaceDialogProblems } from './editors/space-form-state';
-import { collectSpaceMarkerDependencies } from './space-deletion';
-import { completeSpaceDeletion } from './editors/space-delete';
 import {
   gridCellFieldValue,
   newSpaceCellCm,
@@ -31,7 +29,7 @@ import type { HouseplanEditorHostPort } from './houseplan-editor-runtime';
 // #600: форма и границы шага сетки — из одного модуля с редактором; прежняя
 // локальная копия констант и `strictNumber` нарушала «одно число — один источник».
 import {
-  CELL_CM_MAX, CELL_CM_MIN, renderSpaceForm, revealSpaceDeleteBlocker,
+  CELL_CM_MAX, CELL_CM_MIN, renderSpaceForm,
 } from './editors/space-form';
 
 const BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
@@ -410,36 +408,6 @@ export class HouseplanOnboardingRuntime {
       };
       this.host._showToast(this.host._t('toast.error', { err: this.host._errText(error) }));
     }
-  }
-
-  public async _deleteSpace(): Promise<void> {
-    const dialog = this.host._spaceDialog;
-    if (!dialog || dialog.mode !== 'edit') return;
-    const serverConfig = this.host._serverCfg;
-    if (!serverConfig) return;
-    const space = serverConfig.spaces.find((candidate) => candidate.id === dialog.spaceId);
-    if (!space) return;
-    const dependencies = collectSpaceMarkerDependencies(
-      serverConfig, this.host._layout || {}, dialog.spaceId || '',
-    );
-    const deletingLastSpace = serverConfig.spaces.length === 1
-      && serverConfig.spaces[0]?.id === dialog.spaceId;
-    if (dependencies.count && !deletingLastSpace) {
-      this.host._spaceDialog = { ...dialog, deleteBlockers: dependencies.count };
-      void revealSpaceDeleteBlocker(this.host);
-      return;
-    }
-    const spaceId = dialog.spaceId!;
-    const accepted = await this.host._confirmDanger({
-      key: 'delete-space',
-      kind: 'destructive',
-      title: this.host._t('confirm.delete_space_title'),
-      message: this.host._t('confirm.delete_space_body'),
-      objectName: space.title,
-      confirmLabel: this.host._t('btn.delete'),
-      cancelLabel: this.host._t('btn.cancel'),
-    });
-    if (accepted) await completeSpaceDeletion(this.host, spaceId, dependencies);
   }
 
   public _startImport(): void {

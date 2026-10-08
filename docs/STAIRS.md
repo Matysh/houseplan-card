@@ -141,6 +141,10 @@ one-space transfer, plan-only transfer, diagnostics and support packages
 preserve the same records. When a complete backup removes a target space its
 incoming stair
 links are cleared; a one-space transfer cannot invent an external target.
+Successful space deletion also clears incoming `target_space_id` to `null`
+in both the server candidate and TS mirror (#826), preserving the stair and
+its unknown fields. Foreign targets and missing legacy fields stay unchanged;
+a blocked or absent-target deletion does not clean up any links.
 
 ## Implementation boundary
 

@@ -902,6 +902,9 @@ const isRecord = (value: unknown): value is Record<string, any> => (
 export function adoptWallSegmentModelCandidateInPlace<T>(target: T, candidate: T): T {
   const adopt = (current: any, next: any): any => {
     if (Array.isArray(current) && Array.isArray(next)) {
+      // Scalar arrays (including points) have no gesture identity. Give each
+      // owner its candidate values; mutating a shared tuple corrupts siblings.
+      if (next.every((item) => item === null || typeof item !== 'object')) return next.slice();
       const currentById = new Map<string, any>();
       for (const item of current) {
         if (isRecord(item) && typeof item.id === 'string' && item.id)
