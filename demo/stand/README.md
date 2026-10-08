@@ -32,7 +32,9 @@ of the shipped integration.
   between betas carries the last beta's bundle. Validate publishes the bundle
   it built for the head of `dev` into the orphan branch `dev-build` (one commit,
   force-pushed, `DEV-BUILD.json` names the source SHA; `scripts/dev-build.mjs`).
-  The host deploy script must overlay it after `git pull`:
+  Since #835 the branch carries the whole integration of that SHA; the stand
+  takes only `frontend/` from it, the rest comes from its own checkout. The
+  host deploy script must overlay it after `git pull`:
 
   ```sh
   demo/stand/update-dev-bundle.sh --reset <checkout>   # before git pull: restore the tracked copy

@@ -926,9 +926,11 @@ jobs:
 
   # #657 (2б): бандл в дереве dev меняет только кандидат беты, поэтому стенд
   # dev.houseplan.tech берёт его не из дерева, а из этого артефакта: после
-  # зелёного фронтенда на push в dev собранный `dist/` публикуется в служебную
-  # ветку `dev-build` одним коммитом без истории (scripts/dev-build.mjs), хост
-  # забирает его demo/stand/update-dev-bundle.sh. Опубликуется только голова:
+  # зелёного фронтенда на push в dev собранный `dist/` вместе с остальной
+  # интеграцией того же SHA (#835) публикуется в служебную ветку `dev-build`
+  # одним коммитом без истории (scripts/dev-build.mjs); стенд забирает из неё
+  # фронтенд (demo/stand/update-dev-bundle.sh), своя инсталляция владельца —
+  # всю интеграцию (scripts/ha-track-dev.sh). Опубликуется только голова:
   # если dev ушёл вперёд, пушит следующий прогон. Не вход доказательства:
   # стенд — не гейт, и сбой публикации не красит проверку кода.
   dev_build:
@@ -958,7 +960,32 @@ jobs:
           name: card-bundle
           path: dist
       - name: Опубликовать в dev-build
+        id: publish
         run: node scripts/dev-build.mjs --sha "$GITHUB_SHA" --dist dist
+      # #835: своя инсталляция владельца ставит голову dev по вебхуку Home
+      # Assistant (scripts/ha-track-dev.sh, docs/DEVELOPMENT.md «Tracking the
+      # head of dev»). Зовём, только если изменилось то, что попадает в HA
+      # (`changed` по integrationTree: push только документации не будит), и
+      # только при заданном секрете — без него шаг ничего не делает. Адрес
+      # вебхука — секрет: ни он, ни ответ, ни текст ошибки curl в лог не идут.
+      - name: Разбудить свою инсталляцию HA
+        if: steps.publish.outputs.changed == 'true'
+        env:
+          HP_HA_DEV_WEBHOOK: ${{ secrets.HP_HA_DEV_WEBHOOK }}
+        run: |
+          if [ -z "$HP_HA_DEV_WEBHOOK" ]; then
+            echo "секрет HP_HA_DEV_WEBHOOK не задан — вебхук не вызывается"
+            exit 0
+          fi
+          code=0
+          curl --silent --fail --max-time 20 --retry 2 -o /dev/null -X POST \
+            -H 'Content-Type: application/json' -d "{\"source\": \"$GITHUB_SHA\"}" \
+            "$HP_HA_DEV_WEBHOOK" || code=$?
+          if [ "$code" -ne 0 ]; then
+            echo "::warning::вебхук своей инсталляции не ответил (curl exit $code)"
+            exit 1
+          fi
+          echo "вебхук своей инсталляции вызван"
 
   smoke:
     name: Смоки в браузере (шард ${{ matrix.shard }} из 3)

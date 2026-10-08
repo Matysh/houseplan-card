@@ -102,6 +102,19 @@ test('#657 копии бандла сверяются только на рели
     'стенд — не вход доказательства');
 });
 
+test('#835 вебхук своей инсталляции: только при изменении интеграции, без утечки адреса', () => {
+  const workflow = read('validate.yml');
+  const devBuild = workflow.slice(workflow.indexOf('\n  dev_build:\n'), workflow.indexOf('\n  smoke:\n'));
+  assert.match(devBuild, /name: Опубликовать в dev-build\n\s+id: publish\n/);
+  const hook = devBuild.slice(devBuild.indexOf('name: Разбудить свою инсталляцию HA'));
+  assert.match(hook, /^name: Разбудить свою инсталляцию HA\n\s+if: steps\.publish\.outputs\.changed == 'true'\n/,
+    'push только документации (тот же integrationTree) установку не будит');
+  assert.match(hook, /HP_HA_DEV_WEBHOOK: \$\{\{ secrets\.HP_HA_DEV_WEBHOOK \}\}/);
+  assert.match(hook, /if \[ -z "\$HP_HA_DEV_WEBHOOK" \]; then[\s\S]*?exit 0/, 'без секрета шаг — no-op');
+  assert.doesNotMatch(hook, /echo[^\n]*\$HP_HA_DEV_WEBHOOK|set -x|--verbose|-v /, 'адрес вебхука не печатается');
+  assert.match(hook, /curl --silent --fail/, 'текст ошибки curl с адресом не попадает в лог');
+});
+
 test('предполётные проверки не прячут друг друга (#336)', () => {
   const workflow = read('validate.yml');
   const preflight = workflow.slice(

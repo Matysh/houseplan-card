@@ -11322,6 +11322,18 @@ const MUTANT_DEFINITIONS = [
     patches: [{ file: "scripts/dev-build.mjs", find: "      'commit-tree', tree, '-m',", replace: "      'commit-tree', tree, '-p', git(['rev-parse', 'HEAD']).out, '-m'," }],
   },
   {
+    id: "dev-build-changed-always",
+    guard: "node --test --test-name-pattern=\"#835 dev-build: changed\" test/dev-build.test.mjs",
+    because: "#835: a docs-only push to dev must not wake the owner's installation \u2014 changed follows the integration tree, not the source SHA",
+    patches: [{ file: "scripts/dev-build.mjs", find: "  const changed = previous !== built.marker.integrationTree;", replace: "  const changed = true;" }],
+  },
+  {
+    id: "ha-track-dev-reinstalls-same-build",
+    guard: "node --test --test-name-pattern=\"#835 ha-track-dev.sh: \u043f\u0435\u0440\u0432\u0430\u044f \u0443\u0441\u0442\u0430\u043d\u043e\u0432\u043a\u0430\" test/dev-build.test.mjs",
+    because: "#835: the same build is not reinstalled \u2014 otherwise every trigger restarts Home Assistant",
+    patches: [{ file: "scripts/ha-track-dev.sh", find: "if [ \"$tree\" = \"$installed\" ]; then", replace: "if false; then" }],
+  },
+  {
     id: "process-index-on-task-branch",
     guard: "node --test --test-name-pattern=\"#635/#657 \\\\(1\u0431\\\\)\" test/reviews-index.test.mjs",
     because: "#657 (1b): the review index is rebuilt only by commits that go to dev; in a task branch it conflicts by construction",

@@ -686,7 +686,87 @@ node scripts/bundle-tree.mjs dist custom_components/houseplan/frontend   # candi
 
 Installations update themselves through HACS by release tag (`PROCESS.md` §12: no
 manual copying into a running Home Assistant); the closed dev stand auto-deploys
-the `dev` branch. Access to the owner's instances is not documented here.
+the `dev` branch, and an installation of the owner's choosing may track the
+head of `dev` automatically (below). Access to the owner's instances is not
+documented here.
+
+### Tracking the head of dev on your own installation (#835)
+
+HACS installs releases only (`zip_release`), never branches. After every green
+push to `dev`, Validate publishes the whole integration of that commit into the
+orphan branch `dev-build` (`scripts/dev-build.mjs`): the Python side from the
+source tree and `frontend/` from the bundle it has just built — the committed
+bundle in `dev` is the last beta's (#657). `DEV-BUILD.json` names the source SHA
+and `integrationTree`, the git hash of `custom_components/houseplan` in the
+branch. The hash follows content: a push that does not change what Home
+Assistant receives (documentation, process, review documents) keeps it, so
+nothing is reinstalled and nothing restarts.
+
+`scripts/ha-track-dev.sh` installs that branch on a Home Assistant host. It is
+POSIX `sh` for the Home Assistant container (it needs `curl` and `tar`),
+swaps `/config/custom_components/houseplan` by rename, keeps the previous copy
+in `/config/houseplan-dev-prev`, and prints `updated <source> <tree>` or
+`unchanged <source> <tree>`. On any failure the installed copy is untouched and
+the exit code is non-zero. Without arguments it downloads the archive (~4 MB);
+with `--poll` it first compares the ~300-byte marker and downloads only on a
+change — the marker on `raw.githubusercontent.com` may lag a few minutes behind
+the branch, which is why the push path does not use `--poll`.
+
+Copy the script to `/config/scripts/ha-track-dev.sh`, then:
+
+```yaml
+# configuration.yaml
+shell_command:
+  houseplan_dev: sh /config/scripts/ha-track-dev.sh {{ mode | default('') }}
+
+# automations.yaml
+- alias: House Plan — head of dev
+  mode: single
+  triggers:
+    # Push: Validate calls this webhook when the integration changed.
+    - trigger: webhook
+      webhook_id: houseplan-dev-<random>
+      allowed_methods: [POST]
+      local_only: false
+      id: push
+    # Pull: for a host that the internet cannot reach. Drop either trigger.
+    - trigger: time_pattern
+      minutes: "/10"
+      id: poll
+  actions:
+    - action: shell_command.houseplan_dev
+      data:
+        mode: "{{ '--poll' if trigger.id == 'poll' else '' }}"
+      response_variable: result
+    - condition: template
+      value_template: "{{ result.returncode == 0 and result.stdout.startswith('updated') }}"
+    - action: homeassistant.restart
+```
+
+For the push path, store the full webhook URL — `https://<host>/api/webhook/<id>`,
+or the `hooks.nabu.casa` address Home Assistant Cloud gives the webhook trigger —
+as the repository secret `HP_HA_DEV_WEBHOOK`. The `dev_build` job calls it only
+when `integrationTree` changed; without the secret the step does nothing, and a
+failed call never turns Validate red (the job is `continue-on-error`). The URL,
+the response and curl's error text stay out of the log.
+
+What the head of `dev` is not:
+
+- **Not a beta.** It is reviewed code behind the light Validate; golden, smokes
+  and performance run only on a beta candidate.
+- **Data may move first.** A storage migration reaches this installation before
+  any beta; a later downgrade to a release may not read it. Keep Home
+  Assistant's automatic backups on.
+- **HACS still owns the slot.** It keeps showing the installed release and
+  offers release updates; installing one replaces the dev copy until the next
+  trigger installs the head again. Removing House Plan in HACS deletes the
+  files. To stop tracking, disable the automation.
+- **The version string is the last beta's.** The identity of what is installed
+  is the `updated` line and `custom_components/houseplan/.dev-build-tree`.
+- **Rollback:** `rm -rf /config/custom_components/houseplan && mv
+  /config/houseplan-dev-prev /config/custom_components/houseplan`, then restart
+  — or redownload a release in HACS. The installed hash travels with the copy,
+  so the next trigger installs the head again unless the automation is off.
 
 ## Frontend cache and the "empty view"
 
