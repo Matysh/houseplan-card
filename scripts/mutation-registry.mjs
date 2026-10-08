@@ -15696,6 +15696,29 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'kiosk-hold-survives-recognized-pan',
+    guard: 'node demo/smoke_kiosk_scale_no_editor.mjs',
+    because: '#825 AC1: real slow mouse/touch pan and return to origin must never open the '
+      + '3 s modal; a timer helper alone cannot prove the stage classifier cancels its owner',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '        if (this._kioskHold.pointerId === ev.pointerId) this._kioskHold.cancel();\n',
+      replace: '        // mutant: recognized navigation leaves the kiosk hold armed\n',
+    }],
+  },
+  {
+    id: 'led-zoom-noop-renews-lease',
+    guard: 'node demo/smoke_led_zoom_quality.mjs',
+    because: '#825 AC3: the trusted clamped wheel must preserve the original 160 ms deadline '
+      + 'and remain full in idle, despite slow Node round trips; only mounted input proves this wiring',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      // A clamped/no-op command neither starts nor shortens the zoom lease.\n',
+      replace: '      // mutant: renew quality on an unchanged camera\n'
+        + '      this._zoomScaleActivity.change({ w: 2, h: 2 }, { w: 1, h: 1 });\n',
+    }],
+  },
+  {
     id: 'kiosk-hold-leaves-stage-gesture-under-modal',
     guard: 'node demo/smoke_kiosk_scale_no_editor.mjs',
     because: '#813 AC1: a mouse has no implicit capture, so the release of the 3 s kiosk hold goes to '

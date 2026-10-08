@@ -177,13 +177,14 @@ const watchReleases = (page) => page.evaluate((selector) => {
  * A real mouse press held on the bare stage until the dialog appears (or the
  * hold has clearly failed), then released where the pointer is: over the modal.
  */
-const mouseHold = async (session) => {
+const mouseHold = async (session, jitter = false) => {
   const point = await emptyStagePoint(session.page);
   if (!point) throw new Error('no bare stage point for the kiosk mouse hold');
   await session.page.mouse.move(point.x, point.y);
   await watchReleases(session.page);
   const started = Date.now();
   await session.page.mouse.down();
+  if (jitter) await session.page.mouse.move(point.x + 2, point.y + 1);
   let opened = true;
   try {
     await session.page.locator(DIALOG).waitFor({ state: 'attached', timeout: HOLD_MS + 1600 });
@@ -243,6 +244,52 @@ out.coldPageHasNoEditorChunk = kiosk.cold;
 const before = await kioskState(kiosk.page);
 out.coldKioskEditorIdle = same({ loader: 'idle', runtime: false, requests: 0 },
   { loader: before.loader, runtime: before.runtime, requests: kiosk.chunk.requests });
+
+// #825: real slow pan crosses the existing 8 px classifier, then returns
+// to the press origin without releasing. Neither leg may revive the hold.
+await kiosk.page.evaluate((selector) => {
+  const card = document.querySelector(selector), hass = card.hass;
+  window.__panWrites = []; window.__panServices = 0; window.__panEvents = [];
+  card.hass = { ...hass, callService: (...args) => {
+    window.__panServices++; return hass.callService(...args);
+  }, callWS: (request) => {
+    if (/save|set_|delete/.test(request.type)) window.__panWrites.push(request.type);
+    return hass.callWS(request);
+  } };
+  card.shadowRoot.querySelector('.stage').addEventListener('pointermove', event => {
+    window.__panEvents.push({ trusted: event.isTrusted, type: event.pointerType });
+  });
+}, KIOSK);
+for (const type of ['mouse', 'touch']) {
+  const p = await emptyStagePoint(kiosk.page), original = await planViewBox(kiosk.page);
+  const send = (kind, dx = 0, dy = 0) => kiosk.cdp.send('Input.dispatchTouchEvent', {
+    type: kind, touchPoints: kind === 'touchEnd' ? [] : [{ x: p.x + dx, y: p.y + dy, id: 9 }],
+  });
+  if (type === 'mouse') { await kiosk.page.mouse.move(p.x, p.y); await kiosk.page.mouse.down(); }
+  else await send('touchStart');
+  await kiosk.page.waitForTimeout(300);
+  if (type === 'mouse') await kiosk.page.mouse.move(p.x + 25, p.y + 20, { steps: 3 });
+  else await send('touchMove', 25, 20);
+  await kiosk.page.waitForTimeout(HOLD_MS);
+  out[`${type}SlowPanActuallyMovesPlan`] = (await planViewBox(kiosk.page)) !== original;
+  out[`${type}SlowPanNeverOpensHold`] = !(await kioskState(kiosk.page)).open;
+  if (type === 'mouse') await kiosk.page.mouse.move(p.x, p.y, { steps: 3 });
+  else await send('touchMove');
+  await kiosk.page.waitForTimeout(HOLD_MS);
+  out[`${type}ReturnToOriginDoesNotRearmHold`] = !(await kioskState(kiosk.page)).open;
+  if (type === 'mouse') await kiosk.page.mouse.up(); else await send('touchEnd');
+  if (process.argv.includes('--pan-red-witness') && !out[`${type}SlowPanNeverOpensHold`]) {
+    checkAll(out); await finish(kiosk.browser, out); process.exit(process.exitCode || 0);
+  }
+  await closeDialog(kiosk.page);
+}
+out.slowPanUsesTrustedMouseAndTouch = await kiosk.page.evaluate(() => ['mouse', 'touch']
+  .every(type => window.__panEvents.some(event => event.type === type && event.trusted)));
+out.slowPanHasNoWritesServicesOrEditor = await kiosk.page.evaluate(() =>
+  window.__panWrites.length === 0 && window.__panServices === 0) && kiosk.chunk.requests === 0;
+if (process.argv.includes('--pan-red-witness')) {
+  checkAll(out); await finish(kiosk.browser, out); process.exit(process.exitCode || 0);
+}
 
 const first = await hold(kiosk);
 out.realHoldOpensDialog = first.opened && first.heldMs >= 3000 || `opened=${first.opened} after ${first.heldMs} ms`;
@@ -308,7 +355,7 @@ await kiosk.page.evaluate((selector) => {
 const mouseBefore = { viewBox: await planViewBox(kiosk.page), state: await kioskState(kiosk.page) };
 const rounds = [];
 for (let round = 0; round < 3; round += 1) {
-  const result = await mouseHold(kiosk);
+  const result = await mouseHold(kiosk, round === 0);
   result.viewBox = await planViewBox(kiosk.page);
   result.closed = await closeDialog(kiosk.page);
   await kiosk.page.waitForTimeout(300);

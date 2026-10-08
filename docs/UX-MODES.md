@@ -374,4 +374,7 @@ experience with the header removed and editors hard-blocked (even for
 admins). Swipe switches spaces at 1:1 zoom only (zoomed gestures pan;
 double tap resets zoom); `cycle: N` auto-advances spaces with a 60 s pause
 after any touch; a 3 s long-press on empty plan opens the per-screen size
-popover (localStorage). Nav persistence never restores an editor here.
+popover (localStorage). Once movement crosses the existing pan/swipe threshold,
+that press cannot open the popover, even after returning to its origin; small
+stationary jitter below the threshold still permits the hold (#825). Nav
+persistence never restores an editor here.

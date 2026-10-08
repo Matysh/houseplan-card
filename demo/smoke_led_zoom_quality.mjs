@@ -1,6 +1,7 @@
 /** #789: real input → temporary LED-only24 → exact full48. Not a benchmark. */
 import { launch, check, finish } from './serve.mjs';
 import { installLedZoomOracle } from './helpers/led-zoom-oracle.mjs';
+import { observeClampedWheelLease, clampedWheelVerdict } from './helpers/clamped-wheel-lease.mjs';
 
 const { page, browser } = await launch({ width: 1000, height: 820 }, 1, [], { hasTouch: true });
 await page.evaluate(installLedZoomOracle);
@@ -201,27 +202,14 @@ try {
   if (!process.argv.includes('--red-witness') && results.some(r => r.coarse)) {
     // At the scale clamp a wheel event is not an actual scale change.
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    let reachedMax = false;
-    for (let i = 0; i < 25; i++) {
-      await wheel();
-      if (await page.evaluate(() => window.__card._zoom >= 8)) { reachedMax = true; break; }
-    }
-    check('clamp witness reaches maximum by real wheel while coarse is active', reachedMax && (await quality()).coarse);
-    await page.evaluate(() => { window.__clampStarted = performance.now(); });
-    await page.waitForTimeout(45);
+    await idle();
+    const clamp = await observeClampedWheelLease(page, point);
+    results.push({ clamp });
+    check('clamp witness reaches maximum by real wheel while coarse is active', clamp.before.scale === 8 && clamp.before.coarse);
+    check('clamp witness delivers trusted wheel inside the measured original lease', clamp.delivery);
+    for (const [name, passed] of Object.entries(clampedWheelVerdict(clamp))) check(name, passed);
     await page.evaluate(() => { window.__colourCache = [...window.__card.shadowRoot.querySelectorAll('.led-fields')]
       .map(n => [n.dataset.ledCache, n.dataset.ledRecomputes]); });
-    await wheel();
-    check('clamped wheel during coarse does not cancel the current lease', (await quality()).coarse);
-    await page.evaluate(async () => {
-      await new Promise(resolve => setTimeout(resolve, Math.max(0, 175 - (performance.now() - window.__clampStarted))));
-    });
-    check('clamped wheel does not extend the original lease', !(await quality()).coarse);
-    await idle();
-    const maxScale = await page.evaluate(() => window.__card._zoom);
-    await wheel();
-    check('clamped wheel leaves scale unchanged', await page.evaluate(() => window.__card._zoom), maxScale);
-    check('clamped wheel neither enters coarse nor extends its deadline', !(await quality()).coarse);
     await page.locator('[data-hp="zoom-fit"]').click(); await idle();
 
     await wheel();

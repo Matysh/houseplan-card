@@ -532,14 +532,6 @@ export const devicesStyles = css`
     .dev .lqi.below-value-badge {
       margin-top: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.8875);
     }
-    .temprange {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--sp-3);
-      margin-left: auto;
-      color: var(--hp-muted);
-      font-size: var(--fs-s);
-    }
     /* #162: the dock says the moving robot is drawn nowhere. Amber is not the
        only signal — the alert glyph carries the same meaning without colour,
        and the accessible name carries the exact reason. */

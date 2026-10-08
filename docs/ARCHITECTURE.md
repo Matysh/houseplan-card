@@ -659,6 +659,11 @@ ignores `#space=`.
 
 ## Camera and mode transitions (#101, #82)
 
+The existing `STAGE_TAP_DISTANCE_PX` pan/swipe classifier cancels the owning
+`KioskHoldGesture` as soon as navigation is recognized (#825). Returning to
+the press origin cannot re-arm it; sub-threshold jitter is still a hold.
+There is no additional threshold or timer.
+
 Two one-token/one-RAF controllers own every animated camera change and leave
 no CSS timers or WAAPI animations behind. `ModeTransitionController`
 (`src/mode-transition.ts`) is the only timeline for entering, leaving and

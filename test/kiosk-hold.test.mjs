@@ -61,7 +61,8 @@ test('#813 AC1 the same hold repeats: each new press arms a fresh hold', () => {
 test('#813 AC2 an ordinary tap, a second contact, cancel, lost capture, blur and disconnect never fire', () => {
   // The card maps each of these endings to cancel(); none may leave a timer.
   for (const [ending, at] of [
-    ['tap release', 120], ['second contact', 400], ['pointercancel', 900],
+    ['tap release', 120], ['recognized pan', 300], ['recognized swipe', 350],
+    ['second contact', 400], ['pointercancel', 900],
     ['lostpointercapture', 1500], ['window blur', 2000], ['disconnect', KIOSK_HOLD_MS - 1],
   ]) {
     const { clock, fired, hold } = gesture();

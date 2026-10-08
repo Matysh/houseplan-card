@@ -6942,6 +6942,7 @@ export class HouseplanCard extends LitElement {
         const edge = this._swipeStart?.id === ev.pointerId ? this._swipeStart.edge : null;
         const owner = classifySpaceDrag(edge, ddx, ddy, STAGE_TAP_DISTANCE_PX);
         this._panLock = owner === 'swipe' ? 'swipe' : 'pan';
+        if (this._kioskHold.pointerId === ev.pointerId) this._kioskHold.cancel();
         if (this._panLock === 'pan') { this._activateSafeDayCycleOutline(); this._clearRoomFocus(); }
       }
       const stage = this._stageEl;

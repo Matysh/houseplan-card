@@ -37,6 +37,12 @@ Canonical: `WARM-REMOUNT.md` §5.1. Readonly/input, golden and bundle ratchets r
 Existing static parity and cold-optimization fixtures now use authoritative
 server setup and a distinct cold element, not private loaded-state injection.
 
+Kiosk input (#825): recognized pan/swipe cancels the owning 3 s hold at the
+existing gesture threshold, without changing stationary holds or LED timings.
+The clamped-wheel witness uses the actual browser lease deadline and controlled
+page time, not an unbounded Node round-trip window. Only the unused exact
+`.temprange` CSS block is removed; the live `hpf-temprange` hook stays.
+
 Mutation witness readiness (#830): node browser guards explicitly compile their
 model fixtures in a fresh worktree; the cheap readiness check includes smoke
 entry files. The server angular witness selects the unrounded boundary as well

@@ -398,6 +398,16 @@ archive. The wizard cannot recover an archive automatically.
 
 ## Tests
 
+- Kiosk pan/hold (#825): `smoke_kiosk_scale_no_editor` uses trusted slow mouse
+  and touch pans, including return to origin on the same press, and stationary
+  jitter on the next hold. `--pan-red-witness` exits with the observed modal
+  failure on the original implementation; editor and write/service spies stay
+  empty. The LED clamp witness pauses page-local time, records the actual
+  owner's 160 ms timer and trusted wheel timestamps, and samples inside and
+  exactly at its original deadline despite 240 ms Node round trips. It restores
+  hooks/resumes time in `finally`; closing the context disposes the clock.
+  `clamped-wheel-lease.test.mjs` separately rejects cancellation, renewal,
+  idle activation and scale/cache changes; existing guard IDs remain in place.
 - Frontend: `npm test` — compiles src/logic.ts+rules.ts (tsconfig.test.json) and runs node:test
   (test/*.test.mjs). Strict typing: `npm run typecheck` (tsc --noEmit, part of `npm run build`).
 - Shared Glow scheduling and render-local barrier reuse (#789) have separate

@@ -54,6 +54,10 @@ On phones, tablets, wall panels and HA Companion apps, the ordinary View must:
   remount;
 - preserve kiosk gestures and prevent accidental editor interactions.
 
+The kiosk's empty-stage 3 s hold is cancelled when the existing movement
+classifier recognizes pan or swipe. Returning to the original press point does
+not re-arm it; small sub-threshold jitter still permits stationary holding.
+
 During every intermediate pan or pinch frame, walls, floors, room fills,
 hatching, lighting and markers must remain continuously painted. The scene SVGs
 stay on one promoted compositor path from the first movement until the terminal
