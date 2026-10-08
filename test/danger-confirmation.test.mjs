@@ -65,7 +65,7 @@ test('all dangerous-action call sites use the shared confirmation contract', () 
   const sharedCalls = source.match(/await this(?:\.host)?\._confirmDanger\s*\(\{/g) || [];
 
   assert.equal(nativeCalls.length, 0, 'native browser confirmation must not return');
-  assert.equal(sharedCalls.length, 8, 'the reviewed inventory stays on the shared surface');
+  assert.equal(sharedCalls.length, 7, '#826 removes only the unreachable onboarding space-delete confirmation');
   for (const key of [
     'remove-marker', 'delete-plan', 'delete-space', 'unlock', 'close-support-busy',
   ]) {

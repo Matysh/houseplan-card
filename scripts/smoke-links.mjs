@@ -30,7 +30,7 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
-    symbols: ['adoptWallSegmentModelCandidateInPlace'],
+    files: ['src/wall-segment-model.ts'],
     smokes: ['smoke_wall_adoption_alias.mjs'],
     because: '#826: two native Resize commits and Undo/Redo must preserve an aliased untouched '
       + 'floor and opening hosts; the smoke observes saved config/IDs rather than calling the adopter',

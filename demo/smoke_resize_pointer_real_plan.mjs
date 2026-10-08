@@ -78,9 +78,8 @@ if (aliasOwnership) {
     window.__aliasSpaceRef = other; window.__aliasRoomRefs = [...other.rooms];
     const runtime = card._editorRuntime;
     const introduced = runtime._junctionLimitsIntroduced.bind(runtime);
-    // private-ok: #826 read-only observer at the existing last pre-adoption
-    // proof. It delegates the real guard, never supplies its result.
-    runtime._junctionLimitsIntroduced = (candidate, ...args) => {
+    // private-ok: #826 read-only pre-adoption observer; delegates the real guard, never replaces its result.
+    runtime._junctionLimitsIntroduced = (candidate, ...args) => { // private-ok: #826 observes validated candidate and delegates the original guard unchanged.
       window.__aliasExpected = JSON.stringify(candidate.spaces.find(space => space.id === 'alias-floor').rooms);
       return introduced(candidate, ...args);
     };

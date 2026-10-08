@@ -51,7 +51,7 @@ check('alias.setup_changes_only_ownership', await page.evaluate(alias => {
   window.__aliasRefs = { root, other, rooms: [...other.rooms] };
   const runtime = card._editorRuntime, original = runtime._junctionLimitsIntroduced.bind(runtime);
   // private-ok: observe the actual validated candidate, never replace the guard.
-  runtime._junctionLimitsIntroduced = (candidate, ...args) => {
+  runtime._junctionLimitsIntroduced = (candidate, ...args) => { // private-ok: #826 observes validated candidate and delegates the original guard unchanged.
     window.__aliasExpectedOther = JSON.stringify(candidate.spaces.find(space => space.id === 'other'));
     return original(candidate, ...args);
   };
