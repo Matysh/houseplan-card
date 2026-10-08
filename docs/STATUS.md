@@ -39,6 +39,11 @@ its original path; all optimized failure paths retain canonical fallbacks.
 Accepted node capture freezes the presented camera like other plan gestures.
 Native CDP regression input explicitly carries both `button: left` and
 `buttons: 1`; a separate capture probe protects the driver before measurement.
+Numerical retry now proves boundary identity for each outer and its own holes;
+unchanged ring counts cannot hide a split/merge that transfers a hole. Exact
+zero-area retraces remain equivalent filled geometry, without epsilon or a
+second coordinate snap. The connected floor and reduced two-room repro retain
+their full acceptance checks.
 
 Repeated Resize (#832): coalesced UI runs project back into frozen structural
 atoms/IDs, retaining fixed side breakpoints and rigidly moving translated runs.

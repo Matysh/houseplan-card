@@ -51,6 +51,14 @@ const shippedBundleIsFresh = (manifest) => (
 const STALE_SHIPPED_BUNDLE = '#657: закоммиченный бандл отстаёт от исходников до кандидата — '
   + 'полосу потолка судит `npm run bundle:budget` по свежей сборке, здесь сравнивать не с чем';
 
+const requiresCandidateReserve = (policy) => {
+  assert.equal(policy.error, undefined, 'bundle policy did not start');
+  assert.ok(policy.status === 0 || policy.status === 1, policy.stderr || 'bundle policy failed');
+  assert.equal(policy.stderr.trim(), '', 'a policy error is not an ordinary-task verdict');
+  if (policy.status === 1) assert.match(policy.stdout, /бандл не меняется/);
+  return policy.status === 0;
+};
+
 /** #627: the nine namespace × language chunks, each a dynamic import of a lazy chunk. */
 const namespaceLocaleChunkPath = (entry) => `houseplan-assets/${entry.namespace}-${entry.language}-HASH.js`;
 const namespaceLocaleBundleChunks = (code = (entry) => `${entry.namespace} ${entry.language}`) => Object.fromEntries(
@@ -1015,6 +1023,9 @@ test('#438/#699 рост выше полосы над потолком беты 
   assert.match(grew.text, /#367/, 'у отказа обязан быть выход, а не только запрет');
   // Ровно потолок плюс полоса — ещё не рост: граница включительная.
   assert.equal(initialViewCeilingViolation(294_000, { ceiling: 292_000, band: 2_000 }), null);
+  assert.equal(initialViewCeilingViolation(293_822, { ceiling: 292_000, band: 2_000 }), null,
+    '#699: an ordinary task may use the last 500 bytes of the approved band');
+  assert.equal(initialViewCeilingViolation(294_001, { ceiling: 292_000, band: 2_000 }).kind, 'grew');
   assert.equal(initialViewCeilingViolation(292_400, { ceiling: 292_000, band: 2_000 }), null, 'рост в полосе задачу не красит');
 });
 
@@ -1029,6 +1040,23 @@ test('#699 падение ниже потолка задачу не красит
   assert.equal(initialViewCeilingViolation(undefined).kind, 'missing');
 });
 
+test('#834 candidate reserve classifier does not turn CLI errors into ordinary-task permission', () => {
+  assert.equal(requiresCandidateReserve({ status: 0, stdout: 'candidate', stderr: '' }), true);
+  assert.equal(requiresCandidateReserve({ status: 1, stdout: 'HEAD: бандл не меняется', stderr: '' }), false);
+  for (const result of [
+    { status: 1, stdout: '', stderr: 'bundle-policy: git failed' },
+    { status: 1, stdout: '', stderr: '' },
+    { status: null, stdout: '', stderr: '', error: new Error('spawn failed') },
+    { status: 2, stdout: '', stderr: '' },
+  ]) assert.throws(() => requiresCandidateReserve(result));
+  const invalidRef = spawnSync(process.execPath,
+    ['scripts/bundle-policy.mjs', '--must-match', 'HEAD^{not-a-git-object-type}'], {
+      cwd: fileURLToPath(new URL('..', import.meta.url)), encoding: 'utf8',
+    });
+  assert.equal(invalidRef.status, 1, 'the real CLI shares exit 1 between false and Git errors');
+  assert.throws(() => requiresCandidateReserve(invalidRef));
+});
+
 test('#438 полоса шире наблюдаемого шума метрики', (t) => {
   // gzip не монотонен по исходнику: на beta.2 initial-чанк стал меньше на 344
   // сырых байта и на 40 байт больше в сжатом виде. Полоса обязана быть заметно
@@ -1038,16 +1066,24 @@ test('#438 полоса шире наблюдаемого шума метрик�
     'полоса меньше килобайта превращает потолок в лотерею');
   // И потолок обязан оставаться под общим бюджетом: иначе он ничего не значит.
   assert.ok(INITIAL_VIEW_GZIP_CEILING < INITIAL_VIEW_GZIP_BUDGET);
-  // Факт лежит не у края отказа. С #699 отказ — выше потолка на полосу, а
-  // снижение гейт не красит: кандидат беты опускает потолок ровно до факта
-  // (`ratchets.mjs tighten`), и запас до отказа тогда равен полосе.
+  // #699: обычная задача вправе занять всю полосу. Запас восстанавливает
+  // кандидат (`ratchets.mjs tighten`), а не скрытый второй потолок -500 Б.
+  // Тот же canonical selector, что у сверки бандла, отличает кандидата от
+  // свежей локальной сборки обычной задачи и от beta-derived/golden коммита.
   const manifest = shippedManifest();
   if (!shippedBundleIsFresh(manifest)) { t.diagnostic(STALE_SHIPPED_BUNDLE); return; }
   const shipped = manifest.initialViewGzipBytes;
-  assert.ok(INITIAL_VIEW_GZIP_CEILING + INITIAL_VIEW_CEILING_BAND - shipped > 500,
-    'до отказа меньше 500 Б — это шум');
+  const violation = initialViewCeilingViolation(shipped);
+  assert.equal(violation, null, violation?.text);
   assert.equal(initialViewCeilingViolation(shipped - 5_000), null,
     'снижение не красит гейт (#699)');
+  const policy = spawnSync(process.execPath, ['scripts/bundle-policy.mjs', '--must-match', 'HEAD'], {
+    cwd: fileURLToPath(new URL('..', import.meta.url)), encoding: 'utf8',
+  });
+  if (requiresCandidateReserve(policy)) {
+    assert.ok(INITIAL_VIEW_GZIP_CEILING + INITIAL_VIEW_CEILING_BAND - shipped > 500,
+      'кандидат должен восстановить запас: node scripts/ratchets.mjs tighten');
+  }
 });
 
 test('#438 предупреждение о запасе можно погасить, и повышение потолка его возвращает', () => {

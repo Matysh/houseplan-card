@@ -4,6 +4,7 @@
  * This never edits a stored room, wall, opening or caller-owned polygon. */
 import { union } from './wall-boolean-cache';
 import { COORDINATE_FACTOR } from './coordinate-canonicalization';
+import { sameWallOperandTopology } from './wall-operand-topology';
 
 type Multi = ReturnType<typeof union>;
 type Ring = Multi[number][number];
@@ -19,9 +20,9 @@ const signedArea = (ring: Ring): number => {
   return twice / 2;
 };
 
-/** No ring (including a hole) may disappear during the retry. The input is a
- * canonical clipping result, so a component or hole-count change after
- * recanonicalizing either operand is a real loss of proof, not an empty wall. */
+/** Every outer and its own holes must survive normalizing the rounded operand.
+ * A split and simultaneous merge can preserve all counts yet move a hole into
+ * another component, so compare boundary identity, not a topology histogram. */
 export function canonicalComputedWallGeometry(geometry: Multi, coordScale: number): Multi {
   if (!(Number.isFinite(coordScale) && coordScale > 0)) throw new Error('invalid boolean scale');
   const quantum = coordScale / COORDINATE_FACTOR;
@@ -43,8 +44,7 @@ export function canonicalComputedWallGeometry(geometry: Multi, coordScale: numbe
     return next;
   }));
   const normalized = union(canonical);
-  const topology = (value: Multi): string => value.map(polygon => polygon.length).sort((a, b) => a - b).join(',');
-  if (topology(normalized) !== topology(geometry)) throw new Error('changed boolean topology');
+  if (!sameWallOperandTopology(canonical, normalized)) throw new Error('changed boolean topology');
   return normalized;
 }
 

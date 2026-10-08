@@ -30,7 +30,8 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
-    files: ['src/wall-node-editor.ts', 'src/wall-node-card-adapter.ts', 'src/wall-node-preview.ts', 'src/wall-thickness.ts'],
+    files: ['src/wall-node-editor.ts', 'src/wall-node-card-adapter.ts', 'src/wall-node-preview.ts',
+      'src/wall-thickness.ts', 'src/wall-shell-union.ts', 'src/wall-operand-topology.ts'],
     smokes: ['smoke_wall_node_connected.mjs'],
     because: '#834: native connected-floor drags prove neighbouring positions, atomic last-input release '
       + 'and warm end-to-end input/geometry/paint budgets, which disconnected-room benchmarks cannot observe',

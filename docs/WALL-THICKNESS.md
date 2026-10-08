@@ -53,7 +53,14 @@ release; cancel/revision retirement removes pending work. The same snapped
 point/axis reuses both valid and invalid results without rebuilding geometry.
 A numerical failure joining the computed masonry and exterior shell gets one
 canonical-coordinate retry; original room/wall coordinates never change.
-Each operand must preserve its rings, holes and component topology. Strictly
+Each operand must preserve each outer boundary together with its own holes,
+not merely a sorted list of ring counts. The rounded operand and normalized
+result must have identical boundaries modulo ring/component order, winding,
+cyclic starts, exact collinear subdivisions and zero-area retraces. Collinearity
+uses exact decimal arithmetic, matching the clipping library's interpretation
+of Number coordinates: no epsilon or second rounding of its result. This is
+identity of regularized filled polygons, not their linear wiregraphs. Split
+and simultaneous merge cannot hide a hole changing owner. Strictly
 separated component bounding boxes across operands must retain that certified
 separation after rounding; this is not a claim of general cross-operand
 topology equivalence. All existing physical guards still run, and failure of

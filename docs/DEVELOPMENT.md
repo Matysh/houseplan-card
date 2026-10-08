@@ -9,6 +9,21 @@ floor holes and opening cuts; the two-room reduction proves this is independent
 of HA state. The Python companion executes the unchanged server's independent
 proof and exact inverse on the same 100 positions.
 
+`wall-shell-topology.test.mjs` independently exercises the rare numerical retry.
+A valid canonical operand loses a thin neck while its right lobe joins another
+component after rounding: every hole survives and sorted ring counts remain
+`[2, 3]`, but one hole changes owner. The retry must reject that result and keep
+the exact original exception, without attempting the repaired merge. Boundary
+identity binds each outer to its own holes and accepts only representation
+changes, including exact zero-area retraces in the two-room regression. Equal
+area/counts or a global bag of rings cannot prove identity; a one-ULP bend is
+not collinear and cannot be silently removed.
+The fresh-build bundle unit follows the existing #699 distinction: an ordinary
+task may use the full 2,000-byte growth band; only a release candidate must
+restore its additional noise reserve. It uses the canonical `bundle-policy
+--must-match` selector, not a second ceiling 500 bytes below the actual gate.
+The absolute View wall, graph ceilings and performance budgets are unchanged.
+
 `smoke_wall_node_connected.mjs` is a normal CI-discovered smoke and the
 `benchmark:wall-node-connected` command. Its native CDP stream does not wait for
 two animation frames between moves. Every submitted input has an immutable
