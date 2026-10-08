@@ -165,17 +165,20 @@ test('the harness compiles test-build for exactly the guards that need it (#235)
 
 test('no mutant guard is left unable to resolve test-build (#235)', () => {
   for (const mutant of MUTANTS) {
-    const file = mutant.guard.split(/\s+/).find((part) => part.endsWith('.test.mjs'));
-    if (!file) continue;
-    const source = readFileSync(join(repoRoot, file), 'utf8');
-    if (!source.includes('test-build/')) continue;
-    // Либо гвард компилирует сам, либо это делает харнесс — третьего исхода
-    // (падение на резолве модуля) быть не должно.
-    assert.ok(
-      mutant.guard.includes('tsconfig.test.json') || guardNeedsTestBuild(mutant.guard),
-      `${mutant.id}: гвард читает ${file}, который импортирует test-build/, `
-      + 'и никто этот каталог в мутанте не соберёт',
-    );
+    // #830: browser guards can import compiled fixture/model helpers too. In
+    // a fresh worktree these are absent, just as for a short node --test guard.
+    for (const file of guardFiles(mutant.guard, path => existsSync(join(repoRoot, path)))
+      .filter(path => path.endsWith('.mjs'))) {
+      const source = readFileSync(join(repoRoot, file), 'utf8');
+      if (!source.includes('test-build/')) continue;
+      // Либо гвард компилирует сам, либо это делает харнесс — третьего исхода
+      // (падение на резолве модуля) быть не должно.
+      assert.ok(
+        mutant.guard.includes('tsconfig.test.json') || guardNeedsTestBuild(mutant.guard),
+        `${mutant.id}: гвард читает ${file}, который импортирует test-build/, `
+        + 'и никто этот каталог в мутанте не соберёт',
+      );
+    }
   }
 });
 

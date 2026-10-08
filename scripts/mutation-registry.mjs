@@ -7,6 +7,10 @@ import { fileURLToPath } from 'node:url';
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 
 const occurrenceCount = (source, needle) => source.split(needle).length - 1;
+// #830: these browser fixtures import model helpers from test-build. A mutant
+// worktree has no compiled helpers; prepare them before the declared oracle.
+const compiledNodeSmoke = name => 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs'
+  + ` && node demo/${name}.mjs`;
 
 /**
  * Map a logical pre-split card anchor onto the lazy editor source.
@@ -130,7 +134,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'node-preview-retains-original-body',
-    guard: 'node demo/smoke_wall_node_move.mjs',
+    guard: compiledNodeSmoke('smoke_wall_node_move'),
     because: '#828: the real pointer raster replaces settled affected masonry with one .35 source ghost, not an opaque old body',
     patches: [{ file: 'src/wall-node-editor.ts',
       find: ": 'url(#hp-node-old-walls-mask)';",
@@ -139,7 +143,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'node-source-ghost-opaque',
-    guard: 'node demo/smoke_wall_node_reliability.mjs',
+    guard: compiledNodeSmoke('smoke_wall_node_reliability'),
     because: '#828 AC5: Chromium pixels prove .35 compositing above candidate paper/fills, '
       + 'in valid/invalid, positive/zero/mixed and light/dark scenes; attributes alone cannot',
     patches: [{ file: 'src/wall-node-editor.ts',
@@ -149,7 +153,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'node-invalid-warning-settled-copy',
-    guard: 'node demo/smoke_wall_node_reliability.mjs',
+    guard: compiledNodeSmoke('smoke_wall_node_reliability'),
     because: '#828 AC4: full hass/Lit ticks during a captured pointer must not retain a second '
       + 'warning across invalid A / invalid B / valid C; a pure template has no live DOM lifecycle',
     patches: [{ file: 'src/wall-node-editor.ts',
@@ -159,7 +163,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'node-guide-settled-copy',
-    guard: 'node demo/smoke_wall_node_reliability.mjs',
+    guard: compiledNodeSmoke('smoke_wall_node_reliability'),
     because: '#828 AC4: actual X carrier drag and full hass/Lit tick must present one current '
       + 'guide, not a settled duplicate in the mounted SVG',
     patches: [{ file: 'src/wall-node-editor.ts',
@@ -169,7 +173,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'node-axis-prompt-settled-copy',
-    guard: 'node demo/smoke_wall_node_reliability.mjs',
+    guard: compiledNodeSmoke('smoke_wall_node_reliability'),
     because: '#828 AC4: captured X before movement survives real full hass/Lit ticks with '
       + 'exactly one choose-axis prompt; the browser owns the settled/live roots',
     patches: [{ file: 'src/wall-node-editor.ts',
@@ -253,8 +257,9 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'node-noisy-server-axis-uses-positional-epsilon',
-    guard: 'node scripts/backend-test-guard.mjs noisy_atomized tests_backend/test_wall_node_move.py',
-    because: '#803 H1: the server must accept the same noisy T/X atoms, including reversed storage and exact inverse',
+    guard: 'node scripts/backend-test-guard.mjs "noisy_atomized or shared_angular_boundary" tests_backend/test_wall_node_move.py',
+    because: '#803 H1 / #830: model canonicalization can straighten noisy atoms; include the '
+      + 'unrounded angular-boundary classifier witness as well as reversed T/X moves and exact inverse',
     patches: [{ file: 'custom_components/houseplan/wall_node_move.py',
       find: '    return abs(_cross(a, b)) <= DIRECTION_EPS',
       replace: '    return abs(_cross(a, b)) <= EPS',

@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Mutation witness readiness (#830): node browser guards explicitly compile their
+model fixtures in a fresh worktree; the cheap readiness check includes smoke
+entry files. The server angular witness selects the unrounded boundary as well
+as canonicalized noisy T/X operations. IDs and mutation patches are retained;
+development runs only clean guards and static checks, not mutations.
+
 Space deletion (#819): editor and onboarding share one lazy post-confirmation
 completion path, preserving target/marker-set fences, authoritative adoption
 and error recovery. Confirmation copy remains in each caller; bundle ratchets

@@ -857,6 +857,13 @@ runs); dependencies never point back to the CLI. Guard-input caching is
 invocation-scoped (one resolver, one tracked-file snapshot); persisted success
 exists only in the explicit caught-witness ledger. Usage: [TESTING](TESTING.md).
 
+Node-drag browser guards declare compilation of their `test-build/` model
+fixtures before the browser oracle (#830). The existing runner still separates
+setup from assertion evidence; a missing compiled module is never a caught
+mutant. The cheap registry test checks all `.mjs` entry files for this readiness,
+including browser smokes, rather than assuming that every smoke needs only a
+bundle. Product code and nightly-only mutation execution policy are unchanged.
+
 ## LED strips: lazy boundaries (#780)
 
 `space.led_strips` belongs to the space; the link is one-way strip → marker

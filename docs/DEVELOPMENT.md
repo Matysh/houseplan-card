@@ -62,6 +62,11 @@ must refuse with unchanged config, revision and events. The raw-legacy room
 fixture exercises the ledger's read-compatible identity canonicalisation and
 exact source immutability. Register these guards and use `mutation-gate --check`;
 do not execute mutants during development.
+The node browser witnesses also read compiled fixture helpers: their registry
+guards explicitly prepare `test-build/` before the smoke (#830). Do not infer
+readiness from a previous shared clean guard. The Python angular witness selects
+both noisy operations and the unsmoothed classifier boundary; canonicalization
+may erase the noise before the operation. See TESTING for preparation semantics.
 Before pushing Python edits, also run the CI ruff subset: paired collections
 use explicit `zip(..., strict=True)` so an incomplete proof cannot be truncated.
 The mouse smoke also exits after a saved node, re-enters Plan with a real Enter
