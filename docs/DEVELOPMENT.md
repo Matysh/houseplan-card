@@ -590,8 +590,12 @@ unpublished/mismatched branch SHAs, stale source fingerprints, toolchain drift,
 partial matrices, undeclared differences and an insufficient witness floor. It
 writes `artifacts/golden/wsl-attestation.json`, which self-hashes the source
 identity, environment, pinned toolchain, report, every PNG and the acceptance
-intent. Acceptance verifies the passport again and records it under
-`localAttestation` in the baseline index. Copy the printed
+intent. Its Chromium is the headless shell that actually launches, judged like
+`toolchain:check` (#827) — running version, selected and resolved path, sha256
+of the resolved binary — not `chromium.executablePath()` (#833); a foreign or
+missing browser is an environment failure before any passport. Acceptance
+verifies the passport again, re-judges the current headless shell against it
+and records it under `localAttestation` in the baseline index. Copy the printed
 `Baseline-Reviewed-Local: sha256:…` line to the baseline commit together with
 `Release:`; never add the GitHub `Baseline-Reviewed:` trailer to the same commit.
 Push that commit and wait for the full GitHub Validate on its exact SHA before

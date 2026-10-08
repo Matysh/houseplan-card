@@ -14,7 +14,7 @@ import {
   CAPTURE_CANON_PLATFORM, captureEnvironment, environmentNote,
   foreignCaptureAllowance, foreignCaptureRefusal, reportCaptureProvenance,
 } from '../../scripts/capture-environment.mjs';
-import { verifyWslAttestation } from '../../scripts/golden-wsl-artifact.mjs';
+import { localAttestationRecord, verifyWslAttestation } from '../../scripts/golden-wsl-artifact.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const reviewed = process.argv.includes('--reviewed');
@@ -199,20 +199,8 @@ writeFileSync(resolve(baselineRoot, GOLDEN_BASELINE_MANIFEST), `${JSON.stringify
   capture: provenance,
   // Локальный источник не маскируется под actions run. Хеш паспорта связывает
   // индекс, терминальный `Baseline-Reviewed-Local` и CI proof финального SHA.
-  localAttestation: localAttestation ? {
-    schema: localAttestation.schema,
-    sha256: localAttestation.sha256,
-    artifactSha256: localAttestation.artifactSha256,
-    createdAt: localAttestation.createdAt,
-    source: localAttestation.source,
-    environment: localAttestation.environment,
-    toolchain: {
-      node: localAttestation.toolchain.node,
-      npm: localAttestation.toolchain.npm,
-      playwright: localAttestation.toolchain.playwright,
-      chromiumExecutableSha256: localAttestation.toolchain.chromiumExecutableSha256,
-    },
-  } : null,
+  // #833: браузер записи — фактически исполняемый headless shell паспорта.
+  localAttestation: localAttestationRecord(localAttestation),
   // Причина осознанного обхода живёт в индексе, а не только в stdout: через
   // неделю stdout нет ни у кого, а индекс лежит в репозитории.
   foreignCapture: foreignAllowed ? { reason: foreignAllowed } : null,

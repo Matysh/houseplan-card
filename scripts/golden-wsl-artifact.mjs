@@ -6,6 +6,14 @@
  * аттестует исходное дерево, WSL/ext4, пиновый Node/Playwright/Chromium,
  * полный набор сцен, PNG-хеши и floor свидетелей. Приёмщик повторяет все
  * проверки; финальный exact-SHA Validate в GitHub остаётся merge/release-гейтом.
+ *
+ * Chromium паспорта — тот, что снимает кадры (#833, F33/F53): стандартный
+ * headless-запуск поднимает headless shell, а не полный Chromium из
+ * `chromium.executablePath()`. Паспорт описывает запущенный браузер тем же
+ * судом, что и #827 (`scripts/browser-attestation.mjs`): версия процесса,
+ * выбранный Playwright и фактически исполняемый путь, sha256 исполняемого
+ * бинарника. Расхождение с пинами, отсутствие или неопрашиваемость — отказ
+ * среды, паспорт не создаётся.
  */
 import { createHash } from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -25,10 +33,17 @@ import { reportCaptureProvenance } from './capture-environment.mjs';
 import { sourceFingerprint } from './source-fingerprint.mjs';
 import { pinsFromSources } from './toolchain-pins.mjs';
 import { isBundlePath } from './bundle-policy.mjs';
+import {
+  BrowserEnvironmentError, environmentFailureMessage, expectedBrowser, installedPlaywright, judgeBrowser,
+  probeStandardLaunch,
+} from './browser-attestation.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const WSL_ATTESTATION_FILE = 'wsl-attestation.json';
-export const WSL_ATTESTATION_SCHEMA = 'houseplan-golden-wsl/v1';
+/** v2 (#833): Chromium — фактически исполняемый headless shell, не executablePath(). */
+export const WSL_ATTESTATION_SCHEMA = 'houseplan-golden-wsl/v2';
+/** Поля браузера, которые приёмка сверяет с паспортом. */
+export const WSL_BROWSER_KEYS = Object.freeze(['version', 'resolvedExecutable', 'executableSha256']);
 
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 
@@ -127,19 +142,41 @@ export function environmentRefusal(environment) {
   return null;
 }
 
-export async function toolchainSnapshot(root = ROOT) {
-  const pins = pinsFromSources();
-  const playwrightPackage = JSON.parse(readFileSync(resolve(root, 'node_modules/playwright/package.json'), 'utf8'));
-  const { chromium } = await import('playwright');
-  const chromiumExecutable = chromium.executablePath();
-  if (!existsSync(chromiumExecutable)) throw new Error(`Chromium не установлен: ${chromiumExecutable}`);
+/**
+ * Toolchain паспорта (#833): стандартный headless-запуск поднимается один раз
+ * (`probeStandardLaunch`) и судится против пинов (`judgeBrowser`) — как
+ * `toolchain:check` и съёмка golden (#827). Непригодная среда —
+ * `BrowserEnvironmentError`, паспорта нет. Хешируется фактически исполняемый
+ * бинарник (`/proc/<pid>/exe`), а не путь, названный пином.
+ * `probe`/`hashFile` — подмена для тестов; `launcher` — для `probeStandardLaunch`.
+ */
+export async function toolchainSnapshot(root = ROOT, {
+  pins = pinsFromSources(), playwright = installedPlaywright(root), npm = null,
+  launcher = null, probe = null, platform = process.platform, hashFile = fileSha256,
+} = {}) {
+  const launched = probe ? await probe() : await probeStandardLaunch({ launcher, platform });
+  const verdict = judgeBrowser({ pins, probe: launched, playwright, platform });
+  if (!verdict.ok) throw new BrowserEnvironmentError(environmentFailureMessage(verdict, 'WSL golden passport'), verdict);
+  const executable = verdict.actual.resolvedExecutable;
+  if (!executable) {
+    throw new BrowserEnvironmentError(environmentFailureMessage({
+      ...verdict, problems: ['путь фактически исполняемого headless shell не прочитан: паспорт хеширует только его'],
+    }, 'WSL golden passport'), verdict);
+  }
   return {
     pins,
     node: process.versions.node,
-    npm: command(root, 'npm', ['--version']),
-    playwright: playwrightPackage.version,
-    chromiumExecutable,
-    chromiumExecutableSha256: await fileSha256(chromiumExecutable),
+    npm: npm ?? command(root, 'npm', ['--version']),
+    playwright,
+    browser: {
+      expected: verdict.expected,
+      version: verdict.actual.version,
+      product: verdict.actual.product,
+      mode: verdict.actual.mode,
+      selectedExecutable: verdict.actual.selectedExecutable,
+      resolvedExecutable: executable,
+      executableSha256: await hashFile(executable),
+    },
   };
 }
 
@@ -149,7 +186,11 @@ export function toolchainRefusal(toolchain, report = null) {
   if (toolchain?.playwright !== toolchain?.pins?.playwright) failures.push('Playwright');
   const browserVersion = toolchain?.pins?.chromium?.version;
   if (report && browserVersion && !String(report.chromium || '').includes(browserVersion)) failures.push('Chromium');
-  if (!/^[0-9a-f]{64}$/.test(toolchain?.chromiumExecutableSha256 || '')) failures.push('Chromium executable');
+  // #833: паспорт несёт браузер, который снимает: headless shell по пину.
+  const expected = expectedBrowser(toolchain?.pins);
+  if (!expected?.version || toolchain?.browser?.version !== expected.version) failures.push('Chromium headless shell');
+  if (!toolchain?.browser?.resolvedExecutable
+    || !/^[0-9a-f]{64}$/.test(toolchain?.browser?.executableSha256 || '')) failures.push('Chromium executable');
   return failures.length ? `toolchain расходится с CI: ${failures.join(', ')}` : null;
 }
 
@@ -267,6 +308,28 @@ export async function createWslAttestation({
   return { ...payload, sha256: objectSha256(payload) };
 }
 
+/**
+ * Запись о WSL-паспорте в индексе эталонов (`localAttestation`, #641): хеш
+ * паспорта, источник, среда и toolchain. Браузер — фактически исполняемый
+ * headless shell, которым сняты кадры (#833), не полный Chromium.
+ */
+export function localAttestationRecord(attestation) {
+  if (!attestation) return null;
+  const { node, npm, playwright, browser } = attestation.toolchain || {};
+  return {
+    schema: attestation.schema,
+    sha256: attestation.sha256,
+    artifactSha256: attestation.artifactSha256,
+    createdAt: attestation.createdAt,
+    source: attestation.source,
+    environment: attestation.environment,
+    toolchain: {
+      node, npm, playwright,
+      browser: Object.fromEntries(WSL_BROWSER_KEYS.map((key) => [key, browser?.[key] ?? null])),
+    },
+  };
+}
+
 const matchingSource = (attestation, current) => [
   'repository', 'branch', 'commit', 'tree', 'remoteSha',
 ].every((key) => attestation?.source?.[key] === current?.[key]);
@@ -281,8 +344,13 @@ export async function verifyWslAttestation({
   if (!existsSync(path)) return null;
   currentSource ||= repositorySnapshot(root);
   currentEnvironment ||= runtimeEnvironment(root);
-  currentToolchain ||= await toolchainSnapshot(root);
   const attestation = JSON.parse(readFileSync(path, 'utf8'));
+  if (attestation.schema === 'houseplan-golden-wsl/v1') {
+    // #833: v1 хешировал полный Chromium из executablePath(), а снимал headless
+    // shell — такой паспорт не говорит, каким браузером сняты кадры.
+    throw new Error('WSL golden attestation houseplan-golden-wsl/v1 attests chromium.executablePath() (full Chromium), '
+      + 'not the headless shell that captured the frames (#833): re-run npm run golden:wsl:capture');
+  }
   if (attestation.schema !== WSL_ATTESTATION_SCHEMA || attestation.kind !== 'wsl-local') {
     throw new Error(`unsupported WSL golden attestation: ${attestation.schema || 'missing'}`);
   }
@@ -303,11 +371,19 @@ export async function verifyWslAttestation({
   if (attestation.packageLockSha256 !== sha256(readFileSync(resolve(root, 'package-lock.json')))) {
     throw new Error('package-lock.json changed after the WSL golden capture');
   }
+  // Браузер запускается только для паспорта, прошедшего схему, хеш и среду.
+  currentToolchain ||= await toolchainSnapshot(root);
   const toolProblem = toolchainRefusal(currentToolchain);
   if (toolProblem) throw new Error(toolProblem);
-  for (const key of ['node', 'npm', 'playwright', 'chromiumExecutableSha256']) {
+  for (const key of ['node', 'npm', 'playwright']) {
     if (currentToolchain[key] !== attestation.toolchain?.[key]) {
       throw new Error(`toolchain changed after WSL golden capture: ${key}`);
+    }
+  }
+  // #833: тот же фактический headless shell — путь и байты бинарника.
+  for (const key of WSL_BROWSER_KEYS) {
+    if (currentToolchain.browser?.[key] !== attestation.toolchain?.browser?.[key]) {
+      throw new Error(`toolchain changed after WSL golden capture: browser.${key}`);
     }
   }
   const report = JSON.parse(readFileSync(resolve(artifactRoot, 'golden-report.json'), 'utf8'));

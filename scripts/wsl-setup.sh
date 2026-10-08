@@ -81,9 +81,11 @@ if [ "$MODE" != "--check" ]; then
   npm ci --no-audit --no-fund
   npx playwright install chromium >/dev/null
 fi
-echo "chromium: $(node -e 'console.log(require("playwright").chromium.executablePath())')"
 
 # Сверка тем же скриптом, что и на Windows; Python передаётся явно и не зависит от PATH.
+# Chromium она судит запущенным (#827): версия процесса и фактически исполняемый
+# headless shell. `chromium.executablePath()` — полный Chromium, им кадры не
+# снимаются, и как «браузер» он не печатается (#833).
 node scripts/toolchain-pins.mjs --check --python "$PYTHON_EXE"
 
 if [ "$MODE" = "--verify" ]; then

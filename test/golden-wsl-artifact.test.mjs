@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createHash } from 'node:crypto';
 import {
-  copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync,
+  copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, rmSync, writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
@@ -10,9 +10,10 @@ import { fileURLToPath } from 'node:url';
 
 import { CAPTURE_PROVENANCE_SCHEMA } from '../scripts/capture-environment.mjs';
 import {
-  WSL_ATTESTATION_FILE, createWslAttestation, environmentRefusal,
-  repositoryRefusal, verifyWslAttestation, withoutBundlePaths,
+  WSL_ATTESTATION_FILE, WSL_ATTESTATION_SCHEMA, createWslAttestation, environmentRefusal, localAttestationRecord,
+  objectSha256, repositoryRefusal, toolchainRefusal, toolchainSnapshot, verifyWslAttestation, withoutBundlePaths,
 } from '../scripts/golden-wsl-artifact.mjs';
+import { BrowserEnvironmentError, expectedBrowser } from '../scripts/browser-attestation.mjs';
 import { GOLDEN_MATRIX_VERSION, GOLDEN_SCENARIOS } from '../demo/golden/matrix.mjs';
 import { sourceFingerprint } from '../scripts/source-fingerprint.mjs';
 import { pinsFromSources } from '../scripts/toolchain-pins.mjs';
@@ -30,15 +31,21 @@ const environment = Object.freeze({
   wsl: true, distro: 'Ubuntu', filesystem: 'ext2/ext3',
 });
 
+/** Пиновый headless shell, как его записывает паспорт v2 (#833). */
+const shellOf = (pins) => `/home/test/.cache/ms-playwright/chromium_headless_shell-${expectedBrowser(pins).revision}`
+  + '/chrome-headless-shell-linux64/chrome-headless-shell';
 const toolchain = () => {
   const pins = pinsFromSources();
+  const expected = expectedBrowser(pins);
   return {
     pins,
     node: `${pins.node}.0.0`,
     npm: '10.9.0',
     playwright: pins.playwright,
-    chromiumExecutable: '/home/test/chromium',
-    chromiumExecutableSha256: 'c'.repeat(64),
+    browser: {
+      expected, version: expected.version, product: `HeadlessChrome/${expected.version}`, mode: 'headless-shell',
+      selectedExecutable: shellOf(pins), resolvedExecutable: shellOf(pins), executableSha256: 'c'.repeat(64),
+    },
   };
 };
 
@@ -226,4 +233,140 @@ test('#657 WSL golden: пересобранный бандл не считает
   ].join('\n');
   assert.equal(withoutBundlePaths(status), [' M src/editor-panel.ts', '?? demo/golden/notes.txt'].join('\n'));
   assert.equal(withoutBundlePaths('M dist/houseplan-card.js'), '');
+});
+
+// ---------- #833: паспорт описывает фактически запущенный headless shell ----------
+
+/** Браузер без Chromium: версия, CDP и pid процесса для `/proc`. */
+const fakeBrowser = (version, pid) => ({
+  version: () => version,
+  newBrowserCDPSession: async () => ({
+    send: async (method) => (method === 'Browser.getVersion'
+      ? { product: `HeadlessChrome/${version}` }
+      : { processInfo: [{ type: 'browser', id: pid }] }),
+    detach: async () => {},
+  }),
+  close: async () => {},
+});
+
+test('#833 AC1: паспорт хеширует запущенный headless shell, а не chromium.executablePath()', {
+  skip: process.platform !== 'linux' && 'путь процесса читается через /proc (WSL — Linux)',
+}, async (t) => {
+  const dir = mkdtempSync(resolve(tmpdir(), 'hp-833-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const full = resolve(dir, 'chrome');
+  writeFileSync(full, 'full Chromium, которым кадры не снимаются');
+  const pins = pinsFromSources();
+  const expected = expectedBrowser(pins);
+  // Стандартный запуск подменён: «браузер» — этот процесс Node, его бинарник и есть фактически исполняемый.
+  const launches = [];
+  const launcher = {
+    executablePath: () => full,
+    launch: async (options) => { launches.push(options); return fakeBrowser(expected.version, process.pid); },
+  };
+  const snapshot = await toolchainSnapshot(ROOT, { pins, launcher, npm: '10.9.0', platform: 'linux' });
+  assert.equal(launches.length, 1, 'стандартный запуск — один');
+  assert.equal(launches[0], undefined, 'без executablePath: тот запуск, что у serve.mjs и golden');
+  const running = readlinkSync(`/proc/${process.pid}/exe`);
+  assert.equal(snapshot.browser.resolvedExecutable, running);
+  assert.equal(snapshot.browser.executableSha256, digest(readFileSync(running)));
+  assert.notEqual(snapshot.browser.executableSha256, digest(readFileSync(full)));
+  assert.deepEqual(snapshot.browser.expected, expected);
+  assert.equal(snapshot.browser.version, expected.version);
+  assert.match(snapshot.browser.selectedExecutable, /\S/);
+  assert.equal('chromiumExecutableSha256' in snapshot, false, 'полный Chromium паспорт больше не описывает');
+  assert.equal(toolchainRefusal(snapshot), null);
+});
+
+test('#833 AC1: F33, чужая версия, отсутствие и неопрашиваемость — отказ среды, паспорта нет', async () => {
+  const pins = pinsFromSources();
+  const expected = expectedBrowser(pins);
+  const shell = shellOf(pins);
+  const hashed = [];
+  const snap = (probe) => toolchainSnapshot(ROOT, {
+    pins, npm: '10.9.0', platform: 'linux', probe: async () => probe,
+    hashFile: async (path) => { hashed.push(path); return 'e'.repeat(64); },
+  });
+  const failure = (pattern) => (error) => error instanceof BrowserEnvironmentError
+    && /^environment failure \(browser-attestation\) \[WSL golden passport\]: /.test(error.message)
+    && pattern.test(error.message);
+  // F33: каталог назван пиновой ревизией, исполняется чужая сборка.
+  await assert.rejects(snap({
+    version: '1.0.0.0', product: 'HeadlessChrome/1.0.0.0', pid: 7, mode: 'headless-shell',
+    selectedExecutable: shell, resolvedExecutable: '/opt/other/chromium_headless_shell-1/headless_shell',
+  }), failure(new RegExp(`запущен Chromium 1\\.0\\.0\\.0, пин chromium-headless-shell ${expected.version.replaceAll('.', '\\.')}.*\\(F33\\)`)));
+  await assert.rejects(snap({ launchError: "browserType.launch: Executable doesn't exist at /x" }),
+    failure(/стандартный запуск Playwright не поднял браузер/));
+  await assert.rejects(snap({ version: null, error: 'Target closed' }), failure(/версия запущенного браузера не прочитана: Target closed/));
+  await assert.rejects(snap({ version: expected.version, product: `HeadlessChrome/${expected.version}`, pid: 7, selectedExecutable: shell, resolvedExecutable: null }),
+    failure(/путь запущенного исполняемого не прочитан/));
+  assert.deepEqual(hashed, [], 'непригодная среда ничего не хеширует');
+  // Совпавший headless shell — хеш от фактически исполняемого пути, не от выбранного.
+  const ok = await snap({ version: expected.version, product: `HeadlessChrome/${expected.version}`, pid: 7, selectedExecutable: shell, resolvedExecutable: '/real/headless_shell' });
+  assert.deepEqual(hashed, ['/real/headless_shell']);
+  assert.equal(ok.browser.executableSha256, 'e'.repeat(64));
+  assert.equal(ok.browser.selectedExecutable, shell);
+});
+
+test('#833 AC1: toolchain без фактического headless shell паспорт не создаёт', async () => {
+  const dir = artifact();
+  try {
+    const { browser, ...legacy } = toolchain();
+    for (const [name, tc, pattern] of [
+      ['v1: только полный Chromium', { ...legacy, chromiumExecutable: '/home/test/chromium', chromiumExecutableSha256: 'c'.repeat(64) },
+        /toolchain расходится с CI: Chromium headless shell, Chromium executable/],
+      ['чужая версия headless shell', { ...legacy, browser: { ...browser, version: '1.0.0.0' } }, /Chromium headless shell/],
+      ['хеш не записан', { ...legacy, browser: { ...browser, executableSha256: null } }, /Chromium executable/],
+    ]) {
+      await assert.rejects(() => createWslAttestation({
+        root: ROOT, artifactRoot: dir, intent, source, environment, toolchain: tc,
+      }), pattern, name);
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('#833 AC2: подмена headless shell после съёмки и паспорт прежней схемы отвергаются', async () => {
+  const dir = artifact();
+  try {
+    const tc = toolchain();
+    const attestation = await createWslAttestation({
+      root: ROOT, artifactRoot: dir, intent, source, environment, toolchain: tc,
+    });
+    assert.equal(attestation.schema, WSL_ATTESTATION_SCHEMA);
+    assert.equal(WSL_ATTESTATION_SCHEMA, 'houseplan-golden-wsl/v2');
+    assert.deepEqual(attestation.toolchain.browser, tc.browser);
+    writeFileSync(resolve(dir, WSL_ATTESTATION_FILE), `${JSON.stringify(attestation, null, 2)}\n`);
+    const verify = (currentToolchain) => verifyWslAttestation({
+      root: ROOT, artifactRoot: dir, intent, currentSource: source, currentEnvironment: environment, currentToolchain,
+    });
+    assert.equal((await verify(tc)).sha256, attestation.sha256);
+    // Бинарник заменён на месте или symlink переставлен на другую сборку того же номера.
+    await assert.rejects(() => verify({ ...tc, browser: { ...tc.browser, executableSha256: 'd'.repeat(64) } }),
+      /toolchain changed after WSL golden capture: browser\.executableSha256/);
+    await assert.rejects(() => verify({ ...tc, browser: { ...tc.browser, resolvedExecutable: '/opt/other/headless_shell' } }),
+      /toolchain changed after WSL golden capture: browser\.resolvedExecutable/);
+    // Запись приёмки — хеш того же фактического бинарника, полного Chromium в ней нет.
+    const record = localAttestationRecord(attestation);
+    assert.deepEqual(record.toolchain.browser, {
+      version: tc.browser.version, resolvedExecutable: tc.browser.resolvedExecutable, executableSha256: tc.browser.executableSha256,
+    });
+    assert.equal(record.sha256, attestation.sha256);
+    assert.doesNotMatch(JSON.stringify(record), /chromiumExecutable/);
+    assert.equal(localAttestationRecord(null), null);
+    // Паспорт v1 (хеш полного Chromium) — отказ с причиной, до запуска браузера.
+    const { sha256: _, ...payload } = attestation;
+    const { browser, ...legacyToolchain } = tc;
+    const v1 = {
+      ...payload, schema: 'houseplan-golden-wsl/v1',
+      toolchain: { ...legacyToolchain, chromiumExecutable: '/home/test/chromium', chromiumExecutableSha256: 'c'.repeat(64) },
+    };
+    writeFileSync(resolve(dir, WSL_ATTESTATION_FILE), `${JSON.stringify({ ...v1, sha256: objectSha256(v1) }, null, 2)}\n`);
+    await assert.rejects(() => verifyWslAttestation({
+      root: ROOT, artifactRoot: dir, intent, currentSource: source, currentEnvironment: environment,
+    }), /houseplan-golden-wsl\/v1 attests chromium\.executablePath\(\) \(full Chromium\), not the headless shell that captured the frames \(#833\)/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

@@ -125,10 +125,20 @@ npm run golden:verify
 
 The capture writes `artifacts/golden/wsl-attestation.json`. Its self-hash binds
 repository/branch/commit/tree and remote SHA, WSL distro/kernel/architecture and
-filesystem, Node/npm/Playwright/Chromium identity, `package-lock.json`, source
+filesystem, Node/npm/Playwright identity, `package-lock.json`, source
 fingerprint, matrix version, every scene's dimensions and PNG checksum, the
-report checksum, witness count/floor and the declared acceptance intent. The
-accept command verifies the same facts again before writing and stores the
+report checksum, witness count/floor and the declared acceptance intent. Its
+Chromium is the headless shell that actually captures the frames (schema
+`houseplan-golden-wsl/v2`, #833), not `chromium.executablePath()` (the full
+Chromium): one standard headless launch is judged by
+`scripts/browser-attestation.mjs` — expected and running version, the path
+Playwright selected and the binary that actually runs — and the passport stores
+the sha256 of that binary. A pin mismatch, a missing or an unprobeable browser,
+or the F33 shape (a pinned directory name with another build inside) is an
+environment failure and no passport is written. The accept command verifies the
+same facts again before writing — the current headless shell must keep the
+passport's version, path and sha256, otherwise "toolchain changed after WSL
+golden capture"; a v1 passport is refused with that reason — and stores the
 local provenance separately in `baselines-index.json`; it never pretends that a
 local capture came from GitHub Actions.
 

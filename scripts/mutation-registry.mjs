@@ -16180,6 +16180,29 @@ const MUTANT_DEFINITIONS = [
       replace: '            : # mutant: the label is never added\n',
     }],
   },
+  // #833 (F53): WSL-паспорт golden описывает фактически запущенный headless shell.
+  {
+    id: 'wsl-passport-hashes-executable-path',
+    guard: 'node --test --test-name-pattern="#833 AC1" test/golden-wsl-artifact.test.mjs',
+    because: '#833 AC1: chromium.executablePath() is the full Chromium, not the headless shell that '
+      + 'captures the frames; hashing it again lets a passport vouch for a browser that rendered nothing (F33 shape)',
+    patches: [{
+      file: 'scripts/golden-wsl-artifact.mjs',
+      find: '  const executable = verdict.actual.resolvedExecutable;',
+      replace: "  const executable = (launcher || (await import('playwright')).chromium).executablePath(); // mutant: full Chromium",
+    }],
+  },
+  {
+    id: 'wsl-acceptance-ignores-browser-binary',
+    guard: 'node --test --test-name-pattern="#833 AC2" test/golden-wsl-artifact.test.mjs',
+    because: '#833 AC2: acceptance must re-judge the headless shell against the passport; without the '
+      + 'comparison a binary swapped after the WSL capture is accepted as the one that captured the frames',
+    patches: [{
+      file: 'scripts/golden-wsl-artifact.mjs',
+      find: '  for (const key of WSL_BROWSER_KEYS) {',
+      replace: '  for (const key of []) { // mutant: the browser binary is not compared',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');
