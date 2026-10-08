@@ -388,6 +388,10 @@ const heldGesture = async (handle, end, during) => {
     steps: window.__card._cfgEpoch - before.epoch,
     areas: await window.__hp814.liveAreasAgainstFresh(),
   }), before);
+  if (held.areas.error) console.log('diagnostic rejected Resize ' + JSON.stringify(await page.evaluate(() => ({
+    toast: window.__card._toast, dragging: window.__card._resize.dragging,
+    rooms: window.__card._spaceModel()?.rooms.map(room => ({ id: room.id, poly: room.poly, wall_ids: room.wall_ids })),
+  }))));
   if (end === 'escape') await page.keyboard.press('Escape');
   await page.mouse.up();
   await page.evaluate(() => window.__hp814.settled());

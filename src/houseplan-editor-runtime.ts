@@ -65,7 +65,7 @@ import {
 } from './resize-controller';
 import { resizeLiveCandidateSpace, resizeLiveJunctionRoomIds } from './resize-live-preflight';
 import {
-  prepareResizeAtomProjection, applyResizeAtomProjection, projectResizeAtomCatalogue, projectResizeAtomConsumers,
+  prepareResizeAtomProjection, applyResizeAtomProjection, projectResizeStoredAtoms,
   prepareResizeAtomContext, type ResizeAtomContext,
 } from './resize-atom-projection';
 import {
@@ -3158,24 +3158,6 @@ public _rszProjectPreview(
         newSpans.push([newPoly[i], newPoly[(i + 1) % newPoly.length]]);
       }
     }
-    const proposedAtoms = projectResizeAtomCatalogue(
-      this._resizeAtomMap.consumers,
-      new Map(sp.rooms.filter(room => changedRoomIds.includes(room.id)).map(room => [room.id, room.poly])),
-      this._resizeAtomMap.catalogue, atomEps,
-    );
-    if (!proposedAtoms) return { ok: false, reason: 'wall-metadata' };
-    const consumerPolys = projectResizeAtomConsumers(
-      this._resizeAtomMap.consumers, this._resizeAtomMap.catalogue, proposedAtoms, new Set(changedRoomIds), atomEps,
-    );
-    if (!consumerPolys) return { ok: false, reason: 'wall-metadata' };
-    for (const room of sp.rooms) {
-      const poly = consumerPolys.get(room.id);
-      if (poly) room.poly = poly;
-    }
-    for (const segment of sp.wall_segments || []) {
-      const proposed = proposedAtoms.get(segment.id);
-      if (proposed) { segment.a = [...proposed.a]; segment.b = [...proposed.b]; }
-    }
     if (oldSpans.length) {
       if (Array.isArray(sp.walls) && sp.walls.length) {
         const rekeyed = rekeyWallsAfterMoveChecked(
@@ -3185,6 +3167,9 @@ public _rszProjectPreview(
         sp.walls = rekeyed.walls;
       }
     }
+    const atomCandidate = projectResizeStoredAtoms(sp, this._resizeAtomMap, new Set(changedRoomIds), atomEps);
+    if (!atomCandidate) return { ok: false, reason: 'wall-metadata' };
+    Object.assign(sp, atomCandidate);
     const wallCarriers: [number[], number[]][] = [];
     for (const room of sp.rooms || []) {
       const poly = roomPoly(room);

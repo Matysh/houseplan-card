@@ -16125,8 +16125,8 @@ const MUTANT_DEFINITIONS = [
       + 'Lit/editor/write-boundary call-site: omitting it recreates the native valid-second refusal.',
     patches: [{
       file: 'src/houseplan-editor-runtime.ts',
-      find: '      if (poly) room.poly = poly;',
-      replace: '      if (poly && changedRoomIds.includes(room.id)) room.poly = poly; // mutant: fixed consumer stays stale',
+      find: '    Object.assign(sp, atomCandidate);',
+      replace: '    // mutant: validated stored candidate is never installed into the live preview',
     }],
   },
   // #818: CLI гейта мутаций не теряет хвост stdout, когда читатель отстаёт.

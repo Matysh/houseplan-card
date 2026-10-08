@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.80.0-beta.8** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.79.0` |
 | Latest prerelease tag | `v1.80.0-beta.8` |
-| Tests | Node unit 3909 · pure backend 460 · HA-harness backend 354 · browser smokes 312 (`npm run inventory`) |
+| Tests | Node unit 3915 · pure backend 460 · HA-harness backend 354 · browser smokes 312 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -31,6 +31,9 @@ Compatibility consumers of shared atoms keep their physical outline unchanged;
 only a derived same-thickness collinear vertex is resynced. Corner/mismatched
 owners refuse. Full physical/junction proof and materialization remain mandatory;
 native repeated commits and exact catalogue Undo/Redo cover the boundary.
+Genuine side-wall ownership splits use the existing structural barrier without
+moving a neighbour corner; the server-rollback floor-cache regression protects
+that distinction and retains the exact compatibility-record ledger.
 
 Configuration candidates (#826): in-place wall adoption gives scalar arrays
 their own candidate values, retaining root and id-bearing gesture objects.

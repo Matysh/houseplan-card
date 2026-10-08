@@ -40,6 +40,17 @@ metric bands, core ceilings, absolute bundle and Resize performance budgets stay
 unchanged. `benchmark_safe_resize` times the solver/cached proof, not end-to-end
 pointer-to-paint latency.
 
+The full CI `smoke_floor_cache_reuse` caught a separate #832 regression after
+server rejection materialized a four-room crossing: an inactive owner's real
+corner is not a movable derived seam. `projectResizeStoredAtoms` recognises
+only overlapping same-carrier side-wall changes and crosses the existing
+structural barrier on that floor to split ownership, keeping all neighbour
+corners fixed. It retains the checked legacy rekey ledger; replacing it with
+the materializer's atom-count projection falsely fails the existing exact
+multiplicity guard. Neither that guard nor physical/junction limits is relaxed.
+This smoke is now selected for changes to the projection helpers. Pure units
+prove final ownership and reject displaced carriers/corrupt lineage.
+
 ## Wall-node editing (#803)
 
 Use `node demo/smoke_wall_node_move.mjs` after `npm run bundle:sync` for trusted

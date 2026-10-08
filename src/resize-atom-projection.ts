@@ -1,3 +1,5 @@
+import { commitWallSegmentModel } from './wall-segment-model';
+
 /** Frozen correspondence between user-facing Resize runs and stored atoms. */
 export interface ResizeAtomProjection {
   source: number[][];
@@ -92,6 +94,80 @@ export function projectResizeAtomConsumers(
 }
 const finitePoint = (p: readonly number[]): boolean => p.length >= 2 && Number.isFinite(p[0]) && Number.isFinite(p[1]);
 const near = (a: readonly number[], b: readonly number[], eps: number): boolean => Math.hypot(a[0] - b[0], a[1] - b[1]) <= eps;
+
+/** An unchanged owner's real corner can separate two shared side-wall atoms.
+ * Keep that corner fixed: this is a structural split, not consumer motion.
+ * Only overlapping, same-carrier changes qualify; malformed/ambiguous IDs,
+ * displaced carriers and conflicting derived vertices still refuse.
+ */
+function hasResizeAtomCornerSplit(
+  context: ResizeAtomContext, updates: ReadonlyMap<string, { a: number[]; b: number[] }>,
+  moving: ReadonlySet<string>, epsilon: number,
+): boolean {
+  let split = false;
+  for (const room of context.consumers) {
+    if (moving.has(room.id)) continue;
+    if (room.poly.length < 3 || room.poly.length !== room.wall_ids.length) return false;
+    const starts: number[][] = [], ends: number[][] = [];
+    for (let i = 0; i < room.poly.length; i++) {
+      const a = room.poly[i], b = room.poly[(i + 1) % room.poly.length];
+      const old = context.catalogue.get(room.wall_ids[i]);
+      if (!old) return false;
+      const forward = near(old.a, a, epsilon) && near(old.b, b, epsilon);
+      const reverse = near(old.b, a, epsilon) && near(old.a, b, epsilon);
+      if (forward === reverse) return false;
+      const next = updates.get(room.wall_ids[i]) || old;
+      const start = forward ? next.a : next.b, end = forward ? next.b : next.a;
+      const dx = b[0] - a[0], dy = b[1] - a[1], length = Math.hypot(dx, dy);
+      const t = (p: number[]) => ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / (length * length);
+      if (!(length > epsilon) || !finitePoint(start) || !finitePoint(end)
+          || [start, end].some(p => Math.abs((p[0] - a[0]) * dy - (p[1] - a[1]) * dx) > epsilon * length)
+          || t(end) - t(start) <= epsilon / length
+          || Math.min(1, t(end)) - Math.max(0, t(start)) <= epsilon / length) return false;
+      starts.push(start); ends.push(end);
+    }
+    for (let i = 0; i < room.poly.length; i++) {
+      const previous = (i - 1 + room.poly.length) % room.poly.length;
+      const a = room.poly[previous], p = room.poly[i], b = room.poly[(i + 1) % room.poly.length];
+      if (near(starts[i], p, epsilon) && near(ends[previous], p, epsilon)) continue;
+      const corner = Math.abs((p[0] - a[0]) * (b[1] - p[1]) - (p[1] - a[1]) * (b[0] - p[0]))
+        > epsilon * (Math.hypot(p[0] - a[0], p[1] - a[1]) + Math.hypot(b[0] - p[0], b[1] - p[1]));
+      if (corner) {
+        if (!near(starts[i], p, epsilon) && !near(ends[previous], p, epsilon)) return false;
+        split = true;
+      } else if (!near(starts[i], ends[previous], epsilon)
+          || context.catalogue.get(room.wall_ids[previous])?.cm !== context.catalogue.get(room.wall_ids[i])?.cm) return false;
+    }
+  }
+  return split;
+}
+
+/** Complete the stored candidate before physical/junction proof and paint.
+ * The ordinary path preserves every atom. Only a proven real corner split
+ * crosses the existing structural barrier, on this floor alone; no fallback
+ * moves an unchanged owner's corner or bypasses a failed ID correspondence.
+ */
+export function projectResizeStoredAtoms<T extends {
+  id: string; rooms: Array<{ id: string; poly: number[][]; wall_ids?: string[] }>;
+  wall_segments?: Array<ResizeAtomSegment & { id: string }>;
+}>(space: T, context: ResizeAtomContext, moving: ReadonlySet<string>, epsilon: number): T | null {
+  const targets = new Map(space.rooms.filter(room => moving.has(room.id)).map(room => [room.id, room.poly]));
+  const updates = projectResizeAtomCatalogue(context.consumers, targets, context.catalogue, epsilon);
+  if (!updates) return null;
+  const polygons = projectResizeAtomConsumers(context.consumers, context.catalogue, updates, moving, epsilon);
+  const segments = (space.wall_segments || []).map(segment => ({ ...segment, ...(updates.get(segment.id) || {}) }));
+  if (polygons) return { ...space, ...(space.wall_segments ? { wall_segments: segments } : {}),
+    rooms: space.rooms.map(room => ({ ...room, poly: polygons.get(room.id) || room.poly })) };
+  if (!hasResizeAtomCornerSplit(context, updates, moving, epsilon)) return null;
+  try {
+    const candidate = { ...space, wall_segments: segments };
+    const materialized = commitWallSegmentModel({ spaces: [candidate] }).config.spaces[0];
+    // Keep the proven legacy rekey ledger (including exact multiplicity).
+    // Only the structural catalogue/ownership crosses the split barrier here;
+    // the ordinary write barrier later derives its canonical walls projection.
+    return { ...space, rooms: materialized.rooms, wall_segments: materialized.wall_segments };
+  } catch { return null; }
+}
 
 /** Every original vertex has exactly one oriented run/corner owner. */
 export function prepareResizeAtomProjection(

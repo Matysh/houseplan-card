@@ -585,12 +585,13 @@ export const SMOKE_LINKS = [
   {
     symbols: [
       'prepareResizeAtomProjection', 'applyResizeAtomProjection', 'projectResizeAtomCatalogue',
-      'projectResizeAtomConsumers', 'prepareResizeAtomContext', 'ResizeAtomContext',
+      'projectResizeAtomConsumers', 'projectResizeStoredAtoms', 'prepareResizeAtomContext', 'ResizeAtomContext',
       'ResizeAtomProjection', 'ResizeAtomContour', 'ResizeAtomSegment',
     ],
-    smokes: ['smoke_resize_pointer_real_plan.mjs', 'smoke_wall_adoption_alias.mjs'],
+    smokes: ['smoke_resize_pointer_real_plan.mjs', 'smoke_wall_adoption_alias.mjs', 'smoke_floor_cache_reuse.mjs'],
     because: '#832 native repeated Resize crosses coalesced runs, stored IDs, final materialization '
       + 'and precise persisted Undo/Redo; #826 also protects compact repeated/adopted JSON. '
+      + '#814 covers a genuine side-wall split at a fixed third-room corner after a server rollback. '
       + 'The bundle does not expose these pure projection helpers to the browser fixture.',
   },
   {

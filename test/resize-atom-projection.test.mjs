@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { prepareResizeAtomProjection as prepare, applyResizeAtomProjection as apply,
   projectResizeAtomCatalogue as atoms, projectResizeAtomConsumers as consumers,
-  prepareResizeAtomContext as context } from '../test-build/resize-atom-projection.js';
+  prepareResizeAtomContext as context, projectResizeStoredAtoms as projectStored } from '../test-build/resize-atom-projection.js';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 import { checkSpacePhysicalGeometry } from '../test-build/plan-geometry-preflight.js';
 import { junctionLimitViolations, increasedViolations } from '../test-build/junction-limits.js';
@@ -169,4 +169,49 @@ test('#832 coherent atom candidate passes full final proof; stale consumer adds 
   assert.deepEqual(increasedViolations(limits(committed), limits(baseline)), []);
   assert.deepEqual(committed.spaces[0].wall_segments.map(s => [s.id, s.cm]), source.wall_segments.map(s => [s.id, s.cm]));
   assert.deepEqual(committed.spaces[0].rooms.find(r => r.id === 'fixed').extension, { untouched: true });
+});
+
+test('#832 a true side-wall split retains the fixed neighbours corners and full proof', () => {
+  const rect = (x0, y0, x1, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
+  const baseline = commitWallSegmentModel({ spaces: [{ id: 'split', cell_cm: 5, rooms: [
+    { id: 'left', poly: rect(.1, .15, .5, .5) }, { id: 'right', poly: rect(.5, .15, .9, .5) },
+    { id: 'bottom-left', poly: rect(.1, .5, .5, .85), extension: { fixed: true } },
+    { id: 'bottom-right', poly: rect(.5, .5, .9, .85) },
+  ] }] }).config;
+  const source = freeze(baseline.spaces[0]), moving = new Set(['left', 'right']);
+  const prepared = context(source.rooms, source.wall_segments, [...moving]);
+  const candidate = structuredClone(source);
+  for (const room of candidate.rooms) if (moving.has(room.id)) room.poly = room.poly.map(p => [p[0] === .5 ? .45 : p[0], p[1]]);
+  const before = JSON.stringify(candidate), next = projectStored(candidate, prepared, moving, 1e-9);
+  assert.ok(next, 'an enabled repeated gesture can cross the existing structural split barrier');
+  assert.equal(JSON.stringify(candidate), before, 'projection is pure');
+  assert.ok(next.wall_segments.length > source.wall_segments.length, 'this is a real split, not fixed-topology ID motion');
+  for (const id of ['bottom-left', 'bottom-right']) {
+    const old = source.rooms.find(r => r.id === id), room = next.rooms.find(r => r.id === id);
+    for (const point of old.poly) assert.ok(room.poly.some(p => JSON.stringify(p) === JSON.stringify(point)), 'every authored corner stays fixed');
+    assert.deepEqual(room.extension, old.extension);
+    assert.ok(room.poly.every(p => p[1] === .5 || p[1] === .85), 'only an identity seam is inserted');
+  }
+  assert.equal(checkSpacePhysicalGeometry({ spaces: [next] }, 'split').ok, true);
+  const limits = space => junctionLimitViolations({ spaces: [space] }, 'split', space.wall_segments);
+  assert.deepEqual(increasedViolations(limits(next), limits(source)), []);
+  const final = commitWallSegmentModel({ spaces: [next] }).config.spaces[0];
+  assert.deepEqual(final.rooms, next.rooms, 'preview already has the final structural ownership');
+  assert.deepEqual(final.wall_segments, next.wall_segments);
+  assert.deepEqual(next.walls, candidate.walls, 'the compatibility rekey ledger is not replaced by atom counts');
+});
+
+test('#832 split fallback rejects displaced carriers and corrupt IDs; legacy fields stay absent', () => {
+  const { room, catalog } = ownersFixture();
+  const source = { id: 'guard', rooms: [room, { id: 'moving', poly: structuredClone(room.poly), wall_ids: [...room.wall_ids] }],
+    wall_segments: [...catalog].map(([id, atom]) => ({ id, ...atom })) };
+  const prepared = context(source.rooms, source.wall_segments, ['moving']);
+  const candidate = structuredClone(source);
+  candidate.rooms[1].poly[0] = [-1, 0];
+  assert.equal(projectStored(candidate, prepared, new Set(['moving']), 1e-9), null, 'a neighbour corner cannot move off its incident carrier');
+  candidate.rooms[1].wall_ids.reverse();
+  const corrupt = context(candidate.rooms, source.wall_segments, ['moving']);
+  assert.equal(projectStored(candidate, corrupt, new Set(['moving']), 1e-9), null, 'no recovery from ambiguous lineage');
+  const legacy = { id: 'legacy', rooms: [{ id: 'room', poly: contour }] };
+  assert.deepEqual(projectStored(freeze(legacy), context(legacy.rooms, [], ['room']), new Set(['room']), 1e-9), legacy);
 });

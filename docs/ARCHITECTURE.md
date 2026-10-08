@@ -16,6 +16,11 @@ their compatibility polygon. An inactive owner's same-thickness collinear
 identity vertex may move on its unchanged run, never a corner or physical
 thickness boundary. Both incident atoms must agree. Metadata, full physical and
 junction barriers still run before paint/commit; terminal/reset drops the map.
+If an enabled side-wall length change separates shared ownership at a fixed
+third-room corner, a proven same-carrier split uses the existing structural
+barrier on the current floor before proof/paint. It never drags that corner.
+The already-checked compatibility rekey ledger stays intact; final writes
+derive the canonical wall projection through the ordinary barrier.
 
 One HACS repository (category **Integration**) ships the backend
 (`custom_components/houseplan`), both Lovelace cards and the `/houseplan` panel
