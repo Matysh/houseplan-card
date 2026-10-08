@@ -2356,6 +2356,8 @@ export class HouseplanCard extends LitElement {
   private _kioskDotsTimer?: number;
   /** #813 F11: the empty-stage hold; firing ends the stage gesture, then opens the dialog. */
   private readonly _kioskHold = new KioskHoldGesture((pointerId) => {
+    this._touchClickGuard.interruptForModal(pointerId);
+    this._suppressClick = false; // transfer the old tail to the event-owned modal barrier (#831)
     this._interruptViewGesture(pointerId, this._stageEl);
     this._kioskDialog = true;
   });
@@ -7278,6 +7280,9 @@ export class HouseplanCard extends LitElement {
     if (ev.type === 'pointerdown') this._touchClickGuard.pointerDown(
       pointer.pointerId, pointer.pointerType,
     );
+    const wasMultitouch = ev.type === 'pointerup' || ev.type === 'pointercancel'
+      || ev.type === 'lostpointercapture'
+      ? this._touchClickGuard.pointerTerminal(pointer.pointerId, pointer.pointerType, ev.type) : false;
     if (pointer.pointerType !== 'touch') return;
     if (ev.type === 'pointerdown') {
       this._touchContacts.set(pointer.pointerId, {
@@ -7336,9 +7341,6 @@ export class HouseplanCard extends LitElement {
     }
     if (ev.type !== 'pointerup' && ev.type !== 'pointercancel'
         && ev.type !== 'lostpointercapture') return;
-    const wasMultitouch = this._touchClickGuard.pointerTerminal(
-      pointer.pointerId, pointer.pointerType,
-    );
     this._clearTransientHover();
     this._touchContacts.delete(pointer.pointerId); if (!this._touchContacts.size) this._roomGearTouchNavigation = false;
     if (wasMultitouch) {

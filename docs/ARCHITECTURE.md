@@ -1,5 +1,13 @@
 # House Plan architecture
 
+Kiosk hold-to-modal input (#831) transfers stage suppression to an instance-local
+`TouchGestureClickGuard` modal-tail barrier before interrupting the stage. Its
+owning pointer survives implicit capture loss until actual release/cancel; an
+unrelated terminal cannot re-arm it. A fresh pointerdown after that boundary or
+Enter/Space permits native dialog activation without a timeout. The existing
+multi-touch post-gesture barrier remains independent and cannot be re-armed by
+modal keyboard intent. No pointermove work or editor runtime is added.
+
 One HACS repository (category **Integration**) ships the backend
 (`custom_components/houseplan`), both Lovelace cards and the `/houseplan` panel
 (`src/` → `dist/`). This document is the map: each subsystem gets a short

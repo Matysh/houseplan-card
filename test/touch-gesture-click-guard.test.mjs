@@ -2,6 +2,72 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { TouchGestureClickGuard } from '../test-build/touch-gesture-click-guard.js';
 
+const activation = (guard, type = 'click', init = {}) => {
+  const event = { type, defaultPrevented: false, immediateStopped: false, ...init,
+    preventDefault() { this.defaultPrevented = true; },
+    stopImmediatePropagation() { this.immediateStopped = true; } };
+  guard.handleActivation(event, false);
+  return event;
+};
+
+test('#831 modal takeover blocks old and delayed activations, not a fresh press', () => {
+  for (const type of ['mouse', 'touch']) for (const terminal of ['pointerup', 'pointercancel']) {
+    const guard = new TouchGestureClickGuard();
+    guard.pointerDown(1, type); guard.interruptForModal(1);
+    assert.equal(activation(guard).defaultPrevented, true, 'old held click blocked');
+    guard.pointerTerminal(99, type, terminal);
+    activation(guard, 'keydown', { key: 'Enter' });
+    assert.equal(activation(guard).defaultPrevented, true, 'foreign terminal cannot re-arm');
+    guard.pointerTerminal(1, type, terminal);
+    assert.equal(activation(guard).defaultPrevented, true, 'terminal does not admit delayed click');
+    activation(guard, 'keydown', { key: 'Tab' });
+    assert.equal(activation(guard, 'contextmenu').immediateStopped, true, 'Tab is not action intent');
+    guard.pointerDown(2, type);
+    assert.equal(activation(guard).defaultPrevented, false, 'fresh dialog press works immediately');
+  }
+});
+
+test('#831 capture loss and second contact cannot re-arm the held modal tail', () => {
+  const guard = new TouchGestureClickGuard();
+  guard.pointerDown(1, 'touch'); guard.interruptForModal(1);
+  guard.pointerTerminal(1, 'touch', 'lostpointercapture');
+  guard.pointerDown(2, 'touch');
+  assert.equal(activation(guard).defaultPrevented, true, 'old physical contact still owns modal tail');
+  guard.pointerTerminal(2, 'touch');
+  activation(guard, 'keydown', { key: ' ' });
+  assert.equal(activation(guard).defaultPrevented, true, 'keyboard cannot re-arm before old release');
+  guard.pointerTerminal(1, 'touch');
+  assert.equal(activation(guard).defaultPrevented, true);
+  guard.pointerDown(3, 'touch');
+  assert.equal(activation(guard).defaultPrevented, false);
+});
+
+test('#831 keyboard modal intent, reused mouse id and remount reset are bounded', () => {
+  for (const key of ['Enter', ' ']) {
+    const guard = new TouchGestureClickGuard();
+    guard.pointerDown(1, 'mouse'); guard.interruptForModal(1);
+    activation(guard, 'keydown', { key });
+    assert.equal(activation(guard).defaultPrevented, true, 'held mouse has not ended');
+    guard.pointerTerminal(1, 'mouse');
+    activation(guard, 'keydown', { key });
+    assert.equal(activation(guard).defaultPrevented, false, 'keyboard button action after release works');
+    guard.interruptForModal(1); guard.pointerDown(1, 'mouse');
+    assert.equal(activation(guard).defaultPrevented, false, 'real new down proves old mouse has ended');
+    guard.interruptForModal(1); guard.reset();
+    assert.equal(activation(guard).defaultPrevented, false, 'remount discards old modal ownership');
+  }
+});
+
+test('#831 modal keyboard re-arm never bypasses the completed pinch barrier', () => {
+  const guard = new TouchGestureClickGuard();
+  guard.pointerDown(1, 'touch'); guard.interruptForModal(1); guard.pointerDown(2, 'touch');
+  guard.pointerTerminal(1, 'touch'); guard.pointerTerminal(2, 'touch');
+  activation(guard, 'keydown', { key: 'Enter' });
+  assert.equal(activation(guard).defaultPrevented, true, 'pinch compatibility tail still blocked');
+  guard.pointerDown(3, 'mouse');
+  assert.equal(activation(guard).defaultPrevented, false, 'new hybrid mouse input works');
+});
+
 test('#563 multi-touch keeps every unowned click blocked after both releases', () => {
   const guard = new TouchGestureClickGuard();
   guard.pointerDown(1, 'touch');

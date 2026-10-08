@@ -505,12 +505,14 @@ export const SMOKE_LINKS = [
       + 'bundle and names neither the adoption function nor the sheets',
   },
   {
-    symbols: ['_kioskDialog', '_renderKioskDialog', '_saveKioskScale', 'saveScale'],
+    symbols: ['_kioskDialog', '_renderKioskDialog', '_saveKioskScale', 'saveScale', '_kioskHold', 'interruptForModal'],
+    files: ['src/touch-gesture-click-guard.ts'],
     smokes: ['smoke_kiosk_scale_no_editor.mjs'],
     because: '#763: a cold kiosk opens the per-screen size dialog with a real 3 s touch hold and '
       + 'drives its sliders, Reset, Close and reopen through the DOM, while the network log proves '
       + 'the editor chunk is never requested, also when the network refuses it; the smoke names '
-      + 'none of these members',
+      + 'none of these members; #831 also proves trusted 5 px jitter takeover, inert old tail '
+      + 'and fresh mouse/touch/keyboard dialog input without changing gesture thresholds',
   },
   {
     symbols: [

@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.80.0-beta.8** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.79.0` |
 | Latest prerelease tag | `v1.80.0-beta.8` |
-| Tests | Node unit 3875 · pure backend 460 · HA-harness backend 354 · browser smokes 312 (`npm run inventory`) |
+| Tests | Node unit 3880 · pure backend 460 · HA-harness backend 354 · browser smokes 312 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -32,6 +32,13 @@ and exact Undo/Redo; ordinary JSON remains a control. The space-delete mirror
 clears incoming stair links like the server and refuses cleanup of absent
 targets. The unreachable onboarding delete adapter is removed; the editor's
 lazy completion path and creation/import onboarding remain. No model migration.
+
+Kiosk modal input (#831): the hold-to-dialog handoff transfers its activation
+tail to an event-owned barrier rather than retaining stage click suppression.
+Fresh mouse/touch down or Enter/Space after the original terminal works at once;
+old and delayed clicks stay inert. Stage movement thresholds and 3 s hold remain
+unchanged. Trusted kiosk jitter/control smoke and pure guard transitions cover
+the boundary; there is no model/backend/editor-runtime change.
 
 View recovery (#824): same-element static attach revalidates authoritative
 config/layout after missed events; a full long return waits for usable HA and

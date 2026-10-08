@@ -378,3 +378,6 @@ popover (localStorage). Once movement crosses the existing pan/swipe threshold,
 that press cannot open the popover, even after returning to its origin; small
 stationary jitter below the threshold still permits the hold (#825). Nav
 persistence never restores an editor here.
+The original hold's release and delayed click stay inert after the size dialog
+appears. Fresh click/tap and Enter/Space on its focused button work immediately
+after release, without tapping the plan to unlock the dialog (#831).

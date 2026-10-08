@@ -10542,6 +10542,30 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'kiosk-modal-tail-barrier-not-transferred',
+    guard: 'node demo/smoke_kiosk_scale_no_editor.mjs --jitter-only',
+    because: '#831 AC2: a trusted hold releases over a newly painted modal; capture retargeting '
+      + 'and the native button/dialog lifecycle require Chromium, not a pure guard state test. '
+      + 'The named tail oracle must stay inert without a fresh pointerdown (including delayed click).',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    this._touchClickGuard.interruptForModal(pointerId);',
+      replace: '    void pointerId; // mutant: modal receives unowned old hold click',
+    }],
+  },
+  {
+    id: 'kiosk-modal-tail-cleared-by-unrelated-terminal',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#831" test/touch-gesture-click-guard.test.mjs',
+    because: '#831 AC2/AC3: only the owning hold terminal may admit fresh input; foreign terminals '
+      + 'and implicit capture loss do not end a still-held touch.',
+    patches: [{
+      file: 'src/touch-gesture-click-guard.ts',
+      find: "    if (terminal !== 'lostpointercapture' && this._modalTailPointer === pointerId) {",
+      replace: '    if (pointerId >= 0) { // mutant: any terminal ends modal ownership',
+    }],
+  },
+  {
     id: 'touch-pinch-marker-hold-rearmed',
     guard: 'node demo/smoke_editor_gestures.mjs',
     because: 'when the stage owns the first touch and a marker receives the second, capture has '

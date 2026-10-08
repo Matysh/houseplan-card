@@ -1,5 +1,19 @@
 # Development and deployment
 
+## Kiosk hold → modal input (#831)
+
+`smoke_kiosk_scale_no_editor --jitter-only` exercises real >4/<8 px mouse/touch
+movement, the 3 s hold, release over Close, delayed unowned clicks and fresh
+Close/Reset/Enter/Space. The delayed click is dispatched intentionally and is
+not claimed as trusted input. The existing full smoke still covers pan, pinch,
+cancel, lost capture, blur, remount, no lazy editor request and rejected chunk.
+`test/touch-gesture-click-guard.test.mjs` executes the matching/foreign terminal,
+remaining contact, capture-loss and keyboard negatives cheaply. Modal takeover
+can release implicit capture before the physical touch lifts: do not treat that
+capture event as permission for another still-overlapping contact to act.
+Browser-only handoff mutation is documented in the reviewed inventory; registry
+anchors are checked locally, actual mutants only run nightly (PROCESS §2.7).
+
 ## Wall-node editing (#803)
 
 Use `node demo/smoke_wall_node_move.mjs` after `npm run bundle:sync` for trusted

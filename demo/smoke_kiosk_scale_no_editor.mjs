@@ -238,6 +238,77 @@ const footerButton = (page, kind) => page.locator(`${DIALOG} [slot="footer"] but
 
 const out = {};
 
+// #831: enter through real input, not modal/private state writes. In particular,
+// >4 but <8 px movement arms the old suppression flag without recognizing pan.
+const jitterDialog = async (session, type, closeVia = 'pointer') => {
+  const { page, cdp } = session, p = await emptyStagePoint(page);
+  const name = `${type}Jitter${closeVia}`;
+  await page.evaluate(selector => {
+    window.__hpJitterEvents = [];
+    if (window.__hpJitterWatch) return;
+    window.__hpJitterWatch = true;
+    for (const kind of ['pointerdown', 'pointerup', 'pointermove']) window.addEventListener(kind, event => {
+      if (event.composedPath().includes(document.querySelector(selector))) {
+        window.__hpJitterEvents.push({ kind, trusted: event.isTrusted, type: event.pointerType });
+      }
+    }, true);
+  }, KIOSK);
+  const before = await kioskState(page), frame = await planViewBox(page);
+  const started = Date.now();
+  const touch = (kind, point = p) => cdp.send('Input.dispatchTouchEvent', {
+    type: kind, touchPoints: kind === 'touchEnd' ? [] : [{ ...point, id: 31 }],
+  });
+  if (type === 'mouse') { await page.mouse.move(p.x, p.y); await page.mouse.down(); }
+  else await touch('touchStart');
+  if (type === 'mouse') await page.mouse.move(p.x + 3, p.y + 2);
+  else await touch('touchMove', { x: p.x + 3, y: p.y + 2 });
+  await page.locator(DIALOG).waitFor({ state: 'attached', timeout: 5000 });
+  const modalBefore = await kioskState(page);
+  out[`${name}WaitsForRealHoldThreshold`] = Date.now() - started >= 3000;
+  const takeover = await page.evaluate(selector => {
+    const c = document.querySelector(selector);
+    return { pointers: c._pointers.size, pan: !!c._panStart, pinch: !!c._pinchStart };
+  }, KIOSK);
+  const button = footerButton(page, 'on'), box = await button.boundingBox();
+  const overButton = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  if (type === 'mouse') { await page.mouse.move(overButton.x, overButton.y); await page.mouse.up(); }
+  else { await touch('touchMove', overButton); await touch('touchEnd'); }
+  await page.waitForTimeout(200);
+  const release = await kioskState(page);
+  // This dispatched click is specifically the unowned/delayed compatibility
+  // tail, not evidence of trusted activation. It must not execute Close/Reset.
+  await page.locator(DIALOG).evaluate(dialog => {
+    dialog.querySelector('button.on').dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+    dialog.querySelector('button.ghost').dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+  });
+  const tail = await kioskState(page);
+  out[`${name}OldReleaseAndDelayedTailAreInert`] = release.open && tail.open
+    && JSON.stringify(tail.stored) === JSON.stringify(before.stored)
+    && JSON.stringify(tail.sliders) === JSON.stringify(modalBefore.sliders)
+    && tail.iconSize === before.iconSize && tail.labelFont === before.labelFont;
+  out[`${name}TakeoverEndsStageGesture`] = same({ pointers: 0, pan: false, pinch: false }, takeover);
+  if (!tail.open) return false; // report the named tail oracle, not a later locator timeout
+  if (closeVia === 'pointer') {
+    if (type === 'touch') {
+      await footerButton(page, 'ghost').tap();
+      const reset = await kioskState(page);
+      out.touchJitterFreshResetWorks = same([100, 100], reset.sliders)
+        && reset.stored.some(([icon, font]) => icon === 1 && font === 1);
+      await footerButton(page, 'on').tap();
+    } else await button.click();
+  } else { await button.focus(); await page.keyboard.press(closeVia); }
+  await page.waitForTimeout(100);
+  out[`${name}FreshInputClosesDialog`] = !(await kioskState(page)).open;
+  out[`${name}HoldNeverChangesPlanFrame`] = (await planViewBox(page)) === frame;
+  out[`${name}UsesTrustedInput`] = await page.evaluate(({ type, pointer }) => {
+    const events = window.__hpJitterEvents.filter(e => e.type === type && e.trusted);
+    return events.some(e => e.kind === 'pointermove')
+      && events.filter(e => e.kind === 'pointerdown').length >= (pointer ? 2 : 1)
+      && events.some(e => e.kind === 'pointerup');
+  }, { type, pointer: closeVia === 'pointer' });
+  return !(await kioskState(page)).open;
+};
+
 // (1) Cold kiosk, network healthy: the dialog lives without the editor.
 const kiosk = await openKiosk(false);
 out.coldPageHasNoEditorChunk = kiosk.cold;
@@ -341,6 +412,19 @@ out.kioskSessionNeverRequestedEditor = same(
 );
 out.scaleNeverWritesTheLegacyKey = same(null,
   await kiosk.page.evaluate((key) => localStorage.getItem(key), LEGACY_SCALE_KEY));
+
+// Keep a non-default saved value, so a falsely executed old Reset cannot hide.
+for (const closeVia of ['pointer', 'Enter', 'Space']) {
+  const okay = await jitterDialog(kiosk, 'mouse', closeVia);
+  if (!okay) {
+    checkAll(out); await finish(kiosk.browser, out); process.exit(process.exitCode || 1);
+  }
+}
+await jitterDialog(kiosk, 'touch');
+if (process.argv.includes('--jitter-only')) {
+  out.jitterControlsLoadNoEditor = kiosk.chunk.requests === 0;
+  checkAll(out); await finish(kiosk.browser, out); process.exit(process.exitCode || 0);
+}
 
 // (1b) #813 AC1: three real mouse holds in a row on the same cold kiosk.
 await kiosk.page.evaluate((selector) => {

@@ -57,6 +57,10 @@ On phones, tablets, wall panels and HA Companion apps, the ordinary View must:
 The kiosk's empty-stage 3 s hold is cancelled when the existing movement
 classifier recognizes pan or swipe. Returning to the original press point does
 not re-arm it; small sub-threshold jitter still permits stationary holding.
+After that hold opens the screen-size dialog, releasing it or receiving a
+delayed compatibility click must not operate the dialog. A new deliberate tap
+after release works immediately, including when the release did not reach the
+stage; no extra stage tap or waiting period is required (#831).
 
 During every intermediate pan or pinch frame, walls, floors, room fills,
 hatching, lighting and markers must remain continuously painted. The scene SVGs

@@ -6,6 +6,11 @@
   overwrite another room or floor during wall-model adoption. Subsequent
   edits and Undo/Redo retain the accepted geometry and wall IDs
   ([#826](https://github.com/Matysh/houseplan-card/issues/826)).
+- Kiosk: the screen-size dialog remains usable after a slightly jittery hold.
+  A new click, tap or keyboard button activation works immediately; releasing
+  the original hold cannot accidentally close or reset the dialog
+  ([#831](https://github.com/Matysh/houseplan-card/issues/831)).
+
 - View: embedded space cards refresh missed plan/device-position changes on
   return. A long return before Home Assistant is ready now waits safely;
   rapidly repeated reconnections no longer accept obsolete responses.
