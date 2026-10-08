@@ -20,6 +20,12 @@ anchors are checked locally, actual mutants only run nightly (PROCESS §2.7).
 
 ## Repeated Resize on materialized plans (#832)
 
+The owner approved raising the lazy-editor gzip ceiling from 252,758 to
+255,500 bytes on 2026-10-08, rather than micro-optimizing geometry checks.
+The implementation keeps explicit correspondence/carrier checks and bounded
+split materialization. The 2,000-byte band, initial-View and absolute budgets,
+core caps and performance guards are unchanged; the issue records measured cost.
+
 Do not index `wall_ids` by the shorter coalesced handle contour. Pure atom
 projection tests cover ring starts/orientation, translated interiors, fixed
 breakpoints, inconsistent catalogue incidence and inactive owner corners.
@@ -44,12 +50,17 @@ The full CI `smoke_floor_cache_reuse` caught a separate #832 regression after
 server rejection materialized a four-room crossing: an inactive owner's real
 corner is not a movable derived seam. `projectResizeStoredAtoms` recognises
 only overlapping same-carrier side-wall changes and crosses the existing
-structural barrier on that floor to split ownership, keeping all neighbour
+structural barrier on the changed-ID owner closure to split ownership, keeping all neighbour
 corners fixed. It retains the checked legacy rekey ledger; replacing it with
 the materializer's atom-count projection falsely fails the existing exact
 multiplicity guard. Neither that guard nor physical/junction limits is relaxed.
 This smoke is now selected for changes to the projection helpers. Pure units
 prove final ownership and reject displaced carriers/corrupt lineage.
+The split barrier receives no remote room, partition, decor or unrelated
+opening. Poisoned remote-room/opening `toJSON` units make whole-floor cloning RED; atoms
+also consumed outside the closure must stay byte-identical or the step refuses.
+Local catalogue thickness hints retain custom cm on split children and zero
+atoms; the hosted-opening unit checks the child host, width and unknown fields.
 
 ## Wall-node editing (#803)
 

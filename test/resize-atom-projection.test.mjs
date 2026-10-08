@@ -197,7 +197,8 @@ test('#832 a true side-wall split retains the fixed neighbours corners and full 
   assert.deepEqual(increasedViolations(limits(next), limits(source)), []);
   const final = commitWallSegmentModel({ spaces: [next] }).config.spaces[0];
   assert.deepEqual(final.rooms, next.rooms, 'preview already has the final structural ownership');
-  assert.deepEqual(final.wall_segments, next.wall_segments);
+  const byId = segments => [...segments].sort((a, b) => a.id.localeCompare(b.id));
+  assert.deepEqual(byId(final.wall_segments), byId(next.wall_segments));
   assert.deepEqual(next.walls, candidate.walls, 'the compatibility rekey ledger is not replaced by atom counts');
 });
 
@@ -214,4 +215,61 @@ test('#832 split fallback rejects displaced carriers and corrupt IDs; legacy fie
   assert.equal(projectStored(candidate, corrupt, new Set(['moving']), 1e-9), null, 'no recovery from ambiguous lineage');
   const legacy = { id: 'legacy', rooms: [{ id: 'room', poly: contour }] };
   assert.deepEqual(projectStored(freeze(legacy), context(legacy.rooms, [], ['room']), new Set(['room']), 1e-9), legacy);
+});
+
+test('#832 true split never serializes a remote owner; externally consumed atoms stay byte-identical', () => {
+  const rect = (x0, y0, x1, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
+  const source = commitWallSegmentModel({ spaces: [{ id: 'bounded', cell_cm: 5, rooms: [
+    { id: 'left', poly: rect(.1, .15, .5, .5) }, { id: 'right', poly: rect(.5, .15, .9, .5) },
+    { id: 'bottom-left', poly: rect(.1, .5, .5, .85) }, { id: 'bottom-right', poly: rect(.5, .5, .9, .85) },
+    { id: 'remote', poly: rect(.1, .85, .5, 1.2), extension: { untouched: true } },
+  ] }] }).config.spaces[0];
+  const moving = new Set(['left', 'right']), prepared = context(source.rooms, source.wall_segments, [...moving]);
+  assert.ok(!prepared.consumers.some(room => room.id === 'remote'));
+  const candidate = structuredClone(source), remote = candidate.rooms.find(room => room.id === 'remote');
+  // Instrumentation, not a product config: a whole-floor structural clone is RED.
+  remote.toJSON = () => { throw new Error('remote room entered the local materializer'); };
+  const remoteOpening = { id: 'remote-opening', kind: 'window', x: .3, y: 1.2, length: .05, angle: 0,
+    host: { kind: 'wall', id: remote.wall_ids.find(id => !prepared.consumers.some(room => room.wall_ids.includes(id))), t: .5 },
+    toJSON: () => { throw new Error('remote opening entered the local materializer'); } };
+  candidate.openings = [remoteOpening];
+  for (const room of candidate.rooms) if (moving.has(room.id)) room.poly = room.poly.map(p => [p[0] === .5 ? .45 : p[0], p[1]]);
+  const next = projectStored(candidate, prepared, moving, 1e-9);
+  assert.ok(next); assert.equal(next.rooms.find(room => room.id === 'remote'), remote);
+  assert.equal(next.openings[0], remoteOpening, 'unrelated hosts never enter the local materializer');
+  for (const id of remote.wall_ids) assert.deepEqual(next.wall_segments.find(s => s.id === id), source.wall_segments.find(s => s.id === id));
+  const shared = remote.wall_ids.find(id => prepared.consumers.some(room => room.wall_ids.includes(id)));
+  assert.ok(shared, 'an indirect owner outside the changed-ID closure really consumes a local atom');
+  const original = candidate.wall_segments.find(s => s.id === shared);
+  [original.a, original.b] = [original.b, original.a];
+  const reversePrepared = context(candidate.rooms, candidate.wall_segments, [...moving]);
+  assert.equal(projectStored(candidate, reversePrepared, moving, 1e-9), null, 'no silent orientation rewrite of an external consumer atom');
+});
+
+test('#832 local split inherits custom thickness, keeps zero atoms and remaps an opening host', () => {
+  const rect = (x0, y0, x1, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
+  const source = commitWallSegmentModel({ spaces: [{ id: 'hosts', cell_cm: 20, rooms: [
+    { id: 'left', poly: rect(.1, .15, .5, .5) }, { id: 'right', poly: rect(.5, .15, .9, .5) },
+    { id: 'bottom-left', poly: rect(.1, .5, .5, .85) }, { id: 'bottom-right', poly: rect(.5, .5, .9, .85) },
+  ] }] }).config.spaces[0];
+  for (const segment of source.wall_segments) segment.cm = segment.a[1] === segment.b[1] ? 37 : 0;
+  const host = source.wall_segments.find(s => s.a[1] === .5 && s.b[1] === .5
+    && Math.min(s.a[0], s.b[0]) === .1 && Math.max(s.a[0], s.b[0]) === .5);
+  assert.ok(host);
+  const opening = { id: 'split-window', kind: 'window', x: .475, y: .5, angle: 0, length: .02,
+    host: { kind: 'wall', id: host.id, t: (.475 - host.a[0]) / (host.b[0] - host.a[0]) },
+    extension: { preserve: true } };
+  source.openings = [opening];
+  const moving = new Set(['left', 'right']), prepared = context(source.rooms, source.wall_segments, [...moving]);
+  const candidate = structuredClone(source);
+  for (const room of candidate.rooms) if (moving.has(room.id)) room.poly = room.poly.map(p => [p[0] === .5 ? .45 : p[0], p[1]]);
+  const next = projectStored(candidate, prepared, moving, 1e-9);
+  assert.ok(next);
+  const remapped = next.openings[0], child = next.wall_segments.find(s => s.id === remapped.host.id);
+  assert.ok(child); assert.notEqual(child.id, host.id, 'the opening moves to the structural split child');
+  assert.equal(child.cm, 37);
+  assert.equal(remapped.x, opening.x); assert.equal(remapped.y, opening.y);
+  assert.equal(remapped.length, opening.length); assert.deepEqual(remapped.extension, opening.extension);
+  assert.ok(next.wall_segments.filter(s => s.a[0] === s.b[0]).every(s => s.cm === 0));
+  assert.deepEqual(next.walls, candidate.walls, 'the checked compatibility ledger stays untouched');
 });

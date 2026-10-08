@@ -16129,8 +16129,20 @@ const MUTANT_DEFINITIONS = [
       replace: '    // mutant: validated stored candidate is never installed into the live preview',
     }],
   },
-  // #818: CLI гейта мутаций не теряет хвост stdout, когда читатель отстаёт.
   {
+    id: 'resize-atom-split-rebuilds-remote-rooms',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/resize-atom-projection.test.mjs',
+    because: '#832 the split barrier is local to frozen changed-ID consumers; a poisoned remote '
+      + 'serialization witness and exact external-atom comparison prove the boundary without a browser.',
+    patches: [{
+      file: 'src/resize-atom-projection.ts',
+      find: '    const candidate = { id: space.id, cell_cm: space.cell_cm, rooms: localRooms, walls, openings,',
+      replace: '    const candidate = { id: space.id, cell_cm: space.cell_cm, rooms: space.rooms, walls, openings,',
+    }],
+  },
+  {
+    // #818: CLI гейта мутаций не теряет хвост stdout, когда читатель отстаёт.
     id: 'mutation-gate-cli-exits-before-stdout-drains',
     guard: 'node --test --test-name-pattern="#818 AC1" test/mutation-gate.test.mjs',
     because: '#818 AC1: process.exit() after main drops the queued tail of a piped stdout; the '

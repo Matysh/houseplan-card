@@ -10,6 +10,8 @@
   Stored wall IDs, opening hosts/widths and unrelated room fields stay intact.
   A genuine side-wall split at a fixed neighbouring corner also remains
   possible after server rollback; the neighbour's corner is not moved.
+  This split is prepared locally without rebuilding remote room geometry,
+  retaining custom wall thickness and opening hosts on split children.
 
 - Plan: accepting a geometry edit no longer lets a shared coordinate tuple
   overwrite another room or floor during wall-model adoption. Subsequent

@@ -130,11 +130,13 @@ run; contradictory incidence, a real corner or physical breakpoint refuses.
 The existing physical and junction barriers are not relaxed (#832).
 An actual side-wall ownership split at an unchanged neighbouring corner is
 distinct from moving that corner. Only overlapping same-carrier changes may
-cross the existing structural materializer on the current floor before live
+cross the existing structural materializer on the changed-ID owner closure before live
 proof; unchanged owners retain their physical contours. The exact-multiplicity
 legacy rekey ledger is retained until the normal final write barrier regenerates
 its canonical projection. Displaced carriers and ambiguous lineage still fail
 closed. `smoke_floor_cache_reuse` protects this path after server rollback.
+No remote room, decor, partition or unrelated opening enters that materializer;
+indirectly shared atoms with consumers outside the closure remain byte-identical.
 
 The gesture owns an immutable `_geometrySnapshot()`. Every preview is rebuilt
 from it; `_serverCfg` is untouched until pointerup. The overlay contains rooms,

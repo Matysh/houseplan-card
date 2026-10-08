@@ -1,4 +1,7 @@
 import { commitWallSegmentModel } from './wall-segment-model';
+import { GRID_STEP_N } from './space-geometry';
+import { wallKey, type WallEntry } from './wall-thickness';
+import type { OpeningCfg } from './types';
 
 /** Frozen correspondence between user-facing Resize runs and stored atoms. */
 export interface ResizeAtomProjection {
@@ -144,12 +147,13 @@ function hasResizeAtomCornerSplit(
 
 /** Complete the stored candidate before physical/junction proof and paint.
  * The ordinary path preserves every atom. Only a proven real corner split
- * crosses the existing structural barrier, on this floor alone; no fallback
+ * crosses the existing structural barrier on the frozen owner closure; no fallback
  * moves an unchanged owner's corner or bypasses a failed ID correspondence.
  */
 export function projectResizeStoredAtoms<T extends {
   id: string; rooms: Array<{ id: string; poly: number[][]; wall_ids?: string[] }>;
   wall_segments?: Array<ResizeAtomSegment & { id: string }>;
+  walls?: WallEntry[]; openings?: OpeningCfg[]; cell_cm?: number;
 }>(space: T, context: ResizeAtomContext, moving: ReadonlySet<string>, epsilon: number): T | null {
   const targets = new Map(space.rooms.filter(room => moving.has(room.id)).map(room => [room.id, room.poly]));
   const updates = projectResizeAtomCatalogue(context.consumers, targets, context.catalogue, epsilon);
@@ -160,12 +164,40 @@ export function projectResizeStoredAtoms<T extends {
     rooms: space.rooms.map(room => ({ ...room, poly: polygons.get(room.id) || room.poly })) };
   if (!hasResizeAtomCornerSplit(context, updates, moving, epsilon)) return null;
   try {
-    const candidate = { ...space, wall_segments: segments };
+    const owners = new Set(context.consumers.map(room => room.id));
+    const ids = new Set(context.consumers.flatMap(room => room.wall_ids));
+    const localRooms = space.rooms.filter(room => owners.has(room.id));
+    const localSegments = segments.filter(segment => ids.has(segment.id));
+    // Authoritative carriers provide local thickness hints, including non-default
+    // cm on new split children. Zero-thickness atoms remain in the catalogue.
+    const walls: WallEntry[] = localSegments.filter(segment => segment.cm > 0).map(segment => ({
+      key: wallKey(segment.a, segment.b, GRID_STEP_N), a: segment.a, b: segment.b, cm: segment.cm,
+    }));
+    const openings = (space.openings || []).filter(opening => opening.host?.kind === 'wall' && ids.has(opening.host.id));
+    const candidate = { id: space.id, cell_cm: space.cell_cm, rooms: localRooms, walls, openings,
+      wall_segments: localSegments };
     const materialized = commitWallSegmentModel({ spaces: [candidate] }).config.spaces[0];
+    const replacement = new Map(materialized.wall_segments.map(segment => [segment.id, segment]));
+    const original = new Map((space.wall_segments || []).map(segment => [segment.id, segment]));
+    // A local unchanged atom can also serve an owner outside the closure.
+    // That owner's carrier/ID must remain byte-identical, never be repaired.
+    for (const room of space.rooms) if (!owners.has(room.id)) for (const id of room.wall_ids || []) {
+      if (ids.has(id) && JSON.stringify(replacement.get(id)) !== JSON.stringify(original.get(id))) return null;
+    }
+    const retained = (space.wall_segments || []).flatMap(segment => {
+      if (!ids.has(segment.id)) return [segment];
+      const next = replacement.get(segment.id);
+      replacement.delete(segment.id);
+      return next ? [next] : [];
+    });
+    const roomsById = new Map(materialized.rooms.map(room => [room.id, room]));
+    const openingsById = new Map(materialized.openings.map(opening => [opening.id, opening]));
     // Keep the proven legacy rekey ledger (including exact multiplicity).
-    // Only the structural catalogue/ownership crosses the split barrier here;
-    // the ordinary write barrier later derives its canonical walls projection.
-    return { ...space, rooms: materialized.rooms, wall_segments: materialized.wall_segments };
+    // Only local structural ownership/hosts cross the split barrier here;
+    // the ordinary write barrier later derives the canonical walls projection.
+    return { ...space, rooms: space.rooms.map(room => roomsById.get(room.id) || room),
+      ...(space.openings ? { openings: space.openings.map(opening => openingsById.get(opening.id) || opening) } : {}),
+      wall_segments: [...retained, ...replacement.values()] };
   } catch { return null; }
 }
 

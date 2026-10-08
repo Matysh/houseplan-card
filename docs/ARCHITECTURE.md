@@ -18,7 +18,9 @@ thickness boundary. Both incident atoms must agree. Metadata, full physical and
 junction barriers still run before paint/commit; terminal/reset drops the map.
 If an enabled side-wall length change separates shared ownership at a fixed
 third-room corner, a proven same-carrier split uses the existing structural
-barrier on the current floor before proof/paint. It never drags that corner.
+barrier on the frozen changed-ID owner closure before proof/paint. It never
+drags that corner or rebuilds remote rooms. An indirectly shared atom with an
+external consumer must remain byte-identical or the local candidate refuses.
 The already-checked compatibility rekey ledger stays intact; final writes
 derive the canonical wall projection through the ordinary barrier.
 

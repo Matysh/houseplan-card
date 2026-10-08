@@ -705,7 +705,11 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_934;
 // outside the big chunk's dictionary. Same requests, no new chunk. Recalculated
 // once by the centre rule, fact + 1 000; the band and every initial-View
 // ceiling and budget are unchanged (`ratchets tighten` lowers the initial one).
-export const LAZY_EDITOR_GZIP_CEILING = 252_758;
+// #832, 2026-10-08: the owner explicitly approved raising this ceiling instead
+// of byte-level geometry rewrites. Restore readable strict correspondence and
+// carrier checks, and materialize genuine splits only in the owner closure.
+// The 2-KB band, initial-View ceilings, absolute budgets and perf guards stay put.
+export const LAZY_EDITOR_GZIP_CEILING = 255_500;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
