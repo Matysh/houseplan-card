@@ -53,6 +53,36 @@ test('834 every grouped corner failure, including final union, replays per-fan c
   equalAreaAndHoles(unionClippedWallCorners(body, [malformed, ...pieces], bound), expected);
 });
 
+test('834 contained fans skip the lazy bound; uncovered or holed pieces retain canonical clipping', () => {
+  const body = union(rect(0, 0, 10, 10));
+  const triangle = [[[0, 0], [10, 0], [0, 10], [0, 0]]];
+  let boundCalls = 0;
+  const bound = () => { boundCalls++; return union(rect(-1, -1, 12, 12)); };
+  assert.strictEqual(unionClippedWallCorners(body, [triangle, rect(0, 0, 10, 1)], bound), body);
+  assert.equal(boundCalls, 0, 'a proved redundant fan needs neither facade reconstruction nor clipping');
+  const extra = rect(9, 0, 2, 2);
+  equalAreaAndHoles(unionClippedWallCorners(body, [triangle, extra], bound), union(body, extra));
+  assert.equal(boundCalls, 1);
+  const holedPiece = difference(rect(1, 1, 3, 3), rect(2, 2, 1, 1));
+  equalAreaAndHoles(unionClippedWallCorners(body, [holedPiece], bound), body);
+  assert.equal(boundCalls, 2, 'only one simple convex ring is eligible for the fast proof');
+  const missing = difference(rect(0, 0, 10, 10), rect(1, 1, 1, 1));
+  equalAreaAndHoles(unionClippedWallCorners(missing, [triangle], bound), union(missing, triangle));
+  assert.equal(boundCalls, 3, 'the fan must still fill actual missing material inside a hole');
+});
+
+test('834 a failed lazy corner bound is evaluated once and cannot recover during fallback', () => {
+  const body = union(rect(0, 0, 10, 10)), pieces = [rect(9, 0, 2, 2)];
+  const failure = new Error('unproved corner bound');
+  let calls = 0;
+  const bound = () => {
+    if (++calls === 1) throw failure;
+    return union(rect(0, 0, 20, 20));
+  };
+  assert.throws(() => unionClippedWallCorners(body, pieces, bound), error => error === failure);
+  assert.equal(calls, 1, 'fallback preserves the first failure instead of retrying a stateful producer');
+});
+
 test('834 batched exact corner unions preserve sequential material, holes and disconnected components', () => {
   const roomRing = difference(rect(0, 0, 100, 100), rect(10, 10, 80, 80));
   const fans = Array.from({ length: 29 }, (_, i) => rect(i * 3, -2, 1, 4));
@@ -97,7 +127,7 @@ test('834 connected floor batched corners/openings match independent sequential 
     }, 0);
     return total + (index ? -1 : 1) * Math.abs(twice) / 2;
   }, 0), 0);
-  for (const offset of [53, 54, 60]) {
+  for (const offset of Array.from({ length: 100 }, (_, i) => i + 1)) {
     const candidate = applyNodeMove(plan, [point[0], point[1] + offset / 240], null);
     assert.ok(candidate.ok);
     canonicalizeConfigGeometryInPlace({ spaces: [candidate.space] });
@@ -110,7 +140,8 @@ test('834 connected floor batched corners/openings match independent sequential 
     const expected = { geometry: withWallBooleanBaseline(sequential, false, () => wallBodiesGeometry(
       model.rooms, input.walls, input.openCuts, input.roomOpenings,
       GRID_STEP_N, input.cellCm, GRID_PITCH, NORM_W, input.physicalBodies,
-      { coveredQuad: wallQuadCovered, clipCorners: unionClippedWallCornersSequential },
+      { coveredQuad: wallQuadCovered,
+        clipCorners: (body, pieces, bound) => unionClippedWallCornersSequential(body, pieces, bound()) },
     )) };
     assert.equal(actual.geometry.status, 'ok');
     assert.equal(expected.geometry.status, 'ok');

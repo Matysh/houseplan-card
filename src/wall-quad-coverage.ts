@@ -9,6 +9,9 @@ type Sign = -1 | 0 | 1 | null;
 
 const same = (a: Point, b: Point): boolean => a[0] === b[0] && a[1] === b[1];
 const orientation = (a: Point, b: Point, p: Point): Sign => {
+  // Identical endpoints are exactly collinear without multiplying anything.
+  // Other cancellation zeros remain unproved, including almost-collinear rays.
+  if (same(a, p) || same(b, p)) return 0;
   const dx = b[0] - a[0], dy = b[1] - a[1], px = p[0] - a[0], py = p[1] - a[1];
   const left = dx * py, right = dy * px;
   // Relative-error bounds do not apply to underflowed or subnormal products.
@@ -45,12 +48,24 @@ const location = (point: Point, ring: Ring): Sign => {
 };
 
 export function wallQuadCovered(quad: Ring, geometry: Geometry): boolean {
-  if (quad.length !== 4 || !quad.every(p => p.length === 2 && p.every(Number.isFinite))) return false;
-  const directions = quad.map((a, i) => orientation(a, quad[(i + 1) % 4], quad[(i + 2) % 4]));
-  if (!directions[0] || directions.some(sign => sign !== directions[0])) return false;
-  const outward = directions[0] === 1 ? -1 : 1;
-  const center = [quad.reduce((sum, p) => sum + p[0], 0) / 4,
-    quad.reduce((sum, p) => sum + p[1], 0) / 4];
+  return quad.length === 4 && wallConvexCovered(quad, geometry);
+}
+
+/** The same sufficient proof for a convex corner fan. Every other vertex,
+ * not just consecutive turns, must lie strictly inside each supporting line:
+ * a self-crossing star can have equally directed turns without being convex. */
+export function wallConvexCovered(quad: Ring, geometry: Geometry): boolean {
+  const count = quad.length;
+  if (count < 3 || !quad.every(p => p.length === 2 && p.every(Number.isFinite))) return false;
+  const direction = orientation(quad[0], quad[1], quad[2]);
+  if (!direction) return false;
+  for (let i = 0; i < count; i++) for (let j = 0; j < count; j++) {
+    if (j === i || j === (i + 1) % count) continue;
+    if (orientation(quad[i], quad[(i + 1) % count], quad[j]) !== direction) return false;
+  }
+  const outward = direction === 1 ? -1 : 1;
+  const center = [quad.reduce((sum, p) => sum + p[0], 0) / count,
+    quad.reduce((sum, p) => sum + p[1], 0) / count];
   return geometry.some(polygon => {
     if (!polygon.length || polygon.some(ring => ring.length < 4 || !same(ring[0], ring[ring.length - 1])
         || !ring.every(point => point.length === 2 && point.every(Number.isFinite)))) return false;
@@ -71,9 +86,9 @@ export function wallQuadCovered(quad: Ring, geometry: Geometry): boolean {
       for (let i = 0; i < ring.length - 1; i++) {
         const a = ring[i], b = ring[i + 1];
         let separated = false;
-        for (let q = 0; q < 4; q++) {
-          const sideA = orientation(quad[q], quad[(q + 1) % 4], a);
-          const sideB = orientation(quad[q], quad[(q + 1) % 4], b);
+        for (let q = 0; q < count; q++) {
+          const sideA = orientation(quad[q], quad[(q + 1) % count], a);
+          const sideB = orientation(quad[q], quad[(q + 1) % count], b);
           if ((sideA === 0 || sideA === outward) && (sideB === 0 || sideB === outward)) {
             separated = true;
             break;

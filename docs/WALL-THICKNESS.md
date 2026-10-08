@@ -65,6 +65,22 @@ pre-opening canonical masonry only, room-floor subtraction drops strictly
 remote holes from its clipping operand. The full outer boundary, touching or
 enclosing holes and all ambiguous rings remain; the guard still computes and
 judges the floor itself. Default View uses the original clipping/subtraction.
+If the whole subject is proved inside one canonical outer boundary and every
+other masonry component is strictly disjoint, subtraction is exactly the
+intersection with that polygon's holes. Fully contained holes can be united
+directly; partial overlap or a hole in the subject still requires intersection.
+Any failed operation replays the complete historical subtraction. This never
+uses a cached/rendered floor or omits an island component from the proof.
+
+Centre/interval inputs are reused only inside one geometry call;
+the mapped and plain exterior shells still build their own contours.
+Opening slots receive one canonical union, reusable by the frozen boolean
+cache; any mask/subtraction failure replays every mandatory cut. A convex fan
+is skipped only when conservative half-plane predicates prove its entire
+interior already belongs to masonry. Holes, concavity, self-crossing shapes
+and ambiguous arithmetic cannot gain that shortcut. When all fans are proved
+redundant, their clipping bound need not be built; a required bound failure is
+retained, never retried into a different outcome.
 
 ### Stable stored identity and zero walls (model v10, #282/#306/#478)
 

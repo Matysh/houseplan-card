@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { union, difference } from 'polyclip-ts';
-import { wallQuadCovered } from '../test-build/wall-quad-coverage.js';
+import { wallQuadCovered, wallConvexCovered } from '../test-build/wall-quad-coverage.js';
 import { geometryArea } from '../test-build/physical-geometry.js';
 
 const quad = (x, y, w, h) => [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
@@ -68,4 +68,29 @@ test('#834 underflow and subnormal orientation products remain unproved', () => 
       'a numerically unproved separator falls back even if the shape looks covered');
   }
   assert.equal(wallQuadCovered([[0, 0, 1], [1, 0], [1, 1], [0, 1]], [rect(0, 0, 2, 2)]), false);
+});
+
+test('#834 convex fan proof covers triangles but refuses stars, bays, holes and ambiguous vertices', () => {
+  const body = union(rect(0, 0, 10, 10));
+  for (const fan of [[[0, 0], [10, 0], [0, 10]], [[1, 1], [3, 1], [1, 3]]]) {
+    assert.equal(wallConvexCovered(fan, body), true);
+    assert.equal(geometryArea(difference(polygon(fan), body)), 0);
+    assert.equal(wallQuadCovered(fan, body), false, 'the strip entry point remains quad-only');
+  }
+  const endpointFan = [[0, 0], [10, 0], [0, 10]];
+  const longDiagonal = union([[[0, 0], [12, -2], [-2, 12], [0, 0]]]);
+  assert.equal(geometryArea(difference(polygon(endpointFan), longDiagonal)), 0);
+  assert.equal(wallConvexCovered(endpointFan, longDiagonal), false,
+    'non-endpoint collinearity still falls back; the exact endpoint identity is not an epsilon relaxation');
+  const holed = difference(rect(0, 0, 10, 10), rect(1, 1, 1, 1));
+  assert.equal(wallConvexCovered([[0, 0], [10, 0], [0, 10]], holed), false,
+    'covered triangle vertices do not prove the interior across a room hole');
+  const star = Array.from({ length: 5 }, (_, i) => {
+    const angle = i * 4 * Math.PI / 5;
+    return [5 + 3 * Math.cos(angle), 5 + 3 * Math.sin(angle)];
+  });
+  assert.equal(wallConvexCovered(star, body), false, 'equal consecutive turns do not certify a self-crossing fan');
+  assert.equal(wallConvexCovered([[0, 0], [10, 0], [4, 4], [10, 10], [0, 10]], body), false, 'concave fan');
+  assert.equal(wallConvexCovered([[0, 0], [1, 1], [2, 2 + Number.EPSILON]], body), false, 'cancelled orientation');
+  assert.equal(wallConvexCovered([[0, 0], [1e-200, 0], [0, 1e-200]], body), false, 'underflow stays unproved');
 });

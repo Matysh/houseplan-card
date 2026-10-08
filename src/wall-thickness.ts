@@ -57,13 +57,17 @@ export interface WallBodiesGeometryResult {
 }
 
 export interface WallGeometryOperations {
+  /** Reuse only centre/interval inputs inside this one geometry invocation. */
+  reuseExterior?: boolean;
   /** Optional exact redundancy proof supplied by the lazy Select preview.
    * Other consumers retain the canonical edge intersection/union path. */
   coveredQuad?: typeof wallQuadCovered;
   /** Select may group common-bound clipping; View keeps per-fan isolation. */
-  clipCorners?: typeof unionClippedWallCornersSequential;
+  clipCorners?: (subject: Geom | null, pieces: Geom[], bound: () => Geom | null) => Geom | null;
+  /** Select can reuse the exact opening mask; View retains its usual cuts. */
+  subtractOpenings?: typeof subtractWallOpeningCuts;
   /** Test seam around the transaction which may fail for one independent body. */
-  mergeExtra?: (primary: any, extra: any, index: number) => any;
+  mergeExtra?: (primary: Geom | null, extra: Geom, index: number) => Geom;
   /** Bounded diagnostic seam; never receives coordinates, ids or exceptions. */
   onCoreFailure?: (phase: string) => void;
   /** Test seam: failed optional trim composition must replay the historical path. */
@@ -2769,7 +2773,7 @@ export function innerContourForRoom(
   gridPitch: number,
   coordScale = 1,
   /** Canonical room-wall masonry before opening cuts; pass the render cache. */
-  sharedRoomWallGeometry?: any,
+  sharedRoomWallGeometry?: unknown,
   /** Canonical junction topology from the same wall-geometry pass. */
   sharedMultiWallNodes?: MultiWallNodeMap | null,
   /** Optional exact subtraction; ordinary View uses the historical operation. */
@@ -3261,6 +3265,10 @@ interface ExteriorEnvelopeGeometry {
   shell: any;
 }
 
+interface ExteriorEnvelopeInputs {
+  value?: { centre: Geom; intervals: WallInterval[] };
+}
+
 /** Open every ring of a polyclip MultiPolygon and drop its closing duplicate. */
 function geometryRings(geom: any): number[][][] {
   const out: number[][][] = [];
@@ -3347,16 +3355,19 @@ function exteriorEnvelopeGeometry(
   gridPitch: number,
   coordScale: number,
   sharedMultiWallNodes?: MultiWallNodeMap | null,
+  prepared?: ExteriorEnvelopeInputs,
 ): ExteriorEnvelopeGeometry | null {
   const polys = (rooms || []).map(roomPoly)
     .filter((p): p is number[][] => !!p && p.length >= 3);
   if (!polys.length) return null;
-  let centre: any = union(closedRing(polys[0]) as any);
-  for (let i = 1; i < polys.length; i++) centre = unionLocalWallGeometry(centre, closedRing(polys[i]));
-
-  const intervals = wallIntervals(
-    rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
-  );
+  let centre = prepared?.value?.centre;
+  let intervals = prepared?.value?.intervals;
+  if (!centre || !intervals) {
+    centre = union(closedRing(polys[0]));
+    for (let i = 1; i < polys.length; i++) centre = unionLocalWallGeometry(centre, closedRing(polys[i]));
+    intervals = wallIntervals(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
+    if (prepared) prepared.value = { centre, intervals };
+  }
   const outer = intervals.filter((iv) => iv.kind === 'outer' && iv.half > 0);
   const eps = openEps(pitch, coordScale) * 4;
   const multiWallNodes = sharedMultiWallNodes
@@ -3446,6 +3457,7 @@ export function junctionNodeBound(
   gridPitch: number,
   coordScale: number,
   map: MultiWallNodeMap,
+  prepared?: ExteriorEnvelopeInputs,
 ): any | null {
   try {
     const plain: MultiWallNodeMap = {
@@ -3453,7 +3465,7 @@ export function junctionNodeBound(
       nodes: [], index: new Map(),
     };
     const exterior = exteriorEnvelopeGeometry(
-      rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale, plain,
+      rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale, plain, prepared,
     );
     if (!exterior) return null;
     return exterior.shell?.length
@@ -3755,8 +3767,11 @@ export function wallBodiesGeometry(
     : null;
   let corePhase = 'exterior';
   try {
+    // This object cannot escape the invocation. Mapped and plain shells still
+    // build separate contours; only their identical centre/intervals are shared.
+    const exteriorInputs: ExteriorEnvelopeInputs | undefined = operations.reuseExterior ? {} : undefined;
     const exterior = exteriorEnvelopeGeometry(
-      rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale, multiWallNodes,
+      rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale, multiWallNodes, exteriorInputs,
     );
     // Paper and masonry share this one structural pass. Renderers cache the
     // returned pair, so a live HA state update never repeats exterior topology.
@@ -3867,9 +3882,8 @@ export function wallBodiesGeometry(
     corePhase = 'junction-corners';
     if (multiWallNodes.nodes.length) {
       const corners = junctionNodeGeometry(multiWallNodes);
-      const bound = junctionNodeBound(
-        rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
-        multiWallNodes,
+      const bound = () => junctionNodeBound(
+        rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale, multiWallNodes, exteriorInputs,
       );
       // Fans only: with the trim now TARGETED (it never cuts an ordinary
       // node's strips) the support re-union became dead weight — measured by
@@ -3884,7 +3898,8 @@ export function wallBodiesGeometry(
           // still stands on its own.
         }
       }
-      body = (operations.clipCorners || unionClippedWallCornersSequential)(body, cornerPieces, bound);
+      body = operations.clipCorners ? operations.clipCorners(body, cornerPieces, bound)
+        : unionClippedWallCornersSequential(body, cornerPieces, bound());
       body = dropDegenerateRings(body, Math.max(multiWallNodes.epsilon, 1e-9) ** 2);
     }
     const roomGeom = body || [];
@@ -3916,9 +3931,10 @@ export function wallBodiesGeometry(
       ];
       openingSlots.push(closedRing(slot) as Geom);
     }
-    if (body) body = subtractWallOpeningCuts(body, openingSlots);
+    const subtractOpenings = operations.subtractOpenings || subtractWallOpeningCuts;
+    if (body) body = subtractOpenings(body, openingSlots);
     for (const component of isolatedCore)
-      component.geom = subtractWallOpeningCuts(component.geom, openingSlots);
+      component.geom = subtractOpenings(component.geom, openingSlots);
     // Independent bodies are physical but own no openings. Each merge is a
     // transaction: a local boolean failure must not discard the last valid
     // room/extra union. A valid offending body remains an isolated component,

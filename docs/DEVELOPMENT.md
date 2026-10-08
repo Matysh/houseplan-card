@@ -44,6 +44,19 @@ Follow-up corner grouping and exact remote-hole exclusion reduce actual work,
 not sampling or thresholds. Units compare all 100 positions with the original
 floor subtraction and exercise each grouped-corner failure stage; touching,
 enclosing and ambiguous holes retain the original operand and proof.
+The next full run (37840038041) passed the other 312 browser smokes but found
+CPU p95 75 ms and input-to-paint p95 143.907 ms. Its raw report shows roughly
+1.93 times the local steady CPU for identical targets, not an input-clock or
+queueing defect. The next optimization reuses canonical opening masks and
+avoids only conservatively proved redundant fans; failed grouped operations
+retain their historical fallback. The budgets
+and native input protocol do not change.
+The lazy floor operation also uses the exact complement identity only after
+proving containment in one outer contour and strict separation from every
+other masonry component. Partial floors, islands, subject holes and failed
+operations have explicit negative witnesses. The 100-position comparison uses
+ordinary `wallBodiesGeometry` with no optimized ports, including material,
+component/hole counts and strict proof verdicts.
 The earlier epoch-based protocol exposed a 2.3 ms conversion step within one
 gesture despite stable pre-gesture probes; the final native input was delivered
 and painted. It is not accepted as performance evidence. Before/after figures
@@ -57,7 +70,8 @@ may be shared; open-span/incompatible cases retain the independent proof.
 The numerical retry must not accept degraded geometry or discard a failed hole.
 Registry anchors are checked locally; actual mutants remain nightly only.
 The raw generated-tree accounting baseline increases from 2,771,465 to
-2,777,899 bytes for these readable geometry helpers and conservative fallbacks;
+2,780,814 bytes for these readable geometry helpers and conservative fallbacks
+(the second CI follow-up adds 2,915 bytes over the initial 2,777,899 baseline);
 delegation/port/harness coupling metrics do not grow. This is not a change to
 the initial-View, lazy-editor, or runtime performance budgets.
 

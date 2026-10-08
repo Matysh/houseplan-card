@@ -33,6 +33,9 @@ independent server proof and guarded Undo/Redo; the model/API do not change.
 Select-only grouped corner clipping and strictly remote-hole exclusion reduce
 connected-floor frame work while retaining the original fallback and clearance
 proof. CI preserves raw timing evidence even when a performance budget fails.
+Reusable exact opening masks and proved redundant corner fans remove
+additional full-body boolean work. View retains
+its original path; all optimized failure paths retain canonical fallbacks.
 
 Repeated Resize (#832): coalesced UI runs project back into frozen structural
 atoms/IDs, retaining fixed side breakpoints and rigidly moving translated runs.

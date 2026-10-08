@@ -1,8 +1,9 @@
-/** Select-only locality for successful canonical room masonry. A remote hole
- * of one connected wall body cannot affect the floor inside this room. The
- * guard still performs the ordinary subtraction and judges its result. */
-import type { Geom } from './wall-boolean-cache';
+/** Select-only exact locality for successful canonical room masonry. Remote
+ * holes cannot affect this room; proved outer containment also expresses the
+ * same subtraction as an intersection with holes. The guard judges that floor. */
+import { intersection, union, type Geom } from './wall-boolean-cache';
 import { subtractLocalWallGeometry } from './wall-local-boolean';
+import { wallQuadCovered } from './wall-quad-coverage';
 
 type Multi = ReturnType<typeof subtractLocalWallGeometry>;
 type Ring = Multi[number][number];
@@ -28,6 +29,8 @@ const touches = (a: Box, b: Box): boolean => a[0] <= b[2] && b[0] <= a[2]
   && a[1] <= b[3] && b[1] <= a[3];
 const asMulti = (geometry: Geom): Multi => !geometry.length ? []
   : typeof geometry[0][0][0] === 'number' ? [geometry as Multi[number]] : geometry as Multi;
+const boxQuad = (box: Box): Ring => [[box[0], box[1]], [box[2], box[1]],
+  [box[2], box[3]], [box[0], box[3]]];
 
 /** Only the lazy Select producer supplies this operation, with fresh successful
  * pre-opening masonry, in the guard's coordinate units. Ambiguous rings retain
@@ -41,14 +44,41 @@ export function subtractNodeRoomMasonry(subject: Geom, clipping: Geom): Multi {
     subjectBoxes.push(box);
   }
   const local: Multi = [];
+  const outerBoxes: Box[] = [];
   for (const polygon of clips) {
+    if (!polygon.length) return subtractLocalWallGeometry(subject, clipping);
     const rings: Ring[] = [];
     for (let index = 0; index < polygon.length; index++) {
       const ring = polygon[index], box = ringBox(ring);
       if (!box) return subtractLocalWallGeometry(subject, clipping);
+      if (index === 0) outerBoxes.push(box);
       if (index === 0 || subjectBoxes.some(ownBox => touches(ownBox, box))) rings.push(ring);
     }
     local.push(rings);
+  }
+  if (subjectBoxes.length) {
+    const subjectBox: Box = [Math.min(...subjectBoxes.map(box => box[0])),
+      Math.min(...subjectBoxes.map(box => box[1])), Math.max(...subjectBoxes.map(box => box[2])),
+      Math.max(...subjectBoxes.map(box => box[3]))];
+    for (let index = 0; index < local.length; index++) {
+      // This is a set identity for canonical masonry, not a cached floor or
+      // permission to skip the guard: A inside O implies A\(O\H) = A∩H.
+      // An island component inside a hole must still subtract its material.
+      if (outerBoxes.some((box, other) => other !== index && touches(subjectBox, box))) continue;
+      const polygon = local[index];
+      if (!wallQuadCovered(boxQuad(subjectBox), [[polygon[0]]])) continue;
+      const holes: Multi = polygon.slice(1).map(ring => [ring]);
+      try {
+        if (!holes.length) return [];
+        // If every retained hole is itself inside the actual subject (holes
+        // included), the result is their canonical union. Otherwise intersect
+        // normally; bounding boxes alone never establish filled containment.
+        return holes.every(hole => wallQuadCovered(boxQuad(ringBox(hole[0])!), own))
+          ? union(holes) : intersection(own, holes);
+      } catch {
+        return subtractLocalWallGeometry(subject, clipping);
+      }
+    }
   }
   return subtractLocalWallGeometry(subject, local);
 }

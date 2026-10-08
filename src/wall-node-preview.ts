@@ -17,6 +17,7 @@ import type { JunctionSharedGeometry } from './junction-limits';
 import { wallQuadCovered } from './wall-quad-coverage';
 import { subtractNodeRoomMasonry } from './wall-node-room-floor';
 import { unionClippedWallCorners } from './wall-node-corners';
+import { subtractNodeOpeningCuts } from './wall-node-openings';
 
 type Bounds = [number, number, number, number];
 const bounds = (points: readonly number[][], pad = 0): Bounds => [
@@ -92,7 +93,8 @@ export function buildNodePreview(space: NodeMoveSpace) {
   const input = prepareSpacePhysicalGeometryInputs(space, model);
   const geometry = wallBodiesGeometry(model.rooms, input.walls, input.openCuts, input.roomOpenings,
     GRID_STEP_N, input.cellCm, GRID_PITCH, NORM_W, input.physicalBodies,
-    { coveredQuad: wallQuadCovered, clipCorners: unionClippedWallCorners });
+    { coveredQuad: wallQuadCovered, clipCorners: unionClippedWallCorners, subtractOpenings: subtractNodeOpeningCuts,
+      reuseExterior: true });
   return { space, model, input, geometry, renderRoomContours: new Map<string, number[][] | null>(),
     safe: geometry.status === 'ok' || geometry.status === 'not-applicable' };
 }
