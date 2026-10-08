@@ -27,6 +27,7 @@ interface NodeCardHost<TState> extends WallNodeWriteHost {
   _viewOr(vb: number[]): { w: number };
   _t(key: I18nKey, params?: Record<string, string | number>): string;
   _showToast(text: string): void;
+  _cancelCameraTransition(commitTarget?: boolean, keepPresented?: boolean): void;
   _geometryHistory: { push(command: { name: string; before: TState; after: TState }): void; clear(): void };
   readonly _fillColors: { wall_fill: { c: string; a: number } };
   _openingAmt(opening: OpeningCfg): number;
@@ -56,6 +57,7 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeMoveHistory
       ? toolsT(language(), key as ToolsI18nKey, params || { reason: host._t('toast.geometry_unsafe') })
       : host._t(key as I18nKey, params),
     toast: text => host._showToast(text),
+    freezeViewport: () => host._cancelCameraTransition(false, true),
     changed: () => { if (editor.dragging) { commitHouseplanEditor(host); editor.paint(); }
       else { geometry = null; baselineGeometry = null; host.requestUpdate(); } },
     validate: (space, before) => {

@@ -9,6 +9,7 @@
   Shared corner clipping, reusable unchanged opening masks,
   and local room-floor subtraction further reduce dragging work without
   changing wall-clearance limits.
+  Starting a node drag also freezes any in-flight zoom at the presented frame.
   One live preview retains translucent original walls; cancel, the latest
   release position, opening cuts and Undo/Redo remain guarded
   ([#834](https://github.com/Matysh/houseplan-card/issues/834)).

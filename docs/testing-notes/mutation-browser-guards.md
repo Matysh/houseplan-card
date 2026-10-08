@@ -34,10 +34,10 @@ that transition events alone prove disposal.
 | Performance threshold | 5 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 3 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 50 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 57 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Pointer geometry and trusted interaction | 58 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 41 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
 | Custom-element and HA browser lifecycle | 134 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **290 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| **Total** | **291 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -166,6 +166,12 @@ cold View is unchanged and no source-level check sees the unstyled editor.
 - `zigbee-topology-unknown-outline-ignores-plan-zoom`
 
 ### Pointer geometry and trusted interaction
+
+`node-capture-jumps-to-camera-target` checks that native wheel-to-node capture
+preserves the browser-presented SVG CTM rather than jumping to the animation
+target; a port unit cannot observe that frame.
+
+- `node-capture-jumps-to-camera-target`
 
 - `battery-passive-frame-intercepts-pointer`
 

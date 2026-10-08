@@ -7,8 +7,8 @@ function setup() {
   const cfg = { model_version: 10, spaces: [{ id: 'f', rooms: [], wall_segments: [],
     partitions: [{ id: 'w', a: [0, 0], b: [1, 0], cm: 0 }] }], markers: [], settings: {} };
   const context = { enabled: true, api: true, space: 'f', revision: 1 };
-  const capture = new Set();
-  const stage = { style: {}, setPointerCapture: p => capture.add(p),
+  const capture = new Set(), lifecycle = [];
+  const stage = { style: {}, setPointerCapture: p => { lifecycle.push('capture'); capture.add(p); },
     hasPointerCapture: p => capture.has(p), releasePointerCapture: p => capture.delete(p) };
   const window = new EventTarget(), toasts = [], writes = [], recorded = [];
   const frames = new Map(); let frameId = 0, autoFrames = true;
@@ -27,7 +27,8 @@ function setup() {
     stage: () => stage, root: () => ({ querySelectorAll: () => [] }),
     document: { defaultView: window, createElementNS: () => ({ style: {}, classList: { add() {} }, appendChild() {} }) },
     text: key => key, toast: text => toasts.push(text),
-    changed: () => changes.push([editor.busy, recorded.length]),
+    freezeViewport: () => lifecycle.push('freeze'),
+    changed: () => { lifecycle.push('changed'); changes.push([editor.busy, recorded.length]); },
     validate: (...args) => { validations.push(args); return validPreview; }, paintOpportunity: () => paint,
     write: async h => {
       writes.push(h); if (fail) throw new Error('refused');
@@ -40,13 +41,56 @@ function setup() {
   const ev = (type, x = 0, y = 0, patch = {}) => ({ type, pointerId: 1, pointerType: 'mouse',
     isPrimary: true, button: 0, detail: 1, clientX: x, clientY: y, composedPath: () => [stage],
     preventDefault() {}, stopImmediatePropagation() {}, ...patch });
-  return { cfg, context, capture, editor, ev, writes, recorded, toasts, window, listeners, changes, validations, frames,
+  return { cfg, context, capture, stage, lifecycle, editor, ev, writes, recorded, toasts, window, listeners, changes, validations, frames,
     holdFrames: () => { autoFrames = false; }, flushFrame,
     refusePreview: () => { validPreview = false; },
     holdPaint: () => { paint = new Promise(resolve => { paintResolve = resolve; }); },
     finishPaint: () => paintResolve(), refuse: () => { fail = true; }, retireAtWrite: () => { retireOnWrite = true; } };
 }
 const settle = () => new Promise(resolve => setImmediate(resolve));
+
+test('a successful node capture freezes the presented viewport before the first preview paint', async () => {
+  const s = setup(); s.holdFrames();
+  assert.equal(s.editor.guardEvent(s.ev('pointerdown')), true);
+  assert.equal(s.editor.dragging, true);
+  assert.deepEqual(s.lifecycle, ['capture', 'freeze', 'changed']);
+  s.editor.guardEvent(s.ev('pointermove', .25, .3)); s.flushFrame();
+  s.editor.guardEvent(s.ev('pointerup')); await settle();
+  assert.equal(s.writes.length, 1); assert.equal(s.recorded.length, 1);
+  assert.equal(s.lifecycle.filter(phase => phase === 'freeze').length, 1);
+  s.editor.dispose();
+});
+
+test('rejected node presses and failed capture do not acquire the viewport', () => {
+  for (const rejection of ['disabled', 'outside', 'miss', 'busy', 'touch', 'secondary',
+    'nonprimary', 'api', 'ambiguous', 'unsupported', 'capture-failed']) {
+    const s = setup(); let event = s.ev('pointerdown');
+    if (rejection === 'disabled') s.context.enabled = false;
+    else if (rejection === 'outside') event = s.ev('pointerdown', 0, 0, { composedPath: () => [] });
+    else if (rejection === 'miss') event = s.ev('pointerdown', .5, .5);
+    else if (rejection === 'busy') s.editor.busy = true;
+    else if (rejection === 'touch') event = s.ev('pointerdown', 0, 0, { pointerType: 'touch' });
+    else if (rejection === 'secondary') event = s.ev('pointerdown', 0, 0, { button: 2 });
+    else if (rejection === 'nonprimary') event = s.ev('pointerdown', 0, 0, { isPrimary: false });
+    else if (rejection === 'api') s.context.api = false;
+    else if (rejection === 'ambiguous') s.cfg.spaces[0].partitions.push(
+      { id: 'near', a: [0, .0005], b: [1, .0005], cm: 0 });
+    else if (rejection === 'unsupported') s.cfg.spaces[0].partitions = [
+      { id: 'h', a: [-1, 0], b: [1, 0], cm: 0 },
+      { id: 'v', a: [0, -1], b: [0, 1], cm: 0 },
+      { id: 'd', a: [-1, -1], b: [1, 1], cm: 0 },
+    ];
+    else s.stage.setPointerCapture = () => { s.lifecycle.push('capture'); throw new Error('capture refused'); };
+    s.editor.guardEvent(event);
+    assert.equal(s.editor.dragging, false, rejection);
+    assert.equal(s.capture.size, 0, rejection);
+    assert.deepEqual(s.lifecycle, rejection === 'capture-failed' ? ['capture'] : [], rejection);
+    assert.equal(s.writes.length, 0); assert.equal(s.recorded.length, 0);
+    if (rejection === 'ambiguous') assert.deepEqual(s.toasts, ['node_move_ambiguous']);
+    if (rejection === 'unsupported') assert.deepEqual(s.toasts, ['node_move_unsupported_junction']);
+    s.editor.dispose();
+  }
+});
 
 test('native event turns share one frame and repeated snapped positions reuse the candidate', async () => {
   const s = setup(); s.holdFrames(); s.editor.guardEvent(s.ev('pointerdown'));

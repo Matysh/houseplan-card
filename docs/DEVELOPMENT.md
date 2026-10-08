@@ -51,6 +51,17 @@ queueing defect. The next optimization reuses canonical opening masks and
 avoids only conservatively proved redundant fans; failed grouped operations
 retain their historical fallback. The budgets
 and native input protocol do not change.
+The third CI run (37848952720) instead timed out in warmup: a successful
+capture vanished before the first recorded move. A minimal native control
+isolated the test-driver defect: CDP `mouseMoved` with `buttons: 1` but no
+`button` lost capture; explicitly carrying `button: 'left'`, as Playwright
+does, retained it. The identical throttled harness then completed all eight
+gestures and the functional/history checks. Throttled timings are diagnostic,
+not acceptance evidence. The driver now has a separate native capture probe
+before the measured fixture; cadence, frozen clocks, workload and budgets are
+unchanged. No camera-settling delay is used to hide the input defect.
+Independently, accepted Select capture now freezes an in-flight camera at its
+presented frame, matching the existing canvas pointerdown contract.
 The lazy floor operation also uses the exact complement identity only after
 proving containment in one outer contour and strict separation from every
 other masonry component. Partial floors, islands, subject holes and failed

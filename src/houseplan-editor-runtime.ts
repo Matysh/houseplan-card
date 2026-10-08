@@ -491,6 +491,7 @@ export interface HouseplanEditorHostPort {
   _canEdit: boolean;
   _haWallNodeMoveApi: number | null;
   _canOptimizeUndo: boolean;
+  _cancelCameraTransition(commitTarget?: boolean, keepPresented?: boolean): void;
   _cancelDevicePressFeedback: () => void;
   _cancelDeviceDrag: () => boolean;
   _cancelModeTransition: (commitTarget?: boolean) => void;

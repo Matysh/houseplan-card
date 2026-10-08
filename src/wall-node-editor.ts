@@ -22,6 +22,7 @@ export interface WallNodeEditorPort {
   document: Document;
   text(key: string, params?: Record<string, string>): string;
   toast(text: string): void;
+  freezeViewport(): void;
   changed(): void;
   validate(space: NodeMoveSpace, before: NodeMoveSpace, final: boolean): boolean;
   paintOpportunity(): Promise<void>;
@@ -135,6 +136,9 @@ export class WallNodeEditor {
       axis: null, target: [...hit.node!.point], guide: null, candidate: null,
       affected: [], invalid: null, moved: false, released: false, outline: false };
     try { stage.setPointerCapture(ev.pointerId); } catch { this.session = null; return true; }
+    // Capture-phase ownership bypasses the ordinary stage pointerdown, which
+    // freezes the presented camera before a gesture (CANVAS §5).
+    this.port.freezeViewport();
     // Freeze the already-presented production masonry once, before any live
     // candidate. This also preserves real opening cuts when no candidate can
     // be built. No room fill, opening symbol or editor handle is cloned.

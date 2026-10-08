@@ -281,6 +281,9 @@ produce a zero-sized SVG `viewBox`.
   and disconnect cancel or settle it before taking ownership. Reduced motion
   always commits the exact target immediately. View persists only the settled
   target once; editor camera remains session-only.
+  Select's node capture runs before the ordinary stage handler, so its
+  successful capture explicitly performs the same presented-camera freeze.
+  Rejected node hits do not claim camera ownership.
 * **LED gradient during zoom (#789).** Actual scale changes temporarily paint
   24 of the retained 48 mask bands; light, geometry and the coloured strip stay
   visible. Full quality returns after 160 ms of scale inactivity, including

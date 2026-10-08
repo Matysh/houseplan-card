@@ -7,10 +7,11 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { setTimeout as delay } from 'node:timers/promises';
-import { launch, finish, requirePinnedBrowser } from './serve.mjs';
+import { launch, finish, requirePinnedBrowser, watchPage } from './serve.mjs';
 import { installNodePaintObserver } from './helpers/node-paint-observer.mjs';
 import { assertNodeClockBounds, assertUniqueNodeInputPositions, calibrateNodeInputClock, installNodeInputObserver, settleNodeInputLedger } from './helpers/node-input-ledger.mjs';
 import { writeNodeCiReport } from './helpers/node-ci-report.mjs';
+import { sendNodeNativeMove } from './helpers/node-native-input.mjs';
 import { applyNodeMove, prepareNodeMove, structuralWallNodes } from '../test-build/wall-node-move.js';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 
@@ -43,6 +44,32 @@ const report = { issue: 834, fixtureSha256: createHash('sha256').update(fixtureT
   raw: [], failures: [] };
 mkdirSync(dirname(output), { recursive: true });
 try {
+  // Native protocol preflight, isolated from the product and all measured work.
+  // Both this small capture regression and the real stream use one move helper.
+  const capturePage = watchPage(await browser.newPage());
+  try {
+    await capturePage.setContent('<div id="capture" style="width:400px;height:300px;touch-action:none"></div>');
+    await capturePage.evaluate(() => {
+      const target = document.getElementById('capture');
+      window.captureProbe = { down: false, moves: [], lost: 0 };
+      target.addEventListener('pointerdown', event => {
+        target.setPointerCapture(event.pointerId); event.preventDefault();
+        window.captureProbe.down = target.hasPointerCapture(event.pointerId);
+      });
+      target.addEventListener('pointermove', event => {
+        if (event.buttons === 1) window.captureProbe.moves.push({ x: event.clientX, y: event.clientY,
+          captured: target.hasPointerCapture(event.pointerId), trusted: event.isTrusted });
+      });
+      target.addEventListener('lostpointercapture', () => window.captureProbe.lost++);
+    });
+    const captureCdp = await capturePage.context().newCDPSession(capturePage);
+    await capturePage.mouse.move(50, 50); await capturePage.mouse.down();
+    for (let index = 0; index < 4; index++) await sendNodeNativeMove(captureCdp, { x: 60 + index * 10, y: 60 });
+    assert.deepEqual(await capturePage.evaluate(() => window.captureProbe), { down: true, lost: 0,
+      moves: Array.from({ length: 4 }, (_, index) => ({ x: 60 + index * 10, y: 60, captured: true, trusted: true })) },
+    'native held-primary-button moves preserve capture before release');
+    await capturePage.mouse.up();
+  } finally { await capturePage.close(); }
   report.bundleFingerprint = await page.evaluate(() => globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__);
   await page.exposeFunction('connectedNodeWire', message => {
     if (message.type === 'houseplan/config/get') return { config: structuredClone(server), rev: revision,
@@ -170,8 +197,7 @@ try {
       // fitting can replace them with a later, spuriously faster timestamp.
       const nodeTime = performance.now(); inputs.push(Object.freeze({ id: inputs.length, nodeTime,
         eventTime: nodeTime + clockCalibration.offsetMs, pointerId, pointerType: 'mouse', buttons: 1, ...position }));
-      pending.push(cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...position,
-        buttons: 1, pointerType: 'mouse' }));
+      pending.push(sendNodeNativeMove(cdp, position));
       await delay(16);
     }
     await Promise.all(pending);

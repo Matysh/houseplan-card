@@ -140,4 +140,63 @@ const acceptedRevision = revision;
 await page.keyboard.press('Escape'); await page.evaluate(() => window.__hpTest.settled());
 check('idle Esc after accepted move/Redo is not Undo and makes no write',
   [writes.length, server, revision, (await inspect()).size], [count, accepted, acceptedRevision, 1]);
+
+// #834 / CANVAS §5: a Select press owns the presented camera even though its
+// capture guard consumes pointerdown before the ordinary stage handler.
+await page.evaluate(async () => { await window.__hpTest.setMode('plan'); await window.__hpTest.setTool('select'); });
+await page.waitForFunction(() => !window.__card._modeTransitionBusy && window.__card.renderRoot.querySelector('.hp-node-handle'));
+const cameraBaseline = await inspect(), cameraWrites = writes.length;
+const cameraNode = await screen(server.spaces[0].partitions[0].a);
+await page.mouse.move(cameraNode.x, cameraNode.y);
+await page.evaluate(() => {
+  const card = window.__card, stage = card._stageEl;
+  const snapshot = () => {
+    const matrix = card.renderRoot.querySelector('svg.plan-svg').getScreenCTM();
+    return { active: card._cameraTransition.active, zoom: card._zoom, view: { ...card._view },
+      ctm: [matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f] };
+  };
+  const witness = window.__nodeCameraWitness = { snapshot, before: null, transition: null };
+  // Observe native input without driving any production controller. The wheel
+  // promise resolves after the stage's existing wheel handler, not after its
+  // animation, so there is no guessed sleep before the following mouse press.
+  witness.wheel = new Promise(resolve => stage.addEventListener('wheel', resolve, { once: true }));
+  document.addEventListener('pointerdown', event => {
+    if (!event.composedPath().includes(stage)) return;
+    witness.before = snapshot();
+    witness.transition = structuredClone(card._cameraTransition.state);
+  }, { capture: true, once: true });
+});
+await page.mouse.wheel(0, -120);
+await page.evaluate(() => window.__nodeCameraWitness.wheel.then(() => undefined));
+await page.mouse.down();
+const cameraDown = await page.evaluate(() => {
+  const { before, transition, snapshot } = window.__nodeCameraWitness;
+  return { before, after: snapshot(), transition, dragging: window.__card._editorRuntime.nodeMove.dragging };
+});
+assert.ok(cameraDown.before?.active && cameraDown.transition?.reason === 'wheel'
+  && cameraDown.before.zoom !== cameraDown.transition.to.zoom,
+  'native node press must witness a running wheel transition, not an already settled camera');
+check('node capture freezes a running wheel transition', [cameraDown.dragging, cameraDown.after.active], [true, false]);
+const frozenCamera = { ...cameraDown.before, active: false };
+check('node capture keeps the exact presented camera instead of jumping to the target', cameraDown.after, frozenCamera);
+const cameraFrames = await page.evaluate(async () => {
+  const witness = window.__nodeCameraWitness, frames = [];
+  const deadline = witness.transition.startedAt + witness.transition.duration;
+  do {
+    await new Promise(requestAnimationFrame);
+    frames.push(witness.snapshot());
+  } while (performance.now() <= deadline || frames.length < 3);
+  return frames;
+});
+check('retired zoom frames cannot move the captured viewport', cameraFrames.every(frame =>
+  JSON.stringify(frame) === JSON.stringify(frozenCamera)));
+const cameraTarget = await screen([0.27, 0.54]);
+await page.mouse.move(cameraTarget.x, cameraTarget.y);
+await page.waitForFunction(() => window.__card._editorRuntime.nodeMove.preview !== null);
+check('native node movement keeps the frozen camera', await page.evaluate(() => window.__nodeCameraWitness.snapshot()), frozenCamera);
+await page.keyboard.press('Escape'); await page.mouse.up();
+await page.evaluate(() => window.__hpTest.settled());
+check('Esc after interrupted zoom leaves geometry and history unchanged',
+  [(await inspect()).config, (await inspect()).size, writes.length], [cameraBaseline.config, cameraBaseline.size, cameraWrites]);
+await page.evaluate(() => { delete window.__nodeCameraWitness; });
 await finish(browser, { writes: writes.length });

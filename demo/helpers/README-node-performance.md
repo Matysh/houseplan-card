@@ -40,6 +40,12 @@ Primary sources: [Chromium input timestamp conversion](https://chromium.googleso
 
 ## Native event identity and readiness
 
+`sendNodeNativeMove` sends both `button: 'left'` and `buttons: 1` for a held
+primary mouse move, matching Playwright's native protocol. Omitting `button`
+can make Chromium release capture even with `buttons: 1`; a four-move native
+probe on an isolated blank page protects this contract before measurement.
+The probe is outside the product fixture and never paces the measured stream.
+
 The browser readiness predicate and Node ledger share one pure inspector,
 installed directly with `page.evaluate(installNodeInputObserver)`, without
 `eval`. Source positions must be unique at the 0.001 px native-coordinate

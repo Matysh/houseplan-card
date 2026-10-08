@@ -36,6 +36,9 @@ proof. CI preserves raw timing evidence even when a performance budget fails.
 Reusable exact opening masks and proved redundant corner fans remove
 additional full-body boolean work. View retains
 its original path; all optimized failure paths retain canonical fallbacks.
+Accepted node capture freezes the presented camera like other plan gestures.
+Native CDP regression input explicitly carries both `button: left` and
+`buttons: 1`; a separate capture probe protects the driver before measurement.
 
 Repeated Resize (#832): coalesced UI runs project back into frozen structural
 atoms/IDs, retaining fixed side breakpoints and rigidly moving translated runs.
