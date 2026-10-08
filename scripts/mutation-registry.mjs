@@ -15824,6 +15824,18 @@ const MUTANT_DEFINITIONS = [
         + "      return { ok: false, reason: 'physical-geometry' };\n",
     }],
   },
+  // #818: CLI гейта мутаций не теряет хвост stdout, когда читатель отстаёт.
+  {
+    id: 'mutation-gate-cli-exits-before-stdout-drains',
+    guard: 'node --test --test-name-pattern="#818 AC1" test/mutation-gate.test.mjs',
+    because: '#818 AC1: process.exit() after main drops the queued tail of a piped stdout; the '
+      + 'membership warnings and plan-metrics vanish while the status stays 0',
+    patches: [{
+      file: 'scripts/mutation-gate.mjs',
+      find: '  main(process.argv.slice(2)).then((code) => { process.exitCode = code; }, (err) => {',
+      replace: '  main(process.argv.slice(2)).then((code) => process.exit(code), (err) => {',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

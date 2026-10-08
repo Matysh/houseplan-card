@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import test from 'node:test';
 import { copyFileSync, existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import {
   MUTANTS, applyPatches, guardNeedsBundle, guardNeedsTestBuild, mutantBundleStrategy,
@@ -304,8 +304,8 @@ test('#811 AC7: malformed ID bullets cannot silently disappear during count rege
   }
 });
 
-/** The real CLI and its modules, with a tiny registry; --check never executes guards. */
-function inventoryCli811(t, extra = []) {
+/** A copy of the real CLI and its modules with a tiny registry; --check never executes guards. */
+function inventoryRoot811(t, extra = [], registry = null) {
   const root = mkdtempSync(join(tmpdir(), 'hp-inventory-811-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   mkdirSync(join(root, 'scripts'));
@@ -316,8 +316,14 @@ function inventoryCli811(t, extra = []) {
   const mutants = ['alpha', 'beta', 'gamma', ...extra].map((id) => ({
     id, guard: 'node demo/smoke_x.mjs', patches: [], because: 'browser fixture',
   }));
-  writeFileSync(join(root, 'scripts/mutation-registry.mjs'), `export const MUTANTS = ${JSON.stringify(mutants)};\n`);
+  writeFileSync(join(root, 'scripts/mutation-registry.mjs'),
+    registry ?? `export const MUTANTS = ${JSON.stringify(mutants)};\n`);
   mkdirSync(join(root, 'docs/testing-notes'), { recursive: true });
+  return root;
+}
+
+function inventoryCli811(t, extra = []) {
+  const root = inventoryRoot811(t, extra);
   return (markdown) => {
     writeFileSync(join(root, 'docs/testing-notes/mutation-browser-guards.md'), markdown);
     return spawnSync(process.execPath, [join(root, 'scripts/mutation-gate.mjs'), '--check', '--id=alpha'], {
@@ -358,6 +364,97 @@ test('#811 AC7: membership drift and more than 200 guards remain CLI warnings', 
   assert.match(result.stdout, /WARN beta: browser guard не размечен/);
   assert.match(result.stdout, /WARN stale: browser-разметка устарела/);
   assert.doesNotMatch(result.stdout, /FAIL/);
+});
+
+const ALIVE_818 = 'hp-818: alive after main';
+
+/**
+ * Runs the real CLI entry while nobody reads its stdout, then reads everything.
+ * A preload reports on stderr how much output was still queued when `--check`
+ * queued its last line (`plan-metrics`), and one macrotask later that the
+ * process is still alive. A `process.exit()` entry exits in a microtask before
+ * that, with the tail still queued; an entry that lets the process end on its
+ * own stays alive until stdout drains. The reader resumes on whichever comes
+ * first — both always come — so the verdict depends on neither timing nor load.
+ */
+async function runWithStalledStdout818(t, root, args) {
+  const probe = join(root, 'stdout-probe-818.mjs');
+  writeFileSync(probe, [
+    "import { writeSync } from 'node:fs';",
+    'const write = process.stdout.write.bind(process.stdout);',
+    'process.stdout.write = (chunk, ...rest) => {',
+    '  const accepted = write(chunk, ...rest);',
+    "  if (String(chunk).startsWith('plan-metrics:')) {",
+    '    writeSync(2, `hp-818: queued=${process.stdout.writableLength}\\n`);',
+    `    setImmediate(() => writeSync(2, '${ALIVE_818}\\n'));`,
+    '  }',
+    '  return accepted;',
+    '};',
+    '',
+  ].join('\n'));
+  const child = spawn(process.execPath, ['--import', pathToFileURL(probe).href,
+    join(root, 'scripts/mutation-gate.mjs'), ...args], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
+  t.after(() => { if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL'); });
+  // A 'readable' listener keeps stdout paused, and child_process does not flush
+  // (discard) such a stream when the child exits first: whatever the child got
+  // into the pipe is still read below, so only its own lost tail can be missing.
+  const chunks = [];
+  let reading = false;
+  const drain = () => { for (let chunk; (chunk = child.stdout.read()) !== null;) chunks.push(chunk); };
+  child.stdout.on('readable', () => { if (reading) drain(); });
+  let stderr = '';
+  child.stderr.setEncoding('utf8');
+  const closed = new Promise((resolve) => child.on('close', (status) => resolve(status)));
+  const alive = new Promise((resolve) => child.stderr.on('data', (chunk) => {
+    stderr += chunk;
+    if (stderr.includes(ALIVE_818)) resolve('alive');
+  }));
+  const exited = new Promise((resolve) => child.on('exit', () => resolve('exit')));
+  const resumedOn = await Promise.race([alive, exited]);
+  reading = true;
+  drain();
+  const status = await closed;
+  const queued = Number(/hp-818: queued=(\d+)/.exec(stderr)?.[1] ?? NaN);
+  return { status, stdout: Buffer.concat(chunks).toString('utf8'), stderr, queued, resumedOn };
+}
+
+const stdoutPipeSkip818 = process.platform === 'win32'
+  ? 'stdout pipes are synchronous on Windows: there is no queued tail to lose'
+  : false;
+
+test('#818 AC1: the real --check keeps the whole stdout when its reader lags', {
+  skip: stdoutPipeSkip818, timeout: 120_000,
+}, async (t) => {
+  // ~350 KB of warnings: far beyond what the pipe and the paused reader can hold.
+  const root = inventoryRoot811(t, Array.from({ length: 1999 }, (_, i) => `extra-${i}`));
+  writeFileSync(join(root, 'docs/testing-notes/mutation-browser-guards.md'),
+    inventory811(['alpha', 'stale'], ['gamma']));
+  const result = await runWithStalledStdout818(t, root, ['--check', '--id=alpha']);
+  const where = `resumed on ${result.resumedOn}, queued=${result.queued}, `
+    + `stdout ${Buffer.byteLength(result.stdout)} bytes\n${result.stderr}`;
+  // Not vacuous: the tail really was still queued when the CLI finished printing.
+  assert.ok(result.queued > 0, `no backpressure, the witness proves nothing: ${where}`);
+  assert.equal(result.status, 0, where);
+  assert.match(result.stdout, /WARN browser guards: 2002/, where);
+  assert.match(result.stdout, /WARN extra-1998: browser guard не размечен/, where);
+  assert.match(result.stdout, /WARN stale: browser-разметка устарела/, where);
+  assert.match(result.stdout, /предупреждений mutation registry: 2002\n/, where);
+  assert.match(result.stdout, /\nplan-metrics: [^\n]*\n$/, where);
+  assert.doesNotMatch(result.stdout, /FAIL/);
+});
+
+test('#818 AC2: exit codes survive the entry change — unknown --id and a throwing main are 2', (t) => {
+  const run = (root, args) => spawnSync(process.execPath, [join(root, 'scripts/mutation-gate.mjs'), ...args], {
+    cwd: root, encoding: 'utf8', timeout: 60_000,
+  });
+  const unknown = run(inventoryRoot811(t), ['--check', '--id=nope']);
+  assert.equal(unknown.status, 2, `${unknown.stdout}\n${unknown.stderr}`);
+  assert.match(unknown.stderr, /мутант «nope» не объявлен/);
+  const broken = inventoryRoot811(t, [], 'export const MUTANTS = null;\n');
+  const thrown = run(broken, ['--check', '--id=alpha']);
+  assert.equal(thrown.error, undefined, 'the CLI must end on its own, not by the timeout');
+  assert.equal(thrown.status, 2, `${thrown.stdout}\n${thrown.stderr}`);
+  assert.match(thrown.stderr, /TypeError/);
 });
 
 test('#659: browser-only mutations reuse one clean bundle unless their patch is bundled', () => {

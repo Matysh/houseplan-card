@@ -260,8 +260,12 @@ export async function main(argv) {
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  main(process.argv.slice(2)).then((code) => process.exit(code), (err) => {
+  // exitCode, а не process.exit(): на POSIX stdout в pipe асинхронный, и
+  // process.exit() бросал недописанный хвост вывода, когда читатель отстаёт
+  // (#818: пропадали `WARN stale` и `plan-metrics` при status 0). Процесс
+  // завершается сам, дописав stdout/stderr; открытых хендлов после main нет.
+  main(process.argv.slice(2)).then((code) => { process.exitCode = code; }, (err) => {
     console.error(err);
-    process.exit(2);
+    process.exitCode = 2;
   });
 }
