@@ -8,6 +8,15 @@ Enter/Space permits native dialog activation without a timeout. The existing
 multi-touch post-gesture barrier remains independent and cannot be re-armed by
 modal keyboard intent. No pointermove work or editor runtime is added.
 
+Resize atom projection (#832) prepares frozen oriented run/vertex correspondence
+in `resize-atom-projection.ts`. Solver handles remain coalesced; preview restores
+the original ordered structural vertices before updating catalogue IDs. The
+gesture owns one catalogue/consumer closure: only owners of changed IDs resync
+their compatibility polygon. An inactive owner's same-thickness collinear
+identity vertex may move on its unchanged run, never a corner or physical
+thickness boundary. Both incident atoms must agree. Metadata, full physical and
+junction barriers still run before paint/commit; terminal/reset drops the map.
+
 One HACS repository (category **Integration**) ships the backend
 (`custom_components/houseplan`), both Lovelace cards and the `/houseplan` panel
 (`src/` → `dist/`). This document is the map: each subsystem gets a short

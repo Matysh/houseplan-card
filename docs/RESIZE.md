@@ -118,6 +118,17 @@ angled walls never promise that Optimize can repair arbitrary authored shapes.
 
 ## Preview and commit
 
+On materialized plans, the user-facing contour coalesces identity-only collinear
+atoms into whole-side handles. It is not an ordered `wall_ids` index. The frozen
+`resize-atom-projection` correspondence restores the stored vertex order for
+the candidate: translated-run interiors move rigidly, changing-length side
+breakpoints stay fixed. Catalogue updates follow each original ID/orientation.
+Owners of a shared updated atom also resync its compatibility polygon before
+materialization, but an inactive room's physical contour/corners stay unchanged.
+Only a same-thickness identity-only collinear point can slide on that original
+run; contradictory incidence, a real corner or physical breakpoint refuses.
+The existing physical and junction barriers are not relaxed (#832).
+
 The gesture owns an immutable `_geometrySnapshot()`. Every preview is rebuilt
 from it; `_serverCfg` is untouched until pointerup. The overlay contains rooms,
 openings, re-keyed wall thickness/open spans and byte-equivalent partitions,

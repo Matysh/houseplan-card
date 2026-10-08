@@ -65,6 +65,10 @@ import {
 } from './resize-controller';
 import { resizeLiveCandidateSpace, resizeLiveJunctionRoomIds } from './resize-live-preflight';
 import {
+  prepareResizeAtomProjection, applyResizeAtomProjection, projectResizeAtomCatalogue, projectResizeAtomConsumers,
+  prepareResizeAtomContext, type ResizeAtomContext,
+} from './resize-atom-projection';
+import {
   commitWallChainFinishGeometry, commitWallChainSegmentGeometry,
 } from './draft-live-commit';
 import { wallChainLiveSeed } from './draft-live-preflight';
@@ -820,6 +824,7 @@ export class HouseplanEditorRuntime {
   }>();
   private _resizePreviewNodes: MultiWallNodeMap | null = null;
   private _resizeBaselineLimits: JunctionLimitViolation[] = [];
+  private _resizeAtomMap: (ResizeAtomContext & { snapshot: string }) | null = null;
   private _resizeBaseFrameStable = true;
   /** #814: the bodies' union of one Resize gesture, cleared at its begin and end. */
   readonly rszBodiesUnion = new BodyObstaclesMemo();
@@ -3065,6 +3070,7 @@ public _rszSnapshot(): string {
   }
 
 public _rszResetController(): void {
+    this._resizeAtomMap = null;
     const hadPreview = this.host._resize.preview !== null;
     this.host._resize.reset();
     this.rszBodiesUnion.clear();
@@ -3083,7 +3089,7 @@ public _rszProjectPreview(
     this.host._rszLimitViolation = null;
     const real = this.host._serverCfg?.spaces.find((s: any) => s.id === this.host._space);
     if (!real || !this.host._serverCfg) return { ok: false, reason: 'missing-context' };
-    const s = JSON.parse(snapshot); // fresh deep copies every move — free to mutate
+    const s = JSON.parse(snapshot) as SpaceGeometryState; // fresh deep copies every move — free to mutate
     const sp: any = {
       ...real,
       rooms: s.rooms,
@@ -3098,10 +3104,33 @@ public _rszProjectPreview(
       else delete (sp as any)[key];
     }
     const H = this.host._spaceH;
+    if (this._resizeAtomMap?.snapshot !== snapshot) {
+      const context = prepareResizeAtomContext(s.rooms, s.wall_segments || [], changedRoomIds);
+      if (!context) return { ok: false, reason: 'wall-metadata' };
+      this._resizeAtomMap = { snapshot, ...context };
+    }
     for (const [id, poly] of Object.entries(polys)) {
       const r = sp.rooms.find((x: any) => x.id === id);
       if (!r) continue;
-      r.poly = poly.map((p) => [p[0] / NORM_W, p[1] / H]);
+      let projected = poly;
+      if (Array.isArray(r.wall_ids)) {
+        if (!Array.isArray(r.poly) || r.poly.length !== r.wall_ids.length) return { ok: false, reason: 'wall-metadata' };
+        const source = sourceRooms.find(room => room.id === id);
+        if (!source) return { ok: false, reason: 'wall-metadata' };
+        let correspondence = this._resizeAtomMap.rooms.get(id);
+        if (!correspondence) {
+          correspondence = prepareResizeAtomProjection(
+            r.poly.map((p: number[]) => [p[0] * NORM_W, p[1] * H]), source.poly,
+            Math.max(1e-9, this.host._gridPitch * 1e-9),
+          ) || undefined;
+          if (!correspondence) return { ok: false, reason: 'wall-metadata' };
+          this._resizeAtomMap.rooms.set(id, correspondence);
+        }
+        const restored = applyResizeAtomProjection(correspondence, poly);
+        if (!restored) return { ok: false, reason: 'wall-metadata' };
+        projected = restored;
+      }
+      r.poly = projected.map((p) => [p[0] / NORM_W, p[1] / H]);
       delete r.x; delete r.y; delete r.w; delete r.h; // a resized room is saved as a polygon
     }
     for (const [id, c] of Object.entries(ops)) {
@@ -3116,28 +3145,36 @@ public _rszProjectPreview(
     // behind or accumulate rounding error during a long drag.
     const oldSpans: [number[], number[]][] = [];
     const newSpans: [number[], number[]][] = [];
+    const atomEps = Math.max(1e-12, this.host._wallKeyPitch * 1e-9);
     for (const id of changedRoomIds) {
       const oldR = sourceRooms.find((r) => r.id === id);
       const nr = sp.rooms.find((x: any) => x.id === id);
       if (!oldR || !nr?.poly) continue;
-      const newPoly = nr.poly.map((p: number[]) => [p[0] * NORM_W, p[1] * H] as number[]);
+      const newPoly = polys[id]; // compatibility records map whole user-facing runs
+      if (!newPoly) return { ok: false, reason: 'wall-metadata' };
       if (oldR.poly.length !== newPoly.length) continue;
-      const ids = Array.isArray((oldR as any).wall_ids) ? (oldR as any).wall_ids : [];
       for (let i = 0; i < oldR.poly.length; i++) {
         oldSpans.push([oldR.poly[i], oldR.poly[(i + 1) % oldR.poly.length]]);
         newSpans.push([newPoly[i], newPoly[(i + 1) % newPoly.length]]);
-        const id = ids[i];
-        const segment = typeof id === 'string'
-          ? (sp.wall_segments || []).find((item) => item.id === id)
-          : null;
-        if (segment) {
-          segment.a = [newPoly[i][0] / NORM_W, newPoly[i][1] / NORM_W];
-          segment.b = [
-            newPoly[(i + 1) % newPoly.length][0] / NORM_W,
-            newPoly[(i + 1) % newPoly.length][1] / NORM_W,
-          ];
-        }
       }
+    }
+    const proposedAtoms = projectResizeAtomCatalogue(
+      this._resizeAtomMap.consumers,
+      new Map(sp.rooms.filter(room => changedRoomIds.includes(room.id)).map(room => [room.id, room.poly])),
+      this._resizeAtomMap.catalogue, atomEps,
+    );
+    if (!proposedAtoms) return { ok: false, reason: 'wall-metadata' };
+    const consumerPolys = projectResizeAtomConsumers(
+      this._resizeAtomMap.consumers, this._resizeAtomMap.catalogue, proposedAtoms, new Set(changedRoomIds), atomEps,
+    );
+    if (!consumerPolys) return { ok: false, reason: 'wall-metadata' };
+    for (const room of sp.rooms) {
+      const poly = consumerPolys.get(room.id);
+      if (poly) room.poly = poly;
+    }
+    for (const segment of sp.wall_segments || []) {
+      const proposed = proposedAtoms.get(segment.id);
+      if (proposed) { segment.a = [...proposed.a]; segment.b = [...proposed.b]; }
     }
     if (oldSpans.length) {
       if (Array.isArray(sp.walls) && sp.walls.length) {
@@ -3305,6 +3342,7 @@ public _rszEdgeDown(ev: PointerEvent, roomId: string, edge: number): void {
     const shown = this.host._wallUnionCache;
     const wallUnionBefore = unionKey !== null && shown?.key === unionKey ? shown.value : null;
     const snapshotIdentity = this._rszSnapshot();
+    this._resizeAtomMap = null;
     this.rszBodiesUnion.clear();
     this.host._resize.begin({
       pointerId: ev.pointerId, start: [start[0], start[1]], roomId, plan,
@@ -3382,6 +3420,7 @@ public _rszUp(ev: PointerEvent): void {
       currentSnapshotIdentity: this._rszSnapshot(),
       validatePreview: (preview) => this._rszCandidateRenderable(preview),
     });
+    this._resizeAtomMap = null;
     this.rszBodiesUnion.clear();
     if (result.kind === 'no-op') {
       // HP-1550-01: nothing to restore — the preview never touched the config
@@ -3419,6 +3458,7 @@ public _rszCancelDrag(pointerId?: number): void {
     cancelHouseplanPointerMove(this.host, 'resize');
     const result = this.host._resize.cancel(this._rszSnapshot(), pointerId);
     this.rszBodiesUnion.clear();
+    if (result.kind !== 'no-op') this._resizeAtomMap = null;
     if (result.kind === 'no-op') return;
     // An identical cancel reuses the pre-drag structural caches and writes nothing.
     if (result.restoreEpoch !== null) this.host._cfgEpoch = result.restoreEpoch;

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Plan / Resize: a repeated wall move after saving or Undo/Redo keeps the
+  atomic wall catalogue and its room contours in sync. Hidden collinear
+  identity points no longer leave a stale seam that falsely blocks the move;
+  genuinely unsafe positions still stop at the last safe preview
+  ([#832](https://github.com/Matysh/houseplan-card/issues/832)).
+  Stored wall IDs, opening hosts/widths and unrelated room fields stay intact.
+
 - Plan: accepting a geometry edit no longer lets a shared coordinate tuple
   overwrite another room or floor during wall-model adoption. Subsequent
   edits and Undo/Redo retain the accepted geometry and wall IDs

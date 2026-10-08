@@ -18,6 +18,28 @@ capture event as permission for another still-overlapping contact to act.
 Browser-only handoff mutation is documented in the reviewed inventory; registry
 anchors are checked locally, actual mutants only run nightly (PROCESS §2.7).
 
+## Repeated Resize on materialized plans (#832)
+
+Do not index `wall_ids` by the shorter coalesced handle contour. Pure atom
+projection tests cover ring starts/orientation, translated interiors, fixed
+breakpoints, inconsistent catalogue incidence and inactive owner corners.
+`smoke_resize_pointer_real_plan` now keeps a revisioned persisted server and
+adds three native commits plus exact catalogue Undo/Redo on the same live layer;
+`--repeat-no-history` separates history from the materialization defect.
+`--record-repeat` writes the accepted anonymized config under artifacts/826 for
+the invariant CLI. Old cancellation/capture/foreign-pointer assertions remain.
+Strict physical preview success alone is insufficient: final materialization
+and junction proof must see coherent compatibility polygons of shared ID owners.
+The initial +5 finding includes legitimate numerical refusals; tests use a
+coherent +2 target and never change geometry tolerances to force acceptance.
+The full-proof unit includes an explicit stale-consumer negative. The tracked
+real plan's old room-c/partition overlap remains an inherited invariant finding;
+compare the before/after report, and run the clean three-owner regression too.
+The helper's measured raw code cost is recorded in `monolith-baseline.json`;
+metric bands, core ceilings, absolute bundle and Resize performance budgets stay
+unchanged. `benchmark_safe_resize` times the solver/cached proof, not end-to-end
+pointer-to-paint latency.
+
 ## Wall-node editing (#803)
 
 Use `node demo/smoke_wall_node_move.mjs` after `npm run bundle:sync` for trusted

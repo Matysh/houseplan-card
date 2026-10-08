@@ -16079,6 +16079,56 @@ const MUTANT_DEFINITIONS = [
       replace: '        const resolution = this._rszResolution(r.id, i); // mutant: one snapshot per handle',
     }],
   },
+  // #832: frozen atom correspondence and its actual editor/write handoff.
+  {
+    id: 'resize-atom-fixed-breakpoint-translated',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/resize-atom-projection.test.mjs',
+    because: '#832 changing-length run breakpoints stay anchored; translating every interior '
+      + 'vertex silently moves an unrelated stored atom. The frozen pure projection proves this cheaply.',
+    patches: [{
+      file: 'src/resize-atom-projection.ts',
+      find: '    return near(a, b, epsilon) ? [atom.point[0] + a[0], atom.point[1] + a[1]] : [...atom.point];',
+      replace: '    return [atom.point[0] + a[0], atom.point[1] + a[1]]; // mutant: fixed atoms move',
+    }],
+  },
+  {
+    id: 'resize-atom-shared-owner-conflict-ignored',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/resize-atom-projection.test.mjs',
+    because: '#832 opposite shared owners must propose one pair of endpoints for the same ID; '
+      + 'a conflicting frozen owner is a pure fail-closed witness, not a browser-only assertion.',
+    patches: [{
+      file: 'src/resize-atom-projection.ts',
+      find: '      if (prior && (!near(prior.a, proposed.a, epsilon) || !near(prior.b, proposed.b, epsilon))) return null;',
+      replace: '      // mutant: a later shared owner overwrites a conflicting proposal',
+    }],
+  },
+  {
+    id: 'resize-atom-consumer-corner-movable',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/resize-atom-projection.test.mjs',
+    because: '#832 bounded compatibility consumers may slide only derived collinear nodes, '
+      + 'never authored third-room corners; executable pure negatives prove this without Chromium.',
+    patches: [{
+      file: 'src/resize-atom-projection.ts',
+      find: '      if (!onInterior(p) || !onInterior(n)\n'
+        + '          || catalogue.get(room.wall_ids[previous])?.cm !== catalogue.get(room.wall_ids[i])?.cm) return null;',
+      replace: '      if (catalogue.get(room.wall_ids[previous])?.cm !== catalogue.get(room.wall_ids[i])?.cm) return null;',
+    }],
+  },
+  {
+    id: 'resize-atom-fixed-consumer-handoff-skipped',
+    guard: 'node demo/smoke_resize_pointer_real_plan.mjs',
+    because: '#832 the real live card must hand changed catalog IDs to an inactive derived seam '
+      + 'before final materialization/junction proof and save. Pure helpers cannot prove this '
+      + 'Lit/editor/write-boundary call-site: omitting it recreates the native valid-second refusal.',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '      if (poly) room.poly = poly;',
+      replace: '      if (poly && changedRoomIds.includes(room.id)) room.poly = poly; // mutant: fixed consumer stays stale',
+    }],
+  },
   // #818: CLI гейта мутаций не теряет хвост stdout, когда читатель отстаёт.
   {
     id: 'mutation-gate-cli-exits-before-stdout-drains',

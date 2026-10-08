@@ -348,6 +348,13 @@ unknown-fields policy. Server trails written by a newer backend carry
 
 ## Stable wall identity — model v8 (#282)
 
+Resize's coalesced handles are a read-only interaction projection, not the
+persisted atom index (#832). Before a candidate crosses this write barrier, it
+restores the existing structural order/IDs and synchronizes the compatibility
+contours of shared-ID consumers. An unchanged room may move a derived collinear
+same-thickness seam point on its unchanged carrier; physical corners and fields
+remain fixed. Otherwise it refuses. No schema/version change or repair on read.
+
 Model v8 adds `space.wall_segments[]`, ordered `rooms[].wall_ids[]`, IDs on
 `room_drafts[].segments[]`, and tagged wall hosts on room-wall openings. These
 fields are authoritative for wall identity, thickness and opening ownership.

@@ -77,6 +77,11 @@ keeps the parent ID on the child containing the old midpoint (then the old first
 endpoint on a tie), while the other child receives a new UUID. Merge, Resize,
 room deletion, opening edits, Undo/Redo/recovery, Optimize and import/export
 apply the same lineage and validation rules before one atomic persistence write.
+Resize handles coalesce identity-only vertices, but the accepted contour is
+projected back onto frozen stored atoms/ordered IDs before any physical proof
+(#832). Consumers of changed IDs may synchronise a derived collinear seam point
+on an unchanged equal-thickness run; an inactive authored corner or conflicting
+incident pair is refused. This does not join another room to the Resize solver.
 Initial legacy IDs are deterministic, so frontend, backend and repeated
 migrations converge; only genuinely new segments get UUIDs.
 Room-face acceptance settles its provisional partition lineage after coincident
