@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 377, issue: 191. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 378, issue: 191. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -15,6 +15,7 @@
 | #828 | [CODE-REVIEW-828-r1.md](CODE-REVIEW-828-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #827 | [SPEC-REVIEW-827-r1.md](SPEC-REVIEW-827-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #826 | [SPEC-REVIEW-826-r1.md](SPEC-REVIEW-826-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | Формулировка в «Скоуп» (§4): «удаление недостижимого onboarding delete-адаптера/оставши… | — |
+| #826 | [CODE-REVIEW-826-r1.md](CODE-REVIEW-826-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | docs/STATUS.md Node-unit снимок не совпадает со своим генератором (сниму сам) | `docs/STATUS.md` `wall-adoption-alias.test.mjs` `space-deletion.test.mjs` `process-gate.mjs` |
 | #825 | [SPEC-REVIEW-825-r1.md](SPEC-REVIEW-825-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #825 | [CODE-REVIEW-825-r1.md](CODE-REVIEW-825-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #824 | [SPEC-REVIEW-824-r1.md](SPEC-REVIEW-824-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | `houseplan-card.ts` `WARM-REMOUNT.md` `src/houseplan-card.ts` `src/space-card.ts` `AGENTS.md` |
