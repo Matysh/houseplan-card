@@ -1,18 +1,18 @@
-<!-- release: v1.80.0-beta.8 -->
+<!-- release: v1.80.0-beta.9 -->
 
 ## Основное
 
-- Редактор плана: перемещайте узлы стен в «Выбрать» с полупрозрачным предпросмотром, магнитами, отменой Esc и Undo/Redo. На больших планах повторное переключение этажей и изменение комнат используют уже подготовленную геометрию ([#803](https://github.com/Matysh/houseplan-card/issues/803), [#814](https://github.com/Matysh/houseplan-card/issues/814)).
-- При повторной установке можно восстановить прежние планы или начать заново, сохранив архив. Пространство можно удалить вместе с устройствами; связанные назначения карт робота тоже удаляются ([#820](https://github.com/Matysh/houseplan-card/issues/820), [#819](https://github.com/Matysh/houseplan-card/issues/819), [#822](https://github.com/Matysh/houseplan-card/issues/822)).
-- В подсказке батарейного устройства виден заряд; Incomplete data больше не показывается у Zigbee-координатора или устройства с известной исходящей связью ([#817](https://github.com/Matysh/houseplan-card/issues/817), [#816](https://github.com/Matysh/houseplan-card/issues/816)).
+- Перемещение узлов: исправлены ложные отказы и залипающее превью. Исходные стены остаются полупрозрачными во время перетаскивания ([#828](https://github.com/Matysh/houseplan-card/issues/828)).
+- Изменение комнат: повторный перенос стены после сохранения или Undo/Redo сохраняет геометрию, ID стен и привязки проёмов, не меняя посторонние комнаты и этажи ([#832](https://github.com/Matysh/houseplan-card/issues/832), [#826](https://github.com/Matysh/houseplan-card/issues/826)).
+- Просмотр корректно восстанавливается после возвращения на экран; в киоске свайп не открывает диалог размеров, а после удержания его кнопки работают сразу ([#824](https://github.com/Matysh/houseplan-card/issues/824), [#825](https://github.com/Matysh/houseplan-card/issues/825), [#831](https://github.com/Matysh/houseplan-card/issues/831)).
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Plan editor: move wall nodes in Select with a translucent preview, snapping, Esc cancellation and Undo/Redo. Large plans reuse prepared geometry when revisiting floors and resizing rooms ([#803](https://github.com/Matysh/houseplan-card/issues/803), [#814](https://github.com/Matysh/houseplan-card/issues/814)).
-- Reinstallation offers restoring previous plans or starting fresh while keeping an archive. A space can be deleted together with its devices; associated robot-map assignments are removed too ([#820](https://github.com/Matysh/houseplan-card/issues/820), [#819](https://github.com/Matysh/houseplan-card/issues/819), [#822](https://github.com/Matysh/houseplan-card/issues/822)).
-- Battery-powered device tooltips show charge; Incomplete data is hidden for Zigbee coordinators and devices with a known outgoing link ([#817](https://github.com/Matysh/houseplan-card/issues/817), [#816](https://github.com/Matysh/houseplan-card/issues/816)).
+- Moving wall nodes: fixed false refusals and stuck previews. Original walls remain translucent while dragging ([#828](https://github.com/Matysh/houseplan-card/issues/828)).
+- Room resizing: repeated wall moves after saving or Undo/Redo preserve geometry, wall IDs and opening hosts without changing unrelated rooms or floors ([#832](https://github.com/Matysh/houseplan-card/issues/832), [#826](https://github.com/Matysh/houseplan-card/issues/826)).
+- View recovers correctly when returning to the screen; kiosk swipes no longer open the size dialog, and its buttons work immediately after a hold ([#824](https://github.com/Matysh/houseplan-card/issues/824), [#825](https://github.com/Matysh/houseplan-card/issues/825), [#831](https://github.com/Matysh/houseplan-card/issues/831)).
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.80.0-beta.8/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.80.0-beta.8/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.80.0-beta.9/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.80.0-beta.9/docs/CHANGELOG.md)

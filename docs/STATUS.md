@@ -17,7 +17,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Item | State |
 |---|---|
 | Generated | 2026-10-08 — rerun `node scripts/status-snapshot.mjs` for the current tree |
-| Version | **1.80.0-beta.8** in all 7 version sources (`scripts/release-contract.mjs`) |
+| Version | **1.80.0-beta.9** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.79.0` |
 | Latest prerelease tag | `v1.80.0-beta.8` |
 | Tests | Node unit 3917 · pure backend 460 · HA-harness backend 354 · browser smokes 312 (`npm run inventory`) |

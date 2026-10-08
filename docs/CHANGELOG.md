@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.80.0-beta.9 — 2026-10-08
+
 - Plan / Resize: a repeated wall move after saving or Undo/Redo keeps the
   atomic wall catalogue and its room contours in sync. Hidden collinear
   identity points no longer leave a stale seam that falsely blocks the move;

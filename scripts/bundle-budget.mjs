@@ -395,7 +395,7 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
  * не получили нового кода. Центр оставляет 630 Б сверху и 1 370 Б до нижней
  * границы полосы; общий бюджет 301 066 Б не меняется.
  */
-export const INITIAL_VIEW_GZIP_CEILING = 300_458;
+export const INITIAL_VIEW_GZIP_CEILING = 301_145;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
@@ -612,7 +612,7 @@ export function initialViewCeilingViolation(bytes, {
  * сторон, чтобы ни семибайтный шум не красил гейт, ни молчаливый выигрыш не
  * оставался незафиксированным.
  */
-export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_934;
+export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_940;
 /**
  * #600, промежуточные замеры по сериям (итог ставится в конце):
  * - серия 0: 222 900 → 225 900. Набор контролов формы вырос до полного
@@ -709,7 +709,7 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_934;
 // of byte-level geometry rewrites. Restore readable strict correspondence and
 // carrier checks, and materialize genuine splits only in the owner closure.
 // The 2-KB band, initial-View ceilings, absolute budgets and perf guards stay put.
-export const LAZY_EDITOR_GZIP_CEILING = 255_500;
+export const LAZY_EDITOR_GZIP_CEILING = 254_459;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
@@ -725,7 +725,7 @@ export const LAZY_GRAPH_CEILING_BAND = 2_000;
  * (форма #600), не словари; их вынос заметен пользователю (задержка на первом
  * «?») и в скоуп #627 не входит.
  */
-export const LAZY_ONBOARDING_GZIP_CEILING = 29_257;
+export const LAZY_ONBOARDING_GZIP_CEILING = 28_191;
 
 /**
  * #780 ТЗ §13.1: the LED chunks are a new feature's own budget, not a raise of
