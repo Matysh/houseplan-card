@@ -16113,6 +16113,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'capture-determinism-skips-browser-attestation',
+    guard: 'node --test --test-name-pattern="#827 AC1/AC2 CLI" test/browser-attestation.test.mjs',
+    because: '#827 AC2: CI documentation capture runs through capture-determinism, not docs:capture; '
+      + 'without its attestation a foreign Chromium captures and accepts docs screenshots silently',
+    patches: [{
+      file: 'scripts/capture-determinism.mjs',
+      find: "    await attestStandardLaunch({ reason: 'docs capture' });",
+      replace: "    // mutant: the docs capture no longer judges the launched browser",
+    }],
+  },
+  {
     id: 'render-risk-forgets-tooltip-paths',
     guard: 'node --test --test-name-pattern="#827 AC3" test/process-track.test.mjs',
     because: '#827 AC3 (F48): the #816/#817 tooltip and caption hunks gave no visual.render, and the '

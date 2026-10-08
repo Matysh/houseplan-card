@@ -277,4 +277,10 @@ test('#827 AC1/AC2 CLI: отсутствующий браузер — ненул
   const accept = cliWithoutBrowsers(t, ['scripts/assert-capture-env.mjs', 'docs', '--stage=accept']);
   assert.equal(accept.status, 0, `приёмка браузер не запускает: ${accept.output}`);
   assert.doesNotMatch(accept.output, /browser-attestation/);
+  // Съёмка документации в CI идёт через capture-determinism мимо docs:capture:
+  // отказ среды — до первого прогона съёмки, ни одного кадра (CODE-REVIEW-827-r1).
+  const determinism = cliWithoutBrowsers(t, ['scripts/capture-determinism.mjs']);
+  assert.equal(determinism.status, 1, determinism.output);
+  assert.match(determinism.output, /environment failure \(browser-attestation\) \[docs capture\]/);
+  assert.doesNotMatch(determinism.output, /съёмка \(|съёмка воспроизводима|недетерминирована/);
 });
