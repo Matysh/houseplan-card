@@ -421,10 +421,9 @@ links alone do not suppress it. A coordinator never shows it, nor does a device
 with a known outgoing route, including remote or unplaced parents. The overall
 partial snapshot status in settings is unchanged. Staleness is marked separately:
 a snapshot older than one hour is stale, and a failed refresh marks the last
-snapshot stale at once. Lines and arrows pass over battery indicators but stay
-under device faces and captions. An arrowhead also stays visible over the value
-badge of a device at the end of the link, while the line itself passes under
-the badge. A recent read of ZHA's
+snapshot stale at once. Lines and arrows pass over battery indicators and the
+value badges of the devices at the ends of a link but stay under device faces
+and captions. A recent read of ZHA's
 cache does not prove a recent radio scan. These are integration records, not
 live packet tracing or proof of the entire chain. The layer does not appear on touch/pen, in kiosk, in
 editors or in the static card, and hovering never starts a scan.

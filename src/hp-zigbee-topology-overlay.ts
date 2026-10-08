@@ -60,10 +60,9 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   static styles = css`
     /* No host stacking context: endpoint cores stay above routes (8 > 7),
        while information captions also stay above passive batteries (9 > 8).
-       #808: a copy of the routes clipped to endpoint battery frames paints
-       over those batteries (9 > 8) and under captions (same 9, earlier DOM).
-       #829: in the same layer a copy of the arrowheads alone, clipped to the
-       endpoint value badges, paints over those badges. */
+       #808/#829: a copy of the routes clipped to endpoint battery and value
+       badge frames paints over those batteries and badges (9 > 8) and under
+       captions (same 9, earlier DOM). */
     :host { position: absolute; inset: 0; z-index: auto; display: block; pointer-events: none; }
     svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 7; }
     svg.over-battery { z-index: 9; }
@@ -251,33 +250,33 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     }
   }
 
-  /** #808: routes paint over the passive battery of their own endpoints too.
-   *  An endpoint marker rises above the route layer as a whole (#464), its
-   *  battery included, so the route copy one level higher is clipped to those
-   *  battery frames only; cores, value sections and captions keep their order
-   *  (#792 AC7). #829: the arrowhead copy is clipped the same way to the value
-   *  badges of the endpoints. DOM-only, inside the existing layout frame. */
+  /** #808/#829: routes paint over the passive battery and the value badge of
+   *  their own endpoints too. An endpoint marker rises above the route layer
+   *  as a whole (#464), so the route copy one level higher is clipped to those
+   *  frames only; cores and captions keep their order (#792 AC7). A battery
+   *  frame keeps 2px for its drop shadow; a badge gets none, since only the
+   *  flex gap (0.1 of the core) separates it from the core. DOM-only, inside
+   *  the existing layout frame. */
   private _clipRouteCopies(): void {
+    const clip = this.renderRoot.querySelector<SVGClipPathElement>('#hp-zigbee-route-clip');
+    if (!clip) return;
     const layer = this.getBoundingClientRect();
     const scaleX = this.clientWidth ? layer.width / this.clientWidth : 1;
     const scaleY = this.clientHeight ? layer.height / this.clientHeight : 1;
-    for (const [id, selector] of [['battery', '.device-battery'], ['badge', '.value-badge']] as const) {
-      const clip = this.renderRoot.querySelector<SVGClipPathElement>(`#hp-zigbee-${id}-clip`);
-      if (!clip) continue;
-      const boxes = scaleX > 0 && scaleY > 0 ? [...this._endpointElements]
-        .flatMap((marker) => [...marker.querySelectorAll(selector)].map((node) => node.getBoundingClientRect()))
-        .filter((rect) => rect.width > 0 && rect.height > 0)
-        .map((rect) => [(rect.left - layer.left) / scaleX - 2, (rect.top - layer.top) / scaleY - 2,
-          rect.width / scaleX + 4, rect.height / scaleY + 4].map((value) => value.toFixed(2))) : [];
-      const key = boxes.join(';');
-      if (clip.dataset.boxes === key) continue;
-      clip.dataset.boxes = key;
-      clip.replaceChildren(...boxes.map(([x, y, width, height]) => {
-        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        for (const [name, value] of Object.entries({ x, y, width, height })) rect.setAttribute(name, value);
-        return rect;
-      }));
-    }
+    const boxes = scaleX > 0 && scaleY > 0 ? [...this._endpointElements]
+      .flatMap((marker) => [...marker.querySelectorAll('.device-battery, .value-badge')])
+      .map((node) => ({ rect: node.getBoundingClientRect(), pad: node.classList.contains('value-badge') ? 0 : 2 }))
+      .filter(({ rect }) => rect.width > 0 && rect.height > 0)
+      .map(({ rect, pad }) => [(rect.left - layer.left) / scaleX - pad, (rect.top - layer.top) / scaleY - pad,
+        rect.width / scaleX + 2 * pad, rect.height / scaleY + 2 * pad].map((value) => value.toFixed(2))) : [];
+    const key = boxes.join(';');
+    if (clip.dataset.boxes === key) return;
+    clip.dataset.boxes = key;
+    clip.replaceChildren(...boxes.map(([x, y, width, height]) => {
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      for (const [name, value] of Object.entries({ x, y, width, height })) rect.setAttribute(name, value);
+      return rect;
+    }));
   }
 
   private _acceptRuntime(next: ZigbeeTopologyRuntimeSnapshot): void {
@@ -467,19 +466,16 @@ export class HpZigbeeTopologyOverlay extends LitElement {
 
   private _route(origin: ZigbeePixelPoint, point: ZigbeePixelPoint, lqi: number | undefined,
     direction: 'toward-neighbor' | 'toward-origin',
-    arrow: ReturnType<typeof zigbeeArrowGeometry>, parent = false, parentIndex?: number, copy = false,
-    arrowOnly = false) {
+    arrow: ReturnType<typeof zigbeeArrowGeometry>, parent = false, parentIndex?: number, copy = false) {
     const color = zigbeeLinkColor(lqi);
     const outline = Number.isFinite(this.zoom) && this.zoom > 0 ? this.zoom : 1;
-    // #829: the badge copy draws the arrowhead alone; its line stays under the badge.
-    const shaft = arrowOnly ? nothing : svg`${lqi === undefined ? svg`<line class="link-casing" data-hp=${copy ? nothing : 'zigbee-topology-line-casing'}
+    return svg`${lqi === undefined ? svg`<line class="link-casing" data-hp=${copy ? nothing : 'zigbee-topology-line-casing'}
       data-parent-index=${parentIndex ?? nothing} x1=${origin.x} y1=${origin.y} x2=${point.x} y2=${point.y}
       stroke="#000000" stroke-width=${2 + 2 * outline} data-direction=${direction}></line>` : nothing}
       <line class=${parent ? 'parent-route' : 'link-core'}
         data-hp=${copy ? nothing : parent ? 'zigbee-topology-parent-line' : 'zigbee-topology-line'}
         data-parent-index=${parentIndex ?? nothing} x1=${origin.x} y1=${origin.y} x2=${point.x} y2=${point.y}
-        stroke=${color} stroke-width=${lqi === undefined ? 2 : 2.2} data-direction=${direction}></line>`;
-    return svg`${shaft}
+        stroke=${color} stroke-width=${lqi === undefined ? 2 : 2.2} data-direction=${direction}></line>
       ${arrow ? svg`<polygon class="route-arrow"
         data-hp=${copy ? nothing : parent ? 'zigbee-topology-parent-arrow' : 'zigbee-topology-arrow'}
         data-parent-index=${parentIndex ?? nothing} data-direction=${direction} points=${this._points(arrow.points)} fill=${color}
@@ -557,21 +553,19 @@ export class HpZigbeeTopologyOverlay extends LitElement {
         this._hovered,
         ...lines.map((line) => line.neighborMarkerId),
       ] : []);
-    const routes = (copy: boolean, arrowOnly = false) => [
+    const routes = (copy: boolean) => [
       ...lines.map((line) => this._route(origin, line.point!, line.lqi, line.routeDirection, line.arrow,
-        false, undefined, copy, arrowOnly)),
+        false, undefined, copy)),
       ...bubbles.map((bubble, index) => this._route(origin, bubble.point, bubble.target.lqi, 'toward-neighbor',
-        bubble.arrow, true, index, copy, arrowOnly)),
+        bubble.arrow, true, index, copy)),
     ];
     return html`
       ${lines.length || bubbles.length ? svg`<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"
         aria-hidden="true" data-hp="zigbee-topology-lines">${routes(false)}</svg>
       <svg class="over-battery" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"
         aria-hidden="true" data-hp="zigbee-topology-lines-over-battery">
-        <clipPath id="hp-zigbee-battery-clip"></clipPath>
-        <clipPath id="hp-zigbee-badge-clip"></clipPath>
-        <g clip-path="url(#hp-zigbee-battery-clip)">${routes(true)}</g>
-        <g clip-path="url(#hp-zigbee-badge-clip)">${routes(true, true)}</g>
+        <clipPath id="hp-zigbee-route-clip"></clipPath>
+        <g clip-path="url(#hp-zigbee-route-clip)">${routes(true)}</g>
       </svg>` : nothing}
       ${lines.map((line) => html`<div class="halo" data-hp="zigbee-topology-neighbor"
         data-id=${line.neighborMarkerId} style="left:${line.point!.x}px;top:${line.point!.y}px;width:${line.point!.width * 1.22}px;height:${line.point!.height * 1.22}px"></div>`)}

@@ -6,8 +6,9 @@
  * #813 AC5: keyboard focus in 2.5D lifts an ordinary marker to the hover layer
  * (5) and never pulls a Zigbee endpoint, the #809 neighbour included, off 8;
  * focusing starts no scan, no service and no dialog.
- * #829 AC1: the arrowhead paints over the value badge of the neighbour and of
- * the hovered endpoint, Flat and 2.5D; the line beyond it stays under the badge.
+ * #829 AC1: the line and the arrowhead paint over the value badge of the
+ * neighbour and of the hovered endpoint, Flat and 2.5D; the core of that
+ * endpoint still paints over the route.
  * Controls hide only the rendered test layer for a differential raster probe.
  * Registry, settings, provider fetch and hover enter through public surfaces.
  */
@@ -369,8 +370,9 @@ try {
   // faces its child d_light1, so the arrowhead of their local link lands on
   // that badge: a neighbour endpoint's badge while d_light1 is hovered, the
   // hovered endpoint's own badge while d_leak is. Inside the shared area the
-  // arrow pixels must paint over the badge, in Flat and 2.5D; the line beyond
-  // the arrowhead stays under the badge as before.
+  // arrow pixels and, beyond the arrowhead, the line pixels must paint over
+  // the badge, in Flat and 2.5D (r2, owner 2026-10-08: lines too). The core of
+  // d_leak beside the badge still paints over the route.
   await page.evaluate(async () => {
     await window.__hpTest.setServerConfig(cfg => ({ ...cfg,
       markers: cfg.markers.map(marker => marker.id === 'd_leak' ? { ...marker, value_badge: { enabled: true,
@@ -405,6 +407,7 @@ try {
         const fill = polygon.getAttribute('fill').match(/\d+/g).map(Number);
         const radius = Number.parseFloat(getComputedStyle(root
           .querySelector('[data-hp="device"][data-id="d_leak"] .value-badge')).borderTopLeftRadius);
+        const core = root.querySelector('[data-hp="device"][data-id="d_leak"] .device-core').getBoundingClientRect();
         return {
           arrow: polygon.getAttribute('points').trim().split(/\s+/)
             .map(pair => pair.split(',').map(Number)).map(([x, y]) => toViewport(x, y)),
@@ -413,6 +416,7 @@ try {
           badge: { x: badge.x, y: badge.y, right: badge.right, bottom: badge.bottom,
             width: badge.width, height: badge.height,
             radius: Number.isFinite(radius) ? Math.min(radius, badge.height / 2) : badge.height / 2 },
+          core: { x: core.x, y: core.y, width: core.width, height: core.height },
           fill,
         };
       });
@@ -430,7 +434,7 @@ try {
           .querySelectorAll('[data-hp^="zigbee-topology-lines"]')) layer.style.removeProperty('visibility');
         root.querySelector('[data-hp-live-tip]')?.style.removeProperty('visibility');
       });
-      const evidence = await page.evaluate(async ({ active, routesHidden, arrow, line, badge, fill }) => {
+      const evidence = await page.evaluate(async ({ active, routesHidden, arrow, line, badge, core, fill }) => {
         const decode = async data => {
           const bitmap = await createImageBitmap(await (await fetch(`data:image/png;base64,${data}`)).blob());
           const canvas = new OffscreenCanvas(bitmap.width, bitmap.height), ctx = canvas.getContext('2d');
@@ -443,6 +447,7 @@ try {
           return [image.data[index], image.data[index + 1], image.data[index + 2]];
         };
         const changed = (first, second) => first.some((value, index) => Math.abs(value - second[index]) > 12);
+        // A known-LQI line and its arrowhead share one opaque colour.
         const arrowInk = pixel => pixel.every((value, index) => Math.abs(value - fill[index]) <= 40);
         // Signed distance inside the arrowhead (positive inside, either winding).
         const area = (arrow[1].x - arrow[0].x) * (arrow[2].y - arrow[0].y)
@@ -473,23 +478,39 @@ try {
             if (changed(painted, at(hidden, px, py)) && arrowInk(painted)) arrowOver++;
           }
         }
+        // Along the drawn line: inside the badge beyond the arrowhead the line
+        // shows in its own colour; inside the core (inscribed ellipse, so a
+        // round Flat core paints every sample) the route layers change nothing.
+        const inCore = (x, y) => {
+          const rx = core.width / 2 - 2, ry = core.height / 2 - 2;
+          return rx > 0 && ry > 0
+            && ((x - core.x - core.width / 2) / rx) ** 2 + ((y - core.y - core.height / 2) / ry) ** 2 <= 1;
+        };
         const [p, q] = line, length = Math.hypot(q.x - p.x, q.y - p.y), seen = new Set();
-        let lineSamples = 0, lineShows = 0;
+        let lineSamples = 0, lineOver = 0, coreSamples = 0, coreChanged = 0;
         for (let step = 0; step <= length * 2; step++) {
           const x = p.x + (q.x - p.x) * step / (length * 2), y = p.y + (q.y - p.y) * step / (length * 2);
           const key = `${Math.floor(x)},${Math.floor(y)}`;
-          if (seen.has(key) || !inBadge(x, y, 2) || inArrow(x, y, -3)) continue;
+          if (seen.has(key)) continue;
           seen.add(key);
-          lineSamples++;
-          if (changed(at(a, x, y), at(hidden, x, y))) lineShows++;
+          const painted = at(a, x, y), routeShows = changed(painted, at(hidden, x, y));
+          if (inBadge(x, y, 2) && !inArrow(x, y, -3)) {
+            lineSamples++;
+            if (routeShows && arrowInk(painted)) lineOver++;
+          } else if (inCore(x, y)) {
+            coreSamples++;
+            if (routeShows) coreChanged++;
+          }
         }
-        return { shared, arrowOver, lineSamples, lineShows,
+        return { shared, arrowOver, lineSamples, lineOver, coreSamples, coreChanged,
           arrowOverBadge: shared >= 10 && arrowOver / shared >= 0.9,
-          lineUnderBadge: lineSamples >= 6 && lineShows <= 1 };
+          lineOverBadge: lineSamples >= 6 && lineOver / lineSamples >= 0.9,
+          coreOverRoute: coreSamples >= 6 && coreChanged <= 2 };
       }, { active: active.toString('base64'), routesHidden: routesHidden.toString('base64'), ...geometry });
       console.log(`Battery Zigbee ${mode} value badge (${role.toLowerCase()} endpoint) evidence:`, evidence, geometry);
       out[`${mode}_arrowPaintsOver${role}ValueBadge`] = evidence.arrowOverBadge;
-      out[`${mode}_lineStaysUnder${role}ValueBadge`] = evidence.lineUnderBadge;
+      out[`${mode}_linePaintsOver${role}ValueBadge`] = evidence.lineOverBadge;
+      out[`${mode}_coreStaysOverRouteBeside${role}ValueBadge`] = evidence.coreOverRoute;
     }
   }
   await page.mouse.move(10, 10);

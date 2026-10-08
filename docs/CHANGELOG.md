@@ -14,10 +14,10 @@
   original walls stay visible at 35% opacity while dragging, including hatch
   and opening cuts, with one active handle; cancel and Undo/Redo remain atomic
   ([#828](https://github.com/Matysh/houseplan-card/issues/828)).
-- Zigbee links: an arrowhead is no longer hidden under a device's value badge.
-  Where a link ends at a device with a value badge beside it, the arrow stays
-  visible on top of the badge, so the direction of the link is readable. Lines,
-  device faces and captions keep their order
+- Zigbee links: lines and arrows are no longer hidden under a device's value
+  badge. Where a link ends at a device with a value badge beside it, the line
+  and its arrow stay visible on top of the badge, so the direction of the link
+  is readable. Device faces and captions still stay on top
   ([#829](https://github.com/Matysh/houseplan-card/issues/829)).
 
 ## v1.80.0-beta.8 — 2026-10-08

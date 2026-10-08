@@ -478,14 +478,15 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'zigbee-arrow-copy-under-value-badge',
+    id: 'zigbee-route-copy-under-value-badge',
     guard: 'node demo/smoke_device_battery_zigbee.mjs',
-    because: '#829 AC1: only rasterised overlap proves that the arrowhead paints over the value badge '
-      + 'of the neighbour and of the hovered endpoint, which rise above the base route layer as whole markers.',
+    because: '#829 AC1: only rasterised overlap proves that the line and the arrowhead paint over the '
+      + 'value badge of the neighbour and of the hovered endpoint, which rise above the base route '
+      + 'layer as whole markers.',
     patches: [{
       file: 'src/hp-zigbee-topology-overlay.ts',
-      find: '        <g clip-path="url(#hp-zigbee-badge-clip)">${routes(true, true)}</g>\n',
-      replace: '',
+      find: "      .flatMap((marker) => [...marker.querySelectorAll('.device-battery, .value-badge')])",
+      replace: "      .flatMap((marker) => [...marker.querySelectorAll('.device-battery')])",
     }],
   },
   {

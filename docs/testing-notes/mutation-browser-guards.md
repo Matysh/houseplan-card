@@ -107,7 +107,7 @@ while the new position stays translucent. A template cannot prove compositing.
 - `battery-zigbee-captions-under-endpoint`
 - `zigbee-route-copy-under-battery`
 - `zigbee-iso-neighbour-endpoint-under-routes`
-- `zigbee-arrow-copy-under-value-badge`
+- `zigbee-route-copy-under-value-badge`
 
 The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium.
 
