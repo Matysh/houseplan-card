@@ -208,7 +208,10 @@ The owner's Windows machine: `.\scripts\windows-toolchain.ps1 setup|check` owns
 the pinned Node and Python; WSL works from an ext4 clone with
 `bash scripts/wsl-setup.sh --verify` (`docs/DEVELOPMENT.md` › Local Windows
 workstation). `npm run toolchain:check` compares any machine with the pins CI
-uses. The full Home Assistant harness cannot run on native Windows; without an
+uses, Chromium by the browser it actually launches (#827): a directory named
+after the pinned revision with another build inside is an unusable environment
+for visual proof, and golden and the smokes that declare the pinned browser
+refuse there as an environment failure, not a product one. The full Home Assistant harness cannot run on native Windows; without an
 importable `homeassistant` pytest does not collect `test_ha_*.py` at all, so a
 green pure run proves nothing about the harness (`docs/TESTING.md`). Cloud
 agents have the harness at `.venv-backend/bin/python`.

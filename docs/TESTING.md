@@ -390,14 +390,14 @@ tsc, юниты и смоки (мутантов с #709 нет). Решение 
   дефект логики. `HP_ALLOW_STALE_BUNDLE=1` отключает проверку для отладки и
   говорит об этом вслух.
 - **Сверять и снимать — разные вещи** (#455). `golden:verify` — совещательный
-  и законный где угодно, Windows включительно: он сообщает разницу и ничего не
+  и законный на любой ОС, Windows включительно, но в пиновом Chromium: он сообщает разницу и ничего не
   принимает. **Съёмка** кадров вне Linux отказывает ещё до запуска браузера —
   `golden:capture` через `demo/golden/policy.mjs`, скриншоты документации через
   `npm run docs:capture` (именно скрипт, не голый `node demo/docs/capture.mjs`:
   правка скрипта съёмки сама обесценивает индекс скриншотов). Причина — физика,
   а не политика: Windows растеризует текст через DirectWrite, и кадр байт в байт
   не совпадёт ни с одним эталоном. Осознанный обход —
-  `HP_ALLOW_FOREIGN_CAPTURE="причина"`, причина уходит в вывод и манифест.
+  `HP_ALLOW_FOREIGN_CAPTURE="причина"`, причина уходит в вывод и манифест; версию браузера он не обходит. **Браузер судится запущенным, не по имени каталога** (#827, F33): golden, `docs:capture` и смоки с `requirePinnedBrowser()` сверяют процесс headless Chromium с пином `chromium-headless-shell` (`scripts/browser-attestation.mjs`, отчёт — `npm run toolchain:check`); чужая сборка под пиновым именем — `environment failure` до первого кадра и вердикта, не дефект продукта (`docs/DEVELOPMENT.md`).
   Принимаются эталоны только `npm run golden:accept -- --reviewed` по полному
   артефакту (`demo/golden/README.md`); единственный локальный короткий путь —
   `npm run docs:accept -- --identical` (раздел про версию в кадрах ниже).
@@ -616,7 +616,7 @@ changes a reviewed image and fails if any scenario itself errors.
 `demo/golden/baselines/`, writes high-contrast pixel diffs and fails on a
 missing image, changed dimensions, excessive diff, scenario error or stale
 matrix manifest. It also refuses a different Chromium build and baseline PNGs
-whose hashes no longer match the reviewed manifest. `golden:accept --
+whose hashes no longer match the reviewed manifest; both modes first judge the launched browser against the pin (#827), and each scene line carries `sha256=` of the frame and `diff=`/`ratio=`/`maxDelta=` against the baseline. `golden:accept --
 --reviewed` is the only baseline write path and also requires a complete,
 error-free report captured from the current source fingerprint; the entire set
 is validated before any reference is copied.

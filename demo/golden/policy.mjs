@@ -1,6 +1,7 @@
 import {
   captureEnvironment, foreignCaptureAllowance, foreignCaptureRefusal,
 } from '../../scripts/capture-environment.mjs';
+import { requirePinnedBrowser } from '../../scripts/browser-attestation.mjs';
 
 // The name must NOT end with `manifest.json`: the HACS submission check globs
 // `*manifest.json` over the whole clone of the default branch and refuses a
@@ -42,6 +43,13 @@ export const assertGoldenInvocation = (mode, scenarioFilter = '', options = {}) 
   if (!['capture', 'verify'].includes(mode)) throw new Error(`unknown golden mode: ${mode}`);
   if (mode === 'verify' && scenarioFilter)
     throw new Error('golden verify must run the complete matrix; use capture for a diagnostic --scenario run');
+  // #827: и capture, и verify — визуальное доказательство. Общий launch
+  // (`demo/serve.mjs`) судит каждый запущенный браузер против пинов toolchain
+  // и отказывает как среда до первого кадра: каталог с пиновым именем и чужой
+  // сборкой внутри давал другой первый кадр (F33). Кадр это не меняет — только
+  // отказ, поэтому файл по-прежнему вне корпуса отпечатка. Разрешение чужой
+  // платформы ниже версию браузера не обходит.
+  requirePinnedBrowser(`golden ${mode}`);
   // Диагностический прогон verify в чужой среде законен: он ничего не принимает.
   if (mode !== 'capture') return;
   const platform = options.platform ?? captureEnvironment().platform;
@@ -60,6 +68,23 @@ export const goldenScenarioSetsMatch = (expected, indexed, baselineFiles) => {
   const wanted = normalized(expected);
   return JSON.stringify(normalized(indexed)) === JSON.stringify(wanted)
     && JSON.stringify(normalized(baselineFiles)) === JSON.stringify(wanted);
+};
+
+/**
+ * Строка сцены в логе прогона (#827): статус и id — как прежде, затем хеш
+ * снятого кадра и разница с эталоном. Отчёт `golden-report.json` уходит
+ * артефактом только при падении, а повторы одного SHA сравниваются именно по
+ * зелёным прогонам: без хеша в логе «тот же кадр или нет» не отвечается.
+ */
+export const goldenResultLine = (result) => {
+  const parts = [`${String(result?.status ?? 'error').padEnd(17)} ${result?.id ?? '?'}`];
+  if (result?.actualSha256) parts.push(`sha256=${result.actualSha256}`);
+  if (result?.differingPixels !== undefined) {
+    const ratio = Number.isFinite(result.diffRatio) ? result.diffRatio.toFixed(6) : '—';
+    parts.push(`diff=${result.differingPixels ?? '—'}px ratio=${ratio} maxDelta=${result.maxObservedDelta ?? '—'}`);
+  }
+  if (result?.error) parts.push(`error=${String(result.error).replace(/\s+/g, ' ').slice(0, 200)}`);
+  return parts.join(' ');
 };
 
 export const goldenRunFailed = (mode, manifestValid, results) => {

@@ -5,6 +5,7 @@ import { assertFreshDemoBundleUnlessAllowed } from './bundle-freshness.mjs';
 import { ensureHarnessEditorRuntime } from './editor-runtime-compat.mjs';
 import { installHarnessIsoRuntimeHelper } from './iso-runtime-compat.mjs';
 import { installHpTestOnPage } from './helpers/hp-test.mjs';
+import { enforcePinnedBrowser, requirePinnedBrowser } from '../scripts/browser-attestation.mjs';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
@@ -129,6 +130,16 @@ export async function finish(browser, out) {
   }
 }
 
+/**
+ * #827: процесс объявляет, что его браузер — визуальное доказательство
+ * (golden — через `demo/golden/policy.mjs`, целевые смоки — сами). Тогда
+ * каждый `launch*()` судит уже запущенный Chromium против пинов toolchain
+ * (версия процесса, выбранный и фактический исполняемый) и при расхождении
+ * отказывает как СРЕДА — до первой страницы и до вердикта. Нового процесса на
+ * запуск нет; без объявления поведение прежнее.
+ */
+export { requirePinnedBrowser };
+
 async function launchInternal(
   preloadEditorRuntime,
   viewport = { width: 820, height: 760 },
@@ -141,6 +152,12 @@ async function launchInternal(
   waitForCard = true,
 ) {
   const browser = await chromium.launch({ args: ['--no-sandbox', ...browserArgs] });
+  try {
+    await enforcePinnedBrowser(browser);
+  } catch (error) {
+    await browser.close().catch(() => {});
+    throw error;
+  }
   const page = await (await browser.newContext({
     viewport, deviceScaleFactor: scale, ...contextOptions,
   })).newPage();

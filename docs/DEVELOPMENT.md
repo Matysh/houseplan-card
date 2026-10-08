@@ -294,6 +294,27 @@ them from `validate.yml`, `tests_backend/requirements.txt` and the lockfile, and
 `npm run toolchain:check` compares the machine with them (#496). `.nvmrc` and
 `.python-version` carry the same values for nvm/uv/pyenv; a test keeps them equal.
 
+Chromium is judged by the browser that actually runs (#827, F33), not by the
+existence of `chromium.executablePath()`: that is the full Chromium, while the
+standard headless `chromium.launch()` starts the separate headless shell
+(`chromium-headless-shell` in `playwright-core/browsers.json`), and a directory
+named after the pinned revision can be a symlink to another build.
+`toolchain:check` launches the standard headless Chromium once and reports the
+expected pin, the version of the running process, the Playwright version, the
+mode and the path Playwright selected next to the binary that actually runs
+(`/proc/<pid>/exe`, symlinks resolved). The same check
+(`scripts/browser-attestation.mjs`, `node scripts/browser-attestation.mjs`
+alone) guards the visual-proof entry points: `npm run docs:capture` and
+`scripts/capture-determinism.mjs` before the first frame, golden capture and
+verify on every browser the shared launcher starts, and the smokes that declare
+`requirePinnedBrowser()` (`smoke_support_feedback`, `smoke_zigbee_tooltip_layout`,
+`smoke_editor_styles_lazy`). A mismatch, a missing browser or a browser that
+cannot be probed is an **environment failure** with a non-zero exit — no frame
+or verdict is produced and committed PNGs and indexes stay untouched. There is
+no bypass; `HP_ALLOW_FOREIGN_CAPTURE` covers the platform only. The check never
+repairs a global install or a symlink: install the pinned browser with
+`npx playwright install chromium`.
+
 The supported native setup is repository-scoped and does not change the
 machine's default Node, Python or persistent `PATH` (#557):
 

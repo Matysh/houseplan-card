@@ -12,6 +12,7 @@ import { CAPTURE_PROVENANCE_SCHEMA, captureProvenance } from '../../scripts/capt
 import {
   assertGoldenInvocation,
   GOLDEN_BASELINE_MANIFEST,
+  goldenResultLine,
   goldenRunFailed,
   goldenScenarioSetsMatch,
 } from './policy.mjs';
@@ -1166,7 +1167,7 @@ try {
             ? 'baseline PNG does not match its reviewed manifest hash'
             : 'baseline PNG is not listed in the reviewed manifest';
           results.push(result);
-          console.log(`${result.status.padEnd(17)} ${scenario.id}`);
+          console.log(goldenResultLine(result));
           continue;
         }
         const comparison = await comparePng(page, actual, baseline, scenario.threshold);
@@ -1190,7 +1191,7 @@ try {
       }
     }
     results.push(result);
-    console.log(`${result.status.padEnd(17)} ${scenario.id}`);
+    console.log(goldenResultLine(result));
   }
 } finally {
   await Promise.all([...extraBrowsers.map((item) => item.close()), browser.close()]);

@@ -16067,6 +16067,51 @@ const MUTANT_DEFINITIONS = [
       replace: '  main(process.argv.slice(2)).then((code) => process.exit(code), (err) => {',
     }],
   },
+  // #827 (F33, F48): фактически запущенный Chromium и visual/render → ci:golden.
+  {
+    id: 'browser-attestation-version-unchecked',
+    guard: 'node --test --test-name-pattern="#827 AC1" test/browser-attestation.test.mjs',
+    because: '#827 AC1 (F33): a directory named after the pinned revision with another Chromium inside '
+      + 'launches fine; without comparing the running version the sandbox 141 passes as pinned 151 again',
+    patches: [{
+      file: 'scripts/browser-attestation.mjs',
+      find: '  } else if (probe.version !== expected.version) {',
+      replace: '  } else if (false) { // mutant: the running version is not compared',
+    }],
+  },
+  {
+    id: 'serve-launch-skips-browser-attestation',
+    guard: 'node --test --test-name-pattern="#827 AC2" test/browser-attestation.test.mjs',
+    because: '#827 AC2: golden and the three target smokes declare a pinned browser, but only the '
+      + 'shared launch judges the browser it has just started; skipping it renders the first page in any Chromium',
+    patches: [{
+      file: 'demo/serve.mjs',
+      find: '    await enforcePinnedBrowser(browser);\n',
+      replace: '    // mutant: the launched browser is not judged\n',
+    }],
+  },
+  {
+    id: 'golden-policy-forgets-pinned-browser',
+    guard: 'node --test --test-name-pattern="#827" test/golden-policy.test.mjs',
+    because: '#827 AC2: golden capture and verify are visual proof; without the declaration the shared '
+      + 'launch stays silent and a foreign Chromium produces candidate frames again',
+    patches: [{
+      file: 'demo/golden/policy.mjs',
+      find: '  requirePinnedBrowser(`golden ${mode}`);\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'toolchain-check-trusts-browser-path',
+    guard: 'node --test --test-name-pattern="#827" test/toolchain-pins.test.mjs',
+    because: '#827 AC1: toolchain:check must judge the running browser; accepting any launchable '
+      + 'browser restores the old existence check that passed the symlinked 141 (F33)',
+    patches: [{
+      file: 'scripts/toolchain-pins.mjs',
+      find: '      actual.version ?? verdict.status, verdict.ok,',
+      replace: "      actual.version ?? verdict.status, verdict.status !== 'missing', // mutant: launchable is enough",
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

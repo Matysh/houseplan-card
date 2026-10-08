@@ -1,11 +1,14 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { launch, checkAll, finish } from './serve.mjs';
+import { launch, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
 
 const VERSION = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
 const PREVIEW_TEXT = '{"format":"houseplan-support-package","version":1}\n';
 const PREVIEW_SHA = createHash('sha256').update(PREVIEW_TEXT).digest('hex');
 
+// #827: F40/F41 читались как дефект продукта, пока браузер был не тот —
+// общий launch судит запущенный Chromium против пинов и отказывает как среда.
+requirePinnedBrowser('smoke_support_feedback');
 const { page, browser } = await launch({ width: 1000, height: 900 });
 const result = await page.evaluate(async ({ version, previewText, previewSha }) => {
   const card = window.__card;

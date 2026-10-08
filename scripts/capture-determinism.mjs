@@ -21,6 +21,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { attestStandardLaunch } from './browser-attestation.mjs';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const IMAGES = resolve(ROOT, 'docs/images');
@@ -83,5 +84,13 @@ function main() {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  // #827: съёмка CI-документации идёт мимо `npm run docs:capture`, поэтому
+  // запущенный Chromium судится и здесь, один раз до обоих прогонов.
+  try {
+    await attestStandardLaunch({ reason: 'docs capture' });
+  } catch (error) {
+    console.error(`::error::${error instanceof Error ? error.message : String(error)}`);
+    process.exit(1);
+  }
   process.exit(main());
 }

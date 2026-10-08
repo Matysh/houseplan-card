@@ -3,9 +3,11 @@ import test from 'node:test';
 import {
   assertGoldenInvocation,
   GOLDEN_BASELINE_MANIFEST,
+  goldenResultLine,
   goldenRunFailed,
   goldenScenarioSetsMatch,
 } from '../demo/golden/policy.mjs';
+import { pinnedBrowserRequirement } from '../scripts/browser-attestation.mjs';
 import {
   goldenAcceptancePlan, goldenAcceptanceRefusal, goldenSilentDeclarations,
 } from '../scripts/golden-acceptance.mjs';
@@ -328,4 +330,32 @@ test('#455 съёмка golden в чужой среде отказывается
   assert.throws(() => assertGoldenInvocation('capture', '', {
     platform: 'win32', allowance: '',
   }), /съёмка отказана/);
+});
+
+test('#827 golden capture и verify объявляют пиновый браузер до первого запуска', () => {
+  // Суд запущенного Chromium делает общий launch (demo/serve.mjs) по этому
+  // объявлению; здесь — что golden его делает в обоих режимах.
+  assert.doesNotThrow(() => assertGoldenInvocation('verify', '', { platform: 'linux' }));
+  assert.equal(pinnedBrowserRequirement(), 'golden verify');
+  assert.doesNotThrow(() => assertGoldenInvocation('capture', 'one-scenario', { platform: 'linux' }));
+  assert.equal(pinnedBrowserRequirement(), 'golden capture');
+  // Разрешение чужой платформы требование браузера не снимает.
+  assert.doesNotThrow(() => assertGoldenInvocation('capture', '', { platform: 'win32', allowance: 'нет WSL' }));
+  assert.equal(pinnedBrowserRequirement(), 'golden capture');
+});
+
+test('#827 строка сцены в логе golden несёт хеш кадра и разницу с эталоном', () => {
+  const sha = 'a'.repeat(64);
+  assert.equal(goldenResultLine({
+    id: 'device-battery-mobile-dark', status: 'passed', actualSha256: sha,
+    differingPixels: 0, diffRatio: 0, maxObservedDelta: 0,
+  }), `passed            device-battery-mobile-dark sha256=${sha} diff=0px ratio=0.000000 maxDelta=0`);
+  assert.equal(goldenResultLine({
+    id: 'x', status: 'different', actualSha256: sha, differingPixels: 12, diffRatio: 0.0001234, maxObservedDelta: 40,
+  }), `different         x sha256=${sha} diff=12px ratio=0.000123 maxDelta=40`);
+  // Сцена, упавшая до сравнения: статус, хеш если был, причина одной строкой.
+  assert.equal(goldenResultLine({ id: 'y', status: 'error', actualSha256: null, error: 'semantic\n golden   failed' }),
+    'error             y error=semantic golden failed');
+  assert.equal(goldenResultLine({ id: 'z', status: 'invalid-baseline', actualSha256: sha, error: 'baseline PNG is not listed' }),
+    `invalid-baseline  z sha256=${sha} error=baseline PNG is not listed`);
 });

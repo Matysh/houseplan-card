@@ -19,6 +19,19 @@ radial spokes visible instead of hiding them under a translucent room fill.
   demo bundles fail before the first screenshot.
 - Chromium, viewport, locale, timezone, colour profile, font rendering,
   animations and caret are controlled by the runner.
+- The browser is judged as it runs, not by its directory (#827, F33):
+  `capture` and `verify` declare the pinned browser (`policy.mjs`), and the
+  shared launcher compares every launched Chromium with the
+  `chromium-headless-shell` pin of `playwright-core/browsers.json` — process
+  version, Playwright, mode, the path Playwright selected and the binary that
+  actually runs. A mismatch, a missing or an unprobeable browser is an
+  `environment failure (browser-attestation)` before the first frame: nothing is
+  captured, baselines and the index are untouched. There is no bypass;
+  `npm run toolchain:check` shows the same report.
+- Every scene line in the log carries the frame hash and the comparison:
+  `<status> <id> sha256=<frame> diff=<px> ratio=<r> maxDelta=<d>`, or
+  `error=<reason>`. A green Validate uploads no artifact, so repeated runs of
+  one SHA are compared by these lines.
 - `capture` writes only to ignored `artifacts/golden/`; it never changes a
   baseline and never claims a missing baseline passed. Any scenario runtime
   error makes capture fail, including the initial no-baseline CI run.

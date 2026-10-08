@@ -13,7 +13,7 @@
 // import, a failed first attempt healed by the content-hashed retry, a module
 // of another build. AC7 — opening the editor requests only the editor graph.
 import { readFileSync } from 'node:fs';
-import { launchColdView, checkAll, finish } from './serve.mjs';
+import { launchColdView, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
 
 const manifest = JSON.parse(readFileSync('dist/houseplan-assets.json', 'utf8'));
 const runtimePath = manifest.files.map((file) => file.path)
@@ -23,6 +23,10 @@ const runtimeName = runtimePath.split('/').at(-1);
 const runtimePattern = `**/${runtimeName}*`;
 const jsName = (pathname) => pathname.replace(/^\/assets\//, '');
 const isJs = (pathname) => pathname.endsWith('.js');
+
+// #827: первый кадр стилей (#805) — свидетель только в пиновом Chromium;
+// каждая сессия launchColdView судит запущенный браузер и отказывает как среда.
+requirePinnedBrowser('smoke_editor_styles_lazy');
 
 const DESKTOP = { width: 1100, height: 820 };
 const PHONE = { width: 360, height: 780 };

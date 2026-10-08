@@ -2,7 +2,7 @@
 // fixture delivers registry events and the integration's normal topology feed.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { launch, checkAll, finish } from './serve.mjs';
+import { launch, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
 
 const artifacts = new URL('../artifacts/zigbee-topology-802/', import.meta.url);
 mkdirSync(artifacts, { recursive: true });
@@ -36,6 +36,9 @@ const zha = nodes.map(([id, n, nwk, type]) => ({ ieee: ieee(n), nwk, device_reg_
   ...(n === 1 || n === 6 ? { routes: [{ dest_nwk: 0, next_hop: 0, route_status: 'Active' }] } : {}),
 }));
 
+// #827: F47 (подсказка после прокрутки страницы) судится только в пиновом
+// Chromium — общий launch проверяет запущенный браузер и отказывает как среда.
+requirePinnedBrowser('smoke_zigbee_tooltip_layout');
 for (const provider of ['z2m', 'zha']) {
   const { page, browser } = await launch({ width: 1100, height: 900 });
   const root = page.locator('#host > houseplan-card');

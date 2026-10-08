@@ -8,18 +8,27 @@
 //   Python    — `python-version` там же
 //   HA-стек   — tests_backend/requirements.txt (homeassistant==, плагин pytest)
 //   Playwright — package-lock.json, Chromium — browsers.json самого Playwright
+//                (и `chromium`, и `chromium-headless-shell`: стандартный
+//                headless-запуск поднимает второй, #827)
 // Второго словаря версий не появляется; `.nvmrc` и `.python-version` обязаны
 // совпадать с этим чтением (тест), чтобы nvm/uv/pyenv подхватывали их сами.
 //
 //   node scripts/toolchain-pins.mjs            # таблица пинов
 //   node scripts/toolchain-pins.mjs --json     # для скриптов установки
 //   node scripts/toolchain-pins.mjs --check    # локальное окружение против пинов
+//
+// `--check` судит Chromium по ЗАПУЩЕННОМУ браузеру (#827, F33): стандартный
+// `chromium.launch()` поднимается один раз, у него читаются версия, выбранный и
+// фактический исполняемый (scripts/browser-attestation.mjs). Существование пути
+// `executablePath()` версию не доказывает: это даже не тот бинарник, что
+// запускается в headless, а каталог с пиновым именем бывает symlink'ом на чужую сборку.
 
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isMainModule } from './spawn-portable.mjs';
+import { browserPinsFromSources, installedPlaywright, judgeBrowser } from './browser-attestation.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(resolve(ROOT, rel), 'utf8');
@@ -40,14 +49,14 @@ export function pinsFromSources({
   const node = single([...validateYml.matchAll(/node-version:\s*['"]?(\d+)['"]?/g)].map((m) => m[1]), 'node-version');
   const python = single([...validateYml.matchAll(/python-version:\s*['"]?([\d.]+)['"]?/g)].map((m) => m[1]), 'python-version');
   const req = (name) => single([...requirements.matchAll(new RegExp(`^${name.replace(/-/g, '\\-')}==([^\\s#]+)`, 'gm'))].map((m) => m[1]), name);
-  const chromium = browsers.browsers.find((b) => b.name === 'chromium');
   return {
     node,
     python,
     homeassistant: req('homeassistant'),
     pytestHomeAssistant: req('pytest-homeassistant-custom-component'),
-    playwright: packageLock.packages['node_modules/playwright'].version,
-    chromium: chromium ? { revision: chromium.revision, version: chromium.browserVersion } : null,
+    // Playwright, chromium и (#827) chromium-headless-shell — тот, что поднимает
+    // стандартный headless-запуск; чтение одно с судом запущенного браузера.
+    ...browserPinsFromSources({ packageLock, browsers }),
   };
 }
 
@@ -73,6 +82,25 @@ function pythonProbe(exec, explicitCommand = null) {
   return null;
 }
 
+const ATTESTATION_SCRIPT = resolve(ROOT, 'scripts/browser-attestation.mjs');
+
+/**
+ * Проба запущенного браузера из дочернего процесса (#827): JSON
+ * `probeStandardLaunch`. Нет вывода или он не JSON — проба не выполнилась,
+ * это `unprobeable`, а не «браузер в порядке».
+ */
+export function browserProbe(exec = run) {
+  const out = exec(process.execPath, [ATTESTATION_SCRIPT, '--probe-json']);
+  if (!out) return { error: 'проба запущенного браузера не выполнилась' };
+  try {
+    // `run` склеивает stdout и stderr: берётся последняя строка-объект.
+    const parsed = JSON.parse(out.split(/\r?\n/).filter((line) => line.startsWith('{')).at(-1));
+    return parsed && typeof parsed === 'object' ? parsed : { error: 'проба вернула не объект' };
+  } catch {
+    return { error: 'проба вернула не JSON' };
+  }
+}
+
 /** Что установлено локально; `null` — не найдено. */
 export function localToolchain({ exec = run, pythonCommand = null } = {}) {
   const node = process.versions.node;
@@ -82,11 +110,8 @@ export function localToolchain({ exec = run, pythonCommand = null } = {}) {
     const out = exec(pythonRuntime.command, [...pythonRuntime.prefix, '-m', 'pip', 'show', name]);
     return out ? (out.match(/^Version:\s*(\S+)/m) || [])[1] || null : null;
   };
-  let playwright = null;
   const playwrightPath = resolve(ROOT, 'node_modules/playwright/package.json');
-  try { playwright = JSON.parse(readFileSync(playwrightPath, 'utf8')).version; } catch { /* нет */ }
-  const chromiumPath = exec(process.execPath, ['-e',
-    'const { chromium } = require("playwright"); process.stdout.write(chromium.executablePath())']);
+  const playwright = installedPlaywright(ROOT);
   return {
     node,
     nodePath: process.execPath,
@@ -96,8 +121,8 @@ export function localToolchain({ exec = run, pythonCommand = null } = {}) {
     pytestHomeAssistant: pipShow('pytest-homeassistant-custom-component'),
     playwright,
     playwrightPath: existsSync(playwrightPath) ? playwrightPath : null,
-    chromiumPath,
-    chromiumExists: !!chromiumPath && existsSync(chromiumPath),
+    // #827: запущенный браузер, а не существование пути executablePath().
+    browser: browserProbe(exec),
   };
 }
 
@@ -127,10 +152,16 @@ export function compareToolchain(pins, local) {
   }
   row('playwright', pins.playwright, local.playwright, local.playwright === pins.playwright,
     ` (${local.playwrightPath || 'package path unknown'})`);
-  if (local.chromiumExists !== undefined || local.chromiumPath !== undefined) {
-    const chromiumPin = `${pins.chromium?.version || '?'} rev ${pins.chromium?.revision || '?'}`;
-    row('chromium', chromiumPin, local.chromiumExists ? 'installed' : 'missing',
-      local.chromiumExists === true, ` (${local.chromiumPath || 'executable path unavailable'})`);
+  if (local.browser !== undefined) {
+    // #827: судится запущенный стандартный headless Chromium — версия у
+    // процесса и путь у ядра; Playwright судит строка выше.
+    const verdict = judgeBrowser({ pins, probe: local.browser, playwright: local.playwright, checkPlaywright: false });
+    const { expected, actual } = verdict;
+    row('chromium', expected ? `${expected.version} rev ${expected.revision}` : '?',
+      actual.version ?? verdict.status, verdict.ok,
+      ` (${expected?.name || 'pin unavailable'}; режим ${actual.mode || '—'};`
+        + ` ${actual.selectedExecutable || '—'} → ${actual.resolvedExecutable || '—'})`);
+    for (const problem of verdict.problems) lines.push(`      ${problem}`);
   }
   return { ok: failures.length === 0, lines, failures };
 }

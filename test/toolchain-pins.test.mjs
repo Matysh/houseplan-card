@@ -39,8 +39,10 @@ test('сравнение: мажор Node, minor Python, HA-стек точно 
 
 test('#557 explicit Python owns both version and package probes; paths are visible', () => {
   const python = 'C:\\tools\\houseplan\\python.exe';
-  const chromium = 'C:\\browser\\chrome.exe';
+  const chromium = 'C:\\browser\\chrome-headless-shell.exe';
   const calls = [];
+  // #827: Chromium — проба запущенного браузера (JSON дочернего процесса), а не executablePath().
+  const probe = { version: '140.0.0.0', product: 'HeadlessChrome/140.0.0.0', pid: 9, selectedExecutable: chromium, resolvedExecutable: chromium, mode: 'headless-shell', error: null };
   const exec = (command, args) => {
     calls.push([command, args]);
     if (command === python && args.includes('-c')) return `3.14.7\n${python}`;
@@ -48,7 +50,7 @@ test('#557 explicit Python owns both version and package probes; paths are visib
     if (command === python && args.at(-1) === 'pytest-homeassistant-custom-component') {
       return 'Name: pytest-homeassistant-custom-component\nVersion: 0.13.357';
     }
-    if (command === process.execPath) return chromium;
+    if (command === process.execPath && args.at(-1) === '--probe-json') return `(node:1) warning\n${JSON.stringify(probe)}`;
     return null;
   };
 
@@ -65,13 +67,46 @@ test('#557 explicit Python owns both version and package probes; paths are visib
     node: process.versions.node.split('.')[0], python: '3.14',
     homeassistant: '2026.8.3', pytestHomeAssistant: '0.13.357', playwright: local.playwright,
     chromium: { version: '140.0.0.0', revision: '1234' },
+    chromiumHeadlessShell: { version: '140.0.0.0', revision: '1234' },
   };
-  const compared = compareToolchain(pins, { ...local, chromiumExists: true });
-  assert.equal(compared.ok, true);
+  assert.deepEqual(local.browser, probe, 'строка-объект пробы находится и после предупреждения в stderr');
+  const compared = compareToolchain(pins, local);
+  assert.equal(compared.ok, true, compared.lines.join('\n'));
   assert.ok(compared.lines.some((line) => line.includes(process.execPath)));
   assert.ok(compared.lines.some((line) => line.includes(python)));
   assert.ok(compared.lines.some((line) => line.includes(local.playwrightPath)));
   assert.ok(compared.lines.some((line) => line.includes(chromium)));
+});
+
+test('#827 AC1 F33 regressesOldCheck: toolchain:check судит запущенный Chromium, а не существование пути', () => {
+  const pins = {
+    node: process.versions.node.split('.')[0], python: '3.14', homeassistant: '2026.8.3',
+    pytestHomeAssistant: '0.13.357', playwright: '1.0.0',
+    chromium: { version: '300.0.0.1', revision: '4321' },
+    chromiumHeadlessShell: { version: '300.0.0.1', revision: '4321' },
+  };
+  const shell = '/pw/chromium_headless_shell-4321/chrome-headless-shell-linux64/chrome-headless-shell';
+  const base = { node: process.versions.node, python: '3.14.1', homeassistant: null, pytestHomeAssistant: null, playwright: '1.0.0' };
+  const probe = (over) => ({ version: '300.0.0.1', product: 'HeadlessChrome/300.0.0.1', pid: 5, selectedExecutable: shell, resolvedExecutable: shell, mode: 'headless-shell', error: null, ...over });
+  const good = compareToolchain(pins, { ...base, browser: probe({}) });
+  assert.equal(good.ok, true, good.lines.join('\n'));
+  assert.ok(good.lines.some((line) => /^ok +chromium .*300\.0\.0\.1 rev 4321 .*локально 300\.0\.0\.1 .*chromium-headless-shell; режим headless-shell/.test(line)));
+  // Прежний критерий выполнен (каталог назван ревизией пина, путь есть) — версия чужая.
+  const f33 = compareToolchain(pins, {
+    ...base, chromiumPath: shell, chromiumExists: true,
+    browser: probe({ version: '299.9.9.9', product: 'HeadlessChrome/299.9.9.9', resolvedExecutable: '/opt/old/headless_shell' }),
+  });
+  assert.equal(f33.ok, false);
+  assert.deepEqual(f33.failures, ['chromium']);
+  assert.ok(f33.lines.some((line) => line.startsWith('FAIL  chromium') && line.includes(`${shell} → /opt/old/headless_shell`)), f33.lines.join('\n'));
+  assert.ok(f33.lines.some((line) => /каталог назван пиновой ревизией 4321.*\(F33\)/.test(line)));
+  // Проба не выполнилась или вернула не JSON — не «в порядке».
+  for (const out of [null, 'C:\\browser\\chrome.exe']) {
+    const local = localToolchain({ exec: (command) => (command === process.execPath ? out : null), pythonCommand: 'none' });
+    const verdict = compareToolchain(pins, { ...base, browser: local.browser });
+    assert.deepEqual(verdict.failures, ['chromium'], String(out));
+    assert.ok(verdict.lines.some((line) => /^FAIL +chromium .*локально unprobeable/.test(line)), verdict.lines.join('\n'));
+  }
 });
 
 test('#557 setup entrypoints are pinned, non-destructive and exercise Linux HA plus capture', () => {
