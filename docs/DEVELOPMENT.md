@@ -13,11 +13,20 @@ proof and exact inverse on the same 100 positions.
 `benchmark:wall-node-connected` command. Its native CDP stream does not wait for
 two animation frames between moves. Every submitted input has an immutable
 browser-clock timestamp; browser-coalesced/superseded inputs are reported
-explicitly, never counted as separately painted positions. Three native clock
-probes before each mouse-down fix a conservative epoch-to-native offset before
-dispatch, never fitted to measured inputs. A missing final source input or
-unstable calibration fails the run; unmatched native observations remain in
-the raw report. The report retains
+explicitly, never counted as separately painted positions. Independent
+round-trip probes before each mouse-down bound the offset from the injector's
+monotonic clock to the browser's monotonic clock. The lower offset bound is
+conservative: it cannot make the source input appear later and under-report
+latency. Source clocks are frozen before dispatch and never fitted to measured
+inputs. Eight fixed probes include 0.1 ms clock-quantisation bounds, require at
+most 1 ms uncertainty, and must remain consistent with independent post-gesture
+probes; there is no retry-until-pass loop. Native CDP events use their own
+monotonic timestamp, without an epoch
+timestamp override. Unique exact positions identify the source inputs; order,
+ownership, causal timestamps and the final input remain mandatory. A missing
+final input or uncertain calibration fails the run. Unmatched native extras
+stay in raw evidence without an invented source clock or paint latency, and
+cannot block readiness of the complete matched stream. The report retains
 cold/warm samples, complete candidate/proof/paint CPU, input-to-paint opportunity,
 long tasks and proof counts. The test also exercises previously rejected
 neighbours, actual new wall coverage, cancellation, one commit and Undo/Redo.
@@ -28,6 +37,17 @@ It observes/delegates native rAF calls without changing their IDs or pacing
 input. Raw data also retains the unconditional two-rAF upper bound so the
 scheduler change cannot hide the measurement difference. Neither number claims
 a compositor presentation timestamp. The 50/100/150 ms budgets are unchanged.
+CI also preserves the complete raw report, including partial failure evidence,
+in `smoke-logs/smoke_wall_node_connected.raw.json` after measurement finishes.
+The first full #834 CI found CPU p95 50.8 ms against the unchanged 50 ms limit.
+Follow-up corner grouping and exact remote-hole exclusion reduce actual work,
+not sampling or thresholds. Units compare all 100 positions with the original
+floor subtraction and exercise each grouped-corner failure stage; touching,
+enclosing and ambiguous holes retain the original operand and proof.
+The earlier epoch-based protocol exposed a 2.3 ms conversion step within one
+gesture despite stable pre-gesture probes; the final native input was delivered
+and painted. It is not accepted as performance evidence. Before/after figures
+must use the same monotonic protocol, not mix it with those historical runs.
 The old 200-room synthetic node benchmark selects only 0–2 disconnected rooms
 per gesture; it is not evidence for a connected residential floor.
 

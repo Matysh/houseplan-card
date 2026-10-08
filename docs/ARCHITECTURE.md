@@ -65,6 +65,15 @@ an optional observer then copies them into the candidate's render-only cache
 in render units. The proof never consumes that cache. Incompatible previews
 retain the original independent contour calculation.
 
+Select also groups corner fans before clipping their shared facade bound. Any
+failed grouped stage, including the final body union, replays the complete
+historical per-fan path; ordinary View keeps that path directly. The guard's
+lazy subtraction operation omits only canonical masonry holes whose bounding
+boxes are strictly disjoint from every subject ring. Outer boundaries and
+touching/enclosing holes stay intact; ambiguous rings use the complete old
+operand. This exact locality reduction never skips the room-floor subtraction
+or its clearance checks, and both helper implementations stay outside View.
+
 Node movement (#803) is a lazy Select-only subsystem: `wall-node-move.ts`
 freezes the structural graph, `wall-node-editor.ts` owns capture/cancel and
 the isolated live roots, `wall-node-preview.ts` renders the local complete-body

@@ -13,7 +13,7 @@ import { NEAR_AXIS_MAX_DEGREES } from './near-axis';
 import { LATTICE_NOISE_STEPS } from './coordinate-canonicalization';
 import { unionWallShellGeometry } from './wall-shell-union';
 import type { wallQuadCovered } from './wall-quad-coverage';
-import { unionWallCornerPieces, subtractWallOpeningCuts } from './wall-geometry-batch';
+import { unionClippedWallCornersSequential, subtractWallOpeningCuts } from './wall-geometry-batch';
 import { applyWallLocalReplacements, type WallLocalReplacement } from './wall-local-replacements';
 
 export interface WallEntry {
@@ -60,6 +60,8 @@ export interface WallGeometryOperations {
   /** Optional exact redundancy proof supplied by the lazy Select preview.
    * Other consumers retain the canonical edge intersection/union path. */
   coveredQuad?: typeof wallQuadCovered;
+  /** Select may group common-bound clipping; View keeps per-fan isolation. */
+  clipCorners?: typeof unionClippedWallCornersSequential;
   /** Test seam around the transaction which may fail for one independent body. */
   mergeExtra?: (primary: any, extra: any, index: number) => any;
   /** Bounded diagnostic seam; never receives coordinates, ids or exceptions. */
@@ -2770,6 +2772,8 @@ export function innerContourForRoom(
   sharedRoomWallGeometry?: any,
   /** Canonical junction topology from the same wall-geometry pass. */
   sharedMultiWallNodes?: MultiWallNodeMap | null,
+  /** Optional exact subtraction; ordinary View uses the historical operation. */
+  subtractRoomMasonry: typeof subtractLocalWallGeometry = subtractLocalWallGeometry,
 ): number[][] | null {
   const room = (rooms || []).find((r) => r?.id === roomId);
   const poly = roomPoly(room);
@@ -2792,7 +2796,7 @@ export function innerContourForRoom(
   );
   if (roomWallGeometry) {
     try {
-      const floor = subtractLocalWallGeometry(closedRing(pr.poly), roomWallGeometry);
+      const floor = subtractRoomMasonry(closedRing(pr.poly), roomWallGeometry);
       const contour = largestOuterContour(floor);
       if (contour) return contour;
     } catch {
@@ -3874,16 +3878,13 @@ export function wallBodiesGeometry(
       const cornerPieces: Geom[] = [];
       for (const piece of corners.fans) {
         try {
-          let ring: any = [closedRing(piece)];
-          if (bound) ring = intersectLocalWallGeometry(ring, bound);
-          if (!ring?.length) continue;
-          cornerPieces.push(ring);
+          cornerPieces.push([closedRing(piece)]);
         } catch {
           // A degenerate piece must not take the whole node down; the rest
           // still stands on its own.
         }
       }
-      body = unionWallCornerPieces(body, cornerPieces);
+      body = (operations.clipCorners || unionClippedWallCornersSequential)(body, cornerPieces, bound);
       body = dropDegenerateRings(body, Math.max(multiWallNodes.epsilon, 1e-9) ** 2);
     }
     const roomGeom = body || [];

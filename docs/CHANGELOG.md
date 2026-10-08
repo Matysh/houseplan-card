@@ -6,6 +6,8 @@
   neighbouring positions because of numerical noise in computed wall contours.
   Connected-floor dragging reuses unchanged geometry and coalesces pointer
   work; repeated snapped positions keep their preview without rebuilding it.
+  Shared corner clipping and local room-floor subtraction further reduce
+  dragging work without changing wall-clearance limits.
   One live preview retains translucent original walls; cancel, the latest
   release position, opening cuts and Undo/Redo remain guarded
   ([#834](https://github.com/Matysh/houseplan-card/issues/834)).

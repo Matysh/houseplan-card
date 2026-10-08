@@ -1,7 +1,20 @@
 /** Associative exact booleans traverse the complete connected body once.
  * No coordinate rounding, omitted patch or widened cut is involved. */
 import { difference, union, type Geom } from './wall-boolean-cache';
-import { unionLocalWallGeometry } from './wall-local-boolean';
+import { unionLocalWallGeometry, intersectLocalWallGeometry } from './wall-local-boolean';
+
+/** Historical per-fan clipping and optional-patch isolation. Ordinary View
+ * uses this directly; Select replays it after any failed grouped stage. */
+export function unionClippedWallCornersSequential(subject: Geom | null, pieces: Geom[], bound: Geom | null): Geom | null {
+  const clipped: Geom[] = [];
+  for (const piece of pieces) {
+    try {
+      const own = bound ? intersectLocalWallGeometry(piece, bound) : piece;
+      if (own.length) clipped.push(own);
+    } catch { /* Preserve the historical isolated optional-fan failure. */ }
+  }
+  return unionWallCornerPieces(subject, clipped);
+}
 
 /** Optional corner fans retain the historical per-piece isolation if the
  * combined operation fails. A malformed fan cannot discard other corners. */

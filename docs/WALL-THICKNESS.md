@@ -59,6 +59,13 @@ separation after rounding; this is not a claim of general cross-operand
 topology equivalence. All existing physical guards still run, and failure of
 the retry stays fail-closed.
 
+Lazy Select clips the union of corner fans against their common bound once;
+any grouped failure replays all historical per-fan operations. For successful
+pre-opening canonical masonry only, room-floor subtraction drops strictly
+remote holes from its clipping operand. The full outer boundary, touching or
+enclosing holes and all ambiguous rings remain; the guard still computes and
+judges the floor itself. Default View uses the original clipping/subtraction.
+
 ### Stable stored identity and zero walls (model v10, #282/#306/#478)
 
 The decision record behind the stored representation — what the code calls

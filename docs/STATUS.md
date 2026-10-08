@@ -30,6 +30,9 @@ with synchronous latest-input flush before release and complete cancellation
 of pending work. A repeated snapped target retains its accepted or refused
 candidate. Connected-floor tests cover the numerical shell-union retry,
 independent server proof and guarded Undo/Redo; the model/API do not change.
+Select-only grouped corner clipping and strictly remote-hole exclusion reduce
+connected-floor frame work while retaining the original fallback and clearance
+proof. CI preserves raw timing evidence even when a performance budget fails.
 
 Repeated Resize (#832): coalesced UI runs project back into frozen structural
 atoms/IDs, retaining fixed side breakpoints and rigidly moving translated runs.

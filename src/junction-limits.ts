@@ -18,6 +18,7 @@ import {
   type MultiWallNodeMap, type WallBodiesGeometryResult, type WallEntry,
 } from './wall-thickness';
 import type { RoomCfg } from './types';
+import type { subtractLocalWallGeometry } from './wall-local-boolean';
 
 interface JunctionLimitSpace {
   id?: string;
@@ -32,6 +33,9 @@ export type JunctionSharedGeometry =
     /** Observation only: the guard always computes and judges the contour.
      * Consumers may copy it for painting; it is never a validation input. */
     onRoomInnerContour?: (roomId: string, contour: readonly (readonly number[])[] | null) => void;
+    /** Exact subtraction supplied only with successful canonical masonry;
+     * the guard still computes every floor and applies its own limits. */
+    subtractRoomMasonry?: typeof subtractLocalWallGeometry;
   })
   | { status: 'lightweight'; multiWallNodes?: MultiWallNodeMap | null };
 
@@ -111,6 +115,7 @@ export function junctionLimitViolations(
       inner = innerContourForRoom(
         space.rooms || [], roomId, space.walls || [], [], GRID_STEP_N, cellCm, GRID_STEP_N, 1,
         lightweight ? null : roomGeometry ?? undefined, nodes,
+        completeGeometry?.subtractRoomMasonry,
       );
     } catch { inner = null; }
     violations.push(...checkRoomClearance(roomId, inner, cellCm, GRID_STEP_N));

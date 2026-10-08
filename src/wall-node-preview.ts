@@ -15,6 +15,8 @@ import type { OpeningCfg, ServerConfig } from './types';
 import { resolveZeroWalls } from './zero-walls';
 import type { JunctionSharedGeometry } from './junction-limits';
 import { wallQuadCovered } from './wall-quad-coverage';
+import { subtractNodeRoomMasonry } from './wall-node-room-floor';
+import { unionClippedWallCorners } from './wall-node-corners';
 
 type Bounds = [number, number, number, number];
 const bounds = (points: readonly number[][], pad = 0): Bounds => [
@@ -89,7 +91,8 @@ export function buildNodePreview(space: NodeMoveSpace) {
   const model = spaceModels({ spaces: [space] } as ServerConfig)[0];
   const input = prepareSpacePhysicalGeometryInputs(space, model);
   const geometry = wallBodiesGeometry(model.rooms, input.walls, input.openCuts, input.roomOpenings,
-    GRID_STEP_N, input.cellCm, GRID_PITCH, NORM_W, input.physicalBodies, { coveredQuad: wallQuadCovered });
+    GRID_STEP_N, input.cellCm, GRID_PITCH, NORM_W, input.physicalBodies,
+    { coveredQuad: wallQuadCovered, clipCorners: unionClippedWallCorners });
   return { space, model, input, geometry, renderRoomContours: new Map<string, number[][] | null>(),
     safe: geometry.status === 'ok' || geometry.status === 'not-applicable' };
 }
@@ -107,6 +110,7 @@ export function nodePreviewJunctionGeometry(preview: NodePreviewGeometry, captur
   const roomGeom = geometry.roomGeom as number[][][][];
   return { status: 'ok', multiWallNodes: null,
     roomGeom: roomGeom.map(polygon => polygon.map(ring => ring.map(point => [point[0] / NORM_W, point[1] / NORM_W]))),
+    subtractRoomMasonry: subtractNodeRoomMasonry,
     onRoomInnerContour: captureForScene ? (id, contour) => {
       // This private copy is produced only after the normalized guard judged
       // the same immutable candidate. Proof never consumes the scene cache.

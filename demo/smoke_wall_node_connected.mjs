@@ -5,10 +5,12 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { performance } from 'node:perf_hooks';
 import { setTimeout as delay } from 'node:timers/promises';
 import { launch, finish, requirePinnedBrowser } from './serve.mjs';
 import { installNodePaintObserver } from './helpers/node-paint-observer.mjs';
-import { calibrateNodeInputClock, settleNodeInputLedger } from './helpers/node-input-ledger.mjs';
+import { assertNodeClockBounds, assertUniqueNodeInputPositions, calibrateNodeInputClock, installNodeInputObserver, settleNodeInputLedger } from './helpers/node-input-ledger.mjs';
+import { writeNodeCiReport } from './helpers/node-ci-report.mjs';
 import { applyNodeMove, prepareNodeMove, structuralWallNodes } from '../test-build/wall-node-move.js';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 
@@ -37,7 +39,7 @@ const report = { issue: 834, fixtureSha256: createHash('sha256').update(fixtureT
   counts: { rooms: 8, walls: 30, openings: 14 }, viewport, dpr: 1, node: process.version,
   chromium: browser.version(), budgets, warmupGestures: 3, measuredGestures: 5,
   latencyDefinition: 'Per submitted native input to a post-paint opportunity of the latest candidate. The same RAF-phase observer uses next RAF after a synchronous RAF producer, second RAF after a task/microtask producer. Unconditional two-RAF is retained separately. Superseded inputs are labelled, not claimed rendered.',
-  clockDefinition: 'Before each mouse-down, three independent native CDP probes calibrate epoch to native monotonic time; their conservative minimum offset is fixed before all 60 measured inputs are dispatched. Raw probes and immutable source clocks are retained.',
+  clockDefinition: 'Eight fixed independent Node/browser monotonic RTT probes before mouse-down choose the tightest conservative lower offset (including 0.1ms quantisation on each side, uncertainty at most 1ms). Source clocks are frozen before dispatch. Native CDP input uses no epoch timestamp. After-gesture independent bounds must overlap; all probes and source clocks are retained.',
   raw: [], failures: [] };
 mkdirSync(dirname(output), { recursive: true });
 try {
@@ -87,6 +89,7 @@ try {
   await page.mouse.move(center.x, center.y); await page.mouse.wheel(0, -400); await settle();
 
   await page.evaluate(installNodePaintObserver);
+  await page.evaluate(installNodeInputObserver);
   await page.evaluate(() => {
     const editor = window.__card._editorRuntime.nodeMove;
     const perf = window.__connectedNodePerf = { active: null, gestures: [], validateCalls: 0, pending: [] };
@@ -96,7 +99,8 @@ try {
       const delivered = event.getCoalescedEvents?.() || [];
       for (const input of delivered.length ? delivered : [event]) {
         const entry = { id: perf.active.events.length, eventTime: input.timeStamp, dispatched: performance.now(),
-          x: input.clientX, y: input.clientY, browserCoalesced: delivered.length > 1 };
+          x: input.clientX, y: input.clientY, pointerId: input.pointerId, pointerType: input.pointerType,
+          buttons: input.buttons, isTrusted: input.isTrusted, browserCoalesced: delivered.length > 1 };
         perf.active.events.push(entry); perf.pending.push(entry);
       }
     }, true);
@@ -147,32 +151,56 @@ try {
   const timeOrigin = await page.evaluate(() => performance.timeOrigin);
   report.browserTimeOrigin = timeOrigin;
   for (let gesture = 0; gesture < 8; gesture++) {
-    const clockCalibration = await calibrateNodeInputClock(page, cdp, timeOrigin);
+    const clockCalibration = await calibrateNodeInputClock(cdp);
     await down();
-    await page.evaluate(index => {
+    const pointerId = await page.evaluate(index => {
       const perf = window.__connectedNodePerf;
       const value = { index, kind: index < 3 ? 'warmup' : 'measured', started: performance.now(), events: [], samples: [], longTasks: [] };
       perf.pending = []; perf.active = value; perf.gestures.push(value);
+      return window.__card._editorRuntime.nodeMove.activePointerId;
     }, gesture);
     const targets = Array.from({ length: 60 }, (_, index) => index < 48
       ? [origin[0], origin[1] + (index + 1) / 240]
       : [upper[0], upper[1] - (index - 47) / 240]);
     const positions = await screen(targets), pending = [], inputs = [];
+    assertUniqueNodeInputPositions(positions);
     for (const position of positions) {
-      // Explicit epoch timestamps retain all 60 input clocks even when the
-      // browser coalesces native moves before JS (demo.local is not secure, so
-      // getCoalescedEvents need not be exposed). CDP's epoch-to-native offset
-      // was independently calibrated before mouse-down, never from this stream.
-      const epoch = Date.now(); inputs.push(Object.freeze({ id: inputs.length, epochMs: epoch,
-        eventTime: epoch - timeOrigin + clockCalibration.offsetMs, ...position }));
+      // Immutable send-time clocks include CDP transport and renderer queuing,
+      // even when native input is coalesced. No epoch conversion or receipt-time
+      // fitting can replace them with a later, spuriously faster timestamp.
+      const nodeTime = performance.now(); inputs.push(Object.freeze({ id: inputs.length, nodeTime,
+        eventTime: nodeTime + clockCalibration.offsetMs, pointerId, pointerType: 'mouse', buttons: 1, ...position }));
       pending.push(cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...position,
-        buttons: 1, pointerType: 'mouse', timestamp: epoch / 1000 }));
+        buttons: 1, pointerType: 'mouse' }));
       await delay(16);
     }
     await Promise.all(pending);
-    await page.waitForFunction(() => {
+    await page.waitForFunction(inputs => {
       const g = window.__connectedNodePerf.active;
-      return g.events.length > 0 && g.events.every(e => e.paintOpportunity !== undefined);
+      return window.__hpNodeInputObserver.inspect(inputs, g.events).ready;
+    }, inputs).catch(async error => {
+      // Read-only failure capture: do not lose the active gesture if an
+      // observation remains pending and the strict completion wait times out.
+      const diagnostic = await page.evaluate(() => {
+        const perf = window.__connectedNodePerf, editor = window.__card._editorRuntime.nodeMove;
+        const session = editor.session, pending = editor.pendingMove;
+        return { active: structuredClone(perf.active), pending: structuredClone(perf.pending), now: performance.now(),
+          editor: { dragging: editor.dragging, busy: editor.busy, invalid: editor.invalid,
+            moveFrame: editor.moveFrame, listening: editor.listening,
+            pendingMove: pending && { point: pending.point, axis: pending.axis, guide: pending.guide,
+              sameSession: pending.session === session },
+            session: session && { target: session.target, axis: session.axis, released: session.released,
+              pointer: session.pointer, revision: session.revision, moved: session.moved },
+            context: editor.port.context() } };
+      });
+      diagnostic.active.clockCalibration = clockCalibration;
+      diagnostic.active.sourceInputs = inputs;
+      diagnostic.active.measurementIncomplete = true;
+      report.raw.push(diagnostic.active);
+      report.timeoutDiagnostic = diagnostic;
+      report.failures.push(`gesture ${gesture}: incomplete paint observation`);
+      console.log('connected node timeout diagnostic', JSON.stringify(diagnostic));
+      throw error;
     });
     const raw = await page.evaluate(() => {
       const perf = window.__connectedNodePerf, g = perf.active;
@@ -193,8 +221,10 @@ try {
     if (raw.kind === 'measured' && raw.samples.filter(s => s.validateCalls > 0).length < 10)
       report.failures.push(`gesture ${gesture}: fewer than ten complete heavy candidates (coalesced-away workload)`);
     assert.ok(raw.samples.some(s => s.invalid) && raw.samples.some(s => !s.invalid), 'valid and unsafe-neighbour paths measured');
-    assert.ok(raw.events.every(e => e.inputToPaintMs >= 0 && e.eventTime <= e.dispatched + 1)
+    assert.ok(raw.sourceMatches.every(match => raw.events[match.observationIndex].inputToPaintMs >= 0)
       && raw.inputs.every(e => Number.isFinite(e.inputToPaintMs) && e.inputToPaintMs >= 0), 'every input retains a valid browser-clock paint latency');
+    raw.clockAfter = await calibrateNodeInputClock(cdp);
+    assertNodeClockBounds(clockCalibration, raw.clockAfter);
     await cancel();
   }
   const measured = report.raw.filter(g => g.kind === 'measured');
@@ -289,7 +319,11 @@ try {
     validateCalls: report.validateCalls, coalescedInputs: report.coalescedInputs, budgets, failures: report.failures, pass: report.pass }, null, 2));
   assert.ok(report.pass, '#834 native connected-floor performance budgets');
   await finish(browser, { writes: writes.length, rawReport: output });
+} catch (error) {
+  if (error.clockProbes) report.clockFailure = { message: error.message, probes: error.clockProbes };
+  throw error;
 } finally {
   writeFileSync(output, JSON.stringify(report, null, 2) + '\n');
+  writeNodeCiReport(report);
   await browser.close();
 }

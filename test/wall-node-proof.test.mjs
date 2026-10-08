@@ -10,6 +10,9 @@ import { innerContourForRoom, wallBodiesGeometry } from '../test-build/wall-thic
 import { GRID_STEP_N, GRID_PITCH, NORM_W } from '../test-build/space-geometry.js';
 import { wallQuadCovered } from '../test-build/wall-quad-coverage.js';
 import { geometryArea } from '../test-build/physical-geometry.js';
+import { subtractNodeRoomMasonry } from '../test-build/wall-node-room-floor.js';
+import { withWallBooleanBaseline } from '../test-build/wall-boolean-cache.js';
+import { WallBooleanBaseline } from '../test-build/wall-boolean-baseline.js';
 
 const connected = JSON.parse(readFileSync(new URL('./fixtures/834-node-connected.json', import.meta.url)));
 const distanceToContour = (point, contour) => Math.min(...contour.map((a, i) => {
@@ -144,5 +147,54 @@ test('834 Select-only covered-quad optimization preserves the ordinary View bool
     const a = canonical[key], b = optimized[key];
     assert.deepEqual(a.map(p => p.length).sort((x, y) => x - y), b.map(p => p.length).sort((x, y) => x - y));
     assert.ok(Math.abs(geometryArea(a) - geometryArea(b)) <= Math.max(1, geometryArea(a)) * 1e-9, `${key}: material unchanged`);
+  }
+});
+
+test('834 lazy floor subtraction receives normalized uncut masonry, not visible geometry or scene data', () => {
+  const space = twoRooms();
+  space.openings = [{ id: 'door', type: 'door', x: .3, y: 0, length: .1, angle: 0 }];
+  const preview = buildNodePreview(space), shared = nodePreviewJunctionGeometry(preview);
+  assert.strictEqual(shared.subtractRoomMasonry, subtractNodeRoomMasonry);
+  const saved = structuredClone(shared.roomGeom), config = { spaces: [space] }, walls = structuralNodeWalls(space);
+  const expected = junctionLimitViolations(config, space.id, walls, { ...shared, subtractRoomMasonry: undefined });
+  let calls = 0;
+  const actual = junctionLimitViolations(config, space.id, walls, { ...shared, subtractRoomMasonry: (subject, clipping) => {
+    calls++;
+    assert.strictEqual(clipping, shared.roomGeom, 'no accidental cut-geometry, render-unit or scene-cache substitution');
+    assert.notDeepEqual(clipping, preview.geometry.geom);
+    assert.ok(subject.flat(2).every(value => Math.abs(value) < 10), 'room operand uses normalized proof coordinates');
+    return subtractNodeRoomMasonry(subject, clipping);
+  } });
+  assert.equal(calls, 2, 'both guarded room floors actually use the port');
+  assert.deepEqual(actual, expected);
+  assert.ok(actual.some(v => v.rule === 'clearance' && v.subject === 'small' && v.actual < 25));
+  assert.deepEqual(shared.roomGeom, saved, 'the shared guard artifact stays immutable');
+});
+
+test('834 all 100 connected positions keep exact old floor boundaries and junction verdicts', () => {
+  const space = connected.spaces[0], nodes = structuralWallNodes(space), point = [-401 / 240, 928 / 240];
+  const node = nodes.find(n => n.point.every((v, i) => Math.abs(v - point[i]) < 1e-8));
+  const plan = prepareNodeMove(space, node, nodes, {}), cache = new WallBooleanBaseline();
+  withWallBooleanBaseline(cache, true, () => buildNodePreview(space));
+  for (let offset = 1; offset <= 100; offset++) {
+    const result = applyNodeMove(plan, [point[0], point[1] + offset / 240], null);
+    assert.ok(result.ok); canonicalizeConfigGeometryInPlace({ spaces: [result.space] });
+    const preview = withWallBooleanBaseline(cache, false, () => buildNodePreview(result.space));
+    const shared = nodePreviewJunctionGeometry(preview), config = { spaces: [result.space] }, walls = structuralNodeWalls(result.space);
+    assert.ok(shared, `${offset}: successful canonical masonry`);
+    const oldFloors = new Map();
+    const expected = junctionLimitViolations(config, result.space.id, walls, { ...shared, subtractRoomMasonry: undefined,
+      onRoomInnerContour: (id, contour) => oldFloors.set(id, contour),
+    });
+    const actual = junctionLimitViolations(config, result.space.id, walls, shared);
+    assert.deepEqual(actual, expected, `${offset}: unchanged guard decisions and physical metrics`);
+    for (const [id, original] of oldFloors) {
+      const copied = preview.renderRoomContours.get(id), local = copied?.map(p => p.map(value => value / NORM_W));
+      assert.equal(!!local, !!original);
+      if (local && original) {
+        assert.ok(local.every(p => distanceToContour(p, original) < 1e-9), `${offset}/${id}: no new floor boundary`);
+        assert.ok(original.every(p => distanceToContour(p, local) < 1e-9), `${offset}/${id}: no old floor boundary lost`);
+      }
+    }
   }
 });
