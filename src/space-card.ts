@@ -11,6 +11,8 @@ import { buildSpaceDevices, renderSpaceStatic, spaceModels } from './space-rende
 import { resolveDeviceAreaRelocations } from './device-area-relocation';
 import { resolveSpaceCardFit, type SpaceCardFit } from './space-geometry';
 import { getConfig, onConfigChange, cachedSnapshot, type HpConfigSnapshot } from './config-store';
+import { CardReadLifecycle } from './card-read-lifecycle';
+import { configReloadContext } from './config-reload-authority';
 import { t, langOf, type Lang } from './i18n';
 import { LANGUAGE_RUNTIME } from './i18n/registry';
 import { languageLoadingTemplate, languageRenderGate } from './i18n/language-runtime';
@@ -85,6 +87,8 @@ class HouseplanSpaceCard extends LitElement {
   private _config?: SpaceCardConfig;
   private _snap: HpConfigSnapshot | null = null;
   private _loading = false;
+  private readonly _read = new CardReadLifecycle();
+  private _attachReload = false;
   private _reloadQueued = false;
   private _forceReloadQueued = false;
   private _reloadRetryTimer = 0;
@@ -107,7 +111,6 @@ class HouseplanSpaceCard extends LitElement {
   private _continuityUnsub?: () => void;
   private _continuityEpoch = 0;
   private _continuityDataReady = true;
-  private _continuityPaintToken = -1;
   private _continuityDisposed = false;
   private _renderSnapshotAt = Date.now();
   private _hassSequence = 0;
@@ -115,7 +118,7 @@ class HouseplanSpaceCard extends LitElement {
   private _connectionWasLost = false;
   private _visibleDeviceSnapshot: RenderDeviceSnapshot | null = null;
   private _candidateDeviceSnapshot: RenderDeviceSnapshot | null = null;
-  private _stagedDeviceSnapshotToken = -1;
+  private _stagedToken = -1;
   private _capturedSnapshotSequence = -1;
   private _capturedSnapshotDevices: DevItem[] | null = null;
   private _capturedSnapshotActivity = '';
@@ -244,14 +247,12 @@ class HouseplanSpaceCard extends LitElement {
     }
     if (Date.now() - this._renderSnapshotAt > 1000) this._continuity.note('device-snapshot-stale');
     this._continuityDataReady = false;
-    this._continuityPaintToken = -1;
     void this._load(true);
   };
 
   private _onConnLost = (): void => {
     this._connectionWasLost = true;
     this._continuityDataReady = false;
-    this._continuityPaintToken = -1;
     this._continuity.connectionLost();
   };
 
@@ -262,7 +263,6 @@ class HouseplanSpaceCard extends LitElement {
       this._beginContinuityCandidate('connection-ready', false, 'plan');
     } else {
       this._continuityDataReady = false;
-      this._continuityPaintToken = -1;
     }
     void this._load(true);
   };
@@ -302,6 +302,9 @@ class HouseplanSpaceCard extends LitElement {
       throw new Error('houseplan-space-card: "space" is required');
     }
     if (this._config?.space !== config.space) {
+      this._read.invalidate(); this._loading = false;
+      this._attachReload = true;
+      if (this._continuity.hasCompleteFrame) this._beginContinuityCandidate('space', this._loadedOnce);
       disposeGlowRuntime(this._glowRuntimeState, this._glowRuntimeHost);
       ledRelease(this._glowRuntimeState);
     }
@@ -329,9 +332,9 @@ class HouseplanSpaceCard extends LitElement {
     if (this._continuityDisposed) {
       this._continuity = this._newContinuityController();
       this._continuityDisposed = false;
-      this._continuityPaintToken = -1;
     }
     super.connectedCallback();
+    this._attachReload = true;
     this._pointerModality.connect(this.ownerDocument.defaultView);
     this._motionMedia = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     this._reducedMotion = !!this._motionMedia?.matches;
@@ -341,15 +344,19 @@ class HouseplanSpaceCard extends LitElement {
     this._continuityUnsub?.();
     this._continuityUnsub = subscribePageVisibility(this.ownerDocument, this._pageVisibility);
     this._unsub = onConfigChange(() => {
+      this._read.invalidate(); this._loading = false;
       this._beginContinuityCandidate('config-event', false);
-      this._reloadQueued = true;
       void this._load();
     });
     // a dashboard on a wall tablet outlives a 24 h signature
     this._signer.start(() => this.hass, () => this._referenced());
+    if (this.hass?.callWS) void this._load(true);
   }
 
   public disconnectedCallback(): void {
+    this._read.invalidate(); this._loading = false;
+    this._attachReload = false;
+    this._reloadQueued = false; this._forceReloadQueued = false;
     this._pointerModality.disconnect();
     this._continuityUnsub?.();
     this._continuityUnsub = undefined;
@@ -403,9 +410,13 @@ class HouseplanSpaceCard extends LitElement {
       this._continuity.note('hass-snapshot');
       this._ensureHaRegistryAuthority();
       this._hookConnection();
+      if (this._read.observe(configReloadContext(this))) {
+        this._loading = false; this._attachReload = true;
+      }
     }
-    if (this.hass && !this._loading && (!this._snap || changed.has('hass'))) {
-      if (!this._snap || !this._loadedOnce) this._load();
+    if (this.isConnected && this.hass?.callWS && !this._loading
+        && (this._attachReload || !this._loadedOnce)) {
+      void this._load(this._attachReload);
     }
     if (changed.has('hass') || changed.has('_snap') || changed.has('_config') || !this._devices.length) {
       this._refreshDevices();
@@ -575,7 +586,7 @@ class HouseplanSpaceCard extends LitElement {
   private get _renderDeviceSnapshot(): RenderDeviceSnapshot | null {
     return selectRenderDeviceSnapshot(
       this._visibleDeviceSnapshot, this._candidateDeviceSnapshot,
-      this._stagedDeviceSnapshotToken === this._continuity.token, this._snapshotGeometry(),
+      this._stagedToken === this._continuity.token, this._snapshotGeometry(),
     );
   }
 
@@ -585,8 +596,7 @@ class HouseplanSpaceCard extends LitElement {
     recoveryReason: 'plan' | 'connection' | 'stage-size' | 'asset' = 'plan',
   ): number {
     this._continuityDataReady = dataReady;
-    this._continuityPaintToken = -1;
-    this._stagedDeviceSnapshotToken = -1;
+    this._stagedToken = -1;
     return this._continuity.beginCandidate(reason, recoveryReason);
   }
 
@@ -625,7 +635,7 @@ class HouseplanSpaceCard extends LitElement {
     return !!stage && stage.clientWidth > 0 && stage.clientHeight > 0;
   }
 
-  private _settleContinuityFrame(): void {
+  private _settleContinuityFrame(externalUpdate: boolean): void {
     if (!this._stageValid()) return;
     if (!this._continuity.hasCompleteFrame && this._continuity.state === 'steady') {
       if (!this._assetsReady()) this._beginContinuityCandidate('asset-wait', true, 'asset');
@@ -641,13 +651,12 @@ class HouseplanSpaceCard extends LitElement {
     const token = this._continuity.token;
     if (this._candidateDeviceSnapshot
         && this._candidateDeviceSnapshot !== this._visibleDeviceSnapshot
-        && this._stagedDeviceSnapshotToken !== token) {
-      this._stagedDeviceSnapshotToken = token;
+        && this._stagedToken !== token) {
+      this._stagedToken = token;
       this.requestUpdate();
       return;
     }
-    if (this._continuityPaintToken === token) return;
-    this._continuityPaintToken = token;
+    if (!this._continuity.canAttemptPaint(externalUpdate, this._assetsReady())) return;
     if (!this._continuity.candidateReady(token)) return;
     void this._continuity.commitAfterPaint(token, {
       updateComplete: () => this.updateComplete,
@@ -656,29 +665,24 @@ class HouseplanSpaceCard extends LitElement {
       frameFingerprint: () => this._frameFingerprint(),
     }).then((committed) => {
       if (!committed || token !== this._continuity.token) {
-        if (token === this._continuity.token) {
-          this._continuityPaintToken = -1;
-          this._stagedDeviceSnapshotToken = -1;
-          this._candidateDeviceSnapshot = null;
-          this.requestUpdate();
-        }
+        // #824: keep the matching staged pair, without a self-driven retry.
         return;
       }
       this._renderSnapshotAt = Date.now();
       if (this._candidateDeviceSnapshot) this._visibleDeviceSnapshot = this._candidateDeviceSnapshot;
       this._candidateDeviceSnapshot = null;
-      this._stagedDeviceSnapshotToken = -1;
+      this._stagedToken = -1;
     });
   }
 
   private _onAssetLoaded = (raw: string, paintedUrl: string): void => {
     this._signer.markLoaded(this.hass, raw, paintedUrl);
     this._continuity.note('asset-ready');
-    this._continuityPaintToken = -1;
+    this._continuity.resetPaint();
     if (this._continuity.state !== 'steady') this.requestUpdate();
   };
 
-  protected updated(): void {
+  protected updated(changed: PropertyValues): void {
     const stage = this.renderRoot.querySelector<HTMLElement>('.hp-static-stage') || undefined;
     if (stage !== this._observedStage) {
       this._stageObserver?.disconnect();
@@ -719,21 +723,28 @@ class HouseplanSpaceCard extends LitElement {
       }
     }
     this._syncDayCycleClock();
-    this._settleContinuityFrame();
+    this._settleContinuityFrame(!changed.has('_continuityEpoch') || changed.size > 1);
   }
 
   private _loadedOnce = false;
   private async _load(force = false): Promise<void> {
-    if (!this.hass) return;
+    if (!this.isConnected || typeof this.hass?.callWS !== 'function') return;
     if (this._loading) {
       this._reloadQueued = true;
       this._forceReloadQueued ||= force;
       return;
     }
+    const loadClaim = this._read.begin(configReloadContext(this));
+    if (!loadClaim) return;
+    const hass = this.hass;
+    const isCurrent = () => this.isConnected && this._read.isCurrent(loadClaim)
+      && !this._read.observe(configReloadContext(this));
+    this._attachReload = false;
     this._loading = true;
     this._reloadQueued = false;
     try {
-      const snap = await getConfig(this.hass, force);
+      const snap = await getConfig(hass, force);
+      if (!isCurrent()) return;
       const configChanged = !this._snap
         || this._snap.configFingerprint !== snap.configFingerprint;
       const layoutChanged = !this._snap
@@ -747,9 +758,11 @@ class HouseplanSpaceCard extends LitElement {
         // by the incoming visual candidate cannot yet be prepared.
         this._decorAssets = new Map();
       }
-      if (configChanged && !await this._signer.prepareImage(
-        this.hass, this._candidateBackdrop(snap.config),
-      )) {
+      const assetReady = !configChanged || await this._signer.prepareImage(
+        hass, this._candidateBackdrop(snap.config),
+      );
+      if (!isCurrent()) return;
+      if (!assetReady) {
         this._continuity.note('asset-failed');
         window.clearTimeout(this._reloadRetryTimer);
         this._reloadRetryTimer = window.setTimeout(() => void this._load(true), 1000);
@@ -771,11 +784,12 @@ class HouseplanSpaceCard extends LitElement {
       if (configChanged) this._continuity.note('config-candidate', { configRev: snap.rev });
       if (snap.decorAssetsApi === DECOR_ASSETS_API_VERSION) {
         try {
-          this._decorAssets = await resolveDecorAssets(
-            this.hass, decorAssetIds(snap.config), snap.rev,
-          );
+          const assets = await resolveDecorAssets(hass, decorAssetIds(snap.config), snap.rev);
+          if (!isCurrent()) return;
+          this._decorAssets = assets;
         } catch { /* retain the last complete frame; failed sets are not cached and retry next load */ }
       }
+      if (!isCurrent()) return;
       if (layoutChanged) this._continuity.note('layout-candidate', { layoutRev: snap.layoutRev });
       if (virtualLightsChanged) this._capturedSnapshotSequence = -1;
       this._loadedOnce = true;
@@ -785,6 +799,7 @@ class HouseplanSpaceCard extends LitElement {
     } catch {
       /* keep any localStorage snapshot */
     } finally {
+      if (!this._read.finish(loadClaim)) return;
       this._loading = false;
       // A failed signing/decode attempt is still a completed candidate attempt;
       // the paint barrier decides whether to keep the stale frame or show the
@@ -841,7 +856,6 @@ class HouseplanSpaceCard extends LitElement {
 
   private _retryContinuity = (): void => {
     this._continuityDataReady = false;
-    this._continuityPaintToken = -1;
     this._continuity.retry(this._continuity.recoveryReason || 'plan');
     void this._load(true);
   };

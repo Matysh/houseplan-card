@@ -152,6 +152,19 @@ belongs to the nightly gate. No rendering, input or model migration is involved.
 
 ## Input support contract
 
+For View recovery (#824), run `node demo/smoke_view_recovery.mjs` after
+`npm run bundle:sync`. It exercises missed config/layout events while detached,
+short/long/cold return with late HA, the real bounded paint timeout in both
+cards, and held stale responses under connection/placement/floor replacement.
+No private state is written to simulate a successful load or controller timeout.
+The historical beta.8 checkout is the negative control, not a development-time
+mutation run. Node ownership/controller tests complement, not replace, those
+mounted caller witnesses. Run existing continuity, warm/dialog/owner/navigation,
+static identity, kiosk/touch smokes and golden verification without accepting
+new baselines. Preserve fixed-floor selection, readonly static input and bundle
+ratchets; six browser mutation declarations are inventoried and two pure
+controller guards stay cheap. Execute only `mutation-gate --check` locally.
+
 Read `docs/TOUCH-SUPPORT.md` before changing interaction code.
 
 - View and kiosk must work well on touch and remain release-blocking surfaces.

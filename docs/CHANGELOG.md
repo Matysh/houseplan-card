@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- View: embedded space cards refresh missed plan/device-position changes on
+  return. A long return before Home Assistant is ready now waits safely.
+  A rendering timeout no longer pairs new walls and doors with old device
+  states; recovery can finish without another HA update
+  ([#824](https://github.com/Matysh/houseplan-card/issues/824)).
 - Plan / Select: moving a wall node no longer rejects an unchanged far-end
   connection merely because formerly straight walls become angled. Live
   preview and warnings no longer stick or duplicate after HA updates. The

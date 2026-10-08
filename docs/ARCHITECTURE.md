@@ -586,6 +586,13 @@ still recognised in stored config but no longer served
   body only while that failed candidate is still current (#442, #500).
 - `src/config-reload-authority.ts` (#543): each reload holds a generation-scoped
   claim; a superseded one ends with no side effect.
+- `src/card-read-lifecycle.ts` (#824) owns ephemeral full-read transport claims
+  for both cards, independent of visual HA deduplication. Disconnect/context
+  replacement/navigation fence every awaited adoption and optional tail.
+  Static attach revalidates the server; a full long return without HA defers.
+  The shared continuity controller owns one bounded paint attempt. A timeout
+  retains matching staged data without marking a complete frame or self-retry;
+  external readiness/update can recover. Canonical: `WARM-REMOUNT.md` §5.1.
 - `ContentSigner` (`src/signing.ts`) is the only signer for both cards:
   `MAX_SIGN_PATHS` (200) is shared with `const.py`; the cache is age-aware and
   pruned to live URLs; queued/in-flight are distinct, failures back off and

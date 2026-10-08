@@ -44,7 +44,7 @@ export interface ConfigReloadEventReservation {
   readonly observedRevision: number;
 }
 
-const sameContext = (left: ConfigReloadContext, right: ConfigReloadContext): boolean =>
+export const sameReloadContext = (left: ConfigReloadContext, right: ConfigReloadContext): boolean =>
   left.connection === right.connection
   && left.userId === right.userId
   && left.route === right.route;
@@ -68,7 +68,7 @@ export class ConfigReloadAuthority {
       this.context = { ...next };
       return;
     }
-    if (sameContext(this.context, next)) return;
+    if (sameReloadContext(this.context, next)) return;
     this.context = { ...next };
     this.invalidateLifecycle();
   }
@@ -119,7 +119,7 @@ export class ConfigReloadAuthority {
     const acceptedRevision = finiteRevision(accepted) ?? Number.NEGATIVE_INFINITY;
     return reservation.sequence === this.currentSequence
       && reservation.lifecycle === this.lifecycle
-      && sameContext(reservation.context, context)
+      && sameReloadContext(reservation.context, context)
       && reservation.observedRevision === this.observedHighWater
       && reservation.observedRevision > acceptedRevision;
   }
@@ -156,7 +156,7 @@ export class ConfigReloadAuthority {
       && (claim.force || !state.writePending)
       && claim.sequence === this.currentSequence
       && claim.lifecycle === this.lifecycle
-      && sameContext(claim.context, state.context)
+      && sameReloadContext(claim.context, state.context)
       && claim.baselineRevision === state.baselineRevision
       && claim.baselineFingerprint === state.baselineFingerprint;
   }
@@ -204,7 +204,7 @@ export const configReloadContext = (
   };
 };
 
-const claimCurrent = (host: ConfigReloadHostPort, claim: ConfigReloadClaim): boolean =>
+export const configReloadClaimCurrent = (host: ConfigReloadHostPort, claim: ConfigReloadClaim): boolean =>
   host._configReloadAuthority.isCurrent({
     claim,
     context: configReloadContext(host),
@@ -212,6 +212,14 @@ const claimCurrent = (host: ConfigReloadHostPort, claim: ConfigReloadClaim): boo
     baselineRevision: host._cfgRev,
     baselineFingerprint: host._adoption.currentConfigFingerprint(),
     writePending: host._saveConfigDebounced.pending() || host._cfgWriting,
+  });
+
+export const beginConfigReload = (host: ConfigReloadHostPort, force = false): ConfigReloadClaim =>
+  host._configReloadAuthority.begin({
+    force,
+    context: configReloadContext(host),
+    baselineRevision: host._cfgRev,
+    baselineFingerprint: host._adoption.currentConfigFingerprint(),
   });
 
 /**
@@ -243,13 +251,8 @@ export async function reloadConfigOnly(
       return;
     }
   }
-  const claim = owner.begin({
-    force,
-    context: configReloadContext(host),
-    baselineRevision: host._cfgRev,
-    baselineFingerprint: host._adoption.currentConfigFingerprint(),
-  });
-  const isCurrent = (): boolean => claimCurrent(host, claim);
+  const claim = beginConfigReload(host, force);
+  const isCurrent = (): boolean => configReloadClaimCurrent(host, claim);
   let settleCurrentAttempt = false;
   try {
     const resp = await host._getAuthoritativeConfig();

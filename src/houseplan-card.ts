@@ -119,11 +119,13 @@ import {
 } from './config-adoption';
 import { recoverConfigWriteConflict } from './config-write-conflict';
 import {
+  beginConfigReload, configReloadClaimCurrent,
   configReloadContext,
   ConfigReloadAuthority,
   reloadConfigOnly,
   type ConfigReloadHostPort,
 } from './config-reload-authority';
+import { CardReadLifecycle } from './card-read-lifecycle';
 import type { OptimisticAttempt } from './serialized-write-queue';
 import {
   COLUMN_MAX_CM, directionalOccluders, floorMinusBodies, geometryOuterRings,
@@ -834,6 +836,7 @@ export class HouseplanCard extends LitElement {
   private _liveSyncConnection: any = null;
   /** #543: only the newest live-context config read may cross adoption. */
   private readonly _configReloadAuthority = new ConfigReloadAuthority();
+  private readonly _read = new CardReadLifecycle();
   private _virtualLights: VirtualLightSnapshot = virtualLightSnapshot(null);
   /** One-deep server snapshot; invalidated by the first later plan edit. */
   private _canOptimizeUndo = false;
@@ -1445,6 +1448,8 @@ export class HouseplanCard extends LitElement {
   private _commitSpace(id: string, authority = false): boolean {
     if (!this._canCommitSpace(id, authority)) return false;
     if (id !== this._space) {
+      if (!authority) { this._read.invalidate(); this._loading = false;
+        if (this._continuity.state !== 'steady') this._beginContinuityCandidate('space', true); }
       this._cancelPendingWarmMode();
       this._clearRoomFocus(true);
       this._resetDeviceHitState();
@@ -2262,13 +2267,12 @@ export class HouseplanCard extends LitElement {
   private _languageFailureUnsub?: () => void;
   private _continuityEpoch = 0;
   private _continuityDataReady = true;
-  private _continuityPaintToken = -1;
   private _continuityDisposed = false;
   private _renderSnapshotAt = Date.now();
   private _hassSequence = 0;
   private _visibleDeviceSnapshot: RenderDeviceSnapshot | null = null;
   private _candidateDeviceSnapshot: RenderDeviceSnapshot | null = null;
-  private _stagedDeviceSnapshotToken = -1;
+  private _stagedToken = -1;
   private _capturedSnapshotSequence = -1;
   private _capturedSnapshotDevices: DevItem[] | null = null;
   private _capturedSnapshotLayout: Record<string, { x: number; y: number; s?: string; k?: number }> | null = null;
@@ -2327,7 +2331,6 @@ export class HouseplanCard extends LitElement {
     // and revalidate config+layout as one structural pair.
     if (Date.now() - this._renderSnapshotAt > 1000) this._continuity.note('device-snapshot-stale');
     this._continuityDataReady = false;
-    this._continuityPaintToken = -1;
     this._resumeSettling = true;
     if (!this._loading) void this._loadFromServer();
     else this.requestUpdate();
@@ -2577,7 +2580,6 @@ export class HouseplanCard extends LitElement {
     if (this._continuityDisposed) {
       this._continuity = this._newContinuityController();
       this._continuityDisposed = false;
-      this._continuityPaintToken = -1;
     }
     const resolvedBlend = resolvedSvgScreenBlend(this.ownerDocument);
     if (resolvedBlend !== undefined) this._glowScreenBlend = resolvedBlend;
@@ -2674,6 +2676,7 @@ export class HouseplanCard extends LitElement {
     // A same-element reconnect is a new lifecycle even when HA reuses the
     // Connection object and the route/user strings happen to match (#543).
     this._configReloadAuthority.invalidateLifecycle();
+    this._read.invalidate(); this._loading = false;
     this._liveRt?.dispose();
     this._radarLive.stop();
     this._editorRuntime?._disposeLiveEditor();
@@ -3158,6 +3161,8 @@ export class HouseplanCard extends LitElement {
   }
 
   public setConfig(config: CardConfig): void {
+    this._read.invalidate(); this._loading = false;
+    this._configReloadAuthority.invalidateLifecycle();
     const previousConfig = this._config;
     const previousFixed = !!previousConfig
       && Object.prototype.hasOwnProperty.call(previousConfig, 'floor');
@@ -3623,8 +3628,7 @@ export class HouseplanCard extends LitElement {
     // that has already been complete at least once.
     if (this._booting && !this._continuity.hasCompleteFrame) return this._continuity.token;
     this._continuityDataReady = dataReady;
-    this._continuityPaintToken = -1;
-    this._stagedDeviceSnapshotToken = -1;
+    this._stagedToken = -1;
     this._resumeSettling = true;
     return this._continuity.beginCandidate(reason, recoveryReason);
   }
@@ -3703,7 +3707,7 @@ export class HouseplanCard extends LitElement {
   }
 
   /** Called from updated(): one token owns at most one paint barrier. */
-  private _settleContinuityFrame(): void {
+  private _settleContinuityFrame(externalUpdate: boolean): void {
     if (this._booting || !this._continuityStageValid()) return;
     if (!this._continuity.hasCompleteFrame && this._continuity.state === 'steady') {
       // Cold start belongs to the boot veil. Do not replace it with a recovery
@@ -3720,13 +3724,12 @@ export class HouseplanCard extends LitElement {
     const token = this._continuity.token;
     if (this._candidateDeviceSnapshot
         && this._candidateDeviceSnapshot !== this._visibleDeviceSnapshot
-        && this._stagedDeviceSnapshotToken !== token) {
-      this._stagedDeviceSnapshotToken = token;
+        && this._stagedToken !== token) {
+      this._stagedToken = token;
       this.requestUpdate();
       return;
     }
-    if (this._continuityPaintToken === token) return;
-    this._continuityPaintToken = token;
+    if (!this._continuity.canAttemptPaint(externalUpdate, this._continuityAssetsReady())) return;
     if (!this._continuity.candidateReady(token)) return;
     void this._continuity.commitAfterPaint(token, {
       updateComplete: () => this.updateComplete,
@@ -3735,19 +3738,15 @@ export class HouseplanCard extends LitElement {
       frameFingerprint: () => this._visualFrameFingerprint(),
     }).then((committed) => {
       if (!committed || token !== this._continuity.token) {
-        if (token === this._continuity.token) {
-          this._continuityPaintToken = -1;
-          this._stagedDeviceSnapshotToken = -1;
-          this._candidateDeviceSnapshot = null;
-          this.requestUpdate();
-        }
+        // Matching staged data belongs to the adopted geometry, even when
+        // paint times out. No automatic retry or old-snapshot fallback (#824).
         return;
       }
       this._resumeSettling = false;
       this._renderSnapshotAt = Date.now();
       if (this._candidateDeviceSnapshot) this._visibleDeviceSnapshot = this._candidateDeviceSnapshot;
       this._candidateDeviceSnapshot = null;
-      this._stagedDeviceSnapshotToken = -1;
+      this._stagedToken = -1;
       this._warmSnapshot();
     });
   }
@@ -3755,13 +3754,12 @@ export class HouseplanCard extends LitElement {
   private _onBackdropLoaded(raw: string, paintedUrl?: string): void {
     this._signer.markLoaded(this.hass, raw, paintedUrl);
     this._continuity.note('asset-ready');
-    this._continuityPaintToken = -1;
+    this._continuity.resetPaint();
     if (this._continuity.state !== 'steady') this.requestUpdate();
   }
 
   private _retryContinuity = (): void => {
     this._continuityDataReady = false;
-    this._continuityPaintToken = -1;
     this._continuity.retry(this._continuity.recoveryReason || 'plan');
     if (!this._loading) void this._loadFromServer();
   };
@@ -4061,6 +4059,13 @@ export class HouseplanCard extends LitElement {
       // Observe every user/connection transition, including A→B→A while an
       // old promise is waiting. Equality at completion must not revive it.
       this._configReloadAuthority.observeContext(configReloadContext(this));
+      const waiting = this._read.busy || this._read.pending;
+      if (this.hass?.callWS && this._read.observe(configReloadContext(this))) {
+        this._loading = false; if (waiting) this._read.defer();
+      }
+      // A reused HA object can be deduplicated by visual intake after detach.
+      // Deferred transport intent is independent of that frame identity.
+      if (this._read.pending) void this._loadFromServer();
     }
     // `_serverCfg` is the root of every geometry cache. Keep the epoch
     // invariant local to that reactive assignment so imports, reconnects and
@@ -4097,7 +4102,7 @@ export class HouseplanCard extends LitElement {
     }
     this._captureRenderDeviceSnapshot();
   }
-  protected updated(): void {
+  protected updated(changed: PropertyValues): void {
     if (this._isoFirstFrame.sync(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes), () => parseCssColor(this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)')) ?? [17, 17, 17])) this.requestUpdate(); this._summary?.updated(); this._liveRt?.commit(); this._headerMenu.revealActiveTab();
     this._editorRuntime?._commitLiveEditor();
     this._pruneDevicePressFeedback();
@@ -4160,7 +4165,7 @@ export class HouseplanCard extends LitElement {
     }
     if (stage && !this._view) this._refitView();
     this._editorSecondary?.afterRender();
-    this._settleContinuityFrame();
+    this._settleContinuityFrame(!changed.has('_continuityEpoch') || changed.size > 1);
     // onboarding: on an empty server config, open the space dialog right away
     if (
       this._serverStorage &&
@@ -4246,6 +4251,14 @@ export class HouseplanCard extends LitElement {
   }
 
   private async _loadFromServer(): Promise<void> {
+    if (!this.isConnected) return;
+    if (typeof this.hass?.callWS !== 'function') { this._read.defer(); return; }
+    const loadClaim = this._read.begin(configReloadContext(this));
+    if (!loadClaim) return;
+    const hass = this.hass;
+    const port = this as unknown as ConfigReloadHostPort;
+    const claim = beginConfigReload(port);
+    const isCurrent = () => this._read.isCurrent(loadClaim) && configReloadClaimCurrent(port, claim);
     this._loading = true;
     this._loadTries++;
     const visibleSpace = this._space;
@@ -4262,10 +4275,10 @@ export class HouseplanCard extends LitElement {
     try {
       const [cfgResp, layResp] = await Promise.all([
         this._getAuthoritativeConfig(),
-        this.hass.callWS({ type: 'houseplan/layout/get' }),
+        hass.callWS({ type: 'houseplan/layout/get' }),
       ]);
       const adopted = await this._adoptAuthoritative({
-        cfgResp, layResp, reason: 'structural-response', profile: 'reload',
+        cfgResp, layResp, reason: 'structural-response', profile: 'reload', isCurrent,
         beforeAdopt: () => {
           this._connectionWasLost = false;
           this._serverStorage = true;
@@ -4294,11 +4307,12 @@ export class HouseplanCard extends LitElement {
       // Trails and event subscriptions enrich an already complete snapshot.
       // A read-only HA session may reject these; that must never roll the
       // accepted config back into the mandatory load catch.
-      void this.hass.callWS({ type: 'houseplan/trail/get' })
-        .then((r: any) => { this._vacSrvTrails = r?.trails || {}; this.requestUpdate(); })
+      void hass.callWS({ type: 'houseplan/trail/get' })
+        .then((r: any) => { if (this.isConnected && this._read.isCurrent(loadClaim) && this.hass?.connection === hass.connection) { this._vacSrvTrails = r?.trails || {}; this.requestUpdate(); } })
         .catch(() => undefined);
       this._ensureLiveSyncSubscriptions();
     } catch (e) {
+      if (!isCurrent()) return;
       if (this._serverCfg) {
         // DEV-B703-02: this instance already RENDERS a valid config (the LS
         // snapshot, or an earlier successful load). A failing socket is a
@@ -4320,7 +4334,10 @@ export class HouseplanCard extends LitElement {
       // fewer than 8 tries with nothing shown yet: silently wait for the
       // next hass update (WS warm-up)
     } finally {
+      const ownsTail = devicesRebuilt || isCurrent();
+      if (!this._read.finish(loadClaim)) return;
       this._loading = false;
+      if (!ownsTail) return;
       // Readiness belongs to the candidate attempt, including a bounded asset
       // failure. Leaving it false on an early return stranded the controller
       // before its own two-second barrier could ever start.
@@ -4669,7 +4686,7 @@ export class HouseplanCard extends LitElement {
     // #813: the held projection is painted only with the geometry it was captured for.
     return selectRenderDeviceSnapshot(
       this._visibleDeviceSnapshot, this._candidateDeviceSnapshot,
-      this._stagedDeviceSnapshotToken === this._continuity.token, this._cfgEpoch,
+      this._stagedToken === this._continuity.token, this._cfgEpoch,
     );
   }
 
@@ -4773,7 +4790,6 @@ export class HouseplanCard extends LitElement {
     } else {
       // A confirmed loss already owns the connection candidate/token.
       this._continuityDataReady = false;
-      this._continuityPaintToken = -1;
     }
     if (this._loading) return;
     // Re-read config and layout as one mandatory candidate. Optional live-sync
@@ -4787,7 +4803,6 @@ export class HouseplanCard extends LitElement {
     if (this._booting && !this._continuity.hasCompleteFrame) return;
     this._connectionWasLost = true;
     this._continuityDataReady = false;
-    this._continuityPaintToken = -1;
     this._continuity.connectionLost();
   };
   private _hookConnection(): void {
@@ -7453,6 +7468,7 @@ export class HouseplanCard extends LitElement {
     this._routeDepartureHandled = true;
     this._cancelPendingWarmMode();
     this._configReloadAuthority.invalidateLifecycle();
+    this._read.invalidate(); this._loading = false;
     this._summary?.leaveRoute();
     this._clearRoomFocus(true); this._cancelDangerConfirm();
     // The destination page cannot display this decorative transition and may

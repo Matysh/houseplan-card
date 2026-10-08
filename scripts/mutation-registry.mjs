@@ -77,6 +77,88 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'space-reattach-skips-authoritative-read',
+    guard: 'node demo/smoke_view_recovery.mjs',
+    because: '#824 AC1 crosses real custom-element detach/attach and missed HA events: '
+      + 'the same loaded static card must read authoritative config/layout and paint four rooms becoming three.',
+    patches: [{
+      file: 'src/space-card.ts',
+      find: '    super.connectedCallback();\n    this._attachReload = true;',
+      replace: '    super.connectedCallback();\n    this._attachReload = !this._loadedOnce;',
+    }, {
+      file: 'src/space-card.ts',
+      find: '    if (this.hass?.callWS) void this._load(true);',
+      replace: '    if (this.hass?.callWS && !this._loadedOnce) void this._load(true);',
+    }],
+  },
+  {
+    id: 'full-resume-forgets-late-hass',
+    guard: 'node demo/smoke_view_recovery.mjs',
+    because: '#824 AC2 requires actual placement tombstone ageing and Lit hass intake: '
+      + 'a long return before HA exists must defer exactly one real config/layout read without a page error.',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    if (typeof this.hass?.callWS !== 'function') { this._read.defer(); return; }",
+      replace: "    if (typeof this.hass?.callWS !== 'function') { return; }",
+    }],
+  },
+  ...['full', 'space'].map((kind) => ({
+    id: `${kind}-timeout-drops-matching-projection`,
+    guard: 'node demo/smoke_view_recovery.mjs',
+    because: '#824 AC3 waits for the mounted card/controller physical paint barrier to time out: '
+      + 'new closed-door geometry must retain its matching candidate, not consume the old live projection.',
+    patches: [{
+      file: kind === 'full' ? 'src/houseplan-card.ts' : 'src/space-card.ts',
+      find: '      if (!committed || token !== this._continuity.token) {',
+      replace: '      if (!committed || token !== this._continuity.token) {\n'
+        + '        this._candidateDeviceSnapshot = null;',
+    }],
+  })),
+  {
+    id: 'full-read-ignores-lifecycle-owner',
+    guard: 'node demo/smoke_view_recovery.mjs',
+    because: '#824 AC4 crosses real asynchronous HA reads, floor navigation and element replacement: '
+      + 'a captured response must not adopt config or write authority after its load owner expires.',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    const isCurrent = () => this._read.isCurrent(loadClaim) && configReloadClaimCurrent(port, claim);',
+      replace: '    const isCurrent = () => configReloadClaimCurrent(port, claim);',
+    }],
+  },
+  {
+    id: 'space-read-ignores-lifecycle-owner',
+    guard: 'node demo/smoke_view_recovery.mjs',
+    because: '#824 AC4 needs the static card mounted through Lit and real HA connection replacement: '
+      + 'a held old read must never win transiently over the new owner or explicit floor choice.',
+    patches: [{
+      file: 'src/space-card.ts',
+      find: '    const isCurrent = () => this.isConnected && this._read.isCurrent(loadClaim)',
+      replace: '    const isCurrent = () => this.isConnected',
+    }],
+  },
+  {
+    id: 'continuity-timeout-blesses-candidate',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs'
+      + ' && node --test --test-name-pattern="#824" test/visual-continuity.test.mjs',
+    because: '#824: the executed controller must keep holding the previous complete fingerprint after a timeout.',
+    patches: [{
+      file: 'src/visual-continuity.ts',
+      find: "this._state = this._recoveryReason === 'connection' ? 'offline-stale' : 'holding';",
+      replace: "this._state = this._recoveryReason === 'connection' ? 'offline-stale' : 'steady';",
+    }],
+  },
+  {
+    id: 'continuity-timeout-self-retries',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs'
+      + ' && node --test --test-name-pattern="#824" test/visual-continuity.test.mjs',
+    because: '#824: an internal timeout notification is not permission for an unbounded automatic paint retry.',
+    patches: [{
+      file: 'src/visual-continuity.ts',
+      find: '(externalUpdate && this._paintTimedOut && assetsReady)',
+      replace: '((externalUpdate || this._paintTimedOut) && this._paintTimedOut && assetsReady)',
+    }],
+  },
+  {
     id: 'reinstall-archives-before-final-confirmation',
     guard: 'node scripts/backend-test-guard.mjs abort_preserves_data tests_backend/test_ha_config_flow.py',
     because: '#820 AC4: cancelling the user form after choosing fresh must not change any bytes, '
@@ -14637,8 +14719,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_warm_mode_adoption.mjs',
     because: '#762 AC5: a floor tab must invalidate an editor remembered on the previous floor',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: '    if (id !== this._space) {\n      this._cancelPendingWarmMode();',
-      replace: '    if (id !== this._space) {\n      // mutant: old space keeps its pending editor',
+      find: '      this._cancelPendingWarmMode();\n      this._clearRoomFocus(true);',
+      replace: '      // mutant: old space keeps its pending editor\n      this._clearRoomFocus(true);',
     }],
   },
   {

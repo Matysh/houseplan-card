@@ -147,6 +147,9 @@ export class VisualContinuityController {
   private _token = 0;
   private _frameFingerprint = '';
   private _hasCompleteFrame = false;
+  private _paintTimedOut = false;
+  private _paintToken = -1;
+  private _paintingToken = -1;
   private _overlayPhase: OverlayPhase = 'none';
   private _recoveryReason: RecoveryReason = null;
   private _overlayTimer = 0;
@@ -165,6 +168,12 @@ export class VisualContinuityController {
   get token(): number { return this._token; }
   get frameFingerprint(): string { return this._frameFingerprint; }
   get hasCompleteFrame(): boolean { return this._hasCompleteFrame; }
+  get paintTimedOut(): boolean { return this._paintTimedOut; }
+  resetPaint(): void { if (this._paintingToken !== this._token) this._paintToken = -1; }
+  canAttemptPaint(externalUpdate: boolean, assetsReady: boolean): boolean {
+    return this._paintingToken !== this._token
+      && (this._paintToken !== this._token || (externalUpdate && this._paintTimedOut && assetsReady));
+  }
   get overlayPhase(): OverlayPhase { return this._overlayPhase; }
   get overlayVisible(): boolean { return this._overlayPhase !== 'none'; }
   get overlayBlocksInteraction(): boolean { return this.overlayVisible; }
@@ -244,6 +253,8 @@ export class VisualContinuityController {
 
   beginCandidate(reason: string, recoveryReason: RecoveryReason = 'plan'): number {
     this._token++;
+    this._paintToken = -1;
+    this._paintTimedOut = false;
     this._recoveryReason = recoveryReason;
     if (this._hasCompleteFrame) {
       this._state = recoveryReason === 'connection' ? 'offline-stale' : 'holding';
@@ -267,6 +278,7 @@ export class VisualContinuityController {
 
   candidateReady(token: number): boolean {
     if (this._disposed || token !== this._token) return false;
+    this._paintTimedOut = false;
     this._state = 'candidate-ready';
     this.record('candidate-ready');
     this.changed();
@@ -278,7 +290,8 @@ export class VisualContinuityController {
    * barrier. A stale token can never reveal an older candidate.
    */
   async commitAfterPaint(token: number, hooks: PaintBarrierHooks): Promise<boolean> {
-    if (this._disposed || token !== this._token) return false;
+    if (this._disposed || token !== this._token || this._paintingToken === token) return false;
+    this._paintingToken = this._paintToken = token;
     let barrierActive = true;
     const barrier = (async () => {
       await hooks.updateComplete();
@@ -310,12 +323,17 @@ export class VisualContinuityController {
     ]);
     barrierActive = false;
     this.clock.clearTimeout(timeout);
+    if (this._paintingToken === token) this._paintingToken = -1;
     if (this._disposed || token !== this._token) return false;
     if (!outcome.ready && !outcome.timedOut) return false;
     if (!outcome.ready) {
+      this._paintTimedOut = true;
       this.record('paint-barrier-timeout');
       if (this._hasCompleteFrame) {
-        this._state = this._recoveryReason === 'connection' ? 'offline-stale' : 'steady';
+        // #824: the staged geometry/data pair is not a COMPLETE frame yet.
+        // Keep holding and retry only on a later external readiness/update,
+        // never bless the candidate or discard its matching projection here.
+        this._state = this._recoveryReason === 'connection' ? 'offline-stale' : 'holding';
         this.clearOverlay();
       } else {
         this._state = 'recovery-error';

@@ -170,7 +170,8 @@ test('asset readiness is polled inside the bounded barrier and keeps a stale fra
   await Promise.resolve();
   clock.advance(PAINT_BARRIER_MAX_MS);
   assert.equal(await committed, false);
-  assert.equal(controller.state, 'steady');
+  assert.equal(controller.state, 'holding');
+  assert.equal(controller.paintTimedOut, true);
   assert.equal(controller.frameFingerprint, 'old');
   assert.equal(controller.trace.at(-1)?.event, 'paint-barrier-timeout');
 });
@@ -191,6 +192,34 @@ test('a real paint timeout without a complete frame becomes a recoverable error'
   assert.equal(await result, false);
   assert.equal(controller.state, 'recovery-error');
   assert.equal(controller.overlayPhase, 'opaque');
+});
+
+test('#824 a timeout preserves identity and only external readiness can retry', async () => {
+  const clock = new FakeClock();
+  let changes = 0;
+  const controller = new VisualContinuityController(() => changes++, clock);
+  controller.markCompleteFrame('old-pair');
+  const token = controller.beginCandidate('replacement');
+  assert.equal(controller.canAttemptPaint(false, true), true);
+  controller.candidateReady(token);
+  const pending = controller.commitAfterPaint(token, {
+    updateComplete: async () => undefined,
+    stageValid: () => true, assetsReady: () => false,
+    frameFingerprint: () => 'new-pair',
+  });
+  await Promise.resolve(); clock.advance(PAINT_BARRIER_MAX_MS);
+  assert.equal(await pending, false);
+  assert.equal(controller.state, 'holding');
+  assert.equal(controller.frameFingerprint, 'old-pair');
+  assert.equal(controller.canAttemptPaint(false, true), false, 'timeout notifications cannot self-retry');
+  assert.equal(controller.canAttemptPaint(true, false), false, 'an update cannot bypass missing assets');
+  const afterTimeout = changes;
+  clock.advance(20_000); clock.frame(); await Promise.resolve();
+  assert.equal(changes, afterTimeout, 'no timer/RAF retry loop');
+  assert.equal(controller.canAttemptPaint(true, true), true);
+  assert.equal(await commit(controller, clock, token, 'new-pair'), true);
+  assert.equal(controller.paintTimedOut, false);
+  assert.equal(controller.frameFingerprint, 'new-pair');
 });
 
 test('content fingerprints are stable across object key order and frame parts', () => {
