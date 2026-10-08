@@ -62,8 +62,14 @@ const AREAS = {
   ],
   perf: [RENDER_DIR, ...['render-*', 'houseplan-render-lifecycle', 'iso-scene-render', 'glow-*', 'day-cycle-render',
     'initial-load', 'boot-soft-layout'].map(src)],
+  // #827 (F48): строки и факты подсказок и подписей устройств и Zigbee —
+  // `live-hover`, `device-battery`, `zigbee-topology`, его оверлей. Видимая
+  // дельта #816/#817 шла мимо golden: эти модули рисуют текст поверх плана, а
+  // в таблице их не было. Точные модули, не `device-*`/`zigbee-*`: геометрия
+  // топологии и переключение устройств остаются своими классами.
   'visual:render': [RENDER_DIR, ...['iso-*', 'glow-*', 'day-cycle-render', 'space-render', 'stairs-view',
-    'device-visual', 'device-face'].map(src), path('*.generated.ts', /^src\/(?:.*\/)?[^/]*\.generated\.ts$/)],
+    'device-visual', 'device-face', 'live-hover', 'device-battery', 'zigbee-topology', 'hp-zigbee-topology-overlay'].map(src),
+  path('*.generated.ts', /^src\/(?:.*\/)?[^/]*\.generated\.ts$/)],
   'visual:ui': [
     path('src/styles/**', /^src\/styles\//),
     path('src/styles.ts', /^src\/styles\.ts$/),

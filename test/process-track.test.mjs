@@ -440,6 +440,127 @@ test('#755: заменённая строка — одно доказатель�
   assert.equal(classifyRisk(diffOf([{ path: view, del: [[9, 'x = 1;']], add: [[9, 'x = 2;']] }])).counts.visual, 2);
 });
 
+// ---------- #827: строки подсказок и подписей — путь отрисовки (F48) ----------
+
+// Ханки `src/` как есть (`git show --unified=0`): #816 — 2e0f1a17, #817 — 3c8f9af6.
+// Видимая дельта обеих прошла S7 без ci:golden; дрейф кадра поймала #814.
+const HUNKS_816 = [
+  "diff --git a/src/hp-zigbee-topology-overlay.ts b/src/hp-zigbee-topology-overlay.ts",
+  "index c8b08b81..ae713778 100644",
+  "--- a/src/hp-zigbee-topology-overlay.ts",
+  "+++ b/src/hp-zigbee-topology-overlay.ts",
+  "@@ -545 +545 @@ export class HpZigbeeTopologyOverlay extends LitElement {",
+  "-      hover.outgoing !== 'not-zigbee' && hover.partial ? topologyT(lang, 'route_partial') : '',",
+  "+      hover.showIncomplete ? topologyT(lang, 'route_partial') : '',",
+  "diff --git a/src/zigbee-topology.ts b/src/zigbee-topology.ts",
+  "index f67ae24b..3b2ddea9 100644",
+  "--- a/src/zigbee-topology.ts",
+  "+++ b/src/zigbee-topology.ts",
+  "@@ -25,0 +26 @@ export interface ZigbeeHoverResolution {",
+  "+  showIncomplete: boolean;",
+  "@@ -153 +154 @@ export function resolveMappedTopologyHover(",
+  "-  let partial = false; let obtainedAt: number | undefined;",
+  "+  let partial = false; let isCoordinator = false; let obtainedAt: number | undefined;",
+  "@@ -161,0 +163 @@ export function resolveMappedTopologyHover(",
+  "+      isCoordinator ||= map.nodes.get(key)?.role === 'coordinator';",
+  "@@ -193,0 +196 @@ export function resolveMappedTopologyHover(",
+  "+    showIncomplete: partial && outgoing === 'unknown' && !isCoordinator,",
+].join('\n');
+const HUNKS_817 = [
+  "diff --git a/src/device-battery.ts b/src/device-battery.ts",
+  "index 3d939843..24c921c1 100644",
+  "--- a/src/device-battery.ts",
+  "+++ b/src/device-battery.ts",
+  "@@ -10 +10 @@ export interface ResolvedDeviceBattery {",
+  "-/** #817: the selected source's own value, for text; no reading means no text. */",
+  "+/** #817: the selected source and its own value, for text; no reading means no text. */",
+  "@@ -12,2 +12,2 @@ export type DeviceBatteryReading =",
+  "-  | { readonly kind: 'percent'; readonly value: number }",
+  "-  | { readonly kind: 'binary'; readonly low: boolean };",
+  "+  | { readonly kind: 'percent'; readonly value: number; readonly sourceEntityId: string }",
+  "+  | { readonly kind: 'binary'; readonly low: boolean; readonly sourceEntityId: string };",
+  "@@ -196 +196 @@ export function deviceBatteryReading(",
+  "-    return percent === null ? null : Object.freeze({ kind: 'percent', value: percent });",
+  "+    return percent === null ? null : Object.freeze({ kind: 'percent', value: percent, sourceEntityId });",
+  "@@ -198 +198,2 @@ export function deviceBatteryReading(",
+  "-  return value === 'on' || value === 'off' ? Object.freeze({ kind: 'binary', low: value === 'on' }) : null;",
+  "+  return value === 'on' || value === 'off'",
+  "+    ? Object.freeze({ kind: 'binary', low: value === 'on', sourceEntityId }) : null;",
+  "diff --git a/src/live-hover.ts b/src/live-hover.ts",
+  "index ff02ba97..574c18d9 100644",
+  "--- a/src/live-hover.ts",
+  "+++ b/src/live-hover.ts",
+  "@@ -4 +4 @@ import type { ResolvedDevicePresentation } from './device-presentation';",
+  "-import type { DevItem } from './types';",
+  "+import type { DevItem, ValueBadgeSource } from './types';",
+  "@@ -61 +61,3 @@ type BatteryTipKey = 'tip.battery_percent' | 'tip.battery_normal' | 'tip.battery",
+  "- * #792 source and its current value decide. No reading — no line.",
+  "+ * #792 source and its current value decide. No reading — no line. A value",
+  "+ * badge already showing that very sensor in the meta row is not repeated in a",
+  "+ * second format, as `lqiText` yields to an LQI badge.",
+  "@@ -66,0 +69 @@ export function deviceBatteryTipText(",
+  "+  badge?: ValueBadgeSource | null,",
+  "@@ -69,0 +73 @@ export function deviceBatteryTipText(",
+  "+  if (badge?.kind === 'entity_state' && badge.entity_id === reading.sourceEntityId) return '';",
+  "@@ -91 +95,2 @@ const deviceTipContent = (",
+  "-    createDeviceBatteryContext(host._renderPlanHass, host._fullRegistryHass), (key, vars) => host._t(key, vars));",
+  "+    createDeviceBatteryContext(host._renderPlanHass, host._fullRegistryHass), (key, vars) => host._t(key, vars),",
+  "+    presentation.valueBadge?.source);",
+].join('\n');
+
+test('#827 AC3: реальные ханки #816/#817 дают visual.render — прежний ложный пропуск', () => {
+  const zigbee = classifyRisk(`${HUNKS_816}\n`);
+  assert.deepEqual(zigbee.classes, ['visual']);
+  assert.deepEqual(zigbee.visual, { render: true, ui: false });
+  assert.deepEqual(zigbee.evidence.visual, [
+    'src/hp-zigbee-topology-overlay.ts:545 · участок hp-zigbee-topology-overlay (render)',
+    'src/zigbee-topology.ts:154 · участок zigbee-topology (render)',
+    'src/zigbee-topology.ts:163 · участок zigbee-topology (render)',
+    'src/zigbee-topology.ts:196 · участок zigbee-topology (render)',
+  ], 'член интерфейса ZigbeeHoverResolution (строка 26) — только тип, риска не даёт');
+  const battery = classifyRisk(`${HUNKS_817}\n`);
+  assert.deepEqual(battery.classes, ['visual']);
+  assert.equal(battery.visual.render, true);
+  assert.equal(battery.counts.visual, 7, 'комментарии, import type и объединение типа DeviceBatteryReading не считаются');
+  assert.deepEqual(battery.evidence.visual.slice(0, 4), [
+    'src/device-battery.ts:196 · участок device-battery (render)',
+    'src/device-battery.ts:198 · участок device-battery (render)',
+    'src/device-battery.ts:199 · участок device-battery (render)',
+    'src/live-hover.ts:69 · участок live-hover (render)',
+  ]);
+  // visual ship не повышает: правило «visual — единственный неповышающий» прежнее.
+  assert.deepEqual(battery.raising, []);
+});
+
+test('#827 AC3: каждый из четырёх путей — render по коду и ничего по типам, импортам, комментариям, пробелам', () => {
+  const cls = (path, add, del = []) => classifyRisk(diffOf([{ path, add, del }]));
+  for (const path of ['src/live-hover.ts', 'src/device-battery.ts', 'src/zigbee-topology.ts', 'src/hp-zigbee-topology-overlay.ts']) {
+    const code = cls(path, [[7, "  const caption = t('tip.battery_percent', { value });"]]);
+    assert.deepEqual(code.classes, ['visual'], path);
+    assert.deepEqual(code.visual, { render: true, ui: false }, path);
+    for (const quiet of [
+      "import type { DevItem } from './types';",
+      "import { topologyT } from './zigbee-topology-i18n';",
+      'export type TipKey = string;',
+      '// #827: caption wording',
+      ' * Battery line of the device tooltip.',
+      '   ',
+    ]) {
+      assert.deepEqual(cls(path, [[3, quiet]]).classes, [], `${path}: «${quiet}»`);
+    }
+  }
+  // Соседние модули тех же подсистем — не render: таблица точная, не по префиксу.
+  assert.deepEqual(cls('src/zigbee-topology-geometry.ts', [[3, 'x = 1;']]).classes, ['geometry']);
+  for (const path of ['src/zigbee-topology-runtime.ts', 'src/device-battery-settings.ts', 'src/hp-zigbee-topology-settings.ts']) {
+    assert.equal(cls(path, [[3, 'x = 1;']]).visual.render, false, path);
+  }
+  // Тесты, смоки, документы и переводы задачи — не путь отрисовки.
+  for (const path of ['test/device-battery-tip.test.mjs', 'demo/smoke_device_battery_tooltip.mjs', 'docs/USER-GUIDE.md', 'docs/DEVICE-PRESENTATION.md']) {
+    assert.equal(cls(path, [[3, "const tip = deviceBatteryTipText(reading, ctx, t);"]]).visual.render, false, path);
+  }
+  assert.equal(cls('src/i18n/en.json', [[3, '  "tip.battery_low": "Battery low",']]).visual.render, false, 'новый ключ i18n — ux, не render');
+});
+
 test('#707 AC2: происхождение трека — строка владельца, предложение, прежние метки', () => {
   const c = (author, body, createdAt) => ({ author, body, createdAt });
   const owner = 'Matysh';

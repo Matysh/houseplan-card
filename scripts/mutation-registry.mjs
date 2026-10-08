@@ -16112,6 +16112,17 @@ const MUTANT_DEFINITIONS = [
       replace: "      actual.version ?? verdict.status, verdict.status !== 'missing', // mutant: launchable is enough",
     }],
   },
+  {
+    id: 'render-risk-forgets-tooltip-paths',
+    guard: 'node --test --test-name-pattern="#827 AC3" test/process-track.test.mjs',
+    because: '#827 AC3 (F48): the #816/#817 tooltip and caption hunks gave no visual.render, and the '
+      + 'visible delta reached dev without golden; dropping the paths restores that false negative',
+    patches: [{
+      file: 'scripts/change-risk.mjs',
+      find: "    'device-visual', 'device-face', 'live-hover', 'device-battery', 'zigbee-topology', 'hp-zigbee-topology-overlay'].map(src),",
+      replace: "    'device-visual', 'device-face'].map(src), // mutant: #816/#817 paths dropped",
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');
