@@ -589,6 +589,8 @@ still recognised in stored config but no longer served
 - `src/card-read-lifecycle.ts` (#824) owns ephemeral full-read transport claims
   for both cards, independent of visual HA deduplication. Disconnect/context
   replacement/navigation fence every awaited adoption and optional tail.
+  Context is observed per HA assignment before Lit coalesces A→B→A; transport
+  restart waits for the current usable authority, including a temporary HA gap.
   Static attach revalidates the server; a full long return without HA defers.
   The shared continuity controller owns one bounded paint attempt. A timeout
   retains matching staged data without marking a complete frame or self-retry;

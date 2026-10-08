@@ -168,6 +168,8 @@ Static parity fixtures publish config/layout through `__hpTest` before mounting;
 do not bypass authoritative attach with `_snap`/`_loadedOnce` writes. The
 coordinate-canonicalization cold oracle mounts a distinct card and waits for
 its real load, rather than clearing a live card while its intake is pending.
+The recovery smoke also samples same-turn A→B→A and A→missing-HA→A: observing
+only `willUpdate` misses the intermediate authority and is not a valid fence.
 
 Read `docs/TOUCH-SUPPORT.md` before changing interaction code.
 

@@ -28,7 +28,9 @@ Everything computable from the tree and git; regenerate, never edit by hand
 View recovery (#824): same-element static attach revalidates authoritative
 config/layout after missed events; a full long return waits for usable HA and
 coalesces reads, including reuse of the same HA object. Ephemeral load claims
-reject replaced/detached/navigated responses and late write authority. A real
+reject replaced/detached/navigated responses and late write authority. Each
+HA assignment is observed before Lit coalesces even a same-turn A→B→A or HA gap.
+The load restart is deferred to the current usable authority. A real
 paint timeout keeps the geometry's matching device candidate, not an old door
 projection, without blessing a complete frame or starting a retry loop.
 Canonical: `WARM-REMOUNT.md` §5.1. Readonly/input, golden and bundle ratchets remain.

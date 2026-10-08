@@ -312,6 +312,43 @@ reports.races = await races.page.evaluate(async () => {
     && navigated[0];
   replacement.spaceNavigationWins = el._config.space === 'garden'
     && navigated[1];
+  // Observe every HA assignment, not only the final context Lit coalesces.
+  const aba = [];
+  const authorityA = { ...latest, connection: connection(), callWS: async (message) => {
+    const response = await latest.callWS(message);
+    if (message.type !== 'houseplan/config/get') return response;
+    const obsolete = structuredClone(response);
+    obsolete.rev += 400; obsolete.config.spaces[0].rooms[0].name = 'ABA response';
+    return new Promise((resolve) => aba.push(() => resolve(obsolete)));
+  } };
+  card.hass = authorityA; el.hass = authorityA;
+  window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+  replacement.twoABATransportsEntered = await until(() => aba.length === 2);
+  const authorityB = { ...latest, connection: connection() };
+  const currentA = { ...latest, connection: authorityA.connection };
+  card.hass = authorityB; el.hass = authorityB;
+  card.hass = currentA; el.hass = currentA;
+  await card.updateComplete; await el.updateComplete;
+  for (const release of aba) release();
+  const returned = [true, true];
+  for (let i = 0; i < 20; i++) { await frame(); sample(returned, 'ABA response'); }
+  replacement.fullRejectsSameTurnABA = returned[0];
+  replacement.spaceRejectsSameTurnABA = returned[1];
+  aba.length = 0;
+  card.hass = authorityA; el.hass = authorityA;
+  window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+  replacement.twoMissingHATransportsEntered = await until(() => aba.length === 2);
+  const readsBeforeGap = calls.filter((type) => type === 'houseplan/config/get').length;
+  card.hass = undefined; el.hass = undefined;
+  card.hass = currentA; el.hass = currentA;
+  await card.updateComplete; await el.updateComplete;
+  for (const release of aba) release();
+  const gap = [true, true];
+  for (let i = 0; i < 20; i++) { await frame(); sample(gap, 'ABA response'); }
+  replacement.sameTurnMissingHADoesNotAdoptOldRead = gap.every(Boolean);
+  replacement.sameTurnMissingHAStillRevalidates = calls.filter((type) =>
+    type === 'houseplan/config/get').length - readsBeforeGap === 2
+    && card._continuity.state === 'steady' && el._continuity.state === 'steady';
   replacement.viewRecoveryDoesNotLoadEditor = !card._editorRuntime;
   replacement.viewRecoveryDoesNotWrite = !calls.some((type) => /\/(set|update|delete)$/.test(type));
   host.remove(); return replacement;

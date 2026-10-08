@@ -3,7 +3,8 @@
 ## Unreleased
 
 - View: embedded space cards refresh missed plan/device-position changes on
-  return. A long return before Home Assistant is ready now waits safely.
+  return. A long return before Home Assistant is ready now waits safely;
+  rapidly repeated reconnections no longer accept obsolete responses.
   A rendering timeout no longer pairs new walls and doors with old device
   states; recovery can finish without another HA update
   ([#824](https://github.com/Matysh/houseplan-card/issues/824)).

@@ -5,7 +5,7 @@
  * (no clicks/hover/tooltips/drag/more-info). A footer button opens
  * the space in the full component via a deep-link (`#space=<id>`).
  */
-import { LitElement, html, nothing, noChange, css, type TemplateResult, type PropertyValues } from 'lit';
+import { LitElement, html, nothing, noChange, css, type TemplateResult, type PropertyValues, type PropertyDeclaration } from 'lit';
 import { cardStyles } from './styles';
 import { buildSpaceDevices, renderSpaceStatic, spaceModels } from './space-render';
 import { resolveDeviceAreaRelocations } from './device-area-relocation';
@@ -83,6 +83,13 @@ interface SpaceCardConfig {
 }
 
 class HouseplanSpaceCard extends LitElement {
+  public requestUpdate(name?: PropertyKey, oldValue?: unknown, options?: PropertyDeclaration): void {
+    // Observe intermediate HA authorities before Lit coalesces their renders.
+    if (name === 'hass' && this._read.observe(configReloadContext(this))) {
+      this._loading = false; this._attachReload = true;
+    }
+    super.requestUpdate(name, oldValue, options);
+  }
   public hass?: any;
   private _config?: SpaceCardConfig;
   private _snap: HpConfigSnapshot | null = null;
@@ -119,7 +126,7 @@ class HouseplanSpaceCard extends LitElement {
   private _visibleDeviceSnapshot: RenderDeviceSnapshot | null = null;
   private _candidateDeviceSnapshot: RenderDeviceSnapshot | null = null;
   private _stagedToken = -1;
-  private _capturedSnapshotSequence = -1;
+  private _capturedSeq = -1;
   private _capturedSnapshotDevices: DevItem[] | null = null;
   private _capturedSnapshotActivity = '';
   private _capturedSnapshotVirtual = '';
@@ -138,7 +145,7 @@ class HouseplanSpaceCard extends LitElement {
   private _motionMedia?: MediaQueryList;
   private _onMotionChange = (event: MediaQueryListEvent): void => {
     this._reducedMotion = event.matches;
-    this._capturedSnapshotSequence = -1;
+    this._capturedSeq = -1;
     this.requestUpdate();
   };
   private _onHaRegistryUpdate = () => {
@@ -146,7 +153,7 @@ class HouseplanSpaceCard extends LitElement {
     if (revision === this._haRegistryRevision) return;
     this._haRegistryRevision = revision;
     this._refreshDevices();
-    this._capturedSnapshotSequence = -1;
+    this._capturedSeq = -1;
     this.requestUpdate();
   };
 
@@ -240,7 +247,7 @@ class HouseplanSpaceCard extends LitElement {
         expired = true;
       }
       if (expired) {
-        this._capturedSnapshotSequence = -1;
+        this._capturedSeq = -1;
         this.requestUpdate();
       }
       return;
@@ -410,9 +417,6 @@ class HouseplanSpaceCard extends LitElement {
       this._continuity.note('hass-snapshot');
       this._ensureHaRegistryAuthority();
       this._hookConnection();
-      if (this._read.observe(configReloadContext(this))) {
-        this._loading = false; this._attachReload = true;
-      }
     }
     if (this.isConnected && this.hass?.callWS && !this._loading
         && (this._attachReload || !this._loadedOnce)) {
@@ -505,7 +509,7 @@ class HouseplanSpaceCard extends LitElement {
       .join('|');
     const virtualFingerprint = this._snap?.virtualLights
       ? `${this._snap.virtualLights.configRev}:${this._snap.virtualLights.rev}` : '';
-    if (this._capturedSnapshotSequence === this._hassSequence
+    if (this._capturedSeq === this._hassSequence
         && this._capturedSnapshotDevices === this._devices
         && this._capturedSnapshotActivity === activity
         && this._capturedSnapshotVirtual === virtualFingerprint) return;
@@ -566,7 +570,7 @@ class HouseplanSpaceCard extends LitElement {
       devices: this._devices, presentations, entityIds, deviceIds, areaIds, showBattery, batteryContext,
       geometry: this._snapshotGeometry(),
     });
-    this._capturedSnapshotSequence = this._hassSequence;
+    this._capturedSeq = this._hassSequence;
     this._capturedSnapshotDevices = this._devices;
     this._capturedSnapshotActivity = activity;
     this._capturedSnapshotVirtual = virtualFingerprint;
@@ -791,7 +795,7 @@ class HouseplanSpaceCard extends LitElement {
       }
       if (!isCurrent()) return;
       if (layoutChanged) this._continuity.note('layout-candidate', { layoutRev: snap.layoutRev });
-      if (virtualLightsChanged) this._capturedSnapshotSequence = -1;
+      if (virtualLightsChanged) this._capturedSeq = -1;
       this._loadedOnce = true;
       this._connectionWasLost = false;
       this._continuityDataReady = true;

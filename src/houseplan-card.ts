@@ -553,6 +553,14 @@ const HANDLE_PAINT_ORDER = ['edges', 'corners'] as const;
 
 export class HouseplanCard extends LitElement {
   public requestUpdate(name?: PropertyKey, oldValue?: unknown, options?: PropertyDeclaration): void {
+    if (name === 'hass') {
+      // Every assignment counts, even A→B→A coalesced into one Lit update.
+      this._configReloadAuthority.observeContext(configReloadContext(this));
+      const waiting = this._read.busy || this._read.pending;
+      if (this._read.observe(configReloadContext(this))) {
+        this._loading = false; if (waiting) this._read.defer();
+      }
+    }
     if (name === 'hass' && this.hass && this._liveRt) {
       const snapshot = this._visibleDeviceSnapshot || this._candidateDeviceSnapshot;
       const render = this._liveRt.hass(
@@ -2240,7 +2248,7 @@ export class HouseplanCard extends LitElement {
   // ---- kiosk (wall device) mode ----
   private _kioskScale: { icon: number; font: number } = { icon: 1, font: 1 }; private _kioskDialog = false;
   private readonly _headerMenu = new HeaderMenu(this);
-  private _summary?: import('./summary-panel-runtime-loaded').LoadedSummaryPanelRuntime; private readonly _summarySlot = new SummaryRuntimeSlot(summaryRuntimeLoader, this, (runtime) => { this._summary = runtime; this._capturedSnapshotSequence = -1; /* summary entities (re)join the live subscription */ if (this.isConnected) { runtime.connect(); if (this.hasUpdated) this.requestUpdate(); } }); // #506: warm code attaches before the first render
+  private _summary?: import('./summary-panel-runtime-loaded').LoadedSummaryPanelRuntime; private readonly _summarySlot = new SummaryRuntimeSlot(summaryRuntimeLoader, this, (runtime) => { this._summary = runtime; this._capturedSeq = -1; /* summary entities (re)join the live subscription */ if (this.isConnected) { runtime.connect(); if (this.hasUpdated) this.requestUpdate(); } }); // #506: warm code attaches before the first render
   /**
    * Previous entity states + the short event/terminal-transition window for
    * every marker. The map lives outside Lit state: hass ticks update it, one
@@ -2273,7 +2281,7 @@ export class HouseplanCard extends LitElement {
   private _visibleDeviceSnapshot: RenderDeviceSnapshot | null = null;
   private _candidateDeviceSnapshot: RenderDeviceSnapshot | null = null;
   private _stagedToken = -1;
-  private _capturedSnapshotSequence = -1;
+  private _capturedSeq = -1;
   private _capturedSnapshotDevices: DevItem[] | null = null;
   private _capturedSnapshotLayout: Record<string, { x: number; y: number; s?: string; k?: number }> | null = null;
   private _capturedSnapshotActivity = '';
@@ -4056,13 +4064,6 @@ export class HouseplanCard extends LitElement {
   protected willUpdate(changed: PropertyValues): void {
     this._cfgPass.begin(); this._isoProjectionSnapshot = null; this._isoFirstFrame.prepare(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes)); this._syncVolumetricSetting(); this._summary?.willUpdate();
     if (changed.has('hass')) {
-      // Observe every user/connection transition, including A→B→A while an
-      // old promise is waiting. Equality at completion must not revive it.
-      this._configReloadAuthority.observeContext(configReloadContext(this));
-      const waiting = this._read.busy || this._read.pending;
-      if (this.hass?.callWS && this._read.observe(configReloadContext(this))) {
-        this._loading = false; if (waiting) this._read.defer();
-      }
       // A reused HA object can be deduplicated by visual intake after detach.
       // Deferred transport intent is independent of that frame identity.
       if (this._read.pending) void this._loadFromServer();
@@ -4542,7 +4543,7 @@ export class HouseplanCard extends LitElement {
           && (runtime.expiresAt || runtime.flashTs + ACTIVITY_WINDOW_MS) > now ? 1 : 0}`)
       .join('|');
     const virtualFingerprint = virtualLightFingerprint(this._virtualLights);
-    if (this._capturedSnapshotSequence === this._hassSequence
+    if (this._capturedSeq === this._hassSequence
         && this._capturedSnapshotDevices === this._devices
         && this._capturedSnapshotLayout === this._layout
         && this._capturedSnapshotConfigEpoch === this._cfgEpoch
@@ -4668,7 +4669,7 @@ export class HouseplanCard extends LitElement {
       areaIds,
       geometry: this._cfgEpoch,
     });
-    this._capturedSnapshotSequence = this._hassSequence;
+    this._capturedSeq = this._hassSequence;
     this._capturedSnapshotDevices = this._devices;
     this._capturedSnapshotLayout = this._layout;
     this._capturedSnapshotActivity = activity;
