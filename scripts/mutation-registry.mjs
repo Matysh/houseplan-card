@@ -15824,6 +15824,19 @@ const MUTANT_DEFINITIONS = [
         + "      return { ok: false, reason: 'physical-geometry' };\n",
     }],
   },
+  // #821: бенчмарк рендера Resize считает snapshot на настоящем владельце.
+  {
+    id: 'resize-render-snapshot-per-handle',
+    guard: 'node demo/benchmark_safe_resize_render.mjs',
+    because: '#821 AC2: the Resize layer must serialize the geometry snapshot once per frame; '
+      + 'resolving each handle without the frame snapshot repeats it per edge, which only a '
+      + 'counter on the real render owner in the warm 20-room/80-handle benchmark can see',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '        const resolution = this._rszResolution(r.id, i, renderSnapshot);',
+      replace: '        const resolution = this._rszResolution(r.id, i); // mutant: one snapshot per handle',
+    }],
+  },
   // #818: CLI гейта мутаций не теряет хвост stdout, когда читатель отстаёт.
   {
     id: 'mutation-gate-cli-exits-before-stdout-drains',

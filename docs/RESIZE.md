@@ -254,7 +254,8 @@ building the preview frame itself.
   audit loses only the proven `duplicate-physical-wall` blockers (#296);
 - `demo/benchmark_safe_resize.mjs`: same-run pointer and cached pointerup budgets;
 - `demo/benchmark_safe_resize_render.mjs`: warm 20-room/80-handle layer p95
-  and exactly one geometry snapshot per rendered frame;
+  and exactly one geometry snapshot per rendered frame, counted on the editor
+  runtime that renders the layer; a zero count fails as unobserved (#821);
 - mutation gate: eligibility, third-room, topology, side ownership, jamb,
   fixed-topology wall endpoint mapping,
   pointer displacement/capture, shared-seam coalescing, preview rejection and
