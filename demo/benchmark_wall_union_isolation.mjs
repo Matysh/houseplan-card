@@ -1,4 +1,5 @@
-// #278: component projection overhead and degraded-fixture completion budget.
+// #278/#834: component projection overhead and a deterministic degraded merge
+// completion budget. The historical floating-tail room/shell failure is fixed.
 import { performance } from 'node:perf_hooks';
 import { readFileSync } from 'node:fs';
 
@@ -34,6 +35,10 @@ const degradedFixture = JSON.parse(readFileSync(
   new URL('../test/fixtures/278-wall-union-isolation.json', import.meta.url), 'utf8',
 ));
 const degradedInput = prepare(degradedFixture.config)[0];
+// Keep measuring two VALID retained components through the existing operation
+// seam, rather than requiring the historical numerical bug to exist forever.
+degradedInput.physicalBodies.push([[3000, 0], [3100, 0], [3100, 100], [3000, 100]]);
+const degradedOperations = { mergeExtra: () => { throw new Error('benchmark independent-body merge failure'); } };
 
 const validResults = validInputs.map((input) => wallBodiesGeometry(...args(input)));
 if (validResults.some((result) => result.status !== 'ok'))
@@ -54,7 +59,7 @@ const validProjection = () => {
   }
 };
 const degradedProjection = () => {
-  const result = wallBodiesUnionPath(...args(degradedInput));
+  const result = wallBodiesUnionPath(...args(degradedInput), degradedOperations);
   if (!result || result.status !== 'degraded-extra' || result.paths.length !== 2)
     throw new Error(`degraded projection: ${result?.status || 'null'}`);
 };
@@ -106,7 +111,8 @@ const overheadP95 = quantile(pairs.overhead, 0.95);
 const pass = candidate.p95 <= relativeLimit && overheadP95 <= OVERHEAD_P95_MS
   && degraded.p95 <= DEGRADED_P95_MS;
 console.log(JSON.stringify({
-  issue: 278, fixture: LARGE_HOUSE_COUNTS, warmups: WARMUPS, samples: SAMPLES,
+  issue: 278, fixture: LARGE_HOUSE_COUNTS, degradedWitness: 'valid-body injected merge failure; historical shell now healthy',
+  warmups: WARMUPS, samples: SAMPLES,
   validBatch: VALID_BATCH,
   baseline, candidate, degraded, overheadP95,
   budgets: {

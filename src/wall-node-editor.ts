@@ -3,7 +3,6 @@ import { nothing, render, svg, type TemplateResult } from 'lit';
 import { NORM_W, GRID_STEP_N } from './canvas-constants';
 import { commitWallSegmentModel } from './wall-segment-model';
 import { canonicalizeConfigGeometryInPlace } from './coordinate-canonicalization';
-import { cancelHouseplanPointerMove, flushHouseplanPointerMove, queueHouseplanPointerMove } from './pointer-move-queue';
 import { applyNodeMove, pickWallNode, prepareNodeMove, resolveNodeMoveSnap, structuralNodeWalls,
   structuralWallNodes, sameNodePoint, type NodeMoveIntent, type NodeMovePlan,
   type NodeMoveSpace, type NodePoint, type WallNode, type NodeMoveReason } from './wall-node-move';
@@ -37,6 +36,9 @@ interface Session {
   candidate: NodeMoveSpace | null; affected: string[]; invalid: NodeMoveReason | null;
   moved: boolean; released: boolean; outline: boolean;
 }
+interface PendingNodeMove {
+  session: Session; point: NodePoint; axis: string | null; guide: string | null;
+}
 
 /** Identical mask bounds/backing for every local ghost pass. */
 const nodeMask = (id: string, paths: unknown): TemplateResult => svg`<mask id=${id} maskUnits="objectBoundingBox"
@@ -54,6 +56,8 @@ export class WallNodeEditor {
   private sourceGhost: SVGGElement | null = null;
   private sourceCoverage: { axis: string | null; unitPx: number; old: string[]; fixed: string[] } | null = null;
   private listening = true;
+  private moveFrame: number | null = null;
+  private pendingMove: PendingNodeMove | null = null;
   public busy = false;
   private readonly pagehide = (): void => { this.cancel(); };
   constructor(private readonly port: WallNodeEditorPort) {
@@ -158,25 +162,55 @@ export class WallNodeEditor {
   }
   private move(ev: PointerEvent): void {
     const s = this.session; if (!s || s.released) return;
-    queueHouseplanPointerMove(this, 'node', () => {
-      if (!this.current(s)) { this.cancel(); return; }
-      const snapped = resolveNodeMoveSnap(s.plan, this.port.screenPoint(ev), this.port.unitsPerPixel(), s.axis);
-      s.axis = snapped.axis; s.target = snapped.point; s.guide = snapped.guide;
-      const candidate = applyNodeMove(s.plan, s.target, s.axis);
-      s.moved = !sameNodePoint(s.target, s.plan.node.point);
-      s.invalid = candidate.ok ? null : candidate.reason;
-      s.candidate = candidate.ok && candidate.changed ? candidate.space : null;
-      if (s.candidate) canonicalizeConfigGeometryInPlace({ spaces: [s.candidate] });
-      s.affected = candidate.ok ? candidate.affected : [];
-      if (s.candidate && !this.port.validate(s.candidate, s.plan.source, false)) s.invalid = 'invalid';
-      // Invalid is the LAST resolved candidate, never the previous valid one.
-      this.port.changed();
+    // Resolve the cheap input now so X keeps its first unambiguous axis even
+    // when several native events arrive before a frame. Only the last target
+    // needs the expensive geometry/proof/paint pass.
+    const axis = this.pendingMove?.session === s ? this.pendingMove.axis : s.axis;
+    const snapped = resolveNodeMoveSnap(s.plan, this.port.screenPoint(ev), this.port.unitsPerPixel(), axis);
+    this.pendingMove = { session: s, ...snapped };
+    if (this.moveFrame !== null) return;
+    const view = this.port.document.defaultView;
+    if (!view) { this.cancel(); return; }
+    const frame = view.requestAnimationFrame(() => {
+      if (this.moveFrame !== frame) return;
+      this.moveFrame = null;
+      this.flushMove();
     });
+    this.moveFrame = frame;
+  }
+
+  private clearMoveFrame(): void {
+    if (this.moveFrame !== null) this.port.document.defaultView?.cancelAnimationFrame(this.moveFrame);
+    this.moveFrame = null;
+  }
+
+  private flushMove(): void {
+    this.clearMoveFrame();
+    const pending = this.pendingMove; this.pendingMove = null;
+    if (!pending) return;
+    const s = pending.session;
+    if (!this.current(s)) { if (this.session === s) this.cancel(); return; }
+    const same = s.axis === pending.axis
+      && s.target[0] === pending.point[0] && s.target[1] === pending.point[1];
+    const guideChanged = s.guide !== pending.guide;
+    s.axis = pending.axis; s.target = pending.point; s.guide = pending.guide;
+    // A repeated snapped position retains its exact accepted OR refused
+    // candidate; pointer jitter cannot pay for geometry again.
+    if (same) { if (guideChanged) this.port.changed(); return; }
+    const candidate = applyNodeMove(s.plan, s.target, s.axis);
+    s.moved = !sameNodePoint(s.target, s.plan.node.point);
+    s.invalid = candidate.ok ? null : candidate.reason;
+    s.candidate = candidate.ok && candidate.changed ? candidate.space : null;
+    if (s.candidate) canonicalizeConfigGeometryInPlace({ spaces: [s.candidate] });
+    s.affected = candidate.ok ? candidate.affected : [];
+    if (s.candidate && !this.port.validate(s.candidate, s.plan.source, false)) s.invalid = 'invalid';
+    // Invalid is the LAST resolved candidate, never the previous valid one.
+    this.port.changed();
   }
 
   private async up(ev: PointerEvent): Promise<void> {
     const s = this.session; if (!s || s.released) return;
-    flushHouseplanPointerMove(this, 'node');
+    this.flushMove();
     if (!this.current(s)) { this.cancel(); return; }
     s.released = true; this.tail = true;
     // Flush -> DOM -> actual paint opportunity -> save that very candidate.
@@ -216,7 +250,7 @@ export class WallNodeEditor {
   }
   cancel(): boolean {
     const s = this.session;
-    cancelHouseplanPointerMove(this);
+    this.clearMoveFrame(); this.pendingMove = null;
     if (!s) return false;
     this.session = null; this.cache = null; this.tail = true;
     s.capture.style.cursor = '';

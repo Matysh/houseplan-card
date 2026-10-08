@@ -207,7 +207,7 @@ test('#451 live resize candidate keeps nearby physical bodies and excludes remot
   assert.deepEqual(candidate.openings.map((item) => item.id), ['near']);
 });
 
-test('#451 live resize physical preflight retains the adjacent room of a degraded wall', () => {
+test('#451/#834 live resize retains adjacent-room closure and still refuses an unbuildable body', () => {
   const fixture = JSON.parse(readFileSync(
     new URL('./fixtures/278-wall-union-isolation.json', import.meta.url), 'utf8',
   ));
@@ -221,8 +221,7 @@ test('#451 live resize physical preflight retains the adjacent room of a degrade
   });
   const largeSpace = { ...baseSpace, rooms: [...baseSpace.rooms, ...remoteRooms] };
   const full = checkSpacePhysicalGeometry({ spaces: [largeSpace] }, largeSpace.id);
-  assert.equal(full.ok, false);
-  assert.equal(full.reason, 'wall-degraded-extra');
+  assert.equal(full.ok, true, '#834 repairs the historical floating-tail union');
 
   const liveRoomIds = resizeLiveJunctionRoomIds(largeSpace.rooms, ['r1']);
   assert.deepEqual(liveRoomIds, ['r1', 'r2']);
@@ -230,6 +229,17 @@ test('#451 live resize physical preflight retains the adjacent room of a degrade
   assert.ok(liveSpace);
   assert.deepEqual(liveSpace.rooms.map((room) => room.id), ['r1', 'r2']);
   const live = checkSpacePhysicalGeometry({ spaces: [liveSpace] }, liveSpace.id);
-  assert.equal(live.ok, false);
-  assert.equal(live.reason, 'wall-degraded-extra');
+  assert.equal(live.ok, true);
+  // Deliberate corruption witnesses the guard independently of a historical
+  // library bug. Unknown/unbuildable nearby geometry may not be filtered out.
+  const corrupted = { ...largeSpace,
+    wall_columns: [{ id: 'deliberately-unbuildable', shape: 'rect', center: [NaN, 0], cm: 30, angle: 0 }] };
+  const localCorrupted = resizeLiveCandidateSpace(corrupted, liveRoomIds);
+  assert.deepEqual(localCorrupted.rooms.map(room => room.id), ['r1', 'r2']);
+  assert.equal(localCorrupted.wall_columns.length, 1);
+  for (const candidate of [corrupted, localCorrupted]) {
+    const refused = checkSpacePhysicalGeometry({ spaces: [candidate] }, candidate.id);
+    assert.equal(refused.ok, false);
+    assert.equal(refused.reason, 'wall-degraded-extra');
+  }
 });

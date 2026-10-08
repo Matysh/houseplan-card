@@ -1,5 +1,46 @@
 # Development and deployment
 
+## Connected-floor Select node movement (#834)
+
+`test/fixtures/834-node-connected.json` retains the anonymised 8-room, 30-wall,
+14-opening geometry from the beta.9 report, not HA identifiers or device data.
+`wall-node-connected.test.mjs` scans 100 adjacent positions and checks masonry,
+floor holes and opening cuts; the two-room reduction proves this is independent
+of HA state. The Python companion executes the unchanged server's independent
+proof and exact inverse on the same 100 positions.
+
+`smoke_wall_node_connected.mjs` is a normal CI-discovered smoke and the
+`benchmark:wall-node-connected` command. Its native CDP stream does not wait for
+two animation frames between moves. Every submitted input has an immutable
+browser-clock timestamp; browser-coalesced/superseded inputs are reported
+explicitly, never counted as separately painted positions. Three native clock
+probes before each mouse-down fix a conservative epoch-to-native offset before
+dispatch, never fitted to measured inputs. A missing final source input or
+unstable calibration fails the run; unmatched native observations remain in
+the raw report. The report retains
+cold/warm samples, complete candidate/proof/paint CPU, input-to-paint opportunity,
+long tasks and proof counts. The test also exercises previously rejected
+neighbours, actual new wall coverage, cancellation, one commit and Undo/Redo.
+The paint observer uses the same producer-phase rule before and after: a
+synchronous DOM update inside rAF has a paint opportunity before the next rAF;
+a task/microtask update needs two rAFs because the first can precede its paint.
+It observes/delegates native rAF calls without changing their IDs or pacing
+input. Raw data also retains the unconditional two-rAF upper bound so the
+scheduler change cannot hide the measurement difference. Neither number claims
+a compositor presentation timestamp. The 50/100/150 ms budgets are unchanged.
+The old 200-room synthetic node benchmark selects only 0–2 disconnected rooms
+per gesture; it is not evidence for a connected residential floor.
+
+Never pass render-unit, opening-cut geometry directly to junction clearance.
+Only a compatible pre-opening component explicitly normalized to config units
+may be shared; open-span/incompatible cases retain the independent proof.
+The numerical retry must not accept degraded geometry or discard a failed hole.
+Registry anchors are checked locally; actual mutants remain nightly only.
+The raw generated-tree accounting baseline increases from 2,771,465 to
+2,777,899 bytes for these readable geometry helpers and conservative fallbacks;
+delegation/port/harness coupling metrics do not grow. This is not a change to
+the initial-View, lazy-editor, or runtime performance budgets.
+
 ## Kiosk hold → modal input (#831)
 
 `smoke_kiosk_scale_no_editor --jitter-only` exercises real >4/<8 px mouse/touch

@@ -11,17 +11,24 @@ function setup() {
   const stage = { style: {}, setPointerCapture: p => capture.add(p),
     hasPointerCapture: p => capture.has(p), releasePointerCapture: p => capture.delete(p) };
   const window = new EventTarget(), toasts = [], writes = [], recorded = [];
+  const frames = new Map(); let frameId = 0, autoFrames = true;
+  const flushFrame = () => { const ready = [...frames.values()]; frames.clear(); for (const run of ready) run(0); };
+  window.requestAnimationFrame = run => { const id = ++frameId; frames.set(id, run);
+    if (autoFrames) setImmediate(() => { const task = frames.get(id); frames.delete(id); task?.(0); });
+    return id; };
+  window.cancelAnimationFrame = id => frames.delete(id);
   const listeners = new Set(), add = window.addEventListener.bind(window), remove = window.removeEventListener.bind(window);
   window.addEventListener = (type, listener) => { if (type === 'pagehide') listeners.add(listener); add(type, listener); };
   window.removeEventListener = (type, listener) => { if (type === 'pagehide') listeners.delete(listener); remove(type, listener); };
-  let paintResolve, paint = Promise.resolve(), fail = false, retireOnWrite = false;
-  const changes = [];
+  let paintResolve, paint = Promise.resolve(), fail = false, retireOnWrite = false, validPreview = true;
+  const changes = [], validations = [];
   const port = { context: () => context, config: () => cfg,
     screenPoint: ev => [ev.clientX, ev.clientY], unitsPerPixel: () => 0.0001,
     stage: () => stage, root: () => ({ querySelectorAll: () => [] }),
     document: { defaultView: window, createElementNS: () => ({ style: {}, classList: { add() {} }, appendChild() {} }) },
     text: key => key, toast: text => toasts.push(text),
-    changed: () => changes.push([editor.busy, recorded.length]), validate: () => true, paintOpportunity: () => paint,
+    changed: () => changes.push([editor.busy, recorded.length]),
+    validate: (...args) => { validations.push(args); return validPreview; }, paintOpportunity: () => paint,
     write: async h => {
       writes.push(h); if (fail) throw new Error('refused');
       if (retireOnWrite) { context.revision++; editor.paint(); }
@@ -33,11 +40,104 @@ function setup() {
   const ev = (type, x = 0, y = 0, patch = {}) => ({ type, pointerId: 1, pointerType: 'mouse',
     isPrimary: true, button: 0, detail: 1, clientX: x, clientY: y, composedPath: () => [stage],
     preventDefault() {}, stopImmediatePropagation() {}, ...patch });
-  return { cfg, context, capture, editor, ev, writes, recorded, toasts, window, listeners, changes,
+  return { cfg, context, capture, editor, ev, writes, recorded, toasts, window, listeners, changes, validations, frames,
+    holdFrames: () => { autoFrames = false; }, flushFrame,
+    refusePreview: () => { validPreview = false; },
     holdPaint: () => { paint = new Promise(resolve => { paintResolve = resolve; }); },
     finishPaint: () => paintResolve(), refuse: () => { fail = true; }, retireAtWrite: () => { retireOnWrite = true; } };
 }
 const settle = () => new Promise(resolve => setImmediate(resolve));
+
+test('native event turns share one frame and repeated snapped positions reuse the candidate', async () => {
+  const s = setup(); s.holdFrames(); s.editor.guardEvent(s.ev('pointerdown'));
+  for (const x of [.2, .25, .3]) {
+    s.editor.guardEvent(s.ev('pointermove', x, .3)); await settle();
+  }
+  assert.equal(s.frames.size, 1); assert.equal(s.validations.length, 0);
+  s.flushFrame();
+  assert.deepEqual(s.editor.preview.sp.partitions[0].a, [.3, .3]);
+  assert.equal(s.validations.length, 1);
+  const candidate = s.editor.preview.sp, paints = s.changes.length;
+  for (let i = 0; i < 5; i++) {
+    s.editor.guardEvent(s.ev('pointermove', .30001, .30001)); s.flushFrame();
+  }
+  assert.equal(s.editor.preview.sp, candidate); assert.equal(s.validations.length, 1);
+  assert.equal(s.changes.length, paints); s.editor.dispose();
+});
+
+test('sub-epsilon free-axis changes cannot retarget a previously proved candidate', async () => {
+  const s = setup(); s.holdFrames(); s.editor.guardEvent(s.ev('pointerdown'));
+  s.editor.guardEvent(s.ev('pointermove', 1, .3)); s.flushFrame();
+  const original = s.editor.preview.sp;
+  s.editor.guardEvent(s.ev('pointermove', 1, .3000000009)); s.flushFrame();
+  assert.notEqual(s.editor.preview.sp, original);
+  assert.equal(s.validations.length, 2, 'the new free-axis coordinate receives its own proof');
+  assert.deepEqual(s.editor.preview.sp.partitions[0].a, [1, .3], 'ordinary canonical geometry policy still applies');
+  s.editor.guardEvent(s.ev('pointerup')); await settle();
+  assert.deepEqual(s.writes[0].intent.target, [1, .3000000009]);
+  s.editor.dispose();
+});
+
+test('pending frame release flushes the newest target and cannot run again after commit', async () => {
+  const s = setup(); s.holdFrames(); s.editor.guardEvent(s.ev('pointerdown'));
+  s.editor.guardEvent(s.ev('pointermove', .2, .3)); await settle();
+  s.editor.guardEvent(s.ev('pointermove', .4, .3)); await settle();
+  assert.equal(s.validations.length, 0);
+  s.editor.guardEvent(s.ev('pointerup')); await settle(); s.flushFrame();
+  assert.equal(s.frames.size, 0); assert.equal(s.writes.length, 1);
+  assert.deepEqual(s.writes[0].intent.target, [.4, .3]);
+  assert.equal(s.validations.filter(v => !v[2]).length, 1);
+  assert.equal(s.recorded.length, 1); s.editor.dispose();
+});
+
+test('a guide-only change paints without computing a candidate and a repeated refusal stays refused', async () => {
+  const s = setup(); s.holdFrames(); s.editor.guardEvent(s.ev('pointerdown'));
+  const capturedPaints = s.changes.length;
+  s.editor.guardEvent(s.ev('pointermove', 0, .0001)); s.flushFrame();
+  assert.equal(s.validations.length, 0); assert.equal(s.editor.preview, null);
+  assert.equal(s.changes.length, capturedPaints + 1, 'origin axis guide was painted');
+  s.refusePreview(); s.editor.guardEvent(s.ev('pointermove', .25, .3)); s.flushFrame();
+  assert.equal(s.editor.invalid, 'invalid'); const candidate = s.editor.preview.sp;
+  s.editor.guardEvent(s.ev('pointermove', .25001, .30001)); s.flushFrame();
+  assert.equal(s.validations.length, 1); assert.equal(s.editor.preview.sp, candidate);
+  assert.equal(s.editor.invalid, 'invalid');
+  s.editor.guardEvent(s.ev('pointerup')); await settle();
+  assert.equal(s.writes.length, 0); assert.equal(s.recorded.length, 0); s.editor.dispose();
+});
+
+test('X keeps the first unambiguous carrier even when later native events precede the frame', () => {
+  const s = setup(); s.holdFrames();
+  s.cfg.spaces[0].partitions = [
+    { id: 'h', a: [-1, 0], b: [1, 0], cm: 0 },
+    { id: 'v', a: [0, -1], b: [0, 1], cm: 0 },
+  ];
+  s.editor.guardEvent(s.ev('pointerdown'));
+  s.editor.guardEvent(s.ev('pointermove', .25, .001));
+  s.editor.guardEvent(s.ev('pointermove', .1, .3));
+  s.flushFrame();
+  assert.equal(s.editor.invalid, null);
+  const walls = s.editor.preview.sp.partitions;
+  assert.deepEqual(walls.find(w => w.id === 'h'), s.cfg.spaces[0].partitions[0]);
+  assert.ok(walls.filter(w => w.id !== 'h').every(w => w.a[1] === 0 || w.b[1] === 0));
+  assert.ok(walls.some(w => w.a[0] === .1 || w.b[0] === .1)); s.editor.dispose();
+});
+
+test('pending frames retire on cancel, context changes and disposal without a late candidate', () => {
+  for (const terminal of ['cancel', 'revision', 'floor', 'permission', 'dispose', 'pointercancel', 'lostpointercapture']) {
+    const s = setup(); s.holdFrames(); s.editor.guardEvent(s.ev('pointerdown'));
+    s.editor.guardEvent(s.ev('pointermove', .25, .3));
+    if (terminal === 'cancel') s.editor.cancel();
+    else if (terminal === 'dispose') s.editor.dispose();
+    else if (terminal === 'revision') s.context.revision++;
+    else if (terminal === 'floor') s.context.space = 'other';
+    else if (terminal === 'permission') s.context.enabled = false;
+    else s.editor.guardEvent(s.ev(terminal));
+    s.flushFrame();
+    assert.equal(s.frames.size, 0); assert.equal(s.editor.dragging, false);
+    assert.equal(s.editor.preview, null); assert.equal(s.validations.length, 0);
+    assert.equal(s.writes.length, 0); assert.equal(s.recorded.length, 0); s.editor.dispose();
+  }
+});
 
 test('queued release flushes the last move and waits for paint before any write/history', async () => {
   const s = setup(); s.holdPaint();
@@ -51,6 +151,27 @@ test('queued release flushes the last move and waits for paint before any write/
   assert.equal(s.writes.length, 1); assert.equal(s.recorded.length, 1);
   assert.equal(s.editor.dragging, false); assert.equal(s.capture.size, 0);
   s.editor.dispose();
+});
+
+test('cancel or disposal while the final paint awaits prevents the write and history', async () => {
+  for (const terminal of ['cancel', 'dispose']) {
+    const s = setup(); s.holdPaint(); s.editor.guardEvent(s.ev('pointerdown'));
+    s.editor.guardEvent(s.ev('pointermove', .25, .3)); s.editor.guardEvent(s.ev('pointerup'));
+    s.editor[terminal](); s.finishPaint(); await settle();
+    assert.equal(s.writes.length, 0); assert.equal(s.recorded.length, 0);
+    assert.equal(s.editor.preview, null); assert.equal(s.capture.size, 0); s.editor.dispose();
+  }
+});
+
+test('a delivered retired frame cannot flush a newer gesture', () => {
+  const s = setup(); s.holdFrames(); s.editor.guardEvent(s.ev('pointerdown'));
+  s.editor.guardEvent(s.ev('pointermove', .2, .3));
+  const retired = [...s.frames.values()][0]; s.editor.cancel();
+  s.editor.guardEvent(s.ev('pointerdown')); s.editor.guardEvent(s.ev('pointermove', .4, .3));
+  retired(0);
+  assert.equal(s.validations.length, 0); assert.equal(s.frames.size, 1);
+  s.flushFrame(); assert.deepEqual(s.editor.preview.sp.partitions[0].a, [.4, .3]);
+  assert.equal(s.validations.length, 1); s.editor.dispose();
 });
 
 test('own revision adoption before history record still refreshes the enabled Undo toolbar', async () => {

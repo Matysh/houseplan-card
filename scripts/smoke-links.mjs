@@ -30,6 +30,12 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/wall-node-editor.ts', 'src/wall-node-card-adapter.ts', 'src/wall-node-preview.ts', 'src/wall-thickness.ts'],
+    smokes: ['smoke_wall_node_connected.mjs'],
+    because: '#834: native connected-floor drags prove neighbouring positions, atomic last-input release '
+      + 'and warm end-to-end input/geometry/paint budgets, which disconnected-room benchmarks cannot observe',
+  },
+  {
     files: ['src/wall-segment-model.ts'],
     smokes: ['smoke_wall_adoption_alias.mjs'],
     because: '#826: two native Resize commits and Undo/Redo must preserve an aliased untouched '
@@ -578,9 +584,10 @@ export const SMOKE_LINKS = [
       'checkSpacePhysicalGeometry', 'spacePhysicalGeometryFingerprint',
     ],
     smokes: ['smoke_wall_union_isolation.mjs'],
-    because: 'the #278 production bundle must paint isolated canonical components in Plan, '
-      + 'View, Static, hidden Iso and light barriers, reject a physical write with zero WS/Undo, '
-      + 'and still allow a non-geometry edit on the same degraded legacy space',
+    because: 'the #278/#834 production bundle must retain the independently specified historical masonry in Plan, '
+      + 'View, Static, hidden Iso and light barriers after its numerical repair, reject a genuinely unbuildable '
+      + 'physical candidate with zero WS/Undo, and still allow a non-geometry edit; deterministic retained-component '
+      + 'failure isolation is additionally exercised through the existing boolean fault seam in unit tests',
   },
   {
     symbols: [

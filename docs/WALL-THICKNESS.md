@@ -47,6 +47,18 @@ latest positions never commit a previous valid frame. Paper,
 room fills and opening cuts use that same candidate. Pointerup flushes the queue
 and allows the final frame to paint before writing the whole atomic delta.
 
+#834 computes only the newest queued target per animation frame, retaining
+the first X-axis decision across raw events. The final input is flushed before
+release; cancel/revision retirement removes pending work. The same snapped
+point/axis reuses both valid and invalid results without rebuilding geometry.
+A numerical failure joining the computed masonry and exterior shell gets one
+canonical-coordinate retry; original room/wall coordinates never change.
+Each operand must preserve its rings, holes and component topology. Strictly
+separated component bounding boxes across operands must retain that certified
+separation after rounding; this is not a claim of general cross-operand
+topology equivalence. All existing physical guards still run, and failure of
+the retry stays fail-closed.
+
 ### Stable stored identity and zero walls (model v10, #282/#306/#478)
 
 The decision record behind the stored representation — what the code calls
@@ -608,6 +620,12 @@ read-only recovery: strict Optimize and every physical-geometry edit reject a
 degraded candidate and never silently delete or rewrite the offending object.
 A core room-body failure is `failed-core`: it sits outside the optional-union
 fallback and activates fail-dark rendering.
+
+#834 repairs the floating-tail shell union in the historical two-room #278
+fixture: it now has one complete, independently checked T-shaped component.
+Tests no longer require that numerical defect to survive. Genuine unbuildable
+bodies still exercise the strict refusal path, and an injected merge failure
+separately verifies preservation of two individually valid components.
 
 An opening with explicit `host:{kind:'partition',id,t}` is resolved from that
 partition alone and subtracted full-depth from its raw body before the joined

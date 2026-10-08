@@ -6,11 +6,15 @@
  * displayed m² use the inner (inset) contour. Wall-length rulers stay on the
  * centreline.
  */
-import { union, difference, intersection } from 'polyclip-ts';
+import { union, difference, intersection, type Geom } from './wall-boolean-cache';
 import { unionLocalWallGeometry, intersectLocalWallGeometry, subtractLocalWallGeometry } from './wall-local-boolean';
 import { polygonArea, roomPoly, roomEdges, sharedBoundary, paperRoomShapes } from './logic';
 import { NEAR_AXIS_MAX_DEGREES } from './near-axis';
 import { LATTICE_NOISE_STEPS } from './coordinate-canonicalization';
+import { unionWallShellGeometry } from './wall-shell-union';
+import type { wallQuadCovered } from './wall-quad-coverage';
+import { unionWallCornerPieces, subtractWallOpeningCuts } from './wall-geometry-batch';
+import { applyWallLocalReplacements, type WallLocalReplacement } from './wall-local-replacements';
 
 export interface WallEntry {
   key: string;
@@ -53,10 +57,15 @@ export interface WallBodiesGeometryResult {
 }
 
 export interface WallGeometryOperations {
+  /** Optional exact redundancy proof supplied by the lazy Select preview.
+   * Other consumers retain the canonical edge intersection/union path. */
+  coveredQuad?: typeof wallQuadCovered;
   /** Test seam around the transaction which may fail for one independent body. */
   mergeExtra?: (primary: any, extra: any, index: number) => any;
   /** Bounded diagnostic seam; never receives coordinates, ids or exceptions. */
   onCoreFailure?: (phase: string) => void;
+  /** Test seam: failed optional trim composition must replay the historical path. */
+  composeLocalReplacements?: typeof applyWallLocalReplacements;
 }
 
 export const WALL_MIN_CM = 1;
@@ -3059,7 +3068,46 @@ function multiWallEffectiveCutGeometry(
   return cuts && protectedStrips ? difference(cuts, protectedStrips) : cuts;
 }
 
-function bevelMultiWallBody(
+/** Body-independent physical pieces shared by sequential and composed trims.
+ * Both paths use the same finite rays, bevels, core and exterior envelope. */
+function multiWallReplacementPieces(
+  node: MultiWallNode, map: MultiWallNodeMap, protectedStrips: Geom | null,
+  centre?: Geom, envelope?: Geom,
+): { mask: Geom; outerCuts: Geom | null; localInside: Geom; foreignFinite: Geom | null } {
+  const radius = MITRE_LIMIT * node.halfDepth + map.epsilon * 2;
+  const mask = closedRing([
+    [node.point[0] - radius, node.point[1] - radius],
+    [node.point[0] + radius, node.point[1] - radius],
+    [node.point[0] + radius, node.point[1] + radius],
+    [node.point[0] - radius, node.point[1] + radius],
+  ]) as Geom;
+  const outerCuts: Geom | null = multiWallEffectiveCutGeometry(node, map, false, true, protectedStrips);
+  let local: Geom = multiWallRayStripGeometry(node, map, radius * 2);
+  const retainedCuts: Geom | null = multiWallEffectiveCutGeometry(node, map, true, true, protectedStrips);
+  // Rebuild finite half-strips before removing excessive pairwise overlap;
+  // cutting the legacy ring directly could strand floor or delete a ray.
+  if (retainedCuts) local = difference(local, retainedCuts);
+  if (protectedStrips) local = union(local, protectedStrips);
+  // Replace mathematical endpoint contact by the same tiny physical core.
+  const coreRadius = Math.min(...node.rays.map(ray => ray.halfDepth)) * 0.02;
+  local = union(local, closedRing([
+    [node.point[0] - coreRadius, node.point[1] - coreRadius],
+    [node.point[0] + coreRadius, node.point[1] - coreRadius],
+    [node.point[0] + coreRadius, node.point[1] + coreRadius],
+    [node.point[0] - coreRadius, node.point[1] + coreRadius],
+  ]) as Geom);
+  if (!local) throw new Error('missing local wall geometry');
+  let localInside: Geom = intersection(local, mask);
+  // The full paper envelope retains the exterior half-wall at a T-junction.
+  if (envelope) localInside = intersection(localInside, envelope);
+  else if (centre) localInside = intersection(localInside, centre);
+  // A short ray may hand off inside the mask to a non-incident shared wall.
+  // Preserve its exact finite continuation, never a projected square strip.
+  const foreignFinite: Geom | null = multiWallContinuationStripGeometry(node, map, mask);
+  return { mask, outerCuts, localInside, foreignFinite };
+}
+
+function bevelMultiWallBodySequential(
   body: any,
   map: MultiWallNodeMap,
   centre?: any,
@@ -3079,61 +3127,16 @@ function bevelMultiWallBody(
   }
   let current = body;
   for (const node of map.nodes) {
-    const radius = MITRE_LIMIT * node.halfDepth + map.epsilon * 2;
-    const extent = radius * 2;
-    const mask = [
-      [node.point[0] - radius, node.point[1] - radius],
-      [node.point[0] + radius, node.point[1] - radius],
-      [node.point[0] + radius, node.point[1] + radius],
-      [node.point[0] - radius, node.point[1] + radius],
-    ];
     try {
+      const { mask, outerCuts, localInside, foreignFinite } = multiWallReplacementPieces(
+        node, map, protectedStrips, centre, envelope,
+      );
       let boundedCurrent = current;
-      const outerCuts = multiWallEffectiveCutGeometry(
-        node, map, false, true, protectedStrips,
-      );
       if (outerCuts) boundedCurrent = difference(boundedCurrent, outerCuts);
-      let local = multiWallRayStripGeometry(node, map, extent);
-      const retainedCuts = multiWallEffectiveCutGeometry(
-        node, map, true, true, protectedStrips,
-      );
-      if (retainedCuts) {
-        // Rebuild the physical half-strips first, then remove only their
-        // excessive pairwise overlap. Applying this cut to the legacy room
-        // ring itself can delete an incident half-strip and strand floor.
-        local = difference(local, retainedCuts);
-      }
-      // The same protected material is restored after subtraction so boolean
-      // ordering/rounding cannot turn a right-angle wall into an open notch.
-      if (protectedStrips) local = union(local, protectedStrips);
-      // Rays share a mathematical endpoint. A tiny physical core turns that
-      // point contact into a stable polygon contact for boolean/render paths.
-      const coreRadius = Math.min(
-        ...node.rays.map((ray) => ray.halfDepth),
-      ) * 0.02;
-      local = union(local, closedRing([
-        [node.point[0] - coreRadius, node.point[1] - coreRadius],
-        [node.point[0] + coreRadius, node.point[1] - coreRadius],
-        [node.point[0] + coreRadius, node.point[1] + coreRadius],
-        [node.point[0] - coreRadius, node.point[1] + coreRadius],
-      ]) as any);
-      if (!local) continue;
-      let localInside = intersection(local, closedRing(mask) as any);
-      // `envelope` is the bounded physical paper, including the exterior
-      // half-walls. Clipping the repair to the room-centre union first drops
-      // exactly the valid T-junction wedge this reconstruction must retain.
-      if (envelope) localInside = intersection(localInside, envelope);
-      else if (centre) localInside = intersection(localInside, centre);
-      const maskGeometry = closedRing(mask) as any;
-      const outside = difference(boundedCurrent, maskGeometry);
+      const outside = difference(boundedCurrent, mask);
       const preservedExterior = centre
-        ? difference(intersection(boundedCurrent, maskGeometry), centre)
+        ? difference(intersection(boundedCurrent, mask), centre)
         : null;
-      // The square replacement removes legacy mitre/room-ring material before
-      // rebuilding this node's finite rays. A short ray can end inside it and
-      // hand off to a shared wall that is not incident to this node; preserve
-      // that exact continuation, never a global square/radius projection.
-      const foreignFinite = multiWallContinuationStripGeometry(node, map, maskGeometry);
       current = union(
         outside,
         ...(preservedExterior ? [preservedExterior] : []),
@@ -3156,6 +3159,39 @@ function bevelMultiWallBody(
     }
   }
   return current;
+}
+
+/** Compose the same ordered trims as local set differences/additions. The
+ * previous implementation traverses the entire connected body repeatedly for
+ * each node. Here only the final difference/union touches that complete body.
+ * If any local operation or final composition fails, replay the unchanged
+ * historical path so its per-node failure isolation remains authoritative. */
+function bevelMultiWallBody(
+  body: Geom, map: MultiWallNodeMap, centre?: Geom, envelope?: Geom,
+  compose: typeof applyWallLocalReplacements = applyWallLocalReplacements,
+): Geom {
+  if (!body || !map.nodes.length) return body;
+  try {
+    const protectedStrips: Geom | null = multiWallProtectedMapGeometry(map);
+    const replacements: WallLocalReplacement[] = [];
+    for (const node of map.nodes) {
+      const { mask, outerCuts, localInside, foreignFinite } = multiWallReplacementPieces(
+        node, map, protectedStrips, centre, envelope,
+      );
+      // (A\mask) union ((A intersect mask)\centre) = A\(mask intersect centre).
+      // Keep the exterior contribution exactly; do not treat the entire mask
+      // as removable masonry when the node sits on the facade.
+      const maskedCentre: Geom = centre ? intersection(mask, centre) : mask;
+      replacements.push({ cuts: [...(outerCuts ? [outerCuts] : []), maskedCentre],
+        pieces: [...(foreignFinite ? [foreignFinite] : []), localInside] });
+    }
+    let protectedInside = protectedStrips;
+    if (protectedInside && envelope) protectedInside = intersection(protectedInside, envelope);
+    else if (protectedInside && centre) protectedInside = intersection(protectedInside, centre);
+    return compose(body, replacements, protectedInside);
+  } catch {
+    return bevelMultiWallBodySequential(body, map, centre, envelope);
+  }
 }
 
 
@@ -3760,6 +3796,7 @@ export function wallBodiesGeometry(
       for (const edge of wallEdgeBodies(
         rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
       )) {
+        if (body && operations.coveredQuad?.(edge.quad, body)) continue;
         try {
           const piece = intersectLocalWallGeometry(closedRing(edge.quad), exterior.centre);
           body = body ? unionLocalWallGeometry(body, piece) : piece;
@@ -3783,7 +3820,7 @@ export function wallBodiesGeometry(
       if (!body) body = exterior.shell;
       else {
         try {
-          const merged = union(body, exterior.shell);
+          const merged = unionWallShellGeometry(body, exterior.shell, coordScale);
           if (!structurallyValidWallGeometry(merged)) throw new Error('invalid shell union');
           body = merged;
         } catch {
@@ -3815,7 +3852,8 @@ export function wallBodiesGeometry(
         const trimMap: MultiWallNodeMap = {
           ...multiWallNodes, nodes: trimNodes,
         };
-        body = bevelMultiWallBody(body, trimMap, exterior?.centre, paperGeom);
+        body = bevelMultiWallBody(body, trimMap, exterior?.centre, paperGeom,
+          operations.composeLocalReplacements);
       }
     }
     // Then the node gets its additive corners: the exact support quads of its
@@ -3833,17 +3871,19 @@ export function wallBodiesGeometry(
       // node's strips) the support re-union became dead weight — measured by
       // the full unit suite staying green without it. The support quads stay
       // exported: the detector and the tests use them as the contract truth.
+      const cornerPieces: Geom[] = [];
       for (const piece of corners.fans) {
         try {
           let ring: any = [closedRing(piece)];
           if (bound) ring = intersectLocalWallGeometry(ring, bound);
           if (!ring?.length) continue;
-          body = body ? unionLocalWallGeometry(body, ring) : ring;
+          cornerPieces.push(ring);
         } catch {
           // A degenerate piece must not take the whole node down; the rest
           // still stands on its own.
         }
       }
+      body = unionWallCornerPieces(body, cornerPieces);
       body = dropDegenerateRings(body, Math.max(multiWallNodes.epsilon, 1e-9) ** 2);
     }
     const roomGeom = body || [];
@@ -3857,6 +3897,7 @@ export function wallBodiesGeometry(
     ];
     // cut opening tunnels (axis-aligned to opening angle)
     corePhase = 'openings';
+    const openingSlots: Geom[] = [];
     for (const o of openings) {
       if (!(o.length > 0)) continue;
       const association = resolveOpeningWallAssociation(openingIndex!, o, true);
@@ -3872,11 +3913,11 @@ export function wallBodiesGeometry(
         [o.x + ux * half + nx * pad, o.y + uy * half + ny * pad],
         [o.x - ux * half + nx * pad, o.y - uy * half + ny * pad],
       ];
-      if (body) body = difference(body, closedRing(slot) as any);
-      for (const component of isolatedCore) {
-        component.geom = difference(component.geom, closedRing(slot) as any);
-      }
+      openingSlots.push(closedRing(slot) as Geom);
     }
+    if (body) body = subtractWallOpeningCuts(body, openingSlots);
+    for (const component of isolatedCore)
+      component.geom = subtractWallOpeningCuts(component.geom, openingSlots);
     // Independent bodies are physical but own no openings. Each merge is a
     // transaction: a local boolean failure must not discard the last valid
     // room/extra union. A valid offending body remains an isolated component,

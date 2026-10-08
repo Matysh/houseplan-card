@@ -37,6 +37,7 @@
     "benchmark:coincident-partitions": "node demo/benchmark_coincident_partitions.mjs",
     "benchmark:safe-resize": "node demo/benchmark_safe_resize.mjs",
     "benchmark:safe-resize-render": "node demo/benchmark_safe_resize_render.mjs",
+    "benchmark:wall-node-connected": "node demo/smoke_wall_node_connected.mjs",
     "benchmark:wall-union-isolation": "node demo/benchmark_wall_union_isolation.mjs",
     "golden:capture": "node demo/golden/run.mjs --mode=capture",
     "golden:verify": "node demo/golden/run.mjs --mode=verify",

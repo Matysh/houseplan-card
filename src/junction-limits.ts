@@ -28,7 +28,11 @@ interface JunctionLimitSpace {
 
 type JunctionLimitConfig = { spaces?: JunctionLimitSpace[] };
 export type JunctionSharedGeometry =
-  | Pick<WallBodiesGeometryResult, 'status' | 'roomGeom' | 'multiWallNodes'>
+  | (Pick<WallBodiesGeometryResult, 'status' | 'roomGeom' | 'multiWallNodes'> & {
+    /** Observation only: the guard always computes and judges the contour.
+     * Consumers may copy it for painting; it is never a validation input. */
+    onRoomInnerContour?: (roomId: string, contour: readonly (readonly number[])[] | null) => void;
+  })
   | { status: 'lightweight'; multiWallNodes?: MultiWallNodeMap | null };
 
 export const MIN_JUNCTION_ANGLE_DEG = 15;
@@ -110,6 +114,9 @@ export function junctionLimitViolations(
       );
     } catch { inner = null; }
     violations.push(...checkRoomClearance(roomId, inner, cellCm, GRID_STEP_N));
+    // Do not swallow an observer failure: candidate callers must retain their
+    // existing fail-closed check_failed path instead of authorizing a write.
+    completeGeometry?.onRoomInnerContour?.(roomId, inner);
   }
   return violations;
 }

@@ -6,10 +6,13 @@ import { WallNodeEditor, type NodeMoveHistory } from './wall-node-editor';
 import { writeWallNode, type WallNodeWriteHost } from './wall-node-write';
 import type { NodeMoveSpace } from './wall-node-move';
 import type { ServerConfig } from './types';
-import { buildNodePreview, nodeMoveLocalSpaces, nodePreviewScene, type NodePreviewGeometry } from './wall-node-preview';
+import { buildNodePreview, nodeMoveLocalSpaces, nodePreviewScene, nodePreviewJunctionGeometry, type NodePreviewGeometry } from './wall-node-preview';
 import { spaceDisplayOf } from './logic';
 import type { OpeningCfg } from './types';
 import { commitHouseplanEditor } from './live-editor';
+import type { JunctionSharedGeometry } from './junction-limits';
+import { withWallBooleanBaseline } from './wall-boolean-cache';
+import { WallBooleanBaseline } from './wall-boolean-baseline';
 
 interface NodeCardHost<TState> extends WallNodeWriteHost {
   readonly _mode: string; readonly _tool: string;
@@ -32,12 +35,14 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeMoveHistory
   host: NodeCardHost<TState>, callbacks: {
     point(event: PointerEvent): number[];
     snapshot(space: NodeMoveSpace): TState | null;
-    introduced(candidate: ServerConfig, baseline: ServerConfig, spaceId: string): readonly unknown[];
+    introduced(candidate: ServerConfig, baseline: ServerConfig, spaceId: string,
+      candidateGeometry?: JunctionSharedGeometry, baselineGeometry?: JunctionSharedGeometry): readonly unknown[];
   },
 ): WallNodeEditor {
   const language = () => langOf(host.hass, host._config?.language);
   let geometry: { source: NodeMoveSpace; candidate: NodeMoveSpace; before: NodePreviewGeometry; next: NodePreviewGeometry } | null = null;
-  let baselineGeometry: { source: NodeMoveSpace; signature: string; value: NodePreviewGeometry; config: ServerConfig } | null = null;
+  let baselineGeometry: { source: NodeMoveSpace; signature: string; value: NodePreviewGeometry;
+    proof: JunctionSharedGeometry | undefined; config: ServerConfig; booleans: WallBooleanBaseline } | null = null;
   const editor = new WallNodeEditor({
     document: host.renderRoot.ownerDocument,
     context: () => ({ enabled: host._mode === 'plan' && host._tool === 'select'
@@ -60,11 +65,16 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeMoveHistory
         const [localBefore, localNext] = nodeMoveLocalSpaces(before, space);
         const config = { ...host._serverCfg, spaces: [localNext] };
         const signature = JSON.stringify(localBefore);
-        if (!baselineGeometry || baselineGeometry.source !== before || baselineGeometry.signature !== signature)
-          baselineGeometry = { source: before, signature, value: buildNodePreview(localBefore),
-            config: { ...host._serverCfg, spaces: [localBefore] } };
-        const old = baselineGeometry.value, next = buildNodePreview(localNext);
-        next.safe &&= !callbacks.introduced(config, baselineGeometry.config, space.id).length;
+        if (!baselineGeometry || baselineGeometry.source !== before || baselineGeometry.signature !== signature) {
+          const booleans = new WallBooleanBaseline();
+          const value = withWallBooleanBaseline(booleans, true, () => buildNodePreview(localBefore));
+          baselineGeometry = { source: before, signature, value, proof: nodePreviewJunctionGeometry(value, false),
+            config: { ...host._serverCfg, spaces: [localBefore] }, booleans };
+        }
+        const old = baselineGeometry.value;
+        const next = withWallBooleanBaseline(baselineGeometry.booleans, false, () => buildNodePreview(localNext));
+        next.safe &&= !callbacks.introduced(config, baselineGeometry.config, space.id,
+          nodePreviewJunctionGeometry(next), baselineGeometry.proof).length;
         geometry = { source: before, candidate: space, before: old, next };
         return next.safe;
       }

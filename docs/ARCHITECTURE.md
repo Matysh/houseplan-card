@@ -31,6 +31,40 @@ description and a link to its canonical document, which owns the details.
 
 ## Wall-node editing (#803)
 
+#834 separates cheap input arbitration from expensive frame work. Native
+events retain the first unambiguous X axis while only the newest pending target
+builds/proves/paints in an animation frame. Release flushes synchronously before
+the existing paint/write barrier; cancellation retires the callback. Identical
+snapped target/axis reuses its exact accepted or refused candidate, while a
+guide-only change still paints.
+
+`wall-shell-union.ts` keeps the ordinary exact union first. Only its exception
+gets a retry with computed operands at the existing canonical coordinate
+precision; collapsed rings, disappearing holes and changed operand topology
+remain failures. This does not rewrite stored coordinates or relax junction
+limits. Junction reuse explicitly scales the pre-opening room masonry to
+config units; structural open-spans and incompatible/failed artifacts retain
+the canonical independent proof. Visible opening-cut geometry is never used
+as that proof.
+
+The frozen gesture owns `WallBooleanBaseline`: exact operation/operand keys,
+defensive result copies, and a bounded baseline-only recording phase (512
+entries / 2 million serialized characters). Moving candidates only read it;
+misses do not accumulate across pointer positions. The synchronous scope is
+restored even on exceptions and does not alter ordinary View/Resize calls.
+Corner unions and opening cuts batch exact associative boolean operations,
+with the historical sequential path on failure. A wall strip is omitted only
+when a conservative convex-containment proof shows it already lies entirely
+in masonry; ambiguous predicates, holes and concave bays take normal clipping.
+This coverage predicate is supplied only by lazy Select through `WallGeometryOperations`; ordinary View retains the canonical edge boolean path without loading that helper.
+Ordered local junction replacements are composed before the final whole-body
+difference/union; later cuts still remove earlier additions. Failed composition
+replays the historical sequential path, including its per-node isolation and
+protected strips. The junction guard computes and judges room contours itself;
+an optional observer then copies them into the candidate's render-only cache
+in render units. The proof never consumes that cache. Incompatible previews
+retain the original independent contour calculation.
+
 Node movement (#803) is a lazy Select-only subsystem: `wall-node-move.ts`
 freezes the structural graph, `wall-node-editor.ts` owns capture/cancel and
 the isolated live roots, `wall-node-preview.ts` renders the local complete-body

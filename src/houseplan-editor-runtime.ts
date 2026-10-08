@@ -921,7 +921,8 @@ export class HouseplanEditorRuntime {
         this.nodeMove = createWallNodeEditor<SpaceGeometryState>(this.host, {
           point: ev => this._svgPoint(ev),
           snapshot: space => this._geometrySnapshotFromConfig({ spaces: [space] }, space.id),
-          introduced: (config, baseline, id) => this._junctionLimitsIntroduced(config, baseline, id),
+          introduced: (config, baseline, id, geometry, baselineGeometry) =>
+            this._junctionLimitsIntroduced(config, baseline, id, geometry, undefined, baselineGeometry),
         });
         this.host.requestUpdate();
       }).catch(() => { this.host._showToast(this.host._t('toast.geometry_unsafe')); })
@@ -1829,6 +1830,7 @@ public _junctionLimitsIntroduced(
     candidate: ServerConfig, previousConfig: ServerConfig, spaceId: string,
     candidateGeometry?: JunctionSharedGeometry | null,
     affectedRoomIds?: readonly string[],
+    baselineGeometry?: JunctionSharedGeometry,
   ): JunctionLimitViolation[] {
     // The baseline must be the previous document AS THE CANDIDATE SEES IT: a
     // legacy space carries no wall catalogue at all, so comparing it raw with
@@ -1855,7 +1857,7 @@ public _junctionLimitsIntroduced(
           ? previousConfig
           : commitWallSegmentModel(previousConfig).config;
         inherited = this.host._junctionLimitViolations(
-          baseline, spaceId, affected ? null : undefined, affected,
+          baseline, spaceId, affected ? null : baselineGeometry, affected,
         );
       } catch {
         // An unmigratable baseline proves nothing about inheritance; never

@@ -13,6 +13,8 @@ import { renderOpeningVisibleGeometry } from './render/opening-symbol';
 import { structuralNodeWalls, sameNodePoint, type NodeMoveSpace } from './wall-node-move';
 import type { OpeningCfg, ServerConfig } from './types';
 import { resolveZeroWalls } from './zero-walls';
+import type { JunctionSharedGeometry } from './junction-limits';
+import { wallQuadCovered } from './wall-quad-coverage';
 
 type Bounds = [number, number, number, number];
 const bounds = (points: readonly number[][], pad = 0): Bounds => [
@@ -87,10 +89,32 @@ export function buildNodePreview(space: NodeMoveSpace) {
   const model = spaceModels({ spaces: [space] } as ServerConfig)[0];
   const input = prepareSpacePhysicalGeometryInputs(space, model);
   const geometry = wallBodiesGeometry(model.rooms, input.walls, input.openCuts, input.roomOpenings,
-    GRID_STEP_N, input.cellCm, GRID_PITCH, NORM_W, input.physicalBodies);
-  return { space, model, input, geometry, safe: geometry.status === 'ok' || geometry.status === 'not-applicable' };
+    GRID_STEP_N, input.cellCm, GRID_PITCH, NORM_W, input.physicalBodies, { coveredQuad: wallQuadCovered });
+  return { space, model, input, geometry, renderRoomContours: new Map<string, number[][] | null>(),
+    safe: geometry.status === 'ok' || geometry.status === 'not-applicable' };
 }
 export type NodePreviewGeometry = ReturnType<typeof buildNodePreview>;
+
+/** The junction guard judges uncut room masonry in config units. The renderer
+ * retains exactly that pre-opening/pre-independent-body component separately
+ * from its visible, cut geometry. Explicit room open-spans change even that
+ * component, so those candidates keep the independent canonical guard pass.
+ * Never share the visible `geom`, its opening index, or render-unit node map. */
+export function nodePreviewJunctionGeometry(preview: NodePreviewGeometry, captureForScene = true): JunctionSharedGeometry | undefined {
+  const { input, geometry } = preview;
+  if (input.openCuts.length || geometry.status !== 'ok'
+      || input.coordScale !== NORM_W || input.gridPitch !== GRID_PITCH) return undefined;
+  const roomGeom = geometry.roomGeom as number[][][][];
+  return { status: 'ok', multiWallNodes: null,
+    roomGeom: roomGeom.map(polygon => polygon.map(ring => ring.map(point => [point[0] / NORM_W, point[1] / NORM_W]))),
+    onRoomInnerContour: captureForScene ? (id, contour) => {
+      // This private copy is produced only after the normalized guard judged
+      // the same immutable candidate. Proof never consumes the scene cache.
+      preview.renderRoomContours.set(id, contour ? contour.map(point =>
+        [point[0] * NORM_W, point[1] * NORM_W]) : null);
+    } : undefined,
+  };
+}
 export interface NodePreviewScene {
   paper: TemplateResult; rooms: TemplateResult; walls: TemplateResult;
   roomIds: string[]; openingIds: string[]; oldZeroD: string[]; oldWallsD: string; oldPaperD: string;
@@ -101,15 +125,17 @@ export function nodePreviewScene(before: NodePreviewGeometry, next: NodePreviewG
   const united = wallBodiesGeometryPath(geometry);
   const solid = wallBodyNeedsSolid(geometry.depthUnits, options.px)
     || wallHatchNeedsSolid(wallHatchStepUnits(input.cellCm), options.px);
+  const edgeCuts = wallEdgeBodies(model.rooms, input.walls, input.openCuts,
+    GRID_STEP_N, input.cellCm, GRID_PITCH, NORM_W).map(w => [...w.a, ...w.b]);
   const zero = model.rooms.flatMap(r => {
     const p = roomPoly(r); return p ? outlineWithout(p, [...input.openCuts,
-      ...wallEdgeBodies(model.rooms, input.walls, input.openCuts, GRID_STEP_N, input.cellCm, GRID_PITCH, NORM_W)
-        .map(w => [...w.a, ...w.b])], GRID_PITCH * .02) : [];
+      ...edgeCuts], GRID_PITCH * .02) : [];
   });
   const roomShapes = model.rooms.map(r => {
     const own = roomPoly(r) || [];
-    const inner = r.id ? innerContourForRoom(model.rooms, r.id, input.walls, input.openCuts,
-      GRID_STEP_N, input.cellCm, GRID_PITCH, NORM_W, geometry.roomGeom, geometry.multiWallNodes) || own : own;
+    const inner = r.id ? (next.renderRoomContours.has(r.id) ? next.renderRoomContours.get(r.id)
+      : innerContourForRoom(model.rooms, r.id, input.walls, input.openCuts,
+        GRID_STEP_N, input.cellCm, GRID_PITCH, NORM_W, geometry.roomGeom, geometry.multiWallNodes)) || own : own;
     const holes = islandsOf(inner, model.rooms.filter(o => o !== r).flatMap(o => roomPoly(o) ? [roomPoly(o)!] : []));
     const clean = cleanFloorForRoom({ room: r, floor: inner, space: model, floorKey: () => model.id,
       resizePreview: true, cache: new Map(), physicalBodies: () => input.physicalBodies });

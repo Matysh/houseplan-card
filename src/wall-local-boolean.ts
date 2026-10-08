@@ -1,7 +1,7 @@
 /** Exact booleans on canonical wall components. Distant disconnected rooms
  * cannot affect a local patch; do not send them through the sweep repeatedly.
  * Touching bounding boxes remain eligible (no epsilon/geometry relaxation). */
-import { union, intersection, difference, type Geom } from 'polyclip-ts';
+import { union, intersection, difference, type Geom } from './wall-boolean-cache';
 
 type Multi = ReturnType<typeof union>;
 type Polygon = Multi[number];

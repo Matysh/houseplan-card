@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Plan / Select: moving a wall node no longer intermittently rejects safe
+  neighbouring positions because of numerical noise in computed wall contours.
+  Connected-floor dragging reuses unchanged geometry and coalesces pointer
+  work; repeated snapped positions keep their preview without rebuilding it.
+  One live preview retains translucent original walls; cancel, the latest
+  release position, opening cuts and Undo/Redo remain guarded
+  ([#834](https://github.com/Matysh/houseplan-card/issues/834)).
+
 ## v1.80.0-beta.9 — 2026-10-08
 
 - Plan / Resize: a repeated wall move after saving or Undo/Redo keeps the

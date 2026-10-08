@@ -1173,10 +1173,10 @@ export async function prepareGoldenScenario(page, scenario) {
     if (scenario.wallUnionIsolation) {
       const result = card._wallUnionGeometry?.();
       const paths = [...card.renderRoot.querySelectorAll('[data-hp="wall"]')];
-      // The stored #278 fixture deliberately contains near-lattice noise so
-      // its unit test can exercise degraded-extra isolation. In the mounted
-      // product, #291's write barrier canonicalizes that noise before this
-      // integration frame: the same masonry must now unite normally.
+      // The #278 fixture records a historical near-lattice shell failure.
+      // #291 canonicalizes mounted input; #834 also repairs the raw computed
+      // shell operands. Fault-injected units separately exercise isolation;
+      // this integration frame must retain the same complete masonry.
       if (result?.status !== 'ok' || result.paths?.length !== 1
           || paths.length !== 1
           || new Set(paths.map((path) => path.dataset.component)).size !== 1) {

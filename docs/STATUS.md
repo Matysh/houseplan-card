@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Select node movement (#834): native input is coalesced at the frame boundary,
+with synchronous latest-input flush before release and complete cancellation
+of pending work. A repeated snapped target retains its accepted or refused
+candidate. Connected-floor tests cover the numerical shell-union retry,
+independent server proof and guarded Undo/Redo; the model/API do not change.
+
 Repeated Resize (#832): coalesced UI runs project back into frozen structural
 atoms/IDs, retaining fixed side breakpoints and rigidly moving translated runs.
 Compatibility consumers of shared atoms keep their physical outline unchanged;
