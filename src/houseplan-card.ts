@@ -4308,7 +4308,7 @@ export class HouseplanCard extends LitElement {
       // A read-only HA session may reject these; that must never roll the
       // accepted config back into the mandatory load catch.
       void hass.callWS({ type: 'houseplan/trail/get' })
-        .then((r: any) => { if (this.isConnected && this._read.isCurrent(loadClaim) && this.hass?.connection === hass.connection) { this._vacSrvTrails = r?.trails || {}; this.requestUpdate(); } })
+        .then((r: { trails?: Record<string, unknown> }) => { if (this.isConnected && this._read.isCurrent(loadClaim) && this.hass?.connection === hass.connection) { this._vacSrvTrails = r?.trails || {}; this.requestUpdate(); } })
         .catch(() => undefined);
       this._ensureLiveSyncSubscriptions();
     } catch (e) {
