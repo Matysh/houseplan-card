@@ -1,11 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawnSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { milestoneQuery } from '../scripts/release-ledger.mjs';
+import { narrativeLanguages } from '../scripts/release-narrative.mjs';
+import { TELEGRAM_LIMIT } from '../scripts/telegram-release.mjs';
 import {
   assertReleaseContract,
   changelogContainsVersion,
@@ -122,6 +125,49 @@ test('current repository release metadata satisfies its own publication contract
   const result = assertReleaseContract({ tag, repo, requirePrerelease: packageIsPrerelease });
   assert.equal(result.version, packageVersion);
   assert.equal(result.prerelease, packageIsPrerelease);
+});
+
+test('#838 real candidate contract checks selected root, exact changelog prose and announcement length BEFORE publishing', (t) => {
+  // Keep the complete publication/version-authority fixture with its contract tests.
+  // Narrative-unit tests operate on exported behaviour, not frontend source paths.
+  const tag = 'v1.81.0', repo = 'x/y';
+  const cycle = { schema: 1, baseStable: 'v1.80.1', targetStable: tag, milestone: { number: 3, title: '1.81' } };
+  const entries = [{ issue: 1, category: 'major' }, { issue: 2, category: 'stable-fix' }, { issue: 3, category: 'line-fix' }, { issue: 4, category: 'infra' }];
+  const body = `Теперь редактировать план удобнее.\n\n- Новая возможность. [#1](https://github.com/${repo}/issues/1)\n\nТакже устранены задержки существовавшего редактора.\n\n[Все изменения](${milestoneQuery(repo, cycle)})`;
+  const mixed = `<!-- release: ${tag} -->\n<!-- stable-notes: 1 -->\n<!-- base: v1.80.1 -->\n<!-- language: ru -->\n${body}\n<!-- language: en -->\n${body}\n`;
+  const root = mkdtempSync(join(tmpdir(), 'hp-narrative-contract-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const write = (path, text) => { mkdirSync(dirname(join(root, path)), { recursive: true }); writeFileSync(join(root, path), text); };
+  const git = (...args) => execFileSync('git', ['-C', root, '-c', 'user.name=t', '-c', 'user.email=t@x', ...args], { encoding: 'utf8' });
+  git('init', '-q');
+  write('docs/release-ledger/cycle.json', JSON.stringify(cycle));
+  git('add', '.'); git('commit', '-qm', 'base'); git('tag', cycle.baseStable);
+  for (const row of entries) write(`docs/release-ledger/v1.80.1/${row.issue}.json`, JSON.stringify({
+    schema: 1, baseStable: cycle.baseStable, rationale: 'Evidence relative to previous stable',
+    summary: { ru: 'Факт', en: 'Fact' }, ...(row.category === 'line-fix' ? { introducedBy: 1 } : {}), ...row,
+  }));
+  git('add', '.'); git('commit', '-qm', entries.map((row) => `Issue: #${row.issue}`).join('\n'));
+  const version = tag.slice(1);
+  write('package.json', JSON.stringify({ version }));
+  write('package-lock.json', JSON.stringify({ version, packages: { '': { version } } }));
+  write('custom_components/houseplan/manifest.json', JSON.stringify({ version }));
+  write('custom_components/houseplan/const.py', `VERSION = "${version}"`);
+  write('src/houseplan-card.ts', `const CARD_VERSION = "${version}"`);
+  write('src/houseplan-editor-runtime.ts', `const CARD_VERSION = "${version}"`);
+  const changelog = (body) => `## ${tag} — 2026-10-09\n\n${body}\n`;
+  const installNotes = (text) => {
+    const { ru, en } = narrativeLanguages(text, { tag });
+    write('docs/RELEASE-NOTES.md', text);
+    write('docs/CHANGELOG.ru.md', changelog(ru));
+    write('docs/CHANGELOG.md', changelog(en));
+  };
+  installNotes(mixed);
+  git('add', '.'); git('commit', '-qm', `Release: ${tag}\nIssue: #1`);
+  assert.equal(assertReleaseContract({ root, tag, repo, requirePrerelease: false, requireStable: true }).version, version);
+  write('docs/CHANGELOG.ru.md', changelog('Разошедшийся текст.'));
+  assert.throws(() => assertReleaseContract({ root, tag, repo, requirePrerelease: false, requireStable: true }), /exact authored/);
+  installNotes(mixed.replaceAll('Теперь редактировать план удобнее.', 'я'.repeat(TELEGRAM_LIMIT)));
+  assert.throws(() => assertReleaseContract({ root, tag, repo, requirePrerelease: false, requireStable: true }), /agent must shorten/);
 });
 
 test('local orchestrator validates issue lists and public release assets', () => {
