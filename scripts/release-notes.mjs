@@ -8,8 +8,9 @@
  * Usage:
  *   node scripts/release-notes.mjs v1.81.0            # print classified facts (JSON), NOT prose
  *   node scripts/release-notes.mjs v1.81.0 --verify   # verify docs/RELEASE-NOTES.md
+ *   node scripts/release-notes.mjs v1.81.0 --write    # copy authored user RU/EN into RELEASE-NOTES.md
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -180,10 +181,15 @@ export function verifyReleaseNotes({
 
 const invokedDirectly = process.argv[1]
   && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
-if (invokedDirectly) {
+async function main() {
   const args = process.argv.slice(2);
   const tag = args.find((argument) => !argument.startsWith('--'));
   const verify = args.includes('--verify');
+  const write = args.includes('--write');
+  if (args.some((argument) => argument.startsWith('--') && !['--verify', '--write'].includes(argument)) || (verify && write)) {
+    console.error('usage: node scripts/release-notes.mjs <stable-tag> [--verify | --write]');
+    process.exit(2);
+  }
   if (!tag) {
     console.error('usage: node scripts/release-notes.mjs <stable-tag> [--verify]');
     process.exit(2);
@@ -199,17 +205,22 @@ if (invokedDirectly) {
   if (tag !== cycle.baseStable) {
     try {
       const catalogue = readCatalogue({ tag });
-      if (verify) {
+      if (verify || write) {
         const { validateNarrative } = await import('./release-narrative.mjs');
-        validateNarrative(readFileSync(resolve(ROOT, 'docs/RELEASE-NOTES.md'), 'utf8'), {
+        const { readUserStableNotes } = await import('./user-stable-changelog.mjs');
+        const authored = readUserStableNotes(ROOT, { tag, baseStable: cycle.baseStable });
+        validateNarrative(authored, {
           tag, repo: process.env.GITHUB_REPOSITORY || 'Matysh/houseplan-card', catalogue,
         });
+        if (write) writeFileSync(resolve(ROOT, 'docs/RELEASE-NOTES.md'), authored);
+        else if (readFileSync(resolve(ROOT, 'docs/RELEASE-NOTES.md'), 'utf8').trim() !== authored.trim())
+          throw new Error('Stable release body differs from the authored user changelog RU/EN sections');
         console.log(`Author's stable narrative verified: ${cycle.baseStable}..${catalogue.candidate}`);
       } else console.log(JSON.stringify(catalogue, null, 2));
     } catch (error) { console.error(`release notes: ${error.message}`); process.exitCode = 1; }
     process.exit(process.exitCode || 0);
   }
-  if (!verify) {
+  if (!verify || write) {
     console.error('Historical stable: no draft generation. New releases use classified facts and agent-authored prose.');
     process.exit(2);
   }
@@ -228,3 +239,10 @@ if (invokedDirectly) {
   }
 
 }
+
+// Finish module evaluation before dynamically loading the ledger: it imports
+// the legacy version helpers above, so top-level await here would deadlock.
+if (invokedDirectly) main().catch((error) => {
+  console.error(`release notes: ${error.message}`);
+  process.exitCode = 1;
+});

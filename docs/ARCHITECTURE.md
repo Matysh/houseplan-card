@@ -1,5 +1,13 @@
 # House Plan architecture
 
+Stable release prose (#840) has separate authored RU/EN histories in
+`docs/changelog_user_stable_{ru,en}.md`. `user-stable-changelog.mjs` extracts a
+tag/base-bound section without summarizing it. Release preparation copies both
+languages into RELEASE-NOTES for GitHub/HACS; the contract proves exact equality.
+Telegram reads only the same RU section and renders the heading/bold/links,
+retaining emoji and blank lines. Technical/beta changelogs and product runtime
+are unchanged. Canon: `PROCESS.md` §11.9; mechanics: `DEVELOPMENT.md` › Release.
+
 Kiosk hold-to-modal input (#831) transfers stage suppression to an instance-local
 `TouchGestureClickGuard` modal-tail barrier before interrupting the stage. Its
 owning pointer survives implicit capture loss until actual release/cancel; an

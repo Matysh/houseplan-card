@@ -1331,16 +1331,28 @@ temporary `hotfix/*` branch and wait for Validate before creating the tag;
 never tag a detached or otherwise unpushed commit, because the release gate
 will wait for a run that cannot exist and then fail closed after one hour.
 
-### Agent-authored stable notes and release accounting (#838)
+### Agent-authored stable notes and release accounting (#838/#840)
 
 The agent writes the net user-facing difference since the **previous stable**,
 not since the last beta. Scripts never draft prose or classify issues. Russian
-comes first, English second with equivalent meaning. Each language contains:
+comes first, English second with equivalent meaning. The canonical authored
+sources are `docs/changelog_user_stable_ru.md` and
+`docs/changelog_user_stable_en.md`, newest releases first. Start with the
+owner-approved 1.80.1 example in these files; its historical milestone link is
+only a style example, not evidence of retrospectively verified membership.
+Add a new section during stable preparation, not per task or beta.
+`docs/CHANGELOG.ru.md` and `docs/CHANGELOG.md` remain technical/commit-oriented
+history for tasks, betas and releases; never replace them with user prose.
+Each language contains:
 
-1. A simple introductory paragraph describing the product changes.
-2. 1–5 concrete major-feature bullets, with issue-number links **at the end**.
+1. The heading `## Новый релиз - HousePlan X.Y.Z` / `## New release - HousePlan X.Y.Z`, then a simple introductory paragraph.
+2. 1–5 short, human major-feature paragraphs, each starting with a suitable emoji instead of a bullet and a **bold short title**, with issue-number links **at the end**.
 3. Optionally a short paragraph about fixes/polish of previous-stable behaviour.
 4. A compact link to all eligible issues in this release's GitHub milestone.
+
+Separate the heading, introduction, every feature, other-changes paragraph
+and collection link with a blank line. Prefer a few clear user actions over
+implementation details or long feature inventories.
 
 If there are no major features, omit the list entirely: intro + short fixes
 paragraph. With no user-visible changes at all, don't invent fixes or filler.
@@ -1398,6 +1410,7 @@ then verify milestone membership is exactly the catalogue's user issues:
 
 ```sh
 node scripts/release-ledger.mjs verify-milestone --candidate=HEAD --tag=vX.Y.Z
+npm run release:notes -- vX.Y.Z --write
 npm run release:notes -- vX.Y.Z --verify
 node scripts/release-contract.mjs vX.Y.Z --stable
 ```
@@ -1405,41 +1418,46 @@ node scripts/release-contract.mjs vX.Y.Z --stable
 Extra unmerged/infra issues in the milestone must be investigated and removed or
 reassigned by the curator; never advertise unshipped work. The query omits state
 filters so closed issues remain visible. Publication verifies this equality
-again. The agent writes the corresponding dated stable sections in both
-changelogs (exact copies of the respective language bodies) and the current
-`docs/RELEASE-NOTES.md` instance using this format:
+again. The agent writes both user changelog sections using this format
+(one language per file; the English file has the equivalent English heading
+and prose):
 
 ```md
 <!-- release: vX.Y.Z -->
-<!-- stable-notes: 1 -->
 <!-- base: vPREVIOUS.STABLE.VERSION -->
-<!-- language: ru -->
+## Новый релиз - HousePlan X.Y.Z
+
 Пользовательское описание того, что изменилось с предыдущего стабильного релиза.
 
-- Конкретное крупное изменение. [#123](https://github.com/Matysh/houseplan-card/issues/123)
+🧱 **Короткое название.** Конкретное крупное изменение. [#123](https://github.com/Matysh/houseplan-card/issues/123)
+
+🔋 **Ещё одно изменение.** Коротко о пользе для человека. [#456](https://github.com/Matysh/houseplan-card/issues/456)
 
 Коротко о других исправлениях уже существовавшего поведения.
 
 [Все пользовательские изменения](https://github.com/Matysh/houseplan-card/issues?q=is%3Aissue%20milestone%3A%22TITLE%22)
-<!-- language: en -->
-The equivalent user-facing introduction in English.
-
-- The same major change. [#123](https://github.com/Matysh/houseplan-card/issues/123)
-
-Other fixes to behaviour that already existed in the previous stable.
-
-[All user-facing changes](https://github.com/Matysh/houseplan-card/issues?q=is%3Aissue%20milestone%3A%22TITLE%22)
 ```
+
+`--write` mechanically copies these already-authored RU/EN sections into
+`docs/RELEASE-NOTES.md` with release/base/language markers, after validating
+them against the candidate catalogue. It never drafts or shortens prose.
+`--verify` and the publication contract require the projection to match the
+two user files exactly; missing locales/tags, stale bases and divergence fail
+closed. This is the GitHub release body consumed by the HACS/HA update dialog;
+there is no separate updater inside the card and no new runtime fetch path.
 
 Use the actual tag/base and `milestoneQuery()` URL, not the placeholders. Zero
 major issues means zero bullets; up to five bullets can group multiple major
 issues using compact number links. No obligatory small-fixes line, full raw URLs,
-engineering headings or internal tasks. Independent review judges the narrative
+engineering headings or internal tasks. The agreed release title is the only
+visible heading. Independent review judges the narrative
 accuracy; deterministic checks judge candidate membership, structure and links.
 Previously published bodies, including v1.80.1, are not rewritten.
 
-Telegram uses only the authored RU portion. `telegram-release.mjs` mechanically
-escapes text and converts Markdown links to HTML anchors; no generated summary,
+Telegram reads the exact tagged RU section from `changelog_user_stable_ru.md`.
+`telegram-release.mjs` mechanically escapes text and converts the release title
+and bold text to HTML bold, and Markdown links to HTML anchors. Emoji and blank
+lines survive unchanged. There is no extra old heading/footer, generated summary,
 English duplicate or byte clipping. If the complete rendered announcement exceeds
 4096 UTF-16 units, shorten the authored prose before publishing; never truncate
 Unicode or links. The release contract dry-renders the complete announcement

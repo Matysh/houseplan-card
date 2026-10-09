@@ -2,9 +2,10 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
-import { NARRATIVE_MARKER, narrativeLanguages, validateNarrative } from './release-narrative.mjs';
+import { NARRATIVE_MARKER, validateNarrative } from './release-narrative.mjs';
 import { readCatalogue } from './release-ledger.mjs';
 import { telegramPayload } from './telegram-release.mjs';
+import { readUserStableNotes } from './user-stable-changelog.mjs';
 
 const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
 
@@ -176,10 +177,9 @@ export function assertReleaseContract({
   }).trim() }) : null;
   validateReleaseNotes(contract.notes, { tag, repo, ...(narrative ? { catalogue } : {}) });
   if (narrative) {
-    const languages = narrativeLanguages(contract.notes, { tag });
-    if (changelogVersionBody(contract.changelogRu, tag) !== languages.ru
-      || changelogVersionBody(contract.changelogEn, tag) !== languages.en)
-      throw new Error('Stable RU/EN changelog sections must preserve the exact authored release narrative');
+    const authored = readUserStableNotes(root, { tag, baseStable: catalogue.cycle.baseStable });
+    if (contract.notes.trim() !== authored.trim())
+      throw new Error('Stable release body must preserve the exact authored user changelog RU/EN sections');
     // Dry rendering only: reject an oversized announcement before publication,
     // not after the release has become public. No network or file writes here.
     telegramPayload({ notes: contract.notes, tag, url: `https://github.com/${repo}/releases/tag/${tag}`, chat: 'contract-check' });

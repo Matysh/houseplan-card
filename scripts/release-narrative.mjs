@@ -6,6 +6,14 @@ const languageMarker = (language) => `<!-- language: ${language} -->`;
 const links = (text) => [...text.matchAll(/\[([^\]\n]+)\]\((https:\/\/[^\s)]+)\)/g)];
 const sorted = (values) => [...new Set(values)].sort((a, b) => a - b).join(',');
 
+export function stableHeading(tag, language) {
+  if (!/^v\d+\.\d+\.\d+$/.test(tag || '')) throw new Error('User changelog requires a stable release tag');
+  if (!['ru', 'en'].includes(language)) throw new Error('Unknown user changelog language');
+  return `## ${language === 'ru' ? 'Новый релиз' : 'New release'} - HousePlan ${tag.slice(1)}`;
+}
+
+const isFeature = (block) => /^\p{Extended_Pictographic}[\p{Extended_Pictographic}\p{Emoji_Modifier}\uFE0F\u200D]* \*\*[^*\n]+\*\* \S/u.test(block);
+
 export function narrativeLanguages(notes, { tag } = {}) {
   if (tag && notes.split(/\r?\n/, 1)[0] !== `<!-- release: ${tag} -->`)
     throw new Error(`Stable notes must start with <!-- release: ${tag} -->`);
@@ -36,23 +44,26 @@ export function validateNarrative(notes, { tag, repo = 'Matysh/houseplan-card', 
   const query = milestoneQuery(repo, cycle);
   const issueSets = [];
   for (const [language, body] of Object.entries(languages)) {
-    if (/<!--|^\s*(?:#|>|\d+\.|```)|<\/?[a-z][^>]*>/im.test(body))
-      throw new Error(`${language}: use plain paragraphs, a flat major-feature list and Markdown links only`);
     const blocks = body.split(/\n\s*\n/);
+    if (blocks.shift() !== stableHeading(tag, language))
+      throw new Error(`${language}: stable announcement needs the exact release heading and a blank line`);
+    if (/<!--|^\s*(?:#|>|\d+\.|```|[-*] )|<\/?[a-z][^>]*>/im.test(blocks.join('\n\n')))
+      throw new Error(`${language}: use plain paragraphs and emoji features, not technical headings or bullet lists`);
     if (!blocks[0] || /^[-*]/.test(blocks[0]) || /\n- |https?:\/\//.test(blocks[0]))
       throw new Error(`${language}: first block must be a plain human-readable introductory paragraph`);
+    if (isFeature(blocks[0])) throw new Error(`${language}: introductory paragraph must precede the features`);
     const collection = blocks.pop();
     if (links(collection).length !== 1 || collection !== links(collection)[0][0] || links(collection)[0][2] !== query)
       throw new Error(`${language}: final compact link must select the exact milestone, including closed issues`);
     blocks.shift();
     let bullets = [];
-    if (blocks[0]?.startsWith('- ')) bullets = blocks.shift().split('\n');
+    while (blocks.length && isFeature(blocks[0])) bullets.push(blocks.shift());
     if (bullets.length > 5 || (major.length && !bullets.length) || (!major.length && bullets.length))
       throw new Error(`${language}: 1–5 major bullets, or no list when no major features`);
     const bulletIssues = [];
     for (const bullet of bullets) {
-      if (!bullet.startsWith('- ') || !/\[#\d+\]\(https:\/\/[^\s)]+\)$/.test(bullet))
-        throw new Error(`${language}: each flat bullet must end with compact issue-number link(s)`);
+      if (bullet.includes('\n') || !/\[#\d+\]\(https:\/\/[^\s)]+\)$/.test(bullet))
+        throw new Error(`${language}: each emoji feature needs a blank line and must end with compact issue-number link(s)`);
       const anchors = links(bullet);
       if (!anchors.length) throw new Error(`${language}: missing major-feature issue links`);
       for (const [, label, url] of anchors) {

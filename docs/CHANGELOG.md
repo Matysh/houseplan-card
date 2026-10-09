@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Stable user announcements have separate authored histories in
+  [changelog_user_stable_ru.md](changelog_user_stable_ru.md) and
+  [changelog_user_stable_en.md](changelog_user_stable_en.md): the approved
+  heading, short emoji features, bold titles, blank lines and compact links.
+  Release bodies and Telegram use this source; this file remains the technical
+  task/beta history ([#840](https://github.com/Matysh/houseplan-card/issues/840)).
+
 ## v1.80.1 — 2026-10-09
 
 - Plan editing: drag wall nodes in Select with translucent original walls and

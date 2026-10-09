@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.80.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.80.1` |
 | Latest prerelease tag | `v1.80.1-beta.1` |
-| Tests | Node unit 4092 · pure backend 462 · HA-harness backend 354 · browser smokes 313 (`npm run inventory`) |
+| Tests | Node unit 4099 · pure backend 462 · HA-harness backend 354 · browser smokes 313 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -30,6 +30,15 @@ to the previous stable in `docs/release-ledger/`. The active planned cycle is
 `v1.80.1` → `v1.81.0`, using the existing milestone `1.81` (number 3).
 The agent writes the final narrative; transport only validates and publishes
 it. Published v1.80.1 notes are unchanged. Mechanics: DEVELOPMENT › Release.
+
+Stable user prose (#840) is separately maintained in
+`docs/changelog_user_stable_ru.md` and `docs/changelog_user_stable_en.md`.
+The approved 1.80.1 example records the title, short bold emoji features and
+blank-line spacing. Future GitHub/HACS stable notes and RU Telegram announcements
+use this source; the existing changelogs remain technical and retain beta history.
+Both user histories also contain retrospective 1.78.0 and 1.79.0 descriptions,
+based on the owner's existing milestones 6/5 and the corresponding stable ranges;
+published historical release bodies and milestone membership are not changed.
 
 Select node movement (#834): native input is coalesced at the frame boundary,
 with synchronous latest-input flush before release and complete cancellation
