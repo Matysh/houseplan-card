@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 389, issue: 196. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 392, issue: 196. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -10,6 +10,9 @@
 | бета v1.79.0-beta.1 | [SHIP-REVIEW-v1.79.0-beta.1.md](SHIP-REVIEW-v1.79.0-beta.1.md) | пакетное ревью ship · — | ⚪ — | 0 | 0 | — | — |
 | #835 | [CODE-REVIEW-835-r1.md](CODE-REVIEW-835-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #834 | [SPEC-REVIEW-834-r1.md](SPEC-REVIEW-834-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #834 | [CODE-REVIEW-834-r1.md](CODE-REVIEW-834-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | слабая проверка топологии в численном retry (в скоупе) | `src/wall-shell-union.ts` `test/wall-node-connected.test.mjs` |
+| #834 | [CODE-REVIEW-834-r2.md](CODE-REVIEW-834-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | safeAddedEdges не проверяет пересечение новых рёбер друг с другом (в скоупе AC2) | `src/wall-boundary-splice.ts` `test/wall-boundary-splice.test.mjs` `wall-node-preview.ts` `wall-thickness.ts` `scripts/mutation-registry.mjs` `src/wall-shell-union.ts` |
+| #834 | [CODE-REVIEW-834-r3.md](CODE-REVIEW-834-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
 | #833 | [CODE-REVIEW-833-r1.md](CODE-REVIEW-833-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #832 | [SPEC-REVIEW-832-r1.md](SPEC-REVIEW-832-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #832 | [SPEC-REVIEW-832-r2.md](SPEC-REVIEW-832-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
