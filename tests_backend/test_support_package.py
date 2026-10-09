@@ -129,6 +129,32 @@ def _build(namespace: str = "test"):
     return raw, summary, forbidden
 
 
+def test_issue_836_dev_label_is_a_separate_section_and_release_bytes_are_unchanged():
+    """К8: `build` only with a dev label; without it the package bytes are the same."""
+    import copy
+
+    config, layout, _ = _source()
+    source = "024b6595" + "1" * 32
+    kwargs = dict(
+        config_rev=17, layout_rev=24, card_version="1.80.1", integration_version="1.80.1",
+        home_assistant_version="2026.8.0", runtime=_facts(), namespace="test",
+    )
+    plain, plain_summary = build_support_package(copy.deepcopy(config), copy.deepcopy(layout), **kwargs)
+    explicit, _ = build_support_package(
+        copy.deepcopy(config), copy.deepcopy(layout), build=None, **kwargs)
+    labelled, labelled_summary = build_support_package(
+        copy.deepcopy(config), copy.deepcopy(layout),
+        build={"channel": "dev", "source": source}, **kwargs)
+    assert explicit == plain
+    assert b'"build"' not in plain
+    package = json.loads(labelled)
+    assert package["build"] == {"channel": "dev", "source": source}
+    assert {key: value for key, value in package.items() if key != "build"} == json.loads(plain)
+    assert package["versions"]["integration"] == "1.80.1", "versions keep their contract"
+    assert labelled_summary["versions"] == plain_summary["versions"]
+    assert labelled_summary["sha256"] == sha256(labelled).hexdigest()
+
+
 def test_package_is_canonical_and_preview_hash_describes_exact_bytes():
     first, summary, _ = _build()
     second, _, _ = _build()

@@ -587,6 +587,8 @@ export const editorDialogsStyles = css`
     }
     :host([data-pointer-hover]) .aboutlink:hover { text-decoration: underline; }
     .aboutlink ha-icon { --mdc-icon-size: 18px; line-height: 1; }
+    /* #836: the dev build SHA is a link inside the version line. */
+    .aboutver .aboutlink { display: inline; font-size: inherit; padding: 0; }
     /* #805: no gap here — the eager hp-dialog .body rule (same weight, later in
        the old single sheet) always set it; this sheet now comes after it. */
     hp-dialog .supportbody {

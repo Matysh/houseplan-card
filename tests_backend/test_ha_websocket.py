@@ -2521,6 +2521,44 @@ async def test_config_get_reports_can_write(hass: HomeAssistant, hass_ws_client:
     assert "support_api" not in projected["result"]["config"]
 
 
+@pytest.mark.parametrize("label", [None, "{broken", '{"schema": 1, "channel": "beta", '
+                                   '"source": "0000000000000000000000000000000000000000"}'],
+                         ids=["release", "broken-label", "foreign-channel"])
+async def test_issue_836_config_get_reports_build_identity_fields(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch, label: str | None,
+) -> None:
+    """К4: two separate fields; integration_version and the rest keep their contract."""
+    from custom_components.houseplan import build_identity
+
+    fingerprint = "f00dfeed" * 8
+    (tmp_path / "frontend").mkdir()
+    (tmp_path / "frontend" / "houseplan-assets.json").write_text(
+        json.dumps({"schema": 1, "fingerprint": fingerprint}), encoding="utf-8")
+    if label is not None:
+        (tmp_path / "BUILD.json").write_text(label, encoding="utf-8")
+    monkeypatch.setattr(build_identity, "INTEGRATION_ROOT", tmp_path)
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    resp = await client.receive_json()
+    assert resp["success"], resp
+    result = resp["result"]
+    assert result["integration_version"] == VERSION
+    assert result["frontend_fingerprint"] == fingerprint
+    assert result["build"] is None, "a missing or invalid label is a release"
+    assert "build" not in result["config"] and "frontend_fingerprint" not in result["config"]
+
+    (tmp_path / "frontend" / "houseplan-assets.json").unlink()
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    assert await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    reloaded = (await client.receive_json())["result"]
+    assert reloaded["frontend_fingerprint"] is None, "no asset manifest — unknown fingerprint"
+    assert reloaded["integration_version"] == VERSION
+
+
 def _support_preview_request(draft_id: str = "draft-browser-one") -> dict:
     return {
         "type": "houseplan/support/preview",
@@ -2578,6 +2616,41 @@ def test_support_repairs_aggregate_safe_translation_key_families(
     assert "private room" not in serialized
     assert "Unsafe-family" not in serialized
     assert "foreign" not in serialized
+
+
+@pytest.mark.parametrize("labelled", [False, True], ids=["release", "dev"])
+async def test_issue_836_support_preview_and_export_carry_the_dev_label_only_on_dev(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch, labelled: bool,
+) -> None:
+    """К8 through the real WS handlers: one copy of the backend label, else no field."""
+    from custom_components.houseplan import build_identity
+
+    source = "024b6595" + "1" * 32
+    if labelled:
+        (tmp_path / "BUILD.json").write_text(
+            json.dumps({"schema": 1, "channel": "dev", "source": source}), encoding="utf-8")
+    monkeypatch.setattr(build_identity, "INTEGRATION_ROOT", tmp_path)
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id(_support_preview_request("draft-build-label"))
+    preview = await client.receive_json()
+    assert preview["success"], preview
+    package = json.loads(preview["result"]["text"])
+    await client.send_json_auto_id({"type": "houseplan/export/create", "kind": "full"})
+    exported = await client.receive_json()
+    assert exported["success"], exported
+    document = exported["result"]["document"]
+    if labelled:
+        assert package["build"] == {"channel": "dev", "source": source}
+        assert document["build"] == {"channel": "dev", "source": source}
+        keys = list(document)
+        assert keys[keys.index("integration_version") + 1] == "build"
+    else:
+        assert "build" not in package
+        assert "build" not in document
+    assert package["versions"]["integration"] == VERSION
+    assert document["integration_version"] == VERSION
 
 
 async def test_support_preview_quota_rejects_before_store_load_or_executor(

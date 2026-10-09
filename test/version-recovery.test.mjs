@@ -330,3 +330,128 @@ test('#536 a disconnect without a notice asks for nothing', () => {
     'отсоединение без плашки перерисовку не просит',
   );
 });
+
+// --- #836: a build is its fingerprint, not its version number ---------------
+const FP_OLD = `1111aaaa${'0'.repeat(56)}`;
+const FP_NEW = `024b6595${'0'.repeat(56)}`;
+const SHA_OLD = `1111aaaa${'1'.repeat(32)}`;
+const SHA_NEW = `024b6595${'2'.repeat(32)}`;
+const devBuild = (source) => ({ channel: 'dev', source });
+// Overrides name the four facts flat; the controller takes them per side.
+const sameVersion = (overrides = {}) => {
+  const facts = {
+    frontendFingerprint: FP_OLD,
+    backendFingerprint: FP_NEW,
+    frontendLabel: devBuild(SHA_OLD),
+    backendLabel: devBuild(SHA_NEW),
+    frontendVersion: '1.80.1',
+    backendVersion: '1.80.1',
+    kiosk: false,
+    reducedMotion: true,
+    ...overrides,
+  };
+  return {
+    frontendVersion: facts.frontendVersion,
+    backendVersion: facts.backendVersion,
+    frontendBuild: { fingerprint: facts.frontendFingerprint, build: facts.frontendLabel },
+    backendBuild: { fingerprint: facts.backendFingerprint, build: facts.backendLabel },
+    kiosk: facts.kiosk,
+    reducedMotion: facts.reducedMotion,
+  };
+};
+
+test('#836 equal versions with different fingerprints are a mismatch labelled by build', () => {
+  const h = harness();
+  h.controller.update(sameVersion());
+  h.controller.connect();
+  assert.deepEqual(h.controller.relation, {
+    kind: 'mismatch',
+    frontend: '1.80.1 · dev 1111aaaa',
+    backend: '1.80.1 · dev 024b6595',
+    target: '1.80.1@024b6595',
+  });
+  assert.equal(h.controller.banner?.phase, 'visible');
+  assert.equal(h.controller.banner?.frontend, '1.80.1 · dev 1111aaaa');
+  assert.equal(h.controller.banner?.backend, '1.80.1 · dev 024b6595');
+  assert.equal(h.controller.banner?.target, '1.80.1@024b6595');
+
+  // Without a dev label the fingerprint itself tells the builds apart (К7).
+  h.controller.update(sameVersion({ frontendLabel: null, backendLabel: undefined }));
+  assert.equal(h.controller.banner?.frontend, '1.80.1 · 1111aaaa');
+  assert.equal(h.controller.banner?.backend, '1.80.1 · 024b6595');
+
+  // The reload landed on the matching build: the notice goes away.
+  h.controller.update(sameVersion({ frontendFingerprint: FP_NEW, frontendLabel: devBuild(SHA_NEW) }));
+  assert.deepEqual(h.controller.relation, { kind: 'equal', frontend: '1.80.1', backend: '1.80.1' });
+  assert.equal(h.controller.banner, null);
+  assert.equal(h.controller.hasCurrentMismatchNotice, false);
+});
+
+test('#836 a matching build never shows the notice, even with different dev labels', () => {
+  const h = harness();
+  h.controller.update(sameVersion({ frontendFingerprint: FP_NEW, frontendLabel: devBuild(SHA_OLD) }));
+  h.controller.connect();
+  assert.equal(h.controller.relation.kind, 'equal');
+  assert.equal(h.controller.banner, null);
+});
+
+test('#836 an unknown fingerprint on either side compares versions exactly as before', () => {
+  for (const unknown of [null, undefined, '', '__HOUSEPLAN_SOURCE_FINGERPRINT__', FP_NEW.toUpperCase(), FP_NEW.slice(1), 1]) {
+    for (const side of ['frontendFingerprint', 'backendFingerprint']) {
+      const h = harness();
+      h.controller.update(sameVersion({ [side]: unknown }));
+      h.controller.connect();
+      assert.deepEqual(h.controller.relation, { kind: 'equal', frontend: '1.80.1', backend: '1.80.1' },
+        `${side}=${String(unknown)}`);
+      assert.equal(h.controller.banner, null);
+
+      h.controller.update(sameVersion({ [side]: unknown, backendVersion: '1.81.0' }));
+      assert.deepEqual(h.controller.relation, { kind: 'mismatch', frontend: '1.80.1', backend: '1.81.0' },
+        'version-only relation, as before #836');
+      assert.equal(h.controller.banner?.backend, '1.81.0');
+
+      const kiosk = harness();
+      kiosk.controller.update(sameVersion({ [side]: unknown, backendVersion: '1.81.0', kiosk: true }));
+      kiosk.controller.connect();
+      kiosk.clock.advance(VERSION_RECOVERY_CHECK_MS);
+      assert.deepEqual(kiosk.events.filter((event) => event.kind === 'reload'),
+        [{ kind: 'reload', stored: '1.81.0' }], 'the kiosk target stays the bare version');
+    }
+  }
+});
+
+test('#836 different versions show only versions; the target still names the backend build', () => {
+  assert.deepEqual(compareRuntimeVersions('1.80.1', '1.81.0',
+    { fingerprint: FP_OLD, build: devBuild(SHA_OLD) }, { fingerprint: FP_NEW, build: devBuild(SHA_NEW) },
+  ), { kind: 'mismatch', frontend: '1.80.1', backend: '1.81.0', target: '1.81.0@024b6595' });
+  assert.deepEqual(compareRuntimeVersions('1.80.1', '1.80.1', null, undefined),
+    { kind: 'equal', frontend: '1.80.1', backend: '1.80.1' });
+});
+
+test('#836 kiosk: one automatic attempt per new build of one version, never for the same target', () => {
+  const storage = memoryStorage();
+  const first = harness({ storage });
+  first.controller.update(sameVersion({ kiosk: true }));
+  first.controller.connect();
+  assert.equal(first.controller.banner, null, 'a fresh build target stays quiet');
+  first.clock.advance(VERSION_RECOVERY_CHECK_MS);
+  assert.deepEqual(first.events.filter((event) => event.kind === 'reload'),
+    [{ kind: 'reload', stored: '1.80.1@024b6595' }]);
+
+  // The reload brought the same stale JS back (proxy cache): manual only.
+  const again = harness({ storage });
+  again.controller.update(sameVersion({ kiosk: true }));
+  again.controller.connect();
+  again.clock.advance(VERSION_RECOVERY_CHECK_MS * 10);
+  assert.equal(again.events.some((event) => event.kind === 'reload'), false);
+  assert.equal(again.controller.banner?.phase, 'visible');
+  assert.equal(again.controller.banner?.target, '1.80.1@024b6595');
+
+  // The next dev build of the same version is a new target: one more attempt.
+  const NEXT = `5555bbbb${'0'.repeat(56)}`;
+  again.controller.update(sameVersion({ kiosk: true, backendFingerprint: NEXT }));
+  assert.equal(again.controller.banner, null);
+  again.clock.advance(VERSION_RECOVERY_CHECK_MS);
+  assert.equal(again.events.filter((event) => event.kind === 'reload').length, 1);
+  assert.equal(storage.values.get(VERSION_RELOAD_ATTEMPT_KEY), '1.80.1@5555bbbb');
+});

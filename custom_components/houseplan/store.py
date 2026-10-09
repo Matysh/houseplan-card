@@ -12,6 +12,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
+from .build_identity import UNKNOWN_BUILD, BuildIdentity
 from .const import (
     DOMAIN,
     STORAGE_CONFIG_KEY,
@@ -114,6 +115,8 @@ class HouseplanData:
     radar_coordinator: Any | None = None
     # #800: MQTT jobs and last-good maps live only for this loaded entry.
     zigbee_coordinator: Any | None = None
+    # #836: frontend fingerprint and dev label, read once at entry setup.
+    build_identity: BuildIdentity = UNKNOWN_BUILD
 
 
 HouseplanConfigEntry = ConfigEntry[HouseplanData]

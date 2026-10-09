@@ -21,8 +21,8 @@ from .const import (
     PANEL_TITLE,
     PANEL_URL,
     PANEL_URL_PATH,
-    VERSION,
 )
+from .build_identity import BuildIdentity, frontend_module_url
 from .frontend_registration import async_register_frontend_static_path
 from .store import HouseplanConfigEntry
 
@@ -127,8 +127,13 @@ async def async_setup_panel_registration(
     hass: HomeAssistant,
     entry: HouseplanConfigEntry,
     panel_path: Path,
+    *,
+    identity: BuildIdentity | None = None,
 ) -> PanelRegistrationState:
-    """Register the panel last without making integration setup depend on it."""
+    """Register the panel last without making integration setup depend on it.
+
+    The module URL follows the build like the card's (#836 К3).
+    """
     domain_data = hass.data.setdefault(DOMAIN, {})
     previous = domain_data.get(PANEL_REGISTRATION_KEY)
     if isinstance(previous, PanelRegistrationState):
@@ -165,7 +170,7 @@ async def async_setup_panel_registration(
         )
         return state
 
-    module_url = f"{PANEL_FRONTEND_URL}?v={VERSION}"
+    module_url = frontend_module_url(PANEL_FRONTEND_URL, identity)
     try:
         await panel_custom.async_register_panel(
             hass=hass,

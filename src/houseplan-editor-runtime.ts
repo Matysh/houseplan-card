@@ -8,6 +8,7 @@
  */
 import { html, svg, nothing, TemplateResult } from 'lit';
 import { displayVersion } from './card-version';
+import { entryBuildLabel } from './build-identity';
 import { finishWarmModeAdoption, resumeWarmMode, type WarmModeHost } from './warm-mode-adoption';
 import { guard } from 'lit/directives/guard.js';
 import { renderVacuumMapsSection } from './editors/vacuum-maps-section';
@@ -8852,6 +8853,8 @@ public _renderSupportDialog(): TemplateResult {
     const st = (key: SupportI18nKey, vars?: Record<string, string | number>): string =>
       supportT(lang, key, vars);
     const busy = state.status === 'building' || state.status === 'sending';
+    // #836: the build this document RUNS (its entry URL), the same as the console.
+    const runningBuild = entryBuildLabel();
     const validation = supportDraftError(state);
     const preparedMinutes = state.preview
       ? Math.max(0, Math.floor((Date.now() - state.preview.preparedAt) / 60_000)) : 0;
@@ -8866,7 +8869,7 @@ public _renderSupportDialog(): TemplateResult {
         <div class="body supportbody">
           <section class="supportsection" aria-labelledby="support-about-heading">
             <h3 id="support-about-heading">${st('support.about_group')}</h3>
-            <div class="aboutver">${this.host._t('gs.about_version', { v: displayVersion(CARD_VERSION) })}</div>
+            <div class="aboutver">${this.host._t('gs.about_version', { v: displayVersion(CARD_VERSION) })}${runningBuild ? html` · dev <a class="aboutlink" href="https://github.com/Matysh/houseplan-card/commit/${runningBuild.source}" target="_blank" rel="noopener noreferrer">${runningBuild.source.slice(0, 8)}</a>` : nothing}</div>
             <div class="supportlinks">
               <a class="aboutlink" href="https://github.com/Matysh/houseplan-card" target="_blank" rel="noopener noreferrer">
                 <ha-icon icon="mdi:github"></ha-icon>${this.host._t('gs.about_github')}</a>

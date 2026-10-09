@@ -6,7 +6,15 @@
  * tests can therefore prove the reload-loop and lifecycle rules without a
  * browser.  Keeping it in the eager graph lets View/kiosk recover even when a
  * stale lazy editor chunk cannot be imported (#462).
+ *
+ * #836: a version number does not identify a build — consecutive dev builds
+ * share one. When both sides know their frontend fingerprint, equal versions
+ * with different fingerprints are a mismatch too, and the kiosk reload target
+ * names the backend build (`<version>@<fingerprint8>`). An unknown fingerprint
+ * on either side (an old backend, the unit-test placeholder) keeps the
+ * version-only comparison exactly as before.
  */
+import { devBuildLabel, formatBuild, knownFingerprint } from './build-identity';
 
 export const VERSION_RELOAD_ATTEMPT_KEY = 'houseplan-card:version-reload-target:v1';
 export const VERSION_RECOVERY_CHECK_MS = 250;
@@ -14,7 +22,17 @@ export const VERSION_RECOVERY_CHECK_MS = 250;
 export type VersionRelation =
   | { kind: 'unknown' }
   | { kind: 'equal'; frontend: string; backend: string }
-  | { kind: 'mismatch'; frontend: string; backend: string };
+  /**
+   * `frontend`/`backend` are what the notice shows. `target` (#836) is the
+   * kiosk reload target when it is not simply the backend version.
+   */
+  | { kind: 'mismatch'; frontend: string; backend: string; target?: string };
+
+/** #836: what one side knows about its build besides the version. */
+export interface RuntimeBuildFacts {
+  fingerprint?: unknown;
+  build?: unknown;
+}
 
 export interface VersionReloadSafetySnapshot {
   connected: boolean;
@@ -32,6 +50,12 @@ export interface VersionReloadSafetySnapshot {
 export interface VersionRecoveryInput {
   frontendVersion: unknown;
   backendVersion: unknown;
+  /**
+   * #836: `{fingerprint, build}` of each side — a 64-hex fingerprint and a
+   * dev label; anything else is unknown. They act only through the relation.
+   */
+  frontendBuild?: RuntimeBuildFacts | null;
+  backendBuild?: RuntimeBuildFacts | null;
   kiosk: boolean;
   reducedMotion: boolean;
 }
@@ -39,6 +63,8 @@ export interface VersionRecoveryInput {
 export interface VersionBannerNotice {
   frontend: string;
   backend: string;
+  /** #836: the reload target this notice is about. */
+  target: string;
   phase: 'visible' | 'leaving';
   /** Rejects a late animationend after the target or phase changed. */
   token: number;
@@ -72,15 +98,37 @@ export function normalizeRuntimeVersion(value: unknown): string | null {
   return normalized || null;
 }
 
-export function compareRuntimeVersions(frontend: unknown, backend: unknown): VersionRelation {
+export function compareRuntimeVersions(
+  frontend: unknown,
+  backend: unknown,
+  frontendBuild?: RuntimeBuildFacts | null,
+  backendBuild?: RuntimeBuildFacts | null,
+): VersionRelation {
   const normalizedFrontend = normalizeRuntimeVersion(frontend);
   const normalizedBackend = normalizeRuntimeVersion(backend);
   if (!normalizedFrontend || !normalizedBackend) return { kind: 'unknown' };
-  if (normalizedFrontend === normalizedBackend) {
-    return { kind: 'equal', frontend: normalizedFrontend, backend: normalizedBackend };
+  // #836: a fingerprint takes part only when BOTH sides know theirs.
+  const frontendFingerprint = knownFingerprint(frontendBuild?.fingerprint);
+  const backendFingerprint = knownFingerprint(backendBuild?.fingerprint);
+  const target = frontendFingerprint && backendFingerprint
+    ? { target: `${normalizedBackend}@${backendFingerprint.slice(0, 8)}` } : {};
+  if (normalizedFrontend !== normalizedBackend) {
+    return { kind: 'mismatch', frontend: normalizedFrontend, backend: normalizedBackend, ...target };
   }
-  return { kind: 'mismatch', frontend: normalizedFrontend, backend: normalizedBackend };
+  if (frontendFingerprint && backendFingerprint && frontendFingerprint !== backendFingerprint) {
+    return {
+      kind: 'mismatch',
+      frontend: formatBuild(normalizedFrontend, devBuildLabel(frontendBuild?.build), frontendFingerprint),
+      backend: formatBuild(normalizedBackend, devBuildLabel(backendBuild?.build), backendFingerprint),
+      ...target,
+    };
+  }
+  return { kind: 'equal', frontend: normalizedFrontend, backend: normalizedBackend };
 }
+
+/** The sessionStorage target of one actionable mismatch (#462, #836 К6). */
+const reloadTarget = (relation: { backend: string; target?: string }): string =>
+  relation.target ?? relation.backend;
 
 /**
  * A fulfilled config/get is authoritative even when a concurrently requested
@@ -146,10 +194,12 @@ function claimReloadTarget(
   }
 }
 
+// #836: builds act only through the relation, so the target is compared here.
 const sameRelation = (a: VersionRelation, b: VersionRelation): boolean =>
   a.kind === b.kind
     && (a.kind === 'unknown'
-      || (b.kind !== 'unknown' && a.frontend === b.frontend && a.backend === b.backend));
+      || (b.kind !== 'unknown' && a.frontend === b.frontend && a.backend === b.backend
+        && (a as { target?: string }).target === (b as { target?: string }).target));
 
 const sameInput = (a: VersionRecoveryInput, b: VersionRecoveryInput): boolean =>
   a.frontendVersion === b.frontendVersion
@@ -226,6 +276,8 @@ export class VersionRecoveryController {
     const relation = compareRuntimeVersions(
       normalized.frontendVersion,
       normalized.backendVersion,
+      next.frontendBuild,
+      next.backendBuild,
     );
     const semanticChanged = !sameInput(this._input, normalized)
       || !sameRelation(this._relation, relation);
@@ -253,11 +305,11 @@ export class VersionRecoveryController {
     if (!this._input.kiosk) {
       this._attemptTarget = null;
       this._attemptState = null;
-      this._showBanner(this._relation.frontend, this._relation.backend);
+      this._showBanner(this._relation.frontend, this._relation.backend, reloadTarget(this._relation));
       return;
     }
 
-    const target = this._relation.backend;
+    const target = reloadTarget(this._relation);
     if (this._attemptTarget !== target || this._attemptState === null) {
       this._attemptTarget = target;
       this._attemptState = attemptedTarget(this.hooks.storage, target);
@@ -267,7 +319,7 @@ export class VersionRecoveryController {
       this._armTimer();
       return;
     }
-    this._showBanner(this._relation.frontend, target);
+    this._showBanner(this._relation.frontend, this._relation.backend, target);
   }
 
   private _armTimer(): void {
@@ -294,19 +346,19 @@ export class VersionRecoveryController {
       return;
     }
 
-    const target = this._relation.backend;
+    const target = reloadTarget(this._relation);
     const claim = claimReloadTarget(this.hooks.storage, target);
     this._attemptTarget = target;
     this._attemptState = claim === 'claimed' ? 'attempted' : claim;
     if (claim !== 'claimed') {
-      this._showBanner(this._relation.frontend, target);
+      this._showBanner(this._relation.frontend, this._relation.backend, target);
       return;
     }
 
     // The attempt is already durable at this point.  If a test seam, browser
     // policy or embedding shell prevents navigation, the same instance falls
     // back to the manual notice rather than silently trying again.
-    this._showBanner(this._relation.frontend, target);
+    this._showBanner(this._relation.frontend, this._relation.backend, target);
     try {
       this.hooks.reload();
     } catch {
@@ -316,12 +368,13 @@ export class VersionRecoveryController {
     }
   }
 
-  private _showBanner(frontend: string, backend: string): void {
-    if (this._banner?.phase === 'visible'
-        && this._banner.frontend === frontend && this._banner.backend === backend) return;
+  private _showBanner(frontend: string, backend: string, target: string): void {
+    if (this._banner?.phase === 'visible' && this._banner.frontend === frontend
+        && this._banner.backend === backend && this._banner.target === target) return;
     this._banner = {
       frontend,
       backend,
+      target,
       phase: 'visible',
       token: ++this._noticeToken,
     };

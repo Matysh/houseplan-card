@@ -23,6 +23,7 @@ from homeassistant.helpers import issue_registry as ir
 
 from .asset_integrity import get_asset_integrity_verifier
 from .auth import may_write
+from .build_identity import UNKNOWN_BUILD, BuildIdentity
 from .const import (
     ASSETS_DIR,
     CONTENT_URL,
@@ -307,6 +308,12 @@ def _runtime(hass: HomeAssistant, connection, msg_id: int) -> HouseplanData | No
     return data
 
 
+def _build_identity(rt: HouseplanData) -> BuildIdentity:
+    """#836: the build identity read at entry setup; unknown on test doubles."""
+    identity = getattr(rt, "build_identity", None)
+    return identity if isinstance(identity, BuildIdentity) else UNKNOWN_BUILD
+
+
 def _check_write(hass: HomeAssistant, connection) -> bool:
     """May this connection write? Thin wrapper over the shared policy."""
     return may_write(hass, getattr(connection, "user", None))
@@ -475,6 +482,7 @@ async def ws_export_create(hass: HomeAssistant, connection, msg: dict[str, Any])
                 plan_only=msg.get("plan_only", False),
                 card_version=msg.get("card_version", ""),
                 config_root=Path(hass.config.path("")),
+                build=_build_identity(rt).build,
             )
         )
     except ImportFailure as err:
@@ -1490,6 +1498,10 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             # #295: the card compares this against its own version to decide
             # whether the «update House Plan» preflight hint can actually help.
             "integration_version": VERSION,
+            # #836: build identity. Two builds of one version differ here; the
+            # card's version reconciliation (#462) compares the fingerprint.
+            "frontend_fingerprint": _build_identity(rt).fingerprint,
+            "build": _build_identity(rt).build,
             # #423: protocol capability is independent from release skew.
             "support_api": SUPPORT_API_VERSION,
             "wall_node_move_api": 1,
@@ -2757,6 +2769,7 @@ async def ws_support_preview(
     # diagnostic artifact. Validation runs on disposable copies because the
     # schemas canonicalize coordinates.
     repairs = _support_repairs(hass)
+    build = _build_identity(rt).build
 
     def _build_snapshot() -> tuple[bytes, dict[str, Any]]:
         CONFIG_SCHEMA(copy.deepcopy(config))
@@ -2779,6 +2792,7 @@ async def ws_support_preview(
                 "registry_age_bucket": msg["registry_age_bucket"],
             },
             repairs=repairs,
+            build=build,
         )
 
     try:

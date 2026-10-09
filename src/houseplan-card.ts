@@ -198,9 +198,10 @@ import {
   type PageVisibilitySignal,
 } from './visual-continuity';
 import { cardVersionReloadSafetySnapshot, createCardVersionRecovery, renderVersionBanner,
-  adoptCardConfigCapabilities, getAuthoritativeCardConfig,
-  type AuthoritativeConfigResponse, type ConfigCapabilitiesCardPort,
+  adoptCardConfigCapabilities, getAuthoritativeCardConfig, runningBuild,
+  type AuthoritativeConfigResponse, type BackendBuildIdentity, type ConfigCapabilitiesCardPort,
   type VersionRecoveryCardPort } from './version-recovery-card';
+import { entryBuildLabel, formatBuild } from './build-identity';
 import { PointerModalityController } from './pointer-modality';
 import { type DeviceVisualState, type EntityVisualSample } from './device-visual';
 import {
@@ -2085,12 +2086,16 @@ export class HouseplanCard extends LitElement {
   private _rulesDialog: { rules: IconRule[]; test: string; busy: boolean } | null = null;
   /** #295: integration version from houseplan/config/get; null on old backends. */
   private _haIntegrationVersion: string | null = null;
+  /** #836: backend fingerprint and dev label from houseplan/config/get. */
+  private _haBackendBuild: BackendBuildIdentity | null = null;
   /** #462: eager full-card recovery; the static space card never owns one. */
   private readonly _versionRecovery = createCardVersionRecovery(this as unknown as VersionRecoveryCardPort);
   private _syncVersionRecovery(): void {
     this._versionRecovery.update({
       frontendVersion: displayVersion(CARD_VERSION),
       backendVersion: this._haIntegrationVersion,
+      frontendBuild: runningBuild(),
+      backendBuild: this._haBackendBuild,
       kiosk: this._config?.kiosk === true,
       reducedMotion: this._reducedMotion,
     });
@@ -13039,4 +13044,5 @@ if (!(window as any).customCards.find((c: any) => c.type === 'houseplan-card')) 
 }
 
 // eslint-disable-next-line no-console
-console.info(`%c HOUSEPLAN-CARD %c v${CARD_VERSION} `, 'background:#3ea6ff;color:#04121f;font-weight:700', '');
+// #836: a dev build names its channel and SHA from the entry URL it was loaded by.
+console.info(`%c HOUSEPLAN-CARD %c v${formatBuild(CARD_VERSION, entryBuildLabel())} `, 'background:#3ea6ff;color:#04121f;font-weight:700', '');

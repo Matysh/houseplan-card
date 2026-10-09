@@ -191,6 +191,37 @@ class RelayTestCase(unittest.TestCase):
         status, payload = self.post(request_json(blob), blob)
         self.assertEqual((status, payload["error"]), (400, "support_rejected"))
 
+    def test_dev_build_section_is_accepted(self):
+        # #836: пакет с dev-инсталляции несёт метку сборки отдельным разделом.
+        blob = package_bytes({"build": {"channel": "dev", "source": "024b6595" + "1" * 32}})
+        status, payload = self.post(request_json(blob), blob)
+        self.assertEqual(status, 200, payload)
+        _, _, delivered = self.provider.calls[0]
+        self.assertEqual(delivered, blob)
+
+    def test_malformed_build_section_is_rejected(self):
+        source = "024b6595" + "1" * 32
+        for index, build in enumerate((
+            {"channel": "beta", "source": source},
+            {"channel": "dev", "source": source[:8]},
+            {"channel": "dev", "source": source.upper()},
+            {"channel": "dev", "source": source + "\n"},
+            {"channel": "dev", "source": 1},
+            {"channel": "dev"},
+            {"channel": "dev", "source": source, "extra": "x"},
+            ["dev", source],
+            None,
+            "dev",
+        )):
+            with self.subTest(build=build):
+                blob = package_bytes({"build": build})
+                status, payload = self.post(
+                    request_json(blob, key=f"idem-build-{index:04d}"), blob,
+                    source=f"203.0.113.{100 + index}",
+                )
+                self.assertEqual((status, payload["error"]), (400, "support_rejected"))
+        self.assertEqual(self.provider.calls, [])
+
     def test_oversized_attachment_is_rejected(self):
         blob = package_bytes({"summary": {"pad": "x" * (config.MAX_ATTACHMENT_BYTES + 16)}})
         status, payload = self.post(request_json(blob), blob)

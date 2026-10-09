@@ -14,7 +14,8 @@ from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.start import async_at_started
 from homeassistant.helpers.translation import async_get_translations
 
-from .const import DOMAIN, FRONTEND_URL, VERSION
+from .build_identity import BuildIdentity, frontend_module_url
+from .const import DOMAIN, FRONTEND_URL
 from .store import HouseplanConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
@@ -575,15 +576,23 @@ async def async_setup_frontend_registration(
     hass: HomeAssistant,
     entry: HouseplanConfigEntry,
     card_path: Path,
+    *,
+    identity: BuildIdentity | None = None,
 ) -> FrontendRegistrationState:
-    """Register static/card resources without blocking the rest of entry setup."""
+    """Register static/card resources without blocking the rest of entry setup.
+
+    ``identity`` (#836) makes the module URL change with every build of the
+    same version; without it the URL is exactly ``?v=<VERSION>``.
+    """
     domain_data = hass.data.setdefault(DOMAIN, {})
     previous = domain_data.get(FRONTEND_REGISTRATION_KEY)
     if isinstance(previous, FrontendRegistrationState):
         previous.cancel()
 
     card_file_present = card_path.is_file()
-    module_url = f"{FRONTEND_URL}?v={VERSION}" if card_file_present else None
+    module_url = (
+        frontend_module_url(FRONTEND_URL, identity) if card_file_present else None
+    )
     active_fallbacks = _active_extra_module_urls(hass)
     fallback_added = module_url is not None and (
         module_url in _owned_fallback_urls(hass)

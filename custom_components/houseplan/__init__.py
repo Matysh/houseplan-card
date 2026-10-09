@@ -12,6 +12,7 @@ from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.event import async_track_time_interval
 
 from . import websocket_api as hp_ws
+from .build_identity import read_build_identity
 from .const import (
     ASSETS_DIR,
     DOMAIN,
@@ -148,7 +149,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
     # gated frontend bundle stays public so Lovelace can load it. Registration
     # failures are observable and recoverable, but never skip storage migration,
     # repairs or housekeeping below.
-    await async_setup_frontend_registration(hass, entry, card_path)
+    # #836: the module URL follows the build (frontend fingerprint, dev label),
+    # not only the version; both are read once here, off the event loop.
+    data.build_identity = await hass.async_add_executor_job(read_build_identity)
+    await async_setup_frontend_registration(
+        hass, entry, card_path, identity=data.build_identity
+    )
 
     # Resolve an interrupted whole-plan pair before any other setup-time
     # writer reads or mutates either store. This is the same fence used by
@@ -283,7 +289,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
     # missing/colliding/broken panel remains fail-soft and cannot strand a
     # sidebar entry after a migration, repair or initial housekeeping failure.
     panel_path = Path(__file__).parent / "frontend" / "houseplan-panel.js"
-    await async_setup_panel_registration(hass, entry, panel_path)
+    await async_setup_panel_registration(
+        hass, entry, panel_path, identity=data.build_identity
+    )
 
     async def _flush_on_stop(_event) -> None:
         stop_listener[0] = None

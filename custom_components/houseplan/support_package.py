@@ -502,6 +502,7 @@ def build_support_package(
     runtime: dict[str, Any],
     repairs: list[dict[str, Any]] | None = None,
     namespace: str | None = None,
+    build: dict[str, str] | None = None,
 ) -> tuple[bytes, dict[str, Any]]:
     """Build canonical bytes and a bounded summary for the preview response."""
     facts = validate_frontend_facts(runtime)
@@ -540,6 +541,9 @@ def build_support_package(
             "layout": _project_layout(ids, layout),
         },
     }
+    if build:
+        # #836: the dev label only; a release/beta package keeps its bytes.
+        package["build"] = {"channel": build["channel"], "source": build["source"]}
     raw = (json.dumps(
         package, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False,
     ) + "\n").encode("utf-8")

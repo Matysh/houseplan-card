@@ -33,12 +33,17 @@ ATTACHMENT_META_ALLOWED = frozenset({"size", "sha256"})
 PACKAGE_ALLOWED_TOP_LEVEL = frozenset({
     "format", "version", "versions", "runtime", "revisions",
     "summary", "validation", "repairs", "plan_backup",
+    # #836: метка dev-сборки; есть только у пакета с dev-инсталляции.
+    "build",
 })
+BUILD_KEYS = frozenset({"channel", "source"})
+BUILD_CHANNEL = "dev"
 PACKAGE_FORMAT = "houseplan-support-package"
 PACKAGE_VERSION = 1
 
 IDEMPOTENCY_RE = re.compile(r"\A[A-Za-z0-9_.:-]{8,128}\Z")
 SHA256_RE = re.compile(r"\A[0-9a-f]{64}\Z")
+SOURCE_SHA_RE = re.compile(r"\A[0-9a-f]{40}\Z")
 SAFE_VERSION_RE = re.compile(r"\A[0-9A-Za-z._+-]{1,32}\Z")
 FILENAME_RE = re.compile(r"\Ahouseplan-support-[0-9a-z-]{1,40}\.json\Z")
 
@@ -173,3 +178,20 @@ def check_attachment(body: bytes, filename: str | None, content_type: str, reque
     unknown = set(package) - PACKAGE_ALLOWED_TOP_LEVEL
     if unknown:
         raise ValidationError("support_rejected", f"unknown package sections: {sorted(unknown)}")
+    if "build" in package:
+        check_build(package["build"])
+
+
+def check_build(build: object) -> None:
+    """#836: раздел `build` — ровно `{"channel": "dev", "source": <40 hex>}`.
+
+    Раздел необязателен (у релиза и беты его нет), но если он есть, форма
+    закрытая, как и у остального пакета: иное — отказ, а не «почти dev».
+    """
+    if not isinstance(build, dict) or set(build) != BUILD_KEYS:
+        raise ValidationError("support_rejected", "build must be {channel, source}")
+    if build["channel"] != BUILD_CHANNEL:
+        raise ValidationError("support_rejected", "build channel is not recognised")
+    source = build["source"]
+    if not isinstance(source, str) or not SOURCE_SHA_RE.match(source):
+        raise ValidationError("support_rejected", "build source must be a full lowercase commit SHA")

@@ -12,6 +12,7 @@ from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.houseplan import frontend_registration as registration
+from custom_components.houseplan.build_identity import BuildIdentity
 from custom_components.houseplan.const import DOMAIN, FRONTEND_URL, VERSION
 
 
@@ -258,6 +259,60 @@ async def test_repeated_setup_updates_once_then_reuses_canonical_resource(
     assert resources.items == [
         {"id": "houseplan", "url": module_url, "type": "module"}
     ]
+    assert added == []
+
+
+async def test_issue_836_module_url_follows_the_build_and_updates_one_resource(
+    hass: HomeAssistant, tmp_path: Path, monkeypatch
+) -> None:
+    """К3: the URL changes with the build, a repeated build keeps it (#836 AC3)."""
+    card_path = tmp_path / "houseplan-card.js"
+    card_path.write_text("// card", encoding="utf-8")
+    release_url = f"{FRONTEND_URL}?v={VERSION}"
+    resources = _StorageResources(
+        [{"id": "houseplan", "url": release_url, "type": "module"}]
+    )
+    hass.data["lovelace"] = SimpleNamespace(resources=resources)
+    monkeypatch.setattr(
+        hass, "http", SimpleNamespace(async_register_static_paths=AsyncMock())
+    )
+    monkeypatch.setattr(registration, "_async_create_reload_notice", AsyncMock())
+    added: list[str] = []
+    monkeypatch.setattr(
+        registration.frontend, "add_extra_js_url", lambda _hass, url: added.append(url)
+    )
+    source = "024b6595" + "0" * 32
+    builds = [
+        None,
+        BuildIdentity(fingerprint="a" * 64),
+        BuildIdentity(fingerprint="a" * 64),
+        BuildIdentity(fingerprint="b" * 64),
+        BuildIdentity(fingerprint="b" * 64, source=source),
+        BuildIdentity(source=source),
+        BuildIdentity(),
+    ]
+
+    states = [
+        await registration.async_setup_frontend_registration(
+            hass, _Entry(), card_path, identity=identity
+        )
+        for identity in builds
+    ]
+
+    assert [state.module_url for state in states] == [
+        release_url,
+        f"{release_url}&b=aaaaaaaa",
+        f"{release_url}&b=aaaaaaaa",
+        f"{release_url}&b=bbbbbbbb",
+        f"{release_url}&b=bbbbbbbb&dev={source}",
+        f"{release_url}&dev={source}",
+        release_url,
+    ]
+    assert [state.resource_status for state in states] == [
+        "existing", "updated", "existing", "updated", "updated", "updated", "updated",
+    ]
+    assert resources.created == [] and resources.deleted == []
+    assert resources.items == [{"id": "houseplan", "url": release_url, "type": "module"}]
     assert added == []
 
 

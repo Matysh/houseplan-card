@@ -442,7 +442,15 @@ export function editorRuntimeRetryUrlPlugin() {
  * is new: it defines a minimal fallback element with a human message.
  *
  * Must run BEFORE bundleManifestPlugin so the manifest hashes the final code.
+ *
+ * #836: before anything loads, each facade records its own `import.meta.url`
+ * in `globalThis[ENTRY_URL_SEAM]`; the first facade loaded in a document wins.
+ * The card's code runs in a content-hashed chunk whose own URL has no query,
+ * and only the facade's URL carries what the backend registered
+ * (`?v=…&b=…&dev=…`): the console banner and «About» read the dev label there.
  */
+export const ENTRY_URL_SEAM = '__HOUSEPLAN_ENTRY_URL__';
+
 export function entryFallbackPlugin() {
   // #803: manual chunking can add eager side-effect edges to either facade.
   // They must settle before the implementation, as static imports did, but
@@ -457,6 +465,7 @@ export function entryFallbackPlugin() {
     return assets;
   };
   const awaitAssets = (assets) => assets.map((asset) => `await import("${asset}");`).join('');
+  const recordEntryUrl = `globalThis.${ENTRY_URL_SEAM}??=import.meta.url;`;
   const fallbackDefinition = (contract) => `if(!customElements.get("${contract.element}")){`
     + 'const l=String(navigator.language||"en").toLowerCase();'
     + 'const m=l.startsWith("ru")'
@@ -492,7 +501,7 @@ export function entryFallbackPlugin() {
       const cardSideEffects = hoistSideEffectAssets(cardEntry, cardAsset);
       cardEntry.code = cardEntry.code.replace(
         cardPattern,
-        `try{${awaitAssets(cardSideEffects)}await import("${cardAsset}")}`
+        `${recordEntryUrl}try{${awaitAssets(cardSideEffects)}await import("${cardAsset}")}`
           + `catch(e){${fallbackDefinition(cardContract)}`
           + 'console.error("[houseplan] stale houseplan-card.js: the implementation chunk is unavailable",e)}',
       );
@@ -525,7 +534,7 @@ export function entryFallbackPlugin() {
       const panelSideEffects = hoistSideEffectAssets(panelEntry, cardAsset);
       panelEntry.code = panelEntry.code.replace(
         panelPattern,
-        `try{${awaitAssets(panelSideEffects)}await import("${cardAsset}")}`
+        `${recordEntryUrl}try{${awaitAssets(panelSideEffects)}await import("${cardAsset}")}`
           + `catch(e){${fallbackDefinition(panelContract)}`
           + 'console.error("[houseplan] stale houseplan-panel.js: the card implementation '
           + 'chunk is unavailable",e)}',

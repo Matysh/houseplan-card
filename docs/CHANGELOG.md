@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- The front-end/back-end version check now notices a browser still running the
+  previous card after a redeploy of the same version: the card and panel are
+  registered under a URL that changes with every build, and two builds of one
+  version are told apart by their fingerprint. A dev build is labelled — the
+  console, “About” (with the commit link) and the Home Assistant integration
+  page show `… · dev <sha>` / `+dev.<sha>`; releases and betas look as before
+  ([#836](https://github.com/Matysh/houseplan-card/issues/836)).
+
 - Stable user announcements use the shorter title “Релиз Houseplan X.Y.Z”
   (“Houseplan X.Y.Z release” in English), including the saved examples;
   published release bodies remain unchanged

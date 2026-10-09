@@ -1226,6 +1226,39 @@ def test_full_export_import_round_trip_restores_model_version(tmp_path: Path) ->
     assert config == _config()
 
 
+def test_issue_836_dev_label_rides_the_envelope_and_imports(tmp_path: Path) -> None:
+    """К8: `build` only with a label, next to integration_version; import accepts it."""
+    source = "024b6595" + "1" * 32
+    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    data = ({"config": _config(), "rev": 2}, {"layout": {}, "rev": 3})
+    plain, _ = create_export(runtime, *copy.deepcopy(data), kind="full", space_id=None,
+                             card_version="1.80.1", config_root=tmp_path)
+    labelled, _ = create_export(runtime, *copy.deepcopy(data), kind="full", space_id=None,
+                                card_version="1.80.1", config_root=tmp_path,
+                                build={"channel": "dev", "source": source})
+    assert "build" not in plain
+    assert labelled["build"] == {"channel": "dev", "source": source}
+    keys = list(labelled)
+    assert keys[keys.index("integration_version") + 1] == "build"
+    assert [key for key in keys if key != "build"] == list(plain), "envelope order unchanged"
+    def strip(document: dict) -> dict:
+        return {k: v for k, v in document.items() if k not in {"build", "created_at"}}
+
+    assert strip(labelled) == strip(plain)
+
+    response = create_preview(
+        runtime, json.dumps(labelled).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": {"spaces": [], "markers": []}, "rev": 0},
+        current_layout_data={"layout": {}, "rev": 0}, config_root=tmp_path,
+    )
+    candidate = get_candidate(runtime, response["token"], "alice")
+    config, _layout, _details = prepare_apply(
+        candidate, {"spaces": [], "markers": []}, {}, confirm_missing_content=False,
+    )
+    assert config == _config()
+    assert "build" not in config
+
+
 @pytest.mark.parametrize("kind", ["full", "space"])
 @pytest.mark.parametrize("target_current", [False, True])
 def test_v7_export_and_import_always_materialize_the_current_model(

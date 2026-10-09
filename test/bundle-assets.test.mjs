@@ -8,7 +8,7 @@ import test from 'node:test';
 
 import {
   buildBundleManifest, buildFingerprintPlugin, editorRuntimeRetryUrlPlugin,
-  entryFallbackPlugin, NAMESPACE_LOCALE_CHUNKS,
+  entryFallbackPlugin, ENTRY_URL_SEAM, NAMESPACE_LOCALE_CHUNKS,
 } from '../scripts/bundle-manifest.mjs';
 import {
   INITIAL_PANEL_ONLY_GZIP_BUDGET, INITIAL_VIEW_CEILING_BAND,
@@ -473,10 +473,19 @@ for (const extraEdges of [false, true]) test(
     assert.ok(code.indexOf('await import("./houseplan-assets/extra-b.js")')
       < code.indexOf('await import("./houseplan-assets/card-HASH.js")'), 'eager side effects precede the implementation');
   }
+  // #836 К5: each facade records its own URL once, before any chunk can load.
+  for (const code of [card, panel]) {
+    const record = `globalThis.${ENTRY_URL_SEAM}??=import.meta.url;`;
+    assert.equal(code.split(record).length - 1, 1, 'exactly one seam write per facade');
+    assert.ok(code.indexOf(record) < code.indexOf('await import('), 'the URL is recorded before the chunks load');
+    assert.ok(code.indexOf(record) < code.indexOf('try{'), 'outside the stale-load catch boundary');
+  }
 
   const priorCustomElements = Object.getOwnPropertyDescriptor(globalThis, 'customElements');
   const priorHTMLElement = Object.getOwnPropertyDescriptor(globalThis, 'HTMLElement');
   const priorNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  const priorEntryUrl = Object.getOwnPropertyDescriptor(globalThis, ENTRY_URL_SEAM);
+  delete globalThis[ENTRY_URL_SEAM];
   const priorConsoleError = console.error;
   const registry = new Map();
   Object.defineProperty(globalThis, 'customElements', {
@@ -492,12 +501,16 @@ for (const extraEdges of [false, true]) test(
   });
   console.error = () => {};
   try {
-    await import(`data:text/javascript;base64,${Buffer.from(card).toString('base64')}`);
+    const cardUrl = `data:text/javascript;base64,${Buffer.from(card).toString('base64')}`;
+    await import(cardUrl);
+    assert.equal(globalThis[ENTRY_URL_SEAM], cardUrl,
+      '#836: the card facade recorded its URL even though its chunk is unavailable');
     assert.ok(registry.has('houseplan-card'));
     const staleCard = new (registry.get('houseplan-card'))();
     staleCard.connectedCallback();
     assert.match(staleCard.textContent, /reload the page/);
     await import(`data:text/javascript;base64,${Buffer.from(panel).toString('base64')}`);
+    assert.equal(globalThis[ENTRY_URL_SEAM], cardUrl, '#836: the first facade loaded in a document wins');
     assert.ok(registry.has('houseplan-panel'));
     const stalePanel = new (registry.get('houseplan-panel'))();
     stalePanel.connectedCallback();
@@ -508,6 +521,7 @@ for (const extraEdges of [false, true]) test(
       ['customElements', priorCustomElements],
       ['HTMLElement', priorHTMLElement],
       ['navigator', priorNavigator],
+      [ENTRY_URL_SEAM, priorEntryUrl],
     ]) {
       if (descriptor) Object.defineProperty(globalThis, name, descriptor);
       else delete globalThis[name];

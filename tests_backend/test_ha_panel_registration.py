@@ -13,6 +13,7 @@ from homeassistant.components import frontend
 from homeassistant.core import HomeAssistant
 
 from custom_components.houseplan import panel_registration as panel
+from custom_components.houseplan.build_identity import BuildIdentity
 from custom_components.houseplan.const import (
     DOMAIN,
     FRONTEND_URL,
@@ -324,6 +325,45 @@ async def test_generation_and_identity_guards_make_cleanup_exact_and_idempotent(
     panel.remove_panel_registration(hass)
     assert third.panel_status == "removed"
     assert removed == [(hass, PANEL_URL_PATH), (hass, PANEL_URL_PATH)]
+
+
+async def test_issue_836_panel_module_url_follows_the_build(
+    hass: HomeAssistant, tmp_path: Path, monkeypatch
+) -> None:
+    """К3: the panel module URL changes with the build like the card's (#836 AC3)."""
+    path = _make_panel_file(tmp_path)
+    _stub_static_success(monkeypatch)
+    hass.data[frontend.DATA_PANELS] = {}
+    calls, _objects = _stub_successful_panel_api(hass, monkeypatch)
+    monkeypatch.setattr(
+        panel.frontend,
+        "async_remove_panel",
+        lambda hass_arg, url_path: hass_arg.data[frontend.DATA_PANELS].pop(url_path, None),
+    )
+    source = "024b6595" + "0" * 32
+    release_url = f"{PANEL_FRONTEND_URL}?v={VERSION}"
+    states = [
+        await panel.async_setup_panel_registration(hass, _Entry(), path, identity=identity)
+        for identity in (
+            None,
+            BuildIdentity(fingerprint="a" * 64),
+            BuildIdentity(fingerprint="a" * 64),
+            BuildIdentity(fingerprint="b" * 64),
+            BuildIdentity(fingerprint="b" * 64, source=source),
+        )
+    ]
+
+    expected = [
+        release_url,
+        f"{release_url}&b=aaaaaaaa",
+        f"{release_url}&b=aaaaaaaa",
+        f"{release_url}&b=bbbbbbbb",
+        f"{release_url}&b=bbbbbbbb&dev={source}",
+    ]
+    assert [call["module_url"] for call in calls] == expected
+    assert states[-1].panel_status == "registered"
+    assert states[-1].panel_module_url == expected[-1]
+    assert list(hass.data[frontend.DATA_PANELS]) == [PANEL_URL_PATH]
 
 
 async def test_panel_is_visible_to_admin_and_read_only_users(

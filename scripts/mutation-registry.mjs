@@ -5394,7 +5394,7 @@ const MUTANT_DEFINITIONS = [
       file: 'scripts/bundle-manifest.mjs',
       find: '      cardEntry.code = cardEntry.code.replace(\n'
         + '        cardPattern,\n'
-        + '        `try{${awaitAssets(cardSideEffects)}await import("${cardAsset}")}`\n'
+        + '        `${recordEntryUrl}try{${awaitAssets(cardSideEffects)}await import("${cardAsset}")}`\n'
         + '          + `catch(e){${fallbackDefinition(cardContract)}`\n'
         + "          + 'console.error(\"[houseplan] stale houseplan-card.js: the implementation chunk is unavailable\",e)}',\n"
         + '      );',
@@ -5411,7 +5411,7 @@ const MUTANT_DEFINITIONS = [
       file: 'scripts/bundle-manifest.mjs',
       find: '      panelEntry.code = panelEntry.code.replace(\n'
         + '        panelPattern,\n'
-        + '        `try{${awaitAssets(panelSideEffects)}await import("${cardAsset}")}`\n'
+        + '        `${recordEntryUrl}try{${awaitAssets(panelSideEffects)}await import("${cardAsset}")}`\n'
         + '          + `catch(e){${fallbackDefinition(panelContract)}`\n'
         + "          + 'console.error(\"[houseplan] stale houseplan-panel.js: the card implementation '\n"
         + "          + 'chunk is unavailable\",e)}',\n"
@@ -5448,10 +5448,10 @@ const MUTANT_DEFINITIONS = [
       + '(#535 AC1/AC2)',
     patches: [{
       file: 'scripts/bundle-manifest.mjs',
-      find: '        `try{${awaitAssets(panelSideEffects)}await import("${cardAsset}")}`\n'
+      find: '        `${recordEntryUrl}try{${awaitAssets(panelSideEffects)}await import("${cardAsset}")}`\n'
         + '          + `catch(e){${fallbackDefinition(panelContract)}`\n'
         + "          + 'console.error(\"[houseplan] stale houseplan-panel.js: the card implementation '",
-      replace: '        `try{${awaitAssets(panelSideEffects)}await import("./${CARD_ENTRY_FILE}")}`\n'
+      replace: '        `${recordEntryUrl}try{${awaitAssets(panelSideEffects)}await import("./${CARD_ENTRY_FILE}")}`\n'
         + '          + `catch(e){${fallbackDefinition(panelContract)}`\n'
         + "          + 'console.error(\"[houseplan] stale houseplan-panel.js: the card implementation '",
     }],
@@ -11767,6 +11767,53 @@ const MUTANT_DEFINITIONS = [
       file: 'scripts/dev-build.mjs',
       find: '      integrationTree,\n',
       replace: "      integrationTree: git(['rev-parse', `${git(['write-tree']).out}:${DEV_BUILD_INTEGRATION}`]).out, // mutant: hash taken after the label\n",
+    }],
+  },
+  {
+    id: 'version-recovery-ignores-build-fingerprint',
+    guard: 'node --test --test-name-pattern="#836 equal versions with different fingerprints" '
+      + 'test/version-recovery.test.mjs',
+    because: '#836: two dev builds share one version; with both fingerprints known, a different '
+      + 'backend build must still show the notice instead of leaving the browser on stale JS',
+    patches: [{
+      file: 'src/version-recovery.ts',
+      find: '  if (frontendFingerprint && backendFingerprint && frontendFingerprint !== backendFingerprint) {',
+      replace: "  if (frontendFingerprint && backendFingerprint && frontendFingerprint !== backendFingerprint && String(frontend) === 'mutant-never') {",
+    }],
+  },
+  {
+    id: 'frontend-module-url-ignores-build-fingerprint',
+    guard: 'python3 -m pytest tests_backend/test_ha_frontend_registration.py '
+      + 'tests_backend/test_ha_panel_registration.py -q -p no:cacheprovider -k "issue_836"',
+    because: '#836 K3: a redeploy of the same version must change the card and panel module URL, '
+      + 'otherwise the browser keeps the previous JavaScript under an unchanged resource',
+    patches: [{
+      file: 'custom_components/houseplan/build_identity.py',
+      find: '        query += f"&b={identity.fingerprint[:8]}"',
+      replace: '        pass  # mutant: the module URL ignores the build fingerprint',
+    }],
+  },
+  {
+    id: 'support-relay-accepts-any-build',
+    guard: 'python3 scripts/support-relay/tests/test_relay.py '
+      + 'RelayTestCase.test_malformed_build_section_is_rejected',
+    because: '#836: the optional package section `build` keeps the closed schema of the relay — '
+      + 'only {channel: dev, source: 40 hex}; anything else is support_rejected',
+    patches: [{
+      file: 'scripts/support-relay/hp_relay/validate.py',
+      find: '        check_build(package["build"])',
+      replace: '        pass  # mutant: any build section is accepted',
+    }],
+  },
+  {
+    id: 'entry-wrapper-skips-url-seam',
+    guard: 'node --test --test-name-pattern="#486 both stable entries" test/bundle-assets.test.mjs',
+    because: '#836 K5: the card chunk cannot see the query of the URL it was registered under; '
+      + 'only the entry facades can record it, before any chunk loads',
+    patches: [{
+      file: 'scripts/bundle-manifest.mjs',
+      find: '  const recordEntryUrl = `globalThis.${ENTRY_URL_SEAM}??=import.meta.url;`;',
+      replace: "  const recordEntryUrl = ''; // mutant: no entry records its URL",
     }],
   },
   {

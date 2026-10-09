@@ -328,6 +328,13 @@ export const SMOKE_LINKS = [
       + 'cannot observe those DOM and Home Assistant lifecycle effects',
   },
   {
+    symbols: ['entryBuildLabel', 'formatBuild', 'devBuildLabel', 'knownFingerprint', 'runningBuild'],
+    smokes: ['smoke_build_identity.mjs', 'smoke_version_recovery.mjs'],
+    because: 'the #836 production-bundle scenarios load both entry wrappers by the URL the backend '
+      + 'registers (`dev=`), read the console banner and the About link, and reconcile equal '
+      + 'versions by fingerprint; neither smoke names the parsing or formatting helpers',
+  },
+  {
     symbols: [
       'LiveEditorState', 'finishRevision', 'hoverProperties',
       'routeHouseplanEditorUpdate', 'whenHouseplanEditorSettled',

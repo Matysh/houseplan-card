@@ -97,9 +97,11 @@ async def test_panel_registration_runs_after_repair_and_initial_housekeeping(
         order.append("sweep")
         return 0
 
-    async def setup_panel(_hass, entry, path) -> None:
+    async def setup_panel(_hass, entry, path, *, identity) -> None:
         assert entry.runtime_data.sweep is not None
         assert path.name == "houseplan-panel.js"
+        # #836: the panel URL follows the same build identity as the card's.
+        assert identity is entry.runtime_data.build_identity
         order.append("panel")
 
     monkeypatch.setattr(integration, "async_check_plan_files", check_plan_files)

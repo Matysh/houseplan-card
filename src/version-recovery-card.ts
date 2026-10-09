@@ -6,12 +6,20 @@ import {
   fetchAuthoritativeConfig,
   normalizeRuntimeVersion,
   VersionRecoveryController,
+  type RuntimeBuildFacts,
   type VersionBannerNotice,
   type VersionReloadSafetySnapshot,
   type VersionRecoveryStorage,
 } from './version-recovery';
 import { DECOR_ASSETS_API_VERSION } from './decor-assets';
 import { SUMMARY_PANEL_API_VERSION } from './summary-panel-api';
+import {
+  devBuildLabel,
+  entryBuildLabel,
+  knownFingerprint,
+  type DevBuildLabel,
+} from './build-identity';
+import { ENTRY_BUILD_FINGERPRINT } from './editor-runtime-loader';
 
 interface PendingCollection { readonly size: number }
 interface PendingDebounce { pending(): boolean }
@@ -21,9 +29,16 @@ interface VersionRecoveryContinuity {
   readonly overlayBlocksInteraction: boolean;
 }
 
+/** #836: the backend build as reported by config/get; null fields are unknown. */
+export interface BackendBuildIdentity {
+  readonly fingerprint: string | null;
+  readonly build: DevBuildLabel | null;
+}
+
 export interface ConfigCapabilitiesCardPort {
   readonly hass: { callWS<T>(message: { type: string }): Promise<T> };
   _haIntegrationVersion: string | null;
+  _haBackendBuild?: BackendBuildIdentity | null;
   _haSupportApi: number | null;
   _haDecorAssetsApi: number | null;
   _haSummaryPanelApi: number | null;
@@ -40,6 +55,8 @@ export interface AuthoritativeConfigResponse {
   readonly can_optimize_undo?: boolean;
   readonly undo_kind?: string | null;
   readonly integration_version?: unknown;
+  readonly frontend_fingerprint?: unknown;
+  readonly build?: unknown;
   readonly support_api?: unknown;
   readonly decor_assets_api?: unknown;
   readonly summary_panel_api?: unknown;
@@ -54,10 +71,14 @@ export function adoptCardConfigCapabilities(
 ): void {
   const capabilities = response && typeof response === 'object'
     ? response as Partial<Record<
-        'integration_version' | 'support_api' | 'decor_assets_api'
+        'integration_version' | 'frontend_fingerprint' | 'build' | 'support_api' | 'decor_assets_api'
         | 'summary_panel_api' | 'radar_stage1_api' | 'wall_node_move_api', unknown
       >> : {};
   host._haIntegrationVersion = normalizeRuntimeVersion(capabilities.integration_version);
+  host._haBackendBuild = {
+    fingerprint: knownFingerprint(capabilities.frontend_fingerprint),
+    build: devBuildLabel(capabilities.build),
+  };
   const supportApi = capabilities.support_api;
   host._haSupportApi = typeof supportApi === 'number' && Number.isSafeInteger(supportApi)
     ? supportApi : null;
@@ -69,6 +90,15 @@ export function adoptCardConfigCapabilities(
   host._haWallNodeMoveApi = capabilities.wall_node_move_api === 1 ? 1 : null;
   host._syncVersionRecovery();
 }
+
+/**
+ * #836: the build this document runs — the fingerprint it was built with and
+ * the `dev=` of its entry URL. The backend side is the last config/get.
+ */
+export const runningBuild = (): RuntimeBuildFacts => ({
+  fingerprint: ENTRY_BUILD_FINGERPRINT,
+  build: entryBuildLabel(),
+});
 
 export function getAuthoritativeCardConfig(
   host: ConfigCapabilitiesCardPort,
@@ -214,7 +244,7 @@ export function renderVersionBanner(
     }
   };
   return html`<div class="version-recovery phase-${notice.phase}"
-      data-version-recovery-target=${notice.backend} role="status"
+      data-version-recovery-target=${notice.target} role="status"
       aria-live="polite" aria-atomic="true" aria-hidden=${leaving ? 'true' : nothing}
       ?inert=${leaving} @animationend=${finish}>
     <div class="version-recovery-card">

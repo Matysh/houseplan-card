@@ -135,6 +135,43 @@ const authoritativeClear = await page.evaluate(async () => {
   };
 });
 
+// #836 AC5: the identity of a build is its fingerprint. Equal versions with a
+// different backend build show the notice with build labels; config/get naming
+// this very build removes it; an old backend without the field compares
+// versions exactly as before.
+const buildReconciliation = await page.evaluate(async () => {
+  const card = window.__card;
+  const running = globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__;
+  const version = card._versionRecovery._input.frontendVersion;
+  const other = running.startsWith('1111aaaa') ? `2222bbbb${running.slice(8)}` : `1111aaaa${running.slice(8)}`;
+  const source = `024b6595${'1'.repeat(32)}`;
+  const settle = async () => {
+    await card.updateComplete;
+    await new Promise((done) => setTimeout(done, 260));
+    await card.updateComplete;
+  };
+  const banner = () => card.renderRoot.querySelector('.version-recovery');
+  const values = () => [...(banner()?.querySelectorAll('.version-recovery-versions b') || [])]
+    .map((node) => node.textContent);
+  card._adoptConfigCapabilities({
+    integration_version: version, frontend_fingerprint: other, build: { channel: 'dev', source },
+  });
+  await settle();
+  const stale = {
+    relation: card._versionRecovery.relation.kind,
+    notice: card._versionRecovery.hasCurrentMismatchNotice,
+    values: values(),
+    target: banner()?.getAttribute('data-version-recovery-target'),
+  };
+  card._adoptConfigCapabilities({ integration_version: version, frontend_fingerprint: running });
+  await settle();
+  const matching = { relation: card._versionRecovery.relation.kind, banner: !!banner() };
+  card._adoptConfigCapabilities({ integration_version: version });
+  await settle();
+  const oldBackend = { relation: card._versionRecovery.relation.kind, banner: !!banner() };
+  return { version, running, other, stale, matching, oldBackend };
+});
+
 const configFailureAdoption = await page.evaluate(async () => {
   const base = window.__card;
   const accepted = structuredClone(base._serverCfg);
@@ -379,6 +416,17 @@ const out = {
     && trustedManual.focused && trustedManual.stored === null,
   configGetClearsStaleVersion: authoritativeClear.relation === 'unknown'
     && authoritativeClear.backend === null && !authoritativeClear.banner,
+  sameVersionOtherBuildShowsLabelledNotice: buildReconciliation.stale.relation === 'mismatch'
+    && buildReconciliation.stale.notice
+    && buildReconciliation.stale.values.join(' / ')
+      === `${buildReconciliation.version} · ${buildReconciliation.running.slice(0, 8)}`
+        + ` / ${buildReconciliation.version} · dev 024b6595`
+    && buildReconciliation.stale.target
+      === `${buildReconciliation.version}@${buildReconciliation.other.slice(0, 8)}`,
+  matchingBuildRemovesNotice: buildReconciliation.matching.relation === 'equal'
+    && !buildReconciliation.matching.banner,
+  backendWithoutFingerprintComparesVersions: buildReconciliation.oldBackend.relation === 'equal'
+    && !buildReconciliation.oldBackend.banner,
   configCapabilitiesSurviveSiblingFailures:
     configFailureAdoption.setBeforeLayoutFailure
     && configFailureAdoption.clearBeforeAssetFailure,
@@ -401,5 +449,5 @@ const out = {
 };
 checkAll(out);
 await finish(browser, {
-  ...out, reducedMotion, stagePointerdowns, kioskGuards, configFailureAdoption,
+  ...out, reducedMotion, stagePointerdowns, kioskGuards, configFailureAdoption, buildReconciliation,
 });

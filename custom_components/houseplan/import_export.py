@@ -512,6 +512,7 @@ def create_export(
     plan_only: bool = False,
     card_version: str,
     config_root: Path,
+    build: dict[str, str] | None = None,
 ) -> tuple[dict[str, Any], str]:
     if not isinstance(plan_only, bool) or plan_only and kind != "space":
         raise ImportFailure("invalid_format", "Plan-only export requires one space")
@@ -627,6 +628,9 @@ def create_export(
         "source_fingerprint": source_fingerprint(runtime.instance_id),
         "card_version": card_version,
         "integration_version": VERSION,
+        # #836: only a dev build carries its label; a release document keeps
+        # exactly its previous bytes. Importers ignore unknown envelope keys.
+        **({"build": dict(build)} if build else {}),
         "model_version": model_version,
         "payload": {"config": config, "layout": layout},
         "placement_manifest": placement_manifest(config, layout),
