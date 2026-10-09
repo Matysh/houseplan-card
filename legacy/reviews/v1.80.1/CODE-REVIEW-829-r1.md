@@ -21,7 +21,7 @@ Validate на этом SHA: success, https://github.com/Matysh/houseplan-card/ac
 (`getBoundingClientRect` внутри `flatMap` по `this._endpointElements`).
 
 Документ/AC, где поведение уже зафиксировано: это не новый перф-паттерн, а буквальное расширение того, что уже
-разобрано и принято в [CODE-REVIEW-808-r1](../../docs/reviews/CODE-REVIEW-808-r1.md) (раздел «Риск по изменённым
+разобрано и принято в [CODE-REVIEW-808-r1](CODE-REVIEW-808-r1.md) (раздел «Риск по изменённым
 участкам», `_clipRoutesToBatteries`) — там этот же вызов `getBoundingClientRect` в том же `requestAnimationFrame`
 уже признан не меняющим частоту кадра и ограниченным тем же `this._endpointElements`. Плюс в этом диффе:
 `docs/ARCHITECTURE.md` («Endpoint value badges get the same treatment for arrowheads only: an arrowhead copy in

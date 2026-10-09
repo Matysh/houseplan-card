@@ -18,7 +18,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 |---|---|
 | Generated | 2026-10-09 — rerun `node scripts/status-snapshot.mjs` for the current tree |
 | Version | **1.80.1** in all 7 version sources (`scripts/release-contract.mjs`) |
-| Latest stable tag | `v1.79.0` |
+| Latest stable tag | `v1.80.1` |
 | Latest prerelease tag | `v1.80.1-beta.1` |
 | Tests | Node unit 4073 · pure backend 462 · HA-harness backend 354 · browser smokes 313 (`npm run inventory`) |
 <!-- status-snapshot:end -->
@@ -128,7 +128,8 @@ recovery documented in both user guides. No runtime schema or View changes.
 
 | Item | State |
 |---|---|
-| Current local cycle | **v1.80.1 stable promotion** — the published v1.80.1-beta.1 is promoted without feature changes: synchronized versions, rebuilt production snapshots and bilingual release metadata for the whole line since v1.79.0. The exact candidate passes the full local suite, Validate, Full Performance and real-HA E2E before publication. |
+| Current local cycle | **v1.80.1 stable published** — the published v1.80.1-beta.1 was promoted without feature changes. The exact candidate `89b09f41` passed the full local suite, Validate, all 11 Full Performance profiles and real-HA first-run/journeys/upgrade. The canonical publisher verified compositor continuity and downloaded public assets against SHA256SUMS before announcing. |
+| Release follow-up | [Independent v1.80.1 line review](../legacy/reviews/v1.80.1/RELEASE-REVIEW-v1.80.1.md): High 0, Medium 1, Low 3; findings remain the owner's decision. The Medium concerns connected-floor timing in the shared review environment; exact-SHA CI completed green after controlled failed-job repeats without changing budgets. The supplemental authentic HA-dialog diagnostic remains unverified: its existing fixture adapter rejected the changed synthetic HTML bootstrap before creating the card (`Synthetic demo bootstrap changed; update the explicit fixture adapter`), not a demonstrated product-dialog failure. |
 | Branches | `main` carries stable releases only; pre-release tags point at `dev`. Work lands on `dev`, which is equal to or ahead of `main`, never behind. |
 | Zigbee incomplete captions | #816 suppresses only the hovered device's Incomplete data caption for confirmed outgoing routes and every coordinator; global snapshot partial and stale/provider messages stay independent. |
 | Wall-node movement | #803 adds Select-only node drag, isolated translucent preview, carrier-constrained T/X editing and server-proved Undo/Redo. Noisy atom axes/rays share one angular classifier; snap ties use stable wall ID and an orientation-independent anchor; exact non-parallel axis/HV intersections survive quantisation. A separate original-geometry host-ID ledger precedes strict jamb validation and read-normalises legacy identities on a copy. Trailing pointer clicks are stage-scoped and never swallow keyboard/header/toolbar activation. Context adoption cancels before painting; post-ack history refresh enables toolbar Undo; shared lazy helpers preserve the editor's network-retry API. Extra eager entry edges stay inside the awaited stale-update fallback. Frozen baseline reuse and exact disconnected-component clipping bound large-plan work without weakening geometry guards. The accepted issue body remains the behavioral contract; no persisted node graph or model-version change. |

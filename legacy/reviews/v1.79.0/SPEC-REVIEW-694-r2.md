@@ -11,7 +11,7 @@ Issue: [#694](https://github.com/Matysh/houseplan-card/issues/694)
 
 ## Скоуп разбора (по дельте, §2.10)
 
-Предыдущий раунд — [SPEC-REVIEW-694-r1.md](../../docs/reviews/SPEC-REVIEW-694-r1.md),
+Предыдущий раунд — [SPEC-REVIEW-694-r1.md](SPEC-REVIEW-694-r1.md),
 жёлтый, 3 Medium в скоупе, 1 Low снята ревьюером. Материал r1 — тело issue на
 момент вынесения вердикта r1 (детач `dev`@`84ed38e3d5d511687de48e8ca4dae714f82efe2f`,
 дерево `51385b4bd49434fbfe510a14c8824a1c48b01d0b`, блоб тела
