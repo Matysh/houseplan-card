@@ -425,9 +425,12 @@ const MUTANT_DEFINITIONS = [
     id: 'node-boundary-splice-skips-new-edge-safety',
     guard: 'node --test --test-name-pattern="added edges cannot self-cross inside one reconstructed ring" test/wall-boundary-splice.test.mjs',
     because: '#834 AC2/r2: endpoint graph reconstruction and ring ownership cannot certify a simple boundary; the complete new-edge crossing guard must reject a non-vertex self-intersection',
+    // #837: `false && …` made the call statically unreachable, so TypeScript lost
+    // the `resultEdges` null narrowing and test-build failed before the oracle.
+    // A runtime-false but statically opaque guard skips the check the same way.
     patches: [{ file: 'src/wall-boundary-splice.ts',
       find: '  if (!safeAddedEdges(added, resultEdges, predicates)) return null;',
-      replace: '  if (false && !safeAddedEdges(added, resultEdges, predicates)) return null;',
+      replace: '  if (added.length < 0 && !safeAddedEdges(added, resultEdges, predicates)) return null;',
     }],
   },
   {
