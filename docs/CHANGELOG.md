@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Stable user announcements use the shorter title “Релиз Houseplan X.Y.Z”
+  (“Houseplan X.Y.Z release” in English), including the saved examples;
+  published release bodies remain unchanged
+  ([#841](https://github.com/Matysh/houseplan-card/issues/841)).
+
 - Stable user announcements have separate authored histories in
   [changelog_user_stable_ru.md](changelog_user_stable_ru.md) and
   [changelog_user_stable_en.md](changelog_user_stable_en.md): the approved

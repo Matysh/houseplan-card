@@ -10,7 +10,7 @@ collection has not yet been curated under the new rules.
 
 <!-- release: v1.80.1 -->
 <!-- base: v1.79.0 -->
-## New release - HousePlan 1.80.1
+## Houseplan 1.80.1 release
 
 Editing your plan is easier: move walls by dragging their nodes and remove unused spaces without extra steps. Battery levels are now visible on the plan, the Zigbee map is more accurate, and restoring your plans after reinstalling is simpler.
 
@@ -30,7 +30,7 @@ Switching floors and resizing rooms is faster on large plans. LED strips cause l
 
 <!-- release: v1.79.0 -->
 <!-- base: v1.78.0 -->
-## New release - HousePlan 1.79.0
+## Houseplan 1.79.0 release
 
 Show light right where it belongs: draw an LED strip on the plan and link it to a device. In the evening, the background can show the Moon in its current phase. We also made the plan faster and steadier, with less flicker, fewer unexpected shifts and better editor recovery.
 
@@ -44,7 +44,7 @@ In 2.5D, furniture no longer shifts when switching views, and device icons stay 
 
 <!-- release: v1.78.0 -->
 <!-- base: v1.77.0 -->
-## New release - HousePlan 1.78.0
+## Houseplan 1.78.0 release
 
 Your plan is clearer and easier to use every day. Volumetric view is now in General settings, and stairs connect floors right on the plan. Phones leave more space for your home, card height is adjustable, and you can manage hidden devices as a group.
 

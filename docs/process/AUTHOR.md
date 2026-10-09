@@ -203,7 +203,7 @@
   ([§11.9](../../PROCESS.md#119-авторский-changelog-стабильного-релиза)).
 - Stable-источник — `docs/changelog_user_stable_ru.md` и
   `docs/changelog_user_stable_en.md`: новая запись при подготовке stable,
-  заголовок «Новый релиз - HousePlan X.Y.Z», короткие emoji-пункты с жирным
+  заголовок «Релиз Houseplan X.Y.Z», короткие emoji-пункты с жирным
   названием, пустые строки. Telegram и release body для окна обновления берут
   этот текст; старые changelog остаются техническими и для бет
   ([§11.9](../../PROCESS.md#119-авторский-changelog-стабильного-релиза)).

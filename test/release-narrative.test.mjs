@@ -14,6 +14,19 @@ const notes = (body) => `<!-- release: ${tag} -->\n<!-- stable-notes: 1 -->\n<!-
 const mixed = notes(`Теперь редактировать план удобнее.\n\n🧱 **Новая возможность.** Двигайте стены. ${issueLink(1)}\n\nТакже устранены задержки существовавшего редактора.\n\n${collection}`);
 const check = (text, cat = catalogue) => validateNarrative(text, { tag, repo, catalogue: cat });
 
+test('stable title uses the exact owner-approved wording and rejects old wording, brand casing and wrong locale', () => {
+  assert.equal(stableHeading(tag, 'ru'), '## Релиз Houseplan 1.81.0');
+  assert.equal(stableHeading(tag, 'en'), '## Houseplan 1.81.0 release');
+  for (const [language, wrong] of [
+    ['ru', '## Новый релиз - HousePlan 1.81.0'],
+    ['en', '## New release - HousePlan 1.81.0'],
+    ['ru', '## Релиз HousePlan 1.81.0'],
+    ['en', '## HousePlan 1.81.0 release'],
+    ['ru', '## Houseplan 1.81.0 release'],
+    ['en', '## Релиз Houseplan 1.81.0'],
+  ]) assert.throws(() => check(mixed.replace(stableHeading(tag, language), wrong)), /exact release heading/);
+});
+
 test('authored mixed release is preserved with intro, major list, genuine polish and compact collection', () => {
   assert.equal(check(mixed), mixed);
   assert.equal(validateReleaseNotes(mixed, { tag, repo, catalogue }), mixed);
@@ -49,7 +62,7 @@ test('at most five flat major bullets, grouping allowed; each major needs eviden
 });
 
 test('stable format refuses ordinary bullets, missing emoji/bold, missing heading and tight feature spacing', () => {
-  assert.throws(() => check(mixed.replace('## Новый релиз - HousePlan 1.81.0\n\n', '')), /release heading/);
+  assert.throws(() => check(mixed.replace('## Релиз Houseplan 1.81.0\n\n', '')), /release heading/);
   assert.throws(() => check(mixed.replaceAll('🧱 **Новая возможность.**', '- Новая возможность.')), /bullet lists/);
   assert.throws(() => check(mixed.replaceAll('🧱 **Новая возможность.**', 'Новая возможность.')), /1–5/);
   const cat = { cycle, entries: [{ issue: 1, category: 'major' }, { issue: 2, category: 'major' }] };
@@ -65,7 +78,7 @@ test('Telegram transports only RU prose with actual clickable issue anchors, esc
   assert.match(payload.text, /<a href="https:\/\/github.com\/x\/y\/issues\/1">#1<\/a>/);
   assert.match(payload.text, /&lt;b&gt; &amp; &quot;текст&quot;/);
   assert.equal(payload.text.split('Новая возможность.').length, 2, 'no English duplicate');
-  assert.match(payload.text, /^<b>Новый релиз - HousePlan 1\.81\.0<\/b>\n\n/);
+  assert.match(payload.text, /^<b>Релиз Houseplan 1\.81\.0<\/b>\n\n/);
   assert.match(payload.text, /\n\n🧱 <b>Новая возможность\.<\/b>/);
   assert.doesNotMatch(payload.text, /houseplan-card v|\[Релиз\]|\*\*|^##/);
   assert.doesNotMatch(payload.text, /<!--|\[#1\]|Основное|Highlights/);

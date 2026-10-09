@@ -1345,7 +1345,7 @@ Add a new section during stable preparation, not per task or beta.
 history for tasks, betas and releases; never replace them with user prose.
 Each language contains:
 
-1. The heading `## Новый релиз - HousePlan X.Y.Z` / `## New release - HousePlan X.Y.Z`, then a simple introductory paragraph.
+1. The heading `## Релиз Houseplan X.Y.Z` / `## Houseplan X.Y.Z release`, then a simple introductory paragraph (owner's shorter title, #841).
 2. 1–5 short, human major-feature paragraphs, each starting with a suitable emoji instead of a bullet and a **bold short title**, with issue-number links **at the end**.
 3. Optionally a short paragraph about fixes/polish of previous-stable behaviour.
 4. A compact link to all eligible issues in this release's GitHub milestone.
@@ -1425,7 +1425,7 @@ and prose):
 ```md
 <!-- release: vX.Y.Z -->
 <!-- base: vPREVIOUS.STABLE.VERSION -->
-## Новый релиз - HousePlan X.Y.Z
+## Релиз Houseplan X.Y.Z
 
 Пользовательское описание того, что изменилось с предыдущего стабильного релиза.
 

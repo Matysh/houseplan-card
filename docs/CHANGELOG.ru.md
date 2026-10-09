@@ -8,6 +8,10 @@
 
 ## Не выпущено
 
+- Заголовок стабильных пользовательских анонсов сокращён до «Релиз Houseplan
+  X.Y.Z», в том числе в сохранённых образцах. Опубликованные release body
+  не переписываются ([#841](https://github.com/Matysh/houseplan-card/issues/841)).
+
 - Стабильные пользовательские анонсы ведутся отдельно в
   [changelog_user_stable_ru.md](changelog_user_stable_ru.md) и
   [changelog_user_stable_en.md](changelog_user_stable_en.md): утверждённый

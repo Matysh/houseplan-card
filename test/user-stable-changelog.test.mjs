@@ -18,8 +18,8 @@ test('approved 1.80.1 example is preserved as separate RU/EN user prose, not a t
   const languages = narrativeLanguages(compose(), { tag });
   assert.equal(languages.ru, userStableSection(ru, { tag, language: 'ru', baseStable }).body);
   assert.equal(languages.en, userStableSection(en, { tag, language: 'en', baseStable }).body);
-  assert.match(languages.ru, /^## Новый релиз - HousePlan 1\.80\.1\n\nРедактировать план стало удобнее:/);
-  assert.match(languages.en, /^## New release - HousePlan 1\.80\.1\n\nEditing your plan is easier:/);
+  assert.match(languages.ru, /^## Релиз Houseplan 1\.80\.1\n\nРедактировать план стало удобнее:/);
+  assert.match(languages.en, /^## Houseplan 1\.80\.1 release\n\nEditing your plan is easier:/);
   for (const body of Object.values(languages)) {
     assert.equal(body.split(/\n\n(?=🧱|🔋|📡|🗑️|💾)/).length, 6);
     assert.doesNotMatch(body, /\n[-*] |#834|#832|## Основное|## Highlights/);
@@ -32,13 +32,15 @@ test('approved 1.80.1 example is preserved as separate RU/EN user prose, not a t
 });
 
 test('section selection is tag-specific and rejects missing/duplicate tags, wrong locale and stale base', () => {
-  assert.equal(userStableSection(`${ru}\n<!-- release: v1.79.0 -->\n<!-- base: v1.78.0 -->\n## Новый релиз - HousePlan 1.79.0\n\nOld.`, { tag, language: 'ru' }).body,
+  assert.equal(userStableSection(`${ru}\n<!-- release: v1.79.0 -->\n<!-- base: v1.78.0 -->\n## Релиз Houseplan 1.79.0\n\nOld.`, { tag, language: 'ru' }).body,
     userStableSection(ru, { tag, language: 'ru' }).body);
   const fenced = '# Example\n```md\n<!-- release: v1.80.1 -->\n```\n';
   assert.throws(() => userStableSection(fenced, { tag, language: 'ru' }), /exactly one/);
   assert.throws(() => compose({ changelogRu: `${ru}\n${ru}` }), /exactly one/);
   assert.throws(() => compose({ changelogEn: en.replace(tag, 'v1.80.0') }), /exactly one/);
-  assert.throws(() => compose({ changelogEn: en.replace('New release', 'Новый релиз') }), /exact release heading/);
+  assert.throws(() => compose({ changelogEn: en.replace('Houseplan 1.80.1 release', 'Релиз Houseplan 1.80.1') }), /exact release heading/);
+  assert.throws(() => compose({ changelogRu: ru.replace('Релиз Houseplan 1.80.1', 'Новый релиз - HousePlan 1.80.1') }), /exact release heading/);
+  assert.throws(() => compose({ changelogEn: en.replace('Houseplan 1.80.1 release', 'New release - HousePlan 1.80.1') }), /exact release heading/);
   assert.throws(() => compose({ changelogRu: ru.replace(baseStable, 'v1.78.0') }), /previous stable/);
   assert.throws(() => compose({ changelogRu: ru.replace('1.80.1\n\nРедактировать', '1.80.1\nРедактировать') }), /blank line/);
   assert.throws(() => userStableSection(ru, { tag: `${tag}-beta.1`, language: 'ru' }), /stable release tag/);
@@ -84,11 +86,11 @@ test('Telegram keeps the approved heading, emoji, bold, spacing and compact link
   const payload = telegramPayload({ userChangelog: ru, tag, chat: 'test-only' });
   const rendered = markdownToTelegram(source);
   assert.equal(payload.text, rendered.html);
-  assert.match(payload.text, /^<b>Новый релиз - HousePlan 1\.80\.1<\/b>\n\n/);
+  assert.match(payload.text, /^<b>Релиз Houseplan 1\.80\.1<\/b>\n\n/);
   assert.match(payload.text, /\n\n🗑️ <b>Удаляйте пространство одним действием\.<\/b>/);
   assert.equal((payload.text.match(/<b>/g) || []).length, 6);
   assert.equal((payload.text.match(/<a href=/g) || []).length, 10);
-  assert.doesNotMatch(rendered.plain, /https?:\/\/|houseplan-card v|New release|\*\*|##/);
+  assert.doesNotMatch(rendered.plain, /https?:\/\/|houseplan-card v| release|Новый релиз|\*\*|##/);
   assert.equal(payload.link_preview_options.is_disabled, true);
   assert.throws(() => telegramPayload({ userChangelog: '# missing', tag, chat: 'test' }), /exactly one/);
 });

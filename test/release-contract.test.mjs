@@ -134,7 +134,7 @@ test('#838 real candidate contract checks selected root, exact changelog prose a
   const cycle = { schema: 1, baseStable: 'v1.80.1', targetStable: tag, milestone: { number: 3, title: '1.81' } };
   const entries = [{ issue: 1, category: 'major' }, { issue: 2, category: 'stable-fix' }, { issue: 3, category: 'line-fix' }, { issue: 4, category: 'infra' }];
   const body = `Теперь редактировать план удобнее.\n\n🧱 **Новая возможность.** Двигайте стены. [#1](https://github.com/${repo}/issues/1)\n\nТакже устранены задержки существовавшего редактора.\n\n[Все изменения](${milestoneQuery(repo, cycle)})`;
-  const mixed = `<!-- release: ${tag} -->\n<!-- stable-notes: 1 -->\n<!-- base: v1.80.1 -->\n<!-- language: ru -->\n## Новый релиз - HousePlan 1.81.0\n\n${body}\n<!-- language: en -->\n## New release - HousePlan 1.81.0\n\n${body}\n`;
+  const mixed = `<!-- release: ${tag} -->\n<!-- stable-notes: 1 -->\n<!-- base: v1.80.1 -->\n<!-- language: ru -->\n## Релиз Houseplan 1.81.0\n\n${body}\n<!-- language: en -->\n## Houseplan 1.81.0 release\n\n${body}\n`;
   const root = mkdtempSync(join(tmpdir(), 'hp-narrative-contract-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const write = (path, text) => { mkdirSync(dirname(join(root, path)), { recursive: true }); writeFileSync(join(root, path), text); };
@@ -166,7 +166,7 @@ test('#838 real candidate contract checks selected root, exact changelog prose a
   installNotes(mixed);
   git('add', '.'); git('commit', '-qm', `Release: ${tag}\nIssue: #1`);
   assert.equal(assertReleaseContract({ root, tag, repo, requirePrerelease: false, requireStable: true }).version, version);
-  write('docs/changelog_user_stable_ru.md', `<!-- release: ${tag} -->\n<!-- base: v1.80.1 -->\n## Новый релиз - HousePlan 1.81.0\n\nРазошедшийся текст.\n`);
+  write('docs/changelog_user_stable_ru.md', `<!-- release: ${tag} -->\n<!-- base: v1.80.1 -->\n## Релиз Houseplan 1.81.0\n\nРазошедшийся текст.\n`);
   assert.throws(() => assertReleaseContract({ root, tag, repo, requirePrerelease: false, requireStable: true }), /exact authored/);
   installNotes(mixed);
   write('docs/changelog_user_stable_en.md', '# Missing English release');

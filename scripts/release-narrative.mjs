@@ -9,7 +9,7 @@ const sorted = (values) => [...new Set(values)].sort((a, b) => a - b).join(',');
 export function stableHeading(tag, language) {
   if (!/^v\d+\.\d+\.\d+$/.test(tag || '')) throw new Error('User changelog requires a stable release tag');
   if (!['ru', 'en'].includes(language)) throw new Error('Unknown user changelog language');
-  return `## ${language === 'ru' ? 'Новый релиз' : 'New release'} - HousePlan ${tag.slice(1)}`;
+  return language === 'ru' ? `## Релиз Houseplan ${tag.slice(1)}` : `## Houseplan ${tag.slice(1)} release`;
 }
 
 const isFeature = (block) => /^\p{Extended_Pictographic}[\p{Extended_Pictographic}\p{Emoji_Modifier}\uFE0F\u200D]* \*\*[^*\n]+\*\* \S/u.test(block);
