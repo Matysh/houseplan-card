@@ -46,11 +46,13 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - name: Check out release notes for a reusable call
-        if: ${{ inputs.reusable == true }}
+      - name: Check out the transport and authored release notes
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ inputs.ref || github.sha }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
       - name: Send to Telegram
         env:
           TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -63,28 +65,12 @@ jobs:
           EVENT: ${{ github.event_name }}
         run: |
           set -euo pipefail
-          if [ "$EVENT" = "workflow_dispatch" ] && [ "$CALLED" != "true" ]; then
-            TEXT="✅ Тест: оповещения о релизах houseplan-card подключены."
-          else
-            # Единственный путь к сообщению о релизе — вызов из воркфлоу, который
-            # уже закончил работу (#538). Тело берётся из файла заметок ветки
-            # тега, а не из события: события здесь больше нет.
-            TAG=$INPUT_TAG
-            NAME=$INPUT_NAME
-            URL=$INPUT_URL
-            PRE=$INPUT_PRE
-            BODY=$(cat docs/RELEASE-NOTES.md)
-            if [ "$PRE" = "true" ]; then
-              echo "Prerelease Telegram announcement is disabled"
-              exit 0
-            fi
-            KIND="🏠 Релиз"
-            SUMMARY=$(printf '%s' "$BODY" | head -c 2500)
-            TEXT=$(printf '%s houseplan-card %s — %s\n\n%s\n\n%s' \
-              "$KIND" "$TAG" "$NAME" "$SUMMARY" "$URL")
+          if [ "$INPUT_PRE" = "true" ]; then
+            echo "Prerelease Telegram announcement is disabled"
+            exit 0
           fi
+          node scripts/telegram-release.mjs "$RUNNER_TEMP/telegram-request.json"
           curl -sS --fail-with-body -X POST \
             "https://api.telegram.org/bot$TOKEN/sendMessage" \
-            --data-urlencode "chat_id=$CHAT" \
-            --data-urlencode "text=$TEXT" \
-            -d disable_web_page_preview=true
+            -H 'Content-Type: application/json' \
+            --data-binary "@$RUNNER_TEMP/telegram-request.json"

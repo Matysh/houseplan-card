@@ -1,23 +1,13 @@
 #!/usr/bin/env node
 /**
- * Release notes for STABLE releases (#328).
- *
- * Owner rules (2026-08-27):
- * 1. A stable release aggregates the changelog since the PREVIOUS STABLE
- *    release, not since the last beta: every feature/fix described in the
- *    line's beta changelogs must reach the stable body.
- * 2. A bug that was introduced AND fixed inside the beta line (never present
- *    in any stable release) must not appear in the stable body. That judgment
- *    needs a human: the draft lists every candidate item with its source
- *    section so the curator can strike the in-line-only fixes.
- * 3. «Мелкие исправления и улучшения» / «Small fixes and improvements» is
- *    allowed ONLY when such work really exists — user-visible commits in the
- *    range whose issues the body does not mention explicitly. A single-issue
- *    hotfix ships without the filler line.
+ * Stable release facts/validation (#838). The agent writes narrative prose;
+ * reviewed release-ledger entries classify changes against previous stable.
+ * No script-generated draft, infrastructure bullets or within-line repairs.
+ * Version and legacy #328 helper exports remain for historical consumers.
  *
  * Usage:
- *   node scripts/release-notes.mjs v1.69.0            # print an aggregation draft
- *   node scripts/release-notes.mjs v1.69.0 --verify   # verify docs/RELEASE-NOTES.md
+ *   node scripts/release-notes.mjs v1.81.0            # print classified facts (JSON), NOT prose
+ *   node scripts/release-notes.mjs v1.81.0 --verify   # verify docs/RELEASE-NOTES.md
  */
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -202,6 +192,28 @@ if (invokedDirectly) {
   const changelogEn = readFileSync(resolve(ROOT, 'docs/CHANGELOG.md'), 'utf8');
   const tags = defaultGit(['tag', '--list', 'v*']).split('\n').filter((line) => parseVersion(line));
 
+  // #838: the active stable cycle uses reviewed classifications, not a union
+  // of beta changelog bullets. Legacy helper exports remain for old tooling.
+  const { readCatalogue } = await import('./release-ledger.mjs');
+  const cycle = JSON.parse(readFileSync(resolve(ROOT, 'docs/release-ledger/cycle.json'), 'utf8'));
+  if (tag !== cycle.baseStable) {
+    try {
+      const catalogue = readCatalogue({ tag });
+      if (verify) {
+        const { validateNarrative } = await import('./release-narrative.mjs');
+        validateNarrative(readFileSync(resolve(ROOT, 'docs/RELEASE-NOTES.md'), 'utf8'), {
+          tag, repo: process.env.GITHUB_REPOSITORY || 'Matysh/houseplan-card', catalogue,
+        });
+        console.log(`Author's stable narrative verified: ${cycle.baseStable}..${catalogue.candidate}`);
+      } else console.log(JSON.stringify(catalogue, null, 2));
+    } catch (error) { console.error(`release notes: ${error.message}`); process.exitCode = 1; }
+    process.exit(process.exitCode || 0);
+  }
+  if (!verify) {
+    console.error('Historical stable: no draft generation. New releases use classified facts and agent-authored prose.');
+    process.exit(2);
+  }
+
   if (verify) {
     const notes = readFileSync(resolve(ROOT, 'docs/RELEASE-NOTES.md'), 'utf8');
     const report = verifyReleaseNotes({ tag, notes, changelogRu, changelogEn, tags });
@@ -215,19 +227,4 @@ if (invokedDirectly) {
     process.exit(0);
   }
 
-  const prevStable = previousStableTag(tag, tags);
-  console.log(`# Черновик тела ${tag} — агрегат от предыдущего стабильного ${prevStable ?? '(нет)'}\n`);
-  console.log('# Правь руками: вычеркни багфиксы, чей баг жил ТОЛЬКО внутри бета-линейки');
-  console.log('# (не встречался ни в одном стабильном релизе) — им в стабильном теле не место.\n');
-  for (const [label, changelog] of [['RU', changelogRu], ['EN', changelogEn]]) {
-    console.log(`## Кандидаты (${label})\n`);
-    const sections = sectionsInRange(parseChangelog(changelog), prevStable, tag);
-    for (const { item, source } of aggregateItems(sections)) {
-      console.log(`${item}\n    ^ из секции: ${source}\n`);
-    }
-  }
-  const visible = visibleIssuesInRange(prevStable ? `${prevStable}..HEAD` : 'HEAD');
-  console.log(`# User-visible issues диапазона: ${[...visible].sort((a, b) => a - b)
-    .map((issue) => `#${issue}`).join(', ') || '(нет)'}`);
-  console.log('# Приписка о мелких улучшениях законна только если часть из них не попала в тело.');
 }

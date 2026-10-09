@@ -1170,7 +1170,7 @@ facts with `node scripts/ratchets.mjs tighten` (#699: it rewrites the core line
 caps, the gzip graph ceilings and `scripts/monolith-baseline.json` from the
 fresh `dist/`; commit them with the candidate) and write the
 short bilingual body in `docs/RELEASE-NOTES.md`. That file is the one current
-instance of the canonical `## Основное` / `## Highlights` template; its two
+instance of the **prerelease** `## Основное` / `## Highlights` template; its two
 changelog links must be pinned to the new tag.
 
 After the candidate commit is pushed to `dev` and its exact-SHA Validate is
@@ -1331,28 +1331,126 @@ temporary `hotfix/*` branch and wait for Validate before creating the tag;
 never tag a detached or otherwise unpushed commit, because the release gate
 will wait for a run that cannot exist and then fail closed after one hour.
 
-The GitHub Release body is a concise **bilingual user summary**, not a copy of
-the exhaustive changelog. Put Russian first and English second, with equivalent
-meaning in both sections. Give separate bullets only to significant features
-and user-visible behaviour changes. Collapse minor fixes, visual polish,
-refactors, tests and purely internal improvements into one final bullet:
-`Мелкие исправления и улучшения.` / `Small fixes and improvements.` Keep the
-body short because HACS displays it inside Home Assistant and concatenates the
-bodies of skipped releases. The full detail remains in both
-`docs/CHANGELOG.ru.md` and `docs/CHANGELOG.md`; finish every release body with
-two explicit links, one to each language version of the changelog.
+### Agent-authored stable notes and release accounting (#838)
 
-A **stable** body aggregates the changelog since the previous **stable**
-release, never since the last beta (#328, owner rules 2026-08-27): everything
-the line's beta changelogs describe reaches it, while a bug introduced and fixed
-strictly inside the beta line — never shipped in any stable — stays out. Every
-bullet links its GitHub issue so the rules stay machine-checkable. Draft with
-`npm run release:notes -- <tag>` (it lists each candidate item with its source
-section so the curator can strike in-line-only fixes), curate by hand, then
-`npm run release:notes -- <tag> --verify` must pass. The small-fixes bullet is
-allowed only when the range really contains user-visible work the body does not
-itemise; a single-issue hotfix ships without it (the verifier enforces this).
-Open or partially delivered issues are never presented as shipped.
+The agent writes the net user-facing difference since the **previous stable**,
+not since the last beta. Scripts never draft prose or classify issues. Russian
+comes first, English second with equivalent meaning. Each language contains:
+
+1. A simple introductory paragraph describing the product changes.
+2. 1–5 concrete major-feature bullets, with issue-number links **at the end**.
+3. Optionally a short paragraph about fixes/polish of previous-stable behaviour.
+4. A compact link to all eligible issues in this release's GitHub milestone.
+
+If there are no major features, omit the list entirely: intro + short fixes
+paragraph. With no user-visible changes at all, don't invent fixes or filler.
+Infrastructure/documentation and repairs to newly introduced beta functionality
+are absent from stable prose and its milestone. Performance of behaviour that
+already existed in the previous stable is eligible `stable-fix` work. The final
+description of a major feature incorporates its beta refinements without
+advertising those repairs as separate stable changes.
+
+Before S7, the author adds one reviewed JSON record per issue under
+`docs/release-ledger/<previous-stable>/<NN>.json`. Required: `schema: 1`, `issue`,
+`baseStable`, `category` (`major`, `infra`, `stable-fix`, `line-fix`), and a factual
+`rationale` anchored to the previous stable. Eligible categories also need
+`summary: {ru, en}` user-facing facts; `line-fix` needs `introducedBy` (the issue
+that first added the missing-in-stable feature). For mixed tasks classify their
+net user-visible result: `major` if a large feature is delivered, otherwise
+`stable-fix` when previous-stable behaviour improves; incidental infrastructure
+and within-line repairs do not change eligibility. This is release accounting,
+not a task backlog. Beta changelogs and `User-Visible` trailers still retain
+their existing per-commit contract.
+
+`docs/release-ledger/cycle.json` explicitly binds the previous stable, the
+intended stable tag and an existing GitHub milestone number/title. Do not guess
+a milestone from an issue label or whichever milestone happens to be open.
+Current planning binds `v1.81.0` to milestone 3 (`1.81`). If the owner chooses
+a different next stable (for example a hotfix), the release author explicitly
+updates that binding before collecting facts. After a stable ships, the next
+task opens the next cycle with the new base and reclassifies carried tasks;
+old records remain immutable history, not defaults for the new baseline.
+
+The trusted merge controller checks the record in the accepted candidate and
+lands it with the task. Only after successful dev push does it idempotently set
+the configured milestone for `major`/`stable-fix`, or remove that milestone for
+`infra`/`line-fix`. A different planning/historical milestone requires curator
+resolution, never silent replacement. API failure leaves S8 truthful and prints
+a bookkeeping-only recovery command; do not merge again:
+
+```sh
+git fetch origin dev
+node scripts/release-ledger.mjs reconcile --candidate=<merged-SHA> --issue=<NN>
+```
+
+For a stable candidate, fetch tags and build the **data-only** catalogue:
+
+```sh
+npm run release:notes -- vX.Y.Z
+node scripts/release-ledger.mjs catalogue --candidate=HEAD --tag=vX.Y.Z
+```
+
+The catalogue intersects classified issues with `Issue:` commit evidence in
+previous-stable..candidate, excluding release-promotion trailer repetition.
+Missing/stale classifications fail closed: the agent must research and classify,
+not fall back to beta bullets or `User-Visible: yes`. Reconcile eligible records,
+then verify milestone membership is exactly the catalogue's user issues:
+
+```sh
+node scripts/release-ledger.mjs verify-milestone --candidate=HEAD --tag=vX.Y.Z
+npm run release:notes -- vX.Y.Z --verify
+node scripts/release-contract.mjs vX.Y.Z --stable
+```
+
+Extra unmerged/infra issues in the milestone must be investigated and removed or
+reassigned by the curator; never advertise unshipped work. The query omits state
+filters so closed issues remain visible. Publication verifies this equality
+again. The agent writes the corresponding dated stable sections in both
+changelogs (exact copies of the respective language bodies) and the current
+`docs/RELEASE-NOTES.md` instance using this format:
+
+```md
+<!-- release: vX.Y.Z -->
+<!-- stable-notes: 1 -->
+<!-- base: vPREVIOUS.STABLE.VERSION -->
+<!-- language: ru -->
+Пользовательское описание того, что изменилось с предыдущего стабильного релиза.
+
+- Конкретное крупное изменение. [#123](https://github.com/Matysh/houseplan-card/issues/123)
+
+Коротко о других исправлениях уже существовавшего поведения.
+
+[Все пользовательские изменения](https://github.com/Matysh/houseplan-card/issues?q=is%3Aissue%20milestone%3A%22TITLE%22)
+<!-- language: en -->
+The equivalent user-facing introduction in English.
+
+- The same major change. [#123](https://github.com/Matysh/houseplan-card/issues/123)
+
+Other fixes to behaviour that already existed in the previous stable.
+
+[All user-facing changes](https://github.com/Matysh/houseplan-card/issues?q=is%3Aissue%20milestone%3A%22TITLE%22)
+```
+
+Use the actual tag/base and `milestoneQuery()` URL, not the placeholders. Zero
+major issues means zero bullets; up to five bullets can group multiple major
+issues using compact number links. No obligatory small-fixes line, full raw URLs,
+engineering headings or internal tasks. Independent review judges the narrative
+accuracy; deterministic checks judge candidate membership, structure and links.
+Previously published bodies, including v1.80.1, are not rewritten.
+
+Telegram uses only the authored RU portion. `telegram-release.mjs` mechanically
+escapes text and converts Markdown links to HTML anchors; no generated summary,
+English duplicate or byte clipping. If the complete rendered announcement exceeds
+4096 UTF-16 units, shorten the authored prose before publishing; never truncate
+Unicode or links. The release contract dry-renders the complete announcement
+before publication to reject oversized prose early. The existing post-public-verification announcement trigger and
+prerelease silence stay unchanged. Tests do not send messages to the channel.
+
+### Prerelease notes (unchanged)
+
+The beta body remains the concise bilingual `## Основное` / `## Highlights`
+template below with immutable links to both detailed changelogs. Do not apply
+this legacy template or its obligatory grouped bullet to new stable releases.
 
 Changelog entries may link directly to a **closed** GitHub Issue when that
 issue is the canonical task for the shipped change. Append a normal Markdown
@@ -1379,9 +1477,7 @@ and do not expand the grouped small-fixes bullet into an issue inventory.
 ```
 
 The literal `## Основное` and `## Highlights` headings above are the canonical
-release-body format. Do not maintain a second `## Русский` / `## English`
-template in scripts or release notes; change this single template if the
-product format changes again.
+**prerelease** format. Stable publication uses the agent-authored narrative above.
 
 Replace `vX.Y.Z` with the release tag so the links remain pinned to the
 published version instead of drifting with `dev` or `main`.

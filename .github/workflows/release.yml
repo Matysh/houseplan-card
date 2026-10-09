@@ -244,12 +244,18 @@ jobs:
         env:
           TAG: ${{ needs.candidate.outputs.tag }}
           PRERELEASE: ${{ needs.candidate.outputs.prerelease }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           if [ "$PRERELEASE" = "true" ]; then
             node scripts/release-contract.mjs "$TAG" --repo="$GITHUB_REPOSITORY"
           else
             node scripts/release-contract.mjs "$TAG" --repo="$GITHUB_REPOSITORY" --stable
+            # Legacy published notes are immutable. New stable candidates must
+            # prove exact milestone membership before any public announcement.
+            if grep -Fq '<!-- stable-notes: 1 -->' docs/RELEASE-NOTES.md; then
+              node scripts/release-ledger.mjs verify-milestone --candidate=HEAD --tag="$TAG" --repo="$GITHUB_REPOSITORY"
+            fi
           fi
       - name: Require a green Validate for this exact commit
         env:

@@ -20,10 +20,16 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.80.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.80.1` |
 | Latest prerelease tag | `v1.80.1-beta.1` |
-| Tests | Node unit 4077 · pure backend 462 · HA-harness backend 354 · browser smokes 313 (`npm run inventory`) |
+| Tests | Node unit 4092 · pure backend 462 · HA-harness backend 354 · browser smokes 313 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Stable release accounting (#838) uses reviewed agent classifications relative
+to the previous stable in `docs/release-ledger/`. The active planned cycle is
+`v1.80.1` → `v1.81.0`, using the existing milestone `1.81` (number 3).
+The agent writes the final narrative; transport only validates and publishes
+it. Published v1.80.1 notes are unchanged. Mechanics: DEVELOPMENT › Release.
 
 Select node movement (#834): native input is coalesced at the frame boundary,
 with synchronous latest-input flush before release and complete cancellation

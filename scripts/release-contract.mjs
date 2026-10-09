@@ -1,6 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
+import { NARRATIVE_MARKER, narrativeLanguages, validateNarrative } from './release-narrative.mjs';
+import { readCatalogue } from './release-ledger.mjs';
+import { telegramPayload } from './telegram-release.mjs';
 
 const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
 
@@ -61,7 +65,7 @@ export function validateVersionSources(tag, sources, { requirePrerelease = true,
   return parsed;
 }
 
-export function changelogContainsVersion(changelog, tag) {
+export function changelogContainsVersion(changelog, tag, { allowParagraphs = false } = {}) {
   const heading = new RegExp(`^##\\s+${escapeRegExp(tag)}\\s+[—-]\\s+(\\d{4})-(\\d{2})-(\\d{2})\\s*$`);
   const lines = changelog.split(/\r?\n/);
   let fenced = false;
@@ -81,13 +85,18 @@ export function changelogContainsVersion(changelog, tag) {
       if (/^\s*```/.test(lines[body])) { bodyFence = !bodyFence; continue; }
       if (!bodyFence && /^##\s+/.test(lines[body])) break;
       if (!bodyFence && /^-\s+\S/.test(lines[body])) return true;
+      if (allowParagraphs && !bodyFence && /^[^\s<#\[-]/.test(lines[body])) return true;
     }
     return false;
   }
   return false;
 }
 
-export function validateReleaseNotes(notes, { tag, repo }) {
+export function validateReleaseNotes(notes, { tag, repo, catalogue }) {
+  if (catalogue || notes.includes(NARRATIVE_MARKER)) {
+    if (!catalogue) throw new Error('Stable narrative needs candidate-bound release classifications');
+    return validateNarrative(notes, { tag, repo, catalogue });
+  }
   const marker = `<!-- release: ${tag} -->`;
   if (notes.split(/\r?\n/, 1)[0] !== marker)
     throw new Error(`Release notes must start with the exact ${marker} marker`);
@@ -120,6 +129,14 @@ export function validateReleaseNotes(notes, { tag, repo }) {
   return notes.trim() + '\n';
 }
 
+export function changelogVersionBody(changelog, tag) {
+  const lines = changelog.split(/\r?\n/);
+  const start = lines.findIndex((line) => new RegExp(`^##\\s+${escapeRegExp(tag)}\\s+[—-]\\s+\\d{4}-\\d{2}-\\d{2}\\s*$`).test(line));
+  if (start < 0) throw new Error(`No dated changelog body for ${tag}`);
+  const end = lines.findIndex((line, index) => index > start && /^##\s+/.test(line));
+  return lines.slice(start + 1, end < 0 ? undefined : end).join('\n').trim();
+}
+
 export function readReleaseContract(root = process.cwd()) {
   const read = (name) => readFileSync(resolve(root, name), 'utf8');
   return {
@@ -142,11 +159,31 @@ export function assertReleaseContract({
 } = {}) {
   const contract = readReleaseContract(root);
   const parsed = validateVersionSources(tag, contract.sources, { requirePrerelease, requireStable });
-  if (!changelogContainsVersion(contract.changelogRu, tag))
+  const narrative = contract.notes.includes(NARRATIVE_MARKER);
+  // Historical published notes stay intact. Only the recorded previous stable
+  // may use the legacy format; new stable publication cannot silently fall back.
+  const cyclePath = resolve(root, 'docs/release-ledger/cycle.json');
+  if (requireStable && !narrative) {
+    const cycle = JSON.parse(readFileSync(cyclePath, 'utf8'));
+    if (tag !== cycle.baseStable) throw new Error('New stable releases require agent-authored narrative notes');
+  }
+  if (!changelogContainsVersion(contract.changelogRu, tag, { allowParagraphs: narrative }))
     throw new Error(`docs/CHANGELOG.ru.md has no dated ${tag} section`);
-  if (!changelogContainsVersion(contract.changelogEn, tag))
+  if (!changelogContainsVersion(contract.changelogEn, tag, { allowParagraphs: narrative }))
     throw new Error(`docs/CHANGELOG.md has no dated ${tag} section`);
-  validateReleaseNotes(contract.notes, { tag, repo });
+  const catalogue = narrative ? readCatalogue({ tag, gitRunner: (args) => execFileSync('git', ['-C', root, ...args], {
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
+  }).trim() }) : null;
+  validateReleaseNotes(contract.notes, { tag, repo, ...(narrative ? { catalogue } : {}) });
+  if (narrative) {
+    const languages = narrativeLanguages(contract.notes, { tag });
+    if (changelogVersionBody(contract.changelogRu, tag) !== languages.ru
+      || changelogVersionBody(contract.changelogEn, tag) !== languages.en)
+      throw new Error('Stable RU/EN changelog sections must preserve the exact authored release narrative');
+    // Dry rendering only: reject an oversized announcement before publication,
+    // not after the release has become public. No network or file writes here.
+    telegramPayload({ notes: contract.notes, tag, url: `https://github.com/${repo}/releases/tag/${tag}`, chat: 'contract-check' });
+  }
   return { ...parsed, tag, repo, sources: contract.sources };
 }
 

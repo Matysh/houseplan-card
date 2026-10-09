@@ -256,9 +256,11 @@ test('manual publish workflow is draft-first, exact-SHA gated and self-contained
 
   const announce = readFileSync(new URL('../.github/workflows/announce.yml', import.meta.url), 'utf8');
   assert.ok(announce.includes('workflow_call:'));
-  assert.ok(announce.includes('if: ${{ inputs.reusable == true }}'));
+  assert.ok(announce.includes('ref: ${{ inputs.ref || github.sha }}'));
   assert.ok(announce.includes('CALLED: ${{ inputs.reusable }}'));
-  assert.ok(announce.includes('BODY=$(cat docs/RELEASE-NOTES.md)'));
+  assert.ok(announce.includes('node scripts/telegram-release.mjs'));
+  assert.ok(announce.includes('--data-binary'));
+  assert.ok(!announce.includes('head -c'), 'authored Unicode and links must never be byte-truncated');
   // #538: условия на событие релиза больше нет и быть не должно — анонс
   // вызывается только после выкладки ассетов. Пинится обратное: ветка события
   // не вернулась.

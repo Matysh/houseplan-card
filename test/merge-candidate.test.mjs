@@ -13,6 +13,68 @@ import {
 import { buildCiProof } from '../scripts/ci-proof.mjs';
 import { buildIndex } from '../scripts/reviews-index.mjs';
 
+test('#838: missing classification stops dev push; milestone is never written before a successful lease', async () => {
+  const missing = fakeOps({ branchTip: 'mat', material: 'mat' });
+  missing.checkReleaseEntry = () => { throw new Error('Missing classification'); };
+  missing.recordReleaseMilestone = () => { assert.fail('must not write a milestone'); };
+  await assert.rejects(mergeCandidate({ branch: 'issue/1-x', material: 'mat', issue: 1, ops: missing }), /Missing classification/);
+  assert.ok(!missing.calls.some((call) => call[0] === 'push'));
+
+  const accepted = fakeOps({ branchTip: 'mat', material: 'mat', leaseRejects: 1 });
+  const order = [];
+  accepted.checkReleaseEntry = (sha) => order.push(['check', sha]);
+  accepted.recordReleaseMilestone = (sha) => {
+    assert.equal(accepted.calls.filter((call) => call[0] === 'push').length, 2);
+    order.push(['record', sha]);
+  };
+  const result = await mergeCandidate({ branch: 'issue/1-x', material: 'mat', issue: 1, ops: accepted });
+  assert.equal(result.to, 'S8-merged');
+  assert.deepEqual(order, [['check','mat'], ['check','mat'], ['record','mat']]);
+});
+
+test('#838: milestone/comment API failure after successful dev push cannot cause S6 or a second merge', async () => {
+  const ops = fakeOps({ branchTip: 'mat', material: 'mat' });
+  ops.recordReleaseMilestone = () => { throw new Error('API unavailable'); };
+  ops.comment = () => { throw new Error('comments API unavailable too'); };
+  const result = await mergeCandidate({ branch: 'issue/1-x', material: 'mat', issue: 1, ops });
+  assert.equal(result.merged, true);
+  assert.equal(result.to, 'S8-merged');
+  assert.match(result.releaseWarning, /reconcile --candidate=mat --issue=1/);
+  assert.equal(ops.calls.filter((call) => call[0] === 'push').length, 1);
+});
+
+test('#838: trusted realOps reads classification from accepted git blobs, ignoring dirty local edits', (t) => {
+  const work = mkdtempSync(join(tmpdir(), 'hp-release-ledger-git-'));
+  t.after(() => rmSync(work, { recursive: true, force: true }));
+  const cfg = ['-c', 'user.name=t', '-c', 'user.email=t@x'];
+  const git = (...args) => execFileSync('git', ['-C', work, ...cfg, ...args], { encoding: 'utf8' }).trim();
+  git('init', '-q');
+  const ledger = join(work, 'docs/release-ledger');
+  mkdirSync(join(ledger, 'v1.80.1'), { recursive: true });
+  const cycle = { schema: 1, baseStable: 'v1.80.1', targetStable: 'v1.81.0', milestone: { number: 3, title: '1.81' } };
+  writeFileSync(join(ledger, 'cycle.json'), JSON.stringify(cycle));
+  git('add', '.'); git('commit', '-qm', 'base'); git('tag', 'v1.80.1');
+  const entry = { schema: 1, issue: 838, baseStable: 'v1.80.1', category: 'major', rationale: 'New compared to stable', summary: { ru: 'Новая фича', en: 'New feature' } };
+  writeFileSync(join(ledger, 'v1.80.1/838.json'), JSON.stringify(entry));
+  git('add', '.'); git('commit', '-qm', 'task\n\nIssue: #838\nUser-Visible: yes');
+  const candidate = git('rev-parse', 'HEAD');
+  writeFileSync(join(ledger, 'v1.80.1/838.json'), JSON.stringify({ ...entry, category: 'infra' }));
+  let current = null, writes = 0;
+  const ops = realOps({ repo: 'x/y', token: 'none', issue: 838,
+    exec: (command, args) => spawnSync(command, args, { cwd: work, encoding: 'utf8' }),
+    releaseApi: (method, path, body) => {
+      if (path.includes('/milestones/')) return { title: '1.81', state: 'open' };
+      if (method === 'PATCH') { current = { number: body.milestone }; writes++; }
+      return { milestone: current };
+    },
+  });
+  assert.equal(ops.checkReleaseEntry(candidate).entry.category, 'major');
+  ops.recordReleaseMilestone(candidate);
+  ops.recordReleaseMilestone(candidate);
+  assert.equal(current.number, 3);
+  assert.equal(writes, 1);
+});
+
 function seedReviewedIndexGenerator(work) {
   mkdirSync(join(work, 'scripts'), { recursive: true });
   for (const name of ['reviews-index.mjs', 'spawn-portable.mjs', 'md-anchors.mjs']) {
@@ -406,6 +468,9 @@ test('на настоящем git: чистый ребейз с равным pat
     ops.comment = (issue, body) => { calls.push(['comment', body.slice(0, 40)]); };
     ops.log = () => {};
     const inWork = (fn) => (...args) => { const cwd = process.cwd(); process.chdir(work); try { return fn(...args); } finally { process.chdir(cwd); } };
+    // These pre-ledger fixtures isolate rebase/index proof; #838 tests below
+    // exercise release accounting against an actual git repository separately.
+    ops.checkReleaseEntry = () => {}; ops.recordReleaseMilestone = () => {};
     for (const name of ['fetch', 'revParse', 'mergeBase', 'diffNames', 'patchId', 'rebaseOnto', 'freshIndex']) ops[name] = inWork(ops[name]);
 
     const r = await mergeCandidate({ branch: 'issue/7-double', material, issue: 7, ops });
@@ -548,6 +613,7 @@ test('#516 AC1: dev moved only by review documents and the branch carries its ow
     ops.comment = (issue, body) => { calls.push(['comment', body.slice(0, 60)]); };
     ops.log = () => {};
     const inWork = (fn) => (...args) => { const cwd = process.cwd(); process.chdir(work); try { return fn(...args); } finally { process.chdir(cwd); } };
+    ops.checkReleaseEntry = () => {}; ops.recordReleaseMilestone = () => {};
     for (const name of ['fetch', 'revParse', 'mergeBase', 'diffNames', 'patchId', 'rebaseOnto', 'freshIndex']) ops[name] = inWork(ops[name]);
 
     const r = await mergeCandidate({ branch: 'issue/9-fix', material, issue: 9, ops });
@@ -624,6 +690,7 @@ test('#643 AC1: dev сдвинулся документами ревью дру�
     ops.comment = (issue, body) => { calls.push(['comment', body.slice(0, 60)]); };
     ops.log = () => {};
     const inWork = (fn) => (...args) => { const cwd = process.cwd(); process.chdir(work); try { return fn(...args); } finally { process.chdir(cwd); } };
+    ops.checkReleaseEntry = () => {}; ops.recordReleaseMilestone = () => {};
     for (const name of ['fetch', 'revParse', 'mergeBase', 'diffNames', 'patchId', 'rebaseOnto', 'freshIndex']) ops[name] = inWork(ops[name]);
 
     const r = await mergeCandidate({ branch: 'issue/9-fix', material, issue: 9, ops });
@@ -713,6 +780,7 @@ test('#657 r1 H1 на настоящем git: fast-forward несёт свежи
     ops.comment = (issue, body) => { calls.push(['comment', body.slice(0, 60)]); };
     ops.log = () => {};
     const inWork = (fn) => (...args) => { const cwd = process.cwd(); process.chdir(work); try { return fn(...args); } finally { process.chdir(cwd); } };
+    ops.checkReleaseEntry = () => {}; ops.recordReleaseMilestone = () => {};
     for (const name of ['fetch', 'revParse', 'mergeBase', 'diffNames', 'patchId', 'rebaseOnto', 'freshIndex']) ops[name] = inWork(ops[name]);
 
     const r = await mergeCandidate({ branch: 'issue/9-fix', material, issue: 9, ops });

@@ -33,6 +33,7 @@ import { CONVEYOR_IDENTITY } from './reviews-index.mjs';
 import { commitCandidateReviewsIndex } from './candidate-reviews-index.mjs';
 import { normalizeBrowserGuardCounts } from './mutation-browser-inventory.mjs';
 import { BROWSER_GUARD_INVENTORY } from './mutation-browser-policy.mjs';
+import { readMergeEntry, reconcileEntry, ghApi } from './release-ledger.mjs';
 
 export const MAX_ATTEMPTS = 3;
 /** Пути вне patch-id кандидата (#698): документы ревью и то, что ребейз сливает сам. */
@@ -336,6 +337,7 @@ export function realOps({
   proofContext = (run) => loadGithubProofContext({ repo, run, token }),
   mutants = true,
   log = (line) => console.log(line),
+  releaseApi = ghApi,
 }) {
   const pushUrl = `https://x-access-token:${token}@github.com/${repo}`;
   const git = (...args) => exec('git', args);
@@ -347,6 +349,11 @@ export function realOps({
     return refusal;
   };
   return {
+    checkReleaseEntry: (candidate) => readMergeEntry(candidate, issue, (args) => must(git(...args), 'release classification')),
+    recordReleaseMilestone: (candidate) => {
+      const { cycle, entry } = readMergeEntry(candidate, issue, (args) => must(git(...args), 'release classification'));
+      return reconcileEntry({ cycle, entry, repo, api: releaseApi });
+    },
     fetch: (...refs) => must(git('fetch', '-q', 'origin', ...refs), 'git fetch'),
     revParse: (ref) => must(git('rev-parse', ref), `rev-parse ${ref}`),
     mergeBase: (a, b) => must(git('merge-base', a, b), 'merge-base'),
@@ -491,6 +498,17 @@ async function mergeAttempts({ branch, material, issue, ops, maxAttempts = MAX_A
   const ctx = { branch, material, actual, issue };
   const finish = (decision, extra = {}) => {
     const merged = decision.action === 'push' || decision.action === 'fast-forward';
+    // Milestone writes happen after the proved dev push. An API failure must
+    // never send already merged work back to S6 or trigger a second merge.
+    let releaseWarning = '';
+    if (merged && ops.recordReleaseMilestone) {
+      try { ops.recordReleaseMilestone(extra.candidate || actual); }
+      catch (error) {
+        releaseWarning = `\n\nУчёт milestone не завершён: ${redactSecrets(error.message)}. Код уже в dev; повторное слияние не нужно. `
+          + `Повторить только: \`node scripts/release-ledger.mjs reconcile --candidate=${extra.candidate || actual} --issue=${issue}\` после git fetch origin dev.`;
+        ops.log(releaseWarning);
+      }
+    }
     // #702: влитая ветка больше не нужна — 368 таких висели на origin, и агент,
     // искавший ветку по номеру, мог взять устаревшую. `branchTip` — вершина,
     // которую слияние видело последней: кандидат, опубликованный в ветку, либо
@@ -500,10 +518,16 @@ async function mergeAttempts({ branch, material, issue, ops, maxAttempts = MAX_A
       try { branchDeleted = ops.deleteBranch(branch, extra.branchTip); }
       catch (error) { ops.log(`ветка ${branch} не удалена: ${error.message}`); }
     }
-    const body = commentFor(decision.action, { ...ctx, ...extra, attempt: extra.attempt, branchDeleted });
-    if (body) ops.comment(issue, body);
+    const body = commentFor(decision.action, { ...ctx, ...extra, attempt: extra.attempt, branchDeleted }) + releaseWarning;
+    if (body) {
+      try { ops.comment(issue, body); }
+      catch (error) {
+        if (!merged) throw error;
+        ops.log(`Код уже в dev; комментарий не опубликован: ${redactSecrets(error.message)}`);
+      }
+    }
     ops.log(`решение: ${decision.action} → ${decision.to || '(метка по вердикту)'}`);
-    return { merged, to: decision.to, action: decision.action, candidate: extra.candidate || actual };
+    return { merged, to: decision.to, action: decision.action, candidate: extra.candidate || actual, ...(releaseWarning ? { releaseWarning } : {}) };
   };
 
   if (!reviewedFresh) return finish(decideMerge({ fresh: false }));
@@ -518,6 +542,7 @@ async function mergeAttempts({ branch, material, issue, ops, maxAttempts = MAX_A
 
     if (!devMoved) {
       const target = ops.freshIndex(tip);
+      ops.checkReleaseEntry?.(target);
       const pushed = ops.pushWithLease(target, 'dev', devNow);
       const decision = decideMerge({ fresh: true, devMoved: false, leaseRejected: !pushed });
       if (decision.action === 'retry') continue;
@@ -567,6 +592,7 @@ async function mergeAttempts({ branch, material, issue, ops, maxAttempts = MAX_A
     let decision = decideMerge({ fresh: true, devMoved: true, patchIdEqual: true, validate: result, attempt, maxAttempts });
     if (decision.action !== 'push') return finish(decision, { candidate, devNow, runUrl: url });
 
+    ops.checkReleaseEntry?.(candidate);
     const pushed = ops.pushWithLease(candidate, 'dev', devNow);
     decision = decideMerge({ fresh: true, devMoved: true, patchIdEqual: true, validate: result, leaseRejected: !pushed, attempt, maxAttempts });
     if (decision.action === 'retry') { ops.log('dev двинулся снова — ещё попытка'); continue; }
