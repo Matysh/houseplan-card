@@ -124,6 +124,11 @@ take the complete original boolean operation, including its original failure.
 The edge check permits only shared endpoints, not overlaps or endpoint/interior
 contacts. It proves new-edge simplicity itself rather than assuming it from
 the caller's canonical-value certificate.
+The exact predicate coordinate map also supplies each reconstructed ring's
+shoelace sign: one positive scale preserves the sign across rings with different
+decimal exponents. No floating-point area or tolerance replaces this check.
+An exact endpoint equality gives zero orientation before BigInt arithmetic;
+all other contacts still execute the same exact determinant.
 
 For a fixed intersection subject, a separately certified canonical clipping
 operand can change strictly outside the relevant region. The reuse signature

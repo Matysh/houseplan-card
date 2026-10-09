@@ -416,6 +416,9 @@ export class WallNodeEditor {
     }
     const scene = s.candidate ? this.port.scene?.(s.candidate, s.plan.source) : null;
     s.outline = !!s.invalid && !scene;
+    // Live handles read the viewport width. Prepare them before changing the
+    // paper/room paths, so a retained preview does not force layout mid-paint.
+    const live = this.render(true);
     render(scene?.paper || nothing, this.liveRoots[0]);
     render(scene?.rooms || nothing, this.liveRoots[1]);
     render(svg`<defs>${scene ? nodeMask('hp-node-old-walls-mask', svg`
@@ -424,7 +427,7 @@ export class WallNodeEditor {
       ${scene.oldZeroD.map(d => svg`<path d=${d}
         stroke="black" stroke-width="4" vector-effect="non-scaling-stroke"/>`)}`) : nothing}
       ${scene ? nodeMask('hp-node-old-paper-mask', svg`<path d=${scene.oldPaperD} fill="black" fill-rule="evenodd"/>`)
-        : nothing}</defs>${s.moved ? this.sourceGhost : nothing}${scene?.walls || nothing}${this.render(true)}`, this.liveRoots[2]);
+        : nothing}</defs>${s.moved ? this.sourceGhost : nothing}${scene?.walls || nothing}${live}`, this.liveRoots[2]);
     const oldZero = scene?.oldZeroD || s.plan.node.walls.filter(w => w.cm === 0).map(w =>
       `M${nodePointText(w.a)}L${nodePointText(w.b)}`);
     const elements = root.querySelectorAll<SVGElement>(`.hp-node-layer [data-node="${s.plan.node.key}"], .plan-snap-node[cx="${s.plan.node.point[0] * NORM_W}"][cy="${s.plan.node.point[1] * NORM_W}"], ${nodeMasonrySelector}, .zero-wall, .hp-paperg, [data-hp="room"], .openinglayer [data-hp="opening"]`);

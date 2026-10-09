@@ -23,6 +23,7 @@ type AxisIndex = { vertical: Map<number, Set<number>>; horizontal: Map<number, S
 type Predicates = {
   orientation(a: Point, b: Point, p: Point): number;
   on(p: Point, a: Point, b: Point): boolean;
+  areaSign(ring: Ring): number;
 };
 type Prepared = {
   before: Multi;
@@ -169,6 +170,7 @@ function exactPredicates(points: Point[]): Predicates {
   const scaled = new Map([...parts].map(([value, part]) =>
     [value, part.coefficient * 10n ** BigInt(part.power - power)]));
   const orientation = (a: Point, b: Point, p: Point): number => {
+    if (same(p, a) || same(p, b)) return 0;
     const ax = scaled.get(a[0])!, ay = scaled.get(a[1])!;
     const determinant = (scaled.get(b[0])! - ax) * (scaled.get(p[1])! - ay)
       - (scaled.get(b[1])! - ay) * (scaled.get(p[0])! - ax);
@@ -177,7 +179,19 @@ function exactPredicates(points: Point[]): Predicates {
   const on = (p: Point, a: Point, b: Point): boolean =>
     p[0] >= Math.min(a[0], b[0]) && p[0] <= Math.max(a[0], b[0])
     && p[1] >= Math.min(a[1], b[1]) && p[1] <= Math.max(a[1], b[1]);
-  return { orientation, on };
+  const areaSign = (ring: Ring): number => {
+    // Normalization only removes/rotates/copies existing edge endpoints. All
+    // coordinates already have exact integers here; this shared positive scale
+    // preserves each ring's sign without parsing and scaling its values again.
+    let ax = scaled.get(ring[0][0])!, ay = scaled.get(ring[0][1])!, sum = 0n;
+    for (let i = 1; i < ring.length; i++) {
+      const bx = scaled.get(ring[i][0])!, by = scaled.get(ring[i][1])!;
+      sum += ax * by - bx * ay;
+      ax = bx; ay = by;
+    }
+    return sum > 0n ? 1 : sum < 0n ? -1 : 0;
+  };
+  return { orientation, on, areaSign };
 }
 
 function safeAddedEdges(added: Array<[string, Edge]>, resultEdges: Edges, predicates: Predicates): boolean {
@@ -295,7 +309,7 @@ function splice(current: Geom, prepared: Prepared): Multi | null {
     owners.add(owner);
     const [pi, ri] = owner.split(':').map(Number), normalized = trimAxisSubdivisions(ring);
     if (!normalized) return null;
-    const sign = areaSign(normalized);
+    const sign = predicates.areaSign(normalized);
     if (!sign || sign !== baselineSigns[pi][ri]) return null;
     result[pi][ri] = normalized;
   }

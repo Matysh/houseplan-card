@@ -56,6 +56,8 @@ restored even on exceptions and does not alter ordinary View/Resize calls.
 Local boundary replacement proves every added/retained and added/added edge
 pair free of crossings, overlaps and interior contacts before reconstructing
 the output rings; only ordinary shared endpoints are allowed.
+The reconstructed rings reuse that same exact coordinate scale for their area
+sign; this avoids reparsing decimals without approximating the shoelace sum.
 Corner unions and opening cuts batch exact associative boolean operations,
 with the historical sequential path on failure. A wall strip is omitted only
 when a conservative convex-containment proof shows it already lies entirely
@@ -120,6 +122,8 @@ its physical proof. Context exits, writes/history, pagehide and disposal retire
 it. Candidate geometry, structural snapshots and live layers remain gesture-only.
 Persistent source-style overrides are diffed and restored only on departure;
 full host renders rebind their elements and changed authoritative inline styles.
+Live handle templates read the current viewport scale before committing the
+paper/room SVG layers, avoiding a read-after-write layout flush within paint.
 `wall-local-boolean` keeps disconnected canonical components out of
 repeated clipping sweeps; touching bounds still invoke the original boolean
 library. These are exact broad-phase exclusions, not relaxed wall limits.

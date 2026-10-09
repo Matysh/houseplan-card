@@ -20,6 +20,8 @@
   Unchanged local intersections are also reused with exact enclosure checks.
   Retrying after Esc reuses the unchanged source calculation, and live frames
   no longer repeatedly restore and hide the same source walls.
+  Preview drawing also avoids an unnecessary mid-frame layout calculation
+  and repeated exact-coordinate conversion.
   One live preview retains translucent original walls; cancel, the latest
   release position, opening cuts and Undo/Redo remain guarded
   ([#834](https://github.com/Matysh/houseplan-card/issues/834)).

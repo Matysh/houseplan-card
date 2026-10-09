@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { svg } from 'lit';
 import { WallNodeEditor } from '../test-build/wall-node-editor.js';
 
 function setup() {
@@ -154,5 +155,44 @@ test('cancel, disposal, pagehide, stale context and missing SVG all restore node
     assert.equal(room.style.opacity, '.6', terminal); assert.equal(room.style.transition, 'opacity 200ms', terminal);
     assert.equal(s.editor.touched.size, 0, terminal);
     s.editor.dispose();
+  }
+});
+
+test('retained node layers read viewport scale before committing paper, rooms or live SVG', () => {
+  for (const mode of ['captured', 'valid', 'invalid']) {
+    const s = setup(), commits = [];
+    const source = { id: 'f', rooms: [], wall_segments: [] };
+    const node = { key: 'origin', point: [0, 0], supported: true, walls: [], axes: [], passing: 0 };
+    let dirty = false, scale = .001, reads = 0;
+    s.active(); Object.assign(s.editor.session, {
+      plan: { source, node, nodes: [node], splitIds: {} },
+      moved: mode !== 'captured', candidate: mode === 'valid' ? source : null,
+      target: [.5, .5], affected: [], invalid: mode === 'invalid' ? 'invalid' : null,
+      axis: null, guide: null,
+    });
+    s.editor.port.unitsPerPixel = () => {
+      reads++; assert.equal(dirty, false, `${mode}: a viewport read after an SVG commit can force layout`);
+      return scale;
+    };
+    s.editor.port.text = key => key;
+    s.editor.port.scene = () => ({ paper: svg`<path d="M0 0L1 0L1 1Z"/>`,
+      rooms: svg`<path d="M0 0L2 0L2 2Z"/>`, walls: svg`<path d="M0 0L3 0L3 3Z"/>`,
+      oldWallsD: '', oldPaperD: '', oldZeroD: [], roomIds: [], openingIds: [] });
+    s.editor.port.root = () => ({ querySelector: () => ({}), querySelectorAll: () => [] });
+    // Retained Lit parts are commit sinks: execute the real paint/render
+    // ordering without requiring a browser's SVG parser in the Node suite.
+    s.editor.liveRoots = ['paper', 'rooms', 'live'].map(name => ({ isConnected: true,
+      _$litPart$: { _$AI(value) { dirty = true; commits.push({ name, value }); } } }));
+    for (let frame = 0; frame < 2; frame++) {
+      dirty = false; scale *= 2;
+      s.editor.session.outline = mode === 'invalid';
+      const expected = s.editor.render(true);
+      reads = 0; commits.length = 0;
+      s.editor.paint();
+      assert.equal(reads, 1, `${mode}: each paint measures the current scale once for live handles`);
+      assert.deepEqual(commits.map(({ name }) => name), ['paper', 'rooms', 'live']);
+      assert.deepEqual(commits[2].value.values.at(-1), expected, `${mode}: live geometry matches ordinary render at the current scale`);
+    }
+    s.editor.liveRoots = []; s.editor.dispose();
   }
 });

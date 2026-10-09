@@ -112,6 +112,17 @@ refusal directly, without claiming that malformed inputs pass the production
 canonical-value certificate. Nightly anchors guard the complete crossing check
 and the added-edge accumulation; local validation only checks the registry.
 
+Full Validate 37881199359 on d4bd6e2c passed the other 312 browser smokes but
+failed the unchanged native CPU/input limits at 50.2/109.858 ms. The next narrow
+optimization reuses the exact predicate coordinate map for output area signs,
+and constructs live handle templates before committing paper/room SVG. The
+previous ordering read stage width after those writes and could force layout.
+The executable paint witness fails on that old ordering, covers captured,
+valid and invalid frames, and rechecks the scale on the next paint. Exact-area
+witnesses retain a one-ULP positive triangle whose ordinary floating-point
+shoelace sum is zero, and reject zero/opposite signs. Native input/clock and
+performance budgets remain unchanged.
+
 Never pass render-unit, opening-cut geometry directly to junction clearance.
 Only a compatible pre-opening component explicitly normalized to config units
 may be shared; open-span/incompatible cases retain the independent proof.

@@ -110,6 +110,38 @@ test('#834 consecutive added edges may share their ordinary common endpoint', ()
   sameMaterial(prepared(current), expected);
 });
 
+test('#834 boundary area keeps exact decimal signs through cancellation and mixed coordinate scales', () => {
+  const origin = 1e8, ulp = 2 ** -26;
+  const a = [origin, origin], b = [origin + 1, origin + 1];
+  const tiny = union(rect(-2e-20, -2e-20, -1e-20, -1e-20));
+  const before = union(tiny, [[a, b, [origin + 2, origin + 3], a]]);
+  const fixed = [union(rect(2e8, 2e8, 2e8 + 1, 2e8 + 1))];
+  const baseline = difference(before, ...fixed);
+  const prepared = prepareWallBoundarySplice(before, fixed, baseline);
+  assert.equal(typeof prepared, 'function');
+  for (const delta of [ulp, -ulp, 0]) {
+    const c = [origin + 2, origin + 2 + delta], ring = [a, b, c, a];
+    let floatingArea = 0;
+    for (let i = 1; i < ring.length; i++)
+      floatingArea += ring[i - 1][0] * ring[i][1] - ring[i][0] * ring[i - 1][1];
+    assert.equal(floatingArea, 0, 'ordinary Number shoelace loses both nonzero signs');
+    assert.equal(Math.sign(c[1] - c[0]), Math.sign(delta), 'the exact determinant sign is known independently');
+    const current = [...tiny, [ring]], normalized = union(current);
+    const result = frozenCall(before, current, fixed, baseline);
+    if (delta > 0) {
+      assert.equal(normalized.length, 2, 'the thin nonzero triangle remains real material');
+      assert.ok(result, 'the shared decimal scale must preserve a positive sign, not round it to zero');
+      sameMaterial(result, difference(normalized, ...fixed));
+      sameMaterial(prepared(current), result);
+    } else {
+      // These deliberately malformed candidates retain the old directed edge
+      // but reverse or collapse the ring. Canonical provenance is not claimed.
+      assert.equal(result, null, 'opposite and zero signs never reuse the old positive owner');
+      assert.equal(prepared(current), null);
+    }
+  }
+});
+
 test('#834 boundary splice changes local masonry while preserving real fixed cuts and owned holes', () => {
   const before = difference(rect(0, 0, 10, 10), rect(2, 2, 3, 3));
   const current = difference(rect(0, 0, 12, 10), rect(2, 2, 3, 3));
