@@ -12,6 +12,10 @@
   Starting a node drag also freezes any in-flight zoom at the presented frame.
   Numerical repair additionally preserves the specific wall contour that owns
   each hole, rejecting ambiguous repairs even when all ring counts match.
+  Exactly horizontal and vertical wall faces retain their exact intersection
+  coordinate. Local drag changes can reuse unchanged boolean boundaries only
+  after proving separation, non-crossing and the actual ownership of holes.
+  Unchanged local intersections are also reused with exact enclosure checks.
   One live preview retains translucent original walls; cancel, the latest
   release position, opening cuts and Undo/Redo remain guarded
   ([#834](https://github.com/Matysh/houseplan-card/issues/834)).

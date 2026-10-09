@@ -44,6 +44,14 @@ unchanged ring counts cannot hide a split/merge that transfers a hole. Exact
 zero-area retraces remain equivalent filled geometry, without epsilon or a
 second coordinate snap. The connected floor and reduced two-room repro retain
 their full acceptance checks.
+Exactly axial face intersections retain the literal fixed coordinate, removing
+numerical shell noise at its source. Select reuses frozen boolean results only
+after exact local boundary/owner/containment proofs, or a complete subject plus
+canonical directed-edge intersection signature. Far-right enclosure edges and
+every ULP remain significant. Bounded full-value certificates reject mutation;
+unproved cases execute the original boolean, and all final physical checks stay.
+This delta addresses the subsequent CI-only performance return without changing
+the native input protocol or the 50/100/150 ms budgets.
 
 Repeated Resize (#832): coalesced UI runs project back into frozen structural
 atoms/IDs, retaining fixed side breakpoints and rigidly moving translated runs.

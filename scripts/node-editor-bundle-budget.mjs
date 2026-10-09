@@ -19,5 +19,9 @@ const hasBaselineCache = path => cacheMarker.test(readFileSync(`dist/${path}`, '
 assert.equal([...loaded].some(hasBaselineCache), false, 'editor boolean baseline cache is not eager in View or other editors');
 assert.equal(extra.some(hasBaselineCache), true, 'the Select-only graph owns its bounded boolean baseline cache');
 const gzip = extra.reduce((sum, path) => sum + byPath.get(path).gzipBytes, 0);
-assert.ok(gzip <= 14 * 1024, `${gzip} B gzip exceeds the new Select-only 14 KiB budget`);
-console.log(`Select-only node graph: ${gzip} B gzip, budget ${14 * 1024}; existing bundle ceilings unchanged`);
+// #834: exact local boundary, ownership and winding proofs replace repeated
+// clipping. The owner permits an explicit ceiling increase, not byte golfing.
+// This is still a hard Select-only cap; View/editor ceilings remain unchanged.
+const budget = 18 * 1024;
+assert.ok(gzip <= budget, `${gzip} B gzip exceeds the Select-only 18 KiB budget`);
+console.log(`Select-only node graph: ${gzip} B gzip, budget ${budget}; existing bundle ceilings unchanged`);

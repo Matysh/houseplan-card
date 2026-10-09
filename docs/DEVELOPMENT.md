@@ -237,10 +237,16 @@ activation (no intervening pointerdown), and still performs exact Undo/Redo.
 The pure tail witness distinguishes keyboard and outside-stage controls from
 the cancelled gesture's late pointer-compatible stage click.
 The Select-only module is a second-level lazy import, with an additional
-14 KiB gzip guard (`node scripts/node-editor-bundle-budget.mjs`); it does not
+18 KiB gzip guard (`node scripts/node-editor-bundle-budget.mjs`); it does not
 change any existing graph ceiling or load in cold View/other tools. The
 intentional raw-bundle/coupling increments are recorded in issue #803 and
 `monolith-baseline.json`, not hidden by widening ratchet bands.
+For #834 the owner-approved explicit increase from 14 to 18 KiB accommodates
+exact boundary/ownership/winding proofs in this Select-only graph. Its bounded
+cache and mandatory fallback trade a small one-time lazy download for less
+per-frame clipping; no proof is dropped for byte savings. The raw bundle
+baseline increase is recorded with the same issue and commit. Initial View,
+ordinary editor ceilings, ratchet bands and runtime timing budgets do not grow.
 After integrating #814, shared ghost mask/point templates and one affected-wall
 selection remove duplicate emitted code; neither the accepted baseline nor its
 bands change. Re-run both node raster smokes and the floor-cache-reuse smoke.

@@ -1501,7 +1501,14 @@ function lineIntersect(
   if (Math.abs(rxs) < 1e-12) return null;
   const qp = [q[0] - p[0], q[1] - p[1]];
   const t = (qp[0] * s[1] - qp[1] * s[0]) / rxs;
-  return [p[0] + t * r[0], p[1] + t * r[1]];
+  const hit = [p[0] + t * r[0], p[1] + t * r[1]];
+  if (!hit.every(Number.isFinite) || ![...p, ...r, ...q, ...s].every(Number.isFinite)) return hit;
+  // An exactly axial line already owns one exact intersection coordinate.
+  // Evaluating it along the other line can introduce a different floating tail
+  // at each end of one wall face. Preserve that constraint, without snapping
+  // oblique lines or changing the existing parallel/non-finite failure path.
+  return [r[0] === 0 ? p[0] : s[0] === 0 ? q[0] : hit[0],
+    r[1] === 0 ? p[1] : s[1] === 0 ? q[1] : hit[1]];
 }
 
 /**
@@ -3260,7 +3267,7 @@ export function unionJunctionPatches(
 
 interface ExteriorEnvelopeGeometry {
   /** Union of room centrelines. Shared Split edges disappear from this shape. */
-  centre: any;
+  centre: Geom;
   /** Wall shell generated only from the surviving exterior boundary. */
   shell: any;
 }
@@ -3458,7 +3465,7 @@ export function junctionNodeBound(
   coordScale: number,
   map: MultiWallNodeMap,
   prepared?: ExteriorEnvelopeInputs,
-): any | null {
+): Geom | null {
   try {
     const plain: MultiWallNodeMap = {
       epsilon: map.epsilon, coordinateScale: map.coordinateScale,

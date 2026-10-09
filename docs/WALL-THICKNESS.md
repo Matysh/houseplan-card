@@ -89,6 +89,58 @@ and ambiguous arithmetic cannot gain that shortcut. When all fans are proved
 redundant, their clipping bound need not be built; a required bound failure is
 retained, never retried into a different outcome.
 
+Exactly axial offset lines supply their literal X/Y intersection coordinate;
+evaluating that coordinate along the other line must not introduce a different
+floating tail at each end of one face. Only an exactly zero direction component
+qualifies: oblique lines, parallel limits and non-finite failures are unchanged.
+
+Select may also reuse a frozen successful union/difference by replacing only
+proved local boundary fragments (`wall-boundary-splice.ts`). Both old and fresh
+moving operands require complete canonical-value certificates, not object
+identity, vertex counts or area. The unchanged operands retain their exact
+ordered values and operation. Exact horizontal/vertical subdivisions reveal
+shared directed edges; there is no snapping of diagonal or near-axis edges.
+One **global** rectangle covering all removed AND added fragments must be
+strictly separated from every unchanged component's bounding box. Individual
+edge separation is insufficient: new edges could enclose an unchanged cut.
+Outside the rectangle the boundary winding difference is zero at infinity and
+throughout its connected exterior; inside it the unchanged operands are empty.
+
+Replacement further requires bijective input ring/owner correspondence,
+unambiguous directed cycles, exact non-crossing of new and retained segments,
+and the actual output containment tree. In particular, a fixed cut can split
+one input component into two: retaining old output hole indices does not prove
+ownership. Decimal BigInt predicates match polyclip's Number interpretation;
+touching boundaries, changed nesting, missing anchors and every uncertain case
+take the complete original boolean operation, including its original failure.
+
+For a fixed intersection subject, a separately certified canonical clipping
+operand can change strictly outside the relevant region. The reuse signature
+retains the subject's **complete** value and the sorted directed **multiset**
+of clipping edges whose X maximum reaches the subject's X minimum and whose
+Y interval touches its full Y interval (`wall-intersection-signature.ts`).
+There is deliberately no right-hand X cutoff: distant right edges determine
+enclosure. Equal signatures preserve every rightward-ray winding and boundary
+contact throughout the subject rectangle; remote component/hole changes cannot
+change the intersection there. Only two-operand intersections of a known full
+canonical clipping value qualify, and only a successful frozen result is reused.
+ULP differences, changed local holes, unregistered mutation, extra operands or
+an uncertain/oversized signature take the original boolean. Reused results are
+fresh copies, not aliases to cached geometry.
+
+Canonical certificates include proved splice results and use a 256-entry /
+500,000-character FIFO; frozen incremental records are separately capped at
+256 entries / 500,000 characters shared by boundary and intersection records,
+with at most four boundary records per exact fixed-operand group. Pointer
+positions never grow or replace the frozen record table. Together with the
+existing 512-entry / 2,000,000-character exact cache, all reuse remains bounded
+and owned by one frozen gesture/context. It is absent from ordinary View, and
+never replaces the subsequent junction, clearance, opening or release checks.
+The frozen boundary record privately copies its inputs and prepares fixed
+component boxes, vertex keys and exact ring signs once. Candidate subdivisions,
+separation, crossings and output containment remain fresh checks; neither input
+mutation nor modification of a returned result can change the prepared record.
+
 ### Stable stored identity and zero walls (model v10, #282/#306/#478)
 
 The decision record behind the stored representation — what the code calls
