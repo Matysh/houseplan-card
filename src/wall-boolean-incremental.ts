@@ -3,7 +3,7 @@
 import type { Geom } from 'polyclip-ts';
 import type { WallBooleanOperation } from './wall-boolean-cache';
 import { prepareWallBoundarySplice, type PreparedWallBoundarySplice } from './wall-boundary-splice';
-import { wallIntersectionSignature } from './wall-intersection-signature';
+import { wallIntersectionSignatureFromKey } from './wall-intersection-signature';
 
 type Multi = ReturnType<typeof import('polyclip-ts').union>;
 type Baseline = { key: string; splice: PreparedWallBoundarySplice };
@@ -23,9 +23,10 @@ export class WallBooleanIncremental {
    * polygon/hole ownership. Mutating a previously returned array cannot preserve
    * this certificate. An exact deep clone of a known value is safe to recognize.
    * The bounded FIFO holds certificates only; candidates never enter the frozen
-   * result table. A successfully proved splice also supplies a certificate. */
-  remember(result: Multi): void {
-    const key = JSON.stringify(result);
+   * result table. A successfully proved splice also supplies a certificate.
+   * Keys come only from apply's same-call serialization or its private frozen
+   * copied result; this class never accepts an array-identity certificate. */
+  remember(key: string): void {
     if (key.includes('null') || key.length > LIMIT || this.canonical.has(key)) return;
     while (this.canonical.size >= 256 || this.canonicalCharacters + key.length > LIMIT) {
       const oldest = this.canonical.keys().next().value!;
@@ -35,27 +36,27 @@ export class WallBooleanIncremental {
     this.updateCounts();
   }
 
-  private candidate(operation: WallBooleanOperation, operands: Geom[]): { key: string; group: string } | null {
+  private candidate(operation: WallBooleanOperation, operands: Geom[], operandKeys: readonly string[]): { key: string; group: string } | null {
     if ((operation !== 'union' && operation !== 'difference') || operands.length < 2) return null;
-    const key = JSON.stringify(operands[0]);
+    const key = operandKeys[0];
     if (!this.canonical.has(key)) return null;
-    const rest = JSON.stringify(operands.slice(1));
+    const rest = `[${operandKeys.slice(1).join(',')}]`;
     if (rest.includes('null')) return null;
     return { key, group: `${operation}:${rest}` };
   }
 
-  private intersectionKey(operation: WallBooleanOperation, operands: Geom[]): string | null {
+  private intersectionKey(operation: WallBooleanOperation, operands: Geom[], operandKeys: readonly string[]): string | null {
     if (operation !== 'intersection' || operands.length !== 2 ||
-        !this.canonical.has(JSON.stringify(operands[1]))) return null;
-    return wallIntersectionSignature(operands[0], operands[1]);
+        !this.canonical.has(operandKeys[1])) return null;
+    return wallIntersectionSignatureFromKey(operands[0], operands[1], operandKeys[0]);
   }
 
   /** Only the original frozen geometry pass may record a baseline. A new
    * pointer position can neither replace it nor grow this bounded table. */
-  record(operation: WallBooleanOperation, operands: Geom[], result: Multi): void {
-    const intersection = this.intersectionKey(operation, operands);
+  record(operation: WallBooleanOperation, operands: Geom[], result: Multi, operandKeys: readonly string[], resultKey: string): void {
+    const intersection = this.intersectionKey(operation, operands, operandKeys);
     if (intersection !== null) {
-      const characters = intersection.length + JSON.stringify(result).length;
+      const characters = intersection.length + resultKey.length;
       if (!this.intersections.has(intersection) && this.counts.stored < 256 &&
           this.baselineCharacters + characters <= LIMIT) {
         this.intersections.set(intersection, copy(result));
@@ -64,11 +65,11 @@ export class WallBooleanIncremental {
       }
       return;
     }
-    const candidate = this.candidate(operation, operands);
+    const candidate = this.candidate(operation, operands, operandKeys);
     if (!candidate) return;
     const previous = this.baselines.get(candidate.group);
     if ((previous?.length || 0) >= 4 || this.counts.stored >= 256) return;
-    const characters = candidate.key.length + candidate.group.length + JSON.stringify(result).length;
+    const characters = candidate.key.length + candidate.group.length + resultKey.length;
     if (this.baselineCharacters + characters > LIMIT) return;
     const splice = prepareWallBoundarySplice(operands[0], operands.slice(1), result);
     if (!splice) return;
@@ -79,15 +80,15 @@ export class WallBooleanIncremental {
     this.updateCounts();
   }
 
-  reuse(operation: WallBooleanOperation, operands: Geom[]): Multi | null {
-    const intersection = this.intersectionKey(operation, operands);
+  reuse(operation: WallBooleanOperation, operands: Geom[], operandKeys: readonly string[]): Multi | null {
+    const intersection = this.intersectionKey(operation, operands, operandKeys);
     if (intersection !== null) {
       this.counts.attempts++;
       const result = this.intersections.get(intersection);
       if (result) { this.counts.hits++; return copy(result); }
       return null;
     }
-    const candidate = this.candidate(operation, operands);
+    const candidate = this.candidate(operation, operands, operandKeys);
     if (!candidate) return null;
     for (const baseline of this.baselines.get(candidate.group) || []) {
       // The ordinary full-key cache owns the unchanged-input case.

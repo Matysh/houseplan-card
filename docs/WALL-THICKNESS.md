@@ -51,6 +51,13 @@ and allows the final frame to paint before writing the whole atomic delta.
 the first X-axis decision across raw events. The final input is flushed before
 release; cancel/revision retirement removes pending work. The same snapped
 point/axis reuses both valid and invalid results without rebuilding geometry.
+The source mask/opacity overrides remain installed between live frames rather
+than restoring and immediately hiding the same elements again. Only changed
+overrides are written; departing room-fill overrides restore opacity with
+transitions disabled before returning the original transition. Full host
+renders rebind replacement elements and reapply overrides to changed styles;
+cancel/disposal restores all owned styles. The generic editor layer hands over
+once per captured gesture, not once per pointer candidate.
 A numerical failure joining the computed masonry and exterior shell gets one
 canonical-coordinate retry; original room/wall coordinates never change.
 Each operand must preserve each outer boundary together with its own holes,
@@ -134,12 +141,24 @@ Canonical certificates include proved splice results and use a 256-entry /
 with at most four boundary records per exact fixed-operand group. Pointer
 positions never grow or replace the frozen record table. Together with the
 existing 512-entry / 2,000,000-character exact cache, all reuse remains bounded
-and owned by one frozen gesture/context. It is absent from ordinary View, and
+and owned by one frozen baseline/context. It is absent from ordinary View, and
 never replaces the subsequent junction, clearance, opening or release checks.
 The frozen boundary record privately copies its inputs and prepares fixed
 component boxes, vertex keys and exact ring signs once. Candidate subdivisions,
 separation, crossings and output containment remain fresh checks; neither input
 mutation nor modification of a returned result can change the prepared record.
+Each live operand is fully serialized once per boolean call; only a privately
+copied frozen result may retain its already-computed key. No caller array gains
+an identity-based certificate.
+
+At most one successful baseline may survive an Esc retry in Select. Reuse
+requires the same authoritative config object, revision and space plus the
+exact complete selected-config value, including proof settings. Its config is
+a private snapshot; every fresh candidate still receives geometry and physical
+proof. A changed local closure, in-place config value change, failed baseline,
+write/history operation, context/permission/API change, pagehide or disposal
+retires this reuse. Candidate geometry and the node snapshot do not survive
+cancel. No baseline construction is moved ahead of the first real candidate.
 
 ### Stable stored identity and zero walls (model v10, #282/#306/#478)
 

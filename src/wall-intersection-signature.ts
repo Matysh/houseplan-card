@@ -28,10 +28,17 @@ function rings(geometry: Geom): Ring[] | null {
 }
 
 export function wallIntersectionSignature(subject: Geom, canonicalClipping: Geom): string | null {
+  try { return wallIntersectionSignatureFromKey(subject, canonicalClipping, JSON.stringify(subject)); }
+  catch { return null; }
+}
+
+/** Internal same-call port: subjectKey must be the freshly serialized complete
+ * subject supplied by WallBooleanBaseline.apply, never a caller identity cache.
+ * The public pure entrypoint above owns serialization for independent callers. */
+export function wallIntersectionSignatureFromKey(subject: Geom, canonicalClipping: Geom, subjectKey: string): string | null {
   try {
     const subjectRings = rings(subject), clippingRings = rings(canonicalClipping);
     if (!subjectRings?.length || !clippingRings) return null;
-    const subjectKey = JSON.stringify(subject);
     if (subjectKey.length > LIMIT) return null;
     let minX = Infinity, minY = Infinity, maxY = -Infinity;
     // Include every component AND hole, including raw subject rings whose

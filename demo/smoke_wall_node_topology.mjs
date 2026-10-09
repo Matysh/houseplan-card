@@ -144,7 +144,7 @@ for (let i = 0; i < 100; i++) {
   else { await page.keyboard.press('Escape'); await page.mouse.up(); await idle(); }
   const state = await page.evaluate(() => {
     const e = window.__card._editorRuntime.nodeMove;
-    return [e.liveRoots.length, e.touched.length, e.session, e.cache?.nodes.length || 0];
+    return [e.liveRoots.length, e.touched.size, e.session, e.cache?.nodes.length || 0];
   });
   assert.deepEqual(state.slice(0, 3), [0, 0, null]); assert.ok(state[3] <= graphSize);
 }

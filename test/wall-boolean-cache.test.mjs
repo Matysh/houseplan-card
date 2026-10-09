@@ -66,3 +66,43 @@ test('834 baseline capture itself has a fixed entry ceiling', () => {
   });
   assert.equal(cache.counts.stored, 512);
 });
+
+test('834 each call serializes current operands once and shares its result key without trusting returned arrays', () => {
+  const cache = new WallBooleanBaseline(), current = structuredClone(operands);
+  const observe = work => {
+    const original = JSON.stringify, values = [];
+    JSON.stringify = function(value, ...rest) { values.push(value); return original.call(this, value, ...rest); };
+    try { return { result: work(), values }; }
+    finally { JSON.stringify = original; }
+  };
+  const first = observe(() => cache.apply('difference', current, true));
+  assert.equal(first.values.filter(value => value === current[0]).length, 1);
+  assert.equal(first.values.filter(value => value === current[1]).length, 1);
+  assert.equal(first.values.filter(value => value === first.result).length, 1,
+    'the fresh result key is shared by provenance, frozen storage and character accounting');
+  first.result[0][0][0][0] = 999;
+  const hit = observe(() => cache.apply('difference', current, false));
+  assert.deepEqual(hit.values, current, 'the private frozen result reuses its captured key; both live operands are fresh');
+  assert.deepEqual(hit.result, canonical.difference(...current));
+  current[1][0][1][0] += .125;
+  const previousHits = cache.counts.hits;
+  const changed = observe(() => cache.apply('difference', current, false));
+  assert.equal(changed.values.filter(value => value === current[1]).length, 1);
+  assert.equal(cache.counts.hits, previousHits, 'mutating the same array cannot retain the old full-value key');
+  assert.deepEqual(changed.result, canonical.difference(...current));
+});
+
+test('834 assembled keys preserve invalid array entries, exact arity and signed-zero JSON semantics', () => {
+  const cache = new WallBooleanBaseline(), subject = rect(0, 0, 4, 4);
+  const captured = cache.apply('union', [subject], true);
+  const negativeZero = structuredClone(subject);
+  negativeZero[0][0][0] = -0;
+  assert.deepEqual(cache.apply('union', [negativeZero], false), captured);
+  assert.equal(cache.counts.hits, 1, 'negative zero has the same existing JSON/geometry semantics');
+  for (const operands of [[subject, undefined], [subject, null], Object.assign(new Array(2), { 0: subject })]) {
+    const counts = structuredClone(cache.counts);
+    assert.throws(() => cache.apply('union', operands, false));
+    assert.equal(cache.counts.hits, counts.hits, 'invalid extra arity never aliases the one-operand cache');
+    assert.equal(cache.counts.stored, counts.stored);
+  }
+});

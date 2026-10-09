@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { difference, intersection, union } from 'polyclip-ts';
-import { wallIntersectionSignature as signature } from '../test-build/wall-intersection-signature.js';
+import { wallIntersectionSignature as signature, wallIntersectionSignatureFromKey } from '../test-build/wall-intersection-signature.js';
 import { WallBooleanBaseline } from '../test-build/wall-boolean-baseline.js';
 import { withWallBooleanBaseline, union as scopedUnion,
   intersection as scopedIntersection } from '../test-build/wall-boolean-cache.js';
@@ -11,6 +11,14 @@ const equalMaterial = (a,b) => {
   assert.deepEqual(difference(a,b), []);
   assert.deepEqual(difference(b,a), []);
 };
+test('#834 internal signature key reuse matches fresh public serialization and never remembers mutable input identity', () => {
+  const subject = rect(0,0,2,2), clipping = union(rect(-1,-1,3,3));
+  const first = signature(subject,clipping);
+  assert.equal(wallIntersectionSignatureFromKey(subject,clipping,JSON.stringify(subject)),first);
+  subject[0][1][0] += .25;
+  assert.notEqual(signature(subject,clipping),first);
+  assert.equal(wallIntersectionSignatureFromKey(subject,clipping,JSON.stringify(subject)),signature(subject,clipping));
+});
 test('#834 local intersection signature reuses remote changes with exact material and holes', () => {
   const subject = difference(rect(0,0,2,2),rect(.25,.25,.5,.5));
   const before = union(rect(-2,-2,3,3),rect(20,20,21,21));

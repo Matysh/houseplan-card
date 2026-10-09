@@ -47,10 +47,11 @@ config units; structural open-spans and incompatible/failed artifacts retain
 the canonical independent proof. Visible opening-cut geometry is never used
 as that proof.
 
-The frozen gesture owns `WallBooleanBaseline`: exact operation/operand keys,
+The frozen Select baseline owns `WallBooleanBaseline`: exact operation/operand keys,
 defensive result copies, and a bounded baseline-only recording phase (512
-entries / 2 million serialized characters). Moving candidates only read it;
-misses do not accumulate across pointer positions. The synchronous scope is
+entries / 2 million serialized characters). Moving candidates never add result
+records; they may refresh the separately bounded canonical-value certificate
+FIFO described in WALL-THICKNESS.md. The synchronous scope is
 restored even on exceptions and does not alter ordinary View/Resize calls.
 Corner unions and opening cuts batch exact associative boolean operations,
 with the historical sequential path on failure. A wall strip is omitted only
@@ -109,8 +110,14 @@ therefore cannot abort the entry before its stale-update message is installed;
 the manifest retains every eager dependency.
 The write terminal refreshes history controls even when its own revision
 adoption already retired the live preview before the command was recorded.
-The frozen local baseline retains its geometry and guard carrier for one
-gesture. `wall-local-boolean` keeps disconnected canonical components out of
+One successful local baseline can survive cancellation while the authoritative
+config object, revision, space and exact selected-config value remain unchanged.
+The retained config is private; every new candidate still builds and receives
+its physical proof. Context exits, writes/history, pagehide and disposal retire
+it. Candidate geometry, structural snapshots and live layers remain gesture-only.
+Persistent source-style overrides are diffed and restored only on departure;
+full host renders rebind their elements and changed authoritative inline styles.
+`wall-local-boolean` keeps disconnected canonical components out of
 repeated clipping sweeps; touching bounds still invoke the original boolean
 library. These are exact broad-phase exclusions, not relaxed wall limits.
 Snap arbitration keeps its winning axis guide but preserves an exact compatible

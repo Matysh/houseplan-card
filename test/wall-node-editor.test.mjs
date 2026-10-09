@@ -321,7 +321,7 @@ test('100 accepted/cancelled gestures leave one listener and no transient state;
     await settle();
     assert.equal(s.listeners.size, 1); assert.equal(s.capture.size, 0);
     assert.equal(s.editor.preview, null); assert.equal(s.editor.cache, null);
-    assert.equal(s.editor.touched.length, 0); assert.equal(s.editor.liveRoots.length, 0);
+    assert.equal(s.editor.touched.size, 0); assert.equal(s.editor.liveRoots.length, 0);
     assert.equal(s.editor.sourceGhost, null); assert.equal(s.editor.sourceCoverage, null);
   }
   assert.equal(s.writes.length, 50); s.editor.dispose(); assert.equal(s.listeners.size, 0);

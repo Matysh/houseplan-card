@@ -90,6 +90,20 @@ must use the same monotonic protocol, not mix it with those historical runs.
 The old 200-room synthetic node benchmark selects only 0–2 disconnected rooms
 per gesture; it is not evidence for a connected residential floor.
 
+The full a249d62d run (37871638284) still failed the unchanged native limits:
+CPU p95 54.3 ms, input-to-paint p95 123.663 ms. Its first candidate after each
+Esc rebuilt the identical baseline; source painting also restored and immediately
+reapplied all opacity/mask overrides, forcing a style barrier every frame.
+One exact-context baseline now survives cancellation, while candidate geometry
+and proof do not. Source style overrides are diffed, with a transition barrier
+only when restoring a departing room opacity override. The adapter acquires
+generic live-layer ownership once per gesture. The same native protocol remains
+unchanged, including cold-first raw data; no preparation moves before real input.
+`wall-node-card-adapter.test.mjs` covers value/reference/revision/context changes,
+local-component replacement, failed baseline and write/disposal retirement.
+`wall-node-paint.test.mjs` covers steady writes, valid/invalid mask changes,
+full-render style adoption, replacement nodes and exact terminal restoration.
+
 Never pass render-unit, opening-cut geometry directly to junction clearance.
 Only a compatible pre-opening component explicitly normalized to config units
 may be shared; open-span/incompatible cases retain the independent proof.

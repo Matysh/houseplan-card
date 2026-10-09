@@ -29,6 +29,7 @@ export interface WallNodeEditorPort {
   write(history: NodeMoveHistory, expectedRevision: number): Promise<ServerConfig>;
   record(before: NodeMoveSpace, after: NodeMoveSpace, intent: NodeMoveIntent): void;
   historyFailed(): void;
+  dispose?(): void;
   scene?(space: NodeMoveSpace, before: NodeMoveSpace): NodePreviewScene | null;
 }
 interface Session {
@@ -40,6 +41,9 @@ interface Session {
 interface PendingNodeMove {
   session: Session; point: NodePoint; axis: string | null; guide: string | null;
 }
+type NodePaintStyle = Partial<Record<'mask' | 'opacity' | 'transition', string>>;
+interface NodePaintOverride { original: NodePaintStyle; applied: NodePaintStyle; requested: NodePaintStyle }
+const nodePaintProperties = ['mask', 'opacity', 'transition'] as const;
 
 /** Identical mask bounds/backing for every local ghost pass. */
 const nodeMask = (id: string, paths: unknown): TemplateResult => svg`<mask id=${id} maskUnits="objectBoundingBox"
@@ -52,7 +56,7 @@ export class WallNodeEditor {
   private session: Session | null = null;
   private cache: { space: string; identity: string; nodes: WallNode[]; source: NodeMoveSpace } | null = null;
   private tail = false;
-  private touched: { element: SVGElement; mask: string; opacity: string; transition: string }[] = [];
+  private touched = new Map<SVGElement, NodePaintOverride>();
   private liveRoots: SVGGElement[] = [];
   private sourceGhost: SVGGElement | null = null;
   private sourceCoverage: { axis: string | null; unitPx: number; old: string[]; fixed: string[] } | null = null;
@@ -60,7 +64,7 @@ export class WallNodeEditor {
   private moveFrame: number | null = null;
   private pendingMove: PendingNodeMove | null = null;
   public busy = false;
-  private readonly pagehide = (): void => { this.cancel(); };
+  private readonly pagehide = (): void => { this.cancel(); this.port.dispose?.(); };
   constructor(private readonly port: WallNodeEditorPort) {
     port.document.defaultView?.addEventListener('pagehide', this.pagehide);
   }
@@ -253,6 +257,9 @@ export class WallNodeEditor {
     return true;
   }
   cancel(): boolean {
+    // The runtime also calls cancel while idle when leaving Select. Let the
+    // adapter retire any retained immutable baseline on that context change.
+    this.port.context();
     const s = this.session;
     this.clearMoveFrame(); this.pendingMove = null;
     if (!s) return false;
@@ -262,7 +269,7 @@ export class WallNodeEditor {
     this.restorePaint(); this.clearLive(); this.sourceGhost = null; this.sourceCoverage = null;
     this.port.changed(); return true;
   }
-  dispose(): void { this.cancel(); this.cache = null; this.clearLive(); this.listening = false;
+  dispose(): void { this.cancel(); this.port.dispose?.(); this.cache = null; this.clearLive(); this.listening = false;
     this.port.document.defaultView?.removeEventListener('pagehide', this.pagehide); }
 
   render(live = false): TemplateResult | typeof nothing {
@@ -342,27 +349,61 @@ export class WallNodeEditor {
     </g>`;
   }
 
-  private restorePaint(): void {
-    for (const { element, mask, opacity } of this.touched) { element.style.mask = mask; element.style.opacity = opacity; }
-    const changed = this.touched.filter(t => t.element.style.transition !== t.transition);
-    // Flush once while transitions are off: restore never fades the hidden old
-    // floor through a ghost or fades authoritative geometry back after Esc.
-    if (changed.length) this.port.document.defaultView?.getComputedStyle(changed[0].element).opacity;
-    for (const { element, transition } of changed) element.style.transition = transition;
-    this.touched = [];
+  /** Keep overrides installed between frames. A host render may replace an
+   * element or its inline styles; only a value unlike our last write is a new
+   * authoritative original. CSSOM-normalized writes are remembered as well. */
+  private syncPaint(desired: Map<SVGElement, NodePaintStyle>): void {
+    const transitions: { element: SVGElement; value: string }[] = [];
+    for (const element of new Set([...this.touched.keys(), ...desired.keys()])) {
+      const next = desired.get(element) || {};
+      const previous = this.touched.get(element) || { original: {}, applied: {}, requested: {} };
+      const target: NodePaintStyle = {};
+      for (const property of nodePaintProperties) {
+        const applied = previous.applied[property], wanted = next[property];
+        if (applied !== undefined && element.style[property] !== applied) previous.original[property] = element.style[property];
+        if (wanted !== undefined) {
+          if (applied === undefined) previous.original[property] = element.style[property];
+          target[property] = previous.requested[property] === wanted ? applied ?? wanted : wanted;
+        } else if (applied !== undefined) target[property] = previous.original[property];
+      }
+      const restoringTransition = next.transition === undefined && previous.applied.transition !== undefined;
+      const opacityChanges = target.opacity !== undefined && element.style.opacity !== target.opacity;
+      if (restoringTransition && opacityChanges) {
+        if (element.style.transition !== 'none') element.style.transition = 'none';
+      } else if (target.transition !== undefined && element.style.transition !== target.transition) {
+        element.style.transition = target.transition;
+      }
+      for (const property of ['mask', 'opacity'] as const) {
+        if (target[property] !== undefined && element.style[property] !== target[property]) element.style[property] = target[property];
+      }
+      if (restoringTransition && element.style.transition !== target.transition) {
+        transitions.push({ element, value: target.transition! });
+      }
+      const applied: NodePaintStyle = {}, original: NodePaintStyle = {};
+      for (const property of nodePaintProperties) if (next[property] !== undefined) {
+        applied[property] = element.style[property]; original[property] = previous.original[property];
+      }
+      if (Object.keys(applied).length) this.touched.set(element, { original, applied, requested: { ...next } });
+      else this.touched.delete(element);
+    }
+    // Only a departing opacity override needs a style barrier. Steady preview
+    // frames never restore/rehide the floor or force its computed layout.
+    const connected = transitions.find(({ element }) => element.isConnected);
+    if (connected) this.port.document.defaultView?.getComputedStyle(connected.element).opacity;
+    for (const { element, value } of transitions) element.style.transition = value;
   }
+  private restorePaint(): void { this.syncPaint(new Map()); }
   private clearLive(): void { for (const root of this.liveRoots) { render(nothing, root); root.remove(); } this.liveRoots = []; }
   /** Separate local production paper/fill/masonry passes preserve layer order.
    * The settled scene and every authoritative/cache/write carrier stay frozen. */
   paint(): void {
-    this.restorePaint();
-    const s = this.session; if (!s) { this.clearLive(); return; }
+    const s = this.session; if (!s) { this.restorePaint(); this.clearLive(); return; }
     // Context adoption can run updated() before Select's next render. Retire
     // before constructing live groups: render(true) may otherwise cancel and
     // remove the very group that the outer Lit render is about to target.
     if (!this.current(s)) { this.cancel(); return; }
     const root = this.port.root();
-    const svgRoot = root.querySelector<SVGSVGElement>('svg.plan-svg'); if (!svgRoot) return;
+    const svgRoot = root.querySelector<SVGSVGElement>('svg.plan-svg'); if (!svgRoot) { this.restorePaint(); return; }
     if (this.liveRoots.some(r => !r.isConnected)) this.clearLive();
     if (!this.liveRoots.length) {
       for (let i = 0; i < 3; i++) {
@@ -387,24 +428,27 @@ export class WallNodeEditor {
     const oldZero = scene?.oldZeroD || s.plan.node.walls.filter(w => w.cm === 0).map(w =>
       `M${nodePointText(w.a)}L${nodePointText(w.b)}`);
     const elements = root.querySelectorAll<SVGElement>(`.hp-node-layer [data-node="${s.plan.node.key}"], .plan-snap-node[cx="${s.plan.node.point[0] * NORM_W}"][cy="${s.plan.node.point[1] * NORM_W}"], ${nodeMasonrySelector}, .zero-wall, .hp-paperg, [data-hp="room"], .openinglayer [data-hp="opening"]`);
+    const desired = new Map<SVGElement, NodePaintStyle>();
     for (const element of elements) {
       if (element.closest('[data-hp-node-live]')) continue;
-      this.touched.push({ element, mask: element.style.mask, opacity: element.style.opacity, transition: element.style.transition });
-      if (element.closest('.hp-node-layer') || element.matches('.plan-snap-node')) element.style.opacity = '0';
+      const style: NodePaintStyle = {};
+      if (element.closest('.hp-node-layer') || element.matches('.plan-snap-node')) style.opacity = '0';
       else if (element.matches('.zero-wall')) {
         const a = `${element.getAttribute('x1')} ${element.getAttribute('y1')}`;
         const b = `${element.getAttribute('x2')} ${element.getAttribute('y2')}`;
-        if (s.moved && (oldZero.includes(`M${a}L${b}`) || oldZero.includes(`M${b}L${a}`))) element.style.opacity = '0';
+        if (s.moved && (oldZero.includes(`M${a}L${b}`) || oldZero.includes(`M${b}L${a}`))) style.opacity = '0';
       }
       else if (scene && element.matches('[data-hp="room"]')) {
-        if (scene.roomIds.includes(element.dataset.id || '')) { element.style.transition = 'none'; element.style.opacity = '0'; }
+        if (scene.roomIds.includes(element.dataset.id || '')) { style.transition = 'none'; style.opacity = '0'; }
       } else if (scene && element.matches('[data-hp="opening"]')) {
-        if (scene.openingIds.includes(element.dataset.id || '')) element.style.opacity = '0';
-      } else if (scene) element.style.mask = element.matches('.hp-paperg')
+        if (scene.openingIds.includes(element.dataset.id || '')) style.opacity = '0';
+      } else if (scene) style.mask = element.matches('.hp-paperg')
         ? 'url(#hp-node-old-paper-mask)' : 'url(#hp-node-old-walls-mask)';
-      else if (s.moved && element.matches(nodeMasonrySelector)) element.style.mask = 'url(#hp-node-ghost-mask)';
+      else if (s.moved && element.matches(nodeMasonrySelector)) style.mask = 'url(#hp-node-ghost-mask)';
       else if (s.moved && element.matches('[data-hp="opening"]') && s.plan.source.openings?.some(o => o.id === element.dataset.id
-        && o.host && s.plan.node.walls.some(w => w.id === o.host?.id))) element.style.opacity = '0';
+        && o.host && s.plan.node.walls.some(w => w.id === o.host?.id))) style.opacity = '0';
+      if (Object.keys(style).length) desired.set(element, style);
     }
+    this.syncPaint(desired);
   }
 }

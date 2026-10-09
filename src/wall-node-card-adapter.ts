@@ -42,13 +42,22 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeMoveHistory
 ): WallNodeEditor {
   const language = () => langOf(host.hass, host._config?.language);
   let geometry: { source: NodeMoveSpace; candidate: NodeMoveSpace; before: NodePreviewGeometry; next: NodePreviewGeometry } | null = null;
-  let baselineGeometry: { source: NodeMoveSpace; signature: string; value: NodePreviewGeometry;
+  let ownsLiveLayer = false;
+  let baselineGeometry: { authority: ServerConfig; revision: number; space: string; signature: string; value: NodePreviewGeometry;
     proof: JunctionSharedGeometry | undefined; config: ServerConfig; booleans: WallBooleanBaseline } | null = null;
+  const retire = (): void => { geometry = null; baselineGeometry = null; };
+  const context = () => {
+    const result = { enabled: host._mode === 'plan' && host._tool === 'select'
+      && host._canEdit && !host._kiosk && host.isConnected,
+      space: host._space, revision: host._cfgRev, api: host._haWallNodeMoveApi === 1 };
+    if (!result.enabled || !result.api || (baselineGeometry && (baselineGeometry.authority !== host._serverCfg
+        || baselineGeometry.revision !== result.revision || baselineGeometry.space !== result.space))) retire();
+    return result;
+  };
   const editor = new WallNodeEditor({
     document: host.renderRoot.ownerDocument,
-    context: () => ({ enabled: host._mode === 'plan' && host._tool === 'select'
-      && host._canEdit && !host._kiosk && host.isConnected,
-      space: host._space, revision: host._cfgRev, api: host._haWallNodeMoveApi === 1 }),
+    context,
+    dispose: retire,
     config: () => host._serverCfg,
     screenPoint: ev => { const p = callbacks.point(ev); return [p[0] / NORM_W, p[1] / NORM_W]; },
     unitsPerPixel: () => host._viewOr(host._baseVb()).w / Math.max(1, host._stageEl?.clientWidth || 1) / NORM_W,
@@ -58,29 +67,43 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeMoveHistory
       : host._t(key as I18nKey, params),
     toast: text => host._showToast(text),
     freezeViewport: () => host._cancelCameraTransition(false, true),
-    changed: () => { if (editor.dragging) { commitHouseplanEditor(host); editor.paint(); }
-      else { geometry = null; baselineGeometry = null; host.requestUpdate(); } },
+    changed: () => { if (editor.dragging) {
+      // Capture hands the generic editor layer over once. Subsequent moves
+      // paint only the node-owned groups; a full host update already commits
+      // the generic layer through _commitLiveEditor before repainting nodes.
+      if (!ownsLiveLayer) { commitHouseplanEditor(host); ownsLiveLayer = true; }
+      editor.paint();
+    } else { ownsLiveLayer = false; geometry = null; context(); host.requestUpdate(); } },
     validate: (space, before) => {
-      if (!host._serverCfg) return false;
-      if (geometry?.candidate === space && geometry.source === before) return geometry.next.safe;
+      const ctx = context(), authority = host._serverCfg;
+      if (!ctx.enabled || !ctx.api || !authority) { retire(); return false; }
       try {
         const [localBefore, localNext] = nodeMoveLocalSpaces(before, space);
-        const config = { ...host._serverCfg, spaces: [localNext] };
-        const signature = JSON.stringify(localBefore);
-        if (!baselineGeometry || baselineGeometry.source !== before || baselineGeometry.signature !== signature) {
+        const config = { ...authority, spaces: [localNext] };
+        // One bounded immutable baseline may survive an Esc retry. Snapshot
+        // identity changes on every capture; the full selected config covers
+        // geometry AND proof inputs, including in-place settings mutations.
+        const signature = JSON.stringify({ ...authority, spaces: [localBefore] });
+        if (baselineGeometry?.signature !== signature) retire();
+        if (geometry?.candidate === space && geometry.source === before) return geometry.next.safe;
+        let baseline = baselineGeometry;
+        if (!baseline) {
           const booleans = new WallBooleanBaseline();
-          const value = withWallBooleanBaseline(booleans, true, () => buildNodePreview(localBefore));
-          baselineGeometry = { source: before, signature, value, proof: nodePreviewJunctionGeometry(value, false),
-            config: { ...host._serverCfg, spaces: [localBefore] }, booleans };
+          const snapshot = JSON.parse(signature) as ServerConfig;
+          const value = withWallBooleanBaseline(booleans, true, () => buildNodePreview(snapshot.spaces[0] as NodeMoveSpace));
+          baseline = { authority, revision: ctx.revision, space: ctx.space, signature, value,
+            proof: nodePreviewJunctionGeometry(value, false), config: snapshot, booleans };
+          // A failed baseline is never carried into another independent retry.
+          if (value.safe) baselineGeometry = baseline;
         }
-        const old = baselineGeometry.value;
-        const next = withWallBooleanBaseline(baselineGeometry.booleans, false, () => buildNodePreview(localNext));
-        next.safe &&= !callbacks.introduced(config, baselineGeometry.config, space.id,
-          nodePreviewJunctionGeometry(next), baselineGeometry.proof).length;
+        const old = baseline.value;
+        const next = withWallBooleanBaseline(baseline.booleans, false, () => buildNodePreview(localNext));
+        next.safe &&= !callbacks.introduced(config, baseline.config, space.id,
+          nodePreviewJunctionGeometry(next), baseline.proof).length;
         geometry = { source: before, candidate: space, before: old, next };
         return next.safe;
       }
-      catch { return false; }
+      catch { retire(); return false; }
     },
     scene: (space, before) => {
       if (!geometry || geometry.candidate !== space || geometry.source !== before) return null;
@@ -92,7 +115,7 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeMoveHistory
     },
     paintOpportunity: async () => { await host.updateComplete;
       await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))); },
-    write: (history, revision) => writeWallNode(host, history, revision),
+    write: (history, revision) => { retire(); return writeWallNode(host, history, revision); },
     record: (beforeSpace, afterSpace, intent) => {
       const before = callbacks.snapshot(beforeSpace), after = callbacks.snapshot(afterSpace);
       if (!before || !after) return;

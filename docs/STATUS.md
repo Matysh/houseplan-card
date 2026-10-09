@@ -50,6 +50,10 @@ after exact local boundary/owner/containment proofs, or a complete subject plus
 canonical directed-edge intersection signature. Far-right enclosure edges and
 every ULP remain significant. Bounded full-value certificates reject mutation;
 unproved cases execute the original boolean, and all final physical checks stay.
+An unchanged successful source baseline can survive an Esc retry, bounded to
+one exact config/revision/space context. Candidate proof remains fresh; writes,
+context exits and disposal retire reuse. Source SVG overrides are diffed rather
+than restored/hidden on every frame, retaining exact terminal style restoration.
 This delta addresses the subsequent CI-only performance return without changing
 the native input protocol or the 50/100/150 ms budgets.
 
