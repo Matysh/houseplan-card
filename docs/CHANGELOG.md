@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.80.1-beta.1 — 2026-10-09
+
 - Plan / Select: moving a wall node no longer intermittently rejects safe
   neighbouring positions because of numerical noise in computed wall contours.
   Connected-floor dragging reuses unchanged geometry and coalesces pointer
