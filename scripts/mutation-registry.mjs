@@ -3724,6 +3724,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_resize_pointer_real_plan.mjs',
     because: 'write-time wall degradation must not erase the one Resize Undo command; '
       + 'the strict outbound barrier remains authoritative after the local restore (#293)',
+    // #837: no real history baseline of the fixture is degraded since #834, so the
+    // smoke supplies that one boundary verdict (`resize_history.degraded_baseline_*`).
     patches: [{
       file: 'src/houseplan-editor-runtime.ts',
       find: "        // A history snapshot can predate the write-time wall degradation that\n"
@@ -3787,6 +3789,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_resize_pointer_real_plan.mjs',
     because: 'the real pointer must keep driving the gesture after it leaves the small SVG handle; '
       + 'without capture the visible preview freezes as soon as the cursor exits (#293)',
+    // #837: the hittable live handle copy lets the first steps land without capture;
+    // `resize_pointer.capture_preview_stays_under_pointer` checks the whole gesture.
     patches: [{
       file: 'src/houseplan-card.ts',
       find: '    capturePointer(ev);\n    const plan = resolution.plan;',

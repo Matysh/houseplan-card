@@ -266,6 +266,23 @@ if (target) {
   check('resize_pointer.capture_beyond_handle', await domHasSharedX(400), false);
   check('resize_pointer.capture_travels_past_hit_area',
     Math.abs((await sharedHandleX()) - 400) > target.hitRadiusSvg * 1.5, true);
+  // #837: the live handle copy is hittable (`.rszhandle` sets pointer-events)
+  // and chases the cursor, so without capture the first steps still land and
+  // the preview passes the two checks above before it freezes. Capture is what
+  // keeps the moving handle under the pointer for the whole 120 px gesture.
+  check('resize_pointer.capture_preview_stays_under_pointer', await page.waitForFunction(({ x, y, radius }) => {
+    const root = window.__card.renderRoot;
+    const live = root.querySelector('[data-hp-live-editor] .hp-live-resize');
+    const handle = root.querySelector('.rszhandle');
+    if (!live || !handle) return false;
+    const point = handle.ownerSVGElement.createSVGPoint();
+    point.x = x; point.y = y;
+    const pointerX = point.matrixTransform(handle.getScreenCTM().inverse()).x;
+    return [...live.querySelectorAll('.rszhandle[aria-disabled="false"]')].some((entry) =>
+      Math.abs(Number(entry.getAttribute('cy')) - 529.166667) < 2
+      && Math.abs(Number(entry.getAttribute('cx')) - pointerX) <= radius);
+  }, { x: target.start[0] + outsideDistance, y: target.start[1], radius: target.hitRadiusSvg },
+  { timeout: 3000 }).then(() => true, () => false), true);
   await page.keyboard.press('Escape');
   await page.mouse.up();
   await settle();
@@ -392,6 +409,40 @@ if (target) {
   await history('Control+Shift+z', second.config, 'second_redo');
   check('resize_repeat.latest_write_equals_saved_catalog', await page.evaluate(() =>
     JSON.stringify(window.__resizeWrites.at(-1).config) === JSON.stringify(window.__card._serverCfg)));
+
+  // #837: #293 lets Undo/Redo restore a baseline that predates write-time wall
+  // degradation (`wall-degraded-extra`). Since the #834 geometry repairs no
+  // history baseline of this plan is degraded (every boundary preflight is ok),
+  // so the branch went unexercised. Supply exactly that verdict at the history
+  // boundary; every other caller, the outbound write barrier included, keeps
+  // the strict check. The other failure reason proves the substitute is read.
+  await page.evaluate(() => {
+    const card = window.__card, strict = card._checkSpacePhysicalGeometry;
+    window.__historyBoundaryReason = null;
+    card._checkSpacePhysicalGeometry = function (...args) { // private-ok: #837 substitutes only the Undo/Redo boundary verdict; all other callers get the original strict result
+      const verdict = strict.apply(this, args), reason = window.__historyBoundaryReason;
+      return reason && /_applyGeometryState/.test(new Error().stack || '')
+        ? { ...verdict, ok: false, status: 'failed', reason } : verdict;
+    };
+  });
+  const boundaryUndo = async (reason) => {
+    const count = await page.evaluate((value) => {
+      window.__historyBoundaryReason = value;
+      return window.__resizeWrites.length;
+    }, reason);
+    await page.keyboard.press('Control+z'); await settle(); await page.waitForTimeout(650);
+    const history = await page.evaluate(() => {
+      window.__historyBoundaryReason = null;
+      return { size: window.__card._geometryHistory.size, canRedo: window.__card._geometryHistory.canRedo };
+    });
+    const config = await complete();
+    return { ...history, restored: JSON.stringify(config) === JSON.stringify(first.config),
+      writes: await page.evaluate(() => window.__resizeWrites.length) - count };
+  };
+  check('resize_history.degraded_baseline_undo_restores', await boundaryUndo('wall-degraded-extra'),
+    { size: 1, canRedo: true, restored: true, writes: 1 });
+  check('resize_history.other_boundary_failure_fails_closed', await boundaryUndo('wall-failed-core'),
+    { size: 0, canRedo: false, restored: true, writes: 0 });
 }
 
 await finish(browser, { done: true });
