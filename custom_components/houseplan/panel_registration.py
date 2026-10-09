@@ -13,6 +13,7 @@ from typing import Literal
 from homeassistant.components import frontend, panel_custom
 from homeassistant.core import HomeAssistant, callback
 
+from .build_identity import BuildIdentity, frontend_module_url
 from .const import (
     DOMAIN,
     PANEL_COMPONENT_NAME,
@@ -22,7 +23,6 @@ from .const import (
     PANEL_URL,
     PANEL_URL_PATH,
 )
-from .build_identity import BuildIdentity, frontend_module_url
 from .frontend_registration import async_register_frontend_static_path
 from .store import HouseplanConfigEntry
 
