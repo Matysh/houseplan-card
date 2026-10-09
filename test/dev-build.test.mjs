@@ -2,6 +2,8 @@
 // а не из дерева dev, где бандл меняет только кандидат.
 // #835: ветка несёт всю интеграцию того же SHA, а scripts/ha-track-dev.sh
 // ставит её на свою инсталляцию HA.
+// #836: опубликованная интеграция помечена как dev-сборка (BUILD.json и
+// `+dev.<sha8>` в version манифеста), а integrationTree считается без метки.
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -13,7 +15,8 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 
 import {
-  DEV_BUILD_INTEGRATION, DEV_BUILD_MARKER, DEV_BUILD_TARGET, integrationIndexEntries, parseArgs, publishDevBuild,
+  DEV_BUILD_INTEGRATION, DEV_BUILD_LABEL, DEV_BUILD_MANIFEST, DEV_BUILD_MARKER, DEV_BUILD_TARGET,
+  integrationIndexEntries, labelManifestText, parseArgs, publishDevBuild,
 } from '../scripts/dev-build.mjs';
 
 const STAND = fileURLToPath(new URL('../demo/stand/update-dev-bundle.sh', import.meta.url));
@@ -26,6 +29,12 @@ const git = (cwd, ...args) => execFileSync('git', args, {
   cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, ...ENV },
 }).trim();
 const sha256 = (text) => createHash('sha256').update(text).digest('hex');
+// Байты файла как есть: git() выше обрезает перевод строки в конце.
+const blob = (cwd, spec) => execFileSync('git', ['show', spec], { cwd, encoding: 'utf8' });
+// Манифест дерева с нестандартными пробелами и вложенной `version`: метка
+// обязана заменить только верхнеуровневое значение и не тронуть остальное.
+const SOURCE_MANIFEST = '{\n  "domain": "houseplan",\n  "requirements": [],\n'
+  + '  "extra": {"version": "nested"},\n  "version" :  "1.80.1-beta.1"\n}\n';
 
 function writeDist(root, card) {
   const dir = join(root, 'dist');
@@ -56,7 +65,7 @@ function fixture() {
   writeFileSync(join(work, DEV_BUILD_TARGET, 'houseplan-assets.json'), '{}\n');
   writeFileSync(join(work, DEV_BUILD_TARGET, 'houseplan-assets', 'beta-OLD.js'), 'chunk of the last beta');
   mkdirSync(join(work, DEV_BUILD_INTEGRATION, 'translations'), { recursive: true });
-  writeFileSync(join(work, DEV_BUILD_INTEGRATION, 'manifest.json'), '{"domain": "houseplan"}\n');
+  writeFileSync(join(work, DEV_BUILD_INTEGRATION, 'manifest.json'), SOURCE_MANIFEST);
   writeFileSync(join(work, DEV_BUILD_INTEGRATION, '__init__.py'), 'VERSION = 1\n');
   writeFileSync(join(work, DEV_BUILD_INTEGRATION, 'translations', 'ru.json'), '{}\n');
   writeFileSync(join(work, 'src.ts'), 'v1');
@@ -147,10 +156,11 @@ test('#835 dev-build: вся интеграция источника, фронт
     publishDevBuild({ cwd: work, sha: head, log: () => {} });
     const tip = git(origin, 'rev-parse', 'refs/heads/dev-build');
     assert.deepEqual(backendOf(origin, tip), [
+      `${DEV_BUILD_INTEGRATION}/BUILD.json`,
       `${DEV_BUILD_INTEGRATION}/__init__.py`,
       `${DEV_BUILD_INTEGRATION}/manifest.json`,
       `${DEV_BUILD_INTEGRATION}/translations/ru.json`,
-    ], 'файлы бэкенда — из дерева коммита-источника');
+    ], 'файлы бэкенда — из дерева коммита-источника и метка #836');
     assert.equal(git(origin, 'show', `${tip}:${DEV_BUILD_INTEGRATION}/__init__.py`), 'VERSION = 1');
     assert.equal(git(origin, 'show', `${tip}:${DEV_BUILD_TARGET}/houseplan-card.js`), 'fresh card');
     assert.equal(git(origin, 'ls-tree', '--name-only', `${tip}:${DEV_BUILD_TARGET}/houseplan-assets`), 'c-HASH.js',
@@ -159,9 +169,107 @@ test('#835 dev-build: вся интеграция источника, фронт
     assert.equal(marker.schema, 2);
     assert.equal(marker.source, head);
     assert.equal(marker.backendFiles, 3);
-    assert.equal(marker.integrationTree, git(origin, 'rev-parse', `${tip}:${DEV_BUILD_INTEGRATION}`),
-      'integrationTree — хеш дерева интеграции в самой ветке');
+    assert.equal(marker.integrationTree, unlabelledIntegrationTree(origin, tip, head),
+      'integrationTree — хеш дерева интеграции в самой ветке без метки #836');
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+/**
+ * Хеш дерева интеграции опубликованного коммита, из которого убрана метка
+ * #836: без BUILD.json и с манифестом дерева источника. Ровно это обязан
+ * назвать `integrationTree`.
+ */
+function unlabelledIntegrationTree(repo, tip, source) {
+  const dir = mkdtempSync(join(tmpdir(), 'hp-dev-build-index-'));
+  const index = join(dir, 'index');
+  const run = (...args) => execFileSync('git', args, {
+    cwd: repo, encoding: 'utf8', env: { ...process.env, ...ENV, GIT_INDEX_FILE: index },
+  }).trim();
+  try {
+    run('read-tree', tip);
+    run('rm', '-q', '--cached', DEV_BUILD_LABEL);
+    run('update-index', '--cacheinfo', `100644,${run('rev-parse', `${source}:${DEV_BUILD_MANIFEST}`)},${DEV_BUILD_MANIFEST}`);
+    return run('rev-parse', `${run('write-tree')}:${DEV_BUILD_INTEGRATION}`);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+}
+
+test('#836 dev-build: метка BUILD.json и +dev в манифесте, integrationTree без неё, источник не тронут', () => {
+  const { root, origin, work, head } = fixture();
+  try {
+    writeDist(work, 'fresh card');
+    const result = publishDevBuild({ cwd: work, sha: head, log: () => {} });
+    const tip = git(origin, 'rev-parse', 'refs/heads/dev-build');
+    assert.deepEqual(JSON.parse(blob(origin, `${tip}:${DEV_BUILD_LABEL}`)),
+      { schema: 1, channel: 'dev', source: head }, 'BUILD.json по К1, полный SHA источника');
+    const published = blob(origin, `${tip}:${DEV_BUILD_MANIFEST}`);
+    const version = `1.80.1-beta.1+dev.${head.slice(0, 8)}`;
+    assert.equal(published, SOURCE_MANIFEST.replace('"1.80.1-beta.1"', JSON.stringify(version)),
+      'в манифесте меняется только значение version, остальные байты те же');
+    assert.equal(JSON.parse(published).version, version);
+    assert.equal(JSON.parse(published).extra.version, 'nested', 'вложенная version не тронута');
+    assert.equal(result.version, version);
+
+    const marker = JSON.parse(blob(origin, `${tip}:${DEV_BUILD_MARKER}`));
+    assert.equal(marker.integrationTree, unlabelledIntegrationTree(origin, tip, head),
+      'integrationTree считается по интеграции без метки');
+    assert.notEqual(marker.integrationTree, git(origin, 'rev-parse', `${tip}:${DEV_BUILD_INTEGRATION}`),
+      'метка лежит в опубликованной интеграции, но вне integrationTree');
+
+    assert.equal(git(work, 'ls-tree', '--name-only', head, '--', DEV_BUILD_LABEL), '', 'в дереве источника BUILD.json нет');
+    assert.equal(blob(work, `${head}:${DEV_BUILD_MANIFEST}`), SOURCE_MANIFEST, 'манифест источника не тронут');
+    assert.equal(readFileSync(join(work, DEV_BUILD_MANIFEST), 'utf8'), SOURCE_MANIFEST);
+    assert.equal(existsSync(join(work, DEV_BUILD_LABEL)), false);
+    assert.equal(git(work, 'status', '--porcelain'), '?? dist/', 'рабочее дерево и индекс источника не тронуты');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('#836 dev-build: два источника с одной интеграцией и разными SHA — один integrationTree', () => {
+  const { root, origin, work, head } = fixture();
+  try {
+    writeDist(work, 'fresh card');
+    const first = publishDevBuild({ cwd: work, sha: head, log: () => {} });
+    writeFileSync(join(work, 'README.md'), 'docs only');
+    git(work, 'add', 'README.md');
+    git(work, 'commit', '-q', '-m', 'docs');
+    git(work, 'push', '-q', 'origin', 'dev');
+    const next = git(work, 'rev-parse', 'HEAD');
+    const second = publishDevBuild({ cwd: work, sha: next, log: () => {} });
+    assert.notEqual(next, head);
+    assert.equal(second.marker.integrationTree, first.marker.integrationTree,
+      'одинаковая интеграция — одинаковый integrationTree при разных SHA и метках');
+    assert.equal(second.changed, false, 'установка такой коммит не переставляет');
+    const tip = git(origin, 'rev-parse', 'refs/heads/dev-build');
+    assert.equal(JSON.parse(blob(origin, `${tip}:${DEV_BUILD_LABEL}`)).source, next, 'метка называет новый SHA');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('#836 dev-build: битый манифест или манифест без строковой version — отказ без push', () => {
+  for (const [manifest, error] of [
+    ['{"domain": "houseplan",\n', /manifest\.json не разбирается/],
+    ['{"domain": "houseplan"}\n', /нет строковой version/],
+    ['{"domain": "houseplan", "version": 180}\n', /нет строковой version/],
+    ['["houseplan"]\n', /нет строковой version/],
+  ]) {
+    const { root, origin, work } = fixture();
+    try {
+      writeFileSync(join(work, DEV_BUILD_MANIFEST), manifest);
+      git(work, 'commit', '-qam', 'broken manifest');
+      git(work, 'push', '-q', 'origin', 'dev');
+      writeDist(work, 'fresh card');
+      assert.throws(() => publishDevBuild({ cwd: work, sha: git(work, 'rev-parse', 'HEAD'), log: () => {} }), error);
+      assert.equal(git(origin, 'for-each-ref', 'refs/heads/dev-build'), '', 'ветка не создана');
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  }
+});
+
+test('#836 labelManifestText: только верхнеуровневая version, суффикс не удваивается', () => {
+  const sha = '024b6595'.padEnd(40, '0');
+  assert.equal(labelManifestText('{"version":"1.80.1","x":"\\"version\\": \\"y\\""}', sha).text,
+    '{"version":"1.80.1+dev.024b6595","x":"\\"version\\": \\"y\\""}');
+  assert.equal(labelManifestText('{"a":{"version":"1"},\n"version": "2"}\n', sha).text,
+    '{"a":{"version":"1"},\n"version": "2+dev.024b6595"}\n');
+  assert.throws(() => labelManifestText('{"version": "1.0.0+dev.11111111"}', sha), /не принимает суффикс/);
+  assert.throws(() => labelManifestText('{"version": ""}', sha), /не принимает суффикс/);
 });
 
 test('#835 dev-build: changed — только когда меняется то, что попадает в HA', () => {
@@ -288,6 +396,37 @@ test('#835 ha-track-dev.sh: первая установка, повтор без
     assert.equal(back.status, 0, back.stderr);
     assert.match(back.stdout, /^updated /);
     assert.equal(readFileSync(join(t.installed, '__init__.py'), 'utf8'), 'VERSION = 2\n');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('#836 ha-track-dev.sh: метка едет с установленной копией; та же интеграция с новым SHA — unchanged и прежний SHA', { skip: NO_SH }, () => {
+  const { root, origin, work, head } = fixture();
+  const t = track({ root, origin, work, head });
+  try {
+    writeDist(t.work, 'fresh card');
+    publishDevBuild({ cwd: t.work, sha: t.head, log: () => {} });
+    t.pack();
+    const first = t.run();
+    assert.equal(first.status, 0, first.stderr);
+    const tree = first.stdout.trim().split(' ')[2];
+    const label = () => JSON.parse(readFileSync(join(t.installed, 'BUILD.json'), 'utf8'));
+    assert.deepEqual(label(), { schema: 1, channel: 'dev', source: t.head });
+    assert.equal(JSON.parse(readFileSync(join(t.installed, 'manifest.json'), 'utf8')).version,
+      `1.80.1-beta.1+dev.${t.head.slice(0, 8)}`);
+
+    writeFileSync(join(t.work, 'README.md'), 'docs only');
+    git(t.work, 'add', 'README.md');
+    git(t.work, 'commit', '-q', '-m', 'docs');
+    git(t.work, 'push', '-q', 'origin', 'dev');
+    const next = git(t.work, 'rev-parse', 'HEAD');
+    publishDevBuild({ cwd: t.work, sha: next, log: () => {} });
+    t.pack();
+    for (const args of [['--poll'], []]) {
+      const again = t.run(args);
+      assert.equal(again.status, 0, again.stderr);
+      assert.equal(again.stdout, `unchanged ${next} ${tree}\n`, 'та же интеграция — та же сборка');
+      assert.equal(label().source, t.head, 'установленная копия хранит SHA, с которого её ставили');
+    }
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 

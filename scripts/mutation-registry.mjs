@@ -11758,6 +11758,18 @@ const MUTANT_DEFINITIONS = [
     patches: [{ file: "scripts/ha-track-dev.sh", find: "if [ \"$tree\" = \"$installed\" ]; then", replace: "if false; then" }],
   },
   {
+    id: 'dev-build-label-in-integration-tree',
+    guard: 'node --test --test-name-pattern="#836 dev-build: (метка BUILD.json|два источника)" '
+      + 'test/dev-build.test.mjs',
+    because: '#836: the dev-build label (BUILD.json, +dev version) lies outside integrationTree; '
+      + 'hashing it would turn every push to dev into a reinstall of an unchanged integration',
+    patches: [{
+      file: 'scripts/dev-build.mjs',
+      find: '      integrationTree,\n',
+      replace: "      integrationTree: git(['rev-parse', `${git(['write-tree']).out}:${DEV_BUILD_INTEGRATION}`]).out, // mutant: hash taken after the label\n",
+    }],
+  },
+  {
     id: "process-index-on-task-branch",
     guard: "node --test --test-name-pattern=\"#635/#657 \\\\(1\u0431\\\\)\" test/reviews-index.test.mjs",
     because: "#657 (1b): the review index is rebuilt only by commits that go to dev; in a task branch it conflicts by construction",
