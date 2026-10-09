@@ -53,6 +53,9 @@ entries / 2 million serialized characters). Moving candidates never add result
 records; they may refresh the separately bounded canonical-value certificate
 FIFO described in WALL-THICKNESS.md. The synchronous scope is
 restored even on exceptions and does not alter ordinary View/Resize calls.
+Local boundary replacement proves every added/retained and added/added edge
+pair free of crossings, overlaps and interior contacts before reconstructing
+the output rings; only ordinary shared endpoints are allowed.
 Corner unions and opening cuts batch exact associative boolean operations,
 with the historical sequential path on failure. A wall strip is omitted only
 when a conservative convex-containment proof shows it already lies entirely

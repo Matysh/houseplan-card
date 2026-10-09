@@ -56,6 +56,9 @@ context exits and disposal retire reuse. Source SVG overrides are diffed rather
 than restored/hidden on every frame, retaining exact terminal style restoration.
 This delta addresses the subsequent CI-only performance return without changing
 the native input protocol or the 50/100/150 ms budgets.
+The r2 follow-up closes the boundary proof's new/new edge gap: exact crossing,
+overlap and interior-contact checks now include previously added edges, not
+only retained edges. Shared endpoints and all later physical guards remain.
 
 Repeated Resize (#832): coalesced UI runs project back into frozen structural
 atoms/IDs, retaining fixed side breakpoints and rigidly moving translated runs.

@@ -15,6 +15,8 @@
   Exactly horizontal and vertical wall faces retain their exact intersection
   coordinate. Local drag changes can reuse unchanged boolean boundaries only
   after proving separation, non-crossing and the actual ownership of holes.
+  That proof also rejects crossings, overlaps and interior contacts between
+  newly added edges, while preserving their ordinary shared endpoints.
   Unchanged local intersections are also reused with exact enclosure checks.
   Retrying after Esc reuses the unchanged source calculation, and live frames
   no longer repeatedly restore and hide the same source walls.

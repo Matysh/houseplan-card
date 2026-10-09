@@ -17,14 +17,14 @@ const frozenCall = (before, current, fixed, baseline) => {
   const inputs = [before, current, fixed, baseline], snapshot = structuredClone(inputs);
   freeze(inputs);
   const result = spliceWallBooleanBoundary(...inputs);
-  assert.deepEqual(inputs, snapshot, 'proof never mutates caller-owned canonical operands/results');
+  assert.deepEqual(inputs, snapshot, 'proof never mutates caller-owned operands/results');
   return result;
 };
 
-// The helper's provenance precondition is supplied by its caller. Every input
-// here is an actual successful clipping result, not an invented self-crossing
-// ring intended to bypass that precondition. Operation/provenance cache tests
-// belong to the wrapper; these tests exercise the geometric proof itself.
+// Production provenance is checked by the wrapper and remains a precondition
+// of the reuse/material cases below. The explicit malformed-candidate cases
+// additionally exercise this helper's own defensive crossing proof; they do
+// not claim that the canonical production wrapper emits those candidates.
 function exchangingHoles() {
   const [leftHole] = rect(1, 1, 2, 2), [rightHole] = rect(8, 1, 9, 2);
   const before = union(difference(rect(0, 0, 4, 4), [leftHole]),
@@ -36,6 +36,79 @@ function exchangingHoles() {
   const current = union(difference([left], [rightHole]), difference([right], [leftHole]));
   return { before, current, leftHole, rightHole };
 }
+
+const cross = (a, b, p) => (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0]);
+const strictlyCross = (a, b, c, d) => cross(a, b, c) * cross(a, b, d) < 0
+  && cross(c, d, a) * cross(c, d, b) < 0;
+function refusesAddedEdges(before, current) {
+  const fixed = [union(rect(100, 100, 101, 101))], baseline = difference(before, ...fixed);
+  const prepared = prepareWallBoundarySplice(before, fixed, baseline);
+  assert.equal(typeof prepared, 'function', 'the successful canonical baseline is reusable');
+  const inputs = [before, current, fixed, baseline], snapshot = structuredClone(inputs);
+  freeze(inputs);
+  assert.equal(prepared(current), null, 'prepared reuse rejects the malformed new edge arrangement');
+  assert.equal(spliceWallBooleanBoundary(...inputs), null, 'one-shot reuse has the same crossing guard');
+  assert.deepEqual(inputs, snapshot);
+}
+
+test('#834 added edges cannot self-cross inside one reconstructed ring', () => {
+  const before = union(rect(0, 0, 10, 10));
+  const ring = [[0, 0], [10, 0], [10, 10], [2, 2], [8, 2], [0, 10], [0, 0]];
+  assert.equal(strictlyCross(ring[2], ring[3], ring[4], ring[5]), true,
+    'the two new diagonals cross strictly inside both segments at (5,5)');
+  const current = [[ring]], normalized = union(current);
+  assert.notDeepEqual(normalized, current, 'full clipping removes the self-crossing boundary');
+  assert.ok(normalized[0][0].some(p => p[0] === 5 && p[1] === 5));
+  refusesAddedEdges(before, current);
+});
+
+test('#834 added edges cannot cross between two reconstructed outer rings', () => {
+  const before = union(rect(0, 0, 4, 4), rect(6, 0, 10, 4));
+  const left = [[0, 0], [4, 0], [8, 3], [4, 4], [0, 4], [0, 0]];
+  const right = [[6, 0], [10, 0], [10, 4], [6, 4], [5, -2], [6, 0]];
+  assert.equal(strictlyCross(left[1], left[2], right[3], right[4]), true);
+  assert.equal(strictlyCross(left[2], left[3], right[3], right[4]), true);
+  // Each ring alone is a valid canonical polygon. Their newly introduced
+  // crossings are between rings, away from all retained baseline edges.
+  const current = [union([left])[0], union([right])[0]];
+  assert.equal(before.length, 2); assert.equal(current.length, 2);
+  assert.equal(union(current).length, 1, 'the full canonical operation merges the overlapping components');
+  refusesAddedEdges(before, current);
+});
+
+test('#834 adjacent added edges cannot overlap beyond their common endpoint', () => {
+  const before = union(rect(0, 0, 10, 10));
+  const ring = [[0, 0], [10, 0], [10, 10], [2, 2], [6, 6], [0, 10], [0, 0]];
+  assert.equal(cross(ring[2], ring[3], ring[4]), 0);
+  assert.ok(ring[4][0] > ring[3][0] && ring[4][0] < ring[2][0],
+    '(2,2)→(6,6) retraces part of the new (10,10)→(2,2) segment');
+  assert.notDeepEqual(union([[ring]]), [[ring]], 'canonical clipping removes the overlapping retrace');
+  refusesAddedEdges(before, [[ring]]);
+});
+
+test('#834 an added endpoint cannot land in the interior of another added edge', () => {
+  const before = union(rect(0, 0, 10, 10));
+  const ring = [[0, 0], [10, 0], [10, 10], [2, 2], [8, 2], [6, 6], [0, 10], [0, 0]];
+  assert.equal(cross(ring[2], ring[3], ring[5]), 0);
+  assert.ok(ring[5][0] > ring[3][0] && ring[5][0] < ring[2][0]);
+  assert.notEqual(cross(ring[2], ring[3], ring[4]), 0,
+    'the arriving segment is non-collinear: this is endpoint-interior contact, not overlap');
+  refusesAddedEdges(before, [[ring]]);
+});
+
+test('#834 consecutive added edges may share their ordinary common endpoint', () => {
+  const before = union(rect(0, 0, 10, 10));
+  const current = union([[[0, 0], [10, 0], [12, 8], [10, 10], [0, 10], [0, 0]]]);
+  const fixed = [union(rect(100, 100, 101, 101))], baseline = difference(before, ...fixed);
+  const expected = difference(current, ...fixed);
+  assert.ok(current[0][0].some(p => p[0] === 12 && p[1] === 8), 'two new edges meet at the new corner');
+  const result = frozenCall(before, current, fixed, baseline);
+  assert.ok(result, 'an ordinary shared endpoint is not a crossing or overlap');
+  sameMaterial(result, expected);
+  const prepared = prepareWallBoundarySplice(before, fixed, baseline);
+  assert.equal(typeof prepared, 'function');
+  sameMaterial(prepared(current), expected);
+});
 
 test('#834 boundary splice changes local masonry while preserving real fixed cuts and owned holes', () => {
   const before = difference(rect(0, 0, 10, 10), rect(2, 2, 3, 3));

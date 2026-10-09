@@ -114,12 +114,16 @@ Outside the rectangle the boundary winding difference is zero at infinity and
 throughout its connected exterior; inside it the unchanged operands are empty.
 
 Replacement further requires bijective input ring/owner correspondence,
-unambiguous directed cycles, exact non-crossing of new and retained segments,
+unambiguous directed cycles, exact non-crossing of new and retained segments
+and of every pair of new segments,
 and the actual output containment tree. In particular, a fixed cut can split
 one input component into two: retaining old output hole indices does not prove
 ownership. Decimal BigInt predicates match polyclip's Number interpretation;
 touching boundaries, changed nesting, missing anchors and every uncertain case
 take the complete original boolean operation, including its original failure.
+The edge check permits only shared endpoints, not overlaps or endpoint/interior
+contacts. It proves new-edge simplicity itself rather than assuming it from
+the caller's canonical-value certificate.
 
 For a fixed intersection subject, a separately certified canonical clipping
 operand can change strictly outside the relevant region. The reuse signature

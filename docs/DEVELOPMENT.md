@@ -104,6 +104,14 @@ local-component replacement, failed baseline and write/disposal retirement.
 `wall-node-paint.test.mjs` covers steady writes, valid/invalid mask changes,
 full-render style adoption, replacement nodes and exact terminal restoration.
 
+The r2 boundary-splice follow-up compares each added edge with both retained
+edges and earlier added edges using the same exact predicates. Defensive
+public-helper witnesses reject new/new crossings, overlaps and interior
+contacts; a shared endpoint remains legal. The negative cases demonstrate
+refusal directly, without claiming that malformed inputs pass the production
+canonical-value certificate. Nightly anchors guard the complete crossing check
+and the added-edge accumulation; local validation only checks the registry.
+
 Never pass render-unit, opening-cut geometry directly to junction clearance.
 Only a compatible pre-opening component explicitly normalized to config units
 may be shared; open-span/incompatible cases retain the independent proof.

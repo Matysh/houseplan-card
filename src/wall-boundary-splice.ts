@@ -181,12 +181,12 @@ function exactPredicates(points: Point[]): Predicates {
 }
 
 function safeAddedEdges(added: Array<[string, Edge]>, resultEdges: Edges, predicates: Predicates): boolean {
-  const retained = [...resultEdges.values()].filter(edge => edge.owner !== null)
+  const checked = [...resultEdges.values()].filter(edge => edge.owner !== null)
     .map(edge => ({ ...edge, box: bounds([edge.a, edge.b])! }));
   const { orientation: orient, on } = predicates;
   for (const [, next] of added) {
     const box = bounds([next.a, next.b])!;
-    for (const old of retained) {
+    for (const old of checked) {
       if (!touches(box, old.box)) continue;
       const a = next.a, b = next.b, c = old.a, d = old.b;
       const o1 = orient(a, b, c), o2 = orient(a, b, d), o3 = orient(c, d, a), o4 = orient(c, d, b);
@@ -202,6 +202,9 @@ function safeAddedEdges(added: Array<[string, Edge]>, resultEdges: Edges, predic
         if (!orientation && on(point, x, y)
           && !((same(point, a) || same(point, b)) && (same(point, c) || same(point, d)))) return false;
     }
+    // The next edge must also be separated from this newly added edge.
+    // Compare each added/added pair once, without relying on caller simplicity.
+    checked.push({ ...next, box });
   }
   return true;
 }
