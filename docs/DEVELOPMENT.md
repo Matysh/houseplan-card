@@ -842,6 +842,23 @@ branch. The hash follows content: a push that does not change what Home
 Assistant receives (documentation, process, review documents) keeps it, so
 nothing is reinstalled and nothing restarts.
 
+The published integration is labelled as a dev build (#836):
+`custom_components/houseplan/BUILD.json` holds
+`{"schema": 1, "channel": "dev", "source": "<full SHA>"}`, and only the `version`
+value of `manifest.json` gets the suffix `+dev.<sha8>` (the rest of the file is
+byte for byte the tree's; a manifest that does not parse or lacks a string
+`version` is not published). Both are added after `integrationTree` is
+computed, so the hash still describes the content without the label: two
+sources with the same integration and different SHAs give one tree, the script
+answers `unchanged`, and the installed copy keeps the SHA it was installed
+from. The `dev` tree, betas and releases never carry a label. What the label
+gives: Home Assistant's integration page shows `1.80.1+dev.024b6595` (the
+pinned loader accepts it — `tests_backend/test_ha_build_identity.py`), the
+module URLs carry `&dev=<sha>`, so the console prints
+`HOUSEPLAN-CARD v1.80.1 · dev 024b6595` and «About» links the SHA to its
+commit, and `houseplan/config/get`, the plan export and the support report get a
+separate `build` field (`{channel, source}`) — never on a release or a beta.
+
 `scripts/ha-track-dev.sh` installs that branch on a Home Assistant host. It is
 POSIX `sh` for the Home Assistant container (it needs `curl` and `tar`),
 swaps `/config/custom_components/houseplan` by rename, keeps the previous copy
@@ -901,8 +918,11 @@ What the head of `dev` is not:
   offers release updates; installing one replaces the dev copy until the next
   trigger installs the head again. Removing House Plan in HACS deletes the
   files. To stop tracking, disable the automation.
-- **The version string is the last beta's.** The identity of what is installed
-  is the `updated` line and `custom_components/houseplan/.dev-build-tree`.
+- **The version number is the last beta's — labelled.** The identity of what is
+  installed is `custom_components/houseplan/BUILD.json` (the SHA it was
+  installed from), the `updated` line and `.dev-build-tree`. A support report
+  sent from this installation carries `build`; the support relay accepts it
+  only after its #836 redeploy (`scripts/support-relay/README.md`).
 - **Rollback:** `rm -rf /config/custom_components/houseplan && mv
   /config/houseplan-dev-prev /config/custom_components/houseplan`, then restart
   — or redownload a release in HACS. The installed hash travels with the copy,
@@ -910,12 +930,14 @@ What the head of `dev` is not:
 
 ## Frontend cache and the "empty view"
 
-- The card module URL contains `?v=<VERSION from const.py>`. Browsers keep the ES module in
-  memory cache: after deploying new JS **bump VERSION in const.py and restart HA**,
-  otherwise a plain F5 will keep the old version. This is a deployment step — a
-  release candidate or your own local stand. An ordinary task commit bumps neither
-  `VERSION` nor the committed bundle: both change only in a commit with a
-  `Release:` trailer (#657, `PROCESS.md` §1).
+- The card module URL is `?v=<VERSION from const.py>&b=<first 8 of the bundle
+  fingerprint>` (#836): browsers keep the ES module in memory cache, and a new
+  build changes the URL even at the same version once HA restarts (or the entry
+  reloads) and re-reads `frontend/houseplan-assets.json`. A bundle copied without
+  that manifest falls back to `?v=<VERSION>` — then **bump VERSION in const.py
+  and restart HA**, or a plain F5 keeps the old version. An ordinary task commit
+  bumps neither `VERSION` nor the committed bundle: both change only in a commit
+  with a `Release:` trailer (#657, `PROCESS.md` §1).
 - After a page reload the HA frontend (with kiosk-mode) sometimes leaves the view empty
   ("InvalidStateError: Transition was aborted", hui-view is not created for 1–2 min).
   Cured by repeating the SPA navigation: pushState + a location-changed event, or just waiting.
@@ -937,14 +959,41 @@ What the head of `dev` is not:
   a previously known version. The full-card version controller stays in the
   initial View graph; do not move it behind the lazy editor runtime or add it to
   `houseplan-space-card`.
+- **A build is its fingerprint, not its version (#836).** Consecutive dev builds
+  share a version, so `build_identity.py` reads, once per entry setup in the
+  executor, the bundle fingerprint (`frontend/houseplan-assets.json`, schema 1,
+  64 lowercase hex) and the dev label (`BUILD.json`, see «Tracking the head of
+  dev»); anything malformed or missing means "unknown" and never raises. The
+  card and panel register as `<url>?v=<VERSION>[&b=<fingerprint8>][&dev=<SHA>]`
+  — exactly `?v=<VERSION>` without either — and the Lovelace resource is updated
+  in place (`updated`), a repeated build stays `existing`. `config/get` adds
+  `frontend_fingerprint` (64 hex or `null`) and `build` (`{channel: "dev",
+  source}` or `null`); `integration_version` is unchanged.
+- The card compares versions **and**, when both sides know theirs, fingerprints:
+  equal versions with different fingerprints are a mismatch. An unknown
+  fingerprint on either side (an old backend, the `__HOUSEPLAN_SOURCE_FINGERPRINT__`
+  placeholder in unit tests) keeps the version-only comparison. The kiosk
+  target is `<backend version>@<fingerprint8>` (the version alone when unknown):
+  a new build of the same version gets one automatic attempt, the same target
+  never a second. At equal versions the notice shows `<version> · dev <sha8>`
+  or `<version> · <fingerprint8>` on each side; at different versions only
+  versions.
+- The card's code runs in a content-hashed chunk whose own URL has no query, so
+  both entry wrappers (`entryFallbackPlugin`) record their `import.meta.url` in
+  `globalThis.__HOUSEPLAN_ENTRY_URL__` before any chunk loads; the first one in a
+  document wins. The console banner and «About» read `dev=<40 hex>` there
+  (`src/build-identity.ts`) — the build the tab **runs**; a stale tab learns about
+  the newer backend from the version notice, not from «About».
 - Targeted checks while changing this contract are:
 
   ```text
   python -m pytest tests_backend/test_ha_frontend_registration.py tests_backend/test_ha_setup.py -q
+  python -m pytest tests_backend/test_ha_build_identity.py tests_backend/test_ha_panel_registration.py -q
   npx tsc -p tsconfig.test.json
   node scripts/fix-test-build.mjs
-  node --test test/version-recovery.test.mjs
+  node --test test/version-recovery.test.mjs test/build-identity.test.mjs
   node demo/smoke_version_recovery.mjs
+  node demo/smoke_build_identity.mjs
   node scripts/check-docs.mjs
   ```
 
@@ -1072,9 +1121,12 @@ edits — not a commit, not a merge (that is decided in `integrate` from the sea
   a default export — tsc or the runtime breaks, whichever you appease. Use **polyclip-ts**
   (proper ESM + native types; same results). It brings `bignumber.js` and `splaytree-ts`;
   their measured weight in the built graph is below (#814).
-- **Redeploying the same version keeps the resource URL** (`/houseplan_files/houseplan-card.js?v=X`),
-  so browsers may serve the previous bundle from cache. Bump the version for anything users must
-  pick up, or hard-refresh (Ctrl+Shift+R) when testing a hotfix redeploy.
+- **Redeploying the same version changes the resource URL only through the fingerprint**
+  (`/houseplan_files/houseplan-card.js?v=X&b=<fingerprint8>`, #836). The backend reads the
+  fingerprint at entry setup, so the new URL — and the version notice for a tab still on the old
+  JS — appears after HA restarts or the entry reloads. A redeploy without
+  `frontend/houseplan-assets.json` (a hand-copied entry) keeps `?v=X`: bump the version or
+  hard-refresh (Ctrl+Shift+R).
 - **CSS `filter: blur()` on an SVG group is applied in name only** in Chromium:
   `getComputedStyle` returns `blur(1px)`, and the rendered result changes by a
   couple of hundred pixels on a whole plan — i.e. not at all. Use an SVG

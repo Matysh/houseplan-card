@@ -178,7 +178,7 @@ houseplan-card/
 │  ├─ sun.ts · day-cycle-render.ts       # window rays, four-phase background (SUN.md)
 │  ├─ vacuum*.ts · radar-*.ts · zigbee-topology*.ts · summary-panel*.ts  # live subsystems
 │  ├─ hp-dialog.ts · hp-confirm.ts · danger-confirm.ts · hp-help.ts · floating-surface*.ts
-│  ├─ editor-runtime-loader.ts · version-recovery*.ts · editor-secondary.ts  # lazy loader; #462; tray
+│  ├─ editor-runtime-loader.ts · version-recovery*.ts · build-identity.ts · editor-secondary.ts  # lazy loader; #462/#836; tray
 │  ├─ editor.ts · space-editor.ts        # Lovelace GUI config editors of both cards
 │  └─ editors/ · render/ · styles/ · i18n/  # settings dialogs, SVG projections, sheets, locales
 ├─ dist/                                 # two stable entries, houseplan-assets.json, hashed chunks
@@ -188,7 +188,7 @@ houseplan-card/
 │  ├─ __init__.py · store.py             # setup/unload; versioned stores and per-entry runtime data
 │  ├─ websocket_api.py · http_api.py · auth.py  # WS commands, uploads, the one may_write policy
 │  ├─ validation.py · coordinate_canonicalization.py  # pure schema validation, write canonicalisation
-│  ├─ frontend_registration.py · frontend_assets.py · panel_registration.py  # resource, chunks, panel
+│  ├─ frontend_registration.py · frontend_assets.py · panel_registration.py · build_identity.py  # resource, chunks, panel, build
 │  ├─ import_export.py · decor_assets.py · plans.py  # backup/import, decor images, plan blobs
 │  ├─ trails.py · vacuum_routes.py · radar*.py · virtual_lights.py  # live-subsystem backends
 │  ├─ config_flow.py · const.py · system_health.py · diagnostics.py · repairs.py · support_*.py
@@ -211,10 +211,13 @@ chunks. Commands and gates: `DEVELOPMENT.md` › Build, › Tests, › Release.
 ## Key decisions
 
 1. **One repository — integration + panel + cards.** The integration serves
-   its own JS; the exact versioned module URL is the resource identity, a
+   its own JS; the exact build-specific module URL is the resource identity
+   (`?v=<version>&b=<fingerprint8>`, plus `&dev=<sha>` on a dev build, #836), a
    writable Lovelace resource registry is authoritative and `add_extra_js_url`
-   the truthful fallback. Each `houseplan/config/get` carries the authoritative
-   `integration_version`: View offers a manual reload, kiosk reloads once per
+   the truthful fallback. A build is identified by its frontend fingerprint, not
+   by the version number, which consecutive dev builds share. Each
+   `houseplan/config/get` carries the authoritative `integration_version`,
+   `frontend_fingerprint` and dev `build`: View offers a manual reload, kiosk reloads once per
    backend target in a safe idle state, the space card has no version controller
    (`DEVELOPMENT.md` › Resource registration and version recovery (#462)). After
    migrations succeed, setup registers the public `/houseplan` panel
