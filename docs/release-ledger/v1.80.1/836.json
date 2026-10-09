@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 836,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "Регистрация ресурса карточки и панели и сверка версий фронтенда/бэкенда (#462) были в v1.80.1 и не различали сборки одной версии: при повторной выкладке той же версии URL модуля не менялся (браузер оставался на прежнем JS), а сверка его не замечала. #836 делает отпечаток сборки идентичностью для URL и сверки на любом канале; метка dev-сборки (BUILD.json, +dev в версии манифеста, поле build) видна только на dev-инсталляции.",
+  "summary": {
+    "ru": "Окно сверки версий замечает вкладку, оставшуюся на прежней карточке после повторной выкладки той же версии: ресурс карточки и панели теперь меняет адрес с каждой сборкой, и браузер подхватывает новую.",
+    "en": "The version check now notices a tab still running the previous card after the same version is redeployed: the card and panel resource address changes with every build, so the browser picks up the new one."
+  }
+}
