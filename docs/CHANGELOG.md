@@ -2,6 +2,41 @@
 
 ## Unreleased
 
+## v1.80.1 — 2026-10-09
+
+- Plan editing: drag wall nodes in Select with translucent original walls and
+  a live preview, wall-axis and horizontal/vertical snapping, Esc cancellation
+  and Undo/Redo. T/X junctions can slide along their carrier wall; previews
+  remain responsive on large connected floors
+  ([#803](https://github.com/Matysh/houseplan-card/issues/803),
+  [#834](https://github.com/Matysh/houseplan-card/issues/834)).
+- Delete a space together with its devices without changing Home Assistant.
+  When reinstalling, restore previous plans or start fresh while preserving
+  the old data in a permanent archive
+  ([#819](https://github.com/Matysh/houseplan-card/issues/819),
+  [#820](https://github.com/Matysh/houseplan-card/issues/820)).
+- Battery charge on the plan: colour indicators, a low-only display option
+  and per-device hiding. Tooltips show a percentage or battery status from HA
+  ([#792](https://github.com/Matysh/houseplan-card/issues/792),
+  [#806](https://github.com/Matysh/houseplan-card/issues/806),
+  [#807](https://github.com/Matysh/houseplan-card/issues/807),
+  [#817](https://github.com/Matysh/houseplan-card/issues/817)).
+- Zigbee links use parents and active next hops reported by ZHA/Zigbee2MQTT
+  instead of an inferred neighbour tree. Zigbee2MQTT map scans continue after
+  settings or the browser are closed. Coordinators and devices with known
+  outgoing links no longer show the Incomplete data caption
+  ([#798](https://github.com/Matysh/houseplan-card/issues/798),
+  [#800](https://github.com/Matysh/houseplan-card/issues/800),
+  [#816](https://github.com/Matysh/houseplan-card/issues/816)).
+- Faster floor switching and room resizing reuse unchanged geometry. View
+  cards recover missed updates on return, and kiosk panning no longer opens
+  the size dialog accidentally
+  ([#814](https://github.com/Matysh/houseplan-card/issues/814),
+  [#824](https://github.com/Matysh/houseplan-card/issues/824),
+  [#825](https://github.com/Matysh/houseplan-card/issues/825)).
+- Small fixes and improvements across the beta line. Update and restart the
+  integration as well as refreshing the frontend.
+
 ## v1.80.1-beta.1 — 2026-10-09
 
 - Plan / Select: moving a wall node no longer intermittently rejects safe
