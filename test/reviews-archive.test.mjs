@@ -1,6 +1,10 @@
 // #682: архив документов ревью выпущенных линий — кому куда, решают трейлеры.
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { ARCHIVE_DIR, LIVE_DIR, archivePlan, brokenLinks, renderPlan, repairLinks, stableTagsThrough } from '../scripts/reviews-archive.mjs';
 
 const lines = [
@@ -118,3 +122,35 @@ test('#682 r1 архив legacy/: относительные ссылки рез
   assert.deepEqual(broken, []);
 });
 
+test('#839 link audit ignores literal code but still reports real missing links, even in quotations', (t) => {
+  const cwd = mkdtempSync(join(tmpdir(), 'hp-review-links-'));
+  t.after(() => rmSync(cwd, { recursive: true, force: true }));
+  execFileSync('git', ['init', '-q', cwd]);
+  mkdirSync(join(cwd, 'legacy/reviews/v1.80.1'), { recursive: true });
+  const path = 'legacy/reviews/v1.80.1/CODE-REVIEW-839-r1.md';
+  const text = [
+    '`[inline](inline-missing.md)` and ``a ` tick [code](double-missing.md)``',
+    '```md', '[fenced](fenced-missing.md)', '```',
+    '~~~~markdown', '[tilde](tilde-missing.md)', '~~~', '[still fenced](still-missing.md)', '~~~~',
+    '[exists](../../../present.md)',
+    '[real](real-missing.md#anchor)',
+    '> [quoted but clickable](quoted-missing.md)',
+    '`unclosed paragraph', '', '[between paragraphs](paragraph-missing.md)', '', 'another `unclosed paragraph',
+    '`unclosed tick [real too](unclosed-missing.md)',
+  ].join('\n');
+  writeFileSync(join(cwd, path), text);
+  writeFileSync(join(cwd, 'present.md'), '# Present');
+  execFileSync('git', ['-C', cwd, 'add', '.']);
+  assert.deepEqual(brokenLinks({ cwd, roots: ['legacy/reviews'] }), [
+    { path, target: 'real-missing.md#anchor' }, { path, target: 'quoted-missing.md' },
+    { path, target: 'paragraph-missing.md' }, { path, target: 'unclosed-missing.md' },
+  ]);
+});
+
+test('#839 archive repair preserves examples verbatim while repairing neighbouring real links', () => {
+  const example = '`[example](CODE-REVIEW-594-r1.md)`\n~~~md\n[fenced](CODE-REVIEW-594-r1.md)\n~~~\n';
+  const source = example + '[actual `code` label](CODE-REVIEW-594-r1.md)';
+  const result = repairLinks({ text: source, path: 'docs/reviews/CODE-REVIEW-635-r1.md', moved, exists });
+  assert.equal(result.text, example + '[actual `code` label](../../legacy/reviews/v1.77.0/CODE-REVIEW-594-r1.md)');
+  assert.equal(result.fixed, 1);
+});

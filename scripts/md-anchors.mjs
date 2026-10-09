@@ -15,6 +15,27 @@ export const githubSlug = (heading) => heading
   .replace(/[^\p{L}\p{M}\p{N}\p{Pc} -]/gu, '')
   .replace(/ /g, '-');
 
+/** #839: preserve offsets while hiding literal fenced/inline code examples. */
+export function renderedMarkdown(text) {
+  const mask = (part) => part.replace(/[^\r\n]/g, ' ');
+  let fence = null;
+  const body = String(text).split(/(?<=\n)/).map((part) => {
+    const line = part.replace(/\r?\n$/, '');
+    if (fence) {
+      if (new RegExp(`^ {0,3}${fence.char}{${fence.length},}[ \\t]*$`).test(line)) fence = null;
+      return mask(part);
+    }
+    const open = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line);
+    if (open && (open[1][0] !== '`' || !open[2].includes('`'))) {
+      fence = { char: open[1][0], length: open[1].length };
+      return mask(part);
+    }
+    return part;
+  }).join('');
+  // Equal-length backtick runs; unmatched delimiters hide nothing.
+  return body.replace(/(?<!`)(`+)(?!`)(?:(?!\r?\n[ \t]*\r?\n)[\s\S])*?(?<!`)\1(?!`)/g, mask);
+}
+
 /** Заголовки документа вне fenced-блоков: [{ level, text, anchor, line }]. */
 export function headings(text) {
   const seen = new Map();

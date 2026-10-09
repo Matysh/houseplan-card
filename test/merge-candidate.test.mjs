@@ -15,7 +15,7 @@ import { buildIndex } from '../scripts/reviews-index.mjs';
 
 function seedReviewedIndexGenerator(work) {
   mkdirSync(join(work, 'scripts'), { recursive: true });
-  for (const name of ['reviews-index.mjs', 'spawn-portable.mjs']) {
+  for (const name of ['reviews-index.mjs', 'spawn-portable.mjs', 'md-anchors.mjs']) {
     writeFileSync(join(work, 'scripts', name), readFileSync(new URL(`../scripts/${name}`, import.meta.url)));
   }
 }

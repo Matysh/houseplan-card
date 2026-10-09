@@ -1297,6 +1297,15 @@ the relative Markdown links in and to the moved documents and rebuilds
 whose `Issue:` trailer names the issue doing the move or the repository-hygiene
 umbrella (`PROCESS.md` §11.3).
 
+Archive link auditing and repair (#839) operate on rendered Markdown links,
+not literal inline/fenced code examples. Actual missing links, including links
+inside quotations, still fail the audit; example source is never rewritten.
+The review index retains ship reports and interprets their own canonical
+`Итог: High … · Medium …` summary (High blocks, Medium is owner advice under
+PROCESS §11.7). A missing/quoted/inherited summary remains unknown; ordinary
+code/spec reviews still require their own recognized verdict. Do not weaken the
+live-index recognition threshold or drop ship reports to make archival pass.
+
 Publishing a stable release by hand in the GitHub form still works, but
 fail-closed: `release: published` starts the same workflow, which immediately
 turns the release back into a draft and walks the same path; nothing installable

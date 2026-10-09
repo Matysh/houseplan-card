@@ -24,6 +24,7 @@ import { readdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { isMainModule } from './spawn-portable.mjs';
+import { renderedMarkdown } from './md-anchors.mjs';
 
 export const INDEX_FILE = 'INDEX.md';
 const DOC_NAME = /^(CODE|SPEC)-REVIEW-(?:issue-)?(\d+)(?:-r(\d+))?(?:-([a-z0-9-]+))?\.md$/i;
@@ -408,10 +409,17 @@ export function parseFiles(text, limit = 8, { round } = {}) {
 export function indexEntry(name, text) {
   const meta = parseDocName(name);
   if (!meta) return null;
+  const body = meta.stage === 'ship' ? renderedMarkdown(text) : text;
+  const verdict = parseVerdict(body, { round: meta.round });
+  // Ship reports use their canonical own «Итог: High … · Medium …» summary,
+  // not a colour verdict. High blocks ship coverage; Medium is owner advice.
+  // No summary => still unknown. Ordinary reviews retain their stricter rule.
+  const shipSummary = meta.stage === 'ship' ? releaseCounts(ownText(body)) : null;
   return {
     name, ...meta,
-    verdict: parseVerdict(text, { round: meta.round }),
-    ...parseCounts(text, { round: meta.round }),
+    verdict: shipSummary?.high > 0 ? 'красный'
+      : verdict === '—' && shipSummary ? 'зелёный' : verdict,
+    ...parseCounts(body, { round: meta.round }),
     findings: parseFindings(text, 6, { round: meta.round }),
     files: parseFiles(text, 8, { round: meta.round }),
   };

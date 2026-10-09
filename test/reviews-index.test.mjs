@@ -214,6 +214,38 @@ test('#635 живой каталог docs/reviews: индекс свеж и по
   assert.ok(recognised / entries.length > 0.9, `вердикт распознан у ${recognised} из ${entries.length}`);
 });
 
+test('#839 ship summary supplies a verdict without weakening ordinary or unknown review checks', () => {
+  const name = 'SHIP-REVIEW-v1.80.0-beta.1.md';
+  for (const medium of [0, 2]) {
+    const entry = indexEntry(name, `# Ship\n\nИтог: High 0 · Medium ${medium} · Low 1`);
+    assert.equal(entry.verdict, 'зелёный');
+    assert.deepEqual([entry.high, entry.medium], [0, medium]);
+  }
+  assert.equal(indexEntry(name, 'Итог: High 1 · Medium 0 · Low 0\nВердикт: зелёный').verdict, 'красный');
+  assert.equal(indexEntry(name, 'Итог: High 0 · Medium 0\nВердикт: красный').verdict, 'красный');
+  for (const text of ['No verdict', '> Итог: High 0 · Medium 0', '```\nИтог: High 0 · Medium 0\n```',
+    '## Унаследовано из r1\n\nИтог: High 0 · Medium 0', 'Итог: High ? · Medium 0', 'Итог: High 0']) {
+    assert.equal(indexEntry(name, text).verdict, '—', text);
+  }
+  assert.equal(indexEntry('CODE-REVIEW-839-r1.md', 'Итог: High 0 · Medium 0').verdict, '—');
+});
+
+test('#839 real ship reports remaining after archival are indexed as reports, not silently excluded', () => {
+  const cwd = fileURLToPath(new URL('../', import.meta.url));
+  for (const beta of [1, 7]) {
+    const name = `SHIP-REVIEW-v1.80.0-beta.${beta}.md`;
+    // The same immutable report remains a regression fixture after the next archival.
+    const tracked = spawnSync('git', ['ls-files', '--', `docs/reviews/${name}`, `legacy/reviews/**/${name}`], { cwd, encoding: 'utf8' });
+    assert.equal(tracked.status, 0, tracked.stderr);
+    const paths = tracked.stdout.trim().split('\n').filter(Boolean);
+    assert.equal(paths.length, 1, `exactly one tracked ${name}`);
+    const text = readFileSync(join(cwd, paths[0]), 'utf8');
+    const entry = indexEntry(name, text);
+    assert.equal(entry.verdict, 'зелёный');
+    assert.deepEqual([entry.high, entry.medium], [0, 0]);
+  }
+});
+
 // r2 #635 H1: закоммиченный INDEX.md обязан совпадать с пересборкой — иначе
 // документы, приехавшие ребейзом, невидимы через индекс. Гейт — шаг Validate
 // `reviews-index --check` на push в dev (см. комментарий в validate.yml, почему

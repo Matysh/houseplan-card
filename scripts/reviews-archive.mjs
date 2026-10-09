@@ -44,6 +44,7 @@ import { isMainModule } from './spawn-portable.mjs';
 import { issueTrailers } from './release-membership.mjs';
 import { INDEX_FILE, parseDocName } from './reviews-index.mjs';
 import { STABLE_TAG_RE } from './release-review.mjs';
+import { renderedMarkdown } from './md-anchors.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const LIVE_DIR = 'docs/reviews';
@@ -185,7 +186,10 @@ const EXTERNAL = /^(?:[a-z][a-z0-9+.-]*:|#|\/)/i;
  */
 export function repairLinks({ text, path, oldPath = path, moved, exists }) {
   let fixed = 0;
-  const out = String(text).replace(LINK_RE, (whole, open, target, close) => {
+  const source = String(text);
+  const rendered = new Set([...renderedMarkdown(source).matchAll(LINK_RE)].map((match) => match.index));
+  const out = source.replace(LINK_RE, (whole, open, target, close, offset) => {
+    if (!rendered.has(offset)) return whole;
     if (EXTERNAL.test(target)) return whole;
     const hash = target.indexOf('#');
     const file = hash >= 0 ? target.slice(0, hash) : target;
@@ -249,7 +253,7 @@ export function brokenLinks({ cwd = ROOT, roots = [LIVE_DIR, ARCHIVE_DIR, 'docs/
   const broken = [];
   for (const path of trackedMarkdown(cwd).filter((p) => roots.some((root) => p.startsWith(`${root}/`)))) {
     const text = readFileSync(join(cwd, path), 'utf8');
-    for (const [, , target] of text.matchAll(LINK_RE)) {
+    for (const [, , target] of renderedMarkdown(text).matchAll(LINK_RE)) {
       if (EXTERNAL.test(target)) continue;
       const file = target.split('#')[0];
       if (!file) continue;

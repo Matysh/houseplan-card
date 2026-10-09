@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.80.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.80.1` |
 | Latest prerelease tag | `v1.80.1-beta.1` |
-| Tests | Node unit 4073 · pure backend 462 · HA-harness backend 354 · browser smokes 313 (`npm run inventory`) |
+| Tests | Node unit 4077 · pure backend 462 · HA-harness backend 354 · browser smokes 313 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -62,6 +62,10 @@ only retained edges. Shared endpoints and all later physical guards remain.
 The subsequent CI performance return removes another repeated decimal-area
 conversion and prepares live handle templates before SVG layer writes. Each
 paint still measures its current viewport; exact area/crossing guards stay.
+
+Review archive/index accounting (#839) distinguishes literal Markdown examples
+from rendered links and recognizes ship reports' own canonical result summary.
+Real broken links and unknown ordinary verdicts remain guarded; runtime is unchanged.
 
 Repeated Resize (#832): coalesced UI runs project back into frozen structural
 atoms/IDs, retaining fixed side breakpoints and rigidly moving translated runs.
