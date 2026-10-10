@@ -1,0 +1,25 @@
+{
+  "domain": "houseplan",
+  "name": "House Plan",
+  "after_dependencies": [
+    "lovelace",
+    "mqtt"
+  ],
+  "codeowners": [
+    "@Matysh"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "http",
+    "frontend",
+    "panel_custom",
+    "websocket_api"
+  ],
+  "documentation": "https://github.com/Matysh/houseplan-card",
+  "integration_type": "service",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/Matysh/houseplan-card/issues",
+  "requirements": [],
+  "single_config_entry": true,
+  "version": "1.80.1+dev.3495e826"
+}

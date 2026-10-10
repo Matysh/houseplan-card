@@ -1,0 +1,574 @@
+"""Server-side vacuum trails.
+
+The integration records the robot's path ITSELF by watching the source
+entity's state changes — no card involvement. This removes every client-side
+race (N open tabs would fight over writes), survives page reloads by
+construction, and keeps recording while no card is open at all. Stored: the
+current run and one previous run per marker (owner call 2026-07-31 — users
+want to see where the cleanup has already been).
+"""
+from __future__ import annotations
+
+import asyncio
+import logging
+import math
+import time
+from typing import Any
+
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.event import async_call_later, async_track_state_change_event
+from homeassistant.helpers.storage import Store
+
+from .const import DOMAIN
+from .vacuum_routes import effective_routes
+
+_LOGGER = logging.getLogger(__name__)
+
+TRAIL_CAP = 2000          # raw points per run before decimation
+TRAIL_RESUME_GRACE_S = 30 * 60  # same-map stop/pause belongs to one cleanup
+SAVE_DELAY_S = 10         # debounce store writes — flash wear over precision
+FIRE_THROTTLE_S = 2.0     # event-bus updates for live cards
+MOVING_STATES = {"cleaning", "returning", "on"}
+
+
+def same_run_identity(run: Any, route_id: str, map_id: str) -> bool:
+    """Whether a stored run and a fresh point belong to the same cleanup.
+
+    Route identity wins when both sides have one: two maps of one robot may
+    share a map id only across different sources, and a route change (new
+    source, map or target space) is a new run by definition (#162). A run
+    written before #162 carries no route id, so it is still matched by map id
+    and keeps resuming exactly as it used to.
+    """
+    if not isinstance(run, dict):
+        return False
+    stored_route = run.get("route_id")
+    if route_id and isinstance(stored_route, str) and stored_route:
+        return stored_route == route_id
+    return run.get("map_id") == map_id
+
+
+def can_resume_trail_run(run: Any, map_id: str, now: float, route_id: str = "") -> bool:
+    """Whether an ended current run may be reopened for this point.
+
+    Store timestamps are untrusted persisted data. Only finite JSON-number
+    timestamps and a non-negative inclusive grace interval are accepted;
+    malformed values and wall-clock rollback fail closed into a new run.
+    """
+    if not same_run_identity(run, route_id, map_id):
+        return False
+    ended = run.get("ended")
+    if (
+        isinstance(ended, bool)
+        or not isinstance(ended, (int, float))
+        or isinstance(now, bool)
+        or not isinstance(now, (int, float))
+    ):
+        return False
+    elapsed = now - ended
+    return math.isfinite(elapsed) and 0 <= elapsed <= TRAIL_RESUME_GRACE_S
+
+
+def resolve_map_id(src_attrs: Any, vac_attrs: Any) -> str:
+    """Map-id normalisation contract, shared with the frontend.
+
+    Mirrors src/vacuum.ts vacMapIdFromAttrs (source attrs, `??`-chain) plus the
+    card's _vacMapId fallback to the vacuum entity's selected_map. The FIRST
+    value that is not None wins — truthiness is wrong here: a zero-based
+    `map_index: 0` is a valid first map and an empty string is still an id.
+    The old `or`-chain dropped the zero, so the server stored trails under a
+    key the renderer never looked up (HP-1540-02).
+    """
+    for v in (
+        src_attrs.get("map_name"),
+        src_attrs.get("current_map"),
+        src_attrs.get("map_index"),
+        src_attrs.get("selected_map"),
+        vac_attrs.get("selected_map"),
+    ):
+        if v is not None:
+            return str(v)
+    return "default"
+
+
+class TrailBook:
+    """Pure run bookkeeping: {marker: {current: run, previous: run}}.
+
+    A run is {"map_id", "started", "ended", "points": [[x, y], …]} in RAW
+    robot coordinates — recalibration never invalidates a stored trail.
+    """
+
+    def __init__(self, data: dict[str, Any] | None = None) -> None:
+        self.data: dict[str, Any] = data if isinstance(data, dict) else {}
+
+    def on_point(
+        self, marker: str, map_id: str, x: float, y: float, now: float,
+        route_id: str = "", source: str = "",
+    ) -> bool:
+        rec = self.data.setdefault(marker, {})
+        cur = rec.get("current")
+        resumed = bool(cur and can_resume_trail_run(cur, map_id, now, route_id))
+        if resumed:
+            cur["ended"] = None
+        if not cur or cur.get("ended") is not None or not same_run_identity(cur, route_id, map_id):
+            # a new run begins: the old one becomes "previous" (and the one
+            # before it is forgotten — we keep exactly two, per the owner)
+            if cur:
+                rec["previous"] = cur
+            cur = {"map_id": map_id, "started": now, "ended": None, "points": []}
+            # #162: the run remembers WHICH route wrote it, so the card can put
+            # it on the right floor without re-deriving the routing itself.
+            if route_id:
+                cur["route_id"] = route_id
+            if source:
+                cur["source"] = source
+            rec["current"] = cur
+        pts: list[list[float]] = cur["points"]
+        if pts and pts[-1][0] == x and pts[-1][1] == y:
+            # Clearing ended is observable state even if the source repeats
+            # the dock point: it must still reach Store and live cards.
+            return resumed
+        pts.append([x, y])
+        if len(pts) > TRAIL_CAP:
+            # decimate by two but never lose the freshest point
+            half = pts[0::2]
+            if half[-1] != pts[-1]:
+                half.append(pts[-1])
+            cur["points"] = half
+        return True
+
+    def end_run(self, marker: str, now: float) -> bool:
+        cur = (self.data.get(marker) or {}).get("current")
+        if cur and cur.get("ended") is None:
+            cur["ended"] = now
+            return True
+        return False
+
+    def delete(self, marker: str) -> bool:
+        """Forget every stored run of one plan marker."""
+        return self.data.pop(marker, None) is not None
+
+    def drop_unknown_routes(self, marker: str, route_ids: set[str]) -> bool:
+        """Forget runs whose route no longer exists (deleted or re-targeted).
+
+        Only runs that name a route are touched. A pre-#162 run names none and
+        is adopted by the card instead — deleting it here would destroy history
+        the user can still legitimately see.
+        """
+        rec = self.data.get(marker)
+        if not isinstance(rec, dict):
+            return False
+        changed = False
+        for slot in ("current", "previous"):
+            run = rec.get(slot)
+            if not isinstance(run, dict):
+                continue
+            stored = run.get("route_id")
+            if isinstance(stored, str) and stored and stored not in route_ids:
+                rec.pop(slot)
+                changed = True
+        return changed
+
+
+class TrailRecorder:
+    """HA wiring: watch the tracked entities, feed the book, persist, notify."""
+
+    def __init__(self, hass: HomeAssistant, rt: Any) -> None:
+        self.routes_by_marker: dict[str, list[dict[str, Any]]] = {}
+        self.hass = hass
+        self.rt = rt
+        self.store = Store(hass, 1, f"{DOMAIN}.trails")
+        self.book = TrailBook()
+        # HP-1540-03: one source may feed SEVERAL markers — the same robot
+        # placed on two floors is the documented multi-floor case, and a plain
+        # source → (marker, vacuum) dict silently kept only the last one
+        self.pairs: dict[str, list[tuple[str, str]]] = {}  # source → [(marker, vacuum), …]
+        self._unsub_track = None
+        self._unsub_save = None
+        self._last_fire = 0.0
+        # One active incident per saved marker/source. `reason` is mutable so
+        # missing↔disabled changes do not create warning storms.
+        self._source_health: dict[tuple[str, str], str] = {}
+        # HP-1540-05: config/set fires refresh as a detached task; two of them
+        # interleaving across the awaited load both subscribed and the loser's
+        # unsub handle was overwritten — a leak until HA restart
+        self._refresh_lock = asyncio.Lock()
+        self._closed = False
+
+    async def async_setup(self) -> None:
+        self.book = TrailBook(await self.store.async_load() or {})
+        await self.async_refresh()
+
+    async def async_refresh(self) -> None:
+        """(Re)subscribe after any config change — markers may come and go.
+
+        Serialised (HP-1540-05): the lock makes unsubscribe-then-resubscribe
+        atomic across the awaited config load, so overlapping refresh tasks can
+        no longer both subscribe and strand one callback forever. The _closed
+        check covers teardown() racing a refresh that is parked on its await.
+        """
+        async with self._refresh_lock:
+            stored = await self.rt.config_store.async_load() or {}
+            if self._closed:
+                return
+            cfg = stored.get("config") or {}
+            pairs: dict[str, list[tuple[str, str]]] = {}
+            health_pairs: set[tuple[str, str]] = set()
+            routes_by_marker: dict[str, list[dict[str, Any]]] = {}
+            for m in cfg.get("markers") or []:
+                if m.get("removed") is True:
+                    continue
+                v = m.get("vacuum") or {}
+                src = v.get("source")
+                if v.get("live") is False:
+                    continue
+                marker_id = str(m.get("id"))
+                # #162: a multi-floor robot may publish each map through its own
+                # camera, so every route source is watched — not only the root
+                # discovery source, which is now just one of them.
+                routes = effective_routes(marker_id, v, str(m.get("space") or ""), src)
+                routes_by_marker[marker_id] = routes
+                sources = {str(route["source"]) for route in routes if route.get("source")}
+                if src:
+                    sources.add(str(src))
+                if not sources:
+                    continue
+                vac = self._vacuum_entity(m)
+                for source in sorted(sources):
+                    health_pairs.add((marker_id, source))
+                    if vac:
+                        # HP-1540-03: append, never overwrite — every floor's
+                        # marker records its own copy of the run
+                        pairs.setdefault(source, []).append((marker_id, vac))
+            self._refresh_source_health(health_pairs)
+            self.pairs = pairs
+            self.routes_by_marker = routes_by_marker
+            self._resubscribe()
+            # A run already in progress (HA restarted mid-cleanup, or the user
+            # just finished calibrating) must start recording NOW, not at the
+            # next state change — otherwise the first seconds of the path are
+            # lost.
+            now = time.time()
+            changed = False
+            for src in self.pairs:
+                changed |= self._sample(src, now)
+            self._handle_sample_change(changed, now)
+
+    def _source_failure_reason(self, source: str) -> str | None:
+        """Classify only refresh-time health evidence.
+
+        A registry row or exact live state proves existence. No registry access
+        is neutral: it can neither create a loss incident nor recover one.
+        """
+        registry = er.async_get(self.hass)
+        state = self.hass.states.get(source)
+        if registry is None or not hasattr(registry, "async_get"):
+            return None if state is not None else "unverified"
+        entry = registry.async_get(source)
+        if entry is not None and getattr(entry, "disabled_by", None) is not None:
+            return "disabled"
+        # Registry-less YAML entities are valid: exact live state is stronger
+        # evidence than a missing registry row.
+        if entry is not None or state is not None:
+            return None
+        return "missing"
+
+    def _refresh_source_health(self, expected: set[tuple[str, str]]) -> None:
+        """Refresh deduplicated source incidents during config refresh/restart.
+
+        `unavailable` and unsupported-but-existing states count as proven
+        recovery. There is intentionally no registry subscription in Stage 1;
+        the next config refresh or restart observes a later transition.
+        """
+        for key in list(self._source_health):
+            if key not in expected:
+                del self._source_health[key]
+        for marker_id, source in sorted(expected):
+            key = (marker_id, source)
+            reason = self._source_failure_reason(source)
+            previous = self._source_health.get(key)
+            # Limited/unavailable registry evidence is neutral: keep an
+            # existing incident as-is, and never create or recover one.
+            if reason == "unverified":
+                continue
+            if reason is None:
+                if previous is not None:
+                    _LOGGER.info(
+                        "Vacuum source recovered: marker=%s source=%s (was %s)",
+                        marker_id, source, previous,
+                    )
+                    del self._source_health[key]
+                continue
+            if previous is None:
+                _LOGGER.warning(
+                    "Vacuum source %s: marker=%s source=%s",
+                    reason, marker_id, source,
+                )
+            self._source_health[key] = reason
+
+    async def async_delete(self, marker: str) -> bool:
+        """Stop and erase one marker without racing subscription refresh/save."""
+        return bool(await self._async_delete_many({marker}))
+
+    async def async_purge_orphans(self, config: dict[str, Any]) -> int:
+        """Erase trails whose marker is absent or a removal tombstone.
+
+        A tombstone deliberately stays in config so discovery cannot resurrect
+        a deleted device.  For live tracking and trail ownership it is absent:
+        this is the same boundary used by ``async_refresh`` above.
+
+        Returns the number of erased markers. Runs dropped because their route
+        vanished (#162) are not counted, but they are just as durable (#495):
+        they leave with the orphan transaction, or with a write of their own.
+        """
+        live_marker_ids = {
+            str(marker.get("id"))
+            for marker in config.get("markers") or []
+            if marker.get("id") is not None and marker.get("removed") is not True
+        }
+        fire = False
+        try:
+            async with self._refresh_lock:
+                # #162: a route that vanished (deleted, or re-targeted to
+                # another space, which is a new identity) takes its own runs
+                # with it, while the marker and its other routes stay untouched.
+                dropped = self._drop_unknown_routes(config)
+                orphan_ids = set(self.book.data) - live_marker_ids
+                if not orphan_ids and not dropped:
+                    return 0
+                try:
+                    if orphan_ids:
+                        removed = await self._delete_many_locked(orphan_ids)
+                    else:
+                        removed = 0
+                        await self._save_now_locked()
+                except Exception:
+                    # The store is the durable authority (#335): a drop that
+                    # never reached it must not survive only in memory, or a
+                    # restart brings the runs back while the card believed
+                    # them gone. Put them back so the next commit retries.
+                    self._restore_dropped(dropped)
+                    raise
+                fire = True
+                return removed
+        except Exception:  # noqa: BLE001 — config commit already succeeded
+            _LOGGER.exception(
+                "House Plan: reconciling vacuum trails after a config commit failed",
+            )
+            return 0
+        finally:
+            if fire:
+                self.hass.bus.async_fire("houseplan_trail_updated", {})
+
+    def _drop_unknown_routes(self, config: dict[str, Any]) -> dict[str, dict[str, Any]]:
+        """Forget runs of routes the config no longer has; return what was dropped."""
+        dropped: dict[str, dict[str, Any]] = {}
+        for marker in config.get("markers") or []:
+            marker_id = str(marker.get("id"))
+            if marker.get("removed") is True or marker_id not in self.book.data:
+                continue
+            vacuum = marker.get("vacuum") or {}
+            routes = effective_routes(
+                marker_id, vacuum, str(marker.get("space") or ""), vacuum.get("source"))
+            before = {
+                slot: run for slot, run in (self.book.data.get(marker_id) or {}).items()
+                if slot in ("current", "previous")
+            }
+            if self.book.drop_unknown_routes(marker_id, {str(r.get("id")) for r in routes}):
+                after = self.book.data.get(marker_id) or {}
+                dropped[marker_id] = {
+                    slot: run for slot, run in before.items() if slot not in after
+                }
+        return dropped
+
+    def _restore_dropped(self, dropped: dict[str, dict[str, Any]]) -> None:
+        for marker_id, runs in dropped.items():
+            self.book.data.setdefault(marker_id, {}).update(runs)
+
+    async def _save_now_locked(self) -> None:
+        """Write the book immediately, superseding a pending debounced write.
+
+        A failed write puts the debounce back: the points it was going to
+        persist are still only in memory.
+        """
+        had_pending_save = self._unsub_save is not None
+        if self._unsub_save:
+            self._unsub_save()
+            self._unsub_save = None
+        try:
+            await self.store.async_save(self.book.data)
+        except Exception:
+            if had_pending_save:
+                self._schedule_save()
+            raise
+
+    async def _async_delete_many(self, markers: set[str]) -> int:
+        """Delete one or more books with one subscription/store transaction."""
+        async with self._refresh_lock:
+            removed = await self._delete_many_locked(markers)
+        if removed:
+            self.hass.bus.async_fire("houseplan_trail_updated", {})
+        return removed
+
+    async def _delete_many_locked(self, markers: set[str]) -> int:
+        """The transaction of ``_async_delete_many``; the caller holds the lock."""
+        # The trail book owns deletion. When it has no such marker, this
+        # is a no-op and must not silently damage the live tracking graph.
+        removed = {
+            marker: self.book.data.pop(marker)
+            for marker in markers
+            if marker in self.book.data
+        }
+        if not removed:
+            return 0
+        previous_pairs = {src: list(pairs) for src, pairs in self.pairs.items()}
+        try:
+            for src in list(self.pairs):
+                kept = [pair for pair in self.pairs[src] if pair[0] not in removed]
+                if kept:
+                    self.pairs[src] = kept
+                else:
+                    del self.pairs[src]
+            self._resubscribe()
+            await self._save_now_locked()
+        except Exception:
+            # The store is the durable authority. Restore the in-memory
+            # owner graph so the next successful config sync can retry
+            # instead of leaving an orphan on disk forever (#335).
+            self.book.data.update(removed)
+            self.pairs = previous_pairs
+            self._resubscribe()
+            raise
+        return len(removed)
+
+    def _resubscribe(self) -> None:
+        """Replace the state subscription for the current pair graph."""
+        if self._unsub_track:
+            self._unsub_track()
+            self._unsub_track = None
+        # deduplicated: two markers of one robot share source AND vacuum
+        ents = set(self.pairs) | {vac for ps in self.pairs.values() for _, vac in ps}
+        _LOGGER.info("Trail recorder: tracking %s", sorted(ents))
+        if ents and not self._closed:
+            self._unsub_track = async_track_state_change_event(
+                self.hass, sorted(ents), self._on_state
+            )
+
+    def _close_subscriptions(self) -> bool:
+        """Stop callbacks/timers and report whether a save was pending."""
+        # HP-1540-05: flag FIRST — a refresh parked on its awaited load must
+        # not re-subscribe after this cleanup has already run.
+        self._closed = True
+        if self._unsub_track:
+            self._unsub_track()
+            self._unsub_track = None
+        pending = self._unsub_save is not None
+        if self._unsub_save:
+            self._unsub_save()
+            self._unsub_save = None
+        return pending
+
+    async def async_teardown(self) -> None:
+        """Stop the recorder and durably flush a pending debounced save."""
+        async with self._refresh_lock:
+            pending = self._close_subscriptions()
+            if pending:
+                await self.store.async_save(self.book.data)
+
+    def teardown(self) -> None:
+        """Synchronous emergency cleanup for already-closing event loops."""
+        self._close_subscriptions()
+
+    def _vacuum_entity(self, m: dict[str, Any]) -> str | None:
+        b = str(m.get("binding") or "")
+        if b.startswith("entity:vacuum."):
+            return b[len("entity:"):]
+        if b.startswith("device:"):
+            reg = er.async_get(self.hass)
+            for e in er.async_entries_for_device(reg, b[len("device:"):]):
+                if e.entity_id.startswith("vacuum."):
+                    return e.entity_id
+        return None
+
+    def _sample(self, src: str, now: float) -> bool:
+        """Record one point (or end the run) for EVERY marker fed by src.
+
+        HP-1540-03: the same source serves one marker per floor — all of them
+        must receive the point, not just whichever survived the dict.
+        """
+        changed = False
+        for marker, vac in self.pairs.get(src) or ():
+            st_vac = self.hass.states.get(vac)
+            # "no state yet" is NOT "stopped": during HA boot the vacuum reads
+            # unavailable and ending the run here would split one cleanup into
+            # current+previous on every restart (observed live: 21 points
+            # became previous, the same run restarted at 5)
+            if not st_vac or st_vac.state in ("unavailable", "unknown"):
+                continue
+            if st_vac.state not in MOVING_STATES:
+                changed |= self.book.end_run(marker, now)
+                continue
+            st_src = self.hass.states.get(src)
+            attrs = st_src.attributes if st_src else {}
+            raw = attrs.get("vacuum_position") or attrs.get("robot_position")
+            # Server-side these attributes are often OBJECTS (Tasshack keeps a
+            # Point dataclass in memory — it only becomes a dict when
+            # serialised to the frontend). Caught live on the owner's X50: the
+            # recorder saw every state change and rejected every single one.
+            if isinstance(raw, dict):
+                px, py = raw.get("x"), raw.get("y")
+            else:
+                px, py = getattr(raw, "x", None), getattr(raw, "y", None)
+            try:
+                x, y = float(px), float(py)  # type: ignore[arg-type]
+            except (TypeError, ValueError):
+                continue
+            map_id = resolve_map_id(attrs, st_vac.attributes)
+            route_id = self._route_id(marker, src, map_id)
+            changed |= self.book.on_point(
+                marker, map_id, x, y, now, route_id=route_id,
+                source=src if route_id else "",
+            )
+        return changed
+
+    def _route_id(self, marker: str, source: str, map_id: str) -> str:
+        """The route this point belongs to, or "" when routing cannot say.
+
+        Validation keeps (source, map_id) unique inside one marker, so at most
+        one route can match. No match means the map is unmapped: the point is
+        still recorded — raw history is valuable — but it is not filed under a
+        route that does not own it.
+        """
+        for route in getattr(self, "routes_by_marker", {}).get(marker) or ():
+            if route.get("source") == source and route.get("map_id") == map_id:
+                return str(route.get("id") or "")
+        return ""
+
+    @callback
+    def _on_state(self, event: Any) -> None:
+        eid = event.data.get("entity_id")
+        now = time.time()
+        changed = False
+        for src, pair_list in self.pairs.items():
+            if eid == src or any(eid == vac for _, vac in pair_list):
+                changed |= self._sample(src, now)
+        self._handle_sample_change(changed, now)
+
+    def _handle_sample_change(self, changed: bool, now: float) -> None:
+        """Persist and announce one logical sampling pass when it changed."""
+        if changed:
+            self._schedule_save()
+            if now - self._last_fire >= FIRE_THROTTLE_S:
+                self._last_fire = now
+                self.hass.bus.async_fire("houseplan_trail_updated", {})
+
+    def _schedule_save(self) -> None:
+        if self._unsub_save:
+            return
+
+        async def _save(_now: Any) -> None:
+            self._unsub_save = None
+            await self.store.async_save(self.book.data)
+
+        self._unsub_save = async_call_later(self.hass, SAVE_DELAY_S, _save)
