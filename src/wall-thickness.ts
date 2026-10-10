@@ -57,6 +57,8 @@ export interface WallBodiesGeometryResult {
 }
 
 export interface WallGeometryOperations {
+  /** Select can clip the union of uncovered strips to their common centre. */
+  mergeEdgeBodies?: (body: Geom | null, quads: number[][][], centre: Geom) => Geom | null;
   /** Reuse only centre/interval inputs inside this one geometry invocation. */
   reuseExterior?: boolean;
   /** Optional exact redundancy proof supplied by the lazy Select preview.
@@ -3819,9 +3821,11 @@ export function wallBodiesGeometry(
     // facade boundary; the canonical exterior shell is added afterwards.
     corePhase = 'edge-bodies';
     if (exterior) {
-      for (const edge of wallEdgeBodies(
+      const edges = wallEdgeBodies(
         rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
-      )) {
+      );
+      if (operations.mergeEdgeBodies) body = operations.mergeEdgeBodies(body, edges.map(edge => edge.quad), exterior.centre);
+      else for (const edge of edges) {
         if (body && operations.coveredQuad?.(edge.quad, body)) continue;
         try {
           const piece = intersectLocalWallGeometry(closedRing(edge.quad), exterior.centre);

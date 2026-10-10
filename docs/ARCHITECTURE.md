@@ -115,6 +115,10 @@ authority from the candidate. `config/set` keeps its existing host protection.
 The ledger read-normalises a copy of the durable legacy input before deriving
 structural identities, just as the first proof does; it never migrates on hover.
 Details: CANVAS.md, UX-MODES.md, WALL-THICKNESS.md and CONFIG-COMPATIBILITY.md.
+`wall-node-edges.ts` (#864) groups only uncovered edge strips, clips their
+union to the common centre and merges it into the unchanged room body. Any
+grouped failure replays the complete old per-edge phase; ordinary View retains
+its original sequential consumer, and no geometry certificate/cache is added.
 Every live paint rechecks its frozen context before constructing SVG groups;
 mode/floor/revision adoption retires capture and masks before the settled render.
 `editor-shared` isolates shared lazy helpers so the editor entry retains its

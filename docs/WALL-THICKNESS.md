@@ -160,6 +160,15 @@ Each live operand is fully serialized once per boolean call; only a privately
 copied frozen result may retain its already-computed key. No caller array gains
 an identity-based certificate.
 
+Select-only edge grouping (#864) uses union(Q_i ∩ centre) = union(Q_i) ∩ centre
+for strips not already proved covered by the current room body. Three common
+boolean stages replace repeated sweeps of a growing connected floor. Failure
+in strip union, common clipping or body union replays the complete historical
+per-edge coverage/clipping/isolated union, including healthy later strips.
+Room-ring order, mandatory facade/shell/corner/opening stages and every physical
+guard remain unchanged. No precision rewrite or new candidate cache; View does
+not supply the edge grouping port.
+
 At most one successful baseline may survive an Esc retry in Select. Reuse
 requires the same authoritative config object, revision and space plus the
 exact complete selected-config value, including proof settings. Its config is

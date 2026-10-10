@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Select node dragging clips uncovered wall strips together instead of repeatedly
+  sweeping the growing floor. Failed grouped stages retain the full historical
+  per-edge fallback; geometry, native input and performance budgets are unchanged
+  ([#864](https://github.com/Matysh/houseplan-card/issues/864)).
+
 - The front-end/back-end version check now notices a browser still running the
   previous card after a redeploy of the same version: the card and panel are
   registered under a URL that changes with every build, and two builds of one

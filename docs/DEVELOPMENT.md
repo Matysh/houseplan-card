@@ -2,6 +2,19 @@
 
 ## Connected-floor Select node movement (#834)
 
+The 10.10 nightly (#864) failed at 52/110.260 ms CPU/input-to-paint p95; one
+diagnostic attempt failed again at 48.9/105.378 ms. These were real budget
+failures, not the schedule warning. The unrelated stale docs fingerprint was
+updated by the canonical derived bot with 11 byte-identical witnesses.
+Select now groups uncovered wall strips before clipping to their common
+centre, while leaving room assembly and all mandatory proof stages unchanged.
+`wall-node-edges.test.mjs` compares actual filled regions, holes and facade cuts,
+counts delegated sweeps, injects every grouped-stage failure and verifies
+individual fallback isolation. Failed grouping replays the entire old phase.
+The room-group/tree drafts were discarded because they reduced baseline reuse;
+timing workloads, input clocks and 50/100/150 ms budgets are unchanged. Local
+reports are diagnostic; final Linux CI is the acceptance witness.
+
 `test/fixtures/834-node-connected.json` retains the anonymised 8-room, 30-wall,
 14-opening geometry from the beta.9 report, not HA identifiers or device data.
 `wall-node-connected.test.mjs` scans 100 adjacent positions and checks masonry,

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 864,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "Перемещение узлов в Select уже присутствует в v1.80.1. Ночь 10.10 и отдельная диагностическая попытка подтвердили недостаточный запас input-to-paint при связанном этаже; оптимизация сокращает реальную геометрическую работу, не меняя UX, proof или пороги. Свежесть docs исправлена отдельно штатным ботом.",
+  "summary": {
+    "ru": "Перетаскивание узлов стен на связанном этаже требует меньше вычислений; проёмы, отмена и проверки безопасности сохранены.",
+    "en": "Dragging wall nodes on a connected floor takes less computation, while keeping openings, cancellation and safety checks intact."
+  }
+}
