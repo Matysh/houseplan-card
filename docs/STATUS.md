@@ -139,6 +139,11 @@ entry files. The server angular witness selects the unrounded boundary as well
 as canonicalized noisy T/X operations. IDs and mutation patches are retained;
 development runs only clean guards and static checks, not mutations.
 
+The grouped-edge fallback witness (#868) skips the replay through a typed empty
+iteration instead of an unconditional early return. Its id and geometric guard
+are unchanged; setup failures still cannot count as caught evidence. Product
+geometry is untouched, and capture of the revised witness remains nightly-only.
+
 Space deletion (#819/#826): the editor uses one lazy post-confirmation
 completion path, preserving target/marker-set fences, authoritative adoption
 and error recovery. Confirmation copy remains in the caller; bundle ratchets

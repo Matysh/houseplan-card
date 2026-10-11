@@ -585,8 +585,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node --test --test-name-pattern="every grouped edge failure" test/wall-node-edges.test.mjs',
     because: '#864 AC2: every grouped stage failure must replay the complete historical edge phase',
     patches: [{ file: 'src/wall-node-edges.ts',
-      find: '    let current = subject;',
-      replace: '    return subject; let current = subject;',
+      find: '    for (const quad of quads) {',
+      replace: '    for (const quad of quads.slice(0, 0)) {',
     }],
   },
   {
