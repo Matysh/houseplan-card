@@ -41,6 +41,7 @@ import { classify } from './change-classes.mjs';
 import { labelTrack, parseNumstat } from './process-track.mjs';
 import { issueTrailers } from './release-membership.mjs';
 import { USAGE_KEYS, lastUsageIn } from './model-usage.mjs';
+import { lastModelDetailsIn, formatModelDetails, modelSummary } from './model-usage-details.mjs';
 import { ANCHOR_MARKER, verdictDeclaration } from './review-doc-guard.mjs';
 import { SHIP_REVIEW_ANCHOR, parseAnchorBlock } from './ship-review.mjs';
 import { PIPELINE_EVENTS } from './wait-verdict.mjs';
@@ -502,6 +503,19 @@ export function tokenUsage(reviewDocs = []) {
     for (const key of USAGE_KEYS) totals[key] += usage[key];
   }
   return { docs, totals: docs ? totals : null, missing };
+}
+
+/** #857 dimensions are separate from frozen aggregate totals, never added to them. */
+export function modelObservations(reviewDocs = []) {
+  const seen = new Set();
+  return (reviewDocs || []).flatMap(doc => {
+    if (seen.has(doc.path)) return [];
+    seen.add(doc.path);
+    const text = String(doc.text || '');
+    const at = SHIP_DOC.test(String(doc.path || '')) ? text.lastIndexOf(SHIP_REVIEW_ANCHOR) : text.indexOf(ANCHOR_MARKER);
+    const details = at < 0 ? null : lastModelDetailsIn(text.slice(at));
+    return details ? [{ source: doc.path, ...details }] : [];
+  });
 }
 
 /**
@@ -1016,6 +1030,8 @@ function trackReport({ since, until, issues, timelines, timelineTruncated, revie
     tokens: reviewDocAdded
       ? { ...tokenUsage(tokenDocs(reviewDocs, { added: reviewDocAdded, since, until })), window: { since, until } }
       : tokenUsage(reviewDocs),
+    modelObservations: modelObservations(reviewDocAdded
+      ? tokenDocs(reviewDocs, { added: reviewDocAdded, since, until }) : reviewDocs),
     compare: compareCohorts(rows, { cutover: compare.cutover ?? TRACKS_CUTOVER, days: compare.days ?? COMPARE_DAYS, until }),
   };
 }
@@ -1068,6 +1084,11 @@ export function renderMarkdown(report) {
   if (report.drafts) renderDrafts(lines, report.drafts);
   if ('stages' in report) renderStages(lines, report.stages);
   if ('tokens' in report) renderTokens(lines, report.tokens);
+  if (report.modelObservations?.length) {
+    lines.push('', '### Фактические модели и завершение раундов (#857)', '',
+      'Отдельные измерения, не прибавляются к aggregate. Provider cost — estimate, не OAuth-оплата или quota.', '');
+    for (const { source, ...d } of report.modelObservations) lines.push(`- ${source}: ${modelSummary(formatModelDetails(d))}`);
+  }
   if (report.compare) renderCompare(lines, report.compare);
   return `${lines.join('\n')}\n`;
 }

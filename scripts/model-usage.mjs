@@ -41,7 +41,7 @@ export const USAGE_KEYS = Object.freeze([
 ]);
 
 /** Токены — поля `modelUsage[<модель>]` SDK (camelCase) и `result.usage` (snake_case). */
-const MODEL_USAGE_FIELDS = Object.freeze({
+export const MODEL_USAGE_FIELDS = Object.freeze({
   input_tokens: 'inputTokens',
   output_tokens: 'outputTokens',
   cache_creation_input_tokens: 'cacheCreationInputTokens',
@@ -63,7 +63,7 @@ const COUNT = '(0|[1-9]\\d{0,11})';
 const DATA_RE = new RegExp(`^<!-- hp:usage ${USAGE_KEYS.map((key) => `${key}=${COUNT}`).join(' ')} -->$`);
 const NONE_RE = new RegExp(`^<!-- hp:usage-none reason=(${USAGE_REASONS.join('|')}) -->$`);
 
-const isCount = (value) => Number.isSafeInteger(value) && value >= 0 && value <= MAX_COUNT;
+export const isCount = (value) => Number.isSafeInteger(value) && value >= 0 && value <= MAX_COUNT;
 const isRecord = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 
 /**

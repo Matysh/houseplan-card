@@ -11,6 +11,7 @@ import {
   usageFromExecutionFile, usageFromMessages,
 } from '../scripts/model-usage.mjs';
 import { REQUIRED_FILES } from '../scripts/review-result-gate.mjs';
+import { parseModelDetails } from '../scripts/model-usage-details.mjs';
 import { findStep, runStep } from './helpers/workflow-step.mjs';
 
 // #737: расход сессии модели — одной машинной строкой в документе ревью.
@@ -312,10 +313,12 @@ test('#737 AC5: шаг снятия расхода на настоящем bash 
         env: { ...process.env, EXEC, GITHUB_OUTPUT: output, GITHUB_STEP_SUMMARY: summary, ...(snapshot ? { TOOLS_SHA: head, RUNNER_TEMP: dir } : {}) },
       });
       assert.equal(r.status, 0, `${file}: ${r.stderr}`);
-      assert.equal(readFileSync(output, 'utf8'), `line=${line}\n`, file);
+      const outputs = readFileSync(output, 'utf8').trim().split('\n');
+      assert.equal(outputs[0], `line=${line}`, file);
+      assert.ok(parseModelDetails(outputs[1].slice('details='.length)), `${file}: strict separate dimensions`);
       const printed = readFileSync(summary, 'utf8');
       assert.ok(printed.includes(line), `${file}: строка в сводке`);
-      assert.equal(printed.split('\n').filter(Boolean).length, 1, `${file}: одна строка сводки`);
+      assert.equal(printed.split('\n').filter(Boolean).length, 2, `${file}: aggregate + separate human-readable dimensions`);
       for (const where of [r.stdout, r.stderr, printed]) assert.ok(!where.includes(TOKEN), `${file}: секрета нет`);
     }
   }

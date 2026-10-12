@@ -36,6 +36,7 @@ import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { isMainModule } from './spawn-portable.mjs';
 import { lastUsageIn, publishedUsageLine } from './model-usage.mjs';
+import { publishedModelDetails } from './model-usage-details.mjs';
 import { issueTrailers, readCandidateHistory } from './release-membership.mjs';
 import { parseDocName } from './reviews-index.mjs';
 
@@ -353,7 +354,7 @@ export function renderShipBrief({ tag, candidate, base, ship, runUrl = '', doc =
  */
 export function anchorBlock({
   tag, candidate, base = null, issues = [], high = 0, medium = 0, low = 0, runUrl = '', mode = null, patches = null,
-  usage = null,
+  usage = null, usageDetails = null,
 }) {
   return [
     SHIP_REVIEW_ANCHOR,
@@ -371,6 +372,7 @@ export function anchorBlock({
     ...(mode ? [`mode ${mode}`] : []),
     ...(patches ? [`patches ${formatPatches(patches)}`] : []),
     '```',
+    ...(usageDetails != null ? [publishedModelDetails(usageDetails)] : []),
     ...(usage != null ? [publishedUsageLine(usage)] : []),
     '',
   ].join('\n');

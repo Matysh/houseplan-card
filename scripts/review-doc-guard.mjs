@@ -27,6 +27,7 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { publishedUsageLine } from './model-usage.mjs';
+import { publishedModelDetails } from './model-usage-details.mjs';
 import { isMainModule } from './spawn-portable.mjs';
 
 export const REVIEW_DOC_ALLOWLIST = ['docs/reviews/'];
@@ -313,7 +314,7 @@ const ANCHOR_ROUTES = ['fix', 'reclassify'];
 /** Идентификатор критерия в якоре: только формат, смысл судит `reviewRoute`. */
 const ANCHOR_CRITERION = /^[a-z][a-z0-9-]{0,39}$/;
 
-export function materialAnchorBlock({ sha, tree, branch, specs = [], verdict, high, issueBody, route, criterion, usage } = {}) {
+export function materialAnchorBlock({ sha, tree, branch, specs = [], verdict, high, issueBody, route, criterion, usage, usageDetails } = {}) {
   const short = (value) => (typeof value === 'string' ? value.slice(0, 12) : '');
   const lines = [
     ANCHOR_MARKER,
@@ -366,6 +367,7 @@ export function materialAnchorBlock({ sha, tree, branch, specs = [], verdict, hi
   // пусто — `reason=missing`, не по формату — `reason=invalid`. Прежние строки
   // блока не меняются, их разбор тоже. Не передано вовсе (вызов до #737) —
   // строки нет.
+  if (usageDetails != null) lines.push(publishedModelDetails(usageDetails));
   if (usage != null) lines.push(publishedUsageLine(usage));
   return `${lines.join('\n')}\n`;
 }
@@ -821,6 +823,7 @@ if (invokedDirectly) {
       criterion: value('criterion'),
       // #737: строка расхода модели; без флага (вызов до #737) строки нет.
       usage: argv.some((item) => item.startsWith('--usage=')) ? value('usage') : undefined,
+      usageDetails: argv.some((item) => item.startsWith('--usage-details=')) ? value('usage-details') : undefined,
     };
     const text = readFileSync(path, 'utf8');
     writeFileSync(path, withMaterialAnchors(text, anchors), 'utf8');

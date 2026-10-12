@@ -103,6 +103,22 @@ const MUTANT_DEFINITIONS = [
       replace: "    ...(['legacy/reviews'])]).trim().split('\\n');" }],
   },
   {
+    id: 'model-outcome-allows-exhausted',
+    guard: 'node --test --test-name-pattern="#857 interrupted SDK" test/model-evidence-857.test.mjs',
+    because: '#857: a known interrupted result must not authorize complete verdict publication.',
+    patches: [{ file: 'scripts/model-usage-details.mjs',
+      find: "  return !d || !['exhausted', 'error'].includes(d.outcome);",
+      replace: '  return true;' }],
+  },
+  {
+    id: 'model-failure-returns-stale-material',
+    guard: 'node --test --test-name-pattern="#857 current failed epoch" test/model-evidence-857.test.mjs',
+    because: '#857: stale code material cannot return a newer review request to its author.',
+    patches: [{ file: 'scripts/model-review-failure.mjs',
+      find: ' || current.headSha !== materialSha)',
+      replace: ' || false)' }],
+  },
+  {
     id: 'wall-adoption-mutates-shared-point-owners',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test test/wall-adoption-alias.test.mjs',

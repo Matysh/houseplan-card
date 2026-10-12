@@ -129,6 +129,7 @@ jobs:
     # #737: строка расхода сессии модели (scripts/model-usage.mjs).
     outputs:
       usage: ${{ steps.usage.outputs.line }}
+      usage_details: ${{ steps.usage.outputs.details }}
     # Недоверенная стадия без права записи (#556): документ публикует
     # `publish`. `github_token` у шага Review обязателен — без него action
     # меняет OIDC на собственный App-токен с правом записи.
@@ -256,13 +257,19 @@ jobs:
         run: |
           line=$(node scripts/model-usage.mjs --execution-file="$EXEC")
           echo "line=$line" >> "$GITHUB_OUTPUT"
+          details=$(node scripts/model-usage-details.mjs --execution-file="$EXEC")
+          echo "details=$details" >> "$GITHUB_OUTPUT"
+          summary=$(node scripts/model-usage-details.mjs --summary-line="$details")
+          echo "- модели/outcome: $summary" >> "$GITHUB_STEP_SUMMARY"
           echo "- расход модели: \`$line\`" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Запечатать результат модели
         env:
           SOURCE: ${{ runner.temp }}/ship-review.md
           OUT: ${{ steps.review.outputs.structured_output }}
+          USAGE_DETAILS: ${{ steps.usage.outputs.details }}
         run: |
+          node scripts/model-usage-details.mjs --require-complete-line="$USAGE_DETAILS"
           test -s "$SOURCE" || { echo "::error::модель не оставила документ ревью"; exit 1; }
           dir="$RUNNER_TEMP/ship-review-result"
           mkdir -p "$dir"
@@ -320,6 +327,7 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           # #737: расход модели — строкой сразу после блока; недоверенный ввод.
           USAGE: ${{ needs.model_review.outputs.usage }}
+          USAGE_DETAILS: ${{ needs.model_review.outputs.usage_details }}
         run: |
           dir="$RUNNER_TEMP/ship-review-result"
           (cd "$dir" && sha256sum -c manifest.sha256)
@@ -359,6 +367,7 @@ jobs:
                   high: Number(process.argv[1]), medium: Number(process.argv[2]), low: Number(process.argv[3]),
                   runUrl: process.env.RUN_URL, mode: process.env.MODE, patches: m.parsePatches(process.env.PATCHES),
                   usage: process.env.USAGE ?? "",
+                  usageDetails: process.env.USAGE_DETAILS ?? "",
                 })));
               ' "$high" "$medium" "$low"
             } > "$DOC"

@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Review evidence (#857) retains actual SDK model ids and nullable per-model
+buckets separately from the unchanged aggregate usage. Immutable role packets
+preserve canon/risky-hunk obligations; current failed epochs return to their
+author without a verdict/cycle. Default model and 150 turns are unchanged;
+OAuth savings or quality improvements are not claimed without comparable runs.
+
 LED/daycycle smoke evidence (#863) separates native active24 from delivery after
 the natural lease (settled48). Raster measurement keeps every raw task, pair,
 phase, timing and pinned-browser identity; missing readiness/material fails,

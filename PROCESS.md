@@ -1376,6 +1376,21 @@ Matysh/houseplan-card/.github/workflows/_<имя>.yml@dev` с `secrets: inherit`
 Validate запускает `ship-review.yml` dispatch'ем с `-f tag=nightly` (§11.7,
 #727): входы и права для этого в `main` уже есть, тонкие файлы не меняются.
 
+**Контекст и расход ревью** (#857). До модели immutable packet связывает
+тело issue, SHA/tree и полный список changed hunks с обязательным role entry.
+Pipeline-дифф требует полный канон, а не сокращённую роль; архивные решения
+читаются адресно. Повтор уже пригодного check не нужен, но изменившиеся
+материал, среда или oracle требуют нового доказательства и negative probe.
+Фактические model ids, отдельные buckets, turns/duration и finish reason идут
+versioned отчётным payload рядом с прежним `hp:usage`, не складываются с ним.
+Пропущенные данные — unknown. Provider cost — estimate, не OAuth-оплата и
+не account quota. Default model и max-turns 150 не меняются без решения.
+Known exhausted/error не допускает запечатывание вердикта. При отсутствии
+полного результата trusted recovery повторно сверяет текущие epoch/run,
+body и code HEAD: только совпадающий S4/S7 возвращается в S3/S6 без расхода
+цикла; новый/остановленный запрос не трогается. Полный private transcript
+не публикуется. Экономия/качество требуют сравнимой выборки, не обещаются.
+
 **Скрипты конвейера — из `dev`** (#749). Тело читается из `dev`, поэтому и
 скрипты, которые оно зовёт со своими флагами и форматами, — версии `dev`. Job
 `integrate` сразу после `setup-node` снимает один снимок `git archive

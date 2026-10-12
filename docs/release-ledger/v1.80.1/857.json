@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 857,
+  "baseStable": "v1.80.1",
+  "category": "infra",
+  "rationale": "Фактические SDK model dimensions, static-first immutable reviewer context и безопасный возврат незавершённого раунда. Только B/C; модель, бюджет и пользовательский продукт не изменены."
+}
