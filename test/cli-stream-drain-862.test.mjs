@@ -8,7 +8,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 // Resume independently of exit: waiting for exit before draining would deadlock
 // a correctly backpressured CLI. A deadline belongs to this witness, not the CLI.
-function runNode(args, { input = '', pause = 0, timeout = 15000, env = {}, brokenPipe = false } = {}) {
+function runNode(args, { input = '', pause = 0, timeout = 15000, env = {}, brokenPipe = false, brokenStderr = false } = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, args, { cwd: ROOT, env: { ...process.env, ...env } });
     const out = [], err = [];
@@ -29,15 +29,16 @@ function runNode(args, { input = '', pause = 0, timeout = 15000, env = {}, broke
     child.stdout.on('end', () => { stdoutEnded = true; });
     child.stderr.on('end', () => { stderrEnded = true; });
     child.on('exit', () => { exitSeen = true; });
-    child.on('error', reject);
+    child.on('error', error => { clearTimeout(drain); clearTimeout(deadline); child.kill(); reject(error); });
     child.on('close', (code, signal) => {
       clearTimeout(drain); clearTimeout(deadline);
       resolve({ code, signal, stdout: Buffer.concat(out), stderr: Buffer.concat(err),
         stdoutEnded, stderrEnded, exitSeen, ms: Date.now() - started });
     });
-    child.stdin.on('error', error => { if (error.code !== 'EPIPE') reject(error); });
+    child.stdin.on('error', error => { if (error.code !== 'EPIPE') { child.kill(); reject(error); } });
     if (pause) child.stdout.pause();
     if (brokenPipe) child.stdout.destroy();
+    if (brokenStderr) child.stderr.destroy();
     child.stdin.end(input);
   });
 }
@@ -90,8 +91,32 @@ test('#862 a closed output pipe does not turn a failed write into success', { sk
   const actual = await runNode(['scripts/smoke-select.mjs', '--diff', '-', '--json'], {
     input: diff(1500), brokenPipe: true,
   });
-  assert.notEqual(actual.code, 0);
-  assert.match(actual.stderr.toString(), /EPIPE|ERR_STREAM_DESTROYED/);
+  assert.equal(actual.code, 1);
+  assert.equal(actual.signal, null, 'not killed by the deadline');
+});
+
+test('#862 async completion cannot overwrite an earlier stdout/stderr write failure', { skip: process.platform === 'win32' }, async () => {
+  for (const stream of ['stdout', 'stderr']) {
+    const source = `import { guardCliOutput } from './scripts/cli-output.mjs';
+      const finish = guardCliOutput();
+      console.${stream === 'stdout' ? 'log' : 'error'}('x'.repeat(512000));
+      await new Promise(resolve => setTimeout(resolve, 40)); finish(0);`;
+    const actual = await runNode(['--input-type=module', '-e', source], {
+      brokenPipe: stream === 'stdout', brokenStderr: stream === 'stderr',
+    });
+    assert.equal(actual.code, 1, stream);
+    assert.equal(actual.signal, null, stream);
+  }
+});
+
+test('#862 a large stderr report drains completely and retains a pre-existing failure code', async () => {
+  const source = `import { guardCliOutput } from './scripts/cli-output.mjs';
+    const finish = guardCliOutput(); console.error('x'.repeat(512000)); finish(2);`;
+  const actual = await runNode(['--input-type=module', '-e', source]);
+  assert.equal(actual.code, 2);
+  assert.deepEqual(actual.stderr, Buffer.from(`${'x'.repeat(512000)}\n`));
+  assert.equal(actual.stdout.length, 0);
+  assert.ok(actual.stderrEnded && actual.exitSeen);
 });
 
 test('#862 witness deadline rejects a deliberately live handle and kills its child', async () => {
