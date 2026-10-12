@@ -19,11 +19,17 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Generated | 2026-10-12 — rerun `node scripts/status-snapshot.mjs` for the current tree |
 | Version | **1.81.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.80.1` |
-| Latest prerelease tag | `v1.80.1-beta.1` |
-| Tests | Node unit 4135 · pure backend 464 · HA-harness backend 367 · browser smokes 315 (`npm run inventory`) |
+| Latest prerelease tag | `v1.81.0-beta.1` |
+| Tests | Node unit 4168 · pure backend 464 · HA-harness backend 367 · browser smokes 315 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Candidate preparation (#858) is read-only and deterministic over exact material,
+pins, ledger, fresh issue bodies and full proof. Owner-reviewed scene intent and
+native ordinary/risky-neighbour dev acceptance are separate from CI green;
+headless never substitutes for required real-GPU field proof. Night diagnostics
+retain exact failing job/step and unknown cause rather than inferring guilt.
 
 Frontend producer reuse and remaining workflow waits (#856) are proof-bound:
 pending frees runners but never grants merge/publish authority; local product

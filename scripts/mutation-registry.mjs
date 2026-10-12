@@ -77,6 +77,24 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'candidate-headless-substitutes-owner-gpu',
+    guard: 'node --test --test-name-pattern="#858 interactive floor" test/candidate-858.test.mjs',
+    because: '#858: native/headless green must not stand in for an authenticated owner real-GPU dev receipt',
+    patches: [{ file: 'scripts/candidate-readiness.mjs',
+      find: '  if (gpu && (record.environment.realGpu !== true || !record.environment.gpu?.trim()',
+      replace: '  if (false && (record.environment.realGpu !== true || !record.environment.gpu?.trim()',
+    }],
+  },
+  {
+    id: 'candidate-accepts-unrelated-scene-drift',
+    guard: 'node --test --test-name-pattern="#858 owner scene intent" test/candidate-858.test.mjs',
+    because: '#858: owner-scoped scene intent never approves unrelated golden regions or a partial capture',
+    patches: [{ file: 'scripts/candidate-readiness.mjs',
+      find: "  return results.some(r => r.status !== 'passed') && !goldenAcceptanceRefusal(results, scenes.change, scenes.new);",
+      replace: "  return results.some(r => r.status !== 'passed') && true;",
+    }],
+  },
+  {
     id: 'led-state-delivery-blesses-expired-lease',
     guard: 'node --test --test-name-pattern="#863 LED oracle" test/smoke-evidence-863.test.mjs',
     because: '#863: active paint must have contemporaneous active delivery, not a settled state or a Node timing assumption; synthetic field evidence proves this without Chromium',

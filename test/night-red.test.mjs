@@ -263,7 +263,7 @@ test('#736 AC2 К4–К5: один комментарий на задачу за
   const sameCode = await night([validateRun({ id: 112, sha: c8, at: day(30), conclusion: 'failure' }),
     validateRun({ id: 111, sha: c8, at: day(29) })], 112);
   assert.equal(store.posted.length, 5);
-  assert.match(sameCode.summary.join('\n'), /Тот же код был зелёным — вероятен флак/);
+  assert.match(sameCode.summary.join('\n'), /Причина не установлена, флак не объявляется/);
 
   // Зелёной в окне нет — подозреваемых не назначаю.
   const lost = await night([R3, validateRun({ id: 99, sha: sha.G, at: day(19), full: false })], 110);
@@ -349,12 +349,14 @@ async function actionsServer(t, items, { fail = false } = {}) {
     if (download) return send(200, zipWith(items.find((item) => item.run.id === Number(download[1])).context.proof), 'application/zip');
     if (req.headers.authorization !== 'Bearer actions-token') return send(401, { message: 'bad token' });
     if (url.pathname === `/repos/${REPO}/actions/workflows/validate.yml/runs`) return send(200, { workflow_runs: items.map((item) => item.run) });
-    const route = url.pathname.match(new RegExp(`^/repos/${REPO}/actions/runs/(\\d+)(/artifacts|/jobs)?$`));
+    const route = url.pathname.match(new RegExp(`^/repos/${REPO}/actions/runs/(\\d+)(/artifacts|/jobs|/attempts/\\d+/jobs)?$`));
     const item = route && items.find((entry) => entry.run.id === Number(route[1]));
     if (!item) return send(404, { message: 'not found' });
     if (!route[2]) return send(200, item.run);
-    if (route[2] === '/jobs') {
-      return send(200, { jobs: item.run.conclusion === 'failure' ? [{ name: 'Смоки в браузере (шард 3/6)', conclusion: 'failure' }, { name: 'Предполёт', conclusion: 'success' }] : item.context.jobs });
+    if (route[2]?.endsWith('/jobs')) {
+      return send(200, { jobs: item.run.conclusion === 'failure' ? [{ name: 'Смоки в браузере (шард 3/6)', conclusion: 'failure',
+        html_url: `${item.run.html_url || `https://ghe.example.test/${REPO}/actions/runs/${item.run.id}`}/job/3`,
+        steps: [{ number: 7, name: 'Run browser smoke', conclusion: 'failure' }] }, { name: 'Предполёт', conclusion: 'success' }] : item.context.jobs });
     }
     const name = url.searchParams.get('name');
     return send(200, { artifacts: [{ name, expired: false, archive_download_url: `http://127.0.0.1:${server.address().port}/download/${item.run.id}` }] });

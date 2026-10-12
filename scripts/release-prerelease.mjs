@@ -13,6 +13,7 @@ import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
 import { assertReleaseContract } from './release-contract.mjs';
 import { candidateExpectations, classifyValidateProofs } from './release-gate.mjs';
+import { assertCandidateAcceptance } from './release-prepare.mjs';
 import { assertBundleManifest } from './bundle-tree.mjs';
 import { assertCommittedBundleFresh } from './bundle-policy.mjs';
 import { sourceFingerprint } from './source-fingerprint.mjs';
@@ -502,6 +503,9 @@ if (invokedDirectly) {
     const bundleSnapshot = assertBundleSnapshots(sha);
     const bundleSha256 = bundleSnapshot.entrySha256;
     const validateRuns = await assertGreenValidate(sha);
+    // #858: independent owner field receipt is not inferred from full CI green.
+    await assertCandidateAcceptance({ repo, candidate: sha, root,
+      token: run('gh', ['auth', 'token']).stdout });
     validateIssues();
     // #696, PROCESS.md §11.7: ship-задачи диапазона слиты без ревью модели —
     // бета только после пакетного ревью их кода (`ship-review.yml`).

@@ -104,6 +104,12 @@ jobs:
           retention-days: 1
       # #696, PROCESS.md §11.7: задачи track:ship слиты без ревью модели — бета
       # публикуется, только когда их код прочитало пакетное ревью диапазона.
+      - name: Candidate scenes and owner native/GPU acceptance are current
+        if: steps.readiness.outputs.proceed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.candidate.outputs.sha }}
+        run: node scripts/release-prepare.mjs --candidate="$SHA" --repo="$GITHUB_REPOSITORY"
       - name: Ship tasks of the range are batch-reviewed
         if: steps.readiness.outputs.proceed == 'true'
         env:

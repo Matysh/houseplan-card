@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 858,
+  "baseStable": "v1.80.1",
+  "category": "infra",
+  "rationale": "Read-only candidate prepare, authenticated owner scene/native/GPU acceptance and exact red-night diagnostics. B/C only; no product behavior, automatic baseline acceptance or new publisher."
+}

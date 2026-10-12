@@ -37,6 +37,7 @@ import { classify } from './change-classes.mjs';
 import { issueTrailers } from './release-membership.mjs';
 import { hasReleaseTrailer } from './ship-review.mjs';
 import { CI_PROOF_POLICIES, evaluateCiProof, githubApiBase, githubServerUrl, loadGithubProofContext } from './ci-proof.mjs';
+import { diagnoseNight, diagnosticLines } from './night-diagnostics.mjs';
 
 /** Сколько последних dispatch-прогонов Validate на `dev` смотрит поиск `G`. */
 export const RUN_WINDOW = 50;
@@ -135,7 +136,7 @@ const limited = (items, render) => {
  * К4: тело комментария. `commits` — все коммиты задачи в диапазоне; метка несёт все.
  * `server` — для ссылок прогонов без `html_url` (#766).
  */
-export function commentBody({ repo, red, green, commits = [], failedJobs = [], server = githubServerUrl() }) {
+export function commentBody({ repo, red, green, commits = [], failedJobs = [], diagnostic = null, server = githubServerUrl() }) {
   const R = red.head_sha;
   const G = green.head_sha;
   return [
@@ -143,6 +144,7 @@ export function commentBody({ repo, red, green, commits = [], failedJobs = [], s
       + ` Последняя зелёная ночь — ${runUrl(repo, green, server)} (\`${short(G, 12)}\`).`,
     `Коммиты этой задачи с файлами классов A/B вошли в \`dev\` между ними: ${limited(commits, (c) => `\`${short(c.sha, 8)}\` ${c.subject}`)}.`,
     `Упали job: ${failedJobs.length ? limited(failedJobs, (name) => name) : '—'}.`,
+    ...(diagnostic ? diagnosticLines(diagnostic) : ['Причина не установлена; список job не доказывает product regression или golden drift.']),
     'Задача — подозреваемая по диапазону, а не виновная. Ночь — сигнал, не гейт: бета по-прежнему требует зелёный Validate на SHA кандидата.',
     `<!-- hp:night-red green=${G} red=${R} commits=${commits.map((c) => short(c.sha, 12)).join('+')} -->`,
   ].join('\n');
@@ -160,7 +162,7 @@ const VERDICT_LINE = {
  * `rangeCommits`. Возвращает строки сводки, написанные комментарии и
  * предупреждения; сбой до первой задачи — исключение.
  */
-export async function nightRed({ repo, redRunId, api, issues, git, workflowJobs = undefined, server = githubServerUrl() }) {
+export async function nightRed({ repo, redRunId, api, issues, git, workflowJobs = undefined, diagnosticEvidence = null, server = githubServerUrl() }) {
   const head = '### Красная ночь (#736)';
   const red = await api.run(redRunId);
   const redLine = `${runUrl(repo, red, server)} (\`${short(red.head_sha, 12)}\`)`;
@@ -170,10 +172,11 @@ export async function nightRed({ repo, redRunId, api, issues, git, workflowJobs 
       summary: [head, `- Прогон Validate ${redLine}: ${red.status}/${red.conclusion || '—'}, не failure — комментариев нет.`],
     };
   }
+  const diagnostic = diagnoseNight({ run: red, jobs: api.jobs ? await api.jobs(red.id, red.run_attempt) : [], evidence: diagnosticEvidence });
   const found = await findLastGreen({
     red, runs: await api.runs(), isAncestor: git.isAncestor, proofContext: api.proofContext, workflowJobs,
   });
-  const summary = [head, `- Красный прогон: ${redLine}.`];
+  const summary = [head, `- Красный прогон: ${redLine}.`, ...diagnosticLines(diagnostic).map(l => `- ${l}`)];
   for (const item of found.skipped) {
     summary.push(`- Отсеян зелёный ${runUrl(repo, item.run, server)} (\`${short(item.run.head_sha, 12)}\`): ${item.status} — ${item.note}.`);
   }
@@ -185,7 +188,7 @@ export async function nightRed({ repo, redRunId, api, issues, git, workflowJobs 
   summary.push(`- Последняя зелёная ночь: ${runUrl(repo, green, server)} (\`${short(green.head_sha, 12)}\`).`);
   const commits = green.head_sha === red.head_sha ? [] : git.rangeCommits(green.head_sha, red.head_sha);
   if (!commits.length) {
-    summary.push('- Тот же код был зелёным — вероятен флак. Комментариев нет.');
+    summary.push('- Тот же код был зелёным, но совпадение pins/окружения и полный bounded повтор не доказаны. Причина не установлена, флак не объявляется. Комментариев нет.');
     return { posted: [], warnings: [], summary };
   }
   const { issues: suspects, orphans } = rangeSuspects(commits);
@@ -199,7 +202,7 @@ export async function nightRed({ repo, redRunId, api, issues, git, workflowJobs 
       const issue = issues.view(suspect.number);
       const verdict = commentVerdict({ issue, green: green.head_sha, commits: suspect.commits });
       if (verdict === 'comment') {
-        const body = commentBody({ repo, red, green, commits: suspect.commits, failedJobs, server });
+        const body = commentBody({ repo, red, green, commits: suspect.commits, failedJobs, diagnostic, server });
         issues.comment(suspect.number, body);
         posted.push({ number: suspect.number, body });
       }
@@ -258,6 +261,11 @@ export function actionsClient({ repo, token, apiBase = githubApiBase(), fetchImp
   };
   return {
     run: (id) => json(`/actions/runs/${id}`),
+    jobs: async (id, attempt = 1) => {
+      const result = await json(`/actions/runs/${id}/attempts/${attempt}/jobs?per_page=100`);
+      if (result.total_count > 100) throw Error('night diagnostics: >100 jobs; exact failed step list would be incomplete');
+      return result.jobs || [];
+    },
     runs: async () => (await json(`/actions/workflows/validate.yml/runs?branch=dev&event=workflow_dispatch&per_page=${RUN_WINDOW}`))
       ?.workflow_runs || [],
     failedJobs: async (id) => ((await json(`/actions/runs/${id}/jobs?per_page=100`))?.jobs || [])

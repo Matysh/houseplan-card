@@ -1261,6 +1261,74 @@ above); the dev stand takes the head of `dev` from the `dev-build` branch
 
 ### Primary prerelease path
 
+Before the existing owner publish command, run `npm run release:prepare` on a
+clean exact-candidate checkout. This command performs only GETs/local reads:
+it cannot create a tag, release, baseline, workflow dispatch or announcement.
+Its identity includes SHA/tree, verified two-copy bundle manifest, canonical
+pins/workflow, candidate ledger, fresh issue bodies, scene plans and full
+Validate proof. A missing/stale/red/partial proof is an actionable blocker,
+not a cache hit. Repeat with unchanged inputs yields the same identity. Stable
+performance/E2E and batch-review contracts remain additional publisher gates.
+
+For a merged/closed `ci:golden` task the repository owner reviews an explicit
+scene plan in that issue. `release:prepare` prints its issue/body/material keys;
+`npm run release:prepare -- --list-scenes` lists existing IDs with mode/theme/
+viewport, so no hidden catalogue knowledge is needed. The owner comment is:
+
+```text
+<!-- hp:candidate-plan
+{"schema":1,"issue":123,"body":"<fresh body digest>","issueMaterial":"<prepare key>","change":["<existing scene ID>"],"new":[],"reason":"Reviewed intentional change"}
+-->
+```
+
+An explicit empty plan means no intentional pixel change. The latest owner
+record wins, including malformed/revoked records; a claimed owner inside JSON
+does not authenticate it. Plans are tied to delivered file contents and issue
+body, never inferred from a red screenshot. Existing `_beta-derived.yml` and
+golden acceptance commands still review the declared artifact; prepare never
+executes them. Undeclared differences/new scenes remain forbidden.
+
+For large frontend features and geometry/viewport changes the report supplies
+ordinary and risky-neighbour cases, scripts and observable oracles. Run
+`npm run release:native` (or `-- --profiles=geometry,view`) on the clean
+committed candidate after preparing its emitted test helpers/demo bundle.
+The runner uses real browser pointers in the existing node/topology and live
+coverage scenarios, enforces the launched browser pins, records actual
+environment, script/output hashes and observed checks. Timeout/exit0 without
+the required check inventory is not PASS. Native evidence is **not** human
+acceptance; a successful headless run never claims field/GPU acceptance.
+
+Install that exact material on the existing dev stand; the owner observes each
+listed case and posts `hp:candidate-acceptance` JSON in the relevant issue:
+`schema:1`, `material:<prepare material key>`, `verdict:"accepted"`,
+`surface:"dev"`, `native:<native report metadata, including pass/SHA/tree/
+bundle/pins/actual environment>`, and `cases` containing each required id,
+script/scriptHash/nativeOutput, `pass:true`, an actual `observed` result and
+HTTPS `evidence` URL (trace/video/native report). Include `environment.browser`
+and `environment.os`. For raster/compositor risk also include
+`environment.realGpu:true`, named `gpu`, `headless:false`, and `gpuEvidence`.
+This is an authenticated owner's field attestation, not automated verification
+of a video's contents; never manufacture it as an agent. A new candidate,
+body/pin/ledger/scene change or missing ordinary/neighbour evidence requires a
+fresh attestation. Adding an acceptance does not change its material key, but
+does change the complete readiness identity. No receipt means no publication.
+
+`release-prerelease.mjs`, `publish-prerelease.yml` and `release.yml` all check
+fresh candidate readiness before public work. Prepare alone grants no publish
+authority: the separate owner command/confirmation, full Validate and existing
+release gates remain mandatory. Comments are read in at most ten 100-item
+pages; overflow fails explicitly rather than silently missing a revocation.
+
+Night red diagnostics fetch the current Validate attempt's jobs and failed
+steps (at most 100; overflow refuses) and retain exact SHA/run/job/step URLs.
+They distinguish unknown from structured exact-attempt, complete environment/
+harness/product assertion or reviewed intentional-scene evidence. A single
+same-SHA green elsewhere is not flaky proof. At most one observed retry with
+complete matching SHA/environment supports `bounded-flaky-evidence`, never
+PASS or issue guilt. The live path stays `unknown` when those structured
+receipts are unavailable; no automatic retry, baseline acceptance or diagnostic
+category changes gate colour. Errors preserve the original red gate outcome.
+
 Prepare the candidate as usual: synchronize every version field, add dated RU
 and EN changelog sections, update the production bundle snapshots with
 `npm run bundle:release` (since #657 the only commit that may change them; it

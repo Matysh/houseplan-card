@@ -1436,8 +1436,13 @@ SHA уходит выходом `tools_sha` в `model_review`. Рабочая к
 каждый `Issue: #NN` коммита из `git rev-list --no-merges <зелёная>..<красная>`
 (коммиты ветки, влитой слиянием, входят) с файлом класса A или B и без трейлера
 `Release:`; коммит только из `docs/**` не считается, коммит без трейлера —
-строка «без задачи» в сводке, пустой диапазон — «вероятен флак». Комментарий
-называет прогоны, коммиты задачи и упавшие job, говорит «подозреваемая, а не
+строка «без задачи» в сводке. Пустой диапазон не доказывает флак: без полного
+bounded повтора с совпадающими материалом/pins/окружением причина unknown
+(#858). Диагностика сохраняет exact run/attempt/SHA, ссылки job и упавших step;
+product regression, intentional drift, environment/harness и bounded flaky
+evidence называются только по пригодным структурным наблюдениям. Категория
+не меняет исходный gate outcome, partial/timeout/retry не становятся PASS.
+Комментарий называет прогоны, коммиты задачи и упавшие job/step, говорит «подозреваемая, а не
 виновная» и несёт метку `hp:night-red green=… red=… commits=…`. Повтор не
 пишется в закрытую задачу и туда, где метка с той же зелёной ночью уже
 перечисляет все нынешние коммиты задачи в диапазоне: серия красных ночей от
@@ -1447,6 +1452,14 @@ SHA уходит выходом `tools_sha` в `model_review`. Рабочая к
 `issues: write` нет, потолок тонкого `nightly.yml` не меняется. Постановка в
 очередь явно `pending`, не зелёная ночь. Цвет проверки — цвет полного Validate;
 сбой диагностического `night-red` не делает его зелёным.
+
+Read-only candidate prepare и owner scene/native/GPU приёмка (#858) описаны в
+`docs/DEVELOPMENT.md` › Release. Prepare связывает exact SHA/tree/bundle/pins,
+ledger, свежие тела issue и полный proof; ни tag, ни baseline, ни публикацию
+сам не создаёт. Native ordinary/risky-neighbour oracle и отдельная приёмка на
+dev нужны для крупных geometry/gesture/View изменений; headless не заменяет
+required owner real-GPU evidence. Existing owner-команда выпуска, full gates
+и отдельное подтверждение сохраняются; агент не фабрикует owner field receipt.
 
 **Оставшиеся ожидания без runner** (#856). Интеграция после ребейза, ночь и
 ранее заказанный владельцем релиз запечатывают `workflow-continuation-RUN-ATTEMPT`
