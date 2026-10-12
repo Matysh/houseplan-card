@@ -21,7 +21,7 @@ const CLASS_A = [
 const CLASS_B = [
   /^test\//, /^tests_backend\//, /^demo\//, /^scripts\//,
   /^\.github\//, /^\.githooks\//, /^rollup\.config\.mjs$/, /^tsconfig.*\.json$/,
-  /^package(-lock)?\.json$/, /^pytest\.ini$/, /^\.gitignore$/, /^\.gitattributes$/,
+  /^package(-lock)?\.json$/, /^pytest\.ini$/, /^\.gitignore$/, /^\.ignore$/, /^\.gitattributes$/,
   // Пины toolchain — производные от validate.yml (#496), конфиг сборки.
   /^\.nvmrc$/, /^\.python-version$/,
 ];

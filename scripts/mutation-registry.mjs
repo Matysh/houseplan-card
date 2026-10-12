@@ -95,6 +95,14 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'decision-context-archive-by-default',
+    guard: 'node --test --test-name-pattern="#860 bounded lookup" test/decision-context-860.test.mjs',
+    because: '#860: explicit historical access must not turn normal addressed lookup into archive noise.',
+    patches: [{ file: 'scripts/decision-context.mjs',
+      find: "    ...(historical ? ['legacy/reviews'] : [])]).trim().split('\\n');",
+      replace: "    ...(['legacy/reviews'])]).trim().split('\\n');" }],
+  },
+  {
     id: 'wall-adoption-mutates-shared-point-owners',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test test/wall-adoption-alias.test.mjs',

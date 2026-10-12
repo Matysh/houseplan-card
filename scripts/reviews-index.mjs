@@ -506,7 +506,7 @@ export function commitIfStale({ dir, output = join(dir, INDEX_FILE), issue, git 
   if (!existsSync(dir)) return { changed: false, sha: null }; // каталога нет — индексировать нечего
   const markdown = buildIndex(dir);
   const current = existsSync(output) ? readFileSync(output, 'utf8') : '';
-  if (current === markdown) return { changed: false, sha: null };
+  if (current.replace(/\r\n?/g, '\n') === markdown) return { changed: false, sha: null };
   writeFileSync(output, markdown, 'utf8');
   const must = (args, what) => {
     const r = git(args);

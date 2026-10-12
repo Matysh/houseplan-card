@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 860,
+  "baseStable": "v1.80.1",
+  "category": "infra",
+  "rationale": "Адресные role/history packets, политика поиска архивов и read-only asset checkpoint. Только B/C, без изменений пользовательского поведения; канон и исторические proof не удаляются."
+}

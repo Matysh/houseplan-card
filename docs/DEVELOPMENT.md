@@ -623,6 +623,12 @@ This post-GC value is the #628 monthly-growth baseline. To evaluate AC2 on or
 after 2026-10-25, run the same GC and `count-objects` sequence and compare the
 new `size-pack` with 467.63 MiB; the accepted upper bound is 487.63 MiB.
 
+`node scripts/repo-weight.mjs` (#860) records read-only host/platform/material,
+raw KiB loose+pack metrics and logical tracked PNG/bundle bytes. It never runs
+GC or modifies history, LFS or quota. Compare growth only for the same clone
+and phase: a WSL partial clone or a without-GC snapshot cannot satisfy the
+Windows post-GC checkpoint. The 2026-10-25 decision remains with the owner.
+
 ## Previous-installation lifecycle (#820)
 
 The config flow uses `previous_data.py` for read-only discovery and reversible

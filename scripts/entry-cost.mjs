@@ -47,10 +47,22 @@ export const countWords = (text) => text.split(/\s+/).filter(Boolean).length;
 
 /** Замер одного маршрута: слова по файлам, сумма и вердикт бюджета. */
 export function measureRoute(route, read = (rel) => readFileSync(join(ROOT, rel), 'utf8')) {
-  const files = route.files.map((file) => ({ file, words: countWords(read(file)) }));
+  const files = [...new Set(route.files)].map((file) => {
+    const text = read(file);
+    return { file, words: countWords(text), bytes: Buffer.byteLength(text, 'utf8') };
+  });
   const total = files.reduce((sum, row) => sum + row.words, 0);
   const over = route.budget != null && total > route.budget;
-  return { files, total, budget: route.budget, over };
+  return { files, total, bytes: files.reduce((sum, row) => sum + row.bytes, 0), reads: files.length, budget: route.budget, over };
+}
+
+/** #860: links, not another summary of mandatory rules. Pipeline route cannot be shortened by a role flag. */
+export function roleEntry(role, changedFiles = []) {
+  if (!Object.hasOwn(ROUTES, role)) throw new Error('entry-cost: unknown role');
+  const pipeline = changedFiles.some(path => /^(?:\.github\/|scripts\/|\.githooks\/|docs\/process\/|AGENTS\.md$|PROCESS\.md$)/.test(path));
+  const requiredRole = pipeline ? 'canon' : role;
+  return { schema: 1, requestedRole: role, requiredRole, files: ROUTES[requiredRole].files,
+    canon: 'PROCESS.md', changedFiles, policy: 'read each required source once; read addressed subsystem and risky hunks in full; packet is not permission' };
 }
 
 export function measureAll(routes = ROUTES, read) {
@@ -69,6 +81,10 @@ export function renderTable(results) {
 }
 
 if (isMainModule(import.meta.url)) {
+  if (process.argv.includes('--packet')) {
+    const arg = key => process.argv.find(a => a.startsWith(`--${key}=`))?.slice(key.length + 3);
+    console.log(JSON.stringify(roleEntry(arg('role') || 'author', (arg('files') || '').split(',').filter(Boolean)), null, 2));
+  } else {
   const results = measureAll();
   if (process.argv.includes('--json')) console.log(JSON.stringify(results, null, 2));
   else console.log(renderTable(results));
@@ -78,5 +94,6 @@ if (isMainModule(import.meta.url)) {
       console.error(`entry-cost: превышен бюджет входа: ${failed.join(', ')}`);
       process.exit(1);
     }
+  }
   }
 }

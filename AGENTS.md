@@ -50,6 +50,15 @@ Where the rest lives: commands — `package.json` scripts, `CONTRIBUTING.md`,
 `docs/DEVELOPMENT.md` (toolchain, build, release — its Release section is the
 only home of release mechanics); tests and gates — `docs/TESTING.md`.
 
+Addressed entry (#860): `entry-cost.mjs --packet --role=author|reviewer|canon
+--files=<comma-separated paths>` returns sources, not another rule digest;
+pipeline paths require the full canon even with an author/reviewer flag.
+`task-packet.mjs --issue NN --role=canon` adds that entry to the current task.
+`decision-context.mjs --issue=NN` or `--file=src/file.ts` returns bounded source
+anchors at an immutable material; add `--historical` for the archive and
+`--at=YYYY-MM-DD|<ref>` for earlier material. Ordinary `rg` excludes only
+`legacy/**`; explicit `rg --no-ignore ... legacy` remains available.
+
 ## Rule #1
 
 > Changing product code without an issue is forbidden. Code changes only when the

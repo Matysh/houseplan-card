@@ -480,6 +480,12 @@ test('#635 r2: --commit-if-stale пересобирает индекс и ком
     const fresh = commitIfStale({ dir, issue: '635', git });
     assert.deepEqual(fresh, { changed: false, sha: null });
     assert.equal(git(['rev-parse', 'HEAD']).stdout.trim(), base, 'свежий индекс — коммита нет');
+    // #860: Windows line endings alone must not create an index commit.
+    const currentIndex = readFileSync(join(dir, INDEX_FILE), 'utf8');
+    writeFileSync(join(dir, INDEX_FILE), currentIndex.replace(/\n/g, '\r\n'));
+    assert.deepEqual(commitIfStale({ dir, issue: '635', git }), { changed: false, sha: null });
+    assert.equal(git(['rev-parse', 'HEAD']).stdout.trim(), base);
+    writeFileSync(join(dir, INDEX_FILE), currentIndex);
     // «Ребейз» принёс новый документ: индекс устарел.
     writeFileSync(join(dir, 'CODE-REVIEW-2-r1.md'), 'Вердикт: **жёлтый** · High: 0 · Medium: 1\n### M1 — x\n');
     git(['add', '-A']);

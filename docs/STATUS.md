@@ -52,6 +52,13 @@ normal unit gates and static CLI. Bare CLI is static; only the nightly workflow
 opts into execution. Changed readiness pins base/material and fails on unreadable
 definitions. The retired Validate interface cannot execute or write caught proof.
 
+Agent entry (#860) preserves required role/canon routes and measures distinct
+source reads/UTF-8 bytes, not token estimates. Addressed decision lookup pins
+material and limits document reads; explicit historical lookup bypasses only
+the legacy search ignore. INDEX line-ending-only changes do not create commits.
+`repo-weight.mjs` is read-only; cross-host/raw metrics cannot decide #628's
+Windows post-GC growth checkpoint on 2026-10-25.
+
 Settings focus (#870) has one owner per composite: the authentic HA icon picker
 keeps its own active line, the native fallback uses the form-kit wrapper, and
 unit controls retain the #784 policy. The offline pinned-component diagnostic

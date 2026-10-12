@@ -28,6 +28,7 @@ import {
   classifyRisk, cycleLimit, hasTrackLabel, rebaseBeforeReview, riskClassLine, trackFromLabels, trackOrigin,
 } from './process-track.mjs';
 import { CALL_CONTEXT_LINES, selectSmokes } from './smoke-select.mjs';
+import { roleEntry } from './entry-cost.mjs';
 
 export const STATUS_LABELS = ['S1-new', 'S2-analysis', 'S3-spec', 'S4-spec-review', 'S5-ready', 'S6-in-progress', 'S7-code-review', 'S8-merged'];
 
@@ -307,11 +308,11 @@ export function changelogState({ commits = [], changedFiles = [], risk = null } 
  * не ставится, но на старых остаётся. Инфраструктурный вход её не несёт; `infra`
  * рядом с ней — тематическая метка.
  */
-export function productFlowEvidence({ status = null, labels = [], issue = {}, specs = [], reviewDocs = [], comments = [] } = {}) {
+export function productFlowEvidence({ status = null, labels = [], issue = {}, specs = [], reviewDocs = [], comments = [], infrastructureContract = false } = {}) {
   const reasons = [];
   if (PRE_CODE_STATUSES.includes(status)) reasons.push(`статус ${status}`);
   if (labels.includes('trivial')) reasons.push('прежняя метка trivial — продуктовый поток, читается как track:show (§5.1)');
-  if (/^#{1,3}\s*ТЗ(?![\p{L}\p{N}_])/mu.test(String(issue?.body ?? ''))) reasons.push('раздел «## ТЗ» в теле issue');
+  if (!infrastructureContract && /^#{1,3}\s*ТЗ(?![\p{L}\p{N}_])/mu.test(String(issue?.body ?? ''))) reasons.push('раздел «## ТЗ» в теле issue');
   if (specs.length) reasons.push('файл ТЗ в docs/specs');
   if (reviewDocs.some((d) => String(d.name).startsWith('SPEC-REVIEW-'))) reasons.push('документ ревью ТЗ');
   else if (comments.some((c) => verdictDeclaration(c.body) && /SPEC-REVIEW-\d+/.test(String(c.body)))) reasons.push('вердикт ревью ТЗ в комментариях');
@@ -327,7 +328,12 @@ export function buildPacket(inputs) {
   // Трек сначала определяется статусом и историей issue (#632): прошедшая
   // S3/S4/S5 или несущая ТЗ задача — продуктовая, и её право на класс A в
   // S5–S7 не отнимается пустым пока диффом.
-  const productFlow = productFlowEvidence({ status, labels, issue, specs, reviewDocs, comments });
+  // #860: a voluntary infra work contract is not a product spec. Only a real
+  // class-A-free branch plus the explicit declaration can remove this one hint;
+  // S1–S5/legacy/spec-review evidence and all class-A guards remain authoritative.
+  const infrastructureContract = branch?.infrastructure === true && labels.includes('infra')
+    && String(issue.body).includes('Добровольный рабочий контракт инфраструктурной задачи');
+  const productFlow = productFlowEvidence({ status, labels, issue, specs, reviewDocs, comments, infrastructureContract });
   // `infra` — тематическая метка и не даёт процессных прав. Ускоренный трек
   // доказывается тем же механическим признаком, что process-gate: в реальном
   // diff опубликованной ветки нет ни одного файла класса A — и только вне
@@ -584,6 +590,10 @@ if (isMainModule(import.meta.url)) {
   const number = Number(value('issue'));
   if (!Number.isInteger(number) || number <= 0) { console.error('нужен --issue <номер>'); process.exit(2); }
   const repo = value('repo') || 'Matysh/houseplan-card';
-  const packet = buildPacket(collectInputs({ number, repo }));
-  process.stdout.write(argv.includes('--json') ? `${JSON.stringify(packet, null, 2)}\n` : renderPacket(packet));
+  const inputs = collectInputs({ number, repo });
+  const packet = buildPacket(inputs);
+  const role = value('role');
+  const entry = role ? roleEntry(role, inputs.branch?.changedFiles || []) : null;
+  process.stdout.write(argv.includes('--json') ? `${JSON.stringify(entry ? { entry, packet } : packet, null, 2)}\n`
+    : (entry ? `Ролевой вход (${entry.requiredRole}): ${entry.files.join(' → ')}. Пакет не заменяет чтение правил.\n\n` : '') + renderPacket(packet));
 }
