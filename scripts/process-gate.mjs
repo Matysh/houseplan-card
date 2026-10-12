@@ -36,6 +36,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { guardCliOutput } from './cli-output.mjs';
 
 import { SPEC_DRAFT_VALUE, resolveValidationRange, specDraftValues } from './validate-commit-provenance.mjs';
 
@@ -1102,9 +1103,10 @@ function main(argv) {
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  try { process.exitCode = main(process.argv.slice(2)); }
+  const finish = guardCliOutput();
+  try { finish(main(process.argv.slice(2))); }
   catch (error) {
     if (!(error instanceof GitCliFailure)) throw error;
-    process.exitCode = 2;
+    finish(2);
   }
 }

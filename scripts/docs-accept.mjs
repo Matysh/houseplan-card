@@ -33,6 +33,7 @@ import { portableCommand } from './spawn-portable.mjs';
 import { assertCaptureEnvironment, captureEnvironment } from './capture-environment.mjs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { guardCliOutput } from './cli-output.mjs';
 
 import { DOC_SCREENSHOT_VERSION, DOC_SCREENSHOTS } from '../demo/docs/screenshots.mjs';
 import { docsAcceptancePlan } from './docs-acceptance.mjs';
@@ -330,8 +331,9 @@ async function main(argv) {
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  main(process.argv.slice(2)).then((code) => { process.exitCode = code; }, (error) => {
+  const finish = guardCliOutput();
+  main(process.argv.slice(2)).then(finish, (error) => {
     console.error(`отказ: ${error.message}`);
-    process.exitCode = 1;
+    finish(1);
   });
 }

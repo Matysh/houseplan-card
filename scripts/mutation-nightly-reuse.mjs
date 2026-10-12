@@ -22,6 +22,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { isMainModule } from './spawn-portable.mjs';
+import { guardCliOutput } from './cli-output.mjs';
 
 export const REUSE_MARKER_SCHEMA = 'houseplan-mutation-green/v1';
 export const MAX_REUSE_AGE_DAYS = 7;
@@ -129,4 +130,4 @@ export function main(argv, { now = Date.now(), log = (line) => console.log(line)
   return 0;
 }
 
-if (isMainModule(import.meta.url)) process.exitCode = main(process.argv.slice(2));
+if (isMainModule(import.meta.url)) guardCliOutput()(main(process.argv.slice(2)));

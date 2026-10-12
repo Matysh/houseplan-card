@@ -22,6 +22,7 @@ import { spawnSync } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { attestStandardLaunch } from './browser-attestation.mjs';
+import { guardCliOutput } from './cli-output.mjs';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const IMAGES = resolve(ROOT, 'docs/images');
@@ -87,6 +88,7 @@ export function main({ runCapture = capture, hashes = () => frameHashes(IMAGES) 
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const finish = guardCliOutput();
   // #827: съёмка CI-документации идёт мимо `npm run docs:capture`, поэтому
   // запущенный Chromium судится и здесь, один раз до обоих прогонов.
   let ready = false;
@@ -95,7 +97,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     ready = true;
   } catch (error) {
     console.error(`::error::${error instanceof Error ? error.message : String(error)}`);
-    process.exitCode = 1;
+    finish(1);
   }
-  if (ready) process.exitCode = main();
+  if (ready) finish(main());
 }

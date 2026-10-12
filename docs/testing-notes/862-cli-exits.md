@@ -1,9 +1,13 @@
 # CLI output completion — #862
 
 The eight affected entry points now set `process.exitCode` and return naturally.
-Node drains pending writes; no flush timer, output schema or stream-error handler
-was added. An unhandled write error retains Node's nonzero error exit (POSIX
-EPIPE). This is not a guarantee for a reader that never resumes reading.
+Node drains pending writes; no flush timer or output schema change was added.
+All eight use the same finite-report policy: `cli-output.mjs` latches write errors
+on either channel and prevents Console's default ignoreErrors from claiming
+success (POSIX EPIPE). Existing nonzero codes are retained; otherwise write failure
+sets 1, including errors preceding async main completion. Importing these modules
+as a library installs no listeners. This is not a guarantee for a reader that
+never resumes reading.
 
 | Entry point | Output / exit branches | Owned resources and cleanup | Witness |
 |---|---|---|---|

@@ -29,6 +29,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { registeredSmokes } from './smoke-links.mjs';
+import { guardCliOutput } from './cli-output.mjs';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -453,5 +454,5 @@ function main(argv) {
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  process.exitCode = main(process.argv.slice(2));
+  guardCliOutput()(main(process.argv.slice(2)));
 }

@@ -56,6 +56,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { guardCliOutput } from './cli-output.mjs';
 import ts from 'typescript';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -392,5 +393,5 @@ function main(argv) {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))) {
-  process.exitCode = main(process.argv.slice(2));
+  guardCliOutput()(main(process.argv.slice(2)));
 }

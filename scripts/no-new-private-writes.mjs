@@ -47,6 +47,7 @@ import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { addedLinesByFile, movedLinesByFile, parseExemption } from './no-new-any.mjs';
 import { isMainModule } from './spawn-portable.mjs';
+import { guardCliOutput } from './cli-output.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -347,5 +348,5 @@ function main(argv) {
 }
 
 if (isMainModule(import.meta.url)) {
-  process.exitCode = main(process.argv.slice(2));
+  guardCliOutput()(main(process.argv.slice(2)));
 }
