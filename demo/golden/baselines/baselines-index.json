@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 73,
-  "acceptedAt": "2026-10-07T20:16:32.701Z",
-  "sourceFingerprint": "e270340092f7e34e87f84df9b2d6b4a34d4ffadf0039174d8c3c89cfa4573b69",
+  "acceptedAt": "2026-10-12T09:23:57.727Z",
+  "sourceFingerprint": "785250b5805c81140e713af8409f3ced23c2e13f215b6bc863698a46d7abd0ac",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,18 +10,18 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "e270340092f7e34e87f84df9b2d6b4a34d4ffadf0039174d8c3c89cfa4573b69",
+    "buildFingerprint": "785250b5805c81140e713af8409f3ced23c2e13f215b6bc863698a46d7abd0ac",
     "ci": {
       "repository": "Matysh/houseplan-card",
-      "run": 37675448130,
+      "run": 38227563994,
       "attempt": 1,
-      "sha": "334e0c23788d9da952a217f5e86b080e89eb8934"
+      "sha": "69aa99058cd1dcff9de19098018b5d2d163bb60b"
     }
   },
   "localAttestation": null,
   "foreignCapture": null,
   "witnesses": {
-    "count": 111,
+    "count": 98,
     "floor": 10
   },
   "scenarios": {
@@ -211,7 +211,7 @@
     "support-phone-success-dark-en": "dcf2cb53e904dd3196052f5e0001b8aee712db9c9c0e4f8cd2982645e4bf7dbd",
     "support-relay-error-light-en": "adf30f96a926a1730c9ad34d18b4234d9b19140f11d56c8fb7508976f366c11d",
     "support-tablet-preview-dark-ru": "a69ba86bf069d9beba94eedf6cc3b385b026caeee66348e4ef42c1a072b6df6a",
-    "device-ripple-color-popover-mobile-ru": "3f74934eac123e25ef0e9aed18b470e06271f250e53a26cac15d8882fa260f43",
+    "device-ripple-color-popover-mobile-ru": "373571eddd1f1e398900436f01f1cb3e8d8c8c8456494177d3582a00007db218",
     "space-room-color-popover-desktop-ru": "0e4654978e004cb9242ccf4add8022b57459b6a8524f141160ae49aa46787fe9",
     "backup-full-preview-desktop-en": "2a71dd52bce193a5ddca1ee0404f91754787206cbe01af0b0bfb3871016ed289",
     "backup-plan-only-export-desktop-en": "d7ae8031e1147ee8d3d15f35d8cd5bc65aa24fc880ad2feafdd7c8713b76c0c5",
