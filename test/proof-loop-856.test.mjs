@@ -37,6 +37,9 @@ test('#856 frontend reuse needs full successful provenance, exact input/env and 
     { artifact: { ...artifact, expired: true } }, { now: context.now + 86400000 }])
     assert.equal(admissibleFrontendProof(proof, { ...context, ...delta }), false);
   assert.equal(admissibleFrontendProof({ ...proof, reused: true }, context), false, 'no unbounded proof chain');
+  assert.equal(admissibleFrontendProof(proof, { ...context, run: { ...run, head_branch: 'issue/856-source' }, promotedSha: a }), true,
+    'exact material actually merged into protected dev may reuse its successful issue producer');
+  assert.equal(admissibleFrontendProof(proof, { ...context, run: { ...run, head_branch: 'issue/856-source' }, promotedSha: b }), false);
   const dir = temp(t);
   for (const name of ['dist', 'test-build']) { mkdirSync(join(dir, name)); writeFileSync(join(dir, name, 'file.js'), name); }
   const p = { dist: artifactTree(join(dir, 'dist')), testBuild: artifactTree(join(dir, 'test-build')) };
@@ -62,18 +65,25 @@ test('#856 real producer restore copies verified bytes; config/lock/pin/workflow
     dist: artifactTree(join(producer, 'dist')), testBuild: artifactTree(join(producer, 'test-build')) };
   writeFileSync(join(producer, 'proof.json'), JSON.stringify(stored));
   const sourceRun = { ...run, head_sha: sha };
+  let protectedHead = sha;
   const sourceArtifact = { ...artifact, created_at: new Date().toISOString() };
   const api = args => {
     const path = args[1];
+    if (path.includes('/git/ref/heads/')) return { object: { sha: protectedHead } };
     if (path.includes('/workflows/')) return { workflow_runs: [sourceRun] };
     if (path.includes('/artifacts')) return { artifacts: [sourceArtifact] };
     if (path.includes('/jobs')) return { jobs };
     if (path.includes('/git/commits/')) return { tree: { sha: tree } };
     return sourceRun;
   };
-  const restore = () => restoreFrontend({ root: dir, repo, environment, api, download: (_id, _name, out) => cpSync(producer, out, { recursive: true }) });
+  const restore = () => restoreFrontend({ root: dir, repo, environment, api, consumerBranch: 'dev',
+    download: (_id, _name, out) => cpSync(producer, out, { recursive: true }) });
   assert.equal(restore().reused, true);
   assert.equal(readFileSync(join(dir, 'dist/file.js'), 'utf8'), 'verified-dist');
+  sourceRun.head_branch = 'issue/856-source';
+  assert.equal(restore().reused, true, 'actual promoted issue producer path');
+  protectedHead = a; assert.equal(restore().reused, false, 'protected consumer moved away');
+  protectedHead = sha; sourceRun.head_branch = 'dev';
   for (const p of ['tsconfig.json', 'package-lock.json', '.nvmrc', '.github/workflows/validate.yml', 'src/a.ts']) {
     const bytes = readFileSync(join(dir, p)); writeFileSync(join(dir, p), bytes + '\nchanged');
     assert.equal(restore().reused, false, p); writeFileSync(join(dir, p), bytes);
@@ -105,6 +115,8 @@ test('#856 release pending preserves owner intent; no green for partial/failed/c
   await resumeDomainContinuation(p, { ...ops, claim: () => false });
   await resumeDomainContinuation(p, { ...ops, proof: () => ({ status: 'cancelled' }) });
   assert.equal(calls, 1);
+  const ambiguous = await resumeDomainContinuation(p, { ...ops, dispatch: () => { throw Error('delivery timeout'); } });
+  assert.equal(ambiguous.action, 'claimed-delivery-unknown'); assert.equal(ambiguous.needsRecovery, true);
   const gates = [];
   const stableBase = { ...base, tag: 'v1.81.0', stable: true,
     probe: options => { gates.push(options.workflow || 'validate.yml'); return { status: 'green' }; },

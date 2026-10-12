@@ -30,8 +30,10 @@ export async function resumeDomainContinuation(p, { state, proof, claim, dispatc
     return { action: 'pending', reason: `complete proof not green: ${verdict.status}` };
   if (!matches(await state())) return { action: 'noop', reason: 'state changed before dispatch' };
   if (!await claim(p)) return { action: 'already-claimed', reason: 'no repeat; inspect original continuation run if delivery is ambiguous' };
-  if (!matches(await state())) return { action: 'claimed-stale', reason: 'changed after claim; no dispatch, owner repair required' };
-  await dispatch(p);
+  try {
+    if (!matches(await state())) return { action: 'claimed-stale', reason: 'changed after claim; no dispatch, owner repair required' };
+    await dispatch(p);
+  } catch { return { action: 'claimed-delivery-unknown', reason: 'claim exists; verify source/delivery before an explicit owner retry', needsRecovery: true }; }
   return { action: 'dispatched', status: verdict.status, ...(diagnosticWarning ? { diagnosticWarning } : {}) };
 }
 
@@ -59,8 +61,10 @@ export async function resumeMergeContinuation(p, { state, proof, merge, move, co
   if (decision.action === 'merge') {
     if (!await merge(p)) return { action: 'noop', reason: 'lease/branch changed before dev push' };
     // A successful push is irreversible here; do not relabel a newer epoch.
-    if (mergeContinuationDecision(p, await state()).action !== 'repair')
-      return { action: 'merged', reason: 'code in dev; changed request left untouched' };
+    try {
+      if (mergeContinuationDecision(p, await state()).action !== 'repair')
+        return { action: 'merged', reason: 'code in dev; changed request left untouched' };
+    } catch { return { action: 'merged-label-pending', reason: 'code pushed; freshness API failed, reconcile must repair', needsRecovery: true }; }
   }
   const to = ['merge', 'repair'].includes(decision.action) ? 'S8-merged' : 'S6-in-progress';
   try { await move('S7-code-review', to); }
@@ -99,7 +103,9 @@ export async function continueWorkflows({ repo, eventId, apply = false, out = nu
       // An old artifact must not survive a cancelled/new producer rerun.
       const producer = api(`repos/${repo}/actions/runs/${runId}`);
       const p = loadSealedArtifact(repo, { id: runId, attempt }, artifact, 'pending.json');
-      if (!validContinuation(p)) { outcomes.push({ action: 'noop', reason: 'invalid sealed identity' }); continue; }
+      if (!validContinuation(p) || String(p.producer.run) !== runId || String(p.producer.attempt) !== attempt) {
+        outcomes.push({ action: 'noop', reason: 'invalid sealed identity/name' }); continue;
+      }
       const eventWorkflow = event?.path === '.github/workflows/performance.yml' && p.kind === 'release' ? 'performance.yml' : 'validate.yml';
       const childRuns = api(`repos/${repo}/actions/workflows/${eventWorkflow}/runs?head_sha=${p.candidate}&per_page=10`).workflow_runs || [];
       const latest = childRuns.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at) || b.id - a.id)[0];
@@ -171,7 +177,7 @@ export async function continueWorkflows({ repo, eventId, apply = false, out = nu
         });
         outcomes.push({ kind: p.kind, producer: producer.id, ...result });
       }
-    } catch { outcomes.push({ action: 'noop', reason: 'cannot authenticate/verify continuation; no authority applied' }); }
+    } catch { outcomes.push({ action: 'unverified', reason: 'verification failed; no success assumed; inspect source and possible one-shot claim before retry' }); }
   }
   if (out) {
     const { mkdirSync, writeFileSync } = await import('node:fs');

@@ -487,7 +487,8 @@ pre-push hook. Root `tsc --noEmit` is already part of build; test-config emit,
 `fix-test-build` and `noUnusedLocals` have different contracts and remain.
 
 Validate can restore dist/test-build only from a complete successful protected
-producer run/attempt, byte inventories, known Node/OS/architecture/runner image
+producer run/attempt (or an issue producer whose exact SHA has actually reached
+the protected consumer ref), byte inventories, known Node/OS/architecture/runner image
 and the complete frontend content key. V1 also binds HEAD/SHA/tree because unit
 fixtures inspect git metadata: cross-commit equivalence is not presumed.
 Red/cancelled/incomplete/expired/foreign or changed config/pin/toolchain evidence

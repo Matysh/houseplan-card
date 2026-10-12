@@ -47,13 +47,15 @@ export function artifactTree(directory) {
   if (!rows.length) throw Error('empty producer artifact');
   return hash(JSON.stringify(rows));
 }
-export function admissibleFrontendProof(proof, { key, fingerprint, environment, run, jobs, artifact, tree, now = Date.now(), repo }) {
+export function admissibleFrontendProof(proof, { key, fingerprint, environment, run, jobs, artifact, tree, now = Date.now(), repo, promotedSha = null }) {
   return proof?.schema === 1 && proof.outcome === 'success' && proof.reused === false
     && hex(proof.key, 64) && proof.key === key && proof.fingerprint === fingerprint
     && JSON.stringify(proof.environment) === JSON.stringify(environment)
     && Boolean(environment.imageOS && environment.imageVersion)
     && run?.status === 'completed' && run.conclusion === 'success'
-    && run.repository?.full_name === repo && run.head_repository?.full_name === repo && ['dev', 'main'].includes(run.head_branch)
+    && run.repository?.full_name === repo && run.head_repository?.full_name === repo
+    && (['dev', 'main'].includes(run.head_branch) || /^issue\/[1-9]\d+-[\w-]+$/.test(run.head_branch || '')
+      && promotedSha === run.head_sha)
     && run.path === '.github/workflows/validate.yml' && proof.sha === run.head_sha && proof.tree === tree
     && hex(proof.sha, 40) && hex(proof.tree, 40) && String(proof.run) === String(run.id)
     && Number(proof.attempt) === Number(run.run_attempt)
@@ -70,15 +72,21 @@ export function verifyProducerTrees(proof, directory) {
 const gh = args => JSON.parse(execFileSync('gh', args, { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 }));
 const git = args => execFileSync('git', args, { encoding: 'utf8' }).trim();
 export function restoreFrontend({ root = process.cwd(), repo, environment = producerEnvironment(), api = gh,
+  consumerBranch = process.env.GITHUB_REF_NAME,
   download = (id, name, dir) => execFileSync('gh', ['run', 'download', String(id), '--repo', repo, '--name', name, '--dir', dir], { stdio: 'pipe' }) } = {}) {
   const key = frontendKey(root, environment), fingerprint = sourceFingerprint(root);
   if (!environment.imageOS || !environment.imageVersion) return { reused: false, key, reason: 'unknown runner environment' };
-  const list = api(['api', `repos/${repo}/actions/workflows/validate.yml/runs?branch=dev&status=success&per_page=10`]);
+  // For dev-after-merge, an issue run becomes trusted only when its exact HEAD
+  // has actually reached the protected consumer ref. No cross-SHA equivalence.
+  const localSha = execFileSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+  const promotedSha = ['dev', 'main'].includes(consumerBranch)
+    && api(['api', `repos/${repo}/git/ref/heads/${consumerBranch}`]).object?.sha === localSha ? localSha : null;
+  const list = api(['api', `repos/${repo}/actions/workflows/validate.yml/runs?head_sha=${localSha}&status=success&per_page=10`]);
   for (const candidate of list.workflow_runs || []) {
     if (String(candidate.id) === String(process.env.GITHUB_RUN_ID)) continue;
     const dir = mkdtempSync(join(tmpdir(), 'hp-frontend-proof-'));
     try {
-      const run = api(['api', `repos/${repo}/actions/runs/${candidate.id}/attempts/${candidate.run_attempt}`]);
+      const run = api(['api', `repos/${repo}/actions/runs/${candidate.id}`]);
       const name = `frontend-proof-${run.id}-${run.run_attempt}`;
       const artifacts = api(['api', `repos/${repo}/actions/runs/${run.id}/artifacts?name=${name}`]).artifacts || [];
       if (artifacts.length !== 1 || artifacts[0].expired) continue;
@@ -86,7 +94,7 @@ export function restoreFrontend({ root = process.cwd(), repo, environment = prod
       const proof = JSON.parse(readFileSync(join(dir, 'proof.json'), 'utf8'));
       const jobs = api(['api', `repos/${repo}/actions/runs/${run.id}/attempts/${run.run_attempt}/jobs?per_page=100`]).jobs;
       const tree = api(['api', `repos/${repo}/git/commits/${run.head_sha}`]).tree?.sha;
-      if (!admissibleFrontendProof(proof, { key, fingerprint, environment, run, jobs, artifact: artifacts[0], tree, repo })) continue;
+      if (!admissibleFrontendProof(proof, { key, fingerprint, environment, run, jobs, artifact: artifacts[0], tree, repo, promotedSha })) continue;
       verifyProducerTrees(proof, dir);
       for (const name of ['dist', 'test-build']) {
         const target = resolve(root, name);
