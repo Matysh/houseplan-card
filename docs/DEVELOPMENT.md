@@ -1318,6 +1318,11 @@ fresh candidate readiness before public work. Prepare alone grants no publish
 authority: the separate owner command/confirmation, full Validate and existing
 release gates remain mandatory. Comments are read in at most ten 100-item
 pages; overflow fails explicitly rather than silently missing a revocation.
+Publishers refresh this check immediately before tag/publication, not only at
+the earlier gate. Their `--publication-check` permits only untracked generated
+`houseplan.zip`, `release-assets/`, `passport/`, `existing-public/`; tracked
+bundle/source/config changes or other untracked files still refuse. The normal
+prepare/native path requires a fully clean checkout.
 
 Night red diagnostics fetch the current Validate attempt's jobs and failed
 steps (at most 100; overflow refuses) and retain exact SHA/run/job/step URLs.

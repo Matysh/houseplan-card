@@ -7,10 +7,10 @@ import { GOLDEN_SCENARIOS } from '../demo/golden/matrix.mjs';
 import { candidateExpectations, probeGreenWorkflow } from './release-gate.mjs';
 import { isMainModule } from './spawn-portable.mjs';
 const get = path => JSON.parse(execFileSync('gh', ['api', '--method', 'GET', path], { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 }));
-export async function prepareCandidate({ repo, candidate = 'HEAD', root = process.cwd(), input,
+export async function prepareCandidate({ repo, candidate = 'HEAD', root = process.cwd(), input, publicationCheck = false,
   request = get, probe = probeGreenWorkflow, token = process.env.GH_TOKEN } = {}) {
   if (!/^[\w.-]+\/[\w.-]+$/.test(repo || '')) throw Error('repo=owner/name required');
-  input ||= candidateInputs({ candidate, root });
+  input ||= candidateInputs({ candidate, root, publicationCheck });
   token ||= execFileSync('gh', ['auth', 'token'], { encoding: 'utf8' }).trim();
   const issues = input.catalogue.entries.map(entry => {
     const issue = request(`repos/${repo}/issues/${entry.issue}`);
@@ -39,7 +39,8 @@ if (isMainModule(import.meta.url)) {
       console.log(JSON.stringify(GOLDEN_SCENARIOS.map(s => ({ id: s.id, mode: s.mode, theme: s.theme,
         projection: s.projection || 'flat', viewport: s.viewport })), null, 2));
     } else {
-    const record = await prepareCandidate({ repo: arg('repo') || process.env.GITHUB_REPOSITORY || 'Matysh/houseplan-card', candidate: arg('candidate') || 'HEAD' });
+    const record = await prepareCandidate({ repo: arg('repo') || process.env.GITHUB_REPOSITORY || 'Matysh/houseplan-card', candidate: arg('candidate') || 'HEAD',
+      publicationCheck: process.argv.includes('--publication-check') });
     console.log(JSON.stringify(record, null, 2));
     if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY,
       `\n### Candidate ${record.identity}\n\n${record.ready ? 'Prepared, not published.' : record.blockers.map(b => `- ${b}`).join('\n')}\n`);

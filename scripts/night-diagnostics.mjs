@@ -29,7 +29,8 @@ export function diagnoseNight({ run, jobs = [], evidence = null, sceneIds }) {
     gateOutcome: run.status === 'completed' && run.conclusion === 'success' ? 'success' : 'not-green', category, reason, locations };
 }
 export function diagnosticLines(report) {
-  return [`Диагноз: ${report.category} — ${report.reason}`, ...report.locations.flatMap(l => [
+  return [`Материал: ${report.sha}, Validate run ${report.run}, attempt ${report.attempt}.`,
+    `Диагноз: ${report.category} — ${report.reason}`, ...report.locations.flatMap(l => [
     `Job ${l.job}: ${l.url || 'URL отсутствует'}`, ...l.steps.map(s => `Step ${s.number} «${s.name}» (${s.conclusion}): ${s.url || 'URL отсутствует'}`),
   ])];
 }

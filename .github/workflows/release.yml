@@ -347,10 +347,12 @@ jobs:
       # not necessarily the verified commit. The tag is pinned here, first.
       - name: Create or verify the tag at the exact commit
         env:
+          GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.candidate.outputs.tag }}
           SHA: ${{ needs.candidate.outputs.sha }}
         run: |
           set -euo pipefail
+          node scripts/release-prepare.mjs --publication-check --candidate="$SHA" --repo="$GITHUB_REPOSITORY"
           REMOTE=$(git ls-remote --tags origin "refs/tags/$TAG" "refs/tags/$TAG^{}")
           if [ -n "$REMOTE" ]; then
             PEELED=$(printf '%s\n' "$REMOTE" | awk -v ref="refs/tags/$TAG^{}" '$2 == ref {print $1}')
@@ -452,8 +454,10 @@ jobs:
           TAG: ${{ needs.candidate.outputs.tag }}
           MODE: ${{ needs.candidate.outputs.mode }}
           PRERELEASE: ${{ needs.candidate.outputs.prerelease }}
+          SHA: ${{ needs.candidate.outputs.sha }}
         run: |
           set -euo pipefail
+          node scripts/release-prepare.mjs --publication-check --candidate="$SHA" --repo="$GITHUB_REPOSITORY"
           if [ "$MODE" = "repair" ]; then
             echo "newly_published=false" >> "$GITHUB_OUTPUT"
             echo "repair of a public release: nothing to publish"

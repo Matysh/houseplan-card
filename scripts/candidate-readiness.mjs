@@ -30,7 +30,7 @@ export function requiredProfiles(entry, files) {
   if (entry.category === 'infra') return [];
   const majorFrontend = entry.category === 'major' && files.some(f => f.startsWith('src/'));
   return unique([
-    ...(files.some(f => /(?:wall-node|wall-segment|resize|geometry-transaction)/.test(f)) ? ['geometry'] : []),
+    ...(files.some(f => /(?:wall[-_]|geometry|resize|opening)/.test(f)) ? ['geometry'] : []),
     ...(majorFrontend || files.some(f => /(?:live-interaction|live-view|viewport|gesture|visual-continuity)/.test(f)) ? ['view'] : []),
   ]);
 }
@@ -127,10 +127,15 @@ export function intentionalDrift(results, scenes, sceneIds = GOLDEN_SCENARIOS.ma
   if (results.length !== sceneIds.length || unique(results.map(r => r.id)).join('\0') !== unique(sceneIds).join('\0')) return false;
   return results.some(r => r.status !== 'passed') && !goldenAcceptanceRefusal(results, scenes.change, scenes.new);
 }
-export function candidateInputs({ candidate = 'HEAD', root = process.cwd(), gitRunner } = {}) {
+export function candidateInputs({ candidate = 'HEAD', root = process.cwd(), gitRunner, publicationCheck = false } = {}) {
   const git = gitRunner || (args => execFileSync('git', ['-C', root, ...args], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 }).trim());
   const sha = git(['rev-parse', `${candidate}^{commit}`]);
-  if (git(['rev-parse', 'HEAD']) !== sha || git(['status', '--porcelain'])) throw Error('prepare requires a clean exact-candidate checkout');
+  const dirt = git(['status', '--porcelain']).split('\n').filter(Boolean);
+  // Only the existing publishers' generated, untracked asset containers may
+  // coexist with a last-moment check. No tracked/source/config edit is ignored.
+  const unsafe = dirt.filter(l => !(publicationCheck && l.startsWith('?? ')
+    && /^(?:houseplan\.zip|release-assets\/|passport\/|existing-public\/)$/.test(l.slice(3))));
+  if (git(['rev-parse', 'HEAD']) !== sha || unsafe.length) throw Error('prepare requires a clean exact-candidate checkout');
   const catalogue = readCatalogue({ candidate: sha, gitRunner: git });
   const issueFiles = {}, issueMaterials = {};
   for (const entry of catalogue.entries) {

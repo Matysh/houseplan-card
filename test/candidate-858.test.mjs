@@ -23,7 +23,7 @@ const comment = (marker, record, login = 'Matysh', id = 1) => ({ user: { login }
 function fixture(category = 'major') {
   const input = { sha: a, tree: b, manifest: k, pins: { lock: k },
     catalogue: { entries: [{ issue: 1, category, commits: [a] }] },
-    issueFiles: { 1: ['src/wall-node-move.ts', 'src/houseplan-card.ts'] }, issueMaterials: { 1: k },
+    issueFiles: { 1: ['src/wall-node-move.ts', 'src/live-interaction-runtime.ts'] }, issueMaterials: { 1: k },
     scripts: Object.fromEntries(Object.values(NATIVE_PROFILES).flat().map(c => [c.script, k])) };
   const issue = { number: 1, body: 'spec', state: 'open', labels: ['S8-merged', 'ci:golden'], comments: [] };
   const plan = { schema: 1, issue: 1, body: issueBodyDigest(issue.body), issueMaterial: k, change: ['one'], new: [], reason: 'reviewed intended change' };
@@ -138,7 +138,9 @@ test('#858 actual publisher workflow steps refuse an unprepared candidate before
 test('#858 candidate inspects actual first-parent merge delta and committed bundle, not issue title', t => {
   const dir = temp(t); const put = (p, v) => { mkdirSync(join(dir, p, '..'), { recursive: true }); writeFileSync(join(dir, p), v); };
   git(dir, 'init', '-q', '-b', 'dev');
-  for (const tree of ['dist','custom_components/houseplan/frontend']) cpSync(join(root, tree), join(dir, tree), { recursive: true });
+  // The fixture supplies one coherent synthetic projection to BOTH copies;
+  // the real task checkout deliberately keeps its committed frontend unchanged.
+  for (const tree of ['dist','custom_components/houseplan/frontend']) cpSync(join(root, 'dist'), join(dir, tree), { recursive: true });
   for (const p of ['package.json','package-lock.json','.nvmrc','.python-version','tests_backend/requirements.txt','.github/workflows/validate.yml','demo/golden/matrix.mjs',
     ...new Set(Object.values(NATIVE_PROFILES).flat().map(c => c.script))]) put(p, readFileSync(join(root,p)));
   put('src/dummy.ts','export const a = 1;');
@@ -152,5 +154,11 @@ test('#858 candidate inspects actual first-parent merge delta and committed bund
   git(dir,'merge','--no-ff','side','-m','integrate\n\nIssue: #1\nUser-Visible: no');
   const inputs = candidateInputs({ root: dir }); assert.ok(inputs.issueFiles[1].includes('src/wall-node-new.ts'));
   assert.equal(inputs.sha, git(dir,'rev-parse','HEAD')); assert.equal(inputs.manifest.length,64);
+  put('houseplan.zip','generated');
+  assert.throws(() => candidateInputs({ root: dir }), /clean exact-candidate/);
+  assert.deepEqual(candidateInputs({ root: dir, publicationCheck: true }), inputs);
+  put('src/untracked.ts','unsafe');
+  assert.throws(() => candidateInputs({ root: dir, publicationCheck: true }), /clean exact-candidate/);
+  rmSync(join(dir,'src/untracked.ts')); rmSync(join(dir,'houseplan.zip'));
   put('dist/houseplan-card.js','corrupt'); assert.throws(() => candidateInputs({ root: dir }), /clean exact-candidate/);
 });

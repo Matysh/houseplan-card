@@ -197,10 +197,12 @@ jobs:
           node scripts/release-assets.mjs sums release-assets --include-membership
       - name: Create or verify the annotated tag
         env:
+          GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.gate.outputs.tag }}
           SHA: ${{ needs.gate.outputs.sha }}
         run: |
           set -euo pipefail
+          node scripts/release-prepare.mjs --publication-check --candidate="$SHA" --repo="$GITHUB_REPOSITORY"
           REMOTE=$(git ls-remote --tags origin "refs/tags/$TAG" "refs/tags/$TAG^{}")
           if [ -n "$REMOTE" ]; then
             PEELED=$(printf '%s\n' "$REMOTE" | awk -v ref="refs/tags/$TAG^{}" '$2 == ref {print $1}')
@@ -225,8 +227,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.gate.outputs.tag }}
+          SHA: ${{ needs.gate.outputs.sha }}
         run: |
           set -euo pipefail
+          node scripts/release-prepare.mjs --publication-check --candidate="$SHA" --repo="$GITHUB_REPOSITORY"
           if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag \
               --draft --prerelease --title "$TAG" --notes-file docs/RELEASE-NOTES.md
@@ -261,6 +265,7 @@ jobs:
             if (!(Number(assets.get(name)?.size) > 0)) throw new Error(`${name} is missing or empty`);
           }
           NODE
+          node scripts/release-prepare.mjs --publication-check --candidate="$SHA" --repo="$GITHUB_REPOSITORY"
           gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease \
             --title "$TAG" --notes-file docs/RELEASE-NOTES.md
       - name: Verify the public release and assets

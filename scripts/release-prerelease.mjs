@@ -584,6 +584,7 @@ if (invokedDirectly) {
       }
 
       const zipPath = buildZip(sha, contract.version, bundleSnapshot, artifactsDir);
+      await assertCandidateAcceptance({ repo, candidate: sha, root, token: run('gh', ['auth', 'token']).stdout });
       if (!existingTag.exists) {
         const local = localTag();
         if (local.exists && (!local.annotated || local.commit !== sha)) {
@@ -623,6 +624,7 @@ if (invokedDirectly) {
           throw new Error(`Draft release asset ${name} is missing or empty`);
       }
 
+      await assertCandidateAcceptance({ repo, candidate: sha, root, token: run('gh', ['auth', 'token']).stdout });
       run('gh', [
         'release', 'edit', tag, '--repo', repo, '--draft=false', '--prerelease',
         '--title', tag, '--notes-file', 'docs/RELEASE-NOTES.md',
