@@ -4,6 +4,13 @@ import { spawnSync } from 'node:child_process';
 import { attestStandardLaunch, requirePinnedBrowser } from './browser-attestation.mjs';
 import { candidateInputs, digest, NATIVE_PROFILES } from './candidate-readiness.mjs';
 import { isMainModule } from './spawn-portable.mjs';
+export const NATIVE_CHECK_FLOORS = Object.freeze({
+  'demo/smoke_wall_node_move.mjs': ['committed geometry equals the visible preview', 'Undo restores exact starting catalogue/openings',
+    'Esc and trailing move/up create no writes', 'invalid last release never saves the older valid candidate',
+    'raster: original affected wall is a translucent source ghost', 'native node movement keeps the frozen camera'],
+  'demo/smoke_live_pan_coverage.mjs': ['flatMouseRightEdgeHeldCoverage', 'flatTouchZoomOutHeldCoverage',
+    'isoTouchZoomOutHeldCoverage', 'isoMouseRightEdgeMarkerParity', 'kioskTouchRightEdgeHeldCoverage', 'stablePromotionCleansAtTerminal'],
+});
 export function judgeNativeOutput(script, result) {
   const text = result.stdout || '';
   if (result.error || result.status !== 0 || !/^OK\s*$/m.test(text)) return { pass: false, reason: 'failed/incomplete/timeout native process' };
@@ -14,10 +21,8 @@ export function judgeNativeOutput(script, result) {
   const line = text.split('\n').find(l => l.startsWith('HP_SMOKE_CHECKS '));
   let checks;
   try { checks = JSON.parse(line?.slice(16)); } catch { return { pass: false, reason: 'observable check inventory missing' }; }
-  const ordinary = script.endsWith('smoke_wall_node_move.mjs')
-    ? ['committed geometry equals the visible preview', 'Undo restores exact starting catalogue/openings']
-    : ['flatMouseRightEdge', 'kioskTouchRightEdge', 'isoTouchZoomOut'];
-  if (!Array.isArray(checks) || ordinary.some(name => !checks.some(c => c.includes(name)))) return { pass: false, reason: 'ordinary/risky-neighbour oracle missing' };
+  const ordinary = NATIVE_CHECK_FLOORS[script];
+  if (!ordinary || !Array.isArray(checks) || ordinary.some(name => !checks.includes(name))) return { pass: false, reason: 'ordinary/risky-neighbour oracle missing' };
   return { pass: true, observed: checks.join('; ') };
 }
 export async function runCandidateNative({ input = candidateInputs(), profiles = ['geometry', 'view'], execute = spawnSync,

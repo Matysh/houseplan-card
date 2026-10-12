@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildCandidate, candidateInputs, digest, NATIVE_PROFILES, intentionalDrift, ownerRecord } from '../scripts/candidate-readiness.mjs';
 import { prepareCandidate, assertCandidateAcceptance } from '../scripts/release-prepare.mjs';
-import { judgeNativeOutput, runCandidateNative } from '../scripts/candidate-native.mjs';
+import { judgeNativeOutput, runCandidateNative, NATIVE_CHECK_FLOORS } from '../scripts/candidate-native.mjs';
 import { diagnoseNight, diagnosticLines } from '../scripts/night-diagnostics.mjs';
 import { issueBodyDigest } from '../scripts/review-doc-guard.mjs';
 import { sourceFingerprint } from '../scripts/source-fingerprint.mjs';
@@ -91,10 +91,13 @@ test('#858 prepare only performs GETs, calls existing full proof, never dispatch
 });
 test('#858 native receipt refuses exit0 without real observed floor, timeout and partial output', async () => {
   const script = NATIVE_PROFILES.geometry[0].script;
-  const stdout = 'HP_SMOKE_CHECKS ' + JSON.stringify(['committed geometry equals the visible preview', 'Undo restores exact starting catalogue/openings']) + '\nOK\n';
+  const stdout = 'HP_SMOKE_CHECKS ' + JSON.stringify(NATIVE_CHECK_FLOORS[script]) + '\nOK\n';
   assert.equal(judgeNativeOutput(script, { status: 0, stdout }).pass, true);
   for (const bad of [{ status: 0, stdout: 'OK\n' }, { status: 1, stdout }, { status: null, stdout }, { status: 0, stdout, error: Error('timeout') }])
     assert.equal(judgeNativeOutput(script, bad).pass, false);
+  const view = 'demo/smoke_live_pan_coverage.mjs';
+  assert.equal(judgeNativeOutput(view, { status: 0, stdout: `HP_SMOKE_CHECKS ${JSON.stringify(NATIVE_CHECK_FLOORS[view])}\nOK\n` }).pass, true);
+  assert.equal(judgeNativeOutput(view, { status: 0, stdout: 'HP_SMOKE_CHECKS ["flatMouseRightEdgeHeldCoverageButNotActually"]\nOK\n' }).pass, false);
   const f = fixture(); const calls = [];
   const report = await runCandidateNative({ input: f.input, profiles: ['geometry'], attest: async () => ({ actual: { version: 'pinned' } }),
     execute: (_node, args, opts) => { calls.push({ args, opts }); return { status: 0, stdout: args[1].includes('topology') ? '{"scenarios":7,"cycles":100}\nOK\n' : stdout }; } });
