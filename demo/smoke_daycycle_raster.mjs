@@ -20,14 +20,25 @@
 // профиль Firefox с машины владельца: подсказка это совет движку, и Gecko
 // вправе отклонить её по бюджету памяти (layout.css.will-change.budget).
 // Смок нужен не вместо того профиля, а чтобы правку нельзя было молча снять.
-import { launch, check, finish } from './serve.mjs';
+import { launch, check, finish, requirePinnedBrowser } from './serve.mjs';
+import { attestLaunchedBrowser } from '../scripts/browser-attestation.mjs';
+import { PAN_STEPS, SAMPLE_ROUNDS, DAYCYCLE_FIXTURE, pairedMeasurementReport } from './helpers/daycycle-measurement.mjs';
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const PAN_STEPS = 60;
-const SAMPLE_ROUNDS = 3;
-const RATIO_CEILING = 2.0;
-
+requirePinnedBrowser('#863 daycycle raw paired evidence');
 const { page, browser } = await launch({ width: 1400, height: 900 }, 1);
+try {
 const cdp = await page.context().newCDPSession(page);
+const environment = await attestLaunchedBrowser(browser, { reason: '#863 measurement environment', log: () => {} });
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
+const materialSha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim();
+const materialClean = !execFileSync('git', ['status', '--porcelain', '--untracked-files=normal', '--',
+  'src', 'demo', 'scripts', 'package.json', 'package-lock.json', 'tsconfig.json', 'rollup.config.mjs'],
+{ cwd: ROOT, encoding: 'utf8' }).trim();
+let currentMode = null;
 
 const setBackground = async (mode) => {
   await page.evaluate(async (mode) => {
@@ -49,6 +60,17 @@ const setBackground = async (mode) => {
   }, mode);
   // Переход фильтра длится 1100 мс: замер до его конца мерил бы анимацию.
   await page.waitForTimeout(1400);
+  await page.waitForFunction(mode => {
+    const card = window.__card, root = card.shadowRoot;
+    const stage = root.querySelector('.stage'), paper = root.querySelector('.hp-paperg');
+    return !!paper && stage.classList.contains('daycycle') === (mode === 'daynight')
+      && !!root.querySelector('.hp-paper-outline-svg') === (mode === 'daynight')
+      && !card._cameraTransition.active
+      && [paper, root.querySelector('.hp-paper-outline-svg')].filter(Boolean)
+        .every(node => node.getAnimations().every(a => a.playState !== 'running'));
+  }, mode, { timeout: 4000 });
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  currentMode = mode;
 };
 
 const outlineStyle = () => page.evaluate(() => {
@@ -79,8 +101,12 @@ const stageBox = () => page.evaluate(() => {
 });
 
 /** Одна панорама с зажатой кнопкой; возвращает суммарный RasterTask в мс. */
-const measurePan = async () => {
+const measurePan = async (round, order) => {
+  const readyStyle = await outlineStyle();
+  const ready = { mode: currentMode, ok: readyStyle?.daycycle === (currentMode === 'daynight')
+    && readyStyle?.outlinePresent === (currentMode === 'daynight'), style: readyStyle };
   const box = await stageBox();
+  const startedAt = performance.now();
   const events = [];
   const collect = ({ value }) => events.push(...value);
   cdp.on('Tracing.dataCollected', collect);
@@ -113,17 +139,17 @@ const measurePan = async () => {
   await complete;
   cdp.off('Tracing.dataCollected', collect);
   let micros = 0, tasks = 0;
+  const rasterTasks = [];
   for (const event of events) {
     if (event.name !== 'RasterTask' || event.ph !== 'X' || typeof event.dur !== 'number') continue;
     micros += event.dur;
     tasks += 1;
+    rasterTasks.push({ ts: event.ts, dur: event.dur, pid: event.pid, tid: event.tid });
   }
-  return { ms: micros / 1000, tasks };
-};
-
-const median = (values) => {
-  const sorted = [...values].sort((a, b) => a - b);
-  return sorted[Math.floor(sorted.length / 2)];
+  const endedAt = performance.now();
+  return { mode: currentMode, round, order, steps: PAN_STEPS, ready,
+    startedAt, endedAt, wallMs: endedAt - startedAt,
+    ms: micros / 1000, tasks, rasterTasks };
 };
 
 const out = {};
@@ -154,10 +180,10 @@ const staticSamples = [];
 const dayCycleSamples = [];
 let safeDayStyle = null;
 for (let round = 0; round < SAMPLE_ROUNDS; round += 1) {
-  staticSamples.push(await measurePan());
+  staticSamples.push(await measurePan(round, round * 2));
   await setBackground('daynight');
   safeDayStyle = await outlineStyle();
-  dayCycleSamples.push(await measurePan());
+  dayCycleSamples.push(await measurePan(round, round * 2 + 1));
   if (round < SAMPLE_ROUNDS - 1) await setBackground('static');
 }
 out.cameraUsesSafeOutline = safeDayStyle?.safe === true
@@ -171,26 +197,21 @@ out.dayCyclePaperStaysUnfiltered = (safeDayStyle?.paperFilter || 'none') === 'no
 out.safePlanLayerIsExplicit = (safeDayStyle?.planWillChange || '') === 'opacity';
 
 out.rasterTasksObserved = [...staticSamples, ...dayCycleSamples].every((sample) => sample.tasks > 0);
-const staticMedianMs = median(staticSamples.map((sample) => sample.ms));
-const dayCycleMedianMs = median(dayCycleSamples.map((sample) => sample.ms));
-const pairedRatios = dayCycleSamples.map((sample, index) => (
-  staticSamples[index].ms > 0 ? sample.ms / staticSamples[index].ms : Infinity
-));
-const ratio = median(pairedRatios);
-out.rasterRatioWithinBudget = ratio <= RATIO_CEILING;
-
-console.log(JSON.stringify({
-  staticSamples: staticSamples.map((sample) => ({
-    ms: Number(sample.ms.toFixed(1)), tasks: sample.tasks,
-  })),
-  dayCycleSamples: dayCycleSamples.map((sample) => ({
-    ms: Number(sample.ms.toFixed(1)), tasks: sample.tasks,
-  })),
-  staticMedianMs: Number(staticMedianMs.toFixed(1)),
-  dayCycleMedianMs: Number(dayCycleMedianMs.toFixed(1)),
-  pairedRatios: pairedRatios.map((value) => Number(value.toFixed(2))),
-  ratio: Number(ratio.toFixed(2)), ceiling: RATIO_CEILING,
-}, null, 1));
+const report = pairedMeasurementReport({ materialSha, materialClean, environment,
+  fixture: DAYCYCLE_FIXTURE, staticSamples, dayCycleSamples });
+out.measurementValid = report.measurementValid;
+out.rasterRatioWithinBudget = report.rasterRatioWithinBudget;
+const reportArg = process.argv.find(arg => arg.startsWith('--report='))?.slice(9);
+if (reportArg) {
+  if (!/^artifacts\/diagnostics\/863\/[A-Za-z0-9_-]+\.json$/.test(reportArg)) throw new Error('report must be an own artifacts/diagnostics/863 JSON path');
+  const path = resolve(ROOT, reportArg); mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, JSON.stringify(report, null, 2) + '\n', { flag: 'wx' });
+}
+// Full raw samples survive CI in the smoke log; --report also saves standalone JSON.
+console.log(JSON.stringify(report));
 
 for (const [name, value] of Object.entries(out)) check(name, value);
 await finish(browser, out);
+} finally {
+  await browser.close();
+}

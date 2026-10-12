@@ -1,8 +1,10 @@
 /** #789: real input → temporary LED-only24 → exact full48. Not a benchmark. */
-import { launch, check, finish } from './serve.mjs';
+import { launch, check, finish, requirePinnedBrowser } from './serve.mjs';
 import { installLedZoomOracle } from './helpers/led-zoom-oracle.mjs';
 import { observeClampedWheelLease, clampedWheelVerdict } from './helpers/clamped-wheel-lease.mjs';
+import { observeLedStateDelivery, ledDeliveryVerdict } from './helpers/led-state-delivery.mjs';
 
+requirePinnedBrowser('#863 LED active/settled state evidence');
 const { page, browser } = await launch({ width: 1000, height: 820 }, 1, [], { hasTouch: true });
 await page.evaluate(installLedZoomOracle);
 const cdp = await page.context().newCDPSession(page);
@@ -234,11 +236,23 @@ try {
       await wheel(); await setState(state); await page.waitForTimeout(650);
       check(`${state} during coarse is never resurrected by restore`, await page.evaluate(() =>
         !window.__card.shadowRoot.querySelector('[data-led-field="quality"]')));
-      await wheel(); await setState('on', { rgb_color: [117, 197, 42], brightness: 190 });
-      const appeared = await quality(), newFields = appeared.fields.filter(f => f.id === 'quality');
-      check(`new on field during coarse uses current quality (${state})`, appeared.coarse && newFields.length === 1
-        && newFields.every(f => f.retained === 48 && f.painted === 24 && f.correct24));
+      const attributes = { rgb_color: [117, 197, 42], brightness: 190 };
+      // Frozen fixture reference: palette alpha .85 and the documented brightness
+      // formula. Do not derive the expected brightness from the observed field.
+      const expected = { id: 'quality', fill: '#75c52a',
+        alpha: (.85 * .7 * (.4 + .6 * Math.pow(190 / 255, 1 / 2.2))).toFixed(4) };
+      const appeared = await observeLedStateDelivery(page, wheel, { attributes });
+      results.push({ state, phase: 'new-on-active', delivery: appeared });
+      check(`new on field during coarse uses current quality (${state})`, ledDeliveryVerdict(appeared, expected));
       await page.waitForTimeout(650); await restored(`on after ${state}`);
+      const settled = await quality();
+      check(`new on field retains RGB/brightness after lease (${state})`, settled.fields.some(f =>
+        f.id === expected.id && f.painted === 48 && f.fill === expected.fill && f.alpha === expected.alpha));
+      await setState(state); await page.waitForTimeout(650); await idle();
+      const late = await observeLedStateDelivery(page, wheel, { attributes, delayMs: 250 });
+      results.push({ state, phase: 'new-on-after-lease', delivery: late });
+      check(`delayed on after lease uses settled48, not an active claim (${state})`, ledDeliveryVerdict(late, expected, 'settled'));
+      await restored(`delayed on after ${state}`);
     }
 
     await page.evaluate(() => {

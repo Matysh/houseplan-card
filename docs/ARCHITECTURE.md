@@ -1001,6 +1001,11 @@ bundle. Product code and nightly-only mutation execution policy are unchanged.
 
 ## LED strips: lazy boundaries (#780)
 
+The #863 smoke helper coordinates HA delivery and contemporaneous quality
+observations in the browser after a native wheel. It changes no product timer
+or renderer. The paired daycycle report is a separate test-only oracle over raw
+RasterTask/phase/readiness/environment evidence; no sample is silently removed.
+
 `space.led_strips` belongs to the space; the link is one-way strip → marker
 and the device model stays the only owner of state and services. Four modules:
 

@@ -239,9 +239,9 @@ c._drag = { id, sx, sy }; // private-ok: #NNN состояние жеста, о�
 ловит ревью по правилу №6 выше. Гейт идёт в `gate:small` и в шаге job
 `frontend` рядом с `no-new-any`, с той же базой.
 
-`HP_SMOKE_CHECKS=1 node demo/smoke_<имя>.mjs` печатает в `finish()`
-отсортированный список имён проверок — так перевод смока доказывается «без
-потери утверждений»: список до и после сравнивается построчно.
+`HP_SMOKE_CHECKS=1 node demo/smoke_<имя>.mjs` печатает в `finish()` список проверок; при переводе смока списки до/после сравнивают построчно.
+#863: LED state delivery наблюдает native active24 и отдельно поздний settled48 внутри браузера, без продления lease.
+Daycycle сохраняет все paired samples/RasterTask/env/SHA, проверяет readiness и прежний ratio≤2; `--report=artifacts/diagnostics/863/<name>.json` сохраняет JSON без перезаписи.
 
 ## Локальный набор перед пушем (#343)
 

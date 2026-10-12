@@ -77,6 +77,24 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'led-state-delivery-blesses-expired-lease',
+    guard: 'node --test --test-name-pattern="#863 LED oracle" test/smoke-evidence-863.test.mjs',
+    because: '#863: active paint must have contemporaneous active delivery, not a settled state or a Node timing assumption; synthetic field evidence proves this without Chromium',
+    patches: [{ file: 'demo/helpers/led-state-delivery.mjs',
+      find: "    && row.coarseAtDelivery === (phase === 'active')",
+      replace: '    && true',
+    }],
+  },
+  {
+    id: 'daycycle-raster-report-blesses-over-budget',
+    guard: 'node --test --test-name-pattern="#863 raster median" test/smoke-evidence-863.test.mjs',
+    because: '#863: retained raw paired samples must still reject a systematic ratio above the unchanged ceiling; a pure report fixture does not need browser timing',
+    patches: [{ file: 'demo/helpers/daycycle-measurement.mjs',
+      find: '    rasterRatioWithinBudget: ratio <= RATIO_CEILING };',
+      replace: '    rasterRatioWithinBudget: true };',
+    }],
+  },
+  {
     id: 'wall-adoption-mutates-shared-point-owners',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test test/wall-adoption-alias.test.mjs',

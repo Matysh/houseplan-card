@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+LED/daycycle smoke evidence (#863) separates native active24 from delivery after
+the natural lease (settled48). Raster measurement keeps every raw task, pair,
+phase, timing and pinned-browser identity; missing readiness/material fails,
+not retries. The historical raster failure remains unresolved unless reproduced;
+the threshold, workload, product lease and baselines are unchanged.
+
 Review preparation (#855) validates format and material identity before model
 work and freshly checks the issue at the model boundary. Invalid active requests
 return without a review cycle. A mechanical PASS is not semantic approval;

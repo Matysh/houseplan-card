@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 863,
+  "baseStable": "v1.80.1",
+  "category": "infra",
+  "rationale": "Только надёжность и наблюдаемость LED/daycycle CI-свидетелей: browser-side native state delivery, readiness, полные raw paired reports и отрицательные fixtures. Продукт, lease, performance ceiling, workload и baselines не меняются; пользовательский stable changelog и milestone не требуются."
+}
