@@ -72,7 +72,10 @@ test('full performance is isolated to stable, scheduled and manual entry points'
   // #540: признак стабильного — тег кандидата, не поле события: тот же гейт
   // работает и по `workflow_dispatch`, где события нет.
   assert.ok(release.includes("if: ${{ needs.candidate.outputs.prerelease != 'true' }}"));
-  assert.ok(release.includes('--workflow=performance.yml --label="Полные бенчмарки производительности"'));
+  assert.ok(release.includes('scripts/workflow-pending.mjs --sha="$SHA" --tag="$TAG" --stable="$STABLE"'));
+  assert.match(release, /STABLE: \$\{\{ needs\.candidate\.outputs\.prerelease != 'true' \}\}/);
+  const producer = readFileSync(new URL('../scripts/workflow-pending.mjs', import.meta.url), 'utf8');
+  assert.match(producer, /stable \? await probe\(\{ repo, sha: candidate, workflow: 'performance\.yml'/);
   assert.ok(release.includes('test -s dist/houseplan-panel.js'));
   assert.ok(release.includes('cp dist/houseplan-card.js houseplan.zip release-assets/'),
     'the standalone release asset remains card-only; the panel ships through HACS zip');

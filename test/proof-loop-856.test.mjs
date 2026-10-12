@@ -105,6 +105,14 @@ test('#856 release pending preserves owner intent; no green for partial/failed/c
   await resumeDomainContinuation(p, { ...ops, claim: () => false });
   await resumeDomainContinuation(p, { ...ops, proof: () => ({ status: 'cancelled' }) });
   assert.equal(calls, 1);
+  const gates = [];
+  const stableBase = { ...base, tag: 'v1.81.0', stable: true,
+    probe: options => { gates.push(options.workflow || 'validate.yml'); return { status: 'green' }; },
+    e2e: () => ({ status: 'pending', dispatched: true }) };
+  assert.equal((await prepareReleasePending(stableBase)).proceed, false);
+  assert.deepEqual(gates, ['validate.yml', 'performance.yml']);
+  assert.equal(fields.at(-1).e2eDispatched, true, 'initial E2E dispatch is not repeated at completion');
+  await assert.rejects(prepareReleasePending({ ...stableBase, e2e: () => ({ status: 'failed' }) }), /E2E is red/);
 });
 
 test('#856 bounded E2E snapshot accepts only exact ref; no polling, no repeated dispatch, newest red barrier', async () => {
