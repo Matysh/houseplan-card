@@ -12,7 +12,7 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/jav
   '.svg': 'image/svg+xml', '.png': 'image/png' };
 
 // Runs in the browser. core.* is deliberately absent: importing it starts auth.
-async function bootstrap(pin) {
+async function bootstrap(pin, extraModules = []) {
   window.__ha505WebSockets ||= [];
   window.WebSocket = class {
     constructor(url) {
@@ -46,13 +46,14 @@ async function bootstrap(pin) {
   await prepare(pin.module);
   await require(pin.module);
   await customElements.whenDefined('ha-dialog');
+  for (const id of extraModules) { await prepare(id); await require(id); }
   window.__ha505Ready = { version: pin.version, chunks: [...loaded] };
 }
 
 /** Starts a synthetic loopback-only page; `authentic:false` keeps native hp-dialog. */
 export async function launchHaDialogFixture({
   authentic = true, viewport = { width: 1600, height: 1000 },
-  cacheDir, wheelPath, assets, colorScheme = 'light',
+  cacheDir, wheelPath, assets, colorScheme = 'light', extraModules = [],
 } = {}) {
   const ha = authentic ? assets || await prepareHaDialogAssets({ cacheDir, wheelPath }) : null;
   const errors = [], externalRequests = [], websocketAttempts = [];
@@ -60,7 +61,7 @@ export async function launchHaDialogFixture({
     let body, type = 'text/javascript';
     try {
       const pathname = decodeURIComponent(new URL(request.url, 'http://127.0.0.1').pathname);
-      if (pathname === '/ha505-bootstrap.mjs' && ha) body = `await (${bootstrap})(${JSON.stringify(HA_DIALOG_PIN)});`;
+      if (pathname === '/ha505-bootstrap.mjs' && ha) body = `await (${bootstrap})(${JSON.stringify(HA_DIALOG_PIN)},${JSON.stringify(extraModules)});`;
       else if (pathname === '/ha505-probe.html' && ha) {
         type = 'text/html';
         body = '<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><script type="module">await import("/ha505-bootstrap.mjs"); const parent=document.createElement("section"); parent.id="parent"; const dialog=document.createElement("ha-dialog"); dialog.width="small"; dialog.headerTitle="Authentic HA dialog — offline diagnostic"; dialog.innerHTML="<p>Official pinned component; synthetic content; no HA server.</p>"; parent.append(dialog); document.body.append(parent); dialog.open=true;</script>';
@@ -97,7 +98,7 @@ export async function launchHaDialogFixture({
         }
       }
       response.writeHead(200, { 'content-type': type.startsWith('text/') ? `${type}; charset=utf-8` : type, 'cache-control': 'no-store',
-        'content-security-policy': "default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; font-src 'self' data:; img-src 'self' data: blob:; worker-src 'none'" }).end(body);
+        'content-security-policy': "default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' data:; font-src 'self' data:; img-src 'self' data: blob:; worker-src 'none'" }).end(body);
     } catch (error) { errors.push(String(error)); response.writeHead(500).end('Diagnostic fixture error'); }
   });
   await new Promise((accept, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', accept); });

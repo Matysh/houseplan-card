@@ -154,6 +154,15 @@ test('#784 unit input leaves one focus ring on its wrapper', () => {
     'the wrapper keeps the single visible focus ring');
 });
 
+test('#870 fallback focus specificity and authentic picker ownership', () => {
+  const css = formKitCss(CARD_DIALOG_FORM_KIT);
+  assert.ok(css.includes('hp-dialog .hpf-form .hpf-iconfield-control > .hpf-input:focus { outline: 0; }'));
+  assert.ok(css.includes('.hpf-iconfield-control:focus-within:not(:has(> ha-icon-picker)) { outline: 2px'));
+  assert.ok(!css.includes('.hpf-iconfield-control:focus-within { outline:'));
+  assert.ok(css.includes('hp-dialog .hpf-form button:focus-visible'));
+  assert.ok(css.includes('.hpf-unit:focus-within { outline: 2px'));
+});
+
 test('#594 сегментированный переключатель остаётся радиогруппой', () => {
   const kit = readFileSync(new URL('../src/editors/form-kit.ts', import.meta.url), 'utf8');
   // Только тело `segmented`: дальше в файле есть другие радиогруппы (radioRow,

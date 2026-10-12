@@ -25,6 +25,11 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Settings focus (#870) has one owner per composite: the authentic HA icon picker
+keeps its own active line, the native fallback uses the form-kit wrapper, and
+unit controls retain the #784 policy. The offline pinned-component diagnostic
+is `demo/verify_field_focus_870.mjs`; owner GPU acceptance is separate.
+
 Stable release accounting (#838) uses reviewed agent classifications relative
 to the previous stable in `docs/release-ledger/`. The active planned cycle is
 `v1.80.1` → `v1.81.0`, using the existing milestone `1.81` (number 3).

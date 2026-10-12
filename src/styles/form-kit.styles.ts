@@ -479,10 +479,10 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-check > input { width: 18px; height: 18px; margin: 0; accent-color: var(${tokens.accent}); cursor: pointer; }
   .${p}-iconfield { display: flex; align-items: center; gap: 8px; min-width: 0; }
   .${p}-iconfield-control { box-sizing: border-box; display: flex; align-items: center; flex: 1 1 auto; min-width: 0; min-height: 44px; border: 1px solid var(${tokens.line}); border-radius: 7px; background: var(${tokens.canvas}); }
-  .${p}-iconfield-control:focus-within { outline: 2px solid var(${tokens.accent}); outline-offset: 2px; }
+  .${p}-iconfield-control:focus-within:not(:has(> ha-icon-picker)) { outline: 2px solid var(${tokens.accent}); outline-offset: 2px; }
   .${p}-iconfield-control > .${p}-input, .${p}-iconfield-control > ha-icon-picker { flex: 1 1 auto; min-width: 0; width: 100%; }
   ${form} .${p}-iconfield-control > .${p}-input { min-height: 42px; height: 42px; border: 0; background: transparent; }
-  .${p}-iconfield-control > .${p}-input:focus { outline: 0; }
+  ${form} .${p}-iconfield-control > .${p}-input:focus { outline: 0; }
   .${p}-iconfield-control > ha-icon-picker { display: block; min-height: 42px; --mdc-text-field-fill-color: transparent; --mdc-text-field-idle-line-color: transparent; --mdc-text-field-hover-line-color: transparent; --mdc-text-field-height: 42px; --mdc-shape-small: 7px; --ha-color-form-background: transparent; --ha-color-border-neutral-loud: transparent; --md-list-item-one-line-container-height: 42px; --md-list-item-two-line-container-height: 42px; }
   .${p}-iconpreview { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 42px; width: 42px; height: 42px; color: var(${tokens.muted}); }
   .${p}-mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8125rem; }

@@ -1,5 +1,9 @@
 # House Plan architecture
 
+Composite form focus (#870) belongs either to the native form-kit wrapper or
+the authentic HA picker, never both. The picker is styled through its public
+host contract; its private shadow DOM and event handlers remain untouched.
+
 Stable release prose (#840) has separate authored RU/EN histories in
 `docs/changelog_user_stable_{ru,en}.md`. `user-stable-changelog.mjs` extracts a
 tag/base-bound section without summarizing it. Release preparation copies both
