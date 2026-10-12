@@ -8,6 +8,7 @@ import {
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
+import { guardNeedsTestBuild } from './mutation-preparation.mjs';
 
 import {
   MUTATION_OUTCOME, MUTATION_PROOF, runGuardPhases, runMutationLifecycle, setupFailureOwner,
@@ -80,9 +81,7 @@ export function dropWorktree(dir) {
  * «мутант поймал поломку», хотя означало «гвард не смог исполниться». Компиляция
  * стоит секунд, поэтому шаг ставится только там, где гвард не делает его сам.
  */
-export function guardNeedsTestBuild(guard) {
-  return /(^|[\s&|;])node --test\b/.test(guard) && !guard.includes('tsconfig.test.json');
-}
+export { guardNeedsTestBuild } from './mutation-preparation.mjs';
 
 /**
  * Нужен ли гварду СОБРАННЫЙ бандл (#332).

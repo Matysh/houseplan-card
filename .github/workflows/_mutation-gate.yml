@@ -177,7 +177,7 @@ jobs:
         run: |
           mkdir -p artifacts/mutation-shard-${{ matrix.shard }}
           set -o pipefail
-          node scripts/mutation-gate.mjs --shard=${{ matrix.shard }}/10 2>&1 | tee artifacts/mutation-shard-${{ matrix.shard }}/mutation-shard-${{ matrix.shard }}.log
+          node scripts/mutation-gate.mjs --shard=${{ matrix.shard }}/10 --execute-nightly 2>&1 | tee artifacts/mutation-shard-${{ matrix.shard }}/mutation-shard-${{ matrix.shard }}.log
       # Исход шага едет в evidence (#604): снятый по timeout-minutes шаг даёт
       # `cancelled`, и агрегатор отвергает такой шард как неполный — лог без
       # строк FAIL сам по себе зелёным не считается.

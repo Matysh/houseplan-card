@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 854,
+  "baseStable": "v1.80.1",
+  "category": "infra",
+  "rationale": "Статическая готовность mutation definitions, immutable changed input и удаление development execution/ledger code. Только тесты и процесс: runtime прежнего stable не меняется; статический PASS не создаёт caught evidence, ночной oracle остаётся обязательным."
+}

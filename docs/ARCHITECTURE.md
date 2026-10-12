@@ -985,6 +985,13 @@ runs); dependencies never point back to the CLI. Guard-input caching is
 invocation-scoped (one resolver, one tracked-file snapshot); persisted success
 exists only in the explicit caught-witness ledger. Usage: [TESTING](TESTING.md).
 
+Static readiness (#854) is shared by the normal unit gate and CLI; preparation
+policy is a leaf module shared with the nightly runner. Changed input identities
+are read-only helpers; static success never writes caught proof. Development CI
+keeps only a retired compatibility interface, while nightly explicitly opts in
+to applying mutations. Two witnesses of removed development setup code retired
+with that code; the nightly environment and outcome contracts are unchanged.
+
 Node-drag browser guards declare compilation of their `test-build/` model
 fixtures before the browser oracle (#830). The existing runner still separates
 setup from assertion evidence; a missing compiled module is never a caught

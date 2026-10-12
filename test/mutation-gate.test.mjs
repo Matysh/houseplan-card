@@ -13,6 +13,7 @@ import {
   witnessFingerprint, readLedger, recordCaught, splitByLedger, LEDGER_SCHEMA,
 } from '../scripts/mutation-gate.mjs';
 import { guardPhases } from '../scripts/mutation-guard-outcome.mjs';
+import { checkMutationRegistry } from '../scripts/mutation-registry-check.mjs';
 import {
   BROWSER_GUARD_LIMIT, browserGuardPolicy, documentedBrowserGuards,
 } from '../scripts/mutation-browser-policy.mjs';
@@ -30,17 +31,9 @@ const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 // дрейф якорей ловится здесь, а не при редком полном прогоне.
 
 test('every mutant patch anchors exactly once in the current source', () => {
-  for (const mutant of MUTANTS) {
-    for (const patch of mutant.patches) {
-      const path = join(repoRoot, patch.file);
-      assert.ok(existsSync(path), `${mutant.id}: файла ${patch.file} больше нет`);
-      const source = readFileSync(path, 'utf8');
-      const hits = source.split(patch.find).length - 1;
-      assert.equal(hits, 1,
-        `${mutant.id}: якорь в ${patch.file} найден ${hits} раз(а) — реестр отстал от кода`);
-      assert.notEqual(patch.find, patch.replace, `${mutant.id}: патч ничего не меняет`);
-    }
-  }
+  const diagnostics = [];
+  assert.equal(checkMutationRegistry(MUTANTS, { root: repoRoot, log: (line) => diagnostics.push(line) }),
+    0, diagnostics.filter((line) => line.startsWith('FAIL')).join('\n'));
 });
 
 test('every guard command points at a file that exists', () => {
@@ -317,8 +310,11 @@ function inventoryRoot811(t, extra = [], registry = null) {
     copyFileSync(join(repoRoot, 'scripts', name), join(root, 'scripts', name));
   }
   const mutants = ['alpha', 'beta', 'gamma', ...extra].map((id) => ({
-    id, guard: 'node demo/smoke_x.mjs', patches: [], because: 'browser fixture',
+    id, guard: 'node demo/smoke_x.mjs', patches: [{ file: 'src/fixture.ts', find: 'before', replace: 'after' }], because: 'browser fixture',
   }));
+  writeFileSync(join(root, 'src/fixture.ts'), 'before');
+  mkdirSync(join(root, 'demo'));
+  writeFileSync(join(root, 'demo/smoke_x.mjs'), 'throw new Error("static check must never execute this guard");');
   writeFileSync(join(root, 'scripts/mutation-registry.mjs'),
     registry ?? `export const MUTANTS = ${JSON.stringify(mutants)};\n`);
   mkdirSync(join(root, 'docs/testing-notes'), { recursive: true });
@@ -943,9 +939,16 @@ test('#481 AC4: --ledger без --changed — отказ с кодом 2', () =>
   assert.match(run.stderr, /--ledger работает только вместе с --changed/);
 });
 
-test('#558: CLI reports planning time and guard-input cache counters', () => {
-  const script = join(repoRoot, 'scripts/mutation-gate.mjs');
-  const run = spawnSync(process.execPath, [script, '--changed=HEAD..HEAD', '--plan-only'], { encoding: 'utf8' });
+test('#558: CLI reports planning time and guard-input cache counters', (t) => {
+  const root = inventoryRoot811(t);
+  const env = { ...Object.fromEntries(Object.entries(process.env).filter(([name]) => !/^GIT_/i.test(name))),
+    GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: process.platform === 'win32' ? 'NUL' : '/dev/null' };
+  for (const args of [['init', '-q'], ['add', '.'], ['-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'fixture']]) {
+    const result = spawnSync('git', args, { cwd: root, env, encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+  }
+  const script = join(root, 'scripts/mutation-gate.mjs');
+  const run = spawnSync(process.execPath, [script, '--changed=HEAD..HEAD', '--plan-only'], { cwd: root, env, encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr);
   assert.match(run.stdout, /plan=0/);
   assert.match(run.stdout, /plan-metrics: guard-input requests=0, computations=0, cache-hits=0, unique-guards=0, source-reads=0, duration-ms=\d+(?:\.\d+)?/);

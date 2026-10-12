@@ -273,6 +273,9 @@ S1-new → S2-analysis → S3-spec → S4-spec-review ⟲ → S5-ready →
   продукт, и их цена — десятки минут на задачу. Якоря реестра сверяет статический
   `mutation-gate --check`. Поимку проверяет только ночной полный прогон
   (`mutation-gate.yml`, #513); выживший мутант ночью заводит issue (#472).
+  Обычный CLI с #854 статический: структура/anchors/preparation, не caught;
+  только ночной workflow явно включает `--execute-nightly`. Changed readiness
+  закрепляет base/material и не допускает PASS с нечитаемыми definitions.
 
   Новый мутант с browser-smoke guard допустим только когда инвариант нельзя
   доказать без браузера: `because` обязан назвать конкретную зависимость от

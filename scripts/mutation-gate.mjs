@@ -14,7 +14,8 @@ import {
   makeBundleSeed, makeWorktree, mutantBundleStrategy, mutantPatchesNeedBundle,
   planNeedsBundleSeed, runCleanGuards, runMutant,
 } from './mutation-execution.mjs';
-import { checkMutationRegistry } from './mutation-registry-check.mjs';
+import { checkMutationRegistry, registryProblems } from './mutation-registry-check.mjs';
+import { freezeMutationRange, materialReader } from './mutation-readiness-input.mjs';
 import {
   ANCHOR_RADIUS_LINES, MUTATION_REGISTRY_FILES, anchorRegion, anchorSpan,
   baseRegistry, createGuardInputResolver, guardFiles, guardInputs,
@@ -43,6 +44,12 @@ export {
 };
 
 export async function main(argv) {
+  // #854: a bare/development invocation is static. Only the nightly workflow
+  // opts into applying mutations; --plan-only/list/check never apply them.
+  if (!argv.some((arg) => ['--check', '--plan-only', '--list', '--execute-nightly'].includes(arg))) {
+    argv = [...argv, '--check'];
+    console.log('static readiness only; mutation execution belongs to the nightly workflow (#709)');
+  }
   const planStarted = performance.now();
   let guardInputReads = 0;
   const inputsOf = createGuardInputResolver({
@@ -63,6 +70,8 @@ export async function main(argv) {
   };
   const idArg = argv.find((a) => a.startsWith('--id='))?.slice(5);
   let selected = idArg ? MUTANTS.filter((m) => m.id === idArg) : MUTANTS;
+  const malformed = registryProblems(MUTANTS);
+  if (malformed.length) { for (const error of malformed) console.error('FAIL ' + error); return 2; }
   if (idArg && !selected.length) {
     console.error(`мутант «${idArg}» не объявлен; --list покажет реестр`);
     return 2;
@@ -70,6 +79,7 @@ export async function main(argv) {
 
   const changedArg = argv.find((a) => a === '--changed' || a.startsWith('--changed='));
   let rangeBase = null;
+  let materialSha = null;
   const ledgerArg = argv.find((a) => a.startsWith('--ledger='))?.slice(9);
   if (ledgerArg && !changedArg) {
     // Полный прогон журнал не читает — он его пишет по расписанию целиком;
@@ -78,7 +88,11 @@ export async function main(argv) {
     return 2;
   }
   if (changedArg) {
-    const range = changedArg.includes('=') ? changedArg.split('=')[1] : 'origin/dev..HEAD';
+    const requested = changedArg.includes('=') ? changedArg.slice('--changed='.length)
+      : (argv[argv.indexOf(changedArg) + 1]?.startsWith('-') === false ? argv[argv.indexOf(changedArg) + 1] : 'origin/dev..HEAD');
+    let range;
+    try { ({ range, materialSha } = freezeMutationRange(requested, repoRoot)); }
+    catch (error) { console.error(error.message); return 2; }
     const diff = spawnSync('git', ['-C', repoRoot, 'diff', '--name-only', range],
       { encoding: 'utf8' });
     if (diff.status !== 0) {
@@ -106,8 +120,14 @@ export async function main(argv) {
     let base = null;
     if (files.some((file) => MUTATION_REGISTRY_FILES.includes(file))) {
       const baseRef = range.includes('..') ? range.split('..')[0] : range;
-      base = await baseRegistry(baseRef);
-      if (!base) console.log(`реестр базы ${baseRef} не прочитан — отбор по определениям пропущен`);
+      try { base = await baseRegistry(baseRef); }
+      catch (error) { console.error(`реестр базы ${baseRef} не прочитан: ${error.message}`); return 2; }
+      if (!Array.isArray(base)) {
+        console.error(`реестр базы ${baseRef} не прочитан — пустой PASS запрещён`);
+        return 2;
+      }
+      const errors = registryProblems(base);
+      if (errors.length) { console.error(`реестр базы ${baseRef}: ${errors.join('; ')}`); return 2; }
     }
     // #518: области диффа сужают сторону патча до окрестности якоря. Не
     // прочитались — отбор остаётся файловым, то есть прежним и более широким.
@@ -153,7 +173,8 @@ export async function main(argv) {
   }
 
   if (argv.includes('--check')) {
-    const result = checkMutationRegistry(selected, { allMutants: MUTANTS, root: repoRoot });
+    const read = materialSha ? materialReader(materialSha, repoRoot) : undefined;
+    const result = checkMutationRegistry(selected, { allMutants: MUTANTS, root: repoRoot, read });
     reportPlanMetrics();
     return result;
   }

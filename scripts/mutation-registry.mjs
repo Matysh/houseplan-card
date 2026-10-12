@@ -6133,28 +6133,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'browser-shard-skips-chromium',
-    guard: 'node --test --test-name-pattern="#620 AC2" test/validate-workflow.test.mjs',
-    because: 'a shard whose guards open a browser must install Chromium, or its clean run goes red '
-      + 'and the task loses a review round for nothing (#620)',
-    patches: [{
-      file: '.github/workflows/validate.yml',
-      find: "        if: steps.plan.outputs.count != '0' && steps.plan.outputs.browser == 'true' && steps.pw.outputs.cache-hit != 'true'",
-      replace: "        if: steps.plan.outputs.count != '0' && steps.plan.outputs.browser == 'yes' && steps.pw.outputs.cache-hit != 'true'",
-    }],
-  },
-  {
-    id: 'unread-plan-environment-skips-install',
-    guard: 'node --test --test-name-pattern="#620 AC2" test/validate-workflow.test.mjs',
-    because: 'a plan line that was not read must mean "install": skipping the environment on an '
-      + 'unknown need trades minutes for a red shard (#620)',
-    patches: [{
-      file: '.github/workflows/validate.yml',
-      find: '            echo "browser=${browser:-true}" >> "$GITHUB_OUTPUT"',
-      replace: '            echo "browser=${browser:-false}" >> "$GITHUB_OUTPUT"',
-    }],
-  },
-  {
     id: 'environment-misses-playwright-import',
     guard: 'node --test --test-name-pattern="#620: браузер нужен" test/mutation-gate.test.mjs',
     because: 'a unit guard that reaches Playwright through an import still needs Chromium; the '

@@ -41,6 +41,11 @@ codes/formats and aborting failed capture/git operations before subsequent work.
 The POSIX slow-pipe witness is `test/cli-stream-drain-862.test.mjs`; the resource
 inventory is recorded in issue #862. No mutation/reuse policy changed.
 
+Mutation readiness (#854) shares schema/anchor/guard/preparation checks between
+normal unit gates and static CLI. Bare CLI is static; only the nightly workflow
+opts into execution. Changed readiness pins base/material and fails on unreadable
+definitions. The retired Validate interface cannot execute or write caught proof.
+
 Settings focus (#870) has one owner per composite: the authentic HA icon picker
 keeps its own active line, the native fallback uses the form-kit wrapper, and
 unit controls retain the #784 policy. The offline pinned-component diagnostic
