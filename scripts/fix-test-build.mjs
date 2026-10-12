@@ -13,7 +13,7 @@ const patchImports = (dir) => {
     }
     if (!entry.name.endsWith('.js')) continue;
     const source = readFileSync(path, 'utf8').replace(
-      /(from\s+['"]|import\s*\(\s*['"])(\.\.?\/[^'"]+)(['"])/g,
+      /(from\s+['"]|import(?:\s*\(\s*|\s+)['"])(\.\.?\/[^'"]+)(['"])/g,
       (match, prefix, specifier, suffix) => (
         // A dot inside the module NAME is not an extension: `./styles/base.styles`
         // must still get `.js` (#266). Only real loader extensions pass through.
