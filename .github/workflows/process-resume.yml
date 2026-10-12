@@ -11,7 +11,7 @@ run-name: "resume · ${{ github.event.workflow_run.head_branch }} · ${{ github.
 
 on:
   workflow_run:
-    workflows: ["Проверка (CI)"]
+    workflows: ["Проверка (CI)", "Полные бенчмарки производительности"]
     types: [completed]
 
 permissions:
@@ -23,11 +23,12 @@ jobs:
   # workflow может права только сузить, поэтому каждая его job по-прежнему
   # получает свой прежний минимум (#556), а шире этого набора не получит никто.
   dev:
-    # Тот же фильтр, что у job `resume` тела: посторонние события не
-    # поднимают вызов, а прогон остаётся skipped, как до #623.
-    if: github.event.workflow_run.event == 'workflow_dispatch' && startsWith(github.event.workflow_run.head_branch, 'issue/')
+    # #856: ceiling/filter union of exact continuations and legacy resume.
+    # The legacy job retains its narrower issue-dispatch guard.
+    if: github.event.workflow_run.repository.full_name == github.repository && github.event.workflow_run.head_repository.full_name == github.repository
     permissions:
-      contents: read
-      actions: read
+      contents: write
+      actions: write
+      issues: write
     uses: Matysh/houseplan-card/.github/workflows/_process-resume.yml@dev # #623: тело конвейера из dev
     secrets: inherit
