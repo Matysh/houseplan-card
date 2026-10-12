@@ -129,4 +129,4 @@ export function main(argv, { now = Date.now(), log = (line) => console.log(line)
   return 0;
 }
 
-if (isMainModule(import.meta.url)) process.exit(main(process.argv.slice(2)));
+if (isMainModule(import.meta.url)) process.exitCode = main(process.argv.slice(2));

@@ -54,19 +54,22 @@ export function driftBetweenRuns(first, second) {
     }));
 }
 
-function capture(label) {
-  const run = spawnSync(process.execPath, [CAPTURE], { cwd: ROOT, stdio: 'inherit' });
-  if (run.status !== 0) {
-    console.error(`::error::съёмка (${label}) завершилась с кодом ${run.status}`);
-    process.exit(run.status || 1);
+export function capture(label, { run = spawnSync, error = console.error } = {}) {
+  const result = run(process.execPath, [CAPTURE], { cwd: ROOT, stdio: 'inherit' });
+  if (result.status !== 0) {
+    error(`::error::съёмка (${label}) завершилась с кодом ${result.status}`);
+    return result.status || 1;
   }
+  return 0;
 }
 
-function main() {
-  capture('прогон 1');
-  const first = frameHashes(IMAGES);
-  capture('прогон 2');
-  const second = frameHashes(IMAGES);
+export function main({ runCapture = capture, hashes = () => frameHashes(IMAGES) } = {}) {
+  const firstCode = runCapture('прогон 1');
+  if (firstCode) return firstCode;
+  const first = hashes();
+  const secondCode = runCapture('прогон 2');
+  if (secondCode) return secondCode;
+  const second = hashes();
 
   const drift = driftBetweenRuns(first, second);
   if (!drift.length) {
@@ -86,11 +89,13 @@ function main() {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   // #827: съёмка CI-документации идёт мимо `npm run docs:capture`, поэтому
   // запущенный Chromium судится и здесь, один раз до обоих прогонов.
+  let ready = false;
   try {
     await attestStandardLaunch({ reason: 'docs capture' });
+    ready = true;
   } catch (error) {
     console.error(`::error::${error instanceof Error ? error.message : String(error)}`);
-    process.exit(1);
+    process.exitCode = 1;
   }
-  process.exit(main());
+  if (ready) process.exitCode = main();
 }

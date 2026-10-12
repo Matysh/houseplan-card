@@ -72,7 +72,7 @@ test('#862 error entry points keep codes, complete stderr and no success stdout'
     ['process-gate', ['--range', 'hp862-no-such-ref..HEAD'], 2, /^git log .*hp862-no-such-ref.*\n$/s],
     ['no-new-any', ['--base', 'hp862-no-such-ref'], 2, /^git diff .*hp862-no-such-ref.*\n$/s],
     ['no-new-private-writes', ['--base', 'hp862-no-such-ref'], 2, /^git diff .*hp862-no-such-ref.*\n$/s],
-    ['capture-determinism', [], 1, /::error::.*непригодна среда|::error::.*browser.*environment/s],
+    ['capture-determinism', [], 1, /::error::environment failure \(browser-attestation\).*\n$/s],
   ];
   for (const [name, args, code, diagnostic] of cases) {
     const env = name === 'capture-determinism' ? { PLAYWRIGHT_BROWSERS_PATH: `${ROOT}/artifacts/hp862-no-browser` } : {};
@@ -84,7 +84,9 @@ test('#862 error entry points keep codes, complete stderr and no success stdout'
   }
 });
 
-test('#862 a closed output pipe does not turn a failed write into success', async () => {
+// Windows closes anonymous pipe handles differently; POSIX EPIPE is the
+// acceptance surface for this case, not a fabricated native Windows oracle.
+test('#862 a closed output pipe does not turn a failed write into success', { skip: process.platform === 'win32' }, async () => {
   const actual = await runNode(['scripts/smoke-select.mjs', '--diff', '-', '--json'], {
     input: diff(1500), brokenPipe: true,
   });

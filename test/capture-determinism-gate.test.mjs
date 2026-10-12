@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { driftBetweenRuns, frameHashes } from '../scripts/capture-determinism.mjs';
+import { capture, driftBetweenRuns, frameHashes, main } from '../scripts/capture-determinism.mjs';
 
 // #422. Гейт сравнивает два прогона съёмки. Его собственная логика должна
 // уметь падать не меньше, чем то, что он охраняет: разошедшийся кадр, кадр
@@ -22,6 +22,21 @@ test('хешируются только кадры, посторонние фа�
 test('одинаковые прогоны расхождений не дают', () => {
   const first = frameHashes('/nowhere', fakeRead, fakeList);
   assert.deepEqual(driftBetweenRuns(first, { ...first }), []);
+});
+
+test('#862 failed capture aborts before reading frames or starting a later run', () => {
+  for (const status of [7, null]) {
+    const errors = [];
+    const code = capture('прогон 1', { run: () => ({ status }), error: line => errors.push(line) });
+    assert.equal(code, status || 1);
+    assert.deepEqual(errors, [`::error::съёмка (прогон 1) завершилась с кодом ${status}`]);
+    let captures = 0, reads = 0;
+    assert.equal(main({ runCapture: () => { captures++; return code; }, hashes: () => { reads++; } }), code);
+    assert.equal(captures, 1); assert.equal(reads, 0);
+  }
+  let captures = 0, reads = 0;
+  assert.equal(main({ runCapture: () => ++captures === 2 ? 9 : 0, hashes: () => { reads++; return {}; } }), 9);
+  assert.equal(captures, 2); assert.equal(reads, 1);
 });
 
 test('разошедшийся кадр назван по имени', () => {

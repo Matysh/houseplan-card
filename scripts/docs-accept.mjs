@@ -330,8 +330,8 @@ async function main(argv) {
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  main(process.argv.slice(2)).then((code) => process.exit(code), (error) => {
+  main(process.argv.slice(2)).then((code) => { process.exitCode = code; }, (error) => {
     console.error(`отказ: ${error.message}`);
-    process.exit(1);
+    process.exitCode = 1;
   });
 }

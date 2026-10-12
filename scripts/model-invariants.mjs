@@ -919,5 +919,5 @@ function main(argv) {
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  process.exit(main(process.argv.slice(2)));
+  process.exitCode = main(process.argv.slice(2));
 }

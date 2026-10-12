@@ -347,5 +347,5 @@ function main(argv) {
 }
 
 if (isMainModule(import.meta.url)) {
-  process.exit(main(process.argv.slice(2)));
+  process.exitCode = main(process.argv.slice(2));
 }

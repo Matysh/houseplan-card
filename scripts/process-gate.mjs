@@ -756,11 +756,14 @@ export function buildReport({ range, branch, commits, findings }) {
 }
 
 // --- CLI ---
+class GitCliFailure extends Error {}
+
 function git(args, repo) {
   const r = spawnSync('git', ['-C', repo, ...args], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   if (r.status !== 0) {
     process.stderr.write(`git ${args.join(' ')} → ${(r.stderr || '').trim()}\n`);
-    process.exit(2);
+    // Abort the operation, but let the diagnostic pipe drain before exiting.
+    throw new GitCliFailure();
   }
   return r.stdout;
 }
@@ -890,7 +893,7 @@ function main(argv) {
   if (!range && flag('github-range')) {
     // gitObjectExists ловит исключение, чтобы подменить осиротевший после
     // force-push BEFORE_SHA на origin/dev (#315). Раннер обязан бросать,
-    // а не завершать процесс, как это делает git() ниже.
+    // а не прерывать CLI, как это делает git() ниже.
     range = resolveValidationRange({
       eventName: process.env.EVENT_NAME,
       beforeSha: process.env.BEFORE_SHA,
@@ -1099,5 +1102,9 @@ function main(argv) {
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  process.exit(main(process.argv.slice(2)));
+  try { process.exitCode = main(process.argv.slice(2)); }
+  catch (error) {
+    if (!(error instanceof GitCliFailure)) throw error;
+    process.exitCode = 2;
+  }
 }

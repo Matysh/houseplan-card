@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 862,
+  "baseStable": "v1.80.1",
+  "category": "infra",
+  "rationale": "CLI output could be truncated by force-exit in v1.80.1. Only tooling, subprocess tests and documentation change; product state and public CLI formats remain unchanged.",
+  "summary": {
+    "ru": "Утилиты дожидаются передачи вывода, не теряя хвост JSON и диагностики.",
+    "en": "CLI tools drain output without losing JSON or diagnostic tails."
+  }
+}

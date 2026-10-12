@@ -25,6 +25,11 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+CLI completion (#862) uses natural exit in eight audited entry points, keeping
+codes/formats and aborting failed capture/git operations before subsequent work.
+The POSIX slow-pipe witness and resource inventory live in
+`docs/testing-notes/862-cli-exits.md`; no mutation/reuse policy changed.
+
 Stable release accounting (#838) uses reviewed agent classifications relative
 to the previous stable in `docs/release-ledger/`. The active planned cycle is
 `v1.80.1` → `v1.81.0`, using the existing milestone `1.81` (number 3).
