@@ -54,7 +54,7 @@ https://github.com/Matysh/houseplan-card/issues/855#issuecomment-6125735643.
   fixture проверяет first-parent files и две coherent bundle copies.
 - `docs/reviews/evidence-858/native.json`: три реальные pinned native команды,
   exit0/OK; node preview/Esc/Undo/raster (28 checks), T/X и 100 lifecycle cycles,
-  mouse/touch pinch/held coverage/2.5D/kiosk (62 checks). Это headless-native
+  mouse/touch pinch/held coverage/2.5D/kiosk (65 checks). Это headless-native
   implementation evidence на freshly-built demo, **не** owner/GPU acceptance
   и не ложный release candidate receipt.
 - Первый полный gate поймал incoherent test bundle fixture и запрещённый
