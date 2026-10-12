@@ -70,6 +70,12 @@ Runtime/geometry/input/visual/perf не затронуты. User-Visible:no, inf
 
 ## Вердикт
 
+После отказа pre-review из-за конфликта registry с #863 выполнен требуемый
+ребейз на dev `6b52d892`: сохранены все три новые записи, продукт не менялся.
+На приведённом материале targeted tests PASS 88/88 и static registry PASS
+1364 definitions, execution=0. Вновь прочитана интеграционная дельта; anchors
+обновлены на code `fece4977a61c`. Отказ не был модельным вердиктом и не тратил цикл.
+
 Вердикт: зелёный · r1 · блокирующих циклов 0/2 · High: 0 · Medium: 0 · Low: 0.
 
 ---
@@ -78,10 +84,10 @@ Runtime/geometry/input/visual/perf не затронуты. User-Visible:no, inf
 
 ## Материал раунда
 
-- Ветка: `issue/860-bounded-decision-context`, коммит `5e7f28c044c8` — ребейз его осиротит, и это нормально: ниже якоря, которые ребейз не меняет.
-- Дерево материала: `a4a370121b9fba146c66b075f84bca5e287b57de`
+- Ветка: `issue/860-bounded-decision-context`, коммит `fece4977a61c` — ребейз его осиротит, и это нормально: ниже якоря, которые ребейз не меняет.
+- Дерево материала: `b22010b5d5f838b1b271c2430c64c9f644cffafd`
   ```
-  git log --all --format='%H %T' | grep a4a370121b9f
+  git log --all --format='%H %T' | grep b22010b5d5f8
   ```
 - Тело issue: `663d67a151bde850a148588873a91ac422cb16bd8df16272b8ef9a1eb7eabee9`
 - Вердикт конвейера: `green` · High 0 · маршрут `fix`
