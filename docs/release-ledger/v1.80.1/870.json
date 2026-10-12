@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 870,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "Existing settings controls can show two focus indicators in v1.80.1. Scope is the common CSS policy, without schema, editor values or HA actions changing.",
+  "summary": {
+    "ru": "Убрана двойная подсветка фокуса у поля иконки; клавиатурный фокус и радиус свечения сохранены.",
+    "en": "Removed duplicate icon-field focus highlighting while preserving keyboard focus and the glow-radius control."
+  }
+}

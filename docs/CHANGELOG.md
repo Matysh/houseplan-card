@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Settings fields have a single focus indicator: the HA icon picker keeps its
+  own highlight, while the text fallback and glow radius use their wrapper
+  ([#870](https://github.com/Matysh/houseplan-card/issues/870)).
+
 - Select node dragging clips uncovered wall strips together instead of repeatedly
   sweeping the growing floor. Failed grouped stages retain the full historical
   per-edge fallback; geometry, native input and performance budgets are unchanged

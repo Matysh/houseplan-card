@@ -74,3 +74,12 @@ external/HA requests; any attempted external request, WebSocket or page error
 fails the run. The synthetic demo HTML is adapted only in its served response
 to await the authentic component bootstrap and avoid duplicate icon/card tag
 registration. No production HA configuration, devices or services are touched.
+
+#870 also exercises the unmodified official icon picker (module 16213) using
+`node demo/verify_field_focus_870.mjs` after compiling `test-build`. Its native
+fallback/unit/input/select and real-picker light/dark × mouse/Tab captures go
+to ignored `artifacts/field-focus-870/`. Optional `extraModules` only loads
+additional original factories through the existing loader. Local `data:`
+fetches used by the official picker are permitted by CSP; external requests,
+HA connections and workers remain forbidden. This component diagnostic does
+not replace the owner's GPU/browser acceptance or a complete HA application.
