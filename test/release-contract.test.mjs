@@ -286,7 +286,7 @@ test('manual publish workflow is draft-first, exact-SHA gated and self-contained
   for (const required of [
     'workflow_dispatch:',
     'node scripts/release-contract.mjs',
-    'node scripts/release-gate.mjs',
+    'node scripts/workflow-pending.mjs',
     '--draft --prerelease',
     "'houseplan-card.js', 'houseplan.zip', 'RELEASE-MEMBERSHIP.json', 'SHA256SUMS'",
     'test -s dist/houseplan-panel.js',

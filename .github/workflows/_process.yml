@@ -2026,6 +2026,7 @@ jobs:
           NUM: ${{ github.event.issue.number }}
           MATERIAL_SHA: ${{ needs.prepare.outputs.material_sha }}
           # #696: show/ship сливаются по лёгкому Validate на кандидате.
+          MATERIAL_BODY: ${{ needs.prepare.outputs.material_issue_body }}
           MUTANTS: ${{ needs.prepare.outputs.mutants }}
           # #749/#811: policy, Git writes and CI proof stay in the dev snapshot.
           # Only the accepted candidate's index generator runs from an exported
@@ -2038,10 +2039,20 @@ jobs:
             exit 0
           fi
           node "$TOOLS/scripts/merge-candidate.mjs" --branch="$BRANCH" --material="$MATERIAL_SHA" \
-            --issue="$NUM" --repo="${{ github.repository }}" --mutants="${MUTANTS:-false}"
+            --issue="$NUM" --repo="${{ github.repository }}" --mutants="${MUTANTS:-false}" \
+            --pending-dir="$RUNNER_TEMP/merge-pending"
+
+      - name: Retain authenticated merge continuation
+        if: steps.merge.outputs.action == 'pending'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: workflow-continuation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/merge-pending
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Переставить метку
-        if: steps.ready.outputs.proceed == 'true'
+        if: steps.ready.outputs.proceed == 'true' && steps.merge.outputs.action != 'pending'
         env:
           # Именно PAT: с GITHUB_TOKEN следующий шаг конвейера не запустится.
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}

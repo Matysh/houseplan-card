@@ -25,6 +25,42 @@ permissions:
   actions: read
 
 jobs:
+  continuation:
+    name: Exact pending candidate completion
+    if: github.event.workflow_run.repository.full_name == github.repository && github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: write
+      issues: write
+    concurrency:
+      group: workflow-continuations
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: dev
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+      - name: Consume authenticated immutable continuation
+        env:
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          HP_PROCESS_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          REPO: ${{ github.repository }}
+          EVENT_ID: ${{ github.event.workflow_run.id }}
+        run: node scripts/workflow-continuation.mjs --repo="$REPO" --run-id="$EVENT_ID" --apply=true --out="${{ runner.temp }}/continuation-result"
+      - name: Retain continuation outcome for idempotent consumers
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: continuation-result-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/continuation-result
+          if-no-files-found: error
+          retention-days: 1
   resume:
     name: "Разбудить раунд, ждавший этот Validate"
     if: github.event.workflow_run.event == 'workflow_dispatch' && startsWith(github.event.workflow_run.head_branch, 'issue/')

@@ -111,6 +111,20 @@ const MUTANT_DEFINITIONS = [
       replace: '  return true;' }],
   },
   {
+    id: 'frontend-producer-red-cache-hit',
+    guard: 'node --test --test-name-pattern="#856 frontend reuse" test/proof-loop-856.test.mjs',
+    because: '#856: red producer evidence is never a successful cache hit.',
+    patches: [{ file: 'scripts/frontend-proof.mjs',
+      find: "proof.outcome === 'success'", replace: 'true' }],
+  },
+  {
+    id: 'continuation-ignores-current-epoch',
+    guard: 'node --test --test-name-pattern="#856 merge continuation" test/proof-loop-856.test.mjs',
+    because: '#856: completion cannot apply a verdict to a newer request epoch.',
+    patches: [{ file: 'scripts/workflow-continuation.mjs',
+      find: 'current.request?.id !== p.epoch', replace: 'false' }],
+  },
+  {
     id: 'model-failure-returns-stale-material',
     guard: 'node --test --test-name-pattern="#857 current failed epoch" test/model-evidence-857.test.mjs',
     because: '#857: stale code material cannot return a newer review request to its author.',

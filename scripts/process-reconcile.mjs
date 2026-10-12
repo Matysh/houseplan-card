@@ -13,6 +13,7 @@ import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { isMainModule } from './spawn-portable.mjs';
+import { continuationName, validContinuation } from './continuation-record.mjs';
 
 export const REVIEW_LABELS = ['S4-spec-review', 'S7-code-review'];
 export const ACTIVE_RUN_STATES = new Set(['queued', 'in_progress', 'pending', 'requested', 'waiting']);
@@ -55,6 +56,7 @@ export function parseProcessRun(run = {}) {
     pending: run.pending || null,
     pendingValidate: run.pendingValidate || null,
     evidenceError: run.evidenceError || null,
+    ...(run.continuation ? { continuation: run.continuation } : {}),
   };
 }
 
@@ -167,6 +169,10 @@ export function decideReconciliation({
   const settledAt = at(run.updatedAt || run.createdAt);
   if (Number.isFinite(settledAt) && now - settledAt < graceMs) {
     return result('wait', 'completed run is still within label-application grace', { label, stage, run });
+  }
+  if (run.continuation) {
+    return result(now >= Date.parse(run.continuation.expiresAt) ? 'escalate' : 'wait',
+      'exact merge continuation owns this completed round; do not relabel/spend model again', { label, stage, run });
   }
   if (run.resultArtifact) {
     return result('escalate', 'sealed model result exists but was not integrated; automatic rerun would spend the model twice', { label, stage, run });
@@ -342,6 +348,12 @@ function hydrateRunEvidence(repo, issue, run) {
     const resultArtifacts = artifacts.filter((artifact) => artifact.name === resultName && !artifact.expired);
     const pendingName = pendingArtifactName(issue, run);
     const pendingArtifacts = artifacts.filter((artifact) => artifact.name === pendingName && !artifact.expired);
+    const continuationArtifacts = artifacts.filter(a => a.name === continuationName(run.id, run.attempt) && !a.expired);
+    if (continuationArtifacts.length > 1) throw Error('duplicate merge continuation');
+    const continuation = continuationArtifacts.length === 1 ? loadSealedArtifact(repo, run, continuationArtifacts[0], 'pending.json') : null;
+    if (continuation && (!validContinuation(continuation) || continuation.kind !== 'merge' || Number(continuation.issue) !== Number(issue.number)
+      || Number(continuation.producer.run) !== Number(run.id) || Number(continuation.producer.attempt) !== Number(run.attempt)))
+      throw Error('invalid merge continuation');
     if (preparedArtifacts.length > 1 || resultArtifacts.length > 1 || pendingArtifacts.length > 1) {
       return { ...run, evidenceError: 'duplicate prepared/result/pending artifacts' };
     }
@@ -350,6 +362,7 @@ function hydrateRunEvidence(repo, issue, run) {
     if (pendingError) return { ...run, evidenceError: pendingError };
     return {
       ...run,
+      continuation,
       preparedArtifact: preparedArtifacts.length === 1,
       resultArtifact: resultArtifacts.length === 1,
       prepared: preparedArtifacts.length === 1

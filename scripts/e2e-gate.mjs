@@ -157,6 +157,20 @@ export async function e2eGate({ tag, ref = tag, ops, appearMs = VALIDATE_APPEAR_
 
 const sh = (cmd, args) => spawnSync(cmd, args, { encoding: 'utf8' });
 
+/** #856: bounded external-repository snapshot; no sleeping runner. */
+export async function probeE2e({ tag, ref, ops, dispatch = false, since = Date.now() - 86400000, authorizeDispatch = () => true }) {
+  const runs = [...await ops.listRuns()].filter(r => Date.parse(r.createdAt || '') >= since)
+    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt) || b.databaseId - a.databaseId);
+  for (const run of runs) {
+    if (classifyRun(await ops.jobs(run.databaseId), ref) !== 'ours') continue;
+    return { status: run.status !== 'completed' ? 'pending' : run.conclusion === 'success' ? 'green' : 'failed',
+      url: run.url, note: `E2E ${run.conclusion || run.status}` };
+  }
+  const dispatched = dispatch && await authorizeDispatch();
+  if (dispatched) await ops.dispatch(ref, previousStable(await ops.releases(), tag));
+  return { status: 'pending', dispatched, note: dispatched ? 'E2E dispatched; continuation/reconcile will recheck' : 'no matching E2E; inspect pending intent' };
+}
+
 export function realOps({ repo = E2E_REPO, workflow = E2E_WORKFLOW, cardRepo = CARD_REPO, exec = sh } = {}) {
   const fields = 'databaseId,status,conclusion,url,createdAt';
   const parse = (r) => (r.status === 0 && r.stdout ? JSON.parse(r.stdout) : []);

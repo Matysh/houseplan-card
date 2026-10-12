@@ -32,8 +32,10 @@ const npm = 'npm';
 export function parseArgs(argv) {
   const base = argv.find((a) => a.startsWith('--base='))?.slice('--base='.length) || 'origin/dev';
   const smokes = argv.includes('--smokes');
+  const group = argv.find(a => a.startsWith('--group='))?.slice(8) || 'all';
+  if (!['all', 'product', 'tooling'].includes(group)) throw Error('unknown local gate group');
   const jobs = Number(argv.find((a) => a.startsWith('--jobs='))?.slice('--jobs='.length) || 2);
-  return { base, smokes, jobs: Number.isInteger(jobs) && jobs > 0 ? jobs : 2 };
+  return { base, smokes, jobs: Number.isInteger(jobs) && jobs > 0 ? jobs : 2, ...(group !== 'all' ? { group } : {}) };
 }
 
 /**
@@ -113,13 +115,16 @@ export function summarize(results) {
   return { lines, failed };
 }
 
-export async function gateSmall({ cwd = ROOT, base = 'origin/dev', smokes = false, jobs = 2, log = console.log } = {}) {
+export async function gateSmall({ cwd = ROOT, base = 'origin/dev', smokes = false, jobs = 2, group = 'all', log = console.log } = {}) {
   const started = Date.now();
   log(`gate:small — база диапазона ${base}; параллельно: сборка, no-new-any, no-new-private-writes, smoke-select; после сборки: юниты и проверки артефакта${smokes ? `; затем bundle-sync и смоки по диффу (×${jobs})` : ''}`);
-  const parallel = await Promise.all(parallelSteps(base).map((step) => runStep(step, cwd)));
+  const planned = parallelSteps(base).filter(step => group !== 'tooling' || !step.args.includes('build'));
+  if (group === 'tooling') planned.push({ name: 'tooling units (local subset)', cmd: process.execPath, args: ['scripts/unit-groups.mjs', '--group=tooling'] });
+  const parallel = await Promise.all(planned.map((step) => runStep(step, cwd)));
   const buildOk = parallel.find((r) => r.args.includes('build'))?.code === 0;
   const serial = [];
-  if (buildOk) for (const step of postBuildSteps()) serial.push(await runStep(step, cwd));
+  if (buildOk) for (const step of postBuildSteps()) serial.push(await runStep(group === 'product' && step.args[0] === 'test'
+    ? { ...step, cmd: process.execPath, args: ['scripts/unit-groups.mjs', '--group=product'] } : step, cwd));
   // Browser-consumers — после подготовки артефактов (#496): bundle-sync раскладывает
   // собранное дерево в demo/srv/assets, смоки читают его и отказываются на несвежем.
   let selected = [];
@@ -159,13 +164,15 @@ export async function gateSmall({ cwd = ROOT, base = 'origin/dev', smokes = fals
     if (r.code !== 0 && !r.informational) { log(''); log(`--- ${r.name}`); log(r.out.trim()); }
   }
   log('');
-  log(`итого ${Math.round((Date.now() - started) / 1000)} с; упало: ${failed}${buildOk ? '' : ' (сверка бандла пропущена — сборка не прошла)'}`);
+  log(`итого ${Math.round((Date.now() - started) / 1000)} с; упало: ${failed}${group === 'tooling'
+    ? ' (артефактные проверки не входят в локальный tooling subset)' : buildOk ? '' : ' (сверка бандла пропущена — сборка не прошла)'}`);
+  if (group !== 'all') log('LOCAL SUBSET ONLY: product + tooling compose the required union; push still requires full gate:small');
   return { failed, results };
 }
 
 const invokedDirectly = process.argv[1]
   && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
 if (invokedDirectly) {
-  const { base, smokes, jobs } = parseArgs(process.argv.slice(2));
-  gateSmall({ base, smokes, jobs }).then(({ failed }) => { process.exitCode = failed ? 1 : 0; });
+  const options = parseArgs(process.argv.slice(2));
+  gateSmall(options).then(({ failed }) => { process.exitCode = failed ? 1 : 0; });
 }

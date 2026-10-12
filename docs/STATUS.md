@@ -25,6 +25,10 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Frontend producer reuse and remaining workflow waits (#856) are proof-bound:
+pending frees runners but never grants merge/publish authority; local product
+and tooling subsets do not replace the complete required gate.
+
 Review evidence (#857) retains actual SDK model ids and nullable per-model
 buckets separately from the unchanged aggregate usage. Immutable role packets
 preserve canon/risky-hunk obligations; current failed epochs return to their

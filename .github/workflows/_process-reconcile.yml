@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: dev
-          fetch-depth: 1
+          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
@@ -55,3 +55,34 @@ jobs:
           path: artifacts/process-reconcile/summary.json
           if-no-files-found: error
           retention-days: 14
+  continuation:
+    name: Recover missed immutable completion events
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    concurrency:
+      group: workflow-continuations
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: dev
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+      - name: Reconcile exact workflow continuations without model polling
+        env:
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          HP_PROCESS_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          REPO: ${{ github.repository }}
+          APPLY: ${{ github.event_name == 'schedule' || inputs.apply == true }}
+        run: node scripts/workflow-continuation.mjs --repo="$REPO" --apply="$APPLY" --out="${{ runner.temp }}/continuation-result"
+      - name: Retain continuation outcome
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: continuation-result-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/continuation-result
+          if-no-files-found: error
+          retention-days: 1

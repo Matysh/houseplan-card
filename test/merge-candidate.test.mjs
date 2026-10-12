@@ -251,6 +251,20 @@ function fakeOps({ base = 'dev0', devTips = ['dev0'], validate = [], leaseReject
   };
 }
 
+test('#856 deferred candidate captures immutable context and never waits or pushes dev before proof', async () => {
+  const ops = fakeOps({ base: 'dev0', devTips: ['dev1'], branchTip: 'mat', material: 'mat' });
+  let captured, reads = 0;
+  ops.waitValidate = async (_sha, options) => {
+    assert.equal(options.wait, false); reads++; return { result: 'pending', runId: null };
+  };
+  ops.defer = fields => { captured = fields; };
+  const result = await mergeCandidate({ branch: 'issue/856-loop', material: 'mat', issue: 856, ops, mutants: false, defer: true });
+  assert.equal(result.action, 'pending'); assert.equal(result.to, null); assert.equal(reads, 1);
+  assert.equal(captured.dev, 'dev1'); assert.equal(captured.policy, 'merge-light');
+  assert.equal(ops.calls.filter(c => c[0] === 'dispatch').length, 1, 'missing push run gets one dispatch, not a sleeping discover loop');
+  assert.ok(!ops.calls.some(c => c[0] === 'push' && c[2] === 'dev'));
+});
+
 test('dev не двигался: push кандидата как есть, с lease на текущий dev', async () => {
   const ops = fakeOps({ devTips: ['dev0'], branchTip: 'mat', material: 'mat' });
   const r = await mergeCandidate({ branch: 'issue/1-x', material: 'mat', issue: 1, ops });

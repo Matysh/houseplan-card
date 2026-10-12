@@ -487,7 +487,11 @@ test('ночной прогон — dispatch Validate на dev с full=true (#47
   const text = read('_nightly.yml');
   // #623: расписание — у тонкого вызывающего `nightly.yml`, тело — в `_nightly.yml`.
   assert.match(read('nightly.yml'), /schedule:\n\s+- cron:/);
-  assert.match(text, /gh workflow run validate\.yml --repo "\$REPO" --ref dev -f full=true/);
+  assert.match(text, /workflow-pending\.mjs --kind=night/);
+  assert.match(readFileSync(new URL('../scripts/workflow-pending.mjs', import.meta.url), 'utf8'),
+    /'validate\.yml', '--repo', repo, '--ref', 'dev', '-f', 'full=true'/);
+  assert.doesNotMatch(text, /gh run watch|sleep 10/);
+  assert.match(text, /workflow-continuation-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/);
   assert.match(text, /actions: write/);
 });
 

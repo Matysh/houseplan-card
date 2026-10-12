@@ -34,6 +34,9 @@ import { commitCandidateReviewsIndex } from './candidate-reviews-index.mjs';
 import { normalizeBrowserGuardCounts } from './mutation-browser-inventory.mjs';
 import { BROWSER_GUARD_INVENTORY } from './mutation-browser-policy.mjs';
 import { readMergeEntry, reconcileEntry, ghApi } from './release-ledger.mjs';
+import { sealContinuation } from './continuation-record.mjs';
+import { issueEvents, latestReviewRequest, processRuns, reviewRunsForRequest } from './process-reconcile.mjs';
+import { issueBodyDigest } from './review-doc-guard.mjs';
 
 export const MAX_ATTEMPTS = 3;
 /** Пути вне patch-id кандидата (#698): документы ревью и то, что ребейз сливает сам. */
@@ -426,7 +429,7 @@ export function realOps({
       const r = exec('gh', ['workflow', 'run', workflow, '--repo', repo, '--ref', ref, '-f', 'full=false', '-f', `mutants=${withMutants ? 'true' : 'false'}`]);
       if (r.status !== 0) throw new Error(`gh workflow run ${workflow}: ${r.stderr || r.stdout}`);
     },
-    waitValidate: async (sha, { event = 'workflow_dispatch' } = {}) => {
+    waitValidate: async (sha, { event = 'workflow_dispatch', wait = true } = {}) => {
       const started = now();
       let runId = null;
       const ignored = new Set();
@@ -454,6 +457,7 @@ export function realOps({
         } else if (now() - started > VALIDATE_APPEAR_MS) {
           return { result: 'missing', url: null };
         }
+        if (!wait) return { result: 'pending', url: run?.url || null, runId: run?.databaseId || null };
         await sleep(20_000);
       }
       return { result: 'failed', url: runId ? `run ${runId} (timeout)` : null };
@@ -489,7 +493,7 @@ export async function mergeCandidate(args) {
   }
 }
 
-async function mergeAttempts({ branch, material, issue, ops, maxAttempts = MAX_ATTEMPTS, mutants = true }) {
+async function mergeAttempts({ branch, material, issue, ops, maxAttempts = MAX_ATTEMPTS, mutants = true, defer = false }) {
   ops.fetch('dev', branch);
   const actual = ops.revParse(`origin/${branch}`);
   const reviewedFresh = actual === material
@@ -576,18 +580,27 @@ async function mergeAttempts({ branch, material, issue, ops, maxAttempts = MAX_A
     // (paths-ignore), а отменённый concurrency прогон заменить некому.
     let result;
     let url;
+    let runId;
     if (mutants) {
       ops.dispatchValidate(branch);
       ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);
-      ({ result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch' }));
+      ({ result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch', wait: !defer }));
     } else {
       ops.log(`лёгкий Validate на кандидате ${candidate.slice(0, 8)} — ждём push-прогон`);
-      ({ result, url } = await ops.waitValidate(candidate, { event: 'push' }));
+      ({ result, url, runId } = await ops.waitValidate(candidate, { event: 'push', wait: !defer }));
       if (result === 'missing') {
         ops.log('push-прогона на кандидате нет — лёгкий dispatch');
         ops.dispatchValidate(branch);
-        ({ result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch' }));
+        ({ result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch', wait: !defer }));
       }
+    }
+    if (result === 'pending' && defer) {
+      // No push run yet (including docs/reviews paths-ignore): one dispatch,
+      // then sealed completion, never a runner sleeping for run discovery.
+      if (!mutants && !runId) ops.dispatchValidate(branch);
+      ops.defer({ branch, material, candidate, dev: devNow, issue, policy: mutants ? 'merge' : 'merge-light' });
+      ops.log('точный кандидат ожидает event completion; runner освобождён, S7 не переигрывается');
+      return { merged: false, to: null, action: 'pending', candidate };
     }
     let decision = decideMerge({ fresh: true, devMoved: true, patchIdEqual: true, validate: result, attempt, maxAttempts });
     if (decision.action !== 'push') return finish(decision, { candidate, devNow, runUrl: url });
@@ -696,9 +709,25 @@ else if (isMainModule(import.meta.url)) { // #496: переносимо для W
   // #696: `--mutants=false` — треки show/ship сливаются по лёгкому Validate.
   const mutants = arg('mutants') !== 'false';
   const ops = realOps({ repo, token, issue, mutants });
+  const defer = arg('pending-dir');
+  if (defer) ops.defer = fields => {
+    const row = ghApi('GET', `repos/${repo}/issues/${issue}`);
+    const request = latestReviewRequest(issueEvents(repo, issue), 'S7-code-review');
+    const run = reviewRunsForRequest(processRuns(repo, [], { since: request?.at }), issue, request)[0];
+    const labels = (row.labels || []).map(l => l.name);
+    if (!request || String(run?.id) !== String(process.env.GITHUB_RUN_ID)
+      || row.state !== 'open' || labels.filter(l => /^S[1-8]-/.test(l)).join(',') !== 'S7-code-review'
+      || labels.includes('blocked') || labels.includes('review-4')
+      || issueBodyDigest(row.body || '') !== process.env.MATERIAL_BODY)
+      throw Error('request/body changed before pending continuation');
+    const tree = ops.revParse(`${fields.candidate}^{tree}`);
+    sealContinuation({ kind: 'merge', repo, ...fields, issue: Number(issue), tree,
+      epoch: request.id, bodyDigest: process.env.MATERIAL_BODY,
+      producerPath: '.github/workflows/process.yml' }, defer);
+  };
   const pipelineUrl = process.env.GITHUB_RUN_ID
     ? `${process.env.GITHUB_SERVER_URL || 'https://github.com'}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID}` : '';
-  mergeCandidate({ branch, material, issue, ops, mutants, pipelineUrl }).then((r) => {
+  mergeCandidate({ branch, material, issue, ops, mutants, pipelineUrl, defer: Boolean(defer) }).then((r) => {
     const out = `merged=${r.merged}\nto=${r.to || ''}\naction=${r.action}\ncandidate=${r.candidate}\n`;
     if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, out);
     process.stdout.write(out);

@@ -212,9 +212,10 @@ jobs:
     name: "Гейт: контракт, Validate, Full Performance и E2E на точном SHA"
     needs: candidate
     runs-on: ubuntu-24.04
-    # Больше суммы собственных ожиданий job: Validate и Full Performance ждутся
-    # до 60 мин каждый (release-gate.mjs), E2E — до 45 (e2e-gate.mjs): 165 < 180 (#658).
-    timeout-minutes: 180
+    # #856: one bounded snapshot; pending never grants publication authority.
+    timeout-minutes: 15
+    outputs:
+      proceed: ${{ steps.readiness.outputs.proceed }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -257,39 +258,28 @@ jobs:
               node scripts/release-ledger.mjs verify-milestone --candidate=HEAD --tag="$TAG" --repo="$GITHUB_REPOSITORY"
             fi
           fi
-      - name: Require a green Validate for this exact commit
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          SHA: ${{ needs.candidate.outputs.sha }}
-        run: node scripts/release-gate.mjs "$SHA"
-      - name: Require full performance for a stable release
-        if: ${{ needs.candidate.outputs.prerelease != 'true' }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          SHA: ${{ needs.candidate.outputs.sha }}
-        run: node scripts/release-gate.mjs "$SHA" --workflow=performance.yml --label="Полные бенчмарки производительности"
-      # #514/#540: единственная проверка на настоящем Home Assistant. Раньше
-      # houseplan-e2e ставил `houseplan.zip` из публичного релиза — то есть
-      # релиз должен был быть публичным ДО проверки. Теперь он ставит дерево
-      # `custom_components/houseplan` коммита-кандидата (tarball codeload),
-      # а ZIP строится `git archive` из того же дерева: тождество «что
-      # тестировали = что публикуем» — хеш дерева, он печатается на сборке.
-      # Cross-repository dispatch needs a token with Actions: write on
-      # houseplan-e2e; HP_PROCESS_TOKEN (classic, repo scope) has it,
-      # E2E_DISPATCH_TOKEN is the fallback for a fine-grained token.
-      - name: Require green E2E on a real Home Assistant for a stable release
-        if: ${{ needs.candidate.outputs.prerelease != 'true' }}
+      - name: Check exact Validate, performance and E2E; defer without a sleeping runner
+        id: readiness
         env:
           GH_TOKEN: ${{ secrets.E2E_DISPATCH_TOKEN || secrets.HP_PROCESS_TOKEN }}
+          REPO: ${{ github.repository }}
           SHA: ${{ needs.candidate.outputs.sha }}
           TAG: ${{ needs.candidate.outputs.tag }}
-        run: node scripts/e2e-gate.mjs --ref="$SHA" --tag="$TAG"
+          STABLE: ${{ needs.candidate.outputs.prerelease != 'true' }}
+        run: node scripts/workflow-pending.mjs --sha="$SHA" --tag="$TAG" --stable="$STABLE" --workflow=release.yml --out="${{ runner.temp }}/workflow-pending"
+      - name: Preserve existing owner release intent while checks are pending
+        if: steps.readiness.outputs.pending == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: workflow-continuation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/workflow-pending
+          if-no-files-found: error
+          retention-days: 1
 
   stage:
     name: "Сборка: ассеты, SHA256SUMS и загрузка в черновик"
     needs: [candidate, gate]
+    if: needs.gate.outputs.proceed == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:

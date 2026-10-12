@@ -93,6 +93,26 @@ export const workflowRunsUrl = ({ repo, workflow, sha, apiBase = githubApiBase()
 
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 
+/** One bounded snapshot for event continuations; pending/missing is never green. */
+export async function probeGreenWorkflow({ repo, sha, token, workflow = 'validate.yml', root = process.cwd(),
+  tree = null, expected = undefined, fetchImpl = fetch } = {}) {
+  if (!repo || !/^[a-f0-9]{40}$/.test(sha || '') || !token) throw Error('exact repo/SHA/token required');
+  const response = await fetchImpl(workflowRunsUrl({ repo, workflow, sha }), { headers: {
+    Accept: 'application/vnd.github+json', Authorization: `Bearer ${token}`, 'User-Agent': 'houseplan-release-gate',
+    'X-GitHub-Api-Version': '2022-11-28',
+  } });
+  if (!response.ok) throw Error(`GitHub Actions API ${response.status}`);
+  const runs = (await response.json()).workflow_runs || [];
+  if (workflow === 'validate.yml') return classifyValidateProofs({ runs, repo, sha,
+    tree: tree || await githubCandidateTree({ repo, sha, token, fetchImpl }), token, fetchImpl,
+    expected: expected === undefined ? candidateExpectations({ sha, root }) : expected });
+  const run = latestRelevantRun(runs);
+  if (run && (run.repository?.full_name !== repo || run.head_repository?.full_name !== repo
+    || run.head_sha !== sha || run.path !== `.github/workflows/${workflow}`)) return { status: 'missing', note: 'foreign run' };
+  return { status: classifyValidateRuns(runs) === 'success' ? 'green'
+    : classifyValidateRuns(runs) === 'fail' ? 'failed' : 'pending', url: run?.html_url, note: run?.conclusion || 'not complete' };
+}
+
 export async function waitForGreenWorkflow({
   repo, sha, token, workflow = 'validate.yml', label = 'Validate', timeoutMs = 60 * 60 * 1000,
   root = process.cwd(),

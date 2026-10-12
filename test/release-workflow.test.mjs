@@ -58,18 +58,16 @@ test('#540 AC1/#514: the gate judges the exact SHA — trailer names the tag, co
   const gate = job('gate');
   const trailer = at('grep -Fxq "Release: $TAG"', gate);
   const contract = at('node scripts/release-contract.mjs "$TAG" --repo="$GITHUB_REPOSITORY" --stable', gate);
-  const validate = at('node scripts/release-gate.mjs "$SHA"\n', gate);
-  const perf = at('      - name: Require full performance for a stable release\n', gate);
-  const e2e = at('      - name: Require green E2E on a real Home Assistant for a stable release\n', gate);
-  assert.ok(trailer < contract && contract < validate && validate < perf && perf < e2e, 'order: trailer, contract, Validate, Full Performance, E2E');
-  const e2eStep = gate.slice(e2e);
-  assert.match(e2eStep, /if: \$\{\{ needs\.candidate\.outputs\.prerelease != 'true' \}\}/, 'prereleases skip the step');
-  assert.match(e2eStep, /node scripts\/e2e-gate\.mjs --ref="\$SHA" --tag="\$TAG"/, 'E2E installs the candidate tree, not a public ZIP');
-  assert.match(e2eStep, /GH_TOKEN: \$\{\{ secrets\.E2E_DISPATCH_TOKEN \|\| secrets\.HP_PROCESS_TOKEN \}\}/);
-  assert.match(gate, /--workflow=performance\.yml --label="Полные бенчмарки производительности"/);
-  assert.ok(!/github\.event\.release\.tag_name/.test(gate + job('stage') + job('publish')), 'every job works from the resolved candidate, not the event payload');
+  const readiness = at('node scripts/workflow-pending.mjs --sha="$SHA" --tag="$TAG"', gate);
+  assert.ok(trailer < contract && contract < readiness, 'trailer/contract before all exact-SHA proof checks');
+  assert.match(gate, /STABLE: \$\{\{ needs\.candidate\.outputs\.prerelease != 'true' \}\}/);
+  assert.match(gate, /GH_TOKEN: \$\{\{ secrets\.E2E_DISPATCH_TOKEN \|\| secrets\.HP_PROCESS_TOKEN \}\}/);
+  const producer = readFileSync(new URL('../scripts/workflow-pending.mjs', import.meta.url), 'utf8');
+  assert.match(producer, /workflow: 'performance\.yml'/);
+  assert.match(producer, /e2e\(\{ tag, ref: candidate/);
+  assert.match(job('stage'), /if: needs\.gate\.outputs\.proceed == 'true'/);
+  assert.ok(!/github\.event\.release\.tag_name/.test(gate + job('stage') + job('publish')), 'resolved candidate, not event payload');
 });
-
 test('#540 AC3: one build, deterministic ZIP from the tree E2E installed, passport, verified public bytes', () => {
   const stage = job('stage');
   assert.match(stage, /git -c core\.autocrlf=false archive --format=zip --output=houseplan\.zip \\\n\s+"\$SHA:custom_components\/houseplan"/);

@@ -22,11 +22,12 @@ jobs:
   gate:
     name: "Гейт: зелёная Проверка и релизный контракт"
     runs-on: ubuntu-24.04
-    # Больше ожидания зелёного Validate в release-gate.mjs (до 60 мин) (#658).
-    timeout-minutes: 75
+    # #856: pending releases runner; no waiting loop and no public publication.
+    timeout-minutes: 15
     outputs:
       sha: ${{ steps.candidate.outputs.sha }}
       tag: ${{ steps.candidate.outputs.tag }}
+      proceed: ${{ steps.readiness.outputs.proceed }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -86,20 +87,32 @@ jobs:
       - name: Documentation screenshots are fresh for the candidate
         run: node scripts/check-docs.mjs --screenshots=strict
       - name: Require green Validate for this exact SHA
+        id: readiness
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           SHA: ${{ steps.candidate.outputs.sha }}
-        run: node scripts/release-gate.mjs "$SHA"
+          TAG: ${{ steps.candidate.outputs.tag }}
+        run: node scripts/workflow-pending.mjs --sha="$SHA" --tag="$TAG" --stable=false --workflow=publish-prerelease.yml --out="${{ runner.temp }}/workflow-pending"
+      - name: Preserve existing owner prerelease intent
+        if: steps.readiness.outputs.pending == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: workflow-continuation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/workflow-pending
+          if-no-files-found: error
+          retention-days: 1
       # #696, PROCESS.md §11.7: задачи track:ship слиты без ревью модели — бета
       # публикуется, только когда их код прочитало пакетное ревью диапазона.
       - name: Ship tasks of the range are batch-reviewed
+        if: steps.readiness.outputs.proceed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.candidate.outputs.tag }}
           SHA: ${{ steps.candidate.outputs.sha }}
         run: node scripts/ship-review.mjs check --tag="$TAG" --candidate="$SHA" --repo="$GITHUB_REPOSITORY"
       - name: Bind issue membership to the exact candidate
+        if: steps.readiness.outputs.proceed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.candidate.outputs.tag }}
@@ -122,6 +135,7 @@ jobs:
               --output=release-membership/RELEASE-MEMBERSHIP.json
           fi
       - name: Preserve candidate membership for publication
+        if: steps.readiness.outputs.proceed == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: release-membership
@@ -132,6 +146,7 @@ jobs:
   publish:
     name: Публикация тега и релиза
     needs: gate
+    if: needs.gate.outputs.proceed == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     outputs:

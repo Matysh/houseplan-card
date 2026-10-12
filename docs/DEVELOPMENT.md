@@ -476,6 +476,33 @@ HP_PREPUSH_GATE=0 git push origin issue/NNN-slug   # explicit opt-out
 
 What each command guarantees:
 
+### Frontend producer and short local loops (#856)
+
+`npm run gate:plan` derives suggested product/tooling subsets from the real diff
+and the import/data dependency closure. Unknown inputs select both. Optional
+`npm run gate:tooling` does not build the product; `npm run gate:product` builds
+and runs every emitted-tree consumer. Their test-file union is exactly the
+ordinary unit suite; neither subset alone replaces `npm run gate:small` or the
+pre-push hook. Root `tsc --noEmit` is already part of build; test-config emit,
+`fix-test-build` and `noUnusedLocals` have different contracts and remain.
+
+Validate can restore dist/test-build only from a complete successful protected
+producer run/attempt, byte inventories, known Node/OS/architecture/runner image
+and the complete frontend content key. V1 also binds HEAD/SHA/tree because unit
+fixtures inspect git metadata: cross-commit equivalence is not presumed.
+Red/cancelled/incomplete/expired/foreign or changed config/pin/toolchain evidence
+means a fresh producer. Diff guards, bundle policy/budget and unused checks
+still run fresh. The source run is printed; no cache hit is a green verdict.
+
+Night, merge-after-rebase and release readiness free the runner while pending.
+Completion/reconcile authenticate repository, source attempt/path, child SHA
+and immutable request state. Pending is not PASS. A full release still needs
+Validate, full performance and exact-ref real-HA E2E; no timeout/partial result
+publishes. If intent expires or a one-shot dispatch claim has ambiguous delivery,
+inspect the source/child run and issue summary; repair the cause and issue a new
+explicit command (S7 for integration, nightly dispatch, or the original tag's
+release/publish-prerelease dispatch). Never clear a live claim to retry blindly.
+
 - **`scripts/sandbox-bootstrap.sh`** — the worktree comes from the clone the
   script lives in (`HP_CLONE` overrides), `npm ci --ignore-scripts` runs only
   when `package-lock.json` changed (`HP_SHARED_NODE_MODULES` links a ready

@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 856,
+  "baseStable": "v1.80.1",
+  "category": "infra",
+  "rationale": "Совместимый frontend producer, устранение дублирующего root typecheck, sealed event continuations и локальные поднаборы без ослабления required union. Только B/C; не изменение пользовательского продукта."
+}

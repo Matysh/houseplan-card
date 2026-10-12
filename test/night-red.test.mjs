@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 import { buildCiProof, githubServerUrl } from '../scripts/ci-proof.mjs';
 import { jobInstanceNames, validateJobs } from '../scripts/workflow-jobs.mjs';
-import { findStep, stepCommand } from './helpers/workflow-step.mjs';
+import { nightRedCommand, resumeDomainContinuation } from '../scripts/workflow-continuation.mjs';
 import {
   LIST_LIMIT, NIGHT_RED_MARKER_RE, actionsClient, commentBody, commentVerdict, countsForNightRed, findLastGreen, gitClient,
   nightRed, parseNightRedMarkers, rangeSuspects,
@@ -394,12 +394,8 @@ async function runNightStep(t, { cwd, items, issues = {}, fail = false, scripts 
   rmSync(join(cwd, 'scripts'), { recursive: true, force: true });
   symlinkSync(scripts, join(cwd, 'scripts'));
   const files = { log: join(root, 'gh.log'), summary: join(root, 'summary.md') };
-  const name = 'Комментарий в задачи диапазона от последней зелёной ночи до красной';
-  const nightly = readFileSync(new URL('../.github/workflows/_nightly.yml', import.meta.url), 'utf8');
-  // #766: shell шага — по правилам раннера (без `shell:` — `bash -e {0}`); тело — файлом.
-  const { command, args, dir } = stepCommand(findStep(nightly, `      - name: "${name}"\n`, '_nightly.yml'), stepRun(nightly, name));
-  t.after(() => rmSync(dir, { recursive: true, force: true }));
-  const child = spawn(command, args, {
+  // #856: domain consumer invokes this exact existing command directly.
+  const child = spawn(process.execPath, nightRedCommand(REPO, { id: 105 }), {
     cwd,
     env: {
       ...ENV, PATH: `${gh.bin}:${process.env.PATH}`, REPO, RED_RUN: '105',
@@ -488,9 +484,13 @@ test('#736 К6 на настоящем bash: сбой API или упавший 
   const empty = mkdtempSync(join(tmpdir(), 'hp-736-noscripts-'));
   t.after(() => rmSync(empty, { recursive: true, force: true }));
   const crashed = await runNightStep(t, { cwd, items, scripts: empty });
-  assert.equal(crashed.status, 0, crashed.stderr);
-  assert.match(crashed.stdout, /^::warning::красная ночь \(#736\): скрипт упал — комментарии не написаны/m);
-  assert.match(crashed.summary, /- Красная ночь \(#736\): скрипт упал/);
+  assert.notEqual(crashed.status, 0, 'native command fails; controller must retain a diagnostic warning and RED verdict');
+  const retained = await resumeDomainContinuation({ kind: 'night', candidate: sha.R }, {
+    state: () => ({ dev: sha.R }), proof: () => ({ status: 'failed' }),
+    diagnose: () => { throw Error('script crashed'); }, claim: () => true, dispatch: () => {},
+  });
+  assert.equal(retained.status, 'failed');
+  assert.match(retained.diagnosticWarning, /diagnostic failed.*remains red/);
 });
 
 // #766: ссылка на прогон без `html_url` строится от сервера раннера

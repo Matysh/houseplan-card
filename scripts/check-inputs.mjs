@@ -269,7 +269,7 @@ export function referencesOf(file, rawText) {
 // ordinary source and must participate in closure discovery.
 export const LEAF_FILES = new Set(['scripts/mutation-registry.mjs']);
 
-export function closure(root, entries, { tracked = trackedFiles(root), stopAt = () => false, read, parents } = {}) {
+export function closure(root, entries, { tracked = trackedFiles(root), stopAt = () => false, read, parents, references } = {}) {
   const trackedSet = new Set(tracked);
   const readText = read || ((rel) => {
     const abs = join(root, rel);
@@ -289,9 +289,14 @@ export function closure(root, entries, { tracked = trackedFiles(root), stopAt = 
     traversed.add(file);
     if (stopAt(file) || LEAF_FILES.has(file)) continue;
     if (!/\.(mjs|cjs|js|ts|py)$/.test(file)) continue;
-    let text;
-    try { text = readText(file); } catch { continue; }
-    const { code, data } = referencesOf(file, text);
+    let refs = references?.get(file);
+    if (!refs) {
+      let text;
+      try { text = readText(file); } catch { continue; }
+      refs = referencesOf(file, text);
+      references?.set(file, refs);
+    }
+    const { code, data } = refs;
     for (const ref of code) {
       if (trackedSet.has(ref)) { note(ref, file); if (!traversed.has(ref)) queue.push(ref); }
     }
@@ -349,9 +354,9 @@ export const CHECKS = {
   frontend: {
     // npm run typecheck, npm test, npm run build, bundle:budget, lint:unused (#624)
     entries: ['test/*.test.mjs', 'scripts/no-new-any.mjs', 'scripts/no-new-private-writes.mjs', 'scripts/render-layout-read.mjs', 'scripts/bundle-budget.mjs',
-      'scripts/fix-test-build.mjs', 'scripts/unused-locals-gate.mjs'],
+      'scripts/fix-test-build.mjs', 'scripts/unused-locals-gate.mjs', 'scripts/frontend-proof.mjs'],
     // demo/helpers/** — область no-new-private-writes (#629): гейт читает их текст.
-    roots: [...BUILD_INPUTS, 'assets/furniture/**', 'assets/moon/**', 'test/**', 'tsconfig*.json', 'scripts/monolith-baseline.json', 'demo/smoke_*.mjs', 'demo/benchmark_*.mjs', 'demo/guard/*.mjs', 'demo/helpers/**', ...WORKFLOW],
+    roots: [...BUILD_INPUTS, '.nvmrc', '.python-version', 'assets/furniture/**', 'assets/moon/**', 'test/**', 'tsconfig*.json', 'scripts/monolith-baseline.json', 'demo/smoke_*.mjs', 'demo/benchmark_*.mjs', 'demo/guard/*.mjs', 'demo/helpers/**', ...WORKFLOW],
   },
   changed_mutants: {
     entries: ['scripts/mutation-*.mjs', 'scripts/*-guard.mjs', 'test/*.test.mjs', 'demo/smoke_*.mjs', 'tests_backend/**/*.py'],

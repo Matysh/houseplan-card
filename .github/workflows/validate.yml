@@ -702,8 +702,13 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Typecheck
-        run: npm run typecheck
+      # #856: build already contains the identical root tsc --noEmit. The
+      # emitted test config and noUnusedLocals remain independent contracts.
+      - name: Restore complete compatible frontend producer
+        id: producer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/frontend-proof.mjs --repo="${{ github.repository }}"
       # Долг типизации снимается при извлечении подсистем (#34), а не разовой
       # заменой: в src/** его 1034 вхождения в 49 файлах. Гейт держит приращение
       # на нуле — судит только добавленные строки (#342). Тем же диапазоном
@@ -745,12 +750,14 @@ jobs:
           node scripts/no-new-private-writes.mjs --base "$base" --head "$HEAD_SHA" || status=1
           exit "$status"
       - name: Build
+        if: steps.producer.outputs.reused != 'true'
         run: npm run build
       # Часть unit-контрактов проверяет размеры реально поставляемых графов в
       # dist/ (#438, #593, #627). В issue-ветке закоммиченный dist законно
       # отстаёт от исходников (#657), поэтому юниты обязаны читать свежую
       # сборку — тот же порядок закреплён локальным gate:small.
       - name: Unit tests
+        if: steps.producer.outputs.reused != 'true'
         run: npm test
       # Entry, manifest and every content-hashed chunk are one artifact (#337).
       # #657: the committed bundle changes only in a release candidate, so the
@@ -765,6 +772,18 @@ jobs:
       # сборки — одно из чисел считает байты dist/.
       - name: Мёртвый код и связность монолита
         run: npm run lint:unused
+      - name: Seal fresh complete frontend producer
+        if: steps.producer.outputs.reused != 'true'
+        run: node scripts/frontend-proof.mjs --store --out="${{ runner.temp }}/frontend-proof"
+      - name: Retain frontend producer with byte inventory
+        if: steps.producer.outputs.reused != 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: frontend-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/frontend-proof
+          include-hidden-files: true
+          retention-days: 1
+          if-no-files-found: error
       # Бандл собирается один раз и уезжает артефактом (#336). Прежде каждая из
       # пяти браузерных job собирала его заново: `bundle:sync` — это `tsc
       # --noEmit` плюс rollup, около минуты на job.
