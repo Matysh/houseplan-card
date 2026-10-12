@@ -360,6 +360,7 @@ export function anchorBlock({
     SHIP_REVIEW_ANCHOR,
     '### Материал пакетного ревью',
     '',
+    ...(usageDetails ? [publishedModelDetails(usageDetails)] : []),
     '```',
     `tag ${tag}`,
     `candidate ${candidate}`,
@@ -372,7 +373,6 @@ export function anchorBlock({
     ...(mode ? [`mode ${mode}`] : []),
     ...(patches ? [`patches ${formatPatches(patches)}`] : []),
     '```',
-    ...(usageDetails != null ? [publishedModelDetails(usageDetails)] : []),
     ...(usage != null ? [publishedUsageLine(usage)] : []),
     '',
   ].join('\n');
