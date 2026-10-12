@@ -41,6 +41,7 @@ test('#856 actual runner step dispatches once, seals pinned SHA and fails when d
   assert.equal(p.candidate, sha); assert.equal(p.kind, 'night'); assert.equal(p.producer.run, 20);
   assert.match(readFileSync(join(dir, 'calls'), 'utf8'), /workflow run validate.yml --repo o\/r --ref dev -f full=true/);
   assert.match(r.stdout, /not a green night/);
+  assert.match(r.stdout, /"pending":true/);
   assert.notEqual(execute(join(dir, 'refused'), true).status, 0, 'failed producer cannot authenticate a continuation');
 });
 test('#856/#727/#736 night completion: red diagnoses and still reviews code once, cancelled/stale never dispatch', async () => {

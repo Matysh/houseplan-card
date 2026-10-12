@@ -6499,8 +6499,8 @@ const MUTANT_DEFINITIONS = [
       + 'правка пакета не выбирает frontend и не запускает сверку generated-модулей (#671)',
     patches: [{
       file: 'scripts/check-inputs.mjs',
-      find: "    roots: [...BUILD_INPUTS, 'assets/furniture/**', 'assets/moon/**', 'test/**',",
-      replace: "    roots: [...BUILD_INPUTS, 'assets/moon/**', 'test/**',  // mutant: furniture package is not a frontend input",
+      find: "    roots: [...BUILD_INPUTS, '.nvmrc', '.python-version', 'assets/furniture/**', 'assets/moon/**', 'test/**',",
+      replace: "    roots: [...BUILD_INPUTS, '.nvmrc', '.python-version', 'assets/moon/**', 'test/**',  // mutant: furniture package is not a frontend input",
     }],
   },
   {
@@ -6584,7 +6584,7 @@ const MUTANT_DEFINITIONS = [
       + 'it without a green Validate on that SHA is the false-green the audit reproduced (#492 §4)',
     patches: [{
       file: 'scripts/merge-candidate.mjs',
-      find: "      ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);\n      ({ result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch' }));",
+      find: "      ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);\n      ({ result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch', wait: !defer }));",
       replace: "      ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);\n      ({ result, url } = { result: 'green', url: 'skipped' }); // mutant: no validation",
     }],
   },
@@ -6627,13 +6627,12 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'nightly-does-not-wait',
-    guard: 'node --test --test-name-pattern="nightly ждёт запущенный Validate" test/nightly-workflow.test.mjs',
-    because: 'a nightly that returns green at dispatch time hides a red full run; the job must wait '
-      + 'for the child and inherit its conclusion (#492 §7)',
+    guard: 'node --test --test-name-pattern="#856 actual runner step" test/nightly-workflow.test.mjs',
+    because: '#856/#492: dispatch is pending, not a successful full nightly verdict; completion owns the verdict.',
     patches: [{
-      file: '.github/workflows/_nightly.yml',
-      find: '          gh run watch "$run_id" --repo "$REPO" --exit-status --interval 30',
-      replace: '          echo "watching skipped"  # mutant: dispatch counted as success',
+      file: 'scripts/workflow-pending.mjs',
+      find: 'result = { pending: true, candidate, note:',
+      replace: 'result = { pending: false, candidate, note:',
     }],
   },
   {
@@ -14131,7 +14130,7 @@ const MUTANT_DEFINITIONS = [
       + 'wait for that run, not for the push run that carries no mutants (#510 AC3)',
     patches: [{
       file: 'scripts/merge-candidate.mjs',
-      find: "      ops.dispatchValidate(branch);\n      ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);\n      ({ result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch' }));",
+      find: "      ops.dispatchValidate(branch);\n      ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);\n      ({ result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch', wait: !defer }));",
       replace: "      ops.log(`Validate на кандидате ${candidate.slice(0, 8)} — ждём`);\n      ({ result, url } = await ops.waitValidate(candidate)); // mutant: push run, no dispatch",
     }],
   },
@@ -15630,8 +15629,8 @@ const MUTANT_DEFINITIONS = [
       + 'doubles runner minutes on every show/ship merge',
     patches: [{
       file: 'scripts/merge-candidate.mjs',
-      find: "      ({ result, url } = await ops.waitValidate(candidate, { event: 'push' }));",
-      replace: "      ops.dispatchValidate(branch); ({ result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch' })); // mutant: second run",
+      find: "      ({ result, url, runId } = await ops.waitValidate(candidate, { event: 'push', wait: !defer }));",
+      replace: "      ops.dispatchValidate(branch); ({ result, url, runId } = await ops.waitValidate(candidate, { event: 'workflow_dispatch', wait: !defer })); // mutant: second run",
     }],
   },
   {
