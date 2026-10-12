@@ -20,8 +20,10 @@ export function validContinuation(p) {
       && /^[a-f0-9]{64}$/.test(p.bodyDigest || '') && typeof p.epoch === 'string' && p.epoch.length > 0
       && ['merge', 'merge-light'].includes(p.policy))
     && (p.kind !== 'night' || p.branch === 'dev')
-    && (p.kind !== 'release' || /^v\d+\.\d+\.\d+(?:-beta\.\d+)?$/.test(p.tag || '')
+    && (p.kind !== 'release' || /^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?$/.test(p.tag || '')
       && ['release.yml', 'publish-prerelease.yml'].includes(p.workflow) && typeof p.stable === 'boolean'
+      && p.producer.path === `.github/workflows/${p.workflow}` && p.stable === !p.tag.includes('-')
+      && (p.workflow !== 'publish-prerelease.yml' || !p.stable)
       && sha(p.dispatchSha) && (p.tagSha === null || p.tagSha === p.candidate)
       && typeof p.e2eDispatched === 'boolean' && Array.isArray(p.children) && p.children.length <= 20
       && p.children.every(r => id(r.id) && id(r.attempt) && ['.github/workflows/validate.yml', '.github/workflows/performance.yml'].includes(r.path)));

@@ -95,7 +95,9 @@ export async function continueWorkflows({ repo, eventId, apply = false, out = nu
   for (const artifact of candidates) {
     try {
       const [, runId, attempt] = /^workflow-continuation-(\d+)-(\d+)$/.exec(artifact.name);
-      const producer = api(`repos/${repo}/actions/runs/${runId}/attempts/${attempt}`);
+      // Read CURRENT run attempt, not its historical success endpoint.
+      // An old artifact must not survive a cancelled/new producer rerun.
+      const producer = api(`repos/${repo}/actions/runs/${runId}`);
       const p = loadSealedArtifact(repo, { id: runId, attempt }, artifact, 'pending.json');
       if (!validContinuation(p)) { outcomes.push({ action: 'noop', reason: 'invalid sealed identity' }); continue; }
       const eventWorkflow = event?.path === '.github/workflows/performance.yml' && p.kind === 'release' ? 'performance.yml' : 'validate.yml';

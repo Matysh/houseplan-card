@@ -152,7 +152,7 @@ test('#856 actual completion runner refuses cancelled/foreign/failed-source even
     'let value; const p=a[1];',
     'if(p.endsWith("/actions/runs/30"))value=f.child;',
     'else if(p.includes("/actions/artifacts?"))value={artifacts:[f.artifact]};',
-    'else if(p.includes("/actions/runs/20/attempts/1"))value=f.parent;',
+    'else if(p.endsWith("/actions/runs/20"))value=f.parent;',
     'else if(p.includes("/workflows/validate.yml/runs?"))value={workflow_runs:[f.child]};',
     'else process.exit(43);process.stdout.write(JSON.stringify(value));',
   ].join('\n'), { mode: 0o755 });
