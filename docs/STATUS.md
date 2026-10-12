@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Activity settings (#865) display the shared ordinary pulse colour, without
+turning a live automatic result into a stored override. Colour and size survive
+inactive Display modes/LED; alarm red remains independent. In-flight marker
+saves affect only their own dialog transaction. Native picker and production
+save-method witnesses cover persistence, Cancel and delayed responses.
+
 CLI completion (#862) uses natural exit in eight audited entry points, keeping
 codes/formats and aborting failed capture/git operations before subsequent work.
 The POSIX slow-pipe witness is `test/cli-stream-drain-862.test.mjs`; the resource

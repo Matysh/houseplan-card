@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  generatedRgbColor, safeRenderColor, safeStoredColor,
+  generatedRgbColor, renderColorToHex, safeRenderColor, safeStoredColor,
 } from '../test-build/color.js';
 
 test('persisted colors accept only exact six-digit hex', () => {
@@ -33,4 +33,14 @@ test('render colors allow only stored hex and internally generated rgb', () => {
     'rgb(0,13,255)', 'rgb(0 13 255)', 'rgba(0, 13, 255, .5)',
     'rgb(256, 0, 0)', 'red', 'red;position:fixed', 'url(data:text/css,x)',
   ]) assert.equal(safeRenderColor(value, null), null, value);
+});
+
+test('#865 effective colour is projected into HEX without broadening stored colours', () => {
+  assert.equal(renderColorToHex('#AbCdEF', '#0C82F0'), '#AbCdEF');
+  assert.equal(renderColorToHex('rgb(0, 13, 255)', '#0C82F0'), '#000dff');
+  assert.equal(renderColorToHex('rgb(255, 0, 128)', '#0C82F0'), '#ff0080');
+  for (const bad of [null, '#fff', 'rgb(256, 0, 0)', 'red;position:fixed', 'url(data:x)']) {
+    assert.equal(renderColorToHex(bad, '#0C82F0'), '#0C82F0');
+  }
+  assert.equal(safeStoredColor('rgb(0, 13, 255)', null), null);
 });

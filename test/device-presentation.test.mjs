@@ -56,6 +56,48 @@ const options = {
   showSignal: true,
 };
 
+test('#865 ordinary settings colour shares pulse priority without inheriting safety red', () => {
+  const project = (eid, value, attributes, marker = {}, extra = {}) => {
+    const h = hass({ [eid]: state(eid, value, attributes) }, {
+      [eid]: { entity_id: eid, device_id: 'd1', platform: 'demo' },
+    });
+    return resolveDevicePresentation(h, device({ entities: [eid], primary: eid,
+      marker: { id: 'd1', binding: 'device:d1', display: 'icon_ripple', ...marker },
+    }), { ...options, ...extra });
+  };
+  for (const [eid, value, attrs, color] of [
+    ['binary_sensor.presence', 'on', { device_class: 'occupancy' }, '#1DC21D'],
+    ['vacuum.cleaner', 'cleaning', {}, '#F0A00C'],
+    ['cover.blind', 'opening', {}, '#0C82F0'],
+    ['light.rgb', 'on', { rgb_color: [12, 140, 250] }, 'rgb(12, 140, 250)'],
+  ]) {
+    const auto = project(eid, value, attrs);
+    assert.equal(auto.ordinaryPulseColor, color, eid);
+    assert.equal(auto.pulse.color, color, eid);
+    const custom = project(eid, value, attrs, { ripple_color: '#123456', ripple_size: 8 });
+    assert.equal(custom.ordinaryPulseColor, '#123456');
+    assert.equal(custom.pulse.color, '#123456');
+    assert.equal(custom.pulse.diameterScale, 8);
+    assert.equal(project(eid, value, attrs, { ripple_color: 'url(x)' }).ordinaryPulseColor, color);
+  }
+  const idle = project('binary_sensor.presence', 'off', { device_class: 'occupancy' });
+  assert.equal(idle.pulse.kind, 'none');
+  assert.equal(idle.ordinaryPulseColor, idle.pulse.color);
+  const alarm = project('binary_sensor.smoke', 'on', { device_class: 'smoke' }, { ripple_color: '#123456', ripple_size: 8 });
+  assert.equal(alarm.ordinaryPulseColor, '#123456');
+  assert.equal(alarm.pulse.color, '#F0410C');
+  assert.equal(alarm.pulse.diameterScale, 1.5);
+  const legacy = project('binary_sensor.presence', 'on', { device_class: 'occupancy' }, {
+    display: 'ripple', ripple_color: '#123456', ripple_size: 20,
+  });
+  assert.equal(legacy.display, 'icon_ripple');
+  assert.equal(legacy.pulse.color, '#123456');
+  assert.equal(legacy.pulse.diameterScale, 20);
+  const reduced = project('binary_sensor.presence', 'on', { device_class: 'occupancy' }, {}, { reducedMotion: true });
+  assert.equal(reduced.ordinaryPulseColor, '#1DC21D');
+  assert.equal(reduced.pulse.reducedMotionIndicator, 'dot');
+});
+
 test('#792 battery is independent of static face and live-state policies', () => {
   const ha = hass({
     'switch.relay': state('switch.relay', 'on'),

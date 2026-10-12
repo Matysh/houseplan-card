@@ -33,7 +33,7 @@ import {
   type ResolvedValueBadge,
 } from './device-value-badge';
 import {
-  DEVICE_PULSE_DEFAULT_SCALE, resolveDevicePulse, type ResolvedDevicePulse,
+  DEVICE_PULSE_DEFAULT_SCALE, ordinaryDevicePulseColor, resolveDevicePulse, type ResolvedDevicePulse,
 } from './device-pulse';
 import { isManualVirtualLightMarker } from './virtual-light-state';
 import {
@@ -194,6 +194,8 @@ export interface ResolvedDevicePresentation {
   angle: number;
   rippleScale: number;
   rippleColor: string | null;
+  /** Effective ordinary colour, also while idle. Alarm red is a separate signal. */
+  ordinaryPulseColor: string;
 
   userHidden: boolean;
   effectiveHidden: boolean;
@@ -805,6 +807,7 @@ export function resolveDevicePresentation(
     ? Number(d.marker!.ripple_size) : DEVICE_PULSE_DEFAULT_SCALE;
   const configuredRippleColor = safeStoredColor(d.marker?.ripple_color, null);
   const rippleColor = neutralFace ? null : configuredRippleColor || lightColor || null;
+  const ordinaryPulseColor = ordinaryDevicePulseColor(visual, combined.activity, rippleColor);
   const pulse = resolveDevicePulse({
     display,
     visual,
@@ -886,6 +889,7 @@ export function resolveDevicePresentation(
     angle,
     rippleScale,
     rippleColor,
+    ordinaryPulseColor,
     userHidden,
     effectiveHidden,
     haDisabled,

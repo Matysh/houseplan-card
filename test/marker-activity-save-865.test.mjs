@@ -9,7 +9,7 @@ const { HouseplanEditorRuntime } = await import('../test-build/houseplan-editor-
 // Execute the production save/draft methods. The port substitutes only the
 // server transport, unrelated geometry preparation and post-save UI teardown.
 function fixture(display = 'badge', save = async () => {}) {
-  const marker = { id: 'm865', binding: 'virtual', name: 'Presence', space: 'f1', area: null,
+  const marker = { id: 'v_865', binding: 'virtual', name: 'Presence', space: 'f1', area: null,
     display, ripple_color: '#123456', ripple_size: 3 };
   const space = { id: 'f1', vb: [0, 0, 100, 100], rooms: [] };
   const cfg = { version: 8, spaces: [space], markers: [marker] };
@@ -21,7 +21,7 @@ function fixture(display = 'badge', save = async () => {}) {
   const toasts = [];
   const host = { _markerDialog: draft, _serverCfg: cfg, _cfgRev: 1,
     _markers: cfg.markers, _devices: [{ id: marker.id, space: 'f1', marker }],
-    _layout: { m865: { s: 'f1', x: 10, y: 10 } }, _space: 'f1', _defPos: {},
+    _layout: { v_865: { s: 'f1', x: 10, y: 10 } }, _space: 'f1', _defPos: {},
     _spaceModelById: () => space, _spaceModel: () => space, _bindingEntities: () => [],
     _adoption: { beginOptimistic: (base, candidate) => ({ base, candidate }) },
     _saveConfigDebounced: { pending: () => false }, _maybeRebuildDevices: () => {},
@@ -46,7 +46,7 @@ test('#865 actual draft/save payload retains activity settings in every display'
     assert.equal(draftMarker.ripple_color, '#123456', `${display} preview draft`);
     assert.equal(draftMarker.ripple_size, 3, `${display} preview draft`);
     await f.runtime._saveMarker();
-    const saved = f.payload()?.markers.find(m => m.id === 'm865');
+    const saved = f.payload()?.markers.find(m => m.id === 'v_865');
     assert.equal(saved?.ripple_color, '#123456', `${display} save`);
     assert.equal(saved?.ripple_size, 3, `${display} save`);
     assert.equal(f.closed(), 1);
@@ -63,6 +63,16 @@ test('#865 failed Save retains editable color/size and rolls back the candidate'
   assert.equal(f.host._markerDialog.rippleSize, 3);
   assert.equal(f.host._markerDialog.busy, false);
   assert.equal(f.closed(), 0);
+});
+
+test('#865 LED presentation keeps dormant activity settings and the unchanged shape', async () => {
+  const f = fixture('static_icon');
+  const strip = { id: 'led865', points: [[0.1, 0.1], [0.3, 0.1]], marker: 'v_865', active: true };
+  f.host._serverCfg.spaces[0].led_strips = [strip];
+  await f.runtime._saveMarker();
+  assert.deepEqual(f.payload().spaces[0].led_strips, [strip]);
+  assert.equal(f.payload().markers[0].ripple_color, '#123456');
+  assert.equal(f.payload().markers[0].ripple_size, 3);
 });
 
 test('#865 late success/failure does not close or rewrite the next dialog', async () => {

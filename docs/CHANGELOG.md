@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Activity colour now matches the actual ordinary pulse in device settings;
+  colour and size survive switching Display modes. A late save no longer closes
+  the next device dialog ([#865](https://github.com/Matysh/houseplan-card/issues/865)).
+
 - Settings fields have a single focus indicator: the HA icon picker keeps its
   own highlight, while the text fallback and glow radius use their wrapper
   ([#870](https://github.com/Matysh/houseplan-card/issues/870)).

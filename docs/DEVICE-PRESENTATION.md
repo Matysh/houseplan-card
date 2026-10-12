@@ -215,6 +215,13 @@ catalogue the marker stays «On the plan».
   wins, then live RGB, then presence-green/work-amber/transition-blue. The
   backend accepts legacy `display: ripple` only for compatibility;
   `normalizeDeviceDisplay()` maps it to `icon_ripple`.
+  Activity parameters survive saving every inactive Display, including an LED
+  presentation. The existing colour field shows `ordinaryPulseColor` from the
+  shared presentation (HEX projection of live RGB where needed), never alarm
+  red or a fixed placeholder. Reading/unchanged confirmation does not persist
+  an automatic colour. An open picker holds its editing session during live
+  updates; an explicit colour draft remains authoritative. Legacy sizes through
+  20 remain readable; the unchanged UI range is 1–8, default 1.5 (#865).
 - Activity baselines are seeded as soon as a rebuilt registry becomes
   authoritative, before the next HA snapshot is classified; a source-key change
   resets any finite effect immediately.

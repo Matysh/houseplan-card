@@ -7657,7 +7657,8 @@ public async _saveMarker(): Promise<void> {
     } else if (previousMarker && Object.prototype.hasOwnProperty.call(previousMarker, 'radar')) {
       radarField = { radar: previousMarker.radar };
     }
-    this.host._markerDialog = { ...dlg, busy: true };
+    const savingDraft = { ...dlg, busy: true };
+    this.host._markerDialog = savingDraft;
     let attempt: OptimisticAttempt<ServerConfig> | null = null;
     let configAccepted = false;
     try {
@@ -7681,8 +7682,8 @@ public async _saveMarker(): Promise<void> {
         name: dlg.name.trim() || null,
         icon: dlg.icon || null,
         display: dlg.display !== 'badge' ? dlg.display : null,
-        ripple_color: dlg.display === 'icon_ripple' && dlg.rippleColor ? dlg.rippleColor : null,
-        ripple_size: dlg.display === 'icon_ripple' && dlg.rippleSize !== 1.5 ? dlg.rippleSize : null,
+        ripple_color: dlg.rippleColor || null,
+        ripple_size: dlg.rippleSize !== 1.5 ? dlg.rippleSize : null,
         size: dlg.size !== 1 ? dlg.size : null,
         angle: dlg.angle ? dlg.angle : null,
         ...this._markerTapActionFields(dlg),
@@ -7805,7 +7806,7 @@ public async _saveMarker(): Promise<void> {
       }
       // File copy is async: never install a candidate built from a replaced root.
       if (this.host._serverCfg !== cfg || this.host._cfgRev !== baseRevision || contentFingerprint(cfg) !== baseContent) {
-        if (this.host._markerDialog) this.host._markerDialog = { ...this.host._markerDialog, busy: false };
+        if (this.host._markerDialog === savingDraft) this.host._markerDialog = { ...savingDraft, busy: false };
         this.host._showToast(this.host._t('toast.conflict'));
         return;
       }
@@ -7840,10 +7841,12 @@ public async _saveMarker(): Promise<void> {
           .callWS({ type: 'houseplan/files/cleanup', marker_id: fileSrc })
           .catch(() => undefined); // leftovers are harmless; broken links are not
       }
-      forgetMarkerBaseline(this.host);
-      this._closeMarkerDialog();
-      this.host._cancelDeviceDrag();
-      this.host._devicePositionHistory.clear();
+      if (this.host._markerDialog === savingDraft) {
+        forgetMarkerBaseline(this.host);
+        this._closeMarkerDialog();
+        this.host._cancelDeviceDrag();
+        this.host._devicePositionHistory.clear();
+      }
       this.host._regSignature = '';
       this.host._maybeRebuildDevices();
       this.host._showToast(this.host._t('toast.marker_saved'));
@@ -7858,7 +7861,7 @@ public async _saveMarker(): Promise<void> {
         this.host._maybeRebuildDevices();
         this.host.requestUpdate();
       }
-      if (this.host._markerDialog) this.host._markerDialog = { ...this.host._markerDialog, busy: false };
+      if (this.host._markerDialog === savingDraft) this.host._markerDialog = { ...savingDraft, busy: false };
       this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
     }
   }
@@ -11616,8 +11619,8 @@ public _markerDraft(d: NonNullable<HouseplanEditorHostPort['_markerDialog']>): M
       name: d.name.trim() || null,
       icon: d.icon || null,
       display: d.display !== 'badge' ? d.display : null,
-      ripple_color: d.display === 'icon_ripple' && d.rippleColor ? d.rippleColor : null,
-      ripple_size: d.display === 'icon_ripple' && d.rippleSize !== 1.5 ? d.rippleSize : null,
+      ripple_color: d.rippleColor || null,
+      ripple_size: d.rippleSize !== 1.5 ? d.rippleSize : null,
       size: d.size !== 1 ? d.size : null,
       angle: d.angle || null,
       ...this._markerTapActionFields(d),

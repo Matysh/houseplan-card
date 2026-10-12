@@ -39,10 +39,13 @@ export const DEVICE_PULSE_DEFAULT_SCALE = 1.5;
 
 const ALARM_DIAMETER_SCALE = DEVICE_PULSE_DEFAULT_SCALE;
 
-function semanticPulseColor(
+/** Ordinary activity colour; the safety alarm projection must not replace it. */
+export function ordinaryDevicePulseColor(
   visual: DeviceVisualState,
   semanticActivity: DeviceActivity,
+  color?: string | null,
 ): string {
+  if (color) return color;
   if (semanticActivity === 'presence') return DEVICE_ACTIVITY_GREEN;
   if (semanticActivity === 'running' || visual.status === 'working' || visual.status === 'open') {
     return DEVICE_ACTIVITY_AMBER;
@@ -77,7 +80,7 @@ export function resolveDevicePulse(options: ResolveDevicePulseOptions): Resolved
   const generation = Math.max(1, Math.trunc(options.shortGeneration || 1));
   const diameterScale = Number.isFinite(options.diameterScale)
     ? Math.max(1, Number(options.diameterScale)) : DEVICE_PULSE_DEFAULT_SCALE;
-  const color = options.color || semanticPulseColor(visual, semanticActivity);
+  const color = ordinaryDevicePulseColor(visual, semanticActivity, options.color);
   if (effectiveHidden || bindingUnavailable || visual.availability === 'unavailable'
       || displayIsNeutral(display)) {
     return noPulse(generation, color, diameterScale);

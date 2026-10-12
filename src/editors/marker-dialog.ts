@@ -21,6 +21,9 @@ import { forgetMarkerBaseline, markerDirty, markerProblems } from './marker-form
 import { settingsCopy } from './settings-copy';
 
 import { resolveDevicePresentation } from '../device-presentation';
+import { renderColorToHex } from '../color';
+import { DEVICE_ACTIVITY_BLUE } from '../device-pulse';
+import type { HpColorOpacity } from '../hp-color-opacity';
 import { deviceBatteryModeOf, showDeviceBatteryOf } from '../device-battery-settings';
 import { ledStripsByMarker } from '../led-strip-gate';
 import { toggleEntityCandidates } from '../device-toggle';
@@ -97,6 +100,11 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           reducedMotion: this.host._reducedMotion,
         })
       : null;
+    // Keep live auto colour steady during the picker's editing session.
+    const activityPicker = this.host.renderRoot.querySelector<HpColorOpacity>('[data-activity-color]');
+    const activityColor = d.rippleColor || (activityPicker?.pickerOpen
+      ? activityPicker.color
+      : renderColorToHex(previewPresentation?.ordinaryPulseColor, DEVICE_ACTIVITY_BLUE));
     const badgeCandidates = previewDevice
       ? valueBadgeCandidates(this.host._planHass, previewDevice, previewLightDevices) : [];
     const badgeRecommendation = previewDevice
@@ -647,10 +655,10 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           ? html`${field({
               label: t('marker.activity_color'),
               control: html`<div class="ripple-colorrow">${colorField({
-                hex: d.rippleColor || '#3ea6ff',
-                picker: html`<hp-color-opacity .label=${t('marker.activity_color')} hide-label flat-swatch
+                hex: activityColor,
+                picker: html`<hp-color-opacity data-activity-color .label=${t('marker.activity_color')} hide-label flat-swatch
                   .pickerLabels=${this.host._colorPickerLabels}
-                  .color=${d.rippleColor || '#3ea6ff'} .opacity=${1} .showOpacity=${false}
+                  .color=${activityColor} .opacity=${1} .showOpacity=${false}
                   @hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => {
                     this.host._markerDialog = { ...d, rippleColor: e.detail.color };
                   }}></hp-color-opacity>`,

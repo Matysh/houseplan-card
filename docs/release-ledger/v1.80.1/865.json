@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 865,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "v1.80.1 shows a fixed activity swatch inconsistent with automatic pulse colour and deletes colour/size when saving inactive Display modes. Fixes existing behaviour without a schema or pulse-policy change.",
+  "summary": {
+    "ru": "Цвет активности в форме соответствует пульсации, цвет и размер сохраняются при смене отображения; поздний Save не закрывает следующий диалог.",
+    "en": "Activity colour matches the pulse and colour/size survive Display changes; a late save cannot close the next dialog."
+  }
+}

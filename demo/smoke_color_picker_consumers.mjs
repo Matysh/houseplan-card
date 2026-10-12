@@ -90,7 +90,8 @@ const result = await page.evaluate(async () => {
   dialog = root().querySelector('hp-dialog');
   const ripple = pickerByLabel(dialog, card._t('marker.activity_color'));
   out.rippleUsesColorOnlyPicker = !!ripple && ripple.showOpacity === false
-    && ripple.color === '#3ea6ff' && nativeColors() === 0;
+    // Unbound preview: honest ordinary transition-blue, not the old fake swatch.
+    && ripple.color === '#0C82F0' && nativeColors() === 0;
   // #600: подпись цвета — подпись поля набора над плашкой (label пикера скрыт,
   // hide-label), подпись размера — подпись своей строки range-line.
   const rippleLabelBox = dialog.querySelector('.ripple-colorrow')?.closest('.hpf-field')

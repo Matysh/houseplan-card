@@ -2167,7 +2167,7 @@ export class HouseplanCard extends LitElement {
     icon: string;        // '' = auto
     autoIcon: string;    // the icon the rules would give — picker placeholder
     display: DeviceDisplayMode;
-    rippleColor: string; // '' = accent
+    rippleColor: string; // '' = live/semantic automatic activity colour
     rippleSize: number;  // in icon diameters; package default 1.5
     size: number;        // icon size multiplier
     angle: number;       // icon rotation, degrees

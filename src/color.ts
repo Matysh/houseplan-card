@@ -40,3 +40,11 @@ export function generatedRgbColor(values: unknown): string | null {
   const [r, g, b] = channels.map((value) => Math.round(Math.min(255, Math.max(0, value))));
   return `rgb(${r}, ${g}, ${b})`;
 }
+
+/** Render-only HEX projection; never a stored override. */
+export function renderColorToHex(value: unknown, fallback: string): string {
+  const safe = safeRenderColor(value, null);
+  if (!safe) return fallback;
+  if (safe.startsWith('#')) return safe;
+  return '#' + safe.slice(4, -1).split(', ').map((channel) => Number(channel).toString(16).padStart(2, '0')).join('');
+}

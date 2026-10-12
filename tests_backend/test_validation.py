@@ -326,6 +326,19 @@ def test_marker_binding_shape_and_ripple_color():
         v.MARKER_SCHEMA({"id": "m1", "binding": "device:x", "ripple_color": "#fff"})
 
 
+@pytest.mark.parametrize("display", ["badge", "icon_ripple", "ripple", "value", "static_icon", "value_static_icon"])
+@pytest.mark.parametrize("size", [1, 1.5, 8, 20])
+def test_activity_settings_round_trip_independent_of_display_865(display, size):
+    """Inactive presentation does not delete stored activity; legacy size 20 stays valid."""
+    marker = {"id": "m865", "binding": "virtual", "display": display,
+              "ripple_color": "#123456", "ripple_size": size}
+    restored = v.MARKER_SCHEMA(json.loads(json.dumps(v.MARKER_SCHEMA(marker))))
+    assert restored["ripple_color"] == "#123456"
+    assert restored["ripple_size"] == size
+    automatic = v.MARKER_SCHEMA({**marker, "ripple_color": None, "ripple_size": None})
+    assert automatic["ripple_color"] is None and automatic["ripple_size"] is None
+
+
 def test_decor_rect_extents_must_be_positive():
     """audit P3-4: rect/ellipse w/h are sizes, not signed canvas coords."""
     v.DECOR_SCHEMA({"id": "d", "kind": "rect", "x": 0, "y": 0, "w": 0.1, "h": 0.2})

@@ -51,6 +51,8 @@ export class HpColorOpacity extends LitElement {
   public pickerLabels: ColorPickerLabels = DEFAULT_LABELS;
 
   private _open = false;
+  /** Consumers may hold live-derived properties steady while HEX is edited. */
+  public get pickerOpen(): boolean { return this._open; }
   private _pickerRaf = 0;
   private _emitRaf = 0;
   private _forceFallback = false;
