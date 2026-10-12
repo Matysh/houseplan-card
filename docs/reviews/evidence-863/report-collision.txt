@@ -1,0 +1,12 @@
+browser-attestation ok (ok) [#863 daycycle raw paired evidence] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-p1W2VP --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+mouse.move: Target page, context or browser has been closed
+    at measurePan (/home/matysh/hp-nightfix-20261010/demo/smoke_daycycle_raster.mjs:125:22)
+    at async file:///home/matysh/hp-nightfix-20261010/demo/smoke_daycycle_raster.mjs:186:24 {
+  log: []
+}
+
+Node.js v22.23.2
