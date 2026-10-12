@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.81.0-beta.1 — 2026-10-12
+
 - Activity colour now matches the actual ordinary pulse in device settings;
   colour and size survive switching Display modes. A late save no longer closes
   the next device dialog ([#865](https://github.com/Matysh/houseplan-card/issues/865)).
@@ -34,6 +36,13 @@
   heading, short emoji features, bold titles, blank lines and compact links.
   Release bodies and Telegram use this source; this file remains the technical
   task/beta history ([#840](https://github.com/Matysh/houseplan-card/issues/840)).
+
+- Release accounting now uses candidate-bound classifications and milestones
+  relative to the previous stable; review-archive checks remain valid after
+  archival (#838, #839).
+- CLI reports drain stdout/stderr before exit and retain asynchronous write
+  errors; repaired mutation witnesses compile and exercise their intended
+  fallback, resize and history-boundary cases (#862, #868, #837).
 
 ## v1.80.1 — 2026-10-09
 
