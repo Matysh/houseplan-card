@@ -25,6 +25,11 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Review preparation (#855) validates format and material identity before model
+work and freshly checks the issue at the model boundary. Invalid active requests
+return without a review cycle. A mechanical PASS is not semantic approval;
+voluntary infrastructure specifications retain the infrastructure route.
+
 Activity settings (#865) display the shared ordinary pulse colour, without
 turning a live automatic result into a stored override. Colour and size survive
 inactive Display modes/LED; alarm red remains independent. In-flight marker

@@ -699,6 +699,33 @@ jobs:
           fi
           echo "материал ревью: $(git rev-parse --short HEAD), дерево $(git rev-parse --short 'HEAD^{tree}')"
 
+      - name: "Механическая готовность материала до модели (#855)"
+        id: preflight
+        if: steps.rebase.outputs.conflict != 'true' && steps.rebase.outputs.refused == ''
+        env:
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          NUM: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+          STAGE: ${{ needs.guard.outputs.stage }}
+          TRACK: ${{ steps.track.outputs.track }}
+          SHA: ${{ steps.material.outputs.sha }}
+          TREE: ${{ steps.material.outputs.tree }}
+          DIGEST: ${{ steps.material.outputs.issue_body }}
+          BASE: ${{ steps.tools.outputs.sha }}
+          TOOLS: ${{ steps.tools.outputs.dir }}
+        run: |
+          report="$RUNNER_TEMP/review-preflight.json"
+          if node "$TOOLS/scripts/review-preflight.mjs" --repo="$REPO" --issue="$NUM" \
+            --stage="$STAGE" --track="$TRACK" --sha="$SHA" --tree="$TREE" \
+            --body-digest="$DIGEST" --base="$BASE" --output="$report" --return=true; then
+            echo 'Формат проверен; смысл и доказательства остаются за ревьюером.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            # Setup failure must stop the job; a format refusal already returned its status.
+            code=$?
+            test "$code" -eq 1
+            test -s "$report"
+          fi
+
       # Повторное применение зелёного вердикта без вызова модели (#499). Сценарий
       # #437 r4: зелёный r3 не слился (страж #312), задача вернулась в S6 и тут же
       # в S7, и ревьюер двенадцать минут заново разбирал дерево, в котором с r3
@@ -710,7 +737,7 @@ jobs:
       # теле issue, которого в дереве нет.
       - name: "Зелёный вердикт прошлого захода применим без ревью (#499)"
         id: reuse
-        if: steps.rebase.outputs.conflict != 'true' && steps.rebase.outputs.refused == '' && needs.guard.outputs.stage == 'code'
+        if: steps.rebase.outputs.conflict != 'true' && steps.rebase.outputs.refused == '' && steps.preflight.outputs.ok == 'true' && needs.guard.outputs.stage == 'code'
         env:
           NUM: ${{ github.event.issue.number }}
           # Правка ТЗ между раундами обязана отменять повторное применение
@@ -789,7 +816,7 @@ jobs:
       # слияние само дожидается Validate на кандидате.
       - name: Validate на материале
         id: gate
-        if: steps.rebase.outputs.conflict != 'true' && steps.rebase.outputs.refused == ''
+        if: steps.rebase.outputs.conflict != 'true' && steps.rebase.outputs.refused == '' && steps.preflight.outputs.ok == 'true'
         env:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           STAGE: ${{ needs.guard.outputs.stage }}
@@ -1116,6 +1143,26 @@ jobs:
             "$dir/prepared.json"
           test "$(git rev-parse HEAD)" = "$MATERIAL_SHA"
           test "$(git rev-parse 'HEAD^{tree}')" = "$MATERIAL_TREE"
+
+      - name: "Перепроверить тело перед моделью (#855)"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NUM: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+          STAGE: ${{ needs.guard.outputs.stage }}
+          TRACK: ${{ needs.prepare.outputs.track }}
+          SHA: ${{ needs.prepare.outputs.material_sha }}
+          TREE: ${{ needs.prepare.outputs.material_tree }}
+          DIGEST: ${{ needs.prepare.outputs.material_issue_body }}
+          TOOLS_SHA: ${{ needs.prepare.outputs.tools_sha }}
+        run: |
+          set -euo pipefail
+          tools="$RUNNER_TEMP/preflight-tools"
+          mkdir -p "$tools"
+          git archive --format=tar "$TOOLS_SHA" scripts | tar -x -C "$tools"
+          node "$tools/scripts/review-preflight.mjs" --repo="$REPO" --issue="$NUM" \
+            --stage="$STAGE" --track="$TRACK" --sha="$SHA" --tree="$TREE" \
+            --body-digest="$DIGEST" --base="$TOOLS_SHA" --return=true
 
       # #696: окружение ставится по нужде. Ревью ТЗ кода не исполняет — ни
       # `npm ci`, ни браузера. Ревью `show` ставит Chromium, только если тело
