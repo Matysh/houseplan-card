@@ -441,8 +441,10 @@ if (target) {
   };
   check('resize_history.degraded_baseline_undo_restores', await boundaryUndo('wall-degraded-extra'),
     { size: 1, canRedo: true, restored: true, writes: 1 });
+  // #883: the failure still fails closed (nothing restored or written), but only
+  // that step leaves the history; the redo branch stays.
   check('resize_history.other_boundary_failure_fails_closed', await boundaryUndo('wall-failed-core'),
-    { size: 0, canRedo: false, restored: true, writes: 0 });
+    { size: 0, canRedo: true, restored: true, writes: 0 });
 }
 
 await finish(browser, { done: true });

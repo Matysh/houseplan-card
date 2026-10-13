@@ -158,6 +158,126 @@ const MUTANT_DEFINITIONS = [
       replace: '    if (ctx.revision !== s.revision) return false; // mutant: any revision change retires',
     }],
   },
+  // #883: a refused ordinary Undo/Redo keeps the rest of the shared history.
+  // Pure runtime-level oracles: real runtime, CommandStack, ConfigAdoption and
+  // wall model; only the HA wire, card shell and physical verdict are substituted.
+  {
+    id: 'ordinary-history-clears-on-temporary-refusal',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#883 AC1" test/command-stack.test.mjs test/geometry-history-refusal.test.mjs',
+    because: '#883 AC1: a floor pinned elsewhere (owner decision Q1), a not yet authoritative config or an exception '
+      + 'is temporary; it keeps the exact command and both directions instead of consuming or clearing them',
+    patches: [{ file: 'src/geometry-history-step.ts',
+      find: "  } else port.toast(port.text(outcome === 'pinned' ? 'history.space_pinned' : 'history.unavailable'));",
+      replace: "  } else { stack.removeWhere(() => true); port.toast(port.text(outcome === 'pinned' ? 'history.space_pinned' : 'history.unavailable')); } // mutant: clear on a temporary refusal",
+    }],
+  },
+  {
+    id: 'ordinary-history-cache-proves-missing-space',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#883 AC1" test/command-stack.test.mjs test/geometry-history-refusal.test.mjs',
+    because: '#883 AC1/contract 3: only an authoritative baseline proves a floor gone; before the answer a missing '
+      + 'floor is a retry and the command stays',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts',
+      find: "    if (!config.spaces.some((space) => space.id === state.spaceId)) return ready ? 'space' : 'retry';",
+      replace: "    if (!config.spaces.some((space) => space.id === state.spaceId)) return 'space'; // mutant: a warm cache proves removal",
+    }],
+  },
+  {
+    id: 'ordinary-history-removes-same-name',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#883 AC2" test/command-stack.test.mjs test/geometry-history-refusal.test.mjs',
+    because: '#883 AC2: an unfit command leaves by identity; neighbours with the same name (another floor, the next '
+      + 'segment) stay and apply with the next press',
+    patches: [{ file: 'src/geometry-history-step.ts',
+      find: '    stack.removeWhere(mine);\n    port.toast',
+      replace: '    stack.removeWhere(item => item.name === name); // mutant: by name\n    port.toast',
+    }],
+  },
+  {
+    id: 'ordinary-history-unfit-moves-cursor',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#883 AC2" test/command-stack.test.mjs test/geometry-history-refusal.test.mjs',
+    because: '#883 AC2: an unfit command is removed from the direction it is in and never enters the opposite one '
+      + '(no success cursor on a refusal)',
+    patches: [{ file: 'src/geometry-history-step.ts',
+      find: '    stack.removeWhere(mine);\n    port.toast',
+      replace: '    if (undo) stack.confirmUndo(command); else stack.confirmRedo(command); // mutant: success cursor\n    port.toast',
+    }],
+  },
+  {
+    id: 'ordinary-history-chain-survives-removal',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#883 AC3" test/command-stack.test.mjs test/geometry-history-refusal.test.mjs',
+    because: '#883 AC3: once its step is removed, the transient Walls chain ends as a UI session; kept, its next '
+      + 'Undo/Redo would treat a neighbouring command as the chain terminal',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts',
+      find: '    if (historyUnfit(outcome) && host._activeWallChainId) this._clearGeometryGesture();',
+      replace: '    // mutant: the obsolete chain and its redo-point ledger survive the removal',
+    }],
+  },
+  {
+    id: 'ordinary-history-chain-ends-on-retry',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#883 AC3" test/command-stack.test.mjs test/geometry-history-refusal.test.mjs',
+    because: '#883 AC3: a temporary refusal keeps path, IDs, thickness and the redo-point ledger of the active chain',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts',
+      find: '    if (historyUnfit(outcome) && host._activeWallChainId) this._clearGeometryGesture();',
+      replace: '    if (outcome !== true && host._activeWallChainId) this._clearGeometryGesture(); // mutant: any refusal ends the chain',
+    }],
+  },
+  {
+    id: 'ordinary-history-ignores-fixed-floor',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#883 AC1|#883 AC5 a new command" test/command-stack.test.mjs test/geometry-history-refusal.test.mjs',
+    because: '#883 AC1/AC4: the fixed `floor` stays a write boundary for history; without it Undo switches to and '
+      + 'writes a floor the pinned card forbids',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts',
+      find: "    if (!host._canCommitSpace(state.spaceId)) return ready ? 'pinned' : 'retry';",
+      replace: '    // mutant: no fixed-floor check for history',
+    }],
+  },
+  {
+    id: 'ordinary-history-gesture-not-first',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#883 AC4" test/command-stack.test.mjs test/geometry-history-refusal.test.mjs',
+    because: '#883 AC4: a live draft or transform owns the first Undo/Redo; the history moves only with the next press',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts',
+      find: '    if (this.nodeMove?.busy || this.nodeMove?.cancel()) return true;',
+      replace: '    if (Date.now() > 0) return false; // mutant: gestures no longer own the first press\n    if (this.nodeMove?.busy || this.nodeMove?.cancel()) return true;',
+    }],
+  },
+  {
+    id: 'ordinary-history-exception-removes',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#883 AC5" test/command-stack.test.mjs test/geometry-history-refusal.test.mjs',
+    because: '#883 AC5: an unexpected exception is no proof of unfitness; the command stays and the plan is restored',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts',
+      find: "      if (host._space !== space) this._showGeometrySpace(space);\n      return 'retry';",
+      replace: "      if (host._space !== space) this._showGeometrySpace(space);\n      return 'geometry'; // mutant: an exception removes the step",
+    }],
+  },
+  {
+    id: 'ordinary-history-refusal-announced-as-success',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#883 AC1|#883 AC5" test/command-stack.test.mjs test/geometry-history-refusal.test.mjs',
+    because: '#883 AC5: no refusal moves the cursor or shows «Undone/Redone»',
+    patches: [{ file: 'src/geometry-history-step.ts',
+      find: '  if (outcome === true) {',
+      replace: "  if (outcome === true || outcome === 'retry' || outcome === 'pinned') { // mutant: failure as success",
+    }],
+  },
+  {
+    id: 'ordinary-history-stale-confirm-kept',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#883 AC5" test/command-stack.test.mjs test/geometry-history-refusal.test.mjs',
+    because: '#883 AC5: a command that is no longer next (a newer edit during the attempt) leaves by identity; the '
+      + 'newer top and the dropped redo branch are not undone',
+    patches: [{ file: 'src/geometry-history-step.ts',
+      find: '    if (!(undo ? stack.confirmUndo(command) : stack.confirmRedo(command))) stack.removeWhere(mine);',
+      replace: '    if (undo) stack.confirmUndo(command); else stack.confirmRedo(command); // mutant: a stale command stays',
+    }],
+  },
   {
     id: 'vacuum-native-path-appends-target',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/vacuum-path-geometry.test.mjs',
@@ -4240,15 +4360,9 @@ const MUTANT_DEFINITIONS = [
     // smoke supplies that one boundary verdict (`resize_history.degraded_baseline_*`).
     patches: [{
       file: 'src/houseplan-editor-runtime.ts',
-      find: "        // A history snapshot can predate the write-time wall degradation that\n"
-        + "        // canonicalized its command. Restore that one repairable baseline so\n"
-        + "        // Undo remains byte-exact immediately; _writeConfig still degrades and\n"
-        + "        // strictly validates the outbound candidate before it can leave the\n"
-        + "        // card. Every other preflight failure stays fail-closed.\n"
-        + "        strictOk = !!check?.ok;\n"
-        + "        safe = strictOk || !!(allowHistoryBoundaryRepair\n"
-        + "          && check?.reason === 'wall-degraded-extra');",
-      replace: "        strictOk = !!check?.ok;\n        safe = strictOk;",
+      // #883: both history-boundary verdicts share one closure; the repair is its middle branch.
+      find: "        return check.ok ? true : allowHistoryBoundaryRepair && check.reason === 'wall-degraded-extra' ? false : null;",
+      replace: "        return check.ok ? true : null;",
     }],
   },
   {
