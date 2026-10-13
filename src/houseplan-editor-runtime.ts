@@ -13,7 +13,6 @@ import { finishWarmModeAdoption, resumeWarmMode, type WarmModeHost } from './war
 import { guard } from 'lit/directives/guard.js';
 import { renderVacuumMapsSection } from './editors/vacuum-maps-section';
 import { renderVacuumPathDiagnostics } from './editors/vacuum-path-diagnostics';
-import type { VacuumTrailDiagnostic } from './vacuum-trail-diagnostics';
 import { renderMarkerDialog } from './editors/marker-dialog';
 import {
   CELL_CM_MAX, CELL_CM_MIN, renderSpaceSettingsDialog,
@@ -772,7 +771,7 @@ export interface HouseplanEditorHostPort {
   _vacSrvTrails: import('./vacuum-trail-material').VacuumServerBook;
   _vacTrailFormat: number;
   _vacGeometryCache: import('./vacuum-path-geometry').VacuumPathGeometryCache;
-  _vacTrailDiagnostics: (device: DevItem) => VacuumTrailDiagnostic;
+  _vacTrailDiagnostics: (device: DevItem) => import('./vacuum-trail-diagnostics').VacuumTrailDiagnostic;
   _view: { x: number; y: number; w: number; h: number; } | null;
   _viewportGestureDirty: boolean;
   _viewModeSnap: { space: string; zoom: number; cx?: number; cy?: number; w?: number; } | null;
