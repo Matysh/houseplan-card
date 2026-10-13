@@ -164,7 +164,7 @@ test('#872 ownership cache does not trust a shallow freeze and keeps raw attribu
   assert.deepEqual(ownVacuumPathInput(new Array(10000000)), []);
 });
 
-test('#872 four 100k robots and five clients share material and warm geometry without repeated raw work', () => {
+test('#872 four 100k robots and five shared readers reuse owned material and warm geometry', () => {
   const raw = Object.fromEntries(Array.from({length: 4}, (_, i) => [String(i), {current: {
     path_format: 2, paths: [Array.from({length: 100000}, (_, n) => [n % 2, n])],
     quality: {source: 'native', reason: 'ok'},
@@ -192,8 +192,51 @@ test('#872 four 100k robots and five clients share material and warm geometry wi
     assert.equal(vacuumTrailSvg(cache, path, [100,0,0,0,100,0], 1, 20000), warm[0]);
   }
   assert.equal(cache.computations, 4);
-  console.log(JSON.stringify({workload: '4x100k, 5 clients, 100 idle frames',
+  console.log(JSON.stringify({workload: '4x100k, 5 shared readers, 100 idle frames',
     computations: cache.computations, elapsedMs: +(performance.now()-started).toFixed(2)}));
+});
+
+test('#872 five isolated clients each cache four 100k routes without global frontend sharing', () => {
+  let firstPath, computations = 0;
+  const started = performance.now();
+  for (let client = 0; client < 5; client++) {
+    // Separate transport values and cache instances, as in separate browsers.
+    const raw = Object.fromEntries(Array.from({length: 4}, (_, i) => [String(i), {current: {
+      path_format: 2, paths: [Array.from({length: 100000}, (_, n) => [n % 2, n])],
+      quality: {source: 'native', reason: 'ok'},
+    }}]));
+    const book = vacuumTrailMaterial(raw), cache = new VacuumPathGeometryCache();
+    let budget = VAC_RENDER_POINT_BUDGET;
+    const warm = Object.keys(raw).map(id => {
+      assert.notEqual(book[id].current.paths, raw[id].current.paths);
+      const path = selectVacuumTrail(null, book[id].current, [], 2).path;
+      const frame = vacuumTrailSvg(cache, path, [100,0,0,0,100,0], 1, budget);
+      budget -= frame.count;
+      assert.ok(frame.limited);
+      return frame;
+    });
+    assert.equal(budget, 0);
+    assert.equal(cache.computations, 4);
+    if (client === 0) firstPath = warm[0].d;
+    else assert.equal(warm[0].d, firstPath);
+    for (let idle = 0; idle < 100; idle++) {
+      const idleBook = vacuumTrailMaterial(raw);
+      let remaining = VAC_RENDER_POINT_BUDGET;
+      Object.keys(raw).forEach((id, i) => {
+        assert.ok(idleBook[id].current.paths === book[id].current.paths);
+        const path = selectVacuumTrail(null, idleBook[id].current, [], 2).path;
+        const frame = vacuumTrailSvg(cache, path, [100,0,0,0,100,0], 1, remaining);
+        remaining -= frame.count;
+        assert.equal(frame, warm[i]);
+      });
+      assert.equal(remaining, 0);
+    }
+    assert.equal(cache.computations, 4);
+    computations += cache.computations;
+  }
+  assert.equal(computations, 20);
+  console.log(JSON.stringify({workload: '4x100k, 5 isolated clients, 100 idle frames each',
+    computations, elapsedMs: +(performance.now()-started).toFixed(2)}));
 });
 
 test('#872 SVG uses exact endpoint text and cached commands, not unconditional one decimal', () => {
