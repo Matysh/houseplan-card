@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 875,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "v1.80.1 already supports JSON backup import in General settings, but an empty installation only exposes Add space. This adds access to the existing importer without a temporary space and protects its asynchronous UI; it is neither a major new backup feature nor a fix of a feature introduced only on this release line.",
+  "summary": {
+    "ru": "JSON-копию House Plan можно импортировать прямо с пустого экрана без создания временного пространства.",
+    "en": "Import a House Plan JSON backup directly from the empty screen without creating a temporary space."
+  }
+}

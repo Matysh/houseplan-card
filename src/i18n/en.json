@@ -83,6 +83,7 @@
   "physical.column_size_title": "Outer side of the square column placed by the click (1–150 cm).",
   "card.title": "House plan",
   "empty.no_spaces": "No spaces yet.",
+  "empty.import_backup": "Import backup",
   "nav.spaces": "House Plan spaces",
   "empty.add_first": "Add the first space and upload a floor plan.",
   "empty.read_only": "No spaces are configured. Ask an administrator to add one.",

@@ -400,6 +400,7 @@ these full-card attributes.
 | `[data-hp="space-settings"][data-id="…"]` | Settings gear for one space |
 | `[data-hp="empty"]` | Existing empty, fixed-floor loading or fixed-floor error surface |
 | `[data-hp="create-space"]` | First-space action, only for a user already allowed to see it |
+| `[data-hp="import-backup"]` | Empty-screen JSON backup action, writer-only and not in House Plan kiosk |
 | `[data-hp="toast"][data-kind="message"]` | Current transient message |
 
 Zoom controls remain in the DOM inside the CSS-hidden kiosk header, exactly as

@@ -111,6 +111,21 @@ export const baseStyles = css`
     .empty .btn {
       margin-top: var(--sp-4);
     }
+    .empty-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: var(--sp-4);
+      max-width: 100%;
+    }
+    .empty-actions .empty-backup-upload { display: contents; }
+    .empty-actions input[type='file'] { display: none; }
+    .empty-actions .btn {
+      min-height: 44px;
+      max-width: 100%;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
     .version-recovery {
       position: absolute;
       z-index: 72;

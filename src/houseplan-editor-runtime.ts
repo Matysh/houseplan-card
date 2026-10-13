@@ -461,6 +461,8 @@ export interface HouseplanEditorHostPort {
   _backdropGuard: import('./backdrop-pick').BackdropGuardState | null;
   _backdropDialog: { widthCm: number; heightCm: number; angle: string; } | null;
   _backupExportDialog: { kind: "full" | "space"; planOnly: boolean; busy: boolean; error: string; } | null;
+  _backupImportIntent: import('./backup-import-intent').BackupImportIntent;
+  _canImportBackup: boolean;
   _backupImportDialog: { filename: string; size: number; token: string; preview: any; expectedConfigRev: number; expectedLayoutRev: number; duplicatePolicy: "skip" | "virtual"; confirmMissing: boolean; busy: boolean; error: string; } | null;
   _baseVb: (projection?: 'flat' | 'iso') => number[];
   _bdActive: boolean;
@@ -9249,11 +9251,29 @@ public async _runBackupExport(): Promise<void> {
     }
   }
 
+private _backupImportRequest = 0;
+
+public _closeBackupImport(): void {
+    this.host._backupImportDialog = null;
+    this.host._backupImportIntent.cancel();
+  }
+
+private _ownsBackupImport(request: number): boolean {
+    return this.host.isConnected && this.host._backupImportIntent.owns(request);
+  }
+
 public async _pickBackupImport(ev: Event): Promise<void> {
     const input = ev.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
-    if (!file) return;
+    if (!file || !this.host._canImportBackup) return;
+    await this._importBackupFile(file);
+  }
+
+public async _importBackupFile(file: File, request = this.host._backupImportIntent.begin()): Promise<void> {
+    if (!this._ownsBackupImport(request) || !this.host._canImportBackup) return;
+    this._backupImportRequest = request;
+    this.host._backupImportIntent.opened(request);
     this.host._settingsDialog = null;
     this.host._backupImportDialog = {
       filename: file.name, size: file.size, token: '', preview: null,
@@ -9264,6 +9284,8 @@ public async _pickBackupImport(ev: Event): Promise<void> {
       if (this.host._saveConfigDebounced.pending()) this.host._saveConfigDebounced.flush();
       await this.host._writeChain;
       if (this.host._persistLayout.pending()) this.host._persistLayout.flush();
+      if (!this._ownsBackupImport(request)) return;
+      if (!this.host._canImportBackup) throw new Error(this.host._t('empty.read_only'));
       const path = '/api/houseplan/import/preview?duplicate_policy=skip';
       const init = { method: 'POST', body: file, headers: { 'content-type': 'application/json' } };
       const response: Response = this.host.hass?.fetchWithAuth
@@ -9278,7 +9300,7 @@ public async _pickBackupImport(ev: Event): Promise<void> {
           });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.error) throw Object.assign(new Error(data.message || data.error || `HTTP ${response.status}`), { code: data.error });
-      if (this.host._backupImportDialog) {
+      if (this._ownsBackupImport(request) && this.host._backupImportDialog) {
         this.host._backupImportDialog = {
           ...this.host._backupImportDialog,
           token: data.token,
@@ -9288,8 +9310,8 @@ public async _pickBackupImport(ev: Event): Promise<void> {
           busy: false,
         };
       }
-    } catch (error: any) {
-      if (this.host._backupImportDialog) {
+    } catch (error: unknown) {
+      if (this._ownsBackupImport(request) && this.host._backupImportDialog) {
         this.host._backupImportDialog = { ...this.host._backupImportDialog, busy: false, error: this._backupErrorText(error) };
       }
     }
@@ -9297,13 +9319,15 @@ public async _pickBackupImport(ev: Event): Promise<void> {
 
 public async _setBackupDuplicatePolicy(policy: 'skip' | 'virtual'): Promise<void> {
     const d = this.host._backupImportDialog;
-    if (!d || d.busy || !d.token || policy === d.duplicatePolicy) return;
+    const request = this._backupImportRequest;
+    if (!this._ownsBackupImport(request) || !this.host._canImportBackup
+      || !d || d.busy || !d.token || policy === d.duplicatePolicy) return;
     this.host._backupImportDialog = { ...d, duplicatePolicy: policy, busy: true, error: '' };
     try {
       const response: any = await this.host.hass.callWS({
         type: 'houseplan/import/revalidate', token: d.token, duplicate_policy: policy,
       });
-      if (this.host._backupImportDialog) {
+      if (this._ownsBackupImport(request) && this.host._backupImportDialog) {
         this.host._backupImportDialog = {
           ...this.host._backupImportDialog,
           preview: { ...d.preview, ...response.preview },
@@ -9314,7 +9338,7 @@ public async _setBackupDuplicatePolicy(policy: 'skip' | 'virtual'): Promise<void
         };
       }
     } catch (error: any) {
-      if (this.host._backupImportDialog) {
+      if (this._ownsBackupImport(request) && this.host._backupImportDialog) {
         this.host._backupImportDialog = {
           ...this.host._backupImportDialog,
           duplicatePolicy: d.duplicatePolicy,
@@ -9329,7 +9353,9 @@ public async _setBackupDuplicatePolicy(policy: 'skip' | 'virtual'): Promise<void
 
 public async _applyBackupImport(): Promise<void> {
     const d = this.host._backupImportDialog;
-    if (!d || d.busy || !d.token || !d.preview) return;
+    const request = this._backupImportRequest;
+    if (!this._ownsBackupImport(request) || !this.host._canImportBackup
+      || !d || d.busy || !d.token || !d.preview) return;
     if (d.preview.confirmation_required && !d.confirmMissing) return;
     this.host._backupImportDialog = { ...d, busy: true, error: '' };
     const previousSpace = this.host._space;
@@ -9342,11 +9368,15 @@ public async _applyBackupImport(): Promise<void> {
         duplicate_policy: d.duplicatePolicy,
         confirm_missing_content: d.confirmMissing,
       });
+      // Apply is already a server transaction; close only revokes this UI's ownership.
+      if (!this._ownsBackupImport(request)) return;
       const [configResponse, layoutResponse] = await Promise.all([
         this.host._getAuthoritativeConfig(),
         this.host.hass.callWS({ type: 'houseplan/layout/get' }),
       ]);
+      if (!this._ownsBackupImport(request)) return;
       const adopted = await this.host._adoptAuthoritative({ cfgResp: configResponse, layResp: layoutResponse, reason: 'import-apply', profile: 'post-write' });
+      if (!this._ownsBackupImport(request)) return;
       if (adopted.status !== 'adopted') { this.host._backupImportDialog = { ...d, busy: false, error: '' }; this.host.requestUpdate(); return; }
       this.host._geometryHistory.clear();
       this.host._dirtyPos.clear();
@@ -9371,6 +9401,7 @@ public async _applyBackupImport(): Promise<void> {
       if (this.host._hasFixedFloor) this.host._adoptInitialSpace(this.host._model, true);
       else this.host._commitSpace(nextSpace);
       this.host._backupImportDialog = null;
+      this.host._backupImportIntent.cancel(false);
       this.host._cacheSnapshot();
       this.host.requestUpdate();
       const outcomeCounts = result.kind === 'space' ? d.preview.counts : result.counts;
@@ -9380,6 +9411,7 @@ public async _applyBackupImport(): Promise<void> {
         refs: String(result.repaired_target_refs || 0),
       }));
     } catch (error: any) {
+      if (!this._ownsBackupImport(request)) return;
       if (error?.code === 'conflict' && this.host._backupImportDialog?.token) {
         try {
           const current = this.host._backupImportDialog;
@@ -9387,6 +9419,7 @@ public async _applyBackupImport(): Promise<void> {
             type: 'houseplan/import/revalidate', token: current.token,
             duplicate_policy: current.duplicatePolicy,
           });
+          if (!this._ownsBackupImport(request)) return;
           this.host._backupImportDialog = {
             ...current,
             preview: { ...current.preview, ...refreshed.preview },
@@ -9401,7 +9434,7 @@ public async _applyBackupImport(): Promise<void> {
           error = refreshError;
         }
       }
-      if (this.host._backupImportDialog) {
+      if (this._ownsBackupImport(request) && this.host._backupImportDialog) {
         this.host._backupImportDialog = { ...this.host._backupImportDialog, busy: false, error: this._backupErrorText(error) };
       }
     }
@@ -9474,7 +9507,7 @@ public _renderBackupImportDialog(): TemplateResult {
     ];
     const reportRows = allReportRows.filter(([, value]) => value > 0);
     return html`<hp-dialog .hass=${this.host.hass} data-kind="backup" .title=${this.host._t('backup.import_title')}
-      icon="mdi:upload" wide dismiss-on-scrim @hp-close=${() => (this.host._backupImportDialog = null)}>
+      icon="mdi:upload" wide dismiss-on-scrim @hp-close=${() => this._closeBackupImport()}>
       <div class="body backupbody" aria-busy=${d.busy ? 'true' : 'false'}>
         <div class="backupfile"><b>${d.filename}</b><span>${(d.size / 1024).toFixed(1)} KB</span></div>
         ${d.busy && !p ? html`<div class="rhint" role="status" aria-live="polite">${this.host._t('backup.reading')}</div>` : nothing}
@@ -9576,10 +9609,10 @@ public _renderBackupImportDialog(): TemplateResult {
         ` : nothing}
       </div>
       <div class="row" slot="footer">
-        <button class="btn ghost" autofocus data-hp="dialog-cancel" @click=${() => (this.host._backupImportDialog = null)}>${this.host._t('btn.cancel')}</button>
+        <button class="btn ghost" autofocus data-hp="dialog-cancel" @click=${() => this._closeBackupImport()}>${this.host._t('btn.cancel')}</button>
         <span class="spacer"></span>
         ${p ? html`<button class="btn ${p.kind === 'full' ? 'danger' : 'on'}" data-hp="dialog-confirm"
-          ?disabled=${d.busy || (p.confirmation_required && !d.confirmMissing)} @click=${() => this._applyBackupImport()}>
+          ?disabled=${!this.host._canImportBackup || d.busy || (p.confirmation_required && !d.confirmMissing)} @click=${() => this._applyBackupImport()}>
           <ha-icon icon=${p.kind === 'full' ? 'mdi:database-import' : 'mdi:plus'}></ha-icon>
           ${d.busy ? '…' : this.host._t(p.kind === 'full' ? 'backup.replace' : 'backup.add')}
         </button>` : nothing}

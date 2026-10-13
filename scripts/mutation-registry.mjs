@@ -8602,6 +8602,40 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'backup-import-ignores-writer',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/backup-import-intent.test.mjs',
+    because: '#875: the executed access matrix refuses lost/missing writer permission without requiring an active space.',
+    patches: [{ file: 'src/backup-import-intent.ts',
+      find: 'access.connected && access.loaded && access.server && access.writer && !access.kiosk',
+      replace: 'access.connected && access.loaded && access.server && !access.kiosk' }],
+  },
+  {
+    id: 'backup-import-replacement-retains-epoch',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/backup-import-intent.test.mjs',
+    because: '#875: the negative replacement probe executes ownership and requires the old epoch to be revoked.',
+    patches: [{ file: 'src/backup-import-intent.ts',
+      find: 'return this.active && this.epoch === epoch;',
+      replace: 'return this.active && epoch > 0;' }],
+  },
+  {
+    id: 'backup-import-runtime-skips-ownership',
+    guard: 'node demo/smoke_empty_backup_import.mjs',
+    because: '#875: the production lazy runtime must not paint cancelled preview/error/Apply '
+      + 'responses into a replacement hp-dialog; this crosses File input, Lit/custom-element and lazy lifecycle.',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts',
+      find: 'return this.host.isConnected && this.host._backupImportIntent.owns(request);',
+      replace: 'return this.host.isConnected && request > 0;' }],
+  },
+  {
+    id: 'backup-import-double-apply',
+    guard: 'node demo/smoke_empty_backup_import.mjs',
+    because: '#875: two native dialog activation events before Lit disables the button '
+      + 'must send exactly one HA transaction; the witness requires the actual browser/custom-element lifecycle.',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts',
+      find: 'public async _applyBackupImport(): Promise<void> {\n    const d = this.host._backupImportDialog;\n    const request = this._backupImportRequest;\n    if (!this._ownsBackupImport(request) || !this.host._canImportBackup\n      || !d || d.busy || !d.token || !d.preview) return;',
+      replace: 'public async _applyBackupImport(): Promise<void> {\n    const d = this.host._backupImportDialog;\n    const request = this._backupImportRequest;\n    if (!this._ownsBackupImport(request) || !this.host._canImportBackup\n      || !d || !d.token || !d.preview) return;' }],
+  },
+  {
     id: 'passage-visible-geometry-door-fallback',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test test/opening-symbol.test.mjs',

@@ -7,6 +7,7 @@
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
 import { ledAnchor, ledRelease, ledRuntime, ledStripsByMarker, ledVisible } from './led-strip-gate';
+import { BackupImportIntent, backupImportAllowed } from './backup-import-intent';
 import { createDeviceBatteryContext } from './device-battery';
 import { deviceBatteryModeOf, showDeviceBatteryOf } from './device-battery-settings';
 import { ZoomScaleActivity } from './zoom-scale-activity';
@@ -1001,6 +1002,16 @@ export class HouseplanCard extends LitElement {
     return this.hass?.user?.is_admin === true;
   }
   private get _canEdit(): boolean { return this._norm && this._canManageConfiguration; }
+
+  public get _canImportBackup(): boolean {
+    return backupImportAllowed({ connected: this.isConnected, loaded: this._loadOk,
+      server: this._serverStorage, writer: this._canManageConfiguration, kiosk: this._kiosk });
+  }
+
+  private get _canImportEmptyBackup(): boolean {
+    return this._canImportBackup && !this._hasFixedFloor
+      && this._serverCfg?.spaces?.length === 0 && this._model.length === 0;
+  }
 
   /** Legacy alias: markup machinery is active exactly in plan mode. */
   private get _kiosk(): boolean {
@@ -2107,6 +2118,7 @@ export class HouseplanCard extends LitElement {
   private _backupExportDialog: {
     kind: 'full' | 'space'; planOnly: boolean; busy: boolean; error: string;
   } | null = null;
+  public readonly _backupImportIntent = new BackupImportIntent();
   private _backupImportDialog: {
     filename: string; size: number; token: string; preview: any;
     expectedConfigRev: number; expectedLayoutRev: number;
@@ -2685,6 +2697,8 @@ export class HouseplanCard extends LitElement {
   }
 
   public disconnectedCallback(): void {
+    this._backupImportIntent.cancel(false);
+    this._backupImportDialog = null;
     // Stop the independent kiosk timer before any teardown flush can mutate
     // config/layout state or this detached instance can reload the document.
     this._versionRecovery.disconnect();
@@ -2862,7 +2876,7 @@ export class HouseplanCard extends LitElement {
       if (this._infoCard) { this._closeInfoCard(); return; }
       if (this._rulesDialog) { this._rulesDialog = null; return; }
       if (this._alignDialog) { this._alignDialog = null; return; }
-      if (this._backupImportDialog) { this._backupImportDialog = null; return; }
+      if (this._backupImportDialog) { this._editorRuntime?._closeBackupImport(); return; }
       if (this._backupExportDialog) { this._backupExportDialog = null; return; }
       if (this._pdfDialog) { this._pdfDialog = false; return; }
       if (this._supportDialog) { void this._editorRuntime?._closeSupportDialog(); return; }
@@ -4182,6 +4196,8 @@ export class HouseplanCard extends LitElement {
       this._model.length === 0 &&
       !this._spaceDialog &&
       !this._importDialog &&
+      !this._backupImportDialog &&
+      !this._backupImportIntent.loading &&
       !this._onboardingShown
     ) {
       this._onboardingShown = true;
@@ -7475,6 +7491,7 @@ export class HouseplanCard extends LitElement {
     this._closeInfoCard();
     this._rulesDialog = null;
     this._alignDialog = null;
+    this._backupImportIntent.cancel(false);
     this._backupImportDialog = null;
     this._backupExportDialog = null;
     this._pdfDialog = false;
@@ -9704,13 +9721,16 @@ export class HouseplanCard extends LitElement {
   }
 
   private _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
+    if (mode === 'create' && (this._backupImportIntent.loading || this._backupImportDialog)) return;
     if (this._spaceDialogUsesOnboardingRuntime(mode)) {
       if (this._onboardingRuntime) {
         this._onboardingRuntime._openSpaceDialog(mode, spaceId);
         return;
       }
       void this._ensureOnboardingRuntime().then((ready) => {
-        if (ready) this._spaceRuntimeOrThrow()._openSpaceDialog(mode, spaceId);
+        if (ready && !(mode === 'create' && (this._backupImportIntent.loading || this._backupImportDialog))) {
+          this._spaceRuntimeOrThrow()._openSpaceDialog(mode, spaceId);
+        }
       });
       return;
     }
@@ -10269,6 +10289,32 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._openBackupExport();
   }
 
+  private async _pickEmptyBackupImport(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || !this._canImportEmptyBackup) return;
+    const intent = this._backupImportIntent.begin(() => {
+      void this.updateComplete.then(() => {
+        if (this._canImportEmptyBackup && !this._backupImportIntent.loading && !this._backupImportDialog) {
+          this.renderRoot.querySelector<HTMLButtonElement>('[data-hp="import-backup"]')?.focus();
+        }
+      });
+    });
+    this._onboardingShown = true;
+    this._spaceDialog = null;
+    this._importDialog = null;
+    this.requestUpdate();
+    const ready = await this._ensureEditorRuntime();
+    if (!this._backupImportIntent.owns(intent)) return;
+    if (!ready || !this._canImportEmptyBackup) {
+      this._backupImportIntent.cancel();
+      this.requestUpdate();
+      return;
+    }
+    await this._editorRuntimeOrThrow()._importBackupFile(file, intent);
+  }
+
   private async _runBackupExport(): Promise<void> {
     return this._editorRuntimeOrThrow()._runBackupExport();
   }
@@ -10753,15 +10799,27 @@ export class HouseplanCard extends LitElement {
           <p>${this._t('empty.no_spaces')}</p>
           ${this._serverStorage && this._canManageConfiguration
             ? html`<p class="muted">${this._t('empty.add_first')}</p>
-                <button class="btn on" data-hp="create-space" @click=${() => this._openSpaceDialog('create')}>
+                <div class="empty-actions">
+                <button class="btn on" data-hp="create-space" ?disabled=${this._backupImportIntent.loading}
+                  @click=${() => this._openSpaceDialog('create')}>
                   <ha-icon icon="mdi:plus"></ha-icon>${this._t('btn.add_space')}
-                </button>`
+                </button>
+                ${this._canImportEmptyBackup ? html`<span class="empty-backup-upload">
+                  <button class="btn" type="button" data-hp="import-backup" @click=${(e: Event) =>
+                    ((e.currentTarget as HTMLElement).nextElementSibling as HTMLInputElement)?.click()}>
+                    <ha-icon icon="mdi:upload"></ha-icon>${this._t('empty.import_backup')}
+                  </button>
+                  <input type="file" accept="application/json,.json" tabindex="-1"
+                    @change=${(e: Event) => this._pickEmptyBackupImport(e)} />
+                </span>` : nothing}
+                </div>`
             : html`<p class="muted">${this._t(this._serverStorage ? 'empty.read_only' : 'empty.install')}</p>`}
         </div>
         ${this._spaceDialog
           ? (this._onboardingRuntime || this._editorRuntime) ? this._renderSpaceDialog() : nothing
           : nothing}
         ${this._importDialog ? this._onboardingRuntime ? this._renderImportDialog() : nothing : nothing}
+        ${this._backupImportDialog && this._editorRuntime ? this._renderBackupImportDialog() : nothing}
         ${this._toast ? html`<div class="toast" data-hp="toast" data-kind="message" role="alert" aria-live="assertive">${this._toast}</div>` : nothing}
       </ha-card>`;
     }

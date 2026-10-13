@@ -83,6 +83,7 @@
   "physical.column_size_title": "Côté extérieur de la colonne carrée placée par le clic (1–150 cm).",
   "card.title": "Plan de la maison",
   "empty.no_spaces": "Aucun espace pour le moment.",
+  "empty.import_backup": "Importer une sauvegarde",
   "nav.spaces": "Espaces House Plan",
   "empty.add_first": "Ajoutez le premier espace et importez un plan.",
   "empty.read_only": "Aucun espace n’est configuré. Demandez à un administrateur d’en ajouter un.",

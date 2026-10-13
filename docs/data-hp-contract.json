@@ -6,6 +6,11 @@
     "additionsAreCompatible": true
   },
   "hooks": {
+    "import-backup": {
+      "elements": ["button"],
+      "since": "1.81.0",
+      "audience": ["test"]
+    },
     "create-space": {
       "elements": ["button"],
       "since": "1.73.0-beta.7",

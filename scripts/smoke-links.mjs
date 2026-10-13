@@ -54,6 +54,13 @@ export const SMOKE_LINKS = [
       + 'late discovery and real HA Area relocation must keep their original attention behaviour.',
   },
   {
+    symbols: ['BackupImportIntent', 'backupImportAllowed', '_canImportEmptyBackup', '_pickEmptyBackupImport',
+      '_importBackupFile', '_ownsBackupImport', '_closeBackupImport'],
+    smokes: ['smoke_empty_backup_import.mjs', 'smoke_backup_transfer.mjs', 'smoke_lazy_editor_chunk.mjs'],
+    because: '#875: native empty-screen file chooser, preview/apply, cancellation, lazy chunk and '
+      + 'ACL probes observe UI and transport, not private import methods; existing settings/onboarding remain covered.',
+  },
+  {
     symbols: ['classifyWallFaceRoom', 'classifyWallFaceCandidates', 'selectWallFacePromotionIds', '_classifyWallFaces',
       '_dismissWallFaceBatch', 'sourceIntervals'],
     files: ['src/wall-face-room-split.ts'],

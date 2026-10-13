@@ -444,6 +444,16 @@ config never carries bytes or URLs) — [`DECOR-EDITOR.md`](DECOR-EDITOR.md) §7
 
 ## Server-side configuration
 
+Empty server installations expose Add space and Import backup (#875). The
+file chooser opens synchronously in the user's activation; the File, not its
+DOM event, crosses the editor lazy-load. `BackupImportIntent` owns each
+instance-local operation through preview/revalidate/apply; close, replacement,
+route departure and disconnect revoke late UI results. Writer/kiosk checks do
+not require an active space and are repeated after loading and before upload
+and Apply. The empty branch renders the existing backup dialog after the
+editor runtime has installed its styles. Onboarding and backup import never
+open simultaneously. Existing server ACL, CAS and paired writes are unchanged.
+
 `.storage/houseplan.config` holds `{model_version, spaces[], markers[], settings}`.
 A space carries plan-image fields, `rooms[]` (with ordered `wall_ids`),
 `wall_segments[]`, `partitions[]`, `wall_columns[]`, `openings[]`, `decor[]`,

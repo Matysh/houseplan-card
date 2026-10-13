@@ -2194,6 +2194,13 @@ but the map source's internal entity ID is removed from the response.
 
 ### Portable JSON backup
 
+With no spaces yet, choose **Import backup** next to **Add space** on the empty
+screen. Close the automatic first-space/floor dialog if it is open, select a
+House Plan JSON backup and confirm the normal preview; no temporary space is
+needed. Nothing changes before confirmation, and Cancel returns to the empty
+screen. This entry requires editing permission and is unavailable in House
+Plan kiosk mode. It does not import a complete Home Assistant backup.
+
 **Global settings → Backup and transfer** exports either the complete House
 Plan model or the current space. Import first shows a server-side preview with
 type, versions, object counts, source and content-link state; nothing is written

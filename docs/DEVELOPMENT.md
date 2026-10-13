@@ -48,6 +48,20 @@ Compile `tsconfig.test.json` and run `scripts/fix-test-build.mjs` before the
 smoke. Existing new-device and Area-relocation smokes are companion witnesses.
 The mutation registry guards runtime capture and atomic-payload wiring.
 
+## Empty-screen backup entry (#875)
+
+`smoke_empty_backup_import.mjs` starts a genuinely cold document with an empty
+authoritative config, then uses native filechooser/keyboard/dialog controls.
+Its synthetic HA transport logs preview/apply and forbids config/layout writes;
+it does not claim backend validation or atomicity. It covers cancelled and
+replaced previews, permissions, missing-content confirmation, conflict,
+full/space/plan-only/empty results, locales/narrow layout and lazy retry.
+Keep the chooser before async runtime loading, snapshot the File and reset the
+input before awaiting. The operation epoch and focus callback are transient;
+close never cancels an Apply transaction already sent to the server. Compile
+the test build for `backup-import-intent.test.mjs`; the existing lazy-editor
+and backup-transfer smokes remain required neighbours. No model migration.
+
 ## Composite room closure (#874)
 
 `wall-face-room-split.test.mjs` preserves the reported floating-point geometry
