@@ -11,7 +11,7 @@ import { checkReferences, checkWallKeys, checkMixedRoleRecords,
   checkHiddenObstacles, checkPhysicalGeometry } from '../scripts/model-invariants.mjs';
 
 const fixture = JSON.parse(readFileSync(new URL('../test/fixtures/874-room-closure.json', import.meta.url)));
-function seed({ added = false, duplicate = false, oldCm = 25, newCm = 15, opening = false } = {}) {
+function seed({ added = false, duplicate = false, oldCm = 25, newCm = 15, opening = false, unrelated = false } = {}) {
   const rooms = [{ id: 'parent', name: 'Parent', area: 'synthetic-parent',
     settings: { name_size: 1.2 }, poly: fixture.parent },
   { id: 'neighbor', name: 'Neighbor', area: null, poly: fixture.neighbor }];
@@ -25,7 +25,7 @@ function seed({ added = false, duplicate = false, oldCm = 25, newCm = 15, openin
     name: 'Synthetic marker', space: 'closure', x: -.5, y: -2 }], spaces: [{
     id: 'closure', title: 'Closure', cell_cm: 1.5, view_box: [-3.2, -3, 4.8, 4.5],
     rooms, walls, partitions: [...added ? [old, fresh] : [old],
-      { id: 'unrelated-coincident', a: [-2.95, -2.2], b: [-2.95, -1.8], cm: 30 }],
+      ...unrelated ? [{ id: 'unrelated-coincident', a: [-2.95, -2.2], b: [-2.95, -1.8], cm: 30 }] : []],
     openings: opening ? [{ id: 'retained-opening', type: 'window', x: openingX,
       y: old.a[1], length: .1, angle: 0,
       host: { kind: 'partition', id: old.id, t: (old.a[0] - openingX) / (old.a[0] - old.b[0]) },
@@ -155,8 +155,6 @@ await scenario('Native reported drawing and Undo Redo', seed(), async page => {
     originalCarrier25cm: space.wall_segments.some(w => covers(w, fixture.oldWall.a, fixture.oldWall.b) && w.cm === 25),
     newCut15cm: space.wall_segments.some(w => Math.abs(w.a[0] - .125) < 1e-8 && Math.abs(w.b[0] - .125) < 1e-8 && w.cm === 15),
     residualCarrierRetained: (space.partitions || []).some(w => w.id === 'old-carrier' && w.cm === 25),
-    unrelatedCarrierRetained: equal(space.partitions.find(w => w.id === 'unrelated-coincident'),
-      before.config.spaces[0].partitions.find(w => w.id === 'unrelated-coincident')),
     savedOnceAndAtomicHistory: after.server.writes === before.server.writes + 1 && after.history === before.history + 1,
     canonicalIdsValid: validIds(space), dialogClosed: !after.dialog && !after.batch,
     persistedGeometry: equal(geometry(after.server.saved), geometry(after.config)),
@@ -177,6 +175,19 @@ await scenario('Native reported drawing and Undo Redo', seed(), async page => {
   await page.waitForFunction(() => window.__card._serverCfg?.spaces?.[0]?.rooms?.length === 3);
   out.coldCardReadsExactSavedGeometry = equal(geometry((await snapshot(page)).config), geometry(after.config));
   return out;
+});
+
+// Legacy debt is deliberate only in this scope probe, not in the clean reported
+// reproduction whose post-Save invariants must be entirely green.
+await scenario('Unrelated legacy carrier remains outside accepted scope', seed({ added: true, unrelated: true }), async page => {
+  const before = await snapshot(page), oldViolations = checkHiddenObstacles(before.config);
+  await click(page, [.5, -.8]); await save(page);
+  const after = await snapshot(page), space = after.config.spaces[0];
+  return { acceptedRoom: space.rooms.length === 3 && !after.dialog,
+    unrelatedCarrierRetained: equal(space.partitions.find(w => w.id === 'unrelated-coincident'),
+      before.config.spaces[0].partitions.find(w => w.id === 'unrelated-coincident')),
+    noNewHiddenObstacles: oldViolations.length === 1 && oldViolations[0].owner === 'closure:unrelated-coincident'
+      && equal(checkHiddenObstacles(after.config), oldViolations) };
 });
 
 for (const [cm, newCm] of [[0, 15], [25, 15], [25, 0]]) await scenario(`Existing composite with ${cm}/${newCm}cm carriers`, seed({ added: true, oldCm: cm, newCm }), async page => {
