@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 883,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "В v1.80.1 обычная геометрическая отмена/повтор уже существовала, и все четыре ветки применения (Undo, Redo, Redo активной цепочки в runtime, Undo активного отрезка в карточке) отвечали на любой отказ _applyGeometryState одним _geometryHistory.clear() — проверено фактическим кодом тега: src/houseplan-editor-runtime.ts строки 2189–2190, 2219–2220, 2234–2235 и src/houseplan-card.ts 3126–3127; закреплённый floor (_canCommitSpace → false) входил в тот же отказ. #883 исправляет это существующее поведение без новой функции: курсор двигается только при успехе, временный отказ (решение владельца Q1: закреплённый floor) сохраняет команду, непригодная удаляется одна, отказ назван тостом, устаревшая цепочка «Стены» завершается без записи. Формат данных, конфиг и WS API не меняются.",
+  "summary": {
+    "ru": "Отказ отмены или повтора обычной операции больше не стирает всю историю: операция для этажа, скрытого закреплением карточки, остаётся, а удаляется только та, которую уже нельзя восстановить, с названной причиной.",
+    "en": "A refused Undo or Redo of an ordinary operation no longer erases the whole history: an operation for a floor the card's fixed floor hides stays, and only one that can never be restored is removed, with its reason named."
+  }
+}
