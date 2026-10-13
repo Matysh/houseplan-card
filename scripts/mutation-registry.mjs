@@ -159,6 +159,51 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'vacuum-native-path-appends-target',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/vacuum-path-geometry.test.mjs',
+    because: '#872 AC8: a proven native full path must never gain an animated fabricated tip.',
+    patches: [{ file: 'src/vacuum-trail-material.ts',
+      find: "allowTip: server?.quality?.source !== 'native' && Array.isArray(tail) && tail.length >= 2,",
+      replace: 'allowTip: Array.isArray(tail) && tail.length >= 2,',
+    }],
+  },
+  {
+    id: 'vacuum-physical-certification-infinite-line',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/vacuum-path-geometry.test.mjs',
+    because: '#872 AC4/AC5: temporal monotone finite-segment certification preserves reversals, not an infinite RDP line.',
+    patches: [{ file: 'src/vacuum-path-geometry.ts',
+      find: 'if (t < projection || t > 1 || ex * ex + ey * ey > squared)',
+      replace: 'if (ex * ex + ey * ey > squared)',
+    }],
+  },
+  {
+    id: 'vacuum-native-first-map-is-job-proof',
+    guard: 'node scripts/backend-test-guard.mjs full_snapshot_book_lifecycle tests_backend/test_ha_vacuum_paths.py',
+    because: '#872 AC6: first nonempty retained map is not proof of the new cleanup.',
+    patches: [{ file: 'custom_components/houseplan/trails.py',
+      find: 'if not proven and prior != list(identity):',
+      replace: 'if False and not proven and prior != list(identity):',
+    }],
+  },
+  {
+    id: 'vacuum-native-late-delete-resurrects-run',
+    guard: 'node scripts/backend-test-guard.mjs full_snapshot_book_lifecycle tests_backend/test_ha_vacuum_paths.py',
+    because: '#872 AC7: only the exact surviving run generation can consume a late full snapshot.',
+    patches: [{ file: 'custom_components/houseplan/trails.py',
+      find: 'or cur.get("_generation") != generation \\',
+      replace: 'or False \\',
+    }],
+  },
+  {
+    id: 'vacuum-wrapper-timeout-frees-physical-read',
+    guard: 'node scripts/backend-test-guard.mjs timeout_keeps_physical_lease tests_backend/test_ha_vacuum_paths.py',
+    because: '#872 AC9: timeout/reload must not start a second physical request before the first completes.',
+    patches: [{ file: 'custom_components/houseplan/vacuum_path_collector.py',
+      find: 'self.physical: dict[str, _PhysicalRead] = hass.data.setdefault("houseplan_vacuum_path_reads", {})',
+      replace: 'self.physical: dict[str, _PhysicalRead] = {}',
+    }],
+  },
+  {
     id: 'vacuum-trail-double-camera-owner',
     guard: 'node demo/smoke_vacuum_camera.mjs',
     because: '#871 AC1: native intermediate pan frames observe SVG/plan screen landmarks; '
@@ -1733,8 +1778,8 @@ const MUTANT_DEFINITIONS = [
       + 'arbitrary levels of current and previous route records.',
     patches: [{
       file: 'custom_components/houseplan/websocket_api.py',
-      find: '            if key != "source"\n',
-      replace: '            if True  # mutant: expose source entity ids\n',
+      find: '    return public_trails(value)\n',
+      replace: '    return value  # mutant: expose private run fields\n',
     }],
   },
   {
@@ -8907,7 +8952,8 @@ const MUTANT_DEFINITIONS = [
       + 'of rotating into previous; focused pure and recorder sequences must reject the old unconditional split',
     patches: [{
       file: 'custom_components/houseplan/trails.py',
-      find: '        resumed = bool(cur and can_resume_trail_run(cur, map_id, now, route_id))',
+      find: '        resumed = bool(cur and not changed_job and same_run_identity(cur, route_id, map_id)\n'
+        + '                       and (same_job or can_resume_trail_run(cur, map_id, now, route_id)))',
       replace: '        resumed = False',
     }],
   },

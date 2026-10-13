@@ -1,5 +1,21 @@
 # Development and deployment
 
+## Full vacuum paths (#872)
+
+Compile `tsconfig.test.json` then run `test/vacuum-path-geometry.test.mjs`
+for independent finite-segment/ordered error, 100k budget, affine and curve
+oracles. `tests_backend/test_vacuum_paths.py` exercises the actual pure codec;
+`test_ha_vacuum_paths.py` uses real HA EntityComponent, executor, Store and
+collector owners with offline providers/clock. Its real camera import needs
+the pinned HA camera dependency `PyTurboJPEG==1.8.3` in the HA harness venv;
+an importable core alone does not install every optional integration codec.
+`demo/smoke_vacuum_path_fidelity.mjs` observes the card WS/render boundary,
+native endpoints/gaps, stale-quality diagnostics and shared render quota;
+`smoke_vacuum_camera.mjs` remains the native pan/pinch ownership witness.
+The owner's personal map is never committed. Static mutation readiness does
+not mean mutants ran. Installed-version snapshot and owner/GPU acceptance
+remain separate from synthetic and upstream evidence. Canon: `VACUUM.md`.
+
 ## Editor draft ownership and failed-chain exit (#851)
 
 `src/editors/draft-close.ts` fences each opening; `draft-actions.ts` connects

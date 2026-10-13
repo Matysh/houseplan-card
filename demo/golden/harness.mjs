@@ -1025,9 +1025,17 @@ export async function prepareGoldenScenario(page, scenario) {
         if (message.type === 'houseplan/layout/get')
           return { layout: structuredClone(fixture.layout || {}), rev: 1 };
         if (message.type === 'houseplan/trail/get') return scenario.vacuumTrail ? {
+          trail_format: 2,
           trails: { 'golden-vacuum-trail': {
+            current: {
+              map_id: 'golden-trail', started: 2, ended: null, path_format: 2,
+              paths: structuredClone(scenario.vacuumTrail.current),
+              quality: { source: 'native', reason: 'ok' }, final_status: 'unconfirmed',
+            },
             previous: {
-              map_id: 'golden-trail', started: 1, ended: 2,
+              map_id: 'golden-trail', started: 1, ended: 2, path_format: 2,
+              paths: [structuredClone(scenario.vacuumTrail.previous)],
+              quality: { source: 'native', reason: 'ok' },
               points: structuredClone(scenario.vacuumTrail.previous),
             },
           } },

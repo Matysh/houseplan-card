@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Vacuum paths preserve turns, reversals and gaps without blind thinning.
+  Supported Dreame ordinary cameras can provide full server-recorded paths;
+  uncertain cleanup identity falls back safely to positions. The device
+  diagnostics show path source, quality and received/stored/drawn point counts
+  ([#872](https://github.com/Matysh/houseplan-card/issues/872)).
+
 - Infrastructure: importing the furniture generator's tolerance no longer
   rewrites tracked art while a parallel unit checks it; explicit generation
   and strict stale-file checks are unchanged

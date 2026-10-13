@@ -382,6 +382,18 @@ composed SVG screen matrix; it reads all geometry before DOM writes and keeps
 robot identity. The passive path SVG inherits the HTML device-layer camera
 once (#871); calibration and trail-source arbitration remain separate.
 
+Full paths (#872) use a single backend `vacuum_path_collector.py` per saved
+source/robot with a HA-lifetime physical read lease, not one poll per card.
+`vacuum_paths.py` owns bounded ordinary JSON/attribute decoding and the public
+allowlist. Run generation in `TrailBook` fences reset proof, late responses
+and persistence. Frontend `vacuum-path-geometry.ts` owns immutable revision
+material and finite/ordered physical certification; `vacuum-trail-material.ts`
+is the server/legacy authority and `vacuum-trail-render.ts` memoizes commands.
+`vacuum-local-trail.ts` is a bounded position-only legacy reserve. Source
+diagnostics are a read-only projection in `vacuum-trail-diagnostics.ts`;
+their UI lives in lazy `editors/vacuum-path-diagnostics.ts`, not either monolith.
+Source health, map routing, path quality and final confirmation remain distinct.
+
 ## Sizes
 
 `icon_size` is a percentage of the plan (default 2.5; legacy px values > 8 fall

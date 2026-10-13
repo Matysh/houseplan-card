@@ -1,4 +1,6 @@
 """End-to-end HA WebSocket contracts for persistent virtual lights (#107)."""
+from copy import deepcopy
+
 import pytest
 
 
@@ -149,16 +151,15 @@ async def test_home_assistant_stop_flushes_pending_virtual_light_and_trail(
     assert recorder.book.on_point("vacuum", "floor", 1.0, 2.0, 10.0)
     assert recorder.book.end_run("vacuum", 11.0)
     recorder._schedule_save()
-    expected_trails = {
-        "vacuum": {
-            "current": {
-                "map_id": "floor",
-                "started": 10.0,
-                "ended": 11.0,
-                "points": [[1.0, 2.0]],
-            },
-        },
-    }
+    expected_trails = deepcopy(recorder.book.data)
+    current = expected_trails["vacuum"]["current"]
+    assert current["map_id"] == "floor"
+    assert current["started"] == 10.0 and current["ended"] == 11.0
+    assert current["path_format"] == 2
+    assert current["paths"] == [[[1.0, 2.0]]]
+    assert current["points"] == [[1.0, 2.0]]
+    assert current["quality"]["source"] == "positions"
+    assert current["_generation"]
 
     assert (await entry.runtime_data.virtual_light_store.async_load())["off"] == []
     assert await recorder.store.async_load() is None

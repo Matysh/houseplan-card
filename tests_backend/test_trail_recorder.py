@@ -450,7 +450,7 @@ def test_short_available_stops_resume_one_run_and_neutral_states_do_not_shift_wi
     assert rec._sample("camera.map", 800.0)
     run = rec.book.data["m1"]["current"]
     assert run["ended"] is None
-    assert run["points"] == [[1000.0, -500.0], [1100.0, -450.0]]
+    assert run["paths"] == [[[1000.0, -500.0]], [[1100.0, -450.0]]]
     assert "previous" not in rec.book.data["m1"]
 
 
@@ -465,8 +465,8 @@ def test_any_available_nonmoving_state_uses_the_same_grace_contract():
             "idle", {"vacuum_position": {"x": 1200, "y": -400}, "map_index": 1}
         )
         assert rec._sample("camera.map", 3.0), stopped
-        assert rec.book.data["m1"]["current"]["points"] == [
-            [1000.0, -500.0], [1200.0, -400.0],
+        assert rec.book.data["m1"]["current"]["paths"] == [
+            [[1000.0, -500.0]], [[1200.0, -400.0]],
         ]
         assert "previous" not in rec.book.data["m1"]
 

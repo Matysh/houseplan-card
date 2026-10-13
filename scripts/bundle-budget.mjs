@@ -398,7 +398,11 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // #875 r2 on dev 75aafe0f: the empty-screen entry/ownership and four core
 // labels add 816 B gzip (305216 -> 306032); editor code stays lazy. Recentre
 // at fact - 1000 after crossing the old band; keep its 2000 B and 320000 B wall.
-export const INITIAL_VIEW_GZIP_CEILING = 305_032;
+// #872: measured 307620 B gzip (+4016). Full-path authority, owned raw
+// material and physically bounded geometry/cache are needed by View before
+// any editor import. Diagnostic UI remains lazy; absolute 320000-B budget
+// and 2000-B band are unchanged. Cost and bounds are recorded in issue #872.
+export const INITIAL_VIEW_GZIP_CEILING = 307_620;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не

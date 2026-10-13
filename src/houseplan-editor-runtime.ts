@@ -12,6 +12,8 @@ import { entryBuildLabel } from './build-identity';
 import { finishWarmModeAdoption, resumeWarmMode, type WarmModeHost } from './warm-mode-adoption';
 import { guard } from 'lit/directives/guard.js';
 import { renderVacuumMapsSection } from './editors/vacuum-maps-section';
+import { renderVacuumPathDiagnostics } from './editors/vacuum-path-diagnostics';
+import type { VacuumTrailDiagnostic } from './vacuum-trail-diagnostics';
 import { renderMarkerDialog } from './editors/marker-dialog';
 import {
   CELL_CM_MAX, CELL_CM_MIN, renderSpaceSettingsDialog,
@@ -763,11 +765,14 @@ export interface HouseplanEditorHostPort {
   _vacMapId: (d: DevItem, tele: { mapId: string }, planHass?: any) => string;
   _vacFit: VacuumFit | null;
   _vacOpenAllCameras: (d: DevItem) => void;
-  _vacRt: Map<string, { trail: VacPt[]; lastKey: string; lastTs: number; moving: boolean; jump: boolean; endedTs: number; lastPos: VacPt | null; }>;
+  _vacRt: Map<string, { trail: VacPt[]; material: import('./vacuum').VacPath; lastKey: string; lastTs: number; moving: boolean; jump: boolean; endedTs: number; lastPos: VacPt | null; }>;
   _vacSource: (d: DevItem, planHass?: any) => string | null;
   _vacObservedMapId: (d: DevItem, source: string) => string | undefined;
   _vacSourceResolution: (d: DevItem, includeAllCameras?: boolean, planHass?: any) => VacSourceResolution;
-  _vacSrvTrails: Record<string, any>;
+  _vacSrvTrails: import('./vacuum-trail-material').VacuumServerBook;
+  _vacTrailFormat: number;
+  _vacGeometryCache: import('./vacuum-path-geometry').VacuumPathGeometryCache;
+  _vacTrailDiagnostics: (device: DevItem) => VacuumTrailDiagnostic;
   _view: { x: number; y: number; w: number; h: number; } | null;
   _viewportGestureDirty: boolean;
   _viewModeSnap: { space: string; zoom: number; cx?: number; cy?: number; w?: number; } | null;
@@ -9912,6 +9917,7 @@ public _renderVacSection(dlg: any): TemplateResult | typeof nothing {
             readiness: this.host._t(roomMatches >= 3 ? 'vac.autocal_ready' : 'vac.autocal_not_ready'),
           })}</b></div>
           <div><span>${this.host._t('vac.diag_path')}</span><b>${tele?.path.length ? this.host._t('common.yes') : this.host._t('common.no')}</b></div>
+          ${renderVacuumPathDiagnostics(this.host, dev)}
           <div><span>${this.host._t('vac.diag_map')}</span><b>${tele?.mapId ?? 'default'}</b></div>
         </div>
         ${(resolution.status === 'missing' || resolution.status === 'disabled' || resolution.status === 'unverified')

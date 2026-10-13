@@ -167,32 +167,47 @@ Numeric `0`, string `"0"` and an empty string are valid IDs.
 
 ## Paths and trails
 
-The current visible path has one authority:
+With a format-2 trail backend the current visible path has one authority:
 
-1. drawable integration path;
-2. drawable current server run;
-3. drawable local runtime buffer;
+1. proven full server snapshot from the selected integration;
+2. server-sampled positions, with literal gaps;
+3. local positions only when the backend does not advertise format 2;
 4. no path.
 
-An integration path can contain several subpaths. They are transformed and
-thinned independently and rendered with separate SVG `M` commands, so a data
-gap never becomes a long false line. Invalid points and segments shorter than
-two points are discarded before limits are applied. The newest 64 drawable
-subpaths are kept, with at most 4000 total points; both endpoints of every kept
-subpath survive deterministic proportional thinning.
+An old/missing backend keeps the integration → server → local compatibility
+order, but an HA attribute must not bypass the new server's run proof. Empty or
+bad snapshots retain last-good geometry and a separate reason. A malformed
+point splits a fragment; boolean/string/nonfinite coordinates are not points.
+Adjacent duplicates are removed; repeated visits are not. There is no index
+thinning, newest-64 pruning or every-other-point Store decimation (#872).
+
+Limits: 8 MiB provider JSON before our decode, 100,000 raw samples and 1024
+fragments per run, 8 MiB normalized geometry and 64 MiB serialized entry data.
+An oversize full snapshot is rejected whole. Position recording stops honestly
+at its quota. Rendering has a shared 20,000-point current-before-previous quota
+for all robots in the selected space; over-budget geometry is a contiguous
+certified prefix, not a chord across removed ranges. Diagnostics say `limited`.
+Raw revisions and affine/grid keys own immutable geometry/SVG memoization;
+unrelated HA updates, hover, pan and projection do not rebuild the full path.
 
 Current and previous trails use the same bounded rounded-corner curve. The
 curve preserves every subpath endpoint and never leaves the recorded polyline
 by more than 17.5 cm in physical plan coordinates. Smoothing happens after
 vacuum calibration and before flat/isometric projection, so zoom, viewport,
-DPR and projection do not change that limit. The live target is still trimmed
-before rendering, and smoothing never bridges an integration data gap.
+DPR and projection do not change that limit. Ordered simplification certifies
+every original sample against a finite segment with monotone progress, at
+most 2 cm after affine calibration. Reversals over 90° and endpoints survive.
+Smoothing uses the remaining 15.5 cm allowance; shortest-roundtrip SVG numbers
+add no unconditional decimal quantization. With an unverifiable physical
+transform no physical simplification/smoothing claim is made. Native full paths
+are neither target-trimmed nor connected synthetically to the puck. Only a
+continuous sampled fragment may have the existing animated live tip.
 
 | Display mode | While moving | After movement stops |
 |---|---|---|
 | `never` | Hidden | Hidden |
 | `cleaning` (default) | Current path | Hidden immediately |
-| `always` | Current path | Current integration path or stored current/previous runs |
+| `always` | Current path | Stored current/previous runs (legacy integration fallback with an old backend) |
 
 Server trails are recorded by `custom_components/houseplan/trails.py`, even
 with no card open. It stores current and one previous run in raw robot
@@ -204,6 +219,46 @@ change, a longer stop, malformed persisted time or wall-clock rollback starts a
 new run. `unavailable`, `unknown` and a missing state remain neutral. Without a
 vendor task id, two genuinely separate same-map cleanups started inside the
 grace may therefore appear as one run.
+
+The position teleport guard splits when calibrated distance exceeds
+max(100 cm, 200 cm/s × trustworthy positive elapsed seconds). Unknown periods,
+map/source changes and pause/resume break fragments even without physical
+scale proof. Full snapshots require proof of the current generation: an
+observed schema-valid empty/reset path while moving, or already persisted
+provider-map identity in that same run. A first nonempty response after a late
+connection is **not** proof: diagnostics say `run_unverified` and positions
+continue. A map/frame id or receive timestamp is never invented as a job id.
+
+### Provider passports (#872)
+
+| Provider | Proven channel/schema/coordinates | Live / final capability | Fallback |
+|---|---|---|---|
+| Dreame Vacuum / Tasshack 2.0.2 (`f5b8472b8e2e4bb3dff7bc2a81a5fd594eca9585`) | Exact registered ordinary camera, public `map_data_string(include_resources=False)`, `map_index == 0`, ordinary JSON `version:2`. Ordered chunks `[1/2/3,x,y,…]` (S/W/M; L continues the chunk). Raw millimetres, same axes/origin as `robot_position`; not pixel/Valetudo coordinates. Private provider key includes map_id/saved_map_id/map_index; frame_id orders revisions, not jobs. | Shared server read, active poll 30 s, minimum 10 s, timeout 10 s. An in-flight physical lease survives timeout/unload/reload. Backoff 30/60/120/300 s. On available stop, attempts at 0/15/45 s, ≤3 in 60 s under the same limits. No proven stable job id or explicit final marker: final remains **unconfirmed**. | Missing interface, unknown schema, non-current/saved/Wi-Fi/history/recovery, uncertain map/run, disabled/unavailable or timeout retain last-good and sampled positions. No token, self-HTTP, forced-update service or private coordinator. |
+| Xiaomi Cloud Map Extractor / generic attributes | Existing `path`, nested `path.path`/`path.points`, flat x/y tuples or x/y objects, optionally multiple fragments. Same saved source and raw coordinate system as position/calibration. Predicted goto is ignored. | Initial state and HA events; no added vendor poll. No fabricated job/final metadata. Reset/run proof as above. | Sampled positions; enable XCME `path` attribute if absent. |
+| Valetudo / core Roborock | Existing compatible positions or generic attributes only. PNG path pixels are not structured path data. | No new raw-MQTT decoder, raster tracing or private coordinator access. | Positions or no path; native support is not claimed. |
+
+Primary pinned sources: [public camera bridge](https://github.com/Tasshack/dreame-vacuum/blob/f5b8472b8e2e4bb3dff7bc2a81a5fd594eca9585/custom_components/dreame_vacuum/camera.py),
+[ordinary serializer, including path chunks](https://github.com/Tasshack/dreame-vacuum/blob/f5b8472b8e2e4bb3dff7bc2a81a5fd594eca9585/custom_components/dreame_vacuum/dreame/map.py#L8335-L8349).
+These prove upstream compatibility, not a blanket promise for every installed
+version/model. The owner's private X50 2.0.2 snapshot decodes 201 points without
+coordinate loss; this is only partial real-device evidence, not end-to-end/GPU
+acceptance. Personal maps are not committed or automatically attached to support.
+
+The device editor's existing diagnostics separately show source health, path
+source, quality/reason, received/stored/drawn counts, last sample/snapshot time
+and whether the source explicitly confirmed the final snapshot. No new user
+controls, banners or cleanup commands are added.
+
+Store version stays 1 with additive per-run `path_format:2`, `paths`, `quality`,
+`provenance` and private generation/provider identity. Legacy `points` projects
+one contiguous fragment for downgrade, never flattened gaps. Malformed known
+runs are isolated; unknown future formats are not interpreted or rewritten.
+The authenticated shared read policy is unchanged; only the allowlisted public
+shape reaches clients, without source/job identity, raster or access tokens.
+Events are throttled to 2 s with a trailing update; Store writes retain their
+10 s debounce and teardown flush. To preserve full geometry before downgrade,
+back up `.storage/houseplan.trails`: ordinary plan/support exports are not trail
+backups, and an old writer may discard additive fields.
 
 Server recording is independent of the display mode. The source
 health monitor checks saved marker/source pairs on config refresh and restart:

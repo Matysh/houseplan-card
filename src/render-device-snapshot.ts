@@ -1,5 +1,6 @@
 import type { ResolvedDevicePresentation } from './device-presentation';
 import type { DevItem } from './types';
+import { isVacuumPathMaterial, ownVacuumPathInput } from './vacuum-path-geometry';
 import {
   createDeviceBatteryContext, deviceBatteryEntityIds, type DeviceBatteryContext,
 } from './device-battery';
@@ -78,6 +79,7 @@ export function renderDeviceSnapshotPositions(
 function cloneFact<T>(value: T, stack = new WeakMap<object, unknown>()): T {
   if (value === null || typeof value !== 'object') return value;
   const object = value as unknown as object;
+  if (isVacuumPathMaterial(object)) return value;
   const found = stack.get(object);
   if (found) return found as T;
   if (Array.isArray(value)) {
@@ -169,7 +171,9 @@ export function createRenderDeviceSnapshot(options: {
   const projectedStates: Record<string, any> = {};
   for (const entityId of entityIds) {
     const state = options.hass?.states?.[entityId];
-    if (state) projectedStates[entityId] = state;
+    if (state) projectedStates[entityId] = entityId.startsWith('camera.') && state.attributes?.path
+      ? { ...state, attributes: { ...state.attributes, path: ownVacuumPathInput(state.attributes.path) } }
+      : state;
   }
   const hass = Object.freeze({
     states: cloneFact(projectedStates),

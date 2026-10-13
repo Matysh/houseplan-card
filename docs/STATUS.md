@@ -25,6 +25,13 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Vacuum path fidelity (#872) replaces index/Store thinning with ordered raw
+fragments and a certified physical render projection. A shared bounded server
+bridge reads the exact ordinary Dreame camera; reset/run proof is mandatory,
+and retained first snapshots are not new jobs. Diagnostic source/quality/counts
+are separate from source health. Real X50 snapshot decoding is partial proof,
+not real-device lifecycle or GPU acceptance; no support claim fills that gap.
+
 Furniture generator isolation (#884) makes the exported tolerance import
 read-only and silent. Only explicit CLI generation writes the three modules;
 strict checks still reject stale/missing bytes. A controlled copy-only probe

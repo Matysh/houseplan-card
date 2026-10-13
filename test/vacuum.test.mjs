@@ -132,7 +132,7 @@ test('areaCentroid has deterministic closing, zero-area, invalid and butterfly b
   assert.deepEqual(areaCentroid([[0, 0], [2, 2], [0, 2], [2, 0]]), [1, 1]);
 });
 
-test('normalizeVacPath filters before cap and distributes the exact 4000-point budget', () => {
+test('normalizeVacPath retains all 66 drawable fragments instead of dropping the oldest', () => {
   const many = [];
   for (let segment = 0; segment < 66; segment++) {
     const length = 70 + (segment % 3) * 10;
@@ -140,9 +140,9 @@ test('normalizeVacPath filters before cap and distributes the exact 4000-point b
     many.push([[segment, 999]]); // singleton must not displace a drawable segment
   }
   const out = normalizeVacPath(many);
-  assert.equal(out.length, 64);
-  assert.equal(out.reduce((sum, segment) => sum + segment.length, 0), 4000);
-  assert.equal(out[0][0][0], 2); // oldest two drawable segments were capped
+  assert.equal(out.length, 66);
+  assert.equal(out.reduce((sum, segment) => sum + segment.length, 0), 5280);
+  assert.equal(out[0][0][0], 0);
   for (const segment of out) {
     const source = many.find((candidate) => candidate.length > 1 && candidate[0][0] === segment[0][0]);
     assert.deepEqual(segment[0], source[0]);
@@ -150,19 +150,19 @@ test('normalizeVacPath filters before cap and distributes the exact 4000-point b
   }
 });
 
-test('normalizeVacPath uses largest remainder over internal points', () => {
+test('normalizeVacPath leaves dense original segments untouched', () => {
   const lengths = [3002, 2002, 1002];
   const out = normalizeVacPath(lengths.map((length, segment) =>
     Array.from({ length }, (_, point) => [segment, point])));
-  assert.deepEqual(out.map((segment) => segment.length), [1999, 1333, 668]);
-  assert.equal(out.reduce((sum, segment) => sum + segment.length, 0), 4000);
+  assert.deepEqual(out.map((segment) => segment.length), lengths);
+  assert.equal(out.reduce((sum, segment) => sum + segment.length, 0), 6006);
 });
 
-test('normalizeVacPath largest-remainder ties prefer the older subpath', () => {
+test('normalizeVacPath does not use index quotas on equal dense segments', () => {
   const out = normalizeVacPath([0, 1, 2].map((segment) =>
     Array.from({ length: 10002 }, (_, point) => [segment, point])));
-  assert.deepEqual(out.map((segment) => segment.length), [1334, 1333, 1333]);
-  assert.equal(out.reduce((sum, segment) => sum + segment.length, 0), 4000);
+  assert.deepEqual(out.map((segment) => segment.length), [10002, 10002, 10002]);
+  assert.equal(out.reduce((sum, segment) => sum + segment.length, 0), 30006);
 });
 
 test('resolveCurrentVacPath arbitrates only drawable sources and preserves gaps', () => {
@@ -364,9 +364,9 @@ test('thinPath keeps corners, drops straight-line noise', () => {
 test('pushTrailPoint dedups and respects the cap', () => {
   let buf = [];
   for (let i = 0; i < 3000; i++) buf = pushTrailPoint(buf, [i, (i * 7) % 13], 0.5);
-  assert.ok(buf.length <= 600, String(buf.length));
+  assert.equal(buf.length, 3000);
   buf = pushTrailPoint(buf, buf[buf.length - 1], 0.5); // dup ignored
-  assert.ok(buf.length <= 600);
+  assert.equal(buf.length, 3000);
 });
 
 test('isVacMoving', () => {

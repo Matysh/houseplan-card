@@ -346,6 +346,17 @@ unknown-fields policy. Server trails written by a newer backend carry
 `route_id`/`source`; an older frontend ignores both and matches runs by
 `map_id` exactly as before.
 
+The trail Store remains version 1 (#872); runs add `path_format:2`, ordered
+`paths`, quality/provenance and private generation/provider-map identity.
+Known malformed runs are isolated without dropping other robots; unknown
+future formats are not interpreted or rewritten. Legacy `points` projects
+one contiguous fragment, never a flattened bridge through gaps. Downgrading
+to an old writer may discard additive full geometry: back up the HA
+`.storage/houseplan.trails` file first. Ordinary plan/support exports do not
+contain trails. `trail/get` advertises `trail_format:2` and only exposes an
+allowlist; source/job/token/raster fields stay private. Old clients ignore
+additive fields and old servers retain the existing browser fallback.
+
 ## Stable wall identity — model v8 (#282)
 
 Resize's coalesced handles are a read-only interaction projection, not the

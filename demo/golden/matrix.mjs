@@ -1,7 +1,16 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 73;
+export const GOLDEN_MATRIX_VERSION = 74;
+
+// Hundreds of actual input samples, same independently known waypoints. The
+// renderer must retain corners and the explicit gap, not choose by index.
+const denseVacuumPath = (segments) => segments.map((points) => points.flatMap((p, i) => {
+  const next = points[i + 1];
+  return next ? Array.from({ length: 60 }, (_, n) => [
+    p[0] + (next[0] - p[0]) * n / 60, p[1] + (next[1] - p[1]) * n / 60,
+  ]) : [p];
+}));
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -512,10 +521,10 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'vacuum-trail-smoothing-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     vacuumTrail: {
       maxDeviationCm: 17.5,
-      current: [
+      current: denseVacuumPath([
         [[180, 220], [360, 220], [360, 420], [520, 420]],
         [[650, 240], [780, 240], [780, 500], [650, 620], [850, 760]],
-      ],
+      ]),
       previous: [[160, 760], [300, 650], [420, 740], [560, 600]],
     },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },

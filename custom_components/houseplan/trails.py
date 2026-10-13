@@ -10,9 +10,12 @@ want to see where the cleanup has already been).
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import math
 import time
+import uuid
+from collections.abc import Callable
 from typing import Any
 
 from homeassistant.core import HomeAssistant, callback
@@ -21,11 +24,22 @@ from homeassistant.helpers.event import async_call_later, async_track_state_chan
 from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN
+from .vacuum_path_collector import PathCollector, PathContext
+from .vacuum_paths import (
+    MAX_ENTRY_BYTES,
+    MAX_JSON_BYTES,
+    MAX_POINTS,
+    MAX_SEGMENTS,
+    PathRejected,
+    PathSnapshot,
+    normalize_paths,
+    number,
+)
 from .vacuum_routes import effective_routes
 
 _LOGGER = logging.getLogger(__name__)
 
-TRAIL_CAP = 2000          # raw points per run before decimation
+TRAIL_CAP = MAX_POINTS    # stop honestly at the budget; never decimate history
 TRAIL_RESUME_GRACE_S = 30 * 60  # same-map stop/pause belongs to one cleanup
 SAVE_DELAY_S = 10         # debounce store writes — flash wear over precision
 FIRE_THROTTLE_S = 2.0     # event-bus updates for live cards
@@ -101,53 +115,275 @@ class TrailBook:
 
     def __init__(self, data: dict[str, Any] | None = None) -> None:
         self.data: dict[str, Any] = data if isinstance(data, dict) else {}
+        # Retain the actual list alongside its count: recycled object ids must
+        # not reuse another run's quota. Prune on rotation/delete, never by a
+        # per-point traversal of all geometry.
+        self._counts: dict[int, tuple[list[Any], int]] = {}
+        self._opaque_sizes: dict[int, int] = {}
+        for marker, record in list(self.data.items()):
+            if not isinstance(record, dict):
+                self.data.pop(marker)
+                continue
+            for slot in ("current", "previous"):
+                run = record.get(slot)
+                if not isinstance(run, dict):
+                    record.pop(slot, None)
+                    continue
+                if isinstance(run.get("path_format"), bool) or run.get("path_format", 1) not in (1, 2):
+                    # Constructor runs on the executor. Future values are
+                    # preserved, but their REAL bytes still consume quota.
+                    self._opaque_sizes[id(run)] = len(json.dumps(run, separators=(",", ":")).encode())
+                    continue  # preserve unknown future values, do not write them
+                try:
+                    paths = normalize_paths(run.get("paths") if run.get("path_format") == 2
+                                            else run.get("points", []))
+                    if run.get("path_format") == 2:
+                        run["paths"] = paths
+                        quality = run.get("quality")
+                        if not isinstance(quality, dict):
+                            quality = {"source": "positions", "reason": "sampled"}
+                            run["quality"] = quality
+                        if quality.get("source") not in ("positions", "native"):
+                            quality.update(source="positions", reason="sampled")
+                        if quality.get("source") == "positions":
+                            run["_position_paths"] = paths
+                        else:
+                            run["_position_paths"] = normalize_paths(run.get("_position_paths", []))
+                        run["points"] = paths[-1] if paths else []
+                    else:
+                        run["points"] = paths[-1] if paths else []
+                    if slot == "current" and paths and run.get("ended") is None:
+                        # A restart is an unobserved period even when the run
+                        # continues. Preserve history, never bridge its gap.
+                        run["_gap_pending"] = True
+                except PathRejected:
+                    record.pop(slot)  # isolate only the malformed run
 
-    def on_point(
-        self, marker: str, map_id: str, x: float, y: float, now: float,
-        route_id: str = "", source: str = "",
-    ) -> bool:
-        rec = self.data.setdefault(marker, {})
+    def _count(self, paths: list[Any]) -> int:
+        cached = self._counts.get(id(paths))
+        if cached is None or cached[0] is not paths:
+            cached = (paths, sum(len(p) for p in paths if isinstance(p, list)))
+            self._counts[id(paths)] = cached
+        return cached[1]
+
+    def _prune_counts(self) -> None:
+        alive = set()
+        runs = set()
+        for record in self.data.values():
+            if not isinstance(record, dict):
+                continue
+            for slot in ("current", "previous"):
+                run = record.get(slot)
+                if isinstance(run, dict):
+                    runs.add(id(run))
+                    for key in ("paths", "_position_paths"):
+                        if isinstance(run.get(key), list):
+                            alive.add(id(run[key]))
+        self._counts = {key: value for key, value in self._counts.items() if key in alive}
+        self._opaque_sizes = {key: value for key, value in self._opaque_sizes.items() if key in runs}
+
+    def _entry_bytes(self, replaced: dict[str, Any] | None = None,
+                     replacement_count: int = 0) -> int:
+        # Upper bound of serialized doubles plus list punctuation. Account for
+        # the one-fragment legacy projection and private positional reserve;
+        # aliases in memory still serialize twice in the version-1 Store.
+        total = 0
+        for record in self.data.values():
+            if not isinstance(record, dict):
+                continue
+            for slot in ("current", "previous"):
+                run = record.get(slot)
+                if not isinstance(run, dict):
+                    continue
+                if id(run) in self._opaque_sizes:
+                    total += self._opaque_sizes[id(run)]
+                    continue
+                if run is replaced:
+                    total += replacement_count * 2 * 54 + 4096
+                    continue
+                count = sum(self._count(run[k]) for k in ("paths", "_position_paths")
+                            if isinstance(run.get(k), list))
+                count += len(run.get("points", [])) if isinstance(run.get("points"), list) else 0
+                total += count * 54 + 4096
+        return total
+
+    def ensure_run(self, marker: str, map_id: str, now: float,
+                   route_id: str = "", source: str = "", job_id: str | None = None) -> tuple[dict[str, Any], bool]:
+        """Position and full-path providers share the same lifecycle authority."""
+        rec = self.data.get(marker)
+        if not isinstance(rec, dict):
+            rec = {}
+            self.data[marker] = rec
         cur = rec.get("current")
-        resumed = bool(cur and can_resume_trail_run(cur, map_id, now, route_id))
-        if resumed:
+        if not isinstance(cur, dict):
+            cur = None
+        if isinstance(cur, dict) and (isinstance(cur.get("path_format"), bool)
+                                     or cur.get("path_format", 1) not in (1, 2)):
+            # Reading unknown future history may not destructively migrate it.
+            return cur, False
+        same_job = bool(job_id and cur and cur.get("_job_id") == job_id)
+        changed_job = bool(job_id and cur and cur.get("_job_id") not in (None, job_id))
+        resumed = bool(cur and not changed_job and same_run_identity(cur, route_id, map_id)
+                       and (same_job or can_resume_trail_run(cur, map_id, now, route_id)))
+        if resumed and cur is not None:
             cur["ended"] = None
-        if not cur or cur.get("ended") is not None or not same_run_identity(cur, route_id, map_id):
-            # a new run begins: the old one becomes "previous" (and the one
-            # before it is forgotten — we keep exactly two, per the owner)
+            cur["_gap_pending"] = True
+        if not cur or changed_job or (cur.get("ended") is not None and not resumed) \
+                or not same_run_identity(cur, route_id, map_id):
             if cur:
                 rec["previous"] = cur
-            cur = {"map_id": map_id, "started": now, "ended": None, "points": []}
-            # #162: the run remembers WHICH route wrote it, so the card can put
-            # it on the right floor without re-deriving the routing itself.
+            cur = {"map_id": map_id, "started": now, "ended": None, "points": [],
+                   "path_format": 2, "paths": [], "quality": {"source": "positions", "reason": "sampled"},
+                   "_generation": uuid.uuid4().hex}
             if route_id:
                 cur["route_id"] = route_id
             if source:
                 cur["source"] = source
             rec["current"] = cur
-        pts: list[list[float]] = cur["points"]
+            self._prune_counts()
+        assert isinstance(cur, dict)
+        if cur.get("path_format") != 2:
+            cur.update(path_format=2, paths=[cur.get("points", [])],
+                       quality={"source": "positions", "reason": "sampled"},
+                       _generation=uuid.uuid4().hex)
+        if not isinstance(cur.get("_generation"), str) or not cur["_generation"]:
+            cur["_generation"] = uuid.uuid4().hex
+            cur.pop("_native_identity", None)
+        if job_id:
+            cur["_job_id"] = job_id
+        return cur, resumed
+
+    def on_point(
+        self, marker: str, map_id: str, x: float, y: float, now: float,
+        route_id: str = "", source: str = "",
+        gap: bool = False, physical_cm: tuple[float, float] | None = None,
+    ) -> bool:
+        if any(number(value) is None for value in (x, y, now)):
+            self.mark_gap(marker)
+            return False
+        cur, resumed = self.ensure_run(marker, map_id, now, route_id, source)
+        if isinstance(cur.get("path_format"), bool) or cur.get("path_format", 1) not in (1, 2):
+            return False
+        # Legacy values keep their exact points; additions opt into the new
+        # format without claiming the lost historical samples were recovered.
+        if cur.get("path_format") != 2:
+            cur.update(path_format=2, paths=[cur.get("points", [])],
+                       quality={"source": "positions", "reason": "sampled"},
+                       _generation=uuid.uuid4().hex)
+        positions = cur.setdefault("_position_paths", cur["paths"] if cur["quality"]["source"] == "positions" else [])
+        last_sample = cur.get("_last_sample")
+        if isinstance(last_sample, list) and len(last_sample) == 3 and physical_cm is not None:
+            dt = now - last_sample[2]
+            gap |= not math.isfinite(dt) or dt <= 0 or math.hypot(
+                physical_cm[0] - last_sample[0], physical_cm[1] - last_sample[1],
+            ) > max(100, 200 * dt)
+        if physical_cm is not None:
+            cur["_last_sample"] = [*physical_cm, now]
+        gap |= bool(cur.pop("_gap_pending", False))
+        if gap and positions and positions[-1]:
+            if len(positions) >= MAX_SEGMENTS:
+                cur["quality"]["reason"] = "limited"
+                return True
+            positions.append([])
+        if not positions:
+            positions.append([] if cur["quality"]["source"] == "native" else cur["points"])
+        pts: list[list[float]] = positions[-1]
+        if cur["quality"]["source"] == "positions":
+            cur["points"] = pts  # downgrade sees ONE contiguous fragment only
         if pts and pts[-1][0] == x and pts[-1][1] == y:
             # Clearing ended is observable state even if the source repeats
             # the dock point: it must still reach Store and live cards.
             return resumed
+        count = self._count(positions)
+        # Conservative runtime allowance includes Python point/list overhead;
+        # payload budget is also bounded (each finite double <= 25 JSON bytes).
+        native_count = self._count(cur["paths"]) if cur["quality"]["source"] == "native" else 0
+        if count + native_count >= TRAIL_CAP or (count + native_count + 1) * 54 > MAX_JSON_BYTES \
+                or self._entry_bytes() + 3 * 54 > MAX_ENTRY_BYTES:
+            changed = cur["quality"].get("reason") != "limited"
+            cur["quality"]["reason"] = "limited"
+            return changed or resumed
         pts.append([x, y])
-        if len(pts) > TRAIL_CAP:
-            # decimate by two but never lose the freshest point
-            half = pts[0::2]
-            if half[-1] != pts[-1]:
-                half.append(pts[-1])
-            cur["points"] = half
+        self._counts[id(positions)] = (positions, count + 1)
+        if cur["quality"]["source"] == "positions":
+            cur["paths"] = positions
+            cur["quality"]["raw_points"] = count + 1
+            cur["received_at"] = now
+        return True
+
+    def mark_gap(self, marker: str) -> None:
+        cur = (self.data.get(marker) or {}).get("current")
+        if isinstance(cur, dict) and not isinstance(cur.get("path_format"), bool) and cur.get("path_format", 1) in (1, 2):
+            cur["_gap_pending"] = True
+
+    def on_snapshot(self, marker: str, snap: PathSnapshot, now: float,
+                    route_id: str, map_id: str, generation: str, proven: bool) -> bool:
+        """Replace a whole, proven snapshot; never append one or resurrect a run."""
+        cur = (self.data.get(marker) or {}).get("current")
+        if not isinstance(cur, dict) or cur.get("path_format") != 2 \
+                or cur.get("_generation") != generation \
+                or not same_run_identity(cur, route_id, map_id) or not snap.paths:
+            return False
+        identity = (snap.provider, snap.map_key)
+        prior = cur.get("_native_identity")
+        if not proven and prior != list(identity):
+            return self.path_reason(marker, "run_unverified")
+        if prior is not None and prior != list(identity):
+            return self.path_reason(marker, "coordinates_unverified")
+        previous_revision = cur.get("_native_revision")
+        if snap.revision is not None and isinstance(previous_revision, int) \
+                and snap.revision < previous_revision:
+            return False
+        if cur.get("_native_digest") == snap.digest:
+            changed = cur["quality"].get("reason") != "ok" \
+                or cur.get("_native_revision") != snap.revision \
+                or (snap.final and cur.get("final_status") != "confirmed")
+            if changed:
+                cur["quality"]["reason"] = "ok"
+                cur["received_at"] = now
+                cur["_native_revision"] = snap.revision
+                if snap.final:
+                    cur["final_status"] = "confirmed"
+            return changed
+        native_count = sum(len(p) for p in snap.paths)
+        if native_count > MAX_POINTS or len(snap.paths) > MAX_SEGMENTS \
+                or self._entry_bytes(cur, native_count) > MAX_ENTRY_BYTES:
+            return self.path_reason(marker, "limited")
+        self._counts[id(snap.paths)] = (snap.paths, native_count)
+        # A proven full snapshot supersedes the sampled reserve; do not keep
+        # a second unbounded copy of a now-complete run. The legacy projection
+        # remains one contiguous native fragment, never flattened gaps.
+        cur.update(_position_paths=[], points=snap.paths[-1])
+        cur.update(paths=snap.paths, quality={"source": "native", "reason": "ok", "raw_points": native_count},
+                   provenance={"provider": snap.provider, "schema": snap.schema},
+                   received_at=now, _native_identity=list(identity), _native_digest=snap.digest,
+                   _native_revision=snap.revision, final_status="confirmed" if snap.final else "unconfirmed")
+        cur["revision"] = snap.digest  # opaque geometry cache key, not vendor identity
+        self._prune_counts()
+        return True
+
+    def path_reason(self, marker: str, reason: str) -> bool:
+        cur = (self.data.get(marker) or {}).get("current")
+        if not isinstance(cur, dict) or isinstance(cur.get("path_format"), bool) or cur.get("path_format", 1) not in (1, 2):
+            return False
+        quality = cur.setdefault("quality", {"source": "positions"})
+        if quality.get("reason") == reason:
+            return False
+        quality["reason"] = reason
         return True
 
     def end_run(self, marker: str, now: float) -> bool:
         cur = (self.data.get(marker) or {}).get("current")
-        if cur and cur.get("ended") is None:
+        if isinstance(cur, dict) and not isinstance(cur.get("path_format"), bool) and cur.get("path_format", 1) in (1, 2) and cur.get("ended") is None:
             cur["ended"] = now
             return True
         return False
 
     def delete(self, marker: str) -> bool:
         """Forget every stored run of one plan marker."""
-        return self.data.pop(marker, None) is not None
+        changed = self.data.pop(marker, None) is not None
+        self._prune_counts()
+        return changed
 
     def drop_unknown_routes(self, marker: str, route_ids: set[str]) -> bool:
         """Forget runs whose route no longer exists (deleted or re-targeted).
@@ -168,6 +404,7 @@ class TrailBook:
             if isinstance(stored, str) and stored and stored not in route_ids:
                 rec.pop(slot)
                 changed = True
+        self._prune_counts()
         return changed
 
 
@@ -178,14 +415,14 @@ class TrailRecorder:
         self.routes_by_marker: dict[str, list[dict[str, Any]]] = {}
         self.hass = hass
         self.rt = rt
-        self.store = Store(hass, 1, f"{DOMAIN}.trails")
+        self.store: Store[dict[str, Any]] = Store(hass, 1, f"{DOMAIN}.trails")
         self.book = TrailBook()
         # HP-1540-03: one source may feed SEVERAL markers — the same robot
         # placed on two floors is the documented multi-floor case, and a plain
         # source → (marker, vacuum) dict silently kept only the last one
         self.pairs: dict[str, list[tuple[str, str]]] = {}  # source → [(marker, vacuum), …]
-        self._unsub_track = None
-        self._unsub_save = None
+        self._unsub_track: Callable[[], None] | None = None
+        self._unsub_save: Callable[[], None] | None = None
         self._last_fire = 0.0
         # One active incident per saved marker/source. `reason` is mutable so
         # missing↔disabled changes do not create warning storms.
@@ -195,9 +432,13 @@ class TrailRecorder:
         # unsub handle was overwritten — a leak until HA restart
         self._refresh_lock = asyncio.Lock()
         self._closed = False
+        self._unsub_fire: Callable[[], None] | None = None
+        self._spaces: dict[str, dict[str, Any]] = {}
+        self.collector = PathCollector(hass, self._accept_path, self._path_reason)
 
     async def async_setup(self) -> None:
-        self.book = TrailBook(await self.store.async_load() or {})
+        stored = await self.store.async_load() or {}
+        self.book = await self.hass.async_add_executor_job(TrailBook, stored)
         await self.async_refresh()
 
     async def async_refresh(self) -> None:
@@ -213,6 +454,7 @@ class TrailRecorder:
             if self._closed:
                 return
             cfg = stored.get("config") or {}
+            self._spaces = {str(s.get("id")): s for s in cfg.get("spaces") or [] if isinstance(s, dict)}
             pairs: dict[str, list[tuple[str, str]]] = {}
             health_pairs: set[tuple[str, str]] = set()
             routes_by_marker: dict[str, list[dict[str, Any]]] = {}
@@ -253,6 +495,12 @@ class TrailRecorder:
             changed = False
             for src in self.pairs:
                 changed |= self._sample(src, now)
+            contexts = self._path_contexts()
+            self.collector.refresh(contexts)
+            for context in contexts:
+                state = self.hass.states.get(context.source)
+                if state and "path" in state.attributes:
+                    self.collector.observe(context, event=False, attribute_path=state.attributes["path"])
             self._handle_sample_change(changed, now)
 
     def _source_failure_reason(self, source: str) -> str | None:
@@ -422,6 +670,7 @@ class TrailRecorder:
         }
         if not removed:
             return 0
+        self.book._prune_counts()
         previous_pairs = {src: list(pairs) for src, pairs in self.pairs.items()}
         try:
             for src in list(self.pairs):
@@ -431,6 +680,7 @@ class TrailRecorder:
                 else:
                     del self.pairs[src]
             self._resubscribe()
+            self.collector.refresh(self._path_contexts())
             await self._save_now_locked()
         except Exception:
             # The store is the durable authority. Restore the in-memory
@@ -439,6 +689,7 @@ class TrailRecorder:
             self.book.data.update(removed)
             self.pairs = previous_pairs
             self._resubscribe()
+            self.collector.refresh(self._path_contexts())
             raise
         return len(removed)
 
@@ -460,6 +711,10 @@ class TrailRecorder:
         # HP-1540-05: flag FIRST — a refresh parked on its awaited load must
         # not re-subscribe after this cleanup has already run.
         self._closed = True
+        self.collector.close()
+        if self._unsub_fire:
+            self._unsub_fire()
+            self._unsub_fire = None
         if self._unsub_track:
             self._unsub_track()
             self._unsub_track = None
@@ -505,12 +760,23 @@ class TrailRecorder:
             # current+previous on every restart (observed live: 21 points
             # became previous, the same run restarted at 5)
             if not st_vac or st_vac.state in ("unavailable", "unknown"):
+                self.book.mark_gap(marker)
                 continue
             if st_vac.state not in MOVING_STATES:
                 changed |= self.book.end_run(marker, now)
                 continue
             st_src = self.hass.states.get(src)
+            if self._source_failure_reason(src) is not None or not st_src \
+                    or st_src.state in ("unknown", "unavailable"):
+                self.book.mark_gap(marker)
+                continue
             attrs = st_src.attributes if st_src else {}
+            map_id = resolve_map_id(attrs, st_vac.attributes)
+            route_id = self._route_id(marker, src, map_id)
+            if route_id:
+                before = (self.book.data.get(marker) or {}).get("current")
+                cur, resumed = self.book.ensure_run(marker, map_id, now, route_id, src)
+                changed |= before is not cur or resumed
             raw = attrs.get("vacuum_position") or attrs.get("robot_position")
             # Server-side these attributes are often OBJECTS (Tasshack keeps a
             # Point dataclass in memory — it only becomes a dict when
@@ -520,17 +786,87 @@ class TrailRecorder:
                 px, py = raw.get("x"), raw.get("y")
             else:
                 px, py = getattr(raw, "x", None), getattr(raw, "y", None)
+            if isinstance(px, bool) or isinstance(py, bool):
+                self.book.mark_gap(marker)
+                continue
             try:
                 x, y = float(px), float(py)  # type: ignore[arg-type]
             except (TypeError, ValueError):
+                self.book.mark_gap(marker)
                 continue
-            map_id = resolve_map_id(attrs, st_vac.attributes)
-            route_id = self._route_id(marker, src, map_id)
             changed |= self.book.on_point(
                 marker, map_id, x, y, now, route_id=route_id,
                 source=src if route_id else "",
+                physical_cm=self._physical_point(marker, route_id, x, y),
             )
         return changed
+
+    def _physical_point(self, marker: str, route_id: str, x: float, y: float) -> tuple[float, float] | None:
+        for route in self.routes_by_marker.get(marker, []):
+            if route["id"] != route_id:
+                continue
+            matrix = route.get("calibration")
+            cell_cm = number((self._spaces.get(route["space"]) or {}).get("cell_cm", 5))
+            if not isinstance(matrix, list) or len(matrix) != 6 or cell_cm is None or cell_cm <= 0:
+                return None
+            if any(number(v) is None for v in matrix):
+                return None
+            if abs(matrix[0] * matrix[4] - matrix[1] * matrix[3]) < 1e-12:
+                return None
+            factor = cell_cm * 240 / 1000
+            return ((matrix[0] * x + matrix[1] * y + matrix[2]) * factor,
+                    (matrix[3] * x + matrix[4] * y + matrix[5]) * factor)
+        return None
+
+    def _path_contexts(self) -> list[PathContext]:
+        contexts: list[PathContext] = []
+        registry = er.async_get(self.hass)
+        for src, pairs in self.pairs.items():
+            st_src = self.hass.states.get(src)
+            entry = registry.async_get(src) if registry is not None and hasattr(registry, "async_get") else None
+            platform = getattr(entry, "platform", None)
+            for vac in sorted({v for _, v in pairs}):
+                st_vac = self.hass.states.get(vac)
+                vac_entry = registry.async_get(vac) if registry is not None and hasattr(registry, "async_get") else None
+                available = bool(st_src and st_src.state not in ("unknown", "unavailable")
+                                 and st_vac and st_vac.state not in ("unknown", "unavailable")
+                                 and self._source_failure_reason(src) is None
+                                 and getattr(vac_entry, "disabled_by", None) is None)
+                map_id = resolve_map_id(st_src.attributes if st_src else {}, st_vac.attributes if st_vac else {})
+                markers = []
+                routing = []
+                for marker, vacuum in pairs:
+                    run = (self.book.data.get(marker) or {}).get("current")
+                    route = self._route_id(marker, src, map_id)
+                    if vacuum == vac and route and isinstance(run, dict) and run.get("_generation") \
+                            and same_run_identity(run, route, map_id):
+                        markers.append((marker, route, run["_generation"]))
+                        definition = next(r for r in self.routes_by_marker[marker] if r["id"] == route)
+                        routing.append((marker, route, definition.get("space"), definition.get("calibration")))
+                if markers:
+                    contexts.append(PathContext(src, vac, map_id, tuple(sorted(markers)),
+                                                bool(st_vac and st_vac.state in MOVING_STATES), available, platform,
+                                                repr(routing)))
+        return contexts
+
+    def _accept_path(self, context: PathContext, snap: PathSnapshot, proven: bool) -> None:
+        # Recheck live registry AND saved route/run after every await, including
+        # an underlying executor read finishing after its ten-second timeout.
+        if context not in self._path_contexts() or self._closed:
+            return
+        now = time.time()
+        changed = False
+        for marker, route, generation in context.markers:
+            changed |= self.book.on_snapshot(marker, snap, now, route, context.map_id, generation, proven)
+        self._handle_sample_change(changed, now)
+
+    def _path_reason(self, context: PathContext, reason: str) -> None:
+        if context not in self._path_contexts() or self._closed:
+            return
+        changed = False
+        for marker, _route, _generation in context.markers:
+            changed |= self.book.path_reason(marker, reason)
+        self._handle_sample_change(changed, time.time())
 
     def _route_id(self, marker: str, source: str, map_id: str) -> str:
         """The route this point belongs to, or "" when routing cannot say.
@@ -553,6 +889,12 @@ class TrailRecorder:
         for src, pair_list in self.pairs.items():
             if eid == src or any(eid == vac for _, vac in pair_list):
                 changed |= self._sample(src, now)
+        for context in self._path_contexts():
+            if eid == context.source or eid == context.vacuum:
+                state = self.hass.states.get(context.source)
+                attrs = state.attributes if state else {}
+                raw_path = attrs.get("path") if "path" in attrs else None
+                self.collector.observe(context, attribute_path=raw_path)
         self._handle_sample_change(changed, now)
 
     def _handle_sample_change(self, changed: bool, now: float) -> None:
@@ -560,8 +902,19 @@ class TrailRecorder:
         if changed:
             self._schedule_save()
             if now - self._last_fire >= FIRE_THROTTLE_S:
+                if self._unsub_fire:
+                    self._unsub_fire()
+                    self._unsub_fire = None
                 self._last_fire = now
                 self.hass.bus.async_fire("houseplan_trail_updated", {})
+            elif self._unsub_fire is None:
+                @callback
+                def publish(_now: Any) -> None:
+                    self._unsub_fire = None
+                    if not self._closed:
+                        self._last_fire = time.time()
+                        self.hass.bus.async_fire("houseplan_trail_updated", {})
+                self._unsub_fire = async_call_later(self.hass, FIRE_THROTTLE_S - (now - self._last_fire), publish)
 
     def _schedule_save(self) -> None:
         if self._unsub_save:

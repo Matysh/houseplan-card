@@ -108,6 +108,7 @@ from .store import (
 )
 from .support_package import SupportPackageError, build_support_package
 from .support_transport import SupportTransportError, async_submit_report
+from .vacuum_paths import public_trails
 from .validation import (
     CONFIG_SCHEMA,
     LAYOUT_SCHEMA,
@@ -2649,16 +2650,8 @@ async def _purge_trail_recorder(hass: HomeAssistant, config: dict[str, Any]) -> 
 
 
 def _public_trails(value: Any) -> Any:
-    """Copy the trail book for View without exposing source entity ids (#626)."""
-    if isinstance(value, dict):
-        return {
-            key: _public_trails(item)
-            for key, item in value.items()
-            if key != "source"
-        }
-    if isinstance(value, list):
-        return [_public_trails(item) for item in value]
-    return value
+    """The shared authenticated read retains only the public format-2 value."""
+    return public_trails(value)
 
 
 @websocket_api.websocket_command({vol.Required("type"): "houseplan/trail/get"})
@@ -2667,7 +2660,7 @@ async def ws_trail_get(hass: HomeAssistant, connection: websocket_api.ActiveConn
     """Current + previous runs and raw coordinates, without source entity ids."""
     rec = hass.data.get(DOMAIN, {}).get("trail_recorder")
     connection.send_result(
-        msg["id"], {"trails": _public_trails(rec.book.data) if rec else {}}
+        msg["id"], {"trail_format": 2, "trails": _public_trails(rec.book.data) if rec else {}}
     )
 
 

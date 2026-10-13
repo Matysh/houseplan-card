@@ -11,6 +11,22 @@ import { readHouseplanProductionSource } from './houseplan-source.mjs';
 import { createDeviceBatteryContext } from '../test-build/device-battery.js';
 import { resolveDevicePresentation } from '../test-build/device-presentation.js';
 import { classifyHassRenderChange } from '../test-build/render-invalidation.js';
+import { freezeVacuumPath } from '../test-build/vacuum-path-geometry.js';
+
+test('#872 render frames reuse owned geometry but isolate mutable HA attributes', () => {
+  const source = { path: [[0, 0], [1, 1]] };
+  const material = freezeVacuumPath([[[0, 0], [1, 1]]]);
+  const options = { sourceSequence: 1,
+    hass: { states: { 'camera.map': { state: 'idle', attributes: { path: source } } } },
+    devices: [{ id: 'robot', entities: ['camera.map'] }], positions: new Map(),
+    presentations: new Map(), facts: new Map([['vacuum:robot', { trail: material }]]) };
+  const first = createRenderDeviceSnapshot(options), second = createRenderDeviceSnapshot(options);
+  assert.equal(first.facts.get('vacuum:robot').trail, material);
+  assert.equal(second.hass.states['camera.map'].attributes.path, first.hass.states['camera.map'].attributes.path);
+  source.path[0][0] = 999;
+  assert.equal(first.hass.states['camera.map'].attributes.path.path[0][0], 0);
+  assert.throws(() => first.facts.get('vacuum:robot').trail[0].push([2, 2]), TypeError);
+});
 
 test('#792 opt-out skips battery indexing and extra tick dependencies, not ordinary sources', () => {
   // The diagnostic sibling deliberately precedes the bound entity and has no

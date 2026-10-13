@@ -30,6 +30,13 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/vacuum-path-geometry.ts', 'src/vacuum-trail-material.ts',
+      'src/vacuum-trail-render.ts', 'src/vacuum-local-trail.ts', 'src/vacuum-trail-diagnostics.ts'],
+    smokes: ['smoke_vacuum_path_fidelity.mjs', 'smoke_vacuum_camera.mjs'],
+    because: '#872: real HA transport, native endpoint/gap DOM and bounded render/cache '
+      + 'witnesses exercise the complete path pipeline; held camera frames preserve #871.',
+  },
+  {
     symbols: ['syncVacuumTips', 'inheritedSceneClip', '_vacRafLoop', '_renderVacuums'],
     files: ['src/vacuum-view.ts'],
     smokes: ['smoke_vacuum_camera.mjs', 'smoke_vacuum_multifloor.mjs',

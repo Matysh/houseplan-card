@@ -1,13 +1,21 @@
 """TrailBook: the pure part of the server-side vacuum trails."""
 import math
 import pathlib
+import uuid
+import json
+from pure_imports import load_pure, HOUSEPLAN_ROOT
+paths = load_pure("hp_vacuum_paths", HOUSEPLAN_ROOT / "vacuum_paths.py")
 # TrailBook берётся без импорта: из trails.py читается текст и исполняется срез
 # до класса TrailRecorder — только он тянет Home Assistant. Ни sys.path, ни
 # sys.modules при этом не трогаются намеренно (#393): правка импорт-машины
 # переживает свой тест и достаётся всей сессии, а чем это кончается, показал
 # #389 — 85 тестов харнесса падали с голым `assert False`.
 src = (pathlib.Path(__file__).parent.parent / "custom_components" / "houseplan" / "trails.py").read_text(encoding="utf-8")
-ns = {"Any": object, "annotations": None, "math": math}
+ns = {"Any": object, "annotations": None, "math": math, "uuid": uuid, "json": json,
+      "MAX_POINTS": paths.MAX_POINTS, "MAX_SEGMENTS": paths.MAX_SEGMENTS,
+      "MAX_JSON_BYTES": paths.MAX_JSON_BYTES, "MAX_ENTRY_BYTES": paths.MAX_ENTRY_BYTES,
+      "PathSnapshot": paths.PathSnapshot, "number": paths.number,
+      "normalize_paths": paths.normalize_paths, "PathRejected": paths.PathRejected}
 exec(src[src.index("TRAIL_CAP"):src.index("class TrailRecorder")], ns)
 TrailBook = ns["TrailBook"]
 TRAIL_CAP = ns["TRAIL_CAP"]
@@ -49,7 +57,8 @@ def test_ended_run_resumes_within_grace_and_duplicate_is_a_change():
     assert b.end_run("m", 120.0)
     assert b.on_point("m", "floor", 2, 2, 120.0 + 600)
     rec = b.data["m"]
-    assert rec["current"]["points"] == [[1, 1], [2, 2]]
+    assert rec["current"]["paths"] == [[[1, 1], [2, 2]], [[2, 2]]]
+    assert rec["current"]["points"] == [[2, 2]]  # downgrade has no gap bridge
     assert rec["current"]["started"] == 100.0
     assert rec["current"]["ended"] is None
     assert "previous" not in rec
@@ -64,7 +73,7 @@ def test_resume_grace_is_inclusive_then_rotates_after_epsilon():
 
     b.end_run("m", 2000.0)
     assert b.on_point("m", "floor", 3, 3, 2000.0 + TRAIL_RESUME_GRACE_S + 0.001)
-    assert b.data["m"]["previous"]["points"] == [[1, 1], [2, 2]]
+    assert b.data["m"]["previous"]["paths"] == [[[1, 1]], [[2, 2]]]
     assert b.data["m"]["current"]["points"] == [[3, 3]]
 
 
@@ -104,7 +113,7 @@ def test_resume_fails_closed_on_clock_rollback_and_survives_restart_shape():
     }}}
     restarted = TrailBook(persisted)
     restarted.on_point("m", "floor", 4, 4, 2100.0 + 300)
-    assert restarted.data["m"]["current"]["points"] == [[3, 3], [4, 4]]
+    assert restarted.data["m"]["current"]["paths"] == [[[3, 3]], [[4, 4]]]
     assert restarted.data["m"]["current"]["started"] == 2000.0
     assert restarted.data["m"]["current"]["ended"] is None
     assert "previous" not in restarted.data["m"]
@@ -117,7 +126,7 @@ def test_repeated_short_stops_keep_all_points_and_existing_previous():
         assert b.on_point("m", "floor", index + 1, index + 1, now)
         assert b.end_run("m", now + 10)
         assert not b.end_run("m", now + 20)
-    assert b.data["m"]["current"]["points"] == [[1, 1], [2, 2], [3, 3]]
+    assert b.data["m"]["current"]["paths"] == [[[1, 1]], [[2, 2]], [[3, 3]]]
     assert b.data["m"]["previous"] is previous
 
 
@@ -129,13 +138,14 @@ def test_map_switch_mid_run_starts_a_new_run():
     assert b.data["m"]["previous"]["map_id"] == "floor1"
 
 
-def test_cap_decimates_but_keeps_the_freshest_point():
+def test_cap_stops_append_honestly_without_decimating_accepted_history():
     b = TrailBook()
     for i in range(TRAIL_CAP + 1):
         b.on_point("m", "0", float(i), 0.0, float(i))
     pts = b.data["m"]["current"]["points"]
-    assert len(pts) <= TRAIL_CAP // 2 + 2
-    assert pts[-1] == [float(TRAIL_CAP), 0.0]
+    assert len(pts) == TRAIL_CAP
+    assert pts[-1] == [float(TRAIL_CAP - 1), 0.0]
+    assert b.data["m"]["current"]["quality"]["reason"] == "limited"
 
 
 def test_junk_store_data_tolerated():
@@ -171,7 +181,9 @@ def test_run_without_route_stays_legacy_shaped():
     b.on_point("m", "0", 1.0, 2.0, 100.0)
     run = b.data["m"]["current"]
     assert "route_id" not in run and "source" not in run
-    assert set(run) == {"map_id", "started", "ended", "points"}
+    assert run["path_format"] == 2
+    assert run["paths"] == [[[1.0, 2.0]]]
+    assert run["points"] == [[1.0, 2.0]]
 
 
 def test_legacy_run_resumes_by_map_id_as_before():
@@ -180,7 +192,7 @@ def test_legacy_run_resumes_by_map_id_as_before():
     b.end_run("m", 200.0)
     assert b.on_point("m", "0", 3.0, 4.0, 300.0)
     assert "previous" not in b.data["m"]
-    assert b.data["m"]["current"]["points"] == [[1.0, 2.0], [3.0, 4.0]]
+    assert b.data["m"]["current"]["paths"] == [[[1.0, 2.0]], [[3.0, 4.0]]]
 
 
 def test_route_run_does_not_resume_into_another_route():

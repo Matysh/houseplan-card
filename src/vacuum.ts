@@ -7,6 +7,8 @@
  * run, and a thinned trail. See docs/VACUUM.md for the approved contract.
  */
 
+import { normalizeVacuumGeometry, simplifyOrderedPath, VAC_RAW_MAX_POINTS, VAC_RAW_MAX_SEGMENTS } from './vacuum-path-geometry';
+
 export type Affine = [number, number, number, number, number, number];
 export type Pt = [number, number];
 export type VacPath = Pt[][];
@@ -18,8 +20,8 @@ export type VacPathCommand =
 
 export const VAC_TRAIL_SMOOTH_RADIUS_CM = 17.5;
 
-export const VAC_PATH_MAX_SEGMENTS = 64;
-export const VAC_PATH_MAX_POINTS = 4000;
+export const VAC_PATH_MAX_SEGMENTS = VAC_RAW_MAX_SEGMENTS;
+export const VAC_PATH_MAX_POINTS = VAC_RAW_MAX_POINTS;
 
 /** target = [a b; d e]·source + [c f] */
 export function applyAffine(m: Affine, x: number, y: number): Pt {
@@ -100,15 +102,6 @@ const pointOf = (value: unknown): Pt | null => {
   return x == null || y == null ? null : [x, y];
 };
 
-const looksLikePoint = (value: unknown): boolean => {
-  if (Array.isArray(value)) {
-    return value.length >= 2 && !Array.isArray(value[0])
-      && (typeof value[0] !== 'object' || value[0] == null);
-  }
-  return !!value && typeof value === 'object'
-    && ('x' in (value as object) || 'y' in (value as object));
-};
-
 /** Shoelace area centroid. A zero-area outline deterministically falls back
  * to its vertex average; invalid/non-finite outlines have no centroid. */
 export function areaCentroid(raw: unknown): Pt | null {
@@ -160,46 +153,10 @@ function outlineGeometry(raw: unknown): { centroid: Pt; bbox: [number, number, n
   return { centroid, bbox: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)] };
 }
 
-function thinPathToTarget(points: Pt[], target: number): Pt[] {
-  if (target >= points.length) return points.slice();
-  if (target <= 2) return [points[0], points[points.length - 1]];
-  const out: Pt[] = [];
-  for (let i = 0; i < target; i++) {
-    const index = Math.round((i * (points.length - 1)) / (target - 1));
-    out.push(points[index]);
-  }
-  return out;
-}
-
 /** Normalize legacy flat paths and integration multi-subpaths, then enforce
  * drawable/cap/budget rules without ever joining across a gap. */
 export function normalizeVacPath(raw: unknown): VacPath {
-  let value: unknown = raw;
-  if (value && typeof value === 'object' && !Array.isArray(value)) {
-    const object = value as any;
-    value = object.path ?? object.points ?? value;
-  }
-  if (!Array.isArray(value) || !value.length) return [];
-  const flat = value.some((entry) => looksLikePoint(entry));
-  const rawSegments: unknown[][] = flat ? [value] : value.filter(Array.isArray) as unknown[][];
-  let segments = rawSegments
-    .map((segment) => segment.map(pointOf).filter((point): point is Pt => point != null))
-    .filter((segment) => segment.length >= 2);
-  if (segments.length > VAC_PATH_MAX_SEGMENTS) segments = segments.slice(-VAC_PATH_MAX_SEGMENTS);
-  const total = segments.reduce((sum, segment) => sum + segment.length, 0);
-  if (total <= VAC_PATH_MAX_POINTS) return segments.map((segment) => segment.slice());
-
-  const base = segments.length * 2;
-  const remaining = VAC_PATH_MAX_POINTS - base;
-  const weights = segments.map((segment) => segment.length - 2);
-  const weightTotal = weights.reduce((sum, weight) => sum + weight, 0);
-  const quotas = weights.map((weight) => remaining * weight / weightTotal);
-  const allocations = quotas.map(Math.floor);
-  let left = remaining - allocations.reduce((sum, allocation) => sum + allocation, 0);
-  const order = quotas.map((quota, index) => ({ index, fraction: quota - Math.floor(quota) }))
-    .sort((a, b) => b.fraction - a.fraction || a.index - b.index);
-  for (let i = 0; i < left; i++) allocations[order[i].index]++;
-  return segments.map((segment, index) => thinPathToTarget(segment, 2 + allocations[index]));
+  return normalizeVacuumGeometry(raw);
 }
 
 export type VacCurrentPathSource = 'integration' | 'server' | 'local' | 'none';
@@ -226,12 +183,16 @@ export function resolveCurrentVacPath(
 }
 
 /** Remove the live target from only the final drawable subpath. */
+const trimmedTargets = new WeakMap<VacPath, VacPath>();
 export function trimVacPathTarget(path: VacPath): VacPath {
+  const cached = trimmedTargets.get(path);
+  if (cached) return cached;
   const out = path.map((segment) => segment.slice());
   const last = out[out.length - 1];
   if (!last) return [];
   if (last.length > 2) last.pop();
   else out.pop();
+  trimmedTargets.set(path, out);
   return out;
 }
 
@@ -275,7 +236,7 @@ export function smoothVacPath(
       const dot = (inX * outX + inY * outY) / (inLength * outLength);
       // An almost exact reversal would fold a quadratic back onto itself. Keep
       // that telemetry cusp literal instead of inventing a loop around it.
-      if (!Number.isFinite(dot) || dot <= -0.999) {
+      if (!Number.isFinite(dot) || dot < 0) {
         commands.push({ kind: 'line', point: b });
         continue;
       }
@@ -544,46 +505,23 @@ export function autoCalibrate(
 
 // ---------------- trail ----------------
 
-export const TRAIL_MAX = 600;
+export const TRAIL_MAX = VAC_RAW_MAX_POINTS;
 export const VAC_TELEPORT_GAP_MS = 10000;
 export const VAC_STALE_MS = 60000;
 export const VAC_TRAIL_LINGER_MS = 10 * 60000;
 
 /** Ramer–Douglas–Peucker; keeps ends, drops points under eps deviation. */
 export function thinPath(pts: Pt[], eps: number): Pt[] {
-  if (pts.length < 3) return pts.slice();
-  const keep = new Uint8Array(pts.length);
-  keep[0] = keep[pts.length - 1] = 1;
-  const stack: Array<[number, number]> = [[0, pts.length - 1]];
-  while (stack.length) {
-    const [a, b] = stack.pop()!;
-    const [ax, ay] = pts[a]; const [bx, by] = pts[b];
-    const dx = bx - ax, dy = by - ay;
-    const len = Math.hypot(dx, dy) || 1e-9;
-    let worst = 0, wi = -1;
-    for (let i = a + 1; i < b; i++) {
-      const d = Math.abs((pts[i][0] - ax) * dy - (pts[i][1] - ay) * dx) / len;
-      if (d > worst) { worst = d; wi = i; }
-    }
-    if (wi > 0 && worst > eps) {
-      keep[wi] = 1;
-      stack.push([a, wi], [wi, b]);
-    }
-  }
-  const out: Pt[] = [];
-  for (let i = 0; i < pts.length; i++) if (keep[i]) out.push(pts[i]);
-  return out;
+  return simplifyOrderedPath(pts, eps);
 }
 
 /** Append a point; over the cap → thin, and if thinning was not enough, decimate. */
-export function pushTrailPoint(buf: Pt[], p: Pt, epsHint: number): Pt[] {
+export function pushTrailPoint(buf: Pt[], p: Pt, _epsHint: number): Pt[] {
+  if (!finitePoint(p) || buf.length >= TRAIL_MAX) return buf;
   const last = buf[buf.length - 1];
   if (last && last[0] === p[0] && last[1] === p[1]) return buf;
   buf.push(p);
-  if (buf.length <= TRAIL_MAX) return buf;
-  let thinned = thinPath(buf, epsHint);
-  if (thinned.length > TRAIL_MAX) thinned = thinned.filter((_, i) => i % 2 === 0 || i === thinned.length - 1);
-  return thinned;
+  return buf;
 }
 
 /** true → the robot is actively driving (a puck should exist). */

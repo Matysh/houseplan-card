@@ -82,9 +82,9 @@ import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-sele
 import { roomTempRangeFromDraft, type SpaceDialogState } from './space-dialog';
 import { mdiHomeCityOutline } from '@mdi/js';
 import {
-  Affine, applyAffine, readVacTelemetry, pushTrailPoint, isVacMoving, vacTrailMode,
-  vacMapIdWithFallback, parseVacSourceCandidate, resolveVacSource, resolveCurrentVacPath,
-  trimVacPathTarget, normalizeVacPath, smoothVacPath, VAC_TRAIL_SMOOTH_RADIUS_CM,
+  Affine, applyAffine, readVacTelemetry, isVacMoving, vacTrailMode,
+  vacMapIdWithFallback, parseVacSourceCandidate, resolveVacSource,
+  trimVacPathTarget, normalizeVacPath,
   VAC_TELEPORT_GAP_MS, VAC_STALE_MS, FitParams, Pt as VacPt, type VacPath, type VacSourceCandidate,
   type VacSourceResolution, type VacSourceStatus,
 } from './vacuum';
@@ -93,6 +93,12 @@ import {
   type VacuumMapRoute, type VacuumRouteResolution,
 } from './vacuum-routes';
 import { syncVacuumTips } from './vacuum-view';
+import { VacuumPathGeometryCache, VAC_RENDER_POINT_BUDGET } from './vacuum-path-geometry';
+import { recordLocalVacuumPosition, type LocalVacuumPath } from './vacuum-local-trail';
+import { selectVacuumTrail, vacuumTrailMaterial, type VacuumServerBook } from './vacuum-trail-material';
+import { vacuumTrailSvg, type VacuumSvgFrame } from './vacuum-trail-render';
+import { diagnoseVacuumTrail, type VacuumTrailDiagnostic } from './vacuum-trail-diagnostics';
+import type { HouseplanEditorHostPort } from './houseplan-editor-runtime';
 import {
   buildDevices, seedHiddenBindings, lqiFor, tempFor, climateTempFor, effectiveExcludedIntegrations,
   sourceValue, roomClimateKey, roomClimateMap, resolvedLightSources, resolvedLightState,
@@ -2259,15 +2265,18 @@ export class HouseplanCard extends LitElement {
    */
   private _activityRt = new Map<string, FiniteActivityRuntime>();
   /** live-vacuum runtime per marker: RAW robot coords (matrix applied at render) */
-  private _vacRt = new Map<string, { trail: VacPt[]; lastKey: string; lastTs: number;
-    moving: boolean; jump: boolean; endedTs: number; lastPos: VacPt | null }>();
+  private _vacRt = new Map<string, LocalVacuumPath & {
+    lastKey: string; lastTs: number; moving: boolean; jump: boolean; gap: boolean;
+    mapKey: string; endedTs: number; lastPos: VacPt | null }>();
   /** view signature of the previous vacuum render: a changed view (zoom, pan,
       space switch) or a tab return must TELEPORT the puck — animating left/top
       through a viewport change reads as «едет через весь план» (owner). */
   private _vacViewKey = '';
   private _vacRaf = 0;
   /** server-recorded runs per marker: {current, previous} in raw robot coords */
-  private _vacSrvTrails: Record<string, any> = {};
+  private _vacSrvTrails: VacuumServerBook = {};
+  private _vacTrailFormat = 1;
+  private _vacGeometryCache = new VacuumPathGeometryCache();
   private _unsubTrail?: () => void;
   private _vacJumpOnce = false;
   private _continuity = this._newContinuityController();
@@ -4332,7 +4341,7 @@ export class HouseplanCard extends LitElement {
       // A read-only HA session may reject these; that must never roll the
       // accepted config back into the mandatory load catch.
       void hass.callWS({ type: 'houseplan/trail/get' })
-        .then((r: { trails?: Record<string, unknown> }) => { if (this.isConnected && this._read.isCurrent(loadClaim) && this.hass?.connection === hass.connection) { this._vacSrvTrails = r?.trails || {}; this.requestUpdate(); } })
+        .then((r: { trails?: unknown; trail_format?: number }) => { if (this.isConnected && this._read.isCurrent(loadClaim) && this.hass?.connection === hass.connection) { this._vacSrvTrails = vacuumTrailMaterial(r?.trails); this._vacTrailFormat = r?.trail_format === 2 ? 2 : 1; this.requestUpdate(); } })
         .catch(() => undefined);
       this._ensureLiveSyncSubscriptions();
     } catch (e) {
@@ -4426,7 +4435,8 @@ export class HouseplanCard extends LitElement {
       async () => {
         try {
           const r: any = await this.hass.callWS({ type: 'houseplan/trail/get' });
-          this._vacSrvTrails = r?.trails || {};
+          this._vacSrvTrails = vacuumTrailMaterial(r?.trails);
+          this._vacTrailFormat = r?.trail_format === 2 ? 2 : 1;
           this.requestUpdate();
         } catch { /* transient WS hiccup — the next event retries */ }
       },
@@ -4667,7 +4677,7 @@ export class HouseplanCard extends LitElement {
           resolution,
           mapId: telemetry ? this._vacMapId(device, telemetry, planHass) : null,
           runtime: runtime ? {
-            trail: runtime.trail,
+            trail: runtime.material,
             lastTs: runtime.lastTs,
             moving: runtime.moving,
             jump: runtime.jump,
@@ -11653,21 +11663,38 @@ export class HouseplanCard extends LitElement {
         continue;
       }
       const src = this._vacSource(d);
-      if (!src) continue;
+      if (!src) {
+        const previous = this._vacRt.get(d.id);
+        if (previous) previous.gap = true;
+        continue;
+      }
       const vacEnt = this._vacEntity(d);
-      const moving = isVacMoving(this.hass.states[vacEnt || '']?.state);
+      const vacuumState = this.hass.states[vacEnt || '']?.state;
+      const moving = isVacMoving(vacuumState);
       const tele = readVacTelemetry(this.hass.states[src]?.attributes);
       let rt = this._vacRt.get(d.id);
       if (!rt) {
-        rt = { trail: [], lastKey: '', lastTs: 0, moving: false, jump: false, endedTs: 0, lastPos: null };
+        rt = { trail: [], paths: [], material: [], version: 0, lastKey: '', lastTs: 0,
+          moving: false, jump: false, gap: false, mapKey: '', endedTs: 0, lastPos: null };
         this._vacRt.set(d.id, rt);
       }
-      if (moving && !rt.moving) { rt.trail = []; rt.lastPos = null; } // a fresh run
-      const wantTrail = vacTrailMode(d.marker?.vacuum) !== 'never' && !tele?.path.length;
+      if (!vacuumState || vacuumState === 'unknown' || vacuumState === 'unavailable') {
+        rt.gap = true;
+        continue;
+      }
+      const mapKey = src + '|' + (tele ? this._vacMapId(d, tele) : '');
+      if (mapKey !== rt.mapKey || (moving && !rt.moving
+        && (Date.now() - rt.endedTs < 0 || Date.now() - rt.endedTs > 30 * 60_000))) {
+        rt.trail = []; rt.paths = []; rt.material = []; rt.lastPos = null; rt.lastKey = '';
+        rt.version = -1; rt.sampleCm = undefined; rt.sampleAt = undefined;
+      }
+      rt.mapKey = mapKey;
+      const wantTrail = this._vacTrailFormat < 2 && vacTrailMode(d.marker?.vacuum) !== 'never';
+      if (moving && !rt.moving) rt.gap = true;
       if (!moving && rt.moving) {
         rt.endedTs = Date.now();
         // the run is over: the puck has arrived everywhere it was going
-        if (wantTrail && rt.lastPos) rt.trail = pushTrailPoint(rt.trail, rt.lastPos, 40);
+        if (wantTrail) recordLocalVacuumPosition(rt, null, Date.now());
         rt.lastPos = null;
       }
       rt.moving = moving;
@@ -11683,7 +11710,14 @@ export class HouseplanCard extends LitElement {
           // the trail lags ONE point behind: when a new target arrives the puck
           // has just (visually) reached the previous one — a segment must never
           // outrun the icon (owner report 2026-07-31)
-          if (wantTrail && rt.lastPos) rt.trail = pushTrailPoint(rt.trail, rt.lastPos, 40);
+          rt.gap ||= rt.jump;
+          const route = effectiveRoutes(d.id, d.marker?.vacuum ?? null, d.space, src)
+            .find((r) => r.source === src && r.map_id === this._vacMapId(d, tele!))?.calibration;
+          const physical = route?.every(Number.isFinite) && Math.abs(route[0] * route[4] - route[1] * route[3]) > 1e-12
+            && Number.isFinite(this._cellCm) && this._cellCm > 0
+            ? applyAffine(route, pos.x, pos.y).map((v) => v * this._cellCm / this._gridPitch) as VacPt : undefined;
+          if (wantTrail) recordLocalVacuumPosition(rt, [pos.x, pos.y], now, physical);
+          rt.gap = false;
           rt.lastPos = [pos.x, pos.y];
         }
       }
@@ -11785,18 +11819,12 @@ export class HouseplanCard extends LitElement {
   }
 
   /** One bounded current/previous trail serializer for flat and Iso surfaces. */
-  private _vacTrailPathD(path: VacPath, matrix: Affine): string {
-    const calibrated = path.map((segment) => segment.map(([x, y]) => applyAffine(matrix, x, y)));
-    const commands = smoothVacPath(calibrated, this._cmToUnits(VAC_TRAIL_SMOOTH_RADIUS_CM));
-    const pointText = (point: readonly [number, number]): string => {
-      const scene = point;
-      return `${scene[0].toFixed(1)} ${scene[1].toFixed(1)}`;
-    };
-    return commands.map((segment) => segment.map((command) => {
-      if (command.kind === 'move') return `M ${pointText(command.point)}`;
-      if (command.kind === 'line') return `L ${pointText(command.point)}`;
-      return `Q ${pointText(command.control)} ${pointText(command.point)}`;
-    }).join(' ')).join(' ');
+  private _vacTrailDiagnostics(device: DevItem): VacuumTrailDiagnostic {
+    return diagnoseVacuumTrail(this as unknown as HouseplanEditorHostPort, device);
+  }
+
+  private _vacTrailPathD(path: VacPath, matrix: Affine, budget: number): VacuumSvgFrame {
+    return vacuumTrailSvg(this._vacGeometryCache, path, matrix, this._cellCm / this._gridPitch, budget);
   }
 
   /** Puck + trail for every live vacuum of the space. */
@@ -11815,6 +11843,8 @@ export class HouseplanCard extends LitElement {
     this._vacJumpOnce = false;
     const pucks: TemplateResult[] = [];
     const trails: TemplateResult[] = [];
+    const previousRuns: Array<{ path: VacPath; matrix: Affine }> = [];
+    let trailBudget = VAC_RENDER_POINT_BUDGET;
     let hasTips = false;
     for (const d of devs) {
       if (d.hidden || !this._isVacDev(d)) continue;
@@ -11848,31 +11878,29 @@ export class HouseplanCard extends LitElement {
       // mode says always; the previous run only ever shows in 'always'
       const showCur = tmode === 'always' || (tmode === 'cleaning' && moving);
       const srv = srv0;
-      const srvCur = plan.currentRunMatches && Array.isArray(srv?.current?.points) ? srv.current : null;
-      const srvPrev = plan.previous && Array.isArray(srv?.previous?.points) ? srv.previous : null;
+      const srvCur = plan.currentRunMatches ? srv?.current ?? null : null;
+      const srvPrev = plan.previous ? srv?.previous ?? null : null;
       // the PREVIOUS run stays visible even at rest: users compare where the
       // robot has been against where it has not (owner call 2026-07-31)
       if (tmode === 'always' && srvPrev && plan.previous) {
-        const previous = normalizeVacPath(srvPrev.points);
-        const pathD = this._vacTrailPathD(previous, plan.previous);
-        if (pathD) {
-          trails.push(svg`<g class="prev"><path class="case" d="${pathD}"></path><path class="core" d="${pathD}"></path></g>`);
-        }
+        previousRuns.push({ path: normalizeVacPath(srvPrev.path_format === 2 ? srvPrev.paths : srvPrev.points), matrix: plan.previous });
       }
       // One arbitration authority: integration multi-subpath → server run →
       // local runtime. Only drawable segments participate.
       if (showCur && matrix) {
-        const current = resolveCurrentVacPath(tele, srvCur, rt?.trail || []);
+        const current = selectVacuumTrail(tele, srvCur, rt?.material ?? rt?.trail ?? [], this._vacTrailFormat);
         // Server/integration paths include the current target. Remove it from
         // the final subpath only while moving so the line cannot outrun puck.
-        const raw: VacPath = moving && (current.source === 'integration' || current.source === 'server')
+        const raw: VacPath = moving && !current.native && current.allowTip && current.source !== 'local'
           ? trimVacPathTarget(current.path) : current.path;
         if (raw.length) {
-          const pathD = this._vacTrailPathD(raw, matrix);
+          const frame = this._vacTrailPathD(raw, matrix, trailBudget);
+          trailBudget -= frame.count;
+          const pathD = frame.d;
           // A single SVG path with several M commands keeps gaps literal.
           if (pathD) trails.push(svg`<path class="case" d="${pathD}"></path><path class="core" d="${pathD}"></path>`);
           const last = raw[raw.length - 1];
-          if (moving && last?.length >= 2) {
+          if (moving && current.allowTip && !current.native && !frame.limited && last?.length >= 2) {
             hasTips = true;
             const anchor = last[last.length - 1];
             const [ax, ay] = applyAffine(matrix, anchor[0], anchor[1]);
@@ -11897,6 +11925,11 @@ export class HouseplanCard extends LitElement {
         @click=${(e: Event) => { e.stopPropagation(); const ve = this._vacEntity(d); if (ve) this._openMoreInfo(ve); }}>
         <ha-icon .icon=${icon}></ha-icon>
       </div>`);
+    }
+    for (const previous of previousRuns) {
+      const frame = this._vacTrailPathD(previous.path, previous.matrix, trailBudget);
+      trailBudget -= frame.count;
+      if (frame.d) trails.unshift(svg`<g class="prev"><path class="case" d="${frame.d}"></path><path class="core" d="${frame.d}"></path></g>`);
     }
     if (pucks.length && hasTips && this.isConnected && this.ownerDocument.visibilityState !== 'hidden') {
       if (!this._vacRaf) this._vacRafLoop();

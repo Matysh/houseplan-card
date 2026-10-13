@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 872,
+  "baseStable": "v1.80.1",
+  "category": "major",
+  "rationale": "Adds full native Dreame map-path collection and persistence beyond sampled positions, with reset/run proof and diagnostics. Geometry fidelity fixes are coupled to this new core capability, not misclassified as a stable patch.",
+  "summary": {
+    "ru": "Полные маршруты поддерживаемых карт пылесоса и сохранение поворотов без слепого прореживания; диагностика качества пути.",
+    "en": "Full paths from supported vacuum maps, retained turns without blind thinning, and path-quality diagnostics."
+  }
+}

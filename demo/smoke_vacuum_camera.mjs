@@ -46,15 +46,18 @@ try {
   });
   await page.waitForFunction(() => window.__card.renderRoot.querySelectorAll('.vacpuck').length===3);
   // Local fallback receives ordinary HA samples, preserving runtime recording.
-  for (const [x,y] of [[500,500],[600,500],[700,700],[850,850]]) {
+  for (const [x,y] of [[500,500],[600,500],[700,600],[800,650]]) {
     await page.evaluate(([x,y])=>{
       const c=window.__card, old=c.hass.states['camera.local_map'];
       c.hass={...c.hass,states:{...c.hass.states,'camera.local_map':{...old,
         attributes:{...old.attributes,vacuum_position:{x,y}}}}};
     },[x,y]);
+    // The real recorder samples on its 250 ms tick. Let each HA coordinate
+    // reach it; four synchronous replacements are just one observed sample.
+    await page.waitForTimeout(300);
     await settle();
   }
-  await page.waitForFunction(() => window.__card.renderRoot.querySelectorAll('.vactrail line.tip.core').length===3);
+  await page.waitForFunction(() => window.__card.renderRoot.querySelectorAll('.vactrail line.tip.core').length===2);
   out.sourceVariantsAndPrevious = await page.evaluate(() => {
     const r=window.__card.renderRoot, paths=[...r.querySelectorAll('.vactrail > path.core')];
     return paths.length===3 && !!r.querySelector('.vactrail g.prev path.core')
@@ -115,7 +118,9 @@ try {
     });
     evidence.push(e);
     out[`${e.label}:landmarks`] = e.samples.length>=3 && e.samples.every(s=>s.pathErrors.length>=3 && s.pathErrors.every(n=>n<=1));
-    out[`${e.label}:tips`] = e.samples.every(s=>s.tipErrors.length===3 && s.tipErrors.every(n=>n<=1));
+    // Native integration geometry keeps its real endpoint; only sampled
+    // server/local paths receive the animated position connector (#872).
+    out[`${e.label}:tips`] = e.samples.every(s=>s.tipErrors.length===2 && s.tipErrors.every(n=>n<=1));
     out[`${e.label}:noDoubleCamera`] = e.samples.every(s=>!s.sceneTransform);
     if(!changingSource) out[`${e.label}:sourceUnchanged`] = e.samples.every(s=>JSON.stringify(s.d)===JSON.stringify(e.samples[0].d));
     out[`${e.label}:noRenderPerMove`] = e.commits<e.samples.length/2;
@@ -204,24 +209,24 @@ try {
   out.visibleRestarts=true;
   // Real HA registry disable/reactivation cannot leave the robot's trail behind.
   await page.evaluate(()=>{
-    window.__setRegistryDisabled('entity','vacuum.robo','user');
+    window.__setRegistryDisabled('entity','vacuum.second','user');
     const c=window.__card;c.hass={...c.hass};
   });
-  await page.waitForFunction(()=>!window.__card.renderRoot.querySelector('.vacpuck[data-mid="e_vacuum_robo"]'));
-  out.haDisabled = await page.evaluate(()=>!window.__card.renderRoot.querySelector('line.tip[data-mid="e_vacuum_robo"]'));
+  await page.waitForFunction(()=>!window.__card.renderRoot.querySelector('.vacpuck[data-mid="e_vacuum_second"]'));
+  out.haDisabled = await page.evaluate(()=>!window.__card.renderRoot.querySelector('line.tip[data-mid="e_vacuum_second"]'));
   await page.evaluate(()=>{
-    window.__setRegistryDisabled('entity','vacuum.robo',null);
+    window.__setRegistryDisabled('entity','vacuum.second',null);
     const c=window.__card;c.hass={...c.hass,states:{...c.hass.states}};
   });
   await settle();
   // Re-enabled entities resume through normal HA state delivery after registry refresh.
   await page.waitForTimeout(250);
   await page.evaluate(()=>{
-    const c=window.__card,old=c.hass.states['camera.robo_map'];
-    c.hass={...c.hass,states:{...c.hass.states,'camera.robo_map':{...old,
+    const c=window.__card,old=c.hass.states['camera.second_map'];
+    c.hass={...c.hass,states:{...c.hass.states,'camera.second_map':{...old,
       attributes:{...old.attributes,vacuum_position:{x:905,y:1080}}}}};
   });
-  await page.waitForFunction(()=>!!window.__card.renderRoot.querySelector('line.tip.core[data-mid="e_vacuum_robo"]'));
+  await page.waitForFunction(()=>!!window.__card.renderRoot.querySelector('line.tip.core[data-mid="e_vacuum_second"]'));
   out.haReactivated=true;
   // Dispose the actual current DOM; retired lines must never receive another tip write.
   out.disposal = await page.evaluate(async()=>{
@@ -231,15 +236,15 @@ try {
     return c._vacRaf===0&&lines.every((l,i)=>l.getAttribute('x2')===before[i][0]&&l.getAttribute('y2')===before[i][1]);
   });
   await page.evaluate(async()=>{document.getElementById('host').append(window.__card);await window.__hpTest.settled();});
-  await page.waitForFunction(()=>!!window.__card.renderRoot.querySelector('line.tip.core[data-mid="e_vacuum_robo"]')&&window.__card._vacRaf>0);
+  await page.waitForFunction(()=>!!window.__card.renderRoot.querySelector('line.tip.core[data-mid="e_vacuum_second"]')&&window.__card._vacRaf>0);
   out.remountRecovers=true;
   for(const patch of [{hidden:true},{hidden:false,display:'static_icon'},
-    {hidden:false,display:'badge',vacuum:{source:'camera.robo_map',trail_mode:'never',calibration:{m1:[.5,0,0,0,.5,0]}}}]){
+    {hidden:false,display:'badge',vacuum:{source:'camera.second_map',trail_mode:'never',calibration:{m1:[.5,0,0,0,.5,0]}}}]){
     await page.evaluate(patch=>window.__hpTest.setServerConfig(cfg=>({...cfg,markers:cfg.markers.map(m=>
-      m.id==='e_vacuum_robo'?{...m,...patch}:m)})),patch);
+      m.id==='e_vacuum_second'?{...m,...patch}:m)})),patch);
     const name=patch.hidden?'hidden':patch.display==='static_icon'?'static':'never';
     out[`disabledOverlay-${name}`] = await page.evaluate(()=>
-      !window.__card.renderRoot.querySelector('line.tip[data-mid="e_vacuum_robo"]'));
+      !window.__card.renderRoot.querySelector('line.tip[data-mid="e_vacuum_second"]'));
   }
   await page.evaluate(()=>window.__hpTest.switchSpace('garden'));
   out.oldFloorRetired = await page.evaluate(()=>!window.__card.renderRoot.querySelector('.vactrail')&&window.__card._vacRaf===0);
