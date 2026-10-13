@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 29, issue: 18. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 30, issue: 18. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -22,6 +22,7 @@
 | #854 | [CODE-REVIEW-854-r1.md](CODE-REVIEW-854-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #842 | [SPEC-REVIEW-842-r1.md](SPEC-REVIEW-842-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | AC не покрывают заявленный «обычный» путь записи | `houseplan-card.ts` `houseplan-editor-runtime.ts` |
 | #842 | [SPEC-REVIEW-842-r2.md](SPEC-REVIEW-842-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #842 | [CODE-REVIEW-842-r1.md](CODE-REVIEW-842-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #841 | [CODE-REVIEW-841-r1.md](CODE-REVIEW-841-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | edger | `docs/release-ledger/v1.80.1/841.json` `scripts/release-ledger.mjs` |
 | #840 | [CODE-REVIEW-840-r1.md](CODE-REVIEW-840-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #839 | [CODE-REVIEW-839-r1.md](CODE-REVIEW-839-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | в docs/release-ledger/v1.80.1/839.json протащена часть | `docs/release-ledger/v1.80.1/839.json` `839.json` `docs/DEVELOPMENT.md` `PROCESS.md` |
