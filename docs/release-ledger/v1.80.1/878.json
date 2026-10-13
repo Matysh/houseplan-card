@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 878,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "v1.80.1 already builds the device-dialog preview from the marker draft and computes entity-marker icons through icon rules, so an auto-placed light group shows mdi:chip in the preview and after Save while the plan shows mdi:lightbulb-group. Fixes that existing behaviour without a config migration or a new feature.",
+  "summary": {
+    "ru": "Группа света без ручной иконки показывает иконку группы в предпросмотре, в поле «Auto» и на плане после сохранения.",
+    "en": "A light group without a manual icon keeps the group icon in the preview, the “Auto” field and on the plan after saving."
+  }
+}
