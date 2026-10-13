@@ -1478,10 +1478,14 @@ export class HouseplanCard extends LitElement {
 
   /** Change the space with the usual sideways transition. */
   private _slideTo(id: string, dir: 'left' | 'right'): boolean {
+    this._editorRuntime?.invalidateEditorNavigation();
     if (id === this._space) return true;
     if (!this._canCommitSpace(id)) return false;
+    const resume = () => { if (this._slideTo(id, dir)) this._saveNav(); };
+    if (this._editorRuntime && !this._editorRuntime._guardDraftNavigation(resume)) return false;
     if (this._wallFaceBatch) this._roomDialogCancel();
-    if (this._mode === 'plan' && this._tool === 'draw' && !this._finishWallChain()) return false;
+    if (this._mode === 'plan' && this._tool === 'draw'
+      && !this._editorRuntimeOrThrow()._finishWallChainForNavigation(resume)) return false;
     this._cancelModeTransition(true);
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
     this._commitSpace(id);
@@ -2453,11 +2457,25 @@ export class HouseplanCard extends LitElement {
     return hashSpace(window.location.hash || '');
   }
   private _onHashChange = (): void => {
+    this._editorRuntime?.invalidateEditorNavigation();
     if (this._hasFixedFloor) return;
     const id = this._hashSpace();
     if (id && this._model.find((sp) => sp.id === id) && id !== this._space) {
+      const requestedHash = location.hash;
+      const restoreHash = `#space=${encodeURIComponent(this._space)}`;
+      const resume = () => {
+        if (location.hash !== restoreHash) return;
+        history.replaceState(history.state, '', `${location.pathname}${location.search}${requestedHash}`);
+        this._onHashChange();
+      };
+      // The hash changed before the confirmation. Keep URL and actual floor
+      // coherent while waiting, and on Keep editing.
+      history.replaceState(history.state, '', `${location.pathname}${location.search}${restoreHash}`);
+      if (this._editorRuntime && !this._editorRuntime._guardDraftNavigation(resume)) return;
       if (this._wallFaceBatch) this._roomDialogCancel();
-      if (this._mode === 'plan' && this._tool === 'draw' && !this._finishWallChain()) return;
+      if (this._mode === 'plan' && this._tool === 'draw'
+        && !this._editorRuntimeOrThrow()._finishWallChainForNavigation(resume)) return;
+      history.replaceState(history.state, '', `${location.pathname}${location.search}${requestedHash}`);
       this._commitSpace(id);
       this._selId = null;
       this._path = [];
@@ -2873,7 +2891,7 @@ export class HouseplanCard extends LitElement {
       if (this._supportDialog) { void this._editorRuntime?._closeSupportDialog(); return; }
       if (this._settingsDialog) { this._settingsDialog = null; return; }
       if (this._summary?.closeDialogIfIdle()) return;
-      if (this._markerDialog) { this._closeMarkerDialog(); return; }
+      if (this._markerDialog) { void this._editorRuntimeOrThrow()._requestMarkerDialogClose(); return; }
       if (this._deviceInbox) { this._deviceInbox = null; return; }
       if (this._openingDialog) { this._openingDialog = null; return; }
       if (this._physicalDialog) { this._physicalDialog = null; return; }
@@ -3040,7 +3058,7 @@ export class HouseplanCard extends LitElement {
     }
     if (this._roomDialog) {
       e.preventDefault();
-      this._roomDialogCancel();
+      void this._editorRuntimeOrThrow()._requestRoomDialogClose();
       return;
     }
     if (this._tool === 'draw' && this._path.length) {
@@ -3048,7 +3066,7 @@ export class HouseplanCard extends LitElement {
       // Escape releases the active wall chain without making it destructive:
       // Ctrl/Cmd+Z remains the one-point undo path (#294).  Reuse the exact
       // finish transaction used by a tool change, but keep `draw` selected.
-      this._finishWallChain();
+      this._editorRuntimeOrThrow()._finishWallChainForNavigation(() => this._editorRuntimeOrThrow()._activateMarkupTool('select'));
       return;
     }
     if (this._physicalSel) {
@@ -12074,7 +12092,7 @@ export class HouseplanCard extends LitElement {
   }
 
   /** Save the room edited via the gear (name, area, tier-3 settings). */
-  private _saveRoomEdit(): void {
+  private _saveRoomEdit(): Promise<void> {
     return this._editorRuntimeOrThrow()._saveRoomEdit();
   }
 

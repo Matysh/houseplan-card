@@ -85,6 +85,27 @@ test('dirty calibration stays open when discard confirmation is rejected', async
   assert.ok(controller.active);
 });
 
+test('#851 late discard of radar A cannot reset a new setup B', async () => {
+  let answer;
+  const controller = new RadarSetupController({
+    hass: () => ({}), requestUpdate() {}, t: key => key,
+    configFromDraft: radarConfigFromDraft, apply() {},
+    confirmDiscard: () => new Promise(resolve => { answer = resolve; }),
+  });
+  const room = { id: 'living', name: 'Living', poly: [[0, 0], [1, 0], [1, 1]] };
+  controller.begin('radar-A', draft(), room, 5, 7, BOARD);
+  controller.choosePoint(pointer(250, 400));
+  const closing = controller.discardIfAllowed();
+  controller.reset();
+  controller.begin('radar-B', draft(), room, 5, 7, BOARD);
+  controller.choosePoint(pointer(350, 450));
+  const next = controller.active;
+  answer(true);
+  assert.equal(await closing, false);
+  assert.equal(controller.active, next);
+  assert.equal(controller.isDirty(), true);
+});
+
 test('calibration reports bad reference placement separately from a measurement mismatch', () => {
   const controller = new RadarSetupController({
     hass: () => ({}), requestUpdate() {}, t: (key) => key,

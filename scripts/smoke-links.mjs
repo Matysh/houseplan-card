@@ -39,6 +39,13 @@ export const SMOKE_LINKS = [
       + 'routing and incoming-edge coverage are separate runtime witnesses.',
   },
   {
+    symbols: ['requestDraftClose', 'dialogSession', 'EditorChainExit', 'requestRoomClose', 'requestMarkerClose', '_finishWallChainForNavigation'],
+    files: ['src/editors/draft-actions.ts', 'src/editors/draft-close.ts', 'src/editor-chain-exit.ts'],
+    smokes: ['smoke_editor_draft_exit.mjs'],
+    because: '#851: real create/edit controls prove dirty close, focus recovery, save refusal/retry, '
+      + 'late Save ownership and the requested exit destination without a geometry write.',
+  },
+  {
     symbols: ['RoomDeviceDiscovery', '_syncNewDevices'],
     files: ['src/room-device-discovery.ts'],
     smokes: ['smoke_room_device_discovery.mjs', 'smoke_new_device.mjs',

@@ -312,6 +312,13 @@ export class HpDialog extends LitElement {
   private _focusRoot: Node | null = null;
   private _useHaDialog: boolean | null = null;
   private _closing = false;
+  private _lastInputFocus: HTMLElement | null = null;
+  private _restoreInputFocus = false;
+  private readonly _rememberInputFocus = (event: FocusEvent): void => {
+    const input = event.composedPath().find((node): node is HTMLElement =>
+      node instanceof HTMLElement && node.matches('input, textarea, select, [contenteditable="true"]'));
+    if (input) this._lastInputFocus = input;
+  };
   private _overlays: OverlayEntry[] = [];
   private readonly _titleId = `hp-dialog-title-${++dialogSequence}`;
 
@@ -343,6 +350,7 @@ export class HpDialog extends LitElement {
     // already-reviewed native fallback geometry.
     this.toggleAttribute('ha-dialog-shell', this._usesHaDialog());
     this.addEventListener('keydown', this._onKeyDown, true);
+    this.addEventListener('focusin', this._rememberInputFocus, true);
     queueMicrotask(() => {
       // Re-entering the top layer lets the UA choose a default focus target.
       // Restore our deterministic initial target only on a real reconnect
@@ -352,7 +360,9 @@ export class HpDialog extends LitElement {
   }
 
   disconnectedCallback(): void {
+    this._restoreInputFocus = false;
     this.removeEventListener('keydown', this._onKeyDown, true);
+    this.removeEventListener('focusin', this._rememberInputFocus, true);
     const overlays = [...this._overlays];
     this._overlays = [];
     for (const entry of overlays.reverse()) entry.close('disconnect');
@@ -471,6 +481,19 @@ export class HpDialog extends LitElement {
   }
 
   private _focusInitial = (): void => {
+    if (this._restoreInputFocus && this._lastInputFocus?.isConnected) {
+      const input = this._lastInputFocus;
+      const restore = () => {
+        if (!this.isConnected || this._closing || !this._restoreInputFocus || this._lastInputFocus !== input) return;
+        this._restoreInputFocus = false;
+        input.focus({ preventScroll: true });
+      };
+      // WebAwesome and the departing confirmation restore their modal focus
+      // after HA's opened event. Follow both bounded lifecycle-frame tails.
+      if (this._usesHaDialog()) requestAnimationFrame(() => requestAnimationFrame(restore));
+      else restore();
+      return;
+    }
     const focusable = this._focusableElements();
     const autofocus = focusable.find((el) => el.hasAttribute('autofocus'));
     const target = autofocus || focusable[0]
@@ -499,7 +522,15 @@ export class HpDialog extends LitElement {
    */
   public rejectClose(): void {
     this._closing = false;
-    if (this.isConnected) this.requestUpdate();
+    this._restoreInputFocus = true;
+    if (this.isConnected) {
+      this.requestUpdate();
+      void this.updateComplete.then(() => {
+        // HA restores its physical modal asynchronously. Consume the saved
+        // input only at @opened, not while its old surface is still hidden.
+        if (!this._usesHaDialog() && this.isConnected && !this._closing && this._restoreInputFocus) this._focusInitial();
+      });
+    }
   }
 
   private _pruneOverlays(): void {

@@ -1,4 +1,9 @@
 {
+  "editor.chain_finish_failed_title": "Impossible de terminer les murs",
+  "editor.chain_finish_failed_message": "Les murs dessinés sont enregistrés. Vous pouvez continuer à modifier ou quitter sans terminer la chaîne.",
+  "editor.chain_finish_pending_message": "Vous pouvez continuer à modifier ou quitter sans terminer la chaîne. Quitter ne confirme pas que les murs ont été enregistrés.",
+  "editor.keep_editing": "Continuer à modifier",
+  "editor.leave_unfinished": "Quitter sans terminer",
   "editor.context_actions": "Actions : {object}",
   "editor.tool_options": "Options de l’outil : {tool}",
   "editor.palette": "Palette : {tool}",

@@ -33,5 +33,5 @@ test('#607: rejected authentic HA closes commit a false -> true open transition'
   assert.equal(renders.length, 2, 'two authentic HA render branches');
   for (const render of renders) assert.match(render, /\.open=\$\{live\(!this\._closing\)\}/, render);
   assert.match(source, /private _requestClose[\s\S]*?this\._closing = true;[\s\S]*?if \(this\.isConnected\) this\.requestUpdate\(\);[\s\S]*?dispatchEvent/);
-  assert.match(source, /public rejectClose\(\): void \{[\s\S]*?this\._closing = false;[\s\S]*?if \(this\.isConnected\) this\.requestUpdate\(\);/);
+  assert.match(source, /public rejectClose\(\): void \{[\s\S]*?this\._closing = false;[\s\S]*?if \(this\.isConnected\) \{\s*this\.requestUpdate\(\);/);
 });

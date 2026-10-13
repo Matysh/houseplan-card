@@ -6,6 +6,12 @@
   animated end follows the robot in Flat and 2.5D views, including pauses
   and live updates during a gesture
   ([#871](https://github.com/Matysh/houseplan-card/issues/871)).
+- Unsaved input in new-device and new-room forms now asks before being discarded;
+  Keep preserves the draft and restores input focus. A refused room-settings save
+  keeps the form open for retry. When a wall chain cannot be finished safely, you
+  can keep editing or explicitly leave without deleting already saved walls;
+  a cancelled floor switch also keeps the URL on the actual floor.
+  ([#851](https://github.com/Matysh/houseplan-card/issues/851)).
 
 - Devices automatically placed in a newly created HA-bound room no longer
   get a new-device red dot. Existing marks and later discoveries are unchanged

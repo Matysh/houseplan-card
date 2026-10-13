@@ -115,6 +115,26 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'editor-draft-close-ignores-session-owner',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/editor-draft-exit.test.mjs',
+    because: '#851 AC2: an accepted answer A must never close B, even when an identical target reopens.',
+    patches: [{
+      file: 'src/editors/draft-close.ts',
+      find: "  const current = () => options.current()\n    && dialogSession(options.host, options.kind) === owner;",
+      replace: '  const current = () => options.current();',
+    }],
+  },
+  {
+    id: 'editor-chain-exit-skips-current-intent-check',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/editor-draft-exit.test.mjs',
+    because: '#851 AC4: an accepted leave decision must revalidate geometry/navigation/lifecycle after awaiting.',
+    patches: [{
+      file: 'src/editor-chain-exit.ts',
+      find: '      if (!accepted || !options.current()) return;',
+      replace: '      if (!accepted) return;',
+    }],
+  },
+  {
     id: 'room-placement-capture-disconnected',
     guard: compiledNodeSmoke('smoke_room_device_discovery'),
     because: '#879 AC1: both real room Save paths must capture first placements before new-device detection.',
@@ -3164,14 +3184,8 @@ const MUTANT_DEFINITIONS = [
       + 'shell can reopen after its owner has already been removed (#607)',
     patches: [{
       file: 'src/hp-dialog.ts',
-      find: '  public rejectClose(): void {\n'
-        + '    this._closing = false;\n'
-        + '    if (this.isConnected) this.requestUpdate();\n'
-        + '  }',
-      replace: '  public rejectClose(): void {\n'
-        + '    this._closing = false;\n'
-        + '    this.requestUpdate();\n'
-        + '  }',
+      find: '    this._restoreInputFocus = true;\n    if (this.isConnected) {',
+      replace: '    this._restoreInputFocus = true;\n    if (this.isConnected || Boolean("mutant-detached")) {',
     }],
   },
   {
@@ -13309,7 +13323,7 @@ const MUTANT_DEFINITIONS = [
       + 'the just-authored collinear seams for Optimize to find (#477)',
     patches: [{
       file: 'src/houseplan-editor-runtime.ts',
-      find: 'if (this._finishWallChain()) this.host.requestUpdate();',
+      find: "if (this._finishWallChainForNavigation(() => this._activateMarkupTool('select'))) this.host.requestUpdate();",
       replace: 'this._cancelPath(); this.host.requestUpdate(); // mutant: Reset skips finish',
     }],
   },
@@ -15254,8 +15268,8 @@ const MUTANT_DEFINITIONS = [
       + 'изменениях; без dirty футер снова врёт о том, есть ли что сохранять',
     patches: [{
       file: 'src/editors/room-settings-dialog.ts',
-      find: '  const canSave = problems.length === 0 && tempValid && (edit ? dirty : true);',
-      replace: '  const canSave = problems.length === 0 && tempValid;',
+      find: '  const canSave = !this.roomSaveBusy && problems.length === 0 && tempValid && (edit ? dirty : true);',
+      replace: '  const canSave = !this.roomSaveBusy && problems.length === 0 && tempValid;',
     }],
   },
   {
@@ -15264,9 +15278,9 @@ const MUTANT_DEFINITIONS = [
     because: '#600 К10 (Q1): закрытие диалога комнаты с изменениями обязано спросить. '
       + 'Перевёрнутое условие закрывает «грязный» диалог молча и спрашивает у чистого',
     patches: [{
-      file: 'src/editors/room-settings-dialog.ts',
-      find: "    if (!edit || !dirty) { close(); return; }",
-      replace: "    if (!edit || dirty) { close(); return; }",
+      file: 'src/editors/draft-actions.ts',
+      find: "    host, kind: 'room', dirty: roomDirty(host),",
+      replace: "    host, kind: 'room', dirty: Boolean(0),",
     }],
   },
   {
@@ -15517,9 +15531,9 @@ const MUTANT_DEFINITIONS = [
     because: '#600 К10 (Q1): закрытие диалога устройства с изменениями обязано спросить. '
       + 'Перевёрнутое условие закрывает «грязный» диалог молча и спрашивает у чистого',
     patches: [{
-      file: 'src/editors/marker-dialog.ts',
-      find: "      if (!edit || !dirty) { forgetMarkerBaseline(this.host); this._closeMarkerDialog(); return; }",
-      replace: "      if (!edit || dirty) { forgetMarkerBaseline(this.host); this._closeMarkerDialog(); return; }",
+      file: 'src/editors/draft-actions.ts',
+      find: "  const dirty = markerDirty(host, draft);",
+      replace: "  const dirty = markerDirty(host, draft) && String(host._space) === 'mutant-never-dirty';",
     }],
   },
   {

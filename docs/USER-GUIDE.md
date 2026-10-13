@@ -478,12 +478,17 @@ Settings are grouped into cards; a card or field may carry a `?` help action.
 **Save** is enabled only after a change; no footer sentence duplicates that
 state. Closing with an unsaved draft through the close button, **Cancel** or a
 click outside first asks whether to discard it. **Continue** keeps the draft and
-reopens the form; **Discard** closes it. Invalid required values are explained
+reopens the form with input focus restored; **Discard** closes it. Invalid required values are explained
 under the field, and **Review N fields** moves to the first problem. Empty room
 temperature bounds are the deliberate exception: each inherits its space
 value. If Home Assistant recreates the card without a full page reload, an
 open dialog, its draft and its original comparison point are restored for a
 short window; a full reload does not restore drafts.
+
+New-device and new-room forms, including queued room names and Split, use the
+same protection. Merely opening a new form is not a change. A refused
+room-settings save keeps the form and input available for retry; closing a
+form never saves it automatically.
 
 <!-- docs-section: input -->
 
@@ -699,6 +704,14 @@ While drawing an open chain, `Esc` finishes all accepted segments as ordinary
 independent walls and keeps **Walls** selected; the next click starts a new
 chain. `Ctrl/Cmd+Z` instead removes the last accepted point and segment. Pan,
 pinch and `pointercancel` neither finish the chain nor add geometry.
+
+If finishing fails, **Keep editing** leaves the chain available for retry.
+**Leave without finishing** releases only the drawing session, preserves saved
+walls and performs the requested tool/editor/floor change. A failed Escape or
+Reset leaves into **Select**; successful Escape still keeps **Walls** selected.
+Leaving never bypasses the geometry check or adds an Undo command. A rejected
+floor deep link also restores the URL to the actual floor. Navigating away from
+Houseplan or reloading the page keeps the existing reset behaviour.
 
 Existing segment endpoints and lines appear above walls while drawing. An
 endpoint grows when the next click will join it. A point on a line shows where

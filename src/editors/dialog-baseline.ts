@@ -12,15 +12,25 @@
 export type DialogKind = 'space' | 'settings' | 'room' | 'marker';
 
 const baselines = new WeakMap<object, Map<DialogKind, string>>();
+const sessions = new WeakMap<object, Map<DialogKind, object>>();
 
 export function rememberDialogBaseline(host: object, kind: DialogKind, key: string): void {
   const map = baselines.get(host) ?? new Map<DialogKind, string>();
   map.set(kind, key);
   baselines.set(host, map);
+  const owners = sessions.get(host) ?? new Map<DialogKind, object>();
+  owners.set(kind, {});
+  sessions.set(host, owners);
 }
 
 export function forgetDialogBaseline(host: object, kind: DialogKind): void {
   baselines.get(host)?.delete(kind);
+  sessions.get(host)?.delete(kind);
+}
+
+/** Editing replaces draft objects, not the owner of this open form (#851). */
+export function dialogSession(host: object, kind: DialogKind): object | undefined {
+  return sessions.get(host)?.get(kind);
 }
 
 /** Read-only transfer hook for a warm remount. The key is still page-memory only. */

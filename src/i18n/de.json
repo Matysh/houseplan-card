@@ -1,4 +1,9 @@
 {
+  "editor.chain_finish_failed_title": "Die Wände konnten nicht abgeschlossen werden",
+  "editor.chain_finish_failed_message": "Die gezeichneten Wände sind gespeichert. Du kannst weiter bearbeiten oder die Wandkette unvollendet verlassen.",
+  "editor.chain_finish_pending_message": "Du kannst weiter bearbeiten oder die Wandkette unvollendet verlassen. Das Verlassen bestätigt nicht, dass die Wände gespeichert wurden.",
+  "editor.keep_editing": "Weiter bearbeiten",
+  "editor.leave_unfinished": "Unvollendet verlassen",
   "editor.context_actions": "Aktionen: {object}",
   "editor.tool_options": "Werkzeugoptionen: {tool}",
   "editor.palette": "Palette: {tool}",

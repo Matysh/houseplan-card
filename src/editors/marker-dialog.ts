@@ -17,7 +17,7 @@ import {
   callout, colorField, ensureFormKitStyles, field, fieldGrid, footerStatus, formCard, rangeEnds,
   rangeLine, segmented, sourcePicker, subsection, textLink, tintBlock, toggleRow, unitInput,
 } from './form-kit';
-import { forgetMarkerBaseline, markerDirty, markerProblems } from './marker-form-state';
+import { markerDirty, markerProblems } from './marker-form-state';
 import { settingsCopy } from './settings-copy';
 
 import { resolveDevicePresentation } from '../device-presentation';
@@ -181,18 +181,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
       && (edit ? dirty : true);
     const saveTitle = problems[0] ? st(problems[0].message)
       : bindingUnverified && !!d.binding && d.binding !== 'virtual' ? t('marker.ha_registry_limited') : '';
-    const requestClose = async (event: Event) => {
-      if (!edit || !dirty) { forgetMarkerBaseline(this.host); this._closeMarkerDialog(); return; }
-      const dialog = event.currentTarget as { rejectClose?: () => void } | null;
-      const discard = await this.host._confirmDanger({
-        key: 'discard-marker-dialog', kind: 'warning',
-        title: st('dialog.discard_title'), message: st('dialog.discard_message'),
-        objectName: d.name.trim() || previewDevice?.name || undefined,
-        confirmLabel: st('dialog.discard_confirm'), cancelLabel: st('dialog.discard_keep'),
-        icon: 'mdi:content-save-off-outline', confirmIcon: 'mdi:content-save-off-outline',
-      });
-      if (discard) { forgetMarkerBaseline(this.host); this._closeMarkerDialog(); } else dialog?.rejectClose?.();
-    };
+    const requestClose = () => { void this._requestMarkerDialogClose(); };
     const reviewFirst = () => {
       const first = problems[0];
       if (!first) return;

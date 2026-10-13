@@ -1,4 +1,9 @@
 {
+  "editor.chain_finish_failed_title": "Не удалось завершить стены",
+  "editor.chain_finish_failed_message": "Нарисованные стены сохранены. Можно продолжить редактирование или выйти без завершения цепочки.",
+  "editor.chain_finish_pending_message": "Можно продолжить редактирование или выйти без завершения цепочки. Выход не подтверждает, что стены сохранены.",
+  "editor.keep_editing": "Продолжить редактирование",
+  "editor.leave_unfinished": "Выйти без завершения",
   "editor.context_actions": "Действия: {object}",
   "editor.tool_options": "Параметры инструмента: {tool}",
   "editor.palette": "Палитра: {tool}",

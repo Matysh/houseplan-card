@@ -5,6 +5,7 @@
 import assert from 'node:assert/strict';
 import { assertFreshDemoBundle } from './bundle-freshness.mjs';
 import { launchHaDialogFixture } from './helpers/ha-dialog-fixture.mjs';
+import { installHpTestOnPage } from './helpers/hp-test.mjs';
 
 const cases = [
   { kind: 'marker', input: '#marker-name', state: '_markerDialog' },
@@ -16,6 +17,7 @@ const cases = [
 const fixture = await launchHaDialogFixture({
   authentic: true,
   viewport: { width: 1280, height: 900 },
+  cacheDir: process.env.HP_HA_DIALOG_CACHE,
 });
 
 const { page } = fixture;
@@ -61,6 +63,7 @@ const edit = async (testCase, suffix) => page.evaluate(async ({ kind, input, suf
   const card = window.__card;
   const field = card.shadowRoot.querySelector(`hp-dialog[data-kind="${kind}"] ${input}`);
   if (!field) throw new Error(`${kind}: missing field ${input}`);
+  field.focus();
   if (kind === 'settings') field.value = suffix === ' first' ? '47' : '48';
   else field.value = `${field.value}${suffix}`;
   field.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
@@ -117,8 +120,14 @@ const decide = async (accept) => page.evaluate((accept) => {
 
 try {
   await page.goto(`${fixture.url}/product.html`);
-  await page.waitForFunction(() => window.__card?._model?.length > 0
-    && window.__card?._devices?.length > 0 && window.__card?._booting === false);
+  try {
+    await page.waitForFunction(() => window.__card?._model?.length > 0
+      && window.__card?._devices?.length > 0 && window.__card?._booting === false);
+  } catch (error) {
+    const state = await page.evaluate(() => ({ card: !!window.__card, ready: window.__ha505Ready,
+      rooms: window.__card?._model?.length, devices: window.__card?._devices?.length, booting: window.__card?._booting }));
+    throw new Error(`HA diagnostic bootstrap failed: ${JSON.stringify({ state, errors: fixture.errors, externalRequests: fixture.externalRequests })}`, { cause: error });
+  }
   await assertFreshDemoBundle(page);
 
   for (const testCase of cases) {
@@ -129,6 +138,26 @@ try {
     await waitConfirm(testCase);
     await decide(false);
     await waitOwnerOpen(testCase);
+    try {
+      await page.waitForFunction(({ kind, input }) => {
+        const root = window.__card.shadowRoot;
+        return root.activeElement === root.querySelector(`hp-dialog[data-kind="${kind}"] ${input}`);
+      }, testCase, { timeout: 5000 });
+    } catch (error) {
+      const focus = await page.evaluate(({ kind, input }) => {
+        const root = window.__card.shadowRoot, owner = root.querySelector(`hp-dialog[data-kind="${kind}"]`);
+        let active = document.activeElement; const path = [];
+        while (active) { path.push(`${active.localName}#${active.id}`); active = active.shadowRoot?.activeElement; }
+        const field = owner?.querySelector(input);
+        field?.focus();
+        return { path, remembered: owner?._lastInputFocus?.id, restore: owner?._restoreInputFocus,
+          connected: owner?._lastInputFocus?.isConnected, expected: field?.id,
+          afterManualFocus: root.activeElement?.localName, focused: root.activeElement === field,
+          rects: field?.getClientRects().length, disabled: field?.disabled,
+          html: field?.outerHTML, modalCount: [...document.querySelectorAll('*')].filter(e => e.matches(':modal')).length };
+      }, testCase);
+      throw new Error(`HA input focus did not recover: ${JSON.stringify(focus)}`, { cause: error });
+    }
     const secondDraft = await edit(testCase, ' second');
 
     const continued = await page.evaluate(({ kind, state, input, firstDraft, secondDraft }) => {
@@ -153,10 +182,31 @@ try {
     await waitOwnerClosed(testCase);
 
     results[`${testCase.kind}: continue restores modal`] = continued.sameDraft;
+    results[`${testCase.kind}: continue restores input focus`] = true;
     results[`${testCase.kind}: one close before retry`] = continued.oneClose;
     results[`${testCase.kind}: retry emits exactly one more close`] = twoCloses;
     results[`${testCase.kind}: discard and clean close finish`] = true;
   }
+
+  // #851 creation is opened through the actual toolbar, not a private field.
+  await installHpTestOnPage(page);
+  await page.evaluate(async () => {
+    await window.__hpTest.setMode('devices');
+    const owner = await window.__hpTest.openMarkerDialog();
+    await window.__hpTest.input(owner.querySelector('#marker-name'), 'Unfinished new device');
+  });
+  const create = { kind: 'marker', input: '#marker-name', state: '_markerDialog' };
+  await waitOwnerOpen(create);
+  await clickAuthenticClose(create); await waitConfirm(create); await decide(false);
+  await waitOwnerOpen(create);
+  await page.waitForFunction(() => {
+    const root = window.__card.shadowRoot;
+    const input = root.querySelector('hp-dialog[data-kind="marker"] #marker-name');
+    return root.activeElement === input && input.value === 'Unfinished new device';
+  });
+  results['851 new device: authentic HA Keep restores draft and focus'] = true;
+  await clickAuthenticClose(create); await waitConfirm(create); await decide(true); await waitOwnerClosed(create);
+  results['851 new device: authentic HA discard closes'] = true;
 
   await fixture.assertClean();
   for (const [name, value] of Object.entries(results)) assert.equal(value, true, name);

@@ -1,5 +1,20 @@
 # Development and deployment
 
+## Editor draft ownership and failed-chain exit (#851)
+
+`src/editors/draft-close.ts` fences each opening; `draft-actions.ts` connects
+existing discard copy to marker/room controls and editor navigation.
+`room-save.ts` reuses config-adoption's optimistic boundary and closes only its
+own accepted form. `editor-chain-exit.ts` revalidates floor/mode/geometry/session
+after confirmation; leaving a refused chain never deletes stored partitions.
+The native witness is `node demo/smoke_editor_draft_exit.mjs`; set
+`HP_SMOKE_WIDTH=390` for its touch-enabled mobile variant. Use
+`demo/verify_ha_dialog_discard_recovery.mjs` with the offline authentic HA fixture
+to verify nested modal reopening **and editable focus**, not only visibility.
+Its component evidence is not live HA authentication or owner/GPU acceptance.
+The baseline `ece52121` fails the native dirty new-device Escape before fault
+injection; session guards have static mutation definitions, not local caught proof.
+
 ## Vacuum camera attachment (#871)
 
 `test/vacuum-view.test.mjs` covers full affine inversion, invalid matrices,

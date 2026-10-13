@@ -715,7 +715,10 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_938;
 // Recentred by the same rule, fact − 1 000: 1 000 B above, 1 000 B to the
 // bottom of the band. The band, initial-View ceilings and absolute budgets stay
 // put; the issue records the measurement.
-export const LAZY_EDITOR_GZIP_CEILING = 255_476;
+// #851: measured 258481 B gzip (+3005 over the old ceiling) for dirty-create
+// protection, accepted room-save ownership, safe chain exits and four-language
+// copy. These helpers remain lazy; no new View dependency. Keep the 2000 B band.
+export const LAZY_EDITOR_GZIP_CEILING = 258_481;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

@@ -220,6 +220,14 @@ tabs, the editor-close reserve, zoom and one gear whose menu holds the rest.
   faces opens the room queue; its decisions are buffered and applied as one
   Undo/Redo transaction. Re-selecting Walls, pan, pinch and pointer
   cancellation are not finish actions.
+- If chain finalization fails, Keep editing preserves the session; explicit
+  Leave without finishing forgets only its path/chain membership/hover, keeps
+  persisted partitions and executes the requested tool/editor/floor change.
+  Failed Escape/Reset without a destination leaves into Select; successful
+  Escape retains Walls. Dirty device/room forms resolve their discard question
+  first. Pending confirmations revalidate their own lifecycle, floor, geometry
+  and navigation intent; rejected hash navigation restores the actual floor's
+  URL. An actual external HA route departure is not intercepted (#851).
 - Opening places every existing opening type on a room wall or a finished
   independent Walls segment. A hosted opening moves with that segment; deleting
   the segment requires an explicit cascade confirmation. Its physical gap does

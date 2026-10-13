@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 851,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "v1.80.1 already has device/room creation forms, room-settings saves and the wall-chain finalizer. This protects unfinished input and exits from existing refused workflows; it is not polish of functionality first introduced in the current beta cycle.",
+  "summary": {
+    "ru": "Редактор сохраняет незавершённый ввод при отказе сохранения и позволяет выйти из ошибочной цепочки, не удаляя стены.",
+    "en": "The editor preserves unfinished input after a refused save and lets you leave a failed wall chain without deleting walls."
+  }
+}

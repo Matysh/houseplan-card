@@ -205,12 +205,17 @@ test('#477 source contract routes every explicit chain finish through one finali
     transaction.indexOf('/** #461 bounded transaction'),
   );
   assert.match(runtime, /public _finishWallChain\(\): boolean[\s\S]*?_finalizeWallChainPartitions/);
-  assert.match(runtime, /_finishWallChain\(\)[\s\S]{0,300}btn\.reset/);
+  assert.match(runtime, /_finishWallChainForNavigation\(\(\) => this\._activateMarkupTool\('select'\)\)[\s\S]{0,300}btn\.reset/);
+  assert.match(runtime, /public _finishWallChainForNavigation[\s\S]{0,180}return finishWallChainForNavigation\(this, navigate, interactive\)/);
+  assert.match(readFileSync(new URL('../src/editor-chain-exit.ts', import.meta.url), 'utf8'),
+    /if \(runtime\._finishWallChain\(\)\) return true/);
   assert.match(runtime, /if \(!accepted\.length\)[\s\S]{0,300}_finalizeWallChainPartitions/);
   assert.match(runtime, /_keepClosedAsPartitions[\s\S]*?_finalizeWallChainPartitions/);
-  assert.match(card, /_slideTo[\s\S]{0,500}_finishWallChain\(\)/);
-  assert.match(card, /_onHashChange[\s\S]{0,500}_finishWallChain\(\)/);
-  assert.match(card, /Escape releases the active wall chain[\s\S]{0,250}_finishWallChain\(\)/);
+  assert.match(card.slice(card.indexOf('private _slideTo('), card.indexOf('/** Direct space tabs')),
+    /_finishWallChainForNavigation\(resume\)/);
+  assert.match(card.slice(card.indexOf('private _onHashChange ='), card.indexOf('private _drag:')),
+    /_finishWallChainForNavigation\(resume\)/);
+  assert.match(card, /Escape releases the active wall chain[\s\S]{0,400}_finishWallChainForNavigation/);
   assert.doesNotMatch(runtime, /_markupClick[\s\S]{0,1200}_finalizeWallChainPartitions/,
     'the latency-critical terminal click must not run the finalizer');
   assert.match(finishTransaction,

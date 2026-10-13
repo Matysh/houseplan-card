@@ -178,8 +178,10 @@ export class RadarSetupController {
 
   public async discardIfAllowed(): Promise<boolean> {
     if (!this.active) return true;
+    const generation = this.generation;
     const dirty = this.active.mount !== null || this.active.phase !== 'mount';
     if (dirty && !await this.host.confirmDiscard()) return false;
+    if (generation !== this.generation) return false;
     this.reset();
     this.host.requestUpdate();
     return true;

@@ -879,6 +879,16 @@ command and never sweeps unrelated legacy debt. Pan, pinch, pointer cancellation
 and suppressed clicks never finish a chain or append a segment; a finished chain
 is not resumed after reload or remount.
 
+#851 adds a non-destructive escape from a refused finish: Keep editing leaves
+the session intact; Leave without finishing clears only session state, not
+persisted partitions, history or config. It resumes the original tool/editor/
+space intent; failed Esc/Reset with no destination enters Select. The decision
+is fenced by lifecycle, mode/tool, space, config revision/epoch, path/membership
+and open-form ownership. Pending writes use wording that does not claim server
+acceptance. Dirty room/device forms resolve discard first. A changed hash is
+restored while waiting or after Keep; actual HA route departure retains the
+existing View/reset contract and never forces an unsafe finish.
+
 Active-chain Undo preserves the complete record of every surviving partition,
 including its stable id; only a genuinely new edge receives a new identity. Each
 segment history snapshot carries session-only chain seed ids: while the chain is

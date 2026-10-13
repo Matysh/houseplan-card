@@ -20,7 +20,7 @@ import {
   colorField, colorRow, ensureFormKitStyles, field, fieldGrid, footerStatus, formCard, rangeEnds,
   rangeLine, segmented, sourcePicker, subsection, textLink, toggleRow, unitInput,
 } from './form-kit';
-import { forgetRoomBaseline, roomDirty, roomProblems } from './room-form-state';
+import { roomDirty, roomProblems } from './room-form-state';
 
 type RoomFillMode = typeof ROOM_FILL_MODES[number];
 
@@ -95,29 +95,14 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
   const dirty = roomDirty(host);
   /* К10 (Q1): в edit «Сохранить» активен только при изменениях; в create черновик
    * новой комнаты сохранять есть всегда — условие прежнее (имя или зона, границы). */
-  const canSave = problems.length === 0 && tempValid && (edit ? dirty : true);
+  const canSave = !this.roomSaveBusy && problems.length === 0 && tempValid && (edit ? dirty : true);
   // the free-areas list must include the edited room's CURRENT area
   const areas = [...host._freeAreas];
   if (edit && host._areaSel && !areas.some((a) => a.area_id === host._areaSel)) {
     const cur = host.hass.areas[host._areaSel];
     if (cur) areas.unshift(cur);
   }
-  const close = () => { forgetRoomBaseline(host); this._roomDialogCancel(); };
-  /* К10: закрытие с изменениями в edit спрашивает. В create отмена и раньше
-   * значила «не создавать» и возвращала контур на план (`_roomDialogCancel`) —
-   * вопрос там мешал бы очереди «Room N of M», а терять нечего. */
-  const requestClose = async (event: Event) => {
-    if (!edit || !dirty) { close(); return; }
-    const dialog = event.currentTarget as { rejectClose?: () => void } | null;
-    const discard = await host._confirmDanger({
-      key: 'discard-room-dialog', kind: 'warning',
-      title: st('dialog.discard_title'), message: st('dialog.discard_message'),
-      objectName: host._nameSel.trim() || undefined,
-      confirmLabel: st('dialog.discard_confirm'), cancelLabel: st('dialog.discard_keep'),
-      icon: 'mdi:content-save-off-outline', confirmIcon: 'mdi:content-save-off-outline',
-    });
-    if (discard) close(); else dialog?.rejectClose?.();
-  };
+  const requestClose = () => { void this._requestRoomDialogClose(); };
   const reviewFirst = () => {
     const first = problems[0];
     if (!first) return;
@@ -148,7 +133,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
     .title=${edit ? t('room.settings_title') : batchProgress || t('room.new')}
     .badge=${host._spaceModel()?.title ?? ''}
     icon=${edit ? 'mdi:cog-outline' : 'mdi:floor-plan'} @hp-close=${requestClose}>
-      <div class="body hpf-form">
+      <div class="body hpf-form" ?inert=${this.roomSaveBusy}>
         ${batchProgress ? html`<p class="hpf-hint" role="status" aria-live="polite">${batchProgress}</p>` : nothing}
         ${formCard({
           id: 'basics',
@@ -295,12 +280,12 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
           ${edit
             ? html`<button class="btn on" data-hp="dialog-confirm" ?disabled=${!canSave}
                 title=${problems[0] ? st(problems[0].message) : nothing}
-                @click=${() => { forgetRoomBaseline(host); this._saveRoomEdit(); }}>
+                @click=${() => { void this._saveRoomEdit(); }}>
                 <ha-icon icon="mdi:check"></ha-icon>${t('btn.save')}
               </button>`
             : html`<button class="btn on room-save" data-hp="dialog-confirm" ?disabled=${!canSave}
                 title=${problems[0] ? st(problems[0].message) : nothing}
-                @click=${() => { forgetRoomBaseline(host); this._saveRoom(); }}>
+                @click=${() => { this._saveRoom(); }}>
                 <ha-icon icon="mdi:check"></ha-icon>${t('btn.save')}
               </button>`}
         </div>

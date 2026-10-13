@@ -441,6 +441,18 @@ Layout v2 maps `device_id | rl_<roomId>` to `{s, x, y}`. Plan files are
 copy-on-write `<config>/houseplan/plans/<space>.<token>.<ext>`, never deleted for
 age ([`SCOPE.md`](SCOPE.md)). Migrations: [`CONFIG-COMPATIBILITY.md`](CONFIG-COMPATIBILITY.md).
 
+### Editor draft ownership (#851)
+
+`editors/dialog-baseline.ts` holds page-memory comparison keys and per-opening
+owner tokens, transferred with warm drafts but never serialized. `draft-close.ts`
+rechecks ownership after confirmation; `draft-actions.ts` composes the ordinary
+form and existing Radar discard into one question and guards editor navigation.
+`editors/room-save.ts` keeps a room-settings draft until its own accepted write,
+staging through the same runtime/ConfigAdoption boundary as marker saves and
+retaining #842's rollback/deferred-write authority. `editor-chain-exit.ts` owns
+the failed-finish navigation decision; its leave path only releases session
+state. Neither helper writes a schema key, deletes walls or bypasses preflight.
+
 ### Persisted colour boundary
 
 Every stored colour is exactly `#RRGGBB`: `src/color.ts` resolves it and

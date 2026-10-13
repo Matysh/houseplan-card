@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Editor draft ownership (#851) covers create/edit and warm remount; Keep restores
+the editable field. Ordinary room Save waits for its own accepted response,
+while stale face proposals retain #874's fail-closed reset. Failed chain exit
+releases only transient state, never saved walls or config/history authority.
+Reload and actual HA route departure remain outside draft recovery.
+
 Vacuum camera attachment (#871) has one camera owner for the passive trail
 SVG and a current composed inverse for animated tip endpoints. The bounded
 paint window follows the existing anchor budget; source data and stacking

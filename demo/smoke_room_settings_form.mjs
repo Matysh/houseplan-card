@@ -167,7 +167,7 @@ const out = await page.evaluate(async () => {
   await upd(); await new Promise((r) => setTimeout(r, 60));
   o.cleanClosesImmediately = !dlg() && !confirm();
 
-  // --- create-режим: Keep as walls слева, Save без «грязи», отмена без вопроса
+  // --- create-режим: Keep as walls слева, Save без «грязи», защита введённого имени (#851)
   c._tool = 'draw'; c._resetRoomDialogFields(); c._roomDialog = true; await upd();
   o.createHasKeepAsWallsOnLeft = (() => {
     const keep = qa('.dialog-action-footer .btn').find((b) => b.textContent.trim() === c._t('btn.keep_as_walls'));
@@ -178,7 +178,11 @@ const out = await page.evaluate(async () => {
   o.createSaveEnabledWithName = saveBtn().disabled === false && statusText() === '';
   dlg().dispatchEvent(new CustomEvent('hp-close', { bubbles: true, composed: true }));
   await upd(); await new Promise((r) => setTimeout(r, 60));
-  o.createCancelsWithoutAsking = !dlg() && !confirm() && c._roomDialog === false;
+  o.dirtyCreateAsksBeforeCancel = !!dlg() && !!confirm() && c._roomDialog === true;
+  confirm()?.querySelector('[data-hp="dialog-confirm"]')?.click();
+  await upd(); await new Promise((r) => setTimeout(r, 60));
+  o.createDiscardClosesWithoutSaving = !dlg() && !confirm() && c._roomDialog === false
+    && !c._curSpaceCfg.rooms.some((r) => r.name === 'New 600');
   return o;
 });
 

@@ -126,11 +126,12 @@ test('#659 settings handlers preserve dirty, discard, inversion and field owners
     'if (this.embedded) return this._renderEmbedded();');
   contains('src/editors/room-settings-dialog.ts',
     "if (kind === 'temp') host._roomTempSrc = v;\n    else host._roomHumSrc = v;",
-    'const canSave = problems.length === 0 && tempValid && (edit ? dirty : true);',
-    'if (!edit || !dirty) { close(); return; }',
+    'const canSave = !this.roomSaveBusy && problems.length === 0 && tempValid && (edit ? dirty : true);',
+    'const requestClose = () => { void this._requestRoomDialogClose(); };',
     "onChange: (v) => setFill(v ? '' : startMode()),",
     'onInput: (raw) => { host._roomTempMin = raw; host.requestUpdate(); },',
   );
+  contains('src/editors/draft-actions.ts', "host, kind: 'room', dirty: roomDirty(host),");
 });
 
 test('#659 marker handlers preserve callouts, baselines and explicit user choices', () => {
@@ -139,11 +140,12 @@ test('#659 marker handlers preserve callouts, baselines and explicit user choice
     "? callout({ kind: 'warning', role: 'status', text: t('marker.run_target_gone', { id: d.tapTarget }) })",
     '&& (edit ? dirty : true);',
     '@click=${() => { void this._saveMarker(); }}',
-    'if (!edit || !dirty) { forgetMarkerBaseline(this.host); this._closeMarkerDialog(); return; }',
+    'const requestClose = () => { void this._requestMarkerDialogClose(); };',
     "${effectiveTapAction === 'run' || effectiveTapAction === 'toggle'",
     "markerglowblock ${glowSourceDisabled ? 'hpf-disabled' : ''}",
     'valueBadgePosition: position,\n                  valueBadgeTouched: true,',
   );
+  contains('src/editors/draft-actions.ts', 'const dirty = markerDirty(host, draft);');
 });
 
 test('#659 room gear drag keeps the click suppression window after a real move', () => {

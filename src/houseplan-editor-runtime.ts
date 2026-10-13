@@ -125,7 +125,11 @@ import {
   deviceBatteryModeOf, markerBatteryFields, writeDeviceBatterySetting, type DeviceBatteryMode,
 } from './device-battery-settings';
 import { openMoonStatus } from './editors/moon-status';
-import { rememberRoomBaseline } from './editors/room-form-state';
+import { forgetRoomBaseline, rememberRoomBaseline } from './editors/room-form-state';
+import { roomSaveBusy, saveRoomEdit } from './editors/room-save';
+import { dialogSession } from './editors/dialog-baseline';
+import { guardDraftNavigation, requestMarkerClose, requestRoomClose } from './editors/draft-actions';
+import { EditorChainExit, finishWallChainForNavigation } from './editor-chain-exit';
 import { forgetMarkerBaseline, rememberMarkerBaseline } from './editors/marker-form-state';
 import { commitPlanOptimization } from './plan-optimize-write';
 import { saveSpaceCopy } from './space-copy-runtime';
@@ -825,6 +829,11 @@ export const EDITOR_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 export { EDITOR_LANGUAGE_RUNTIME }; // #627: see src/i18n/editor-language.ts
 
 export class HouseplanEditorRuntime {
+  public readonly chainExit: EditorChainExit;
+  private _navigationIntent = 0;
+  public get navigationIntent(): number { return this._navigationIntent; }
+  public invalidateEditorNavigation(): void { this._navigationIntent++; this.chainExit.invalidate(); }
+  public get roomSaveBusy(): boolean { return roomSaveBusy(this.host); }
   public readonly roomDeviceDiscovery = new RoomDeviceDiscovery();
   public readonly languageRuntime = EDITOR_LANGUAGE_RUNTIME;
   public readonly stairs = new StairEditorRuntime(this.host as unknown as StairEditorHostPort);
@@ -852,6 +861,7 @@ export class HouseplanEditorRuntime {
   /** #642: «Оптимизировать планы» — свой модуль с узким портом, не делегаты карточки. */
   public readonly optimizePlans: OptimizePlansDialog;
   public constructor(public readonly host: HouseplanEditorHostPort) {
+    this.chainExit = new EditorChainExit(request => host._confirmDanger(request), () => host._cancelDangerConfirm());
     // #805: editor-only CSS, adopted at the loader's create() — before install, so before any editor frame.
     if (!adoptEditorStyles(host)) void host.updateComplete.then(() => adoptEditorStyles(host));
     const owner = host;
@@ -952,7 +962,7 @@ public _routeLiveEditorUpdate(name?: PropertyKey, oldValue?: unknown): boolean {
     return live;
   }
 public _commitLiveEditor(): void { commitHouseplanEditor(this.host); this.nodeMove?.paint(); }
-public _disposeLiveEditor(): void { this._nodeMoveEpoch++; this.nodeMove?.dispose(); this._radarSetup.reset(); this.roomGear.reset(); disposeHouseplanEditor(this.host); }
+public _disposeLiveEditor(): void { this.invalidateEditorNavigation(); this._nodeMoveEpoch++; this.nodeMove?.dispose(); this._radarSetup.reset(); this.roomGear.reset(); disposeHouseplanEditor(this.host); }
 public _cancelRadarSetup(): void { this._radarSetup.interrupt(); }
 public async _whenLiveEditorSettled(): Promise<void> {
   // An already queued pointer calculation runs before this continuation.
@@ -994,6 +1004,10 @@ public warmRoomDraft() {
 }
 
 public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): void {
+    this.invalidateEditorNavigation();
+    // A route departure has already happened; it keeps the existing reset
+    // contract. Interactive editor navigation must resolve the open draft.
+    if (animate && mode !== this.host._mode && !this._guardDraftNavigation(() => this._setMode(mode, animate))) return;
     if (mode !== this.host._mode) { this.host._cancelDangerConfirm(); this.host._ledEditor?.reset(); }
     this.host._endTabDrag();
     this._clearFurniturePreview();
@@ -1029,7 +1043,8 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
       return;
     }
     if (this.host._wallFaceBatch) this._roomDialogCancel();
-    if (this.host._mode === 'plan' && this.host._tool === 'draw' && !this._finishWallChain()) return;
+    if (this.host._mode === 'plan' && this.host._tool === 'draw'
+      && !this._finishWallChainForNavigation(() => this._setMode(mode, animate), animate)) return;
     this.host._clearTransientHover(true);
     this.host._cancelDevicePressFeedback();
     const previousMode = this.host._mode;
@@ -1299,10 +1314,17 @@ public _finishWallChain(): boolean {
     return true;
   }
 
+/** Failed finalization does not authorize deleting or rewriting saved walls. */
+public _finishWallChainForNavigation(navigate: () => void, interactive = true): boolean {
+    return finishWallChainForNavigation(this, navigate, interactive);
+  }
+
 public _activateMarkupTool(tool: MarkupTool): void {
+    this.invalidateEditorNavigation();
     if (tool === this.host._tool) return;
+    if (!this._guardDraftNavigation(() => this._activateMarkupTool(tool))) return;
     if (this.host._wallFaceBatch) this._roomDialogCancel();
-    if (this.host._tool === 'draw' && !this._finishWallChain()) return;
+    if (this.host._tool === 'draw' && !this._finishWallChainForNavigation(() => this._activateMarkupTool(tool))) return;
     else this._cancelPath();
     if (this.host._tool === 'resize') {
       if (this.host._resize.dragging) this._rszCancelDrag();
@@ -2003,9 +2025,11 @@ public _commitPhysicalGeometry(
   }
 
 public _clearGeometryGesture(): void {
+    this.chainExit.invalidate();
     // Reload/rollback may discard a room-face proposal without its Save path.
     // Close only that creation form, never an ordinary room-settings dialog.
     if (this.host._wallFaceBatch && !this.host._roomEditId) {
+      forgetRoomBaseline(this.host);
       this.host._roomDialog = false;
       this.host._nameSel = '';
       this.host._areaSel = '';
@@ -2529,6 +2553,7 @@ public _beginWallFaceBatch(candidates: WallFaceCandidate[]): void {
     this.host._areaSel = '';
     this._resetRoomDialogFields();
     this.host._roomDialog = true;
+    rememberRoomBaseline(this.host);
   }
 
 public _offerExistingWallFace(raw: number[]): boolean {
@@ -5008,7 +5033,7 @@ public _renderPlanSecondary(): EditorSecondaryModel | null {
         ${hintKey ? html`<span class="hint">${this.host._t(hintKey as any)}</span>` : nothing}
         ${this.host._tool === 'draw' && this.host._path.length
           ? html`<button class="btn ghost" @click=${() => this._runEditorContext(contextId, () => {
-              if (this._finishWallChain()) this.host.requestUpdate();
+              if (this._finishWallChainForNavigation(() => this._activateMarkupTool('select'))) this.host.requestUpdate();
             })}>
               ${this.host._t('btn.reset')}
             </button>` : nothing}`,
@@ -6396,6 +6421,7 @@ public _splitClick(raw: number[]): void {
     this.host._nameSel = '';
     this.host._areaSel = '';
     this.host._roomDialog = true;
+    rememberRoomBaseline(this.host);
   }
 
 public _markupMove(ev: MouseEvent): void {
@@ -6470,6 +6496,7 @@ public _decideWallFace(create: boolean): void {
       this.host._nameSel = '';
       this.host._areaSel = '';
       this._resetRoomDialogFields();
+      rememberRoomBaseline(this.host);
       this.host.requestUpdate();
       return;
     }
@@ -6635,6 +6662,7 @@ public _applyWallFaceBatch(): void {
     }
     if (!accepted.length) {
       if (!this._finalizeWallChainPartitions(batch.activePartitionIds)) return;
+      forgetRoomBaseline(this.host);
       this.host._path = [];
       this.host._activeWallChainId = null;
       this.host._activeWallChainPartitionIds = [];
@@ -6811,6 +6839,7 @@ public _applyWallFaceBatch(): void {
     this.host._nameSel = '';
     this.host._areaSel = '';
     this.host._regSignature = '';
+    forgetRoomBaseline(this.host);
     this.host._maybeRebuildDevices(newRooms.map(({ room }) => ({
       space: this.host._space, roomId: room.id, area: room.area,
     })));
@@ -6855,6 +6884,12 @@ public _commitRoom(): void {
     if (!sp || !space) return;
     const before = this._geometrySnapshot();
     if (!before) return;
+    const session = {
+      path: this.host._path, chain: this.host._activeWallChainId,
+      ids: this.host._activeWallChainPartitionIds, cms: this.host._wallChainSegmentCms,
+      redo: this.host._wallChainRedo, closing: this.host._closingWallCm,
+      split: this.host._pendingSplit, selection: this.host._splitSel,
+    };
     const abortMutation = (): void => {
       this._restoreGeometryStateLocal(before);
       this.host._showToast(this.host._t('toast.geometry_unsafe'));
@@ -6877,6 +6912,8 @@ public _commitRoom(): void {
       // apply the cut now: the bigger part keeps the original room, this dialog names the rest
       const main = sp.rooms.find((r: any) => r.id === this.host._pendingSplit!.roomId);
       if (!main) {
+        forgetRoomBaseline(this.host);
+        this.host._showToast(this.host._t('toast.geometry_unsafe'));
         this.host._pendingSplit = null;
         this.host._splitSel = null;
         this.host._roomDialog = false;
@@ -6978,6 +7015,20 @@ public _commitRoom(): void {
     const committed = this._commitPhysicalGeometry(
       this.host._t(wasSplit ? 'history.split_room' : 'history.add_room'), before,
     );
+    if (!committed) {
+      // Local preflight rolled back geometry, not the user's naming draft.
+      this.host._path = session.path;
+      this.host._activeWallChainId = session.chain;
+      this.host._activeWallChainPartitionIds = session.ids;
+      this.host._wallChainSegmentCms = session.cms;
+      this.host._wallChainRedo = session.redo;
+      this.host._closingWallCm = session.closing;
+      this.host._pendingSplit = session.split;
+      this.host._splitSel = session.selection;
+      this.host.requestUpdate();
+      return;
+    }
+    forgetRoomBaseline(this.host);
     this.host._path = [];
     this.host._activeWallChainId = null;
     this.host._activeWallChainPartitionIds = [];
@@ -6991,10 +7042,9 @@ public _commitRoom(): void {
     this.host._nameSel = '';
     this.host._roomDialog = false;
     this.host._regSignature = '';
-    this.host._maybeRebuildDevices(committed ? [{
+    this.host._maybeRebuildDevices([{
       space: this.host._space, roomId: newRoom.id, area: newRoom.area,
-    }] : undefined);
-    if (!committed) return;
+    }]);
     // auto-add the area's device icons + PIN their positions in the layout,
     // so that icons do not get reshuffled when the order in the HA registry changes.
     let added = 0;
@@ -7022,6 +7072,8 @@ public _commitRoom(): void {
   }
 
 public _cancelPath(): void {
+    this.chainExit.invalidate();
+    forgetRoomBaseline(this.host);
     this.host._wallRepairDiagnostic = null;
     this.host._path = [];
     this.host._activeWallChainId = null;
@@ -7043,6 +7095,7 @@ public _cancelPath(): void {
   }
 
 public _roomDialogCancel(): void {
+    forgetRoomBaseline(this.host);
     this.host._roomDialog = false;
     if (this.host._roomEditId) {
       this.host._roomEditId = null;
@@ -7081,14 +7134,23 @@ public _openDeviceInbox(): void {
 public _closeMarkerDialog(): void {
     if (this._radarSetup.isDirty()) { void this._closeMarkerDialogGuarded(); return; }
     this._radarSetup.reset();
+    forgetMarkerBaseline(this.host);
     finishMarkerDialogClose(this.host);
   }
+public _requestMarkerDialogClose(): Promise<boolean> { return requestMarkerClose(this); }
+public _requestRoomDialogClose(): Promise<boolean> { return requestRoomClose(this); }
+public _guardDraftNavigation(navigate: () => void): boolean { return guardDraftNavigation(this, navigate); }
 private async _closeMarkerDialogGuarded(): Promise<void> {
+    const session = dialogSession(this.host, 'marker');
     if (!await this._radarSetup.discardIfAllowed()) {
-      await this.host.updateComplete; this.host.renderRoot
+      if (!this.host.isConnected || dialogSession(this.host, 'marker') !== session) return;
+      await this.host.updateComplete;
+      if (!this.host.isConnected || dialogSession(this.host, 'marker') !== session) return;
+      this.host.renderRoot
         .querySelector<HpDialog>('#marker-dialog')?.rejectClose();
       return;
     }
+    if (!this.host.isConnected || dialogSession(this.host, 'marker') !== session) return;
     this._closeMarkerDialog();
   }
 
@@ -7238,6 +7300,7 @@ public _openInboxMarker(row: DeviceInboxRow, add = false): void {
       bindingMode: 'ha', binding: row.binding, bindingOpen: false,
       showEntities: row.kind === 'entity', name: '',
     };
+    rememberMarkerBaseline(this.host, this.host._markerDialog);
   }
 
 public async _setInboxHidden(row: DeviceInboxRow, hidden: boolean): Promise<void> {
@@ -7825,8 +7888,7 @@ public async _saveMarker(): Promise<void> {
         return;
       }
       candidate = this._prepareConfigCandidate(candidate);
-      attempt = this.host._adoption.beginOptimistic(cfg, candidate);
-      this.host._serverCfg = candidate;
+      attempt = this._stageOptimisticConfig(cfg, candidate);
       this.host._regSignature = '';
       this.host._maybeRebuildDevices();
       this.host.requestUpdate();
@@ -7893,6 +7955,7 @@ public async _deleteMarker(): Promise<void> {
     if (!expectedBinding) return;
     const label = dlg.name || this.host._t('device.fallback');
     const targetId = dlg.devId;
+    const owner = dialogSession(this.host, 'marker');
     const accepted = await this.host._confirmDanger({
       key: 'remove-marker',
       kind: 'destructive',
@@ -7903,7 +7966,8 @@ public async _deleteMarker(): Promise<void> {
       cancelLabel: this.host._t('btn.cancel'),
     });
     const currentDialog = this.host._markerDialog;
-    if (!accepted || !currentDialog || currentDialog.busy || currentDialog.devId !== targetId) return;
+    if (!accepted || !this.host.isConnected || dialogSession(this.host, 'marker') !== owner
+      || !currentDialog || currentDialog.busy || currentDialog.devId !== targetId) return;
     const currentDevice = this.host._devices.find((item) => item.id === targetId);
     const currentPersisted = this.host._markers.find((marker) => marker.id === targetId);
     if (!currentDevice && !currentPersisted) return;
@@ -7931,7 +7995,8 @@ public async _deleteMarker(): Promise<void> {
           ),
         };
       }
-    this.host._markerDialog = { ...currentDialog, busy: true };
+    const deletingDraft = { ...currentDialog, busy: true };
+    this.host._markerDialog = deletingDraft;
     try {
       await this._saveConfigNow();
       // Housekeeping follows the durable config write. Every call is
@@ -7954,10 +8019,10 @@ public async _deleteMarker(): Promise<void> {
         await this.host.hass.callWS({ type: 'houseplan/trail/delete', marker_id: id })
           .catch(() => undefined);
       }
-      if (this.host._deviceInboxReturn) {
+      if (dialogSession(this.host, 'marker') === owner && this.host._deviceInboxReturn) {
         this.host._deviceInboxReturn = { ...this.host._deviceInboxReturn, tab: 'readd', anchor: binding };
       }
-      this._closeMarkerDialog();
+      if (this.host.isConnected && dialogSession(this.host, 'marker') === owner) this._closeMarkerDialog();
       this.host._cancelDeviceDrag();
       this.host._devicePositionHistory.clear();
       if (this.host._infoCard?.id === targetId) this.host._closeInfoCard();
@@ -7968,7 +8033,7 @@ public async _deleteMarker(): Promise<void> {
       this.host._showToast(this.host._t('toast.marker_removed'));
     } catch (e: any) {
       if (this.host._serverCfg === cfg) cfg.markers = previousMarkers;
-      if (this.host._markerDialog) this.host._markerDialog = { ...this.host._markerDialog, busy: false };
+      if (this.host._markerDialog === deletingDraft) this.host._markerDialog = { ...deletingDraft, busy: false };
       if (!isGeometryCleanupRefusal(e)) this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
     }
   }
@@ -10138,47 +10203,12 @@ public _roomSettingsFromDialog(): RoomCfg['settings'] {
     return Object.keys(st).length ? st : null;
   }
 
-public _saveRoomEdit(): void {
-    const sp = this.host._curSpaceCfg;
-    const room = sp?.rooms.find((x: any) => x.id === this.host._roomEditId);
-    if (!room) {
-      this.host._roomDialog = false;
-      this.host._roomEditId = null;
-      return;
-    }
-    room.name = this.host._nameSel.trim() || room.name;
-    room.area = this.host._areaSel || null;
-    // Preserve unknown/future room settings. A legacy fill_mode:'glow' materializes its effective
-    // Glow in the same write (an unrelated room edit must not switch the overlay off). #581: the room
-    // colour is kept only with the room's own custom mode — "as the space" forgets it, orphans included.
-    const previous = room.settings || {};
-    const next: any = { ...previous };
-    if (!applyRoomTempThresholdDraft(next, this.host._roomTempMin, this.host._roomTempMax)) return;
-    if (this.host._roomFill) next.fill_mode = this.host._roomFill;
-    else delete next.fill_mode;
-    if (this.host._roomFill === 'custom' && this.host._roomCustomFill) next.custom_fill = this.host._roomCustomFill;
-    else delete next.custom_fill;
-    if (previous.fill_mode === 'glow' && typeof previous.glow !== 'boolean') next.glow = true;
-    if (this.host._roomTempSrc) next.temp_source = this.host._roomTempSrc;
-    else delete next.temp_source;
-    if (this.host._roomHumSrc) next.hum_source = this.host._roomHumSrc;
-    else delete next.hum_source;
-    if (this.host._roomNameScale !== 1) next.name_scale = this.host._roomNameScale;
-    else delete next.name_scale;
-    if (this.host._roomLabelScale !== 1) next.label_scale = this.host._roomLabelScale;
-    else delete next.label_scale;
-    if (Object.keys(next).length) room.settings = next;
-    else delete room.settings;
-    this._saveConfig();
-    this.host._roomDialog = false;
-    this.host._roomEditId = null;
-    this.host._nameSel = '';
-    this.host._areaSel = '';
-    this.host._regSignature = '';
-    this.host._maybeRebuildDevices();
-    this.host.requestUpdate();
-    this.host._showToast(this.host._t('toast.room_updated'));
+public _stageOptimisticConfig(previous: ServerConfig, candidate: ServerConfig): OptimisticAttempt<ServerConfig> {
+    const attempt = this.host._adoption.beginOptimistic(previous, candidate);
+    this.host._serverCfg = candidate;
+    return attempt;
   }
+public _saveRoomEdit(): Promise<void> { return saveRoomEdit(this); }
 
 public _roomSrcCandidates(): { value: string; label: string; sub: string }[] {
     const h = this.host._planHass;

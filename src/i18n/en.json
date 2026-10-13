@@ -1,4 +1,9 @@
 {
+  "editor.chain_finish_failed_title": "Could not finish the walls",
+  "editor.chain_finish_failed_message": "The drawn walls are saved. You can keep editing or leave without finishing the chain.",
+  "editor.chain_finish_pending_message": "You can keep editing or leave without finishing the chain. Leaving does not confirm that the walls have been saved.",
+  "editor.keep_editing": "Keep editing",
+  "editor.leave_unfinished": "Leave without finishing",
   "editor.context_actions": "Actions: {object}",
   "editor.tool_options": "Tool options: {tool}",
   "editor.palette": "Palette: {tool}",

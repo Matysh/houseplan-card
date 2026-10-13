@@ -31,7 +31,7 @@ const res = await page.evaluate(async () => {
   c._roomFill = 'none';
   c._roomTempSrc = 'entity:sensor.custom_room_temp';
   c._roomHumSrc = 'entity:sensor.custom_room_hum';
-  c._saveRoomEdit(); await c.updateComplete;
+  await c._saveRoomEdit(); await c.updateComplete; // #851: await this form's accepted Save before View.
   const room = c._curSpaceCfg.rooms.find((r) => r.id === editedId);
   out.saved = room.settings?.fill_mode === 'none'
     && room.settings?.temp_source === 'entity:sensor.custom_room_temp'
@@ -132,7 +132,7 @@ const res = await page.evaluate(async () => {
   c._roomFill = 'custom'; c._roomCustomFill = { ...B }; c.requestUpdate(); await c.updateComplete;
   out.ownColourRowShownForCustom = colorRow();
   out.ownColourDraftResolves = resolves(editedId, B);
-  c._saveRoomEdit(); await c.updateComplete;
+  await c._saveRoomEdit(); await c.updateComplete;
   out.ownColourStored = cfgRoom().settings?.fill_mode === 'custom' && cfgRoom().settings?.custom_fill?.c === B.c;
   out.ownColourPaintsInView = await paintsInView(editedId, B);
   // AC5: back to "as the space" in the open dialog — the frame resolver answers A at once
@@ -143,7 +143,7 @@ const res = await page.evaluate(async () => {
   out.inheritClearsDraft = c._roomFill === '' && c._roomCustomFill === null && !colorRow();
   out.inheritDraftResolvesSpace = resolves(editedId, A);
   // AC3: saved — neither the mode nor the colour survives, the plan paints A
-  c._saveRoomEdit(); await c.updateComplete;
+  await c._saveRoomEdit(); await c.updateComplete;
   out.inheritForgetsColour = !('fill_mode' in (cfgRoom().settings || {})) && !('custom_fill' in (cfgRoom().settings || {}));
   out.inheritPaintsSpaceInView = await paintsInView(editedId, A);
   c._openRoomEdit(cfgRoom()); await c.updateComplete;
@@ -158,7 +158,7 @@ const res = await page.evaluate(async () => {
   out.orphanPaintsSpaceInView = await paintsInView(editedId, A) && !(await paintsInView(editedId, { c: '#182a32', a: 0.59 }));
   c._openRoomEdit(cfgRoom()); await c.updateComplete;
   out.orphanOpensAsInherit = c._roomFill === '' && c._roomCustomFill === null && !colorRow();
-  c._saveRoomEdit(); await c.updateComplete;
+  await c._saveRoomEdit(); await c.updateComplete;
   out.orphanDroppedOnSave = !('custom_fill' in (cfgRoom().settings || {}))
     && cfgRoom().settings?.name_scale === 1.35 && cfgRoom().settings?.label_scale === 1.2;
   out.orphanStillPaintsSpaceAfterSave = await paintsInView(editedId, A);

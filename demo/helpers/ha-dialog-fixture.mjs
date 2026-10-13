@@ -87,14 +87,14 @@ export async function launchHaDialogFixture({
         }
         if (ha && pathname === '/product.html') {
           const original = body.toString();
-          if (!/<script>\r?\nclass HaIcon/.test(original) || !/<script type="module">\r?\nconst CFG/.test(original)) {
+          if (!/<script>\r?\nclass HaIcon/.test(original) || !/<script type="module">\r?\n(?:const|let) CFG/.test(original)) {
             throw new Error('Synthetic demo bootstrap changed; update the explicit fixture adapter');
           }
           body = original
             .replace(/<script>\r?\nclass HaIcon/, '<script type="module">\nawait import("/ha505-bootstrap.mjs");\nclass HaIcon')
             .replace("customElements.define('ha-icon',HaIcon);", "if(!customElements.get('ha-icon'))customElements.define('ha-icon',HaIcon);")
             .replace("customElements.define('ha-card',HaCard);", "if(!customElements.get('ha-card'))customElements.define('ha-card',HaCard);")
-            .replace(/<script type="module">\r?\nconst CFG/, '<script type="module">\nawait import("/ha505-bootstrap.mjs");\nconst CFG');
+            .replace(/<script type="module">\r?\n(const|let) CFG/, (_, declaration) => `<script type="module">\nawait import("/ha505-bootstrap.mjs");\n${declaration} CFG`);
         }
       }
       response.writeHead(200, { 'content-type': type.startsWith('text/') ? `${type}; charset=utf-8` : type, 'cache-control': 'no-store',
