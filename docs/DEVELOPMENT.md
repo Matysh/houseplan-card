@@ -539,6 +539,14 @@ What each command guarantees:
 
 ### Frontend producer and short local loops (#856)
 
+Asset-generating scripts imported by tests must keep all pack I/O behind the
+explicit CLI entry guard. Furniture's tolerance import previously regenerated
+three tracked modules during parallel `npm test`, allowing `--check` to read
+an O_TRUNC window (#884). Do not regenerate to hide a stale check: reproduce
+in a disposable copy. `test/furniture-assets.test.mjs` protects import purity,
+the controlled write/read boundary, strict stale/missing refusal and exact
+explicit CLI output, including POSIX symlink entry. Product art is unchanged.
+
 `npm run gate:plan` derives suggested product/tooling subsets from the real diff
 and the import/data dependency closure. Unknown inputs select both. Optional
 `npm run gate:tooling` does not build the product; `npm run gate:product` builds

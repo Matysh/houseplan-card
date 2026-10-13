@@ -4,6 +4,7 @@ import { joinFurniturePaths } from './furniture-path-join.mjs';
 import { boxFillDeviation } from './svg-path-bounds.mjs';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import { isMainModule } from './spawn-portable.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PACK = path.join(ROOT, 'assets', 'furniture', 'houseplan-0.4.1');
@@ -201,8 +202,12 @@ function output(file, content) {
   }
 }
 
-const pack = loadPack();
-output(CATALOG_OUT, renderCatalog(pack.symbols));
-output(PLAN_OUT, renderPlan(pack.symbols));
-output(MENU_OUT, renderMenu(pack.menu));
-console.log(`Furniture pack OK: ${pack.symbols.length} plan symbols, ${pack.menu.length} menu icons${CHECK ? ' (generated files current)' : ''}.`);
+// Importing the tolerance in parallel unit files must not regenerate the pack
+// while another process is checking it (#884). Only the CLI may read/write the pack.
+if (isMainModule(import.meta.url)) {
+  const pack = loadPack();
+  output(CATALOG_OUT, renderCatalog(pack.symbols));
+  output(PLAN_OUT, renderPlan(pack.symbols));
+  output(MENU_OUT, renderMenu(pack.menu));
+  console.log(`Furniture pack OK: ${pack.symbols.length} plan symbols, ${pack.menu.length} menu icons${CHECK ? ' (generated files current)' : ''}.`);
+}

@@ -49,7 +49,13 @@ The generator validates a deliberately small, inert SVG subset and produces:
   furniture and imported statically by the editor;
 - `src/furniture-menu-art.generated.ts` for the lazy editor graph only.
 
-Generated files are never edited manually. The 93 drawings were created by
+Generated files are never edited manually. The generator runs only as an
+explicit CLI (#884). Importing its exported
+`PLAN_BOUNDS_TOLERANCE` does not read the pack, write generated modules or print
+CLI output. `furniture:check` remains a read-only exact-byte comparison and
+refuses stale or missing modules; unit tests must not silently regenerate them.
+
+The 93 drawings were created by
 Sergey Matyunin (`Matysh`) and granted to the project under its MIT License in
 [issue #593](https://github.com/Matysh/houseplan-card/issues/593#issuecomment-5739841899).
 No separate attribution is required in the interface. The 0.4.1 pack's own

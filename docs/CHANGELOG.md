@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Infrastructure: importing the furniture generator's tolerance no longer
+  rewrites tracked art while a parallel unit checks it; explicit generation
+  and strict stale-file checks are unchanged
+  ([#884](https://github.com/Matysh/houseplan-card/issues/884)).
+
 - Vacuum paths stay attached to the plan while panning or zooming; their
   animated end follows the robot in Flat and 2.5D views, including pauses
   and live updates during a gesture

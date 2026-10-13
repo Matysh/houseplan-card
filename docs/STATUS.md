@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Furniture generator isolation (#884) makes the exported tolerance import
+read-only and silent. Only explicit CLI generation writes the three modules;
+strict checks still reject stale/missing bytes. A controlled copy-only probe
+reproduces the former truncate/read race without changing product art or
+serializing/retrying the unit suite.
+
 Editor draft ownership (#851) covers create/edit and warm remount; Keep restores
 the editable field. Ordinary room Save waits for its own accepted response,
 while stale face proposals retain #874's fail-closed reset. Failed chain exit
