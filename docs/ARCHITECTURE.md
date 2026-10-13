@@ -572,7 +572,17 @@ Card state: `_mode`, `_tool` (`select|draw|column|merge|split|resize|opening|
 stairs|wallthick|delroom`), session `_path` on the `GRID_N = 240` lattice
 (`_snap`, `CANVAS.md` §9). Committed geometry enters the named 50-command
 Undo/Redo stack shared with Background (`DECOR-EDITOR.md` §6, §9); it survives
-the echo of its own writes and clears on a newer external revision. Every
+the echo of its own writes and clears on a newer external revision. A refused
+step never clears it (#883, `geometry-history-step.ts`): `_applyGeometryState`
+answers `true` or a reason and the cursor moves only on success. A fixed
+`floor` elsewhere (owner decision), a not yet authoritative baseline or an
+exception is temporary and keeps the command; a missing exact space, an
+unrestorable snapshot or an explicit physical/wall-model verdict removes only
+that command object from the direction it is in (identity, never name or
+floor). One press is one attempt in all four call sites (Undo, Redo,
+active-chain Redo, active-segment Undo); an unfit step ends an obsolete
+transient Walls chain without a write. Snapshots are not rebuilt after a
+removal; node commands keep #843's server path. Every
 physical-geometry writer crosses one fail-closed boundary (#278,
 `checkSpacePhysicalGeometry()`) before history/save, rechecked at the deferred
 write; presentation edits bypass it. Contracts: Walls chain, faces, room

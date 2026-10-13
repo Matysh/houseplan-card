@@ -32,6 +32,14 @@ and retained first snapshots are not new jobs. Diagnostic source/quality/counts
 are separate from source health. Real X50 snapshot decoding is partial proof,
 not real-device lifecycle or GPU acceptance; no support claim fills that gap.
 
+Ordinary history refusals (#883) no longer clear the shared Plan/Background
+stack. `geometry-history-step.ts` moves the cursor only on success; a fixed
+`floor` elsewhere (owner decision Q1), a non-authoritative baseline or an
+exception keeps the command, while a missing space, an unrestorable snapshot or
+an explicit geometry/model verdict removes only that object. An obsolete
+transient Walls chain ends as a UI session. Snapshots are not rebuilt after a
+removal; node history (#843) and legitimate adoption/route clears are unchanged.
+
 Furniture generator isolation (#884) makes the exported tolerance import
 read-only and silent. Only explicit CLI generation writes the three modules;
 strict checks still reject stale/missing bytes. A controlled copy-only probe

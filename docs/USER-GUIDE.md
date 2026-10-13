@@ -549,7 +549,20 @@ Important details:
 Plan and Background share one 50-command geometry history. Both toolbars have
 **Undo** and **Redo**, whose tooltip names the next command. The history lasts
 for the current card session and resets safely when a newer external plan
-revision arrives. In every dialog, `Tab` and `Shift+Tab` stay inside the open
+revision arrives.
+
+When an operation cannot be undone or redone, the history is not erased and one
+press never applies the next operation. An operation for a space this card's
+fixed floor does not show stays in place: open a card with access to that space
+or remove the fixed-floor setting and try again. A temporary failure shows
+“Undo is not available right now. Try again.”. An operation that can no longer
+be restored (its space no longer exists, its saved state or geometry cannot be
+safely restored) is removed from history alone, with its reason; the other
+steps keep their order. In an active **Walls** chain a temporary refusal keeps
+the points; after its step is removed the chain ends without changing saved
+walls and the tool stays selected.
+
+In every dialog, `Tab` and `Shift+Tab` stay inside the open
 surface; `Esc` closes the top one and focus returns to the control that opened
 it, including through nested dialogs.
 

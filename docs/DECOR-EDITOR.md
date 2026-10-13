@@ -416,3 +416,7 @@ Smokes: `demo/smoke_decor.mjs`, `demo/smoke_decor_text.mjs`,
   render-unit strokes/text retain their old pixels until migration.
 - External config revisions clear the session history; undo never applies a
   command to a different server revision.
+- A refused Undo/Redo of a decor or backdrop step follows the shared rule
+  (#883, `UX-MODES.md`): a temporary refusal keeps the step, a step that can
+  never be restored is removed alone with its name and reason, and the Plan
+  steps around it stay available.

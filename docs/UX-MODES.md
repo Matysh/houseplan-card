@@ -199,6 +199,19 @@ tabs, the editor-close reserve, zoom and one gear whose menu holds the rest.
   «can no longer be undone/redone: the floor plan has changed». A node may be
   moved right after the person's own edit; another client's floor change still
   refuses it.
+- A refused ordinary Undo/Redo (#883) never clears the history and never applies
+  another step with the same press; the floor, editor, tool and plan stay and
+  one toast explains it (no «Undone/Redone»). A step on a floor the card's
+  `floor` forbids keeps its place in both directions: «This operation belongs to
+  a space unavailable in this card. Open a card with access to that space or
+  remove the fixed-floor setting.»; a temporary failure says «Undo is not
+  available right now. Try again.». A step that can never be restored (its space
+  is gone, its saved state or geometry cannot be safely restored) is removed
+  alone: «Cannot undo/redo “name”: reason. Only this operation was removed from
+  history.»; the remaining steps keep their order. In an active Walls chain a
+  temporary refusal keeps its points and redo points; a removed step ends the
+  chain as a session (saved walls unchanged, no Save, Walls stays selected), and
+  the next press is an ordinary step.
 - A T slides on its original passing wall. An X freezes one original carrier
   and bends its transverse wall at the new node without moving the far ends.
   Doors/windows keep their physical distance from the fixed end; an unsafe

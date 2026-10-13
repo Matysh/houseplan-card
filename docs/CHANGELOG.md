@@ -11,6 +11,15 @@
   legacy input limits are reported instead of looking like missing data
   ([#872](https://github.com/Matysh/houseplan-card/issues/872)).
 
+- A refused Undo or Redo of an ordinary Plan or Background operation no longer
+  silently clears the whole history. An operation on a floor that this card's
+  fixed `floor` does not show stays in place with a message on how to reach it,
+  and a temporary failure asks to try again; only an operation that can never be
+  restored is removed, named with its reason, while the other steps keep their
+  order. One press never applies the next operation. An active wall chain keeps
+  its points on a temporary refusal and ends without touching saved walls when
+  its step is removed
+  ([#883](https://github.com/Matysh/houseplan-card/issues/883)).
 - Infrastructure: importing the furniture generator's tolerance no longer
   rewrites tracked art while a parallel unit checks it; explicit generation
   and strict stale-file checks are unchanged

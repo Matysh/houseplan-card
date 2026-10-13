@@ -3143,18 +3143,16 @@ export class HouseplanCard extends LitElement {
     const start = this._path[0] ? [...this._path[0]] : null;
     const nextPath = this._path.slice(0, -1).map((point) => [...point]);
     const nextCms = this._wallChainSegmentCms.slice(0, -1);
-    const command = this._geometryHistory.undo();
-    if (!command) {
+    const outcome = this._editorRuntimeOrThrow()._stepGeometryHistory('undo');
+    if (outcome === null) {
       this._activeWallChainPartitionIds = [];
       this._wallChainSegmentCms = [];
       this._wallChainRedo = [];
       this._path = start ? [start] : [];
       return;
     }
-    if (!this._applyGeometryState(command.before, true)) {
-      this._geometryHistory.clear();
-      return;
-    }
+    // #883: a temporary refusal keeps this ledger; an unfit step has already ended the chain.
+    if (outcome !== true) return;
     this._activeWallChainId ||= `chain-${Date.now().toString(36)}`;
     this._activeWallChainPartitionIds = ids.slice(0, -1);
     this._path = nextPath.length ? nextPath : start ? [start] : [];
@@ -3163,7 +3161,6 @@ export class HouseplanCard extends LitElement {
       id: terminal.id, point: [...terminal.b], cm: terminal.cm,
     });
     this._clearPlanSnapHover();
-    this._showToast(this._t('history.undone', { name: command.name }));
   }
 
   public static async getConfigElement() {
@@ -7848,12 +7845,6 @@ export class HouseplanCard extends LitElement {
       if (this._suppressClick) setTimeout(() => (this._suppressClick = false), 0);
     }
     if (this._pointers.size === 0) this._finishViewportGesture();
-  }
-
-  private _applyGeometryState(
-    state: SpaceGeometryState, allowHistoryBoundaryRepair = false,
-  ): boolean {
-    return this._editorRuntimeOrThrow()._applyGeometryState(state, allowHistoryBoundaryRepair);
   }
 
   private _undoGeometry = (): void => {

@@ -19,6 +19,24 @@ The owner's personal map is never committed. Static mutation readiness does
 not mean mutants ran. Installed-version snapshot and owner/GPU acceptance
 remain separate from synthetic and upstream evidence. Canon: `VACUUM.md`.
 
+## Ordinary history refusals (#883)
+
+`src/geometry-history-step.ts` is one ordinary Undo/Redo attempt over the real
+`CommandStack`: `_applyGeometryState` returns `true` or a reason; `retry` and
+`pinned` keep the command, `space`/`state`/`geometry` remove exactly that object.
+`test/geometry-history-refusal.test.mjs` drives the real runtime, stack, adoption
+and wall model; only the HA wire, card shell (fixed floor) and physical verdict
+are substituted. The `#883` block of `test/command-stack.test.mjs` pins identity,
+order and the no-restore rule. The native `demo/smoke_geometry_history_refusal.mjs`
+creates every step by mouse, pins a floor with a live public `setConfig` and
+injects only the history-boundary physical verdict (unsafe or a throwing
+checker). It removes the isolated page's warm cache before `setConfig`;
+otherwise the cached older revision is repainted over the session's own accepted
+writes and the next write conflicts (pre-existing, outside #883). Missing-space
+and corrupted-snapshot refusals are unreachable from the UI and stay unit-only.
+`origin/dev` fails both witnesses (the smoke shows the stack going 2→0). Mutation
+anchors are checked statically; each was caught by hand (patch → guard → rollback).
+
 ## Editor draft ownership and failed-chain exit (#851)
 
 `src/editors/draft-close.ts` fences each opening; `draft-actions.ts` connects

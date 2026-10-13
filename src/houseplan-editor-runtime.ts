@@ -38,6 +38,7 @@ import type { ConfigAdoption, GatedAdoptionInput, GatedAdoptionResult } from './
 import { isGeometryCleanupRefusal, supersedeDeferredWrite } from './config-adoption';
 import type { WallNodeEditor } from './wall-node-editor';
 import { type SpaceGeometryState, nodeHistoryNext } from './geometry-history-state';
+import { type HistoryApply, historyUnfit, runOrdinaryHistory } from './geometry-history-step';
 import './hp-device-preview'; import './hp-zigbee-topology-settings';
 import { adoptEditorStyles } from './editor-style-adoption'; // #805: after the CSS-bearing elements — shared gzip context
 import {
@@ -481,6 +482,8 @@ export interface HouseplanEditorHostPort {
   _bootSoftCancel: () => void;
   _cacheSnapshot: () => void;
   _canCommitSpace: (id: string, authority?: boolean) => boolean;
+  /** #883: the config is the authoritative answer, not a warm-cache paint. */
+  readonly _loadOk: boolean;
   _canEdit: boolean;
   _haWallNodeMoveApi: number | null;
   _canOptimizeUndo: boolean;
@@ -1705,17 +1708,19 @@ public _restoreGeometryStateInConfig(
     return true;
   }
 
-public _canonicalWallChainHistoryState(state: SpaceGeometryState): SpaceGeometryState | null {
+/** #883: 'state' — the snapshot cannot be canonicalized; a non-model exception is no verdict and propagates. */
+public _canonicalWallChainHistoryState(state: SpaceGeometryState): SpaceGeometryState | 'state' {
     if (this.host._activeWallChainId || !state.wallChainSeedIds?.length) return state;
-    if (!this.host._serverCfg) return null;
     const candidate = JSON.parse(JSON.stringify(this.host._serverCfg));
-    if (!this._restoreGeometryStateInConfig(candidate, state)) return null;
-    let committed: ServerConfig;
-    try { committed = commitWallSegmentModel(candidate).config; }
-    catch { return null; }
-    const raw = committed.spaces?.find((space) => space.id === state.spaceId);
-    const model = selectSpaceModelById(spaceModels(committed), state.spaceId);
-    if (!raw || !model) return null;
+    if (!this._restoreGeometryStateInConfig(candidate, state)) return 'state';
+    const commit = (config: ServerConfig): ServerConfig | null => {
+      try { return commitWallSegmentModel(config).config; }
+      catch (error) { if (error instanceof WallSegmentModelError) return null; throw error; }
+    };
+    const committed = commit(candidate);
+    const raw = committed?.spaces?.find((space) => space.id === state.spaceId);
+    const model = committed && selectSpaceModelById(spaceModels(committed), state.spaceId);
+    if (!committed || !raw || !model) return 'state';
     const result = finalizeWallChainSpace(
       raw,
       model,
@@ -1735,11 +1740,9 @@ public _canonicalWallChainHistoryState(state: SpaceGeometryState): SpaceGeometry
     // exactly as the production finish transaction does.  Otherwise a Redo
     // could restore the pre-commit carrier representation and Optimize would
     // find work immediately afterwards.
-    let finalized: ServerConfig;
-    try { finalized = commitWallSegmentModel(committed).config; }
-    catch { return null; }
-    const normalized = this._geometrySnapshotFromConfig(finalized, state.spaceId);
-    if (!normalized) return null;
+    const finalized = commit(committed);
+    const normalized = finalized && this._geometrySnapshotFromConfig(finalized, state.spaceId);
+    if (!normalized) return 'state';
     normalized.wallChainSeedIds = [...state.wallChainSeedIds];
     if (state.roomReferences) normalized.roomReferences = JSON.parse(JSON.stringify(state.roomReferences));
     return normalized;
@@ -2095,78 +2098,75 @@ public _stagePointerCancel(ev: PointerEvent): void {
     }
   }
 
+/**
+ * #883: apply one ordinary history snapshot — `true`, or why not. Every
+ * refusal leaves geometry, effects and the active floor as before; the caller
+ * keeps the command on a temporary refusal and removes only it when unfit.
+ */
 public _applyGeometryState(
     state: SpaceGeometryState, allowHistoryBoundaryRepair = false,
-  ): boolean {
+  ): HistoryApply {
+    const host = this.host, config = host._serverCfg, ready = !!host._loadOk;
     // #843: node commands are server transactions of `_runNodeHistory`, never a local state.
-    if (state.nodeMove) return false;
-    const target = this._canonicalWallChainHistoryState(state);
-    if (!target || !this.host._canCommitSpace(target.spaceId)) return false;
-    const before = this._geometrySnapshot(target.spaceId);
-    if (!before || !this._restoreGeometryStateLocal(target)) return false;
-    const restoredCandidate = this.host._serverCfg;
-    const physicalChanged = spacePhysicalGeometryFingerprint(before)
-      !== spacePhysicalGeometryFingerprint(target);
-    if (physicalChanged) {
-      let safe = false;
-      try {
-        const check = restoredCandidate
-          ? this.host._checkSpacePhysicalGeometry(restoredCandidate, target.spaceId)
-          : null;
-        safe = !!check?.ok || !!(allowHistoryBoundaryRepair
-          && check?.reason === 'wall-degraded-extra');
-      } catch { safe = false; }
-      if (!safe) {
-        this._restoreGeometryStateLocal(before);
-        this.host._showToast(this.host._t('toast.geometry_unsafe'));
-        return false;
-      }
-    }
-    let committedCandidate: any;
+    if (state.nodeMove || !config) return 'retry';
+    // The exact space, no first-floor fallback; only an authoritative baseline proves it gone.
+    if (!config.spaces.some((space) => space.id === state.spaceId)) return ready ? 'space' : 'retry';
+    // Q1: a `floor` pinned elsewhere forbids it for now; the step stays for a card that may show it.
+    if (!host._canCommitSpace(state.spaceId)) return ready ? 'pinned' : 'retry';
+    let before: SpaceGeometryState | null = null;
+    const space = host._space;
     try {
-      committedCandidate = commitWallSegmentModel(restoredCandidate).config;
-    } catch (error) {
-      this._restoreGeometryStateLocal(before);
-      this._showWallModelMigrationBlocked(error);
-      return false;
-    }
-    let strictOk = false;
-    if (physicalChanged) {
-      let safe = false;
+      const target = this._canonicalWallChainHistoryState(state);
+      if (target === 'state') return target;
+      before = this._geometrySnapshot(target.spaceId);
+      if (!before || !this._restoreGeometryStateLocal(target)) return 'space';
+      const restoredCandidate = config;
+      const physicalChanged = spacePhysicalGeometryFingerprint(before)
+        !== spacePhysicalGeometryFingerprint(target);
+      // An explicit negative verdict refuses; an exception of the check is none (caught below).
+      // A history snapshot can predate the write-time wall degradation that
+      // canonicalized its command. Restore that one repairable baseline so
+      // Undo remains byte-exact immediately; _writeConfig still degrades and
+      // strictly validates the outbound candidate before it can leave the
+      // card. Every other preflight failure stays fail-closed.
+      const verdict = (candidate: ServerConfig): boolean | null => {
+        const check = host._checkSpacePhysicalGeometry(candidate, target.spaceId);
+        return check.ok ? true : allowHistoryBoundaryRepair && check.reason === 'wall-degraded-extra' ? false : null;
+      };
+      const baseline = before, unsafe = (): 'geometry' => { this._restoreGeometryStateLocal(baseline); return 'geometry'; };
+      if (physicalChanged && verdict(restoredCandidate) === null) return unsafe();
+      let committedCandidate: ServerConfig;
       try {
-        const check = committedCandidate
-          ? this.host._checkSpacePhysicalGeometry(committedCandidate, target.spaceId)
-          : null;
-        // A history snapshot can predate the write-time wall degradation that
-        // canonicalized its command. Restore that one repairable baseline so
-        // Undo remains byte-exact immediately; _writeConfig still degrades and
-        // strictly validates the outbound candidate before it can leave the
-        // card. Every other preflight failure stays fail-closed.
-        strictOk = !!check?.ok;
-        safe = strictOk || !!(allowHistoryBoundaryRepair
-          && check?.reason === 'wall-degraded-extra');
-      } catch { safe = false; }
-      if (!safe) {
-        this._restoreGeometryStateLocal(before);
-        this.host._showToast(this.host._t('toast.geometry_unsafe'));
-        return false;
+        committedCandidate = commitWallSegmentModel(restoredCandidate).config;
+      } catch (error) {
+        if (!(error instanceof WallSegmentModelError)) throw error;
+        return unsafe();
       }
+      const strict = physicalChanged ? verdict(committedCandidate) : true;
+      if (strict === null) return unsafe();
       adoptWallSegmentModelCandidateInPlace(restoredCandidate, committedCandidate);
-      const afterSpace = restoredCandidate?.spaces.find((space) => space.id === target.spaceId);
-      const pending = this.host._pendingPhysicalWrites.get(target.spaceId);
-      this.host._pendingPhysicalWrites.set(target.spaceId, {
-        before: pending?.before || before,
-        // #842 F57: only a strict pass is proof; '' never matches, so a repaired boundary is checked at write.
-        fingerprint: strictOk ? spacePhysicalGeometryFingerprint(afterSpace) : '',
-      });
-    } else adoptWallSegmentModelCandidateInPlace(restoredCandidate, committedCandidate);
-    this._showGeometrySpace(target.spaceId);
-    this.host._modelCache = null;
-    this.host._frame = null;
-    this.host._regSignature = '';
-    this.host._maybeRebuildDevices();
+      if (physicalChanged) {
+        const afterSpace = restoredCandidate.spaces.find((space) => space.id === target.spaceId);
+        const pending = host._pendingPhysicalWrites.get(target.spaceId);
+        host._pendingPhysicalWrites.set(target.spaceId, {
+          before: pending?.before || before,
+          // #842 F57: only a strict pass is proof; '' never matches, so a repaired boundary is checked at write.
+          fingerprint: strict ? spacePhysicalGeometryFingerprint(afterSpace) : '',
+        });
+      }
+      this._showGeometrySpace(target.spaceId);
+      host._modelCache = null;
+      host._frame = null;
+      host._regSignature = '';
+      host._maybeRebuildDevices();
+    } catch {
+      // Unexpected: no proof of unfitness. Local changes and the floor go back to the baseline.
+      if (before) this._restoreGeometryStateLocal(before);
+      if (host._space !== space) this._showGeometrySpace(space);
+      return 'retry';
+    }
     this._saveConfig();
-    this.host.requestUpdate();
+    host.requestUpdate();
     return true;
   }
 
@@ -2189,72 +2189,57 @@ private _runNodeHistory(direction: 'undo' | 'redo'): void {
     this.host._showToast(this.host._t('history.unavailable'));
   }
 
+/** Undo and Redo share one transaction boundary: the first press cancels a live gesture. */
+private _historyGestureFirst(): boolean {
+    const host = this.host;
+    if (this.nodeMove?.busy || this.nodeMove?.cancel()) return true;
+    if (host._physicalDrag || host._physicalRotate) this._cancelPhysicalGesture();
+    else if (host._decorDraft) { host._decorDraft = null; host.requestUpdate(); }
+    else if (host._decorMove || host._dtDrag || host._bdDrag) this._cancelDecorGesture();
+    else if (host._resize.dragging) this._rszCancelDrag();
+    else return false;
+    return true;
+  }
+
+/**
+ * #883: one attempt on the next ordinary command (`geometry-history-step.ts`).
+ * An unfit command leaves alone; a transient Walls chain built on the stack
+ * then ends as a UI session — no write, no finalization, no history step.
+ */
+public _stepGeometryHistory(direction: 'undo' | 'redo'): HistoryApply | null {
+    const host = this.host;
+    const outcome = runOrdinaryHistory({
+      stack: host._geometryHistory,
+      apply: (state) => this._applyGeometryState(state, true),
+      text: (key, params) => host._t(key as I18nKey, params),
+      toast: (text) => host._showToast(text),
+    }, direction);
+    if (historyUnfit(outcome) && host._activeWallChainId) this._clearGeometryGesture();
+    host.requestUpdate();
+    return outcome;
+  }
+
 public _undoGeometry = (): void => {
-    if (this.nodeMove?.busy || this.nodeMove?.cancel()) return;
-    if (this.host._physicalDrag || this.host._physicalRotate) {
-      this._cancelPhysicalGesture();
-      return;
-    }
-    if (this.host._decorDraft) { this.host._decorDraft = null; this.host.requestUpdate(); return; }
-    if (this.host._decorMove || this.host._dtDrag || this.host._bdDrag) {
-      this._cancelDecorGesture();
-      return;
-    }
-    if (this.host._resize.dragging) { this._rszCancelDrag(); return; }
-    if (nodeHistoryNext(this.host._geometryHistory, 'undo')) { this._runNodeHistory('undo'); return; }
-    const command = this.host._geometryHistory.undo();
-    if (!command) return;
-    if (!this._applyGeometryState(command.before, true)) {
-      this.host._geometryHistory.clear();
-      return;
-    }
-    this.host._showToast(this.host._t('history.undone', { name: command.name }));
+    if (this._historyGestureFirst()) return;
+    if (nodeHistoryNext(this.host._geometryHistory, 'undo')) this._runNodeHistory('undo');
+    else this._stepGeometryHistory('undo');
   };
 
 public _redoGeometry = (): void => {
-    if (this.nodeMove?.busy || this.nodeMove?.cancel()) return;
-    // Redo and Undo share the same transaction boundary. The first invocation
-    // cancels an in-progress transform; only the next one navigates history.
-    if (this.host._physicalDrag || this.host._physicalRotate) {
-      this._cancelPhysicalGesture();
-      return;
-    }
-    if (this.host._decorDraft) { this.host._decorDraft = null; this.host.requestUpdate(); return; }
-    if (this.host._decorMove || this.host._dtDrag || this.host._bdDrag) {
-      this._cancelDecorGesture();
-      return;
-    }
-    if (this.host._resize.dragging) { this._rszCancelDrag(); return; }
-    if (nodeHistoryNext(this.host._geometryHistory, 'redo')) { this._runNodeHistory('redo'); return; }
-    if (this.host._activeWallChainId && this.host._wallChainRedo.length) {
-      const chainId = this.host._activeWallChainId;
-      const path = this.host._path.map((point) => [...point]);
-      const ids = [...this.host._activeWallChainPartitionIds];
-      const cms = [...this.host._wallChainSegmentCms];
-      const redo = [...this.host._wallChainRedo];
-      const terminal = redo[redo.length - 1];
-      const command = this.host._geometryHistory.redo();
-      if (!command) return;
-      if (!this._applyGeometryState(command.after, true)) {
-        this.host._geometryHistory.clear();
-        return;
-      }
-      this.host._activeWallChainId = chainId;
-      this.host._path = [...path, [...terminal.point]];
-      this.host._activeWallChainPartitionIds = [...ids, terminal.id];
-      this.host._wallChainSegmentCms = [...cms, terminal.cm];
-      this.host._wallChainRedo = redo.slice(0, -1);
-      this._clearPlanSnapHover();
-      this.host._showToast(this.host._t('history.redone', { name: command.name }));
-      return;
-    }
-    const command = this.host._geometryHistory.redo();
-    if (!command) return;
-    if (!this._applyGeometryState(command.after, true)) {
-      this.host._geometryHistory.clear();
-      return;
-    }
-    this.host._showToast(this.host._t('history.redone', { name: command.name }));
+    if (this._historyGestureFirst()) return;
+    const host = this.host, chainId = host._activeWallChainId, redo = [...host._wallChainRedo];
+    if (nodeHistoryNext(host._geometryHistory, 'redo')) { this._runNodeHistory('redo'); return; }
+    if (!chainId || !redo.length) { this._stepGeometryHistory('redo'); return; }
+    // The active chain: one accepted point forward; a refusal keeps (temporary) or ends (unfit) it.
+    const path = host._path.map((point) => [...point]), ids = [...host._activeWallChainPartitionIds];
+    const cms = [...host._wallChainSegmentCms], terminal = redo[redo.length - 1];
+    if (this._stepGeometryHistory('redo') !== true) return;
+    host._activeWallChainId = chainId;
+    host._path = [...path, [...terminal.point]];
+    host._activeWallChainPartitionIds = [...ids, terminal.id];
+    host._wallChainSegmentCms = [...cms, terminal.cm];
+    host._wallChainRedo = redo.slice(0, -1);
+    this._clearPlanSnapHover();
   };
 
 public _roomAt(p: number[]): RoomCfg | undefined {
