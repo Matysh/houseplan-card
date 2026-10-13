@@ -94,7 +94,8 @@ touching/enclosing holes stay intact; ambiguous rings use the complete old
 operand. This exact locality reduction never skips the room-floor subtraction
 or its clearance checks, and both helper implementations stay outside View.
 
-Node movement (#803) is a lazy Select-only subsystem: `wall-node-move.ts`
+Node movement (#803) is a lazy subsystem whose capture is Select-only (#843:
+its history is not): `wall-node-move.ts`
 freezes the structural graph, `wall-node-editor.ts` owns capture/cancel and
 the isolated live roots, `wall-node-preview.ts` renders the local complete-body
 closure through production masonry/inner-contour/opening functions, and
@@ -119,6 +120,15 @@ authority from the candidate. `config/set` keeps its existing host protection.
 The ledger read-normalises a copy of the durable legacy input before deriving
 structural identities, just as the first proof does; it never migrates on hover.
 Details: CANVAS.md, UX-MODES.md, WALL-THICKNESS.md and CONFIG-COMPATIBILITY.md.
+`wall-node-history.ts` (#843) applies a node command of the shared geometry
+stack from any Plan/Background tool; a node step in the stack makes the runtime
+load the adapter on demand, View never does. `writeWallNode` first settles this
+tab's own write queue (a failed own write is re-sent before, never overtaken)
+and may then advance the expected revision only through own accepted writes:
+`ConfigAdoption.adoptionEpoch` moves on every other identity change, and the
+target floor must equal the command's expectation (Undo: the accepted move,
+Redo: the accepted Undo — the server proves only Undo; a gesture: its start).
+`CommandStack.confirmUndo/confirmRedo` move the cursor only after acceptance.
 `wall-node-edges.ts` (#864) groups only uncovered edge strips, clips their
 union to the common centre and merges it into the unchanged room body. Any
 grouped failure replays the complete old per-edge phase; ordinary View retains

@@ -183,6 +183,22 @@ tabs, the editor-close reserve, zoom and one gear whose menu holds the rest.
   Suppression of the gesture's trailing click is limited to pointer-compatible
   clicks on the stage; unrelated header/toolbar and keyboard activations remain
   usable without requiring another mouse press first.
+- Undo/Redo of a node move (#843) is part of the shared Plan/Background history:
+  any tool, after a mode, floor or editor change, by the toolbar button or the
+  keyboard. Only capture and handles need Plan/Select; View, kiosk and
+  non-writers get no geometry Undo. An unfinished Draw/Split draft or a text
+  field keeps the first press. The step waits for this card's own pending or
+  in-flight Save and is one server operation: the cursor, the «Undone/Redone»
+  toast and the result floor (shown like any history step, editor and tool kept)
+  follow acceptance; while it is in flight Undo/Redo are inactive. Refusals are
+  named and keep the history: unavailable right now (transport, own write
+  failed, update required), another client changed the plan (`history.conflict`,
+  both histories invalidated as before), the space cannot be opened
+  (`floor` pinned elsewhere, refused before sending). If the person changed the
+  target floor outside history (a title, a room), only that step is removed with
+  «can no longer be undone/redone: the floor plan has changed». A node may be
+  moved right after the person's own edit; another client's floor change still
+  refuses it.
 - A T slides on its original passing wall. An X freezes one original carrier
   and bends its transverse wall at the new node without moving the far ends.
   Doors/windows keep their physical distance from the fixed end; an unsafe
