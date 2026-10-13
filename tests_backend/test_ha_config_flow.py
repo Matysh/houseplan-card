@@ -48,30 +48,61 @@ def hass_config_dir(tmp_path):
     return str(tmp_path)
 
 
-def _seed(hass):
+MARKER = {"id": "old-marker", "binding": "device:old", "space": "old"}
+
+
+def _store(root, key, data):
+    path = root / ".storage" / key
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({
+        "version": 1, "minor_version": 1 if key == "houseplan.trails" else 2,
+        "key": key, "data": data,
+    }))
+    return path
+
+
+def _seed(hass, markers=()):
     root = Path(hass.config.config_dir)
     config = {"model_version": PLAN_MODEL_VERSION, "spaces": [{
         "id": "old", "title": "Old floor", "view_box": [0, 0, 1, 1], "rooms": [],
         "plan_url": "/api/houseplan/content/plans/_/old.svg",
-    }], "markers": [], "settings": {"bg_mode": "static"}}
+    }], "markers": list(markers), "settings": {"bg_mode": "static"}}
     payloads = [
         {"config": config, "rev": 7},
         {"layout": {"old-marker": {"x": 0.2, "y": 0.3}}, "rev": 3},
         {}, {},
     ]
     for key, data in zip(previous_data.STORE_KEYS, payloads, strict=True):
-        path = root / ".storage" / key
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps({
-            "version": 1, "minor_version": 1 if key == "houseplan.trails" else 2,
-            "key": key, "data": data,
-        }))
+        _store(root, key, data)
     for name in previous_data.DATA_DIRS:
         path = root / name / "nested" / "keep.bin"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(b"unchanged")
     (root / "houseplan/plans/old.svg").write_bytes(b'<svg xmlns="http://www.w3.org/2000/svg"/>')
     return root
+
+
+def _seed_spaceless(hass, *, config=True, markers=()):
+    """#877: no spaces, maybe markers, a settled layout, trails and an attachment."""
+    root = Path(hass.config.config_dir)
+    if config:
+        _store(root, "houseplan.config", {"config": {
+            "model_version": PLAN_MODEL_VERSION, "spaces": [], "markers": list(markers),
+            "settings": {"bg_mode": "static"},
+        }, "rev": 5})
+    _store(root, "houseplan.layout", {"layout": {"old-marker": {"x": 0.2, "y": 0.3}}, "rev": 3})
+    _store(root, "houseplan.trails", {})
+    path = root / "houseplan/files/nested/manual.pdf"
+    path.parent.mkdir(parents=True)
+    path.write_bytes(b"%PDF-old")
+    return root
+
+
+SPACELESS = {
+    "markers": {"markers": [{"id": "old-marker", "binding": "device:old"}]},
+    "no-markers": {"markers": []},
+    "no-config": {"config": False},
+}
 
 
 def _snapshot(root):
@@ -124,6 +155,7 @@ async def test_user_flow_creates_entry(hass: HomeAssistant) -> None:
     assert result["title"] == "House Plan"
     assert result["options"] == {CONF_ADMIN_ONLY: True}
     assert result["description"] == "panel_ready"
+    assert not (Path(hass.config.config_dir) / "houseplan/archive").exists()
 
 
 async def test_single_instance(hass: HomeAssistant) -> None:
@@ -156,8 +188,10 @@ async def test_options_flow(hass: HomeAssistant) -> None:
     assert entry.options == {CONF_ADMIN_ONLY: True}
 
 
-async def test_previous_data_menu(hass):
-    root = _seed(hass)
+@pytest.mark.parametrize("markers", [(), (MARKER,)], ids=["no-markers", "markers"])
+async def test_previous_data_menu(hass, markers):
+    """#877 AC2: at least one space keeps the menu, with or without markers."""
+    root = _seed(hass, markers)
     before = _snapshot(root)
     result = await _init(hass)
     assert result["type"] is FlowResultType.MENU
@@ -170,8 +204,9 @@ async def test_previous_data_menu(hass):
     assert _snapshot(root) == before
 
 
-async def test_restore_previous_data(hass, hass_ws_client, hass_client):
-    root = _seed(hass)
+@pytest.mark.parametrize("markers", [(), (MARKER,)], ids=["no-markers", "markers"])
+async def test_restore_previous_data(hass, hass_ws_client, hass_client, markers):
+    root = _seed(hass, markers)
     before = _active_bytes(root)
     result = await _choose(hass, await _init(hass), "restore")
     assert result["type"] is FlowResultType.FORM and result["step_id"] == "user"
@@ -179,6 +214,7 @@ async def test_restore_previous_data(hass, hass_ws_client, hass_client):
     assert (await _finish(hass, result))["type"] is FlowResultType.CREATE_ENTRY
     config = await _ws_get(hass, hass_ws_client, "config")
     assert config["config"]["spaces"][0]["id"] == "old"
+    assert [m["id"] for m in config["config"]["markers"]] == [m["id"] for m in markers]
     client = await hass_client()
     response = await client.get("/api/houseplan/content/plans/_/old.svg")
     assert response.status == 200
@@ -187,13 +223,20 @@ async def test_restore_previous_data(hass, hass_ws_client, hass_client):
     assert not (root / "houseplan/archive").exists()
 
 
-async def test_start_fresh(hass, hass_ws_client):
-    root = _seed(hass)
+@pytest.mark.parametrize("markers", [(), (MARKER,)], ids=["no-markers", "markers"])
+async def test_start_fresh(hass, hass_ws_client, markers):
+    root = _seed(hass, markers)
     before = _active_bytes(root)
     result = await _choose(hass, await _init(hass), "start_fresh")
     assert _active_bytes(root) == before
     assert (await _finish(hass, result))["type"] is FlowResultType.CREATE_ENTRY
-    assert (await _ws_get(hass, hass_ws_client, "config"))["config"]["spaces"] == []
+    await _assert_fresh(hass, hass_ws_client, root, before)
+
+
+async def _assert_fresh(hass, hass_ws_client, root, before):
+    """Empty active plan; the whole previous set in exactly one new archive."""
+    config = (await _ws_get(hass, hass_ws_client, "config"))["config"]
+    assert config["spaces"] == [] and not config.get("markers")
     assert (await _ws_get(hass, hass_ws_client, "layout"))["layout"] == {}
     for name in previous_data.DATA_DIRS:
         assert list((root / name).iterdir()) == []
@@ -203,6 +246,83 @@ async def test_start_fresh(hass, hass_ws_client):
                 for p in archives[0].rglob("*") if p.is_file()}
     assert archived == {p.replace(".storage/", "storage/").replace("houseplan/", "", 1): value
                         for p, value in before.items()}
+
+
+@pytest.mark.parametrize("variant", SPACELESS)
+async def test_spaceless_starts_fresh_without_menu(hass, hass_ws_client, variant):
+    """#877 AC1: no spaces, no question; the final form archives like Start fresh."""
+    root = _seed_spaceless(hass, **SPACELESS[variant])
+    snapshot = _snapshot(root)
+    before = _active_bytes(root)
+    result = await _init(hass)
+    assert result["type"] is FlowResultType.FORM and result["step_id"] == "user"
+    assert _snapshot(root) == snapshot and not (root / "houseplan/archive").exists()
+    assert (await _finish(hass, result))["type"] is FlowResultType.CREATE_ENTRY
+    await _assert_fresh(hass, hass_ws_client, root, before)
+
+
+@pytest.mark.parametrize("variant", SPACELESS)
+async def test_spaceless_cancel_changes_nothing(hass, variant):
+    root = _seed_spaceless(hass, **SPACELESS[variant])
+    before = _snapshot(root)
+    result = await _init(hass)
+    assert result["type"] is FlowResultType.FORM and result["step_id"] == "user"
+    hass.config_entries.flow.async_abort(result["flow_id"])
+    await hass.async_block_till_done()
+    assert _snapshot(root) == before and not (root / "houseplan/archive").exists()
+    assert hass.config_entries.async_entries(DOMAIN) == []
+
+
+@pytest.mark.parametrize("variant", SPACELESS)
+async def test_spaceless_archive_failure_never_creates_entry(hass, monkeypatch, variant):
+    root = _seed_spaceless(hass, **SPACELESS[variant])
+    before = _active_bytes(root)
+    result = await _init(hass)
+    assert result["type"] is FlowResultType.FORM and result["step_id"] == "user"
+    _fail_second_rename(monkeypatch)
+    result = await _finish(hass, result)
+    assert result["type"] is FlowResultType.ABORT and result["reason"] == "archive_failed"
+    assert hass.config_entries.async_entries(DOMAIN) == []
+    assert _active_bytes(root) == before and not (root / "houseplan/archive").exists()
+
+
+PENDING_LAYOUT = {"version": 1, "minor_version": 2, "key": "houseplan.layout", "data": {
+    "layout": {}, "rev": 3,
+    "optimize_pending": {"config": {"spaces": [{"id": "new"}]}, "layout": {}, "config_rev": 6},
+}}
+UNKNOWN = {
+    "config-json": ("houseplan.config", b"invalid json"),
+    "config-version": ("houseplan.config", b'{"version": 99, "data": {"config": {"spaces": []}}}'),
+    "spaces-not-list": ("houseplan.config", b'{"version": 1, "data": {"config": {"spaces": {}}}}'),
+    "unsafe-link": ("houseplan/files/link.pdf", None),
+    "layout-unreadable": ("houseplan.layout", b"invalid json"),
+    "layout-pending": ("houseplan.layout", json.dumps(PENDING_LAYOUT).encode()),
+}
+
+
+@pytest.mark.parametrize("case", UNKNOWN)
+async def test_unknown_previous_data_keeps_menu(hass, tmp_path_factory, case):
+    """#877 AC3: unknown is not empty; the menu stays and no choice archives nothing."""
+    root = _seed_spaceless(hass)
+    name, payload = UNKNOWN[case]
+    if payload is None:
+        external = tmp_path_factory.mktemp("external") / "outside.pdf"
+        external.write_bytes(b"external")
+        (root / name).symlink_to(external)
+    else:
+        (root / ".storage" / name).write_bytes(payload)
+    before = _snapshot(root)
+    result = await _init(hass)
+    assert result["type"] is FlowResultType.MENU and result["step_id"] == "previous_data"
+    assert result["menu_options"] == ["restore", "start_fresh"]
+    unreadable = not case.startswith("layout-")
+    placeholders = result["description_placeholders"]
+    assert placeholders["spaces"] == ("—" if unreadable else "0")
+    assert bool(placeholders["warning"]) is unreadable
+    hass.config_entries.flow.async_abort(result["flow_id"])
+    await hass.async_block_till_done()
+    assert _snapshot(root) == before and not (root / "houseplan/archive").exists()
+    assert hass.config_entries.async_entries(DOMAIN) == []
 
 
 @pytest.mark.parametrize("choice", [None, "restore", "start_fresh"])
@@ -227,6 +347,9 @@ async def test_archive_only_uses_original_user_step(hass):
     result = await _init(hass)
     assert result["type"] is FlowResultType.FORM and result["step_id"] == "user"
     assert _snapshot(root) == before
+    assert (await _finish(hass, result))["type"] is FlowResultType.CREATE_ENTRY
+    assert [p.name for p in (root / "houseplan/archive").iterdir()] == ["old"]
+    assert path.read_bytes() == b"old"
 
 
 @pytest.mark.parametrize("payload", [b"invalid json", b'{"version": 99, "data": {}}'])
@@ -267,10 +390,7 @@ async def test_menu_translations(hass, language):
         assert translated[prefix + key]
 
 
-async def test_archive_failure_never_creates_entry(hass, monkeypatch):
-    root = _seed(hass)
-    before = _active_bytes(root)
-    result = await _choose(hass, await _init(hass), "start_fresh")
+def _fail_second_rename(monkeypatch):
     rename = Path.rename
     calls = 0
 
@@ -282,6 +402,13 @@ async def test_archive_failure_never_creates_entry(hass, monkeypatch):
         return rename(path, destination)
 
     monkeypatch.setattr(Path, "rename", fail_second)
+
+
+async def test_archive_failure_never_creates_entry(hass, monkeypatch):
+    root = _seed(hass)
+    before = _active_bytes(root)
+    result = await _choose(hass, await _init(hass), "start_fresh")
+    _fail_second_rename(monkeypatch)
     result = await _finish(hass, result)
     assert result["type"] is FlowResultType.ABORT and result["reason"] == "archive_failed"
     assert hass.config_entries.async_entries(DOMAIN) == []

@@ -15,6 +15,7 @@ from homeassistant.helpers.storage import Store
 from .build_identity import UNKNOWN_BUILD, BuildIdentity
 from .const import (
     DOMAIN,
+    OPTIMIZE_PENDING,
     STORAGE_CONFIG_KEY,
     STORAGE_KEY,
     STORAGE_MINOR_VERSION,
@@ -155,7 +156,6 @@ def get_entry(hass: HomeAssistant) -> ConfigEntry | None:
 
 
 OPTIMIZE_BACKUP = "optimize_backup"
-OPTIMIZE_PENDING = "optimize_pending"
 LAYOUT_STORE_CORE_KEYS = frozenset({"layout", "rev"})
 
 

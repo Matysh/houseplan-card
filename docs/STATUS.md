@@ -235,6 +235,8 @@ active previous data exists. Fresh archives all four Stores and the three file
 directories only on final confirmation; cancellation is read-only. Archives
 are permanent, excluded from active discovery/quotas/cleanup, with manual
 recovery documented in both user guides. No runtime schema or View changes.
+A readable set without spaces and without a pending paired write skips the
+menu and is archived on confirmation like Start fresh (#877).
 
 | Item | State |
 |---|---|

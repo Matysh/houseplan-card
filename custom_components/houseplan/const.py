@@ -6,6 +6,9 @@ STORAGE_CONFIG_KEY = f"{DOMAIN}.config"
 STORAGE_VIRTUAL_LIGHTS_KEY = f"{DOMAIN}.virtual_lights"
 STORAGE_VERSION = 1
 STORAGE_MINOR_VERSION = 2
+# Layout-store key of an unfinished paired config/layout write (store.py). Kept
+# here so read-only reinstall discovery stays free of Home Assistant (#877, #436).
+OPTIMIZE_PENDING = "optimize_pending"
 FRONTEND_URL = "/houseplan_files/houseplan-card.js"
 FRONTEND_ASSETS_URL = "/houseplan_files/houseplan-assets"
 PANEL_FRONTEND_URL = "/houseplan_files/houseplan-panel.js"

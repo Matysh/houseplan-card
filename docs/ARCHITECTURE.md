@@ -248,8 +248,12 @@ chunks. Commands and gates: `DEVELOPMENT.md` › Build, › Tests, › Release.
    Reinstallation (#820) is an admin-only HA config-flow choice, not a runtime
    cleanup action. `previous_data.py` inventories these four fixed Store files
    and `houseplan/{plans,files,assets}` read-only in the executor; only the config
-   JSON is read, without calling Store or triggering migrations. Restore uses
-   the unchanged setup path. Fresh, on final `user` confirmation only, renames
+   JSON and, when it has no spaces, the layout JSON (its `optimize_pending` key
+   only) are read, without calling Store or triggering migrations. A safe set
+   whose config is absent or has `spaces: []` and whose layout holds no pending
+   paired write skips the menu and takes the Fresh path (#877); unreadable,
+   unsafe or pending data keeps the menu. Restore uses the unchanged setup
+   path. Fresh, on final `user` confirmation only, renames
    the complete set to `houseplan/archive/<unique UTC timestamp>/storage/` and
    its three sibling data directories. Archives are outside active discovery,
    quotas and housekeeping and have no automatic retention cleanup. Unsafe

@@ -29,6 +29,11 @@
   after saving — not the default chip. Icon rules do not change a group's
   icon; a manually chosen icon still wins
   ([#878](https://github.com/Matysh/houseplan-card/issues/878)).
+- Adding House Plan again over previous data without spaces no longer asks
+  “Previous installation found”: once the final form is confirmed, the old set
+  is archived as with “Start fresh”. Data with spaces, unreadable data or an
+  interrupted plan save still shows the menu
+  ([#877](https://github.com/Matysh/houseplan-card/issues/877)).
 - Closing a room through an existing partition now splits its parent safely,
   preserving neighbouring rooms, unrelated walls and wall thickness. A failed save or config
   reload no longer leaves a room-creation dialog with an inert Save button

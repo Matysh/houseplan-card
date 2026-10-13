@@ -19,6 +19,7 @@ from .const import (
     ASSETS_DIR,
     DOMAIN,
     FILES_DIR,
+    OPTIMIZE_PENDING,
     PLANS_DIR,
     STORAGE_CONFIG_KEY,
     STORAGE_KEY,
@@ -36,13 +37,19 @@ DATA_DIRS = (PLANS_DIR, FILES_DIR, ASSETS_DIR)
 
 @dataclass(frozen=True)
 class PreviousData:
-    """One summary, shared by all menu placeholders."""
+    """One summary, shared by all menu placeholders.
+
+    ``empty`` means reliably without spaces (#877): a safe inventory, a config
+    that is absent or readable with ``spaces == []`` and no unfinished paired
+    write in the layout Store. Markers, files and other Stores do not matter.
+    """
 
     found: bool
     spaces: int | None
     files: int
     modified: float | None
     unsafe: bool = False
+    empty: bool = False
 
 
 @dataclass
@@ -129,16 +136,33 @@ def _spaces(path: Path) -> int | None:
         return None
 
 
+def _layout_settled(path: Path) -> bool:
+    """No unfinished paired write: the next start would replace config with it."""
+    if _lstat(path) is None:
+        return True
+    try:
+        with path.open(encoding="utf-8") as stream:
+            envelope = json.load(stream)
+    except (OSError, ValueError, UnicodeError):
+        return False
+    data = envelope.get("data") if isinstance(envelope, dict) else None
+    return isinstance(data, dict) and OPTIMIZE_PENDING not in data
+
+
 def inspect_previous_data(config_dir: str) -> PreviousData:
     """Discover only fixed active paths, without writes or following symlinks."""
     root = Path(config_dir)
     inventory = _inventory(root)
+    spaces = None if inventory.unsafe else _spaces(root / ".storage" / STORAGE_CONFIG_KEY)
     return PreviousData(
         found=bool(inventory.files) or inventory.unsafe,
-        spaces=None if inventory.unsafe else _spaces(root / ".storage" / STORAGE_CONFIG_KEY),
+        spaces=spaces,
         files=sum(path.parent != root / ".storage" for path, _ in inventory.files),
         modified=max((info.st_mtime for _, info in inventory.files), default=None),
         unsafe=inventory.unsafe,
+        # An unsafe inventory has no count, so 0 also proves a safe one. The
+        # layout is read only when everything else already says "no spaces".
+        empty=spaces == 0 and _layout_settled(root / ".storage" / STORAGE_KEY),
     )
 
 

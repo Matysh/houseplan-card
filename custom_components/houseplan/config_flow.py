@@ -37,7 +37,10 @@ class HouseplanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 _LOGGER.exception("Cannot inspect previous House Plan data")
                 return self.async_abort(reason="previous_data_error")
             self._previous_checked = True
-            if previous.found:
+            if previous.found and previous.empty:
+                # #877: no spaces to restore; final confirmation archives like Start fresh.
+                self._start_fresh = True
+            elif previous.found:
                 self._previous = previous
                 return await self.async_step_previous_data()
         if user_input is not None:

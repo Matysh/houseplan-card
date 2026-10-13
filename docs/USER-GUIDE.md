@@ -171,6 +171,10 @@ count and last-modified date, then offers:
 Both choices lead to the existing administrators-only checkbox. Archival starts
 only when that final form is confirmed. Closing the wizard before confirmation
 changes nothing. With no data, or only an archive, there is no extra question.
+If the previous data has no spaces (devices alone do not count), there is no
+question either: once the final form is confirmed, the old set is archived as
+with **Start fresh**. The menu appears only when spaces exist, the data cannot
+be read, or an interrupted plan save is pending.
 Archives are excluded from file quotas and never cleaned automatically; each
 fresh start creates a separate archive. Only the administrator can remove it
 manually.

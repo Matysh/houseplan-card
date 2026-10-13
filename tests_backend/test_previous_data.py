@@ -38,6 +38,33 @@ def byteset(root: Path) -> dict:
     return {str(p.relative_to(root)): p.read_bytes() for p in root.rglob("*") if p.is_file()}
 
 
+def store(root: Path, key: str, data) -> Path:
+    path = root / ".storage" / key
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({
+        "version": 1, "minor_version": STORAGE_MINOR_VERSION, "key": key, "data": data,
+    }))
+    return path
+
+
+def seed_spaceless(root: Path, *, config: bool = True, markers=()) -> None:
+    """#877: no spaces, but markers, a settled layout, trails and an attachment."""
+    if config:
+        store(root, "houseplan.config", {"config": {"spaces": [], "markers": list(markers)}, "rev": 4})
+    store(root, "houseplan.layout", {"layout": {"m1": {"x": 0.2, "y": 0.3}}, "rev": 2})
+    store(root, "houseplan.trails", {})
+    path = root / "houseplan/files/nested/manual.pdf"
+    path.parent.mkdir(parents=True)
+    path.write_bytes(b"%PDF-old")
+
+
+SPACELESS = {
+    "markers": {"markers": [{"id": "m1", "binding": "device:abc"}]},
+    "no-markers": {"markers": []},
+    "no-config": {"config": False},
+}
+
+
 def test_no_data_and_archive_only(tmp_path):
     assert not previous.inspect_previous_data(str(tmp_path)).found
     for name in previous.DATA_DIRS:
@@ -73,7 +100,7 @@ def test_summary_read_only(tmp_path):
     os.utime(ignored, (2000000000, 2000000000))
     before = snapshot(tmp_path)
     summary = previous.inspect_previous_data(str(tmp_path))
-    assert summary.found and summary.spaces == 2 and summary.files == 3
+    assert summary.found and summary.spaces == 2 and summary.files == 3 and not summary.empty
     assert summary.modified == 1700000000 + len(files) - 1
     assert snapshot(tmp_path) == before
 
@@ -103,6 +130,77 @@ def test_unreadable_count(tmp_path, payload):
     summary = previous.inspect_previous_data(str(tmp_path))
     assert summary.found and summary.spaces is None and summary.files == 3
     assert snapshot(tmp_path) == before
+
+
+@pytest.mark.parametrize("variant", SPACELESS)
+def test_spaceless_is_empty(tmp_path, variant):
+    seed_spaceless(tmp_path, **SPACELESS[variant])
+    before = snapshot(tmp_path)
+    summary = previous.inspect_previous_data(str(tmp_path))
+    assert summary.found and summary.spaces == 0 and summary.files == 1
+    assert summary.empty
+    assert snapshot(tmp_path) == before
+
+
+@pytest.mark.parametrize("markers", [[], [{"id": "m1", "binding": "device:abc"}]])
+def test_one_space_is_not_empty(tmp_path, markers):
+    seed_spaceless(tmp_path)
+    store(tmp_path, "houseplan.config", {"config": {"spaces": [{"id": "old"}], "markers": markers}})
+    summary = previous.inspect_previous_data(str(tmp_path))
+    assert summary.found and summary.spaces == 1 and not summary.empty
+
+
+PENDING = {"layout": {}, "rev": 2, "optimize_pending": {"config": {"spaces": [{"id": "new"}]}, "layout": {}}}
+
+
+@pytest.mark.parametrize(("name", "payload"), [
+    ("houseplan.config", b"not json"),
+    ("houseplan.config", b'{"version": 99, "data": {"config": {"spaces": []}}}'),
+    ("houseplan.config", b'{"version": 1, "data": {"config": {"spaces": "bad"}}}'),
+    ("houseplan.layout", b"not json"),
+    ("houseplan.layout", b"[]"),
+    ("houseplan.layout", b'{"version": 1, "data": []}'),
+    ("houseplan.layout", json.dumps({"version": 1, "data": PENDING}).encode()),
+], ids=["config-json", "config-version", "spaces-not-list",
+        "layout-json", "layout-array", "layout-data-array", "layout-pending"])
+def test_unknown_is_not_empty(tmp_path, name, payload):
+    """#877 AC3: unreadable data or a pending pair never counts as no spaces."""
+    seed_spaceless(tmp_path)
+    (tmp_path / ".storage" / name).write_bytes(payload)
+    before = snapshot(tmp_path)
+    summary = previous.inspect_previous_data(str(tmp_path))
+    assert summary.found and not summary.empty
+    assert summary.spaces == (None if name == "houseplan.config" else 0)
+    assert snapshot(tmp_path) == before
+
+
+def test_unsafe_is_not_empty(tmp_path):
+    root = tmp_path / "ha"
+    external = tmp_path / "external"
+    root.mkdir()
+    external.mkdir()
+    seed_spaceless(root)
+    (root / "houseplan/files/link").symlink_to(external, target_is_directory=True)
+    summary = previous.inspect_previous_data(str(root))
+    assert summary.found and summary.unsafe and summary.spaces is None and not summary.empty
+
+
+def test_layout_read_only_without_spaces(tmp_path, monkeypatch):
+    seed(tmp_path)
+    opened = []
+    open_file = Path.open
+
+    def record(path, *args, **kwargs):
+        opened.append(path.name)
+        return open_file(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", record)
+    assert not previous.inspect_previous_data(str(tmp_path)).empty
+    assert opened == ["houseplan.config"]
+    store(tmp_path, "houseplan.config", {"config": {"spaces": []}})
+    opened.clear()
+    assert previous.inspect_previous_data(str(tmp_path)).empty
+    assert opened == ["houseplan.config", "houseplan.layout"]
 
 
 def test_archive_roundtrip(tmp_path):

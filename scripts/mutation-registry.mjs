@@ -531,6 +531,62 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'reinstall-skip-keeps-spaceless-set',
+    guard: 'node scripts/backend-test-guard.mjs spaceless_starts_fresh_without_menu tests_backend/test_ha_config_flow.py',
+    because: '#877 AC1: skipping the menu for a set without spaces must still archive it on final '
+      + 'confirmation, exactly like Start fresh; otherwise the old markers and files stay active.',
+    patches: [{
+      file: 'custom_components/houseplan/config_flow.py',
+      find: '                # #877: no spaces to restore; final confirmation archives like Start fresh.\n'
+        + '                self._start_fresh = True',
+      replace: '                pass  # mutant: skip the menu but keep the old set active',
+    }],
+  },
+  {
+    id: 'reinstall-empty-ignores-space-count',
+    guard: 'node scripts/backend-test-guard.mjs previous_data_menu tests_backend/test_ha_config_flow.py',
+    because: '#877 AC2: only a readable config with zero spaces skips the menu; a set with a space '
+      + '(with or without markers) keeps Restore / Start fresh.',
+    patches: [{
+      file: 'custom_components/houseplan/previous_data.py',
+      find: '        empty=spaces == 0 and _layout_settled(',
+      replace: '        empty=spaces is not None and _layout_settled(',
+    }],
+  },
+  {
+    id: 'reinstall-empty-trusts-unknown-config',
+    guard: 'node scripts/backend-test-guard.mjs unknown_previous_data_keeps_menu tests_backend/test_ha_config_flow.py',
+    because: '#877 AC3: a corrupt, unsupported or non-list config and an unsafe inventory have no '
+      + 'space count; unknown is not empty and must keep the menu with its warning.',
+    patches: [{
+      file: 'custom_components/houseplan/previous_data.py',
+      find: '        empty=spaces == 0 and _layout_settled(',
+      replace: '        empty=_layout_settled(',
+    }],
+  },
+  {
+    id: 'reinstall-empty-ignores-pending-pair',
+    guard: 'node scripts/backend-test-guard.mjs unknown_previous_data_keeps_menu tests_backend/test_ha_config_flow.py',
+    because: '#877 AC3: an optimize_pending intent replaces config on the next start, so spaces: [] '
+      + 'next to it is not final and must keep the menu.',
+    patches: [{
+      file: 'custom_components/houseplan/previous_data.py',
+      find: '    return isinstance(data, dict) and OPTIMIZE_PENDING not in data',
+      replace: '    return isinstance(data, dict)',
+    }],
+  },
+  {
+    id: 'reinstall-empty-trusts-broken-layout',
+    guard: 'node scripts/backend-test-guard.mjs unknown_previous_data_keeps_menu tests_backend/test_ha_config_flow.py',
+    because: '#877 AC3: an unreadable layout cannot prove the absence of a pending pair; '
+      + 'unknown is not empty and must keep the menu.',
+    patches: [{
+      file: 'custom_components/houseplan/previous_data.py',
+      find: '        return False\n    data = envelope.get("data")',
+      replace: '        return True\n    data = envelope.get("data")',
+    }],
+  },
+  {
     id: 'node-extra-entry-edge-bypasses-fallback',
     guard: 'node --test --test-name-pattern="#803 extra eager chunks" test/bundle-assets.test.mjs',
     because: '#803 must preserve stale-load recovery after manual chunking: even an extra eager edge '
