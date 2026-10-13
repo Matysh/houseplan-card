@@ -253,3 +253,61 @@ def test_independent_host_ledger_accepts_legacy_room_input_without_mutating_it()
     assert legacy == frozen
     assert baseline == commit_wall_segment_model(legacy)[0]
     assert candidate["spaces"][0]["future"] == legacy["spaces"][0]["future"]
+
+
+def two_floors():
+    """#843: the fixture floor plus an unrelated second floor and settings."""
+    cfg = copy.deepcopy(fixture())
+    other = copy.deepcopy(cfg["spaces"][0])
+    other["id"], other["title"] = "g", "Other floor"
+    cfg["spaces"].append(other)
+    return commit_wall_segment_model(cfg)[0]
+
+
+@pytest.mark.parametrize("change", ["settings", "other_floor"])
+def test_843_undo_after_own_settings_or_other_floor_change_is_proved_and_keeps_it(change):
+    before = two_floors()
+    after = node_move_candidate(before, "f", intent())
+    current = copy.deepcopy(after)
+    if change == "settings":
+        current["settings"]["theme"] = "dark"
+    else:
+        current["spaces"][1]["title"] = "Kept"
+        current["spaces"][1]["rooms"].append({"id": "g-room", "name": "Kept", "poly": [[2, 2], [3, 2], [3, 3], [2, 3]]})
+        current = commit_wall_segment_model(current)[0]
+    restored = node_move_candidate(current, "f", intent(), "undo", before["spaces"][0])
+    assert restored["spaces"][0] == before["spaces"][0]
+    assert restored["settings"] == current["settings"]
+    assert restored["spaces"][1] == current["spaces"][1]
+
+
+@pytest.mark.parametrize("change", ["room_name", "space_title", "another_wall"])
+def test_843_any_change_of_the_target_floor_refuses_the_inverse(change):
+    before = two_floors()
+    current = copy.deepcopy(node_move_candidate(before, "f", intent()))
+    space = current["spaces"][0]
+    if change == "room_name":
+        space["rooms"].append({"id": "f-room", "name": "Renamed", "poly": [[2, 2], [3, 2], [3, 3], [2, 3]]})
+    elif change == "space_title":
+        space["title"] = "Renamed floor"
+    else:
+        space["partitions"].append(wall("extra", [0.5, 0.5], [0.9, 0.5]))
+        current = commit_wall_segment_model(current)[0]
+    with pytest.raises(NodeMoveError):
+        node_move_candidate(current, "f", intent(), "undo", before["spaces"][0])
+
+
+@pytest.mark.parametrize("change", ["space_title", "another_wall"])
+def test_843_apply_is_not_proved_and_lands_over_a_same_floor_change(change):
+    """Redo has no server proof: the client must compare the floor before sending it."""
+    before = two_floors()
+    after = node_move_candidate(before, "f", intent())
+    current = copy.deepcopy(node_move_candidate(after, "f", intent(), "undo", before["spaces"][0]))
+    if change == "space_title":
+        current["spaces"][0]["title"] = "Foreign"
+    else:
+        current["spaces"][0]["partitions"].append(wall("extra", [0.5, 0.5], [0.9, 0.5]))
+        current = commit_wall_segment_model(current)[0]
+    redone = node_move_candidate(current, "f", intent())
+    assert redone["spaces"][0] != after["spaces"][0], "not the recorded after state"
+    assert redone["spaces"][0]["partitions"][1]["a"] == [0, -1], "yet the move is applied on top"
