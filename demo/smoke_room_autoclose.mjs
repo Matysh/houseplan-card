@@ -135,17 +135,18 @@ const out = await page.evaluate(async () => {
     && card._path.length === 4
     && currentChain().length === 3;
 
-  // #173: a proper X is a derived graph node. The two bounded faces are
-  // offered, while the terminal draft remains the only persisted mutation.
+  // #874: crossing the parent's boundary completes a two-part Split at the
+  // third click. Complementary graph faces are one decision, not two nested
+  // rooms. The old fourth synthetic click bypassed the already-open modal.
   await reset();
   await click(500, 100);
   await click(400, 300);
   await click(700, 300);
-  await click(500, 500);
-  result.xIntersectionOffersFacesWithoutPartialRooms = card._roomDialog
-    && card._wallFaceBatch?.candidates.length === 2
-    && card._path.length === 4
-    && currentChain().length === 3
+  result.boundaryIntersectionOffersOneParentSplit = card._roomDialog
+    && card._wallFaceBatch?.candidates.length === 1
+    && card._wallFaceBatch.candidates[0].split?.roomId === 'existing'
+    && card._path.length === 3
+    && currentChain().length === 2
     && card._curSpaceCfg.rooms.length === 1;
 
   return result;

@@ -16,6 +16,7 @@ export type WallFaceRoomClassification =
   | { kind: 'split'; split: WallFaceRoomSplit };
 
 interface RoomOutline { id: string; poly: number[][] }
+interface FaceCarrier { id: string; a: readonly number[]; b: readonly number[] }
 const geometry = (ring: number[][]): Geom => [ring.map(p => [p[0], p[1]] as [number, number])];
 const multiArea = (polys: number[][][][]): number => polys.reduce((total, rings) => (
   total + polygonArea(rings[0]) - rings.slice(1).reduce((sum, ring) => sum + polygonArea(ring), 0)
@@ -154,4 +155,13 @@ export function classifyWallFaceCandidates<T extends WallGraphFace>(
     });
   }
   return [...plain, ...[...splits].filter(([id]) => !conflicts.has(id)).map(([, face]) => face)];
+}
+
+/** Acceptance consumes only carriers on an accepted face, not remote old debt. */
+export function selectWallFacePromotionIds(
+  rings: readonly number[][][], carriers: readonly FaceCarrier[], epsilon: number,
+): string[] {
+  return carriers.filter(carrier => rings.some(ring => sharesSpan(
+    ring, [[...carrier.a], [...carrier.b]], epsilon,
+  ))).map(carrier => carrier.id);
 }

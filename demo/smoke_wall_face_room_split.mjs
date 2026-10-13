@@ -24,7 +24,8 @@ function seed({ added = false, duplicate = false, oldCm = 25, newCm = 15, openin
   const config = commitWallSegmentModel({ settings: {}, markers: [{ id: 'virtual-parent', binding: 'virtual', room_id: 'parent',
     name: 'Synthetic marker', space: 'closure', x: -.5, y: -2 }], spaces: [{
     id: 'closure', title: 'Closure', cell_cm: 1.5, view_box: [-3.2, -3, 4.8, 4.5],
-    rooms, walls, partitions: added ? [old, fresh] : [old],
+    rooms, walls, partitions: [...added ? [old, fresh] : [old],
+      { id: 'unrelated-coincident', a: [-2.95, -2.2], b: [-2.95, -1.8], cm: 30 }],
     openings: opening ? [{ id: 'retained-opening', type: 'window', x: openingX,
       y: old.a[1], length: .1, angle: 0,
       host: { kind: 'partition', id: old.id, t: (old.a[0] - openingX) / (old.a[0] - old.b[0]) },
@@ -154,6 +155,8 @@ await scenario('Native reported drawing and Undo Redo', seed(), async page => {
     originalCarrier25cm: space.wall_segments.some(w => covers(w, fixture.oldWall.a, fixture.oldWall.b) && w.cm === 25),
     newCut15cm: space.wall_segments.some(w => Math.abs(w.a[0] - .125) < 1e-8 && Math.abs(w.b[0] - .125) < 1e-8 && w.cm === 15),
     residualCarrierRetained: (space.partitions || []).some(w => w.id === 'old-carrier' && w.cm === 25),
+    unrelatedCarrierRetained: equal(space.partitions.find(w => w.id === 'unrelated-coincident'),
+      before.config.spaces[0].partitions.find(w => w.id === 'unrelated-coincident')),
     savedOnceAndAtomicHistory: after.server.writes === before.server.writes + 1 && after.history === before.history + 1,
     canonicalIdsValid: validIds(space), dialogClosed: !after.dialog && !after.batch,
     persistedGeometry: equal(geometry(after.server.saved), geometry(after.config)),

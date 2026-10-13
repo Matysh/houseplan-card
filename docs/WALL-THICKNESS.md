@@ -863,6 +863,8 @@ rollback path. A user can explicitly click the face again for a fresh proposal.
 Original room profiles, including 0 cm, win on inherited spans; each newly
 promoted shared cut keeps its own partition's thickness. Residual lineage and
 the backend's existing forbidden opening-host transitions remain unchanged.
+Reconciliation is scoped to carriers sharing a positive-length span with an
+accepted face; unrelated legacy coincidence is not a room-creation cleanup.
 
 **Finishing a chain (#294, #477).** Changing Plan tool, editor or floor, `Esc`,
 the tray's Reset, route/hash departure and a room-face batch whose every face

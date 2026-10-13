@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { classifyWallFaceRoom, classifyWallFaceCandidates } from '../test-build/wall-face-room-split.js';
+import { classifyWallFaceRoom, classifyWallFaceCandidates, selectWallFacePromotionIds } from '../test-build/wall-face-room-split.js';
 import { polygonArea } from '../test-build/logic.js';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 import { setWallThickness } from '../test-build/wall-thickness.js';
@@ -102,4 +102,15 @@ test('#874 complementary equal parts deduplicate despite collinear graph subdivi
   const a = classifyWallFaceCandidates([left, right], [parent], epsilon);
   assert.equal(a.length, 1);
   assert.equal(a[0].area, 50);
+});
+
+test('#874 promotion scopes full/partial carriers, ignoring remote spans and point-only touches', () => {
+  const carriers = [
+    { id: 'full', a: [0, -2], b: [0, 12] },
+    { id: 'partial', a: [0, 2], b: [0, 4] },
+    { id: 'remote', a: [10, 0], b: [10, 10] },
+    { id: 'point-only', a: [0, -2], b: [0, 0] },
+    { id: 'non-collinear', a: [0, 0], b: [1, 1] },
+  ];
+  assert.deepEqual(selectWallFacePromotionIds([rectangle(0, 0, 3, 10)], carriers, epsilon), ['full', 'partial']);
 });

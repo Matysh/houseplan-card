@@ -283,7 +283,7 @@ import { gridCellFieldValue, gridVisualUnits, newSpaceCellCm } from './grid-scal
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 import { reconcileCoincidentPartitions } from './coincident-partitions';
 import { selectWallFaceLineage, settleWallFaceLineage } from './wall-face-lineage';
-import { classifyWallFaceCandidates } from './wall-face-room-split';
+import { classifyWallFaceCandidates, selectWallFacePromotionIds } from './wall-face-room-split';
 import { finalizeWallChainSpace } from './writer-fixed-point';
 import {
   captureMarkerRoomReferences, restoreMarkerRoomReferences,
@@ -6804,6 +6804,7 @@ public _applyWallFaceBatch(): void {
           gridPitch: this.host._gridPitch,
           coordScale: NORM_W,
           allowCoincidentPartitions: true, // #478 room acceptance consumes its wall carriers.
+          partitionIds: selectWallFacePromotionIds(acceptedRings, model.partitions, epsilon),
         },
       );
       if (reconciled.walls.length) sp.walls = reconciled.walls;

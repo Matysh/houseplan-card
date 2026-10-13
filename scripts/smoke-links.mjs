@@ -30,7 +30,7 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
-    symbols: ['classifyWallFaceRoom', 'classifyWallFaceCandidates', '_classifyWallFaces',
+    symbols: ['classifyWallFaceRoom', 'classifyWallFaceCandidates', 'selectWallFacePromotionIds', '_classifyWallFaces',
       '_dismissWallFaceBatch', 'sourceIntervals'],
     files: ['src/wall-face-room-split.ts'],
     smokes: ['smoke_wall_face_room_split.mjs', 'smoke_wall_face_lineage.mjs', 'smoke_wall_face_overlap.mjs'],

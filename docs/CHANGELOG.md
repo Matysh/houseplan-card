@@ -3,7 +3,7 @@
 ## Unreleased
 
 - Closing a room through an existing partition now splits its parent safely,
-  preserving neighbouring rooms and wall thickness. A failed save or config
+  preserving neighbouring rooms, unrelated walls and wall thickness. A failed save or config
   reload no longer leaves a room-creation dialog with an inert Save button
   ([#874](https://github.com/Matysh/houseplan-card/issues/874)).
 

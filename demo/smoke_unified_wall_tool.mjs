@@ -121,8 +121,9 @@ const result = await page.evaluate(async () => {
     card._spaceModel = originalSpaceModel;
   }
   out.nullModelRollsBackWholeRoomMutation = JSON.stringify(space()) === geometryBeforeNullModel
-    && space().rooms.length === 0 && card._path.length === 5
-    && card._activeWallChainPartitionIds.length === 4;
+    && space().rooms.length === 0 && card._path.length === 0
+    && card._activeWallChainPartitionIds.length === 0
+    && !card._roomDialog && !card._wallFaceBatch;
 
   await reset();
   card._path = [[100, 100], [300, 100], [300, 300], [100, 300], [100, 100]];

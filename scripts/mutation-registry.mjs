@@ -77,6 +77,15 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'wall-face-acceptance-sweeps-unrelated-carriers',
+    guard: compiledNodeSmoke('smoke_wall_face_room_split'),
+    because: '#874 AC5: native acceptance must preserve an unrelated coincident legacy partition on another parent edge, not sweep it as Optimize debt.',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts',
+      find: '          partitionIds: selectWallFacePromotionIds(acceptedRings, model.partitions, epsilon),\n',
+      replace: '',
+    }],
+  },
+  {
     id: 'wall-face-composite-falls-back-to-island',
     guard: compiledNodeSmoke('smoke_wall_face_room_split'),
     because: '#874 AC1/AC2: native composite closure must replace the parent outline, not add a third owner.',
