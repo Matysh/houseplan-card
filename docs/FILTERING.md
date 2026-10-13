@@ -109,6 +109,17 @@ the old behaviour until an editing client materialises it.
   dialog still permits metadata edits, Open in HA and Delete. Opening,
   searching, filtering and Find are read-only.
 - Room LQI counts hidden devices (owner's decision).
+- Saving a newly created, uniquely HA-Area-bound room silently acknowledges
+  only the already-present automatic devices first placed by that Save
+  (including automatic light groups). The lazy editor's
+  `room-device-discovery.ts` freezes that finite set before discovery runs
+  and sends its `known_devices` baseline in the same accepted config write
+  as the room. Cancel, Undo before sending and refused writes acknowledge
+  nothing; a layout-only failure does not undo an accepted config. Existing
+  `new_device_ids`, including one for the same ID, are never cleared.
+  Later arrivals, even while Save is pending, use ordinary new-device discovery;
+  changing an existing room's Area and actual device relocation get no exemption.
+  This adds no persisted field or standing Area exemption.
 - A direct device/entity marker without an explicit House Plan room follows an
   authoritative HA Area change. A saved drag position is discarded only after
   the target Area resolves to exactly one room; explicit placement, virtual

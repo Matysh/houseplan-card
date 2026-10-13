@@ -30,6 +30,14 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['RoomDeviceDiscovery', '_syncNewDevices'],
+    files: ['src/room-device-discovery.ts'],
+    smokes: ['smoke_room_device_discovery.mjs', 'smoke_new_device.mjs',
+      'smoke_area_relocation.mjs', 'smoke_area_relocation_safety.mjs'],
+    because: '#879: native room Save and durable config prove the capture/discovery/writer wiring; '
+      + 'late discovery and real HA Area relocation must keep their original attention behaviour.',
+  },
+  {
     symbols: ['classifyWallFaceRoom', 'classifyWallFaceCandidates', 'selectWallFacePromotionIds', '_classifyWallFaces',
       '_dismissWallFaceBatch', 'sourceIntervals'],
     files: ['src/wall-face-room-split.ts'],

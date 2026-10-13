@@ -334,6 +334,12 @@ base icon is the first matching icon rule (`"<name> <model>"`) → entity
 `mdi:lock`. Duplicate `name|area` pairs are numbered; HA light groups and Z2M
 group devices become `lg_<entity>` items that fold their lamps. Hiding is
 `FILTERING.md`.
+The lazy editor owns `RoomDeviceDiscovery` (#879), a finite Save-scoped
+placement ledger. Both room-creation paths capture eligible first placements
+before new-device detection. The serialized writer includes their existing
+`known_devices` baseline atomically with the room, acknowledging live settings
+only after success. It never clears historical attention or exempts later
+arrivals; room identity/unique Area validation drops stale intents.
 
 ## Live data
 

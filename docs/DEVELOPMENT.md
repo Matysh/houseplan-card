@@ -1,5 +1,18 @@
 # Development and deployment
 
+## Intentional room placement and discovery (#879)
+
+`room-device-discovery.test.mjs` covers finite capture, ambiguous/stale rooms,
+old attention IDs, rejected and delayed actual serialized writes.
+`smoke_room_device_discovery.mjs` observes native ordinary/batch/multi-room
+Save, device dots and catalog rows, atomic config payloads, cancellation,
+pre-debounce Undo, server rejection/retry, later discovery while Save is
+pending, reload and a read-only second card despite layout-write failure.
+The Undo timing injection is a labelled negative probe, not native-input evidence.
+Compile `tsconfig.test.json` and run `scripts/fix-test-build.mjs` before the
+smoke. Existing new-device and Area-relocation smokes are companion witnesses.
+The mutation registry guards runtime capture and atomic-payload wiring.
+
 ## Composite room closure (#874)
 
 `wall-face-room-split.test.mjs` preserves the reported floating-point geometry

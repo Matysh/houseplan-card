@@ -36,8 +36,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 50 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 58 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 41 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 139 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **296 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 140 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **297 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -321,6 +321,13 @@ config-update scenario; ordinary success paths use native drawing/Save/Undo.
 The carrier-scope witness places unrelated coincident legacy debt on another
 parent edge and checks that the runtime does not silently Optimize it away.
 
+`room-placement-capture-disconnected` (#879) crosses native room Save,
+the lazy editor and Lit registry rebuild before new-device detection. Pure
+placement-ledger tests cannot prove either room-creation path actually supplies
+its finite placement intent; the browser observes the device dot, catalog and
+durable baseline. Atomic-payload wiring is guarded separately by a Node test
+executing the actual serialized editor writer.
+
 `floor-cache-counter-skips-evicting-miss` (#769) needs the real card cycling floors
 through its tabs with a full union pool: only the rendered floor switch reaches the
 miss branch that evicts, and the witness compares the build counter with the whole
@@ -436,6 +443,7 @@ owner, with no settled copy surviving the next presented frame.
 - `resize-bodies-rekey-format-diverges`
 - `resize-union-kept-after-reset`
 - `room-accept-leaves-coincident-partitions`
+- `room-placement-capture-disconnected`
 - `room-gear-second-touch-keeps-drag`
 - `room-settings-click-does-not-open`
 - `room-tooltip-off-skips-pointer-modality`

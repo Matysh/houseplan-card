@@ -77,6 +77,25 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'room-placement-capture-disconnected',
+    guard: compiledNodeSmoke('smoke_room_device_discovery'),
+    because: '#879 AC1: both real room Save paths must capture first placements before new-device detection.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: 'roomDeviceDiscovery.capture(createdRooms, previousDevices, this._devices, this._serverCfg);',
+      replace: 'roomDeviceDiscovery.capture([], previousDevices, this._devices, this._serverCfg);',
+    }],
+  },
+  {
+    id: 'room-placement-baseline-not-sent',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#879 AC1/3/4" test/room-device-discovery.test.mjs',
+    because: '#879 AC1/AC4: the durable baseline must be in the same accepted config as the room, not only in local state.',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts',
+      find: 'await this.host._sendConfigCandidate(discoveryWrite?.config || candidate);',
+      replace: 'await this.host._sendConfigCandidate(candidate);',
+    }],
+  },
+  {
     id: 'wall-face-acceptance-sweeps-unrelated-carriers',
     guard: compiledNodeSmoke('smoke_wall_face_room_split'),
     because: '#874 AC5: native acceptance must preserve an unrelated coincident legacy partition on another parent edge, not sweep it as Optimize debt.',

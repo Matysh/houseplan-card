@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Devices automatically placed in a newly created HA-bound room no longer
+  get a new-device red dot. Existing marks and later discoveries are unchanged
+  and a cancelled or rejected room save acknowledges nothing
+  ([#879](https://github.com/Matysh/houseplan-card/issues/879)).
+
 - Closing a room through an existing partition now splits its parent safely,
   preserving neighbouring rooms, unrelated walls and wall thickness. A failed save or config
   reload no longer leaves a room-creation dialog with an inert Save button

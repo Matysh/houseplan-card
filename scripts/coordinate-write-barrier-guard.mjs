@@ -41,9 +41,17 @@ export function checkCoordinateWriteBarriers(root = defaultRoot) {
     /const canonicalCandidate = canonicalizeConfigGeometry\(candidate\);[\s\S]*config: canonicalCandidate,[\s\S]*expected_rev: this\._cfgRev/,
     'frontend config/set', 600,
   );
-  if (occurrences(frontend, '._sendConfigCandidate(candidate)').length !== 2) {
+  // #879 adds lifecycle metadata AFTER staging the canonical geometry.
+  // Inventory this exact wrapper without accepting a new unregistered transport.
+  const roomWrites = occurrences(frontend, '._sendConfigCandidate(discoveryWrite?.config || candidate)');
+  const ordinaryWrites = occurrences(frontend, '._sendConfigCandidate(candidate)');
+  if (ordinaryWrites.length + roomWrites.length !== 2
+      || occurrences(frontend, '._sendConfigCandidate(').length !== 2) {
     errors.push('frontend canonical config transport callers changed');
   }
+  for (const index of roomWrites) requireWindow(errors, frontend, index,
+    /this\._adoption\.stageConfigCandidate\(candidate\);\s*const discoveryWrite = this\.roomDeviceDiscovery\?\.prepare\(candidate\);/,
+    'frontend room discovery config', 300);
 
   const positionWrites = occurrences(frontend, "type: 'houseplan/layout/update'");
   if (positionWrites.length !== 3) errors.push(`frontend position writer inventory: ${positionWrites.length}`);

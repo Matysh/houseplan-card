@@ -98,6 +98,7 @@ import {
   resolvedLightStats, removedPlanBindings, isRemovedPlanEntity, resolveIcon, type AreaClimate,
 } from './devices';
 import { type DeviceInboxCategory, type DeviceInboxRow } from './device-inbox';
+import type { CreatedAreaRoom } from './room-device-discovery';
 import {
   formatToggleConfirmation, projectedTapAction, resolveToggleIntent, sameToggleOperationTargets,
   toggleIntentName, toggleOperation, unavailableToggleTargetNames, type ResolvedToggleIntent,
@@ -4959,7 +4960,7 @@ export class HouseplanCard extends LitElement {
 
   // ================= devices from the registries =================
 
-  private _maybeRebuildDevices(): void {
+  private _maybeRebuildDevices(createdRooms?: readonly CreatedAreaRoom[]): void {
     const h = this.hass;
     if (!h?.devices || !h?.entities || !h?.areas) return;
     const registry = this._haRegistry;
@@ -4968,6 +4969,7 @@ export class HouseplanCard extends LitElement {
       (this._norm ? 'n' : 'l') + ':' + langOf(h, this._config?.language);
     if (sig === this._regSignature && this._devices.length) return;
     this._regSignature = sig;
+    const previousDevices = this._devices;
     const before = new Map(this._devices.map((d) => [d.id, d.bindingStatus?.kind || 'active']));
     this._devices = buildDevices({
       hass: h,
@@ -5017,6 +5019,8 @@ export class HouseplanCard extends LitElement {
       }
     }
     this._defPos = this._defaultPositions();
+    if (createdRooms && this._serverCfg && this._canEdit)
+      this._editorRuntime?.roomDeviceDiscovery.capture(createdRooms, previousDevices, this._devices, this._serverCfg);
     this._syncNewDevices();
     this._seedHiddenDevices();
     if (areaRelocations) this._syncAreaRelocations(areaRelocations);
@@ -5097,7 +5101,8 @@ export class HouseplanCard extends LitElement {
     if (key === this._newSyncKey) return; // same registry picture — nothing to do
     this._newSyncKey = key;
     const st: any = this._settings;
-    const { fresh, known } = diffNewDevices(autoIds, st.known_devices);
+    const expected = this._editorRuntime?.roomDeviceDiscovery.pendingIds(this._serverCfg);
+    const { fresh, known } = diffNewDevices(autoIds.filter(id => !expected?.has(id)), st.known_devices);
     if (!Array.isArray(st.known_devices) || fresh.length) {
       const newIds = [...new Set([...(st.new_device_ids || []), ...fresh])];
       this._serverCfg = {

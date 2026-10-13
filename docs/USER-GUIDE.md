@@ -1040,6 +1040,10 @@ House Plan reads Home Assistant device, entity and area registries. A device in
 a bound HA area receives an automatic marker. Service-only records, bridges and
 other non-spatial records are filtered; a light group may replace its members.
 Newly discovered devices get a red dot until first opened in Device.
+Devices automatically placed when you save a newly created room bound to an
+HA area are the exception: a successful room save acknowledges them immediately.
+This also applies to splitting a room or creating several rooms from walls.
+Existing red dots are kept. Devices arriving in HA later still get a red dot.
 
 When the Area of a direct HA device or a separately placed entity changes,
 House Plan moves its automatic marker to the room bound to the new Area. A
@@ -1052,7 +1056,8 @@ Service and non-spatial integrations such as HACS, system records, bridges,
 scenes and some aggregates are filtered when the list is first materialised.
 Room light members may be replaced by one group marker. Newly discovered
 devices receive a red attention dot until their marker settings are first
-opened. The compact marker size is stored directly in its base geometry, so
+opened, except for the intentional room-creation placement described above.
+The compact marker size is stored directly in its base geometry, so
 its saved point remains the centre and the action target does not shrink. In
 Value mode the inner number capsule has true semicircular ends and even inset
 inside the outer shell.

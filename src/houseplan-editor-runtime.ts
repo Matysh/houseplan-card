@@ -154,6 +154,7 @@ import {
 } from './device-toggle';
 import { toggleEntityWriteFields } from './marker-toggle-entity';
 import { removeMarkerAreaSnapshots } from './device-area-relocation';
+import { RoomDeviceDiscovery, type CreatedAreaRoom } from './room-device-discovery';
 import { type VirtualLightSnapshot } from './virtual-light-state';
 import type {
   OpeningCfg, PartitionOpeningHost, RoomCfg, PartitionCfg, WallColumnCfg, SpaceModel, PdfRef,
@@ -631,7 +632,7 @@ export interface HouseplanEditorHostPort {
   _markerPreviewMemo: { key: string; device: DevItem | null; } | null;
   _markers: Marker[];
   _markup: boolean;
-  _maybeRebuildDevices: () => void;
+  _maybeRebuildDevices: (createdRooms?: readonly CreatedAreaRoom[]) => void;
   _mergeDialog: { aId: string; bId: string; poly: number[][]; pick: "a" | "b"; } | null;
   _mergeSel: string | null;
   _mode: "view" | "plan" | "devices" | "decor";
@@ -824,6 +825,7 @@ export const EDITOR_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 export { EDITOR_LANGUAGE_RUNTIME }; // #627: see src/i18n/editor-language.ts
 
 export class HouseplanEditorRuntime {
+  public readonly roomDeviceDiscovery = new RoomDeviceDiscovery();
   public readonly languageRuntime = EDITOR_LANGUAGE_RUNTIME;
   public readonly stairs = new StairEditorRuntime(this.host as unknown as StairEditorHostPort);
   private _junctionBaselineCache = new WeakMap<object, {
@@ -1562,9 +1564,15 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null): Pro
       // A real coordinate change still adopts the exact object sent below;
       // willUpdate owns the corresponding geometry-epoch bump.
       this.host._adoption.stageConfigCandidate(candidate);
+      const discoveryWrite = this.roomDeviceDiscovery?.prepare(candidate);
       try {
-        await this.host._sendConfigCandidate(candidate);
+        await this.host._sendConfigCandidate(discoveryWrite?.config || candidate);
       } catch (error) {
+        if (discoveryWrite?.placements.length) {
+          this.roomDeviceDiscovery.reject(discoveryWrite);
+          this.host._newSyncKey = '';
+          this.host._regSignature = '';
+        }
         const rolledBack = this._rollbackRejectedPhysicalWrites(strictEntries);
         if (!rolledBack) throw error;
         // HA normally rejects with an Error-like object, but integrations and
@@ -1576,6 +1584,7 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null): Pro
         failure.physicalGeometryRolledBack = true;
         throw failure;
       }
+      if (discoveryWrite) this.roomDeviceDiscovery.accept(discoveryWrite, this.host._serverCfg);
       for (const [spaceId, accepted] of strictEntries) {
         if (this.host._pendingPhysicalWrites.get(spaceId)?.fingerprint === accepted.fingerprint)
           this.host._pendingPhysicalWrites.delete(spaceId);
@@ -6802,7 +6811,9 @@ public _applyWallFaceBatch(): void {
     this.host._nameSel = '';
     this.host._areaSel = '';
     this.host._regSignature = '';
-    this.host._maybeRebuildDevices();
+    this.host._maybeRebuildDevices(newRooms.map(({ room }) => ({
+      space: this.host._space, roomId: room.id, area: room.area,
+    })));
     // Match the ordinary room-save contract: newly area-bound devices are
     // auto-added and their initial positions are pinned immediately, while a
     // clean split leaves the surviving parent's existing layout untouched.
@@ -6980,7 +6991,9 @@ public _commitRoom(): void {
     this.host._nameSel = '';
     this.host._roomDialog = false;
     this.host._regSignature = '';
-    this.host._maybeRebuildDevices();
+    this.host._maybeRebuildDevices(committed ? [{
+      space: this.host._space, roomId: newRoom.id, area: newRoom.area,
+    }] : undefined);
     if (!committed) return;
     // auto-add the area's device icons + PIN their positions in the layout,
     // so that icons do not get reshuffled when the order in the HA registry changes.

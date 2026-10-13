@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 879,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "v1.80.1 already auto-places devices when a new room is bound to an HA Area, but incorrectly treats that intentional placement as new-device discovery. This changes only the existing attention marker, without new configuration fields or placement behaviour.",
+  "summary": {
+    "ru": "Убрана красная отметка у устройств, автоматически размещённых в новой HA-привязанной комнате.",
+    "en": "Removed the new-device red dot from devices automatically placed in a newly created HA-bound room."
+  }
+}
