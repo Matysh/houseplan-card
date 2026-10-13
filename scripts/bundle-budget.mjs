@@ -709,7 +709,13 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_938;
 // of byte-level geometry rewrites. Restore readable strict correspondence and
 // carrier checks, and materialize genuine splits only in the owner closure.
 // The 2-KB band, initial-View ceilings, absolute budgets and perf guards stay put.
-export const LAZY_EDITOR_GZIP_CEILING = 254_649;
+// #842: the save-preservation guard (`geometry-cleanup.ts`, the deferred-write
+// restore in five editor writers, F57) on top of #874 measures 256 476 B gzip;
+// the old ceiling + band left 173 B, below the 500-B noise guard (as in #798).
+// Recentred by the same rule, fact − 1 000: 1 000 B above, 1 000 B to the
+// bottom of the band. The band, initial-View ceilings and absolute budgets stay
+// put; the issue records the measurement.
+export const LAZY_EDITOR_GZIP_CEILING = 255_476;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
