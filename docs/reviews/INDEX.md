@@ -12,6 +12,7 @@
 | #882 | [CODE-REVIEW-882-r1.md](CODE-REVIEW-882-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #879 | [SPEC-REVIEW-879-r1.md](SPEC-REVIEW-879-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #879 | [CODE-REVIEW-879-r1.md](CODE-REVIEW-879-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #878 | [CODE-REVIEW-878-r1.md](CODE-REVIEW-878-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #875 | [SPEC-REVIEW-875-r1.md](SPEC-REVIEW-875-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #874 | [SPEC-REVIEW-874-r1.md](SPEC-REVIEW-874-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #874 | [CODE-REVIEW-874-r1.md](CODE-REVIEW-874-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
