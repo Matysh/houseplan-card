@@ -46,7 +46,9 @@ are distinct from required real-GPU owner acceptance.
 The empty authoritative server screen has an Import backup entry (#875) next
 to Add space. It uses the existing JSON preview/confirmation/apply flow without
 a temporary space; transient operation ownership and writer/kiosk rechecks
-protect cancelled, superseded and disconnected imports. No storage change.
+protect cancelled, superseded and disconnected imports. Setup mutual exclusion
+is scoped to an empty plan; populated Add space tab/menu retain their existing
+behaviour during a settings import. No storage change.
 
 Composite room closure (#874) uses a proven parent-minus-face Split and a
 space/geometry proposal stamp; rejected or reloaded drafts cannot retain an

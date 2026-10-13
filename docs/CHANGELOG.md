@@ -31,7 +31,8 @@
   ([#879](https://github.com/Matysh/houseplan-card/issues/879)).
 - Import a House Plan JSON backup directly from the empty screen next to
   Add space, without creating a temporary floor. Cancel and late preview
-  responses no longer interfere with a newly opened import
+  responses no longer interfere with a newly opened import. Creating a floor
+  on a populated plan is not blocked by settings import
   ([#875](https://github.com/Matysh/houseplan-card/issues/875)).
 
 - A light group (a Home Assistant light group or a Zigbee2MQTT group) without

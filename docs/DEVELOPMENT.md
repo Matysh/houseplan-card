@@ -61,6 +61,22 @@ input before awaiting. The operation epoch and focus callback are transient;
 close never cancels an Apply transaction already sent to the server. Compile
 the test build for `backup-import-intent.test.mjs`; the existing lazy-editor
 and backup-transfer smokes remain required neighbours. No model migration.
+The r1/M1 neighbour keeps a settings preview pending on a populated plan and
+dispatches both real Add space DOM handlers (tab and narrow header menu),
+requiring a visible create form, no writes on Cancel and the surviving import.
+This is a labelled background-handler probe, not native input through a modal
+scrim. The opposite empty-screen probe retains mutual exclusion; the former
+unscoped guard fails the populated tab assertion before the fix.
+After rebasing onto dev `75aafe0f`, source builds measure initial View
+305216 -> 306032 B gzip (+816), lazy editor 258523 -> 258740 B gzip (+217).
+The initial rolling ceiling is recentred to fact minus 1000 (305032 B),
+retaining the 2000 B band, absolute 320000 B wall and low-headroom warning.
+The raw bundle baseline records the measured 2819806 B; coupling baselines
+and lazy budgets are unchanged. This is accounting, not a performance gain.
+The owner separately approved the runtime line ceiling 12030 -> 12107 after
+the rebase (dev 12074 + 33 existing #875 integration lines). The M1 fix itself
+adds no runtime lines. The 50-line core band is unchanged; no unrelated import
+refactor is included solely to satisfy the combined post-rebase ceiling.
 
 ## Composite room closure (#874)
 

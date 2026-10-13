@@ -8636,6 +8636,15 @@ const MUTANT_DEFINITIONS = [
       replace: 'public async _applyBackupImport(): Promise<void> {\n    const d = this.host._backupImportDialog;\n    const request = this._backupImportRequest;\n    if (!this._ownsBackupImport(request) || !this.host._canImportBackup\n      || !d || !d.token || !d.preview) return;' }],
   },
   {
+    id: 'backup-import-blocks-populated-space-create',
+    guard: 'node demo/smoke_empty_backup_import.mjs',
+    because: '#875 r1/M1: actual tab/menu DOM handlers must still paint a create hp-dialog '
+      + 'on a populated plan with a pending settings import; this crosses lazy runtime and Lit dialog lifecycle.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: "if (mode === 'create' && this._model.length === 0 && (this._backupImportIntent.loading || this._backupImportDialog)) return;",
+      replace: "if (mode === 'create' && (this._backupImportIntent.loading || this._backupImportDialog)) return;" }],
+  },
+  {
     id: 'passage-visible-geometry-door-fallback',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test test/opening-symbol.test.mjs',

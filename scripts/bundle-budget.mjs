@@ -395,7 +395,10 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
  * не получили нового кода. Центр оставляет 630 Б сверху и 1 370 Б до нижней
  * границы полосы; общий бюджет 301 066 Б не меняется.
  */
-export const INITIAL_VIEW_GZIP_CEILING = 303_604;
+// #875 r2 on dev 75aafe0f: the empty-screen entry/ownership and four core
+// labels add 816 B gzip (305216 -> 306032); editor code stays lazy. Recentre
+// at fact - 1000 after crossing the old band; keep its 2000 B and 320000 B wall.
+export const INITIAL_VIEW_GZIP_CEILING = 305_032;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не

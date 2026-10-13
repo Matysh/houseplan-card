@@ -64,7 +64,10 @@ const CAPS = {
   // 2026-09-24, #642: диалог «Оптимизировать планы» (превью, запуск,
   // диагностика preflight, разметка) уехал в src/optimize-plans-dialog.ts за
   // узкий порт из 18 членов — 362 строки. Потолок опущен на выигрыш.
-  'src/houseplan-editor-runtime.ts': 12030,
+  // #875 r2, owner-approved after rebase: dev 75aafe0f has 12074 lines;
+  // the existing backup ownership integration adds 33 (12107 total).
+  // The M1 scope fix adds no runtime lines; preserve CORE_BAND = 50.
+  'src/houseplan-editor-runtime.ts': 12107,
 };
 
 /**

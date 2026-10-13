@@ -9721,14 +9721,14 @@ export class HouseplanCard extends LitElement {
   }
 
   private _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
-    if (mode === 'create' && (this._backupImportIntent.loading || this._backupImportDialog)) return;
+    if (mode === 'create' && this._model.length === 0 && (this._backupImportIntent.loading || this._backupImportDialog)) return;
     if (this._spaceDialogUsesOnboardingRuntime(mode)) {
       if (this._onboardingRuntime) {
         this._onboardingRuntime._openSpaceDialog(mode, spaceId);
         return;
       }
       void this._ensureOnboardingRuntime().then((ready) => {
-        if (ready && !(mode === 'create' && (this._backupImportIntent.loading || this._backupImportDialog))) {
+        if (ready && !(mode === 'create' && this._model.length === 0 && (this._backupImportIntent.loading || this._backupImportDialog))) {
           this._spaceRuntimeOrThrow()._openSpaceDialog(mode, spaceId);
         }
       });

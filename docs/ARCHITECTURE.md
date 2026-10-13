@@ -451,8 +451,10 @@ instance-local operation through preview/revalidate/apply; close, replacement,
 route departure and disconnect revoke late UI results. Writer/kiosk checks do
 not require an active space and are repeated after loading and before upload
 and Apply. The empty branch renders the existing backup dialog after the
-editor runtime has installed its styles. Onboarding and backup import never
-open simultaneously. Existing server ACL, CAS and paired writes are unchanged.
+editor runtime has installed its styles. On the empty screen, onboarding and
+backup import never open simultaneously; this setup fence does not block the
+existing Add space tab/menu on a populated plan during settings import.
+Existing server ACL, CAS and paired writes are unchanged.
 
 `.storage/houseplan.config` holds `{model_version, spaces[], markers[], settings}`.
 A space carries plan-image fields, `rooms[]` (with ordered `wall_ids`),

@@ -36,6 +36,8 @@ async function start(options = {}) {
       cfgRev: 20, layRev: 20, writer: options.writer !== false, log: [], tokens: {}, delay: '',
       release: null, conflict: false, applyWait: false, releaseApply: null, revalidateWait: false, releaseRevalidate: null };
     const hass = window.__mkHass();
+    if (options.populated) state.config.spaces = [{ id: 'existing', title: 'Existing floor', rooms: [],
+      wall_segments: [], partitions: [], wall_columns: [], openings: [], decor: [] }];
     const original = hass.callWS;
     hass.floors = {}; hass.areas = {};
     hass.user = { id: 'empty-writer', is_admin: options.admin !== false,
@@ -50,6 +52,11 @@ async function start(options = {}) {
         return { config: structuredClone(state.config), rev: state.cfgRev, can_write: state.writer };
       }
       if (message.type === 'houseplan/layout/get') return { layout: state.layout, rev: state.layRev };
+      if (options.populated && message.type === 'houseplan/config/set') {
+        // Existing settings opening may flush its normal defaults before preview.
+        state.config = structuredClone(message.config);
+        return { rev: ++state.cfgRev };
+      }
       if (message.type === 'houseplan/import/revalidate') {
         if (state.revalidateWait) await new Promise(resolve => { state.releaseRevalidate = resolve; });
         return { preview: state.tokens[message.token].preview, expected_config_rev: ++state.cfgRev,
@@ -122,7 +129,7 @@ async function start(options = {}) {
   }
   await page.waitForFunction(() => window.__card?._loadOk);
   // Existing auto-onboarding stays intact; close it exactly as the user does.
-  if (!options.kiosk && options.writer !== false && !options.fixed) {
+  if (!options.populated && !options.kiosk && options.writer !== false && !options.fixed) {
     await page.locator('hp-dialog').waitFor();
     await page.locator('hp-dialog .btn[data-hp="dialog-cancel"]').click();
     await page.locator('hp-dialog').waitFor({ state: 'detached' });
@@ -151,6 +158,46 @@ async function cancel(page) {
 }
 
 try {
+  // r1/M1: a delayed settings import must not change existing Add space handlers.
+  const warm = await start({ populated: true });
+  await warm.page.locator('[data-hp="settings"]').click();
+  await warm.page.evaluate(() => { window.emptyImportFixture.delay = 'settings-pending.json'; });
+  await warm.page.locator('.backupupload input[type="file"]').setInputFiles(file(fixture(), 'settings-pending.json'));
+  await warm.page.waitForFunction(() => !!window.emptyImportFixture.release, null, { timeout: 5000 })
+    .catch(async error => { console.log(await warm.page.evaluate(() => ({
+      loaded: window.__card._loadOk, allowed: window.__card._canImportBackup,
+      dialog: window.__card._backupImportDialog, log: window.emptyImportFixture.log,
+    }))); throw error; });
+  await dialog(warm.page).waitFor();
+  const writesBeforeAdd = await warm.page.evaluate(() => window.emptyImportFixture.log
+    .filter(m => m.type === 'houseplan/config/set').length);
+  for (const entry of ['tab', 'menu']) {
+    if (entry === 'menu') {
+      await warm.page.setViewportSize({ width: 360, height: 760 });
+      await warm.page.locator('[data-hp="header-menu"]').evaluate(el => el.click());
+    }
+    const button = warm.page.locator(entry === 'tab' ? '[data-hp="space-add"]'
+      : '[data-hp="header-menu-item"][data-id="space-add"]');
+    // Labelled negative probe: dispatch the real DOM handler under the modal
+    // scrim, as in the review repro; this does NOT claim native background input.
+    await button.evaluate(el => el.click());
+    await warm.page.evaluate(() => window.__hpTest.settled());
+    assert.equal(await warm.page.locator('hp-dialog[data-kind="space"]').isVisible(), true,
+      `settings import must not block populated-plan Add space (${entry})`);
+    assert.equal(await warm.page.evaluate(() => window.__card._spaceDialog?.mode), 'create');
+    await warm.page.locator('hp-dialog[data-kind="space"] .btn[data-hp="dialog-cancel"]').click();
+    assert.equal(await dialog(warm.page).isVisible(), true);
+  }
+  assert.equal(await previews(warm.page), 1);
+  assert.equal(await applies(warm.page), 0);
+  assert.equal(await warm.page.evaluate(() => window.emptyImportFixture.log
+    .filter(m => m.type === 'houseplan/config/set').length), writesBeforeAdd,
+  'opening/cancelling Add space must not write the existing plan');
+  await warm.page.evaluate(() => window.emptyImportFixture.release());
+  await ready(warm.page); await cancel(warm.page);
+  assert.equal(await warm.page.evaluate(() => window.__card._serverCfg.spaces[0].id), 'existing');
+  out.populatedSettingsImportKeepsBothAddSpaceEntries = true;
+
   const cold = await start();
   out.coldViewDoesNotLoadEditor = !cold.requests.some(url => url.includes(runtime));
   assert.equal(await importButton(cold.page).count(), 1);
@@ -160,6 +207,12 @@ try {
   assert.match(out.coldFirstEnterPreview, /same.json/);
   assert.equal(await applies(cold.page), 0);
   assert.equal(await dialog(cold.page).count(), 1);
+  // Opposite boundary: the same background handler stays fenced on empty setup.
+  await cold.page.locator('[data-hp="create-space"]').evaluate(el => el.click());
+  await cold.page.evaluate(() => window.__hpTest.settled());
+  assert.equal(await cold.page.locator('hp-dialog[data-kind="space"]').count(), 0);
+  assert.equal(await dialog(cold.page).isVisible(), true);
+  out.emptySetupKeepsImportExclusive = true;
   await cancel(cold.page);
   assert.equal(await importButton(cold.page).evaluate(el => el.matches(':focus')), true);
   await choose(cold.page, fixture(), 'same.json'); await ready(cold.page); await cancel(cold.page);
