@@ -46,6 +46,11 @@ const out = await page.evaluate(async () => {
   const originalHass = card.hass;
   card.hass = {
     ...originalHass,
+    fetchWithAuth: async () => new Response(JSON.stringify({
+      token: 'token-500',
+      preview: { kind: 'full', confirmation_required: false, counts: {} },
+      expected_config_rev: server.cfgRev, expected_layout_rev: server.layRev,
+    }), { status: 200, headers: { 'content-type': 'application/json' } }),
     callWS: async (message) => {
       switch (message.type) {
         case 'houseplan/space/delete': {
@@ -133,6 +138,25 @@ const out = await page.evaluate(async () => {
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     await card.updateComplete;
   };
+  const previewBackupFromUi = async () => {
+    // #875: start through the existing settings input, not an invented dialog
+    // which has no owning import intent. The native chooser is covered by the
+    // dedicated cold-empty smoke; this witness judges post-write adoption.
+    card.renderRoot.querySelector('[data-hp="settings"]').click();
+    await card.updateComplete;
+    const input = card.renderRoot.querySelector('.backupupload input[type="file"]');
+    if (!input) throw new Error('reachable settings Import input is absent');
+    const files = new DataTransfer();
+    files.items.add(new File(['{}'], 'plan.json', { type: 'application/json' }));
+    input.files = files.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    for (let attempt = 0; attempt < 100 && !card._backupImportDialog?.preview; attempt++) {
+      await new Promise(resolve => setTimeout(resolve, 5));
+    }
+    if (!card._backupImportDialog?.preview || card._backupImportDialog.busy) {
+      throw new Error('settings Import did not reach a ready preview');
+    }
+  };
   for (const name of ['editorDelete']) {
     await reset(name);
     card._spaceDialog = spaceDialog('beta');
@@ -152,11 +176,7 @@ const out = await page.evaluate(async () => {
   verdict('optimizeUndo', { optimizeUndoClearsUndo: card._canOptimizeUndo === false && card._undoKind === null });
 
   await reset('importApply');
-  card._backupImportDialog = {
-    filename: 'plan.json', size: 1, token: 'token-500', preview: { confirmation_required: false, counts: {} },
-    expectedConfigRev: card._cfgRev, expectedLayoutRev: card._layoutRev,
-    duplicatePolicy: 'skip', confirmMissing: false, busy: false, error: '',
-  };
+  await previewBackupFromUi();
   const fixedFloor = !!card._hasFixedFloor;
   await editor._applyBackupImport();
   verdict('importApply', {
@@ -179,11 +199,7 @@ const out = await page.evaluate(async () => {
   await editor._undoPlanOptimization();
   refusedVerdict('optimizeUndo', { optimizeUndoRefusedKeepsUndoFlag: card._canOptimizeUndo === true && card._optimizeUndoBusy === false });
   await reset('importApply-refused');
-  card._backupImportDialog = {
-    filename: 'plan.json', size: 1, token: 'token-500', preview: { confirmation_required: false, counts: {} },
-    expectedConfigRev: card._cfgRev, expectedLayoutRev: card._layoutRev,
-    duplicatePolicy: 'skip', confirmMissing: false, busy: false, error: '',
-  };
+  await previewBackupFromUi();
   await editor._applyBackupImport();
   refusedVerdict('importApply', { importApplyRefusedReleasesDialog: card._backupImportDialog?.busy === false });
   assetReady = true;
