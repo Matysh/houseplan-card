@@ -135,6 +135,15 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'merge-continuation-skips-material-fetch',
+    guard: 'node --test --test-name-pattern="#882 AC1" test/merge-continuation-882.test.mjs',
+    because: '#882 AC1: after the candidate force-push the reviewed material is on no branch; '
+      + 'without a fetch by SHA merge-base fails and a green verdict dies as a silent unverified.',
+    patches: [{ file: 'scripts/workflow-continuation.mjs',
+      find: '  try { ops.fetch(p.material); } catch (error) {',
+      replace: '  try { /* mutant: material not delivered */ } catch (error) {' }],
+  },
+  {
     id: 'room-placement-capture-disconnected',
     guard: compiledNodeSmoke('smoke_room_device_discovery'),
     because: '#879 AC1: both real room Save paths must capture first placements before new-device detection.',

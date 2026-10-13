@@ -6,7 +6,7 @@ import { authenticatedContinuation, validContinuation } from './continuation-rec
 import { artifactNames, issueEvents, latestReviewRequest, loadSealedArtifact, processRuns, reviewRunsForRequest } from './process-reconcile.mjs';
 import { issueBodyDigest } from './review-doc-guard.mjs';
 import { moveStatusLabel } from './status-label.mjs';
-import { realOps as mergeOps } from './merge-candidate.mjs';
+import { realOps as mergeOps, redactSecrets } from './merge-candidate.mjs';
 import { CI_PROOF_POLICIES, evaluateCiProof, loadGithubProofContext } from './ci-proof.mjs';
 import { isMainModule } from './spawn-portable.mjs';
 import { probeGreenWorkflow } from './release-gate.mjs';
@@ -77,6 +77,25 @@ export async function resumeMergeContinuation(p, { state, proof, merge, move, co
   } catch { warning = 'comment API failed; applied code/status not rolled back'; }
   return { ...decision, to, ...(warning ? { warning } : {}) };
 }
+/** #882: the reviewed material is the branch tip before the rebase. After the
+ * candidate's force-push no branch holds it, and a checkout of refs/heads/*
+ * lacks it: merge-base died and the green verdict ended as a silent
+ * `unverified`. Fetch it by full SHA first (GitHub serves an unreferenced
+ * commit); the rest is unchanged: patch-id, ledger, lease on the sealed dev. */
+export function mergeReviewedCandidate(p, ops, { secrets = [] } = {}) {
+  try { ops.fetch(p.material); } catch (error) {
+    // Step and SHA for the job log; git's answer only redacted and clipped.
+    const why = redactSecrets(String(error?.message ?? error), secrets).replace(/\s+/g, ' ').trim().slice(0, 400);
+    console.error(`merge continuation: material fetch ${p.material} failed: ${why}`);
+    throw error;
+  }
+  const base = ops.mergeBase(p.material, p.dev);
+  if (ops.patchId(base, p.material) !== ops.patchId(p.dev, p.candidate)) throw Error('reviewed patch changed');
+  ops.checkReleaseEntry(p.candidate);
+  const pushed = ops.pushWithLease(p.candidate, 'dev', p.dev);
+  if (pushed) { try { ops.recordReleaseMilestone(p.candidate); } catch { console.error('milestone accounting needs retry; code is already in dev'); } }
+  return pushed;
+}
 const gh = (args, extra = {}) => execFileSync('gh', args, { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024, ...extra });
 const api = path => JSON.parse(gh(['api', path]));
 export const nightRedCommand = (repo, child) => ['scripts/night-red.mjs', `--repo=${repo}`, `--red-run=${child.id}`];
@@ -117,7 +136,8 @@ export async function continueWorkflows({ repo, eventId, apply = false, out = nu
       }
       if (!apply) { outcomes.push({ kind: p.kind, action: 'ready-for-check', producer: producer.id }); continue; }
       if (p.kind === 'merge') {
-        const ops = mergeOps({ repo, token: process.env.HP_PROCESS_TOKEN || process.env.GH_TOKEN, issue: p.issue, mutants: p.policy === 'merge' });
+        const token = process.env.HP_PROCESS_TOKEN || process.env.GH_TOKEN;
+        const ops = mergeOps({ repo, token, issue: p.issue, mutants: p.policy === 'merge' });
         ops.fetch('dev', p.branch);
         const state = () => {
           const issue = api(`repos/${repo}/issues/${p.issue}`), request = latestReviewRequest(issueEvents(repo, p.issue), 'S7-code-review');
@@ -134,14 +154,7 @@ export async function continueWorkflows({ repo, eventId, apply = false, out = nu
           state,
           proof: async () => evaluateCiProof({ run: child, ...await loadGithubProofContext({ repo, run: child, token: process.env.GH_TOKEN }),
             candidate: { sha: p.candidate, tree: p.tree }, policy: p.policy === 'merge' ? CI_PROOF_POLICIES.merge : CI_PROOF_POLICIES.mergeLight }),
-          merge: () => {
-            const base = ops.mergeBase(p.material, p.dev);
-            if (ops.patchId(base, p.material) !== ops.patchId(p.dev, p.candidate)) throw Error('reviewed patch changed');
-            ops.checkReleaseEntry(p.candidate);
-            const pushed = ops.pushWithLease(p.candidate, 'dev', p.dev);
-            if (pushed) { try { ops.recordReleaseMilestone(p.candidate); } catch { console.error('milestone accounting needs retry; code is already in dev'); } }
-            return pushed;
-          },
+          merge: () => mergeReviewedCandidate(p, ops, { secrets: [token, process.env.GH_TOKEN] }),
           move: (from, to) => moveStatusLabel({ repo, issue: p.issue, from, to }),
           comment: body => gh(['api', '--method', 'POST', `repos/${repo}/issues/${p.issue}/comments`, '--input', '-'], { input: JSON.stringify({ body }) }),
         });
