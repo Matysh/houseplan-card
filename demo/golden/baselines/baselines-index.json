@@ -1,8 +1,8 @@
 {
   "schema": 3,
-  "matrixVersion": 73,
-  "acceptedAt": "2026-10-12T09:23:57.727Z",
-  "sourceFingerprint": "785250b5805c81140e713af8409f3ced23c2e13f215b6bc863698a46d7abd0ac",
+  "matrixVersion": 74,
+  "acceptedAt": "2026-10-13T20:53:22.948Z",
+  "sourceFingerprint": "6a7633bfe1df0cf7c453a017dfd3f676b8f8d797a442aab7af423bc983488ac4",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,15 +10,42 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "785250b5805c81140e713af8409f3ced23c2e13f215b6bc863698a46d7abd0ac",
-    "ci": {
+    "buildFingerprint": "6a7633bfe1df0cf7c453a017dfd3f676b8f8d797a442aab7af423bc983488ac4",
+    "ci": null
+  },
+  "localAttestation": {
+    "schema": "houseplan-golden-wsl/v2",
+    "sha256": "66b3d0e5dad9f96f4c4cebcea3624566b497de3cdd1e1fecfbf1788404a7192b",
+    "artifactSha256": "0fe93b1aa0e921bbad17dcf2d47972920bff67e5c0d5366188a6ff9a4bf03f9e",
+    "createdAt": "2026-10-13T20:53:11.506Z",
+    "source": {
       "repository": "Matysh/houseplan-card",
-      "run": 38227563994,
-      "attempt": 1,
-      "sha": "69aa99058cd1dcff9de19098018b5d2d163bb60b"
+      "branch": "issue/872-vacuum-path-fidelity",
+      "commit": "bdb7cd3b793524c9a7d38931fb8182efcc069092",
+      "tree": "2d52221fc4a8cbe32d17539a30d1587195f49c65",
+      "remoteSha": "bdb7cd3b793524c9a7d38931fb8182efcc069092",
+      "clean": true,
+      "status": ""
+    },
+    "environment": {
+      "platform": "linux",
+      "arch": "x64",
+      "kernel": "6.18.33.2-microsoft-standard-WSL2",
+      "wsl": true,
+      "distro": "Ubuntu-24.04",
+      "filesystem": "ext2/ext3"
+    },
+    "toolchain": {
+      "node": "22.23.2",
+      "npm": "10.9.8",
+      "playwright": "1.62.0",
+      "browser": {
+        "version": "151.0.7922.34",
+        "resolvedExecutable": "/home/sergey/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell",
+        "executableSha256": "e11fc9ce65c96313476f7ee9844b6fb6a9220fb048693cfe9eee00acf4170a9f"
+      }
     }
   },
-  "localAttestation": null,
   "foreignCapture": null,
   "witnesses": {
     "count": 98,
@@ -58,7 +85,7 @@
     "isometric-touch-kiosk-dark": "71192d83e38a8d306f6a24fdd422faf2917f97a9a95484a0b0bdf6932a447601",
     "isometric-large-warm-remount-dark": "85b212f1bb65b4500e4c24459d1eed333d8ba8c8864fd06d4844e91c39ea707d",
     "isometric-stage3-overlays-light": "51c87e932f59bde985ec51fc670a81abf1b5ae69c42a0ad9486897bb448eac27",
-    "isometric-stage3-overlays-dark": "7f36dee09f08c4c0373bca28e3cdb19c8f7424885649841149d88fbbc5a7c992",
+    "isometric-stage3-overlays-dark": "12bc2e0629bae766947c966a26924adf022312075aa85241354fa2ac32332a0f",
     "isometric-stage3-openings-dark": "0a7a6dc33cd47191397f7677da106ec42bd04872b08b7ead9ab76d133aeb1a7d",
     "isometric-stage3-forced-colors-dark": "8b86a9b7d32259b1bd86bb8626523ac36d4112a5411399c174ed730b760b7fc7",
     "isometric-stage3-no-filter-dark": "c6617a286c3819fb0e96fcf2e3f5be1c3ff36af762bd88b718631719e31cda86",
@@ -67,7 +94,7 @@
     "pdf-export-geometry-light": "c403a141cefb73e4653f2ffb9c346b4cfaa3de339b6c39c227ef1552ebde0048",
     "pdf-export-polish-light": "ed6685900355e20a4618e931d42d2e45a39ad44e4a2ab044fa5ee64ff56f12f4",
     "pdf-export-stepped-dimensions-light": "b9732b8b9c38153c564d0c93fbfbf44a8dd348c8667d2f8c2d14492e08e04f3e",
-    "vacuum-trail-smoothing-dark": "f8eecc726a3e8bdaba414584ad6afd48908ee9d96ea969a1e37758f4e76843e2",
+    "vacuum-trail-smoothing-dark": "92cf674657db4aac7693554d6407da01b786d98237946fbaf1476b78b96321be",
     "room-label-parity-view-dark": "4c00ee3119d3886a5906d5880769558083eb06547a2e2c56e91ae84498416bc9",
     "room-label-parity-plan-dark": "88374fbca15362da485ff32a0c5dce21bd07ee752087a863e10484537b18a930",
     "room-label-parity-view-light": "ec2a1294b0f08019f49a392cdc94970c1545673ebe0d7f22652f602adf00d4e8",
