@@ -69,7 +69,6 @@ import {
   type OpeningWallIndex, type WallEntry, type WallInterval,
 } from './wall-thickness';
 import type { JunctionLimitViolation, JunctionSharedGeometry } from './junction-limits';
-import { type OpenSpanEntry } from './open-spans';
 import { ContentSigner } from './signing';
 import {
   resolveFixedFloor, resolveInitialSpace, settleBestEffort,
@@ -109,6 +108,7 @@ import {
   applyVirtualLightEvent, reconcileVirtualLightSnapshot, virtualLightFingerprint,
   virtualLightSnapshot, virtualLightWire, type VirtualLightSnapshot,
 } from './virtual-light-state';
+import type { SpaceGeometryState } from './geometry-history-state';
 import type {
   OpeningCfg, PartitionOpeningHost, RoomCfg, PartitionCfg, WallColumnCfg, SpaceModel, PdfRef,
   Marker, ServerConfig, DevItem, CardConfig, MarkerValueBadge, ValueBadgePosition,
@@ -309,7 +309,6 @@ import {
   applySpaceOrder, canStartTabDrag, markersNeedingPlacement, passedDragThreshold,
   reorderSpaceIds,
 } from './space-order';
-import type { MarkerRoomReferenceSnapshot } from './room-reference-transaction';
 import { SummaryRuntimeSlot, summaryRuntimeLoader } from './summary-runtime-loader';
 import { HeaderMenu, headerMenuItems, renderHeaderActions } from './header-menu';
 import { isoWallMaterialVars, parseCssColor } from './iso-materials'; import { IsoFirstFrameState, isoPaperContext } from './iso-first-frame';
@@ -439,28 +438,6 @@ type WallFaceBatch = {
   activeCms: number[];
   activePartitionIds: string[];
 };
-/** Everything whose topology or wall association changes in the plan editor. */
-interface SpaceGeometryState {
-  nodeMove?: import('./wall-node-editor').NodeMoveHistory;
-  spaceId: string;
-  rooms: any[];
-  openings?: OpeningCfg[];
-  walls?: WallEntry[];
-  wall_segments?: any[];
-  open_spans?: OpenSpanEntry[];
-  partitions?: PartitionCfg[];
-  wall_columns?: WallColumnCfg[];
-  decor?: DecorShape[];
-  stairs?: import('./stairs').Stair[];
-  plan_transform: {
-    plan_x?: number; plan_y?: number; plan_scale?: number;
-    plan_scale_x?: number; plan_scale_y?: number; plan_angle?: number;
-  };
-  /** Session-only: current-writer normalisation scope for wall-chain history. */
-  wallChainSeedIds?: string[];
-  /** Session-only: exact room fields touched by Delete/Merge room. */
-  roomReferences?: MarkerRoomReferenceSnapshot[];
-}
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
   const ev = new Event(type, { bubbles: true, composed: true }) as any;
   ev.detail = detail ?? {};

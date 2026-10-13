@@ -35,7 +35,8 @@ import './hp-help';
 import type { AuthoritativeConfigResponse } from './version-recovery-card';
 import type { ConfigAdoption, GatedAdoptionInput, GatedAdoptionResult } from './config-adoption';
 import { isGeometryCleanupRefusal, supersedeDeferredWrite } from './config-adoption';
-import type { WallNodeEditor, NodeMoveHistory } from './wall-node-editor';
+import type { WallNodeEditor } from './wall-node-editor';
+import { type SpaceGeometryState, nodeHistoryNext } from './geometry-history-state';
 import './hp-device-preview'; import './hp-zigbee-topology-settings';
 import { adoptEditorStyles } from './editor-style-adoption'; // #805: after the CSS-bearing elements — shared gzip context
 import {
@@ -109,7 +110,6 @@ import {
 } from './junction-limits';
 import {
   pointOnOpenCut,
-  type OpenSpanEntry,
 } from './open-spans';
 import { ContentSigner } from './signing';
 import { type InitialSpaceSelection } from './initial-load';
@@ -294,7 +294,7 @@ import { classifyWallFaceCandidates, selectWallFacePromotionIds } from './wall-f
 import { finalizeWallChainSpace } from './writer-fixed-point';
 import {
   captureMarkerRoomReferences, restoreMarkerRoomReferences,
-  rewriteMarkerRoomReferences, type MarkerRoomReferenceSnapshot,
+  rewriteMarkerRoomReferences,
 } from './room-reference-transaction';
 
 const CARD_VERSION = '1.81.0-beta.1';
@@ -380,27 +380,6 @@ const MAX_WALL_CHAIN_POINTS = 500;
 const MAX_PARTITIONS = 2000;
 const MAX_ROOMS = 400;
 const MAX_WALL_COLUMNS = 500;
-/** Everything whose topology or wall association changes in the plan editor. */
-interface SpaceGeometryState {
-  nodeMove?: NodeMoveHistory;
-  spaceId: string;
-  rooms: any[];
-  openings?: OpeningCfg[];
-  walls?: WallEntry[];
-  wall_segments?: any[];
-  open_spans?: OpenSpanEntry[];
-  partitions?: PartitionCfg[];
-  wall_columns?: WallColumnCfg[];
-  decor?: DecorShape[]; stairs?: import('./stairs').Stair[];
-  plan_transform: {
-    plan_x?: number; plan_y?: number; plan_scale?: number;
-    plan_scale_x?: number; plan_scale_y?: number; plan_angle?: number;
-  };
-  /** Session-only: current-writer normalisation scope for wall-chain history. */
-  wallChainSeedIds?: string[];
-  /** Session-only: exact room fields touched by Delete/Merge room. */
-  roomReferences?: MarkerRoomReferenceSnapshot[];
-}
 /** Tools of the decor (background) editor. `furniture` is the library
  *  (docs/FURNITURE.md): it opens a palette and places a symbol at real size. */
 type DecorTool = 'select' | 'backdrop' | 'line' | 'rect' | 'ellipse' | 'text' | 'furniture' | 'image' | 'erase';
@@ -2195,12 +2174,6 @@ public _showGeometrySpace(spaceId: string): void {
     }
   }
 
-/** #843: the next history step is a node command, applied by its server transaction. */
-private _nodeHistoryNext(direction: 'undo' | 'redo'): boolean {
-    const history = this.host._geometryHistory;
-    return !!(direction === 'undo' ? history.peekUndo()?.before : history.peekRedo()?.after)?.nodeMove;
-  }
-
 private _runNodeHistory(direction: 'undo' | 'redo'): void {
     // An unfinished Draw/Split draft owns the first press; a node step never lands on it.
     if (this.host._path.length || this.host._splitSel?.pts?.length) { this._clearGeometryGesture(); return; }
@@ -2222,7 +2195,7 @@ public _undoGeometry = (): void => {
       return;
     }
     if (this.host._resize.dragging) { this._rszCancelDrag(); return; }
-    if (this._nodeHistoryNext('undo')) { this._runNodeHistory('undo'); return; }
+    if (nodeHistoryNext(this.host._geometryHistory, 'undo')) { this._runNodeHistory('undo'); return; }
     const command = this.host._geometryHistory.undo();
     if (!command) return;
     if (!this._applyGeometryState(command.before, true)) {
@@ -2246,7 +2219,7 @@ public _redoGeometry = (): void => {
       return;
     }
     if (this.host._resize.dragging) { this._rszCancelDrag(); return; }
-    if (this._nodeHistoryNext('redo')) { this._runNodeHistory('redo'); return; }
+    if (nodeHistoryNext(this.host._geometryHistory, 'redo')) { this._runNodeHistory('redo'); return; }
     if (this.host._activeWallChainId && this.host._wallChainRedo.length) {
       const chainId = this.host._activeWallChainId;
       const path = this.host._path.map((point) => [...point]);
