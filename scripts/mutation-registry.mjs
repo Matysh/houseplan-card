@@ -76,6 +76,88 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // `find` обязан встречаться в файле ровно один раз: патч, который ложится «куда
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
+  // #843: node history is a server transaction of the shared stack. Pure
+  // runtime-level oracles: real runtime, adapter, writeWallNode, CommandStack
+  // and ConfigAdoption over a recording wire; no browser is needed.
+  {
+    id: 'node-history-requires-select',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#843 AC1|#843 node history" test/node-history-runtime.test.mjs test/wall-node-card-adapter.test.mjs',
+    because: '#843 AC1: Undo/Redo of a node move belongs to every Plan/Background tool of a writer; '
+      + 'only capture and handles are Select-only, otherwise a tool, mode or floor change loses the history',
+    patches: [{ file: 'src/wall-node-card-adapter.ts',
+      find: "      enabled: () => ['plan', 'decor'].includes(host._mode) && writer(), api,",
+      replace: "      enabled: () => ['plan', 'decor'].includes(host._mode) && host._tool === 'select' && writer(), api,",
+    }],
+  },
+  {
+    id: 'node-write-revision-before-own-queue',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#843 AC2" test/node-history-runtime.test.mjs test/wall-node-write.test.mjs',
+    because: '#843 AC2/AC7: the expected revision is read after the own write queue; taken before flush() '
+      + 'the own accepted Save makes a correct Undo or move a stale or conflicting request',
+    patches: [{ file: 'src/wall-node-write.ts',
+      find: '  await settleOwnQueue(host);\n',
+      replace: '  const early = host._cfgRev; // mutant: expected revision taken before flush()\n  await settleOwnQueue(host);\n',
+    }, { file: 'src/wall-node-write.ts',
+      find: '      expected_rev: revision, intent: history.intent,',
+      replace: '      expected_rev: early, intent: history.intent,',
+    }],
+  },
+  {
+    id: 'node-redo-skips-floor-check',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#843 AC3" test/node-history-runtime.test.mjs',
+    because: '#843 AC3: the server does not prove Redo (apply); without the client floor check the latest '
+      + 'revision lets the move land over an own change of the same floor',
+    patches: [{ file: 'src/wall-node-write.ts',
+      find: "    if (!nodeBasisHolds(host, basis)) throw new Error('stale-node-snapshot');",
+      replace: "    if (history.direction === 'undo' && !nodeBasisHolds(host, basis)) throw new Error('stale-node-snapshot');",
+    }],
+  },
+  {
+    id: 'node-history-clears-on-temporary-refusal',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#843 AC4" test/node-history-runtime.test.mjs',
+    because: '#843 AC4: transport, timeout, update-required and a failed own write are temporary; '
+      + 'they keep the cursor and every command so the next attempt can pass',
+    patches: [{ file: 'src/wall-node-history.ts',
+      find: "    if (refusal === 'outdated') stack.removeWhere(item => item === command);",
+      replace: '    stack.removeWhere(() => true); // mutant: clear() on every refusal',
+    }],
+  },
+  {
+    id: 'node-history-shows-floor-before-answer',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#843 AC5" test/node-history-runtime.test.mjs',
+    because: '#843 AC5: the result floor is shown only after acceptance; switching before the answer '
+      + 'shows an unchanged floor and stays switched after a refusal',
+    patches: [{ file: 'src/wall-node-history.ts',
+      find: '  let config: ServerConfig;\n',
+      replace: '  port.show(space); // mutant: switch the floor before the answer\n  let config: ServerConfig;\n',
+    }],
+  },
+  {
+    id: 'node-history-without-writer-check',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#843 AC6|#843 node history" test/node-history-runtime.test.mjs test/wall-node-card-adapter.test.mjs',
+    because: '#843 AC6: the wider history context still needs a writer; a non-writer must never send a node operation',
+    patches: [{ file: 'src/wall-node-card-adapter.ts',
+      find: '  const writer = () => host._canEdit && !host._kiosk && host.isConnected;',
+      replace: '  const writer = () => !host._kiosk && host.isConnected; // mutant: no _canEdit',
+    }],
+  },
+  {
+    id: 'node-gesture-retires-on-own-save',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#843 AC7" test/wall-node-editor.test.mjs test/node-history-runtime.test.mjs',
+    because: '#843 AC7: an own Save accepted while a node is held advances the revision of the same floor; '
+      + 'it must not silently cancel the gesture',
+    patches: [{ file: 'src/wall-node-editor.ts',
+      find: '    if (ctx.revision !== s.revision && !(s.basis && this.port.holds?.(s.basis))) return false;',
+      replace: '    if (ctx.revision !== s.revision) return false; // mutant: any revision change retires',
+    }],
+  },
   {
     id: 'vacuum-trail-double-camera-owner',
     guard: 'node demo/smoke_vacuum_camera.mjs',
