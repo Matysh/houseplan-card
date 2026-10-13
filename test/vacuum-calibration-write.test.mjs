@@ -16,7 +16,7 @@ function deferred() {
   return { promise, resolve, reject };
 }
 
-function fixture({ marker = true, save } = {}) {
+function fixture({ marker = true, save, pending = true } = {}) {
   const accepted = {
     spaces: [{ id: 'ground', title: 'Ground', rooms: [] }],
     markers: marker ? [{
@@ -32,12 +32,18 @@ function fixture({ marker = true, save } = {}) {
   };
   const toasts = [];
   let rebuilds = 0;
+  // The card's deferred config write: callable (re-arm), pending, cancel.
+  const deferredWrite = Object.assign(() => { deferredWrite.armed = true; deferredWrite.arms += 1; }, {
+    armed: pending, arms: 0,
+    pending: () => deferredWrite.armed,
+    cancel: () => { deferredWrite.armed = false; },
+  });
   const host = {
     _devices: [{
       id: 'vac', bindingKind: 'entity', bindingRef: 'vacuum.demo',
       space: 'ground', area: null, hidden: false,
     }],
-    _saveConfigDebounced: { pending: () => true, cancel: () => {} },
+    _saveConfigDebounced: deferredWrite,
     _regSignature: 'accepted',
     _markerDialog: { busy: false, name: 'Vacuum draft' },
     _vacCalConfirm: null,
@@ -58,7 +64,7 @@ function fixture({ marker = true, save } = {}) {
       host._adoption.refreshConfigFingerprint();
     }),
   };
-  return { accepted, host, runtime, toasts, rebuilds: () => rebuilds };
+  return { accepted, host, runtime, toasts, rebuilds: () => rebuilds, deferredWrite };
 }
 
 test('rejected matrix restores the accepted marker and a retry can persist (#442)', async () => {
@@ -141,4 +147,41 @@ test('rejected proposal and manual fit preserve their exact retry drafts (#442)'
   await saveManualCalibration(f.runtime, () => matrix);
   assert.equal(f.host._vacFit, null);
   assert.equal(f.toasts.at(-1), 'vac.cal_done');
+});
+
+// #842 К4: the calibration candidate carries the pending deferred edit, so the
+// write cancels its timer; only a rolled-back rejection re-arms it, once.
+test('#842 AC4 vacuum calibration: a rejected matrix re-arms the cancelled pending write once', async () => {
+  const f = fixture({ save: async () => { throw new Error('semantic reject'); } });
+  assert.equal(await saveVacuumMatrix(f.runtime, 'vac', 'camera.map', 'new', [2, 0, 30, 0, 2, 40], 'upstairs'), false);
+  assert.equal(f.deferredWrite.armed, true);
+  assert.equal(f.deferredWrite.arms, 1);
+});
+
+test('#842 AC4 vacuum calibration: success, nothing pending or a conflict reload arm nothing', async () => {
+  const ok = fixture();
+  assert.equal(await saveVacuumMatrix(ok.runtime, 'vac', 'camera.map', 'new', [2, 0, 30, 0, 2, 40], 'upstairs'), true);
+  assert.equal(ok.deferredWrite.armed, false, 'the accepted matrix write carried it');
+  assert.equal(ok.deferredWrite.arms, 0);
+  const idle = fixture({ pending: false, save: async () => { throw new Error('offline'); } });
+  await saveVacuumMatrix(idle.runtime, 'vac', 'camera.map', 'new', [2, 0, 30, 0, 2, 40], 'upstairs');
+  assert.equal(idle.deferredWrite.arms, 0);
+  const conflict = fixture({ save: async () => {
+    // `_saveConfigNow` adopts the newer server revision before rethrowing.
+    conflict.host._adoption.adoptResponses({ config: { ...conflict.accepted, settings: { theirs: true } }, rev: 8 },
+      undefined, () => {}, () => {});
+    throw Object.assign(new Error('changed elsewhere'), { code: 'conflict' });
+  } });
+  await saveVacuumMatrix(conflict.runtime, 'vac', 'camera.map', 'new', [2, 0, 30, 0, 2, 40], 'upstairs');
+  assert.equal(conflict.deferredWrite.arms, 0);
+  assert.deepEqual(conflict.host._serverCfg.settings, { theirs: true });
+});
+
+test('#842 К2 vacuum calibration: a refusal to delete plan objects shows no save-failed toast', async () => {
+  const f = fixture({ save: async () => {
+    throw Object.assign(new Error('saving would delete plan objects'), { code: 'geometry-cleanup-required' });
+  } });
+  assert.equal(await saveVacuumMatrix(f.runtime, 'vac', 'camera.map', 'new', [2, 0, 30, 0, 2, 40], 'upstairs'), false);
+  assert.deepEqual(f.host._serverCfg, f.accepted);
+  assert.deepEqual(f.toasts, []);
 });

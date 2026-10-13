@@ -301,6 +301,28 @@ export const GEOMETRY_CLEANUP_REFUSED = 'geometry-cleanup-required';
 export const isGeometryCleanupRefusal = (error: unknown): boolean =>
   (error as { code?: unknown } | null)?.code === GEOMETRY_CLEANUP_REFUSED;
 
+/** The card's deferred config write as the immediate writers see it. */
+export interface DeferredConfigWrite { (): void; pending(): boolean; cancel(): void }
+
+/**
+ * #842 K4: an immediate write carries the content of a pending deferred write,
+ * so it cancels that timer. Its restorer re-arms the deferred write once, and
+ * only when the failed attempt was rolled back (`rollbackOptimistic` → true or
+ * the writer's own rollback): after a conflict or a newer adoption the general
+ * reload policy owns the config. When fired, it writes the live config of that
+ * moment, never a candidate saved in advance (K5).
+ */
+export function supersedeDeferredWrite(write: DeferredConfigWrite): (rolledBack: boolean) => void {
+  const wasPending = write.pending();
+  if (wasPending) write.cancel();
+  let restored = false;
+  return (rolledBack) => {
+    if (!wasPending || !rolledBack || restored) return;
+    restored = true;
+    write();
+  };
+}
+
 /** What every other module holds: the owner with its identity fields read-only. */
 export type ConfigAdoption = Readonly<MutableConfigAdoption>;
 export const createConfigAdoption = (

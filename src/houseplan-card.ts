@@ -177,7 +177,7 @@ import {
   applyAreaRelocationResolution,
   markerAreaSnapshotOf,
   resolveAreaSnapshotCleanup,
-  resolveDeviceAreaRelocations,
+  resolveDeviceAreaRelocations, writeAreaProvenance,
   type AreaRelocationResolution, type MarkerAreaBinding,
 } from './device-area-relocation';
 import { resolvedSvgScreenBlend, svgScreenBlendSupported } from './glow-blend';
@@ -5168,44 +5168,15 @@ export class HouseplanCard extends LitElement {
       const attentionChanged = contentFingerprint(nextAttention)
         !== contentFingerprint(Array.isArray(st.new_device_ids) ? st.new_device_ids : []);
       if (snapshotChanged || attentionChanged) {
-        const previousSnapshot = st.marker_area_snapshot;
-        const previousAttention = st.new_device_ids;
-        const nextConfig: ServerConfig = {
-          ...this._serverCfg,
-          settings: {
-            ...st,
-            marker_area_snapshot: nextSnapshot,
-            ...(attentionChanged ? { new_device_ids: nextAttention } : {}),
-          },
-        };
-        this._setAreaLifecycleConfig(nextConfig);
-        try {
-          // Await this internal lifecycle write. A debounced fire-and-forget
-          // save would leave the local snapshot advanced after a rejection,
-          // suppressing the retry required by the delete-first contract.
-          // If the registry rebuild was itself triggered by a debounced user
-          // mutation, the candidate below already contains that mutation.
-          // Cancel its redundant timer so one UI Save remains one transport
-          // write (#44) while still sharing the serialized write chain.
-          if (this._saveConfigDebounced.pending()) this._saveConfigDebounced.cancel();
-          await this._writeConfig();
-        } catch (error: unknown) {
-          const current = this._settings;
-          // Restore only if no newer mutation replaced our exact attempt while
-          // the serialized write was in flight.
-          if (contentFingerprint(current.marker_area_snapshot)
-              === contentFingerprint(nextSnapshot)
-              && contentFingerprint(current.new_device_ids)
-                === contentFingerprint(attentionChanged ? nextAttention : previousAttention)) {
-            const restored = { ...current };
-            if (previousSnapshot === undefined) delete restored.marker_area_snapshot;
-            else restored.marker_area_snapshot = previousSnapshot;
-            if (previousAttention === undefined) delete restored.new_device_ids;
-            else restored.new_device_ids = previousAttention;
-            const restoredConfig: ServerConfig = { ...this._serverCfg!, settings: restored };
-            this._setAreaLifecycleConfig(restoredConfig);
-            this._adoption.refreshConfigFingerprint();
-          }
+        const failure = await writeAreaProvenance({
+          settings: () => this._settings,
+          stage: (settings) => this._setAreaLifecycleConfig({ ...this._serverCfg!, settings }),
+          refreshFingerprint: () => this._adoption.refreshConfigFingerprint(),
+          write: () => this._writeConfig(),
+          deferred: this._saveConfigDebounced,
+        }, st, nextSnapshot, attentionChanged ? nextAttention : undefined);
+        if (failure) {
+          const { error } = failure;
           // Config and layout are separate stores, but this lifecycle change is
           // one user transaction. A rejected provenance write must put every
           // successfully deleted manual point back before the relocation may

@@ -18,7 +18,7 @@ import {
   commitVacuumRouteDraft, convertLegacyRoutes, newRouteId, removeRoute,
   type VacuumRouteDraft,
 } from '../vacuum-route-edit';
-import { isGeometryCleanupRefusal, type ConfigAdoption } from '../config-adoption';
+import { isGeometryCleanupRefusal, supersedeDeferredWrite, type ConfigAdoption, type DeferredConfigWrite } from '../config-adoption';
 import type { OptimisticAttempt } from '../serialized-write-queue';
 
 interface SpaceRow { id?: unknown; name?: unknown }
@@ -31,7 +31,7 @@ export interface VacuumMapsCardHost {
   readonly _cfgRev: number;
   readonly _adoption: ConfigAdoption;
   _rollbackOptimistic: (attempt: OptimisticAttempt<ServerConfig>) => boolean;
-  _saveConfigDebounced: { pending: () => boolean; cancel: () => void };
+  _saveConfigDebounced: DeferredConfigWrite;
   _regSignature: string;
   _t: (key: I18nKey, vars?: Record<string, string | number>) => string;
   _errText: (error: unknown) => string;
@@ -108,12 +108,12 @@ export function renderVacuumMapsSection(
     host._regSignature = '';
     host._maybeRebuildDevices();
     host.requestUpdate();
-    if (host._saveConfigDebounced.pending()) host._saveConfigDebounced.cancel();
+    const restoreDeferred = supersedeDeferredWrite(host._saveConfigDebounced); // #842 K4
     try {
       await runtime._saveConfigNow();
       return true;
     } catch (error) {
-      host._rollbackOptimistic(attempt);
+      restoreDeferred(host._rollbackOptimistic(attempt));
       host._regSignature = '';
       host._maybeRebuildDevices();
       host.requestUpdate();

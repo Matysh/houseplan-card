@@ -719,6 +719,12 @@ still recognised in stored config but no longer served
   and the next write asks again; teardown refuses without asking. Only a
   decided write runs the normalisation that deletes nothing (columns keep
   unknown fields; the `walls` degradation stays the canonical cleanup).
+- An immediate writer that cancels a pending deferred write
+  (`_saveConfigDebounced`) carries its content; if the write is rejected and
+  its own rollback succeeds, `supersedeDeferredWrite` re-arms that deferred
+  write once — never after a conflict reload or a newer adoption. The
+  re-armed write sends the live config of its moment and teardown flushes it
+  like any other (#842).
 - `src/config-reload-authority.ts` (#543): each reload holds a generation-scoped
   claim; a superseded one ends with no side effect.
 - `src/card-read-lifecycle.ts` (#824) owns ephemeral full-read transport claims

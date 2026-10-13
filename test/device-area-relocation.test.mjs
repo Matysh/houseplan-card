@@ -373,3 +373,58 @@ test('marker deletion and rebind cleanup remove only their own lifecycle entries
   });
   assert.equal(Object.hasOwn(source, 'deleted'), true, 'helper must not mutate config input');
 });
+
+// #842 К4, the fifth place: the lifecycle provenance write cancels a pending
+// deferred user write (one UI Save = one transport write, #44). A rejection
+// restores exactly its own attempt and only then re-arms that write once.
+async function provenanceFixture({ pending = true, fail = null, during = null } = {}) {
+  const { writeAreaProvenance } = await import('../test-build/device-area-relocation.js');
+  let settings = { marker_area_snapshot: { m1: { binding: 'device:d1', area: 'old' } }, new_device_ids: ['a'] };
+  let armed = pending;
+  let arms = 0;
+  let writes = 0;
+  const deferred = Object.assign(() => { armed = true; arms += 1; }, {
+    pending: () => armed, cancel: () => { armed = false; },
+  });
+  const port = {
+    settings: () => settings,
+    stage: (next) => { settings = next; },
+    refreshFingerprint() {},
+    write: async () => {
+      writes += 1;
+      during?.((next) => { settings = next; }, settings);
+      if (fail) throw fail;
+    },
+    deferred,
+  };
+  const snapshot = { m1: { binding: 'device:d1', area: 'new' } };
+  const result = await writeAreaProvenance(port, settings, snapshot, ['a', 'm1']);
+  return { result, settings: () => settings, armed: () => armed, arms: () => arms, writes: () => writes };
+}
+
+test('#842 AC4 zone lifecycle: a rejected provenance write restores itself and re-arms the pending edit once', async () => {
+  const f = await provenanceFixture({ fail: new Error('offline') });
+  assert.ok(f.result?.error);
+  assert.deepEqual(f.settings().marker_area_snapshot, { m1: { binding: 'device:d1', area: 'old' } });
+  assert.deepEqual(f.settings().new_device_ids, ['a']);
+  assert.equal(f.armed(), true);
+  assert.equal(f.arms(), 1);
+});
+
+test('#842 AC4 zone lifecycle: accepted, not pending, conflict or replaced attempt — no restored write', async () => {
+  const accepted = await provenanceFixture();
+  assert.equal(accepted.result, null);
+  assert.equal(accepted.armed(), false, 'the pending edit travelled with the accepted write');
+  assert.equal(accepted.arms(), 0);
+  const idle = await provenanceFixture({ pending: false, fail: new Error('offline') });
+  assert.equal(idle.arms(), 0);
+  const conflict = await provenanceFixture({ fail: Object.assign(new Error('x'), { code: 'conflict' }) });
+  assert.equal(conflict.arms(), 0, 'a conflict reloads; the restored write would race it');
+  const replaced = await provenanceFixture({
+    fail: new Error('offline'),
+    during: (set, current) => set({ ...current, marker_area_snapshot: { m2: { binding: 'device:d2', area: 'x' } } }),
+  });
+  assert.deepEqual(replaced.settings().marker_area_snapshot, { m2: { binding: 'device:d2', area: 'x' } },
+    'a newer mutation is never rolled back');
+  assert.equal(replaced.arms(), 0);
+});

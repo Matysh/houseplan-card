@@ -10565,7 +10565,7 @@ const MUTANT_DEFINITIONS = [
       + 'leaving the independent Device editor draft available for Retry (#442 AC1)',
     patches: [{
       file: 'src/houseplan-editor-runtime.ts',
-      find: '        this.host._rollbackOptimistic(attempt);\n'
+      find: '        restoreDeferred(this.host._rollbackOptimistic(attempt));\n'
         + "        this.host._regSignature = '';",
       replace: "        this.host._regSignature = '';",
     }],
@@ -10589,7 +10589,7 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/houseplan-editor-runtime.ts',
       find: '      if (!configAccepted && attempt) {\n'
-        + '        this.host._rollbackOptimistic(attempt);',
+        + '        restoreDeferred(this.host._rollbackOptimistic(attempt));',
       replace: '      if (attempt) {\n'
         + '        this.host._serverCfg = attempt.previous;',
     }],
@@ -10601,7 +10601,7 @@ const MUTANT_DEFINITIONS = [
       + 'marker in the local accepted config (#442 AC5–AC7)',
     patches: [{
       file: 'src/vacuum-calibration-write.ts',
-      find: '    host._rollbackOptimistic(attempt);\n    rebuild(host);',
+      find: '    restoreDeferred(host._rollbackOptimistic(attempt));\n    rebuild(host);',
       replace: '    rebuild(host);',
     }],
   },

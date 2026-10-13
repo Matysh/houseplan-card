@@ -9,12 +9,18 @@ import { createLedStripEditor } from '../test-build/led-strip-editor.js';
 globalThis.window ??= { matchMedia: () => ({ matches: false }) };
 globalThis.queueMicrotask ??= (fn) => Promise.resolve().then(fn);
 
-function setup({ strips = [], markers = [], devices = [], fail = false } = {}) {
+function setup({ strips = [], markers = [], devices = [], fail = false, pending = false, rolledBack = true } = {}) {
   const pushed = [];
   const toasts = [];
   const rolled = [];
   const saves = [];
   const dialogs = [];
+  // The card's deferred config write: callable (re-arm), pending, cancel.
+  const deferred = Object.assign(() => { deferred.armed = true; deferred.arms += 1; }, {
+    armed: pending, arms: 0,
+    pending: () => deferred.armed,
+    cancel: () => { deferred.armed = false; },
+  });
   const space = { id: 's', vb: [0, 0, 1000, 1000], rooms: [], partitions: [], wall_columns: [], wall_segments: [], stairs: [] };
   const host = {
     hass: { states: {}, language: 'en' }, _config: { language: 'en' },
@@ -23,11 +29,11 @@ function setup({ strips = [], markers = [], devices = [], fail = false } = {}) {
     _markerDialog: null, _cellCm: 5, _gridPitch: 10, _wallKeyPitch: 10, _spaceWalls: [], _openingsR: [],
     _devicePositionHistory: { push: (command) => pushed.push(command) },
     _adoption: { beginOptimistic: (base, candidate) => ({ base, candidate }), stageLocalConfig: (config) => { host._serverCfg = config; } },
-    _saveConfigDebounced: { pending: () => false, cancel: () => {} },
+    _saveConfigDebounced: deferred,
     _regSignature: 'x',
     _spaceModel: () => space, _floorKey: () => 'k', _screenToVb: (x, y) => [x, y], _openCuts: () => [],
     _roomWallOpeningInputs: () => [], _partitionOpeningCuts: () => [],
-    _rollbackOptimistic: (attempt) => { rolled.push(attempt); host._serverCfg = attempt.base; return true; },
+    _rollbackOptimistic: (attempt) => { rolled.push(attempt); if (rolledBack) host._serverCfg = attempt.base; return rolledBack; },
     _maybeRebuildDevices: () => {}, _showToast: (message) => toasts.push(message), _errText: (e) => String(e?.message || e),
     requestUpdate: () => {},
     _editorRuntime: {
@@ -39,7 +45,7 @@ function setup({ strips = [], markers = [], devices = [], fail = false } = {}) {
     },
   };
   const led = createLedStripEditor(host);
-  return { led, host, pushed, toasts, rolled, saves, dialogs };
+  return { led, host, pushed, toasts, rolled, saves, dialogs, deferred };
 }
 
 const ev = (x, y, extra = {}) => ({ clientX: x, clientY: y, pointerId: 1, button: 0, pointerType: 'mouse', detail: 1, shiftKey: false, ...extra });
@@ -292,4 +298,40 @@ test('r1 M3: a space switch finishes the unfinished chain in its own space, neve
   assert.equal(led.tool, false);
   assert.equal(led.sel, null, 'no selection carried into the other space');
   assert.equal(led.picker, null, 'no device picker over the other space');
+});
+
+// #842 К4: a pending deferred edit travels inside the LED command's candidate,
+// so the command cancels its timer; a rolled-back failure re-arms it once.
+test('#842 AC4 LED: a failed command re-arms the cancelled pending write once; success, idle or no rollback arm nothing', async () => {
+  const draw = async (options) => {
+    const f = setup(options);
+    f.led.open();
+    click(f.led, 100, 100);
+    click(f.led, 300, 100);
+    await f.led.finish();
+    return f;
+  };
+  const failed = await draw({ fail: true, pending: true });
+  assert.equal(failed.deferred.armed, true, 'the independent edit is scheduled again');
+  assert.equal(failed.deferred.arms, 1, 'exactly once');
+  const saved = await draw({ pending: true });
+  assert.equal(saved.deferred.armed, false, 'the accepted command already carried it');
+  assert.equal(saved.deferred.arms, 0);
+  const idle = await draw({ fail: true });
+  assert.equal(idle.deferred.arms, 0, 'nothing was pending');
+  const replaced = await draw({ fail: true, pending: true, rolledBack: false });
+  assert.equal(replaced.deferred.arms, 0, 'a conflict reload or newer adoption owns the config');
+});
+
+test('#842 К2 LED: a refusal to delete plan objects shows no LED error toast — K3 asks instead', async () => {
+  const f = setup();
+  f.host._editorRuntime._saveConfigNow = async () => {
+    throw Object.assign(new Error('saving would delete plan objects'), { code: 'geometry-cleanup-required' });
+  };
+  f.led.open();
+  click(f.led, 100, 100);
+  click(f.led, 300, 100);
+  await f.led.finish();
+  assert.equal(f.rolled.length, 1, 'the optimistic strip is rolled back');
+  assert.deepEqual(f.toasts, []);
 });

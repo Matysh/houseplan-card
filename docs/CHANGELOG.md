@@ -13,6 +13,11 @@
   write, “Cancel” keeps the plan as it is
   ([#842](https://github.com/Matysh/houseplan-card/issues/842)).
 
+- When saving a device, an LED strip, a vacuum calibration or a device-zone
+  update fails, an earlier edit that was still waiting to be saved is saved
+  afterwards instead of staying only in the open tab
+  ([#842](https://github.com/Matysh/houseplan-card/issues/842)).
+
 ## v1.81.0-beta.1 — 2026-10-12
 
 - Activity colour now matches the actual ordinary pulse in device settings;

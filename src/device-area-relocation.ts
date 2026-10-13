@@ -1,8 +1,10 @@
+import { supersedeDeferredWrite, type DeferredConfigWrite } from './config-adoption';
 import { pointStrictlyInside } from './logic';
 import type {
   DevItem, Marker, MarkerAreaBinding, MarkerAreaSnapshot,
-  RoomCfg, SpaceModel,
+  RoomCfg, ServerConfig, SpaceModel,
 } from './types';
+import { contentFingerprint } from './visual-continuity';
 
 export type { MarkerAreaBinding, MarkerAreaSnapshot } from './types';
 
@@ -343,4 +345,60 @@ export function applyAreaRelocationResolution(
     next[decision.id] = { binding: decision.binding, area: decision.area };
   }
   return next;
+}
+
+type LifecycleSettings = ServerConfig['settings'];
+
+/** The card's side of the provenance write: its settings body, writer and deferred write. */
+export interface AreaProvenanceWritePort {
+  settings(): LifecycleSettings;
+  /** Replace the config body's settings without invalidating room geometry. */
+  stage(settings: LifecycleSettings): void;
+  refreshFingerprint(): void;
+  write(): Promise<void>;
+  readonly deferred: DeferredConfigWrite;
+}
+
+/**
+ * Persist advanced registry-Area provenance as one awaited config write.
+ *
+ * A fire-and-forget save would leave the local snapshot advanced after a
+ * rejection, suppressing the retry required by the delete-first contract. If
+ * the registry rebuild was itself triggered by a debounced user mutation, the
+ * candidate already contains it, so that timer is cancelled to keep one UI
+ * Save one transport write (#44). A rejection restores exactly this attempt
+ * while no newer mutation replaced it, and only then re-arms the cancelled
+ * deferred write once — never after a conflict, whose reload owns the config
+ * (#842 K4). Returns the rejection, or null when the write was accepted.
+ */
+export async function writeAreaProvenance(
+  port: AreaProvenanceWritePort,
+  base: LifecycleSettings,
+  snapshot: MarkerAreaSnapshot,
+  attention: string[] | undefined,
+): Promise<{ error: unknown } | null> {
+  const previousSnapshot = base.marker_area_snapshot;
+  const previousAttention = base.new_device_ids;
+  port.stage({ ...base, marker_area_snapshot: snapshot, ...(attention ? { new_device_ids: attention } : {}) });
+  const restoreDeferred = supersedeDeferredWrite(port.deferred);
+  try {
+    await port.write();
+    return null;
+  } catch (error: unknown) {
+    const current = port.settings();
+    let restoredOwn = false;
+    if (contentFingerprint(current.marker_area_snapshot) === contentFingerprint(snapshot)
+        && contentFingerprint(current.new_device_ids) === contentFingerprint(attention ?? previousAttention)) {
+      const restored = { ...current };
+      if (previousSnapshot === undefined) delete restored.marker_area_snapshot;
+      else restored.marker_area_snapshot = previousSnapshot;
+      if (previousAttention === undefined) delete restored.new_device_ids;
+      else restored.new_device_ids = previousAttention;
+      port.stage(restored);
+      port.refreshFingerprint();
+      restoredOwn = true;
+    }
+    restoreDeferred(restoredOwn && (error as { code?: unknown } | null)?.code !== 'conflict');
+    return { error };
+  }
 }

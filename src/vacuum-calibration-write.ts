@@ -4,7 +4,7 @@ import type { DevItem, Marker, ServerConfig } from './types';
 import { fitFromMatrix, type Affine, type FitParams } from './vacuum';
 import { writeVacuumMatrix } from './vacuum-route-edit';
 import type { OptimisticAttempt } from './serialized-write-queue';
-import { isGeometryCleanupRefusal, type ConfigAdoption } from './config-adoption';
+import { isGeometryCleanupRefusal, supersedeDeferredWrite, type ConfigAdoption, type DeferredConfigWrite } from './config-adoption';
 
 export type CalibrationProposal = {
   markerId: string;
@@ -41,7 +41,7 @@ export interface VacuumCalibrationWriteHost {
   readonly _cfgRev: number;
   readonly _adoption: ConfigAdoption;
   _rollbackOptimistic: (attempt: OptimisticAttempt<ServerConfig>) => boolean;
-  _saveConfigDebounced: { pending: () => boolean; cancel: () => void };
+  _saveConfigDebounced: DeferredConfigWrite;
   _regSignature: string;
   _markerDialog: { busy: boolean } | null;
   _vacCalConfirm: CalibrationProposal | null;
@@ -104,12 +104,12 @@ export async function saveVacuumMatrix(
   const attempt = host._adoption.beginOptimistic(previous, candidate);
   host._adoption.stageLocalConfig(candidate);
   rebuild(host);
-  if (host._saveConfigDebounced.pending()) host._saveConfigDebounced.cancel();
+  const restoreDeferred = supersedeDeferredWrite(host._saveConfigDebounced); // #842 K4
   try {
     await runtime._saveConfigNow(attempt);
     return true;
   } catch (error) {
-    host._rollbackOptimistic(attempt);
+    restoreDeferred(host._rollbackOptimistic(attempt));
     rebuild(host);
     if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.cfg_save_failed', { err: host._errText(error) }));
     return false;

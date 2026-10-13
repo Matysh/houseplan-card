@@ -69,3 +69,43 @@ test('optimisticAttempt snapshots the previous body by value (#439)', () => {
   assert.equal(attempt.attempted, attempted);
   assert.equal(attempt.attemptedFingerprint, fingerprint(attempted));
 });
+
+// #842 К4/К5: the deferred write an immediate write superseded is re-armed
+// once, only after its own rollback, and reads the live value when it runs —
+// never a candidate captured in advance.
+test('#842 a superseded deferred write is restored once, only on rollback, and reads the queue turn’s value', async () => {
+  const { supersedeDeferredWrite } = await import('../test-build/config-adoption.js');
+  let chain = Promise.resolve();
+  let live = 'independent edit';
+  const sent = [];
+  let armed = false;
+  let arms = 0;
+  const deferred = Object.assign(() => { armed = true; arms += 1; }, {
+    pending: () => armed,
+    cancel: () => { armed = false; },
+  });
+  const fire = () => {
+    armed = false;
+    chain = enqueueSerializedWrite(chain, async () => { sent.push(live); });
+    return chain;
+  };
+
+  deferred();
+  const restore = supersedeDeferredWrite(deferred);
+  assert.equal(armed, false, 'the immediate write carries the pending content');
+  restore(true);
+  restore(true);
+  assert.equal(arms, 2, 'one re-arm, however often the failure path runs');
+  live = 'edited after the rejection';
+  await fire();
+  assert.deepEqual(sent, ['edited after the rejection'], 'the restored write sends the live value of its turn');
+
+  const notPending = supersedeDeferredWrite(deferred);
+  notPending(true);
+  assert.equal(arms, 2, 'nothing was pending — nothing is armed');
+
+  deferred();
+  const conflict = supersedeDeferredWrite(deferred);
+  conflict(false);
+  assert.equal(armed, false, 'no rollback (conflict, newer adoption) — no restoration');
+});

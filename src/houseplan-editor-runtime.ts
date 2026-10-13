@@ -34,7 +34,7 @@ import type { ColorPickerLabels } from './hp-color-opacity';
 import './hp-help';
 import type { AuthoritativeConfigResponse } from './version-recovery-card';
 import type { ConfigAdoption, GatedAdoptionInput, GatedAdoptionResult } from './config-adoption';
-import { isGeometryCleanupRefusal } from './config-adoption';
+import { isGeometryCleanupRefusal, supersedeDeferredWrite } from './config-adoption';
 import type { WallNodeEditor, NodeMoveHistory } from './wall-node-editor';
 import './hp-device-preview'; import './hp-zigbee-topology-settings';
 import { adoptEditorStyles } from './editor-style-adoption'; // #805: after the CSS-bearing elements — shared gzip context
@@ -7658,6 +7658,7 @@ public async _saveMarker(): Promise<void> {
     this.host._markerDialog = savingDraft;
     let attempt: OptimisticAttempt<ServerConfig> | null = null;
     let configAccepted = false;
+    let restoreDeferred = (_rolledBack: boolean): void => undefined;
     try {
       const replacedRemovedIds = dlg.binding === 'virtual'
         ? []
@@ -7813,7 +7814,7 @@ public async _saveMarker(): Promise<void> {
       this.host._regSignature = '';
       this.host._maybeRebuildDevices();
       this.host.requestUpdate();
-      if (this.host._saveConfigDebounced.pending()) this.host._saveConfigDebounced.cancel();
+      restoreDeferred = supersedeDeferredWrite(this.host._saveConfigDebounced); // #842 K4
       await this._saveConfigNow(attempt);
       configAccepted = true;
       if (newPos) {
@@ -7853,7 +7854,7 @@ public async _saveMarker(): Promise<void> {
       // then crashes, blanking the whole card. The toast below is the
       // only remaining signal, so it must still fire.
       if (!configAccepted && attempt) {
-        this.host._rollbackOptimistic(attempt);
+        restoreDeferred(this.host._rollbackOptimistic(attempt));
         this.host._regSignature = '';
         this.host._maybeRebuildDevices();
         this.host.requestUpdate();
