@@ -3870,9 +3870,10 @@ const MUTANT_DEFINITIONS = [
         + "        // Undo remains byte-exact immediately; _writeConfig still degrades and\n"
         + "        // strictly validates the outbound candidate before it can leave the\n"
         + "        // card. Every other preflight failure stays fail-closed.\n"
-        + "        safe = !!check?.ok || !!(allowHistoryBoundaryRepair\n"
+        + "        strictOk = !!check?.ok;\n"
+        + "        safe = strictOk || !!(allowHistoryBoundaryRepair\n"
         + "          && check?.reason === 'wall-degraded-extra');",
-      replace: "        safe = !!check?.ok;",
+      replace: "        strictOk = !!check?.ok;\n        safe = strictOk;",
     }],
   },
   {

@@ -2106,6 +2106,7 @@ public _applyGeometryState(
       this._showWallModelMigrationBlocked(error);
       return false;
     }
+    let strictOk = false;
     if (physicalChanged) {
       let safe = false;
       try {
@@ -2117,7 +2118,8 @@ public _applyGeometryState(
         // Undo remains byte-exact immediately; _writeConfig still degrades and
         // strictly validates the outbound candidate before it can leave the
         // card. Every other preflight failure stays fail-closed.
-        safe = !!check?.ok || !!(allowHistoryBoundaryRepair
+        strictOk = !!check?.ok;
+        safe = strictOk || !!(allowHistoryBoundaryRepair
           && check?.reason === 'wall-degraded-extra');
       } catch { safe = false; }
       if (!safe) {
@@ -2130,7 +2132,8 @@ public _applyGeometryState(
       const pending = this.host._pendingPhysicalWrites.get(target.spaceId);
       this.host._pendingPhysicalWrites.set(target.spaceId, {
         before: pending?.before || before,
-        fingerprint: spacePhysicalGeometryFingerprint(afterSpace),
+        // #842 F57: only a strict pass is proof; '' never matches, so a repaired boundary is checked at write.
+        fingerprint: strictOk ? spacePhysicalGeometryFingerprint(afterSpace) : '',
       });
     } else adoptWallSegmentModelCandidateInPlace(restoredCandidate, committedCandidate);
     this._clearGeometryGesture();

@@ -251,3 +251,39 @@ test('#842 AC7: a background write refuses by itself, asks K3, and both answers 
   assert.equal(h.confirms.length, 2, 'and shows no dialog');
   assert.ok(ids(live().partitions).includes('p-again'));
 });
+
+// F57 (ТЗ #842, план автотестов): Undo/Redo may restore a history boundary the
+// strict checker reports as `wall-degraded-extra` (`_applyGeometryState(…, true)`).
+// The fingerprint registered by that exceptional restore must not stand in for a
+// strict check of the outgoing candidate. The boolean merge failure is modelled
+// deterministically in the checker, as test/wall-union-isolation.test.mjs does.
+test('#842 F57: a boundary restored only as wall-degraded-extra is strictly checked before it can leave the card', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  // A plan already in canonical write form: preparing it changes nothing, so
+  // nothing but the strict check itself can stop the restored boundary.
+  const canonical = plan();
+  delete canonical.spaces[0].wall_columns[0].finish;
+  delete canonical.spaces[0].wall_columns[1].label;
+  delete canonical.spaces[0].partitions[1].note;
+  const h = editorWriteHarness({ config: canonical });
+  Object.assign(h.host, { _canCommitSpace: () => true, _activeWallChainId: null });
+  h.runtime._clearGeometryGesture = () => {};
+  const checked = [];
+  h.host._checkSpacePhysicalGeometry = (config, spaceId) => {
+    const column = config.spaces.find((space) => space.id === spaceId).wall_columns
+      .find((item) => item.id === 'c-square');
+    const degraded = column.center[0] === 0.75;
+    checked.push(degraded ? 'degraded' : 'ok');
+    return degraded ? { ok: false, reason: 'wall-degraded-extra' } : { ok: true };
+  };
+  const boundary = h.runtime._geometrySnapshot('f1');
+  boundary.wall_columns[0].center = [0.75, 0.85];
+  assert.equal(h.runtime._applyGeometryState(boundary, true), true, 'Undo restores the repairable boundary locally');
+  checked.length = 0;
+  t.mock.timers.tick(500);
+  await settle();
+  assert.deepEqual(checked, ['degraded'], 'the outgoing candidate is strictly checked');
+  assert.equal(h.server.sets.length, 0, 'a wall-degraded-extra candidate never leaves the card');
+  assert.ok(h.toasts.includes('toast.geometry_unsafe'));
+  assert.equal(h.host._serverCfg.spaces[0].wall_columns[0].center[0], 0.7, 'the last strictly checked state is back');
+});

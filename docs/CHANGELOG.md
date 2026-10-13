@@ -18,6 +18,11 @@
   afterwards instead of staying only in the open tab
   ([#842](https://github.com/Matysh/houseplan-card/issues/842)).
 
+- Undo or Redo of a wall edit no longer saves wall geometry the strict check
+  refuses just because that state was once allowed back for display: the save
+  is checked and refused with the usual message
+  ([#842](https://github.com/Matysh/houseplan-card/issues/842)).
+
 ## v1.81.0-beta.1 — 2026-10-12
 
 - Activity colour now matches the actual ordinary pulse in device settings;
