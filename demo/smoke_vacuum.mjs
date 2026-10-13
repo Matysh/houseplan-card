@@ -1,5 +1,6 @@
 // Live vacuum P1 (docs/VACUUM.md): puck, trail, calibration, hidden rules.
-import { launch, checkAll, finish } from './serve.mjs';
+import { launch, requirePinnedBrowser, checkAll, finish } from './serve.mjs';
+requirePinnedBrowser();
 const { page, browser } = await launch();
 
 const out = await page.evaluate(async () => {
@@ -61,18 +62,18 @@ const out = await page.evaluate(async () => {
 
   // drive: two more points -> trail polyline grows; puck moves
   const p1 = puck.getBoundingClientRect();
-  for (const [x, y] of [[900, 800], [900, 1100]]) {
+  for (const [x, y] of [[700, 800], [700, 900]]) {
     c.hass = { ...c.hass, states: { ...c.hass.states,
       'camera.robo_map': { state: 'idle', attributes: mkAttrs(x, y) } } };
-    await c.updateComplete; await new Promise((r) => setTimeout(r, 30));
+    await c.updateComplete; await new Promise((r) => setTimeout(r, 300));
   }
   const trail = sr().querySelector('.vactrail path.case');
   // the trail LAGS one point behind the puck: after 3 telemetry points only
   // the first two are drawn — a segment never outruns the icon (owner)
   const localD = trail?.getAttribute('d') || '';
   o.trailDrawn = (localD.match(/[ML]/g) || []).length === 2;
-  o.trailScaledByMatrix = localD.startsWith('M 300.0 400.0');
-  o.trailBehindPuck = !localD.includes('450.0 550.0');
+  o.trailScaledByMatrix = localD.startsWith('M 300 400');
+  o.trailBehindPuck = !localD.includes('350 450');
   // a zoom/view change TELEPORTS the puck instead of gliding across the plan
   c._applyView(1.35); c.requestUpdate(); await c.updateComplete;
   o.zoomTeleports = sr().querySelector('.vacpuck').classList.contains('jump');
@@ -168,6 +169,16 @@ const out = await page.evaluate(async () => {
   o.srvCurTrimmed = !!cur && (cur.getAttribute('d').match(/[ML]/g) || []).length === 3
     && (cur.getAttribute('d').match(/Q /g) || []).length === 1;
   o.srvPrevFaded = !!prevG && getComputedStyle(prevG).opacity === '0.4';
+  // Only the position-sampled server reserve gets a growing connector.
+  const tip = sr().querySelector('line.tip');
+  o.tipExists = !!tip;
+  await new Promise((r) => setTimeout(r, 250));
+  const puckNow = sr().querySelector('.vacpuck').getBoundingClientRect();
+  const svgT = sr().querySelector('.vactrail');
+  const vbT = svgT.viewBox.baseVal; const sbT = svgT.getBoundingClientRect();
+  const tx = sbT.left + ((parseFloat(tip?.getAttribute('x2')) - vbT.x) / vbT.width) * sbT.width;
+  const ty = sbT.top + ((parseFloat(tip?.getAttribute('y2')) - vbT.y) / vbT.height) * sbT.height;
+  o.tipGluedToPuck = !!tip && Math.hypot(tx - (puckNow.left + puckNow.width / 2), ty - (puckNow.top + puckNow.height / 2)) < 12;
   // XCME integration path outranks the simultaneous server run. Its two
   // subpaths remain two SVG moveto sections: no synthetic bridge over a gap.
   c.hass = { ...c.hass, states: { ...c.hass.states,
@@ -182,17 +193,8 @@ const out = await page.evaluate(async () => {
   await c.updateComplete;
   const integrationD = sr().querySelector('.vactrail > path.case')?.getAttribute('d') || '';
   o.multiSubpathNoBridge = (integrationD.match(/M /g) || []).length === 2
-    && (integrationD.match(/L /g) || []).length === 2;
-  // the growing tip is glued to the puck by the rAF sampler
-  const tip = sr().querySelector('line.tip');
-  o.tipExists = !!tip;
-  await new Promise((r) => setTimeout(r, 250));
-  const puckNow = sr().querySelector('.vacpuck').getBoundingClientRect();
-  const svgT = sr().querySelector('.vactrail');
-  const vbT = svgT.viewBox.baseVal; const sbT = svgT.getBoundingClientRect();
-  const tx = sbT.left + ((parseFloat(tip.getAttribute('x2')) - vbT.x) / vbT.width) * sbT.width;
-  const ty = sbT.top + ((parseFloat(tip.getAttribute('y2')) - vbT.y) / vbT.height) * sbT.height;
-  o.tipGluedToPuck = Math.hypot(tx - (puckNow.left + puckNow.width / 2), ty - (puckNow.top + puckNow.height / 2)) < 12;
+    && integrationD.endsWith('475 575');
+  o.integrationEndpointNoInventedTip = !sr().querySelector('line.tip');
   c.hass = { ...c.hass, states: { ...c.hass.states,
     'vacuum.robo': { state: 'docked', attributes: { friendly_name: 'Робот' } },
   } };
@@ -289,7 +291,7 @@ checkAll(out, {
   srvEndedCurrentHiddenDefault: true, srvResumedCurrentKeepsEarlierPoints: true,
   srvResumedCurrentSmooth: true,
   srvPrevRunShown: true, srvCurTrimmed: true, srvPrevFaded: true,
-  multiSubpathNoBridge: true, integrationPathAlwaysAtRest: true,
+  multiSubpathNoBridge: true, integrationEndpointNoInventedTip: true, integrationPathAlwaysAtRest: true,
   tipExists: true, tipGluedToPuck: true, neverHidesAll: true,
   fitDevFound: true, fitOverlay: true, fitGhostRooms: true, fitLabels: true,
   fitHandles: true, fitHandleHittable: true, fitGhostHittable: true, fitBar: true, fitMirrorDefault: true, fitDragMoves: true,
