@@ -607,18 +607,11 @@ evidence is `demo/out/vacuum-camera-871/frames.json`. Matrix failure/recovery
 and read-before-write ordering also have Node witnesses. Headless geometry
 and golden do not replace the issue's real-GPU owner acceptance.
 
-Full native snapshots keep their own exact endpoint; an animated connector is
-only valid for a continuous position-sampled reserve. Path tests must measure
-finite-segment physical error and temporal order, not just point count or
-nonempty SVG. Stress includes bounded raw ownership, whole-scene render quota,
-revision cache reuse during unrelated frames and store/public round-trip.
-The pinned `smoke_vacuum_path_fidelity.mjs` witnesses format-2 authority and
-literal gaps through HA transport and the actual View DOM; native/generic
-provider scheduling and late lifecycle replies use the real HA harness in
-`tests_backend/test_ha_vacuum_paths.py`. Mutation readiness is static at handoff;
-execution belongs to nightly. A supplied map file proves only that snapshot:
-without observed cleanup boundaries and owner GPU comparison it is not real
-device lifecycle acceptance or a claim of app-equivalent fidelity.
+Native endpoints never get invented connectors; tests measure finite-segment error/order.
+Stress checks raw ownership, scene quota, idle cache reuse and store/public round-trip.
+`smoke_vacuum_path_fidelity.mjs` witnesses transport authority/gaps in actual View DOM;
+`test_ha_vacuum_paths.py` covers scheduling/late replies. Mutants run only nightly.
+A map alone proves neither cleanup lifecycle nor app-equivalent fidelity: see `VACUUM.md`.
 
 `npm run golden:capture` records the data-only scenarios from
 `demo/golden/matrix.mjs` into ignored `artifacts/golden/actual/`; it never
