@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 877,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "v1.80.1 already ships the #820 reinstall step and opens Previous installation found whenever any storage file exists, even when the readable config has no spaces. This removes that needless question and reuses the existing Start fresh archive on final confirmation; no new model, migration or feature.",
+  "summary": {
+    "ru": "Мастер повторной установки больше не спрашивает о прежних данных без пространств: они архивируются как при «Начать с чистого листа».",
+    "en": "The reinstall wizard no longer asks about previous data without spaces: it is archived as with “Start fresh”."
+  }
+}
