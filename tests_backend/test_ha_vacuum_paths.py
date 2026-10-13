@@ -239,6 +239,18 @@ def test_snapshot_wrong_map_revision_and_corrupt_run_are_isolated(monkeypatch):
     assert run["paths"] == first.paths and run["quality"]["reason"] == "limited"
 
 
+def test_corrupt_physical_reserve_is_a_gap_not_a_store_or_event_failure():
+    for last_sample in (["broken", 1, "time"], [float("nan"), 1, 1], [True, 1, 1]):
+        book = TrailBook({"m": {"current": {"map_id": "floor", "started": 1,
+            "ended": None, "path_format": 2, "paths": [[[0, 0], [1, 1]]],
+            "_last_sample": last_sample}}})
+        assert book.on_point("m", "floor", 2, 2, 2, physical_cm=(2, 2))
+        assert book.data["m"]["current"]["paths"] == [[[0, 0], [1, 1]], [[2, 2]]]
+        assert book.on_point("m", "floor", 3, 3, 3, physical_cm=(float("inf"), 3))
+        assert "_last_sample" not in book.data["m"]["current"]
+        json.dumps(book.data, allow_nan=False)
+
+
 def test_four_dense_native_runs_fit_entry_quota_and_do_not_gain_sampled_connectors():
     book = TrailBook()
     geometry = [[[i % 2, i] for i in range(100000)]]
@@ -269,6 +281,18 @@ def test_future_format_is_preserved_but_its_exact_bytes_consume_entry_quota(monk
     assert book.data["future"] == future
     book.delete("future")
     assert not book._opaque_sizes
+
+
+async def test_physical_projection_overflow_is_not_persisted(hass):
+    recorder = TrailRecorder(hass, SimpleNamespace())
+    route = {"id": "r", "space": "floor", "calibration": [2, 0, 0, 0, 2, 0]}
+    recorder.routes_by_marker = {"m": [route]}
+    recorder._spaces = {"floor": {"cell_cm": 5}}
+    assert recorder._physical_point("m", "r", 10, 10) == (24, 24)
+    assert recorder._physical_point("m", "r", 1e308, 1e308) is None
+    route["calibration"] = [1e308, 0, 0, 0, 1e308, 0]
+    assert recorder._physical_point("m", "r", 0, 0) is None
+    await recorder.async_teardown()
 
 
 async def test_recorder_native_without_position_fanout_store_and_stale_delete(hass):

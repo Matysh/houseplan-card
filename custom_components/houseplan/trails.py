@@ -271,8 +271,18 @@ class TrailBook:
                        quality={"source": "positions", "reason": "sampled"},
                        _generation=uuid.uuid4().hex)
         positions = cur.setdefault("_position_paths", cur["paths"] if cur["quality"]["source"] == "positions" else [])
+        if physical_cm is not None and any(number(v) is None for v in physical_cm):
+            physical_cm = None
+            gap = True
+            cur.pop("_last_sample", None)
         last_sample = cur.get("_last_sample")
-        if isinstance(last_sample, list) and len(last_sample) == 3 and physical_cm is not None:
+        valid_sample = isinstance(last_sample, list) and len(last_sample) == 3 \
+            and all(number(v) is not None for v in last_sample)
+        if last_sample is not None and not valid_sample:
+            cur.pop("_last_sample", None)
+            gap = True
+        if valid_sample and physical_cm is not None:
+            assert isinstance(last_sample, list)
             dt = now - last_sample[2]
             gap |= not math.isfinite(dt) or dt <= 0 or math.hypot(
                 physical_cm[0] - last_sample[0], physical_cm[1] - last_sample[1],
@@ -811,11 +821,13 @@ class TrailRecorder:
                 return None
             if any(number(v) is None for v in matrix):
                 return None
-            if abs(matrix[0] * matrix[4] - matrix[1] * matrix[3]) < 1e-12:
+            determinant = matrix[0] * matrix[4] - matrix[1] * matrix[3]
+            if not math.isfinite(determinant) or abs(determinant) < 1e-12:
                 return None
             factor = cell_cm * 240 / 1000
-            return ((matrix[0] * x + matrix[1] * y + matrix[2]) * factor,
-                    (matrix[3] * x + matrix[4] * y + matrix[5]) * factor)
+            projected = ((matrix[0] * x + matrix[1] * y + matrix[2]) * factor,
+                         (matrix[3] * x + matrix[4] * y + matrix[5]) * factor)
+            return projected if all(math.isfinite(v) for v in projected) else None
         return None
 
     def _path_contexts(self) -> list[PathContext]:
