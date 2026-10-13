@@ -933,26 +933,31 @@ export class HouseplanEditorRuntime {
     if (this.host._mode !== 'plan' || this.host._tool !== 'select' || !this.host._canEdit || this.host._kiosk) {
       this.nodeMove?.cancel(); return nothing;
     }
-    if (!this.nodeMove && !this._nodeMoveLoad) {
-      const epoch = this._nodeMoveEpoch;
-      this._nodeMoveLoad = import('./wall-node-card-adapter').then(({ createWallNodeEditor }) => {
-        if (epoch !== this._nodeMoveEpoch || !this.host.isConnected) return;
-        this.nodeMove = createWallNodeEditor<SpaceGeometryState>(this.host, {
-          point: ev => this._svgPoint(ev),
-          snapshot: space => this._geometrySnapshotFromConfig({ spaces: [space] }, space.id),
-          introduced: (config, baseline, id, geometry, baselineGeometry) =>
-            this._junctionLimitsIntroduced(config, baseline, id, geometry, undefined, baselineGeometry),
-        });
-        this.host.requestUpdate();
-      }).catch(() => { this.host._showToast(this.host._t('toast.geometry_unsafe')); })
-        .finally(() => {
-          this._nodeMoveLoad = null;
-          // A Select return before the old import settles needs a new render;
-          // the retired epoch must neither install nor strand its controller.
-          if (epoch !== this._nodeMoveEpoch && this.host.isConnected) this.host.requestUpdate();
-        });
-    }
+    this._loadNodeMove();
     return this.nodeMove?.render() || nothing;
+  }
+  /** Select, or a node command of the shared history (#843), loads the node subsystem. */
+  private _loadNodeMove(): void {
+    if (this.nodeMove || this._nodeMoveLoad) return;
+    const epoch = this._nodeMoveEpoch;
+    this._nodeMoveLoad = import('./wall-node-card-adapter').then(({ createWallNodeEditor }) => {
+      if (epoch !== this._nodeMoveEpoch || !this.host.isConnected) return;
+      this.nodeMove = createWallNodeEditor<SpaceGeometryState>(this.host, {
+        point: ev => this._svgPoint(ev),
+        snapshot: space => this._geometrySnapshotFromConfig({ spaces: [space] }, space.id),
+        introduced: (config, baseline, id, geometry, baselineGeometry) =>
+          this._junctionLimitsIntroduced(config, baseline, id, geometry, undefined, baselineGeometry),
+        canShow: id => this.host._canCommitSpace(id),
+        show: id => this._showGeometrySpace(id),
+      });
+      this.host.requestUpdate();
+    }).catch(() => { this.host._showToast(this.host._t('toast.geometry_unsafe')); })
+      .finally(() => {
+        this._nodeMoveLoad = null;
+        // A Select return before the old import settles needs a new render;
+        // the retired epoch must neither install nor strand its controller.
+        if (epoch !== this._nodeMoveEpoch && this.host.isConnected) this.host.requestUpdate();
+      });
   }
 public _routeLiveEditorUpdate(name?: PropertyKey, oldValue?: unknown): boolean {
     const gearSpace = this.host._mode === 'plan' ? this.host._spaceModel() : null;
@@ -2108,7 +2113,8 @@ public _stagePointerCancel(ev: PointerEvent): void {
 public _applyGeometryState(
     state: SpaceGeometryState, allowHistoryBoundaryRepair = false,
   ): boolean {
-    if (state.nodeMove) return this.nodeMove?.applyHistory(state.nodeMove) || false;
+    // #843: node commands are server transactions of `_runNodeHistory`, never a local state.
+    if (state.nodeMove) return false;
     const target = this._canonicalWallChainHistoryState(state);
     if (!target || !this.host._canCommitSpace(target.spaceId)) return false;
     const before = this._geometrySnapshot(target.spaceId);
@@ -2169,12 +2175,7 @@ public _applyGeometryState(
         fingerprint: strictOk ? spacePhysicalGeometryFingerprint(afterSpace) : '',
       });
     } else adoptWallSegmentModelCandidateInPlace(restoredCandidate, committedCandidate);
-    this._clearGeometryGesture();
-    if (this.host._space !== target.spaceId) {
-      this.host._commitSpace(target.spaceId);
-      this.host._saveNav();
-      this.host._restoreZoom();
-    }
+    this._showGeometrySpace(target.spaceId);
     this.host._modelCache = null;
     this.host._frame = null;
     this.host._regSignature = '';
@@ -2182,6 +2183,31 @@ public _applyGeometryState(
     this._saveConfig();
     this.host.requestUpdate();
     return true;
+  }
+
+/** Show the floor of an applied history step; editor, tool and navigation stay (#843 shares it). */
+public _showGeometrySpace(spaceId: string): void {
+    this._clearGeometryGesture();
+    if (this.host._space !== spaceId) {
+      this.host._commitSpace(spaceId);
+      this.host._saveNav();
+      this.host._restoreZoom();
+    }
+  }
+
+/** #843: the next history step is a node command, applied by its server transaction. */
+private _nodeHistoryNext(direction: 'undo' | 'redo'): boolean {
+    const history = this.host._geometryHistory;
+    return !!(direction === 'undo' ? history.peekUndo()?.before : history.peekRedo()?.after)?.nodeMove;
+  }
+
+private _runNodeHistory(direction: 'undo' | 'redo'): void {
+    // An unfinished Draw/Split draft owns the first press; a node step never lands on it.
+    if (this.host._path.length || this.host._splitSel?.pts?.length) { this._clearGeometryGesture(); return; }
+    if (this.nodeMove) { this.nodeMove.history(direction); return; }
+    // A cold adapter is a temporary refusal: history stays, the import enables the next attempt.
+    this._loadNodeMove();
+    this.host._showToast(this.host._t('history.unavailable'));
   }
 
 public _undoGeometry = (): void => {
@@ -2196,6 +2222,7 @@ public _undoGeometry = (): void => {
       return;
     }
     if (this.host._resize.dragging) { this._rszCancelDrag(); return; }
+    if (this._nodeHistoryNext('undo')) { this._runNodeHistory('undo'); return; }
     const command = this.host._geometryHistory.undo();
     if (!command) return;
     if (!this._applyGeometryState(command.before, true)) {
@@ -2219,6 +2246,7 @@ public _redoGeometry = (): void => {
       return;
     }
     if (this.host._resize.dragging) { this._rszCancelDrag(); return; }
+    if (this._nodeHistoryNext('redo')) { this._runNodeHistory('redo'); return; }
     if (this.host._activeWallChainId && this.host._wallChainRedo.length) {
       const chainId = this.host._activeWallChainId;
       const path = this.host._path.map((point) => [...point]);
@@ -5233,11 +5261,11 @@ public _renderDecorBar(): TemplateResult {
         @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
           this._updateDecorStyle({ ...this.host._decorStyle, ...e.detail })}>
       </hp-color-opacity>
-      <button class="btn ghost" @click=${() => this._undoGeometry()} ?disabled=${!undoName}
+      <button class="btn ghost" @click=${() => this._undoGeometry()} ?disabled=${!undoName || this.nodeMove?.busy}
         title=${undoName ? this.host._t('history.undo_named', { name: undoName }) : this.host._t('history.undo_empty')}>
         <ha-icon icon="mdi:undo-variant"></ha-icon>${this.host._t('history.undo')}
       </button>
-      <button class="btn ghost" @click=${() => this._redoGeometry()} ?disabled=${!redoName}
+      <button class="btn ghost" @click=${() => this._redoGeometry()} ?disabled=${!redoName || this.nodeMove?.busy}
         title=${redoName ? this.host._t('history.redo_named', { name: redoName }) : this.host._t('history.redo_empty')}>
         <ha-icon icon="mdi:redo-variant"></ha-icon>${this.host._t('history.redo')}
       </button>
@@ -11237,12 +11265,12 @@ public _renderMarkupBar(): TemplateResult {
         <ha-icon icon="mdi:delete-outline"></ha-icon>${this.host._t('markup.delete_room')}
       </button>
       <button class="btn ghost" @click=${() => this._undoGeometry()}
-        ?disabled=${!undoName}
+        ?disabled=${!undoName || this.nodeMove?.busy}
         title=${undoTitle} aria-label=${undoTitle}>
         <ha-icon icon="mdi:undo-variant" aria-hidden="true"></ha-icon>
       </button>
       <button class="btn ghost" @click=${() => this._redoGeometry()}
-        ?disabled=${!redoName}
+        ?disabled=${!redoName || this.nodeMove?.busy}
         title=${redoTitle} aria-label=${redoTitle}>
         <ha-icon icon="mdi:redo-variant" aria-hidden="true"></ha-icon>
       </button>

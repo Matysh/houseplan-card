@@ -48,6 +48,21 @@ export class CommandStack<T> {
     return command;
   }
 
+  /** The command `undo()`/`redo()` would return, without moving the cursor. */
+  public peekUndo(): NamedCommand<T> | null { return this._undo[this._undo.length - 1] ?? null; }
+  public peekRedo(): NamedCommand<T> | null { return this._redo[this._redo.length - 1] ?? null; }
+
+  /**
+   * #843: a server-applied command moves the cursor only after acceptance, and
+   * only while it is still the next one. A newer command is never displaced.
+   */
+  public confirmUndo(command: NamedCommand<T>): boolean {
+    return this.peekUndo() === command && this.undo() === command;
+  }
+  public confirmRedo(command: NamedCommand<T>): boolean {
+    return this.peekRedo() === command && this.redo() === command;
+  }
+
   /** Remove commands invalidated by an external change while preserving unrelated history. */
   public removeWhere(predicate: (command: NamedCommand<T>) => boolean): number {
     const undoSize = this._undo.length;

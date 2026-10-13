@@ -6,6 +6,13 @@
   rewrites tracked art while a parallel unit checks it; explicit generation
   and strict stale-file checks are unchanged
   ([#884](https://github.com/Matysh/houseplan-card/issues/884)).
+- Undo and Redo of a wall-node move now work from any Plan or Background tool,
+  after a mode or floor change, and right after your own settings edit, instead
+  of silently clearing the whole history. The result is shown on its floor once
+  the server accepts it; a refusal names its cause, keeps the history, and only
+  an operation whose floor changed since is removed. A node can also be moved
+  right after your own edit
+  ([#843](https://github.com/Matysh/houseplan-card/issues/843)).
 
 - Vacuum paths stay attached to the plan while panning or zooming; their
   animated end follows the robot in Flat and 2.5D views, including pauses

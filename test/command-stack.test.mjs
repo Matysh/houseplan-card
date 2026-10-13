@@ -50,3 +50,19 @@ test('selective invalidation removes matching undo and redo without clearing nei
   assert.equal(stack.canRedo, false);
   assert.equal(stack.undo()?.name, 'lamp');
 });
+
+test('#843 peek and confirm move the cursor only over the very next command', () => {
+  const stack = new CommandStack(50);
+  const room = { name: 'Add room', before: 0, after: 1 }, node = { name: 'Move wall node', before: 1, after: 2 };
+  stack.push(room); stack.push(node);
+  assert.equal(stack.peekUndo(), node); assert.equal(stack.size, 2, 'peek does not move the cursor');
+  assert.equal(stack.confirmUndo(room), false, 'a command that is not next is never moved');
+  assert.equal(stack.confirmUndo(node), true);
+  assert.deepEqual([stack.undoName, stack.redoName, stack.peekRedo()], ['Add room', 'Move wall node', node]);
+  const newer = { name: 'Split room', before: 1, after: 3 };
+  stack.push(newer);
+  assert.equal(stack.confirmRedo(node), false, 'a newer branch is not displaced');
+  assert.deepEqual([stack.undoName, stack.canRedo, stack.size], ['Split room', false, 2]);
+  assert.equal(stack.confirmUndo(newer), true); assert.equal(stack.confirmRedo(newer), true);
+  assert.equal(stack.peekUndo(), newer);
+});

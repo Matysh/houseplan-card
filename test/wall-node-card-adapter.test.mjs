@@ -28,11 +28,12 @@ function setup(t) {
     _fillColors: { wall_fill: { c: '#aaa', a: 1 } }, _openingAmt: () => 0,
     _baseVb: () => [0, 0, 1000, 1000], _viewOr: () => ({ w: 1000 }),
     _cancelCameraTransition() {}, _t: key => key, _showToast() {}, requestUpdate: () => { updates++; },
-    _geometryHistory: { push() {}, clear() {} }, _writeChain: Promise.resolve(),
+    _geometryHistory: { push() {}, clear() {} }, _writeChain: Promise.resolve(), _adoption: { adoptionEpoch: 0 },
     _saveConfigDebounced: { pending: () => false }, _reloadRejectedPhysicalWrite: async () => {},
     hass: { callWS: async () => { throw new Error('intentional write refusal'); } } };
+  const shown = [];
   const editor = createWallNodeEditor(host, { point: ev => [ev.clientX, ev.clientY], snapshot: () => ({}),
-    introduced: (...args) => { proofs.push(args); return []; } });
+    introduced: (...args) => { proofs.push(args); return []; }, canShow: () => true, show: space => shown.push(space) });
   editor.paint = () => { paints++; };
   t.after(() => editor.dispose());
   const source = () => commitWallSegmentModel({ ...host._serverCfg, spaces: [host._serverCfg.spaces[0]] }).config.spaces[0];
@@ -53,7 +54,7 @@ function setup(t) {
     assert.equal(editor.dragging, true);
     return editor.session.plan.source;
   };
-  return { host, editor, window, proofs, queries, source, candidate, validate, down,
+  return { host, editor, window, proofs, queries, source, candidate, validate, down, shown,
     counts: () => ({ paints, updates, recordedOperations, candidateOperations }) };
 }
 
@@ -160,7 +161,7 @@ for (const reason of ['dispose', 'pagehide']) test(`${reason} releases retained 
 
 test('write or history attempt retires retained baseline even if no new config is adopted', async t => {
   const s = setup(t), { before } = s.validate(); const previous = s.proofs.at(-1)[1];
-  await assert.rejects(s.editor.port.write({ beforeSpace: before, intent: {}, direction: 'undo' }, s.host._cfgRev),
+  await assert.rejects(s.editor.port.write({ beforeSpace: before, intent: {}, direction: 'undo' }, null),
     /intentional write refusal/);
   s.validate(); assert.notEqual(s.proofs.at(-1)[1], previous);
 });
@@ -177,4 +178,33 @@ test('failed baseline build is not retained for another independent retry', t =>
   const recorded = s.counts().recordedOperations;
   refuse = false; s.editor.port.changed(); s.validate();
   assert.ok(s.counts().recordedOperations > recorded, 'healthy retry builds a new baseline');
+});
+
+test('#843 node history: any Plan/Background tool of a writer applies it; capture stays Plan/Select-only', async t => {
+  const s = setup(t), sent = [], toasts = [];
+  s.host.hass.callWS = async message => { sent.push(message); return { config: structuredClone(s.host._serverCfg), rev: s.host._cfgRev + 1 }; };
+  s.host._adoption = { adoptionEpoch: 0, stageConfigCandidate() {}, acceptConfigWrite: (c, r) => { s.host._cfgRev = r.rev; } };
+  Object.assign(s.host, { _showToast: text => toasts.push(text), _cfgEpoch: 0, _cacheSnapshot() {} });
+  const { nodeFloorFingerprint } = await import('../test-build/wall-node-write.js');
+  const before = s.source(), floor = '';
+  const command = { name: 'Move wall node',
+    before: { nodeMove: { beforeSpace: before, intent: {}, direction: 'undo', floor } },
+    after: { nodeMove: { beforeSpace: before, intent: {}, direction: 'apply' } } };
+  let cursor = 0;
+  s.host._geometryHistory = { peekUndo: () => (cursor ? null : command), peekRedo: () => null, push() {},
+    confirmUndo: c => c === command && !cursor++, confirmRedo: () => false, removeWhere: () => 0 };
+  const cases = [['plan', 'draw', {}, true], ['plan', 'resize', {}, true], ['decor', 'select', {}, true],
+    ['view', 'select', {}, false], ['plan', 'draw', { _kiosk: true }, false], ['plan', 'draw', { _canEdit: false }, false],
+    ['plan', 'draw', { isConnected: false }, false]];
+  for (const [mode, tool, patch, applies] of cases) {
+    Object.assign(s.host, { _mode: mode, _tool: tool, _kiosk: false, _canEdit: true, isConnected: true }, patch);
+    cursor = 0; sent.length = 0; s.shown.length = 0;
+    // The expected floor is the current one: only the context decides here.
+    command.before.nodeMove.floor = nodeFloorFingerprint(s.host._serverCfg.spaces[0]);
+    assert.equal(s.editor.port.context().enabled, false, `${mode}/${tool}: no capture or handles`);
+    await s.editor.port.history('undo');
+    assert.equal(sent.length, Number(applies), `${mode}/${tool} ${JSON.stringify(patch)}`);
+    assert.deepEqual(s.shown, applies ? ['f'] : []);
+  }
+  assert.equal(toasts.filter(text => text.startsWith('history.undone')).length, 3);
 });

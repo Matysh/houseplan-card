@@ -89,6 +89,12 @@ export class MutableConfigAdoption {
   layout: DeviceLayout = {};
   layoutRev = 0;
   layoutFingerprint = '';
+  /**
+   * #843: moves whenever config identity changes by anything other than our own
+   * accepted write (`acceptConfigWrite`). A node command may advance its expected
+   * revision through own accepted writes only while this stays the same.
+   */
+  adoptionEpoch = 0;
 
   constructor(private readonly onBodyReplaced?: (field: BodyField, previous: unknown) => void) {}
 
@@ -136,7 +142,9 @@ export class MutableConfigAdoption {
       this.setConfig(next);
       this.configFingerprint = nextFingerprint;
     }
-    this.configRev = cfgResp?.rev ?? this.configRev;
+    const nextRev = cfgResp?.rev ?? this.configRev;
+    if (configChanged || nextRev !== this.configRev) this.adoptionEpoch++;
+    this.configRev = nextRev;
     let layoutChanged = false;
     if (layResp !== undefined) {
       const nextLayout = layResp?.layout ?? {};
@@ -204,6 +212,7 @@ export class MutableConfigAdoption {
     this.layoutFingerprint = contentFingerprint(layout);
     this.configRev = finiteRevision(response?.config_rev, this.configRev + 1);
     this.layoutRev = finiteRevision(response?.layout_rev, this.layoutRev + 1);
+    this.adoptionEpoch++;
   }
 
   /** Our own `layout/update` reply, or its event: revisions are monotonic. */
@@ -226,6 +235,7 @@ export class MutableConfigAdoption {
   seedIdentity(patch: Partial<Pick<MutableConfigAdoption,
     'configRev' | 'layoutRev' | 'configFingerprint' | 'layoutFingerprint'>>): void {
     Object.assign(this, patch);
+    if ('configRev' in patch || 'configFingerprint' in patch) this.adoptionEpoch++;
   }
 
   /**
@@ -272,6 +282,7 @@ export class MutableConfigAdoption {
     this.setLayout(cached?.layout || {});
     this.layoutRev = cached?.layout_rev || 0;
     this.layoutFingerprint = cached?.layout_fingerprint || contentFingerprint(this.layout);
+    this.adoptionEpoch++;
     return true;
   }
 

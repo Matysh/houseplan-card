@@ -36,7 +36,7 @@ function setup() {
       const nodes = structuralWallNodes(h.beforeSpace), node = nodes.find(n => n.point.every((v, i) => v === h.intent.point[i]));
       const r = applyNodeMove(prepareNodeMove(h.beforeSpace, node, nodes), h.intent.target, h.intent.axis);
       return { ...cfg, spaces: [r.space] };
-    }, record: (...args) => recorded.push(args), historyFailed: () => {} };
+    }, record: (...args) => recorded.push(args), history: async () => {} };
   const editor = new WallNodeEditor(port);
   const ev = (type, x = 0, y = 0, patch = {}) => ({ type, pointerId: 1, pointerType: 'mouse',
     isPrimary: true, button: 0, detail: 1, clientX: x, clientY: y, composedPath: () => [stage],
@@ -48,6 +48,7 @@ function setup() {
     finishPaint: () => paintResolve(), refuse: () => { fail = true; }, retireAtWrite: () => { retireOnWrite = true; } };
 }
 const settle = () => new Promise(resolve => setImmediate(resolve));
+const deferred = () => { let resolve; return { promise: new Promise(r => { resolve = r; }), resolve: v => resolve(v) }; };
 
 test('a successful node capture freezes the presented viewport before the first preview paint', async () => {
   const s = setup(); s.holdFrames();
@@ -325,4 +326,35 @@ test('100 accepted/cancelled gestures leave one listener and no transient state;
     assert.equal(s.editor.sourceGhost, null); assert.equal(s.editor.sourceCoverage, null);
   }
   assert.equal(s.writes.length, 50); s.editor.dispose(); assert.equal(s.listeners.size, 0);
+});
+
+test('#843 AC7: an own accepted write during the gesture advances its revision; any other change retires', async () => {
+  for (const holds of [true, false]) {
+    const s = setup(), bases = [], checks = [];
+    s.editor.port.basis = space => { const basis = { epoch: 7, space, floor: 'start' }; bases.push(basis); return basis; };
+    s.editor.port.holds = basis => { checks.push(basis); return holds; };
+    const write = s.editor.port.write; let sent = null;
+    s.editor.port.write = (history, basis) => { sent = basis; return write(history, basis); };
+    s.editor.guardEvent(s.ev('pointerdown')); s.editor.guardEvent(s.ev('pointermove', .25, .3)); await settle();
+    s.context.revision++; // the own Save that waited (or flew) is accepted mid-gesture
+    s.editor.guardEvent(s.ev('pointermove', .26, .3)); await settle();
+    assert.equal(s.editor.dragging, holds); assert.deepEqual(checks, [bases[0]]);
+    s.editor.guardEvent(s.ev('pointermove', .27, .3)); await settle();
+    assert.equal(checks.length, 1, 'the advanced revision is the new start; no repeated floor proof per frame');
+    s.editor.guardEvent(s.ev('pointerup')); await settle();
+    assert.equal(s.writes.length, Number(holds)); assert.equal(s.recorded.length, Number(holds));
+    if (holds) assert.equal(sent, bases[0], 'the write is judged against the gesture start, not the current state');
+    s.editor.dispose();
+  }
+});
+test('#843 node history: one transaction at a time, busy until the port settles', async () => {
+  const s = setup(), gate = deferred(), calls = [];
+  s.editor.port.history = direction => { calls.push(direction); return gate.promise; };
+  s.editor.history('undo'); s.editor.history('undo'); s.editor.history('redo');
+  assert.deepEqual(calls, ['undo']); assert.equal(s.editor.busy, true);
+  assert.deepEqual(s.changes.at(-1), [true, 0], 'toolbar learns the busy state at once');
+  assert.equal(s.editor.guardEvent(s.ev('pointerdown')), true); assert.equal(s.capture.size, 0, 'no capture over a pending command');
+  gate.resolve(); await settle();
+  assert.equal(s.editor.busy, false); assert.deepEqual(s.changes.at(-1), [false, 0]);
+  s.editor.history('redo'); assert.deepEqual(calls, ['undo', 'redo']); s.editor.dispose();
 });

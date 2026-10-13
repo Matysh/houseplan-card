@@ -1,4 +1,5 @@
-/** Lazy Select-only adapter. Preview has no route into a config/history writer. */
+/** Lazy node editor: capture and handles are Select-only, Undo/Redo of its commands is not (#843).
+ * Preview has no route into a config/history writer. */
 import { nothing, render, svg, type TemplateResult } from 'lit';
 import { NORM_W, GRID_STEP_N } from './canvas-constants';
 import { commitWallSegmentModel } from './wall-segment-model';
@@ -8,9 +9,11 @@ import { applyNodeMove, pickWallNode, prepareNodeMove, resolveNodeMoveSnap, stru
   type NodeMoveSpace, type NodePoint, type WallNode, type NodeMoveReason } from './wall-node-move';
 import type { ServerConfig } from './types';
 import type { NodePreviewScene } from './wall-node-preview';
+import type { NodeWriteBasis } from './wall-node-write';
 import { VISUAL_MITRE_LIMIT } from './wall-thickness';
 
-export interface NodeMoveHistory { beforeSpace: NodeMoveSpace; intent: NodeMoveIntent; direction: 'apply' | 'undo' }
+/** `floor`: the target floor fingerprint this direction expects before it is sent (#843). */
+export interface NodeMoveHistory { beforeSpace: NodeMoveSpace; intent: NodeMoveIntent; direction: 'apply' | 'undo'; floor?: string }
 export interface NodeEditorContext { enabled: boolean; space: string; revision: number; api: boolean }
 export interface WallNodeEditorPort {
   context(): NodeEditorContext;
@@ -26,14 +29,18 @@ export interface WallNodeEditorPort {
   changed(): void;
   validate(space: NodeMoveSpace, before: NodeMoveSpace, final: boolean): boolean;
   paintOpportunity(): Promise<void>;
-  write(history: NodeMoveHistory, expectedRevision: number): Promise<ServerConfig>;
+  write(history: NodeMoveHistory, basis: NodeWriteBasis | null): Promise<ServerConfig>;
   record(before: NodeMoveSpace, after: NodeMoveSpace, intent: NodeMoveIntent): void;
-  historyFailed(): void;
+  /** #843: one Undo/Redo of the node command next in the shared history. */
+  history(direction: 'undo' | 'redo'): Promise<void>;
+  /** #843: the gesture's start; own accepted writes may advance its revision while it holds. */
+  basis?(space: string): NodeWriteBasis;
+  holds?(basis: NodeWriteBasis): boolean;
   dispose?(): void;
   scene?(space: NodeMoveSpace, before: NodeMoveSpace): NodePreviewScene | null;
 }
 interface Session {
-  pointer: number; revision: number; configIdentity: string; plan: NodeMovePlan;
+  pointer: number; revision: number; basis: NodeWriteBasis | null; configIdentity: string; plan: NodeMovePlan;
   capture: HTMLElement; axis: string | null; target: NodePoint; guide: string | null;
   candidate: NodeMoveSpace | null; affected: string[]; invalid: NodeMoveReason | null;
   moved: boolean; released: boolean; outline: boolean;
@@ -135,7 +142,7 @@ export class WallNodeEditor {
       splitIds[`${wall.kind}:${wall.id}`] = `${wall.kind}-${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
     }
     const plan = prepareNodeMove(data.source, hit.node!, data.nodes, splitIds);
-    this.session = { pointer: ev.pointerId, revision: ctx.revision,
+    this.session = { pointer: ev.pointerId, revision: ctx.revision, basis: this.port.basis?.(ctx.space) ?? null,
       configIdentity: JSON.stringify(this.port.config()), plan, capture: stage,
       axis: null, target: [...hit.node!.point], guide: null, candidate: null,
       affected: [], invalid: null, moved: false, released: false, outline: false };
@@ -165,8 +172,11 @@ export class WallNodeEditor {
 
   private current(s: Session): boolean {
     const ctx = this.port.context();
-    return this.session === s && ctx.enabled && ctx.space === s.plan.source.id
-      && ctx.revision === s.revision && ctx.api;
+    if (this.session !== s || !ctx.enabled || ctx.space !== s.plan.source.id || !ctx.api) return false;
+    // #843: an own accepted write (Save that waited or flew) advances the
+    // revision of the very same floor; any other revision change retires.
+    if (ctx.revision !== s.revision && !(s.basis && this.port.holds?.(s.basis))) return false;
+    s.revision = ctx.revision; return true;
   }
   private move(ev: PointerEvent): void {
     const s = this.session; if (!s || s.released) return;
@@ -235,7 +245,7 @@ export class WallNodeEditor {
       intent: { point: [...s.plan.node.point], target: [...s.target], axis: s.axis, split_ids: s.plan.splitIds }, direction: 'apply' };
     this.busy = true;
     try {
-      const config = await this.port.write(history, s.revision);
+      const config = await this.port.write(history, s.basis);
       const after = config.spaces.find(space => space.id === history.beforeSpace.id) as NodeMoveSpace;
       this.port.record(history.beforeSpace, after, history.intent);
     } catch {
@@ -248,13 +258,11 @@ export class WallNodeEditor {
     }
   }
 
-  applyHistory(history: NodeMoveHistory): boolean {
-    if (this.busy || !this.port.context().enabled || !this.port.context().api) return false;
-    this.busy = true;
-    void this.port.write(history, this.port.context().revision)
-      .catch(() => { this.port.historyFailed(); this.port.toast(this.port.text('toast.geometry_unsafe')); })
-      .finally(() => { this.busy = false; this.cache = null; this.port.changed(); });
-    return true;
+  /** #843: the port owns stack, own queue and floor; repeated presses wait for this one. */
+  history(direction: 'undo' | 'redo'): void {
+    if (this.busy) return;
+    this.busy = true; this.port.changed();
+    void this.port.history(direction).finally(() => { this.busy = false; this.cache = null; this.port.changed(); });
   }
   cancel(): boolean {
     // The runtime also calls cancel while idle when leaving Select. Let the

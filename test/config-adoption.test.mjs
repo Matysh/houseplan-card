@@ -550,3 +550,19 @@ test('AC6: newer in-place content on the attempted root also wins (#442)', () =>
   assert.equal(adoption.rollbackOptimistic(attempt), false);
   assert.equal(adoption.config, attempted);
 });
+
+test('#843: adoptionEpoch moves on every identity change except our own accepted write', () => {
+  const adoption = createConfigAdoption();
+  const epoch = () => adoption.adoptionEpoch;
+  adoption.restoreCached({ config: cfg('One'), rev: 3, layout: {}, layout_rev: 1 });
+  let seen = epoch(); assert.equal(seen, 1, 'the warm cache is not our write');
+  const step = (label, run, moves) => { run(); assert.equal(epoch(), seen + Number(moves), label); seen = epoch(); };
+  step('own accepted config/set', () => { const sent = cfg('Mine'); adoption.stageConfigCandidate(sent); adoption.acceptConfigWrite(sent, { rev: 4 }); }, false);
+  step('echo of our own write', () => adoption.adoptResponses({ config: cfg('Mine'), rev: 4 }, undefined, () => {}, () => {}), false);
+  step('equal content with a foreign revision', () => adoption.adoptResponses({ config: cfg('Mine'), rev: 5 }, undefined, () => {}, () => {}), true);
+  step('foreign content', () => adoption.adoptResponses({ config: cfg('Theirs'), rev: 6 }, undefined, () => {}, () => {}), true);
+  step('layout-only response', () => adoption.adoptResponses({ config: cfg('Theirs'), rev: 6 }, { layout: { d: {} }, rev: 2 }, () => {}, () => {}), false);
+  step('paired write (optimize/import)', () => adoption.acceptPairWrite(cfg('Pair'), {}, { config_rev: 7, layout_rev: 3 }), true);
+  step('harness revision seam', () => adoption.seedIdentity({ configRev: 9 }), true);
+  step('harness layout seam', () => adoption.seedIdentity({ layoutRev: 9 }), false);
+});
