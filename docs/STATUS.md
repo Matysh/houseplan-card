@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Composite room closure (#874) uses a proven parent-minus-face Split and a
+space/geometry proposal stamp; rejected or reloaded drafts cannot retain an
+inert creation form. Exact exported geometry is anonymised in the fixture;
+native room Save/Cancel/Undo/Redo and actual HA-write rollback have dedicated
+coverage. Model identity, opening-host rules and View rendering are unchanged.
+
 Candidate preparation (#858) is read-only and deterministic over exact material,
 pins, ledger, fresh issue bodies and full proof. Owner-reviewed scene intent and
 native ordinary/risky-neighbour dev acceptance are separate from CI green;

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 874,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "v1.80.1 already classifies new wall faces using only splitRoomPath(activePath) and otherwise adds a nested room; composite closure can manufacture a third owner and leave an inert Save after rollback. This fixes that existing workflow without a new model or feature.",
+  "summary": {
+    "ru": "Исправлено создание комнаты через существующую перегородку и зависший диалог после отказа сохранения.",
+    "en": "Fixed room creation through an existing partition and an inert dialog after a refused save."
+  }
+}

@@ -39,7 +39,7 @@
     "src/floating-surface.ts", "src/floating-surface-controller.ts", "src/help-behavior.ts", "src/support-feedback.ts",
     "src/hp-help.ts", "src/hp-dialog.ts", "src/hp-color-opacity.ts", "src/danger-confirm.ts",
     "src/opening-placement.ts", "src/opening-dimensions.ts", "src/partition-openings.ts", "src/plan-snap-overlay.ts", "src/wall-face-graph.ts", "src/wall-face-repair.ts", "src/room-deletion.ts", "src/render/opening-symbol.ts",
-    "src/wall-thickness.ts",
+    "src/wall-thickness.ts", "src/wall-face-room-split.ts",
     "src/wall-segment-model.ts", "src/wall-face-lineage.ts",
     "src/wall-merge.ts", "src/writer-fixed-point.ts", "src/room-reference-transaction.ts",
     "src/physical-geometry.ts",

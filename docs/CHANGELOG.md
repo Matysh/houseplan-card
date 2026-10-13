@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Closing a room through an existing partition now splits its parent safely,
+  preserving neighbouring rooms and wall thickness. A failed save or config
+  reload no longer leaves a room-creation dialog with an inert Save button
+  ([#874](https://github.com/Matysh/houseplan-card/issues/874)).
+
 ## v1.81.0-beta.1 — 2026-10-12
 
 - Activity colour now matches the actual ordinary pulse in device settings;

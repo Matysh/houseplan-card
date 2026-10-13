@@ -836,8 +836,16 @@ physical gap created by an `open_span` or absent wall remains a gap. A door,
 window, gate or passage is a property of a wall and preserves connectivity. A clean divider across
 one room reuses the Split contract: the larger side keeps the room identity,
 metadata and device binding, and only the smaller side is offered.
-`splitRoomPath()` is a strict partition: the two parts' areas must sum to the
-original within a relative 1e-6 epsilon, otherwise the cut is rejected.
+`wall-face-room-split.ts` applies the same contract to a composite cut made of
+new and existing partitions (#874). A containing parent must share a boundary
+span of positive length; its difference with the face must be exactly one
+simple, hole-free remainder. The two parts must cover the parent, have no area
+overlap and conserve area within relative 1e-6. Boolean boundary vertices reuse
+proven source coordinates instead of rounding saved walls. Complementary faces
+queue one smaller room, equal-area ties use a canonical key, ambiguous parents
+or conflicting cuts do not queue an arbitrary proposal. True islands and
+point-only contacts remain nested rooms, not Split. The explicit Split tool's
+`splitRoomPath()` retains its own strict two-part area proof.
 
 The terminal active path remains session-local while the resulting room dialogs
 are open. Create/Keep-as-walls answers are buffered; Cancel/Esc discards all
@@ -846,6 +854,15 @@ revalidates the whole batch and applies accepted rooms while consuming only the
 coincident partitions used by those rooms in one history/config transaction.
 Graph construction never runs on pointermove, Home Assistant state updates or
 ordinary rendering.
+
+The proposal records its space and physical geometry fingerprint. Apply refuses
+changed geometry before mutation. A synchronous refusal or server reload that
+discards a face draft also closes its creation form, never a normal room-edit
+form; no active-but-inert Save remains. Failed config/set follows the existing
+rollback path. A user can explicitly click the face again for a fresh proposal.
+Original room profiles, including 0 cm, win on inherited spans; each newly
+promoted shared cut keeps its own partition's thickness. Residual lineage and
+the backend's existing forbidden opening-host transitions remain unchanged.
 
 **Finishing a chain (#294, #477).** Changing Plan tool, editor or floor, `Esc`,
 the tray's Reset, route/hash departure and a room-face batch whose every face

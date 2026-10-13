@@ -56,11 +56,15 @@ const result = await page.evaluate(async () => {
   const drawnRing = ring(300, 300, 500, 500);
   await draw(closed(drawnRing));
   const offered = card._wallFaceBatch?.candidates || [];
-  out.partialOverlapDecomposesIntoFaces = offered.length === 3;
+  out.partialOverlapDecomposesIntoFaces = offered.length === 2
+    && offered.filter(candidate => candidate.split?.roomId === 'r-base').length === 1;
   out.partialOverlapNeverOffersDrawnRing = offered.length > 0
     && offered.every((candidate) => candidate.area < 40000 - 1);
   out.partialOverlapFacesSumToUnion = Math.abs(
-    offered.reduce((sum, candidate) => sum + candidate.area, 0) - 70000,
+    // #874: the surviving larger parent is retained, not offered again as an
+    // overlapping new room. Its area plus the two offers still equals union.
+    offered.reduce((sum, candidate) => sum + candidate.area
+      + (candidate.split ? 30000 : 0), 0) - 70000,
   ) < 1;
   out.partialOverlapKeepsRoomsUntilDecision = JSON.stringify(roomShape()) === configBefore;
 
@@ -80,12 +84,9 @@ const result = await page.evaluate(async () => {
 
   await reset([roomAt('base', base)]);
   const clash = ring(300, 300, 500, 500);
-  card._wallFaceBatch = {
-    candidates: [{ key: 'manual', area: 1, ring: clash }],
-    index: 0,
-    decisions: [{ candidate: { key: 'manual', area: 1, ring: clash }, create: true }],
-    activePath: closed(clash), activeCms: [15, 15, 15, 15], activePartitionIds: [],
-  };
+  const invalid = { key: 'manual', area: 1, ring: clash };
+  card._editorRuntime._beginWallFaceBatch([invalid]); // private-ok: inject a forbidden overlap to exercise the apply-time guard, not a UI happy path.
+  card._wallFaceBatch.decisions.push({ candidate: invalid, create: true }); // private-ok: one invalid decision isolates the overlap barrier from the stale-proposal guard.
   const roomsBeforeGuard = space().rooms.length;
   card._applyWallFaceBatch(); await update();
   out.applyGuardRejectsOverlap = space().rooms.length === roomsBeforeGuard;

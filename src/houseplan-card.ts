@@ -428,6 +428,8 @@ type WallFaceDecision = {
   settings?: RoomCfg['settings'];
 };
 type WallFaceBatch = {
+  spaceId: string;
+  geometryFingerprint: string;
   candidates: WallFaceCandidate[];
   index: number;
   decisions: WallFaceDecision[];

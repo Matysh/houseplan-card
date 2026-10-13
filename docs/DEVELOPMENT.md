@@ -1,5 +1,18 @@
 # Development and deployment
 
+## Composite room closure (#874)
+
+`wall-face-room-split.test.mjs` preserves the reported floating-point geometry
+without private HA data and exercises containment, complementary/equal faces,
+islands, self-contact and ambiguous cuts. `smoke_wall_face_room_split.mjs`
+uses native drawing and dialog buttons, then checks actual config/set results,
+atomic Undo/Redo, 0/15/25cm carriers, residual IDs/openings, synchronous refusal,
+server rejection and config-update invalidation. Compile `tsconfig.test.json`
+and run `scripts/fix-test-build.mjs` before this smoke; the mutation registry's
+compiled smoke guard does this explicitly. Race/overlap injections are labelled
+negative probes; they are not happy-path evidence. Existing lineage and overlap
+smokes remain companion witnesses. No generated bundle is committed here.
+
 ## Connected-floor Select node movement (#834)
 
 The 10.10 nightly (#864) failed at 52/110.260 ms CPU/input-to-paint p95; one

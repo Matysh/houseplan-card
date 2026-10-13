@@ -471,6 +471,14 @@ and settle only new-room hints against the partitions left after reconciliation
 edge. The common model barrier, host validation and atomic history remain the
 authorities; this helper neither allocates IDs nor writes configuration.
 
+`wall-face-room-split.ts` is another lazy Plan-only pure proposal helper (#874):
+it proves parent-minus-face as one hole-free component and deduplicates
+complementary faces without changing the model. The runtime revalidates a
+space/geometry stamp, retains each original wall/partition profile and commits
+the split with carrier reconciliation in one existing history/config command.
+Refusal/reload closes only the discarded room-face creation form. No View,
+pointermove or HA-state rendering path imports or invokes this clipping helper.
+
 Rooms may not partially overlap (lying on a shared wall is legal, a fully nested
 island is supported). Merge/Split use **polyclip-ts** (not `polygon-clipping`,
 see [`DEVELOPMENT.md`](DEVELOPMENT.md)): Merge accepts a pair only when the union

@@ -36,8 +36,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 50 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 58 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 41 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 134 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **291 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 138 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **295 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -312,6 +312,13 @@ dialog, post-reconciliation runtime wiring, history, asynchronous `config/set` a
 reload. Pure lineage-helper tests cannot prove that the editor actually settles
 residual-owned IDs before the strict wall-model barrier or rolls rejected writes back.
 
+The four #874 witnesses below reuse one native room-closure smoke. Pure clipping
+tests cannot prove the runtime applies Split rather than nesting, restores each
+shared carrier's actual cm, closes a form whose draft reload discarded, or
+checks the proposal's space/geometry stamp before writing. The last witness is
+an explicitly labelled negative race injection, distinct from the real HA
+config-update scenario; ordinary success paths use native drawing/Save/Undo.
+
 `floor-cache-counter-skips-evicting-miss` (#769) needs the real card cycling floors
 through its tabs with a full union pool: only the rendered floor switch reaches the
 miss branch that evicts, and the witness compares the build counter with the whole
@@ -450,6 +457,10 @@ owner, with no settled copy surviving the next presented frame.
 - `volumetric-kiosk-ignores-setting`
 - `wall-face-apply-skips-overlap-guard`
 - `wall-face-lineage-skips-post-reconcile-settlement`
+- `wall-face-composite-falls-back-to-island`
+- `wall-face-shared-cut-loses-own-carrier-cm`
+- `wall-face-reload-keeps-form-after-draft-loss`
+- `wall-face-apply-overwrites-changed-geometry`
 - `wall-union-fingerprint-from-stored-record`
 - `wallthick-hit-narrowed`
 - `warm-late-resume-beats-user-mode`

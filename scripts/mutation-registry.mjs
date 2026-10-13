@@ -77,6 +77,42 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'wall-face-composite-falls-back-to-island',
+    guard: compiledNodeSmoke('smoke_wall_face_room_split'),
+    because: '#874 AC1/AC2: native composite closure must replace the parent outline, not add a third owner.',
+    patches: [{ file: 'src/wall-face-room-split.ts',
+      find: "  return result ? { kind: 'split', split: result } : { kind: 'plain' };",
+      replace: "  return { kind: 'plain' };",
+    }],
+  },
+  {
+    id: 'wall-face-shared-cut-loses-own-carrier-cm',
+    guard: compiledNodeSmoke('smoke_wall_face_room_split'),
+    because: '#874 AC5: a shared promoted cut preserves its own 0/15/25cm carrier, independently of the first face edge.',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts',
+      find: '            original?.cm ?? carrier?.cm\n',
+      replace: '            original?.cm\n',
+    }],
+  },
+  {
+    id: 'wall-face-reload-keeps-form-after-draft-loss',
+    guard: compiledNodeSmoke('smoke_wall_face_room_split'),
+    because: '#874 AC3/AC6: a real config-update reload must not leave an active Save after clearing its proposal.',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts',
+      find: '    if (this.host._wallFaceBatch && !this.host._roomEditId) {\n',
+      replace: '    if (false && this.host._wallFaceBatch && !this.host._roomEditId) {\n',
+    }],
+  },
+  {
+    id: 'wall-face-apply-overwrites-changed-geometry',
+    guard: compiledNodeSmoke('smoke_wall_face_room_split'),
+    because: '#874 AC6: a negative race probe retains the old form and isolates the apply-time geometry/space stamp from reload cancellation.',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts',
+      find: '    if (batch.spaceId !== this.host._space\n        || batch.geometryFingerprint !== spacePhysicalGeometryFingerprint(sp)) {',
+      replace: '    if (false) {',
+    }],
+  },
+  {
     id: 'candidate-headless-substitutes-owner-gpu',
     guard: 'node --test --test-name-pattern="#858 interactive floor" test/candidate-858.test.mjs',
     because: '#858: native/headless green must not stand in for an authenticated owner real-GPU dev receipt',

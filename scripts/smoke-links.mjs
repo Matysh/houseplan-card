@@ -30,6 +30,14 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['classifyWallFaceRoom', 'classifyWallFaceCandidates', '_classifyWallFaces',
+      '_dismissWallFaceBatch', 'sourceIntervals'],
+    files: ['src/wall-face-room-split.ts'],
+    smokes: ['smoke_wall_face_room_split.mjs', 'smoke_wall_face_lineage.mjs', 'smoke_wall_face_overlap.mjs'],
+    because: '#874: the native room dialog/config writer proves composite Split, inherited carrier '
+      + 'thickness, stale-proposal refusal and closed failure forms; unit clipping alone cannot witness the runtime wiring.',
+  },
+  {
     files: ['src/wall-node-editor.ts', 'src/wall-node-card-adapter.ts', 'src/wall-node-preview.ts',
       'src/wall-thickness.ts', 'src/wall-shell-union.ts', 'src/wall-operand-topology.ts',
       'src/wall-boolean-baseline.ts', 'src/wall-boolean-incremental.ts', 'src/wall-boundary-splice.ts',

@@ -283,6 +283,7 @@ import { gridCellFieldValue, gridVisualUnits, newSpaceCellCm } from './grid-scal
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 import { reconcileCoincidentPartitions } from './coincident-partitions';
 import { selectWallFaceLineage, settleWallFaceLineage } from './wall-face-lineage';
+import { classifyWallFaceCandidates } from './wall-face-room-split';
 import { finalizeWallChainSpace } from './writer-fixed-point';
 import {
   captureMarkerRoomReferences, restoreMarkerRoomReferences,
@@ -359,6 +360,8 @@ type WallFaceDecision = {
   settings?: RoomCfg['settings'];
 };
 type WallFaceBatch = {
+  spaceId: string;
+  geometryFingerprint: string;
   candidates: WallFaceCandidate[];
   index: number;
   decisions: WallFaceDecision[];
@@ -2026,6 +2029,13 @@ public _commitPhysicalGeometry(
   }
 
 public _clearGeometryGesture(): void {
+    // Reload/rollback may discard a room-face proposal without its Save path.
+    // Close only that creation form, never an ordinary room-settings dialog.
+    if (this.host._wallFaceBatch && !this.host._roomEditId) {
+      this.host._roomDialog = false;
+      this.host._nameSel = '';
+      this.host._areaSel = '';
+    }
     this.nodeMove?.cancel();
     this._clearFurniturePreview();
     this.host._path = [];
@@ -2504,47 +2514,31 @@ public _offerWallFaces(
         ));
         return;
       }
-      if (repair.kind === 'repair' && !this._overlapRoom(repair.face.ring)) {
-        this._beginWallFaceBatch([{ ...repair.face, repair: repair.proposal }]);
+      if (repair.kind === 'repair') {
+        const candidates = this._classifyWallFaces([{ ...repair.face, repair: repair.proposal }]);
+        if (candidates.length) this._beginWallFaceBatch(candidates);
       }
       return;
     }
 
-    // A clean wall-to-wall cut is one product decision about the smaller part,
-    // even though the planar delta contains both resulting faces.
-    for (const room of space.rooms) {
-      const poly = roomPoly(room);
-      if (!room.id || !poly) continue;
-      const parts = splitRoomPath(poly, this.host._path, this.host._gridPitch * 0.02);
-      if (!parts) continue;
-      const [p1, p2] = parts;
-      const main = polygonArea(p1) >= polygonArea(p2) ? p1 : p2;
-      const fresh = main === p1 ? p2 : p1;
-      const matched = [...faces].sort((left, right) =>
-        Math.abs(left.area - polygonArea(fresh)) - Math.abs(right.area - polygonArea(fresh))
-        || left.key.localeCompare(right.key))[0];
-      if (!matched) return;
-      this._beginWallFaceBatch([{
-        ...matched,
-        ring: fresh.map((point) => [point[0], point[1]] as [number, number]),
-        split: { roomId: room.id, mainPoly: main, newPoly: fresh },
-        consumeAllActive: true,
-      }]);
-      return;
-    }
-
-    const eligible = faces.filter((face) => {
-      if (face.ring.length < 3 || this._contourSelfIntersects(face.ring)) return false;
-      // roomsOverlap rejects exact duplicates and partial overlap, while full
-      // nesting in either direction deliberately remains eligible.
-      return !this._overlapRoom(face.ring);
-    });
+    const eligible = this._classifyWallFaces(faces);
     if (eligible.length) this._beginWallFaceBatch(eligible);
+  }
+
+private _classifyWallFaces(faces: WallFaceCandidate[]): WallFaceCandidate[] {
+    const rooms = (this.host._spaceModel()?.rooms || []).flatMap(room => {
+      const poly = roomPoly(room);
+      return room.id && poly ? [{ id: room.id, poly }] : [];
+    });
+    return classifyWallFaceCandidates(faces, rooms, this.host._gridPitch * 0.0002)
+      .filter(face => !this._overlapRoom(face.ring));
   }
 
 public _beginWallFaceBatch(candidates: WallFaceCandidate[]): void {
     this.host._wallRepairDiagnostic = null;
     this.host._wallFaceBatch = {
+      spaceId: this.host._space,
+      geometryFingerprint: spacePhysicalGeometryFingerprint(this.host._curSpaceCfg!),
       candidates: [...candidates].sort((left, right) =>
         left.area - right.area || left.key.localeCompare(right.key)),
       index: 0,
@@ -2598,9 +2592,10 @@ public _offerExistingWallFace(raw: number[]): boolean {
           }
         }
       }
-      if (!face || face.ring.length < 3 || this._contourSelfIntersects(face.ring)
-          || this._overlapRoom(face.ring)) return false;
-      this._beginWallFaceBatch([{ ...face, existing: !repair, repair }]);
+      if (!face) return false;
+      const candidates = this._classifyWallFaces([{ ...face, existing: !repair, repair }]);
+      if (!candidates.length) return false;
+      this._beginWallFaceBatch(candidates);
       return true;
     } catch {
       return false;
@@ -6607,11 +6602,21 @@ public _applyWallFaceBatch(): void {
     const batch = this.host._wallFaceBatch;
     const sp = this.host._curSpaceCfg as any;
     const model = this.host._spaceModel();
-    if (!batch || !sp || !model) return;
+    if (!batch) return;
+    if (!sp || !model) {
+      this._dismissWallFaceBatch();
+      this.host._showToast(this.host._t('toast.geometry_unsafe'));
+      return;
+    }
     const abort = (message: string, vars?: Record<string, string | number>): void => {
       this.host._showToast(this.host._t(message as any, vars));
-      this._roomDialogCancel();
+      this._dismissWallFaceBatch();
     };
+    if (batch.spaceId !== this.host._space
+        || batch.geometryFingerprint !== spacePhysicalGeometryFingerprint(sp)) {
+      abort('toast.geometry_unsafe');
+      return;
+    }
     const accepted = batch.decisions.filter((decision) => decision.create);
     const acceptedRings = accepted.map((decision) => decision.candidate.ring);
     const existingRooms = model.rooms;
@@ -6672,6 +6677,10 @@ public _applyWallFaceBatch(): void {
     const roomLineage = accepted.map((decision) => selectWallFaceLineage(
       decision.candidate.ring, model.partitions, activePartitionIds, epsilon,
     ));
+    const sourceIntervals = wallIntervals(
+      model.rooms, sp.walls, this.host._openCuts(),
+      this.host._wallKeyPitch, this.host._cellCm, this.host._gridPitch, NORM_W,
+    );
     const before = this._geometrySnapshot();
     if (!before) {
       abort('toast.geometry_unsafe');
@@ -6752,14 +6761,24 @@ public _applyWallFaceBatch(): void {
           updatedModel.rooms, walls, openCuts,
           this.host._wallKeyPitch, this.host._cellCm, this.host._gridPitch, NORM_W,
         )) {
-          if (interval.roomId !== room.id || interval.kind !== 'outer') continue;
+          if (interval.roomId !== room.id) continue;
+          const covers = (a: readonly number[], b: readonly number[]) => (
+            distToSegment(interval.a, [...a, ...b]) <= epsilon
+            && distToSegment(interval.b, [...a, ...b]) <= epsilon
+          );
+          // Existing room profiles win, including explicit 0 cm. Newly
+          // promoted shared cuts inherit their own carrier, not ring[0]'s cm.
+          const original = sourceIntervals.find(source => covers(source.a, source.b));
+          const carrier = model.partitions.find(source => covers(source.a, source.b));
+          if (!original && !carrier && interval.kind !== 'outer') continue;
           const midpoint = [
             (interval.a[0] + interval.b[0]) / 2,
             (interval.a[1] + interval.b[1]) / 2,
           ];
           walls = setWallThickness(
             walls, interval.a, interval.b,
-            this._wallSourceCmAt(midpoint, batch.activePath, batch.activeCms),
+            original?.cm ?? carrier?.cm
+              ?? this._wallSourceCmAt(midpoint, batch.activePath, batch.activeCms),
             this.host._wallKeyPitch, NORM_W,
           );
         }
@@ -6799,7 +6818,10 @@ public _applyWallFaceBatch(): void {
       }
     }
 
-    if (!this._commitPhysicalGeometry(this.host._t('history.wall_face_batch'), before)) return;
+    if (!this._commitPhysicalGeometry(this.host._t('history.wall_face_batch'), before)) {
+      this._dismissWallFaceBatch();
+      return;
+    }
     this.host._path = [];
     this.host._activeWallChainId = null;
     this.host._activeWallChainPartitionIds = [];
@@ -6836,6 +6858,15 @@ public _applyWallFaceBatch(): void {
     this.host._showToast(this.host._t(accepted.length ? 'toast.wall_rooms_saved' : 'toast.wall_chain_saved', {
       n: accepted.length,
     }));
+  }
+
+/** A refused creation cannot leave a valid-looking form with no draft (#874). */
+private _dismissWallFaceBatch(): void {
+    this._clearGeometryGesture();
+    this.host._roomDialog = false;
+    this.host._nameSel = '';
+    this.host._areaSel = '';
+    this.host.requestUpdate();
   }
 
 public _commitRoom(): void {
