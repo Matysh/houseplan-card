@@ -122,6 +122,66 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'geometry-cleanup-guard-disabled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#842 AC[27]" test/geometry-cleanup-842.test.mjs',
+    because: '#842 К2: a write whose preparation would delete plan objects (R) is refused before '
+      + 'config/set, the live config untouched and the K3 question asked instead of an error toast.',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '      if (removal) throw refuseGeometryWrite(this, removal);',
+      replace: '      void removal; // mutant: the K2 guard is off',
+    }],
+  },
+  {
+    id: 'wall-columns-whitelist-again',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#842 AC1" test/geometry-cleanup-842.test.mjs',
+    because: '#842 К1: a column keeps the fields the backend allows (WALL_COLUMN_SCHEMA ALLOW_EXTRA); '
+      + 'the write canonicalises shape/cm/angle only and never rebuilds it from a whitelist.',
+    patches: [{
+      file: 'src/geometry-cleanup.ts',
+      find: "    ...column,\n    shape: circle ? 'circle' : 'square',",
+      replace: "    id: column.id,\n    shape: circle ? 'circle' : 'square',",
+    }],
+  },
+  {
+    id: 'geometry-cleanup-forgets-partition-openings',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#842 AC3" test/geometry-cleanup-842.test.mjs',
+    because: '#842 К2/К3: an opening hosted by a removed partition belongs to R; without it the '
+      + 'cleanup document is the one the backend rejects (tests_backend/test_geometry_cleanup_842.py).',
+    patches: [{
+      file: 'src/geometry-cleanup.ts',
+      find: "      if (host?.kind === 'partition' && removedIds.has(host.id) && !keptPartitionIds.has(host.id)) {",
+      replace: '      if (false) {',
+    }],
+  },
+  {
+    id: 'deferred-write-not-restored',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#842 AC4 marker: a rejected Save" test/config-write-conflict.test.mjs',
+    because: '#842 К4: an immediate write that cancelled a pending deferred edit and was rolled back '
+      + 'must re-arm it once, or the independent edit lives only in this tab.',
+    patches: [{
+      file: 'src/config-adoption.ts',
+      find: '    restored = true;\n    write();',
+      replace: '    restored = true;',
+    }],
+  },
+  {
+    id: 'deferred-write-restored-after-conflict',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#842 AC4 marker: a revision conflict" test/config-write-conflict.test.mjs',
+    because: '#842 К4/К5: after a conflict reload or a newer adoption the rollback returns false and '
+      + 'no deferred write may be restored over the authoritative config.',
+    patches: [{
+      file: 'src/config-adoption.ts',
+      find: '    if (!wasPending || !rolledBack || restored) return;',
+      replace: '    if (!wasPending || restored) return;',
+    }],
+  },
+  {
     id: 'candidate-headless-substitutes-owner-gpu',
     guard: 'node --test --test-name-pattern="#858 interactive floor" test/candidate-858.test.mjs',
     because: '#858: native/headless green must not stand in for an authenticated owner real-GPU dev receipt',
