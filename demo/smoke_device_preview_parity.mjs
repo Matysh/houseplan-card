@@ -1,5 +1,6 @@
 // Shared face parity for the same live light on the full plan, the marker
-// editor preview and houseplan-space-card.
+// editor preview and houseplan-space-card. #878: the same parity for light
+// groups (Z2M `Group` model, HA `group` platform) before and after Save.
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 1100, height: 900 }, 1);
@@ -167,6 +168,77 @@ const res = await page.evaluate(async () => {
     && getComputedStyle(node).getPropertyValue('--device-visual-factor').trim() === ''
     && parseFloat(getComputedStyle(node).getPropertyValue('--device-base-size')) > 0);
 
+  // #878: a light group without a manual icon is mdi:lightbulb-group on the
+  // plan, in the dialog preview, in the "Auto" field and after Save. Two real
+  // shapes through the fixture's registry: a Zigbee2MQTT group (device model
+  // `Group` + its mqtt light), auto-placed in the hallway, and an area-less HA
+  // `group` light the person picks in the Add-device binding picker.
+  const hp = window.__hpTest;
+  const GROUP_ICON = 'mdi:lightbulb-group';
+  const markerDialog = () => sr().querySelector('hp-dialog[data-kind="marker"]');
+  const previewFaceNow = async () => {
+    const node = markerDialog()?.querySelector('hp-device-preview');
+    await node?.updateComplete;
+    return face(node?.renderRoot?.querySelector('.dev'));
+  };
+  const autoField = () => markerDialog()?.querySelector('.iconauto')?.textContent?.replace(/\s+/g, ' ').trim() || '';
+  const waitUntil = async (predicate, what) => {
+    const end = performance.now() + 6000;
+    while (!predicate()) {
+      if (performance.now() > end) throw new Error(`#878 timed out: ${what}`);
+      await wait(20);
+    }
+    await hp.settled();
+  };
+  const saveMarker = async () => {
+    markerDialog().querySelector('.dialog-action-commit [data-hp="dialog-confirm"]').click();
+    await waitUntil(() => !markerDialog(), 'marker dialog closes after Save');
+  };
+  const storedMarker = (id) => (c._serverCfg?.markers || []).find((marker) => marker.id === id);
+  const planFaceOf = async (id) => {
+    await hp.setMode('view');
+    return face(sr().querySelector(`.dev[data-id="${id}"]`));
+  };
+  if (markerDialog()) await hp.close(markerDialog());
+
+  const z2mGroup = 'light.hp878_elina';
+  const haGroup = 'light.hp878_hall_group';
+  window.__addRegistryDevice('d_hp878_group', 'Elina light', 'Group', 'hallway', { manufacturer: 'Zigbee2MQTT' });
+  window.__addRegistryEntity(z2mGroup, null, 'off', 'mqtt', { device_id: 'd_hp878_group' }, {
+    friendly_name: 'Elina light', group_entities: ['light.hp878_member_1', 'light.hp878_member_2'],
+  });
+  window.__addRegistryEntity(haGroup, null, 'off', 'group', {}, {
+    friendly_name: 'Hall group', entity_id: ['light.hp878_member_3'],
+  });
+  c.hass = window.__mkHass();
+  await waitUntil(() => c._devices.some((item) => item.id === `lg_${z2mGroup}`), 'Z2M group is placed');
+
+  const groupPlanFace = await planFaceOf(`lg_${z2mGroup}`);
+  await hp.setMode('devices');
+  await hp.openMarkerDialog(`lg_${z2mGroup}`);
+  const groupPreviewFace = await previewFaceNow();
+  const groupAutoField = autoField();
+  await hp.input(markerDialog().querySelector('#marker-name'), 'Elina lights');
+  await saveMarker();
+  const groupSavedFace = await planFaceOf(`lg_${z2mGroup}`);
+  const groupSavedMarker = storedMarker(`lg_${z2mGroup}`);
+
+  await hp.setMode('devices');
+  const addDialog = await hp.openMarkerDialog();
+  addDialog.querySelector('input[name="bmode"][value="ha"]').click();
+  await hp.settled();
+  const bindingPicker = () => markerDialog()?.querySelector('#marker-binding')?.closest('.hpf-picker');
+  await hp.input(bindingPicker().querySelector('.hpf-panel input.hpf-input'), haGroup);
+  const candidate = [...bindingPicker().querySelectorAll('.hpf-cand')]
+    .find((button) => button.textContent.includes('Hall group'));
+  candidate?.click();
+  await hp.settled();
+  const pickedAutoField = autoField();
+  const pickedPreviewFace = await previewFaceNow();
+  await saveMarker();
+  const pickedSavedFace = await planFaceOf(`lg_${haGroup}`);
+  const pickedSavedMarker = storedMarker(`lg_${haGroup}`);
+
   return {
     allFacesPresent: !!planFace && !!previewFace && !!staticFace,
     previewHoverGatePropagates,
@@ -185,6 +257,17 @@ const res = await page.evaluate(async () => {
     resolvedBaseContract,
     bottomBadgeLqiStacked,
     staticBindingHook: staticNode?.getAttribute('data-binding-status') === 'active',
+    lightGroup878PlanIcon: groupPlanFace?.icon === GROUP_ICON,
+    lightGroup878PreviewEqualsPlan: !!groupPreviewFace
+      && JSON.stringify(groupPreviewFace) === JSON.stringify(groupPlanFace),
+    lightGroup878AutoFieldEqualsPlan: groupAutoField.includes(GROUP_ICON),
+    lightGroup878SavedWithoutIcon: !!groupSavedMarker && groupSavedMarker.icon == null,
+    lightGroup878SavedPlanIcon: groupSavedFace?.icon === GROUP_ICON,
+    lightGroup878PickedCandidate: !!candidate && pickedSavedMarker?.binding === `entity:${haGroup}`,
+    lightGroup878PickedAutoField: pickedAutoField.includes(GROUP_ICON),
+    lightGroup878PickedPreviewIcon: pickedPreviewFace?.icon === GROUP_ICON,
+    lightGroup878PickedSavedWithoutIcon: !!pickedSavedMarker && pickedSavedMarker.icon == null,
+    lightGroup878PickedSavedPlanIcon: pickedSavedFace?.icon === GROUP_ICON,
   };
 });
 

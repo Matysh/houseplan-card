@@ -96,7 +96,7 @@ import { syncVacuumTips } from './vacuum-view';
 import {
   buildDevices, seedHiddenBindings, lqiFor, tempFor, climateTempFor, effectiveExcludedIntegrations,
   sourceValue, roomClimateKey, roomClimateMap, resolvedLightSources, resolvedLightState,
-  resolvedLightStats, removedPlanBindings, isRemovedPlanEntity, resolveIcon, type AreaClimate,
+  resolvedLightStats, removedPlanBindings, isRemovedPlanEntity, autoIconForBinding, type AreaClimate,
 } from './devices';
 import { type DeviceInboxCategory, type DeviceInboxRow } from './device-inbox';
 import type { CreatedAreaRoom } from './room-device-discovery';
@@ -9587,30 +9587,10 @@ export class HouseplanCard extends LitElement {
 
   /** Effective auto icon for a binding selected but not saved yet. */
   private _autoIconForBinding(binding: string): string {
-    if (binding === 'virtual') return 'mdi:map-marker';
-    const [kind, ref] = binding.split(':');
-    if (!ref) return '';
-    const h = this._fullRegistryHass;
-    const status = this._bindingStatus(binding);
-    const activeEntities = status.kind === 'active' ? status.enabledEntityIds : status.allEntityIds;
-    if (kind === 'device') {
-      const dev = h.devices?.[ref];
-      if (!dev) return 'mdi:help-circle';
-      const entities = activeEntities;
-      if (entities.some((eid) => eid.startsWith('lock.'))) return 'mdi:lock';
-      return resolveIcon(
-        h, dev.name_by_user || dev.name || '', dev.model, entities, this._iconRules,
-      );
-    }
-    if (kind === 'entity') {
-      const reg = h.entities?.[ref];
-      const state = this.hass.states?.[ref];
-      const name = reg?.name || state?.attributes?.friendly_name || ref;
-      return ref.startsWith('lock.')
-        ? 'mdi:lock'
-        : resolveIcon(h, name, '', [ref], this._iconRules);
-    }
-    return '';
+    return autoIconForBinding(
+      this._fullRegistryHass, binding, () => this._bindingStatus(binding),
+      this._iconRules, this.hass.states,
+    );
   }
 
   /** List of rooms across all spaces for a virtual device. */

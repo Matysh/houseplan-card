@@ -16,7 +16,7 @@ import {
 } from './virtual-light-state';
 import {
   activeRegistryHass, fullRegistryHass, haRegistrySnapshot, isRegistryEntryEnabled,
-  resolveHaBindingStatus, type HaRegistrySnapshot,
+  resolveHaBindingStatus, type HaBindingStatus, type HaRegistrySnapshot,
 } from './ha-binding-status';
 
 /** Build context: a slice of hass + config resolution. */
@@ -801,22 +801,47 @@ export function humFor(hass: any, entIds: string[]): number | null {
   return null;
 }
 
+/** Icon of a light group without a manual icon; icon rules do not apply (#878). */
+export const LIGHT_GROUP_ICON = 'mdi:lightbulb-group';
+
+/** The registry and state rows the light-group definition and the auto icon read. */
+export interface IconRegistryView {
+  devices?: Record<string, {
+    name?: string | null; name_by_user?: string | null; model?: string | null;
+  } | undefined>;
+  entities?: Record<string, {
+    name?: string | null; platform?: string | null; device_id?: string | null;
+  } | undefined>;
+  states?: Record<string, { attributes?: { friendly_name?: string } } | undefined>;
+}
+
+/**
+ * A light group: a `light.*` entity of the HA `group` platform or of a
+ * Zigbee2MQTT group device (model `Group`). The definition only; hidden,
+ * enabled, area and `group_lights` decide PLACEMENT (lightGroups), never the
+ * icon, so the plan, the dialog preview and a saved marker agree (#878).
+ */
+export function isLightGroupEntity(hass: IconRegistryView | null | undefined, eid: string): boolean {
+  if (!eid.startsWith('light.')) return false;
+  const reg = hass?.entities?.[eid];
+  if (!reg) return false;
+  if (reg.platform === 'group') return true;
+  return !!reg.device_id && hass?.devices?.[reg.device_id]?.model === 'Group';
+}
+
 /** Group light entities: HA light-group (platform=group) and Z2M groups (device model=Group). */
 export function lightGroups(hass: any, enabled: boolean): { eid: string; name: string; area: string }[] {
   if (!enabled) return [];
   const res: { eid: string; name: string; area: string }[] = [];
   for (const [eid, reg] of Object.entries<any>(hass.entities)) {
-    if (!eid.startsWith('light.') || reg.hidden || !isRegistryEntryEnabled(reg)) continue;
-    let area: string | null = null;
+    if (reg.hidden || !isRegistryEntryEnabled(reg) || !isLightGroupEntity(hass, eid)) continue;
+    let area: string | null;
     if (reg.platform === 'group') {
       area = reg.area_id || null;
-    } else if (reg.device_id) {
+    } else {
       const dev = hass.devices[reg.device_id];
       if (!isRegistryEntryEnabled(dev)) continue;
-      if (dev?.model === 'Group') area = dev.area_id || reg.area_id || null;
-      else continue;
-    } else {
-      continue;
+      area = dev.area_id || reg.area_id || null;
     }
     if (!area) continue;
     const st = hass.states[eid];
@@ -835,6 +860,38 @@ export function resolveIcon(hass: any, name: string, model: string | undefined, 
     if (dc) classes.push(dc);
   }
   return iconFromDeviceClasses(classes) ?? FALLBACK_ICON;
+}
+
+/**
+ * Automatic icon of a binding chosen in the marker dialog but not saved yet:
+ * the same chain buildDevices applies to that binding on the plan. `hass` is
+ * the full-registry projection; `statusOf` is asked only for a device binding.
+ */
+export function autoIconForBinding(
+  hass: IconRegistryView,
+  binding: string,
+  statusOf: () => HaBindingStatus,
+  rules?: CompiledIconRule[],
+  states: IconRegistryView['states'] = hass.states,
+): string {
+  if (binding === 'virtual') return 'mdi:map-marker';
+  const [kind, ref] = binding.split(':');
+  if (!ref) return '';
+  if (kind === 'device') {
+    const dev = hass.devices?.[ref];
+    if (!dev) return 'mdi:help-circle';
+    const status = statusOf();
+    const entities = status.kind === 'active' ? status.enabledEntityIds : status.allEntityIds;
+    if (entities.some((eid) => eid.startsWith('lock.'))) return 'mdi:lock';
+    return resolveIcon(hass, dev.name_by_user || dev.name || '', dev.model ?? undefined, entities, rules);
+  }
+  if (kind === 'entity') {
+    if (ref.startsWith('lock.')) return 'mdi:lock';
+    if (isLightGroupEntity(hass, ref)) return LIGHT_GROUP_ICON;
+    const name = hass.entities?.[ref]?.name || states?.[ref]?.attributes?.friendly_name || ref;
+    return resolveIcon(hass, name, '', [ref], rules);
+  }
+  return '';
 }
 
 export interface RemovedPlanBindings {
@@ -1177,7 +1234,7 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
       model: loc('device.light_group'),
       area: g.area,
       space: areaToSpace[g.area],
-      icon: 'mdi:lightbulb-group',
+      icon: LIGHT_GROUP_ICON,
       entities: [g.eid],
       allEntities: [g.eid],
       bindingStatus: { kind: 'active', enabledEntityIds: [g.eid], allEntityIds: [g.eid] },
@@ -1245,7 +1302,10 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
       );
       const st = h.states[ref];
       const nm = reg?.name || st?.attributes?.friendly_name || ref;
-      let icon = resolveIcon(h, nm, '', [ref], iconRules);
+      // A light group keeps its group icon as a marker too: the auto plan,
+      // the dialog draft and the saved marker are one icon (#878).
+      let icon = isLightGroupEntity(fullHass, ref)
+        ? LIGHT_GROUP_ICON : resolveIcon(h, nm, '', [ref], iconRules);
       if (ref.startsWith('lock.')) icon = 'mdi:lock';
       const item: DevItem = {
         id: m.id,

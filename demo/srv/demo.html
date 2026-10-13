@@ -243,10 +243,16 @@ window.__pushServerLayout=(layout)=>{
   for(const cb of SERVER_LISTENERS.houseplan_layout_updated)cb({event_type:'houseplan_layout_updated',data:{rev:LAYOUT_REV}});
   return LAYOUT_REV;
 };
-window.__addRegistryEntity=(id,areaId,state='on',platform='demo')=>{
-  ENTITIES[id]={entity_id:id,device_id:null,area_id:areaId,platform,disabled_by:null};
-  STATES[id]={entity_id:id,state,attributes:{friendly_name:id}};
+window.__addRegistryEntity=(id,areaId,state='on',platform='demo',row={},attributes={})=>{
+  ENTITIES[id]={entity_id:id,device_id:null,area_id:areaId,platform,disabled_by:null,...row};
+  STATES[id]={entity_id:id,state,attributes:{friendly_name:id,...attributes}};
   for(const cb of REGISTRY_LISTENERS.entity_registry_updated)cb({action:'create',id});
+};
+// #878: a registry device created at run time (e.g. a Zigbee2MQTT group,
+// model 'Group'); the static fixture above stays unchanged for other smokes.
+window.__addRegistryDevice=(id,name,model,areaId,extra={})=>{
+  DEVICES[id]={...dev(id,name,model,areaId)[1],...extra};
+  for(const cb of REGISTRY_LISTENERS.device_registry_updated)cb({action:'create',id});
 };
 </script>
 </body></html>

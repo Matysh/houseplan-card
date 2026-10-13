@@ -163,6 +163,31 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'light-group-marker-icon-by-rules',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#878" test/light-group-icon-878.test.mjs',
+    because: '#878 AC1/AC2: the dialog draft and a saved group marker without a manual icon go through '
+      + 'the entity-marker branch; via icon rules a light group shows mdi:chip (or a rule icon) in the '
+      + 'preview and on the plan after Save, while the auto plan shows mdi:lightbulb-group.',
+    patches: [{
+      file: 'src/devices.ts',
+      find: "      let icon = isLightGroupEntity(fullHass, ref)\n        ? LIGHT_GROUP_ICON : resolveIcon(h, nm, '', [ref], iconRules);",
+      replace: "      let icon = resolveIcon(h, nm, '', [ref], iconRules);",
+    }],
+  },
+  {
+    id: 'light-group-auto-field-icon-by-rules',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#878 AC3" test/light-group-icon-878.test.mjs',
+    because: '#878 AC3: the "Auto" icon of a freshly chosen entity binding must match the plan; without '
+      + 'the group branch a light group resolves through icon rules to mdi:chip.',
+    patches: [{
+      file: 'src/devices.ts',
+      find: '    if (isLightGroupEntity(hass, ref)) return LIGHT_GROUP_ICON;\n',
+      replace: '',
+    }],
+  },
+  {
     id: 'wall-face-acceptance-sweeps-unrelated-carriers',
     guard: compiledNodeSmoke('smoke_wall_face_room_split'),
     because: '#874 AC5: native acceptance must preserve an unrelated coincident legacy partition on another parent edge, not sweep it as Optimize debt.',

@@ -23,6 +23,12 @@
   and a cancelled or rejected room save acknowledges nothing
   ([#879](https://github.com/Matysh/houseplan-card/issues/879)).
 
+- A light group (a Home Assistant light group or a Zigbee2MQTT group) without
+  a manually chosen icon now shows the group icon everywhere: in the device
+  dialog preview, in the “Auto” icon of a newly chosen binding and on the plan
+  after saving — not the default chip. Icon rules do not change a group's
+  icon; a manually chosen icon still wins
+  ([#878](https://github.com/Matysh/houseplan-card/issues/878)).
 - Closing a room through an existing partition now splits its parent safely,
   preserving neighbouring rooms, unrelated walls and wall thickness. A failed save or config
   reload no longer leaves a room-creation dialog with an inert Save button
