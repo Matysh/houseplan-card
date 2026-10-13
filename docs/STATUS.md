@@ -50,6 +50,12 @@ protect cancelled, superseded and disconnected imports. Setup mutual exclusion
 is scoped to an empty plan; populated Add space tab/menu retain their existing
 behaviour during a settings import. No storage change.
 
+Authoritative demo fixtures (#880) use an explicit read-only write barrier:
+config and point-position queues finish before replacement, including writes
+scheduled by config adoption. Strict revision and exact-content witnesses stay
+separate; native late-receipt negative/positive probes guard the boundary.
+Product timers, transport and grid/Optimize behaviour are unchanged.
+
 Composite room closure (#874) uses a proven parent-minus-face Split and a
 space/geometry proposal stamp; rejected or reloaded drafts cannot retain an
 inert creation form. Exact exported geometry is anonymised in the fixture;

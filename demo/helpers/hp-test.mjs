@@ -44,7 +44,8 @@ export const SELECTORS = Object.freeze({
 });
 
 /** Члены карточки, которые фасад читает (F3). Записей нет ни одной. */
-export const READS = Object.freeze(['_cfgRev', '_layoutRev', '_serverCfg', '_layout']);
+export const READS = Object.freeze(['_cfgRev', '_layoutRev', '_serverCfg', '_layout',
+  '_saveConfigDebounced', '_persistLayout', '_writesPending', '_dirtyPos', '_sentPos', '_writeChain']);
 
 /**
  * Страничная часть. Сериализуется Playwright'ом, поэтому самодостаточна:
@@ -119,6 +120,49 @@ export function installHpTest(selectors) {
     /** Был ли `__hpTest` на странице ДО установки харнессом — бандл его определять не должен (P2). */
     preinstalled,
     settled,
+
+    /** #880: observe completed editor writes; never flush, cancel or clear them. */
+    async waitForWrites({ timeoutMs = WAIT_MS } = {}) {
+      const c = need('waitForWrites');
+      if (!Number.isFinite(timeoutMs) || timeoutMs <= 0)
+        throw new Error('__hpTest.waitForWrites: timeoutMs должен быть положительным конечным числом');
+      const deadline = performance.now() + timeoutMs;
+      const state = () => ({
+        configDebounce: c._saveConfigDebounced.pending(),
+        layoutDebounce: c._persistLayout.pending(),
+        configWrites: c._writesPending,
+        dirty: c._dirtyPos.size,
+        sent: c._sentPos.size,
+      });
+      const idle = () => Object.values(state()).every(value => !value);
+      const describe = () => `записи не завершились: ${JSON.stringify(state())}`;
+      const withinDeadline = async promise => {
+        let timer;
+        try {
+          if (performance.now() >= deadline) throw new Error(`__hpTest.waitForWrites: ${describe()}`);
+          await Promise.race([
+            promise,
+            new Promise((_, reject) => {
+              timer = setTimeout(() => reject(new Error(`__hpTest.waitForWrites: ${describe()}`)),
+                Math.max(0, deadline - performance.now()));
+            }),
+          ]);
+        } finally { clearTimeout(timer); }
+      };
+      for (;;) {
+        if (!c.isConnected) throw new Error('__hpTest.waitForWrites: карточка отсоединена');
+        const chain = c._writeChain;
+        await withinDeadline(chain);
+        await waitFor('waitForWrites', () => {
+          if (!c.isConnected) throw new Error('__hpTest.waitForWrites: карточка отсоединена');
+          return idle();
+        }, describe, Math.max(0, deadline - performance.now()));
+        await withinDeadline(settled());
+        if (!c.isConnected) throw new Error('__hpTest.waitForWrites: карточка отсоединена');
+        if (chain === c._writeChain && idle()) return;
+        if (performance.now() >= deadline) throw new Error(`__hpTest.waitForWrites: ${describe()}`);
+      }
+    },
 
     async setMode(next) {
       const c = need('setMode');

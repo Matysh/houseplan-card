@@ -35,6 +35,24 @@ window; only `bundleBytes` changes. Initial View is 304,498 B gzip, inside the
 existing 320,000 B budget and +2,000 B ratchet band. Bands and all other
 monolith baselines stay unchanged; rationale is recorded in issue #871.
 
+## Authoritative layout fixtures (#880)
+
+`smoke_grid_snap.mjs` waits for both serialized config writes and debounced
+point-wise layout writes before replacing server fixtures. It waits again after
+config adoption, which can schedule Area-relocation writes. A late `rl_r1`
+receipt previously advanced the card from fixture revision 9 to 10 before its
+reload. Revision checks stay strict; the three Optimize fixtures also assert
+exact layout content. No product transport/timer is changed.
+
+`node --test test/hp-test-write-barrier.test.mjs test/hp-test-facade.test.mjs`
+covers independent queues, chain replacement during rendering, bounded waits,
+rejection and disconnect without clearing pending state.
+`node demo/smoke_layout_fixture_barrier.mjs` holds a receipt after a native label
+drag: the no-barrier negative detects fixture content loss even when its
+revision is accepted; the positive waits for the receipt and delivers once.
+Run it with `node demo/smoke_grid_snap.mjs` after build/bundle-sync; repeat the
+grid smoke sequentially and concurrently to exercise the fixture boundary.
+
 ## Intentional room placement and discovery (#879)
 
 `room-device-discovery.test.mjs` covers finite capture, ambiguous/stale rooms,

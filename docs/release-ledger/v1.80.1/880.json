@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 880,
+  "baseStable": "v1.80.1",
+  "category": "infra",
+  "rationale": "Only demo/test fixture synchronization and its documentation change. A read-only barrier completes existing config and point-wise layout writes before authoritative fixtures, preserving strict revision, grid and Optimize assertions. Product timers, transport, rendering and user behaviour are unchanged.",
+  "summary": {
+    "ru": "Устранена гонка тестовых раскладок с отложенными записями; добавлены проверки позднего ответа и точного содержимого.",
+    "en": "Removed the test-layout race with deferred writes; added late-receipt and exact-content checks."
+  }
+}

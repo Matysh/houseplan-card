@@ -36,6 +36,7 @@ const out = await page.evaluate(async () => {
     });
   };
   const firstSpace = c._space;
+  await hp.waitForWrites();
   await hp.setServerConfig((cfg) => {
     cfg.model_version = 7;
     makePhysical(cfg.spaces.find((space) => space.id === firstSpace));
@@ -127,6 +128,7 @@ const out = await page.evaluate(async () => {
   // a shape that is ALREADY off the grid is put on it by one drag: the mover
   // snaps the resulting anchor, not the delta (which used to preserve the drift)
   const decorSpace = c._space;
+  await hp.waitForWrites();
   await hp.setServerConfig((cfg) => {
     const space = cfg.spaces.find((item) => item.id === decorSpace);
     space.decor = [...(space.decor || []), { id: 'dcOff', kind: 'rect',
@@ -140,6 +142,7 @@ const out = await page.evaluate(async () => {
   const off2 = c._decorList.find((x) => x.id === 'dcOff');
   o.oneDragPutsADriftedShapeOnTheGrid = onGridN(off2.x) && onGridN(off2.y);
   c._decorMove = null;
+  await hp.waitForWrites();
   await hp.setServerConfig((cfg) => {
     const space = cfg.spaces.find((item) => item.id === decorSpace);
     space.decor = (space.decor || []).filter((x) => x.id !== 'dcOff' && x.id !== dsh.id);
@@ -199,13 +202,10 @@ const out = await page.evaluate(async () => {
 
   // ---- 2) «Оптимизировать планы» -----------------------------------------
   await hp.setMode('view');
-  // The preceding real editor gestures schedule a physical config write.
-  // Finish it before replacing the whole server snapshot with the next
-  // synthetic fixture: production adoption does this at a revision boundary,
-  // while a direct private-field assignment cannot invalidate #278's pending
-  // exact-candidate approval by itself.
-  if (c._saveConfigDebounced.pending()) c._saveConfigDebounced.flush();
-  await c._writeChain;
+  // #880: config and point-wise layout writes are separate queues. Observe
+  // both finishing before replacing an authoritative fixture; do not cancel
+  // a pending label write or weaken setLayout's revision assertion.
+  await hp.waitForWrites();
   // a deliberately detuned fixture: a third of a step off, everywhere
   const D = 1 / GRID_N / 3;
   const FIX = { spaces: [{
@@ -223,7 +223,9 @@ const out = await page.evaluate(async () => {
   }], markers: [], settings: {} };
   const FIXLAY = { d_light1: { s: 'g1', x: 0.3 + D, y: 0.3 }, rl_r1: { s: 'g1', x: 0.25 + D, y: 0.25 } };
   await hp.setServerConfig(structuredClone(FIX));
+  await hp.waitForWrites(); // config adoption can enqueue area-relocation writes
   await hp.setLayout(structuredClone(FIXLAY));
+  o.fixtureLayoutMatchesExactly = JSON.stringify(c._layout) === JSON.stringify(FIXLAY);
   await hp.switchSpace('g1');
 
   c._editorRuntime.optimizePlans.open();
@@ -278,8 +280,11 @@ const out = await page.evaluate(async () => {
       rooms: [{ id: 'mb', name: 'B', area: 'kitchen',
         poly: [[0.2 + 1 / GRID_N / 2, 0.2], [0.4, 0.2], [0.4, 0.4], [0.2, 0.4]] }] },
   ], markers: [], settings: {} };
+  await hp.waitForWrites();
   await hp.setServerConfig(structuredClone(MULTI));
+  await hp.waitForWrites();
   await hp.setLayout({});
+  o.multiFixtureLayoutIsEmpty = Object.keys(c._layout).length === 0;
   await hp.switchSpace('m1');
   c._editorRuntime.optimizePlans.open(); await c.updateComplete;
   const md = c._alignDialog;
@@ -297,8 +302,11 @@ const out = await page.evaluate(async () => {
     walls: [{ key: 'r1-top', a: [0.2, 0.2], b: [0.5, 0.2], cm: 15 }],
     openings: [{ id: 'oa', type: 'window', x: 0.35, y: 0.2, angle: 90, length: 0.1 }],
   }], markers: [], settings: {} };
+  await hp.waitForWrites();
   await hp.setServerConfig(structuredClone(TURN));
+  await hp.waitForWrites();
   await hp.setLayout({});
+  o.angleFixtureLayoutIsEmpty = Object.keys(c._layout).length === 0;
   await hp.switchSpace('a1');
   c._editorRuntime.optimizePlans.open(); await c.updateComplete;
   const ad = c._alignDialog;
