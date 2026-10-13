@@ -186,7 +186,10 @@ fragments per run, 8 MiB normalized geometry and 64 MiB serialized entry data.
 An oversize full snapshot is rejected whole. Position recording stops honestly
 at its quota. Rendering has a shared 20,000-point current-before-previous quota
 for all robots in the selected space; over-budget geometry is a contiguous
-certified prefix, not a chord across removed ranges. Diagnostics say `limited`.
+certified prefix plus a separate real latest-point dot, not a chord across
+removed ranges. The dot shares the quota; with no remaining quota only
+diagnostics can indicate `limited`. Legacy raw-ingest quota rejection also
+reports `limited`, including when a compatible positional fallback remains.
 Raw revisions and affine/grid keys own immutable geometry/SVG memoization;
 unrelated HA updates, hover, pan and projection do not rebuild the full path.
 
@@ -201,7 +204,7 @@ Smoothing uses the remaining 15.5 cm allowance; shortest-roundtrip SVG numbers
 add no unconditional decimal quantization. With an unverifiable physical
 transform no physical simplification/smoothing claim is made. Native full paths
 are neither target-trimmed nor connected synthetically to the puck. Only a
-continuous sampled fragment may have the existing animated live tip.
+continuous, non-limited sampled fragment may have the existing animated live tip.
 
 | Display mode | While moving | After movement stops |
 |---|---|---|

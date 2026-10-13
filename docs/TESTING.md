@@ -605,13 +605,7 @@ and no full render per pointer move. It includes integration/server/local
 paths, gaps, multiple robots and lifecycle retirement. Raw frame/matrix
 evidence is `demo/out/vacuum-camera-871/frames.json`. Matrix failure/recovery
 and read-before-write ordering also have Node witnesses. Headless geometry
-and golden do not replace the issue's real-GPU owner acceptance.
-
-Native endpoints never get invented connectors; tests measure finite-segment error/order.
-Stress checks raw ownership, scene quota, idle cache reuse and store/public round-trip.
-`smoke_vacuum_path_fidelity.mjs` witnesses transport authority/gaps in actual View DOM;
-`test_ha_vacuum_paths.py` covers scheduling/late replies. Mutants run only nightly.
-A map alone proves neither cleanup lifecycle nor app-equivalent fidelity: see `VACUUM.md`.
+and golden do not replace real-GPU owner acceptance; full-path limits and witnesses live in `VACUUM.md`.
 
 `npm run golden:capture` records the data-only scenarios from
 `demo/golden/matrix.mjs` into ignored `artifacts/golden/actual/`; it never

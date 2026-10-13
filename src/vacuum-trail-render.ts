@@ -15,8 +15,13 @@ export function vacuumTrailSvg(
   // shortest-roundtrip numeric text introduces no extra decimal quantization.
   const radius = geometry.physicalVerified
     ? (VAC_TRAIL_SMOOTH_RADIUS_CM - VAC_SIMPLIFY_CM) / cmPerUnit : 0;
-  const commands: VacPathCommand[][] = radius > 0 ? smoothVacPath(geometry.path, radius) : geometry.path
-    .filter((p) => p.length >= 2).map((p) => p.map((point, i) => ({ kind: i ? 'line' : 'move', point })));
+  const commands: VacPathCommand[][] = geometry.path.filter((p) => p.length).flatMap((p) => {
+    // A round-capped zero-length subpath visibly marks the real endpoint;
+    // never join it to the budget-cut prefix or fabricate a tip to the puck.
+    if (p.length === 1) return [[{ kind: 'move', point: p[0] }, { kind: 'line', point: p[0] }]];
+    return radius > 0 ? smoothVacPath([p], radius)
+      : [p.map((point, i) => ({ kind: i ? 'line' : 'move', point }))];
+  });
   const text = (point: readonly [number, number]): string => `${point[0]} ${point[1]}`;
   const d = commands.map((segment) => segment.map((command) => {
     if (command.kind === 'move') return `M ${text(command.point)}`;

@@ -1,5 +1,5 @@
 import { normalizeVacPath, resolveCurrentVacPath, type VacPath } from './vacuum';
-import { ownVacuumPathInput } from './vacuum-path-geometry';
+import { ownVacuumPathInput, vacuumPathLimited } from './vacuum-path-geometry';
 
 export interface VacuumServerRun {
   points?: unknown;
@@ -40,16 +40,18 @@ export function selectVacuumTrail(
     const path = normalizeVacPath(server?.paths);
     const fragments = server?.paths;
     const tail = Array.isArray(fragments) ? fragments[fragments.length - 1] : null;
+    const limited = vacuumPathLimited(fragments) || server?.quality?.reason === 'limited';
     return { path, native: server?.quality?.source === 'native',
-      allowTip: server?.quality?.source !== 'native' && Array.isArray(tail) && tail.length >= 2,
-      reason: server?.quality?.reason ?? (path.length ? 'sampled' : 'none'),
+      allowTip: !limited && server?.quality?.source !== 'native' && Array.isArray(tail) && tail.length >= 2,
+      reason: limited ? 'limited' : server?.quality?.reason ?? (path.length ? 'sampled' : 'none'),
       source: path.length ? server?.quality?.source ?? 'positions' : 'none' };
   }
   // An old/missing backend retains its documented compatible scenario, but
   // cannot become a format-2 authoritative writer through the browser.
   const legacy = resolveCurrentVacPath(telemetry, server, local);
+  const limited = [telemetry?.path, server?.points, local].some(vacuumPathLimited);
   const localTail = Array.isArray(local) && Array.isArray(local[0]?.[0]) ? local[local.length - 1] : local;
   return { path: legacy.path, native: legacy.source === 'integration',
-    allowTip: legacy.source !== 'integration' && (legacy.source !== 'local' || (Array.isArray(localTail) && localTail.length >= 2)),
-    reason: legacy.source === 'none' ? 'none' : 'sampled', source: legacy.source };
+    allowTip: !limited && legacy.source !== 'integration' && (legacy.source !== 'local' || (Array.isArray(localTail) && localTail.length >= 2)),
+    reason: limited ? 'limited' : legacy.source === 'none' ? 'none' : 'sampled', source: legacy.source };
 }

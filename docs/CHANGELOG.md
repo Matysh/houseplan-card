@@ -6,7 +6,9 @@
   Supported Dreame ordinary cameras can provide full server-recorded paths;
   uncertain cleanup identity falls back safely to positions. The device
   diagnostics show path source, quality and received/stored/drawn point counts
-  without letting corrupt metric samples interrupt recording
+  without letting corrupt metric samples interrupt recording. Limited paths
+  show their real endpoint separately without bridging the omitted part;
+  legacy input limits are reported instead of looking like missing data
   ([#872](https://github.com/Matysh/houseplan-card/issues/872)).
 
 - Infrastructure: importing the furniture generator's tolerance no longer

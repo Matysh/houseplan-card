@@ -18,7 +18,9 @@ type Host = Pick<HouseplanEditorHostPort, '_vacSrvTrails' | '_vacRt' | '_vacTrai
 
 export function diagnoseVacuumTrail(host: Host, device: DevItem): VacuumTrailDiagnostic {
   const run = host._vacSrvTrails[device.id]?.current;
-  const chosen = selectVacuumTrail(null, run ?? null, host._vacRt.get(device.id)?.material ?? [], host._vacTrailFormat);
+  const source = host._vacSource(device);
+  const telemetry = source ? readVacTelemetry(host.hass?.states[source]?.attributes) : null;
+  const chosen = selectVacuumTrail(telemetry, run ?? null, host._vacRt.get(device.id)?.material ?? [], host._vacTrailFormat);
   const raw = run?.quality?.raw_points ?? chosen.path.reduce((n, p) => n + p.length, 0);
   let rendered = 0, limited = false, budget = VAC_RENDER_POINT_BUDGET;
   // Same current-before-previous / roster order and space quota as View.

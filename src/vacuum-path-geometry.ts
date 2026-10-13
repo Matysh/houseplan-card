@@ -10,6 +10,19 @@ const material = new WeakSet<object>();
 const geometryMaterial = new WeakSet<object>();
 const normalized = new WeakMap<object, VacPath>();
 const ownedInputs = new WeakMap<object, unknown>();
+const limitedInputs = new WeakSet<object>();
+
+export function vacuumPathLimited(value: unknown): boolean {
+  return !!value && typeof value === 'object' && limitedInputs.has(value);
+}
+
+function rejectLimitedPath(raw: object): VacPath {
+  const empty = freezeVacuumPath([]);
+  limitedInputs.add(raw);
+  limitedInputs.add(empty);
+  normalized.set(raw, empty);
+  return empty;
+}
 
 /** Preserve an attribute's public shape, but own/freeze its bounded data once.
  * Weak identity is HA's immutable state value, not a mutable card model row. */
@@ -43,7 +56,7 @@ export function ownVacuumPathInput(value: unknown): unknown {
     return result;
   } catch {
     // Malformed/oversized geometry never starts unbounded snapshot cloning.
-    const empty = freezeVacuumPath([]);
+    const empty = rejectLimitedPath(value);
     ownedInputs.set(value, empty);
     return empty;
   }
@@ -80,7 +93,8 @@ export function normalizeVacuumGeometry(raw: unknown): VacPath {
   if (cached) return cached;
   const object = raw as Record<string, unknown>;
   const value = Array.isArray(raw) ? raw : object.path ?? object.points;
-  if (!Array.isArray(value) || value.length > VAC_RAW_MAX_POINTS) return [];
+  if (!Array.isArray(value)) return [];
+  if (value.length > VAC_RAW_MAX_POINTS) return rejectLimitedPath(raw);
   const flat = value.some((v: unknown) => {
     if (Array.isArray(v)) return v.length >= 2 && !Array.isArray(v[0])
       && (v[0] == null || typeof v[0] !== 'object');
@@ -94,16 +108,16 @@ export function normalizeVacuumGeometry(raw: unknown): VacPath {
     let current: Pt[] = [];
     const flush = (): void => { if (current.length) out.push(current); current = []; };
     for (const candidate of segment) {
-      if (++visited > VAC_RAW_MAX_POINTS) return [];
+      if (++visited > VAC_RAW_MAX_POINTS) return rejectLimitedPath(raw);
       const p = pathPoint(candidate);
       if (!p) { flush(); continue; }
       const prior = current[current.length - 1];
       if (prior && prior[0] === p[0] && prior[1] === p[1]) continue;
       current.push(p);
-      if (++count > VAC_RAW_MAX_POINTS) return [];
+      if (++count > VAC_RAW_MAX_POINTS) return rejectLimitedPath(raw);
     }
     flush();
-    if (out.length > VAC_RAW_MAX_SEGMENTS) return [];
+    if (out.length > VAC_RAW_MAX_SEGMENTS) return rejectLimitedPath(raw);
   }
   const frozen = freezeVacuumPath(out.filter((segment) => segment.length >= 2));
   normalized.set(raw, frozen);
@@ -171,18 +185,27 @@ export class VacuumPathGeometryCache {
     ])).filter((segment) => segment.every((point) => point.every(Number.isFinite))) : [];
     const rawPoints = raw.reduce((sum, segment) => sum + segment.length, 0);
     const reduced = valid ? calibrated.map((p) => simplifyOrderedPath(p, VAC_SIMPLIFY_CM / cmPerUnit)) : calibrated;
-    let available = Math.max(0, Math.floor(budget));
+    const capacity = Number.isFinite(budget) ? Math.max(0, Math.floor(budget)) : 0;
+    const limited = reduced.reduce((sum, p) => sum + p.length, 0) > capacity;
+    // Reserve one point for the real latest endpoint, isolated from the prefix.
+    // A zero remaining scene quota can only report limited in diagnostics.
+    let available = Math.max(0, capacity - (limited ? 1 : 0));
     const path: VacPath = [];
-    let limited = false;
     for (const segment of reduced) {
       if (segment.length > available) {
         // Honest contiguous original prefix, NEVER a chord over omitted data.
         if (available >= 2) path.push(segment.slice(0, available));
-        limited = true;
         break;
       }
       path.push(segment);
       available -= segment.length;
+    }
+    if (limited && capacity > 0) {
+      let latest: Pt | undefined;
+      for (let i = reduced.length - 1; i >= 0 && !latest; i--) {
+        const segment = reduced[i]; latest = segment[segment.length - 1];
+      }
+      if (latest) path.push([latest]);
     }
     const result = { path: freezeVacuumPath(path), rawPoints,
       renderedPoints: path.reduce((sum, p) => sum + p.length, 0), limited, physicalVerified: valid };

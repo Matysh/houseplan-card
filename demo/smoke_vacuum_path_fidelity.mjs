@@ -4,7 +4,7 @@ requirePinnedBrowser();
 const { page, browser } = await launchColdView();
 const out = await page.evaluate(async () => {
   const old = window.__card, baseWS = old.hass.callWS.bind(old.hass);
-  let trailNotify;
+  let trailNotify, serverFormat = 2;
   const baseSubscribe = old.hass.connection.subscribeEvents.bind(old.hass.connection);
   window.__addRegistryEntity('vacuum.fidelity', null, 'cleaning');
   window.__addRegistryEntity('camera.fidelity_map', null, 'idle');
@@ -22,7 +22,7 @@ const out = await page.evaluate(async () => {
     'camera.fidelity_map': { entity_id: 'camera.fidelity_map', state: 'idle', attributes: {
       robot_position: {x:900,y:900}, map_name:'m1', path:[[999,999],[888,888]] } } },
     callWS: async (message) => message.type === 'houseplan/trail/get'
-      ? { trail_format: 2, trails: server } : baseWS(message) };
+      ? { trail_format: serverFormat, trails: server } : baseWS(message) };
   const marker = {id:'e_vacuum_fidelity',binding:'entity:vacuum.fidelity',space:'f1',
     vacuum:{source:'camera.fidelity_map',trail_mode:'always',map_routes:[{
       id:'fidelity-route',source:'camera.fidelity_map',map_id:'m1',space:'f1',calibration:[1,0,0,0,1,0]}]}};
@@ -55,17 +55,31 @@ const out = await page.evaluate(async () => {
   const limited=c._vacTrailDiagnostics(c._devices.find(d=>d.id==='e_vacuum_fidelity'));
   results.rawAll100k=limited.raw===100000 && limited.stored===100000;
   results.shared20kBudget=limited.rendered===20000 && limited.reason==='limited';
-  results.limitedNoFalseTail=!root().querySelector('.vactrail line.tip') && !path()?.includes('1999980');
+  results.limitedNoFalseTail=!root().querySelector('.vactrail line.tip')
+    && (path()?.match(/M /g)||[]).length===2
+    && path()?.endsWith('M 10 1999980 L 10 1999980');
+  results.latestPointUsesRoundCaps=getComputedStyle(root().querySelector('.vactrail > path.core')).strokeLinecap==='round';
   server.e_vacuum_fidelity.current=run;
   await trailNotify({data:{}});
   c.requestUpdate(); await c.updateComplete;
   await window.__hpTest.setVolumetricView(true); await c.updateComplete;
   await new Promise(r=>setTimeout(r,100));
   results.isoSameNativePath=path()===original;
+  server.e_vacuum_fidelity.current={...run,quality:{source:'positions',reason:'limited',raw_points:5}};
+  await trailNotify({data:{}}); c.requestUpdate(); await c.updateComplete;
+  results.positionQuotaNoFalseTip=!root().querySelector('.vactrail line.tip') && path()?.endsWith('600 500');
+  server.e_vacuum_fidelity.current=run;
+  await trailNotify({data:{}}); c.requestUpdate(); await c.updateComplete;
   await window.__hpTest.setMode('devices'); await c.updateComplete;
   const dev=c._devices.find(d=>d.id==='e_vacuum_fidelity');
   const info=c._vacTrailDiagnostics(dev);
   results.diagnosticsHonest=info.source==='native' && info.raw===5 && info.stored===5 && !info.final;
+  serverFormat=1;
+  c.hass={...c.hass,states:{...c.hass.states,'camera.fidelity_map':{
+    ...c.hass.states['camera.fidelity_map'], attributes:{robot_position:{x:900,y:900},map_name:'m1',
+      path:Array.from({length:100001},(_,i)=>[i,0])}}}};
+  await trailNotify({data:{}}); c.requestUpdate(); await c.updateComplete;
+  results.legacyQuotaReported=c._vacTrailDiagnostics(dev).reason==='limited';
   return results;
 });
 checkAll(out); await finish(browser);

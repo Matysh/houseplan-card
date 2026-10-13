@@ -4,6 +4,7 @@ import { normalizeVacPath, pushTrailPoint, thinPath } from '../test-build/vacuum
 import {
   VacuumPathGeometryCache, simplifyOrderedPath, VAC_RENDER_POINT_BUDGET,
   isVacuumPathMaterial, ownVacuumPathInput,
+  vacuumPathLimited,
 } from '../test-build/vacuum-path-geometry.js';
 import { selectVacuumTrail, vacuumTrailMaterial } from '../test-build/vacuum-trail-material.js';
 import { vacuumTrailSvg } from '../test-build/vacuum-trail-render.js';
@@ -131,9 +132,57 @@ test('#872 100k adversarial turns: bounded honest prefix, no index sampler or in
   assert.equal(frame.renderedPoints, 20000);
   assert.equal(frame.rawPoints, 100000);
   assert.equal(frame.limited, true);
-  assert.deepEqual(frame.path[0].at(-1), [100, 1999900]);
+  assert.deepEqual(frame.path[0].at(-1), [0, 1999800]);
+  assert.deepEqual(frame.path[1], [[100, 9999900]]);
+  const svg = vacuumTrailSvg(cache, raw, [100, 0, 0, 0, 100, 0], 1, 20000);
+  assert.equal((svg.d.match(/M /g) || []).length, 2);
+  assert.ok(svg.d.endsWith('M 100 9999900 L 100 9999900'));
   assert.equal(cache.resolve(raw, [100, 0, 0, 0, 100, 0], 1, 20000), frame);
   assert.equal(cache.computations, 1);
+});
+
+test('#872 budget endpoint is separate across later gaps; zero/tiny quotas never invent a bridge', () => {
+  const raw = normalizeVacPath([[[0, 0], [1, 0], [2, 0]], [[100, 100], [101, 100]], [[500, 500], [501, 500]]]);
+  const cache = new VacuumPathGeometryCache(), matrix = [1, 0, 0, 0, 1, 0];
+  const prefix = cache.resolve(raw, matrix, 0, 5);
+  assert.deepEqual(prefix.path, [[[0, 0], [1, 0], [2, 0]], [[501, 500]]]);
+  assert.equal(prefix.limited, true);
+  for (const budget of [0, 1, 2]) {
+    const svg = vacuumTrailSvg(cache, raw, matrix, 0, budget);
+    assert.ok(svg.count <= budget);
+    assert.equal(svg.limited, true);
+    assert.equal(svg.d, budget ? 'M 501 500 L 501 500' : '');
+  }
+  const complete = cache.resolve(raw, matrix, 0, 7);
+  assert.equal(complete.limited, false);
+  assert.deepEqual(complete.path, raw);
+});
+
+test('#872 legacy ingest quotas report limited, retain fallback, and cache the rejection', () => {
+  const cases = [
+    Array.from({length: 100001}, (_, i) => [i, 0]),
+    Array.from({length: 1025}, (_, i) => [[i, 0], [i, 1]]),
+    [Array.from({length: 50001}, (_, i) => [i, 0]), Array.from({length: 50000}, (_, i) => [i, 1])],
+    ownVacuumPathInput(new Array(10000000)),
+  ];
+  for (const raw of cases) {
+    const rejected = normalizeVacPath(raw);
+    assert.deepEqual(rejected, []);
+    assert.ok(vacuumPathLimited(raw));
+    assert.ok(vacuumPathLimited(rejected));
+    assert.equal(normalizeVacPath(raw), rejected);
+    const none = selectVacuumTrail({path: rejected}, null, [], 1);
+    assert.equal(none.reason, 'limited');
+    assert.equal(none.source, 'none');
+    const fallback = selectVacuumTrail({path: raw}, {points: [[1, 1], [2, 2]]}, [], 1);
+    assert.equal(fallback.reason, 'limited');
+    assert.equal(fallback.source, 'server');
+    assert.deepEqual(fallback.path, [[[1, 1], [2, 2]]]);
+    assert.equal(fallback.allowTip, false);
+    assert.equal(selectVacuumTrail(null, {paths: raw}, [], 2).reason, 'limited');
+  }
+  assert.equal(selectVacuumTrail({path: []}, null, [], 1).reason, 'none');
+  assert.equal(vacuumPathLimited([]), false);
 });
 
 test('#872 source authority, native endpoints and untrusted singleton gap forbid puck connector', () => {
@@ -149,6 +198,16 @@ test('#872 source authority, native endpoints and untrusted singleton gap forbid
   assert.equal(gap.allowTip, false);
   assert.deepEqual(selectVacuumTrail(null, null, [[0, 0], [1, 1]], 2).path, []);
   assert.equal(selectVacuumTrail(null, null, [[0, 0], [1, 1]], 1).source, 'local');
+});
+
+test('#872 limited recorded positions retain their endpoint without a fabricated puck connector', () => {
+  const run = {path_format: 2, paths: [[[0, 0], [1, 1]]], quality: {source: 'positions', reason: 'limited'}};
+  const result = selectVacuumTrail(null, run, [], 2);
+  assert.equal(result.reason, 'limited');
+  assert.equal(result.source, 'positions');
+  assert.equal(result.native, false);
+  assert.equal(result.allowTip, false);
+  assert.deepEqual(result.path, run.paths);
 });
 
 test('#872 ownership cache does not trust a shallow freeze and keeps raw attribute shape', () => {
