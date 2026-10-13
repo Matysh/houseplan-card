@@ -35,6 +35,10 @@ home-assistant-frontend==20260729.7
 # Ставится транзитивно из phcc; закреплён явно, чтобы версия была видна тому,
 # кто читает этот файл, а не только тому, кто читает лог.
 homeassistant==2026.8.3
+# #872 imports the real public HA camera helper. Core/phcc do not install
+# optional integration requirements: this exact pin comes from the camera
+# manifest of the same HA 2026.8.3, not from an unrelated latest codec.
+PyTurboJPEG==1.8.3
 # #42: линт бэкенда (шаг «Линт бэкенда» в validate.yml ставится отсюда же).
 ruff==0.16.5
 # #42: строгая типизация allowlist-модулей (шаг «Типы бэкенда»). Без пина

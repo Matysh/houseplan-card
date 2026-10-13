@@ -7,8 +7,11 @@ for independent finite-segment/ordered error, 100k budget, affine and curve
 oracles. `tests_backend/test_vacuum_paths.py` exercises the actual pure codec;
 `test_ha_vacuum_paths.py` uses real HA EntityComponent, executor, Store and
 collector owners with offline providers/clock. Its real camera import needs
-the pinned HA camera dependency `PyTurboJPEG==1.8.3` in the HA harness venv;
-an importable core alone does not install every optional integration codec.
+the pinned HA camera dependency `PyTurboJPEG==1.8.3` in the HA harness venv,
+installed by `tests_backend/requirements.txt` locally and in CI. The pin comes
+from that HA release's camera manifest; an importable core alone does not
+install every optional integration codec. Do not stub/skip the public camera
+import to make collection green.
 `demo/smoke_vacuum_path_fidelity.mjs` observes the card WS/render boundary,
 native endpoints/gaps, stale-quality diagnostics and shared render quota;
 `smoke_vacuum_camera.mjs` remains the native pan/pinch ownership witness.

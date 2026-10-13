@@ -105,6 +105,7 @@ const out = await page.evaluate(async () => {
     vacuumTrails: count('.vactrail .case'),
   });
   const flat = layers();
+  const flatVacuumTrailD = root(original).querySelector('.vactrail path.case')?.getAttribute('d') || '';
   const flatSpillParts = [...root(original).querySelectorAll('.glow-pool')]
     .map((node) => node.getAttribute('data-lit-parts'));
   // #649: the General settings switch, delivered as a server config push.
@@ -118,6 +119,8 @@ const out = await page.evaluate(async () => {
   const beforeSpillParts = [...root(original).querySelectorAll('.glow-pool')]
     .map((node) => node.getAttribute('data-lit-parts'));
   const isoVacuumTrailD = root(original).querySelector('.vactrail path.case')?.getAttribute('d') || '';
+  const isoVacuumCoreD = root(original).querySelector('.vactrail path.core')?.getAttribute('d') || '';
+  const isoVacuumTips = count('.vactrail line.tip');
   const wallFingerprint = root(original).querySelector('[data-hp="iso-walls"]')?.dataset.fingerprint;
   const cachedGeometry = original._isoGeometryCache.get(wallFingerprint)?.geometry;
   const structuralBuildsBeforeLive = Number(root(original).querySelector('.stage')
@@ -216,8 +219,14 @@ const out = await page.evaluate(async () => {
       && before.glowSources >= 2 && before.sun > 0 && before.openings === 0
       && before.verticalOpenings >= 5
       && before.devices > 0 && before.hover > 0 && before.vacuumPucks > 0
-      && before.vacuumTrails >= 2,
-    vacuumTrailCurved: (isoVacuumTrailD.match(/Q /g) || []).length === 1,
+      && before.vacuumTrails >= 1,
+    // #872: a complete native path has one casing/core pair, not a fabricated
+    // sampled connector. All four input points remain, so both corners curve.
+    vacuumTrailCurved: (isoVacuumTrailD.match(/Q /g) || []).length === 2,
+    nativeTrailCasingAndProjectionParity: isoVacuumTrailD === isoVacuumCoreD
+      && isoVacuumTrailD === flatVacuumTrailD && isoVacuumTrailD.startsWith('M 100 100'),
+    nativeTrailExactEndpointWithoutConnector: isoVacuumTrailD.endsWith('L 325 350')
+      && isoVacuumTips === 0,
     liveLayersStable: JSON.stringify(after) === JSON.stringify(before),
     spillBarrierStable: JSON.stringify(afterSpillParts) === JSON.stringify(beforeSpillParts)
       && beforeSpillParts.length >= 2 && beforeSpillParts.every((parts) => Number(parts) > 0),
