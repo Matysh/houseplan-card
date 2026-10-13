@@ -7,6 +7,8 @@ import { launch, check, finish } from './serve.mjs';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 import { setWallThickness } from '../test-build/wall-thickness.js';
 import { polygonArea, distToSegment } from '../test-build/logic.js';
+import { checkReferences, checkWallKeys, checkMixedRoleRecords,
+  checkHiddenObstacles, checkPhysicalGeometry } from '../scripts/model-invariants.mjs';
 
 const fixture = JSON.parse(readFileSync(new URL('../test/fixtures/874-room-closure.json', import.meta.url)));
 function seed({ added = false, duplicate = false, oldCm = 25, newCm = 15, opening = false } = {}) {
@@ -129,6 +131,10 @@ await scenario('Native reported drawing and Undo Redo', seed(), async page => {
   await save(page);
   const after = await snapshot(page), space = after.config.spaces[0];
   const parent = space.rooms.find(r => r.id === 'parent'), child = space.rooms.find(r => r.name === 'Child');
+  const violations = [...checkReferences({ config: after.config, layout: after.layout }),
+    ...checkWallKeys(after.config), ...checkMixedRoleRecords(after.config),
+    ...checkHiddenObstacles(after.config), ...checkPhysicalGeometry(after.config)];
+  if (violations.length) console.error('Model invariants after native Save', violations);
   const covers = (w, a, b) => {
     const dx = w.b[0] - w.a[0], dy = w.b[1] - w.a[1];
     return [a, b].every(p => Math.abs((p[0] - w.a[0]) * dy - (p[1] - w.a[1]) * dx) < 1e-8);
@@ -151,6 +157,7 @@ await scenario('Native reported drawing and Undo Redo', seed(), async page => {
     savedOnceAndAtomicHistory: after.server.writes === before.server.writes + 1 && after.history === before.history + 1,
     canonicalIdsValid: validIds(space), dialogClosed: !after.dialog && !after.batch,
     persistedGeometry: equal(geometry(after.server.saved), geometry(after.config)),
+    modelInvariantsAfterSave: violations.length === 0,
   };
   const historyButton = icon => page.locator('[data-hp="toolbar"][data-kind="plan"] button')
     .filter({ has: page.locator(`ha-icon[icon="mdi:${icon}-variant"]`) });
@@ -158,6 +165,14 @@ await scenario('Native reported drawing and Undo Redo', seed(), async page => {
   out.undoRestoresExactGeometry = equal(geometry((await snapshot(page)).config), geometry(before.config));
   await historyButton('redo').click(); await settle(page);
   out.redoRestoresExactGeometry = equal(geometry((await snapshot(page)).config), geometry(after.config));
+  // A new instance reads durable state through the real config/get lifecycle.
+  await page.evaluate(() => {
+    const old = window.__card, next = document.createElement('houseplan-card');
+    next.setConfig({ type: 'custom:houseplan-card' }); next.hass = old.hass;
+    old.replaceWith(next); window.__card = next;
+  });
+  await page.waitForFunction(() => window.__card._serverCfg?.spaces?.[0]?.rooms?.length === 3);
+  out.coldCardReadsExactSavedGeometry = equal(geometry((await snapshot(page)).config), geometry(after.config));
   return out;
 });
 
