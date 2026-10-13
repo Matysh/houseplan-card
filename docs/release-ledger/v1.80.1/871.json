@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 871,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "v1.80.1 renders the vacuum path under two live-camera owners and converts animated endpoints with a stale view. The fix restores attachment without changing source data, routes, calibration or settings.",
+  "summary": {
+    "ru": "Путь пылесоса и его конец сохраняют привязку к плану и роботу при панорамировании и масштабировании.",
+    "en": "Vacuum paths and their animated ends stay attached to the plan and robot while panning and zooming."
+  }
+}

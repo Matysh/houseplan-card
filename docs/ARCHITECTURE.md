@@ -363,6 +363,10 @@ normative limits: [`specs/485-radar-presence-stage1.md`](specs/485-radar-presenc
 results, #162; mirrored byte-for-byte by `vacuum_routes.py`), `src/vacuum.ts`
 owns telemetry normalization, path arbitration and smoothing, and `trails.py`
 records runs server-side. Contract and code map: [`VACUUM.md`](VACUUM.md).
+`src/vacuum-view.ts` alone synchronizes tip endpoints against the actual
+composed SVG screen matrix; it reads all geometry before DOM writes and keeps
+robot identity. The passive path SVG inherits the HTML device-layer camera
+once (#871); calibration and trail-source arbitration remain separate.
 
 ## Sizes
 
@@ -946,6 +950,13 @@ The day-cycle paper outline joins these roots before the first camera move; the
 static card uses its stage-sized form from the first frame (#582, Key decision 7).
 Unchanged values are never rewritten, so idle frames stay byte-identical;
 `commitHouseplanViewport` removes the transforms and forces the final `viewBox`.
+
+The vacuum SVG is a passive exception inside a live HTML layer (#871):
+`data-hp-live-inherited-scene="camera"` rebases only its bounded paint window
+via `inheritedSceneClip`, around the same anchor and with the same exposure.
+Its `viewBox` and camera transform are not written by this pass. Giving it
+`data-hp-live-viewbox="camera"` as well would double-project the trail. This
+layout preserves the device/hover/lock/Zigbee stacking context unchanged.
 
 ## English and Russian ship whole (#400)
 

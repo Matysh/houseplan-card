@@ -30,6 +30,15 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['syncVacuumTips', 'inheritedSceneClip', '_vacRafLoop', '_renderVacuums'],
+    files: ['src/vacuum-view.ts'],
+    smokes: ['smoke_vacuum_camera.mjs', 'smoke_vacuum_multifloor.mjs',
+      'smoke_live_pan_viewbox.mjs', 'smoke_live_pan_coverage.mjs'],
+    because: '#871: native held pan/pinch/zoom frames align trails and animated tips '
+      + 'through real composed DOM matrices, bounded clipping and HA updates; floor/source '
+      + 'routing and incoming-edge coverage are separate runtime witnesses.',
+  },
+  {
     symbols: ['RoomDeviceDiscovery', '_syncNewDevices'],
     files: ['src/room-device-discovery.ts'],
     smokes: ['smoke_room_device_discovery.mjs', 'smoke_new_device.mjs',

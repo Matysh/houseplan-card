@@ -92,6 +92,7 @@ import {
   effectiveRoutes, observedMapIds, resolveRoute, planVacuumOverlay, routeWarningKey,
   type VacuumMapRoute, type VacuumRouteResolution,
 } from './vacuum-routes';
+import { syncVacuumTips } from './vacuum-view';
 import {
   buildDevices, seedHiddenBindings, lqiFor, tempFor, climateTempFor, effectiveExcludedIntegrations,
   sourceValue, roomClimateKey, roomClimateMap, resolvedLightSources, resolvedLightState,
@@ -2271,7 +2272,6 @@ export class HouseplanCard extends LitElement {
       space switch) or a tab return must TELEPORT the puck — animating left/top
       through a viewport change reads as «едет через весь план» (owner). */
   private _vacViewKey = '';
-  private _vacLastView: { x: number; y: number; w: number; h: number } | null = null;
   private _vacRaf = 0;
   /** server-recorded runs per marker: {current, previous} in raw robot coords */
   private _vacSrvTrails: Record<string, any> = {};
@@ -2311,6 +2311,7 @@ export class HouseplanCard extends LitElement {
     this._continuity.visibility(signal);
     this._dayCycleVisibility(signal); this._summary?.visibility(signal.kind);
     if (signal.kind === 'hidden') {
+      if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
       this._radarLive.stop();
       this._editorRuntime?._cancelRadarSetup();
       this._clearRoomFocus(true);
@@ -2328,6 +2329,7 @@ export class HouseplanCard extends LitElement {
       return;
     }
     this._vacJumpOnce = true;
+    if (!this._vacRaf && this.renderRoot.querySelector('.vactrail line.tip')) this._vacRafLoop();
     this._syncRadarLive();
     if (!signal.long) {
       const now = Date.now();
@@ -11742,22 +11744,9 @@ export class HouseplanCard extends LitElement {
   /** Every frame: glue the growing tip segment to the animated puck centre. */
   private _vacRafLoop(): void {
     this._vacRaf = requestAnimationFrame(() => {
-      const sr = this.renderRoot as ShadowRoot;
-      const stage = this._stageEl;
-      const view = this._vacLastView;
-      const pucks = sr?.querySelectorAll?.('.vacpuck') || [];
-      if (!stage || !view || !pucks.length) { this._vacRaf = 0; return; }
-      const sb = stage.getBoundingClientRect();
-      for (const puck of pucks as any) {
-        const mid = puck.getAttribute('data-mid');
-        const pb = puck.getBoundingClientRect();
-        const cx = view.x + ((pb.left + pb.width / 2 - sb.left) / sb.width) * view.w;
-        const cy = view.y + ((pb.top + pb.height / 2 - sb.top) / sb.height) * view.h;
-        for (const line of sr.querySelectorAll(`line.tip[data-mid="${mid}"]`)) {
-          line.setAttribute('x2', cx.toFixed(1));
-          line.setAttribute('y2', cy.toFixed(1));
-        }
-      }
+      this._vacRaf = 0;
+      if (!this.isConnected || this.ownerDocument.visibilityState === 'hidden'
+        || !syncVacuumTips(this.renderRoot)) return;
       this._vacRafLoop();
     });
   }
@@ -11793,6 +11782,7 @@ export class HouseplanCard extends LitElement {
     this._vacJumpOnce = false;
     const pucks: TemplateResult[] = [];
     const trails: TemplateResult[] = [];
+    let hasTips = false;
     for (const d of devs) {
       if (d.hidden || !this._isVacDev(d)) continue;
       if (displayIsNeutral(normalizeDeviceDisplay(d.marker?.display))) continue;
@@ -11850,6 +11840,7 @@ export class HouseplanCard extends LitElement {
           if (pathD) trails.push(svg`<path class="case" d="${pathD}"></path><path class="core" d="${pathD}"></path>`);
           const last = raw[raw.length - 1];
           if (moving && last?.length >= 2) {
+            hasTips = true;
             const anchor = last[last.length - 1];
             const [ax, ay] = applyAffine(matrix, anchor[0], anchor[1]);
             const point = [ax, ay];
@@ -11874,11 +11865,14 @@ export class HouseplanCard extends LitElement {
         <ha-icon .icon=${icon}></ha-icon>
       </div>`);
     }
-    this._vacLastView = view;
-    if (pucks.length && !this._vacRaf) this._vacRafLoop();
+    if (pucks.length && hasTips && this.isConnected && this.ownerDocument.visibilityState !== 'hidden') {
+      if (!this._vacRaf) this._vacRafLoop();
+    } else if (this._vacRaf) {
+      cancelAnimationFrame(this._vacRaf); this._vacRaf = 0;
+    }
     if (!pucks.length && !trails.length) return nothing;
     return html`
-      ${trails.length ? svg`<svg class="vactrail" data-hp-live-viewbox="camera" viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="none">${trails}</svg>` : nothing}
+      ${trails.length ? svg`<svg class="vactrail" data-hp-live-inherited-scene="camera" viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="none">${trails}</svg>` : nothing}
       ${pucks}`;
   }
 

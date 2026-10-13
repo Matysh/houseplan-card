@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Vacuum camera attachment (#871) has one camera owner for the passive trail
+SVG and a current composed inverse for animated tip endpoints. The bounded
+paint window follows the existing anchor budget; source data and stacking
+remain unchanged. Native frame evidence, matrix guards and lifecycle witnesses
+are distinct from required real-GPU owner acceptance.
+
 Composite room closure (#874) uses a proven parent-minus-face Split and a
 space/geometry proposal stamp; rejected or reloaded drafts cannot retain an
 inert creation form. Exact exported geometry is anonymised in the fixture;

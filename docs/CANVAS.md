@@ -265,6 +265,12 @@ produce a zero-sized SVG `viewBox`.
 
 ## §5 Zoom and pan
 
+* **Vacuum path attachment (#871).** The SVG path inside the HTML device
+  layer inherits that layer's camera once. Its own `viewBox` stays on the last
+  Lit basis; a bounded clip window follows the shared 100 ms / 15% scene
+  anchor. Its animated tip uses the current composed SVG screen inverse,
+  not a cached camera rectangle. Route/calibration/source coordinates and
+  Flat/2.5D stacking do not change; [VACUUM](VACUUM.md) owns this contract.
 * **Zoom in** — unchanged, `ZOOM_MAX = 8`.
 * **Zoom out** — `MIN_ZOOM = 1/3`: you can see three times the content
   frame and no further. Empty space beyond that is not information.

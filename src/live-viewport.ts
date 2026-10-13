@@ -119,6 +119,18 @@ const projectionText = (projection: LiveLayerProjection): string =>
  */
 export const LIVE_SCENE_EXPOSURE_CLIP = 'inset(-25%)';
 
+/** A passive SVG inherits the HTML camera, including its last Lit basis.
+ * Rebase only its paint window, not its viewBox or camera transform (#871).
+ * The window is the same 25% scene exposure around the budgeted anchor.
+ */
+export function inheritedSceneClip(painted: LiveViewBox, anchor: LiveViewBox): string {
+  const x = (anchor.x - painted.x) / painted.w * 100;
+  const y = (anchor.y - painted.y) / painted.h * 100;
+  const w = anchor.w / painted.w * 100;
+  const h = anchor.h / painted.h * 100;
+  return `inset(${y - h * .25}% ${100 - x - w * 1.25}% ${100 - y - h * 1.25}% ${x - w * .25}%)`;
+}
+
 /** A scene marked so is clipped to its own box and never exposed (#689). */
 const SCENE_OVERFLOW_ATTRIBUTE = 'data-hp-live-overflow';
 
@@ -238,6 +250,17 @@ export function paintLiveViewport(
     );
   }
   const projection = liveLayerProjection(painted.view, current.view);
+  // These SVGs are deliberately NOT live-viewbox participants: the enclosing
+  // HTML layer is their sole camera owner. Moving a bounded clip on the usual
+  // anchor budget exposes incoming content without double projection or a
+  // promoted unbounded route surface. The idle DOM remains unchanged.
+  for (const svg of root.querySelectorAll<SVGElement>('[data-hp-live-inherited-scene="camera"]')) {
+    const active = keepSceneLayer || !isIdentityLiveLayerProjection(projection);
+    if (active) {
+      const clip = inheritedSceneClip(painted.view, next.frame.view);
+      if (svg.style.clipPath !== clip) svg.style.clipPath = clip;
+    } else if (svg.style.clipPath) svg.style.removeProperty('clip-path');
+  }
   for (const layer of root.querySelectorAll<HTMLElement>('[data-hp-live-layer="camera"]')) {
     // Keeping an identity transform after terminal reconciliation changes the
     // browser compositing path and therefore the settled raster by a few colour

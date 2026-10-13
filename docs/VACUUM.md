@@ -10,6 +10,24 @@ The placed vacuum marker is the dock and never moves. While the vacuum is in
 Clicking the puck opens the vacuum's HA more-info dialog. A hidden, deleted,
 HA-disabled or `static_icon` marker has no puck, trail or room overlay.
 
+### Camera attachment (#871)
+
+Current/previous paths and every subpath keep their world coordinates during
+pan, pinch, wheel and Fit in Flat/2.5D View or kiosk, including held-pointer
+pauses and HA updates. The trail SVG is passive inside `.devlayer`: its HTML
+parent is the sole live camera owner. It does not also receive a scene transform
+or a budgeted `viewBox`. This preserves the existing marker/Zigbee stacking.
+`live-viewport.ts` moves its bounded paint window on the shared 100 ms / 15%
+anchor budget; the window exposes 25% around that anchor, not the entire plan.
+
+`vacuum-view.ts` translates each animated puck's visual centre through the
+actual current SVG screen-matrix inverse into its matching tip. All geometry
+is read before endpoint writes; unchanged endpoints are not written. Missing,
+singular/nonfinite matrices or detached/zero-size pucks skip that frame without
+changing path data. One existing vacuum RAF retries valid pairs, stops when
+none remain or the card is hidden/disconnected, and resumes on a valid mount
+or visible page. It never becomes a second camera or per-pointer Lit render.
+
 ## Integration coverage
 
 | Integration family | Position | Rooms / auto-calibration | Integration path | Map ID | Source discovery |

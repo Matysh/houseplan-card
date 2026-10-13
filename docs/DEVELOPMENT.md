@@ -1,5 +1,25 @@
 # Development and deployment
 
+## Vacuum camera attachment (#871)
+
+`test/vacuum-view.test.mjs` covers full affine inversion, invalid matrices,
+robot pairing, recovery and read-before-write ordering; `live-viewport.test.mjs`
+retains one camera and bounded clip rebasing. The pinned native
+`demo/smoke_vacuum_camera.mjs` records every held pan/pinch/zoom frame in
+Flat/2.5D View and kiosk, HA telemetry, source subpaths, render/resource counts,
+hide/static/disabled/route retirement and real mount/disconnect recovery.
+Raw evidence lives in `demo/out/vacuum-camera-871/frames.json`, not in git.
+The old dev witness gave 93.41px path and 186.80px tip displacement; a settled
+frame alone concealed both. Existing multi-floor and live-pan coverage are
+companion gates. Mutation anchors are checked statically; execution belongs
+to the night. Real-GPU owner acceptance remains separate from headless green.
+No source/route/calibration/schema, smoothing or UI settings change.
+The raw bundle ratchet deliberately moves from 2,803,783 to 2,806,821 B
+(+3,038 B) for the typed inverse/batched DOM guard and bounded inherited paint
+window; only `bundleBytes` changes. Initial View is 304,498 B gzip, inside the
+existing 320,000 B budget and +2,000 B ratchet band. Bands and all other
+monolith baselines stay unchanged; rationale is recorded in issue #871.
+
 ## Intentional room placement and discovery (#879)
 
 `room-device-discovery.test.mjs` covers finite capture, ambiguous/stale rooms,

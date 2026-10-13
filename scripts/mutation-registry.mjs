@@ -77,6 +77,44 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'vacuum-trail-double-camera-owner',
+    guard: 'node demo/smoke_vacuum_camera.mjs',
+    because: '#871 AC1: native intermediate pan frames observe SVG/plan screen landmarks; '
+      + 'a settled frame or a pure inverse cannot reveal a second live ancestor projection.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: 'data-hp-live-inherited-scene="camera"',
+      replace: 'data-hp-live-viewbox="camera"',
+    }],
+  },
+  {
+    id: 'vacuum-tip-runtime-skips-current-matrix',
+    guard: 'node demo/smoke_vacuum_camera.mjs',
+    because: '#871 AC2: screen coordinates mistakenly written into SVG fail against '
+      + 'the actual animated puck during native camera frames, independent of unit inverse math.',
+    patches: [{ file: 'src/vacuum-view.ts',
+      find: 'vacuumScreenPoint(matrix, box.left + box.width / 2, box.top + box.height / 2) : null',
+      replace: '[box.left + box.width / 2, box.top + box.height / 2] as const : null',
+    }],
+  },
+  {
+    id: 'vacuum-inherited-paint-window-unbounded',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern="#871" test/live-viewport.test.mjs',
+    because: '#871 AC5: passive SVG rebases its bounded paint window without taking another camera transform.',
+    patches: [{ file: 'src/live-viewport.ts',
+      find: 'const clip = inheritedSceneClip(painted.view, next.frame.view);',
+      replace: 'const clip = "none";',
+    }],
+  },
+  {
+    id: 'vacuum-screen-inverse-keeps-stale-origin',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/vacuum-view.test.mjs',
+    because: '#871 AC3: full affine inverse includes translation from every current camera ancestor.',
+    patches: [{ file: 'src/vacuum-view.ts',
+      find: 'const px = x - e, py = y - f;',
+      replace: 'const px = x, py = y; void e; void f;',
+    }],
+  },
+  {
     id: 'room-placement-capture-disconnected',
     guard: compiledNodeSmoke('smoke_room_device_discovery'),
     because: '#879 AC1: both real room Save paths must capture first placements before new-device detection.',

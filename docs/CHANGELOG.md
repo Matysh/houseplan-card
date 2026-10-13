@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Vacuum paths stay attached to the plan while panning or zooming; their
+  animated end follows the robot in Flat and 2.5D views, including pauses
+  and live updates during a gesture
+  ([#871](https://github.com/Matysh/houseplan-card/issues/871)).
+
 - Devices automatically placed in a newly created HA-bound room no longer
   get a new-device red dot. Existing marks and later discoveries are unchanged
   and a cancelled or rejected room save acknowledges nothing

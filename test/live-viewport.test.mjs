@@ -6,6 +6,7 @@ import {
   isIdentityLiveLayerProjection,
   liveLayerProjection,
   liveViewBoxText,
+  inheritedSceneClip,
   paintLiveViewport,
 } from '../test-build/live-viewport.js';
 
@@ -66,9 +67,11 @@ const fakeRoot = () => {
   const cameraPeer = node({ viewBox: '0 0 1000 500' });
   const floor = node({ viewBox: '0 0 1000 500' });
   const layer = node({});
+  const inherited = node({ viewBox: '0 0 1000 500' });
   return {
-    camera, cameraPeer, floor, layer,
+    camera, cameraPeer, floor, layer, inherited,
     querySelectorAll: (selector) => {
+      if (selector.includes('live-inherited-scene')) return [inherited];
       if (selector.includes('viewbox="camera"')) return [camera, cameraPeer];
       if (selector.includes('viewbox="floor"')) return [floor];
       if (selector.includes('live-layer')) return [layer];
@@ -80,6 +83,25 @@ const fakeRoot = () => {
 
 const frame = (x, y, w = 1000, h = 500) => ({
   view: { x, y, w, h }, floor: { x, y, w, h }, zoom: 1,
+});
+
+test('#871 passive nested scene inherits one camera and rebases only a bounded paint window', () => {
+  const root=fakeRoot(); const painted=frame(0,0);
+  let anchor=paintLiveViewport(root,painted,painted,null,{now:0});
+  anchor=paintLiveViewport(root,painted,frame(35,0),anchor,{now:20,keepSceneLayer:true});
+  assert.equal(root.inherited.attrs.viewBox,'0 0 1000 500');
+  assert.equal(root.inherited.style.transform,undefined,'not a second camera');
+  assert.equal(root.inherited.style.clipPath,'inset(-25% -25% -25% -25%)');
+  const writes=root.inherited.styleWrites;
+  anchor=paintLiveViewport(root,painted,frame(70,10),anchor,{now:30,keepSceneLayer:true});
+  assert.equal(root.inherited.styleWrites,writes,'clip uses the same 100ms/15% budget');
+  anchor=paintLiveViewport(root,painted,frame(350,60,500,250),anchor,{now:40,keepSceneLayer:true});
+  assert.equal(root.inherited.attrs.viewBox,'0 0 1000 500','HTML Lit basis is immutable');
+  assert.equal(root.inherited.style.clipPath,inheritedSceneClip(painted.view,anchor.frame.view));
+  // 1.5 times the current camera in local coordinates, not the whole route.
+  assert.equal(root.inherited.style.clipPath,'inset(-0.5% 2.5% 25.5% 22.5%)');
+  paintLiveViewport(root,frame(350,60,500,250),frame(350,60,500,250),anchor,{now:55,force:true});
+  assert.equal(root.inherited.style.clipPath,undefined,'terminal paint restores idle DOM');
 });
 
 test('#531 AC1: кадр жеста двигает сцену трансформом и не трогает viewBox', () => {

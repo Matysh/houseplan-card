@@ -33,11 +33,11 @@ that transition events alone prove disposal.
 | --- | ---: | --- |
 | Performance threshold | 5 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 3 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
-| Paint, cascade and layer composition | 50 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 58 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Paint, cascade and layer composition | 51 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
+| Pointer geometry and trusted interaction | 59 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 41 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
 | Custom-element and HA browser lifecycle | 140 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **297 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| **Total** | **299 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -95,6 +95,10 @@ premature counter snapshot. The unchanged Chromium probes still check the
 real Playwright page-error channel.
 
 ### Paint, cascade and layer composition
+
+#871: native camera frames expose the nested SVG/HTML double projection.
+
+- `vacuum-trail-double-camera-owner`
 
 #828: Chromium raster after real pointer capture must replace the settled old
 affected masonry with one frozen .35 source layer above candidate paper/fills,
@@ -166,6 +170,11 @@ cold View is unchanged and no source-level check sees the unstyled editor.
 - `zigbee-topology-unknown-outline-ignores-plan-zoom`
 
 ### Pointer geometry and trusted interaction
+
+#871: animated puck centres and SVG endpoints share the real composed screen
+matrix during trusted pan/pinch.
+
+- `vacuum-tip-runtime-skips-current-matrix`
 
 `node-capture-jumps-to-camera-target` checks that native wheel-to-node capture
 preserves the browser-presented SVG CTM rather than jumping to the animation
