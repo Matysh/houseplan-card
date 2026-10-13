@@ -1935,15 +1935,27 @@ changes until **Apply**; manual fitting and Cancel remain available.
 - Position appears for cleaning/returning/on with valid data; a moving puck
   opens the vacuum's HA more-info, while the dock marker remains separate.
 - The server path survives card reloads and is shared across clients. Current
-  and previous runs are kept; raw storage is bounded to 2,000 points, the live
-  browser buffer to 600.
-- A position older than 60 seconds is visually stale. Integration gaps remain
-  separate segments (up to 64 drawn segments / 4,000 points), never false
-  connecting lines.
+  and previous runs are kept, with up to 100,000 raw points and 1,024 segments
+  without blind thinning. All robots in the selected space share a limit of
+  20,000 rendered vertices.
+- A position older than 60 seconds is visually stale. Gaps, invalid samples
+  and position jumps never become false connecting lines. At a protective
+  limit, the last good path remains and diagnostics explain the incomplete
+  data; points omitted by the integration are not invented.
 - Current and previous trails use bounded curves that preserve endpoints and
   gaps and deviate no more than 17.5 cm from the recorded polyline.
-- Current-path priority is integration path, then server current run, then the
-  local buffer; an empty or one-point segment cannot steal priority.
+- The new server prefers a full integration path proven to belong to the run,
+  then sampled positions. The browser reserve remains for old/unavailable
+  backends. A complete native path gets no invented connector to the live puck.
+- Dreame Vacuum / Tasshack 2.0.2 can supply a complete path from the selected
+  ordinary camera, without enabling a separate JSON entity or adding a token.
+  The server reads it during cleaning and performs a bounded check after the
+  robot stops. Without proof of the current run, for example after connecting
+  late, it uses positions rather than a potentially old path.
+- **Live position** diagnostics show path source/quality, received/stored/drawn
+  point counts and snapshot time. An unconfirmed final snapshot does not mean
+  the path was lost: the integration may not provide a final marker. Upstream
+  compatibility does not replace checks on the installed version and device.
 - Stop, pause or docking hides the current trail in **During cleaning**. Motion
   on the same map within 30 minutes resumes that run; another map or a longer
   stop starts a new one. Mere entity unavailability does not end a run.
