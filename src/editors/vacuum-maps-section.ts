@@ -18,7 +18,7 @@ import {
   commitVacuumRouteDraft, convertLegacyRoutes, newRouteId, removeRoute,
   type VacuumRouteDraft,
 } from '../vacuum-route-edit';
-import type { ConfigAdoption } from '../config-adoption';
+import { isGeometryCleanupRefusal, type ConfigAdoption } from '../config-adoption';
 import type { OptimisticAttempt } from '../serialized-write-queue';
 
 interface SpaceRow { id?: unknown; name?: unknown }
@@ -117,7 +117,7 @@ export function renderVacuumMapsSection(
       host._regSignature = '';
       host._maybeRebuildDevices();
       host.requestUpdate();
-      host._showToast(host._t('toast.cfg_save_failed', { err: host._errText(error) }));
+      if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.cfg_save_failed', { err: host._errText(error) }));
       return false;
     }
   };

@@ -32,6 +32,7 @@ import { langOf } from './i18n';
 import type { DevItem, LedStripModel, Marker, OpeningCfg, ServerConfig, SpaceModel } from './types';
 import type { EditorSecondaryModel } from './editor-secondary';
 import type { OptimisticAttempt } from './serialized-write-queue';
+import { isGeometryCleanupRefusal } from './config-adoption';
 
 export const LED_EDITOR_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
@@ -501,7 +502,7 @@ export class LedStripEditor {
       this.host._rollbackOptimistic(attempt);
       this.host._regSignature = '';
       this.host._maybeRebuildDevices();
-      this.host._showToast(this.t('led.save_failed', { err: this.host._errText(error) }));
+      if (!isGeometryCleanupRefusal(error)) this.host._showToast(this.t('led.save_failed', { err: this.host._errText(error) }));
       return false;
     } finally {
       this.busy = false;

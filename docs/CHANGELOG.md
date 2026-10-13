@@ -6,6 +6,12 @@
   preserving neighbouring rooms, unrelated walls and wall thickness. A failed save or config
   reload no longer leaves a room-creation dialog with an inert Save button
   ([#874](https://github.com/Matysh/houseplan-card/issues/874)).
+- Saving a device, an LED strip, a vacuum calibration or any plan edit no longer
+  deletes stored partitions or columns that fail the current check, and no
+  longer drops unknown column fields. Saving stops instead and asks: “Delete
+  and save” removes exactly those objects (with the openings on them) in one
+  write, “Cancel” keeps the plan as it is
+  ([#842](https://github.com/Matysh/houseplan-card/issues/842)).
 
 ## v1.81.0-beta.1 — 2026-10-12
 

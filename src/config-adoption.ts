@@ -292,6 +292,15 @@ export class MutableConfigAdoption {
   }
 }
 
+/**
+ * #842 K2: an editor write refused because preparing it would delete plan
+ * objects (R). Nothing was sent and the live config is unchanged; the refusal
+ * itself asks the K3 question, so callers show no generic error toast.
+ */
+export const GEOMETRY_CLEANUP_REFUSED = 'geometry-cleanup-required';
+export const isGeometryCleanupRefusal = (error: unknown): boolean =>
+  (error as { code?: unknown } | null)?.code === GEOMETRY_CLEANUP_REFUSED;
+
 /** What every other module holds: the owner with its identity fields read-only. */
 export type ConfigAdoption = Readonly<MutableConfigAdoption>;
 export const createConfigAdoption = (

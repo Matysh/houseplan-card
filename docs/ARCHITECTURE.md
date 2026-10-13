@@ -706,6 +706,19 @@ still recognised in stored config but no longer served
   undo on rejection capture an `OptimisticAttempt`
   (`beginOptimistic`/`rollbackOptimistic`), which restores the server-backed
   body only while that failed candidate is still current (#442, #500).
+- Write preparation never deletes plan objects silently
+  (`src/geometry-cleanup.ts`, #842). Every editor write first finds R — the
+  `partitions`/`wall_columns` the legacy write filter would drop (bad or
+  repeated id, point off the canvas, degenerate partition) and the openings a
+  dropped partition hosts — on the config exactly as the operation hands it
+  over, so an operation's own deletion (Delete, Optimize) is never R. A
+  non-empty R refuses the write before `config/set` with the live config
+  untouched (an immediate writer rolls its attempt back as usual) and, instead
+  of an error toast, asks one destructive confirmation: «Delete and save»
+  removes exactly R and writes the current plan once; «Cancel» sends nothing
+  and the next write asks again; teardown refuses without asking. Only a
+  decided write runs the normalisation that deletes nothing (columns keep
+  unknown fields; the `walls` degradation stays the canonical cleanup).
 - `src/config-reload-authority.ts` (#543): each reload holds a generation-scoped
   claim; a superseded one ends with no side effect.
 - `src/card-read-lifecycle.ts` (#824) owns ephemeral full-read transport claims

@@ -114,7 +114,7 @@ import type {
 } from './types';
 import type { RadarEditorDraft } from './radar-editor';
 import {
-  adoptAuthoritativeGated, createConfigAdoption, preservesSpaceGeometry,
+  adoptAuthoritativeGated, createConfigAdoption, preservesSpaceGeometry, isGeometryCleanupRefusal,
   type ConfigAdoption, type ConfigAdoptionHostPort, type GatedAdoptionInput, type GatedAdoptionResult,
 } from './config-adoption';
 import { recoverConfigWriteConflict } from './config-write-conflict';
@@ -5230,7 +5230,7 @@ export class HouseplanCard extends LitElement {
           if (code === 'conflict') {
             this._showToast(this._t('toast.conflict'));
             await this._reloadConfigOnly(true);
-          } else {
+          } else if (!isGeometryCleanupRefusal(error)) {
             this._showToast(this._t('toast.cfg_save_failed', { err: this._errText(error) }));
           }
           if (restoreFailed.size && this._serverCfg) {
@@ -7868,8 +7868,8 @@ export class HouseplanCard extends LitElement {
     if (!this._serverCfg) return;
     this._writeConfig().catch((e: any) => {
       const physicalRollback = e?.physicalGeometryRolledBack === true;
-      if (e?.code === 'geometry-unsafe') {
-        return;
+      if (e?.code === 'geometry-unsafe' || isGeometryCleanupRefusal(e)) {
+        return; // already answered: the unsafe-geometry toast, or the #842 K3 question
       } else if (e?.code === 'wall_model_client_outdated') {
         this._showToast(this._t('toast.wall_model_client_outdated'));
       } else if (e?.code === 'conflict') {

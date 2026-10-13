@@ -1,4 +1,5 @@
 import { html, type TemplateResult } from 'lit';
+import { isGeometryCleanupRefusal } from './config-adoption';
 import type { HouseplanEditorHostPort } from './houseplan-editor-runtime';
 import type { I18nKey } from './i18n';
 import { optimizePlans } from './plan-optimizer';
@@ -132,7 +133,7 @@ function showCopyError(host: HouseplanEditorHostPort, error: unknown): void {
     host._showToast(host._t('toast.wall_model_client_outdated'));
     return;
   }
-  host._showToast(host._t('toast.error', { err: host._errText(error) }));
+  if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }));
 }
 
 /** Submit one guarded two-step operation: optional Optimize, then config Copy. */

@@ -11,6 +11,7 @@ import {
   applyInboxVisibility, effectiveInboxSelection, filterDeviceInbox, isInboxBatchTab,
   selectableInboxRows, type DeviceInboxCategory, type DeviceInboxRow,
 } from './device-inbox';
+import { isGeometryCleanupRefusal } from './config-adoption';
 import type { I18nKey } from './i18n';
 import type { Marker } from './types';
 
@@ -142,7 +143,7 @@ export async function writeInboxVisibility<D extends InboxBatchDialog>(
         : undefined;
       host._deviceInbox = { ...current, busy: undefined, selected };
     }
-    host._showToast(host._t('toast.error', { err: host._errText(error) }));
+    if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }));
   }
 }
 

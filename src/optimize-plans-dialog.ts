@@ -13,6 +13,7 @@
  */
 import { html, nothing, type TemplateResult } from 'lit';
 
+import { isGeometryCleanupRefusal } from './config-adoption';
 import { formatLatticeShiftCm } from './coordinate-canonicalization';
 import type { DeviceLayout } from './device-position-history';
 import type { I18nKey } from './i18n';
@@ -246,7 +247,7 @@ export class OptimizePlansDialog {
       if (e?.code === 'conflict') {
         await this.port.reloadAfterConflict();
       }
-      this.port.showToast(this.port.t('toast.error', { err: this.port.errorText(e) }));
+      if (!isGeometryCleanupRefusal(e)) this.port.showToast(this.port.t('toast.error', { err: this.port.errorText(e) }));
     }
   }
 

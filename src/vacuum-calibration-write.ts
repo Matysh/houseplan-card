@@ -4,7 +4,7 @@ import type { DevItem, Marker, ServerConfig } from './types';
 import { fitFromMatrix, type Affine, type FitParams } from './vacuum';
 import { writeVacuumMatrix } from './vacuum-route-edit';
 import type { OptimisticAttempt } from './serialized-write-queue';
-import type { ConfigAdoption } from './config-adoption';
+import { isGeometryCleanupRefusal, type ConfigAdoption } from './config-adoption';
 
 export type CalibrationProposal = {
   markerId: string;
@@ -111,7 +111,7 @@ export async function saveVacuumMatrix(
   } catch (error) {
     host._rollbackOptimistic(attempt);
     rebuild(host);
-    host._showToast(host._t('toast.cfg_save_failed', { err: host._errText(error) }));
+    if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.cfg_save_failed', { err: host._errText(error) }));
     return false;
   }
 }

@@ -34,6 +34,7 @@ import type { ColorPickerLabels } from './hp-color-opacity';
 import './hp-help';
 import type { AuthoritativeConfigResponse } from './version-recovery-card';
 import type { ConfigAdoption, GatedAdoptionInput, GatedAdoptionResult } from './config-adoption';
+import { isGeometryCleanupRefusal } from './config-adoption';
 import type { WallNodeEditor, NodeMoveHistory } from './wall-node-editor';
 import './hp-device-preview'; import './hp-zigbee-topology-settings';
 import { adoptEditorStyles } from './editor-style-adoption'; // #805: after the CSS-bearing elements — shared gzip context
@@ -93,7 +94,7 @@ import { FURNITURE_ART_RUNTIME } from './furniture-art-runtime';
 import { FURNITURE_ART_FINGERPRINT, GENERATED_FURNITURE_ART } from './furniture-plan-art.generated';
 import { furnitureWallSurfacesFor, type FurnitureWallSurface } from './furniture-wall-surface';
 import {
-  degradeWalls, rekeyWallsAfterMoveChecked, wallRecordCarrierViolations, setWallThickness,
+  rekeyWallsAfterMoveChecked, wallRecordCarrierViolations, setWallThickness,
   setWallThicknessForRoom, cmToField, wallCmToUnits, multiWallNodesForGeometry, wallBodiesGeometry,
   wallBodiesUnionPath, innerContourForRoom,
   openingInnerFaceOffsetFromIndex, resolveOpeningWallAssociation, applyWallThicknessToNewRoom,
@@ -107,12 +108,13 @@ import {
   type JunctionLimitViolation, type JunctionSharedGeometry, type LimitSegment,
 } from './junction-limits';
 import {
-  pointOnOpenCut, sanitizeOpenSpans,
+  pointOnOpenCut,
   type OpenSpanEntry,
 } from './open-spans';
 import { ContentSigner } from './signing';
 import { type InitialSpaceSelection } from './initial-load';
 import { selectSpaceModelById } from './space-model-selection';
+import { findGeometryRemoval, normalizeLegacyGeometryInPlace, refuseGeometryWrite } from './geometry-cleanup';
 import {
   applyRoomTempThresholdDraft, createEmptySpaceConfig, initialSpaceDisplayDraft,
   roomTempThresholdDraft, roomTempThresholdInputValues, strictNumber, type SpaceDialogState,
@@ -205,7 +207,7 @@ import {
   fixedTopologyWallLineageHints,
   resolveRoomOpeningHost, wallModelOffGridValueCount, WallSegmentModelError,
 } from './wall-segment-model';
-import { resolveZeroWalls, zeroWallHasOpening, zeroWallStyleOf } from './zero-walls';
+import { zeroWallHasOpening, zeroWallStyleOf } from './zero-walls';
 import { snapNearAxisEndpoint } from './near-axis';
 import type { SpaceReferenceRepairContext } from './space-reference-repair';
 import { collectSpaceMarkerDependencies, hiddenDependencyCount, spaceDeletionMessage } from './space-deletion';
@@ -1484,53 +1486,13 @@ public _samePt(a: readonly number[], b: readonly number[]): boolean {
     return samePoint(a, b);
   }
 
+/**
+ * Write-time normalisation of `config` in place (#842 K1). It deletes nothing:
+ * while preparing would remove plan objects (R), the config stays as it is and
+ * `_writeConfig` refuses the write instead (src/geometry-cleanup.ts).
+ */
 public _dropLegacySegments(config = this.host._serverCfg): void {
-    // «Ripple only» was removed from the UI: keep old configs readable, then
-    // materialise the recognisable icon+activity presentation on any write.
-    for (const marker of config?.markers || []) {
-      if (marker.display === 'ripple') marker.display = 'icon_ripple';
-    }
-    for (const sp of config?.spaces || []) {
-      delete (sp as any).segments;
-      const physicalIds = new Set<string>();
-      const validId = (id: any): id is string => typeof id === 'string'
-        && id.length >= 1 && id.length <= 64 && !physicalIds.has(id);
-      const keepId = (id: string): boolean => { physicalIds.add(id); return true; };
-      const point = (p: any): p is number[] => Array.isArray(p) && p.length === 2
-        && p.every((v: any) => Number.isFinite(Number(v)) && Math.abs(Number(v)) <= CANVAS_LIMIT);
-      if (Array.isArray((sp as any).partitions)) {
-        (sp as any).partitions = (sp as any).partitions.filter((p: any) =>
-          p && validId(p.id) && point(p.a) && point(p.b)
-          && Math.hypot(p.a[0] - p.b[0], p.a[1] - p.b[1]) > 1e-9
-          && keepId(p.id))
-          .map((p: any) => ({
-            ...p,
-            cm: Number.isFinite(Number(p.cm)) ? Math.max(0, Math.min(100, Number(p.cm))) : 15,
-          }));
-        if (!(sp as any).partitions.length) delete (sp as any).partitions;
-      }
-      if (Array.isArray((sp as any).wall_columns)) {
-        (sp as any).wall_columns = (sp as any).wall_columns.filter((c: any) =>
-          c && validId(c.id) && point(c.center) && keepId(c.id))
-          .map((c: any) => ({
-            id: c.id, shape: c.shape === 'circle' ? 'circle' : 'square',
-            center: [Number(c.center[0]), Number(c.center[1])],
-            cm: clampColumnCm(Number(c.cm) || 15),
-            ...(c.shape === 'circle' ? {} : { angle: canonicalColumnAngle(c.angle) }),
-          }));
-        if (!(sp as any).wall_columns.length) delete (sp as any).wall_columns;
-      }
-      if (Array.isArray(sp.walls)) {
-        const model = selectSpaceModelById(spaceModels({ spaces: [sp] } as any), sp.id);
-        const cuts = model
-          ? resolveZeroWalls(sp, model, NORM_W, GRID_PITCH * 0.02).contour
-            .map((cut) => cut.map((value) => value / NORM_W))
-          : sanitizeOpenSpans((sp as any).open_spans)
-            .map((e) => [e.a[0], e.a[1], e.b[0], e.b[1]]);
-        sp.walls = degradeWalls(sp.walls, sp.rooms || [], GRID_STEP_N, 1, cuts);
-        if (!sp.walls.length) delete sp.walls;
-      }
-    }
+    if (config && !findGeometryRemoval(config)) normalizeLegacyGeometryInPlace(config);
   }
 
 public _rollbackRejectedPhysicalWrites(
@@ -1571,6 +1533,9 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null): Pro
     this.host._writesPending++;
     this.host._writeChain = enqueueSerializedWrite(this.host._writeChain, async () => {
       if (!this.host._serverCfg) return;
+      // #842 K2: R is judged on the config as handed over; refusal sends nothing, touches nothing.
+      const removal = findGeometryRemoval(this.host._serverCfg);
+      if (removal) throw refuseGeometryWrite(this, removal);
       const liveFingerprint = contentFingerprint(this.host._serverCfg);
       const candidate = this._prepareConfigCandidate(this.host._serverCfg);
       const candidateFingerprint = contentFingerprint(candidate);
@@ -7894,7 +7859,7 @@ public async _saveMarker(): Promise<void> {
         this.host.requestUpdate();
       }
       if (this.host._markerDialog === savingDraft) this.host._markerDialog = { ...savingDraft, busy: false };
-      this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
+      if (!isGeometryCleanupRefusal(e)) this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
     }
   }
 
@@ -7987,7 +7952,7 @@ public async _deleteMarker(): Promise<void> {
     } catch (e: any) {
       if (this.host._serverCfg === cfg) cfg.markers = previousMarkers;
       if (this.host._markerDialog) this.host._markerDialog = { ...this.host._markerDialog, busy: false };
-      this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
+      if (!isGeometryCleanupRefusal(e)) this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
     }
   }
 
@@ -8372,7 +8337,7 @@ public async _saveSpaceDialog(): Promise<void> {
       // then crashes, blanking the whole card. The toast below is the
       // only remaining signal, so it must still fire.
       if (this.host._spaceDialog) this.host._spaceDialog = { ...this.host._spaceDialog, busy: false };
-      this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
+      if (!isGeometryCleanupRefusal(e)) this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
     }
   }
 
@@ -9628,7 +9593,7 @@ public _updateDecorStyle(next: DecorStyle): void {
       // Never overwrite an authoritative conflict reload or newer edit (#439).
       if (attempt) this.host._rollbackOptimistic(attempt);
       if (this.host._settingsDialog) this.host._settingsDialog = { ...this.host._settingsDialog, busy: false };
-      this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
+      if (!isGeometryCleanupRefusal(e)) this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
     }
   }
 
@@ -9690,7 +9655,7 @@ public async _saveRules(): Promise<void> {
       // then crashes, blanking the whole card. The toast below is the
       // only remaining signal, so it must still fire.
       if (this.host._rulesDialog) this.host._rulesDialog = { ...this.host._rulesDialog, busy: false };
-      this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
+      if (!isGeometryCleanupRefusal(e)) this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
     }
   }
 
