@@ -1623,8 +1623,18 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null): Pro
       }
       if (discoveryWrite) this.roomDeviceDiscovery.accept(discoveryWrite, this.host._serverCfg);
       for (const [index, [spaceId, accepted]] of strictEntries.entries()) {
-        this.physicalWriteHistory.accept(accepted.before, strictCommands[index]);
-        if (this.host._pendingPhysicalWrites.get(spaceId)?.fingerprint === accepted.fingerprint)
+        const pending = this.host._pendingPhysicalWrites.get(spaceId);
+        const nextBaseline = pending?.before === accepted.before && pending.fingerprint !== accepted.fingerprint
+          ? this._geometrySnapshotFromConfig(candidate, spaceId) : null;
+        if (nextBaseline && pending) {
+          const markerIds = this.physicalWriteHistory.roomReferenceIds(accepted.before);
+          if (markerIds.length) nextBaseline.roomReferences = captureMarkerRoomReferences(candidate.markers || [], markerIds);
+          // The next refusal owns only work newer than this accepted send, not
+          // its old physical baseline. Keep the newer live candidate untouched.
+          this.host._pendingPhysicalWrites.set(spaceId, { ...pending, before: nextBaseline });
+        }
+        this.physicalWriteHistory.accept(accepted.before, strictCommands[index], nextBaseline || undefined);
+        if (pending?.before === accepted.before && pending.fingerprint === accepted.fingerprint)
           this.host._pendingPhysicalWrites.delete(spaceId);
       }
     });

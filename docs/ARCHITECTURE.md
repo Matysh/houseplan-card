@@ -640,6 +640,9 @@ bounded lane anchors, without displacing a newer top; an authoritative clear
 cannot be reversed. Only a proved unsafe step is disposable with its own batch.
 Only presentation commands created in that pending batch have their physical
 carrier rebased; older accepted Background snapshots stay byte-for-byte intact.
+If a send is accepted while newer physical work is queued, that newer batch is
+promoted to the exact accepted geometry/reference baseline. Its later refusal
+cannot roll back the earlier accepted send or retire its accepted commands.
 The active Walls redo
 journal survives the transient history reset; explicit finish still retires it.
 `wall-node-refusal.ts` names a finite set of proved-invalid codes; unknown or

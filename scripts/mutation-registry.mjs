@@ -572,6 +572,16 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'physical-refusal-rolls-back-an-earlier-accepted-send',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#891 AC2" test/geometry-history-refusal.test.mjs',
+    because: '#891 AC2: an accepted earlier send advances the pending physical rollback baseline for later work',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts',
+      find: 'this.host._pendingPhysicalWrites.set(spaceId, { ...pending, before: nextBaseline });',
+      replace: 'this.host._pendingPhysicalWrites.set(spaceId, { ...pending, before: accepted.before });',
+    }],
+  },
+  {
     id: 'wall-chain-history-transient-reset-clears-redo-journal',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="#891 AC1" test/geometry-history-refusal.test.mjs',

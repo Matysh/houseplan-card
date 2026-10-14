@@ -272,6 +272,38 @@ test('#891 AC2 accepted cursor rollback never rebases older Background snapshots
   assert.equal(s.ids('f').length, 0, 'older Background Undo cannot resurrect the later accepted wall');
 });
 
+test('#891 AC2 accepting an older send promotes the rollback baseline for newer physical commands', async () => {
+  const s = setup();
+  const before = s.runtime._geometrySnapshot('f');
+  s.spaceOf('f').partitions = [{ id: 'accepted-first', a: [.25, .25], b: [1, .25], cm: 10 }];
+  assert.equal(s.runtime._commitPhysicalGeometry(WALL, before), true);
+  const accepted = s.geometryHistory.peekUndo();
+  let accept;
+  // Recording transport preserves newer staged edits on acceptance, isolating
+  // this physical journal seam from ConfigAdoption's independent queue contract.
+  s.host._sendConfigCandidate = candidate => new Promise(resolve => {
+    accept = () => {
+      const live = clone(s.host._serverCfg);
+      s.server.config = clone(candidate); s.server.rev++; s.server.sets++;
+      s.host._adoption.acceptConfigWrite(candidate, { ok: true, rev: s.server.rev });
+      s.host._adoption.stageLocalConfig(live);
+      resolve();
+    };
+  });
+  const firstWrite = s.runtime._writeConfig(); await settle();
+  const nextBefore = s.runtime._geometrySnapshot('f');
+  s.spaceOf('f').partitions.push({ id: 'refused-second', a: [.25, .5], b: [1, .5], cm: 10 });
+  assert.equal(s.runtime._commitPhysicalGeometry(WALL, nextBefore), true);
+  const refused = s.geometryHistory.peekUndo();
+  accept(); await firstWrite;
+  assert.deepEqual(s.ids('f'), ['accepted-first', 'refused-second']);
+  s.host._sendConfigCandidate = async () => { throw Object.assign(new Error('offline'), { code: 'timeout' }); };
+  await assert.rejects(s.runtime._writeConfig());
+  assert.deepEqual(s.ids('f'), ['accepted-first'], 'second refusal cannot roll back the accepted first send');
+  s.expectStack([accepted], [], 'only second provisional identity is retired');
+  assert.equal(s.geometryHistory.commands().includes(refused), false);
+});
+
 // ---------------------------------------------------------------- AC1
 test('#883 AC1 a floor pinned elsewhere keeps the exact Undo/Redo command, writes nothing, keeps the floor; unpinned, the retry applies exactly it', async () => {
   const s = setup();

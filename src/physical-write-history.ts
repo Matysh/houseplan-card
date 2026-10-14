@@ -40,10 +40,15 @@ export class PhysicalWriteHistory {
   public capture(baseline: SpaceGeometryState): ReadonlySet<Entry> {
     return new Set(this.batches.get(baseline));
   }
-  public accept(baseline: SpaceGeometryState, accepted: ReadonlySet<Entry>): void {
+  public roomReferenceIds(baseline: SpaceGeometryState): string[] {
+    return [...new Set([baseline, ...[...(this.batches.get(baseline) || [])].map(entry => entry.command.before)]
+      .flatMap(state => (state.roomReferences || []).map(reference => reference.markerId)))];
+  }
+  public accept(baseline: SpaceGeometryState, accepted: ReadonlySet<Entry>, nextBaseline?: SpaceGeometryState): void {
     const batch = this.batches.get(baseline);
     for (const command of accepted) batch?.delete(command);
-    if (!batch?.size) this.batches.delete(baseline);
+    if (nextBaseline && batch?.size) this.batches.set(nextBaseline, batch);
+    if (nextBaseline || !batch?.size) this.batches.delete(baseline);
   }
   public reject(stack: CommandStack<SpaceGeometryState>, baseline: SpaceGeometryState, proof = false): void {
     const batch = [...(this.batches.get(baseline) || [])];
