@@ -753,9 +753,10 @@ while the LED frame was rebuilt on 100 ticks of 100. The series is now four
 scenarios (`performance/sensor-tick-scenarios.mjs`) on the shown floor
 (`perf-floor-2`), `--ticks=N` HA objects each (30): S0 an entity off the plan
 (added and settled before the series: its appearance is a composition change,
-not a tick), S1 a plan temperature sensor of that floor, S1b one of another
-floor, S2 the light of one of its strips on/off (an ordinary light of the floor
-at `none`).
+not a tick; the lazy live runtime has landed and captured once, its first
+capture being complete), S1 a plan temperature sensor of that floor, S1b one
+of another floor, S2 the light of one of its strips on/off (an ordinary light
+of the floor at `none`).
 Exact counters per scenario: full renders (`_renderBody` calls, an instance
 wrapper removed after the series), new snapshots and snapshot presentations
 that changed identity (both readable on any SHA), and the product counters of

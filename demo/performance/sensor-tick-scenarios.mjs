@@ -4,6 +4,8 @@
  * Four scenarios on the shown floor of `led-strips-v1` (benchmark_led_strips.mjs):
  *   S0  — an entity that is not on the plan (no render at all, #775); it is
  *         added and settled first, so the series ticks an existing row;
+ *         before it the lazy live runtime has landed and captured once (its
+ *         first capture is complete), primed by one value of the S1 sensor;
  *   S1  — a temperature sensor of a device on the shown floor, not a light;
  *   S1b — the same kind of sensor on another floor;
  *   S2  — the light of an LED strip on the shown floor, on/off (an ordinary
@@ -108,6 +110,12 @@ export async function sensorTickScenarios({ card, host, layout, entities, ticks,
   // that lands inside S0 when the plan is quick to stabilise (`none`), and a
   // render a step scheduled may land frames later (bounded waits).
   for (let waited = 0; card._bootSoft && waited < 3000; waited += 25) await new Promise((done) => setTimeout(done, 25));
+  // The View's live runtime is a lazy chunk: its reuse window starts empty
+  // and its first capture is complete. Wait for it (bounded) and prime it
+  // with one value of the S1 sensor, so no series pays for that capture.
+  for (let waited = 0; !card._liveRt && waited < 3000; waited += 25) await new Promise((done) => setTimeout(done, 25));
+  const [, primer, prime] = scenarios[1];
+  if (primer && host.states[primer]) host.setStates({ ...host.states, [primer]: prime(-1, host.states[primer]) });
   for (let attempt = 0, seen = -1; attempt < 20 && seen !== renders; attempt++) {
     seen = renders;
     await card.updateComplete;
