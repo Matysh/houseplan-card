@@ -52,7 +52,13 @@ layer stays within one CSS pixel of its SVG scene position. Older comparison
 bundles still produce timing baselines; structural assertions become mandatory
 only when the target source contains the live viewport implementation. Its
 dedicated budget preserves every existing large-house ceiling and adds the
-individual interaction timing gates.
+individual interaction timing gates. Issue #850 adds one exact counter to the
+hover series: architectural light fingerprints (`_liveRt.work().lightGeometry`)
+must not grow while the pointer moves; a target whose live runtime remembers
+the fingerprint (`public geometry(record` in `src/live-interaction-runtime.ts`)
+fails the structural contract otherwise. Hover renders nothing, so the
+counter is also zero on a base — it guards against a regression, the camera
+and tick series of `led-strips-v1` carry the before/after difference.
 
 Structural assertions are evaluated independently of timing budgets: a fast
 run still fails when an interaction performs an unexpected full render or
@@ -717,7 +723,8 @@ recomputes over 100 unrelated HA ticks, 100 camera steps and a colour-only
 change; the three caches of the shown space (`ledStats` of the runtime chunk)
 — shapes ≤ 50, visibility ≤ 50, compact visibility batches ≤ 2500 and
 retained SVG path text ≤ 4 Mi characters — identical
-after every cycle; after disconnect 0 retained entries and 0 live LED
+after every cycle (the field geometry counter is judged over the #850 tick
+scenarios below); after disconnect 0 retained entries and 0 live LED
 timers/frames/observers (tracked by creation stack in the page); one extra
 cold run holds the runtime response, removes the card meanwhile and requires
 that the landed chunk renders, caches and schedules nothing for it; the LED
@@ -737,6 +744,50 @@ batch; all batches render as one positive-winding clip path per strip. The
 paths, excluding the joined Lit/DOM clip string. Timing and the 64 MiB
 warm-cycle heap-growth limit are unchanged; that is not an absolute browser
 or GPU memory bound.
+
+Issue #850 — the work of one HA tick of a sensor that stands on the plan. The
+series that the runner used to call "100 unrelated HA ticks" ticked the first
+`sensor.*` of the fixture, a temperature sensor shown on the plan
+(`sensor.perf_132` at 50×50), and judged only field-geometry misses: it read 0
+while the LED frame was rebuilt on 100 ticks of 100. The series is now four
+scenarios (`performance/sensor-tick-scenarios.mjs`) on the shown floor
+(`perf-floor-2`), `--ticks=N` HA objects each (30): S0 an entity off the plan
+(added and settled before the series: its appearance is a composition change,
+not a tick), S1 a plan temperature sensor of that floor, S1b one of another
+floor, S2 the light of one of its strips on/off (an ordinary light of the floor
+at `none`).
+Exact counters per scenario: full renders (`_renderBody` calls, an instance
+wrapper removed after the series), new snapshots and snapshot presentations
+that changed identity (both readable on any SHA), and the product counters of
+#850 — presentations resolved and incremental/refreshed/complete captures
+(`_liveRt.work()`), LED frames built and tubes derived (`ledStats` of the
+runtime chunk), architectural light fingerprints, light-graph builds and full
+light resolutions. `budgets-led-strips.json` `ticks` judges them in every
+sample: S0 nothing at all; S1 and S1b at most two presentations per tick (the
+one device whose rows hold the sensor) and zero frames, tubes, fingerprints,
+graph builds and resolutions; S2 zero tubes, fingerprints and graph builds
+(the light state changes, the graph does not; its resolution and every
+presentation are rebuilt) and no stripe left in the old state after a tick
+(`staleStripes`). `camera.lightGeometry`
+counts fingerprints over the #789 camera cycle (0). A counter the build does not
+have is `null` and fails: a base without the #850 counters is red by design,
+never green by omission. The timing limits above are unchanged; tick medians
+and p95 are reported per scenario but not judged — on a shared runner (the
+local 2-CPU sandbox runs other agents in parallel) milliseconds are noise and
+the counters are the evidence.
+
+`--profile` turns the series into the before/after report of #850: the same
+scenarios with base-compatible observers (LED frame identity read through
+`_ledRt`, strip models replaced — each one a tube on a base — and
+`_resolveLightBarriers` calls — one fingerprint each on a base), the hover
+series H1/H2 (120 moves over a device marker and over an LED hit path: cost per
+move, full renders, tooltip DOM churn) and a CPU profile per scenario
+attributed to product JS, garbage collection and idle/program time; the
+harness overhead is S0's tick. Run it with the same runner on the base SHA for
+the "before" rows (copy the runner, its scenario module and budget file into
+the base tree): `--size=… --profile --ticks=100 --samples=3 --warmups=0
+--cycles=1 --no-late-import --output=…`. A profile run is diagnostic and is
+judged like any partial run.
 
 Issue #789 retains every historical window and budget, and adds
 `cameraFullCycleLongTaskMaxMs`: one continuous observer starting before the

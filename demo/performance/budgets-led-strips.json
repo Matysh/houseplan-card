@@ -2,6 +2,14 @@
   "profile": "led-strips-v1",
   "issue": 780,
   "note": "#780 timing/heap limits unchanged. #788: preserve every end/vertex; compact positive-winding fans into paths without discarding geometry. Bound actual retained representation: 50 shapes/entries, 2500 compact clip paths, 4 Mi SVG characters (at most 8 MiB UTF-16, one eighth of the unchanged 64 MiB heap budget). Actual fan count is still reported, never relabelled as path count. No growth/recomputes, zero after disconnect.",
+  "ticksNote": "#850: exact work of one HA tick per scenario (performance/sensor-tick-scenarios.mjs): S0 an entity off the plan, S1 a plan sensor on the shown floor, S1b one on another floor, S2 a strip's light on/off. Limits are absolute per scenario; a *PerTick limit is multiplied by the scenario's ticks (2 presentations of the one device whose inputs hold the fixture sensor's row). A missing counter fails. The timing limits above are unchanged.",
+  "ticks": {
+    "S0": { "fullRenders": 0, "snapshots": 0, "presentationBuilds": 0, "ledFrames": 0, "ledTubes": 0, "lightGeometry": 0, "lightGraphs": 0, "lightResolutions": 0 },
+    "S1": { "presentationBuildsPerTick": 2, "ledFrames": 0, "ledTubes": 0, "lightGeometry": 0, "lightGraphs": 0, "lightResolutions": 0 },
+    "S1b": { "presentationBuildsPerTick": 2, "ledFrames": 0, "ledTubes": 0, "lightGeometry": 0, "lightGraphs": 0, "lightResolutions": 0 },
+    "S2": { "ledTubes": 0, "lightGeometry": 0, "lightGraphs": 0, "staleStripes": 0 }
+  },
+  "camera": { "lightGeometry": 0 },
   "caches": {
     "shapes": 50,
     "visibility": 50,

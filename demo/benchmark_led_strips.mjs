@@ -26,8 +26,8 @@
  * camera ceiling. Historical camera windows remain unchanged; each row retains
  * raw full-cycle Long Tasks and phase boundaries for audit.
  *
- * Counters (exact, every sample): geometry/visibility recomputes over 100
- * unrelated HA ticks, 100 pan/zoom steps and a colour-only change (0); the
+ * Counters (exact, every sample): field geometry/visibility recomputes over the
+ * sensor-tick scenarios, 100 pan/zoom steps and a colour-only change (0); the
  * three LED caches of the shown space — shapes ≤ 50, visibility ≤ 50,
  * compact visibility paths ≤ 2500 and retained path text ≤ 4 Mi characters
  * (≤ 8 MiB UTF-16) — identical after every cycle (growth 0). The true fan
@@ -36,6 +36,18 @@
  * late import after disconnect restores nothing (one extra cold run with the
  * runtime response delayed); LED chunk requests (none without strips, never
  * the editor chunk in the View).
+ *
+ * #850 — the work of one HA tick of a sensor ON the plan. The series that was
+ * labelled "100 unrelated HA ticks" ticked the first `sensor.*` of the
+ * fixture, a sensor that stands on the plan, and judged only field geometry:
+ * it was blind to the LED frame, tube, snapshot and light work it caused.
+ * `performance/sensor-tick-scenarios.mjs` now runs S0 (an entity off the
+ * plan), S1 (a plan sensor on the shown floor), S1b (one on another floor) and
+ * S2 (a strip's light on/off), `--ticks` each (30), with exact counters judged
+ * against `budgets-led-strips.json` `ticks`, and counts light geometry
+ * fingerprints over the camera cycle (`camera`). `--profile` adds the base-
+ * compatible observers, the hover series H1/H2 and a CPU profile attribution
+ * per scenario (product, GC, idle/program) for the before/after report.
  *
  * `--merge=a.json,b.json` judges the rows of several partial reports of the
  * same size as one run — the samples are the same cold samples, only the
@@ -49,6 +61,9 @@ import { launch } from './serve.mjs';
 import { makeLedStripsFixture } from './performance/led-strips-fixture.mjs';
 import { ledChunkRequestName } from './performance/led-chunk-request.mjs';
 import { cameraCycleFailures, cameraCycleSampleFailures, finishLedCameraCycle } from './performance/led-camera-cycle.mjs';
+import {
+  hoverScenarios, sensorTickScenarios, summarizeCpuProfile, tickCounterFailures,
+} from './performance/sensor-tick-scenarios.mjs';
 
 const valueArg = (name) => process.argv.find((arg) => arg.startsWith(`--${name}=`))?.slice(name.length + 3);
 const warmupOnly = process.argv.includes('--warmup-only');
@@ -58,6 +73,8 @@ const size = valueArg('size') ?? '10x5';
 const output = valueArg('output') ? resolve(valueArg('output')) : null;
 const merge = valueArg('merge')?.split(',').filter(Boolean).map((file) => resolve(file)) ?? null;
 const skipLateImport = process.argv.includes('--no-late-import');
+const profileMode = process.argv.includes('--profile');
+const TICKS = Math.max(1, Math.min(200, Number(valueArg('ticks')) || 30));
 const SIZES = { '10x5': [10, 5], '50x50': [50, 50], none: [0, 0] };
 if (!SIZES[size]) throw new Error(`unknown size: ${size}`);
 const [STRIPS, POINTS] = SIZES[size];
@@ -124,6 +141,8 @@ function installLedLifecycleTracker() {
 function pageHost() {
   return `
     window.__finishLedCameraCycle = ${finishLedCameraCycle.toString()};
+    window.__sensorTickScenarios = ${sensorTickScenarios.toString()};
+    window.__hoverScenarios = ${hoverScenarios.toString()};
     window.__ledHost = (fixture) => {
       const card = document.createElement('houseplan-card');
       card.setConfig({ type: 'custom:houseplan-card', title: 'LED strips', icon_size: 3.4 });
@@ -154,7 +173,7 @@ function pageHost() {
     window.__ledStats = async (card) => {
       const url = performance.getEntriesByType('resource').map((entry) => entry.name)
         .find((name) => /led-strip-runtime-[^/]+\\.js/.test(name));
-      if (!url) return { shapes: 0, visibility: 0, sources: 0, visibilityPaths: 0, pathChars: 0, recomputes: 0, loaded: false };
+      if (!url) return { shapes: 0, visibility: 0, sources: 0, visibilityPaths: 0, pathChars: 0, recomputes: 0, frames: 0, tubes: 0, loaded: false };
       const runtime = await import(url);
       return { ...runtime.ledStats(card), loaded: true };
     };
@@ -175,10 +194,20 @@ async function sample() {
     const name = ledChunkRequestName(request.url());
     if (name) requests.push(name);
   });
+  const cpu = {};
+  if (profileMode) {
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Profiler.enable');
+    await cdp.send('Profiler.setSamplingInterval', { interval: 100 });
+    await page.exposeFunction('__tickMark', async (name, phase) => {
+      if (phase === 'start') await cdp.send('Profiler.start');
+      else cpu[name] = summarizeCpuProfile((await cdp.send('Profiler.stop')).profile);
+    });
+  }
   try {
     await page.evaluate(installLedLifecycleTracker);
     await page.evaluate(pageHost());
-    const row = await page.evaluate(async ({ fixture, strips, cycles }) => {
+    const row = await page.evaluate(async ({ fixture, strips, cycles, ticks, profile }) => {
       const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
       const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
       const until = async (predicate, timeout = 30000) => {
@@ -241,14 +270,14 @@ async function sample() {
       await frame();
 
       const before = await stats();
-      // 100 unrelated HA ticks.
-      const sensor = Object.keys(host.states).find((id) => id.startsWith('sensor.'));
-      for (let tick = 0; tick < 100; tick++) {
-        host.setStates({ ...host.states, [sensor]: { ...host.states[sensor], state: String(20 + (tick % 10) / 10) } });
-        await card.updateComplete;
-      }
-      await frame();
+      // #850: S0, S1, S1b and S2 — the ticks of a sensor on the plan and of a strip's light.
+      const tickWork = await window.__sensorTickScenarios({
+        card, host, layout: fixture.layout, entities: fixture.entities, ticks, strips, observe: profile,
+        frame, stats, mark: profile ? window.__tickMark : null,
+      });
+      const hover = profile ? await window.__hoverScenarios({ card, frame }) : null;
       const afterTicks = await stats();
+      const lightGeometryBeforeCamera = card._liveRt?.work?.().lightGeometry ?? null;
       // The camera: the interaction profile's scenario (one wheel step, its
       // render and frame — benchmark_large_house.mjs), then 100 steps whose
       // Long Tasks are judged too and whose recomputes are counted.
@@ -286,6 +315,7 @@ async function sample() {
       const cameraFullCycleLongTaskMaxMs = await stopFullCycle();
       cameraFullCycle.endTime = performance.now();
       const afterCamera = await stats();
+      const lightGeometryAfterCamera = card._liveRt?.work?.().lightGeometry ?? null;
       // A colour-only change rebuilds no geometry or visibility.
       host.setStates({ ...host.states, ...Object.fromEntries(floorLights.map((id) => [id,
         { ...host.states[id], attributes: { ...host.states[id].attributes, rgb_color: [255, 120, 80] } }])) });
@@ -322,6 +352,10 @@ async function sample() {
         firstStableRenderMs, warmSpaceReadyMs, stateUpdateMs, panZoomMs, panZoomLongTaskMaxMs, cameraSeriesLongTaskMaxMs,
         cameraFullCycleLongTaskMaxMs, cameraFullCycle,
         retainedHeapBytes: heapBefore == null || heapAfter == null ? null : Math.max(0, heapAfter - heapBefore),
+        ticks: tickWork,
+        hover,
+        camera: { lightGeometry: lightGeometryBeforeCamera == null || lightGeometryAfterCamera == null
+          ? null : lightGeometryAfterCamera - lightGeometryBeforeCamera },
         counters: strips ? {
           recomputesOnHaTicks: afterTicks.recomputes - before.recomputes,
           recomputesOnCamera: afterCamera.recomputes - afterTicks.recomputes,
@@ -340,7 +374,8 @@ async function sample() {
           live: liveAfterDisconnect.timers + liveAfterDisconnect.frames + liveAfterDisconnect.observers,
         },
       };
-    }, { fixture, strips: STRIPS, cycles: CYCLES });
+    }, { fixture, strips: STRIPS, cycles: CYCLES, ticks: TICKS, profile: profileMode });
+    if (profileMode) row.cpu = cpu;
     row.ledRequests = [...new Set(requests)].sort();
     return { row, chromium };
   } finally {
@@ -437,6 +472,11 @@ const report = {
   merged: merge ? merge.length : undefined,
   metrics: Object.fromEntries(METRICS.map((name) => [name, metric(name)])),
   counters: rows[0]?.counters ?? null,
+  ticks: TICKS,
+  tickSamples: rows.map((row) => row.ticks),
+  hoverSamples: profileMode ? rows.map((row) => row.hover) : undefined,
+  cpuSamples: profileMode ? rows.map((row) => row.cpu) : undefined,
+  cameraSamples: rows.map((row) => row.camera),
   counterSamples: rows.map((row) => row.counters),
   disconnectSamples: rows.map((row) => row.disconnect),
   lateImport: late,
@@ -444,6 +484,15 @@ const report = {
   rows,
 };
 const failures = [];
+// #850: the exact work of a sensor tick and of the camera, judged in every sample.
+failures.push(...tickCounterFailures(rows, budgets.ticks));
+for (const [index, row] of rows.entries()) {
+  for (const [name, limit] of Object.entries(budgets.camera || {})) {
+    const value = row.camera?.[name];
+    if (!Number.isFinite(value)) failures.push(`sample ${index}: camera.${name} missing`);
+    else if (value > limit) failures.push(`sample ${index}: camera.${name} = ${value} > ${limit}`);
+  }
+}
 const partial = !merge && (samples < MIN_SAMPLES || warmups < 1);
 if (!partial && (report.samples < MIN_SAMPLES || report.warmups < 1)) {
   failures.push(`${report.samples} samples after ${report.warmups} warmups: the profile needs ≥ ${MIN_SAMPLES} after ≥ 1`);

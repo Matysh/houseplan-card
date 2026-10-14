@@ -80,6 +80,10 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
     '_floorCacheBuilds',
     // #814: the per-floor pools of bodies and tunnels; a base without them reads 0.
     '_physicalBodiesPool', '_openingTunnelPool',
+    // #850: the hover series reads light fingerprints from the live runtime's
+    // `work()`; it is null until the lazy chunk lands, and a base without the
+    // counters reads undefined (judged only when the target has the memo).
+    '_liveRt',
   ]),
   // #649: members that only comparison bundles own. The benchmark feature-probes
   // them (`typeof card._setProjection === 'function'`); the current card no

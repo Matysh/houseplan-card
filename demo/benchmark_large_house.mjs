@@ -56,6 +56,9 @@ const requiresFloorBodyPools = cardSource.includes('private _physicalBodiesPool'
 const requiresPlanSnap = planSnap && existsSync(resolve(targetRoot, 'src/plan-snap-overlay.ts'));
 const requiresWallFace = planSnap && existsSync(resolve(targetRoot, 'src/wall-face-graph.ts'));
 const requiresInteraction = interaction && existsSync(resolve(targetRoot, 'src/live-viewport.ts'));
+// #850: a target whose live runtime remembers the light geometry fingerprint has it judged at zero on hover.
+const requiresLightGeometryMemo = interaction && existsSync(resolve(targetRoot, 'src/live-interaction-runtime.ts'))
+  && readFileSync(resolve(targetRoot, 'src/live-interaction-runtime.ts'), 'utf8').includes('public geometry(record');
 const requiresStairs = existsSync(resolve(targetRoot, 'src/stairs.ts'));
 const fixture = stage3Dense ? makeIsometricStage3DenseFixture() : makeLargeHouseFixture();
 if (backdrop) {
@@ -143,7 +146,7 @@ try {
       fixture, sample, cardContract, isometric, requiresIsometric, planSnap, requiresPlanSnap,
       requiresWallFace, interaction, requiresInteraction, stage3Dense, requireStage3,
       requiresIsoStructuralBuildCounter, requiresStairs, profile, backdrop,
-      requiresFloorCacheBuildCounters, requiresFloorBodyPools,
+      requiresFloorCacheBuildCounters, requiresFloorBodyPools, requiresLightGeometryMemo,
     }) => {
       const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
       const until = async (predicate, timeout = 10000) => {
@@ -658,6 +661,7 @@ try {
           throw new Error('interaction profile has no stage/device/room/heavy scene');
         const rect = stage.getBoundingClientRect();
         const hoverBefore = fullRenderCount;
+        const lightGeometryBefore = card._liveRt?.work?.()?.lightGeometry;
         const hoverLongTasks = startLongTaskWindow();
         const hoverStarted = performance.now();
         device.dispatchEvent(new PointerEvent('pointerover', {
@@ -703,6 +707,10 @@ try {
         await card.updateComplete;
         timings.hoverSeriesMs = performance.now() - hoverStarted;
         deltas.hoverFullRenders = fullRenderCount - hoverBefore;
+        // #850 AC4(а): hover recomputes no architectural light fingerprint (null: a base without the memo).
+        const lightGeometryAfter = card._liveRt?.work?.()?.lightGeometry;
+        deltas.hoverLightGeometry = Number.isFinite(lightGeometryBefore) && Number.isFinite(lightGeometryAfter)
+          ? lightGeometryAfter - lightGeometryBefore : null;
         deltas.hoverTargets = ['device', 'room', 'miss'];
         interactionLongTasks.hoverSeries = await hoverLongTasks.stop();
 
@@ -1055,6 +1063,7 @@ try {
         if (requiresInteraction && (
           deltas.irrelevantFullRenders !== 0 || deltas.irrelevantHassIntakes !== 30
           || deltas.relevantOutsideGestureFullRenders !== 1 || deltas.hoverFullRenders !== 0
+          || (requiresLightGeometryMemo && deltas.hoverLightGeometry !== 0)
           || deltas.hoverTargets.join(',') !== 'device,room,miss'
           || deltas.panMoveFullRenders.some((count) => count !== 0)
           || deltas.terminalFullRenders.some((count) => count !== 1)
@@ -1417,7 +1426,7 @@ try {
       isometric, requiresIsometric, planSnap, requiresPlanSnap, requiresWallFace,
       interaction, requiresInteraction, stage3Dense, requireStage3,
       requiresIsoStructuralBuildCounter, requiresStairs, profile, backdrop,
-      requiresFloorCacheBuildCounters, requiresFloorBodyPools,
+      requiresFloorCacheBuildCounters, requiresFloorBodyPools, requiresLightGeometryMemo,
     });
     // #520: диагностика печатается в лог прогона и в запись не попадает.
     const { bootDiag, ...measured } = row;
