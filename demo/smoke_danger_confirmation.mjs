@@ -29,6 +29,7 @@ for (const name of delayedNamespaceChunks) {
 const out = await page.evaluate(async () => {
   const result = {};
   const card = window.__card;
+  const originalHass = card.hass;
   await card._ensureOnboardingRuntime();
   const editor = card._editorRuntime;
   const onboarding = card._onboardingRuntime;
@@ -252,25 +253,36 @@ const out = await page.evaluate(async () => {
   }
 
   const services = [];
-  card._openingEntityAvailable = () => true;
-  card._openingInfo = {
-    id: 'door', type: 'door', rx: 0.5, ry: 0.5, len_cm: 90, lock: 'lock.danger',
-  };
-  card.hass = {
-    ...card.hass,
-    states: {
-      ...card.hass.states,
-      'lock.danger': { entity_id: 'lock.danger', state: 'locked', attributes: { friendly_name: 'Door' } },
-    },
+  // #846: exercise a real, canonical door popup rather than inventing its
+  // private model; the production dispatch now rejects unowned stale cards.
+  const lockCard = document.createElement('houseplan-card');
+  lockCard.setConfig({type:'custom:houseplan-card',language:'en'});
+  const lockConfig = {spaces:[{...baseSpace(),openings:[{
+    id:'door',type:'door',rx:500,ry:500,len_cm:90,lock:'lock.front_door',
+  }]}],markers:[],settings:{}};
+  lockCard.hass = {
+    ...originalHass,
+    callWS: async message => message.type === 'houseplan/config/get'
+      ? {config:lockConfig,rev:1,can_write:true} : originalHass.callWS(message),
     callService: async (...args) => { services.push(args); },
   };
-  decision = false;
-  await card._lockAction('lock.danger', 'unlock');
+  lockCard.style.cssText='display:block;width:300px;height:500px';
+  document.body.append(lockCard);
+  for (let i=0;i<250&&!lockCard.shadowRoot?.querySelector('.oplock');i++) {
+    await new Promise(resolve=>setTimeout(resolve,10));
+  }
+  const lockRoot=lockCard.shadowRoot;
+  lockRoot.querySelector('.oplock').click(); await lockCard.updateComplete;
+  lockRoot.querySelector('.lockact').click(); await lockCard.updateComplete;
+  lockRoot.querySelector('hp-confirm [data-hp="dialog-cancel"]').click();
+  await lockCard.updateComplete;
   const unlockCancel = services.length === 0;
-  decision = true;
-  await card._lockAction('lock.danger', 'unlock');
+  lockRoot.querySelector('.lockact').click(); await lockCard.updateComplete;
+  lockRoot.querySelector('hp-confirm [data-hp="dialog-confirm"]').click();
+  await lockCard.updateComplete;
   result.unlockCancelAccept = unlockCancel && services.length === 1
     && services[0][0] === 'lock' && services[0][1] === 'unlock';
+  lockCard.remove();
 
   card._confirmDanger = originalConfirm;
   return result;

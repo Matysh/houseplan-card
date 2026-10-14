@@ -200,18 +200,7 @@ export function cardVersionReloadSafetySnapshot(
     && host._continuity.hasCompleteFrame && host._continuity.state === 'steady'
     && !host._continuity.overlayBlocksInteraction
     && !!stage && stage.clientWidth > 0 && stage.clientHeight > 0;
-  const gesturesIdle = host._pointers.size === 0 && host._touchContacts.size === 0
-    && !host._touchSequenceMultitouch && !host._roomPointer && !host._panStart && !host._panLock
-    && !host._pinchStart && !host._swipeStart && !host._tabDrag && !host._tabDragRelease
-    && !host._drag && !host._deviceDrag && !host._rlResize && !host._resize?.dragging
-    && !host._physicalDrag && !host._physicalRotate && !host._opDrag && !host._decorDraft
-    && !host._decorMove && !host._dtDrag && !host._bdDrag && !host._furnTouchPending
-    && !host._compassDrag && !host._viewportGestureDirty && !host._devicePositionBusy
-    && !host._modeTransitionBusy && !host._cameraTransition.active && !host._slide
-    && host._warmModeRequest === 0;
-  const surfacesIdle = !host._editorSecondaryDialogBlocked && !host._partitionDeleteDialog
-    && !host._roomDeleteDialog && !host._backdropGuard && !host._vacFit
-    && !host._editorSecondary?.hasOpenGroup && !host._furnPalette && !host._decorImagePalette;
+  const { gesturesIdle, surfacesIdle } = cardInteractionIdleSnapshot(host);
   return {
     connected: host.isConnected,
     initialFrameSettled,
@@ -225,6 +214,25 @@ export function cardVersionReloadSafetySnapshot(
     interactionPauseElapsed: Date.now() >= host._cyclePausedUntil,
     baseZoom: host._zoom <= 1.001,
   };
+}
+
+/** Shared carousel/reload hold truth, without layout reads or geometry work. */
+export function cardInteractionIdleSnapshot(host: VersionRecoveryCardPort): {
+  gesturesIdle: boolean; surfacesIdle: boolean;
+} {
+  const gesturesIdle = host._pointers.size === 0 && host._touchContacts.size === 0
+    && !host._touchSequenceMultitouch && !host._roomPointer && !host._panStart && !host._panLock
+    && !host._pinchStart && !host._swipeStart && !host._tabDrag && !host._tabDragRelease
+    && !host._drag && !host._deviceDrag && !host._rlResize && !host._resize?.dragging
+    && !host._physicalDrag && !host._physicalRotate && !host._opDrag && !host._decorDraft
+    && !host._decorMove && !host._dtDrag && !host._bdDrag && !host._furnTouchPending
+    && !host._compassDrag && !host._viewportGestureDirty && !host._devicePositionBusy
+    && !host._modeTransitionBusy && !host._cameraTransition.active && !host._slide
+    && host._warmModeRequest === 0;
+  const surfacesIdle = !host._editorSecondaryDialogBlocked && !host._partitionDeleteDialog
+    && !host._roomDeleteDialog && !host._backdropGuard && !host._vacFit
+    && !host._editorSecondary?.hasOpenGroup && !host._furnPalette && !host._decorImagePalette;
+  return { gesturesIdle, surfacesIdle };
 }
 
 export function renderVersionBanner(

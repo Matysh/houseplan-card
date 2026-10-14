@@ -32,6 +32,14 @@ incomplete or foreign series stay unknown, and red observations are retained.
 No runtime, workload, clock, retry or budget changes; wall-time is not CPU/GPU
 acceptance and a green repeat does not establish a historical cause.
 
+Kiosk carousel context (#846) uses one interval and one 60s idle deadline, with
+the same gesture/surface hold truth and interaction pause as version recovery.
+Open local dialogs hold indefinitely; closing restarts the pause. Idle fit and
+carousel arrival persist base zoom for only that floor/browser. Every accepted
+space change closes space-bound View cards/confirmations; action dispatch checks
+the current canonical floor and stable target, including after confirmation.
+Issue labels, not this record, remain authoritative for implementation status.
+
 Pipeline outcomes (#897) distinguish a verified completed-model merge wait from
 legacy review resume: it is a successful no-op, not a second model call. Exact
 changed-patch refusals diagnose and re-request review only for the same live

@@ -428,7 +428,15 @@ players, directional TV effects.
 experience with the header removed and editors hard-blocked (even for
 admins). Swipe switches spaces at 1:1 zoom only (zoomed gestures pan;
 double tap resets zoom); `cycle: N` auto-advances spaces with a 60 s pause
-after any touch; a 3 s long-press on empty plan opens the per-screen size
+after any manual plan/dialog operation. With an active carousel (N>0, multiple
+spaces, no fixed floor), 60 idle seconds return zoom/pan to Fit all independently
+of the next tick. Every carousel arrival starts at Fit all and saves that base
+zoom only for its floor in this browser. Local cards/confirmations and active
+gestures hold both fit and cycling; closing a local dialog restarts 60 seconds.
+Ordinary cards, cycle 0, one-space and fixed-floor kiosks never reset by idleness.
+Accepted space changes close old View cards/confirmations without an action;
+dispatch re-resolves the captured floor/marker/opening/lock before sending.
+A 3 s long-press on empty plan opens the per-screen size
 popover (localStorage). Once movement crosses the existing pan/swipe threshold,
 that press cannot open the popover, even after returning to its origin; small
 stationary jitter below the threshold still permits the hold (#825). Nav

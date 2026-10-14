@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Kiosk carousels resume after zoom or pan: after 60 idle seconds the plan fits
+  the screen, and local dialogs hold the floor until closed. Arrivals remember
+  Fit all only for that floor on this screen. Changing floors closes old device
+  and door cards; confirmed actions refuse deleted, moved or rebound targets
+  ([#846](https://github.com/Matysh/houseplan-card/issues/846)).
+
 - Saving no longer falls back to an old cached plan when Home Assistant reapplies
   card options. Refused vacuum-map edits and New acknowledgements restore their
   own changes, and save-permission errors name saving rather than backup import

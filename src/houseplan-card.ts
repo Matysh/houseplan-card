@@ -76,6 +76,8 @@ import {
 } from './initial-load';
 import { TouchGestureClickGuard } from './touch-gesture-click-guard';
 import { KioskHoldGesture } from './kiosk-hold';
+import { KioskCarousel } from './kiosk-carousel';
+import { currentMarkerActionDevice, openingActionTargetCurrent } from './view-action-context';
 import { DeviceHitController, deviceLayerMutated, observeDeviceHitGeometryScroll } from './device-hit-owner';
 import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
 import { roomTempRangeFromDraft, type SpaceDialogState } from './space-dialog';
@@ -207,7 +209,7 @@ import {
   visualFrameFingerprint,
   type PageVisibilitySignal,
 } from './visual-continuity';
-import { cardVersionReloadSafetySnapshot, createCardVersionRecovery, renderVersionBanner,
+import { cardInteractionIdleSnapshot, cardVersionReloadSafetySnapshot, createCardVersionRecovery, renderVersionBanner,
   adoptCardConfigCapabilities, getAuthoritativeCardConfig, runningBuild,
   type AuthoritativeConfigResponse, type BackendBuildIdentity, type ConfigCapabilitiesCardPort,
   type VersionRecoveryCardPort } from './version-recovery-card';
@@ -1473,6 +1475,8 @@ export class HouseplanCard extends LitElement {
       this._clearRoomFocus(true);
       this._resetDeviceHitState();
       this._cancelDangerConfirm();
+      this._closeInfoCard(); this._openingInfo = null; this._openingInfoSpace = null;
+      this._tapConfirm = null;
       this._cancelCameraTransition(false);
       this._clearTransientHover(true);
       this._cancelDevicePressFeedback();
@@ -1483,11 +1487,11 @@ export class HouseplanCard extends LitElement {
   }
 
   /** Change the space with the usual sideways transition. */
-  private _slideTo(id: string, dir: 'left' | 'right'): boolean {
+  private _slideTo(id: string, dir: 'left' | 'right', carousel = false): boolean {
     this._editorRuntime?.invalidateEditorNavigation();
     if (id === this._space) return true;
     if (!this._canCommitSpace(id)) return false;
-    const resume = () => { if (this._slideTo(id, dir)) this._saveNav(); };
+    const resume = () => { if (this._slideTo(id, dir, carousel)) this._saveNav(); };
     if (this._editorRuntime && !this._editorRuntime._guardDraftNavigation(resume)) return false;
     if (this._wallFaceBatch) this._roomDialogCancel();
     if (this._mode === 'plan' && this._tool === 'draw'
@@ -1508,7 +1512,7 @@ export class HouseplanCard extends LitElement {
     this._editorSecondary?.closeForNavigation();
     this._physicalDialog = null;
     this._physicalDrag = null;
-    this._restoreZoom();
+    this._restoreZoom(carousel);
     if (reduce) return true;
     this._slide = dir;
     clearTimeout(this._slideTimer);
@@ -1706,23 +1710,14 @@ export class HouseplanCard extends LitElement {
   }
 
   private _cycleTick(): void {
-    if (this._hasFixedFloor || !this._kiosk || !(Number(this._config?.cycle) > 0)) return;
-    if (Date.now() >= this._cyclePausedUntil && this._model.length > 1 && this._zoom <= 1.001) {
-      const ids = this._model.map((m) => m.id);
-      const i = ids.indexOf(this._space);
-      this._slideTo(ids[(i + 1) % ids.length], 'left');
-      this._showKioskDots();
-    }
+    if (!this._kioskCarousel.canAdvance()) return;
+    const ids = this._model.map((m) => m.id);
+    const i = ids.indexOf(this._space);
+    if (this._slideTo(ids[(i + 1) % ids.length], 'left', true)) this._showKioskDots();
   }
 
   private _syncCycleTimer(): void {
-    clearInterval(this._cycleTimer);
-    this._cycleTimer = undefined;
-    if (!this.isConnected || this._hasFixedFloor
-        || !this._config?.kiosk || !(Number(this._config.cycle) > 0)) return;
-    this._cycleTimer = window.setInterval(
-      () => this._cycleTick(), Number(this._config.cycle) * 1000,
-    );
+    this._kioskCarousel.sync();
   }
 
   /** Any edit mode is active (plan / devices / decor). */
@@ -1934,6 +1929,7 @@ export class HouseplanCard extends LitElement {
     x: number; y: number; angle: number; // render units (from the wall snap)
   } | null = null;
   private _openingInfo: OpeningCfg | null = null;
+  private _openingInfoSpace: string | null = null;
   private _opDrag: {
     id: string; moved: boolean; sx: number; sy: number; dirty: boolean;
     before: SpaceGeometryState | null;
@@ -2389,8 +2385,22 @@ export class HouseplanCard extends LitElement {
   private readonly _onWindowBlur = (): void => {
     if (this._pointers.size || this._kioskHold.pointerId !== null) this._interruptViewGesture();
   };
-  private _cycleTimer?: number;
   private _cyclePausedUntil = 0;
+  private readonly _kioskCarousel = new KioskCarousel({
+    state: () => ({ connected: this.isConnected,
+      intervalMs: this._kiosk && !this._hasFixedFloor && this._model.length > 1
+        ? Math.max(0, Number(this._config?.cycle) || 0) * 1000 : 0,
+      pausedUntil: this._cyclePausedUntil,
+      ...cardInteractionIdleSnapshot(this as unknown as VersionRecoveryCardPort),
+    }),
+    pause: (until) => { this._cyclePausedUntil = until; },
+    fitAll: () => this._fitAll(),
+    advance: () => this._cycleTick(),
+  });
+  private _kioskInteraction = (event: Event): void => {
+    if (this._kiosk && event.composedPath().some((node) => node instanceof Element
+      && node.matches('.stage, hp-dialog, hp-confirm'))) this._kioskCarousel.interact();
+  };
   private _swipeStart: SpaceSwipePointerStart | null = null;
 
   /** Live tab reorder: which tab is held, where it started, where it would land. */
@@ -2641,6 +2651,9 @@ export class HouseplanCard extends LitElement {
       this._showToast(this._t('toast.locale_load_failed'));
     }), subscribeFurnitureArtLoadFailures(() => this._showToast(this._t('toast.furniture_art_load_failed')))); // #474
     super.connectedCallback();
+    for (const type of ['pointerdown', 'wheel', 'keydown']) this.addEventListener(
+      type, this._kioskInteraction, { capture: true, passive: true },
+    );
     this._summarySlot.connect();
     void this._ensureLiveRuntime().catch(() => this.requestUpdate());
     this._pointerModality.connect(this.ownerDocument.defaultView);
@@ -2718,6 +2731,10 @@ export class HouseplanCard extends LitElement {
   }
 
   public disconnectedCallback(): void {
+    this._kioskCarousel.dispose();
+    for (const type of ['pointerdown', 'wheel', 'keydown']) this.removeEventListener(
+      type, this._kioskInteraction, true,
+    );
     this._backupImportIntent.cancel(false);
     this._backupImportDialog = null;
     // Stop the independent kiosk timer before any teardown flush can mutate
@@ -2767,7 +2784,6 @@ export class HouseplanCard extends LitElement {
     clearTimeout(this._tabSuppressClickTimer);
     this._tabSuppressClickTimer = undefined;
     this._tabSuppressClick = false;
-    clearInterval(this._cycleTimer);
     clearTimeout(this._kioskDotsTimer); this._headerMenu.disconnect();
     // #813: a release that lands while detached never reaches the stage; a
     // pointer kept here would turn the next press after a reattach into a pinch.
@@ -3645,7 +3661,7 @@ export class HouseplanCard extends LitElement {
       }
       case 'openingInfo': {
         const op = (this._curSpaceCfg?.openings || []).find((x: any) => x.id === d.data);
-        if (op) this._openingInfo = op;
+        if (op) { this._openingInfo = op; this._openingInfoSpace = this._space; }
         break;
       }
     }
@@ -4145,6 +4161,7 @@ export class HouseplanCard extends LitElement {
     this._captureRenderDeviceSnapshot();
   }
   protected updated(changed: PropertyValues): void {
+    this._syncCycleTimer();
     if (this._isoFirstFrame.sync(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes), () => parseCssColor(this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)')) ?? [17, 17, 17])) this.requestUpdate(); this._summary?.updated(); this._liveRt?.commit(); this._headerMenu.revealActiveTab();
     this._editorRuntime?._commitLiveEditor();
     this._pruneDevicePressFeedback();
@@ -5505,7 +5522,7 @@ export class HouseplanCard extends LitElement {
     // including keyboard activation — extends the shared kiosk interaction
     // pause used by the carousel and #462 recovery controller.
     if (this._kiosk) {
-      this._cyclePausedUntil = Math.max(this._cyclePausedUntil, Date.now() + 60000);
+      this._kioskCarousel.interact();
     }
     this._nativeMoreInfoEntity = entityId;
     fireEvent(this, 'hass-more-info', { entityId });
@@ -5615,7 +5632,16 @@ export class HouseplanCard extends LitElement {
     // must never inherit that visual staleness: resolve the current DevItem by
     // stable marker id before reading tap_action, controls or the binding.
     const actionDevice = this._devices.find((item) => item.id === d.id);
-    if (!actionDevice) return; // marker disappeared from the live config
+    if (!actionDevice || actionDevice.space !== this._space || d.space !== this._space) return;
+    const actionSpace = this._space;
+    const currentActionDevice = (): DevItem | null => {
+      const current = currentMarkerActionDevice(this._devices, this._space,
+        { spaceId: actionSpace, id: actionDevice.id });
+      if (current) return current;
+      this._tapConfirm = null; this._closeInfoCard();
+      this._showToast(this._t('toast.tap_target_changed'));
+      return null;
+    };
     const action = projectedTapAction(
       actionDevice.tapAction, actionDevice.primary?.split('.')[0],
     );
@@ -5672,7 +5698,8 @@ export class HouseplanCard extends LitElement {
           initialIntent: initial,
           deviceId: actionDevice.id,
           exec: () => {
-            const currentDevice = this._devices.find((item) => item.id === actionDevice.id);
+            const currentDevice = currentActionDevice();
+            if (!currentDevice) return;
             const current = currentDevice ? this._toggleIntent(currentDevice) : null;
             if (current && !toggleOperation(current)
                 && this._showUnavailableToggleTargets(current)) return;
@@ -5708,7 +5735,13 @@ export class HouseplanCard extends LitElement {
       }
       const name = st.attributes?.friendly_name || target;
       guarded(this._t('confirm.tap_run', { name }), () => {
-        if (!this._deviceBindingActive(actionDevice) || !this._planEntityAvailable(target)) return;
+        const current = currentActionDevice();
+        if (!current) return;
+        if (current.marker?.tap_target !== target) {
+          this._tapConfirm = null; this._closeInfoCard();
+          this._showToast(this._t('toast.tap_target_changed')); return;
+        }
+        if (!this._deviceBindingActive(current) || !this._planEntityAvailable(target)) return;
         this._startDevicePressFeedback(actionDevice.id);
         this.hass
           .callService(svc.domain, svc.service, { entity_id: target })
@@ -6630,11 +6663,13 @@ export class HouseplanCard extends LitElement {
   }
 
   /** Restore the saved space zoom and center the plan. */
-  private _restoreZoom(): void {
+  private _restoreZoom(carousel = false): void {
     this._clearRoomFocus(true);
     this._cancelCameraTransition(false);
-    const z = this._zoomBySpace[this._space] || 1;
+    if (carousel) { this._showFar = true; this._frame = null; }
+    const z = carousel ? 1 : this._zoomBySpace[this._space] || 1;
     this._zoom = z;
+    if (carousel) this._saveZoom();
     const stage = this._stageEl;
     if (stage && stage.clientHeight) {
       // HP-1551: the stage is already measured — apply the view NOW, before
@@ -6675,7 +6710,6 @@ export class HouseplanCard extends LitElement {
     // lifecycle here: the former fallback left `_suppressClick` stuck when a
     // pointerup was lost or a pointercancel followed the dismiss press.
     if (this._kiosk) {
-      this._cyclePausedUntil = Date.now() + 60000;
       if (this._pointers.size === 0) {
         const rect = this._stageEl?.getBoundingClientRect();
         this._swipeStart = rect ? beginSpaceSwipePointer(
@@ -12528,7 +12562,7 @@ export class HouseplanCard extends LitElement {
         @click=${(e: MouseEvent) => {
           if (this._mode !== 'view') return;
           e.stopPropagation();
-          this._openingInfo = o;
+          this._openingInfo = o; this._openingInfoSpace = this._space;
         }}>
         <span class="oplock-shell" aria-hidden="true">
           <span class="oplock-core">
@@ -12552,7 +12586,16 @@ export class HouseplanCard extends LitElement {
     // button is a deliberate, labeled control inside an opened card, the same
     // contract as Home Assistant's own more-info dialog. Unlocking additionally
     // asks for confirmation; locking does not (locking is never destructive).
-    if (!this._openingEntityAvailable(entityId)) return;
+    const context = this._openingInfo && this._openingInfoSpace
+      ? { spaceId: this._openingInfoSpace, id: this._openingInfo.id } : null;
+    const currentTarget = (): boolean => {
+      if (openingActionTargetCurrent(this._curSpaceCfg, this._space, context,
+        this._openingInfo?.id, entityId)) return true;
+      this._openingInfo = null; this._openingInfoSpace = null;
+      this._cancelDangerConfirm(); this._showToast(this._t('toast.tap_target_changed'));
+      return false;
+    };
+    if (!currentTarget() || !this._openingEntityAvailable(entityId)) return;
     if (action === 'unlock') {
       const name = this.hass?.states?.[entityId]?.attributes?.friendly_name || entityId;
       const accepted = await this._confirmDanger({
@@ -12564,10 +12607,8 @@ export class HouseplanCard extends LitElement {
         confirmLabel: this._t('opening.unlock_action'),
         cancelLabel: this._t('btn.cancel'),
       });
-      const opening = this._openingInfo;
-      if (!accepted || !this._openingEntityAvailable(entityId)
-        || !opening || (opening.type !== 'door' && opening.type !== 'gate')
-        || opening.lock !== entityId || this.hass?.states?.[entityId]?.state !== 'locked') return;
+      if (!accepted || !currentTarget() || !this._openingEntityAvailable(entityId)
+        || this.hass?.states?.[entityId]?.state !== 'locked') return;
     }
     this.hass?.callService?.('lock', action, { entity_id: entityId });
   }

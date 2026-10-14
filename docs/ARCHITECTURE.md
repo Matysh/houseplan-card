@@ -939,6 +939,20 @@ ignores `#space=`.
 
 ## Camera and mode transitions (#101, #82)
 
+`KioskCarousel` (#846) owns one interval and one 60s idle deadline with injected
+clocks. `cardInteractionIdleSnapshot` is shared with version recovery and reads
+only transient state, not layout or geometry. Host capture observes passive
+pointerdown/wheel/keydown on plan and local dialogs; pointermove never restarts
+the deadline. Open surfaces and camera/gesture work hold both tick and fit.
+Dialog close restarts 60s; expired pointer holds resume from a state update, not
+a 0ms polling loop. Disconnect/config-disable retire both timers and their
+generation. Arrival bypasses saved enlarged zoom before first paint and stores
+the same floor-local base preference as Fit all; ordinary navigation still
+restores its own preference. `_commitSpace` closes only space-bound View
+surfaces on a different accepted id. `view-action-context.ts` resolves exact
+current marker/floor and canonical opening/lock identities before service calls;
+stale confirmation never becomes permission to act on another floor.
+
 The existing `STAGE_TAP_DISTANCE_PX` pan/swipe classifier cancels the owning
 `KioskHoldGesture` as soon as navigation is recognized (#825). Returning to
 the press origin cannot re-arm it; sub-threshold jitter is still a hold.

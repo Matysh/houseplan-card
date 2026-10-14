@@ -62,6 +62,14 @@ delayed compatibility click must not operate the dialog. A new deliberate tap
 after release works immediately, including when the release did not reach the
 stage; no extra stage tap or waiting period is required (#831).
 
+An active kiosk carousel returns the plan to Fit all after 60 idle seconds,
+then continues on its next tick. A down contact, active camera/gesture or local
+dialog holds both fit and cycling; closing a local dialog starts a new 60s pause.
+Plan wheel/keyboard and dialog input count alongside touch. No pointermove
+polling or gesture thresholds change. Idle reset is absent without active
+cycling. A floor change closes old View action contexts; a confirmation never
+operates a marker or door which has moved, disappeared or changed its lock (#846).
+
 During every intermediate pan or pinch frame, walls, floors, room fills,
 hatching, lighting and markers must remain continuously painted. The scene SVGs
 stay on one promoted compositor path from the first movement until the terminal

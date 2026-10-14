@@ -77,6 +77,52 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'kiosk-carousel-arrival-restores-old-zoom',
+    guard: 'node demo/smoke_kiosk_cycle_context.mjs',
+    because: '#846 AC2: actual Lit floor arrival must bypass enlarged browser-storage zoom before first paint and persist its own base camera.',
+    patches: [{file:'src/houseplan-card.ts',find:'    this._restoreZoom(carousel);',replace:'    this._restoreZoom();'}],
+  },
+  {
+    id: 'kiosk-dialog-input-does-not-pause',
+    guard: 'node demo/smoke_kiosk_cycle_context.mjs',
+    because: '#846 AC4: keyboard/pointer events inside the real shadow/native dialog must cross host capture, independent of stage input.',
+    patches: [{file:'src/houseplan-card.ts',find:"node.matches('.stage, hp-dialog, hp-confirm')",replace:"node.matches('.stage')"}],
+  },
+  {
+    id: 'kiosk-space-change-retains-old-door',
+    guard: 'node demo/smoke_kiosk_cycle_context.mjs',
+    because: '#846 AC5: actual hash/tab custom-element navigation must close the rendered old-floor door without an HA service call.',
+    patches: [{file:'src/houseplan-card.ts',
+      find:'      this._closeInfoCard(); this._openingInfo = null; this._openingInfoSpace = null;',
+      replace:'      this._closeInfoCard(); // retain old door popup'}],
+  },
+  {
+    id: 'kiosk-door-dispatch-trusts-stale-dom',
+    guard: 'node demo/smoke_kiosk_cycle_context.mjs',
+    because: '#846 AC6: an old DOM action closure crosses a real HA adoption/confirmation boundary; pure target predicates cannot prove the mounted consumer uses it.',
+    patches: [{file:'src/houseplan-card.ts',
+      find:'      if (openingActionTargetCurrent(this._curSpaceCfg, this._space, context,',
+      replace:'      if (true || openingActionTargetCurrent(this._curSpaceCfg, this._space, context,'}],
+  },
+  {
+    id: 'kiosk-marker-dispatch-trusts-old-floor',
+    guard: 'node demo/smoke_kiosk_cycle_context.mjs',
+    because: '#846 AC6: real toggle confirmation survives a server marker relocation; the captured DOM intent must refuse the new floor even with identical HA entity ids.',
+    patches: [{file:'src/houseplan-card.ts',find:'      if (current) return current;',replace:'      if (current || true) return actionDevice;'}],
+  },
+  {
+    id: 'kiosk-dialog-close-forgets-fresh-pause',
+    guard: 'node --test test/kiosk-carousel.test.mjs',
+    because: '#846 AC3: deterministic injected clocks prove close restarts a full pause after arbitrarily long holds.',
+    patches: [{file:'src/kiosk-carousel.ts',find:'    const closed = this.surfaceHeld && state.surfacesIdle;',replace:'    const closed = false;'}],
+  },
+  {
+    id: 'kiosk-dispose-leaves-idle-deadline',
+    guard: 'node --test test/kiosk-carousel.test.mjs',
+    because: '#846 AC8: injected timers observe both handles retired before reconnect and no work from an old generation.',
+    patches: [{file:'src/kiosk-carousel.ts',find:'  dispose(): void {\n    this.clearTimers();',replace:'  dispose(): void {\n    if (this.interval !== undefined) this.clock.clearInterval(this.interval);'}],
+  },
+  {
     id: 'config-foreign-context-keeps-old-write-queue',
     guard: 'node demo/smoke_config_authority.mjs',
     because: '#890 AC6: fast B mandatory reads and its own serialized save must not wait for the old A transport in either production writer.',

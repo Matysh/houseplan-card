@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 846,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "v1.80.1 already has kiosk cycle, per-space saved zoom, door/marker action cards and confirmations. Its cycle tick stops at enlarged zoom and its space commit leaves old View cards alive. This restores idle resume and exact target safety for existing stable behaviour, not a fix of newly introduced intermediate functionality.",
+  "summary": {
+    "ru": "Киоск возвращается к автолистанию после увеличения и не оставляет действия для прежнего этажа.",
+    "en": "Kiosks resume cycling after zoom and never keep actions for the previous floor."
+  }
+}

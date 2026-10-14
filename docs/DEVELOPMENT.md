@@ -1,5 +1,22 @@
 # Development and deployment
 
+## Kiosk carousel and action context witnesses (#846)
+
+`node --test test/kiosk-carousel.test.mjs test/view-action-context.test.mjs`
+uses injected clocks and exact canonical carriers: deadline independent of cycle,
+held surface/pointer, pause from close, no catch-up, inactive configuration,
+dispose/reconnect and deleted/moved/rebound target refusal. Shared reload-hold
+coverage remains in `test/version-recovery-card.test.mjs`.
+`node demo/smoke_kiosk_cycle_context.mjs` enters through real DOM and HA config
+events. Playwright's boundary clock is installed before the reloaded document
+creates timers; it does not write private deadlines or open fake private dialogs.
+Native oracles cover room fit/idle reset/persisted arrival, dialog keyboard/wheel,
+pointer hold, navigation closure, stale door/marker refusal, exact single current
+dispatch and detach/config-disable. The old danger-confirmation lock fixture now
+opens a canonical door through its actual badge and accepts/cancels the actual
+dialog, instead of inventing an unowned `_openingInfo`.
+No new config fields, migration, private test writes or budget relaxation.
+
 ## Config writer authority witnesses (#890)
 
 `smoke_config_authority` exercises a real GUI Save followed by public setConfig,

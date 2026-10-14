@@ -36,8 +36,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 51 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 62 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 41 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 160 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **322 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 165 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **327 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -300,6 +300,17 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 - `space-delete-block-leaves-focus-behind`
 
 ### Custom-element and HA browser lifecycle
+
+#846: these guards cross mounted floor arrival/browser-storage camera, shadow
+dialog event capture, hash/tab navigation and retained action closures after an
+HA model adoption. Pure policy/target units prove the leaves but not these DOM
+consumers. Deadline/hold/disposal policy instead has cheap injected-clock guards.
+
+- `kiosk-carousel-arrival-restores-old-zoom`
+- `kiosk-dialog-input-does-not-pause`
+- `kiosk-space-change-retains-old-door`
+- `kiosk-door-dispatch-trusts-stale-dom`
+- `kiosk-marker-dispatch-trusts-old-floor`
 
 #890: public setConfig meets real browser localStorage and Lit floor adoption;
 a delayed write crosses the actual HA-intake lifecycle before another connection

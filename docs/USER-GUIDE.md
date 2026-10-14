@@ -2033,6 +2033,19 @@ cycle: 30
 | Hold empty space for 3 seconds | Opens per-display icon/text sizing |
 | `cycle` | Automatically advances; any interaction pauses it for 60 seconds |
 
+Cycling is active with `cycle > 0`, multiple spaces and no fixed `floor`.
+After 60 idle seconds the plan returns to **Fit all**, even when the cycle
+interval is longer. Carousel arrivals also start at Fit all and remember that
+base zoom only for that floor in this browser, just like a double tap. Local
+cards, confirmations, screen-size settings and a down contact hold the floor;
+closing a dialog starts a fresh 60 seconds. Plan/dialog wheel and keyboard input
+also count. `cycle: 0`, one-space and fixed-floor kiosks never reset by idleness.
+
+Changing floors closes old device/door cards and confirmations without sending
+an action. A removed or moved target, or a door rebound to another lock, is
+refused with “The action target changed. Try again.” Open its current card
+again. Unlock still asks for confirmation; Lock does not.
+
 Kiosk sizing is stored in that display's browser, so one tablet may use larger
 markers without affecting other clients. House Plan hides only its own header;
 hide the Home Assistant header with Companion App or a separate kiosk tool.
