@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 887,
+  "baseStable": "v1.80.1",
+  "category": "infra",
+  "rationale": "Repairs the nightly mutation witness definitions and finite/monotone path test coverage only. No class A code, product behaviour, configuration schema, performance limit or release artifact changes.",
+  "summary": {
+    "ru": "Уточнены ночные мутационные свидетели и проверки геометрии пути; пользовательское поведение не меняется.",
+    "en": "Nightly mutation definitions and path geometry witnesses are repaired without changing product behaviour."
+  }
+}

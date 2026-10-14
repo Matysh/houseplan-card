@@ -94,6 +94,11 @@ test('#872 finite-segment/temporal certificate and protected U-turns, not infini
     [[0, 0], [100, 0], [0, 0]], [[0, 0], [100, 0], [99, 1], [0, 1]],
     [[0, 0], [0, 100], [100, 100], [100, 0]],
     Array.from({ length: 3000 }, (_, i) => [i, Math.sin(i) * 0.5]),
+    // Gentle <=45-degree corners do not trigger the separate protectedTurn
+    // shortcut. Perpendicular error is below 2 cm, but the final chord would
+    // overshoot its finite endpoint, or reverse progress inside [0, 1].
+    [[0, 0], [1, 0], [2, 1], [2, 2], [1, 3], [0, 3], [-1, 2]].map(([x, y]) => [x / 4, y / 4]),
+    [[0, 0], [1, 0], [2, -1], [3, -1], [4, 0], [4, 1], [4, 2], [4, 3], [3, 4]].map(([x, y]) => [x / 4, y / 4]),
   ];
   for (const original of paths) {
     const reduced = simplifyOrderedPath(original, 2);
@@ -103,12 +108,30 @@ test('#872 finite-segment/temporal certificate and protected U-turns, not infini
     for (let j = 1; j < reduced.length; j++) {
       const end = original.indexOf(reduced[j], first + 1);
       assert.ok(end > first);
-      for (let i = first; i <= end; i++) assert.ok(segmentDistance(original[i], reduced[j - 1], reduced[j]) <= 2 + 1e-9);
+      const a = reduced[j - 1], b = reduced[j];
+      const dx = b[0] - a[0], dy = b[1] - a[1], lengthSquared = dx * dx + dy * dy;
+      assert.ok(lengthSquared > 0, 'every accepted chord has a finite direction');
+      let progress = 0;
+      for (let i = first; i <= end; i++) {
+        const p = original[i], t = ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / lengthSquared;
+        assert.ok(t >= progress - 1e-12 && t <= 1 + 1e-12,
+          `original sample ${i} stays on the finite chord in temporal order (${progress} -> ${t})`);
+        assert.ok(segmentDistance(p, a, b) <= 2 + 1e-9);
+        progress = t;
+      }
       first = end;
     }
   }
   assert.deepEqual(simplifyOrderedPath(paths[0], 2), paths[0]);
   assert.ok(simplifyOrderedPath(paths[1], 2).includes(paths[1][1]));
+  for (const gentle of paths.slice(-2)) {
+    for (let i = 1; i < gentle.length - 1; i++) {
+      const [a, b, c] = gentle.slice(i - 1, i + 2);
+      assert.ok((b[0] - a[0]) * (c[0] - b[0]) + (b[1] - a[1]) * (c[1] - b[1]) >= 0,
+        'fixture must exercise the certificate, not the independent sharp-turn guard');
+    }
+    assert.equal(simplifyOrderedPath(gentle, 2).length, 3, 'a gentle reversal still needs a temporal waypoint');
+  }
 });
 
 test('#872 physical scale is after affine; mm/cm/m, mirror and shear do not change the result', () => {

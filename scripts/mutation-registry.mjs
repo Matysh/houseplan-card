@@ -733,8 +733,11 @@ const MUTANT_DEFINITIONS = [
     guard: compiledNodeSmoke('smoke_wall_face_room_split'),
     because: '#874 AC5: a shared promoted cut preserves its own 0/15/25cm carrier, independently of the first face edge.',
     patches: [{ file: 'src/houseplan-editor-runtime.ts',
-      find: '            original?.cm ?? carrier?.cm\n',
-      replace: '            original?.cm\n',
+      // Dropping only carrier?.cm is equivalent: _wallSourceCmAt also reads
+      // that same saved carrier. Reproduce the actual wrong-owner default.
+      find: '            original?.cm ?? carrier?.cm\n'
+        + '              ?? this._wallSourceCmAt(midpoint, batch.activePath, batch.activeCms),\n',
+      replace: '            original?.cm ?? fallback,\n',
     }],
   },
   {
@@ -16057,6 +16060,10 @@ const MUTANT_DEFINITIONS = [
     because: '#614 AC3: starting Save cannot erase the comparison baseline; only a '
       + 'successful commit or explicit close may do that',
     patches: [{
+      file: 'src/editors/marker-dialog.ts',
+      find: "import { markerDirty, markerProblems } from './marker-form-state';",
+      replace: "import { forgetMarkerBaseline, markerDirty, markerProblems } from './marker-form-state';",
+    }, {
       file: 'src/editors/marker-dialog.ts',
       find: '@click=${() => { void this._saveMarker(); }}',
       replace: '@click=${() => { forgetMarkerBaseline(this.host); void this._saveMarker(); }}',

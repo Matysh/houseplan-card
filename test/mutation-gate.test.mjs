@@ -47,6 +47,26 @@ test('every guard command points at a file that exists', () => {
   }
 });
 
+test('#887 marker Save mutation supplies its introduced helper import', () => {
+  const mutant = MUTANTS.find(({ id }) => id === 'marker-save-click-forgets-baseline-before-result');
+  assert.ok(mutant);
+  assert.ok(mutant.patches.some(({ file, find, replace }) => file === 'src/editors/marker-dialog.ts'
+    && find === "import { markerDirty, markerProblems } from './marker-form-state';"
+    && replace === "import { forgetMarkerBaseline, markerDirty, markerProblems } from './marker-form-state';"),
+  'the Save-handler mutation must not fail preparation with an unbound helper');
+  assert.ok(mutant.patches.some(({ replace }) => replace.includes('forgetMarkerBaseline(this.host); void this._saveMarker();')));
+});
+
+test('#887 shared-cut mutation bypasses both equivalent own-carrier lookups', () => {
+  const mutant = MUTANTS.find(({ id }) => id === 'wall-face-shared-cut-loses-own-carrier-cm');
+  assert.ok(mutant);
+  assert.ok(mutant.patches.some(({ file, find, replace }) => file === 'src/houseplan-editor-runtime.ts'
+    && find.includes('original?.cm ?? carrier?.cm')
+    && find.includes('this._wallSourceCmAt(midpoint, batch.activePath, batch.activeCms)')
+    && replace.trim() === 'original?.cm ?? fallback,'),
+  'dropping only the direct carrier lookup still gets its own cm from the fallback');
+});
+
 test('every mutant explains itself', () => {
   const ids = new Set();
   const guardProofs = new Map();

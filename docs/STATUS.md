@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Nightly witness maintenance (#887) adds gentle finite/monotone vacuum-path
+cases, replaces an equivalent shared-cut mutation with the actual first-face
+thickness regression, and gives the marker Save mutation its helper import.
+No product behaviour changes; static readiness and ordinary tests do not
+claim an executed mutation verdict, which remains the nightly gate's evidence.
+
 View/device-editor entry (#844) uses Houseplan `can_write` outside kiosk;
 HA Area navigation instead requires HA-admin rights and is never active in
 Plan. Non-admin Plan writers retain the passive draggable Area icon. Lazy

@@ -1,5 +1,24 @@
 # Development and deployment
 
+## Nightly witness repairs (#887)
+
+The 2026-10-14 mutation run exposed three different failures. Vacuum certificate
+fixtures now include gentle turns without the separate sharp-turn shortcut;
+each accepted chord checks finite, monotone progress as well as distance. A
+perpendicular-distance-only oracle cannot certify temporal order.
+
+The shared-room-cut mutation must replace both own-carrier lookups with the
+first face's default. Removing only `carrier?.cm` is equivalent on this path:
+`_wallSourceCmAt(midpoint, ...)` reads the same saved carrier. The existing
+native room-split smoke already checks divergent 0/15/25 cm profiles.
+
+The marker Save mutation supplies the introduced `forgetMarkerBaseline`
+import as a second patch, so a missing symbol is not mistaken for an assertion
+failure. Cheap definition tests retain these constraints. Development runs
+ordinary tests and `mutation-gate --check` only; applied-patch compilation and
+actual caught verdicts remain the nightly workflow's responsibility. Product
+geometry, marker behaviour, limits and schemas are unchanged.
+
 ## View/editor permission boundary (#844)
 
 `demo/smoke_view_edit_permissions.mjs` starts without editor preload, counts
