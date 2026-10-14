@@ -224,7 +224,9 @@ tabs, the editor-close reserve, zoom and one gear whose menu holds the rest.
 - Repeated Undo/Redo in an active Walls chain keeps every session redo point
   and exact persisted segment ID/thickness (#891). An own rejected strict
   physical save rolls back only its physical batch and removes its exact
-  commands, not independent Background/other-floor history; surviving
+  provisional commands, not independent Background/other-floor history;
+  a temporary deferred Undo/Redo failure restores an already accepted command's
+  original cursor for an explicit retry. Surviving
   presentation snapshots cannot restore refused walls. Ordinary drag failures
   distinguish changed-plan conflict, update-required, proved unsafe geometry
   and temporary connection/backend failure. A new attempt is always explicit.

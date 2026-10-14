@@ -47,6 +47,7 @@ including a beta version with no matching stable. Token ceilings are unchanged.
 
 Geometry history safety (#891) keeps active Walls redo journals across repeated
 Undo, preserves independent history/state on strict physical-save refusal,
+restores accepted Undo/Redo cursor identities on retryable deferred refusals,
 and distinguishes node conflict/proof/update/temporary processing failures.
 Node-history classifier corrections originated in #843's intermediate beta;
 the release's stable-fix narrative concerns the pre-existing chain/write UX.

@@ -633,7 +633,12 @@ Own strict-write refusals (#891) use `PhysicalWriteHistory`: the pending
 baseline owns exact command objects. Rollback restores only the physical
 carrier, preserves independent presentation state, and rebases presentation
 snapshots that contain refused walls so their Undo/Redo cannot resurrect them.
-A retired baseline never owns a fresh transaction. The active Walls redo
+A retired baseline never owns a fresh transaction. The pending-write journal
+distinguishes new provisional commands from cursor steps over accepted
+commands. A retryable deferred refusal restores accepted identity/cursor using
+bounded lane anchors, without displacing a newer top; an authoritative clear
+cannot be reversed. Only a proved unsafe step is disposable with its own batch.
+The active Walls redo
 journal survives the transient history reset; explicit finish still retires it.
 `wall-node-refusal.ts` names a finite set of proved-invalid codes; unknown or
 backend-processing errors retain node commands, and incompatible clients ask

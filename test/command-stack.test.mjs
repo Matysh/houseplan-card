@@ -67,6 +67,18 @@ test('#843 peek and confirm move the cursor only over the very next command', ()
   assert.equal(stack.peekUndo(), newer);
 });
 
+test('#891 cursor rollback uses exact anchors, preserves a newer branch and cannot undo an authoritative clear', () => {
+  const stack = new CommandStack();
+  const commands = [0, 1, 2, 3].map(n => ({ name: 'same', before: n, after: n + 1 }));
+  for (const command of commands.slice(0, 3)) stack.push(command);
+  const second = stack.positionOf(commands[1]), third = stack.positionOf(commands[2]);
+  stack.undo(); stack.undo(); stack.push(commands[3]);
+  stack.restorePosition(commands[1], second); stack.restorePosition(commands[2], third);
+  assert.deepEqual(stack.commands(), commands, 'newer top is never displaced; accepted order is exact');
+  stack.clear(); stack.restorePosition(commands[2], third);
+  assert.deepEqual(stack.commands(), [], 'foreign-authoritative clear is not resurrected');
+});
+
 // ---------------------------------------------------------------- #883
 // One ordinary history attempt (`src/geometry-history-step.ts`) over the real
 // CommandStack: the cursor moves only on success, a temporary refusal keeps the

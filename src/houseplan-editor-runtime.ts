@@ -1528,6 +1528,7 @@ public _dropLegacySegments(config = this.host._serverCfg): void {
 
 public _rollbackRejectedPhysicalWrites(
     entries: Array<[string, { fingerprint: string; before: SpaceGeometryState }]>,
+    proof = false,
   ): boolean {
     if (!this.host._serverCfg || !entries.length) return false;
     let restored = false;
@@ -1539,7 +1540,7 @@ public _rollbackRejectedPhysicalWrites(
       if (!live) continue;
       restored = this._restoreGeometryStateInConfig(this.host._serverCfg,
         physicalRollbackState(live, pending.before)) || restored;
-      this.physicalWriteHistory.reject(this.host._geometryHistory, pending.before);
+      this.physicalWriteHistory.reject(this.host._geometryHistory, pending.before, proof);
       this.host._pendingPhysicalWrites.delete(spaceId);
     }
     if (!restored) return false;
@@ -1584,10 +1585,10 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null): Pro
         const candidateSpace = candidate.spaces.find((space) => space.id === spaceId);
         const exactFingerprint = spacePhysicalGeometryFingerprint(candidateSpace);
         if (exactFingerprint === accepted.fingerprint) continue;
-        let safe = false;
-        try { safe = this.host._checkSpacePhysicalGeometry(candidate, spaceId).ok; } catch { safe = false; }
+        let safe = false, proof = false;
+        try { safe = this.host._checkSpacePhysicalGeometry(candidate, spaceId).ok; proof = !safe; } catch { safe = false; }
         if (!safe) {
-          this._rollbackRejectedPhysicalWrites([[spaceId, accepted]]);
+          this._rollbackRejectedPhysicalWrites([[spaceId, accepted]], proof);
           this.host._showToast(this.host._t('toast.geometry_unsafe'));
           throw Object.assign(new Error('unsafe wall geometry'), { code: 'geometry-unsafe' });
         }
@@ -2234,6 +2235,7 @@ private _historyGestureFirst(): boolean {
 public _stepGeometryHistory(direction: 'undo' | 'redo'): HistoryApply | null {
     const host = this.host;
     const command = direction === 'undo' ? host._geometryHistory.peekUndo() : host._geometryHistory.peekRedo();
+    const position = command && host._geometryHistory.positionOf(command);
     const outcome = runOrdinaryHistory({
       stack: host._geometryHistory,
       apply: (state) => this._applyGeometryState(state, true),
@@ -2241,8 +2243,8 @@ public _stepGeometryHistory(direction: 'undo' | 'redo'): HistoryApply | null {
       toast: (text) => host._showToast(text),
     }, direction);
     const pending = command && host._pendingPhysicalWrites.get(command.before.spaceId);
-    if (outcome === true && pending && command && physicalHistoryChanged(command.before, command.after))
-      this.physicalWriteHistory.record(pending.before, command);
+    if (outcome === true && pending && command && position && physicalHistoryChanged(command.before, command.after))
+      this.physicalWriteHistory.record(pending.before, command, position);
     if (historyUnfit(outcome) && host._activeWallChainId) this._clearGeometryGesture();
     host.requestUpdate();
     return outcome;

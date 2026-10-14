@@ -199,6 +199,65 @@ test('#891 AC2 delayed non-conflict physical refusal preserves newer same-floor 
   assert.deepEqual(s.host._serverCfg, state);
 });
 
+for (const direction of ['undo', 'redo']) {
+  test(`#891 AC2 retryable deferred ${direction} refusal restores an accepted command identity/cursor and permits exactly one retry`, async () => {
+    const s = setup();
+    const older = await s.addWall('g'), accepted = await s.addWall('f');
+    if (direction === 'redo') { s.runtime._undoGeometry(); await s.writes(); }
+    const baseline = clone(s.spaceOf('f'));
+    const send = s.host._sendConfigCandidate;
+    s.host._sendConfigCandidate = async () => { throw Object.assign(new Error('offline'), { code: 'timeout' }); };
+    assert.equal(s.runtime._stepGeometryHistory(direction), true);
+    await assert.rejects(s.runtime._writeConfig(), error => error.physicalGeometryRolledBack === true);
+    s.expectStack(direction === 'undo' ? [older, accepted] : [older],
+      direction === 'redo' ? [accepted] : [], 'retryable refusal restores only the accepted cursor');
+    assert.deepEqual(s.spaceOf('f'), baseline, 'accepted physical baseline is restored');
+    s.host._sendConfigCandidate = send;
+    const sends = s.server.sets;
+    assert.equal(s.runtime._stepGeometryHistory(direction), true);
+    await s.writes();
+    assert.equal(s.server.sets, sends + 1, 'explicit retry sends exactly once; no automatic retry');
+    s.expectStack(direction === 'redo' ? [older, accepted] : [older],
+      direction === 'undo' ? [accepted] : [], 'the retry moves exactly the same object');
+  });
+}
+
+test('#891 AC2 multi-step deferred Undo rollback restores accepted order below a newer independent same-floor command', async () => {
+  const s = setup();
+  const older = await s.addWall('g'), first = await s.addWall('f'), second = await s.addWall('f');
+  const physical = clone(s.spaceOf('f').partitions);
+  assert.equal(s.runtime._stepGeometryHistory('undo'), true);
+  assert.equal(s.runtime._stepGeometryHistory('undo'), true);
+  let reject;
+  s.host._sendConfigCandidate = () => new Promise((resolve, fail) => { reject = fail; });
+  const write = s.runtime._writeConfig(); await settle();
+  const before = s.runtime._geometrySnapshot('f');
+  s.spaceOf('f').plan_scale = 2;
+  s.runtime._recordGeometry(WALL, before); // fresh same-name identity clears the optimistic redo lane
+  const newer = s.geometryHistory.peekUndo();
+  reject(Object.assign(new Error('temporary failure'), { code: 'node_move_backend_unavailable' }));
+  await assert.rejects(write);
+  s.expectStack([older, first, second, newer], [], 'both accepted identities restored below the newer branch');
+  assert.deepEqual(s.spaceOf('f').partitions, physical);
+  assert.equal(s.spaceOf('f').plan_scale, 2);
+  assert.deepEqual(newer.before.partitions, physical, 'independent snapshots carry the restored accepted geometry');
+  assert.deepEqual(newer.after.partitions, physical);
+});
+
+for (const explicit of [true, false]) {
+  test(`#891 AC2 deferred preflight ${explicit ? 'proved unsafe' : 'unexpected check failure'} removes only proven unfit accepted steps`, async () => {
+    const s = setup(); const older = await s.addWall('g'), accepted = await s.addWall('f');
+    assert.equal(s.runtime._stepGeometryHistory('undo'), true);
+    s.host._pendingPhysicalWrites.get('f').fingerprint = '';
+    s.host._checkSpacePhysicalGeometry = explicit ? UNSAFE : () => { throw new TypeError('unexpected'); };
+    const sent = s.server.sets;
+    await assert.rejects(s.runtime._writeConfig(), error => error.code === 'geometry-unsafe');
+    s.expectStack(explicit ? [older] : [older, accepted], [], 'only an explicit proof retires this accepted identity');
+    assert.equal(s.server.sets, sent, 'failed preflight sends no WS');
+    assert.equal(s.ids('f').length, 1, 'physical baseline is restored in either failure case');
+  });
+}
+
 // ---------------------------------------------------------------- AC1
 test('#883 AC1 a floor pinned elsewhere keeps the exact Undo/Redo command, writes nothing, keeps the floor; unpinned, the retry applies exactly it', async () => {
   const s = setup();

@@ -557,8 +557,18 @@ const MUTANT_DEFINITIONS = [
       + '&& node --test --test-name-pattern="#891 AC2" test/geometry-history-refusal.test.mjs',
     because: '#891 AC2: owned physical rollback must retain independent command objects and their order',
     patches: [{ file: 'src/physical-write-history.ts',
-      find: '    stack.removeWhere(command => batch.has(command));',
+      find: '    stack.removeWhere(command => disposable.has(command));',
       replace: '    stack.clear(); // mutant: erase independent history',
+    }],
+  },
+  {
+    id: 'physical-refusal-discards-accepted-history-cursor',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#891 AC2" test/geometry-history-refusal.test.mjs',
+    because: '#891 AC2: a retryable write refusal must restore accepted Undo/Redo identities and cursor, not discard them',
+    patches: [{ file: 'src/physical-write-history.ts',
+      find: 'batch.filter(entry => !entry.position || proof)',
+      replace: 'batch.filter(() => true)',
     }],
   },
   {

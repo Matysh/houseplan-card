@@ -12,10 +12,19 @@ export interface NamedCommand<T> {
   after: T;
 }
 
+/** Identity anchors captured before an optimistic cursor step, never a stack replacement. */
+export interface CommandPosition<T> {
+  lane: 'undo' | 'redo';
+  index: number;
+  anchors: readonly NamedCommand<T>[];
+  epoch: number;
+}
+
 export class CommandStack<T> {
   private readonly _limit: number;
   private _undo: NamedCommand<T>[] = [];
   private _redo: NamedCommand<T>[] = [];
+  private _epoch = 0;
 
   public constructor(limit = 50) {
     // UX-04 promises a useful 30–50-step history. Fifty is the product
@@ -31,6 +40,35 @@ export class CommandStack<T> {
 
   /** Bounded identity snapshot; inspecting it never moves either cursor. */
   public commands(): readonly NamedCommand<T>[] { return [...this._undo, ...this._redo]; }
+
+  public positionOf(command: NamedCommand<T>): CommandPosition<T> | null {
+    for (const lane of ['undo', 'redo'] as const) {
+      const anchors = lane === 'undo' ? this._undo : this._redo;
+      const index = anchors.indexOf(command);
+      if (index >= 0) return { lane, index, anchors: [...anchors], epoch: this._epoch };
+    }
+    return null;
+  }
+
+  /** Roll back only this cursor identity; newer commands and the opposite lane stay. */
+  public restorePosition(command: NamedCommand<T>, position: CommandPosition<T>): void {
+    if (position.epoch !== this._epoch) return; // an authoritative clear is irreversible here
+    this.removeWhere(item => item === command);
+    const lane = position.lane === 'undo' ? this._undo : this._redo;
+    let index = -1;
+    for (const anchor of position.anchors.slice(position.index + 1)) {
+      index = lane.indexOf(anchor);
+      if (index >= 0) break;
+    }
+    if (index < 0) {
+      for (const anchor of position.anchors.slice(0, position.index).reverse()) {
+        const found = lane.indexOf(anchor);
+        if (found >= 0) { index = found + 1; break; }
+      }
+    }
+    lane.splice(index < 0 ? Math.min(position.index, lane.length) : index, 0, command);
+    if (lane.length > this._limit) lane.splice(0, lane.length - this._limit);
+  }
 
   public push(command: NamedCommand<T>): void {
     this._undo.push(command);
@@ -76,6 +114,7 @@ export class CommandStack<T> {
   }
 
   public clear(): void {
+    this._epoch++;
     this._undo = [];
     this._redo = [];
   }
