@@ -46,6 +46,16 @@ checkAll(await page.evaluate(()=>{
 }));
 await page.clock.fastForward(90_000); await page.clock.runFor(300);
 check('arrival saved zoom cannot strand next tick',await page.evaluate(()=>window.__card._space==='f1'));
+const swipeBox=await page.locator('houseplan-card .stage').boundingBox();
+for(const [type,dx,buttons] of [['pointerdown',0,1],['pointermove',-80,1],['pointerup',-120,0]]) {
+  await page.locator('houseplan-card .stage').dispatchEvent(type,{
+    pointerId:81,pointerType:'touch',isPrimary:true,button:0,buttons,
+    clientX:swipeBox.x+swipeBox.width-20+dx,clientY:swipeBox.y+swipeBox.height/2,
+  });
+}
+await page.clock.runFor(300);
+check('manual swipe restores garden base saved by carousel',await page.evaluate(()=>window.__card._space==='garden'&&window.__card._zoom===1));
+await page.evaluate(()=>{location.hash='#space=f1';});await page.clock.runFor(300);
 
 // Door card owns the floor for arbitrarily many ticks, and dialog input pauses.
 await page.locator('houseplan-card .oplock').click();
@@ -97,6 +107,7 @@ await page.locator('houseplan-card .oplock').click();
 await page.evaluate(()=>{location.hash='#space=garden';});
 await page.waitForFunction(()=>window.__card._space==='garden');
 checkAll(await page.evaluate(()=>({spaceChangeClosesDoor:!window.__card._openingInfo,
+  ordinaryCardRestoresCarouselBase:window.__card._zoom===1,
   navigationSendsNoService:window.__cycleCalls.length===0})));
 await page.evaluate(()=>{location.hash='#space=f1';});
 await page.waitForFunction(()=>window.__card._space==='f1');
