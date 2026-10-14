@@ -402,7 +402,10 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // material and physically bounded geometry/cache are needed by View before
 // any editor import. Diagnostic UI remains lazy; absolute 320000-B budget
 // and 2000-B band are unchanged. Cost and bounds are recorded in issue #872.
-export const INITIAL_VIEW_GZIP_CEILING = 307_620;
+// #844: cold-View permission, lazy-owner and HA-admin affordance gates measured
+// 309653 B gzip, 33 B over the previous ceiling's band. Keep the absolute
+// 320000 B budget and 2000 B band; do not move forbidden-entry guards to lazy code.
+export const INITIAL_VIEW_GZIP_CEILING = 309_653;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
