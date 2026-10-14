@@ -141,6 +141,9 @@ checkAll(await page.evaluate(()=>({movedMarkerSendsNoService:window.__cycleCalls
   markerConfirmationClosed:!window.__card._tapConfirm})));
 
 const resetContexts=async()=>{
+  // #894 immediately refreshes the rebound popup and dismisses its old unlock
+  // question. Close that valid current popup before the next fresh-badge case.
+  if(await page.locator('houseplan-card hp-dialog[data-kind="opening"]').count()) await page.keyboard.press('Escape');
   await page.evaluate(async()=>window.__hpTest.setServerConfig(cfg=>{
     cfg.spaces.find(s=>s.id==='f1').openings=[{
       id:'cycle-door',type:'door',rx:550,ry:200,angle:90,len_cm:90,lock:'lock.front_door',

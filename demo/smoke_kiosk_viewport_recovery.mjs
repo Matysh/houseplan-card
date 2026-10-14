@@ -5,10 +5,13 @@ requirePinnedBrowser('894 isolated enlarged kiosk recovery');
 const out = {}, ATTEMPT = 'houseplan-card:version-reload-target:v1';
 const fixtureSource = readFileSync(new URL('./srv/demo.html', import.meta.url), 'utf8');
 const anchor = "card.setConfig({type:'custom:houseplan-card', title:'House Plan', icon_size:3.4});";
-if (fixtureSource.split(anchor).length !== 2) throw Error('894 demo boot anchor changed');
-const bootSource = fixtureSource.replace(anchor,
-  `if(sessionStorage.getItem('hp894-server')) CFG=JSON.parse(sessionStorage.getItem('hp894-server'));
-   card.setConfig(JSON.parse(sessionStorage.getItem('hp894-options')));`);
+const storeAnchor = 'const server=createFixtureStore(CFG,LAYOUT,';
+if ([anchor, storeAnchor].some(value => fixtureSource.split(value).length !== 2)) throw Error('894 demo boot anchor changed');
+// #896 clones the initial wire store. Seed the next document through that
+// constructor, not an assignment to the unrelated old CFG constant.
+const bootSource = fixtureSource.replace(storeAnchor,
+  "const server=createFixtureStore(JSON.parse(sessionStorage.getItem('hp894-server'))||CFG,LAYOUT,")
+  .replace(anchor, "card.setConfig(JSON.parse(sessionStorage.getItem('hp894-options')));");
 for (const kind of ['ordinary', 'fixed', 'single', 'deleted', 'carousel', 'same-version']) {
   const { page, browser } = await launchColdView({ width: 1000, height: 850 });
   try {

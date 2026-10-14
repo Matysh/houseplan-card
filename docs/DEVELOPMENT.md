@@ -234,7 +234,13 @@ M1). Author checks applicability only; execution remains nightly-only (#709).
 
 `smoke_view_entry_recovery` uses accepted config events and trusted keyboard/touch
 on RU/EN 360/1280px cards; an injected queued old lock target tests dispatch
-independently of Lit reusing a button with a new listener. It also retains the
+independently of Lit reusing a button with a new listener. Current rebound names
+are checked before that injection; accepted #846 closes the stale-action popup,
+so the next current action reopens its real badge instead of changing the guard.
+The inherited carousel context smoke closes that now-current popup with Escape
+before the next fresh-badge case. Its document-reload witness seeds #896's
+cloned wire store constructor rather than reassigning the old CFG constant.
+It also retains the
 room-name mouse activation through its stable shared pointer owner.
 `smoke_room_link` retains View/Plan name and metric geometry: the 44px Area
 hit box extends away from the name without enlarging its inline footprint.

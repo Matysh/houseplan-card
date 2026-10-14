@@ -50,15 +50,22 @@ for (const variant of [
         const op = cfg.spaces[0].openings.find(o => o.id === '894-a');
         op.lock = 'lock.hp894_b'; op.contact = 'binary_sensor.hp894_b'; return cfg;
       });
-      // private-ok: inject a queued old target at the action boundary; Lit may reuse
-      // a button and replace its listener, so retaining DOM is not a stale closure.
-      await window.__card._lockAction('lock.hp894_a', 'unlock');
     });
     out[`${prefix}:accepted-rebind-retires-unlock`] = await page.evaluate(() => {
       const root = window.__card.renderRoot, dialog = root.querySelector('hp-dialog[data-kind="opening"]');
       return !root.querySelector('hp-dialog[data-kind="confirm"]') && dialog?.title.includes('Guest lock')
         && dialog.textContent.includes('Guest contact') && window.__894Services.length === 0;
     });
+    await page.evaluate(async () => {
+      // private-ok: inject a queued old target at the action boundary; Lit may reuse
+      // a button and replace its listener, so retaining DOM is not a stale closure.
+      await window.__card._lockAction('lock.hp894_a', 'unlock');
+    });
+    out[`${prefix}:queued-old-target-refused`] = await page.evaluate(() => window.__894Services.length === 0
+      && !window.__card.renderRoot.querySelector('hp-dialog[data-kind="confirm"]'));
+    // Accepted #846 closes a popup on a stale action. Re-enter through the
+    // genuine current badge; no fabricated popup/state is needed to continue.
+    await locks.first().tap();
     await page.locator('#host houseplan-card .lockact').click();
     out[`${prefix}:current-lock-action`] = await page.evaluate(() => window.__894Services.length === 1
       && window.__894Services[0].entity_id === 'lock.hp894_b' && window.__894Services[0].service === 'lock');
