@@ -22,7 +22,12 @@ export interface SpaceReferenceRepairContext {
   removeLiveMissingPositions?: boolean;
 }
 
-export type SpaceReferenceOwnerKind = 'room_label' | 'device' | 'group' | 'unknown';
+/**
+ * `legacy_group` (#869): a `grp_<HA Area id>` key of the per-area lamp groups
+ * of v1.0–v1.4.x, dropped in v1.5.0. Recognised only to explain the record:
+ * it stays unverified and is never removed.
+ */
+export type SpaceReferenceOwnerKind = 'room_label' | 'device' | 'group' | 'legacy_group' | 'unknown';
 
 export interface SpaceReferencePositionDetail {
   id: string;
@@ -30,7 +35,7 @@ export interface SpaceReferencePositionDetail {
   kind: SpaceReferenceOwnerKind;
   /** Empty when no safe human-readable name exists. */
   name: string;
-  reason?: 'registry_unavailable' | 'unknown_owner';
+  reason?: 'registry_unavailable' | 'unknown_owner' | 'legacy_group';
 }
 
 export interface SpaceReferenceReport {
@@ -48,6 +53,8 @@ export interface SpaceReferenceReport {
   removedPositions: SpaceReferencePositionDetail[];
   liveMissingPositions: SpaceReferencePositionDetail[];
   unverifiedPositions: SpaceReferencePositionDetail[];
+  /** #869: the owner roster of this analysis was complete (memory only). */
+  registryAuthoritative: boolean;
 }
 
 export interface SpaceReferenceRepairResult {
@@ -172,6 +179,7 @@ export function repairSpaceReferences(
     removedPositions: [],
     liveMissingPositions: [],
     unverifiedPositions: [],
+    registryAuthoritative: context.ownerRoster?.authoritative === true,
   };
   const handledLayout = new Set<string>();
 
@@ -362,6 +370,11 @@ export function repairSpaceReferences(
       owner = detail(key, value, 'device');
       status = rosterAuthoritative ? 'absent' : 'unverified';
       if (status === 'unverified') owner.reason = 'registry_unavailable';
+    } else if (key.startsWith('grp_')) {
+      // #869: after every marker/device check, so only the label changes —
+      // never the status, whatever the roster says.
+      owner = detail(key, value, 'legacy_group', '', 'legacy_group');
+      status = 'unverified';
     } else {
       owner = detail(key, value, 'unknown', '', 'unknown_owner');
       status = 'unverified';

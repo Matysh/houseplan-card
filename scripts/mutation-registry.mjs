@@ -8433,6 +8433,33 @@ const MUTANT_DEFINITIONS = [
       replace: '          ${!d.changed ? nothing : html`',
     }],
   },
+  // #869: непроверенные позиции Optimize — объяснение, повтор, диагностика.
+  {
+    id: 'optimize-legacy-group-unlabelled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#869 AC2" test/space-reference-repair.test.mjs',
+    because: 'an old per-area lamp group (`grp_<area>`, v1.0–v1.4) reported as an unknown owner '
+      + 'is exactly the owner example of #869: the person cannot tell what the record is (AC1/AC2)',
+    patches: [{
+      file: 'src/space-reference-repair.ts',
+      find: "      owner = detail(key, value, 'legacy_group', '', 'legacy_group');",
+      replace: "      owner = detail(key, value, 'unknown', '', 'unknown_owner');",
+    }],
+  },
+  {
+    id: 'optimize-legacy-group-removed-on-full-registry',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#869 AC2" test/space-reference-repair.test.mjs',
+    because: 'recognising `grp_*` is only a label: one unknown id or a missing floor is not proof '
+      + 'enough to delete user data, whatever the registry says (#869 decision 12.10, AC2)',
+    patches: [{
+      file: 'src/space-reference-repair.ts',
+      find: "      owner = detail(key, value, 'legacy_group', '', 'legacy_group');\n"
+        + "      status = 'unverified';",
+      replace: "      owner = detail(key, value, 'legacy_group', '', 'legacy_group');\n"
+        + "      status = rosterAuthoritative ? 'absent' : 'unverified';",
+    }],
+  },
   {
     id: 'union-failure-kills-space',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '

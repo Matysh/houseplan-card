@@ -22,6 +22,7 @@ const emptyOwnerReport = {
   removedPositions: [],
   liveMissingPositions: [],
   unverifiedPositions: [],
+  registryAuthoritative: false,
 };
 
 test('issue 265 Python/TypeScript lineage fixture stays strict and bounded', () => {
@@ -386,4 +387,56 @@ test('issue 252 fails closed for limited registry and unknown future layout owne
   assert.equal(authoritative.report.orphanDevicePositionsRemoved, 1);
   assert.equal(authoritative.report.orphanGroupPositionsRemoved, 1);
   assert.equal(authoritative.report.unverifiedPositions.length, 1);
+});
+
+// #869 AC2: старые `grp_<id области>` (v1.0–v1.4.x) — свой вид только для
+// объяснения. Статус «не проверено» и отсутствие удаления — при любом реестре и
+// при включённом «Убрать старые позиции»; маркеры и устройства проверяются раньше.
+test('#869 AC2 legacy grp_* records get their own kind and are never removed', () => {
+  const opaque = '601413c5793c698f73b8af0a0b93cac6';
+  const config = {
+    spaces: [space('home')],
+    markers: [
+      { id: 'grp_marker', binding: 'virtual', space: 'home', name: 'Group-like marker' },
+      { id: 'grp_retired', binding: 'virtual', removed: true, space: 'gone', name: 'Retired' },
+    ],
+    settings: {},
+  };
+  const layout = {
+    grp_detskaia_elina: { s: 'f2', x: 0.25, y: 0.25 },
+    grp_detskaia_maiia: { s: 'f2', x: 0.5, y: 0.5 },
+    [opaque]: { s: 'smrnf8s7x', x: 0.75, y: 0.75 },
+    grp_marker: { s: 'gone', x: 0.1, y: 0.1 },
+    grp_retired: { s: 'gone', x: 0.2, y: 0.2 },
+    grp_alive_floor: { s: 'home', x: 0.3, y: 0.3 },
+  };
+  const roster = (authoritative) => ({ authoritative, deviceIds: [], entityIds: [], names: {} });
+  for (const context of [
+    {},
+    { ownerRoster: roster(false) },
+    { ownerRoster: roster(false), removeLiveMissingPositions: true },
+    { ownerRoster: roster(true) },
+    { ownerRoster: roster(true), removeLiveMissingPositions: true },
+  ]) {
+    const label = JSON.stringify(context);
+    const result = repairSpaceReferences(config, layout, context);
+    for (const key of ['grp_detskaia_elina', 'grp_detskaia_maiia', opaque, 'grp_alive_floor']) {
+      assert.deepEqual(result.layout[key], layout[key], `${label}: ${key} stays byte-for-byte`);
+    }
+    assert.deepEqual(result.report.unverifiedPositions, [
+      { id: 'grp_detskaia_elina', spaceId: 'f2', kind: 'legacy_group', name: '', reason: 'legacy_group' },
+      { id: 'grp_detskaia_maiia', spaceId: 'f2', kind: 'legacy_group', name: '', reason: 'legacy_group' },
+      { id: opaque, spaceId: 'smrnf8s7x', kind: 'unknown', name: '', reason: 'unknown_owner' },
+    ], label);
+    // A marker id wins over the prefix: a device, exactly as before.
+    assert.deepEqual(result.report.liveMissingPositions.map((item) => [item.id, item.kind]),
+      [['grp_marker', 'device']], label);
+    assert.ok(result.report.removedPositions.some((item) => item.id === 'grp_retired'
+      && item.kind === 'device'), `${label}: a removed marker is still proven absent`);
+    // Only records of missing spaces reach the block — the basis of «you can leave them».
+    for (const item of result.report.unverifiedPositions) {
+      assert.equal(config.spaces.some((sp) => sp.id === item.spaceId), false, `${label}: ${item.id}`);
+    }
+    assert.equal(result.report.registryAuthoritative, context.ownerRoster?.authoritative === true, label);
+  }
 });
