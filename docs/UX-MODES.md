@@ -188,7 +188,10 @@ new-device acknowledgement and warm dialog restoration obey the same gate
 (#844). Read-only/kiosk still have device controls, more-info and Close.
 The room's Area icon remains a passive part of the draggable label in Plan,
 including for writers without HA-admin rights; it never navigates from Plan.
-Outside Plan it is an HA-admin link, and kiosk never displays it.
+In View it is a separate native HA-admin button with an accessible name,
+keyboard activation and a 44px touch floor; activating it never fits the room.
+The room name remains an independent fit action. Other editors keep a passive
+icon, and kiosk never displays it (#894).
 
 Header in View: space tabs, summary control and zoom cluster. On wider screens
 the summary control also remains available in editors; the fixed distance from

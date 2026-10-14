@@ -70,7 +70,13 @@ const res = await page.evaluate(async () => {
   c._setMode('view'); c._infoCard = c._devices[0]; await c.updateComplete;
   await esc(); out.info = !c._infoCard;
   // инфо двери/замка
-  c._openingInfo = { id: 'op1', type: 'door', rx: 550, ry: 200, len_cm: 90, lock: 'lock.front_door' }; await c.updateComplete;
+  await window.__hpTest.setServerConfig(cfg => {
+    cfg.spaces.find(space => space.id === c._space).openings = [
+      { id: 'esc-door', type: 'door', x: .55, y: .2, angle: 0, length: .09, lock: 'lock.front_door' },
+    ]; return cfg;
+  });
+  sr.querySelector('.oplock')?.click(); await c.updateComplete;
+  out.openingInfoVisibleBeforeEsc = !!sr.querySelector('hp-dialog[data-kind="opening"]');
   await esc(); out.openingInfo = !c._openingInfo;
   // приоритет: инфо поверх настроек — Esc закрывает только инфо
   c._openSettingsDialog(); c._infoCard = c._devices[0]; await c.updateComplete;

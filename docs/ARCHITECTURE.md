@@ -36,6 +36,8 @@ permissions/identity/intent cannot publish or acknowledge it. The Area action is
 a native sibling of the room-fit keyboard target, not a nested button.
 The named fit sibling carries the same stable room ID through the shared plan
 pointer owner, so its keyboard role does not swallow the existing room tap.
+Its 44px native Area hit box extends away from the text while retaining the
+passive icon's inline footprint and View/Plan name-anchor parity.
 `isLightGroupDevice` certifies model Group using the existing indexed HA children;
 the shared Auto/roster/preview/static resolver leaves custom icons first.
 `kiosk-viewport-recovery.ts` keeps only a ten-minute, consume-once camera address

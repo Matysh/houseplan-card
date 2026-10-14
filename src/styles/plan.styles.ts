@@ -711,11 +711,14 @@ export const planStyles = css`
     }
     .rlarea {
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       box-sizing: border-box;
       width: 44px;
       height: 44px;
       margin-block: calc((1em - 44px) / 2);
+      /* Keep the same name anchor as Plan's passive .85em icon. The native
+         touch floor extends right, away from the independent fit text. */
+      margin-inline-end: calc(0.85em - 44px);
       padding: 0;
       border: 0;
       border-radius: 6px;

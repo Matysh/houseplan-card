@@ -234,8 +234,14 @@ M1). Author checks applicability only; execution remains nightly-only (#709).
 
 `smoke_view_entry_recovery` uses accepted config events and trusted keyboard/touch
 on RU/EN 360/1280px cards; an injected queued old lock target tests dispatch
-independently of Lit reusing a button with a new listener. `smoke_warm_view_marker`
-also retains the room-name tap through its stable shared pointer owner.
+independently of Lit reusing a button with a new listener. It also retains the
+room-name mouse activation through its stable shared pointer owner.
+`smoke_room_link` retains View/Plan name and metric geometry: the 44px Area
+hit box extends away from the name without enlarging its inline footprint.
+Native post-release implicit capture cancellation of the older delayed touch
+room-fit remains a separately recorded lifecycle finding, not an #894 fix.
+`smoke_esc_dialogs` opens the canonical current badge before its Escape oracle.
+`smoke_warm_view_marker`
 opens and edits a genuine View draft, replaces its element and delays/fails only
 the chunk transport. It checks visible draft, Close/retry, write rights,
 disconnect and newer intent with no hidden marker or extra acknowledgement.

@@ -97,7 +97,8 @@ Issue labels, not this record, remain authoritative for implementation status.
 
 - #894 refreshes named opening cards from accepted exact-space config, restores
   View device drafts only after their renderer loads, exposes a separate 44px
-  keyboard Area action, unifies certified device-group icons and retains the
+  keyboard Area action without shifting the View/Plan name anchor, unifies
+  certified device-group icons and retains the
   non-carousel kiosk camera across safe document updates. No schema/limit change.
   Late warm drafts and camera addresses remain bound to their original owner.
   The separate room-name action retains the shared pointer-fit owner.

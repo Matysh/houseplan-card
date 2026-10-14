@@ -91,7 +91,9 @@ for (const variant of [
       return window.__894Navigation.length === 4 && window.__894Services.length === 0
         && window.__894Camera === JSON.stringify({ space: c._space, zoom: c._zoom, view: c._view });
     });
-    await roomFit.tap(); await page.waitForTimeout(700);
+    // Mouse activation isolates the new independent owner. Native touch's
+    // post-release implicit capture lifecycle is tracked separately by #847.
+    await roomFit.click(); await page.waitForTimeout(700);
     out[`${prefix}:separate-room-name-still-fits`] = await page.evaluate(() => {
       const c = window.__card, fit = c.renderRoot.querySelector('.rlfit[data-id]');
       return c._roomFocus?.roomId === fit?.dataset.id && window.__894Navigation.length === 4;
