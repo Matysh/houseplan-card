@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 103, issue: 56. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 104, issue: 56. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -19,6 +19,7 @@
 | #892 | [SPEC-REVIEW-892-r3.md](SPEC-REVIEW-892-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
 | #891 | [SPEC-REVIEW-891-r1.md](SPEC-REVIEW-891-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | release-артефакты не называют обновление канона; классификация release-ledger не разделяет | `docs/UX-MODES.md` `docs/ARCHITECTURE.md` `docs/USER-GUIDE.md` `docs/DEVELOPMENT.md` `docs/STATUS.md` `src/wall-node-history.ts` `docs/process/REVIEWER.md` |
 | #891 | [SPEC-REVIEW-891-r2.md](SPEC-REVIEW-891-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #891 | [CODE-REVIEW-891-r1.md](CODE-REVIEW-891-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #890 | [SPEC-REVIEW-890-r1.md](SPEC-REVIEW-890-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | пункт контракта 1 покрыт не полностью AC1; , снимаю сам — формулировка в «Принято предположительно» | `houseplan-card.ts` |
 | #890 | [SPEC-REVIEW-890-r2.md](SPEC-REVIEW-890-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #890 | [CODE-REVIEW-890-r1.md](CODE-REVIEW-890-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
