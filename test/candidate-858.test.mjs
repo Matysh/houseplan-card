@@ -98,7 +98,9 @@ test('#889 beta missing field/scene records are advisory, not a fabricated owner
 });
 
 test('#889 stable, RC, unknown and malformed versions cannot use the beta field policy', () => {
-  for (const version of ['1.81.0', '1.81.0-rc.1', '1.81.0-alpha.1', undefined]) {
+  for (const version of ['1.81.0', '1.81.0-rc.1', '1.81.0-alpha.1',
+    '1.81.0-rc-beta.1', '1.81.0-dev-beta.1', '1.81.0-alpha.beta.1',
+    '1.81.0-beta.1+build', '1.81.0-beta.0', undefined]) {
     const f = fixture();
     f.input.version = version;
     f.issue.comments = [];

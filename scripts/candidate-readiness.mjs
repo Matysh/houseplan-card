@@ -31,7 +31,7 @@ export const NATIVE_PROFILES = Object.freeze({
 export function candidatePolicy(version) {
   const beta = typeof version === 'string'
     && versionFromTag(`v${version}`).prerelease
-    && /-beta\.[1-9]\d*$/.test(version);
+    && /^\d+\.\d+\.\d+-beta\.[1-9]\d*$/.test(version);
   return { channel: beta ? 'beta' : 'strict', manualAcceptanceRequired: !beta };
 }
 export function requiredProfiles(entry, files) {
