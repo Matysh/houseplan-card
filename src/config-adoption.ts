@@ -159,7 +159,7 @@ export class MutableConfigAdoption {
       }
       this.layoutRev = layResp?.rev ?? this.layoutRev;
     }
-    if (next) this.rememberAccepted(next, layResp?.layout ?? this.acceptedCache?.layout ?? this.layout,
+    if (next) this.rememberAccepted(next, layResp !== undefined ? layResp?.layout ?? {} : this.acceptedCache?.layout ?? this.layout,
       layResp === undefined ? this.acceptedCache?.layout_rev ?? this.layoutRev : this.layoutRev);
     return { configChanged, layoutChanged };
   }

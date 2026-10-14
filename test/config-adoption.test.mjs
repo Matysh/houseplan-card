@@ -548,6 +548,9 @@ test('#890 AC2: config-only acceptance never pairs an unseen layout revision wit
   adoption.adoptMergedLayout({}, { rev: 9, layout: {} });
   assert.equal(adoption.snapshot(null).layout_rev, 9);
   assert.deepEqual(adoption.snapshot(null).layout, {});
+  adoption.adoptMergedLayout({ first: { s: 'f1', x: 0.1, y: 0.2 } }, { rev: 10 });
+  adoption.adoptResponses({ config: cfg('Empty layout'), rev: 11 }, null, () => {}, () => {});
+  assert.deepEqual(adoption.snapshot(null).layout, {}, 'explicit empty authority is not the old cached layout');
 });
 
 // --- AC6: optimistic writes (#314/#439/#442) --------------------------------
