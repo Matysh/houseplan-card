@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 67, issue: 36. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 68, issue: 37. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -54,6 +54,7 @@
 | #850 | [SPEC-REVIEW-850-r2.md](SPEC-REVIEW-850-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #845 | [SPEC-REVIEW-845-r1.md](SPEC-REVIEW-845-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | защитная регрессия AC4/AC8 не привязана к | `845-wall-identity-parity.json` `tests_backend/wall_node_parity.py` `scripts/mutation-registry.mjs` `demo/srv/demo.html` `test/model-invariants.test.mjs` `fixture-wall-key.test.mjs` `wall-segment-model.ts` `model-invariants.test.mjs` |
 | #845 | [SPEC-REVIEW-845-r2.md](SPEC-REVIEW-845-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #844 | [SPEC-REVIEW-844-r1.md](SPEC-REVIEW-844-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #843 | [SPEC-REVIEW-843-r1.md](SPEC-REVIEW-843-r1.md) | spec · r1 | 🟢 зелёный | 0 | 1 | вне скоупа (заведён отдельный issue); снимаю сам, не блокирует | `houseplan-editor-runtime.ts` `houseplan-card.ts` |
 | #843 | [CODE-REVIEW-843-r1.md](CODE-REVIEW-843-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #843 | [CODE-REVIEW-843-r2.md](CODE-REVIEW-843-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
