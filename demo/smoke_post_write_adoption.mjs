@@ -92,7 +92,7 @@ const out = await page.evaluate(async () => {
     card._persistLayout.cancel();
     server = { config: freshConfig(), layout: {}, cfgRev: 10, layRev: 20 };
     concurrentHref = `media-source://image/${scenario}-500`;
-    adoption.restoreCached({ config: structuredClone(server.config), rev: 10, layout: {}, layout_rev: 20 });
+    adoption.acceptPairWrite(structuredClone(server.config), {}, { config_rev: 10, layout_rev: 20 });
     card._space = 'beta';
     card._spaceDialog = null;
     card._backupImportDialog = null;

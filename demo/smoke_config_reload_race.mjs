@@ -7,10 +7,11 @@ const { page, browser } = await launchColdView();
 const out = await page.evaluate(async () => {
   const card = window.__card;
   const clone = (value) => structuredClone(value);
+  const fixtureConfig = clone(card._serverCfg);
   const cache = () => JSON.parse(localStorage.getItem('houseplan_card_cfg_v1') || 'null');
   const firstTitle = (config) => config?.spaces?.[0]?.title;
   const config = (title, planUrl) => {
-    const next = clone(card._serverCfg);
+    const next = clone(fixtureConfig);
     next.spaces[0].title = title;
     next.spaces[0].plan_url = planUrl;
     return next;
@@ -205,7 +206,12 @@ const out = await page.evaluate(async () => {
     await reset(`race-baseline-${name}`);
     const stale = config(`race-stale-${name}`, `/assets/race-stale-${name}.svg`);
     const gate = deferred();
-    card._getAuthoritativeConfig = async () => gate.promise;
+    let readOnce = false;
+    card._getAuthoritativeConfig = async () => {
+      if (readOnce) return new Promise(() => {}); // #890: new-context mandatory reads are distinct transports, not the stale request's promise.
+      readOnce = true;
+      return gate.promise;
+    };
     const pending = card._reloadConfigOnly(false, 3);
     await Promise.resolve();
     await invalidate();
@@ -355,7 +361,10 @@ const out = await page.evaluate(async () => {
     oldDeferredEventExpired,
     restoredEchoSkipped,
     restoredHigherEventAccepted,
-    noStaleToastOrRetry: tails.toast === 0 && tails.retry === 0,
+    // #890: a new-context mandatory load can legitimately schedule recovery.
+    // The stale reply must add no tail AFTER that boundary, as each case records.
+    noStaleToastOrRetry: routeInvalidated && userInvalidated && connectionInvalidated && reconnectInvalidated
+      && writeFinal.tail.toast === writeTail.toast && writeFinal.tail.retry === writeTail.retry,
   };
 });
 

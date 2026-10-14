@@ -161,32 +161,36 @@ const reread = await ev(async () => {
 });
 check('#842 AC1: a re-read has the same composition', reread, ac1.sent);
 
-// AC4: opening a device flagged new acknowledges it — an ordinary deferred
-// write. The dialog's Save cancels it (its content travels in the candidate);
-// a rejected Save must re-arm it once.
+// #890: the explicit visit owns its accepted ack separately. A later refused
+// dialog Save preserves that accepted attention change and the editable draft,
+// rather than retrying an acknowledgement automatically.
 await ev(async () => {
   await window.__hpTest.setServerConfig((cfg) => {
     cfg.settings.new_device_ids = ['d_tv'];
     return cfg;
   });
   window.__842.sets.length = 0;
-  window.__842.reject = 1;
+  window.__842.reject = 0;
 });
-await saveDevice('d_tv', 'TV #842');
+await page.locator('[data-hp="device"][data-id="d_tv"]').click();
+await ev(() => window.__card._writeChain);
+await ev(() => { window.__842.reject = 1; });
+await page.locator(`${markerDialog} #marker-name`).fill('TV #842');
+await page.locator(`${markerDialog} .dialog-action-commit [data-hp="dialog-confirm"]`).click();
 await page.waitForTimeout(1200);
 const ac4 = await ev(() => {
-  const [attempt, restored] = window.__842.sets;
+  const [ack, attempt] = window.__842.sets;
   const named = (cfg) => !!cfg?.markers?.some((item) => item.name === 'TV #842');
   return {
     writes: window.__842.sets.length,
     attemptIsTheSave: named(attempt) && !(attempt?.settings?.new_device_ids || []).includes('d_tv'),
-    restoredCarriesTheAck: !!restored && !(restored.settings.new_device_ids || []).includes('d_tv'),
-    restoredWithoutDraft: !named(restored),
+    acceptedAckClearsAttention: !!ack && !(ack.settings.new_device_ids || []).includes('d_tv'),
+    ackWithoutDraft: !named(ack),
     dialogKeepsDraft: window.__card.shadowRoot.querySelector('hp-dialog[data-kind="marker"] #marker-name')?.value === 'TV #842',
   };
 });
-check('#842 AC4 marker: a rejected Save re-arms the cancelled pending edit, written once', ac4, {
-  writes: 2, attemptIsTheSave: true, restoredCarriesTheAck: true, restoredWithoutDraft: true, dialogKeepsDraft: true,
+check('#890 explicit ack precedes refused marker Save without an automatic retry', ac4, {
+  writes: 2, attemptIsTheSave: true, acceptedAckClearsAttention: true, ackWithoutDraft: true, dialogKeepsDraft: true,
 });
 
 await finish(browser, out);

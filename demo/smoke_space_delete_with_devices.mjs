@@ -165,9 +165,8 @@ const pass = (viewport) => page.evaluate(async ({ full }) => {
   card._persistLayout.cancel();
   await card._writeChain;
   // The mock server's plan becomes the card's, as an authoritative re-read would.
-  card._adoption.restoreCached({
-    config: structuredClone(server.config), rev: server.cfgRev,
-    layout: structuredClone(server.layout), layout_rev: server.layoutRev,
+  card._adoption.acceptPairWrite(structuredClone(server.config), structuredClone(server.layout), {
+    config_rev: server.cfgRev, layout_rev: server.layoutRev,
   });
   card.requestUpdate();
   await hp.settled();

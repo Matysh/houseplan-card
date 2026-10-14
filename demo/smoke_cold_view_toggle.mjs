@@ -69,10 +69,7 @@ const out = await page.evaluate(async () => {
   };
   const baseHass = card.hass;
   const baseCallWS = baseHass.callWS.bind(baseHass);
-  const makeHass = () => ({
-    ...baseHass,
-    states: { ...baseHass.states },
-    connection: {
+  const connection = {
       ...baseHass.connection,
       subscribeEvents: async (callback, event) => {
         const listeners = subscriptions.get(event) || new Set();
@@ -80,7 +77,11 @@ const out = await page.evaluate(async () => {
         subscriptions.set(event, listeners);
         return () => listeners.delete(callback);
       },
-    },
+    };
+  const makeHass = () => ({
+    ...baseHass,
+    states: { ...baseHass.states },
+    connection,
     callService: async (domain, service, data) => {
       serviceCalls.push({ domain, service, data });
       // The stub HA honestly flips the switch and pushes a fresh state frame.
