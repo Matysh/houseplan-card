@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 61, issue: 35. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 63, issue: 35. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -28,6 +28,8 @@
 | #874 | [CODE-REVIEW-874-r1.md](CODE-REVIEW-874-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #873 | [SPEC-REVIEW-873-r1.md](SPEC-REVIEW-873-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #872 | [SPEC-REVIEW-872-r1.md](SPEC-REVIEW-872-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | неверный номер строки у источника формата Dreame path | `docs/VACUUM.md` |
+| #872 | [CODE-REVIEW-872-r1.md](CODE-REVIEW-872-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | §8.4 budget degradation не достаёт до заявленного поведения | `src/vacuum-path-geometry.ts` `test/vacuum-path-geometry.test.mjs` `houseplan-card.ts` `vacuum-path-geometry.ts` |
+| #872 | [CODE-REVIEW-872-r2.md](CODE-REVIEW-872-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #871 | [SPEC-REVIEW-871-r1.md](SPEC-REVIEW-871-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #871 | [CODE-REVIEW-871-r1.md](CODE-REVIEW-871-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #869 | [SPEC-REVIEW-869-r1.md](SPEC-REVIEW-869-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
