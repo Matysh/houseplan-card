@@ -17451,9 +17451,10 @@ const MUTANT_DEFINITIONS = [
       + 'device projection; only its presented frames and transition events show the new closed door '
       + 'drawn from the old projection',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: '      geometry: this._cfgEpoch,\n',
-      replace: '      // mutant: the projection forgets its plan\n',
+      // #850: the capture moved out of the card unchanged (render-snapshot-capture.ts).
+      file: 'src/render-snapshot-capture.ts',
+      find: '    geometry: host._cfgEpoch,\n',
+      replace: '    // mutant: the projection forgets its plan\n',
     }],
   },
   {
@@ -17888,6 +17889,135 @@ const MUTANT_DEFINITIONS = [
     patches: [{ file: 'src/wall-node-move.ts',
       find: '    if (!along.length || (line && Math.abs(line.direction[o]) > EPS)) continue;',
       replace: '    if (!along.length) continue; // mutant: the frozen axis/carrier no longer limits it',
+    }],
+  },
+  // #850: the work of a sensor tick — the LED frame key, the incremental
+  // render-device snapshot, the light fingerprints. Mutants run nightly;
+  // each one was checked by hand: patch → guard red → revert.
+  {
+    id: 'led-frame-key-without-icon-size',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#850 AC2" test/led-strip-runtime.test.mjs',
+    because: '#850 AC2: icon_size is read by the frame (stripe thickness D); without it in the key a '
+      + 'config change keeps the old thickness once the frame no longer follows every HA projection',
+    patches: [{
+      file: 'src/led-strip-runtime.ts',
+      find: '    host._config?.icon_size, palette.c, palette.a, host._cellCm, host._gridPitch];',
+      replace: '    palette.c, palette.a, host._cellCm, host._gridPitch];',
+    }],
+  },
+  {
+    id: 'led-frame-key-holds-plan-hass',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#850 AC2" test/led-strip-runtime.test.mjs',
+    because: '#850 AC2: the HA projection is new on every tick; keyed by it the frame and its tubes '
+      + 'are rebuilt for a sensor elsewhere on the plan (the dev behaviour, one frame per tick)',
+    patches: [{
+      file: 'src/led-strip-runtime.ts',
+      find: '  const key: unknown[] = [hass?.entities, sources, ...inputs];',
+      replace: '  const key: unknown[] = [hass, hass?.entities, sources, ...inputs];',
+    }],
+  },
+  {
+    id: 'led-frame-key-without-source-state',
+    guard: 'node demo/smoke_sensor_tick_freshness.mjs',
+    because: '#850 AC5: without the state rows of its sources and primary entity in the key the stripe '
+      + 'and its field keep the old colour after the light is recoloured (the graph changes only on on/off)',
+    patches: [{
+      file: 'src/led-strip-runtime.ts',
+      find: '  for (const source of sources) if (markers.has(source.device.id)) key.push(hass?.states?.[source.eid]);\n',
+      replace: '',
+    }, {
+      file: 'src/led-strip-runtime.ts',
+      find: "  for (const device of devices) if (markers.has(device.id)) key.push(hass?.states?.[device.primary || '']);\n",
+      replace: '',
+    }],
+  },
+  {
+    id: 'led-field-paints-previous-frame',
+    guard: 'node demo/smoke_sensor_tick_freshness.mjs',
+    because: '#850 AC6: the field must paint the frame of this HA tick; painting the remembered one '
+      + 'leaves the field in the old colour and state while the stripe changes',
+    patches: [{
+      file: 'src/led-strip-runtime.ts',
+      find: '  const frame = ledFrameFor(host, space, spaceGlow);\n  const module = frame.scene',
+      replace: '  const frame = frames.get(host)?.frame ?? ledFrameFor(host, space, spaceGlow);\n  const module = frame.scene',
+    }],
+  },
+  {
+    id: 'led-release-keeps-frame-and-tubes',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#850" test/led-strip-path-cache.test.mjs',
+    because: '#850 AC6: tubes now outlive a state frame; disconnect must still release the frame and '
+      + 'every tube it holds, or the card retains LED entries after it is gone',
+    patches: [{
+      file: 'src/led-strip-runtime.ts',
+      find: '  for (const view of frames.get(owner)?.frame.views ?? []) stripePaths.delete(view.strip);\n  frames.delete(owner);\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'snapshot-battery-read-untracked',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/render-snapshot-incremental.test.mjs',
+    because: '#850 AC3/AC5: a marker that reads a battery sibling only through the battery context keeps '
+      + 'its old charge when that read is not recorded as an input of its presentation',
+    patches: [{
+      file: 'src/render-snapshot-capture.ts',
+      find: '  const batteryContext = showBattery ? createDeviceBatteryContext(planHass, registryHass) : undefined;',
+      replace: '  const batteryContext = showBattery ? createDeviceBatteryContext(host._planHass, registryHass) : undefined;',
+    }],
+  },
+  {
+    id: 'snapshot-state-read-unrecorded',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/render-snapshot-incremental.test.mjs',
+    because: '#850 AC3: the recorded rows are the inputs of a presentation; an unrecorded read leaves '
+      + 'value, battery, LQI and badge stale on a state tick (the differential oracle)',
+    patches: [{
+      file: 'src/render-snapshot-reuse.ts',
+      find: '      get: (target, name) => { record(name); return Reflect.get(target, name); },',
+      replace: '      get: (target, name) => Reflect.get(target, name),',
+    }],
+  },
+  {
+    id: 'light-geometry-memo-by-floor-id',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#850 AC4" test/glow-scene.test.mjs',
+    because: '#850 AC4(а): the fingerprint is remembered per raw record; per floor id a replaced config '
+      + 'with an edited wall keeps the old light',
+    patches: [{
+      file: 'src/live-interaction-runtime.ts',
+      find: "    const owner = record && typeof record === 'object' ? record : null;",
+      replace: "    const owner = record && typeof record === 'object'\n"
+        + "      ? (this.floorOwners[String((record as { id?: unknown }).id)] ??= {}) : null;",
+    }, {
+      file: 'src/live-interaction-runtime.ts',
+      find: '  private geometryBuilds = 0;',
+      replace: '  private geometryBuilds = 0;\n  private floorOwners: Record<string, object> = {};',
+    }],
+  },
+  {
+    id: 'light-state-without-controller-row',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#850 AC4" test/devices.test.mjs',
+    because: '#850 AC4(б): a wall switch row is an input of the light graph; outside the state fingerprint '
+      + 'the cached graph keeps the lamp on after the switch turns it off',
+    patches: [{
+      file: 'src/devices.ts',
+      find: "      if (typeof id === 'string' && isControllable(id)) ids.add(id);",
+      replace: "      if (typeof id === 'string' && id.startsWith('light.')) ids.add(id);",
+    }],
+  },
+  {
+    id: 'tick-counter-missing-passes',
+    guard: 'node --test test/sensor-tick-scenarios.test.mjs',
+    because: '#850 AC1: a counter the build does not have must fail the profile, never pass it as zero '
+      + '(the blind recomputesOnHaTicks counted none of the frame work it was meant to show)',
+    patches: [{
+      file: 'demo/performance/sensor-tick-scenarios.mjs',
+      find: '        if (!Number.isFinite(value)) failures.push(`sample ${index}: ${name}.${counter} missing`);',
+      replace: '        if (!Number.isFinite(value)) continue;',
     }],
   },
 ];

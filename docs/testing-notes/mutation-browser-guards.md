@@ -36,8 +36,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 51 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 62 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 41 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 154 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **316 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 156 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **318 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -319,6 +319,11 @@ Only the selected smoke section runs per mutant; execution remains nightly.
 - `room-area-direct-navigation-forgets-permission`
 - `kiosk-writer-lifecycle-incorrectly-blocked`
 
+`#850` adds two witnesses of a complete HA tick through the card: the LED frame
+key without its source state, and the field painting the remembered frame. Each
+needs the real stripe and field after one `hass` assignment and one Lit update;
+the Node frame tests cover every key input, not the painted pair.
+
 - `backup-import-runtime-skips-ownership`
 - `backup-import-double-apply`
 - `backup-import-blocks-populated-space-create`
@@ -456,6 +461,8 @@ owner, with no settled copy surviving the next presented frame.
 - `kiosk-pointer-survives-reattach`
 - `kiosk-scale-dialog-loads-editor-runtime`
 - `led-auto-slot-reserved`
+- `led-field-paints-previous-frame`
+- `led-frame-key-without-source-state`
 - `led-hidden-marker-loads-chunk`
 - `locale-failure-toast-dropped`
 - `main-card-snapshot-without-geometry`
