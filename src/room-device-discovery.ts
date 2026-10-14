@@ -12,6 +12,7 @@ const knownWith = (config: ServerConfig, ids: readonly string[]): string[] =>
 /** Owned by the lazy editor; nothing is acknowledged in live settings before Save succeeds. */
 export class RoomDeviceDiscovery {
   private placements = new Set<Placement>();
+  clear(): void { this.placements.clear(); }
 
   capture(rooms: readonly CreatedAreaRoom[], before: readonly DevItem[], after: readonly DevItem[],
     config: ServerConfig): void {

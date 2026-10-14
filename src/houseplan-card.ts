@@ -547,6 +547,8 @@ export class HouseplanCard extends LitElement {
       if (this._configWriteContext.observe(this.hass)) {
         this._loadOk = false; this._serverCanWrite = null; this._loadTries = 0;
         this._saveConfigDebounced.cancel(); this._adoption.resetContext();
+        this._persistLayout.cancel(); this._dirtyPos.clear(); this._sentPos.clear();
+        this._editorRuntime?.roomDeviceDiscovery.clear();
         this._geometryHistory.clear(); this._devicePositionHistory.clear();
         this._pendingPhysicalWrites.clear(); this._newSyncKey = ''; this._regSignature = '';
       }
@@ -4848,6 +4850,8 @@ export class HouseplanCard extends LitElement {
 
   private _persistLayout = debounce(() => {
     if (this._serverStorage) {
+      const isCurrent = this._configWriteGuard();
+      if (!isCurrent() || !this._loadOk) return;
       // point-wise updates: do not overwrite positions changed in other windows
       const ids = [...this._dirtyPos];
       this._dirtyPos.clear();
@@ -4860,7 +4864,7 @@ export class HouseplanCard extends LitElement {
         this._sentPos.set(id, pos);
         this.hass
           .callWS({ type: 'houseplan/layout/update', device_id: id, pos })
-          .then((r: any) => this._noteLayoutRev(r))
+          .then((r: { rev?: unknown }) => { if (isCurrent()) { this._adoption.acceptLayoutPosition(id, pos, r.rev); this._cacheSnapshot(); } })
           .catch((e: any) => this._showToast(this._t('toast.pos_save_failed', { err: this._errText(e) })))
           .finally(() => { if (this._sentPos.get(id) === pos) this._sentPos.delete(id); });
       }
@@ -5296,6 +5300,8 @@ export class HouseplanCard extends LitElement {
     deviceId: string,
     placement: DevicePlacement | null,
   ): Promise<void> {
+    const isCurrent = this._configWriteGuard();
+    if (this._serverStorage && (!isCurrent() || !this._loadOk)) throw new Error('config authority changed');
     this._layout = applyDevicePlacement(this._layout, deviceId, placement);
     if (this._serverStorage) {
       let pending: DeviceLayout[string] | null = null;
@@ -5323,7 +5329,8 @@ export class HouseplanCard extends LitElement {
             type: 'houseplan/layout/update', device_id: deviceId, pos,
           });
         }
-        this._noteLayoutRev(response);
+        if (!isCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
+        this._adoption.acceptLayoutPosition(deviceId, pending, (response as { rev?: unknown } | null)?.rev);
         this._adoption.refreshLayoutFingerprint();
         this._cacheSnapshot();
       } finally {

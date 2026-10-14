@@ -1570,7 +1570,8 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null): Pro
       const liveFingerprint = contentFingerprint(this.host._serverCfg);
       const candidate = this._prepareConfigCandidate(this.host._serverCfg);
       const candidateFingerprint = contentFingerprint(candidate);
-      if (attempt && liveFingerprint === attempt.attemptedFingerprint) Object.assign(attempt, { revision: this.host._cfgRev, attempted: candidate, attemptedFingerprint: candidateFingerprint });
+      const ownsAttempt = !!attempt && liveFingerprint === attempt.attemptedFingerprint;
+      if (attempt && ownsAttempt) Object.assign(attempt, { revision: this.host._cfgRev, attempted: candidate, attemptedFingerprint: candidateFingerprint });
       const strictEntries = [...this.host._pendingPhysicalWrites.entries()];
       for (const [spaceId, accepted] of strictEntries) {
         const candidateSpace = candidate.spaces.find((space) => space.id === spaceId);
@@ -1594,8 +1595,12 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null): Pro
       // willUpdate owns the corresponding geometry-epoch bump.
       this.host._adoption.stageConfigCandidate(candidate);
       const discoveryWrite = this.roomDeviceDiscovery?.prepare(candidate);
+      const finalCandidate = discoveryWrite?.config || candidate;
+      this.host._adoption.stageConfigCandidate(finalCandidate);
+      if (attempt && ownsAttempt)
+        Object.assign(attempt, { attempted: finalCandidate, attemptedFingerprint: contentFingerprint(finalCandidate) });
       try {
-        await this.host._sendConfigCandidate(discoveryWrite?.config || candidate);
+        await this.host._sendConfigCandidate(finalCandidate);
       } catch (error) {
         if (discoveryWrite?.placements.length) {
           this.roomDeviceDiscovery.reject(discoveryWrite);

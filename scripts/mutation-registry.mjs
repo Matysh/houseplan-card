@@ -830,8 +830,8 @@ const MUTANT_DEFINITIONS = [
       + '&& node --test --test-name-pattern="#879 AC1/3/4" test/room-device-discovery.test.mjs',
     because: '#879 AC1/AC4: the durable baseline must be in the same accepted config as the room, not only in local state.',
     patches: [{ file: 'src/houseplan-editor-runtime.ts',
-      find: 'await this.host._sendConfigCandidate(discoveryWrite?.config || candidate);',
-      replace: 'await this.host._sendConfigCandidate(candidate);',
+      find: 'const finalCandidate = discoveryWrite?.config || candidate;',
+      replace: 'const finalCandidate = candidate;',
     }],
   },
   {

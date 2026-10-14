@@ -524,6 +524,19 @@ test('#890 AC2: accepted write round-trips both fingerprints without caching the
   assert.equal(adoption.configRev, 0);
 });
 
+test('#890 AC2: accepting one layout delta never caches other unsent positions', () => {
+  const adoption = adoptedWith(cfg('Before'), 8);
+  const accepted = { s: 'f1', x: 0.1, y: 0.2 };
+  adoption.stageLocalLayout({ first: accepted, pending: { s: 'f1', x: 0.9, y: 0.9 } });
+  adoption.acceptLayoutPosition('first', accepted, 4);
+  const cached = adoption.snapshot(null);
+  assert.deepEqual(cached.layout, { first: accepted });
+  assert.equal(cached.layout_rev, 4);
+  assert.equal(cached.layout_fingerprint, contentFingerprint(cached.layout));
+  adoption.acceptLayoutPosition('first', null, 5);
+  assert.deepEqual(adoption.snapshot(null).layout, {});
+});
+
 // --- AC6: optimistic writes (#314/#439/#442) --------------------------------
 
 test('AC6: a rejected optimistic write restores only its own candidate (#439)', () => {

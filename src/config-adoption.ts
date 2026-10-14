@@ -227,14 +227,19 @@ export class MutableConfigAdoption {
 
   /** Our own `layout/update` reply, or its event: revisions are monotonic. */
   noteLayoutRevision(rev: unknown): void {
-    if (typeof rev === 'number' && rev > this.layoutRev) {
-      this.layoutRev = rev;
-      if (this.acceptedCache) {
-        this.acceptedCache.layout = structuredClone(this.layout);
-        this.acceptedCache.layout_rev = rev;
-        this.acceptedCache.layout_fingerprint = contentFingerprint(this.layout);
-      }
-    }
+    if (typeof rev === 'number' && rev > this.layoutRev) this.layoutRev = rev;
+  }
+
+  /** Accepted point-wise delta, not every other position still queued locally. */
+  acceptLayoutPosition(id: string, position: DeviceLayout[string] | null, rev: unknown): void {
+    this.noteLayoutRevision(rev);
+    if (!this.acceptedCache) return;
+    const layout = { ...this.acceptedCache.layout };
+    if (position === null) delete layout[id];
+    else layout[id] = structuredClone(position);
+    this.acceptedCache.layout = layout;
+    this.acceptedCache.layout_rev = Math.max(this.acceptedCache.layout_rev, finiteRevision(rev, this.layoutRev));
+    this.acceptedCache.layout_fingerprint = contentFingerprint(layout);
   }
 
   // --- local staging (bodies only; identity untouched) --------------------
