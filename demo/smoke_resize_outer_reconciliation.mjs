@@ -79,7 +79,7 @@ const out = await page.evaluate(async (fixture) => {
   result.disabledCapturesNothing = !card._resize.dragging
     && card._geometryHistory.size === 0;
 
-  card._editorRuntime.optimizePlans.open();
+  await card._editorRuntime.optimizePlans.open();
   await card.updateComplete;
   const previewSpace = card._alignDialog?.config?.spaces?.[0];
   result.previewProvesOuterRewrite = card._alignDialog?.changed === true

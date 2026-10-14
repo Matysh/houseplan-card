@@ -6,6 +6,7 @@
 // refused reload keeps the same report, a full one moves the record to its
 // live owner, a late answer after Close changes nothing. Layout at 1280/360 px
 // in both themes, keyboard reach, and no config/layout write anywhere.
+import { readFileSync } from 'node:fs';
 import { launch, check, finish } from './serve.mjs';
 
 const OPAQUE = '601413c5793c698f73b8af0a0b93cac6';
@@ -43,8 +44,13 @@ const setup = await page.evaluate(async (opaque) => {
   });
   window.__869.language = (code) => window.__869.hass(language(code));
   await test.settled();
+  // #869: the dialog is its own lazy chunk — fetched on the first open only.
+  const dialogChunk = () => performance.getEntriesByType('resource')
+    .some((entry) => /\/optimize-plans-dialog-[^/]+\.js$/.test(new URL(entry.name).pathname));
+  const chunkBeforeOpen = dialogChunk();
   // Optimize's own candidate is the clean plan: the second run must find nothing.
-  card._editorRuntime.optimizePlans.open();
+  await card._editorRuntime.optimizePlans.open();
+  const chunkAfterOpen = dialogChunk();
   await test.settled();
   const clean = structuredClone(card._alignDialog);
   await test.close(undefined, { via: 'cancel' });
@@ -57,7 +63,9 @@ const setup = await page.evaluate(async (opaque) => {
   });
   await test.settled();
   writes.length = 0; // only what the dialog itself might write is judged below
-  return { cleanChanged: clean.changed, access: card._haRegistry.access };
+  return {
+    cleanChanged: clean.changed, access: card._haRegistry.access, chunkBeforeOpen, chunkAfterOpen,
+  };
 }, OPAQUE);
 console.log('setup', JSON.stringify(setup));
 
@@ -65,7 +73,7 @@ console.log('setup', JSON.stringify(setup));
 const openAndRead = () => page.evaluate(async () => {
   const card = window.__card;
   const test = window.__hpTest;
-  card._editorRuntime.optimizePlans.open();
+  await card._editorRuntime.optimizePlans.open();
   await test.settled();
   const dialog = (card.shadowRoot || card.renderRoot).querySelector('hp-dialog[data-kind="settings"]');
   const body = dialog?.querySelector('.body');
@@ -89,7 +97,12 @@ const openAndRead = () => page.evaluate(async () => {
     registryAuthoritative: card._alignDialog?.report.registryAuthoritative,
   };
 });
-const t = (key, vars) => page.evaluate(([k, v]) => window.__card._t(k, v), [key, vars]);
+// Expected RU copy from the dictionaries themselves: the card catalog plus the
+// lazy `settings` dictionary that holds the #869 block strings.
+const dictionary = (path) => JSON.parse(readFileSync(new URL(`../src/i18n/${path}`, import.meta.url), 'utf8'));
+const RU = { ...dictionary('ru.json'), ...dictionary('settings/ru.json') };
+const t = (key, vars = {}) => Object.entries(vars)
+  .reduce((text, [name, value]) => text.split(`{${name}}`).join(String(value)), RU[key] ?? key);
 const close = (via) => page.evaluate(async (how) => {
   const card = window.__card;
   const dialog = (card.shadowRoot || card.renderRoot).querySelector('hp-dialog[data-kind="settings"]');
@@ -106,6 +119,7 @@ const close = (via) => page.evaluate(async (how) => {
 // ------------------------------------------------- AC1: the owner example
 const fullRegistry = setup.access === 'full';
 record('setupFullRegistry', fullRegistry);
+record('dialogChunkLoadsOnFirstOpen', setup.chunkBeforeOpen === false && setup.chunkAfterOpen === true);
 let seen = await openAndRead();
 record('ownerOpensWithNothingToApply', seen.open && seen.changed === false && !seen.hasApply);
 record('ownerLayoutUnchanged', seen.sameLayout);
@@ -166,7 +180,7 @@ record('closeWritesNothing', await close('cancel'));
 const measure = () => page.evaluate(async () => {
   const card = window.__card;
   const test = window.__hpTest;
-  card._editorRuntime.optimizePlans.open();
+  await card._editorRuntime.optimizePlans.open();
   await test.settled();
   await document.fonts.ready;
   const dialog = (card.shadowRoot || card.renderRoot).querySelector('hp-dialog[data-kind="settings"]');
@@ -211,7 +225,7 @@ for (const theme of ['light', 'dark']) {
 await page.setViewportSize({ width: 1280, height: 900 });
 await page.evaluate(async () => { window.__869.language('ru'); await window.__hpTest.settled(); });
 await page.evaluate(async () => {
-  window.__card._editorRuntime.optimizePlans.open();
+  await window.__card._editorRuntime.optimizePlans.open();
   await window.__hpTest.settled();
 });
 const reached = new Set();
@@ -227,7 +241,7 @@ record('escapeClosesWithoutWrite', await page.evaluate(async () => {
   return window.__card._alignDialog === null;
 }));
 await page.evaluate(async () => {
-  window.__card._editorRuntime.optimizePlans.open();
+  await window.__card._editorRuntime.optimizePlans.open();
   await window.__hpTest.settled();
 });
 record('scrimClosesWithoutWrite', await close('scrim'));
@@ -338,7 +352,7 @@ const late = await page.evaluate(async () => {
   while (card._haRegistry.access !== 'limited' && performance.now() < deadline) {
     await new Promise((resolve) => setTimeout(resolve, 20));
   }
-  card._editorRuntime.optimizePlans.open();
+  await card._editorRuntime.optimizePlans.open();
   await test.settled();
   const opened = card._alignDialog?.report.registryAuthoritative === false;
   let release;

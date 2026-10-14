@@ -69,7 +69,7 @@ const out = await page.evaluate(async () => {
     configRev: card._cfgRev, layoutRev: card._layoutRev,
     canUndo: card._canOptimizeUndo, undoKind: card._undoKind,
   };
-  card._editorRuntime.optimizePlans.open(); await card.updateComplete;
+  await card._editorRuntime.optimizePlans.open(); await card.updateComplete;
   const englishText = card.renderRoot.querySelector('hp-dialog .body')?.textContent || '';
   result.englishFailureNamesThreeAndCountsRest = englishText.includes(
     'Could not safely verify the geometry of the following spaces: Alpha, beta, Space 3, and 1 more.',
@@ -96,7 +96,7 @@ const out = await page.evaluate(async () => {
   // newly red result replaces the dialog and still cannot write.
   forceRed = false;
   setCandidate('en');
-  card._editorRuntime.optimizePlans.open(); await card.updateComplete;
+  await card._editorRuntime.optimizePlans.open(); await card.updateComplete;
   const checksAfterGreenPreview = checks;
   result.greenPreviewOffersApply = !!card.renderRoot.querySelector('hp-dialog .btn.on');
   card._alignDialog.config.spaces[0].title = 'Changed after preview';
@@ -112,7 +112,7 @@ const out = await page.evaluate(async () => {
   forceRed = false;
   setCandidate('en');
   const callsBeforeGreen = sent.length;
-  card._editorRuntime.optimizePlans.open(); await card.updateComplete;
+  await card._editorRuntime.optimizePlans.open(); await card.updateComplete;
   const checksBeforeApply = checks;
   const previewCandidate = clone(card._alignDialog.config);
   await card._editorRuntime.optimizePlans.run(); await card.updateComplete;
@@ -125,7 +125,7 @@ const out = await page.evaluate(async () => {
   // The just-written candidate is now a no-op: it skips the geometry pass and
   // retains the established message/absence of Apply.
   const checksBeforeNoOp = checks;
-  card._editorRuntime.optimizePlans.open(); await card.updateComplete;
+  await card._editorRuntime.optimizePlans.open(); await card.updateComplete;
   const noOpText = card.renderRoot.querySelector('hp-dialog .body')?.textContent || '';
   result.noOpSkipsPreflight = checks === checksBeforeNoOp
     && card._alignDialog.preflight === null;
@@ -141,7 +141,7 @@ const out = await page.evaluate(async () => {
   // dictionaries settle; the dialog is judged after the language gate.
   card.requestUpdate(); await card.updateComplete;
   for (let i = 0; i < 250 && card.hasAttribute('aria-busy'); i++) await new Promise((r) => setTimeout(r, 20));
-  card._editorRuntime.optimizePlans.open(); await card.updateComplete;
+  await card._editorRuntime.optimizePlans.open(); await card.updateComplete;
   const russianText = card.renderRoot.querySelector('hp-dialog .body')?.textContent || '';
   result.russianFailureHasExactCopy = russianText.includes(
     'Не удалось безопасно проверить геометрию следующих пространств: Alpha, beta, Пространство 3 и ещё 1.',

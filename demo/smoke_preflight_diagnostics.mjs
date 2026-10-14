@@ -32,8 +32,8 @@ const out = await page.evaluate(async () => {
       { spaceId: 'bad2', displayName: 'Second', status: 'failed', reason: 'floor-null' },
     ],
   };
-  card._editorRuntime.optimizePlans.reportPreflightFailure(preflight);
-  card._editorRuntime.optimizePlans.reportPreflightFailure(preflight); // dedup: same fingerprint logs once
+  await card._editorRuntime.optimizePlans.reportPreflightFailure(preflight);
+  await card._editorRuntime.optimizePlans.reportPreflightFailure(preflight); // dedup: same fingerprint logs once
   result.devLogOnce = warns.filter((w) => String(w[0]).includes('optimize preflight failed')).length === 1;
   const logged = warns.find((w) => String(w[0]).includes('optimize preflight failed'))?.[1];
   result.devLogShape = !!logged && logged.kind === 'houseplan-optimize-preflight'

@@ -92,7 +92,7 @@ const out = await page.evaluate(async () => {
   card.requestUpdate();
   await card.updateComplete;
 
-  card._editorRuntime.optimizePlans.open();
+  await card._editorRuntime.optimizePlans.open();
   await card.updateComplete;
   const preview = card._alignDialog;
   const previewBody = card.renderRoot.querySelector('hp-dialog .body');
@@ -135,7 +135,7 @@ const out = await page.evaluate(async () => {
   await card.updateComplete;
   result.cancelWritesNothing = calls.length === 0;
 
-  card._editorRuntime.optimizePlans.open();
+  await card._editorRuntime.optimizePlans.open();
   await card.updateComplete;
   card._editorRuntime.optimizePlans.toggleLivePositions();
   await card.updateComplete;
@@ -155,7 +155,7 @@ const out = await page.evaluate(async () => {
     && restored.icon === 'mdi:washing-machine'
     && !!card.renderRoot.querySelector('.dev[data-id="orphan"]');
 
-  card._editorRuntime.optimizePlans.open();
+  await card._editorRuntime.optimizePlans.open();
   await card.updateComplete;
   const noOpText = card.renderRoot.querySelector('hp-dialog .body')?.textContent || '';
   // #869: unmatched records alone are no dead end — a plain summary, why they

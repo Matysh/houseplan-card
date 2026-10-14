@@ -37,14 +37,16 @@ export const SMOKE_LINKS = [
   },
   {
     symbols: ['retryRegistry', 'renderUnverified', 'fallbackBlock', 'reloadHaRegistriesBounded',
-      'unverifiedDiagnostics', 'unverifiedGroup', 'unverifiedName', 'legacyGroupAreaName'],
-    files: ['src/optimize-unverified.ts'],
+      'unverifiedDiagnostics', 'unverifiedGroup', 'unverifiedName', 'legacyGroupAreaName',
+      'LazyOptimizePlansDialog'],
+    files: ['src/optimize-unverified.ts', 'src/optimize-plans-loader.ts'],
     smokes: ['smoke_optimize_unverified.mjs', 'smoke_orphan_space_references.mjs',
       'smoke_preflight_diagnostics.mjs'],
     because: '#869: the production Optimize dialog explains unmatched position records — groups by '
       + 'cause with the exact HA Area name, Copy/Close, a bounded registry re-check against the demo '
       + 'registry fixture, a late answer after Close, 360 px in both themes — and writes nothing; '
-      + 'the preflight smoke owns the shared clipboard fallback.',
+      + 'the dialog chunk is fetched only on the first open; the preflight smoke owns the shared '
+      + 'clipboard fallback.',
   },
   {
     files: ['src/vacuum-path-geometry.ts', 'src/vacuum-trail-material.ts',

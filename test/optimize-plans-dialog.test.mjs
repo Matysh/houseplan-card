@@ -3,7 +3,7 @@
 // разметке и тосте диалога (AC3) и гварды восьми мутантов реестра (AC4).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import ts from 'typescript';
 
 import {
@@ -14,6 +14,7 @@ import { acquireHaRegistries, haRegistrySnapshot } from '../test-build/ha-bindin
 import { subst } from '../test-build/logic.js';
 import { spacePhysicalGeometryFingerprint } from '../test-build/plan-geometry-preflight.js';
 import { optimizePlans } from '../test-build/plan-optimizer.js';
+import { LazyOptimizePlansDialog } from '../test-build/optimize-plans-loader.js';
 import { contentFingerprint } from '../test-build/visual-continuity.js';
 
 const MODULE_SOURCE = readFileSync(new URL('../src/optimize-plans-dialog.ts', import.meta.url), 'utf8');
@@ -515,8 +516,11 @@ test('#642 AC2: the dialog port is narrow and the module never reaches the edito
 
 // ------------------------------------------- #869: unverified position records
 
-const RU = JSON.parse(readFileSync(new URL('../src/i18n/ru.json', import.meta.url), 'utf8'));
-const EN = JSON.parse(readFileSync(new URL('../src/i18n/en.json', import.meta.url), 'utf8'));
+const dictionaryOf = (path) => JSON.parse(readFileSync(new URL(`../src/i18n/${path}`, import.meta.url), 'utf8'));
+// Основной каталог карточки плюс ленивый `settings`, куда #869 положил строки
+// блока: это ровно то, что видит диалог через порт загрузчика.
+const RU = { ...dictionaryOf('ru.json'), ...dictionaryOf('settings/ru.json') };
+const EN = { ...dictionaryOf('en.json'), ...dictionaryOf('settings/en.json') };
 /** Настоящие строки словаря с той же подстановкой, что у карточки. */
 const translator = (dictionary) => (key, vars) => subst(dictionary[key] ?? key, vars);
 const OPAQUE = '601413c5793c698f73b8af0a0b93cac6';
@@ -904,4 +908,54 @@ test('#869 legacy group name comes only from the HA Area with exactly that id', 
   assert.ok(text.includes(tr('gs.optimize_unverified_legacy', {
     n: '4', names: tr('gs.optimize_live_names', { names: 'Kids room', more: '' }),
   })), text);
+});
+
+// ------------------------------------------- #869: the lazy Optimize chunk
+
+const SOURCE_FILES = (dir) => readdirSync(new URL(dir, import.meta.url), { withFileTypes: true })
+  .flatMap((entry) => (entry.isDirectory()
+    ? SOURCE_FILES(`${dir}${entry.name}/`)
+    : entry.name.endsWith('.ts') ? [`${dir}${entry.name}`] : []));
+
+test('#869 the dialog and its helpers are reached only by a dynamic import of the loader', () => {
+  const lazy = new Set(['./optimize-plans-dialog', './optimize-unverified']);
+  const offenders = [];
+  for (const file of SOURCE_FILES('../src/')) {
+    if (/\/optimize-(?:plans-dialog|unverified)\.ts$/.test(file)) continue;
+    const unit = ts.createSourceFile(file, readFileSync(new URL(file, import.meta.url), 'utf8'),
+      ts.ScriptTarget.Latest, true);
+    for (const statement of unit.statements) {
+      if (!ts.isImportDeclaration(statement) && !ts.isExportDeclaration(statement)) continue;
+      const specifier = statement.moduleSpecifier?.text?.replace(/^\.\.\//, './');
+      if (!lazy.has(specifier)) continue;
+      const typeOnly = ts.isImportDeclaration(statement)
+        ? statement.importClause?.isTypeOnly === true
+        : statement.isTypeOnly === true;
+      if (!typeOnly) offenders.push(`${file}: ${statement.getText(unit)}`);
+    }
+  }
+  assert.deepEqual(offenders, [], 'a static import pulls the dialog back into the editor graph');
+  const loader = readFileSync(new URL('../src/optimize-plans-loader.ts', import.meta.url), 'utf8');
+  assert.match(loader, /import\('\.\/optimize-plans-dialog'\)/);
+});
+
+test('#869 the loader opens the real dialog and routes the block strings to the lazy settings dictionary', async () => {
+  const { port, state, calls } = fakePort({ t: (key, vars) => `main:${key}${vars ? JSON.stringify(vars) : ''}` });
+  const loader = new LazyOptimizePlansDialog(port, () => 'en');
+  assert.equal(flatten(loader.render()), '', 'nothing paints before the chunk arrives');
+  assert.equal(loader.clipboardFallback, null);
+  state.config = { spaces: [space('a', 'Alpha', 0.5), space('b', 'Beta', 0.50337)], markers: [], settings: {} };
+  await loader.open();
+  assert.ok(state.dialog?.changed, 'the real preview opened');
+  assert.deepEqual(calls.commit, []);
+  assert.ok(calls.requestUpdate >= 1, 'the render requested before the load repaints');
+  state.dialog = dialogOf({ changed: false, preflight: null, report: report({
+    unverifiedPositions: [{ id: 'x', kind: 'unknown', name: '', spaceId: 'gone', reason: 'unknown_owner' }],
+    registryAuthoritative: false,
+  }) });
+  const text = flatten(loader.render());
+  assert.ok(text.includes(EN['gs.optimize_retry']), 'a settings key resolves through settings');
+  assert.ok(text.includes(EN['gs.optimize_no_changes']));
+  assert.match(text, /main:btn\.close/, 'a card key still resolves through the card');
+  assert.doesNotMatch(text, /main:gs\.optimize_(?:retry|no_changes|unverified)/);
 });

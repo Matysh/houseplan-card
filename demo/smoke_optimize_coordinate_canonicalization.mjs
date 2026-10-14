@@ -95,7 +95,7 @@ const out = await page.evaluate(async () => {
   card._modelCache = null; card._frame = null; card._space = 'noisy';
   card.requestUpdate(); await card.updateComplete;
 
-  card._editorRuntime.optimizePlans.open(); await card.updateComplete;
+  await card._editorRuntime.optimizePlans.open(); await card.updateComplete;
   const preview = card._alignDialog;
   const previewText = card.renderRoot.querySelector('hp-dialog .body')?.textContent || '';
   result.previewOffersInvisibleCleanup = !!preview?.changed
@@ -121,7 +121,7 @@ const out = await page.evaluate(async () => {
   result.cancelDoesNotWrite = sent.length === 0
     && JSON.stringify(card._serverCfg) === JSON.stringify(original);
 
-  card._editorRuntime.optimizePlans.open(); await card.updateComplete;
+  await card._editorRuntime.optimizePlans.open(); await card.updateComplete;
   await card._editorRuntime.optimizePlans.run(); await card.updateComplete;
   result.applyUsesOneAtomicWrite = sent.filter((type) => type === 'houseplan/plan/optimize').length === 1;
   result.applyStoresOnlyCanonicalRoomCoordinates = card._serverCfg.spaces[0].rooms
@@ -135,7 +135,7 @@ const out = await page.evaluate(async () => {
     && !lastToast.includes('0 records maintained');
 
   await Promise.all([card._reloadConfigOnly(true), card._reloadLayoutOnly()]);
-  card._editorRuntime.optimizePlans.open(); await card.updateComplete;
+  await card._editorRuntime.optimizePlans.open(); await card.updateComplete;
   result.serverEventReloadIsExactNoOp = card._alignDialog?.changed === false
     && card._alignDialog.report.latticeCoordinatesCanonicalized === 0
     && !card.renderRoot.querySelector('hp-dialog .btn.on');
@@ -152,7 +152,7 @@ const out = await page.evaluate(async () => {
     await new Promise((resolve) => setTimeout(resolve, 16));
   }
   await cold._ensureEditorRuntime();
-  cold._editorRuntime.optimizePlans.open(); await cold.updateComplete;
+  await cold._editorRuntime.optimizePlans.open(); await cold.updateComplete;
   result.coldReloadIsExactNoOp = cold._loadOk && cold._alignDialog?.changed === false
     && cold._alignDialog.report.latticeCoordinatesCanonicalized === 0
     && !cold.renderRoot.querySelector('hp-dialog .btn.on');

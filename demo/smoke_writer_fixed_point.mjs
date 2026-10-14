@@ -11,8 +11,9 @@ const chain = await runWallDrawFinishProfile(page);
 
 const chainHistory = await page.evaluate(async (chainIds) => {
   const card = window.__card;
-  const optimizeNoop = () => {
-    card._editorRuntime.optimizePlans.preview(false);
+  // #869: the Optimize dialog is a lazy chunk — the preview resolves once it loads.
+  const optimizeNoop = async () => {
+    await card._editorRuntime.optimizePlans.preview(false);
     const changed = card._alignDialog?.changed;
     card._alignDialog = null;
     return changed === false;
@@ -20,14 +21,14 @@ const chainHistory = await page.evaluate(async (chainIds) => {
   card._undoGeometry();
   await card.updateComplete;
   const afterUndo = {
-    optimizeNoop: optimizeNoop(),
+    optimizeNoop: await optimizeNoop(),
     partitions: (card._curSpaceCfg.partitions || [])
       .filter((partition) => chainIds.includes(partition.id)).length,
   };
   card._redoGeometry();
   await card.updateComplete;
   const afterRedo = {
-    optimizeNoop: optimizeNoop(),
+    optimizeNoop: await optimizeNoop(),
     partitions: (card._curSpaceCfg.partitions || [])
       .filter((partition) => chainIds.includes(partition.id)).length,
   };

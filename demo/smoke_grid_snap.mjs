@@ -228,7 +228,7 @@ const out = await page.evaluate(async () => {
   o.fixtureLayoutMatchesExactly = JSON.stringify(c._layout) === JSON.stringify(FIXLAY);
   await hp.switchSpace('g1');
 
-  c._editorRuntime.optimizePlans.open();
+  await c._editorRuntime.optimizePlans.open();
   await c.updateComplete;
   const dlg = c._alignDialog;
   o.alignDialogOpens = !!dlg && !!sr().querySelector('hp-dialog .alignmsg');
@@ -261,7 +261,7 @@ const out = await page.evaluate(async () => {
     g.openings[0].y - (w0[1] + tt * (w1[1] - w0[1]))) < 1e-9;
 
   // ---- 2b) …and the second run has nothing to do ------------------------
-  c._editorRuntime.optimizePlans.open();
+  await c._editorRuntime.optimizePlans.open();
   await c.updateComplete;
   o.secondRunMovesNothing = c._alignDialog.report.moved === 0;
   o.secondRunOffersNoButton = !sr().querySelector('hp-dialog .btn.on');
@@ -286,7 +286,7 @@ const out = await page.evaluate(async () => {
   await hp.setLayout({});
   o.multiFixtureLayoutIsEmpty = Object.keys(c._layout).length === 0;
   await hp.switchSpace('m1');
-  c._editorRuntime.optimizePlans.open(); await c.updateComplete;
+  await c._editorRuntime.optimizePlans.open(); await c.updateComplete;
   const md = c._alignDialog;
   o.alignPromiseUsesTheOwnScaleOfEachSpace = !!md && md.cm >= 50 && md.cm < 51;
   o.alignPromiseNamesTheSpaceItBelongsTo = !!md && md.where === 'Attic'
@@ -308,7 +308,7 @@ const out = await page.evaluate(async () => {
   await hp.setLayout({});
   o.angleFixtureLayoutIsEmpty = Object.keys(c._layout).length === 0;
   await hp.switchSpace('a1');
-  c._editorRuntime.optimizePlans.open(); await c.updateComplete;
+  await c._editorRuntime.optimizePlans.open(); await c.updateComplete;
   const ad = c._alignDialog;
   o.angleOnlyOpeningCounts = !!ad && ad.report.moved === 1 && ad.report.rotated === 1;
   o.angleOnlyOpeningOffersTheButton = !!sr().querySelector('hp-dialog .btn.on');

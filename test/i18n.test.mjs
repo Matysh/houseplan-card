@@ -301,12 +301,18 @@ test('issue 252 Optimize keeps internal ids out of the main orphan report', () =
     'Убрано забытых записей: {total} — подписи комнат: {rooms}; устройства: {devices}; групповые метки: {groups}. Все они принадлежали пространствам, удалённым ранее.',
   );
   // #642: сам отчёт диалога — исполнением в test/optimize-plans-dialog.test.mjs.
+  // #869: строки блока непроверенных записей — в ленивом словаре `settings`.
+  const settingsOf = (code) => JSON.parse(readFileSync(
+    new URL(`../src/i18n/settings/${code}.json`, import.meta.url), 'utf8',
+  ));
+  const enAll = { ...en, ...settingsOf('en') };
+  const ruAll = { ...ru, ...settingsOf('ru') };
   for (const key of [
     'gs.optimize_orphans_removed', 'gs.optimize_live_positions',
     'gs.optimize_unverified', 'gs.optimize_vacuum_warning',
   ]) {
-    assert.doesNotMatch(en[key], /\b(?:layout|owner|nested mapping|space id|marker id)\b/i);
-    assert.doesNotMatch(ru[key], /\b(?:layout|owner|id|вложенн)/i);
+    assert.doesNotMatch(enAll[key], /\b(?:layout|owner|nested mapping|space id|marker id)\b/i);
+    assert.doesNotMatch(ruAll[key], /\b(?:layout|owner|id|вложенн)/i);
   }
 });
 

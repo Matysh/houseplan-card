@@ -199,7 +199,7 @@ export async function runWallDrawFinishProfile(page) {
     card._activateMarkupTool('select');
     const finishMs = performance.now() - started;
     const terminal = delta(snapshots(), before);
-    card._editorRuntime.optimizePlans.preview(false);
+    await card._editorRuntime.optimizePlans.preview(false);
     const optimizeChanged = card._alignDialog?.changed;
     card._alignDialog = null;
     await card.updateComplete;

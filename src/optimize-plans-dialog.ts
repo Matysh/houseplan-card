@@ -18,6 +18,7 @@ import { formatLatticeShiftCm } from './coordinate-canonicalization';
 import type { DeviceLayout } from './device-position-history';
 import { haRegistryDiagnostics } from './ha-binding-status';
 import type { I18nKey } from './i18n';
+import type { SettingsI18nKey } from './i18n/settings';
 import {
   reloadHaRegistriesBounded, unverifiedDiagnostics, unverifiedGroup, unverifiedName,
   type UnverifiedGroup,
@@ -58,7 +59,8 @@ export type OptimizePlansDialogState = {
 export interface OptimizePlansDialogPort {
   dialog(): OptimizePlansDialogState | null;
   setDialog(next: OptimizePlansDialogState | null): void;
-  t(key: I18nKey, vars?: Record<string, string | number>): string;
+  /** #869: the dialog's own strings live in the lazy `settings` dictionary. */
+  t(key: I18nKey | SettingsI18nKey, vars?: Record<string, string | number>): string;
   hass(): unknown;
   config(): ServerConfig | null;
   /** the normalised plan exists — the preview has something to optimise */
@@ -323,7 +325,7 @@ export class OptimizePlansDialog {
         })
       : '';
     const limited = d.report.registryAuthoritative === false;
-    const line = (n: number, key: I18nKey, vars: Record<string, string> = {}) => (n
+    const line = (n: number, key: SettingsI18nKey, vars: Record<string, string> = {}) => (n
       ? html`<li>${this.port.t(key, { n: String(n), ...vars })}</li>` : nothing);
     return html`<div class="optimize-unverified">
       <p class="alignmsg">${this.port.t('gs.optimize_unverified', { n: String(items.length) })}</p>

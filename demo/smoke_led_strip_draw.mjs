@@ -208,7 +208,7 @@ const optimizeNote = await evaluate(async () => {
   await window.__hpTest.setServerConfig((cfg) => {
     cfg.spaces[0].led_strips = [...cfg.spaces[0].led_strips, { id: 'through', points: [[0.3, 0.3], [0.7, 0.3]], marker: null }];
   });
-  c._editorRuntime.optimizePlans.open();
+  await c._editorRuntime.optimizePlans.open();
   await c.updateComplete;
   for (let i = 0; i < 40 && !c.shadowRoot.querySelector('[data-led-walls]'); i++) {
     await new Promise((r) => setTimeout(r, 50));

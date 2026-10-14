@@ -174,7 +174,8 @@ import {
 import { finishMarkerDialogClose } from './marker-dialog-close';
 import { renderRadarSection } from './editors/radar-section';
 import { radarDiscardRequest, RadarSetupController } from './radar-setup';
-import { OptimizePlansDialog, type OptimizePlansDialogState } from './optimize-plans-dialog';
+import type { OptimizePlansDialogState } from './optimize-plans-dialog';
+import { LazyOptimizePlansDialog } from './optimize-plans-loader';
 import {
   BodyObstaclesMemo, COLUMN_MAX_CM, canonicalColumnAngle, clampColumnCm, columnBody, floorMinusObstacles, geometryArea,
   partitionBody, pointInPhysicalBody, sameColumnPlacement, type PartitionOpeningCut,
@@ -848,8 +849,8 @@ export class HouseplanEditorRuntime {
   // к контроллеру оттуда. Остальной класс использует `public _x` — поле
   // следует той же договорённости, а не заводит обёртку ради одного слова.
   public readonly _radarSetup: RadarSetupController;
-  /** #642: «Оптимизировать планы» — свой модуль с узким портом, не делегаты карточки. */
-  public readonly optimizePlans: OptimizePlansDialog;
+  /** #642: «Оптимизировать планы» — свой модуль с узким портом; #869: ленивый чанк. */
+  public readonly optimizePlans: LazyOptimizePlansDialog;
   public constructor(public readonly host: HouseplanEditorHostPort) {
     this.chainExit = new EditorChainExit(request => host._confirmDanger(request), () => host._cancelDangerConfirm());
     // #805: editor-only CSS, adopted at the loader's create() — before install, so before any editor frame.
@@ -888,7 +889,7 @@ export class HouseplanEditorRuntime {
       },
       confirmDiscard: () => host._confirmDanger(radarDiscardRequest((key) => host._t(key))),
     });
-    this.optimizePlans = new OptimizePlansDialog({
+    this.optimizePlans = new LazyOptimizePlansDialog({
       dialog: () => host._alignDialog,
       setDialog: (next) => { host._alignDialog = next; },
       t: (key, vars) => host._t(key, vars),
@@ -908,7 +909,7 @@ export class HouseplanEditorRuntime {
       commit: (config, layout) => commitPlanOptimization(host, config, layout),
       reloadAfterConflict: () => Promise.all([host._reloadConfigOnly(true), host._reloadLayoutOnly()]),
       ledNote: () => host._ledNote(),
-    });
+    }, () => langOf(host.hass, host._config?.language));
     host._editorSecondary = new EditorSecondaryController({
       root: () => host.renderRoot as ShadowRoot,
       requestUpdate: () => host.requestUpdate(),
