@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 892,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "Optimize and its orphan-position report existed in v1.80.1. This makes existing maintenance actionable and safe, clarifies archived movement and vacuum warnings, and aligns documented permissions with the existing backend write policy.",
+  "summary": {
+    "ru": "Optimize понятно объясняет старые записи и предлагает безопасную очистку с отменой.",
+    "en": "Optimize explains old records and offers safe cleanup with Undo."
+  }
+}

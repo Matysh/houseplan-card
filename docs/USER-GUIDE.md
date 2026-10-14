@@ -197,8 +197,9 @@ Every signed-in user can view the plan. Home Assistant permissions still govern
 device service calls. With the default integration option, only administrators
 can edit configuration or upload files. If that option is disabled, ordinary
 household users may edit, but members of Home Assistant's `system-read-only`
-group never become writers. Plan optimization and its undo always require an
-administrator.
+group never become writers. Plan optimization and its undo use the same
+Houseplan write permission, including ordinary writers when admin-only is off.
+These actions are unavailable in kiosk mode.
 
 The **House Plan** sidebar item is visible to every signed-in user. A user who
 cannot edit gets the complete View experience without editor controls. On an
@@ -2247,10 +2248,10 @@ Plan images and attachments are never deleted merely because nothing currently
 references them.
 
 Position records that could not be matched to an object form a block of their
-own. All of them belong to floors that no longer exist: the plan does not show
-them and they do not affect it, so you can leave them. Optimize neither removes
-nor renames them; on Apply their coordinates are snapped to the grid like any
-other position. The block counts the records by cause: **old per-area lamp
+own. They refer to deleted spaces, but that alone does not prove they are unused:
+a live room's scale can still be read independently of its old space reference.
+They are kept by default; remaining coordinates are snapped to the grid on Apply.
+The block counts the records by cause: **old per-area lamp
 groups** (`grp_<area id>`, created before v1.5.0; when Home Assistant has an
 area with exactly that id, its name is shown), records whose owner **could not
 be determined**, and records **not checked because Home Assistant data is
@@ -2267,6 +2268,24 @@ coordinates; when the clipboard is unavailable, the same text opens inside the
 dialog. When there is nothing to apply, the footer button is **Close**. Viewing,
 checking again, copying and closing write nothing. In **Details**, a known name
 is shown before the record's id.
+
+**Remove invalid records** prepares a separate preview of only proven-unused
+old positions. The report shows the eligible count and why other records are
+kept. Only **Apply changes** writes the candidate; selecting cleanup, Cancel
+and Close change nothing. An unused record is removed in full, including its
+old scale. Live-room scale, existing or hidden devices, unknown fields and
+unchecked owners stay. An icon being off-screen is not proof of an unused record.
+Obsolete `grp_*` positions with no current owner may be cleaned with limited
+registry data; opaque old HA device IDs require a full roster, including
+state-only entities. After cleanup the report is rebuilt, and Optimize Undo
+restores the removed records.
+
+Movement of existing-space positions and archived deleted-space positions is
+counted separately; archived positions are not visible plan icons. If the plan,
+layout or check data changes after preview, Apply sends nothing, refreshes the
+report and resets the cleanup choice. Vacuum warnings identify the device and
+direct you to **Device editor → vacuum → Maps** to check segment links.
+Optimize does not remove those links or change calibration.
 
 ### Risk and Undo
 

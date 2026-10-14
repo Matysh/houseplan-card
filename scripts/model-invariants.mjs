@@ -132,8 +132,6 @@ export function checkReferences({ config, layout = {} } = {}, { notes = [] } = {
     .map((marker) => String(marker?.id ?? '')).filter(Boolean));
   const roomIdsBySpace = new Map(spaces.map((space) => [String(space?.id ?? ''),
     new Set((space?.rooms || []).map((room) => String(room?.id ?? '')).filter(Boolean))]));
-  const areasBySpace = new Map(spaces.map((space) => [String(space?.id ?? ''),
-    new Set((space?.rooms || []).map((room) => String(room?.area ?? '')).filter(Boolean))]));
   const add = (kind, owner, reference, detail) =>
     violations.push({ invariant: 'references', kind, owner, reference, detail });
 
@@ -192,13 +190,11 @@ export function checkReferences({ config, layout = {} } = {}, { notes = [] } = {
     }
   }
 
-  // Владельцы позиций, разрешимые по одной конфигурации: комнаты и области
+  // Владельцы позиций, разрешимые по одной конфигурации: комнаты и маркеры
   // любого пространства. Нужны, чтобы судить запись на удалённом пространстве
   // тем же правилом, которым её судит сам продукт (#566).
   const allRoomIds = new Set(spaces.flatMap((space) => (space?.rooms || [])
     .map((room) => String(room?.id ?? '')).filter(Boolean)));
-  const allAreas = new Set(spaces.flatMap((space) => (space?.rooms || [])
-    .map((room) => String(room?.area ?? '')).filter(Boolean)));
   const removedMarkerIds = new Set((config?.markers || [])
     .filter((marker) => marker?.removed === true)
     .map((marker) => String(marker?.id ?? '')).filter(Boolean));
@@ -219,11 +215,8 @@ export function checkReferences({ config, layout = {} } = {}, { notes = [] } = {
       // во что не резолвится, значит заявить доказанность там, где её нет, и
       // следующий разбор поверит записи вместо проверки (r1 Medium).
       const roomOwner = key.startsWith('rl_') ? key.slice(3) : '';
-      const areaOwner = key.startsWith('grp_') ? key.slice(4) : '';
       const owner = roomOwner
         ? (allRoomIds.has(roomOwner) ? 'live' : 'absent')
-        : areaOwner
-        ? (allAreas.has(areaOwner) ? 'live' : 'absent')
         : removedMarkerIds.has(key) ? 'absent'
         : activeMarkerIds.has(key) ? 'live'
         : 'unverified';
@@ -255,11 +248,8 @@ export function checkReferences({ config, layout = {} } = {}, { notes = [] } = {
       continue;
     }
     if (key.startsWith('grp_')) {
-      const area = key.slice(4);
-      const areas = areasBySpace.get(space);
-      if (areas && areas.size && !areas.has(area)) {
-        add('layout_owner', key, area, 'в этом пространстве нет комнаты с такой областью');
-      }
+      if (!markerIds.has(key)) notes.push({ invariant: 'references', kind: 'unknown_owner', owner: key,
+        reference: key, detail: 'владелец не найден в конфигурации (старая группа ламп)' });
       continue;
     }
     if (!markerIds.has(key)) {

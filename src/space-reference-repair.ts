@@ -20,6 +20,10 @@ export interface SpaceReferenceRepairContext {
   };
   /** Explicit preview opt-in; the default candidate preserves live owners. */
   removeLiveMissingPositions?: boolean;
+  /** Separate, explicit preview opt-in for proved-unused position records. */
+  removeInvalidMissingPositions?: boolean;
+  /** Supplied by the optimizer's single model-version authority. */
+  invalidCleanupSupported?: boolean;
 }
 
 /**
@@ -36,6 +40,7 @@ export interface SpaceReferencePositionDetail {
   /** Empty when no safe human-readable name exists. */
   name: string;
   reason?: 'registry_unavailable' | 'unknown_owner' | 'legacy_group';
+  cleanupReason?: 'live_owner' | 'unknown_shape' | 'registry_unavailable' | 'unsupported_model';
 }
 
 export interface SpaceReferenceReport {
@@ -55,6 +60,9 @@ export interface SpaceReferenceReport {
   unverifiedPositions: SpaceReferencePositionDetail[];
   /** #869: the owner roster of this analysis was complete (memory only). */
   registryAuthoritative: boolean;
+  invalidPositionsEligible: SpaceReferencePositionDetail[];
+  invalidPositionsRemoved: SpaceReferencePositionDetail[];
+  invalidPositionsRetained: SpaceReferencePositionDetail[];
 }
 
 export interface SpaceReferenceRepairResult {
@@ -180,6 +188,9 @@ export function repairSpaceReferences(
     liveMissingPositions: [],
     unverifiedPositions: [],
     registryAuthoritative: context.ownerRoster?.authoritative === true,
+    invalidPositionsEligible: [],
+    invalidPositionsRemoved: [],
+    invalidPositionsRetained: [],
   };
   const handledLayout = new Set<string>();
 
@@ -338,6 +349,15 @@ export function repairSpaceReferences(
     else report.orphanDevicePositionsRemoved++;
   };
   const remainingDead = new Set<string>();
+  const plainPosition = (position: unknown): boolean => {
+    if (!position || typeof position !== 'object' || Array.isArray(position)) return false;
+    const value = position as Record<string, unknown>;
+    return typeof value.s === 'string' && !!value.s
+      && typeof value.x === 'number' && Number.isFinite(value.x)
+      && typeof value.y === 'number' && Number.isFinite(value.y)
+      && (!own(value, 'k') || (typeof value.k === 'number' && Number.isFinite(value.k)))
+      && Object.keys(value).every((field) => ['s', 'x', 'y', 'k'].includes(field));
+  };
   for (const [key, position] of Object.entries(layout)) {
     const value = typeof (position as any)?.s === 'string' ? (position as any).s : '';
     if (!value || existingSpaceIds.has(value)) continue;
@@ -395,7 +415,30 @@ export function repairSpaceReferences(
         report.removedPositions.push(owner);
         continue;
       }
+      report.invalidPositionsRetained.push({ ...owner, cleanupReason: 'live_owner' });
     } else {
+      // Unknown ownership is not permission to discard user data. The old
+      // group namespace is positively obsolete; other opaque keys need a full
+      // roster, and even then a current exact entity is positive evidence.
+      const cleanupReason: SpaceReferencePositionDetail['cleanupReason'] =
+        context.invalidCleanupSupported !== true ? 'unsupported_model'
+        : !plainPosition(position) ? 'unknown_shape'
+        : liveEntityIds.has(key) ? 'live_owner'
+        : owner.kind === 'unknown' && !/^[0-9a-f]{32}$/i.test(key) ? 'unknown_shape'
+        : owner.kind === 'legacy_group' && !/^grp_[A-Za-z0-9_-]+$/.test(key) ? 'unknown_shape'
+        : owner.kind !== 'legacy_group' && !rosterAuthoritative ? 'registry_unavailable'
+        : undefined;
+      if (cleanupReason) {
+        report.invalidPositionsRetained.push({ ...owner, cleanupReason });
+      } else {
+        report.invalidPositionsEligible.push(owner);
+        if (context.removeInvalidMissingPositions === true) {
+          delete layout[key];
+          report.invalidPositionsRemoved.push(owner);
+          report.removedPositions.push(owner);
+          continue;
+        }
+      }
       report.unverifiedPositions.push(owner);
     }
     report.positionsUnresolved++;

@@ -16,6 +16,7 @@ import { spacePhysicalGeometryFingerprint } from '../test-build/plan-geometry-pr
 import { optimizePlans } from '../test-build/plan-optimizer.js';
 import { LazyOptimizePlansDialog } from '../test-build/optimize-plans-loader.js';
 import { contentFingerprint } from '../test-build/visual-continuity.js';
+import { sameOptimizeSource } from '../test-build/optimize-source.js';
 import { resolve as resolvePath } from 'node:path';
 import { REPO_ROOT, VIEW_ENTRIES, staticGraph } from './helpers/editor-style-ownership.mjs';
 
@@ -31,6 +32,7 @@ const space = (id, title, x) => ({
 
 const report = (patch = {}) => ({
   moved: 0, total: 0, rotated: 0, maxShift: 0, maxShiftCm: 0, maxSpace: '',
+  currentPositions: 0, archivedPositions: 0, currentPositionsMoved: 0, archivedPositionsMoved: 0,
   modelFrom: 10, modelTo: 10, migrated: 0, glowSpacesMigrated: 0, glowRoomsMigrated: 0,
   canonicalized: 0, wallSegmentsMigrated: 0, roomDraftsMigrated: 0, roomDraftSegmentsMigrated: 0,
   legacyZeroWallsMigrated: 0, wallsMerged: 0, spansMerged: 0, partitionsMerged: 0,
@@ -42,6 +44,7 @@ const report = (patch = {}) => ({
   orphanRoomLabelsRemoved: 0, orphanDevicePositionsRemoved: 0, orphanGroupPositionsRemoved: 0,
   liveMissingPositionsRemoved: 0, nestedRefsUnresolved: 0,
   removedPositions: [], liveMissingPositions: [], unverifiedPositions: [],
+  invalidPositionsEligible: [], invalidPositionsRemoved: [], invalidPositionsRetained: [],
   registryAuthoritative: true,
   ...patch,
 });
@@ -63,6 +66,12 @@ const dialogOf = (patch = {}) => {
   return {
     report: report(), config, layout: {}, preflight: okPreflight(config),
     cm: 0, where: '', changed: true, busy: false, removeLiveMissingPositions: false,
+    removeInvalidMissingPositions: false, vacuumNames: [],
+    source: {
+      configRev: 1, layoutRev: 2,
+      configFingerprint: contentFingerprint({ spaces: [space('a', 'Alpha', 0.5)], markers: [], settings: {} }),
+      layoutFingerprint: contentFingerprint({}), ownersFingerprint: 'owners', connection: null,
+    },
     ...patch,
   };
 };
@@ -85,6 +94,13 @@ function fakePort(overrides = {}, registryRetryMs = undefined) {
     hass: () => ({}),
     config: () => state.config,
     planReady: () => true,
+    canWrite: () => true,
+    source: () => ({
+      configRev: state.configRev ?? 1, layoutRev: state.layoutRev ?? 2,
+      configFingerprint: contentFingerprint(state.config),
+      layoutFingerprint: contentFingerprint(port.layout()), ownersFingerprint: state.ownersFingerprint ?? 'owners',
+      connection: state.connection ?? null,
+    }),
     layout: () => ({}),
     integrationVersion: () => state.integration,
     cardVersion: () => '9.9.9',
@@ -92,7 +108,9 @@ function fakePort(overrides = {}, registryRetryMs = undefined) {
     showToast: (message) => { calls.toasts.push(message); },
     errorText: (error) => String(error?.message ?? error),
     checkGeometry: (config) => { calls.checkGeometry.push(config); return okPreflight(config); },
-    referenceContext: (removeLive) => { calls.referenceContext.push(removeLive); return { removeLiveMissingPositions: removeLive }; },
+    referenceContext: (removeLive, removeInvalid) => { calls.referenceContext.push(removeLive); return {
+      removeLiveMissingPositions: removeLive, removeInvalidMissingPositions: removeInvalid,
+    }; },
     showMigrationBlocked: (error) => { calls.migration.push(error); },
     clearGeometryGesture: () => { calls.gesture += 1; },
     commit: async (config, layout) => { calls.commit.push([config, layout]); },
@@ -101,7 +119,9 @@ function fakePort(overrides = {}, registryRetryMs = undefined) {
     ledNote: () => "",
     ...overrides,
   };
-  return { port, calls, state, dialog: new OptimizePlansDialog(port, { optimize: optimizePlans, registryRetryMs }) };
+  return { port, calls, state, dialog: new OptimizePlansDialog(port, {
+    optimize: optimizePlans, sourceMatches: sameOptimizeSource, registryRetryMs,
+  }) };
 }
 
 // ------------------------------------------------------ TemplateResult helpers
@@ -573,9 +593,9 @@ function realPort({ dictionary = RU, config, layout, context, hass = {}, retryMs
     t: translator(dictionary),
     hass: () => hass,
     layout: () => layout,
-    referenceContext: (removeLive) => {
+    referenceContext: (removeLive, removeInvalid) => {
       made.calls.referenceContext.push(removeLive);
-      return { ...context(), removeLiveMissingPositions: removeLive };
+      return { ...context(), removeLiveMissingPositions: removeLive, removeInvalidMissingPositions: removeInvalid };
     },
   }, retryMs);
   made.state.config = config;
@@ -630,7 +650,7 @@ test('#869 AC1 owner example: a plain summary, why it is safe, groups by cause, 
       assert.equal(text.includes(tr('gs.optimize_registry_limited')), false, `${label}: full registry`);
       assert.doesNotMatch(text, new RegExp(`grp_detskaia|${OPAQUE}|smrnf8s7x`), `${label}: ids only in Details`);
       assert.deepEqual(buttons(template).map((button) => button.label),
-        [tr('gs.preflight_copy'), tr('btn.close')], label);
+        [tr('gs.preflight_copy'), tr('gs.optimize_invalid_remove'), tr('btn.close')], label);
       assert.doesNotMatch(flatten(template), /data-hp="dialog-confirm"/);
       assert.doesNotMatch(unverifiedBlock(template), /role="alert"/, `${label}: the block is not an alert`);
       assert.deepEqual(calls.commit, []);
@@ -703,7 +723,7 @@ test('#869 AC3 a refused or hung reload keeps the same report and says the data 
   const { dialog, state } = realPort({
     config: optimalConfig(), layout: ownerLayout(), hass, context: () => rosterOf(hass), retryMs: 250,
   });
-  assert.equal(new OptimizePlansDialog(fakePort().port, { optimize: optimizePlans }).registryRetryMs, 10_000,
+  assert.equal(new OptimizePlansDialog(fakePort().port, { optimize: optimizePlans, sourceMatches: sameOptimizeSource }).registryRetryMs, 10_000,
     'default wait is 10 s');
   dialog.open();
   const before = state.dialog;
@@ -972,4 +992,80 @@ test('#869 the loader opens the real dialog and routes the block strings to the 
   assert.ok(text.includes(EN['gs.optimize_no_changes']));
   assert.match(text, /main:btn\.close/, 'a card key still resolves through the card');
   assert.doesNotMatch(text, /main:gs\.optimize_(?:retry|no_changes|unverified)/);
+});
+
+test('#892 AC1: direct and lazy entry points refuse a current non-writer without a candidate or commit', async () => {
+  const { dialog, port, state, calls } = fakePort({ canWrite: () => false });
+  dialog.open();
+  assert.equal(state.dialog, null);
+  assert.deepEqual(calls.referenceContext, []);
+  state.dialog = dialogOf();
+  await dialog.run();
+  assert.deepEqual(calls.commit, []);
+  const loader = new LazyOptimizePlansDialog(port, () => 'en');
+  await loader.open();
+  assert.equal(loader.dialog, null, 'no lazy import just to attempt a forbidden mutation');
+  assert.ok(calls.toasts.some(x => x.includes('write')));
+});
+
+test('#892 AC8: revision, deep content or proof changes reset consent and never commit a stale candidate', async () => {
+  for (const change of [
+    (s) => { s.configRev = 4; }, (s) => { s.layoutRev = 5; },
+    (s) => { s.config.spaces[0].title = 'Changed'; },
+    (s) => { s.ownersFingerprint = 'new roster'; }, (s) => { s.connection = {}; },
+  ]) {
+    const { dialog, state, calls } = fakePort();
+    state.dialog = dialogOf({ removeInvalidMissingPositions: true });
+    change(state);
+    await dialog.run();
+    assert.equal(calls.commit.length, 0);
+    assert.equal(state.dialog.removeInvalidMissingPositions, false);
+    assert.equal(state.dialog.removeLiveMissingPositions, false);
+    assert.ok(calls.toasts.includes('gs.optimize_preview_changed'));
+  }
+});
+
+test('#892 AC5: cleanup is preview-only, Apply writes its exact pair, post-commit report is clean', async () => {
+  let layout = ownerLayout();
+  const config = optimalConfig();
+  const { dialog, port, state, calls } = fakePort({
+    layout: () => layout,
+    referenceContext: (removeLive, removeInvalid) => ({ ...roster(true),
+      removeLiveMissingPositions: removeLive, removeInvalidMissingPositions: removeInvalid }),
+    commit: async (cfg, lay, guard) => {
+      assert.equal(guard.canWrite(), true);
+      assert.equal(sameOptimizeSource(guard.source, guard.current()), true);
+      calls.commit.push([cfg, lay]); state.config = cfg; layout = lay;
+    },
+  });
+  state.config = config;
+  dialog.open();
+  const original = JSON.stringify(layout);
+  assert.equal(state.dialog.changed, false);
+  assert.equal(state.dialog.report.invalidPositionsEligible.length, 3);
+  dialog.toggleInvalidPositions();
+  assert.equal(calls.commit.length, 0);
+  assert.equal(JSON.stringify(layout), original);
+  const candidate = state.dialog;
+  assert.equal(candidate.report.invalidPositionsRemoved.length, 3);
+  assert.match(flatten(dialog.render()), /gs.optimize_invalid_selected/);
+  await dialog.run();
+  assert.deepEqual(calls.commit[0], [candidate.config, candidate.layout]);
+  assert.equal(state.dialog.report.invalidPositionsEligible.length, 0);
+  assert.equal(state.dialog.changed, false);
+  assert.equal(state.dialog.removeInvalidMissingPositions, false);
+  assert.match(calls.toasts.at(-1), /gs.optimize_invalid_done/);
+  assert.equal(port.dialog(), state.dialog);
+});
+
+test('#892 AC8/9: closing a pending Apply cannot close or toast a subsequently opened dialog', async () => {
+  let finish;
+  const { dialog, state, calls } = fakePort({ commit: () => new Promise(r => { finish = r; }) });
+  state.dialog = dialogOf();
+  const pending = dialog.run();
+  state.dialog = dialogOf();
+  const reopened = state.dialog;
+  finish(); await pending;
+  assert.equal(state.dialog, reopened);
+  assert.equal(calls.toasts.length, 0);
 });

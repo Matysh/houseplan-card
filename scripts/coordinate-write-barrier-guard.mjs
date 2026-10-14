@@ -73,7 +73,7 @@ export function checkCoordinateWriteBarriers(root = defaultRoot) {
   if (optimizeWrites.length !== 1) errors.push(`frontend Optimize writer inventory: ${optimizeWrites.length}`);
   for (const index of optimizeWrites) requireWindow(
     errors, frontend, index,
-    /config,[\s\S]*layout,[\s\S]*expected_config_rev: this\._cfgRev/,
+    /config,[\s\S]*layout,[\s\S]*expected_config_rev: (?:guard\?\.source\.configRev \?\? )?this\._cfgRev,[\s\S]*expected_layout_rev: (?:guard\?\.source\.layoutRev \?\? )?this\._layoutRev/,
     'frontend Optimize transaction', 300,
   );
 

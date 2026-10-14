@@ -22,6 +22,7 @@ const emptyOwnerReport = {
   removedPositions: [],
   liveMissingPositions: [],
   unverifiedPositions: [],
+  invalidPositionsEligible: [], invalidPositionsRemoved: [], invalidPositionsRetained: [],
   registryAuthoritative: false,
 };
 

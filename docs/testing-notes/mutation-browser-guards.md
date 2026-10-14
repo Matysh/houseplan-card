@@ -36,8 +36,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 52 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 67 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 41 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 178 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **346 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 179 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **347 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -376,6 +376,13 @@ Vacuum-attempt and New-ack rollback guards instead execute their Node consumers.
 - `config-foreign-write-reply-revives-authority`
 - `config-foreign-context-keeps-old-write-queue`
 - `config-foreign-reply-decrements-new-context-count`
+
+#892 checks the actual settings/cleanup/Apply controls in the mounted lazy
+dialog, the unchanged stores before Apply, the exact paired request, and the
+rebuilt report after adoption. A helper-only witness cannot prove this DOM/HA
+transaction wiring; no production test facade or private draft mutation is used.
+
+- `optimize-892-loses-cleanup-opt-in`
 
 The #844 predicates and independent runtime port guard have cheap Node
 witnesses. These eleven guards instead cross the actual footer/direct caller,

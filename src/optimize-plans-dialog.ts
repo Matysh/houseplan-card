@@ -31,6 +31,7 @@ import type {
   SpaceReferencePositionDetail, SpaceReferenceRepairContext,
 } from './space-reference-repair';
 import type { ServerConfig } from './types';
+import type { OptimizeSource, OptimizeWriteGuard, sameOptimizeSource } from './optimize-source';
 import { contentFingerprint } from './visual-continuity';
 
 /** Optimization preview plus the exact pair, so commit cannot differ from it. */
@@ -45,6 +46,9 @@ export type OptimizePlansDialogState = {
     busy: boolean;
     /** False by default; true only after the secondary preview action. */
     removeLiveMissingPositions: boolean;
+    removeInvalidMissingPositions: boolean;
+    source: OptimizeSource;
+    vacuumNames: string[];
     /** #869: a registry re-check is in flight (memory only). */
     retrying?: boolean;
     /** #869: the last re-check still brought no complete registry. */
@@ -53,7 +57,7 @@ export type OptimizePlansDialogState = {
 
 /**
  * Всё, что диалогу нужно от редактора. Порт собирает рантайм в конструкторе;
- * других зависимостей у модуля нет. Рост порта выше 20 членов — сигнал, что
+ * других зависимостей у модуля нет. Рост порта выше 23 членов — сигнал, что
  * сюда протекает чужая подсистема (юнит `optimize-plans-dialog.test.mjs`).
  */
 export interface OptimizePlansDialogPort {
@@ -65,6 +69,8 @@ export interface OptimizePlansDialogPort {
   config(): ServerConfig | null;
   /** the normalised plan exists — the preview has something to optimise */
   planReady(): boolean;
+  canWrite(): boolean;
+  source(): OptimizeSource;
   layout(): DeviceLayout | null | undefined;
   integrationVersion(): string | null;
   /** `displayVersion(CARD_VERSION)` of the runtime; no second copy here */
@@ -73,10 +79,10 @@ export interface OptimizePlansDialogPort {
   showToast(message: string): void;
   errorText(error: unknown): string;
   checkGeometry(config: ServerConfig): OptimizeGeometryPreflightResult;
-  referenceContext(removeLiveMissingPositions: boolean): SpaceReferenceRepairContext;
+  referenceContext(removeLiveMissingPositions: boolean, removeInvalidMissingPositions?: boolean): SpaceReferenceRepairContext;
   showMigrationBlocked(error: unknown): void;
   clearGeometryGesture(): void;
-  commit(config: ServerConfig, layout: DeviceLayout): Promise<void>;
+  commit(config: ServerConfig, layout: DeviceLayout, guard: OptimizeWriteGuard): Promise<void>;
   /** a write conflict reloads both stores before the error toast */
   reloadAfterConflict(): Promise<unknown>;
   /** #780: strips passing through walls of the optimised result (lazy LED tool). */
@@ -125,6 +131,7 @@ export function preflightVersionsDiffer(integration: string | null, cardVersion:
  */
 export interface OptimizePlansDialogOptions {
   optimize: typeof optimizePlans;
+  sourceMatches: typeof sameOptimizeSource;
   /** the bounded wait of «Check again», 10 s by default */
   registryRetryMs?: number;
 }
@@ -212,16 +219,21 @@ export class OptimizePlansDialog {
    * Preview whole-plan maintenance. Nothing is written here: the pure run
    * produces both the report and the exact config/layout pair to commit.
    */
-  public preview(removeLiveMissingPositions: boolean): void {
+  public preview(removeLiveMissingPositions: boolean, removeInvalidMissingPositions = false): void {
     const config = this.port.config();
+    if (!this.port.canWrite()) {
+      this.port.showToast(this.port.t('gs.optimize_write_required'));
+      return;
+    }
     if (!this.port.planReady() || !config) return;
+    const source = this.port.source();
     const spaces = config.spaces || [];
     let r;
     try {
       r = this.options.optimize(
         config,
         this.port.layout() || {},
-        this.port.referenceContext(removeLiveMissingPositions),
+        this.port.referenceContext(removeLiveMissingPositions, removeInvalidMissingPositions),
       );
     } catch (error) {
       this.port.showMigrationBlocked(error);
@@ -237,10 +249,18 @@ export class OptimizePlansDialog {
     const cm = Math.ceil(r.report.maxShiftCm * 10) / 10;
     const sp = spaces.find((x) => x?.id != null && String(x.id) === r.report.maxSpace);
     const where = spaces.length > 1 && sp ? String(sp.title || sp.id) : '';
+    const rooms = new Set((r.config.spaces || []).flatMap((space) =>
+      (space.rooms || []).map((room) => room.id)));
+    const vacuumNames = (r.config.markers || []).filter((marker) =>
+      Object.values(marker.vacuum?.segment_map || {}).some((room) =>
+        typeof room === 'string' && !!room && !rooms.has(room)))
+      .map((marker) => String(marker.name || marker.id));
     // A new dialog object also starts without an inline clipboard fallback.
     this.port.setDialog({
       report: r.report, config: r.config, layout: r.layout, cm, where,
       preflight, changed: r.changed, busy: false, removeLiveMissingPositions,
+      removeInvalidMissingPositions, source,
+      vacuumNames,
     });
   }
 
@@ -249,7 +269,23 @@ export class OptimizePlansDialog {
   public toggleLivePositions(): void {
     const dialog = this.port.dialog();
     if (!dialog || dialog.busy || dialog.retrying || !dialog.report.liveMissingPositions.length) return;
-    this.preview(!dialog.removeLiveMissingPositions);
+    if (this.refreshChanged(dialog)) return;
+    this.preview(!dialog.removeLiveMissingPositions, dialog.removeInvalidMissingPositions);
+  }
+
+  public toggleInvalidPositions(): void {
+    const d = this.port.dialog();
+    if (!d || d.busy || d.retrying || (d.changed && !d.preflight?.ok)
+      || !d.report.invalidPositionsEligible.length) return;
+    if (this.refreshChanged(d)) return;
+    this.preview(d.removeLiveMissingPositions, !d.removeInvalidMissingPositions);
+  }
+
+  private refreshChanged(d: OptimizePlansDialogState): boolean {
+    if (this.options.sourceMatches(d.source, this.port.source())) return false;
+    this.preview(false, false);
+    this.port.showToast(this.port.t('gs.optimize_preview_changed'));
+    return true;
   }
 
   /**
@@ -265,7 +301,8 @@ export class OptimizePlansDialog {
     this.port.setDialog(pending);
     const complete = await reloadHaRegistriesBounded(this.port.hass(), this.registryRetryMs);
     if (this.port.dialog() !== pending) return;
-    if (complete) this.preview(pending.removeLiveMissingPositions);
+    // New evidence requires a new opt-in; never carry deletion consent across a refresh.
+    if (complete) this.preview(false, false);
     if (this.port.dialog() === pending) {
       this.port.setDialog({ ...pending, retrying: false, retryFailed: !complete });
     }
@@ -277,8 +314,17 @@ export class OptimizePlansDialog {
    */
   public async run(): Promise<void> {
     let d = this.port.dialog();
+    if (!this.port.canWrite()) {
+      this.port.showToast(this.port.t('gs.optimize_write_required'));
+      return;
+    }
     if (d?.retrying) return; // #869: the re-check may still rebuild this preview
     if (!d || d.busy || !this.port.config() || !d.changed || !d.preflight?.ok) return;
+    if (!this.options.sourceMatches(d.source, this.port.source())) {
+      this.preview(false, false);
+      this.port.showToast(this.port.t('gs.optimize_preview_changed'));
+      return;
+    }
     const fingerprint = contentFingerprint(d.config);
     if (d.preflight.fingerprint !== fingerprint) {
       const preflight = this.port.checkGeometry(d.config);
@@ -288,10 +334,20 @@ export class OptimizePlansDialog {
       if (!preflight.ok) return;
     }
     this.port.clearGeometryGesture();
-    this.port.setDialog({ ...d, busy: true });
+    const pending = { ...d, busy: true };
+    this.port.setDialog(pending);
     try {
-      await this.port.commit(d.config, d.layout);
-      this.port.setDialog(null);
+      await this.port.commit(d.config, d.layout, {
+        source: d.source, current: () => this.port.source(), canWrite: () => this.port.canWrite(),
+      });
+      if (this.port.dialog() !== pending || !this.port.canWrite()) return;
+      if (d.removeInvalidMissingPositions) {
+        this.preview(false, false);
+        this.port.showToast(this.port.t('gs.optimize_invalid_done', {
+          n: String(d.report.invalidPositionsRemoved.length),
+        }));
+      } else this.port.setDialog(null);
+      if (d.removeInvalidMissingPositions) return;
       this.port.showToast(this.port.t('gs.align_done', {
         n: String(d.report.moved),
         m: String(d.report.migrated + d.report.canonicalized
@@ -302,10 +358,18 @@ export class OptimizePlansDialog {
         r: String(d.report.spaceRefsRemapped + d.report.roomRefsRemapped
           + d.report.positionsRemapped + d.report.markersDetached
           + d.report.orphanRoomLabelsRemoved + d.report.orphanDevicePositionsRemoved
-          + d.report.orphanGroupPositionsRemoved),
+          + d.report.orphanGroupPositionsRemoved + d.report.invalidPositionsRemoved.length),
       }));
     } catch (e: any) { // any-ok: ответ WS HA не типизирован, code читается как у всех писателей конфига
       const current = this.port.dialog();
+      if (current !== pending) return;
+      if (e?.code === 'optimize_preview_changed') {
+        if (this.port.canWrite()) this.preview(false, false);
+        else this.port.setDialog({ ...pending, busy: false });
+        this.port.showToast(this.port.t(this.port.canWrite()
+          ? 'gs.optimize_preview_changed' : 'gs.optimize_write_required'));
+        return;
+      }
       if (current) this.port.setDialog({ ...current, busy: false });
       if (e?.code === 'wall_model_client_outdated') {
         this.port.showToast(this.port.t('toast.wall_model_client_outdated'));
@@ -313,6 +377,8 @@ export class OptimizePlansDialog {
       }
       if (e?.code === 'conflict') {
         await this.port.reloadAfterConflict();
+        if (this.port.dialog() !== current && this.port.dialog()?.source !== current.source) return;
+        if (this.port.canWrite()) this.preview(false, false);
       }
       if (!isGeometryCleanupRefusal(e)) this.port.showToast(this.port.t('toast.error', { err: this.port.errorText(e) }));
     }
@@ -409,6 +475,8 @@ export class OptimizePlansDialog {
       ? String(straightenSpace.title || straightenSpace.id) : '';
     const removed = r.orphanRoomLabelsRemoved + r.orphanDevicePositionsRemoved
       + r.orphanGroupPositionsRemoved;
+    const invalidEligible = r.invalidPositionsEligible;
+    const invalidRetained = r.invalidPositionsRetained;
     const liveNames = r.liveMissingPositions.map((item) => item.name).filter(Boolean);
     const visibleLiveNames = liveNames.slice(0, 3).join(', ');
     const remainingLiveNames = Math.max(0, liveNames.length - 3);
@@ -485,6 +553,12 @@ export class OptimizePlansDialog {
             : html`
               ${r.moved ? html`<p class="alignmsg">${this.port.t('gs.align_count', {
                   n: String(r.moved), total: String(r.total), cm: String(d.cm),
+                })}</p>` : nothing}
+              ${r.currentPositionsMoved ? html`<p class="alignmsg">${this.port.t('gs.optimize_visible_positions', {
+                  n: String(r.currentPositionsMoved), total: String(r.currentPositions),
+                })}</p>` : nothing}
+              ${r.archivedPositions ? html`<p class="alignmsg">${this.port.t('gs.optimize_missing_space_positions', {
+                  n: String(r.archivedPositionsMoved), total: String(r.archivedPositions),
                 })}</p>` : nothing}
               ${r.latticeCoordinatesCanonicalized ? html`
                 <p class="alignmsg">${this.port.t('gs.optimize_lattice_summary', {
@@ -582,11 +656,37 @@ export class OptimizePlansDialog {
               </div>`
             : nothing}
           ${r.unverifiedPositions.length ? this.renderUnverified(d, failed) : nothing}
+          ${invalidEligible.length || invalidRetained.length ? html`<div class="optimize-invalid">
+              <p class="alignmsg">${this.port.t('gs.optimize_invalid_eligible', {
+                n: String(invalidEligible.length),
+              })}</p>
+              <p class="rhint">${this.port.t('gs.optimize_invalid_hint')}</p>
+              ${invalidEligible.length ? html`<button class="btn ghost optimize-action optimize-invalid-cleanup" type="button"
+                aria-pressed=${d.removeInvalidMissingPositions ? 'true' : 'false'}
+                ?disabled=${d.busy || !!d.retrying || failed || !this.port.canWrite()}
+                @click=${() => this.toggleInvalidPositions()}>
+                <ha-icon icon=${d.removeInvalidMissingPositions ? 'mdi:undo' : 'mdi:broom'}></ha-icon>
+                ${this.port.t(d.removeInvalidMissingPositions
+                  ? 'gs.optimize_invalid_keep' : 'gs.optimize_invalid_remove')}
+              </button>` : html`<p class="rhint">${this.port.t('gs.optimize_invalid_none_safe')}</p>`}
+              ${d.removeInvalidMissingPositions ? html`<p class="rhint" role="status">
+                ${this.port.t('gs.optimize_invalid_selected', { n: String(r.invalidPositionsRemoved.length) })}
+              </p>` : nothing}
+              ${invalidRetained.length ? html`<p class="rhint">${this.port.t('gs.optimize_invalid_retained', {
+                  n: String(invalidRetained.length),
+                })}</p>
+                <ul>${(['live_owner', 'unknown_shape', 'registry_unavailable', 'unsupported_model'] as const)
+                  .map((reason) => {
+                    const n = invalidRetained.filter((item) => item.cleanupReason === reason).length;
+                    return n ? html`<li>${this.port.t(`gs.optimize_invalid_${reason}`, { n: String(n) })}</li>` : nothing;
+                  })}</ul>` : nothing}
+            </div>` : nothing}
           ${r.nestedRefsUnresolved
             ? html`<div class="rhint" role="alert">${this.port.t('gs.optimize_vacuum_warning', {
                 n: String(r.nestedRefsUnresolved),
               })}</div>`
             : nothing}
+          ${(d.vacuumNames || []).map((name) => html`<p class="rhint">${this.port.t('gs.optimize_vacuum_action', { name })}</p>`)}
           ${this.port.ledNote()}
           ${referenceDetails.length
             ? html`<details class="optimize-details">
@@ -608,8 +708,8 @@ export class OptimizePlansDialog {
             d.changed ? 'btn.cancel' : 'btn.close',
           )}</button>
           ${!d.changed || !d.preflight?.ok ? nothing : html`
-            <button class="btn on" data-hp="dialog-confirm" @click=${() => this.run()} ?disabled=${d.busy || !!d.retrying}>
-              <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this.port.t('gs.align_run')}
+            <button class="btn on" data-hp="dialog-confirm" @click=${() => this.run()} ?disabled=${d.busy || !!d.retrying || !this.port.canWrite()}>
+              <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this.port.t(d.removeInvalidMissingPositions ? 'gs.optimize_apply_changes' : 'gs.align_run')}
             </button>`}
         </div>
     </hp-dialog>`;

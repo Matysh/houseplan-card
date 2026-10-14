@@ -258,6 +258,7 @@ import { SpacingMagnet, spacingMarkers, spacingRows } from './device-spacing'; /
 import { ledStripsByMarker } from './led-strip-gate';
 import { effectiveDeviceBaseSize } from './device-marker-geometry';
 import { contentFingerprint } from './visual-continuity';
+import { settingsT } from './i18n/settings';
 import { physicalBodiesKey, wallUnionKey, writeWallUnionPool } from './floor-geometry-key';
 import { PointerModalityController } from './pointer-modality';
 import { type ResolvedDevicePresentation } from './device-presentation';
@@ -903,6 +904,20 @@ export class HouseplanEditorRuntime {
       hass: () => host.hass,
       config: () => host._serverCfg,
       planReady: () => !!host._norm,
+      canWrite: () => host._canEdit && !host._kiosk,
+      source: () => ({
+        configRev: host._cfgRev, layoutRev: host._layoutRev,
+        configFingerprint: contentFingerprint(host._serverCfg),
+        layoutFingerprint: contentFingerprint(host._layout),
+        ownersFingerprint: contentFingerprint({
+          revision: host._haRegistry.revision, authoritative: host._haRegistry.authoritative,
+          deviceIds: Object.keys(host._haRegistry.devices || {}).sort(),
+          entityIds: Object.keys(host._haRegistry.entities || {}).sort(),
+          stateIds: Object.keys(host.hass?.states || {}).sort(),
+          effectiveAreas: host._devices.map((device) => [device.id, device.virtual, device.area]),
+        }),
+        connection: host.hass?.connection,
+      }),
       layout: () => host._layout,
       integrationVersion: () => host._haIntegrationVersion,
       cardVersion: () => displayVersion(CARD_VERSION),
@@ -910,10 +925,10 @@ export class HouseplanEditorRuntime {
       showToast: (message) => host._showToast(message),
       errorText: (error) => host._errText(error),
       checkGeometry: (config) => host._checkOptimizeGeometry(config),
-      referenceContext: (removeLive) => this._optimizeReferenceContext(removeLive),
+      referenceContext: (removeLive, removeInvalid) => this._optimizeReferenceContext(removeLive, removeInvalid),
       showMigrationBlocked: (error) => this._showWallModelMigrationBlocked(error),
       clearGeometryGesture: () => this._clearGeometryGesture(),
-      commit: (config, layout) => commitPlanOptimization(host, config, layout),
+      commit: (config, layout, guard) => commitPlanOptimization(host, config, layout, guard),
       reloadAfterConflict: () => Promise.all([host._reloadConfigOnly(true), host._reloadLayoutOnly()]),
       ledNote: () => host._ledNote(),
     }, () => langOf(host.hass, host._config?.language));
@@ -9154,6 +9169,7 @@ public _checkSpacePhysicalGeometryImpl(
 
 public _optimizeReferenceContext(
     removeLiveMissingPositions: boolean,
+    removeInvalidMissingPositions = false,
   ): SpaceReferenceRepairContext {
     const registry = this.host._haRegistry;
     const full = this.host._fullRegistryHass;
@@ -9209,11 +9225,17 @@ public _optimizeReferenceContext(
         names,
       },
       removeLiveMissingPositions,
+      removeInvalidMissingPositions,
     };
   }
 
 public async _undoPlanOptimization(): Promise<void> {
+    if (!this.host._canEdit || this.host._kiosk) {
+      this.host._showToast(settingsT(langOf(this.host.hass, this.host._config?.language), 'gs.optimize_write_required'));
+      return;
+    }
     if (!this.host._canOptimizeUndo || this.host._optimizeUndoBusy) return;
+    const connection = this.host.hass?.connection;
     const undoKind = this.host._undoKind;
     this._clearGeometryGesture();
     this.host._optimizeUndoBusy = true;
@@ -9228,6 +9250,7 @@ public async _undoPlanOptimization(): Promise<void> {
         this.host._getAuthoritativeConfig(),
         this.host.hass.callWS({ type: 'houseplan/layout/get' }),
       ]);
+      if (this.host.hass?.connection !== connection) return;
       // config/get is the sole authority for runtime capabilities, including
       // integration_version. Reuse the full-card adopter instead of leaving
       // this direct optimization-undo path with stale version state (#462).

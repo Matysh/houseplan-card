@@ -96,6 +96,13 @@ and distinguishes node conflict/proof/update/temporary processing failures.
 Node-history classifier corrections originated in #843's intermediate beta;
 the release's stable-fix narrative concerns the pre-existing chain/write UX.
 
+Optimize cleanup (#892) is an explicit preview/Apply choice for proven-unused
+missing-space positions, not blanket deletion. Hidden/live owners and live-room
+scale remain consumers; unknown shapes/models and unchecked opaque IDs stay.
+The candidate anchors the source pair and owner evidence across pending writes,
+and changed evidence resets deletion consent. Optimize/Undo use Houseplan write
+permission outside kiosk; paired storage and one-deep Undo remain authoritative.
+
 Beta publication (#889) treats additional owner scene/dev/native/GPU records
 as advice when absent, not as fabricated acceptance. Only the committed beta
 version selects this policy; stable/RC/unknown channels stay strict. Exact full

@@ -1087,10 +1087,28 @@ view boxes, deduplicate markers, or delete files. It may delete an unattached
 layout entry only after classifying its owner against current rooms, marker
 tombstones and an authoritative HA device/entity roster. Proven-absent room
 labels, devices and group markers are cleaned; live owners are preserved unless
-the administrator explicitly opts into removing their old positions, and an
+the plan writer explicitly opts into removing their old positions, and an
 incomplete registry or unknown namespace always fails closed. The cleanup is
 part of the pure candidate, Undo and idempotence contract. File collection
 remains the backend's reference-aware scheduled job.
+
+#892 adds a separate opt-in for proven-unused missing-space positions. Legacy
+`grp_*` keys with no current marker/device/entity consumer can be classified
+without a full registry; an opaque historical HA device ID requires an
+authoritative full Device/Entity roster plus state-only entities. Unknown
+namespaces, unknown fields, malformed records and unsupported model versions
+are retained. Current room-label `k` remains live even if its `s` is stale;
+an unused eligible record, including `k`, is removed as a whole. Hidden markers
+are consumers. Exact import lineage repair runs before eligibility checks.
+This is an explicit maintenance candidate, never a read-time migration.
+
+The dialog anchors both source revisions, config/layout content, owner-proof
+context and HA connection. It rechecks after queued writes before sending the
+same candidate with the anchored CAS revisions. Changed evidence requires a
+fresh report and new consent. A reply from a replaced HA connection is not
+adopted. Optimize/Undo use the existing Houseplan `may_write` policy, not a new
+administrator-only rule; kiosk refuses these UI actions. Existing paired
+storage intent/rollback/one-deep Undo and compatibility schemas are unchanged.
 
 `alignAllToGrid(spaces, layout)` (`src/align-grid.ts`) is pure: it
 copies its input, never mutates it, and returns the new spaces, the new

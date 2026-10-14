@@ -2280,7 +2280,7 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
     only receives success once both halves are durable.
     """
     if not _check_write(hass, connection):
-        connection.send_error(msg["id"], "unauthorized", "Only administrators may optimize plans")
+        connection.send_error(msg["id"], "unauthorized", "Houseplan write permission is required to optimize plans")
         return
     rt = _runtime(hass, connection, msg["id"])
     if rt is None:
@@ -2492,7 +2492,7 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
 async def ws_plan_optimize_undo(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
     """Restore the snapshot, but never overwrite edits made after optimization."""
     if not _check_write(hass, connection):
-        connection.send_error(msg["id"], "unauthorized", "Only administrators may undo optimization")
+        connection.send_error(msg["id"], "unauthorized", "Houseplan write permission is required to undo optimization")
         return
     rt = _runtime(hass, connection, msg["id"])
     if rt is None:

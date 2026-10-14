@@ -88,6 +88,11 @@ export interface AlignReport {
   maxSpace: string;
   /** Openings whose stored `angle` is corrected — possibly without moving. */
   rotated: number;
+  /** Saved positions on existing / absent spaces, not painted object counts. */
+  currentPositions: number;
+  archivedPositions: number;
+  currentPositionsMoved: number;
+  archivedPositionsMoved: number;
 }
 
 export interface AlignResult {
@@ -149,6 +154,8 @@ export function alignAllToGrid(
   const layout: Record<string, any> = JSON.parse(JSON.stringify(layoutIn || {}));
   let moved = 0, total = 0, maxShift = 0, maxShiftCm = 0, maxSpace = '', rotated = 0;
   let coordsCanonicalized = 0;
+  let currentPositions = 0, archivedPositions = 0;
+  let currentPositionsMoved = 0, archivedPositionsMoved = 0;
 
   /** Count only a near-node value which was actually written to the candidate. */
   const noteCanonicalCoordinate = (before: number, after: number): void => {
@@ -349,6 +356,9 @@ export function alignAllToGrid(
     // an entry whose space is gone still moves, and the promise must not
     // shrink because of it: the largest scale on the plan is the safe one
     const sid = typeof p.s === 'string' ? p.s : '';
+    const archived = !!sid && !Object.prototype.hasOwnProperty.call(cellById, sid);
+    if (archived) { archivedPositions++; if (d > EPS) archivedPositionsMoved++; }
+    else { currentPositions++; if (d > EPS) currentPositionsMoved++; }
     note(d, cellById[sid] ?? cellWorst, sid);
   }
 
@@ -357,6 +367,7 @@ export function alignAllToGrid(
     report: {
       moved, coordsCanonicalized, total, maxShift, maxShiftCm, maxSpace,
       rotated,
+      currentPositions, archivedPositions, currentPositionsMoved, archivedPositionsMoved,
     },
     changed: moved > 0 || coordsCanonicalized > 0,
   };

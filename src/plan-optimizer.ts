@@ -429,7 +429,12 @@ export function optimizePlans(
 ): OptimizeResult {
   const reconcilePartitions = dependencies.reconcileCoincidentPartitions
     ?? reconcileCoincidentPartitions;
-  const references = repairSpaceReferences(configIn, layoutIn, context);
+  const references = repairSpaceReferences(configIn, layoutIn, {
+    ...context,
+    invalidCleanupSupported: configIn?.model_version === undefined
+      || (Number.isInteger(configIn.model_version) && configIn.model_version >= 0
+        && configIn.model_version <= PLAN_MODEL_VERSION),
+  });
   const config = references.config;
   const lattice = latticeCanonicalizationReport(config, references.layout);
   // repairSpaceReferences already owns the immutable candidate clone. Apply

@@ -56,6 +56,65 @@ async def _access_token_for_group(hass: HomeAssistant, group_id: str) -> str:
     return hass.auth.async_create_access_token(refresh_token)
 
 
+@pytest.mark.parametrize(("group_id", "admin_only", "allowed"), [
+    (None, True, True),
+    (GROUP_ID_USER, False, True),
+    (GROUP_ID_USER, True, False),
+    (GROUP_ID_READ_ONLY, False, False),
+])
+async def test_issue_892_optimize_cleanup_acl_pair_and_undo(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+    group_id: str | None, admin_only: bool, allowed: bool,
+) -> None:
+    """Real authenticated WS boundary: unused k is deleted/restored as one pair."""
+    from custom_components.houseplan.store import get_data
+
+    await _setup(hass, options={CONF_ADMIN_ONLY: admin_only})
+    owner = await hass_ws_client(hass)
+    source = {"spaces": [{"id": "floor", "title": "Floor", "view_box": [0, 0, 1, 1],
+                           "rooms": []}], "markers": [], "settings": {}}
+    await owner.send_json_auto_id({"type": "houseplan/config/set", "config": source, "expected_rev": 0})
+    assert (await owner.receive_json())["success"]
+    await owner.send_json_auto_id({"type": "houseplan/config/get"})
+    snapshot = (await owner.receive_json())["result"]
+    runtime = get_data(hass)
+    assert runtime is not None
+    original_layout = {"grp_obsolete": {"s": "deleted", "x": 0.25, "y": 0.5, "k": 1.6}}
+    # Seed a pre-existing legacy position, not private application UI state.
+    await runtime.store.async_save({"layout": original_layout, "rev": 1})
+    client = owner if group_id is None else await hass_ws_client(
+        hass, access_token=await _access_token_for_group(hass, group_id))
+    await client.send_json_auto_id({"type": "houseplan/plan/optimize", "config": snapshot["config"],
+        "layout": {}, "expected_config_rev": snapshot["rev"], "expected_layout_rev": 1})
+    answer = await client.receive_json()
+    assert answer["success"] is allowed, answer
+    if not allowed:
+        assert answer["error"]["code"] == "unauthorized"
+        assert "Houseplan write permission" in answer["error"]["message"]
+        assert "administrators" not in answer["error"]["message"]
+        assert (await runtime.store.async_load())["layout"] == original_layout
+        assert (await runtime.config_store.async_load())["rev"] == snapshot["rev"]
+        await client.send_json_auto_id({"type": "houseplan/plan/optimize_undo",
+            "expected_config_rev": snapshot["rev"], "expected_layout_rev": 1})
+        denied = await client.receive_json()
+        assert denied["error"]["code"] == "unauthorized"
+        assert "Houseplan write permission" in denied["error"]["message"]
+        return
+    applied = answer["result"]
+    assert applied["can_undo"] is True
+    assert (await runtime.store.async_load())["layout"] == {}
+    await client.send_json_auto_id({"type": "houseplan/plan/optimize", "config": snapshot["config"],
+        "layout": {}, "expected_config_rev": snapshot["rev"], "expected_layout_rev": 1})
+    stale = await client.receive_json()
+    assert stale["success"] is False and stale["error"]["code"] == "conflict"
+    await client.send_json_auto_id({"type": "houseplan/plan/optimize_undo",
+        "expected_config_rev": applied["config_rev"], "expected_layout_rev": applied["layout_rev"]})
+    restored = await client.receive_json()
+    assert restored["success"], restored
+    assert (await runtime.store.async_load())["layout"] == original_layout
+    assert (await runtime.config_store.async_load())["config"] == snapshot["config"]
+
+
 @pytest.mark.parametrize("fixed_neighbours", [False, True])
 async def test_issue_803_node_protocol_apply_undo_redo_conflict_and_acl(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator, fixed_neighbours: bool,

@@ -109,10 +109,12 @@ test('#252/#566: позиция на удалённое пространство
     rl_room_gone: { s: 'sp1', x: 0.3, y: 0.3 },
     'grp_no_such_area': { s: 'sp1', x: 0.3, y: 0.3 },
   } });
-  const kinds = checkReferences(m).map((v) => `${v.kind}:${v.owner}`);
+  const notes = [];
+  const kinds = checkReferences(m, { notes }).map((v) => `${v.kind}:${v.owner}`);
   assert.ok(kinds.includes('layout_owner:rl_room_gone'));
-  assert.ok(kinds.includes('layout_owner:grp_no_such_area'));
-  assert.equal(kinds.length, 2, 'живая позиция m1 нарушением быть не должна');
+  assert.equal(kinds.includes('layout_owner:grp_no_such_area'), false, 'legacy group is not proved absent by area');
+  assert.ok(notes.some(n => n.kind === 'unknown_owner' && n.owner === 'grp_no_such_area'));
+  assert.equal(kinds.length, 1, 'живая позиция m1 нарушением быть не должна');
 });
 
 test('#566: на удалённом пространстве нарушение — только исчезнувший владелец', () => {
@@ -146,7 +148,6 @@ test('#566: на удалённом пространстве нарушение 
   const notes = [];
   const found = checkReferences(m, { notes });
   assert.deepEqual(found.map((v) => `${v.kind}:${v.owner}`).sort(), [
-    'layout_space:grp_area_never_existed',
     'layout_space:m_gone',
     'layout_space:rl_room_never_existed',
   ]);
@@ -156,9 +157,9 @@ test('#566: на удалённом пространстве нарушение 
   // (находка r1). Поэтому сверяется и вид наблюдения, и ТЕКСТ причины: вид без
   // текста эту асимметрию пропускает — именно так она и проехала.
   assert.deepEqual(notes.filter((n) => n.kind === 'stale_layout_space')
-    .map((n) => n.owner).sort(), ['grp_kitchen', 'm1', 'rl_r1']);
+    .map((n) => n.owner).sort(), ['m1', 'rl_r1']);
   assert.deepEqual(notes.filter((n) => n.kind === 'unknown_owner')
-    .map((n) => n.owner), ['980f1446c4ec1a3a9fa9ff5f6d93caed']);
+    .map((n) => n.owner).sort(), ['980f1446c4ec1a3a9fa9ff5f6d93caed', 'grp_area_never_existed', 'grp_kitchen']);
   for (const note of notes.filter((n) => n.kind === 'stale_layout_space')) {
     assert.match(note.detail, /владелец жив — Optimize хранит позицию намеренно/);
   }

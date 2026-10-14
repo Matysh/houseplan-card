@@ -41,6 +41,12 @@
   refused walls. Node-move messages now distinguish conflicts, geometry proof
   refusals and temporary connection/backend failures; fixed-floor history uses
   the same honest message for Undo and Redo ([#891](https://github.com/Matysh/houseplan-card/issues/891)).
+- Optimize offers a separate safe cleanup preview for unused positions in
+  deleted spaces, followed by Apply and paired Undo. Live/hidden owners,
+  live-room scale and unknown data are preserved. Archived positions are counted
+  separately, vacuum warnings point to segment settings, and permissions match
+  Houseplan write access. Changed preview evidence requires fresh confirmation
+  ([#892](https://github.com/Matysh/houseplan-card/issues/892)).
 
 ## v1.81.0-beta.2 — 2026-10-14
 

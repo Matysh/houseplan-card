@@ -9004,6 +9004,45 @@ const MUTANT_DEFINITIONS = [
   },
   // #869: непроверенные позиции Optimize — объяснение, повтор, диагностика.
   {
+    id: 'optimize-892-cleans-live-owner-as-unused',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/optimize-cleanup-892.test.mjs',
+    because: '#892 must keep live room scale, hidden markers and known HA owners even on deleted floors',
+    patches: [{ file: 'src/space-reference-repair.ts',
+      find: "    if (status === 'live') {\n      report.liveMissingPositions.push(owner);",
+      replace: "    if (status === 'live' && context.removeInvalidMissingPositions !== true) {\n      report.liveMissingPositions.push(owner);",
+    }],
+  },
+  {
+    id: 'optimize-892-pending-flush-bypasses-source-fence',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/optimize-cleanup-892.test.mjs',
+    because: '#892 must not send an old cleanup candidate with fresh revisions after a queued edit changes either store',
+    patches: [{ file: 'src/plan-optimize-write.ts',
+      find: '  if (guard && (!guard.canWrite() || !sameOptimizeSource(guard.source, guard.current()))) {',
+      replace: "  if (String(guard) === 'mutant-never' && guard && (!guard.canWrite() || !sameOptimizeSource(guard.source, guard.current()))) {",
+    }],
+  },
+  {
+    id: 'optimize-892-no-write-permission-guard',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/optimize-plans-dialog.test.mjs',
+    because: '#892 direct preview entry must refuse a current non-writer before preparing a candidate',
+    patches: [{ file: 'src/optimize-plans-dialog.ts',
+      find: "    const config = this.port.config();\n    if (!this.port.canWrite()) {",
+      replace: "    const config = this.port.config();\n    if (String(this.port.canWrite()) === 'mutant-never') {",
+    }],
+  },
+  {
+    id: 'optimize-892-loses-cleanup-opt-in',
+    guard: 'node demo/smoke_optimize_cleanup.mjs',
+    because: '#892 cleanup button must rebuild a deletion preview while leaving both stores untouched until Apply',
+    patches: [{ file: 'src/optimize-plans-dialog.ts',
+      find: '    this.preview(d.removeLiveMissingPositions, !d.removeInvalidMissingPositions);',
+      replace: '    this.preview(d.removeLiveMissingPositions, d.removeInvalidMissingPositions);',
+    }],
+  },
+  {
     id: 'optimize-legacy-group-unlabelled',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="#869 AC2" test/space-reference-repair.test.mjs',

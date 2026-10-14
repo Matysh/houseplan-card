@@ -15,6 +15,7 @@ import { hasSettingsTranslation, settingsT } from './i18n/settings';
 import type { OptimizePlansDialog, OptimizePlansDialogPort } from './optimize-plans-dialog';
 import type { OptimizeGeometryPreflightResult } from './plan-geometry-preflight';
 import { optimizePlans } from './plan-optimizer';
+import { sameOptimizeSource } from './optimize-source';
 import type { ServerConfig } from './types';
 
 /** The runtime's port: the card's own catalog only; the loader adds `settings`. */
@@ -40,7 +41,7 @@ export class LazyOptimizePlansDialog {
         ...port,
         t: (key, vars) => (hasSettingsTranslation(this.lang(), key)
           ? settingsT(this.lang(), key, vars) : port.t(key as I18nKey, vars)),
-      }, { optimize: optimizePlans });
+      }, { optimize: optimizePlans, sourceMatches: sameOptimizeSource });
       return this.dialog;
     }, (error: unknown) => {
       this.loading = null;
@@ -61,7 +62,16 @@ export class LazyOptimizePlansDialog {
   }
 
   public get clipboardFallback(): string | null { return this.dialog?.clipboardFallback ?? null; }
-  public open(): Promise<void> { return this.withDialog((dialog) => dialog.open()); }
+  public open(): Promise<void> {
+    if (!this.port.canWrite()) {
+      this.port.showToast(settingsT(this.lang(), 'gs.optimize_write_required'));
+      return Promise.resolve();
+    }
+    const connection = this.port.source().connection;
+    return this.withDialog((dialog) => {
+      if (this.port.source().connection === connection) dialog.open();
+    });
+  }
   public preview(removeLive: boolean): Promise<void> {
     return this.withDialog((dialog) => dialog.preview(removeLive));
   }

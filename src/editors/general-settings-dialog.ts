@@ -277,14 +277,15 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             </div>` : nothing}
           ${subsection({ title: st('gs.grid_group'), help: this._help('gs.grid_group.help') })}
           <div class="hpf-actions">
-            <button class="btn" @click=${() => this.optimizePlans.open()}>
+            <button class="btn" @click=${() => this.optimizePlans.open()} ?disabled=${!host._canEdit || host._kiosk}>
               <ha-icon icon="mdi:broom"></ha-icon>${t('gs.align_all')}
             </button>
             ${host._canOptimizeUndo && host._undoKind !== 'import' ? html`
-              <button class="btn" @click=${() => this._undoPlanOptimization()} ?disabled=${host._optimizeUndoBusy}>
+              <button class="btn" @click=${() => this._undoPlanOptimization()} ?disabled=${host._optimizeUndoBusy || !host._canEdit || host._kiosk}>
                 <ha-icon icon="mdi:undo-variant"></ha-icon>${st('gs.optimize_undo')}
               </button>` : nothing}
-          </div>`,
+          </div>
+          ${!host._canEdit || host._kiosk ? html`<p class="rhint">${st('gs.optimize_write_required')}</p>` : nothing}`,
       })}
     </div>
     <div class="row dialog-action-footer hpf-footer" slot="footer">

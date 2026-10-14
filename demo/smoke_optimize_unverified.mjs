@@ -52,7 +52,8 @@ const setup = await page.evaluate(async (opaque) => {
   await card._editorRuntime.optimizePlans.open();
   const chunkAfterOpen = dialogChunk();
   await test.settled();
-  const clean = structuredClone(card._alignDialog);
+  const clean = structuredClone({ config: card._alignDialog.config,
+    layout: card._alignDialog.layout, changed: card._alignDialog.changed });
   await test.close(undefined, { via: 'cancel' });
   await test.setServerConfig(clean.config);
   await test.setLayout({
@@ -132,8 +133,8 @@ record('ownerExplainsAndGroups', JSON.stringify(seen.blockLines) === JSON.string
   await t('gs.optimize_unverified_legacy', { n: '2', names: namesRu }),
   await t('gs.optimize_unverified_unknown', { n: '1' }),
 ]));
-record('ownerActionsCopyAndClose', JSON.stringify(seen.buttons.filter(Boolean)) === JSON.stringify([
-  await t('gs.preflight_copy'), await t('btn.close'),
+record('ownerActionsCopyCleanupAndClose', JSON.stringify(seen.buttons.filter(Boolean)) === JSON.stringify([
+  await t('gs.preflight_copy'), await t('gs.optimize_invalid_remove'), await t('btn.close'),
 ]));
 record('ownerBlockIsNotAlert', !seen.alertInBlock && !seen.statusInBlock);
 record('ownerIdsOnlyInClosedDetails', seen.detailsClosed
