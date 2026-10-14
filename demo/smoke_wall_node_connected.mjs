@@ -175,6 +175,10 @@ try {
   // CDP dispatches native mouse events independently every 16 ms, not after a
   // measured callback/rAF has finished. Awaiting all replies happens at the end.
   const cdp = await page.context().newCDPSession(page);
+  // #850: the lazy View runtime (ensured on connect) counts the snapshot
+  // captures, presentations, light graph builds, resolutions and wall
+  // fingerprints of the card; a node gesture must do none of them.
+  assert.equal(await page.evaluate(() => typeof window.__card._liveRt?.work), 'function', 'the #850 work counters are readable');
   const timeOrigin = await page.evaluate(() => performance.timeOrigin);
   report.browserTimeOrigin = timeOrigin;
   for (let gesture = 0; gesture < 8; gesture++) {
@@ -182,7 +186,9 @@ try {
     await down();
     const pointerId = await page.evaluate(index => {
       const perf = window.__connectedNodePerf;
-      const value = { index, kind: index < 3 ? 'warmup' : 'measured', started: performance.now(), events: [], samples: [], longTasks: [] };
+      const value = { index, kind: index < 3 ? 'warmup' : 'measured', started: performance.now(), events: [], samples: [], longTasks: [],
+        // #850: the View runtime's exact work counters at the gesture's start.
+        reuseWorkBefore: window.__card._liveRt.work() };
       perf.pending = []; perf.active = value; perf.gestures.push(value);
       return window.__card._editorRuntime.nodeMove.activePointerId;
     }, gesture);
@@ -230,7 +236,10 @@ try {
     });
     const raw = await page.evaluate(() => {
       const perf = window.__connectedNodePerf, g = perf.active;
-      g.ended = performance.now(); perf.active = null; return structuredClone(g);
+      g.ended = performance.now(); perf.active = null;
+      const after = window.__card._liveRt.work();
+      g.reuseWork = Object.fromEntries(Object.entries(after).map(([key, value]) => [key, value - g.reuseWorkBefore[key]]));
+      return structuredClone(g);
     });
     raw.clockCalibration = clockCalibration; raw.sourceInputs = inputs;
     report.raw.push(raw); // preserve failed clocks/observations too
@@ -254,6 +263,13 @@ try {
     await cancel();
   }
   const measured = report.raw.filter(g => g.kind === 'measured');
+  // #850: exact counters, not milliseconds. Every gesture (moves, proofs and
+  // paints up to the release) captures no render snapshot, resolves no
+  // presentation, builds no light graph, resolves no light sources and
+  // computes no wall fingerprint — dev does none of this work either.
+  report.reuseWork = report.raw.map(g => g.reuseWork);
+  assert.deepEqual(report.raw.flatMap(g => Object.entries(g.reuseWork ?? { missing: 1 }).filter(([, value]) => value !== 0)
+    .map(([key, value]) => `gesture ${g.index}: ${key} ${value}`)), [], '#850: a node gesture does no snapshot or light work');
   report.coldFirst = report.raw[0];
   report.mainThread = quantiles(measured.flatMap(g => g.samples.map(s => s.mainThreadMs)));
   report.inputToPaint = quantiles(measured.flatMap(g => g.inputs.map(e => e.inputToPaintMs)));
