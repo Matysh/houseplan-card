@@ -4,8 +4,8 @@ export function deviceEditorAllowed(writer: boolean, kiosk: boolean): boolean {
 }
 
 export function roomAreaAffordance(access: {
-  admin: boolean; writer: boolean; kiosk: boolean; plan: boolean;
+  admin: boolean; writer: boolean; kiosk: boolean; plan: boolean; view: boolean;
 }): { visible: boolean; interactive: boolean } {
-  const interactive = access.admin && !access.kiosk && !access.plan;
-  return { visible: interactive || access.plan && deviceEditorAllowed(access.writer, access.kiosk), interactive };
+  const visible = !access.kiosk && (access.plan ? access.writer : access.admin);
+  return { visible, interactive: visible && !access.plan && access.view };
 }

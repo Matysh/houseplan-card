@@ -27,6 +27,21 @@ physical release, and implicit loss after accepted up cannot cancel room fit.
 to the existing hidden signal and deduplicates hidden+pagehide. Sun fade teardown
 resets its two-second keep-alive before detach; reconnect reads current HA sun.
 
+View entry recovery (#894) resolves opening-info against the canonical exact
+space/stable opening ID, never a retained display object. Binding changes retire
+the old unlock decision. Exact lock/contact friendly names are presentation-only.
+`WarmMarkerRestore` owns an unpublished View draft until the lazy renderer is
+ready; its visible loading/error surface can be closed or retried, and stale
+permissions/identity/intent cannot publish or acknowledge it. The Area action is
+a native sibling of the room-fit keyboard target, not a nested button.
+`isLightGroupDevice` certifies model Group using the existing indexed HA children;
+the shared Auto/roster/preview/static resolver leaves custom icons first.
+`kiosk-viewport-recovery.ts` keeps only a ten-minute, consume-once camera address
+in sessionStorage, scoped by DOM/shadow placement, route, options and HA account.
+Only non-carousel kiosks bypass the old base-zoom version gate; all other guards
+remain. A failed memo write refuses automatic navigation rather than discarding
+the camera; deleted exact floors never transfer coordinates to the fallback.
+
 Composite form focus (#870) belongs either to the native form-kit wrapper or
 the authentic HA picker, never both. The picker is styled through its public
 host contract; its private shadow DOM and event handlers remain untouched.

@@ -212,6 +212,10 @@ kiosk. Without that permission, device state, controls, **Open in HA**
 **New** flag is not acknowledged. The room-name Area link is visible only to
 HA administrators outside kiosk. In Plan its icon remains part of the draggable
 label for every plan writer, including non-admin writers, and never navigates.
+In View the Area action is a separate button: Tab selects it and Enter or Space
+opens the HA area without fitting the room. Device settings opened in View
+retain an unsaved draft across a short card remount; renderer loading can be
+closed, and a failed load offers an explicit retry.
 
 ## 3. Adding a card
 
@@ -1070,6 +1074,10 @@ first and clears the binding.
 | Other editors | Inert | No |
 
 ### Lock
+
+The opening card uses the exact lock/contact friendly names from Home Assistant,
+with distinct names beside their states. Another client's accepted deletion or
+rebinding updates or closes the card and cancels its old unlock confirmation.
 
 - `locked` uses a closed lock on green; `unlocked`/`open` uses an open lock on red;
 - an unknown state uses neutral unknown styling;
@@ -2091,6 +2099,12 @@ again. Unlock still asks for confirmation; Lock does not.
 Kiosk sizing is stored in that display's browser, so one tablet may use larger
 markers without affecting other clients. House Plan hides only its own header;
 hide the Home Assistant header with Companion App or a separate kiosk tool.
+
+A kiosk without a running carousel, with one space or with a fixed floor may
+automatically reload a new version even while enlarged, after the usual 60-second
+interaction pause and only without pending dialogs/writes. Its own floor, zoom
+and pan return after cold boot. A deleted floor falls back normally without
+copying that floor's coordinates to another one.
 
 ## 18. Static space card
 

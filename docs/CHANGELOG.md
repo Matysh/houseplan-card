@@ -45,6 +45,12 @@
   rendering while provider data is absent. Embedded floor cards share the same
   registry-owned diagnostic index across live state updates
   ([#867](https://github.com/Matysh/houseplan-card/issues/867)).
+- Door cards show their current lock/contact names and refresh when the plan
+  changes. Device settings opened in View survive a warm remount visibly;
+  HA Area links have their own keyboard/touch button. Device-bound Zigbee2MQTT
+  light groups share the group icon, and non-carousel kiosks can update while
+  enlarged without losing their floor or camera
+  ([#894](https://github.com/Matysh/houseplan-card/issues/894)).
 
 - Saving no longer falls back to an old cached plan when Home Assistant reapplies
   card options. Refused vacuum-map edits and New acknowledgements restore their

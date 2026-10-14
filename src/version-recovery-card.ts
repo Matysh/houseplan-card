@@ -20,6 +20,7 @@ import {
   type DevBuildLabel,
 } from './build-identity';
 import { ENTRY_BUILD_FINGERPRINT } from './editor-runtime-loader';
+import { nonCarouselKiosk } from './kiosk-viewport-recovery';
 
 interface PendingCollection { readonly size: number }
 interface PendingDebounce { pending(): boolean }
@@ -113,7 +114,9 @@ export function getAuthoritativeCardConfig(
 export interface VersionRecoveryCardPort {
   readonly ownerDocument: Document;
   readonly isConnected: boolean;
-  readonly _config: { kiosk?: boolean } | null;
+  readonly _config: { kiosk?: boolean; cycle?: number } | null;
+  readonly _hasFixedFloor: boolean;
+  readonly _model: readonly { readonly id: string }[];
   readonly _mode: string;
   readonly _editing: boolean;
   readonly _loadOk: boolean;
@@ -173,7 +176,7 @@ export interface VersionRecoveryCardPort {
   readonly _editorSecondary: { readonly hasOpenGroup?: boolean } | null;
   readonly _furnPalette: unknown;
   readonly _decorImagePalette: unknown;
-  _reloadDocument(): void;
+  _reloadDocument(automatic?: boolean): void;
   requestUpdate(): unknown;
   _t(key: I18nKey): string;
 }
@@ -186,7 +189,7 @@ export function createCardVersionRecovery(host: VersionRecoveryCardPort): Versio
     },
     storage: (): VersionRecoveryStorage | null => host.ownerDocument.defaultView?.sessionStorage ?? null,
     safety: () => cardVersionReloadSafetySnapshot(host),
-    reload: () => host._reloadDocument(),
+    reload: () => host._reloadDocument(true),
     changed: () => { host.requestUpdate(); },
   });
 }
@@ -213,7 +216,8 @@ export function cardVersionReloadSafetySnapshot(
       && host._sentPos.size === 0 && !host._devicePositionBusy,
     gesturesIdle,
     interactionPauseElapsed: Date.now() >= host._cyclePausedUntil,
-    baseZoom: host._zoom <= 1.001,
+    baseZoom: host._zoom <= 1.001 || host._config?.kiosk === true
+      && nonCarouselKiosk(host._config.cycle, host._hasFixedFloor, host._model.length),
   };
 }
 

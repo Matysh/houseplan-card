@@ -9,9 +9,9 @@ test('#844 Houseplan writer outside kiosk may edit regardless of HA admin', () =
 
 test('#844 HA administration gates links; Plan keeps the writer drag affordance', () => {
   for (const admin of [false, true]) for (const writer of [false, true])
-    for (const kiosk of [false, true]) for (const plan of [false, true]) {
-      const result = roomAreaAffordance({ admin, writer, kiosk, plan });
-      assert.equal(result.interactive, admin && !kiosk && !plan);
+    for (const kiosk of [false, true]) for (const plan of [false, true]) for (const view of [false, true]) {
+      const result = roomAreaAffordance({ admin, writer, kiosk, plan, view });
+      assert.equal(result.interactive, admin && !kiosk && !plan && view);
       assert.equal(result.visible, !kiosk && (plan ? writer : admin));
     }
 });

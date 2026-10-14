@@ -284,6 +284,7 @@ The invariant depends on hit testing, pointer capture, touch/keyboard dispatch o
 
 ### Responsive DOM layout
 
+- `room-area-button-loses-touch-floor`
 - `zigbee-tooltip-collision-bypass`
 
 The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size.
@@ -391,6 +392,13 @@ the real custom element also disposes the live-HA sun layer fade.
 the browser guard observes that the mounted overlay settles without a render loop.
 
 - `signal-empty-overlay-repeats-size-render`
+
+#894: accepted popup config adoption, a renderer-delayed genuine View draft and
+an actual document reload need Lit/DOM/storage witnesses, not private fields.
+
+- `opening-popup-keeps-retained-config-object`
+- `warm-view-marker-publishes-without-renderer`
+- `kiosk-document-recovery-drops-camera`
 
 #890: public setConfig meets real browser localStorage and Lit floor adoption;
 a delayed write crosses the actual HA-intake lifecycle before another connection

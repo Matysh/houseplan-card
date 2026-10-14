@@ -255,7 +255,7 @@ for (const role of [{ name: 'admin', admin: true, writer: true },
       }, mode);
       const visible = !role.kiosk && (role.admin || mode === 'plan');
       checks[`area:${role.name}:${mode}:visibility`] = result.visible === !!visible;
-      checks[`area:${role.name}:${mode}:navigation`] = result.navigations === (role.admin && !role.kiosk && mode !== 'plan' ? 2 : 0);
+      checks[`area:${role.name}:${mode}:navigation`] = result.navigations === (role.admin && !role.kiosk && mode === 'view' ? 2 : 0);
       if (mode === 'plan') {
         checks[`area:${role.name}:plan-no-link-title`] = result.title === '';
         if (result.point) {

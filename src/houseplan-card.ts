@@ -316,6 +316,9 @@ import {
   sameOpeningPlacementInput, type OpeningPlacementPreset, type OpeningPlacementType,
 } from './opening-placement';
 import { type OpeningDimensionContext } from './opening-dimensions';
+import { currentOpeningContext, openingInfoEligible, openingBindingsEqual, openingInfoNames } from './opening-context';
+import { WarmMarkerRestore } from './warm-marker-restore';
+import { kioskPlacementKey, nonCarouselKiosk, saveKioskViewport, takeKioskViewport, type KioskViewport } from './kiosk-viewport-recovery';
 import type {
   DeviceDragState, OpeningPlacementCandidate, OpMeasure, RenderOpening,
 } from './interaction-types';
@@ -594,6 +597,17 @@ export class HouseplanCard extends LitElement {
   private _warmModeRequest = 0;
   private _markerDialogRequest = 0;
   private _settingsDialogRequest = 0;
+  private readonly _warmMarker = new WarmMarkerRestore<WarmDialog>({
+    allowed: (d) => this.isConnected && d.space === this._space && d.mode === this._mode
+      && deviceEditorAllowed(this._canEdit, this._kiosk) && !this._otherDialogsBlocked
+      && (!d.data.devId || this._devices.some((device) => device.id === d.data.devId)),
+    ensure: () => this._ensureEditorRuntime(),
+    restore: (d) => {
+      this._markerDialog = { ...d.data, busy: false };
+      restoreWarmDialogBaseline(this, 'marker', d.baseline);
+    },
+    changed: () => this.requestUpdate(),
+  });
   private readonly _editorRuntimeLoader = new EditorRuntimeLoader<
     import('./houseplan-editor-runtime').HouseplanEditorRuntime
   >({
@@ -787,6 +801,7 @@ export class HouseplanCard extends LitElement {
   }
   /** Explicit navigation supersedes permission/runtime-delayed restoration. */
   private _cancelPendingWarmMode(): void {
+    this._warmMarker.cancel();
     this._pendingNavMode = null;
     this._releaseWarmRefit(this._warmModeRequest);
     ++this._editorModeRequest;
@@ -2218,6 +2233,8 @@ export class HouseplanCard extends LitElement {
    *  _restoreZoom) or applied twice (the dialog revival). */
   private _warmVp: WarmViewport | null = null;
   private _warmVpArmed = false;
+  private _recoveryViewport: KioskViewport | null = null;
+  private _recoveryViewportTaken = false;
   private _warmLongReturn = false;
   private _warmRevivePending = false;
   private _warmReviveTimer?: number;
@@ -2723,6 +2740,7 @@ export class HouseplanCard extends LitElement {
     for (const type of ['pointerdown', 'wheel', 'keydown']) this.removeEventListener(
       type, this._kioskInteraction, true,
     );
+    this._warmMarker.cancel();
     this._backupImportIntent.cancel(false);
     this._backupImportDialog = null;
     // Stop the independent kiosk timer before any teardown flush can mutate
@@ -2895,6 +2913,7 @@ export class HouseplanCard extends LitElement {
       return;
     }
     if (e.key === 'Escape') {
+      if (this._warmMarker.active) { this._warmMarker.cancel(); return; }
       if (this._tapConfirm) { this._tapConfirm = null; return; }
       if (this._vacCalConfirm) {
         if (!this._vacCalConfirm.busy) this._vacCalConfirm = null;
@@ -3596,6 +3615,10 @@ export class HouseplanCard extends LitElement {
     }
     const d = e.dlg;
     const freed = e.freed;
+    if (!settle && !discard && d.kind === 'marker' && d.mode === 'view' && !this._loadOk) {
+      this._warmRevivePending = true;
+      return; // Validate identity and server write rights before loading its renderer.
+    }
     if (!settle && d.mode !== this._mode && d.mode !== 'view' && this._warmVp?.mode === d.mode
         && !this._editorRuntime) {
       // The dialog belongs to the editor viewport that is waiting for its lazy
@@ -3614,6 +3637,8 @@ export class HouseplanCard extends LitElement {
       case 'space': this._spaceDialog = { ...d.data, busy: false, savedBusy: false }; break;
       case 'marker':
         if (!deviceEditorAllowed(this._canEdit, this._kiosk)) return;
+        if (d.data.devId && !this._devices.some((device) => device.id === d.data.devId)) return;
+        if (!this._editorRuntime) { this._warmMarker.begin(d); return; }
         this._markerDialog = { ...d.data, busy: false }; break;
       case 'settings': this._settingsDialog = { ...d.data, busy: false }; this._reviveMoonStatus(); break;
       case 'rules': this._rulesDialog = { ...d.data, busy: false }; break;
@@ -3653,7 +3678,7 @@ export class HouseplanCard extends LitElement {
       }
       case 'openingInfo': {
         const op = (this._curSpaceCfg?.openings || []).find((x: any) => x.id === d.data);
-        if (op) { this._openingInfo = op; this._openingInfoSpace = this._space; }
+        if (op) { this._openingInfoSpace = d.space; this._openingInfo = op; }
         break;
       }
     }
@@ -3712,14 +3737,21 @@ export class HouseplanCard extends LitElement {
     models: SpaceModel[], authoritative = this._loadOk,
   ): InitialSpaceSelection {
     const fixed = this._fixedFloorState(models, authoritative);
+    if (authoritative && !this._recoveryViewportTaken && this.isConnected && this.hass && this._kiosk) {
+      this._recoveryViewportTaken = true;
+      try { this._recoveryViewport = takeKioskViewport(this.ownerDocument.defaultView?.sessionStorage ?? null, this._kioskRecoveryKey()); } catch { /* storage unavailable */ }
+    }
     if (fixed.kind === 'valid') return { id: fixed.id, source: 'fixed' };
     if (this._hasFixedFloor) return { id: null, source: 'none' };
+    const recoverySpace = this._recoveryViewport?.space;
+    const restoreRecovery = this._kiosk && nonCarouselKiosk(this._config?.cycle, false, models.length)
+      && !!recoverySpace && models.some((space) => space.id === recoverySpace);
     return resolveInitialSpace({
       spaceIds: models.map((space) => space.id),
       hashSpace: this._hashSpace(),
       acceptHash: !this._hashApplied,
-      currentSpace: this._space,
-      preserveCurrent: this._hashApplied || this._navApplied || this._warmVpArmed,
+      currentSpace: restoreRecovery ? recoverySpace : this._space,
+      preserveCurrent: restoreRecovery || this._hashApplied || this._navApplied || this._warmVpArmed,
       savedSpace: this._savedNav()?.space,
       defaultSpace: this._config?.default_floor,
     });
@@ -3838,7 +3870,27 @@ export class HouseplanCard extends LitElement {
   }
 
   /** One patchable seam shared by trusted manual and guarded automatic reload. */
-  private _reloadDocument(): void {
+  private _kioskRecoveryKey(): string | null {
+    return kioskPlacementKey(this, location.pathname + location.search, contentFingerprint(this._config), this.hass?.user?.id || '');
+  }
+  private _restoreKioskViewport(): boolean {
+    const memo = this._recoveryViewport; this._recoveryViewport = null;
+    if (!memo || !this._kiosk || this._mode !== 'view' || memo.space !== this._space
+        || !this._model.some((space) => space.id === memo.space)
+        || !nonCarouselKiosk(this._config?.cycle, this._hasFixedFloor, this._model.length)) return false;
+    this._zoom = memo.zoom; this._view = { ...memo.view };
+    this._applyView(memo.zoom, memo.view.x + memo.view.w / 2, memo.view.y + memo.view.h / 2);
+    return true;
+  }
+  private _reloadDocument(automatic = false): void {
+    if (this._kiosk && this._mode === 'view' && this._view
+        && nonCarouselKiosk(this._config?.cycle, this._hasFixedFloor, this._model.length)) {
+      let saved = false;
+      try { saved = saveKioskViewport(this.ownerDocument.defaultView?.sessionStorage ?? null,
+        this._kioskRecoveryKey(), { space: this._space, zoom: this._zoom, view: this._view }); } catch { /* storage unavailable */ }
+      // Auto recovery must not silently throw away a camera it promised to keep.
+      if (automatic && !saved) throw new Error('Kiosk camera recovery storage unavailable');
+    }
     this.ownerDocument.defaultView?.location.reload();
   }
 
@@ -4111,6 +4163,8 @@ export class HouseplanCard extends LitElement {
   }
 
   protected willUpdate(changed: PropertyValues): void {
+    this._warmMarker.reconcile();
+    if (changed.has('_serverCfg') || changed.has('_space') || changed.has('_openingInfo')) this._syncOpeningInfo();
     this._cfgPass.begin(); this._isoProjectionSnapshot = null; this._isoFirstFrame.prepare(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes)); this._syncVolumetricSetting(); this._summary?.willUpdate();
     if (changed.has('hass')) {
       // A reused HA object can be deduplicated by visual intake after detach.
@@ -4347,13 +4401,15 @@ export class HouseplanCard extends LitElement {
           // the instance that was thrown away; the centred restore here IS
           // the reported jerk. Only a genuine navigation (the hash/nav landed
           // us on another space) still needs it.
-          if (this._warmVpArmed && this._space === this._warmVp?.space) this._warmVpArmed = false;
+          if (this._restoreKioskViewport()) { /* one-shot document recovery owns this camera */ }
+          else if (this._warmVpArmed && this._space === this._warmVp?.space) this._warmVpArmed = false;
           else if (!hadViewport || this._space !== visibleSpace) this._restoreZoom();
           // `_syncNewDevices` and `_syncAreaRelocations` refuse to write
           // before the authoritative snapshot is usable, and it is usable
           // exactly here — the bodies are adopted.
           this._loadOk = true;
           rebuildDevices();
+          if (this._warmRevivePending && this._mode === 'view') this._warmReviveDialog();
         },
       });
       if (adopted.status !== 'adopted') return;
@@ -6986,7 +7042,7 @@ export class HouseplanCard extends LitElement {
   private _clickRoom(r: RoomCfg): void {
     if (this._suppressClick || !r.area || !roomAreaAffordance({
       admin: this.hass?.user?.is_admin === true, writer: this._canEdit,
-      kiosk: this._kiosk, plan: this._markup,
+      kiosk: this._kiosk, plan: this._markup, view: this._mode === 'view',
     }).interactive) return;
     navigate('/config/areas/area/' + r.area);
   }
@@ -8562,6 +8618,9 @@ export class HouseplanCard extends LitElement {
   }
 
   private get _editorSecondaryDialogBlocked(): boolean {
+    return this._warmMarker.active || this._otherDialogsBlocked;
+  }
+  private get _otherDialogsBlocked(): boolean {
     return !!(this._dangerConfirm || this._tapConfirm || this._vacCalConfirm
       || this._roomDialog || this._mergeDialog
       || this._openingDialog || this._physicalDialog || this._openingInfo
@@ -9352,6 +9411,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _openMarkerDialog(d?: DevItem): void {
+    this._warmMarker.cancel();
     const request = ++this._markerDialogRequest;
     if (!deviceEditorAllowed(this._canEdit, this._kiosk)) return;
     if (!this._editorRuntime) {
@@ -11211,6 +11271,7 @@ export class HouseplanCard extends LitElement {
           ? (this._onboardingRuntime || this._editorRuntime) ? this._renderSpaceDialog() : nothing
           : nothing}
         ${this._deviceInbox ? this._editorRuntime ? this._renderDeviceInbox() : nothing : nothing}
+        ${this._warmMarker.render((key) => this._t(key))}
         ${this._markerDialog && (this._mode !== 'view' || deviceEditorAllowed(this._canEdit, this._kiosk))
           ? this._editorRuntime ? this._renderMarkerDialog() : nothing : nothing}
         ${this._backdropGuard
@@ -12081,9 +12142,11 @@ export class HouseplanCard extends LitElement {
     // Plan keeps the same name-row geometry as the other modes, but the Area
     // icon remains part of the draggable label instead of becoming a link.
     const areaAffordance = roomAreaAffordance({ admin: this.hass?.user?.is_admin === true,
-      writer: this._canEdit, kiosk: this._kiosk, plan: this._markup });
+      writer: this._canEdit, kiosk: this._kiosk, plan: this._markup, view: this._mode === 'view' });
     const showAreaLink = !!r.area && areaAffordance.visible;
     const areaLinkInteractive = areaAffordance.interactive;
+    const separateAreaAction = showAreaLink && areaLinkInteractive;
+    const areaName = r.area && this.hass?.areas?.[r.area]?.name || r.name || r.area || '';
     return html`<div class="roomlabel ${rows.length ? 'card' : ''}"
       data-hp="room-label" data-id=${r.id || nothing} data-area=${r.area || nothing}
       data-hp-iso-overlay-kind=${isoPlacement?.plane === 'raised' ? 'room-label' : nothing}
@@ -12091,11 +12154,11 @@ export class HouseplanCard extends LitElement {
       data-hp-iso-nudged=${isoPlacement?.plane === 'raised' ? 'false' : nothing}
       data-hp-iso-floor=${isoPlacement ? `${isoPlacement.floorScene[0]},${isoPlacement.floorScene[1]}` : nothing}
       data-hp-iso-visual=${isoPlacement ? `${point[0]},${point[1]}` : nothing}
-      role=${this._mode === 'view' ? 'button' : nothing}
-      tabindex=${this._mode === 'view' ? '0' : nothing}
-      aria-label=${this._mode === 'view' ? this._t('room.fit_action', { name: r.name || '' }) : nothing}
+      role=${this._mode === 'view' && !separateAreaAction ? 'button' : nothing}
+      tabindex=${this._mode === 'view' && !separateAreaAction ? '0' : nothing}
+      aria-label=${this._mode === 'view' && !separateAreaAction ? this._t('room.fit_action', { name: r.name || '' }) : nothing}
       style="left:${left}%;top:${top}%;color:${disp.color};opacity:${op};--rl-scale:${k};--rl-space:${disp.cardFontScale};--rl-name:${clampScale(r.settings?.name_scale)};--rl-meta:${clampScale(r.settings?.label_scale)}"
-      @keydown=${this._mode === 'view' && r.id
+      @keydown=${this._mode === 'view' && !separateAreaAction && r.id
         ? (e: KeyboardEvent) => this._roomLabelKey(e, r.id!) : nothing}
       @pointerdown=${this._markup
         ? (e: PointerEvent) => this._labelDown(e, r, space.id) : nothing}
@@ -12103,15 +12166,23 @@ export class HouseplanCard extends LitElement {
         ? (e: PointerEvent) => this._labelMove(e, r, space.id) : nothing}
       @pointerup=${this._markup ? () => this._labelUp(r) : nothing}
       @pointercancel=${this._markup ? () => this._labelUp(r) : nothing}
-    ><span class="rlname">${r.name || (this._markup ? this._t('room.unnamed') : '')}${showAreaLink
-        ? html`<ha-icon class="rlgo" icon="mdi:open-in-new"
-            title=${areaLinkInteractive ? this._t('room.open_area') : nothing}
-            @click=${areaLinkInteractive
-              ? (e: Event) => { e.stopPropagation(); this._clickRoom(r); }
-              : nothing}
-            @pointerdown=${areaLinkInteractive
-              ? (e: Event) => e.stopPropagation()
-              : nothing}></ha-icon>`
+    ><span class="rlname"><span class="rlfit"
+        role=${separateAreaAction ? 'button' : nothing}
+        tabindex=${separateAreaAction ? '0' : nothing}
+        aria-label=${separateAreaAction ? this._t('room.fit_action', { name: r.name || '' }) : nothing}
+        @keydown=${separateAreaAction && r.id ? (e: KeyboardEvent) => this._roomLabelKey(e, r.id!) : nothing}
+      >${r.name || (this._markup ? this._t('room.unnamed') : '')}</span>${showAreaLink
+        ? separateAreaAction
+          ? html`<button type="button" class="rlgo rlarea" data-hp="room-area-link"
+              aria-label=${this._t('room.open_area_named', { name: areaName })}
+              title=${this._t('room.open_area')}
+              @click=${(e: Event) => { e.stopPropagation(); this._clickRoom(r); }}
+              @keydown=${(e: KeyboardEvent) => e.stopPropagation()}
+              @keyup=${(e: KeyboardEvent) => e.stopPropagation()}
+              @dblclick=${(e: Event) => e.stopPropagation()}
+              @pointerdown=${(e: Event) => e.stopPropagation()}
+            ><ha-icon icon="mdi:open-in-new"></ha-icon></button>`
+          : html`<ha-icon class="rlgo" icon="mdi:open-in-new"></ha-icon>`
         : nothing}</span>
       ${rows.length ? html`<span class="rlmetrics">${rows}</span>` : nothing}
       ${this._mode === 'plan'
@@ -12457,12 +12528,14 @@ export class HouseplanCard extends LitElement {
         @click=${(e: MouseEvent) => {
           if (this._mode !== 'view') return;
           e.stopPropagation();
-          this._openingInfo = o; this._openingInfoSpace = this._space;
+          this._openingInfoSpace = this._space;
+          this._openingInfo = o;
         }}
         @keydown=${(e: KeyboardEvent) => {
           if (this._mode !== 'view' || (e.key !== 'Enter' && e.key !== ' ')) return;
           e.preventDefault(); e.stopPropagation();
-          this._openingInfo = o; this._openingInfoSpace = this._space;
+          this._openingInfoSpace = this._space;
+          this._openingInfo = o;
         }}>
         <span class="oplock-shell" aria-hidden="true">
           <span class="oplock-core">
@@ -12479,6 +12552,17 @@ export class HouseplanCard extends LitElement {
    * taps on plan icons; here the user has opened the info card and pressed a
    * clearly labeled action button — same interaction contract as HA's more-info.
    */
+  private _syncOpeningInfo(): void {
+    const before = this._openingInfo;
+    const current = before && this._openingInfoSpace ? currentOpeningContext(this._curSpaceCfg, {
+      spaceId: this._openingInfoSpace, openingId: before.id,
+    }) : null;
+    const eligible = current && openingInfoEligible(current) ? current : null;
+    if ((!before || !eligible || !openingBindingsEqual(before, eligible)) && this._dangerConfirm?.request.key === 'unlock') this._cancelDangerConfirm();
+    this._openingInfo = eligible;
+    if (!eligible) this._openingInfoSpace = null;
+  }
+
   private async _lockAction(entityId: string, action: 'lock' | 'unlock'): Promise<void> {
     // THE ONLY sanctioned lock actuation surface (review CR-1, 2026-07-27).
     // The invariant is "no lock or alarm panel is ever actuated by a TAP on the
@@ -12527,6 +12611,9 @@ export class HouseplanCard extends LitElement {
     const titleKey = o.type === 'door' ? 'opening.door'
       : o.type === 'gate' ? 'opening.gate'
         : o.type === 'passage' ? 'opening.passage' : 'opening.window';
+    const names = openingInfoNames(o, this.hass?.states, this._curSpaceCfg?.title);
+    const distinctNames = names.contactName && names.lockName && names.contactName !== names.lockName;
+    const title = names.name ? this._t('opening.info_named', { kind: this._t(titleKey), name: names.name }) : this._t(titleKey);
     const openingIcon = o.type === 'door' ? 'mdi:door'
       : o.type === 'gate' ? 'mdi:gate'
         : o.type === 'passage' ? 'mdi:arch' : 'mdi:window-closed-variant';
@@ -12536,12 +12623,12 @@ export class HouseplanCard extends LitElement {
     const row = (icon: string, label: string, value: string, cls = '') =>
       html`<div class="oprow ${cls}"><ha-icon icon=${icon}></ha-icon><span>${label}</span><b>${value}</b></div>`;
     return html`<hp-dialog .hass=${this.hass} data-kind="opening"
-      .title=${this._t(titleKey)} icon=${openingIcon} dismiss-on-scrim
+      .title=${title} icon=${openingIcon} dismiss-on-scrim
       @hp-close=${() => (this._openingInfo = null)}>
         <div class="body">
           ${contact
             ? row(contactIcon,
-                this._t('opening.contact_label'),
+                distinctNames ? this._t('opening.contact_named', { name: names.contactName! }) : this._t('opening.contact_label'),
                 cSt === 'unavailable' || cSt == null
                   ? this._t('opening.state_unknown')
                   : this._t(amt > 0 ? 'opening.open' : 'opening.closed'),
@@ -12549,7 +12636,7 @@ export class HouseplanCard extends LitElement {
             : nothing}
           ${lock
             ? row(lSt === 'locked' ? 'mdi:lock' : 'mdi:lock-open-variant',
-                this._t('opening.lock_label'),
+                distinctNames ? this._t('opening.lock_named', { name: names.lockName! }) : this._t('opening.lock_label'),
                 lSt === 'locked' ? this._t('opening.locked')
                   : ['unlocked', 'open'].includes(String(lSt)) ? this._t('opening.unlocked')
                   : this._t('opening.state_unknown'),
@@ -12568,6 +12655,7 @@ export class HouseplanCard extends LitElement {
                 </button>`
               : nothing}
           ${!contact && !lock ? html`<p class="muted">${this._t('opening.no_entities')}</p>` : nothing}
+          ${names.diagnostic ? html`<p class="muted">${names.diagnostic}</p>` : nothing}
         </div>
         <div class="row" slot="footer">
           <span class="spacer"></span>

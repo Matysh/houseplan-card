@@ -6,6 +6,16 @@
     "additionsAreCompatible": true
   },
   "hooks": {
+    "room-area-link": {
+      "elements": ["button"],
+      "since": "1.81.0",
+      "audience": ["test"]
+    },
+    "restore-retry": {
+      "elements": ["button"],
+      "since": "1.81.0",
+      "audience": ["test"]
+    },
     "import-backup": {
       "elements": ["button"],
       "since": "1.81.0",
@@ -41,6 +51,7 @@
           "kiosk",
           "led-picker",
           "marker",
+          "marker-restore",
           "onboarding",
           "opening",
           "pdf",

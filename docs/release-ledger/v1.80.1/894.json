@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 894,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "v1.80.1 already has opening info, warm View drafts, room Area navigation, device: bindings (devices.ts:1204) and baseZoom kiosk version recovery (version-recovery-card.ts:196). This repairs and polishes these existing user paths. Device-bound Group presentation is a stable group/binding polish, not a repair restricted to the newer #878 entity-icon implementation.",
+  "summary": {
+    "ru": "Актуальные понятные карточки дверей, восстановление настроек и увеличенного киоска, доступные переходы в HA и узнаваемые группы света.",
+    "en": "Current readable door cards, restored device settings and enlarged kiosk views, accessible HA links and recognizable light groups."
+  }
+}

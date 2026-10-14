@@ -239,6 +239,19 @@ const res = await page.evaluate(async () => {
   const pickedSavedFace = await planFaceOf(`lg_${haGroup}`);
   const pickedSavedMarker = storedMarker(`lg_${haGroup}`);
 
+  // #894: explicit device: Group uses that same shared pipeline, not the chip fallback.
+  await hp.setServerConfig(cfg => {
+    cfg.markers = [...cfg.markers.filter(marker => marker.id !== 'd_hp878_group'),
+      { id: 'd_hp878_group', binding: 'device:d_hp878_group' }]; return cfg;
+  });
+  const deviceGroupFace = await planFaceOf('d_hp878_group');
+  const groupTargets = c._devices.find(d => d.id === 'd_hp878_group')?.entities;
+  await hp.setMode('devices'); await hp.openMarkerDialog('d_hp878_group');
+  const deviceGroupPreview = await previewFaceNow(), deviceGroupAuto = autoField();
+  await hp.close(markerDialog()); await hp.setMode('view');
+  await waitUntil(() => card.renderRoot.querySelector('.dev[data-id="d_hp878_group"]'), 'static device group');
+  const deviceGroupStatic = face(card.renderRoot.querySelector('.dev[data-id="d_hp878_group"]'));
+
   return {
     allFacesPresent: !!planFace && !!previewFace && !!staticFace,
     previewHoverGatePropagates,
@@ -268,6 +281,9 @@ const res = await page.evaluate(async () => {
     lightGroup878PickedPreviewIcon: pickedPreviewFace?.icon === GROUP_ICON,
     lightGroup878PickedSavedWithoutIcon: !!pickedSavedMarker && pickedSavedMarker.icon == null,
     lightGroup878PickedSavedPlanIcon: pickedSavedFace?.icon === GROUP_ICON,
+    deviceGroup894SharedIcon: deviceGroupFace?.icon === GROUP_ICON && deviceGroupPreview?.icon === GROUP_ICON
+      && deviceGroupStatic?.icon === GROUP_ICON && deviceGroupAuto.includes(GROUP_ICON),
+    deviceGroup894TargetsUnchanged: JSON.stringify(groupTargets) === JSON.stringify([z2mGroup]),
   };
 });
 

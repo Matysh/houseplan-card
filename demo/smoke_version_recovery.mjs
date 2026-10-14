@@ -345,7 +345,8 @@ const kioskGuards = await page.evaluate(async () => {
   await probe('gesture', () => { kiosk._pointers.set(462, {}); }, () => { kiosk._pointers.delete(462); });
   await probe('pause', () => { kiosk._cyclePausedUntil = Date.now() + 60_000; },
     () => { kiosk._cyclePausedUntil = 0; });
-  await probe('zoom', () => { kiosk._zoom = 1.5; }, () => { kiosk._zoom = 1; });
+  await probe('zoom', () => { kiosk.setConfig({ ...kiosk._config, cycle: 10 }); kiosk._zoom = 1.5; },
+    () => { kiosk.setConfig({ ...kiosk._config, cycle: 0 }); kiosk._zoom = 1; });
   return results;
 });
 

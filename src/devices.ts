@@ -831,6 +831,12 @@ export function isLightGroupEntity(hass: IconRegistryView | null | undefined, ei
   return !!reg.device_id && hass?.devices?.[reg.device_id]?.model === 'Group';
 }
 
+/** Device bindings use their existing indexed entity roster, not another registry scan. */
+export function isLightGroupDevice(hass: IconRegistryView, id: string, entityIds: readonly string[]): boolean {
+  return hass.devices?.[id]?.model === 'Group' && entityIds.some((eid) =>
+    hass.entities?.[eid]?.device_id === id && isLightGroupEntity(hass, eid));
+}
+
 /** Group light entities: HA light-group (platform=group) and Z2M groups (device model=Group). */
 export function lightGroups(hass: any, enabled: boolean): { eid: string; name: string; area: string }[] {
   if (!enabled) return [];
@@ -885,6 +891,7 @@ export function autoIconForBinding(
     const status = statusOf();
     const entities = status.kind === 'active' ? status.enabledEntityIds : status.allEntityIds;
     if (entities.some((eid) => eid.startsWith('lock.'))) return 'mdi:lock';
+    if (isLightGroupDevice(hass, ref, status.allEntityIds)) return LIGHT_GROUP_ICON;
     return resolveIcon(hass, dev.name_by_user || dev.name || '', dev.model ?? undefined, entities, rules);
   }
   if (kind === 'entity') {
@@ -1200,7 +1207,8 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
     }
     const name = (dev.name_by_user || dev.name || loc('device.unnamed')).trim();
     const key = name + '|' + area;
-    let icon = resolveIcon(h, name, dev.model, entIds, iconRules);
+    let icon = isLightGroupDevice(fullHass, dev.id, bindingStatus.allEntityIds)
+      ? LIGHT_GROUP_ICON : resolveIcon(h, name, dev.model, entIds, iconRules);
     if (entIds.some((e) => e.startsWith('lock.'))) icon = 'mdi:lock';
     if (legacy && !showAll && groupLights && icon === 'mdi:lightbulb' && groupedAreas.has(area)) continue;
     // duplicates by “name|zone” are numbered rather than hidden
@@ -1269,7 +1277,8 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
       );
       const entIds = bindingStatus.kind === 'active' ? bindingStatus.enabledEntityIds : [];
       let icon = dev
-        ? resolveIcon(h, dev.name_by_user || dev.name || '', dev.model, entIds, iconRules)
+        ? (isLightGroupDevice(fullHass, ref, bindingStatus.allEntityIds) ? LIGHT_GROUP_ICON
+          : resolveIcon(h, dev.name_by_user || dev.name || '', dev.model, entIds, iconRules))
         : 'mdi:help-circle';
       if (entIds.some((e) => e.startsWith('lock.'))) icon = 'mdi:lock';
       const item: DevItem = {

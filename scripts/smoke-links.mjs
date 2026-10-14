@@ -91,6 +91,24 @@ export const SMOKE_LINKS = [
     because: '#876: public form saves and HA pushes exercise global/local/YAML precedence through the production bundle, independent full/static consumers, retained diagnostic siblings, explicit values and topology; helper names do not occur in the DOM-driven witnesses.',
   },
   {
+    files: ['src/opening-context.ts', 'src/styles/plan.styles.ts'],
+    smokes: ['smoke_view_entry_recovery.mjs'],
+    because: '#894: accepted config events update the real opening popup; trusted keyboard/touch '
+      + 'exercise the separate Area control, its 44px computed box, focus and no room-fit/service fallthrough.',
+  },
+  {
+    files: ['src/warm-marker-restore.ts'],
+    smokes: ['smoke_warm_view_marker.mjs'],
+    because: '#894: real View draft remounts wait for a fresh renderer and retire late loading '
+      + 'after Close, permission loss, disconnect or a newer intent, with visible failure/retry.',
+  },
+  {
+    files: ['src/kiosk-viewport-recovery.ts'],
+    smokes: ['smoke_kiosk_viewport_recovery.mjs'],
+    because: '#894: production document reload consumes its own floor/zoom/pan address; '
+      + 'fixed/single/deleted floors and carousel/same-version negative controls cross browser storage and cold boot.',
+  },
+  {
     files: ['src/device-editor-access.ts'],
     smokes: ['smoke_view_edit_permissions.mjs'],
     because: '#844: real footer/direct/lazy/warm entries and Area-icon navigation/drag '

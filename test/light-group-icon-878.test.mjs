@@ -189,8 +189,8 @@ test('#878 AC3 the auto icon of a freshly chosen binding: light group → group 
   assert.equal(auto('entity:switch.relay_group'), 'mdi:chip');
   assert.equal(auto('entity:binary_sensor.front_door'), 'mdi:door');
   assert.equal(auto('entity:lock.front'), 'mdi:lock');
-  assert.equal(auto('device:elina', active(['light.svet_u_eliny']), iconRules), 'mdi:star', 'device binding keeps rules');
-  assert.equal(auto('device:elina', active(['light.svet_u_eliny'])), 'mdi:chip', 'device binding keeps the chain');
+  assert.equal(auto('device:elina', active(['light.svet_u_eliny']), iconRules), GROUP_ICON, '#894 extends the same certified group icon to device bindings');
+  assert.equal(auto('device:elina', active(['light.svet_u_eliny'])), GROUP_ICON, '#894 device binding no longer falls to chip');
   assert.equal(auto('device:desk', active(['light.desk', 'light.porch'])), 'mdi:lightbulb', 'device rule by model');
   assert.equal(auto('device:door', active(['binary_sensor.front_door', 'lock.front'])), 'mdi:lock');
   assert.equal(auto('device:door', disabled(['lock.front'])), 'mdi:lock', 'disabled device uses all entities');
@@ -215,4 +215,37 @@ test('#878 the light-group definition is the one lightGroups places', () => {
   assert.equal(isLightGroupEntity(hidden, 'light.kitchen_group'), true, 'hidden group');
   assert.equal(isLightGroupEntity(hidden, 'light.svet_u_eliny'), true, 'area-less Z2M group');
   assert.equal(isLightGroupEntity(hidden, 'light.unknown'), false, 'no registry row');
+});
+
+test('#894 AC4 certified device light group shares Auto, roster, saved and preview icon without changing targets', () => {
+  const hass = fixture();
+  const entities = ['light.svet_u_eliny'];
+  const status = () => ({ kind: 'active', enabledEntityIds: entities, allEntityIds: entities });
+  const settings = { group_lights: false, filter_seeded: true };
+  const rules = compileIconRules([{ pattern: 'элин', icon: 'mdi:star' }, ...DEFAULT_ICON_RULES]);
+  const marker = { ...draftFor('unused', 'Свет у Элины'), id: 'group-device', binding: 'device:elina' };
+  assert.equal(devices.autoIconForBinding(hass, marker.binding, status, rules), GROUP_ICON);
+  assert.equal(iconOf(buildDevices(ctx(hass, { settings, iconRules: rules })), 'elina'), GROUP_ICON);
+  const saved = buildDevices(ctx(hass, { markers: [marker], settings, iconRules: rules })).find((item) => item.id === marker.id);
+  assert.equal(saved.icon, GROUP_ICON);
+  assert.deepEqual(saved.entities, entities);
+  assert.equal(saved.primary, 'light.svet_u_eliny');
+  const preview = deviceFromMarkerDraft({ ...ctx(hass, { settings, iconRules: rules }), marker, siblingMarkers: [] });
+  assert.equal(preview.icon, saved.icon);
+  assert.deepEqual(preview.entities, saved.entities);
+  assert.equal(deviceFromMarkerDraft({ ...ctx(hass, { settings }), marker: { ...marker, icon: 'mdi:ceiling-light' }, siblingMarkers: [] }).icon, 'mdi:ceiling-light');
+  assert.equal(iconOf(buildDevices(ctx(hass, { markers: [{ ...marker, icon: 'mdi:ceiling-light' }], settings })), marker.id), 'mdi:ceiling-light');
+});
+
+test('#894 AC4 a similar name/model, non-light group or unrelated registry child cannot certify a device group', () => {
+  const hass = fixture();
+  assert.equal(devices.isLightGroupDevice(hass, 'elina', ['light.svet_u_eliny']), true);
+  assert.equal(devices.isLightGroupDevice(hass, 'elina', ['light.kitchen_group']), false, 'another owner is not a device sibling');
+  assert.equal(devices.isLightGroupDevice(hass, 'desk', ['light.desk']), false, 'ordinary light device');
+  assert.equal(devices.isLightGroupDevice(hass, 'elina', ['switch.relay_group']), false, 'non-light entity');
+  hass.devices.elina.model = 'Lighting Group';
+  assert.equal(devices.isLightGroupDevice(hass, 'elina', ['light.svet_u_eliny']), false, 'similar model is not Group');
+  hass.devices.elina.model = 'Group';
+  const disabled = () => ({ kind: 'ha_disabled', reason: 'entity', enabledEntityIds: [], allEntityIds: ['light.svet_u_eliny'] });
+  assert.equal(devices.autoIconForBinding(hass, 'device:elina', disabled), GROUP_ICON, 'known disabled child retains metadata identity');
 });

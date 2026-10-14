@@ -13,6 +13,8 @@ function safeHost(overrides = {}) {
     ownerDocument: { defaultView: null },
     isConnected: true,
     _config: { kiosk: true },
+    _hasFixedFloor: false,
+    _model: [{ id: 'f1' }, { id: 'f2' }],
     _mode: 'view',
     _editing: false,
     _loadOk: true,
@@ -152,4 +154,17 @@ test('card adapter maps interaction pause into the kiosk reload guard', () => {
   assert.equal(cardVersionReloadSafetySnapshot(safeHost({
     _cyclePausedUntil: Date.now() + 60_000,
   })).interactionPauseElapsed, false);
+});
+
+test('#894 enlarged non-carousel recovery changes only the zoom predicate', () => {
+  const enlarged = { _zoom: 2.4, _config: { kiosk: true, cycle: 0 } };
+  assert.equal(cardVersionReloadSafetySnapshot(safeHost(enlarged)).baseZoom, true);
+  assert.equal(cardVersionReloadSafetySnapshot(safeHost({ ...enlarged, _config: { kiosk: true, cycle: 10 } })).baseZoom, false);
+  assert.equal(cardVersionReloadSafetySnapshot(safeHost({ ...enlarged, _config: { kiosk: false, cycle: 0 } })).viewOnly, false);
+  for (const [field, overrides] of [
+    ['connected', { isConnected: false }], ['initialFrameSettled', { _loading: true }],
+    ['gesturesIdle', { _pointers: pending(1) }], ['surfacesIdle', { _editorSecondaryDialogBlocked: true }],
+    ['configWritesIdle', { _writesPending: 1 }], ['physicalWritesIdle', { _pendingPhysicalWrites: pending(1) }],
+    ['layoutWritesIdle', { _dirtyPos: pending(1) }], ['interactionPauseElapsed', { _cyclePausedUntil: Date.now() + 60000 }],
+  ]) assert.equal(cardVersionReloadSafetySnapshot(safeHost({ ...enlarged, ...overrides }))[field], false, field);
 });

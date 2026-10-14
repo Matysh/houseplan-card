@@ -705,11 +705,30 @@ export const planStyles = css`
       display: inline-flex;
       opacity: 0.55;
     }
-    .stage.mode-view .rlgo {
+    .stage.mode-view .rlarea {
       pointer-events: auto;
       cursor: pointer;
     }
-    :host([data-pointer-hover]) .stage.mode-view .rlgo:hover { opacity: 1; }
+    .rlarea {
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      width: 44px;
+      height: 44px;
+      margin-block: calc((1em - 44px) / 2);
+      padding: 0;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      outline: none;
+    }
+    .rlarea:focus-visible, .rlfit:focus-visible {
+      outline: 2px solid var(--hp-accent);
+      outline-offset: 2px;
+    }
+    :host([data-pointer-hover]) .stage.mode-view .rlarea:hover { opacity: 1; }
     .roomlabel .rlmetrics {
       position: absolute; /* below the name, outside the centring math */
       top: calc(100% + 0.15em);

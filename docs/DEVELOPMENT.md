@@ -230,6 +230,23 @@ becomes conditional on an already open card). Removing just the first cancel
 was equivalent and cannot prove it individually necessary (CODE-REVIEW-847-r2
 M1). Author checks applicability only; execution remains nightly-only (#709).
 
+## View entry and document recovery witnesses (#894)
+
+`smoke_view_entry_recovery` uses accepted config events and trusted keyboard/touch
+on RU/EN 360/1280px cards; an injected queued old lock target tests dispatch
+independently of Lit reusing a button with a new listener. `smoke_warm_view_marker`
+opens and edits a genuine View draft, replaces its element and delays/fails only
+the chunk transport. It checks visible draft, Close/retry, write rights,
+disconnect and newer intent with no hidden marker or extra acknowledgement.
+`smoke_kiosk_viewport_recovery` wheels and pans the actual stage, advances only
+the existing deadline and lets the browser really reload the document. Its boot
+fixture changes card options/server replies, not restoration fields; fixed,
+single and deleted floors, active carousel and matching-version controls remain.
+Shared full/preview/static group parity includes device: as well as entity:.
+Golden intent is named opening/group presentation and the 44px native Area
+control footprint; only reviewed artifacts may update the affected baselines.
+The four new expensive guards are declared for nightly mutation execution only.
+
 ## Config writer authority witnesses (#890)
 
 `smoke_config_authority` exercises a real GUI Save followed by public setConfig,
