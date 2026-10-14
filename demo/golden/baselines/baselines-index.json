@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 74,
-  "acceptedAt": "2026-10-13T20:53:22.948Z",
-  "sourceFingerprint": "6a7633bfe1df0cf7c453a017dfd3f676b8f8d797a442aab7af423bc983488ac4",
+  "acceptedAt": "2026-10-14T07:50:32.995Z",
+  "sourceFingerprint": "dfc4ccae44dc58cb96e6e2aa6f19ea5885c065c01fdecdf315312998d130e3bd",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,45 +10,18 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "6a7633bfe1df0cf7c453a017dfd3f676b8f8d797a442aab7af423bc983488ac4",
-    "ci": null
-  },
-  "localAttestation": {
-    "schema": "houseplan-golden-wsl/v2",
-    "sha256": "66b3d0e5dad9f96f4c4cebcea3624566b497de3cdd1e1fecfbf1788404a7192b",
-    "artifactSha256": "0fe93b1aa0e921bbad17dcf2d47972920bff67e5c0d5366188a6ff9a4bf03f9e",
-    "createdAt": "2026-10-13T20:53:11.506Z",
-    "source": {
+    "buildFingerprint": "dfc4ccae44dc58cb96e6e2aa6f19ea5885c065c01fdecdf315312998d130e3bd",
+    "ci": {
       "repository": "Matysh/houseplan-card",
-      "branch": "issue/872-vacuum-path-fidelity",
-      "commit": "bdb7cd3b793524c9a7d38931fb8182efcc069092",
-      "tree": "2d52221fc4a8cbe32d17539a30d1587195f49c65",
-      "remoteSha": "bdb7cd3b793524c9a7d38931fb8182efcc069092",
-      "clean": true,
-      "status": ""
-    },
-    "environment": {
-      "platform": "linux",
-      "arch": "x64",
-      "kernel": "6.18.33.2-microsoft-standard-WSL2",
-      "wsl": true,
-      "distro": "Ubuntu-24.04",
-      "filesystem": "ext2/ext3"
-    },
-    "toolchain": {
-      "node": "22.23.2",
-      "npm": "10.9.8",
-      "playwright": "1.62.0",
-      "browser": {
-        "version": "151.0.7922.34",
-        "resolvedExecutable": "/home/sergey/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell",
-        "executableSha256": "e11fc9ce65c96313476f7ee9844b6fb6a9220fb048693cfe9eee00acf4170a9f"
-      }
+      "run": 38527369787,
+      "attempt": 2,
+      "sha": "078c8bfdfe78b5aee7f59817650cbfb50e78479f"
     }
   },
+  "localAttestation": null,
   "foreignCapture": null,
   "witnesses": {
-    "count": 98,
+    "count": 99,
     "floor": 10
   },
   "scenarios": {
@@ -66,7 +39,7 @@
     "panel-narrow-read-only-empty-light-en": "99b8f1af82b1ad13f237125aab8f7e7da0563c138e9da2ddf06e54c2d56138c4",
     "version-mismatch-desktop-dark-en": "8981a02083caa27a163e9c59319bfdb3f55adf70ee319c9ac9a80739e08dd84e",
     "version-mismatch-touch-light-ru": "855bb817ffd5628e8bdcc4e5e48367b140ff16e5040e674555fbb52c43d7867c",
-    "version-mismatch-kiosk-attempted-dark-de": "2e3eaf2fb13d1cca77abe97938374b3e25235fc7db87bb6f7a2e72f1cafe4a7e",
+    "version-mismatch-kiosk-attempted-dark-de": "3ccd3e52c13cee9d711a9b706f877b2b0c1ffbe8bdf839492baa711cd9fb0775",
     "hidden-wall-diagnostics-plan-light": "7bcb8a821b8e0712b1a6c9ad6f36965448db75575ffb02f5d5af0cd328d3c27f",
     "hidden-wall-diagnostics-plan-dark": "a89b83c64cc7bf0fb4989eceaa4cd24297309221085603f676dc0398da344ecb",
     "coincident-partition-before-dark": "32d6d7e32db1bb579b33c783833ce986d10a81589e0783c5e7fae4b8c1e2755e",
@@ -82,7 +55,7 @@
     "isometric-geometry-view-light": "72ab80a0d826657266ed1d7f4bcc9ecd482c05bd9d71dbbafad5079d287d5d95",
     "isometric-live-layers-dark": "07e0eb592e91eef3bd960d2421bf4b1b77ff977296470e4ffed3aac3acb66b69",
     "isometric-no-borders-dark": "65b24c7d1236adfd18636b23b75a1bc60a1823e3d3ea537259f8d8749cbd9439",
-    "isometric-touch-kiosk-dark": "71192d83e38a8d306f6a24fdd422faf2917f97a9a95484a0b0bdf6932a447601",
+    "isometric-touch-kiosk-dark": "160b33b5fcd01b105d276b1166418e8a745770666c49b1b15d4660c3b8a9a301",
     "isometric-large-warm-remount-dark": "85b212f1bb65b4500e4c24459d1eed333d8ba8c8864fd06d4844e91c39ea707d",
     "isometric-stage3-overlays-light": "51c87e932f59bde985ec51fc670a81abf1b5ae69c42a0ad9486897bb448eac27",
     "isometric-stage3-overlays-dark": "12bc2e0629bae766947c966a26924adf022312075aa85241354fa2ac32332a0f",
