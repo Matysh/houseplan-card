@@ -79,6 +79,24 @@ test('#891 cursor rollback uses exact anchors, preserves a newer branch and cann
   assert.deepEqual(stack.commands(), [], 'foreign-authoritative clear is not resurrected');
 });
 
+for (const count of [49, 50]) {
+  test(`#891 capacity rollback preserves ${count} newer commands without exceeding fifty or evicting them`, () => {
+    const stack = new CommandStack();
+    const accepted = { name: 'accepted', before: 0, after: 1 };
+    stack.push(accepted); stack.undo();
+    const position = stack.positionOf(accepted);
+    stack.redo(); // optimistic retry whose deferred write will fail
+    const newer = Array.from({ length: count }, (_, n) => ({ name: 'new', before: n, after: n + 1 }));
+    for (const command of newer) stack.push(command);
+    stack.restorePosition(accepted, position);
+    assert.equal(stack.commands().length, 50, 'combined Undo + Redo cardinality is bounded');
+    newer.forEach((command, index) => assert.equal(stack.commands()[index], command, 'new identity/order stays exact'));
+    assert.equal(stack.peekUndo(), newer.at(-1), 'the new top is never displaced');
+    assert.equal(stack.peekRedo(), count === 49 ? accepted : null,
+      'a command already displaced at capacity is not resurrected; a live one keeps its retry cursor');
+  });
+}
+
 // ---------------------------------------------------------------- #883
 // One ordinary history attempt (`src/geometry-history-step.ts`) over the real
 // CommandStack: the cursor moves only on success, a temporary refusal keeps the

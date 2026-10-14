@@ -582,6 +582,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'physical-refusal-cursor-exceeds-history-capacity',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#891 capacity" test/command-stack.test.mjs',
+    because: '#891 AC2: retry cursor restoration cannot resurrect a capacity-displaced identity above fifty or evict newer commands',
+    patches: [{ file: 'src/command-stack.ts',
+      find: '    if (!this._undo.includes(command) && !this._redo.includes(command)\n'
+        + '        && this._undo.length + this._redo.length >= this._limit) return;',
+      replace: '    // mutant: restore an absent old command even when the newer branch filled capacity',
+    }],
+  },
+  {
     id: 'wall-chain-history-transient-reset-clears-redo-journal',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="#891 AC1" test/geometry-history-refusal.test.mjs',

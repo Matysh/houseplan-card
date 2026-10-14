@@ -53,6 +53,10 @@ export class CommandStack<T> {
   /** Roll back only this cursor identity; newer commands and the opposite lane stay. */
   public restorePosition(command: NamedCommand<T>, position: CommandPosition<T>): void {
     if (position.epoch !== this._epoch) return; // an authoritative clear is irreversible here
+    // A full newer branch already displaced this absent old identity. Restoring
+    // it must neither exceed capacity nor evict one of those newer commands.
+    if (!this._undo.includes(command) && !this._redo.includes(command)
+        && this._undo.length + this._redo.length >= this._limit) return;
     this.removeWhere(item => item === command);
     const lane = position.lane === 'undo' ? this._undo : this._redo;
     let index = -1;
