@@ -1,7 +1,7 @@
 // #873: equal-spacing magnet of the device editor — the pure resolver.
 //
-// The card rounds a dragged marker with `_devicePlacementForCanvas`
-// (src/houseplan-card.ts); `place` below repeats that formula verbatim and
+// The card rounds a dragged marker with `_devicePlacementForCanvas`;
+// `place` below repeats that formula verbatim and
 // converts the stored point back to render units the way `_livePos` does, so
 // the numbers here are the numbers the card stores. Coordinates are plan units
 // (1000 per original square); every AC point is a grid node (ТЗ, «Критерии»).
