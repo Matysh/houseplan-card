@@ -107,7 +107,7 @@ const out = await page.evaluate(async () => {
   };
 
   // The opening info card remains the one deliberate lock surface.
-  c._openingInfo = openings[0];
+  sr().querySelector('.oplock').click();
   await settle();
   result.infoHasContactAndLock = sr().querySelectorAll('.oprow').length === 2;
   result.infoHasOneLockAction = sr().querySelectorAll('.lockact').length === 1;
@@ -166,7 +166,7 @@ const out = await page.evaluate(async () => {
     callService: async (domain, service, data) => calls.push({ domain, service, data }),
   };
   await settle();
-  c._openingInfo = c._openingsR[0];
+  sr().querySelector('.oplock').click();
   await settle();
   const unavailableCandidates = c._lockCandidates().map((item) => item.value);
   result.unavailableRemainsCandidate = unavailableCandidates.includes('lock.front_door');

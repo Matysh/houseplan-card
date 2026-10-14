@@ -30,10 +30,12 @@ const res = await page.evaluate(async () => {
   c._cardToggle('alarm_control_panel.home');
   out.cardToggleRefuses = lockCalls().length === 0;
   // 4) кнопка в карточке двери — единственная разрешённая поверхность, и спрашивает подтверждение
-  c._openingEntityAvailable = () => true;
-  c._openingInfo = {
-    id: 'front', type: 'door', rx: 0.5, ry: 0.5, len_cm: 90, lock: 'lock.front_door',
-  };
+  await window.__hpTest.setServerConfig(cfg=>{
+    cfg.spaces.find(space=>space.id==='f1').openings=[{
+      id:'front',type:'door',rx:500,ry:500,len_cm:90,lock:'lock.front_door',
+    }];return cfg;
+  });
+  (c.shadowRoot||c.renderRoot).querySelector('.oplock').click();await c.updateComplete;
   let pending = c._lockAction('lock.front_door', 'unlock');
   await c.updateComplete;
   out.unlockAsksConfirm = c._dangerConfirm?.request?.key === 'unlock' && lockCalls().length === 0;

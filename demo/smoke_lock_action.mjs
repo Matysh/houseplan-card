@@ -16,7 +16,7 @@ const res = await page.evaluate(async () => {
   const lockId = op.lock;
   // 1) замок закрыт → кнопка "Unlock"
   c.hass = { ...c.hass, states: { ...c.hass.states, [lockId]: { state: 'locked', attributes: {} } } };
-  c._openingInfo = op; await c.updateComplete;
+  sr().querySelector('.oplock').click(); await c.updateComplete;
   let btn = sr().querySelector('.btn.lockact');
   out.unlockBtnShown = !!btn && !btn.disabled;
   out.unlockBtnDanger = btn?.classList.contains('warn');
