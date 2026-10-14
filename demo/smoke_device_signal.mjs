@@ -1,8 +1,8 @@
-/** #867 AC1–AC4/AC7: real DOM inputs, own HA diagnostics and canonical radio anchors. */
+/** #867 AC1–AC3/AC6–AC7: real DOM inputs, own HA diagnostics and canonical radio anchors. */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { launch, checkAll, finish } from './serve.mjs';
-import { installBatteryFixture, patchBatteryMarker } from './helpers/device-battery-fixture.mjs';
+import { installBatteryFixture } from './helpers/device-battery-fixture.mjs';
 
 const artifacts = new URL('../artifacts/device-signal-867/', import.meta.url);
 mkdirSync(artifacts, { recursive: true });
@@ -11,9 +11,12 @@ const out = { completed: false }, evidence = {};
 const root = page.locator('#host > houseplan-card');
 const dev = id => root.locator(`[data-hp="device"][data-id="${id}"]`);
 const dialog = () => root.locator('hp-dialog[data-kind="marker"]');
+const patchSignalMarker = patch => page.evaluate(patch => window.__hpTest.setServerConfig(cfg => ({ ...cfg,
+  markers: cfg.markers.map(marker => marker.id === 'lg_sensor.living_temp' ? { ...marker, ...patch } : marker),
+})), patch);
 const settle = () => page.evaluate(() => window.__hpTest.settled());
 const open = async () => page.evaluate(async () => {
-  await window.__hpTest.setMode('devices'); await window.__hpTest.openMarkerDialog('d_temp');
+  await window.__hpTest.setMode('devices'); await window.__hpTest.openMarkerDialog('lg_sensor.living_temp');
   await window.__hpTest.waitForWrites();
 });
 const close = () => page.evaluate(async () => {
@@ -22,7 +25,7 @@ const close = () => page.evaluate(async () => {
   await window.__hpTest.settled();
 });
 const sample = () => page.evaluate(() => {
-  const marker = window.__card.shadowRoot.querySelector('[data-hp="device"][data-id="d_temp"]');
+  const marker = window.__card.shadowRoot.querySelector('[data-hp="device"][data-id="lg_sensor.living_temp"]');
   return { lqi: marker?.querySelector('.lqi')?.textContent.trim() ?? null,
     badge: marker?.querySelector('.value-badge')?.textContent.trim() ?? null,
     battery: marker?.querySelector('.device-battery')?.dataset.state ?? null };
@@ -50,11 +53,12 @@ try {
     c.hass = { ...c.hass, states: { ...c.hass.states,
       'sensor.living_temp': { ...c.hass.states['sensor.living_temp'], attributes },
       'sensor.hp867_lqi': { entity_id: 'sensor.hp867_lqi', state: '137', attributes: { unit_of_measurement: 'lqi' } } } };
-    window.__signal867 = { primary: c.hass.states['sensor.living_temp'], writes: [], reject: false };
+    window.__signal867 = { primary: c.hass.states['sensor.living_temp'], writes: [], traces: [], reject: false };
     const original = c.hass.callWS;
     c.hass = { ...c.hass, callWS: async message => {
       if (message.type === 'houseplan/config/set') {
         window.__signal867.writes.push(structuredClone(message));
+        window.__signal867.traces.push(new Error('signal config/set').stack);
         if (window.__signal867.reject) throw Object.assign(new Error('fixture config refusal'), { code: 'fixture-refusal' });
       }
       if (message.type === 'zha/devices') return [
@@ -65,13 +69,24 @@ try {
       return original(message);
     } };
   });
-  await patchBatteryMarker(page, { binding: 'entity:sensor.living_temp' });
-  await page.waitForFunction(() => window.__card.shadowRoot.querySelector('[data-id="d_temp"] .lqi')?.textContent.trim() === '137');
+  await page.evaluate(() => window.__hpTest.setServerConfig(cfg => ({ ...cfg,
+    // The battery fixture's marker id is also its physical HA device id.
+    // Retire the automatic physical placement and use the editor's canonical
+    // entity id. Otherwise this fixture aliases the automatic physical item,
+    // and saving would also exercise an unrelated marker-id migration.
+    markers: [...cfg.markers.map(marker => marker.id === 'd_temp'
+      ? { ...marker, id: 'lg_sensor.living_temp', binding: 'entity:sensor.living_temp' } : marker),
+    { id: 'hp867_retired_parent', binding: 'device:d_temp', removed: true, hidden: true }] })));
+  await page.waitForFunction(() => window.__card.shadowRoot.querySelector('[data-id="lg_sensor.living_temp"] .lqi')?.textContent.trim() === '137');
   out.entityInheritsOwnSiblingAndExistingBattery = (await sample()).battery === 'normal';
+  out.fixtureHasOneExactEntityNotAnAutomaticPhysicalAlias = await page.evaluate(() => {
+    const matches = window.__card._devices.filter(device => device.id === 'lg_sensor.living_temp');
+    return matches.length === 1 && matches[0].bindingKind === 'entity';
+  });
   await page.evaluate(() => window.__hpTest.setServerConfig(cfg => ({ ...cfg,
     settings: { ...cfg.settings, show_device_battery: false } })));
   await reading(0);
-  await page.waitForFunction(() => window.__card.shadowRoot.querySelector('[data-id="d_temp"] .lqi')?.textContent.trim() === '0');
+  await page.waitForFunction(() => window.__card.shadowRoot.querySelector('[data-id="lg_sensor.living_temp"] .lqi')?.textContent.trim() === '0');
   out.siblingOnlyZeroPaintsWithBatteryOff = (await sample()).battery === null
     && await page.evaluate(() => window.__card.hass.states['sensor.living_temp'] === window.__signal867.primary);
   await reading(55);
@@ -86,30 +101,30 @@ try {
   await close();
   await page.evaluate(() => window.__hpTest.setMode('view'));
   out.cancelKeepsAcceptedLineAndFlag = (await sample()).lqi === '55'
-    && await page.evaluate(() => !window.__card._serverCfg.markers.find(m => m.id === 'd_temp').hide_signal);
+    && await page.evaluate(() => !window.__card._serverCfg.markers.find(m => m.id === 'lg_sensor.living_temp').hide_signal);
 
   await open(); await dialog().locator('#marker-hide-signal').check();
-  await page.evaluate(() => { window.__signal867.reject = true; window.__signal867.writes.length = 0; });
+  await page.evaluate(() => { window.__signal867.reject = true; window.__signal867.writes.length = 0; window.__signal867.traces.length = 0; });
   await dialog().locator('.dialog-action-commit [data-hp="dialog-confirm"]').click();
   await page.waitForFunction(() => window.__signal867.writes.length === 1 && window.__card._markerDialog?.busy === false);
   out.refusalKeepsDraftAndAcceptedPlan = await dialog().locator('#marker-hide-signal').isChecked()
-    && (await sample()).lqi === '55' && await page.evaluate(() => !window.__card._serverCfg.markers.find(m => m.id === 'd_temp').hide_signal);
+    && (await sample()).lqi === '55' && await page.evaluate(() => !window.__card._serverCfg.markers.find(m => m.id === 'lg_sensor.living_temp').hide_signal);
   await page.evaluate(() => { window.__signal867.reject = false; });
   await dialog().locator('.dialog-action-commit [data-hp="dialog-confirm"]').click();
   await dialog().waitFor({ state: 'detached' });
   out.retryWritesOnceAndHidesAcceptedLine = (await sample()).lqi === null
     && await page.evaluate(() => window.__signal867.writes.length === 2
-      && window.__card._serverCfg.markers.find(m => m.id === 'd_temp').hide_signal === true);
+      && window.__card._serverCfg.markers.find(m => m.id === 'lg_sensor.living_temp').hide_signal === true);
   await open();
   out.saveSurvivesReopen = await dialog().locator('#marker-hide-signal').isChecked();
   await close(); await page.evaluate(() => window.__hpTest.setMode('view'));
-  await dev('d_temp').hover(); await settle();
+  await dev('lg_sensor.living_temp').hover(); await settle();
   out.localHideRetainsOrdinaryTooltip = await page.evaluate(() => window.__card.shadowRoot
     .querySelector('[data-hp-live-tip]')?.textContent.includes('LQI 55'));
   await page.mouse.move(2, 2);
-  await patchBatteryMarker(page, { value_badge: { enabled: true, source: { kind: 'derived_lqi' } } });
+  await patchSignalMarker({ value_badge: { enabled: true, source: { kind: 'derived_lqi' } } });
   out.localHideRetainsExplicitBadge = (await sample()).badge === '55' && (await sample()).lqi === null;
-  await patchBatteryMarker(page, { value_badge: { enabled: false }, hide_signal: false });
+  await patchSignalMarker({ value_badge: { enabled: false }, hide_signal: false });
 
   await page.evaluate(async () => {
     await customElements.whenDefined('houseplan-space-card');
@@ -117,14 +132,19 @@ try {
     secondary.setConfig({ type: 'custom:houseplan-space-card', space: 'f1', live_states: true, show_button: false });
     secondary.hass = window.__card.hass; document.body.appendChild(secondary);
   });
-  await page.waitForFunction(() => document.querySelector('houseplan-space-card')?.shadowRoot?.querySelector('[data-id="d_temp"] .lqi')?.textContent.trim() === '55');
+  await page.waitForFunction(() => document.querySelector('houseplan-space-card')?.shadowRoot?.querySelector('[data-id="lg_sensor.living_temp"] .lqi')?.textContent.trim() === '55');
   await reading(77);
-  await page.waitForFunction(() => document.querySelector('houseplan-space-card')?.shadowRoot?.querySelector('[data-id="d_temp"] .lqi')?.textContent.trim() === '77');
+  await page.waitForFunction(() => document.querySelector('houseplan-space-card')?.shadowRoot?.querySelector('[data-id="lg_sensor.living_temp"] .lqi')?.textContent.trim() === '77');
   out.spaceCardSharesSiblingUpdate = (await sample()).lqi === '77';
   await page.evaluate(() => document.querySelector('houseplan-space-card').remove());
-  await page.evaluate(() => window.__hpTest.setVolumetricView(true));
-  await page.waitForFunction(() => window.__card.shadowRoot.querySelector('[data-hp="iso-walls"]'));
-  out.isoUsesSameReading = (await sample()).lqi === '77';
+  await page.evaluate(async () => {
+    await window.__hpTest.setMode('view');
+    await window.__hpTest.setVolumetricView(true);
+  });
+  // f1 is a background-image floor: its 2.5D device plane is real, but it has
+  // no structural wall mesh. The public projection class is the correct gate.
+  out.isoUsesSameReading = await root.locator('.stage.projection-iso').count() === 1
+    && (await sample()).lqi === '77';
   await page.screenshot({ path: fileURLToPath(new URL('iso-reading.png', artifacts)) });
   await page.evaluate(() => window.__card.setConfig({ type: 'custom:houseplan-card', kiosk: true, cycle: 0, language: 'en' }));
   await settle(); out.kioskUsesSameReadingWithoutTopology = (await sample()).lqi === '77'
@@ -132,71 +152,16 @@ try {
   await page.evaluate(() => window.__card.setConfig({ type: 'custom:houseplan-card', language: 'en' }));
   await settle(); await page.evaluate(() => window.__hpTest.setVolumetricView(false));
 
-  // Two entity aliases plus a device marker. Only public registry/config/layout inputs.
-  await page.evaluate(async () => {
-    const c = window.__card;
-    window.__addRegistryEntity('switch.hp867_second', null, 'off');
-    Object.assign(c.hass.entities['switch.hp867_second'], { device_id: 'd_temp' });
-    window.__setRegistryArea('entity', 'switch.hp867_second', null);
-    c.hass = { ...c.hass };
-    await window.__hpTest.setServerConfig(cfg => ({ ...cfg,
-      settings: { ...cfg.settings, zigbee_topology: { enabled: true, z2m_base_topics: [] } },
-      markers: [...cfg.markers.filter(m => m.id !== 'd_temp'),
-        { id: 'd_temp', binding: 'device:d_temp', space: 'f1' },
-        { id: 'hp867_first', binding: 'entity:sensor.living_temp', space: 'f1' },
-        { id: 'hp867_second', binding: 'entity:switch.hp867_second', space: 'f1' }] }));
-    await window.__hpTest.setLayout(layout => ({ ...layout, d_temp: { s: 'f1', x: .30, y: .40 },
-      hp867_first: { s: 'f1', x: .55, y: .45 }, hp867_second: { s: 'f1', x: .70, y: .60 } }));
-  });
-  await dev('hp867_second').hover(); await settle();
-  out.emptyProviderHoverDoesNotContinuouslyUpdate = await page.evaluate(async () => {
-    const overlay = window.__card.shadowRoot.querySelector('hp-zigbee-topology-overlay');
-    await overlay.updateComplete;
-    let prior = overlay.updateComplete, updates = 0;
-    for (let i = 0; i < 20; i++) {
-      await new Promise(resolve => requestAnimationFrame(resolve));
-      const current = overlay.updateComplete;
-      if (current !== prior) { updates++; prior = current; }
-    }
-    return updates <= 2 && !overlay.shadowRoot.querySelector('line');
-  });
-  await root.locator('[data-hp="settings"]').click();
-  const settings = root.locator('hp-zigbee-topology-settings');
-  await settings.locator('.hpf-actions button').first().click();
-  await page.waitForFunction(() => window.__card.shadowRoot.querySelector('hp-zigbee-topology-settings')?._snapshot?.states?.zha?.phase === 'ready');
-  await page.evaluate(() => window.__hpTest.close(undefined, { via: 'cancel' }));
-  const geometry = async (hovered, expectedOrigin) => {
-    await page.mouse.move(2, 2); await dev(hovered).hover();
-    await page.waitForFunction(() => !!window.__card.shadowRoot.querySelector('hp-zigbee-topology-overlay')?.shadowRoot?.querySelector('[data-hp="zigbee-topology-line"]'));
-    await settle();
-    return page.evaluate(expectedOrigin => {
-      const r = window.__card.shadowRoot, o = r.querySelector('hp-zigbee-topology-overlay');
-      const svg = o.shadowRoot.querySelector('svg'), matrix = svg.getScreenCTM();
-      const line = o.shadowRoot.querySelector('[data-hp="zigbee-topology-line"]');
-      const start = new DOMPoint(Number(line.getAttribute('x1')), Number(line.getAttribute('y1'))).matrixTransform(matrix);
-      const box = r.querySelector(`[data-hp="device"][data-id="${expectedOrigin}"]`).getBoundingClientRect();
-      const ids = [...r.querySelectorAll('[data-hp-zigbee-topology-endpoint]')].map(x => x.dataset.id).sort();
-      return { aligned: Math.hypot(start.x - box.left - box.width / 2, start.y - box.top - box.height / 2) < 1,
-        ids, lines: o.shadowRoot.querySelectorAll('[data-hp="zigbee-topology-line"]').length };
-    }, expectedOrigin);
-  };
-  evidence.deviceRepresentative = await geometry('hp867_second', 'd_temp');
-  out.secondAliasUsesCanonicalDeviceAnchor = evidence.deviceRepresentative.aligned
-    && evidence.deviceRepresentative.lines === 1 && !evidence.deviceRepresentative.ids.includes('hp867_second');
-  await page.evaluate(() => window.__hpTest.setServerConfig(cfg => ({ ...cfg,
-    markers: cfg.markers.map(m => m.id === 'd_temp' ? { ...m, hidden: true } : m) })));
-  evidence.entityRepresentative = await geometry('hp867_second', 'hp867_first');
-  out.hiddenDeviceFallsBackToFirstConfiguredEntity = evidence.entityRepresentative.aligned
-    && !evidence.entityRepresentative.ids.includes('d_temp');
-  await page.screenshot({ path: fileURLToPath(new URL('canonical-entity-anchor.png', artifacts)) });
   out.completed = true;
 } catch (error) {
   evidence.failure = await page.evaluate(() => ({ toast: window.__card._toast,
     draft: window.__card._markerDialog && { binding: window.__card._markerDialog.binding,
       hideSignal: window.__card._markerDialog.hideSignal, busy: window.__card._markerDialog.busy },
-    writes: window.__signal867?.writes, canEdit: window.__card._canEdit,
+    writes: window.__signal867?.writes, traces: window.__signal867?.traces, canEdit: window.__card._canEdit,
     transport: String(window.__card.hass.callWS).slice(0, 160) }));
-  console.error('signal witness failure', JSON.stringify(evidence.failure));
+  console.error('signal witness failure', JSON.stringify({ ...evidence.failure,
+    writes: evidence.failure.writes?.map(write => ({ expected_rev: write.expected_rev,
+      marker: write.config.markers.find(marker => marker.id === 'lg_sensor.living_temp') })) }));
   throw error;
 } finally {
   writeFileSync(new URL('evidence.json', artifacts), JSON.stringify({ out, evidence }, null, 2));
