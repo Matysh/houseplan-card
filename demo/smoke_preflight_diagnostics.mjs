@@ -58,6 +58,7 @@ const out = await page.evaluate(async () => {
       positionsRemapped: 0, markersDetached: 0, orphanRoomLabelsRemoved: 0,
       orphanDevicePositionsRemoved: 0, orphanGroupPositionsRemoved: 0,
       removedPositions: [], liveMissingPositions: [], unverifiedPositions: [],
+      invalidPositionsEligible: [], invalidPositionsRemoved: [], invalidPositionsRetained: [],
       nestedRefsUnresolved: 0 },
   };
   await update();

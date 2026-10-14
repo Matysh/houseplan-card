@@ -97,6 +97,7 @@ const out = await page.evaluate(async () => {
   card._maybeRebuildDevices();
   card.requestUpdate();
   await card.updateComplete;
+  await window.__hpTest.waitForWrites();
 
   await card._editorRuntime.optimizePlans.open();
   await card.updateComplete;
@@ -170,7 +171,7 @@ const out = await page.evaluate(async () => {
     && noOpText.includes('There are no automatic changes to apply.')
     && !noOpText.includes('Review the items below.')
     && noOpText.includes('Old position records that could not be matched to objects: 1. They were left unchanged.')
-    && noOpText.includes('Their floors no longer exist.')
+    && noOpText.includes('These records refer to deleted spaces.')
     && !card.renderRoot.querySelector('hp-dialog .btn.on')
     && card.renderRoot.querySelector('hp-dialog [data-hp="dialog-cancel"]')?.textContent.trim() === 'Close';
   card._alignDialog = null;
