@@ -211,7 +211,8 @@ test('harness edits are isolated to their own job (#208)', () => {
     only(['backend'])(() => put('custom_components/houseplan/store.py', 'VERSION = 2\n'));
     // Протокол браузерного харнеса общий для трёх job (#492 §5.1 protocol).
     only(['smoke', 'golden', 'performance_smoke'])(() => put('demo/serve.mjs', "import './bundle-freshness.mjs';\n// harness\n"));
-    only(['smoke', 'golden', 'performance_smoke'])(() => put('demo/srv/demo.html', '<div id="host"></div>\n<!-- page -->\n'));
+    // #845 also reads the actual CFG here for the mandatory identity corpus.
+    only(['smoke', 'golden', 'performance_smoke', 'geometry_parity'])(() => put('demo/srv/demo.html', '<div id="host"></div>\n<!-- page -->\n'));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

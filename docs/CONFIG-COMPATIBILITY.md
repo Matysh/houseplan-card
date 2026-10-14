@@ -359,6 +359,18 @@ additive fields and old servers retain the existing browser fallback.
 
 ## Stable wall identity — model v8 (#282)
 
+#845 aligns the existing browser/server materialization contract, without a
+new model or migration on read. Wall and draft-partition IDs reserve stairs
+as well as rooms/openings/decor/partitions/columns; initial collisions use the
+existing deterministic suffix rule, while a conflicting current identity fails.
+Lineage ties, catalogue order and owner seeds use Unicode code points, not a
+locale or UTF-16 ordering. Existing complete catalogue IDs remain intact.
+Commit canonicalizes named coordinates to the nine-decimal storage contract
+**before** twelve-decimal deterministic seed keys: raw odd multiples of
+`1/8192` therefore do not establish a rounding defect between the runtimes.
+Compatibility wall keys also retain the established #258 near-lattice boundary
+before midpoint rounding; the stored geometry itself is not snapped again.
+
 Resize's coalesced handles are a read-only interaction projection, not the
 persisted atom index (#832). Before a candidate crosses this write barrier, it
 restores the existing structural order/IDs and synchronizes the compatibility

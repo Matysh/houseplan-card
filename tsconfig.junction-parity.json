@@ -8,6 +8,8 @@
     "incremental": false
   },
   "include": [
-    "src/junction-limits.ts"
+    "src/junction-limits.ts",
+    "src/wall-node-move.ts",
+    "src/wall-segment-model.ts"
   ]
 }

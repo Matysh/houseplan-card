@@ -1,0 +1,5751 @@
+{
+  "schema": 1,
+  "baseline": "a7ee8e44f23e0f2b1e5b77cb73987bfb3116ba64",
+  "inventory": [
+    {
+      "file": "test/fixtures/197-junction-patch.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/249-multiwall-junction.json",
+      "configs": 0
+    },
+    {
+      "file": "test/fixtures/258-wall-key-roundtrip.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/275-orthogonal-strip-containment.json",
+      "configs": 2
+    },
+    {
+      "file": "test/fixtures/276-coincident-partition.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/278-wall-union-isolation.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/279-near-orthogonal-junction.json",
+      "configs": 0
+    },
+    {
+      "file": "test/fixtures/280-optimize-rehost-candidate.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/281-resize-outer-candidate.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/281-resize-outer-partitions.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/282-wall-identity-parity.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/289-mixed-role-resize.json",
+      "configs": 0
+    },
+    {
+      "file": "test/fixtures/302-junction-artifacts.json",
+      "configs": 0
+    },
+    {
+      "file": "test/fixtures/309-junction-teeth.json",
+      "configs": 0
+    },
+    {
+      "file": "test/fixtures/316-span-over-door-migrated.json",
+      "configs": 2
+    },
+    {
+      "file": "test/fixtures/319-orphan-span-migration.json",
+      "configs": 2
+    },
+    {
+      "file": "test/fixtures/329-sharp-apex.json",
+      "configs": 0
+    },
+    {
+      "file": "test/fixtures/477-writer-fixed-point-writers.json",
+      "configs": 0
+    },
+    {
+      "file": "test/fixtures/478-room-draft-migration-vectors.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/560-corpus/c1-short-edges.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/560-corpus/c2-t-junction-thicknesses.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/560-corpus/c3-x-junction.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/560-corpus/c4-opening-at-vertex.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/560-corpus/c5-node-noise-near-axis.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/560-corpus/c6-stale-layout.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/803-wall-node-parity.json",
+      "configs": 0
+    },
+    {
+      "file": "test/fixtures/804-wall-face-lineage-backend.json",
+      "configs": 22
+    },
+    {
+      "file": "test/fixtures/804-wall-face-lineage.json",
+      "configs": 0
+    },
+    {
+      "file": "test/fixtures/834-node-connected.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/842-geometry-cleanup.json",
+      "configs": 2
+    },
+    {
+      "file": "test/fixtures/874-room-closure.json",
+      "configs": 0
+    },
+    {
+      "file": "test/fixtures/config-lifecycle/current.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/config-lifecycle/future-fields.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/config-lifecycle/oldest-supported.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/coordinate-canonicalization.json",
+      "configs": 2
+    },
+    {
+      "file": "test/fixtures/glow/additive-pools.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/import-id-lineage.json",
+      "configs": 0
+    },
+    {
+      "file": "test/fixtures/junction-limits-parity.json",
+      "configs": 0
+    },
+    {
+      "file": "test/fixtures/optimize-storage-roundtrip.json",
+      "configs": 2
+    },
+    {
+      "file": "test/fixtures/radar-source-boundaries.json",
+      "configs": 0
+    },
+    {
+      "file": "test/fixtures/real-plan-first-floor.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/real-plan-second-floor.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/resize-safe-regression.json",
+      "configs": 0
+    },
+    {
+      "file": "test/fixtures/space-delete-with-markers.json",
+      "configs": 10
+    },
+    {
+      "file": "test/fixtures/vacuum-attrs/map-id.json",
+      "configs": 0
+    },
+    {
+      "file": "test/fixtures/vacuum-routes/legacy-run.json",
+      "configs": 0
+    },
+    {
+      "file": "test/fixtures/vacuum-routes/resolve.json",
+      "configs": 0
+    },
+    {
+      "file": "test/fixtures/zigbee2mqtt-networkmap-real-anonymized.json",
+      "configs": 0
+    },
+    {
+      "file": "demo/fixtures/large-house.mjs",
+      "configs": 1
+    },
+    {
+      "file": "demo/fixtures/v8-draft-regression.mjs",
+      "configs": 1
+    },
+    {
+      "file": "demo/fixtures/visual-matrix.mjs",
+      "configs": 1
+    },
+    {
+      "file": "demo/fixtures/wall-draw-click.mjs",
+      "configs": 1
+    },
+    {
+      "file": "demo/fixtures/wall-key.mjs",
+      "configs": 0
+    },
+    {
+      "file": "demo/srv/demo.html",
+      "configs": 1
+    }
+  ],
+  "documents": [
+    {
+      "label": "test/fixtures/197-junction-patch.json",
+      "fingerprint": "fdf624253287cb664e10d7a60493e7d23e4f4bcee50ec2f33446d3fb16f57f0b",
+      "ok": true,
+      "identity": [
+        {
+          "space": "space_repro",
+          "catalogue": [
+            "wall-jcd4heifluqipn77fxa3",
+            "wall-tfjpxnatm2w5puzyhbne",
+            "wall-3q4dbkk3ri3x72smq2jz",
+            "wall-i3ucdelafcpvgnahe7rv",
+            "wall-bwf6xsdqceq5ob4qkkvb",
+            "wall-k3bixipodzwzph6wkfft",
+            "wall-lt4ikgf2niiygl7kfrcy",
+            "wall-rk5irgctsw5lijs4ohyn",
+            "wall-r332mnkbai4hdfmogitt",
+            "wall-66nniacmz66moqllgrcm",
+            "wall-qshdrkzmpqgb4qk5urea",
+            "wall-axikc6c7rwz6h7prcmjl",
+            "wall-362q6wdr33wtyu4qiii2",
+            "wall-xnrwp2z7fz47j3h63ud2",
+            "wall-tiworq5lilzdc3hzq772",
+            "wall-xzivubhrh7ucj6bvale6",
+            "wall-ik7qv7v5jtpvmo3qwpdj",
+            "wall-ad3nri45odtsnmiijrjr",
+            "wall-aclan5vz7bunqfz2wadd",
+            "wall-q6tu2gak33rqqxp4ngmj",
+            "wall-bgwekvodngom5wphck2i",
+            "wall-yhn6yzxth6scu6mbtt3h",
+            "wall-rkm5iv7yqvfjptcxykas",
+            "wall-w7a33ib5encaaslb2mav",
+            "wall-qe5upt4tbpitjzp23vz4",
+            "wall-ie5awewiazfy2lmq4k3n",
+            "wall-wwf7bleu7v6jargrfxyc",
+            "wall-qdw7iytb3ymlruitu5yk",
+            "wall-7yrnikhafso76micmitz",
+            "wall-swl32ntzurc57w7or55y",
+            "wall-ah3djvxtqj6a2ygdnoma",
+            "wall-s64ihybgffc2khqi4mpf"
+          ],
+          "rooms": [
+            {
+              "id": "room_1",
+              "walls": [
+                "wall-jcd4heifluqipn77fxa3",
+                "wall-tfjpxnatm2w5puzyhbne",
+                "wall-wwf7bleu7v6jargrfxyc",
+                "wall-w7a33ib5encaaslb2mav",
+                "wall-rkm5iv7yqvfjptcxykas",
+                "wall-qe5upt4tbpitjzp23vz4",
+                "wall-bgwekvodngom5wphck2i",
+                "wall-aclan5vz7bunqfz2wadd",
+                "wall-xzivubhrh7ucj6bvale6",
+                "wall-xnrwp2z7fz47j3h63ud2",
+                "wall-r332mnkbai4hdfmogitt",
+                "wall-i3ucdelafcpvgnahe7rv"
+              ]
+            },
+            {
+              "id": "room_2",
+              "walls": [
+                "wall-rk5irgctsw5lijs4ohyn",
+                "wall-r332mnkbai4hdfmogitt",
+                "wall-xnrwp2z7fz47j3h63ud2",
+                "wall-tiworq5lilzdc3hzq772",
+                "wall-axikc6c7rwz6h7prcmjl",
+                "wall-66nniacmz66moqllgrcm"
+              ]
+            },
+            {
+              "id": "room_3",
+              "walls": [
+                "wall-qshdrkzmpqgb4qk5urea",
+                "wall-axikc6c7rwz6h7prcmjl",
+                "wall-ik7qv7v5jtpvmo3qwpdj",
+                "wall-362q6wdr33wtyu4qiii2"
+              ]
+            },
+            {
+              "id": "room_4",
+              "walls": [
+                "wall-bwf6xsdqceq5ob4qkkvb",
+                "wall-k3bixipodzwzph6wkfft",
+                "wall-66nniacmz66moqllgrcm",
+                "wall-qshdrkzmpqgb4qk5urea",
+                "wall-lt4ikgf2niiygl7kfrcy"
+              ]
+            },
+            {
+              "id": "room_5",
+              "walls": [
+                "wall-ik7qv7v5jtpvmo3qwpdj",
+                "wall-tiworq5lilzdc3hzq772",
+                "wall-xzivubhrh7ucj6bvale6",
+                "wall-aclan5vz7bunqfz2wadd",
+                "wall-q6tu2gak33rqqxp4ngmj",
+                "wall-ad3nri45odtsnmiijrjr"
+              ]
+            },
+            {
+              "id": "room_6",
+              "walls": [
+                "wall-q6tu2gak33rqqxp4ngmj",
+                "wall-bgwekvodngom5wphck2i",
+                "wall-ie5awewiazfy2lmq4k3n",
+                "wall-7yrnikhafso76micmitz",
+                "wall-yhn6yzxth6scu6mbtt3h"
+              ]
+            },
+            {
+              "id": "room_7",
+              "walls": [
+                "wall-3q4dbkk3ri3x72smq2jz",
+                "wall-i3ucdelafcpvgnahe7rv",
+                "wall-rk5irgctsw5lijs4ohyn",
+                "wall-k3bixipodzwzph6wkfft"
+              ]
+            },
+            {
+              "id": "room_8",
+              "walls": [
+                "wall-w7a33ib5encaaslb2mav",
+                "wall-qdw7iytb3ymlruitu5yk",
+                "wall-ah3djvxtqj6a2ygdnoma",
+                "wall-s64ihybgffc2khqi4mpf",
+                "wall-swl32ntzurc57w7or55y",
+                "wall-ie5awewiazfy2lmq4k3n",
+                "wall-qe5upt4tbpitjzp23vz4",
+                "wall-rkm5iv7yqvfjptcxykas"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/258-wall-key-roundtrip.json/space",
+      "fingerprint": "aa8ad6ac540e273663a2ddeadd66f349bb2f5ae421be91d06772da623e14230b",
+      "ok": true,
+      "identity": [
+        {
+          "space": "wall-key-roundtrip",
+          "catalogue": [
+            "wall-4mulrbm4wu6ypmdjtb33",
+            "wall-xo46odgh3rbe75kbypan",
+            "wall-ltgtcndpk26dupnpgjpm",
+            "wall-tz3dndaev7eu7j2b47ag",
+            "wall-a2agjkngexv5ekwmqkch",
+            "wall-4rxihusqzp2jcymdxdcv",
+            "wall-iwpks2j3nizm7umry2eb",
+            "wall-g7x7c7wynx24a2n3vnsj"
+          ],
+          "rooms": [
+            {
+              "id": "lower",
+              "walls": [
+                "wall-xo46odgh3rbe75kbypan",
+                "wall-4rxihusqzp2jcymdxdcv",
+                "wall-tz3dndaev7eu7j2b47ag",
+                "wall-4mulrbm4wu6ypmdjtb33"
+              ]
+            },
+            {
+              "id": "upper",
+              "walls": [
+                "wall-tz3dndaev7eu7j2b47ag",
+                "wall-iwpks2j3nizm7umry2eb",
+                "wall-g7x7c7wynx24a2n3vnsj",
+                "wall-a2agjkngexv5ekwmqkch",
+                "wall-ltgtcndpk26dupnpgjpm"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/275-orthogonal-strip-containment.json/cases/0",
+      "fingerprint": "3738911145665445cc1813248e9a1b5198cf5543e1ad30f005102a62cab32e8b",
+      "ok": true,
+      "identity": [
+        {
+          "space": "cell-5-mixed-depth-t",
+          "catalogue": [
+            "wall-32enoudjn3setctjru5z",
+            "wall-t6jqx6cfobpuluiur4tu",
+            "wall-65ozecwq2wysqx3mqecq",
+            "wall-kynjdemhmr22gfzvohbn",
+            "wall-nh4ex3kwuv2bjuy5cr7y",
+            "wall-76qtqar7glaqek6xg7bt",
+            "wall-36tdatiojpv6hdwu77id",
+            "wall-cv2g7mi533ynhxmw5dul",
+            "wall-jljf3p6wg64jytwbc2l4",
+            "wall-tpthxcj5vxflso2drzt4",
+            "wall-rvzx3r6c4qk4f6jvi3zj"
+          ],
+          "rooms": [
+            {
+              "id": "a",
+              "walls": [
+                "wall-76qtqar7glaqek6xg7bt",
+                "wall-36tdatiojpv6hdwu77id",
+                "wall-rvzx3r6c4qk4f6jvi3zj",
+                "wall-tpthxcj5vxflso2drzt4",
+                "wall-cv2g7mi533ynhxmw5dul"
+              ]
+            },
+            {
+              "id": "b",
+              "walls": [
+                "wall-65ozecwq2wysqx3mqecq",
+                "wall-kynjdemhmr22gfzvohbn",
+                "wall-cv2g7mi533ynhxmw5dul",
+                "wall-jljf3p6wg64jytwbc2l4",
+                "wall-nh4ex3kwuv2bjuy5cr7y"
+              ]
+            },
+            {
+              "id": "c",
+              "walls": [
+                "wall-32enoudjn3setctjru5z",
+                "wall-t6jqx6cfobpuluiur4tu",
+                "wall-76qtqar7glaqek6xg7bt",
+                "wall-kynjdemhmr22gfzvohbn"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/275-orthogonal-strip-containment.json/cases/1",
+      "fingerprint": "a590275b1ec0949a22ea64e5f81c967a5c69007da2a0a08cd34d7f07099120d2",
+      "ok": true,
+      "identity": [
+        {
+          "space": "cell-1-thick-crossbar-t",
+          "catalogue": [
+            "wall-dxvqkywvdxmxu7i24syp",
+            "wall-kkiggytl7bcoykzs3fja",
+            "wall-r4v37df6obcbk24airxa",
+            "wall-q4psnn7hqpgajmx4wkc6",
+            "wall-2iqpvioxqw4y6fmpinwh",
+            "wall-gldkmqnyjgwrrict4ia3",
+            "wall-vzsqejgipk6e2rtpi3lh",
+            "wall-4gm3qn6rfpg3lb2jamti",
+            "wall-y7sjxfxcj52rzpwegweb",
+            "wall-ozklmf7ezqhrnscns2il",
+            "wall-2jc6rt5edratukrw7r4v",
+            "wall-cw6rxqzcgz4mg265hbkv",
+            "wall-ysp7fkzceztsmbo72w2e",
+            "wall-cgkcvhbqcdnpk3ibzpzw",
+            "wall-ps6cstz5teufd6z5lcqn",
+            "wall-a33rzjwacrgshqrl7awk",
+            "wall-nbcgonskqps6gunxpmqk"
+          ],
+          "rooms": [
+            {
+              "id": "a",
+              "walls": [
+                "wall-ozklmf7ezqhrnscns2il",
+                "wall-2iqpvioxqw4y6fmpinwh",
+                "wall-q4psnn7hqpgajmx4wkc6",
+                "wall-gldkmqnyjgwrrict4ia3",
+                "wall-4gm3qn6rfpg3lb2jamti"
+              ]
+            },
+            {
+              "id": "b",
+              "walls": [
+                "wall-y7sjxfxcj52rzpwegweb",
+                "wall-kkiggytl7bcoykzs3fja",
+                "wall-dxvqkywvdxmxu7i24syp",
+                "wall-2iqpvioxqw4y6fmpinwh"
+              ]
+            },
+            {
+              "id": "c",
+              "walls": [
+                "wall-dxvqkywvdxmxu7i24syp",
+                "wall-r4v37df6obcbk24airxa",
+                "wall-2jc6rt5edratukrw7r4v",
+                "wall-ysp7fkzceztsmbo72w2e",
+                "wall-cgkcvhbqcdnpk3ibzpzw",
+                "wall-nbcgonskqps6gunxpmqk",
+                "wall-a33rzjwacrgshqrl7awk",
+                "wall-ps6cstz5teufd6z5lcqn",
+                "wall-cw6rxqzcgz4mg265hbkv",
+                "wall-vzsqejgipk6e2rtpi3lh",
+                "wall-q4psnn7hqpgajmx4wkc6"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/276-coincident-partition.json",
+      "fingerprint": "ce409b438977e1aaca6d88936294befd1f08ed86337e2f912ce8b44c6f3f0275",
+      "ok": true,
+      "identity": [
+        {
+          "space": "offset-shared-wall",
+          "catalogue": [
+            "wall-l4hjd3v6q2ih4lmhyebi",
+            "wall-jqm76ztdnzk4hxxq4f2v",
+            "wall-mkjekzxnixddfnfewsg7",
+            "wall-lpihsklwsegsow7swcot",
+            "wall-rsillbgj56qyurceosfa",
+            "wall-vq6hgauic4zxd5r7zlet",
+            "wall-6zxvpkmnrthjifm2mnzt",
+            "wall-r3tuoz4rgdawcgnhkcha",
+            "wall-phv7rbxb7jl4tbhwnlkk",
+            "wall-2fff2kin2gzrvrkxytbz",
+            "wall-kl2kghjvpn3k72ogi7nk"
+          ],
+          "rooms": [
+            {
+              "id": "left",
+              "walls": [
+                "wall-jqm76ztdnzk4hxxq4f2v",
+                "wall-lpihsklwsegsow7swcot",
+                "wall-rsillbgj56qyurceosfa",
+                "wall-r3tuoz4rgdawcgnhkcha",
+                "wall-6zxvpkmnrthjifm2mnzt",
+                "wall-vq6hgauic4zxd5r7zlet",
+                "wall-mkjekzxnixddfnfewsg7",
+                "wall-l4hjd3v6q2ih4lmhyebi"
+              ]
+            },
+            {
+              "id": "right",
+              "walls": [
+                "wall-phv7rbxb7jl4tbhwnlkk",
+                "wall-kl2kghjvpn3k72ogi7nk",
+                "wall-2fff2kin2gzrvrkxytbz",
+                "wall-r3tuoz4rgdawcgnhkcha"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "hosted-door",
+              "host": {
+                "kind": "partition",
+                "id": "redundant"
+              }
+            }
+          ],
+          "partitions": [
+            "redundant"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/278-wall-union-isolation.json/config",
+      "fingerprint": "d68bbcdce3824f7f18f3203c37aeb40db8ac511b4296f5fdb23b6dbf7562af5c",
+      "ok": true,
+      "identity": [
+        {
+          "space": "wall-union-regression",
+          "catalogue": [
+            "wall-msbtojn7hftl3tfmewcs",
+            "wall-bkgyqvigm4ctebljhaog",
+            "wall-7wh4dc4zsb6sgctua4ua",
+            "wall-65taxaa2htwpwcvds5bf",
+            "wall-wxmxv34267wzsz7zshkf",
+            "wall-ozzpwewfhsoutixadjz7",
+            "wall-tdgzqjm5r32knquxv7k2"
+          ],
+          "rooms": [
+            {
+              "id": "r1",
+              "walls": [
+                "wall-msbtojn7hftl3tfmewcs",
+                "wall-bkgyqvigm4ctebljhaog",
+                "wall-65taxaa2htwpwcvds5bf",
+                "wall-7wh4dc4zsb6sgctua4ua"
+              ]
+            },
+            {
+              "id": "r2",
+              "walls": [
+                "wall-tdgzqjm5r32knquxv7k2",
+                "wall-ozzpwewfhsoutixadjz7",
+                "wall-65taxaa2htwpwcvds5bf",
+                "wall-wxmxv34267wzsz7zshkf"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/280-optimize-rehost-candidate.json",
+      "fingerprint": "76a506b9b2bf6860d48059ab5d4b3b2cb2ebae7cf500a30b1f47a04ee1f5ffc5",
+      "ok": true,
+      "identity": [
+        {
+          "space": "offset-shared-wall",
+          "catalogue": [
+            "wall-l4hjd3v6q2ih4lmhyebi",
+            "wall-jqm76ztdnzk4hxxq4f2v",
+            "wall-mkjekzxnixddfnfewsg7",
+            "wall-lpihsklwsegsow7swcot",
+            "wall-rsillbgj56qyurceosfa",
+            "wall-vq6hgauic4zxd5r7zlet",
+            "wall-6zxvpkmnrthjifm2mnzt",
+            "wall-r3tuoz4rgdawcgnhkcha",
+            "wall-phv7rbxb7jl4tbhwnlkk",
+            "wall-2fff2kin2gzrvrkxytbz",
+            "wall-kl2kghjvpn3k72ogi7nk"
+          ],
+          "rooms": [
+            {
+              "id": "left",
+              "walls": [
+                "wall-jqm76ztdnzk4hxxq4f2v",
+                "wall-lpihsklwsegsow7swcot",
+                "wall-rsillbgj56qyurceosfa",
+                "wall-r3tuoz4rgdawcgnhkcha",
+                "wall-6zxvpkmnrthjifm2mnzt",
+                "wall-vq6hgauic4zxd5r7zlet",
+                "wall-mkjekzxnixddfnfewsg7",
+                "wall-l4hjd3v6q2ih4lmhyebi"
+              ]
+            },
+            {
+              "id": "right",
+              "walls": [
+                "wall-phv7rbxb7jl4tbhwnlkk",
+                "wall-kl2kghjvpn3k72ogi7nk",
+                "wall-2fff2kin2gzrvrkxytbz",
+                "wall-r3tuoz4rgdawcgnhkcha"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "hosted-door",
+              "host": {
+                "kind": "wall",
+                "id": "wall-r3tuoz4rgdawcgnhkcha"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/281-resize-outer-candidate.json",
+      "fingerprint": "e9039a914f85f1d6578e98b252922e80310655c0915f41c2a451337d67e67df6",
+      "ok": true,
+      "identity": [
+        {
+          "space": "resize-outer",
+          "catalogue": [
+            "wall-5mx4b2qfylbnhqigyosw",
+            "wall-efvwngyqwvt3i2wtucjl",
+            "wall-m7fvm7py63vewrj25txx",
+            "wall-xhivulbmxmricwrsavtk",
+            "wall-yvbffwd5yd237kwqwlsj",
+            "wall-3w4swceywbniqg2o7ux4",
+            "wall-ret3zsfn72ub2hil6ap3"
+          ],
+          "rooms": [
+            {
+              "id": "left",
+              "walls": [
+                "wall-efvwngyqwvt3i2wtucjl",
+                "wall-xhivulbmxmricwrsavtk",
+                "wall-m7fvm7py63vewrj25txx",
+                "wall-5mx4b2qfylbnhqigyosw"
+              ]
+            },
+            {
+              "id": "right",
+              "walls": [
+                "wall-yvbffwd5yd237kwqwlsj",
+                "wall-ret3zsfn72ub2hil6ap3",
+                "wall-3w4swceywbniqg2o7ux4",
+                "wall-xhivulbmxmricwrsavtk"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "left-window",
+              "host": {
+                "kind": "wall",
+                "id": "wall-efvwngyqwvt3i2wtucjl"
+              }
+            },
+            {
+              "id": "right-window",
+              "host": {
+                "kind": "wall",
+                "id": "wall-yvbffwd5yd237kwqwlsj"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/281-resize-outer-partitions.json",
+      "fingerprint": "0848eb9d2497a13febf157f794c170759c261484b850f1026b7f81f7b3154a6a",
+      "ok": true,
+      "identity": [
+        {
+          "space": "resize-outer",
+          "catalogue": [
+            "wall-5mx4b2qfylbnhqigyosw",
+            "wall-efvwngyqwvt3i2wtucjl",
+            "wall-m7fvm7py63vewrj25txx",
+            "wall-xhivulbmxmricwrsavtk",
+            "wall-yvbffwd5yd237kwqwlsj",
+            "wall-3w4swceywbniqg2o7ux4",
+            "wall-ret3zsfn72ub2hil6ap3"
+          ],
+          "rooms": [
+            {
+              "id": "left",
+              "walls": [
+                "wall-efvwngyqwvt3i2wtucjl",
+                "wall-xhivulbmxmricwrsavtk",
+                "wall-m7fvm7py63vewrj25txx",
+                "wall-5mx4b2qfylbnhqigyosw"
+              ]
+            },
+            {
+              "id": "right",
+              "walls": [
+                "wall-yvbffwd5yd237kwqwlsj",
+                "wall-ret3zsfn72ub2hil6ap3",
+                "wall-3w4swceywbniqg2o7ux4",
+                "wall-xhivulbmxmricwrsavtk"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "left-window",
+              "host": {
+                "kind": "partition",
+                "id": "top-left"
+              }
+            },
+            {
+              "id": "right-window",
+              "host": {
+                "kind": "partition",
+                "id": "top-right"
+              }
+            }
+          ],
+          "partitions": [
+            "top-left",
+            "top-right",
+            "bottom-right"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/282-wall-identity-parity.json/input",
+      "fingerprint": "e4d06daf48d5f5d7a2d0abe1c672fb011ef414c40a3ff7e5b1093e3cbfc962bf",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-oq2aqjdsktorqgxatdwh",
+            "wall-7cu6gpb7e44ucopgzjm2",
+            "wall-j2ti4ktyymgw4e2r5ns5",
+            "wall-vgpy3fkbbprvy2cofyq3",
+            "wall-g33xjvyd5marxwkowoqm",
+            "wall-d2hfqa5fvueqwrwo2da7",
+            "wall-tqy5sdtydjrx7syybupl",
+            "wall-qancsrbiwkhhy5hos7io",
+            "wall-ybr4j2bztfx2wkbwvbwd"
+          ],
+          "rooms": [
+            {
+              "id": "large",
+              "walls": [
+                "wall-7cu6gpb7e44ucopgzjm2",
+                "wall-vgpy3fkbbprvy2cofyq3",
+                "wall-g33xjvyd5marxwkowoqm",
+                "wall-tqy5sdtydjrx7syybupl",
+                "wall-j2ti4ktyymgw4e2r5ns5",
+                "wall-oq2aqjdsktorqgxatdwh"
+              ]
+            },
+            {
+              "id": "small",
+              "walls": [
+                "wall-d2hfqa5fvueqwrwo2da7",
+                "wall-ybr4j2bztfx2wkbwvbwd",
+                "wall-qancsrbiwkhhy5hos7io",
+                "wall-g33xjvyd5marxwkowoqm"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "wall",
+                "id": "wall-7cu6gpb7e44ucopgzjm2"
+              }
+            }
+          ],
+          "partitions": [
+            "wall-3fc443i7zsmjyo6z2szo",
+            "wall-n25vxmz2rpwsfy2xtio5"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/316-span-over-door-migrated.json/stored",
+      "fingerprint": "56319c9ecf32dfe4258f86b817c634f4faafb4e2c4c47a65e022151e58ab316a",
+      "ok": true,
+      "identity": [
+        {
+          "space": "golden-span-over-door",
+          "catalogue": [
+            "wall-uyhvjlqcorfj3orzvhhj",
+            "wall-s2g2iw3nbbxkym6sodv4",
+            "wall-mzbb6mwcqxj67rhw7mc5",
+            "wall-qmhko777ctlb3hey6c3v",
+            "wall-odwfy5lyxkwsum2jewma",
+            "wall-l3r6mytgo2l4so24dljp"
+          ],
+          "rooms": [
+            {
+              "id": "sod-room",
+              "walls": [
+                "wall-s2g2iw3nbbxkym6sodv4",
+                "wall-qmhko777ctlb3hey6c3v",
+                "wall-odwfy5lyxkwsum2jewma",
+                "wall-l3r6mytgo2l4so24dljp",
+                "wall-mzbb6mwcqxj67rhw7mc5",
+                "wall-uyhvjlqcorfj3orzvhhj"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "sod-door",
+              "host": {
+                "kind": "wall",
+                "id": "wall-qmhko777ctlb3hey6c3v"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/316-span-over-door-migrated.json/migrated",
+      "fingerprint": "f39791a4f134747cd7a706829c7edb499183a6e5a46f8f249976c543f6dbabb0",
+      "ok": true,
+      "identity": [
+        {
+          "space": "golden-span-over-door",
+          "catalogue": [
+            "wall-uyhvjlqcorfj3orzvhhj",
+            "wall-s2g2iw3nbbxkym6sodv4",
+            "wall-mzbb6mwcqxj67rhw7mc5",
+            "wall-qmhko777ctlb3hey6c3v",
+            "wall-odwfy5lyxkwsum2jewma",
+            "wall-l3r6mytgo2l4so24dljp"
+          ],
+          "rooms": [
+            {
+              "id": "sod-room",
+              "walls": [
+                "wall-s2g2iw3nbbxkym6sodv4",
+                "wall-qmhko777ctlb3hey6c3v",
+                "wall-odwfy5lyxkwsum2jewma",
+                "wall-l3r6mytgo2l4so24dljp",
+                "wall-mzbb6mwcqxj67rhw7mc5",
+                "wall-uyhvjlqcorfj3orzvhhj"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "sod-door",
+              "host": {
+                "kind": "wall",
+                "id": "wall-qmhko777ctlb3hey6c3v"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/319-orphan-span-migration.json/stored",
+      "fingerprint": "e309265de61049d358629d16e92cddcc226bee8036d5bea11689d3ddd9a70ce3",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-oq2aqjdsktorqgxatdwh",
+            "wall-7cu6gpb7e44ucopgzjm2",
+            "wall-j2ti4ktyymgw4e2r5ns5",
+            "wall-vgpy3fkbbprvy2cofyq3",
+            "wall-g33xjvyd5marxwkowoqm",
+            "wall-d2hfqa5fvueqwrwo2da7",
+            "wall-tqy5sdtydjrx7syybupl",
+            "wall-qancsrbiwkhhy5hos7io",
+            "wall-ybr4j2bztfx2wkbwvbwd"
+          ],
+          "rooms": [
+            {
+              "id": "large",
+              "walls": [
+                "wall-7cu6gpb7e44ucopgzjm2",
+                "wall-vgpy3fkbbprvy2cofyq3",
+                "wall-g33xjvyd5marxwkowoqm",
+                "wall-tqy5sdtydjrx7syybupl",
+                "wall-j2ti4ktyymgw4e2r5ns5",
+                "wall-oq2aqjdsktorqgxatdwh"
+              ]
+            },
+            {
+              "id": "small",
+              "walls": [
+                "wall-d2hfqa5fvueqwrwo2da7",
+                "wall-ybr4j2bztfx2wkbwvbwd",
+                "wall-qancsrbiwkhhy5hos7io",
+                "wall-g33xjvyd5marxwkowoqm"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "wall",
+                "id": "wall-7cu6gpb7e44ucopgzjm2"
+              }
+            }
+          ],
+          "partitions": [
+            "wall-ulziozdfsjzlriamibvg",
+            "wall-bvlpyhrsy6xjgox3g6e6"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/319-orphan-span-migration.json/sent",
+      "fingerprint": "b64c03ebd326be7e5cd899f5274c8ee708ffad595e99453cac7bcd3cc51c80bb",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-oq2aqjdsktorqgxatdwh",
+            "wall-7cu6gpb7e44ucopgzjm2",
+            "wall-j2ti4ktyymgw4e2r5ns5",
+            "wall-vgpy3fkbbprvy2cofyq3",
+            "wall-g33xjvyd5marxwkowoqm",
+            "wall-d2hfqa5fvueqwrwo2da7",
+            "wall-tqy5sdtydjrx7syybupl",
+            "wall-qancsrbiwkhhy5hos7io",
+            "wall-ybr4j2bztfx2wkbwvbwd"
+          ],
+          "rooms": [
+            {
+              "id": "large",
+              "walls": [
+                "wall-7cu6gpb7e44ucopgzjm2",
+                "wall-vgpy3fkbbprvy2cofyq3",
+                "wall-g33xjvyd5marxwkowoqm",
+                "wall-tqy5sdtydjrx7syybupl",
+                "wall-j2ti4ktyymgw4e2r5ns5",
+                "wall-oq2aqjdsktorqgxatdwh"
+              ]
+            },
+            {
+              "id": "small",
+              "walls": [
+                "wall-d2hfqa5fvueqwrwo2da7",
+                "wall-ybr4j2bztfx2wkbwvbwd",
+                "wall-qancsrbiwkhhy5hos7io",
+                "wall-g33xjvyd5marxwkowoqm"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "wall",
+                "id": "wall-7cu6gpb7e44ucopgzjm2"
+              }
+            }
+          ],
+          "partitions": [
+            "wall-ulziozdfsjzlriamibvg",
+            "wall-bvlpyhrsy6xjgox3g6e6"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/478-room-draft-migration-vectors.json/accepted/input",
+      "fingerprint": "f916903d1b0385267195278c6fcb33adfb698d537ac3bb6fd8dbbf3935082bc4",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "wall-d2ypm2qxakxh3ptdvgvl",
+            "wall-gsjue66gcixcalb47qwf",
+            "wall-d2ypm2qxakxh3ptdvgvl-2",
+            "wall-xejmlatjgvgeaamf63jw"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/560-corpus/c1-short-edges.json",
+      "fingerprint": "9009824ddeda011a06d41450121e86825f319410ebb7ea3d9747b87ef313395d",
+      "ok": true,
+      "identity": [
+        {
+          "space": "c1",
+          "catalogue": [
+            "c1-w6",
+            "c1-w1",
+            "c1-w5",
+            "c1-w4",
+            "c1-w3",
+            "c1-w2"
+          ],
+          "rooms": [
+            {
+              "id": "c1-r1",
+              "walls": [
+                "c1-w1",
+                "c1-w2",
+                "c1-w3",
+                "c1-w4",
+                "c1-w5",
+                "c1-w6"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/560-corpus/c2-t-junction-thicknesses.json",
+      "fingerprint": "069595515b4822eac7f663a4c2a12c218b6a9352e42900429ff92f0aa0ad4f08",
+      "ok": true,
+      "identity": [
+        {
+          "space": "c2",
+          "catalogue": [
+            "c2-w7",
+            "c2-w5",
+            "c2-w4",
+            "c2-w1",
+            "c2-w3",
+            "c2-w6",
+            "c2-w8",
+            "c2-w2",
+            "c2-w10",
+            "c2-w9"
+          ],
+          "rooms": [
+            {
+              "id": "c2-nw",
+              "walls": [
+                "c2-w1",
+                "c2-w2",
+                "c2-w3",
+                "c2-w4"
+              ]
+            },
+            {
+              "id": "c2-sw",
+              "walls": [
+                "c2-w5",
+                "c2-w6",
+                "c2-w1",
+                "c2-w7"
+              ]
+            },
+            {
+              "id": "c2-east",
+              "walls": [
+                "c2-w8",
+                "c2-w9",
+                "c2-w10",
+                "c2-w2",
+                "c2-w6"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/560-corpus/c3-x-junction.json",
+      "fingerprint": "30e1e1844ebe846d067575fec90e98164668a60c5246fe6fa070ca043442c601",
+      "ok": true,
+      "identity": [
+        {
+          "space": "c3",
+          "catalogue": [
+            "c3-w4",
+            "c3-w1",
+            "c3-w10",
+            "c3-w3",
+            "c3-w9",
+            "c3-w2",
+            "c3-w5",
+            "c3-w8",
+            "c3-w7",
+            "c3-w12",
+            "c3-w6",
+            "c3-w11"
+          ],
+          "rooms": [
+            {
+              "id": "c3-sw",
+              "walls": [
+                "c3-w1",
+                "c3-w2",
+                "c3-w3",
+                "c3-w4"
+              ]
+            },
+            {
+              "id": "c3-se",
+              "walls": [
+                "c3-w5",
+                "c3-w6",
+                "c3-w7",
+                "c3-w2"
+              ]
+            },
+            {
+              "id": "c3-nw",
+              "walls": [
+                "c3-w3",
+                "c3-w8",
+                "c3-w9",
+                "c3-w10"
+              ]
+            },
+            {
+              "id": "c3-ne",
+              "walls": [
+                "c3-w7",
+                "c3-w11",
+                "c3-w12",
+                "c3-w8"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/560-corpus/c4-opening-at-vertex.json",
+      "fingerprint": "eab5e26dbd657351ed4d3e1b1b773a2d4484c70cba525ee541fc3415c645ffd3",
+      "ok": true,
+      "identity": [
+        {
+          "space": "c4",
+          "catalogue": [
+            "c4-w4",
+            "c4-w1",
+            "c4-w3",
+            "c4-w2",
+            "c4-w5",
+            "c4-w7",
+            "c4-w6"
+          ],
+          "rooms": [
+            {
+              "id": "c4-left",
+              "walls": [
+                "c4-w1",
+                "c4-w2",
+                "c4-w3",
+                "c4-w4"
+              ]
+            },
+            {
+              "id": "c4-right",
+              "walls": [
+                "c4-w5",
+                "c4-w6",
+                "c4-w7",
+                "c4-w2"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "c4-o1",
+              "host": {
+                "kind": "wall",
+                "id": "c4-w2"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/560-corpus/c5-node-noise-near-axis.json",
+      "fingerprint": "5fdaafe28ef5b7ffead28a5902057fd94cf24e3cf4bc41fe4c0cf5c600de5b97",
+      "ok": true,
+      "identity": [
+        {
+          "space": "c5",
+          "catalogue": [
+            "c5-w4",
+            "c5-w1",
+            "c5-w3",
+            "c5-w8",
+            "c5-w5",
+            "c5-w7",
+            "c5-w2",
+            "c5-w6"
+          ],
+          "rooms": [
+            {
+              "id": "c5-r1",
+              "walls": [
+                "c5-w1",
+                "c5-w2",
+                "c5-w3",
+                "c5-w4"
+              ]
+            },
+            {
+              "id": "c5-r2",
+              "walls": [
+                "c5-w5",
+                "c5-w6",
+                "c5-w7",
+                "c5-w8"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/560-corpus/c6-stale-layout.json/config",
+      "fingerprint": "8df337fb9c5e48fe9070c2e1261c69f2bf5b6eb0a0b8e0ef0c2c380371c19cbf",
+      "ok": true,
+      "identity": [
+        {
+          "space": "c6",
+          "catalogue": [
+            "c6-w4",
+            "c6-w1",
+            "c6-w3",
+            "c6-w2"
+          ],
+          "rooms": [
+            {
+              "id": "c6-r1",
+              "walls": [
+                "c6-w1",
+                "c6-w2",
+                "c6-w3",
+                "c6-w4"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/0/before",
+      "fingerprint": "4db0873bef68e945bb4eff9539f7902acbdbd10af3806e60003d50ff7db7c593",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-eytv2xfzvyn3tluuffbg",
+            "wall-rdtj7m6tyt3i74kuufu3",
+            "wall-ca6fzw32cbixe75tkfju",
+            "wall-evpepzjcmnflwx57pkke"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-rdtj7m6tyt3i74kuufu3",
+                "wall-evpepzjcmnflwx57pkke",
+                "wall-ca6fzw32cbixe75tkfju",
+                "wall-eytv2xfzvyn3tluuffbg"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "long-source",
+            "top-source",
+            "bottom-source"
+          ]
+        },
+        {
+          "space": "unrelated-space",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/0/after",
+      "fingerprint": "38503c9424b16f3a6f79c058a5f22263a181f6000b61ee11c53381127d5ff786",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-7fe6755d-701b-4578-b8b3-e9a5f5cc76c8",
+            "top-source",
+            "bottom-source",
+            "wall-eytv2xfzvyn3tluuffbg",
+            "wall-rdtj7m6tyt3i74kuufu3",
+            "wall-ca6fzw32cbixe75tkfju",
+            "wall-evpepzjcmnflwx57pkke"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-rdtj7m6tyt3i74kuufu3",
+                "wall-evpepzjcmnflwx57pkke",
+                "wall-ca6fzw32cbixe75tkfju",
+                "wall-eytv2xfzvyn3tluuffbg"
+              ]
+            },
+            {
+              "id": "accepted-0",
+              "walls": [
+                "top-source",
+                "wall-eytv2xfzvyn3tluuffbg",
+                "bottom-source",
+                "wall-7fe6755d-701b-4578-b8b3-e9a5f5cc76c8"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "long-source",
+            "long-source~r-etmy9d"
+          ]
+        },
+        {
+          "space": "unrelated-space",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/1/before",
+      "fingerprint": "17150a27fd3377b3ddc20dad56d9ab4fe02332145fe08923ed4f3259a42c7f13",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-eytv2xfzvyn3tluuffbg",
+            "wall-rdtj7m6tyt3i74kuufu3",
+            "wall-ca6fzw32cbixe75tkfju",
+            "wall-evpepzjcmnflwx57pkke"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-rdtj7m6tyt3i74kuufu3",
+                "wall-evpepzjcmnflwx57pkke",
+                "wall-ca6fzw32cbixe75tkfju",
+                "wall-eytv2xfzvyn3tluuffbg"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "long-source",
+            "top-source",
+            "bottom-source"
+          ]
+        },
+        {
+          "space": "unrelated-space",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/1/after",
+      "fingerprint": "dc693468d9e7bf372d0e51026ea2e6ab626268c40d3039689e39a5f2972ed624",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-02c54b7f-b422-4c45-8c2c-fb69a5bf2075",
+            "top-source",
+            "bottom-source",
+            "wall-eytv2xfzvyn3tluuffbg",
+            "wall-rdtj7m6tyt3i74kuufu3",
+            "wall-ca6fzw32cbixe75tkfju",
+            "wall-evpepzjcmnflwx57pkke"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-rdtj7m6tyt3i74kuufu3",
+                "wall-evpepzjcmnflwx57pkke",
+                "wall-ca6fzw32cbixe75tkfju",
+                "wall-eytv2xfzvyn3tluuffbg"
+              ]
+            },
+            {
+              "id": "accepted-0",
+              "walls": [
+                "top-source",
+                "wall-eytv2xfzvyn3tluuffbg",
+                "bottom-source",
+                "wall-02c54b7f-b422-4c45-8c2c-fb69a5bf2075"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "long-source"
+          ]
+        },
+        {
+          "space": "unrelated-space",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/2/before",
+      "fingerprint": "a23762a1b5019de68d9ae450f8c104097531a4d19ddf21a32ed9fe0f0af0e3e7",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-eytv2xfzvyn3tluuffbg",
+            "wall-rdtj7m6tyt3i74kuufu3",
+            "wall-ca6fzw32cbixe75tkfju",
+            "wall-evpepzjcmnflwx57pkke"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-rdtj7m6tyt3i74kuufu3",
+                "wall-evpepzjcmnflwx57pkke",
+                "wall-ca6fzw32cbixe75tkfju",
+                "wall-eytv2xfzvyn3tluuffbg"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "long-source",
+            "top-source",
+            "bottom-source"
+          ]
+        },
+        {
+          "space": "unrelated-space",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/2/after",
+      "fingerprint": "bc912daee3aeac36ee50aa68d986b8d7913d661834d7fb49f0c5bebad96e4015",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-08bcf052-8967-45d2-93b6-6a8dbbeb65d9",
+            "top-source",
+            "bottom-source",
+            "wall-eytv2xfzvyn3tluuffbg",
+            "wall-rdtj7m6tyt3i74kuufu3",
+            "wall-ca6fzw32cbixe75tkfju",
+            "wall-evpepzjcmnflwx57pkke"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-rdtj7m6tyt3i74kuufu3",
+                "wall-evpepzjcmnflwx57pkke",
+                "wall-ca6fzw32cbixe75tkfju",
+                "wall-eytv2xfzvyn3tluuffbg"
+              ]
+            },
+            {
+              "id": "accepted-0",
+              "walls": [
+                "top-source",
+                "wall-eytv2xfzvyn3tluuffbg",
+                "bottom-source",
+                "wall-08bcf052-8967-45d2-93b6-6a8dbbeb65d9"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "long-source"
+          ]
+        },
+        {
+          "space": "unrelated-space",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/3/before",
+      "fingerprint": "58e5340dc374d6888ccf06a21cdf8bae18fec559a0faa89bc52d8d998c8bdbd2",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-eytv2xfzvyn3tluuffbg",
+            "wall-rdtj7m6tyt3i74kuufu3",
+            "wall-ca6fzw32cbixe75tkfju",
+            "wall-evpepzjcmnflwx57pkke"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-rdtj7m6tyt3i74kuufu3",
+                "wall-evpepzjcmnflwx57pkke",
+                "wall-ca6fzw32cbixe75tkfju",
+                "wall-eytv2xfzvyn3tluuffbg"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "long-source",
+            "top-source",
+            "bottom-source"
+          ]
+        },
+        {
+          "space": "unrelated-space",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/3/after",
+      "fingerprint": "87123a69bdab0323588b0b05072c8cd90714e528adb93c8320507af44fcce280",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "long-source",
+            "top-source",
+            "bottom-source",
+            "wall-eytv2xfzvyn3tluuffbg",
+            "wall-rdtj7m6tyt3i74kuufu3",
+            "wall-ca6fzw32cbixe75tkfju",
+            "wall-evpepzjcmnflwx57pkke"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-rdtj7m6tyt3i74kuufu3",
+                "wall-evpepzjcmnflwx57pkke",
+                "wall-ca6fzw32cbixe75tkfju",
+                "wall-eytv2xfzvyn3tluuffbg"
+              ]
+            },
+            {
+              "id": "accepted-0",
+              "walls": [
+                "top-source",
+                "wall-eytv2xfzvyn3tluuffbg",
+                "bottom-source",
+                "long-source"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "unrelated-space",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/4/before",
+      "fingerprint": "e4e710d1c0f76553ec98545fc3e9acc351f671946d875932e27be57c4969ff4b",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-eytv2xfzvyn3tluuffbg",
+            "wall-rdtj7m6tyt3i74kuufu3",
+            "wall-ca6fzw32cbixe75tkfju",
+            "wall-evpepzjcmnflwx57pkke"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-rdtj7m6tyt3i74kuufu3",
+                "wall-evpepzjcmnflwx57pkke",
+                "wall-ca6fzw32cbixe75tkfju",
+                "wall-eytv2xfzvyn3tluuffbg"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "long-source",
+            "top-source",
+            "bottom-source"
+          ]
+        },
+        {
+          "space": "unrelated-space",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/4/after",
+      "fingerprint": "b5246f14c24ce712f936d57879f676a58c782225078515519c0606d9ec69e62b",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-a3dac825-637f-4c34-a21f-09583333f38f",
+            "top-source",
+            "bottom-source",
+            "wall-eytv2xfzvyn3tluuffbg",
+            "wall-rdtj7m6tyt3i74kuufu3",
+            "wall-ca6fzw32cbixe75tkfju",
+            "wall-evpepzjcmnflwx57pkke"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-rdtj7m6tyt3i74kuufu3",
+                "wall-evpepzjcmnflwx57pkke",
+                "wall-ca6fzw32cbixe75tkfju",
+                "wall-eytv2xfzvyn3tluuffbg"
+              ]
+            },
+            {
+              "id": "accepted-0",
+              "walls": [
+                "top-source",
+                "wall-eytv2xfzvyn3tluuffbg",
+                "bottom-source",
+                "wall-a3dac825-637f-4c34-a21f-09583333f38f"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "long-source",
+            "long-source~r-etmy9d"
+          ]
+        },
+        {
+          "space": "unrelated-space",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/5/before",
+      "fingerprint": "e58b861ef3a3be8cf7e7762de66c31d6c5da0ad619fcb702b6ef00dcc9c6b524",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-eytv2xfzvyn3tluuffbg",
+            "wall-rdtj7m6tyt3i74kuufu3",
+            "wall-ca6fzw32cbixe75tkfju",
+            "wall-evpepzjcmnflwx57pkke"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-rdtj7m6tyt3i74kuufu3",
+                "wall-evpepzjcmnflwx57pkke",
+                "wall-ca6fzw32cbixe75tkfju",
+                "wall-eytv2xfzvyn3tluuffbg"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "long-source",
+            "top-source",
+            "bottom-source"
+          ]
+        },
+        {
+          "space": "unrelated-space",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/5/after",
+      "fingerprint": "871626ac5c11170faa001740a27da926876aa73cc9d152cb8a062486c1add501",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-68b233eb-9b5b-4322-901a-efd2eabdf23c",
+            "top-source",
+            "bottom-source",
+            "wall-eytv2xfzvyn3tluuffbg",
+            "wall-rdtj7m6tyt3i74kuufu3",
+            "wall-ca6fzw32cbixe75tkfju",
+            "wall-evpepzjcmnflwx57pkke"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-rdtj7m6tyt3i74kuufu3",
+                "wall-evpepzjcmnflwx57pkke",
+                "wall-ca6fzw32cbixe75tkfju",
+                "wall-eytv2xfzvyn3tluuffbg"
+              ]
+            },
+            {
+              "id": "accepted-0",
+              "walls": [
+                "top-source",
+                "wall-eytv2xfzvyn3tluuffbg",
+                "bottom-source",
+                "wall-68b233eb-9b5b-4322-901a-efd2eabdf23c"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "long-source",
+            "long-source~r-etmy9d"
+          ]
+        },
+        {
+          "space": "unrelated-space",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/6/before",
+      "fingerprint": "debeeacfa5901685330249ba5dd38af5eeae546fb4fef7fd514aff1b3f8ea857",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-eytv2xfzvyn3tluuffbg",
+            "wall-rdtj7m6tyt3i74kuufu3",
+            "wall-ca6fzw32cbixe75tkfju",
+            "wall-evpepzjcmnflwx57pkke"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-rdtj7m6tyt3i74kuufu3",
+                "wall-evpepzjcmnflwx57pkke",
+                "wall-ca6fzw32cbixe75tkfju",
+                "wall-eytv2xfzvyn3tluuffbg"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "long-source",
+            "top-source",
+            "bottom-source"
+          ]
+        },
+        {
+          "space": "unrelated-space",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/6/after",
+      "fingerprint": "f25882c1a14dea5a7487299ed35d4ba7829fd765a9662e2eaa09df0907ca75cc",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-52134d7a-9012-484f-92fd-eb122691d10f",
+            "top-source",
+            "bottom-source",
+            "wall-eytv2xfzvyn3tluuffbg",
+            "wall-rdtj7m6tyt3i74kuufu3",
+            "wall-ca6fzw32cbixe75tkfju",
+            "wall-evpepzjcmnflwx57pkke"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-rdtj7m6tyt3i74kuufu3",
+                "wall-evpepzjcmnflwx57pkke",
+                "wall-ca6fzw32cbixe75tkfju",
+                "wall-eytv2xfzvyn3tluuffbg"
+              ]
+            },
+            {
+              "id": "accepted-0",
+              "walls": [
+                "top-source",
+                "wall-eytv2xfzvyn3tluuffbg",
+                "bottom-source",
+                "wall-52134d7a-9012-484f-92fd-eb122691d10f"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "long-source",
+            "long-source~r-etmy9d"
+          ]
+        },
+        {
+          "space": "unrelated-space",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/7/before",
+      "fingerprint": "6bf0c95e0421fd514659d148cb4e73646cd13c16aa5bdf788f4eab51c274e2df",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-eytv2xfzvyn3tluuffbg",
+            "wall-rdtj7m6tyt3i74kuufu3",
+            "wall-ca6fzw32cbixe75tkfju",
+            "wall-evpepzjcmnflwx57pkke"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-rdtj7m6tyt3i74kuufu3",
+                "wall-evpepzjcmnflwx57pkke",
+                "wall-ca6fzw32cbixe75tkfju",
+                "wall-eytv2xfzvyn3tluuffbg"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "long-source",
+            "top-source",
+            "bottom-source"
+          ]
+        },
+        {
+          "space": "unrelated-space",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/7/after",
+      "fingerprint": "86174a360970fe2c2b15623b72647ca225775b326d28c5699614485a737dfb2e",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "long-source",
+            "top-source",
+            "bottom-source",
+            "wall-eytv2xfzvyn3tluuffbg",
+            "wall-rdtj7m6tyt3i74kuufu3",
+            "wall-ca6fzw32cbixe75tkfju",
+            "wall-evpepzjcmnflwx57pkke"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-rdtj7m6tyt3i74kuufu3",
+                "wall-evpepzjcmnflwx57pkke",
+                "wall-ca6fzw32cbixe75tkfju",
+                "wall-eytv2xfzvyn3tluuffbg"
+              ]
+            },
+            {
+              "id": "accepted-0",
+              "walls": [
+                "top-source",
+                "wall-eytv2xfzvyn3tluuffbg",
+                "bottom-source",
+                "long-source"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "unrelated-space",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/8/before",
+      "fingerprint": "475240a9feffeb34aa3fd1b527fc0be127de98f855e799512bdd6378734a8a1d",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-eytv2xfzvyn3tluuffbg",
+            "wall-rdtj7m6tyt3i74kuufu3",
+            "wall-ca6fzw32cbixe75tkfju",
+            "wall-evpepzjcmnflwx57pkke"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-rdtj7m6tyt3i74kuufu3",
+                "wall-evpepzjcmnflwx57pkke",
+                "wall-ca6fzw32cbixe75tkfju",
+                "wall-eytv2xfzvyn3tluuffbg"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "hosted-opening",
+              "host": {
+                "kind": "partition",
+                "id": "long-source"
+              }
+            }
+          ],
+          "partitions": [
+            "long-source",
+            "top-source",
+            "bottom-source"
+          ]
+        },
+        {
+          "space": "unrelated-space",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/8/after",
+      "fingerprint": "c40348dca2e7239df4cca50a010ed0c34f77a16c67ab2cbf1cb33093cdf4bd43",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-97e66ece-704a-481e-a1dd-74c53c2aed62",
+            "top-source",
+            "bottom-source",
+            "wall-eytv2xfzvyn3tluuffbg",
+            "wall-rdtj7m6tyt3i74kuufu3",
+            "wall-ca6fzw32cbixe75tkfju",
+            "wall-evpepzjcmnflwx57pkke"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-rdtj7m6tyt3i74kuufu3",
+                "wall-evpepzjcmnflwx57pkke",
+                "wall-ca6fzw32cbixe75tkfju",
+                "wall-eytv2xfzvyn3tluuffbg"
+              ]
+            },
+            {
+              "id": "accepted-0",
+              "walls": [
+                "top-source",
+                "wall-eytv2xfzvyn3tluuffbg",
+                "bottom-source",
+                "wall-97e66ece-704a-481e-a1dd-74c53c2aed62"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "hosted-opening",
+              "host": {
+                "kind": "partition",
+                "id": "long-source"
+              }
+            }
+          ],
+          "partitions": [
+            "long-source",
+            "long-source~r-etmy9d"
+          ]
+        },
+        {
+          "space": "unrelated-space",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/9/before",
+      "fingerprint": "eb59fd0002a2b975bd903d8100375de938eae18c5fee3873b827bc1eaa25afce",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-eytv2xfzvyn3tluuffbg",
+            "wall-rdtj7m6tyt3i74kuufu3",
+            "wall-ca6fzw32cbixe75tkfju",
+            "wall-evpepzjcmnflwx57pkke"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-rdtj7m6tyt3i74kuufu3",
+                "wall-evpepzjcmnflwx57pkke",
+                "wall-ca6fzw32cbixe75tkfju",
+                "wall-eytv2xfzvyn3tluuffbg"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "hosted-opening",
+              "host": {
+                "kind": "partition",
+                "id": "long-source"
+              }
+            }
+          ],
+          "partitions": [
+            "long-source",
+            "top-source",
+            "bottom-source"
+          ]
+        },
+        {
+          "space": "unrelated-space",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/9/after",
+      "fingerprint": "ac56a50f6ec6c0a2479665a3b56e5ccb1d112a53fba8fa74feebe41ff34acf8a",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-56d90ade-477b-4e87-bd47-3e21c5c66e84",
+            "top-source",
+            "bottom-source",
+            "wall-eytv2xfzvyn3tluuffbg",
+            "wall-rdtj7m6tyt3i74kuufu3",
+            "wall-ca6fzw32cbixe75tkfju",
+            "wall-evpepzjcmnflwx57pkke"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-rdtj7m6tyt3i74kuufu3",
+                "wall-evpepzjcmnflwx57pkke",
+                "wall-ca6fzw32cbixe75tkfju",
+                "wall-eytv2xfzvyn3tluuffbg"
+              ]
+            },
+            {
+              "id": "accepted-0",
+              "walls": [
+                "top-source",
+                "wall-eytv2xfzvyn3tluuffbg",
+                "bottom-source",
+                "wall-56d90ade-477b-4e87-bd47-3e21c5c66e84"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "hosted-opening",
+              "host": {
+                "kind": "partition",
+                "id": "long-source~r-etmy9d"
+              }
+            }
+          ],
+          "partitions": [
+            "long-source",
+            "long-source~r-etmy9d"
+          ]
+        },
+        {
+          "space": "unrelated-space",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/10/before",
+      "fingerprint": "0c9a022edcad210d2b4028b71b278b0a7e21f4b03442de73037c8010e68ab0f1",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-eytv2xfzvyn3tluuffbg",
+            "wall-rdtj7m6tyt3i74kuufu3",
+            "wall-ca6fzw32cbixe75tkfju",
+            "wall-evpepzjcmnflwx57pkke"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-rdtj7m6tyt3i74kuufu3",
+                "wall-evpepzjcmnflwx57pkke",
+                "wall-ca6fzw32cbixe75tkfju",
+                "wall-eytv2xfzvyn3tluuffbg"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "hosted-opening",
+              "host": {
+                "kind": "partition",
+                "id": "long-source"
+              }
+            }
+          ],
+          "partitions": [
+            "long-source",
+            "top-source",
+            "bottom-source"
+          ]
+        },
+        {
+          "space": "unrelated-space",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/10/after",
+      "fingerprint": "eea0d2cf70628b6498aecf5a302baf2910598a223f7f5c8cf983cda15a7881e0",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-6c14a6a0-d476-49ca-8445-bd45d4e13032",
+            "top-source",
+            "bottom-source",
+            "wall-eytv2xfzvyn3tluuffbg",
+            "wall-rdtj7m6tyt3i74kuufu3",
+            "wall-ca6fzw32cbixe75tkfju",
+            "wall-evpepzjcmnflwx57pkke"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-rdtj7m6tyt3i74kuufu3",
+                "wall-evpepzjcmnflwx57pkke",
+                "wall-ca6fzw32cbixe75tkfju",
+                "wall-eytv2xfzvyn3tluuffbg"
+              ]
+            },
+            {
+              "id": "accepted-0",
+              "walls": [
+                "top-source",
+                "wall-eytv2xfzvyn3tluuffbg",
+                "bottom-source",
+                "wall-6c14a6a0-d476-49ca-8445-bd45d4e13032"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "hosted-opening",
+              "host": {
+                "kind": "wall",
+                "id": "wall-6c14a6a0-d476-49ca-8445-bd45d4e13032"
+              }
+            }
+          ],
+          "partitions": [
+            "long-source",
+            "long-source~r-etmy9d"
+          ]
+        },
+        {
+          "space": "unrelated-space",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/834-node-connected.json",
+      "fingerprint": "798dee466f68306955ce7b5495dcfe675a040bfd18e33c5cae804fa06f7e43bf",
+      "ok": true,
+      "identity": [
+        {
+          "space": "connected-floor",
+          "catalogue": [
+            "wall1",
+            "wall2",
+            "wall3",
+            "wall4",
+            "wall5",
+            "wall6",
+            "wall7",
+            "wall8",
+            "wall9",
+            "wall10",
+            "wall11",
+            "wall12",
+            "wall13",
+            "wall14",
+            "wall15",
+            "wall16",
+            "wall17",
+            "wall18",
+            "wall19",
+            "wall20",
+            "wall21",
+            "wall22",
+            "wall23",
+            "wall24",
+            "wall25",
+            "wall26",
+            "wall27",
+            "wall28",
+            "wall29",
+            "wall30"
+          ],
+          "rooms": [
+            {
+              "id": "room1",
+              "walls": [
+                "wall13",
+                "wall14",
+                "wall18",
+                "wall3",
+                "wall2"
+              ]
+            },
+            {
+              "id": "room2",
+              "walls": [
+                "wall24",
+                "wall25",
+                "wall20",
+                "wall18",
+                "wall19"
+              ]
+            },
+            {
+              "id": "room3",
+              "walls": [
+                "wall15",
+                "wall2",
+                "wall1",
+                "wall5"
+              ]
+            },
+            {
+              "id": "room4",
+              "walls": [
+                "wall21",
+                "wall22",
+                "wall27",
+                "wall28",
+                "wall23"
+              ]
+            },
+            {
+              "id": "room5",
+              "walls": [
+                "wall3",
+                "wall20",
+                "wall25",
+                "wall26",
+                "wall30",
+                "wall29",
+                "wall27",
+                "wall22",
+                "wall7",
+                "wall4",
+                "wall1"
+              ]
+            },
+            {
+              "id": "room6",
+              "walls": [
+                "wall16",
+                "wall5",
+                "wall4",
+                "wall6",
+                "wall8",
+                "wall10"
+              ]
+            },
+            {
+              "id": "room7",
+              "walls": [
+                "wall17",
+                "wall10",
+                "wall9",
+                "wall11"
+              ]
+            },
+            {
+              "id": "room8",
+              "walls": [
+                "wall6",
+                "wall7",
+                "wall21",
+                "wall12",
+                "wall9",
+                "wall8"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "opening1",
+              "host": {
+                "kind": "wall",
+                "id": "wall14"
+              }
+            },
+            {
+              "id": "opening2",
+              "host": {
+                "kind": "wall",
+                "id": "wall19"
+              }
+            },
+            {
+              "id": "opening3",
+              "host": {
+                "kind": "wall",
+                "id": "wall3"
+              }
+            },
+            {
+              "id": "opening4",
+              "host": {
+                "kind": "wall",
+                "id": "wall20"
+              }
+            },
+            {
+              "id": "opening5",
+              "host": {
+                "kind": "wall",
+                "id": "wall22"
+              }
+            },
+            {
+              "id": "opening6",
+              "host": {
+                "kind": "wall",
+                "id": "wall7"
+              }
+            },
+            {
+              "id": "opening7",
+              "host": {
+                "kind": "wall",
+                "id": "wall1"
+              }
+            },
+            {
+              "id": "opening8",
+              "host": {
+                "kind": "wall",
+                "id": "wall6"
+              }
+            },
+            {
+              "id": "opening9",
+              "host": {
+                "kind": "wall",
+                "id": "wall9"
+              }
+            },
+            {
+              "id": "opening10",
+              "host": {
+                "kind": "wall",
+                "id": "wall30"
+              }
+            },
+            {
+              "id": "opening11",
+              "host": {
+                "kind": "wall",
+                "id": "wall15"
+              }
+            },
+            {
+              "id": "opening12",
+              "host": {
+                "kind": "wall",
+                "id": "wall16"
+              }
+            },
+            {
+              "id": "opening13",
+              "host": {
+                "kind": "wall",
+                "id": "wall23"
+              }
+            },
+            {
+              "id": "opening14",
+              "host": {
+                "kind": "wall",
+                "id": "wall12"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/842-geometry-cleanup.json/before",
+      "fingerprint": "4eb5e4223a68a989384ab07fb99dd47961d14eca31461137a517e10fd7230807",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f1",
+          "catalogue": [
+            "wall-o47y3344mz2hxgnz2fxk",
+            "wall-53ro4e74mkizuqq75ku3",
+            "wall-qd7cvqjw3lacrnhzdkkm",
+            "wall-mpx744afyapbvsh3sgh2",
+            "wall-vdte5x7b2nwbezejgibs",
+            "wall-ovcg57fgda6qnjjy6rhk",
+            "wall-xk6ghb2xc46jt5ba7pvb"
+          ],
+          "rooms": [
+            {
+              "id": "r-hall",
+              "walls": [
+                "wall-53ro4e74mkizuqq75ku3",
+                "wall-mpx744afyapbvsh3sgh2",
+                "wall-qd7cvqjw3lacrnhzdkkm",
+                "wall-o47y3344mz2hxgnz2fxk"
+              ]
+            },
+            {
+              "id": "r-kitchen",
+              "walls": [
+                "wall-vdte5x7b2nwbezejgibs",
+                "wall-xk6ghb2xc46jt5ba7pvb",
+                "wall-ovcg57fgda6qnjjy6rhk",
+                "wall-mpx744afyapbvsh3sgh2"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "o-room",
+              "host": null
+            },
+            {
+              "id": "o-partition",
+              "host": {
+                "kind": "partition",
+                "id": "p-host"
+              }
+            },
+            {
+              "id": "o-lost",
+              "host": {
+                "kind": "partition",
+                "id": "p-lost"
+              }
+            }
+          ],
+          "partitions": [
+            "p-host",
+            "p-free",
+            "p-lost"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/842-geometry-cleanup.json/cleaned",
+      "fingerprint": "8a3040b4899048be85a73c4749c9efb52f16e6d129d02f95a5dfce473cac25e0",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f1",
+          "catalogue": [
+            "wall-o47y3344mz2hxgnz2fxk",
+            "wall-53ro4e74mkizuqq75ku3",
+            "wall-qd7cvqjw3lacrnhzdkkm",
+            "wall-mpx744afyapbvsh3sgh2",
+            "wall-vdte5x7b2nwbezejgibs",
+            "wall-ovcg57fgda6qnjjy6rhk",
+            "wall-xk6ghb2xc46jt5ba7pvb"
+          ],
+          "rooms": [
+            {
+              "id": "r-hall",
+              "walls": [
+                "wall-53ro4e74mkizuqq75ku3",
+                "wall-mpx744afyapbvsh3sgh2",
+                "wall-qd7cvqjw3lacrnhzdkkm",
+                "wall-o47y3344mz2hxgnz2fxk"
+              ]
+            },
+            {
+              "id": "r-kitchen",
+              "walls": [
+                "wall-vdte5x7b2nwbezejgibs",
+                "wall-xk6ghb2xc46jt5ba7pvb",
+                "wall-ovcg57fgda6qnjjy6rhk",
+                "wall-mpx744afyapbvsh3sgh2"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "o-room",
+              "host": null
+            },
+            {
+              "id": "o-partition",
+              "host": {
+                "kind": "partition",
+                "id": "p-host"
+              }
+            }
+          ],
+          "partitions": [
+            "p-host",
+            "p-free"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/config-lifecycle/current.json",
+      "fingerprint": "3a162857cde08f8badf77da7a576e834bde9f1e6cd5f2557a54209639e0069f1",
+      "ok": true,
+      "identity": [
+        {
+          "space": "ground",
+          "catalogue": [
+            "w4",
+            "w1",
+            "w3",
+            "w2"
+          ],
+          "rooms": [
+            {
+              "id": "hall",
+              "walls": [
+                "w1",
+                "w2",
+                "w3",
+                "w4"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/config-lifecycle/future-fields.json",
+      "fingerprint": "c7ca372416ecbd7de19aef474a23f8aa5f52d6993dcceb357a985c0ce946dda3",
+      "ok": true,
+      "identity": [
+        {
+          "space": "ground",
+          "catalogue": [
+            "w4",
+            "w1",
+            "w3",
+            "w2"
+          ],
+          "rooms": [
+            {
+              "id": "hall",
+              "walls": [
+                "w1",
+                "w2",
+                "w3",
+                "w4"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/config-lifecycle/oldest-supported.json",
+      "fingerprint": "698ee12518cf008adb3c0a03effabdc7fe95ff5f8135eaf8fa39a76232e7183d",
+      "ok": true,
+      "identity": [
+        {
+          "space": "ground",
+          "catalogue": [
+            "wall-3ardbk7bjp4pmsenpge2",
+            "wall-u25pecaml5zarf67tl5j",
+            "wall-2g6ho6m64ci4x4gtu67i",
+            "wall-ww2inkqmiklgovs6mtad"
+          ],
+          "rooms": [
+            {
+              "id": "hall",
+              "walls": [
+                "wall-u25pecaml5zarf67tl5j",
+                "wall-ww2inkqmiklgovs6mtad",
+                "wall-2g6ho6m64ci4x4gtu67i",
+                "wall-3ardbk7bjp4pmsenpge2"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/coordinate-canonicalization.json/configInput",
+      "fingerprint": "2a04ef1fa1160f6628a22349b7390327ea42284f0e359a4bd8ad93da7e2ddb45",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-my2cf3t3762pknzllaxl",
+            "wall-yx76keqywqbm3ba5cvxv",
+            "wall-6klz3zy3rwe2ri7lk7x3",
+            "wall-xleal2ja7js272dufr3l",
+            "wall-i4pkr4c72mgpgazfxyvm",
+            "wall-rvuxp2stkh7pxsavg53r",
+            "wall-gxr3gn34bhejc4bohe2e"
+          ],
+          "rooms": [
+            {
+              "id": "poly",
+              "walls": [
+                "wall-yx76keqywqbm3ba5cvxv",
+                "wall-6klz3zy3rwe2ri7lk7x3",
+                "wall-my2cf3t3762pknzllaxl"
+              ]
+            },
+            {
+              "id": "rect",
+              "walls": [
+                "wall-i4pkr4c72mgpgazfxyvm",
+                "wall-gxr3gn34bhejc4bohe2e",
+                "wall-rvuxp2stkh7pxsavg53r",
+                "wall-xleal2ja7js272dufr3l"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "opening",
+              "host": {
+                "kind": "partition",
+                "id": "partition"
+              }
+            }
+          ],
+          "partitions": [
+            "partition",
+            "wall-riyf55vrwhceoui3d2mu",
+            "wall-bjlgxrgwvhujerdfplhs"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/coordinate-canonicalization.json/configExpected",
+      "fingerprint": "b70fcda6df4f1a37751934c749a1ed5bc9591022c589eb3e0fce4585331fe568",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-my2cf3t3762pknzllaxl",
+            "wall-yx76keqywqbm3ba5cvxv",
+            "wall-6klz3zy3rwe2ri7lk7x3",
+            "wall-xleal2ja7js272dufr3l",
+            "wall-i4pkr4c72mgpgazfxyvm",
+            "wall-rvuxp2stkh7pxsavg53r",
+            "wall-gxr3gn34bhejc4bohe2e"
+          ],
+          "rooms": [
+            {
+              "id": "poly",
+              "walls": [
+                "wall-yx76keqywqbm3ba5cvxv",
+                "wall-6klz3zy3rwe2ri7lk7x3",
+                "wall-my2cf3t3762pknzllaxl"
+              ]
+            },
+            {
+              "id": "rect",
+              "walls": [
+                "wall-i4pkr4c72mgpgazfxyvm",
+                "wall-gxr3gn34bhejc4bohe2e",
+                "wall-rvuxp2stkh7pxsavg53r",
+                "wall-xleal2ja7js272dufr3l"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "opening",
+              "host": {
+                "kind": "partition",
+                "id": "partition"
+              }
+            }
+          ],
+          "partitions": [
+            "partition",
+            "wall-riyf55vrwhceoui3d2mu",
+            "wall-bjlgxrgwvhujerdfplhs"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/glow/additive-pools.json/config",
+      "fingerprint": "497b6843bc8b6c9ec23471d91eca0a20b6ae049edaaefe4d8ddd8cd1475bfcca",
+      "ok": true,
+      "identity": [
+        {
+          "space": "glow-fixture",
+          "catalogue": [
+            "wall-4brvcvfz3obgahqfrc32",
+            "wall-mjyhbhjhpnqqhqj7uqtn",
+            "wall-2xfnby7hrokf4z6vojd6",
+            "wall-fn7gmppm4xknjrkqooc2",
+            "wall-63dtzig6zk6pmcah7esl",
+            "wall-gyl6q2m2c6djwgzufvfu",
+            "wall-5oakvxdnbwdr4gca2rdg"
+          ],
+          "rooms": [
+            {
+              "id": "glow-left",
+              "walls": [
+                "wall-mjyhbhjhpnqqhqj7uqtn",
+                "wall-fn7gmppm4xknjrkqooc2",
+                "wall-2xfnby7hrokf4z6vojd6",
+                "wall-4brvcvfz3obgahqfrc32"
+              ]
+            },
+            {
+              "id": "glow-right",
+              "walls": [
+                "wall-63dtzig6zk6pmcah7esl",
+                "wall-5oakvxdnbwdr4gca2rdg",
+                "wall-gyl6q2m2c6djwgzufvfu",
+                "wall-fn7gmppm4xknjrkqooc2"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "glow-door",
+              "host": {
+                "kind": "wall",
+                "id": "wall-fn7gmppm4xknjrkqooc2"
+              }
+            }
+          ],
+          "partitions": [
+            "glow-partition"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/optimize-storage-roundtrip.json/input/config",
+      "fingerprint": "2836d29ab282ad26a0465d5f13a9dd52daaa1300231d0b63a763da709b1f47d4",
+      "ok": true,
+      "identity": [
+        {
+          "space": "fine",
+          "catalogue": [
+            "wall-2p5v3xgwtvsbainkhyk4",
+            "wall-wjksr7kt5pqii5mdfjlm",
+            "wall-vazlh4lrawmx44cgu4gq",
+            "wall-eivcyotdqeqxur4vnhtm"
+          ],
+          "rooms": [
+            {
+              "id": "fine-room",
+              "walls": [
+                "wall-wjksr7kt5pqii5mdfjlm",
+                "wall-eivcyotdqeqxur4vnhtm",
+                "wall-vazlh4lrawmx44cgu4gq",
+                "wall-2p5v3xgwtvsbainkhyk4"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "regular",
+          "catalogue": [
+            "wall-kzjn7273gogxtjkjtbs6",
+            "wall-5yfzignil3ysguqdo4df",
+            "wall-47i5wxqm2645m5tsrnvu",
+            "wall-oyjp2s67gzz4m6vwvfiq"
+          ],
+          "rooms": [
+            {
+              "id": "regular-room",
+              "walls": [
+                "wall-5yfzignil3ysguqdo4df",
+                "wall-oyjp2s67gzz4m6vwvfiq",
+                "wall-47i5wxqm2645m5tsrnvu",
+                "wall-kzjn7273gogxtjkjtbs6"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/optimize-storage-roundtrip.json/expected/config",
+      "fingerprint": "4115bb6d6f31dfaddaaff0281e0e38d7cf2b649945ac03d696b536f183255c07",
+      "ok": true,
+      "identity": [
+        {
+          "space": "fine",
+          "catalogue": [
+            "wall-2p5v3xgwtvsbainkhyk4",
+            "wall-wjksr7kt5pqii5mdfjlm",
+            "wall-vazlh4lrawmx44cgu4gq",
+            "wall-eivcyotdqeqxur4vnhtm"
+          ],
+          "rooms": [
+            {
+              "id": "fine-room",
+              "walls": [
+                "wall-wjksr7kt5pqii5mdfjlm",
+                "wall-eivcyotdqeqxur4vnhtm",
+                "wall-vazlh4lrawmx44cgu4gq",
+                "wall-2p5v3xgwtvsbainkhyk4"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "regular",
+          "catalogue": [
+            "wall-kzjn7273gogxtjkjtbs6",
+            "wall-5yfzignil3ysguqdo4df",
+            "wall-47i5wxqm2645m5tsrnvu",
+            "wall-oyjp2s67gzz4m6vwvfiq"
+          ],
+          "rooms": [
+            {
+              "id": "regular-room",
+              "walls": [
+                "wall-5yfzignil3ysguqdo4df",
+                "wall-oyjp2s67gzz4m6vwvfiq",
+                "wall-47i5wxqm2645m5tsrnvu",
+                "wall-kzjn7273gogxtjkjtbs6"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/real-plan-first-floor.json/space",
+      "fingerprint": "57afbf64214781f4c607a2346b04014d4ea9c4eacd9b64b9e941b401555e1def",
+      "ok": true,
+      "identity": [
+        {
+          "space": "real-first-floor",
+          "catalogue": [
+            "wall-5jju6dsf3clx6mj2op5q",
+            "wall-wain2vcde4tvc567anjr",
+            "wall-gybrzhmc3opwp4r7yea3",
+            "wall-rgfanppidgu5gu4m6l5l",
+            "wall-hslhtlvx2okhrprpdc6k",
+            "wall-ymfxohtgh65mnyhopa3v",
+            "wall-q3atsejqfgdk6od34van",
+            "wall-wqhls4kmvkujlvwkn4kc",
+            "wall-33yh7lyalgfpjuvqxl6m",
+            "wall-kwvnb6ewqc3vdcyzkp2a",
+            "wall-euhnirsrx65qmc7aellm",
+            "wall-paxatybupyt45ort62j4",
+            "wall-7pwjlxvazlpvtuzthnsr",
+            "wall-l4hhvrlay4d4tmhs2yks",
+            "wall-67fnvwlvenv4pub3t4si",
+            "wall-ugsz7hso2bg4meuft7sb",
+            "wall-x73dnofmuow6n2me2lov",
+            "wall-szzd54b2e76vkx4glodi",
+            "wall-wirlhj552w4sf3oyy6d5",
+            "wall-hnnkk3tncmd27my6sn6e",
+            "wall-5guhj52sxynfmhhtwlfy",
+            "wall-tohieerugwfkjwj4sc4r",
+            "wall-gwwskx2wqs2ymgxu2u42",
+            "wall-c3xtbqhcei67dycij3aw",
+            "wall-jhett4imbzh5taptgx3i",
+            "wall-265w35nzqhqc2pko36g5",
+            "wall-kfsq6revg7dm6gyzxqsr",
+            "wall-h3wpwqvfmzkk234hrjoh",
+            "wall-xu6fk6sfhu7xzsrrqbsk",
+            "wall-cmeederahksvriukc4ox",
+            "wall-pcyejnh7jabw77ujsmzs",
+            "wall-inu5zwi4256u7gaq2r6t",
+            "wall-cvp6ouerpf3yca4hr2xh"
+          ],
+          "rooms": [
+            {
+              "id": "room-a",
+              "walls": [
+                "wall-5jju6dsf3clx6mj2op5q",
+                "wall-wain2vcde4tvc567anjr",
+                "wall-h3wpwqvfmzkk234hrjoh",
+                "wall-jhett4imbzh5taptgx3i",
+                "wall-c3xtbqhcei67dycij3aw",
+                "wall-265w35nzqhqc2pko36g5",
+                "wall-tohieerugwfkjwj4sc4r",
+                "wall-hnnkk3tncmd27my6sn6e",
+                "wall-wirlhj552w4sf3oyy6d5",
+                "wall-67fnvwlvenv4pub3t4si",
+                "wall-l4hhvrlay4d4tmhs2yks",
+                "wall-33yh7lyalgfpjuvqxl6m",
+                "wall-rgfanppidgu5gu4m6l5l"
+              ]
+            },
+            {
+              "id": "room-b",
+              "walls": [
+                "wall-wqhls4kmvkujlvwkn4kc",
+                "wall-33yh7lyalgfpjuvqxl6m",
+                "wall-ugsz7hso2bg4meuft7sb",
+                "wall-paxatybupyt45ort62j4",
+                "wall-kwvnb6ewqc3vdcyzkp2a"
+              ]
+            },
+            {
+              "id": "room-c",
+              "walls": [
+                "wall-euhnirsrx65qmc7aellm",
+                "wall-paxatybupyt45ort62j4",
+                "wall-x73dnofmuow6n2me2lov",
+                "wall-7pwjlxvazlpvtuzthnsr"
+              ]
+            },
+            {
+              "id": "room-d",
+              "walls": [
+                "wall-hslhtlvx2okhrprpdc6k",
+                "wall-ymfxohtgh65mnyhopa3v",
+                "wall-kwvnb6ewqc3vdcyzkp2a",
+                "wall-euhnirsrx65qmc7aellm",
+                "wall-q3atsejqfgdk6od34van"
+              ]
+            },
+            {
+              "id": "room-e",
+              "walls": [
+                "wall-x73dnofmuow6n2me2lov",
+                "wall-ugsz7hso2bg4meuft7sb",
+                "wall-l4hhvrlay4d4tmhs2yks",
+                "wall-67fnvwlvenv4pub3t4si",
+                "wall-wirlhj552w4sf3oyy6d5",
+                "wall-hnnkk3tncmd27my6sn6e",
+                "wall-5guhj52sxynfmhhtwlfy",
+                "wall-szzd54b2e76vkx4glodi"
+              ]
+            },
+            {
+              "id": "room-f",
+              "walls": [
+                "wall-5guhj52sxynfmhhtwlfy",
+                "wall-tohieerugwfkjwj4sc4r",
+                "wall-kfsq6revg7dm6gyzxqsr",
+                "wall-cmeederahksvriukc4ox",
+                "wall-gwwskx2wqs2ymgxu2u42"
+              ]
+            },
+            {
+              "id": "room-g",
+              "walls": [
+                "wall-gybrzhmc3opwp4r7yea3",
+                "wall-rgfanppidgu5gu4m6l5l",
+                "wall-wqhls4kmvkujlvwkn4kc",
+                "wall-ymfxohtgh65mnyhopa3v"
+              ]
+            },
+            {
+              "id": "room-h",
+              "walls": [
+                "wall-jhett4imbzh5taptgx3i",
+                "wall-xu6fk6sfhu7xzsrrqbsk",
+                "wall-inu5zwi4256u7gaq2r6t",
+                "wall-cvp6ouerpf3yca4hr2xh",
+                "wall-pcyejnh7jabw77ujsmzs",
+                "wall-kfsq6revg7dm6gyzxqsr",
+                "wall-265w35nzqhqc2pko36g5",
+                "wall-c3xtbqhcei67dycij3aw"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "partition_partition_partition_partition-msjey_30638872"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/real-plan-second-floor.json/space",
+      "fingerprint": "46fa7e3eae391e629faeab25ccb4106300b8be147cfcd58bb7473684fc9eb266",
+      "ok": true,
+      "identity": [
+        {
+          "space": "real-second-floor",
+          "catalogue": [
+            "wall-jocu65rqbvgpqzi3bvdi",
+            "wall-fymr2ymrqnq2cltonio4",
+            "wall-n7vcpnps2zhowakjaamb",
+            "wall-jqgezseqj5jgsi7yecv3",
+            "wall-jy5p6kmp5w2dkp3pz2y2",
+            "wall-uutt35vpum2y6gdshceg",
+            "wall-hwjhv75sxdmrrnikzxt3",
+            "wall-xnslhd44vwnff4lirbrm",
+            "wall-fs77yr36beqjmjny6ske",
+            "wall-pojmvvm6wauwzlhf5jym",
+            "wall-4h6747b6v2j6e4ctgoh3",
+            "wall-6ksb3nbrrlg7m47zpimm",
+            "wall-pmmwmzajfs6tu3ink7gb",
+            "wall-af6mapc5dobhjqxd6yag",
+            "wall-5d2m5pa3v7n5dzo6qphu",
+            "wall-xtbkk6gkb3lth6iuypno",
+            "wall-semy5kksv5cvltvoksqk",
+            "wall-bs4lkzhoj7367zfcazy3",
+            "wall-cmntsjqga56jhe25ea6j",
+            "wall-4ecjt6d6is4oqnycvhr7",
+            "wall-jliobj4h6kzybu4rxilm",
+            "wall-5o5ihsfvljb7wl4mb2jp",
+            "wall-jahu5dbrjs2tganahql5",
+            "wall-u6y4dneptk7qvbdoa7ov",
+            "wall-oc4nzduhqrnpjjzj3uuk",
+            "wall-nl6pglthmq6ekl54haqt",
+            "wall-777icns7b4zwmjygpy5b",
+            "wall-kez5ey7ohy4nchlj5msp",
+            "wall-ldxr2jomsz7xgiibhrms"
+          ],
+          "rooms": [
+            {
+              "id": "room-a",
+              "walls": [
+                "wall-6ksb3nbrrlg7m47zpimm",
+                "wall-pmmwmzajfs6tu3ink7gb",
+                "wall-semy5kksv5cvltvoksqk",
+                "wall-n7vcpnps2zhowakjaamb",
+                "wall-fymr2ymrqnq2cltonio4"
+              ]
+            },
+            {
+              "id": "room-b",
+              "walls": [
+                "wall-jahu5dbrjs2tganahql5",
+                "wall-u6y4dneptk7qvbdoa7ov",
+                "wall-cmntsjqga56jhe25ea6j",
+                "wall-semy5kksv5cvltvoksqk",
+                "wall-bs4lkzhoj7367zfcazy3"
+              ]
+            },
+            {
+              "id": "room-c",
+              "walls": [
+                "wall-xtbkk6gkb3lth6iuypno",
+                "wall-fs77yr36beqjmjny6ske",
+                "wall-xnslhd44vwnff4lirbrm",
+                "wall-pojmvvm6wauwzlhf5jym"
+              ]
+            },
+            {
+              "id": "room-d",
+              "walls": [
+                "wall-5d2m5pa3v7n5dzo6qphu",
+                "wall-jy5p6kmp5w2dkp3pz2y2",
+                "wall-jqgezseqj5jgsi7yecv3",
+                "wall-uutt35vpum2y6gdshceg",
+                "wall-fs77yr36beqjmjny6ske"
+              ]
+            },
+            {
+              "id": "room-e",
+              "walls": [
+                "wall-af6mapc5dobhjqxd6yag",
+                "wall-fymr2ymrqnq2cltonio4",
+                "wall-jocu65rqbvgpqzi3bvdi",
+                "wall-jy5p6kmp5w2dkp3pz2y2"
+              ]
+            },
+            {
+              "id": "room-f",
+              "walls": [
+                "wall-uutt35vpum2y6gdshceg",
+                "wall-hwjhv75sxdmrrnikzxt3",
+                "wall-4ecjt6d6is4oqnycvhr7",
+                "wall-4h6747b6v2j6e4ctgoh3",
+                "wall-xnslhd44vwnff4lirbrm"
+              ]
+            },
+            {
+              "id": "room-g",
+              "walls": [
+                "wall-4ecjt6d6is4oqnycvhr7",
+                "wall-jliobj4h6kzybu4rxilm",
+                "wall-nl6pglthmq6ekl54haqt",
+                "wall-777icns7b4zwmjygpy5b",
+                "wall-5o5ihsfvljb7wl4mb2jp"
+              ]
+            },
+            {
+              "id": "room-h",
+              "walls": [
+                "wall-n7vcpnps2zhowakjaamb",
+                "wall-cmntsjqga56jhe25ea6j",
+                "wall-u6y4dneptk7qvbdoa7ov",
+                "wall-oc4nzduhqrnpjjzj3uuk",
+                "wall-ldxr2jomsz7xgiibhrms",
+                "wall-kez5ey7ohy4nchlj5msp",
+                "wall-nl6pglthmq6ekl54haqt",
+                "wall-jliobj4h6kzybu4rxilm",
+                "wall-hwjhv75sxdmrrnikzxt3",
+                "wall-jqgezseqj5jgsi7yecv3",
+                "wall-jocu65rqbvgpqzi3bvdi"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "partition-mt2on9ou-0"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/space-delete-with-markers.json/cases/0/config",
+      "fingerprint": "9c620ef33051b7521f7706ce7dc629b2646df564192849b0849c2bc4f6478f48",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f1",
+          "catalogue": [
+            "wall-dhyu2tovusfnxm4utmhu",
+            "wall-blj4qxuidvv22gqqhvez",
+            "wall-erur3a272e4ehretljm3",
+            "wall-aqcslf7dphpx64v3esxt"
+          ],
+          "rooms": [
+            {
+              "id": "r1",
+              "walls": [
+                "wall-blj4qxuidvv22gqqhvez",
+                "wall-aqcslf7dphpx64v3esxt",
+                "wall-erur3a272e4ehretljm3",
+                "wall-dhyu2tovusfnxm4utmhu"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "f2",
+          "catalogue": [
+            "wall-bxwmq67opbgfjjkz33u4",
+            "wall-kw7octla3rqes5pbagqx",
+            "wall-yg3ikikbifx4f6z2inwj",
+            "wall-7fojly3dsruf5h7xtkox"
+          ],
+          "rooms": [
+            {
+              "id": "r2",
+              "walls": [
+                "wall-kw7octla3rqes5pbagqx",
+                "wall-7fojly3dsruf5h7xtkox",
+                "wall-yg3ikikbifx4f6z2inwj",
+                "wall-bxwmq67opbgfjjkz33u4"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/space-delete-with-markers.json/cases/0/configAfter",
+      "fingerprint": "0b13d39061e238b4c0e80db967e844d787fbd8d5e22fa33ef20789abf1cae352",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f2",
+          "catalogue": [
+            "wall-bxwmq67opbgfjjkz33u4",
+            "wall-kw7octla3rqes5pbagqx",
+            "wall-yg3ikikbifx4f6z2inwj",
+            "wall-7fojly3dsruf5h7xtkox"
+          ],
+          "rooms": [
+            {
+              "id": "r2",
+              "walls": [
+                "wall-kw7octla3rqes5pbagqx",
+                "wall-7fojly3dsruf5h7xtkox",
+                "wall-yg3ikikbifx4f6z2inwj",
+                "wall-bxwmq67opbgfjjkz33u4"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/space-delete-with-markers.json/cases/1/config",
+      "fingerprint": "667202304915630276ae0e2cd8a74dbcf11f7374b89d67ba92799ef80b436cec",
+      "ok": true,
+      "identity": [
+        {
+          "space": "only",
+          "catalogue": [
+            "wall-n66a5uuuhq6p4hrlswhv",
+            "wall-mzmson4czf7jvqex3vfo",
+            "wall-dijd4xxd7njbyv4sk63f",
+            "wall-6oqmcvyxgidxss45hqji"
+          ],
+          "rooms": [
+            {
+              "id": "room",
+              "walls": [
+                "wall-mzmson4czf7jvqex3vfo",
+                "wall-6oqmcvyxgidxss45hqji",
+                "wall-dijd4xxd7njbyv4sk63f",
+                "wall-n66a5uuuhq6p4hrlswhv"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/space-delete-with-markers.json/cases/1/configAfter",
+      "fingerprint": "4050788202a5471383e48cbe23e248387c5a54293ede9a9267fff7e9d580b393",
+      "ok": true,
+      "identity": []
+    },
+    {
+      "label": "test/fixtures/space-delete-with-markers.json/cases/2/config",
+      "fingerprint": "a1618cc5a5bc6467adcde849ca077aa3750aa2991b4f6798219be1339253f868",
+      "ok": true,
+      "identity": [
+        {
+          "space": "old",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "kept",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "no-stairs",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/space-delete-with-markers.json/cases/2/configAfter",
+      "fingerprint": "6a5b345e2cbcd5b73fb6357749473b24f4d680daf8f7fae7aa23c12900c6e038",
+      "ok": true,
+      "identity": [
+        {
+          "space": "kept",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "no-stairs",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/space-delete-with-markers.json/cases/3/config",
+      "fingerprint": "f81b20a8f0fa3a4b5b047a1002154040481e412a81bd9c1b1bbc22f90fa95ae2",
+      "ok": true,
+      "identity": [
+        {
+          "space": "old",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "kept",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/space-delete-with-markers.json/cases/3/configAfter",
+      "fingerprint": "f81b20a8f0fa3a4b5b047a1002154040481e412a81bd9c1b1bbc22f90fa95ae2",
+      "ok": true,
+      "identity": [
+        {
+          "space": "old",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "kept",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/space-delete-with-markers.json/cases/4/config",
+      "fingerprint": "c8d5278a12755dda2070c5b822b7e820d9367a26bf741bc15d092eb4b364f6f3",
+      "ok": true,
+      "identity": [
+        {
+          "space": "kept",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/space-delete-with-markers.json/cases/4/configAfter",
+      "fingerprint": "c8d5278a12755dda2070c5b822b7e820d9367a26bf741bc15d092eb4b364f6f3",
+      "ok": true,
+      "identity": [
+        {
+          "space": "kept",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "demo/fixtures/large-house.mjs:makeLargeHouseFixture/config",
+      "fingerprint": "eecc2b37b460bcc4d65db87462feef7633addcf5f590dc5fc8a460db70e2bf73",
+      "ok": true,
+      "identity": [
+        {
+          "space": "perf-floor-1",
+          "catalogue": [
+            "wall-mp7velvxgl6ak6kdlyab",
+            "wall-y4ctrpjrfao3kubafasi",
+            "wall-6hrhvqe6u52yysh2jhiz",
+            "wall-rz44afixo77kdr2gwayj",
+            "wall-nbb22aad2djz5mjom5c6",
+            "wall-5cghjyotdewasnkbaipo",
+            "wall-jexr2e2g2xalilg6pnrj",
+            "wall-y3sj5kpj7722tyyabw7y",
+            "wall-ipwbfg7u5j67boikonl4",
+            "wall-iymvzuzl56cl3kak2hjy",
+            "wall-7zjyc57sgihawe3d76k7",
+            "wall-6criuzkf7ofniyyf3tqj",
+            "wall-ujyh42p7swkcgdbqkotu",
+            "wall-wo5k545jsqxpr4aiqjkw",
+            "wall-dr5swvayijgpuv4k7ads",
+            "wall-bnwdusmno47shwb6mln6",
+            "wall-xe7mokyjgs42f5batuvg",
+            "wall-iibxhvfyxzhbifmctmk7",
+            "wall-psqlfingdd7nakfybqpn",
+            "wall-zk3qyvbyyquaqieen3kl",
+            "wall-mdxkh4sbvodielsieruu",
+            "wall-gmbuc6iymkfskbnwcaww",
+            "wall-di4q42naqcz4y635cixe",
+            "wall-qfj7c5ldxafgg3ekxtad",
+            "wall-33oeptvhh6pv7ettdci6",
+            "wall-pxjf5jjpgusmzkgtn54j",
+            "wall-vufyomiy3nbabnczup4o",
+            "wall-2tlu5peyp4uwelbvcitq",
+            "wall-tcd5qby5os2e76gpyuax",
+            "wall-27kz4j2f4p4re2elqevm",
+            "wall-iibwxs4ygc6a5bjbrowi",
+            "wall-tjzxshvizfzxip64r4xz",
+            "wall-fuklgyg742dcpmylnoew",
+            "wall-ourxwzrbrwrelyskkrac",
+            "wall-a65nlq4ib433ct5o7tpo",
+            "wall-2e7kmd3nthakhnsy3rgl",
+            "wall-dlffeaqhkv72k3mexq55",
+            "wall-vs63aocst3srzzqrl4bz",
+            "wall-vc4sayiwpvmh3u3xjqtr",
+            "wall-7hgslhh7chrz6kp72ivd",
+            "wall-nmkeiyltot6k4fmobqcf",
+            "wall-vf45do2njv3c5yxz2oav",
+            "wall-y2ofitdghlknfevxzcm5",
+            "wall-k6krmkydsf72hnrd3ypn",
+            "wall-3tkemc3vztsr4rkpcxxg",
+            "wall-dium3htnopnfyyj34q4j",
+            "wall-2o5576du7ukzwjwallqn",
+            "wall-e3yn2b6hp2pp6v2gaiob",
+            "wall-2o63gm452sdn5iyziu4v"
+          ],
+          "rooms": [
+            {
+              "id": "perf-room-0-0",
+              "walls": [
+                "wall-y4ctrpjrfao3kubafasi",
+                "wall-iymvzuzl56cl3kak2hjy",
+                "wall-rz44afixo77kdr2gwayj",
+                "wall-mp7velvxgl6ak6kdlyab"
+              ]
+            },
+            {
+              "id": "perf-room-0-1",
+              "walls": [
+                "wall-7zjyc57sgihawe3d76k7",
+                "wall-psqlfingdd7nakfybqpn",
+                "wall-ujyh42p7swkcgdbqkotu",
+                "wall-iymvzuzl56cl3kak2hjy"
+              ]
+            },
+            {
+              "id": "perf-room-0-2",
+              "walls": [
+                "wall-zk3qyvbyyquaqieen3kl",
+                "wall-2tlu5peyp4uwelbvcitq",
+                "wall-gmbuc6iymkfskbnwcaww",
+                "wall-psqlfingdd7nakfybqpn"
+              ]
+            },
+            {
+              "id": "perf-room-0-3",
+              "walls": [
+                "wall-tcd5qby5os2e76gpyuax",
+                "wall-dlffeaqhkv72k3mexq55",
+                "wall-iibwxs4ygc6a5bjbrowi",
+                "wall-2tlu5peyp4uwelbvcitq"
+              ]
+            },
+            {
+              "id": "perf-room-0-4",
+              "walls": [
+                "wall-vs63aocst3srzzqrl4bz",
+                "wall-dium3htnopnfyyj34q4j",
+                "wall-7hgslhh7chrz6kp72ivd",
+                "wall-dlffeaqhkv72k3mexq55"
+              ]
+            },
+            {
+              "id": "perf-room-0-5",
+              "walls": [
+                "wall-rz44afixo77kdr2gwayj",
+                "wall-6criuzkf7ofniyyf3tqj",
+                "wall-5cghjyotdewasnkbaipo",
+                "wall-6hrhvqe6u52yysh2jhiz"
+              ]
+            },
+            {
+              "id": "perf-room-0-6",
+              "walls": [
+                "wall-ujyh42p7swkcgdbqkotu",
+                "wall-mdxkh4sbvodielsieruu",
+                "wall-dr5swvayijgpuv4k7ads",
+                "wall-6criuzkf7ofniyyf3tqj"
+              ]
+            },
+            {
+              "id": "perf-room-0-7",
+              "walls": [
+                "wall-gmbuc6iymkfskbnwcaww",
+                "wall-27kz4j2f4p4re2elqevm",
+                "wall-qfj7c5ldxafgg3ekxtad",
+                "wall-mdxkh4sbvodielsieruu"
+              ]
+            },
+            {
+              "id": "perf-room-0-8",
+              "walls": [
+                "wall-iibwxs4ygc6a5bjbrowi",
+                "wall-vc4sayiwpvmh3u3xjqtr",
+                "wall-fuklgyg742dcpmylnoew",
+                "wall-27kz4j2f4p4re2elqevm"
+              ]
+            },
+            {
+              "id": "perf-room-0-9",
+              "walls": [
+                "wall-7hgslhh7chrz6kp72ivd",
+                "wall-2o5576du7ukzwjwallqn",
+                "wall-vf45do2njv3c5yxz2oav",
+                "wall-vc4sayiwpvmh3u3xjqtr"
+              ]
+            },
+            {
+              "id": "perf-room-0-10",
+              "walls": [
+                "wall-5cghjyotdewasnkbaipo",
+                "wall-wo5k545jsqxpr4aiqjkw",
+                "wall-y3sj5kpj7722tyyabw7y",
+                "wall-nbb22aad2djz5mjom5c6"
+              ]
+            },
+            {
+              "id": "perf-room-0-11",
+              "walls": [
+                "wall-dr5swvayijgpuv4k7ads",
+                "wall-di4q42naqcz4y635cixe",
+                "wall-xe7mokyjgs42f5batuvg",
+                "wall-wo5k545jsqxpr4aiqjkw"
+              ]
+            },
+            {
+              "id": "perf-room-0-12",
+              "walls": [
+                "wall-qfj7c5ldxafgg3ekxtad",
+                "wall-tjzxshvizfzxip64r4xz",
+                "wall-pxjf5jjpgusmzkgtn54j",
+                "wall-di4q42naqcz4y635cixe"
+              ]
+            },
+            {
+              "id": "perf-room-0-13",
+              "walls": [
+                "wall-fuklgyg742dcpmylnoew",
+                "wall-nmkeiyltot6k4fmobqcf",
+                "wall-a65nlq4ib433ct5o7tpo",
+                "wall-tjzxshvizfzxip64r4xz"
+              ]
+            },
+            {
+              "id": "perf-room-0-14",
+              "walls": [
+                "wall-vf45do2njv3c5yxz2oav",
+                "wall-e3yn2b6hp2pp6v2gaiob",
+                "wall-k6krmkydsf72hnrd3ypn",
+                "wall-nmkeiyltot6k4fmobqcf"
+              ]
+            },
+            {
+              "id": "perf-room-0-15",
+              "walls": [
+                "wall-y3sj5kpj7722tyyabw7y",
+                "wall-bnwdusmno47shwb6mln6",
+                "wall-ipwbfg7u5j67boikonl4",
+                "wall-jexr2e2g2xalilg6pnrj"
+              ]
+            },
+            {
+              "id": "perf-room-0-16",
+              "walls": [
+                "wall-xe7mokyjgs42f5batuvg",
+                "wall-33oeptvhh6pv7ettdci6",
+                "wall-iibxhvfyxzhbifmctmk7",
+                "wall-bnwdusmno47shwb6mln6"
+              ]
+            },
+            {
+              "id": "perf-room-0-17",
+              "walls": [
+                "wall-pxjf5jjpgusmzkgtn54j",
+                "wall-ourxwzrbrwrelyskkrac",
+                "wall-vufyomiy3nbabnczup4o",
+                "wall-33oeptvhh6pv7ettdci6"
+              ]
+            },
+            {
+              "id": "perf-room-0-18",
+              "walls": [
+                "wall-a65nlq4ib433ct5o7tpo",
+                "wall-y2ofitdghlknfevxzcm5",
+                "wall-2e7kmd3nthakhnsy3rgl",
+                "wall-ourxwzrbrwrelyskkrac"
+              ]
+            },
+            {
+              "id": "perf-room-0-19",
+              "walls": [
+                "wall-k6krmkydsf72hnrd3ypn",
+                "wall-2o63gm452sdn5iyziu4v",
+                "wall-3tkemc3vztsr4rkpcxxg",
+                "wall-y2ofitdghlknfevxzcm5"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "perf-opening-0-0",
+              "host": {
+                "kind": "wall",
+                "id": "wall-y4ctrpjrfao3kubafasi"
+              }
+            },
+            {
+              "id": "perf-opening-0-1",
+              "host": {
+                "kind": "wall",
+                "id": "wall-iymvzuzl56cl3kak2hjy"
+              }
+            },
+            {
+              "id": "perf-opening-0-2",
+              "host": {
+                "kind": "wall",
+                "id": "wall-rz44afixo77kdr2gwayj"
+              }
+            },
+            {
+              "id": "perf-opening-0-3",
+              "host": {
+                "kind": "wall",
+                "id": "wall-mp7velvxgl6ak6kdlyab"
+              }
+            },
+            {
+              "id": "perf-opening-0-4",
+              "host": {
+                "kind": "wall",
+                "id": "wall-7zjyc57sgihawe3d76k7"
+              }
+            },
+            {
+              "id": "perf-opening-0-5",
+              "host": {
+                "kind": "wall",
+                "id": "wall-psqlfingdd7nakfybqpn"
+              }
+            },
+            {
+              "id": "perf-opening-0-6",
+              "host": {
+                "kind": "wall",
+                "id": "wall-ujyh42p7swkcgdbqkotu"
+              }
+            },
+            {
+              "id": "perf-opening-0-7",
+              "host": {
+                "kind": "wall",
+                "id": "wall-zk3qyvbyyquaqieen3kl"
+              }
+            },
+            {
+              "id": "perf-opening-0-8",
+              "host": {
+                "kind": "wall",
+                "id": "wall-2tlu5peyp4uwelbvcitq"
+              }
+            },
+            {
+              "id": "perf-opening-0-9",
+              "host": {
+                "kind": "wall",
+                "id": "wall-gmbuc6iymkfskbnwcaww"
+              }
+            },
+            {
+              "id": "perf-opening-0-10",
+              "host": {
+                "kind": "wall",
+                "id": "wall-tcd5qby5os2e76gpyuax"
+              }
+            },
+            {
+              "id": "perf-opening-0-11",
+              "host": {
+                "kind": "wall",
+                "id": "wall-dlffeaqhkv72k3mexq55"
+              }
+            },
+            {
+              "id": "perf-opening-0-12",
+              "host": {
+                "kind": "wall",
+                "id": "wall-iibwxs4ygc6a5bjbrowi"
+              }
+            },
+            {
+              "id": "perf-opening-0-13",
+              "host": {
+                "kind": "wall",
+                "id": "wall-vs63aocst3srzzqrl4bz"
+              }
+            },
+            {
+              "id": "perf-opening-0-14",
+              "host": {
+                "kind": "wall",
+                "id": "wall-dium3htnopnfyyj34q4j"
+              }
+            },
+            {
+              "id": "perf-opening-0-15",
+              "host": {
+                "kind": "wall",
+                "id": "wall-7hgslhh7chrz6kp72ivd"
+              }
+            },
+            {
+              "id": "perf-opening-0-16",
+              "host": {
+                "kind": "wall",
+                "id": "wall-6criuzkf7ofniyyf3tqj"
+              }
+            },
+            {
+              "id": "perf-opening-0-17",
+              "host": {
+                "kind": "wall",
+                "id": "wall-5cghjyotdewasnkbaipo"
+              }
+            },
+            {
+              "id": "perf-opening-0-18",
+              "host": {
+                "kind": "wall",
+                "id": "wall-6hrhvqe6u52yysh2jhiz"
+              }
+            },
+            {
+              "id": "perf-opening-0-19",
+              "host": {
+                "kind": "wall",
+                "id": "wall-mdxkh4sbvodielsieruu"
+              }
+            },
+            {
+              "id": "perf-opening-0-20",
+              "host": {
+                "kind": "wall",
+                "id": "wall-dr5swvayijgpuv4k7ads"
+              }
+            },
+            {
+              "id": "perf-opening-0-21",
+              "host": {
+                "kind": "wall",
+                "id": "wall-27kz4j2f4p4re2elqevm"
+              }
+            },
+            {
+              "id": "perf-opening-0-22",
+              "host": {
+                "kind": "wall",
+                "id": "wall-qfj7c5ldxafgg3ekxtad"
+              }
+            },
+            {
+              "id": "perf-opening-0-23",
+              "host": {
+                "kind": "wall",
+                "id": "wall-vc4sayiwpvmh3u3xjqtr"
+              }
+            },
+            {
+              "id": "perf-opening-0-24",
+              "host": {
+                "kind": "wall",
+                "id": "wall-fuklgyg742dcpmylnoew"
+              }
+            },
+            {
+              "id": "perf-opening-0-25",
+              "host": {
+                "kind": "wall",
+                "id": "wall-2o5576du7ukzwjwallqn"
+              }
+            },
+            {
+              "id": "perf-opening-0-26",
+              "host": {
+                "kind": "wall",
+                "id": "wall-vf45do2njv3c5yxz2oav"
+              }
+            },
+            {
+              "id": "perf-opening-0-27",
+              "host": {
+                "kind": "wall",
+                "id": "wall-wo5k545jsqxpr4aiqjkw"
+              }
+            },
+            {
+              "id": "perf-opening-0-28",
+              "host": {
+                "kind": "wall",
+                "id": "wall-y3sj5kpj7722tyyabw7y"
+              }
+            },
+            {
+              "id": "perf-opening-0-29",
+              "host": {
+                "kind": "wall",
+                "id": "wall-nbb22aad2djz5mjom5c6"
+              }
+            },
+            {
+              "id": "perf-opening-0-30",
+              "host": {
+                "kind": "wall",
+                "id": "wall-di4q42naqcz4y635cixe"
+              }
+            },
+            {
+              "id": "perf-opening-0-31",
+              "host": {
+                "kind": "wall",
+                "id": "wall-xe7mokyjgs42f5batuvg"
+              }
+            },
+            {
+              "id": "perf-opening-0-32",
+              "host": {
+                "kind": "wall",
+                "id": "wall-tjzxshvizfzxip64r4xz"
+              }
+            },
+            {
+              "id": "perf-opening-0-33",
+              "host": {
+                "kind": "wall",
+                "id": "wall-pxjf5jjpgusmzkgtn54j"
+              }
+            }
+          ],
+          "partitions": [
+            "perf-partition-0-0",
+            "perf-partition-0-1",
+            "perf-partition-0-2",
+            "perf-partition-0-3",
+            "perf-partition-0-4",
+            "perf-partition-0-5",
+            "perf-partition-0-6",
+            "perf-partition-0-7",
+            "perf-partition-0-8",
+            "perf-partition-0-9",
+            "perf-partition-0-10",
+            "perf-partition-0-11",
+            "perf-partition-0-12",
+            "perf-partition-0-13",
+            "perf-partition-0-14",
+            "perf-partition-0-15",
+            "perf-partition-0-16",
+            "perf-partition-0-17",
+            "perf-partition-0-18",
+            "perf-partition-0-19"
+          ]
+        },
+        {
+          "space": "perf-floor-2",
+          "catalogue": [
+            "wall-fp7hux7zu2ifk2tmfzle",
+            "wall-2ex7bvgls5pwvaoscjh4",
+            "wall-fod5jki6dtvn5dz74bt7",
+            "wall-ifpbhb57xbnlfjbhttt3",
+            "wall-q7qhq4eu22py7erhcfst",
+            "wall-msapzpmk3jc435fwkalz",
+            "wall-dnp25xgg4ivjgkmlll6h",
+            "wall-pibkxaggpz5mlqofz63j",
+            "wall-5zvcda7umjsdjgegz24p",
+            "wall-psrgpwfve2s2xfldbtz7",
+            "wall-c3i2oxdjmoufc2nexpat",
+            "wall-uhwehq7ho6r73m24aacj",
+            "wall-pahr77groenw4xhnlkax",
+            "wall-nq2n5eh7dxhag2nwglo5",
+            "wall-wmv74ivao5ifczq2plj6",
+            "wall-36alq7dn2dx23vccoo4f",
+            "wall-5nvxrayipvlht2s457hp",
+            "wall-buybqzmptdic5niqyhhn",
+            "wall-kf4tliz7vn7oxjejtggn",
+            "wall-vg6mzpxckpbm76pjofp2",
+            "wall-tfqi3t5if2u2iu5fjbm6",
+            "wall-ay3dz5pxxzwnyt65lw3z",
+            "wall-flpyikr5wfa7eqadyv2y",
+            "wall-iexm2ua2zu5clcni6wa2",
+            "wall-fbvxo2c4t27thkxkvl3b",
+            "wall-f2kocrufpcnlluvaeryv",
+            "wall-w3tnqdbky2j6znjihtdj",
+            "wall-kjbqspj3aejisryg64oz",
+            "wall-75fdu3noycqojbdrkp35",
+            "wall-tex3jliffn2umiztux4g",
+            "wall-4z2rrcppc2t6pzsy3rbp",
+            "wall-y3rzaf3dxc4cpgg6ewof",
+            "wall-6iuhwmrzyfy6i4mko5lz",
+            "wall-nqi2ozd7c44dusy2dkmr",
+            "wall-gjf76wvvzd4ezwn7cgrv",
+            "wall-3a7ykk3cm3iv63heim7x",
+            "wall-pgtqpiak7uipvquzjaek",
+            "wall-2pwiwy3yagltskmukmoi",
+            "wall-wgxmpxdvga2gfu7brpj7",
+            "wall-ldzv4jgno5thyn63kya2",
+            "wall-zp3mp6fsu6aeqllak6ph",
+            "wall-nugqxcu2y6uzwrr5ca7l",
+            "wall-nacmdhignvxxlj3z45ui",
+            "wall-lgvpnhy2z2u4cstgrxqg",
+            "wall-rdsjaz7j264bflgmqazv",
+            "wall-kspudhplujo3jqkutdff",
+            "wall-qmvph2ug5qhc44evp2sp",
+            "wall-z3ecg2h2we5ckmzl5xuk",
+            "wall-2anpo65qp4b2yhb4uhtn"
+          ],
+          "rooms": [
+            {
+              "id": "perf-room-1-0",
+              "walls": [
+                "wall-2ex7bvgls5pwvaoscjh4",
+                "wall-psrgpwfve2s2xfldbtz7",
+                "wall-ifpbhb57xbnlfjbhttt3",
+                "wall-fp7hux7zu2ifk2tmfzle"
+              ]
+            },
+            {
+              "id": "perf-room-1-1",
+              "walls": [
+                "wall-c3i2oxdjmoufc2nexpat",
+                "wall-kf4tliz7vn7oxjejtggn",
+                "wall-pahr77groenw4xhnlkax",
+                "wall-psrgpwfve2s2xfldbtz7"
+              ]
+            },
+            {
+              "id": "perf-room-1-2",
+              "walls": [
+                "wall-vg6mzpxckpbm76pjofp2",
+                "wall-kjbqspj3aejisryg64oz",
+                "wall-ay3dz5pxxzwnyt65lw3z",
+                "wall-kf4tliz7vn7oxjejtggn"
+              ]
+            },
+            {
+              "id": "perf-room-1-3",
+              "walls": [
+                "wall-75fdu3noycqojbdrkp35",
+                "wall-pgtqpiak7uipvquzjaek",
+                "wall-4z2rrcppc2t6pzsy3rbp",
+                "wall-kjbqspj3aejisryg64oz"
+              ]
+            },
+            {
+              "id": "perf-room-1-4",
+              "walls": [
+                "wall-2pwiwy3yagltskmukmoi",
+                "wall-kspudhplujo3jqkutdff",
+                "wall-ldzv4jgno5thyn63kya2",
+                "wall-pgtqpiak7uipvquzjaek"
+              ]
+            },
+            {
+              "id": "perf-room-1-5",
+              "walls": [
+                "wall-ifpbhb57xbnlfjbhttt3",
+                "wall-uhwehq7ho6r73m24aacj",
+                "wall-msapzpmk3jc435fwkalz",
+                "wall-fod5jki6dtvn5dz74bt7"
+              ]
+            },
+            {
+              "id": "perf-room-1-6",
+              "walls": [
+                "wall-pahr77groenw4xhnlkax",
+                "wall-tfqi3t5if2u2iu5fjbm6",
+                "wall-wmv74ivao5ifczq2plj6",
+                "wall-uhwehq7ho6r73m24aacj"
+              ]
+            },
+            {
+              "id": "perf-room-1-7",
+              "walls": [
+                "wall-ay3dz5pxxzwnyt65lw3z",
+                "wall-tex3jliffn2umiztux4g",
+                "wall-iexm2ua2zu5clcni6wa2",
+                "wall-tfqi3t5if2u2iu5fjbm6"
+              ]
+            },
+            {
+              "id": "perf-room-1-8",
+              "walls": [
+                "wall-4z2rrcppc2t6pzsy3rbp",
+                "wall-wgxmpxdvga2gfu7brpj7",
+                "wall-6iuhwmrzyfy6i4mko5lz",
+                "wall-tex3jliffn2umiztux4g"
+              ]
+            },
+            {
+              "id": "perf-room-1-9",
+              "walls": [
+                "wall-ldzv4jgno5thyn63kya2",
+                "wall-qmvph2ug5qhc44evp2sp",
+                "wall-nugqxcu2y6uzwrr5ca7l",
+                "wall-wgxmpxdvga2gfu7brpj7"
+              ]
+            },
+            {
+              "id": "perf-room-1-10",
+              "walls": [
+                "wall-msapzpmk3jc435fwkalz",
+                "wall-nq2n5eh7dxhag2nwglo5",
+                "wall-pibkxaggpz5mlqofz63j",
+                "wall-q7qhq4eu22py7erhcfst"
+              ]
+            },
+            {
+              "id": "perf-room-1-11",
+              "walls": [
+                "wall-wmv74ivao5ifczq2plj6",
+                "wall-flpyikr5wfa7eqadyv2y",
+                "wall-5nvxrayipvlht2s457hp",
+                "wall-nq2n5eh7dxhag2nwglo5"
+              ]
+            },
+            {
+              "id": "perf-room-1-12",
+              "walls": [
+                "wall-iexm2ua2zu5clcni6wa2",
+                "wall-y3rzaf3dxc4cpgg6ewof",
+                "wall-f2kocrufpcnlluvaeryv",
+                "wall-flpyikr5wfa7eqadyv2y"
+              ]
+            },
+            {
+              "id": "perf-room-1-13",
+              "walls": [
+                "wall-6iuhwmrzyfy6i4mko5lz",
+                "wall-zp3mp6fsu6aeqllak6ph",
+                "wall-gjf76wvvzd4ezwn7cgrv",
+                "wall-y3rzaf3dxc4cpgg6ewof"
+              ]
+            },
+            {
+              "id": "perf-room-1-14",
+              "walls": [
+                "wall-nugqxcu2y6uzwrr5ca7l",
+                "wall-z3ecg2h2we5ckmzl5xuk",
+                "wall-lgvpnhy2z2u4cstgrxqg",
+                "wall-zp3mp6fsu6aeqllak6ph"
+              ]
+            },
+            {
+              "id": "perf-room-1-15",
+              "walls": [
+                "wall-pibkxaggpz5mlqofz63j",
+                "wall-36alq7dn2dx23vccoo4f",
+                "wall-5zvcda7umjsdjgegz24p",
+                "wall-dnp25xgg4ivjgkmlll6h"
+              ]
+            },
+            {
+              "id": "perf-room-1-16",
+              "walls": [
+                "wall-5nvxrayipvlht2s457hp",
+                "wall-fbvxo2c4t27thkxkvl3b",
+                "wall-buybqzmptdic5niqyhhn",
+                "wall-36alq7dn2dx23vccoo4f"
+              ]
+            },
+            {
+              "id": "perf-room-1-17",
+              "walls": [
+                "wall-f2kocrufpcnlluvaeryv",
+                "wall-nqi2ozd7c44dusy2dkmr",
+                "wall-w3tnqdbky2j6znjihtdj",
+                "wall-fbvxo2c4t27thkxkvl3b"
+              ]
+            },
+            {
+              "id": "perf-room-1-18",
+              "walls": [
+                "wall-gjf76wvvzd4ezwn7cgrv",
+                "wall-nacmdhignvxxlj3z45ui",
+                "wall-3a7ykk3cm3iv63heim7x",
+                "wall-nqi2ozd7c44dusy2dkmr"
+              ]
+            },
+            {
+              "id": "perf-room-1-19",
+              "walls": [
+                "wall-lgvpnhy2z2u4cstgrxqg",
+                "wall-2anpo65qp4b2yhb4uhtn",
+                "wall-rdsjaz7j264bflgmqazv",
+                "wall-nacmdhignvxxlj3z45ui"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "perf-opening-1-0",
+              "host": {
+                "kind": "wall",
+                "id": "wall-2ex7bvgls5pwvaoscjh4"
+              }
+            },
+            {
+              "id": "perf-opening-1-1",
+              "host": {
+                "kind": "wall",
+                "id": "wall-psrgpwfve2s2xfldbtz7"
+              }
+            },
+            {
+              "id": "perf-opening-1-2",
+              "host": {
+                "kind": "wall",
+                "id": "wall-ifpbhb57xbnlfjbhttt3"
+              }
+            },
+            {
+              "id": "perf-opening-1-3",
+              "host": {
+                "kind": "wall",
+                "id": "wall-fp7hux7zu2ifk2tmfzle"
+              }
+            },
+            {
+              "id": "perf-opening-1-4",
+              "host": {
+                "kind": "wall",
+                "id": "wall-c3i2oxdjmoufc2nexpat"
+              }
+            },
+            {
+              "id": "perf-opening-1-5",
+              "host": {
+                "kind": "wall",
+                "id": "wall-kf4tliz7vn7oxjejtggn"
+              }
+            },
+            {
+              "id": "perf-opening-1-6",
+              "host": {
+                "kind": "wall",
+                "id": "wall-pahr77groenw4xhnlkax"
+              }
+            },
+            {
+              "id": "perf-opening-1-7",
+              "host": {
+                "kind": "wall",
+                "id": "wall-vg6mzpxckpbm76pjofp2"
+              }
+            },
+            {
+              "id": "perf-opening-1-8",
+              "host": {
+                "kind": "wall",
+                "id": "wall-kjbqspj3aejisryg64oz"
+              }
+            },
+            {
+              "id": "perf-opening-1-9",
+              "host": {
+                "kind": "wall",
+                "id": "wall-ay3dz5pxxzwnyt65lw3z"
+              }
+            },
+            {
+              "id": "perf-opening-1-10",
+              "host": {
+                "kind": "wall",
+                "id": "wall-75fdu3noycqojbdrkp35"
+              }
+            },
+            {
+              "id": "perf-opening-1-11",
+              "host": {
+                "kind": "wall",
+                "id": "wall-pgtqpiak7uipvquzjaek"
+              }
+            },
+            {
+              "id": "perf-opening-1-12",
+              "host": {
+                "kind": "wall",
+                "id": "wall-4z2rrcppc2t6pzsy3rbp"
+              }
+            },
+            {
+              "id": "perf-opening-1-13",
+              "host": {
+                "kind": "wall",
+                "id": "wall-2pwiwy3yagltskmukmoi"
+              }
+            },
+            {
+              "id": "perf-opening-1-14",
+              "host": {
+                "kind": "wall",
+                "id": "wall-kspudhplujo3jqkutdff"
+              }
+            },
+            {
+              "id": "perf-opening-1-15",
+              "host": {
+                "kind": "wall",
+                "id": "wall-ldzv4jgno5thyn63kya2"
+              }
+            },
+            {
+              "id": "perf-opening-1-16",
+              "host": {
+                "kind": "wall",
+                "id": "wall-uhwehq7ho6r73m24aacj"
+              }
+            },
+            {
+              "id": "perf-opening-1-17",
+              "host": {
+                "kind": "wall",
+                "id": "wall-msapzpmk3jc435fwkalz"
+              }
+            },
+            {
+              "id": "perf-opening-1-18",
+              "host": {
+                "kind": "wall",
+                "id": "wall-fod5jki6dtvn5dz74bt7"
+              }
+            },
+            {
+              "id": "perf-opening-1-19",
+              "host": {
+                "kind": "wall",
+                "id": "wall-tfqi3t5if2u2iu5fjbm6"
+              }
+            },
+            {
+              "id": "perf-opening-1-20",
+              "host": {
+                "kind": "wall",
+                "id": "wall-wmv74ivao5ifczq2plj6"
+              }
+            },
+            {
+              "id": "perf-opening-1-21",
+              "host": {
+                "kind": "wall",
+                "id": "wall-tex3jliffn2umiztux4g"
+              }
+            },
+            {
+              "id": "perf-opening-1-22",
+              "host": {
+                "kind": "wall",
+                "id": "wall-iexm2ua2zu5clcni6wa2"
+              }
+            },
+            {
+              "id": "perf-opening-1-23",
+              "host": {
+                "kind": "wall",
+                "id": "wall-wgxmpxdvga2gfu7brpj7"
+              }
+            },
+            {
+              "id": "perf-opening-1-24",
+              "host": {
+                "kind": "wall",
+                "id": "wall-6iuhwmrzyfy6i4mko5lz"
+              }
+            },
+            {
+              "id": "perf-opening-1-25",
+              "host": {
+                "kind": "wall",
+                "id": "wall-qmvph2ug5qhc44evp2sp"
+              }
+            },
+            {
+              "id": "perf-opening-1-26",
+              "host": {
+                "kind": "wall",
+                "id": "wall-nugqxcu2y6uzwrr5ca7l"
+              }
+            },
+            {
+              "id": "perf-opening-1-27",
+              "host": {
+                "kind": "wall",
+                "id": "wall-nq2n5eh7dxhag2nwglo5"
+              }
+            },
+            {
+              "id": "perf-opening-1-28",
+              "host": {
+                "kind": "wall",
+                "id": "wall-pibkxaggpz5mlqofz63j"
+              }
+            },
+            {
+              "id": "perf-opening-1-29",
+              "host": {
+                "kind": "wall",
+                "id": "wall-q7qhq4eu22py7erhcfst"
+              }
+            },
+            {
+              "id": "perf-opening-1-30",
+              "host": {
+                "kind": "wall",
+                "id": "wall-flpyikr5wfa7eqadyv2y"
+              }
+            },
+            {
+              "id": "perf-opening-1-31",
+              "host": {
+                "kind": "wall",
+                "id": "wall-5nvxrayipvlht2s457hp"
+              }
+            },
+            {
+              "id": "perf-opening-1-32",
+              "host": {
+                "kind": "wall",
+                "id": "wall-y3rzaf3dxc4cpgg6ewof"
+              }
+            }
+          ],
+          "partitions": [
+            "perf-partition-1-0",
+            "perf-partition-1-1",
+            "perf-partition-1-2",
+            "perf-partition-1-3",
+            "perf-partition-1-4",
+            "perf-partition-1-5",
+            "perf-partition-1-6",
+            "perf-partition-1-7",
+            "perf-partition-1-8",
+            "perf-partition-1-9",
+            "perf-partition-1-10",
+            "perf-partition-1-11",
+            "perf-partition-1-12",
+            "perf-partition-1-13",
+            "perf-partition-1-14",
+            "perf-partition-1-15",
+            "perf-partition-1-16",
+            "perf-partition-1-17",
+            "perf-partition-1-18",
+            "perf-partition-1-19"
+          ]
+        },
+        {
+          "space": "perf-floor-3",
+          "catalogue": [
+            "wall-pprmmsvkav4idluj7bkz",
+            "wall-vjcmwfurdqd255xc2ruw",
+            "wall-thdmf3gbwfrtt7gke423",
+            "wall-rfixmffzqp2ta36y6267",
+            "wall-tfcniesw3fotf4i5btg7",
+            "wall-jn4ijvyzaur7e4xy26xk",
+            "wall-sadm4baqszhkxjhey7jr",
+            "wall-sx5gekzfoo7znz6rwrzj",
+            "wall-vmtg54ski6fl23nz7kye",
+            "wall-wf4jcsgi5bwrkbbqnsf2",
+            "wall-mfrrpnv2yz2q2phs7hxj",
+            "wall-4yktxq6gb5ojvchlocld",
+            "wall-6uknmq73x2ig674nzp3s",
+            "wall-n4vyqr5cy263aonwyqkp",
+            "wall-egjsnaymlm6rkmt3wxiy",
+            "wall-x3auuwmmuqkn7caxidj3",
+            "wall-dvo6kt7g3bx7kn3cbtlb",
+            "wall-v7hgh6mlj6xyl3pbgpi6",
+            "wall-mmyitnaghuklaeumaoaa",
+            "wall-gc66q66ocx5uixbttbsw",
+            "wall-6qhznrwre544nbrkwhqn",
+            "wall-t2boshty6mae75kuvltt",
+            "wall-fiszney6lk323flwqmvk",
+            "wall-fsafn6y5usdnaoygbxpx",
+            "wall-5eyv52dnnultebpy3ats",
+            "wall-pniwttprohkghdpxlvmz",
+            "wall-dvujmiw77wtr62wy5clt",
+            "wall-27iqqvp2nr3l4a3fcylj",
+            "wall-t625efnmxnab54qp27lk",
+            "wall-jsfk7ozo2rs2motapeeo",
+            "wall-nhot2l6hqvqaewm7m7vv",
+            "wall-mfkrdpqu5nvfw75ebgns",
+            "wall-ovxjgiyflycpl3h6bjrn",
+            "wall-ebb5olhh2li32ymh6fb7",
+            "wall-ntqke2amkqlfckkx7trf",
+            "wall-rz5sgdcpvrrzhalcgbfi",
+            "wall-4a2d6zpcu53hv3fhzuxx",
+            "wall-d2nxxuh5h4ipwzbd3poe",
+            "wall-bvgbjaptxz5o7xuabh7g",
+            "wall-qnw2vispcuemi4lixczx",
+            "wall-cd2pnukvej5n5kcbfuxd",
+            "wall-svyxjlid2kcd6wrkittc",
+            "wall-ezrzqaufaob477re3jxb",
+            "wall-szx33rpxpnlakx7hqoll",
+            "wall-273c2k7y35auuke4uokz",
+            "wall-vcm2awyzalohdvbtrozf",
+            "wall-o5kj5eki5s63jgumolnb",
+            "wall-hnj7ptwplghijnkfcw3f",
+            "wall-j4luhhivzg2cy6fadahi"
+          ],
+          "rooms": [
+            {
+              "id": "perf-room-2-0",
+              "walls": [
+                "wall-vjcmwfurdqd255xc2ruw",
+                "wall-wf4jcsgi5bwrkbbqnsf2",
+                "wall-rfixmffzqp2ta36y6267",
+                "wall-pprmmsvkav4idluj7bkz"
+              ]
+            },
+            {
+              "id": "perf-room-2-1",
+              "walls": [
+                "wall-mfrrpnv2yz2q2phs7hxj",
+                "wall-mmyitnaghuklaeumaoaa",
+                "wall-6uknmq73x2ig674nzp3s",
+                "wall-wf4jcsgi5bwrkbbqnsf2"
+              ]
+            },
+            {
+              "id": "perf-room-2-2",
+              "walls": [
+                "wall-gc66q66ocx5uixbttbsw",
+                "wall-27iqqvp2nr3l4a3fcylj",
+                "wall-t2boshty6mae75kuvltt",
+                "wall-mmyitnaghuklaeumaoaa"
+              ]
+            },
+            {
+              "id": "perf-room-2-3",
+              "walls": [
+                "wall-t625efnmxnab54qp27lk",
+                "wall-4a2d6zpcu53hv3fhzuxx",
+                "wall-nhot2l6hqvqaewm7m7vv",
+                "wall-27iqqvp2nr3l4a3fcylj"
+              ]
+            },
+            {
+              "id": "perf-room-2-4",
+              "walls": [
+                "wall-d2nxxuh5h4ipwzbd3poe",
+                "wall-vcm2awyzalohdvbtrozf",
+                "wall-qnw2vispcuemi4lixczx",
+                "wall-4a2d6zpcu53hv3fhzuxx"
+              ]
+            },
+            {
+              "id": "perf-room-2-5",
+              "walls": [
+                "wall-rfixmffzqp2ta36y6267",
+                "wall-4yktxq6gb5ojvchlocld",
+                "wall-jn4ijvyzaur7e4xy26xk",
+                "wall-thdmf3gbwfrtt7gke423"
+              ]
+            },
+            {
+              "id": "perf-room-2-6",
+              "walls": [
+                "wall-6uknmq73x2ig674nzp3s",
+                "wall-6qhznrwre544nbrkwhqn",
+                "wall-egjsnaymlm6rkmt3wxiy",
+                "wall-4yktxq6gb5ojvchlocld"
+              ]
+            },
+            {
+              "id": "perf-room-2-7",
+              "walls": [
+                "wall-t2boshty6mae75kuvltt",
+                "wall-jsfk7ozo2rs2motapeeo",
+                "wall-fsafn6y5usdnaoygbxpx",
+                "wall-6qhznrwre544nbrkwhqn"
+              ]
+            },
+            {
+              "id": "perf-room-2-8",
+              "walls": [
+                "wall-nhot2l6hqvqaewm7m7vv",
+                "wall-bvgbjaptxz5o7xuabh7g",
+                "wall-ovxjgiyflycpl3h6bjrn",
+                "wall-jsfk7ozo2rs2motapeeo"
+              ]
+            },
+            {
+              "id": "perf-room-2-9",
+              "walls": [
+                "wall-qnw2vispcuemi4lixczx",
+                "wall-o5kj5eki5s63jgumolnb",
+                "wall-svyxjlid2kcd6wrkittc",
+                "wall-bvgbjaptxz5o7xuabh7g"
+              ]
+            },
+            {
+              "id": "perf-room-2-10",
+              "walls": [
+                "wall-jn4ijvyzaur7e4xy26xk",
+                "wall-n4vyqr5cy263aonwyqkp",
+                "wall-sx5gekzfoo7znz6rwrzj",
+                "wall-tfcniesw3fotf4i5btg7"
+              ]
+            },
+            {
+              "id": "perf-room-2-11",
+              "walls": [
+                "wall-egjsnaymlm6rkmt3wxiy",
+                "wall-fiszney6lk323flwqmvk",
+                "wall-dvo6kt7g3bx7kn3cbtlb",
+                "wall-n4vyqr5cy263aonwyqkp"
+              ]
+            },
+            {
+              "id": "perf-room-2-12",
+              "walls": [
+                "wall-fsafn6y5usdnaoygbxpx",
+                "wall-mfkrdpqu5nvfw75ebgns",
+                "wall-pniwttprohkghdpxlvmz",
+                "wall-fiszney6lk323flwqmvk"
+              ]
+            },
+            {
+              "id": "perf-room-2-13",
+              "walls": [
+                "wall-ovxjgiyflycpl3h6bjrn",
+                "wall-cd2pnukvej5n5kcbfuxd",
+                "wall-ntqke2amkqlfckkx7trf",
+                "wall-mfkrdpqu5nvfw75ebgns"
+              ]
+            },
+            {
+              "id": "perf-room-2-14",
+              "walls": [
+                "wall-svyxjlid2kcd6wrkittc",
+                "wall-hnj7ptwplghijnkfcw3f",
+                "wall-szx33rpxpnlakx7hqoll",
+                "wall-cd2pnukvej5n5kcbfuxd"
+              ]
+            },
+            {
+              "id": "perf-room-2-15",
+              "walls": [
+                "wall-sx5gekzfoo7znz6rwrzj",
+                "wall-x3auuwmmuqkn7caxidj3",
+                "wall-vmtg54ski6fl23nz7kye",
+                "wall-sadm4baqszhkxjhey7jr"
+              ]
+            },
+            {
+              "id": "perf-room-2-16",
+              "walls": [
+                "wall-dvo6kt7g3bx7kn3cbtlb",
+                "wall-5eyv52dnnultebpy3ats",
+                "wall-v7hgh6mlj6xyl3pbgpi6",
+                "wall-x3auuwmmuqkn7caxidj3"
+              ]
+            },
+            {
+              "id": "perf-room-2-17",
+              "walls": [
+                "wall-pniwttprohkghdpxlvmz",
+                "wall-ebb5olhh2li32ymh6fb7",
+                "wall-dvujmiw77wtr62wy5clt",
+                "wall-5eyv52dnnultebpy3ats"
+              ]
+            },
+            {
+              "id": "perf-room-2-18",
+              "walls": [
+                "wall-ntqke2amkqlfckkx7trf",
+                "wall-ezrzqaufaob477re3jxb",
+                "wall-rz5sgdcpvrrzhalcgbfi",
+                "wall-ebb5olhh2li32ymh6fb7"
+              ]
+            },
+            {
+              "id": "perf-room-2-19",
+              "walls": [
+                "wall-szx33rpxpnlakx7hqoll",
+                "wall-j4luhhivzg2cy6fadahi",
+                "wall-273c2k7y35auuke4uokz",
+                "wall-ezrzqaufaob477re3jxb"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "perf-opening-2-0",
+              "host": {
+                "kind": "wall",
+                "id": "wall-vjcmwfurdqd255xc2ruw"
+              }
+            },
+            {
+              "id": "perf-opening-2-1",
+              "host": {
+                "kind": "wall",
+                "id": "wall-wf4jcsgi5bwrkbbqnsf2"
+              }
+            },
+            {
+              "id": "perf-opening-2-2",
+              "host": {
+                "kind": "wall",
+                "id": "wall-rfixmffzqp2ta36y6267"
+              }
+            },
+            {
+              "id": "perf-opening-2-3",
+              "host": {
+                "kind": "wall",
+                "id": "wall-pprmmsvkav4idluj7bkz"
+              }
+            },
+            {
+              "id": "perf-opening-2-4",
+              "host": {
+                "kind": "wall",
+                "id": "wall-mfrrpnv2yz2q2phs7hxj"
+              }
+            },
+            {
+              "id": "perf-opening-2-5",
+              "host": {
+                "kind": "wall",
+                "id": "wall-mmyitnaghuklaeumaoaa"
+              }
+            },
+            {
+              "id": "perf-opening-2-6",
+              "host": {
+                "kind": "wall",
+                "id": "wall-6uknmq73x2ig674nzp3s"
+              }
+            },
+            {
+              "id": "perf-opening-2-7",
+              "host": {
+                "kind": "wall",
+                "id": "wall-gc66q66ocx5uixbttbsw"
+              }
+            },
+            {
+              "id": "perf-opening-2-8",
+              "host": {
+                "kind": "wall",
+                "id": "wall-27iqqvp2nr3l4a3fcylj"
+              }
+            },
+            {
+              "id": "perf-opening-2-9",
+              "host": {
+                "kind": "wall",
+                "id": "wall-t2boshty6mae75kuvltt"
+              }
+            },
+            {
+              "id": "perf-opening-2-10",
+              "host": {
+                "kind": "wall",
+                "id": "wall-t625efnmxnab54qp27lk"
+              }
+            },
+            {
+              "id": "perf-opening-2-11",
+              "host": {
+                "kind": "wall",
+                "id": "wall-4a2d6zpcu53hv3fhzuxx"
+              }
+            },
+            {
+              "id": "perf-opening-2-12",
+              "host": {
+                "kind": "wall",
+                "id": "wall-nhot2l6hqvqaewm7m7vv"
+              }
+            },
+            {
+              "id": "perf-opening-2-13",
+              "host": {
+                "kind": "wall",
+                "id": "wall-d2nxxuh5h4ipwzbd3poe"
+              }
+            },
+            {
+              "id": "perf-opening-2-14",
+              "host": {
+                "kind": "wall",
+                "id": "wall-vcm2awyzalohdvbtrozf"
+              }
+            },
+            {
+              "id": "perf-opening-2-15",
+              "host": {
+                "kind": "wall",
+                "id": "wall-qnw2vispcuemi4lixczx"
+              }
+            },
+            {
+              "id": "perf-opening-2-16",
+              "host": {
+                "kind": "wall",
+                "id": "wall-4yktxq6gb5ojvchlocld"
+              }
+            },
+            {
+              "id": "perf-opening-2-17",
+              "host": {
+                "kind": "wall",
+                "id": "wall-jn4ijvyzaur7e4xy26xk"
+              }
+            },
+            {
+              "id": "perf-opening-2-18",
+              "host": {
+                "kind": "wall",
+                "id": "wall-thdmf3gbwfrtt7gke423"
+              }
+            },
+            {
+              "id": "perf-opening-2-19",
+              "host": {
+                "kind": "wall",
+                "id": "wall-6qhznrwre544nbrkwhqn"
+              }
+            },
+            {
+              "id": "perf-opening-2-20",
+              "host": {
+                "kind": "wall",
+                "id": "wall-egjsnaymlm6rkmt3wxiy"
+              }
+            },
+            {
+              "id": "perf-opening-2-21",
+              "host": {
+                "kind": "wall",
+                "id": "wall-jsfk7ozo2rs2motapeeo"
+              }
+            },
+            {
+              "id": "perf-opening-2-22",
+              "host": {
+                "kind": "wall",
+                "id": "wall-fsafn6y5usdnaoygbxpx"
+              }
+            },
+            {
+              "id": "perf-opening-2-23",
+              "host": {
+                "kind": "wall",
+                "id": "wall-bvgbjaptxz5o7xuabh7g"
+              }
+            },
+            {
+              "id": "perf-opening-2-24",
+              "host": {
+                "kind": "wall",
+                "id": "wall-ovxjgiyflycpl3h6bjrn"
+              }
+            },
+            {
+              "id": "perf-opening-2-25",
+              "host": {
+                "kind": "wall",
+                "id": "wall-o5kj5eki5s63jgumolnb"
+              }
+            },
+            {
+              "id": "perf-opening-2-26",
+              "host": {
+                "kind": "wall",
+                "id": "wall-svyxjlid2kcd6wrkittc"
+              }
+            },
+            {
+              "id": "perf-opening-2-27",
+              "host": {
+                "kind": "wall",
+                "id": "wall-n4vyqr5cy263aonwyqkp"
+              }
+            },
+            {
+              "id": "perf-opening-2-28",
+              "host": {
+                "kind": "wall",
+                "id": "wall-sx5gekzfoo7znz6rwrzj"
+              }
+            },
+            {
+              "id": "perf-opening-2-29",
+              "host": {
+                "kind": "wall",
+                "id": "wall-tfcniesw3fotf4i5btg7"
+              }
+            },
+            {
+              "id": "perf-opening-2-30",
+              "host": {
+                "kind": "wall",
+                "id": "wall-fiszney6lk323flwqmvk"
+              }
+            },
+            {
+              "id": "perf-opening-2-31",
+              "host": {
+                "kind": "wall",
+                "id": "wall-dvo6kt7g3bx7kn3cbtlb"
+              }
+            },
+            {
+              "id": "perf-opening-2-32",
+              "host": {
+                "kind": "wall",
+                "id": "wall-mfkrdpqu5nvfw75ebgns"
+              }
+            }
+          ],
+          "partitions": [
+            "perf-partition-2-0",
+            "perf-partition-2-1",
+            "perf-partition-2-2",
+            "perf-partition-2-3",
+            "perf-partition-2-4",
+            "perf-partition-2-5",
+            "perf-partition-2-6",
+            "perf-partition-2-7",
+            "perf-partition-2-8",
+            "perf-partition-2-9",
+            "perf-partition-2-10",
+            "perf-partition-2-11",
+            "perf-partition-2-12",
+            "perf-partition-2-13",
+            "perf-partition-2-14",
+            "perf-partition-2-15",
+            "perf-partition-2-16",
+            "perf-partition-2-17",
+            "perf-partition-2-18",
+            "perf-partition-2-19"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "demo/fixtures/v8-draft-regression.mjs:makeV8DraftRegressionFixture",
+      "fingerprint": "a38647c676f79c09db1ccb6df4c298573eed7f31d8a982231de946caa6da6273",
+      "ok": true,
+      "identity": [
+        {
+          "space": "space-314-dense",
+          "catalogue": [
+            "wall-314-005",
+            "wall-314-001",
+            "wall-314-004",
+            "wall-314-003",
+            "wall-314-002",
+            "wall-314-006",
+            "wall-314-009",
+            "wall-314-008",
+            "wall-314-007",
+            "wall-314-010",
+            "wall-314-013",
+            "wall-314-012",
+            "wall-314-011",
+            "wall-314-014",
+            "wall-314-017",
+            "wall-314-016",
+            "wall-314-015",
+            "wall-314-018",
+            "wall-314-020",
+            "wall-314-019",
+            "wall-314-021",
+            "wall-314-023",
+            "wall-314-022",
+            "wall-314-024",
+            "wall-314-026",
+            "wall-314-025",
+            "wall-314-027",
+            "wall-314-029",
+            "wall-314-028",
+            "wall-314-030",
+            "wall-314-032",
+            "wall-314-031",
+            "wall-314-033",
+            "wall-314-035",
+            "wall-314-034",
+            "wall-314-036",
+            "wall-314-038",
+            "wall-314-037",
+            "wall-314-039",
+            "wall-314-041",
+            "wall-314-040",
+            "wall-314-042",
+            "wall-314-044",
+            "wall-314-043"
+          ],
+          "rooms": [
+            {
+              "id": "room-314-01",
+              "walls": [
+                "wall-314-001",
+                "wall-314-002",
+                "wall-314-003",
+                "wall-314-004",
+                "wall-314-005"
+              ]
+            },
+            {
+              "id": "room-314-02",
+              "walls": [
+                "wall-314-006",
+                "wall-314-007",
+                "wall-314-008",
+                "wall-314-009",
+                "wall-314-002"
+              ]
+            },
+            {
+              "id": "room-314-03",
+              "walls": [
+                "wall-314-010",
+                "wall-314-011",
+                "wall-314-012",
+                "wall-314-013",
+                "wall-314-007"
+              ]
+            },
+            {
+              "id": "room-314-04",
+              "walls": [
+                "wall-314-014",
+                "wall-314-015",
+                "wall-314-016",
+                "wall-314-017",
+                "wall-314-011"
+              ]
+            },
+            {
+              "id": "room-314-05",
+              "walls": [
+                "wall-314-018",
+                "wall-314-019",
+                "wall-314-020",
+                "wall-314-015"
+              ]
+            },
+            {
+              "id": "room-314-06",
+              "walls": [
+                "wall-314-021",
+                "wall-314-022",
+                "wall-314-023",
+                "wall-314-019"
+              ]
+            },
+            {
+              "id": "room-314-07",
+              "walls": [
+                "wall-314-024",
+                "wall-314-025",
+                "wall-314-026",
+                "wall-314-022"
+              ]
+            },
+            {
+              "id": "room-314-08",
+              "walls": [
+                "wall-314-027",
+                "wall-314-028",
+                "wall-314-029",
+                "wall-314-025"
+              ]
+            },
+            {
+              "id": "room-314-09",
+              "walls": [
+                "wall-314-030",
+                "wall-314-031",
+                "wall-314-032",
+                "wall-314-028"
+              ]
+            },
+            {
+              "id": "room-314-10",
+              "walls": [
+                "wall-314-033",
+                "wall-314-034",
+                "wall-314-035",
+                "wall-314-031"
+              ]
+            },
+            {
+              "id": "room-314-11",
+              "walls": [
+                "wall-314-036",
+                "wall-314-037",
+                "wall-314-038",
+                "wall-314-034"
+              ]
+            },
+            {
+              "id": "room-314-12",
+              "walls": [
+                "wall-314-039",
+                "wall-314-040",
+                "wall-314-041",
+                "wall-314-037"
+              ]
+            },
+            {
+              "id": "room-314-13",
+              "walls": [
+                "wall-314-042",
+                "wall-314-043",
+                "wall-314-044",
+                "wall-314-040"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "partition-314-01",
+            "partition-314-02",
+            "partition-314-03",
+            "partition-314-04",
+            "partition-314-05",
+            "partition-314-06",
+            "partition-314-07",
+            "partition-314-08",
+            "partition-314-09",
+            "partition-314-10",
+            "partition-314-11",
+            "partition-314-12",
+            "partition-314-13",
+            "partition-314-14",
+            "partition-314-15",
+            "partition-314-16",
+            "partition-314-17",
+            "partition-314-18",
+            "partition-314-19",
+            "partition-314-20",
+            "partition-314-21",
+            "partition-314-22",
+            "partition-314-23",
+            "partition-314-24",
+            "wall-314-known-draft"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "demo/fixtures/visual-matrix.mjs:makeVisualMatrixFixture/config",
+      "fingerprint": "29960088992786b51afd1b46bbe9f5f3cd6cc27e2db4da8cc3e1cc17e4fc873e",
+      "ok": true,
+      "identity": [
+        {
+          "space": "golden-geometry",
+          "catalogue": [
+            "wall-234wojzxcmub2itpixmi",
+            "wall-4xqim4uuxt2hyi4fhrko",
+            "wall-f36sijjyusy7axuflnak",
+            "wall-ho2pudi6xixfy4arlrfr",
+            "wall-tnbeif2wbwiyr6jicbmv",
+            "wall-y3aen57adebtt6s2slvu",
+            "wall-izxhkrx3naqu33unzfb4",
+            "wall-jpr7xmfel3obl54g7bxd",
+            "wall-yylsmsx5pmmwkz7irprk",
+            "wall-y4pcrvfw3sb5myiywcxs",
+            "wall-gberlzbc5ksacvvuznpd",
+            "wall-6p3anhzhdjqjpmzdioan",
+            "wall-qnwfauwva5cvmpylpkcr",
+            "wall-yxvqj3kax7emfggpmfhq",
+            "wall-nq7yhcebrw5xz6wdiocu",
+            "wall-cvrzo4bz2442fy3yhpre",
+            "wall-6keyaycibpqabuvyzqsi",
+            "wall-twi5ghx7cqgu4hwnt6nw"
+          ],
+          "rooms": [
+            {
+              "id": "geo-nw",
+              "walls": [
+                "wall-4xqim4uuxt2hyi4fhrko",
+                "wall-y3aen57adebtt6s2slvu",
+                "wall-jpr7xmfel3obl54g7bxd",
+                "wall-yylsmsx5pmmwkz7irprk",
+                "wall-ho2pudi6xixfy4arlrfr",
+                "wall-234wojzxcmub2itpixmi"
+              ]
+            },
+            {
+              "id": "geo-ne",
+              "walls": [
+                "wall-izxhkrx3naqu33unzfb4",
+                "wall-6keyaycibpqabuvyzqsi",
+                "wall-gberlzbc5ksacvvuznpd",
+                "wall-yylsmsx5pmmwkz7irprk",
+                "wall-jpr7xmfel3obl54g7bxd",
+                "wall-y3aen57adebtt6s2slvu"
+              ]
+            },
+            {
+              "id": "geo-sw",
+              "walls": [
+                "wall-ho2pudi6xixfy4arlrfr",
+                "wall-y4pcrvfw3sb5myiywcxs",
+                "wall-tnbeif2wbwiyr6jicbmv",
+                "wall-f36sijjyusy7axuflnak"
+              ]
+            },
+            {
+              "id": "geo-se",
+              "walls": [
+                "wall-gberlzbc5ksacvvuznpd",
+                "wall-twi5ghx7cqgu4hwnt6nw",
+                "wall-6p3anhzhdjqjpmzdioan",
+                "wall-y4pcrvfw3sb5myiywcxs"
+              ]
+            },
+            {
+              "id": "geo-nested",
+              "walls": [
+                "wall-nq7yhcebrw5xz6wdiocu",
+                "wall-cvrzo4bz2442fy3yhpre",
+                "wall-yxvqj3kax7emfggpmfhq",
+                "wall-qnwfauwva5cvmpylpkcr"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "geo-window",
+              "host": {
+                "kind": "wall",
+                "id": "wall-4xqim4uuxt2hyi4fhrko"
+              }
+            },
+            {
+              "id": "geo-door",
+              "host": {
+                "kind": "wall",
+                "id": "wall-yylsmsx5pmmwkz7irprk"
+              }
+            },
+            {
+              "id": "geo-gate",
+              "host": {
+                "kind": "wall",
+                "id": "wall-6p3anhzhdjqjpmzdioan"
+              }
+            },
+            {
+              "id": "geo-diagonal-window",
+              "host": {
+                "kind": "wall",
+                "id": "wall-nq7yhcebrw5xz6wdiocu"
+              }
+            }
+          ],
+          "partitions": [
+            "geo-partition-h",
+            "geo-partition-v"
+          ]
+        },
+        {
+          "space": "golden-lighting",
+          "catalogue": [
+            "wall-yelrzrqcufu3yvswihmt",
+            "wall-sl7eewmku44wdzltoxsn",
+            "wall-y6omndwig3vfx5ysy7ga",
+            "wall-c7epzaor4sw4zyr2tarl",
+            "wall-skh5bxslmjjwi2yx34fm",
+            "wall-cldcpera6bj22trb2qrr",
+            "wall-cebm26jxie4vzdhyvgom"
+          ],
+          "rooms": [
+            {
+              "id": "light-left",
+              "walls": [
+                "wall-sl7eewmku44wdzltoxsn",
+                "wall-c7epzaor4sw4zyr2tarl",
+                "wall-y6omndwig3vfx5ysy7ga",
+                "wall-yelrzrqcufu3yvswihmt"
+              ]
+            },
+            {
+              "id": "light-right",
+              "walls": [
+                "wall-skh5bxslmjjwi2yx34fm",
+                "wall-cebm26jxie4vzdhyvgom",
+                "wall-cldcpera6bj22trb2qrr",
+                "wall-c7epzaor4sw4zyr2tarl"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "light-window",
+              "host": {
+                "kind": "wall",
+                "id": "wall-sl7eewmku44wdzltoxsn"
+              }
+            },
+            {
+              "id": "light-door",
+              "host": {
+                "kind": "wall",
+                "id": "wall-c7epzaor4sw4zyr2tarl"
+              }
+            },
+            {
+              "id": "light-gate",
+              "host": {
+                "kind": "wall",
+                "id": "wall-cldcpera6bj22trb2qrr"
+              }
+            }
+          ],
+          "partitions": [
+            "light-partition"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "demo/fixtures/wall-draw-click.mjs:makeWallDrawClickFixture",
+      "fingerprint": "83fa7ba2ee03bbb34ab893991be0a3abfc878bb4bc8946b8c0a8af9d5ca16e5f",
+      "ok": true,
+      "identity": [
+        {
+          "space": "edited",
+          "catalogue": [
+            "base-0-wall-3",
+            "base-0-wall-0",
+            "base-0-wall-2",
+            "base-4-wall-3",
+            "base-4-wall-0",
+            "base-4-wall-2",
+            "base-8-wall-3",
+            "base-8-wall-0",
+            "base-8-wall-2",
+            "base-0-wall-1",
+            "base-4-wall-1",
+            "base-8-wall-1",
+            "base-1-wall-3",
+            "base-1-wall-0",
+            "base-1-wall-2",
+            "base-5-wall-3",
+            "base-5-wall-0",
+            "base-5-wall-2",
+            "base-9-wall-3",
+            "base-9-wall-0",
+            "base-9-wall-2",
+            "base-1-wall-1",
+            "base-5-wall-1",
+            "base-9-wall-1",
+            "base-2-wall-3",
+            "base-2-wall-0",
+            "base-2-wall-2",
+            "base-6-wall-3",
+            "base-6-wall-0",
+            "base-6-wall-2",
+            "base-10-wall-3",
+            "base-10-wall-0",
+            "base-10-wall-2",
+            "base-2-wall-1",
+            "base-6-wall-1",
+            "base-10-wall-1",
+            "base-3-wall-3",
+            "base-3-wall-0",
+            "base-3-wall-2",
+            "base-7-wall-3",
+            "base-7-wall-0",
+            "base-7-wall-2",
+            "base-11-wall-3",
+            "base-11-wall-0",
+            "base-11-wall-2",
+            "base-3-wall-1",
+            "base-7-wall-1",
+            "base-11-wall-1"
+          ],
+          "rooms": [
+            {
+              "id": "base-0",
+              "walls": [
+                "base-0-wall-0",
+                "base-0-wall-1",
+                "base-0-wall-2",
+                "base-0-wall-3"
+              ]
+            },
+            {
+              "id": "base-1",
+              "walls": [
+                "base-1-wall-0",
+                "base-1-wall-1",
+                "base-1-wall-2",
+                "base-1-wall-3"
+              ]
+            },
+            {
+              "id": "base-2",
+              "walls": [
+                "base-2-wall-0",
+                "base-2-wall-1",
+                "base-2-wall-2",
+                "base-2-wall-3"
+              ]
+            },
+            {
+              "id": "base-3",
+              "walls": [
+                "base-3-wall-0",
+                "base-3-wall-1",
+                "base-3-wall-2",
+                "base-3-wall-3"
+              ]
+            },
+            {
+              "id": "base-4",
+              "walls": [
+                "base-4-wall-0",
+                "base-4-wall-1",
+                "base-4-wall-2",
+                "base-4-wall-3"
+              ]
+            },
+            {
+              "id": "base-5",
+              "walls": [
+                "base-5-wall-0",
+                "base-5-wall-1",
+                "base-5-wall-2",
+                "base-5-wall-3"
+              ]
+            },
+            {
+              "id": "base-6",
+              "walls": [
+                "base-6-wall-0",
+                "base-6-wall-1",
+                "base-6-wall-2",
+                "base-6-wall-3"
+              ]
+            },
+            {
+              "id": "base-7",
+              "walls": [
+                "base-7-wall-0",
+                "base-7-wall-1",
+                "base-7-wall-2",
+                "base-7-wall-3"
+              ]
+            },
+            {
+              "id": "base-8",
+              "walls": [
+                "base-8-wall-0",
+                "base-8-wall-1",
+                "base-8-wall-2",
+                "base-8-wall-3"
+              ]
+            },
+            {
+              "id": "base-9",
+              "walls": [
+                "base-9-wall-0",
+                "base-9-wall-1",
+                "base-9-wall-2",
+                "base-9-wall-3"
+              ]
+            },
+            {
+              "id": "base-10",
+              "walls": [
+                "base-10-wall-0",
+                "base-10-wall-1",
+                "base-10-wall-2",
+                "base-10-wall-3"
+              ]
+            },
+            {
+              "id": "base-11",
+              "walls": [
+                "base-11-wall-0",
+                "base-11-wall-1",
+                "base-11-wall-2",
+                "base-11-wall-3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "saved-partition-0-0",
+            "saved-partition-0-1",
+            "saved-partition-1-0",
+            "saved-partition-1-1",
+            "saved-partition-2-0",
+            "saved-partition-2-1",
+            "saved-partition-3-0",
+            "saved-partition-3-1"
+          ]
+        },
+        {
+          "space": "other-0",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "other-1",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "other-2",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "other-3",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "demo/srv/demo.html:CFG",
+      "fingerprint": "08a2265c231c34ae51c8ab5c5c66988c23c7705763e5af91797d903caba70e71",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f1",
+          "catalogue": [
+            "wall-j4tinowhn5qvi3ptjaqx",
+            "wall-ebqckrgyknzoyxour6ma",
+            "wall-hknz3lxmafwqadrlxdgv",
+            "wall-6cwdkbjitb4pr5lil2y3",
+            "wall-iggbhtpjyhpg2h4vo4ly",
+            "wall-mfz3wezwj2ra7v4qqsxj",
+            "wall-n6u5fc3266ipbktgry2u",
+            "wall-6j7em53qf5g6pbevrohn",
+            "wall-l4firgj7zvk55kk5kzdo",
+            "wall-yep6whtnzai3tstewpsv",
+            "wall-hi3ppxtjhntloy672z7i",
+            "wall-2i4ff7lh3vpberuw33vt",
+            "wall-aodmsai7s76qn24auky6"
+          ],
+          "rooms": [
+            {
+              "id": "r1",
+              "walls": [
+                "wall-ebqckrgyknzoyxour6ma",
+                "wall-mfz3wezwj2ra7v4qqsxj",
+                "wall-6j7em53qf5g6pbevrohn",
+                "wall-6cwdkbjitb4pr5lil2y3",
+                "wall-j4tinowhn5qvi3ptjaqx"
+              ]
+            },
+            {
+              "id": "r2",
+              "walls": [
+                "wall-n6u5fc3266ipbktgry2u",
+                "wall-2i4ff7lh3vpberuw33vt",
+                "wall-l4firgj7zvk55kk5kzdo",
+                "wall-mfz3wezwj2ra7v4qqsxj"
+              ]
+            },
+            {
+              "id": "r3",
+              "walls": [
+                "wall-l4firgj7zvk55kk5kzdo",
+                "wall-aodmsai7s76qn24auky6",
+                "wall-hi3ppxtjhntloy672z7i",
+                "wall-yep6whtnzai3tstewpsv",
+                "wall-6j7em53qf5g6pbevrohn"
+              ]
+            },
+            {
+              "id": "r4",
+              "walls": [
+                "wall-6cwdkbjitb4pr5lil2y3",
+                "wall-yep6whtnzai3tstewpsv",
+                "wall-iggbhtpjyhpg2h4vo4ly",
+                "wall-hknz3lxmafwqadrlxdgv"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "garden",
+          "catalogue": [
+            "wall-a5csv5mheywfaumy24ba",
+            "wall-jpbedbhckpnwtcvumkpa",
+            "wall-e3ic62lxmwbuvd3wsx56",
+            "wall-qjmttfllguxnhcuh34zb"
+          ],
+          "rooms": [
+            {
+              "id": "g1",
+              "walls": [
+                "wall-jpbedbhckpnwtcvumkpa",
+                "wall-qjmttfllguxnhcuh34zb",
+                "wall-e3ic62lxmwbuvd3wsx56",
+                "wall-a5csv5mheywfaumy24ba"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    }
+  ]
+}

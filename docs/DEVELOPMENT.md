@@ -405,6 +405,25 @@ for `model-invariants --config`; no user home is copied into fixtures.
 `python tests_backend/wall_node_parity.py` executes the common TS/Python
 fixture matrix, including atomized unsupported junctions, opening intervals,
 and independently proven inverse operations (not an optional skipped test).
+
+#845 makes this matrix mandatory in the existing `geometry_parity` job:
+`npx tsc -p tsconfig.junction-parity.json && node scripts/fix-test-build.mjs`,
+then both `junction_parity.py` and
+`wall_node_parity.py --build-dir=test-build/junction-parity`. Missing build,
+Node or loader material fails, never skips. The matrix adds pair/T/2×2-X/L,
+T-partition and shared-opening room plans on/off grid, complete candidate and
+cross-idempotence comparison, and exact Undo/Redo with browser `before_space`.
+`test/fixtures/845-wall-identity-parity.json` is the common D1–D6/number witness.
+`test/wall-identity-corpus.test.mjs` and its read-only helper enumerate nested
+JSON configs, exported demo factories and the actual stand CFG; the pre-change
+`845-wall-corpus-identities.json` passport records membership/input identity,
+catalogue order and room/opening references. It cannot auto-accept new configs.
+The same corpus is compared in Python. Incomplete current-model test fixtures
+pin only fresh UUID entropy in each runner; product randomness is unchanged.
+Source RED probes, independent negative corpus probes and static mutation
+readiness are distinct from nightly mutant execution. No snapshot/format/gesture
+change and no headless claim of live HA or real-GPU acceptance.
+
 The matrix includes realistic off-grid noisy T/X atoms and reversed endpoints,
 an unrelated collinear node beyond the finite carrier, and a forbidden exchange
 of two edges' connectivity at the same foreign point. Pure guards cover the

@@ -26,6 +26,34 @@ const segmentFor = (room, index, catalogue) => (
   catalogue.find((segment) => segment.id === room.wall_ids[index])
 );
 
+const identity845 = JSON.parse(readFileSync(
+  new URL('./fixtures/845-wall-identity-parity.json', import.meta.url), 'utf8',
+)).cases.filter(c => c.mode !== 'pure');
+
+test('#845 shared identity fixtures match the agreed TS/Python document', () => {
+  for (const c of identity845) {
+    const frozen = structuredClone(c.input);
+    if (!c.expected.ok) {
+      assert.throws(() => commitWallSegmentModel(c.input),
+        error => error instanceof WallSegmentModelError && error.reason === c.expected.reason, c.name);
+    } else {
+      const config = commitWallSegmentModel(c.input).config;
+      assert.deepEqual(config, c.expected.config, c.name);
+      assert.equal(JSON.stringify(commitWallSegmentModel(config).config), JSON.stringify(config), c.name);
+    }
+    assert.deepEqual(c.input, frozen, c.name + ': source stays exact');
+  }
+});
+
+test('#845 wall identity is independent of String.localeCompare', () => {
+  const original = String.prototype.localeCompare;
+  String.prototype.localeCompare = () => { throw Error('locale-dependent identity'); };
+  try {
+    for (const c of identity845.filter(c => c.expected.ok))
+      assert.deepEqual(commitWallSegmentModel(c.input).config, c.expected.config, c.name);
+  } finally { String.prototype.localeCompare = original; }
+});
+
 test('the #319 pair fixture matches the current initial migration byte for byte', () => {
   // Guards the fixture against drift: `sent` must stay exactly what the
   // current writer produces from `stored` (a v1.68.0-beta.2 document with one

@@ -2,6 +2,7 @@
  * The frozen structural graph deliberately ignores opening cuts and room-owner
  * multiplicity. Only the at-most-six incident rays change on pointermove. */
 import { GRID_STEP_N } from './canvas-constants';
+import { compareCodePoints as compare } from './codepoint-order';
 import { wallKey } from './wall-thickness';
 import type { OpeningCfg, PartitionCfg, RoomCfg, WallSegmentEntry, WallEntry } from './types';
 
@@ -41,14 +42,6 @@ const EPS = 1e-9;
 // predicate for grouping and ray ownership (the former dot-ray tolerance).
 const DIRECTION_EPS = Math.sqrt(2 * EPS - EPS * EPS);
 const parallel = (a: NodePoint, b: NodePoint): boolean => Math.abs(cross(a, b)) <= DIRECTION_EPS;
-// Match Python's Unicode code-point ordering, not the browser/OS locale.
-const compare = (a: string, b: string): number => {
-  const left = Array.from(a), right = Array.from(b);
-  for (let i = 0; i < Math.min(left.length, right.length); i++) {
-    const d = left[i].codePointAt(0)! - right[i].codePointAt(0)!; if (d) return d;
-  }
-  return left.length - right.length;
-};
 const copy = <T>(v: T): T => JSON.parse(JSON.stringify(v));
 const point = (v: number[]): NodePoint => [v[0], v[1]];
 const sub = (a: number[], b: number[]): NodePoint => [a[0] - b[0], a[1] - b[1]];
@@ -285,7 +278,8 @@ export function applyNodeMove(plan: NodeMovePlan, target: NodePoint, axisKey: st
   out.wall_segments = replace(out.wall_segments || [], 'wall');
   if (source.partitions) out.partitions = replace(out.partitions || [], 'partition');
   for (const room of out.rooms) {
-    if (!room.poly || !room.wall_ids) return { ok: false, reason: 'invalid' };
+    if (!room.poly || !room.wall_ids || room.wall_ids.length !== room.poly.length)
+      return { ok: false, reason: 'invalid' };
     const poly: number[][] = [], ids: string[] = [];
     for (let i = 0; i < room.poly.length; i++) {
       const id = room.wall_ids[i], changed = replacements.get(`wall:${id}`);
@@ -312,7 +306,7 @@ export function applyNodeMove(plan: NodeMovePlan, target: NodePoint, axisKey: st
   const originalIncident = new Set(n.walls.map(wallRef));
   for (const a of afterWalls.filter(w => changedIds.has(wallRef(w)))) for (const b of afterWalls) {
     if (a === b) continue;
-    const pair = [wallRef(a), wallRef(b)].sort().join('|');
+    const pair = [wallRef(a), wallRef(b)].sort(compare).join('|');
     if (checkedPairs.has(pair)) continue;
     checkedPairs.add(pair);
     const hit = intersection(a, b);

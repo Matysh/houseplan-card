@@ -318,8 +318,11 @@ test('§8.1 представители: каждая категория кажд
     geometry_parity: {
       source: ['src/junction-limits.ts', 'src/space-geometry.ts',
         'custom_components/houseplan/junction_limits.py', 'custom_components/houseplan/wall_segment_model.py'],
-      tests: ['tests_backend/junction_parity.py'],
-      fixtures: ['test/fixtures/junction-limits-parity.json'],
+      tests: ['tests_backend/junction_parity.py', 'tests_backend/wall_node_parity.py',
+        'test/helpers/wall-node-parity-runner.mjs', 'test/helpers/wall-identity-corpus.mjs'],
+      fixtures: ['test/fixtures/junction-limits-parity.json',
+        'test/fixtures/845-wall-identity-parity.json', 'test/fixtures/845-wall-corpus-identities.json',
+        'demo/fixtures/large-house.mjs', 'demo/srv/demo.html'],
       config: ['tsconfig.junction-parity.json', 'tsconfig.json'],
       toolchain: ['package.json', 'package-lock.json', '.nvmrc', '.python-version',
         '.github/workflows/validate.yml'],

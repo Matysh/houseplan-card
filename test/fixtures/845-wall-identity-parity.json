@@ -1,0 +1,6792 @@
+{
+  "schema": 1,
+  "baseline": "a7ee8e44f23e0f2b1e5b77cb73987bfb3116ba64",
+  "cases": [
+    {
+      "name": "D1-current",
+      "input": {
+        "spaces": [
+          {
+            "id": "f",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "rooms": [
+              {
+                "id": "r",
+                "name": "r",
+                "poly": [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    1
+                  ],
+                  [
+                    0,
+                    1
+                  ]
+                ],
+                "wall_ids": [
+                  "wall-5sqppn7smt32f2dufeow",
+                  "wall-pjuah2r2zdacweqgstpw",
+                  "wall-e36jci2c2iwzaxibvvcz",
+                  "wall-qakp7zk62ujmgswbukmi"
+                ]
+              }
+            ],
+            "future": {
+              "opaque": true
+            },
+            "wall_segments": [
+              {
+                "id": "wall-qakp7zk62ujmgswbukmi",
+                "a": [
+                  0,
+                  0
+                ],
+                "b": [
+                  0,
+                  1
+                ],
+                "cm": 0
+              },
+              {
+                "id": "wall-5sqppn7smt32f2dufeow",
+                "a": [
+                  0,
+                  0
+                ],
+                "b": [
+                  1,
+                  0
+                ],
+                "cm": 0
+              },
+              {
+                "id": "wall-e36jci2c2iwzaxibvvcz",
+                "a": [
+                  0,
+                  1
+                ],
+                "b": [
+                  1,
+                  1
+                ],
+                "cm": 0
+              },
+              {
+                "id": "wall-pjuah2r2zdacweqgstpw",
+                "a": [
+                  1,
+                  0
+                ],
+                "b": [
+                  1,
+                  1
+                ],
+                "cm": 0
+              }
+            ],
+            "stairs": [
+              {
+                "id": "wall-5sqppn7smt32f2dufeow",
+                "kind": "straight",
+                "x": 2,
+                "y": 2,
+                "length": 0.2,
+                "width": 0.05,
+                "angle": 0,
+                "direction": "forward"
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {},
+        "model_version": 10
+      },
+      "expected": {
+        "ok": false,
+        "reason": "duplicate-id"
+      }
+    },
+    {
+      "name": "D1-initial",
+      "input": {
+        "spaces": [
+          {
+            "id": "f",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "rooms": [
+              {
+                "id": "r",
+                "name": "r",
+                "poly": [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    1
+                  ],
+                  [
+                    0,
+                    1
+                  ]
+                ]
+              }
+            ],
+            "future": {
+              "opaque": true
+            },
+            "stairs": [
+              {
+                "id": "wall-5sqppn7smt32f2dufeow",
+                "kind": "straight",
+                "x": 2,
+                "y": 2,
+                "length": 0.2,
+                "width": 0.05,
+                "angle": 0,
+                "direction": "forward"
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "expected": {
+        "ok": true,
+        "config": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "r",
+                  "name": "r",
+                  "poly": [
+                    [
+                      0,
+                      0
+                    ],
+                    [
+                      1,
+                      0
+                    ],
+                    [
+                      1,
+                      1
+                    ],
+                    [
+                      0,
+                      1
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-5sqppn7smt32f2dufeow-2",
+                    "wall-pjuah2r2zdacweqgstpw",
+                    "wall-e36jci2c2iwzaxibvvcz",
+                    "wall-qakp7zk62ujmgswbukmi"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "stairs": [
+                {
+                  "id": "wall-5sqppn7smt32f2dufeow",
+                  "kind": "straight",
+                  "x": 2,
+                  "y": 2,
+                  "length": 0.2,
+                  "width": 0.05,
+                  "angle": 0,
+                  "direction": "forward"
+                }
+              ],
+              "wall_segments": [
+                {
+                  "id": "wall-qakp7zk62ujmgswbukmi",
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    0,
+                    1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-5sqppn7smt32f2dufeow-2",
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    0
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-e36jci2c2iwzaxibvvcz",
+                  "a": [
+                    0,
+                    1
+                  ],
+                  "b": [
+                    1,
+                    1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-pjuah2r2zdacweqgstpw",
+                  "a": [
+                    1,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    1
+                  ],
+                  "cm": 0
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        }
+      }
+    },
+    {
+      "name": "D1-draft",
+      "input": {
+        "spaces": [
+          {
+            "id": "f",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "rooms": [],
+            "future": {
+              "opaque": true
+            },
+            "stairs": [
+              {
+                "id": "seg-1",
+                "kind": "straight",
+                "x": 2,
+                "y": 2,
+                "length": 0.2,
+                "width": 0.05,
+                "angle": 0,
+                "direction": "forward"
+              }
+            ],
+            "room_drafts": [
+              {
+                "id": "draft",
+                "points": [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0.5,
+                    0
+                  ]
+                ],
+                "segments": [
+                  {
+                    "id": "seg-1",
+                    "cm": 10
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {},
+        "model_version": 9
+      },
+      "expected": {
+        "ok": true,
+        "config": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [],
+              "future": {
+                "opaque": true
+              },
+              "stairs": [
+                {
+                  "id": "seg-1",
+                  "kind": "straight",
+                  "x": 2,
+                  "y": 2,
+                  "length": 0.2,
+                  "width": 0.05,
+                  "angle": 0,
+                  "direction": "forward"
+                }
+              ],
+              "partitions": [
+                {
+                  "id": "wall-27eot643rqek75edixqm",
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    0.5,
+                    0
+                  ],
+                  "cm": 10
+                }
+              ],
+              "wall_segments": []
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        }
+      }
+    },
+    {
+      "name": "D3-Zb/ab",
+      "input": {
+        "spaces": [
+          {
+            "id": "f",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "rooms": [
+              {
+                "id": "r",
+                "name": "r",
+                "poly": [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    1
+                  ],
+                  [
+                    0,
+                    1
+                  ]
+                ]
+              }
+            ],
+            "future": {
+              "opaque": true
+            },
+            "wall_segments": [
+              {
+                "id": "Zb",
+                "a": [
+                  -0.5,
+                  0
+                ],
+                "b": [
+                  1.5,
+                  0
+                ],
+                "cm": 10
+              },
+              {
+                "id": "ab",
+                "a": [
+                  -0.5,
+                  0
+                ],
+                "b": [
+                  1.5,
+                  0
+                ],
+                "cm": 10
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "expected": {
+        "ok": true,
+        "config": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "r",
+                  "name": "r",
+                  "poly": [
+                    [
+                      0,
+                      0
+                    ],
+                    [
+                      1,
+                      0
+                    ],
+                    [
+                      1,
+                      1
+                    ],
+                    [
+                      0,
+                      1
+                    ]
+                  ],
+                  "wall_ids": [
+                    "Zb",
+                    "wall-pjuah2r2zdacweqgstpw",
+                    "wall-e36jci2c2iwzaxibvvcz",
+                    "wall-qakp7zk62ujmgswbukmi"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "wall_segments": [
+                {
+                  "id": "wall-qakp7zk62ujmgswbukmi",
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    0,
+                    1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "Zb",
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    0
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-e36jci2c2iwzaxibvvcz",
+                  "a": [
+                    0,
+                    1
+                  ],
+                  "b": [
+                    1,
+                    1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-pjuah2r2zdacweqgstpw",
+                  "a": [
+                    1,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    1
+                  ],
+                  "cm": 0
+                }
+              ],
+              "walls": [
+                {
+                  "key": "0.500000,0.000000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    0
+                  ]
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        }
+      }
+    },
+    {
+      "name": "D3-wall-B/wall-a",
+      "input": {
+        "spaces": [
+          {
+            "id": "f",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "rooms": [
+              {
+                "id": "r",
+                "name": "r",
+                "poly": [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    1
+                  ],
+                  [
+                    0,
+                    1
+                  ]
+                ]
+              }
+            ],
+            "future": {
+              "opaque": true
+            },
+            "wall_segments": [
+              {
+                "id": "wall-B",
+                "a": [
+                  -0.5,
+                  0
+                ],
+                "b": [
+                  1.5,
+                  0
+                ],
+                "cm": 10
+              },
+              {
+                "id": "wall-a",
+                "a": [
+                  -0.5,
+                  0
+                ],
+                "b": [
+                  1.5,
+                  0
+                ],
+                "cm": 10
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "expected": {
+        "ok": true,
+        "config": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "r",
+                  "name": "r",
+                  "poly": [
+                    [
+                      0,
+                      0
+                    ],
+                    [
+                      1,
+                      0
+                    ],
+                    [
+                      1,
+                      1
+                    ],
+                    [
+                      0,
+                      1
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-B",
+                    "wall-pjuah2r2zdacweqgstpw",
+                    "wall-e36jci2c2iwzaxibvvcz",
+                    "wall-qakp7zk62ujmgswbukmi"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "wall_segments": [
+                {
+                  "id": "wall-qakp7zk62ujmgswbukmi",
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    0,
+                    1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-B",
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    0
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-e36jci2c2iwzaxibvvcz",
+                  "a": [
+                    0,
+                    1
+                  ],
+                  "b": [
+                    1,
+                    1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-pjuah2r2zdacweqgstpw",
+                  "a": [
+                    1,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    1
+                  ],
+                  "cm": 0
+                }
+              ],
+              "walls": [
+                {
+                  "key": "0.500000,0.000000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    0
+                  ]
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        }
+      }
+    },
+    {
+      "name": "D3-wall_x/wall-x",
+      "input": {
+        "spaces": [
+          {
+            "id": "f",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "rooms": [
+              {
+                "id": "r",
+                "name": "r",
+                "poly": [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    1
+                  ],
+                  [
+                    0,
+                    1
+                  ]
+                ]
+              }
+            ],
+            "future": {
+              "opaque": true
+            },
+            "wall_segments": [
+              {
+                "id": "wall_x",
+                "a": [
+                  -0.5,
+                  0
+                ],
+                "b": [
+                  1.5,
+                  0
+                ],
+                "cm": 10
+              },
+              {
+                "id": "wall-x",
+                "a": [
+                  -0.5,
+                  0
+                ],
+                "b": [
+                  1.5,
+                  0
+                ],
+                "cm": 10
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "expected": {
+        "ok": true,
+        "config": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "r",
+                  "name": "r",
+                  "poly": [
+                    [
+                      0,
+                      0
+                    ],
+                    [
+                      1,
+                      0
+                    ],
+                    [
+                      1,
+                      1
+                    ],
+                    [
+                      0,
+                      1
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-x",
+                    "wall-pjuah2r2zdacweqgstpw",
+                    "wall-e36jci2c2iwzaxibvvcz",
+                    "wall-qakp7zk62ujmgswbukmi"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "wall_segments": [
+                {
+                  "id": "wall-qakp7zk62ujmgswbukmi",
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    0,
+                    1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-x",
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    0
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-e36jci2c2iwzaxibvvcz",
+                  "a": [
+                    0,
+                    1
+                  ],
+                  "b": [
+                    1,
+                    1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-pjuah2r2zdacweqgstpw",
+                  "a": [
+                    1,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    1
+                  ],
+                  "cm": 0
+                }
+              ],
+              "walls": [
+                {
+                  "key": "0.500000,0.000000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    0
+                  ]
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        }
+      }
+    },
+    {
+      "name": "D3-wall-é/wall-z",
+      "input": {
+        "spaces": [
+          {
+            "id": "f",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "rooms": [
+              {
+                "id": "r",
+                "name": "r",
+                "poly": [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    1
+                  ],
+                  [
+                    0,
+                    1
+                  ]
+                ]
+              }
+            ],
+            "future": {
+              "opaque": true
+            },
+            "wall_segments": [
+              {
+                "id": "wall-é",
+                "a": [
+                  -0.5,
+                  0
+                ],
+                "b": [
+                  1.5,
+                  0
+                ],
+                "cm": 10
+              },
+              {
+                "id": "wall-z",
+                "a": [
+                  -0.5,
+                  0
+                ],
+                "b": [
+                  1.5,
+                  0
+                ],
+                "cm": 10
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "expected": {
+        "ok": true,
+        "config": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "r",
+                  "name": "r",
+                  "poly": [
+                    [
+                      0,
+                      0
+                    ],
+                    [
+                      1,
+                      0
+                    ],
+                    [
+                      1,
+                      1
+                    ],
+                    [
+                      0,
+                      1
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-z",
+                    "wall-pjuah2r2zdacweqgstpw",
+                    "wall-e36jci2c2iwzaxibvvcz",
+                    "wall-qakp7zk62ujmgswbukmi"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "wall_segments": [
+                {
+                  "id": "wall-qakp7zk62ujmgswbukmi",
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    0,
+                    1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-z",
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    0
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-e36jci2c2iwzaxibvvcz",
+                  "a": [
+                    0,
+                    1
+                  ],
+                  "b": [
+                    1,
+                    1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-pjuah2r2zdacweqgstpw",
+                  "a": [
+                    1,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    1
+                  ],
+                  "cm": 0
+                }
+              ],
+              "walls": [
+                {
+                  "key": "0.500000,0.000000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    0
+                  ]
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        }
+      }
+    },
+    {
+      "name": "D3-wall-😀/wall-Ａ",
+      "input": {
+        "spaces": [
+          {
+            "id": "f",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "rooms": [
+              {
+                "id": "r",
+                "name": "r",
+                "poly": [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    1
+                  ],
+                  [
+                    0,
+                    1
+                  ]
+                ]
+              }
+            ],
+            "future": {
+              "opaque": true
+            },
+            "wall_segments": [
+              {
+                "id": "wall-😀",
+                "a": [
+                  -0.5,
+                  0
+                ],
+                "b": [
+                  1.5,
+                  0
+                ],
+                "cm": 10
+              },
+              {
+                "id": "wall-Ａ",
+                "a": [
+                  -0.5,
+                  0
+                ],
+                "b": [
+                  1.5,
+                  0
+                ],
+                "cm": 10
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "expected": {
+        "ok": true,
+        "config": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "r",
+                  "name": "r",
+                  "poly": [
+                    [
+                      0,
+                      0
+                    ],
+                    [
+                      1,
+                      0
+                    ],
+                    [
+                      1,
+                      1
+                    ],
+                    [
+                      0,
+                      1
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-Ａ",
+                    "wall-pjuah2r2zdacweqgstpw",
+                    "wall-e36jci2c2iwzaxibvvcz",
+                    "wall-qakp7zk62ujmgswbukmi"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "wall_segments": [
+                {
+                  "id": "wall-qakp7zk62ujmgswbukmi",
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    0,
+                    1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-Ａ",
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    0
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-e36jci2c2iwzaxibvvcz",
+                  "a": [
+                    0,
+                    1
+                  ],
+                  "b": [
+                    1,
+                    1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-pjuah2r2zdacweqgstpw",
+                  "a": [
+                    1,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    1
+                  ],
+                  "cm": 0
+                }
+              ],
+              "walls": [
+                {
+                  "key": "0.500000,0.000000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    0
+                  ]
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        }
+      }
+    },
+    {
+      "name": "D3-owners",
+      "input": {
+        "spaces": [
+          {
+            "id": "f",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "rooms": [
+              {
+                "id": "Ａ",
+                "name": "Ａ",
+                "poly": [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    1
+                  ],
+                  [
+                    0,
+                    1
+                  ]
+                ]
+              },
+              {
+                "id": "😀",
+                "name": "😀",
+                "poly": [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    2,
+                    0
+                  ],
+                  [
+                    2,
+                    1
+                  ],
+                  [
+                    1,
+                    1
+                  ]
+                ]
+              }
+            ],
+            "future": {
+              "opaque": true
+            }
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "expected": {
+        "ok": true,
+        "config": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "Ａ",
+                  "name": "Ａ",
+                  "poly": [
+                    [
+                      0,
+                      0
+                    ],
+                    [
+                      1,
+                      0
+                    ],
+                    [
+                      1,
+                      1
+                    ],
+                    [
+                      0,
+                      1
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-j2gkhfsc6gkblnnycy4b",
+                    "wall-q4z5pf3ztfb2nroomtev",
+                    "wall-kediry5qskfm546s5upf",
+                    "wall-2ayb5fvaxpllfkyenyvn"
+                  ]
+                },
+                {
+                  "id": "😀",
+                  "name": "😀",
+                  "poly": [
+                    [
+                      1,
+                      0
+                    ],
+                    [
+                      2,
+                      0
+                    ],
+                    [
+                      2,
+                      1
+                    ],
+                    [
+                      1,
+                      1
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-dwfmadtypr7ky6saswm6",
+                    "wall-6gnpwtj6kji7alwveq7a",
+                    "wall-c75mdnzg2jwe3jioqqn6",
+                    "wall-q4z5pf3ztfb2nroomtev"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "wall_segments": [
+                {
+                  "id": "wall-2ayb5fvaxpllfkyenyvn",
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    0,
+                    1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-j2gkhfsc6gkblnnycy4b",
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    0
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-kediry5qskfm546s5upf",
+                  "a": [
+                    0,
+                    1
+                  ],
+                  "b": [
+                    1,
+                    1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-q4z5pf3ztfb2nroomtev",
+                  "a": [
+                    1,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-dwfmadtypr7ky6saswm6",
+                  "a": [
+                    1,
+                    0
+                  ],
+                  "b": [
+                    2,
+                    0
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-c75mdnzg2jwe3jioqqn6",
+                  "a": [
+                    1,
+                    1
+                  ],
+                  "b": [
+                    2,
+                    1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-6gnpwtj6kji7alwveq7a",
+                  "a": [
+                    2,
+                    0
+                  ],
+                  "b": [
+                    2,
+                    1
+                  ],
+                  "cm": 0
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        }
+      }
+    },
+    {
+      "name": "D2-truncated",
+      "input": {
+        "spaces": [
+          {
+            "id": "f",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "rooms": [
+              {
+                "id": "r",
+                "name": "r",
+                "poly": [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    1
+                  ],
+                  [
+                    0,
+                    1
+                  ]
+                ],
+                "wall_ids": [
+                  "wall-5sqppn7smt32f2dufeow",
+                  "wall-pjuah2r2zdacweqgstpw",
+                  "wall-e36jci2c2iwzaxibvvcz"
+                ]
+              }
+            ],
+            "future": {
+              "opaque": true
+            },
+            "wall_segments": [
+              {
+                "id": "wall-qakp7zk62ujmgswbukmi",
+                "a": [
+                  0,
+                  0
+                ],
+                "b": [
+                  0,
+                  1
+                ],
+                "cm": 0
+              },
+              {
+                "id": "wall-5sqppn7smt32f2dufeow",
+                "a": [
+                  0,
+                  0
+                ],
+                "b": [
+                  1,
+                  0
+                ],
+                "cm": 0
+              },
+              {
+                "id": "wall-e36jci2c2iwzaxibvvcz",
+                "a": [
+                  0,
+                  1
+                ],
+                "b": [
+                  1,
+                  1
+                ],
+                "cm": 0
+              },
+              {
+                "id": "wall-pjuah2r2zdacweqgstpw",
+                "a": [
+                  1,
+                  0
+                ],
+                "b": [
+                  1,
+                  1
+                ],
+                "cm": 0
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {},
+        "model_version": 10
+      },
+      "intent": {
+        "point": [
+          0,
+          0
+        ],
+        "target": [
+          -0.004166666666666667,
+          0
+        ],
+        "axis": null,
+        "split_ids": {}
+      },
+      "mode": "pure",
+      "expected": {
+        "ok": false,
+        "reason": "invalid"
+      }
+    },
+    {
+      "name": "D4-T-0.1002",
+      "input": {
+        "spaces": [
+          {
+            "id": "f",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "rooms": [
+              {
+                "id": "left",
+                "name": "left",
+                "poly": [
+                  [
+                    0.1,
+                    0.1
+                  ],
+                  [
+                    0.6,
+                    0.1
+                  ],
+                  [
+                    0.6,
+                    0.6
+                  ],
+                  [
+                    0.1,
+                    0.6
+                  ]
+                ]
+              },
+              {
+                "id": "right",
+                "name": "right",
+                "poly": [
+                  [
+                    0.6,
+                    0.1004
+                  ],
+                  [
+                    1,
+                    0.1004
+                  ],
+                  [
+                    1,
+                    0.6
+                  ],
+                  [
+                    0.6,
+                    0.6
+                  ]
+                ]
+              }
+            ],
+            "future": {
+              "opaque": true
+            },
+            "walls": [
+              {
+                "key": "0.350000,0.100000@0.0000",
+                "a": [
+                  0.1,
+                  0.1
+                ],
+                "b": [
+                  0.6,
+                  0.1
+                ],
+                "cm": 10
+              },
+              {
+                "key": "0.600000,0.350000@1.5706",
+                "a": [
+                  0.6,
+                  0.1
+                ],
+                "b": [
+                  0.6,
+                  0.6
+                ],
+                "cm": 10
+              },
+              {
+                "key": "0.350000,0.600000@0.0000",
+                "a": [
+                  0.6,
+                  0.6
+                ],
+                "b": [
+                  0.1,
+                  0.6
+                ],
+                "cm": 10
+              },
+              {
+                "key": "0.100000,0.350000@1.5706",
+                "a": [
+                  0.1,
+                  0.6
+                ],
+                "b": [
+                  0.1,
+                  0.1
+                ],
+                "cm": 10
+              },
+              {
+                "key": "0.800000,0.100000@0.0000",
+                "a": [
+                  0.6,
+                  0.1004
+                ],
+                "b": [
+                  1,
+                  0.1004
+                ],
+                "cm": 10
+              },
+              {
+                "key": "1.000000,0.350000@1.5706",
+                "a": [
+                  1,
+                  0.1004
+                ],
+                "b": [
+                  1,
+                  0.6
+                ],
+                "cm": 10
+              },
+              {
+                "key": "0.800000,0.600000@0.0000",
+                "a": [
+                  1,
+                  0.6
+                ],
+                "b": [
+                  0.6,
+                  0.6
+                ],
+                "cm": 10
+              },
+              {
+                "key": "0.600000,0.350000@1.5706",
+                "a": [
+                  0.6,
+                  0.6
+                ],
+                "b": [
+                  0.6,
+                  0.1004
+                ],
+                "cm": 10
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "intent": {
+        "point": [
+          0.6,
+          0.1004
+        ],
+        "target": [
+          0.6,
+          0.1002
+        ],
+        "axis": "wall:wall-d7bzi73jcnpivgmuc7ih",
+        "split_ids": {}
+      },
+      "expected": {
+        "ok": true,
+        "config": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "left",
+                  "name": "left",
+                  "poly": [
+                    [
+                      0.1,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.1004
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ],
+                    [
+                      0.1,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-xovzgvmrw3q22mjnkna3",
+                    "wall-pexkual4v3v34rsszs5v",
+                    "wall-d7bzi73jcnpivgmuc7ih",
+                    "wall-ovaob3iaujdl23jt4myy",
+                    "wall-jwbx6jgd7jvciagg5v6z"
+                  ]
+                },
+                {
+                  "id": "right",
+                  "name": "right",
+                  "poly": [
+                    [
+                      0.6,
+                      0.1004
+                    ],
+                    [
+                      1,
+                      0.1004
+                    ],
+                    [
+                      1,
+                      0.6
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-gsudvzeplduylqzym2mb",
+                    "wall-ahmfnnqyezeklqn5qkh2",
+                    "wall-cakhrqpihqpc5tn5qgzf",
+                    "wall-d7bzi73jcnpivgmuc7ih"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "walls": [
+                {
+                  "key": "0.100000,0.350000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.1,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "0.350000,0.100000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1
+                  ]
+                },
+                {
+                  "key": "0.350000,0.600000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.1,
+                    0.6
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "0.600000,0.100000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1004
+                  ]
+                },
+                {
+                  "key": "0.600000,0.350000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1004
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "0.800000,0.100000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1004
+                  ],
+                  "b": [
+                    1,
+                    0.1004
+                  ]
+                },
+                {
+                  "key": "0.800000,0.600000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.6
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "1.000000,0.350000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    1,
+                    0.1004
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ]
+                }
+              ],
+              "wall_segments": [
+                {
+                  "id": "wall-jwbx6jgd7jvciagg5v6z",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.1,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-xovzgvmrw3q22mjnkna3",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-ovaob3iaujdl23jt4myy",
+                  "a": [
+                    0.1,
+                    0.6
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-pexkual4v3v34rsszs5v",
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1004
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-d7bzi73jcnpivgmuc7ih",
+                  "a": [
+                    0.6,
+                    0.1004
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-gsudvzeplduylqzym2mb",
+                  "a": [
+                    0.6,
+                    0.1004
+                  ],
+                  "b": [
+                    1,
+                    0.1004
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-cakhrqpihqpc5tn5qgzf",
+                  "a": [
+                    0.6,
+                    0.6
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-ahmfnnqyezeklqn5qkh2",
+                  "a": [
+                    1,
+                    0.1004
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 10
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        },
+        "after": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "left",
+                  "name": "left",
+                  "poly": [
+                    [
+                      0.1,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.1002
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ],
+                    [
+                      0.1,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-xovzgvmrw3q22mjnkna3",
+                    "wall-pexkual4v3v34rsszs5v",
+                    "wall-d7bzi73jcnpivgmuc7ih",
+                    "wall-ovaob3iaujdl23jt4myy",
+                    "wall-jwbx6jgd7jvciagg5v6z"
+                  ]
+                },
+                {
+                  "id": "right",
+                  "name": "right",
+                  "poly": [
+                    [
+                      0.6,
+                      0.1002
+                    ],
+                    [
+                      1,
+                      0.1004
+                    ],
+                    [
+                      1,
+                      0.6
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-gsudvzeplduylqzym2mb",
+                    "wall-ahmfnnqyezeklqn5qkh2",
+                    "wall-cakhrqpihqpc5tn5qgzf",
+                    "wall-d7bzi73jcnpivgmuc7ih"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "walls": [
+                {
+                  "key": "0.100000,0.350000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.1,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "0.350000,0.100000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1
+                  ]
+                },
+                {
+                  "key": "0.350000,0.600000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.1,
+                    0.6
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "0.600000,0.100000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1002
+                  ]
+                },
+                {
+                  "key": "0.600000,0.350000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1002
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "0.800000,0.100000@0.0006",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1002
+                  ],
+                  "b": [
+                    1,
+                    0.1004
+                  ]
+                },
+                {
+                  "key": "0.800000,0.600000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.6
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "1.000000,0.350000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    1,
+                    0.1004
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ]
+                }
+              ],
+              "wall_segments": [
+                {
+                  "id": "wall-jwbx6jgd7jvciagg5v6z",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.1,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-xovzgvmrw3q22mjnkna3",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-ovaob3iaujdl23jt4myy",
+                  "a": [
+                    0.1,
+                    0.6
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-pexkual4v3v34rsszs5v",
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1002
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-d7bzi73jcnpivgmuc7ih",
+                  "a": [
+                    0.6,
+                    0.1002
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-gsudvzeplduylqzym2mb",
+                  "a": [
+                    0.6,
+                    0.1002
+                  ],
+                  "b": [
+                    1,
+                    0.1004
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-cakhrqpihqpc5tn5qgzf",
+                  "a": [
+                    0.6,
+                    0.6
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-ahmfnnqyezeklqn5qkh2",
+                  "a": [
+                    1,
+                    0.1004
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 10
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        }
+      }
+    },
+    {
+      "name": "D4-T-0.1003",
+      "input": {
+        "spaces": [
+          {
+            "id": "f",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "rooms": [
+              {
+                "id": "left",
+                "name": "left",
+                "poly": [
+                  [
+                    0.1,
+                    0.1
+                  ],
+                  [
+                    0.6,
+                    0.1
+                  ],
+                  [
+                    0.6,
+                    0.6
+                  ],
+                  [
+                    0.1,
+                    0.6
+                  ]
+                ]
+              },
+              {
+                "id": "right",
+                "name": "right",
+                "poly": [
+                  [
+                    0.6,
+                    0.1004
+                  ],
+                  [
+                    1,
+                    0.1004
+                  ],
+                  [
+                    1,
+                    0.6
+                  ],
+                  [
+                    0.6,
+                    0.6
+                  ]
+                ]
+              }
+            ],
+            "future": {
+              "opaque": true
+            },
+            "walls": [
+              {
+                "key": "0.350000,0.100000@0.0000",
+                "a": [
+                  0.1,
+                  0.1
+                ],
+                "b": [
+                  0.6,
+                  0.1
+                ],
+                "cm": 10
+              },
+              {
+                "key": "0.600000,0.350000@1.5706",
+                "a": [
+                  0.6,
+                  0.1
+                ],
+                "b": [
+                  0.6,
+                  0.6
+                ],
+                "cm": 10
+              },
+              {
+                "key": "0.350000,0.600000@0.0000",
+                "a": [
+                  0.6,
+                  0.6
+                ],
+                "b": [
+                  0.1,
+                  0.6
+                ],
+                "cm": 10
+              },
+              {
+                "key": "0.100000,0.350000@1.5706",
+                "a": [
+                  0.1,
+                  0.6
+                ],
+                "b": [
+                  0.1,
+                  0.1
+                ],
+                "cm": 10
+              },
+              {
+                "key": "0.800000,0.100000@0.0000",
+                "a": [
+                  0.6,
+                  0.1004
+                ],
+                "b": [
+                  1,
+                  0.1004
+                ],
+                "cm": 10
+              },
+              {
+                "key": "1.000000,0.350000@1.5706",
+                "a": [
+                  1,
+                  0.1004
+                ],
+                "b": [
+                  1,
+                  0.6
+                ],
+                "cm": 10
+              },
+              {
+                "key": "0.800000,0.600000@0.0000",
+                "a": [
+                  1,
+                  0.6
+                ],
+                "b": [
+                  0.6,
+                  0.6
+                ],
+                "cm": 10
+              },
+              {
+                "key": "0.600000,0.350000@1.5706",
+                "a": [
+                  0.6,
+                  0.6
+                ],
+                "b": [
+                  0.6,
+                  0.1004
+                ],
+                "cm": 10
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "intent": {
+        "point": [
+          0.6,
+          0.1004
+        ],
+        "target": [
+          0.6,
+          0.1003
+        ],
+        "axis": "wall:wall-d7bzi73jcnpivgmuc7ih",
+        "split_ids": {}
+      },
+      "expected": {
+        "ok": true,
+        "config": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "left",
+                  "name": "left",
+                  "poly": [
+                    [
+                      0.1,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.1004
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ],
+                    [
+                      0.1,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-xovzgvmrw3q22mjnkna3",
+                    "wall-pexkual4v3v34rsszs5v",
+                    "wall-d7bzi73jcnpivgmuc7ih",
+                    "wall-ovaob3iaujdl23jt4myy",
+                    "wall-jwbx6jgd7jvciagg5v6z"
+                  ]
+                },
+                {
+                  "id": "right",
+                  "name": "right",
+                  "poly": [
+                    [
+                      0.6,
+                      0.1004
+                    ],
+                    [
+                      1,
+                      0.1004
+                    ],
+                    [
+                      1,
+                      0.6
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-gsudvzeplduylqzym2mb",
+                    "wall-ahmfnnqyezeklqn5qkh2",
+                    "wall-cakhrqpihqpc5tn5qgzf",
+                    "wall-d7bzi73jcnpivgmuc7ih"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "walls": [
+                {
+                  "key": "0.100000,0.350000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.1,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "0.350000,0.100000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1
+                  ]
+                },
+                {
+                  "key": "0.350000,0.600000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.1,
+                    0.6
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "0.600000,0.100000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1004
+                  ]
+                },
+                {
+                  "key": "0.600000,0.350000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1004
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "0.800000,0.100000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1004
+                  ],
+                  "b": [
+                    1,
+                    0.1004
+                  ]
+                },
+                {
+                  "key": "0.800000,0.600000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.6
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "1.000000,0.350000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    1,
+                    0.1004
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ]
+                }
+              ],
+              "wall_segments": [
+                {
+                  "id": "wall-jwbx6jgd7jvciagg5v6z",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.1,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-xovzgvmrw3q22mjnkna3",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-ovaob3iaujdl23jt4myy",
+                  "a": [
+                    0.1,
+                    0.6
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-pexkual4v3v34rsszs5v",
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1004
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-d7bzi73jcnpivgmuc7ih",
+                  "a": [
+                    0.6,
+                    0.1004
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-gsudvzeplduylqzym2mb",
+                  "a": [
+                    0.6,
+                    0.1004
+                  ],
+                  "b": [
+                    1,
+                    0.1004
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-cakhrqpihqpc5tn5qgzf",
+                  "a": [
+                    0.6,
+                    0.6
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-ahmfnnqyezeklqn5qkh2",
+                  "a": [
+                    1,
+                    0.1004
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 10
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        },
+        "after": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "left",
+                  "name": "left",
+                  "poly": [
+                    [
+                      0.1,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.1003
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ],
+                    [
+                      0.1,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-xovzgvmrw3q22mjnkna3",
+                    "wall-pexkual4v3v34rsszs5v",
+                    "wall-d7bzi73jcnpivgmuc7ih",
+                    "wall-ovaob3iaujdl23jt4myy",
+                    "wall-jwbx6jgd7jvciagg5v6z"
+                  ]
+                },
+                {
+                  "id": "right",
+                  "name": "right",
+                  "poly": [
+                    [
+                      0.6,
+                      0.1003
+                    ],
+                    [
+                      1,
+                      0.1004
+                    ],
+                    [
+                      1,
+                      0.6
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-gsudvzeplduylqzym2mb",
+                    "wall-ahmfnnqyezeklqn5qkh2",
+                    "wall-cakhrqpihqpc5tn5qgzf",
+                    "wall-d7bzi73jcnpivgmuc7ih"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "walls": [
+                {
+                  "key": "0.100000,0.350000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.1,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "0.350000,0.100000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1
+                  ]
+                },
+                {
+                  "key": "0.350000,0.600000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.1,
+                    0.6
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "0.600000,0.100000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1003
+                  ]
+                },
+                {
+                  "key": "0.600000,0.350000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1003
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "0.800000,0.100000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1003
+                  ],
+                  "b": [
+                    1,
+                    0.1004
+                  ]
+                },
+                {
+                  "key": "0.800000,0.600000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.6
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "1.000000,0.350000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    1,
+                    0.1004
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ]
+                }
+              ],
+              "wall_segments": [
+                {
+                  "id": "wall-jwbx6jgd7jvciagg5v6z",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.1,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-xovzgvmrw3q22mjnkna3",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-ovaob3iaujdl23jt4myy",
+                  "a": [
+                    0.1,
+                    0.6
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-pexkual4v3v34rsszs5v",
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1003
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-d7bzi73jcnpivgmuc7ih",
+                  "a": [
+                    0.6,
+                    0.1003
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-gsudvzeplduylqzym2mb",
+                  "a": [
+                    0.6,
+                    0.1003
+                  ],
+                  "b": [
+                    1,
+                    0.1004
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-cakhrqpihqpc5tn5qgzf",
+                  "a": [
+                    0.6,
+                    0.6
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-ahmfnnqyezeklqn5qkh2",
+                  "a": [
+                    1,
+                    0.1004
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 10
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        }
+      }
+    },
+    {
+      "name": "D4-T-0.1004",
+      "input": {
+        "spaces": [
+          {
+            "id": "f",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "rooms": [
+              {
+                "id": "left",
+                "name": "left",
+                "poly": [
+                  [
+                    0.1,
+                    0.1
+                  ],
+                  [
+                    0.6,
+                    0.1
+                  ],
+                  [
+                    0.6,
+                    0.6
+                  ],
+                  [
+                    0.1,
+                    0.6
+                  ]
+                ]
+              },
+              {
+                "id": "right",
+                "name": "right",
+                "poly": [
+                  [
+                    0.6,
+                    0.1004
+                  ],
+                  [
+                    1,
+                    0.1004
+                  ],
+                  [
+                    1,
+                    0.6
+                  ],
+                  [
+                    0.6,
+                    0.6
+                  ]
+                ]
+              }
+            ],
+            "future": {
+              "opaque": true
+            },
+            "walls": [
+              {
+                "key": "0.350000,0.100000@0.0000",
+                "a": [
+                  0.1,
+                  0.1
+                ],
+                "b": [
+                  0.6,
+                  0.1
+                ],
+                "cm": 10
+              },
+              {
+                "key": "0.600000,0.350000@1.5706",
+                "a": [
+                  0.6,
+                  0.1
+                ],
+                "b": [
+                  0.6,
+                  0.6
+                ],
+                "cm": 10
+              },
+              {
+                "key": "0.350000,0.600000@0.0000",
+                "a": [
+                  0.6,
+                  0.6
+                ],
+                "b": [
+                  0.1,
+                  0.6
+                ],
+                "cm": 10
+              },
+              {
+                "key": "0.100000,0.350000@1.5706",
+                "a": [
+                  0.1,
+                  0.6
+                ],
+                "b": [
+                  0.1,
+                  0.1
+                ],
+                "cm": 10
+              },
+              {
+                "key": "0.800000,0.100000@0.0000",
+                "a": [
+                  0.6,
+                  0.1004
+                ],
+                "b": [
+                  1,
+                  0.1004
+                ],
+                "cm": 10
+              },
+              {
+                "key": "1.000000,0.350000@1.5706",
+                "a": [
+                  1,
+                  0.1004
+                ],
+                "b": [
+                  1,
+                  0.6
+                ],
+                "cm": 10
+              },
+              {
+                "key": "0.800000,0.600000@0.0000",
+                "a": [
+                  1,
+                  0.6
+                ],
+                "b": [
+                  0.6,
+                  0.6
+                ],
+                "cm": 10
+              },
+              {
+                "key": "0.600000,0.350000@1.5706",
+                "a": [
+                  0.6,
+                  0.6
+                ],
+                "b": [
+                  0.6,
+                  0.1004
+                ],
+                "cm": 10
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "intent": {
+        "point": [
+          0.6,
+          0.1004
+        ],
+        "target": [
+          0.6,
+          0.1004
+        ],
+        "axis": "wall:wall-d7bzi73jcnpivgmuc7ih",
+        "split_ids": {}
+      },
+      "expected": {
+        "ok": true,
+        "config": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "left",
+                  "name": "left",
+                  "poly": [
+                    [
+                      0.1,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.1004
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ],
+                    [
+                      0.1,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-xovzgvmrw3q22mjnkna3",
+                    "wall-pexkual4v3v34rsszs5v",
+                    "wall-d7bzi73jcnpivgmuc7ih",
+                    "wall-ovaob3iaujdl23jt4myy",
+                    "wall-jwbx6jgd7jvciagg5v6z"
+                  ]
+                },
+                {
+                  "id": "right",
+                  "name": "right",
+                  "poly": [
+                    [
+                      0.6,
+                      0.1004
+                    ],
+                    [
+                      1,
+                      0.1004
+                    ],
+                    [
+                      1,
+                      0.6
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-gsudvzeplduylqzym2mb",
+                    "wall-ahmfnnqyezeklqn5qkh2",
+                    "wall-cakhrqpihqpc5tn5qgzf",
+                    "wall-d7bzi73jcnpivgmuc7ih"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "walls": [
+                {
+                  "key": "0.100000,0.350000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.1,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "0.350000,0.100000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1
+                  ]
+                },
+                {
+                  "key": "0.350000,0.600000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.1,
+                    0.6
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "0.600000,0.100000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1004
+                  ]
+                },
+                {
+                  "key": "0.600000,0.350000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1004
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "0.800000,0.100000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1004
+                  ],
+                  "b": [
+                    1,
+                    0.1004
+                  ]
+                },
+                {
+                  "key": "0.800000,0.600000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.6
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "1.000000,0.350000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    1,
+                    0.1004
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ]
+                }
+              ],
+              "wall_segments": [
+                {
+                  "id": "wall-jwbx6jgd7jvciagg5v6z",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.1,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-xovzgvmrw3q22mjnkna3",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-ovaob3iaujdl23jt4myy",
+                  "a": [
+                    0.1,
+                    0.6
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-pexkual4v3v34rsszs5v",
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1004
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-d7bzi73jcnpivgmuc7ih",
+                  "a": [
+                    0.6,
+                    0.1004
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-gsudvzeplduylqzym2mb",
+                  "a": [
+                    0.6,
+                    0.1004
+                  ],
+                  "b": [
+                    1,
+                    0.1004
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-cakhrqpihqpc5tn5qgzf",
+                  "a": [
+                    0.6,
+                    0.6
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-ahmfnnqyezeklqn5qkh2",
+                  "a": [
+                    1,
+                    0.1004
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 10
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        },
+        "after": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "left",
+                  "name": "left",
+                  "poly": [
+                    [
+                      0.1,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.1004
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ],
+                    [
+                      0.1,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-xovzgvmrw3q22mjnkna3",
+                    "wall-pexkual4v3v34rsszs5v",
+                    "wall-d7bzi73jcnpivgmuc7ih",
+                    "wall-ovaob3iaujdl23jt4myy",
+                    "wall-jwbx6jgd7jvciagg5v6z"
+                  ]
+                },
+                {
+                  "id": "right",
+                  "name": "right",
+                  "poly": [
+                    [
+                      0.6,
+                      0.1004
+                    ],
+                    [
+                      1,
+                      0.1004
+                    ],
+                    [
+                      1,
+                      0.6
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-gsudvzeplduylqzym2mb",
+                    "wall-ahmfnnqyezeklqn5qkh2",
+                    "wall-cakhrqpihqpc5tn5qgzf",
+                    "wall-d7bzi73jcnpivgmuc7ih"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "walls": [
+                {
+                  "key": "0.100000,0.350000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.1,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "0.350000,0.100000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1
+                  ]
+                },
+                {
+                  "key": "0.350000,0.600000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.1,
+                    0.6
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "0.600000,0.100000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1004
+                  ]
+                },
+                {
+                  "key": "0.600000,0.350000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1004
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "0.800000,0.100000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1004
+                  ],
+                  "b": [
+                    1,
+                    0.1004
+                  ]
+                },
+                {
+                  "key": "0.800000,0.600000@0.0000",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.6
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ]
+                },
+                {
+                  "key": "1.000000,0.350000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    1,
+                    0.1004
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ]
+                }
+              ],
+              "wall_segments": [
+                {
+                  "id": "wall-jwbx6jgd7jvciagg5v6z",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.1,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-xovzgvmrw3q22mjnkna3",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-ovaob3iaujdl23jt4myy",
+                  "a": [
+                    0.1,
+                    0.6
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-pexkual4v3v34rsszs5v",
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1004
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-d7bzi73jcnpivgmuc7ih",
+                  "a": [
+                    0.6,
+                    0.1004
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-gsudvzeplduylqzym2mb",
+                  "a": [
+                    0.6,
+                    0.1004
+                  ],
+                  "b": [
+                    1,
+                    0.1004
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-cakhrqpihqpc5tn5qgzf",
+                  "a": [
+                    0.6,
+                    0.6
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-ahmfnnqyezeklqn5qkh2",
+                  "a": [
+                    1,
+                    0.1004
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 10
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        }
+      }
+    },
+    {
+      "name": "D4-persisted-3.4mm",
+      "input": {
+        "spaces": [
+          {
+            "id": "f",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "rooms": [
+              {
+                "id": "r",
+                "name": "r",
+                "poly": [
+                  [
+                    0.1,
+                    0.1
+                  ],
+                  [
+                    0.6,
+                    0.1
+                  ],
+                  [
+                    0.6,
+                    0.100283333
+                  ],
+                  [
+                    0.6,
+                    0.6
+                  ],
+                  [
+                    0.1,
+                    0.6
+                  ]
+                ],
+                "wall_ids": [
+                  "wall-p6c4p66gg7x7qgzs5hu2",
+                  "wall-2kwoacu2qk4cir4iq7gf",
+                  "wall-rs2wgvbyu4hh2scvcf32",
+                  "wall-4wxf2mhp276kn2fucocv",
+                  "wall-dxnm6qlol3r4h36vygd6"
+                ]
+              }
+            ],
+            "future": {
+              "opaque": true
+            },
+            "wall_segments": [
+              {
+                "id": "wall-dxnm6qlol3r4h36vygd6",
+                "a": [
+                  0.1,
+                  0.1
+                ],
+                "b": [
+                  0.1,
+                  0.6
+                ],
+                "cm": 0
+              },
+              {
+                "id": "wall-p6c4p66gg7x7qgzs5hu2",
+                "a": [
+                  0.1,
+                  0.1
+                ],
+                "b": [
+                  0.6,
+                  0.1
+                ],
+                "cm": 0
+              },
+              {
+                "id": "wall-4wxf2mhp276kn2fucocv",
+                "a": [
+                  0.1,
+                  0.6
+                ],
+                "b": [
+                  0.6,
+                  0.6
+                ],
+                "cm": 0
+              },
+              {
+                "id": "wall-2kwoacu2qk4cir4iq7gf",
+                "a": [
+                  0.6,
+                  0.1
+                ],
+                "b": [
+                  0.6,
+                  0.100283333
+                ],
+                "cm": 0
+              },
+              {
+                "id": "wall-rs2wgvbyu4hh2scvcf32",
+                "a": [
+                  0.6,
+                  0.100283333
+                ],
+                "b": [
+                  0.6,
+                  0.6
+                ],
+                "cm": 0
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {},
+        "model_version": 10
+      },
+      "intent": {
+        "point": [
+          0.1,
+          0.6
+        ],
+        "target": [
+          0.09583333333333333,
+          0.6
+        ],
+        "axis": null,
+        "split_ids": {}
+      },
+      "expected": {
+        "ok": true,
+        "config": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "r",
+                  "name": "r",
+                  "poly": [
+                    [
+                      0.1,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.100283333
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ],
+                    [
+                      0.1,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-p6c4p66gg7x7qgzs5hu2",
+                    "wall-2kwoacu2qk4cir4iq7gf",
+                    "wall-rs2wgvbyu4hh2scvcf32",
+                    "wall-4wxf2mhp276kn2fucocv",
+                    "wall-dxnm6qlol3r4h36vygd6"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "wall_segments": [
+                {
+                  "id": "wall-dxnm6qlol3r4h36vygd6",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.1,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-p6c4p66gg7x7qgzs5hu2",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-4wxf2mhp276kn2fucocv",
+                  "a": [
+                    0.1,
+                    0.6
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-2kwoacu2qk4cir4iq7gf",
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.100283333
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-rs2wgvbyu4hh2scvcf32",
+                  "a": [
+                    0.6,
+                    0.100283333
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 0
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        },
+        "after": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "r",
+                  "name": "r",
+                  "poly": [
+                    [
+                      0.1,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.100283333
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ],
+                    [
+                      0.09583333333333334,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-p6c4p66gg7x7qgzs5hu2",
+                    "wall-2kwoacu2qk4cir4iq7gf",
+                    "wall-rs2wgvbyu4hh2scvcf32",
+                    "wall-4wxf2mhp276kn2fucocv",
+                    "wall-dxnm6qlol3r4h36vygd6"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "wall_segments": [
+                {
+                  "id": "wall-dxnm6qlol3r4h36vygd6",
+                  "a": [
+                    0.09583333333333334,
+                    0.6
+                  ],
+                  "b": [
+                    0.1,
+                    0.1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-4wxf2mhp276kn2fucocv",
+                  "a": [
+                    0.09583333333333334,
+                    0.6
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-p6c4p66gg7x7qgzs5hu2",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-2kwoacu2qk4cir4iq7gf",
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.100283333
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-rs2wgvbyu4hh2scvcf32",
+                  "a": [
+                    0.6,
+                    0.100283333
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 0
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        }
+      }
+    },
+    {
+      "name": "D5-D6-0.0001",
+      "input": {
+        "spaces": [
+          {
+            "id": "f",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "rooms": [
+              {
+                "id": "left",
+                "name": "left",
+                "poly": [
+                  [
+                    0.1,
+                    0.1
+                  ],
+                  [
+                    0.6,
+                    0.1
+                  ],
+                  [
+                    0.6,
+                    0.6
+                  ],
+                  [
+                    0.1,
+                    0.6
+                  ]
+                ]
+              },
+              {
+                "id": "right",
+                "name": "right",
+                "poly": [
+                  [
+                    0.6,
+                    0.3
+                  ],
+                  [
+                    1,
+                    0.3
+                  ],
+                  [
+                    1,
+                    0.6
+                  ],
+                  [
+                    0.6,
+                    0.6
+                  ]
+                ]
+              }
+            ],
+            "future": {
+              "opaque": true
+            },
+            "walls": [
+              {
+                "key": "0.600000,0.200000@1.5706",
+                "a": [
+                  0.6,
+                  0.1
+                ],
+                "b": [
+                  0.6,
+                  0.3001
+                ],
+                "cm": 10
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "intent": {
+        "point": [
+          0.1,
+          0.1
+        ],
+        "target": [
+          0.09583333333333333,
+          0.1
+        ],
+        "axis": null,
+        "split_ids": {}
+      },
+      "expected": {
+        "ok": true,
+        "config": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "left",
+                  "name": "left",
+                  "poly": [
+                    [
+                      0.1,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.3
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ],
+                    [
+                      0.1,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-xovzgvmrw3q22mjnkna3",
+                    "wall-ccvgtho3ds42vj7jvc7c",
+                    "wall-hjglv6hf5cwuaqtkpnjf",
+                    "wall-ovaob3iaujdl23jt4myy",
+                    "wall-jwbx6jgd7jvciagg5v6z"
+                  ]
+                },
+                {
+                  "id": "right",
+                  "name": "right",
+                  "poly": [
+                    [
+                      0.6,
+                      0.3
+                    ],
+                    [
+                      1,
+                      0.3
+                    ],
+                    [
+                      1,
+                      0.6
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-zoc3zo7kjjeox4bf4aeo",
+                    "wall-6nxrhqpmgepupo6fnwch",
+                    "wall-cakhrqpihqpc5tn5qgzf",
+                    "wall-hjglv6hf5cwuaqtkpnjf"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "walls": [
+                {
+                  "key": "0.600000,0.200000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.3
+                  ]
+                }
+              ],
+              "wall_segments": [
+                {
+                  "id": "wall-jwbx6jgd7jvciagg5v6z",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.1,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-xovzgvmrw3q22mjnkna3",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-ovaob3iaujdl23jt4myy",
+                  "a": [
+                    0.1,
+                    0.6
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-ccvgtho3ds42vj7jvc7c",
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.3
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-hjglv6hf5cwuaqtkpnjf",
+                  "a": [
+                    0.6,
+                    0.3
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-zoc3zo7kjjeox4bf4aeo",
+                  "a": [
+                    0.6,
+                    0.3
+                  ],
+                  "b": [
+                    1,
+                    0.3
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-cakhrqpihqpc5tn5qgzf",
+                  "a": [
+                    0.6,
+                    0.6
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-6nxrhqpmgepupo6fnwch",
+                  "a": [
+                    1,
+                    0.3
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 0
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        },
+        "after": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "left",
+                  "name": "left",
+                  "poly": [
+                    [
+                      0.09583333333333334,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.3
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ],
+                    [
+                      0.1,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-xovzgvmrw3q22mjnkna3",
+                    "wall-ccvgtho3ds42vj7jvc7c",
+                    "wall-hjglv6hf5cwuaqtkpnjf",
+                    "wall-ovaob3iaujdl23jt4myy",
+                    "wall-jwbx6jgd7jvciagg5v6z"
+                  ]
+                },
+                {
+                  "id": "right",
+                  "name": "right",
+                  "poly": [
+                    [
+                      0.6,
+                      0.3
+                    ],
+                    [
+                      1,
+                      0.3
+                    ],
+                    [
+                      1,
+                      0.6
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-zoc3zo7kjjeox4bf4aeo",
+                    "wall-6nxrhqpmgepupo6fnwch",
+                    "wall-cakhrqpihqpc5tn5qgzf",
+                    "wall-hjglv6hf5cwuaqtkpnjf"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "walls": [
+                {
+                  "key": "0.600000,0.200000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.3
+                  ]
+                }
+              ],
+              "wall_segments": [
+                {
+                  "id": "wall-jwbx6jgd7jvciagg5v6z",
+                  "a": [
+                    0.09583333333333334,
+                    0.1
+                  ],
+                  "b": [
+                    0.1,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-xovzgvmrw3q22mjnkna3",
+                  "a": [
+                    0.09583333333333334,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-ovaob3iaujdl23jt4myy",
+                  "a": [
+                    0.1,
+                    0.6
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-ccvgtho3ds42vj7jvc7c",
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.3
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-hjglv6hf5cwuaqtkpnjf",
+                  "a": [
+                    0.6,
+                    0.3
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-zoc3zo7kjjeox4bf4aeo",
+                  "a": [
+                    0.6,
+                    0.3
+                  ],
+                  "b": [
+                    1,
+                    0.3
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-cakhrqpihqpc5tn5qgzf",
+                  "a": [
+                    0.6,
+                    0.6
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-6nxrhqpmgepupo6fnwch",
+                  "a": [
+                    1,
+                    0.3
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 0
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        }
+      }
+    },
+    {
+      "name": "D5-D6-0.0003",
+      "input": {
+        "spaces": [
+          {
+            "id": "f",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "rooms": [
+              {
+                "id": "left",
+                "name": "left",
+                "poly": [
+                  [
+                    0.1,
+                    0.1
+                  ],
+                  [
+                    0.6,
+                    0.1
+                  ],
+                  [
+                    0.6,
+                    0.6
+                  ],
+                  [
+                    0.1,
+                    0.6
+                  ]
+                ]
+              },
+              {
+                "id": "right",
+                "name": "right",
+                "poly": [
+                  [
+                    0.6,
+                    0.3
+                  ],
+                  [
+                    1,
+                    0.3
+                  ],
+                  [
+                    1,
+                    0.6
+                  ],
+                  [
+                    0.6,
+                    0.6
+                  ]
+                ]
+              }
+            ],
+            "future": {
+              "opaque": true
+            },
+            "walls": [
+              {
+                "key": "0.600000,0.200000@1.5706",
+                "a": [
+                  0.6,
+                  0.1
+                ],
+                "b": [
+                  0.6,
+                  0.3003
+                ],
+                "cm": 10
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "intent": {
+        "point": [
+          0.1,
+          0.1
+        ],
+        "target": [
+          0.09583333333333333,
+          0.1
+        ],
+        "axis": null,
+        "split_ids": {}
+      },
+      "expected": {
+        "ok": true,
+        "config": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "left",
+                  "name": "left",
+                  "poly": [
+                    [
+                      0.1,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.3
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ],
+                    [
+                      0.1,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-xovzgvmrw3q22mjnkna3",
+                    "wall-ccvgtho3ds42vj7jvc7c",
+                    "wall-hjglv6hf5cwuaqtkpnjf",
+                    "wall-ovaob3iaujdl23jt4myy",
+                    "wall-jwbx6jgd7jvciagg5v6z"
+                  ]
+                },
+                {
+                  "id": "right",
+                  "name": "right",
+                  "poly": [
+                    [
+                      0.6,
+                      0.3
+                    ],
+                    [
+                      1,
+                      0.3
+                    ],
+                    [
+                      1,
+                      0.6
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-zoc3zo7kjjeox4bf4aeo",
+                    "wall-6nxrhqpmgepupo6fnwch",
+                    "wall-cakhrqpihqpc5tn5qgzf",
+                    "wall-hjglv6hf5cwuaqtkpnjf"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "walls": [
+                {
+                  "key": "0.600000,0.200000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.3
+                  ]
+                }
+              ],
+              "wall_segments": [
+                {
+                  "id": "wall-jwbx6jgd7jvciagg5v6z",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.1,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-xovzgvmrw3q22mjnkna3",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-ovaob3iaujdl23jt4myy",
+                  "a": [
+                    0.1,
+                    0.6
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-ccvgtho3ds42vj7jvc7c",
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.3
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-hjglv6hf5cwuaqtkpnjf",
+                  "a": [
+                    0.6,
+                    0.3
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-zoc3zo7kjjeox4bf4aeo",
+                  "a": [
+                    0.6,
+                    0.3
+                  ],
+                  "b": [
+                    1,
+                    0.3
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-cakhrqpihqpc5tn5qgzf",
+                  "a": [
+                    0.6,
+                    0.6
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-6nxrhqpmgepupo6fnwch",
+                  "a": [
+                    1,
+                    0.3
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 0
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        },
+        "after": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "left",
+                  "name": "left",
+                  "poly": [
+                    [
+                      0.09583333333333334,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.3
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ],
+                    [
+                      0.1,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-xovzgvmrw3q22mjnkna3",
+                    "wall-ccvgtho3ds42vj7jvc7c",
+                    "wall-hjglv6hf5cwuaqtkpnjf",
+                    "wall-ovaob3iaujdl23jt4myy",
+                    "wall-jwbx6jgd7jvciagg5v6z"
+                  ]
+                },
+                {
+                  "id": "right",
+                  "name": "right",
+                  "poly": [
+                    [
+                      0.6,
+                      0.3
+                    ],
+                    [
+                      1,
+                      0.3
+                    ],
+                    [
+                      1,
+                      0.6
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-zoc3zo7kjjeox4bf4aeo",
+                    "wall-6nxrhqpmgepupo6fnwch",
+                    "wall-cakhrqpihqpc5tn5qgzf",
+                    "wall-hjglv6hf5cwuaqtkpnjf"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "walls": [
+                {
+                  "key": "0.600000,0.200000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.3
+                  ]
+                }
+              ],
+              "wall_segments": [
+                {
+                  "id": "wall-jwbx6jgd7jvciagg5v6z",
+                  "a": [
+                    0.09583333333333334,
+                    0.1
+                  ],
+                  "b": [
+                    0.1,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-xovzgvmrw3q22mjnkna3",
+                  "a": [
+                    0.09583333333333334,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-ovaob3iaujdl23jt4myy",
+                  "a": [
+                    0.1,
+                    0.6
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-ccvgtho3ds42vj7jvc7c",
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.3
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-hjglv6hf5cwuaqtkpnjf",
+                  "a": [
+                    0.6,
+                    0.3
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-zoc3zo7kjjeox4bf4aeo",
+                  "a": [
+                    0.6,
+                    0.3
+                  ],
+                  "b": [
+                    1,
+                    0.3
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-cakhrqpihqpc5tn5qgzf",
+                  "a": [
+                    0.6,
+                    0.6
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-6nxrhqpmgepupo6fnwch",
+                  "a": [
+                    1,
+                    0.3
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 0
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        }
+      }
+    },
+    {
+      "name": "D5-D6-0.0004",
+      "input": {
+        "spaces": [
+          {
+            "id": "f",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "rooms": [
+              {
+                "id": "left",
+                "name": "left",
+                "poly": [
+                  [
+                    0.1,
+                    0.1
+                  ],
+                  [
+                    0.6,
+                    0.1
+                  ],
+                  [
+                    0.6,
+                    0.6
+                  ],
+                  [
+                    0.1,
+                    0.6
+                  ]
+                ]
+              },
+              {
+                "id": "right",
+                "name": "right",
+                "poly": [
+                  [
+                    0.6,
+                    0.3
+                  ],
+                  [
+                    1,
+                    0.3
+                  ],
+                  [
+                    1,
+                    0.6
+                  ],
+                  [
+                    0.6,
+                    0.6
+                  ]
+                ]
+              }
+            ],
+            "future": {
+              "opaque": true
+            },
+            "walls": [
+              {
+                "key": "0.600000,0.200000@1.5706",
+                "a": [
+                  0.6,
+                  0.1
+                ],
+                "b": [
+                  0.6,
+                  0.3004
+                ],
+                "cm": 10
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "intent": {
+        "point": [
+          0.1,
+          0.1
+        ],
+        "target": [
+          0.09583333333333333,
+          0.1
+        ],
+        "axis": null,
+        "split_ids": {}
+      },
+      "expected": {
+        "ok": true,
+        "config": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "left",
+                  "name": "left",
+                  "poly": [
+                    [
+                      0.1,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.3
+                    ],
+                    [
+                      0.6,
+                      0.3004
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ],
+                    [
+                      0.1,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-xovzgvmrw3q22mjnkna3",
+                    "wall-ccvgtho3ds42vj7jvc7c",
+                    "wall-jl2kjj3kukheesalxwik",
+                    "wall-6f6ftddnz6qa3qnsktd2",
+                    "wall-ovaob3iaujdl23jt4myy",
+                    "wall-jwbx6jgd7jvciagg5v6z"
+                  ]
+                },
+                {
+                  "id": "right",
+                  "name": "right",
+                  "poly": [
+                    [
+                      0.6,
+                      0.3
+                    ],
+                    [
+                      1,
+                      0.3
+                    ],
+                    [
+                      1,
+                      0.6
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ],
+                    [
+                      0.6,
+                      0.3004
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-zoc3zo7kjjeox4bf4aeo",
+                    "wall-6nxrhqpmgepupo6fnwch",
+                    "wall-cakhrqpihqpc5tn5qgzf",
+                    "wall-6f6ftddnz6qa3qnsktd2",
+                    "wall-jl2kjj3kukheesalxwik"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "walls": [
+                {
+                  "key": "0.600000,0.200000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.3
+                  ]
+                },
+                {
+                  "key": "0.600000,0.300000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.3
+                  ],
+                  "b": [
+                    0.6,
+                    0.3004
+                  ]
+                }
+              ],
+              "wall_segments": [
+                {
+                  "id": "wall-jwbx6jgd7jvciagg5v6z",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.1,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-xovzgvmrw3q22mjnkna3",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-ovaob3iaujdl23jt4myy",
+                  "a": [
+                    0.1,
+                    0.6
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-ccvgtho3ds42vj7jvc7c",
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.3
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-jl2kjj3kukheesalxwik",
+                  "a": [
+                    0.6,
+                    0.3
+                  ],
+                  "b": [
+                    0.6,
+                    0.3004
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-zoc3zo7kjjeox4bf4aeo",
+                  "a": [
+                    0.6,
+                    0.3
+                  ],
+                  "b": [
+                    1,
+                    0.3
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-6f6ftddnz6qa3qnsktd2",
+                  "a": [
+                    0.6,
+                    0.3004
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-cakhrqpihqpc5tn5qgzf",
+                  "a": [
+                    0.6,
+                    0.6
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-6nxrhqpmgepupo6fnwch",
+                  "a": [
+                    1,
+                    0.3
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 0
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        },
+        "after": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "left",
+                  "name": "left",
+                  "poly": [
+                    [
+                      0.09583333333333334,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.3
+                    ],
+                    [
+                      0.6,
+                      0.3004
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ],
+                    [
+                      0.1,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-xovzgvmrw3q22mjnkna3",
+                    "wall-ccvgtho3ds42vj7jvc7c",
+                    "wall-jl2kjj3kukheesalxwik",
+                    "wall-6f6ftddnz6qa3qnsktd2",
+                    "wall-ovaob3iaujdl23jt4myy",
+                    "wall-jwbx6jgd7jvciagg5v6z"
+                  ]
+                },
+                {
+                  "id": "right",
+                  "name": "right",
+                  "poly": [
+                    [
+                      0.6,
+                      0.3
+                    ],
+                    [
+                      1,
+                      0.3
+                    ],
+                    [
+                      1,
+                      0.6
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ],
+                    [
+                      0.6,
+                      0.3004
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-zoc3zo7kjjeox4bf4aeo",
+                    "wall-6nxrhqpmgepupo6fnwch",
+                    "wall-cakhrqpihqpc5tn5qgzf",
+                    "wall-6f6ftddnz6qa3qnsktd2",
+                    "wall-jl2kjj3kukheesalxwik"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "walls": [
+                {
+                  "key": "0.600000,0.200000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.3
+                  ]
+                },
+                {
+                  "key": "0.600000,0.300000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.3
+                  ],
+                  "b": [
+                    0.6,
+                    0.3004
+                  ]
+                }
+              ],
+              "wall_segments": [
+                {
+                  "id": "wall-jwbx6jgd7jvciagg5v6z",
+                  "a": [
+                    0.09583333333333334,
+                    0.1
+                  ],
+                  "b": [
+                    0.1,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-xovzgvmrw3q22mjnkna3",
+                  "a": [
+                    0.09583333333333334,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-ovaob3iaujdl23jt4myy",
+                  "a": [
+                    0.1,
+                    0.6
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-ccvgtho3ds42vj7jvc7c",
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.3
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-jl2kjj3kukheesalxwik",
+                  "a": [
+                    0.6,
+                    0.3
+                  ],
+                  "b": [
+                    0.6,
+                    0.3004
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-zoc3zo7kjjeox4bf4aeo",
+                  "a": [
+                    0.6,
+                    0.3
+                  ],
+                  "b": [
+                    1,
+                    0.3
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-6f6ftddnz6qa3qnsktd2",
+                  "a": [
+                    0.6,
+                    0.3004
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-cakhrqpihqpc5tn5qgzf",
+                  "a": [
+                    0.6,
+                    0.6
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-6nxrhqpmgepupo6fnwch",
+                  "a": [
+                    1,
+                    0.3
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 0
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        }
+      }
+    },
+    {
+      "name": "D6-gap-4.8mm",
+      "input": {
+        "spaces": [
+          {
+            "id": "f",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "rooms": [
+              {
+                "id": "left",
+                "name": "left",
+                "poly": [
+                  [
+                    0.1,
+                    0.1
+                  ],
+                  [
+                    0.6,
+                    0.1
+                  ],
+                  [
+                    0.6,
+                    0.6
+                  ],
+                  [
+                    0.1,
+                    0.6
+                  ]
+                ]
+              },
+              {
+                "id": "right",
+                "name": "right",
+                "poly": [
+                  [
+                    0.6,
+                    0.3
+                  ],
+                  [
+                    1,
+                    0.3
+                  ],
+                  [
+                    1,
+                    0.6
+                  ],
+                  [
+                    0.6,
+                    0.6
+                  ]
+                ]
+              }
+            ],
+            "future": {
+              "opaque": true
+            },
+            "walls": [
+              {
+                "key": "0.600000,0.200000@1.5706",
+                "a": [
+                  0.6,
+                  0.1
+                ],
+                "b": [
+                  0.6,
+                  0.2996
+                ],
+                "cm": 10
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "intent": {
+        "point": [
+          0.1,
+          0.1
+        ],
+        "target": [
+          0.09583333333333333,
+          0.1
+        ],
+        "axis": null,
+        "split_ids": {}
+      },
+      "expected": {
+        "ok": true,
+        "config": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "left",
+                  "name": "left",
+                  "poly": [
+                    [
+                      0.1,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.2996
+                    ],
+                    [
+                      0.6,
+                      0.3
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ],
+                    [
+                      0.1,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-xovzgvmrw3q22mjnkna3",
+                    "wall-tue45uita7gyn342fuxu",
+                    "wall-ccp7kb6pxnujzckr5rvw",
+                    "wall-hjglv6hf5cwuaqtkpnjf",
+                    "wall-ovaob3iaujdl23jt4myy",
+                    "wall-jwbx6jgd7jvciagg5v6z"
+                  ]
+                },
+                {
+                  "id": "right",
+                  "name": "right",
+                  "poly": [
+                    [
+                      0.6,
+                      0.3
+                    ],
+                    [
+                      1,
+                      0.3
+                    ],
+                    [
+                      1,
+                      0.6
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-zoc3zo7kjjeox4bf4aeo",
+                    "wall-6nxrhqpmgepupo6fnwch",
+                    "wall-cakhrqpihqpc5tn5qgzf",
+                    "wall-hjglv6hf5cwuaqtkpnjf"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "walls": [
+                {
+                  "key": "0.600000,0.200000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.2996
+                  ]
+                },
+                {
+                  "key": "0.600000,0.300000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.2996
+                  ],
+                  "b": [
+                    0.6,
+                    0.3
+                  ]
+                }
+              ],
+              "wall_segments": [
+                {
+                  "id": "wall-jwbx6jgd7jvciagg5v6z",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.1,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-xovzgvmrw3q22mjnkna3",
+                  "a": [
+                    0.1,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-ovaob3iaujdl23jt4myy",
+                  "a": [
+                    0.1,
+                    0.6
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-tue45uita7gyn342fuxu",
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.2996
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-ccp7kb6pxnujzckr5rvw",
+                  "a": [
+                    0.6,
+                    0.2996
+                  ],
+                  "b": [
+                    0.6,
+                    0.3
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-hjglv6hf5cwuaqtkpnjf",
+                  "a": [
+                    0.6,
+                    0.3
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-zoc3zo7kjjeox4bf4aeo",
+                  "a": [
+                    0.6,
+                    0.3
+                  ],
+                  "b": [
+                    1,
+                    0.3
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-cakhrqpihqpc5tn5qgzf",
+                  "a": [
+                    0.6,
+                    0.6
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-6nxrhqpmgepupo6fnwch",
+                  "a": [
+                    1,
+                    0.3
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 0
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        },
+        "after": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "left",
+                  "name": "left",
+                  "poly": [
+                    [
+                      0.09583333333333334,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.1
+                    ],
+                    [
+                      0.6,
+                      0.2996
+                    ],
+                    [
+                      0.6,
+                      0.3
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ],
+                    [
+                      0.1,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-xovzgvmrw3q22mjnkna3",
+                    "wall-tue45uita7gyn342fuxu",
+                    "wall-ccp7kb6pxnujzckr5rvw",
+                    "wall-hjglv6hf5cwuaqtkpnjf",
+                    "wall-ovaob3iaujdl23jt4myy",
+                    "wall-jwbx6jgd7jvciagg5v6z"
+                  ]
+                },
+                {
+                  "id": "right",
+                  "name": "right",
+                  "poly": [
+                    [
+                      0.6,
+                      0.3
+                    ],
+                    [
+                      1,
+                      0.3
+                    ],
+                    [
+                      1,
+                      0.6
+                    ],
+                    [
+                      0.6,
+                      0.6
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-zoc3zo7kjjeox4bf4aeo",
+                    "wall-6nxrhqpmgepupo6fnwch",
+                    "wall-cakhrqpihqpc5tn5qgzf",
+                    "wall-hjglv6hf5cwuaqtkpnjf"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "walls": [
+                {
+                  "key": "0.600000,0.200000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.2996
+                  ]
+                },
+                {
+                  "key": "0.600000,0.300000@1.5706",
+                  "cm": 10,
+                  "a": [
+                    0.6,
+                    0.2996
+                  ],
+                  "b": [
+                    0.6,
+                    0.3
+                  ]
+                }
+              ],
+              "wall_segments": [
+                {
+                  "id": "wall-jwbx6jgd7jvciagg5v6z",
+                  "a": [
+                    0.09583333333333334,
+                    0.1
+                  ],
+                  "b": [
+                    0.1,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-xovzgvmrw3q22mjnkna3",
+                  "a": [
+                    0.09583333333333334,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-ovaob3iaujdl23jt4myy",
+                  "a": [
+                    0.1,
+                    0.6
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-tue45uita7gyn342fuxu",
+                  "a": [
+                    0.6,
+                    0.1
+                  ],
+                  "b": [
+                    0.6,
+                    0.2996
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-ccp7kb6pxnujzckr5rvw",
+                  "a": [
+                    0.6,
+                    0.2996
+                  ],
+                  "b": [
+                    0.6,
+                    0.3
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-hjglv6hf5cwuaqtkpnjf",
+                  "a": [
+                    0.6,
+                    0.3
+                  ],
+                  "b": [
+                    0.6,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-zoc3zo7kjjeox4bf4aeo",
+                  "a": [
+                    0.6,
+                    0.3
+                  ],
+                  "b": [
+                    1,
+                    0.3
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-cakhrqpihqpc5tn5qgzf",
+                  "a": [
+                    0.6,
+                    0.6
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-6nxrhqpmgepupo6fnwch",
+                  "a": [
+                    1,
+                    0.3
+                  ],
+                  "b": [
+                    1,
+                    0.6
+                  ],
+                  "cm": 0
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        }
+      }
+    },
+    {
+      "name": "numbers",
+      "input": {
+        "spaces": [
+          {
+            "id": "f",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "rooms": [
+              {
+                "id": "r",
+                "name": "r",
+                "poly": [
+                  [
+                    0.0001220703125,
+                    0
+                  ],
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    1
+                  ],
+                  [
+                    0.0001220703125,
+                    1
+                  ]
+                ]
+              }
+            ],
+            "future": {
+              "opaque": true
+            }
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "expected": {
+        "ok": true,
+        "config": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "cell_cm": 5,
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "r",
+                  "name": "r",
+                  "poly": [
+                    [
+                      0.00012207,
+                      0
+                    ],
+                    [
+                      1,
+                      0
+                    ],
+                    [
+                      1,
+                      1
+                    ],
+                    [
+                      0.00012207,
+                      1
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-z7quaq2ijl24wn6vaxds",
+                    "wall-pjuah2r2zdacweqgstpw",
+                    "wall-b4fkymngpkq4wvasggsd",
+                    "wall-obmosjx76h672mausigb"
+                  ]
+                }
+              ],
+              "future": {
+                "opaque": true
+              },
+              "wall_segments": [
+                {
+                  "id": "wall-obmosjx76h672mausigb",
+                  "a": [
+                    0.00012207,
+                    0
+                  ],
+                  "b": [
+                    0.00012207,
+                    1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-z7quaq2ijl24wn6vaxds",
+                  "a": [
+                    0.00012207,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    0
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-b4fkymngpkq4wvasggsd",
+                  "a": [
+                    0.00012207,
+                    1
+                  ],
+                  "b": [
+                    1,
+                    1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-pjuah2r2zdacweqgstpw",
+                  "a": [
+                    1,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    1
+                  ],
+                  "cm": 0
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        }
+      }
+    },
+    {
+      "name": "D6-covering-tie-legacy-keys",
+      "input": {
+        "spaces": [
+          {
+            "id": "f",
+            "title": "Floor",
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "rooms": [
+              {
+                "id": "r",
+                "name": "r",
+                "poly": [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    1
+                  ],
+                  [
+                    0,
+                    1
+                  ]
+                ]
+              }
+            ],
+            "walls": [
+              {
+                "key": "😀",
+                "a": [
+                  0,
+                  0.0001
+                ],
+                "b": [
+                  1,
+                  0.0001
+                ],
+                "cm": 12
+              },
+              {
+                "key": "Ａ",
+                "a": [
+                  0,
+                  0.0001
+                ],
+                "b": [
+                  1,
+                  0.0001
+                ],
+                "cm": 24
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "expected": {
+        "ok": true,
+        "config": {
+          "spaces": [
+            {
+              "id": "f",
+              "title": "Floor",
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "rooms": [
+                {
+                  "id": "r",
+                  "name": "r",
+                  "poly": [
+                    [
+                      0,
+                      0
+                    ],
+                    [
+                      1,
+                      0
+                    ],
+                    [
+                      1,
+                      1
+                    ],
+                    [
+                      0,
+                      1
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-5sqppn7smt32f2dufeow",
+                    "wall-pjuah2r2zdacweqgstpw",
+                    "wall-e36jci2c2iwzaxibvvcz",
+                    "wall-qakp7zk62ujmgswbukmi"
+                  ]
+                }
+              ],
+              "walls": [
+                {
+                  "key": "0.500000,0.000000@0.0000",
+                  "cm": 12,
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    0
+                  ]
+                }
+              ],
+              "wall_segments": [
+                {
+                  "id": "wall-qakp7zk62ujmgswbukmi",
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    0,
+                    1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-5sqppn7smt32f2dufeow",
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    0
+                  ],
+                  "cm": 12
+                },
+                {
+                  "id": "wall-e36jci2c2iwzaxibvvcz",
+                  "a": [
+                    0,
+                    1
+                  ],
+                  "b": [
+                    1,
+                    1
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-pjuah2r2zdacweqgstpw",
+                  "a": [
+                    1,
+                    0
+                  ],
+                  "b": [
+                    1,
+                    1
+                  ],
+                  "cm": 0
+                }
+              ]
+            }
+          ],
+          "markers": [],
+          "settings": {},
+          "model_version": 10
+        }
+      }
+    },
+    {
+      "name": "D4-degenerate-edge",
+      "input": {
+        "spaces": [
+          {
+            "id": "f",
+            "title": "Floor",
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "rooms": [
+              {
+                "id": "r",
+                "name": "r",
+                "poly": [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    1
+                  ],
+                  [
+                    0,
+                    1
+                  ]
+                ]
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "expected": {
+        "ok": false,
+        "reason": "zero-length"
+      }
+    }
+  ]
+}

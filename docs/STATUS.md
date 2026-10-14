@@ -25,6 +25,14 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Wall identity parity (#845) reserves stairs alongside all other plan IDs and
+uses a shared Unicode code-point order. The server preserves positive short
+contour edges like the browser; first migration prioritises shared boundaries
+and mirrors browser thickness inheritance. A pre-change corpus passport keeps
+catalogue identity/order, and the mandatory clean TS/Python job compares room
+candidates, cross-idempotence and Undo using the browser's baseline. Model/API
+versions, read-side behaviour, junction limits and input scope are unchanged.
+
 Vacuum path fidelity (#872) replaces index/Store thinning with ordered raw
 fragments and a certified physical render projection. A shared bounded server
 bridge reads the exact ordinary Dreame camera; reset/run proof is mandatory,

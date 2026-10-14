@@ -1220,12 +1220,14 @@ jobs:
         with:
           python-version-file: .python-version
       - run: npm ci
-      - name: Компилировать узкое TS-зеркало П1–П4
+      - name: Компилировать TS-зеркала стыков и идентичности/переноса стен
         run: |
           npx --no-install tsc -p tsconfig.junction-parity.json
           node scripts/fix-test-build.mjs
       - name: Сравнить настоящие TS/Python validators (fail closed)
-        run: python tests_backend/junction_parity.py --build-dir=test-build/junction-parity
+        run: |
+          python tests_backend/junction_parity.py --build-dir=test-build/junction-parity
+          python tests_backend/wall_node_parity.py --build-dir=test-build/junction-parity
       - name: Записать маркер успеха
         run: |
           printf '%s\n' "geometry_parity прогнана успешно" \

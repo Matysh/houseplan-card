@@ -527,11 +527,12 @@ tighten` опускает потолки ядер, графов бандла и 
 - The backend job measures branch coverage (pure + HA harness combined), fails
   below `scripts/backend-coverage-baseline.txt` and refuses to run when the HA
   harness would silently skip.
-- The clean-runner `geometry_parity` job (#548) compiles only the TypeScript
-  graph rooted at `src/junction-limits.ts`, loads the production Python module
-  without Home Assistant and compares both over
-  `test/fixtures/junction-limits-parity.json`. It fails closed on missing
-  prerequisites, announces the number of executed scenarios and reuses a result
+- The clean-runner `geometry_parity` job (#548/#845) compiles actual TS junction,
+  wall-identity and node graphs and loads the production Python modules without HA.
+  It executes `junction_parity.py` and `wall_node_parity.py` over shared fixtures,
+  room/partition candidates and the saved fixture/demo corpus, including exact
+  browser-baseline inverses and cross-idempotence (DEVELOPMENT › Wall-node editing).
+  Missing prerequisites fail, never skip; actual counts are reported. Reuse applies
   only when both mirrors, the fixture, toolchain pins and harness inputs are
   byte-identical.
 - The error-code scanner proves every emitted code (`send_error` literals,

@@ -180,6 +180,18 @@ cancel. No baseline construction is moved ahead of the first real candidate.
 
 ### Stable stored identity and zero walls (model v10, #282/#306/#478)
 
+#845 makes both materializers use the browser's existing rule: a contour edge
+longer than `1e-9` survives, including edges shorter than `2 · eps`; that short
+edge receives no inserted split points. Degenerate edges still refuse, and all
+physical/junction checks remain. Split representatives are prioritised as shared
+room boundaries, canonical zero cuts, legacy cuts, exact stored wall endpoints,
+then opening edges; nearby points keep the first representative.
+After exact thickness coverage/conflict checks, first materialization inherits
+through the existing browser compatibility lookup (same span, half-cell
+midpoint/direction tolerance, then finite parent coverage) before previous cm.
+This removes legacy first-move Undo disagreement; it is not Optimize's lossy
+micro-interval repair and never runs on hover or ordinary read.
+
 The decision record behind the stored representation — what the code calls
 «ADR 282» — is `docs/adr/282-wall-geometry-representation.md`; the migration
 matrix is in `CONFIG-COMPATIBILITY.md` (model v8–v10).

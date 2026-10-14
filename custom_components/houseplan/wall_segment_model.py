@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import base64
 import copy
+import decimal
 import hashlib
 import math
 import re
@@ -169,6 +170,14 @@ def _quantize(value: float, pitch: float = GRID_STEP_N) -> float:
 
 
 def _wall_key(a: list[float], b: list[float]) -> str:
+    # Mirror wallKey's documented storage-noise boundary (#258), not a second
+    # grid snap. A nine-decimal echo of a lattice endpoint must retain its key
+    # when the segment midpoint is exactly on a half-step rounding tie.
+    def coordinate(value: float) -> float:
+        snapped = _quantize(value)
+        return snapped if abs(snapped - value) <= max(GRID_STEP_N * 1e-6, EPS) else value
+    a = [coordinate(float(v)) for v in a[:2]]
+    b = [coordinate(float(v)) for v in b[:2]]
     midpoint_x = _quantize((float(a[0]) + float(b[0])) / 2)
     midpoint_y = _quantize((float(a[1]) + float(b[1])) / 2)
     dx, dy = _wall_direction(a, b)
@@ -206,12 +215,10 @@ def _atomize(
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     rooms = space.get("rooms") or []
     room_polys = {str(room.get("id", "")): _room_poly(room) for room in rooms}
-    global_breaks: list[list[float]] = []
     explicit_spans = space.get("open_spans") or []
     legacy_segments: list[list[float]] = []
     for span in explicit_spans:
         if isinstance(span, dict) and isinstance(span.get("a"), list) and isinstance(span.get("b"), list):
-            global_breaks.extend((span["a"], span["b"]))
             legacy_segments.append([
                 float(span["a"][0]), float(span["a"][1]),
                 float(span["b"][0]), float(span["b"][1]),
@@ -231,7 +238,6 @@ def _atomize(
                     room_polys.get(str(second.get("id", "")), []),
                 ):
                     legacy_segments.append(shared)
-                    global_breaks.extend(([shared[0], shared[1]], [shared[2], shared[3]]))
     canonical_zero_segments: list[list[float]] = []
     for room in rooms:
         poly = room_polys.get(str(room.get("id", ""))) or []
@@ -247,8 +253,14 @@ def _atomize(
                 float(poly[index][0]), float(poly[index][1]),
                 float(poly[following][0]), float(poly[following][1]),
             ])
-    for segment in canonical_zero_segments:
-        global_breaks.extend((segment[:2], segment[2:]))
+    # Match atomicPolyForRoom's precedence: shared room boundaries (per room),
+    # canonical zero cuts, legacy cuts, stored wall endpoints, opening edges.
+    # Nearby split points keep the first representative, so order is identity.
+    global_breaks = [
+        point for segment in [*canonical_zero_segments, *legacy_segments]
+        for point in (segment[:2], segment[2:])
+    ]
+    opening_breaks: list[list[float]] = []
 
     # #316 §3.1: a legacy open_spans/open_to cut never zeroes the atom that
     # carries an existing contour opening; its edges become atom boundaries so
@@ -280,7 +292,7 @@ def _atomize(
                 {"centre": centre, "angle": angle, "half": half}
             )
             direction = (math.cos(math.radians(angle)), math.sin(math.radians(angle)))
-            global_breaks.extend((
+            opening_breaks.extend((
                 [centre[0] - direction[0] * half, centre[1] - direction[1] * half],
                 [centre[0] + direction[0] * half, centre[1] + direction[1] * half],
             ))
@@ -300,6 +312,7 @@ def _atomize(
     for wall in space.get("walls") or []:
         if isinstance(wall, dict) and isinstance(wall.get("a"), list) and isinstance(wall.get("b"), list):
             global_breaks.extend((wall["a"], wall["b"]))
+    global_breaks.extend(opening_breaks)
 
     atoms_by_key: dict[str, dict[str, Any]] = {}
     next_rooms: list[dict[str, Any]] = []
@@ -309,12 +322,13 @@ def _atomize(
         original = room_polys.get(room_id) or []
         if not room_id or len(original) < 3:
             raise WallSegmentMigrationError("invalid-room", room_id)
-        breaks = list(global_breaks)
+        breaks = []
         for other_id, other_poly in room_polys.items():
             if other_id == room_id:
                 continue
             for shared in _shared_boundaries(original, other_poly):
                 breaks.extend(([shared[0], shared[1]], [shared[2], shared[3]]))
+        breaks.extend(global_breaks)
 
         poly: list[list[float]] = []
         parents: list[int] = []
@@ -323,8 +337,10 @@ def _atomize(
             poly.append(list(a))
             parents.append(index)
             length = _length(a, b)
-            if length < epsilon * 2:
+            if length <= EPS:
                 raise WallSegmentMigrationError("zero-length", room_id)
+            if length < epsilon * 2:
+                continue  # Authored short edges survive; never insert split points.
             gap = min(0.499, epsilon * 2 / length)
             positions: list[float] = []
             for breakpoint in breaks:
@@ -407,6 +423,108 @@ def _atomize(
     return sorted(atoms_by_key.values(), key=lambda atom: atom["key"]), next_rooms
 
 
+def _legacy_thickness_at(walls: list[dict[str, Any]], a: list[float], b: list[float]) -> float:
+    """Mirror thicknessCmAt/lookupWall/exactCoveringWall at normalized scale.
+
+    This is the final compatibility fallback, after exact/conflicting coverage.
+    It must also precede the previous catalogue's cm, just like the browser.
+    """
+    def cm_of(wall: dict[str, Any]) -> float:
+        cm = float(wall.get("cm", 0))
+        return max(1.0, min(100.0, cm)) if math.isfinite(cm) else 1.0
+
+    def span_of(wall: dict[str, Any]) -> tuple[list[float], list[float]] | None:
+        endpoints = (wall.get("a"), wall.get("b"))
+        if not all(isinstance(p, list) and len(p) >= 2 for p in endpoints):
+            return None
+        first, second = ([float(p[0]), float(p[1])] for p in endpoints)
+        return (first, second) if all(math.isfinite(v) for p in (first, second) for v in p) else None
+
+    def angle_of(first: list[float], second: list[float]) -> float:
+        direction = _wall_direction(first, second)
+        angle = math.atan2(direction[1], direction[0])
+        return angle + math.pi if angle < 0 else angle
+
+    def angle_close(first: float, second: float) -> bool:
+        difference = abs(first - second)
+        if difference > math.pi / 2:
+            difference = math.pi - difference
+        return difference < 0.02
+
+    # The existing exact-key and strict same-span lookup win before tolerance.
+    query_key = _wall_key(a, b)
+    hit = next((w for w in walls if w.get("key") == query_key), None)
+    exact_eps = max(GRID_STEP_N * 1e-6, EPS)
+    if hit is None:
+        for wall in walls:
+            span = span_of(wall)
+            if span is None:
+                continue
+            if any(all(abs(p[i] - q[i]) <= exact_eps for p, q in
+                       zip((a, b), ordered, strict=True) for i in (0, 1))
+                   for ordered in (span, tuple(reversed(span)))):
+                hit = wall
+                break
+    tolerance = max(GRID_STEP_N * 0.5, EPS)
+    query_angle = angle_of(a, b)
+    midpoint = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
+    if hit is None:
+        for wall in walls:
+            key = str(wall.get("key", ""))
+            try:
+                location, angle = key.rsplit("@", 1)
+                x, y = (float(v) for v in location.split(","))
+                angle = float(angle)
+            except (ValueError, TypeError):
+                continue
+            if all(math.isfinite(v) for v in (x, y, angle)) and angle_close(angle, query_angle) \
+                    and math.hypot(x - midpoint[0], y - midpoint[1]) <= tolerance:
+                hit = wall
+                break
+    if hit is not None and float(hit.get("cm", 0)) > 0:
+        return cm_of(hit)
+
+    query_length = _length(a, b)
+    if query_length < 1e-12:
+        return 0.0
+    best: tuple[float, bytes, dict[str, Any]] | None = None
+    for wall in walls:
+        if float(wall.get("cm", 0)) <= 0:
+            continue
+        span = span_of(wall)
+        if span is None:
+            continue
+        span_length = _length(*span)
+        if span_length < 1e-12 or not angle_close(angle_of(*span), query_angle):
+            continue
+        if _distance_to_segment(a, *span) > tolerance or _distance_to_segment(b, *span) > tolerance \
+                or span_length + tolerance < query_length:
+            continue
+        extra = max(0.0, span_length - query_length)
+        # Number.toString's fixed/scientific boundary; no extra numeric rounding
+        # (physical cm values do not belong to the nine-decimal coordinate pass).
+        def number_text(value: float) -> str:
+            if value == 0:
+                return "0"
+            text = repr(float(value))
+            coefficient, separator, exponent = text.partition("e")
+            if not separator:
+                return text.removesuffix(".0")
+            power = int(exponent)
+            if -6 <= power < 21:
+                return format(decimal.Decimal(text), "f")
+            return coefficient.removesuffix(".0") + "e" + ("+" if power >= 0 else "-") + str(abs(power))
+        stable = (f"{wall.get('key', '')}|{number_text(cm_of(wall))}|"
+                  + ",".join(number_text(v) for p in span for v in p))
+        # This legacy thickness tie mirrors exactCoveringWall's raw JS string
+        # comparison, not catalogue identity's Unicode code-point comparator.
+        stable_key = stable.encode("utf-16-be", errors="surrogatepass")
+        if best is None or extra < best[0] - 1e-12 \
+                or (abs(extra - best[0]) <= 1e-12 and stable_key < best[1]):
+            best = extra, stable_key, wall
+    return cm_of(best[2]) if best else 0.0
+
+
 def _thickness(space: dict[str, Any], atom: dict[str, Any], previous: dict[str, Any] | None) -> float:
     if atom.get("zero_wall"):
         return 0.0
@@ -432,6 +550,9 @@ def _thickness(space: dict[str, Any], atom: dict[str, Any], previous: dict[str, 
         raise WallSegmentMigrationError("thickness-conflict", atom["key"])
     if candidates:
         return candidates[0]
+    resolved = _legacy_thickness_at(space.get("walls") or [], atom["a"], atom["b"])
+    if resolved > 0:
+        return resolved
     if previous is not None and float(previous.get("cm", 0)) > 0:
         return float(previous["cm"])
     return 0.0

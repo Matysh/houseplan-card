@@ -13,6 +13,23 @@ const plan = (s, p, splitIds = {}) => {
   const nodes = structuralWallNodes(s), n = nodes.find(n => Math.hypot(n.point[0] - p[0], n.point[1] - p[1]) < 1e-8);
   assert.ok(n, `node ${p}`); return prepareNodeMove(s, n, nodes, splitIds);
 };
+
+test('#845 short edges and legacy migration keep safe moves and exact identities', () => {
+  const cases = JSON.parse(readFileSync(new URL('./fixtures/845-wall-identity-parity.json', import.meta.url))).cases;
+  for (const c of cases.filter(c => c.intent)) {
+    const base = c.mode === 'pure' ? c.input : commitWallSegmentModel(c.input).config;
+    const source = base.spaces[0], frozen = structuredClone(source);
+    const moved = applyNodeMove(plan(source, c.intent.point, c.intent.split_ids), c.intent.target, c.intent.axis);
+    assert.equal(moved.ok, c.expected.ok, c.name);
+    assert.deepEqual(source, frozen, c.name + ': never mutate the baseline');
+    if (!moved.ok) { assert.equal(moved.reason, c.expected.reason, c.name); continue; }
+    const after = commitWallSegmentModel({ ...base, spaces: [moved.space] }).config;
+    assert.deepEqual(after, c.expected.after, c.name);
+    assert.equal(buildNodePreview(moved.space).safe, true, c.name + ': production physical geometry');
+    assert.deepEqual(increasedViolations(junctionLimitViolations(after, 'f'),
+      junctionLimitViolations(base, 'f')), [], c.name + ': no introduced junction violations');
+  }
+});
 test('828 preserves finite fixed contacts with collinear neighbours and proven X children', () => {
   const cases = JSON.parse(readFileSync(new URL('./fixtures/803-wall-node-parity.json', import.meta.url)))
     .filter(c => c.name.startsWith('828-'));

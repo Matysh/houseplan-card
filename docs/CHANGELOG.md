@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Wall-node moves and Undo on older plans now build the same wall catalogue in
+  the browser and server. Valid short contour edges no longer cause a server-only
+  refusal; stair ID collisions, Unicode lineage order and boundary thickness
+  inheritance have shared regression coverage and mandatory TS/Python CI parity
+  ([#845](https://github.com/Matysh/houseplan-card/issues/845)).
+
 - Vacuum paths preserve turns, reversals and gaps without blind thinning.
   Supported Dreame ordinary cameras can provide full server-recorded paths;
   uncertain cleanup identity falls back safely to positions. The device

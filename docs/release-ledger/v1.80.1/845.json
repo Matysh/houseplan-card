@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 845,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "All four wall-model/node-move mirrors at the analytics baseline a7ee8e44 match v1.80.1. This repairs existing browser/server wall materialization disagreement: short contour edges, first legacy split/thickness inheritance and Undo, stair ID reservations, Unicode lineage order and storage-noise compatibility keys. It does not repair only an intermediate new feature or introduce a new model/API. The owner confirmed accepting the browser's short-edge rule and including first migration/Undo in #845.",
+  "summary": {
+    "ru": "Перенос узлов и отмена на старых планах больше не отказывают из-за разного построения стен браузером и сервером; короткие допустимые участки и толщина сохраняются.",
+    "en": "Wall-node moves and Undo on older plans no longer fail because the browser and server build different walls; valid short edges and wall thickness are preserved."
+  }
+}

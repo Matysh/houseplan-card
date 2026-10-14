@@ -503,6 +503,15 @@ product/security decision and must not be added to an individual sink.
 
 ## Room and independent wall geometry
 
+Identity ordering (#845) is a pure shared leaf, `codepoint-order.ts`: Python
+Unicode code points, never locale or UTF-16. Both migration ID sets reserve
+stairs. The Python materializer mirrors `atomicPolyForRoom`'s split-point
+precedence and positive short-edge contract, plus `thicknessCmAt`'s final
+compatibility inheritance before previous cm. Its wall key uses the already
+documented storage-noise boundary. The independent node proof/Undo protocol
+is unchanged. Corpus and room parity run against actual modules in the existing
+`geometry_parity` job, without trusting a frontend verdict or repairing on read.
+
 Model v10 (#282, #306, #478): `wall_segments[]` is the authoritative catalog of
 atomic room-wall intervals with stable ids, `rooms[].wall_ids[]` orders each
 contour, and room polygons plus `walls[]` are read-compatibility projections.

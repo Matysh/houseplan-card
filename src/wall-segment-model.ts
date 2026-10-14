@@ -10,6 +10,7 @@
 import {
   canonicalizeConfigGeometryInPlace, LATTICE_NOISE_STEPS,
 } from './coordinate-canonicalization';
+import { compareCodePoints } from './codepoint-order';
 import { roomPoly, samePoint } from './logic';
 import { resolveOpenCuts, sanitizeOpenSpans } from './open-spans';
 import { GRID_STEP_N } from './space-geometry';
@@ -213,7 +214,7 @@ export const deterministicWallSegmentId = (
   spaceId: string, a: number[], b: number[], ownerIds: readonly string[], salt = '',
 ): string => {
   const [ca, cb] = canonicalSpan(a, b);
-  const seed = `${spaceId}|${pointKey(ca)}|${pointKey(cb)}|${[...ownerIds].sort().join(',')}${salt}`;
+  const seed = `${spaceId}|${pointKey(ca)}|${pointKey(cb)}|${[...ownerIds].sort(compareCodePoints).join(',')}${salt}`;
   return `wall-${base32(sha256(seed)).slice(0, 20)}`;
 };
 
@@ -236,7 +237,7 @@ const nonCatalogIds = (space: any): Set<string> => {
   const result = new Set<string>();
   for (const collection of [
     space.rooms, space.openings, space.decor, space.room_drafts,
-    space.partitions, space.wall_columns,
+    space.partitions, space.wall_columns, space.stairs,
   ]) {
     for (const item of Array.isArray(collection) ? collection : []) {
       if (typeof item?.id === 'string' && item.id) result.add(item.id);
@@ -439,7 +440,7 @@ const buildAtoms = (
       wall_ids: wallIds,
     });
   }
-  return { atoms: [...byKey.values()].sort((a, b) => a.key.localeCompare(b.key)), rooms: nextRooms };
+  return { atoms: [...byKey.values()].sort((a, b) => compareCodePoints(a.key, b.key)), rooms: nextRooms };
 };
 
 /**
@@ -512,7 +513,7 @@ const assignLineage = (
       continue;
     }
     if (atom.preferredIds.size > 1) {
-      throw new WallSegmentModelError('duplicate-id', [...atom.preferredIds].sort().join(','));
+      throw new WallSegmentModelError('duplicate-id', [...atom.preferredIds].sort(compareCodePoints).join(','));
     }
     const preferredId = [...atom.preferredIds][0];
     const preferred = preferredId ? old.get(preferredId) : undefined;
@@ -538,7 +539,7 @@ const assignLineage = (
     candidates.sort((left, right) => (
       (hostCounts.get(right.id) || 0) - (hostCounts.get(left.id) || 0)
       || lengthOf(right.a, right.b) - lengthOf(left.a, left.b)
-      || left.id.localeCompare(right.id)
+      || compareCodePoints(left.id, right.id)
     ));
     if (candidates[0]) proposed.set(atom, candidates[0]);
     else if (atom.positionalIds.size === 1) {
@@ -565,7 +566,7 @@ const assignLineage = (
       if (midpointLeft !== midpointRight) return midpointLeft - midpointRight;
       const oldALeft = distanceToSegment(oldSegment.a, left.a, left.b) <= EPS ? 0 : 1;
       const oldARight = distanceToSegment(oldSegment.a, right.a, right.b) <= EPS ? 0 : 1;
-      return oldALeft - oldARight || left.key.localeCompare(right.key);
+      return oldALeft - oldARight || compareCodePoints(left.key, right.key);
     });
     candidates[0].id = id;
   }
@@ -581,10 +582,11 @@ const assignLineage = (
     // documented -2/-3 suffix. This is deterministic even if room order is not.
     const seeds = unassigned.map((atom) => {
       const [ca, cb] = canonicalSpan(atom.a, atom.b);
-      const seed = `${String(space.id || '')}|${pointKey(ca)}|${pointKey(cb)}|${[...atom.owners].sort().join(',')}`;
+      const seed = `${String(space.id || '')}|${pointKey(ca)}|${pointKey(cb)}|${[...atom.owners].sort(compareCodePoints).join(',')}`;
       const digest = base32(sha256(seed));
       return { atom, seed, digest, base: `wall-${digest.slice(0, 20)}` };
-    }).sort((left, right) => left.digest.localeCompare(right.digest) || left.atom.key.localeCompare(right.atom.key));
+    }).sort((left, right) => compareCodePoints(left.digest, right.digest)
+      || compareCodePoints(left.atom.key, right.atom.key));
     const fullDigests = new Map<string, string>();
     for (const entry of seeds) {
       const previousSeed = fullDigests.get(entry.digest);
@@ -665,7 +667,7 @@ const migrateRoomOpeningHost = (
     return [...candidates].sort((x, y) => (
       distanceToSegment(centre, x.a, x.b) - distanceToSegment(centre, y.a, y.b)
       || Number(y.cm) - Number(x.cm)
-      || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0)
+      || compareCodePoints(x.id, y.id)
     ))[0];
   };
   // §3.3 (CODE-REVIEW-316-r1 H1): no distant fallback pool. A host away from
@@ -715,6 +717,7 @@ type LegacyRoomDraftSpace = {
   rooms?: Array<{ id?: unknown }>;
   openings?: OpeningCfg[];
   decor?: Array<{ id?: unknown }>;
+  stairs?: Array<{ id?: unknown }>;
   partitions?: PartitionCfg[];
   wall_columns?: Array<{ id?: unknown }>;
   wall_segments?: WallSegmentEntry[];
@@ -753,7 +756,7 @@ const migrateRoomDraftsToPartitions = (
   const used = new Set<string>();
   for (const collection of [
     space.rooms, space.openings, space.decor, space.partitions,
-    space.wall_columns, space.wall_segments,
+    space.wall_columns, space.wall_segments, space.stairs,
   ]) {
     for (const item of Array.isArray(collection) ? collection : []) {
       if (typeof item?.id === 'string' && item.id) used.add(item.id);

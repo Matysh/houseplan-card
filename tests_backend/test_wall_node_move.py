@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from custom_components.houseplan.junction_limits import validate_junction_limits
 from custom_components.houseplan.validation import (
     CONFIG_SCHEMA,
     PartitionOpeningHostError,
@@ -13,10 +14,36 @@ from custom_components.houseplan.validation import (
 from custom_components.houseplan.wall_node_move import (
     NodeMoveError,
     _classify,
+    move_node_space,
     node_move_candidate,
     node_move_host_baseline,
 )
 from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
+
+_IDENTITY_845 = json.loads((
+    Path(__file__).parents[1] / "test/fixtures/845-wall-identity-parity.json"
+).read_text(encoding="utf-8"))["cases"]
+
+
+@pytest.mark.parametrize("case", [c for c in _IDENTITY_845 if "intent" in c],
+                         ids=lambda c: c["name"])
+def test_issue_845_product_move_and_browser_baseline_undo(case):
+    if case.get("mode") == "pure":
+        with pytest.raises(NodeMoveError) as raised:
+            move_node_space(case["input"]["spaces"][0], case["intent"])
+        assert raised.value.code == "node_move_invalid"
+        return
+    original = copy.deepcopy(case["input"])
+    before = case["expected"]["config"]
+    after = node_move_candidate(original, "f", case["intent"])
+    assert after == case["expected"]["after"]
+    assert CONFIG_SCHEMA(after) == after
+    validate_junction_limits(after, before)
+    # Crucially use the browser's before_space, not a server-created baseline.
+    restored = node_move_candidate(after, "f", case["intent"], "undo", before["spaces"][0])
+    assert restored == before
+    assert node_move_candidate(restored, "f", case["intent"]) == after
+    assert original == case["input"]
 
 
 def wall(identity, a, b, cm=0):

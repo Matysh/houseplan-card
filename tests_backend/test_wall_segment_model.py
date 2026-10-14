@@ -35,6 +35,27 @@ def _config(space: dict) -> dict:
             "markers": [], "settings": {}}
 
 
+_IDENTITY_845 = json.loads((
+    Path(__file__).parents[1] / "test/fixtures/845-wall-identity-parity.json"
+).read_text(encoding="utf-8"))["cases"]
+
+
+@pytest.mark.parametrize("case", [c for c in _IDENTITY_845 if c.get("mode") != "pure"],
+                         ids=lambda c: c["name"])
+def test_issue_845_shared_identity_and_schema(case):
+    source = copy.deepcopy(case["input"])
+    if not case["expected"]["ok"]:
+        with pytest.raises(WallSegmentMigrationError) as raised:
+            commit_wall_segment_model(source)
+        assert raised.value.reason == case["expected"]["reason"]
+    else:
+        actual, _ = commit_wall_segment_model(source)
+        assert actual == case["expected"]["config"]
+        assert CONFIG_SCHEMA(actual) == actual
+        assert commit_wall_segment_model(actual)[0] == actual
+    assert source == case["input"]
+
+
 def test_backend_migration_matches_shared_frontend_parity_fixture() -> None:
     fixture = json.loads((
         Path(__file__).parents[1] / "test" / "fixtures" / "282-wall-identity-parity.json"

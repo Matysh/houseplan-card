@@ -76,6 +76,143 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // `find` обязан встречаться в файле ровно один раз: патч, который ложится «куда
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
+{
+  "id": "wall-identity-ts-forgets-stairs",
+  "guard": "npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern=\"#845\" test/wall-segment-model.test.mjs test/wall-node-move.test.mjs test/wall-identity-corpus.test.mjs",
+  "because": "#845 AC3: both catalogue and draft migration reserve stair IDs",
+  "patches": [
+    {
+      "file": "src/wall-segment-model.ts",
+      "find": "    space.partitions, space.wall_columns, space.stairs,",
+      "replace": "    space.partitions, space.wall_columns,"
+    },
+    {
+      "file": "src/wall-segment-model.ts",
+      "find": "    space.wall_columns, space.wall_segments, space.stairs,",
+      "replace": "    space.wall_columns, space.wall_segments,"
+    }
+  ]
+},
+{
+  "id": "wall-identity-python-forgets-stairs",
+  "guard": "node scripts/backend-test-guard.mjs issue_845 tests_backend/test_wall_segment_model.py",
+  "because": "#845 AC3: server rejects colliding current IDs and suffixes legacy migration",
+  "patches": [
+    {
+      "file": "custom_components/houseplan/wall_segment_model.py",
+      "find": "    for name in (\"rooms\", \"openings\", \"decor\", \"stairs\", \"room_drafts\", \"partitions\", \"wall_columns\"):",
+      "replace": "    for name in (\"rooms\", \"openings\", \"decor\", \"room_drafts\", \"partitions\", \"wall_columns\"):"
+    }
+  ]
+},
+{
+  "id": "wall-identity-utf16-order",
+  "guard": "npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern=\"#845\" test/wall-segment-model.test.mjs test/wall-node-move.test.mjs test/wall-identity-corpus.test.mjs",
+  "because": "#845 AC4: astral/BMP owner seeds and lineage use Unicode code points",
+  "patches": [
+    {
+      "file": "src/codepoint-order.ts",
+      "find": "    const left = a.codePointAt(i)!, right = b.codePointAt(j)!;",
+      "replace": "    const left = a.charCodeAt(i), right = b.charCodeAt(j);"
+    }
+  ]
+},
+{
+  "id": "wall-identity-locale-order",
+  "guard": "npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern=\"#845\" test/wall-segment-model.test.mjs test/wall-node-move.test.mjs test/wall-identity-corpus.test.mjs",
+  "because": "#845 AC4: persisted ID ordering cannot depend on locale",
+  "patches": [
+    {
+      "file": "src/codepoint-order.ts",
+      "find": "  let i = 0, j = 0;",
+      "replace": "  if (a.length >= 0) return a.localeCompare(b); // runtime-only mutant\n  let i = 0, j = 0;"
+    }
+  ]
+},
+{
+  "id": "wall-identity-reversed-catalogue-order",
+  "guard": "npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern=\"#845\" test/wall-segment-model.test.mjs test/wall-node-move.test.mjs test/wall-identity-corpus.test.mjs",
+  "because": "#845 AC4/AC8: corpus passport detects a reordered catalogue despite valid references",
+  "patches": [
+    {
+      "file": "src/codepoint-order.ts",
+      "find": "    if (left !== right) return left - right;",
+      "replace": "    if (left !== right) return right - left;"
+    }
+  ]
+},
+{
+  "id": "wall-node-room-length-unchecked",
+  "guard": "npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern=\"#845\" test/wall-segment-model.test.mjs test/wall-node-move.test.mjs test/wall-identity-corpus.test.mjs",
+  "because": "#845 AC5: a corrupt pure room wall_ids vector is invalid, not JSON null identities",
+  "patches": [
+    {
+      "file": "src/wall-node-move.ts",
+      "find": "    if (!room.poly || !room.wall_ids || room.wall_ids.length !== room.poly.length)",
+      "replace": "    if (!room.poly || !room.wall_ids)"
+    }
+  ]
+},
+{
+  "id": "wall-identity-short-room-edge-rejected",
+  "guard": "npx tsc -p tsconfig.junction-parity.json && node scripts/fix-test-build.mjs && python tests_backend/wall_node_parity.py --build-dir=test-build/junction-parity",
+  "because": "#845 AC1: accepted browser 2.4/3.6mm T targets and stored 3.4mm edges survive server proof and Undo",
+  "patches": [
+    {
+      "file": "custom_components/houseplan/wall_segment_model.py",
+      "find": "            if length <= EPS:\n                raise WallSegmentMigrationError(\"zero-length\", room_id)",
+      "replace": "            if length < epsilon * 2:\n                raise WallSegmentMigrationError(\"zero-length\", room_id)"
+    }
+  ]
+},
+{
+  "id": "wall-identity-legacy-split-priority",
+  "guard": "npx tsc -p tsconfig.junction-parity.json && node scripts/fix-test-build.mjs && python tests_backend/wall_node_parity.py --build-dir=test-build/junction-parity",
+  "because": "#845 AC2: shared room boundaries own nearby split points before legacy wall endpoints",
+  "patches": [
+    {
+      "file": "custom_components/houseplan/wall_segment_model.py",
+      "find": "        breaks = []\n        for other_id, other_poly in room_polys.items():",
+      "replace": "        breaks = list(global_breaks)\n        for other_id, other_poly in room_polys.items():"
+    }
+  ]
+},
+{
+  "id": "wall-identity-legacy-thickness-fallback-absent",
+  "guard": "npx tsc -p tsconfig.junction-parity.json && node scripts/fix-test-build.mjs && python tests_backend/wall_node_parity.py --build-dir=test-build/junction-parity",
+  "because": "#845 AC2: legacy gap inherits browser thickness before previous cm; browser-baseline Undo remains exact",
+  "patches": [
+    {
+      "file": "custom_components/houseplan/wall_segment_model.py",
+      "find": "    resolved = _legacy_thickness_at(space.get(\"walls\") or [], atom[\"a\"], atom[\"b\"])",
+      "replace": "    resolved = 0.0 # mutant: omit browser compatibility inheritance"
+    }
+  ]
+},
+{
+  "id": "wall-identity-seed-before-canonicalization",
+  "guard": "npx tsc -p tsconfig.junction-parity.json && node scripts/fix-test-build.mjs && python tests_backend/wall_node_parity.py --build-dir=test-build/junction-parity",
+  "because": "#845 AC7: nine-decimal canonicalization precedes deterministic seed keys, including odd 1/8192",
+  "patches": [
+    {
+      "file": "custom_components/houseplan/wall_segment_model.py",
+      "find": "    candidate = canonicalize_config_geometry(copy.deepcopy(config))",
+      "replace": "    candidate = copy.deepcopy(config) # mutant: raw twelve-decimal seed"
+    }
+  ]
+},
+{
+  "id": "wall-identity-key-ignores-storage-noise",
+  "guard": "npx tsc -p tsconfig.junction-parity.json && node scripts/fix-test-build.mjs && python tests_backend/wall_node_parity.py --build-dir=test-build/junction-parity",
+  "because": "#845 room matrix: odd lattice midpoint keeps the same compatibility key after a nine-decimal echo",
+  "patches": [
+    {
+      "file": "custom_components/houseplan/wall_segment_model.py",
+      "find": "    a = [coordinate(float(v)) for v in a[:2]]\n    b = [coordinate(float(v)) for v in b[:2]]",
+      "replace": "    a = [float(v) for v in a[:2]]\n    b = [float(v) for v in b[:2]]"
+    }
+  ]
+},
   // #843: node history is a server transaction of the shared stack. Pure
   // runtime-level oracles: real runtime, adapter, writeWallNode, CommandStack
   // and ConfigAdoption over a recording wire; no browser is needed.
