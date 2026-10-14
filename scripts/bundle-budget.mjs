@@ -728,7 +728,12 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_938;
 // #851: measured 258481 B gzip (+3005 over the old ceiling) for dirty-create
 // protection, accepted room-save ownership, safe chain exits and four-language
 // copy. These helpers remain lazy; no new View dependency. Keep the 2000 B band.
-export const LAZY_EDITOR_GZIP_CEILING = 258_481;
+// #885, 2026-10-14: the owner decided to raise the ceilings that block closing
+// the issues in work. dev 240c69e0 already measured 259 773 B (208 B under the
+// 500-B noise guard); the wall-end magnet adds 312 B — 260 085 B. The ceiling
+// becomes this fact, so #873/#869/#850 rebase onto a full band. The band, the
+// initial-View ceiling and the absolute budget stay put.
+export const LAZY_EDITOR_GZIP_CEILING = 260_085;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
