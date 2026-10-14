@@ -498,6 +498,25 @@ backup import never open simultaneously; this setup fence does not block the
 existing Add space tab/menu on a populated plan during settings import.
 Existing server ACL, CAS and paired writes are unchanged.
 
+Optimize maintenance (#892) keeps deletion consent and its source anchor only
+in the lazy dialog's memory. `optimize-source.ts` binds the config/layout
+revisions and contents, owner evidence and HA connection; the shared paired
+writer checks that anchor after pending writes have finished, before sending
+the frozen revisions. A changed source rebuilds the preview without consent;
+a foreign-connection reply is not adopted. The unguarded Copy space caller
+retains its existing contract. Current Houseplan write permission, not a new
+HA-admin gate, authorizes Optimize and its paired Undo outside kiosk.
+
+`space-reference-repair.ts` classifies proven-unused missing-space records
+separately from live owners, unknown shapes/models and incomplete registry
+evidence. The explicit preview option removes eligible whole records (including
+unused scale); live-room scale remains a consumer even with an obsolete `s`.
+Cleanup neither persists a second snapshot nor calls `layout/set`: Apply and
+the existing one-deep Undo still use the server's paired storage transaction.
+The report distinguishes current-space and archived-position grid shifts;
+vacuum warnings name configured objects and their existing editor path without
+changing routes or calibration.
+
 `.storage/houseplan.config` holds `{model_version, spaces[], markers[], settings}`.
 A space carries plan-image fields, `rooms[]` (with ordered `wall_ids`),
 `wall_segments[]`, `partitions[]`, `wall_columns[]`, `openings[]`, `decor[]`,
