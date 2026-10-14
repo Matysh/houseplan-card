@@ -255,7 +255,7 @@ a task/microtask update needs two rAFs because the first can precede its paint.
 It observes/delegates native rAF calls without changing their IDs or pacing
 input. Raw data also retains the unconditional two-rAF upper bound so the
 scheduler change cannot hide the measurement difference. Neither number claims
-a compositor presentation timestamp. The 50/100/150 ms budgets are unchanged.
+a compositor presentation timestamp. The budgets are 50/110/150 ms: input-to-paint p95 was raised from 100 ms by the owner decision of 2026-10-14 (#850).
 CI also preserves the complete raw report, including partial failure evidence,
 in `smoke-logs/smoke_wall_node_connected.raw.json` after measurement finishes.
 The first full #834 CI found CPU p95 50.8 ms against the unchanged 50 ms limit.

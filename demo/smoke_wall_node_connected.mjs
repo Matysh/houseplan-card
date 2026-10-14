@@ -25,7 +25,11 @@ const upper = [-401 / 240, 725 / 240];
 const output = process.argv.find(v => v.startsWith('--output='))?.slice(9)
   || 'artifacts/834-node/connected.json';
 const viewport = { width: 1280, height: 1000 };
-const budgets = { mainThreadP95Ms: 50, inputToPaintP95Ms: 100, longTaskMaxMs: 150 };
+// #850, owner decision 2026-10-14 (raise the ceilings that block closing the issues in
+// work): input-to-paint p95 100 -> 110 ms. Pinned CI measured 101.3 and 107.7 ms on #850
+// while exact per-gesture work counters equal dev (0 captures, 0 presentations, 0 light
+// fingerprints; asserted below). Main-thread and long-task budgets are unchanged.
+const budgets = { mainThreadP95Ms: 50, inputToPaintP95Ms: 110, longTaskMaxMs: 150 };
 const quantiles = values => {
   const sorted = values.slice().sort((a, b) => a - b);
   return { count: sorted.length, median: sorted[Math.ceil(sorted.length * .5) - 1] || 0,
