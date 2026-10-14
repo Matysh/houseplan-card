@@ -346,6 +346,11 @@ the real custom element also disposes the live-HA sun layer fade.
 - `view-hidden-reset-allows-old-tail`
 - `view-sun-fade-outlives-detach`
 
+#867: an empty provider still crosses real Lit/ResizeObserver/RAF ownership;
+the browser guard observes that the mounted overlay settles without a render loop.
+
+- `signal-empty-overlay-repeats-size-render`
+
 #890: public setConfig meets real browser localStorage and Lit floor adoption;
 a delayed write crosses the actual HA-intake lifecycle before another connection
 is authorized. Pure context tests cannot prove those consumers remain wired.

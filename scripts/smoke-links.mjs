@@ -40,6 +40,11 @@ export const SMOKE_LINKS = [
       + 'fade disposal. Pure owner units cannot observe these consumers.',
   },
   {
+    files: ['src/device-signal.ts', 'src/zigbee-topology.ts'],
+    smokes: ['smoke_device_signal.mjs', 'smoke_device_signal_topology.mjs', 'smoke_zigbee_tooltip_layout.mjs'],
+    because: '#867: public HA sibling updates, real marker settings and mouse hover prove inherited diagnostics, local hide and canonical radio anchors through the production bundle; SVG screen-space resize endpoints need the existing native layout matrix.',
+  },
+  {
     files: ['src/device-editor-access.ts'],
     smokes: ['smoke_view_edit_permissions.mjs'],
     because: '#844: real footer/direct/lazy/warm entries and Area-icon navigation/drag '

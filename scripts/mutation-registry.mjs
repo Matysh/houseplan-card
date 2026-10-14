@@ -294,6 +294,62 @@ const MUTANT_DEFINITIONS = [
     ]
   },
   {
+    id: 'signal-empty-overlay-repeats-size-render',
+    guard: 'node demo/smoke_device_signal_topology.mjs',
+    because: '#867 AC7: a real Lit/ResizeObserver/RAF empty-provider hover must settle within two updates over 20 animation frames; pure mapping tests cannot observe an endless browser render loop.',
+    patches: [{ file: 'src/hp-zigbee-topology-overlay.ts',
+      find: '    this._renderSize = { width, height };',
+      replace: '    // forget the dimensions of empty/loading overlay renders' }],
+  },
+  {
+    id: 'signal-entity-reads-functional-roster-only',
+    guard: 'node --test test/device-signal.test.mjs',
+    because: '#867 AC1: exact own physical siblings supply diagnostics without changing the functional roster; missing parent and router controls remain negative cases.',
+    patches: [{ file: 'src/device-signal.ts',
+      find: "  if (binding.kind !== 'entity') return device.entities;",
+      replace: '  return device.entities;' }],
+  },
+  {
+    id: 'signal-registry-reindexed-on-every-state-frame',
+    guard: 'node --test test/device-signal.test.mjs',
+    because: '#867 AC2/AC7: 250 state-only updates with 10,000 foreign registry rows must retain one index and touch only own diagnostic states.',
+    patches: [{ file: 'src/device-signal.ts',
+      find: '  let index = indices.get(entities);',
+      replace: '  let index: ReadonlyMap<string, readonly string[]> | undefined;' }],
+  },
+  {
+    id: 'signal-snapshot-forgets-sibling-with-battery-off',
+    guard: 'node --test test/device-signal.test.mjs',
+    because: '#867 AC2: a sibling-only real zero update with battery disabled and identical primary invalidates the own presentation and tooltip.',
+    patches: [{ file: 'src/render-device-snapshot.ts',
+      find: '    for (const entityId of deviceSignalEntityIds(device, signalContext)) entityIds.add(entityId);',
+      replace: '    // omit signal-specific snapshot dependencies' }],
+  },
+  {
+    id: 'signal-local-hide-also-hides-tooltip',
+    guard: 'node --test test/device-signal.test.mjs',
+    because: '#867 AC3: the local plan opt-out preserves the ordinary tooltip, explicit value and badge while respecting the effective global gate.',
+    patches: [{ file: 'src/device-presentation.ts',
+      find: "    lqiTipText: lqi == null || valueBadge?.isLqi || value.source?.kind === 'derived_lqi' ? null : String(lqi),",
+      replace: "    lqiTipText: !showMarkerSignalOf(d.marker) || lqi == null || valueBadge?.isLqi || value.source?.kind === 'derived_lqi' ? null : String(lqi)," }],
+  },
+  {
+    id: 'signal-room-counts-every-marker-radio',
+    guard: 'node --test test/device-signal.test.mjs',
+    because: '#867 AC5: A=100 device plus two own entities and B=200 contribute 150, never per-marker 125; hidden labels do not remove the physical vote.',
+    patches: [{ file: 'src/devices.ts',
+      find: '    if (physical && counted.has(physical)) continue;',
+      replace: '    // count the same radio again for every marker' }],
+  },
+  {
+    id: 'signal-topology-entity-choice-follows-last-alias',
+    guard: 'node --test test/zigbee-provider-routes.test.mjs',
+    because: '#867 AC4: the first eligible entity in configured marker order is canonical when no visible device marker exists; HA order and hover do not own the anchor.',
+    patches: [{ file: 'src/zigbee-topology.ts',
+      find: '    const representative = physical.length === 1 ? physical[0] : !physical.length ? entities[0] : undefined;',
+      replace: '    const representative = physical.length === 1 ? physical[0] : !physical.length ? entities.at(-1) : undefined;' }],
+  },
+  {
     id: 'config-foreign-context-keeps-old-write-queue',
     guard: 'node demo/smoke_config_authority.mjs',
     because: '#890 AC6: fast B mandatory reads and its own serialized save must not wait for the old A transport in either production writer.',
@@ -12033,12 +12089,12 @@ const MUTANT_DEFINITIONS = [
       + 'would restore the original occlusion behind unrelated devices (#464 AC1, AC2)',
     patches: [{
       file: 'src/hp-zigbee-topology-overlay.ts',
-      find: '    this._setDesiredEndpointIds(lines.length || bubbles.length || hover.remoteCount\n'
+      find: '    this._setDesiredEndpointIds(!originRemote && (lines.length || bubbles.length || hover.remoteCount)\n'
         + '      ? [\n'
-        + '        this._hovered,\n'
+        + '        this._originMarkerId,\n'
         + '        ...lines.map((line) => line.neighborMarkerId),\n'
         + '      ] : []);',
-      replace: '    this._setDesiredEndpointIds(lines.length || bubbles.length || hover.remoteCount\n'
+      replace: '    this._setDesiredEndpointIds(!originRemote && (lines.length || bubbles.length || hover.remoteCount)\n'
         + '      ? this.devices.filter((item) => item.space === this.currentSpace).map((item) => item.id) : []);',
     }],
   },
@@ -12123,8 +12179,8 @@ const MUTANT_DEFINITIONS = [
       + 'as local routes instead of becoming permanently grey (#798)',
     patches: [{
       file: 'src/hp-zigbee-topology-overlay.ts',
-      find: "      ...bubbles.map((bubble, index) => this._route(origin, bubble.point, bubble.target.lqi, 'toward-neighbor',",
-      replace: "      ...bubbles.map((bubble, index) => this._route(origin, bubble.point, undefined, 'toward-neighbor',",
+      find: "      ...(!originRemote ? bubbles : []).map((bubble, index) => this._route(origin, bubble.point, bubble.target.lqi, 'toward-neighbor',",
+      replace: "      ...(!originRemote ? bubbles : []).map((bubble, index) => this._route(origin, bubble.point, undefined, 'toward-neighbor',",
     }],
   },
   {
@@ -12141,12 +12197,12 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'zigbee-topology-ambiguous-marker-selected',
     guard: 'node --test --test-name-pattern="exact device/entity ownership" test/zigbee-provider-routes.test.mjs',
-    because: 'a Zigbee node with multiple drawable placements must fail closed instead of '
-      + 'drawing a plausible but false neighbour line (#54 AC8)',
+    because: 'a Zigbee node with multiple drawable device placements must still fail closed; '
+      + 'the deliberate first-own-entity fallback in #867 does not invent a physical device identity (#54 AC8)',
     patches: [{
       file: 'src/zigbee-topology.ts',
-      find: '    if (candidates.length === 1) placements.set(node.key, {',
-      replace: '    if (candidates.length >= 1) placements.set(node.key, {',
+      find: '    const representative = physical.length === 1 ? physical[0] : !physical.length ? entities[0] : undefined;',
+      replace: '    const representative = physical.length >= 1 ? physical[0] : entities[0];',
     }],
   },
   {

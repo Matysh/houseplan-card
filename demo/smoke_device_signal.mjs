@@ -14,6 +14,7 @@ const dialog = () => root.locator('hp-dialog[data-kind="marker"]');
 const settle = () => page.evaluate(() => window.__hpTest.settled());
 const open = async () => page.evaluate(async () => {
   await window.__hpTest.setMode('devices'); await window.__hpTest.openMarkerDialog('d_temp');
+  await window.__hpTest.waitForWrites();
 });
 const close = () => page.evaluate(async () => {
   const closed = await window.__hpTest.close(undefined, { via: 'cancel' });
@@ -147,9 +148,21 @@ try {
     await window.__hpTest.setLayout(layout => ({ ...layout, d_temp: { s: 'f1', x: .30, y: .40 },
       hp867_first: { s: 'f1', x: .55, y: .45 }, hp867_second: { s: 'f1', x: .70, y: .60 } }));
   });
+  await dev('hp867_second').hover(); await settle();
+  out.emptyProviderHoverDoesNotContinuouslyUpdate = await page.evaluate(async () => {
+    const overlay = window.__card.shadowRoot.querySelector('hp-zigbee-topology-overlay');
+    await overlay.updateComplete;
+    let prior = overlay.updateComplete, updates = 0;
+    for (let i = 0; i < 20; i++) {
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      const current = overlay.updateComplete;
+      if (current !== prior) { updates++; prior = current; }
+    }
+    return updates <= 2 && !overlay.shadowRoot.querySelector('line');
+  });
   await root.locator('[data-hp="settings"]').click();
   const settings = root.locator('hp-zigbee-topology-settings');
-  await settings.locator('.provider button').first().click();
+  await settings.locator('.hpf-actions button').first().click();
   await page.waitForFunction(() => window.__card.shadowRoot.querySelector('hp-zigbee-topology-settings')?._snapshot?.states?.zha?.phase === 'ready');
   await page.evaluate(() => window.__hpTest.close(undefined, { via: 'cancel' }));
   const geometry = async (hovered, expectedOrigin) => {

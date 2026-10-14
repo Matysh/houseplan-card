@@ -62,6 +62,7 @@ test('#867 AC1 exact ownership refuses router/controls, unknown/disabled/missing
     assert.equal(deviceLqi(h, { ...d, bindingStatus: { kind } }), null);
   }
   assert.equal(deviceLqi(h, { ...d, virtual: true }), null);
+  assert.equal(deviceLqi(h, { ...d, bindingKind: undefined, bindingRef: undefined, marker: { binding: 'virtual' } }), null);
 });
 
 test('#867 AC2 registry index is shared on state ticks and retired on registry replacement', () => {
@@ -72,6 +73,27 @@ test('#867 AC2 registry index is shared on state ticks and retired on registry r
   const c = createDeviceSignalContext(changed);
   assert.notEqual(a.entityIdsByDevice, c.entityIdsByDevice);
   assert.equal(deviceLqi(changed, marker(), c), null, 'old parent cannot retain the moved sibling');
+});
+
+test('#867 AC7 10,000 foreign rows are indexed once; state ticks read only the own diagnostic roster', () => {
+  const h = hass(), rows = { ...h.entities };
+  for (let index = 0; index < 10000; index++) rows[`sensor.foreign_${index}_lqi`] = own(`foreign-${index}`);
+  let registryScans = 0, stateReads = 0;
+  h.entities = new Proxy(rows, { ownKeys: target => { registryScans++; return Reflect.ownKeys(target); } });
+  const d = marker(), ownCount = Object.values(rows).filter(row => row.device_id === 'A').length;
+  let firstIndex;
+  for (let tick = 0; tick < 250; tick++) {
+    const states = new Proxy({ ...h.states, 'sensor.a_linkquality': state(String(tick % 256)) }, {
+      get: (target, key) => { if (typeof key === 'string') stateReads++; return Reflect.get(target, key); },
+      ownKeys: () => { throw new Error('a marker reading must not enumerate all HA states'); },
+    });
+    const current = { ...h, states }, context = createDeviceSignalContext(current);
+    firstIndex ||= context.entityIdsByDevice;
+    assert.equal(context.entityIdsByDevice, firstIndex);
+    assert.equal(deviceLqi(current, d, context), tick % 256);
+  }
+  assert.equal(registryScans, 1, 'registry identity, not state/frame identity, owns the full scan');
+  assert.equal(stateReads, 250 * ownCount * 2, 'one availability pass and one canonical reading pass over own rows only');
 });
 
 test('#867 AC2 sibling-only tick with battery off invalidates both own presentation variants', () => {

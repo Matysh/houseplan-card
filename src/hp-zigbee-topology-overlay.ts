@@ -494,6 +494,11 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   }
 
   protected render() {
+    // Capture even an empty/loading render: an unchanged empty overlay must
+    // not schedule RAF → requestUpdate forever while no provider data exists.
+    const width = this.clientWidth || this._parent?.clientWidth || 1;
+    const height = this.clientHeight || this._parent?.clientHeight || 1;
+    this._renderSize = { width, height };
     // #627: the ru/de/fr topology strings are a lazy chunk. Request it once on
     // mount — before the first hover can paint a label — and draw nothing
     // until it settled (ready or bounded English fallback).
@@ -514,9 +519,6 @@ export class HpZigbeeTopologyOverlay extends LitElement {
       && memo.registry === this.registry ? memo.mapped : mapTopologies(this._runtime.topologies, this.devices, this.registry);
     if (!memo || mapped !== memo.mapped) this._mappedMemo = { runtime: this._runtime, devices: this.devices, registry: this.registry, mapped };
     const hover = resolveMappedTopologyHover(mapped, this.currentSpace, this._hovered);
-    const width = this.clientWidth || this._parent?.clientWidth || 1;
-    const height = this.clientHeight || this._parent?.clientHeight || 1;
-    this._renderSize = { width, height };
     const originRemote = !!hover.originSpace && hover.originSpace !== this.currentSpace;
     this._originMarkerId = originRemote ? this._hovered : hover.originMarkerId || this._hovered;
     const origin = this._position(this._originMarkerId, width, height);

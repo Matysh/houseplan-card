@@ -54,7 +54,7 @@ export function createDeviceSignalContext(
 }
 
 function bindingOf(device: DeviceSignalDevice): { kind: string; ref: string } | null {
-  if (device.virtual || device.bindingKind === 'virtual' || device.marker?.removed
+  if (device.virtual || device.bindingKind === 'virtual' || device.marker?.binding === 'virtual' || device.marker?.removed
       || (device.bindingStatus && device.bindingStatus.kind !== 'active')) return null;
   const [kind, ...ref] = (device.marker?.binding || '').split(':');
   return { kind: device.bindingKind || kind, ref: device.bindingRef || ref.join(':') };
