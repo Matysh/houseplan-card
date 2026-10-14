@@ -235,6 +235,7 @@ M1). Author checks applicability only; execution remains nightly-only (#709).
 `smoke_view_entry_recovery` uses accepted config events and trusted keyboard/touch
 on RU/EN 360/1280px cards; an injected queued old lock target tests dispatch
 independently of Lit reusing a button with a new listener. `smoke_warm_view_marker`
+also retains the room-name tap through its stable shared pointer owner.
 opens and edits a genuine View draft, replaces its element and delays/fails only
 the chunk transport. It checks visible draft, Close/retry, write rights,
 disconnect and newer intent with no hidden marker or extra acknowledgement.

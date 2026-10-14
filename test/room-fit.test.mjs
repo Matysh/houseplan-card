@@ -132,6 +132,9 @@ test('#152 browser event path is the room authority and interactive children sup
   const stage = pathNode(['.stage']);
   assert.equal(roomFitOwnerFromPath([room]), 'room-a');
   assert.equal(roomFitOwnerFromPath([pathNode(['.rlname']), label]), 'room-a');
+  const fitAction = pathNode(['.rlfit[data-id]', '[role="button"]'], 'room-a');
+  assert.equal(roomFitOwnerFromPath([fitAction, label]), 'room-a');
+  assert.equal(roomFitOwnerFromPath([pathNode(['button']), fitAction, label]), null);
   assert.equal(roomFitOwnerFromPath([pathNode(['.rlgo', '[role="link"]']), label]), null);
   assert.equal(roomFitOwnerFromPath([pathNode(['.dev']), room]), null);
   assert.equal(roomFitOwnerFromPath([pathNode(['button']), room]), null);

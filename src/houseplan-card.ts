@@ -12173,6 +12173,7 @@ export class HouseplanCard extends LitElement {
       @pointerup=${this._markup ? () => this._labelUp(r) : nothing}
       @pointercancel=${this._markup ? () => this._labelUp(r) : nothing}
     ><span class="rlname"><span class="rlfit"
+        data-id=${separateAreaAction && r.id ? r.id : nothing}
         role=${separateAreaAction ? 'button' : nothing}
         tabindex=${separateAreaAction ? '0' : nothing}
         aria-label=${separateAreaAction ? this._t('room.fit_action', { name: r.name || '' }) : nothing}

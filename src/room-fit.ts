@@ -123,7 +123,7 @@ const pathMatches = (node: RoomFitPathNode, selector: string): boolean => {
 export function planGestureOwnerFromPath(path: readonly unknown[]): PlanGestureOwner {
   for (const raw of path) {
     const node = raw as RoomFitPathNode;
-    if (pathMatches(node, '.roomlabel[data-id]')) {
+    if (pathMatches(node, '.roomlabel[data-id], .rlfit[data-id]')) {
       const roomId = node.getAttribute?.('data-id');
       return roomId ? { kind: 'room', roomId } : { kind: 'interactive' };
     }
