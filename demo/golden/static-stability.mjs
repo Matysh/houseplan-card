@@ -2,27 +2,31 @@
 // import this installer. Styles follow open and subsequently attached roots.
 export function installStaticStability() {
   window.__hpGoldenStability?.reset();
-  const styles = new Set(), roots = new Map();
+  const roots = new Set();
   const descriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'attachShadow');
   const css = ':host,*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important;scroll-behavior:auto!important}';
+  const sheet = new CSSStyleSheet(); sheet.replaceSync(css);
   let active = true;
   const visit = (root) => {
     if (!active) return;
     if (root instanceof ShadowRoot) {
-      let style = roots.get(root);
-      if (!style) {
-        style = document.createElement('style');
-        style.dataset.hpCaptureStability = '';
-        style.textContent = css; roots.set(root, style); styles.add(style);
+      if (!roots.has(root)) {
+        roots.add(root);
         observer.observe(root, { childList: true, subtree: true });
       }
-      if (style.parentNode !== root) root.append(style);
+      // Never insert a DOM style before Lit creates its root part: Lit may
+      // adopt that node as renderBefore, and removing it would detach its end
+      // anchor. A constructed sheet has no position in the managed DOM.
+      if (!root.adoptedStyleSheets.includes(sheet))
+        root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
     }
     for (const el of root.querySelectorAll('*')) if (el.shadowRoot) visit(el.shadowRoot);
   };
   const observer = new MutationObserver(() => {
     visit(document);
-    for (const root of roots.keys()) visit(root);
+    // Lit's createRenderRoot may replace adoptedStyleSheets after attachShadow.
+    // Its first DOM commit restores membership without touching template nodes.
+    for (const root of roots) visit(root);
   });
   function attachShadow(options) {
     const root = descriptor.value.call(this, options);
@@ -37,8 +41,9 @@ export function installStaticStability() {
       active = false; observer.disconnect();
       if (Element.prototype.attachShadow === attachShadow)
         Object.defineProperty(Element.prototype, 'attachShadow', descriptor);
-      for (const style of styles) style.remove();
-      styles.clear(); delete window.__hpGoldenStability;
+      for (const root of roots)
+        root.adoptedStyleSheets = root.adoptedStyleSheets.filter(item => item !== sheet);
+      roots.clear(); delete window.__hpGoldenStability;
     },
   };
 }

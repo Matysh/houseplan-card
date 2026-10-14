@@ -24,6 +24,10 @@ hover pixels and exact reset. LED dynamic smokes never install that override.
 The actual `prepareGoldenScenario` entry is exercised for successful and
 controlled failing capture phases: reset restores the previous observed motion,
 colour-scheme and forced-colour media modes, not just the temporary stylesheet.
+The overlap→cover-source scene sequence then reconfigures the retained card
+after reset: no capture-owned DOM anchor may detach, and component-owned adopted
+sheets must survive. This catches the reproduced Lit `nextSibling` exception;
+stability uses an owned constructed sheet, never a node in Lit's managed part.
 `source-fingerprint.test.mjs` changes a real browser-args dependency and proves
 stale docs rejection before reading/copying PNGs; post-capture policy remains
 excluded. `bundle-assets.test.mjs` exercises all three valid lazy graph manifests

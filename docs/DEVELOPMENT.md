@@ -31,7 +31,10 @@ cloned actual arguments across successive `__mkHass()` instances. Synthetic
 on/off semantics are unchanged; this does not emulate HA domain state machines.
 
 Static golden/docs capture installs a temporary recursive shadow-root style
-observer and restores `attachShadow`, styles and capture clock/CSS overrides in
+observer with one owned constructed stylesheet, never a DOM node that Lit could
+adopt as its root end anchor. Membership is restored after a lazy Lit first
+commit; reset removes only that sheet, preserving current component sheets.
+It restores `attachShadow`, styles and capture clock/CSS overrides in
 `finally`, including stability-only and failed captures. This is harness-only;
 the media modes observed before preparation are restored too, so capture's
 reduced-motion setting cannot leak into a subsequent ordinary transition test.

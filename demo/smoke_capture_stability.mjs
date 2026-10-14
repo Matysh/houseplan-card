@@ -11,6 +11,7 @@ try {
       animation: getComputedStyle(node).animationName, styles: document.querySelectorAll('[data-hp-capture-stability]').length };
   });
   const ordinary = await read();
+  await page.evaluate(() => { window.__stabilityProductSheets = [...window.__card.shadowRoot.adoptedStyleSheets]; });
   check('#896 ordinary card has a real transition', ordinary.transition.split(',').some(value => parseFloat(value) > 0));
   await page.evaluate(() => {
     const head = document.createElement('style'); head.id = 'hp-golden-stability';
@@ -24,13 +25,17 @@ try {
     const shadow = el.attachShadow({ mode: 'open' });
     // An upgrading custom element may replace its first contents after attach.
     shadow.innerHTML = '<style>span{transition:opacity .23s;animation:fixture 2s infinite}@keyframes fixture{to{opacity:.5}}</style><span>lazy capture root</span>';
+    const productSheet = new CSSStyleSheet(); productSheet.replaceSync('span{color:rgb(10,20,30)}');
+    el.productSheet = productSheet; shadow.adoptedStyleSheets = [productSheet];
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     window.__stabilityLazy = el;
     return { transition: getComputedStyle(shadow.querySelector('span')).transitionDuration,
-      animation: getComputedStyle(shadow.querySelector('span')).animationName };
+      animation: getComputedStyle(shadow.querySelector('span')).animationName,
+      color: getComputedStyle(shadow.querySelector('span')).color };
   });
   check('#896 lazy open root transition suppressed after content replacement', lazy.transition, '0s');
   check('#896 lazy open root animation suppressed', lazy.animation, 'none');
+  check('#896 component-owned adopted sheet remains active during capture', lazy.color, 'rgb(10, 20, 30)');
   const marker = page.locator('houseplan-card').locator('[data-hp="device"][data-id="d_light1"]');
   await marker.hover(); await page.evaluate(() => window.__hpTest.settled());
   const first = await marker.screenshot(); await page.waitForTimeout(120);
@@ -42,10 +47,15 @@ try {
     animation: getComputedStyle(window.__stabilityLazy.shadowRoot.querySelector('span')).animationName,
     styles: [...document.querySelectorAll('*')].flatMap(el => [...(el.shadowRoot?.querySelectorAll('[data-hp-capture-stability]') || [])]).length,
     active: !!window.__hpGoldenStability,
+    productSheets: window.__card.shadowRoot.adoptedStyleSheets.length === window.__stabilityProductSheets.length
+      && window.__card.shadowRoot.adoptedStyleSheets.every((sheet, index) => sheet === window.__stabilityProductSheets[index]),
+    lazyProductSheet: window.__stabilityLazy.shadowRoot.adoptedStyleSheets.length === 1
+      && window.__stabilityLazy.shadowRoot.adoptedStyleSheets[0] === window.__stabilityLazy.productSheet,
   }));
   check('#896 reset restores lazy transition', restored.transition, '0.23s');
   check('#896 reset restores lazy animation', restored.animation, 'fixture');
   check('#896 reset removes overrides and observer lifetime', [restored.styles, restored.active], [0, false]);
+  check('#896 reset preserves exact current component sheets', restored.productSheets && restored.lazyProductSheet);
   const media = () => page.evaluate(() => ({
     reduced: matchMedia('(prefers-reduced-motion: reduce)').matches,
     dark: matchMedia('(prefers-color-scheme: dark)').matches,
@@ -72,4 +82,20 @@ try {
   finally { await resetGoldenStability(page); }
   check('#896 controlled failed capture phase was reached', failedPhaseObserved);
   check('#896 failed capture finally also restores media', await media(), beforeCapture);
+  // Regression from the full matrix: a DOM-injected style became Lit's root
+  // end anchor; reset removed it, and the next owner/media update crashed.
+  for (const id of ['device-battery-zigbee-overlap-dark', 'device-value-face-cover-source-dark']) {
+    await prepareGoldenScenario(page, GOLDEN_SCENARIOS.find(scene => scene.id === id));
+    check(`#896 ${id} has no capture-owned DOM end anchor`, await page.evaluate(() => {
+      const anchor = window.__goldenCard.renderOptions?.renderBefore;
+      return !anchor || (anchor.isConnected && !anchor.matches?.('[data-hp-capture-stability]'));
+    }));
+    await resetGoldenStability(page);
+    await page.evaluate(async () => {
+      const card = window.__goldenCard;
+      card.setConfig({ type: 'custom:houseplan-card', floor: 'no-such-floor' });
+      await card.updateComplete;
+    });
+    await page.waitForTimeout(50);
+  }
 } finally { await resetGoldenStability(page); await finish(browser); }
