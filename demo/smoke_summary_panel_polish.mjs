@@ -34,6 +34,17 @@ async function installFixture({ seed = false } = {}) {
       localStorage.setItem(fixtureKey, JSON.stringify({ config, rev: card._cfgRev }));
     }
     const server = JSON.parse(localStorage.getItem(fixtureKey));
+    // #896: every foreign user read must acknowledge this fixture's server,
+    // not the unrelated default demo config or a private pre-load body.
+    const callWS = card.hass.callWS;
+    card.hass = { ...card.hass, callWS: async message => message.type === 'houseplan/config/get'
+      ? { config: structuredClone(server.config), rev: server.rev, can_write: true, summary_panel_api: 1 }
+      : callWS(message) };
+    const accepted = async () => {
+      const deadline = performance.now() + 4000;
+      while ((!card._serverCfg || card._cfgRev !== server.rev) && performance.now() < deadline) await pause(1);
+      if (!card._serverCfg || card._cfgRev !== server.rev) throw new Error('summary fixture context read was not accepted');
+    };
     card._serverCfg = structuredClone(server.config);
     card._settings = card._serverCfg.settings;
     card._cfgRev = server.rev;
@@ -114,7 +125,7 @@ async function installFixture({ seed = false } = {}) {
       card._summary.resized(); await settle();
     };
     window.__summary505 = {
-      card, root, frame, settle, pause, panel, control, toggle, show, open, dialog,
+      card, root, frame, settle, pause, accepted, panel, control, toggle, show, open, dialog,
       field, clickField, close, localKey, stored, snapshot, sample, size, writes,
     };
     return { key: localKey(), freshServer: !!server.config.settings.summary_panel };
@@ -305,9 +316,10 @@ try {
       out[`${boundary}_cancels_old_presentation`] = immediatelyGone && !f.panel();
       f.card._mode = 'view'; f.card.hass = { ...f.card.hass, user: original.user };
       f.card.panelHost = original.host;
+      if (boundary === 'route') history.replaceState({}, '', original.path);
+      await f.accepted();
       f.card._serverCfg = { ...f.card._serverCfg, settings: original.settings };
       f.card._settings = original.settings;
-      if (boundary === 'route') history.replaceState({}, '', original.path);
       f.card._summary.connect(); f.card.requestUpdate(); await f.settle();
     }
     const contentSettings = f.card._serverCfg.settings;

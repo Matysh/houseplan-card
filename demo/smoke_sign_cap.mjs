@@ -8,6 +8,7 @@ const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
   const base = c.hass.callWS;
+  const seed = structuredClone(c._serverCfg);
   const batchSizes = [];
   let round = 0;
 
@@ -22,8 +23,14 @@ const res = await page.evaluate(async () => {
       for (const p of m.paths.slice(0, 200)) urls[p] = p.split('?')[0] + '?authSig=R' + round;
       return { urls };
     }
-    return base(m);
+    const response = await base(m);
+    return m.type === 'houseplan/config/get' ? { ...response, config: structuredClone(seed) } : response;
   } };
+  // #896: a foreign signer connection retires canonical authority (#890).
+  // Seed that fixture's own response and await adoption, never spread null.
+  const deadline = performance.now() + 4000;
+  while (!c._serverCfg && performance.now() < deadline) await new Promise(r => setTimeout(r, 1));
+  if (JSON.stringify(c._serverCfg) !== JSON.stringify(seed)) throw new Error('signer fixture config was not accepted');
 
   // 201 вложение, разложенное по маркерам: столько же подписанных ссылок
   const pdfs = [];

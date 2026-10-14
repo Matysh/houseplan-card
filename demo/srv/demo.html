@@ -49,7 +49,8 @@ class HaCard extends HTMLElement{
 customElements.define('ha-card',HaCard);
 </script>
 <script type="module">
-let CFG = {
+import { createFixtureStore, createServiceRecorder } from './fixture-state.js';
+const CFG = {
   spaces: [
     { id:'f1', title:'Ground floor', plan_url:'/assets/f1.svg', plan_aspect:1.25,
       view_box:[0,0,1,1],
@@ -66,13 +67,12 @@ let CFG = {
   markers: [],
   settings: {}
 };
-let LAYOUT = {
+const LAYOUT = {
   d_light1:{s:'f1',x:0.22,y:0.22}, d_lamp:{s:'f1',x:0.42,y:0.5}, d_tv:{s:'f1',x:0.13,y:0.5},
   d_temp:{s:'f1',x:0.33,y:0.35}, d_kettle:{s:'f1',x:0.72,y:0.15}, d_leak:{s:'f1',x:0.88,y:0.34},
   d_bedlight:{s:'f1',x:0.75,y:0.6}, d_window:{s:'f1',x:0.9,y:0.85}, d_lock:{s:'f1',x:0.1,y:0.88},
   d_motion:{s:'f1',x:0.4,y:0.75}, d_mower:{s:'garden',x:0.25,y:0.35}, d_gate:{s:'garden',x:0.73,y:0.22}
 };
-let CFG_REV=1, LAYOUT_REV=1;
 const AREAS={living_room:{area_id:'living_room',name:'Living room'},kitchen:{area_id:'kitchen',name:'Kitchen'},
   bedroom:{area_id:'bedroom',name:'Bedroom'},hallway:{area_id:'hallway',name:'Hallway'},garden:{area_id:'garden',name:'Garden'}};
   function dev(id,name,model,area){return [id,{id,name,model,area_id:area,identifiers:[['demo',id]],config_entries:['ce_demo'],entry_type:null,via_device_id:null,disabled_by:null}];}
@@ -112,7 +112,9 @@ const REGISTRY_LISTENERS={device_registry_updated:new Set(),entity_registry_upda
 // through __pushServerConfig/__pushServerLayout (test facade setServerConfig/setLayout).
 const SERVER_LISTENERS={houseplan_config_updated:new Set(),houseplan_layout_updated:new Set()};
 const SERVED={config:0,layout:0};
-let PUSHED_CFG_REV=0;
+const server=createFixtureStore(CFG,LAYOUT,(event,rev)=>{
+  for(const cb of SERVER_LISTENERS[event])cb({event_type:event,data:{rev}});
+});
 window.__servedRevision=SERVED;
 const CONNECTION={subscribeEvents:async(cb,event)=>{
   const listeners=REGISTRY_LISTENERS[event]||SERVER_LISTENERS[event];
@@ -174,36 +176,31 @@ function mkHass(){
       }
       if(m.type==='config_entries/get')return[{entry_id:'ce_demo',domain:'demo',title:'Synthetic Home'}];
       if(m.type==='manifest/list')return[{domain:'demo',name:'House Plan Demo'}];
-      if(m.type==='houseplan/config/get'){SERVED.config=CFG_REV;return{config:CFG,rev:CFG_REV,can_write:true};}
-      if(m.type==='houseplan/layout/get'){SERVED.layout=LAYOUT_REV;return{layout:LAYOUT,rev:LAYOUT_REV};}
-      if(m.type==='houseplan/config/set'){
-        // #629: like the real server, a write based on a revision older than
-        // one pushed by another client is a conflict. Only pushes arm this, so
-        // smokes that never push see the fixture exactly as before.
-        if(PUSHED_CFG_REV&&typeof m.expected_rev==='number'&&m.expected_rev<PUSHED_CFG_REV){
-          const error=new Error('config changed on the server');error.code='conflict';throw error;
-        }
-        return{ok:true,rev:++CFG_REV};
-      }
-      if(['houseplan/layout/set','houseplan/layout/update','houseplan/layout/delete'].includes(m.type))
-        return{ok:true,rev:++LAYOUT_REV};
+      if(m.type==='houseplan/config/get')SERVED.config=server.configRev;
+      if(m.type==='houseplan/layout/get')SERVED.layout=server.layoutRev;
+      const reply=server.handle(m);
+      if(reply!==undefined)return reply;
       if(m.type==='houseplan/plan/optimize')return{
-        ok:true,config_rev:++CFG_REV,layout_rev:++LAYOUT_REV,can_undo:true};
+        ok:true,...server.advanceOptimizer(),can_undo:true};
       if(m.type==='houseplan/plan/optimize_undo')return{
-        ok:true,config_rev:++CFG_REV,layout_rev:++LAYOUT_REV,can_undo:false};
+        ok:true,...server.advanceOptimizer(),can_undo:false};
       return {ok:true};
     },
-    callService:async (d,s,data)=>{
-      const eid=data.entity_id, st=STATES[eid];
-      if(st){const on=['on','playing','unlocked','open'].includes(st.state);
-        STATES={...STATES,[eid]:{...st,state:on?'off':'on'}};
-        card.hass=mkHass();}
-    },
+    callService:serviceRecorder.callService,
     connection:CONNECTION,
     localize:(key)=>key==='component.demo.title'?'Demo integration':null,
     formatEntityState:(st)=>st.state,
   };
 }
+const serviceRecorder=createServiceRecorder(async(d,s,data)=>{
+  const eid=data.entity_id, st=STATES[eid];
+  if(st){const on=['on','playing','unlocked','open'].includes(st.state);
+    STATES={...STATES,[eid]:{...st,state:on?'off':'on'}};
+    // A state event does not replace the HA connection, user or installed
+    // service wrappers. Keep the current session and this recording boundary.
+    if(card)card.hass={...card.hass,states:STATES};}
+});
+window.__serviceCalls=serviceRecorder.calls;
 window.__mkHass=mkHass;
 let card=null;
 if(!new URLSearchParams(location.search).has('panel-cold')){
@@ -234,14 +231,10 @@ window.__setRegistryArea=(kind,id,areaId)=>{
 // #629: "the config changed on the server" — another client wrote it. The card
 // re-reads houseplan/config/get (or layout/get) on its own, as in production.
 window.__pushServerConfig=(cfg)=>{
-  CFG=cfg; CFG_REV+=1; PUSHED_CFG_REV=CFG_REV;
-  for(const cb of SERVER_LISTENERS.houseplan_config_updated)cb({event_type:'houseplan_config_updated',data:{rev:CFG_REV}});
-  return CFG_REV;
+  return server.pushConfig(cfg);
 };
 window.__pushServerLayout=(layout)=>{
-  LAYOUT=layout; LAYOUT_REV+=1;
-  for(const cb of SERVER_LISTENERS.houseplan_layout_updated)cb({event_type:'houseplan_layout_updated',data:{rev:LAYOUT_REV}});
-  return LAYOUT_REV;
+  return server.pushLayout(layout);
 };
 window.__addRegistryEntity=(id,areaId,state='on',platform='demo',row={},attributes={})=>{
   ENTITIES[id]={entity_id:id,device_id:null,area_id:areaId,platform,disabled_by:null,...row};

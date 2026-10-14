@@ -5,8 +5,43 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import {
-  fingerprintCorpus, postCaptureInputs, sourceFingerprint, visualFingerprint,
+  browserArgumentCorpus, captureScriptFingerprint, fingerprintCorpus, postCaptureInputs, sourceFingerprint, visualFingerprint,
 } from '../scripts/source-fingerprint.mjs';
+import { verifyDocsCandidate } from '../scripts/docs-accept.mjs';
+
+test('#896 capture identity follows browser flags and local helper dependencies, before candidate copying', () => {
+  const directory = mkdtempSync(resolve(tmpdir(), 'hp-capture-identity-'));
+  try {
+    for (const dir of ['src', 'demo/docs', 'demo/golden']) mkdirSync(resolve(directory, dir), { recursive: true });
+    const put = (file, text) => writeFileSync(resolve(directory, file), text);
+    put('demo/docs/capture.mjs', 'capture();\n');
+    put('demo/docs/browser-args.mjs', "export { args } from './flags.mjs';\n");
+    put('demo/docs/flags.mjs', "export const args=['--force-color-profile=srgb'];\n");
+    put('demo/golden/policy.mjs', 'export const policy=1;\n');
+    const identity = captureScriptFingerprint(directory), source = sourceFingerprint(directory), visual = visualFingerprint(directory);
+    assert.deepEqual(browserArgumentCorpus(directory), ['demo/docs/browser-args.mjs', 'demo/docs/flags.mjs']);
+    put('demo/docs/flags.mjs', "export const args=['--force-color-profile=srgb'];\r\n");
+    assert.equal(captureScriptFingerprint(directory), identity, 'line-ending canonical');
+    put('demo/golden/policy.mjs', 'export const policy=2;\n');
+    assert.equal(captureScriptFingerprint(directory), identity);
+    assert.equal(sourceFingerprint(directory), source);
+    put('demo/docs/flags.mjs', "export const args=['--force-color-profile=display-p3'];\n");
+    assert.notEqual(captureScriptFingerprint(directory), identity);
+    assert.notEqual(sourceFingerprint(directory), source);
+    assert.notEqual(visualFingerprint(directory), visual);
+    let reads = 0;
+    const manifest = { version: 1, fixture: 'synthetic-only', sourceFingerprint: visual,
+      captureScriptSha256: identity, chromium: 'pinned', scenarios: {} };
+    assert.throws(() => verifyDocsCandidate({ root: directory, manifest, version: 1, scenarios: [],
+      expectedFingerprint: visualFingerprint(directory), readBytes() { reads++; assert.fail('stale bytes read'); } }), /отпечаток/);
+    assert.equal(reads, 0);
+    assert.throws(() => verifyDocsCandidate({ root: directory, manifest, version: 1, scenarios: [],
+      expectedFingerprint: visual, readBytes() { reads++; assert.fail('stale bytes read'); } }), /browser-args/);
+    assert.equal(reads, 0);
+    assert.throws(() => verifyDocsCandidate({ root: directory,
+      manifest: { ...manifest, captureScriptSha256: undefined }, version: 1, scenarios: [], expectedFingerprint: visual }), /browser-args/);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});
 
 test('source fingerprint is stable across LF and CRLF checkouts', () => {
   const directory = mkdtempSync(resolve(tmpdir(), 'houseplan-fingerprint-'));
@@ -201,13 +236,14 @@ test('состав исключения объявлен списком, а не
   assert.deepEqual(postCaptureInputs(), ['demo/golden/accept.mjs', 'demo/golden/policy.mjs']);
 });
 
-test('в корпусе настоящего репозитория из demo/golden ровно пять файлов (#344, #792, #881)', () => {
+test('в корпусе настоящего репозитория все шесть golden capture inputs (#344, #792, #881, #896)', () => {
   const corpus = fingerprintCorpus(fileURLToPath(new URL('..', import.meta.url)));
   const golden = corpus.filter((file) => file.startsWith('demo/golden/')).sort();
   assert.deepEqual(golden, [
     'demo/golden/device-battery.mjs', 'demo/golden/harness.mjs',
     'demo/golden/matrix.mjs', 'demo/golden/run.mjs',
     'demo/golden/scene-repaint.mjs',
+    'demo/golden/static-stability.mjs',
   ]);
   assert.ok(corpus.includes('scripts/source-fingerprint.mjs'), 'сам отпечаток остаётся входом сборки');
   assert.ok(corpus.some((file) => file.startsWith('src/')), 'корпус без src был бы пуст по смыслу');

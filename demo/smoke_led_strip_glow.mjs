@@ -14,9 +14,17 @@ import { launch, check, finish } from './serve.mjs';
 import { installHpTestOnPage } from './helpers/hp-test.mjs';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
+import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { sourceFingerprint } from '../scripts/source-fingerprint.mjs';
+import { attestLaunchedBrowser } from '../scripts/browser-attestation.mjs';
+import { transitionOutcome } from './transition-timeline.mjs';
 
 const { page, browser } = await launch({ width: 1000, height: 820 }, 1);
+const browserPassport = await attestLaunchedBrowser(browser, { reason: 'LED transition observation #896' });
 const ledRequests = [];
+const transitionEvidence = [];
 page.on('request', (request) => { if (/led-strip-(runtime|field|editor)-/.test(request.url())) ledRequests.push(request.url().replace(/.*\//, '')); });
 const evaluate = (fn, arg) => page.evaluate(fn, arg);
 const settle = () => page.waitForTimeout(500);
@@ -361,6 +369,7 @@ await evaluate(async () => {
   await stat.updateComplete;
   const proof = window.__ledFadeProof = {
     cards: [main, stat], host, savedHass: main.hass, log: [], listeners: [],
+    timeline: [], nodeIds: new WeakMap(), nextNode: 0, phase: 'setup', phaseAt: performance.now(),
     selectors: ['[data-led-field="ceiling"]', '[data-glow-source="light.floor_lamp"]'],
     parent: main.parentNode, next: main.nextSibling, updates: [0, 0], late: [], descriptors: [],
   };
@@ -373,10 +382,19 @@ await evaluate(async () => {
     await Promise.all(proof.cards.map(card => card.updateComplete));
   };
   for (const [cardIndex, card] of proof.cards.entries()) {
+    const listenerAt = performance.now();
     const listener = event => {
       if (event.propertyName !== 'opacity') return;
       const kind = proof.selectors.findIndex(selector => event.target.matches(selector));
-      if (kind >= 0) proof.log.push({ card: cardIndex, kind, event: event.type, elapsed: event.elapsedTime });
+      if (kind >= 0) {
+        if (!proof.nodeIds.has(event.target)) proof.nodeIds.set(event.target, ++proof.nextNode);
+        const row = { card: cardIndex, kind, event: event.type, elapsed: event.elapsedTime,
+          phase: proof.phase, phaseAt: proof.phaseAt, listenerAt, eventAt: event.timeStamp,
+          deliveredAt: performance.now(), node: proof.nodeIds.get(event.target),
+          lease: { connected: event.target.isConnected, productPhase: event.target.dataset.ledPhase ?? null,
+            entering: event.target.classList.contains('is-entering'), leaving: event.target.classList.contains('is-leaving') } };
+        proof.log.push(row); proof.timeline.push(row);
+      }
     };
     for (const name of ['transitionrun', 'transitionend']) card.shadowRoot.addEventListener(name, listener);
     proof.listeners.push(listener);
@@ -390,11 +408,15 @@ try {
   check('#789: both kinds start absent on both surfaces', await evaluate(() =>
     window.__ledFadeProof.nodes().every(nodes => nodes.every(node => !node))), true);
   const fadeSet = state => evaluate(async state => {
-    const proof = window.__ledFadeProof; proof.log = []; await proof.set(state);
+    const proof = window.__ledFadeProof; proof.log = [];
+    proof.phase = state; proof.phaseAt = performance.now(); await proof.set(state);
+    proof.committedAt = performance.now();
   }, state);
   const fadeSnapshot = () => evaluate(() => {
     const proof = window.__ledFadeProof;
-    return { log: proof.log, nodes: proof.nodes().map(nodes => nodes.map(node => node ? {
+    return { log: proof.log, phase: proof.phase, intentAt: proof.phaseAt,
+      startedAt: proof.committedAt ?? proof.phaseAt, observedAt: performance.now(),
+      nodes: proof.nodes().map(nodes => nodes.map(node => node ? {
       opacity: Number(getComputedStyle(node).opacity), leaving: node.classList.contains('is-leaving'),
       entering: node.classList.contains('is-entering'),
     } : null)) };
@@ -406,6 +428,14 @@ try {
       check(`${label} actually starts an opacity transition`, events.some(event => event.event === 'transitionrun'), true);
       check(`${label} completes the unchanged 500 ms transition`, events.some(event =>
         event.event === 'transitionend' && Math.abs(event.elapsed - 0.5) < 0.01), true);
+      // Only these intents establish this 750 ms observation clock. The later
+      // navigation/settings cases retain raw events and their existing oracle;
+      // an old on/off clock must not manufacture a timeout for another action.
+      if (['on', 'off', 'reconnected'].includes(phase)) {
+        const diagnostic = transitionOutcome(result.log, { card, kind, phase: result.phase, startedAt: result.startedAt });
+        transitionEvidence.push(diagnostic);
+        console.log('#896 transition outcome', JSON.stringify(diagnostic));
+      }
     }
   };
   await fadeSet('on');
@@ -536,9 +566,11 @@ try {
   if (late.length) console.log('#789 late update diagnostic', JSON.stringify(late, null, 2));
   await evaluate(async () => {
     const proof = window.__ledFadeProof; proof.log = [];
+    proof.phase = 'reconnected'; proof.phaseAt = performance.now();
     proof.parent.insertBefore(proof.cards[0], proof.next?.parentNode === proof.parent ? proof.next : null);
     proof.host.appendChild(proof.cards[1]);
     await Promise.all(proof.cards.map(card => card.updateComplete));
+    proof.committedAt = performance.now();
   });
   await page.waitForTimeout(750);
   const reconnected = await fadeSnapshot();
@@ -641,6 +673,24 @@ try {
   await evaluate(() => window.__hpTest.switchSpace('f1'));
   await page.waitForTimeout(750);
 } finally {
+  const rawTimeline = await evaluate(() => window.__ledFadeProof?.timeline || []);
+  mkdirSync('artifacts/led-transition-896', { recursive: true });
+  const receipt = {
+    schema: 1, candidate: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+    dirty: !!execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim(),
+    observerSha256: createHash('sha256').update(readFileSync(new URL(import.meta.url))).digest('hex'),
+    fixtureSha256: createHash('sha256').update(readFileSync(new URL('./srv/demo.html', import.meta.url)))
+      .update(readFileSync(new URL('./srv/fixture-state.js', import.meta.url))).digest('hex'),
+    material: sourceFingerprint(), chromium: browser.version(), browserPassport,
+    playwright: JSON.parse(execFileSync(process.execPath, ['-p', "JSON.stringify(require('playwright/package.json').version)"], { encoding: 'utf8' })),
+    workload: { cards: 2, sourcesPerCard: 2, nativeDurationMs: 500, observationMs: 750,
+      stabilityOverride: false, retries: 0, internalLeaseIdentity: 'not-exposed; DOM node identity and phase observed' },
+    outcomes: transitionEvidence, timeline: rawTimeline,
+  };
+  writeFileSync('artifacts/led-transition-896/timeline.json', JSON.stringify(receipt, null, 2) + '\n');
+  // Failure logs are archived by the existing smoke shard workflow. Preserve
+  // the raw rows there as well, not only in the local ignored JSON artifact.
+  console.log('#896 raw transition receipt', JSON.stringify(receipt));
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await evaluate(async () => {
     const proof = window.__ledFadeProof;

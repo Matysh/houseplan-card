@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 896,
+  "baseStable": "v1.80.1",
+  "category": "infra",
+  "rationale": "Демо сохраняет фактические wire-кандидаты и команды, capture stability ограничена жизненным циклом съёмки и достигает shadow roots, паспорт включает browser-args inputs, три lazy budget witnesses используют принятую включительную полосу. LED timeline диагностический, причина исторического отказа unknown. Продуктовые timings, исходники и пользовательское поведение не меняются."
+}

@@ -1277,8 +1277,6 @@ test('#593 потолки ленивых графов — гейт, а не ст
   ] : []) {
     const violation = lazyGraphCeilingViolation(bytes, { ceiling, label });
     assert.equal(violation, null, violation?.text);
-    // #699: запас сверху — полоса над потолком беты; снизу границы у задачи нет.
-    assert.ok(ceiling + LAZY_GRAPH_CEILING_BAND - bytes > 500, `${label}: сверху меньше 500 Б — это шум`);
   }
   // Гейт обязан быть исполняемым и на синтетике, обе стороны — и это не
   // зависит от свежести бандла: мутант «потолок никогда не срабатывает»
@@ -1296,6 +1294,37 @@ test('#593 потолки ленивых графов — гейт, а не ст
   // Текст обязан называть граф: «graph выше потолка» не говорит, куда смотреть.
   assert.match(lazyGraphCeilingViolation(NaN, { ceiling: 1, label: 'lazy editor graph' }).text,
     /lazy editor graph/);
+});
+
+test('#896 all three valid lazy graphs use the inclusive band, with no extra 500 B reserve', () => {
+  const manifest = shippedManifest();
+  const graphs = [
+    ['lazyFurnitureArtGzipBytes', 'lazy furniture art graph'],
+    ['lazyEditorGzipBytes', 'lazy editor graph'],
+    ['lazyOnboardingGzipBytes', 'lazy onboarding graph'],
+  ];
+  for (const [index, [field, label]] of graphs.entries()) {
+    for (const offset of [-500, 0, 1]) {
+      const ceilings = graphs.map(([key]) => manifest[key]);
+      const ceiling = manifest[field] - LAZY_GRAPH_CEILING_BAND - offset;
+      ceilings[index] = ceiling;
+      const shippedGraphJudge = () => {
+        const violation = lazyGraphCeilingViolation(manifest[field], { ceiling, label });
+        if (violation) throw new Error(violation.text);
+      };
+      const cliJudge = () => assertBundleBudget(manifest, INITIAL_VIEW_GZIP_BUDGET,
+        INITIAL_PANEL_ONLY_GZIP_BUDGET, ...ceilings);
+      if (offset > 0) {
+        assert.throws(shippedGraphJudge, /больше полосы/);
+        assert.throws(cliJudge, /больше полосы/);
+      } else {
+        assert.doesNotThrow(shippedGraphJudge);
+        assert.doesNotThrow(cliJudge);
+        assert.equal(ceiling + LAZY_GRAPH_CEILING_BAND - manifest[field] > 500, false,
+          'the removed reserve expression would reject this allowed material');
+      }
+    }
+  }
 });
 
 test('#627 AC1 граф онбординга гейтится тем же потолком с полосой, что editor и furniture art', (t) => {

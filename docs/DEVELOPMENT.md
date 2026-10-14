@@ -17,6 +17,30 @@ opens a canonical door through its actual badge and accepts/cancels the actual
 dialog, instead of inventing an unowned `_openingInfo`.
 No new config fields, migration, private test writes or budget relaxation.
 
+## Synthetic QA boundary (#896)
+
+`demo/srv/fixture-state.js` is an in-memory wire fixture, not a backend validator.
+`config/set` and `layout/set` replace cloned whole documents with `expected_rev`
+CAS; `layout/update` takes the actual `{device_id,pos}` message (no revision
+field), replacing only that position; `layout/delete` takes `{device_id}` and
+returns `rev:null` for a missing key. No-op writes do not create revisions.
+Config/layout revisions are independent and refusal does not mutate either.
+Server pushes still publish normal events. Service-state updates preserve the
+current HA connection/user/wrappers, while `__serviceCalls` records ordered
+cloned actual arguments across successive `__mkHass()` instances. Synthetic
+on/off semantics are unchanged; this does not emulate HA domain state machines.
+
+Static golden/docs capture installs a temporary recursive shadow-root style
+observer and restores `attachShadow`, styles and capture clock/CSS overrides in
+`finally`, including stability-only and failed captures. This is harness-only;
+dynamic transition tests use ordinary CSS. `captureScriptSha256` now hashes
+canonical-LF capture code plus `browser-args.mjs` and its literal local module
+dependencies; those arguments also enter source/visual fingerprints. This is
+not a hash of the browser: launched binary/pins keep their independent
+attestation. Legacy receipts remain readable but cannot authorize proof reuse
+without the current identity. Re-capture/accept before release through the
+normal process; do not rewrite image/baseline manifests to make identity green.
+
 ## Config writer authority witnesses (#890)
 
 `smoke_config_authority` exercises a real GUI Save followed by public setConfig,

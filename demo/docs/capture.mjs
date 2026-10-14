@@ -9,16 +9,15 @@ import { fileURLToPath } from 'node:url';
 // leaves every content-hashed import at 404.
 import '../../scripts/bundle-sync.mjs';
 import { wholePixelClip } from './clip.mjs';
-import { visualFingerprint } from '../../scripts/source-fingerprint.mjs';
+import { captureScriptFingerprint, visualFingerprint } from '../../scripts/source-fingerprint.mjs';
 import { assertFreshDemoBundle } from '../bundle-freshness.mjs';
-import { goldenClip, prepareGoldenScenario } from '../golden/harness.mjs';
+import { goldenClip, prepareGoldenScenario, resetGoldenStability } from '../golden/harness.mjs';
 import { launch } from '../serve.mjs';
 import { DOC_SCREENSHOT_VERSION, DOC_SCREENSHOTS } from './screenshots.mjs';
 import { DETERMINISTIC_ARGS } from './browser-args.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const OUTPUT = resolve(ROOT, 'docs/images');
-const SCRIPT = fileURLToPath(import.meta.url);
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 
 /**
@@ -268,6 +267,7 @@ try {
   const fingerprint = visualFingerprint(ROOT);
   const scenarios = {};
   for (const scenario of DOC_SCREENSHOTS) {
+    try {
     await prepareGoldenScenario(page, scenario);
     const runtime = await applyDocumentationState(page, scenario);
     if (scenario.expectDialog && !runtime.dialog)
@@ -328,6 +328,9 @@ try {
       imageSha256: sha256(stored),
     };
     console.log(`captured ${scenario.id} -> docs/images/${scenario.file}`);
+    } finally {
+      await resetGoldenStability(page);
+    }
   }
   if (browserErrors.length) throw new Error(`browser errors: ${browserErrors.join(' | ')}`);
   if (STABILITY_SHOTS) {
@@ -348,7 +351,7 @@ try {
       // Чем жали — тоже часть доказательства: без инструмента байты другие.
       oxipng: oxipngVersion,
       sourceFingerprint: fingerprint,
-      captureScriptSha256: sha256(readFileSync(SCRIPT)),
+      captureScriptSha256: captureScriptFingerprint(ROOT),
       command: 'npm run build && node demo/docs/capture.mjs',
       scenarios,
     };

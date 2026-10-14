@@ -1,6 +1,8 @@
 import { makeLargeHouseFixture } from '../fixtures/large-house.mjs';
 import { fixtureWallKey, makeVisualMatrixFixture } from '../fixtures/visual-matrix.mjs';
 import { readFileSync } from 'node:fs';
+import { installStaticStability, resetGoldenStability } from './static-stability.mjs';
+export { resetGoldenStability } from './static-stability.mjs';
 import { makeBatteryBoardFixture, prepareBatteryBoard, makeBatteryZigbeeFixture,
   prepareBatteryZigbeeOverlap, batteryZigbeeProbe, batteryZigbeeClip } from './device-battery.mjs';
 
@@ -82,11 +84,13 @@ const panelThemeVars = {
 };
 
 async function stableEnvironment(page, scenario) {
+  await resetGoldenStability(page);
   await page.setViewportSize(scenario.viewport);
   await page.emulateMedia({
     reducedMotion: 'reduce', colorScheme: scenario.theme,
     forcedColors: scenario.forcedColors ? 'active' : 'none',
   });
+  await page.evaluate(installStaticStability);
   await page.evaluate(({
     variables, panelVariableNames, theme, panelHost, attemptedTarget, attemptKey, disableIsoFilters,
     moonClock,

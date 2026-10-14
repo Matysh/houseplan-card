@@ -1,5 +1,13 @@
 # House Plan architecture
 
+The synthetic QA boundary (#896) is outside both product bundles and persisted
+HA schemas. Its cloned in-memory config/layout pairs implement the real write
+message shapes and independent revisions, while a session-stable service
+recorder survives synthetic state events. Static capture alone owns recursive
+shadow stability and restores it in `finally`; dynamic transition evidence uses
+ordinary CSS. Capture/source identity includes browser argument modules, with
+launched-browser attestation remaining a separate proof of the executable.
+
 Composite form focus (#870) belongs either to the native form-kit wrapper or
 the authentic HA picker, never both. The picker is styled through its public
 host contract; its private shadow DOM and event handlers remain untouched.

@@ -37,7 +37,7 @@ import { guardCliOutput } from './cli-output.mjs';
 
 import { DOC_SCREENSHOT_VERSION, DOC_SCREENSHOTS } from '../demo/docs/screenshots.mjs';
 import { docsAcceptancePlan } from './docs-acceptance.mjs';
-import { visualFingerprint } from './source-fingerprint.mjs';
+import { captureScriptFingerprint, visualFingerprint } from './source-fingerprint.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
@@ -70,9 +70,9 @@ export function verifyDocsCandidate({
   const fingerprint = expectedFingerprint ?? visualFingerprint(root);
   if (manifest.sourceFingerprint !== fingerprint)
     throw new Error('кандидат снят не с текущего дерева: отпечаток не совпадает');
-  const scriptSha = captureScript ?? sha256(readBytes(resolve(root, 'demo/docs/capture.mjs')));
+  const scriptSha = captureScript ?? captureScriptFingerprint(root);
   if (manifest.captureScriptSha256 !== scriptSha)
-    throw new Error('кандидат снят другой версией demo/docs/capture.mjs');
+    throw new Error('кандидат снят другой версией capture/browser-args inputs');
   // Кто снимал — часть доказательства, а не украшение: именно смена браузера
   // и переписывает все девять файлов без содержательных изменений.
   if (typeof manifest.chromium !== 'string' || !manifest.chromium.trim())

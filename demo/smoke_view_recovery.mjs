@@ -231,7 +231,17 @@ reports.races = await races.page.evaluate(async () => {
   el.setConfig({ type: 'custom:houseplan-space-card', space: 'f1', show_button: false });
   el.hass = card.hass; host.append(el);
   await until(() => el._loadedOnce);
+  // The isolated HA authorities below serve an explicit seed captured BEFORE
+  // replacement, not whichever cache/default the old fixture happens to hold.
+  const seed = structuredClone(card._serverCfg);
+  const expected = [seed, seed];
+  const nodes = [card, el];
   const original = window.__mkHass();
+  const originalCallWS = original.callWS;
+  original.callWS = async message => {
+    const response = await originalCallWS(message);
+    return message.type === 'houseplan/config/get' ? { ...response, config: structuredClone(seed) } : response;
+  };
   const held = [];
   const calls = [];
   const connection = () => ({ ...original.connection });
@@ -247,22 +257,43 @@ reports.races = await races.page.evaluate(async () => {
   card.hass = oldAuthority; el.hass = oldAuthority;
   window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
   const twoReads = await until(() => held.length === 2);
+  let holdLatest = true;
+  const latestReads = [];
   const latest = { ...original, connection: connection(), callWS: async (message) => {
     calls.push(message.type);
     const response = await original.callWS(message);
-    if (message.type === 'houseplan/config/get') await sleep(50);
+    if (message.type === 'houseplan/config/get' && holdLatest)
+      await new Promise(resolve => latestReads.push(resolve));
+    else if (message.type === 'houseplan/config/get') await sleep(50);
     return message.type === 'houseplan/config/get' ? { ...response, can_write: false } : response;
   } };
   card.hass = latest; el.hass = latest;
   await card.updateComplete; await el.updateComplete;
+  const latestEntered = await until(() => latestReads.length >= 1);
+  const pendingAuthorityRetired = card._serverCfg === null;
+  const pendingFrames = nodes.map(node => ({ fingerprint: node._continuity.frameFingerprint,
+    text: node.renderRoot.querySelector('.stage')?.textContent || '' }));
   for (const release of held) release();
-  const names = (text) => [card._serverCfg, el._snap.config].map((cfg) =>
-    cfg.spaces[0].rooms[0].name !== text);
+  // A retained frame is display-only while foreign canonical authority is null.
+  // Observe its DOM as well as any accepted body; null is not acceptance.
+  const names = (text) => [card._serverCfg, el._snap.config].map((cfg, index) =>
+    !nodes[index].renderRoot.querySelector('.stage')?.textContent.includes(text)
+      && (!cfg || cfg.spaces[0].rooms[0].name !== text));
+  await frame();
+  const pendingRejectsOld = names('Obsolete response').every(Boolean) && card._serverCfg === null;
+  holdLatest = false; latestReads.forEach(release => release());
+  const accepted = () => until(() => [card._serverCfg, el._snap.config].every((cfg, index) =>
+    cfg && JSON.stringify(cfg) === JSON.stringify(expected[index])));
   const replaced = [true, true];
   const sample = (target, text) => names(text).forEach((safe, index) => { target[index] &&= safe; });
   for (let i = 0; i < 20; i++) { await frame(); sample(replaced, 'Obsolete response'); }
   const replacement = {
     twoOldTransportsEntered: twoReads,
+    latestContextReadEntered: latestEntered,
+    pendingForeignAuthorityRetired: pendingAuthorityRetired,
+    pendingOldReplyCannotBecomeAuthority: pendingRejectsOld,
+    pendingDisplayNeverShowsObsolete: pendingFrames.every(frame => !frame.text.includes('Obsolete response')),
+    replacementAcceptedExactConfig: await accepted(),
     fullRejectsReplacedConnection: replaced[0],
     spaceRejectsReplacedConnection: replaced[1],
     staleReadCannotRegrantWrite: card._serverCanWrite === false,
@@ -289,19 +320,24 @@ reports.races = await races.page.evaluate(async () => {
   for (let i = 0; i < 20; i++) { await frame(); sample(detached, 'Detached response'); }
   replacement.fullRejectsDetachedRead = detached[0];
   replacement.spaceRejectsDetachedRead = detached[1];
+  replacement.detachAcceptedExactConfig = await accepted();
 
   // An explicit floor choice wins over a read captured for the previous floor.
   const navigation = [];
+  let holdNavigation = false;
   const navigatingAuthority = { ...latest, connection: connection(), callWS: async (message) => {
     const response = await latest.callWS(message);
-    if (message.type !== 'houseplan/config/get') return response;
+    if (message.type !== 'houseplan/config/get' || !holdNavigation) return response;
     const obsolete = structuredClone(response);
     obsolete.rev += 300; obsolete.config.spaces[0].rooms[0].name = 'Navigated response';
     return new Promise((resolve) => navigation.push(() => resolve(obsolete)));
   } };
   card.hass = navigatingAuthority; el.hass = navigatingAuthority;
+  if (!(await accepted())) throw new Error('navigation fixture context was not accepted');
+  holdNavigation = true;
   window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
   await until(() => navigation.length === 2);
+  holdNavigation = false;
   await window.__hpTest.switchSpace('garden');
   el.setConfig({ type: 'custom:houseplan-space-card', space: 'garden', show_button: false });
   el.hass = latest;
@@ -312,6 +348,7 @@ reports.races = await races.page.evaluate(async () => {
     && navigated[0];
   replacement.spaceNavigationWins = el._config.space === 'garden'
     && navigated[1];
+  replacement.navigationAcceptedExactConfig = await accepted();
   // Observe every HA assignment, not only the final context Lit coalesces.
   const aba = [];
   const authorityA = { ...latest, connection: connection(), callWS: async (message) => {
@@ -334,6 +371,7 @@ reports.races = await races.page.evaluate(async () => {
   for (let i = 0; i < 20; i++) { await frame(); sample(returned, 'ABA response'); }
   replacement.fullRejectsSameTurnABA = returned[0];
   replacement.spaceRejectsSameTurnABA = returned[1];
+  replacement.abaAcceptedExactConfig = await accepted();
   aba.length = 0;
   card.hass = authorityA; el.hass = authorityA;
   window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
@@ -346,6 +384,7 @@ reports.races = await races.page.evaluate(async () => {
   const gap = [true, true];
   for (let i = 0; i < 20; i++) { await frame(); sample(gap, 'ABA response'); }
   replacement.sameTurnMissingHADoesNotAdoptOldRead = gap.every(Boolean);
+  replacement.missingHAAcceptedExactConfig = await accepted();
   replacement.sameTurnMissingHAStillRevalidates = calls.filter((type) =>
     type === 'houseplan/config/get').length - readsBeforeGap === 2
     && card._continuity.state === 'steady' && el._continuity.state === 'steady';

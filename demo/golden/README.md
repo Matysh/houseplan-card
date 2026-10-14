@@ -19,6 +19,14 @@ radial spokes visible instead of hiding them under a translucent room fill.
   demo bundles fail before the first screenshot.
 - Chromium, viewport, locale, timezone, colour profile, font rendering,
   animations and caret are controlled by the runner.
+- Static capture temporarily suppresses transitions/animations in existing and
+  lazy open shadow roots (#896), not just `document.head`. Per-scenario `finally`
+  removes those styles and restores the attachment hook; LED/dynamic smokes do
+  not install it. Docs capture shares the same scoped lifecycle, including
+  stability-only and failing captures.
+- Browser-argument helpers and their literal local dependencies enter both
+  source/visual identity and the docs capture-script digest. Old receipts cannot
+  be made current by changing a hash manually; re-capture and review normally.
 - Only `device-battery-zigbee-overlap-dark` opts into a root-background repaint
   before its final capture (#881): two frames with a temporary colour, then
   two with the original inline value/priority restored. This removes the

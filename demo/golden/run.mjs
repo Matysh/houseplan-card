@@ -5,7 +5,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launch } from '../serve.mjs';
 import { assertFreshDemoBundle } from '../bundle-freshness.mjs';
-import { goldenClip, prepareGoldenScenario } from './harness.mjs';
+import { goldenClip, prepareGoldenScenario, resetGoldenStability } from './harness.mjs';
 import { GOLDEN_MATRIX_VERSION, GOLDEN_SCENARIOS } from './matrix.mjs';
 import { inspectBatteryBoardPixels } from './device-battery.mjs';
 import { captureGoldenFrame } from './scene-repaint.mjs';
@@ -1184,6 +1184,7 @@ try {
     } catch (error) {
       result.error = error instanceof Error ? error.message : String(error);
     } finally {
+      await resetGoldenStability(page);
       // Tab-divider goldens deliberately hold the real pointer through the
       // screenshot. Always release it before the shared page is reused, even
       // when semantic validation or capture failed.

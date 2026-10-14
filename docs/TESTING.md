@@ -10,6 +10,27 @@ golden, а то, чего автоматика не видит, собрано �
 
 ## Правила для новых тестов (issue #85) — обязательны
 
+Fixture/capture fidelity (#896): `demo-fixture.test.mjs` covers saved independent
+wire pairs, clone boundaries, CAS, no-op revisions and immutable service records.
+`smoke_fixture_contract` uses three real marker actions, native cancelled
+multitouch/hold, public `callWS` writes/reads and a cold second card. Existing
+write-barrier/replacement races stay separate. Foreign HA fixtures must capture
+their seed before replacement and wait for an accepted new-context response;
+null canonical config during loading is correct, and retained DOM is display-only.
+
+`smoke_capture_stability` checks actual card computed transitions, a head-only
+negative, subsequently attached/replaced shadow contents, identical static
+hover pixels and exact reset. LED dynamic smokes never install that override.
+`source-fingerprint.test.mjs` changes a real browser-args dependency and proves
+stale docs rejection before reading/copying PNGs; post-capture policy remains
+excluded. `bundle-assets.test.mjs` exercises all three valid lazy graph manifests
+at band-minus-500, equality and plus-one through the CLI predicate and shipped
+graph predicate; no approved ceilings or artifact consistency checks change.
+LED raw timeline: `artifacts/led-transition-896/timeline.json`, with actual
+browser attestation, material, listener/event/delivery times, DOM generation and
+phase, fixed workload/deadline and explicit missing/late cause. Preserve all
+predeclared series outcomes; no retry, wider timeout or historical-cause claim.
+
 Connected-node diagnostics: `node --test test/node-performance-report.test.mjs`
 protects exact budget boundaries and failure reasons, immutable identity-joined
 phase sums, superseded inputs, unknown/incomplete evidence, fixed-series

@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { relative, resolve } from 'node:path';
+import { dirname, relative, resolve } from 'node:path';
 
 const sourceFiles = (directory) => {
   const files = [];
@@ -62,6 +62,26 @@ const POST_CAPTURE_INPUTS = new Set([
 
 const repoRelative = (root, file) => relative(root, file).replaceAll('\\', '/');
 
+// Browser arguments are executable capture inputs, not post-capture policy.
+// Follow their local modules too, so splitting the list cannot escape identity.
+export const browserArgumentCorpus = (root = process.cwd()) => {
+  const seen = new Set();
+  const visit = (file) => {
+    if (seen.has(file)) return;
+    seen.add(file);
+    const text = readFileSync(file, 'utf8');
+    const imports = /(?:\bfrom\s*|\bimport\s*(?:\(\s*)?)["'](\.[^"']+)["']/g;
+    for (const match of text.matchAll(imports)) visit(resolve(dirname(file), match[1]));
+  };
+  const entry = resolve(root, 'demo/docs/browser-args.mjs');
+  if (existsSync(entry)) visit(entry);
+  return [...seen].sort().map((file) => repoRelative(root, file));
+};
+
+export const captureScriptFingerprint = (root = process.cwd()) => digest(root,
+  [...new Set(['demo/docs/capture.mjs', 'demo/docs/browser-args.mjs', ...browserArgumentCorpus(root)])]
+    .sort().map((name) => resolve(root, name)), (text) => text);
+
 const fingerprintFiles = (root) => {
   const deterministicFixtureInputs = ['demo/fixtures', 'demo/golden']
     .map((name) => resolve(root, name))
@@ -72,6 +92,7 @@ const fingerprintFiles = (root) => {
   return [
     ...sourceFiles(resolve(root, 'src')),
     ...deterministicFixtureInputs,
+    ...browserArgumentCorpus(root).map((name) => resolve(root, name)),
     ...BUILD_INPUTS.map((name) => resolve(root, name)).filter(existsSync),
   ].sort((a, b) => relative(root, a).localeCompare(relative(root, b)));
 };

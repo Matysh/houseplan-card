@@ -4,7 +4,7 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import { dirname, extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DOC_SCREENSHOTS } from '../demo/docs/screenshots.mjs';
-import { visualFingerprint } from './source-fingerprint.mjs';
+import { captureScriptFingerprint, visualFingerprint } from './source-fingerprint.mjs';
 import { freshnessSink, screenshotsMode } from './docs-freshness.mjs';
 import { guideParityErrors } from './user-guide-parity.mjs';
 
@@ -219,8 +219,7 @@ if (!existsSync(manifestPath)) {
   // коммит оставляет этот гейт красным.
   if (manifest.sourceFingerprint !== visualFingerprint(ROOT))
     freshness.push('screenshot source fingerprint is stale; run npm run docs:capture and accept before the beta candidate (#479)');
-  const scriptPath = resolve(ROOT, 'demo/docs/capture.mjs');
-  if (manifest.captureScriptSha256 !== sha256(readFileSync(scriptPath)))
+  if (manifest.captureScriptSha256 !== captureScriptFingerprint(ROOT))
     freshness.push('screenshot capture script changed; run npm run docs:capture and accept before the beta candidate (#479)');
   const ids = Object.keys(manifest.scenarios || {});
   if (JSON.stringify(ids.sort()) !== JSON.stringify([...EXPECTED_SCREENSHOTS].sort()))

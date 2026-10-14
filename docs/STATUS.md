@@ -25,6 +25,16 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+QA fixture/capture contracts (#896) record every delegated service action and
+persist independent config/layout wire pairs with CAS and exact point updates.
+Foreign HA smoke consumers wait for their own accepted reads; pending display
+is not canonical authority. Static capture reaches open/lazy shadow roots and
+removes its overrides afterwards. Browser-argument helpers join capture/source
+identity; old receipts are stale, not silently upgraded. The three furniture
+lazy graphs retain their inclusive approved band, without a second 500 B reserve.
+LED event/DOM-generation timelines are observation only; the historical cause
+remains unknown. No product timings, budgets or accepted images changed.
+
 Connected-node diagnostics (#888) name exact exceeded budgets and preserve
 functional/clock failures. Existing raw source/native/flush identities produce
 read-only phase evidence with clean material/protocol/environment passports;
