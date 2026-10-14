@@ -4562,7 +4562,7 @@ export class HouseplanCard extends LitElement {
     if (memo && memo.hass === this.hass && memo.sig === sig) {
       return memo.active;
     }
-    const active = activeRegistryHass(this.hass, snapshot);
+    const active = activeRegistryHass(this.hass, snapshot, memo?.sig === sig && memo.active);
     const full = fullRegistryHass(this.hass, snapshot);
     this._planHassMemo = { hass: this.hass, sig, active, full };
     return active;
@@ -10432,6 +10432,7 @@ export class HouseplanCard extends LitElement {
       cellCm: this._cellCm,
       gridPitch: this._gridPitch,
       openingAmount: (opening) => this._openingAmt(opening),
+      geometryFingerprint: this._liveRt?.geometry(raw), // #850: once per record, epoch and scale
     });
     const cacheKey = `${space.id}|${revision.fingerprint}`;
     const pooled = lruRead(this._lightBarrierPool, cacheKey);

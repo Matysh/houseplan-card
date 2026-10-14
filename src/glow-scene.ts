@@ -9,7 +9,7 @@
 import { nothing, svg, type TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import {
-  resolvedLightSources, selectSpatialGlowSource,
+  lightPass, resolvedLightSources, selectSpatialGlowSource,
 } from './devices';
 import {
   glowAlpha, isInteriorLightOpeningType, openingLightApertureLength,
@@ -93,15 +93,17 @@ export interface LightBarrierScene {
  * Share that read, including its content fingerprint, only inside the render.
  * Handlers, subsequent renders and exception paths never retain the memo:
  * in-place edits and changed opening states must still rebuild the revision.
+ * #850: the same memo serves the pass's plan light resolution (`lightPass`,
+ * keyed by roster, never by a space), so its rooms resolve the graph once.
  */
 export class LightBarrierPass {
   private scenes: Map<SpaceModel, LightBarrierScene> | null = null;
 
   run<T>(render: () => T): T {
     const previous = this.scenes;
-    this.scenes = new Map();
+    lightPass.map = this.scenes = new Map();
     try { return render(); }
-    finally { this.scenes.clear(); this.scenes = previous; }
+    finally { this.scenes.clear(); lightPass.map = this.scenes = previous; }
   }
 
   read(space: SpaceModel, build: () => LightBarrierScene): LightBarrierScene {
@@ -267,8 +269,10 @@ export function resolveLightBarrierRevision(input: {
   cellCm: number;
   gridPitch: number;
   openingAmount: (opening: GeometryOpeningProjection) => number;
+  /** #850: the architectural fingerprint the caller remembers for this raw config and scale. */
+  geometryFingerprint?: string;
 }): LightBarrierRevision {
-  const geometryFingerprint = lightGeometryFingerprint(
+  const geometryFingerprint = input.geometryFingerprint ?? lightGeometryFingerprint(
     input.rawSpaceConfig, input.cellCm, input.gridPitch,
   );
   const polygons = input.space.rooms.flatMap((room) => {

@@ -73,7 +73,7 @@ interface HassIntakeHost {
   _renderSnapshotAt: number;
   _continuity: { note: (reason: string) => void };
   _ensureHaRegistryAuthority: () => void;
-  _planHassMemo: unknown;
+  _planHassMemo: { hass: unknown } | null;
   _hookConnection: () => void;
   _loadOk: boolean;
   _loading: boolean;
@@ -90,7 +90,10 @@ export function intakeHass(value: object): void {
   host._renderSnapshotAt = Date.now();
   host._continuity.note('hass-snapshot');
   host._ensureHaRegistryAuthority();
-  host._planHassMemo = null;
+  // A new HA frame rebuilds the active projection; #850: rows of the same
+  // registry build are lent to it (`activeRegistryHass`), so the light graph
+  // keyed by the registry survives a state tick.
+  if (host._planHassMemo) host._planHassMemo.hass = null;
   host._hookConnection();
   if (!host._loadOk && !host._loading && host._loadTries < 8) host._loadFromServer();
   host._maybeRebuildDevices();

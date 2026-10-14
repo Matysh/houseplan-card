@@ -439,22 +439,38 @@ function lightGraphFingerprint(devices: readonly LightSourceDevice[]): string {
 
 /** Cheap state projection used to reuse the plan-wide graph for every room in
  * one frame. It deliberately includes persisted entity refs that are not own
- * entities: a controller outside a room may drive a source inside it. */
+ * entities: a controller outside a room may drive a source inside it.
+ * #850: only the rows the resolver can read — controllable (light/switch) own,
+ * bound, primary or forced entities and controls. Whether a sensor-led device
+ * is a light is decided by the registry, never by a sensor's state, so a
+ * sensor tick keeps the resolved graph. */
 function lightStateFingerprint(hass: any, devices: readonly LightSourceDevice[]): string {
   const ids = new Set<string>();
   for (const device of devices) {
-    for (const id of device.entities) ids.add(id);
-    for (const ref of device.controls || device.marker?.controls || []) {
-      if (typeof ref === 'string' && !ref.startsWith('marker:')) ids.add(ref);
+    for (const id of [...ownControllableEntities(device), ...device.controls || [], ...device.marker?.controls || []]) {
+      if (typeof id === 'string' && isControllable(id)) ids.add(id);
     }
   }
   return [...ids].sort().map((id) => `${id}:${hass?.states?.[id]?.state ?? '<missing>'}`).join('|');
 }
 
-function lightGraphOf<D extends LightSourceDevice>(devices: readonly D[]): CachedLightGraph<D> {
+/** #850: exact work counters for the performance witness: [graph builds, full resolutions]. */
+export const lightWork = [0, 0];
+
+/**
+ * #850: one render pass resolves the plan graph once for all of its room
+ * consumers. `LightBarrierPass.run` lends `map` — the memo of its render pass,
+ * keyed here by roster — for the duration of the pass: a repeated room call
+ * with the same roster, HA projection and manual-light snapshot reuses the
+ * first resolution; outside a pass every call validates its fingerprints.
+ */
+export const lightPass: { map?: Map<object, unknown> | null } = {};
+
+function lightGraphOf<D extends LightSourceDevice>(devices: readonly D[], owner: object = devices): CachedLightGraph<D> {
   const fingerprint = lightGraphFingerprint(devices);
-  const previous = LIGHT_GRAPH_CACHE.get(devices as object) as CachedLightGraph<D> | undefined;
+  const previous = LIGHT_GRAPH_CACHE.get(owner) as CachedLightGraph<D> | undefined;
   if (previous?.fingerprint === fingerprint) return previous;
+  lightWork[0]++;
   const visible = devices.filter((device) => !device.hidden);
   const markerById = new Map<string, D>();
   const persistedByDevice = new Map<D, string[]>();
@@ -494,7 +510,7 @@ function lightGraphOf<D extends LightSourceDevice>(devices: readonly D[]): Cache
     }
   }
   const value = { fingerprint, visible, markerById, persistedByDevice, incomingByMarker };
-  LIGHT_GRAPH_CACHE.set(devices as object, value);
+  LIGHT_GRAPH_CACHE.set(owner, value);
   return value;
 }
 
@@ -593,20 +609,28 @@ export function resolvedLightSources<D extends LightSourceDevice>(
   // room binding. This preserves cross-room controllers while avoiding a full
   // O(devices + links) graph walk for every room consumer.
   if (room != null) {
-    return resolvedLightSources(hass, devices, null, virtualLights).filter((source) =>
-      lightSourceBelongsToRoom(source.device, room));
+    const memo = lightPass.map?.get(devices) as [unknown, unknown, ResolvedLightSource<D>[]] | undefined;
+    const all = memo && memo[0] === hass && memo[1] === virtualLights ? memo[2]
+      : resolvedLightSources(hass, devices, null, virtualLights);
+    lightPass.map?.set(devices, [hass, virtualLights, all]);
+    return all.filter((source) => lightSourceBelongsToRoom(source.device, room));
   }
   const graphFingerprint = lightGraphFingerprint(devices);
   const stateFingerprint = lightStateFingerprint(hass, devices);
   const manualFingerprint = virtualLightFingerprint(virtualLights);
-  const cached = RESOLVED_LIGHT_CACHE.get(devices as object) as CachedResolvedLightSources<D> | undefined;
+  // #850: a one-device roster (a presentation's own graph) is a new array on
+  // every call; keyed by its device, its resolution and its graph stay cached.
+  // The fingerprints still validate every entry.
+  const owner = devices.length === 1 ? devices[0] : devices;
+  const cached = RESOLVED_LIGHT_CACHE.get(owner) as CachedResolvedLightSources<D> | undefined;
   if (cached?.graphFingerprint === graphFingerprint
       && cached.stateFingerprint === stateFingerprint
       && cached.virtualLightFingerprint === manualFingerprint
       && cached.registry === hass?.entities) return cached.sources;
+  lightWork[1]++;
 
   type Candidate = ResolvedLightSource<D>;
-  const { visible, markerById, persistedByDevice, incomingByMarker } = lightGraphOf(devices);
+  const { visible, markerById, persistedByDevice, incomingByMarker } = lightGraphOf(devices, owner);
   // Room consumers need sources owned by that room, not a full resolution of
   // every marker followed by a final filter. Controllers outside the room are
   // still scanned below because they may drive a source whose owner is inside.
@@ -690,7 +714,7 @@ export function resolvedLightSources<D extends LightSourceDevice>(
     for (const source of ownByDevice.get(controller) || []) add(source);
   }
   const sources = [...byKey.values()];
-  RESOLVED_LIGHT_CACHE.set(devices as object, {
+  RESOLVED_LIGHT_CACHE.set(owner, {
     graphFingerprint, stateFingerprint, virtualLightFingerprint: manualFingerprint,
     registry: hass?.entities, sources,
   });

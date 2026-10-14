@@ -319,23 +319,29 @@ export function isRegistryEntryEnabled(entry: any): boolean {
   return !!entry && entry.disabled_by == null;
 }
 
-/** Hass-shaped projection containing registry metadata but only active rows. */
-export function activeRegistryHass(hass: any, snapshot = haRegistrySnapshot(hass)): any {
-  const devices: Record<string, any> = {};
-  const entities: Record<string, any> = {};
+/**
+ * Hass-shaped projection containing registry metadata but only active rows.
+ * #850: `same`, the projection of the same registry build, lends its registry
+ * rows: a state tick keeps the active registry objects by identity.
+ */
+export function activeRegistryHass(hass: any, snapshot = haRegistrySnapshot(hass), same?: any): any { // any-ok: HA's hass is untyped here; `same` is an earlier result of this function
+  const devices: HaRegistrySnapshot['devices'] = same?.devices || {};
+  const entities: HaRegistrySnapshot['entities'] = same?.entities || {};
   const states: Record<string, any> = {};
-  for (const [id, device] of Object.entries<any>(snapshot.devices || {})) {
-    if (isRegistryEntryEnabled(device)) devices[id] = device;
-  }
-  for (const [eid, entity] of Object.entries<any>(snapshot.entities || {})) {
-    if (!isRegistryEntryEnabled(entity)) continue;
-    // In limited mode an absent parent row is not evidence that the parent is
-    // disabled: HA may expose the entity/state but omit the device registry.
-    // Only an explicitly present disabled parent may suppress the entity.
-    const parent = entity.device_id ? snapshot.devices?.[entity.device_id] : null;
-    if (snapshot.authoritative && entity.device_id && !parent) continue;
-    if (parent && !isRegistryEntryEnabled(parent)) continue;
-    entities[eid] = entity;
+  if (!same) {
+    for (const [id, device] of Object.entries(snapshot.devices || {})) {
+      if (isRegistryEntryEnabled(device)) devices[id] = device;
+    }
+    for (const [eid, entity] of Object.entries(snapshot.entities || {})) {
+      if (!isRegistryEntryEnabled(entity)) continue;
+      // In limited mode an absent parent row is not evidence that the parent is
+      // disabled: HA may expose the entity/state but omit the device registry.
+      // Only an explicitly present disabled parent may suppress the entity.
+      const parent = entity.device_id ? snapshot.devices?.[entity.device_id] : null;
+      if (snapshot.authoritative && entity.device_id && !parent) continue;
+      if (parent && !isRegistryEntryEnabled(parent)) continue;
+      entities[eid] = entity;
+    }
   }
   for (const [eid, state] of Object.entries<any>(hass?.states || {})) {
     const entity = snapshot.entities?.[eid];

@@ -1043,8 +1043,10 @@ test('a light source paints exactly one region: the floor it can see', () => {
   // Barriers are keyed by their own content: `_cfgEpoch` lags behind geometry
   // edited in place, and a stale barrier set lights straight through a wall.
   assert.doesNotMatch(glow, /_cfgEpoch/);
+  // #850: View's live runtime may hand in the fingerprint it remembers per raw
+  // record, epoch and scale (View only; an editor pass always recomputes it).
   assert.match(glow,
-    /const geometryFingerprint = lightGeometryFingerprint\(\s*input\.rawSpaceConfig, input\.cellCm, input\.gridPitch/);
+    /const geometryFingerprint = input\.geometryFingerprint \?\? lightGeometryFingerprint\(\s*input\.rawSpaceConfig, input\.cellCm, input\.gridPitch/);
   assert.match(glow,
     /fingerprint: contentFingerprint\(\[geometryFingerprint, openingStateSignature\]\)/);
   assert.match(glow,

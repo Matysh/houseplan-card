@@ -159,6 +159,16 @@ invisible — the plan simply keeps lighting through a wall or closed door that
 now exists. Unrelated HA updates preserve the signature and hit the bounded
 barrier cache. The combined fingerprint, plus source position and radius, keys
 the per-source region cache (`_glowClipCache`).
+The architectural fingerprint itself walks the whole raw floor record
+(≈1.3 ms on `large-house`), so in View the live runtime remembers it per raw
+record, config epoch and scale (`LiveRuntime.geometry`, #850; the #744
+floor-key rule: every config write bumps the epoch, a replaced config brings
+new records). HA ticks, camera and hover passes then compute no fingerprint;
+the opening-state signature is still resolved on every pass, so a door that
+opens changes the scene in the same render. Editors may mutate a record during
+a gesture without a new epoch: their passes recompute it every time and leave
+nothing View could reuse, exactly as before; without the live chunk every pass
+computes it (#848).
 Top-level LED-strip source data is excluded from this architectural fingerprint:
 editing an emitter does not change masonry. The full card, static card and
 accepted resize artifacts use the same tag; every other raw field, scale and
@@ -215,6 +225,18 @@ operational toggle or optimistic visual flip occurs. Adding a link preserves
 the stored manual bit, and removing the final link exposes that exact value
 again. The operational revision remains part of the resolver cache key, but it
 cannot change a linked source without a driver-state change.
+
+The resolver cache (#850) holds one resolution per roster, validated by the
+graph fingerprint (device configuration), the registry identity, the manual
+snapshot and a state fingerprint of exactly the rows the resolver can read:
+the controllable (`light.*`/`switch.*`) own, bound, primary or forced entities
+and the controls of every device. Whether a sensor-led device is a light is
+decided by registry metadata, never by a sensor's state, so a temperature,
+battery or contact tick keeps the resolved graph; a light or controller row is
+an input. A one-device roster (a presentation's own projection) is a new array
+on every call; its resolution and its graph are cached by its device. Inside
+one render pass the room consumers share the pass's first plan resolution
+(`lightPass`, lent by `LightBarrierPass.run`).
 
 The controller picker can therefore link a smart relay to a virtual marker for
 a dumb physical lamp. Multiple controllers use OR. A direct entity reference

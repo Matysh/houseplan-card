@@ -2226,3 +2226,76 @@ test('#44 AC6: the filters preview calls the shared buildDevices', () => {
   assert.doesNotMatch(preview, /EXCLUDED_DOMAINS\.has|\.platform/,
     'no re-implementation of the filter inside the preview');
 });
+
+test('#850 AC4(б): a sensor tick keeps the resolved light graph; a controller row is an input', async () => {
+  const module = await import('../test-build/devices.js');
+  const devices = [
+    { id: 'lamp', area: 'r', entities: [], marker: { id: 'lamp', binding: 'virtual', is_light: true } },
+    { id: 'wall', area: 'r', primary: 'switch.wall', entities: ['switch.wall', 'sensor.wall_power'],
+      marker: { id: 'wall', binding: 'device:wall', controls: ['marker:lamp'] } },
+    { id: 'probe', area: 'r', primary: 'sensor.t', entities: ['sensor.t', 'sensor.t_battery', 'binary_sensor.t_contact'],
+      marker: { id: 'probe' } },
+    { id: 'bulb', area: 'r', primary: 'light.bulb', entities: ['light.bulb'], marker: { id: 'bulb' } },
+  ];
+  const entities = Object.fromEntries(['switch.wall', 'sensor.wall_power', 'sensor.t', 'sensor.t_battery',
+    'binary_sensor.t_contact', 'light.bulb'].map((entity_id) => [entity_id, { entity_id }]));
+  const states = {
+    'switch.wall': { state: 'on' }, 'sensor.wall_power': { state: '5' }, 'sensor.t': { state: '21' },
+    'sensor.t_battery': { state: '80' }, 'binary_sensor.t_contact': { state: 'off', attributes: { device_class: 'door' } },
+    'light.bulb': { state: 'on' },
+  };
+  const first = resolvedLightSources({ states, entities }, devices);
+  const work = [...module.lightWork];
+  for (const [eid, state] of [['sensor.t', '22'], ['sensor.t_battery', '5'], ['sensor.wall_power', '7'],
+    ['binary_sensor.t_contact', 'on'], ['sensor.t', 'unavailable']]) {
+    const tick = { states: { ...states, [eid]: { ...states[eid], state } }, entities };
+    assert.equal(resolvedLightSources(tick, devices), first, `${eid} → ${state} is not a light input`);
+  }
+  assert.deepEqual([...module.lightWork], work, 'no graph build and no resolution on sensor ticks');
+  const off = resolvedLightSources({ states: { ...states, 'switch.wall': { state: 'off' } }, entities }, devices);
+  assert.notEqual(off, first, 'the controller row is an input of the light graph');
+  assert.equal(off.find((source) => source.key === 'marker:lamp').on, false, 'the switch turns the lamp off');
+  assert.equal(module.lightWork[1], work[1] + 1, 'one resolution');
+  const bulb = resolvedLightSources({ states: { ...states, 'light.bulb': { state: 'off' } }, entities }, devices);
+  assert.equal(bulb.find((source) => source.eid === 'light.bulb').on, false, 'an own light row is an input');
+  const gone = resolvedLightSources({ states: { ...states, 'light.bulb': undefined }, entities }, devices);
+  assert.equal(gone.some((source) => source.eid === 'light.bulb'), false, 'a light row that disappears is an input');
+  assert.equal(module.lightWork[0], work[0], 'the graph is built from config only');
+  // A presentation's own roster is a new one-device array on every call (S2):
+  // the device keeps its resolution and its graph; its light row is still an input.
+  const bulbDevice = devices[3];
+  const own = resolvedLightSources({ states, entities }, [bulbDevice]);
+  const graphs = module.lightWork[0];
+  assert.equal(resolvedLightSources({ states, entities }, [bulbDevice]), own, 'a new array of the same device');
+  const ownOff = resolvedLightSources({ states: { ...states, 'light.bulb': { state: 'off' } }, entities }, [bulbDevice]);
+  assert.equal(ownOff[0].on, false, 'the own light row is an input of the one-device roster');
+  assert.equal(module.lightWork[0], graphs, 'the one-device graph is reused while the device is unchanged');
+});
+
+test('#850 AC4(в): twenty room calls of one render pass compute the graph and state fingerprints once', async () => {
+  const { LightBarrierPass } = await import('../test-build/glow-scene.js');
+  let stateReads = 0, rosterReads = 0;
+  const rooms = Array.from({ length: 20 }, (_, i) => ({ id: `r${i}`, area: `a${i}` }));
+  const devices = rooms.map((room, i) => {
+    const device = { id: `l${i}`, area: room.area, primary: `light.l${i}`, marker: { id: `l${i}` } };
+    const entities = [`light.l${i}`];
+    Object.defineProperty(device, 'entities', { enumerable: true, get: () => { rosterReads++; return entities; } });
+    return device;
+  });
+  const raw = Object.fromEntries(rooms.map((_, i) => [`light.l${i}`, { state: i % 2 ? 'on' : 'off' }]));
+  const hass = { entities: {}, states: new Proxy(raw, { get: (target, key) => { stateReads++; return target[key]; } }) };
+  const pass = (count) => new LightBarrierPass().run(() => rooms.slice(0, count)
+    .map((room) => resolvedLightSources(hass, devices, room)));
+  pass(20); // the first pass resolves the graph
+  stateReads = 0; rosterReads = 0;
+  pass(1);
+  const one = { stateReads, rosterReads };
+  stateReads = 0; rosterReads = 0;
+  const all = pass(20);
+  assert.deepEqual({ stateReads, rosterReads }, one, 'twenty rooms cost one fingerprint pair');
+  assert.deepEqual(all.map((sources) => sources.map((source) => [source.device.id, source.on])),
+    rooms.map((_, i) => [[`l${i}`, i % 2 === 1]]), 'every room still receives exactly its sources');
+  stateReads = 0;
+  for (const room of rooms) resolvedLightSources(hass, devices, room);
+  assert.equal(stateReads, 20 * one.stateReads, 'outside a pass every call validates its fingerprints');
+});

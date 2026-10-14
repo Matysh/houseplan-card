@@ -21,7 +21,9 @@ test('#375 AC1: resolvedLightSources reuses the cached graph for a stable array'
     icon: 'mdi:lightbulb', is_light: true, binding: 'entity:light.l',
     entity: 'light.l', entities: ['light.l'], x: 0.5, y: 0.5,
   };
-  const devices = [lamp];
+  // #850: a one-device roster is keyed by its device (a presentation's own
+  // roster is a new array on every call); a plan roster stays keyed by identity.
+  const devices = [lamp, { ...lamp, id: 'lamp2', entities: ['light.l2'], binding: 'entity:light.l2', entity: 'light.l2' }];
   const manual = { rev: 1, configRev: 1, off: new Set() };
   const first = resolvedLightSources(hass, devices, null, manual);
   const second = resolvedLightSources(hass, devices, null, manual);
@@ -30,6 +32,8 @@ test('#375 AC1: resolvedLightSources reuses the cached graph for a stable array'
   const spreadMiss = resolvedLightSources(hass, [...devices], null, manual);
   assert.notEqual(first, spreadMiss,
     'a spread copy is a different WeakMap key — full rebuild (the bug of #375)');
+  assert.equal(resolvedLightSources(hass, [lamp], null, manual), resolvedLightSources(hass, [lamp], null, manual),
+    '#850: a new one-device array of the same device reuses its resolution');
 });
 
 test('#375 AC1: the glow scene passes input.devices without a spread', () => {

@@ -223,3 +223,59 @@ test('space card exposes one explicit default-off visual-editor flag', () => {
   assert.match(editor, /name: 'light_pools', selector: \{ boolean: \{\} \}/);
   assert.match(editor, /light_pools: t\(L, 'editor\.light_pools'\)/);
 });
+
+test('#850 AC4(а): the architectural fingerprint is computed once per raw floor record, epoch and scale', async () => {
+  // The memo is the live runtime's (the View's lazy chunk); without it the card computes it every pass.
+  const { LiveRuntime } = await import('../test-build/live-interaction-runtime.js');
+  const host = { _mode: 'view', _cfgEpoch: 1, _cellCm: 5, _gridPitch: 20 };
+  const runtime = new LiveRuntime(host);
+  assert.equal(typeof runtime.geometry, 'function', 'the View remembers the architectural fingerprint');
+  const builds = () => runtime.work().lightGeometry;
+  const record = { id: 'f', rooms: [square('room', 0, 100)], walls: [{ key: 'w', a: [0, 0], b: [100, 0], cm: 20 }],
+    openings: [], led_strips: [{ id: 'led', points: [[0, 0], [1, 0]], marker: null }] };
+  const first = runtime.geometry(record);
+  assert.equal(first, lightGeometryFingerprint(record, 5, 20));
+  // HA ticks, camera and hover passes of View: the same record, epoch and scale.
+  for (let pass = 0; pass < 100; pass++) assert.equal(runtime.geometry(record), first);
+  assert.equal(builds(), 1, 'one computation for a hundred render passes');
+  // Every config write bumps the epoch (`_saveConfig`): an in-place wall edit is seen.
+  record.walls[0].cm = 40;
+  host._cfgEpoch = 2;
+  const edited = runtime.geometry(record);
+  assert.notEqual(edited, first, 'a wall edit is a new fingerprint');
+  assert.equal(edited, lightGeometryFingerprint(record, 5, 20));
+  // A config replaced from the server brings new records under the same floor id.
+  const replaced = { ...record, walls: [{ ...record.walls[0], cm: 60 }] };
+  assert.equal(runtime.geometry(replaced), lightGeometryFingerprint(replaced, 5, 20),
+    'a record of the same floor id is not the same geometry');
+  const opened = { ...replaced, openings: [{ id: 'o', type: 'door', rx: 50, ry: 0, rlen: 20, angle: 0 }] };
+  assert.equal(runtime.geometry(opened), lightGeometryFingerprint(opened, 5, 20), 'an added opening as well');
+  host._cellCm = 10;
+  assert.equal(runtime.geometry(opened), lightGeometryFingerprint(opened, 10, 20), 'cell_cm is an input');
+  host._gridPitch = 40;
+  assert.equal(runtime.geometry(opened), lightGeometryFingerprint(opened, 10, 40), 'the grid pitch is an input');
+  // An editor may mutate the record during a gesture without a new epoch:
+  // every editor pass is fresh, and View never reuses what it remembered before the edit.
+  const before = builds();
+  host._mode = 'plan';
+  opened.walls[0].cm = 80;
+  assert.equal(runtime.geometry(opened), lightGeometryFingerprint(opened, 10, 40));
+  assert.equal(runtime.geometry(opened), lightGeometryFingerprint(opened, 10, 40));
+  assert.equal(builds(), before + 2, 'an editor pass never hits');
+  opened.walls[0].cm = 90;
+  host._mode = 'view';
+  assert.equal(runtime.geometry(opened), lightGeometryFingerprint(opened, 10, 40), 'back in View: no stale entry');
+  runtime.dispose();
+  const disposed = builds();
+  runtime.geometry(opened);
+  assert.equal(builds(), disposed + 1, 'disconnect forgets the remembered fingerprints');
+  // The door state is not in this part: the same remembered geometry, a new door amount, a new revision.
+  const space = { id: 's', rooms: [square('left', 0, 100), square('right', 100, 200)] };
+  const door = { id: 'd', type: 'door', rx: 100, ry: 50, rlen: 40, angle: 90, contact: 'binary_sensor.d' };
+  const revision = (amount) => resolveLightBarrierRevision({
+    rawSpaceConfig: { id: 's', rooms: space.rooms }, space, openings: [door], cellCm: 5, gridPitch: 20,
+    openingAmount: () => amount, geometryFingerprint: 'remembered',
+  });
+  assert.equal(revision(0).geometryFingerprint, 'remembered', 'the caller remembers the architectural part');
+  assert.notEqual(revision(0).fingerprint, revision(1).fingerprint, 'opening a door changes the scene in the same pass');
+});

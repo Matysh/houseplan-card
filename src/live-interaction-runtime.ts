@@ -10,10 +10,16 @@ import {
   classifyHassRenderChange, type HassRenderDependencies, type HassRenderSnapshot,
 } from './render-invalidation';
 import type { RenderLifecycle } from './houseplan-render-lifecycle';
+import { lightWork } from './devices';
+import { lightGeometryFingerprint } from './glow-scene';
 import type { DevItem } from './types';
 
 interface LiveRuntimeHost {
   _renderLife: RenderLifecycle;
+  _mode: string;
+  _cfgEpoch: number;
+  _cellCm: number;
+  _gridPitch: number;
   _pointers: { size: number };
   _cameraTransition: { active: boolean };
   _deviceDrag?: unknown;
@@ -30,7 +36,35 @@ interface LiveRuntimeHost {
 /** Lazily loaded DOM-only fast paths; the card keeps a full-render fallback. */
 export class LiveRuntime {
   private deferredHass = false;
+  private fingerprints = new WeakMap<object, [number, number, number, string]>();
+  private geometryBuilds = 0;
   public constructor(private readonly host: object) {}
+  /** #850: exact work counters for the performance witness. */
+  public work(): Record<string, number> {
+    return { lightGraphs: lightWork[0], lightResolutions: lightWork[1],
+      lightGeometry: this.geometryBuilds };
+  }
+  /**
+   * #850: the architectural light fingerprint of the card's raw floor record
+   * (`lightGeometryFingerprint`), once per record, config epoch and scale
+   * instead of once per render pass. In View every config write bumps the
+   * epoch and a replaced config brings new records (the #744 floor-key rule).
+   * An editor may mutate the record during a gesture without a new epoch: its
+   * passes never hit, and the entry they leave is never reused. Without this
+   * chunk the card computes the fingerprint on every pass, as before (#848).
+   */
+  public geometry(record: unknown): string {
+    const host = this.host as LiveRuntimeHost;
+    const epoch = host._mode === 'view' ? host._cfgEpoch : Number.NaN;
+    const cellCm = host._cellCm, gridPitch = host._gridPitch;
+    const owner = record && typeof record === 'object' ? record : null;
+    const hit = owner && this.fingerprints.get(owner);
+    if (hit && hit[0] === epoch && hit[1] === cellCm && hit[2] === gridPitch) return hit[3];
+    this.geometryBuilds++;
+    const value = lightGeometryFingerprint(record, cellCm, gridPitch);
+    if (owner) this.fingerprints.set(owner, [epoch, cellCm, gridPitch, value]);
+    return value;
+  }
   public hass(
     before: HassRenderSnapshot | null | undefined,
     after: HassRenderSnapshot | null | undefined,
@@ -82,6 +116,7 @@ export class LiveRuntime {
     syncHouseplanHover(this.host);
   }
   public dispose(): void {
+    this.fingerprints = new WeakMap();
     disposeHouseplanViewport(this.host);
     clearDeviceFocusTip(this.host);
     resetHouseplanHover(this.host);
