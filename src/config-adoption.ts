@@ -97,6 +97,7 @@ export class MutableConfigAdoption {
   adoptionEpoch = 0;
   /** Last server-confirmed bodies, isolated from in-place editor drafts (#890). */
   private acceptedCache: CachedStructuralSnapshot | null = null;
+  private optimisticAttempts = new WeakSet<OptimisticAttempt<ServerConfig>>();
 
   constructor(private readonly onBodyReplaced?: (field: BodyField, previous: unknown) => void) {}
 
@@ -277,7 +278,9 @@ export class MutableConfigAdoption {
   // --- optimistic writes (#314) -------------------------------------------
 
   beginOptimistic(previous: ServerConfig, attempted: ServerConfig): OptimisticAttempt<ServerConfig> {
-    return optimisticAttempt(previous, attempted, this.configFingerprint, this.configRev, contentFingerprint);
+    const attempt = optimisticAttempt(previous, attempted, this.configFingerprint, this.configRev, contentFingerprint);
+    this.optimisticAttempts.add(attempt);
+    return attempt;
   }
 
   /**
@@ -285,6 +288,7 @@ export class MutableConfigAdoption {
    * reload or a newer edit owns a different revision/content and must win.
    */
   rollbackOptimistic(attempt: OptimisticAttempt<ServerConfig>): boolean {
+    if (!this.optimisticAttempts.has(attempt)) return false;
     const current = this.config;
     if (!current || this.configRev !== attempt.revision
         || contentFingerprint(current) !== attempt.attemptedFingerprint) return false;
@@ -313,6 +317,7 @@ export class MutableConfigAdoption {
   /** Retire a foreign HA authority, never turn its revision into a cold hint. */
   resetContext(): void {
     this.acceptedCache = null;
+    this.optimisticAttempts = new WeakSet();
     this.setConfig(null); this.setLayout({});
     this.configRev = this.layoutRev = 0;
     this.configFingerprint = this.layoutFingerprint = '';

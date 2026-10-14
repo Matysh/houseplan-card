@@ -77,6 +77,33 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'config-foreign-context-keeps-old-write-queue',
+    guard: 'node demo/smoke_config_authority.mjs',
+    because: '#890 AC6: fast B mandatory reads and its own serialized save must not wait for the old A transport in either production writer.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: '        this._writeChain = Promise.resolve(); this._writesPending = 0;',
+      replace: '        // retain foreign queue and pending count' }],
+  },
+  {
+    id: 'config-foreign-reply-decrements-new-context-count',
+    guard: 'node demo/smoke_config_authority.mjs',
+    because: '#890 AC6: after B begins a write before late A completion, only B completion may retire the B pending count; real View and editor writers both own it.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: '    const mine = this._writeChain.finally(() => { if (ownsPending()) this._writesPending--; });',
+      replace: '    const mine = this._writeChain.finally(() => { this._writesPending--; });' },
+    { file: 'src/houseplan-editor-runtime.ts',
+      find: '    const mine = this.host._writeChain.finally(() => { if (ownsPending()) this.host._writesPending--; });',
+      replace: '    const mine = this.host._writeChain.finally(() => { this.host._writesPending--; });' }],
+  },
+  {
+    id: 'config-foreign-context-restores-old-optimistic-attempt',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/config-adoption.test.mjs',
+    because: '#890 AC6: matching content and numeric revisions across installations are not ownership of the refused A attempt.',
+    patches: [{ file: 'src/config-adoption.ts',
+      find: '    if (!this.optimisticAttempts.has(attempt)) return false;',
+      replace: '    // allow foreign optimistic rollback' }],
+  },
+  {
     id: 'config-live-setconfig-restores-stale-cache',
     guard: 'node demo/smoke_config_authority.mjs',
     because: '#890 AC1/AC6: the real Lit card, browser localStorage and public setConfig/floor lifecycle must retain accepted/pending authority.',

@@ -501,7 +501,11 @@ storage exception cannot reverse server acceptance. `ConfigWriteContext` fences
 queued writes and late replies at HA connection/user replacement; a reconnect
 through the same connection retains independent drafts. Foreign authority
 retires structural identity/history until that context's config/layout reads
-complete. `new-device-ack` owns one explicit visit's attention change and restores
+complete. Write queues and pending counters are context-owned: fast new reads
+and saves never wait for old transports, whose completion cannot retire a new
+counter. Optimistic attempts also lose rollback ownership across contexts even
+when both installations have identical content and numeric revisions.
+`new-device-ack` owns one explicit visit's attention change and restores
 only that ID after rejection, without a background retry loop. Vacuum routes
 pass the same optimistic attempt through write-time canonicalization.
 

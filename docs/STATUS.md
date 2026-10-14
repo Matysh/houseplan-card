@@ -35,6 +35,8 @@ including a beta version with no matching stable. Token ceilings are unchanged.
 - #890 isolates confirmed config/layout cache from pending edits, preserves live
   setConfig authority, fences foreign HA writes and restores rejected vacuum
   routes/New acknowledgements. Status remains authoritative in issue labels.
+  Fast replacement-context reads and writes are independent of the old queue;
+  late completions cannot decrement the new counter or roll back a matching body.
 
 Beta publication (#889) treats additional owner scene/dev/native/GPU records
 as advice when absent, not as fabricated acceptance. Only the committed beta

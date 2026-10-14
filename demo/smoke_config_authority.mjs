@@ -98,6 +98,51 @@ const out = await page.evaluate(async () => {
   releaseB();
   for (let i = 0; i < 100 && !c._loadOk; i++) await pause();
   o.bReceivesItsOwnAuthority = c._loadOk && c._cfgRev === 3 && c._serverCfg.spaces[0].title === 'Authority B';
+  // AC6 order matters: B mandatory reads and its own write win before A replies.
+  // Run both production writers, with an installed editor and a View-only card.
+  const fastContext = async (card, label) => {
+    const config = copy(card._serverCfg); config.spaces[0].title = `Fast ${label}`;
+    let releaseOld, enteredOld = false;
+    const oldResponse = new Promise((resolve) => { releaseOld = resolve; });
+    card.hass = { ...card.hass, callWS: async (message) => {
+      if (message.type === 'houseplan/config/set') { enteredOld = true; await oldResponse; return { rev: 100 }; }
+      return base(message);
+    } };
+    const oldWrite = card._writeConfig().catch((error) => error.code); // private-ok: #890 exercise the real shared transport queue, including View metadata without loading the editor.
+    for (let i = 0; i < 100 && !enteredOld; i++) await pause();
+    let releaseOwn, ownEntered = false;
+    const ownResponse = new Promise((resolve) => { releaseOwn = resolve; });
+    const ownWrites = [];
+    card.hass = { ...card.hass, connection: { ...card.hass.connection }, callWS: async (message) => {
+      if (message.type === 'houseplan/config/get') return { config: copy(config), rev: 3, can_write: true };
+      if (message.type === 'houseplan/layout/get') return { layout: {}, rev: 2 };
+      if (message.type === 'houseplan/config/set') {
+        ownWrites.push(copy(message));
+        if (ownWrites.length === 1) { ownEntered = true; await ownResponse; }
+        return { rev: 3 + ownWrites.length };
+      }
+      return base(message);
+    } };
+    for (let i = 0; i < 100 && !card._loadOk; i++) await pause();
+    o[`${label}FastLoadBeforeOldReply`] = card._loadOk && card._cfgRev === 3
+      && card._serverCfg.spaces[0].title === `Fast ${label}` && card._writesPending === 0;
+    const ownWrite = card._writeConfig().catch((error) => error.code); // private-ok: #890 hold transport to observe per-context queue/count, not a GUI action oracle.
+    for (let i = 0; i < 100 && !ownEntered; i++) await pause();
+    o[`${label}OwnWriteBeforeOldReply`] = ownEntered && ownWrites[0]?.expected_rev === 3 && card._writesPending === 1;
+    releaseOld(); const oldCode = await oldWrite;
+    o[`${label}LateOldReplyKeepsOwnCounter`] = oldCode === 'context-changed' && card._writesPending === 1
+      && card._cfgRev === 3 && card._serverCfg.spaces[0].title === `Fast ${label}`;
+    releaseOwn(); await ownWrite;
+    o[`${label}OwnWriteSettlesItsCounter`] = card._writesPending === 0 && card._cfgRev === 4;
+    await card._writeConfig(); // private-ok: #890 assert expected_rev at the real View/editor writer boundary.
+    o[`${label}NextWriteUsesOwnRev`] = ownWrites.at(-1).expected_rev === 4 && card._writesPending === 0;
+  };
+  await fastContext(c, 'editor');
+  cold.hass = c.hass; document.body.append(cold);
+  for (let i = 0; i < 100 && !cold._loadOk; i++) await pause();
+  o.viewFixtureHasNoEditor = cold._loadOk && !cold._editorRuntime;
+  await fastContext(cold, 'view');
+  cold.remove();
   return o;
 });
 checkAll(out, Object.fromEntries(Object.keys(out).map((key) => [key, true])));

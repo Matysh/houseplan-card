@@ -914,7 +914,9 @@ but cache bodies are isolated server-confirmed snapshots, never pending edits
 labelled with an old accepted revision. Cache restore is a cold display hint,
 not write authority. Public card-option updates retain the live document and
 history; a different HA connection/user retires that authority and fences old
-queued writes/replies until new authoritative reads complete. Vacuum routing
+queued writes/replies until new authoritative reads complete. Its write queue,
+pending count and optimistic rollback ownership are retired separately from old
+in-flight transports; new reads/saves do not wait for those old replies. Vacuum routing
 uses its canonical attempt; refused New acknowledgement restores only its own
 attention while preserving newer discovery and accepted revisions. No schema,
 model version, server ACL or revision wire format changes.

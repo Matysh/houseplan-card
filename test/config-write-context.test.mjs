@@ -12,11 +12,13 @@ test('#890 AC6: same HA connection/reconnect keeps drafts; foreign authority fen
   assert.equal(owner.current(claim, a), true);
   assert.equal(owner.observe(null), false, 'temporary disconnect is not proof of a foreign installation');
   assert.equal(owner.current(claim, null), false);
+  assert.equal(owner.owns(claim), true, 'disconnect must still retire its own pending counter');
   assert.equal(owner.observe(a), false);
   assert.equal(owner.current(claim, a), true);
   const b = { ...a, connection: {} };
   assert.equal(owner.observe(b), true);
   assert.equal(owner.current(claim, b), false);
+  assert.equal(owner.owns(claim), false, 'late A completion cannot decrement the B counter');
   assert.equal(owner.observe(a), true);
   assert.equal(owner.current(claim, a), false, 'returning identity cannot revive an old generation');
   assert.equal(owner.current(owner.claim(), a), true);

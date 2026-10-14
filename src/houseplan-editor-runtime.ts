@@ -798,7 +798,7 @@ export interface HouseplanEditorHostPort {
   _writeChain: Promise<void>;
   _writesPending: number;
   _sendConfigCandidate: (candidate: ServerConfig) => Promise<void>;
-  _configWriteGuard?: () => () => boolean;
+  _configWriteGuard?: (pendingOnly?: boolean) => () => boolean;
   _writeConfig: () => Promise<void>;
   _requestMode: (mode: 'view' | 'plan' | 'devices' | 'decor', animate?: boolean) => Promise<void>;
   _checkOptimizeGeometry: (config: ServerConfig) => OptimizeGeometryPreflightResult;
@@ -1561,6 +1561,7 @@ public _prepareConfigCandidate(config: ServerConfig): ServerConfig { this._dropL
 public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null): Promise<void> {
     this.host._writesPending++;
     const isCurrent = this.host._configWriteGuard?.() ?? (() => true);
+    const ownsPending = this.host._configWriteGuard?.(true) ?? (() => true);
     this.host._writeChain = enqueueSerializedWrite(this.host._writeChain, async () => {
       if (!isCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
       if (!this.host._serverCfg) return;
@@ -1597,6 +1598,7 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null): Pro
       try {
         await this.host._sendConfigCandidate(discoveryWrite?.config || candidate);
       } catch (error) {
+        if (!isCurrent()) throw error;
         if (discoveryWrite?.placements.length) {
           this.roomDeviceDiscovery.reject(discoveryWrite);
           this.host._newSyncKey = '';
@@ -1619,7 +1621,7 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null): Pro
           this.host._pendingPhysicalWrites.delete(spaceId);
       }
     });
-    const mine = this.host._writeChain.finally(() => { this.host._writesPending--; });
+    const mine = this.host._writeChain.finally(() => { if (ownsPending()) this.host._writesPending--; });
     // keep the chain itself unadorned so the next link waits for the write only
     return mine;
   }

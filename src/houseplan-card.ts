@@ -547,6 +547,7 @@ export class HouseplanCard extends LitElement {
       if (this._configWriteContext.observe(this.hass)) {
         this._loadOk = false; this._serverCanWrite = null; this._loadTries = 0;
         this._saveConfigDebounced.cancel(); this._adoption.resetContext();
+        this._writeChain = Promise.resolve(); this._writesPending = 0;
         this._persistLayout.cancel(); this._dirtyPos.clear(); this._sentPos.clear();
         this._editorRuntime?.roomDeviceDiscovery.clear();
         this._geometryHistory.clear(); this._devicePositionHistory.clear();
@@ -7611,9 +7612,9 @@ export class HouseplanCard extends LitElement {
     this._cacheSnapshot();
   }
 
-  public _configWriteGuard(): () => boolean {
+  public _configWriteGuard(pendingOnly = false): () => boolean {
     const claim = this._configWriteContext.claim();
-    return () => this._configWriteContext.current(claim, this.hass);
+    return () => pendingOnly ? this._configWriteContext.owns(claim) : this._configWriteContext.current(claim, this.hass);
   }
 
   private _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null): Promise<void> {
@@ -7624,6 +7625,7 @@ export class HouseplanCard extends LitElement {
     // because such writes can only be created by an installed editor.
     this._writesPending++;
     const isCurrent = this._configWriteGuard();
+    const ownsPending = this._configWriteGuard(true);
     this._writeChain = enqueueSerializedWrite(this._writeChain, async () => {
       if (!isCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
       if (!this._serverCfg) return;
@@ -7633,7 +7635,7 @@ export class HouseplanCard extends LitElement {
       this._adoption.stageConfigCandidate(candidate);
       await this._sendConfigCandidate(candidate);
     });
-    const mine = this._writeChain.finally(() => { this._writesPending--; });
+    const mine = this._writeChain.finally(() => { if (ownsPending()) this._writesPending--; });
     return mine;
   }
 

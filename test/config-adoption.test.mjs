@@ -608,6 +608,23 @@ test('AC6: newer in-place content on the attempted root also wins (#442)', () =>
   assert.equal(adoption.config, attempted);
 });
 
+test('#890 AC6: old-context rollback loses ownership even when B matches A content and revision', () => {
+  const adoption = adoptedWith(cfg('A before'), 3);
+  const attempted = cfg('Same body in both installations');
+  const attempt = adoption.beginOptimistic(adoption.config, attempted);
+  adoption.stageConfigCandidate(attempted);
+  adoption.resetContext();
+  adoption.adoptResponses({ config: structuredClone(attempted), rev: 3 }, undefined, () => {}, () => {});
+  const authoritativeB = adoption.config;
+  assert.equal(contentFingerprint(authoritativeB), attempt.attemptedFingerprint);
+  assert.equal(adoption.rollbackOptimistic(attempt), false, 'identical independent revision is not write ownership');
+  assert.equal(adoption.config, authoritativeB);
+  const ownB = adoption.beginOptimistic(authoritativeB, cfg('B own rejected draft'));
+  adoption.stageLocalConfig(ownB.attempted);
+  assert.equal(adoption.rollbackOptimistic(ownB), true, 'ordinary same-context refusal still rolls back');
+  assert.equal(adoption.config.spaces[0].title, 'Same body in both installations');
+});
+
 test('#843: adoptionEpoch moves on every identity change except our own accepted write', () => {
   const adoption = createConfigAdoption();
   const epoch = () => adoption.adoptionEpoch;

@@ -24,8 +24,10 @@ export class ConfigWriteContext {
   }
 
   claim(): object { return this.generation; }
+  /** Pending bookkeeping survives a temporary disconnect, but not a foreign HA. */
+  owns(claim: object): boolean { return claim === this.generation; }
   current(claim: object, hass: WriteHass | null | undefined): boolean {
-    return !!hass && typeof hass.callWS === 'function' && claim === this.generation
+    return !!hass && typeof hass.callWS === 'function' && this.owns(claim)
       && (hass.connection ?? hass.callWS) === this.authority && hass.user?.id === this.user;
   }
 }
