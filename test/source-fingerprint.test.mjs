@@ -201,12 +201,13 @@ test('состав исключения объявлен списком, а не
   assert.deepEqual(postCaptureInputs(), ['demo/golden/accept.mjs', 'demo/golden/policy.mjs']);
 });
 
-test('в корпусе настоящего репозитория из demo/golden ровно четыре файла (#344, #792)', () => {
+test('в корпусе настоящего репозитория из demo/golden ровно пять файлов (#344, #792, #881)', () => {
   const corpus = fingerprintCorpus(fileURLToPath(new URL('..', import.meta.url)));
   const golden = corpus.filter((file) => file.startsWith('demo/golden/')).sort();
   assert.deepEqual(golden, [
     'demo/golden/device-battery.mjs', 'demo/golden/harness.mjs',
     'demo/golden/matrix.mjs', 'demo/golden/run.mjs',
+    'demo/golden/scene-repaint.mjs',
   ]);
   assert.ok(corpus.includes('scripts/source-fingerprint.mjs'), 'сам отпечаток остаётся входом сборки');
   assert.ok(corpus.some((file) => file.startsWith('src/')), 'корпус без src был бы пуст по смыслу');

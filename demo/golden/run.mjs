@@ -8,6 +8,7 @@ import { assertFreshDemoBundle } from '../bundle-freshness.mjs';
 import { goldenClip, prepareGoldenScenario } from './harness.mjs';
 import { GOLDEN_MATRIX_VERSION, GOLDEN_SCENARIOS } from './matrix.mjs';
 import { inspectBatteryBoardPixels } from './device-battery.mjs';
+import { captureGoldenFrame } from './scene-repaint.mjs';
 import { CAPTURE_PROVENANCE_SCHEMA, captureProvenance } from '../../scripts/capture-environment.mjs';
 import {
   assertGoldenInvocation,
@@ -1017,7 +1018,7 @@ try {
         caret: 'hide',
         scale: 'css',
       };
-      const actual = await page.screenshot(screenshotOptions);
+      const actual = await captureGoldenFrame(page, scenario, screenshotOptions);
       const actualPath = resolve(actualRoot, `${scenario.id}.png`);
       writeFileSync(actualPath, actual);
       result.actualSha256 = sha256(actual);

@@ -1,5 +1,16 @@
 # Development and deployment
 
+## Focused golden repaint (#881)
+
+Owner option b keeps all Chromium arguments unchanged. The golden runner uses
+`captureGoldenFrame` only to repaint the root background of the focused
+battery/Zigbee overlap scene for two frames, restore its exact inline value
+and priority, and wait two more frames before the normal screenshot. Other
+scenes bypass the barrier. Behavioural Node tests cover scope, frame order and
+restoration on failure; the registered mutants run only in the nightly gate.
+The single baseline is accepted from a reviewed full CI artifact, with the
+original 10/0 threshold and all other PNGs retained.
+
 ## Nightly witness repairs (#887)
 
 The 2026-10-14 mutation run exposed three different failures. Vacuum certificate

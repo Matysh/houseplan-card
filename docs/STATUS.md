@@ -25,6 +25,11 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Golden overlap capture (#881, owner option b) repaints only the focused
+`device-battery-zigbee-overlap-dark` scene before its final screenshot, with
+the page background restored. Browser launch flags, semantic controls, matrix
+thresholds and the other scenes' capture paths are unchanged.
+
 Nightly witness maintenance (#887) adds gentle finite/monotone vacuum-path
 cases, replaces an equivalent shared-cut mutation with the actual first-face
 thickness regression, and gives the marker Save mutation its helper import.

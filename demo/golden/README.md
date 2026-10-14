@@ -19,6 +19,13 @@ radial spokes visible instead of hiding them under a translucent room fill.
   demo bundles fail before the first screenshot.
 - Chromium, viewport, locale, timezone, colour profile, font rendering,
   animations and caret are controlled by the runner.
+- Only `device-battery-zigbee-overlap-dark` opts into a root-background repaint
+  before its final capture (#881): two frames with a temporary colour, then
+  two with the original inline value/priority restored. This removes the
+  focused scene's partial-raster history without changing Chromium flags,
+  fixtures, semantic controls or thresholds; other scenes keep their capture
+  path. Its reviewed baseline is the fully repainted frame, not a historical
+  partially rasterised variant.
 - The browser is judged as it runs, not by its directory (#827, F33):
   `capture` and `verify` declare the pinned browser (`policy.mjs`), and the
   shared launcher compares every launched Chromium with the

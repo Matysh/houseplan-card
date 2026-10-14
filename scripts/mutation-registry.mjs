@@ -77,6 +77,22 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'golden-overlap-forgets-scene-repaint',
+    guard: 'node --test test/golden-scene-repaint.test.mjs',
+    because: '#881 AC1: the focused overlap frame must paint a temporary root background and restore it before capture, without affecting the other scenes.',
+    patches: [{ file: 'demo/golden/scene-repaint.mjs',
+      find: "if (scenario.id === 'device-battery-zigbee-overlap-dark') {",
+      replace: 'if (false) {' }],
+  },
+  {
+    id: 'golden-repaint-leaks-to-other-scenes',
+    guard: 'node --test test/golden-scene-repaint.test.mjs',
+    because: '#881 owner option b / AC1: all other matrix scenes must keep their unchanged capture path.',
+    patches: [{ file: 'demo/golden/scene-repaint.mjs',
+      find: "if (scenario.id === 'device-battery-zigbee-overlap-dark') {",
+      replace: 'if (true) {' }],
+  },
+  {
     id: 'view-edit-footer-forgets-permission',
     guard: 'node demo/smoke_view_edit_permissions.mjs --only=roles',
     because: '#844 AC1: denied roles and kiosk must not get Edit, while more-info and Close remain.',

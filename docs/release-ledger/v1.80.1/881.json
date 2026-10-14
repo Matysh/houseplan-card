@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 881,
+  "baseStable": "v1.80.1",
+  "category": "infra",
+  "rationale": "Scene-local repaint and its reviewed golden baseline remove Chromium partial-raster history from a test capture only. No product, browser launch flags, fixture, threshold or user behaviour changes.",
+  "summary": {
+    "ru": "Стабилизирован эталон перекрытия батареи Zigbee-маршрутом без изменений продукта.",
+    "en": "The battery/Zigbee overlap golden capture is stabilised without product changes."
+  }
+}
