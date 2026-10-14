@@ -76,12 +76,9 @@ import {
 } from './initial-load';
 import { TouchGestureClickGuard } from './touch-gesture-click-guard';
 import { KioskHoldGesture } from './kiosk-hold';
-<<<<<<< HEAD
 import { KioskCarousel } from './kiosk-carousel';
 import { currentMarkerActionDevice, openingActionTargetCurrent } from './view-action-context';
-=======
 import { ViewHoldGesture } from './view-hold';
->>>>>>> 03983b18 (fix(view): own hold and interrupted gesture lifecycle)
 import { DeviceHitController, deviceLayerMutated, observeDeviceHitGeometryScroll } from './device-hit-owner';
 import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
 import { roomTempRangeFromDraft, type SpaceDialogState } from './space-dialog';
