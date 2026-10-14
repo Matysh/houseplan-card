@@ -147,6 +147,143 @@ const MUTANT_DEFINITIONS = [
     patches: [{file:'src/kiosk-carousel.ts',find:'  dispose(): void {\n    this.clearTimers();',replace:'  dispose(): void {\n    if (this.interval !== undefined) this.clock.clearInterval(this.interval);'}],
   },
   {
+    "id": "view-hold-terminal-only-marker",
+    "guard": "node demo/smoke_view_hold_lifecycle.mjs",
+    "because": "#847 AC3: trusted mouse releases beyond the invisible 44px target below the pan threshold; browser hit testing is required.",
+    "patches": [
+      {
+        "file": "src/houseplan-card.ts",
+        "find": "  private readonly _onViewPointerTerminal = (event: PointerEvent): void => {\n    this._viewHold.cancel(event.pointerId);",
+        "replace": "  private readonly _onViewPointerTerminal = (event: PointerEvent): void => {\n    // mutant: ignore outer terminal"
+      },
+      {
+        "file": "src/houseplan-card.ts",
+        "find": "  private _stagePointerUp(ev: PointerEvent): void {\n    this._viewHold.cancel(ev.pointerId);",
+        "replace": "  private _stagePointerUp(ev: PointerEvent): void {\n    // mutant: ignore stage terminal"
+      }
+    ]
+  },
+  {
+    "id": "view-blur-keeps-activation-tail",
+    "guard": "node demo/smoke_view_hold_lifecycle.mjs",
+    "because": "#847 AC5: real iframe window blur between trusted down/up must invoke the guard; pure guard tests cannot observe mounted listener wiring.",
+    "patches": [
+      {
+        "file": "src/houseplan-card.ts",
+        "find": "    if (this._mode === 'view') {\n      this._touchClickGuard.interrupt();",
+        "replace": "    if (this._mode === 'view') {\n      // mutant: blur release still activates"
+      }
+    ]
+  },
+  {
+    "id": "view-hidden-keeps-contacts",
+    "guard": "node demo/smoke_view_hold_lifecycle.mjs",
+    "because": "#847 AC6: mounted card has separate guard/coordinate owners; first trusted touch after backgrounding cannot join stale coordinates.",
+    "patches": [
+      {
+        "file": "src/houseplan-card.ts",
+        "find": "  private _abandonViewInput(): void {\n    this._touchClickGuard.abandon();\n    this._touchContacts.clear();",
+        "replace": "  private _abandonViewInput(): void {\n    this._touchClickGuard.interrupt();\n    // mutant: retain physical contacts"
+      }
+    ]
+  },
+  {
+    "id": "view-hidden-reset-allows-old-tail",
+    "guard": "node demo/smoke_view_hold_lifecycle.mjs",
+    "because": "#847 AC6: delayed Lit click/contextmenu after dispatched pagehide stays inert; real mounted listener cannot use unrestricted reset.",
+    "patches": [
+      {
+        "file": "src/houseplan-card.ts",
+        "find": "  private _abandonViewInput(): void {\n    this._touchClickGuard.abandon();",
+        "replace": "  private _abandonViewInput(): void {\n    this._touchClickGuard.reset();"
+      }
+    ]
+  },
+  {
+    "id": "view-sun-fade-outlives-detach",
+    "guard": "node demo/smoke_view_hold_lifecycle.mjs",
+    "because": "#847 AC7: actual custom-element detach during live HA sun fade must retire its timer before a detached callback changes state.",
+    "patches": [
+      {
+        "file": "src/houseplan-card.ts",
+        "find": "    this._abandonViewInput();\n    this._sunFadeReset();\n    clearTimeout(this._reloadRetry);",
+        "replace": "    this._abandonViewInput();\n    clearTimeout(this._reloadRetry);"
+      }
+    ]
+  },
+  {
+    "id": "view-hold-context-tail-unowned",
+    "guard": "node demo/smoke_view_hold_lifecycle.mjs",
+    "because": "#847 AC9 F86: contextmenu after trusted touch hold cannot open a second HA dialog over the actual Houseplan info surface.",
+    "patches": [
+      {
+        "file": "src/houseplan-card.ts",
+        "find": "      this._viewHold.arm(pointerId, () => {\n        this._touchClickGuard.interrupt(pointerId);",
+        "replace": "      this._viewHold.arm(pointerId, () => {\n        // mutant: hold has no contextmenu tail owner"
+      }
+    ]
+  },
+  {
+    "id": "view-pan-context-tail-unowned",
+    "guard": "node demo/smoke_view_hold_lifecycle.mjs",
+    "because": "#847 AC9 F86: mounted stage must wire trusted single-touch pan to an inert contextmenu tail before real desktop fresh intent.",
+    "patches": [
+      {
+        "file": "src/houseplan-card.ts",
+        "find": "        if (ev.pointerType === 'touch') this._touchClickGuard.interrupt(ev.pointerId);",
+        "replace": "        // mutant: touch pan keeps contextmenu armed"
+      }
+    ]
+  },
+  {
+    "id": "view-implicit-loss-cancels-accepted-room",
+    "guard": "node demo/smoke_view_hold_lifecycle.mjs",
+    "because": "#847 F010: trusted room-name touch up schedules fit before Chromium implicit lostcapture; synthetic up alone cannot expose browser delivery ordering.",
+    "patches": [
+      {
+        "file": "src/houseplan-card.ts",
+        "find": "      if (this._touchClickGuard.hasPointer(pointer.pointerId)) {\n        this._clearPlanTapSequence();\n        this._touchClickGuard.interrupt(pointer.pointerId);\n      }",
+        "replace": "      this._clearPlanTapSequence(); // mutant: post-up loss cancels accepted room"
+      }
+    ]
+  },
+  {
+    "id": "view-hold-owner-terminal-ignored",
+    "guard": "npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/view-hold.test.mjs",
+    "because": "#847 AC1: pure 600ms owner retires on its own pointer terminal, not only on lifecycle exit.",
+    "patches": [
+      {
+        "file": "src/view-hold.ts",
+        "find": "    if (pointerId !== undefined && this.owner !== pointerId) return;",
+        "replace": "    if (pointerId !== undefined) return; // mutant: no pointer terminal accepted"
+      }
+    ]
+  },
+  {
+    "id": "view-hold-foreign-terminal-retires-owner",
+    "guard": "npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/view-hold.test.mjs",
+    "because": "#847 AC1/AC8: foreign pointer terminal cannot cancel the pure hold owner.",
+    "patches": [
+      {
+        "file": "src/view-hold.ts",
+        "find": "    if (pointerId !== undefined && this.owner !== pointerId) return;",
+        "replace": "    // mutant: every pointer may cancel the owner"
+      }
+    ]
+  },
+  {
+    "id": "view-capture-loss-forgets-physical-contact",
+    "guard": "npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/touch-gesture-click-guard.test.mjs",
+    "because": "#847 AC9 F84: real guard retains the physically down touch after routing capture is lost.",
+    "patches": [
+      {
+        "file": "src/touch-gesture-click-guard.ts",
+        "find": "    if (terminal === 'lostpointercapture') return wasMultitouch;",
+        "replace": "    // mutant: capture loss becomes physical release"
+      }
+    ]
+  },
+  {
     id: 'config-foreign-context-keeps-old-write-queue',
     guard: 'node demo/smoke_config_authority.mjs',
     because: '#890 AC6: fast B mandatory reads and its own serialized save must not wait for the old A transport in either production writer.',
@@ -12277,7 +12414,7 @@ const MUTANT_DEFINITIONS = [
       + 'and implicit capture loss do not end a still-held touch.',
     patches: [{
       file: 'src/touch-gesture-click-guard.ts',
-      find: "    if (terminal !== 'lostpointercapture' && this._modalTailPointer === pointerId) {",
+      find: '    if (this._modalTailPointer === pointerId) {',
       replace: '    if (pointerId >= 0) { // mutant: any terminal ends modal ownership',
     }],
   },
@@ -16571,8 +16708,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_warm_mode_adoption.mjs',
     because: '#762 AC5: a floor tab must invalidate an editor remembered on the previous floor',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: '      this._cancelPendingWarmMode();\n      this._clearRoomFocus(true);',
-      replace: '      // mutant: old space keeps its pending editor\n      this._clearRoomFocus(true);',
+      find: '      this._cancelPendingWarmMode();\n      this._viewHold.cancel();',
+      replace: '      // mutant: old space keeps its pending editor\n      this._viewHold.cancel();',
     }],
   },
   {
@@ -17629,7 +17766,7 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/houseplan-card.ts',
       find: '    // pointer kept here would turn the next press after a reattach into a pinch.\n'
-        + '    this._interruptViewGesture();\n',
+        + '    this._abandonViewInput();\n',
       replace: '    // pointer kept here would turn the next press after a reattach into a pinch.\n'
         + '    this._kioskHold.cancel(); // mutant: the stage pointer outlives the detach\n',
     }],

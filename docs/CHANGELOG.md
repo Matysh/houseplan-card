@@ -11,6 +11,11 @@
   Fit all only for that floor on this screen. Changing floors closes old device
   and door cards; confirmed actions refuse deleted, moved or rebound targets
   ([#846](https://github.com/Matysh/houseplan-card/issues/846)).
+- A cancelled or interrupted device press no longer opens its card later or
+  switches the device. Returning from the background admits the first fresh tap
+  without admitting old gesture tails; normal touch room-name taps still fit
+  the room after implicit capture loss
+  ([#847](https://github.com/Matysh/houseplan-card/issues/847)).
 
 - Saving no longer falls back to an old cached plan when Home Assistant reapplies
   card options. Refused vacuum-map edits and New acknowledgements restore their

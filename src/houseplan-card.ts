@@ -76,8 +76,12 @@ import {
 } from './initial-load';
 import { TouchGestureClickGuard } from './touch-gesture-click-guard';
 import { KioskHoldGesture } from './kiosk-hold';
+<<<<<<< HEAD
 import { KioskCarousel } from './kiosk-carousel';
 import { currentMarkerActionDevice, openingActionTargetCurrent } from './view-action-context';
+=======
+import { ViewHoldGesture } from './view-hold';
+>>>>>>> 03983b18 (fix(view): own hold and interrupted gesture lifecycle)
 import { DeviceHitController, deviceLayerMutated, observeDeviceHitGeometryScroll } from './device-hit-owner';
 import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
 import { roomTempRangeFromDraft, type SpaceDialogState } from './space-dialog';
@@ -1473,6 +1477,7 @@ export class HouseplanCard extends LitElement {
       if (!authority) { this._read.invalidate(); this._loading = false;
         if (this._continuity.state !== 'steady') this._beginContinuityCandidate('space', true); }
       this._cancelPendingWarmMode();
+      this._viewHold.cancel();
       this._clearRoomFocus(true);
       this._resetDeviceHitState();
       this._cancelDangerConfirm();
@@ -2322,6 +2327,7 @@ export class HouseplanCard extends LitElement {
     this._continuity.visibility(signal);
     this._dayCycleVisibility(signal); this._summary?.visibility(signal.kind);
     if (signal.kind === 'hidden') {
+      this._abandonViewInput();
       if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
       this._radarLive.stop();
       this._editorRuntime?._cancelRadarSetup();
@@ -2384,7 +2390,21 @@ export class HouseplanCard extends LitElement {
   });
   /** #813: a window that loses focus mid-press may never deliver its release. */
   private readonly _onWindowBlur = (): void => {
+    if (this._mode === 'view') {
+      this._touchClickGuard.interrupt();
+      this._interruptViewGesture();
+      this._holdFired = false;
+      return;
+    }
     if (this._pointers.size || this._kioskHold.pointerId !== null) this._interruptViewGesture();
+  };
+  private readonly _onViewPointerTerminal = (event: PointerEvent): void => {
+    this._viewHold.cancel(event.pointerId);
+    // A mouse may release outside the marker, stage or this card. Inside-card
+    // terminals keep their existing capture route and must be consumed once.
+    if (!event.composedPath().includes(this) && this._touchClickGuard.hasPointer(event.pointerId)) {
+      this._guardTouchGesture(event);
+    }
   };
   private _cyclePausedUntil = 0;
   private readonly _kioskCarousel = new KioskCarousel({
@@ -2515,7 +2535,7 @@ export class HouseplanCard extends LitElement {
   private _drag: { id: string; sx: number; sy: number; ox: number; oy: number; moved: boolean } | null = null;
   private _deviceDrag: DeviceDragState | null = null;
   private _rlResize: { id: string; space: string; k0: number; cx: number; cy: number; d0: number } | null = null;
-  private _holdTimer?: number;
+  private readonly _viewHold = new ViewHoldGesture();
   private _holdFired = false;
 
   /**
@@ -2687,6 +2707,9 @@ export class HouseplanCard extends LitElement {
     if (this.hass) this._ensureHaRegistryAuthority();
     window.addEventListener('keydown', this._keyHandler);
     window.addEventListener('blur', this._onWindowBlur);
+    window.addEventListener('pointerup', this._onViewPointerTerminal, true);
+    window.addEventListener('pointercancel', this._onViewPointerTerminal, true);
+    window.addEventListener('lostpointercapture', this._onViewPointerTerminal, true);
     // signatures expire (24 h); refresh well before that on long-lived screens
     this._signer.start(() => this.hass, () => this._referencedContentUrls());
     this._syncCycleTimer();
@@ -2775,6 +2798,9 @@ export class HouseplanCard extends LitElement {
     for (const rt of this._activityRt.values()) clearTimeout(rt.timer); // pending activity-window repaints
     window.removeEventListener('keydown', this._keyHandler);
     window.removeEventListener('blur', this._onWindowBlur);
+    window.removeEventListener('pointerup', this._onViewPointerTerminal, true);
+    window.removeEventListener('pointercancel', this._onViewPointerTerminal, true);
+    window.removeEventListener('lostpointercapture', this._onViewPointerTerminal, true);
     // A tab drag holds window listeners for the length of the gesture. Losing
     // the card mid-drag — Lovelace rebuilding its tree, the user leaving the
     // view with the button still down — would leave them alive: the closure
@@ -2788,7 +2814,8 @@ export class HouseplanCard extends LitElement {
     clearTimeout(this._kioskDotsTimer); this._headerMenu.disconnect();
     // #813: a release that lands while detached never reaches the stage; a
     // pointer kept here would turn the next press after a reattach into a pinch.
-    this._interruptViewGesture();
+    this._abandonViewInput();
+    this._sunFadeReset();
     clearTimeout(this._reloadRetry);
     clearTimeout(this._loadRetryTimer);
     this._loadRetryTimer = undefined; // a cleared id must not block a reschedule
@@ -2824,7 +2851,7 @@ export class HouseplanCard extends LitElement {
     window.removeEventListener('hashchange', this._onHashChange);
     this._labsUnsub?.();
     this._labsUnsub = undefined;
-    clearTimeout(this._holdTimer);
+    this._viewHold.cancel();
     this._roViewport?.disconnect();
     this._roViewport = undefined;
     this._roHdr?.disconnect();
@@ -2876,7 +2903,7 @@ export class HouseplanCard extends LitElement {
     // their closure — a disconnected card must not stay pinned to window.
     this._editorRuntime?._furnShiftDetach();
     this._touchContacts.clear(); this._roomGearTouchNavigation = false;
-    this._touchClickGuard.reset();
+    this._touchClickGuard.abandon();
     this._resetDeviceHitState();
     this._clearTransientHover(true);
     this._cancelDevicePressFeedback();
@@ -4987,7 +5014,7 @@ export class HouseplanCard extends LitElement {
         this._cancelDeviceDrag();
         this._devicePositionHistory.clear();
       }
-      clearTimeout(this._holdTimer);
+      this._viewHold.cancel();
       this._holdFired = false;
       this._tip = null;
       this._tapConfirm = null;
@@ -5540,7 +5567,7 @@ export class HouseplanCard extends LitElement {
    * normally request it. This is intentionally separate from editor geometry.
    */
   private _interruptViewGesture(pointerId?: number, source?: Element | null): void {
-    clearTimeout(this._holdTimer);
+    this._viewHold.cancel();
     this._kioskHold.cancel();
     if (pointerId !== undefined) {
       for (const element of [source, this._stageEl]) {
@@ -5566,6 +5593,14 @@ export class HouseplanCard extends LitElement {
     this._interruptViewGesture();
     this._holdFired = false;
     this._infoCard = null;
+  }
+
+  private _abandonViewInput(): void {
+    this._touchClickGuard.abandon();
+    this._touchContacts.clear();
+    this._roomGearTouchNavigation = false;
+    this._interruptViewGesture();
+    this._holdFired = false;
   }
 
   private _invalidateDeviceHitGeometry(): void {
@@ -6861,7 +6896,8 @@ export class HouseplanCard extends LitElement {
         this._roomPointer = null;
         this._clearPlanTapSequence();
         this._suppressClick = true;
-        clearTimeout(this._holdTimer);
+        this._viewHold.cancel();
+        if (ev.pointerType === 'touch') this._touchClickGuard.interrupt(ev.pointerId);
         if (this._tool === 'opening') {
           this._cursorPt = null;
           this._clearOpeningPlacement(false);
@@ -6916,6 +6952,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _stagePointerUp(ev: PointerEvent): void {
+    this._viewHold.cancel(ev.pointerId);
     this._deviceHits.release(ev.pointerId);
     this._flushHa();
     this._editorRuntime?._cancelPointerMove('markup-hover');
@@ -7015,14 +7052,14 @@ export class HouseplanCard extends LitElement {
       // view: no drag, no capture — panning may start on an icon; only the
       // long-press timer runs (cancelled by stage movement)
       this._holdFired = false;
-      clearTimeout(this._holdTimer);
       const pointerId = ev.pointerId;
       const source = ev.currentTarget as Element | null;
-      this._holdTimer = window.setTimeout(() => {
+      this._viewHold.arm(pointerId, () => {
+        this._touchClickGuard.interrupt(pointerId);
         this._holdFired = true;
         this._interruptViewGesture(pointerId, source);
         this._infoCard = d;
-      }, 600);
+      });
       return;
     }
     // A disabled ghost is a service entry point, not a movable plan object.
@@ -7077,7 +7114,7 @@ export class HouseplanCard extends LitElement {
     const dy = ((ev.clientY - drag.sy) / rect.height) * v.h;
     if (Math.abs(ev.clientX - drag.sx) + Math.abs(ev.clientY - drag.sy) > 3) {
       drag.moved = true;
-      clearTimeout(this._holdTimer);
+      this._viewHold.cancel();
     }
     // DEV-B58-01. This used to be clamped into `vb` — the CONTENT FRAME — with
     // a 0.8 % margin, which is exactly the "old canvas border" the owner ran
@@ -7094,7 +7131,7 @@ export class HouseplanCard extends LitElement {
   private _pointerUp(ev: PointerEvent, d: DevItem): void {
     d = this._deviceForPointerEvent(ev, d);
     this._deviceHits.release(ev.pointerId);
-    clearTimeout(this._holdTimer);
+    this._viewHold.cancel(ev.pointerId);
     if (this._mode !== 'devices') return;
     const drag = this._deviceDrag;
     if (!drag || drag.id !== d.id || drag.pointerId !== ev.pointerId) return;
@@ -7134,6 +7171,7 @@ export class HouseplanCard extends LitElement {
       });
   }
   private _pointerCancel(ev: PointerEvent, d: DevItem): void {
+    this._viewHold.cancel(ev.pointerId);
     d = this._deviceForPointerEvent(ev, d);
     this._deviceHits.cancel(ev.pointerId);
     if (this._deviceDrag?.id !== d.id || this._deviceDrag.pointerId !== ev.pointerId) return;
@@ -7214,7 +7252,12 @@ export class HouseplanCard extends LitElement {
     const pointer = ev as PointerEvent;
     this._notePointer(pointer);
     if (ev.type === 'pointercancel' || ev.type === 'lostpointercapture') {
-      this._clearPlanTapSequence();
+      // Implicit capture loss AFTER an accepted up is not a cancelled tap.
+      if (this._touchClickGuard.hasPointer(pointer.pointerId)) {
+        this._clearPlanTapSequence();
+        this._touchClickGuard.interrupt(pointer.pointerId);
+      }
+      this._viewHold.cancel(pointer.pointerId);
       // #813: a hold whose pointer lost its capture is no longer a hold.
       if (this._kioskHold.pointerId === pointer.pointerId) this._kioskHold.cancel();
     } else if (ev.type === 'pointerdown') this._planTaps.clearNonPlan(pointer);
@@ -7235,7 +7278,7 @@ export class HouseplanCard extends LitElement {
         this._deviceHits.clearPointers();
         this._clearRoomFocus(true);
         this._clearTransientHover();
-        clearTimeout(this._holdTimer);
+        this._viewHold.cancel();
         this._kioskHold.cancel();
         this._swipeStart = null;
         // Viewing is the guaranteed touch surface. Seed its existing stage
@@ -7283,7 +7326,10 @@ export class HouseplanCard extends LitElement {
     if (ev.type !== 'pointerup' && ev.type !== 'pointercancel'
         && ev.type !== 'lostpointercapture') return;
     this._clearTransientHover();
-    this._touchContacts.delete(pointer.pointerId); if (!this._touchContacts.size) this._roomGearTouchNavigation = false;
+    // Capture is routing, not a physical release (F84). Keep this contact so a
+    // second finger cannot become a clean marker tap while the first is down.
+    if (ev.type !== 'lostpointercapture') this._touchContacts.delete(pointer.pointerId);
+    if (!this._touchContacts.size) this._roomGearTouchNavigation = false;
     if (wasMultitouch) {
       this._pointers.delete(pointer.pointerId);
       if (!this._vacFit && this._pointers.size >= 2) {

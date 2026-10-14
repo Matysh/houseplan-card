@@ -49,15 +49,17 @@ export interface PageVisibilitySignal {
 
 interface PageVisibilityRuntime {
   hiddenAt: number;
+  hidden: boolean;
   token: number;
   subscribers: Set<(signal: PageVisibilitySignal) => void>;
   onVisibility: () => void;
   onPageShow: (event: PageTransitionEvent) => void;
+  onPageHide: () => void;
 }
 
 const visibilityRuntimes = new WeakMap<Document, PageVisibilityRuntime>();
 
-/** One visibility/pageshow listener per Document, shared by every card. */
+/** One visibility/pageshow/pagehide listener per Document, shared by every card. */
 export function subscribePageVisibility(
   doc: Document,
   subscriber: (signal: PageVisibilitySignal) => void,
@@ -65,8 +67,19 @@ export function subscribePageVisibility(
   let runtime = visibilityRuntimes.get(doc);
   if (!runtime) {
     const subscribers = new Set<(signal: PageVisibilitySignal) => void>();
+    const hide = (): void => {
+      const current = visibilityRuntimes.get(doc);
+      if (!current || current.hidden) return;
+      current.hidden = true;
+      current.hiddenAt = Date.now();
+      const signal: PageVisibilitySignal = {
+        kind: 'hidden', token: current.token, at: current.hiddenAt, hiddenFor: 0, long: false,
+      };
+      for (const listener of [...current.subscribers]) listener(signal);
+    };
     runtime = {
       hiddenAt: doc.visibilityState === 'hidden' ? Date.now() : 0,
+      hidden: doc.visibilityState === 'hidden',
       token: 0,
       subscribers,
       onVisibility: () => {
@@ -74,14 +87,11 @@ export function subscribePageVisibility(
         if (!current) return;
         const at = Date.now();
         if (doc.visibilityState === 'hidden') {
-          if (!current.hiddenAt) current.hiddenAt = at;
-          const signal: PageVisibilitySignal = {
-            kind: 'hidden', token: current.token, at, hiddenFor: 0, long: false,
-          };
-          for (const listener of [...current.subscribers]) listener(signal);
+          hide();
           return;
         }
-        const hiddenFor = current.hiddenAt ? Math.max(0, at - current.hiddenAt) : 0;
+        const hiddenFor = current.hidden ? Math.max(0, at - current.hiddenAt) : 0;
+        current.hidden = false;
         current.hiddenAt = 0;
         current.token++;
         const signal: PageVisibilitySignal = {
@@ -94,6 +104,8 @@ export function subscribePageVisibility(
         const current = visibilityRuntimes.get(doc);
         if (!current) return;
         const at = Date.now();
+        current.hidden = false;
+        current.hiddenAt = 0;
         current.token++;
         const signal: PageVisibilitySignal = {
           kind: 'pageshow', token: current.token, at, hiddenFor: 0,
@@ -101,10 +113,12 @@ export function subscribePageVisibility(
         };
         for (const listener of [...current.subscribers]) listener(signal);
       },
+      onPageHide: hide,
     };
     visibilityRuntimes.set(doc, runtime);
     doc.addEventListener('visibilitychange', runtime.onVisibility);
     doc.defaultView?.addEventListener('pageshow', runtime.onPageShow);
+    doc.defaultView?.addEventListener('pagehide', runtime.onPageHide);
   }
   runtime.subscribers.add(subscriber);
   return () => {
@@ -114,6 +128,7 @@ export function subscribePageVisibility(
     if (current.subscribers.size) return;
     doc.removeEventListener('visibilitychange', current.onVisibility);
     doc.defaultView?.removeEventListener('pageshow', current.onPageShow);
+    doc.defaultView?.removeEventListener('pagehide', current.onPageHide);
     visibilityRuntimes.delete(doc);
   };
 }

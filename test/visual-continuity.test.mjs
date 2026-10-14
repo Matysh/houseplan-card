@@ -4,9 +4,68 @@ import assert from 'node:assert/strict';
 import {
   PAINT_BARRIER_MAX_MS,
   VisualContinuityController,
+  subscribePageVisibility,
   contentFingerprint,
   visualFrameFingerprint,
 } from '../test-build/visual-continuity.js';
+
+test('#847 shared pagehide is an idempotent hidden signal and disposes with its last card', () => {
+  class Surface extends EventTarget {
+    listeners = new Map();
+    addEventListener(type, listener, options) {
+      this.listeners.set(type, (this.listeners.get(type) || 0) + 1);
+      super.addEventListener(type, listener, options);
+    }
+    removeEventListener(type, listener, options) {
+      this.listeners.set(type, (this.listeners.get(type) || 0) - 1);
+      super.removeEventListener(type, listener, options);
+    }
+  }
+  const doc = new Surface(); doc.visibilityState = 'visible'; doc.defaultView = new Surface();
+  const first = [], second = [];
+  const stopFirst = subscribePageVisibility(doc, (signal) => first.push(signal));
+  const stopSecond = subscribePageVisibility(doc, (signal) => second.push(signal));
+  assert.equal(doc.listeners.get('visibilitychange'), 1);
+  assert.equal(doc.defaultView.listeners.get('pageshow'), 1);
+  assert.equal(doc.defaultView.listeners.get('pagehide'), 1);
+  doc.defaultView.dispatchEvent(new Event('pagehide'));
+  doc.visibilityState = 'hidden'; doc.dispatchEvent(new Event('visibilitychange'));
+  doc.defaultView.dispatchEvent(new Event('pagehide'));
+  assert.deepEqual(first.map((signal) => signal.kind), ['hidden']);
+  assert.deepEqual(second, first);
+  const show = new Event('pageshow'); Object.defineProperty(show, 'persisted', { value: true });
+  doc.defaultView.dispatchEvent(show);
+  assert.equal(first.at(-1).kind, 'pageshow');
+  assert.equal(first.at(-1).long, true);
+  assert.equal(first.at(-1).persisted, true);
+  stopFirst();
+  doc.defaultView.dispatchEvent(new Event('pagehide'));
+  assert.equal(first.length, 2, 'disconnected subscriber receives no late signal');
+  assert.equal(second.length, 3);
+  stopSecond();
+  assert.equal(doc.listeners.get('visibilitychange'), 0);
+  assert.equal(doc.defaultView.listeners.get('pageshow'), 0);
+  assert.equal(doc.defaultView.listeners.get('pagehide'), 0);
+  doc.defaultView.dispatchEvent(new Event('pagehide'));
+  assert.equal(second.length, 3);
+});
+
+test('#847 hidden+pagehide preserves the original long-hidden duration', () => {
+  const originalNow = Date.now;
+  let now = 0;
+  Date.now = () => now;
+  const doc = new EventTarget(); doc.visibilityState = 'visible'; doc.defaultView = new EventTarget();
+  const signals = [];
+  const stop = subscribePageVisibility(doc, (signal) => signals.push(signal));
+  try {
+    doc.visibilityState = 'hidden'; doc.dispatchEvent(new Event('visibilitychange'));
+    now = 10_000; doc.defaultView.dispatchEvent(new Event('pagehide'));
+    now = 20_000; doc.visibilityState = 'visible'; doc.dispatchEvent(new Event('visibilitychange'));
+    assert.deepEqual(signals.map((signal) => signal.kind), ['hidden', 'visible']);
+    assert.equal(signals.at(-1).hiddenFor, 20_000);
+    assert.equal(signals.at(-1).long, true);
+  } finally { stop(); Date.now = originalNow; }
+});
 
 class FakeClock {
   at = 10_000;

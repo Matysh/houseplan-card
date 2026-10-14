@@ -1375,6 +1375,11 @@ layer. See [Presence radars](RADAR.md) for supported profiles, setup and privacy
 | Hold 600 ms | House Plan device card | No device control |
 | Right click | Native HA more-info for the primary entity | Browser/editor context |
 
+A cancelled press, a release beside the marker or window focus loss neither
+opens a card later nor switches the device. After returning from the background,
+the next fresh tap or Enter works immediately; an old gesture tail does nothing.
+An already open device card remains open when the window loses focus.
+
 When a short activation actually sends a device command, the marker gently
 shrinks by 5% and returns over 0.2 s. Merely opening information, an editor or a
 confirmation does not trigger feedback; with confirmation it starts only after

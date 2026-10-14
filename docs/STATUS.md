@@ -39,6 +39,13 @@ The pre-release #890 AC6 repair fences already subscribed old-HA callbacks
 before reads or mutations. An explicitly delivered A event during B's initial
 paired load can no longer cancel that load; the issue stays S8 under §11.4.
 
+View input lifecycle (#847) uses an exact pointer-owned hold and inert old
+activation tails after interruption. Hidden/pagehide retire instance contacts;
+fresh touch/mouse/keyboard works immediately. Native room-name taps survive
+post-up implicit capture loss, and detached sun fades keep no timer. New
+behavior stays in View with the existing 600 ms/3 s thresholds; issue labels
+remain authoritative for workflow status.
+
 Connected-node diagnostics (#888) name exact exceeded budgets and preserve
 functional/clock failures. Existing raw source/native/flush identities produce
 read-only phase evidence with clean material/protocol/environment passports;

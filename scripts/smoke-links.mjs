@@ -30,6 +30,16 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['ViewHoldGesture', '_viewHold', '_onWindowBlur', '_onViewPointerTerminal',
+      '_abandonViewInput', '_pageVisibility', '_sunFadeReset'],
+    files: ['src/view-hold.ts', 'src/touch-gesture-click-guard.ts'],
+    smokes: ['smoke_view_hold_lifecycle.mjs'],
+    because: '#847: native marker holds, stage releases, iframe blur, implicit capture loss '
+      + 'and trusted room-name taps exercise mounted View wiring; explicit hidden/pagehide '
+      + 'emulation proves inert old tails and first fresh touch; live HA sun samples prove '
+      + 'fade disposal. Pure owner units cannot observe these consumers.',
+  },
+  {
     files: ['src/device-editor-access.ts'],
     smokes: ['smoke_view_edit_permissions.mjs'],
     because: '#844: real footer/direct/lazy/warm entries and Area-icon navigation/drag '

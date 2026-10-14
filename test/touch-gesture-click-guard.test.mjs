@@ -172,3 +172,77 @@ test('#578 keyboard intent re-arms context menu only after every old touch ended
   const freshContextMenu = activation('contextmenu');
   assert.equal(freshContextMenu.defaultPrevented, false);
 });
+
+test('#847 blur makes mouse/touch tails inert without forgetting physical owners', () => {
+  for (const type of ['mouse', 'touch']) {
+    const guard = new TouchGestureClickGuard();
+    guard.pointerDown(1, type);
+    guard.interrupt();
+    assert.equal(guard.hasPointer(1), true);
+    assert.equal(activation(guard, 'keydown', { key: 'Enter' }).defaultPrevented, true);
+    guard.pointerTerminal(99, type);
+    assert.equal(activation(guard, 'contextmenu').defaultPrevented, true);
+    guard.pointerTerminal(1, type);
+    assert.equal(activation(guard).defaultPrevented, true, 'release is not fresh intent');
+    assert.equal(activation(guard, 'contextmenu').defaultPrevented, true);
+    assert.equal(activation(guard, 'keydown', { key: 'Enter' }).defaultPrevented, false);
+    guard.pointerDown(2, type); guard.pointerTerminal(2, type);
+    assert.equal(activation(guard).defaultPrevented, false, 'first deliberate tap works');
+  }
+});
+
+test('#847 hidden/pagehide abandon contacts, not the old activation tail', () => {
+  for (const count of [1, 2]) for (const fresh of ['touch', 'mouse', 'ContextMenu', 'Enter']) {
+    const guard = new TouchGestureClickGuard();
+    guard.pointerDown(1, 'touch');
+    if (count === 2) guard.pointerDown(2, 'touch');
+    guard.abandon(); guard.abandon();
+    assert.equal(guard.sequenceMultitouch, false);
+    assert.equal(guard.hasPointer(1), false);
+    guard.pointerTerminal(1, 'touch');
+    assert.equal(activation(guard).defaultPrevented, true);
+    assert.equal(activation(guard, 'contextmenu').defaultPrevented, true);
+    if (fresh === 'ContextMenu' || fresh === 'Enter') {
+      assert.equal(activation(guard, 'keydown', { key: fresh }).defaultPrevented, false);
+      if (fresh === 'ContextMenu') assert.equal(activation(guard, 'contextmenu').defaultPrevented, false);
+    } else {
+      guard.pointerDown(3, fresh);
+      guard.pointerTerminal(2, 'touch'); // late forgotten terminal cannot retire 3
+      assert.equal(guard.hasPointer(3), true);
+      guard.pointerTerminal(3, fresh);
+      assert.equal(activation(guard).defaultPrevented, false);
+    }
+    guard.pointerDown(4, 'touch'); guard.pointerDown(5, 'touch');
+    assert.equal(guard.sequenceMultitouch, true, 'a new pinch is still navigation');
+    assert.equal(activation(guard).defaultPrevented, true);
+  }
+});
+
+test('#847 F84 capture loss keeps the physically held contact until up/cancel', () => {
+  const guard = new TouchGestureClickGuard();
+  guard.pointerDown(1, 'touch');
+  guard.pointerTerminal(1, 'touch', 'lostpointercapture');
+  assert.equal(guard.hasPointer(1), true);
+  guard.pointerDown(2, 'touch');
+  assert.equal(guard.sequenceMultitouch, true);
+  guard.pointerTerminal(2, 'touch'); guard.pointerTerminal(1, 'touch');
+  assert.equal(activation(guard).defaultPrevented, true);
+  guard.pointerDown(3, 'touch'); guard.pointerTerminal(3, 'touch');
+  assert.equal(guard.hasPointer(3), false);
+  guard.pointerTerminal(3, 'touch', 'lostpointercapture');
+  assert.equal(activation(guard).defaultPrevented, false, 'implicit post-up loss is not cancellation');
+});
+
+test('#847 F86 hold/navigation tails block contextmenu, fresh desktop intent works', () => {
+  const guard = new TouchGestureClickGuard();
+  guard.pointerDown(1, 'touch'); guard.interrupt(1);
+  guard.pointerTerminal(1, 'touch', 'lostpointercapture');
+  assert.equal(activation(guard, 'contextmenu').defaultPrevented, true);
+  guard.pointerTerminal(1, 'touch');
+  assert.equal(activation(guard, 'contextmenu').defaultPrevented, true);
+  guard.pointerDown(2, 'mouse'); guard.pointerTerminal(2, 'mouse');
+  assert.equal(activation(guard, 'contextmenu').defaultPrevented, false);
+  guard.pointerDown(3, 'touch'); guard.interrupt(); guard.pointerTerminal(3, 'touch');
+  activation(guard, 'keydown', { key: 'ContextMenu' });
+  assert.equal(activation(guard, 'contextmenu').defaultPrevented, false);
+});

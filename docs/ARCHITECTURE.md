@@ -8,6 +8,16 @@ shadow stability and restores it in `finally`; dynamic transition evidence uses
 ordinary CSS. Capture/source identity includes browser argument modules, with
 launched-browser attestation remaining a separate proof of the executable.
 
+View marker holds (#847) have one pointer-owned `ViewHoldGesture`, one 600 ms
+timer and a generation fence. Marker/stage/window terminals cancel only that
+owner. Blur interrupts activation without discarding physical contacts; shared
+hidden/pagehide and disconnect abandon contacts but keep old click/contextmenu
+tails inert until deliberate pointer/keyboard intent. Capture loss is not a
+physical release, and implicit loss after accepted up cannot cancel room fit.
+`subscribePageVisibility` owns one pagehide listener per Document, normalizes it
+to the existing hidden signal and deduplicates hidden+pagehide. Sun fade teardown
+resets its two-second keep-alive before detach; reconnect reads current HA sun.
+
 Composite form focus (#870) belongs either to the native form-kit wrapper or
 the authentic HA picker, never both. The picker is styled through its public
 host contract; its private shadow DOM and event handlers remain untouched.

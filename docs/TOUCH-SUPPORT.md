@@ -70,6 +70,15 @@ polling or gesture thresholds change. Idle reset is absent without active
 cycling. A floor change closes old View action contexts; a confirmation never
 operates a marker or door which has moved, disappeared or changed its lock (#846).
 
+The View marker's 600 ms hold is cancelled by its own release/cancel/capture
+loss, navigation, blur, page hiding or detach. A blur-interrupted short or long
+press never activates on release. Hidden/pagehide forget old physical contacts
+but retain inert click/contextmenu tails; the first deliberate new touch, mouse
+or keyboard action works immediately. Capture loss before physical up does not
+make a still-held contact fresh; implicit capture loss after an accepted room
+tap does not cancel its delayed room fit. Existing device cards remain open
+through blur/backgrounding. The kiosk's separate 3 s hold policy is unchanged.
+
 During every intermediate pan or pinch frame, walls, floors, room fills,
 hatching, lighting and markers must remain continuously painted. The scene SVGs
 stay on one promoted compositor path from the first movement until the terminal

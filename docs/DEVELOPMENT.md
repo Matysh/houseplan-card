@@ -62,6 +62,19 @@ attestation. Legacy receipts remain readable but cannot authorize proof reuse
 without the current identity. Re-capture/accept before release through the
 normal process; do not rewrite image/baseline manifests to make identity green.
 
+## View hold and page lifecycle witnesses (#847)
+
+`smoke_view_hold_lifecycle` uses cold View, trusted CDP touch and real mouse.
+It observes light state rather than wrapping the fixture's replaceable hass,
+finds the actual invisible 44px target edge for a <4px mouse release, and uses
+iframe focus to produce actual window blur. Hidden visibility and pagehide /
+pageshow(persisted) are explicitly emulated/dispatched, not real background or
+bfcache acceptance. Capture loss is named as dispatched when native release is
+unavailable. The positive room-name tap observes Chromium's trusted implicit
+loss after up; Android delivery remains a field hypothesis, not a headless claim.
+Pure units execute the hold clock/generation and shared subscriber disposal;
+registered mutants are checked statically and executed only by the nightly job.
+
 ## Config writer authority witnesses (#890)
 
 `smoke_config_authority` exercises a real GUI Save followed by public setConfig,

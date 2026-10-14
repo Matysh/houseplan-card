@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 847,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "В v1.80.1 уже есть удержание маркера 600 мс (_holdTimer:2469/7082), условный _onWindowBlur:2365 и sun fade _sunOutTimer:10010/10132. View pointercancel/stage release не снимают удержание, blur снимает таймер без запрета короткого/долгого release-click, hidden не завершает контакты и удержание, а disconnectedCallback не сбрасывает sun fade. #847 исправляет существующий View/input lifecycle без новых жестов, порогов, конфигурации или WS API. Trusted room-name positive сохраняет прежнюю пользовательскую операцию при implicit lostcapture после принятого up, не добавляет новую фичу.",
+  "summary": {
+    "ru": "Отменённое или прерванное нажатие больше не открывает карточку позже и не переключает устройство; после возвращения в приложение следующий тап работает сразу.",
+    "en": "A cancelled or interrupted press no longer opens its card later or switches the device; after returning to the app, the next tap works immediately."
+  }
+}
