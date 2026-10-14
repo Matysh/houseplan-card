@@ -91,6 +91,10 @@ Object.assign(out, await page.evaluate(async () => {
       pointer(firstTerminal, base + 1, marker, 250);
       const firstWrites = zoomWrites - start;
       pointer(secondTerminal, base, stage, 470);
+      // #847: loss of routing capture is not a physical release. Complete the
+      // synthetic contact before the next independent fixture sequence.
+      if (firstTerminal === 'lostpointercapture') pointer('pointerup', base + 1, marker, 250);
+      if (secondTerminal === 'lostpointercapture') pointer('pointerup', base, stage, 470);
       return { moveWrites, firstWrites, totalWrites: zoomWrites - start };
     };
     const captureTerminals = marker ? [
@@ -229,6 +233,8 @@ Object.assign(out, await page.evaluate(async () => {
     pointer(secondTerminal, base, marker, 300);
     compatibilityClick();
     compatibilityContextMenu('touch', base);
+    if (firstTerminal === 'lostpointercapture') pointer('pointerup', base + 1, stage, 400);
+    if (secondTerminal === 'lostpointercapture') pointer('pointerup', base, marker, 300);
   };
   terminalGesture('pointerup', 'pointercancel', 61);
   terminalGesture('lostpointercapture', 'pointerup', 71);
@@ -242,6 +248,7 @@ Object.assign(out, await page.evaluate(async () => {
   compatibilityClick();
   compatibilityContextMenu('touch', 77);
   const pinchTerminalVariantsBlocked = noActivation();
+  pointer('pointerup', 75, stage, 400); // physical release follows capture loss
 
   // No timeout: the pointerdown itself, not elapsed time, proves a new intent.
   pointer('pointerdown', 81, marker, 300);

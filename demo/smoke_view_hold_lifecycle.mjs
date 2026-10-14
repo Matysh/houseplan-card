@@ -143,6 +143,18 @@ const show = (page, kind) => page.evaluate((mode) => {
     await page.touchscreen.tap(q.x, q.y); await wait(page, 150);
     assert.notEqual((await state(page)).light, light, 'fresh touch works after the whole sequence');
     out.freshTapAfterLostCapture = true;
+    const remount = await point(page.locator(DEVICE)), remountBefore = await state(page);
+    await touch(cdp, 'touchStart', [{ ...remount, id: 31 }]); await wait(page, 100);
+    await page.evaluate(() => {
+      window.__holdParent = window.__card.parentElement; window.__card.remove();
+    });
+    await touch(cdp, 'touchEnd'); await wait(page, 700);
+    assert.equal((await state(page)).owner, null, 'detached instance has no hold owner');
+    await page.evaluate(() => window.__holdParent.append(window.__card)); await wait(page, 100);
+    await dispatchTail(page); await dispatchTail(page, 'contextmenu');
+    await sameInert(page, remountBefore, 'detachedViewHoldAndTailRetired', 40);
+    await page.locator(DEVICE).click(); await wait(page, 100);
+    assert.notEqual((await state(page)).light, remountBefore.light, 'first fresh click after remount works');
     assert.equal(await reportPageErrors(), false);
   } finally { await browser.close(); }
 }
