@@ -41,7 +41,7 @@ export const SMOKE_LINKS = [
   },
   {
     files: ['src/device-signal.ts', 'src/zigbee-topology.ts'],
-    smokes: ['smoke_device_signal.mjs', 'smoke_device_signal_topology.mjs', 'smoke_zigbee_tooltip_layout.mjs'],
+    smokes: ['smoke_device_signal.mjs', 'smoke_device_signal_settings.mjs', 'smoke_device_signal_topology.mjs', 'smoke_zigbee_tooltip_layout.mjs'],
     because: '#867: public HA sibling updates, real marker settings and mouse hover prove inherited diagnostics, local hide and canonical radio anchors through the production bundle; SVG screen-space resize endpoints need the existing native layout matrix.',
   },
   {
