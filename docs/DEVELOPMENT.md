@@ -1,5 +1,21 @@
 # Development and deployment
 
+## Pre-release subscription ownership fix (#890, PROCESS §11.4)
+
+`node demo/smoke_config_authority.mjs` explicitly pushes the retired A server
+through its actual event bus after a held A save, while B's own config/layout
+responses remain pending. B uses an isolated bus rather than copied A listeners.
+Before the early callback fence, this exact command fails
+`lateAEventDoesNotStartConfigOnlyReadInB` and `bReceivesItsOwnAuthority`: a second
+config-only B read cancels the mandatory pair. The oracle now includes B layout
+revision 2, not just config revision/title. Both View and editor queue controls
+remain in the same smoke. No fixture-wide #896 code, post-await trail guard,
+schema, ACL, timers, baselines or budgets are changed by this repair.
+Positive controls return from accepted B to A and deliver a current A server
+push after A→B→A plus the next public HA frame. They do not certify readiness
+in a coalesced transition with no subsequent HA frame. The old subscription
+slot is reset on authority change so the accepted-load path renews ownership.
+
 ## Kiosk carousel and action context witnesses (#846)
 
 `node --test test/kiosk-carousel.test.mjs test/view-action-context.test.mjs`

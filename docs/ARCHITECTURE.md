@@ -513,6 +513,10 @@ complete. Write queues and pending counters are context-owned: fast new reads
 and saves never wait for old transports, whose completion cannot retire a new
 counter. Optimistic attempts also lose rollback ownership across contexts even
 when both installations have identical content and numeric revisions.
+Already subscribed live callbacks also capture that context plus connection
+and subscription generation. Retired delivery is refused before any read or
+mutation, including the gap before the new paired load installs subscriptions.
+This early fence does not certify async work already started by a valid event.
 `new-device-ack` owns one explicit visit's attention change and restores
 only that ID after rejection, without a background retry loop. Vacuum routes
 pass the same optimistic attempt through write-time canonicalization.

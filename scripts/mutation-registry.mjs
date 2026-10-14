@@ -77,6 +77,22 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'config-return-retains-inert-subscription',
+    guard: 'node demo/smoke_config_authority.mjs',
+    because: '#890 AC6: current A events must work after accepted B-to-A and a coalesced A-to-B-to-A plus a real next HA frame; pure identity checks cannot prove live resubscription.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: '        this._liveSyncConnection = null;',
+      replace: '        // retain the retired subscription epoch' }],
+  },
+  {
+    id: 'config-old-subscription-interrupts-new-paired-load',
+    guard: 'node demo/smoke_config_authority.mjs',
+    because: '#890 AC6: an actual late old-server event must not start a config-only B read and cancel its mandatory config/layout pair; the mounted subscription consumer is the oracle.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: '          if (ownsContext()) return callback(ev);',
+      replace: '          return callback(ev);' }],
+  },
+  {
     id: 'kiosk-retired-confirmation-accepts-new-intent',
     guard: 'node demo/smoke_kiosk_cycle_context.mjs',
     because: '#846 AC5/AC6: a retained DOM confirm button after cancellation must not execute or dismiss a newer same-floor dialog intent in the mounted Lit card.',

@@ -84,9 +84,14 @@ const out = await page.evaluate(async () => {
   await pause();
   const configB = copy(server); configB.spaces[0].title = 'Authority B';
   let releaseB; const waitB = new Promise((resolve) => { releaseB = resolve; });
-  let bWrites = 0;
-  c.hass = { ...c.hass, connection: { ...c.hass.connection }, callWS: async (message) => {
-    if (message.type === 'houseplan/config/get') { await waitB; return { config: copy(configB), rev: 3, can_write: true }; }
+  let bWrites = 0, bConfigReads = 0;
+  o.oldSubscriptionInstalledBeforeSwitch = typeof c._unsubCfg === 'function';
+  // #890 AC6: B has its own event bus, not a copy of A's subscribeEvents.
+  // The already installed A subscription still receives the explicit late
+  // server push below; isolating B must not hide that delivery.
+  const foreignConnection = () => ({ ...c.hass.connection, subscribeEvents: async () => () => {} });
+  c.hass = { ...c.hass, connection: foreignConnection(), callWS: async (message) => {
+    if (message.type === 'houseplan/config/get') { bConfigReads++; await waitB; return { config: copy(configB), rev: 3, can_write: true }; }
     if (message.type === 'houseplan/layout/get') { await waitB; return { layout: {}, rev: 2 }; }
     if (message.type === 'houseplan/config/set') { bWrites++; return { rev: 4 }; }
     return base(message);
@@ -94,10 +99,18 @@ const out = await page.evaluate(async () => {
   await pause();
   o.foreignContextDropsAuthority = !c._loadOk && !c._canEdit && c._cfgRev === 0;
   releaseA(); const staleCode = await pendingA;
+  // Production delivers config_updated when A's save commits. The old fixture
+  // does not emit for config/set; deliver the same real server event explicitly
+  // through its public push API. This also remains valid on the honest fixture
+  // which emitted once during base(message): both late A events must be fenced.
+  const lateARevision = window.__pushServerConfig(copy(server));
+  await pause();
+  o.lateAEventDoesNotStartConfigOnlyReadInB = lateARevision > 3 && bConfigReads === 1;
   o.oldReplyIsFenced = staleCode === 'context-changed' && c._cfgRev === 0 && bWrites === 0;
   releaseB();
   for (let i = 0; i < 100 && !c._loadOk; i++) await pause();
-  o.bReceivesItsOwnAuthority = c._loadOk && c._cfgRev === 3 && c._serverCfg.spaces[0].title === 'Authority B';
+  o.bReceivesItsOwnAuthority = c._loadOk && c._cfgRev === 3 && c._layoutRev === 2
+    && c._serverCfg.spaces[0].title === 'Authority B';
   // AC6 order matters: B mandatory reads and its own write win before A replies.
   // Run both production writers, with an installed editor and a View-only card.
   const fastContext = async (card, label) => {
@@ -113,7 +126,7 @@ const out = await page.evaluate(async () => {
     let releaseOwn, ownEntered = false;
     const ownResponse = new Promise((resolve) => { releaseOwn = resolve; });
     const ownWrites = [];
-    card.hass = { ...card.hass, connection: { ...card.hass.connection }, callWS: async (message) => {
+    card.hass = { ...card.hass, connection: foreignConnection(), callWS: async (message) => {
       if (message.type === 'houseplan/config/get') return { config: copy(config), rev: 3, can_write: true };
       if (message.type === 'houseplan/layout/get') return { layout: {}, rev: 2 };
       if (message.type === 'houseplan/config/set') {
@@ -143,6 +156,25 @@ const out = await page.evaluate(async () => {
   o.viewFixtureHasNoEditor = cold._loadOk && !cold._editorRuntime;
   await fastContext(cold, 'view');
   cold.remove();
+  // A→B→A can coalesce before Lit gets a turn. The returned A connection is
+  // numerically the same object as the old subscription, but a new authority
+  // epoch must own a freshly usable subscription after the accepted load.
+  const currentA = window.__mkHass(); c.hass = currentA;
+  await c.updateComplete;
+  c.hass = { ...currentA };
+  for (let i = 0; i < 100 && (!c._loadOk || c._liveSyncAttempt); i++) await pause();
+  o.returnedAReadyBeforeCoalescedSwitch = c._loadOk && c._liveSyncConnection === currentA.connection;
+  c.hass = { ...currentA, connection: foreignConnection() };
+  c.hass = currentA;
+  await c.updateComplete;
+  c.hass = { ...currentA };
+  for (let i = 0; i < 100 && (!c._loadOk || c._liveSyncAttempt); i++) await pause();
+  if (!c._loadOk || !c._serverCfg) throw Error(`returned A load did not complete: ${JSON.stringify({initialReady:o.returnedAReadyBeforeCoalescedSwitch,rev:c._cfgRev,layout:c._layoutRev,loading:c._loading,pending:c._read.pending,busy:c._read.busy})}`);
+  const returningConfig = copy(c._serverCfg); returningConfig.spaces[0].title = 'Returned A live update';
+  const returningRev = window.__pushServerConfig(returningConfig);
+  for (let i = 0; i < 100 && c._cfgRev !== returningRev; i++) await pause();
+  o.coalescedReturnRearmsCurrentSubscription = c._loadOk && c._cfgRev === returningRev
+    && c._serverCfg.spaces[0].title === 'Returned A live update';
   return o;
 });
 checkAll(out, Object.fromEntries(Object.keys(out).map((key) => [key, true])));

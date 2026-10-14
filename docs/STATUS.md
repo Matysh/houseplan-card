@@ -35,6 +35,10 @@ lazy graphs retain their inclusive approved band, without a second 500 B reserve
 LED event/DOM-generation timelines are observation only; the historical cause
 remains unknown. No product timings, budgets or accepted images changed.
 
+The pre-release #890 AC6 repair fences already subscribed old-HA callbacks
+before reads or mutations. An explicitly delivered A event during B's initial
+paired load can no longer cancel that load; the issue stays S8 under §11.4.
+
 Connected-node diagnostics (#888) name exact exceeded budgets and preserve
 functional/clock failures. Existing raw source/native/flush identities produce
 read-only phase evidence with clean material/protocol/environment passports;

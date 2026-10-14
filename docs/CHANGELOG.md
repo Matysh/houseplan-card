@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Switching Home Assistant connections no longer lets a late old-server
+  notification interrupt the new plan's initial config/layout load
+  ([#890](https://github.com/Matysh/houseplan-card/issues/890)).
+
 - Kiosk carousels resume after zoom or pan: after 60 idle seconds the plan fits
   the screen, and local dialogs hold the floor until closed. Arrivals remember
   Fit all only for that floor on this screen. Changing floors closes old device

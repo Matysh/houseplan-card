@@ -548,6 +548,7 @@ export class HouseplanCard extends LitElement {
     if (name === 'hass') {
       if (this._configWriteContext.observe(this.hass)) {
         this._loadOk = false; this._serverCanWrite = null; this._loadTries = 0;
+        this._liveSyncConnection = null;
         this._saveConfigDebounced.cancel(); this._adoption.resetContext();
         this._writeChain = Promise.resolve(); this._writesPending = 0;
         this._persistLayout.cancel(); this._dirtyPos.clear(); this._sentPos.clear();
@@ -4427,6 +4428,9 @@ export class HouseplanCard extends LitElement {
     }
     if (this._liveSyncAttempt) return;
     const generation = this._liveSyncGeneration;
+    const context = this._configWriteContext.claim();
+    const ownsContext = () => generation === this._liveSyncGeneration && this.isConnected
+      && this.hass?.connection === connection && this._configWriteContext.current(context, this.hass);
     const attempts: Array<() => Promise<void>> = [];
     const subscribe = (
       current: () => (() => void) | null | undefined,
@@ -4436,9 +4440,10 @@ export class HouseplanCard extends LitElement {
     ): void => {
       if (current()) return;
       attempts.push(async () => {
-        const unsubscribe = await connection.subscribeEvents(callback, event);
-        const valid = generation === this._liveSyncGeneration
-          && this.isConnected && this.hass?.connection === connection && !current();
+        const unsubscribe = await connection.subscribeEvents((ev: unknown) => {
+          if (ownsContext()) return callback(ev);
+        }, event);
+        const valid = ownsContext() && !current();
         if (valid) adopt(unsubscribe);
         else unsubscribe?.();
       });
