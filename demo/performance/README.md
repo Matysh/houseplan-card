@@ -216,13 +216,16 @@ reuse key, so a glow-only success never stands in for a run that needed the
 isometric profile.
 
 The interaction profile keeps strict per-series, Long Task, heap, cache and
-structural limits. Its aggregate `interactionSeriesMs` ceiling is 3300 ms:
-enough headroom for the observed hosted-runner baseline (up to 3122.6 ms), but
-still below the known failed pre-optimization result (3501.5 ms). This aggregate
+structural limits. Its aggregate `interactionSeriesMs` ceiling is 3630 ms since
+#898 (owner decision 2026-10-14: ceilings with less than 10 % headroom grow by
+10 %); it was 3300 ms over the observed hosted-runner baseline (up to 3122.6 ms).
+The new ceiling no longer stays below the known failed pre-optimization result
+(3501.5 ms) — the owner accepted that. This aggregate
 is a catastrophic guard; the full workflow's base-relative comparison remains
 the detector for smaller regressions.
 
-Its `firstStableRenderMs` ceiling is 3400 ms (#692). The full workflow's
+Its `firstStableRenderMs` ceiling is 3740 ms since #898 (owner decision
+2026-10-14, +10 % over 3400 ms of #692). The full workflow's
 7-sample median on the hosted runner was about 2790 ms across the 1.77 line
 (2769.0 on 09-21, 2838.2 on 09-23, 2777.3 and 2801.7 on `c392ad3a`) and about
 2920 ms at v1.78.0 (`7d4d75bd`: 2925.0, 2925.2 as the base). Two runs of that
@@ -380,8 +383,8 @@ exists, the job fails closed instead of comparing against an arbitrary commit.
 
 ## Resize Long Task of the interaction profile (#778)
 
-`longTask.editorSeries.maxSingleMs` (150 ms in both the full and the smoke
-interaction budgets) is the longest task of three editor parts; in every
+`longTask.editorSeries.maxSingleMs` (165 ms in both the full and the smoke
+interaction budgets since #898, owner decision 2026-10-14; 150 ms before) is the longest task of three editor parts; in every
 recorded CI sample it is the resize part, and that part has exactly one Long
 Task. The Validate smoke of #762 (`adc2d7c5`, run 36910217188) read 135 / 129 /
 **163** ms on its first attempt and 127 / 132 / 132 ms on the re-run of the

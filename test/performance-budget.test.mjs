@@ -301,10 +301,12 @@ for (const [smokeName, fullName] of [
 }
 
 test('#692 первый стабильный кадр interaction: потолок над уровнем 1.78 с запасом на шум раннера', () => {
+  // #898, решение владельца 14.10.2026: запас меньше 10 % (худший 3144.8 при 3400) → +10 %: 3740 мс.
+  // Это +27,9 % над уровнем 1.78: верхняя граница правила поднята с 20 % до 30 %.
   const smoke = readBudget('budgets-interaction-smoke.json');
   const full = readBudget('budgets-large-house-interaction.json');
   const ceiling = full.timings.firstStableRenderMs.hardMaxMs;
-  assert.equal(ceiling, 3400);
+  assert.equal(ceiling, 3740);
   assert.equal(smoke.timings.firstStableRenderMs.hardMaxMs, ceiling, 'смок = полный профиль (#473 AC4)');
   // Медианы полного профиля (7 образцов) из performance.yml: линия 1.77 и v1.78.0.
   const level177 = [2769.0, 2838.2, 2777.3, 2801.7];
@@ -312,7 +314,7 @@ test('#692 первый стабильный кадр interaction: потоло�
   const worst = 3144.8; // тот же SHA v1.78.0, соседний прогон — шум раннера до 7,5 %
   for (const median of [...level177, ...level178, worst]) assert.ok(median < ceiling, `${median} краснеет на ${ceiling}`);
   assert.ok(ceiling >= Math.max(...level178) * 1.15, 'запас над уровнем 1.78 не меньше 15 %');
-  assert.ok(ceiling <= Math.max(...level178) * 1.2, 'и не больше 20 %: потолок остаётся гардом');
+  assert.ok(ceiling <= Math.max(...level178) * 1.3, 'и не больше 30 %: потолок остаётся гардом');
   // Относительное сравнение полного профиля не ослаблено.
   assert.equal(full.timings.firstStableRenderMs.maxRegressionRatio, 0.3);
   assert.equal(full.timings.firstStableRenderMs.noiseAllowanceMs, 250);
@@ -321,8 +323,9 @@ test('#692 первый стабильный кадр interaction: потоло�
 test('interaction aggregate keeps hosted-runner headroom without weakening component gates (#483)', () => {
   const smoke = readBudget('budgets-interaction-smoke.json');
   const full = readBudget('budgets-large-house-interaction.json');
-  assert.equal(smoke.timings.interactionSeriesMs.hardMaxMs, 3300);
-  assert.equal(full.timings.interactionSeriesMs.hardMaxMs, 3300);
+  // #898, решение владельца 14.10.2026: запас меньше 10 % (3122.6 при 3300) → +10 %: 3630 мс.
+  assert.equal(smoke.timings.interactionSeriesMs.hardMaxMs, 3630);
+  assert.equal(full.timings.interactionSeriesMs.hardMaxMs, 3630);
   assert.equal(smoke.timings.hoverSeriesMs.hardMaxMs, 500);
   assert.equal(smoke.timings.panSeriesMs.hardMaxMs, 500);
   assert.equal(smoke.timings.cameraSeriesMs.hardMaxMs, 500);

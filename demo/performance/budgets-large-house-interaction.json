@@ -13,13 +13,13 @@
       "stat": "median",
       "maxRegressionRatio": 0.3,
       "noiseAllowanceMs": 250,
-      "hardMaxMs": 3400
+      "hardMaxMs": 3740
     },
     "interactionSeriesMs": {
       "stat": "median",
       "maxRegressionRatio": 0.5,
       "noiseAllowanceMs": 150,
-      "hardMaxMs": 3300
+      "hardMaxMs": 3630
     },
     "hoverSeriesMs": {
       "stat": "median",
@@ -109,7 +109,7 @@
     "hoverSeries": { "maxSingleMs": 150, "maxCountP95": 3, "maxTotalP95Ms": 300 },
     "panSeries": { "maxSingleMs": 150, "maxCountP95": 3, "maxTotalP95Ms": 300 },
     "cameraSeries": { "maxSingleMs": 150, "maxCountP95": 3, "maxTotalP95Ms": 300 },
-    "editorSeries": { "maxSingleMs": 150, "maxCountP95": 3, "maxTotalP95Ms": 300 }
+    "editorSeries": { "maxSingleMs": 165, "maxCountP95": 3, "maxTotalP95Ms": 300 }
   },
   "heap": {
     "required": true,

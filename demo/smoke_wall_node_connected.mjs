@@ -29,7 +29,9 @@ const viewport = { width: 1280, height: 1000 };
 // work): input-to-paint p95 100 -> 110 ms. Pinned CI measured 101.3 and 107.7 ms on #850
 // while exact per-gesture work counters equal dev (0 captures, 0 presentations, 0 light
 // fingerprints; asserted below). Main-thread and long-task budgets are unchanged.
-const budgets = { mainThreadP95Ms: 50, inputToPaintP95Ms: 110, longTaskMaxMs: 150 };
+// #898, owner decision 2026-10-14: less than 10 % headroom -> +10 %:
+// main-thread p95 50 -> 55 ms, input-to-paint p95 110 -> 121 ms.
+const budgets = { mainThreadP95Ms: 55, inputToPaintP95Ms: 121, longTaskMaxMs: 150 };
 const quantiles = values => {
   const sorted = values.slice().sort((a, b) => a - b);
   return { count: sorted.length, median: sorted[Math.ceil(sorted.length * .5) - 1] || 0,

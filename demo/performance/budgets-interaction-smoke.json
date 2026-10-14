@@ -9,11 +9,11 @@
     },
     "firstStableRenderMs": {
       "stat": "median",
-      "hardMaxMs": 3400
+      "hardMaxMs": 3740
     },
     "interactionSeriesMs": {
       "stat": "median",
-      "hardMaxMs": 3300
+      "hardMaxMs": 3630
     },
     "hoverSeriesMs": {
       "stat": "median",
@@ -86,7 +86,7 @@
       "maxTotalP95Ms": 300
     },
     "editorSeries": {
-      "maxSingleMs": 150,
+      "maxSingleMs": 165,
       "maxCountP95": 3,
       "maxTotalP95Ms": 300
     }

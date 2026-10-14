@@ -22,6 +22,7 @@ const gzip = extra.reduce((sum, path) => sum + byPath.get(path).gzipBytes, 0);
 // #834: exact local boundary, ownership and winding proofs replace repeated
 // clipping. The owner permits an explicit ceiling increase, not byte golfing.
 // This is still a hard Select-only cap; View/editor ceilings remain unchanged.
-const budget = 18 * 1024;
-assert.ok(gzip <= budget, `${gzip} B gzip exceeds the Select-only 18 KiB budget`);
+// #898, owner decision 2026-10-14: less than 10 % headroom -> +10 %, 18432 -> 20276 B.
+const budget = 20_276;
+assert.ok(gzip <= budget, `${gzip} B gzip exceeds the Select-only ${budget} B budget`);
 console.log(`Select-only node graph: ${gzip} B gzip, budget ${budget}; existing bundle ceilings unchanged`);

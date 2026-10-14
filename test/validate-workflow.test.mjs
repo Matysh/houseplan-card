@@ -146,7 +146,8 @@ test('джобы с полной историей качают её без бл�
     // job `changes`, поэтому имя job ищется только с начала строки.
     const start = workflow.indexOf(`\n  ${job}:\n`);
     assert.ok(start > 0, `нет job ${job}`);
-    const chunk = workflow.slice(start, start + 1800);
+    // #898, решение владельца 14.10.2026: запас меньше 10 % → +10 % (1800 → 1980).
+    const chunk = workflow.slice(start, start + 1980);
     assert.match(chunk, /fetch-depth: 0, filter: 'blob:none'/,
       `${job} обязана качать историю без блобов`);
   }

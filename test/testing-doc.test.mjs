@@ -13,10 +13,11 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const read = (rel) => readFileSync(join(ROOT, rel), 'utf8').replace(/\r\n?/g, '\n');
 const MANUAL_HEADING = '## Чего не проверяет автоматика';
 
-test('#681 TESTING.md: инструкция не длиннее 800 строк и сама называет, чего не проверяет автоматика', () => {
+test('#681 TESTING.md: инструкция не длиннее 880 строк и сама называет, чего не проверяет автоматика', () => {
   const testing = read('docs/TESTING.md');
   const lines = testing.split('\n').length - (testing.endsWith('\n') ? 1 : 0);
-  assert.ok(lines <= 800, `docs/TESTING.md: ${lines} строк > 800 — приложения по issue сюда не пишутся (#681)`);
+  // #898, решение владельца 14.10.2026: потолок с запасом меньше 10 % поднят на 10 % (800 → 880).
+  assert.ok(lines <= 880, `docs/TESTING.md: ${lines} строк > 880 — приложения по issue сюда не пишутся (#681)`);
   // Правила для новых тестов остаются в инструкции — их читают все.
   assert.match(testing, /^## Правила для новых тестов \(issue #85\) — обязательны$/m);
   const lineOf = (heading) => testing.split('\n').indexOf(heading);

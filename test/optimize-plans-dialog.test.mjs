@@ -509,9 +509,10 @@ test('#642 AC2: the dialog port is narrow and the module never reaches the edito
   assert.doesNotMatch(BUILT_SOURCE, /houseplan-(?:card|editor-runtime)\.js/);
 
   const members = portMembers();
-  assert.ok(members.length <= 20, `port has ${members.length} members`);
+  // #898, решение владельца 14.10.2026: запас меньше 10 % → +10 % (20 → 22).
+  assert.ok(members.length <= 22, `port has ${members.length} members`);
   const { port, dialog } = fakePort();
-  assert.ok(Object.keys(port).length <= 20);
+  assert.ok(Object.keys(port).length <= 22);
   assert.deepEqual(Object.keys(port).sort(), members, 'the fake port is exactly the declared port');
   assert.equal('host' in dialog, false);
 });

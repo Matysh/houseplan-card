@@ -90,8 +90,9 @@ test('#690 п.1′: неопределённость выдаёт визуаль
   assert.deepEqual(smokesToRun(docs), [], 'без исполняемого диффа смоков нет');
 });
 
-test('#690 п.1′: визуальный минимум — 5–8 существующих смоков, и CLI его печатает', () => {
-  assert.ok(VISUAL_MINIMUM.length >= 5 && VISUAL_MINIMUM.length <= 8, `в минимуме ${VISUAL_MINIMUM.length}`);
+test('#690 п.1′: визуальный минимум — 5–9 существующих смоков, и CLI его печатает', () => {
+  // #898, решение владельца 14.10.2026: потолок без запаса поднят на 10 % с округлением вверх (8 → 9).
+  assert.ok(VISUAL_MINIMUM.length >= 5 && VISUAL_MINIMUM.length <= 9, `в минимуме ${VISUAL_MINIMUM.length}`);
   for (const smoke of VISUAL_MINIMUM) assert.ok(existsSync(join(repoRoot, 'demo', smoke)), `нет demo/${smoke}`);
   assert.ok(VISUAL_MINIMUM.includes('smoke_modes.mjs'), 'смок, которого не хватило #687');
   const cli = spawnSync(process.execPath, ['scripts/smoke-select.mjs', '--diff', 'test/fixtures/smoke-select/unproven.diff'],

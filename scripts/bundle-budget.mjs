@@ -47,8 +47,11 @@ import { NAMESPACE_LOCALE_CHUNKS } from './bundle-manifest.mjs';
 // HA's four MDI icons; no designer SVG delivery remains in the runtime graph.
 // This does not claim a loading-speed improvement or replace the separately
 // measured rolling ceiling. All ratchets and the low-headroom warning stay on.
-export const INITIAL_VIEW_RECALIBRATION_GZIP_BYTES = 301_037;
-export const INITIAL_VIEW_GZIP_BUDGET = 320_000;
+// #898, owner decision 2026-10-14: ceilings with less than 10 % headroom grow
+// by 10 %. The wall becomes 320000 x 1.1 = 352000 B; the reference of the
+// 5-10 % rule becomes the previous wall (an owner decision, not a measurement).
+export const INITIAL_VIEW_RECALIBRATION_GZIP_BYTES = 320_000;
+export const INITIAL_VIEW_GZIP_BUDGET = 352_000;
 export const INITIAL_PANEL_ONLY_GZIP_BUDGET = 8 * 1024;
 
 /**
@@ -405,7 +408,9 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // #844: cold-View permission, lazy-owner and HA-admin affordance gates measured
 // 309653 B gzip, 33 B over the previous ceiling's band. Keep the absolute
 // 320000 B budget and 2000 B band; do not move forbidden-entry guards to lazy code.
-export const INITIAL_VIEW_GZIP_CEILING = 309_892;
+// #898, owner decision 2026-10-14: every ceiling with less than 10 % headroom is raised by 10 % (rounded up).
+// 309892 -> 340882 B; the band and the warning threshold stay put.
+export const INITIAL_VIEW_GZIP_CEILING = 340_882;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
@@ -622,7 +627,8 @@ export function initialViewCeilingViolation(bytes, {
  * сторон, чтобы ни семибайтный шум не красил гейт, ни молчаливый выигрыш не
  * оставался незафиксированным.
  */
-export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_940;
+// #898, owner decision 2026-10-14: every ceiling with less than 10 % headroom is raised by 10 % (rounded up). 16940 -> 18634 B.
+export const LAZY_FURNITURE_ART_GZIP_CEILING = 18_634;
 /**
  * #600, промежуточные замеры по сериям (итог ставится в конце):
  * - серия 0: 222 900 → 225 900. Набор контролов формы вырос до полного
@@ -733,7 +739,8 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_940;
 // 500-B noise guard); the wall-end magnet adds 312 B — 260 085 B. The ceiling
 // becomes this fact, so #873/#869/#850 rebase onto a full band. The band, the
 // initial-View ceiling and the absolute budget stay put.
-export const LAZY_EDITOR_GZIP_CEILING = 259_060;
+// #898, owner decision 2026-10-14: every ceiling with less than 10 % headroom is raised by 10 % (rounded up). 259060 -> 284966 B.
+export const LAZY_EDITOR_GZIP_CEILING = 284_966;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
@@ -749,7 +756,8 @@ export const LAZY_GRAPH_CEILING_BAND = 2_000;
  * (форма #600), не словари; их вынос заметен пользователю (задержка на первом
  * «?») и в скоуп #627 не входит.
  */
-export const LAZY_ONBOARDING_GZIP_CEILING = 28_578;
+// #898, owner decision 2026-10-14: every ceiling with less than 10 % headroom is raised by 10 % (rounded up). 28578 -> 31436 B.
+export const LAZY_ONBOARDING_GZIP_CEILING = 31_436;
 
 /**
  * #780 ТЗ §13.1: the LED chunks are a new feature's own budget, not a raise of
@@ -763,8 +771,10 @@ export const LAZY_ONBOARDING_GZIP_CEILING = 28_578;
 // 10 607 B gzip. Give this corrected representation 11 KiB. The LED graph
 // remains lazy; the shared eager geometry fingerprint adds 75 B to initial
 // View (300 139 B), within the unchanged initial ceiling.
-export const LAZY_LED_GZIP_CEILING = 11 * 1024;
-export const LAZY_LED_EDITOR_GZIP_CEILING = 11 * 1024;
+// #898, owner decision 2026-10-14: every ceiling with less than 10 % headroom is raised by 10 % (rounded up).
+// 11264 -> 12391 B for both LED graphs.
+export const LAZY_LED_GZIP_CEILING = 12_391;
+export const LAZY_LED_EDITOR_GZIP_CEILING = 12_391;
 
 /**
  * Потолок ленивого графа: `null`, пока значение внутри полосы.

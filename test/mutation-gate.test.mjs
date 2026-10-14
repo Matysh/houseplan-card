@@ -1172,10 +1172,11 @@ test('#558: registry, selection, evidence and execution stay behind bounded modu
   const selection = read('scripts/mutation-selection.mjs');
   const evidence = read('scripts/mutation-evidence.mjs');
   const execution = read('scripts/mutation-execution.mjs');
-  assert.ok(gate.split('\n').length < 300, 'CLI снова поглотил механику или реестр');
+  // #898, решение владельца 14.10.2026: запас меньше 10 % → +10 % (gate 300 → 330, execution 250 → 275).
+  assert.ok(gate.split('\n').length < 330, 'CLI снова поглотил механику или реестр');
   assert.ok(selection.split('\n').length < 350, 'selection-модуль потерял ограниченную границу');
   assert.ok(evidence.split('\n').length < 150, 'evidence-модуль потерял ограниченную границу');
-  assert.ok(execution.split('\n').length < 250, 'execution-модуль потерял ограниченную границу');
+  assert.ok(execution.split('\n').length < 275, 'execution-модуль потерял ограниченную границу');
   assert.doesNotMatch(registry, /from ['"]\.\/mutation-(selection|evidence|execution)\.mjs['"]/,
     'декларации не зависят от механики');
   assert.doesNotMatch(selection, /from ['"]\.\/mutation-(registry|evidence|execution)\.mjs['"]/,

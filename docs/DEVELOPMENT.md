@@ -255,7 +255,7 @@ a task/microtask update needs two rAFs because the first can precede its paint.
 It observes/delegates native rAF calls without changing their IDs or pacing
 input. Raw data also retains the unconditional two-rAF upper bound so the
 scheduler change cannot hide the measurement difference. Neither number claims
-a compositor presentation timestamp. The budgets are 50/110/150 ms: input-to-paint p95 was raised from 100 ms by the owner decision of 2026-10-14 (#850).
+a compositor presentation timestamp. The budgets are 55/121/150 ms: input-to-paint p95 was raised from 100 to 110 ms (#850) and then main-thread and input-to-paint by 10 % (#898), both by owner decisions of 2026-10-14.
 CI also preserves the complete raw report, including partial failure evidence,
 in `smoke-logs/smoke_wall_node_connected.raw.json` after measurement finishes.
 The first full #834 CI found CPU p95 50.8 ms against the unchanged 50 ms limit.
@@ -493,7 +493,7 @@ activation (no intervening pointerdown), and still performs exact Undo/Redo.
 The pure tail witness distinguishes keyboard and outside-stage controls from
 the cancelled gesture's late pointer-compatible stage click.
 The Select-only module is a second-level lazy import, with an additional
-18 KiB gzip guard (`node scripts/node-editor-bundle-budget.mjs`); it does not
+20 276 B gzip guard (`node scripts/node-editor-bundle-budget.mjs`; 18 KiB until the owner's +10 % decision of #898); it does not
 change any existing graph ceiling or load in cold View/other tools. The
 intentional raw-bundle/coupling increments are recorded in issue #803 and
 `monolith-baseline.json`, not hidden by widening ratchet bands.
