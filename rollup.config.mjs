@@ -26,11 +26,12 @@ export default {
     // #803: the nested Select chunk shares these helpers with the editor.
     // Keep them outside the runtime entry so Rollup can preserve its named
     // exports, also used by the immutable-URL network retry (not a Rollup edge).
+    // #885: the wall-end alignment magnet is shared the same way (no Select→runtime edge).
     onlyExplicitManualChunks: true,
     manualChunks(id) {
       const path = id.replaceAll('\\', '/');
-      if (['/src/pointer-move-queue.ts', '/src/live-editor.ts', '/src/i18n/tools.ts', '/src/wall-segment-model.ts']
-        .some((suffix) => path.endsWith(suffix))) return 'editor-shared';
+      if (['/src/pointer-move-queue.ts', '/src/live-editor.ts', '/src/i18n/tools.ts', '/src/wall-segment-model.ts',
+        '/src/wall-end-align.ts'].some((suffix) => path.endsWith(suffix))) return 'editor-shared';
     },
     format: 'es',
     sourcemap: false,

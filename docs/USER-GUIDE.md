@@ -759,6 +759,18 @@ shows the final result. A real diagonal remains unchanged. Older invisible
 one-grid-step slopes are offered separately by **Optimize plans**, with the
 number of walls and maximum movement shown before confirmation.
 
+The end of a horizontal or vertical segment snaps to the line through the end
+of an already drawn parallel wall that is itself exactly horizontal or
+vertical, including a zero-thickness wall and an accepted segment of the
+current chain. The magnet acts when the pointer is closer than 8 screen pixels
+to that line on either side: the end lands exactly on the parallel wall end's
+coordinate, even off the grid, and the segment stays on its axis. Zooming in
+narrows the zone in centimetres, which is how you place a point next to the
+line; there is no key that turns the magnet off. The preview and the length
+label already show this end, and the click places exactly it. An endpoint or
+axis of an existing wall and the contour closure win over the magnet; a
+slanted segment, including `Shift` at 45°, has no magnet, while 0° and 90° do.
+
 If **Room settings** covers an element you need, drag anywhere on its capsule.
 It stays inside that room and remembers the temporary position until you leave
 the Plan editor; zooming, panning or visiting another floor does not reset it.
@@ -808,12 +820,18 @@ selected room measurement source still has priority over the automatic average.
 In **Select**, hover a wall endpoint, room corner or supported junction: the
 cursor becomes a grab hand. Drag the node: affected old walls disappear and
 the proposed node, walls and openings are translucent. Magnets follow original
-wall axes and exact horizontal/vertical positions. Release to save. **Esc
+wall axes and exact horizontal/vertical positions. When a wall connected to the
+node is exactly horizontal or vertical in its new position, the node snaps
+along it to the line through the end of another parallel wall (also exactly on
+an axis, zero thickness included) within 8 screen pixels; walls the node itself
+moves are ignored. Magnets combine: a wall can straighten and end flush with its
+neighbour at once, even off the grid. When an original node magnet pulls the
+same coordinate, the nearer one wins and a tie keeps the node magnet. Release to save. **Esc
 before release** cancels the entire gesture; **Ctrl+Z during dragging** also
 only cancels the gesture, not the previous edit. After saving, normal Undo and
 Redo work.
 
-A T slides along its carrier. At a simple X, first move along one of the two
+A T slides along its carrier and aligns only along it. At a simple X, first move along one of the two
 walls: it stays straight and the transverse wall bends at the new node while
 retaining its far ends. Complex passing junctions are not movable yet. Openings
 retain width and distance from the fixed end; an opening that no longer fits

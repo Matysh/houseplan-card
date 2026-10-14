@@ -3,6 +3,7 @@
  * multiplicity. Only the at-most-six incident rays change on pointermove. */
 import { GRID_STEP_N } from './canvas-constants';
 import { compareCodePoints as compare } from './codepoint-order';
+import { alignWallEnd } from './wall-end-align';
 import { wallKey } from './wall-thickness';
 import type { OpeningCfg, PartitionCfg, RoomCfg, WallSegmentEntry, WallEntry } from './types';
 
@@ -143,7 +144,36 @@ export function pickWallNode(nodes: readonly WallNode[], p: NodePoint, unitsPerP
 }
 
 export interface NodeSnap { point: NodePoint; axis: string | null; guide: 'axis' | 'horizontal' | 'vertical' | null }
+const alignCache = new WeakMap<NodeMovePlan, NodePoint[][]>();
+/** #885: after the node's own goals, the node as an end of every incident wall
+ * that is exact H/V at the target aligns along that wall to a parallel wall end
+ * (8 CSS px; walls the node moves are not candidates). A frozen axis/carrier
+ * allows only its own direction; one coordinate changes, so a node magnet on
+ * the other one stays exact. On the same coordinate a node H/V goal (a fixed
+ * end's coordinate) that is as near or nearer keeps the node's own result. */
 export function resolveNodeMoveSnap(
+  plan: NodeMovePlan, raw: NodePoint, unitsPerPx: number, lockedAxis: string | null,
+): NodeSnap {
+  const snap = goalNodeSnap(plan, raw, unitsPerPx, lockedAxis), n = plan.node, p = snap.point;
+  if (n.passing && !snap.axis) return snap;
+  let walls = alignCache.get(plan);
+  if (!walls) alignCache.set(plan, walls = structuralNodeWalls(plan.source)
+    .filter(w => !n.walls.some(m => wallRef(m) === wallRef(w))).map(w => [w.a, w.b]));
+  const line = n.axes.find(a => a.key === snap.axis)
+    || (snap.guide === 'axis' ? n.axes.find(a => Math.abs(cross(sub(p, n.point), a.direction)) <= EPS) : undefined);
+  const ends = n.walls.flatMap(w => [w.a, w.b].filter(q => !sameNodePoint(q, n.point)));
+  let best: { at: number; d: number; c: 0 | 1 } | null = null;
+  for (const c of [0, 1] as const) {
+    const o = 1 - c, along = ends.filter(f => Math.abs(f[o] - p[o]) <= EPS && Math.abs(f[c] - p[c]) > EPS);
+    if (!along.length || (line && Math.abs(line.direction[o]) > EPS)) continue;
+    const hit = alignWallEnd(raw, c, walls, 8 * unitsPerPx, along.map(f => f[c]), EPS);
+    if (hit && ends.every(f => Math.abs(raw[c] - f[c]) > hit.d) && (!best || hit.d < best.d)) best = { ...hit, c };
+  }
+  if (!best) return snap;
+  const point: NodePoint = [p[0], p[1]]; point[best.c] = best.at;
+  return { ...snap, point };
+}
+function goalNodeSnap(
   plan: NodeMovePlan, raw: NodePoint, unitsPerPx: number, lockedAxis: string | null,
 ): NodeSnap {
   const n = plan.node, passing = n.axes.filter(a => a.passing);

@@ -2115,8 +2115,10 @@ export interface AlignGuide {
 
 /**
  * Alignment guides for a point being drawn/dragged: the nearest candidate
- * sharing its X and the nearest sharing its Y (within tol). Indication only —
- * no magnetism, the grid owns the actual position (owner's decision).
+ * sharing its X and the nearest sharing its Y (within tol). The guide is
+ * indication in every context. Since #885 (owner's decision 2026-10-13) the
+ * Walls segment end and the dragged wall node have a magnet onto such a line
+ * (`alignWallEnd`, src/wall-end-align.ts); every other gesture keeps the grid.
  */
 export function alignGuides(pt: number[], candidates: number[][], tol: number): AlignGuide[] {
   let bestX: { d: number; c: number[] } | null = null;

@@ -516,7 +516,7 @@ quantised to the same step, measured from the wall's first corner:**
 
 | Element | Resolver |
 | --- | --- |
-| a saved endpoint, shared room corner, T/X junction | `resolveNodeMoveSnap`: frozen original axes and exact incident-wall H/V goals before the free grid fallback |
+| a saved endpoint, shared room corner, T/X junction | `resolveNodeMoveSnap`: frozen original axes and exact incident-wall H/V goals, then parallel-wall-end alignment (#885), before the free grid fallback |
 
 Within 12 CSS pixels, choose the nearest compatible goal; ties prefer an
 original axis, then horizontal, then vertical, then the stable wall ID. Two
@@ -540,6 +540,19 @@ their owned rays, TS/Python share one angular predicate
 `abs(cross(unit,unit)) <= sqrt(2e-9 - 1e-18)`; an axis cannot borrow rays from
 another axis. This does not round, merge or globally straighten saved geometry.
 
+After those goals (#885), the node is the placed end of every incident wall
+that is exactly horizontal or vertical at the resolved target. Within 8 CSS
+pixels of the line through an end of a PARALLEL exact H/V wall (zero thickness
+included; walls the node moves are not candidates) the coordinate along that
+wall becomes exactly the candidate's, off-grid included; the cross coordinate
+is never touched, so an H/V goal or carrier on the other coordinate stays
+exact (they add up). A frozen axis/carrier allows only its own direction, so a
+T aligns only along its passing wall; a diagonal one never aligns. On the same
+coordinate an incident fixed end's H/V goal that is as near or nearer to the
+pointer keeps the node's own result. Only one coordinate is aligned. Because
+the aligned wall stays exact H/V, the target still shares a coordinate with its
+fixed end, so `applyNodeMove` and the backend accept it unchanged.
+
 The Walls tool adds one architectural resolver before the free grid fallback.
 Within a 12 CSS-pixel hit zone, exact endpoints win over wall axes. Two distinct
 endpoints that are less than the live 8 CSS-pixel distinguishability threshold
@@ -554,6 +567,22 @@ the active marker and click consume that same point. A nearby saved endpoint
 which would require the forbidden one-step slope therefore loses snap
 ownership instead of being joined invisibly. Shift-selected 45° rays and true
 diagonals outside the shared tolerance are unchanged.
+
+Only when no endpoint, axis or contour closure owns the point (#885): an exact
+horizontal or vertical active segment aligns its free end with the line through
+an end of a parallel exact H/V wall of the space — room edges, independent
+walls of any thickness including zero, and the accepted segments of the active
+chain — when the pointer is within 8 CSS pixels of that line on either side.
+The coordinate along the segment becomes exactly the candidate's (off-grid
+included); the anchor's cross coordinate stays. Several candidates: the nearest
+on screen. Shift keeps it at 0°/90° and never at 45°. Order: endpoint/axis/
+closure > alignment > grid; hover, labels and click consume that same point.
+
+`alignGuides()` stays indication in every context. The former "indication
+only — no magnetism, the grid owns the position" rule now holds everywhere
+except these two gestures: Walls drawing and the node move have the alignment
+magnet above (owner's decision 2026-10-13). The radius is in screen pixels, so
+zooming in narrows it in plan units; there is no bypass key.
 
 On an axis-aligned wall whose corners are on the grid — every wall the
 editor itself draws — the two rules give the same point. An opening is

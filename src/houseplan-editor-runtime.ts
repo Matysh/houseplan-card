@@ -217,6 +217,7 @@ import {
 } from './wall-segment-model';
 import { zeroWallHasOpening, zeroWallStyleOf } from './zero-walls';
 import { snapNearAxisEndpoint } from './near-axis';
+import { alignDrawnWallEnd, planWalls } from './wall-end-align';
 import type { SpaceReferenceRepairContext } from './space-reference-repair';
 import { collectSpaceMarkerDependencies, hiddenDependencyCount, spaceDeletionMessage } from './space-deletion';
 import { settingsCopy } from './editors/settings-copy';
@@ -1480,12 +1481,17 @@ public _resolvePlanDrawPoint(
     const candidate = resolution.kind === 'resolved' ? resolution.candidate : null;
     const snapped = candidate ? [...candidate.point] : this._snapDrawPoint(raw, lock45);
     const point = anchor ? snapNearAxisEndpoint(anchor, snapped) : snapped;
+    // #885: with no node/axis/closure owner, an exact H/V segment end aligns
+    // with a parallel wall end (8 CSS px) before the grid keeps the point.
+    const space = this.host._spaceModel();
+    const end = !candidate && anchor && space ? alignDrawnWallEnd(anchor, point, raw,
+      planWalls(snapshot.value, space), this._cssPxToRender(8), options.epsilon) : point;
     // A nearby topology endpoint loses snap ownership when the drafting rule
     // moves the actually persisted point away from it. Preview and click must
     // describe the exact same geometry (#290).
     const effectiveCandidate = candidate && samePoint(point, candidate.point) ? candidate : null;
     return {
-      point,
+      point: end,
       candidate: effectiveCandidate,
       conflicts: resolution.kind === 'ambiguous' ? resolution.conflicts : [],
       ambiguous: resolution.kind === 'ambiguous',

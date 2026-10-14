@@ -606,7 +606,9 @@ physical-geometry writer crosses one fail-closed boundary (#278,
 write; presentation edits bypass it. Contracts: Walls chain, faces, room
 deletion, partitions — `WALL-THICKNESS.md` §6, §9–11, `CONFIG-COMPATIBILITY.md`
 (#478, #461), `TOUCH-SUPPORT.md`; Resize (#277, #300) — `RESIZE.md`; near-axis
-(#290, `src/near-axis.ts`) — `CANVAS.md` §9.3. `reconcileCoincidentPartitions`
+(#290, `src/near-axis.ts`) and the editor-only wall-end alignment magnet of
+Walls drawing and node movement (#885, `src/wall-end-align.ts`, in the
+`editor-shared` chunk) — `CANVAS.md` §9.3. `reconcileCoincidentPartitions`
 (#276/#296/#477) and `normalizeWallIntervals` (#299) run plan-wide only in
 explicit Optimize, locally in chain finish/room deletion, never in render or
 ordinary saves. Saves strip the legacy root `space.segments`.

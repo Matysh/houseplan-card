@@ -32,6 +32,13 @@
   its points on a temporary refusal and ends without touching saved walls when
   its step is removed
   ([#883](https://github.com/Matysh/houseplan-card/issues/883)).
+- Walls and node moves: the end of a horizontal or vertical wall now snaps to the
+  line through the end of a parallel horizontal or vertical wall when the pointer
+  is within 8 screen pixels, instead of only showing a guide while the grid
+  decides. It lands exactly on that coordinate, even off the grid; an endpoint,
+  wall axis or contour closure still wins, and slanted walls are unchanged. When
+  dragging a node in Select, the same magnet combines with straightening a wall
+  ([#885](https://github.com/Matysh/houseplan-card/issues/885)).
 - Infrastructure: importing the furniture generator's tolerance no longer
   rewrites tracked art while a parallel unit checks it; explicit generation
   and strict stale-file checks are unchanged
