@@ -101,6 +101,24 @@ const step = async (label, run, direction) => {
 
 // ---- the node move itself (Plan/Select is still the only capture context)
 const start = await screen([0.2, 0.4]), target = await screen([0.25, 0.55]);
+// #891 AC4: real native drags, refused only at the transport boundary. No
+// history success, automatic retry or provisional geometry may follow them.
+for (const [code, text] of [
+  ['conflict', 'The plan changed while moving the node.'],
+  ['timeout', 'The node move could not be saved right now.'],
+  ['node_move_backend_unavailable', 'The node move could not be saved right now.'],
+  ['node_move_invalid', 'Cannot move this node:'],
+]) {
+  failures['houseplan/wall/node_move'] = { code, message: code };
+  const requests = log.length;
+  await page.mouse.move(start.x, start.y); await page.mouse.down();
+  await page.mouse.move(target.x, target.y, { steps: 6 });
+  await page.waitForFunction(() => window.__card._editorRuntime.nodeMove.preview !== null);
+  await page.mouse.up(); await idle(); await settled();
+  check(`#891 ${code}: one refused native attempt, no automatic resend`, log.length - requests, 1);
+  check(`#891 ${code}: no successful history or geometry`, [(await state()).size, server], [0, initial]);
+  check(`#891 ${code}: honest visible reason`, (await toasts()).at(-1)?.startsWith(text), true);
+}
 await page.mouse.move(start.x, start.y); await page.mouse.down();
 await page.mouse.move(target.x, target.y, { steps: 6 });
 await page.waitForFunction(() => window.__card._editorRuntime.nodeMove.preview !== null);
@@ -155,7 +173,7 @@ const refusedAt = log.length;
 await page.keyboard.press('Control+Shift+z'); await idle(); await settled();
 check('AC4 refused: one request reached the server and was refused', log.slice(refusedAt).filter(e => e.type === 'node_move').map(e => e.refused), ['timeout']);
 check('AC4 refused: cursor and commands as before', [(await state()).undo, (await state()).redo], [null, MOVE]);
-check('AC4 refused: the cause is named', (await toasts()).at(-1), 'Undo is not available right now. Try again.');
+check('AC4 refused: the cause is named', (await toasts()).at(-1), 'This operation is not available right now. Try again.');
 await step('AC4 next attempt', () => page.keyboard.press('Control+Shift+z'), 'Redo');
 
 // ---- AC7: a move while the own Save flies, accepted in the middle of the gesture

@@ -1888,9 +1888,13 @@ async def ws_wall_node_move(hass: HomeAssistant, connection, msg: dict[str, Any]
                 PartitionOpeningJambMarginError) as err:
             connection.send_error(msg["id"], err.code, str(err))
             return
-        except (vol.Invalid, WallSegmentMigrationError, ValueError, KeyError,
-                TypeError, ZeroDivisionError) as err:
-            connection.send_error(msg["id"], NodeMoveError().code, str(err))
+        except vol.Invalid:
+            connection.send_error(msg["id"], NodeMoveError().code, "Invalid node operation")
+            return
+        except Exception:  # noqa: BLE001 - processing failure is not proof of invalid geometry
+            _LOGGER.exception("House Plan: node operation processing failed")
+            connection.send_error(msg["id"], "node_move_backend_unavailable",
+                                  "Node operation could not be processed; try again")
             return
         if candidate == previous:
             connection.send_result(msg["id"], {"ok": True, "rev": rev, "config": candidate})

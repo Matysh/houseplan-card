@@ -185,6 +185,52 @@ async def test_issue_803_second_host_identity_gate_rejects_foreign_rehost(
     unsubscribe()
 
 
+@pytest.mark.parametrize("failure", ["migration", "type", "unexpected", "invalid"])
+async def test_issue_891_node_processing_refusal_is_safe_retryable_and_does_not_write(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, monkeypatch: pytest.MonkeyPatch,
+    failure: str,
+) -> None:
+    from custom_components.houseplan import websocket_api as api
+    from custom_components.houseplan.wall_segment_model import WallSegmentMigrationError
+    import voluptuous as vol
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    source = {"model_version": 10, "spaces": [{"id": "f", "title": "Floor", "view_box": [0, 0, 1, 1], "rooms": [],
+        "wall_segments": [], "partitions": [{"id": "w", "a": [0, 0], "b": [1, 0], "cm": 0}]}],
+        "markers": [], "settings": {}}
+    await client.send_json_auto_id({"type": "houseplan/config/set", "config": source, "expected_rev": 0})
+    saved = await client.receive_json()
+    assert saved["success"], saved
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    before = (await client.receive_json())["result"]
+    events = []
+    unsubscribe = hass.bus.async_listen("houseplan_config_updated", lambda event: events.append(event.data))
+
+    def broken(*args, **kwargs):
+        if failure == "invalid":
+            raise vol.Invalid("private request material")
+        if failure == "migration":
+            raise WallSegmentMigrationError("private migration material")
+        if failure == "type":
+            raise TypeError("private processing material")
+        raise RuntimeError("private traceback material")
+
+    monkeypatch.setattr(api, "node_move_candidate", broken)
+    await client.send_json_auto_id({"type": "houseplan/wall/node_move", "space_id": "f",
+        "expected_rev": before["rev"], "intent": {"point": [0, 0], "target": [.25, .25]}})
+    refused = await client.receive_json()
+    assert not refused["success"], refused
+    assert refused["error"]["code"] == ("node_move_invalid" if failure == "invalid" else "node_move_backend_unavailable")
+    assert "private" not in refused["error"]["message"]
+    await hass.async_block_till_done()
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    after = (await client.receive_json())["result"]
+    assert after["rev"] == before["rev"] and after["config"] == before["config"]
+    assert events == []
+    unsubscribe()
+
+
 async def test_config_get_advertises_radar_only_while_coordinator_is_ready(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
 ) -> None:

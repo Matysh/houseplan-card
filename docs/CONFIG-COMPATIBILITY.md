@@ -34,6 +34,11 @@ server accepts it only when the same forward operation reproduces the complete
 current canonical document, including every foreign/unknown field. Ordinary
 `config/set` still cannot rehost a partition opening. No receipt, node graph or
 new model version is persisted. Hover/preview/cancel of legacy plans are read-only;
+Node-processing exceptions (#891) return sanitized `node_move_backend_unavailable`
+before any config/revision change; unlike explicit domain proof codes this is
+retryable and does not invalidate a node-history command. Unknown codes are
+also refusals, never success. Existing clients remain compatible and storage,
+expected revisions, proof barriers and capability version are unchanged.
 only an accepted operation crosses the existing materialization barrier.
 The independent host-ID ledger also read-normalises a copy of the original
 durable record before deriving wall identities. It does not mistake an absent

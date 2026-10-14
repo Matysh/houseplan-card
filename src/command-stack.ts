@@ -29,6 +29,9 @@ export class CommandStack<T> {
   public get redoName(): string | null { return this._redo[this._redo.length - 1]?.name ?? null; }
   public get size(): number { return this._undo.length; }
 
+  /** Bounded identity snapshot; inspecting it never moves either cursor. */
+  public commands(): readonly NamedCommand<T>[] { return [...this._undo, ...this._redo]; }
+
   public push(command: NamedCommand<T>): void {
     this._undo.push(command);
     if (this._undo.length > this._limit) this._undo.splice(0, this._undo.length - this._limit);

@@ -200,7 +200,8 @@ tabs, the editor-close reserve, zoom and one gear whose menu holds the rest.
   toast and the result floor (shown like any history step, editor and tool kept)
   follow acceptance; while it is in flight Undo/Redo are inactive. Refusals are
   named and keep the history: unavailable right now (transport, own write
-  failed, update required), another client changed the plan (`history.conflict`,
+  failed, backend processing failure or unknown code), update required for an
+  incompatible client/model, another client changed the plan (`history.conflict`,
   both histories invalidated as before), the space cannot be opened
   (`floor` pinned elsewhere, refused before sending). If the person changed the
   target floor outside history (a title, a room), only that step is removed with
@@ -212,7 +213,7 @@ tabs, the editor-close reserve, zoom and one gear whose menu holds the rest.
   one toast explains it (no «Undone/Redone»). A step on a floor the card's
   `floor` forbids keeps its place in both directions: «This operation belongs to
   a space unavailable in this card. Open a card with access to that space or
-  remove the fixed-floor setting.»; a temporary failure says «Undo is not
+  remove the fixed-floor setting.»; a temporary failure says «This operation is not
   available right now. Try again.». A step that can never be restored (its space
   is gone, its saved state or geometry cannot be safely restored) is removed
   alone: «Cannot undo/redo “name”: reason. Only this operation was removed from
@@ -220,6 +221,13 @@ tabs, the editor-close reserve, zoom and one gear whose menu holds the rest.
   temporary refusal keeps its points and redo points; a removed step ends the
   chain as a session (saved walls unchanged, no Save, Walls stays selected), and
   the next press is an ordinary step.
+- Repeated Undo/Redo in an active Walls chain keeps every session redo point
+  and exact persisted segment ID/thickness (#891). An own rejected strict
+  physical save rolls back only its physical batch and removes its exact
+  commands, not independent Background/other-floor history; surviving
+  presentation snapshots cannot restore refused walls. Ordinary drag failures
+  distinguish changed-plan conflict, update-required, proved unsafe geometry
+  and temporary connection/backend failure. A new attempt is always explicit.
 - A T slides on its original passing wall. An X freezes one original carrier
   and bends its transverse wall at the new node without moving the far ends.
   Doors/windows keep their physical distance from the fixed end; an unsafe

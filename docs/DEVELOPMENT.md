@@ -78,6 +78,18 @@ remain separate from synthetic and upstream evidence. Canon: `VACUUM.md`.
 
 ## Ordinary history refusals (#883)
 
+#891 extends this boundary to strict physical writes. `PhysicalWriteHistory`
+tracks command object identities against the earliest pending baseline;
+rejection restores physical fields only and rebases independent presentation
+snapshots containing that carrier. Never substitute a name/floor sweep or
+`clear()`. A new pending baseline is not owned by a delayed refusal.
+`wall-node-refusal.ts` is shared by native drag and history; processing failures
+have `node_move_backend_unavailable`, not a forged invalid-geometry verdict.
+Focused witnesses: `node --test test/geometry-history-refusal.test.mjs
+test/node-refusal.test.mjs`, `node demo/smoke_wall_chain_history.mjs`,
+`node demo/smoke_node_history_context.mjs`, and `pytest
+tests_backend/test_ha_websocket.py -k 'issue_891 or issue_803'`.
+
 `src/geometry-history-step.ts` is one ordinary Undo/Redo attempt over the real
 `CommandStack`: `_applyGeometryState` returns `true` or a reason; `retry` and
 `pinned` keep the command, `space`/`state`/`geometry` remove exactly that object.

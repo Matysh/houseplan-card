@@ -144,6 +144,61 @@ const undone = name => `history.undone{"name":"${name}"}`;
 const redone = name => `history.redone{"name":"${name}"}`;
 const removed = (direction, name, reason) => `history.removed_${direction}{"name":"${name}","reason":"history.reason_${reason}"}`;
 
+test('#891 AC2 strict pre-send refusal removes only owned physical commands and rebases independent Background snapshots', async () => {
+  const s = setup();
+  const older = await s.addWall('g'), background = await s.addLine('f');
+  const before = s.runtime._geometrySnapshot('f');
+  s.spaceOf('f').partitions = [{ id: 'refused', a: [.25, .25], b: [1, .25], cm: 10 }];
+  assert.equal(s.runtime._commitPhysicalGeometry(WALL, before), true);
+  const refused = s.geometryHistory.peekUndo();
+  const backdropBefore = s.runtime._geometrySnapshot('f');
+  s.spaceOf('f').plan_x = .125;
+  s.runtime._recordGeometry(WALL, backdropBefore); // deliberately same label and floor, distinct identity
+  const newer = s.geometryHistory.peekUndo();
+  s.host._pendingPhysicalWrites.get('f').fingerprint = '';
+  s.host._checkSpacePhysicalGeometry = UNSAFE;
+  const sent = s.server.sets;
+  await assert.rejects(s.runtime._writeConfig(), error => error.code === 'geometry-unsafe');
+  s.expectStack([older, background, newer], [], 'independent command identities survive');
+  assert.equal(s.server.sets, sent, 'preflight refusal sends no WS');
+  assert.equal(s.ids('f').includes('refused'), false);
+  assert.equal(s.spaceOf('f').plan_x, .125, 'independent live background survives rollback');
+  assert.equal(s.geometryHistory.commands().includes(refused), false);
+  s.host._checkSpacePhysicalGeometry = () => ({ ok: true });
+  s.runtime._undoGeometry(); await s.writes();
+  assert.equal(s.spaceOf('f').plan_x, undefined);
+  assert.equal(s.ids('f').includes('refused'), false, 'Background Undo cannot resurrect refused walls');
+  s.runtime._redoGeometry(); await s.writes();
+  assert.equal(s.spaceOf('f').plan_x, .125);
+  assert.equal(s.ids('f').includes('refused'), false, 'Background Redo cannot resurrect refused walls');
+});
+
+test('#891 AC2 delayed non-conflict physical refusal preserves newer same-floor Background command and other-floor history', async () => {
+  const s = setup(); const older = await s.addWall('g');
+  const before = s.runtime._geometrySnapshot('f');
+  s.spaceOf('f').partitions = [{ id: 'refused', a: [.25, .25], b: [1, .25], cm: 10 }];
+  assert.equal(s.runtime._commitPhysicalGeometry(WALL, before), true);
+  let reject;
+  s.host._sendConfigCandidate = () => new Promise((resolve, fail) => { reject = fail; });
+  const write = s.runtime._writeConfig(); await settle();
+  const afterStart = s.runtime._geometrySnapshot('f'); s.spaceOf('f').plan_scale = 2;
+  s.runtime._recordGeometry(WALL, afterStart); const newer = s.geometryHistory.peekUndo();
+  reject(Object.assign(new Error('offline'), { code: 'timeout' }));
+  await assert.rejects(write, error => error.physicalGeometryRolledBack === true);
+  s.expectStack([older, newer], [], 'late refusal is not a name/floor sweep');
+  assert.equal(s.spaceOf('f').plan_scale, 2);
+  assert.equal(s.ids('f').includes('refused'), false);
+  assert.equal(newer.before.partitions?.some(p => p.id === 'refused') ?? false, false);
+  assert.equal(newer.after.partitions?.some(p => p.id === 'refused') ?? false, false);
+  // An already retired refusal cannot roll back a fresh transaction sharing only its floor.
+  const oldEntry = { before, fingerprint: '' }, freshBefore = s.runtime._geometrySnapshot('f');
+  s.host._pendingPhysicalWrites.set('f', { before: freshBefore, fingerprint: 'new' });
+  const state = clone(s.host._serverCfg);
+  assert.equal(s.runtime._rollbackRejectedPhysicalWrites([['f', oldEntry]]), false);
+  s.expectStack([older, newer], [], 'old transaction identity owns nothing new');
+  assert.deepEqual(s.host._serverCfg, state);
+});
+
 // ---------------------------------------------------------------- AC1
 test('#883 AC1 a floor pinned elsewhere keeps the exact Undo/Redo command, writes nothing, keeps the floor; unpinned, the retry applies exactly it', async () => {
   const s = setup();
@@ -285,6 +340,18 @@ test('#883 AC3 active chain Redo: a temporary refusal keeps path, IDs, thickness
   s.runtime._redoGeometry();
   assert.deepEqual(s.ledger(), { ...ledger, path: [...ledger.path, [1750, 1000]], ids: ['chain-1', 'chain-2'], cms: [10, 10], redo: [] },
     'success keeps «one accepted point forward»');
+});
+test('#891 AC1 a second active-chain history reset preserves every redo point, not just the terminal one', async () => {
+  const s = await chain();
+  const redo = clone(s.host._wallChainRedo);
+  // This is the same production reset invoked by each successful active-segment
+  // Undo. The card appends the next terminal point after the reset returns.
+  assert.equal(s.runtime._stepGeometryHistory('undo'), true);
+  assert.deepEqual(s.host._wallChainRedo, redo, 'transient reset must not clear the session redo journal');
+  s.host._activeWallChainId = 'chain-a';
+  s.host._wallChainRedo.push({ id: 'chain-1', point: [1000, 1000], cm: 10 });
+  assert.equal(s.runtime._stepGeometryHistory('redo'), true);
+  assert.equal(s.host._wallChainRedo.length, 2, 'another successful reset retains both entries');
 });
 test('#883 AC3 active chain: an unfit step ends the obsolete chain without a write; the next press is an ordinary step', async () => {
   for (const direction of ['redo', 'undo']) {

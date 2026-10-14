@@ -6,6 +6,11 @@
   card options. Refused vacuum-map edits and New acknowledgements restore their
   own changes, and save-permission errors name saving rather than backup import
   ([#890](https://github.com/Matysh/houseplan-card/issues/890)).
+- Walls drawing keeps every redo point after repeated Undo; rejected physical
+  saves preserve independent Background/other-floor history without restoring
+  refused walls. Node-move messages now distinguish conflicts, geometry proof
+  refusals and temporary connection/backend failures; fixed-floor history uses
+  the same honest message for Undo and Redo ([#891](https://github.com/Matysh/houseplan-card/issues/891)).
 
 ## v1.81.0-beta.2 — 2026-10-14
 

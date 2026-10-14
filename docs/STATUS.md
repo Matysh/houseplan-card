@@ -45,6 +45,12 @@ including a beta version with no matching stable. Token ceilings are unchanged.
   Fast replacement-context reads and writes are independent of the old queue;
   late completions cannot decrement the new counter or roll back a matching body.
 
+Geometry history safety (#891) keeps active Walls redo journals across repeated
+Undo, preserves independent history/state on strict physical-save refusal,
+and distinguishes node conflict/proof/update/temporary processing failures.
+Node-history classifier corrections originated in #843's intermediate beta;
+the release's stable-fix narrative concerns the pre-existing chain/write UX.
+
 Beta publication (#889) treats additional owner scene/dev/native/GPU records
 as advice when absent, not as fabricated acceptance. Only the committed beta
 version selects this policy; stable/RC/unknown channels stay strict. Exact full

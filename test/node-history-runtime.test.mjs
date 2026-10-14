@@ -367,7 +367,7 @@ test('#843 AC5 a fixed floor that cannot show the result refuses before sending'
   s.host._space = 'g'; s.host._tool = 'draw';
   s.host._canCommitSpace = id => id === 'g'; // the card's `floor` now pins g
   s.runtime._undoGeometry(); await s.idle();
-  assert.deepEqual([s.nodeWrites(), s.toasts, s.shell], [['apply@3:f'], ['history.space_unavailable'], []]);
+  assert.deepEqual([s.nodeWrites(), s.toasts, s.shell], [['apply@3:f'], ['history.space_pinned'], []]);
   assert.deepEqual(s.stack(), { undo: MOVE, redo: null, size: 2 });
 });
 

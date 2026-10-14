@@ -628,7 +628,18 @@ that command object from the direction it is in (identity, never name or
 floor). One press is one attempt in all four call sites (Undo, Redo,
 active-chain Redo, active-segment Undo); an unfit step ends an obsolete
 transient Walls chain without a write. Snapshots are not rebuilt after a
-removal; node commands keep #843's server path. Every
+removal; node commands keep #843's server path.
+Own strict-write refusals (#891) use `PhysicalWriteHistory`: the pending
+baseline owns exact command objects. Rollback restores only the physical
+carrier, preserves independent presentation state, and rebases presentation
+snapshots that contain refused walls so their Undo/Redo cannot resurrect them.
+A retired baseline never owns a fresh transaction. The active Walls redo
+journal survives the transient history reset; explicit finish still retires it.
+`wall-node-refusal.ts` names a finite set of proved-invalid codes; unknown or
+backend-processing errors retain node commands, and incompatible clients ask
+for an update. The backend sends a sanitized retryable processing code before
+any write; domain and invalid-request refusals keep their existing codes.
+Every
 physical-geometry writer crosses one fail-closed boundary (#278,
 `checkSpacePhysicalGeometry()`) before history/save, rechecked at the deferred
 write; presentation edits bypass it. Contracts: Walls chain, faces, room

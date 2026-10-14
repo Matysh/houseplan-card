@@ -3,6 +3,8 @@
   "node_move_ambiguous": "Die Knoten liegen zu nahe beieinander. Zum Auswählen vergrößern.",
   "node_move_choose_axis": "Entlang einer ursprünglichen Wand ziehen, um die Gleitachse zu wählen.",
   "node_move_invalid": "Knoten kann nicht bewegt werden: {reason}",
+  "node_move_write_conflict": "Der Plan hat sich während der Bewegung geändert. Nichts gespeichert; im aktualisierten Plan erneut versuchen.",
+  "node_move_write_unavailable": "Die Knotenbewegung konnte gerade nicht gespeichert werden. Verbindung prüfen und erneut versuchen.",
   "node_move_opening_blocked": "Eine Tür oder ein Fenster würde nicht passen oder den Knoten kreuzen. Bewegung abgebrochen.",
   "node_move_update_required": "House-Plan-Integration aktualisieren, um Wandknoten zu bewegen.",
   "node_move_history": "Wandknoten bewegen",

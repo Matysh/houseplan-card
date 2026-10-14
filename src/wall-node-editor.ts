@@ -10,6 +10,7 @@ import { applyNodeMove, pickWallNode, prepareNodeMove, resolveNodeMoveSnap, stru
 import type { ServerConfig } from './types';
 import type { NodePreviewScene } from './wall-node-preview';
 import type { NodeWriteBasis } from './wall-node-write';
+import { nodeDragRefusalKey } from './wall-node-refusal';
 import { VISUAL_MITRE_LIMIT } from './wall-thickness';
 
 /** `floor`: the target floor fingerprint this direction expects before it is sent (#843). */
@@ -248,8 +249,10 @@ export class WallNodeEditor {
       const config = await this.port.write(history, s.basis);
       const after = config.spaces.find(space => space.id === history.beforeSpace.id) as NodeMoveSpace;
       this.port.record(history.beforeSpace, after, history.intent);
-    } catch {
-      this.port.toast(this.port.text('node_move_invalid', { reason: this.port.text('toast.geometry_unsafe') }));
+    } catch (error) {
+      const key = nodeDragRefusalKey(error);
+      this.port.toast(this.port.text(key, key === 'node_move_invalid'
+        ? { reason: this.port.text('toast.geometry_unsafe') } : undefined));
     } finally {
       this.busy = false;
       // Own config adoption may already have retired the preview before record.

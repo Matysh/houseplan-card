@@ -3149,6 +3149,7 @@ export class HouseplanCard extends LitElement {
 
   /** Undo one persisted wall while keeping the session-only chain coherent. */
   private _undoActiveWallPoint(): void {
+    const chainId = this._activeWallChainId;
     const ids = [...this._activeWallChainPartitionIds];
     const terminalId = ids[ids.length - 1];
     const terminal = this._spaceModel()?.partitions.find((item) => item.id === terminalId);
@@ -3165,7 +3166,7 @@ export class HouseplanCard extends LitElement {
     }
     // #883: a temporary refusal keeps this ledger; an unfit step has already ended the chain.
     if (outcome !== true) return;
-    this._activeWallChainId ||= `chain-${Date.now().toString(36)}`;
+    this._activeWallChainId = chainId || `chain-${Date.now().toString(36)}`;
     this._activeWallChainPartitionIds = ids.slice(0, -1);
     this._path = nextPath.length ? nextPath : start ? [start] : [];
     this._wallChainSegmentCms = nextCms;

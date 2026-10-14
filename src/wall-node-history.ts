@@ -7,6 +7,7 @@ import type { NamedCommand } from './command-stack';
 import type { ServerConfig } from './types';
 import type { NodeMoveHistory } from './wall-node-editor';
 import { nodeFloorFingerprint, type NodeWriteBasis } from './wall-node-write';
+import { nodeWriteRefusal } from './wall-node-refusal';
 
 export interface NodeHistoryStack<T> {
   peekUndo(): NamedCommand<T> | null;
@@ -30,14 +31,11 @@ export interface NodeHistoryPort<T extends { nodeMove?: NodeMoveHistory }> {
   toast(text: string): void;
 }
 
-export type NodeHistoryRefusal = 'conflict' | 'outdated' | 'unavailable';
+export type NodeHistoryRefusal = 'conflict' | 'outdated' | 'incompatible' | 'unavailable';
 /** Refusals the person can tell apart. Only `outdated` makes the command unfit. */
 export function nodeHistoryRefusal(error: unknown, foreign: boolean): NodeHistoryRefusal {
-  const code = String((error as { code?: unknown } | null)?.code ?? (error as Error | null)?.message ?? '');
-  if (foreign || code === 'conflict') return 'conflict';
-  return code === 'stale-node-snapshot'
-    || /^(?:node_move_|junction_limit_|invalid_passage_|invalid_partition_opening_)/.test(code)
-    ? 'outdated' : 'unavailable';
+  const kind = nodeWriteRefusal(error, foreign);
+  return kind === 'proof' ? 'outdated' : kind;
 }
 
 export async function runNodeHistory<T extends { nodeMove?: NodeMoveHistory }>(
@@ -51,7 +49,7 @@ export async function runNodeHistory<T extends { nodeMove?: NodeMoveHistory }>(
   if (!port.api()) { port.toast(port.text('node_move_update_required')); return; }
   const space = history.beforeSpace.id, epoch = port.epoch();
   // Refused before anything is sent; the active floor and the history stay.
-  if (!port.canShow(space)) { port.toast(port.text('history.space_unavailable')); return; }
+  if (!port.canShow(space)) { port.toast(port.text('history.space_pinned')); return; }
   let config: ServerConfig;
   try {
     // Undo expects the accepted move's floor, Redo the accepted Undo's floor.
@@ -62,7 +60,8 @@ export async function runNodeHistory<T extends { nodeMove?: NodeMoveHistory }>(
     if (refusal === 'outdated') stack.removeWhere(item => item === command);
     port.toast(port.text(refusal === 'outdated'
       ? undo ? 'history.node_outdated_undo' : 'history.node_outdated_redo'
-      : refusal === 'conflict' ? 'history.conflict' : 'history.unavailable'));
+      : refusal === 'conflict' ? 'history.conflict' : refusal === 'incompatible'
+        ? 'node_move_update_required' : 'history.unavailable'));
     return;
   }
   if (!(undo ? stack.confirmUndo(command) : stack.confirmRedo(command))) stack.removeWhere(item => item === command);

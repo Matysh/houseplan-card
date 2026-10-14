@@ -40,6 +40,7 @@ import { isGeometryCleanupRefusal, supersedeDeferredWrite } from './config-adopt
 import type { WallNodeEditor } from './wall-node-editor';
 import { type SpaceGeometryState, nodeHistoryNext } from './geometry-history-state';
 import { type HistoryApply, historyUnfit, runOrdinaryHistory } from './geometry-history-step';
+import { PhysicalWriteHistory, physicalHistoryChanged, physicalRollbackState } from './physical-write-history';
 import './hp-device-preview'; import './hp-zigbee-topology-settings';
 import { adoptEditorStyles } from './editor-style-adoption'; // #805: after the CSS-bearing elements — shared gzip context
 import {
@@ -824,6 +825,7 @@ export const EDITOR_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 export { EDITOR_LANGUAGE_RUNTIME }; // #627: see src/i18n/editor-language.ts
 
 export class HouseplanEditorRuntime {
+  private readonly physicalWriteHistory = new PhysicalWriteHistory();
   public readonly chainExit: EditorChainExit;
   private _navigationIntent = 0;
   public get navigationIntent(): number { return this._navigationIntent; }
@@ -1529,15 +1531,19 @@ public _rollbackRejectedPhysicalWrites(
   ): boolean {
     if (!this.host._serverCfg || !entries.length) return false;
     let restored = false;
-    for (const [spaceId] of entries) {
+    for (const [spaceId, attempt] of entries) {
       const pending = this.host._pendingPhysicalWrites.get(spaceId);
-      if (!pending) continue;
-      restored = this._restoreGeometryStateInConfig(this.host._serverCfg, pending.before) || restored;
+      // A delayed refusal cannot own a newly started physical transaction.
+      if (!pending || pending.before !== attempt.before) continue;
+      const live = this._geometrySnapshot(spaceId);
+      if (!live) continue;
+      restored = this._restoreGeometryStateInConfig(this.host._serverCfg,
+        physicalRollbackState(live, pending.before)) || restored;
+      this.physicalWriteHistory.reject(this.host._geometryHistory, pending.before);
       this.host._pendingPhysicalWrites.delete(spaceId);
     }
     if (!restored) return false;
     this._clearGeometryGesture();
-    this.host._geometryHistory.clear();
     this.host._cfgEpoch++;
     this.host._modelCache = null;
     this.host._wallUnionCache = null;
@@ -1573,6 +1579,7 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null): Pro
       const candidateFingerprint = contentFingerprint(candidate);
       if (attempt && liveFingerprint === attempt.attemptedFingerprint) Object.assign(attempt, { revision: this.host._cfgRev, attempted: candidate, attemptedFingerprint: candidateFingerprint });
       const strictEntries = [...this.host._pendingPhysicalWrites.entries()];
+      const strictCommands = strictEntries.map(([, accepted]) => this.physicalWriteHistory.capture(accepted.before));
       for (const [spaceId, accepted] of strictEntries) {
         const candidateSpace = candidate.spaces.find((space) => space.id === spaceId);
         const exactFingerprint = spacePhysicalGeometryFingerprint(candidateSpace);
@@ -1580,9 +1587,7 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null): Pro
         let safe = false;
         try { safe = this.host._checkSpacePhysicalGeometry(candidate, spaceId).ok; } catch { safe = false; }
         if (!safe) {
-          this._restoreGeometryStateLocal(accepted.before);
-          this.host._pendingPhysicalWrites.delete(spaceId);
-          this.host._geometryHistory.clear();
+          this._rollbackRejectedPhysicalWrites([[spaceId, accepted]]);
           this.host._showToast(this.host._t('toast.geometry_unsafe'));
           throw Object.assign(new Error('unsafe wall geometry'), { code: 'geometry-unsafe' });
         }
@@ -1616,7 +1621,8 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null): Pro
         throw failure;
       }
       if (discoveryWrite) this.roomDeviceDiscovery.accept(discoveryWrite, this.host._serverCfg);
-      for (const [spaceId, accepted] of strictEntries) {
+      for (const [index, [spaceId, accepted]] of strictEntries.entries()) {
+        this.physicalWriteHistory.accept(accepted.before, strictCommands[index]);
         if (this.host._pendingPhysicalWrites.get(spaceId)?.fingerprint === accepted.fingerprint)
           this.host._pendingPhysicalWrites.delete(spaceId);
       }
@@ -1676,7 +1682,10 @@ public _recordGeometry(name: string, before: SpaceGeometryState | null): void {
         before.roomReferences.map((reference) => reference.markerId),
       );
     }
-    this.host._geometryHistory.push({ name, before, after });
+    const command = { name, before, after };
+    this.host._geometryHistory.push(command);
+    if (physicalHistoryChanged(before, after))
+      this.physicalWriteHistory.record(this.host._pendingPhysicalWrites.get(before.spaceId)?.before || before, command);
     this.host.requestUpdate();
   }
 
@@ -2033,7 +2042,7 @@ public _commitPhysicalGeometry(
     return true;
   }
 
-public _clearGeometryGesture(): void {
+public _clearGeometryGesture(preserveWallChainRedo = false): void {
     this.chainExit.invalidate();
     // Reload/rollback may discard a room-face proposal without its Save path.
     // Close only that creation form, never an ordinary room-settings dialog.
@@ -2063,7 +2072,7 @@ public _clearGeometryGesture(): void {
     this.host._activeWallChainId = null;
     this.host._activeWallChainPartitionIds = [];
     this.host._wallChainSegmentCms = [];
-    this.host._wallChainRedo = [];
+    if (!preserveWallChainRedo) this.host._wallChainRedo = [];
     this.host._closingWallCm = null;
     this.host._openingDialog = null;
     this._rszResetController();
@@ -2170,7 +2179,7 @@ public _applyGeometryState(
           fingerprint: strict ? spacePhysicalGeometryFingerprint(afterSpace) : '',
         });
       }
-      this._showGeometrySpace(target.spaceId);
+      this._showGeometrySpace(target.spaceId, !!host._activeWallChainId && host._space === target.spaceId);
       host._modelCache = null;
       host._frame = null;
       host._regSignature = '';
@@ -2187,8 +2196,8 @@ public _applyGeometryState(
   }
 
 /** Show the floor of an applied history step; editor, tool and navigation stay (#843 shares it). */
-public _showGeometrySpace(spaceId: string): void {
-    this._clearGeometryGesture();
+public _showGeometrySpace(spaceId: string, preserveWallChainRedo = false): void {
+    this._clearGeometryGesture(preserveWallChainRedo);
     if (this.host._space !== spaceId) {
       this.host._commitSpace(spaceId);
       this.host._saveNav();
@@ -2224,12 +2233,15 @@ private _historyGestureFirst(): boolean {
  */
 public _stepGeometryHistory(direction: 'undo' | 'redo'): HistoryApply | null {
     const host = this.host;
+    const command = direction === 'undo' ? host._geometryHistory.peekUndo() : host._geometryHistory.peekRedo();
     const outcome = runOrdinaryHistory({
       stack: host._geometryHistory,
       apply: (state) => this._applyGeometryState(state, true),
       text: (key, params) => host._t(key as I18nKey, params),
       toast: (text) => host._showToast(text),
     }, direction);
+    const pending = command && host._pendingPhysicalWrites.get(command.before.spaceId);
+    if (outcome === true && pending && command) this.physicalWriteHistory.record(pending.before, command);
     if (historyUnfit(outcome) && host._activeWallChainId) this._clearGeometryGesture();
     host.requestUpdate();
     return outcome;
@@ -2237,6 +2249,11 @@ public _stepGeometryHistory(direction: 'undo' | 'redo'): HistoryApply | null {
 
 public _undoGeometry = (): void => {
     if (this._historyGestureFirst()) return;
+    // Toolbar and keyboard must remove the same terminal point of a live chain.
+    if (this.host._tool === 'draw' && this.host._activeWallChainPartitionIds.length
+        && this.host._path.length > 1 && typeof this.host._undoPoint === 'function') {
+      this.host._undoPoint(); return;
+    }
     if (nodeHistoryNext(this.host._geometryHistory, 'undo')) this._runNodeHistory('undo');
     else this._stepGeometryHistory('undo');
   };

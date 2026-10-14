@@ -105,7 +105,7 @@ const editor = async (mode, tool) => {
 };
 const SEGMENT = 'Add wall segment', DECOR = 'Add decor object';
 const PINNED = 'This operation belongs to a space unavailable in this card. Open a card with access to that space or remove the fixed-floor setting.';
-const RETRY = 'Undo is not available right now. Try again.';
+const RETRY = 'This operation is not available right now. Try again.';
 const removed = (verb, name) => `Cannot ${verb} “${name}”: the geometry cannot be safely restored. Only this operation was removed from history.`;
 
 // ---- two real steps on two floors

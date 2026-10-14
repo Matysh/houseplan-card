@@ -20,7 +20,7 @@ function setup() {
   const listeners = new Set(), add = window.addEventListener.bind(window), remove = window.removeEventListener.bind(window);
   window.addEventListener = (type, listener) => { if (type === 'pagehide') listeners.add(listener); add(type, listener); };
   window.removeEventListener = (type, listener) => { if (type === 'pagehide') listeners.delete(listener); remove(type, listener); };
-  let paintResolve, paint = Promise.resolve(), fail = false, retireOnWrite = false, validPreview = true;
+  let paintResolve, paint = Promise.resolve(), fail = null, retireOnWrite = false, validPreview = true;
   const changes = [], validations = [];
   const port = { context: () => context, config: () => cfg,
     screenPoint: ev => [ev.clientX, ev.clientY], unitsPerPixel: () => 0.0001,
@@ -31,7 +31,7 @@ function setup() {
     changed: () => { lifecycle.push('changed'); changes.push([editor.busy, recorded.length]); },
     validate: (...args) => { validations.push(args); return validPreview; }, paintOpportunity: () => paint,
     write: async h => {
-      writes.push(h); if (fail) throw new Error('refused');
+      writes.push(h); if (fail) throw fail;
       if (retireOnWrite) { context.revision++; editor.paint(); }
       const nodes = structuralWallNodes(h.beforeSpace), node = nodes.find(n => n.point.every((v, i) => v === h.intent.point[i]));
       const r = applyNodeMove(prepareNodeMove(h.beforeSpace, node, nodes), h.intent.target, h.intent.axis);
@@ -45,7 +45,7 @@ function setup() {
     holdFrames: () => { autoFrames = false; }, flushFrame,
     refusePreview: () => { validPreview = false; },
     holdPaint: () => { paint = new Promise(resolve => { paintResolve = resolve; }); },
-    finishPaint: () => paintResolve(), refuse: () => { fail = true; }, retireAtWrite: () => { retireOnWrite = true; } };
+    finishPaint: () => paintResolve(), refuse: (code = 'refused') => { fail = Object.assign(new Error(code), { code }); }, retireAtWrite: () => { retireOnWrite = true; } };
 }
 const settle = () => new Promise(resolve => setImmediate(resolve));
 const deferred = () => { let resolve; return { promise: new Promise(r => { resolve = r; }), resolve: v => resolve(v) }; };

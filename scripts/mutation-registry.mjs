@@ -552,6 +552,45 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'physical-refusal-clears-independent-history',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#891 AC2" test/geometry-history-refusal.test.mjs',
+    because: '#891 AC2: owned physical rollback must retain independent command objects and their order',
+    patches: [{ file: 'src/physical-write-history.ts',
+      find: '    stack.removeWhere(command => batch.has(command));',
+      replace: '    stack.clear(); // mutant: erase independent history',
+    }],
+  },
+  {
+    id: 'wall-chain-history-transient-reset-clears-redo-journal',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#891 AC1" test/geometry-history-refusal.test.mjs',
+    because: '#891 AC1: consecutive successful active-chain resets must retain all earlier redo points',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts',
+      find: '    if (!preserveWallChainRedo) this.host._wallChainRedo = [];',
+      replace: '    this.host._wallChainRedo = []; // mutant: forget every earlier redo point',
+    }],
+  },
+  {
+    id: 'physical-refusal-keeps-rejected-carrier-in-background-history',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#891 AC2" test/geometry-history-refusal.test.mjs',
+    because: '#891 AC2: a surviving Background Undo/Redo cannot resurrect rejected physical geometry',
+    patches: [{ file: 'src/physical-write-history.ts',
+      find: '          command[direction] = physicalRollbackState(command[direction], baseline);',
+      replace: '          command[direction] = command[direction]; // mutant: keep rejected walls',
+    }],
+  },
+  {
+    id: 'node-backend-processing-is-geometry-proof',
+    guard: 'python -m pytest tests_backend/test_ha_websocket.py -q -k issue_891',
+    because: '#891 AC3: real HA websocket registration must distinguish processing failure from proved invalid geometry',
+    patches: [{ file: 'custom_components/houseplan/websocket_api.py',
+      find: '            connection.send_error(msg["id"], "node_move_backend_unavailable",',
+      replace: '            connection.send_error(msg["id"], "node_move_invalid",',
+    }],
+  },
+  {
     id: 'node-history-shows-floor-before-answer',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="#843 AC5" test/node-history-runtime.test.mjs',

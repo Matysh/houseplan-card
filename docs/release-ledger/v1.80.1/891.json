@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 891,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "Walls multi-step redo journal, whole-history clearing on strict physical-save refusal, and misleading node-editor/backend error messages already existed in v1.80.1. Those independent user-facing fixes justify the stable-fix milestone. The selective node-history classifier was introduced by #843 after that stable release; its corrected finite taxonomy is an intermediate line-fix introducedBy #843, not a separately claimed old-stable bug. The technical beta changelog includes both parts; stable prose must not advertise AC3 as a v1.80.1 regression.",
+  "summary": {
+    "ru": "Повтор стен и независимая история фона сохраняются при отказах записи; ошибки перемещения узла понятнее объясняют причину.",
+    "en": "Wall redo and independent Background history survive save refusals; node-move errors explain the actual cause."
+  }
+}

@@ -7,6 +7,8 @@
 import { installAdoption } from './adoption-host.mjs';
 import { HpConfirmController } from '../../test-build/danger-confirm.js';
 import { canonicalizeConfigGeometry } from '../../test-build/coordinate-canonicalization.js';
+import { CommandStack } from '../../test-build/command-stack.js';
+import { PhysicalWriteHistory } from '../../test-build/physical-write-history.js';
 
 globalThis.window ??= { customCards: [] };
 globalThis.window.customCards ??= [];
@@ -59,7 +61,7 @@ export function editorWriteHarness({ config, rev = 1, reject = null, marker = nu
     _writeChain: Promise.resolve(),
     _cfgEpoch: 0,
     _pendingPhysicalWrites: new Map(),
-    _geometryHistory: { clear() {} },
+    _geometryHistory: new CommandStack(50),
     _devicePositionHistory: { clear() {} },
     _regSignature: '',
     _layout: {},
@@ -105,6 +107,8 @@ export function editorWriteHarness({ config, rev = 1, reject = null, marker = nu
   host._confirmDanger = (request) => controller.confirm(request);
 
   const runtime = Object.create(HouseplanEditorRuntime.prototype);
+  // This focused writer harness skips the DOM-heavy runtime constructor.
+  runtime.physicalWriteHistory = new PhysicalWriteHistory();
   runtime.host = host;
   // The card's deferred writer and its background failure policy.
   host._saveConfigDebounced = deferredWrite(() => {
