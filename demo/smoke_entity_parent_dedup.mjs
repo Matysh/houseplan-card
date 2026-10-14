@@ -71,6 +71,9 @@ const out = await page.evaluate(async () => {
     actionDoesNotRewriteConfig: JSON.stringify(card._serverCfg) === configBeforeAction,
   };
 
+  // #844: kiosk owns the preceding View assertions, never an editor. Change
+  // the card-option fixture before checking the same exact binding in Devices.
+  card._config = { ...card._config, kiosk: false }; // private-ok: #844 leave the kiosk fixture without replacing its synthetic plan/layout from cache
   card._setMode('devices');
   card._openMarkerDialog(card._devices.find((item) => item.id === marker.id));
   await paint();
