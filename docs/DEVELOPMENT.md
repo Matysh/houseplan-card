@@ -74,6 +74,11 @@ unavailable. The positive room-name tap observes Chromium's trusted implicit
 loss after up; Android delivery remains a field hypothesis, not a headless claim.
 Pure units execute the hold clock/generation and shared subscriber disposal;
 registered mutants are checked statically and executed only by the nightly job.
+Space-change probes keep mouse and touch down for 750 ms after both hash and
+facade navigation, check inertness before release, and verify the first fresh
+native tap on return. Mouse has no implicit capture; an observed absence of
+terminals prevents DOM-removal loss or early pointerup from masking the
+`_commitSpace` cancellation witness (CODE-REVIEW-847-r1 M1).
 
 ## Config writer authority witnesses (#890)
 

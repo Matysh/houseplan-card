@@ -36,8 +36,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 51 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 66 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 41 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 172 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **338 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 173 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **339 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -315,6 +315,12 @@ unit cannot prove that this callback is actually fenced before its read.
 
 - `config-old-subscription-interrupts-new-paired-load`
 - `config-return-retains-inert-subscription`
+
+#847 M1: navigation holds the trusted mouse down beyond the timer deadline;
+there is no implicit capture or independent terminal masking space cancellation.
+The same hash/facade cases keep native touch and immediate next-tap controls.
+
+- `view-space-change-keeps-pending-hold`
 
 #846: these guards cross mounted floor arrival/browser-storage camera, shadow
 dialog event capture, hash/tab navigation and retained action closures after an

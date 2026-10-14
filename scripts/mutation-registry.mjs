@@ -93,6 +93,14 @@ const MUTANT_DEFINITIONS = [
       replace: '          return callback(ev);' }],
   },
   {
+    id: 'view-space-change-keeps-pending-hold',
+    guard: 'node demo/smoke_view_hold_lifecycle.mjs',
+    because: '#847 AC4(в)/D6: actual hash/facade navigation while trusted mouse remains down past 600 ms must retire the mounted hold; no implicit capture/terminal masks space cancellation. Native touch and first-fresh-tap controls remain.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: '      this._cancelPendingWarmMode();\n      this._viewHold.cancel();\n      this._clearRoomFocus(true);',
+      replace: '      this._cancelPendingWarmMode();\n      // mutant: old-space hold survives navigation\n      this._clearRoomFocus(true);' }],
+  },
+  {
     id: 'kiosk-retired-confirmation-accepts-new-intent',
     guard: 'node demo/smoke_kiosk_cycle_context.mjs',
     because: '#846 AC5/AC6: a retained DOM confirm button after cancellation must not execute or dismiss a newer same-floor dialog intent in the mounted Lit card.',

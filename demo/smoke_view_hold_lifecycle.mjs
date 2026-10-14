@@ -226,14 +226,36 @@ const show = (page, kind) => page.evaluate((mode) => {
       assert.equal((await state(page)).contacts, 0, 'late old terminal cannot restore a contact');
       out[`${kind}FirstFreshTap`] = true;
     }
-    // Pending hold is retired on both public space-navigation paths.
-    for (const route of ['hash', 'facade']) {
+    // M1: stay physically down beyond 600 ms after navigating. Mouse has no
+    // implicit capture, so DOM-removal loss/up cannot mask _commitSpace's guard.
+    // Touch retains original D6 without claiming its terminal delivery is absent.
+    for (const route of ['hash', 'facade']) for (const modality of ['mouse', 'touch']) {
       const initial = await state(page), p = await point(page.locator(DEVICE));
-      await touch(cdp, 'touchStart', [{ ...p, id: 5 }]); await wait(page, 100);
+      if (modality === 'touch') await touch(cdp, 'touchStart', [{ ...p, id: 5 }]);
+      else { await page.mouse.move(p.x, p.y); await page.mouse.down(); }
+      await wait(page, 100);
+      const held = (await events(page)).filter(e => e.type === 'pointerdown' && e.pointerType === modality).at(-1);
+      assert.ok(held?.trusted, `${route}/${modality}: trusted contact starts the pending hold`);
+      const terminalStart = (await events(page)).length;
       if (route === 'hash') await page.evaluate(() => { location.hash = '#space=garden'; });
       else await page.evaluate(() => window.__hpTest.switchSpace('garden'));
-      await touch(cdp, 'touchEnd'); await sameInert(page, initial, `${route}SpaceRetiresHold`);
-      await page.evaluate(() => window.__hpTest.switchSpace('f1'));
+      await page.waitForFunction(() => window.__card._space === 'garden');
+      await sameInert(page, initial, `${route}${modality}SpaceRetiresStillDownHold`, 750);
+      assert.equal((await state(page)).owner, null, 'navigation retires the timer before physical release');
+      if (modality === 'mouse') {
+        assert.equal((await events(page)).slice(terminalStart).some(e => e.pointerId === held.pointerId
+          && ['pointerup', 'pointercancel', 'lostpointercapture'].includes(e.type)), false,
+        'mouse navigation has no independent terminal cancelling the hold');
+        await page.mouse.up();
+      } else await touch(cdp, 'touchEnd');
+      await sameInert(page, initial, `${route}${modality}OldReleaseStaysInert`, 40);
+      if (route === 'hash') await page.evaluate(() => { location.hash = '#space=f1'; });
+      else await page.evaluate(() => window.__hpTest.switchSpace('f1'));
+      await page.waitForFunction(() => window.__card._space === 'f1');
+      const fresh = await point(page.locator(DEVICE));
+      await page.touchscreen.tap(fresh.x, fresh.y); await wait(page, 120);
+      assert.notEqual((await state(page)).light, initial.light, 'first fresh native tap after space return works');
+      out[`${route}${modality}SpaceFirstFreshTap`] = true;
     }
     // A real cancelled contact followed by actual blur cannot resurrect a timer.
     const initial = await state(page), p = await point(page.locator(DEVICE));
