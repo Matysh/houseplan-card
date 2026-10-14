@@ -3,9 +3,9 @@
   "issue": 697,
   "baseStable": "v1.80.1",
   "category": "infra",
-  "rationale": "The delivered first-parent delta since v1.80.1 contains only three regenerated docs/images/screenshots.json metadata commits for the derived-artifact workflow. No user behaviour is delivered by this delta.",
+  "rationale": "The delivered first-parent delta since v1.80.1 refreshes documentation screenshots and their generated metadata through the derived-artifact workflow. The beta.2 refresh accepts only the reviewed view-touch and space-create frames; all nine undeclared frames remain byte-identical. User behaviour belongs to the underlying product tasks, not this documentation refresh.",
   "summary": {
-    "ru": "Обновлены метаданные снимков документации.",
-    "en": "Documentation screenshot metadata is refreshed."
+    "ru": "Обновлены снимки документации и их метаданные.",
+    "en": "Documentation screenshots and their metadata are refreshed."
   }
 }

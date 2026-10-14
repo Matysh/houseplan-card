@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.81.0-beta.2 — 2026-10-14
+
 - View device cards no longer offer editing to read-only users or kiosk.
   Direct, delayed and warm-restored device-editor entries cannot bypass the
   permission gate or clear the New flag. Room Area navigation is HA-admin-only

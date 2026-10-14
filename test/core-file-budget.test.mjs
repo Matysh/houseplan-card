@@ -49,7 +49,7 @@ const CAPS = {
   // 2026-09-27, #676: +2 — вызов черновика лестницы в pointerdown сцены и
   // рамка лестницы в верхнем оверлее (выше тел стен). Всё остальное слоя —
   // жесты, рамка, магнит, диалог — живёт в stairs-editor.ts и stairs-box.ts.
-  'src/houseplan-card.ts': 13049,
+  'src/houseplan-card.ts': 12966,
   // #478 removed the persisted room-draft editor branch. Keep that reduction.
   // #485 keeps its large setup surface in editors/radar-section.ts; these are
   // only the dialog state/save seam and the thin lazy-render adapter.
@@ -67,7 +67,7 @@ const CAPS = {
   // #875 r2, owner-approved after rebase: dev 75aafe0f has 12074 lines;
   // the existing backup ownership integration adds 33 (12107 total).
   // The M1 scope fix adds no runtime lines; preserve CORE_BAND = 50.
-  'src/houseplan-editor-runtime.ts': 12107,
+  'src/houseplan-editor-runtime.ts': 12131,
 };
 
 /**

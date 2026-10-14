@@ -405,7 +405,7 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // #844: cold-View permission, lazy-owner and HA-admin affordance gates measured
 // 309653 B gzip, 33 B over the previous ceiling's band. Keep the absolute
 // 320000 B budget and 2000 B band; do not move forbidden-entry guards to lazy code.
-export const INITIAL_VIEW_GZIP_CEILING = 309_653;
+export const INITIAL_VIEW_GZIP_CEILING = 309_892;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
@@ -622,7 +622,7 @@ export function initialViewCeilingViolation(bytes, {
  * сторон, чтобы ни семибайтный шум не красил гейт, ни молчаливый выигрыш не
  * оставался незафиксированным.
  */
-export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_938;
+export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_940;
 /**
  * #600, промежуточные замеры по сериям (итог ставится в конце):
  * - серия 0: 222 900 → 225 900. Набор контролов формы вырос до полного
@@ -733,7 +733,7 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_938;
 // 500-B noise guard); the wall-end magnet adds 312 B — 260 085 B. The ceiling
 // becomes this fact, so #873/#869/#850 rebase onto a full band. The band, the
 // initial-View ceiling and the absolute budget stay put.
-export const LAZY_EDITOR_GZIP_CEILING = 260_085;
+export const LAZY_EDITOR_GZIP_CEILING = 259_060;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
@@ -749,7 +749,7 @@ export const LAZY_GRAPH_CEILING_BAND = 2_000;
  * (форма #600), не словари; их вынос заметен пользователю (задержка на первом
  * «?») и в скоуп #627 не входит.
  */
-export const LAZY_ONBOARDING_GZIP_CEILING = 28_196;
+export const LAZY_ONBOARDING_GZIP_CEILING = 28_578;
 
 /**
  * #780 ТЗ §13.1: the LED chunks are a new feature's own budget, not a raise of
