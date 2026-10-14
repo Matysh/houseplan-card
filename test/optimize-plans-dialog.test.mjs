@@ -16,6 +16,8 @@ import { spacePhysicalGeometryFingerprint } from '../test-build/plan-geometry-pr
 import { optimizePlans } from '../test-build/plan-optimizer.js';
 import { LazyOptimizePlansDialog } from '../test-build/optimize-plans-loader.js';
 import { contentFingerprint } from '../test-build/visual-continuity.js';
+import { resolve as resolvePath } from 'node:path';
+import { REPO_ROOT, VIEW_ENTRIES, staticGraph } from './helpers/editor-style-ownership.mjs';
 
 const MODULE_SOURCE = readFileSync(new URL('../src/optimize-plans-dialog.ts', import.meta.url), 'utf8');
 const BUILT_SOURCE = readFileSync(new URL('../test-build/optimize-plans-dialog.js', import.meta.url), 'utf8');
@@ -99,7 +101,7 @@ function fakePort(overrides = {}, registryRetryMs = undefined) {
     ledNote: () => "",
     ...overrides,
   };
-  return { port, calls, state, dialog: new OptimizePlansDialog(port, registryRetryMs) };
+  return { port, calls, state, dialog: new OptimizePlansDialog(port, { optimize: optimizePlans, registryRetryMs }) };
 }
 
 // ------------------------------------------------------ TemplateResult helpers
@@ -700,7 +702,8 @@ test('#869 AC3 a refused or hung reload keeps the same report and says the data 
   const { dialog, state } = realPort({
     config: optimalConfig(), layout: ownerLayout(), hass, context: () => rosterOf(hass), retryMs: 250,
   });
-  assert.equal(new OptimizePlansDialog(fakePort().port).registryRetryMs, 10_000, 'default wait is 10 s');
+  assert.equal(new OptimizePlansDialog(fakePort().port, { optimize: optimizePlans }).registryRetryMs, 10_000,
+    'default wait is 10 s');
   dialog.open();
   const before = state.dialog;
   // Refused at once: no wait for the timeout.
@@ -937,6 +940,16 @@ test('#869 the dialog and its helpers are reached only by a dynamic import of th
   assert.deepEqual(offenders, [], 'a static import pulls the dialog back into the editor graph');
   const loader = readFileSync(new URL('../src/optimize-plans-loader.ts', import.meta.url), 'utf8');
   assert.match(loader, /import\('\.\/optimize-plans-dialog'\)/);
+  // The chunk may lean only on the View graph (eager chunks). A static edge into
+  // a module of the editor runtime chunk makes Rollup rename the runtime's named
+  // exports, and the immutable-URL retry then reads no fingerprint (#803).
+  const own = new Set(['src/optimize-plans-dialog.ts', 'src/optimize-unverified.ts']
+    .map((path) => resolvePath(REPO_ROOT, path)));
+  const view = staticGraph(VIEW_ENTRIES);
+  const runtimeOnly = [...staticGraph(['src/optimize-plans-dialog.ts'])]
+    .filter((file) => !own.has(file) && !view.has(file))
+    .map((file) => file.slice(REPO_ROOT.length + 1));
+  assert.deepEqual(runtimeOnly, [], 'inject it through the loader instead');
 });
 
 test('#869 the loader opens the real dialog and routes the block strings to the lazy settings dictionary', async () => {

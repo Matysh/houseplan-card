@@ -14,6 +14,7 @@ import type { I18nKey, Lang } from './i18n';
 import { hasSettingsTranslation, settingsT } from './i18n/settings';
 import type { OptimizePlansDialog, OptimizePlansDialogPort } from './optimize-plans-dialog';
 import type { OptimizeGeometryPreflightResult } from './plan-geometry-preflight';
+import { optimizePlans } from './plan-optimizer';
 import type { ServerConfig } from './types';
 
 /** The runtime's port: the card's own catalog only; the loader adds `settings`. */
@@ -39,7 +40,7 @@ export class LazyOptimizePlansDialog {
         ...port,
         t: (key, vars) => (hasSettingsTranslation(this.lang(), key)
           ? settingsT(this.lang(), key, vars) : port.t(key as I18nKey, vars)),
-      });
+      }, { optimize: optimizePlans });
       return this.dialog;
     }, (error: unknown) => {
       this.loading = null;

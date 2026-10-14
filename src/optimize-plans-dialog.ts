@@ -26,7 +26,7 @@ import {
 import {
   spacePhysicalGeometryFingerprint, type OptimizeGeometryPreflightResult,
 } from './plan-geometry-preflight';
-import { optimizePlans, type OptimizeReport } from './plan-optimizer';
+import type { OptimizeReport, optimizePlans } from './plan-optimizer';
 import type {
   SpaceReferencePositionDetail, SpaceReferenceRepairContext,
 } from './space-reference-repair';
@@ -117,6 +117,18 @@ export function preflightVersionsDiffer(integration: string | null, cardVersion:
     && integration !== cardVersion;
 }
 
+/**
+ * #869: what the dialog takes from the runtime besides the port. The optimizer
+ * is injected, not imported: this module is its own lazy chunk, and a static
+ * edge into the editor runtime chunk would make Rollup rename the runtime's
+ * named exports that the immutable-URL retry reads (#803).
+ */
+export interface OptimizePlansDialogOptions {
+  optimize: typeof optimizePlans;
+  /** the bounded wait of «Check again», 10 s by default */
+  registryRetryMs?: number;
+}
+
 export class OptimizePlansDialog {
   /**
    * CODE-REVIEW-295-r1 M2: the inline clipboard fallback belongs to one
@@ -128,11 +140,14 @@ export class OptimizePlansDialog {
   /** #295: dev-log once per distinct failing preflight, not once per render. */
   private reportedFingerprint: string | null = null;
 
-  /** @param registryRetryMs #869: the bounded wait of «Check again». */
+  private readonly registryRetryMs: number;
+
   public constructor(
     private readonly port: OptimizePlansDialogPort,
-    private readonly registryRetryMs = 10_000,
-  ) {}
+    private readonly options: OptimizePlansDialogOptions,
+  ) {
+    this.registryRetryMs = options.registryRetryMs ?? 10_000;
+  }
 
   /** #295: diagnostics text shown inline when the clipboard is unavailable. */
   public get clipboardFallback(): string | null {
@@ -203,7 +218,7 @@ export class OptimizePlansDialog {
     const spaces = config.spaces || [];
     let r;
     try {
-      r = optimizePlans(
+      r = this.options.optimize(
         config,
         this.port.layout() || {},
         this.port.referenceContext(removeLiveMissingPositions),
