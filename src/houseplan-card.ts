@@ -259,6 +259,7 @@ import {
   type WarmEntry, type WarmViewport,
 } from './card-runtime';
 import { restoreWarmDialogBaseline, warmDialogBaseline } from './editors/dialog-baseline';
+import { deviceEditorAllowed, roomAreaAffordance } from './device-editor-access';
 
 // Chromium records a FAILED module in the page module map permanently — a
 // retry of the same URL resolves from that map without touching the network.
@@ -574,6 +575,7 @@ export class HouseplanCard extends LitElement {
   private _editorRuntimeLoadingTimer?: number;
   private _editorModeRequest = 0;
   private _warmModeRequest = 0;
+  private _markerDialogRequest = 0;
   private readonly _editorRuntimeLoader = new EditorRuntimeLoader<
     import('./houseplan-editor-runtime').HouseplanEditorRuntime
   >({
@@ -2737,7 +2739,7 @@ export class HouseplanCard extends LitElement {
     this._deviceHitScrollUnsub?.(); this._deviceHitScrollUnsub = undefined; this._pinchZoomDirty = false;
     if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
     if (this._refitRaf) { cancelAnimationFrame(this._refitRaf); this._refitRaf = 0; }
-    this._warmModeRequest = 0; ++this._editorModeRequest;
+    this._warmModeRequest = 0; ++this._editorModeRequest; ++this._markerDialogRequest;
     if (this._dayCycleTimer) { clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; } this._summarySlot.disconnect();
     this._dayCycleClockKey = '';
     if (this._bootSettleRaf) { cancelAnimationFrame(this._bootSettleRaf); this._bootSettleRaf = 0; }
@@ -3591,7 +3593,9 @@ export class HouseplanCard extends LitElement {
     if (d.space !== this._space || d.mode !== this._mode) return;  // never in another space/editor
     switch (d.kind) {
       case 'space': this._spaceDialog = { ...d.data, busy: false, savedBusy: false }; break;
-      case 'marker': this._markerDialog = { ...d.data, busy: false }; break;
+      case 'marker':
+        if (!deviceEditorAllowed(this._canEdit, this._kiosk)) return;
+        this._markerDialog = { ...d.data, busy: false }; break;
       case 'settings': this._settingsDialog = { ...d.data, busy: false }; this._reviveMoonStatus(); break;
       case 'rules': this._rulesDialog = { ...d.data, busy: false }; break;
       case 'opening': this._openingDialog = { ...d.data }; break;
@@ -5264,6 +5268,7 @@ export class HouseplanCard extends LitElement {
 
   /** First visit to the device's editor acknowledges its "new" flag. */
   private _ackNewDevice(id: string): void {
+    if (!deviceEditorAllowed(this._canEdit, this._kiosk)) return;
     if (!this._newIds.has(id) || !this._serverCfg) return;
     const st: any = this._settings;
     this._serverCfg = {
@@ -7055,7 +7060,10 @@ export class HouseplanCard extends LitElement {
   }
 
   private _clickRoom(r: RoomCfg): void {
-    if (this._suppressClick || !r.area) return;
+    if (this._suppressClick || !r.area || !roomAreaAffordance({
+      admin: this.hass?.user?.is_admin === true, writer: this._canEdit,
+      kiosk: this._kiosk, plan: this._markup,
+    }).interactive) return;
     navigate('/config/areas/area/' + r.area);
   }
 
@@ -9525,9 +9533,12 @@ export class HouseplanCard extends LitElement {
   }
 
   private _openMarkerDialog(d?: DevItem): void {
+    const request = ++this._markerDialogRequest;
+    if (!deviceEditorAllowed(this._canEdit, this._kiosk)) return;
     if (!this._editorRuntime) {
       void this._ensureEditorRuntime().then((ready) => {
-        if (ready) this._openMarkerDialog(d);
+        if (ready && request === this._markerDialogRequest && this.isConnected
+            && deviceEditorAllowed(this._canEdit, this._kiosk)) this._editorRuntime?._openMarkerDialog(d);
       });
       return;
     }
@@ -11373,7 +11384,8 @@ export class HouseplanCard extends LitElement {
           ? (this._onboardingRuntime || this._editorRuntime) ? this._renderSpaceDialog() : nothing
           : nothing}
         ${this._deviceInbox ? this._editorRuntime ? this._renderDeviceInbox() : nothing : nothing}
-        ${this._markerDialog ? this._editorRuntime ? this._renderMarkerDialog() : nothing : nothing}
+        ${this._markerDialog && (this._mode !== 'view' || deviceEditorAllowed(this._canEdit, this._kiosk))
+          ? this._editorRuntime ? this._renderMarkerDialog() : nothing : nothing}
         ${this._backdropGuard
           ? (this._editorRuntime
             ? this._editorRuntime._renderBackdropGuard()
@@ -12241,8 +12253,10 @@ export class HouseplanCard extends LitElement {
     }
     // Plan keeps the same name-row geometry as the other modes, but the Area
     // icon remains part of the draggable label instead of becoming a link.
-    const showAreaLink = !!r.area;
-    const areaLinkInteractive = !this._markup;
+    const areaAffordance = roomAreaAffordance({ admin: this.hass?.user?.is_admin === true,
+      writer: this._canEdit, kiosk: this._kiosk, plan: this._markup });
+    const showAreaLink = !!r.area && areaAffordance.visible;
+    const areaLinkInteractive = areaAffordance.interactive;
     return html`<div class="roomlabel ${rows.length ? 'card' : ''}"
       data-hp="room-label" data-id=${r.id || nothing} data-area=${r.area || nothing}
       data-hp-iso-overlay-kind=${isoPlacement?.plane === 'raised' ? 'room-label' : nothing}
@@ -12899,9 +12913,9 @@ export class HouseplanCard extends LitElement {
             : nothing}
         </div>
         <div class="row infofooter" slot="footer">
-          <button class="btn" @click=${() => { const dd = d; this._closeInfoCard(); this._openMarkerDialog(dd); }}>
+          ${deviceEditorAllowed(this._canEdit, this._kiosk) ? html`<button class="btn" @click=${() => { const dd = d; this._closeInfoCard(); this._openMarkerDialog(dd); }}>
             <ha-icon icon="mdi:pencil"></ha-icon>${this._t('btn.edit')}
-          </button>
+          </button>` : nothing}
           ${d.primary
             ? html`<button class="btn" @click=${() => { const p = d.primary; this._closeInfoCard(); this._openMoreInfo(p); }}>
                 <ha-icon icon="mdi:open-in-new"></ha-icon>${this._t('btn.open_in_ha')}

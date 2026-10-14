@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- View device cards no longer offer editing to read-only users or kiosk.
+  Direct, delayed and warm-restored device-editor entries cannot bypass the
+  permission gate or clear the New flag. Room Area navigation is HA-admin-only
+  outside kiosk; Plan keeps its passive draggable icon for non-admin writers
+  ([#844](https://github.com/Matysh/houseplan-card/issues/844)).
+
 - Wall-node moves and Undo on older plans now build the same wall catalogue in
   the browser and server. Valid short contour edges no longer cause a server-only
   refusal; stair ID collisions, Unicode lineage order and boundary thickness

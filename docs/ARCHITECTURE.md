@@ -481,6 +481,15 @@ age ([`SCOPE.md`](SCOPE.md)). Migrations: [`CONFIG-COMPATIBILITY.md`](CONFIG-COM
 
 ### Editor draft ownership (#851)
 
+`device-editor-access.ts` separates Houseplan writing from HA administration
+(#844). The core guards the info footer, direct lazy entrance and each latest,
+connected completion; disconnect invalidates the request generation. The
+runtime independently guards its entrance, and the core guards acknowledgement,
+View dialog paint and warm restoration. Automatic registry lifecycle updates
+keep their existing writer-only gate, including kiosk writers. The Area
+affordance is administrative outside Plan and passive for Plan writers; the
+navigation handler independently checks its current authority.
+
 `editors/dialog-baseline.ts` holds page-memory comparison keys and per-opening
 owner tokens, transferred with warm drafts but never serialized. `draft-close.ts`
 rechecks ownership after confirmation; `draft-actions.ts` composes the ordinary

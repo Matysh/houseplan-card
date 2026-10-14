@@ -10,6 +10,7 @@ import { html, svg, nothing, TemplateResult } from 'lit';
 import { displayVersion } from './card-version';
 import { entryBuildLabel } from './build-identity';
 import { finishWarmModeAdoption, resumeWarmMode, type WarmModeHost } from './warm-mode-adoption';
+import { deviceEditorAllowed } from './device-editor-access';
 import { guard } from 'lit/directives/guard.js';
 import { renderVacuumMapsSection } from './editors/vacuum-maps-section';
 import { renderVacuumPathDiagnostics } from './editors/vacuum-path-diagnostics';
@@ -7340,6 +7341,7 @@ public _deviceInboxTabKey = (event: KeyboardEvent): void => {
   };
 
 public _openMarkerDialog(d?: DevItem): void {
+    if (!deviceEditorAllowed(this.host._canEdit, this.host._kiosk)) return;
     // A global-camera snapshot belongs to one explicit expansion only; never
     // carry it across device-dialog sessions.
     this.host._vacAllCamerasFor = null;

@@ -205,6 +205,13 @@ cannot edit gets the complete View experience without editor controls. On an
 empty installation that user sees a read-only explanation, not an Add space
 button or an automatically opened setup dialog.
 
+The device information card offers **Edit** only to a plan writer outside
+kiosk. Without that permission, device state, controls, **Open in HA**
+(the ordinary entity more-info dialog) and **Close** remain available, and the
+**New** flag is not acknowledged. The room-name Area link is visible only to
+HA administrators outside kiosk. In Plan its icon remains part of the draggable
+label for every plan writer, including non-admin writers, and never navigates.
+
 ## 3. Adding a card
 
 Normally there is nothing to add: open **House Plan** in the HA sidebar. It

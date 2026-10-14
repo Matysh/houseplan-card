@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 844,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "v1.80.1 already exposes the unconditional information-card Edit button, lazy marker-dialog entry and new-device acknowledgement, and unrestricted room Area navigation. This repairs existing View/kiosk UX boundaries, not functionality first added during the current beta cycle. Backend ACL and permitted device actions are unchanged; Plan keeps its existing passive draggable icon under owner decision 2B.",
+  "summary": {
+    "ru": "Просмотр и киоск не открывают редактор без прав и не снимают флаг нового устройства; переходы к зонам HA больше не предлагаются не-администраторам и киоску.",
+    "en": "View and kiosk cannot open a forbidden editor or acknowledge a new device; HA Area links are no longer offered to non-admins or kiosk."
+  }
+}

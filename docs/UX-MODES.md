@@ -101,7 +101,7 @@ fill or passive room label to Fit all), switching spaces, device tap
 → door/lock info card (openings themselves are inert in View; the card carries an
 explicit Unlock/Lock button — the only way to operate a lock from the card;
 plan-icon taps never toggle locks),
-room-card link icon → HA area, clean single room click/tap → delayed room fit
+room-card link icon → HA area (HA administrators only, outside kiosk), clean single room click/tap → delayed room fit
 (350 ms decision window; keyboard activation is immediate), room hover
 highlight, hover tooltips (name, clean-floor area, temperature, signal).
 
@@ -160,6 +160,14 @@ Removed from this mode (they move, not die):
 - opening dragging along walls and double-click properties (v1.23.1),
 - every edit button in the header (+device, 👁 show-all, ↺ reset, ⬡ rules, ⚙ general,
   per-space gear, markup toggle).
+
+The device information card exposes **Edit** only to a Houseplan writer outside
+kiosk (`can_write`, not HA `is_admin`). Direct and late lazy-runtime entries,
+new-device acknowledgement and warm dialog restoration obey the same gate
+(#844). Read-only/kiosk still have device controls, more-info and Close.
+The room's Area icon remains a passive part of the draggable label in Plan,
+including for writers without HA-admin rights; it never navigates from Plan.
+Outside Plan it is an HA-admin link, and kiosk never displays it.
 
 Header in View: space tabs, summary control and zoom cluster. On wider screens
 the summary control also remains available in editors; the fixed distance from

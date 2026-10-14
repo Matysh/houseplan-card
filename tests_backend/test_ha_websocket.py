@@ -2478,6 +2478,34 @@ async def test_issue_626_authenticated_read_acl_matrix_and_trail_projection(
     assert not refused["success"] and refused["error"]["code"] == "unauthorized"
 
 
+async def test_issue_844_houseplan_writer_is_not_ha_configuration_admin(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    """Real HA panels and Houseplan ACL: can_write is not admin navigation."""
+    from homeassistant.setup import async_setup_component
+
+    await _setup(hass, options={CONF_ADMIN_ONLY: False})
+    assert await async_setup_component(hass, "config", {})
+    await hass.async_block_till_done()
+    admin = await hass_ws_client(hass)
+    household = await hass_ws_client(
+        hass, access_token=await _access_token_for_group(hass, GROUP_ID_USER)
+    )
+    readonly = await hass_ws_client(
+        hass, access_token=await _access_token_for_group(hass, GROUP_ID_READ_ONLY)
+    )
+    for client, can_write, config_panel in (
+        (admin, True, True), (household, True, False), (readonly, False, False),
+    ):
+        await client.send_json_auto_id({"type": "houseplan/config/get"})
+        reply = await client.receive_json()
+        assert reply["success"] and reply["result"]["can_write"] is can_write
+        await client.send_json_auto_id({"type": "get_panels"})
+        panels = await client.receive_json()
+        assert panels["success"], panels
+        assert ("config" in panels["result"]) is config_panel
+
+
 async def test_issue_626_plans_list_refuses_viewer_before_scanning(
     hass: HomeAssistant,
     hass_ws_client: WebSocketGenerator,

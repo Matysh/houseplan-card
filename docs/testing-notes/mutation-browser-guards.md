@@ -36,8 +36,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 51 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 59 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 41 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 143 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **302 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 153 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **312 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -291,6 +291,23 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 - `space-delete-block-leaves-focus-behind`
 
 ### Custom-element and HA browser lifecycle
+
+The #844 predicates and independent runtime port guard have cheap Node
+witnesses. These ten guards instead cross the actual footer/direct caller,
+manifest-named dynamic import, disconnect/latest generation, warm memo/paint,
+browser navigation or automatic registry lifecycle in the mounted card.
+Only the selected smoke section runs per mutant; execution remains nightly.
+
+- `view-edit-footer-forgets-permission`
+- `view-edit-direct-entry-forgets-permission`
+- `view-edit-late-import-forgets-recheck`
+- `view-edit-import-forgets-latest-owner`
+- `view-edit-import-forgets-connected-owner`
+- `view-edit-ack-forgets-permission`
+- `view-edit-warm-forgets-permission`
+- `view-edit-retained-paint-forgets-permission`
+- `room-area-direct-navigation-forgets-permission`
+- `kiosk-writer-lifecycle-incorrectly-blocked`
 
 - `backup-import-runtime-skips-ownership`
 - `backup-import-double-apply`

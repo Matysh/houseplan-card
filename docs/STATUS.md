@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+View/device-editor entry (#844) uses Houseplan `can_write` outside kiosk;
+HA Area navigation instead requires HA-admin rights and is never active in
+Plan. Non-admin Plan writers retain the passive draggable Area icon. Lazy
+import completions and warm dialog revival cannot acknowledge a new device
+after permission is lost; ordinary View actions and kiosk lifecycle writes stay.
+
 Wall identity parity (#845) reserves stairs alongside all other plan IDs and
 uses a shared Unicode code-point order. The server preserves positive short
 contour edges like the browser; first migration prioritises shared boundaries

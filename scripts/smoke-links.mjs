@@ -30,6 +30,12 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/device-editor-access.ts'],
+    smokes: ['smoke_view_edit_permissions.mjs'],
+    because: '#844: real footer/direct/lazy/warm entries and Area-icon navigation/drag '
+      + 'exercise the shared permission predicates through the production bundle.',
+  },
+  {
     files: ['src/vacuum-path-geometry.ts', 'src/vacuum-trail-material.ts',
       'src/vacuum-trail-render.ts', 'src/vacuum-local-trail.ts', 'src/vacuum-trail-diagnostics.ts'],
     smokes: ['smoke_vacuum_path_fidelity.mjs', 'smoke_vacuum_camera.mjs',

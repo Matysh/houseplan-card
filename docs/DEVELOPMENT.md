@@ -1,5 +1,20 @@
 # Development and deployment
 
+## View/editor permission boundary (#844)
+
+`demo/smoke_view_edit_permissions.mjs` starts without editor preload, counts
+the runtime named in the real bundle manifest, uses HA `config/get` responses
+for roles and holds the actual chunk for revocation/latest/disconnect races.
+Fixture state arrives through `__hpTest.setServerConfig`, including its cache;
+an uncached private config assignment followed by `setConfig` tests a stale
+fixture, not acknowledgement. Warm-restore fault injection uses a draft opened
+by the real footer; ordinary entries/mode changes use UI. The standalone
+runtime unit independently proves no acknowledgement under a denied host port.
+The HA harness test uses actual `config`/frontend `get_panels`: plan writing
+does not grant HA administration. No backend ACL, config schema or i18n changes.
+Golden kiosk frames intentionally lose the Area icon; capture is evidence,
+not permission to accept a baseline or claim owner/GPU acceptance.
+
 ## Full vacuum paths (#872)
 
 Compile `tsconfig.test.json` then run `test/vacuum-path-geometry.test.mjs`
