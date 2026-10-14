@@ -51,6 +51,8 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   private _markerObserver?: MutationObserver;
   private _layoutFrame = 0;
   private _layoutResize?: ResizeObserver;
+  private _renderSize = { width: 0, height: 0 };
+  private _originMarkerId = '';
   private _desiredEndpointIds = new Set<string>();
   private _endpointSetDirty = false;
   private _endpointElements = new Set<HTMLElement>();
@@ -183,6 +185,14 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     this._layoutFrame = requestAnimationFrame(() => {
       this._layoutFrame = 0;
       if (!this.isConnected || !this._hovered) return;
+      const width = this.clientWidth || this._parent?.clientWidth || 1;
+      const height = this.clientHeight || this._parent?.clientHeight || 1;
+      if (width !== this._renderSize.width || height !== this._renderSize.height) {
+        // A real resize changes SVG user units and marker centres together.
+        // Re-render only this overlay before DOM fitting, never the card/scan.
+        this.requestUpdate();
+        return;
+      }
       this._clipRouteCopies();
       this._fitParentCaptions();
       this.onLayout?.();
@@ -201,7 +211,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     const right = Math.min(window.innerWidth, stage.right) - 8;
     const top = Math.max(0, stage.top) + 8;
     const bottom = Math.min(window.innerHeight, stage.bottom) - 8;
-    const marker = this._marker(this._hovered)?.getBoundingClientRect();
+    const marker = this._marker(this._originMarkerId)?.getBoundingClientRect();
     const blockers: TipRect[] = [...this.renderRoot.querySelectorAll<HTMLElement>('.remote,.route-status')]
       .map((node) => node.getBoundingClientRect());
     if (marker) blockers.push(marker);
@@ -506,7 +516,10 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     const hover = resolveMappedTopologyHover(mapped, this.currentSpace, this._hovered);
     const width = this.clientWidth || this._parent?.clientWidth || 1;
     const height = this.clientHeight || this._parent?.clientHeight || 1;
-    const origin = this._position(this._hovered, width, height);
+    this._renderSize = { width, height };
+    const originRemote = !!hover.originSpace && hover.originSpace !== this.currentSpace;
+    this._originMarkerId = originRemote ? this._hovered : hover.originMarkerId || this._hovered;
+    const origin = this._position(this._originMarkerId, width, height);
     if (!origin) {
       this._setDesiredEndpointIds([]);
       return nothing;
@@ -533,8 +546,8 @@ export class HpZigbeeTopologyOverlay extends LitElement {
         origin, point, this._markerClearance(origin), 0, 'toward-neighbor',
       ) };
     });
-    const involved = mapped.filter((item) => [...item.placements.values()]
-      .some((placement) => placement.markerId === this._hovered && placement.space === this.currentSpace));
+    const involved = mapped.filter((item) => item.hoverNodes.get(this._hovered)
+      ?.some((alias) => alias.space === this.currentSpace));
     const providerStates = involved.map(({ topology }) => {
       const key = topology.provider === 'zha' ? 'zha' : `z2m:${topology.instanceId}`;
       return this._runtime.states[key];
@@ -548,15 +561,15 @@ export class HpZigbeeTopologyOverlay extends LitElement {
       hover.outgoing !== 'not-zigbee' && stale ? topologyT(lang, 'route_stale') : '',
       hover.showIncomplete ? topologyT(lang, 'route_partial') : '',
     ].filter(Boolean).join(' · ');
-    this._setDesiredEndpointIds(lines.length || bubbles.length || hover.remoteCount
+    this._setDesiredEndpointIds(!originRemote && (lines.length || bubbles.length || hover.remoteCount)
       ? [
-        this._hovered,
+        this._originMarkerId,
         ...lines.map((line) => line.neighborMarkerId),
       ] : []);
     const routes = (copy: boolean) => [
       ...lines.map((line) => this._route(origin, line.point!, line.lqi, line.routeDirection, line.arrow,
         false, undefined, copy)),
-      ...bubbles.map((bubble, index) => this._route(origin, bubble.point, bubble.target.lqi, 'toward-neighbor',
+      ...(!originRemote ? bubbles : []).map((bubble, index) => this._route(origin, bubble.point, bubble.target.lqi, 'toward-neighbor',
         bubble.arrow, true, index, copy)),
     ];
     return html`

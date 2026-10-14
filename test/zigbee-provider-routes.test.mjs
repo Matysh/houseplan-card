@@ -316,6 +316,47 @@ test('exact device/entity ownership and hidden/ambiguous placements still fail c
   assert.equal(hover([topology], 'm2', markers.filter((device) => device.id !== 'm1')).parentTargets[0].kind, 'unplaced-coordinator');
 });
 
+test('#867 AC4 every own alias hovers the stable device representative, never the hovered alias', () => {
+  const topology = zha([row(1, 'Coordinator'), row(2, 'Router', { routes: [route(0)] })]);
+  const reg = { ...registry, entities: { 'switch.router_a': { device_id: 'd2' }, 'switch.router_b': { device_id: 'd2' } } };
+  const entity = (ref, id, space = 'main') => ({ ...markers[1], id, space, bindingKind: 'entity', bindingRef: ref });
+  const a = entity('switch.router_a', 'alias-a'), b = entity('switch.router_b', 'alias-b');
+  const devices = [...markers, a, b];
+  for (const id of ['m2', 'alias-a', 'alias-b']) {
+    const result = hover([topology], id, devices, reg);
+    assert.equal(result.originMarkerId, 'm2');
+    assert.deepEqual(result.lines.map(x => x.neighborMarkerId), ['m1']);
+    assert.equal(result.lines.some(x => x.neighborMarkerId === result.originMarkerId), false);
+  }
+  const withoutDevice = devices.filter(x => x.id !== 'm2');
+  assert.equal(hover([topology], 'alias-b', withoutDevice, reg).originMarkerId, 'alias-a');
+  assert.equal(hover([topology], 'alias-b', [...markers.map(x => x.id === 'm2' ? { ...x, hidden: true } : x), a, b], reg)
+    .originMarkerId, 'alias-a');
+  const reorderedConfig = [b, a, ...markers.filter(x => x.id !== 'm2')];
+  assert.equal(hover([topology], 'alias-a', reorderedConfig, reg).originMarkerId, 'alias-b');
+  assert.equal(hover([topology], 'alias-b', withoutDevice, { ...reg,
+    entities: Object.fromEntries(Object.entries(reg.entities).reverse()) }).originMarkerId, 'alias-a', 'HA registry order is irrelevant');
+  for (const bad of [{ hidden: true }, { marker: { removed: true } }, { bindingStatus: { kind: 'ha_disabled' } },
+    { bindingStatus: { kind: 'orphaned' } }, { bindingStatus: { kind: 'unverified' } }]) {
+    const filtered = [...markers.filter(x => x.id !== 'm2'), { ...a, ...bad }, b];
+    assert.equal(hover([topology], 'alias-b', filtered, reg).originMarkerId, 'alias-b');
+  }
+});
+
+test('#867 AC4 a remote representative yields its named floor bubble, not a line through floors', () => {
+  const topology = zha([row(1, 'Coordinator'), row(2, 'Router', { routes: [route(0)] })]);
+  const reg = { ...registry, entities: { 'switch.router': { device_id: 'd2' } } };
+  const devices = [...markers.map(x => x.id === 'm2' ? { ...x, space: 'upper' } : x),
+    { ...markers[1], id: 'local-alias', bindingKind: 'entity', bindingRef: 'switch.router' }];
+  const result = hover([topology], 'local-alias', devices, reg);
+  assert.equal(result.originMarkerId, 'm2'); assert.equal(result.originSpace, 'upper');
+  assert.deepEqual(result.lines, []);
+  assert.deepEqual(result.parentTargets, [{ kind: 'remote-space', spaceId: 'upper', nodeKey: key(2), deviceName: 'Registry 2' }]);
+  const duplicate = hover([topology], 'local-alias', [...devices, { ...devices[1], id: 'duplicate' }], reg);
+  assert.equal(duplicate.originMarkerId, undefined, 'ambiguous physical placements still fail closed');
+  assert.deepEqual(duplicate.lines, []);
+});
+
 test('node/link/payload bounds remain enforced with no unbounded evidence collection', () => {
   assert.equal(zha(Array.from({ length: TOPOLOGY_MAX_NODES + 1 }, (_, index) => row(index + 1))).nodes.length, 0);
   assert.equal(normalizeZ2mTopology('x'.repeat(TOPOLOGY_MAX_PAYLOAD_BYTES + 1), 'z2m').nodes.length, 0);

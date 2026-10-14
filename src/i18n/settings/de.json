@@ -1,4 +1,7 @@
 {
+  "marker.hide_signal": "Zigbee-Signal auf dem Grundriss ausblenden",
+  "marker.hide_signal_help.aria": "Hilfe: Zigbee-Signal ausblenden",
+  "marker.hide_signal_help": "Blendet nur die systemeigene LQI-Zeile dieses Symbols aus. Gewählte Werte und Badges, Tooltip und Zigbee-Verbindungen bleiben verfügbar.",
   "space.scale_changed": "Eine Änderung des Maßstabs berechnet beim Speichern die Maße des gesamten Bereichs neu. Punkte auf dem Plan bleiben, wo sie sind.",
   "space.plan.help": "Ein Bild als Hintergrund, über das gezeichnet wird. Räume und Geräte bleiben darüber bearbeitbar. Beim Wechsel zum Zeichnen von Hand bleibt das hochgeladene Bild erhalten.",
   "space.plan.help.aria": "Hilfe: Grundriss",

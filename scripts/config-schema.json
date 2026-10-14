@@ -103,6 +103,10 @@
       "required": false,
       "type": "bool"
     },
+    "config.markers[].hide_signal": {
+      "required": false,
+      "type": "bool"
+    },
     "config.markers[].icon": {
       "maxLength": 500,
       "nullable": true,

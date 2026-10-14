@@ -199,10 +199,20 @@ catalogue the marker stays «On the plan».
   automatic face resolver; absent `value_badge` keeps the legacy
   temperature/humidity satellite. Bottom badges stack above the system LQI row;
   a derived-LQI badge or value source suppresses that row.
-- LQI: `devices.ts` averages Z2M `*_linkquality`, ZHA `*_lqi`/unit `lqi` sensors
+- LQI: `device-signal.ts` (also re-exported by `devices.ts`) averages Z2M `*_linkquality`, ZHA `*_lqi`/unit `lqi` sensors
   or a `linkquality`/`lqi` attribute. `logic.ts::lqiColor()` maps 40→180 to hue
   0→120; `markerLqiColor()` delegates to it; `markerLqiBand()` is marker-only
   accessibility metadata.
+- #867: an entity marker's diagnostic roster uses its exact registry
+  `entity.device_id`, never controls, names or the radio router. A registry-identity
+  index includes potential sibling rows in the frozen snapshot independently of
+  battery settings; state-only sibling updates invalidate the recorded own reads.
+  This does not enlarge the functional roster, primary or action targets. Existing
+  battery inheritance is reused, including a live entity whose parent marker alone
+  was removed from the plan. Unknown/disabled/missing parents do not lend data.
+  Exact `marker.hide_signal:true` hides only `lqiText`; `lqiTipText`, explicitly
+  selected derived LQI and topology remain. The effective `showSignal` still gates
+  system line/tooltip and ordinary static/LED policies remain unchanged.
 - Face geometry: the saved coordinate is the icon-core centre; Text is
   shell-centred and a Double shell extends around the anchored core. The
   101.5/80 shell/core ratio (`--device-shell-size`), shared centre, Light/Dark

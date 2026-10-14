@@ -4,6 +4,8 @@
  */
 import { iconFor, iconFromDeviceClasses, DOMAIN_PRIORITY, FALLBACK_ICON, type CompiledIconRule, EXCLUDED_DOMAINS } from './rules';
 import { averageLqi, isControllable } from './logic';
+import { createDeviceSignalContext, deviceLqi, deviceSignalPhysicalId, type DeviceSignalDevice } from './device-signal';
+export { lqiFor } from './device-signal';
 import {
   applianceLifecycleRoleRank, isDevicePowerSwitch, isSemanticBinaryEntity,
 } from './device-visual';
@@ -750,30 +752,6 @@ export function litLightEntity(
 ): string | null {
   return resolvedLightSources(hass, [{ ...d, area: d.area || '' }])
     .find((source) => source.on && !!source.eid)?.eid || null;
-}
-
-/** Average zigbee LQI across the device's entities (*_linkquality/*_lqi sensors or an attribute). */
-export function lqiFor(hass: any, entIds: string[]): number | null {
-  const vals: number[] = [];
-  for (const eid of entIds) {
-    const st = hass.states[eid];
-    if (!st) continue;
-    const unit = (st.attributes?.unit_of_measurement || '').toLowerCase();
-    // 1) dedicated signal sensor: Z2M *_linkquality, ZHA *_lqi, or “lqi” units
-    if (/_(linkquality|lqi)$/.test(eid) || unit === 'lqi') {
-      const v = parseFloat(st.state);
-      if (!isNaN(v)) vals.push(v);
-      continue;
-    }
-    // 2) signal as an ATTRIBUTE on any entity of the device (Z2M linkquality / ZHA lqi) —
-    //    covers devices whose dedicated signal sensor is disabled
-    const av = st.attributes?.linkquality ?? st.attributes?.lqi;
-    if (av != null) {
-      const v = parseFloat(av);
-      if (!isNaN(v)) vals.push(v);
-    }
-  }
-  return averageLqi(vals);
 }
 
 export function tempFor(hass: any, entIds: string[]): number | null {
@@ -1663,12 +1641,16 @@ export function areaLightStats(
 
 /** Average temperature across the area's devices (null when nothing reports one). */
 /** Average zigbee signal (LQI) across an area's non-virtual devices, or null. */
-export function areaLqi(hass: any, devices: { area: string; virtual?: boolean; entities: string[] }[], area: string): number | null {
+export function areaLqi(hass: any, devices: readonly (DeviceSignalDevice & { area: string })[], area: string): number | null {
   const vals: number[] = [];
+  const context = createDeviceSignalContext(hass);
+  const counted = new Set<string>();
   for (const d of devices) {
     if (d.area !== area || d.virtual) continue;
-    const l = lqiFor(hass, d.entities);
-    if (l != null) vals.push(l);
+    const physical = deviceSignalPhysicalId(d, context);
+    if (physical && counted.has(physical)) continue;
+    const l = deviceLqi(hass, d, context);
+    if (l != null) { vals.push(l); if (physical) counted.add(physical); }
   }
   return averageLqi(vals);
 }

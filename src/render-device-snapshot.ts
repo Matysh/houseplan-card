@@ -1,5 +1,6 @@
 import type { ResolvedDevicePresentation } from './device-presentation';
 import type { DevItem } from './types';
+import { createDeviceSignalContext, deviceSignalEntityIds, type DeviceSignalContext } from './device-signal';
 import { isVacuumPathMaterial, ownVacuumPathInput } from './vacuum-path-geometry';
 import {
   createDeviceBatteryContext, deviceBatteryEntityIds, type DeviceBatteryContext,
@@ -129,6 +130,7 @@ export function createRenderDeviceSnapshot(options: {
   /** False skips battery-only work; ordinary badge/room dependencies remain. */
   showBattery?: boolean;
   batteryContext?: DeviceBatteryContext;
+  signalContext?: DeviceSignalContext;
   capturedAt?: number;
   /** The plan geometry the referenced rows were collected from (#813). */
   geometry?: string | number | null;
@@ -150,7 +152,10 @@ export function createRenderDeviceSnapshot(options: {
   const areaIds = new Set(options.areaIds || []);
   const batteryContext = options.showBattery !== false
     ? options.batteryContext || createDeviceBatteryContext(options.hass) : undefined;
+  const signalContext = options.signalContext || createDeviceSignalContext(options.hass);
   for (const device of options.devices) {
+    // Independent of battery and room membership, including missing own rows.
+    for (const entityId of deviceSignalEntityIds(device, signalContext)) entityIds.add(entityId);
     // Entity-bound markers need their physical siblings even if the registry
     // lists those siblings before the bound entity or outside a plan area.
     if (batteryContext) {

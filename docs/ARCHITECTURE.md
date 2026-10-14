@@ -1028,6 +1028,19 @@ live in the device catalog's Discovery-filters section and are resolved only by
 
 ## Contextual Zigbee topology (#54, #457, #464)
 
+#867 separates physical diagnostics (`device-signal.ts`) from functional/action
+rosters. Registry-identity ownership indexing is reused across state ticks; own
+sibling reads are tracked by the presentation reuse window and included in the
+frozen render snapshot even with battery indicators off. `areaLqi` and the card's
+room projection share one physical-radio-per-room aggregation. The optional
+`hide_signal` flag affects only the system plan line, not sources or controls.
+Topology mapping records all eligible hover aliases while preserving one device
+or configuration-ordered entity representative. Cross-floor representatives use
+existing named remote bubbles, without routing through the hovered alias. An
+actual overlay resize re-renders only that overlay's viewBox/centres before its
+DOM-only caption/clip fitting; camera-only fitting does not re-render the card or
+start provider work.
+
 The initial View graph holds only the fail-closed settings reader and a dynamic
 overlay bridge; the overlay chunk loads only for a saved
 `settings.zigbee_topology.enabled === true`, a real HA admin, full-card View and

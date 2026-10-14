@@ -10,6 +10,7 @@
  * capture is a complete rebuild, exactly as before.
  */
 import { createDeviceBatteryContext } from './device-battery';
+import { createDeviceSignalContext } from './device-signal';
 import { deviceBatteryModeOf, showDeviceBatteryOf } from './device-battery-settings';
 import {
   resolveDevicePresentation, type PresentationActivityRuntime, type ResolvePresentationOptions,
@@ -111,6 +112,7 @@ export function captureRenderDeviceSnapshot(
   const showBattery = showDeviceBatteryOf(host._settings);
   const batteryLowOnly = deviceBatteryModeOf(host._settings) === 'low';
   const batteryContext = showBattery ? createDeviceBatteryContext(planHass, registryHass) : undefined;
+  const signalContext = createDeviceSignalContext(planHass, registryHass);
   const ledMarkerIds = showBattery
     ? new Set(host._model.flatMap((space) => [...ledStripsByMarker(space).keys()])) : new Set<string>();
   const facts = new Map<string, unknown>();
@@ -163,6 +165,7 @@ export function captureRenderDeviceSnapshot(
         showBattery: showBattery && !ledMarkerIds.has(device.id),
         batteryLowOnly,
         batteryContext,
+        signalContext,
         lightDevices: host._devices,
         lightSources: planLightSources,
         registryHass,
@@ -209,6 +212,7 @@ export function captureRenderDeviceSnapshot(
     facts,
     showBattery,
     batteryContext,
+    signalContext,
     entityIds,
     deviceIds,
     areaIds,

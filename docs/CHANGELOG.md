@@ -16,6 +16,11 @@
   without admitting old gesture tails; normal touch room-name taps still fit
   the room after implicit capture loss
   ([#847](https://github.com/Matysh/houseplan-card/issues/847)).
+- Device settings can hide only that marker's system Zigbee-signal line. Entity
+  markers read their own physical device's LQI without changing their controls;
+  room LQI counts each physical radio once. Zigbee hover uses a stable device
+  or first configured entity representative, including when another channel is
+  hovered, and routes stay aligned after resizing ([#867](https://github.com/Matysh/houseplan-card/issues/867)).
 
 - Saving no longer falls back to an old cached plan when Home Assistant reapplies
   card options. Refused vacuum-map edits and New acknowledgements restore their

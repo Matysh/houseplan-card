@@ -105,7 +105,17 @@ for (const provider of ['z2m', 'zha']) {
     const sourceElement = root.querySelector(`[data-hp="device"][data-id="${id}"]`);
     const floor = sourceElement.getAttribute('data-hp-iso-floor')?.split(',').map(Number);
     const visual = sourceElement.getAttribute('data-hp-iso-visual')?.split(',').map(Number);
+    const svg = topology?.shadowRoot?.querySelector('svg');
+    const matrix = svg?.getScreenCTM();
+    const routeGeometry = [...(topology?.shadowRoot?.querySelectorAll('line') || [])].map((line) => {
+      const point = (x, y) => matrix ? new DOMPoint(Number(x), Number(y)).matrixTransform(matrix) : null;
+      return { start: point(line.getAttribute('x1'), line.getAttribute('y1'))?.toJSON(),
+        end: point(line.getAttribute('x2'), line.getAttribute('y2'))?.toJSON() };
+    });
     return { source, bounds, badges, tip: tipRect, tipVisible,
+      routePassport: { viewBox: svg?.getAttribute('viewBox'), clientWidth: topology?.clientWidth,
+        svgRect: svg ? rect(svg) : null, screenMatrix: matrix ? [matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f] : null,
+        routeGeometry },
       projectionIso: root.querySelector('.stage').classList.contains('projection-iso'),
       isoWalls: !!root.querySelector('[data-hp="iso-walls"]'),
       sourceRaised: floor?.length === 2 && visual?.length === 2
@@ -161,6 +171,10 @@ for (const provider of ['z2m', 'zha']) {
     await page.evaluate(async ({ provider, nodes, z2m, zha, remoteName }) => {
       const card = window.__card;
       const original = card.hass;
+      const configSeed = structuredClone(card._serverCfg), layoutSeed = structuredClone(card._layout);
+      configSeed.settings = { ...configSeed.settings, zigbee_topology: { enabled: true, z2m_base_topics: ['zigbee2mqtt'] } };
+      configSeed.spaces = configSeed.spaces.map(space => ({ ...space,
+        settings: { ...space.settings, show_borders: true, show_names: true } }));
       const fixture = { devices: structuredClone(original.devices), callbacks: new Set(), registryCallbacks: new Set(),
         calls: { zha: 0, start: 0, subscriptions: 0 }, revision: 0, phase: 'ready', stale: false,
         result: provider === 'z2m' ? z2m : null, originalResult: z2m, zha };
@@ -199,17 +213,13 @@ for (const provider of ['z2m', 'zha']) {
       };
       window.__tooltipFixture = fixture;
       document.getElementById('host').style.width = '900px';
-      await window.__hpTest.setServerConfig((cfg) => {
-        cfg.settings = { ...cfg.settings, zigbee_topology: { enabled: true, z2m_base_topics: ['zigbee2mqtt'] } };
-        cfg.spaces = cfg.spaces.map((space) => ({ ...space,
-          settings: { ...space.settings, show_borders: true, show_names: true },
-        }));
-        return cfg;
-      });
-      await window.__hpTest.setLayout((layout) => ({ ...layout,
+      // #867/#890: foreign connection resets old config authority. Publish the
+      // captured complete fixture, never transform a null foreign-context body.
+      await window.__hpTest.setServerConfig(configSeed);
+      await window.__hpTest.setLayout({ ...layoutSeed,
         d_kettle: { s: 'f1', x: 0.50, y: 0.40 }, d_temp: { s: 'f1', x: 0.22, y: 0.62 },
         d_light1: { s: 'f1', x: 0.25, y: 0.27 }, d_mower: { s: 'garden', x: 0.50, y: 0.48 },
-      }));
+      });
     }, { provider, nodes, z2m, zha, remoteName });
     if (provider === 'zha') {
       await page.evaluate(() => window.__hpTest.setMode('plan'));
@@ -351,6 +361,7 @@ for (const provider of ['z2m', 'zha']) {
       const restored = await witness('resizeRestoresWithoutNewHover', 'd_mower');
       out.resizePreservesSourceAndRoute = JSON.stringify(restored.source) === JSON.stringify(beforeResize.source)
         && JSON.stringify(restored.lines) === JSON.stringify(beforeResize.lines);
+      evidence.push({ provider, name: 'resize-source-and-route', before: beforeResize, restored });
       await deliver({ clear: true });
       await settle();
       const removed = await sample('d_mower');

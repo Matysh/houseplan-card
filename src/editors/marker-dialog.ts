@@ -640,6 +640,12 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           checked: d.hideBattery,
           onChange: (hidden) => (this.host._markerDialog = { ...d, hideBattery: hidden }),
         })}
+        ${toggleRow({
+          id: 'marker-hide-signal', compact: true, icon: 'mdi:signal-off',
+          title: st('marker.hide_signal'), help: shelp('marker.hide_signal_help'),
+          checked: d.hideSignal,
+          onChange: (hidden) => (this.host._markerDialog = { ...d, hideSignal: hidden }),
+        })}
         ${d.display === 'icon_ripple'
           ? html`${field({
               label: t('marker.activity_color'),

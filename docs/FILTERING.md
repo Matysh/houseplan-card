@@ -109,6 +109,12 @@ the old behaviour until an editing client materialises it.
   dialog still permits metadata edits, Open in HA and Delete. Opening,
   searching, filtering and Find are read-only.
 - Room LQI counts hidden devices (owner's decision).
+- #867: room LQI counts one exact physical HA radio per room, not each of its
+  device/entity markers. Local signal-line hiding does not remove this vote.
+  Hidden saved markers still count; removed/HA-disabled/orphaned/unverified do not.
+  A live exact entity restored under a plan-only device tombstone may read its
+  own still-existing HA parent's diagnostics, but neither restores its siblings'
+  functional roles nor resurrects the removed device marker.
 - Saving a newly created, uniquely HA-Area-bound room silently acknowledges
   only the already-present automatic devices first placed by that Save
   (including automatic light groups). The lazy editor's

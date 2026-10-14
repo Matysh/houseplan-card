@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 867,
+  "baseStable": "v1.80.1",
+  "category": "major",
+  "rationale": "New per-marker system-LQI opt-out, own physical sibling-LQI inheritance for entity markers and canonical multi-channel topology representation are user-facing capabilities beyond v1.80.1. Existing battery inheritance is reused and tested, not advertised as a newly implemented feature. Physical-radio room deduplication and resize endpoint alignment accompany this coherent diagnostic contract.",
+  "summary": {
+    "ru": "Локальное скрытие сигнала и собственная Zigbee-диагностика для отдельных каналов без повторных связей и лишнего веса в среднем комнаты.",
+    "en": "Per-marker signal hiding and own-device Zigbee diagnostics for individual channels, without duplicate routes or room-average weighting."
+  }
+}

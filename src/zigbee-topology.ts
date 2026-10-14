@@ -17,6 +17,9 @@ export type ZigbeeParentTarget = (
   | { kind: 'unplaced-coordinator' }
 ) & { nodeKey: string; deviceName?: string; lqi?: number };
 export interface ZigbeeHoverResolution {
+  /** Canonical radio representative, independent of which alias was hovered. */
+  originMarkerId?: string;
+  originSpace?: string;
   lines: ZigbeeHoverLine[];
   remoteCount: number;
   omittedCount: number;
@@ -30,6 +33,7 @@ export type ZigbeeNodePlacement = { markerId: string; space: string };
 export type ZigbeeMappedTopology = {
   topology: ZigbeeTopology;
   placements: Map<string, ZigbeeNodePlacement>;
+  hoverNodes: Map<string, { nodeKey: string; space: string }[]>;
   routes: Map<string, ZigbeeUplink>;
   nodes: Map<string, ZigbeeTopologyNode>;
   names: Map<string, string>;
@@ -62,32 +66,41 @@ function deviceIdsForNode(node: ZigbeeTopologyNode, registry: HaRegistrySnapshot
   return [...ids];
 }
 function drawable(device: DevItem): boolean {
-  return !device.hidden && !device.virtual && device.bindingStatus?.kind !== 'ha_disabled'
+  return !device.hidden && !device.virtual && !device.marker?.removed && device.bindingStatus?.kind !== 'ha_disabled'
     && device.bindingStatus?.kind !== 'orphaned' && device.bindingStatus?.kind !== 'unverified';
 }
 
 /** Exact registry binding only; names, models and friendly names are never identities. */
 export function mapTopologyNodes(
   topology: ZigbeeTopology, devices: readonly DevItem[], registry: HaRegistrySnapshot,
-): { placements: Map<string, ZigbeeNodePlacement>; warnings: ZigbeeTopologyWarning[] } {
+): { placements: Map<string, ZigbeeNodePlacement>; hoverNodes: ZigbeeMappedTopology['hoverNodes']; warnings: ZigbeeTopologyWarning[] } {
   const placements = new Map<string, ZigbeeNodePlacement>();
+  const hoverNodes: ZigbeeMappedTopology['hoverNodes'] = new Map();
   const warnings: ZigbeeTopologyWarning[] = [];
   for (const node of topology.nodes) {
     if (node.available === false) { warnings.push({ code: 'provider_scan_failure', nodeKey: node.key }); continue; }
     const deviceIds = deviceIdsForNode(node, registry);
     if (deviceIds.length !== 1) { warnings.push({ code: 'unmatched_device', nodeKey: node.key }); continue; }
     const deviceId = deviceIds[0];
-    let candidates = devices.filter((item) => drawable(item)
+    const physical = devices.filter((item) => drawable(item)
       && item.bindingKind === 'device' && item.bindingRef === deviceId);
-    if (!candidates.length) candidates = devices.filter((item) => drawable(item)
+    const entities = devices.filter((item) => drawable(item)
       && item.bindingKind === 'entity' && !!item.bindingRef
       && registry.entities[item.bindingRef]?.device_id === deviceId);
-    if (candidates.length === 1) placements.set(node.key, {
-      markerId: candidates[0].id, space: candidates[0].space,
-    });
-    else warnings.push({ code: candidates.length > 1 ? 'ambiguous_placement' : 'unmatched_device', nodeKey: node.key });
+    // buildDevices emits explicit entities in configured marker order, not HA
+    // registry/DOM order. Duplicate device placements remain genuinely ambiguous.
+    const representative = physical.length === 1 ? physical[0] : !physical.length ? entities[0] : undefined;
+    if (!representative) {
+      warnings.push({ code: physical.length > 1 ? 'ambiguous_placement' : 'unmatched_device', nodeKey: node.key });
+      continue;
+    }
+    placements.set(node.key, { markerId: representative.id, space: representative.space });
+    for (const alias of [...physical, ...entities]) {
+      const nodes = hoverNodes.get(alias.id) || [];
+      nodes.push({ nodeKey: node.key, space: alias.space }); hoverNodes.set(alias.id, nodes);
+    }
   }
-  return { placements, warnings };
+  return { placements, hoverNodes, warnings };
 }
 
 /** Cross-provider authority is exact HA ownership, even for an unplaced device. */
@@ -136,7 +149,7 @@ export function mapTopologies(
       const name = topologyName(device?.name_by_user) ?? topologyName(device?.name) ?? node.name;
       if (name) names.set(node.key, name);
     }
-    return { topology, placements: placement.placements, routes: resolveProviderUplinks(topology),
+    return { topology, placements: placement.placements, hoverNodes: placement.hoverNodes, routes: resolveProviderUplinks(topology),
       nodes: new Map(topology.nodes.map((node) => [node.key, node])), names, identities,
       partial: topology.warnings.length > 0 || placement.warnings.length > 0 };
   });
@@ -152,19 +165,28 @@ export function resolveMappedTopologyHover(
   const targets = new Map<string, ZigbeeParentTarget>(); const omitted = new Set<string>();
   let outgoing: ZigbeeHoverResolution['outgoing'] = 'not-zigbee';
   let partial = false; let isCoordinator = false; let obtainedAt: number | undefined;
+  let origin: ZigbeeNodePlacement | undefined;
   for (const map of mappedTopologies) {
-    const hovered = new Set([...map.placements].filter(([, placement]) => (
-      placement.markerId === hoveredMarkerId && placement.space === currentSpace
-    )).map(([key]) => key));
+    const hovered = new Set((map.hoverNodes.get(hoveredMarkerId) || [])
+      .filter((alias) => alias.space === currentSpace).map((alias) => alias.nodeKey));
     if (!hovered.size) continue;
     partial ||= map.partial;
     obtainedAt = obtainedAt === undefined ? map.topology.obtainedAt : Math.min(obtainedAt, map.topology.obtainedAt);
     for (const key of hovered) {
+      origin ||= map.placements.get(key);
       isCoordinator ||= map.nodes.get(key)?.role === 'coordinator';
       const route = map.routes.get(key);
       if (route?.kind === 'known') outgoing = 'known';
       else if (route?.kind === 'root' && outgoing !== 'known') outgoing = 'root';
       else if (outgoing === 'not-zigbee') outgoing = 'unknown';
+    }
+    if (origin && origin.space !== currentSpace) {
+      // The radio's representative is on another floor: an informative bubble,
+      // never a route drawn from the non-representative alias through floors.
+      for (const key of hovered) targets.set(map.identities.get(key)!, {
+        kind: 'remote-space', spaceId: origin.space, nodeKey: key, deviceName: map.names.get(key),
+      });
+      continue;
     }
     for (const [from, route] of map.routes) {
       if (route.kind !== 'known') continue;
@@ -173,7 +195,7 @@ export function resolveMappedTopologyHover(
       const otherKey = isOutgoing ? route.targetKey : from;
       const other = map.placements.get(otherKey);
       const identity = map.identities.get(otherKey)!;
-      if (other?.markerId === hoveredMarkerId) continue;
+      if (other?.markerId === origin?.markerId) continue;
       if (other?.space === currentSpace) {
         const line = lines.get(other.markerId);
         if (!line) lines.set(other.markerId, { neighborMarkerId: other.markerId,
@@ -193,6 +215,7 @@ export function resolveMappedTopologyHover(
   }
   return { lines: [...lines.values()], remoteCount: remote.size, omittedCount: omitted.size,
     parentTargets: [...targets.values()], outgoing, partial,
+    ...(origin ? { originMarkerId: origin.markerId, originSpace: origin.space } : {}),
     showIncomplete: partial && outgoing === 'unknown' && !isCoordinator,
     ...(obtainedAt === undefined ? {} : { obtainedAt }) };
 }

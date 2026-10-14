@@ -1,4 +1,7 @@
 {
+  "marker.hide_signal": "Masquer le signal Zigbee sur le plan",
+  "marker.hide_signal_help.aria": "Aide : masquer le signal Zigbee",
+  "marker.hide_signal_help": "Masque seulement la ligne LQI système de cette icône. Les valeurs et badges choisis, l’infobulle et les liaisons Zigbee restent disponibles.",
   "space.scale_changed": "Changer l’échelle recalcule les dimensions de tout l’espace à l’enregistrement. Les points du plan restent en place.",
   "space.plan.help": "Une image en arrière-plan sur laquelle dessiner. Les pièces et les appareils restent modifiables par-dessus. Passer au dessin à la main conserve l’image téléversée pour la réutiliser.",
   "space.plan.help.aria": "Aide : fond de plan",

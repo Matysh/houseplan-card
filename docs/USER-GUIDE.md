@@ -1593,6 +1593,15 @@ value badge. Battery icons use a soft size-aware shadow to stay legible over
 light and mixed plan backgrounds. Full configuration export/import preserves
 both settings.
 
+The adjacent **Hide Zigbee signal on the plan** option removes only that
+marker's system LQI line, not your explicit value/badge, tooltip or requested
+Zigbee routes. It is off by default. Entity markers read charge and signal from
+their own physical HA device, never its radio router. Multiple channels of one
+device give one vote in each room's LQI average. Routes prefer a visible device
+marker, otherwise the first eligible configured entity; hovering another channel
+keeps that representative. A representative on another floor gets a named floor
+bubble, not a line through floors.
+
 The main tooltip of a battery device, on hover and on keyboard focus, has its
 own charge line from the same source: “Battery N%” (rounded to a whole number),
 or “Battery normal” / “Low battery” for a binary sensor. It does not depend on

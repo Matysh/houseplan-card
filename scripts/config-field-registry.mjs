@@ -8,6 +8,21 @@
  */
 export const CONFIG_FIELD_REGISTRY = Object.freeze([
   {
+    id: 'markers[].hide_signal',
+    enforcedBy: 'device-signal.ts + validation.py + config-schema parity; #867',
+    selector: { path: ['markers', '*', 'hide_signal'] },
+    storage: 'House Plan server config',
+    type: 'boolean',
+    default: 'unset (= false)',
+    level: 'marker',
+    ui: 'Device settings → Appearance → Hide Zigbee signal on the plan',
+    runtime: 'hides only the system plan LQI line; explicit values, tooltip, routes and room averages remain',
+    introduced: '#867',
+    status: 'current',
+    migration: 'none — false is stored as absence; full backup/import and support preserve booleans',
+    compatibility: 'only exact true hides; old clients ignore this optional field',
+  },
+  {
     id: 'settings.show_device_battery',
     enforcedBy: 'device-battery-settings.ts + validation.py + config-schema parity; #792, #807',
     selector: { path: ['settings', 'show_device_battery'] },

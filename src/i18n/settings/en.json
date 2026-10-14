@@ -1,4 +1,7 @@
 {
+  "marker.hide_signal": "Hide Zigbee signal on the plan",
+  "marker.hide_signal_help.aria": "Help: hide Zigbee signal",
+  "marker.hide_signal_help": "Hides only this marker’s system LQI line. Your selected values and badges, tooltip and Zigbee routes remain available.",
   "space.scale_changed": "Changing the scale recalculates the dimensions of the whole space when you save. Points on the plan stay where they are.",
   "space.plan.help": "Use an image as a background to draw over. Rooms and devices stay editable on top of it. Switching to drawing by hand keeps the uploaded image available to use again.",
   "space.plan.help.aria": "Help: floor plan",

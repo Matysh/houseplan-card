@@ -34,7 +34,7 @@ import {
   beginSpaceSwipePointer, classifySpaceDrag, spaceSwipeTargetForOwner, clampScale,
   roomFillModeOf, roomGlowOf,
   openingAmount,
-  averageLqi, fitView, declump, safeUrl, floorsOf, type FloorInfo, stateIcon, diffNewDevices,
+  fitView, declump, safeUrl, floorsOf, type FloorInfo, stateIcon, diffNewDevices,
   isControllable, spaceDisplayOf, resolveEffectiveRoomFill, fillColorsOf, customFillOf,
   roomCustomFillOf, DEFAULT_CUSTOM_FILL, type FillColors, type FillColorEntry,
   type ResolvedRoomFill, runServiceFor, stageBgOf, showRoomTooltipOf, volumetricViewOf, type SpaceDisplay,
@@ -102,7 +102,7 @@ import { vacuumTrailSvg, type VacuumSvgFrame } from './vacuum-trail-render';
 import { diagnoseVacuumTrail, type VacuumTrailDiagnostic } from './vacuum-trail-diagnostics';
 import type { HouseplanEditorHostPort } from './houseplan-editor-runtime';
 import {
-  buildDevices, seedHiddenBindings, lqiFor, tempFor, climateTempFor, effectiveExcludedIntegrations,
+  buildDevices, seedHiddenBindings, areaLqi, tempFor, climateTempFor, effectiveExcludedIntegrations,
   sourceValue, roomClimateKey, roomClimateMap, resolvedLightSources, resolvedLightState,
   resolvedLightStats, removedPlanBindings, isRemovedPlanEntity, autoIconForBinding, type AreaClimate,
 } from './devices';
@@ -2230,6 +2230,7 @@ export class HouseplanCard extends LitElement {
     originalValueSource: ValueBadgeSource | null | undefined;
     useClimateTemp: boolean; // badge + room-average vote from climate current_temperature
     hideBattery: boolean; // per-marker override; global setting remains authoritative
+    hideSignal: boolean; // hides only this marker's system plan line
     model: string;
     link: string;
     description: string;
@@ -5220,13 +5221,7 @@ export class HouseplanCard extends LitElement {
 
   private _roomLqi(area: string | null): number | null {
     if (!area) return null;
-    const vals: number[] = [];
-    for (const d of this._renderDevices) {
-      if (d.area !== area || d.virtual) continue;
-      const l = lqiFor(this._renderPlanHass, d.entities);
-      if (l != null) vals.push(l);
-    }
-    return averageLqi(vals);
+    return areaLqi(this._renderPlanHass, this._renderDevices, area);
   }
 
   // ================= positions =================

@@ -254,6 +254,8 @@ export interface Marker {
   /** Per-device override for the default-on battery diagnostic. Only exact
    * true hides it; absent/false preserve the global setting. */
   hide_battery?: boolean;
+  /** Hide only the system LQI line; explicit values, tooltip and routes remain. */
+  hide_signal?: boolean;
 }
 
 /** One saved answer to "this exact map of this exact source lives here" (#162). */

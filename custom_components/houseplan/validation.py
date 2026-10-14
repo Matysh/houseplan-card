@@ -2005,6 +2005,8 @@ MARKER_SCHEMA = vol.Schema(
         vol.Optional("use_climate_temp"): vol.Any(bool, None),
         # Per-marker battery indicator override; absence/False keeps global policy.
         vol.Optional("hide_battery"): bool,
+        # Local system LQI line only; diagnostics/actions are not persisted here.
+        vol.Optional("hide_signal"): bool,
         vol.Optional("room_id"): vol.Any(str, None),
         # Keep in sync with DISPLAY_MODES in src/logic.ts. `ripple` is no longer
         # offered, but remains accepted while old stores migrate to icon_ripple.

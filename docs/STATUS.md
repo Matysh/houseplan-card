@@ -46,6 +46,13 @@ post-up implicit capture loss, and detached sun fades keep no timer. New
 behavior stays in View with the existing 600 ms/3 s thresholds; issue labels
 remain authoritative for workflow status.
 
+Own Zigbee diagnostics (#867) use registry-identity ownership independently of
+functional controls and battery visibility. Entity markers retain their own HA
+parent diagnostics after a plan-only parent-marker deletion; each physical radio
+votes once per room. Local system-line hiding does not suppress explicit LQI,
+tooltip or mouse topology, whose anchors use one configuration-stable radio
+representative. Resize updates only overlay geometry before caption fitting.
+
 Connected-node diagnostics (#888) name exact exceeded budgets and preserve
 functional/clock failures. Existing raw source/native/flush identities produce
 read-only phase evidence with clean material/protocol/environment passports;

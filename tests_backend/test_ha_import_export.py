@@ -120,6 +120,26 @@ def _config_with_decor_image(asset_id: str) -> tuple[dict, dict]:
     return config, shape
 
 
+@pytest.mark.parametrize("value", [True, False])
+@pytest.mark.parametrize("kind", ["full", "space"])
+def test_issue_867_signal_override_survives_export_parse_and_import(tmp_path: Path, value: bool, kind: str) -> None:
+    config = _config()
+    config["markers"][0].update({"hide_signal": value, "hide_battery": True})
+    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+        {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
+        card_version="review", config_root=tmp_path)
+    parsed = parse_document(json.dumps(document).encode())
+    assert parsed["payload"]["config"]["markers"][0]["hide_signal"] is value
+    runtime = SimpleNamespace(instance_id="same", import_previews={})
+    current = _config()
+    current["markers"] = []  # No duplicate binding to skip during a space import.
+    preview = create_preview(runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": current, "rev": 4}, current_layout_data={"layout": {}, "rev": 5}, config_root=tmp_path)
+    candidate = get_candidate(runtime, preview["token"], "alice")
+    imported, _layout, _details = prepare_apply(candidate, current, {}, confirm_missing_content=True)
+    assert any(marker.get("hide_signal") is value and marker.get("hide_battery") is True for marker in imported["markers"])
+
+
 def _missing_decor_export(
     source: Path, *, kind: str = "full", plan_only: bool = False,
     asset_id: str = "a" * 64,

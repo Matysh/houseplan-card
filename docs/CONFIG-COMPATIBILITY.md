@@ -167,6 +167,14 @@ absence. Full backup/import and the privacy-safe support projection retain the
 boolean. Older clients ignore it, so no model/store version migration is
 required. It does not select a battery entity or persist charge state.
 
+`marker.hide_signal` (#867) is likewise an optional strict boolean; only exact
+`true` hides that marker's system plan LQI line. Default/false saves as absence.
+Explicit values/badges, tooltip and requested topology remain available, subject
+to their existing effective display policies. Full/space export/import and the
+privacy-safe support projection preserve the flag; no migration or background
+write is required. Old clients ignore it. Physical ownership, live readings and
+canonical topology representatives are derived at runtime, never persisted.
+
 ## 2.5D View setting (#649)
 
 `settings.volumetric_view` is an optional global boolean for the whole

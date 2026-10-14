@@ -1,6 +1,7 @@
 import {
-  climateTempFor, humFor, isHumEntity, isTempEntity, lqiFor, resolvedLightSources, tempFor,
+  climateTempFor, humFor, isHumEntity, isTempEntity, resolvedLightSources, tempFor,
 } from './devices';
+import { deviceLqi, type DeviceSignalContext } from './device-signal';
 import { isRegistryEntryEnabled } from './ha-binding-status';
 import { displayIsNeutral, displayWantsValue, hassValue, valueWithUnit, type DeviceDisplayMode } from './logic';
 import type {
@@ -51,6 +52,7 @@ export interface ResolveValueBadgeOptions {
   effectiveHidden: boolean;
   /** Canonical marker:* states already projected by presentation/light graph. */
   markerStates?: readonly { ref: string; on: boolean; name: string }[];
+  signalContext?: DeviceSignalContext;
 }
 
 export function valueBadgeTitle(badge: ResolvedValueBadge | null | undefined): string {
@@ -159,6 +161,7 @@ function sourceTone(source: ValueBadgeSource): ResolvedValueBadge['tone'] {
 export function resolveValueSource(
   hass: any, d: DevItem, source: ValueBadgeSource,
   markerStates: readonly { ref: string; on: boolean; name: string }[] = [],
+  signalContext?: DeviceSignalContext,
 ): Omit<ResolvedValueBadge, 'configured' | 'enabled' | 'position'> {
   let text: string | null = null;
   let label = '';
@@ -218,7 +221,7 @@ export function resolveValueSource(
     }
   } else if (source.kind === 'derived_lqi') {
     label = 'LQI';
-    const lqi = lqiFor(hass, d.entities);
+    const lqi = deviceLqi(hass, d, signalContext);
     if (lqi == null) {
       availability = 'unavailable';
       failure = 'missing';
@@ -299,7 +302,7 @@ export function resolveDeviceValueBadge(
     };
     return {
       configured: true, enabled: true, position: stored.position || 'right',
-      ...resolveValueSource(hass, d, stored.source, options.markerStates),
+      ...resolveValueSource(hass, d, stored.source, options.markerStates, options.signalContext),
     };
   }
   if (!options.showTemperature || displayWantsValue(options.display)) return null;
@@ -389,7 +392,7 @@ export function valueBadgeCandidates(
   for (const ref of [...refs].sort()) {
     if (lightKeys.has(ref as `marker:${string}`)) add({ kind: 'derived_marker_state', ref: ref as `marker:${string}` });
   }
-  if (!d.virtual && lqiFor(hass, d.entities) != null) add({ kind: 'derived_lqi' });
+  if (!d.virtual && deviceLqi(hass, d) != null) add({ kind: 'derived_lqi' });
   CANDIDATE_CACHE.set(d as object, {
     states: hass?.states || null,
     entities: hass?.entities || null,

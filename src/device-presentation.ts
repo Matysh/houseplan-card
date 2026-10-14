@@ -6,7 +6,7 @@
  * entity, reclassify a state or format a value on their own.
  */
 import {
-  climateTempFor, humFor, isHumEntity, isTempEntity, lqiFor,
+  climateTempFor, humFor, isHumEntity, isTempEntity,
   persistedExternalControls, resolvedDeviceStateEntities, resolvedLightSources, tempFor,
   type ResolvedLightSource,
 } from './devices';
@@ -28,6 +28,7 @@ import {
   type DeviceBatteryContext, type ResolvedDeviceBattery,
 } from './device-battery';
 import { showMarkerBatteryOf } from './device-battery-settings';
+import { createDeviceSignalContext, deviceLqi, showMarkerSignalOf, type DeviceSignalContext } from './device-signal';
 import {
   resolveDeviceValueBadge, resolveValueSource, valueBadgeSourceKey,
   type ResolvedValueBadge,
@@ -144,6 +145,7 @@ export interface ResolvePresentationOptions {
   /** #807: the low-only mode keeps the indicator only in the red `low` state. */
   batteryLowOnly?: boolean;
   batteryContext?: DeviceBatteryContext;
+  signalContext?: DeviceSignalContext;
   /** User-hidden markers show their real design inside the editor preview. */
   designPreview?: boolean;
   activityRuntime?: PresentationActivityRuntime | null;
@@ -187,6 +189,8 @@ export interface ResolvedDevicePresentation {
   valueBadge: ResolvedValueBadge | null;
   battery: ResolvedDeviceBattery | null;
   lqiText: string | null;
+  /** System tooltip text ignores only the local plan-line opt-out. */
+  lqiTipText: string | null;
   lqiColor: string | null;
   lqiBand: DeviceLqiBand | null;
   lightColor: string | null;
@@ -512,6 +516,7 @@ function resolveValue(
   sources: ResolvedPresentationSources,
   showTemperature: boolean,
   markerStates: readonly { ref: string; on: boolean; name: string }[] = [],
+  signalContext?: DeviceSignalContext,
 ): {
   source: ResolvedValueSource | null;
   text: string | null;
@@ -524,7 +529,7 @@ function resolveValue(
   }
   const explicitSource = d.marker?.value_source;
   if (explicitSource) {
-    const resolved = resolveValueSource(hass, d, explicitSource, markerStates);
+    const resolved = resolveValueSource(hass, d, explicitSource, markerStates, signalContext);
     const kind: ResolvedValueSource['kind'] = explicitSource.kind === 'derived_lqi'
       ? 'derived_lqi'
       : explicitSource.kind === 'derived_marker_state'
@@ -734,9 +739,10 @@ export function resolveDevicePresentation(
     ).length > 0;
   const controllerFace = sources.sourceKind === 'controls'
     || (configuredController && sources.sourceKind !== 'light' && sources.sourceKind !== 'cover');
+  const signalContext = options.signalContext || createDeviceSignalContext(hass, options.registryHass || hass);
   const value = sourceless && options.sourceDetails === false
     ? { source: null, text: null, fullText: null, fallback: null, explicit: false }
-    : resolveValue(hass, d, sources, options.showTemperature, markerStates);
+    : resolveValue(hass, d, sources, options.showTemperature, markerStates, signalContext);
   const sourceSignature = signatureOf(d, sources, value.source);
   const activitySignature = activitySourceSignature(hass, d, sources);
   const rt = options.activityRuntime;
@@ -779,13 +785,14 @@ export function resolveDevicePresentation(
   const hum = policy.metrics && options.showTemperature
     && !!d.primary && isHumEntity(hass, d.primary)
     ? humFor(hass, d.entities) : null;
-  const lqi = policy.metrics && options.showSignal && !d.virtual ? lqiFor(hass, d.entities) : null;
+  const lqi = policy.metrics && options.showSignal ? deviceLqi(hass, d, signalContext) : null;
   const valueBadge = resolveDeviceValueBadge(hass, d, {
     showTemperature: options.showTemperature,
     showSignal: options.showSignal,
     display,
     effectiveHidden,
     markerStates,
+    signalContext,
   });
   const realVisualSource = sources.visualSources.find((source) => !source.eid.startsWith('marker:'));
   const actEid = sources.sourceKind === 'cover'
@@ -880,8 +887,9 @@ export function resolveDevicePresentation(
     humText: hum == null ? null : String(hum),
     valueBadge,
     battery,
-    lqiText: lqi == null || valueBadge?.isLqi || value.source?.kind === 'derived_lqi'
+    lqiText: !showMarkerSignalOf(d.marker) || lqi == null || valueBadge?.isLqi || value.source?.kind === 'derived_lqi'
       ? null : String(lqi),
+    lqiTipText: lqi == null || valueBadge?.isLqi || value.source?.kind === 'derived_lqi' ? null : String(lqi),
     lqiColor: lqi == null ? null : markerLqiColor(lqi),
     lqiBand: lqi == null ? null : markerLqiBand(lqi),
     lightColor,
