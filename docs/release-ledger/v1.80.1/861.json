@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 861,
+  "baseStable": "v1.80.1",
+  "category": "infra",
+  "rationale": "Only SPEC-REVIEW-861-r1.md and the review index are delivered in this candidate's first-parent history. The planned gesture-owner refactor is not implemented or claimed released; the open S5 task remains open.",
+  "summary": {
+    "ru": "Опубликован документ ревью ТЗ; реализация задачи в выпуск не входит.",
+    "en": "A specification review document is recorded; the planned implementation is not delivered."
+  }
+}

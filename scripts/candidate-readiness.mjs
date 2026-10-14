@@ -10,6 +10,7 @@ import { assertCommittedBundleFresh } from './bundle-policy.mjs';
 import { sourceFingerprint } from './source-fingerprint.mjs';
 import { goldenAcceptanceRefusal } from './golden-acceptance.mjs';
 import { GOLDEN_SCENARIOS } from '../demo/golden/matrix.mjs';
+import { versionFromTag } from './release-contract.mjs';
 
 export const digest = value => createHash('sha256').update(typeof value === 'string' || Buffer.isBuffer(value)
   ? value : JSON.stringify(value)).digest('hex');
@@ -26,6 +27,13 @@ export const NATIVE_PROFILES = Object.freeze({
     { id: 'view-neighbour', script: 'demo/smoke_live_pan_coverage.mjs', oracle: 'native touch pinch, 2.5D and kiosk: held coverage and terminal cleanup' },
   ],
 });
+/** #889: only the committed canonical beta channel has advisory field QA. */
+export function candidatePolicy(version) {
+  const beta = typeof version === 'string'
+    && versionFromTag(`v${version}`).prerelease
+    && /-beta\.[1-9]\d*$/.test(version);
+  return { channel: beta ? 'beta' : 'strict', manualAcceptanceRequired: !beta };
+}
 export function requiredProfiles(entry, files) {
   if (entry.category === 'infra') return [];
   const majorFrontend = entry.category === 'major' && files.some(f => f.startsWith('src/'));
@@ -85,16 +93,20 @@ export function acceptanceRefusal(record, { material, cases, scripts, gpu, input
 }
 export function buildCandidate({ input, issues, proof, owner, sceneIds = GOLDEN_SCENARIOS.map(s => s.id) }) {
   if (!SHA.test(input.sha || '') || !SHA.test(input.tree || '')) throw Error('exact candidate SHA/tree required');
-  const blockers = [], plans = [], profiles = new Set();
+  const policy = candidatePolicy(input.version);
+  const blockers = [], warnings = [], plans = [], profiles = new Set();
   for (const entry of input.catalogue.entries) {
     const issue = issues.find(i => i.number === entry.issue);
     if (!issue) throw Error(`missing fresh issue #${entry.issue}`);
     const files = input.issueFiles[entry.issue] || [];
     requiredProfiles(entry, files).forEach(p => profiles.add(p));
     const filesKey = input.issueMaterials[entry.issue];
+    const golden = issue.labels?.some(l => (l.name || l) === 'ci:golden');
     const delta = sceneDelta({ issue, filesKey, owner, sceneIds,
-      required: issue.labels?.some(l => (l.name || l) === 'ci:golden') });
+      required: golden && policy.manualAcceptanceRequired });
     if (delta.blocker) blockers.push(delta.blocker);
+    if (golden && !policy.manualAcceptanceRequired && !delta.review && !delta.blocker)
+      warnings.push(`#${issue.number}: beta has no additional owner scene plan; no intentional pixel changes declared`);
     plans.push({ issue: entry.issue, body: issueBodyDigest(issue.body), issueMaterial: filesKey, ...delta });
   }
   const cases = [...profiles].sort().flatMap(p => NATIVE_PROFILES[p]);
@@ -104,18 +116,22 @@ export function buildCandidate({ input, issues, proof, owner, sceneIds = GOLDEN_
   if (scenes.change.some(id => scenes.new.includes(id))) blockers.push('conflicting change/new declarations across issues');
   // No clock or Actions timestamps in material. Proof/receipt changes get their
   // own complete identity; acceptance never authorizes a different body/pin/tree.
-  const material = digest({ schema: 1, ...input, plans, cases, gpu });
+  const material = digest({ schema: 1, ...input, plans, cases, gpu, policy });
   const receipts = [];
   for (const entry of input.catalogue.entries) {
     const localCases = requiredProfiles(entry, input.issueFiles[entry.issue] || []).flatMap(p => NATIVE_PROFILES[p]);
     if (!localCases.length) continue;
     const record = ownerRecord(issues.find(i => i.number === entry.issue).comments || [], 'candidate-acceptance', owner);
     const refusal = acceptanceRefusal(record, { material, cases: localCases, scripts: input.scripts, gpu, input });
-    if (refusal) blockers.push(`#${entry.issue}: ${refusal}`);
+    // Advice is not permission to ignore an explicit current owner veto or
+    // revive older approval after a malformed/revoked latest owner record.
+    const veto = record && (record.invalid
+      || (record.material === material && record.verdict !== 'accepted'));
+    if (refusal) (policy.manualAcceptanceRequired || veto ? blockers : warnings).push(`#${entry.issue}: ${refusal}`);
     receipts.push({ issue: entry.issue, record, refusal });
   }
   if (proof.status !== 'green') blockers.push(`full exact-SHA Validate is ${proof.status}: ${proof.note || 'proof unavailable'} ${proof.url || ''}`);
-  const record = { schema: 1, material, input, plans, scenes, cases, gpu, receipts, proof, blockers };
+  const record = { schema: 1, material, input, policy, plans, scenes, cases, gpu, receipts, proof, blockers, warnings };
   return { ...record, identity: digest(record), ready: blockers.length === 0, publish: false,
     planTemplates: plans.filter(p => p.blocker).map(p => ({ schema: 1, issue: p.issue, body: p.body,
       issueMaterial: p.issueMaterial, change: [], new: [], reason: 'Explain reviewed intent; empty arrays are an explicit no-scene-change declaration.' })),
@@ -150,5 +166,8 @@ export function candidateInputs({ candidate = 'HEAD', root = process.cwd(), gitR
     '.github/workflows/validate.yml', 'demo/golden/matrix.mjs'].map(f => [f, digest(git(['show', `${sha}:${f}`]))]));
   const scripts = Object.fromEntries(unique(Object.values(NATIVE_PROFILES).flat().map(c => c.script))
     .map(f => [f, digest(readFileSync(resolve(root, f)))]));
-  return { sha, tree: git(['rev-parse', `${sha}^{tree}`]), manifest: digest(manifest), pins, catalogue, issueFiles, issueMaterials, scripts };
+  // Read the channel from the exact committed material, never a CLI/env waiver.
+  const version = JSON.parse(git(['show', `${sha}:package.json`])).version;
+  candidatePolicy(version);
+  return { sha, tree: git(['rev-parse', `${sha}^{tree}`]), version, manifest: digest(manifest), pins, catalogue, issueFiles, issueMaterials, scripts };
 }

@@ -25,6 +25,11 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Beta publication (#889) treats additional owner scene/dev/native/GPU records
+as advice when absent, not as fabricated acceptance. Only the committed beta
+version selects this policy; stable/RC/unknown channels stay strict. Exact full
+CI, coherent artifacts and reviewed baseline boundaries remain mandatory.
+
 Golden overlap capture (#881, owner option b) repaints only the focused
 `device-battery-zigbee-overlap-dark` scene before its final screenshot, with
 the page background restored. Browser launch flags, semantic controls, matrix

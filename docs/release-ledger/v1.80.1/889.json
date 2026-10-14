@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 889,
+  "baseStable": "v1.80.1",
+  "category": "infra",
+  "rationale": "Owner-approved beta-only publication policy for additional field/dev/GPU receipts. No product changes; stable/RC policy and automatic proof, artifact and baseline safety contracts remain strict.",
+  "summary": {
+    "ru": "Ручная приёмка dev/GPU не блокирует бету с зелёными автоматическими проверками.",
+    "en": "Additional dev/GPU field acceptance no longer blocks an automatically verified beta."
+  }
+}

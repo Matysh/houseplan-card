@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 697,
+  "baseStable": "v1.80.1",
+  "category": "infra",
+  "rationale": "The delivered first-parent delta since v1.80.1 contains only three regenerated docs/images/screenshots.json metadata commits for the derived-artifact workflow. No user behaviour is delivered by this delta.",
+  "summary": {
+    "ru": "Обновлены метаданные снимков документации.",
+    "en": "Documentation screenshot metadata is refreshed."
+  }
+}

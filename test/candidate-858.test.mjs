@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildCandidate, candidateInputs, digest, NATIVE_PROFILES, intentionalDrift, ownerRecord } from '../scripts/candidate-readiness.mjs';
+import { buildCandidate, candidateInputs, candidatePolicy, digest, NATIVE_PROFILES, intentionalDrift, ownerRecord } from '../scripts/candidate-readiness.mjs';
 import { prepareCandidate, assertCandidateAcceptance } from '../scripts/release-prepare.mjs';
 import { judgeNativeOutput, runCandidateNative, NATIVE_CHECK_FLOORS } from '../scripts/candidate-native.mjs';
 import { diagnoseNight, diagnosticLines } from '../scripts/night-diagnostics.mjs';
@@ -76,6 +76,82 @@ test('#858 interactive floor needs native ordinary+neighbour and independent own
     assert.equal(f.build().ready, false);
   }
   const f = fixture(); f.issue.comments[1].user.login = 'agent'; assert.equal(f.build().ready, false);
+});
+
+test('#889 beta missing field/scene records are advisory, not a fabricated owner acceptance', () => {
+  const f = fixture();
+  f.input.version = '1.81.0-beta.2';
+  f.issue.comments = [];
+  const result = f.build();
+  assert.equal(result.ready, true);
+  assert.equal(result.publish, false);
+  assert.deepEqual(result.policy, { channel: 'beta', manualAcceptanceRequired: false });
+  assert.deepEqual(result.scenes, { change: [], new: [] });
+  assert.equal(result.cases.length, 4, 'retain ordinary/neighbour risk inventory');
+  assert.equal(result.gpu, true, 'do not hide the GPU risk');
+  assert.equal(result.receipts[0].record, null);
+  assert.match(result.receipts[0].refusal, /missing\/stale owner dev interactive acceptance/);
+  assert.equal(result.warnings.length, 2);
+  assert.match(result.warnings[0], /no intentional pixel changes declared/);
+  assert.equal(intentionalDrift([{ id: 'one', status: 'different' }, { id: 'two', status: 'passed' }],
+    result.scenes, ['one', 'two']), false);
+});
+
+test('#889 stable, RC, unknown and malformed versions cannot use the beta field policy', () => {
+  for (const version of ['1.81.0', '1.81.0-rc.1', '1.81.0-alpha.1', undefined]) {
+    const f = fixture();
+    f.input.version = version;
+    f.issue.comments = [];
+    const result = f.build();
+    assert.equal(result.ready, false, String(version));
+    assert.equal(result.policy.manualAcceptanceRequired, true);
+    assert.ok(result.blockers.some(b => b.includes('owner-reviewed scene plan')));
+    assert.ok(result.blockers.some(b => b.includes('owner dev interactive acceptance')));
+  }
+  for (const version of ['not-a-version', '1.81.0-beta.02', '1.81.0-beta.2 extra'])
+    assert.throws(() => candidatePolicy(version), /SemVer|leading zeroes/);
+});
+
+test('#889 beta still blocks every non-green full proof and invalid/revoked owner scene intent', () => {
+  for (const status of ['failed', 'pending', 'cancelled', 'stale', 'missing']) {
+    const f = fixture();
+    f.input.version = '1.81.0-beta.2';
+    f.issue.comments = [];
+    f.proof.status = status;
+    const result = f.build();
+    assert.equal(result.ready, false, status);
+    assert.ok(result.blockers.some(b => b.includes(`Validate is ${status}`)));
+  }
+  for (const mutate of [
+    p => p.body = 'stale', p => p.issueMaterial = 'f'.repeat(64),
+    p => p.change = ['unknown'], p => p.new = ['one'], p => p.schema = 0,
+  ]) {
+    const f = fixture();
+    f.input.version = '1.81.0-beta.2';
+    mutate(f.plan);
+    f.issue.comments = [comment('candidate-plan', f.plan)];
+    assert.equal(f.build().ready, false);
+  }
+  const f = fixture();
+  f.input.version = '1.81.0-beta.2';
+  f.issue.comments.push({ ...comment('candidate-plan', {}), body: '<!-- hp:candidate-plan\nnot-json\n-->' });
+  assert.equal(f.build().ready, false);
+});
+
+test('#889 advisory beta field QA cannot override a current owner veto or malformed latest record', () => {
+  for (const verdict of ['rejected', 'revoked']) {
+    const f = fixture();
+    f.input.version = '1.81.0-beta.2';
+    f.issue.comments = [];
+    const material = f.build().material;
+    f.issue.comments.push(comment('candidate-acceptance', { schema: 1, material, verdict }, 'Matysh', 3));
+    assert.equal(f.build().ready, false, verdict);
+  }
+  const f = fixture();
+  f.input.version = '1.81.0-beta.2';
+  f.issue.comments.push({ ...comment('candidate-acceptance', {}),
+    body: '<!-- hp:candidate-acceptance\nnot-json\n-->' });
+  assert.equal(f.build().ready, false);
 });
 test('#858 prepare only performs GETs, calls existing full proof, never dispatches/publishes', async () => {
   const f = fixture('infra'); f.issue.labels = []; f.issue.comments = [];
@@ -157,6 +233,8 @@ test('#858 candidate inspects actual first-parent merge delta and committed bund
   git(dir,'merge','--no-ff','side','-m','integrate\n\nIssue: #1\nUser-Visible: no');
   const inputs = candidateInputs({ root: dir }); assert.ok(inputs.issueFiles[1].includes('src/wall-node-new.ts'));
   assert.equal(inputs.sha, git(dir,'rev-parse','HEAD')); assert.equal(inputs.manifest.length,64);
+  assert.equal(inputs.version, JSON.parse(git(dir, 'show', 'HEAD:package.json')).version,
+    '#889: publication policy is bound to the Git version, not an environment override');
   put('houseplan.zip','generated');
   assert.throws(() => candidateInputs({ root: dir }), /clean exact-candidate/);
   assert.deepEqual(candidateInputs({ root: dir, publicationCheck: true }), inputs);

@@ -77,6 +77,22 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'candidate-beta-field-policy-leaks-to-stable',
+    guard: 'node --test test/candidate-858.test.mjs',
+    because: '#889 AC2: stable, RC and unknown channels still require independent field/GPU acceptance.',
+    patches: [{ file: 'scripts/candidate-readiness.mjs',
+      find: "return { channel: beta ? 'beta' : 'strict', manualAcceptanceRequired: !beta };",
+      replace: "return { channel: beta ? 'beta' : 'strict', manualAcceptanceRequired: false };" }],
+  },
+  {
+    id: 'candidate-beta-forgets-full-proof',
+    guard: 'node --test test/candidate-858.test.mjs',
+    because: '#889 AC3: beta field advice cannot authorise a failed, missing, pending, stale or cancelled full Validate.',
+    patches: [{ file: 'scripts/candidate-readiness.mjs',
+      find: "if (proof.status !== 'green') blockers.push(`full exact-SHA Validate is ${proof.status}: ${proof.note || 'proof unavailable'} ${proof.url || ''}`);",
+      replace: "if (proof.status !== 'green' && policy.manualAcceptanceRequired) blockers.push(`full exact-SHA Validate is ${proof.status}: ${proof.note || 'proof unavailable'} ${proof.url || ''}`);" }],
+  },
+  {
     id: 'golden-overlap-forgets-scene-repaint',
     guard: 'node --test test/golden-scene-repaint.test.mjs',
     because: '#881 AC1: the focused overlap frame must paint a temporary root background and restore it before capture, without affecting the other scenes.',

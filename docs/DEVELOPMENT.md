@@ -1477,6 +1477,18 @@ by `release.yml`. Installations then update through HACS by tag («Deployment»
 above); the dev stand takes the head of `dev` from the `dev-build` branch
 (`demo/stand/README.md`).
 
+Beta field policy (#889, owner decision 2026-10-14): only committed canonical
+`X.Y.Z-beta.N` versions make the additional #858 owner dev/native/GPU receipts
+advisory rather than publication blockers. Missing additional owner scene-plan
+JSON declares no intentional pixel changes; invalid or revoked supplied plans
+still refuse. Prepare reports these missing records as warnings and never
+claims field/GPU acceptance. Stable, RC, other and unknown channels keep #858's
+strict owner contract. A current explicit owner veto or malformed latest owner
+record is still a blocker, including on beta. The exact full CI proof, fresh coherent bundle, reviewed
+baseline acceptance, declared scene boundaries, witness floor, ship review and
+public asset passport remain mandatory on every channel; there is no CLI/env
+waiver. Channel policy is read from the candidate's committed package version.
+
 ### Primary prerelease path
 
 Before the existing owner publish command, run `npm run release:prepare` on a
@@ -1488,7 +1500,7 @@ Validate proof. A missing/stale/red/partial proof is an actionable blocker,
 not a cache hit. Repeat with unchanged inputs yields the same identity. Stable
 performance/E2E and batch-review contracts remain additional publisher gates.
 
-For a merged/closed `ci:golden` task the repository owner reviews an explicit
+On strict (non-beta) channels, for a merged/closed `ci:golden` task the repository owner reviews an explicit
 scene plan in that issue. `release:prepare` prints its issue/body/material keys;
 `npm run release:prepare -- --list-scenes` lists existing IDs with mode/theme/
 viewport, so no hidden catalogue knowledge is needed. The owner comment is:
@@ -1516,7 +1528,8 @@ environment, script/output hashes and observed checks. Timeout/exit0 without
 the required check inventory is not PASS. Native evidence is **not** human
 acceptance; a successful headless run never claims field/GPU acceptance.
 
-Install that exact material on the existing dev stand; the owner observes each
+The following field workflow is required on strict channels and advisory on
+canonical betas. Install that exact material on the existing dev stand; the owner observes each
 listed case and posts `hp:candidate-acceptance` JSON in the relevant issue:
 `schema:1`, `material:<prepare material key>`, `verdict:"accepted"`,
 `surface:"dev"`, `native:<native report metadata, including pass/SHA/tree/
@@ -1528,8 +1541,9 @@ and `environment.os`. For raster/compositor risk also include
 This is an authenticated owner's field attestation, not automated verification
 of a video's contents; never manufacture it as an agent. A new candidate,
 body/pin/ledger/scene change or missing ordinary/neighbour evidence requires a
-fresh attestation. Adding an acceptance does not change its material key, but
-does change the complete readiness identity. No receipt means no publication.
+fresh attestation on strict channels. Adding an acceptance does not change its material key, but
+does change the complete readiness identity. No receipt means no publication
+on strict channels; canonical beta publication retains an explicit advisory.
 
 `release-prerelease.mjs`, `publish-prerelease.yml` and `release.yml` all check
 fresh candidate readiness before public work. Prepare alone grants no publish
