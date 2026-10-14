@@ -33,6 +33,8 @@ on/off semantics are unchanged; this does not emulate HA domain state machines.
 Static golden/docs capture installs a temporary recursive shadow-root style
 observer and restores `attachShadow`, styles and capture clock/CSS overrides in
 `finally`, including stability-only and failed captures. This is harness-only;
+the media modes observed before preparation are restored too, so capture's
+reduced-motion setting cannot leak into a subsequent ordinary transition test.
 dynamic transition tests use ordinary CSS. `captureScriptSha256` now hashes
 canonical-LF capture code plus `browser-args.mjs` and its literal local module
 dependencies; those arguments also enter source/visual fingerprints. This is

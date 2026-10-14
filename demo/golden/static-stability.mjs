@@ -44,10 +44,14 @@ export function installStaticStability() {
 }
 
 export async function resetGoldenStability(page) {
-  await page.evaluate(() => {
+  const media = await page.evaluate(() => {
     window.__hpGoldenStability?.reset();
     document.getElementById('hp-golden-stability')?.remove();
     if (window.__hpGoldenNativeDate) window.Date = window.__hpGoldenNativeDate;
     if (window.__hpGoldenNativeCssSupports) CSS.supports = window.__hpGoldenNativeCssSupports;
+    const prior = window.__hpGoldenMediaBefore ?? null;
+    delete window.__hpGoldenMediaBefore;
+    return prior;
   });
+  if (media) await page.emulateMedia(media);
 }

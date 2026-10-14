@@ -85,6 +85,13 @@ const panelThemeVars = {
 
 async function stableEnvironment(page, scenario) {
   await resetGoldenStability(page);
+  await page.evaluate(() => {
+    window.__hpGoldenMediaBefore = {
+      reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduce' : 'no-preference',
+      colorScheme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
+      forcedColors: matchMedia('(forced-colors: active)').matches ? 'active' : 'none',
+    };
+  });
   await page.setViewportSize(scenario.viewport);
   await page.emulateMedia({
     reducedMotion: 'reduce', colorScheme: scenario.theme,

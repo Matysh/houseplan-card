@@ -1,5 +1,7 @@
 import { launch, check, finish } from './serve.mjs';
 import { installStaticStability, resetGoldenStability } from './golden/static-stability.mjs';
+import { prepareGoldenScenario } from './golden/harness.mjs';
+import { GOLDEN_SCENARIOS } from './golden/matrix.mjs';
 const { page, browser } = await launch({ width: 1000, height: 820 });
 try {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
@@ -44,4 +46,30 @@ try {
   check('#896 reset restores lazy transition', restored.transition, '0.23s');
   check('#896 reset restores lazy animation', restored.animation, 'fixture');
   check('#896 reset removes overrides and observer lifetime', [restored.styles, restored.active], [0, false]);
+  const media = () => page.evaluate(() => ({
+    reduced: matchMedia('(prefers-reduced-motion: reduce)').matches,
+    dark: matchMedia('(prefers-color-scheme: dark)').matches,
+    forced: matchMedia('(forced-colors: active)').matches,
+  }));
+  await page.emulateMedia({ reducedMotion: 'no-preference', colorScheme: 'light', forcedColors: 'none' });
+  const beforeCapture = await media();
+  const scenario = GOLDEN_SCENARIOS.find(scene => scene.mode === 'view' && scene.theme === 'dark'
+    && !scene.hoverDevice && !scene.kiosk && !scene.projection && !scene.pdfExport && !scene.moonClock);
+  if (!scenario) throw new Error('ordinary golden lifecycle fixture missing');
+  // Exercise the actual preparation entry, not just the stylesheet installer.
+  await prepareGoldenScenario(page, scenario);
+  const prepared = await media();
+  check('#896 actual prepare really enables reduced capture motion', prepared.reduced);
+  check('#896 no-reset negative observation differs from ordinary media', JSON.stringify(prepared) === JSON.stringify(beforeCapture), false);
+  await resetGoldenStability(page);
+  check('#896 actual prepare/reset restores all prior observed media modes', await media(), beforeCapture);
+  // A failing screenshot/semantic phase follows the same finally path.
+  let failedPhaseObserved = false;
+  try {
+    await prepareGoldenScenario(page, scenario);
+    throw new Error('controlled capture phase failure');
+  } catch (error) { failedPhaseObserved = error.message === 'controlled capture phase failure'; }
+  finally { await resetGoldenStability(page); }
+  check('#896 controlled failed capture phase was reached', failedPhaseObserved);
+  check('#896 failed capture finally also restores media', await media(), beforeCapture);
 } finally { await resetGoldenStability(page); await finish(browser); }

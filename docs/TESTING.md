@@ -21,6 +21,9 @@ null canonical config during loading is correct, and retained DOM is display-onl
 `smoke_capture_stability` checks actual card computed transitions, a head-only
 negative, subsequently attached/replaced shadow contents, identical static
 hover pixels and exact reset. LED dynamic smokes never install that override.
+The actual `prepareGoldenScenario` entry is exercised for successful and
+controlled failing capture phases: reset restores the previous observed motion,
+colour-scheme and forced-colour media modes, not just the temporary stylesheet.
 `source-fingerprint.test.mjs` changes a real browser-args dependency and proves
 stale docs rejection before reading/copying PNGs; post-capture policy remains
 excluded. `bundle-assets.test.mjs` exercises all three valid lazy graph manifests
