@@ -29,6 +29,7 @@ async function start(kind, { language = 'en', width = 1280, hidden = false, depe
   if (kind === 'summary' && !hidden && Object.keys(preference).length !== 1) throw Error('summary fixture did not persist exactly its real local preference');
   const options = { type: 'custom:houseplan-card', title: 'House Plan', icon_size: 3.4, language };
   const source = boot
+    .replace('#host{width:780px;', '#host{width:min(780px, calc(100vw - 16px));')
     .replace("card.setConfig({type:'custom:houseplan-card', title:'House Plan', icon_size:3.4});", `card.setConfig(${JSON.stringify(options)});`)
     .replace("  await import('/assets/houseplan-card.js');", `${[kind, ...otherKinds].includes('zigbee') ? '  CFG.settings.zigbee_topology={enabled:true,z2m_base_topics:[]};\n' : ''}  await import('/assets/houseplan-card.js');`)
     .replace('  card.hass=mkHass();\n  window.__card=card;', `  card.hass={...mkHass(),themes:{darkMode:${language === 'ru'}}};\n  window.__card=card;`);
@@ -195,15 +196,24 @@ try {
   });
   await pending.page.waitForFunction(() => window.__retiredCard._loadOk && window.__card._loadOk);
   await pending.page.waitForFunction(() => ['live', 'summary'].every(name => window.__card._viewRuntimes[name].state === 'loading'));
-  await pending.page.evaluate(() => {
-    const old = window.__retiredCard; old.remove(); window.__retiredUpdates = 0;
+  await pending.page.evaluate(async () => {
+    const old = window.__retiredCard; old.remove();
+    // Finish the render already queued by the initial header measurement.
+    // Imports remain physically held: only updates after release belong to
+    // the late optional-runtime completion being measured here.
+    while (old.isUpdatePending) await old.updateComplete;
+    window.__retiredUpdates = 0;
+    window.__retiredUpdateStacks = [];
     const update = old.requestUpdate.bind(old);
-    old.requestUpdate = (...args) => { window.__retiredUpdates++; return update(...args); };
+    old.requestUpdate = (...args) => { window.__retiredUpdates++; window.__retiredUpdateStacks.push(new Error().stack); return update(...args); };
   });
   release();
   await pending.page.waitForFunction(() => ['live', 'summary'].every(name => window.__card._viewRuntimes[name].state === 'ready'));
+  const retired = await pending.page.evaluate(() => ({ live: !!window.__retiredCard._liveRt,
+    summary: !!window.__retiredCard._summary, updates: window.__retiredUpdates, stacks: window.__retiredUpdateStacks }));
   out.pendingImportSharedWithoutConstructingForDetachedCard = requests.live === 1 && requests.summary === 1
-    && await pending.page.evaluate(() => !window.__retiredCard._liveRt && !window.__retiredCard._summary && window.__retiredUpdates === 0);
+    && !retired.live && !retired.summary && retired.updates === 0;
+  if (!out.pendingImportSharedWithoutConstructingForDetachedCard) console.error('pending diagnostics', { requests, retired });
   out.warmCodeCreatesDistinctRuntimeBeforeFirstRender = await pending.page.evaluate(() => {
     const current = window.__card, warm = window.__makeViewCard('Warm independent card');
     return !!warm._summary && !!warm._liveRt && !warm.hasUpdated

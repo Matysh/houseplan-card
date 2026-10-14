@@ -289,11 +289,13 @@ These witnesses are being completed in S6; no full release or GPU acceptance is
 claimed by focused headless evidence. Enlarged non-carousel kiosk integration
 is verified after accepted #894, without copying its unreviewed implementation.
 
-S6 checkpoint before the separate #890 pre-release fix: real root404 retry,
-dependency404, foreign fingerprint, aggregated double-click and warm-instance
-cases execute. Latest native is NOT green: three 360px notice-layout checks
-and the detached-instance no-late-update check fail and must be resolved before
-handoff. No baseline or gate relaxation is accepted for these failures.
+The focused native is green (53 assertions): real root404 retry, dependency404,
+foreign fingerprint, aggregated double-click and warm-instance cases execute.
+Its 360px document uses an actually responsive host rather than cropping the
+demo's fixed 780px card. The detached witness drains already queued initial
+Lit/header work while the actual imports remain held; only then does it release
+the roots and require no construction or late host update. Neither correction
+changes a production guard, baseline, budget or expected final behavior.
 
 ## Config writer authority witnesses (#890)
 
