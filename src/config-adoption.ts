@@ -159,7 +159,8 @@ export class MutableConfigAdoption {
       }
       this.layoutRev = layResp?.rev ?? this.layoutRev;
     }
-    if (next) this.rememberAccepted(next, layResp?.layout ?? this.acceptedCache?.layout ?? this.layout);
+    if (next) this.rememberAccepted(next, layResp?.layout ?? this.acceptedCache?.layout ?? this.layout,
+      layResp === undefined ? this.acceptedCache?.layout_rev ?? this.layoutRev : this.layoutRev);
     return { configChanged, layoutChanged };
   }
 
@@ -206,7 +207,7 @@ export class MutableConfigAdoption {
   acceptConfigWrite(candidate: ServerConfig, response: { rev?: unknown } | null | undefined): void {
     this.configFingerprint = contentFingerprint(candidate);
     this.configRev = finiteRevision(response?.rev, this.configRev + 1);
-    this.rememberAccepted(candidate, this.acceptedCache?.layout ?? this.layout);
+    this.rememberAccepted(candidate, this.acceptedCache?.layout ?? this.layout, this.acceptedCache?.layout_rev ?? this.layoutRev);
   }
 
   /** Paired write (`plan/optimize`, copy, import): both bodies with both revisions. */
@@ -318,11 +319,11 @@ export class MutableConfigAdoption {
     this.adoptionEpoch++;
   }
 
-  private rememberAccepted(config: ServerConfig, layout: DeviceLayout): void {
+  private rememberAccepted(config: ServerConfig, layout: DeviceLayout, layoutRev = this.layoutRev): void {
     this.acceptedCache = {
       config: structuredClone(config), rev: this.configRev,
       config_fingerprint: contentFingerprint(config),
-      layout: structuredClone(layout), layout_rev: this.layoutRev,
+      layout: structuredClone(layout), layout_rev: layoutRev,
       layout_fingerprint: contentFingerprint(layout),
     };
   }

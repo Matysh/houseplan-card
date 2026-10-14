@@ -537,6 +537,19 @@ test('#890 AC2: accepting one layout delta never caches other unsent positions',
   assert.deepEqual(adoption.snapshot(null).layout, {});
 });
 
+test('#890 AC2: config-only acceptance never pairs an unseen layout revision with old cached positions', () => {
+  const adoption = adoptedWith(cfg('Before'), 8);
+  adoption.adoptMergedLayout({ first: { s: 'f1', x: 0.1, y: 0.2 } }, { rev: 7 });
+  adoption.noteLayoutRevision(9); // a notification is not a complete layout response
+  adoption.acceptConfigWrite(cfg('Saved'), { rev: 9 });
+  assert.equal(adoption.snapshot(null).layout_rev, 7);
+  adoption.adoptResponses({ config: cfg('Reloaded'), rev: 10 }, undefined, () => {}, () => {});
+  assert.equal(adoption.snapshot(null).layout_rev, 7);
+  adoption.adoptMergedLayout({}, { rev: 9, layout: {} });
+  assert.equal(adoption.snapshot(null).layout_rev, 9);
+  assert.deepEqual(adoption.snapshot(null).layout, {});
+});
+
 // --- AC6: optimistic writes (#314/#439/#442) --------------------------------
 
 test('AC6: a rejected optimistic write restores only its own candidate (#439)', () => {
