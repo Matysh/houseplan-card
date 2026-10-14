@@ -2241,7 +2241,8 @@ public _stepGeometryHistory(direction: 'undo' | 'redo'): HistoryApply | null {
       toast: (text) => host._showToast(text),
     }, direction);
     const pending = command && host._pendingPhysicalWrites.get(command.before.spaceId);
-    if (outcome === true && pending && command) this.physicalWriteHistory.record(pending.before, command);
+    if (outcome === true && pending && command && physicalHistoryChanged(command.before, command.after))
+      this.physicalWriteHistory.record(pending.before, command);
     if (historyUnfit(outcome) && host._activeWallChainId) this._clearGeometryGesture();
     host.requestUpdate();
     return outcome;

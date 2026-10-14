@@ -591,6 +591,16 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'node-editor-every-write-refusal-is-unsafe-geometry',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#891 AC4" test/wall-node-editor.test.mjs',
+    because: '#891 AC4: the actual editor release must not present transport/conflict as a geometry failure',
+    patches: [{ file: 'src/wall-node-editor.ts',
+      find: '      const key = nodeDragRefusalKey(error);',
+      replace: "      const key = 'node_move_invalid'; // mutant: all refusals look like geometry",
+    }],
+  },
+  {
     id: 'node-history-shows-floor-before-answer',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="#843 AC5" test/node-history-runtime.test.mjs',

@@ -314,6 +314,21 @@ test('refused server write leaves no optimistic geometry for the next writer', a
   assert.equal(s.writes.length, 1); assert.equal(s.recorded.length, 0); assert.deepEqual(s.cfg, baseline);
   assert.equal(s.editor.busy, false); assert.equal(s.editor.preview, null); s.editor.dispose();
 });
+test('#891 AC4 actual node editor release distinguishes conflict, proof and temporary backend/transport refusal', async () => {
+  for (const [code, expected] of [
+    ['conflict', 'node_move_write_conflict'], ['node_move_invalid', 'node_move_invalid'],
+    ['timeout', 'node_move_write_unavailable'], ['node_move_backend_unavailable', 'node_move_write_unavailable'],
+    ['node_move_unknown', 'node_move_write_unavailable'], ['wall_model_client_outdated', 'node_move_update_required'],
+  ]) {
+    const s = setup(); s.refuse(code); const baseline = structuredClone(s.cfg);
+    s.editor.guardEvent(s.ev('pointerdown')); s.editor.guardEvent(s.ev('pointermove', .25, .3));
+    s.editor.guardEvent(s.ev('pointerup')); await settle();
+    assert.deepEqual(s.toasts, [expected], code);
+    assert.equal(s.recorded.length, 0, code); assert.deepEqual(s.cfg, baseline, code);
+    assert.equal(s.writes.length, 1, 'one attempt, never automatic resend');
+    s.editor.dispose();
+  }
+});
 test('100 accepted/cancelled gestures leave one listener and no transient state; disposal removes it', async () => {
   const s = setup(); assert.equal(s.listeners.size, 1);
   for (let i = 0; i < 100; i++) {
