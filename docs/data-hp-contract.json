@@ -16,6 +16,9 @@
       "since": "1.81.0",
       "audience": ["test"]
     },
+    "view-runtime-notice": { "elements": ["aside"], "since": "1.81.0", "audience": ["test"] },
+    "view-runtime-retry": { "elements": ["button"], "since": "1.81.0", "audience": ["test"] },
+    "view-runtime-reload": { "elements": ["button"], "since": "1.81.0", "audience": ["test"] },
     "import-backup": {
       "elements": ["button"],
       "since": "1.81.0",

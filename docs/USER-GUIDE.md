@@ -151,6 +151,15 @@ code from another build does the advice ask for a page refresh instead. A fully
 stale proxy-cached `houseplan-card.js` no longer leaves an empty card after an
 update: it shows a panel asking to reload the page.
 
+If tips/live updates, the summary panel or Zigbee links cannot load, a
+persistent notice names the unavailable feature while the base plan and safe
+actions remain usable. **Try again** makes one same-build attempt. The notice
+disappears on success; otherwise only **Reload page** remains. A summary you
+hid is not reported as broken and its saved preference is retained. Ordinary
+cards never reload automatically. A terminal kiosk failure may use the existing
+one-per-build/session safe reload, never during dialogs, gestures or pending
+writes. Manual recovery keeps the editor's normal discard-draft decision.
+
 ### Removal and reinstallation
 
 Removing the House Plan entry in **Settings → Devices & services** and then

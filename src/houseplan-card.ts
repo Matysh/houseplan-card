@@ -327,7 +327,7 @@ import {
   applySpaceOrder, canStartTabDrag, markersNeedingPlacement, passedDragThreshold,
   reorderSpaceIds,
 } from './space-order';
-import { SummaryRuntimeSlot, summaryRuntimeLoader } from './summary-runtime-loader';
+import { ViewRuntimes, type ViewRuntimeHost } from './view-runtimes';
 import { HeaderMenu, headerMenuItems, renderHeaderActions } from './header-menu';
 import { isoWallMaterialVars, parseCssColor } from './iso-materials'; import { IsoFirstFrameState, isoPaperContext } from './iso-first-frame';
 import { renderIsoTileShadow } from './iso-tiles';
@@ -2253,7 +2253,8 @@ export class HouseplanCard extends LitElement {
   // ---- kiosk (wall device) mode ----
   private _kioskScale: { icon: number; font: number } = { icon: 1, font: 1 }; private _kioskDialog = false;
   private readonly _headerMenu = new HeaderMenu(this);
-  private _summary?: import('./summary-panel-runtime-loaded').LoadedSummaryPanelRuntime; private readonly _summarySlot = new SummaryRuntimeSlot(summaryRuntimeLoader, this, (runtime) => { this._summary = runtime; this._capturedSeq = -1; /* summary entities (re)join the live subscription */ if (this.isConnected) { runtime.connect(); if (this.hasUpdated) this.requestUpdate(); } }); // #506: warm code attaches before the first render
+  private _summary?: import('./summary-panel-runtime-loaded').LoadedSummaryPanelRuntime;
+  private readonly _viewRuntimes = new ViewRuntimes(this as unknown as ViewRuntimeHost);
   /**
    * Previous entity states + the short event/terminal-transition window for
    * every marker. The map lives outside Lit state: hass ticks update it, one
@@ -2657,8 +2658,7 @@ export class HouseplanCard extends LitElement {
     for (const type of ['pointerdown', 'wheel', 'keydown']) this.addEventListener(
       type, this._kioskInteraction, { capture: true, passive: true },
     );
-    this._summarySlot.connect();
-    void this._ensureLiveRuntime().catch(() => this.requestUpdate());
+    this._viewRuntimes.connect();
     this._pointerModality.connect(this.ownerDocument.defaultView);
     this._deviceHitScrollUnsub?.();
     this._deviceHitScrollUnsub = observeDeviceHitGeometryScroll(this, () => this._invalidateDeviceHitGeometry());
@@ -2774,7 +2774,7 @@ export class HouseplanCard extends LitElement {
     if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
     if (this._refitRaf) { cancelAnimationFrame(this._refitRaf); this._refitRaf = 0; }
     this._warmModeRequest = 0; ++this._editorModeRequest; ++this._markerDialogRequest; ++this._settingsDialogRequest;
-    if (this._dayCycleTimer) { clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; } this._summarySlot.disconnect();
+    if (this._dayCycleTimer) { clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; } this._viewRuntimes.disconnect();
     this._dayCycleClockKey = '';
     if (this._bootSettleRaf) { cancelAnimationFrame(this._bootSettleRaf); this._bootSettleRaf = 0; }
     this._bootSettling = false;
@@ -4171,6 +4171,7 @@ export class HouseplanCard extends LitElement {
   protected willUpdate(changed: PropertyValues): void {
     this._warmMarker.reconcile();
     if (changed.has('_serverCfg') || changed.has('_space') || changed.has('_openingInfo')) this._syncOpeningInfo();
+    this._viewRuntimes.reconcile();
     this._cfgPass.begin(); this._isoProjectionSnapshot = null; this._isoFirstFrame.prepare(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes)); this._syncVolumetricSetting(); this._summary?.willUpdate();
     if (changed.has('hass')) {
       // A reused HA object can be deduplicated by visual intake after detach.
@@ -4598,13 +4599,6 @@ export class HouseplanCard extends LitElement {
   private _planHassMemo: { hass: unknown; sig: string; active: unknown; full: unknown } | null = null;
   private _renderLife = new RenderLifecycle();
   private _liveEditorPaintCount = 0;
-
-  private async _ensureLiveRuntime(): Promise<void> {
-    if (this._liveRt) return;
-    const module = await import('./live-interaction-runtime');
-    this._liveRt = new module.LiveRuntime(this);
-    if (this.isConnected) this.requestUpdate();
-  }
 
   private _liveVp(now = false): void { this._liveRt ? this._liveRt.viewport(now) : this.requestUpdate(); }
   private _syncLiveHover(): void { this._liveRt ? this._liveRt.hover() : this.requestUpdate(); }
@@ -5655,13 +5649,13 @@ export class HouseplanCard extends LitElement {
 
   private _showDeviceTip(ev: PointerEvent, d: DevItem): void {
     if (this._liveRt) this._liveRt.devicePointerTip(ev, d);
-    else void this._ensureLiveRuntime().then(() => this._liveRt?.devicePointerTip(ev, d));
+    else this._viewRuntimes.withLive(runtime => runtime.devicePointerTip(ev, d));
   }
 
   private _showDeviceFocusTip(ev: FocusEvent, d: DevItem): void {
     const target = ev.currentTarget as HTMLElement | null;
     if (this._liveRt) this._liveRt.deviceFocusTip(target, d);
-    else void this._ensureLiveRuntime().then(() => this._liveRt?.deviceFocusTip(target, d));
+    else this._viewRuntimes.withLive(runtime => runtime.deviceFocusTip(target, d));
   }
   private _hideDeviceFocusTip(deviceId: string): void { this._liveRt?.deviceBlur(deviceId); }
   private _clearPointerHover(): void { this._liveRt ? this._liveRt.pointerLeave() : this._clearTransientHover(); }
@@ -10611,7 +10605,7 @@ export class HouseplanCard extends LitElement {
   /** One stable Lit template site lets a nested `noChange` retain the body
    * while the independent confirmation child is removed during a warm gate. */
   private _renderRoot(body: TemplateResult | typeof noChange): TemplateResult {
-    return html`${body}${this._renderVersionBanner()}${this._renderDangerConfirm()}`;
+    return html`${body}${this._viewRuntimes.render()}${this._renderVersionBanner()}${this._renderDangerConfirm()}`;
   }
 
   protected render(): TemplateResult | typeof nothing | typeof noChange {
@@ -11239,7 +11233,7 @@ export class HouseplanCard extends LitElement {
               : nothing}
             ${this._markup ? space.rooms.map((r) => this._renderRoomGear(r, space, view)) : nothing}
             ${''/* #649: one floor-shadow layer (z below every tile), after the markers in DOM order */}${iso ? html`<div class="iso-tile-shadows" aria-hidden="true">${repeat(devs, (d) => d.id, (d) => this._renderDevice(d, view, showLqi, isoOverlays?.devices.get(d.id), true))}${this._renderOpeningLocks(view, isoOverlays?.locks, true)}</div>` : nothing}
-            ${renderZigbeeTopologyOverlay({ hass: this.hass, settings: this._settings, devices: this._renderDevices, registry: this._haRegistry, currentSpace: space.id, spaces: this._serverCfg?.spaces, viewKey: view, zoom: this._zoom, view: this._mode === 'view', kiosk: this._kiosk, onLayout: () => this._liveRt?.hover() })}
+            ${renderZigbeeTopologyOverlay({ hass: this.hass, settings: this._settings, devices: this._renderDevices, registry: this._haRegistry, currentSpace: space.id, spaces: this._serverCfg?.spaces, viewKey: view, zoom: this._zoom, view: this._mode === 'view', kiosk: this._kiosk, ready: this._viewRuntimes.zigbee.state === 'ready', onLayout: () => this._liveRt?.hover() })}
           </div>
           <div data-hp-live-editor-html></div>
           ${this._wallDialog

@@ -15,12 +15,16 @@ import {
 import type { HaRegistrySnapshot } from './ha-binding-status';
 import type { DevItem } from './types';
 import { placeDeviceTooltip, type TipRect } from './live-tip-placement';
+import { ViewRuntimeFingerprintMismatch } from './view-runtime-boundary';
+
+export const ZIGBEE_OVERLAY_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
 const EMPTY_RUNTIME: ZigbeeTopologyRuntimeSnapshot = { revision: 0, topologies: [], states: {} };
 const ENDPOINT_ATTRIBUTE = 'data-hp-zigbee-topology-endpoint';
 type MarkerPosition = ZigbeePixelPoint & { width: number; height: number };
 
 export class HpZigbeeTopologyOverlay extends LitElement {
+  static readonly buildFingerprint = ZIGBEE_OVERLAY_FINGERPRINT;
   static properties = {
     hass: { attribute: false },
     devices: { attribute: false },
@@ -597,6 +601,13 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   }
 }
 
-if (!customElements.get('hp-zigbee-topology-overlay')) {
-  customElements.define('hp-zigbee-topology-overlay', HpZigbeeTopologyOverlay);
+/** Registration is an installation side effect, only after entry/build/owner checks. */
+export function installZigbeeTopologyOverlay(): true {
+  const current = customElements.get('hp-zigbee-topology-overlay') as
+    (CustomElementConstructor & { buildFingerprint?: string }) | undefined;
+  if (current && current.buildFingerprint !== ZIGBEE_OVERLAY_FINGERPRINT) {
+    throw new ViewRuntimeFingerprintMismatch('registered Zigbee overlay belongs to another build');
+  }
+  if (!current) customElements.define('hp-zigbee-topology-overlay', HpZigbeeTopologyOverlay);
+  return true;
 }

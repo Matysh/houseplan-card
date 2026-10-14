@@ -517,6 +517,30 @@ const chromeCoreStyles = css`
       font-size: var(--fs-s);
       display: block;
     }
+    .view-runtime-notice {
+      position: absolute;
+      inset-inline: 8px;
+      bottom: 8px;
+      z-index: 65;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--hp-accent);
+      border-radius: 10px;
+      background: var(--hp-bg);
+      color: var(--hp-txt);
+      box-shadow: var(--shadow-2);
+      font-size: var(--fs-s);
+      max-height: min(50%, 220px);
+      overflow: auto;
+    }
+    .view-runtime-notice > span { flex: 1 1 200px; }
+    .view-runtime-notice > div { display: flex; flex-wrap: wrap; gap: 8px; }
+    .view-runtime-functions { display: block; color: var(--hp-muted); }
+    .view-runtime-notice .btn { min-width: 44px; min-height: 44px; }
 `;
 
 /** #437 summary CSS lives with its lazy runtime in summary-panel-style.ts. */

@@ -15,6 +15,8 @@ import { lightWork } from './devices';
 import { lightGeometryFingerprint } from './glow-scene';
 import type { DevItem } from './types';
 
+export const LIVE_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
+
 interface LiveRuntimeHost {
   _renderLife: RenderLifecycle;
   _mode: string;

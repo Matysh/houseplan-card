@@ -268,6 +268,26 @@ Golden intent is named opening/group presentation and the 44px native Area
 control footprint; only reviewed artifacts may update the affected baselines.
 The four new expensive guards are declared for nightly mutation execution only.
 
+## Optional View runtime recovery (#848)
+
+`view-runtime-boundary.test` proves bounded retries, warm factory sharing,
+retirement before construction, the existing discard decision and visible
+in-flight recovery. `version-recovery.test` exercises terminal chunk failures
+against every existing safety category and a claim already consumed by a
+version mismatch, including multiple hosts and remounts. Unknown entry builds
+cannot acquire an automatic failure-reload claim.
+
+`smoke_view_runtime_recovery` controls real root/dependency404 responses on the
+production module graph, not private runtime fields. It observes fresh nonce
+requests and rejection cached in the browser module map; RU/EN360/1280 controls
+use actual keyboard/touch and retain a notice beyond the old toast lifetime.
+Summary's root is a thin named entry because the shared implementation chunk
+alone exposes internal Rollup namespace aliases to a raw URL import. The retry
+URL injection and its missing/duplicate roots are unit-tested by bundle-assets.
+These witnesses are being completed in S6; no full release or GPU acceptance is
+claimed by focused headless evidence. Enlarged non-carousel kiosk integration
+is verified after accepted #894, without copying its unreviewed implementation.
+
 ## Config writer authority witnesses (#890)
 
 `smoke_config_authority` exercises a real GUI Save followed by public setConfig,

@@ -8,7 +8,7 @@ import test from 'node:test';
 
 import {
   buildBundleManifest, buildFingerprintPlugin, editorRuntimeRetryUrlPlugin,
-  entryFallbackPlugin, ENTRY_URL_SEAM, NAMESPACE_LOCALE_CHUNKS,
+  entryFallbackPlugin, ENTRY_URL_SEAM, NAMESPACE_LOCALE_CHUNKS, VIEW_RUNTIME_RETRY_CHUNKS,
 } from '../scripts/bundle-manifest.mjs';
 import {
   INITIAL_PANEL_ONLY_GZIP_BUDGET, INITIAL_VIEW_CEILING_BAND,
@@ -692,7 +692,24 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
       modules: { '/repo/src/led-strip-editor.ts': {} },
     },
   };
+  bundle['houseplan-assets/view-owner.js'] = {
+    type: 'chunk', fileName: 'houseplan-assets/view-owner.js', modules: {},
+    code: VIEW_RUNTIME_RETRY_CHUNKS.map(entry => `import("${entry.token}")`).join(';'),
+  };
+  for (const [index, entry] of VIEW_RUNTIME_RETRY_CHUNKS.entries()) {
+    const path = `houseplan-assets/view-runtime-${index}-HASH.js`;
+    bundle[path] = { type: 'chunk', fileName: path, modules: { [`/repo${entry.module}`]: {} }, code: '' };
+  }
+  const original = structuredClone(bundle);
+  const duplicate = structuredClone(original);
+  duplicate['houseplan-assets/view-owner.js'].code += `;import("${VIEW_RUNTIME_RETRY_CHUNKS[0].token}")`;
+  assert.throws(() => editorRuntimeRetryUrlPlugin().generateBundle({}, duplicate), /invalid View retry root/);
+  const missing = structuredClone(original);
+  delete missing['houseplan-assets/view-runtime-1-HASH.js'];
+  assert.throws(() => editorRuntimeRetryUrlPlugin().generateBundle({}, missing), /invalid View retry root/);
   plugin.generateBundle({}, bundle);
+  assert.equal(bundle['houseplan-assets/view-owner.js'].code,
+    VIEW_RUNTIME_RETRY_CHUNKS.map((_, index) => `import("./view-runtime-${index}-HASH.js")`).join(';'));
   assert.equal(
     bundle['houseplan-assets/houseplan-card.js'].code,
     'new URL("./houseplan-editor-runtime-HASH.js", import.meta.url);'

@@ -1,0 +1,140 @@
+/** Per-card optional View boundaries. No editor chunk or second reload budget. */
+import { html, nothing, type TemplateResult } from 'lit';
+import type { I18nKey } from './i18n';
+import type { ServerConfig } from './types';
+import type { ConfigWriteContext } from './config-write-context';
+import type { VersionRecoveryController } from './version-recovery';
+import type { LiveRuntime } from './live-interaction-runtime';
+import type { LoadedSummaryPanelRuntime } from './summary-panel-runtime-loaded';
+import type { ZigbeeTopologyHass } from './zigbee-topology-runtime';
+import { liveRuntimeCode, zigbeeOverlayCode } from './view-runtime-code';
+import { summaryRuntimeLoader } from './summary-runtime-loader';
+import { ViewRuntimeBoundary, guardedViewRuntimeReload } from './view-runtime-boundary';
+import { zigbeeTopologyOverlayRequested } from './zigbee-topology-overlay-bridge';
+import { effectiveSummaryVisible, parseSummaryLocal, summaryPanelOf } from './summary-panel';
+import { summaryPreferenceKey, type SummaryPreferenceHost } from './summary-panel-identity';
+
+export interface ViewRuntimeHost extends SummaryPreferenceHost {
+  readonly isConnected: boolean;
+  readonly _configWriteContext: ConfigWriteContext;
+  readonly _versionRecovery: VersionRecoveryController;
+  readonly _settings: ServerConfig['settings'];
+  readonly _mode: string;
+  readonly _kiosk: boolean;
+  readonly narrow: boolean | null;
+  readonly hass: ZigbeeTopologyHass & { callWS?: unknown; connection?: unknown };
+  _liveRt: LiveRuntime | null;
+  _summary?: LoadedSummaryPanelRuntime;
+  _capturedSeq: number;
+  readonly _editorRuntime?: { _guardDraftNavigation(resume: () => void): boolean } | null;
+  _reloadDocument(automatic?: boolean): void;
+  _t(key: I18nKey): string;
+  requestUpdate(): unknown;
+}
+
+export function summaryRecoveryRequested(host: ViewRuntimeHost): boolean {
+  if (host._mode !== 'view') return false;
+  const key = summaryPreferenceKey(host);
+  if (!key) return false;
+  try {
+    const raw = JSON.parse(host.ownerDocument.defaultView?.localStorage.getItem(key) || 'null');
+    const config = summaryPanelOf(host._settings, key => key).config;
+    return !!config && effectiveSummaryVisible({ view: true, localShow: parseSummaryLocal(raw, null).show,
+      showOnMobile: config.show_on_mobile, narrow: host.narrow, fits: true });
+  } catch { return false; }
+}
+
+interface FailedViewRuntime {
+  name: I18nKey;
+  boundary: { readonly canRetry: boolean; readonly terminalFailure: boolean; retry(): Promise<boolean> };
+}
+
+export class ViewRuntimes {
+  readonly live: ViewRuntimeBoundary<object, LiveRuntime>;
+  readonly summary: ViewRuntimeBoundary<unknown, LoadedSummaryPanelRuntime>;
+  readonly zigbee: ViewRuntimeBoundary<object, true>;
+
+  constructor(private readonly host: ViewRuntimeHost) {
+    const port = <Runtime>(install: (runtime: Runtime) => void) => ({
+      owner: () => host._configWriteContext.claim(),
+      current: (owner: object) => host.isConnected && host._configWriteContext.current(owner, host.hass),
+      install,
+      changed: () => {
+        if (!host.isConnected) return;
+        this.syncRecovery(); host.requestUpdate();
+      },
+    });
+    this.live = new ViewRuntimeBoundary(host, liveRuntimeCode, port(runtime => { host._liveRt = runtime; }));
+    this.summary = new ViewRuntimeBoundary(host, summaryRuntimeLoader, port(runtime => {
+      host._summary = runtime; host._capturedSeq = -1;
+      if (host.isConnected) runtime.connect();
+    }));
+    this.zigbee = new ViewRuntimeBoundary(host, zigbeeOverlayCode, port(() => {}));
+  }
+
+  connect(): void {
+    this.host._summary?.connect();
+    this.live.connect(); this.summary.connect(); this.zigbee.connect(false);
+    this.reconcile();
+  }
+  disconnect(): void {
+    this.live.disconnect(); this.summary.disconnect(); this.zigbee.disconnect();
+    this.host._summary?.disconnect();
+  }
+  reconcile(): void {
+    if (this.live.state !== 'ready') void this.live.ensure();
+    if (this.summary.state !== 'ready') void this.summary.ensure();
+    if (this.zigbee.state !== 'ready' && this.wantsZigbee()) void this.zigbee.ensure();
+    this.syncRecovery();
+  }
+  withLive(run: (runtime: LiveRuntime) => void): void {
+    const host = this.host, owner = host._configWriteContext.claim();
+    void this.live.ensure().then(ready => {
+      if (ready && host.isConnected && host._configWriteContext.current(owner, host.hass) && host._liveRt) run(host._liveRt);
+    });
+  }
+  private wantsZigbee(): boolean {
+    const host = this.host;
+    return zigbeeTopologyOverlayRequested({ hass: host.hass, settings: host._settings,
+      view: host._mode === 'view', kiosk: host._kiosk });
+  }
+  private failures(): FailedViewRuntime[] {
+    const failures: FailedViewRuntime[] = [];
+    if (this.live.unavailable) failures.push({ name: 'view.runtime_live', boundary: this.live });
+    if (this.summary.unavailable && summaryRecoveryRequested(this.host)) {
+      failures.push({ name: 'view.runtime_summary', boundary: this.summary });
+    }
+    if (this.zigbee.unavailable && this.wantsZigbee()) {
+      failures.push({ name: 'view.runtime_zigbee', boundary: this.zigbee });
+    }
+    return failures;
+  }
+  private syncRecovery(): void {
+    this.host._versionRecovery.setRuntimeFailure(this.failures().some(item => item.boundary.terminalFailure));
+  }
+  private reload(event: Event): void {
+    event.stopPropagation();
+    if (!event.isTrusted || !this.failures().length) return;
+    const host = this.host, owner = host._configWriteContext.claim();
+    guardedViewRuntimeReload({
+      current: () => host.isConnected && host._configWriteContext.current(owner, host.hass),
+      guard: host._editorRuntime ? resume => host._editorRuntime!._guardDraftNavigation(resume) : undefined,
+      reload: () => host._reloadDocument(),
+    });
+  }
+  render(): TemplateResult | typeof nothing {
+    const failures = this.failures();
+    if (!failures.length) return nothing;
+    const retryable = failures.filter(item => item.boundary.canRetry);
+    return html`<aside class="view-runtime-notice" data-hp="view-runtime-notice" role="status" aria-live="polite">
+      <span>${this.host._t('view.runtime_failed')}
+        <span class="view-runtime-functions">${failures.map(item => this.host._t(item.name)).join(' · ')}</span>
+      </span>
+      <div>${retryable.length ? html`<button class="btn" type="button" data-hp="view-runtime-retry"
+        @click=${(event: Event) => { event.stopPropagation(); if (event.isTrusted) for (const item of retryable) void item.boundary.retry(); }}
+        >${this.host._t('view.runtime_retry')}</button>` : nothing}
+      <button class="btn" type="button" data-hp="view-runtime-reload" @click=${(event: Event) => this.reload(event)}
+        >${this.host._t('view.runtime_reload')}</button></div>
+    </aside>`;
+  }
+}

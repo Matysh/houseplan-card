@@ -48,6 +48,19 @@ the camera; deleted exact floors never transfer coordinates to the fallback.
 Delayed restoration rechecks the captured write-context generation and the
 unchanged placement key before it can publish a draft or camera.
 
+Optional View boundaries (#848) share immutable factory/pending code only.
+`ViewRuntimeBoundary` owns each card's loading/error, single explicit retry and
+HA-context generation. A retired pending result cannot construct or install a
+runtime or update its old host. Every module checks its own compiled fingerprint;
+Zigbee custom-element registration is an installation side effect after that
+check. Summary keeps synchronous page-warm adoption and rejected-promise cleanup;
+its named entry facade survives Rollup's internal shared-namespace export aliases.
+Nonce retry points to the same immutable hashed root, not a guessed new bundle.
+The permanent notice remains during retry and disappears only on success or a
+disabled function. Summary preference identity has one shared reader. Terminal
+failures feed the existing `VersionRecoveryController` safety timer/session claim,
+without inventing a version mismatch or another reload budget.
+
 Composite form focus (#870) belongs either to the native form-kit wrapper or
 the authentic HA picker, never both. The picker is styled through its public
 host contract; its private shadow DOM and event handlers remain untouched.

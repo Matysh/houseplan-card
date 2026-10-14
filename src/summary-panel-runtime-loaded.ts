@@ -10,7 +10,7 @@ import {
   cloneSummaryPanel, confirmedSummaryPanelWriteRecovery, defaultSummaryPanel, effectiveSummaryVisible,
   moveSummaryItem, normalizeSummaryDraft, parseSummaryLocal,
   normalizeSummaryScale, resolveSummaryLayout, sameSummaryPanel,
-  summaryLocalKey, summaryPanelEntityIds, summaryPanelOf, validateSummaryDraft, visibleSummaryBlocks,
+  summaryPanelEntityIds, summaryPanelOf, validateSummaryDraft, visibleSummaryBlocks,
 } from './summary-panel';
 import { SUMMARY_PANEL_API_VERSION } from './summary-panel-api';
 import { enqueueSerializedWrite } from './serialized-write-queue';
@@ -23,7 +23,7 @@ import { SummaryPanelPresentation } from './summary-panel-presentation';
 import { summaryPanelText } from './summary-panel-i18n';
 import type { SummaryPanelHost } from './summary-panel-host';
 import type { HeaderMenuItem } from './header-menu';
-import { stableSummaryPlacementSlot } from './summary-panel-identity';
+import { stableSummaryPlacementSlot, summaryPreferenceKey } from './summary-panel-identity';
 import {
   refreshSummaryEntityIndex, type SummaryEntityIndex,
 } from './summary-panel-picker';
@@ -31,6 +31,8 @@ import { floorRecordKeyMemo } from './floor-geometry-key';
 
 const isSummarySystemKey = (value: string): value is SummaryPanelSystemKey =>
   value === 'device_count' || value === 'total_area' || value === 'datetime';
+
+export const SUMMARY_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
 export type SummaryPanelDialogState = {
   draft: SummaryPanelConfig;
@@ -371,12 +373,7 @@ export class LoadedSummaryPanelRuntime {
   }
 
   private preferenceKey(): string | null {
-    return summaryLocalKey({
-      userId: this.host.hass?.user?.id || this.host.hass?.user?.name,
-      path: location.pathname,
-      host: this.host.panelHost ? 'panel' : 'lovelace',
-      slot: this.placementSlot(),
-    });
+    return summaryPreferenceKey(this.host);
   }
 
   private identity(): string {

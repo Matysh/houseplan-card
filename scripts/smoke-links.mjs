@@ -109,6 +109,13 @@ export const SMOKE_LINKS = [
       + 'fixed/single/deleted floors and carousel/same-version negative controls cross browser storage and cold boot.',
   },
   {
+    files: ['src/view-runtime-boundary.ts', 'src/view-runtime-code.ts', 'src/view-runtime-retry.ts',
+      'src/view-runtimes.ts', 'src/summary-panel-runtime-entry.ts'],
+    smokes: ['smoke_view_runtime_recovery.mjs'],
+    because: '#848: real root/dependency404, nonce requests and immutable module-map refusal '
+      + 'are judged via production imports and visible recovery controls, not helper-name references.',
+  },
+  {
     files: ['src/device-editor-access.ts'],
     smokes: ['smoke_view_edit_permissions.mjs'],
     because: '#844: real footer/direct/lazy/warm entries and Area-icon navigation/drag '

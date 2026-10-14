@@ -6,6 +6,24 @@
  * therefore uses the canonical `cards` array; other hosts retain the
  * structural fallback introduced with the summary panel.
  */
+import { summaryLocalKey } from './summary-panel';
+
+export interface SummaryPreferenceHost {
+  readonly hass?: { user?: { id?: string; name?: string } };
+  readonly panelHost: boolean;
+  readonly ownerDocument: Document;
+}
+
+/** The runtime and a cold-runtime error surface read the same preference address. */
+export function summaryPreferenceKey(host: SummaryPreferenceHost): string | null {
+  return summaryLocalKey({
+    userId: host.hass?.user?.id || host.hass?.user?.name,
+    path: host.ownerDocument.defaultView?.location.pathname ?? '/',
+    host: host.panelHost ? 'panel' : 'lovelace',
+    slot: stableSummaryPlacementSlot(host),
+  });
+}
+
 type PlacementNode = {
   localName?: unknown;
   parentNode?: unknown;

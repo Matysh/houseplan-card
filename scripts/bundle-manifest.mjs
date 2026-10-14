@@ -15,6 +15,11 @@ const MOON_RETRY_ASSET_TOKEN = '__HOUSEPLAN_MOON_RETRY_ASSET__';
 const LED_RETRY_ASSET_TOKEN = '__HOUSEPLAN_LED_RETRY_ASSET__';
 const LED_FIELD_RETRY_ASSET_TOKEN = '__HOUSEPLAN_LED_FIELD_RETRY_ASSET__';
 const LED_EDITOR_RETRY_ASSET_TOKEN = '__HOUSEPLAN_LED_EDITOR_RETRY_ASSET__';
+export const VIEW_RUNTIME_RETRY_CHUNKS = [
+  { module: '/src/live-interaction-runtime.ts', token: '__HOUSEPLAN_LIVE_RETRY_ASSET__' },
+  { module: '/src/summary-panel-runtime-entry.ts', token: '__HOUSEPLAN_SUMMARY_RETRY_ASSET__' },
+  { module: '/src/hp-zigbee-topology-overlay.ts', token: '__HOUSEPLAN_ZIGBEE_OVERLAY_RETRY_ASSET__' },
+];
 
 /**
  * #627: ru/de/fr of the three lazy dictionary namespaces are one chunk per
@@ -421,6 +426,20 @@ export function editorRuntimeRetryUrlPlugin() {
         throw new Error('namespace locale retry URL placeholder counts are '
           + namespaceMismatch.map((entry) => `${entry.namespace}-${entry.language}=${entry.replacements}`).join(', ')
           + ', expected exactly 1 each');
+      }
+      // #848: roots keep their content-hashed build URL. The nonce changes
+      // only the browser module-map key, never an entry or dependency hash.
+      for (const entry of VIEW_RUNTIME_RETRY_CHUNKS) {
+        const owners = chunks.filter(chunk => chunk.code.includes(entry.token));
+        if (!owners.length) continue; // older/focused plugin fixtures have no View boundaries
+        const count = owners.reduce((n, chunk) => n + chunk.code.split(entry.token).length - 1, 0);
+        const target = chunks.find(chunk => Object.keys(chunk.modules)
+          .some(id => normalizedId(id).endsWith(entry.module)));
+        if (count !== 1 || !target) throw new Error(`invalid View retry root: ${entry.module} (${count})`);
+        const owner = owners[0];
+        let asset = posix.relative(posix.dirname(owner.fileName), target.fileName);
+        if (!asset.startsWith('.')) asset = `./${asset}`;
+        owner.code = owner.code.replaceAll(entry.token, asset);
       }
     },
   };

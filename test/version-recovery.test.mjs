@@ -87,6 +87,53 @@ const update = (controller, overrides = {}) => controller.update({
   ...overrides,
 });
 
+test('#848 AC5: terminal View chunks use every existing safety gate and the real build claim', () => {
+  const equal = { backendVersion: '1.72.0', kiosk: true,
+    frontendBuild: { fingerprint: 'a'.repeat(64) }, backendBuild: { fingerprint: 'a'.repeat(64) } };
+  for (const key of Object.keys(allSafe())) {
+    const h = harness({ safety: { ...allSafe(), [key]: false } });
+    update(h.controller, equal); h.controller.connect(); h.controller.setRuntimeFailure(true);
+    h.clock.advance(VERSION_RECOVERY_CHECK_MS * 4);
+    assert.equal(h.events.filter(e => e.kind === 'reload').length, 0, key);
+    assert.equal(h.controller.relation.kind, 'equal'); assert.equal(h.controller.banner, null, 'no fake mismatch');
+    h.setSafety(allSafe()); h.clock.advance(VERSION_RECOVERY_CHECK_MS);
+    assert.deepEqual(h.events.filter(e => e.kind === 'reload'), [{ kind: 'reload', stored: '1.72.0@aaaaaaaa' }]);
+    h.clock.advance(VERSION_RECOVERY_CHECK_MS * 10);
+    assert.equal(h.events.filter(e => e.kind === 'reload').length, 1);
+  }
+});
+
+test('#848 AC5: cards, remounts and repeated chunk failures share the mismatch build/session budget', () => {
+  const storage = memoryStorage(), a = harness({ storage }), b = harness({ storage });
+  const facts = { frontendVersion: 'new', backendVersion: 'new', kiosk: true,
+    frontendBuild: { fingerprint: 'b'.repeat(64) }, backendBuild: { fingerprint: 'b'.repeat(64) } };
+  // A version mismatch already claimed the build which this document runs.
+  update(a.controller, { frontendVersion: 'old', backendVersion: 'new', kiosk: true,
+    frontendBuild: { fingerprint: 'a'.repeat(64) }, backendBuild: { fingerprint: 'b'.repeat(64) } });
+  a.controller.connect(); a.clock.advance(VERSION_RECOVERY_CHECK_MS);
+  update(a.controller, facts); a.controller.setRuntimeFailure(true);
+  update(b.controller, facts); b.controller.connect(); b.controller.setRuntimeFailure(true);
+  for (const h of [a, b]) {
+    h.clock.advance(VERSION_RECOVERY_CHECK_MS * 5);
+    h.controller.disconnect(); h.controller.connect();
+    h.controller.setRuntimeFailure(false); h.controller.setRuntimeFailure(true);
+    h.clock.advance(VERSION_RECOVERY_CHECK_MS * 5);
+  }
+  assert.equal(a.events.filter(e => e.kind === 'reload').length, 1);
+  assert.equal(b.events.filter(e => e.kind === 'reload').length, 0);
+  assert.equal(storage.getItem(VERSION_RELOAD_ATTEMPT_KEY), 'new@bbbbbbbb');
+});
+
+test('#848 AC5: ordinary cards and unverified build identities never auto reload for a chunk failure', () => {
+  for (const options of [{ kiosk: false, frontendBuild: { fingerprint: 'c'.repeat(64) } }, { kiosk: true }]) {
+    const h = harness(); update(h.controller, { backendVersion: '1.72.0', ...options });
+    h.controller.connect(); h.controller.setRuntimeFailure(true);
+    h.clock.advance(VERSION_RECOVERY_CHECK_MS * 20);
+    assert.equal(h.events.filter(e => e.kind === 'reload').length, 0);
+    assert.equal(h.clock.timers.size, 0); assert.equal(h.storage.values.size, 0);
+  }
+});
+
 test('versions are trimmed, exact and symmetric; malformed values stay unknown', () => {
   assert.equal(normalizeRuntimeVersion(' 1.72.0 '), '1.72.0');
   for (const value of [undefined, null, 1, '', '   ']) {

@@ -221,6 +221,8 @@ export class VersionRecoveryController {
   private _attemptState: ReloadAttemptState | null = null;
   private _timer: number | undefined;
   private _noticeToken = 0;
+  private _runtimeFailure = false;
+  private _runningTarget: string | null = null;
 
   public constructor(private readonly hooks: VersionRecoveryHooks) {}
 
@@ -235,6 +237,26 @@ export class VersionRecoveryController {
   /** True only for a currently actionable mismatch, never for an exit frame. */
   public get hasCurrentMismatchNotice(): boolean {
     return this._relation.kind === 'mismatch' && this._banner?.phase === 'visible';
+  }
+
+  /** #848: terminal optional chunks share the existing build/session reload claim. */
+  public setRuntimeFailure(failed: boolean): void {
+    if (this._runtimeFailure === failed) return;
+    this._runtimeFailure = failed;
+    this._reconcile();
+  }
+
+  private recoveryTarget(): string | null {
+    if (this._relation.kind === 'mismatch') return reloadTarget(this._relation);
+    return this._runtimeFailure ? this._runningTarget : null;
+  }
+
+  private showCurrentVersionNotice(target: string): void {
+    // Optional-code failure is not evidence of differing versions. Its own
+    // permanent notice stays visible; never fabricate a version mismatch.
+    if (this._relation.kind === 'mismatch') {
+      this._showBanner(this._relation.frontend, this._relation.backend, target);
+    } else this._hideBanner();
   }
 
   public connect(): void {
@@ -279,10 +301,14 @@ export class VersionRecoveryController {
       next.frontendBuild,
       next.backendBuild,
     );
+    const fingerprint = knownFingerprint(next.frontendBuild?.fingerprint);
+    const runningTarget = fingerprint && normalized.frontendVersion
+      ? `${normalized.frontendVersion}@${fingerprint.slice(0, 8)}` : null;
     const semanticChanged = !sameInput(this._input, normalized)
-      || !sameRelation(this._relation, relation);
+      || !sameRelation(this._relation, relation) || this._runningTarget !== runningTarget;
     this._input = normalized;
     this._relation = relation;
+    this._runningTarget = runningTarget;
     if (semanticChanged) this._reconcile();
   }
 
@@ -295,7 +321,8 @@ export class VersionRecoveryController {
 
   private _reconcile(): void {
     this._cancelTimer();
-    if (!this._connected || this._relation.kind !== 'mismatch') {
+    const target = this.recoveryTarget();
+    if (!this._connected || !target) {
       this._attemptTarget = null;
       this._attemptState = null;
       this._hideBanner();
@@ -305,11 +332,10 @@ export class VersionRecoveryController {
     if (!this._input.kiosk) {
       this._attemptTarget = null;
       this._attemptState = null;
-      this._showBanner(this._relation.frontend, this._relation.backend, reloadTarget(this._relation));
+      this.showCurrentVersionNotice(target);
       return;
     }
 
-    const target = reloadTarget(this._relation);
     if (this._attemptTarget !== target || this._attemptState === null) {
       this._attemptTarget = target;
       this._attemptState = attemptedTarget(this.hooks.storage, target);
@@ -319,12 +345,12 @@ export class VersionRecoveryController {
       this._armTimer();
       return;
     }
-    this._showBanner(this._relation.frontend, this._relation.backend, target);
+    this.showCurrentVersionNotice(target);
   }
 
   private _armTimer(): void {
     if (!this._connected || this._timer !== undefined
-        || this._relation.kind !== 'mismatch' || !this._input.kiosk
+        || !this.recoveryTarget() || !this._input.kiosk
         || this._attemptState !== 'fresh') return;
     this._timer = this.hooks.clock.setTimeout(() => {
       this._timer = undefined;
@@ -339,26 +365,26 @@ export class VersionRecoveryController {
   }
 
   private _tick(): void {
-    if (!this._connected || this._relation.kind !== 'mismatch'
+    const target = this.recoveryTarget();
+    if (!this._connected || !target
         || !this._input.kiosk || this._attemptState !== 'fresh') return;
     if (!isVersionReloadSafe(this.hooks.safety())) {
       this._armTimer();
       return;
     }
 
-    const target = reloadTarget(this._relation);
     const claim = claimReloadTarget(this.hooks.storage, target);
     this._attemptTarget = target;
     this._attemptState = claim === 'claimed' ? 'attempted' : claim;
     if (claim !== 'claimed') {
-      this._showBanner(this._relation.frontend, this._relation.backend, target);
+      this.showCurrentVersionNotice(target);
       return;
     }
 
     // The attempt is already durable at this point.  If a test seam, browser
     // policy or embedding shell prevents navigation, the same instance falls
     // back to the manual notice rather than silently trying again.
-    this._showBanner(this._relation.frontend, this._relation.backend, target);
+    this.showCurrentVersionNotice(target);
     try {
       this.hooks.reload();
     } catch {

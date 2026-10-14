@@ -20,6 +20,10 @@
  * trip) but never its result-instance. A failed import is forgotten, so the
  * next `attach` may try again; there are no background retries.
  */
+import { ViewRuntimeCode, assertViewRuntimeFingerprint } from './view-runtime-boundary';
+import { ENTRY_BUILD_FINGERPRINT } from './editor-runtime-loader';
+import { viewRuntimeRetryUrl } from './view-runtime-retry';
+
 export type SummaryRuntimeFactory<Host, Runtime> = (host: Host) => Runtime;
 
 export interface SummaryRuntimeAttachment {
@@ -27,21 +31,7 @@ export interface SummaryRuntimeAttachment {
   cancel(): void;
 }
 
-export class SummaryRuntimeLoader<Host, Runtime> {
-  private factory: SummaryRuntimeFactory<Host, Runtime> | null = null;
-  private pending: Promise<SummaryRuntimeFactory<Host, Runtime>> | null = null;
-
-  public constructor(private readonly load: () => Promise<SummaryRuntimeFactory<Host, Runtime>>) {}
-
-  /** The code is on the page: `create()` will succeed synchronously. */
-  public get warm(): boolean {
-    return this.factory !== null;
-  }
-
-  /** A fresh runtime for `host`, or null while the code is still cold. */
-  public create(host: Host): Runtime | null {
-    return this.factory ? this.factory(host) : null;
-  }
+export class SummaryRuntimeLoader<Host, Runtime> extends ViewRuntimeCode<Host, Runtime> {
 
   /**
    * Build the runtime for `host` as soon as the code is available. When it is
@@ -63,26 +53,6 @@ export class SummaryRuntimeLoader<Host, Runtime> {
     return attachment;
   }
 
-  /** Share one in-flight import; a rejection clears it so a retry is possible. */
-  public ensure(): Promise<SummaryRuntimeFactory<Host, Runtime>> {
-    if (this.factory) return Promise.resolve(this.factory);
-    if (this.pending) return this.pending;
-    this.pending = this.load().then((factory) => {
-      this.factory = factory;
-      this.pending = null;
-      return factory;
-    }, (error: unknown) => {
-      this.pending = null;
-      throw error;
-    });
-    return this.pending;
-  }
-
-  /** Test seam: a page that wants to model a cold chunk again. */
-  public reset(): void {
-    this.factory = null;
-    this.pending = null;
-  }
 }
 
 /** What one host's slot needs from its runtime. */
@@ -137,7 +107,10 @@ type LoadedSummaryPanelRuntime = import('./summary-panel-runtime-loaded').Loaded
  * mount pays the import; every later instance builds its runtime synchronously.
  */
 export const summaryRuntimeLoader = new SummaryRuntimeLoader<unknown, LoadedSummaryPanelRuntime>(
-  () => import('./summary-panel-runtime-loaded').then(
-    ({ LoadedSummaryPanelRuntime }) => (host) => new LoadedSummaryPanelRuntime(host),
-  ),
+  async attempt => {
+    const module = attempt === 0 ? await import('./summary-panel-runtime-entry')
+      : await import(/* @vite-ignore */ viewRuntimeRetryUrl('__HOUSEPLAN_SUMMARY_RETRY_ASSET__', import.meta.url)) as typeof import('./summary-panel-runtime-entry');
+    assertViewRuntimeFingerprint(module.SUMMARY_RUNTIME_FINGERPRINT, ENTRY_BUILD_FINGERPRINT);
+    return host => new module.LoadedSummaryPanelRuntime(host);
+  },
 );

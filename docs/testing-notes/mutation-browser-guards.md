@@ -401,6 +401,13 @@ an actual document reload need Lit/DOM/storage witnesses, not private fields.
 - `warm-view-marker-publishes-without-renderer`
 - `kiosk-document-recovery-drops-camera`
 
+#848's root retry needs Chromium's failed-URL module map and an actual fresh
+request; foreign Zigbee rejection must precede global custom-element registration.
+Other owner/retry/discard/notice invariants execute pure Node boundaries.
+
+- `view-summary-retry-reuses-failed-root`
+- `view-zigbee-installs-foreign-root`
+
 #890: public setConfig meets real browser localStorage and Lit floor adoption;
 a delayed write crosses the actual HA-intake lifecycle before another connection
 is authorized. Pure context tests cannot prove those consumers remain wired.

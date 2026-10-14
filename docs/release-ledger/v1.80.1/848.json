@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 848,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "v1.80.1 already lazily imports the View live runtime, summary runtime and Zigbee overlay. This makes failures of those existing paths observable and recoverable without import/reload storms; it is not polishing functionality introduced only in the current release line.",
+  "summary": {
+    "ru": "Если часть плана не загрузилась после обновления, карточка понятно сообщает об этом и предлагает безопасное восстановление.",
+    "en": "When plan features fail to load after an update, the card explains the problem and offers safe recovery."
+  }
+}

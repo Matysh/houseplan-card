@@ -1,4 +1,10 @@
 {
+  "view.runtime_failed": "Einige Planfunktionen sind nicht verfügbar. Laden Sie sie erneut oder laden Sie die Seite neu.",
+  "view.runtime_retry": "Erneut versuchen",
+  "view.runtime_reload": "Seite neu laden",
+  "view.runtime_live": "Live-Updates und Hinweise",
+  "view.runtime_summary": "Übersicht",
+  "view.runtime_zigbee": "Zigbee-Verbindungen",
   "editor.chain_finish_failed_title": "Die Wände konnten nicht abgeschlossen werden",
   "editor.chain_finish_failed_message": "Die gezeichneten Wände sind gespeichert. Du kannst weiter bearbeiten oder die Wandkette unvollendet verlassen.",
   "editor.chain_finish_pending_message": "Du kannst weiter bearbeiten oder die Wandkette unvollendet verlassen. Das Verlassen bestätigt nicht, dass die Wände gespeichert wurden.",

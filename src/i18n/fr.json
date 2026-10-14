@@ -1,4 +1,10 @@
 {
+  "view.runtime_failed": "Certaines fonctions du plan sont indisponibles. Réessayez de les charger ou rechargez la page.",
+  "view.runtime_retry": "Réessayer",
+  "view.runtime_reload": "Recharger la page",
+  "view.runtime_live": "Mises à jour et infobulles",
+  "view.runtime_summary": "Synthèse",
+  "view.runtime_zigbee": "Liaisons Zigbee",
   "editor.chain_finish_failed_title": "Impossible de terminer les murs",
   "editor.chain_finish_failed_message": "Les murs dessinés sont enregistrés. Vous pouvez continuer à modifier ou quitter sans terminer la chaîne.",
   "editor.chain_finish_pending_message": "Vous pouvez continuer à modifier ou quitter sans terminer la chaîne. Quitter ne confirme pas que les murs ont été enregistrés.",

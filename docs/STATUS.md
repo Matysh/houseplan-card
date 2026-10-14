@@ -80,6 +80,11 @@ votes once per room. Local system-line hiding does not suppress explicit LQI,
 tooltip or mouse topology, whose anchors use one configuration-stable radio
 representative. Resize updates only overlay geometry before caption fitting.
 
+- #848 implements named, persistent optional View loading failures and one
+  exact-build retry, with context-owned adoption and the existing kiosk reload
+  budget. Focused unit/native evidence is recorded in DEVELOPMENT; final gates
+  and independent review remain required. No config schema or ceiling changes.
+
 Connected-node diagnostics (#888) name exact exceeded budgets and preserve
 functional/clock failures. Existing raw source/native/flush identities produce
 read-only phase evidence with clean material/protocol/environment passports;

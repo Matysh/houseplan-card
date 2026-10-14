@@ -95,6 +95,14 @@ support. User documentation recommends desktop for creation and maintenance.
 
 ## View — display and device interaction only
 
+An optional live/tips, summary or Zigbee chunk failure has a persistent named
+notice, not a disappearing toast (#848). The base plan and other safe actions
+remain accessible. One explicit same-build retry keeps the notice until success;
+a terminal failure offers reload only. A disabled summary/topology function is
+not shown as broken. Kiosk recovery shares the version controller's existing
+safety/claim, ordinary View reload is explicit and retains the editor discard
+policy if invoked while editing.
+
 Allowed: pan/zoom (wheel, pinch, buttons, double-click/tap on background, room
 fill or passive room label to Fit all), switching spaces, device tap
 (info / more-info / toggle per settings), long-press → info card, lock-badge tap

@@ -1,4 +1,10 @@
 {
+  "view.runtime_failed": "Часть функций плана недоступна. Повторите загрузку или обновите страницу.",
+  "view.runtime_retry": "Повторить",
+  "view.runtime_reload": "Перезагрузить страницу",
+  "view.runtime_live": "Обновления и подсказки",
+  "view.runtime_summary": "Сводка",
+  "view.runtime_zigbee": "Связи Zigbee",
   "editor.chain_finish_failed_title": "Не удалось завершить стены",
   "editor.chain_finish_failed_message": "Нарисованные стены сохранены. Можно продолжить редактирование или выйти без завершения цепочки.",
   "editor.chain_finish_pending_message": "Можно продолжить редактирование или выйти без завершения цепочки. Выход не подтверждает, что стены сохранены.",
