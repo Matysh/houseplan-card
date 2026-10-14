@@ -16,8 +16,8 @@
 //      as the independent card on that record says; cancelling restores the
 //      walls and areas of the stored record. Both frames of a held drag are
 //      judged: the live layer that paints the moving wall, and the settled
-//      scene that replaces it whenever the host renders mid-drag (an entity
-//      state change from Home Assistant, a toast expiring) and draws the
+//      scene that replaces it whenever the host renders mid-drag (a structural
+//      HA metadata update, a toast expiring) and draws the
 //      preview record through the floor-geometry caches.
 // #769 AC8 one source of the union and bodies keys (src/floor-geometry-key.ts),
 //      judged on the AC2c drag. (a) A host render mid-drag draws the union a
@@ -350,8 +350,9 @@ if (gesture) {
       .map((label) => [label.roomId, label.text]);
     return { ac2cPreviewIsLive: !!preview && preview.space === 'f1' && card._resize.dragging };
   }));
-  // The settled frame of the held drag: a light switched in the house renders
-  // the host; the settled scene now draws the walls and areas of the preview.
+  // #896: state-only HA ticks intentionally defer during Resize (#451).
+  // A genuine independent theme-metadata frame must still render the host;
+  // neither stimulus may change the connection/user or replace the preview.
   Object.assign(checks, await page.evaluate(async () => {
     const card = window.__card;
     const { diag, shown, settled } = window.__hp744;
@@ -361,8 +362,17 @@ if (gesture) {
       .map((family) => [family, after[family] - before[family]]));
     const record = JSON.stringify(card._resize.preview?.sp ?? null);
     const beforeHostRender = builds();
+    const context = [card.hass.connection, card.hass.user];
+    let renders = 0;
+    const originalRender = card.render;
+    card.render = function (...args) { renders++; return originalRender.apply(this, args); };
+    try {
     await card.hass.callService('light', 'toggle', { entity_id: 'light.ceiling' });
     await settled();
+    const deferredRenders = renders;
+    card.hass = { ...card.hass, themes: { ...card.hass.themes } };
+    await settled();
+    const firstMetadataRenders = renders - deferredRenders;
     diag.ac2cSettled = shown();
     // #769 AC8 a/c: the union of this preview already exists — built once by
     // its first reader, nothing seeds it (see `_rszAcceptPreview`) — so host
@@ -373,15 +383,25 @@ if (gesture) {
     diag.ac8cBodies = bodiesOf();
     await card.hass.callService('light', 'toggle', { entity_id: 'light.ceiling' });
     await settled();
+    const beforeSecondMetadata = renders;
+    card.hass = { ...card.hass, themes: { ...card.hass.themes } };
+    await settled();
+    diag.ac2cStimuli = { deferredRenders, firstMetadataRenders,
+      secondStateRenders: beforeSecondMetadata - firstMetadataRenders,
+      secondMetadataRenders: renders - beforeSecondMetadata };
     diag.ac8bBuildsBeforeCancel = builds();
     diag.ac8aUnionBuildsOnTheWayToTheFirstHostRender = beforeHostRender.wallUnion - diag.ac8BuildsBeforeDrag.wallUnion;
     return {
+      ac2cStateTickActuallyDefers: deferredRenders === 0 && beforeSecondMetadata === firstMetadataRenders,
+      ac2cMetadataActuallyRendersTwice: firstMetadataRenders === 1 && renders - beforeSecondMetadata === 1,
+      ac2cStimuliKeepTheAuthorityContext: card.hass.connection === context[0] && card.hass.user === context[1],
       ac2cStateChangeKeepsThePreview: card._resize.dragging
         && JSON.stringify(card._resize.preview?.sp ?? null) === record,
       ac8aHostRendersMidDragBuildNoUnion: growth(beforeHostRender, diag.ac8bBuildsBeforeCancel).wallUnion,
       ac8aTheUnionIsStillTheDrawnOne: unionOf() === diag.ac8aUnion,
       ac8cTheDragNeverRebuildsTheBodies: growth(diag.ac8BuildsBeforeDrag, diag.ac8bBuildsBeforeCancel).physicalBodies,
     };
+    } finally { card.render = originalRender; }
   }));
   await page.keyboard.press('Escape');
   await page.mouse.up();

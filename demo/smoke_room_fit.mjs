@@ -23,19 +23,11 @@ const out = await page.evaluate(async () => {
     }],
     markers: [], settings: { filter_seeded: true },
   };
-  const server = (await c.hass.callWS({ type: 'houseplan/config/get' })).config;
-  for (const key of Object.keys(server)) delete server[key];
-  Object.assign(server, JSON.parse(JSON.stringify(config)));
-  c._serverCfg = server;
-  c._space = 'fit-floor';
-  c._modelCache = null;
-  c._frame = null;
-  c._cfgEpoch++;
-  c._mode = 'view';
-  c._zoom = 1;
-  c._view = null;
-  c.requestUpdate();
-  await c.updateComplete;
+  // #896: GET documents are detached. Publish the seed so both this card and
+  // the later cold kiosk accept the same saved floor, not a private alias.
+  await window.__hpTest.setServerConfig(config);
+  await window.__hpTest.switchSpace('fit-floor');
+  await window.__hpTest.setMode('view');
 
   const waitCamera = async () => {
     const started = performance.now();
@@ -67,6 +59,16 @@ const out = await page.evaluate(async () => {
     };
   };
 
+  // #896: the cold boot grace can still resize the stage on the first input
+  // (_bootSoftCancel). It is independent from room-tap arbitration: observe
+  // its real completion before measuring the unchanged 120/250ms tap window.
+  const readyStarted = performance.now();
+  while (c._bootSoft || c._booting || c._bootFading || c._refitRaf) {
+    if (performance.now() - readyStarted > 5000) throw new Error('room fixture boot/layout did not settle');
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+  }
+  await c.updateComplete;
+  await waitCamera();
   localStorage.setItem('houseplan_card_zoom_v1', JSON.stringify({ 'fit-floor': 1 }));
   const beforeDelayedRoomFit = JSON.stringify({ zoom: c._zoom, view: c._view });
   pointer(roomNode(), 'pointerdown', 15201);

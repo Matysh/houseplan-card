@@ -136,24 +136,15 @@ const out = await page.evaluate(async () => {
   c._openingInfo = null;
 
   // Exercise the actual static custom element with the same immutable snapshot.
+  // #896: let the actual save settle and publish the fixture, never race its
+  // pending GET with a private _snap replacement.
+  await window.__hpTest.waitForWrites();
+  await window.__hpTest.setServerConfig(structuredClone(c._serverCfg));
+  await window.__hpTest.setLayout(structuredClone(c._layout));
   const staticCard = document.createElement('houseplan-space-card');
   staticCard.setConfig({ type: 'custom:houseplan-space-card', space: c._space, show_button: false });
   staticCard.hass = c.hass;
   document.body.append(staticCard);
-  await staticCard.updateComplete;
-  const baseSnap = staticCard._snap || {};
-  staticCard._snap = {
-    ...baseSnap,
-    config: c._serverCfg,
-    rev: 157,
-    configFingerprint: 'open-passage-smoke',
-    layout: c._layout,
-    layoutRev: 157,
-    layoutFingerprint: 'open-passage-layout',
-    virtualLights: baseSnap.virtualLights || c._virtualLights,
-  };
-  staticCard._refreshDevices();
-  staticCard.requestUpdate();
   await staticCard.updateComplete;
   await new Promise((resolve) => setTimeout(resolve, 350));
   staticCard.requestUpdate();

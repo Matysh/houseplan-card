@@ -35,6 +35,10 @@ const out = await page.evaluate(async () => {
   };
 
   let serverConfig = clone(original), serverLayout = {}, backup = null;
+  // #896: the custom optimizer and the ordinary Thickness Save share one
+  // coherent wire store. A GET-only rev=3 used to conflict with base rev=1.
+  const { createFixtureStore } = await import('/fixture-state.js');
+  const store = createFixtureStore(serverConfig, serverLayout);
   const sent = [];
   const baseCall = card.hass.callWS.bind(card.hass);
   card.hass = {
@@ -44,18 +48,24 @@ const out = await page.evaluate(async () => {
         sent.push(message.type);
         backup = { config: clone(serverConfig), layout: clone(serverLayout) };
         serverConfig = clone(message.config); serverLayout = clone(message.layout);
-        return { ok: true, config_rev: 2, layout_rev: 2, can_undo: true };
+        return { ok: true, config_rev: store.pushConfig(serverConfig),
+          layout_rev: store.pushLayout(serverLayout), can_undo: true };
       }
       if (message.type === 'houseplan/plan/optimize_undo') {
         sent.push(message.type);
         serverConfig = clone(backup.config); serverLayout = clone(backup.layout);
         backup = null;
-        return { ok: true, config_rev: 3, layout_rev: 3, can_undo: false };
+        return { ok: true, config_rev: store.pushConfig(serverConfig),
+          layout_rev: store.pushLayout(serverLayout), can_undo: false };
       }
       if (message.type === 'houseplan/config/get')
-        return { config: clone(serverConfig), rev: 3, can_write: true, can_optimize_undo: !!backup };
-      if (message.type === 'houseplan/layout/get')
-        return { layout: clone(serverLayout), rev: 3 };
+        return { ...store.handle(message), can_optimize_undo: !!backup };
+      const response = store.handle(message);
+      if (response !== undefined) {
+        serverConfig = store.handle({ type: 'houseplan/config/get' }).config;
+        serverLayout = store.handle({ type: 'houseplan/layout/get' }).layout;
+        return response;
+      }
       return baseCall(message);
     },
   };
@@ -112,6 +122,7 @@ const out = await page.evaluate(async () => {
   result.thicknessToolSelectsCanonicalWall = !!card._wallDialog;
   card._wallDialog = { ...card._wallDialog, value: '10' };
   card._wallThickApply(false); await card.updateComplete;
+  await window.__hpTest.waitForWrites();
   const finalSpace = card._serverCfg.spaces[0];
   result.thicknessChangesSingleBody = finalSpace.partitions == null
     && finalSpace.walls.length === 1 && finalSpace.walls[0].cm === 10

@@ -404,17 +404,23 @@ const stat = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
   await customElements.whenDefined('houseplan-space-card');
-  // NOTE: the config-store cache is module-level and already primed by the
-  // earlier static-card sections (with the PRE-§12 rooms), so a mocked
-  // callWS would never reach the card — inject the snapshot directly.
+  // #896: each immutable fixture owns its actual connection/GET authority.
+  // A private snapshot injected before attach can be replaced by a shared GET.
   const mk = async (cfg) => {
     const host = document.createElement('div');
     document.body.appendChild(host);
     const el = document.createElement('houseplan-space-card');
     el.setConfig({ type: 'custom:houseplan-space-card', space: c._space });
-    el._snap = { config: cfg, rev: 1, layout: {} };
-    el._loadedOnce = true;
-    el.hass = c.hass;
+    const config = structuredClone(cfg), layout = structuredClone(c._layout);
+    const callWS = c.hass.callWS;
+    el.hass = { ...c.hass,
+      connection: { ...c.hass.connection, subscribeEvents: async () => () => {} },
+      callWS: async (message) => {
+        if (message.type === 'houseplan/config/get') return { config: structuredClone(config), rev: 1, can_write: true };
+        if (message.type === 'houseplan/layout/get') return { layout: structuredClone(layout), rev: 1 };
+        return callWS(message);
+      },
+    };
     host.appendChild(el);
     const t0 = Date.now();
     while (!el.renderRoot?.querySelector('.hp-static-stage') && Date.now() - t0 < 6000)

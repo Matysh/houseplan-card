@@ -142,6 +142,9 @@ const res = await page.evaluate(async () => {
   out.sameInViewMode = dom(live.id) === editorText
     && editorText === 'Бак 22.4 °C; LQI 154';
 
+  // #896: a cold card reads the accepted server document, not this editor's
+  // pending debounced draft. Observe the real save without flushing it.
+  await window.__hpTest.waitForWrites();
   const kiosk = document.createElement('houseplan-card');
   kiosk.setConfig({ type: 'custom:houseplan-card', kiosk: true });
   kiosk.hass = c.hass;

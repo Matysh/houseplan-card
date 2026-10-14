@@ -47,6 +47,10 @@ const out = await page.evaluate(async () => {
   };
   let serverConfig = clone(original);
   let serverLayout = clone(originalLayout);
+  // #896: custom Optimize, GET and ordinary writes use the same saved pair
+  // and exact CAS revisions; detached GET replies cannot update the base store.
+  const { createFixtureStore } = await import('/fixture-state.js');
+  const store = createFixtureStore(serverConfig, serverLayout);
   let backup = null;
   const calls = [];
   const baseCall = card.hass.callWS.bind(card.hass);
@@ -58,23 +62,25 @@ const out = await page.evaluate(async () => {
         backup = { config: clone(serverConfig), layout: clone(serverLayout) };
         serverConfig = clone(message.config);
         serverLayout = clone(message.layout);
-        return { ok: true, config_rev: 2, layout_rev: 2, can_undo: true };
+        return { ok: true, config_rev: store.pushConfig(serverConfig),
+          layout_rev: store.pushLayout(serverLayout), can_undo: true };
       }
       if (message.type === 'houseplan/plan/optimize_undo') {
         calls.push(message.type);
         serverConfig = clone(backup.config);
         serverLayout = clone(backup.layout);
-        return { ok: true };
+        return { ok: true, config_rev: store.pushConfig(serverConfig),
+          layout_rev: store.pushLayout(serverLayout) };
       }
       if (message.type === 'houseplan/space/delete') {
         calls.push(message.type);
         throw Object.assign(new Error('in use'), { code: 'space_in_use' });
       }
-      if (message.type === 'houseplan/config/get') {
-        return { config: clone(serverConfig), rev: 3, can_write: true };
-      }
-      if (message.type === 'houseplan/layout/get') {
-        return { layout: clone(serverLayout), rev: 3 };
+      const response = store.handle(message);
+      if (response !== undefined) {
+        serverConfig = store.handle({ type: 'houseplan/config/get' }).config;
+        serverLayout = store.handle({ type: 'houseplan/layout/get' }).layout;
+        return response;
       }
       return baseCall(message);
     },

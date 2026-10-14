@@ -34,6 +34,9 @@ const res = await page.evaluate(async () => {
       host: { kind: 'partition', id: 'fit-wall', t: 0.5 },
     }];
   }
+  // #896: changing a GET clone never changes the fixture server. Publish the
+  // structural voters before the independent static cards perform their GET.
+  await window.__hpTest.setServerConfig(configs[0]);
   const host = document.createElement('div');
   document.body.appendChild(host);
 

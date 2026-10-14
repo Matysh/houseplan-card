@@ -163,7 +163,18 @@ const out = await page.evaluate(async () => {
   await customElements.whenDefined('houseplan-space-card');
   const staticCard = document.createElement('houseplan-space-card');
   staticCard.setConfig({ type: 'custom:houseplan-space-card', space: 'f1' });
-  staticCard.hass = card.hass;
+  // #896: an independent card accepts this fixture's immutable document via
+  // its own transport, not a private editor alias or a shared cache snapshot.
+  const staticConfig = structuredClone(card._serverCfg), staticLayout = structuredClone(card._layout);
+  const staticWS = card.hass.callWS;
+  staticCard.hass = { ...card.hass,
+    connection: { ...card.hass.connection, subscribeEvents: async () => () => {} },
+    callWS: async (message) => {
+      if (message.type === 'houseplan/config/get') return { config: structuredClone(staticConfig), rev: 1, can_write: true };
+      if (message.type === 'houseplan/layout/get') return { layout: structuredClone(staticLayout), rev: 1 };
+      return staticWS(message);
+    },
+  };
   document.body.appendChild(staticCard);
   const started = Date.now();
   while (!staticCard.renderRoot?.querySelector(`.dev[data-id="${markerId}"]`)

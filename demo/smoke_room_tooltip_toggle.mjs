@@ -67,7 +67,9 @@ const result = await page.evaluate(async () => {
 
   const authoritative = structuredClone(beforeRejectedSave);
   authoritative.settings = { ...authoritative.settings, bg_color: '#345678' };
-  const authoritativeRev = card._cfgRev + 5;
+  // #896: the conflict reply and the following ordinary Save must refer to
+  // the same persisted authority/revision, not a fictional GET-only revision.
+  const authoritativeRev = window.__pushServerConfig(authoritative);
   card._openSettingsDialog();
   card._settingsDialog = {
     ...card._settingsDialog, bgColor: '#abcdef', showRoomTooltip: false,
@@ -75,9 +77,6 @@ const result = await page.evaluate(async () => {
   card.hass = { ...card.hass, callWS: async (message) => {
     if (message.type === 'houseplan/config/set') {
       throw Object.assign(new Error('conflict'), { code: 'conflict' });
-    }
-    if (message.type === 'houseplan/config/get') {
-      return { config: structuredClone(authoritative), rev: authoritativeRev, can_write: true };
     }
     return originalCallWS(message);
   } };
