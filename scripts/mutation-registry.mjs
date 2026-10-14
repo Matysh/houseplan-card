@@ -17981,6 +17981,31 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'snapshot-ignores-records-edited-in-place',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="in-place edit" test/render-snapshot-incremental.test.mjs',
+    because: '#850 AC3: DevItems hold the live marker records; an edit in place (vacuum trail_mode, no '
+      + 'epoch) keeps every identity, so without their content in the source key the reused roster clone '
+      + 'and presentations stay stale (smoke_vacuum: previous run and resting integration path lost)',
+    patches: [{
+      file: 'src/render-snapshot-reuse.ts',
+      find: '      JSON.stringify([host._devices, host._serverCfg?.settings]),\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'led-frame-key-without-record-content',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="in-place edit of the strips" test/led-strip-runtime.test.mjs',
+    because: '#850 AC2: the model keeps the stored strips and room settings by reference; an edit in place '
+      + 'must still rebuild the frame at the next HA frame, as the projection key did before',
+    patches: [{
+      file: 'src/led-strip-runtime.ts',
+      find: '  key.push(JSON.stringify([space.led_strips, space.rooms.map((room) => room.settings)]));\n',
+      replace: '',
+    }],
+  },
+  {
     id: 'light-geometry-memo-by-floor-id',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="#850 AC4" test/glow-scene.test.mjs',

@@ -8,14 +8,15 @@
  * lists are open towards rebuilding, never towards reuse:
  *
  * - the source key — both registry projections, the roster, layout, config
- *   epoch (every in-place config edit bumps it; DevItems hold live marker
- *   records), the stored config with its settings and markers, the plan
- *   model, the summary and vacuum-fit rows. A change forgets everything: the
+ *   epoch, the stored config with its settings and markers, the plan model,
+ *   the summary and vacuum-fit rows, and the content of the roster and the
+ *   stored settings: DevItems hold the live marker records, which an edit may
+ *   change in place without a new epoch. A change forgets everything: the
  *   clone memo, the previous projections and every presentation;
  * - the presentation key — every top-level HA member except `states` (locale,
- *   themes, formatters, config…), the card config, manual lights, the plan
- *   light graph, reduced motion and each activity runtime with its live window
- *   at this moment. A change rebuilds every presentation; unchanged rows,
+ *   themes, formatters, config…), the card config and its content, manual
+ *   lights, the plan light graph, reduced motion and each activity runtime
+ *   with its live window at this moment. A change rebuilds every presentation; unchanged rows,
  *   DevItems and the roster keep their clones, lent to a new clone memo
  *   (`lend`) so the weak table does not collect every rebuilt presentation.
  *
@@ -77,8 +78,14 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
       hass?.entities, hass?.devices, registry?.entities, registry?.devices, host._devices, host._layout,
       host._cfgEpoch, host._serverCfg, host._serverCfg?.settings, host._model, host._vacFit?.source,
       [...host._summary?.entityIds() || []].join('\n'),
+      // The card's own records keep their identity through an edit in place
+      // (a marker's `vacuum.trail_mode` with no epoch, the stored settings); a
+      // complete capture read them anew, so their content is a source too
+      // (fail-open, ТЗ п.2). The card config's content is a presentation input.
+      JSON.stringify([host._devices, host._serverCfg?.settings]),
     ];
-    const inputs: unknown[] = [host._config, host._virtualLights, lightSources, host._reducedMotion];
+    const inputs: unknown[] = [host._config, JSON.stringify(host._config), host._virtualLights, lightSources,
+      host._reducedMotion];
     for (const name of Object.keys(host.hass || {}).sort()) if (name !== 'states') inputs.push(name, host.hass[name]);
     for (const [id, runtime] of host._activityRt) {
       const expires = runtime.expiresAt || runtime.flashTs + ACTIVITY_WINDOW_MS;

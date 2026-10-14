@@ -539,6 +539,9 @@ export function ledFrameFor(host: LedCardHost, space: SpaceModel, spaceGlow: boo
   // Rows by identity: a state, colour or availability change of a strip's source.
   for (const source of sources) if (markers.has(source.device.id)) key.push(hass?.states?.[source.eid]);
   for (const device of devices) if (markers.has(device.id)) key.push(hass?.states?.[device.primary || '']);
+  // The strips and room settings are live config records: an edit in place
+  // (no new epoch, the same space) is seen at the next HA frame, as before.
+  key.push(JSON.stringify([space.led_strips, space.rooms.map((room) => room.settings)]));
   if (hit && same(hit.key, key)) {
     hit.pass = pass;
     return hit.frame;

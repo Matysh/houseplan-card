@@ -603,6 +603,25 @@ test('#850 AC2: a sensor elsewhere on the plan reuses the frame; each input of Ð
   releaseLed(host);
 });
 
+test('#850 AC2: an in-place edit of the strips or a room\'s Glow is seen at the next HA frame', async () => {
+  // The model's strips and room settings are the stored config's records; an
+  // edit in place keeps the space object. Before #850 the next HA projection
+  // rebuilt the frame; the key must still notice it.
+  const { ledFrameFor, releaseLed } = await import('../test-build/led-strip-runtime.js');
+  const host = ledHost(), space = ledSpace();
+  const base = ledFrameFor(host, space, true);
+  const tick = () => { host._renderPlanHass = { ...host._renderPlanHass, states: { ...host._renderPlanHass.states } }; };
+  space.led_strips[0].points[1] = [0.6, 0.1];
+  tick();
+  const moved = ledFrameFor(host, space, true);
+  assert.notEqual(moved, base, 'an in-place point edit rebuilds the frame at the next HA frame');
+  assert.equal(moved.views[0].strip.points[1][0], 0.6 * 1000);
+  space.rooms[0].settings = { glow: false };
+  tick();
+  assert.equal(ledFrameFor(host, space, true).views[0].glow, false, 'an in-place room Glow edit as well');
+  releaseLed(host);
+});
+
 test('#850 AC2: a state or colour frame derives no tube; thickness, points and faces do', async () => {
   const { ledFrameFor, ledStripePath, ledWork, releaseLed } = await import('../test-build/led-strip-runtime.js');
   const host = ledHost(), space = ledSpace();

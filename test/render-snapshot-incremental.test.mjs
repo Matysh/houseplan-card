@@ -216,6 +216,33 @@ test('#850 AC3: a structural change rebuilds every presentation or everything; d
   assert.ok(first);
 });
 
+test('#850 AC3: an in-place edit of a marker record, the stored settings or the card config is an input', () => {
+  // DevItems hold the live marker records of the stored config; an edit in
+  // place keeps every identity (no epoch, no new roster) and a complete capture
+  // read it on the next HA frame (smoke_vacuum: `trail_mode` set in place).
+  const host = captureHost(oracleFixture());
+  const reuse = new RenderSnapshotReuseWindow();
+  captureRenderDeviceSnapshot(host, reuse);
+  const sensor = 'sensor.perf_3';
+  const tick = (value) => {
+    host.hass = { ...host.hass, states: { ...host.hass.states,
+      [sensor]: { ...host.hass.states[sensor], state: String(value) } } };
+    host._hassSequence++;
+  };
+  const device = host._devices.find((item) => item.marker && item.entities.length);
+  for (const [label, edit] of [
+    ['marker record', () => { device.marker.vacuum = { trail_mode: 'always' }; device.marker.display = 'value'; }],
+    ['stored settings', () => { host._serverCfg.settings.show_device_battery = false; }],
+    ['card config', () => { host._config.show_temperature = false; }],
+  ]) {
+    edit();
+    tick(label.length);
+    const next = captureRenderDeviceSnapshot(host, reuse);
+    assert.deepEqual(plain(next), plain(captureRenderDeviceSnapshot(host, null)), `${label}: equals complete`);
+  }
+  assert.equal(host._devices.find((item) => item.id === device.id).marker.vacuum.trail_mode, 'always');
+});
+
 test('#850 AC3: a row read only through the battery context or a badge is still an input', () => {
   const host = captureHost(oracleFixture());
   const reuse = new RenderSnapshotReuseWindow();
