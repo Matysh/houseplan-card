@@ -34,10 +34,10 @@ that transition events alone prove disposal.
 | Performance threshold | 5 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 3 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 51 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 59 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Pointer geometry and trusted interaction | 62 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 41 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
 | Custom-element and HA browser lifecycle | 154 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **313 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| **Total** | **316 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -183,6 +183,15 @@ target; a port unit cannot observe that frame.
 - `node-capture-jumps-to-camera-target`
 
 - `battery-passive-frame-intercepts-pointer`
+
+#873: the equal-spacing resolver itself is judged by `node --test`; these three
+cover what only a real gesture through the card and the lazy editor runtime
+shows — the magnet dies with `DeviceDragState`, release writes the previewed
+point, and View pointer routing never reaches the device drag.
+
+- `spacing-magnet-outlives-the-gesture`
+- `spacing-target-search-before-the-mode-check`
+- `spacing-write-differs-from-the-shown-point`
 
 The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry.
 

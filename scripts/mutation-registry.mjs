@@ -341,6 +341,89 @@ const MUTANT_DEFINITIONS = [
     }
   ]
 },
+  // #873: equal-spacing magnet of the device editor. The resolver is pure
+  // (src/device-spacing.ts) and judged by node --test; the gesture wiring
+  // (state lifetime, write path, View routing) needs a real browser gesture.
+  {
+    id: 'spacing-step-follows-the-pointer',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-spacing.test.mjs',
+    because: '#873 AC1: a captured target is stored exactly; the step must come from the row, not from wherever the pointer is (4 px at zoom 1 is 1.6 grid cells)',
+    patches: [{ file: 'src/device-spacing.ts', find: '    return held ? held.p : grid.p;\n', replace: '    return grid.p; // mutant: the step is wherever the pointer is\n' }],
+  },
+  {
+    id: 'spacing-line-by-angle',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-spacing.test.mjs',
+    because: '#873 AC2: a line is an equal coordinate within 1e-6 plan units; an angle tolerance joins a pair one node apart into a row',
+    patches: [{ file: 'src/device-spacing.ts', find: '      while (j < byLine.length && byLine[j][o] - byLine[i][o] <= SPACING_EPS) j++;', replace: '      while (j < byLine.length && byLine[j][o] - byLine[i][o] <= 1000 * Math.tan(Math.PI / 90)) j++; // mutant: 2 degrees' }],
+  },
+  {
+    id: 'spacing-row-without-2d-rule',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-spacing.test.mjs',
+    because: '#873 AC2: without the 2d rule an outsider within 2d past the end still leaves a row, and its target can promise an equal step next to an unequal one',
+    patches: [{ file: 'src/device-spacing.ts', find: '        if ((s > 0 && c[s] - c[s - 1] <= 2 * d + SPACING_EPS)\n          || (e + 1 < c.length && c[e + 1] - c[e] <= 2 * d + SPACING_EPS)) continue;\n', replace: '        // mutant: no 2d rule\n' }],
+  },
+  {
+    id: 'spacing-participants-like-align-candidates',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-spacing.test.mjs',
+    because: '#873 AC2: participants are the drawn markers; the alignment candidates also list a hidden marker and an LED strip, which then make a row nobody sees',
+    patches: [{ file: 'src/device-spacing.ts', find: 'd.id !== moving.id && !d.hidden && !leds.has(d.id)', replace: 'd.id !== moving.id' }],
+  },
+  {
+    id: 'spacing-tie-goes-to-the-last-target',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-spacing.test.mjs',
+    because: '#873 AC3: an equal distance goes to the stable key (axis, line, position); taking the last one scanned makes the choice depend on scan order',
+    patches: [{ file: 'src/device-spacing.ts', find: '      if (dist < bestPx - 1e-9) {', replace: '      if (dist <= bestPx + 1e-9) {' }],
+  },
+  {
+    id: 'spacing-target-not-held',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-spacing.test.mjs',
+    because: '#873 AC3: a captured target is held until r_out; without the hold the marker flickers between two targets a few px apart',
+    patches: [{ file: 'src/device-spacing.ts', find: '        keep ||= t === this.held;\n', replace: '        // mutant: nothing is held\n' }],
+  },
+  {
+    id: 'spacing-reference-is-the-near-gap',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-spacing.test.mjs',
+    because: '#873 AC4: the reference is the far gap of the row (A–B for D), not the one next to the new gap (B–C)',
+    patches: [{ file: 'src/device-spacing.ts', find: '        add(c[e], d, [c[s], c[s + 1]]);', replace: '        add(c[e], d, [c[e - 1], c[e]]);' }],
+  },
+  {
+    id: 'spacing-hint-from-the-raw-point',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-spacing.test.mjs',
+    because: '#873 AC4: the hint follows the final (grid) point; judged on the raw pointer it vanishes at zoom 8 where the grid itself lands on the target',
+    patches: [{ file: 'src/device-spacing.ts', find: '      if (t.x === grid.x && t.y === grid.y) onGrid.push(t);', replace: '      if (Math.hypot(t.x - x, t.y - y) <= SPACING_EPS) onGrid.push(t); // mutant: the raw point' }],
+  },
+  {
+    id: 'spacing-radius-in-plan-units',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-spacing.test.mjs',
+    because: '#873 AC5: the pull is in CSS px; a radius in plan units (6 px at zoom 1) is 2 px at zoom 1/3 and 48 px at zoom 8',
+    patches: [{ file: 'src/device-spacing.ts', find: '      const dist = Math.hypot((t.x - x) * px, (t.y - y) * py);', replace: '      const dist = Math.hypot(t.x - x, t.y - y) * 0.5856; // mutant: 6 px at the demo\'s zoom 1' }],
+  },
+  {
+    id: 'spacing-index-per-move',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-spacing.test.mjs',
+    because: '#873 AC7: the row index is built once per gesture; rebuilt on each move it costs O(N log N) per pointermove (100 builds instead of 1)',
+    patches: [{ file: 'src/device-spacing.ts', find: '    if (!this.targets) {\n      this.builds++;', replace: '    if (this.targets || !this.targets) { // mutant: every move\n      this.builds++;' }],
+  },
+  {
+    id: 'spacing-magnet-outlives-the-gesture',
+    guard: 'node demo/smoke_device_equal_spacing.mjs',
+    because: '#873 AC6: the magnet (index and held target) lives in DeviceDragState; kept on the runtime it outlives Esc — the next gesture inherits a held target and the stale markers. Browser: real pointer gestures through the lazy editor runtime',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts', find: '    return new SpacingMagnet(spacingMarkers(this.host._devices, d, ledStripsByMarker(space), (o) => this.host._pos(o)),', replace: '    const keep = this as unknown as { spacingKeep?: SpacingMagnet<DevicePlacement> }; // mutant: one magnet per runtime\n    return keep.spacingKeep ??= new SpacingMagnet(spacingMarkers(this.host._devices, d, ledStripsByMarker(space), (o) => this.host._pos(o)),' }],
+  },
+  {
+    id: 'spacing-write-differs-from-the-shown-point',
+    guard: 'node demo/smoke_device_equal_spacing.mjs',
+    because: '#873 AC1/AC6: pointerup writes the previewed point; re-rounding the raw pointer at release stores a neighbouring node, not the target the hint promised. Browser: the write path of a real gesture',
+    patches: [{ file: 'src/houseplan-card.ts', find: '    const after = devicePlacement(this._layout, d.id);\n', replace: '    const box = (this.renderRoot.querySelector(\'.stage\') as HTMLElement).getBoundingClientRect(), view = this._viewOr(this._baseVb()); // mutant: the write re-rounds the raw pointer\n    const after: DevicePlacement | null = this._devicePlacementForCanvas(d, drag.ox + ((ev.clientX - drag.sx) / box.width) * view.w, drag.oy + ((ev.clientY - drag.sy) / box.height) * view.h);\n' }],
+  },
+  {
+    id: 'spacing-target-search-before-the-mode-check',
+    guard: 'node demo/smoke_device_equal_spacing.mjs',
+    because: '#873 AC8: the device drag and its target search run only in the Devices editor; reached from View, a mouse drag over a marker moves and snaps it. Browser: View pointer routing',
+    patches: [{ file: 'src/houseplan-card.ts', find: '    if (this._mode === \'view\') {\n      // view: no drag, no capture — panning may start on an icon; only the', replace: '    if (this._mode === \'view\' && ev.pointerType !== \'mouse\') {\n      // view: no drag, no capture — panning may start on an icon; only the' },
+      { file: 'src/houseplan-card.ts', find: '    if (this._mode !== \'devices\') return d;\n    const drag = this._deviceDrag;\n    if (!drag || drag.id !== d.id || drag.pointerId !== ev.pointerId) return d;\n    this._editorRuntimeOrThrow()._queuePointerMove(\'device\'', replace: '    const drag = this._deviceDrag; // mutant: the drag and its target search before the mode check\n    if (!drag || drag.id !== d.id || drag.pointerId !== ev.pointerId) return d;\n    this._editorRuntimeOrThrow()._queuePointerMove(\'device\'' },
+      { file: 'src/houseplan-card.ts', find: '  private _pointerMoveNow(ev: PointerEvent, d: DevItem): void {\n    if (this._mode !== \'devices\') return;\n', replace: '  private _pointerMoveNow(ev: PointerEvent, d: DevItem): void {\n' }],
+  },
   // #843: node history is a server transaction of the shared stack. Pure
   // runtime-level oracles: real runtime, adapter, writeWallNode, CommandStack
   // and ConfigAdoption over a recording wire; no browser is needed.
