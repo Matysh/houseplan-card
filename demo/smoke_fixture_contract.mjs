@@ -28,7 +28,9 @@ try {
   const cdp = await page.context().newCDPSession(page);
   const point = (id, dx = 0) => ({ id, x: x + dx, y, radiusX: 2, radiusY: 2, force: 1 });
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point(1)] });
+  check('#896 native first touch really enters the stage gesture', await page.evaluate(() => window.__card._pointers.size), 1);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point(1), point(2, 45)] });
+  check('#896 native second touch really enters multitouch', await page.evaluate(() => window.__card._pointers.size), 2);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
   await page.waitForTimeout(100);
   check('#896 cancelled native multitouch dispatches zero', await page.evaluate(() => window.__serviceCalls.length), 3);
