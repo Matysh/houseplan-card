@@ -507,3 +507,119 @@ test('AC17/r1 M5: a released owner retains nothing; the stats count visibility e
   assert.deepEqual(ledFieldStats(owner), { visibility: 0, sources: 0, visibilityPaths: 0, pathChars: 0, recomputes: 0 });
   assert.notEqual(ledFieldCache(owner), cache, 'a new mount starts a new cache');
 });
+
+// #850 AC2: the frame key holds every input the frame reads and nothing else.
+const ledHost = (patch = {}) => {
+  const sceneA = { occluders: [], floor: [], fingerprint: 'a', masonryGeometry: [], opaqueBodies: [] };
+  return {
+    isConnected: true,
+    _renderDevices: [
+      { id: 'lamp', name: 'Lamp', primary: 'light.led', entities: ['light.led'], space: 's',
+        marker: { id: 'lamp', binding: 'device:lamp' } },
+      { id: 'probe', name: 'Probe', primary: 'sensor.t', entities: ['sensor.t'], space: 's',
+        marker: { id: 'probe', binding: 'device:probe' } },
+    ],
+    _renderPlanHass: { states: {
+      'light.led': { state: 'on', attributes: { rgb_color: [128, 213, 255] } },
+      'sensor.t': { state: '21', attributes: {} },
+    } },
+    _virtualLights: { rev: 0, configRev: 0, off: new Set() },
+    _fillColors: { glow_light: { c: '#ffd27b', a: 0.7 } },
+    _cellCm: 5, _gridPitch: 1000 / 240, _config: { icon_size: 3.4 },
+    _mode: 'view', _showAll: false,
+    _scene: sceneA,
+    _lightBarriers() { return this._scene; },
+    _pointInRoom: () => true,
+    ...patch,
+  };
+};
+const ledSpace = (patch = {}) => ({ id: 's', vb: [0, 0, 1000, 1000],
+  rooms: [{ id: 'r', poly: [[0, 0], [1000, 0], [1000, 1000], [0, 1000]] }],
+  led_strips: [{ id: 'strip', marker: 'lamp', points: [[0.1, 0.1], [0.4, 0.1]] }], ...patch });
+
+test('#850 AC2: a sensor elsewhere on the plan reuses the frame; each input of п.4 rebuilds it alone', async () => {
+  const { ledFrameFor, ledWork, releaseLed } = await import('../test-build/led-strip-runtime.js');
+  const host = ledHost(), space = ledSpace();
+  const base = ledFrameFor(host, space, true);
+  const frames = ledWork?.frames;
+  host._renderPlanHass = { states: { ...host._renderPlanHass.states, 'sensor.t': { state: '22', attributes: {} } } };
+  assert.equal(ledFrameFor(host, space, true), base, 'a plan sensor tick is not an input of the LED frame');
+  assert.equal(ledWork.frames, frames, 'and builds no frame');
+  const rebuilds = (label, change, expect, { glow = true, at = space } = {}) => {
+    const before = ledFrameFor(host, at, glow);
+    const restore = change();
+    const after = ledFrameFor(host, restore?.space || at, restore?.glow ?? glow);
+    assert.notEqual(after, before, `${label} rebuilds the frame`);
+    expect(after);
+  };
+  const states = () => host._renderPlanHass.states;
+  rebuilds('the source state', () => { host._renderPlanHass = { states: { ...states(), 'light.led': { state: 'off', attributes: {} } } }; },
+    (frame) => assert.equal(frame.views[0].state, 'off'));
+  rebuilds('the source colour', () => { host._renderPlanHass = { states: { ...states(), 'light.led': { state: 'on', attributes: { rgb_color: [255, 0, 0] } } } }; },
+    (frame) => assert.equal(frame.views[0].appearance.c, '#ff0000'));
+  rebuilds('unavailable source', () => { host._renderPlanHass = { states: { ...states(), 'light.led': { state: 'unavailable', attributes: {} } } }; },
+    (frame) => assert.equal(frame.views[0].state, 'unavailable'));
+  host._renderPlanHass = { states: { ...states(), 'light.led': { state: 'on', attributes: {} } } };
+  rebuilds('icon_size', () => { host._config = { icon_size: 5 }; }, (frame) => assert.ok(frame.d > base.d));
+  rebuilds('the glow_light colour', () => { host._fillColors = { glow_light: { c: '#00ff00', a: 0.7 } }; },
+    (frame) => assert.equal(frame.views[0].appearance.c, '#00ff00'));
+  rebuilds('the glow_light alpha', () => { host._fillColors = { glow_light: { c: '#00ff00', a: 0.3 } }; },
+    (frame) => assert.ok(frame.views[0].appearance.alpha < 0.5));
+  rebuilds('cell_cm', () => { host._cellCm = 10; }, (frame) => assert.ok(Math.abs(frame.views[0].radius - (30 / 10) * (1000 / 240)) < 1e-9));
+  rebuilds('the grid pitch', () => { host._gridPitch = 1000 / 120; }, (frame) => assert.ok(Math.abs(frame.views[0].radius - (30 / 10) * (1000 / 120)) < 1e-9));
+  rebuilds('the barrier scene (a door)', () => { host._scene = { ...host._scene, fingerprint: 'b' }; },
+    (frame) => assert.equal(frame.scene, host._scene));
+  rebuilds('floor Glow', () => ({ glow: false }), (frame) => assert.equal(frame.views[0].glow, false));
+  rebuilds('room Glow', () => ({ space: ledSpace({ rooms: [{ ...space.rooms[0], settings: { glow: false } }] }) }),
+    (frame) => assert.equal(frame.views[0].glow, false));
+  rebuilds('the points', () => ({ space: ledSpace({ led_strips: [{ ...space.led_strips[0], points: [[0.2, 0.1], [0.4, 0.1]] }] }) }),
+    (frame) => assert.equal(frame.views[0].strip.points[0][0], 0.2 * 1000));
+  rebuilds('active', () => ({ space: ledSpace({ led_strips: [{ ...space.led_strips[0], active: false }] }) }),
+    (frame) => assert.equal(frame.views.length, 0));
+  const device = (patch) => [{ ...host._renderDevices[0], ...patch }, host._renderDevices[1]];
+  rebuilds('glow_radius_cm', () => { host._renderDevices = device({ marker: { id: 'lamp', binding: 'device:lamp', glow_radius_cm: 60 } }); },
+    (frame) => assert.ok(Math.abs(frame.views[0].radius - (60 / 10) * (1000 / 120)) < 1e-9));
+  rebuilds('room_id', () => { host._renderDevices = device({ marker: { id: 'lamp', binding: 'device:lamp', room_id: 'gone' } }); },
+    (frame) => assert.equal(frame.views[0].device.marker.room_id, 'gone'));
+  rebuilds('hidden', () => { host._renderDevices = device({ hidden: true }); }, (frame) => assert.equal(frame.views.length, 0));
+  rebuilds('showAll in Devices', () => { host._mode = 'devices'; host._showAll = true; }, (frame) => assert.equal(frame.views.length, 1));
+  rebuilds('the mode', () => { host._mode = 'view'; }, (frame) => assert.equal(frame.views.length, 0));
+  rebuilds('the space', () => { host._renderDevices = device({ space: 'other' }); }, (frame) => assert.equal(frame.views.length, 0));
+  // A passive marker driven by a controller (marker:*), and a manual virtual light.
+  host._renderDevices = [
+    { id: 'lamp', name: 'Lamp', entities: [], space: 's', virtual: true, bindingKind: 'virtual',
+      marker: { id: 'lamp', binding: 'virtual', is_light: true, tap_action: 'toggle' } },
+    { id: 'wall', name: 'Switch', primary: 'switch.wall', entities: ['switch.wall'], space: 's',
+      controls: [], marker: { id: 'wall', binding: 'device:wall', controls: ['marker:lamp'] } },
+  ];
+  host._renderPlanHass = { states: { 'switch.wall': { state: 'on', attributes: {} } } };
+  assert.equal(ledFrameFor(host, space, true).views[0].state, 'on', 'the controller drives the passive strip');
+  rebuilds('the marker:* controller row', () => { host._renderPlanHass = { states: { 'switch.wall': { state: 'off', attributes: {} } } }; },
+    (frame) => assert.equal(frame.views[0].state, 'off'));
+  host._renderDevices = [host._renderDevices[0]];
+  assert.equal(ledFrameFor(host, space, true).views[0].state, 'on', 'without a controller the manual light is on');
+  rebuilds('the manual virtual light', () => { host._virtualLights = { rev: 1, configRev: 0, off: new Set(['lamp']) }; },
+    (frame) => assert.equal(frame.views[0].state, 'off'));
+  releaseLed(host);
+});
+
+test('#850 AC2: a state or colour frame derives no tube; thickness, points and faces do', async () => {
+  const { ledFrameFor, ledStripePath, ledWork, releaseLed } = await import('../test-build/led-strip-runtime.js');
+  const host = ledHost(), space = ledSpace();
+  const tube = (frame) => ledStripePath(frame.views[0].strip, frame.faces, frame.d);
+  const first = tube(ledFrameFor(host, space, true));
+  const count = ledWork?.tubes;
+  for (const [state, rgb] of [['off', null], ['on', [255, 0, 0]], ['on', [0, 0, 255]]]) {
+    host._renderPlanHass = { states: { ...host._renderPlanHass.states,
+      'light.led': { state, attributes: rgb ? { rgb_color: rgb } : {} } } };
+    assert.equal(tube(ledFrameFor(host, space, true)), first, `${state} ${rgb} keeps the tube`);
+  }
+  assert.equal(ledWork.tubes, count, 'state and colour derive no tube');
+  host._config = { icon_size: 5 };
+  assert.notEqual(tube(ledFrameFor(host, space, true)), first, 'a thicker stripe derives its tube');
+  host._scene = { ...host._scene, fingerprint: 'door' };
+  const doorTubes = ledWork.tubes;
+  tube(ledFrameFor(host, space, true));
+  assert.equal(ledWork.tubes, doorTubes + 1, 'new faces derive the tube');
+  releaseLed(host);
+});

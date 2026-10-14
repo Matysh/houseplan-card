@@ -1,7 +1,7 @@
 // #788: camera renders reuse tube geometry without freezing live state or edits.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ledFrameFor, ledStripePath, releaseLed } from '../test-build/led-strip-runtime.js';
+import { ledFrameFor, ledStripePath, ledWork, releaseLed } from '../test-build/led-strip-runtime.js';
 import { LED_THICKNESS_D, pathD, visibleStripPath } from '../test-build/led-strip-geometry.js';
 
 const strip = () => ({ id: 'led', marker: 'lamp', points: [[2, 1], [6, 1], [6, 4]] });
@@ -68,21 +68,40 @@ const ownerFixture = () => ({
 const spaceFixture = () => ({ id: 's', vb: [0, 0, 1000, 1000], rooms: [],
   led_strips: [{ id: 'led', marker: 'lamp', points: [[0.1, 0.1], [0.4, 0.1]] }] });
 
-test('#788: new HA frames keep live state and evict the old frame geometry; disconnect releases it', () => {
+test('#850: a state frame keeps the tube, a sensor tick keeps the frame; disconnect releases it', () => {
   const owner = ownerFixture(), space = spaceFixture();
   const first = ledFrameFor(owner, space, true);
   const firstStrip = first.views[0].strip;
   const firstPath = ledStripePath(firstStrip, first.faces, first.d);
   assert.equal(ledFrameFor(owner, space, true), first, 'unchanged camera inputs reuse the frame');
   assert.equal(ledStripePath(firstStrip, first.faces, first.d), firstPath);
+  // A plan sensor ticks: a new HA projection whose strip rows are the same objects.
+  const lamp = owner._renderPlanHass.states['light.led'];
+  owner._renderPlanHass = { states: { 'light.led': lamp, 'sensor.t': { state: '21', attributes: {} } } };
+  assert.equal(ledFrameFor(owner, space, true), first, 'a row the strip does not read keeps the frame');
   owner._renderPlanHass = { states: { 'light.led': { state: 'off', attributes: {} } } };
+  const tubes = ledWork.tubes;
   const second = ledFrameFor(owner, space, true);
-  assert.notEqual(second, first);
+  assert.notEqual(second, first, 'the source row is an input of the frame');
   assert.equal(second.views[0].state, 'off', 'geometry caching must not freeze the device state');
-  assert.notEqual(ledStripePath(firstStrip, first.faces, first.d), firstPath, 'old frame entry was explicitly evicted');
-  const secondStrip = second.views[0].strip;
-  const secondPath = ledStripePath(secondStrip, second.faces, second.d);
-  assert.deepEqual(secondPath, firstPath, 'state changes preserve the physical tube');
+  assert.equal(second.views[0].strip, firstStrip, 'an unchanged stored strip keeps its model');
+  assert.equal(ledStripePath(second.views[0].strip, second.faces, second.d), firstPath,
+    'a state change reuses the physical tube and hit path');
+  assert.equal(ledWork.tubes, tubes, 'no tube was derived for the state frame');
   releaseLed(owner);
-  assert.notEqual(ledStripePath(secondStrip, second.faces, second.d), secondPath, 'disconnect explicitly evicts current frame entries');
+  assert.notEqual(ledStripePath(firstStrip, second.faces, second.d), firstPath, 'disconnect explicitly evicts current frame entries');
+});
+
+test('#850: a strip the next frame no longer draws gives up its tube; a moved strip derives a new one', () => {
+  const owner = ownerFixture(), space = spaceFixture();
+  const first = ledFrameFor(owner, space, true);
+  const strip = first.views[0].strip;
+  const path = ledStripePath(strip, first.faces, first.d);
+  const moved = { ...space, led_strips: [{ ...space.led_strips[0], points: [[0.1, 0.2], [0.4, 0.2]] }] };
+  const second = ledFrameFor(owner, moved, true);
+  assert.notEqual(second.views[0].strip, strip, 'new points are a new strip model');
+  assert.notEqual(ledStripePath(strip, first.faces, first.d), path, 'the replaced model was evicted');
+  assert.deepEqual(ledStripePath(second.views[0].strip, second.faces, second.d),
+    fresh(second.views[0].strip, second.faces, second.d));
+  releaseLed(owner);
 });

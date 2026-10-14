@@ -16,6 +16,7 @@ import {
   resolveGlowCandidates,
   type GlowCandidate, type LightBarrierScene, type LightRoomPolygon,
 } from './glow-scene';
+import { resolvedLightSources } from './devices';
 import { ENTRY_BUILD_FINGERPRINT } from './editor-runtime-loader';
 import { NORM_W, iconUnit } from './space-geometry';
 import { roomGlowOf, roomPoly } from './logic';
@@ -134,6 +135,22 @@ export function faceContext(scene: LightBarrierScene | null, epsilon: number): F
 }
 
 /**
+ * #850: one face context per scene and epsilon. A frame rebuilt for a light
+ * state keeps the scene, so its faces — and the tube cache keyed by them —
+ * stay the same objects.
+ */
+const sceneFaces = new WeakMap<LightBarrierScene, FaceContext | null>();
+function facesOf(scene: LightBarrierScene | null, epsilon: number): FaceContext | null {
+  if (!scene) return null;
+  let faces = sceneFaces.get(scene);
+  if (faces?.epsilon !== epsilon) sceneFaces.set(scene, faces = faceContext(scene, epsilon));
+  return faces ?? null;
+}
+
+/** #850: exact work counters for the performance witness (frames built, tubes derived). */
+export const ledWork = { frames: 0, tubes: 0 };
+
+/**
  * The state of one strip from the card's own light resolution (ТЗ §3, §5):
  * an unavailable source is a grey dashed stripe without a field — never an
  * unbinding; on uses the source colour for the core, with a field when Glow
@@ -241,6 +258,7 @@ export function ledStripePath(strip: LedStripModel, faces: FaceContext | null, d
   const points = pts(strip.points);
   const path = visibleStripPath(points, faces, t / 2);
   const value = { t, path, d: pathD(path) };
+  ledWork.tubes++;
   stripePaths.set(strip, { faces, epsilon: faces?.epsilon, points, value });
   return value;
 }
@@ -384,7 +402,10 @@ export function stripRoom(
     ?? (anchor ? rooms.find((r) => inRoom(anchor, r)) : undefined);
 }
 
-export function ledFrame(input: LedFrameInput): LedFrame {
+export function ledFrame(input: LedFrameInput, previous?: LedFrame | null): LedFrame {
+  // #850: a strip whose marker and exact points are unchanged keeps its model,
+  // so a frame rebuilt for a state or colour reuses its tube and hit path.
+  const prior = new Map(previous?.views.map((view) => [view.strip.id, view.strip]));
   const byId = new Map(input.devices.map((device) => [device.id, device]));
   const radius = (LED_DEFAULT_RADIUS_CM / input.cellCm) * input.gridPitch;
   const candidates = new Map(resolveGlowCandidates({
@@ -403,10 +424,11 @@ export function ledFrame(input: LedFrameInput): LedFrame {
   for (const stored of input.space.led_strips || []) {
     if (stored?.active === false || !stored.marker || !validStripPoints(stored.points)) continue;
     // Stored strips are normalised like the layout; the plan draws render units.
-    const strip: LedStripModel = {
-      ...stored,
-      points: stored.points.map((p) => [p[0] * NORM_W, p[1] * NORM_W]),
-    };
+    const points = stored.points.map((p) => [p[0] * NORM_W, p[1] * NORM_W]);
+    const old = prior.get(stored.id);
+    const strip: LedStripModel = old && old.marker === stored.marker && old.points.length === points.length
+      && old.points.every((p, i) => p[0] === points[i][0] && p[1] === points[i][1])
+      ? old : { ...stored, points };
     const device = byId.get(strip.marker as string);
     if (!device || device.space !== input.space.id) continue;
     if (device.hidden && !input.showHidden) continue;
@@ -425,7 +447,7 @@ export function ledFrame(input: LedFrameInput): LedFrame {
   const epsilon = (LED_EPSILON_CM / input.cellCm) * input.gridPitch;
   return {
     views,
-    faces: faceContext(input.scene, epsilon),
+    faces: facesOf(input.scene, epsilon),
     d: (input.iconPct / 100) * iconUnit(input.space),
     scene: input.scene,
     polygons: input.polygons,
@@ -467,7 +489,7 @@ export interface LedCardHost {
   requestUpdate(): void;
 }
 
-const frames = new WeakMap<object, { key: unknown[]; frame: LedFrame }>();
+const frames = new WeakMap<object, { pass: unknown[]; key: unknown[]; frame: LedFrame }>();
 
 /** Disconnect (ТЗ §13.2, r1 M5): the frame and the field caches of this card are released. */
 export function releaseLed(owner: object): void {
@@ -479,12 +501,20 @@ export function releaseLed(owner: object): void {
 /** The performance witness: shapes (frame), visibility entries and retained fans of this card. */
 export function ledStats(owner: object): {
   shapes: number; visibility: number; sources: number; visibilityPaths: number; pathChars: number; recomputes: number;
+  frames: number; tubes: number;
 } {
   return { shapes: frames.get(owner)?.frame.views.length ?? 0,
-    ...(field?.ledFieldStats(owner) ?? { visibility: 0, sources: 0, visibilityPaths: 0, pathChars: 0, recomputes: 0 }) };
+    ...(field?.ledFieldStats(owner) ?? { visibility: 0, sources: 0, visibilityPaths: 0, pathChars: 0, recomputes: 0 }),
+    ...ledWork };
 }
 
-/** The LED frame of a space for this card, rebuilt only when an input changed. */
+/**
+ * The LED frame of a space for this card, rebuilt only when an input changed
+ * (#850): the plan, the roster and registry, the resolved light graph, the
+ * state rows of each strip's sources and primary entity, Glow, the barrier
+ * scene, mode, `icon_size`, the `glow_light` palette and the scale. A sensor
+ * elsewhere on the plan is none of these, so its tick reuses the frame.
+ */
 export function ledFrameFor(host: LedCardHost, space: SpaceModel, spaceGlow: boolean): LedFrame {
   const polygons = space.rooms.flatMap((room) => {
     const poly = roomPoly(room);
@@ -493,18 +523,34 @@ export function ledFrameFor(host: LedCardHost, space: SpaceModel, spaceGlow: boo
   const scene = polygons.length
     ? host._lightBarriers(space, polygons.map(({ room, poly }) => ({ r: room, poly })))
     : null;
-  const key = [space, host._renderDevices, host._renderPlanHass, spaceGlow, scene, host._mode, host._showAll];
+  const hass = host._renderPlanHass, devices = host._renderDevices, palette = host._fillColors.glow_light;
+  const same = (a: unknown[] | undefined, b: unknown[]) => a?.length === b.length && a.every((value, i) => value === b[i]);
+  const inputs = [space, devices, host._virtualLights, spaceGlow, scene, host._mode, host._showAll,
+    host._config?.icon_size, palette.c, palette.a, host._cellCm, host._gridPitch];
+  // A camera or hover pass draws the same HA projection: nothing to resolve.
+  const pass = [hass, ...inputs];
   const hit = frames.get(host);
-  if (hit && hit.key.every((value, i) => value === key[i])) return hit.frame;
-  for (const view of hit?.frame.views ?? []) stripePaths.delete(view.strip);
+  if (hit && same(hit.pass, pass)) return hit.frame;
+  // A new HA projection is no input by itself: the registry, the light graph
+  // and the rows of each strip's sources and primary entity are.
+  const markers = new Set((space.led_strips || []).map((strip) => strip.marker));
+  const sources = resolvedLightSources(hass, devices, null, host._virtualLights);
+  const key: unknown[] = [hass?.entities, sources, ...inputs];
+  // Rows by identity: a state, colour or availability change of a strip's source.
+  for (const source of sources) if (markers.has(source.device.id)) key.push(hass?.states?.[source.eid]);
+  for (const device of devices) if (markers.has(device.id)) key.push(hass?.states?.[device.primary || '']);
+  if (hit && same(hit.key, key)) {
+    hit.pass = pass;
+    return hit.frame;
+  }
   const size = host._config?.icon_size ?? 2.5;
   const frame = ledFrame({
     space,
-    devices: host._renderDevices,
-    hass: host._renderPlanHass,
+    devices,
+    hass,
     virtualLights: host._virtualLights,
-    defaultColor: host._fillColors.glow_light.c,
-    paletteAlpha: host._fillColors.glow_light.a,
+    defaultColor: palette.c,
+    paletteAlpha: palette.a,
     cellCm: host._cellCm,
     gridPitch: host._gridPitch,
     iconPct: size > 8 ? 2.5 : size,
@@ -513,9 +559,13 @@ export function ledFrameFor(host: LedCardHost, space: SpaceModel, spaceGlow: boo
     glowFor: (room) => roomGlowOf(spaceGlow, room),
     inRoom: (point, room) => host._pointInRoom(point, room),
     showHidden: host._mode === 'devices' && host._showAll,
-  });
+  }, hit?.frame);
+  ledWork.frames++;
+  // Only the strips this frame no longer draws give up their tube (another floor, an edit).
+  const kept = new Set(frame.views.map((view) => view.strip));
+  for (const view of hit?.frame.views ?? []) if (!kept.has(view.strip)) stripePaths.delete(view.strip);
   // A disconnected card keeps nothing (a pending update after disconnect, r1 M5).
-  if (host.isConnected !== false) frames.set(host, { key, frame });
+  if (host.isConnected !== false) frames.set(host, { pass, key, frame });
   return frame;
 }
 
