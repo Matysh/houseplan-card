@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 74,
-  "acceptedAt": "2026-10-15T01:15:16.073Z",
-  "sourceFingerprint": "4dfd5901d70cb8d624c376b9f62f8b1016d9d3dca4314da2e08e3fb8cab07c77",
+  "acceptedAt": "2026-10-14T21:39:05.728Z",
+  "sourceFingerprint": "236525f778686d34605b2c018c5695c013e9101edc9a70e83b591c21ea182c69",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,20 +10,20 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "4dfd5901d70cb8d624c376b9f62f8b1016d9d3dca4314da2e08e3fb8cab07c77",
+    "buildFingerprint": "236525f778686d34605b2c018c5695c013e9101edc9a70e83b591c21ea182c69",
     "ci": null
   },
   "localAttestation": {
     "schema": "houseplan-golden-wsl/v2",
-    "sha256": "16326ab6303350a85426682f2308dfae0d2df106bd8c7a68723a36e4b6e46cca",
-    "artifactSha256": "9e185a19f396357276a2857b6a017e30bb1b5e3e4dcf295ba1f7923fed7c4f45",
-    "createdAt": "2026-10-15T01:14:35.230Z",
+    "sha256": "e63cd3a41c5035db6b65209cc09bd8b1bffcfd73f3e94b919bc3d79424ad9469",
+    "artifactSha256": "51806ae40ac5201dc58691ed7f3feaef16ee4d6551da12ccc05b56402b13a73f",
+    "createdAt": "2026-10-14T21:37:39.350Z",
     "source": {
       "repository": "Matysh/houseplan-card",
-      "branch": "issue/849-view-confirm-a11y",
-      "commit": "8ba4206159dc5e43a816f656b26baedbcdae20e9",
-      "tree": "afe1b3ba48bb33d14885de3ac9d9e71659c41224",
-      "remoteSha": "8ba4206159dc5e43a816f656b26baedbcdae20e9",
+      "branch": "issue/892-optimize-cleanup",
+      "commit": "adf6822f6a130162bc9348f3119d6716fe40533e",
+      "tree": "07e70e8068683985641728e2c8294306fcd943ad",
+      "remoteSha": "adf6822f6a130162bc9348f3119d6716fe40533e",
       "clean": true,
       "status": ""
     },
@@ -48,7 +48,7 @@
   },
   "foreignCapture": null,
   "witnesses": {
-    "count": 98,
+    "count": 102,
     "floor": 10
   },
   "scenarios": {
@@ -245,8 +245,8 @@
     "backup-space-preview-mobile-ru": "363aaa313d4b1f6f0b2de66b497390ca876b69cb36dc022b135d33299482465f",
     "optimize-preflight-dialog-dark-en": "09e2d582f6e9591ac7dc7f11520eed51127c06bf97221a1b5340b04227302a87",
     "optimize-preflight-dialog-light-ru": "5b679e352bcdbef8437e6098aadd69b27ff8564fd4bb6d04050bd468f60a20f6",
-    "optimize-orphan-references-dark-en": "6a9ab05787bc789af6181e6f2abca19d3cf92ac166aac661ad8deb7c7a3c88bb",
-    "optimize-orphan-references-light-ru": "332e56edb151a5a820fc307d69ffd4060348978572e48704b0a2c14ba9802720",
+    "optimize-orphan-references-dark-en": "204a021e9737ba8925d6f6c31a7b3ad8f5fdd6c2eade0a35f58a4e3e63c3c1ca",
+    "optimize-orphan-references-light-ru": "78eb25425a4835c2e2153310486c10352b7e29990134dc59d4843e41b8a4b9e4",
     "card-editor-invalid-default-floor-light-en": "dbf251ece014cfee252e0dcb2d7c00eda66aa4b5bd125e4c83e248d4319d24b3",
     "card-editor-invalid-default-floor-dark-ru": "422b74bb391b87e383350247ef1bc1f10ca48c8f6fe418f75bde94e62e3b8bc0",
     "led-strip-design-reference-off-light": "1a558111dbeb1962b10f47baad20b4689248a347510261152f0d6196906044fd",
