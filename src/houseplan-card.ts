@@ -5773,6 +5773,13 @@ export class HouseplanCard extends LitElement {
     return true;
   }
 
+  /** A cancelled/replaced DOM confirmation never accepts a newer intent. */
+  private _acceptTapConfirm(confirmation: { exec(): void } | null): void {
+    if (!confirmation || this._tapConfirm !== confirmation) return;
+    this._tapConfirm = null;
+    confirmation.exec();
+  }
+
   private _keyDevice(ev: KeyboardEvent, d: DevItem): void {
     if (ev.key !== 'Enter' && ev.key !== ' ') return;
     if (this._mode !== 'view' && this._mode !== 'devices') return;
@@ -11387,7 +11394,7 @@ export class HouseplanCard extends LitElement {
                 <div class="row" slot="footer">
                   <span class="spacer"></span>
                   <button class="btn ghost" data-hp="dialog-cancel" @click=${() => (this._tapConfirm = null)}>${this._t('btn.cancel')}</button>
-                  <button class="btn on" data-hp="dialog-confirm" @click=${() => { const c = this._tapConfirm!; this._tapConfirm = null; c.exec(); }}>
+                  <button class="btn on" data-hp="dialog-confirm" @click=${this._acceptTapConfirm.bind(this, this._tapConfirm)}>
                     <ha-icon icon="mdi:check"></ha-icon>${this._t('btn.run')}
                   </button>
                 </div>

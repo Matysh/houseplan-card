@@ -117,6 +117,8 @@ checkAll(await page.evaluate(()=>({deletedDoorSendsNoService:window.__cycleCalls
 // Marker confirmation is scoped by the captured floor even when target ids stay identical.
 await page.locator('houseplan-card [data-hp="device"][data-id="cycle-light"]').click();
 check('real marker opens toggle confirmation',await page.evaluate(()=>!!window.__card._tapConfirm));
+await page.evaluate(()=>{window.__oldCycleToggleButton=window.__card.shadowRoot.querySelector(
+  'hp-dialog[data-kind="confirm"] [data-hp="dialog-confirm"]');});
 await page.evaluate(async()=>window.__hpTest.setServerConfig(cfg=>{
   cfg.markers=cfg.markers.map(m=>m.id==='cycle-light'?{...m,area:'garden',space:'garden'}:m);return cfg;
 }));
@@ -172,6 +174,10 @@ check('Lock has no confirmation and sends exactly one current entity',await page
 }));
 await page.keyboard.press('Escape');
 await page.locator('houseplan-card [data-hp="device"][data-id="cycle-light"]').click();
+await page.evaluate(()=>window.__oldCycleToggleButton.click());
+check('retired DOM confirmation cannot accept a newer same-floor intent',await page.evaluate(()=>{
+  return window.__cycleCalls.length===2&&!!window.__card._tapConfirm;
+}));
 await page.locator('houseplan-card hp-dialog[data-kind="confirm"] [data-hp="dialog-confirm"]').click();
 check('current marker confirmation sends exactly one light operation',await page.evaluate(()=>{
   const call=window.__cycleCalls.at(-1);return window.__cycleCalls.length===3&&call.space==='f1'
@@ -188,8 +194,11 @@ check('tab navigation closes device card without services',await page.evaluate((
 await page.evaluate(async()=>window.__hpTest.switchSpace('f1'));
 await resetContexts();
 await page.locator('houseplan-card [data-hp="device"][data-id="cycle-light"]').click();
+await page.evaluate(()=>{window.__staleCycleConfirmButton=window.__card.shadowRoot.querySelector(
+  'hp-dialog[data-kind="confirm"] [data-hp="dialog-confirm"]');});
 await page.evaluate(()=>{location.hash='#space=garden';});
 await page.waitForFunction(()=>window.__card._space==='garden');
+await page.evaluate(()=>window.__staleCycleConfirmButton.click());
 check('hash navigation cancels pending toggle without service',await page.evaluate(()=>!window.__card._tapConfirm&&window.__cycleCalls.length===3));
 await page.evaluate(()=>{location.hash='#space=f1';});
 await page.waitForFunction(()=>window.__card._space==='f1');

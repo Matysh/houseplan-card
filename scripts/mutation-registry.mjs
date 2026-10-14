@@ -77,6 +77,14 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'kiosk-retired-confirmation-accepts-new-intent',
+    guard: 'node demo/smoke_kiosk_cycle_context.mjs',
+    because: '#846 AC5/AC6: a retained DOM confirm button after cancellation must not execute or dismiss a newer same-floor dialog intent in the mounted Lit card.',
+    patches: [{file:'src/houseplan-card.ts',
+      find:'    if (!confirmation || this._tapConfirm !== confirmation) return;',
+      replace:'    if (!confirmation) return;'}],
+  },
+  {
     id: 'kiosk-carousel-arrival-restores-old-zoom',
     guard: 'node demo/smoke_kiosk_cycle_context.mjs',
     because: '#846 AC2: actual Lit floor arrival must bypass enlarged browser-storage zoom before first paint and persist its own base camera.',
