@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 85, issue: 47. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 86, issue: 48. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -9,6 +9,7 @@
 | #897 | [SPEC-REVIEW-897-r1.md](SPEC-REVIEW-897-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | в «Release-артефакты» не назван явно пункт DoR «производительность/security» | `PROCESS.md` `REVIEWER.md` |
 | #896 | [SPEC-REVIEW-896-r1.md](SPEC-REVIEW-896-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | пункт 5 контракта и AC5 не подтверждаются кодом | `scripts/bundle-budget.mjs` `test/bundle-assets.test.mjs` `bundle-budget.mjs` `bundle-assets.test.mjs` |
 | #895 | [SPEC-REVIEW-895-r1.md](SPEC-REVIEW-895-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #894 | [SPEC-REVIEW-894-r1.md](SPEC-REVIEW-894-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | отсутствует обязательный пункт DoR «влияние на производительность»; Файл: тело issue #894, раздел «Release-артефакты» | `docs/release-ledger/v1.80.1/878.json` `docs/DEVICE-PRESENTATION.md` `docs/release-ledger/v1.80.1/894.json` |
 | #893 | [SPEC-REVIEW-893-r1.md](SPEC-REVIEW-893-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #892 | [SPEC-REVIEW-892-r1.md](SPEC-REVIEW-892-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | премиса «backend требует HA-admin» не подтверждается кодом; предлагаемое ужесточение не… | `custom_components/houseplan/auth.py` `custom_components/houseplan/websocket_api.py` `src/editors/general-settings-dialog.ts` `docs/SCOPE.md` `websocket_api.py` `general-settings-dialog.ts` |
 | #891 | [SPEC-REVIEW-891-r1.md](SPEC-REVIEW-891-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | release-артефакты не называют обновление канона; классификация release-ledger не разделяет | `docs/UX-MODES.md` `docs/ARCHITECTURE.md` `docs/USER-GUIDE.md` `docs/DEVELOPMENT.md` `docs/STATUS.md` `src/wall-node-history.ts` `docs/process/REVIEWER.md` |
