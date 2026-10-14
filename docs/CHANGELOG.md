@@ -20,6 +20,13 @@
   node, and the fourth and further markers repeat the same step. Nothing
   changes in View or kiosk
   ([#873](https://github.com/Matysh/houseplan-card/issues/873)).
+- On a large plan a sensor update no longer recomputes unchanged devices,
+  LED strips and light geometry; the picture is the same, with less work.
+  A tick of a sensor shown on the plan now resolves only the marker that reads
+  it, keeps the LED strips' frame and tubes, and reuses the light graph and the
+  walls' light fingerprint; a light, a door or any setting still updates in the
+  same frame as before
+  ([#850](https://github.com/Matysh/houseplan-card/issues/850)).
 
 - Vacuum paths preserve turns, reversals and gaps without blind thinning.
   Supported Dreame ordinary cameras can provide full server-recorded paths;

@@ -1,0 +1,239 @@
+// #850 AC3: the incremental render-device snapshot equals a complete rebuild.
+//
+// A differential oracle on the real resolvers and the `large-house` fixture:
+// every random tick is captured twice — through the live runtime's reuse
+// window and as a complete rebuild without it — and the two snapshots must be
+// equal. A state tick of a device's own row rebuilds that device's two
+// presentations and keeps every other presentation, DevItem, state and
+// registry row, and the roster itself, by identity. The snapshot stays deeply
+// frozen.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { captureHost, oracleFixture, prng } from './render-snapshot-fixture.mjs';
+import { captureRenderDeviceSnapshot } from '../test-build/render-snapshot-capture.js';
+import { RenderSnapshotReuseWindow } from '../test-build/render-snapshot-reuse.js';
+import { presentationSnapshotKey } from '../test-build/render-device-snapshot.js';
+
+/** A comparable projection of a snapshot: maps become entry lists, the capture time is dropped. */
+const plain = (snapshot) => ({
+  sourceSequence: snapshot.sourceSequence,
+  hass: snapshot.hass,
+  devices: snapshot.devices,
+  vacuumDevices: snapshot.vacuumDevices,
+  positions: [...snapshot.positions],
+  presentations: [...snapshot.presentations],
+  facts: [...snapshot.facts],
+  entityIds: snapshot.entityIds,
+  geometry: snapshot.geometry,
+});
+
+const assertDeepFrozen = (value, path = 'snapshot', seen = new Set()) => {
+  if (value === null || typeof value !== 'object' || seen.has(value)) return;
+  seen.add(value);
+  assert.ok(Object.isFrozen(value), `${path} is frozen`);
+  for (const [key, item] of Object.entries(value)) assertDeepFrozen(item, `${path}.${key}`, seen);
+};
+
+test('#850 AC3: 250 random ticks — the incremental snapshot equals a complete rebuild after every tick', () => {
+  const fixture = oracleFixture();
+  const host = captureHost(fixture);
+  const reuse = new RenderSnapshotReuseWindow();
+  let previous = captureRenderDeviceSnapshot(host, reuse);
+  assert.deepEqual(plain(previous), plain(captureRenderDeviceSnapshot(host, null)), 'the first capture is complete');
+  const random = prng(850);
+  const pick = (list) => list[Math.floor(random() * list.length)];
+  const ownRows = (prefix) => Object.keys(host.hass.states).filter((id) => id.startsWith(prefix));
+  const sensors = ownRows('sensor.perf_').filter((id) => /^sensor\.perf_\d+$/.test(id));
+  // Rows with exactly one reader, their own device: no battery sibling whose
+  // classification reads them, no badge or entity marker elsewhere.
+  const single = new Set(sensors.filter((id) => {
+    const index = Number(id.slice('sensor.perf_'.length));
+    return index % 7 !== 0 && index !== 12 && index !== 42;
+  }));
+  const batteries = ownRows('sensor.perf_').filter((id) => id.endsWith('_battery'));
+  const lqis = ownRows('sensor.perf_').filter((id) => id.endsWith('_linkquality'));
+  const doors = ownRows('binary_sensor.perf_door_');
+  const lights = ownRows('light.perf_');
+  const counts = {};
+  const setRow = (eid, patch) => {
+    const states = { ...host.hass.states };
+    if (patch === undefined) delete states[eid];
+    else states[eid] = { ...states[eid], ...patch, entity_id: eid };
+    host.hass = { ...host.hass, states };
+  };
+  const kinds = {
+    value: () => { const eid = pick(sensors); setRow(eid, { state: String(15 + Math.round(random() * 100) / 10) }); return eid; },
+    battery: () => { const eid = pick(batteries); setRow(eid, { state: random() < 0.5 ? '4' : '96' }); return eid; },
+    lqi: () => { const eid = pick(lqis); setRow(eid, { state: String(Math.round(random() * 255)) }); return eid; },
+    door: () => { const eid = pick(doors); setRow(eid, { state: host.hass.states[eid].state === 'on' ? 'off' : 'on' }); return null; },
+    unavailable: () => {
+      const eid = pick([...sensors, ...batteries, ...doors]);
+      setRow(eid, { state: host.hass.states[eid].state === 'unavailable' ? '20' : 'unavailable' });
+      return null;
+    },
+    light: () => {
+      const eid = pick(lights);
+      setRow(eid, random() < 0.5 ? { state: host.hass.states[eid].state === 'on' ? 'off' : 'on' }
+        : { attributes: { ...host.hass.states[eid].attributes, rgb_color: [Math.round(random() * 255), 120, 80] } });
+      return null;
+    },
+    controller: () => { setRow('switch.perf_1', { state: host.hass.states['switch.perf_1'].state === 'on' ? 'off' : 'on' }); return null; },
+    registry: () => {
+      const entities = { ...host.hass.entities };
+      const eid = pick(sensors);
+      entities[eid] = { ...entities[eid], name: `Renamed ${random()}` };
+      host.hass = { ...host.hass, entities };
+      host.rebuildRoster();
+      return null;
+    },
+    settings: () => {
+      // The card adopts a new stored config; its settings change the battery mode.
+      host._serverCfg = { ...host._serverCfg, settings: { ...host._serverCfg.settings,
+        show_device_battery: pick([undefined, 'low', false]) } };
+      return null;
+    },
+    virtual: () => {
+      const off = new Set(host._virtualLights.off);
+      const id = pick(['perf-virtual-a', 'perf-virtual-b']);
+      if (off.has(id)) off.delete(id); else off.add(id);
+      host._virtualLights = { rev: host._virtualLights.rev + 1, configRev: 0, off };
+      return null;
+    },
+    activity: () => {
+      const id = pick(host._devices).id;
+      const runtime = host._activityRt.get(id) || { sources: '', flashTs: 0, flashKind: null, gen: 1 };
+      host._activityRt.set(id, { ...runtime, flashTs: Date.now(), flashKind: 'event', gen: runtime.gen + 1 });
+      return null;
+    },
+    sameRows: () => { host.hass = { ...host.hass, states: { ...host.hass.states } }; return null; },
+  };
+  const weights = [['value', 6], ['battery', 3], ['lqi', 3], ['door', 2], ['unavailable', 2], ['light', 2],
+    ['controller', 2], ['registry', 1], ['settings', 1], ['virtual', 1], ['activity', 1], ['sameRows', 1]];
+  const bag = weights.flatMap(([kind, weight]) => Array(weight).fill(kind));
+  let singleTicks = 0;
+  for (let tick = 0; tick < 250; tick++) {
+    const kind = pick(bag);
+    counts[kind] = (counts[kind] || 0) + 1;
+    const own = kinds[kind]();
+    host._hassSequence++;
+    const builds = reuse.stats.presentations, incrementalBefore = reuse.stats.incremental;
+    const incremental = captureRenderDeviceSnapshot(host, reuse);
+    const complete = captureRenderDeviceSnapshot(host, null);
+    assert.deepEqual(plain(incremental), plain(complete), `tick ${tick} (${kind}): incremental equals complete`);
+    if (tick % 25 === 0) {
+      assertDeepFrozen(incremental);
+      for (const map of [incremental.positions, incremental.presentations, incremental.facts]) {
+        assert.ok(Object.isFrozen(map), 'the map facade is frozen');
+        for (const [key, value] of map) assertDeepFrozen(value, key);
+      }
+    }
+    // An activity window that expired between two ticks rebuilds every presentation.
+    if (single.has(own) && reuse.stats.incremental === incrementalBefore + 1) {
+      // A plan sensor ticked: only its own device was resolved again.
+      const owner = host._devices.filter((device) => device.entities.includes(own)).map((device) => device.id);
+      singleTicks++;
+      assert.ok(reuse.stats.presentations - builds <= 2 * owner.length,
+        `tick ${tick}: ${reuse.stats.presentations - builds} presentation builds for ${own}`);
+      assert.equal(incremental.devices, previous.devices, 'the roster keeps its identity');
+      assert.equal(incremental.hass.entities, previous.hass.entities, 'the registry projection keeps its identity');
+      for (const [key, presentation] of previous.presentations) {
+        if (owner.some((id) => key.startsWith(`${id}:`))) continue;
+        assert.equal(incremental.presentations.get(key), presentation, `tick ${tick}: ${key} kept`);
+      }
+      for (const [eid, row] of Object.entries(previous.hass.states)) {
+        if (eid !== own) assert.equal(incremental.hass.states[eid], row, `tick ${tick}: ${eid} row kept`);
+      }
+      incremental.devices.forEach((device, index) => assert.equal(device, previous.devices[index]));
+    }
+    previous = incremental;
+  }
+  for (const [kind] of weights) assert.ok(counts[kind] > 0, `the oracle exercised ${kind} (${JSON.stringify(counts)})`);
+  assert.ok(singleTicks > 20, `identity was judged on ${singleTicks} single-reader ticks`);
+  assert.ok(reuse.stats.incremental > 100, `most ticks were incremental: ${JSON.stringify(reuse.stats)}`);
+});
+
+test('#850 AC3: a plan sensor tick rebuilds two presentations; S1b on another floor as well', () => {
+  const host = captureHost(oracleFixture());
+  const reuse = new RenderSnapshotReuseWindow();
+  const first = captureRenderDeviceSnapshot(host, reuse);
+  for (const [eid, floor] of [['sensor.perf_2', 'shown'], ['sensor.perf_22', 'another']]) {
+    const before = { ...reuse.stats };
+    host.hass = { ...host.hass, states: { ...host.hass.states, [eid]: { ...host.hass.states[eid], state: '30.5' } } };
+    host._hassSequence++;
+    const next = captureRenderDeviceSnapshot(host, reuse);
+    assert.equal(reuse.stats.presentations - before.presentations, 2, `${eid} (${floor} floor): 2 × 1 device`);
+    assert.equal(reuse.stats.full, before.full, 'no complete rebuild');
+    const owner = host._devices.find((device) => device.entities.includes(eid));
+    assert.notEqual(next.presentations.get(presentationSnapshotKey(owner.id, false)),
+      first.presentations.get(presentationSnapshotKey(owner.id, false)));
+    assert.match(JSON.stringify(next.presentations.get(presentationSnapshotKey(owner.id, false))), /30\.5/,
+      'the new value is in the same capture');
+    assert.deepEqual(plain(next), plain(captureRenderDeviceSnapshot(host, null)));
+  }
+});
+
+test('#850 AC3: a structural change rebuilds every presentation or everything; disconnect forgets the window', () => {
+  const host = captureHost(oracleFixture());
+  const reuse = new RenderSnapshotReuseWindow();
+  const first = captureRenderDeviceSnapshot(host, reuse);
+  const all = 2 * host._devices.length;
+  for (const [label, change, tier] of [
+    ['locale', () => { host.hass = { ...host.hass, locale: { language: 'de' } }; }, 'refreshed'],
+    ['themes', () => { host.hass = { ...host.hass, themes: { darkMode: true } }; }, 'refreshed'],
+    ['card config', () => { host._config = { ...host._config, show_temperature: false }; }, 'refreshed'],
+    ['reduced motion', () => { host._reducedMotion = !host._reducedMotion; }, 'refreshed'],
+    ['manual lights', () => { host._virtualLights = { rev: 9, configRev: 0, off: new Set(['perf-virtual-a']) }; }, 'refreshed'],
+    ['config epoch', () => { host._cfgEpoch++; }, 'full'],
+    ['layout', () => { host._layout = { ...host._layout }; }, 'full'],
+    ['settings', () => { host._serverCfg = { ...host._serverCfg, settings: { show_device_battery: false } }; }, 'full'],
+    ['registry', () => { host.hass = { ...host.hass, entities: { ...host.hass.entities } }; host.rebuildRoster(); }, 'full'],
+    ['roster', () => { host.rebuildRoster(); }, 'full'],
+  ]) {
+    const previous = captureRenderDeviceSnapshot(host, reuse);
+    const before = { ...reuse.stats };
+    change();
+    host._hassSequence++;
+    const next = captureRenderDeviceSnapshot(host, reuse);
+    assert.equal(reuse.stats[tier], before[tier] + 1, `${label}: ${tier}`);
+    assert.equal(reuse.stats.presentations - before.presentations, all, `${label} resolves every presentation once`);
+    assert.deepEqual(plain(next), plain(captureRenderDeviceSnapshot(host, null)), `${label}: equals complete`);
+    if (tier === 'refreshed') {
+      // A new clone memo (the old one would collect every rebuilt presentation)
+      // still lends what did not change: roster, DevItems, rows, registry rows.
+      assert.equal(next.devices, previous.devices, `${label} keeps the roster clone`);
+      assert.equal(next.devices[3], previous.devices[3], `${label} keeps a DevItem clone`);
+      const row = Object.keys(previous.hass.states).find((id) => !id.startsWith('camera.'));
+      assert.equal(next.hass.states[row], previous.hass.states[row], `${label} keeps an unchanged row's clone`);
+      const device = Object.keys(previous.hass.devices)[0];
+      assert.ok(device && next.hass.devices[device] === previous.hass.devices[device],
+        `${label} keeps a registry device row's clone`);
+    }
+  }
+  reuse.reset();
+  const full = reuse.stats.full;
+  captureRenderDeviceSnapshot(host, reuse);
+  assert.equal(reuse.stats.full, full + 1, 'a reset window starts with a complete capture');
+  assert.ok(first);
+});
+
+test('#850 AC3: a row read only through the battery context or a badge is still an input', () => {
+  const host = captureHost(oracleFixture());
+  const reuse = new RenderSnapshotReuseWindow();
+  captureRenderDeviceSnapshot(host, reuse);
+  const tick = (eid, state) => {
+    host.hass = { ...host.hass, states: { ...host.hass.states, [eid]: { ...host.hass.states[eid], state } } };
+    host._hassSequence++;
+    const next = captureRenderDeviceSnapshot(host, reuse);
+    assert.deepEqual(plain(next), plain(captureRenderDeviceSnapshot(host, null)), `${eid} → ${state}`);
+    return next;
+  };
+  // The entity-bound marker owns sensor.perf_42; its battery is a sibling of the parent device.
+  const marker = presentationSnapshotKey('perf-entity-42', false);
+  assert.equal(tick('sensor.perf_42_battery', '96').presentations.get(marker).battery?.state, 'normal');
+  assert.equal(tick('sensor.perf_42_battery', '4').presentations.get(marker).battery?.state, 'low',
+    'a low charge of the sibling is visible in the same capture');
+  // perf-device-2 shows a badge of another device's row.
+  const badge = presentationSnapshotKey('perf-device-2', false);
+  assert.match(JSON.stringify(tick('sensor.perf_12', '17.25').presentations.get(badge).valueBadge), /17/,
+    'the badge of another device\'s row is fresh');
+});

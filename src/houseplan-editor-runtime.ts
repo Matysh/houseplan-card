@@ -547,7 +547,7 @@ export interface HouseplanEditorHostPort {
   _deviceInbox: DeviceInboxDialogState | null;
   _deviceInboxMemo: { key: string; rows: DeviceInboxRow[]; } | null;
   _deviceInboxReturn: DeviceInboxDialogState | null;
-  _devicePresentation: (d: DevItem, showLqi?: boolean, designPreview?: boolean) => ResolvedDevicePresentation;
+  _devicePresentation: (d: DevItem, showLqi?: boolean) => ResolvedDevicePresentation;
   _devicePositionBusy: boolean;
   _devicePositionHistory: CommandStack<DevicePositionState>;
   _devices: DevItem[];

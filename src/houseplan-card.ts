@@ -8,7 +8,6 @@
  */
 import { ledAnchor, ledRelease, ledRuntime, ledStripsByMarker, ledVisible } from './led-strip-gate';
 import { BackupImportIntent, backupImportAllowed } from './backup-import-intent';
-import { createDeviceBatteryContext } from './device-battery';
 import { deviceBatteryModeOf, showDeviceBatteryOf } from './device-battery-settings';
 import { ZoomScaleActivity } from './zoom-scale-activity';
 import { ledButton, ledEditorFor, ledHistory, ledImportNote, ledSection, ledWallsNote } from './led-strip-card';
@@ -34,13 +33,13 @@ import {
   paperRoomShapes, islandsOf, distToSegment, outlineWithout, segmentAngle, is45, isExact45Vector,
   beginSpaceSwipePointer, classifySpaceDrag, spaceSwipeTargetForOwner, clampScale,
   roomFillModeOf, roomGlowOf,
-  openingAmount, openingEntityReferences,
+  openingAmount,
   averageLqi, fitView, declump, safeUrl, floorsOf, type FloorInfo, stateIcon, diffNewDevices,
   isControllable, spaceDisplayOf, resolveEffectiveRoomFill, fillColorsOf, customFillOf,
   roomCustomFillOf, DEFAULT_CUSTOM_FILL, type FillColors, type FillColorEntry,
   type ResolvedRoomFill, runServiceFor, stageBgOf, showRoomTooltipOf, volumetricViewOf, type SpaceDisplay,
   referencedContentUrls, normalizeDeviceDisplay, isAlarmCapable, displayIsNeutral,
-  type DeviceDisplayMode, type SpaceSwipePointerStart, liveText, liveTextReference, hassValue,
+  type DeviceDisplayMode, type SpaceSwipePointerStart, liveText, hassValue,
   decorTextScale, decorTextLines,
   DECOR_TEXT_BASE,
 } from './logic';
@@ -215,7 +214,6 @@ import { PointerModalityController } from './pointer-modality';
 import { type DeviceVisualState, type EntityVisualSample } from './device-visual';
 import {
   activitySourceSignature, deviceAccessibleLabel, deviceA11yState, presentationClasses,
-  resolveDevicePresentation,
   resolvePresentationSources, type ResolvedDevicePresentation,
 } from './device-presentation';
 import {
@@ -224,9 +222,9 @@ import {
 } from './activity-runtime';
 import { valueBadgeTitle } from './device-value-badge';
 import {
-  createRenderDeviceSnapshot, presentationSnapshotKey, renderDeviceSnapshotPositions,
-  selectRenderDeviceSnapshot, type RenderDeviceSnapshot,
+  presentationSnapshotKey, selectRenderDeviceSnapshot, type RenderDeviceSnapshot,
 } from './render-device-snapshot';
+import { captureRenderDeviceSnapshot, presentDevice } from './render-snapshot-capture';
 import { RenderLifecycle, intakeHass } from './houseplan-render-lifecycle';
 import { RadarLiveController } from './radar-live';
 import { renderRadarLive } from './radar-render';
@@ -4583,126 +4581,8 @@ export class HouseplanCard extends LitElement {
         && this._capturedSnapshotConfigEpoch === this._cfgEpoch
         && this._capturedSnapshotVirtual === virtualFingerprint
         && this._capturedSnapshotActivity === activity) return;
-    const planHass = this._planHass;
-    const presentations = new Map<string, ResolvedDevicePresentation>();
-    const showBattery = showDeviceBatteryOf(this._settings);
-    const batteryLowOnly = deviceBatteryModeOf(this._settings) === 'low';
-    const batteryContext = showBattery ? createDeviceBatteryContext(planHass, this._fullRegistryHass) : undefined;
-    const ledMarkerIds = showBattery
-      ? new Set(this._model.flatMap((space) => [...ledStripsByMarker(space).keys()])) : new Set<string>();
-    const facts = new Map<string, unknown>();
-    const entityIds = new Set<string>(['sun.sun']); for (const id of this._summary?.entityIds() || []) entityIds.add(id);
-    if (this._vacFit?.source) entityIds.add(this._vacFit.source);
-    const deviceIds = new Set<string>();
-    const areaIds = new Set<string>();
-    const addSource = (source: string | null | undefined): void => {
-      if (!source) return;
-      const separator = source.indexOf(':');
-      if (separator < 0) { entityIds.add(source); return; }
-      const kind = source.slice(0, separator), reference = source.slice(separator + 1);
-      if (kind === 'device') deviceIds.add(reference);
-      else if (kind === 'entity') entityIds.add(reference);
-    };
-    for (const space of this._model) for (const room of space.rooms) {
-      if (room.area) areaIds.add(room.area);
-      addSource(room.settings?.temp_source);
-      addSource(room.settings?.hum_source);
-    }
-    for (const rawSpace of this._serverCfg?.spaces || []) for (const opening of rawSpace.openings || []) {
-      for (const entityId of openingEntityReferences(opening)) entityIds.add(entityId);
-    }
-    // Inline HA variables on the decorative layer are part of the painted
-    // frame too. Capture both the current token format and the legacy
-    // one-entity fields so a reconnect cannot update a label ahead of the
-    // rooms, devices and light layers around it.
-    for (const rawSpace of this._serverCfg?.spaces || []) {
-      for (const shape of rawSpace.decor || []) {
-        if (shape.kind !== 'text') continue;
-        for (const match of String(shape.text || '').matchAll(/\{([^{}\r\n]+)\}/g)) {
-          const reference = liveTextReference(match[1]);
-          if (reference?.entity) entityIds.add(reference.entity);
-        }
-        if (shape.entity) entityIds.add(shape.entity);
-        // HA's formatter functions are runtime capabilities and must not cross
-        // the immutable render-snapshot boundary. Freeze the already formatted
-        // caption instead, so locale/precision/unit and every surrounding plan
-        // layer belong to one atomic HA frame.
-        facts.set(`decor:${rawSpace.id}:${shape.id}`, liveText(
-          shape.text, shape, planHass,
-          (entityId) => !!planHass.entities?.[entityId] && !!planHass.states?.[entityId]
-            && !isRemovedPlanEntity(planHass, entityId, removedPlanBindings(this._markers)),
-        ));
-      }
-    }
-    const planLightSources = resolvedLightSources(
-      planHass, this._devices, null, this._virtualLights,
-    );
-    for (const device of this._devices) {
-      for (const showLqi of [false, true]) {
-        presentations.set(presentationSnapshotKey(device.id, showLqi), resolveDevicePresentation(
-          planHass, device, {
-            liveStates: this._config?.live_states !== false,
-            showTemperature: this._config?.show_temperature !== false,
-            // A per-space show_lqi value is an explicit override of the card
-            // default. Snapshot both projections exactly as requested so the
-            // full card, preview and static card cannot disagree.
-            showSignal: showLqi,
-            showBattery: showBattery && !ledMarkerIds.has(device.id),
-            batteryLowOnly,
-            batteryContext,
-            activityRuntime: this._activityRt.get(device.id),
-            sourceDetails: false,
-            lightDevices: this._devices,
-            lightSources: planLightSources,
-            registryHass: this._fullRegistryHass,
-            reducedMotion: this._reducedMotion,
-          },
-        ));
-      }
-      if (this._isVacDev(device)) {
-        const source = this._vacSource(device, planHass);
-        const telemetry = source ? readVacTelemetry(planHass?.states?.[source]?.attributes) : null;
-        const runtime = this._vacRt.get(device.id);
-        // One routing authority per frame: render() must not re-derive which
-        // map the robot is on, or two answers become possible (#162).
-        const routes = effectiveRoutes(device.id, device.marker?.vacuum ?? null, device.space, source);
-        const resolution = resolveRoute({
-          routes,
-          observed: observedMapIds(routes, [source], (src) => this._vacObservedMapId(device, src, planHass)),
-          spaceIds: new Set(this._model.map((space) => space.id)),
-        });
-        facts.set(`vacuum:${device.id}`, {
-          source,
-          telemetry,
-          routes,
-          resolution,
-          mapId: telemetry ? this._vacMapId(device, telemetry, planHass) : null,
-          runtime: runtime ? {
-            trail: runtime.material,
-            lastTs: runtime.lastTs,
-            moving: runtime.moving,
-            jump: runtime.jump,
-          } : null,
-          server: this._vacSrvTrails[device.id] || null,
-        });
-      }
-    }
-    const snapshot = createRenderDeviceSnapshot({
-      sourceSequence: this._hassSequence, hass: planHass,
-      devices: this._devices, presentations,
-      positions: renderDeviceSnapshotPositions(
-        this._model.length > 0,
-        this._devices,
-        (device) => this._livePos(device),
-      ),
-      facts,
-      showBattery,
-      batteryContext,
-      entityIds,
-      deviceIds,
-      areaIds,
-      geometry: this._cfgEpoch,
-    });
+    // #850: the live runtime lends its reuse window (render-snapshot-reuse.ts).
+    const snapshot = captureRenderDeviceSnapshot(this as never, this._liveRt?.capture);
     this._capturedSeq = this._hassSequence;
     this._capturedSnapshotDevices = this._devices;
     this._capturedSnapshotLayout = this._layout;
@@ -5519,26 +5399,17 @@ export class HouseplanCard extends LitElement {
 
   /** One semantic projection consumed by the plan, preview and static card. */
   private _devicePresentation(
-    d: DevItem, showLqi = this._config?.show_signal !== false, designPreview = false,
+    d: DevItem, showLqi = this._config?.show_signal !== false,
   ): ResolvedDevicePresentation {
-    const captured = !designPreview
-      ? this._renderDeviceSnapshot?.presentations.get(presentationSnapshotKey(d.id, showLqi))
-      : null;
-    if (captured) return captured;
-    return resolveDevicePresentation(this._renderPlanHass, d, {
-      liveStates: this._config?.live_states !== false,
-      showTemperature: this._config?.show_temperature !== false,
-      showSignal: showLqi,
-      showBattery: showDeviceBatteryOf(this._settings)
-        && !this._model.some((space) => ledStripsByMarker(space).has(d.id)),
-      batteryLowOnly: deviceBatteryModeOf(this._settings) === 'low',
-      designPreview,
-      activityRuntime: this._activityRt.get(d.id),
-      sourceDetails: false,
-      lightDevices: this._renderDevices,
-      registryHass: this._fullRegistryHass,
-      reducedMotion: this._reducedMotion,
-    });
+    // #850: the design preview resolves its own draft (marker-dialog.ts); no caller passed it here.
+    return this._renderDeviceSnapshot?.presentations.get(presentationSnapshotKey(d.id, showLqi))
+      ?? presentDevice(this as never, this._renderPlanHass, d, showLqi, {
+        showBattery: showDeviceBatteryOf(this._settings)
+          && !this._model.some((space) => ledStripsByMarker(space).has(d.id)),
+        batteryLowOnly: deviceBatteryModeOf(this._settings) === 'low',
+        lightDevices: this._renderDevices,
+        registryHass: this._fullRegistryHass,
+      });
   }
 
   /** One semantic result feeds the plate and every non-critical activity effect. */

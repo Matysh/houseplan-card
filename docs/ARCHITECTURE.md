@@ -427,6 +427,18 @@ overlapping 44 px targets get one screen-space owner (`device-hit-owner.ts`),
 latched for the whole pointer sequence. Rules: [`DEVICE-PRESENTATION.md`](DEVICE-PRESENTATION.md);
 stored fields: [`CONFIG-COMPATIBILITY.md`](CONFIG-COMPATIBILITY.md).
 
+The full card paints from one frozen render-device snapshot per HA frame
+(`render-snapshot-capture.ts`, `render-device-snapshot.ts`; the #813 rule pairs
+it with its plan geometry). Once the lazy live runtime is loaded its reuse
+window (`render-snapshot-reuse.ts`, #850) records which state rows each
+device's presentations read and, when a tick changed nothing but such rows,
+resolves again only the devices whose rows changed; unchanged rows, DevItems,
+the roster and presentations keep their frozen clones. A change of any other
+input — registry, roster, layout, config epoch, stored config, card config,
+locale/themes, manual lights, the plan light graph, an activity window —
+rebuilds every presentation or the whole snapshot. Without the live chunk
+every capture is complete (#848).
+
 `device-battery.ts` adds an independent own-device diagnostic to the same frozen
 presentation. An ownership index is cached against the full HA entity registry;
 values come only from active state rows. Entity-bound markers explicitly capture

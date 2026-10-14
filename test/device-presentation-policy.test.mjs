@@ -636,11 +636,13 @@ test('renderer-ready decision trace covers value, metrics, LQI, vacuum and pulse
   });
   assert.notEqual(expired.pulse.kind, 'short');
 
+  // #850: the full card resolves its presentations in render-snapshot-capture.ts.
   const sourceFiles = [
-    '../src/devices.ts', '../src/houseplan-card.ts', '../src/hp-device-preview.ts',
+    '../src/devices.ts', '../src/houseplan-card.ts', '../src/hp-device-preview.ts', '../src/render-snapshot-capture.ts',
   ].map((path) => readFileSync(new URL(path, import.meta.url), 'utf8'));
   assert.match(sourceFiles[0], /if \(m\.removed\) continue/);
-  assert.match(sourceFiles[1], /resolveDevicePresentation\(/);
+  assert.match(sourceFiles[1], /presentDevice\(/);
+  assert.match(sourceFiles[3], /resolveDevicePresentation\(/);
   assert.match(sourceFiles[2], /renderDeviceFace\(shown/);
 });
 

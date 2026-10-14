@@ -132,7 +132,17 @@ export function createRenderDeviceSnapshot(options: {
   capturedAt?: number;
   /** The plan geometry the referenced rows were collected from (#813). */
   geometry?: string | number | null;
+  /**
+   * #850: the reuse window of the live runtime. `memo` maps every source object
+   * already cloned in this window to its frozen clone, so an unchanged state
+   * or registry row, DevItem, roster or presentation keeps its identity;
+   * `previous` lends its entity registry projection — the light graph's cache
+   * key — when only state rows changed.
+   */
+  window?: { memo: WeakMap<object, unknown>; previous: RenderDeviceSnapshot | null } | null;
 }): RenderDeviceSnapshot {
+  const memo = options.window?.memo;
+  const previous = options.window?.previous?.hass;
   // Copy only the registry/state rows that can contribute to this plan. This
   // is a render-data projection, not a frozen clone of Home Assistant runtime.
   const entityIds = new Set(options.entityIds || []);
@@ -176,14 +186,14 @@ export function createRenderDeviceSnapshot(options: {
       : state;
   }
   const hass = Object.freeze({
-    states: cloneFact(projectedStates),
-    entities: cloneFact(projectedEntities),
-    devices: cloneFact(projectedDevices),
-    config: cloneFact(options.hass?.config),
-    locale: cloneFact(options.hass?.locale),
-    themes: cloneFact(options.hass?.themes),
+    states: cloneFact(projectedStates, memo),
+    entities: previous?.entities ?? cloneFact(projectedEntities, memo),
+    devices: cloneFact(projectedDevices, memo),
+    config: cloneFact(options.hass?.config, memo),
+    locale: cloneFact(options.hass?.locale, memo),
+    themes: cloneFact(options.hass?.themes, memo),
   });
-  const devices = cloneFact([...options.devices]);
+  const devices = cloneFact(options.devices, memo);
   const vacuumDevices = Object.freeze(devices.filter((device) =>
     options.facts?.has(`vacuum:${device.id}`)));
   return Object.freeze({
@@ -195,7 +205,7 @@ export function createRenderDeviceSnapshot(options: {
     positions: readonlyMap([...(options.positions || [])].map(([id, point]) =>
       [id, Object.freeze({ x: point.x, y: point.y })] as const)),
     presentations: readonlyMap([...options.presentations].map(([key, presentation]) =>
-      [key, cloneFact(presentation)] as const)),
+      [key, cloneFact(presentation, memo)] as const)),
     facts: readonlyMap([...(options.facts || [])].map(([key, fact]) =>
       [key, cloneFact(fact)] as const)),
     entityIds: Object.freeze([...entityIds]),

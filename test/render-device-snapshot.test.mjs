@@ -207,24 +207,19 @@ test('atomic plan render paths do not bypass RenderDeviceSnapshot with this.hass
   }
 });
 
-test('the card gates snapshot positions on the render model', () => {
-  const source = readHouseplanProductionSource();
-  const capture = methodBody(source, '_captureRenderDeviceSnapshot');
-  assert.match(
-    capture,
-    /positions:\s*renderDeviceSnapshotPositions\(\s*this\._model\.length > 0,/s,
-    'the empty-plan predicate is the same render-model predicate used by the empty state',
-  );
-  assert.doesNotMatch(
-    capture,
-    /positions:\s*new Map\(this\._devices\.map\(/,
-    'the previous unconditional position path must not return',
-  );
-  assert.match(
-    capture,
-    /this\._summary\?\.entityIds\(\)/,
-    '#490 summary-only HA sources join the one render dependency projection',
-  );
+test('the capture gates snapshot positions on the render model', async () => {
+  // #850: the capture left the card for render-snapshot-capture.ts; the contract is executed.
+  const { captureHost, oracleFixture } = await import('./render-snapshot-fixture.mjs');
+  const { captureRenderDeviceSnapshot } = await import('../test-build/render-snapshot-capture.js');
+  const host = captureHost(oracleFixture());
+  host._summary = { entityIds: () => ['sensor.summary_only'] };
+  const withPlan = captureRenderDeviceSnapshot(host, null);
+  assert.equal(withPlan.positions.size, host._devices.length, 'a renderable plan resolves every position');
+  assert.ok(withPlan.entityIds.includes('sensor.summary_only'),
+    '#490 summary-only HA sources join the one render dependency projection');
+  host._model = [];
+  assert.equal(captureRenderDeviceSnapshot(host, null).positions.size, 0,
+    'the empty-plan predicate is the same render-model predicate used by the empty state');
 });
 
 test('opening references use their own availability policy without weakening plan tombstones', () => {
@@ -337,4 +332,50 @@ test('#813 AC4 a frame paints the projection captured for its own geometry', () 
   assert.equal(selectRenderDeviceSnapshot(null, null, true, 'plan-1'), null);
   const painted = selectRenderDeviceSnapshot(old, next, false, 'plan-2');
   assert.equal(openingAmount('door', painted.hass.states['binary_sensor.new_door']?.state), 0);
+});
+
+test('#850 AC3: inside a reuse window unchanged rows keep identity, the snapshot stays frozen and owns its geometry', () => {
+  const lamp = { id: 'lamp', name: 'Lamp', icon: 'mdi:lightbulb', primary: 'light.lamp', entities: ['light.lamp'], space: 's' };
+  const probe = { id: 'probe', name: 'Probe', icon: 'mdi:thermometer', primary: 'sensor.t', entities: ['sensor.t'], space: 's' };
+  const devices = [lamp, probe];
+  const rows = {
+    'light.lamp': { entity_id: 'light.lamp', state: 'on', attributes: {} },
+    'sensor.t': { entity_id: 'sensor.t', state: '21', attributes: { unit_of_measurement: '°C' } },
+  };
+  const entities = { 'light.lamp': { entity_id: 'light.lamp' }, 'sensor.t': { entity_id: 'sensor.t' } };
+  const presentations = new Map([[presentationSnapshotKey('lamp', false), { visual: { status: 'working' } }],
+    [presentationSnapshotKey('probe', false), { valueText: '21' }]]);
+  const config = { unit_system: {} };
+  const capture = (states, reuse, presentationsOf = presentations) => createRenderDeviceSnapshot({
+    sourceSequence: 1, hass: { states, entities, devices: {}, config },
+    devices, presentations: presentationsOf, entityIds: Object.keys(states), geometry: 7, window: reuse,
+  });
+  const window = { memo: new WeakMap(), previous: null };
+  const first = capture(rows, window);
+  window.previous = first;
+  const tick = { ...rows, 'sensor.t': { ...rows['sensor.t'], state: '22' } };
+  const probeNext = new Map(presentations).set(presentationSnapshotKey('probe', false), { valueText: '22' });
+  const second = capture(tick, window, probeNext);
+  assert.equal(second.devices, first.devices, 'an unchanged roster keeps its identity');
+  assert.equal(second.devices[0], first.devices[0], 'an unchanged DevItem keeps its identity');
+  assert.equal(second.hass.states['light.lamp'], first.hass.states['light.lamp'], 'an unchanged state row keeps its identity');
+  assert.notEqual(second.hass.states['sensor.t'], first.hass.states['sensor.t']);
+  assert.equal(second.hass.states['sensor.t'].state, '22', 'the changed row is new in the same capture');
+  assert.equal(second.hass.entities, first.hass.entities, 'the registry projection keeps its identity');
+  assert.equal(second.hass.config, first.hass.config);
+  assert.equal(second.presentations.get(presentationSnapshotKey('lamp', false)),
+    first.presentations.get(presentationSnapshotKey('lamp', false)), 'an unchanged presentation keeps its identity');
+  assert.equal(second.presentations.get(presentationSnapshotKey('probe', false)).valueText, '22');
+  for (const value of [second, second.hass, second.hass.states, second.hass.states['light.lamp'], second.devices,
+    second.devices[0], second.devices[0].entities, second.presentations.get(presentationSnapshotKey('lamp', false))]) {
+    assert.ok(Object.isFrozen(value), 'reused and new rows are frozen alike');
+  }
+  // #813: a reused projection still names the geometry it was captured for.
+  assert.equal(second.geometry, 7);
+  assert.equal(selectRenderDeviceSnapshot(second, null, false, 8), second, 'no other projection to pair with');
+  // Without a window (no live chunk, #848) nothing is shared: the previous behaviour.
+  const plain = capture(tick, null, probeNext);
+  assert.notEqual(plain.hass.states['light.lamp'], second.hass.states['light.lamp']);
+  assert.notEqual(plain.devices, second.devices);
+  assert.deepEqual(plain.hass, second.hass, 'and the result is equal');
 });

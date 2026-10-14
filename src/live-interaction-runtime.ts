@@ -10,6 +10,7 @@ import {
   classifyHassRenderChange, type HassRenderDependencies, type HassRenderSnapshot,
 } from './render-invalidation';
 import type { RenderLifecycle } from './houseplan-render-lifecycle';
+import { RenderSnapshotReuseWindow } from './render-snapshot-reuse';
 import { lightWork } from './devices';
 import { lightGeometryFingerprint } from './glow-scene';
 import type { DevItem } from './types';
@@ -36,12 +37,14 @@ interface LiveRuntimeHost {
 /** Lazily loaded DOM-only fast paths; the card keeps a full-render fallback. */
 export class LiveRuntime {
   private deferredHass = false;
+  /** #850: the incremental render-device snapshot capture of this card. */
+  public readonly capture = new RenderSnapshotReuseWindow();
   private fingerprints = new WeakMap<object, [number, number, number, string]>();
   private geometryBuilds = 0;
   public constructor(private readonly host: object) {}
   /** #850: exact work counters for the performance witness. */
   public work(): Record<string, number> {
-    return { lightGraphs: lightWork[0], lightResolutions: lightWork[1],
+    return { ...this.capture.stats, lightGraphs: lightWork[0], lightResolutions: lightWork[1],
       lightGeometry: this.geometryBuilds };
   }
   /**
@@ -116,6 +119,7 @@ export class LiveRuntime {
     syncHouseplanHover(this.host);
   }
   public dispose(): void {
+    this.capture.reset();
     this.fingerprints = new WeakMap();
     disposeHouseplanViewport(this.host);
     clearDeviceFocusTip(this.host);

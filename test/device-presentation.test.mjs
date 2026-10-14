@@ -265,11 +265,14 @@ test('shares one lifecycle presentation between full and space cards', () => {
   const deviceVisual = readFileSync(new URL('../src/device-visual.ts', import.meta.url), 'utf8');
   const presentation = readFileSync(new URL('../src/device-presentation.ts', import.meta.url), 'utf8');
   const fullCard = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  // #850: the full card resolves its presentations in render-snapshot-capture.ts.
+  const capture = readFileSync(new URL('../src/render-snapshot-capture.ts', import.meta.url), 'utf8');
   const spaceCard = readFileSync(new URL('../src/space-card.ts', import.meta.url), 'utf8');
   assert.match(deviceVisual, /const LIFECYCLE_WORKING_STATES/);
   assert.doesNotMatch(presentation, /const LIFECYCLE_WORKING_STATES/);
   assert.doesNotMatch(spaceCard, /const LIFECYCLE_WORKING_STATES/);
-  assert.match(fullCard, /resolveDevicePresentation\(/);
+  assert.match(fullCard, /presentDevice\(/);
+  assert.match(capture, /resolveDevicePresentation\(/);
   assert.match(spaceCard, /resolveDevicePresentation\(/);
 });
 

@@ -29,6 +29,14 @@ const DIALOG_MODULES = [
  */
 const SHARED_DIALOG_MODULES = ['../src/editors/space-form.ts'];
 
+/**
+ * #850: снимок рендера устройств (`_captureRenderDeviceSnapshot`) уехал из
+ * карточки в модуль и читает карточку как `host`. Его текст дописывается к
+ * логическому исходнику, как общие модули выше: контракты (ссылки проёмов,
+ * подписи декора) продолжают видеть тот же код, `host.` приводится к `this.`.
+ */
+const MOVED_CARD_MODULES = ['../src/render-snapshot-capture.ts'];
+
 export function readHouseplanProductionSource() {
   const runtime = readFileSync(
     new URL('../src/houseplan-editor-runtime.ts', import.meta.url),
@@ -116,6 +124,11 @@ export function readHouseplanProductionSource() {
       .replaceAll('port.help(', 'this._help(')
       .replaceAll(/(?<!this\.)\bhost\./g, 'this.');
     reconstructed += `\n// --- shared dialog module ${path} ---\n${shared}`;
+  }
+  for (const path of MOVED_CARD_MODULES) {
+    const moved = readFileSync(new URL(path, import.meta.url), 'utf8')
+      .replaceAll(/(?<!this\.)\bhost\./g, 'this.');
+    reconstructed += `\n// --- card module ${path} ---\n${moved}`;
   }
   return reconstructed;
 }
