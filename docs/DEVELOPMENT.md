@@ -238,6 +238,7 @@ independently of Lit reusing a button with a new listener. `smoke_warm_view_mark
 opens and edits a genuine View draft, replaces its element and delays/fails only
 the chunk transport. It checks visible draft, Close/retry, write rights,
 disconnect and newer intent with no hidden marker or extra acknowledgement.
+It also replaces the HA account during the delayed chunk to prove ownership.
 `smoke_kiosk_viewport_recovery` wheels and pans the actual stage, advances only
 the existing deadline and lets the browser really reload the document. Its boot
 fixture changes card options/server replies, not restoration fields; fixed,

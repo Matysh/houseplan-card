@@ -597,8 +597,9 @@ export class HouseplanCard extends LitElement {
   private _warmModeRequest = 0;
   private _markerDialogRequest = 0;
   private _settingsDialogRequest = 0;
-  private readonly _warmMarker = new WarmMarkerRestore<WarmDialog>({
+  private readonly _warmMarker = new WarmMarkerRestore<WarmDialog & { context: object }>({
     allowed: (d) => this.isConnected && d.space === this._space && d.mode === this._mode
+      && this._loadOk && this._configWriteContext.owns(d.context)
       && deviceEditorAllowed(this._canEdit, this._kiosk) && !this._otherDialogsBlocked
       && (!d.data.devId || this._devices.some((device) => device.id === d.data.devId)),
     ensure: () => this._ensureEditorRuntime(),
@@ -2233,7 +2234,7 @@ export class HouseplanCard extends LitElement {
    *  _restoreZoom) or applied twice (the dialog revival). */
   private _warmVp: WarmViewport | null = null;
   private _warmVpArmed = false;
-  private _recoveryViewport: KioskViewport | null = null;
+  private _recoveryViewport: (KioskViewport & { key: string }) | null = null;
   private _recoveryViewportTaken = false;
   private _warmLongReturn = false;
   private _warmRevivePending = false;
@@ -3638,7 +3639,7 @@ export class HouseplanCard extends LitElement {
       case 'marker':
         if (!deviceEditorAllowed(this._canEdit, this._kiosk)) return;
         if (d.data.devId && !this._devices.some((device) => device.id === d.data.devId)) return;
-        if (!this._editorRuntime) { this._warmMarker.begin(d); return; }
+        if (!this._editorRuntime) { this._warmMarker.begin({ ...d, context: this._configWriteContext.claim() }); return; }
         this._markerDialog = { ...d.data, busy: false }; break;
       case 'settings': this._settingsDialog = { ...d.data, busy: false }; this._reviveMoonStatus(); break;
       case 'rules': this._rulesDialog = { ...d.data, busy: false }; break;
@@ -3739,12 +3740,17 @@ export class HouseplanCard extends LitElement {
     const fixed = this._fixedFloorState(models, authoritative);
     if (authoritative && !this._recoveryViewportTaken && this.isConnected && this.hass && this._kiosk) {
       this._recoveryViewportTaken = true;
-      try { this._recoveryViewport = takeKioskViewport(this.ownerDocument.defaultView?.sessionStorage ?? null, this._kioskRecoveryKey()); } catch { /* storage unavailable */ }
+      try {
+        const key = this._kioskRecoveryKey();
+        const memo = takeKioskViewport(this.ownerDocument.defaultView?.sessionStorage ?? null, key);
+        this._recoveryViewport = key && memo ? { ...memo, key } : null;
+      } catch { /* storage unavailable */ }
     }
     if (fixed.kind === 'valid') return { id: fixed.id, source: 'fixed' };
     if (this._hasFixedFloor) return { id: null, source: 'none' };
     const recoverySpace = this._recoveryViewport?.space;
-    const restoreRecovery = this._kiosk && nonCarouselKiosk(this._config?.cycle, false, models.length)
+    const restoreRecovery = this._kiosk && this._recoveryViewport?.key === this._kioskRecoveryKey()
+      && nonCarouselKiosk(this._config?.cycle, false, models.length)
       && !!recoverySpace && models.some((space) => space.id === recoverySpace);
     return resolveInitialSpace({
       spaceIds: models.map((space) => space.id),
@@ -3869,19 +3875,19 @@ export class HouseplanCard extends LitElement {
       </div>`;
   }
 
-  /** One patchable seam shared by trusted manual and guarded automatic reload. */
   private _kioskRecoveryKey(): string | null {
     return kioskPlacementKey(this, location.pathname + location.search, contentFingerprint(this._config), this.hass?.user?.id || '');
   }
   private _restoreKioskViewport(): boolean {
     const memo = this._recoveryViewport; this._recoveryViewport = null;
-    if (!memo || !this._kiosk || this._mode !== 'view' || memo.space !== this._space
+    if (!memo || memo.key !== this._kioskRecoveryKey() || !this._kiosk || this._mode !== 'view' || memo.space !== this._space
         || !this._model.some((space) => space.id === memo.space)
         || !nonCarouselKiosk(this._config?.cycle, this._hasFixedFloor, this._model.length)) return false;
     this._zoom = memo.zoom; this._view = { ...memo.view };
     this._applyView(memo.zoom, memo.view.x + memo.view.w / 2, memo.view.y + memo.view.h / 2);
     return true;
   }
+  /** One patchable seam shared by trusted manual and guarded automatic reload. */
   private _reloadDocument(automatic = false): void {
     if (this._kiosk && this._mode === 'view' && this._view
         && nonCarouselKiosk(this._config?.cycle, this._hasFixedFloor, this._model.length)) {

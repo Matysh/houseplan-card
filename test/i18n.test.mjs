@@ -465,6 +465,8 @@ test('i18n: German values equal to English are explicitly reviewed', () => {
   const allowed = new Set([
     'color_picker.confirm',
     'editor.palette',
+    'opening.info_named', // #894: the shared {kind}: {name} format is language-neutral.
+    'opening.contact_named', // #894: Sensor is the German product term as well.
     'confirm.delete_partition_openings_item',
     'marker.name_ph',
     'marker.name_label', // #600: «Name» — одно слово в обоих языках

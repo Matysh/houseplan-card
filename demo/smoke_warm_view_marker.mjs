@@ -2,7 +2,7 @@
 import { launchColdView, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
 requirePinnedBrowser('894 warm View marker renderer ownership');
 const out = {};
-for (const mode of ['success', 'close', 'permission', 'disconnect', 'failure', 'newer']) {
+for (const mode of ['success', 'close', 'permission', 'identity', 'disconnect', 'failure', 'newer']) {
   const { page, browser } = await launchColdView({ width: 1100, height: 900 });
   try {
     const id = await page.evaluate(async () => {
@@ -37,7 +37,7 @@ for (const mode of ['success', 'close', 'permission', 'disconnect', 'failure', '
       const load = next._editorRuntimeLoader.options.load;
       window.__894WarmLoads = 0; window.__894WarmWrites = [];
       // private-ok: fault-inject only the real chunk transport timing; never a draft or renderer.
-      next._editorRuntimeLoader.options.load = async attempt => {
+      next._editorRuntimeLoader.options.load = async attempt => { // private-ok: #894 delays/fails the actual chunk transport, not dialog state.
         ++window.__894WarmLoads;
         if (mode === 'failure' && !window.__894ChunkAvailable) throw Error('894 chunk unavailable');
         if (mode !== 'failure') await new Promise(resolve => { window.__894ReleaseChunk = resolve; });
@@ -53,6 +53,9 @@ for (const mode of ['success', 'close', 'permission', 'disconnect', 'failure', '
     if (mode === 'close') await page.locator('#host houseplan-card hp-dialog[data-kind="marker-restore"] .btn[data-hp="dialog-cancel"]').click();
     if (mode === 'permission') await page.evaluate(async () => {
       window.__894Writer = false; await window.__hpTest.setServerConfig(cfg => cfg);
+    });
+    if (mode === 'identity') await page.evaluate(() => {
+      const c = window.__card; c.hass = { ...c.hass, user: { ...c.hass.user, id: '894-other' } };
     });
     if (mode === 'disconnect') await page.evaluate(() => window.__card.remove());
     if (mode === 'newer') {

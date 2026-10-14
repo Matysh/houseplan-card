@@ -85,8 +85,12 @@ for (const variant of [
       return window.__894Navigation.length === 2 && window.__894Services.length === 0
         && window.__894Camera === JSON.stringify({ space: c._space, zoom: c._zoom, view: c._view });
     });
-    await area.tap();
-    out[`${prefix}:touch-navigation-no-fallthrough`] = await page.evaluate(() => window.__894Navigation.length === 3 && window.__894Services.length === 0);
+    await area.tap(); await area.tap(); await page.waitForTimeout(400);
+    out[`${prefix}:touch-navigation-no-fallthrough`] = await page.evaluate(() => {
+      const c = window.__card;
+      return window.__894Navigation.length === 4 && window.__894Services.length === 0
+        && window.__894Camera === JSON.stringify({ space: c._space, zoom: c._zoom, view: c._view });
+    });
     await page.evaluate(async () => {
       const c = window.__card; c.hass = { ...c.hass, user: { ...c.hass.user, is_admin: false } };
       c.requestUpdate(); await c.updateComplete;

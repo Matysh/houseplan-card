@@ -617,7 +617,7 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_warm_view_marker.mjs',
     because: '#894 AC2: a new cold element must load its renderer before publishing the genuine View draft; DOM, failure/retry and late close ownership cannot be proved by draft fields alone.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: '        if (!this._editorRuntime) { this._warmMarker.begin(d); return; }',
+      find: '        if (!this._editorRuntime) { this._warmMarker.begin({ ...d, context: this._configWriteContext.claim() }); return; }',
       replace: '        // publish the draft even without its lazy renderer' }],
   },
   {

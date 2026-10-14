@@ -49,7 +49,8 @@
   changes. Device settings opened in View survive a warm remount visibly;
   HA Area links have their own keyboard/touch button. Device-bound Zigbee2MQTT
   light groups share the group icon, and non-carousel kiosks can update while
-  enlarged without losing their floor or camera
+  enlarged without losing their floor or camera. A later account/placement
+  change cannot inherit a delayed restoration
   ([#894](https://github.com/Matysh/houseplan-card/issues/894)).
 
 - Saving no longer falls back to an old cached plan when Home Assistant reapplies

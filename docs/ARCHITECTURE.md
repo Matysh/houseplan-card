@@ -41,6 +41,8 @@ in sessionStorage, scoped by DOM/shadow placement, route, options and HA account
 Only non-carousel kiosks bypass the old base-zoom version gate; all other guards
 remain. A failed memo write refuses automatic navigation rather than discarding
 the camera; deleted exact floors never transfer coordinates to the fallback.
+Delayed restoration rechecks the captured write-context generation and the
+unchanged placement key before it can publish a draft or camera.
 
 Composite form focus (#870) belongs either to the native form-kit wrapper or
 the authentic HA picker, never both. The picker is styled through its public

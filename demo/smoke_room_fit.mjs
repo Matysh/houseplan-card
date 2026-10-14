@@ -125,7 +125,8 @@ const out = await page.evaluate(async () => {
   await waitCamera();
   result.repeatedFitIsNoOp = !c._cameraTransition.active && JSON.stringify(c._view) === settled;
 
-  const label = root.querySelector('.roomlabel[data-id="room-a"]');
+  const roomLabel = root.querySelector('.roomlabel[data-id="room-a"]');
+  const label = roomLabel?.querySelector('.rlfit[role="button"]') || roomLabel;
   result.labelIsKeyboardAction = label?.getAttribute('role') === 'button'
     && label?.getAttribute('tabindex') === '0'
     && /Office/.test(label?.getAttribute('aria-label') || '');

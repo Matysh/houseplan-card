@@ -99,6 +99,7 @@ Issue labels, not this record, remain authoritative for implementation status.
   View device drafts only after their renderer loads, exposes a separate 44px
   keyboard Area action, unifies certified device-group icons and retains the
   non-carousel kiosk camera across safe document updates. No schema/limit change.
+  Late warm drafts and camera addresses remain bound to their original owner.
 
 Pipeline outcomes (#897) distinguish a verified completed-model merge wait from
 legacy review resume: it is a successful no-op, not a second model call. Exact
