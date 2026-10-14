@@ -58,7 +58,8 @@
   summary or Zigbee loading. One explicit retry uses the same build's hashed
   root; a failed dependency or foreign build leaves reload-only advice. Kiosk
   shares its existing safe one-per-build reload budget, and manual recovery
-  respects the editor's discard decision ([#848](https://github.com/Matysh/houseplan-card/issues/848)).
+  respects the editor's discard decision. Root retries retain public exports
+  even when the summary editor shares helper chunks ([#848](https://github.com/Matysh/houseplan-card/issues/848)).
 
 - Saving no longer falls back to an old cached plan when Home Assistant reapplies
   card options. Refused vacuum-map edits and New acknowledgements restore their

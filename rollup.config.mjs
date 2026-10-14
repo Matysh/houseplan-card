@@ -30,6 +30,11 @@ export default {
     onlyExplicitManualChunks: true,
     manualChunks(id) {
       const path = id.replaceAll('\\', '/');
+      // #848: these leaves are also used by the nested summary editor. Keep
+      // them out of its View root, whose named exports are consumed by the
+      // immutable-URL retry as well as Rollup's literal dynamic import.
+      if (['/src/summary-panel-picker.ts', '/src/summary-panel-icons.ts']
+        .some((suffix) => path.endsWith(suffix))) return 'summary-shared';
       if (['/src/pointer-move-queue.ts', '/src/live-editor.ts', '/src/i18n/tools.ts', '/src/wall-segment-model.ts',
         '/src/wall-end-align.ts'].some((suffix) => path.endsWith(suffix))) return 'editor-shared';
     },

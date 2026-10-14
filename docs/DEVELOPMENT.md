@@ -281,12 +281,19 @@ cannot acquire an automatic failure-reload claim.
 production module graph, not private runtime fields. It observes fresh nonce
 requests and rejection cached in the browser module map; RU/EN360/1280 controls
 use actual keyboard/touch and retain a notice beyond the old toast lifetime.
-Summary's root is a thin named entry because the shared implementation chunk
-alone exposes internal Rollup namespace aliases to a raw URL import. The retry
+Summary's root has a named entry and its editor-shared picker/icon leaves stay
+in a separate lazy shared chunk: otherwise Rollup replaces its public exports
+with internal namespace aliases, breaking the raw URL import. The retry
 URL injection and its missing/duplicate roots are unit-tested by bundle-assets.
 These witnesses are being completed in S6; no full release or GPU acceptance is
 claimed by focused headless evidence. Enlarged non-carousel kiosk integration
 is verified after accepted #894, without copying its unreviewed implementation.
+
+S6 checkpoint before the separate #890 pre-release fix: real root404 retry,
+dependency404, foreign fingerprint, aggregated double-click and warm-instance
+cases execute. Latest native is NOT green: three 360px notice-layout checks
+and the detached-instance no-late-update check fail and must be resolved before
+handoff. No baseline or gate relaxation is accepted for these failures.
 
 ## Config writer authority witnesses (#890)
 

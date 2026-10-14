@@ -1,6 +1,6 @@
 // #848: real module-map failures on the production graph; no runtime-field seeding.
 import { readFileSync, mkdirSync } from 'node:fs';
-import { launchColdView, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
+import { launchColdView, launchPanelCold, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
 import { installHpTestOnPage } from './helpers/hp-test.mjs';
 requirePinnedBrowser('848 optional View recovery');
 
@@ -19,7 +19,7 @@ const boot = readFileSync('demo/srv/demo.html', 'utf8');
 const out = {};
 mkdirSync('artifacts/view-runtime', { recursive: true });
 
-async function start(kind, { language = 'en', width = 1280, hidden = false, dependency = false, terminal = false } = {}) {
+async function start(kind, { language = 'en', width = 1280, hidden = false, dependency = false, terminal = false, otherKinds = [] } = {}) {
   const { page, browser } = await launchColdView({ width: 1280, height: 900 }, 1, [], { hasTouch: true });
   // A genuine saved local preference from the preceding healthy document.
   await page.locator('houseplan-card .summary-control button[aria-pressed]').waitFor();
@@ -30,7 +30,7 @@ async function start(kind, { language = 'en', width = 1280, hidden = false, depe
   const options = { type: 'custom:houseplan-card', title: 'House Plan', icon_size: 3.4, language };
   const source = boot
     .replace("card.setConfig({type:'custom:houseplan-card', title:'House Plan', icon_size:3.4});", `card.setConfig(${JSON.stringify(options)});`)
-    .replace("  await import('/assets/houseplan-card.js');", `${kind === 'zigbee' ? '  CFG.settings.zigbee_topology={enabled:true,z2m_base_topics:[]};\n' : ''}  await import('/assets/houseplan-card.js');`)
+    .replace("  await import('/assets/houseplan-card.js');", `${[kind, ...otherKinds].includes('zigbee') ? '  CFG.settings.zigbee_topology={enabled:true,z2m_base_topics:[]};\n' : ''}  await import('/assets/houseplan-card.js');`)
     .replace('  card.hass=mkHass();\n  window.__card=card;', `  card.hass={...mkHass(),themes:{darkMode:${language === 'ru'}}};\n  window.__card=card;`);
   await page.route('**/demo.html', route => route.fulfill({ status: 200, contentType: 'text/html', body: source }));
   const path = paths[kind], seen = [];
@@ -43,6 +43,15 @@ async function start(kind, { language = 'en', width = 1280, hidden = false, depe
     if (enabled && !dependency && (!url.search || failRetry)) return route.fulfill({ status: 404, body: 'controlled root404' });
     return route.fallback();
   });
+  const others = {};
+  for (const name of otherKinds) {
+    const requests = others[name] = [];
+    await page.route(`**/${paths[name].split('/').at(-1)}*`, route => {
+      const query = new URL(route.request().url()).search;
+      requests.push(query || 'plain');
+      return query ? route.fallback() : route.fulfill({ status: 404, body: 'controlled sibling root404' });
+    });
+  }
   let dependencyRequests = 0;
   if (dependency) {
     const root = manifest.files.find(file => file.path === path);
@@ -60,7 +69,7 @@ async function start(kind, { language = 'en', width = 1280, hidden = false, depe
     const c = window.__card;
     return c?._loadOk && !c._booting && c._viewRuntimes?.[kind]?.state === 'error';
   }, kind);
-  return { page, browser, seen, preference, rootName, dependencies: () => dependencyRequests,
+  return { page, browser, seen, others, preference, rootName, dependencies: () => dependencyRequests,
     heal: () => { enabled = false; }, fail: () => { failRetry = true; } };
 }
 
@@ -84,6 +93,16 @@ for (const language of ['en', 'ru']) for (const kind of Object.keys(roots)) {
       return c._model.length > 0 && c._devices.length > 0 && !c._editorRuntime
         && stage && getComputedStyle(stage).visibility === 'visible';
     });
+    if (kind === 'live' && language === 'en') {
+      await f.page.evaluate(() => {
+        const c = window.__card, call = c.hass.callService;
+        window.__safeCalls = [];
+        c.hass = { ...c.hass, callService: async (...args) => { window.__safeCalls.push(args); return call(...args); } };
+      });
+      await f.page.locator('houseplan-card [data-hp="device"][data-id="d_light1"]').click();
+      out.unrelatedLightActionRemainsAvailable = await f.page.evaluate(() => window.__safeCalls.length === 1
+        && window.__safeCalls[0][0] === 'light' && !window.__card._editorRuntime);
+    }
     await f.page.evaluate(async () => {
       const c = window.__card;
       for (let n = 0; n < 4; n++) { c.hass = { ...c.hass }; await c.updateComplete; }
@@ -95,7 +114,18 @@ for (const language of ['en', 'ru']) for (const kind of Object.keys(roots)) {
     const retry = notice.locator('[data-hp="view-runtime-retry"]');
     if (language === 'en') { await retry.focus(); await f.page.keyboard.press('Enter'); }
     else await retry.tap();
-    await f.page.waitForFunction(kind => window.__card._viewRuntimes[kind].state === 'ready', kind);
+    try {
+      await f.page.waitForFunction(kind => window.__card._viewRuntimes[kind].state === 'ready', kind);
+    } catch (error) {
+      console.error('recovery diagnostics', kind, f.seen, await f.page.evaluate(async path => {
+        const boundary = window.__card._viewRuntimes[path.kind];
+        const url = `/assets/${path.file}${path.query}`;
+        try { const module = await import(url); return { state: boundary.state, terminal: boundary.terminalFailure,
+          exports: Object.keys(module), fingerprint: module.SUMMARY_RUNTIME_FINGERPRINT }; }
+        catch (error) { return { state: boundary.state, error: String(error), url }; }
+      }, { kind, file: paths[kind], query: f.seen.at(-1) }));
+      throw error;
+    }
     out[`${prefix}:one-real-nonce-request-and-ready`] = f.seen.length === 2 && f.seen[0] === 'plain' && /hp_retry=view-/.test(f.seen[1]);
     out[`${prefix}:successful-recovery-clears-notice`] = await notice.count() === 0;
     if (kind === 'summary') out[`${prefix}:saved-show-preference-preserved`] = await f.page.evaluate(previous =>
@@ -131,5 +161,54 @@ try {
   out.foreignBuildOffersReloadOnlyWithoutAnotherImport = mismatch.seen.length === 1
     && await mismatch.page.locator('[data-hp="view-runtime-retry"]').count() === 0;
 } finally { await mismatch.browser.close(); }
+
+const aggregate = await start('live', { otherKinds: ['zigbee'] });
+try {
+  await aggregate.page.waitForFunction(() => window.__card._viewRuntimes.zigbee.state === 'error');
+  const notice = aggregate.page.locator('[data-hp="view-runtime-notice"]');
+  out.multipleFailuresAreNamedInOneNotice = await notice.count() === 1
+    && await notice.locator('.view-runtime-functions').evaluate(element => /Live/.test(element.textContent) && /Zigbee/.test(element.textContent));
+  const button = notice.locator('[data-hp="view-runtime-retry"]');
+  await button.dblclick();
+  await aggregate.page.waitForFunction(() => ['live', 'zigbee'].every(name => window.__card._viewRuntimes[name].state === 'ready'));
+  out.doubleClickRemainsOneRetryPerFailedBoundary = aggregate.seen.length === 2 && aggregate.others.zigbee.length === 2;
+  out.aggregateDisappearsOnlyAfterBothFunctionsRecover = await notice.count() === 0;
+} finally { await aggregate.browser.close(); }
+
+const pending = await launchPanelCold();
+try {
+  let release;
+  const held = new Promise(resolve => { release = resolve; }), requests = { live: 0, summary: 0 };
+  for (const name of Object.keys(requests)) await pending.page.route(`**/${paths[name].split('/').at(-1)}*`, async route => {
+    requests[name]++; await held; return route.fallback();
+  });
+  await pending.page.evaluate(async () => {
+    await import('/assets/houseplan-card.js');
+    const make = title => {
+      const card = document.createElement('houseplan-card');
+      card.setConfig({ type: 'custom:houseplan-card', title }); card.hass = window.__mkHass();
+      document.getElementById('host').appendChild(card); return card;
+    };
+    window.__retiredCard = make('Retired pending card');
+    window.__card = make('Current pending card');
+    window.__makeViewCard = make;
+  });
+  await pending.page.waitForFunction(() => window.__retiredCard._loadOk && window.__card._loadOk);
+  await pending.page.waitForFunction(() => ['live', 'summary'].every(name => window.__card._viewRuntimes[name].state === 'loading'));
+  await pending.page.evaluate(() => {
+    const old = window.__retiredCard; old.remove(); window.__retiredUpdates = 0;
+    const update = old.requestUpdate.bind(old);
+    old.requestUpdate = (...args) => { window.__retiredUpdates++; return update(...args); };
+  });
+  release();
+  await pending.page.waitForFunction(() => ['live', 'summary'].every(name => window.__card._viewRuntimes[name].state === 'ready'));
+  out.pendingImportSharedWithoutConstructingForDetachedCard = requests.live === 1 && requests.summary === 1
+    && await pending.page.evaluate(() => !window.__retiredCard._liveRt && !window.__retiredCard._summary && window.__retiredUpdates === 0);
+  out.warmCodeCreatesDistinctRuntimeBeforeFirstRender = await pending.page.evaluate(() => {
+    const current = window.__card, warm = window.__makeViewCard('Warm independent card');
+    return !!warm._summary && !!warm._liveRt && !warm.hasUpdated
+      && warm._summary !== current._summary && warm._liveRt !== current._liveRt;
+  });
+} finally { await pending.browser.close(); }
 
 checkAll(out); await finish(null, out);
