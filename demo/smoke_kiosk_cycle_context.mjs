@@ -22,7 +22,9 @@ await page.evaluate(async () => {
   c.hass={...c.hass,callService:async (...args)=>{window.__cycleCalls.push({space:c._space,args});}};
 });
 await page.waitForFunction(()=>window.__card.shadowRoot.querySelector('[data-hp="room-label"][data-id="r1"]'));
-const freeze=async()=>page.clock.pauseAt(await page.evaluate(()=>Date.now()+10));
+// Leave a transport margin between the browser-time read and pause command;
+// under parallel CI load a10ms target can already be in the past at delivery.
+const freeze=async()=>page.clock.pauseAt(await page.evaluate(()=>Date.now()+1000));
 await freeze();
 // Keyboard room fit is public and immediate; its key event starts the60s pause.
 await page.locator('houseplan-card [data-hp="room-label"][data-id="r1"]').press('Enter');
