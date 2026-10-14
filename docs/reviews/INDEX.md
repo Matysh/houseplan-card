@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 75, issue: 39. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 76, issue: 39. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -57,6 +57,7 @@
 | #851 | [CODE-REVIEW-851-r1.md](CODE-REVIEW-851-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #850 | [SPEC-REVIEW-850-r1.md](SPEC-REVIEW-850-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | AC4(а) не называет способ доказательства для заявки «0 пересчётов … на камере» | `test/glow-scene.test.mjs` `test/devices.test.mjs` `demo/benchmark_led_strips.mjs` `demo/benchmark_large_house.mjs` `demo/performance/budgets-led-strips.json` `benchmark_large_house.mjs` |
 | #850 | [SPEC-REVIEW-850-r2.md](SPEC-REVIEW-850-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #850 | [CODE-REVIEW-850-r1.md](CODE-REVIEW-850-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #845 | [SPEC-REVIEW-845-r1.md](SPEC-REVIEW-845-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | защитная регрессия AC4/AC8 не привязана к | `845-wall-identity-parity.json` `tests_backend/wall_node_parity.py` `scripts/mutation-registry.mjs` `demo/srv/demo.html` `test/model-invariants.test.mjs` `fixture-wall-key.test.mjs` `wall-segment-model.ts` `model-invariants.test.mjs` |
 | #845 | [SPEC-REVIEW-845-r2.md](SPEC-REVIEW-845-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #845 | [CODE-REVIEW-845-r1.md](CODE-REVIEW-845-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
