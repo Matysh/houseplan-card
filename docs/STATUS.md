@@ -25,6 +25,13 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Connected-node diagnostics (#888) name exact exceeded budgets and preserve
+functional/clock failures. Existing raw source/native/flush identities produce
+read-only phase evidence with clean material/protocol/environment passports;
+incomplete or foreign series stay unknown, and red observations are retained.
+No runtime, workload, clock, retry or budget changes; wall-time is not CPU/GPU
+acceptance and a green repeat does not establish a historical cause.
+
 Pipeline outcomes (#897) distinguish a verified completed-model merge wait from
 legacy review resume: it is a successful no-op, not a second model call. Exact
 changed-patch refusals diagnose and re-request review only for the same live

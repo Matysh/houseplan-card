@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 888,
+  "baseStable": "v1.80.1",
+  "category": "infra",
+  "rationale": "Улучшены объяснения красного connected-node perf verdict и read-only диагностика существующих raw timestamps/identity с паспортом материала и окружения. Продуктовая геометрия, сцена, clocks, budgets и пользовательское поведение не меняются; milestone пользовательского релиза не назначается."
+}

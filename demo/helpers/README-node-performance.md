@@ -4,8 +4,11 @@
 same monotonic clock, source-input ledger and phase-aware paint observer. The
 workload remains three warmup and five measured gestures, each with 60 distinct
 native positions sent independently every 16 ms. It does not wait for a render
-or a CDP response before submitting the next position. The warm limits remain
-CPU p95 **50 ms**, source-input-to-paint p95 **100 ms**, longest task **150 ms**.
+or a CDP response before submitting the next position. Authoritative limits are
+the `budgets` in the smoke and each raw report (currently delegated flush
+wall-time p95 **55 ms**, source-input-to-paint p95 **121 ms**, longest task
+**150 ms**, owner headroom decision #898). This is wall-time, not OS CPU
+accounting. Historical reports retain their own recorded thresholds.
 
 ## Clock contract
 
@@ -72,3 +75,40 @@ unconditional two-RAF diagnostic. Production wrappers only delegate and record;
 they cannot validate a candidate, change geometry or persist an edit. On CI the
 full post-measurement report is also saved to
 `os.tmpdir()/smoke-logs/smoke_wall_node_connected.raw.json`, including failures.
+
+## Budget and phase diagnostics (#888)
+
+`node-performance-report.mjs` names every exceeded budget with actual, limit and
+excess. Exact equality passes; missing/non-finite measurements, functional
+failures and clock exceptions cannot silently derive a green result. The smoke
+keeps its original exit condition and all geometry/pixel/write/history guards.
+
+The pure phase report joins existing source/native/flush records by exact
+ledger identities, without another browser wrapper or clock fit. Each source
+latency is the sum of source-to-matching-native, native dispatch, frame
+scheduling, delegated candidate wall-time and candidate-to-paint-opportunity.
+An incomplete/ambiguous join is `unknown`, not a guessed diagnosis. Superseded
+inputs wait for a later matching input, so their first interval is not pure CDP
+transport; they are not claimed rendered separately. Phase quantiles weight
+sources (one flush may repeat); the main-thread gate still weights flushes.
+Component p95s cannot be added, and neither these intervals nor a green repeat
+establish CPU/descheduling cause or real-GPU/compositor presentation.
+
+The raw passport records commit/tree, non-bundle worktree dirtiness, harness,
+fixture and freshly served bundle fingerprints, pinned browser/Node, protocol,
+workload and an allowlisted OS/CPU/memory/runner-image identity. Load and free
+memory before/after are observations, not attribution. No secrets/full env dump.
+
+Read-only offline derivation:
+
+```sh
+node scripts/node-connected-diagnostics.mjs raw-1.json raw-2.json raw-3.json
+```
+
+It never launches or retries a gate, edits reports or replaces `originalPass`.
+Three complete clean receipts with the same material/protocol/workload,
+recorded static environment identity and budgets are comparable bounded
+observations. Missing identity, incomplete functions/clocks, foreign material
+or fewer than three receipts prevent that claim. A red budget outcome remains
+in a complete series. Retain every predeclared run, not retry-until-green;
+the cause remains `unknown` without further evidence.

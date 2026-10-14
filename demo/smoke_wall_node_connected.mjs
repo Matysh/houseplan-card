@@ -5,12 +5,15 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { arch, cpus, freemem, loadavg, platform, release, totalmem } from 'node:os';
 import { performance } from 'node:perf_hooks';
 import { setTimeout as delay } from 'node:timers/promises';
 import { launch, finish, requirePinnedBrowser, watchPage } from './serve.mjs';
 import { installNodePaintObserver } from './helpers/node-paint-observer.mjs';
 import { assertNodeClockBounds, assertUniqueNodeInputPositions, calibrateNodeInputClock, installNodeInputObserver, settleNodeInputLedger } from './helpers/node-input-ledger.mjs';
 import { writeNodeCiReport } from './helpers/node-ci-report.mjs';
+import { nodeBudgetVerdict, nodeLatencyAttribution, nodeQuantiles as quantiles } from './helpers/node-performance-report.mjs';
 import { sendNodeNativeMove } from './helpers/node-native-input.mjs';
 import { applyNodeMove, prepareNodeMove, structuralWallNodes } from '../test-build/wall-node-move.js';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
@@ -32,17 +35,26 @@ const viewport = { width: 1280, height: 1000 };
 // #898, owner decision 2026-10-14: less than 10 % headroom -> +10 %:
 // main-thread p95 50 -> 55 ms, input-to-paint p95 110 -> 121 ms.
 const budgets = { mainThreadP95Ms: 55, inputToPaintP95Ms: 121, longTaskMaxMs: 150 };
-const quantiles = values => {
-  const sorted = values.slice().sort((a, b) => a - b);
-  return { count: sorted.length, median: sorted[Math.ceil(sorted.length * .5) - 1] || 0,
-    p95: sorted[Math.ceil(sorted.length * .95) - 1] || 0, max: sorted.at(-1) || 0 };
-};
+const gitRead = args => execFileSync('git', args, { encoding: 'utf8' }).trim();
+const material = { sha: gitRead(['rev-parse', 'HEAD']), tree: gitRead(['rev-parse', 'HEAD^{tree}']),
+  // Fresh generated bundles differ from the committed last-release snapshot.
+  // They have their own fingerprint; every other non-ignored path must be clean.
+  dirty: Boolean(gitRead(['status', '--porcelain', '--', '.', ':!dist', ':!custom_components/houseplan/frontend'])) };
+const harnessSha256 = createHash('sha256').update(['smoke_wall_node_connected.mjs',
+  'serve.mjs', 'bundle-freshness.mjs', 'editor-runtime-compat.mjs',
+  'helpers/node-input-ledger.mjs', 'helpers/node-native-input.mjs', 'helpers/node-paint-observer.mjs',
+  'helpers/node-performance-report.mjs'].map(name => readFileSync(new URL(name, import.meta.url))).join('\n')).digest('hex');
+const environment = { platform: platform(), arch: arch(), release: release(), cpuModel: cpus()[0]?.model ?? null,
+  cpuCount: cpus().length, totalMemory: totalmem(), freeMemoryAtStart: freemem(), loadAtStart: loadavg(),
+  run: process.env.GITHUB_RUN_ID ?? null, attempt: process.env.GITHUB_RUN_ATTEMPT ?? null,
+  imageOS: process.env.ImageOS ?? null, imageVersion: process.env.ImageVersion ?? null };
 assert.deepEqual([initial.spaces[0].rooms.length, initial.spaces[0].wall_segments.length,
   initial.spaces[0].openings.length], [8, 30, 14], 'connected fixture is not a reduced or disconnected benchmark');
 let server = structuredClone(initial), revision = 1;
 const writes = [];
 const { page, browser } = await launch(viewport, 1);
-const report = { issue: 834, fixtureSha256: createHash('sha256').update(fixtureText).digest('hex'),
+const report = { schema: 'houseplan-connected-node/v1', issue: 834, material, harnessSha256, environment,
+  fixtureSha256: createHash('sha256').update(fixtureText).digest('hex'),
   counts: { rooms: 8, walls: 30, openings: 14 }, viewport, dpr: 1, node: process.version,
   chromium: browser.version(), budgets, warmupGestures: 3, measuredGestures: 5,
   latencyDefinition: 'Per submitted native input to a post-paint opportunity of the latest candidate. The same RAF-phase observer uses next RAF after a synchronous RAF producer, second RAF after a task/microtask producer. Unconditional two-RAF is retained separately. Superseded inputs are labelled, not claimed rendered.',
@@ -359,18 +371,27 @@ try {
   assert.equal(writes.length, beforeInvalid, 'invalid last release cannot save the older valid candidate');
   assert.deepEqual(server, initial); assert.equal(await page.evaluate(() => window.__card._geometryHistory.size), 0);
 
-  report.pass = !report.failures.length && report.mainThread.p95 <= budgets.mainThreadP95Ms
-    && report.inputToPaint.p95 <= budgets.inputToPaintP95Ms && report.longTasks.max <= budgets.longTaskMaxMs;
+  report.functionalChecks = 'passed';
+  report.attribution = nodeLatencyAttribution(report);
+  Object.assign(report, nodeBudgetVerdict(report));
   writeFileSync(output, JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify({ issue: 834, output, fixtureSha256: report.fixtureSha256, chromium: report.chromium,
     mainThread: report.mainThread, inputToPaint: report.inputToPaint, longTasks: report.longTasks,
-    validateCalls: report.validateCalls, coalescedInputs: report.coalescedInputs, budgets, failures: report.failures, pass: report.pass }, null, 2));
+    validateCalls: report.validateCalls, coalescedInputs: report.coalescedInputs, budgets,
+    budgetFailures: report.budgetFailures, failures: report.failures, pass: report.pass,
+    attribution: { ...report.attribution, rows: undefined }, material, harnessSha256, environment }, null, 2));
   assert.ok(report.pass, '#834 native connected-floor performance budgets');
   await finish(browser, { writes: writes.length, rawReport: output });
+  assert.equal(process.exitCode || 0, 0, 'connected-node harness/page-error verdict');
 } catch (error) {
+  report.pass = false;
+  report.error = { name: error.name, message: error.message,
+    stage: report.pass === false && report.budgetFailures?.length ? 'budget-verdict' : 'smoke' };
   if (error.clockProbes) report.clockFailure = { message: error.message, probes: error.clockProbes };
   throw error;
 } finally {
+  Object.assign(report, nodeBudgetVerdict(report));
+  report.environment.freeMemoryAtEnd = freemem(); report.environment.loadAtEnd = loadavg();
   writeFileSync(output, JSON.stringify(report, null, 2) + '\n');
   writeNodeCiReport(report);
   await browser.close();

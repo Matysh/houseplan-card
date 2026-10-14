@@ -10,6 +10,13 @@ golden, а то, чего автоматика не видит, собрано �
 
 ## Правила для новых тестов (issue #85) — обязательны
 
+Connected-node diagnostics: `node --test test/node-performance-report.test.mjs`
+protects exact budget boundaries and failure reasons, immutable identity-joined
+phase sums, superseded inputs, unknown/incomplete evidence, fixed-series
+comparability and read-only CLI preservation of red reports. The native smoke
+keeps its clocks, scene, functional guards and recorded budgets; phase wall-time
+is not CPU/GPU acceptance. Details: [observer contract](../demo/helpers/README-node-performance.md).
+
 Pipeline outcomes: `node --test test/pipeline-outcomes-897.test.mjs` exercises
 complete/corrupt/foreign sealed model receipts, current/stopped/raced merge
 requests, idempotent failure diagnostics, redaction at the actual `realOps`
