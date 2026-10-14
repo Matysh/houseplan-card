@@ -17664,6 +17664,67 @@ const MUTANT_DEFINITIONS = [
       replace: '  for (const key of []) { // mutant: the browser binary is not compared',
     }],
   },
+  // #885: magnet of an exact H/V wall end to the line through a parallel wall end.
+  {
+    id: 'wall-align-radius-doubled',
+    guard: 'node --test --test-name-pattern="#885 AC1" test/wall-end-align.test.mjs',
+    because: '#885 AC1: the magnet zone is 8 CSS px on either side; beyond it the grid owns the '
+      + 'point, so a wider zone would steal ordinary grid positions next to every parallel wall end',
+    patches: [{ file: 'src/wall-end-align.ts',
+      find: '      if (d <= radius && (!best || d < best.d)',
+      replace: '      if (d <= radius * 2 && (!best || d < best.d)',
+    }],
+  },
+  {
+    id: 'wall-align-accepts-slanted-walls',
+    guard: 'node --test --test-name-pattern="#885 AC3 Walls" test/wall-end-align.test.mjs',
+    because: '#885 AC3 (owner 2026-10-13): only strictly horizontal/vertical walls are candidates; '
+      + 'a slanted wall end must keep the alignment line an indication only',
+    patches: [{ file: 'src/wall-end-align.ts',
+      find: '    if (Math.abs(a[1 - along] - b[1 - along]) > eps || Math.abs(a[along] - b[along]) <= eps) continue;',
+      replace: '    if (Math.abs(a[along] - b[along]) <= eps) continue; // mutant: any non-degenerate wall',
+    }],
+  },
+  {
+    id: 'wall-align-beats-topology-node',
+    guard: 'node --test --test-name-pattern="#885 AC4" test/wall-end-align.test.mjs',
+    because: '#885 AC4: a node/axis of an existing wall and the contour closure outrank the '
+      + 'alignment magnet; aligning after a resolved topology hit moves the end off that node',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts',
+      find: '    const end = !candidate && anchor && space ? alignDrawnWallEnd(anchor, point, raw,',
+      replace: '    const end = anchor && space ? alignDrawnWallEnd(anchor, point, raw,',
+    }],
+  },
+  {
+    id: 'wall-align-node-goal-loses-tie',
+    guard: 'node --test --test-name-pattern="#885 node:" test/wall-end-align.test.mjs',
+    because: '#885 contract 4: on the same coordinate the nearer magnet wins and a tie keeps the '
+      + 'node magnet; letting alignment win the tie straightens nothing the person aimed at',
+    patches: [{ file: 'src/wall-node-move.ts',
+      find: '    if (hit && ends.every(f => Math.abs(raw[c] - f[c]) > hit.d)',
+      replace: '    if (hit && ends.every(f => Math.abs(raw[c] - f[c]) >= hit.d)',
+    }],
+  },
+  {
+    id: 'wall-align-node-own-walls-are-candidates',
+    guard: 'node --test --test-name-pattern="#885 AC7" test/wall-end-align.test.mjs',
+    because: '#885 contract 4: walls the dragged node moves are not candidates; their stale '
+      + 'original ends would pull the node back to where it started',
+    patches: [{ file: 'src/wall-node-move.ts',
+      find: '    .filter(w => !n.walls.some(m => wallRef(m) === wallRef(w))).map(w => [w.a, w.b]));',
+      replace: '    .map(w => [w.a, w.b])); // mutant: walls the node moves are candidates',
+    }],
+  },
+  {
+    id: 'wall-align-t-leaves-carrier',
+    guard: 'node --test --test-name-pattern="#885 AC7" test/wall-end-align.test.mjs',
+    because: '#885 AC7: a T sliding along its passing wall aligns only along it; aligning its '
+      + 'vertical stem lifts the junction off the carrier',
+    patches: [{ file: 'src/wall-node-move.ts',
+      find: '    if (!along.length || (line && Math.abs(line.direction[o]) > EPS)) continue;',
+      replace: '    if (!along.length) continue; // mutant: the frozen axis/carrier no longer limits it',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

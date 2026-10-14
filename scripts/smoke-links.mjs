@@ -99,6 +99,14 @@ export const SMOKE_LINKS = [
       + 'floor and opening hosts; the smoke observes saved config/IDs rather than calling the adopter',
   },
   {
+    symbols: ['alignWallEnd', 'alignDrawnWallEnd', 'planWalls'],
+    files: ['src/wall-end-align.ts'],
+    smokes: ['smoke_wall_end_align.mjs'],
+    because: '#885: a real mouse proves that the Walls rubber-band, length label and click, and the '
+      + 'node drag preview, guide and release, land on the same aligned (off-grid) point; the smoke '
+      + 'observes the painted layer and the saved walls, never naming the pure magnet helpers',
+  },
+  {
     files: ['src/wall-node-editor.ts', 'src/wall-node-move.ts'],
     smokes: ['smoke_wall_node_reliability.mjs'],
     because: '#828: a captured real pointer survives full hass/Lit frames with one current '
