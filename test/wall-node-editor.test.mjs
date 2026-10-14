@@ -20,7 +20,8 @@ function setup() {
   const listeners = new Set(), add = window.addEventListener.bind(window), remove = window.removeEventListener.bind(window);
   window.addEventListener = (type, listener) => { if (type === 'pagehide') listeners.add(listener); add(type, listener); };
   window.removeEventListener = (type, listener) => { if (type === 'pagehide') listeners.delete(listener); remove(type, listener); };
-  let paintResolve, paint = Promise.resolve(), fail = null, retireOnWrite = false, validPreview = true;
+  let paintResolve, paint = Promise.resolve(), writeResolve, writeGate = Promise.resolve();
+  let fail = null, retireOnWrite = false, validPreview = true;
   const changes = [], validations = [];
   const port = { context: () => context, config: () => cfg,
     screenPoint: ev => [ev.clientX, ev.clientY], unitsPerPixel: () => 0.0001,
@@ -31,7 +32,7 @@ function setup() {
     changed: () => { lifecycle.push('changed'); changes.push([editor.busy, recorded.length]); },
     validate: (...args) => { validations.push(args); return validPreview; }, paintOpportunity: () => paint,
     write: async h => {
-      writes.push(h); if (fail) throw fail;
+      writes.push(h); await writeGate; if (fail) throw fail;
       if (retireOnWrite) { context.revision++; editor.paint(); }
       const nodes = structuralWallNodes(h.beforeSpace), node = nodes.find(n => n.point.every((v, i) => v === h.intent.point[i]));
       const r = applyNodeMove(prepareNodeMove(h.beforeSpace, node, nodes), h.intent.target, h.intent.axis);
@@ -45,6 +46,8 @@ function setup() {
     holdFrames: () => { autoFrames = false; }, flushFrame,
     refusePreview: () => { validPreview = false; },
     holdPaint: () => { paint = new Promise(resolve => { paintResolve = resolve; }); },
+    holdWrite: () => { writeGate = new Promise(resolve => { writeResolve = resolve; }); },
+    finishWrite: () => writeResolve(),
     finishPaint: () => paintResolve(), refuse: (code = 'refused') => { fail = Object.assign(new Error(code), { code }); }, retireAtWrite: () => { retireOnWrite = true; } };
 }
 const settle = () => new Promise(resolve => setImmediate(resolve));
@@ -328,6 +331,17 @@ test('#891 AC4 actual node editor release distinguishes conflict, proof and temp
     assert.equal(s.writes.length, 1, 'one attempt, never automatic resend');
     s.editor.dispose();
   }
+});
+test('#891 AC4 a late refusal of a retired native gesture cannot add a toast/history in the new context', async () => {
+  const s = setup(); s.holdWrite(); s.refuse('timeout');
+  s.editor.guardEvent(s.ev('pointerdown')); s.editor.guardEvent(s.ev('pointermove', .25, .3));
+  s.editor.guardEvent(s.ev('pointerup')); await settle();
+  assert.equal(s.writes.length, 1);
+  s.context.space = 'other'; s.context.revision++; s.editor.paint();
+  s.finishWrite(); await settle();
+  assert.equal(s.recorded.length, 0); assert.deepEqual(s.toasts, []);
+  assert.equal(s.context.space, 'other'); assert.equal(s.editor.busy, false);
+  s.editor.dispose();
 });
 test('100 accepted/cancelled gestures leave one listener and no transient state; disposal removes it', async () => {
   const s = setup(); assert.equal(s.listeners.size, 1);

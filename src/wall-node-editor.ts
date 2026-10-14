@@ -250,9 +250,12 @@ export class WallNodeEditor {
       const after = config.spaces.find(space => space.id === history.beforeSpace.id) as NodeMoveSpace;
       this.port.record(history.beforeSpace, after, history.intent);
     } catch (error) {
-      const key = nodeDragRefusalKey(error);
-      this.port.toast(this.port.text(key, key === 'node_move_invalid'
-        ? { reason: this.port.text('toast.geometry_unsafe') } : undefined));
+      // A failure from a retired gesture owns neither the new context nor its toast.
+      if (this.current(s)) {
+        const key = nodeDragRefusalKey(error);
+        this.port.toast(this.port.text(key, key === 'node_move_invalid'
+          ? { reason: this.port.text('toast.geometry_unsafe') } : undefined));
+      }
     } finally {
       this.busy = false;
       // Own config adoption may already have retired the preview before record.
