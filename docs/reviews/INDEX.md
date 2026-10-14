@@ -1,12 +1,13 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 99, issue: 55. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 100, issue: 55. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | #898 | [CODE-REVIEW-898-r1.md](CODE-REVIEW-898-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #897 | [SPEC-REVIEW-897-r1.md](SPEC-REVIEW-897-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | в «Release-артефакты» не назван явно пункт DoR «производительность/security» | `PROCESS.md` `REVIEWER.md` |
 | #897 | [SPEC-REVIEW-897-r2.md](SPEC-REVIEW-897-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #897 | [CODE-REVIEW-897-r1.md](CODE-REVIEW-897-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #896 | [SPEC-REVIEW-896-r1.md](SPEC-REVIEW-896-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | пункт 5 контракта и AC5 не подтверждаются кодом | `scripts/bundle-budget.mjs` `test/bundle-assets.test.mjs` `bundle-budget.mjs` `bundle-assets.test.mjs` |
 | #896 | [SPEC-REVIEW-896-r2.md](SPEC-REVIEW-896-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #895 | [SPEC-REVIEW-895-r1.md](SPEC-REVIEW-895-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
