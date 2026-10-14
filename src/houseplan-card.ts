@@ -126,6 +126,8 @@ import {
   type ConfigAdoption, type ConfigAdoptionHostPort, type GatedAdoptionInput, type GatedAdoptionResult,
 } from './config-adoption';
 import { recoverConfigWriteConflict } from './config-write-conflict';
+import { ConfigWriteContext, configWriteErrorKey } from './config-write-context';
+import { acknowledgeNewDevice } from './new-device-ack';
 import {
   beginConfigReload, configReloadClaimCurrent,
   configReloadContext,
@@ -542,6 +544,12 @@ const HANDLE_PAINT_ORDER = ['edges', 'corners'] as const;
 export class HouseplanCard extends LitElement {
   public requestUpdate(name?: PropertyKey, oldValue?: unknown, options?: PropertyDeclaration): void {
     if (name === 'hass') {
+      if (this._configWriteContext.observe(this.hass)) {
+        this._loadOk = false; this._serverCanWrite = null; this._loadTries = 0;
+        this._saveConfigDebounced.cancel(); this._adoption.resetContext();
+        this._geometryHistory.clear(); this._devicePositionHistory.clear();
+        this._pendingPhysicalWrites.clear(); this._newSyncKey = ''; this._regSignature = '';
+      }
       // Every assignment counts, even A→B→A coalesced into one Lit update.
       this._configReloadAuthority.observeContext(configReloadContext(this));
       const waiting = this._read.busy || this._read.pending;
@@ -834,6 +842,7 @@ export class HouseplanCard extends LitElement {
   /** #543: only the newest live-context config read may cross adoption. */
   private readonly _configReloadAuthority = new ConfigReloadAuthority();
   private readonly _read = new CardReadLifecycle();
+  private readonly _configWriteContext = new ConfigWriteContext();
   private _virtualLights: VirtualLightSnapshot = virtualLightSnapshot(null);
   /** One-deep server snapshot; invalidated by the first later plan edit. */
   private _canOptimizeUndo = false;
@@ -3647,8 +3656,7 @@ export class HouseplanCard extends LitElement {
       this._virtualLights = reconcileVirtualLightSnapshot(
         this._virtualLights, this._serverCfg, this._cfgRev,
       );
-      // Local edits may mutate nested config/layout before the debounced write;
-      // `snapshot()` re-pairs the accepted identity with exactly what is cached.
+      // Only server-confirmed bodies enter the cold display hint (#890).
       const snapshot = this._adoption.snapshot(virtualLightWire(this._virtualLights));
       if (snapshot) localStorage.setItem(LS_CFG, JSON.stringify(snapshot));
     } catch {
@@ -5150,13 +5158,7 @@ export class HouseplanCard extends LitElement {
   private _ackNewDevice(id: string): void {
     if (!deviceEditorAllowed(this._canEdit, this._kiosk)) return;
     if (!this._newIds.has(id) || !this._serverCfg) return;
-    const st: any = this._settings;
-    this._serverCfg = {
-      ...this._serverCfg,
-      settings: { ...st, new_device_ids: (st.new_device_ids || []).filter((x: string) => x !== id) },
-    };
-    this._saveConfig();
-    this.requestUpdate();
+    void acknowledgeNewDevice(this as unknown as Parameters<typeof acknowledgeNewDevice>[0], id);
   }
 
   /** Filtering + light groups + overrides + virtual devices. */
@@ -7591,23 +7593,36 @@ export class HouseplanCard extends LitElement {
    * converge on the same payload contract without making View load the editor.
    */
   private async _sendConfigCandidate(candidate: ServerConfig): Promise<void> {
+    const isCurrent = this._configWriteGuard();
+    if (!isCurrent() || !this._loadOk) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
     const canonicalCandidate = canonicalizeConfigGeometry(candidate);
     const response = await this.hass.callWS({
       type: 'houseplan/config/set', config: canonicalCandidate, expected_rev: this._cfgRev,
     });
+    if (!isCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
     this._adoption.acceptConfigWrite(canonicalCandidate, response);
+    this._cacheSnapshot();
   }
 
-  private _writeConfig(): Promise<void> {
-    if (this._editorRuntime) return this._editorRuntime._writeConfig();
+  public _configWriteGuard(): () => boolean {
+    const claim = this._configWriteContext.claim();
+    return () => this._configWriteContext.current(claim, this.hass);
+  }
+
+  private _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null): Promise<void> {
+    if (this._editorRuntime) return this._editorRuntime._writeConfig(attempt);
     // Registry discovery may update shared metadata while the card is still
     // display-only. Persist that small View-owned mutation without pulling in
     // the editor runtime; strict physical-write validation is impossible here
     // because such writes can only be created by an installed editor.
     this._writesPending++;
+    const isCurrent = this._configWriteGuard();
     this._writeChain = enqueueSerializedWrite(this._writeChain, async () => {
+      if (!isCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
       if (!this._serverCfg) return;
       const candidate = canonicalizeConfigGeometry(this._serverCfg);
+      if (attempt && contentFingerprint(this._serverCfg) === attempt.attemptedFingerprint)
+        Object.assign(attempt, { revision: this._cfgRev, attempted: candidate, attemptedFingerprint: contentFingerprint(candidate) });
       this._adoption.stageConfigCandidate(candidate);
       await this._sendConfigCandidate(candidate);
     });
@@ -9495,6 +9510,8 @@ export class HouseplanCard extends LitElement {
   private _errText(e: any): string {
     if (!e) return this._t('err.unknown');
     if (typeof e === 'string') return e;
+    const configErrorKey = configWriteErrorKey(e);
+    if (configErrorKey) return this._t(configErrorKey);
     if (e.code === 'invalid_passage_fields') {
       // #42: structured JSON details first; the legacy "space=..;.." format
       // stays accepted for one beta (deprecated 2026-08-30, remove with the

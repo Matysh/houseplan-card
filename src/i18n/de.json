@@ -400,6 +400,7 @@
   "toast.file_failed": "Datei \"{name}\" wurde nicht hochgeladen: {err}",
   "toast.files_attached": "Dateien angehängt: {n}",
   "err.unknown": "unbekannter Fehler",
+  "err.config_write_unauthorized": "Sie haben keine Berechtigung, diesen Plan zu speichern.",
   "err.code": "Code {code}",
   "err.too_large": "Datei größer als {mb} MB",
   "err.bad_ext": "nicht unterstützter Typ (PDF/Bild erwartet)",

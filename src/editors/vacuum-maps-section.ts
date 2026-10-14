@@ -45,7 +45,7 @@ export interface VacuumMapsCardHost {
 
 export interface VacuumMapsHost {
   host: VacuumMapsCardHost;
-  _saveConfigNow: () => Promise<void>;
+  _saveConfigNow: (attempt?: OptimisticAttempt<ServerConfig>) => Promise<void>;
   _vacAutoCalibrate: (dev: DevItem) => void;
   _vacStartFit: (dev: DevItem, routeId?: string) => void;
 }
@@ -110,7 +110,7 @@ export function renderVacuumMapsSection(
     host.requestUpdate();
     const restoreDeferred = supersedeDeferredWrite(host._saveConfigDebounced); // #842 K4
     try {
-      await runtime._saveConfigNow();
+      await runtime._saveConfigNow(attempt);
       return true;
     } catch (error) {
       restoreDeferred(host._rollbackOptimistic(attempt));

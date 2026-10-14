@@ -95,6 +95,8 @@ export class MutableConfigAdoption {
    * revision through own accepted writes only while this stays the same.
    */
   adoptionEpoch = 0;
+  /** Last server-confirmed bodies, isolated from in-place editor drafts (#890). */
+  private acceptedCache: CachedStructuralSnapshot | null = null;
 
   constructor(private readonly onBodyReplaced?: (field: BodyField, previous: unknown) => void) {}
 
@@ -157,6 +159,7 @@ export class MutableConfigAdoption {
       }
       this.layoutRev = layResp?.rev ?? this.layoutRev;
     }
+    if (next) this.rememberAccepted(next, layResp?.layout ?? this.acceptedCache?.layout ?? this.layout);
     return { configChanged, layoutChanged };
   }
 
@@ -174,6 +177,11 @@ export class MutableConfigAdoption {
     }
     this.layoutFingerprint = fingerprint;
     this.layoutRev = layResp?.rev ?? this.layoutRev;
+    if (this.acceptedCache) {
+      this.acceptedCache.layout = structuredClone(layResp.layout ?? merged);
+      this.acceptedCache.layout_rev = this.layoutRev;
+      this.acceptedCache.layout_fingerprint = contentFingerprint(this.acceptedCache.layout);
+    }
     return changed;
   }
 
@@ -198,6 +206,7 @@ export class MutableConfigAdoption {
   acceptConfigWrite(candidate: ServerConfig, response: { rev?: unknown } | null | undefined): void {
     this.configFingerprint = contentFingerprint(candidate);
     this.configRev = finiteRevision(response?.rev, this.configRev + 1);
+    this.rememberAccepted(candidate, this.acceptedCache?.layout ?? this.layout);
   }
 
   /** Paired write (`plan/optimize`, copy, import): both bodies with both revisions. */
@@ -213,11 +222,19 @@ export class MutableConfigAdoption {
     this.configRev = finiteRevision(response?.config_rev, this.configRev + 1);
     this.layoutRev = finiteRevision(response?.layout_rev, this.layoutRev + 1);
     this.adoptionEpoch++;
+    this.rememberAccepted(config, layout);
   }
 
   /** Our own `layout/update` reply, or its event: revisions are monotonic. */
   noteLayoutRevision(rev: unknown): void {
-    if (typeof rev === 'number' && rev > this.layoutRev) this.layoutRev = rev;
+    if (typeof rev === 'number' && rev > this.layoutRev) {
+      this.layoutRev = rev;
+      if (this.acceptedCache) {
+        this.acceptedCache.layout = structuredClone(this.layout);
+        this.acceptedCache.layout_rev = rev;
+        this.acceptedCache.layout_fingerprint = contentFingerprint(this.layout);
+      }
+    }
   }
 
   // --- local staging (bodies only; identity untouched) --------------------
@@ -274,6 +291,7 @@ export class MutableConfigAdoption {
 
   /** Restore from `LS_CFG`; a cache written before fingerprints recomputes them. */
   restoreCached(cached: Partial<CachedStructuralSnapshot> | null | undefined): boolean {
+    if (this.config || this.acceptedCache) return false;
     const config = cached?.config;
     if (!config || !Array.isArray(config.spaces)) return false;
     this.setConfig(config);
@@ -286,20 +304,27 @@ export class MutableConfigAdoption {
     return true;
   }
 
-  /** Snapshot for `LS_CFG`. Re-pairs fingerprints with the cached bodies first. */
-  snapshot(virtualLights: unknown): CachedStructuralSnapshot | null {
-    if (!this.config) return null;
-    this.refreshConfigFingerprint();
-    this.refreshLayoutFingerprint();
-    return {
-      config: this.config,
-      rev: this.configRev,
-      config_fingerprint: this.configFingerprint,
-      layout: this.layout,
-      layout_rev: this.layoutRev,
-      layout_fingerprint: this.layoutFingerprint,
-      virtual_lights: virtualLights,
+  /** Retire a foreign HA authority, never turn its revision into a cold hint. */
+  resetContext(): void {
+    this.acceptedCache = null;
+    this.setConfig(null); this.setLayout({});
+    this.configRev = this.layoutRev = 0;
+    this.configFingerprint = this.layoutFingerprint = '';
+    this.adoptionEpoch++;
+  }
+
+  private rememberAccepted(config: ServerConfig, layout: DeviceLayout): void {
+    this.acceptedCache = {
+      config: structuredClone(config), rev: this.configRev,
+      config_fingerprint: contentFingerprint(config),
+      layout: structuredClone(layout), layout_rev: this.layoutRev,
+      layout_fingerprint: contentFingerprint(layout),
     };
+  }
+
+  /** Only accepted documents enter LS_CFG; an optimistic draft is not a revision. */
+  snapshot(virtualLights: unknown): CachedStructuralSnapshot | null {
+    return this.acceptedCache ? { ...this.acceptedCache, virtual_lights: virtualLights } : null;
   }
 }
 

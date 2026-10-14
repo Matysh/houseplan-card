@@ -1,5 +1,17 @@
 # Development and deployment
 
+## Config writer authority witnesses (#890)
+
+`smoke_config_authority` exercises a real GUI Save followed by public setConfig,
+fixed/default floor changes, storage quota failure, cold cache, device-editor
+acknowledgement and a delayed write across foreign HA intake. Repeated same
+connection assignment is the preserving control. `smoke_vacuum_route_draft`
+plants a >9-decimal transform tail and an independent deferred unknown-field
+edit before the real route Save, so an omitted canonical attempt cannot hide
+behind an already-normalized fixture. Unit tests cover accepted-cache identity,
+per-ID acknowledgement, distinct RU/EN errors and context generation. Registered
+mutants run nightly only; ordinary development checks anchors and negative cases.
+
 ## Focused golden repaint (#881)
 
 Owner option b keeps all Chromium arguments unchanged. The golden runner uses

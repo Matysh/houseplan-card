@@ -118,6 +118,9 @@ const out = await page.evaluate(async () => {
 
   const writes = [];
   let rejectNext = true;
+  c._serverCfg.spaces[0].plan_x = 0.123456789123; // private-ok: #890 seed write-time numeric normalization to distinguish canonical attempt ownership; no GUI action is claimed by this fixture.
+  c._serverCfg.settings.unknown_890 = 'queued independent'; // private-ok: #890 seed an unknown-field independent pending writer, unavailable as a GUI setting.
+  c._saveConfig();
   c.hass = { ...c.hass, callWS: async (message) => {
     if (message.type === 'houseplan/config/set') {
       writes.push(message);
@@ -136,6 +139,11 @@ const out = await page.evaluate(async () => {
   o.rejectedPayloadWasValid = writes[0]?.config?.markers
     ?.find((marker) => marker.id === 'd_mower')?.vacuum?.map_routes
     ?.every((route) => !!route.space) === true;
+  o.routeAttemptWasNormalized = writes[0]?.config.spaces[0].plan_x === 0.123456789;
+  await waitFor(() => writes.length === 2);
+  o.independentWriteRestoredOnce = writes.length === 2
+    && writes[1].config.settings.unknown_890 === 'queued independent'
+    && writes[1].config.markers.find((marker) => marker.id === 'd_mower').vacuum.map_routes.length === 1;
 
   pending()?.querySelector('.vacroute-draft-save')?.click();
   await waitFor(() => routes().length === 2 && !pending());

@@ -32,6 +32,10 @@ epoch; other failures preserve bounded redacted step/material identity without
 granting merge authority. Beta ship reports archive by real stable ancestry,
 including a beta version with no matching stable. Token ceilings are unchanged.
 
+- #890 isolates confirmed config/layout cache from pending edits, preserves live
+  setConfig authority, fences foreign HA writes and restores rejected vacuum
+  routes/New acknowledgements. Status remains authoritative in issue labels.
+
 Beta publication (#889) treats additional owner scene/dev/native/GPU records
 as advice when absent, not as fabricated acceptance. Only the committed beta
 version selects this policy; stable/RC/unknown channels stay strict. Exact full

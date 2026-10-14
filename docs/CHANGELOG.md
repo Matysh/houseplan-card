@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Saving no longer falls back to an old cached plan when Home Assistant reapplies
+  card options. Refused vacuum-map edits and New acknowledgements restore their
+  own changes, and save-permission errors name saving rather than backup import
+  ([#890](https://github.com/Matysh/houseplan-card/issues/890)).
+
 ## v1.81.0-beta.2 — 2026-10-14
 
 - View device cards no longer offer editing to read-only users or kiosk.

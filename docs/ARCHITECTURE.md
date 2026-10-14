@@ -493,6 +493,18 @@ age ([`SCOPE.md`](SCOPE.md)). Migrations: [`CONFIG-COMPATIBILITY.md`](CONFIG-COM
 
 ### Editor draft ownership (#851)
 
+`ConfigAdoption` separates the last confirmed config/layout cache from mutable
+editor bodies (#890). `restoreCached` seeds only an empty owner; repeated public
+`setConfig` changes card-level floor/default options without replacing accepted
+revisions, pending edits or history. Accepted writes refresh LS_CFG, while a
+storage exception cannot reverse server acceptance. `ConfigWriteContext` fences
+queued writes and late replies at HA connection/user replacement; a reconnect
+through the same connection retains independent drafts. Foreign authority
+retires structural identity/history until that context's config/layout reads
+complete. `new-device-ack` owns one explicit visit's attention change and restores
+only that ID after rejection, without a background retry loop. Vacuum routes
+pass the same optimistic attempt through write-time canonicalization.
+
 `device-editor-access.ts` separates Houseplan writing from HA administration
 (#844). The core guards the info footer, direct lazy entrance and each latest,
 connected completion; disconnect invalidates the request generation. The

@@ -32,7 +32,7 @@
     "src/render-device-snapshot.ts", "src/render-invalidation.ts", "src/config-fingerprint-pass.ts", "src/houseplan-render-lifecycle.ts", "src/live-interaction-runtime.ts", "src/live-viewport.ts", "src/live-hover.ts", "src/live-editor.ts", "src/pointer-move-queue.ts",
     "src/command-stack.ts", "src/device-position-history.ts", "src/device-spacing.ts",
     "src/coordinate-canonicalization.ts",
-    "src/serialized-write-queue.ts",
+    "src/serialized-write-queue.ts", "src/config-write-context.ts", "src/new-device-ack.ts",
     "src/align-grid.ts",
     "src/plan-optimizer.ts", "src/plan-optimize-write.ts", "src/optimize-plans-dialog.ts", "src/space-reference-repair.ts", "src/space-deletion.ts", "src/space-copy.ts", "src/space-copy-runtime.ts",
     "src/plan-geometry-preflight.ts", "src/draft-live-preflight.ts", "src/draft-live-commit.ts",

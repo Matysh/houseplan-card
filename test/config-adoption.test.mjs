@@ -486,14 +486,42 @@ test('AC5: a cache written before fingerprints existed restores with recomputed 
   assert.equal(empty.config, null);
 });
 
-test('snapshot re-pairs fingerprints with bodies mutated in place before the debounced write', () => {
+test('#890 AC2: snapshot caches accepted bodies, not in-place pending drafts', () => {
   const adoption = adoptedWith(cfg('Ground floor'), 3);
   adoption.config.spaces[0].title = 'Mutated in place';
   assert.notEqual(adoption.configFingerprint, contentFingerprint(adoption.config));
   const snapshot = adoption.snapshot(null);
-  assert.equal(snapshot.config_fingerprint, contentFingerprint(adoption.config));
+  assert.equal(snapshot.config.spaces[0].title, 'Ground floor');
+  assert.equal(snapshot.config_fingerprint, contentFingerprint(snapshot.config));
+  assert.notEqual(snapshot.config_fingerprint, contentFingerprint(adoption.config));
   assert.equal(adoption.configFingerprint, snapshot.config_fingerprint);
   assert.equal(createConfigAdoption().snapshot(null), null);
+});
+
+test('#890 AC1: a repeated warm-cache restore cannot replace accepted or pending authority', () => {
+  const adoption = adoptedWith(cfg('Accepted'), 8);
+  const attempt = adoption.beginOptimistic(adoption.config, cfg('Pending'));
+  adoption.stageLocalConfig(attempt.attempted);
+  assert.equal(adoption.restoreCached({ config: cfg('Stale'), rev: 1 }), false);
+  assert.equal(adoption.configRev, 8);
+  assert.equal(adoption.config.spaces[0].title, 'Pending');
+  assert.equal(adoption.rollbackOptimistic(attempt), true);
+});
+
+test('#890 AC2: accepted write round-trips both fingerprints without caching the next draft', () => {
+  const adoption = adoptedWith(cfg('Before'), 8);
+  adoption.acceptConfigWrite(cfg('Saved'), { rev: 9 });
+  adoption.stageLocalConfig(cfg('Next pending'));
+  const cached = JSON.parse(JSON.stringify(adoption.snapshot(null)));
+  const cold = createConfigAdoption();
+  cold.restoreCached(cached);
+  assert.equal(cold.config.spaces[0].title, 'Saved');
+  assert.equal(cold.configRev, 9);
+  assert.equal(cold.configFingerprint, contentFingerprint(cold.config));
+  assert.equal(cold.layoutFingerprint, contentFingerprint(cold.layout));
+  adoption.resetContext();
+  assert.equal(adoption.snapshot(null), null);
+  assert.equal(adoption.configRev, 0);
 });
 
 // --- AC6: optimistic writes (#314/#439/#442) --------------------------------

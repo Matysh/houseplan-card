@@ -99,3 +99,16 @@ test('#842 К2 vacuum maps: a refusal to delete plan objects rolls back without 
   assert.deepEqual(f.host._serverCfg, accepted());
   assert.deepEqual(f.toasts, []);
 });
+
+test('#890 AC3: the route writer receives its attempt; late refusal cannot revert new accepted authority', async () => {
+  const f = fixture({ save: async (attempt) => {
+    assert.ok(attempt, 'canonical writer must receive ownership, not just the draft');
+    const next = accepted(); next.settings.foreign = 'accepted';
+    f.host._adoption.acceptPairWrite(next, {}, { config_rev: 4, layout_rev: 1 });
+    throw Object.assign(new Error('unauthorized'), { code: 'unauthorized' });
+  } });
+  await deleteRoute(f);
+  assert.equal(f.host._serverCfg.settings.foreign, 'accepted');
+  assert.equal(f.host._cfgRev, 4);
+  assert.equal(f.deferredWrite.arms, 0);
+});

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 890,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "v1.80.1 already contains public setConfig warm-cache restoration, vacuum map routing and New-device acknowledgement. This fixes accepted-write/cache ownership and rollback of those existing paths rather than polishing a newly introduced feature.",
+  "summary": {
+    "ru": "Сохранённый план не откатывается к старому кэшу, а отказ сохранения возвращает маршруты и отметку нового устройства.",
+    "en": "Saved plans no longer fall back to old cache, and refused saves restore routes and new-device attention."
+  }
+}

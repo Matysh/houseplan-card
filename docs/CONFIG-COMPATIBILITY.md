@@ -909,6 +909,16 @@ automatic deletion or migration.
 
 ## Atomic marker writes (#442)
 
+Writer/cache clarification (#890): the compatible LS_CFG wire keys are unchanged,
+but cache bodies are isolated server-confirmed snapshots, never pending edits
+labelled with an old accepted revision. Cache restore is a cold display hint,
+not write authority. Public card-option updates retain the live document and
+history; a different HA connection/user retires that authority and fences old
+queued writes/replies until new authoritative reads complete. Vacuum routing
+uses its canonical attempt; refused New acknowledgement restores only its own
+attention while preserving newer discovery and accepted revisions. No schema,
+model version, server ACL or revision wire format changes.
+
 The Device editor builds a separate complete config candidate and treats a
 successful `houseplan/config/set` response as the durable boundary. If semantic
 validation, transport or schema validation rejects that request, the card

@@ -77,6 +77,40 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'config-live-setconfig-restores-stale-cache',
+    guard: 'node demo/smoke_config_authority.mjs',
+    because: '#890 AC1/AC6: the real Lit card, browser localStorage and public setConfig/floor lifecycle must retain accepted/pending authority.',
+    patches: [{ file: 'src/config-adoption.ts',
+      find: '    if (this.config || this.acceptedCache) return false;',
+      replace: '    // stale LS_CFG replaces even accepted authority' }],
+  },
+  {
+    id: 'config-foreign-write-reply-revives-authority',
+    guard: 'node demo/smoke_config_authority.mjs',
+    because: '#890 AC6: a delayed transport reply across the actual HA/Lit intake lifecycle cannot authorize a different connection or install its old revisions.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: "    if (!isCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });\n    this._adoption.acceptConfigWrite(canonicalCandidate, response);",
+      replace: '    this._adoption.acceptConfigWrite(canonicalCandidate, response);' }],
+  },
+  {
+    id: 'vacuum-route-write-forgets-canonical-attempt',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/vacuum-maps-section.test.mjs',
+    because: '#890 AC3: normalized route rejection restores accepted routes and re-arms one independent queued write.',
+    patches: [{ file: 'src/editors/vacuum-maps-section.ts',
+      find: '      await runtime._saveConfigNow(attempt);',
+      replace: '      await runtime._saveConfigNow();' }],
+  },
+  {
+    id: 'new-device-ack-forgets-rejection-ownership',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/new-device-ack.test.mjs',
+    because: '#890 AC4: refusal of the opened device ack restores its New flag, without another automatic config write.',
+    patches: [{ file: 'src/new-device-ack.ts',
+      find: '      const rolledBack = host._rollbackOptimistic(attempt);',
+      replace: '      const rolledBack = false;' }, { file: 'src/new-device-ack.ts',
+      find: '      if (!rolledBack && host._adoption.configRev === attempt.revision && host._adoption.adoptionEpoch === epoch) {',
+      replace: '      if (false) {' }],
+  },
+  {
     id: 'candidate-beta-field-policy-leaks-to-stable',
     guard: 'node --test test/candidate-858.test.mjs',
     because: '#889 AC2: stable, RC and unknown channels still require independent field/GPU acceptance.',

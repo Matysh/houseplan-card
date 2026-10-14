@@ -798,6 +798,7 @@ export interface HouseplanEditorHostPort {
   _writeChain: Promise<void>;
   _writesPending: number;
   _sendConfigCandidate: (candidate: ServerConfig) => Promise<void>;
+  _configWriteGuard?: () => () => boolean;
   _writeConfig: () => Promise<void>;
   _requestMode: (mode: 'view' | 'plan' | 'devices' | 'decor', animate?: boolean) => Promise<void>;
   _checkOptimizeGeometry: (config: ServerConfig) => OptimizeGeometryPreflightResult;
@@ -1559,7 +1560,9 @@ public _prepareConfigCandidate(config: ServerConfig): ServerConfig { this._dropL
 
 public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null): Promise<void> {
     this.host._writesPending++;
+    const isCurrent = this.host._configWriteGuard?.() ?? (() => true);
     this.host._writeChain = enqueueSerializedWrite(this.host._writeChain, async () => {
+      if (!isCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
       if (!this.host._serverCfg) return;
       // #842 K2: R is judged on the config as handed over; refusal sends nothing, touches nothing.
       const removal = findGeometryRemoval(this.host._serverCfg);

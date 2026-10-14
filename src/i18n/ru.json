@@ -400,6 +400,7 @@
   "toast.file_failed": "Файл «{name}» не загружен: {err}",
   "toast.files_attached": "Прикреплено файлов: {n}",
   "err.unknown": "неизвестная ошибка",
+  "err.config_write_unauthorized": "Нет прав на сохранение плана.",
   "err.code": "код {code}",
   "err.too_large": "файл больше {mb} МБ",
   "err.bad_ext": "недопустимый тип (нужен PDF/изображение)",

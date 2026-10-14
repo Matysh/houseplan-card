@@ -41,7 +41,7 @@ const BODY_WRITE = {
  */
 const BODY_STAGING_ALLOWLIST = {
   'src/houseplan-editor-runtime.ts': { _serverCfg: 5, _layout: 5 },
-  'src/houseplan-card.ts': { _serverCfg: 3, _layout: 9 },
+  'src/houseplan-card.ts': { _serverCfg: 2, _layout: 9 },
 };
 
 const count = (text, re) => (text.match(re) || []).length;

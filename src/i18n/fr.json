@@ -400,6 +400,7 @@
   "toast.file_failed": "Le fichier « {name} » n’a pas été importé : {err}",
   "toast.files_attached": "Fichiers joints : {n}",
   "err.unknown": "erreur inconnue",
+  "err.config_write_unauthorized": "Vous n’avez pas l’autorisation d’enregistrer ce plan.",
   "err.code": "code {code}",
   "err.too_large": "fichier supérieur à {mb} Mo",
   "err.bad_ext": "type non pris en charge (PDF/image attendu)",
