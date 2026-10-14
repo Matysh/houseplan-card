@@ -109,7 +109,8 @@ const out = await page.evaluate(async () => {
     && previewMainText.includes('devices detached from missing spaces — 1')
     && previewMainText.includes('Forgotten records removed: 4')
     && previewMainText.includes('Kept marker')
-    && previewMainText.includes('Could not safely verify positions: 1')
+    && previewMainText.includes('Old position records that could not be matched to objects: 1. They were left unchanged.')
+    && previewMainText.includes('Could not determine what these records belong to: 1.')
     && !previewMainText.includes('opaque_owner')
     && !previewMainText.includes('gone');
   result.previewPreservesMarkerSettings = preview?.config.markers[0].description === 'must survive'
@@ -157,10 +158,15 @@ const out = await page.evaluate(async () => {
   card._editorRuntime.optimizePlans.open();
   await card.updateComplete;
   const noOpText = card.renderRoot.querySelector('hp-dialog .body')?.textContent || '';
+  // #869: unmatched records alone are no dead end — a plain summary, why they
+  // can stay, and Close instead of Cancel.
   result.remainingOnlyWarningHasNoApply = card._alignDialog?.changed === false
     && noOpText.includes('There are no automatic changes to apply.')
-    && noOpText.includes('Could not safely verify positions: 1')
-    && !card.renderRoot.querySelector('hp-dialog .btn.on');
+    && !noOpText.includes('Review the items below.')
+    && noOpText.includes('Old position records that could not be matched to objects: 1. They were left unchanged.')
+    && noOpText.includes('Their floors no longer exist.')
+    && !card.renderRoot.querySelector('hp-dialog .btn.on')
+    && card.renderRoot.querySelector('hp-dialog [data-hp="dialog-cancel"]')?.textContent.trim() === 'Close';
   card._alignDialog = null;
   await card.updateComplete;
 
