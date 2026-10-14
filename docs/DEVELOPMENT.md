@@ -1701,6 +1701,14 @@ the relative Markdown links in and to the moved documents and rebuilds
 whose `Issue:` trailer names the issue doing the move or the repository-hygiene
 umbrella (`PROCESS.md` §11.3).
 
+Beta ship reports (#897) go to the first actual stable containing the reviewed
+beta tag/material and the report's introducing commit. A stable with that
+beta's exact version need not exist; unknown tags/materials or unproved ancestry
+stay live. Dry-run is read-only. Continuation errors retain bounded redacted
+step and run/attempt/material identity; `reviewed-patch-changed` re-requests
+review only for the same fresh S7 epoch, never reuses the old green. Inspect
+other failures instead of assuming a merge or retrying ambiguous CAS delivery.
+
 Archive link auditing and repair (#839) operate on rendered Markdown links,
 not literal inline/fenced code examples. Actual missing links, including links
 inside quotations, still fail the audit; example source is never rewritten.

@@ -132,7 +132,8 @@ test('#882 AC1 material on no branch is fetched by SHA; exact candidate goes to 
 
 test('#882 AC2 delivered material keeps the old guards: changed patch, moved dev, rejected lease', async t => {
   const changed = fixture(t, { tamper: true });
-  await assert.rejects(runContinuation(changed), /reviewed patch changed/);
+  const changedResult = await runContinuation(changed);
+  assert.equal(changedResult.code, 'reviewed-patch-changed');
   assert.equal(has(changed.job, changed.material), true, 'the patch was compared on delivered material');
   assert.deepEqual(changed.devPushes(), []);
   assert.equal(changed.head('dev'), changed.dev);
@@ -167,7 +168,8 @@ test('#882 AC3 undeliverable material: no push, no label move, stderr names the 
   const f = fixture(t, { material: missing });
   const lines = [];
   t.mock.method(console, 'error', (...args) => lines.push(args.join(' ')));
-  await assert.rejects(runContinuation(f), /git fetch/);
+  const missingResult = await runContinuation(f);
+  assert.equal(missingResult.code, 'material-fetch-failed');
   t.mock.restoreAll();
   assert.deepEqual(f.devPushes(), []);
   assert.equal(f.head('dev'), f.dev);

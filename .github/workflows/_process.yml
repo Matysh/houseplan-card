@@ -8,15 +8,15 @@ name: "Ревью-конвейер · тело (#623)"
 #
 # Три вещи, без которых конвейер молча не работает:
 #
-# 1. Метки переставляются токеном HP_PROCESS_TOKEN, а не GITHUB_TOKEN. GitHub
+# 1. Review-triggering S4/S7 метки переставляются HP_PROCESS_TOKEN. GitHub
 #    намеренно не запускает workflow от событий, вызванных GITHUB_TOKEN, чтобы
 #    не было циклов — цепочка оборвалась бы после первого шага.
 # 2. Для события `issues` GitHub берёт workflow только из ветки по умолчанию
 #    (main). Там лежит тонкий `process.yml`, который вызывает этот файл по
 #    ссылке `@dev` (#623): тело конвейера читается из dev, зеркало в main не
 #    нужно. Триггер, run-name и потолок прав — в `process.yml`.
-# 3. Многострочный текст внутри `run:` — только через heredoc. Строка с нулевым
-#    отступом обрывает блок YAML, и скрипт обрезается без ошибки парсера.
+# 3. Новый многострочный текст — из скрипта/файла, не heredoc в `run:` (§10.4).
+#    Существующие heredoc переводятся при переработке содержащего их шага.
 #    Проверять не только YAML, но и каждый `run` через `bash -n`.
 
 on:
@@ -1147,6 +1147,8 @@ jobs:
 
       - name: "Перепроверить тело перед моделью (#855)"
         env:
+          # Terminal S3/S6 refusal has no next workflow: deliberately GITHUB_TOKEN.
+          # S4/S7 wakeups always use the PAT, with no permission broadening here.
           GH_TOKEN: ${{ github.token }}
           NUM: ${{ github.event.issue.number }}
           REPO: ${{ github.repository }}

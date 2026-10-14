@@ -195,7 +195,7 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
   },
   {
     id: 'markers[].display=ripple',
-    enforcedBy: 'logic.ts normalizeDeviceDisplay (read) + editor-runtime _dropLegacySegments rewrites on every write',
+    enforcedBy: 'logic.ts normalizeDeviceDisplay (read) + editor-runtime _dropLegacySegments on an explicit safe write',
     selector: { path: ['markers', '*', 'display'], equals: 'ripple' },
     storage: 'House Plan server config',
     type: "legacy enum value 'ripple'",

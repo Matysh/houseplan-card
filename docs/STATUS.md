@@ -25,6 +25,13 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Pipeline outcomes (#897) distinguish a verified completed-model merge wait from
+legacy review resume: it is a successful no-op, not a second model call. Exact
+changed-patch refusals diagnose and re-request review only for the same live
+epoch; other failures preserve bounded redacted step/material identity without
+granting merge authority. Beta ship reports archive by real stable ancestry,
+including a beta version with no matching stable. Token ceilings are unchanged.
+
 Beta publication (#889) treats additional owner scene/dev/native/GPU records
 as advice when absent, not as fabricated acceptance. Only the committed beta
 version selects this policy; stable/RC/unknown channels stay strict. Exact full

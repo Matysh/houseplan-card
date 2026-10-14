@@ -343,8 +343,16 @@ export function realOps({
   releaseApi = ghApi,
 }) {
   const pushUrl = `https://x-access-token:${token}@github.com/${repo}`;
-  const git = (...args) => exec('git', args);
-  const must = (r, what) => { if (r.status !== 0) throw new Error(`${what}: ${r.stderr || r.stdout}`); return r.stdout; };
+  // Redact at the port, not only at selected callers: even thrown errors and
+  // injected exec failures must be safe before entering a log/comment path.
+  const safeError = (error) => new Error(redactSecrets(String(error?.message ?? error), [token]).slice(0, 1500));
+  const git = (...args) => {
+    try { return exec('git', args); } catch (error) { throw safeError(error); }
+  };
+  const must = (r, what) => {
+    if (r.error || r.status !== 0) throw safeError(`${what}: ${r.error?.message || r.stderr || r.stdout}`);
+    return r.stdout;
+  };
   // #705: ответ git на отказ — в журнал, без токена и URL с учётными данными.
   const refusedPush = (ref, stderr) => {
     const refusal = classifyPushRefusal(stderr, { secrets: [token] });
@@ -370,12 +378,12 @@ export function realOps({
     patchId: (from, to) => {
       const ordinaryDiff = must(git('diff', '--full-index', from, to, '--', '.', ...PATCH_ID_EXCLUDES,
         `:!${BROWSER_GUARD_INVENTORY}`), 'diff');
-      const diff = `${ordinaryDiff}\n${browserGuardPatchDiff(from, to)}`;
-      const r = spawnSync('git', ['patch-id', '--stable'], {
-        input: diff, encoding: 'utf8', maxBuffer: MAX_COMMAND_OUTPUT_BYTES,
-      });
-      if (r.error || r.status !== 0) throw new Error(`patch-id: ${r.error?.message || r.stderr || `git exited ${r.status}`}`);
-      return (r.stdout || '').trim().split(' ')[0] || 'empty';
+      try {
+        const diff = `${ordinaryDiff}\n${browserGuardPatchDiff(from, to)}`;
+        const r = exec('git', ['patch-id', '--stable'], { input: diff });
+        const stdout = must(r, 'patch-id');
+        return (stdout || '').trim().split(' ')[0] || 'empty';
+      } catch (error) { throw safeError(error); }
     },
     rebaseOnto: (branchTip, onto) => {
       must(git('checkout', '-q', '-B', 'merge-into-dev', branchTip), 'checkout');

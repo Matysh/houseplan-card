@@ -136,6 +136,12 @@ Usage dimensions — только отчёт, estimate не OAuth billing. Не�
 
 ## Находки и вердикт
 
+- Review-triggering S4/S7 переходы используют PAT; терминальный pre-model
+  отказ S3/S6, не запускающий следующий workflow, — least-privilege GITHUB_TOKEN.
+  Changed-patch continuation требует нового review, не применения старого
+  green; diagnosis пишет только свежему тому же epoch/body/branch
+  ([§10.4](../../PROCESS.md#104-событийный-конвейер-метка-как-триггер)).
+
 - High блокирует. Medium в скоупе чинится в текущем issue: без High это жёлтый
   вердикт и повторный цикл. Medium вне скоупа — отдельный issue со ссылкой.
   Low правится или снимается ревьюером с записью

@@ -181,9 +181,9 @@ test('#856 actual completion runner refuses cancelled/foreign/failed-source even
   const cancelled = execute(parent, child);
   assert.equal(cancelled.status, 0, cancelled.stderr); assert.match(cancelled.stdout, /cancelled completion grants no dispatch/);
   const foreign = execute(parent, { ...child, head_repository: { full_name: 'fork/repo' } });
-  assert.equal(foreign.status, 0); assert.equal(foreign.stdout.trim(), '[]');
+  assert.equal(foreign.status, 0); assert.match(foreign.stdout, /stale-or-foreign-child/);
   const failedSource = execute({ ...parent, conclusion: 'failure' }, child);
-  assert.equal(failedSource.status, 0); assert.equal(failedSource.stdout.trim(), '[]');
+  assert.equal(failedSource.status, 0); assert.match(failedSource.stdout, /stale-or-foreign-child/);
   const logged = readFileSync(calls, 'utf8');
   assert.doesNotMatch(logged, /"POST"|"PATCH"|"DELETE"|"workflow","run"/);
 });

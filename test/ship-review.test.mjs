@@ -94,6 +94,7 @@ test('#696 индекс и архив знают SHIP-REVIEW: бета в инд
   const plan = archivePlan({
     names: ['SHIP-REVIEW-v1.79.0-beta.1.md', 'SHIP-REVIEW-v1.80.0-beta.1.md'],
     lines: [{ tag: 'v1.79.0', issues: [] }], open: [], through: 'v1.79.0',
+    shipIn: new Map([['SHIP-REVIEW-v1.79.0-beta.1.md', 'v1.79.0']]), // #897: ancestry is a proved input, not the filename.
   });
   assert.deepEqual(plan.moves.map((m) => m.to), ['legacy/reviews/v1.79.0/SHIP-REVIEW-v1.79.0-beta.1.md']);
   assert.ok(plan.kept.some((k) => k.name === 'SHIP-REVIEW-v1.80.0-beta.1.md'));
@@ -365,10 +366,10 @@ test('#727 AC7 К7: индекс и архив знают ночной доку�
   const rows = md.split('\n').filter((line) => /^\| (бета|ночь)/.test(line));
   assert.deepEqual(rows.map((r) => r.split('|')[1].trim()), ['бета v1.79.0-beta.2', 'ночь после v1.79.0-beta.1', 'бета v1.79.0-beta.1']);
   assert.match(rows[1], new RegExp(`\\[${NIGHT().replace(/\./g, '\\.')}\\]\\(${NIGHT().replace(/\./g, '\\.')}\\) \\| ночное пакетное ревью ship · — \\| ⚪ — \\| 1 \\|`));
-  const plan = (names, lines, through) => archivePlan({ names, lines: lines.map((tag) => ({ tag, issues: [] })), open: [], through });
+  const plan = (names, lines, through, shipIn = new Map()) => archivePlan({ names, lines: lines.map((tag) => ({ tag, issues: [] })), open: [], through, shipIn });
   const night = 'SHIP-REVIEW-v1.78.0-dev-0123456789ab.md';
   // (а) база-бета → каталог её стабильной линии
-  assert.deepEqual(plan([NIGHT()], ['v1.79.0'], 'v1.79.0').moves.map((m) => m.to), [`legacy/reviews/v1.79.0/${NIGHT()}`]);
+  assert.deepEqual(plan([NIGHT()], ['v1.79.0'], 'v1.79.0', new Map([[NIGHT(), 'v1.79.0']])).moves.map((m) => m.to), [`legacy/reviews/v1.79.0/${NIGHT()}`]);
   // (б) стабильная база → линия новее базы, не каталог самой базы
   const later = plan([night], ['v1.78.0', 'v1.79.0'], 'v1.79.0');
   assert.deepEqual(later.moves.map((m) => m.to), [`legacy/reviews/v1.79.0/${night}`]);

@@ -3,7 +3,7 @@
 import { execFileSync } from 'node:child_process';
 import { appendFileSync } from 'node:fs';
 import { authenticatedContinuation, validContinuation } from './continuation-record.mjs';
-import { artifactNames, issueEvents, latestReviewRequest, loadSealedArtifact, processRuns, reviewRunsForRequest } from './process-reconcile.mjs';
+import { artifactNames, issueEvents, latestReviewRequest, loadSealedArtifact, processRuns, reviewRunsForRequest, relabel } from './process-reconcile.mjs';
 import { issueBodyDigest } from './review-doc-guard.mjs';
 import { moveStatusLabel } from './status-label.mjs';
 import { realOps as mergeOps, redactSecrets } from './merge-candidate.mjs';
@@ -49,7 +49,19 @@ export function mergeContinuationDecision(p, current) {
   if (current.dev !== p.dev) return { action: 'return', reason: 'dev changed; fresh candidate required' };
   return { action: 'merge', reason: 'exact current request/candidate/dev' };
 }
-export async function resumeMergeContinuation(p, { state, proof, merge, move, comment }) {
+export function continuationFailure(error, p, stage = 'verification', secrets = []) {
+  const code = ['reviewed-patch-changed', 'material-fetch-failed'].includes(error?.code) ? error.code : 'verification-failed';
+  const stages = ['verification', 'sealed-artifact', 'child-authentication', 'merge-verification', 'merge', 'material-fetch', 'patch-identity'];
+  const safeStage = stages.includes(error?.stage) ? error.stage : stages.includes(stage) ? stage : 'verification';
+  return { action: 'unverified', code, stage: safeStage,
+    reason: redactSecrets(String(error?.message ?? error), secrets).replace(/\s+/g, ' ').trim().slice(0, 600),
+    ...(p && validContinuation(p) ? { kind: p.kind, producer: p.producer.run, attempt: p.producer.attempt,
+      material: p.material, candidate: p.candidate } : {}),
+    nextStep: code === 'reviewed-patch-changed' ? 'review the current candidate again; old green does not apply'
+      : 'inspect the source run and failed step; no merge/delivery success assumed' };
+}
+
+export async function resumeMergeContinuation(p, { state, proof, merge, move, comment, diagnose, rereview, secrets = [] }) {
   let decision = mergeContinuationDecision(p, await state());
   if (decision.action === 'noop') return decision;
   const verdict = decision.action === 'merge' ? await proof(p) : null;
@@ -59,7 +71,21 @@ export async function resumeMergeContinuation(p, { state, proof, merge, move, co
   if (decision.action === 'merge' && verdict?.status !== 'green')
     decision = { action: 'return', reason: `candidate proof ${verdict?.status || 'missing'}: ${verdict?.note || 'not complete'}` };
   if (decision.action === 'merge') {
-    if (!await merge(p)) return { action: 'noop', reason: 'lease/branch changed before dev push' };
+    let pushed;
+    try { pushed = await merge(p); } catch (error) {
+      const failure = continuationFailure(error, p, 'merge', secrets);
+      // No privilege is obtained from an error. Before every diagnostic or
+      // canonical re-review write the sealed epoch/body/branch is read again.
+      const active = async () => mergeContinuationDecision(p, await state()).action === 'merge';
+      if (!await active()) return { ...failure, action: 'noop', reason: 'request changed after failed merge; left untouched' };
+      if (diagnose) await diagnose(failure);
+      if (failure.code === 'reviewed-patch-changed' && rereview && await active()) {
+        await rereview();
+        return { ...failure, action: 'rereview', to: 'S7-code-review' };
+      }
+      return failure;
+    }
+    if (!pushed) return { action: 'noop', reason: 'lease/branch changed before dev push' };
     // A successful push is irreversible here; do not relabel a newer epoch.
     try {
       if (mergeContinuationDecision(p, await state()).action !== 'repair')
@@ -87,10 +113,12 @@ export function mergeReviewedCandidate(p, ops, { secrets = [] } = {}) {
     // Step and SHA for the job log; git's answer only redacted and clipped.
     const why = redactSecrets(String(error?.message ?? error), secrets).replace(/\s+/g, ' ').trim().slice(0, 400);
     console.error(`merge continuation: material fetch ${p.material} failed: ${why}`);
-    throw error;
+    throw Object.assign(Error(why), { code: 'material-fetch-failed', stage: 'material-fetch' });
   }
   const base = ops.mergeBase(p.material, p.dev);
-  if (ops.patchId(base, p.material) !== ops.patchId(p.dev, p.candidate)) throw Error('reviewed patch changed');
+  if (ops.patchId(base, p.material) !== ops.patchId(p.dev, p.candidate))
+    throw Object.assign(Error('reviewed patch changed; old green cannot authorize this candidate'),
+      { code: 'reviewed-patch-changed', stage: 'patch-identity' });
   ops.checkReleaseEntry(p.candidate);
   const pushed = ops.pushWithLease(p.candidate, 'dev', p.dev);
   if (pushed) { try { ops.recordReleaseMilestone(p.candidate); } catch { console.error('milestone accounting needs retry; code is already in dev'); } }
@@ -109,6 +137,24 @@ const claimIntent = (repo, p, suffix = '') => {
 };
 const head = (repo, branch) => { try { return api(`repos/${repo}/git/ref/heads/${branch}`).object.sha; } catch { return null; } };
 
+export const diagnosisMarker = (p, failure) => `<!-- hp:continuation-diagnostic run=${p.producer.run} attempt=${p.producer.attempt} reason=${failure.code} -->`;
+/** Stop if the bounded history cannot establish that a marker is absent. */
+export function diagnoseOnce(p, failure, { page, comment, fresh }) {
+  const marker = diagnosisMarker(p, failure);
+  for (let n = 1; n <= 10; n++) {
+    const rows = page(n);
+    if (rows.some(row => String(row.body || '').includes(marker))) return false;
+    if (rows.length < 100) {
+      if (!fresh()) return false;
+      comment(`Continuation: ${failure.code} (${failure.stage}). ${failure.reason}\n\n`
+        + `${failure.nextStep}. Candidate \`${p.candidate}\`; material \`${p.material}\`. `
+        + `Source: https://github.com/${p.repo}/actions/runs/${p.producer.run} (attempt ${p.producer.attempt}).\n${marker}`);
+      return true;
+    }
+  }
+  throw Error('diagnostic history exceeds bounded scan; marker absence unknown');
+}
+
 export async function continueWorkflows({ repo, eventId, apply = false, out = null }) {
   if (!/^[\w.-]+\/[\w.-]+$/.test(repo || '') || eventId && !/^[1-9]\d*$/.test(String(eventId))) throw Error('invalid event identity');
   const event = eventId ? api(`repos/${repo}/actions/runs/${eventId}`) : null;
@@ -116,26 +162,33 @@ export async function continueWorkflows({ repo, eventId, apply = false, out = nu
   const candidates = artifacts.filter(a => /^workflow-continuation-[1-9]\d*-[1-9]\d*$/.test(a.name) && !a.expired).slice(0, 12);
   const outcomes = [];
   for (const artifact of candidates) {
+    let p, stage = 'sealed-artifact';
     try {
       const [, runId, attempt] = /^workflow-continuation-(\d+)-(\d+)$/.exec(artifact.name);
       // Read CURRENT run attempt, not its historical success endpoint.
       // An old artifact must not survive a cancelled/new producer rerun.
       const producer = api(`repos/${repo}/actions/runs/${runId}`);
-      const p = loadSealedArtifact(repo, { id: runId, attempt }, artifact, 'pending.json');
+      p = loadSealedArtifact(repo, { id: runId, attempt }, artifact, 'pending.json');
       if (!validContinuation(p) || String(p.producer.run) !== runId || String(p.producer.attempt) !== attempt) {
         outcomes.push({ action: 'noop', reason: 'invalid sealed identity/name' }); continue;
       }
+      stage = 'child-authentication';
       const eventWorkflow = event?.path === '.github/workflows/performance.yml' && p.kind === 'release' ? 'performance.yml' : 'validate.yml';
       const childRuns = api(`repos/${repo}/actions/workflows/${eventWorkflow}/runs?head_sha=${p.candidate}&per_page=10`).workflow_runs || [];
       const latest = childRuns.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at) || b.id - a.id)[0];
       const child = event || latest;
-      if (!authenticatedContinuation(p, producer, child, repo) || child?.id !== latest?.id) continue;
+      if (!authenticatedContinuation(p, producer, child, repo) || child?.id !== latest?.id) {
+        outcomes.push({ kind: p.kind, producer: producer.id, action: 'noop', code: 'stale-or-foreign-child',
+          reason: 'producer/child attempt, identity or newest completion differs; no authority' });
+        continue;
+      }
       if (p.kind !== 'merge' && child.conclusion === 'cancelled') {
         outcomes.push({ kind: p.kind, producer: producer.id, action: 'noop', reason: 'cancelled completion grants no dispatch authority' });
         continue;
       }
       if (!apply) { outcomes.push({ kind: p.kind, action: 'ready-for-check', producer: producer.id }); continue; }
       if (p.kind === 'merge') {
+        stage = 'merge-verification';
         const token = process.env.HP_PROCESS_TOKEN || process.env.GH_TOKEN;
         const ops = mergeOps({ repo, token, issue: p.issue, mutants: p.policy === 'merge' });
         ops.fetch('dev', p.branch);
@@ -157,6 +210,13 @@ export async function continueWorkflows({ repo, eventId, apply = false, out = nu
           merge: () => mergeReviewedCandidate(p, ops, { secrets: [token, process.env.GH_TOKEN] }),
           move: (from, to) => moveStatusLabel({ repo, issue: p.issue, from, to }),
           comment: body => gh(['api', '--method', 'POST', `repos/${repo}/issues/${p.issue}/comments`, '--input', '-'], { input: JSON.stringify({ body }) }),
+          secrets: [token, process.env.GH_TOKEN],
+          diagnose: failure => diagnoseOnce(p, failure, {
+            page: n => api(`repos/${repo}/issues/${p.issue}/comments?per_page=100&page=${n}`),
+            fresh: () => mergeContinuationDecision(p, state()).action === 'merge',
+            comment: body => gh(['api', '--method', 'POST', `repos/${repo}/issues/${p.issue}/comments`, '--input', '-'], { input: JSON.stringify({ body }) }),
+          }),
+          rereview: () => relabel(repo, { number: p.issue }, 'S7-code-review'),
         });
         outcomes.push({ kind: p.kind, producer: producer.id, ...result });
         if (result.to === 'S8-merged') { try { ops.deleteBranch(p.branch, p.candidate); } catch { console.error('merged branch cleanup needs retry'); } }
@@ -190,7 +250,7 @@ export async function continueWorkflows({ repo, eventId, apply = false, out = nu
         });
         outcomes.push({ kind: p.kind, producer: producer.id, ...result });
       }
-    } catch { outcomes.push({ action: 'unverified', reason: 'verification failed; no success assumed; inspect source and possible one-shot claim before retry' }); }
+    } catch (error) { outcomes.push(continuationFailure(error, p, stage, [process.env.HP_PROCESS_TOKEN, process.env.GH_TOKEN])); }
   }
   if (out) {
     const { mkdirSync, writeFileSync } = await import('node:fs');

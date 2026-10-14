@@ -10,6 +10,14 @@ golden, а то, чего автоматика не видит, собрано �
 
 ## Правила для новых тестов (issue #85) — обязательны
 
+Pipeline outcomes: `node --test test/pipeline-outcomes-897.test.mjs` exercises
+complete/corrupt/foreign sealed model receipts, current/stopped/raced merge
+requests, idempotent failure diagnostics, redaction at the actual `realOps`
+error port, real-git beta/stable ancestry and workflow Bash parsing. Existing
+`process-resume`, `proof-loop-856`, `merge-continuation-882`, `merge-candidate`,
+archive and process-digest units retain the exact proof/CAS/lease contracts.
+Synthetic credentials only; none of these tests calls a real write API or model.
+
 Зелёный тест в этом проекте несколько раз означал «ничего не проверено»:
 смок непрерывности не заметил удаления механизма, который защищает; golden-сцена,
 заведённая под #71, была пустой; смок теней был зелёным, пока тени физически не

@@ -74,7 +74,7 @@ export function stableTagsThrough(tags, through) {
  * @param addedIn Map<имя, тег> — линия, в которой документ добавлен (для задач без трейлера)
  * @returns {{ moves: {name, from, to, tag, issue}[], kept: {name, reason, issue?}[] }}
  */
-export function archivePlan({ names, lines, open, through, addedIn = new Map() }) {
+export function archivePlan({ names, lines, open, through, addedIn = new Map(), shipIn = new Map() }) {
   const openSet = new Set([...open].map(Number));
   const lineOf = new Map();
   const ordered = [...lines].sort((a, b) => compareStable(a.tag, b.tag));
@@ -100,9 +100,11 @@ export function archivePlan({ names, lines, open, through, addedIn = new Map() }
     if (doc.stage === 'release' || doc.stage === 'ship') {
       // #696: пакетное ревью беты уходит в каталог своей стабильной линии;
       // #727: ночной документ с базой-бетой — туда же, куда документ этой беты.
-      const line = doc.tag.replace(/-beta\.\d+$/, '');
+      const beta = /-beta\.\d+$/.test(doc.tag);
+      const line = beta ? shipIn.get(name) : doc.tag;
       if (tags.has(line)) moves.push({ name, from: `${LIVE_DIR}/${name}`, to: `${ARCHIVE_DIR}/${line}/${name}`, tag: line, issue: null });
-      else kept.push({ name, reason: `ревью линии ${line} не входит в архивируемые линии` });
+      else kept.push({ name, reason: beta ? `бета ${doc.tag}: нет доказанной выпущенной линии с тегом/материалом и добавлением документа`
+        : `ревью линии ${line} не входит в архивируемые линии` });
       continue;
     }
     if (openSet.has(doc.issue)) { kept.push({ name, issue: doc.issue, reason: 'задача есть в открытой линии' }); continue; }
@@ -150,7 +152,31 @@ export function readInputs({ through, head = 'HEAD', cwd = ROOT }) {
   }));
   const open = trailerIssues(`${through}..${head}`, cwd);
   const names = git(['ls-tree', '--name-only', `${head}:${LIVE_DIR}`], cwd).split('\n').filter(Boolean);
-  return { names, lines, open };
+  return { names, lines, open, shipIn: shipLines({ names, stable, head, cwd }) };
+}
+
+/** Both the reviewed beta/material and the report's introducing commit must
+ * belong to the first actual stable. Numerical resemblance is not proof. */
+export function shipLines({ names, stable, head = 'HEAD', cwd = ROOT }) {
+  const result = new Map();
+  const ancestor = (a, b) => {
+    const run = spawnSync('git', ['merge-base', '--is-ancestor', a, b], { cwd, encoding: 'utf8' });
+    if (run.error || ![0, 1].includes(run.status)) throw Error(`archive ancestry could not be read: ${a}..${b}`);
+    return run.status === 0;
+  };
+  for (const name of names) {
+    const doc = parseDocName(name);
+    if (doc?.stage !== 'ship' || !/-beta\.\d+$/.test(doc.tag)) continue;
+    const exists = spawnSync('git', ['rev-parse', '--verify', `refs/tags/${doc.tag}^{commit}`], { cwd, encoding: 'utf8' });
+    if (exists.status !== 0) continue;
+    const added = git(['log', '--diff-filter=A', '--format=%H', '-1', head, '--', `${LIVE_DIR}/${name}`], cwd).trim();
+    if (!added) continue;
+    const material = doc.nightly ? /-dev-([a-f0-9]+)\.md$/.exec(name)?.[1] : doc.tag;
+    if (!material || spawnSync('git', ['rev-parse', '--verify', `${material}^{commit}`], { cwd, encoding: 'utf8' }).status !== 0) continue;
+    const line = [...stable].sort(compareStable).find(tag => ancestor(doc.tag, tag) && ancestor(material, tag) && ancestor(added, tag));
+    if (line) result.set(name, line);
+  }
+  return result;
 }
 
 /**
