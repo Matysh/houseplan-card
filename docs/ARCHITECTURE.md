@@ -638,6 +638,8 @@ distinguishes new provisional commands from cursor steps over accepted
 commands. A retryable deferred refusal restores accepted identity/cursor using
 bounded lane anchors, without displacing a newer top; an authoritative clear
 cannot be reversed. Only a proved unsafe step is disposable with its own batch.
+Only presentation commands created in that pending batch have their physical
+carrier rebased; older accepted Background snapshots stay byte-for-byte intact.
 The active Walls redo
 journal survives the transient history reset; explicit finish still retires it.
 `wall-node-refusal.ts` names a finite set of proved-invalid codes; unknown or

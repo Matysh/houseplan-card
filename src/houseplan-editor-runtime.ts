@@ -1687,6 +1687,10 @@ public _recordGeometry(name: string, before: SpaceGeometryState | null): void {
     this.host._geometryHistory.push(command);
     if (physicalHistoryChanged(before, after))
       this.physicalWriteHistory.record(this.host._pendingPhysicalWrites.get(before.spaceId)?.before || before, command);
+    else {
+      const pending = this.host._pendingPhysicalWrites.get(before.spaceId);
+      if (pending) this.physicalWriteHistory.recordPresentation(pending.before, command);
+    }
     this.host.requestUpdate();
   }
 

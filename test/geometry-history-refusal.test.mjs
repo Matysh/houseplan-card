@@ -258,6 +258,20 @@ for (const explicit of [true, false]) {
   });
 }
 
+test('#891 AC2 accepted cursor rollback never rebases older Background snapshots into newer walls', async () => {
+  const s = setup(); const background = await s.addLine('f'), accepted = await s.addWall('f');
+  const originalBackground = clone(background);
+  const send = s.host._sendConfigCandidate;
+  s.host._sendConfigCandidate = async () => { throw Object.assign(new Error('offline'), { code: 'timeout' }); };
+  s.runtime._stepGeometryHistory('undo'); await assert.rejects(s.runtime._writeConfig());
+  s.expectStack([background, accepted], [], 'accepted cursor returns with its older Background neighbour');
+  assert.deepEqual(background, originalBackground, 'older snapshots were not created in the refused batch');
+  s.host._sendConfigCandidate = send;
+  s.runtime._undoGeometry(); await s.writes();
+  s.runtime._undoGeometry(); await s.writes();
+  assert.equal(s.ids('f').length, 0, 'older Background Undo cannot resurrect the later accepted wall');
+});
+
 // ---------------------------------------------------------------- AC1
 test('#883 AC1 a floor pinned elsewhere keeps the exact Undo/Redo command, writes nothing, keeps the floor; unpinned, the retry applies exactly it', async () => {
   const s = setup();

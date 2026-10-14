@@ -21,7 +21,7 @@ export function physicalRollbackState(live: SpaceGeometryState, baseline: SpaceG
   return restored;
 }
 
-type Entry = { command: NamedCommand<SpaceGeometryState>; position?: CommandPosition<SpaceGeometryState> };
+type Entry = { command: NamedCommand<SpaceGeometryState>; position?: CommandPosition<SpaceGeometryState>; presentation?: true };
 
 export class PhysicalWriteHistory {
   private readonly batches = new WeakMap<SpaceGeometryState, Set<Entry>>();
@@ -32,6 +32,10 @@ export class PhysicalWriteHistory {
     // are not. Keep each step token so accepting an older send cannot retire a
     // later Undo/Redo of the same command while that send was in flight.
     batch.add({ command, position }); this.batches.set(baseline, batch);
+  }
+  public recordPresentation(baseline: SpaceGeometryState, command: NamedCommand<SpaceGeometryState>): void {
+    const batch = this.batches.get(baseline) || new Set<Entry>();
+    batch.add({ command, presentation: true }); this.batches.set(baseline, batch);
   }
   public capture(baseline: SpaceGeometryState): ReadonlySet<Entry> {
     return new Set(this.batches.get(baseline));
@@ -44,7 +48,7 @@ export class PhysicalWriteHistory {
   public reject(stack: CommandStack<SpaceGeometryState>, baseline: SpaceGeometryState, proof = false): void {
     const batch = [...(this.batches.get(baseline) || [])];
     const rejected = new Set(batch.flatMap(({ command }) => [fingerprint(command.before), fingerprint(command.after)]));
-    const disposable = new Set(batch.filter(entry => !entry.position || proof).map(entry => entry.command));
+    const disposable = new Set(batch.filter(entry => !entry.presentation && (!entry.position || proof)).map(entry => entry.command));
     stack.removeWhere(command => disposable.has(command));
     for (const entry of batch.reverse()) {
       if (entry.position && !disposable.has(entry.command)) stack.restorePosition(entry.command, entry.position);
@@ -52,8 +56,9 @@ export class PhysicalWriteHistory {
     // An independent presentation command may contain the rejected walls in its
     // whole-space snapshots. Rebase that carrier, not its own before/after delta;
     // otherwise its later Undo could resurrect a refused physical write.
-    for (const command of stack.commands()) {
-      if (command.before.spaceId !== baseline.spaceId || physicalHistoryChanged(command.before, command.after)) continue;
+    const surviving = new Set(stack.commands());
+    for (const { command, presentation } of batch) {
+      if (!presentation || !surviving.has(command)) continue;
       for (const direction of ['before', 'after'] as const) {
         if (rejected.has(fingerprint(command[direction])))
           command[direction] = physicalRollbackState(command[direction], baseline);

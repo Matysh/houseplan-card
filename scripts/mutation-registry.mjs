@@ -567,8 +567,8 @@ const MUTANT_DEFINITIONS = [
       + '&& node --test --test-name-pattern="#891 AC2" test/geometry-history-refusal.test.mjs',
     because: '#891 AC2: a retryable write refusal must restore accepted Undo/Redo identities and cursor, not discard them',
     patches: [{ file: 'src/physical-write-history.ts',
-      find: 'batch.filter(entry => !entry.position || proof)',
-      replace: 'batch.filter(() => true)',
+      find: '(!entry.position || proof)',
+      replace: 'true',
     }],
   },
   {
