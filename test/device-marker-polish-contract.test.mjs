@@ -56,8 +56,8 @@ test('issue 362 makes the whole device package inert only in Background', () => 
   const down = card.slice(card.indexOf('private _pointerDown('), card.indexOf('private _showToast('));
   assert.match(down, /private _pointerDown[\s\S]*this\._mode !== 'view' && this\._mode !== 'devices'/);
   assert.match(down, /private _pointerMove[\s\S]*this\._mode !== 'devices'/);
-  assert.match(down, /private _pointerUp[\s\S]*clearTimeout\(this\._holdTimer\);\s*if \(this\._mode !== 'devices'\) return/,
-    'View pointerup must still cancel its long-press timer before rejecting drag');
+  // #847: release cancellation is behavioral evidence in view-hold.test.mjs
+  // and smoke_view_hold_lifecycle, not a frozen spelling of the old timer.
 
   const render = card.slice(card.indexOf('private _renderDevice('), card.indexOf('private _roomArea('));
   assert.match(render, /@pointerover=\$\{[\s\S]*this\._mode !== 'view' && this\._mode !== 'devices'/);

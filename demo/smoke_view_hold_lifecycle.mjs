@@ -155,7 +155,7 @@ const show = (page, kind) => page.evaluate((mode) => {
     await sameInert(page, remountBefore, 'detachedViewHoldAndTailRetired', 40);
     await page.locator(DEVICE).click(); await wait(page, 100);
     assert.notEqual((await state(page)).light, remountBefore.light, 'first fresh click after remount works');
-    assert.equal(await reportPageErrors(), false);
+    if (await reportPageErrors()) throw new Error('uncaught card error');
   } finally { await browser.close(); }
 }
 
@@ -195,7 +195,7 @@ const show = (page, kind) => page.evaluate((mode) => {
       await page.locator(DEVICE).focus(); await page.keyboard.press('Enter'); await wait(page, 100);
       assert.equal((await state(page)).light, initial.light, 'fresh Enter toggles back');
     }
-    assert.equal(await reportPageErrors(), false);
+    if (await reportPageErrors()) throw new Error('uncaught card error');
   } finally { await browser.close(); }
 }
 
@@ -240,7 +240,7 @@ const show = (page, kind) => page.evaluate((mode) => {
     await touch(cdp, 'touchStart', [{ ...p, id: 6 }]); await touch(cdp, 'touchCancel');
     assert.equal(await blur(page), true); await refocus(page);
     await sameInert(page, initial, 'cancelThenBlurRetiresHold');
-    assert.equal(await reportPageErrors(), false);
+    if (await reportPageErrors()) throw new Error('uncaught card error');
   } finally { await browser.close(); }
 }
 
@@ -283,7 +283,7 @@ const show = (page, kind) => page.evaluate((mode) => {
       'accepted native room-name up survives its implicit lostpointercapture');
     assert.ok((await events(page)).some((event) => event.type === 'lostpointercapture' && event.trusted));
     out.trustedRoomNameTapSurvivesImplicitLoss = true;
-    assert.equal(await reportPageErrors(), false);
+    if (await reportPageErrors()) throw new Error('uncaught card error');
   } finally { await browser.close(); }
 }
 
@@ -314,7 +314,7 @@ const show = (page, kind) => page.evaluate((mode) => {
     assert.equal(await page.evaluate(() => window.__card._sunShown), false);
     await sun(20); assert.equal(await page.evaluate(() => window.__card._sunShown), true);
     out.sunFadeDisposesAndRemounts = true;
-    assert.equal(await reportPageErrors(), false);
+    if (await reportPageErrors()) throw new Error('uncaught card error');
   } finally { await browser.close(); }
 }
 console.log(JSON.stringify({ ok: true, ...out }));
