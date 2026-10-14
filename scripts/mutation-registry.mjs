@@ -8461,6 +8461,45 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'optimize-retry-only-for-registry-reason',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#869 AC3 incomplete HA data" '
+      + 'test/optimize-plans-dialog.test.mjs',
+    because: 'with an incomplete registry an opaque live device is reported as an unknown owner; '
+      + 'tying «Check again» to the record reason hides the one action that resolves it (#869 D3)',
+    patches: [{
+      file: 'src/optimize-plans-dialog.ts',
+      find: '    const limited = d.report.registryAuthoritative === false;',
+      replace: "    const limited = items.some((item) => item.reason === 'registry_unavailable');",
+    }],
+  },
+  {
+    id: 'optimize-retry-late-answer-applied',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#869 AC4 a late re-check answer" '
+      + 'test/optimize-plans-dialog.test.mjs',
+    because: 'a registry answer arriving after Close or a reopen must not resurrect the dialog or '
+      + 'replace the preview the person is looking at (#869 contract 6, AC4)',
+    patches: [{
+      file: 'src/optimize-plans-dialog.ts',
+      find: '    if (this.port.dialog() !== pending) return;\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'optimize-unverified-diagnostics-early-return',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#869 AC5 diagnostics" '
+      + 'test/optimize-plans-dialog.test.mjs',
+    because: 'without a geometry refusal «Copy diagnostics» must still copy the unverified records; '
+      + 'the old early return wrote nothing to the clipboard (#869 D2, AC5)',
+    patches: [{
+      file: 'src/optimize-plans-dialog.ts',
+      find: '    if (!dialog) return;\n    let text: string;',
+      replace: '    if (!dialog || !preflight || preflight.ok) return;\n    let text: string;',
+    }],
+  },
+  {
     id: 'union-failure-kills-space',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="malformed room|fallback unions overlapping" '

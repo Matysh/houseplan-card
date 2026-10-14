@@ -10,7 +10,10 @@ import {
   OptimizePlansDialog, preflightDiagnostics, preflightVersionsDiffer,
 } from '../test-build/optimize-plans-dialog.js';
 import { formatLatticeShiftCm } from '../test-build/coordinate-canonicalization.js';
+import { acquireHaRegistries, haRegistrySnapshot } from '../test-build/ha-binding-status.js';
+import { subst } from '../test-build/logic.js';
 import { spacePhysicalGeometryFingerprint } from '../test-build/plan-geometry-preflight.js';
+import { optimizePlans } from '../test-build/plan-optimizer.js';
 import { contentFingerprint } from '../test-build/visual-continuity.js';
 
 const MODULE_SOURCE = readFileSync(new URL('../src/optimize-plans-dialog.ts', import.meta.url), 'utf8');
@@ -36,6 +39,7 @@ const report = (patch = {}) => ({
   orphanRoomLabelsRemoved: 0, orphanDevicePositionsRemoved: 0, orphanGroupPositionsRemoved: 0,
   liveMissingPositionsRemoved: 0, nestedRefsUnresolved: 0,
   removedPositions: [], liveMissingPositions: [], unverifiedPositions: [],
+  registryAuthoritative: true,
   ...patch,
 });
 
@@ -61,7 +65,7 @@ const dialogOf = (patch = {}) => {
 };
 
 /** Фейковый порт: ровно члены `OptimizePlansDialogPort`, каждый считает вызовы. */
-function fakePort(overrides = {}) {
+function fakePort(overrides = {}, registryRetryMs = undefined) {
   const calls = {
     commit: [], checkGeometry: [], toasts: [], requestUpdate: 0, migration: [],
     gesture: 0, reload: 0, referenceContext: [],
@@ -94,7 +98,7 @@ function fakePort(overrides = {}) {
     ledNote: () => "",
     ...overrides,
   };
-  return { port, calls, state, dialog: new OptimizePlansDialog(port) };
+  return { port, calls, state, dialog: new OptimizePlansDialog(port, registryRetryMs) };
 }
 
 // ------------------------------------------------------ TemplateResult helpers
@@ -459,12 +463,16 @@ test('#642 render: details list at most ten items, statuses by kind, and the rem
   const unverified = Array.from({ length: 4 }, (_, index) => ({
     id: `u${index}`, kind: index ? 'group' : 'mystery', spaceId: 'y', reason: 'registry_unavailable',
   }));
-  state.dialog = dialogOf({ report: report({ removedPositions: removed, unverifiedPositions: unverified }) });
+  state.dialog = dialogOf({ report: report({
+    removedPositions: removed, unverifiedPositions: unverified, registryAuthoritative: false,
+  }) });
   const text = flatten(dialog.render());
-  assert.equal(text.split('<li>').length - 1, 10);
+  const details = text.slice(text.indexOf('<details class="optimize-details">'));
+  assert.equal(details.split('<li>').length - 1, 10);
   assert.match(text, /gs\.optimize_detail_item\{"status":"gs\.optimize_detail_removed","kind":"gs\.optimize_detail_room_label","id":"r0","space":"x"\}/);
   assert.match(text, /gs\.optimize_detail_item\{"status":"gs\.optimize_detail_unverified","kind":"gs\.optimize_detail_unknown","id":"u0","space":"y"\}/);
   assert.match(text, /gs\.optimize_details_more\{"n":"2"\}/);
+  // #869: the block counts every record; the registry line follows the analysis.
   assert.match(text, /gs\.optimize_unverified\{"n":"4"\}/);
   assert.match(text, /gs\.optimize_registry_limited/);
 });
@@ -503,4 +511,397 @@ test('#642 AC2: the dialog port is narrow and the module never reaches the edito
   assert.ok(Object.keys(port).length <= 20);
   assert.deepEqual(Object.keys(port).sort(), members, 'the fake port is exactly the declared port');
   assert.equal('host' in dialog, false);
+});
+
+// ------------------------------------------- #869: unverified position records
+
+const RU = JSON.parse(readFileSync(new URL('../src/i18n/ru.json', import.meta.url), 'utf8'));
+const EN = JSON.parse(readFileSync(new URL('../src/i18n/en.json', import.meta.url), 'utf8'));
+/** Настоящие строки словаря с той же подстановкой, что у карточки. */
+const translator = (dictionary) => (key, vars) => subst(dictionary[key] ?? key, vars);
+const OPAQUE = '601413c5793c698f73b8af0a0b93cac6';
+
+const plainText = (markup) => markup.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+/** Текст диалога без закрытых «Подробностей». */
+const mainText = (template) => {
+  const markup = flatten(template);
+  const details = markup.indexOf('<details class="optimize-details">');
+  return plainText(details < 0 ? markup : markup.slice(0, details));
+};
+const detailsText = (template) => {
+  const markup = flatten(template);
+  return plainText(markup.slice(markup.indexOf('<details class="optimize-details">')));
+};
+/** Кнопки по порядку: подпись и признак `?disabled`. */
+const buttons = (template) => [...flatten(template).matchAll(/<button([^>]*)>([\s\S]*?)<\/button>/g)]
+  .map(([, attributes, label]) => ({
+    label: plainText(label), disabled: /\?disabled=true/.test(attributes), attributes,
+  }));
+const unverifiedBlock = (template) => {
+  const markup = flatten(template);
+  const start = markup.indexOf('<div class="optimize-unverified">');
+  return start < 0 ? '' : markup.slice(start, markup.indexOf('<details class="optimize-details">', start));
+};
+
+/** Идемпотентная база: результат одного Optimize, второй прогон ничего не меняет. */
+const optimalConfig = () => structuredClone(optimizePlans({
+  spaces: [{
+    id: 'home', title: 'Дом', view_box: [0, 0, 1, 1], cell_cm: 5,
+    rooms: [{ id: 'r1', name: 'Кухня', area: 'kitchen', poly: [[0.1, 0.1], [0.5, 0.1], [0.5, 0.4], [0.1, 0.4]] }],
+  }],
+  markers: [], settings: {},
+}, {}, { ownerRoster: { authoritative: true } }).config);
+const ownerLayout = () => ({
+  grp_detskaia_elina: { s: 'f2', x: 0.25, y: 0.25 },
+  grp_detskaia_maiia: { s: 'f2', x: 0.5, y: 0.5 },
+  [OPAQUE]: { s: 'smrnf8s7x', x: 0.75, y: 0.75 },
+});
+const roster = (authoritative, deviceIds = []) => ({
+  ownerRoster: { authoritative, deviceIds, entityIds: [], names: {} },
+});
+
+/** Порт поверх настоящего optimizePlans: план, раскладка и реестр задаёт тест. */
+function realPort({ dictionary = RU, config, layout, context, hass = {}, retryMs } = {}) {
+  const made = fakePort({
+    t: translator(dictionary),
+    hass: () => hass,
+    layout: () => layout,
+    referenceContext: (removeLive) => {
+      made.calls.referenceContext.push(removeLive);
+      return { ...context(), removeLiveMissingPositions: removeLive };
+    },
+  }, retryMs);
+  made.state.config = config;
+  return made;
+}
+
+/** Транспорт HA для настоящего `ha-binding-status`: ответ задаёт тест. */
+function registryHass(respond) {
+  const sent = [];
+  return {
+    sent,
+    connection: { subscribeEvents: async () => () => {} },
+    devices: {}, entities: {}, states: {},
+    callWS: async (message) => { sent.push(message.type); return respond(message); },
+  };
+}
+const rosterOf = (hass) => {
+  const snapshot = haRegistrySnapshot(hass);
+  return roster(snapshot.authoritative, Object.keys(snapshot.devices || {}));
+};
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const refused = () => { throw Object.assign(new Error('timeout'), { code: 'timeout' }); };
+const registryRows = (message) => (message.type === 'config/device_registry/list' ? [{ id: OPAQUE }] : []);
+
+test('#869 AC1 owner example: a plain summary, why it is safe, groups by cause, Copy and Close', () => {
+  for (const [lang, dictionary] of [['ru', RU], ['en', EN]]) {
+    const tr = translator(dictionary);
+    for (const areas of [undefined, { detskaia_elina: { area_id: 'detskaia_elina', name: 'Детская Элины' } }]) {
+      const config = optimalConfig();
+      const layout = ownerLayout();
+      const result = optimizePlans(config, layout, roster(true));
+      assert.equal(result.changed, false, lang);
+      assert.equal(JSON.stringify(result.layout), JSON.stringify(layout), `${lang}: layout byte-for-byte`);
+
+      const { dialog, state, calls } = realPort({
+        dictionary, config, layout, context: () => roster(true), hass: areas ? { areas } : {},
+      });
+      dialog.open();
+      assert.equal(state.dialog.changed, false);
+      const template = dialog.render();
+      const text = mainText(template);
+      const label = `${lang}/${areas ? 'area' : 'no area'}`;
+      assert.ok(text.startsWith(tr('gs.optimize_no_changes')), label);
+      assert.equal(text.includes(tr('gs.optimize_no_automatic_changes')), false, `${label}: no «review below»`);
+      assert.doesNotMatch(text, /Проверьте|Review the items/, label);
+      assert.ok(text.includes(tr('gs.optimize_unverified', { n: '3' })), label);
+      assert.ok(text.includes(tr('gs.optimize_unverified_safe')), label);
+      const names = areas ? tr('gs.optimize_live_names', { names: 'Детская Элины', more: '' }) : '';
+      assert.ok(text.includes(tr('gs.optimize_unverified_legacy', { n: '2', names })), `${label}: ${text}`);
+      assert.ok(text.includes(tr('gs.optimize_unverified_unknown', { n: '1' })), label);
+      assert.equal(text.includes(tr('gs.optimize_unverified_unchecked', { n: '0' })), false, label);
+      assert.equal(text.includes(tr('gs.optimize_registry_limited')), false, `${label}: full registry`);
+      assert.doesNotMatch(text, new RegExp(`grp_detskaia|${OPAQUE}|smrnf8s7x`), `${label}: ids only in Details`);
+      assert.deepEqual(buttons(template).map((button) => button.label),
+        [tr('gs.preflight_copy'), tr('btn.close')], label);
+      assert.doesNotMatch(flatten(template), /data-hp="dialog-confirm"/);
+      assert.doesNotMatch(unverifiedBlock(template), /role="alert"/, `${label}: the block is not an alert`);
+      assert.deepEqual(calls.commit, []);
+    }
+  }
+});
+
+test('#869 AC1 summary: «no automatic changes» keeps «review below» only for live owners or the vacuum', () => {
+  const { dialog, state } = fakePort();
+  const unverified = [{ id: 'x', kind: 'unknown', name: '', spaceId: 'gone', reason: 'unknown_owner' }];
+  state.dialog = dialogOf({ changed: false, preflight: null, report: report({ unverifiedPositions: unverified }) });
+  assert.match(flatten(dialog.render()), /gs\.optimize_no_changes/);
+  assert.match(flatten(dialog.render()), /btn\.close/);
+  state.dialog = dialogOf({ changed: false, preflight: null, report: report({
+    unverifiedPositions: unverified, nestedRefsUnresolved: 1,
+  }) });
+  assert.match(flatten(dialog.render()), /gs\.optimize_no_automatic_changes/);
+  state.dialog = dialogOf({ changed: false, preflight: null, report: report({
+    unverifiedPositions: unverified, liveMissingPositions: [{ id: 'm', kind: 'device', name: 'Lamp', spaceId: 'gone' }],
+  }) });
+  assert.match(flatten(dialog.render()), /gs\.optimize_no_automatic_changes/);
+  state.dialog = dialogOf({ report: report({ moved: 1, total: 2, unverifiedPositions: unverified }) });
+  const changed = flatten(dialog.render());
+  assert.match(changed, /btn\.cancel/, 'something to apply — the footer still cancels');
+  assert.match(changed, /optimize-copy/, 'the copy action follows the block, not «changed»');
+});
+
+test('#869 AC3 incomplete HA data: line and «Check again» even for unknown owners; a full reload re-runs the preview', async (t) => {
+  let respond = refused;
+  const hass = registryHass((message) => respond(message));
+  t.after(acquireHaRegistries(hass, () => {}));
+  await sleep(10);
+  assert.equal(haRegistrySnapshot(hass).access, 'limited');
+  const layout = { [OPAQUE]: { s: 'gone', x: 0.25, y: 0.25 } };
+  const { dialog, state, calls } = realPort({
+    config: optimalConfig(), layout, hass, context: () => rosterOf(hass),
+  });
+  dialog.open();
+  const before = state.dialog;
+  assert.equal(before.report.registryAuthoritative, false);
+  assert.deepEqual(before.report.unverifiedPositions.map((item) => item.reason), ['unknown_owner']);
+  let template = dialog.render();
+  assert.ok(mainText(template).includes(RU['gs.optimize_registry_limited']));
+  assert.match(unverifiedBlock(template), /<div class="optimize-registry" role="status">/);
+  assert.deepEqual(buttons(template).map((button) => button.label),
+    [RU['gs.optimize_retry'], RU['gs.preflight_copy'], RU['btn.close']]);
+
+  respond = registryRows;
+  const retry = handlerFor(template, 'click', 'optimize-retry')();
+  assert.equal(state.dialog.retrying, true);
+  assert.equal(buttons(dialog.render())[0].disabled, true, 'the button is inactive while checking');
+  await retry;
+  assert.notEqual(state.dialog, before, 'a new report, built by the same preview');
+  assert.equal(state.dialog.report.registryAuthoritative, true);
+  assert.deepEqual(state.dialog.report.liveMissingPositions.map((item) => item.id), [OPAQUE]);
+  assert.deepEqual(state.dialog.report.unverifiedPositions, []);
+  template = dialog.render();
+  assert.equal(buttons(template).some((button) => button.label === RU['gs.optimize_retry']), false,
+    'a complete registry offers no retry');
+  assert.deepEqual(calls.referenceContext, [false, false]);
+  assert.deepEqual(calls.commit, []);
+  assert.ok(hass.sent.every((type) => type.startsWith('config/')), 'nothing but registry reads');
+});
+
+test('#869 AC3 a refused or hung reload keeps the same report and says the data is still missing', async (t) => {
+  let respond = refused;
+  const hass = registryHass((message) => respond(message));
+  t.after(acquireHaRegistries(hass, () => {}));
+  await sleep(10);
+  const { dialog, state } = realPort({
+    config: optimalConfig(), layout: ownerLayout(), hass, context: () => rosterOf(hass), retryMs: 250,
+  });
+  assert.equal(new OptimizePlansDialog(fakePort().port).registryRetryMs, 10_000, 'default wait is 10 s');
+  dialog.open();
+  const before = state.dialog;
+  // Refused at once: no wait for the timeout.
+  await handlerFor(dialog.render(), 'click', 'optimize-retry')();
+  assert.equal(state.dialog.report, before.report, 'the same report');
+  assert.equal(state.dialog.retryFailed, true);
+  assert.equal(state.dialog.retrying, false);
+  let template = dialog.render();
+  assert.ok(mainText(template).includes(RU['gs.optimize_registry_still_limited']));
+  assert.match(unverifiedBlock(template), new RegExp(`role="status">[\\s\\S]*${RU['gs.optimize_registry_still_limited']}`));
+  assert.equal(buttons(template)[0].disabled, false, 'the button is available again');
+  // Hung: bounded by the dialog's wait.
+  respond = () => new Promise(() => {});
+  const started = Date.now();
+  await handlerFor(template, 'click', 'optimize-retry')();
+  assert.ok(Date.now() - started < 2_000, 'the wait is bounded');
+  assert.equal(state.dialog.report, before.report);
+  assert.equal(state.dialog.retryFailed, true);
+  template = dialog.render();
+  assert.ok(mainText(template).includes(RU['gs.optimize_registry_still_limited']));
+  assert.equal(buttons(template)[0].disabled, false);
+});
+
+test('#869 AC4 a late re-check answer after close or reopen changes nothing, and nothing writes', async (t) => {
+  for (const reopen of [false, true]) {
+    let respond = refused;
+    const gate = [];
+    const hass = registryHass((message) => respond(message));
+    t.after(acquireHaRegistries(hass, () => {}));
+    await sleep(10);
+    const { dialog, state, calls } = realPort({
+      config: optimalConfig(), layout: { [OPAQUE]: { s: 'gone', x: 0.25, y: 0.25 } },
+      hass, context: () => rosterOf(hass),
+    });
+    dialog.open();
+    respond = (message) => new Promise((resolve) => gate.push(() => resolve(registryRows(message))));
+    const retry = handlerFor(dialog.render(), 'click', 'optimize-retry')();
+    await sleep(120);
+    assert.equal(gate.length, 2, 'both registries were asked once');
+    // Esc and the scrim both arrive as hp-close.
+    handlerFor(dialog.render(), 'hp-close')();
+    assert.equal(state.dialog, null);
+    let reopened = null;
+    if (reopen) {
+      dialog.open();
+      reopened = state.dialog;
+    }
+    gate.forEach((release) => release());
+    await retry;
+    assert.equal(state.dialog, reopened, reopen ? 'the reopened dialog keeps its report' : 'no window appears');
+    if (reopen) assert.equal(state.dialog.report.registryAuthoritative, false);
+    assert.deepEqual(calls.commit, []);
+    assert.ok(hass.sent.every((type) => type.startsWith('config/')));
+  }
+});
+
+test('#869 AC4 while checking, Optimize and the old-positions switch are unavailable', async () => {
+  const { dialog, state, calls } = fakePort();
+  const live = [{ id: 'm', kind: 'device', name: 'Lamp', spaceId: 'gone' }];
+  const unverified = [{ id: 'x', kind: 'unknown', name: '', spaceId: 'gone', reason: 'unknown_owner' }];
+  state.dialog = dialogOf({
+    retrying: true,
+    report: report({ moved: 1, total: 2, liveMissingPositions: live, unverifiedPositions: unverified, registryAuthoritative: false }),
+  });
+  const template = dialog.render();
+  const disabled = Object.fromEntries(buttons(template).map((button) => [
+    /data-hp="dialog-confirm"/.test(button.attributes) ? 'apply'
+      : /optimize-cleanup/.test(button.attributes) ? 'switch'
+      : /optimize-retry/.test(button.attributes) ? 'retry' : button.label,
+    button.disabled,
+  ]));
+  assert.equal(disabled.apply, true);
+  assert.equal(disabled.switch, true);
+  assert.equal(disabled.retry, true);
+  const pending = state.dialog;
+  await dialog.run();
+  dialog.toggleLivePositions();
+  await dialog.retryRegistry();
+  assert.equal(state.dialog, pending);
+  assert.deepEqual(calls.commit, []);
+  assert.deepEqual(calls.referenceContext, []);
+});
+
+test('#869 AC4 Apply keeps unverified records and only snaps their coordinates', async () => {
+  const layout = { grp_old: { s: 'f2', x: 0.123456, y: 0.5 } };
+  const { dialog, state, calls } = realPort({
+    config: optimalConfig(), layout, context: () => roster(true),
+  });
+  dialog.open();
+  assert.equal(state.dialog.changed, true);
+  assert.deepEqual(state.dialog.report.unverifiedPositions.map((item) => item.kind), ['legacy_group']);
+  await dialog.run();
+  assert.equal(calls.commit.length, 1);
+  const written = calls.commit[0][1];
+  assert.deepEqual(Object.keys(written), ['grp_old'], 'neither removed nor renamed');
+  assert.equal(written.grp_old.s, 'f2');
+  assert.equal(written.grp_old.y, 0.5);
+  assert.notEqual(written.grp_old.x, 0.123456, 'grid snapping as for any position');
+});
+
+const twelveRecords = () => Array.from({ length: 12 }, (_, index) => (index < 5
+  ? { id: `grp_area_${index}`, spaceId: 'f2', kind: 'legacy_group', name: '', reason: 'legacy_group' }
+  : index < 9
+    ? { id: `opaque-${index}`, spaceId: 'gone', kind: 'unknown', name: '', reason: 'unknown_owner' }
+    : { id: `lg_light.secret_${index}`, spaceId: 'gone', kind: 'group', name: 'Secret lamp', reason: 'registry_unavailable' }));
+
+test('#869 AC5 diagnostics: every record by cause, versions and registry, without names or coordinates', async (t) => {
+  const { dialog, state, calls } = fakePort();
+  state.integration = '1.2.3';
+  state.dialog = dialogOf({ changed: false, preflight: null, report: report({
+    unverifiedPositions: twelveRecords(), registryAuthoritative: false,
+  }) });
+  let copied = null;
+  withClipboard(t, { writeText: async (text) => { copied = text; } });
+  await handlerFor(dialog.render(), 'click', 'optimize-copy')();
+  const block = JSON.parse(copied);
+  assert.equal(block.kind, 'houseplan-optimize-unverified');
+  assert.equal(block.cardVersion, '9.9.9');
+  assert.equal(block.integrationVersion, '1.2.3');
+  assert.ok(!Number.isNaN(Date.parse(block.checkedAt)));
+  assert.deepEqual(Object.keys(block.registry).sort(), ['access', 'analysisAuthoritative', 'authoritative', 'error']);
+  assert.equal(block.registry.analysisAuthoritative, false);
+  assert.deepEqual(block.counts, { total: 12, legacy_group: 5, unknown_owner: 4, registry_unavailable: 3 });
+  assert.equal(block.records.length, 12, 'all records, not only the ten in Details');
+  assert.deepEqual(block.records[11], {
+    id: 'lg_light.secret_11', spaceId: 'gone', kind: 'group', reason: 'registry_unavailable',
+  });
+  assert.doesNotMatch(copied, /Secret lamp|"name"|"x"|"y"|"state"|token/i);
+  assert.deepEqual(calls.toasts, ['gs.preflight_copied']);
+  assert.equal(dialog.clipboardFallback, null);
+  assert.deepEqual(calls.commit, []);
+});
+
+test('#869 AC5 a refused clipboard shows the same text inline, selectable, without a toast', async (t) => {
+  const { dialog, state, calls } = fakePort();
+  state.dialog = dialogOf({ changed: false, preflight: null, report: report({ unverifiedPositions: twelveRecords() }) });
+  withClipboard(t, { writeText: async () => { throw new Error('denied'); } });
+  await dialog.copyDiagnostics();
+  assert.deepEqual(calls.toasts, []);
+  assert.match(dialog.clipboardFallback, /houseplan-optimize-unverified/);
+  assert.match(unverifiedBlock(dialog.render()),
+    /<details open>[\s\S]*<pre style="user-select:text;white-space:pre-wrap">\{\n {2}"kind": "houseplan-optimize-unverified"/);
+});
+
+test('#869 AC5 a geometry refusal keeps its own diagnostics and the block offers no second copy', async (t) => {
+  const { dialog, state } = fakePort();
+  state.dialog = dialogOf({ preflight: failedPreflight(), report: report({ unverifiedPositions: twelveRecords() }) });
+  const template = dialog.render();
+  assert.doesNotMatch(flatten(template), /optimize-copy/);
+  assert.match(unverifiedBlock(template), /gs\.optimize_unverified\{"n":"12"\}/);
+  let copied = null;
+  withClipboard(t, { writeText: async (text) => { copied = text; } });
+  await dialog.copyDiagnostics();
+  assert.equal(JSON.parse(copied).kind, 'houseplan-optimize-preflight');
+});
+
+test('#869 AC6 Details show a known name first, then the id; legacy groups are labelled', () => {
+  const tr = translator(RU);
+  const { dialog, state } = fakePort({
+    t: tr,
+    hass: () => ({ areas: { detskaia_elina: { area_id: 'detskaia_elina', name: 'Детская Элины' } } }),
+  });
+  state.dialog = dialogOf({ changed: false, preflight: null, report: report({
+    liveMissingPositions: [{ id: 'm1', kind: 'device', name: 'Торшер', spaceId: 'gone' }],
+    unverifiedPositions: [
+      { id: 'grp_detskaia_elina', spaceId: 'f2', kind: 'legacy_group', name: '', reason: 'legacy_group' },
+      { id: 'grp_detskaia_maiia', spaceId: 'f2', kind: 'legacy_group', name: '', reason: 'legacy_group' },
+      { id: OPAQUE, spaceId: 'smrnf8s7x', kind: 'unknown', name: '', reason: 'unknown_owner' },
+    ],
+  }) });
+  const details = detailsText(dialog.render());
+  const live = tr('gs.optimize_detail_live');
+  const unverified = tr('gs.optimize_detail_unverified');
+  const legacy = tr('gs.optimize_detail_legacy_group');
+  assert.ok(details.includes(tr('gs.optimize_detail_item_named', {
+    status: live, kind: tr('gs.optimize_detail_device'), name: 'Торшер', id: 'm1', space: 'gone',
+  })), details);
+  assert.ok(details.includes('«Торшер» (m1)'));
+  assert.ok(details.includes(tr('gs.optimize_detail_item_named', {
+    status: unverified, kind: legacy, name: 'Детская Элины', id: 'grp_detskaia_elina', space: 'f2',
+  })));
+  assert.ok(details.includes(tr('gs.optimize_detail_item', {
+    status: unverified, kind: legacy, id: 'grp_detskaia_maiia', space: 'f2',
+  })), 'no exact Area — the id alone, as before');
+  assert.ok(details.includes(tr('gs.optimize_detail_item', {
+    status: unverified, kind: tr('gs.optimize_detail_unknown'), id: OPAQUE, space: 'smrnf8s7x',
+  })));
+  for (const [code, dictionary] of [['ru', RU], ['en', EN]]) {
+    assert.equal(Object.values(dictionary).some((value) => /проверить позиций|safely verify positions/.test(value)),
+      false, `${code}: the broken summary is gone`);
+  }
+});
+
+test('#869 legacy group name comes only from the HA Area with exactly that id', () => {
+  const tr = translator(EN);
+  const areas = {
+    kids: { area_id: 'kids', name: 'Kids room' }, kids_2: { area_id: 'kids_2', name: 'Other' },
+  };
+  const { dialog, state } = fakePort({ t: tr, hass: () => ({ areas }) });
+  const item = (id) => ({ id, spaceId: 'f2', kind: 'legacy_group', name: '', reason: 'legacy_group' });
+  state.dialog = dialogOf({ changed: false, preflight: null, report: report({
+    unverifiedPositions: [item('grp_kids'), item('grp_kid'), item('grp_constructor'), item('grp___proto__')],
+  }) });
+  const text = mainText(dialog.render());
+  assert.ok(text.includes(tr('gs.optimize_unverified_legacy', {
+    n: '4', names: tr('gs.optimize_live_names', { names: 'Kids room', more: '' }),
+  })), text);
 });

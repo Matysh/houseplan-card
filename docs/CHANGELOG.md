@@ -39,6 +39,19 @@
   wall axis or contour closure still wins, and slanted walls are unchanged. When
   dragging a node in Select, the same magnet combines with straightening a wall
   ([#885](https://github.com/Matysh/houseplan-card/issues/885)).
+- Optimize plans no longer ends in a dead end when only old position records
+  remain that it could not match to objects. The dialog says there are no
+  automatic changes, explains that these records belong to floors that no
+  longer exist, are not shown on the plan and can stay, and counts them by
+  cause: old per-area lamp groups from before v1.5.0 (named after the HA area
+  when its id matches exactly), records whose owner could not be determined,
+  and records not checked because Home Assistant data was incomplete. When
+  the check ran on incomplete Home Assistant data, **Check again** reloads the
+  registries once, waiting at most 10 seconds.
+  **Copy diagnostics** now copies every such record without names or
+  coordinates, the footer says **Close** when there is nothing to apply, and
+  **Details** show a known name before the id. Nothing is removed or written
+  ([#869](https://github.com/Matysh/houseplan-card/issues/869)).
 - Infrastructure: importing the furniture generator's tolerance no longer
   rewrites tracked art while a parallel unit checks it; explicit generation
   and strict stale-file checks are unchanged

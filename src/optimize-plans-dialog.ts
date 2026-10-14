@@ -16,12 +16,19 @@ import { html, nothing, type TemplateResult } from 'lit';
 import { isGeometryCleanupRefusal } from './config-adoption';
 import { formatLatticeShiftCm } from './coordinate-canonicalization';
 import type { DeviceLayout } from './device-position-history';
+import { haRegistryDiagnostics } from './ha-binding-status';
 import type { I18nKey } from './i18n';
+import {
+  reloadHaRegistriesBounded, unverifiedDiagnostics, unverifiedGroup, unverifiedName,
+  type UnverifiedGroup,
+} from './optimize-unverified';
 import {
   spacePhysicalGeometryFingerprint, type OptimizeGeometryPreflightResult,
 } from './plan-geometry-preflight';
 import { optimizePlans, type OptimizeReport } from './plan-optimizer';
-import type { SpaceReferenceRepairContext } from './space-reference-repair';
+import type {
+  SpaceReferencePositionDetail, SpaceReferenceRepairContext,
+} from './space-reference-repair';
 import type { ServerConfig } from './types';
 import { contentFingerprint } from './visual-continuity';
 
@@ -37,6 +44,10 @@ export type OptimizePlansDialogState = {
     busy: boolean;
     /** False by default; true only after the secondary preview action. */
     removeLiveMissingPositions: boolean;
+    /** #869: a registry re-check is in flight (memory only). */
+    retrying?: boolean;
+    /** #869: the last re-check still brought no complete registry. */
+    retryFailed?: boolean;
 };
 
 /**
@@ -115,7 +126,11 @@ export class OptimizePlansDialog {
   /** #295: dev-log once per distinct failing preflight, not once per render. */
   private reportedFingerprint: string | null = null;
 
-  public constructor(private readonly port: OptimizePlansDialogPort) {}
+  /** @param registryRetryMs #869: the bounded wait of «Check again». */
+  public constructor(
+    private readonly port: OptimizePlansDialogPort,
+    private readonly registryRetryMs = 10_000,
+  ) {}
 
   /** #295: diagnostics text shown inline when the clipboard is unavailable. */
   public get clipboardFallback(): string | null {
@@ -145,10 +160,25 @@ export class OptimizePlansDialog {
   public async copyDiagnostics(): Promise<void> {
     const dialog = this.port.dialog();
     const preflight = dialog?.preflight;
-    if (!dialog || !preflight || preflight.ok) return;
-    const text = JSON.stringify(
-      this.diagnostics(preflight, dialog.config ?? null), null, 2,
-    );
+    if (!dialog) return;
+    let text: string;
+    if (preflight && !preflight.ok) {
+      text = JSON.stringify(
+        this.diagnostics(preflight, dialog.config ?? null), null, 2,
+      );
+    } else if (dialog.report.unverifiedPositions.length) {
+      // #869: without a geometry refusal the button copies the unmatched records.
+      text = JSON.stringify(unverifiedDiagnostics({
+        items: dialog.report.unverifiedPositions,
+        registry: haRegistryDiagnostics(this.port.hass()),
+        analysisAuthoritative: dialog.report.registryAuthoritative === true,
+        cardVersion: this.port.cardVersion(),
+        integrationVersion: this.port.integrationVersion(),
+        now: new Date(),
+      }), null, 2);
+    } else {
+      return;
+    }
     try {
       await navigator.clipboard.writeText(text);
       if (this.fallbacks.delete(dialog)) this.port.requestUpdate();
@@ -201,8 +231,27 @@ export class OptimizePlansDialog {
 
   public toggleLivePositions(): void {
     const dialog = this.port.dialog();
-    if (!dialog || dialog.busy || !dialog.report.liveMissingPositions.length) return;
+    if (!dialog || dialog.busy || dialog.retrying || !dialog.report.liveMissingPositions.length) return;
     this.preview(!dialog.removeLiveMissingPositions);
+  }
+
+  /**
+   * #869 «Check again»: one bounded reload of the HA registries, then the same
+   * preview again. The report never changes by itself (it is the exact pair
+   * Apply writes), and only the dialog that asked takes the answer: a closed
+   * or reopened dialog discards it.
+   */
+  public async retryRegistry(): Promise<void> {
+    const dialog = this.port.dialog();
+    if (!dialog || dialog.busy || dialog.retrying) return;
+    const pending = { ...dialog, retrying: true, retryFailed: false };
+    this.port.setDialog(pending);
+    const complete = await reloadHaRegistriesBounded(this.port.hass(), this.registryRetryMs);
+    if (this.port.dialog() !== pending) return;
+    if (complete) this.preview(pending.removeLiveMissingPositions);
+    if (this.port.dialog() === pending) {
+      this.port.setDialog({ ...pending, retrying: false, retryFailed: !complete });
+    }
   }
 
   /**
@@ -211,6 +260,7 @@ export class OptimizePlansDialog {
    */
   public async run(): Promise<void> {
     let d = this.port.dialog();
+    if (d?.retrying) return; // #869: the re-check may still rebuild this preview
     if (!d || d.busy || !this.port.config() || !d.changed || !d.preflight?.ok) return;
     const fingerprint = contentFingerprint(d.config);
     if (d.preflight.fingerprint !== fingerprint) {
@@ -249,6 +299,64 @@ export class OptimizePlansDialog {
       }
       if (!isGeometryCleanupRefusal(e)) this.port.showToast(this.port.t('toast.error', { err: this.port.errorText(e) }));
     }
+  }
+
+  /**
+   * #869: records that could not be matched. One explanation (they belong to
+   * floors that are gone, are not drawn and can stay), the count per cause,
+   * the registry line with «Check again» when this analysis ran on incomplete
+   * HA data, and the support copy whenever the geometry check did not refuse.
+   */
+  private renderUnverified(d: OptimizePlansDialogState, failed: boolean): TemplateResult {
+    const items = d.report.unverifiedPositions;
+    const groups: Record<UnverifiedGroup, SpaceReferencePositionDetail[]> = {
+      legacy_group: [], unknown_owner: [], registry_unavailable: [],
+    };
+    for (const item of items) groups[unverifiedGroup(item)].push(item);
+    const hass = this.port.hass();
+    const names = groups.legacy_group.map((item) => unverifiedName(hass, item)).filter(Boolean);
+    const more = Math.max(0, names.length - 3);
+    const legacyNames = names.length
+      ? this.port.t('gs.optimize_live_names', {
+          names: names.slice(0, 3).join(', '),
+          more: more ? this.port.t('gs.optimize_reference_more', { n: String(more) }) : '',
+        })
+      : '';
+    const limited = d.report.registryAuthoritative === false;
+    const line = (n: number, key: I18nKey, vars: Record<string, string> = {}) => (n
+      ? html`<li>${this.port.t(key, { n: String(n), ...vars })}</li>` : nothing);
+    return html`<div class="optimize-unverified">
+      <p class="alignmsg">${this.port.t('gs.optimize_unverified', { n: String(items.length) })}</p>
+      <p class="rhint">${this.port.t('gs.optimize_unverified_safe')}</p>
+      <ul>
+        ${line(groups.legacy_group.length, 'gs.optimize_unverified_legacy', { names: legacyNames })}
+        ${line(groups.unknown_owner.length, 'gs.optimize_unverified_unknown')}
+        ${line(groups.registry_unavailable.length, 'gs.optimize_unverified_unchecked')}
+      </ul>
+      ${limited ? html`<div class="optimize-registry" role="status">
+          <p class="rhint">${this.port.t('gs.optimize_registry_limited')}</p>
+          ${d.retryFailed ? html`<p class="rhint">${this.port.t('gs.optimize_registry_still_limited')}</p>` : nothing}
+        </div>` : nothing}
+      ${limited || !failed ? html`<div class="optimize-actions">
+          ${limited ? html`<button class="btn ghost optimize-action optimize-retry" type="button"
+            ?disabled=${d.busy || !!d.retrying} @click=${() => this.retryRegistry()}>
+            <ha-icon icon="mdi:refresh"></ha-icon>${this.port.t('gs.optimize_retry')}
+          </button>` : nothing}
+          ${failed ? nothing : html`<button class="btn ghost optimize-action optimize-copy" type="button"
+            @click=${() => this.copyDiagnostics()}>
+            <ha-icon icon="mdi:content-copy"></ha-icon>${this.port.t('gs.preflight_copy')}
+          </button>`}
+        </div>` : nothing}
+      ${this.fallbackBlock(failed ? null : this.clipboardFallback)}
+    </div>`;
+  }
+
+  /** #295: the copy text, selectable inline when the clipboard refused it. */
+  private fallbackBlock(text: string | null): TemplateResult | typeof nothing {
+    return text ? html`<details open>
+      <summary>${this.port.t('gs.preflight_copy')}</summary>
+      <pre style="user-select:text;white-space:pre-wrap">${text}</pre>
+    </details>` : nothing;
   }
 
   /**
@@ -294,9 +402,7 @@ export class OptimizePlansDialog {
             ? this.port.t('gs.optimize_reference_more', { n: String(remainingLiveNames) }) : '',
         })
       : '';
-    const registryLimited = r.unverifiedPositions.some(
-      (item) => item.reason === 'registry_unavailable',
-    );
+    const hass = this.port.hass();
     const detailStatus = (item: typeof r.removedPositions[number]): string => {
       if (r.removedPositions.some((removedItem) => removedItem.id === item.id)) {
         return this.port.t('gs.optimize_detail_removed');
@@ -310,8 +416,17 @@ export class OptimizePlansDialog {
       kind === 'room_label' ? 'gs.optimize_detail_room_label'
         : kind === 'group' ? 'gs.optimize_detail_group'
         : kind === 'device' ? 'gs.optimize_detail_device'
+        : kind === 'legacy_group' ? 'gs.optimize_detail_legacy_group'
         : 'gs.optimize_detail_unknown',
     );
+    // #869 п. 10: a known name first, then the id; otherwise as before.
+    const detailText = (item: SpaceReferencePositionDetail): string => {
+      const name = unverifiedName(hass, item);
+      const base = { status: detailStatus(item), kind: detailKind(item.kind) };
+      return name
+        ? this.port.t('gs.optimize_detail_item_named', { ...base, name, id: item.id, space: item.spaceId })
+        : this.port.t('gs.optimize_detail_item', { ...base, id: item.id, space: item.spaceId });
+    };
     const referenceDetails = [
       ...r.removedPositions,
       ...r.liveMissingPositions.filter((item) => (
@@ -321,7 +436,6 @@ export class OptimizePlansDialog {
     ];
     const visibleDetails = referenceDetails.slice(0, 10);
     const remainingDetails = Math.max(0, referenceDetails.length - visibleDetails.length);
-    const fallback = this.clipboardFallback;
     return html`<hp-dialog .hass=${this.port.hass()} data-kind="settings" .title=${this.port.t('gs.align_title')} icon="mdi:broom"
       dismiss-on-scrim @hp-close=${() => this.port.setDialog(null)}>
         <div class="body">
@@ -343,15 +457,13 @@ export class OptimizePlansDialog {
                   ${this.port.t('gs.preflight_copy')}
                 </button>
               </div>
-              ${fallback ? html`<details open>
-                <summary>${this.port.t('gs.preflight_copy')}</summary>
-                <pre style="user-select:text;white-space:pre-wrap">${fallback}</pre>
-              </details>` : nothing}`
+              ${this.fallbackBlock(this.clipboardFallback)}`
             : !d.changed
             ? html`<p class="alignmsg">${this.port.t(
-                r.liveMissingPositions.length || r.unverifiedPositions.length
-                  || r.nestedRefsUnresolved
-                  ? 'gs.optimize_no_automatic_changes' : 'gs.align_none',
+                r.liveMissingPositions.length || r.nestedRefsUnresolved
+                  ? 'gs.optimize_no_automatic_changes'
+                  // #869 п. 1: unmatched records alone ask nothing of the person.
+                  : r.unverifiedPositions.length ? 'gs.optimize_no_changes' : 'gs.align_none',
               )}</p>`
             : html`
               ${r.moved ? html`<p class="alignmsg">${this.port.t('gs.align_count', {
@@ -440,7 +552,7 @@ export class OptimizePlansDialog {
                 })}</p>
                 <button class="btn ghost optimize-cleanup" type="button"
                   aria-pressed=${d.removeLiveMissingPositions ? 'true' : 'false'}
-                  @click=${() => this.toggleLivePositions()} ?disabled=${d.busy}>
+                  @click=${() => this.toggleLivePositions()} ?disabled=${d.busy || !!d.retrying}>
                   <ha-icon icon=${d.removeLiveMissingPositions ? 'mdi:undo' : 'mdi:map-marker-remove-outline'}></ha-icon>
                   ${this.port.t(d.removeLiveMissingPositions
                     ? 'gs.optimize_live_keep' : 'gs.optimize_live_remove')}
@@ -452,14 +564,7 @@ export class OptimizePlansDialog {
                   : nothing}
               </div>`
             : nothing}
-          ${r.unverifiedPositions.length
-            ? html`<div class="rhint" role="alert">
-                ${this.port.t('gs.optimize_unverified', {
-                  n: String(r.unverifiedPositions.length),
-                })}
-                ${registryLimited ? ` ${this.port.t('gs.optimize_registry_limited')}` : ''}
-              </div>`
-            : nothing}
+          ${r.unverifiedPositions.length ? this.renderUnverified(d, failed) : nothing}
           ${r.nestedRefsUnresolved
             ? html`<div class="rhint" role="alert">${this.port.t('gs.optimize_vacuum_warning', {
                 n: String(r.nestedRefsUnresolved),
@@ -470,10 +575,7 @@ export class OptimizePlansDialog {
             ? html`<details class="optimize-details">
                 <summary>${this.port.t('gs.optimize_details')}</summary>
                 <ul>
-                  ${visibleDetails.map((item) => html`<li>${this.port.t('gs.optimize_detail_item', {
-                    status: detailStatus(item), kind: detailKind(item.kind),
-                    id: item.id, space: item.spaceId,
-                  })}</li>`)}
+                  ${visibleDetails.map((item) => html`<li>${detailText(item)}</li>`)}
                 </ul>
                 ${remainingDetails
                   ? html`<div class="rhint">${this.port.t('gs.optimize_details_more', {
@@ -485,9 +587,11 @@ export class OptimizePlansDialog {
         </div>
         <div class="row" slot="footer">
           <span class="spacer"></span>
-          <button class="btn ghost" data-hp="dialog-cancel" @click=${() => this.port.setDialog(null)}>${this.port.t('btn.cancel')}</button>
+          <button class="btn ghost" data-hp="dialog-cancel" @click=${() => this.port.setDialog(null)}>${this.port.t(
+            d.changed ? 'btn.cancel' : 'btn.close',
+          )}</button>
           ${!d.changed || !d.preflight?.ok ? nothing : html`
-            <button class="btn on" data-hp="dialog-confirm" @click=${() => this.run()} ?disabled=${d.busy}>
+            <button class="btn on" data-hp="dialog-confirm" @click=${() => this.run()} ?disabled=${d.busy || !!d.retrying}>
               <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this.port.t('gs.align_run')}
             </button>`}
         </div>

@@ -2206,6 +2206,28 @@ manual review. Preview, the secondary option and Cancel do not write anything.
 Plan images and attachments are never deleted merely because nothing currently
 references them.
 
+Position records that could not be matched to an object form a block of their
+own. All of them belong to floors that no longer exist: the plan does not show
+them and they do not affect it, so you can leave them. Optimize neither removes
+nor renames them; on Apply their coordinates are snapped to the grid like any
+other position. The block counts the records by cause: **old per-area lamp
+groups** (`grp_<area id>`, created before v1.5.0; when Home Assistant has an
+area with exactly that id, its name is shown), records whose owner **could not
+be determined**, and records **not checked because Home Assistant data is
+incomplete**. When the analysis ran on incomplete Home Assistant data, the block
+says so and offers **Check again**: the card requests the registries once more
+(waiting at most 10 seconds) and builds the same preview again. If the data
+still does not arrive, the report stays as it was and the block explains that a
+full check needs administrator access to the Home Assistant registries. A
+background registry load never changes the report by itself: the preview stays
+the exact pair that Apply writes. **Copy diagnostics** puts JSON on the
+clipboard with every such record (id, old space, kind, cause), the count per
+cause, the registry state and the versions — without names, states or
+coordinates; when the clipboard is unavailable, the same text opens inside the
+dialog. When there is nothing to apply, the footer button is **Close**. Viewing,
+checking again, copying and closing write nothing. In **Details**, a known name
+is shown before the record's id.
+
 ### Risk and Undo
 
 Optimization creates one server-side undo point which restores automatically

@@ -495,6 +495,16 @@ export const editorDialogsStyles = css`
     .optimize-live .alignmsg, .optimize-live .rhint { margin-bottom: 0; }
     .optimize-cleanup { min-height: 44px; }
     .optimize-selected { color: var(--hp-txt); }
+    .optimize-unverified {
+      display: grid;
+      gap: var(--sp-2);
+      margin-bottom: var(--sp-3);
+      overflow-wrap: anywhere;
+    }
+    .optimize-unverified p, .optimize-unverified ul { margin: 0; }
+    .optimize-unverified ul { padding-inline-start: 22px; font-size: 13px; }
+    .optimize-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+    .optimize-action { min-height: 44px; }
     .optimize-details {
       margin-top: var(--sp-3);
       color: var(--hp-muted);
