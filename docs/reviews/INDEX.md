@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 99, issue: 54. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 100, issue: 55. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -43,6 +43,7 @@
 | #878 | [CODE-REVIEW-878-r3.md](CODE-REVIEW-878-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
 | #877 | [CODE-REVIEW-877-r1.md](CODE-REVIEW-877-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #877 | [CODE-REVIEW-877-r2.md](CODE-REVIEW-877-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #876 | [SPEC-REVIEW-876-r1.md](SPEC-REVIEW-876-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | M1 | `src/editors/space-form.ts` |
 | #875 | [SPEC-REVIEW-875-r1.md](SPEC-REVIEW-875-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #875 | [CODE-REVIEW-875-r1.md](CODE-REVIEW-875-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | новый guard в openSpaceDialog ломает «Add space» на непустом плане, пока открыт обычный… | `src/houseplan-card.ts` `houseplan-card.ts` |
 | #875 | [CODE-REVIEW-875-r2.md](CODE-REVIEW-875-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
