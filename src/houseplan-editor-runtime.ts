@@ -207,7 +207,7 @@ import {
   type EditorToolbarGroup,
 } from './editor-secondary';
 import {
-  spaceModels, iconCqw, gridLevels, CANVAS_LIMIT, SANE_LIMIT, GRID_PITCH, GRID_STEP_N,
+  spaceModels, iconCqw, iconUnit, gridLevels, CANVAS_LIMIT, SANE_LIMIT, GRID_PITCH, GRID_STEP_N,
   PLAN_SCALE_MIN, PLAN_SCALE_MAX, clampCanvasR, clampCanvasN, type Rect,
 } from './space-geometry';
 import {
@@ -251,7 +251,10 @@ import {
 } from './support-feedback';
 import { renderBackdropGuard, renderPlanBackdropGuard, stagePlanFile, uploadPlanFile } from './backdrop-pick'; import { StairEditorRuntime, type StairEditorHostPort } from './stairs-editor';
 import { CommandStack } from './command-stack';
-import type { DeviceLayout, DevicePositionState } from './device-position-history';
+import type { DeviceLayout, DevicePlacement, DevicePositionState } from './device-position-history';
+import { SpacingMagnet, spacingMarkers, spacingRows } from './device-spacing'; // #873
+import { ledStripsByMarker } from './led-strip-gate';
+import { effectiveDeviceBaseSize } from './device-marker-geometry';
 import { contentFingerprint } from './visual-continuity';
 import { physicalBodiesKey, wallUnionKey, writeWallUnionPool } from './floor-geometry-key';
 import { PointerModalityController } from './pointer-modality';
@@ -556,7 +559,7 @@ export interface HouseplanEditorHostPort {
   /** #400: device dragging has its own state since #74; `_drag` is null in
    *  the devices mode, so anything excluding "the thing being dragged" there
    *  must read this instead. Only the id is needed by the editor runtime. */
-  _deviceDrag: { id: string } | null;
+  _deviceDrag: { id: string; spacing?: SpacingMagnet<DevicePlacement> | null } | null;
   _drawWallCm: number | null;
   _drawWallField: string | null;
   _drawWallFieldValue: string;
@@ -10458,25 +10461,46 @@ public _alignCandidates(): number[][] {
     return out;
   }
 
+/** #873: the equal-spacing magnet of a device gesture; the markers are fixed here, at its start. */
+public _deviceSpacing(d: DevItem, place: (x: number, y: number) => DevicePlacement): SpacingMagnet<DevicePlacement> {
+    const space = this.host._spaceModel();
+    const size = this.host._config?.icon_size ?? 2.5; // the card's rule: above 8 is the default
+    const k = this.host._norm ? NORM_W : 1;
+    return new SpacingMagnet(spacingMarkers(this.host._devices, d, ledStripsByMarker(space), (o) => this.host._pos(o)),
+      (x, y) => {
+        const p = place(x, y);
+        return { p, x: p.x * k, y: p.y * k };
+      },
+      // half a marker shell (101.5/80 of the core): the dimension line clears it
+      effectiveDeviceBaseSize(size > 8 ? 2.5 : size) / 100 * iconUnit(space!) * 0.634375);
+}
+
 public _renderAlignGuides(): TemplateResult {
     const pt = this.host._alignPoint;
-    if (!pt) return svg`` as unknown as TemplateResult;
+    // #873: equal-spacing rows are drawn and labelled here, in the guides layer
+    // (one owner, #521); a shown row replaces the alignment guide of its axis
+    const rows = spacingRows(this.host._deviceDrag?.spacing, (d) => this.host._fmtLen([0, 0], [d, 0]));
     // exact node match for grid-snapped things; half a cell for free-moving cards
     const tol = this.host._drag?.id.startsWith('rl_') ? this.host._gridPitch * 0.5 : this.host._gridPitch * 0.05;
-    const guides = alignGuides(pt, this._alignCandidates(), tol);
-    if (!guides.length) return svg`` as unknown as TemplateResult;
+    const guides = pt ? alignGuides(pt, this._alignCandidates(), tol)
+      .filter((gd) => !rows.some((row) => (row.axis === 'h') === (gd.axis === 'y'))) : [];
+    if (!guides.length && !rows.length) return svg`` as unknown as TemplateResult;
     const g = this.host._gridPitch;
     const over = g * 1.5; // extend a little past the point
-    return svg`<g class="alignguides">
+    return svg`${rows.map((row) => svg`<g class="spacingguides ${row.axis}" aria-hidden="true">${
+      row.gaps.map((gap) => svg`<path class="spacingline" d=${gap.d} transform=${
+        row.axis === 'v' ? 'matrix(0 1 1 0 0 0)' : nothing}></path>${row.fits ? svg`<text class="spacinglabel" x=${
+        gap.mid[0]} y=${gap.mid[1]} font-size=${row.font}>${row.text}</text>` : nothing}`)}</g>`)}${
+      guides.length ? svg`<g class="alignguides">
       ${guides.map((gd: AlignGuide) => {
         const [x1, y1, x2, y2] = gd.axis === 'x'
-          ? [gd.at, gd.from[1], gd.at, pt[1] + Math.sign(pt[1] - gd.from[1]) * over]
-          : [gd.from[0], gd.at, pt[0] + Math.sign(pt[0] - gd.from[0]) * over, gd.at];
+          ? [gd.at, gd.from[1], gd.at, pt![1] + Math.sign(pt![1] - gd.from[1]) * over]
+          : [gd.from[0], gd.at, pt![0] + Math.sign(pt![0] - gd.from[0]) * over, gd.at];
         return svg`<line class="alignline" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"></line>
           <circle class="aligndot" cx="${gd.from[0]}" cy="${gd.from[1]}"
             r="${gridVisualUnits(g * 0.18, this.host._cellCm)}"></circle>`;
       })}
-    </g>` as unknown as TemplateResult;
+    </g>` : nothing}` as unknown as TemplateResult;
   }
 
 public _renderOpeningCenterTick(gd: { x: number; y: number; angle: number }): TemplateResult {

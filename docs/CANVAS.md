@@ -501,8 +501,19 @@ wall runs diagonally is broken geometry, not a tidy plan:
 | decor draft endpoints, text anchor | `_decorPointerDown` / `_stagePointerMove` → `_snap` |
 | decor move | `_decorMoveUpdate` → `_snap` of the resulting ANCHOR |
 | device markers | `_savePos` |
+| a device marker pulled to an equal-spacing target (#873) | `SpacingMagnet.resolve` (`src/device-spacing.ts`): the target itself is a node |
 | room labels | `_labelMove` → `_savePos` |
 | auto-placed markers (`defaultPositions`), the `spaceCenter` fallback, an undragged room label | `snapPt` |
+
+**Equal spacing (#873, Devices editor).** The point one step past either end
+of a row of markers is offered as a target only when it is already a grid
+node — the ordinary device rounding (`_devicePlacementForCanvas`) leaves it in
+place — and it is on the canvas. A captured marker is therefore placed exactly
+there and stays GRID-BOUND, and both gaps stay equal after saving; a row of
+markers between nodes offers no target (Optimize moves them onto nodes). The
+pull is 6 CSS px in and 10 px out, measured from the raw pointer point, the
+same at every zoom; outside it the nearest node applies as before. Alignment
+guides remain indication only.
 
 **WALL-BOUND — projected onto the wall, then the offset ALONG the wall
 quantised to the same step, measured from the wall's first corner:**

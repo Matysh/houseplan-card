@@ -1148,6 +1148,19 @@ and its other entities remain deleted. The complete device stays available in
 - drag a marker to save its server-side position. One completed drag creates
   one position-history step; a cancelled, unchanged or failed drag creates
   none;
+- **equal spacing** (#873): once two markers stand in one horizontal or
+  vertical row, a dragged marker snaps to the point one step past either end
+  of that row when the pointer is within 6 px of it, and lets go beyond 10 px —
+  the same at every zoom. Two identical thin dimension lines show the
+  reference gap (the far one of the row) and the new one with their length;
+  when the length does not fit, both labels hide. The fourth and further
+  markers repeat the same step. A row is markers on one horizontal or vertical
+  with one step and no other marker within two steps past its ends; hidden,
+  disabled and LED-strip markers do not count. The point is always a grid
+  node, so a row of markers between nodes gives no snap — **Optimize plans**
+  puts them on nodes. The drop is an ordinary position save with one history
+  step, Undo restores the previous point without snapping, and no other marker
+  moves. View and kiosk have no snapping;
 - persistent Undo/Redo buttons affect marker positions only. The same
   session-local history is available through `Ctrl/Cmd+Z`,
   `Ctrl/Cmd+Shift+Z` and `Ctrl+Y`, keeps up to 50 completed moves, and is not

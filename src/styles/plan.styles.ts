@@ -802,6 +802,28 @@ export const planStyles = css`
       fill: var(--hp-accent);
       pointer-events: none;
     }
+    /* #873: two equal gaps of a row — thin dimension lines and their length;
+       a halo of the card background keeps both legible over fill and glow */
+    .spacingguides {
+      filter: drop-shadow(0 0 1px var(--hp-bg));
+      pointer-events: none;
+    }
+    .spacingline {
+      fill: none;
+      stroke: var(--hp-accent);
+      stroke-width: 1.5px;
+      vector-effect: non-scaling-stroke;
+    }
+    .spacinglabel {
+      fill: var(--hp-accent);
+      stroke: var(--hp-bg);
+      stroke-width: 0.3em;
+      paint-order: stroke;
+      font-weight: 600;
+      text-anchor: middle;
+      dominant-baseline: central;
+    }
+    .spacingguides.v .spacinglabel { text-anchor: end; }
     .measurelabel.on45 {
       color: #4bd28f;
       border-color: #4bd28f;

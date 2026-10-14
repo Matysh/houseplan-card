@@ -13,6 +13,13 @@
   refusal; stair ID collisions, Unicode lineage order and boundary thickness
   inheritance have shared regression coverage and mandatory TS/Python CI parity
   ([#845](https://github.com/Matysh/houseplan-card/issues/845)).
+- Device editor: a marker dragged in line with two others snaps to the point
+  that repeats their spacing, at either end of a horizontal or vertical row,
+  and both equal gaps are shown as thin dimension lines with their length.
+  The pull is 6 px at any zoom, the stored point is exactly the shown grid
+  node, and the fourth and further markers repeat the same step. Nothing
+  changes in View or kiosk
+  ([#873](https://github.com/Matysh/houseplan-card/issues/873)).
 
 - Vacuum paths preserve turns, reversals and gaps without blind thinning.
   Supported Dreame ordinary cameras can provide full server-recorded paths;

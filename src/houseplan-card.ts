@@ -7119,6 +7119,7 @@ export class HouseplanCard extends LitElement {
       moved: false,
       before: devicePlacement(this._layout, d.id),
       start: this._devicePlacementForCanvas(d, p.x, p.y),
+      spacing: this._editorRuntime?._deviceSpacing(d, (x, y) => this._devicePlacementForCanvas(d, x, y)) ?? null, // #873
     };
     capturePointer(ev);
     this._tip = null;
@@ -7159,7 +7160,8 @@ export class HouseplanCard extends LitElement {
     // enforces, and it is the SAME ±5000 on both sides of the wire.
     const nx = clampCanvasR(drag.ox + dx);
     const ny = clampCanvasR(drag.oy + dy);
-    this._previewDevicePlacement(d.id, this._devicePlacementForCanvas(d, nx, ny));
+    this._previewDevicePlacement(d.id, drag.spacing?.resolve(nx, ny, rect.width / v.w, rect.height / v.h)
+      ?? this._devicePlacementForCanvas(d, nx, ny));
   }
   private _pointerUp(ev: PointerEvent, d: DevItem): void {
     d = this._deviceForPointerEvent(ev, d);

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 873,
+  "baseStable": "v1.80.1",
+  "category": "major",
+  "rationale": "New Devices-editor capability: v1.80.1 has no equal-spacing magnet, and its alignment guides are indication only (logic.ts alignGuides). The diff adds the resolver module, the drag wiring and the two-gap hint; saved data, View and kiosk are unchanged.",
+  "summary": {
+    "ru": "Магнит равного шага в редакторе устройств: маркер встаёт в ряд с тем же интервалом, оба промежутка подсвечены.",
+    "en": "Equal-spacing magnet in the Device editor: a marker snaps into a row at the same interval, with both gaps highlighted."
+  }
+}
