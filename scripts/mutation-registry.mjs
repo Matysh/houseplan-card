@@ -85,6 +85,14 @@ const MUTANT_DEFINITIONS = [
       replace: '${true ? html`<button class="btn" @click=${() => { const dd = d;' }],
   },
   {
+    id: 'view-edit-permission-hides-more-info',
+    guard: 'node demo/smoke_view_edit_permissions.mjs --only=roles',
+    because: '#844 AC7: the mounted Lit footer must retain its real more-info button and HA event for denied roles and kiosk; the actual DOM consumer, not the editor predicate, owns this inverse boundary.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: '${d.primary\n            ? html`<button class="btn" @click=${() => { const p = d.primary;',
+      replace: '${d.primary && deviceEditorAllowed(this._canEdit, this._kiosk)\n            ? html`<button class="btn" @click=${() => { const p = d.primary;' }],
+  },
+  {
     id: 'view-edit-direct-entry-forgets-permission',
     guard: 'node demo/smoke_view_edit_permissions.mjs --only=roles',
     because: '#844 AC2: a denied direct call must not fetch/install the editor chunk.',
