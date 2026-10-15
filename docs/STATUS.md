@@ -25,6 +25,13 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Nightly mutation evidence (#899) retains the full registry and 60-minute
+deadline while splitting each former modulo shard into two. Preparation
+definitions preserve typed reachable branches; redundant editor/diagnostic
+guards are represented together instead of weakening application defences.
+Ordinary isolated snapshot and trusted LED contact/service-ledger witnesses
+remain separate from nightly-only compilation/caught evidence.
+
 Editor gesture owners (#861) separate physical body/rotation and backdrop
 frame state behind 13/14-purpose editor-only ports. Existing queue/reset,
 history and render boundaries remain; hosted doors/windows now move in the

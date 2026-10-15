@@ -1315,6 +1315,12 @@ keeps only a retired compatibility interface, while nightly explicitly opts in
 to applying mutations. Two witnesses of removed development setup code retired
 with that code; the nightly environment and outcome contracts are unchanged.
 
+Nightly capacity (#899) uses twenty deterministic modulo partitions of the
+unchanged registry, with the same hour-long interruption boundary. Evidence
+still binds every shard to one immutable material/workflow/run attempt and
+requires successful terminal outcomes before reuse. Ordinary witness repairs
+and static declaration checks do not produce caught ledger entries.
+
 Node-drag browser guards declare compilation of their `test-build/` model
 fixtures before the browser oracle (#830). The existing runner still separates
 setup from assertion evidence; a missing compiled module is never a caught

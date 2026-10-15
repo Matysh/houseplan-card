@@ -597,13 +597,13 @@ test('#472 AC2 / #549: каждый шард сохраняет лог и identi
   assert.match(mutationWorkflow, /--write-evidence=.*evidence\.json/);
 });
 
-// #795: на шести шардах ночь снова дошла до часового потолка. Контракт
+// #795/#899: на шести, затем десяти шардах ночь дошла до часового потолка. Контракт
 // проверяет не только одинаковые делители, но и полный охват реальной раскладкой.
-test('#795: десять ночных шардов согласованы с runner/evidence и покрывают реестр ровно один раз', () => {
+test('#795/#899: двадцать ночных шардов согласованы с runner/evidence и покрывают реестр ровно один раз', () => {
   const matrix = /shard: \[([0-9, ]+)\]/.exec(mutationWorkflow);
   assert.ok(matrix, 'matrix.shard объявлена списком');
   const shards = matrix[1].split(',').map((n) => Number(n.trim()));
-  assert.deepEqual(shards, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  assert.deepEqual(shards, Array.from({ length: 20 }, (_, index) => index + 1));
   const n = shards.length;
   assert.match(mutationWorkflow, new RegExp(`\\(шард \\$\\{\\{ matrix\\.shard \\}\\} из ${n}\\)`), 'имя job');
   assert.match(mutationWorkflow, new RegExp(`--shard=\\$\\{\\{ matrix\\.shard \\}\\}/${n} `), 'делитель раннера');

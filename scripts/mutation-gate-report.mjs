@@ -362,7 +362,7 @@ if (invokedDirectly) {
     return found ? found.slice(name.length + 3) : fallback;
   };
   const writeEvidence = value('write-evidence');
-  const shardCount = Number(value('shards', '10'));
+  const shardCount = Number(value('shards', '20'));
   if (writeEvidence) {
     const evidence = mutationShardEvidence({
       materialSha: value('sha'), materialTree: value('tree'), workflowSha: value('workflow-sha'),

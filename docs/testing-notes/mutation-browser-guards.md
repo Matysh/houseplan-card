@@ -225,6 +225,11 @@ point, and View pointer routing never reaches the device drag.
 
 The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry.
 
+`led-pinch-calls-action` specifically observes two trusted contacts on the
+painted LED target and the unchanged service ledger through release/cancel and
+explicit compatibility tails. A final light state alone could hide two unsafe
+toggles; ordinary fresh-click and fade/lifecycle controls remain in the smoke.
+
 - `align-guides-exclude-dead-source`
 - `align-point-reads-frozen-snapshot`
 - `decor-default-style-debounce-cut`

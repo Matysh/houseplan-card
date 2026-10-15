@@ -5,7 +5,8 @@
  * strip replaces the icon, paints the two-stroke stripe and — with Glow — the
  * linear field; off/unavailable have no field, unavailable is dashed. The on
  * core takes the source colour with or without Glow. The whole length is one target: a
- * click toggles once, a touch pan calls nothing. A hidden marker or an
+ * click toggles once, a pan/two-contact touch calls no service (exact ledger,
+ * not only final on/off), and the navigation tail stays inert. A hidden marker or an
  * HA-disabled device loads no chunk (r1 M4); the value badge stays at the
  * anchor, passive (r1 M1). The static card is passive in all four
  * light_pools × live_states combinations (r1 M6).
@@ -232,6 +233,7 @@ check('#785: switching does not change the physical stripe thickness',
   JSON.stringify([offStripe?.outlineWidth, offStripe?.coreWidth]),
   JSON.stringify([onStripe?.outlineWidth, onStripe?.coreWidth]));
 // A pan along the stripe calls nothing; the next clean click works at once.
+const servicesBeforePan = await evaluate(() => structuredClone(window.__serviceCalls));
 const along = (k) => evaluate((k) => {
   const el = window.__card.shadowRoot.querySelector('.led-hit');
   const p = el.getPointAtLength(el.getTotalLength() * k), m = el.getScreenCTM();
@@ -245,6 +247,88 @@ const along = (k) => evaluate((k) => {
 await settle();
 const ceiling = () => evaluate(() => window.__card.hass.states['light.ceiling'].state);
 check('a pan along the stripe calls no service', await ceiling(), 'off');
+check('#899 pan keeps the exact service ledger', await evaluate(() => window.__serviceCalls), servicesBeforePan);
+
+// #899: the capture-phase guard still sees child events even if a LED handler
+// stops bubbling. Use actual Chromium contacts on the painted LED path, and
+// inspect every service dispatch: two toggles could leave the old state intact.
+const navigationCdp = await page.context().newCDPSession(page);
+await evaluate(() => {
+  const proof = window.__ledInputProof = { events: [], moreInfo: 0 };
+  proof.observe = event => {
+    if (event.pointerType === 'touch' && event.composedPath().includes(window.__card)) {
+      proof.events.push({ type: event.type, id: event.pointerId, trusted: event.isTrusted,
+        x: event.clientX, y: event.clientY,
+        strip: event.composedPath().find(node => node?.classList?.contains('led-hit'))
+          ?.closest('[data-led-strip]')?.getAttribute('data-led-strip') ?? null });
+    }
+  };
+  proof.more = () => proof.moreInfo++;
+  for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) window.addEventListener(type, proof.observe, true);
+  window.addEventListener('hass-more-info', proof.more);
+});
+try {
+  for (const scenario of [
+    { label: 'two-contact release', move: false, cancel: false },
+    { label: 'pinch release', move: true, cancel: false },
+    { label: 'pinch cancel', move: true, cancel: true },
+  ]) {
+    const before = await evaluate(() => ({ calls: structuredClone(window.__serviceCalls),
+      events: window.__ledInputProof.events.length, moreInfo: window.__ledInputProof.moreInfo,
+      camera: JSON.stringify(window.__card._view) }));
+    // .5 is occluded by another scene target in this fixture; .2 and .3 are
+    // on the same exposed LED run (the ordinary click above uses .3 too).
+    const a = await along(0.2), b = await along(0.3);
+    const point = (id, xy, dx = 0) => ({ id, x: xy[0] + dx, y: xy[1], radiusX: 2, radiusY: 2, force: 1 });
+    const touch = (type, touchPoints) => navigationCdp.send('Input.dispatchTouchEvent', { type, touchPoints });
+    await touch('touchStart', [point(1, a)]);
+    await touch('touchStart', [point(1, a), point(2, b)]);
+    const starts = await evaluate(index => window.__ledInputProof.events.slice(index)
+      .filter(event => event.type === 'pointerdown'), before.events);
+    console.log('#899 LED contact observation', JSON.stringify({ scenario: scenario.label, a, b, starts }));
+    check(`#899 ${scenario.label}: two trusted contacts start on the actual LED path`,
+      starts.length === 2 && new Set(starts.map(event => event.id)).size === 2
+        && starts.every(event => event.trusted && event.strip === 'ceiling'));
+    if (scenario.move) {
+      await touch('touchMove', [point(1, a, -12), point(2, b, 12)]);
+      await evaluate(() => window.__hpTest.settled());
+      const moved = await evaluate(index => ({ camera: JSON.stringify(window.__card._view),
+        ids: window.__ledInputProof.events.slice(index).filter(event => event.type === 'pointermove'
+          && event.trusted).map(event => event.id) }), before.events);
+      check(`#899 ${scenario.label}: both trusted moves really change the camera`,
+        new Set(moved.ids).size === 2 && moved.camera !== before.camera);
+    }
+    if (scenario.cancel) await touch('touchCancel', []);
+    else {
+      await touch('touchEnd', [point(2, b, scenario.move ? 12 : 0)]);
+      await touch('touchEnd', []);
+    }
+    // Explicit untrusted compatibility-tail probes after the trusted native
+    // sequence; no new pointerdown or private guard reset is manufactured.
+    await page.locator('houseplan-card .led-hit').evaluate(node => {
+      for (const type of ['click', 'contextmenu']) node.dispatchEvent(new MouseEvent(type,
+        { bubbles: true, composed: true, cancelable: true }));
+    });
+    await evaluate(() => window.__hpTest.settled());
+    const result = await evaluate(index => ({ calls: window.__serviceCalls,
+      events: window.__ledInputProof.events.slice(index), moreInfo: window.__ledInputProof.moreInfo,
+      info: !!window.__card.shadowRoot.querySelector('hp-dialog[data-kind="info"], hp-dialog[data-kind="confirm"]'),
+    }), before.events);
+    const terminal = scenario.cancel ? 'pointercancel' : 'pointerup';
+    check(`#899 ${scenario.label}: both trusted terminals are observed`,
+      new Set(result.events.filter(event => event.type === terminal && event.trusted).map(event => event.id)).size, 2);
+    check(`#899 ${scenario.label}: gesture and delayed tails dispatch zero services`, result.calls, before.calls);
+    check(`#899 ${scenario.label}: no info, confirm or more-info`, [result.info, result.moreInfo], [false, before.moreInfo]);
+  }
+} finally {
+  await evaluate(() => {
+    const proof = window.__ledInputProof;
+    for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) window.removeEventListener(type, proof.observe, true);
+    window.removeEventListener('hass-more-info', proof.more);
+  });
+  await navigationCdp.detach();
+}
+const servicesBeforeFreshClick = await evaluate(() => window.__serviceCalls.length);
 {
   const [x, y] = await along(0.6);
   await page.mouse.click(x, y);
@@ -259,6 +343,8 @@ check('turning on reaches full opacity smoothly', await evaluate(() => Number(ge
   window.__card.shadowRoot.querySelector('[data-led-field]'),
 ).opacity) > 0.99), true);
 check('the next clean click works at once', await ceiling(), 'on');
+check('#899 the first fresh click after navigation dispatches exactly once',
+  await evaluate(() => window.__serviceCalls.length), servicesBeforeFreshClick + 1);
 {
   const [x, y] = await along(0.6);
   await page.mouse.click(x, y);
@@ -762,16 +848,31 @@ check('the Glow radius has one wrapper focus outline', JSON.stringify(radiusFocu
 await page.reload();
 await page.waitForFunction(() => window.__card?._loadOk);
 await installHpTestOnPage(page);
+// The preceding real pinches persist their camera. Restore the public Fit all
+// before this separate cold-dialog scenario so the intended d_tv hit is exposed,
+// rather than clicking an overlapping/occluding marker in the enlarged plan.
+await page.locator('houseplan-card [data-hp="zoom-fit"]').click();
+await evaluate(() => window.__hpTest.settled());
 ledRequests.length = 0;
 const before = 0;
 await evaluate(async () => { await window.__hpTest.setMode('devices'); await window.__hpTest.openMarkerDialog('d_tv'); });
 await page.waitForTimeout(200);
+check('#899 cold LED conversion starts with the intended device dialog',
+  await evaluate(() => window.__card._markerDialog?.devId), 'd_tv');
 check('static «Show as LED strip» without the tool chunk', await evaluate(() =>
   !!window.__card.shadowRoot.querySelector('[data-led-representation="icon"] [data-led-action="show-strip"]')),
   true);
 check('the dialog alone loads no LED tool', ledRequests.filter((name) => name.startsWith('led-strip-editor-')).length, before);
 await page.click('[data-led-representation] [data-led-action="show-strip"]');
 await page.waitForTimeout(600);
+console.log('#899 LED tool-entry observation', await evaluate(() => {
+  const c = window.__card;
+  return { mode: c._mode, space: c._space, zoom: c._zoom, canEdit: c._canEdit,
+    norm: !!c._norm, transition: c._modeTransitionBusy, toast: c._toast,
+    marker: c._markerDialog && { devId: c._markerDialog.devId, busy: c._markerDialog.busy },
+    confirm: !!c.shadowRoot.querySelector('hp-dialog[data-kind="confirm"]'),
+    led: c._ledEditor && { tool: c._ledEditor.tool, chain: c._ledEditor.chain } };
+}));
 check('the press loads the tool and draws for the same marker', await evaluate(() => {
   const led = window.__card._ledEditor;
   return !!led?.tool && led.chain?.convert === 'd_tv' && !window.__card._markerDialog;

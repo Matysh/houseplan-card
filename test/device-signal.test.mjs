@@ -8,6 +8,7 @@ import { resolveValueSource, valueBadgeCandidates } from '../test-build/device-v
 import { deviceBatteryReading, createDeviceBatteryContext } from '../test-build/device-battery.js';
 import { captureRenderDeviceSnapshot } from '../test-build/render-snapshot-capture.js';
 import { RenderSnapshotReuseWindow } from '../test-build/render-snapshot-reuse.js';
+import { createRenderDeviceSnapshot } from '../test-build/render-device-snapshot.js';
 import { captureHost, oracleFixture } from './render-snapshot-fixture.mjs';
 
 const state = (value, attributes = {}) => ({ state: value, attributes });
@@ -124,6 +125,35 @@ test('#867 AC2 sibling-only tick with battery off invalidates both own presentat
   assert.equal(next.presentations.get('perf-entity-42:1').battery, null);
   assert.notEqual(next.presentations.get('perf-entity-42:1'), first.presentations.get('perf-entity-42:1'));
   assert.deepEqual([...next.presentations], [...captureRenderDeviceSnapshot(host).presentations]);
+});
+
+test('#899 isolated entity snapshot includes early outside-area signal siblings with battery off', () => {
+  // No physical marker and no plan-area fallback may rescue this projection.
+  // The siblings deliberately precede the bound row: discovering its parent
+  // while projecting that later row must not hide the missing dependency.
+  const h = { devices: { A: { area_id: 'outside' }, B: { area_id: 'outside' } }, entities: {
+    'sensor.a_linkquality': { ...own(), area_id: 'outside' },
+    'sensor.a_missing_lqi': { ...own(), area_id: 'outside' },
+    'sensor.foreign_lqi': { ...own('B'), area_id: 'outside' },
+    'switch.a': { ...own(), area_id: 'outside' },
+  }, states: { 'sensor.a_linkquality': state('120'),
+    'sensor.foreign_lqi': state('255'), 'switch.a': state('off') } };
+  const d = marker();
+  const capture = sequence => createRenderDeviceSnapshot({ sourceSequence: sequence,
+    hass: h, devices: [d], presentations: new Map(), showBattery: false, areaIds: ['room'] });
+  const first = capture(1);
+  assert.deepEqual(first.devices.map(device => device.id), ['a1'], 'only the explicit entity marker');
+  assert.deepEqual([...first.entityIds].sort(), ['sensor.a_linkquality', 'sensor.a_missing_lqi', 'switch.a']);
+  assert.deepEqual(Object.keys(first.hass.entities).sort(), [...first.entityIds].sort());
+  assert.equal(Object.hasOwn(first.hass.states, 'sensor.a_missing_lqi'), false, 'a missing source is not fabricated');
+  assert.equal(Object.hasOwn(first.hass.devices, 'B'), false, 'foreign outside-area owner stays out');
+  assert.equal(resolveDevicePresentation(first.hass, d, options).lqiText, '120');
+  const primary = h.states['switch.a'];
+  h.states = { ...h.states, 'sensor.a_linkquality': state('0') };
+  const next = capture(2);
+  assert.equal(h.states['switch.a'], primary);
+  assert.equal(resolveDevicePresentation(next.hass, d, options).lqiText, '0');
+  assert.equal(resolveDevicePresentation(first.hass, d, options).lqiText, '120', 'the old captured frame stays frozen');
 });
 
 test('#867 AC3 local hide affects only system line; explicit badge/value, tip and global/static gates remain', () => {

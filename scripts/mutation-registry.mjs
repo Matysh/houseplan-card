@@ -562,7 +562,7 @@ const MUTANT_DEFINITIONS = [
     because: '#867 AC1: exact own physical siblings supply diagnostics without changing the functional roster; missing parent and router controls remain negative cases.',
     patches: [{ file: 'src/device-signal.ts',
       find: "  if (binding.kind !== 'entity') return device.entities;",
-      replace: '  return device.entities;' }],
+      replace: "  if (binding.kind !== 'entity' || String(binding.kind) === 'entity') return device.entities;" }],
   },
   {
     id: 'signal-registry-reindexed-on-every-state-frame',
@@ -602,7 +602,7 @@ const MUTANT_DEFINITIONS = [
     because: '#867 AC4: the first eligible entity in configured marker order is canonical when no visible device marker exists; HA order and hover do not own the anchor.',
     patches: [{ file: 'src/zigbee-topology.ts',
       find: '    const representative = physical.length === 1 ? physical[0] : !physical.length ? entities[0] : undefined;',
-      replace: '    const representative = physical.length === 1 ? physical[0] : !physical.length ? entities.at(-1) : undefined;' }],
+      replace: '    const representative = physical.length === 1 ? physical[0] : !physical.length ? entities[entities.length - 1] : undefined;' }],
   },
   {
     id: 'opening-popup-keeps-retained-config-object',
@@ -751,7 +751,7 @@ const MUTANT_DEFINITIONS = [
       find: '      const rolledBack = host._rollbackOptimistic(attempt);',
       replace: '      const rolledBack = false;' }, { file: 'src/new-device-ack.ts',
       find: '      if (!rolledBack && host._adoption.configRev === attempt.revision && host._adoption.adoptionEpoch === epoch) {',
-      replace: '      if (false) {' }],
+      replace: "      if (!rolledBack && host._adoption.configRev === attempt.revision && host._adoption.adoptionEpoch === epoch && String(id) === 'mutant-never-restore-new-device-ack') {" }],
   },
   {
     id: 'candidate-beta-field-policy-leaks-to-stable',
@@ -812,10 +812,12 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'view-edit-late-import-forgets-recheck',
     guard: 'node demo/smoke_view_edit_permissions.mjs --only=late',
-    because: '#844 AC3: permission/kiosk revocation during the real import refuses the old dialog.',
+    because: '#844 AC3/#899: permission/kiosk revocation during the real browser import refuses the old dialog. Both the card completion and runtime entry enforce this contract, so the definition must omit both redundant rechecks, not remove either product defence.',
     patches: [{ file: 'src/houseplan-card.ts',
       find: '            && deviceEditorAllowed(this._canEdit, this._kiosk)) this._editorRuntime?._openMarkerDialog(d);',
-      replace: '            ) this._editorRuntime?._openMarkerDialog(d);' }],
+      replace: '            ) this._editorRuntime?._openMarkerDialog(d);' }, { file: 'src/houseplan-editor-runtime.ts',
+      find: '    if (!deviceEditorAllowed(this.host._canEdit, this.host._kiosk)) return;',
+      replace: '    // mutant: omit the redundant runtime entry permission check' }],
   },
   {
     id: 'view-edit-import-forgets-latest-owner',
@@ -5716,7 +5718,10 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/houseplan-card.ts',
       find: 'export class HouseplanCard',
-      replace: `${'\n'.repeat(400)}export class HouseplanCard`,
+      // #899: 400 lines became legal approved headroom after #898. Exceed the
+      // finite cap + band even from an empty file; a metadata unit keeps this
+      // amount above future approved caps without changing the budget itself.
+      replace: `${'\n'.repeat(20000)}export class HouseplanCard`,
     }],
   },
   {
@@ -18006,15 +18011,11 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'led-pinch-calls-action',
     guard: 'node demo/smoke_led_strip_glow.mjs',
-    because: "#780 AC4: the stripe shares the card gesture owner, so a pan over it calls no service",
+    because: '#780 AC4/#899: trusted two-contact navigation on the painted LED hit path calls no service, including a stationary second contact and compatibility tails. The fixture service ledger detects a double toggle whose final state alone would hide it; this requires the real DOM/pointer delivery.',
     patches: [{
       file: 'src/led-strip-runtime.ts',
-      find: "          @pointerdown=${(e: PointerEvent) => h.pointerdown(e, own(e))}\n"
-        + "          @pointermove=${(e: PointerEvent) => h.pointermove(e, own(e))}\n"
-        + "          @pointerup=${(e: PointerEvent) => h.pointerup(e, own(e))}",
-      replace: "          @pointerdown=${(e: PointerEvent) => { e.stopPropagation(); h.pointerdown(e, own(e)); }}\n"
-        + "          @pointermove=${(e: PointerEvent) => e.stopPropagation()}\n"
-        + "          @pointerup=${(e: PointerEvent) => { e.stopPropagation(); h.pointerup(e, own(e)); }}",
+      find: '      pointerup: (e, d) => host._pointerUp(e, d),',
+      replace: "      pointerup: (e, d) => { host._pointerUp(e, d); if (e.pointerType === 'touch') host._clickDevice(e, d); },",
     }],
   },
   {
@@ -18801,12 +18802,15 @@ const MUTANT_DEFINITIONS = [
     id: 'snapshot-battery-read-untracked',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test test/render-snapshot-incremental.test.mjs',
-    because: '#850 AC3/AC5: a marker that reads a battery sibling only through the battery context keeps '
-      + 'its old charge when that read is not recorded as an input of its presentation',
+    because: '#850 AC3/AC5/#899: own diagnostic sibling reads must be tracked. Since #867 both battery and signal contexts read these siblings, the omitted-dependency definition bypasses both contexts; retaining either tracker would leave the same protection intact.',
     patches: [{
       file: 'src/render-snapshot-capture.ts',
       find: '  const batteryContext = showBattery ? createDeviceBatteryContext(planHass, registryHass) : undefined;',
       replace: '  const batteryContext = showBattery ? createDeviceBatteryContext(host._planHass, registryHass) : undefined;',
+    }, {
+      file: 'src/render-snapshot-capture.ts',
+      find: '  const signalContext = createDeviceSignalContext(planHass, registryHass);',
+      replace: '  const signalContext = createDeviceSignalContext(host._planHass, registryHass);',
     }],
   },
   {

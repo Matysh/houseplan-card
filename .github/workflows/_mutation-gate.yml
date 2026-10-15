@@ -109,18 +109,18 @@ jobs:
           fi
 
   mutants:
-    name: "Мутанты: каждый обязан красить тесты (шард ${{ matrix.shard }} из 10)"
+    name: "Мутанты: каждый обязан красить тесты (шард ${{ matrix.shard }} из 20)"
     needs: material
     if: needs.material.outputs.reuse != 'true'
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    # #795: ночь 05.10 (1164 мутанта) заняла 42–60 мин на шести шардах;
-    # четвёртый отменён по потолку. Десять шардов оставляют 116–117 мутантов
-    # вместо 194. Оценка по длительностям той ночи — максимум около 39 мин
-    # с запасом на setup; это прогноз, фактическое время проверяет следующая ночь.
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+    # #899: ночь 15.10 снова упёрлась в 60 мин на шардах 1/10 и 7/10.
+    # Двадцать modulo-шардов делят каждый прежний i на i и i+10 без потерь:
+    # при том же реестре на шард приходится примерно вдвое меньше мутантов.
+    # Это раскладка, не доказательство wall-time: его подтвердит следующая ночь.
     # Матрицу, делители runner/evidence и имя job держит mutation-gate.test.mjs.
     # Бандл собирают только браузерные гварды. Час — потолок против
     # зависшего Chromium, а не бюджет шарда: шард, упёршийся в него, — сигнал
@@ -177,7 +177,7 @@ jobs:
         run: |
           mkdir -p artifacts/mutation-shard-${{ matrix.shard }}
           set -o pipefail
-          node scripts/mutation-gate.mjs --shard=${{ matrix.shard }}/10 --execute-nightly 2>&1 | tee artifacts/mutation-shard-${{ matrix.shard }}/mutation-shard-${{ matrix.shard }}.log
+          node scripts/mutation-gate.mjs --shard=${{ matrix.shard }}/20 --execute-nightly 2>&1 | tee artifacts/mutation-shard-${{ matrix.shard }}/mutation-shard-${{ matrix.shard }}.log
       # Исход шага едет в evidence (#604): снятый по timeout-minutes шаг даёт
       # `cancelled`, и агрегатор отвергает такой шард как неполный — лог без
       # строк FAIL сам по себе зелёным не считается.
@@ -190,7 +190,7 @@ jobs:
             --tree=${{ needs.material.outputs.tree }} \
             --workflow-sha=${{ job.workflow_sha }} \
             --run-id=${{ github.run_id }} --run-attempt=${{ github.run_attempt }} \
-            --shard=${{ matrix.shard }} --shards=10 \
+            --shard=${{ matrix.shard }} --shards=20 \
             --outcome=${{ steps.gate.outcome }}
       - name: Сохранить лог и identity шарда
         if: always()
@@ -201,7 +201,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-  # Результат нельзя приписывать material, пока не доказаны все десять шардов —
+  # Результат нельзя приписывать material, пока не доказаны все двадцать шардов —
   # каждый с identity и с дошедшим до конца прогоном (#549, #604).
   # always() нужен при красном мутанте: лог красного шарда всё равно evidence.
   evidence:
@@ -227,13 +227,13 @@ jobs:
       - name: Проверить полноту и identity
         run: |
           node scripts/mutation-gate-report.mjs --verify-only \
-            --logs=artifacts/mutation-logs --shards=10 \
+            --logs=artifacts/mutation-logs --shards=20 \
             --sha=${{ needs.material.outputs.sha }} \
             --tree=${{ needs.material.outputs.tree }} \
             --workflow-sha=${{ job.workflow_sha }} \
             --run-id=${{ github.run_id }} --run-attempt=${{ github.run_attempt }}
 
-  # #620: маркер пишется ТОЛЬКО после зелёного агрегатора — все десять шардов
+  # #620: маркер пишется ТОЛЬКО после зелёного агрегатора — все двадцать шардов
   # доказаны на одном material. Красный или неполный прогон маркера не оставляет,
   # и следующая ночь гонит реестр заново.
   green_marker:
@@ -305,7 +305,7 @@ jobs:
         run: |
           mkdir -p artifacts
           node scripts/mutation-gate-report.mjs \
-            --require-evidence --logs=artifacts/mutation-logs --shards=10 \
+            --require-evidence --logs=artifacts/mutation-logs --shards=20 \
             --sha=${{ needs.material.outputs.sha }} \
             --tree=${{ needs.material.outputs.tree }} \
             --workflow-sha=${{ job.workflow_sha }} \

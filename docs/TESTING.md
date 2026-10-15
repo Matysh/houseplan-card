@@ -94,9 +94,9 @@ Synthetic credentials only; none of these tests calls a real write API or model.
    Держит `test/workflow-step.test.mjs`.
 
 Проверка: `node scripts/mutation-gate.mjs --check` — якоря патчей живы;
-полный прогон — workflow `mutation-gate.yml` (десять чересполосных шардов
-`--shard=i/10` — при четырёх, а затем и шести шардах реестр упёрся в потолок
-60 минут, #604/#795; число мутантов
+полный прогон — workflow `mutation-gate.yml` (двадцать чересполосных шардов
+`--shard=i/20` — при четырёх, шести и десяти шардах реестр упирался в потолок
+60 минут, #604/#795/#899; число мутантов
 считает `npm run inventory`, а не этот текст;
 один зафиксированный commit/tree для всего прогона; каждый артефакт несёт
 identity и исход шага прогона, а отдельный агрегатор fail-closed отвергает
@@ -180,6 +180,20 @@ checkout материала и чистые tracked inputs; anchors/guard source
 содержит environment/mutation/cache steps и при ошибочном запросе отказывает.
 Логический blind witness и компиляцию применённого патча всё ещё проверяет
 только ночь. Чистые helper/negative fixtures не подменяют её доказательство.
+
+#899 сохраняет часовой timeout и полный реестр: каждая прежняя группа `i/10`
+разбита ровно на `i/20` и `(i+10)/20`. Чистые partition/evidence-тесты требуют
+каждый ID ровно один раз и прежние SHA/tree/workflow/run/attempt/outcome fences;
+прерванный шард даже с итоговой строкой не становится зелёным. Это не обещание
+wall-time — вместимость проверит следующий настоящий ночной прогон.
+Определения устаревших свидетелей учитывают независимые повторные защиты
+late editor entry и battery/signal tracking; тест проекции отдельно исключает
+физический marker/plan-area fallback. LED-смок наблюдает trusted Chromium
+two-contact/release/cancel и явные compatibility tails по неизменному полному
+service ledger, сохраняя прежние pan/click/fade/lifecycle проверки.
+Статическая готовность этих определений не является compilation/caught proof.
+Обычный report CLI также ожидает 20 шардов; для разбора исторического
+десятишардового артефакта явно передайте `--shards=10`.
 
 ## Пустое совпадение `--test-name-pattern` (#650)
 
