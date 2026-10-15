@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 911,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "Stable v1.80.1 already returns no Thickness hover while its dialog is open, leaving the edited wall unmarked. The actual implementation adds only bounded, cursor-independent session presentation resolved from the existing dialog target and current geometry, with existing width, palette and live-editor ownership. No persistent fields, geometry or Apply semantics change.",
+  "summary": {
+    "ru": "Редактируемая стена остаётся выделенной, пока открыт диалог толщины, в том числе при переносе диалога и навигации по плану.",
+    "en": "The edited wall stays highlighted while its thickness dialog is open, including when moving the dialog or navigating the plan."
+  }
+}

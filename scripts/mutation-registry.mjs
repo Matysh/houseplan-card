@@ -99,6 +99,42 @@ const MUTANT_DEFINITIONS = [
       replace: '    const entry = names ? names[id] : undefined;' }],
   },
   {
+    id: 'wall-selection-foreign-floor-accepted',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/wall-thickness-selection.test.mjs',
+    because: '#911 AC3: the pure resolver refuses a foreign floor instead of old session geometry.',
+    patches: [{ file: 'src/wall-thickness-selection.ts', find: '  if (space.id !== spaceId) return null;', replace: '  if (false && space.id !== spaceId) return null;' }],
+  },
+  {
+    id: 'wall-selection-stale-room-fallback',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/wall-thickness-selection.test.mjs',
+    because: '#911 AC3: a changed room span returns null, never old opening coordinates.',
+    patches: [{ file: 'src/wall-thickness-selection.ts', find: '    if (indices.length !== 1) return null;', replace: '    if (indices.length !== 1) return { d: drawWallPreviewD([target.a, target.b], 1, false), open: false };' }],
+  },
+  {
+    id: 'wall-selection-disregards-current-width',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/wall-thickness-selection.test.mjs',
+    because: '#911 AC3: numerical positive/zero controls at cell_cm 1/5/30 retain existing physical widths.',
+    patches: [{ file: 'src/wall-thickness-selection.ts', find: 'wallThickHoverHalfUnits(cm, cellCm, gridPitch)', replace: 'wallThickHoverHalfUnits(100, cellCm, gridPitch)' }],
+  },
+  {
+    id: 'wall-selection-hidden-with-dialog',
+    guard: compiledNodeSmoke('smoke_wallthick_standalone'),
+    because: '#911 AC1 needs the mounted Lit path after trusted public opening and native input focus, not merely a pure shape.',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts', find: '    const hover = d ? selected : this.host._wallThickHover;', replace: '    const hover = d ? null : this.host._wallThickHover;' }],
+  },
+  {
+    id: 'wall-selection-not-live-owned',
+    guard: compiledNodeSmoke('smoke_wallthick_standalone'),
+    because: '#911 AC2 needs computed SVG opacity and live/settled ownership during trusted held input: exactly one visible band follows the wall.',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts', find: "'wallthick-selected hp-editor-only-layer'", replace: "'wallthick-selected'" }],
+  },
+  {
+    id: 'wall-selection-ignores-tool-boundary',
+    guard: compiledNodeSmoke('smoke_wallthick_standalone'),
+    because: '#911 AC4 needs the public toolbar/Lit lifecycle while the dialog target exists; pure resolution cannot prove selected paint retirement.',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts', find: "    if (d && this.host._markup && this.host._tool === 'wallthick') {", replace: '    if (d && this.host._markup) {' }],
+  },
+  {
     id: 'backdrop-cancel-retains-grabbing-cursor',
     guard: 'node demo/smoke_grid_scale_invariance.mjs',
     because: '#908 AC1 requires the browser-computed cursor after trusted touchCancel across two real grid layouts; a reset owner alone cannot prove retained DOM presentation.',

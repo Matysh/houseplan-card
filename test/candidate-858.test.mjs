@@ -185,10 +185,10 @@ test('#858 native receipt refuses exit0 without real observed floor, timeout and
 
 test('#861 gesture candidates require their exact ordinary and held-preview native floors', () => {
   for (const file of ['src/physical-body-gesture.ts', 'src/backdrop-frame-gesture.ts', 'src/live-editor.ts',
-    'src/canvas-surface-gestures.ts', 'src/wall-thickness-dialog-gesture.ts'])
+    'src/canvas-surface-gestures.ts', 'src/wall-thickness-dialog-gesture.ts', 'src/wall-thickness-selection.ts'])
     assert.ok(requiredProfiles({ category: 'stable-fix' }, [file]).includes('editor'));
   assert.deepEqual(requiredProfiles({ category: 'infra' }, ['src/physical-body-gesture.ts']), []);
-  assert.equal(NATIVE_PROFILES.editor.length, 4);
+  assert.equal(NATIVE_PROFILES.editor.length, 5);
   for (const item of NATIVE_PROFILES.editor) {
     const checks = NATIVE_CHECK_FLOORS[item.script];
     const output = names => ({ status: 0, stdout: `HP_SMOKE_CHECKS ${JSON.stringify(names)}\nOK\n` });

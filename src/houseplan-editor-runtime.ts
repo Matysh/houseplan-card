@@ -10,6 +10,7 @@ import { html, svg, nothing, TemplateResult } from 'lit';
 import { ref } from 'lit/directives/ref.js';
 import { keyed } from 'lit/directives/keyed.js';
 import { WallThicknessDialogGesture } from './wall-thickness-dialog-gesture';
+import { wallThicknessSelection } from './wall-thickness-selection';
 import { PhysicalBodyGestureRuntime, type PhysicalBodyGesturePort } from './physical-body-gesture';
 import { BackdropFrameGestureRuntime, type BackdropPlan } from './backdrop-frame-gesture';
 import { displayVersion } from './card-version';
@@ -5288,6 +5289,8 @@ public _wallThickClick(raw: number[]): void {
       return;
     }
     const cm = hit.cm;
+    this.wallThickSpace = this.host._space;
+    this.wallThickSelectionCache = null;
     const view = this.host._viewOr(this.host._baseVb());
     const mx = (hit.a[0] + hit.b[0]) / 2, my = (hit.a[1] + hit.b[1]) / 2;
     this.host._wallDialog = {
@@ -5445,10 +5448,27 @@ public _wallHatchDefs(color: string): TemplateResult {
     </defs>` as unknown as TemplateResult;
   }
 
+private wallThickSpace: string | null = null;
+private wallThickSelectionCache: { a: number[]; space: SpaceModel; epoch: number;
+  shape: ReturnType<typeof wallThicknessSelection> } | null = null;
+
 public _renderWallThickUi(): TemplateResult {
-    const hover = this.host._wallThickHover;
+    const d = this.host._wallDialog;
+    let selected: ReturnType<typeof wallThicknessSelection> = null;
+    if (d && this.host._markup && this.host._tool === 'wallthick') {
+      const space = this.host._spaceModel();
+      if (space && (this.wallThickSelectionCache?.a !== d.a
+          || this.wallThickSelectionCache.space !== space
+          || this.wallThickSelectionCache.epoch !== this.host._cfgEpoch)) {
+        this.wallThickSelectionCache = { a: d.a, space, epoch: this.host._cfgEpoch,
+          shape: wallThicknessSelection(space, this.wallThickSpace, d, this.host._spaceWalls,
+            this.host._openCuts(), this.host._wallKeyPitch, this.host._cellCm, this.host._gridPitch) };
+      }
+      if (space) selected = this.wallThickSelectionCache?.shape ?? null;
+    } else this.wallThickSelectionCache = null;
+    const hover = d ? selected : this.host._wallThickHover;
     if (!hover || !hover.d) return svg`` as unknown as TemplateResult;
-    return svg`<path class="wallthick-hover ${hover.open ? 'isopen' : ''}"
+    return svg`<path class="wallthick-hover ${d ? 'wallthick-selected hp-editor-only-layer' : ''} ${hover.open ? 'isopen' : ''}"
       d="${hover.d}"></path>` as unknown as TemplateResult;
   }
 

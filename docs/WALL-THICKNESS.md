@@ -609,6 +609,17 @@ modes identical. `hide_openings` hides the symbol only.
 
 ## 6. Tool / hooks / i18n
 
+With the Thickness dialog open (#911), a separate cursor-independent selected
+projection resolves the dialog's room/span or partition identity against the
+current floor. It uses the existing physical width and zero minimum, palette,
+and pointer-transparent SVG path; an unapplied field value never changes it.
+Missing/foreign/unresolvable targets fail closed without hover fallback.
+The lazy editor retains one shape per opening/model/epoch, not a plan rebuild
+per pointer move. The selected path joins existing editor-only live ownership,
+so settled/live frames never paint two visible copies. Close/Apply and tool,
+mode, floor or instance changes retire presentation; ordinary no-dialog hover,
+wallhot/cursor, source priority and Apply/history semantics remain unchanged.
+
 Plan-editor tool «Thickness»; hover whole wall; cm/in from HA; exact `0..100`
 is valid for room walls and partitions, while empty/invalid input is
 rejected; apply-to-room. Hooks: `data-hp="wall"`. i18n en/ru. Changing a

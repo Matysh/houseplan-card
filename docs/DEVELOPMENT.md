@@ -2509,3 +2509,12 @@ The existing `smoke_zigbee_topology_job` adds a restored public-feed fixture,
 actual keyboard Update, failure/replacement and another client's saved-OFF reset.
 It proves browser adoption/UI, not backend disk durability or real radio/GPU
 acceptance. Static mutation declarations are checked only; execution is nightly.
+
+## Thickness selection witness (#911)
+
+The existing `smoke_wallthick_standalone` includes public native room/partition
+openings, single visible live/settled selection during input and camera/dialog
+movement, complete no-write snapshots, Apply/Undo, floor/tool/View and remount
+retirement. Its synthetic setup uses the canonical model helper and server
+facade, never a private dialog assignment. `wall-thickness-selection.test.mjs`
+covers current target/width resolution and stale/foreign refusal without a browser.

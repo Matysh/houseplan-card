@@ -5,6 +5,13 @@ import { attestStandardLaunch, requirePinnedBrowser } from './browser-attestatio
 import { candidateInputs, digest, NATIVE_PROFILES } from './candidate-readiness.mjs';
 import { isMainModule } from './spawn-portable.mjs';
 export const NATIVE_CHECK_FLOORS = Object.freeze({
+  'demo/smoke_wallthick_standalone.mjs': ['911 AC1 room public click opens dialog',
+    '911 AC1 partition target band persists away from pointer',
+    '911 AC1 room input draft and neighbour hover retain current physical target',
+    '911 AC2 room held dialog drag retains one physical band', '911 AC2 room held pan follows physical wall',
+    '911 AC2 partition zoom really changed camera', '911 AC2 partition complete config layout history and wire unchanged',
+    '911 AC4 floor switch clears selected indication', '911 AC4 partition Undo restores full source config',
+    '911 AC4 remount kiosk=true cannot revive selected wall'],
   'demo/smoke_canvas_surface_gestures.mjs': ['AC1 native selection replaces all text',
     'AC2 corner follows held pointer 1:1', 'AC2 pointercancel retains last position and retires owner',
     'AC3 clamp 1', 'AC4 moved held pan keeps screen rect',

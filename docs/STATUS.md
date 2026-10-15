@@ -68,6 +68,11 @@ out of scene navigation. The thickness dialog is a bounded screen surface with
 session-only drag state; its native input, persistence and geometry history
 remain independent. Touch editor: best effort / intentionally degraded.
 
+Thickness selection (#911) stays on the current physical wall while its dialog
+is open, independently of cursor, draft field and camera navigation. It is
+session-only lazy editor presentation; stale targets fail closed and selected
+paint follows the existing live/settled ownership without changing wallhot.
+
 Nightly mutation evidence (#899) retains the full registry and 60-minute
 deadline while splitting each former modulo shard into two. Preparation
 definitions preserve typed reachable branches; redundant editor/diagnostic

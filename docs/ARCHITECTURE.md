@@ -6,6 +6,14 @@ HA fallback when standalone. The existing write-error mapper recognises the
 known context code, supplied by the unchanged early placement refusal. Optimize
 reads own string roster names only; owner classification and cleanup stay intact.
 
+Thickness selection (#911) is lazy editor presentation, not a new hit target.
+`wall-thickness-selection.ts` resolves the current room span or partition from
+the dialog target and opening floor, and reuses the physical hover shape policy.
+The runtime caches one result by opening array identity, model and config epoch;
+field edits and camera movement do not rebuild it. Its editor-only class hands
+paint ownership to the existing live layer. The original hover getter remains
+cursor-only and still owns wallhot; no host port, schema or writer is added.
+
 Release delivery phases (#903) share `scripts/task-delivery.mjs` between the
 SPEC publisher, release catalogue and membership create/verify. Versioned
 spec-review trailers require the exact publisher/delta and the document's own

@@ -10,6 +10,9 @@
   changes. A changed Home Assistant context shows a human placement-save error,
   and Optimize reports ignore inherited or non-string owner names
   ([#907](https://github.com/Matysh/houseplan-card/issues/907)).
+- The edited wall stays highlighted while its thickness dialog is open, even
+  when moving the dialog or navigating the plan
+  ([#911](https://github.com/Matysh/houseplan-card/issues/911)).
 - Late vacuum path replies and Optimize/import Undo completions no longer replace
   a plan, history or busy state after switching Home Assistant connections/users
   or detaching the card ([#901](https://github.com/Matysh/houseplan-card/issues/901)).

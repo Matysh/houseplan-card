@@ -888,6 +888,11 @@ Other operations edit existing geometry:
 | Thickness | Changes one span or every wall of a room, including zero-thickness walls |
 | Delete room | Deletes the room after choosing whether its exclusive physical walls remain; shared walls always remain |
 
+While the **Thickness** dialog is open, its wall stays highlighted independently
+of the pointer or an unapplied field value. The band follows the physical wall
+when navigating the plan, not the dragged dialog. Closing the dialog or changing
+tool/floor removes the session-only selection.
+
 Choose **Stairs → Straight** or **Stairs → Spiral**, then draw on the plan
 like a decor shape: press, drag and release. The drag direction is the
 direction of ascent, the drawn extents are the size, and a plain click still

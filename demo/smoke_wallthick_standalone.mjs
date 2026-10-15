@@ -1,7 +1,9 @@
 /** Issue #313/#478: Thickness serves canonical room masonry and partitions. */
 import { launch, checkAll, finish } from './serve.mjs';
+import { wallthickSelectionScenario } from './wallthick-selection-scenario.mjs';
 
 const { page, browser } = await launch({ width: 900, height: 800 }, 1);
+await wallthickSelectionScenario(page);
 
 const out = await page.evaluate(async () => {
   const NORM_W = 1000;
