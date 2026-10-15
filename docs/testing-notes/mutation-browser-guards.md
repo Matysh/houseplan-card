@@ -316,9 +316,13 @@ unit cannot prove that this callback is actually fenced before its read.
 - `config-old-subscription-interrupts-new-paired-load`
 - `config-return-retains-inert-subscription`
 
-#847 M1: navigation holds the trusted mouse down beyond the timer deadline;
-there is no implicit capture or independent terminal masking space cancellation.
-The same hash/facade cases keep native touch and immediate next-tap controls.
+#847 M1-r2: navigation observes the real pending owner before the floor change,
+its immediate teardown afterwards, and trusted mouse still down beyond the
+timer deadline. Mouse has no implicit capture or independent terminal; touch
+and immediate next-tap controls remain. Current navigation cancels through both
+explicit cancel and unconditional closeInfoCard→interrupt. The scoped compound
+mutation disables both paths for a pending no-card press, not either redundant
+line alone; source applicability is static and catching is nightly-only (#709).
 
 - `view-space-change-keeps-pending-hold`
 

@@ -75,10 +75,16 @@ loss after up; Android delivery remains a field hypothesis, not a headless claim
 Pure units execute the hold clock/generation and shared subscriber disposal;
 registered mutants are checked statically and executed only by the nightly job.
 Space-change probes keep mouse and touch down for 750 ms after both hash and
-facade navigation, check inertness before release, and verify the first fresh
-native tap on return. Mouse has no implicit capture; an observed absence of
-terminals prevents DOM-removal loss or early pointerup from masking the
-`_commitSpace` cancellation witness (CODE-REVIEW-847-r1 M1).
+facade navigation. They observe the trusted contact's pending owner before
+navigation and its immediate teardown on the actual floor change, then check
+inertness before release and the first fresh native tap on return. Mouse has no
+implicit capture; observed absence of terminals excludes an independent up/loss.
+`_commitSpace` currently cancels twice: its explicit hold cancel and its
+unconditional `_closeInfoCard` → `_interruptViewGesture` path. The compound
+registry witness disables both only inside that navigation boundary (the close
+becomes conditional on an already open card). Removing just the first cancel
+was equivalent and cannot prove it individually necessary (CODE-REVIEW-847-r2
+M1). Author checks applicability only; execution remains nightly-only (#709).
 
 ## Config writer authority witnesses (#890)
 

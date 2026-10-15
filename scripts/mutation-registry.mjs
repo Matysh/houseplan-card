@@ -95,10 +95,12 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'view-space-change-keeps-pending-hold',
     guard: 'node demo/smoke_view_hold_lifecycle.mjs',
-    because: '#847 AC4(в)/D6: actual hash/facade navigation while trusted mouse remains down past 600 ms must retire the mounted hold; no implicit capture/terminal masks space cancellation. Native touch and first-fresh-tap controls remain.',
+    because: '#847 AC4(в)/D6: navigation has two cancellation paths: explicit ViewHold.cancel and unconditional closeInfoCard→interrupt. Disable both only in commitSpace for a pending press with no open card; trusted mouse/touch must lose their observed owner immediately and remain inert beyond 600 ms. This is combined protection, not proof that either redundant line alone is necessary.',
     patches: [{ file: 'src/houseplan-card.ts',
       find: '      this._cancelPendingWarmMode();\n      this._viewHold.cancel();\n      this._clearRoomFocus(true);',
-      replace: '      this._cancelPendingWarmMode();\n      // mutant: old-space hold survives navigation\n      this._clearRoomFocus(true);' }],
+      replace: '      this._cancelPendingWarmMode();\n      // mutant: old-space hold survives navigation\n      this._clearRoomFocus(true);' }, { file: 'src/houseplan-card.ts',
+      find: '      this._closeInfoCard(); this._openingInfo = null; this._openingInfoSpace = null;',
+      replace: '      if (this._infoCard) this._closeInfoCard(); this._openingInfo = null; this._openingInfoSpace = null;' }],
   },
   {
     id: 'kiosk-retired-confirmation-accepts-new-intent',

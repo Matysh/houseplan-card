@@ -227,7 +227,7 @@ const show = (page, kind) => page.evaluate((mode) => {
       out[`${kind}FirstFreshTap`] = true;
     }
     // M1: stay physically down beyond 600 ms after navigating. Mouse has no
-    // implicit capture, so DOM-removal loss/up cannot mask _commitSpace's guard.
+    // implicit capture, so DOM-removal loss/up cannot mask navigation teardown.
     // Touch retains original D6 without claiming its terminal delivery is absent.
     for (const route of ['hash', 'facade']) for (const modality of ['mouse', 'touch']) {
       const initial = await state(page), p = await point(page.locator(DEVICE));
@@ -236,10 +236,15 @@ const show = (page, kind) => page.evaluate((mode) => {
       await wait(page, 100);
       const held = (await events(page)).filter(e => e.type === 'pointerdown' && e.pointerType === modality).at(-1);
       assert.ok(held?.trusted, `${route}/${modality}: trusted contact starts the pending hold`);
+      assert.equal((await state(page)).owner, held.pointerId,
+        `${route}/${modality}: this still-down contact really owns the pending hold before navigation`);
       const terminalStart = (await events(page)).length;
       if (route === 'hash') await page.evaluate(() => { location.hash = '#space=garden'; });
       else await page.evaluate(() => window.__hpTest.switchSpace('garden'));
       await page.waitForFunction(() => window.__card._space === 'garden');
+      assert.equal((await state(page)).owner, null,
+        `${route}/${modality}: actual navigation tears down the owner immediately, not just at timer expiry`);
+      out[`${route}${modality}SpaceRetiresOwnerImmediately`] = true;
       await sameInert(page, initial, `${route}${modality}SpaceRetiresStillDownHold`, 750);
       assert.equal((await state(page)).owner, null, 'navigation retires the timer before physical release');
       if (modality === 'mouse') {
