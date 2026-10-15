@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 128, issue: 63. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 129, issue: 64. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -8,6 +8,7 @@
 | #906 | [SPEC-REVIEW-906-r1.md](SPEC-REVIEW-906-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #905 | [SPEC-REVIEW-905-r1.md](SPEC-REVIEW-905-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #903 | [SPEC-REVIEW-903-r1.md](SPEC-REVIEW-903-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #902 | [SPEC-REVIEW-902-r1.md](SPEC-REVIEW-902-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | DoR не закрыт: не названо влияние на touch/View-kiosk и на производительность | `PROCESS.md` `docs/TOUCH-SUPPORT.md` |
 | #901 | [SPEC-REVIEW-901-r1.md](SPEC-REVIEW-901-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #900 | [SPEC-REVIEW-900-r1.md](SPEC-REVIEW-900-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | отсутствует буквальная декларация Touch editor: … | `docs/TOUCH-SUPPORT.md` `docs/specs/485-radar-presence-stage1.md` `docs/specs/220-space-tab-reorder.md` |
 | #899 | [CODE-REVIEW-899-r1.md](CODE-REVIEW-899-r1.md) | code · r1 | 🟡 жёлтый | 1 | 0 | новый LED-смок нестабилен: ~40% падений на собственном материале задачи | `demo/smoke_led_strip_glow.mjs` `docs/STATUS.md` `scripts/mutation-registry.mjs` |
