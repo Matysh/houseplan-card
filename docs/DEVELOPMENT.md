@@ -1,5 +1,22 @@
 # Development and deployment
 
+## Information-card confirmation and lock information (#849)
+
+`node --test test/device-toggle.test.mjs test/view-action-context.test.mjs`
+covers the visible/enabled checkbox projection, exact row resolver, fresh
+direction, missing/disabled/secure targets and identity-only context keys.
+`node demo/smoke_info_card_confirm.mjs` enters through genuine long-press,
+entity-row buttons, real confirmation DOM, HA config/registry/state events,
+Tab/Enter/Space and coarse-pointer taps. It records service target/count and
+the actual painted shell's public animation calls. Cancel, retired/repeated
+accept, replaced membership and unavailable targets cannot dispatch or animate;
+read-only kiosk keeps permitted controls. A canonical door badge opens only
+information, while its explicit Unlock button still asks separately. Flat
+hit size remains about 15 px; keyboard focus adds no hit-box padding.
+Five registry witnesses cover the mounted consumer boundaries; local checks
+only validate declarations/anchors, never claim nightly mutation outcomes.
+
+
 ## Pre-release subscription ownership fix (#890, PROCESS §11.4)
 
 `node demo/smoke_config_authority.mjs` explicitly pushes the retired A server

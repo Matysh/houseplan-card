@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 849,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "v1.80.1 already has marker tap_confirm, direct information-card entity toggles and clickable lock-information badges. Its card rows bypass configured confirmation and its badge lacks keyboard parity. This restores safe consistent operation and access in existing stable functionality, not an intermediate-release feature repair.",
+  "summary": {
+    "ru": "Подтверждение учитывается в карточках устройств; сведения о замке доступны с клавиатуры.",
+    "en": "Device-card toggles respect confirmation; lock information is keyboard-accessible."
+  }
+}

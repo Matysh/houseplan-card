@@ -2,8 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   formatToggleConfirmation,
+  infoCardTapConfirmationRequired,
   projectedTapAction,
   resolveToggleIntent,
+  resolveInfoRowToggleIntent,
   sameToggleCommandTargets,
   sameToggleOperationTargets,
   toggleOperation,
@@ -76,6 +78,38 @@ function device(overrides = {}) {
     ...overrides,
   };
 }
+
+test('#849 row confirmation follows only the visible enabled checkbox', () => {
+  for (const [tapAction, primary, expected] of [
+    ['toggle', 'switch.a', true], ['run', 'switch.a', true],
+    ['cover', 'cover.a', true], [null, 'light.a', true],
+    ['info', 'light.a', false], ['more-info', 'light.a', false],
+    ['none', 'light.a', false], [null, 'switch.a', false],
+    ['future-token', 'light.a', false],
+  ]) {
+    const d = device({ tapAction, primary, marker: { tap_confirm: true } });
+    assert.equal(infoCardTapConfirmationRequired(d), expected, `${tapAction}/${primary}`);
+    assert.equal(infoCardTapConfirmationRequired({ ...d, marker: { tap_confirm: false } }), false);
+  }
+});
+
+test('#849 exact row intent cannot inherit the parent marker controls or secure capabilities', () => {
+  const h = hass({ 'light.row': state('light.row', 'off'), 'light.other': state('light.other', 'on') });
+  const before = resolveInfoRowToggleIntent(h, h, 'light.row');
+  assert.deepEqual(before.command, { domain: 'light', service: 'turn_on', data: { entity_id: 'light.row' } });
+  const changed = { ...h, states: { ...h.states, 'light.row': state('light.row', 'on') } };
+  const after = resolveInfoRowToggleIntent(changed, changed, 'light.row');
+  assert.equal(after.command.service, 'turn_off');
+  assert.equal(sameToggleOperationTargets(before, after), true);
+  for (const entityId of ['lock.door', 'alarm_control_panel.home', 'cover.garage', 'light.absent']) {
+    const secure = hass({ [entityId]: state(entityId, 'on', { device_class: 'garage', supported_features: 15 }) });
+    if (entityId === 'light.absent') delete secure.states[entityId];
+    assert.equal(resolveInfoRowToggleIntent(secure, secure, entityId).command, null, entityId);
+  }
+  const disabled = { ...h, entities: { ...h.entities, 'light.row': { disabled_by: 'user' } } };
+  assert.equal(resolveInfoRowToggleIntent(h, disabled, 'light.row').command, null);
+  assert.equal(resolveInfoRowToggleIntent({ ...h, states: { 'light.row': state('light.row', 'unavailable') } }, h, 'light.row').command, null);
+});
 
 test('action projection is universal while persisted legacy/default origins stay distinguishable', () => {
   assert.equal(projectedTapAction('cover', 'cover'), 'toggle');

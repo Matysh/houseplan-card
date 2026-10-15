@@ -33,11 +33,11 @@ that transition events alone prove disposal.
 | --- | ---: | --- |
 | Performance threshold | 5 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 3 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
-| Paint, cascade and layer composition | 51 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 66 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Paint, cascade and layer composition | 52 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
+| Pointer geometry and trusted interaction | 67 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 41 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 174 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **340 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 177 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **345 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -95,6 +95,10 @@ premature counter snapshot. The unchanged Chromium probes still check the
 real Playwright page-error channel.
 
 ### Paint, cascade and layer composition
+
+#849: successful dispatch feedback belongs to the painted marker shell, not modal entry.
+
+- `info-card-confirmation-imitates-dispatch-feedback`
 
 #871: native camera frames expose the nested SVG/HTML double projection.
 
@@ -178,6 +182,10 @@ post-up capture loss require the mounted browser consumer, not just its owner un
 - `view-hold-context-tail-unowned`
 - `view-pan-context-tail-unowned`
 - `view-implicit-loss-cancels-accepted-room`
+
+#849: real Tab/Enter/Space dispatch reaches the information-only lock badge.
+
+- `lock-information-badge-loses-keyboard-entry`
 
 #871: animated puck centres and SVG endpoints share the real composed screen
 matrix during trusted pan/pinch.
@@ -308,6 +316,13 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 - `space-delete-block-leaves-focus-behind`
 
 ### Custom-element and HA browser lifecycle
+
+#849: a secondary row crosses the actual info/modal/HA-update boundary while
+preserving its exact entity target and fresh card membership.
+
+- `info-card-row-bypasses-visible-confirmation`
+- `info-card-row-trusts-retired-membership`
+- `info-card-row-dispatches-controls-neighbour`
 
 #890 pre-release AC6: the public old-server push crosses an already mounted
 subscription while a new connection's paired load is pending. A pure context

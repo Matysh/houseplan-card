@@ -77,7 +77,7 @@ import {
 import { TouchGestureClickGuard } from './touch-gesture-click-guard';
 import { KioskHoldGesture } from './kiosk-hold';
 import { KioskCarousel } from './kiosk-carousel';
-import { currentMarkerActionDevice, openingActionTargetCurrent } from './view-action-context';
+import { currentMarkerActionDevice, infoCardRowContextKey, openingActionTargetCurrent } from './view-action-context';
 import { ViewHoldGesture } from './view-hold';
 import { DeviceHitController, deviceLayerMutated, observeDeviceHitGeometryScroll } from './device-hit-owner';
 import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
@@ -109,7 +109,8 @@ import {
 import { type DeviceInboxCategory, type DeviceInboxRow } from './device-inbox';
 import type { CreatedAreaRoom } from './room-device-discovery';
 import {
-  formatToggleConfirmation, projectedTapAction, resolveToggleIntent, sameToggleOperationTargets,
+  formatToggleConfirmation, infoCardTapConfirmationRequired, projectedTapAction,
+  resolveInfoRowToggleIntent, resolveToggleIntent, sameToggleOperationTargets,
   toggleIntentName, toggleOperation, unavailableToggleTargetNames, type ResolvedToggleIntent,
   type ResolvedToggleTarget, type ToggleNextEffect,
 } from './device-toggle';
@@ -12603,6 +12604,9 @@ export class HouseplanCard extends LitElement {
       const lockState = `${locked ? 'locked' : known ? 'unlocked' : 'unknown'} ${this._isoLightFloors?.has(isoPlacement?.owner?.id ?? '') ? 'iso-floor-light' : ''}`;
       if (ghost) return renderIsoTileShadow('oplock', String(o.id), `${deviceThemeClass(this._renderPlanHass)} ${lockState}`, `left:${left}%;top:${top}%`, nothing);
       return html`<div class="oplock ${deviceThemeClass(this._renderPlanHass)} ${lockState}"
+        role=${this._mode === 'view' ? 'button' : nothing}
+        tabindex=${this._mode === 'view' ? '0' : nothing}
+        aria-label=${this._mode === 'view' ? this._t('opening.lock_info_label') : nothing}
         data-hp-iso-overlay-kind=${isoPlacement?.plane === 'raised' ? 'opening-lock' : nothing}
         data-hp-iso-raised=${isoPlacement?.plane === 'raised' ? 'true' : nothing}
         data-hp-iso-nudged=${isoPlacement?.plane === 'raised' ? 'false' : nothing}
@@ -12612,6 +12616,11 @@ export class HouseplanCard extends LitElement {
         @click=${(e: MouseEvent) => {
           if (this._mode !== 'view') return;
           e.stopPropagation();
+          this._openingInfo = o; this._openingInfoSpace = this._space;
+        }}
+        @keydown=${(e: KeyboardEvent) => {
+          if (this._mode !== 'view' || (e.key !== 'Enter' && e.key !== ' ')) return;
+          e.preventDefault(); e.stopPropagation();
           this._openingInfo = o; this._openingInfoSpace = this._space;
         }}>
         <span class="oplock-shell" aria-hidden="true">
@@ -12818,13 +12827,34 @@ export class HouseplanCard extends LitElement {
     return out.slice(0, 12);
   }
 
-  /** Toggle straight from the device card (safe domains only). */
+  /** The same safe action authority as a marker, with only the selected row as target. */
   private _cardToggle(eid: string): void {
-    const dom = eid.split('.')[0];
-    if (dom === 'lock' || dom === 'alarm_control_panel' || !this._planEntityAvailable(eid)) return;
-    this.hass
-      .callService('homeassistant', 'toggle', { entity_id: eid })
-      .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
+    if (this._mode !== 'view' || !this._infoCard) return;
+    const context = { spaceId: this._space, id: this._infoCard.id };
+    const device = currentMarkerActionDevice(this._devices, this._space, context);
+    if (!device || !this._cardEntities(device).some((row) => row.eid === eid && row.kind === 'toggle')) return;
+    const key = infoCardRowContextKey(device, this._cardEntities(device));
+    const initial = resolveInfoRowToggleIntent(this._planHass, this._fullRegistryHass, eid);
+    if (!initial.command) return;
+    const execute = (): void => {
+      const current = currentMarkerActionDevice(this._devices, this._space, context);
+      if (this._mode !== 'view' || !this.isConnected || !current || this._infoCard?.id !== context.id
+          || infoCardRowContextKey(current, this._cardEntities(current)) !== key) {
+        this._showToast(this._t('toast.tap_target_changed')); return;
+      }
+      const intent = resolveInfoRowToggleIntent(this._planHass, this._fullRegistryHass, eid);
+      if (!intent.command || !sameToggleOperationTargets(initial, intent)) return;
+      this._startDevicePressFeedback(current.id);
+      this.hass.callService(intent.command.domain, intent.command.service, intent.command.data)
+        .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
+    };
+    if (infoCardTapConfirmationRequired(device)) {
+      this._tapConfirm = {
+        kind: 'toggle', text: this._t('confirm.tap_toggle', { name: toggleIntentName(initial) }),
+        lines: this._toggleConfirmationLines(initial), initialIntent: initial,
+        deviceId: device.id, exec: execute,
+      };
+    } else execute();
   }
 
   private _renderInfoCard(): TemplateResult {

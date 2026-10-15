@@ -599,6 +599,11 @@ export const planStyles = css`
       pointer-events: auto;
       cursor: pointer;
     }
+    .stage.mode-view .oplock:focus-visible {
+      outline: 2px solid var(--hp-accent, #3ea6ff);
+      outline-offset: 3px;
+      border-radius: 50%;
+    }
     .stage.projection-iso.mode-view .oplock::before {
       content: '';
       position: absolute;

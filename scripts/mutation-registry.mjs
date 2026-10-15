@@ -77,6 +77,46 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'info-card-row-bypasses-visible-confirmation',
+    guard: 'node demo/smoke_info_card_confirm.mjs',
+    because: '#849 AC1: a mounted secondary entity row must open the real modal before HA dispatch; a pure visibility predicate does not prove the card consumes it.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: '    if (infoCardTapConfirmationRequired(device)) {',
+      replace: '    if (infoCardTapConfirmationRequired(device) && eid.length < 0) {' }],
+  },
+  {
+    id: 'info-card-row-trusts-retired-membership',
+    guard: 'node demo/smoke_info_card_confirm.mjs',
+    because: '#849 AC2: actual HA registry/config replacement while the row modal is open must cancel its retained action, not trust a previously rendered entity list.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: '          || infoCardRowContextKey(current, this._cardEntities(current)) !== key) {',
+      replace: "          || infoCardRowContextKey(current, this._cardEntities(current)) === '') {" }],
+  },
+  {
+    id: 'info-card-row-dispatches-controls-neighbour',
+    guard: 'node demo/smoke_info_card_confirm.mjs',
+    because: '#849 AC1/AC2: the actual service port must receive exactly the secondary row entity, never the parent marker controls target; the resolver unit cannot prove the dispatch adapter.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: '      this.hass.callService(intent.command.domain, intent.command.service, intent.command.data)',
+      replace: '      this.hass.callService(intent.command.domain, intent.command.service, { entity_id: current.controls?.[0] || eid })' }],
+  },
+  {
+    id: 'info-card-confirmation-imitates-dispatch-feedback',
+    guard: 'node demo/smoke_info_card_confirm.mjs',
+    because: '#849 AC4: recording the real painted shell animation distinguishes opening/cancelling a modal from a permitted dispatch; a pure toggle intent cannot prove this visual boundary.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: '    if (infoCardTapConfirmationRequired(device)) {',
+      replace: '    this._startDevicePressFeedback(device.id);\n    if (infoCardTapConfirmationRequired(device)) {' }],
+  },
+  {
+    id: 'lock-information-badge-loses-keyboard-entry',
+    guard: 'node demo/smoke_info_card_confirm.mjs',
+    because: '#849 AC3/AC4: Tab and native Enter/Space must open only door information through the mounted badge; attributes alone do not prove keyboard dispatch.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: "          if (this._mode !== 'view' || (e.key !== 'Enter' && e.key !== ' ')) return;",
+      replace: "          if (this._mode !== 'view' || e.key.length > 0) return;" }],
+  },
+  {
     id: 'config-return-retains-inert-subscription',
     guard: 'node demo/smoke_config_authority.mjs',
     because: '#890 AC6: current A events must work after accepted B-to-A and a coalesced A-to-B-to-A plus a real next HA frame; pure identity checks cannot prove live resubscription.',

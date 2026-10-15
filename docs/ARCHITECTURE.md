@@ -726,6 +726,12 @@ opening-owned exact references: candidates follow HA binding status, render
 reads the frozen active-registry projection (never raw `hass`), neither
 consults marker tombstones. The `.oplock` badge never toggles a lock
 (`resolveToggleIntent` → no-op, `SCOPE.md`); openings are edited only in Plan.
+In View the badge is a named, keyboard-focusable information button; pointer,
+Enter and Space open the same existing card without service dispatch (#849).
+Its focus outline does not change its Flat/2.5D hit geometry. Device-card rows
+share the exact-entity/security resolver in `device-toggle.ts`, with a captured
+`infoCardRowContextKey` over current binding, controls and row identities;
+state-only HA frames may change direction but never redirect a confirmed row.
 
 ## Integration WS API
 

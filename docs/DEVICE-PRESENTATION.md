@@ -353,6 +353,13 @@ read-only presentation) and returns on explicit `tap_action: none` before
 capability lookup, confirmation, cards/toasts, press feedback or HA dispatch;
 hold and context-menu handlers stay independent.
 
+Information-card row toggles use `resolveInfoRowToggleIntent` from the same
+authority, explicitly bypassing marker-group resolution: each row retains its
+own exact entity. `infoCardTapConfirmationRequired` mirrors the editor's
+Toggle/Run-only checkbox visibility. The consumer rechecks current card/binding
+and row membership before resolving fresh direction, availability and security;
+opening/cancelling the confirmation never produces dispatch feedback (#849).
+
 ### A media player is powered, not "working" (owner 2026-08-07)
 
 The resolved role stays `media_player.*` for every TV, receiver, speaker and

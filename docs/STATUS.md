@@ -25,6 +25,11 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Device-card toggles (#849) share confirmation visibility and exact-entity
+security authority with marker actions, rechecking current card membership at
+acceptance. Lock badges expose information through pointer and keyboard only;
+Flat target size remains unchanged by the owner's explicit decision.
+
 QA fixture/capture contracts (#896) record every delegated service action and
 persist independent config/layout wire pairs with CAS and exact point updates.
 Foreign HA smoke consumers wait for their own accepted reads; pending display

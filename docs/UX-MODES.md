@@ -105,6 +105,16 @@ room-card link icon → HA area (HA administrators only, outside kiosk), clean s
 (350 ms decision window; keyboard activation is immediate), room hover
 highlight, hover tooltips (name, clean-floor area, temperature, signal).
 
+Every toggle row in a device information card follows the existing confirmation
+checkbox only when its effective action is Toggle or Run and the checkbox is
+enabled (#849). A saved hidden value under Info, More-info or None does not ask.
+The exact selected row is the sole service target, never the marker's controls
+group; confirmation re-resolves its state and rejects a replaced binding, row
+set, card or unavailable/secure target. Dispatch alone produces press feedback.
+The lock-information badge is a named, focusable button with Enter/Space parity;
+it never actuates a lock. Its Flat target remains about 15 px by owner choice
+(#849), while the existing 2.5D target remains unchanged.
+
 Room, device, opening and shared-control hover is a mouse-only transient layer:
 the card enables it per instance after real mouse input on fine/hover hardware,
 clears it on touch/pen and on mode, space or lifecycle boundaries, and restores

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Device-card toggle buttons respect the marker's enabled confirmation setting
+  without switching a neighbouring entity or controls group. Door lock badges
+  can be reached with Tab and opened with Enter or Space; they still only show
+  information ([#849](https://github.com/Matysh/houseplan-card/issues/849)).
+
 - Switching Home Assistant connections no longer lets a late old-server
   notification interrupt the new plan's initial config/layout load
   ([#890](https://github.com/Matysh/houseplan-card/issues/890)).

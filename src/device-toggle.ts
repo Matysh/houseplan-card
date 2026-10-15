@@ -475,6 +475,19 @@ export function projectedTapAction(
     : 'info';
 }
 
+/** Same visibility contract as the editor's existing confirmation checkbox. */
+export function infoCardTapConfirmationRequired(device: DevItem): boolean {
+  const action = projectedTapAction(device.tapAction, device.primary?.split('.')[0]);
+  return device.marker?.tap_confirm === true && (action === 'toggle' || action === 'run');
+}
+
+/** A card row is its own exact target, never the marker's controls group. */
+export function resolveInfoRowToggleIntent(
+  hass: any, registryHass: any, entityId: string,
+): ResolvedToggleIntent {
+  return singleIntent('explicit-toggle', resolveEntity(hass, registryHass, entityId, 'binding'));
+}
+
 export function toggleOriginOf(device: DevItem): ToggleOrigin | null {
   if (device.tapAction === 'toggle') return 'explicit-toggle';
   if (device.tapAction === 'cover') return 'legacy-cover';

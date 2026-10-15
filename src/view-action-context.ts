@@ -23,3 +23,14 @@ export function currentMarkerActionDevice(
   if (activeSpace !== context.spaceId) return null;
   return devices.find((item) => item.id === context.id && item.space === context.spaceId) ?? null;
 }
+
+/** State ticks may change direction, but a replaced binding/card row set may not act. */
+export function infoCardRowContextKey(
+  device: DevItem, rows: readonly { eid: string; kind: string }[],
+): string {
+  return JSON.stringify([
+    device.id, device.space, device.bindingKind, device.bindingRef, device.marker?.binding,
+    [...(device.controls ?? device.marker?.controls ?? [])].sort(),
+    rows.map(({ eid, kind }) => [eid, kind]).sort((a, b) => a[0].localeCompare(b[0])),
+  ]);
+}
