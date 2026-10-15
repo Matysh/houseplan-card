@@ -252,6 +252,8 @@ export class HpZigbeeTopologySettings extends LitElement {
       partial ? this._t('route_partial') : '',
       topology && !uplinks.some((route) => route.kind === 'known') ? this._t('route_unknown') : '',
       topology?.freshness === 'provider-cache' ? this._t('status_cache') : '',
+      current.persistence === 'pending' ? this._t('storage_pending')
+        : current.persistence === 'failed' ? this._t('storage_failed') : '',
     ].filter(Boolean).join(' · ');
   }
 

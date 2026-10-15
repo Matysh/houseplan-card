@@ -61,12 +61,13 @@ def ws_zigbee_subscribe(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     vol.Required("base_topic"): vol.All(str, vol.Length(min=1, max=1024)),
 })
 @websocket_api.require_admin
-def ws_zigbee_start(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
+@websocket_api.async_response
+async def ws_zigbee_start(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
     coordinator = _coordinator(hass, connection, msg["id"])
     if coordinator is None:
         return
     try:
-        result = coordinator.start(msg["base_topic"])
+        result = await coordinator.start(msg["base_topic"])
     except ZigbeeScanError as err:
         connection.send_error(msg["id"], err.code, err.code)
         return

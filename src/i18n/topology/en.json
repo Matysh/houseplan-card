@@ -12,7 +12,7 @@
   "z2m": "Zigbee2MQTT",
   "z2m_topics": "Base topics (one per line)",
   "z2m_update": "Update map",
-  "z2m_warning": "A network-map scan with routes can take more than 10 minutes. House Plan keeps waiting in the background. Scanning may temporarily reduce Zigbee responsiveness.",
+  "z2m_warning": "A scan can take over 10 minutes and temporarily slow Zigbee. Successful maps survive HA restarts and are marked stale. Update map removes the old map before scanning; disabling links and saving clears all saved maps.",
   "scan_connecting": "Connecting to Zigbee2MQTT",
   "scan_waiting": "Waiting for the map from Zigbee2MQTT",
   "scan_elapsed": "Elapsed: {time}",
@@ -21,7 +21,7 @@
   "scan_cancel": "Cancel request",
   "scan_cancel_hint": "Only House Plan’s waiting is cancelled. Zigbee2MQTT may continue scanning.",
   "scan_cancelled": "Waiting cancelled. Zigbee2MQTT may still be scanning.",
-  "scan_backend_required": "Update the House Plan integration and restart Home Assistant to use background map scans.",
+  "scan_backend_required": "Update the House Plan integration and restart Home Assistant to use saved Zigbee maps.",
   "scan_connection_lost": "The MQTT connection was lost; the result may not have arrived. Waiting has stopped, but Zigbee2MQTT may still be scanning.",
   "scan_frontend_disconnected": "The connection to Home Assistant was interrupted. Waiting continues in the background. Reconnect to restore the status.",
   "scan_unavailable": "MQTT is unavailable or unsupported in Home Assistant.",
@@ -46,5 +46,11 @@
   "route_unknown": "No route data",
   "route_stale": "Stale data",
   "route_partial": "Incomplete data",
-  "status_cache": "Integration cache; radio-scan time unknown"
+  "status_cache": "Integration cache; radio-scan time unknown",
+  "storage_pending": "Saving map…",
+  "storage_failed": "Map is visible but could not be saved; it will be lost after restart. Check HA storage.",
+  "error_storage_read": "Saved maps could not be read. They were not overwritten. Check HA storage and integration version.",
+  "error_storage_clear": "The saved map could not be removed. No new scan was started. Check HA storage and retry.",
+  "error_capacity_exceeded": "The limit of 8 maps or active requests is reached. Saved maps were kept.",
+  "error_disabled": "Save the enabled Zigbee links setting before updating a map."
 }

@@ -17,6 +17,11 @@
   moves the plan. The thickness dialog can be dragged by its background and
   label, stays inside the stage, and keeps its screen position while the plan
   moves ([#900](https://github.com/Matysh/houseplan-card/issues/900)).
+- Successful Zigbee2MQTT maps survive Home Assistant restarts as stale data.
+  Update removes the old map before scanning; saving links OFF clears all maps.
+  A failed durable clear refuses the change instead of reporting success.
+  Storage failures are explained without promising that an unsaved map will
+  survive a restart ([#912](https://github.com/Matysh/houseplan-card/issues/912)).
 
 ## v1.81.0-beta.3 — 2026-10-15
 

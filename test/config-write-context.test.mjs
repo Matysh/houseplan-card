@@ -43,3 +43,12 @@ test('#890 AC5: save unauthorized differs from backup in RU/EN; conflict keeps i
   assert.equal(configWriteErrorKey({ code: 'conflict' }), null);
   assert.equal(configWriteErrorKey('offline'), null);
 });
+
+test('#912 saved OFF cache failures explain storage and never claim a successful save', () => {
+  for (const language of ['ru', 'en']) {
+    const text = t(language, configWriteErrorKey({ code: 'storage_clear' }));
+    assert.match(text, /HA/);
+    assert.match(text, language === 'ru' ? /Настройки не сохранены/ : /Settings were not saved/);
+    assert.notEqual(t(language, configWriteErrorKey({ code: 'storage_read' })), 'backup.error.storage_read');
+  }
+});

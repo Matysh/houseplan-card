@@ -12,7 +12,7 @@
   "z2m": "Zigbee2MQTT",
   "z2m_topics": "Basistopics (eines pro Zeile)",
   "z2m_update": "Karte aktualisieren",
-  "z2m_warning": "Ein Netzwerkscan mit Routen kann länger als 10 Minuten dauern. House Plan wartet im Hintergrund weiter. Der Scan kann Zigbee vorübergehend verlangsamen.",
+  "z2m_warning": "Ein Scan kann über 10 Minuten dauern und Zigbee verlangsamen. Karten bleiben nach HA-Neustarts als veraltet erhalten. Aktualisieren löscht zuerst die alte Karte; gespeichertes Ausschalten der Verbindungen löscht alle Karten.",
   "scan_connecting": "Verbindung zu Zigbee2MQTT wird hergestellt",
   "scan_waiting": "Warten auf die Karte von Zigbee2MQTT",
   "scan_elapsed": "Vergangen: {time}",
@@ -46,5 +46,11 @@
   "route_unknown": "Keine Routendaten",
   "route_stale": "Veraltete Daten",
   "route_partial": "Unvollständige Daten",
-  "status_cache": "Integrationscache; Zeitpunkt des Funkscans unbekannt"
+  "status_cache": "Integrationscache; Zeitpunkt des Funkscans unbekannt",
+  "storage_pending": "Karte wird gespeichert…",
+  "storage_failed": "Karte sichtbar, aber nicht gespeichert. Nach Neustart geht sie verloren. HA-Speicher prüfen.",
+  "error_storage_read": "Gespeicherte Karten nicht lesbar und nicht überschrieben. HA-Speicher und Integrationsversion prüfen.",
+  "error_storage_clear": "Gespeicherte Karte nicht löschbar. Kein neuer Scan gestartet. HA-Speicher prüfen und erneut versuchen.",
+  "error_capacity_exceeded": "Limit von 8 Karten oder aktiven Anfragen erreicht. Gespeicherte Karten bleiben erhalten.",
+  "error_disabled": "Zigbee-Verbindungen zuerst aktivieren und speichern."
 }

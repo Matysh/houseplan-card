@@ -337,22 +337,36 @@ of exact MQTT base topics: empty entries, wildcards, duplicates and control
 characters are dropped. Disabling the feature retains valid topics; resetting
 General settings removes the object.
 
-Provider snapshots, IEEE addresses, links, errors and timestamps are runtime
-memory only. They are not config fields, do not enter backup/export or support
-diagnostics. ZHA snapshots disappear with the HA connection/page. Since #800,
-Z2M jobs and last-good raw maps live only in the loaded HA integration's bounded
-memory: they survive frontend disconnect/reload, not integration/HA restart.
-No runtime map, transaction, job identifier or elapsed timer is written to disk
-or browser storage. Older frontends ignore the settings object; the backend's
-unknown-settings policy preserves it. No model or store version migration is
-required. New frontend + old backend fail closed with an update/restart hint;
-there is no browser-owned MQTT scan fallback. The three scan WS commands always
-require a real HA administrator, independently of editor `admin_only` settings.
+Provider data are not plan/config fields and never enter plan backup/export,
+support diagnostics or browser storage. ZHA remains connection/page-memory-only;
+failed ZHA reads retain the previous cache with its original timestamp.
 
-#798 replaces inferred routes with provider evidence in that runtime only.
-Next-hop addresses, target names and warnings are never persisted. Failed
-refresh preserves the last successful snapshot and explicitly marks it stale;
-reading cached ZHA tables does not establish their radio-scan time.
+Since #912, successful validated Z2M raw maps and their original `obtained_at`
+are stored separately in private, atomic HA Store v1
+`houseplan.zigbee_maps.<config_entry_id>`. Its payload has `schema: 1`, exact
+`entry_id` and at most eight exact-topic records `{map, obtained_at}`. No job,
+transaction, session, timer, subscription or incomplete request is persisted.
+Reload/restart restores maps as stale without MQTT work; age never deletes them.
+Each map retains the 2 MiB / 1000 nodes / 6000 links limits. Unreadable, foreign,
+future-schema or oversized storage is refused without an automatic empty rewrite.
+HA's own corrupt-file handling may retain a recoverable `.corrupt` backup.
+
+An accepted explicit Update durably clears that topic before publishing the new
+request; failure/cancel/restart cannot restore the old map. A repeated Update
+during loading joins the current job without clearing again. Saving links OFF
+clears all maps and retires active jobs' right to write; unsaved dialog drafts do
+not clear anything. All config writers use the same serialized hook. The clear
+is saved before the OFF config write/ACK; a failed clear refuses the save. If the
+subsequent config write fails, the cache may already be empty, never resurrected.
+Changing topics only hides unconfigured maps, not deleting them. Capacity refuses
+another topic rather than evicting a successful map. A failed new-result save may
+leave a live map visible with an explicit non-durable warning.
+
+No model/config migration is required. The settings' unknown-key policy remains
+unchanged. The frontend requires both `zigbee_scan_api: 1` and
+`zigbee_maps_api: 1`; older backends show an update/restart hint, never silently
+fall back to browser MQTT or keep-on-refresh-error semantics. All three scan WS
+commands require a real HA administrator, independently of editor `admin_only`.
 
 ## Vacuum map routes (#162)
 

@@ -208,7 +208,8 @@ for (const provider of ['z2m', 'zha']) {
           if (message.type === 'zha/devices') { fixture.calls.zha++; return fixture.zha; }
           if (message.type === 'houseplan/zigbee/start') { fixture.calls.start++; return fixture.event(); }
           const response = await original.callWS(message);
-          return message.type === 'houseplan/config/get' ? { ...response, zigbee_scan_api: 1 } : response;
+          return message.type === 'houseplan/config/get'
+            ? { ...response, zigbee_scan_api: 1, zigbee_maps_api: 1 } : response;
         },
       };
       window.__tooltipFixture = fixture;
@@ -264,6 +265,25 @@ for (const provider of ['z2m', 'zha']) {
       await page.evaluate(() => window.__hpTest.setServerConfig((cfg) => {
         cfg.spaces.find((space) => space.id === 'f1').title = 'Ground floor'; return cfg;
       }));
+
+      // #912: topic configuration is a display filter, not a deletion/scan command.
+      await page.evaluate(() => window.__hpTest.setServerConfig((cfg) => {
+        cfg.settings.zigbee_topology.z2m_base_topics = ['another-mesh']; return cfg;
+      }));
+      await page.waitForFunction(() => {
+        const overlay = window.__card.shadowRoot.querySelector('hp-zigbee-topology-overlay');
+        return overlay?.z2mTopics?.[0] === 'another-mesh'
+          && !overlay.shadowRoot.querySelector('line,.parent-bubble');
+      });
+      out.z2m_unconfiguredTopicHiddenButCachePreserved = await page.evaluate(() =>
+        window.__tooltipFixture.result !== null && window.__tooltipFixture.calls.start === 0);
+      await page.evaluate(() => window.__hpTest.setServerConfig((cfg) => {
+        cfg.settings.zigbee_topology.z2m_base_topics = ['zigbee2mqtt']; return cfg;
+      }));
+      await hover('d_mower');
+      await bubble.waitFor({ state: 'visible' });
+      out.z2m_readdedTopicRestoresRoutesWithoutScan = await page.evaluate(() =>
+        window.__tooltipFixture.calls.start === 0);
 
       for (const iso of [false, true]) for (const theme of ['light', 'dark']) {
         await setVolumetricView(iso);

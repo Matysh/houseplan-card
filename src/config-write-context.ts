@@ -6,8 +6,13 @@ interface WriteHass {
 }
 
 /** Save context differs from export/import; all other errors keep their own mapping. */
-export const configWriteErrorKey = (error: unknown): 'err.config_write_unauthorized' | null =>
-  (error as { code?: unknown } | null)?.code === 'unauthorized' ? 'err.config_write_unauthorized' : null;
+export function configWriteErrorKey(error: unknown): 'err.config_write_unauthorized'
+  | 'backup.error.storage_clear' | 'backup.error.storage_read' | null {
+  const code = (error as { code?: unknown } | null)?.code;
+  if (code === 'unauthorized') return 'err.config_write_unauthorized';
+  return code === 'storage_clear' ? 'backup.error.storage_clear'
+    : code === 'storage_read' ? 'backup.error.storage_read' : null;
+}
 
 export class ConfigWriteContext {
   private authority: unknown;

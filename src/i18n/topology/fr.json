@@ -12,7 +12,7 @@
   "z2m": "Zigbee2MQTT",
   "z2m_topics": "Topics de base (un par ligne)",
   "z2m_update": "Actualiser la carte",
-  "z2m_warning": "L’analyse de la carte réseau avec les routes peut prendre plus de 10 minutes. House Plan continue d’attendre en arrière-plan. L’analyse peut réduire temporairement la réactivité de Zigbee.",
+  "z2m_warning": "Une analyse peut dépasser 10 minutes et ralentir Zigbee. Les cartes restent après un redémarrage HA, marquées obsolètes. Actualiser supprime d’abord l’ancienne carte ; désactiver puis enregistrer les liens supprime toutes les cartes.",
   "scan_connecting": "Connexion à Zigbee2MQTT",
   "scan_waiting": "En attente de la carte de Zigbee2MQTT",
   "scan_elapsed": "Temps écoulé : {time}",
@@ -46,5 +46,11 @@
   "route_unknown": "Aucune donnée de route",
   "route_stale": "Données anciennes",
   "route_partial": "Données incomplètes",
-  "status_cache": "Cache de l’intégration ; date de l’analyse radio inconnue"
+  "status_cache": "Cache de l’intégration ; date de l’analyse radio inconnue",
+  "storage_pending": "Enregistrement de la carte…",
+  "storage_failed": "Carte visible, mais non enregistrée : perdue au redémarrage. Vérifiez le stockage HA.",
+  "error_storage_read": "Cartes enregistrées illisibles, non écrasées. Vérifiez le stockage HA et la version de l’intégration.",
+  "error_storage_clear": "Suppression impossible. Aucune nouvelle analyse lancée. Vérifiez le stockage HA et réessayez.",
+  "error_capacity_exceeded": "Limite de 8 cartes ou requêtes actives atteinte. Les cartes enregistrées sont conservées.",
+  "error_disabled": "Activez et enregistrez les liens Zigbee avant d’actualiser."
 }

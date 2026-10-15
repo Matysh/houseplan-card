@@ -1229,15 +1229,24 @@ work, checks retained bridge-info and sends one correlated raw `routes:true`
 MQTT request. Closing all frontend clients releases their observers, not the job.
 An initial reset and per-topic state events restore running jobs and last-good
 maps; session/revision and job identifiers isolate stale replies and cancels.
-Map payloads are limited to 2 MiB; at most eight topic slots are held, with only
-terminal slots eligible for eviction. MQTT is an optional dependency.
+Map payloads are limited to 2 MiB; at most eight topic slots are held. Only empty
+terminal slots may be reclaimed; successful maps are never capacity-evicted.
+MQTT is an optional dependency.
 
 There is no overall scan deadline. Transport setup/publishing have 10-second
 limits and retained bridge-info a 4-second limit. At 600 seconds an exact-job
 cancel becomes available; it cancels HP's wait, not Z2M radio work. Matching
-provider errors, invalid maps and MQTT disconnect terminate the job, release
-listeners and retain last-good data as stale. Neither reconnect nor reopening
-settings republishes. Integration unload/restart clears all runtime jobs/cache.
+provider errors, invalid maps and MQTT disconnect terminate the job and release
+listeners. #912 durably removes the old topic map before an accepted replacement
+request, so errors/cancel cannot roll it back. Successful raw maps/original times
+alone enter a dedicated entry-owned atomic HA Store; reload restores them stale
+without MQTT. Jobs/session/elapsed timers stay volatile. A serialized cache lock
+orders success writes, explicit refresh clear and all saved-config OFF writers;
+late callbacks/writes cannot resurrect retired maps. OFF clear failure refuses
+the config save, and new-result persistence failure is visible, not silently
+reported as durable. Topic removal only hides routes. Neither reconnect nor
+reopening settings republishes. Integration unload flushes accepted result writes
+and clears runtime jobs, preserving only successful durable maps.
 Before unload, a `closed` session event invalidates observers even when their HA
 WebSocket stays connected; the next explicit scan reattaches to the new coordinator.
 The frontend derives elapsed time from server elapsed plus local monotonic time,

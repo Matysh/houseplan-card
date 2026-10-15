@@ -21,12 +21,9 @@ await page.exposeFunction('__scanRpc', async (message) => {
   if (message.type === 'houseplan/zigbee/start') {
     if (server.provider?.phase !== 'loading') {
       server.publishes++;
-      const last = server.provider;
       server.provider = { topic: 'zigbee2mqtt', job_id: `job-${++server.sequence}`,
         phase: 'loading', stage: 'waiting', started_at: Date.now(), elapsed_ms: 0,
-        cancel_after_ms: 600000, ...(last?.result ? {
-          result: last.result, obtained_at: last.obtained_at, stale: true,
-        } : {}) };
+        cancel_after_ms: 600000 };
       server.revision++;
     }
     return state();
@@ -79,7 +76,7 @@ const install = async (embedded = false) => page.evaluate(async (isEmbedded) => 
       }
       const result = await original.callWS(message);
       if (message.type === 'houseplan/config/get') return {
-        ...result, zigbee_scan_api: 1,
+        ...result, zigbee_scan_api: 1, zigbee_maps_api: 1,
       };
       return result;
     },
@@ -209,6 +206,58 @@ try {
   record('explicitScanAfterIntegrationReloadReobservesNewSession', server.publishes === 3
     && await page.evaluate(() => window.__scanStats.active === 1
       && document.getElementById('scan-settings')._snapshot.states['z2m:zigbee2mqtt'].jobId === 'job-3'));
+
+  // #912: backend persistence itself is tested with real HA Store/reload.
+  // Here a new document consumes the public restored feed and uses real buttons.
+  const receivedAt = Date.now() - 3 * 60 * 60 * 1000;
+  server.provider = { ...server.provider, phase: 'ready', elapsed_ms: 0,
+    result: { nodes: [{ ieeeAddr: '00124b0000000001', type: 'Coordinator' }], links: [] },
+    obtained_at: receivedAt, stale: true, persistence: 'saved' };
+  server.session = 'restored-server-912'; server.revision = 0;
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__card?._booting === false);
+  await install(); await waitState('ready');
+  await settings().getByText(/Received .*stale/).waitFor({ state: 'visible' });
+  record('restoredMapIsStaleWithOriginalTimeAndNoAutomaticScan', server.publishes === 3
+    && await page.evaluate((time) => {
+      const snapshot = document.getElementById('scan-settings')._snapshot;
+      return snapshot.topologies.length === 1 && snapshot.topologies[0].obtainedAt === time
+        && snapshot.states['z2m:zigbee2mqtt'].stale === true;
+    }, receivedAt) && await settings().getByText(/Received .*stale/).isVisible());
+  await refresh().focus(); await page.keyboard.press('Enter'); await waitState('loading');
+  record('keyboardRefreshImmediatelyRemovesOldRoutes', server.publishes === 4
+    && await page.evaluate(() => document.getElementById('scan-settings')._snapshot.topologies.length === 0));
+  server.provider.phase = 'error'; server.provider.error = 'provider';
+  server.revision++; await deliver(); await waitState('error');
+  record('failedRefreshDoesNotRestoreOldMap', await page.evaluate(() => {
+    const snapshot = document.getElementById('scan-settings')._snapshot;
+    return snapshot.topologies.length === 0 && snapshot.states['z2m:zigbee2mqtt'].obtainedAt === undefined;
+  }) && await refresh().isEnabled());
+  await refresh().focus(); await page.keyboard.press('Enter'); await waitState('loading');
+  server.provider = { ...server.provider, phase: 'ready', error: undefined,
+    result: { nodes: [{ ieeeAddr: '00124b0000000002', type: 'Coordinator' }], links: [] },
+    obtained_at: receivedAt + 1000, persistence: 'saved' };
+  server.revision++; await deliver(); await waitState('ready');
+  record('newSuccessfulMapReplacesOnlyWithNewOriginalTime', server.publishes === 5
+    && await page.evaluate((time) => document.getElementById('scan-settings')._snapshot.topologies[0].obtainedAt === time,
+      receivedAt + 1000));
+  // Another administrator saved links OFF: authoritative reset, not a draft UI event.
+  server.provider = null; server.revision++;
+  await page.evaluate((event) => { for (const callback of window.__scanCallbacks) callback(event); }, initial()[0]);
+  record('savedOffFromAnotherClientClearsMapWithoutRadio', await page.evaluate(() => {
+    const snapshot = document.getElementById('scan-settings')._snapshot;
+    return snapshot.topologies.length === 0 && Object.keys(snapshot.states).length === 0;
+  }) && server.publishes === 5);
+  await page.evaluate(async () => {
+    const element = document.getElementById('scan-settings');
+    element.value = { ...element.value, enabled: false }; element.savedEnabled = false;
+    await element.updateComplete;
+    element.value = { ...element.value, enabled: true }; element.savedEnabled = true;
+    await element.updateComplete;
+  });
+  await page.waitForFunction(() => window.__scanStats.active === 1);
+  record('offOnCannotResurrectClearedMap', await page.evaluate(() =>
+    document.getElementById('scan-settings')._snapshot.topologies.length === 0) && server.publishes === 5);
   await page.evaluate(async () => {
     const element = document.getElementById('scan-settings');
     element.hass = { ...element.hass, user: { id: 'viewer-800', is_admin: false } };

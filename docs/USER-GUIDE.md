@@ -411,9 +411,17 @@ elapsed timer, including on another administrator's device. Progress is not a
 percentage: Zigbee2MQTT does not provide one. After 10 minutes, waiting continues
 and **Cancel request** becomes available. It only stops House Plan waiting for this
 result, not the radio scan in Zigbee2MQTT. Do not start another scan until that scan
-has finished; scanning can temporarily slow the Zigbee network. The last successful
-map stays available, marked stale after an error or cancellation. Restarting Home
-Assistant or reloading the integration clears these temporary jobs and cached maps.
+has finished; scanning can temporarily slow the Zigbee network. Successful Z2M
+maps survive Home Assistant restart/integration reload, marked stale with their
+original reception time. No scan starts automatically. **Update map** removes
+the old map before starting a new scan; an error or cancellation does not bring
+it back. Turning links off and **saving** clears all Z2M maps; a draft toggle does
+not. Removing a topic hides its map without deleting it. At the eight-map limit,
+existing maps are kept and another topic is refused. Storage errors are shown;
+a visible map that could not be saved will be lost on restart. ZHA data remains
+temporary, and a failed ZHA read keeps its previous cache. Running Z2M jobs are
+not resumed after a restart; turning links off only retires House Plan waiting,
+not the provider's radio scan.
 Update and restart the House Plan integration as well as updating the card.
 
 After data is loaded, moving a real mouse over a mapped Zigbee marker shows

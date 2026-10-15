@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 912,
+  "baseStable": "v1.80.1",
+  "category": "major",
+  "rationale": "v1.80.1 had temporary Zigbee topology but no durable Z2M cache. This adds successful-map survival across HA/integration restarts, with explicit refresh/OFF deletion and visible storage failures; it is a new user capability rather than polishing an intermediate-only feature.",
+  "summary": {
+    "ru": "Связи Zigbee2MQTT сохраняются после перезапуска HA; устаревшая карта остаётся доступной до обновления или выключения связей.",
+    "en": "Zigbee2MQTT maps survive HA restarts and remain available as stale data until refreshed or links are disabled."
+  }
+}

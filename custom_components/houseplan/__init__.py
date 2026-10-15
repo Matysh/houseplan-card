@@ -233,6 +233,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
             await recorder.async_purge_orphans(current)
             await recorder.async_refresh()
 
+    # Only the recovered canonical config may decide whether saved links are OFF.
+    # A pre-recovery half of an interrupted import must not erase the map cache.
+    config_payload = await data.config_store.async_load() or {}
+    await data.zigbee_coordinator.async_setup(config_payload.get("config") or {})
+
     await async_check_plan_files(hass, entry)
 
     # Scheduled collection of everything nobody ended up referencing.

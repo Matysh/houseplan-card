@@ -35,14 +35,16 @@ function backend() {
     },
   }, async callWS(message) {
     b.calls.push(message);
-    if (message.type === 'houseplan/config/get') return b.capabilityGate?.promise ?? { zigbee_scan_api: b.capability };
+    if (message.type === 'houseplan/config/get') return b.capabilityGate?.promise
+      ?? { zigbee_scan_api: b.capability, zigbee_maps_api: b.mapsCapability ?? 1 };
     if (b.commandGate) return b.commandGate.promise;
     const topic = message.base_topic, prior = b.jobs.get(topic);
     if (message.type === 'houseplan/zigbee/start') {
       if (prior?.phase === 'loading') return b.envelope(prior);
       b.publications++;
       const next = b.update(topic, { topic, job_id: 'job' + b.publications, phase: 'loading', stage: 'connecting',
-        started_at: 10, elapsed_ms: 0, cancel_after_ms: 600000 });
+        started_at: 10, elapsed_ms: 0, cancel_after_ms: 600000,
+        result: undefined, obtained_at: undefined, stale: false });
       return b.envelope(next);
     }
     assert.equal(message.type, 'houseplan/zigbee/cancel');
@@ -136,7 +138,7 @@ test('#800 clock uses server elapsed plus local monotonic delta; 599/600 and hou
   assert.equal(formatZigbeeScanElapsed(3661000), '1:01:01');
 });
 
-test('#800 exact job cancellation preserves last-good and stale rejection cannot cancel next job', async () => {
+test('#912 exact cancellation cannot restore a cleared map; stale rejection cannot cancel next job', async () => {
   const b = backend(), off = b.observe(); await refreshZ2mTopology(b.hass, TOPIC);
   b.update(TOPIC, { phase: 'ready', result: map, obtained_at: 333 });
   await refreshZ2mTopology(b.hass, TOPIC);
@@ -147,15 +149,15 @@ test('#800 exact job cancellation preserves last-good and stale rejection cannot
   b.update(TOPIC, { elapsed_ms: 600000 });
   await cancelZ2mTopology(b.hass, TOPIC, next);
   assert.equal(b.snapshot().states[KEY].phase, 'cancelled');
-  assert.equal(b.snapshot().states[KEY].stale, true);
-  assert.equal(b.snapshot().topologies[0].obtainedAt, 333);
+  assert.equal(b.snapshot().states[KEY].obtainedAt, undefined);
+  assert.deepEqual(b.snapshot().topologies, []);
   await refreshZ2mTopology(b.hass, TOPIC);
   await cancelZ2mTopology(b.hass, TOPIC, next);
   assert.equal(b.snapshot().states[KEY].phase, 'loading');
   assert.notEqual(b.snapshot().states[KEY].jobId, next); off();
 });
 
-test('#800 terminal MQTT error keeps last good stale; success/cancel race cannot undo ready', async () => {
+test('#912 terminal MQTT error does not restore old map; success/cancel race cannot undo ready', async () => {
   const b = backend(), off = b.observe(); await refreshZ2mTopology(b.hass, TOPIC);
   b.update(TOPIC, { phase: 'ready', result: map, obtained_at: 44 });
   await cancelZ2mTopology(b.hass, TOPIC, b.snapshot().states[KEY].jobId);
@@ -163,7 +165,7 @@ test('#800 terminal MQTT error keeps last good stale; success/cancel race cannot
   await refreshZ2mTopology(b.hass, TOPIC);
   b.update(TOPIC, { phase: 'error', error: 'connection', stale: true });
   assert.equal(b.snapshot().states[KEY].error, 'connection');
-  assert.equal(b.snapshot().topologies[0].obtainedAt, 44);
+  assert.deepEqual(b.snapshot().topologies, []);
   const starts = b.publications; b.events.get('ready')(); await turn(); assert.equal(b.publications, starts); off();
 });
 
@@ -194,7 +196,7 @@ test('#800 previous-owner callback and delayed subscribe acknowledgement are ine
 test('#800 detach during capability prevents late subscribe/start; identity changes invalidate pending results', async () => {
   const b = backend(); b.capabilityGate = deferred();
   const off = b.observe(), started = refreshZ2mTopology(b.hass, TOPIC); off();
-  b.capabilityGate.resolve({ zigbee_scan_api: 1 }); await started; await turn();
+  b.capabilityGate.resolve({ zigbee_scan_api: 1, zigbee_maps_api: 1 }); await started; await turn();
   assert.equal(b.callbacks.length, 0); assert.equal(b.publications, 0);
   b.capabilityGate = null; const off2 = b.observe(); await turn();
   b.commandGate = deferred(); const pending = refreshZ2mTopology(b.hass, TOPIC);
@@ -214,6 +216,44 @@ test('#800 non-admin and old backend fail closed without subscribing, starting, 
   await refreshZ2mTopology(old.hass, TOPIC); await turn();
   assert.equal(old.snapshot().backendError, 'backend_required'); assert.equal(old.callbacks.length, 0);
   assert.equal(old.calls.length, 1); assert.equal(old.publications, 0); release();
+});
+
+test('#912 durable capability is mandatory even when the old background scan API exists', async () => {
+  const b = backend(); b.mapsCapability = 0;
+  const off = b.observe(); await refreshZ2mTopology(b.hass, TOPIC); await turn();
+  assert.equal(b.snapshot().backendError, 'backend_required');
+  assert.equal(b.callbacks.length, 0); assert.equal(b.publications, 0); off();
+});
+
+test('#912 restored stale maps retain original time without scan and authoritative clear retires all routes', async () => {
+  const b = backend();
+  b.jobs.set(TOPIC, { topic: TOPIC, job_id: 'restored-ephemeral', phase: 'ready',
+    elapsed_ms: 0, obtained_at: 123, result: map, stale: true, persistence: 'saved' });
+  const off = b.observe(); await turn();
+  assert.equal(b.snapshot().topologies[0].obtainedAt, 123);
+  assert.equal(b.snapshot().states[KEY].stale, true);
+  assert.equal(b.snapshot().states[KEY].persistence, 'saved');
+  assert.equal(b.publications, 0);
+  const old = b.envelope(b.jobs.get(TOPIC));
+  await refreshZ2mTopology(b.hass, TOPIC);
+  assert.deepEqual(b.snapshot().topologies, []);
+  b.update(TOPIC, { phase: 'error', error: 'provider' });
+  b.emit(old);
+  assert.deepEqual(b.snapshot().topologies, []);
+  assert.equal(b.snapshot().states[KEY].obtainedAt, undefined);
+  b.jobs.clear(); b.revision++; b.reset();
+  assert.deepEqual(b.snapshot().states, {}); off();
+});
+
+test('#912 persistence failures and reset read errors are visible without inventing successful durability', async () => {
+  const b = backend(), off = b.observe(); await refreshZ2mTopology(b.hass, TOPIC);
+  b.update(TOPIC, { phase: 'ready', result: map, obtained_at: 99, persistence: 'failed' });
+  assert.equal(b.snapshot().states[KEY].persistence, 'failed');
+  assert.equal(b.snapshot().topologies.length, 1, 'unsaved live map may remain visible');
+  b.jobs.clear(); b.emit({ kind: 'reset', session_id: b.session,
+    revision: ++b.revision, topics: [], error: 'storage_read' });
+  assert.deepEqual(b.snapshot().topologies, []);
+  assert.equal(b.snapshot().backendError, 'storage_read'); off();
 });
 
 test('#800 new server reset removes only Z2M cache; foreign/older/duplicate messages cannot roll back', async () => {
@@ -257,7 +297,7 @@ test('#800 mutable admin revocation during lazy capability prevents any late rea
   const b = backend(); b.capabilityGate = deferred();
   const off = b.observe(), started = refreshZ2mTopology(b.hass, TOPIC);
   b.hass.user.is_admin = false;
-  b.capabilityGate.resolve({ zigbee_scan_api: 1 }); await started; await turn();
+  b.capabilityGate.resolve({ zigbee_scan_api: 1, zigbee_maps_api: 1 }); await started; await turn();
   assert.equal(b.callbacks.length, 0); assert.equal(b.publications, 0);
   assert.deepEqual(b.snapshot().states, {}); off();
 });

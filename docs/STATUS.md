@@ -25,6 +25,13 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Successful Z2M maps (#912) have an entry-owned atomic HA Store separate from
+plan/export/support data. Reload restores them stale without a scan. Explicit
+Update durably clears its topic first; saved links OFF clears all maps and
+retires pending writers. Topic removal only hides routes, and capacity never
+evicts a successful map. ZHA remains memory-only; storage/capability failures
+remain visible and do not silently fall back to old refresh behavior.
+
 SPEC delivery accounting (#903) preserves accepted review trace separately from
 implemented release entries and close-eligible membership. A shared content and
 provenance check reads versioned phases and existing publisher commits; later

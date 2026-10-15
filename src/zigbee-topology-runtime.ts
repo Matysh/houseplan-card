@@ -2,12 +2,14 @@ import { normalizeZ2mTopology, normalizeZhaTopology, type ZigbeeTopology } from 
 import { normalizeZ2mBaseTopic } from './zigbee-topology-settings';
 
 export type ZigbeeTopologyErrorCode = 'permission' | 'unsupported' | 'timeout' | 'invalid_topic'
-  | 'invalid_payload' | 'provider' | 'backend_required' | 'connection';
+  | 'invalid_payload' | 'provider' | 'backend_required' | 'connection'
+  | 'storage_read' | 'storage_clear' | 'capacity_exceeded' | 'disabled';
 export type ZigbeeProviderState = {
   phase: 'idle' | 'loading' | 'ready' | 'error' | 'cancelled';
   obtainedAt?: number; partial?: boolean; stale?: boolean; error?: ZigbeeTopologyErrorCode;
   jobId?: string; stage?: 'connecting' | 'waiting'; startedAt?: number;
   elapsedMs?: number; elapsedObservedAt?: number; cancelAfterMs?: number;
+  persistence?: 'pending' | 'saved' | 'failed';
 };
 export interface ZigbeeTopologyRuntimeSnapshot {
   revision: number; topologies: ZigbeeTopology[]; states: Record<string, ZigbeeProviderState>;
@@ -72,7 +74,8 @@ function errorCode(error: unknown): ZigbeeTopologyErrorCode {
   if (code === 'permission' || code === 'unauthorized') return 'permission';
   if (code === 'unknown_command' || code === 'not_ready' || code === 'backend_required') return 'backend_required';
   if (code === 'unsupported' || code === 'timeout' || code === 'invalid_topic'
-      || code === 'invalid_payload' || code === 'connection') return code;
+      || code === 'invalid_payload' || code === 'connection' || code === 'storage_read'
+      || code === 'storage_clear' || code === 'capacity_exceeded' || code === 'disabled') return code;
   return 'provider';
 }
 function fail(code: ZigbeeTopologyErrorCode): Error & { code: ZigbeeTopologyErrorCode } {
@@ -109,7 +112,9 @@ function accept(cache: Cache, message: unknown, fromSubscription: boolean): void
     cache.session = envelope.session_id; cache.serverRevision = revision;
     cache.topicRevisions.clear(); // Initial slot events legitimately share the reset revision.
     removeTopics(cache, new Set(envelope.topics.map(normalizeZ2mBaseTopic).filter((v): v is string => !!v)));
-    cache.backendConnected = true; cache.backendError = undefined; notify(cache); return;
+    cache.backendConnected = true;
+    cache.backendError = envelope.error ? errorCode({ code: envelope.error }) : undefined;
+    notify(cache); return;
   }
   if (cache.session && envelope.session_id !== cache.session) return;
   if (revision < cache.serverRevision) return;
@@ -126,8 +131,11 @@ function accept(cache: Cache, message: unknown, fromSubscription: boolean): void
     if (provider.result !== undefined && typeof provider.obtained_at === 'number') {
       topology = normalizeZ2mTopology(provider.result, topic, provider.obtained_at);
       if (!topology.nodes.length && topology.warnings.some(w => w.code === 'invalid_payload')) return;
-      cache.topologies = [...cache.topologies.filter(t => t.provider !== 'z2m' || t.instanceId !== topic), topology];
     }
+    // A durable feed's absent result is an authoritative clear, not permission
+    // to retain a browser's last map while a replacement request fails or waits.
+    cache.topologies = cache.topologies.filter(t => t.provider !== 'z2m' || t.instanceId !== topic);
+    if (topology) cache.topologies = [...cache.topologies, topology];
     cache.states = { ...cache.states, [`z2m:${topic}`]: {
       phase: provider.phase as ZigbeeProviderState['phase'], jobId: provider.job_id,
       stage: provider.stage === 'connecting' ? 'connecting' : 'waiting',
@@ -136,6 +144,8 @@ function accept(cache: Cache, message: unknown, fromSubscription: boolean): void
       cancelAfterMs: typeof provider.cancel_after_ms === 'number' ? Math.max(600_000, provider.cancel_after_ms) : 600_000,
       obtainedAt: topology?.obtainedAt, partial: topology ? topology.warnings.length > 0 : undefined,
       stale: provider.stale === true, error: provider.error ? errorCode({ code: provider.error }) : undefined,
+      persistence: ['pending', 'saved', 'failed'].includes(String(provider.persistence))
+        ? provider.persistence as ZigbeeProviderState['persistence'] : undefined,
     } };
   }
   cache.session = envelope.session_id; cache.serverRevision = revision; cache.topicRevisions.set(topic, revision);
@@ -146,7 +156,7 @@ async function capability(cache: Cache, hass: ZigbeeTopologyHass): Promise<void>
   if (!cache.capability) cache.capability = (async () => {
     if (!hass.callWS || !hass.connection?.subscribeMessage) throw fail('backend_required');
     const result = recordOf(await hass.callWS({ type: 'houseplan/config/get' }));
-    if (result?.zigbee_scan_api !== 1) throw fail('backend_required');
+    if (result?.zigbee_scan_api !== 1 || result?.zigbee_maps_api !== 1) throw fail('backend_required');
   })();
   const pending = cache.capability;
   try {

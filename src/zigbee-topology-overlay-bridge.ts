@@ -28,5 +28,6 @@ export function renderZigbeeTopologyOverlay(input: ZigbeeOverlayEligibility & {
   if (!input.ready || !zigbeeTopologyOverlayRequested(input)) return nothing;
   return html`<hp-zigbee-topology-overlay aria-hidden="true" .hass=${input.hass} .devices=${input.devices}
     .registry=${input.registry} .currentSpace=${input.currentSpace} .spaces=${input.spaces}
+    .z2mTopics=${zigbeeTopologySettingsOf(input.settings).z2mBaseTopics}
     .viewKey=${input.viewKey} .zoom=${input.zoom} .onLayout=${input.onLayout}></hp-zigbee-topology-overlay>`;
 }

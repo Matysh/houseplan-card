@@ -101,7 +101,7 @@ test('ZHA runtime is explicit, admin-only and deduplicates concurrent reads', as
 test('Z2M server job response retains the real fixture normalization without browser MQTT', async () => {
   const hass = { user: { is_admin: true }, connection: { async subscribeMessage() { return () => {}; } },
     async callWS(message) {
-      if (message.type === 'houseplan/config/get') return { zigbee_scan_api: 1 };
+      if (message.type === 'houseplan/config/get') return { zigbee_scan_api: 1, zigbee_maps_api: 1 };
       assert.deepEqual(message, { type: 'houseplan/zigbee/start', base_topic: 'zigbee2mqtt' });
       return { kind: 'state', session_id: 'server', revision: 1, provider: {
         topic: 'zigbee2mqtt', job_id: 'job', phase: 'ready', elapsed_ms: 900000,

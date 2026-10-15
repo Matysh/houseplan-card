@@ -2454,3 +2454,21 @@ sub-checks (`place_dialog_x_magnetised`, `place_committed_x_center`) under the
 pinned Chromium — a `1e-6`-tolerance magnet snap on the opening *placement*
 path. It reproduces against the pristine committed bundle: pre-existing pixel
 precision, not a regression of the change under test.
+
+## Durable Z2M maps (#912)
+
+`python -m pytest tests_backend/test_ha_zigbee_topology.py -q` owns real HA
+Store/entry reload and authenticated WS behavior. It checks persisted map bodies,
+not only write call counts: original timestamps, no operational job fields,
+clear-before-publish/ACK, errors/cancel/reload, late callbacks, successful
+replacement, failed new-result save, failed clear and public config/set refusal,
+saved OFF, topic-list changes, capacity and corrupt/foreign/future payloads.
+The initial ordinary reload witness is red on the unchanged pre-implementation
+source; no mutated product is executed locally.
+
+Runtime units cover authoritative absent-result clears, durable capability,
+stale feed restores and visible persistence errors, retaining ZHA's old contract.
+The existing `smoke_zigbee_topology_job` adds a restored public-feed fixture,
+actual keyboard Update, failure/replacement and another client's saved-OFF reset.
+It proves browser adoption/UI, not backend disk durability or real radio/GPU
+acceptance. Static mutation declarations are checked only; execution is nightly.

@@ -124,7 +124,7 @@ ERROR_CODES: frozenset[str] = frozenset({
     "preview_owner_mismatch", "space_in_use", "space_not_found",
     "support_invalid_message", "support_package_too_large",
     "support_preview_expired", "support_rate_limited", "support_rejected",
-    "support_unavailable",
+    "support_unavailable", "storage_clear", "storage_read",
     "too_large", "unauthorized", "unsupported_export_version", "unsupported_image",
     "value_badge_source_required", "wall_model_client_outdated",
     "wall_model_migration_blocked",

@@ -31,6 +31,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     registry: { attribute: false },
     currentSpace: { type: String, attribute: 'current-space' },
     spaces: { attribute: false },
+    z2mTopics: { attribute: false },
     viewKey: { attribute: false },
     zoom: { type: Number },
     onLayout: { attribute: false },
@@ -41,6 +42,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   registry!: HaRegistrySnapshot;
   currentSpace = '';
   spaces?: readonly { id?: unknown; title?: unknown }[];
+  z2mTopics: readonly string[] = [];
   viewKey: unknown;
   zoom = 1;
   onLayout?: () => void;
@@ -522,7 +524,11 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     const mapped = memo && memo.runtime === this._runtime && memo.devices === this.devices
       && memo.registry === this.registry ? memo.mapped : mapTopologies(this._runtime.topologies, this.devices, this.registry);
     if (!memo || mapped !== memo.mapped) this._mappedMemo = { runtime: this._runtime, devices: this.devices, registry: this.registry, mapped };
-    const hover = resolveMappedTopologyHover(mapped, this.currentSpace, this._hovered);
+    // Removing a configured topic hides its routes without deleting its durable map.
+    const configured = this.z2mTopics.length ? this.z2mTopics : ['zigbee2mqtt'];
+    const selected = mapped.filter(({ topology }) => topology.provider !== 'z2m'
+      || configured.includes(topology.instanceId));
+    const hover = resolveMappedTopologyHover(selected, this.currentSpace, this._hovered);
     const originRemote = !!hover.originSpace && hover.originSpace !== this.currentSpace;
     this._originMarkerId = originRemote ? this._hovered : hover.originMarkerId || this._hovered;
     const origin = this._position(this._originMarkerId, width, height);
@@ -552,7 +558,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
         origin, point, this._markerClearance(origin), 0, 'toward-neighbor',
       ) };
     });
-    const involved = mapped.filter((item) => item.hoverNodes.get(this._hovered)
+    const involved = selected.filter((item) => item.hoverNodes.get(this._hovered)
       ?.some((alias) => alias.space === this.currentSpace));
     const providerStates = involved.map(({ topology }) => {
       const key = topology.provider === 'zha' ? 'zha' : `z2m:${topology.instanceId}`;

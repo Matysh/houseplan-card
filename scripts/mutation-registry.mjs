@@ -18992,6 +18992,29 @@ const MUTANT_DEFINITIONS = [
       replace: '        if (!Number.isFinite(value)) continue;',
     }],
   },
+  {
+    id: 'zigbee-durable-reload-discards-successful-maps',
+    guard: 'python -m pytest tests_backend/test_ha_zigbee_topology.py -q -k issue_912_success_survives',
+    because: '#912 AC1: real entry reload restores a successful raw map stale with its original time and no radio request.',
+    patches: [{ file: 'custom_components/houseplan/zigbee_topology.py',
+      find: 'for topic, item in self._saved.items():', replace: 'for topic, item in {}.items():' }],
+  },
+  {
+    id: 'zigbee-durable-refresh-keeps-old-map-on-disk',
+    guard: 'python -m pytest tests_backend/test_ha_zigbee_topology.py -q -k issue_912_refresh_durably',
+    because: '#912 AC2: accepted refresh clears durable topic data before MQTT, so error/cancel/reload cannot restore the old map.',
+    patches: [{ file: 'custom_components/houseplan/zigbee_topology.py',
+      find: 'await self._save({key: value for key, value in self._saved.items() if key != topic})',
+      replace: 'await self._save(dict(self._saved))' }],
+  },
+  {
+    id: 'zigbee-durable-feed-retains-cleared-browser-routes',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/zigbee-topology-runtime-routes.test.mjs',
+    because: '#912 AC5: a newer authoritative loading/error state without result removes the browser map immediately.',
+    patches: [{ file: 'src/zigbee-topology-runtime.ts',
+      find: 'cache.topologies = cache.topologies.filter(t => t.provider !== \'z2m\' || t.instanceId !== topic);',
+      replace: 'cache.topologies = cache.topologies.filter(t => t.provider !== \'z2m\' || t.instanceId !== topic || !topology);' }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

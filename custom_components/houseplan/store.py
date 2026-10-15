@@ -114,7 +114,7 @@ class HouseplanData:
     junction_baseline: tuple[int, dict[str, dict[str, int]]] | None = None
     # Runtime-only #485 authority; never serialized by HouseplanStore.
     radar_coordinator: Any | None = None
-    # #800: MQTT jobs and last-good maps live only for this loaded entry.
+    # #912: volatile MQTT jobs own a separate entry-scoped durable map Store.
     zigbee_coordinator: Any | None = None
     # #836: frontend fingerprint and dev label, read once at entry setup.
     build_identity: BuildIdentity = UNKNOWN_BUILD
@@ -231,7 +231,15 @@ async def async_save_config_state(
 
     canonical_config = canonicalize_config_geometry(config)
     payload = {"config": canonical_config, "rev": rev}
-    await runtime.config_store.async_save(payload)
+
+    async def save_config() -> None:
+        await runtime.config_store.async_save(payload)
+
+    zigbee = getattr(runtime, "zigbee_coordinator", None)
+    if zigbee is not None:
+        await zigbee.async_save_config(canonical_config, save_config)
+    else:
+        await save_config()
 
     # The config is already durable at this point.  Reconciliation remains a
     # separate Store write; an interrupted pair is detected from config_rev on

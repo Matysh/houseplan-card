@@ -1509,7 +1509,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             "decor_assets_api": DECOR_ASSETS_API_VERSION,
             "summary_panel_api": SUMMARY_PANEL_API_VERSION,
             **({"radar_stage1_api": 1} if rt.radar_coordinator is not None else {}),
-            **({"zigbee_scan_api": 1} if rt.zigbee_coordinator is not None
+            **({"zigbee_scan_api": 1, "zigbee_maps_api": 1} if rt.zigbee_coordinator is not None
                and not rt.zigbee_coordinator.closed else {}),
         },
     )
@@ -1788,12 +1788,15 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             connection.send_result(msg["id"], {"ok": True, "rev": int(current_rev)})
             return
         new_rev = current_rev + 1
-        await async_save_config_state(
-            rt,
-            msg["config"],
-            new_rev,
-            previous_rev=int(current_rev),
-        )
+        from .zigbee_topology import ZigbeeScanError
+
+        try:
+            await async_save_config_state(
+                rt, msg["config"], new_rev, previous_rev=int(current_rev),
+            )
+        except ZigbeeScanError as err:
+            connection.send_error(msg["id"], err.code, str(err))
+            return
         # The candidate just became the stored document: its counts are the
         # next write's baseline (#330 §4.2).
         rt.junction_baseline = (int(new_rev), candidate_counts)

@@ -8,6 +8,7 @@ import math
 import re
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
+from pathlib import Path
 from time import monotonic, time
 from typing import Any
 from uuid import uuid4
@@ -15,12 +16,14 @@ from uuid import uuid4
 from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.storage import Store
 
 MAX_TOPICS = 8
 MAX_LISTENERS = 32
 MAX_PAYLOAD_BYTES = 2 * 1024 * 1024
 MAX_NODES = 1000
 MAX_LINKS = 6000
+MAX_CACHE_BYTES = MAX_TOPICS * (MAX_PAYLOAD_BYTES + 1024) + 4096
 CANCEL_AFTER_MS = 600_000
 TRANSPORT_TIMEOUT = 10.0
 INFO_TIMEOUT = 4.0
@@ -121,6 +124,32 @@ def _valid_map(message: dict[str, Any]) -> bool:
     return True
 
 
+def _raw_map(message: dict[str, Any]) -> dict[str, Any]:
+    """Persist the provider map, never its transaction/request envelope."""
+    data = message.get("data")
+    value = data.get("value", data) if isinstance(data, dict) else data
+    if value is None:
+        value = message.get("value", message)
+    if isinstance(value, str):
+        value = json.loads(value)
+    return {key: item for key, item in value.items() if key != "transaction"}
+
+
+def _enabled(config: dict[str, Any]) -> bool:
+    settings = config.get("settings")
+    topology = settings.get("zigbee_topology") if isinstance(settings, dict) else None
+    return isinstance(topology, dict) and topology.get("enabled") is True
+
+
+def _cache_exists(path: str) -> bool:
+    file = Path(path)
+    if not file.exists():
+        return False
+    if file.stat().st_size > MAX_CACHE_BYTES:
+        raise ValueError("oversized cache")
+    return True
+
+
 @dataclass
 class _Job:
     topic: str
@@ -138,10 +167,11 @@ class _Job:
     response_active: bool = False
     task: asyncio.Task[None] | None = None
     cleanups: list[Callable[[], None]] = field(default_factory=list)
+    persistence: str | None = None
 
 
 class ZigbeeScanCoordinator:
-    """One in-memory slot per topic, shared by all browsers of the HA entry."""
+    """Entry-owned radio jobs and a separate durable, bounded map cache."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         self.hass = hass
@@ -152,6 +182,99 @@ class ZigbeeScanCoordinator:
         self._jobs: dict[str, _Job] = {}
         self._listeners: set[Callable[[dict[str, Any]], None]] = set()
         self._operations: set[asyncio.Task] = set()
+        self._store = Store(hass, 1, f"houseplan.zigbee_maps.{entry.entry_id}",
+                            private=True, atomic_writes=True)
+        self._saved: dict[str, dict[str, Any]] = {}
+        self._storage_error: str | None = None
+        self._lock = asyncio.Lock()
+        self._writes: set[asyncio.Task] = set()
+        self._enabled = False
+
+    async def async_setup(self, config: dict[str, Any]) -> None:
+        """Restore successful maps only; loading never subscribes or publishes MQTT."""
+        self._enabled = _enabled(config)
+        try:
+            existed = await self.hass.async_add_executor_job(_cache_exists, self._store.path)
+            payload = await self._store.async_load()
+            if payload is None:
+                if existed:
+                    raise ValueError("unreadable cache")
+                return
+            if (not isinstance(payload, dict) or type(payload.get("schema")) is not int
+                    or payload["schema"] != 1
+                    or payload.get("entry_id") != self.entry.entry_id
+                    or not isinstance(payload.get("topics"), dict)
+                    or len(payload["topics"]) > MAX_TOPICS):
+                raise ValueError("unsupported cache")
+            for topic, item in payload["topics"].items():
+                if (normalize_base_topic(topic) != topic or not isinstance(item, dict)
+                        or type(item.get("obtained_at")) is not int or item["obtained_at"] < 0
+                        or _parse_payload(json.dumps(item.get("map"), ensure_ascii=False,
+                                                     separators=(",", ":")).encode()) is None
+                        or not _valid_map(item["map"])):
+                    raise ValueError("invalid map cache")
+            self._saved = payload["topics"]
+            if not self._enabled:
+                # A saved OFF decision is authoritative, including after an interrupted shutdown.
+                if self._saved:
+                    await self._save({})
+                return
+            for topic, item in self._saved.items():
+                now = monotonic()
+                job = _Job(topic, f"restored-{uuid4()}", item["obtained_at"], now,
+                           self.hass.loop.create_future(), phase="ready", finished=now,
+                           stale=True, result={"data": {"value": item["map"]}},
+                           obtained_at=item["obtained_at"], persistence="saved")
+                job.info.cancel()
+                self._jobs[topic] = job
+        except Exception:  # noqa: BLE001 - preserve unreadable/future data, never overwrite it automatically
+            self._saved = {}
+            self._storage_error = "storage_read"
+            _LOGGER.error("House Plan: Zigbee map cache cannot be read; existing storage is preserved")
+
+    async def _save(self, topics: dict[str, dict[str, Any]]) -> None:
+        """Caller owns _lock; update in-memory durable truth only after successful I/O."""
+        if self._storage_error:
+            raise ZigbeeScanError(self._storage_error)
+        try:
+            await self._store.async_save({"schema": 1, "entry_id": self.entry.entry_id,
+                                          "topics": topics})
+        except Exception as err:  # noqa: BLE001 - stable public error, no provider data in logs
+            raise ZigbeeScanError("storage_clear") from err
+        self._saved = topics
+
+    async def async_save_config(self, config: dict[str, Any], save: Callable[[], Awaitable]) -> None:
+        """Serialize saved OFF with start/result writes; draft UI changes never call this."""
+        async with self._lock:
+            enabled = _enabled(config)
+            if not enabled and (self._enabled or self._saved):
+                # Durable clear comes first: a failed clear must not acknowledge a saved OFF.
+                await self._save({})
+            await save()
+            self._enabled = enabled
+            if not enabled:
+                for job in self._jobs.values():
+                    self._release(job)
+                    if job.task is not None:
+                        job.task.cancel()
+                self._jobs.clear()
+                self.revision += 1
+                self._emit({"kind": "reset", "session_id": self.session_id,
+                            "revision": self.revision, "topics": []})
+
+    async def _persist(self, job: _Job) -> None:
+        async with self._lock:
+            if self._jobs.get(job.topic) is not job or not self._enabled or job.result is None:
+                return
+            try:
+                await self._save({**self._saved, job.topic: {
+                    "obtained_at": job.obtained_at, "map": _raw_map(job.result),
+                }})
+                job.persistence = "saved"
+            except ZigbeeScanError:
+                job.persistence = "failed"
+            if not self.closed:
+                self._changed(job)
 
     def _active(self, job: _Job) -> bool:
         return not self.closed and self._jobs.get(job.topic) is job and job.phase == "loading"
@@ -165,6 +288,8 @@ class ZigbeeScanCoordinator:
         }
         if job.error is not None:
             provider["error"] = job.error
+        if job.persistence is not None:
+            provider["persistence"] = job.persistence
         if job.result is not None:
             provider["result"] = job.result
             provider["obtained_at"] = job.obtained_at
@@ -184,7 +309,8 @@ class ZigbeeScanCoordinator:
     def initial_events(self) -> list[dict[str, Any]]:
         """Bound each event to one map; never aggregate eight maps into one frame."""
         return [{"kind": "reset", "session_id": self.session_id,
-                 "revision": self.revision, "topics": list(self._jobs)},
+                 "revision": self.revision, "topics": list(self._jobs),
+                 **({"error": self._storage_error} if self._storage_error else {})},
                 *(self._state(job) for job in self._jobs.values())]
 
     def add_listener(self, listener: Callable[[dict[str, Any]], None]) -> Callable[[], None]:
@@ -206,10 +332,17 @@ class ZigbeeScanCoordinator:
         self.revision += 1
         self._emit(self._state(job))
 
-    def start(self, base_topic: str) -> dict[str, Any]:
+    async def start(self, base_topic: str) -> dict[str, Any]:
+        """Join or durably clear a topic before any replacement request is published."""
+        async with self._lock:
+            return await self._start(base_topic)
+
+    async def _start(self, base_topic: str) -> dict[str, Any]:
         """Reserve before creating any task: concurrent WS clients join one job."""
         if self.closed:
             raise ZigbeeScanError("not_ready")
+        if not self._enabled:
+            raise ZigbeeScanError("disabled")
         topic = normalize_base_topic(base_topic)
         previous = self._jobs.get(topic)
         if previous is not None and previous.phase == "loading":
@@ -219,18 +352,17 @@ class ZigbeeScanCoordinator:
         if len(self._operations) >= MAX_TOPICS:
             raise ZigbeeScanError("capacity_exceeded")
         if previous is None and len(self._jobs) >= MAX_TOPICS:
-            candidate = next((item for item in self._jobs.values() if item.phase != "loading"), None)
+            candidate = next((item for item in self._jobs.values()
+                              if item.phase != "loading" and item.result is None), None)
             if candidate is None:
                 raise ZigbeeScanError("capacity_exceeded")
             del self._jobs[candidate.topic]
             self.revision += 1
             self._emit({"kind": "removed", "session_id": self.session_id,
                         "revision": self.revision, "topic": candidate.topic})
+        await self._save({key: value for key, value in self._saved.items() if key != topic})
         job = _Job(topic, f"houseplan-{uuid4()}", int(time() * 1000), monotonic(),
-                   self.hass.loop.create_future(),
-                   stale=previous.stale if previous else False,
-                   result=previous.result if previous else None,
-                   obtained_at=previous.obtained_at if previous else None)
+                   self.hass.loop.create_future())
         self._jobs.pop(topic, None)
         self._jobs[topic] = job
         job.task = self.entry.async_create_background_task(
@@ -283,6 +415,10 @@ class ZigbeeScanCoordinator:
         if result is not None:
             job.result, job.obtained_at = result, int(time() * 1000)
             job.stale = False
+            job.persistence = "pending"
+            write = self.hass.async_create_task(self._persist(job), "House Plan persist Zigbee map")
+            self._writes.add(write)
+            write.add_done_callback(self._writes.discard)
         elif job.result is not None:
             job.stale = True
         self._release(job)
@@ -437,5 +573,7 @@ class ZigbeeScanCoordinator:
                 task.cancel()
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
+        if self._writes:
+            await asyncio.gather(*self._writes, return_exceptions=True)
         self._jobs.clear()
         self._listeners.clear()

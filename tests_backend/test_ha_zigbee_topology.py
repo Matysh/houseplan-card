@@ -13,6 +13,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.houseplan import zigbee_topology as zigbee
 from custom_components.houseplan.const import DOMAIN
+from custom_components.houseplan.store import async_save_config_state
 
 
 @pytest.fixture(autouse=True)
@@ -152,6 +153,14 @@ async def _setup(hass, *, options=None):
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
+    runtime = entry.runtime_data
+    payload = await runtime.config_store.async_load() or {}
+    config = copy.deepcopy(payload.get("config") or {})
+    config.setdefault("spaces", [])
+    config.setdefault("markers", [])
+    config.setdefault("settings", {})["zigbee_topology"] = {"enabled": True}
+    async with runtime.write_lock:
+        await async_save_config_state(runtime, config, int(payload.get("rev", 0)) + 1)
     return entry, entry.runtime_data.zigbee_coordinator
 
 
@@ -161,6 +170,247 @@ async def _command(client, kind, **kwargs):
         reply = await client.receive_json()
         if reply["type"] == "result":
             return reply
+
+
+async def test_issue_912_success_survives_real_entry_reload_without_radio_scan(
+    hass, hass_ws_client, transport, clock,
+):
+    entry, coordinator = await _setup(hass)
+    client = await hass_ws_client(hass)
+    state = (await _start(client, transport))["provider"]
+    transport.respond("zigbee2mqtt", state["job_id"])
+    obtained = coordinator.snapshot("zigbee2mqtt")["provider"]["obtained_at"]
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()
+    clock.now += 90_000
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    replacement = entry.runtime_data.zigbee_coordinator
+    events = replacement.initial_events()
+    restored = [event["provider"] for event in events if event["kind"] == "state"]
+    assert len(restored) == 1, "successful map must survive entry reload"
+    assert restored[0]["phase"] == "ready" and restored[0]["stale"] is True
+    assert restored[0]["obtained_at"] == obtained
+    assert restored[0]["result"]["data"]["value"]["nodes"][0]["networkAddress"] == 0
+    assert len(transport.published) == 1 and transport.listener_count == 0
+    assert replacement.session_id != coordinator.session_id
+
+
+async def _durable(coordinator):
+    return (await coordinator._store.async_load())["topics"]
+
+
+@pytest.mark.parametrize("outcome", ["error", "cancel", "reload"])
+async def test_issue_912_refresh_durably_forgets_old_map_even_when_replacement_fails(
+    hass, hass_ws_client, transport, clock, outcome,
+):
+    entry, coordinator = await _setup(hass)
+    client = await hass_ws_client(hass)
+    first = (await _start(client, transport))["provider"]
+    old_callbacks = tuple(transport.callbacks["zigbee2mqtt/bridge/response/networkmap"])
+    transport.respond("zigbee2mqtt", first["job_id"])
+    await hass.async_block_till_done()
+    saved = await _durable(coordinator)
+    assert set(saved) == {"zigbee2mqtt"}
+    serialized = json.dumps(saved)
+    assert first["job_id"] not in serialized and "transaction" not in serialized
+    assert not any(key in serialized for key in ("elapsed_ms", "session_id", "started_at"))
+    refreshed = (await _start(client, transport))["provider"]
+    assert "result" not in refreshed and await _durable(coordinator) == {}
+    duplicate = await _command(client, "start", base_topic="zigbee2mqtt")
+    assert duplicate["result"]["provider"]["job_id"] == refreshed["job_id"]
+    assert len(transport.published) == 2
+    if outcome == "error":
+        transport.respond("zigbee2mqtt", refreshed["job_id"], status="error")
+    elif outcome == "cancel":
+        clock.now += 600
+        assert (await _command(client, "cancel", base_topic="zigbee2mqtt",
+                               job_id=refreshed["job_id"]))["success"]
+    late = json.dumps({"transaction": first["job_id"], "status": "ok",
+                       "data": {"value": {"nodes": [], "links": []}}}).encode()
+    for old_callback in old_callbacks:
+        old_callback(SimpleNamespace(topic="zigbee2mqtt/bridge/response/networkmap",
+                                     payload=late, retain=False))
+    assert "result" not in coordinator.snapshot("zigbee2mqtt")["provider"]
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    replacement = entry.runtime_data.zigbee_coordinator
+    assert replacement.initial_events()[0]["topics"] == []
+    assert await _durable(replacement) == {} and len(transport.published) == 2
+
+
+async def test_issue_912_clear_must_finish_before_mqtt_and_replacement_is_durable(
+    hass, hass_ws_client, transport, monkeypatch,
+):
+    _entry, coordinator = await _setup(hass)
+    client = await hass_ws_client(hass)
+    first = (await _start(client, transport))["provider"]
+    transport.respond("zigbee2mqtt", first["job_id"])
+    await hass.async_block_till_done()
+    real_save = coordinator._store.async_save
+    entered, release = asyncio.Event(), asyncio.Event()
+
+    async def delayed_clear(data):
+        entered.set()
+        await release.wait()
+        await real_save(data)
+
+    monkeypatch.setattr(coordinator._store, "async_save", delayed_clear)
+    command = hass.async_create_task(_command(client, "start", base_topic="zigbee2mqtt"))
+    await entered.wait()
+    assert not command.done() and len(transport.published) == 1
+    assert "zigbee2mqtt" in await _durable(coordinator)
+    release.set()
+    refreshed = (await command)["result"]["provider"]
+    await _until(lambda: len(transport.published) == 2)
+    assert await _durable(coordinator) == {} and "result" not in refreshed
+    transport.respond("zigbee2mqtt", refreshed["job_id"], value={"nodes": [], "links": []})
+    await hass.async_block_till_done()
+    assert (await _durable(coordinator))["zigbee2mqtt"]["map"] == {"nodes": [], "links": []}
+    assert coordinator.snapshot("zigbee2mqtt")["provider"]["persistence"] == "saved"
+
+
+async def test_issue_912_clear_failure_refuses_refresh_and_saved_off_without_publish(
+    hass, hass_ws_client, transport, monkeypatch,
+):
+    entry, coordinator = await _setup(hass)
+    client = await hass_ws_client(hass)
+    first = (await _start(client, transport))["provider"]
+    transport.respond("zigbee2mqtt", first["job_id"])
+    await hass.async_block_till_done()
+    before = copy.deepcopy(await _durable(coordinator))
+
+    async def fail_save(_data):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(coordinator._store, "async_save", fail_save)
+    refused = await _command(client, "start", base_topic="zigbee2mqtt")
+    assert not refused["success"] and refused["error"]["code"] == "storage_clear"
+    assert len(transport.published) == 1 and await _durable(coordinator) == before
+    runtime = entry.runtime_data
+    previous = await runtime.config_store.async_load()
+    off = copy.deepcopy(previous["config"])
+    off["settings"]["zigbee_topology"]["enabled"] = False
+    with pytest.raises(zigbee.ZigbeeScanError, match="storage_clear"):
+        async with runtime.write_lock:
+            await async_save_config_state(runtime, off, previous["rev"] + 1)
+    assert await runtime.config_store.async_load() == previous
+    assert await _durable(coordinator) == before
+    await client.send_json_auto_id({"type": "houseplan/config/set", "config": off,
+                                   "expected_rev": previous["rev"]})
+    public = await client.receive_json()
+    assert not public["success"] and public["error"]["code"] == "storage_clear", public
+    assert await runtime.config_store.async_load() == previous
+    assert await _durable(coordinator) == before and len(transport.published) == 1
+
+
+async def test_issue_912_failed_success_save_is_honest_and_never_promises_reload_survival(
+    hass, hass_ws_client, transport, monkeypatch,
+):
+    entry, coordinator = await _setup(hass)
+    client = await hass_ws_client(hass)
+    first = (await _start(client, transport))["provider"]
+
+    async def fail_save(_data):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(coordinator._store, "async_save", fail_save)
+    transport.respond("zigbee2mqtt", first["job_id"])
+    await hass.async_block_till_done()
+    state = coordinator.snapshot("zigbee2mqtt")["provider"]
+    assert state["phase"] == "ready" and "result" in state and state["persistence"] == "failed"
+    assert await _durable(coordinator) == {}
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    assert entry.runtime_data.zigbee_coordinator.initial_events()[0]["topics"] == []
+
+
+async def test_issue_912_only_saved_off_clears_all_topics_and_fences_old_callbacks(
+    hass, hass_ws_client, transport,
+):
+    entry, coordinator = await _setup(hass)
+    first_client = await hass_ws_client(hass)
+    second_client = await hass_ws_client(hass)
+    first = (await _start(first_client, transport, topic="mesh-a"))["provider"]
+    transport.respond("mesh-a", first["job_id"])
+    second = (await _start(first_client, transport, topic="mesh-b"))["provider"]
+    callbacks = tuple(transport.callbacks["mesh-b/bridge/response/networkmap"])
+    await hass.async_block_till_done()
+    runtime = entry.runtime_data
+    previous = await runtime.config_store.async_load()
+    draft = copy.deepcopy(previous["config"])
+    draft["settings"]["zigbee_topology"]["enabled"] = False
+    # A local draft, including closing its dialog, does not invoke a server writer.
+    assert set(await _durable(coordinator)) == {"mesh-a"}
+    assert coordinator.snapshot("mesh-b")["provider"]["phase"] == "loading"
+    async with runtime.write_lock:
+        await async_save_config_state(runtime, draft, previous["rev"] + 1)
+    assert await _durable(coordinator) == {} and coordinator.initial_events()[0]["topics"] == []
+    late = json.dumps({"transaction": second["job_id"], "status": "ok",
+                       "data": {"value": {"nodes": [], "links": []}}}).encode()
+    for old_callback in callbacks:
+        old_callback(SimpleNamespace(topic="mesh-b/bridge/response/networkmap", payload=late, retain=False))
+    refused = await _command(second_client, "start", base_topic="mesh-a")
+    assert not refused["success"] and refused["error"]["code"] == "disabled"
+    async with runtime.write_lock:
+        await async_save_config_state(runtime, previous["config"], previous["rev"] + 2)
+    assert coordinator.initial_events()[0]["topics"] == [] and await _durable(coordinator) == {}
+    assert len(transport.published) == 2 and transport.listener_count == 0
+
+
+async def test_issue_912_topic_removal_keeps_exact_cache_and_reload_does_not_scan(
+    hass, hass_ws_client, transport,
+):
+    entry, coordinator = await _setup(hass)
+    client = await hass_ws_client(hass)
+    for topic in ("mesh-a", "mesh-b"):
+        job = (await _start(client, transport, topic=topic))["provider"]
+        transport.respond(topic, job["job_id"])
+    await hass.async_block_till_done()
+    before = copy.deepcopy(await _durable(coordinator))
+    runtime = entry.runtime_data
+    current = await runtime.config_store.async_load()
+    candidate = copy.deepcopy(current["config"])
+    candidate["settings"]["zigbee_topology"]["z2m_base_topics"] = ["mesh-a"]
+    async with runtime.write_lock:
+        await async_save_config_state(runtime, candidate, current["rev"] + 1)
+    assert await _durable(coordinator) == before
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    replacement = entry.runtime_data.zigbee_coordinator
+    assert set(replacement.initial_events()[0]["topics"]) == {"mesh-a", "mesh-b"}
+    assert await _durable(replacement) == before and len(transport.published) == 2
+
+
+@pytest.mark.parametrize("corruption", ["future", "foreign", "topic", "nodes", "time"])
+async def test_issue_912_invalid_store_is_preserved_and_cannot_start_a_radio_scan(
+    hass, hass_ws_client, transport, corruption,
+):
+    entry, coordinator = await _setup(hass)
+    payload = {"schema": 1, "entry_id": entry.entry_id, "topics": {
+        "mesh-a": {"obtained_at": 1234, "map": {"nodes": [], "links": []}},
+    }}
+    if corruption == "future":
+        payload["schema"] = 2
+    elif corruption == "foreign":
+        payload["entry_id"] = "another-entry"
+    elif corruption == "topic":
+        payload["topics"]["bad/#"] = payload["topics"].pop("mesh-a")
+    elif corruption == "nodes":
+        payload["topics"]["mesh-a"]["map"]["nodes"] = [{}]
+    else:
+        payload["topics"]["mesh-a"]["obtained_at"] = True
+    await coordinator._store.async_save(payload)
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    replacement = entry.runtime_data.zigbee_coordinator
+    assert replacement.initial_events()[0]["error"] == "storage_read"
+    client = await hass_ws_client(hass)
+    refused = await _command(client, "start", base_topic="mesh-a")
+    assert not refused["success"] and refused["error"]["code"] == "storage_read"
+    assert await replacement._store.async_load() == payload
+    assert not transport.published and not transport.subscribes
 
 
 async def _start(client, transport, *, topic="zigbee2mqtt"):
@@ -232,7 +482,7 @@ async def test_issue_800_cancel_boundary_old_id_late_reply_and_last_good(
     _entry, coordinator = await _setup(hass)
     client = await hass_ws_client(hass)
     first = await _start(client, transport)
-    good = transport.respond("zigbee2mqtt", first["provider"]["job_id"])
+    transport.respond("zigbee2mqtt", first["provider"]["job_id"])
     await _until(lambda: not coordinator._operations)
     refresh = await _start(client, transport)
     job_id = refresh["provider"]["job_id"]
@@ -244,14 +494,13 @@ async def test_issue_800_cancel_boundary_old_id_late_reply_and_last_good(
     clock.now += 1
     cancelled = (await _command(client, "cancel", base_topic="zigbee2mqtt", job_id=job_id))["result"]
     assert cancelled["provider"]["phase"] == "cancelled"
-    assert cancelled["provider"]["stale"] is True
-    assert cancelled["provider"]["result"] == good
+    assert "result" not in cancelled["provider"] and "obtained_at" not in cancelled["provider"]
     assert cancelled["provider"]["elapsed_ms"] == 600_000
     assert (await _command(client, "cancel", base_topic="zigbee2mqtt", job_id=job_id))["result"] == cancelled
     assert transport.listener_count == 0
 
     newer = await _start(client, transport)
-    assert newer["provider"]["stale"] is True
+    assert "result" not in newer["provider"]
     # The new job is itself cancellable: only job-id correlation may reject
     # this stale command, not the unrelated ten-minute threshold.
     clock.now += 600
@@ -262,7 +511,7 @@ async def test_issue_800_cancel_boundary_old_id_late_reply_and_last_good(
         callback(SimpleNamespace(topic="zigbee2mqtt/bridge/response/networkmap", payload=late, retain=False))
     assert coordinator.snapshot("zigbee2mqtt")["provider"]["job_id"] == newer["provider"]["job_id"]
     assert coordinator.snapshot("zigbee2mqtt")["provider"]["phase"] == "loading"
-    assert coordinator.snapshot("zigbee2mqtt")["provider"]["result"] == good
+    assert "result" not in coordinator.snapshot("zigbee2mqtt")["provider"]
 
 
 @pytest.mark.parametrize("first", ["success", "cancel"])
@@ -310,7 +559,7 @@ async def test_issue_800_foreign_retained_oversized_and_garbage_cannot_replace_c
     _entry, coordinator = await _setup(hass)
     client = await hass_ws_client(hass)
     first = (await _start(client, transport))["provider"]
-    good = transport.respond("zigbee2mqtt", first["job_id"])
+    transport.respond("zigbee2mqtt", first["job_id"])
     refresh = (await _start(client, transport))["provider"]
     transport.respond("zigbee2mqtt", "foreign")
     transport.respond("zigbee2mqtt", refresh["job_id"], retain=True)
@@ -323,11 +572,11 @@ async def test_issue_800_foreign_retained_oversized_and_garbage_cannot_replace_c
     transport.emit(topic, b"not-json")
     transport.emit(topic, {"status": "error"})
     still_waiting = coordinator.snapshot("zigbee2mqtt")["provider"]
-    assert still_waiting["phase"] == "loading" and still_waiting["result"] == good
+    assert still_waiting["phase"] == "loading" and "result" not in still_waiting
     transport.respond("zigbee2mqtt", refresh["job_id"], value={"nodes": "not an array", "links": []})
     failed = coordinator.snapshot("zigbee2mqtt")["provider"]
     assert failed["phase"] == "error" and failed["error"] == "invalid_payload"
-    assert failed["result"] == good and failed["stale"] is True
+    assert "result" not in failed and "obtained_at" not in failed
     assert transport.listener_count == 0
 
 
@@ -351,12 +600,12 @@ async def test_issue_800_mqtt_disconnect_is_terminal_without_retry(hass, hass_ws
     _entry, coordinator = await _setup(hass)
     client = await hass_ws_client(hass)
     first = (await _start(client, transport))["provider"]
-    good = transport.respond("zigbee2mqtt", first["job_id"])
+    transport.respond("zigbee2mqtt", first["job_id"])
     await _start(client, transport)
     transport.disconnect()
     state = coordinator.snapshot("zigbee2mqtt")["provider"]
     assert state["phase"] == "error" and state["error"] == "connection"
-    assert state["stale"] and state["result"] == good
+    assert "result" not in state and "obtained_at" not in state
     assert transport.listener_count == 0 and not transport.status_callbacks
     transport.reconnect()
     await hass.async_block_till_done()
@@ -423,7 +672,7 @@ async def test_issue_800_old_ha_without_readiness_helper_still_scans(
     assert coordinator.snapshot("zigbee2mqtt")["provider"]["phase"] == "ready"
 
 
-async def test_issue_800_eight_slots_reject_ninth_active_and_evict_only_finished(
+async def test_issue_912_eight_slots_never_evict_a_successful_map(
     hass, hass_ws_client, transport,
 ):
     _entry, coordinator = await _setup(hass)
@@ -437,10 +686,11 @@ async def test_issue_800_eight_slots_reject_ninth_active_and_evict_only_finished
     assert len(transport.published) == 8
     third = coordinator.snapshot("mesh3")["provider"]
     transport.respond("mesh3", third["job_id"])
-    await _start(client, transport, topic="ninth")
-    assert len(coordinator._jobs) == 8 and "mesh3" not in coordinator._jobs
+    rejected = await _command(client, "start", base_topic="ninth")
+    assert rejected["success"] is False and rejected["error"]["code"] == "capacity_exceeded"
+    assert len(coordinator._jobs) == 8 and "mesh3" in coordinator._jobs
     removed = [event for event in events if event["kind"] == "removed"]
-    assert [event["topic"] for event in removed] == ["mesh3"]
+    assert removed == []
     assert all(coordinator.snapshot(f"mesh{index}")["provider"]["phase"] == "loading"
                for index in range(8) if index != 3)
     assert [event["revision"] for event in events] == sorted({event["revision"] for event in events})
@@ -525,7 +775,7 @@ async def test_issue_800_missing_mqtt_is_optional_and_reports_unavailable(
 
 async def test_issue_800_ha_stop_releases_entry_jobs(hass, transport):
     _entry, coordinator = await _setup(hass)
-    coordinator.start("zigbee2mqtt")
+    await coordinator.start("zigbee2mqtt")
     await _until(lambda: bool(transport.published))
     hass.bus.async_fire(EVENT_HOMEASSISTANT_STOP)
     await hass.async_block_till_done()
