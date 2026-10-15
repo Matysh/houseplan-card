@@ -291,7 +291,13 @@ try {
   check('pagehide after release retains exactly one accepted command/write',
     [afterPending.writes - beforePending.writes, afterPending.history - beforePending.history], [1, 1]);
   await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
+  await page.waitForFunction(() => !window.__card._loading);
   await page.evaluate(() => window.__hpTest.settled());
+  const resumedPending = await observation();
+  assert.deepEqual(resumedPending.layout, afterPending.layout,
+    'ACK-before-pageshow ordering retains the accepted full layout after resume');
+  check('ACK-before-pageshow ordering retains its accepted history after resume',
+    resumedPending.history, afterPending.history);
   await finish(browser, { roster });
 } finally {
   await browser.close();
