@@ -338,7 +338,14 @@ reports.races = await races.page.evaluate(async () => {
   window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
   await until(() => navigation.length === 2);
   holdNavigation = false;
-  await window.__hpTest.switchSpace('garden');
+  // #847: after the preceding detach, a bare click is an old activation tail.
+  // This race asks for external navigation, using the public deep-link route.
+  location.hash = '#space=garden';
+  window.dispatchEvent(new HashChangeEvent('hashchange'));
+  await window.__hpTest.settled();
+  if (card.renderRoot.querySelector('[data-hp="space-tab"][data-id="garden"]')?.getAttribute('aria-current') !== 'page') {
+    throw new Error('navigation fixture hash did not select garden');
+  }
   el.setConfig({ type: 'custom:houseplan-space-card', space: 'garden', show_button: false });
   el.hass = latest;
   for (const release of navigation) release();

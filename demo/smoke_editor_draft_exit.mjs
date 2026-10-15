@@ -4,6 +4,10 @@ import { launch, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
 requirePinnedBrowser('851-editor-draft-exit');
 const width = Number(process.env.HP_SMOKE_WIDTH || 1100);
 const { page, browser } = await launch({ width, height: 850 }, 1, [], width < 500 ? { hasTouch: true, isMobile: true } : {});
+// #847: the first plan-toolbar action after remount is a new deliberate input,
+// not a compatibility click from before detach. Drive that intended Select natively.
+await page.exposeFunction('__hp851SelectAfterRemount', () => page
+  .locator('houseplan-card [data-hp="tool"][data-tool="select"]').click({ timeout: 5000 }));
 const out = await page.evaluate(async () => {
   const c = window.__card, ui = window.__hpTest, result = {};
   const root = () => c.shadowRoot;
@@ -88,7 +92,7 @@ const out = await page.evaluate(async () => {
   await ui.close(dialog('room')); await decide(true);
   result.warmRoomDiscardKeepsSavedWalls = !dialog('room')
     && JSON.stringify(c._curSpaceCfg.partitions) === partitions && writes === roomWrites;
-  await ui.setTool('select');
+  await window.__hp851SelectAfterRemount(); await settle();
 
   await ui.setServerConfig(cfg => {
     cfg.spaces.find(space => space.id === c._space).rooms.push({ id: 'room-edit', name: 'Room', settings: { fill_mode: 'temp' }, poly: [[.6,.2],[.85,.2],[.85,.45],[.6,.45]] });

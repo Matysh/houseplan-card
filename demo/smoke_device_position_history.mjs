@@ -1,6 +1,9 @@
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch();
+await page.exposeFunction('__fixtureNativeClick', async selector => {
+  await page.locator('houseplan-card').locator(selector).first().click();
+});
 const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
@@ -18,7 +21,7 @@ const res = await page.evaluate(async () => {
     await c.updateComplete;
   };
 
-  [...sr().querySelectorAll('.modetab')][1].click();
+  await window.__fixtureNativeClick('[data-hp="mode-tab"][data-mode="devices"]');
   await settle();
   const deviceNode = () => sr().querySelector('.dev:not(.ha-disabled)');
   let node = deviceNode();
@@ -77,6 +80,7 @@ const res = await page.evaluate(async () => {
     const writesBeforeEnd = writes.length;
     fire(node, cancel ? cancelType : 'pointerup', x + dx, y, pointerId);
     await idle();
+    if (cancel) { fire(sr().querySelector('.stage'), 'pointerup', x + dx, y, pointerId); await idle(); }
     return writesBeforeEnd;
   };
   const beginPreview = (dx, pointerId) => {
@@ -112,7 +116,7 @@ const res = await page.evaluate(async () => {
     && JSON.stringify(serverLayout[deviceId]) === JSON.stringify(writes[writes.length - 1].pos);
 
   const afterDrag = structuredClone(c._layout[deviceId]);
-  sr().querySelector('[data-device-position-history="undo"]').click();
+  await window.__fixtureNativeClick('[data-device-position-history="undo"]');
   await idle();
   // #397: the card now keeps what it sent — the canonical position — so a
   // restored placement may differ from the raw `explicit` by the lattice snap
@@ -124,7 +128,7 @@ const res = await page.evaluate(async () => {
     && near(c._layout[deviceId].y, explicit.y)
     && c._layout[deviceId].k === 0
     && c._devicePositionHistory.canRedo;
-  sr().querySelector('[data-device-position-history="redo"]').click();
+  await window.__fixtureNativeClick('[data-device-position-history="redo"]');
   await idle();
   out.redoRestoresExactEnd = JSON.stringify(c._layout[deviceId]) === JSON.stringify(afterDrag);
   window.dispatchEvent(new KeyboardEvent('keydown', {
@@ -150,33 +154,36 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   out.escapeAbortsWithoutWrite = JSON.stringify(c._layout[deviceId]) === JSON.stringify(beforeEscape)
     && writes.length === writesBeforeEscape && c._deviceDrag === null;
+  fire(sr().querySelector('.stage'), 'pointerup', 0, 0, 741);
   const historySizeBeforePreviewUndo = c._devicePositionHistory.size;
   beginPreview(105, 742);
-  sr().querySelector('[data-device-position-history="undo"]').click();
+  await window.__fixtureNativeClick('[data-device-position-history="undo"]');
   await c.updateComplete;
   out.undoDuringDragOnlyAborts = JSON.stringify(c._layout[deviceId]) === JSON.stringify(beforeEscape)
     && writes.length === writesBeforeEscape
     && c._devicePositionHistory.size === historySizeBeforePreviewUndo
     && c._deviceDrag === null;
+  fire(sr().querySelector('.stage'), 'pointerup', 0, 0, 742);
 
   // Leaving the editor is another abort boundary; re-enter for the remaining cases.
   beginPreview(115, 743);
-  [...sr().querySelectorAll('.modetab')][0].click();
+  await window.__fixtureNativeClick('[data-hp="editor-close"]');
   await settle();
   out.modeSwitchAbortsWithoutWrite = JSON.stringify(c._layout[deviceId]) === JSON.stringify(beforeEscape)
     && writes.length === writesBeforeEscape && c._deviceDrag === null;
-  [...sr().querySelectorAll('.modetab')][1].click();
+  fire(sr().querySelector('.stage'), 'pointerup', 0, 0, 743);
+  await window.__fixtureNativeClick('[data-hp="mode-tab"][data-mode="devices"]');
   await settle();
 
   // A no-op after Undo must not destroy the redo branch.
-  sr().querySelector('[data-device-position-history="undo"]').click();
+  await window.__fixtureNativeClick('[data-device-position-history="undo"]');
   await idle();
   const redoName = c._devicePositionHistory.redoName;
   const writesBeforeNoop = writes.length;
   await drag({ dx: 0, moves: 0, pointerId: 75 });
   out.noopKeepsRedo = c._devicePositionHistory.redoName === redoName
     && writes.length === writesBeforeNoop;
-  sr().querySelector('[data-device-position-history="redo"]').click();
+  await window.__fixtureNativeClick('[data-device-position-history="redo"]');
   await idle();
 
   // Cancellation restores the raw before-state and performs no final write.
@@ -200,6 +207,8 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   out.secondPointerAbortsWithoutWrite = JSON.stringify(c._layout[deviceId]) === JSON.stringify(beforeCancel)
     && writes.length === writesBeforeCancel && c._deviceDrag === null;
+  fire(sr().querySelector('.stage'), 'pointerup', x, y, 762);
+  fire(sr().querySelector('.stage'), 'pointerup', x, y, 763);
 
   // An auto-positioned marker round-trips through delete/update.
   c._devicePositionHistory.clear();
@@ -210,11 +219,11 @@ const res = await page.evaluate(async () => {
   await drag({ dx: 90, pointerId: 77 });
   const autoAfter = structuredClone(c._layout[deviceId]);
   const beforeAutoUndo = writes.length;
-  sr().querySelector('[data-device-position-history="undo"]').click();
+  await window.__fixtureNativeClick('[data-device-position-history="undo"]');
   await idle();
   out.autoUndoDeletesExplicitPlacement = !(deviceId in c._layout)
     && writes[beforeAutoUndo]?.type === 'delete';
-  sr().querySelector('[data-device-position-history="redo"]').click();
+  await window.__fixtureNativeClick('[data-device-position-history="redo"]');
   await idle();
   out.autoRedoRestoresPlacement = JSON.stringify(c._layout[deviceId]) === JSON.stringify(autoAfter)
     && writes.at(-1)?.type === 'update';
@@ -233,7 +242,7 @@ const res = await page.evaluate(async () => {
   await drag({ dx: 100, pointerId: 79 });
   const beforeFailedDelete = structuredClone(c._layout[deviceId]);
   failNextDelete = true;
-  sr().querySelector('[data-device-position-history="undo"]').click();
+  await window.__fixtureNativeClick('[data-device-position-history="undo"]');
   await idle();
   out.failedUndoRestoresStackDirection = JSON.stringify(c._layout[deviceId])
       === JSON.stringify(beforeFailedDelete)
@@ -340,7 +349,7 @@ const res = await page.evaluate(async () => {
     });
     c.requestUpdate();
     await c.updateComplete;
-    sr().querySelector('[data-device-position-history="undo"]').click();
+    await window.__fixtureNativeClick('[data-device-position-history="undo"]');
     await idle();
     await settle();
     const observedOther = c._layout[otherDevice.id];
@@ -365,7 +374,7 @@ const res = await page.evaluate(async () => {
   c._devicePositionHistory.push(staleCommand('removed-device', device.space));
   c.requestUpdate();
   await c.updateComplete;
-  sr().querySelector('[data-device-position-history="undo"]').click();
+  await window.__fixtureNativeClick('[data-device-position-history="undo"]');
   await c.updateComplete;
   out.deletedDeviceCommandFailsClosed = !c._devicePositionHistory.canUndo
     && !c._devicePositionHistory.canRedo && writes.length === writesBeforeStale;
@@ -373,7 +382,7 @@ const res = await page.evaluate(async () => {
   c._devicePositionHistory.push(staleCommand(device.id, 'garden'));
   c.requestUpdate();
   await c.updateComplete;
-  sr().querySelector('[data-device-position-history="undo"]').click();
+  await window.__fixtureNativeClick('[data-device-position-history="undo"]');
   await c.updateComplete;
   out.reboundDeviceCommandFailsClosed = !c._devicePositionHistory.canUndo
     && !c._devicePositionHistory.canRedo && writes.length === writesBeforeStale;
@@ -384,7 +393,7 @@ const res = await page.evaluate(async () => {
   c._devicePositionHistory.push(staleCommand(device.id, device.space));
   c.requestUpdate();
   await c.updateComplete;
-  sr().querySelector('[data-device-position-history="undo"]').click();
+  await window.__fixtureNativeClick('[data-device-position-history="undo"]');
   await c.updateComplete;
   out.disabledDeviceCommandFailsClosed = !c._devicePositionHistory.canUndo
     && !c._devicePositionHistory.canRedo && writes.length === writesBeforeStale;

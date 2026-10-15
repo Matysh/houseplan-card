@@ -563,8 +563,13 @@ try {
     window.__hp805Host.appendChild(card);
     window.__hp805.watch(card, '.editor-secondary-host', 'position');
     card.renderRoot.querySelector('[data-hp="mode-tab"][data-mode="plan"]').click();
+    // #847: reconnect retires the old activation tail. The CSS first-frame
+    // witness must enter the editor through a new deliberate input, not treat
+    // the stale programmatic click above as a new user action.
+    card.renderRoot.querySelector('[data-hp="mode-tab"][data-mode="plan"]').focus();
     return kinds;
   });
+  await detached.page.keyboard.press('Enter');
   const reattached = await frameOf(detached.page);
   const reattachedKinds = await detached.page.evaluate(() => [...window.__card.renderRoot.adoptedStyleSheets]
     .map(window.__hp805.kindOf));

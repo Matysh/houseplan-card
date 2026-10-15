@@ -15,6 +15,9 @@ const sharpnessScenario = { ...scenario, extraOpenings: [{
 
 const { page, browser } = await launch({ width: 1000, height: 900 }, 1);
 await prepareGoldenScenario(page, sharpnessScenario);
+// The golden harness replaces the demo card. Bind the public facade to the
+// mounted scene, not window.__card's retired demo instance.
+await page.evaluate(() => { window.__card = window.__goldenCard; });
 
 const settle = async () => {
   await page.waitForFunction(() => !window.__goldenCard?._cameraTransition?.active);
@@ -125,7 +128,13 @@ const pinch = await state();
 // The same architectural SVG is shared by View and all three editors.
 const modes = [];
 for (const mode of ['view', 'plan', 'devices', 'decor']) {
-  await page.evaluate((value) => window.__hpTest.setMode(value), mode);
+  if (mode === 'plan') {
+    // #847/#831: the completed pinch still owns compatibility clicks. This
+    // next deliberate mode change starts with an actual pointer sequence.
+    await page.locator('houseplan-card [data-hp="mode-tab"][data-mode="plan"]').click();
+    await page.waitForFunction(value => window.__goldenCard.renderRoot
+      .querySelector('ha-card[data-hp-mode]')?.getAttribute('data-hp-mode') === value, mode, { timeout: 5000 });
+  } else await page.evaluate((value) => window.__hpTest.setMode(value), mode);
   await page.waitForTimeout(350);
   await settle();
   await setZoom(1.32);

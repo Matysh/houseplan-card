@@ -18,6 +18,13 @@ import { makeLargeHouseFixture } from './fixtures/large-house.mjs';
 const out = {};
 {
   const { page, browser } = await launch();
+  await page.exposeFunction('__fixtureNativeMode', async mode => {
+    const root = page.locator('houseplan-card');
+    await root.locator(mode === 'view' ? '[data-hp="editor-close"]'
+      : `[data-hp="mode-tab"][data-mode="${mode}"]`).first().click();
+    await page.waitForFunction(mode => window.__card.renderRoot.querySelector('ha-card')
+      ?.getAttribute('data-hp-mode') === mode, mode);
+  });
   Object.assign(out, await page.evaluate(async () => {
     const res = {};
     const c = window.__card;
@@ -156,10 +163,13 @@ const out = {};
         }));
       } else if (end) fire(el, end, ex, ey, p);
       await idle();
-      result.writes = writes.slice(writesBefore);
-      result.history = c._devicePositionHistory.size - historyBefore;
       result.after = hint();
       result.dragGone = c._deviceDrag === null;
+      // Escape/lost capture are not a physical release. Observe cancellation
+      // first, then lift that synthetic contact before the next user action.
+      if (end !== 'pointerup') { fire(sr().querySelector('.stage'), 'pointerup', ex, ey, p); await idle(); }
+      result.writes = writes.slice(writesBefore);
+      result.history = c._devicePositionHistory.size - historyBefore;
       result.end = { el, p, ex, ey };
       return result;
     };
@@ -253,13 +263,13 @@ const out = {};
       const g = await gesture(K, T, [3, 0], {
         end: null,
         before: async () => {
-          await window.__hpTest.setMode('view');
+          await window.__fixtureNativeMode('view');
           return { hint: hint(), drag: c._deviceDrag };
         },
       });
       res.ac6ModeChangeDuringCapture = g.hint.length === 1 && g.extra.hint.length === 0 && g.extra.drag === null
         && g.writes.length === 0 && unchanged();
-      await window.__hpTest.setMode('devices');
+      await window.__fixtureNativeMode('devices');
     }
     {
       const g = await gesture(K, T, [3, 0], {

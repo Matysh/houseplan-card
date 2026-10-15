@@ -246,7 +246,15 @@ try {
     out[`disabledOverlay-${name}`] = await page.evaluate(()=>
       !window.__card.renderRoot.querySelector('line.tip[data-mid="e_vacuum_second"]'));
   }
-  await page.evaluate(()=>window.__hpTest.switchSpace('garden'));
+  // #847: remount retains the old activation tail; in kiosk the tabs are
+  // hidden. Request this lifecycle navigation through the public URL instead
+  // of fabricating a fresh click on an invisible control.
+  await page.evaluate(()=>{
+    location.hash='#space=garden';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+  });
+  await page.waitForFunction(()=>window.__card.renderRoot.querySelector('[data-hp="space-tab"][data-id="garden"]')?.getAttribute('aria-current')==='page',null,{timeout:5000});
+  await settle();
   out.oldFloorRetired = await page.evaluate(()=>!window.__card.renderRoot.querySelector('.vactrail')&&window.__card._vacRaf===0);
 } finally {
   mkdirSync('demo/out/vacuum-camera-871',{recursive:true});

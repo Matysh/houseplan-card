@@ -131,6 +131,8 @@ const result = await page.evaluate(async () => {
   fire(gear(), 'lostpointercapture', cancelX, cancelY, { pointerId: 651 });
   await update();
   out.lostCaptureRestoresPosition = JSON.stringify(position()) === JSON.stringify(beforeCancel);
+  // #847: loss of capture is not release of this injected physical contact.
+  fire(stage, 'pointerup', cancelX, cancelY, { pointerId: 651 });
 
   // The capsule stops on the room boundary instead of leaving it.
   const boundaryRect = gear().getBoundingClientRect();
