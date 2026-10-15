@@ -37,6 +37,11 @@ Other executed checks (raw/result files in that same external directory):
 - `selected-editor`: existing editor input suite, 18 checks, PASS.
 - `units`: pure selection + grid-scale, 12 tests, PASS.
 - `candidate-native-contract`: candidate floor/profile contract, 13 tests, PASS.
+- `scoped-current`: selection/grid-scale/live-editor/candidate suites, 33/33
+  PASS on the completed material. The earlier `scoped-final` attempt had one
+  profile-floor failure while that tooling addition was incomplete; its other
+  114 tests (including all 82 mutation-registry units) passed. The missing floor
+  was added and the completed candidate suite rerun, not muted.
 - `static-mutants`: 1606 definitions, 832 unique reads, execution 0;
   caught status unknown until nightly. Six new declarations, three browser
   guards; 375/200 is the unchanged advisory policy, not a raised limit.
@@ -96,3 +101,40 @@ returns null for an open dialog. Ledger is a real `stable-fix` with RU/EN summar
 not SPEC publication accounting. Native headless proof is not field/GPU proof.
 Touch editor: best effort / intentionally degraded. Physical touch/pen and an
 actual HA deployment were not tested; there is no new touch route here.
+
+## Frozen pre-dependency checkpoint
+
+Source/test implementation commit: `55f2cc4626abc575a2ea8b2c8155a87928ee8018`,
+tree `396e237c5ca3ae7941f1ad8039df758e869fa3a7`. A fresh build+sync (19.3 s),
+native 49-check smoke (9.6 s), process gate (one commit, no warnings), no-new-any
+(67 added source lines), private-write gate and ledger catalogue all passed.
+The catalogue independently records real stable-fix membership and the earlier
+SPEC trace. Current raw/gzip measurements are exactly the budget figures above.
+No ordinary push was attempted while the mandatory budget gate is red.
+
+Additional completed neighbouring checks: `committed-lazy` PASS (13.7 s),
+`selected-esc` PASS, `selected-pan` PASS, `selected-floor` PASS (7.9 s) and
+`selected-layers` PASS. An earlier lazy-style attempt followed `bundle:clean`
+with a still-new demo copy, so its manifest named an absent old asset; this was
+an author-produced incoherent test environment. Rebuilding/syncing the complete
+artifact tree fixed that attempt without source, test or gate changes.
+
+Committed `smoke-select` reports 121 direct matches, no registered additions,
+four broad symbols (`_cellCm`, `_cfgEpoch`, `_gridPitch`, `_space`), and proven
+diff linkage. Decision for each direct row is: RUN if it is one of
+`smoke_wallthick_standalone`, `smoke_canvas_surface_gestures`,
+`smoke_wallthick_hover_width`, `smoke_wall_thickness`, `smoke_editor_gestures`,
+`smoke_editor_styles_lazy`, `smoke_esc_dialogs`, `smoke_pan_any_zoom`,
+`smoke_space_switch_transitions`, `smoke_hide_layers` (all executed PASS);
+otherwise NOT RUN in this task. The other 111 rows match only shared existing
+host APIs/types (`_spaceModel`, `_tool`, `spaceId`, `cellCm`, etc.), not a changed
+geometry writer, hit resolver or input handler. The ten chosen cases cover the
+actual selected projection, current physical widths, retained camera frames,
+lazy style ownership, Apply/Undo and teardown. Geometry, Glow, radar, opening,
+resize, PDF and device writers are unchanged. This is a deliberate reduced
+selection with a decision for every row, not a claim of 121 executed smokes.
+The raw selection remains external `committed-selection.log`.
+
+Only remaining refusal is the existing budget dependency. Per coordinator,
+pause under `blocked` until actual #912 S8, then rebase and rerun the real final
+gate on that exact combined material. No new owner question or ceiling change.
