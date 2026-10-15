@@ -19,7 +19,8 @@ export function lightPresentationComparison(base, result) {
         || report.samples?.length !== 3) failures.push(`${name}: incomplete/dirty/failed material`);
     for (const sample of report?.samples || []) {
       const scenario = sample.tickWork?.scenarios?.S2;
-      if (sample.settled?.bootSoft !== false || sample.settled?.booting !== false
+      if (sample.settled?.liveRuntimeState !== 'ready' || sample.settled?.liveCaptureInstalled !== true
+          || sample.settled?.bootSoft !== false || sample.settled?.booting !== false
           || sample.settled?.continuity !== 'steady' || sample.settled?.devices !== 200 || sample.settled?.strips !== 50
           || scenario?.ticks !== 100 || scenario?.staleStripes !== 0
           || !(scenario?.presentationBuilds > 0) || scenario.rawTickMs?.length !== 100

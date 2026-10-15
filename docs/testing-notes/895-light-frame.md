@@ -54,9 +54,21 @@ deduplication, light geometry, LED bands, alarms or diagnostic policy changed.
   this scenario, not compositor/real-GPU acceptance or new timing budgets.
   This is a **historical independent cohort before #867 integration**, not
   exact final-source proof after that shared capture projection changes.
-- `light-presentation-report.test.mjs`: 2 PASS. The actual raw receipts pass
-  the same read-only comparator with zero failures; missing CPU/capture rows,
-  dirty/unsettled/mismatched material or <50% reduction fail closed.
+- B-only readiness preparation adds an explicit actual #848 live-boundary
+  `ready` plus installed capture condition before observation. Each future
+  receipt records both facts; the comparator rejects missing/non-ready facts
+  on either material. The six historical raw receipts above remain unchanged
+  and are not upgraded to this new observer or accepted by its stricter
+  preparation check. No new benchmark has run at this checkpoint; final B/R
+  measurement waits for accepted #848/#899 and a separate controlled window.
+- Historical `c377a80e` comparator: 2 PASS; the original raw receipts passed
+  that original observer/comparator with zero failures. They lack the new
+  readiness observations and are not valid final-source comparison input.
+- B-only readiness preparation: `node --test test/light-presentation-report.test.mjs`
+  → 3 PASS, including missing/idle/loading/error and missing capture on either
+  material. This is a pure synthetic-receipt check, not new runtime/performance
+  proof. Missing CPU/capture rows, dirty/unsettled/mismatched material or
+  <50% reduction still fail closed.
 - Raw local `artifacts/895-base-perf.json`: SHA256
   `bfa79fba63339deb623fba4aad7d8158a86a9df96b3ff9b2950b4d8c47becabc`;
   `artifacts/895-result-perf.json`:

@@ -83,7 +83,8 @@ try {
           config: { unit_system: { length: 'km' } } };
         const host = { get states() { return states; }, setStates(next) { states = next; card.hass = { ...base, states }; } };
         document.getElementById('host').replaceChildren(card); host.setStates(states);
-        await until(() => card._loadOk && card._model?.length === 3 && !card._booting && !card._bootSoft
+        await until(() => card.isConnected && card._viewRuntimes?.live?.state === 'ready' && !!card._liveRt?.capture
+          && card._loadOk && card._model?.length === 3 && !card._booting && !card._bootSoft
           && card._continuity?.state === 'steady' && card.renderRoot.querySelectorAll('[data-led-strip]').length === 50);
         await frame();
         const captureSamples = [];
@@ -102,6 +103,7 @@ try {
         };
         try {
           const settled = { bootSoft: card._bootSoft, booting: card._booting, continuity: card._continuity.state,
+            liveRuntimeState: card._viewRuntimes?.live?.state ?? 'unknown', liveCaptureInstalled: !!card._liveRt?.capture,
             devices: card._devices.length, strips: card.renderRoot.querySelectorAll('[data-led-strip]').length };
           const tickWork = await window.__lightTickScenarios({ card, host, layout: fixture.layout,
             entities: fixture.entities, ticks: 100, strips: 50, observe: true, frame, stats,

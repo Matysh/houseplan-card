@@ -7,7 +7,8 @@ const receipt = (builds) => ({ pass: true, material: { sha: 'a'.repeat(40), tree
   absoluteBudgets: { unchanged: true }, environment: { platform: 'linux', arch: 'x64', release: 'wsl',
     cpuModel: 'fixture', cpuCount: 4, totalMemory: 1000 },
   samples: Array.from({ length: 3 }, (_, index) => ({ index, chromium: '151', failures: [],
-    settled: { bootSoft: false, booting: false, continuity: 'steady', devices: 200, strips: 50 },
+    settled: { bootSoft: false, booting: false, continuity: 'steady', devices: 200, strips: 50,
+      liveRuntimeState: 'ready', liveCaptureInstalled: true },
     tickWork: { scenarios: { S2: { ticks: 100, presentationBuilds: builds, staleStripes: 0,
       rawTickMs: Array(100).fill(10), tickMs: { p95: 10 } } } },
     captureSamples: Array.from({ length: 100 }, () => ({ phase: 'S2', ms: 1 })), rawCpu: { S2: { nodes: [{}] } } })) });
@@ -26,5 +27,21 @@ test('#895 AC3 paired evidence rejects missing, dirty, warm-up, stale, different
   ]) {
     const after = receipt(200); corrupt(after);
     assert.equal(lightPresentationComparison(receipt(40000), after).pass, false);
+  }
+});
+
+test('#895 AC3 paired evidence requires the actual ready live capture on both materials', () => {
+  for (const side of ['base', 'result']) for (const corrupt of [
+    (r) => { delete r.samples[0].settled.liveRuntimeState; },
+    (r) => { r.samples[0].settled.liveRuntimeState = 'idle'; },
+    (r) => { r.samples[0].settled.liveRuntimeState = 'loading'; },
+    (r) => { r.samples[0].settled.liveRuntimeState = 'error'; },
+    (r) => { delete r.samples[0].settled.liveCaptureInstalled; },
+    (r) => { r.samples[0].settled.liveCaptureInstalled = false; },
+  ]) {
+    const pair = { base: receipt(40000), result: receipt(200) };
+    corrupt(pair[side]);
+    assert.equal(lightPresentationComparison(pair.base, pair.result).pass, false,
+      `${side}: a painted plan or ready label without an installed capture is not settled evidence`);
   }
 });
