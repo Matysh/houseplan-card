@@ -14,7 +14,7 @@ interface UndoHost extends Pick<PlanOptimizeWriteHost,
   readonly hass: UndoHass;
   readonly isConnected: boolean;
   _optimizeUndoBusy: boolean;
-  _configWriteGuard(): () => boolean;
+  _configWriteGuard(pendingOnly?: boolean): () => boolean;
   _getAuthoritativeConfig(hass?: UndoHass, isCurrent?: () => boolean): Promise<AuthoritativeConfigResponse>;
   _adoptAuthoritative(input: GatedAdoptionInput): Promise<GatedAdoptionResult>;
   _showToast(message: string): void;
@@ -40,6 +40,7 @@ export class PlanOptimizationUndo {
     if (!host._canOptimizeUndo || host._optimizeUndoBusy) return;
     const lifecycle = this.lifecycle;
     const authorityCurrent = host._configWriteGuard();
+    const ownsPending = host._configWriteGuard(true);
     const isCurrent = () => lifecycle === this.lifecycle && host.isConnected && authorityCurrent();
     if (!isCurrent()) return;
     const hass = host.hass;
@@ -83,7 +84,9 @@ export class PlanOptimizationUndo {
       host._undoKind = null;
       host._showToast(host._t('toast.error', { err: host._errText(error) }));
     } finally {
-      if (isCurrent()) {
+      // A temporary HA gap may finish its own bookkeeping, never a foreign
+      // authority or detached lifecycle's new operation (#890 pending semantics).
+      if (lifecycle === this.lifecycle && ownsPending()) {
         host._optimizeUndoBusy = false;
         host.requestUpdate();
       }

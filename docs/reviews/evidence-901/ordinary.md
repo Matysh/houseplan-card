@@ -30,6 +30,11 @@ detach, old resolve/reject and terminal cleanup. A fresh new Undo stays busy unt
 its own success. Same-owner success uses the re-read revisions, not write-reply
 revisions; a current rejection keeps the existing failure behavior. Trail tests
 also cover unchanged-owner success, request replacement and current rejection.
+The same owner's temporary missing-HA gap releases only its own pending busy;
+the continuation cannot adopt or toast during that gap, and a fresh same-owner
+operation succeeds after return. This ordinary positive probe initially failed
+2/2 (Optimize/import) on the first fix, then passed using the existing
+`ConfigWriteContext.owns` pending bookkeeping semantics.
 
 | AC | Executed witness | Negative case that fails the oracle |
 |---|---|---|

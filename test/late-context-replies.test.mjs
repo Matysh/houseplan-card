@@ -99,7 +99,8 @@ function undoHarness(kind = 'optimize', seam = 'write') {
     _syncVersionRecovery: rec('version'), _maybeRebuildDevices: rec('rebuild'), _cacheSnapshot: rec('cache'),
     requestUpdate: rec('update'), _showToast: message => toasts.push(message),
     _t: (key, vars) => vars ? `${key}:${vars.err}` : key, _errText: error => error.message,
-    _configWriteGuard: () => { const claim = authority.claim(); return () => authority.current(claim, host.hass); },
+    _configWriteGuard: (pendingOnly = false) => { const claim = authority.claim();
+      return () => pendingOnly ? authority.owns(claim) : authority.current(claim, host.hass); },
     _getAuthoritativeConfig: (hass, isCurrent) => getAuthoritativeCardConfig(host, hass, isCurrent),
     _adoptAuthoritative: input => adoptAuthoritativeGated(host, input),
   };
@@ -172,6 +173,19 @@ for (const mode of ['connection', 'aba', 'detach']) test(`#901 wiring: public HA
 });
 
 for (const kind of ['optimize', 'import']) {
+  test(`#901 AC2: ${kind} Undo releases only its own busy across a temporary HA gap`, async () => {
+    const h = undoHarness(kind), task = h.undo.run(), original = h.host.hass;
+    await tick();
+    h.host.hass = null;
+    h.pending[0].resolve({}); await task;
+    assert.equal(h.host._optimizeUndoBusy, false, 'a transport gap must not strand the same owner busy');
+    assert.equal(h.host._cfgRev, 7); assert.equal(h.host._layoutRev, 8);
+    assert.deepEqual(h.toasts, []);
+    h.host.hass = { ...original }; h.unblock(); await h.undo.run();
+    assert.equal(h.host._cfgRev, 11); assert.equal(h.host._layoutRev, 12);
+    assert.equal(h.host._optimizeUndoBusy, false);
+    assert.equal(h.toasts.at(-1), kind === 'import' ? 'backup.import_undone' : 'gs.optimize_undone');
+  });
   for (const seam of ['write', 'config', 'layout', 'adoption']) {
     for (const mode of ['connection', 'user', 'aba', 'detach']) {
       for (const outcome of ['resolve', 'reject']) test(`#901 AC2: ${kind} Undo ${seam} ${outcome} after ${mode} cannot own new state`, async () => {
