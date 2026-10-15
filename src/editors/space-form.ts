@@ -39,6 +39,7 @@ import type { I18nKey } from '../i18n';
 import type { SettingsI18nKey } from '../i18n/settings';
 import type { HouseplanEditorHostPort } from '../houseplan-editor-runtime';
 import { settingsCopy } from './settings-copy';
+import { globalSignalVisibleOf, type SignalVisibilityMode } from '../signal-visibility';
 /* #592: границы шага сетки живут рядом с полем, которое их показывает; кламп
  * записи в редакторском рантайме импортирует их отсюда — одно число, один
  * источник, и направление импорта то же, что у самой функции рисования. */
@@ -412,11 +413,19 @@ function renderAppearance(port: SpaceFormPort, d: SpaceDialogState, id: (n: stri
           id: id('layer-openings'), compact: true, icon: 'mdi:door', title: st('space.layer_openings'),
           checked: !d.hideOpenings, onChange: (v) => set(port, { ...d, hideOpenings: !v }),
         }),
-        toggleRow({
-          id: id('show-lqi'), compact: true, icon: 'mdi:zigbee', title: t('space.show_lqi'),
-          checked: d.showLqi, onChange: (v) => set(port, { ...d, showLqi: v }),
-        }),
-      ])}`,
+      ])}
+      <div class="hpf-signal-visibility">${radioRow<SignalVisibilityMode>({
+        label: t('space.show_lqi'), name: `${port.idPrefix}-show-lqi`,
+        value: d.showLqiMode,
+        options: [
+          { value: 'inherit', label: st('space.lqi_inherit', {
+            state: st(globalSignalVisibleOf(host._settings) ? 'space.lqi_on' : 'space.lqi_off'),
+          }) },
+          { value: 'on', label: st('space.lqi_on') },
+          { value: 'off', label: st('space.lqi_off') },
+        ],
+        onChange: (showLqiMode) => set(port, { ...d, showLqiMode }),
+      })}</div>`,
   });
 }
 

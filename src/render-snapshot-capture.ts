@@ -87,8 +87,8 @@ export function presentDevice(
   return resolveDevicePresentation(hass, device, {
     liveStates: host._config?.live_states !== false,
     showTemperature: host._config?.show_temperature !== false,
-    // A per-space show_lqi value is an explicit override of the card
-    // default. Snapshot both projections exactly as requested so the
+    // The caller resolves shared/local/YAML policy once. Snapshot both
+    // boolean projections exactly as requested so the
     // full card, preview and static card cannot disagree.
     showSignal: showLqi,
     activityRuntime: host._activityRt.get(device.id),

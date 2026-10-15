@@ -3,6 +3,7 @@
  */
 import { union } from 'polyclip-ts';
 import { generatedRgbColor, safeStoredColor } from './color';
+import { signalVisibilityModeOf, signalVisibilityOverrideOf } from './signal-visibility';
 
 /** Zigbee LQI color: ≤40 — red, ≥180 — green, in between — an hsl gradient. */
 export function lqiColor(lqi: number): string {
@@ -1267,7 +1268,7 @@ export interface SpaceDisplay {
   glow: boolean;
   tempMin: number; // comfort range lower bound, °C
   tempMax: number; // comfort range upper bound, °C
-  /** Per-space LQI badges near zigbee devices; null = follow the card option. */
+  /** Explicit local system-LQI override; null inherits the shared/card policy. */
   showLqi: boolean | null;
   /** Base font multiplier for room cards (tier 2; rooms multiply on top). */
   cardFontScale: number;
@@ -1374,7 +1375,7 @@ export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
     glow: typeof s.glow_enabled === 'boolean' ? s.glow_enabled : legacyGlow,
     tempMin: typeof s.temp_min === 'number' ? s.temp_min : DEFAULT_TEMP_MIN,
     tempMax: typeof s.temp_max === 'number' ? s.temp_max : DEFAULT_TEMP_MAX,
-    showLqi: typeof s.show_lqi === 'boolean' ? s.show_lqi : null,
+    showLqi: signalVisibilityOverrideOf(signalVisibilityModeOf(s)),
     cardFontScale: typeof s.card_font_scale === 'number' && s.card_font_scale > 0
       ? Math.min(3, Math.max(0.5, s.card_font_scale))
       : 1,

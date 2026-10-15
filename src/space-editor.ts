@@ -59,7 +59,6 @@ class HouseplanSpaceCardEditor extends LitElement {
       { name: 'show_temperature', selector: { boolean: {} } },
       { name: 'live_states', selector: { boolean: {} } },
       { name: 'light_pools', selector: { boolean: {} } },
-      { name: 'show_signal', selector: { boolean: {} } },
     ];
   }
 
@@ -83,7 +82,6 @@ class HouseplanSpaceCardEditor extends LitElement {
       show_temperature: t(L, 'editor.show_temperature'),
       live_states: t(L, 'editor.live_states'),
       light_pools: t(L, 'editor.light_pools'),
-      show_signal: t(L, 'editor.show_signal'),
     };
     return html`<ha-form
       .hass=${this.hass}

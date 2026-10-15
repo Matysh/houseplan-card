@@ -13,6 +13,11 @@
   marker drag, switching floors or reconnecting the card restores its visible
   position without a ghost save or click
   ([#893](https://github.com/Matysh/houseplan-card/issues/893)).
+- General settings now control Zigbee signal visibility for the whole home.
+  Spaces offer Use general settings / On / Off; saved historical On values
+  inherit, while existing Off choices and YAML `show_signal: false` remain
+  exceptions. Explicit space On overrides both. The two visual card editors
+  no longer duplicate this setting ([#876](https://github.com/Matysh/houseplan-card/issues/876)).
 
 - Switching Home Assistant connections no longer lets a late old-server
   notification interrupt the new plan's initial config/layout load

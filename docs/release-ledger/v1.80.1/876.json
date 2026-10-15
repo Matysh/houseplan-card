@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 876,
+  "baseStable": "v1.80.1",
+  "category": "major",
+  "rationale": "v1.80.1 has only per-space/card signal controls. This adds an installation-wide GUI preference and an explicit inherit/on/off choice for each space; it is a new user feature, not repair of an intermediate beta.",
+  "summary": {
+    "ru": "Показ Zigbee-сигнала можно настроить сразу для всего дома, сохранив отдельные настройки этажей.",
+    "en": "Set Zigbee signal visibility for the whole home while keeping individual floor overrides."
+  }
+}

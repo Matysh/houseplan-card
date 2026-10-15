@@ -92,6 +92,14 @@ browser/golden — матрица батарей #792, `demo/smoke_device_batter
 
 ## Lifecycle и видимость
 
+Системная строка LQI и её существующее отражение в tooltip получают effective
+флаг через `signal-visibility.ts` (#876): новое локальное on/off → прежнее
+локальное false → точное YAML false → общее значение → default-on.
+Исторические true карточки/пространства наследуют. Static/live/lifecycle gates
+сохраняются; этот флаг не меняет источник LQI, room average/fill, `label_lqi`,
+явный LQI value/value-badge или батарею. Локальное `hide_signal` (#867) может
+дополнительно скрыть системную строку, но не включить effective false.
+
 | ID | Вход | Решение | Наблюдаемый результат | Интерактивность | Доказательство |
 |---|---|---|---|---|---|
 | L01 | `marker.removed:true` | `pre.lifecycle.removed` | marker отсутствует в roster/DOM | отсутствует | `devices` tombstone test; `presentation-row-contract` |

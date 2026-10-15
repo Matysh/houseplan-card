@@ -451,6 +451,10 @@
         }
       ]
     },
+    "config.settings.show_lqi": {
+      "required": false,
+      "type": "bool"
+    },
     "config.settings.show_room_tooltip": {
       "required": false,
       "type": "bool"
@@ -1411,6 +1415,14 @@
     "config.spaces[].settings.show_lqi": {
       "required": false,
       "type": "bool"
+    },
+    "config.spaces[].settings.show_lqi_mode": {
+      "enum": [
+        "inherit",
+        "off",
+        "on"
+      ],
+      "required": false
     },
     "config.spaces[].settings.show_names": {
       "required": false,

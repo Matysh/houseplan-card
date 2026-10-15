@@ -1,5 +1,14 @@
 # House Plan architecture
 
+System LQI visibility (#876) has one bounded policy in `signal-visibility.ts`.
+`spaceDisplayOf` projects explicit new modes and historical false; every full,
+static, hover and preview consumer feeds that local override, the exact card
+option and accepted installation setting into `effectiveShowLqi`. A card's
+default true cannot hide the global setting. The policy performs no HA reads,
+registry indexing, geometry work or persistence; snapshot boolean variants stay
+reusable. The independent room-card `label_lqi`, explicit LQI value sources,
+battery diagnostics and topology ownership do not consume this policy.
+
 The synthetic QA boundary (#896) is outside both product bundles and persisted
 HA schemas. Its cloned in-memory config/layout pairs implement the real write
 message shapes and independent revisions, while a session-stable service

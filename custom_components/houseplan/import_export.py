@@ -94,7 +94,7 @@ _SPACE_PLAN_FIELDS = (
 _SPACE_DISPLAY_FIELDS = (
     "show_borders", "show_names", "room_color", "bg_color", "room_opacity",
     "fill_mode", "custom_fill", "glow_enabled", "temp_min", "temp_max",
-    "show_lqi", "hide_decor", "hide_openings", "label_temp", "label_hum",
+    "show_lqi", "show_lqi_mode", "hide_decor", "hide_openings", "label_temp", "label_hum",
     "label_lqi", "label_light", "card_font_scale", "north_deg", "bg_mode",
     "sun_rays",
 )

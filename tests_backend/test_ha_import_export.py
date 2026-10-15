@@ -578,6 +578,37 @@ def test_background_defaults_and_store_migration_preserve_legacy_view() -> None:
     assert migrate_config_background_mode(layout) is layout
 
 
+@pytest.mark.parametrize("mode", ["inherit", "on", "off"])
+@pytest.mark.parametrize("kind,plan_only", [("full", False), ("space", False), ("space", True)])
+def test_issue_876_lqi_visibility_transfer_keeps_local_mode_without_changing_target_global(
+    tmp_path: Path, mode: str, kind: str, plan_only: bool,
+) -> None:
+    source = _config()
+    source["settings"]["show_lqi"] = False
+    source["settings"]["future_namespace"] = {"kept": 2}
+    source["spaces"][0]["settings"] = {"show_lqi_mode": mode, "show_lqi": mode == "on"}
+    document, _ = create_export(
+        SimpleNamespace(instance_id="instance-a"), {"config": source}, {"layout": {}},
+        kind=kind, space_id=None if kind == "full" else "ground", plan_only=plan_only,
+        card_version="1.81.0", config_root=tmp_path,
+    )
+    parsed = parse_document(json.dumps(document).encode())
+    settings = parsed["payload"]["config"]["spaces"][0]["settings"]
+    assert settings["show_lqi_mode"] == mode
+    assert settings["show_lqi"] is (mode == "on")
+    if kind == "full":
+        assert parsed["payload"]["config"]["settings"]["show_lqi"] is False
+        assert parsed["payload"]["config"]["settings"]["future_namespace"] == {"kept": 2}
+    else:
+        target = _config()
+        target["settings"]["show_lqi"] = True
+        target["settings"]["future_namespace"] = {"kept": 3}
+        before = copy.deepcopy(target["settings"])
+        merged, _layout, _details = build_space_merge(parsed, target, {}, "skip")
+        assert merged["spaces"][-1]["settings"]["show_lqi_mode"] == mode
+        assert merged["settings"] == before
+
+
 def test_background_mode_is_materialized_across_export_and_legacy_import(tmp_path: Path) -> None:
     runtime = SimpleNamespace(instance_id="instance-a")
     inherited = _config()

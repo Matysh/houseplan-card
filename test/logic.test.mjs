@@ -672,10 +672,12 @@ test('room temperature range inherits per side and normalises the effective pair
   assert.deepEqual(roomTempRangeOf(Number.NaN, Infinity, {}), { min: 20, max: 25 });
 });
 
-test('spaceDisplayOf: show_lqi tri-state (null = follow the card option)', () => {
+test('spaceDisplayOf: legacy true inherits, false remains a local off (#876)', () => {
   assert.equal(spaceDisplayOf({}).showLqi, null);
   assert.equal(spaceDisplayOf({ settings: { show_lqi: false } }).showLqi, false);
-  assert.equal(spaceDisplayOf({ settings: { show_lqi: true } }).showLqi, true);
+  assert.equal(spaceDisplayOf({ settings: { show_lqi: true } }).showLqi, null);
+  assert.equal(spaceDisplayOf({ settings: { show_lqi_mode: 'on' } }).showLqi, true);
+  assert.equal(spaceDisplayOf({ settings: { show_lqi_mode: 'inherit', show_lqi: false } }).showLqi, null);
 });
 
 test('roomFillStyle light_none: alpha 0 keeps no-fill; a custom color fills lightless rooms', () => {

@@ -106,7 +106,6 @@ class HouseplanCardEditor extends LitElement {
       { name: 'icon_size', selector: { number: { min: 1, max: 6, step: 0.1, mode: 'box' } } },
       { name: 'show_temperature', selector: { boolean: {} } },
       { name: 'live_states', selector: { boolean: {} } },
-      { name: 'show_signal', selector: { boolean: {} } },
       { name: 'kiosk', selector: { boolean: {} } },
       { name: 'cycle', selector: { number: { min: 0, max: 3600, step: 5, mode: 'box' } } },
     ];
@@ -129,7 +128,6 @@ class HouseplanCardEditor extends LitElement {
       icon_size: t(L, 'editor.icon_size'),
       show_temperature: t(L, 'editor.show_temperature'),
       live_states: t(L, 'editor.live_states'),
-      show_signal: t(L, 'editor.show_signal'),
       kiosk: t(L, 'editor.kiosk'),
       cycle: t(L, 'editor.cycle'),
     };

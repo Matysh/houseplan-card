@@ -1,5 +1,6 @@
 import { roomTempRangeOf, type FillColorEntry, type RoomTempRange } from './logic';
 import type { ZeroWallStyle } from './types';
+import type { SignalVisibilityMode } from './signal-visibility';
 
 export type SpacePlanSource = 'file' | 'draw';
 
@@ -45,7 +46,7 @@ export interface SpaceDialogState {
   /** Ephemeral text shown by required temperature inputs; never persisted. */
   tempMinInput?: string;
   tempMaxInput?: string;
-  showLqi: boolean;
+  showLqiMode: SignalVisibilityMode;
   cardFontScale: number;
   labelTemp: boolean;
   labelHum: boolean;

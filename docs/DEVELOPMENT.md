@@ -113,6 +113,20 @@ four stage PNG observations are in `artifacts/issue-893/`, not accepted baseline
 The original alignment/equal-spacing assertions remain unchanged. Static
 mutation readiness is not mutant execution or physical/GPU acceptance.
 
+## Shared signal settings witnesses (#876)
+
+`test/signal-visibility.test.mjs` executes the global/local/YAML compatibility
+matrix and read-only bounded policy. `demo/smoke_signal_visibility.mjs` uses
+actual form inputs and the fixture's config event bus with independent full,
+static and kiosk cards. `demo/smoke_signal_visibility_lifecycle.mjs` holds an
+actual queued write across closing/reopening and a lazy entry across permission
+revocation; no private configuration/draft assignment seeds its result.
+`demo/smoke_signal_visibility_ui.mjs` measures the new targets and exercises
+native Space/Tab/radio-key dispatch in RU/EN, 360/1280, both themes.
+Strict backend and actual full/space/plan-only transfer witnesses are named
+`issue_876`; the schema manifest is regenerated with `scripts/dump-config-schema.py`.
+The local radio group alone has 44px labels; existing radio groups are unchanged.
+
 ## Pre-release subscription ownership fix (#890, PROCESS §11.4)
 
 `node demo/smoke_config_authority.mjs` explicitly pushes the retired A server

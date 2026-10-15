@@ -125,7 +125,7 @@ const out = await page.evaluate(async () => {
     showBorders: true, showNames: true, zeroWallStyle: 'dashed', displayTouched: true,
     hideDecor: false, hideOpenings: false, roomColor: '#888888', roomOpacity: 1, bgColor: null,
     bgMode: null, northDeg: null, sunRays: null, fillMode: 'custom', customFill: null,
-    glowEnabled: true, tempMin: 15, tempMax: 30, showLqi: true, cardFontScale: 1,
+    glowEnabled: true, tempMin: 15, tempMax: 30, showLqiMode: 'inherit', cardFontScale: 1,
     labelTemp: true, labelHum: true, labelLqi: true, labelLight: true, cellCm: 5,
     busy: false, saved: [],
   });

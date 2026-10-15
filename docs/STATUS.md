@@ -40,6 +40,12 @@ device previews retire queued/live frames and old activation tails while
 released serial saves retain ownership. This record describes implementation;
 GitHub labels and independent review, not prose here, establish its status.
 
+Shared system-LQI visibility (#876) is default-on in General settings, with
+inherit/on/off space choices. Historical space true inherits; false stays off.
+Only exact YAML false is a card exception, weaker than an explicit space mode.
+No read/global toggle rewrites spaces. All controlled surfaces share one pure
+policy; room-card LQI metrics, fills and explicit value badges stay independent.
+
 QA fixture/capture contracts (#896) record every delegated service action and
 persist independent config/layout wire pairs with CAS and exact point updates.
 Foreign HA smoke consumers wait for their own accepted reads; pending display

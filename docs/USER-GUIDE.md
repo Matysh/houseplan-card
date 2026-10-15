@@ -244,7 +244,7 @@ title: House plan
 | `icon_size` | `2.5` | Base marker size, 1–6% of plan width |
 | `show_temperature` | `true` | Compact temperature and humidity values |
 | `live_states` | `true` | Work/open/unavailable presentation and activity; alarms remain visible |
-| `show_signal` | `true` | Base LQI display, overridable by a space |
+| `show_signal` | inherit | Only exact `false` hides system LQI for this card; explicit space On wins |
 | `kiosk` | `false` | Full plan without editors or header |
 | `cycle` | `0` | Kiosk auto-cycle interval in seconds; `0` disables it |
 
@@ -628,6 +628,7 @@ avoid it entirely.
 | Appearance | Always show room borders | Draws room outlines in View |
 | Appearance | Zero-thickness walls | **Dashed / Solid**, with a line sample |
 | Appearance | Visible layers | Separate switches for **Decorative layer** and **Doors, windows and gates**; hiding symbols does not disable sunlight, light transport or sensors |
+| Appearance → Visible layers | Zigbee signal next to devices | Use general settings (showing its current On/Off value), On or Off; an explicit space choice wins over the shared/card preference |
 | Appearance | Room colour and fill | Colour/opacity plus None, Custom, Zigbee, Lights or Temperature; temperature adds two °C bounds and a legend |
 | Room cards | Show room names | Draws room cards in View, kiosk and the static card; no fallback label remains when off |
 | Room cards | Temperature, humidity, signal and light | Four metric tiles; they are disabled until names are on |
@@ -1565,6 +1566,23 @@ The separate battery indicator remains visible in both static display modes
 and with live states disabled. This does not restore LQI, pulses or other
 suppressed diagnostics.
 
+### Zigbee signal visibility
+
+**General settings → Display → Show Zigbee signal**, immediately below battery
+status, controls system signal numbers for the whole home. It defaults to On.
+In **Space settings → Appearance → Visible layers**, choose **Use general
+settings**, **On** or **Off**. The inherited choice shows the current shared
+value; saving another field does not turn inheritance into an override.
+
+Existing Off choices stay Off. Historical On choices inherit the new shared
+setting. YAML `show_signal: false` remains a card exception; true or omission
+inherits. An explicit new space On wins over that exception. The two visual
+card editors no longer duplicate this control.
+
+The panel, full/static cards, kiosk and preview agree. Room-card signal metrics,
+Zigbee room fills, explicitly selected LQI values/badges, battery diagnostics
+and the separate Zigbee-link preference remain independent.
+
 ### Battery charge
 
 Battery-powered devices show a vertical battery to the right of the complete
@@ -2110,7 +2128,7 @@ light_pools: true
 | `icon_size` | base | Static marker size |
 | `live_states` | `true` | Work/open/unavailable state, icon changes and activity; alarms always remain |
 | `show_temperature` | `true` | Compact temperature/humidity values |
-| `show_signal` | `true` | Marker LQI when available |
+| `show_signal` | inherit | Only exact `false` hides system marker LQI; explicit space On wins |
 | `light_pools` | `false` | Full Glow transport and wall shadows; the heavier render path |
 
 `fit` controls only this compact card's frame:

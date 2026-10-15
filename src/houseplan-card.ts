@@ -11,6 +11,7 @@ import { visibleIconMarkers } from './device-icon-roster';
 import { DeviceDragRetirement } from './device-drag-retirement';
 import { BackupImportIntent, backupImportAllowed } from './backup-import-intent';
 import { deviceBatteryModeOf, showDeviceBatteryOf } from './device-battery-settings';
+import { effectiveShowLqi, signalVisibilityOverrideOf } from './signal-visibility';
 import { ZoomScaleActivity } from './zoom-scale-activity';
 import { ledButton, ledEditorFor, ledHistory, ledImportNote, ledSection, ledWallsNote } from './led-strip-card';
 import { LitElement, html, svg, nothing, noChange, TemplateResult, PropertyValues, type PropertyDeclaration } from 'lit';
@@ -592,6 +593,7 @@ export class HouseplanCard extends LitElement {
   private _editorModeRequest = 0;
   private _warmModeRequest = 0;
   private _markerDialogRequest = 0;
+  private _settingsDialogRequest = 0;
   private readonly _editorRuntimeLoader = new EditorRuntimeLoader<
     import('./houseplan-editor-runtime').HouseplanEditorRuntime
   >({
@@ -2132,7 +2134,7 @@ export class HouseplanCard extends LitElement {
     colors: FillColors; glowRadius: number; glowRadiusInput: string; bgColor: string | null;
     /** sun on the plan (docs/SUN.md) */
     northDeg: number | null; northDegInput: string; bgMode: 'static' | 'daynight'; sunRays: boolean; sunRayOrigin: SunRayOrigin;
-    showRoomTooltip: boolean; deviceBattery: import('./device-battery-settings').DeviceBatteryMode; zigbeeTopology: import('./zigbee-topology-settings').ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; moon: boolean; busy: boolean;
+    showRoomTooltip: boolean; showLqi: boolean; deviceBattery: import('./device-battery-settings').DeviceBatteryMode; zigbeeTopology: import('./zigbee-topology-settings').ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; moon: boolean; busy: boolean;
   } | null = null;
   private _pdfDialog = false;
   private _supportDialog: SupportDialogState | null = null;
@@ -2794,7 +2796,7 @@ export class HouseplanCard extends LitElement {
     this._deviceHitScrollUnsub?.(); this._deviceHitScrollUnsub = undefined; this._pinchZoomDirty = false;
     if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
     if (this._refitRaf) { cancelAnimationFrame(this._refitRaf); this._refitRaf = 0; }
-    this._warmModeRequest = 0; ++this._editorModeRequest; ++this._markerDialogRequest;
+    this._warmModeRequest = 0; ++this._editorModeRequest; ++this._markerDialogRequest; ++this._settingsDialogRequest;
     if (this._dayCycleTimer) { clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; } this._summarySlot.disconnect();
     this._dayCycleClockKey = '';
     if (this._bootSettleRaf) { cancelAnimationFrame(this._bootSettleRaf); this._bootSettleRaf = 0; }
@@ -5459,7 +5461,7 @@ export class HouseplanCard extends LitElement {
 
   /** One semantic projection consumed by the plan, preview and static card. */
   private _devicePresentation(
-    d: DevItem, showLqi = this._config?.show_signal !== false,
+    d: DevItem, showLqi = effectiveShowLqi(this._settings, this._spaceDisplayForRender().showLqi, this._config?.show_signal),
   ): ResolvedDevicePresentation {
     // #850: the design preview resolves its own draft (marker-dialog.ts); no caller passed it here.
     return this._renderDeviceSnapshot?.presentations.get(presentationSnapshotKey(d.id, showLqi))
@@ -6078,7 +6080,7 @@ export class HouseplanCard extends LitElement {
     const overlays = this._isoOverlayScene(
       space, this._renderDevices.filter((device) => device.space === space.id && !device.hidden),
       disp, runtime.resolveIsoDecorationLayers(disp), scene, iconPct, effectiveDeviceBaseSize(iconPct),
-      disp.showLqi ?? this._config?.show_signal ?? true);
+      effectiveShowLqi(this._settings, disp.showLqi, this._config?.show_signal));
     const envelope = overlays && runtime.resolveIsoOverlayFitEnvelope({
       baseBounds: scene.frame, entries: overlays.entries, targetView: (bounds) =>
         fitView([bounds.x, bounds.y, bounds.w, bounds.h], aspect) });
@@ -9009,7 +9011,7 @@ export class HouseplanCard extends LitElement {
       glow: dialog.glowEnabled,
       tempMin: dialog.tempMin,
       tempMax: dialog.tempMax,
-      showLqi: dialog.showLqi,
+      showLqi: signalVisibilityOverrideOf(dialog.showLqiMode),
       cardFontScale: dialog.cardFontScale,
       labelTemp: dialog.labelTemp,
       labelHum: dialog.labelHum,
@@ -10193,9 +10195,14 @@ export class HouseplanCard extends LitElement {
   // ================= GENERAL SETTINGS =================
 
   private _openSettingsDialog = (): void => {
+    const request = ++this._settingsDialogRequest;
+    if (!this.isConnected || !this._canEdit || this._kiosk) return;
     if (!this._editorRuntime) {
+      const epoch = this._adoption.adoptionEpoch;
       void this._ensureEditorRuntime().then((ready) => {
-        if (ready) this._openSettingsDialog();
+        if (ready && request === this._settingsDialogRequest && this.isConnected
+            && epoch === this._adoption.adoptionEpoch && this._canEdit && !this._kiosk)
+          this._editorRuntime?._openSettingsDialog();
       });
       return;
     }
@@ -10851,7 +10858,7 @@ export class HouseplanCard extends LitElement {
     const roomFills = this._resolvedRoomFills(space, disp);
     const glowBase = this._resolvedGlowBase(space, disp, roomFills);
     this._isoLightFloors = iso ? this._isoFirstFrame.lightFloors(new Map([...roomFills.byId].map(([id, fill]) => [id, fill && fill.opacity > 0 ? fill : glowBase.byId.get(id) ?? null]))) : null;
-    const showLqi = disp.showLqi ?? this._config.show_signal ?? true;
+    const showLqi = effectiveShowLqi(this._settings, disp.showLqi, this._config.show_signal);
     const cfgSize = this._config.icon_size ?? 2.5;
     const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
     const deviceBasePct = effectiveDeviceBaseSize(iconPct);

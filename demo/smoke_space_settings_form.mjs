@@ -52,7 +52,8 @@ const out = await page.evaluate(async () => {
 
   // --- AC9: цели ≥ 44, семантика ------------------------------------------
   const toggles = qa('.hpf-toggle > input[type="checkbox"]');
-  o.togglesArePresent = toggles.length >= 6; // borders, 3 layers, names, glow
+  // #876: system LQI is now an inherited three-way choice, not a sixth switch.
+  o.togglesArePresent = toggles.length >= 5 && qa('input[name="space-show-lqi"]').length === 3;
   o.toggleTargetsAre44 = toggles.every((i) => { const b = i.getBoundingClientRect(); return b.width >= 44 && b.height >= 44; });
   o.switchPartsAreGeometricallyCentered = toggles.every((input) => {
     const track = getComputedStyle(input, '::before');

@@ -10,6 +10,7 @@ import {
   OPENING_TYPES, VACUUM_TRAIL_MODES, ZERO_WALL_STYLES,
 } from '../test-build/types.js';
 import { BG_MODES, SUN_RAY_ORIGINS } from '../test-build/sun.js';
+import { SIGNAL_VISIBILITY_MODES } from '../test-build/signal-visibility.js';
 
 const manifest = JSON.parse(readFileSync(
   new URL('../scripts/config-schema.json', import.meta.url), 'utf8')).fields;
@@ -30,6 +31,7 @@ const backendValues = (path) => {
 
 /** #33 AC2/AC3: every backend<->frontend enum pair, judged through the allow-list. */
 const PAIRS = [
+  { pair: 'space.show_lqi_mode', path: 'config.spaces[].settings.show_lqi_mode', front: SIGNAL_VISIBILITY_MODES },
   { pair: 'space.fill_mode', path: 'config.spaces[].settings.fill_mode', front: SPACE_FILL_MODES },
   { pair: 'room.fill_mode', path: 'config.spaces[].rooms[].settings.fill_mode', front: ROOM_FILL_MODES },
   { pair: 'marker.display', path: 'config.markers[].display', front: DISPLAY_MODES },

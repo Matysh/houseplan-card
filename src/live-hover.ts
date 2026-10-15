@@ -1,4 +1,5 @@
 import { lqiColor } from './logic';
+import { effectiveShowLqi } from './signal-visibility';
 import type { I18nKey } from './i18n';
 import type { ResolvedDevicePresentation } from './device-presentation';
 import type { DevItem, ValueBadgeSource } from './types';
@@ -42,9 +43,10 @@ interface DeviceTipHost extends LiveHoverHost {
   _drag: unknown;
   _deviceDrag: unknown;
   _config: { show_signal?: boolean } | null;
+  _settings: { show_lqi?: unknown };
   _pointerModality: { hoverEnabled: boolean };
   _deviceHits: { hover: (root: ParentNode, id: string | null) => void };
-  _spaceDisplayForRender: () => { showLqi?: boolean };
+  _spaceDisplayForRender: () => { showLqi?: boolean | null };
   _devicePresentation: (device: DevItem, showLqi: boolean) => ResolvedDevicePresentation;
   _notePointer: (event: PointerEvent) => void;
   _t: LiveHoverHost['_t'] & ((key: I18nKey, vars?: Record<string, string | number>) => string);
@@ -81,7 +83,7 @@ const focusTips = new WeakMap<object, LiveTip>();
 const deviceTipContent = (
   host: DeviceTipHost, device: DevItem,
 ): { title: string; meta: string; battery: string } => {
-  const showLqi = host._spaceDisplayForRender().showLqi ?? host._config?.show_signal ?? true;
+  const showLqi = effectiveShowLqi(host._settings, host._spaceDisplayForRender().showLqi, host._config?.show_signal);
   const presentation = host._devicePresentation(device, showLqi);
   const ghostLabel = presentation.haDisabled
     ? host._t((`marker.ha_disabled_${presentation.disabledReason}`) as I18nKey)

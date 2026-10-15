@@ -149,6 +149,14 @@ settings can be opened there and the local choice can be changed, but the
 overlay appears only after returning to View. The phone gear keeps those two
 entries View-only. `houseplan-space-card` never renders any summary surface.
 
+**General settings → Display → Show Zigbee signal** (#876), immediately after
+battery status, is writer-only outside kiosk and defaults on. Each space's
+Appearance → Visible layers offers Use general settings (including its current
+on/off state), On or Off. Those controls affect system signal captions and
+their existing tooltip/preview surfaces, not the independent room-card metric,
+fills, explicit values or the opt-in topology control below. View/kiosk/static
+remain display-only; mouse/keyboard is the editor reference.
+
 The admin-only **General settings → Show Zigbee links on device hover** option
 is off by default. Once an admin explicitly reads cached ZHA data or updates a
 configured Zigbee2MQTT map, mouse hover temporarily draws only the observed

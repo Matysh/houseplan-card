@@ -21,6 +21,7 @@ import { markerDirty, markerProblems } from './marker-form-state';
 import { settingsCopy } from './settings-copy';
 
 import { resolveDevicePresentation } from '../device-presentation';
+import { effectiveShowLqi } from '../signal-visibility';
 import { renderColorToHex } from '../color';
 import { DEVICE_ACTIVITY_BLUE } from '../device-pulse';
 import type { HpColorOpacity } from '../hp-color-opacity';
@@ -89,7 +90,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
       ? resolveDevicePresentation(this.host._planHass, previewDevice, {
           liveStates: this.host._config?.live_states !== false,
           showTemperature: this.host._config?.show_temperature !== false,
-          showSignal: previewSpaceDisplay?.showLqi ?? (this.host._config?.show_signal !== false),
+          showSignal: effectiveShowLqi(this.host._settings, previewSpaceDisplay?.showLqi, this.host._config?.show_signal),
           showBattery: showDeviceBatteryOf(this.host._settings)
             && !this.host._model.some((space) => ledStripsByMarker(space).has(previewDevice.id)),
           batteryLowOnly: deviceBatteryModeOf(this.host._settings) === 'low',

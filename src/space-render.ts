@@ -63,6 +63,7 @@ import { resolveZeroWalls } from './zero-walls';
 import { ledAnchor, ledRelease, ledRuntime, ledStripsByMarker, ledVisible } from './led-strip-gate';
 import { createDeviceBatteryContext } from './device-battery';
 import { deviceBatteryModeOf, showDeviceBatteryOf } from './device-battery-settings';
+import { effectiveShowLqi } from './signal-visibility';
 import { geometryOpenings } from './plan-geometry-preflight';
 import { resolveDeviceAreaRelocations } from './device-area-relocation';
 import { projectDecorImage } from './decor-assets';
@@ -615,7 +616,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       : null);
   }
   const planLightSources = resolvedLightSources(planHass, devs, null, o.virtualLights);
-  const showLqi = disp.showLqi ?? (o.showSignal !== false);
+  const showLqi = effectiveShowLqi(o.cfg.settings, disp.showLqi, o.showSignal);
   const showBattery = showDeviceBatteryOf(o.cfg.settings);
   const batteryLowOnly = deviceBatteryModeOf(o.cfg.settings) === 'low';
   let batteryContext: ReturnType<typeof createDeviceBatteryContext> | undefined;

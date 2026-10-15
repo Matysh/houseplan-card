@@ -130,6 +130,7 @@ import {
 } from './device-battery-settings';
 import { markerSignalFields } from './device-signal';
 import { openMoonStatus } from './editors/moon-status';
+import { globalSignalVisibleOf, signalVisibilityModeOf, writeGlobalSignalVisibility, writeSpaceSignalVisibility } from './signal-visibility';
 import { forgetRoomBaseline, rememberRoomBaseline } from './editors/room-form-state';
 import { roomSaveBusy, saveRoomEdit } from './editors/room-save';
 import { dialogSession } from './editors/dialog-baseline';
@@ -738,9 +739,9 @@ export interface HouseplanEditorHostPort {
   _sentPos: Map<string, DeviceLayout[string] | null>;
   _serverCfg: ServerConfig | null;
   _serverStorage: boolean;
-  _settings: { exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean; filter_seeded?: boolean; icon_rules?: { pattern: string; icon: string; }[]; show_room_tooltip?: boolean; show_device_battery?: boolean; moon?: boolean; sun_ray_origin?: SunRayOrigin; zigbee_topology?: { enabled?: boolean; z2m_base_topics?: string[] }; radar?: { version?: 1; show_live?: boolean; [key: string]: unknown }; };
+  _settings: { exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean; filter_seeded?: boolean; icon_rules?: { pattern: string; icon: string; }[]; show_room_tooltip?: boolean; show_lqi?: boolean; show_device_battery?: boolean; moon?: boolean; sun_ray_origin?: SunRayOrigin; zigbee_topology?: { enabled?: boolean; z2m_base_topics?: string[] }; radar?: { version?: 1; show_live?: boolean; [key: string]: unknown }; };
   _terminalFrame: 0 | 1 | 2;
-  _settingsDialog: { colors: FillColors; glowRadius: number; glowRadiusInput: string; bgColor: string | null; northDeg: number | null; northDegInput: string; bgMode: "static" | "daynight"; sunRays: boolean; sunRayOrigin: SunRayOrigin; showRoomTooltip: boolean; deviceBattery: DeviceBatteryMode; zigbeeTopology: ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; moon: boolean; busy: boolean; } | null;
+  _settingsDialog: { colors: FillColors; glowRadius: number; glowRadiusInput: string; bgColor: string | null; northDeg: number | null; northDegInput: string; bgMode: "static" | "daynight"; sunRays: boolean; sunRayOrigin: SunRayOrigin; showRoomTooltip: boolean; showLqi: boolean; deviceBattery: DeviceBatteryMode; zigbeeTopology: ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; moon: boolean; busy: boolean; } | null;
   _supportDialog: SupportDialogState | null;
   _showAll: boolean;
   _showHidden: boolean;
@@ -8149,7 +8150,7 @@ public _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
         sunRays: typeof sp.settings?.sun_rays === 'boolean' ? sp.settings.sun_rays : null,
         tempMin: disp.tempMin, tempMax: disp.tempMax,
         tempMinInput: String(disp.tempMin), tempMaxInput: String(disp.tempMax),
-        showLqi: disp.showLqi ?? this.host._config?.show_signal ?? true,
+        showLqiMode: signalVisibilityModeOf(sp.settings),
         cardFontScale: disp.cardFontScale,
         labelTemp: disp.labelTemp, labelHum: disp.labelHum,
         labelLqi: disp.labelLqi, labelLight: disp.labelLight,
@@ -8175,7 +8176,7 @@ public _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
         bgMode: 'daynight', northDeg: null, northDegInput: '', sunRays: null,
         tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
         tempMinInput: String(DEFAULT_TEMP_MIN), tempMaxInput: String(DEFAULT_TEMP_MAX),
-        showLqi: this.host._config?.show_signal ?? true,
+        showLqiMode: 'inherit',
         cardFontScale: 1,
         labelTemp: false, labelHum: false, labelLqi: false, labelLight: false,
         cellCm: newSpaceCellCm(this.host._imperial),
@@ -8409,7 +8410,7 @@ public async _saveSpaceDialog(): Promise<void> {
       }
       // Persist exactly what the dialog showed. Source defaults are projected
       // visibly while editing the create state, never hidden here at Save.
-      sp.settings = {
+      sp.settings = writeSpaceSignalVisibility({
         ...(sp.settings || {}),
         show_borders: d.showBorders,
         show_names: d.showNames,
@@ -8430,13 +8431,12 @@ public async _saveSpaceDialog(): Promise<void> {
         glow_enabled: d.glowEnabled,
         temp_min: Number.isFinite(d.tempMin) ? Math.min(d.tempMin, d.tempMax) : DEFAULT_TEMP_MIN,
         temp_max: Number.isFinite(d.tempMax) ? Math.max(d.tempMin, d.tempMax) : DEFAULT_TEMP_MAX,
-        show_lqi: d.showLqi,
         card_font_scale: d.cardFontScale !== 1 ? d.cardFontScale : undefined,
         label_temp: d.labelTemp,
         label_hum: d.labelHum,
         label_lqi: d.labelLqi,
         label_light: d.labelLight,
-      };
+      }, d.showLqiMode);
       // This is a geometry policy of the space, not a visual room setting.
       sp.zero_wall_style = d.zeroWallStyle;
       sp.cell_cm = Number.isFinite(d.cellCm) && d.cellCm > 0
@@ -8588,7 +8588,7 @@ public _openNextImport(): void {
       bgMode: 'daynight', northDeg: null, northDegInput: '', sunRays: null,
       tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
       tempMinInput: String(DEFAULT_TEMP_MIN), tempMaxInput: String(DEFAULT_TEMP_MAX),
-      showLqi: this.host._config?.show_signal ?? true,
+      showLqiMode: 'inherit',
       cardFontScale: 1,
       labelTemp: false, labelHum: false, labelLqi: false, labelLight: false,
       cellCm: newSpaceCellCm(this.host._imperial),
@@ -8642,7 +8642,7 @@ public _renderImportDialog(): TemplateResult {
   }
 
 public _openSettingsDialog = (): void => {
-    if (!this.host._norm) return;
+    if (!this.host._norm || !this.host._canEdit || this.host._kiosk) return;
     // deep copy so the dialog edits do not leak into the live palette
     const cm = this.host._glowRadiusCm;
     const glowRadius = this.host._imperial
@@ -8661,6 +8661,7 @@ public _openSettingsDialog = (): void => {
       radarShowLive: this.host._settings.radar?.show_live !== false, volumetricView: volumetricViewOf(this.host._settings), moon: moonDraftOf(this.host._settings),
       showRoomTooltip: showRoomTooltipOf(this.host._settings), zigbeeTopology: zigbeeTopologySettingsOf(this.host._settings), busy: false,
       deviceBattery: deviceBatteryModeOf(this.host._settings),
+      showLqi: globalSignalVisibleOf(this.host._settings),
     };
     // #600 К10: снимок на момент открытия — от него считается «есть изменения».
     rememberGeneralBaseline(this.host, this.host._settingsDialog);
@@ -9736,8 +9737,9 @@ public _updateDecorStyle(next: DecorStyle): void {
 
   public async _saveSettingsDialog(): Promise<void> {
     const d = this.host._settingsDialog;
-    if (!d || d.busy) return;
+    if (!d || d.busy || !this.host._canEdit || this.host._kiosk) return;
     if (generalProblems(d).length) return;
+    const owner = dialogSession(this.host, 'settings');
     this.host._settingsDialog = { ...d, busy: true };
     let attempt: OptimisticAttempt<ServerConfig> | null = null;
     try {
@@ -9762,6 +9764,7 @@ public _updateDecorStyle(next: DecorStyle): void {
       if (d.showRoomTooltip) delete settings.show_room_tooltip;
       else settings.show_room_tooltip = false;
       writeDeviceBatterySetting(settings, d.deviceBattery);
+      writeGlobalSignalVisibility(settings, d.showLqi);
       if (d.volumetricView) settings.volumetric_view = true;
       else delete settings.volumetric_view;
       writeMoonSetting(settings, d.moon);
@@ -9780,14 +9783,15 @@ public _updateDecorStyle(next: DecorStyle): void {
       this.host._serverCfg = nextConfig;
       await this._saveConfigNow(attempt);
       if (!d.showRoomTooltip && this.host._tip?.room) this.host._tip = null;
-      this.host._settingsDialog = null;
+      if (dialogSession(this.host, 'settings') === owner) this.host._settingsDialog = null;
       this.host.requestUpdate();
       this.host._showToast(this.host._t('gs.saved'));
     } catch (e: any) {
       // Esc may close the dialog in flight; the toast must still fire (audit L3).
       // Never overwrite an authoritative conflict reload or newer edit (#439).
       if (attempt) this.host._rollbackOptimistic(attempt);
-      if (this.host._settingsDialog) this.host._settingsDialog = { ...this.host._settingsDialog, busy: false };
+      if (this.host._settingsDialog && dialogSession(this.host, 'settings') === owner)
+        this.host._settingsDialog = { ...this.host._settingsDialog, busy: false };
       if (!isGeometryCleanupRefusal(e)) this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
     }
   }

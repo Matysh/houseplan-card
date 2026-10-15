@@ -58,6 +58,19 @@ test('#456 chooses the first free numbered copy title', () => {
   assert.equal(nextSpaceCopyTitle('', [{ title: 'Space (2)' }], 'Space'), 'Space (3)');
 });
 
+test('#876: space copy retains explicit LQI mode and leaves installation defaults unchanged', () => {
+  for (const mode of ['inherit', 'on', 'off']) {
+    const input = fixture();
+    input.settings.show_lqi = false;
+    input.spaces[1].settings.show_lqi_mode = mode;
+    input.spaces[1].settings.show_lqi = mode === 'on';
+    const result = createSpaceCopyCandidate(input, 'source', 'Copy', 'signal');
+    assert.equal(result.space.settings.show_lqi_mode, mode);
+    assert.equal(result.space.settings.show_lqi, mode === 'on');
+    assert.deepEqual(result.config.settings, input.settings);
+  }
+});
+
 test('#456 copies the complete allowed physical surface without room or device ownership', () => {
   const input = fixture();
   const before = structuredClone(input);

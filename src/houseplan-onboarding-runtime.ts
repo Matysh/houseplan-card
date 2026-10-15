@@ -15,6 +15,7 @@ import {
   spaceDisplayOf,
 } from './logic';
 import { northDegOf } from './sun';
+import { signalVisibilityModeOf, writeSpaceSignalVisibility } from './signal-visibility';
 import {
   createEmptySpaceConfig,
   initialSpaceDisplayDraft,
@@ -90,7 +91,7 @@ export class HouseplanOnboardingRuntime {
         sunRays: typeof sp.settings?.sun_rays === 'boolean' ? sp.settings.sun_rays : null,
         tempMin: disp.tempMin, tempMax: disp.tempMax,
         tempMinInput: String(disp.tempMin), tempMaxInput: String(disp.tempMax),
-        showLqi: disp.showLqi ?? this.host._config?.show_signal ?? true,
+        showLqiMode: signalVisibilityModeOf(sp.settings),
         cardFontScale: disp.cardFontScale,
         labelTemp: disp.labelTemp, labelHum: disp.labelHum,
         labelLqi: disp.labelLqi, labelLight: disp.labelLight,
@@ -115,7 +116,7 @@ export class HouseplanOnboardingRuntime {
       bgMode: 'daynight', northDeg: null, northDegInput: '', sunRays: null,
       tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
       tempMinInput: String(DEFAULT_TEMP_MIN), tempMaxInput: String(DEFAULT_TEMP_MAX),
-      showLqi: this.host._config?.show_signal ?? true,
+      showLqiMode: 'inherit',
       cardFontScale: 1,
       labelTemp: false, labelHum: false, labelLqi: false, labelLight: false,
       cellCm,
@@ -339,7 +340,7 @@ export class HouseplanOnboardingRuntime {
         delete space.plan_scale_y;
         delete space.plan_angle;
       }
-      space.settings = {
+      space.settings = writeSpaceSignalVisibility({
         ...(space.settings || {}),
         show_borders: dialog.showBorders,
         show_names: dialog.showNames,
@@ -358,13 +359,12 @@ export class HouseplanOnboardingRuntime {
           ? Math.min(dialog.tempMin, dialog.tempMax) : DEFAULT_TEMP_MIN,
         temp_max: Number.isFinite(dialog.tempMax)
           ? Math.max(dialog.tempMin, dialog.tempMax) : DEFAULT_TEMP_MAX,
-        show_lqi: dialog.showLqi,
         card_font_scale: dialog.cardFontScale !== 1 ? dialog.cardFontScale : undefined,
         label_temp: dialog.labelTemp,
         label_hum: dialog.labelHum,
         label_lqi: dialog.labelLqi,
         label_light: dialog.labelLight,
-      };
+      }, dialog.showLqiMode);
       space.zero_wall_style = dialog.zeroWallStyle;
       space.cell_cm = Number.isFinite(dialog.cellCm) && dialog.cellCm > 0
         ? Math.max(CELL_CM_MIN, Math.min(CELL_CM_MAX, dialog.cellCm)) : 5;
@@ -439,7 +439,7 @@ export class HouseplanOnboardingRuntime {
       bgMode: 'daynight', northDeg: null, northDegInput: '', sunRays: null,
       tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
       tempMinInput: String(DEFAULT_TEMP_MIN), tempMaxInput: String(DEFAULT_TEMP_MAX),
-      showLqi: this.host._config?.show_signal ?? true,
+      showLqiMode: 'inherit',
       cardFontScale: 1,
       labelTemp: false, labelHum: false, labelLqi: false, labelLight: false,
       cellCm,

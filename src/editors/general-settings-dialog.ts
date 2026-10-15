@@ -120,6 +120,11 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
               onChange: (deviceBattery) => set({ deviceBattery }),
             }),
             hint: st('gs.show_device_battery_hint'),
+          })}
+          ${toggleRow({
+            id: 'gs-show-lqi', icon: 'mdi:zigbee',
+            title: st('gs.show_lqi'), caption: st('gs.show_lqi_hint'),
+            checked: d.showLqi, onChange: (showLqi) => set({ showLqi }),
           })}`,
       })}
       ${formCard({
@@ -294,7 +299,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: host._imperial ? 9.8 : 3,
           glowRadiusInput: String(host._imperial ? 9.8 : 3),
           bgColor: null, northDeg: null, northDegInput: '', bgMode: 'daynight', sunRays: false, sunRayOrigin: 'inner',
-          showRoomTooltip: true, deviceBattery: 'all', radarShowLive: true, volumetricView: false, moon: true, zigbeeTopology: { enabled: false, z2mBaseTopics: [] },
+          showRoomTooltip: true, showLqi: true, deviceBattery: 'all', radarShowLive: true, volumetricView: false, moon: true, zigbeeTopology: { enabled: false, z2mBaseTopics: [] },
         })}>${t('gs.reset')}</button>
       </div>
       ${footerStatus(problems.length

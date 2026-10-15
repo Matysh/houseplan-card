@@ -156,6 +156,9 @@ def _global_settings(value: object) -> dict[str, Any]:
     show_room_tooltip = value.get("show_room_tooltip")
     if isinstance(show_room_tooltip, bool):
         out["show_room_tooltip"] = show_room_tooltip
+    show_lqi = value.get("show_lqi")
+    if isinstance(show_lqi, bool):
+        out["show_lqi"] = show_lqi
     show_device_battery = value.get("show_device_battery")
     if isinstance(show_device_battery, bool) or show_device_battery == "low":
         out["show_device_battery"] = show_device_battery
@@ -189,6 +192,8 @@ def _space_settings(value: object) -> dict[str, Any]:
         "hide_decor", "hide_openings", "label_temp", "label_hum", "label_lqi",
         "label_light", "card_font_scale", "north_deg", "bg_mode", "sun_rays",
     ))
+    if isinstance(value, dict) and value.get("show_lqi_mode") in ("inherit", "on", "off"):
+        out["show_lqi_mode"] = value["show_lqi_mode"]
     if isinstance(value, dict) and "custom_fill" in value:
         out["custom_fill"] = _custom_fill(value.get("custom_fill"))
     return out
