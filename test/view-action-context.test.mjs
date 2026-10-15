@@ -1,6 +1,60 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { openingActionTargetCurrent, currentMarkerActionDevice, infoCardRowContextKey } from '../test-build/view-action-context.js';
+import { acceptTapConfirmation, openingActionTargetCurrent, currentMarkerActionDevice, infoCardRowContextKey } from '../test-build/view-action-context.js';
+
+test('#849 AC5 confirmation is consumed before execution and only once', () => {
+  let calls = 0, clears = 0;
+  const intent = { exec() { assert.equal(current, null); calls++; } };
+  let current = intent;
+  const accept = captured => acceptTapConfirmation(captured, current, () => { current = null; clears++; });
+  accept(intent);
+  accept(intent);
+  accept(null);
+  assert.equal(calls, 1);
+  assert.equal(clears, 1);
+});
+
+test('#849 AC5 cancelled and replaced callbacks cannot execute or dismiss a new intent', () => {
+  const calls = [], old = { exec() { calls.push('old'); } }, next = { exec() { calls.push('next'); } };
+  let current = null, clears = 0;
+  const accept = captured => acceptTapConfirmation(captured, current, () => { current = null; clears++; });
+  accept(old);
+  current = next;
+  accept(old);
+  accept(null);
+  assert.equal(current, next);
+  assert.equal(clears, 0);
+  assert.deepEqual(calls, []);
+  accept(next);
+  assert.equal(clears, 1);
+  assert.deepEqual(calls, ['next']);
+});
+
+test('#849 AC5 reentrant acceptance cannot repeat an action or clear its replacement', () => {
+  const calls = [], next = { exec() { calls.push('next'); } };
+  const old = { exec() { calls.push('old'); accept(old); current = next; } };
+  let current = old;
+  const accept = captured => acceptTapConfirmation(captured, current, () => { current = null; });
+  accept(old);
+  accept(old);
+  assert.equal(current, next);
+  assert.deepEqual(calls, ['old']);
+  accept(next);
+  assert.deepEqual(calls, ['old', 'next']);
+});
+
+test('#849 AC5 a thrown action stays consumed and never turns a late callback into TypeError', () => {
+  let calls = 0;
+  const failure = new Error('service refusal');
+  const old = { exec() { calls++; throw failure; } };
+  let current = old;
+  const accept = captured => acceptTapConfirmation(captured, current, () => { current = null; });
+  assert.throws(() => accept(old), error => error === failure);
+  assert.equal(current, null);
+  assert.doesNotThrow(() => accept(old));
+  assert.doesNotThrow(() => accept(null));
+  assert.equal(calls, 1);
+});
 
 test('#846 AC6 exact current opening, space, popup and lock are all required', () => {
   const opening = { id:'o1', type:'door', lock:'lock.door' };

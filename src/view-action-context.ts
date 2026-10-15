@@ -2,6 +2,15 @@ import type { DevItem, OpeningCfg } from './types';
 
 export interface ViewActionContext { readonly spaceId: string; readonly id: string }
 
+/** Consume only the captured current intent, before calling its action. */
+export function acceptTapConfirmation<T extends { exec(): void }>(
+  confirmation: T | null, current: T | null, clear: () => void,
+): void {
+  if (!confirmation || current !== confirmation) return;
+  clear();
+  confirmation.exec();
+}
+
 /** Current canonical carrier only; never search an identically named other floor. */
 export function openingActionTargetCurrent(
   space: { id: string; openings?: readonly OpeningCfg[] } | null | undefined,

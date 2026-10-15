@@ -77,7 +77,7 @@ import {
 import { TouchGestureClickGuard } from './touch-gesture-click-guard';
 import { KioskHoldGesture } from './kiosk-hold';
 import { KioskCarousel } from './kiosk-carousel';
-import { currentMarkerActionDevice, infoCardRowContextKey, openingActionTargetCurrent } from './view-action-context';
+import { acceptTapConfirmation, currentMarkerActionDevice, infoCardRowContextKey, openingActionTargetCurrent } from './view-action-context';
 import { ViewHoldGesture } from './view-hold';
 import { DeviceHitController, deviceLayerMutated, observeDeviceHitGeometryScroll } from './device-hit-owner';
 import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
@@ -5808,9 +5808,7 @@ export class HouseplanCard extends LitElement {
 
   /** A cancelled/replaced DOM confirmation never accepts a newer intent. */
   private _acceptTapConfirm(confirmation: { exec(): void } | null): void {
-    if (!confirmation || this._tapConfirm !== confirmation) return;
-    this._tapConfirm = null;
-    confirmation.exec();
+    acceptTapConfirmation(confirmation, this._tapConfirm, () => { this._tapConfirm = null; });
   }
 
   private _keyDevice(ev: KeyboardEvent, d: DevItem): void {

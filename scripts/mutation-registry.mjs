@@ -154,9 +154,9 @@ const MUTANT_DEFINITIONS = [
     id: 'kiosk-retired-confirmation-accepts-new-intent',
     guard: 'node demo/smoke_kiosk_cycle_context.mjs',
     because: '#846 AC5/AC6: a retained DOM confirm button after cancellation must not execute or dismiss a newer same-floor dialog intent in the mounted Lit card.',
-    patches: [{file:'src/houseplan-card.ts',
-      find:'    if (!confirmation || this._tapConfirm !== confirmation) return;',
-      replace:'    if (!confirmation) return;'}],
+    patches: [{file:'src/view-action-context.ts',
+      find:'  if (!confirmation || current !== confirmation) return;',
+      replace:'  if (!confirmation) return;'}],
   },
   {
     id: 'kiosk-carousel-arrival-restores-old-zoom',

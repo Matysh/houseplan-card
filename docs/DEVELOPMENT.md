@@ -5,6 +5,11 @@
 `node --test test/device-toggle.test.mjs test/view-action-context.test.mjs`
 covers the visible/enabled checkbox projection, exact row resolver, fresh
 direction, missing/disabled/secure targets and identity-only context keys.
+The existing one-shot confirmation guard is exported by the same context
+module and called by the card; executable units cover consume-before-exec,
+cancel/replacement, repeated and reentrant acceptance, and a throwing action.
+The existing kiosk retired-confirmation mutation anchor follows that helper;
+only its static declaration is checked locally, not executed.
 `node demo/smoke_info_card_confirm.mjs` enters through genuine long-press,
 entity-row buttons, real confirmation DOM, HA config/registry/state events,
 Tab/Enter/Space and coarse-pointer taps. It records service target/count and
