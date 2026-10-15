@@ -19,8 +19,8 @@ const out = {};
 Object.assign(out, await page.evaluate(async () => {
   const c = window.__card;
   const o = {};
-  const pd = (id, x, y) => c._stagePointerDown({ pointerId: id, clientX: x, clientY: y, target: c._stageEl, preventDefault() {} });
-  const pm = (id, x, y) => c._stagePointerMove({ pointerId: id, clientX: x, clientY: y });
+  const pd = (id, x, y) => c._stagePointerDown({ composedPath: () => [c._stageEl], pointerId: id, clientX: x, clientY: y, target: c._stageEl, preventDefault() {} });
+  const pm = (id, x, y) => c._stagePointerMove({ composedPath: () => [c._stageEl], pointerId: id, clientX: x, clientY: y });
   const pu = (id, x, y) => c._stagePointerUp({ pointerId: id, clientX: x, clientY: y });
   let pid = 100;
   /** Drag 80x60 px across the middle of the scene; did the view follow? */
@@ -66,8 +66,8 @@ out.panStillWorksZoomedIn = await page.evaluate(async () => {
   const c = window.__card;
   c._setMode('view'); c._applyView(4); await c.updateComplete;
   const v0 = { ...c._view };
-  c._stagePointerDown({ pointerId: 7, clientX: 300, clientY: 300, target: c._stageEl, preventDefault() {} });
-  c._stagePointerMove({ pointerId: 7, clientX: 380, clientY: 360 });
+  c._stagePointerDown({ composedPath: () => [c._stageEl], pointerId: 7, clientX: 300, clientY: 300, target: c._stageEl, preventDefault() {} });
+  c._stagePointerMove({ composedPath: () => [c._stageEl], pointerId: 7, clientX: 380, clientY: 360 });
   const moved = Math.abs(c._view.x - v0.x) > 1;
   c._stagePointerUp({ pointerId: 7, clientX: 380, clientY: 360 });
   c._applyView(1);
@@ -84,8 +84,8 @@ Object.assign(out, await page.evaluate(async () => {
   c._applyView(1, vb[0] + vb[2] / 2, vb[1] + vb[3] / 2); // at 100 % the view IS fitView
   await c.updateComplete;
   const fit = { ...c._view };
-  c._stagePointerDown({ pointerId: 8, clientX: 700, clientY: 400, target: c._stageEl, preventDefault() {} });
-  c._stagePointerMove({ pointerId: 8, clientX: -40000, clientY: 400 }); // shove it into the void
+  c._stagePointerDown({ composedPath: () => [c._stageEl], pointerId: 8, clientX: 700, clientY: 400, target: c._stageEl, preventDefault() {} });
+  c._stagePointerMove({ composedPath: () => [c._stageEl], pointerId: 8, clientX: -40000, clientY: 400 }); // shove it into the void
   const far = { ...c._view };
   c._stagePointerUp({ pointerId: 8, clientX: -40000, clientY: 400 });
   o.panLeavesTheContent = far.x > fit.x + fit.w * 0.5;
@@ -97,8 +97,8 @@ Object.assign(out, await page.evaluate(async () => {
   // the same at 50 %: the screen holds more, the walk is still finite
   const fit2 = { ...c._view };
   c._applyView(0.5, vb[0] + vb[2] / 2, vb[1] + vb[3] / 2); await c.updateComplete;
-  c._stagePointerDown({ pointerId: 9, clientX: 700, clientY: 400, target: c._stageEl, preventDefault() {} });
-  c._stagePointerMove({ pointerId: 9, clientX: -40000, clientY: 400 });
+  c._stagePointerDown({ composedPath: () => [c._stageEl], pointerId: 9, clientX: 700, clientY: 400, target: c._stageEl, preventDefault() {} });
+  c._stagePointerMove({ composedPath: () => [c._stageEl], pointerId: 9, clientX: -40000, clientY: 400 });
   const far2 = { ...c._view };
   c._stagePointerUp({ pointerId: 9, clientX: -40000, clientY: 400 });
   o.panStopsAtTheSlackZoomedOut = far2.x <= fit2.x + fit2.w + 1 && far2.x > fit2.x;
@@ -146,7 +146,7 @@ Object.assign(out, await page.evaluate(async () => {
     o.deviceTakesThePointer = !!c._deviceDrag && c._panStart === null;
     fire(dev, 'pointermove', 22, r.left + r.width / 2 + 40, r.top + r.height / 2 + 30);
     await Promise.resolve();
-    c._stagePointerMove({ pointerId: 22, clientX: r.left + 60, clientY: r.top + 50 });
+    c._stagePointerMove({ composedPath: () => [c._stageEl], pointerId: 22, clientX: r.left + 60, clientY: r.top + 50 });
     const v1 = { ...c._viewOr(c._baseVb()) };
     o.deviceDragDoesNotPan = Math.abs(v1.x - v0.x) < 0.5 && Math.abs(v1.y - v0.y) < 0.5;
     o.deviceActuallyMoved = !!c._deviceDrag && c._deviceDrag.moved === true;
@@ -181,10 +181,10 @@ Object.assign(out, await page.evaluate(async () => {
   // d) a drawing tool is still a drawing tool: two fingers pinch, they do not pan
   c._setMode('plan'); c._tool = 'draw'; c._applyView(1); await c.updateComplete;
   const z0 = c._zoom;
-  c._stagePointerDown({ pointerId: 31, clientX: 300, clientY: 300, target: c._stageEl, preventDefault() {} });
-  c._stagePointerDown({ pointerId: 32, clientX: 400, clientY: 300, target: c._stageEl, preventDefault() {} });
-  c._stagePointerMove({ pointerId: 31, clientX: 250, clientY: 300 });
-  c._stagePointerMove({ pointerId: 32, clientX: 450, clientY: 300 });
+  c._stagePointerDown({ composedPath: () => [c._stageEl], pointerId: 31, clientX: 300, clientY: 300, target: c._stageEl, preventDefault() {} });
+  c._stagePointerDown({ composedPath: () => [c._stageEl], pointerId: 32, clientX: 400, clientY: 300, target: c._stageEl, preventDefault() {} });
+  c._stagePointerMove({ composedPath: () => [c._stageEl], pointerId: 31, clientX: 250, clientY: 300 });
+  c._stagePointerMove({ composedPath: () => [c._stageEl], pointerId: 32, clientX: 450, clientY: 300 });
   o.pinchStillZooms = c._zoom > z0 * 1.5;
   c._stagePointerUp({ pointerId: 31, clientX: 250, clientY: 300 });
   c._stagePointerUp({ pointerId: 32, clientX: 450, clientY: 300 });

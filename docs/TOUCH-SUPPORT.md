@@ -184,6 +184,13 @@ only to dismiss an explicit group/palette is consumed instead of falling
 through to the plan. Pinch/pan outside the tray remains scene-owned. This is a
 safety guarantee, not a promise of full touch parity for editor precision work.
 
+The same ownership applies to the wall-thickness dialog and LED picker (#900):
+pointer, touch and pen input on them never pans or pinches the plan or writes
+geometry. A surface contact cannot join a scene pinch. The thickness dialog's
+background can be dragged on desktop; moving it by touch remains best effort.
+Wheel over the thickness dialog leaves both the plan and its number unchanged;
+the LED picker keeps its own normal list scrolling.
+
 The Plan editor's Walls chain follows the same floor. One clean tap may append
 one segment; pan, pinch, a second pointer, `pointercancel` and a suppressed
 synthetic click never append, finish or convert the chain. An open chain

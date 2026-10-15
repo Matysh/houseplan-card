@@ -19,6 +19,7 @@ const SHA = /^[a-f0-9]{40}$/;
 const HASH = /^[a-f0-9]{64}$/;
 export const NATIVE_PROFILES = Object.freeze({
   editor: [
+    { id: 'editor-dialog-input', script: 'demo/smoke_canvas_surface_gestures.mjs', oracle: 'native text selection, bounded captured dialog movement and fixed intermediate camera frames; LED ownership, touch/pen safety and unchanged config/history' },
     { id: 'editor-physical', script: 'demo/smoke_physical_body_characterization.mjs', oracle: 'native body/rotation thresholds, 1/0/1 renders, queue cancellation, one transaction and late overlap/duplicate/tap controls' },
     { id: 'editor-backdrop', script: 'demo/smoke_backdrop.mjs', oracle: 'native body/frame transforms, frozen viewBox through release, rotation modifiers and six-field reset' },
     { id: 'editor-hosted-preview', script: 'demo/smoke_partition_openings_preview.mjs', oracle: 'actual held door/window ink at two targets, one visible copy, other host unchanged, Esc/Undo/trusted cancel and exact release' },
@@ -43,7 +44,7 @@ export function requiredProfiles(entry, files) {
   if (entry.category === 'infra') return [];
   const majorFrontend = entry.category === 'major' && files.some(f => f.startsWith('src/'));
   return unique([
-    ...(files.some(f => /^src\/(?:physical-body-gesture|backdrop-frame-gesture|live-editor)\.ts$/.test(f)) ? ['editor'] : []),
+    ...(files.some(f => /^src\/(?:physical-body-gesture|backdrop-frame-gesture|live-editor|canvas-surface-gestures|wall-thickness-dialog-gesture)\.ts$/.test(f)) ? ['editor'] : []),
     ...(files.some(f => /(?:wall[-_]|geometry|resize|opening)/.test(f)) ? ['geometry'] : []),
     ...(majorFrontend || files.some(f => /(?:live-interaction|live-view|viewport|gesture|visual-continuity)/.test(f)) ? ['view'] : []),
   ]);

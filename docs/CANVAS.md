@@ -319,6 +319,16 @@ produce a zero-sized SVG `viewBox`.
   only when it points inward and `|dx| > 1.5 × |dy|`; equality, the wrong
   direction, a start outside the strip and an edge without a neighbour all
   become ordinary pan. The decision remains final until release (`_panLock`).
+  Screen surfaces inside the stage (wall-thickness dialog, LED picker,
+  editor tray, summary and recovery overlay) own pointer and wheel input.
+  Native input, textarea, select and editable paths also refuse scene gestures;
+  a contact on a surface never becomes a second scene-pinch contact (#900).
+  The wall-thickness dialog lives outside the camera layers. Its background,
+  label and unit drag it after more than 3 CSS px Manhattan movement; fields
+  and buttons retain native input. Its full rectangle stays 8 px inside the
+  stage (an oversized dialog uses the top-left inset), including after resize.
+  Pan/zoom leaves its screen position fixed. Cancel/capture loss keeps its last
+  position; closing discards that session position without a geometry write.
 * **Room fit (#152).** A clean primary click/tap on the browser-painted room
   target fits that room's final floor plus its visible boundary wall body into
   the middle 80% of the stage. Devices, openings/actions and the HA Area link

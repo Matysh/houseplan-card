@@ -27,7 +27,7 @@ export const editorDialogsStyles = css`
     }
     .wallthick-dlg {
       position: absolute;
-      z-index: 40;
+      z-index: 80;
       min-width: 200px;
       transform: translate(-50%, 8px);
       padding: 10px 12px;
@@ -38,13 +38,17 @@ export const editorDialogsStyles = css`
       flex-direction: column;
       gap: 8px;
       pointer-events: auto;
+      cursor: grab;
+      touch-action: none;
     }
+    .wallthick-dlg.dragging { cursor: grabbing; }
     .wallthick-dlg .row {
       display: flex;
       align-items: center;
       gap: 8px;
     }
     .wallthick-dlg input[type="number"] {
+      cursor: text;
       width: 5.5em;
       padding: 4px 6px;
       border: 1px solid var(--divider-color, #ccc);

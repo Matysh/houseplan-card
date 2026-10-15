@@ -8,6 +8,7 @@
  */
 import { ledAnchor, ledRelease, ledRuntime, ledStripsByMarker, ledVisible } from './led-strip-gate';
 import { visibleIconMarkers } from './device-icon-roster';
+import { sceneGestureFromPath } from './canvas-surface-gestures';
 import { DeviceDragRetirement } from './device-drag-retirement';
 import { BackupImportIntent, backupImportAllowed } from './backup-import-intent';
 import { deviceBatteryModeOf, showDeviceBatteryOf } from './device-battery-settings';
@@ -6651,6 +6652,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _onWheel(ev: WheelEvent): void {
+    if (!sceneGestureFromPath(ev.composedPath())) return;
     this._clearRoomFocus();
     this._prepareCameraCommand();
     const stage = this._stageEl;
@@ -6761,6 +6763,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _stagePointerDown(ev: PointerEvent): void {
+    if (!sceneGestureFromPath(ev.composedPath())) return;
     this._bootSoftCancel();
     const roomId = ev.isPrimary && ev.button === 0 && this._mode === 'view'
       ? roomFitOwnerFromPath(ev.composedPath()) : null;
@@ -6843,6 +6846,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _stagePointerMove(ev: PointerEvent): void {
+    if (!this._pointers.has(ev.pointerId) && !sceneGestureFromPath(ev.composedPath())) return;
     if (this._editorRuntime?.stairs.pointerMove(ev)) return;
     if (this._editorRuntime?.physicalGesture.rotation?.pid === ev.pointerId) {
       this._editorRuntime?.physicalGesture.rotateMove(ev);
@@ -7294,7 +7298,8 @@ export class HouseplanCard extends LitElement {
       this._touchContacts.set(pointer.pointerId, {
         x: pointer.clientX,
         y: pointer.clientY,
-        inStage: !!(pointer.target as Element | null)?.closest?.('.stage'),
+        inStage: sceneGestureFromPath(pointer.composedPath())
+          && !!(pointer.target as Element | null)?.closest?.('.stage'),
       });
       if (this._touchContacts.size >= 2) { if (this._editorRuntime?._cancelRoomGearForMultitouch()) this._roomGearTouchNavigation = true;
         this._deviceHits.clearPointers();
@@ -7913,6 +7918,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _markupClick(ev: MouseEvent): void {
+    if (!sceneGestureFromPath(ev.composedPath())) return;
     if (!this._editorRuntime) return;
     return this._editorRuntime._markupClick(ev);
   }
@@ -11244,10 +11250,8 @@ export class HouseplanCard extends LitElement {
             ${renderZigbeeTopologyOverlay({ hass: this.hass, settings: this._settings, devices: this._renderDevices, registry: this._haRegistry, currentSpace: space.id, spaces: this._serverCfg?.spaces, viewKey: view, zoom: this._zoom, view: this._mode === 'view', kiosk: this._kiosk, ready: this._viewRuntimes.zigbee.state === 'ready', onLayout: () => this._liveRt?.hover() })}
           </div>
           <div data-hp-live-editor-html></div>
-          ${this._wallDialog
-            ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._renderWallThickDialog()}</div>`
-            : nothing}
           </div>
+          ${this._wallDialog ? this._renderWallThickDialog() : nothing}
           <div class="zoombadge" data-hp-live-zoom hidden><span data-hp-live-zoom-value></span></div>
           ${this._renderFarHint()}
           ${this._renderHomeArrow(this._baseVb(projection, isoScene))}

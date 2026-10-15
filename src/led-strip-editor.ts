@@ -786,6 +786,9 @@ export class LedStripEditor {
     const close = () => { this.picker = null; this.host.requestUpdate(); };
     return html`<hp-dialog .hass=${this.host.hass} data-kind="led-picker" .title=${this.t('led.pick_title')}
       icon="mdi:led-strip-variant" flex-content @wheel=${(e: WheelEvent) => e.stopPropagation()}
+      @pointerdown=${(e: Event) => e.stopPropagation()} @pointermove=${(e: Event) => e.stopPropagation()}
+      @pointerup=${(e: Event) => e.stopPropagation()} @pointercancel=${(e: Event) => e.stopPropagation()}
+      @click=${(e: Event) => e.stopPropagation()} @dblclick=${(e: Event) => e.stopPropagation()}
       @hp-close=${close}>
       <div class="body led-picker"
         style="display:flex;flex-direction:column;gap:4px;min-height:0;max-height:min(60dvh,520px);overflow-y:auto;overscroll-behavior:contain">

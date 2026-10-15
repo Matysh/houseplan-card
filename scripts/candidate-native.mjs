@@ -5,6 +5,13 @@ import { attestStandardLaunch, requirePinnedBrowser } from './browser-attestatio
 import { candidateInputs, digest, NATIVE_PROFILES } from './candidate-readiness.mjs';
 import { isMainModule } from './spawn-portable.mjs';
 export const NATIVE_CHECK_FLOORS = Object.freeze({
+  'demo/smoke_canvas_surface_gestures.mjs': ['AC1 native selection replaces all text',
+    'AC2 corner follows held pointer 1:1', 'AC2 pointercancel retains last position and retires owner',
+    'AC3 clamp 1', 'AC4 moved held pan keeps screen rect',
+    'AC5 wheel .wallthick-dlg input keeps camera and value',
+    'AC6 Escape retires capture without write or history', 'AC6 Enter wire contains entered centimetres',
+    'AC7 LED pointer .led-picker cannot navigate', 'AC8 View surface contact never becomes scene second finger',
+    'AC9 future input selects without scene navigation', 'AC9 decor tray keeps scene fixed'],
   'demo/smoke_physical_body_characterization.mjs': ['acceptedGestureOneHistoryAndWrite',
     'physicalRenderRouteOneZeroOne', 'partitionGridAndRigidOpening', 'columnRotationFiveDegreeStep',
     'columnShiftRotationIsFree', 'realOverlappingBodyCycle', 'duplicateColumnRefusedWithoutWriteOrHistory',

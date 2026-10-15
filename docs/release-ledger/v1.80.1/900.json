@@ -2,6 +2,10 @@
   "schema": 1,
   "issue": 900,
   "baseStable": "v1.80.1",
-  "category": "infra",
-  "rationale": "Only the specification review document and review index from C-only commit b8997ce39ec5a242cec27f3c6c6268bdff50c0fa are present in this candidate. No implementation or user-behaviour change for #900 is delivered. The owner explicitly deferred its implementation to the next release on 2026-10-15; it is excluded from beta.3 membership, stays open and has no release milestone. This entry accounts for the already committed documentation only, not the planned feature. Reclassify against the actual delivered scope before its implementation reaches S7."
+  "category": "stable-fix",
+  "rationale": "The actual implementation fixes stage gesture leakage in the existing wall-thickness dialog and LED picker, both present in stable v1.80.1. Native text selection, dialog wheel ownership and fixed screen position restore those workflows; bounded session-only dialog dragging is the small accompanying polish requested in the original report. There are no persisted fields or migration. This replaces the earlier documentation-only accounting now that the product fix is delivered.",
+  "summary": {
+    "ru": "Поле толщины стены и окно выбора LED-устройства больше не двигают план при работе внутри них. Диалог толщины можно перетащить по экрану, сохраняя доступ к полю и кнопкам.",
+    "en": "Using the wall-thickness field or LED device picker no longer moves the plan underneath. Drag the thickness dialog on screen while keeping its field and buttons accessible."
+  }
 }

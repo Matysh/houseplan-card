@@ -11,6 +11,17 @@ oracle requires its trusted lostpointercapture before mouseup. Two completed
 animation frames bound terminal observation, with no artificial HA tick.
 The independent temporary camera-outline class is not a cursor/tool class.
 
+## Stage dialog input (#900)
+
+`demo/smoke_canvas_surface_gestures.mjs` uses a canonical wall-model fixture,
+native mouse selection and capture, intermediate dialog rectangles and the
+wire/history ledger. Compile `test-build` before this smoke; the input tool is
+`data-tool="wall-thickness"`, while its internal enum remains `wallthick`.
+After a synthetic pinch, use native pointer input for the next deliberate action
+so the existing compatibility-click barrier can re-arm. No private gesture setup
+or camera mutation is needed. The launched pinned browser is attested; this is
+headless evidence, not physical touch, HA-shell or owner/GPU acceptance.
+
 ## Editor gesture owners and held opening preview (#861)
 
 `physical-body-gesture` and `backdrop-frame-gesture` use bounded purpose ports,

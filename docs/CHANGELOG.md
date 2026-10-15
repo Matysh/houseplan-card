@@ -9,6 +9,10 @@
   normal cursor. Esc, touch cancellation and loss of pointer capture clear
   the preview without saving; the next drag works immediately
   ([#908](https://github.com/Matysh/houseplan-card/issues/908)).
+- Selecting a wall-thickness value or using the LED device picker no longer
+  moves the plan. The thickness dialog can be dragged by its background and
+  label, stays inside the stage, and keeps its screen position while the plan
+  moves ([#900](https://github.com/Matysh/houseplan-card/issues/900)).
 
 ## v1.81.0-beta.3 — 2026-10-15
 

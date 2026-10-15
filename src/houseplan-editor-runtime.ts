@@ -7,6 +7,9 @@
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
 import { html, svg, nothing, TemplateResult } from 'lit';
+import { ref } from 'lit/directives/ref.js';
+import { keyed } from 'lit/directives/keyed.js';
+import { WallThicknessDialogGesture } from './wall-thickness-dialog-gesture';
 import { PhysicalBodyGestureRuntime, type PhysicalBodyGesturePort } from './physical-body-gesture';
 import { BackdropFrameGestureRuntime, type BackdropPlan } from './backdrop-frame-gesture';
 import { displayVersion } from './card-version';
@@ -849,6 +852,7 @@ export class HouseplanEditorRuntime {
   private _supportPreviewGeneration = 0;
   private _decorAssetGuardReplace: boolean | null = null;
   public readonly roomGear: RoomGearDragController;
+  private readonly wallDialogGesture = new WallThicknessDialogGesture();
   public nodeMove: WallNodeEditor | null = null;
   private _nodeMoveLoad: Promise<void> | null = null;
   private _nodeMoveEpoch = 0;
@@ -1019,7 +1023,7 @@ public _commitLiveEditor(deviceId?: string): void {
   commitHouseplanEditor(this.host, deviceId);
   if (this.host.isConnected) this.nodeMove?.paint();
 }
-public _disposeLiveEditor(): void { this.optimizationUndo.retire(); this.invalidateEditorNavigation(); this._nodeMoveEpoch++; this.nodeMove?.dispose(); this._radarSetup.reset(); this.roomGear.reset(); disposeHouseplanEditor(this.host); }
+public _disposeLiveEditor(): void { this.optimizationUndo.retire(); this.wallDialogGesture.dispose(); this.invalidateEditorNavigation(); this._nodeMoveEpoch++; this.nodeMove?.dispose(); this._radarSetup.reset(); this.roomGear.reset(); disposeHouseplanEditor(this.host); }
 public _cancelRadarSetup(): void { this._radarSetup.interrupt(); }
 public async _whenLiveEditorSettled(): Promise<void> {
   // An already queued pointer calculation runs before this continuation.
@@ -5451,7 +5455,7 @@ public _renderWallThickUi(): TemplateResult {
 public _renderWallThickDialog(): TemplateResult {
     const d = this.host._wallDialog;
     if (!d) return html``;
-    return html`<div class="wallthick-dlg" style="left:${d.sx.toFixed(2)}%;top:${d.sy.toFixed(2)}%"
+    return html`${keyed(d.a, html`<div class="wallthick-dlg" data-scene-surface ${ref(this.wallDialogGesture.bind)} style="left:${d.sx.toFixed(2)}%;top:${d.sy.toFixed(2)}%"
       @click=${(e: Event) => e.stopPropagation()}>
       <div class="row">
         <label>${this.host._t('wallthick.field')}</label>
@@ -5474,7 +5478,7 @@ public _renderWallThickDialog(): TemplateResult {
           <ha-icon icon="mdi:check"></ha-icon>
         </button>
       </div>
-    </div>`;
+    </div>`)}`;
   }
 
 public _openingAt(raw: readonly number[]): RenderOpening | null {

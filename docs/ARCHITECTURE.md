@@ -15,6 +15,16 @@ class value unchanged. The stage routes capture loss only for the active
 backdrop pointer; normal release has already retired that owner. No per-move
 publication, frame policy, transform builder or history/persistence owner changes.
 
+Stage surface ownership (#900) is one pure composed-path predicate in
+`canvas-surface-gestures.ts`, shared by scene pointer, click, wheel and touch
+contact admission. Physical contacts still reach the activation-tail guard;
+surface contacts never enter the scene pinch. `wall-thickness-dialog-gesture.ts`
+is an editor-only DOM owner: keyed dialog lifetime, pointer capture, threshold,
+bounded screen coordinates and a resize observer. It performs no host render,
+camera update, config write or history operation. The dialog is a stage sibling
+of the camera wrapper; editor-only styles remain lazy. LED's modal shell also
+consumes pointer/click events while retaining native list scrolling.
+
 System LQI visibility (#876) has one bounded policy in `signal-visibility.ts`.
 `spaceDisplayOf` projects explicit new modes and historical false; every full,
 static, hover and preview consumer feeds that local override, the exact card

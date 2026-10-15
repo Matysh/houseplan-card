@@ -95,6 +95,48 @@ const MUTANT_DEFINITIONS = [
     patches: [{ file: 'src/houseplan-card.ts', find: '            if (this._editorRuntime?.backdropGesture.owns(e.pointerId)) this._stagePointerCancel(e);', replace: '            if (false && this._editorRuntime?.backdropGesture.owns(e.pointerId)) this._stagePointerCancel(e);' }],
   },
   {
+    id: 'surface-scene-path-always-owned',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/canvas-surface-gestures.test.mjs',
+    because: '#900 AC9: native fields and screen surfaces refuse scene ownership, while room/background paths remain admitted.',
+    patches: [{ file: 'src/canvas-surface-gestures.ts', find: '  return !path.some((entry) => {', replace: '  return true || !path.some((entry) => {' }],
+  },
+  {
+    id: 'surface-position-not-clamped',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/canvas-surface-gestures.test.mjs',
+    because: '#900 AC3: pure boundary cases retain all sides of the rectangle and the top-left fallback for an oversized dialog.',
+    patches: [{ file: 'src/canvas-surface-gestures.ts', find: '  const inset = 8;', replace: '  return position;\n  const inset = 8;' }],
+  },
+  {
+    id: 'surface-stage-pointer-guard-removed',
+    guard: compiledNodeSmoke('smoke_canvas_surface_gestures'),
+    because: '#900 AC9 depends on trusted native field selection in a mounted stage without local stoppers; only real pointer routing exposes camera pan.',
+    patches: [{ file: 'src/houseplan-card.ts', find: '  private _stagePointerDown(ev: PointerEvent): void {\n    if (!sceneGestureFromPath(ev.composedPath())) return;', replace: '  private _stagePointerDown(ev: PointerEvent): void {' }],
+  },
+  {
+    id: 'surface-contact-enters-view-pinch',
+    guard: compiledNodeSmoke('smoke_canvas_surface_gestures'),
+    because: '#900 AC8 depends on browser composed paths through a native field and the mounted View capture listener; a surface contact must not seed camera pinch.',
+    patches: [{ file: 'src/houseplan-card.ts', find: '        inStage: sceneGestureFromPath(pointer.composedPath())\n          && !!(pointer.target as Element | null)?.closest?.(\'.stage\'),', replace: '        inStage: !!(pointer.target as Element | null)?.closest?.(\'.stage\'),' }],
+  },
+  {
+    id: 'wall-dialog-handle-includes-input-and-buttons',
+    guard: compiledNodeSmoke('smoke_canvas_surface_gestures'),
+    because: '#900 AC1/AC6 depend on Chromium native text selection, trusted pointer capture and a button release outside its hit box.',
+    patches: [{ file: 'src/wall-thickness-dialog-gesture.ts', find: "        || event.composedPath().some((node) => node instanceof Element && node.matches('input,button')))", replace: '        || false)' }],
+  },
+  {
+    id: 'wall-dialog-wheel-changes-number',
+    guard: compiledNodeSmoke('smoke_canvas_surface_gestures'),
+    because: '#900 AC5 depends on the browser default wheel action over a focused number input; pure event counters cannot prove its visible value remains unchanged.',
+    patches: [{ file: 'src/wall-thickness-dialog-gesture.ts', find: '    event.preventDefault(); // Keep focused number inputs unchanged too.', replace: '    // Wheel default is intentionally allowed by this mutant.' }],
+  },
+  {
+    id: 'wall-dialog-back-inside-camera-layer',
+    guard: compiledNodeSmoke('smoke_canvas_surface_gestures'),
+    because: '#900 AC4 depends on measured intermediate DOM rectangles during live camera CSS projection, before the terminal viewBox clears that projection.',
+    patches: [{ file: 'src/houseplan-card.ts', find: '          </div>\n          ${this._wallDialog ? this._renderWallThickDialog() : nothing}', replace: '          ${this._wallDialog ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._renderWallThickDialog()}</div>` : nothing}\n          </div>' }],
+  },
+  {
     id: 'physical-owner-rotation-loses-five-degree-step',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/physical-body-gesture.test.mjs',
     because: '#861 AC1: ordinary rotation snaps to five degrees while Shift preserves the raw angle.',

@@ -973,6 +973,12 @@ the two changing side walls and those walls are highlighted.
 
 ### Wall thickness
 
+Select the value with the mouse to replace it. Drag the dialog by its background,
+label or unit to move it aside; it stays inside the stage and holds its screen
+position while you pan or zoom the plan. Closing it forgets that position.
+Wheel over the dialog changes neither the plan nor the value. Precise editing
+is intended for a desktop mouse; moving the dialog on touch is best effort.
+
 | Property | Behaviour |
 |---|---|
 | Value | 0–100 cm for room and independent walls; empty/non-numeric input is rejected |
