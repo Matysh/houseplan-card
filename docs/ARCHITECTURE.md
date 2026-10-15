@@ -427,6 +427,16 @@ complete height chain and clip at the external slot instead (Key decision 1).
 
 ## Device markers
 
+`device-icon-roster.ts` is the pure shared eligibility boundary between painted
+icons and editor alignment/equal-spacing references (#893). The editor reads
+the same render-device snapshot and active LED replacement map as the canvas;
+it cannot align to an invisible discovered device. `DeviceDragRetirement`
+keeps a bounded retired-pointer tail journal, cleared only by fresh deliberate
+pointer/keyboard intent, not a timer. Lifecycle cancellation restores only the
+unfinished preview and explicitly repaints the live marker coordinates: Lit's
+cached pre-drag style may otherwise skip an imperative left/top rollback.
+Released serial writes and their history remain independently owned.
+
 `config.markers[]` records are
 `{id, binding: 'device:<id>'|'entity:<eid>'|'virtual', space?, area?, hidden?, removed?, name?, icon?, …}`
 plus presentation, light, control, vacuum and radar fields (`validation.py` is

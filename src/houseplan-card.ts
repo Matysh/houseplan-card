@@ -7,6 +7,8 @@
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
 import { ledAnchor, ledRelease, ledRuntime, ledStripsByMarker, ledVisible } from './led-strip-gate';
+import { visibleIconMarkers } from './device-icon-roster';
+import { DeviceDragRetirement } from './device-drag-retirement';
 import { BackupImportIntent, backupImportAllowed } from './backup-import-intent';
 import { deviceBatteryModeOf, showDeviceBatteryOf } from './device-battery-settings';
 import { ZoomScaleActivity } from './zoom-scale-activity';
@@ -2327,6 +2329,7 @@ export class HouseplanCard extends LitElement {
     this._dayCycleVisibility(signal); this._summary?.visibility(signal.kind);
     if (signal.kind === 'hidden') {
       this._abandonViewInput();
+      this._cancelDeviceDrag();
       if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
       this._radarLive.stop();
       this._editorRuntime?._cancelRadarSetup();
@@ -2533,6 +2536,7 @@ export class HouseplanCard extends LitElement {
 
   private _drag: { id: string; sx: number; sy: number; ox: number; oy: number; moved: boolean } | null = null;
   private _deviceDrag: DeviceDragState | null = null;
+  private readonly _deviceDragRetirement = new DeviceDragRetirement();
   private _rlResize: { id: string; space: string; k0: number; cx: number; cy: number; d0: number } | null = null;
   private readonly _viewHold = new ViewHoldGesture();
   private _holdFired = false;
@@ -5327,6 +5331,7 @@ export class HouseplanCard extends LitElement {
     if (!drag) return false;
     this._editorRuntime?._cancelPointerMove('device');
     this._deviceDrag = null;
+    this._deviceDragRetirement.retire(drag.pointerId);
     this._deviceHits.cancel(drag.pointerId);
     try {
       if (drag.source?.hasPointerCapture?.(drag.pointerId)) {
@@ -5336,6 +5341,7 @@ export class HouseplanCard extends LitElement {
       // Pointer capture may already have ended before the cancellation signal.
     }
     this._previewDevicePlacement(drag.id, drag.before);
+    if (this.isConnected) this._editorRuntime?._commitLiveEditor(drag.id);
     return true;
   }
 
@@ -5653,6 +5659,7 @@ export class HouseplanCard extends LitElement {
     // propagation so a Background tool still owns the same canvas point even
     // if a future CSS change accidentally makes a marker a hit target again.
     if (this._mode !== 'view' && this._mode !== 'devices') return;
+    if (this._deviceDragRetirement.blocksClick(ev as PointerEvent)) return;
     ev.stopPropagation();
     d = this._deviceForClickEvent(ev, d);
     if (this._deviceDrag?.moved || this._suppressClick || this._holdFired) return;
@@ -7035,6 +7042,7 @@ export class HouseplanCard extends LitElement {
     // event must keep bubbling to the active decor tool; do not prevent it,
     // capture it or create a layout drag.
     if (this._mode !== 'view' && this._mode !== 'devices') return;
+    this._deviceDragRetirement.begin(ev.pointerId);
     if (this._mode === 'view' && ev.pointerType === 'touch' && this._touchSequenceMultitouch) return;
     d = this._deviceHits.begin(
       this.renderRoot, this._renderDevices, this._space, ev, d,
@@ -7237,6 +7245,7 @@ export class HouseplanCard extends LitElement {
    * only a new pointerdown/keyboard event proves a new deliberate sequence.
    */
   private _guardTouchGesture(ev: Event): void {
+    if (ev.type === 'keydown') this._deviceDragRetirement.key((ev as KeyboardEvent).key);
     if (this._editorSecondary?.handleOutsideDismiss(ev)) return;
     if (this._editorRuntime?.nodeMove?.guardEvent(ev)) return;
     if (this._touchClickGuard.handleActivation(ev, this._suppressClick)) return;
@@ -10833,7 +10842,7 @@ export class HouseplanCard extends LitElement {
     // from the build, so room LQI still counts them (docs/FILTERING.md)
     const showGhosts = this._mode === 'devices' && this._showAll;
     const leds = ledStripsByMarker(space);
-    const devs = this._renderDevices.filter((d) => d.space === space.id && (!d.hidden || showGhosts) && !leds.has(d.id));
+    const devs = visibleIconMarkers(this._renderDevices, space.id, leds, showGhosts);
     // #780 r1 M1: a strip keeps its value badge at the anchor; no icon, pulse or slot.
     const ledDevs = leds.size ? this._renderDevices.filter((d) => d.space === space.id && !d.hidden && leds.has(d.id)) : [];
     const deviceSnapshot = this._renderDeviceSnapshot;

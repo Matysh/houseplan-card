@@ -14,6 +14,20 @@ import {
   queueHouseplanPointerMove,
 } from '../test-build/pointer-move-queue.js';
 
+test('cancelled device frame restores imperative DOM coordinates after its drag owner is gone', () => {
+  const element = { dataset: { id: 'moved' }, style: { left: '-10%', top: '70%' } };
+  const host = {
+    _deviceDrag: null, _devices: [{ id: 'moved' }],
+    _livePos: () => ({ x: 150, y: 200 }), _baseVb: () => [0, 0, 1000, 1000],
+    _viewOr: () => ({ x: -50, y: 0, w: 1000, h: 1000 }),
+    renderRoot: { querySelectorAll: () => [element], querySelector: () => null },
+  };
+  try {
+    commitHouseplanEditor(host, 'moved');
+    assert.deepEqual(element.style, { left: '20%', top: '20%' });
+  } finally { disposeHouseplanEditor(host); }
+});
+
 test('editor live routing keeps pointerdown and terminal changes reactive', () => {
   const beforeRaf = globalThis.requestAnimationFrame;
   const beforeCancel = globalThis.cancelAnimationFrame;

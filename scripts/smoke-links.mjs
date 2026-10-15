@@ -62,6 +62,18 @@ export const SMOKE_LINKS = [
     because: '#867: public HA sibling updates, real marker settings and mouse hover prove inherited diagnostics, local hide and canonical radio anchors through the production bundle; SVG screen-space resize endpoints need the existing native layout matrix.',
   },
   {
+    files: ['src/device-icon-roster.ts', 'src/device-drag-retirement.ts'],
+    smokes: ['smoke_editor_guides_lifecycle.mjs', 'smoke_align_guides.mjs', 'smoke_device_equal_spacing.mjs'],
+    because: '#893: the mounted lazy editor shares actual painted references with spacing/alignment; '
+      + 'native queued and painted drag retirement must restore DOM and preserve the released writer.',
+  },
+  {
+    files: ['src/wall-end-align.ts'],
+    smokes: ['smoke_wall_guide_ownership.mjs'],
+    because: '#893: the callback from the existing exact snap winner is consumed by real Walls '
+      + 'preview, one guide layer, native zoom and accepted config write, not only the pure result.',
+  },
+  {
     files: ['src/device-editor-access.ts'],
     smokes: ['smoke_view_edit_permissions.mjs'],
     because: '#844: real footer/direct/lazy/warm entries and Area-icon navigation/drag '

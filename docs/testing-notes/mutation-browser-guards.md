@@ -34,10 +34,10 @@ that transition events alone prove disposal.
 | Performance threshold | 5 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 3 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 52 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 67 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Pointer geometry and trusted interaction | 70 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 41 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 180 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **348 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 182 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **353 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -187,6 +187,14 @@ post-up capture loss require the mounted browser consumer, not just its owner un
 
 - `lock-information-badge-loses-keyboard-entry`
 
+#893: actual painted icon eligibility and the one winning wall guide cross the
+lazy editor and real SVG/marker DOM. Native pinch reaches 50%/200%; endpoint,
+axis, closure and ambiguous owners cannot leave a stale independent line.
+
+- `editor-guides-use-invisible-discovery-roster`
+- `wall-winning-guide-disconnected`
+- `wall-winning-guide-survives-other-owner`
+
 #871: animated puck centres and SVG endpoints share the real composed screen
 matrix during trusted pan/pinch.
 
@@ -324,6 +332,15 @@ preserving its exact entity target and fresh card membership.
 - `info-card-row-trusts-retired-membership`
 - `info-card-row-crosses-ha-authority`
 - `info-card-row-dispatches-controls-neighbour`
+
+#893: a trusted marker move queues work before explicitly delivered lifecycle
+retirement. Compare the complete layout, actual painted rollback, capture,
+history/services/writes and old-tail/fresh-input controls; a released pending
+write is a separate negative control. Pure retirement/DOM positioning helpers
+retain cheaper unit guards.
+
+- `hidden-device-drag-not-retired`
+- `retired-device-tail-opens-settings`
 
 #890 pre-release AC6: the public old-server push crosses an already mounted
 subscription while a new connection's paired load is pending. A pure context

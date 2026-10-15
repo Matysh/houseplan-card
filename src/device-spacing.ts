@@ -24,6 +24,7 @@
  * move scans the ready targets once — at most 2N, never pairs of markers.
  */
 import { clampCanvasR } from './space-geometry';
+import { positionableIconMarkers } from './device-icon-roster';
 
 /** Line and step tolerance, plan units. */
 export const SPACING_EPS = 1e-6;
@@ -65,9 +66,7 @@ export interface SpacingDevice {
  */
 export const spacingMarkers = <D extends SpacingDevice>(
   devices: readonly D[], moving: D, leds: { has(id: string): boolean }, pos: (d: D) => SpacingMarker,
-): SpacingMarker[] => devices
-  .filter((d) => d.space === moving.space && d.id !== moving.id && !d.hidden && !leds.has(d.id)
-    && d.bindingStatus?.kind !== 'ha_disabled')
+): SpacingMarker[] => positionableIconMarkers(devices, moving.space, leds, moving.id)
   .map(pos);
 
 /**

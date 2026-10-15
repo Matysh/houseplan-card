@@ -255,6 +255,7 @@ import { renderBackdropGuard, renderPlanBackdropGuard, stagePlanFile, uploadPlan
 import { CommandStack } from './command-stack';
 import type { DeviceLayout, DevicePlacement, DevicePositionState } from './device-position-history';
 import { SpacingMagnet, spacingMarkers, spacingRows } from './device-spacing'; // #873
+import { positionableIconMarkers } from './device-icon-roster';
 import { ledStripsByMarker } from './led-strip-gate';
 import { effectiveDeviceBaseSize } from './device-marker-geometry';
 import { contentFingerprint } from './visual-continuity';
@@ -554,6 +555,7 @@ export interface HouseplanEditorHostPort {
   _devicePositionBusy: boolean;
   _devicePositionHistory: CommandStack<DevicePositionState>;
   _devices: DevItem[];
+  readonly _renderDevices: readonly DevItem[];
   _dirtyPos: Set<string>;
   _display: (url: string | null | undefined) => string;
   _wallChainSegmentCms: number[];
@@ -827,6 +829,8 @@ export const EDITOR_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 export { EDITOR_LANGUAGE_RUNTIME }; // #627: see src/i18n/editor-language.ts
 
 export class HouseplanEditorRuntime {
+  /** The same winning #885 endpoint as the cursor/commit, never a second snap query. */
+  private _wallEndGuide: AlignGuide | null = null;
   private readonly physicalWriteHistory = new PhysicalWriteHistory();
   public readonly chainExit: EditorChainExit;
   private _navigationIntent = 0;
@@ -980,7 +984,7 @@ public _routeLiveEditorUpdate(name?: PropertyKey, oldValue?: unknown): boolean {
     if (!live && this.host._resize.preview) this._resizeBaseFrameStable = false;
     return live;
   }
-public _commitLiveEditor(): void { commitHouseplanEditor(this.host); this.nodeMove?.paint(); }
+public _commitLiveEditor(deviceId?: string): void { commitHouseplanEditor(this.host, deviceId); this.nodeMove?.paint(); }
 public _disposeLiveEditor(): void { this.invalidateEditorNavigation(); this._nodeMoveEpoch++; this.nodeMove?.dispose(); this._radarSetup.reset(); this.roomGear.reset(); disposeHouseplanEditor(this.host); }
 public _cancelRadarSetup(): void { this._radarSetup.interrupt(); }
 public async _whenLiveEditorSettled(): Promise<void> {
@@ -1505,11 +1509,15 @@ public _resolvePlanDrawPoint(
     const candidate = resolution.kind === 'resolved' ? resolution.candidate : null;
     const snapped = candidate ? [...candidate.point] : this._snapDrawPoint(raw, lock45);
     const point = anchor ? snapNearAxisEndpoint(anchor, snapped) : snapped;
+    this._wallEndGuide = null;
+    const wallGuideBlocked = !!candidate || resolution.kind === 'ambiguous'
+      || !!(lock45 && anchor && point[0] !== anchor[0] && point[1] !== anchor[1]);
     // #885: with no node/axis/closure owner, an exact H/V segment end aligns
     // with a parallel wall end (8 CSS px) before the grid keeps the point.
     const space = this.host._spaceModel();
     const end = !candidate && anchor && space ? alignDrawnWallEnd(anchor, point, raw,
-      planWalls(snapshot.value, space), this._cssPxToRender(8), options.epsilon) : point;
+      planWalls(snapshot.value, space), this._cssPxToRender(8), options.epsilon,
+      (guide) => { if (!wallGuideBlocked) this._wallEndGuide = guide; }) : point;
     // A nearby topology endpoint loses snap ownership when the drafting rule
     // moves the actually persisted point away from it. Preview and click must
     // describe the exact same geometry (#290).
@@ -1524,6 +1532,7 @@ public _resolvePlanDrawPoint(
   }
 
 public _clearPlanSnapHover(clearCursor = true): void {
+    this._wallEndGuide = null;
     this.host._planSnapHover = null;
     this._syncPlanSnapActiveMarker(null);
     this._syncPlanSnapConflictMarkers([]);
@@ -10510,9 +10519,8 @@ public _alignCandidates(): number[][] {
       // matches itself within tolerance: the guide was drawn from the marker
       // to itself and is indistinguishable from an honest one.
       const draggedId = this.host._deviceDrag?.id ?? this.host._drag?.id;
-      for (const d of this.host._devices) {
-        if (d.space !== this.host._space || d.id === draggedId
-            || d.bindingStatus?.kind === 'ha_disabled') continue;
+      for (const d of positionableIconMarkers(this.host._renderDevices, this.host._space,
+          ledStripsByMarker(spm), draggedId)) {
         const p = this.host._pos(d);
         out.push([p.x, p.y]);
       }
@@ -10532,7 +10540,7 @@ public _deviceSpacing(d: DevItem, place: (x: number, y: number) => DevicePlaceme
     const space = this.host._spaceModel();
     const size = this.host._config?.icon_size ?? 2.5; // the card's rule: above 8 is the default
     const k = this.host._norm ? NORM_W : 1;
-    return new SpacingMagnet(spacingMarkers(this.host._devices, d, ledStripsByMarker(space), (o) => this.host._pos(o)),
+    return new SpacingMagnet(spacingMarkers(this.host._renderDevices, d, ledStripsByMarker(space), (o) => this.host._pos(o)),
       (x, y) => {
         const p = place(x, y);
         return { p, x: p.x * k, y: p.y * k };
@@ -10548,8 +10556,10 @@ public _renderAlignGuides(): TemplateResult {
     const rows = spacingRows(this.host._deviceDrag?.spacing, (d) => this.host._fmtLen([0, 0], [d, 0]));
     // exact node match for grid-snapped things; half a cell for free-moving cards
     const tol = this.host._drag?.id.startsWith('rl_') ? this.host._gridPitch * 0.5 : this.host._gridPitch * 0.05;
-    const guides = pt ? alignGuides(pt, this._alignCandidates(), tol)
-      .filter((gd) => !rows.some((row) => (row.axis === 'h') === (gd.axis === 'y'))) : [];
+    const drawing = this.host._markup && this.host._tool === 'draw';
+    const offered = drawing && this._wallEndGuide ? [this._wallEndGuide]
+      : pt ? alignGuides(pt, this._alignCandidates(), tol) : [];
+    const guides = pt ? offered.filter((gd) => !rows.some((row) => (row.axis === 'h') === (gd.axis === 'y'))) : [];
     if (!guides.length && !rows.length) return svg`` as unknown as TemplateResult;
     const g = this.host._gridPitch;
     const over = g * 1.5; // extend a little past the point
@@ -10562,7 +10572,8 @@ public _renderAlignGuides(): TemplateResult {
         const [x1, y1, x2, y2] = gd.axis === 'x'
           ? [gd.at, gd.from[1], gd.at, pt![1] + Math.sign(pt![1] - gd.from[1]) * over]
           : [gd.from[0], gd.at, pt![0] + Math.sign(pt![0] - gd.from[0]) * over, gd.at];
-        return svg`<line class="alignline" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"></line>
+        return svg`<line class="alignline" data-wall-end-guide=${drawing && gd === this._wallEndGuide ? 'true' : nothing}
+          x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"></line>
           <circle class="aligndot" cx="${gd.from[0]}" cy="${gd.from[1]}"
             r="${gridVisualUnits(g * 0.18, this.host._cellCm)}"></circle>`;
       })}

@@ -1149,6 +1149,10 @@ and its other entities remain deleted. The complete device stays available in
 - drag a marker to save its server-side position. One completed drag creates
   one position-history step; a cancelled, unchanged or failed drag creates
   none;
+- guides refer only to other visible, movable icons on this floor, not hidden
+  devices or icons replaced by LED strips. Leaving the page/editor/floor while
+  dragging cancels that unfinished move and restores the icon; the next drag
+  works immediately. A move already released for saving is not cancelled;
 - **equal spacing** (#873): once two markers stand in one horizontal or
   vertical row, a dragged marker snaps to the point one step past either end
   of that row when the pointer is within 6 px of it, and lets go beyond 10 px —

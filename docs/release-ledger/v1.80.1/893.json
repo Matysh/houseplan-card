@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 893,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "v1.80.1 already provides device alignment guides, icon/LED replacement and unfinished device placement previews. This fixes invisible references and interrupted-drag rollback for those existing stable behaviours. The additional Walls line only exposes the winning endpoint from #885 introduced within this cycle; that intermediate polish is not a separate stable-release feature.",
+  "summary": {
+    "ru": "Направляющие учитывают видимые значки, а уход со страницы безопасно отменяет незавершённое перемещение.",
+    "en": "Guides use visible icons, and leaving a page safely cancels unfinished marker moves."
+  }
+}

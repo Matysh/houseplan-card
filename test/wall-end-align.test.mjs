@@ -6,6 +6,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { alignWallEnd, alignDrawnWallEnd } from '../test-build/wall-end-align.js';
+
+test('#893 the drawing guide names the very endpoint which won #885, without changing the point', () => {
+  const walls = [[[100, 80], [417.3, 80]], [[417.3, 80], [500, 80]], [[2, 200], [418, 200]]];
+  const guides = [];
+  const point = alignDrawnWallEnd([0, 5], [420, 5], [415, 6], walls, 8, 1e-6, g => guides.push(g));
+  assert.deepEqual(point, [417.3, 5]);
+  assert.deepEqual(guides, [{ axis: 'x', at: 417.3, from: [417.3, 80] }], 'one deduplicated winning guide');
+  const vertical = [];
+  assert.deepEqual(alignDrawnWallEnd([5, 0], [5, 420], [6, 415],
+    [[[80, 100], [80, 417.3]]], 8, 1e-6, g => vertical.push(g)), [5, 417.3]);
+  assert.deepEqual(vertical, [{ axis: 'y', at: 417.3, from: [80, 417.3] }]);
+  for (const p of [[420, 9], [0, 5], [900, 5]]) {
+    const absent = [];
+    alignDrawnWallEnd([0, 5], p, p, walls, 8, 1e-6, g => absent.push(g));
+    assert.deepEqual(absent, [], 'diagonal/zero/no candidate cannot promise an alignment magnet');
+  }
+});
 import { applyNodeMove, prepareNodeMove, resolveNodeMoveSnap, structuralWallNodes }
   from '../test-build/wall-node-move.js';
 

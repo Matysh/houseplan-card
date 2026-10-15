@@ -78,6 +78,32 @@ The ordinary unchanged consumer passes on accepted `dced034b` and fails on
 expectations and adds explicit second-Apply/canonical-host preconditions.
 It does not flush/cancel the writer or weaken the pending-write negative above.
 
+## Editor reference/retirement witnesses (#893)
+
+After `npm run bundle:sync`, `npx tsc -p tsconfig.test.json` and
+`node scripts/fix-test-build.mjs`, run:
+
+```
+node --test test/device-icon-roster.test.mjs test/device-drag-retirement.test.mjs test/device-spacing.test.mjs test/wall-end-align.test.mjs test/live-editor.test.mjs
+node demo/smoke_editor_guides_lifecycle.mjs
+node demo/smoke_wall_guide_ownership.mjs
+node demo/smoke_align_guides.mjs
+node demo/smoke_device_equal_spacing.mjs
+```
+
+The first native witness compares references to real painted icons, toggles LED
+replacement and retires both a pending first move and an already painted guide.
+Its real mouse move is trusted; hidden is emulated and pagehide/pageshow are
+explicitly dispatched, not real bfcache/device acceptance. It checks the entire
+layout, DOM rollback, capture/guides, zero writes/history/services and immediate
+fresh keyboard/drag, plus a released-but-unacknowledged write control.
+The Walls witness records actual HA config writes and exact off-grid preview
+identity for H/V and 0/20 cm walls, with endpoint/axis/closure/Shift/ambiguous
+negative owners. A trusted CDP pinch reaches 50%/200% in light/dark themes;
+four stage PNG observations are in `artifacts/issue-893/`, not accepted baselines.
+The original alignment/equal-spacing assertions remain unchanged. Static
+mutation readiness is not mutant execution or physical/GPU acceptance.
+
 ## Pre-release subscription ownership fix (#890, PROCESS §11.4)
 
 `node demo/smoke_config_authority.mjs` explicitly pushes the retired A server

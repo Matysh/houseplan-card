@@ -301,12 +301,11 @@ const editorTemplate = (host: LiveEditorHost): TemplateResult | typeof nothing =
   </g>`;
 };
 
-const paintDevice = (host: LiveEditorHost, root: ParentNode): void => {
-  const drag = host._deviceDrag;
-  if (!drag) return;
-  const device = host._devices.find((candidate) => candidate.id === drag.id);
+const paintDevice = (host: LiveEditorHost, root: ParentNode, id = host._deviceDrag?.id): void => {
+  if (!id) return;
+  const device = host._devices.find((candidate) => candidate.id === id);
   const element = [...root.querySelectorAll<HTMLElement>('[data-hp="device"]')]
-    .find((candidate) => candidate.dataset.id === drag.id);
+    .find((candidate) => candidate.dataset.id === id);
   if (!device || !element) return;
   // #713: the 2.5D floor is the Flat plane, and editors are Flat anyway.
   const position = host._livePos(device);
@@ -435,12 +434,15 @@ export function measureHouseplanDecorText(value: object): void {
   host.requestUpdate();
 }
 
-export function commitHouseplanEditor(value: object): void {
+export function commitHouseplanEditor(value: object, restoredDeviceId?: string): void {
   const host = value as LiveEditorHost;
   const state = stateOf(value);
   if (state.raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(state.raf);
   state.raf = 0;
   restore(state);
+  // A cancelled drag restores the same style string Lit already remembers.
+  // Repaint the imperative live left/top too; requestUpdate alone may skip it.
+  if (restoredDeviceId && host.renderRoot) paintDevice(host, host.renderRoot, restoredDeviceId);
   const target = (host.renderRoot as ParentNode | undefined)
     ?.querySelector<SVGElement>('[data-hp-live-editor]');
   if (target) render(nothing, target);

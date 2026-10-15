@@ -500,7 +500,7 @@ wall runs diagonally is broken geometry, not a tidy plan:
 | fixed-topology room-wall resize | `_rszMove` → `_snap`; the last safe node before a corner/opening/third room wins |
 | decor draft endpoints, text anchor | `_decorPointerDown` / `_stagePointerMove` → `_snap` |
 | decor move | `_decorMoveUpdate` → `_snap` of the resulting ANCHOR |
-| device markers | `_savePos` |
+| device markers | `_devicePlacementForCanvas` → `_persistDevicePlacement` |
 | a device marker pulled to an equal-spacing target (#873) | `SpacingMagnet.resolve` (`src/device-spacing.ts`): the target itself is a node |
 | room labels | `_labelMove` → `_savePos` |
 | auto-placed markers (`defaultPositions`), the `spaceCenter` fallback, an undragged room label | `snapPt` |
@@ -514,6 +514,18 @@ markers between nodes offers no target (Optimize moves them onto nodes). The
 pull is 6 CSS px in and 10 px out, measured from the raw pointer point, the
 same at every zoom; outside it the nearest node applies as before. Alignment
 guides remain indication only.
+
+Device alignment and equal-spacing references come from the actually painted
+icon roster (`device-icon-roster.ts`), not the full discovered device list.
+Exclude the moving marker, other spaces, hidden/removed/HA-disabled markers
+and an icon replaced by an active LED strip. A service ghost is a reference
+only when it is actually painted and positionable. This never changes the
+grid, marker rounding, equal-spacing 6/10 px hysteresis or room-label `_savePos`.
+Hidden/pagehide, editor/space changes and detach retire only an unfinished
+marker preview: discard queued moves/live guides, release capture and restore
+both its saved coordinates and imperative painted position. No write/history
+or old-tail activation follows. A drag already released to the serial writer
+keeps its pending save. Shared lifecycle subscriptions are disposed on detach.
 
 **WALL-BOUND — projected onto the wall, then the offset ALONG the wall
 quantised to the same step, measured from the wall's first corner:**
@@ -588,6 +600,12 @@ The coordinate along the segment becomes exactly the candidate's (off-grid
 included); the anchor's cross coordinate stays. Several candidates: the nearest
 on screen. Shift keeps it at 0°/90° and never at 45°. Order: endpoint/axis/
 closure > alignment > grid; hover, labels and click consume that same point.
+
+For Walls drawing the independent-end guide observes that very winning #885
+endpoint in the existing pass, including zero-thickness walls; it never runs
+a second snap query. Endpoint/axis/closure, ambiguous and true Shift-diagonal
+owners cannot leave a stale independent-end guide. The former room/active-chain
+indication remains unchanged, and there is only one painted guide layer.
 
 `alignGuides()` stays indication in every context. The former "indication
 only — no magnetism, the grid owns the position" rule now holds everywhere

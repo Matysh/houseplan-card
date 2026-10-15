@@ -1,6 +1,7 @@
 /** #885: an exact H/V wall end aligned with the line through a parallel wall end.
  * Editor-only (Walls drawing, wall-node move): kept out of the startup graph. */
 import { roomEdges } from './logic';
+import type { AlignGuide } from './logic';
 import type { SpaceModel } from './types';
 
 /**
@@ -14,13 +15,17 @@ import type { SpaceModel } from './types';
 export function alignWallEnd(
   probe: readonly number[], along: 0 | 1, walls: readonly (readonly number[])[][],
   radius: number, avoid: readonly number[], eps: number,
+  onMatch?: (point: readonly number[]) => void,
 ): { at: number; d: number } | null {
   let best: { at: number; d: number } | null = null;
   for (const [a, b] of walls) {
     if (Math.abs(a[1 - along] - b[1 - along]) > eps || Math.abs(a[along] - b[along]) <= eps) continue;
-    for (const end of [a[along], b[along]]) {
-      const d = Math.abs(end - probe[along]);
-      if (d <= radius && (!best || d < best.d) && !avoid.some((v) => Math.abs(v - end) <= eps)) best = { at: end, d };
+    for (const point of [a, b]) {
+      const end = point[along], d = Math.abs(end - probe[along]);
+      if (d <= radius && (!best || d < best.d) && !avoid.some((v) => Math.abs(v - end) <= eps)) {
+        best = { at: end, d };
+        onMatch?.(point);
+      }
     }
   }
   return best;
@@ -43,9 +48,15 @@ export function planWalls(
 export function alignDrawnWallEnd(
   anchor: readonly number[], point: number[], probe: readonly number[],
   walls: readonly (readonly number[])[][], radius: number, eps: number,
+  onGuide?: (guide: AlignGuide) => void,
 ): number[] {
   const h = Math.abs(point[1] - anchor[1]) <= eps;
   if (h === Math.abs(point[0] - anchor[0]) <= eps) return point;
-  const along = h ? 0 : 1, hit = alignWallEnd(probe, along, walls, radius, [anchor[along]], eps);
+  const along = h ? 0 : 1;
+  const observed: { guide: AlignGuide | null } = { guide: null };
+  const hit = alignWallEnd(probe, along, walls, radius, [anchor[along]], eps, (from) => {
+    observed.guide = { axis: h ? 'x' : 'y', at: from[along], from: [...from] };
+  });
+  if (hit && observed.guide) onGuide?.(observed.guide);
   return hit ? (h ? [hit.at, point[1]] : [point[0], hit.at]) : point;
 }

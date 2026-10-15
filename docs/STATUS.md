@@ -33,6 +33,13 @@ frames and unchanged explicit entity ids remain live. Lock badges expose
 information through pointer and keyboard only;
 Flat target size remains unchanged by the owner's explicit decision.
 
+Editor reference/retirement work (#893) shares the painted icon eligibility
+between the canvas, alignment and equal spacing; Walls guides observe the
+existing winning endpoint rather than resnapping. Interrupted unfinished
+device previews retire queued/live frames and old activation tails while
+released serial saves retain ownership. This record describes implementation;
+GitHub labels and independent review, not prose here, establish its status.
+
 QA fixture/capture contracts (#896) record every delegated service action and
 persist independent config/layout wire pairs with CAS and exact point updates.
 Foreign HA smoke consumers wait for their own accepted reads; pending display
