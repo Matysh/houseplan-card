@@ -111,10 +111,21 @@ const out = await page.evaluate(async () => {
       === JSON.stringify(original.spaces[0].openings)
     && card._canOptimizeUndo === false;
 
+  // Undo restored the legacy v7 body. Let its real adoption/migration write
+  // finish before asking for a NEW preview: #892 correctly refuses a preview
+  // whose frozen source changes while its pending writes are being joined.
+  // This observer neither flushes nor cancels that write. The stale-preview
+  // refusal itself remains covered by smoke_optimize_context's held Save.
+  await window.__hpTest.waitForWrites();
+
   // Apply once more and prove the ordinary shared wall is no longer hidden
   // underneath an independent-wall blocker in the remaining Thickness tool.
   await card._editorRuntime.optimizePlans.open(); await card.updateComplete;
   await card._editorRuntime.optimizePlans.run(); await card.updateComplete;
+  result.secondApplyWasAccepted = sent.filter((type) => type === 'houseplan/plan/optimize').length === 2;
+  const beforeThickness = card._serverCfg.spaces[0];
+  result.thicknessStartsOnCanonicalBody = beforeThickness.partitions == null
+    && wallHostResolves(beforeThickness, beforeThickness.openings[0]);
   card._setMode('plan'); card._markup = true;
   card._modelCache = null; card.requestUpdate(); await card.updateComplete;
   card._tool = 'wallthick';

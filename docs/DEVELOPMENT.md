@@ -68,6 +68,16 @@ two floor scales. Its largest deleted-floor displacement disappears only when
 that record is selected for removal; every remaining displacement still lies
 under the final candidate's reported maximum.
 
+`smoke_optimize_coincident_partition` waits for the real legacy-body migration
+write after its original Undo oracle, before requesting an independent second
+preview. Without that observation, the new source barrier correctly refreshes
+the stale preview instead of sending a second Optimize, and the old consumer
+mistakes an unoptimized partition for the intended canonical Thickness target.
+The ordinary unchanged consumer passes on accepted `dced034b` and fails on
+`70cd8b76`; the natural `waitForWrites` adapter restores all ten original
+expectations and adds explicit second-Apply/canonical-host preconditions.
+It does not flush/cancel the writer or weaken the pending-write negative above.
+
 ## Pre-release subscription ownership fix (#890, PROCESS §11.4)
 
 `node demo/smoke_config_authority.mjs` explicitly pushes the retired A server
