@@ -1,4 +1,4 @@
-# #901 — ordinary continuation ownership evidence
+# #901 — author ordinary continuation ownership evidence
 
 The ordinary Node harness uses compiled exports and real `ConfigAdoption` /
 `adoptAuthoritativeGated`, with controlled transport/backdrop promises. The

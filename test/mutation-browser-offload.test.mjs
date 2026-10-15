@@ -20,7 +20,7 @@ test('#659 pure state writers keep one-way ownership and current request claims'
   );
   assert.doesNotMatch(stairs, /-mirror|_serverCfg\.spaces\.find/);
   contains('src/version-recovery-card.ts',
-    '(response) => adoptCardConfigCapabilities(host, response),');
+    '(response) => { if (isCurrent()) adoptCardConfigCapabilities(host, response); },');
   contains('src/vacuum-calibration-write.ts', 'const space = proposal.space || device.space;');
   contains('src/device-inbox.ts',
     'if (isRemovedPlanEntity(h, eid, removed) && !removedBindings.has(value) && !childOfRemovedDevice) continue;');
