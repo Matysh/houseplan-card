@@ -21,7 +21,9 @@
   room LQI counts each physical radio once. Zigbee hover uses a stable device
   or first configured entity representative, including when another channel is
   hovered, and routes stay aligned after resizing without repeated empty-overlay
-  rendering while provider data is absent ([#867](https://github.com/Matysh/houseplan-card/issues/867)).
+  rendering while provider data is absent. Embedded floor cards share the same
+  registry-owned diagnostic index across live state updates
+  ([#867](https://github.com/Matysh/houseplan-card/issues/867)).
 
 - Saving no longer falls back to an old cached plan when Home Assistant reapplies
   card options. Refused vacuum-map edits and New acknowledgements restore their

@@ -4,7 +4,7 @@
  */
 import { iconFor, iconFromDeviceClasses, DOMAIN_PRIORITY, FALLBACK_ICON, type CompiledIconRule, EXCLUDED_DOMAINS } from './rules';
 import { averageLqi, isControllable } from './logic';
-import { createDeviceSignalContext, deviceLqi, deviceSignalPhysicalId, type DeviceSignalDevice } from './device-signal';
+import { createDeviceSignalContext, deviceLqi, deviceSignalPhysicalId, type DeviceSignalDevice, type DeviceSignalHass } from './device-signal';
 export { lqiFor } from './device-signal';
 import {
   applianceLifecycleRoleRank, isDevicePowerSwitch, isSemanticBinaryEntity,
@@ -1641,7 +1641,7 @@ export function areaLightStats(
 
 /** Average temperature across the area's devices (null when nothing reports one). */
 /** Average zigbee signal (LQI) across an area's non-virtual devices, or null. */
-export function areaLqi(hass: any, devices: readonly (DeviceSignalDevice & { area: string })[], area: string): number | null {
+export function areaLqi(hass: DeviceSignalHass, devices: readonly (DeviceSignalDevice & { area: string })[], area: string): number | null {
   const vals: number[] = [];
   const context = createDeviceSignalContext(hass);
   const counted = new Set<string>();

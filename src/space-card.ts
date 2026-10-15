@@ -20,6 +20,7 @@ import { ContentSigner } from './signing';
 import { normalizeDeviceDisplay, openingEntityReferences, referencedContentUrls } from './logic';
 import { acquireHaRegistries, activeRegistryHass, fullRegistryHass, haRegistrySnapshot } from './ha-binding-status';
 import { createDeviceBatteryContext } from './device-battery';
+import { createDeviceSignalContext } from './device-signal';
 import { deviceBatteryModeOf, showDeviceBatteryOf } from './device-battery-settings';
 import { resolvedLightSources } from './devices';
 import { ledRelease, ledStripsByMarker } from './led-strip-gate';
@@ -518,6 +519,7 @@ class HouseplanSpaceCard extends LitElement {
     const showBattery = showDeviceBatteryOf(this._snap?.config?.settings);
     const batteryLowOnly = deviceBatteryModeOf(this._snap?.config?.settings) === 'low';
     const batteryContext = showBattery ? createDeviceBatteryContext(planHass, registryHass) : undefined;
+    const signalContext = createDeviceSignalContext(planHass, registryHass);
     const presentations = new Map<string, ReturnType<typeof resolveDevicePresentation>>();
     const entityIds = new Set<string>(['sun.sun']);
     const deviceIds = new Set<string>();
@@ -555,6 +557,7 @@ class HouseplanSpaceCard extends LitElement {
             showBattery: showBattery && !leds.has(device.id),
             batteryLowOnly,
             batteryContext,
+            signalContext,
             activityRuntime: this._activityRuntime.get(device.id),
             sourceDetails: false,
             lightDevices: this._devices,
@@ -567,7 +570,7 @@ class HouseplanSpaceCard extends LitElement {
     }
     const snapshot = createRenderDeviceSnapshot({
       sourceSequence: this._hassSequence, hass: planHass,
-      devices: this._devices, presentations, entityIds, deviceIds, areaIds, showBattery, batteryContext,
+      devices: this._devices, presentations, entityIds, deviceIds, areaIds, showBattery, batteryContext, signalContext,
       geometry: this._snapshotGeometry(),
     });
     this._capturedSeq = this._hassSequence;

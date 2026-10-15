@@ -302,6 +302,14 @@ const MUTANT_DEFINITIONS = [
       replace: '    // forget the dimensions of empty/loading overlay renders' }],
   },
   {
+    id: 'signal-static-card-rebuilds-active-registry-index',
+    guard: 'node --test test/space-card-signal.test.mjs',
+    because: '#867 AC7: the real static-card willUpdate/capture consumer must share its registry-owned signal context with the snapshot; four state-only frames observe one index construction and one existing active-roster projection per frame.',
+    patches: [{ file: 'src/space-card.ts',
+      find: 'devices: this._devices, presentations, entityIds, deviceIds, areaIds, showBattery, batteryContext, signalContext,',
+      replace: 'devices: this._devices, presentations, entityIds, deviceIds, areaIds, showBattery, batteryContext,' }],
+  },
+  {
     id: 'signal-entity-reads-functional-roster-only',
     guard: 'node --test test/device-signal.test.mjs',
     because: '#867 AC1: exact own physical siblings supply diagnostics without changing the functional roster; missing parent and router controls remain negative cases.',

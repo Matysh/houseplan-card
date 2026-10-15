@@ -28,7 +28,7 @@ test('#872 render frames reuse owned geometry but isolate mutable HA attributes'
   assert.throws(() => first.facts.get('vacuum:robot').trail[0].push([2, 2]), TypeError);
 });
 
-test('#792 opt-out skips battery indexing and extra tick dependencies, not ordinary sources', () => {
+test('#792/#867 battery opt-out skips its index, not independent own-radio dependencies', () => {
   // The diagnostic sibling deliberately precedes the bound entity and has no
   // plan Area: ordinary projection alone does not need this separate source.
   const ha = {
@@ -53,8 +53,9 @@ test('#792 opt-out skips battery indexing and extra tick dependencies, not ordin
   const disabled = createRenderDeviceSnapshot({ ...options, showBattery: false,
     get batteryContext() { throw new Error('opt-out must not access the battery index'); },
   });
-  assert.equal(disabled.entityIds.includes('sensor.charge'), false);
-  assert.equal(classifyHassRenderChange(ha, next, disabled), 'none');
+  assert.equal(disabled.entityIds.includes('sensor.charge'), true,
+    'a live own sibling may carry LQI attributes independently of battery presentation');
+  assert.equal(classifyHassRenderChange(ha, next, disabled), 'state');
   const enabled = createRenderDeviceSnapshot(options);
   assert.equal(enabled.entityIds.includes('sensor.charge'), true);
   assert.equal(classifyHassRenderChange(ha, next, enabled), 'state');

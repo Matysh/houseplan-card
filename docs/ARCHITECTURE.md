@@ -1034,6 +1034,9 @@ sibling reads are tracked by the presentation reuse window and included in the
 frozen render snapshot even with battery indicators off. `areaLqi` and the card's
 room projection share one physical-radio-per-room aggregation. The optional
 `hide_signal` flag affects only the system plan line, not sources or controls.
+Embedded floor captures pass that same full-registry-owned context to both
+presentations and snapshot projection; a newly allocated active projection is
+not the ownership key of the diagnostic index.
 Topology mapping records all eligible hover aliases while preserving one device
 or configuration-ordered entity representative. Cross-floor representatives use
 existing named remote bubbles, without routing through the hovered alias. An
