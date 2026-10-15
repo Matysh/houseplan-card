@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 144, issue: 70. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 146, issue: 70. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -22,6 +22,8 @@
 | #903 | [CODE-REVIEW-903-r1.md](CODE-REVIEW-903-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #902 | [SPEC-REVIEW-902-r1.md](SPEC-REVIEW-902-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | DoR не закрыт: не названо влияние на touch/View-kiosk и на производительность | `PROCESS.md` `docs/TOUCH-SUPPORT.md` |
 | #902 | [SPEC-REVIEW-902-r2.md](SPEC-REVIEW-902-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #902 | [CODE-REVIEW-902-r1.md](CODE-REVIEW-902-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | layout-raced → авто-повтор loadFromServer без «чем краснеет» | `src/houseplan-card.ts` `src/layout-write-reload.ts` `docs/WARM-REMOUNT.md` `mutation-registry.mjs` `test/layout-write-reload.test.mjs` `layout-write-reload.ts` `houseplan-card.ts` `houseplan-card.js` |
+| #902 | [CODE-REVIEW-902-r2.md](CODE-REVIEW-902-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #901 | [SPEC-REVIEW-901-r1.md](SPEC-REVIEW-901-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #901 | [CODE-REVIEW-901-r1.md](CODE-REVIEW-901-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #900 | [SPEC-REVIEW-900-r1.md](SPEC-REVIEW-900-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | отсутствует буквальная декларация Touch editor: … | `docs/TOUCH-SUPPORT.md` `docs/specs/485-radar-presence-stage1.md` `docs/specs/220-space-tab-reorder.md` |
