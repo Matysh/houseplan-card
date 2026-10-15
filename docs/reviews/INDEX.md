@@ -1,9 +1,10 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 121, issue: 57. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 122, issue: 58. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
+| #900 | [SPEC-REVIEW-900-r1.md](SPEC-REVIEW-900-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | отсутствует буквальная декларация Touch editor: … | `docs/TOUCH-SUPPORT.md` `docs/specs/485-radar-presence-stage1.md` `docs/specs/220-space-tab-reorder.md` |
 | #899 | [CODE-REVIEW-899-r1.md](CODE-REVIEW-899-r1.md) | code · r1 | 🟡 жёлтый | 1 | 0 | новый LED-смок нестабилен: ~40% падений на собственном материале задачи | `demo/smoke_led_strip_glow.mjs` `docs/STATUS.md` `scripts/mutation-registry.mjs` |
 | #899 | [CODE-REVIEW-899-r2.md](CODE-REVIEW-899-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #898 | [CODE-REVIEW-898-r1.md](CODE-REVIEW-898-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
