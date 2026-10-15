@@ -106,12 +106,17 @@ export function deviceLqi(
   hass: DeviceSignalHass, device: DeviceSignalDevice,
   context = createDeviceSignalContext(hass),
 ): number | null {
+  const inheritsDiagnostics = bindingOf(device)?.kind === 'entity';
   const ids = deviceSignalEntityIds(device, context).filter((id) => {
     const registry = context.entities[id];
     if (registry?.disabled_by != null || (registry?.device_id
         && context.devices[registry.device_id]?.disabled_by != null)) return false;
     const state = context.states[id];
-    return !!state && state.state !== 'unknown' && state.state !== 'unavailable';
+    // Device markers retain their established exact-attribute reading even
+    // when the functional entity is unavailable. Only inherited entity-marker
+    // diagnostics reject a stale sibling state as a new live source.
+    return !!state && (!inheritsDiagnostics
+      || (state.state !== 'unknown' && state.state !== 'unavailable'));
   });
   return lqiFor(context, ids);
 }

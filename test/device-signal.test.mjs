@@ -43,6 +43,15 @@ test('#867 AC1 own Z2M/ZHA siblings and exact attributes share one canonical rea
   assert.equal(deviceLqi(h, d), 50, 'same canonical average across own active attributes');
   const physical = marker('device', 'A');
   assert.equal(deviceLqi(h, physical), 0, 'physical device keeps its existing entity selection');
+  h.states['switch.a2'] = state('on');
+  for (const unavailable of ['unknown', 'unavailable']) {
+    h.states['switch.a'] = state(unavailable, { linkquality: 182 });
+    assert.equal(deviceLqi(h, physical), lqiFor(h, physical.entities),
+      'existing device-marker exact attributes retain canonical availability policy');
+    assert.equal(deviceLqi(h, physical), 182);
+    assert.equal(deviceLqi(h, d), null,
+      'new entity inheritance must not turn an unavailable sibling attribute into a live reading');
+  }
 });
 
 test('#867 AC1 exact ownership refuses router/controls, unknown/disabled/missing parents and sources', () => {
