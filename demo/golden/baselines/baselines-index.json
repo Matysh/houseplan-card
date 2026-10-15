@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 74,
-  "acceptedAt": "2026-10-14T09:42:59.475Z",
-  "sourceFingerprint": "8eaa455fd5cc09e815ee2cd5151f7b4ae3a87329629b6c95d8017993ac3987b8",
+  "acceptedAt": "2026-10-15T00:19:58.348Z",
+  "sourceFingerprint": "f6b43bd4abff094dc8eb92787a4dd86ea4dff8ca90863a41bb046510856f1d9d",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,18 +10,45 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "8eaa455fd5cc09e815ee2cd5151f7b4ae3a87329629b6c95d8017993ac3987b8",
-    "ci": {
+    "buildFingerprint": "f6b43bd4abff094dc8eb92787a4dd86ea4dff8ca90863a41bb046510856f1d9d",
+    "ci": null
+  },
+  "localAttestation": {
+    "schema": "houseplan-golden-wsl/v2",
+    "sha256": "e75c5594a4dd52ffe2c38047ef924dc9c942ee376743debb592b84c539e20a08",
+    "artifactSha256": "9eefa01cb69b47ff0fb6eadfe36eaeaf7ff92221e5f8f25a21e5016cb668ded9",
+    "createdAt": "2026-10-15T00:19:06.271Z",
+    "source": {
       "repository": "Matysh/houseplan-card",
-      "run": 38543101133,
-      "attempt": 1,
-      "sha": "075028cbe6d14a08a569a6bcb59df3739a9f7149"
+      "branch": "issue/867-device-diagnostics",
+      "commit": "de19f47f6e240463cfbe2204727bb413a9826fee",
+      "tree": "76c6feb5d22b6e4f497e84e2522606753784b613",
+      "remoteSha": "de19f47f6e240463cfbe2204727bb413a9826fee",
+      "clean": true,
+      "status": ""
+    },
+    "environment": {
+      "platform": "linux",
+      "arch": "x64",
+      "kernel": "6.18.33.2-microsoft-standard-WSL2",
+      "wsl": true,
+      "distro": "Ubuntu",
+      "filesystem": "ext2/ext3"
+    },
+    "toolchain": {
+      "node": "22.23.3",
+      "npm": "10.9.9",
+      "playwright": "1.62.0",
+      "browser": {
+        "version": "151.0.7922.34",
+        "resolvedExecutable": "/home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell",
+        "executableSha256": "e11fc9ce65c96313476f7ee9844b6fb6a9220fb048693cfe9eee00acf4170a9f"
+      }
     }
   },
-  "localAttestation": null,
   "foreignCapture": null,
   "witnesses": {
-    "count": 98,
+    "count": 96,
     "floor": 10
   },
   "scenarios": {
@@ -211,7 +238,7 @@
     "support-phone-success-dark-en": "dcf2cb53e904dd3196052f5e0001b8aee712db9c9c0e4f8cd2982645e4bf7dbd",
     "support-relay-error-light-en": "adf30f96a926a1730c9ad34d18b4234d9b19140f11d56c8fb7508976f366c11d",
     "support-tablet-preview-dark-ru": "a69ba86bf069d9beba94eedf6cc3b385b026caeee66348e4ef42c1a072b6df6a",
-    "device-ripple-color-popover-mobile-ru": "373571eddd1f1e398900436f01f1cb3e8d8c8c8456494177d3582a00007db218",
+    "device-ripple-color-popover-mobile-ru": "29c70d1992e24fe969cc5a2400984299b3436a4e2a7983ab4171c7971fc35638",
     "space-room-color-popover-desktop-ru": "0e4654978e004cb9242ccf4add8022b57459b6a8524f141160ae49aa46787fe9",
     "backup-full-preview-desktop-en": "2a71dd52bce193a5ddca1ee0404f91754787206cbe01af0b0bfb3871016ed289",
     "backup-plan-only-export-desktop-en": "d7ae8031e1147ee8d3d15f35d8cd5bc65aa24fc880ad2feafdd7c8713b76c0c5",
