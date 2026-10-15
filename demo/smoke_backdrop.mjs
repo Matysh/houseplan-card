@@ -90,7 +90,7 @@ await page.evaluate(() => {
   const card = window.__card;
   const renderBody = card._renderBody.bind(card);
   let full = 0;
-  card._renderBody = (...args) => { full++; return renderBody(...args); };
+  card._renderBody = (...args) => { full++; return renderBody(...args); }; // private-ok: #861 diagnostic full-render counter calls the real renderer unchanged; gestures use native input.
   window.__backdropRenderCounts = () => ({ full, live: card._liveEditorPaintCount || 0 });
 });
 const renderCounts = () => page.evaluate(() => window.__backdropRenderCounts());
