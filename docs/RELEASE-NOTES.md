@@ -1,18 +1,20 @@
-<!-- release: v1.81.0-beta.2 -->
+<!-- release: v1.81.0-beta.3 -->
 
 ## Основное
 
-- Большие планы обновляются быстрее: изменения датчиков больше не пересчитывают неизменные устройства, свет и LED-ленты.
-- Удобнее редактировать план: появились магниты равных интервалов между устройствами и направляющих стен; Undo сохраняет историю после смены инструмента или этажа.
-- Путь пылесоса точнее и больше не съезжает при масштабировании. Добавлен импорт копии на пустом плане; формы лучше защищают незавершённый ввод.
-- Мелкие исправления и улучшения.
+- Надёжнее управление: отменённые нажатия не срабатывают позже, а подтверждения относятся только к выбранному устройству.
+- Киоск возвращается к листанию после паузы и может обновиться даже на увеличенном плане. Карточки проёмов понятнее, переход в HA-зону доступен с клавиатуры.
+- Больше контроля над Zigbee-сигналом: общая настройка, переопределение для этажа и скрытие для отдельного устройства; у маркеров сущностей появился LQI родительского устройства.
+- Удобнее редактирование: направляющие учитывают только видимые устройства, проёмы следуют за перегородкой в превью, а Optimize умеет безопасно убрать лишние записи.
+- Меньше лишних пересчётов при переключении света на больших планах; ошибки загрузки дополнительных панелей показывают понятную возможность повторить попытку.
 
 ## Highlights
 
-- Large plans update faster: sensor changes no longer recalculate unchanged devices, lighting and LED strips.
-- Plan editing is easier: devices snap to equal spacing and walls to alignment guides; Undo preserves history across tool and floor changes.
-- Vacuum paths are more accurate and stay aligned while zooming. Empty plans can import a backup, and forms better protect unfinished input.
-- Small fixes and improvements.
+- More reliable controls: cancelled presses cannot fire later, and confirmations apply only to the selected device.
+- Kiosk cycling resumes after a pause, and a zoomed plan can receive updates. Opening cards are clearer, and HA area links work with the keyboard.
+- More control over Zigbee signal display: a global setting, floor overrides and per-device hiding; entity markers now show their physical device's LQI.
+- Easier editing: guides use visible devices only, openings follow a partition in its drag preview, and Optimize can safely remove obsolete records.
+- Switching a light avoids rebuilding unrelated device icons, while failed optional panels offer a clear retry action.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.81.0-beta.2/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.81.0-beta.2/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.81.0-beta.3/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.81.0-beta.3/docs/CHANGELOG.md)

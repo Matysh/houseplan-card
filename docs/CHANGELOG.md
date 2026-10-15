@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.81.0-beta.3 — 2026-10-15
+
 - Doors and windows hosted by a partition now follow it while dragging,
   not only after release. Esc and Undo remove the preview without leaving
   an old visible copy ([#861](https://github.com/Matysh/houseplan-card/issues/861)).
