@@ -1387,3 +1387,14 @@ well as the built device list (r1 M4). Each chunk checks the entry
 build fingerprint; a failed load is fail-dark for the strips only and retried
 on the next explicit entry. Budgets: `LAZY_LED_GZIP_CEILING` and
 `LAZY_LED_EDITOR_GZIP_CEILING` in `scripts/bundle-budget.mjs`.
+
+## Review handoff provenance (#904)
+
+`review-handoff.mjs` owns a bounded syntactic parser and edited-comment selector
+shared by collection and format validation. API order and author identity are
+not authority; updated timestamp and numeric id select one candidate, including
+an incomplete one. The preflight v2 material identity adds that comment's
+id/URL/timestamps and exact-text digest. Its canonical snapshot is carried by
+the existing sealed prepare artifact and rechecked against fresh API reads at
+the model boundary. Scalar material guards, verdict schema, permissions and
+merge authority keep their existing owners.

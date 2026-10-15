@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 904,
+  "baseStable": "v1.80.1",
+  "category": "infra",
+  "rationale": "Relative to v1.80.1, this task changes only review-preflight handoff parsing, provenance and the authenticated prepare/model-boundary metadata, with their tests and process documentation. It prevents a stale colon handoff from masking a newer heading handoff and detects edits before model use. No Houseplan card/integration runtime behavior, user plan, product feature or stable-user narrative changes."
+}

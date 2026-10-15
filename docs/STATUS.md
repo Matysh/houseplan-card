@@ -266,6 +266,13 @@ preserve canon/risky-hunk obligations; current failed epochs return to their
 author without a verdict/cycle. Default model and 150 turns are unchanged;
 OAuth savings or quality improvements are not claimed without comparable runs.
 
+Review handoff provenance (#904) shares colon/heading selection and validation,
+chooses the latest edited candidate across all API pages and retains an
+incomplete latest comment as the refusal target. Preflight v2 carries its
+id/URL/timestamps/text digest through the sealed prepare boundary and compares
+a fresh selection before the model. This is format/material evidence only;
+semantic review, author authorization and process budgets are unchanged.
+
 LED/daycycle smoke evidence (#863) separates native active24 from delivery after
 the natural lease (settled48). Raster measurement keeps every raw task, pair,
 phase, timing and pinned-browser identity; missing readiness/material fails,

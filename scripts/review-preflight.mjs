@@ -10,8 +10,9 @@ import { readMergeEntry } from './release-ledger.mjs';
 import { validateCommitMessage } from './validate-commit-provenance.mjs';
 import { moveStatusLabel } from './status-label.mjs';
 import { labelTrack } from './process-track.mjs';
+import { HANDOFF_FIELDS, handoffDigest, handoffSnapshot, parseHandoff, selectHandoff, validHandoffProvenance } from './review-handoff.mjs';
 
-export const PREFLIGHT_SCHEMA = 'houseplan-review-preflight/v1';
+export const PREFLIGHT_SCHEMA = 'houseplan-review-preflight/v2';
 const objectId = /^[0-9a-f]{40}(?:[0-9a-f]{24})?$/;
 const tracks = ['ask', 'show', 'ship'];
 const stages = ['spec', 'code'];
@@ -91,12 +92,16 @@ export function checkReviewInput(input, { ledgerReader = readMergeEntry, readObj
     for (const commit of input.commits || []) {
       for (const message of validateCommitMessage(commit.message, commit.files)) error('commit.' + commit.sha, message);
     }
-    const handoff = plain(input.handoff);
-    for (const [field, pattern] of [
-      ['done', /Сделано\s*:|^#+\s+Сделано/imu], ['files', /Файлы\s*:|^#+\s+Файлы/imu],
-      ['gates', /Гейты\s*:|^#+\s+Гейты/imu], ['not-done', /НЕ сделано\s*:|^#+\s+НЕ сделано/imu],
-      ['risks', /Риски\s*:|^#+\s+Риски/imu], ['next', /Следующий статус\s*:/iu],
-    ]) if (!pattern.test(handoff)) error('handoff.' + field, 'Missing handoff field: ' + field);
+    const parsed = parseHandoff(input.handoff);
+    const handoff = parsed.text;
+    for (const [field] of HANDOFF_FIELDS)
+      if (!parsed.fields.includes(field)) error('handoff.' + field, 'Missing handoff field: ' + field);
+    if (input.handoffError) error('handoff.provenance', input.handoffError);
+    if (!validHandoffProvenance(input.handoffProvenance)
+      || input.handoffProvenance.digest !== handoffDigest(input.handoff))
+      error('handoff.provenance', 'Missing/stale selected handoff identity or text digest');
+    if (input.expectedHandoff !== undefined && input.expectedHandoff !== handoffSnapshot(input.handoffProvenance ?? null))
+      error('handoff.stale', 'Selected handoff changed after preparation; collect fresh material');
     // Local linked reports can be checked exactly. Remote links are not claimed reachable.
     for (const match of handoff.matchAll(/\]\((docs\/[A-Za-z0-9_./-]+)\)/g)) {
       if (match[1].split('/').includes('..')) error('handoff.link', 'Unsafe relative report path');
@@ -106,7 +111,8 @@ export function checkReviewInput(input, { ledgerReader = readMergeEntry, readObj
   }
   return { schema: PREFLIGHT_SCHEMA, ok: errors.length === 0, semanticApproval: false,
     identity: { issue: input.issue, stage: input.stage, track: input.track,
-      infrastructure: input.infrastructure, sha: input.sha, tree: input.tree, bodyDigest: digest }, errors };
+      infrastructure: input.infrastructure, sha: input.sha, tree: input.tree, bodyDigest: digest,
+      handoff: input.stage === 'code' ? input.handoffProvenance ?? null : null }, errors };
 }
 
 export function collectReviewInput(options, { git, api }) {
@@ -121,25 +127,29 @@ export function collectReviewInput(options, { git, api }) {
       message: git(['show', '-s', '--format=%B', sha]),
       files: git(['diff-tree', '--no-commit-id', '--name-only', '-r', sha]).split('\n').filter(Boolean) })) : [];
   const pages = options.stage === 'code' ? api('repos/' + options.repo + '/issues/' + options.issue + '/comments', true) : [];
-  const comments = pages.flat();
-  const handoff = [...comments].reverse().find((row) => /^Сделано\s*:/imu.test(row.body || ''))?.body || '';
+  const selected = selectHandoff(pages);
+  const handoff = selected.body;
   const labels = snapshot.labels.map((row) => typeof row === 'string' ? row : row.name);
   const expected = options.stage === 'spec' ? 'S4-spec-review' : 'S7-code-review';
   const requestActive = snapshot.state === 'open' && labels.includes(expected)
     && labels.filter((label) => /^S[1-8]-/.test(label)).length === 1
     && !labels.includes('blocked') && !labels.includes('review-4');
   return { ...options, body: snapshot.body || '', currentSha, currentTree, files, infrastructure, commits, handoff,
+    handoffProvenance: selected.provenance, handoffError: selected.error,
     requestActive, currentTrack: labelTrack({ labels, infrastructure }) };
 }
 
 export function preflightApplies(result, identity) {
   return result?.schema === PREFLIGHT_SCHEMA && result.ok === true && result.semanticApproval === false
+    && (identity.stage !== 'code' || (validHandoffProvenance(result.identity?.handoff) && validHandoffProvenance(identity.handoff)))
     && ['issue', 'stage', 'track', 'infrastructure', 'sha', 'tree', 'bodyDigest']
-      .every((field) => result.identity?.[field] === identity[field]);
+      .every((field) => result.identity?.[field] === identity[field])
+    && handoffSnapshot(result.identity?.handoff ?? null) === handoffSnapshot(identity.handoff ?? null);
 }
 
 export function preflightComment(result) {
   return 'Механическая подготовка ревью не пройдена; модель не вызывалась, цикл не израсходован.\n\n'
+    + (result.identity.handoff ? `Выбран хендофф #${result.identity.handoff.id}: ${result.identity.handoff.url} (updated ${result.identity.handoff.updatedAt}).\n\n` : '')
     + result.errors.map(({ field, message }) => '- ' + field + ': ' + message).join('\n')
     + '\n\nИсправьте указанные поля и повторно примените review-метку. Форматный PASS не является вердиктом ревью.';
 }
@@ -165,14 +175,16 @@ if (isMainModule(import.meta.url)) {
       'api', endpoint, ...(paginated ? ['--paginate', '--slurp'] : []),
     ], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 }));
     const options = { issue: Number(value('issue')), repo: value('repo'), stage: value('stage'), track: value('track'),
-      sha: value('sha'), tree: value('tree'), bodyDigest: value('body-digest'), base: value('base') };
+      sha: value('sha'), tree: value('tree'), bodyDigest: value('body-digest'), base: value('base'),
+      expectedHandoff: value('handoff-snapshot') };
     const input = collectReviewInput(options, { git, api });
     const result = checkReviewInput(input, { ledgerReader: (sha, issue) => readMergeEntry(sha, issue, git),
       readObject: (object) => git(['show', object]) });
     result.elapsedMs = Math.round(performance.now() - started);
     if (value('output')) writeFileSync(value('output'), JSON.stringify(result, null, 2) + '\n');
     if (value('comment')) writeFileSync(value('comment'), preflightComment(result));
-    if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, 'ok=' + result.ok + '\n');
+    if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, 'ok=' + result.ok + '\n'
+      + 'handoff_snapshot=' + handoffSnapshot(result.identity.handoff) + '\n');
     if (value('return') === 'true' && !result.ok) rejectPreflight(result, {
       current: api('repos/' + options.repo + '/issues/' + options.issue),
       move: (from, to) => moveStatusLabel({ repo: options.repo, issue: options.issue, from, to }),

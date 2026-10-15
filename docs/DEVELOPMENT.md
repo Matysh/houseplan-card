@@ -1753,6 +1753,31 @@ edits — not a commit, not a merge (that is decided in `integrate` from the sea
 `verdict.json`), not a release. Dropping it means moving both duties into
 `integrate`, which is a pipeline change and not part of this one.
 
+## Review handoff identity (#904)
+
+`scripts/review-handoff.mjs` shares the colon/heading grammar between collection
+and validation. A handoff starts with Done after quoted/fenced examples are
+removed; ordinary reviewer prose is not a candidate. This is syntactic selection,
+not a new authorization rule for comment authors. All API pages are flattened;
+the greatest `updated_at` wins, then the stable numeric comment id. An incomplete
+newest candidate is selected and rejected with its URL/field names rather than
+being replaced by an older complete comment. Unknown/conflicting provenance is
+a setup refusal, not a freshness guess.
+
+Preflight results use `houseplan-review-preflight/v2`; v1 is not reusable as a
+v2 proof. The existing scalar material identity additionally carries the selected
+comment id, URL, creation/update timestamps and SHA256 of the exact raw text.
+The canonical base64url snapshot travels through prepare outputs and an additive
+field of the existing sealed `prepared.json` schema 1. The existing model-boundary
+step freshly collects comments and refuses a different snapshot before calling
+the model. A tampered but rehashed prepared file also fails its expected-output
+comparison. Spec stage has no code handoff requirement; semantic approval, token
+ceilings, review cycles and merge/release authority are unchanged.
+
+`test/review-preflight.test.mjs` executes both real workflow boundaries against
+local Git/API fixtures, including edit-after-prepare and sealed-snapshot drift.
+It retains the earlier body/SHA/tree/track/active-request refusal matrix.
+
 ## Dependency and cache gotchas
 
 - **polygon-clipping is a trap**: its `.d.ts` declares named exports but the ESM build has only
