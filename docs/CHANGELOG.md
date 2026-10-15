@@ -24,6 +24,9 @@
   survive a restart. Explicit Update or saved OFF can recover a rejected cache;
   an old read error no longer permanently blocks these actions
   ([#912](https://github.com/Matysh/houseplan-card/issues/912)).
+- Zigbee hover mapping reuses unchanged registry data across unrelated Home
+  Assistant updates, while registry, marker and account changes still rebuild
+  the exact mapping ([#906](https://github.com/Matysh/houseplan-card/issues/906)).
 
 ## v1.81.0-beta.3 — 2026-10-15
 

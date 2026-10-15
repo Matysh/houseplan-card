@@ -1029,6 +1029,20 @@ Existing touch editor behaviour is not silently disposable: when changing a
 covered workflow, update its test and documentation explicitly and record why
 the degradation is accepted.
 
+## Zigbee mapping reuse witness (#906)
+
+`test/zigbee-mapping-memo.test.mjs` executes the compiled overlay render and its
+post-render lifecycle with an ordinary provider fixture lacking direct device
+IDs. A Proxy counts real registry enumeration, not elapsed milliseconds: the
+unchanged-code witness repeated four enumerations after an unrelated update;
+the semantic memo repeats none, with the exact placements and routes preserved.
+The unit matrix includes limited revision0 record replacements, entity-only
+discovery, marker binding/visibility/floor/access, provider revision and A→B→A
+owners. HA registry/marker collections use immutable identity; copied scalar
+metadata prevents a reused mutable wrapper from concealing an access change.
+Native Zigbee hover/resize remains the browser geometry witness. Mutations are
+declarations only outside the nightly executor; use `mutation-gate --check`.
+
 ## Local contour in 5 minutes (локальный контур за 5 минут, #633)
 
 For Zigbee route changes (#798), focused Node tests cover provider formats,

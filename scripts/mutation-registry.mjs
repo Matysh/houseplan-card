@@ -12705,6 +12705,30 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'zigbee-mapping-discards-semantic-reuse',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/zigbee-mapping-memo.test.mjs',
+    because: '#906 AC1: an unrelated HA update/new registry wrapper must not repeat exact mapping or registry traversal.',
+    patches: [{ file: 'src/zigbee-topology.ts',
+      find: '  if (previous && old && previous.owner === input.owner && previous.userIdentity === input.userIdentity',
+      replace: '  if (false && previous && old && previous.owner === input.owner && previous.userIdentity === input.userIdentity' }],
+  },
+  {
+    id: 'zigbee-mapping-ignores-entity-material',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/zigbee-mapping-memo.test.mjs',
+    because: '#906 AC2: a limited revision0 registry can change entity-only discovery without changing device rows.',
+    patches: [{ file: 'src/zigbee-topology.ts',
+      find: '&& previous.devices === input.devices && old.devices === registry.devices && old.entities === registry.entities',
+      replace: '&& previous.devices === input.devices && old.devices === registry.devices' }],
+  },
+  {
+    id: 'zigbee-mapping-ignores-user-owner',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/zigbee-mapping-memo.test.mjs',
+    because: '#906 AC2: a same-connection account/permission change cannot reuse another user mapping entry.',
+    patches: [{ file: 'src/zigbee-topology.ts',
+      find: '  if (previous && old && previous.owner === input.owner && previous.userIdentity === input.userIdentity',
+      replace: '  if (previous && old && previous.owner === input.owner' }],
+  },
+  {
     id: 'zigbee-topology-ambiguous-marker-selected',
     guard: 'node --test --test-name-pattern="exact device/entity ownership" test/zigbee-provider-routes.test.mjs',
     because: 'a Zigbee node with multiple drawable device placements must still fail closed; '

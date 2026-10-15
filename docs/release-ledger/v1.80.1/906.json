@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 906,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "Zigbee hover and the wrapper-identity memo comparison already exist in v1.80.1 (hp-zigbee-topology-overlay.ts:504). This restores reuse of unchanged mapping in that shipped feature, not a new route/provider capability or a repair only within the current beta line. Work-count evidence proves avoided traversal; no millisecond speedup is claimed.",
+  "summary": {
+    "ru": "Связи Zigbee не пересчитываются заново из-за несвязанного обновления Home Assistant.",
+    "en": "Zigbee links avoid repeated mapping caused only by an unrelated Home Assistant update."
+  }
+}

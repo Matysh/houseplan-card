@@ -1220,6 +1220,14 @@ registry ownership maps nodes to markers. Only unique evidence becomes an
 arrow. Conflicts, cycles and unknown roles fail closed, including merged
 providers; no BFS or strongest-LQI fallback remains. A known next hop need not
 prove the complete chain. Mapping/resolution are memoized outside hover.
+The overlay's one-entry mapping memo (#906) compares registry material, not the
+fresh `haRegistrySnapshot` wrapper: device/entity record identities, revision,
+authority/access and freshness/error scalars, plus immutable marker/topology
+collections, provider revision, connection and admin identity. Scalar metadata
+is captured by value; revision0 limited registries still invalidate on changed
+records. Post-render `updated` does not discard a result merely because the
+wrapper changed; detach and provider/owner retirement clear the entry. No
+deep hash, global cache, TTL or provider request is added to render.
 `zigbee-topology-runtime.ts` keeps a per-connection, admin-identity-scoped cache:
 ZHA still reads `zha/devices` without a scan. Z2M uses the integration-owned
 `zigbee_topology.py` coordinator through admin-only

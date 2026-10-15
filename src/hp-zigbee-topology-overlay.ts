@@ -3,7 +3,7 @@ import { langOf } from './i18n';
 import { zigbeeLinkColor } from './zigbee-topology-style';
 import { TOPOLOGY_LANGUAGE_RUNTIME, topologyT } from './i18n/topology';
 import {
-  mapTopologies, resolveMappedTopologyHover, type ZigbeeMappedTopology,
+  memoizeTopologies, resolveMappedTopologyHover, type ZigbeeMappingMemo,
   TOPOLOGY_STALE_MS, type ZigbeeParentTarget,
 } from './zigbee-topology';
 import { zigbeeArrowGeometry, type ZigbeePixelPoint } from './zigbee-topology-geometry';
@@ -62,8 +62,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   private _desiredEndpointIds = new Set<string>();
   private _endpointSetDirty = false;
   private _endpointElements = new Set<HTMLElement>();
-  private _mappedMemo?: { runtime: ZigbeeTopologyRuntimeSnapshot; devices: readonly DevItem[];
-    registry: HaRegistrySnapshot; mapped: ZigbeeMappedTopology[] };
+  private _mappedMemo?: ZigbeeMappingMemo;
 
   static styles = css`
     /* No host stacking context: endpoint cores stay above routes (8 > 7),
@@ -123,6 +122,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     this._release = undefined;
     this._owner = undefined;
     this._runtime = EMPTY_RUNTIME;
+    this._mappedMemo = undefined;
     this._disconnectParent();
     this._hoverGateObserver?.disconnect();
     this._hoverGateObserver = undefined;
@@ -155,7 +155,8 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     const markerInputsChanged = changed.has('currentSpace')
       || changed.has('devices') || changed.has('registry');
     if (markerInputsChanged) {
-      this._mappedMemo = undefined;
+      // render already checked the material key. A new registry wrapper alone
+      // must not discard that result again in this post-render lifecycle hook.
       if (!this.devices.some((item) => item.id === this._hovered && item.space === this.currentSpace)) {
         this._clear();
       }
@@ -520,10 +521,13 @@ export class HpZigbeeTopologyOverlay extends LitElement {
       this._setDesiredEndpointIds([]);
       return nothing;
     }
-    const memo = this._mappedMemo;
-    const mapped = memo && memo.runtime === this._runtime && memo.devices === this.devices
-      && memo.registry === this.registry ? memo.mapped : mapTopologies(this._runtime.topologies, this.devices, this.registry);
-    if (!memo || mapped !== memo.mapped) this._mappedMemo = { runtime: this._runtime, devices: this.devices, registry: this.registry, mapped };
+    const memo = memoizeTopologies(this._mappedMemo, {
+      topologies: this._runtime.topologies, revision: this._runtime.revision,
+      devices: this.devices, registry: this.registry,
+      owner: this.hass?.connection || this.hass, userIdentity: zigbeeTopologyUserIdentity(this.hass),
+    });
+    this._mappedMemo = memo;
+    const mapped = memo.mapped;
     // Removing a configured topic hides its routes without deleting its durable map.
     const configured = this.z2mTopics.length ? this.z2mTopics : ['zigbee2mqtt'];
     const selected = mapped.filter(({ topology }) => topology.provider !== 'z2m'

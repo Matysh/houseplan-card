@@ -134,7 +134,33 @@ function reconcileSources(mapped: ZigbeeMappedTopology[]): void {
   }
 }
 
-/** Normalization and source reconciliation are memoized by the overlay's snapshot revision. */
+export interface ZigbeeMappingInputs {
+  topologies: readonly ZigbeeTopology[];
+  revision: number;
+  devices: readonly DevItem[];
+  registry: HaRegistrySnapshot;
+  owner?: object;
+  userIdentity: string;
+}
+export type ZigbeeMappingMemo = ZigbeeMappingInputs & { mapped: ZigbeeMappedTopology[] };
+
+/** One overlay-owned entry: registry wrappers are not registry material.
+ * Record/marker collections follow the existing immutable identity contract;
+ * scalar metadata is copied, so reusing a mutable wrapper cannot hide changes.
+ * No global cache or per-render traversal/hash of the registries is needed.
+ */
+export function memoizeTopologies(previous: ZigbeeMappingMemo | undefined, input: ZigbeeMappingInputs): ZigbeeMappingMemo {
+  const old = previous?.registry;
+  const registry = input.registry;
+  if (previous && old && previous.owner === input.owner && previous.userIdentity === input.userIdentity
+      && previous.topologies === input.topologies && previous.revision === input.revision
+      && previous.devices === input.devices && old.devices === registry.devices && old.entities === registry.entities
+      && old.revision === registry.revision && old.authoritative === registry.authoritative && old.access === registry.access
+      && old.lastSuccess === registry.lastSuccess && old.error === registry.error) return previous;
+  return { ...input, registry: { ...registry }, mapped: mapTopologies(input.topologies, input.devices, registry) };
+}
+
+/** Pure normalization and source reconciliation; memo ownership is explicit above. */
 export function mapTopologies(
   topologies: readonly ZigbeeTopology[], devices: readonly DevItem[], registry: HaRegistrySnapshot,
 ): ZigbeeMappedTopology[] {
