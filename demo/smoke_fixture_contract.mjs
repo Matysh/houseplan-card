@@ -1,5 +1,12 @@
 import { launch, check, finish } from './serve.mjs';
 const { page, browser } = await launch({ width: 1000, height: 820 });
+let persistenceOwner;
+const lifetimeEvents = [];
+page.on('framenavigated', frame => {
+  if (frame === page.mainFrame()) lifetimeEvents.push('main-frame-navigated');
+});
+page.on('crash', () => lifetimeEvents.push('page-crashed'));
+page.on('close', () => lifetimeEvents.push('page-closed'));
 try {
   await page.evaluate(() => {
     const card = window.__card, original = card.hass.callService;
@@ -41,29 +48,40 @@ try {
   check('#896 held gesture opens information but dispatches zero', await page.evaluate(() => window.__serviceCalls.length), 3);
   await cdp.detach();
 
-  const persistence = await page.evaluate(async () => {
-    const h = window.__mkHass(), read = type => h.callWS({ type });
+  // The host owns this witness until the result has crossed the CDP boundary.
+  // Historical GC cause remains unknown; phases diagnose, they do not retry.
+  persistenceOwner = await page.evaluateHandle(() => window.__fixtureProof);
+  const persistence = await page.evaluate(() => window.__fixtureProof.pending = (async () => {
+    const phase = value => { window.__fixtureProof.phase = value; };
+    const h = window.__mkHass(), read = type => { phase(type); return h.callWS({ type }); };
     const originalConfig = await read('houseplan/config/get'), originalLayout = await read('houseplan/layout/get');
     const candidate = structuredClone(originalConfig.config);
     candidate.spaces[0].title = 'Persisted fixture floor'; candidate.future = { untouched: ['extension'] };
+    phase('config-set');
     const configAck = await h.callWS({ type: 'houseplan/config/set', expected_rev: originalConfig.rev, config: candidate });
     const layout = { ...originalLayout.layout, extra_fixture: { s: 'f1', x: .3, y: .4, future: 'retained' } };
+    phase('layout-set');
     const setAck = await h.callWS({ type: 'houseplan/layout/set', expected_rev: originalLayout.rev, layout });
     const pos = { s: 'f1', x: .31, y: .41, unknown: { keep: true } };
+    phase('layout-update');
     const updateAck = await h.callWS({ type: 'houseplan/layout/update', device_id: 'd_light1', pos });
+    phase('layout-delete');
     const deleteAck = await h.callWS({ type: 'houseplan/layout/delete', device_id: 'extra_fixture' });
     const cfg = await read('houseplan/config/get'), saved = await read('houseplan/layout/get');
     const expectedLayout = { ...originalLayout.layout, d_light1: pos };
     const pair = JSON.stringify([cfg, saved]);
     let conflict = false, refused = false;
+    phase('config-conflict');
     try { await h.callWS({ type: 'houseplan/config/set', expected_rev: originalConfig.rev, config: candidate }); }
     catch (error) { conflict = error.code === 'conflict'; }
     const refusing = { ...h, callWS: async message => {
       if (message.type.endsWith('/set')) throw new Error('injected transport refusal'); return h.callWS(message);
     } };
+    phase('layout-refusal');
     try { await refusing.callWS({ type: 'houseplan/layout/set', expected_rev: saved.rev, layout: {} }); }
     catch { refused = true; }
     const unchanged = JSON.stringify([await read('houseplan/config/get'), await read('houseplan/layout/get')]) === pair;
+    phase('cold-second-card');
     const second = document.createElement('houseplan-card');
     second.setConfig({ type: 'custom:houseplan-card' }); document.body.append(second); second.hass = h;
     const started = performance.now();
@@ -73,14 +91,24 @@ try {
     }
     const coldExact = JSON.stringify(second._serverCfg) === JSON.stringify(candidate)
       && JSON.stringify(second._layout) === JSON.stringify(expectedLayout);
+    phase('cold-second-remove');
     second.remove();
+    phase('complete');
     return { savedConfig: JSON.stringify(cfg.config) === JSON.stringify(candidate),
       savedLayout: JSON.stringify(saved.layout) === JSON.stringify(expectedLayout), coldExact, conflict, refused, unchanged,
       revs: [configAck.rev - originalConfig.rev, cfg.rev - originalConfig.rev,
         setAck.rev - originalLayout.rev, updateAck.rev - originalLayout.rev, deleteAck.rev - originalLayout.rev,
         saved.rev - originalLayout.rev] };
-  });
+  })());
   for (const key of ['savedConfig', 'savedLayout', 'coldExact', 'conflict', 'refused', 'unchanged'])
     check(`#896 fixture ${key}`, persistence[key]);
   check('#896 independent revisions advance once per actual write', persistence.revs, [1, 1, 1, 2, 3, 3]);
-} finally { await finish(browser); }
+} catch (error) {
+  const phase = persistenceOwner
+    ? await persistenceOwner.evaluate(owner => owner.phase).catch(() => 'witness-unavailable')
+    : 'before-persistence';
+  console.error('FIXTURE_LIFETIME', JSON.stringify({ phase, events: lifetimeEvents }));
+  throw error;
+} finally {
+  try { await persistenceOwner?.dispose(); } finally { await finish(browser); }
+}
