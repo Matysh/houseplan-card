@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Returning to the page while a released marker move is being saved no longer
+  loses the accepted position's Undo to an older reload snapshot
+  ([#902](https://github.com/Matysh/houseplan-card/issues/902)).
+
 - Late vacuum path replies and Optimize/import Undo completions no longer replace
   a plan, history or busy state after switching Home Assistant connections/users
   or detaching the card ([#901](https://github.com/Matysh/houseplan-card/issues/901)).

@@ -30,6 +30,14 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['LayoutWriteReload'],
+    smokes: ['smoke_pageshow_layout_ack.mjs'],
+    because: '#902: native released marker drag and public pagehide/pageshow cross '
+      + 'a held real fixture ACK and old paired response, then use actual Undo/Redo. '
+      + 'The witness observes accepted wire positions, history controls and painted '
+      + 'coordinates rather than naming the reconciliation owner.',
+  },
+  {
     files: ['src/physical-body-gesture.ts', 'src/backdrop-frame-gesture.ts', 'src/live-editor.ts'],
     smokes: ['smoke_physical_body_characterization.mjs', 'smoke_partition_openings_preview.mjs',
       'smoke_backdrop.mjs', 'smoke_free_walls.mjs', 'smoke_partition_openings.mjs',

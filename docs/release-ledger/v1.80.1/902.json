@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 902,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "v1.80.1 already has released marker-position writes, position history and full-pair resume adoption that invalidates history. This repairs their overlap in one live card without a feature, stored field, server protocol or persisted Undo.",
+  "summary": {
+    "ru": "Возврат на страницу во время сохранения перемещения не лишает принятую позицию отмены из-за старого снимка.",
+    "en": "Returning to the page while a marker move is saved no longer loses the accepted move's Undo to an older snapshot."
+  }
+}

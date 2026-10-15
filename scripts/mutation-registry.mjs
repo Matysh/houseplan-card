@@ -137,6 +137,24 @@ const MUTANT_DEFINITIONS = [
     patches: [{ file: 'src/houseplan-card.ts', find: '          </div>\n          ${this._wallDialog ? this._renderWallThickDialog() : nothing}', replace: '          ${this._wallDialog ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._renderWallThickDialog()}</div>` : nothing}\n          </div>' }],
   },
   {
+    id: 'layout-full-read-ignores-overlapping-own-write',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/layout-write-reload.test.mjs',
+    because: '#902 AC1/AC2: the actual compiled card full reload must reread after an overlapping own ACK, preserving the accepted position and its real command.',
+    patches: [{ file: 'src/layout-write-reload.ts', find: '      if (this.current(stamp)) {', replace: '      if (true) {' }],
+  },
+  {
+    id: 'layout-full-read-loses-backdrop-write-fence',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/layout-write-reload.test.mjs',
+    because: '#902 AC1/AC3: an own write starting inside the real adoption backdrop await must invalidate the old pair before history is cleared.',
+    patches: [{ file: 'src/layout-write-reload.ts', find: 'adopt(pair, () => isCurrent() && this.current(stamp))', replace: 'adopt(pair, isCurrent)' }],
+  },
+  {
+    id: 'layout-write-terminal-keeps-retired-generation',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/layout-write-reload.test.mjs',
+    because: '#902 AC3: old released-write success/error/finally after detach cannot change current history, position or busy state.',
+    patches: [{ file: 'src/layout-write-reload.ts', find: 'return () => owner === this.owner && authorityCurrent();', replace: 'return () => owner === owner && authorityCurrent();' }],
+  },
+  {
     id: 'physical-owner-rotation-loses-five-degree-step',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/physical-body-gesture.test.mjs',
     because: '#861 AC1: ordinary rotation snaps to five degrees while Shift preserves the raw angle.',

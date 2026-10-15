@@ -144,15 +144,15 @@ test('#520: the authoritative load keeps viewport, readiness and devices inside 
   const load = card.slice(card.indexOf('private async _loadFromServer('));
   const body = load.slice(0, load.indexOf('\n  /** Best-effort live sync'));
   const hook = body.indexOf('afterAdopt: () => {');
-  const awaited = body.indexOf('await this._adoptAuthoritative(');
+  const awaited = body.indexOf('this._adoptAuthoritative(');
   assert.ok(awaited >= 0 && hook > awaited, '_loadFromServer adopts through the hook');
-  const inHook = body.slice(hook, body.indexOf('\n      });', hook));
+  const inHook = body.slice(hook, body.indexOf('\n      }), isCurrent);', hook));
   assert.match(inHook, /this\._loadOk = true;/, 'readiness is set before the devices are seeded');
   assert.match(inHook, /rebuildDevices\(\);/);
   assert.match(inHook, /this\._restoreZoom\(\);/, 'the viewport is restored before the first paint');
   // Nothing may rebuild the devices after the await: the tail only covers the
   // attempts that never adopted.
-  const afterHook = body.slice(body.indexOf('\n      });', hook));
+  const afterHook = body.slice(body.indexOf('\n      }), isCurrent);', hook));
   assert.doesNotMatch(afterHook, /^\s*this\._maybeRebuildDevices\(\);/m,
     'an unguarded rebuild after the await is the regression itself');
   assert.match(afterHook, /if \(!devicesRebuilt\) rebuildDevices\(\);/);

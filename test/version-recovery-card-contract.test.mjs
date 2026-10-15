@@ -26,7 +26,7 @@ test('one host seam owns every full-card config/get request', () => {
 
   // Signature shape is exercised by the compiled #901 wiring harness.
   assert.equal(
-    occurrences(card, 'this._getAuthoritativeConfig()')
+    occurrences(card, 'this._getAuthoritativeConfig(')
       + occurrences(configReload, 'host._getAuthoritativeConfig()'),
     2,
     'initial load and config-only reload both use the seam');

@@ -146,6 +146,7 @@ import {
   type ConfigReloadHostPort,
 } from './config-reload-authority';
 import { CardReadLifecycle } from './card-read-lifecycle';
+import { LayoutWriteReload } from './layout-write-reload';
 import type { OptimisticAttempt } from './serialized-write-queue';
 import {
   COLUMN_MAX_CM, directionalOccluders, floorMinusBodies, geometryOuterRings,
@@ -563,6 +564,7 @@ export class HouseplanCard extends LitElement {
         this._saveConfigDebounced.cancel(); this._adoption.resetContext();
         this._writeChain = Promise.resolve(); this._writesPending = 0;
         this._persistLayout.cancel(); this._dirtyPos.clear(); this._sentPos.clear();
+        this._layoutIO.retire(); this._devicePositionBusy = false;
         this._editorRuntime?.roomDeviceDiscovery.clear();
         this._editorRuntime?.optimizationUndo.retire();
         this._geometryHistory.clear(); this._devicePositionHistory.clear();
@@ -874,6 +876,7 @@ export class HouseplanCard extends LitElement {
   /** #543: only the newest live-context config read may cross adoption. */
   private readonly _configReloadAuthority = new ConfigReloadAuthority();
   private readonly _read = new CardReadLifecycle();
+  private readonly _layoutIO = new LayoutWriteReload(pending => this._configWriteGuard(pending));
   private readonly _configWriteContext = new ConfigWriteContext();
   private _virtualLights: VirtualLightSnapshot = virtualLightSnapshot(null);
   /** One-deep server snapshot; invalidated by the first later plan edit. */
@@ -2755,6 +2758,7 @@ export class HouseplanCard extends LitElement {
     // Connection object and the route/user strings happen to match (#543).
     this._configReloadAuthority.invalidateLifecycle();
     this._read.invalidate(); this._loading = false;
+    this._layoutIO.retire(); this._devicePositionBusy = false; this._devicePositionHistory.clear();
     this._liveRt?.dispose();
     this._radarLive.stop();
     this._editorRuntime?._disposeLiveEditor();
@@ -4385,18 +4389,18 @@ export class HouseplanCard extends LitElement {
     // once. On the adopted path that is `afterAdopt`, inside the adoption
     // task; the tail below only covers the attempts that never adopted.
     let devicesRebuilt = false;
+    let repeatLayoutRead = false;
     const rebuildDevices = (): void => {
       devicesRebuilt = true;
       this._regSignature = '';
       this._maybeRebuildDevices();
     };
     try {
-      const [cfgResp, layResp] = await Promise.all([
-        this._getAuthoritativeConfig(),
+      const adopted = await this._layoutIO.reconcile(() => Promise.all([
+        this._getAuthoritativeConfig(hass, isCurrent),
         hass.callWS({ type: 'houseplan/layout/get' }),
-      ]);
-      const adopted = await this._adoptAuthoritative({
-        cfgResp, layResp, reason: 'structural-response', profile: 'reload', isCurrent,
+      ]), ([cfgResp, layResp], pairCurrent) => this._adoptAuthoritative({
+        cfgResp, layResp, reason: 'structural-response', profile: 'reload', isCurrent: pairCurrent,
         beforeAdopt: () => {
           this._connectionWasLost = false;
           this._serverStorage = true;
@@ -4422,7 +4426,8 @@ export class HouseplanCard extends LitElement {
           rebuildDevices();
           if (this._warmRevivePending && this._mode === 'view') this._warmReviveDialog();
         },
-      });
+      }), isCurrent);
+      repeatLayoutRead = adopted.status === 'layout-raced';
       if (adopted.status !== 'adopted') return;
       // Trails and event subscriptions enrich an already complete snapshot.
       // A read-only HA session may reject these; that must never roll the
@@ -4464,6 +4469,11 @@ export class HouseplanCard extends LitElement {
       this._continuityDataReady = true;
       if (!devicesRebuilt) rebuildDevices();
       this.requestUpdate();
+      // A second *real* overlapping write re-arms one read after settlement.
+      // The finished transport claim still fences authority/route/detach here.
+      if (repeatLayoutRead) queueMicrotask(() => {
+        if (this.isConnected && this._read.isCurrent(loadClaim)) void this._loadFromServer();
+      });
     }
   }
 
@@ -4927,7 +4937,7 @@ export class HouseplanCard extends LitElement {
 
   private _persistLayout = debounce(() => {
     if (this._serverStorage) {
-      const isCurrent = this._configWriteGuard();
+      const isCurrent = this._layoutIO.guard();
       if (!isCurrent() || !this._loadOk) return;
       // point-wise updates: do not overwrite positions changed in other windows
       const ids = [...this._dirtyPos];
@@ -4939,11 +4949,14 @@ export class HouseplanCard extends LitElement {
         // in flight until the server answers: a layout reload triggered in the
         // meantime must keep this position, not the one the server still has
         this._sentPos.set(id, pos);
-        this.hass
-          .callWS({ type: 'houseplan/layout/update', device_id: id, pos })
+        const settled = this._layoutIO.begin();
+        const ownsPending = this._layoutIO.guard(true);
+        // Convert a synchronous transport refusal to the same settled path.
+        const send = async () => this.hass.callWS({ type: 'houseplan/layout/update', device_id: id, pos });
+        void send()
           .then((r: { rev?: unknown }) => { if (isCurrent()) { this._adoption.acceptLayoutPosition(id, pos, r.rev); this._cacheSnapshot(); } })
-          .catch((e: any) => this._showToast(this._t('toast.pos_save_failed', { err: this._errText(e) })))
-          .finally(() => { if (this._sentPos.get(id) === pos) this._sentPos.delete(id); });
+          .catch((e: unknown) => { if (isCurrent()) this._showToast(this._t('toast.pos_save_failed', { err: this._errText(e) })); })
+          .finally(() => { if (ownsPending() && this._sentPos.get(id) === pos) this._sentPos.delete(id); settled(); });
       }
       this._cacheSnapshot();
     } else {
@@ -5373,10 +5386,12 @@ export class HouseplanCard extends LitElement {
     deviceId: string,
     placement: DevicePlacement | null,
   ): Promise<void> {
-    const isCurrent = this._configWriteGuard();
+    const isCurrent = this._layoutIO.guard();
     if (this._serverStorage && (!isCurrent() || !this._loadOk)) throw new Error('config authority changed');
     this._layout = applyDevicePlacement(this._layout, deviceId, placement);
     if (this._serverStorage) {
+      const settled = this._layoutIO.begin();
+      const ownsPending = this._layoutIO.guard(true);
       let pending: DeviceLayout[string] | null = null;
       let registered = false;
       try {
@@ -5407,7 +5422,8 @@ export class HouseplanCard extends LitElement {
         this._adoption.refreshLayoutFingerprint();
         this._cacheSnapshot();
       } finally {
-        if (registered && this._sentPos.get(deviceId) === pending) this._sentPos.delete(deviceId);
+        if (ownsPending() && registered && this._sentPos.get(deviceId) === pending) this._sentPos.delete(deviceId);
+        settled();
       }
       return;
     }
@@ -5424,6 +5440,8 @@ export class HouseplanCard extends LitElement {
 
   private async _runDevicePositionHistory(direction: 'undo' | 'redo'): Promise<void> {
     if (this._cancelDeviceDrag() || this._devicePositionBusy) return;
+    const isCurrent = this._layoutIO.guard();
+    const ownsPending = this._layoutIO.guard(true);
     const command = direction === 'undo'
       ? this._devicePositionHistory.undo()
       : this._devicePositionHistory.redo();
@@ -5446,17 +5464,18 @@ export class HouseplanCard extends LitElement {
     this._previewDevicePlacement(target.deviceId, target.placement);
     try {
       await this._persistDevicePlacement(target.deviceId, target.placement);
+      if (!isCurrent()) return;
       this._showToast(this._t(direction === 'undo' ? 'history.undone' : 'history.redone', {
         name: command.name,
       }));
     } catch (error: unknown) {
+      if (!isCurrent()) return;
       this._previewDevicePlacement(target.deviceId, rollback);
       if (direction === 'undo') this._devicePositionHistory.redo();
       else this._devicePositionHistory.undo();
       this._showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }));
     } finally {
-      this._devicePositionBusy = false;
-      this.requestUpdate();
+      if (ownsPending()) { this._devicePositionBusy = false; this.requestUpdate(); }
     }
   }
 
@@ -7173,8 +7192,11 @@ export class HouseplanCard extends LitElement {
     window.setTimeout(() => { this._suppressClick = false; }, 0);
     this._devicePositionBusy = true;
     this.requestUpdate();
+    const isCurrent = this._layoutIO.guard();
+    const ownsPending = this._layoutIO.guard(true);
     void this._persistDevicePlacement(d.id, after)
       .then(() => {
+        if (!isCurrent()) return;
         const name = this._t('history.device_move', { name: drag.displayName });
         this._devicePositionHistory.push({
           name,
@@ -7187,12 +7209,12 @@ export class HouseplanCard extends LitElement {
         });
       })
       .catch((error: unknown) => {
+        if (!isCurrent()) return;
         this._previewDevicePlacement(d.id, drag.before);
         this._showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }));
       })
       .finally(() => {
-        this._devicePositionBusy = false;
-        this.requestUpdate();
+        if (ownsPending()) { this._devicePositionBusy = false; this.requestUpdate(); }
       });
   }
   private _pointerCancel(ev: PointerEvent, d: DevItem): void {

@@ -107,6 +107,13 @@ The same rule applies to `layout/set` (#356).
 
 ## Crash-resumable config/layout pairs (#491)
 
+Full-card resume reconciliation (#902) is session-only. A full read intersecting
+an own point-write is reread after settlement before authoritative adoption;
+the ACK still comes from the original server operation. No pending position is
+promoted into accepted cache, no server rollback or persisted Undo is added,
+and newer external layout revisions retain their existing authority. An idle
+View/kiosk still reads one pair. Config/layout schemas and CAS are unchanged.
+
 `optimize_pending` is the durable authority for every paired config/layout
 write: Optimize, Optimize Undo, full import and space deletion. Current intents
 carry canonical target documents, their exact target revisions and exact final

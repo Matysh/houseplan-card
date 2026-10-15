@@ -1043,6 +1043,15 @@ still recognised in stored config but no longer served
   like any other (#842).
 - `src/config-reload-authority.ts` (#543): each reload holds a generation-scoped
   claim; a superseded one ends with no side effect.
+- `src/layout-write-reload.ts` (#902) fences complete reloads against own
+  point-writes, including a write settled after the read started or inside the
+  backdrop await. One normal pair gets at most one post-settlement retry;
+  another actual overlap re-arms once after that attempt finishes. This is
+  event-driven, not polling. Accepted cache never receives an unacknowledged
+  overlay; the fresh server revision/body decide external replacement and
+  history invalidation. Active-write tokens and waiters retire with HA identity
+  or detach. Released drag/history terminals share that generation so an old
+  success/error/finally cannot roll back a new owner or release its busy flag.
 - `src/card-read-lifecycle.ts` (#824) owns ephemeral full-read transport claims
   for both cards, independent of visual HA deduplication. Disconnect/context
   replacement/navigation fence every awaited adoption and optional tail.
