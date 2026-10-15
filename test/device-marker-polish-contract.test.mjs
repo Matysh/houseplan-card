@@ -48,11 +48,18 @@ test('issue 362 makes the whole device package inert only in Background', () => 
   );
 
   const click = card.slice(card.indexOf('private _clickDevice('), card.indexOf('private _showUnavailableToggleTargets('));
-  assert.match(
-    click,
-    /if \(this\._mode !== 'view' && this\._mode !== 'devices'\) return;\s*ev\.stopPropagation\(\)/,
+  const modeGuard = click.indexOf("if (this._mode !== 'view' && this._mode !== 'devices') return;");
+  const stop = click.indexOf('ev.stopPropagation();');
+  // #893 adds a read-only retirement refusal between these two boundaries.
+  // Background must still return before propagation/actions; adjacency is not
+  // that contract, and would reject an additional fail-closed check.
+  assert.ok(
+    modeGuard >= 0 && stop > modeGuard,
     'the fail-closed guard must run before propagation is stopped',
   );
+  assert.doesNotMatch(click.slice(modeGuard, stop),
+    /callService|callWS|_showToast|_infoCard|_startDevicePressFeedback|_openMarkerDialog/,
+    'the interval before propagation is owned must not perform a device action');
   const down = card.slice(card.indexOf('private _pointerDown('), card.indexOf('private _showToast('));
   assert.match(down, /private _pointerDown[\s\S]*this\._mode !== 'view' && this\._mode !== 'devices'/);
   assert.match(down, /private _pointerMove[\s\S]*this\._mode !== 'devices'/);

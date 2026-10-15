@@ -102,6 +102,10 @@ late click retains the cancelled physical pointer id. Read-only observations
 first prove shared click/drag/hold suppression is clear, so that negative
 isolates physical-pointer retirement rather than another activation barrier;
 it does not classify a compatibility MouseEvent after new keyboard intent as stale.
+The frozen #362 source contract checks the exact mode refusal precedes
+`stopPropagation`, not textual adjacency: #893 inserts another read-only refusal
+between them. Its remaining CSS/input assertions stay intact, and the interval
+also refuses action side effects. This adapts a structural fixture, not product code.
 The Walls witness records actual HA config writes and exact off-grid preview
 identity for H/V and 0/20 cm walls, with endpoint/axis/closure/Shift/ambiguous
 negative owners. A trusted CDP pinch reaches 50%/200% in light/dark themes;
