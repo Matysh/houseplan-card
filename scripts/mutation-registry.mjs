@@ -4301,7 +4301,7 @@ const MUTANT_DEFINITIONS = [
       + 'layout request or later asset preparation can reject the structural candidate (#462 AC6)',
     patches: [{
       file: 'src/version-recovery-card.ts',
-      find: '    (response) => adoptCardConfigCapabilities(host, response),',
+      find: '    (response) => { if (isCurrent()) adoptCardConfigCapabilities(host, response); },',
       replace: '    () => undefined,  // mutant: aggregate consumers own capability adoption',
     }],
   },
@@ -16384,9 +16384,9 @@ const MUTANT_DEFINITIONS = [
       + 'reload owns the tail. Guarded by the smoke, so the review gate runs it (r2 M1: the witness '
       + 'was red for a round and nobody saw it — CI never ran this smoke)',
     patches: [{
-      file: 'src/houseplan-editor-runtime.ts',
-      find: "      if (adopted.status !== 'adopted') return; // asset wait: the scheduled reload owns the tail",
-      replace: '      void adopted; // mutant: the tail runs on a body that was never adopted',
+      file: 'src/plan-optimize-undo.ts',
+      find: "      if (!isCurrent() || adopted.status !== 'adopted') return;",
+      replace: '      if (!isCurrent()) return; void adopted; // mutant: tail without adoption',
     }],
   },
   {
