@@ -1,4 +1,4 @@
-# Backdrop terminal evidence (#908)
+# Backdrop terminal evidence (#908, 2026-10-15)
 
 Author verification notes, not the independent code-review verdict.
 Touch editor: best effort / intentionally degraded.
@@ -37,11 +37,20 @@ the full unit suite, typecheck, bundle policy/budgets and source guards;
 and the strengthened grid witness in 13.1 s. The actual dirty source diff was
 fed to `smoke-select --diff`: all ten direct matches were run, with additional
 `smoke_decor` and `smoke_backdrop_guard` for neighbouring owner/picker behavior.
-The selector's broad `_editorRuntime` matches are not a claim that its entire
-weak-link matrix was run. Raw logs and true exit records are kept separately
+The selector's broad `_editorRuntime` matches (61 weak/registered matches) are
+not a claim that the entire associated matrix was run: this change only adds
+an owner-ID-gated terminal and backdrop begin/cancel presentation, without
+altering those other flows. All ten direct matches and the adjacent Decor and
+backdrop guard scenarios were selected for execution. Raw logs and true exit
+records are kept separately
 in `/home/matysh/hp908-evidence`; no generated product bundle is committed.
 No size ceiling changed: raw bundle 2,925,438 to 2,925,700 bytes (+262);
 host references 5,347 to 5,349 (+2), other source metrics unchanged.
+
+The first pre-push gate correctly rejected this author's evidence note in
+`docs/testing-notes/`: that directory admits only the browser-guard registry
+(#681). A file-backed full unit retry reproduced that single placement error;
+the note was moved here, without weakening the directory contract.
 
 Risk cases: async capture loss and late mouseup are exercised with owner IDs;
 data/history/wire state is compared before and after cancellation; geometry

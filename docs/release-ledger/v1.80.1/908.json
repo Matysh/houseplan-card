@@ -3,5 +3,9 @@
   "issue": 908,
   "baseStable": "v1.80.1",
   "category": "stable-fix",
-  "rationale": "Fixes cancellation presentation of the existing backdrop editor. The v1.80.1 editor-runtime cancel path already restored the transform, cleared _bdDrag, then set _terminalFrame=1, so the retained class-binding gap predates the #861 owner extraction. The accepted-current native grid witness reproduces grabbing after trusted touchCancel with unchanged config. The fix clears only that owner's cursor, supports its next begin and routes its capture-loss terminal; no persisted model or migration is introduced. Stable path comparison was checked by reading the v1.80.1 tag, not by claiming a stable browser run."
+  "rationale": "Fixes cancellation presentation of the existing backdrop editor. The v1.80.1 editor-runtime cancel path already restored the transform, cleared _bdDrag, then set _terminalFrame=1, so the retained class-binding gap predates the #861 owner extraction. The accepted-current native grid witness reproduces grabbing after trusted touchCancel with unchanged config. The fix clears only that owner's cursor, supports its next begin and routes its capture-loss terminal; no persisted model or migration is introduced. Stable path comparison was checked by reading the v1.80.1 tag, not by claiming a stable browser run.",
+  "summary": {
+    "ru": "После отмены перемещения, масштаба или поворота подложки курсор сразу возвращается в обычное состояние; следующий жест доступен без ожидания обновления Home Assistant.",
+    "en": "Cancelling a backdrop move, resize or rotation immediately restores the normal cursor, and the next gesture works without waiting for a Home Assistant update."
+  }
 }
