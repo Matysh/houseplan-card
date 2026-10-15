@@ -628,7 +628,7 @@ export function initialViewCeilingViolation(bytes, {
  * оставался незафиксированным.
  */
 // #898, owner decision 2026-10-14: every ceiling with less than 10 % headroom is raised by 10 % (rounded up). 16940 -> 18634 B.
-export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_940;
+export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_938;
 /**
  * #600, промежуточные замеры по сериям (итог ставится в конце):
  * - серия 0: 222 900 → 225 900. Набор контролов формы вырос до полного

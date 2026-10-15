@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.81.0-beta.4 — 2026-10-15
+
 - Returning to the page while a released marker move is being saved no longer
   loses the accepted position's Undo to an older reload snapshot
   ([#902](https://github.com/Matysh/houseplan-card/issues/902)).
