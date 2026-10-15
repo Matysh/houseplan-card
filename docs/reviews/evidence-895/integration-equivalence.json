@@ -1,0 +1,68 @@
+{
+  "schema": "houseplan-light-presentation-integration-equivalence/v1",
+  "kind": "source-and-runtime-content-equivalence; not a new benchmark execution",
+  "measured": {
+    "base": {
+      "sha": "fcef2752bfea5ef8292dc14495ad1bc3a6fed2e9",
+      "tree": "8b0ddc5bd0b528180ce07a3bdab605c09dd9fcbe",
+      "dirty": false
+    },
+    "result": {
+      "sha": "b6f183533dc2e51abee97bb1933f4021ccbca096",
+      "tree": "a7e726948e43f4c484f7cd4f648467dc0dd7648c",
+      "dirty": false
+    }
+  },
+  "integrated": {
+    "acceptedBase": {
+      "sha": "c8a45415070ec9fe20e519e89f0877621fd97452",
+      "tree": "3aa9120c1d5470e2e1608cc7515ecad601631fed"
+    },
+    "result": {
+      "sha": "d28cdbeee250996ab426ccd3a3f747f6dfe4557f",
+      "tree": "aef95da5749164952077699640c087041edf5b16",
+      "dirty": false
+    }
+  },
+  "inputAudit": {
+    "method": "SHA256 of every saved inputHashes path, with all paths checked against the actual accepted/base and rebased/result files; no subset selection.",
+    "base": {
+      "savedPassport": "base-inputs.json",
+      "checked": 413,
+      "differences": [],
+      "inputCorpusSha256": "6a819a0ae2e9dc0b5655e9cdade4fd11b874b6b7cda319323d0465a1a7a1b2ec",
+      "sourceFingerprint": "e181a93cc7a7d71273abb734f2b8c3640de89bf179088ee7563afcb73290ed8c"
+    },
+    "result": {
+      "savedPassport": "result-inputs.json",
+      "checked": 414,
+      "differences": [],
+      "inputCorpusSha256": "6d998e4658f27023ca27a9b1ba6068df79032ab9e21d7c09f2b63a619ef0460f",
+      "sourceFingerprint": "ee8741e0aee72932150b965b7a7b97b33197d271f7ece5d58a8cb5dab6decf08"
+    },
+    "additionalUpstreamBenchmarkInputPaths": [],
+    "observerSha256": "fa368de684b968e8120f848a42376f84265dacb581a38519077a732216ec05d3",
+    "comparatorSha256": "bc99ea59a4fb1ce50a79582df838a405f46fcbf7421595fe7154f4b0f5ca6531",
+    "protocolSha256": "1a918fc68c94e7c40f6f8a747b74eef7072a11eb6e8b151c2ac24d3c693a7d5e",
+    "fixtureSha256": "60479a958f189fccd73a80d0b2ffc260b427c3e5312221d7d293437c83be3cd5",
+    "budgetsSha256": "2937d16ac424b29e7396ee257df4863f93e661aebfc9c421e0c743fa33f85f44"
+  },
+  "runtimeAudit": {
+    "base": {
+      "sourceFingerprintComputedOnAcceptedBase": "e181a93cc7a7d71273abb734f2b8c3640de89bf179088ee7563afcb73290ed8c",
+      "verifiedBundleReference": "measured fcef2752 detached checkout, retained unchanged",
+      "bundleManifestSha256": "249a9bf48a337644d537756d912797ac27512732e0e751a0714efe50415d4957",
+      "bundleFiles": 51
+    },
+    "result": {
+      "freshBuildCommand": "npm run bundle:sync",
+      "builtAt": "d28cdbeee250996ab426ccd3a3f747f6dfe4557f",
+      "sourceFingerprint": "ee8741e0aee72932150b965b7a7b97b33197d271f7ece5d58a8cb5dab6decf08",
+      "bundleManifestSha256": "286b99195153cbab6df038c75e173e277e6c6f29f8c5421c0db1a93375886f93",
+      "bundleFiles": 51
+    },
+    "baselineReferenceMatchesOriginal": true,
+    "freshResultMatchesOriginal": true
+  },
+  "limitations": "All six raw measured samples remain exact fcef2752/b6f183533 records, unchanged. This supplement establishes byte/source/runtime equivalence across the accepted B/C-only #899 integration, not execution on c8a45415/d28cdbee or this documentation commit. Absolute full CI, final review and any required owner real-GPU acceptance remain separate."
+}

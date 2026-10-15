@@ -57,3 +57,10 @@ changed executable inputs require a new explicitly identified cohort. The
 older pre-#867 receipts remain historical and were not upgraded to the new
 Live-readiness observer. This evidence commit did not itself execute a new
 benchmark.
+
+After accepting #899, [the integration supplement](integration-equivalence.json)
+checks all 413 base and 414 result inputs against accepted `c8a45415` and
+rebased `d28cdbee`: zero byte differences. The freshly built result has the
+same source fingerprint and 51-file bundle manifest as the measured result.
+The original raw reports and passports above are unchanged; this is content
+equivalence, not a new benchmark execution on the integrated commits.
