@@ -97,8 +97,9 @@ function harness() {
   };
   const change = mode => {
     host._layoutIO.retire(); host._read.invalidate(); host._configReloadAuthority.invalidateLifecycle();
-    host._devicePositionHistory.clear(); host._devicePositionBusy = false; host._sentPos.clear();
+    host._devicePositionBusy = false; host._sentPos.clear();
     if (mode === 'detach') { host.isConnected = false; return; }
+    host._devicePositionHistory.clear();
     const old = host.hass;
     const next = { config: config('B'), layout: { point: pos(.8) }, cfgRev: 30, rev: 40 };
     host.hass = transport(next, mode === 'user' ? old.connection : {}, 'b'); context.observe(host.hass);
@@ -229,6 +230,17 @@ test('#902 AC3 held drag still cancels its preview without a write or command', 
   assert.deepEqual(h.host._layout.point, pos(.1));
   assert.equal(h.host._devicePositionHistory.size, 0);
   assert.equal(h.writes.length, 0);
+});
+
+test('#902 same-element short detach retains already accepted history, unlike a retired pending completion', async () => {
+  const h = harness(); h.releaseDrag(); h.writes[0].gate.resolve(); await tick();
+  assert.equal(h.host._devicePositionHistory.size, 1);
+  h.change('detach'); h.host.isConnected = true;
+  await h.host._loadFromServer();
+  assert.equal(h.host._devicePositionHistory.size, 1);
+  h.holdWrite(false); h.releaseDrag(.5); await tick();
+  assert.equal(h.host._devicePositionHistory.size, 2);
+  assert.equal(h.writes.length, 2);
 });
 
 test('#902 bounded retry: a second actual overlap re-arms once; idle/retire release only their own waiters', async () => {

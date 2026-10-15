@@ -16,6 +16,16 @@ file is mutated. The server's saved canonical point, accepted card body and
 actual marker left/top all match, with one wire write per drag/Undo/Redo.
 Pinned headless Chromium is not owner field or real-GPU acceptance.
 
+Risky neighbour: the first implementation additionally cleared already
+accepted history on same-element detach. The unchanged
+`node demo/smoke_editor_guides_lifecycle.mjs` correctly failed (history deltas
+expected 0/+1, observed -4/-3). Removing only that excessive clear restored its
+native PASS; the pending old-completion fence remains. This preserves #893's
+existing accepted same-instance history, rather than broadening #902 into a
+history reset policy. Foreign connection/user still clears as before, and no
+history transfers to a different card instance. A positive compiled test pins
+short detach, authoritative reread and the next deliberate accepted move.
+
 `test/layout-write-reload.test.mjs` executes the compiled exported card's
 `_loadFromServer`, `_persistDevicePlacement`, released `_pointerUp` and
 history methods against ordinary controlled host/transport ports. It uses the
@@ -24,6 +34,8 @@ owners. It covers both ACK orders, a write starting during the read/backdrop
 await, current reject, newer external revision, connection/user/A→B→A/detach
 with old success/error/finally, unchanged passive View/kiosk read counts, held
 drag cancellation and settlement/retirement without residual receipts.
+`npx tsc -p tsconfig.test.json`, `node scripts/fix-test-build.mjs`, then
+`node --test test/layout-write-reload.test.mjs`: 36/36 PASS, raw exit 0.
 
 | AC | Witness | What makes the oracle red |
 |---|---|---|

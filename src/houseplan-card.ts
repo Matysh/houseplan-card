@@ -2758,7 +2758,7 @@ export class HouseplanCard extends LitElement {
     // Connection object and the route/user strings happen to match (#543).
     this._configReloadAuthority.invalidateLifecycle();
     this._read.invalidate(); this._loading = false;
-    this._layoutIO.retire(); this._devicePositionBusy = false; this._devicePositionHistory.clear();
+    this._layoutIO.retire(); this._devicePositionBusy = false;
     this._liveRt?.dispose();
     this._radarLive.stop();
     this._editorRuntime?._disposeLiveEditor();
@@ -4946,17 +4946,9 @@ export class HouseplanCard extends LitElement {
         const pos = canonicalizePosition(this._layout[id]);
         if (!pos) continue;
         this._layout = { ...this._layout, [id]: pos };
-        // in flight until the server answers: a layout reload triggered in the
-        // meantime must keep this position, not the one the server still has
-        this._sentPos.set(id, pos);
-        const settled = this._layoutIO.begin();
-        const ownsPending = this._layoutIO.guard(true);
-        // Convert a synchronous transport refusal to the same settled path.
-        const send = async () => this.hass.callWS({ type: 'houseplan/layout/update', device_id: id, pos });
-        void send()
-          .then((r: { rev?: unknown }) => { if (isCurrent()) { this._adoption.acceptLayoutPosition(id, pos, r.rev); this._cacheSnapshot(); } })
-          .catch((e: unknown) => { if (isCurrent()) this._showToast(this._t('toast.pos_save_failed', { err: this._errText(e) })); })
-          .finally(() => { if (ownsPending() && this._sentPos.get(id) === pos) this._sentPos.delete(id); settled(); });
+        // Labels and markers share the exact point-write ACK/retirement owner.
+        void this._persistDevicePlacement(id, pos)
+          .catch((e: unknown) => { if (isCurrent()) this._showToast(this._t('toast.pos_save_failed', { err: this._errText(e) })); });
       }
       this._cacheSnapshot();
     } else {
