@@ -84,6 +84,25 @@ test('#903 subsequent implementation without any classification remains fail-clo
   assert.throws(f.catalogue, /Missing classification for #2/);
 });
 
+test('#903 published mixed manifests retain ancillary SPEC trace but require their own implementation SHA', t => {
+  const f = fixture(t); const spec = f.spec();
+  f.put('scripts/implemented.mjs', 'export const value = 1;');
+  const implementation = f.commit('implementation\n\nIssue: #2\nUser-Visible: no');
+  const old = process.cwd(); process.chdir(f.dir);
+  try {
+    const history = readCandidateHistory(implementation);
+    const { manifest } = buildReleaseMembership({ tag: 'v1.81.0-beta.4', candidate: implementation,
+      ...history, issueNumbers: [2] });
+    assert.deepEqual(manifest.issues, [{ number: 2, commits: [implementation] }]);
+    assert.doesNotThrow(() => verifyReleaseMembershipAgainstGit({ ...manifest,
+      issues: [{ number: 2, commits: [spec, implementation].sort() }] }));
+    assert.throws(() => verifyReleaseMembershipAgainstGit({ ...manifest,
+      issues: [{ number: 2, commits: [spec] }] }), /does not prove implementation/);
+    assert.throws(() => verifyReleaseMembershipAgainstGit({ ...manifest,
+      issues: [{ number: 2, commits: [implementation, 'f'.repeat(40)].sort() }] }), /does not prove issue/);
+  } finally { process.chdir(old); }
+});
+
 for (const [name, options, error] of [
   ['unknown phase', { trailer: 'Delivery-Phase: invented/v9' }, /Unknown\/malformed/],
   ['duplicate phase', { trailer: `${phase}\n${phase}` }, /Unknown\/malformed/],

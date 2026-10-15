@@ -2187,6 +2187,10 @@ The immutable trace remains in catalogue `specDeliveries`, outside implemented
 entries, prerelease membership, closure evidence and user milestone selection.
 Unknown/malformed phase or an unsuitable diff fails closed. The producer and
 both membership creation/verification use the same phase contract.
+Already published manifests may retain a SPEC/promotion SHA as ancillary trace
+alongside their own actual implementation SHA; verification requires that
+implementation evidence and still checks every listed SHA against the exact
+candidate history. New manifests list implementation evidence only.
 
 The schema-1 agent classification stays mandatory for real implementation.
 At both merge and catalogue boundaries its blob must differ from any entry

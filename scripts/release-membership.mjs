@@ -136,7 +136,12 @@ export function verifyReleaseMembershipAgainstGit(manifest, expected = {}) {
   }
   const all = new Set(history.commits.map((commit) => commit.sha));
   const byIssue = new Map();
+  const historicalTrace = new Map();
   for (const commit of history.commits) {
+    for (const number of issueTrailers(commit.message)) {
+      if (!historicalTrace.has(number)) historicalTrace.set(number, new Set());
+      historicalTrace.get(number).add(commit.sha);
+    }
     if (taskDelivery(commit) === 'spec-review' || /^Release:\s*/m.test(commit.message)) continue;
     for (const number of issueTrailers(commit.message)) {
       if (!byIssue.has(number)) byIssue.set(number, new Set());
@@ -144,8 +149,12 @@ export function verifyReleaseMembershipAgainstGit(manifest, expected = {}) {
     }
   }
   for (const issue of manifest.issues) {
+    if (!issue.commits.some(sha => byIssue.get(issue.number)?.has(sha)))
+      throw new Error(`membership does not prove implementation for issue #${issue.number}`);
     for (const sha of issue.commits) {
-      if (!all.has(sha) || !byIssue.get(issue.number)?.has(sha)) {
+      // Previously published manifests may retain a SPEC/promotion SHA beside
+      // real implementation evidence. Preserve that trace, never as sole proof.
+      if (!all.has(sha) || !historicalTrace.get(issue.number)?.has(sha)) {
         throw new Error(`membership evidence ${sha} does not prove issue #${issue.number}`);
       }
     }
