@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 113, issue: 56. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 115, issue: 56. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -15,6 +15,8 @@
 | #894 | [SPEC-REVIEW-894-r1.md](SPEC-REVIEW-894-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | отсутствует обязательный пункт DoR «влияние на производительность»; Файл: тело issue #894, раздел «Release-артефакты» | `docs/release-ledger/v1.80.1/878.json` `docs/DEVICE-PRESENTATION.md` `docs/release-ledger/v1.80.1/894.json` |
 | #894 | [SPEC-REVIEW-894-r2.md](SPEC-REVIEW-894-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #893 | [SPEC-REVIEW-893-r1.md](SPEC-REVIEW-893-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #893 | [CODE-REVIEW-893-r1.md](CODE-REVIEW-893-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #893 | [CODE-REVIEW-893-r2.md](CODE-REVIEW-893-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #892 | [SPEC-REVIEW-892-r1.md](SPEC-REVIEW-892-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | премиса «backend требует HA-admin» не подтверждается кодом; предлагаемое ужесточение не… | `custom_components/houseplan/auth.py` `custom_components/houseplan/websocket_api.py` `src/editors/general-settings-dialog.ts` `docs/SCOPE.md` `websocket_api.py` `general-settings-dialog.ts` |
 | #892 | [SPEC-REVIEW-892-r2.md](SPEC-REVIEW-892-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #892 | [SPEC-REVIEW-892-r3.md](SPEC-REVIEW-892-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
