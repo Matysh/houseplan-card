@@ -629,6 +629,14 @@ const MUTANT_DEFINITIONS = [
       replace: '      width: 20px;\n      height: 20px;\n      margin-block: 0;' }],
   },
   {
+    id: 'room-area-icon-keeps-block-baseline',
+    guard: 'node demo/smoke_room_link.mjs',
+    because: '#894 AC3: the native 44px button must preserve the painted HA icon geometry; the inherited custom-element line box requires measured shadow-SVG bounds in Chromium.',
+    patches: [{ file: 'src/styles/plan.styles.ts',
+      find: '    .rlarea > ha-icon { display: inline-flex; }',
+      replace: '    .rlarea > ha-icon { display: block; }' }],
+  },
+  {
     id: 'kiosk-document-recovery-drops-camera',
     guard: 'node demo/smoke_kiosk_viewport_recovery.mjs',
     because: '#894 AC5/AC6: a real document reload must consume only its placement memo and retain exact floor/zoom/pan, with a deleted-floor fallback and no editor/modal.',

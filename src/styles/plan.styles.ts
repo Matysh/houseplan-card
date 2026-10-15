@@ -727,6 +727,7 @@ export const planStyles = css`
       font: inherit;
       outline: none;
     }
+    .rlarea > ha-icon { display: inline-flex; }
     .rlarea:focus-visible, .rlfit:focus-visible {
       outline: 2px solid var(--hp-accent);
       outline-offset: 2px;

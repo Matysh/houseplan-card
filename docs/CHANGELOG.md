@@ -48,7 +48,8 @@
 - Door cards show their current lock/contact names and refresh when the plan
   changes. Device settings opened in View survive a warm remount visibly;
   HA Area links have their own keyboard/touch button while the room name still
-  fits the room without shifting between View and Plan. Device-bound Zigbee2MQTT
+  fits the room without shifting between View and Plan. The Area icon keeps
+  its painted alignment inside the larger touch target. Device-bound Zigbee2MQTT
   light groups share the group icon, and non-carousel kiosks can update while
   enlarged without losing their floor or camera. A later account/placement
   change cannot inherit a delayed restoration

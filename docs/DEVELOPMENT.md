@@ -232,6 +232,13 @@ M1). Author checks applicability only; execution remains nightly-only (#709).
 
 ## View entry and document recovery witnesses (#894)
 
+The full WSL capture exposed an inherited block line-box offset in the new
+44px Area button: its inner `ha-icon` must keep the old inline-flex host.
+`node demo/smoke_room_link.mjs` now measures the shadow SVG, not only the outer
+label and metric boxes. Before the fix all four DPR/theme cases fail painted
+icon parity (2.64–3.64px vertical drift); the touch floor remains unchanged.
+The new browser mutant is declared only; catching it remains nightly evidence.
+
 `smoke_view_entry_recovery` uses accepted config events and trusted keyboard/touch
 on RU/EN 360/1280px cards; an injected queued old lock target tests dispatch
 independently of Lit reusing a button with a new listener. Current rebound names

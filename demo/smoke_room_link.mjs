@@ -23,7 +23,8 @@ for (const scale of [1, 2]) {
         .find((label) => label.dataset.id === id);
       const relativeBox = (label, selector) => {
         const anchorBox = label.getBoundingClientRect();
-        const box = label.querySelector(selector)?.getBoundingClientRect();
+        const node = typeof selector === 'string' ? label.querySelector(selector) : selector;
+        const box = node?.getBoundingClientRect();
         if (!box) return null;
         const anchorX = anchorBox.left + anchorBox.width / 2;
         const anchorY = anchorBox.top + anchorBox.height / 2;
@@ -36,6 +37,8 @@ for (const scale of [1, 2]) {
       };
       const snapshot = (label) => ({
         name: relativeBox(label, '.rlname'),
+        icon: relativeBox(label, label.querySelector('ha-icon.rlgo, .rlarea ha-icon')
+          ?.shadowRoot?.querySelector('svg')),
         metrics: relativeBox(label, '.rlmetrics'),
         metricsText: label.querySelector('.rlmetrics')?.textContent?.replace(/\s+/g, ' ').trim() || '',
       });
@@ -157,7 +160,8 @@ for (const scale of [1, 2]) {
     const values = ['left', 'top', 'width', 'height'];
     const nameDeltas = values.map((field) => Math.abs(setup.view.name[field] - setup.plan.name[field]));
     const metricDeltas = values.map((field) => Math.abs(setup.view.metrics[field] - setup.plan.metrics[field]));
-    geometry.push({ key, nameDeltas, metricDeltas });
+    const iconDeltas = values.map((field) => Math.abs(setup.view.icon[field] - setup.plan.icon[field]));
+    geometry.push({ key, nameDeltas, metricDeltas, iconDeltas });
     checks[`${key}:fixture`] = !setup.missingFixture;
     checks[`${key}:room-cursor`] = setup.roomCursor === 'default';
     checks[`${key}:view-link-per-area-room`] = setup.viewLinkCount === setup.withArea;
@@ -172,6 +176,7 @@ for (const scale of [1, 2]) {
       && drag.dragNav == null && drag.stayedInPlan;
     checks[`${key}:plan-icon-drags-label`] = drag.changed;
     checks[`${key}:core-name-parity`] = nameDeltas.every((delta) => delta <= 0.5);
+    checks[`${key}:painted-area-icon-parity`] = iconDeltas.every((delta) => delta <= 0.5);
     checks[`${key}:core-metrics-parity`] = metricDeltas.every((delta) => delta <= 0.5)
       && setup.view.metricsText === setup.plan.metricsText;
     checks[`${key}:plan-controls-preserved`] = setup.planHandles === 4
