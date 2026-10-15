@@ -15,7 +15,7 @@
  *   clone memo, the previous projections and every presentation;
  * - the presentation key — every top-level HA member except `states` (locale,
  *   themes, formatters, config…), the card config and its content, manual
- *   lights, the plan light graph, reduced motion and each activity runtime
+ *   lights, the light graph's topology, reduced motion and each activity runtime
  *   with its live window at this moment. A change rebuilds every presentation; unchanged rows,
  *   DevItems and the roster keep their clones, lent to a new clone memo
  *   (`lend`) so the weak table does not collect every rebuilt presentation.
@@ -25,7 +25,11 @@
  * `in` test, a descriptor, or — failing open — an iteration, which marks the
  * device as reading everything); a device is rebuilt when one of its recorded
  * rows changed identity (HA replaces a row on any state or attribute change),
- * the others keep their presentation object. Cloning shares one memo per
+ * the others keep their presentation object. #895 additionally records the
+ * exact resolved light keys consumed by each face: passive sources' `on` is
+ * computed before row tracking and must never be inferred from stateEids.
+ * Ambiguous/missing graph proof takes the complete presentation path.
+ * Cloning shares one memo per
  * window, so an unchanged row, DevItem, roster or presentation keeps its frozen
  * clone, and the registry projections are taken from the previous snapshot.
  *
@@ -36,6 +40,7 @@
 import { presentationSnapshotKey, type RenderDeviceSnapshot } from './render-device-snapshot';
 import type { RenderSnapshotHost, RenderSnapshotReuse, RenderSnapshotWindow } from './render-snapshot-capture';
 import type { ResolvedDevicePresentation } from './device-presentation';
+import { PresentationLightFrame } from './presentation-light-frame';
 
 /** A recorded iteration of the states map: the device depends on every row. */
 const EVERY_ROW = '\u0000*';
@@ -60,6 +65,9 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
   private rows = new Map<string, unknown>();
   /** Recorded rows of each device's two presentations. */
   private deps = new Map<string, Set<string>>();
+  private lightDeps = new Map<string, Set<string>>();
+  private lightFrame: PresentationLightFrame | null = null;
+  private changedLights = new Set<string>();
   private built = new Map<string, ResolvedDevicePresentation>();
   /** Rows changed since the last capture; null while every presentation is rebuilt. */
   private changed: Set<string> | null = null;
@@ -72,6 +80,7 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
     if (this.open) this.reset();
     this.open = true;
     this.fresh.clear();
+    const frame = lightSources instanceof PresentationLightFrame ? lightSources : null;
     const hass = host._planHass, registry = host._fullRegistryHass;
     const now = Date.now();
     const sources: unknown[] = [
@@ -84,7 +93,7 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
       // (fail-open, ТЗ п.2). The card config's content is a presentation input.
       JSON.stringify([host._devices, host._serverCfg?.settings]),
     ];
-    const inputs: unknown[] = [host._config, JSON.stringify(host._config), host._virtualLights, lightSources,
+    const inputs: unknown[] = [host._config, JSON.stringify(host._config), host._virtualLights, frame?.topology,
       host._reducedMotion];
     for (const name of Object.keys(host.hass || {}).sort()) if (name !== 'states') inputs.push(name, host.hass[name]);
     for (const [id, runtime] of host._activityRt) {
@@ -93,7 +102,15 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
         runtime.alarmActive, !!(runtime.flashTs && runtime.flashKind && expires > now));
     }
     const kept = !!this.previous && same(this.sources, sources);
-    const reusable = kept && same(this.inputs, inputs);
+    const reusable = kept && frame?.topology != null && this.lightFrame?.topology != null
+      && same(this.inputs, inputs);
+    this.changedLights.clear();
+    if (reusable) {
+      for (const [key, state] of frame.states) {
+        if (this.lightFrame!.states.get(key) !== state) this.changedLights.add(key);
+      }
+    }
+    this.lightFrame = frame;
     this.sources = sources;
     this.inputs = inputs;
     if (!kept) {
@@ -111,6 +128,7 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
     } else {
       this.changed = null;
       this.deps.clear();
+      this.lightDeps.clear();
       this.built.clear();
     }
     return {
@@ -124,17 +142,21 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
   ): ResolvedDevicePresentation {
     const key = presentationSnapshotKey(id, showLqi);
     const deps = this.deps.get(id);
+    const lightDeps = this.lightDeps.get(id);
     const kept = this.built.get(key);
-    if (!this.fresh.has(id) && this.changed && deps && kept
-        && !deps.has(EVERY_ROW) && ![...deps].some((row) => this.changed!.has(row))) return kept;
+    if (!this.fresh.has(id) && this.changed && deps && lightDeps && kept
+        && !deps.has(EVERY_ROW) && ![...deps].some((row) => this.changed!.has(row))
+        && ![...lightDeps].some((source) => this.changedLights.has(source))) return kept;
     if (!this.fresh.has(id)) {
       this.fresh.add(id);
       this.deps.set(id, new Set());
+      this.lightDeps.set(id, new Set());
     }
     this.reading = this.deps.get(id)!;
     this.stats.presentations++;
     try {
-      const presentation = build();
+      const presentation = this.lightFrame
+        ? this.lightFrame.observe(this.lightDeps.get(id)!, build) : build();
       this.built.set(key, presentation);
       return presentation;
     } finally { this.reading = null; }
@@ -156,6 +178,9 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
     this.memo = new WeakMap();
     this.rows.clear();
     this.deps.clear();
+    this.lightDeps.clear();
+    this.lightFrame = null;
+    this.changedLights.clear();
     this.built.clear();
     this.changed = null;
     this.reading = null;

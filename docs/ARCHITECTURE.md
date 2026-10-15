@@ -508,9 +508,19 @@ device's presentations read and, when a tick changed nothing but such rows,
 resolves again only the devices whose rows changed; unchanged rows, DevItems,
 the roster and presentations keep their frozen clones. A change of any other
 input — registry, roster, layout, config epoch, stored config, card config,
-locale/themes, manual lights, the plan light graph, an activity window —
+locale/themes, manual lights, the light graph's topology, an activity window —
 rebuilds every presentation or the whole snapshot. Without the live chunk
 every capture is complete (#848).
+
+The capture-local `PresentationLightFrame` (#895) indexes that resolved graph
+by source key and owner once, with one lazy marker-state choice projection
+only when a derived value consumes it. Reuse records the exact consumed light
+keys alongside HA row reads; this includes passive sources whose `on` already
+encodes incoming driver state and whose `stateEids` may be empty. A lamp tick
+therefore invalidates only actual consumers, not every face because an array
+identity changed. Unproved/ambiguous graph topology takes the full path. The
+current frame/dependency maps are bounded by the live roster and reset with
+the existing owner lifecycle; no authority or cross-floor cache is added.
 
 `device-battery.ts` adds an independent own-device diagnostic to the same frozen
 presentation. An ownership index is cached against the full HA entity registry;

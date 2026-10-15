@@ -37,6 +37,7 @@ import {
   DEVICE_PULSE_DEFAULT_SCALE, ordinaryDevicePulseColor, resolveDevicePulse, type ResolvedDevicePulse,
 } from './device-pulse';
 import { isManualVirtualLightMarker } from './virtual-light-state';
+import { PresentationLightFrame } from './presentation-light-frame';
 import {
   resolveDevicePresentationPolicy, resolvePresentationReason,
   type BindingPresentationLifecycle, type PresentationReason, type ValueFallbackReason,
@@ -156,6 +157,8 @@ export interface ResolvePresentationOptions {
   lightDevices?: readonly DevItem[];
   /** Pre-resolved whole-plan graph. Render/activity passes must build it once. */
   lightSources?: readonly ResolvedLightSource<DevItem>[];
+  /** One indexed source/marker-state projection shared by this capture. */
+  lightFrame?: PresentationLightFrame;
   /** Registry view must match the action resolver, including disabled rows. */
   registryHass?: any;
   now?: number;
@@ -294,6 +297,7 @@ export function resolvePresentationSources(
   hass: any, device: DevItem, lightDevices: readonly DevItem[] = [device],
   planLightSources?: readonly ResolvedLightSource<DevItem>[],
   registryHass: any = hass,
+  lightFrame?: PresentationLightFrame,
 ): ResolvedPresentationSources {
   // User-hidden is a renderer concern. It must not erase the source graph used
   // by the design preview. HA-disabled devices already carry no active entities.
@@ -339,9 +343,9 @@ export function resolvePresentationSources(
   // state is derived from incoming marker:* links and cannot be known from an
   // isolated marker. Fall back to the local owned source for design previews
   // whose temporary marker is not present in `lightDevices`.
-  const globalOwned = globalLights.filter((source) =>
-    source.device.id === d.id && source.via !== 'controls'
-  );
+  const globalOwned = needsGlobalGraph && lightFrame
+    ? lightFrame.owned(d.id)
+    : globalLights.filter((source) => source.device.id === d.id && source.via !== 'controls');
   const localOwned = localLights.filter((source) => source.via !== 'controls');
   const ownedLights = globalOwned.length ? globalOwned : localOwned;
   // In #107's exact manual mode, outgoing controls remain saved and active in
@@ -353,8 +357,10 @@ export function resolvePresentationSources(
     ...ownedLights,
   ];
   if (markerRefs.size) {
-    for (const source of globalLights) {
-      if (!markerRefs.has(source.key)) continue;
+    const linked = lightFrame
+      ? [...markerRefs].flatMap((ref) => [...lightFrame.linked(ref)])
+      : globalLights.filter((source) => markerRefs.has(source.key));
+    for (const source of linked) {
       const aliasesExisting = source.stateEids.length > 0 && lights.some((existing) =>
         existing.stateEids.some((eid) => source.stateEids.includes(eid)),
       );
@@ -704,14 +710,17 @@ export function resolveDevicePresentation(
     ? EMPTY_SOURCES : resolvePresentationSources(
         hass, d, options.lightDevices || [d], options.lightSources,
         options.registryHass || hass,
+        options.lightFrame,
       );
-  const needsMarkerState = d.marker?.value_source?.kind === 'derived_marker_state'
-    || d.marker?.value_badge?.source?.kind === 'derived_marker_state';
-  const markerStateGraph = options.lightSources
-    || (needsMarkerState ? resolvedLightSources(hass, options.lightDevices || [d]) : []);
-  const markerStates = markerStateGraph
-    .filter((source) => source.key.startsWith('marker:'))
-    .map((source) => ({ ref: source.key, on: source.on, name: source.device.name }));
+  const markerRefs = [d.marker?.value_source, d.marker?.value_badge?.source]
+    .filter((source) => source?.kind === 'derived_marker_state')
+    .map((source) => (source as { ref: string }).ref);
+  // Ordinary faces do not consume marker-state choices. Derived values share
+  // one lazy projection, while registering only the refs they actually use.
+  const markerStates = markerRefs.length
+    ? (options.lightFrame || new PresentationLightFrame(options.lightSources
+      || resolvedLightSources(hass, options.lightDevices || [d]))).markerStates(markerRefs)
+    : [];
   const status = d.bindingStatus;
   const haDisabled = status?.kind === 'ha_disabled';
   const orphaned = status?.kind === 'orphaned';

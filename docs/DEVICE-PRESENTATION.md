@@ -186,6 +186,21 @@ browser/golden — матрица батарей #792, `demo/smoke_device_batter
 только тогда, когда меняет победившее решение или наблюдаемый результат; полное
 декартово произведение binding × source × display × activity запрещено.
 
+## Shared light frame (#895)
+
+Full and static captures share one indexed `PresentationLightFrame` for their
+resolved plan graph. Marker-state choices are lazy and built at most once per
+capture; ordinary faces do not request them. Preview source candidate discovery
+is unchanged. Incremental View reuse records consumed source keys as well as
+actual HA state rows, including passive incoming-driver state without a local
+entity. Changes to graph topology, registry, ownership, config, manual state,
+locale/theme or activity context retain the conservative full invalidation.
+Missing/ambiguous dependency proof never authorises reuse. The canonical full
+path remains available before the live chunk and for differential comparison;
+no colour, status, alarm, battery/LQI, service target or LED geometry policy
+changes. `test/presentation-light-frame.test.mjs` covers 200 markers × 100 lamp
+ticks, complete/unindexed parity and reset/bounded retention.
+
 ## LED strip representation (#780)
 
 A marker may be shown as an LED strip instead of an icon (`space.led_strips`,

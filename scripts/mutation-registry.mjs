@@ -324,6 +324,22 @@ const MUTANT_DEFINITIONS = [
       replace: '      this.host._settingsDialog = null;' }],
   },
   {
+    id: 'light-frame-ignores-passive-source-change',
+    guard: 'node --test test/presentation-light-frame.test.mjs',
+    because: '#895 AC2: a passive source has no own stateEids but must change with its incoming driver; exact full and unindexed canonical comparisons detect stale source dependencies.',
+    patches: [{ file: 'src/render-snapshot-reuse.ts',
+      find: '&& ![...lightDeps].some((source) => this.changedLights.has(source))) return kept;',
+      replace: '&& true) return kept;' }],
+  },
+  {
+    id: 'light-frame-restores-global-array-invalidation',
+    guard: 'node --test test/presentation-light-frame.test.mjs',
+    because: '#895 AC1: a lamp tick must keep every independent face identity and build only affected/derived presentations; no timing threshold can hide a global presentation rebuild.',
+    patches: [{ file: 'src/render-snapshot-reuse.ts',
+      find: 'host._virtualLights, frame?.topology,',
+      replace: 'host._virtualLights, frame?.sources,' }],
+  },
+  {
     id: 'config-return-retains-inert-subscription',
     guard: 'node demo/smoke_config_authority.mjs',
     because: '#890 AC6: current A events must work after accepted B-to-A and a coalesced A-to-B-to-A plus a real next HA frame; pure identity checks cannot prove live resubscription.',

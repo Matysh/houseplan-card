@@ -22,6 +22,10 @@
   inherit, while existing Off choices and YAML `show_signal: false` remain
   exceptions. Explicit space On overrides both. The two visual card editors
   no longer duplicate this setting ([#876](https://github.com/Matysh/houseplan-card/issues/876)).
+- Light updates on large plans now reuse unchanged device faces instead of
+  rebuilding them all. Linked and virtual lights still update in the same
+  Home Assistant frame, with the same appearance and controls
+  ([#895](https://github.com/Matysh/houseplan-card/issues/895)).
 
 - Switching Home Assistant connections no longer lets a late old-server
   notification interrupt the new plan's initial config/layout load

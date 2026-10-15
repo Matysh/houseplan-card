@@ -26,6 +26,7 @@ import {
 import { readVacTelemetry } from './vacuum';
 import { effectiveRoutes, observedMapIds, resolveRoute } from './vacuum-routes';
 import type { VirtualLightSnapshot } from './virtual-light-state';
+import { PresentationLightFrame } from './presentation-light-frame';
 import type { DevItem, Marker, SpaceModel } from './types';
 
 /** The card members a capture reads; the card passes itself. */
@@ -101,11 +102,13 @@ export function presentDevice(
 export function captureRenderDeviceSnapshot(
   host: RenderSnapshotHost, reuse?: RenderSnapshotReuse | null,
 ): RenderDeviceSnapshot {
-  // One plan-wide light graph per capture; the reuse window keys on it.
+  // One plan-wide graph/index per capture; reuse observes consumed source keys
+  // separately from structural topology and recorded HA state rows.
   const planLightSources = resolvedLightSources(
     host._planHass, host._devices, null, host._virtualLights,
   );
-  const window = reuse?.begin(host, planLightSources);
+  const lightFrame = new PresentationLightFrame(planLightSources);
+  const window = reuse?.begin(host, lightFrame);
   const planHass = window?.hass || host._planHass;
   const registryHass = window?.registry || host._fullRegistryHass;
   const presentations = new Map<string, ResolvedDevicePresentation>();
@@ -168,6 +171,7 @@ export function captureRenderDeviceSnapshot(
         signalContext,
         lightDevices: host._devices,
         lightSources: planLightSources,
+        lightFrame,
         registryHass,
       });
       presentations.set(presentationSnapshotKey(device.id, showLqi),

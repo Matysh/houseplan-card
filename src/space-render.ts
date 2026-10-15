@@ -44,6 +44,7 @@ import {
   deviceAccessibleLabel, deviceA11yState, resolveDevicePresentation,
   type PresentationActivityRuntime, type ResolvedDevicePresentation,
 } from './device-presentation';
+import { PresentationLightFrame } from './presentation-light-frame';
 import { presentationSnapshotKey } from './render-device-snapshot';
 import { deviceFaceStyle, deviceThemeClass, renderDeviceFace, renderDeviceShadowFace } from './device-face';
 import { effectiveDeviceBaseSize } from './device-marker-geometry';
@@ -616,6 +617,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       : null);
   }
   const planLightSources = resolvedLightSources(planHass, devs, null, o.virtualLights);
+  let lightFrame: PresentationLightFrame | undefined;
   const showLqi = effectiveShowLqi(o.cfg.settings, disp.showLqi, o.showSignal);
   const showBattery = showDeviceBatteryOf(o.cfg.settings);
   const batteryLowOnly = deviceBatteryModeOf(o.cfg.settings) === 'low';
@@ -636,6 +638,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       sourceDetails: false,
       lightDevices: devs,
       lightSources: planLightSources,
+      lightFrame: lightFrame ??= new PresentationLightFrame(planLightSources),
       registryHass,
       reducedMotion: o.reducedMotion,
     });

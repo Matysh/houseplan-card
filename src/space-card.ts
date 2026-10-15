@@ -27,6 +27,7 @@ import { ledRelease, ledStripsByMarker } from './led-strip-gate';
 import {
   activitySourceSignature, resolveDevicePresentation, resolvePresentationSources,
 } from './device-presentation';
+import { PresentationLightFrame } from './presentation-light-frame';
 import {
   advanceFiniteActivity, createFiniteActivityRuntime,
   stampFiniteActivity, type FiniteActivityRuntime,
@@ -547,6 +548,7 @@ class HouseplanSpaceCard extends LitElement {
     const planLightSources = resolvedLightSources(
       planHass, this._devices, null, this._snap?.virtualLights,
     );
+    const lightFrame = new PresentationLightFrame(planLightSources);
     for (const device of this._devices) {
       for (const showLqi of [false, true]) {
         presentations.set(presentationSnapshotKey(device.id, showLqi), resolveDevicePresentation(
@@ -562,6 +564,7 @@ class HouseplanSpaceCard extends LitElement {
             sourceDetails: false,
             lightDevices: this._devices,
             lightSources: planLightSources,
+            lightFrame,
             registryHass,
             reducedMotion: this._reducedMotion,
           },

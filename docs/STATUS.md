@@ -38,6 +38,13 @@ The cold LED guard waits for the revealed View, the public Fit command's saved
 base zoom and interactive Devices DOM; two render frames alone are not camera
 or mode-transition completion.
 
+Light-frame work (#895) shares one source index and lazy marker-state projection
+per capture. Incremental View presentations record consumed resolved-light keys
+as well as HA rows, so passive sources with incoming drivers remain current
+without invalidating independent faces. Topology/authority/manual-state changes
+and unknown proof retain the complete path. No image, control, fixture, timing
+limit or baseline is changed for this optimisation.
+
 Editor gesture owners (#861) separate physical body/rotation and backdrop
 frame state behind 13/14-purpose editor-only ports. Existing queue/reset,
 history and render boundaries remain; hosted doors/windows now move in the

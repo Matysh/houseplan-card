@@ -160,6 +160,7 @@ export async function sensorTickScenarios({ card, host, layout, entities, ticks,
       ...delta(await read(), before),
       tickMs: { median: quantile(times, 0.5), p95: quantile(times, 0.95),
         sum: Number(times.reduce((sum, value) => sum + value, 0).toFixed(2)) },
+      rawTickMs: times,
       ...(observe ? { observed: {
         ledFrames: observedFrames - observedBefore.observedFrames,
         stripsReplaced: stripsReplaced - observedBefore.stripsReplaced,
