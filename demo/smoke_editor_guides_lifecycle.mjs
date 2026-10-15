@@ -130,6 +130,8 @@ try {
   await page.mouse.down(); await page.mouse.move(guideAt.x, guideAt.y, { steps: 4 });
   await page.waitForTimeout(80);
   assert.ok((await observation()).guides > 0, 'a live guide frame really exists before background retirement');
+  const paintedPointerId = await page.evaluate(() => window.__card._deviceDrag?.pointerId);
+  assert.equal(typeof paintedPointerId, 'number', 'the native painted drag has a physical pointer owner');
   await page.evaluate(() => {
     Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
     document.dispatchEvent(new Event('visibilitychange'));
@@ -148,6 +150,35 @@ try {
   await page.waitForFunction(() => !window.__card._markerDialog);
   await page.evaluate(() => window.__hpTest.settled());
   await page.waitForTimeout(200); // the ordinary dialog exit animation still owns its backdrop
+  // The real Enter positive above clears the shared activation barrier. It
+  // does not revive the cancelled physical pointer: deliver that late click
+  // explicitly, without pretending it is a trusted new browser activation.
+  // A compatibility MouseEvent after the deliberate Enter is no longer a
+  // stale-tail contract, so this isolated negative has a pointer id only.
+  const beforeLatePointer = await observation();
+  const latePointerGuards = await page.evaluate(() => {
+    const c = window.__card;
+    return [c._touchClickGuard.clickBlocked, c._suppressClick, c._deviceDrag !== null, c._holdFired];
+  });
+  check('late-pointer negative is not masked by shared click, drag or hold suppression',
+    latePointerGuards, [false, false, false, false]);
+  const latePointerTrusted = await page.evaluate(pointerId => {
+    const node = window.__card.renderRoot.querySelector('[data-hp="device"][data-id="d_lamp"]');
+    const box = node.getBoundingClientRect();
+    const event = new PointerEvent('click', { pointerId, pointerType: 'mouse', button: 0,
+      clientX: box.x + box.width / 2, clientY: box.y + box.height / 2, bubbles: true, composed: true });
+    node.dispatchEvent(event);
+    return event.isTrusted;
+  }, paintedPointerId);
+  await page.waitForTimeout(80);
+  const afterLatePointer = await observation();
+  assert.deepEqual(afterLatePointer.layout, beforeLatePointer.layout,
+    'the retired pointer cannot change the complete layout after a deliberate keyboard action');
+  check('synthetic late old-pointer click stays inert after the real Enter/close positive',
+    [latePointerTrusted, afterLatePointer.dialog, afterLatePointer.guides, afterLatePointer.drag,
+      afterLatePointer.paintedMatches, afterLatePointer.writes - beforeLatePointer.writes,
+      afterLatePointer.history - beforeLatePointer.history, afterLatePointer.services - beforeLatePointer.services],
+    [false, false, 0, null, true, 0, 0, 0]);
   for (const lifecycle of ['hidden', 'pagehide']) {
     const before = await observation(), box = await marker('d_lamp').boundingBox();
     const x = box.x + box.width / 2, y = box.y + box.height / 2;
@@ -169,7 +200,7 @@ try {
       }, { once: true });
     }, lifecycle);
     await page.mouse.move(x + 45, y + 35); await page.waitForTimeout(80);
-    assert.ok(await page.evaluate(() => !!window.__guideQueued), `${lifecycle}: native marker move reached the queued-calculation observer`);
+    assert.ok(await page.evaluate(() => !!window.__guideQueued), `${lifecycle}: native marker move reached the queued-live-frame observer`);
     const retirement = await page.evaluate(kind => {
       const queued = window.__guideQueued;
       const captured = queued.source?.hasPointerCapture?.(queued.pointerId) ?? false;
@@ -298,7 +329,8 @@ try {
     'ACK-before-pageshow ordering retains the accepted full layout after resume');
   check('ACK-before-pageshow ordering retains its accepted history after resume',
     resumedPending.history, afterPending.history);
-  await finish(browser, { roster });
+  await finish(browser, { roster, retiredPointer: { id: paintedPointerId, sharedGuards: latePointerGuards,
+    lateDeliveryTrusted: latePointerTrusted, dialogOpened: afterLatePointer.dialog } });
 } finally {
   await browser.close();
 }

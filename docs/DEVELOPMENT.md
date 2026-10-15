@@ -97,6 +97,11 @@ Its real mouse move is trusted; hidden is emulated and pagehide/pageshow are
 explicitly dispatched, not real bfcache/device acceptance. It checks the entire
 layout, DOM rollback, capture/guides, zero writes/history/services and immediate
 fresh keyboard/drag, plus a released-but-unacknowledged write control.
+After the real Enter/open and Escape/close positive, an explicitly synthetic
+late click retains the cancelled physical pointer id. Read-only observations
+first prove shared click/drag/hold suppression is clear, so that negative
+isolates physical-pointer retirement rather than another activation barrier;
+it does not classify a compatibility MouseEvent after new keyboard intent as stale.
 The Walls witness records actual HA config writes and exact off-grid preview
 identity for H/V and 0/20 cm walls, with endpoint/axis/closure/Shift/ambiguous
 negative owners. A trusted CDP pinch reaches 50%/200% in light/dark themes;
