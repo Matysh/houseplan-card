@@ -580,6 +580,13 @@ try {
   // owner disposal independently, before a detached render can clean up.
   check('#789: reconnect visibly fades and returns all four fields', reconnected.nodes.every(nodes =>
     nodes.every(node => node?.opacity === 1 && !node.leaving)), true);
+  // #847: reconnect retains the interrupted activation tail. Start a genuine
+  // new keyboard sequence on the CURRENT tab (a no-op) after the reconnect
+  // proof, before any later pre-entry-frame scenario; never reset the guard.
+  const currentTab = page.locator('houseplan-card [data-hp="space-tab"][aria-current="page"]');
+  await currentTab.focus();
+  await page.keyboard.press('Enter');
+  check('#847: fresh keyboard intent keeps the current LED floor', await currentTab.getAttribute('data-id'), 'f1');
   for (const exit of [
     { label: 'disabled pools', config: { space: 'f1', light_pools: false } },
     { label: 'another space', config: { space: 'garden', light_pools: true } },
