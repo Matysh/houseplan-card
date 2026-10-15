@@ -111,7 +111,7 @@ export const SMOKE_LINKS = [
   {
     files: ['src/view-runtime-boundary.ts', 'src/view-runtime-code.ts', 'src/view-runtime-retry.ts',
       'src/view-runtimes.ts', 'src/summary-panel-runtime-entry.ts'],
-    smokes: ['smoke_view_runtime_recovery.mjs'],
+    smokes: ['smoke_view_runtime_recovery.mjs', 'smoke_view_runtime_dirty_reload.mjs'],
     because: '#848: real root/dependency404, nonce requests and immutable module-map refusal '
       + 'are judged via production imports and visible recovery controls, not helper-name references.',
   },
