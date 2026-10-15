@@ -661,14 +661,15 @@ export class OptimizePlansDialog {
                 n: String(invalidEligible.length),
               })}</p>
               <p class="rhint">${this.port.t('gs.optimize_invalid_hint')}</p>
-              ${invalidEligible.length ? html`<button class="btn ghost optimize-action optimize-invalid-cleanup" type="button"
+              <button class="btn ghost optimize-action optimize-invalid-cleanup" type="button"
                 aria-pressed=${d.removeInvalidMissingPositions ? 'true' : 'false'}
-                ?disabled=${d.busy || !!d.retrying || failed || !this.port.canWrite()}
+                ?disabled=${!invalidEligible.length || d.busy || !!d.retrying || failed || !this.port.canWrite()}
                 @click=${() => this.toggleInvalidPositions()}>
                 <ha-icon icon=${d.removeInvalidMissingPositions ? 'mdi:undo' : 'mdi:broom'}></ha-icon>
                 ${this.port.t(d.removeInvalidMissingPositions
                   ? 'gs.optimize_invalid_keep' : 'gs.optimize_invalid_remove')}
-              </button>` : html`<p class="rhint">${this.port.t('gs.optimize_invalid_none_safe')}</p>`}
+              </button>
+              ${!invalidEligible.length ? html`<p class="rhint">${this.port.t('gs.optimize_invalid_none_safe')}</p>` : nothing}
               ${d.removeInvalidMissingPositions ? html`<p class="rhint" role="status">
                 ${this.port.t('gs.optimize_invalid_selected', { n: String(r.invalidPositionsRemoved.length) })}
               </p>` : nothing}

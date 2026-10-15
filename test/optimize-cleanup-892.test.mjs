@@ -128,3 +128,22 @@ test('#892 AC8: an old-connection reply is never adopted into a new HA', async (
   await assert.rejects(pending, { code: 'optimize_preview_changed' });
   assert.equal(h.adoptions.length, 0);
 });
+
+test('#892 AC8: the original authority claim fences both queued work and a same-connection late reply', async () => {
+  const queued = writeHarness(); let queuedCurrent = true;
+  queued.source.authorityCurrent = () => queuedCurrent;
+  queued.setFlush(() => { queuedCurrent = false; });
+  await assert.rejects(commitPlanOptimization(queued.host, queued.cfg, queued.layout, queued.guard),
+    { code: 'optimize_preview_changed' });
+  assert.equal(queued.messages.length, 0);
+  assert.equal(queued.adoptions.length, 0);
+
+  const reply = writeHarness(); let replyCurrent = true, release;
+  reply.source.authorityCurrent = () => replyCurrent;
+  reply.host.hass.callWS = () => new Promise(resolve => { release = resolve; });
+  const pending = commitPlanOptimization(reply.host, reply.cfg, reply.layout, reply.guard);
+  await Promise.resolve(); replyCurrent = false;
+  release({ config_rev: 8, layout_rev: 10, can_undo: true });
+  await assert.rejects(pending, { code: 'optimize_preview_changed' });
+  assert.equal(reply.adoptions.length, 0, 'a fresh current source cannot renew the old claim');
+});

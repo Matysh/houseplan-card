@@ -49,7 +49,8 @@ export async function commitPlanOptimization(
     expected_config_rev: guard?.source.configRev ?? host._cfgRev,
     expected_layout_rev: guard?.source.layoutRev ?? host._layoutRev,
   });
-  if (guard && guard.current().connection !== guard.source.connection) {
+  if (guard && (guard.source.authorityCurrent?.() === false
+      || guard.current().connection !== guard.source.connection)) {
     throw new OptimizePreviewChangedError();
   }
   // Both bodies with both revisions from the reply that accepted them (#500 I2).

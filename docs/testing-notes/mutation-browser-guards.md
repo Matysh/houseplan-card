@@ -383,6 +383,7 @@ rebuilt report after adoption. A helper-only witness cannot prove this DOM/HA
 transaction wiring; no production test facade or private draft mutation is used.
 
 - `optimize-892-loses-cleanup-opt-in`
+- `optimize-892-preview-forgets-ha-claim`
 
 The #844 predicates and independent runtime port guard have cheap Node
 witnesses. These eleven guards instead cross the actual footer/direct caller,

@@ -6,10 +6,13 @@ export interface OptimizeSource {
   layoutFingerprint: string;
   ownersFingerprint: string;
   connection: unknown;
+  /** Existing ConfigWriteContext claim, captured with this memory-only preview. */
+  authorityCurrent?: () => boolean;
 }
 
 export function sameOptimizeSource(a: OptimizeSource, b: OptimizeSource): boolean {
-  return a.configRev === b.configRev && a.layoutRev === b.layoutRev
+  return a.authorityCurrent?.() !== false && b.authorityCurrent?.() !== false
+    && a.configRev === b.configRev && a.layoutRev === b.layoutRev
     && a.configFingerprint === b.configFingerprint && a.layoutFingerprint === b.layoutFingerprint
     && a.ownersFingerprint === b.ownersFingerprint && a.connection === b.connection;
 }

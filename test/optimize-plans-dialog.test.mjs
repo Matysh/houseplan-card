@@ -696,7 +696,9 @@ test('#869 AC3 incomplete HA data: line and «Check again» even for unknown own
   assert.ok(mainText(template).includes(RU['gs.optimize_registry_limited']));
   assert.match(unverifiedBlock(template), /<div class="optimize-registry" role="status">/);
   assert.deepEqual(buttons(template).map((button) => button.label),
-    [RU['gs.optimize_retry'], RU['gs.preflight_copy'], RU['btn.close']]);
+    [RU['gs.optimize_retry'], RU['gs.preflight_copy'], RU['gs.optimize_invalid_remove'], RU['btn.close']]);
+  assert.equal(buttons(template).find(button => /optimize-invalid-cleanup/.test(button.attributes))?.disabled,
+    true, 'retained-only cleanup remains discoverable but cannot be selected');
 
   respond = registryRows;
   const retry = handlerFor(template, 'click', 'optimize-retry')();
@@ -1068,4 +1070,18 @@ test('#892 AC8/9: closing a pending Apply cannot close or toast a subsequently o
   finish(); await pending;
   assert.equal(state.dialog, reopened);
   assert.equal(calls.toasts.length, 0);
+});
+
+test('#892 AC6: retained-only records keep a disabled cleanup button and an explanation', () => {
+  const { dialog, state } = fakePort();
+  state.dialog = dialogOf({ report: { ...report(),
+    invalidPositionsRetained: [{ id: 'future', spaceId: 'gone', kind: 'unknown', name: '',
+      cleanupReason: 'unknown_shape' }] } });
+  const template = dialog.render();
+  const action = buttons(template).find(button => /optimize-invalid-cleanup/.test(button.attributes));
+  assert.ok(action);
+  assert.equal(action.disabled, true);
+  assert.match(flatten(template), /gs.optimize_invalid_none_safe/);
+  dialog.toggleInvalidPositions();
+  assert.equal(state.dialog.removeInvalidMissingPositions, false);
 });

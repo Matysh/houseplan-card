@@ -917,6 +917,7 @@ export class HouseplanEditorRuntime {
           effectiveAreas: host._devices.map((device) => [device.id, device.virtual, device.area]),
         }),
         connection: host.hass?.connection,
+        authorityCurrent: host._configWriteGuard?.(),
       }),
       layout: () => host._layout,
       integrationVersion: () => host._haIntegrationVersion,

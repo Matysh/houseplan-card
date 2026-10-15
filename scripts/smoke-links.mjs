@@ -38,6 +38,15 @@ export const SMOKE_LINKS = [
       + 'registry parent remain permitted. The smoke observes the wire, not these symbols.',
   },
   {
+    symbols: ['commitPlanOptimization', 'sameOptimizeSource', 'authorityCurrent'],
+    files: ['src/optimize-source.ts'],
+    smokes: ['smoke_optimize_context.mjs'],
+    because: '#892: actual settings Save/Apply crosses the real pending writer; '
+      + 'public HA registry events revoke cleanup consent, and a held response '
+      + 'must preserve a different user authority at the same connection. '
+      + 'The smoke observes exact accepted pairs, not these helper names.',
+  },
+  {
     symbols: ['ViewHoldGesture', '_viewHold', '_onWindowBlur', '_onViewPointerTerminal',
       '_abandonViewInput', '_pageVisibility', '_sunFadeReset'],
     files: ['src/view-hold.ts', 'src/touch-gesture-click-guard.ts'],

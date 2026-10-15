@@ -32,6 +32,35 @@ asserts the exact allowed direction/receiver, not a mandatory generic `toggle`
 verb. Its existing forbidden-lock-input probe still records zero secure calls;
 the new badge/unlock smoke exercises the sanctioned information/action surface.
 
+## Optimize cleanup consent and authority (#892)
+
+`node demo/smoke_optimize_cleanup.mjs` exercises the actual settings, cleanup,
+Apply and Cancel controls, unchanged live room scale/placement and capability
+revocation. It proves UI/adoption, not the demo stub's durable storage or Undo.
+The real authenticated Optimize/Undo websocket tests own backend pair/CAS,
+one-deep restoration and durable-intent recovery.
+
+`node demo/smoke_optimize_context.mjs` adds actual disabled retained-only action
+discovery, a real General settings Save held at public `config/set`, Apply
+waiting for that pending writer, a current registry-owner arrival and full ↔
+partial registry updates delivered through the public HA fixture event bus.
+Every changed proof drops deletion consent without a write. Separate held Apply
+replies preserve an independently accepted foreign pair for connection and
+same-connection user changes; an ordinary state frame still adopts its own
+confirmed result. Before the claim fix the ordinary probe failed 2/10 checks:
+missing disabled control and an old user response replacing the new user's pair.
+The same smoke then applies through the GUI, remounts a new card against the
+same canonical fixture store, reads both saved bodies, uses the actual GUI Undo,
+and cold-remounts again to read the whole restored record and renewed diagnostic.
+Its scoped paired wire adapter mirrors existing response/CAS/snapshot fields;
+it is explicitly synthetic and does not replace real HA backend evidence.
+
+The preview stores an existing `_configWriteGuard()` closure in its memory-only
+source. Both the pending-write barrier and post-response adoption consume that
+original claim; recomputing a current claim cannot renew the old confirmation.
+No second context owner, persisted field or Copy space policy is introduced.
+Registry declarations are checked statically; development never runs mutants
+or claims their nightly caught outcome.
 
 ## Pre-release subscription ownership fix (#890, PROCESS §11.4)
 

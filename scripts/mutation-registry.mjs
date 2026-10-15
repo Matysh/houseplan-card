@@ -9014,6 +9014,35 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'optimize-892-preview-forgets-ha-claim',
+    guard: 'node demo/smoke_optimize_context.mjs',
+    because: '#892 AC8: the actual GUI preview must capture the existing HA authority claim. A held real Apply reply after a same-connection user replacement must preserve the independently accepted pair; a helper stub cannot prove the runtime captures that claim. State-only frames remain positive controls.',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts',
+      find: '        authorityCurrent: host._configWriteGuard?.(),',
+      replace: '        authorityCurrent: undefined,',
+    }],
+  },
+  {
+    id: 'optimize-892-old-reply-adopted-after-context-change',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="original authority claim" test/optimize-cleanup-892.test.mjs',
+    because: '#892 AC8: the paired writer must consume the original authority after the awaited response, not only before transport, even when the connection itself did not change',
+    patches: [{ file: 'src/plan-optimize-write.ts',
+      find: '  if (guard && (guard.source.authorityCurrent?.() === false',
+      replace: '  if (guard && (false',
+    }],
+  },
+  {
+    id: 'optimize-892-retained-only-control-enabled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="retained-only records" test/optimize-plans-dialog.test.mjs',
+    because: '#892 AC6: the actual dialog template retains the cleanup action but disables it when every record is protected; no alternate selector or destructive click is allowed',
+    patches: [{ file: 'src/optimize-plans-dialog.ts',
+      find: '                ?disabled=${!invalidEligible.length || d.busy || !!d.retrying || failed || !this.port.canWrite()}',
+      replace: '                ?disabled=${d.busy || !!d.retrying || failed || !this.port.canWrite()}',
+    }],
+  },
+  {
     id: 'optimize-892-pending-flush-bypasses-source-fence',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test test/optimize-cleanup-892.test.mjs',

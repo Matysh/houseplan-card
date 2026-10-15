@@ -1103,10 +1103,11 @@ are consumers. Exact import lineage repair runs before eligibility checks.
 This is an explicit maintenance candidate, never a read-time migration.
 
 The dialog anchors both source revisions, config/layout content, owner-proof
-context and HA connection. It rechecks after queued writes before sending the
+context, HA connection and the existing write-authority claim. It rechecks after
+queued writes before sending the
 same candidate with the anchored CAS revisions. Changed evidence requires a
-fresh report and new consent. A reply from a replaced HA connection is not
-adopted. Optimize/Undo use the existing Houseplan `may_write` policy, not a new
+fresh report and new consent. A reply from a replaced HA connection or user is
+not adopted. Optimize/Undo use the existing Houseplan `may_write` policy, not a new
 administrator-only rule; kiosk refuses these UI actions. Existing paired
 storage intent/rollback/one-deep Undo and compatibility schemas are unchanged.
 

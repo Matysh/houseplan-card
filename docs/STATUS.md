@@ -100,8 +100,11 @@ Optimize cleanup (#892) is an explicit preview/Apply choice for proven-unused
 missing-space positions, not blanket deletion. Hidden/live owners and live-room
 scale remain consumers; unknown shapes/models and unchecked opaque IDs stay.
 The candidate anchors the source pair and owner evidence across pending writes,
-and changed evidence resets deletion consent. Optimize/Undo use Houseplan write
-permission outside kiosk; paired storage and one-deep Undo remain authoritative.
+and changed evidence resets deletion consent. A retired Apply response cannot
+replace another user's accepted pair even when the HA connection stays the same.
+Protected-only records keep a disabled cleanup control with an explanation.
+Optimize/Undo use Houseplan write permission outside kiosk; paired storage and
+one-deep Undo remain authoritative.
 
 Beta publication (#889) treats additional owner scene/dev/native/GPU records
 as advice when absent, not as fabricated acceptance. Only the committed beta

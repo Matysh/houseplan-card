@@ -500,10 +500,11 @@ Existing server ACL, CAS and paired writes are unchanged.
 
 Optimize maintenance (#892) keeps deletion consent and its source anchor only
 in the lazy dialog's memory. `optimize-source.ts` binds the config/layout
-revisions and contents, owner evidence and HA connection; the shared paired
+revisions and contents, owner evidence and the existing `ConfigWriteContext`
+claim, including same-connection user changes; the shared paired
 writer checks that anchor after pending writes have finished, before sending
 the frozen revisions. A changed source rebuilds the preview without consent;
-a foreign-connection reply is not adopted. The unguarded Copy space caller
+a retired-authority reply is not adopted. The unguarded Copy space caller
 retains its existing contract. Current Houseplan write permission, not a new
 HA-admin gate, authorizes Optimize and its paired Undo outside kiosk.
 
