@@ -31,7 +31,11 @@ async function start(kind, { language = 'en', width = 1280, hidden = false, depe
   const source = boot
     .replace('#host{width:780px;', '#host{width:min(780px, calc(100vw - 16px));')
     .replace("card.setConfig({type:'custom:houseplan-card', title:'House Plan', icon_size:3.4});", `card.setConfig(${JSON.stringify(options)});`)
-    .replace("  await import('/assets/houseplan-card.js');", `${[kind, ...otherKinds].includes('zigbee') ? '  CFG.settings.zigbee_topology={enabled:true,z2m_base_topics:[]};\n' : ''}  await import('/assets/houseplan-card.js');`)
+    // #896's wire fixture clones the seed when the store is constructed.
+    // Enable the requested feature in that seed, not a detached CFG snapshot
+    // after construction; config/get must actually report it as enabled.
+    .replace('const server=createFixtureStore(CFG,LAYOUT',
+      `${[kind, ...otherKinds].includes('zigbee') ? 'CFG.settings.zigbee_topology={enabled:true,z2m_base_topics:[]};\n' : ''}const server=createFixtureStore(CFG,LAYOUT`)
     .replace('  card.hass=mkHass();\n  window.__card=card;', `  card.hass={...mkHass(),themes:{darkMode:${language === 'ru'}}};\n  window.__card=card;`);
   await page.route('**/demo.html', route => route.fulfill({ status: 200, contentType: 'text/html', body: source }));
   const path = paths[kind], seen = [];
@@ -66,10 +70,21 @@ async function start(kind, { language = 'en', width = 1280, hidden = false, depe
   await page.setViewportSize({ width, height: 900 });
   await page.reload({ waitUntil: 'domcontentloaded' });
   await installHpTestOnPage(page);
-  await page.waitForFunction(kind => {
-    const c = window.__card;
-    return c?._loadOk && !c._booting && c._viewRuntimes?.[kind]?.state === 'error';
-  }, kind);
+  try {
+    await page.waitForFunction(kind => {
+      const c = window.__card;
+      return c?._loadOk && !c._booting && c._viewRuntimes?.[kind]?.state === 'error';
+    }, kind);
+  } catch (error) {
+    console.error('runtime failure setup diagnostics', { kind, language, seen,
+      actual: await page.evaluate(() => ({ loadOk: window.__card?._loadOk,
+        booting: window.__card?._booting, config: window.__card?._cfgRev,
+        topology: window.__card?._serverCfg?.settings?.zigbee_topology,
+        states: Object.fromEntries(['live', 'summary', 'zigbee'].map(name =>
+          [name, window.__card?._viewRuntimes?.[name]?.state])) })) });
+    await browser.close();
+    throw error;
+  }
   return { page, browser, seen, others, preference, rootName, dependencies: () => dependencyRequests,
     heal: () => { enabled = false; }, fail: () => { failRetry = true; } };
 }

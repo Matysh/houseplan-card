@@ -43,7 +43,10 @@ test('#437 keeps the settings form lazy and every summary surface action-free', 
   const manifest = JSON.parse(readFileSync(new URL('../dist/houseplan-assets.json', import.meta.url), 'utf8'));
   assert.match(card, /import\('\.\/summary-panel-runtime-loaded'\)/);
   assert.match(loaded, /import\('\.\/summary-panel-editor'\)/);
-  assert.ok(manifest.lazyFiles.some((path) => path.includes('summary-panel-runtime-loaded-')));
+  // #848's named retry entry now owns the same lazy implementation. The
+  // committed previous-release bundle may still use the old direct root;
+  // either graph must retain an actual summary runtime outside initial View.
+  assert.ok(manifest.lazyFiles.some((path) => /\/summary-panel-runtime-(?:loaded|entry)-/.test(path)));
   assert.ok(manifest.initialViewFiles.every((path) => !path.includes('summary-panel')));
   assert.doesNotMatch(card, /from ['"]\.\/summary-panel-editor/);
   assert.doesNotMatch(`${loaded}\n${editor}`, /callService\s*\(/);

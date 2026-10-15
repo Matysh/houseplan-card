@@ -300,6 +300,16 @@ summary runtime/presentation, optional-space shell, loader, version and boundary
 tests pass 77/77. Final mandatory core/native gates and the accepted #894
 enlarged-kiosk coupled regression are separate evidence, not implied here.
 
+The next mandatory core caught the after-build summary-root assertion: Rollup
+places the implementation in the named `summary-panel-runtime-entry-*` chunk,
+not the old `summary-panel-runtime-loaded-*` path. The existing lazy-runtime
+contract recognizes those two concrete root forms while retaining its full
+no-summary-in-initial-View and action-free form assertions. The recovery smoke
+also seeds Zigbee settings before #896's fixture-store clone is constructed;
+changing the detached `CFG` object afterwards is not a server update. The
+corrected native run passes all 53 original checks, including real root and
+dependency failures, same-build retries and the detached/current warm controls.
+
 The focused native is green (53 assertions): real root404 retry, dependency404,
 foreign fingerprint, aggregated double-click and warm-instance cases execute.
 Its 360px document uses an actually responsive host rather than cropping the
