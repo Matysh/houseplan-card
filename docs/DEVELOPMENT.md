@@ -15,6 +15,10 @@ information, while its explicit Unlock button still asks separately. Flat
 hit size remains about 15 px; keyboard focus adds no hit-box padding.
 Five registry witnesses cover the mounted consumer boundaries; local checks
 only validate declarations/anchors, never claim nightly mutation outcomes.
+The older `smoke_card_controls` now enters through its actual marker/card and
+asserts the exact allowed direction/receiver, not a mandatory generic `toggle`
+verb. Its existing forbidden-lock-input probe still records zero secure calls;
+the new badge/unlock smoke exercises the sanctioned information/action surface.
 
 
 ## Pre-release subscription ownership fix (#890, PROCESS §11.4)

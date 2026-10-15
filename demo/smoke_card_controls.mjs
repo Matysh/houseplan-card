@@ -2,6 +2,25 @@ import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 // Reproduce the narrow wall-tablet/mobile dialog from the field report.
 await page.setViewportSize({ width: 390, height: 760 });
+await page.evaluate(async () => {
+  const c = window.__card;
+  c.hass = { ...c.hass,
+    entities: { ...c.hass.entities, 'lock.front_door': {
+      entity_id: 'lock.front_door', device_id: 'd_light1', platform: 'demo', disabled_by: null,
+    } },
+    states: { ...c.hass.states, 'lock.front_door': {
+      entity_id: 'lock.front_door', state: 'locked', attributes: { friendly_name: 'Front door' },
+    } },
+  };
+  await window.__hpTest.setServerConfig(cfg => {
+    cfg.markers = (cfg.markers || []).filter(marker => marker.id !== 'd_light1');
+    cfg.markers.push({ id: 'd_light1', binding: 'device:d_light1', tap_action: 'info', space: 'f1' });
+    return cfg;
+  });
+});
+// A real user entry rather than inventing a private informational snapshot.
+await page.locator('[data-hp="device"][data-id="d_light1"]').click();
+await page.locator('hp-dialog[data-kind="info"]').waitFor();
 const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
@@ -9,11 +28,9 @@ const res = await page.evaluate(async () => {
   const calls = [];
   c.hass = { ...c.hass, callService: (d, s, data) => { calls.push([d, s, data.entity_id]); return Promise.resolve(); } };
   await c.updateComplete;
-  c._setMode('view'); await c.updateComplete;
   // устройство с управляемой сущностью
-  const dev = c._devices.find((d) => d.entities?.some((e) => e.startsWith('light.') || e.startsWith('switch.')));
+  const dev = c._devices.find((d) => d.id === 'd_light1');
   out.hasDev = !!dev;
-  c._infoCard = dev; await c.updateComplete;
   await new Promise((resolve) => requestAnimationFrame(resolve));
   out.infoUsesWideShell = sr().querySelector('hp-dialog')?.hasAttribute('wide') === true;
   const footer = sr().querySelector('.infofooter');
@@ -41,7 +58,8 @@ const res = await page.evaluate(async () => {
   // 3) кнопка реально переключает
   const before = calls.length;
   btn.click(); await c.updateComplete;
-  out.toggles = calls.length > before && calls.at(-1)[1] === 'toggle';
+  out.toggles = calls.length === before + 1
+    && JSON.stringify(calls.at(-1)) === JSON.stringify(['light', 'turn_off', 'light.ceiling']);
   // 4) замок никогда не переключается из карточки
   const n = calls.length;
   c._cardToggle('lock.front_door');
@@ -52,7 +70,6 @@ const res = await page.evaluate(async () => {
     const cat = c.hass.entities[e]?.entity_category;
     return cat !== 'config' && cat !== 'diagnostic';
   });
-  c._infoCard = null; await c.updateComplete;
   return out;
 });
 checkAll(res);
