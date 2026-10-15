@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 118, issue: 56. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 119, issue: 56. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -93,6 +93,7 @@
 | #849 | [SPEC-REVIEW-849-r1.md](SPEC-REVIEW-849-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #849 | [CODE-REVIEW-849-r1.md](CODE-REVIEW-849-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #848 | [SPEC-REVIEW-848-r1.md](SPEC-REVIEW-848-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #848 | [CODE-REVIEW-848-r1.md](CODE-REVIEW-848-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | неиспользуемый публичный класс после рефакторинга (не блокирует) | `src/summary-runtime-loader.ts` `houseplan-card.ts` `src/houseplan-card.ts` `test/summary-runtime-loader.test.mjs` |
 | #847 | [SPEC-REVIEW-847-r1.md](SPEC-REVIEW-847-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | контракт обещает pagehide, но ни один AC, ни план автотестов, ни «Файлы и модули» не на…; согласованные по делу F84/F86 не привязаны ни к одному AC и не имеют названного способа… | `houseplan-card.ts` `src/visual-continuity.ts` `wall-node-editor.ts` `visual-continuity.ts` `demo/smoke_view_hold_lifecycle.mjs` |
 | #847 | [SPEC-REVIEW-847-r2.md](SPEC-REVIEW-847-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #847 | [CODE-REVIEW-847-r1.md](CODE-REVIEW-847-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | AC4(в)/D6: «_commitSpace не завершает удержание» не доказано ни мутантом, ни изолирующи… | `scripts/mutation-registry.mjs` `src/houseplan-card.ts` `demo/smoke_view_hold_lifecycle.mjs` |
