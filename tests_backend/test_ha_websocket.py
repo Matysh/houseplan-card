@@ -103,6 +103,21 @@ async def test_issue_892_optimize_cleanup_acl_pair_and_undo(
     applied = answer["result"]
     assert applied["can_undo"] is True
     assert (await runtime.store.async_load())["layout"] == {}
+    # A fresh authenticated reader sees the durable pair and the existing
+    # cold-client Undo handshake, not an optimistic browser-only flag.
+    reader = await hass_ws_client(hass)
+    await reader.send_json_auto_id({"type": "houseplan/config/get"})
+    reread_config = (await reader.receive_json())["result"]
+    await reader.send_json_auto_id({"type": "houseplan/layout/get"})
+    reread_layout = (await reader.receive_json())["result"]
+    # Optimize legitimately promotes the submitted legacy model. Compare its
+    # accepted canonical storage boundary, not the pre-Optimize source shape.
+    assert reread_config["config"] == (await runtime.config_store.async_load())["config"]
+    assert reread_config["rev"] == applied["config_rev"]
+    assert reread_layout["layout"] == {}
+    assert reread_layout["rev"] == applied["layout_rev"]
+    assert reread_config["can_optimize_undo"] is True
+    assert reread_config["undo_kind"] == "optimize"
     await client.send_json_auto_id({"type": "houseplan/plan/optimize", "config": snapshot["config"],
         "layout": {}, "expected_config_rev": snapshot["rev"], "expected_layout_rev": 1})
     stale = await client.receive_json()
@@ -113,6 +128,8 @@ async def test_issue_892_optimize_cleanup_acl_pair_and_undo(
     assert restored["success"], restored
     assert (await runtime.store.async_load())["layout"] == original_layout
     assert (await runtime.config_store.async_load())["config"] == snapshot["config"]
+    await reader.send_json_auto_id({"type": "houseplan/layout/get"})
+    assert (await reader.receive_json())["result"]["layout"] == original_layout
 
 
 @pytest.mark.parametrize("fixed_neighbours", [False, True])

@@ -39,6 +39,8 @@ Apply and Cancel controls, unchanged live room scale/placement and capability
 revocation. It proves UI/adoption, not the demo stub's durable storage or Undo.
 The real authenticated Optimize/Undo websocket tests own backend pair/CAS,
 one-deep restoration and durable-intent recovery.
+Their fresh authenticated reader also verifies the canonical stored pair and
+existing `can_optimize_undo`/`undo_kind` handshake before GUI-fixture claims.
 
 `node demo/smoke_optimize_context.mjs` adds actual disabled retained-only action
 discovery, a real General settings Save held at public `config/set`, Apply
@@ -61,6 +63,10 @@ original claim; recomputing a current claim cannot renew the old confirmation.
 No second context owner, persisted field or Copy space policy is introduced.
 Registry declarations are checked statically; development never runs mutants
 or claims their nightly caught outcome.
+The AC3 classifier/optimizer unit uses exact storage-canonical coordinates and
+two floor scales. Its largest deleted-floor displacement disappears only when
+that record is selected for removal; every remaining displacement still lies
+under the final candidate's reported maximum.
 
 ## Pre-release subscription ownership fix (#890, PROCESS §11.4)
 

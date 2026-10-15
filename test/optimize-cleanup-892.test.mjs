@@ -5,6 +5,7 @@ import { optimizePlans } from '../test-build/plan-optimizer.js';
 import { commitPlanOptimization } from '../test-build/plan-optimize-write.js';
 import { contentFingerprint } from '../test-build/visual-continuity.js';
 import { sameOptimizeSource } from '../test-build/optimize-source.js';
+import { GRID_N } from '../test-build/space-geometry.js';
 
 const dead = '601413c5793c698f73b8af0a0b93cac6';
 const live = '601413c5793c698f73b8af0a0b93cac7';
@@ -75,6 +76,35 @@ test('#892 AC3/5: final optimizer separates missing-floor motion and rebuilds an
   const cleanReport = optimizePlans(cleaned.config, cleaned.layout, context(true));
   assert.equal(cleanReport.report.invalidPositionsEligible.length, 0);
   assert.equal(cleanReport.changed, false);
+});
+
+test('#892 AC3: a deleted-floor maximum uses the conservative scale and selected removal keeps every remaining shift', () => {
+  const cfg = config();
+  cfg.spaces.push({ id: 'large', title: 'Large scale', cell_cm: 100,
+    view_box: [0, 0, 1, 1], rooms: [] });
+  // Exact nine-decimal storage values: no unrelated scalar-normalization
+  // noise is mixed into this test of the final grid-movement upper bound.
+  const layout = { hidden: { s: 'floor', x: 0.250390625, y: 0.5 },
+    grp_largest: position({ x: 0.251953125 }),
+    [live]: position({ x: 0.25078125 }) };
+  const ordinary = optimizePlans(cfg, layout, context(true));
+  const cleaned = optimizePlans(cfg, layout, context(true, true));
+  const shift = (result, id, cell) => Math.hypot(result.layout[id].x - layout[id].x,
+    result.layout[id].y - layout[id].y) * GRID_N * cell;
+  const largest = shift(ordinary, 'grp_largest', 100);
+  assert.ok(Math.abs(largest - 46.875) < 1e-8);
+  assert.ok(ordinary.report.maxShiftCm + 1e-8 >= largest);
+  assert.equal(ordinary.report.maxSpace, 'deleted');
+  assert.equal(ordinary.report.currentPositionsMoved, 1);
+  assert.equal(ordinary.report.archivedPositionsMoved, 2);
+  assert.equal(cleaned.layout.grp_largest, undefined);
+  assert.equal(cleaned.report.invalidPositionsRemoved.length, 1);
+  assert.equal(cleaned.report.archivedPositionsMoved, 1, 'a removed record is not invented motion');
+  const retained = Math.max(shift(cleaned, live, 100), shift(cleaned, 'hidden', 5));
+  assert.ok(Math.abs(retained - 18.75) < 1e-8);
+  assert.ok(cleaned.report.maxShiftCm + 1e-8 >= retained);
+  assert.ok(cleaned.report.maxShiftCm < largest, 'the report measures the final remaining pair');
+  assert.equal(optimizePlans(cleaned.config, cleaned.layout, context(true, true)).changed, false);
 });
 
 function writeHarness() {
