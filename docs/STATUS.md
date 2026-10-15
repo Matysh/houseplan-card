@@ -26,8 +26,11 @@ Everything computable from the tree and git; regenerate, never edit by hand
 ## Current cycle and standing decisions
 
 Device-card toggles (#849) share confirmation visibility and exact-entity
-security authority with marker actions, rechecking current card membership at
-acceptance. Lock badges expose information through pointer and keyboard only;
+security authority with marker actions, rechecking current card membership and
+the existing HA-context claim at acceptance. A retained outgoing DOM listener
+cannot act in the same foreign-HA frame before Lit clears it; ordinary state
+frames and unchanged explicit entity ids remain live. Lock badges expose
+information through pointer and keyboard only;
 Flat target size remains unchanged by the owner's explicit decision.
 
 QA fixture/capture contracts (#896) record every delegated service action and

@@ -77,6 +77,14 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'info-card-row-crosses-ha-authority',
+    guard: 'node demo/smoke_info_card_context.mjs',
+    because: '#849 AC2: a retained mounted confirmation listener delivered in the same public foreign-HA frame must not dispatch into the new connection/user authority. Pure context units cannot prove the card captures and consumes that authority before Lit clears the old surface; accepted-B and fresh-native controls stay live.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: "      if (this._mode !== 'view' || !this.isConnected || !this._configWriteContext.current(authority, this.hass)",
+      replace: "      if (this._mode !== 'view' || !this.isConnected" }],
+  },
+  {
     id: 'info-card-row-bypasses-visible-confirmation',
     guard: 'node demo/smoke_info_card_confirm.mjs',
     because: '#849 AC1: a mounted secondary entity row must open the real modal before HA dispatch; a pure visibility predicate does not prove the card consumes it.',

@@ -732,6 +732,9 @@ Its focus outline does not change its Flat/2.5D hit geometry. Device-card rows
 share the exact-entity/security resolver in `device-toggle.ts`, with a captured
 `infoCardRowContextKey` over current binding, controls and row identities;
 state-only HA frames may change direction but never redirect a confirmed row.
+Dispatch also consumes a captured claim from the existing `ConfigWriteContext`:
+foreign connection/user adoption retires a pending action even in the public HA
+frame before Lit removes the outgoing DOM. No second authority owner is added.
 
 ## Integration WS API
 

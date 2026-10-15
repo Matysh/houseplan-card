@@ -322,6 +322,7 @@ preserving its exact entity target and fresh card membership.
 
 - `info-card-row-bypasses-visible-confirmation`
 - `info-card-row-trusts-retired-membership`
+- `info-card-row-crosses-ha-authority`
 - `info-card-row-dispatches-controls-neighbour`
 
 #890 pre-release AC6: the public old-server push crosses an already mounted

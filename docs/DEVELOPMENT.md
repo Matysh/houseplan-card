@@ -13,7 +13,14 @@ accept, replaced membership and unavailable targets cannot dispatch or animate;
 read-only kiosk keeps permitted controls. A canonical door badge opens only
 information, while its explicit Unlock button still asks separately. Flat
 hit size remains about 15 px; keyboard focus adds no hit-box padding.
-Five registry witnesses cover the mounted consumer boundaries; local checks
+`node demo/smoke_info_card_context.mjs` replaces the public HA connection or
+user with identical floor/marker/entity ids. The old actual DOM listener is
+delivered synthetically in that same frame, before Lit clears the old surface;
+this is not claimed as a trusted native click. Neither outgoing nor incoming
+authority may receive that command. Accepted foreign pairs and fresh native
+confirmation remain positive controls. A changed registry parent alone does
+not cancel an explicitly configured, unchanged entity-id target.
+Six registry witnesses cover the mounted consumer boundaries; local checks
 only validate declarations/anchors, never claim nightly mutation outcomes.
 The older `smoke_card_controls` now enters through its actual marker/card and
 asserts the exact allowed direction/receiver, not a mandatory generic `toggle`

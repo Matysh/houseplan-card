@@ -30,6 +30,14 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['_cardToggle', 'infoCardRowContextKey'],
+    smokes: ['smoke_info_card_context.mjs'],
+    because: '#849: actual information-row entry and a retained DOM listener in the '
+      + 'same public HA replacement frame prove dispatch ownership across connection/user '
+      + 'changes; fresh native acceptance and an unchanged explicit entity with a new '
+      + 'registry parent remain permitted. The smoke observes the wire, not these symbols.',
+  },
+  {
     symbols: ['ViewHoldGesture', '_viewHold', '_onWindowBlur', '_onViewPointerTerminal',
       '_abandonViewInput', '_pageVisibility', '_sunFadeReset'],
     files: ['src/view-hold.ts', 'src/touch-gesture-click-guard.ts'],

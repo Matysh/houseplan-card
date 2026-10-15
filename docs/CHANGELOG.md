@@ -3,7 +3,9 @@
 ## Unreleased
 
 - Device-card toggle buttons respect the marker's enabled confirmation setting
-  without switching a neighbouring entity or controls group. Door lock badges
+  without switching a neighbouring entity or controls group. A confirmation
+  opened before switching HA connections or users cannot act in the new context.
+  Door lock badges
   can be reached with Tab and opened with Enter or Space; they still only show
   information ([#849](https://github.com/Matysh/houseplan-card/issues/849)).
 

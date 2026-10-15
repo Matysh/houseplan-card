@@ -12833,12 +12833,14 @@ export class HouseplanCard extends LitElement {
     const context = { spaceId: this._space, id: this._infoCard.id };
     const device = currentMarkerActionDevice(this._devices, this._space, context);
     if (!device || !this._cardEntities(device).some((row) => row.eid === eid && row.kind === 'toggle')) return;
+    const authority = this._configWriteContext.claim();
     const key = infoCardRowContextKey(device, this._cardEntities(device));
     const initial = resolveInfoRowToggleIntent(this._planHass, this._fullRegistryHass, eid);
     if (!initial.command) return;
     const execute = (): void => {
       const current = currentMarkerActionDevice(this._devices, this._space, context);
-      if (this._mode !== 'view' || !this.isConnected || !current || this._infoCard?.id !== context.id
+      if (this._mode !== 'view' || !this.isConnected || !this._configWriteContext.current(authority, this.hass)
+          || !current || this._infoCard?.id !== context.id
           || infoCardRowContextKey(current, this._cardEntities(current)) !== key) {
         this._showToast(this._t('toast.tap_target_changed')); return;
       }
