@@ -6,16 +6,17 @@ import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const out = {};
 
-const pd = (c, id, x, y) => c._stagePointerDown({ pointerId: id, clientX: x, clientY: y, target: c._stageEl, preventDefault() {} });
-const pm = (c, id, x, y) => c._stagePointerMove({ pointerId: id, clientX: x, clientY: y });
+const pd = (c, id, x, y) => c._stagePointerDown({ pointerId: id, clientX: x, clientY: y, target: c._stageEl, composedPath: () => [c._stageEl], preventDefault() {} });
+const pm = (c, id, x, y) => c._stagePointerMove({ pointerId: id, clientX: x, clientY: y, composedPath: () => [c._stageEl] });
 const pu = (c, id, x, y) => c._stagePointerUp({ pointerId: id, clientX: x, clientY: y });
 
 // --- пинч-зум в редакторе плана -----------------------------------------
 out.pinchZoomsInPlanEditor = await page.evaluate(() => {
   const c = window.__card;
   c._setMode('plan');
-  const pd = (id, x, y) => c._stagePointerDown({ pointerId: id, clientX: x, clientY: y, target: c._stageEl, preventDefault() {} });
-  const pm = (id, x, y) => c._stagePointerMove({ pointerId: id, clientX: x, clientY: y });
+  // Direct stage fixtures supply the path every real PointerEvent carries (#900).
+  const pd = (id, x, y) => c._stagePointerDown({ pointerId: id, clientX: x, clientY: y, target: c._stageEl, composedPath: () => [c._stageEl], preventDefault() {} });
+  const pm = (id, x, y) => c._stagePointerMove({ pointerId: id, clientX: x, clientY: y, composedPath: () => [c._stageEl] });
   const pu = (id, x, y) => c._stagePointerUp({ pointerId: id, clientX: x, clientY: y });
   c._resetZoom();
   const z0 = c._zoom;
@@ -341,8 +342,8 @@ out.pinchDoesNotZoomBelowVacuumFit = await page.evaluate(async () => {
 // --- пан одним пальцем в редакторе, точка не рисуется --------------------
 out.panWorksAndDoesNotDraw = await page.evaluate(async () => {
   const c = window.__card;
-  const pd = (id, x, y) => c._stagePointerDown({ pointerId: id, clientX: x, clientY: y, target: c._stageEl, preventDefault() {} });
-  const pm = (id, x, y) => c._stagePointerMove({ pointerId: id, clientX: x, clientY: y });
+  const pd = (id, x, y) => c._stagePointerDown({ pointerId: id, clientX: x, clientY: y, target: c._stageEl, composedPath: () => [c._stageEl], preventDefault() {} });
+  const pm = (id, x, y) => c._stagePointerMove({ pointerId: id, clientX: x, clientY: y, composedPath: () => [c._stageEl] });
   const pu = (id, x, y) => c._stagePointerUp({ pointerId: id, clientX: x, clientY: y });
   const st = c._stageEl;
   c._zoomAt(st.clientWidth / 2, st.clientHeight / 2, 3); // есть куда панорамировать
@@ -361,7 +362,7 @@ out.panWorksAndDoesNotDraw = await page.evaluate(async () => {
 // --- обычный клик без движения по-прежнему рисует ------------------------
 out.tapStillDraws = await page.evaluate(() => {
   const c = window.__card;
-  const pd = (id, x, y) => c._stagePointerDown({ pointerId: id, clientX: x, clientY: y, target: c._stageEl, preventDefault() {} });
+  const pd = (id, x, y) => c._stagePointerDown({ pointerId: id, clientX: x, clientY: y, target: c._stageEl, composedPath: () => [c._stageEl], preventDefault() {} });
   const pu = (id, x, y) => c._stagePointerUp({ pointerId: id, clientX: x, clientY: y });
   c._resetZoom();
   c._tool = 'draw';

@@ -53,3 +53,24 @@ part of this change. Headless proof is not owner field/HA-shell/real-GPU proof.
 Per the owner's explicit 2026-10-15 batch instruction, new out-of-scope findings
 must not create issues: symptom/material/reproduction/risk/links go to root's
 single `batch-findings-2026-10-15.json`. In-scope defects stay here.
+
+Resumed verification on `5bb47899`, rebased onto merged #901/#903
+`4e5d877a`: the full `gate:small` passed (146.5 s), and the 58-check AC smoke
+passed again (28.5 s). Raw bundle was 2931609, 438 bytes above the authorised
+2931171 base and inside its unchanged 2000-byte band. Gzip initial View321638
+and lazy editor265664 passed their existing limits. The new merge-entry reader
+and actual-history catalogue accepted the renewed stable-fix record separately
+from the SPEC trace; mutation static readiness passed with execution=0.
+
+The actual diff selected 49 browser smokes; four additional AC regressions made
+53 executed scenarios (two browser lanes). The first pass had 51 PASS and two
+honestly retained RED results. `smoke_editor_gestures` used old direct event
+objects without `composedPath`; its seven fixtures now supply the actual stage
+path that native PointerEvents carry, as the pan fixture already does. Its
+targeted retry passed all 18 checks, without a product fallback or weaker oracle.
+`smoke_wall_node_connected` refused a 1.425917ms clock-calibration uncertainty
+against its existing 1ms floor under the concurrent browser workload. With that
+queue stopped, an isolated retry passed (13.1 s), with no clock, geometry or
+performance threshold change. That transient diagnostic and both raw runs go
+to root; the earlier RED is not relabelled GREEN. The final handoff names the
+published SHA and its subsequent mandatory pre-push gate separately.
