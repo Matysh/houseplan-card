@@ -44,7 +44,7 @@ test('detached rollback paints only the restored marker without reviving dispose
   await whenHouseplanEditorSettled(host);
 });
 
-test('editor live routing keeps pointerdown and terminal changes reactive', () => {
+test('owned physical gesture routes its unnamed live updates, not other reactive changes', () => {
   const beforeRaf = globalThis.requestAnimationFrame;
   const beforeCancel = globalThis.cancelAnimationFrame;
   globalThis.requestAnimationFrame = () => 17;
@@ -52,13 +52,13 @@ test('editor live routing keeps pointerdown and terminal changes reactive', () =
   const host = {
     isConnected: true,
     _mode: 'plan',
-    _physicalDrag: { moved: false },
+    _editorRuntime: { physicalGesture: { active: true } },
   };
   try {
-    assert.equal(routeHouseplanEditorUpdate(host, '_physicalDrag', null), false);
-    assert.equal(routeHouseplanEditorUpdate(host, '_physicalDrag', { moved: false }), true);
-    host._physicalDrag = null;
-    assert.equal(routeHouseplanEditorUpdate(host, '_physicalDrag', { moved: true }), false);
+    assert.equal(routeHouseplanEditorUpdate(host), true);
+    assert.equal(routeHouseplanEditorUpdate(host, '_physicalSel', null), false);
+    host._editorRuntime.physicalGesture.active = false;
+    assert.equal(routeHouseplanEditorUpdate(host), false);
     assert.equal(routeHouseplanEditorUpdate(host, '_toast', ''), false);
   } finally {
     disposeHouseplanEditor(host);

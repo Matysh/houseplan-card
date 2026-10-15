@@ -117,7 +117,7 @@ function setup({ floors = ['f', 'g'], damaged = false } = {}) {
     _saveConfigDebounced: deferred, _pendingPhysicalWrites: new Map(),
     _checkSpacePhysicalGeometry: () => ({ ok: true }), _maybeRebuildDevices() {},
     _modelCache: null, _frame: null, _regSignature: '', _path: [],
-    _physicalDrag: null, _physicalRotate: null, _decorDraft: null, _decorMove: null, _dtDrag: null, _bdDrag: null,
+    _decorDraft: null, _decorMove: null, _dtDrag: null,
     _activeWallChainId: null, _activeWallChainPartitionIds: [], _wallChainRedo: [], _wallFaceBatch: null,
     // Card shell: one boundary for every space mutation, as `_canCommitSpace`/`_commitSpace`.
     _canCommitSpace: () => true,

@@ -77,6 +77,44 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'physical-owner-move-threshold-is-not-inclusive',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/physical-body-gesture.test.mjs',
+    because: '#861 AC3: the established five CSS-pixel threshold includes exactly five, independent of plan scale.',
+    patches: [{ file: 'src/physical-body-gesture.ts', find: ') >= 5,', replace: ') > 5,' }],
+  },
+  {
+    id: 'physical-owner-terminal-forgets-queued-move',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/physical-body-gesture.test.mjs',
+    because: '#861 AC3/AC6: the legitimate queued move flushes before checking even a foreign terminal pointer.',
+    patches: [{ file: 'src/physical-body-gesture.ts',
+      find: "    flushHouseplanPointerMove(this.port.queueTarget, 'physical');",
+      replace: "    cancelHouseplanPointerMove(this.port.queueTarget, 'physical');" }],
+  },
+  {
+    id: 'backdrop-owner-move-snaps-delta-not-final-origin',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/backdrop-frame-gesture.test.mjs',
+    because: '#861 AC5: a legacy off-grid backdrop must land its final origin, not only its translation, on the existing grid.',
+    patches: [{ file: 'src/backdrop-frame-gesture.ts',
+      find: 'const at = this.port.snap([x0 + (p[0] - d.sx), y0 + (p[1] - d.sy)]);',
+      replace: 'const at = this.port.snap([p[0] - d.sx, p[1] - d.sy]).map((v, i) => v + [x0, y0][i]);' }],
+  },
+  {
+    id: 'partition-held-openings-never-paint',
+    guard: 'node demo/smoke_partition_openings_preview.mjs',
+    because: '#861 AC11: only the mounted renderer can prove actual door/window ink follows two held targets; resolved coordinate units alone missed the inherited symptom.',
+    patches: [{ file: 'src/live-editor.ts',
+      find: "  return drag?.kind === 'partition' && drag.moved",
+      replace: "  return drag?.kind === 'partition' && drag.moved && drag.id.length < 0" }],
+  },
+  {
+    id: 'partition-held-openings-keep-stale-copy',
+    guard: 'node demo/smoke_partition_openings_preview.mjs',
+    because: '#861 AC11: actual painted leaf groups must have one visible copy, not an old settled symbol behind the translated live one; pure owners cannot observe DOM suppression.',
+    patches: [{ file: 'src/live-editor.ts',
+      find: '    makeMovingOpeningsTransparent(state, root, physicalOpeningIds(host));',
+      replace: '    makeMovingOpeningsTransparent(state, root, []);' }],
+  },
+  {
     id: 'info-card-row-crosses-ha-authority',
     guard: 'node demo/smoke_info_card_context.mjs',
     because: '#849 AC2: a retained mounted confirmation listener delivered in the same public foreign-HA frame must not dispatch into the new connection/user authority. Pure context units cannot prove the card captures and consumes that authority before Lit clears the old surface; accepted-B and fresh-native controls stay live.',

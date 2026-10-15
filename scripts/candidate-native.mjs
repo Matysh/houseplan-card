@@ -5,6 +5,22 @@ import { attestStandardLaunch, requirePinnedBrowser } from './browser-attestatio
 import { candidateInputs, digest, NATIVE_PROFILES } from './candidate-readiness.mjs';
 import { isMainModule } from './spawn-portable.mjs';
 export const NATIVE_CHECK_FLOORS = Object.freeze({
+  'demo/smoke_physical_body_characterization.mjs': ['acceptedGestureOneHistoryAndWrite',
+    'physicalRenderRouteOneZeroOne', 'partitionGridAndRigidOpening', 'columnRotationFiveDegreeStep',
+    'columnShiftRotationIsFree', 'realOverlappingBodyCycle', 'duplicateColumnRefusedWithoutWriteOrHistory',
+    'jitterBelowFivePixelsPreservesDoubleTapDialog', 'nativeUndoCancelsHeldBodyWithoutHistoryOrWrite'],
+  'demo/smoke_backdrop.mjs': ['backdrop_body_down_one_full_render', 'backdrop_body_down_grabbing',
+    'backdrop_body_twelve_moves_have_live_paint', 'backdrop_body_twelve_moves_zero_full_renders',
+    'backdrop_body_up_one_full_render', 'backdrop_body_up_not_grabbing',
+    'backdrop_edge_move_viewbox_frozen', 'backdrop_edge_release_frame_catches_up',
+    'backdrop_rotate_handle_snaps_five_degrees', 'backdrop_rotate_shift_preserves_free_angle',
+    'reset_clears_the_fields'],
+  'demo/smoke_partition_openings_preview.mjs': ['canonicalFixturePaintsDoorWindowAndStaticOther',
+    'heldPreviewNeverWritesConfigOrHistory', 'nativeEscapeRollsBackAndLateRealUpCannotCommit',
+    'nativeUndoRestoresTheWholeHostOpeningTransaction', 'physicalRenderRouteOneZeroOne',
+    'releaseKeepsRigidHostAndOpeningsInOneHistoryAndWrite', 'repeatedDragAndActiveUndoLeaveNoGhostOrWrite',
+    'staticOtherAndPaintedSettingsStayUnchanged', 'trustedSamePointerCancelRestoresWithoutConfigHistoryOrGhost',
+    'twoDistinctHeldTargetsFollowExactDeltaWithOneVisibleCopy'],
   'demo/smoke_wall_node_move.mjs': ['committed geometry equals the visible preview', 'Undo restores exact starting catalogue/openings',
     'Esc and trailing move/up create no writes', 'invalid last release never saves the older valid candidate',
     'raster: original affected wall is a translucent source ghost', 'native node movement keeps the frozen camera'],

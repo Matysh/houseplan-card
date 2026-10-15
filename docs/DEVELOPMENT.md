@@ -1,5 +1,19 @@
 # Development and deployment
 
+## Editor gesture owners and held opening preview (#861)
+
+`physical-body-gesture` and `backdrop-frame-gesture` use bounded purpose ports,
+not the card/HostPort; their units cover thresholds, snapping, queued terminal
+ordering and state-only reset asymmetry. The existing lazy-runtime AST guard
+also rejects retained legacy aliases and eager imports. The common physical,
+backdrop, free-walls and partition-opening native consumers were committed
+green on accepted source before extraction and stay unchanged afterward.
+`smoke_partition_openings_preview` separately observes actual painted leaf ink,
+exact hosted door/window identity at two held targets, one visible copy,
+untouched other hosts, Esc, release, native Undo and trusted CDP pointercancel.
+It records the production write/history path, not field/GPU acceptance. Static
+mutation declarations are checked for applicability; execution remains nightly.
+
 ## Information-card confirmation and lock information (#849)
 
 `node --test test/device-toggle.test.mjs test/view-action-context.test.mjs`

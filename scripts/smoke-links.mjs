@@ -30,6 +30,16 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/physical-body-gesture.ts', 'src/backdrop-frame-gesture.ts', 'src/live-editor.ts'],
+    smokes: ['smoke_physical_body_characterization.mjs', 'smoke_partition_openings_preview.mjs',
+      'smoke_backdrop.mjs', 'smoke_free_walls.mjs', 'smoke_partition_openings.mjs',
+      'smoke_backdrop_guard.mjs', 'smoke_decor.mjs', 'smoke_hide_layers.mjs',
+      'smoke_grid_scale_invariance.mjs', 'smoke_render_invalidation.mjs', 'smoke_lazy_editor_chunk.mjs'],
+    because: '#861: ordinary input observes owned body/backdrop gestures, queued terminal/history '
+      + 'boundaries, frozen camera, editor-lazy loading and actual held hosted-opening ink. '
+      + 'The consumers do not call or name the extracted purpose owners.',
+  },
+  {
     symbols: ['_cardToggle', 'infoCardRowContextKey'],
     smokes: ['smoke_info_card_context.mjs'],
     because: '#849: actual information-row entry and a retained DOM listener in the '

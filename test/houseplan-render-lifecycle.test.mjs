@@ -35,8 +35,8 @@ test('HA intake runs once even when an unrelated visual update is skipped', () =
 
 const liveHost = (lifecycle) => ({
   _renderLife: lifecycle, _pointers: new Map(), _cameraTransition: { active: false },
-  _deviceDrag: null, _physicalDrag: null, _physicalRotate: null, _decorMove: null,
-  _decorDraft: null, _dtDrag: null, _bdDrag: null, _opDrag: null,
+  _deviceDrag: null, _editorRuntime: null, _decorMove: null,
+  _decorDraft: null, _dtDrag: null, _opDrag: null,
   _resize: { dragging: false },
 });
 

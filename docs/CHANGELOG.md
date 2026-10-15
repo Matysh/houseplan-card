@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Doors and windows hosted by a partition now follow it while dragging,
+  not only after release. Esc and Undo remove the preview without leaving
+  an old visible copy ([#861](https://github.com/Matysh/houseplan-card/issues/861)).
+
 - Device-card toggle buttons respect the marker's enabled confirmation setting
   without switching a neighbouring entity or controls group. A confirmation
   opened before switching HA connections or users cannot act in the new context.

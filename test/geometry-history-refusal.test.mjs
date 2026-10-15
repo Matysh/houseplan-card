@@ -25,6 +25,8 @@ const { CommandStack } = await import('../test-build/command-stack.js');
 const { canonicalizeConfigGeometry } = await import('../test-build/coordinate-canonicalization.js');
 const { virtualLightSnapshot } = await import('../test-build/virtual-light-state.js');
 const { commitWallSegmentModel } = await import('../test-build/wall-segment-model.js');
+const { LiveRuntime } = await import('../test-build/live-interaction-runtime.js');
+const { cardInteractionIdleSnapshot } = await import('../test-build/version-recovery-card.js');
 
 const clone = value => JSON.parse(JSON.stringify(value));
 const square = id => {
@@ -56,7 +58,8 @@ function setup({ floors = ['f', 'g'] } = {}) {
   window.requestAnimationFrame = callback => { setImmediate(() => callback(0)); return 1; };
   window.cancelAnimationFrame = () => {};
   const document = { defaultView: window, createElementNS: () => ({ style: {}, classList: { add() {} }, appendChild() {} }) };
-  const root = { ownerDocument: document, querySelectorAll: () => [], querySelector: () => null };
+  const stage = { getBoundingClientRect: () => ({ left: 0, top: 0 }) };
+  const root = { ownerDocument: document, querySelectorAll: () => [], querySelector: selector => selector === '.stage' ? stage : null };
   const host = {
     get _serverCfg() { return adoption.config; }, set _serverCfg(next) { adoption.stageLocalConfig(next); },
     get _cfgRev() { return adoption.configRev; }, _adoption: adoption,
@@ -72,7 +75,9 @@ function setup({ floors = ['f', 'g'] } = {}) {
     _saveConfigDebounced: deferred, _pendingPhysicalWrites: new Map(),
     _checkSpacePhysicalGeometry: () => ({ ok: true }), _maybeRebuildDevices() {},
     _modelCache: null, _frame: null, _regSignature: '', _path: [], _closingWallCm: null,
-    _physicalDrag: null, _physicalRotate: null, _decorDraft: null, _decorMove: null, _dtDrag: null, _bdDrag: null,
+    _decorDraft: null, _decorMove: null, _dtDrag: null,
+    _cellCm: 1, _gridPitch: 1, _screenToVb: (x, y) => [x, y],
+    _spaceModel: () => ({ ...host._serverCfg.spaces.find(space => space.id === host._space), wall_columns: [], vb: [0, 0, 1000, 1000] }),
     _activeWallChainId: null, _activeWallChainPartitionIds: [], _wallChainSegmentCms: [], _wallChainRedo: [], _wallFaceBatch: null,
     // Card shell: `_canCommitSpace` is the card's fixed-floor boundary; `floor` is the pinned space.
     floor: null,
@@ -98,6 +103,7 @@ function setup({ floors = ['f', 'g'] } = {}) {
   };
   adoption.adoptResponses({ config: clone(server.config), rev: server.rev }, undefined, () => {}, () => {});
   const runtime = new HouseplanEditorRuntime(host);
+  host._editorRuntime = runtime;
   host.renderRoot = root; host.updateComplete = Promise.resolve(true);
 
   const spaceOf = id => host._serverCfg.spaces.find(space => space.id === id);
@@ -495,13 +501,14 @@ test('#883 AC4 without a refusal: one step per press, Plan and Background share 
 });
 test('#883 AC4 a live gesture owns the first press; the second one moves the history', async () => {
   for (const [label, gesture] of [
-    ['decor draft', h => { h._decorDraft = { kind: 'line', a: [0, 0], b: [1, 1], pid: 1 }; }],
-    ['physical drag', h => { h._physicalDrag = { pid: 1, kind: 'partition', id: 'p-f-1', start: [0, 0], startClient: [0, 0],
-      before: null, moved: true, base: { id: 'p-f-1', a: [0.5, 0.5], b: [1.5, 0.5], cm: 10 }, delta: [0, 0] }; }],
+    ['decor draft', s => { s.host._decorDraft = { kind: 'line', a: [0, 0], b: [1, 1], pid: 1 }; }],
+    ['physical drag', s => { s.runtime.physicalGesture.begin({ pointerId: 1, clientX: 1, clientY: 1,
+      stopPropagation() {}, target: null }, 'partition', 'p-f-1');
+      assert.equal(s.runtime.physicalGesture.active, true); }],
   ]) {
     const s = setup();
     const step = await s.addWall('f');
-    gesture(s.host);
+    gesture(s);
     s.runtime._undoGeometry();
     s.expectStack([step], [], `${label}: the first press cancels the gesture only`);
     s.runtime._undoGeometry();
@@ -543,4 +550,57 @@ test('#883 AC5 a new command after a refusal and an external adoption keep their
   s.runtime._undoGeometry();
   assert.deepEqual(s.toasts, [], 'no attempt, no toast');
   assert.ok(onG);
+});
+
+test('#861 actual editor publication keeps begin/end full and queued physical moves live', async () => {
+  const s = setup(); await s.addWall('f');
+  const previousRaf = globalThis.requestAnimationFrame, previousCancel = globalThis.cancelAnimationFrame;
+  const frames = new Map(); let serial = 0;
+  globalThis.requestAnimationFrame = callback => { frames.set(++serial, callback); return serial; };
+  globalThis.cancelAnimationFrame = id => frames.delete(id);
+  const routes = [];
+  s.host.requestUpdate = () => routes.push(s.runtime._routeLiveEditorUpdate());
+  const pointer = (x, y) => ({ pointerId: 7, clientX: x, clientY: y, target: null, stopPropagation() {} });
+  try {
+    s.runtime.physicalGesture.begin(pointer(1, 1), 'partition', 'p-f-1');
+    assert.deepEqual(routes, [false], 'begin cannot be swallowed by the owner-active live predicate');
+    for (let i = 0; i < 12; i++) { s.runtime.physicalGesture.move(pointer(2 + i, 3 + i)); await Promise.resolve(); }
+    assert.deepEqual(routes, [false, ...Array(12).fill(true)]);
+    assert.equal(frames.size, 1, 'the established RAF still coalesces all twelve live publications');
+    s.runtime.physicalGesture.cancel();
+    assert.equal(routes.at(-1), false, 'terminal publication is full even if another owner remains active');
+    assert.equal(s.runtime.physicalGesture.active, false);
+    assert.equal(s.geometryHistory.size, 1, 'cancelling preview creates no command');
+  } finally {
+    s.runtime._disposeLiveEditor();
+    globalThis.requestAnimationFrame = previousRaf; globalThis.cancelAnimationFrame = previousCancel;
+  }
+});
+
+test('#861 actual owner state blocks LiveRuntime and recovery/carousel idle and clears through the existing runtime', async () => {
+  const s = setup(); await s.addWall('f');
+  Object.assign(s.host, { _pointers: new Map(), _touchContacts: new Map(),
+    _cameraTransition: { active: false }, _warmModeRequest: 0 });
+  Object.defineProperty(s.host, '_curSpaceCfg', { get: () => s.spaceOf(s.host._space) });
+  const pointer = { pointerId: 9, clientX: 1, clientY: 1, target: null, stopPropagation() {} };
+  const live = new LiveRuntime(s.host);
+  const idle = () => [live.active(), cardInteractionIdleSnapshot(s.host).gesturesIdle];
+  assert.deepEqual(idle(), [false, true]);
+  s.runtime.physicalGesture.begin(pointer, 'partition', 'p-f-1');
+  assert.deepEqual(idle(), [true, false]);
+  s.runtime._clearGeometryGesture();
+  assert.deepEqual(idle(), [false, true]);
+  s.spaceOf('f').plan_url = '/test.svg'; s.spaceOf('f').plan_aspect = 1;
+  s.host._mode = 'decor'; s.host._decorTool = 'backdrop';
+  s.runtime.backdropGesture.begin(pointer);
+  assert.deepEqual(idle(), [true, false]);
+  s.runtime._clearGeometryGesture();
+  assert.deepEqual(idle(), [false, true]);
+  s.runtime.backdropGesture.begin(pointer);
+  s.runtime.backdropGesture.move({ ...pointer, clientX: 50, clientY: 50 });
+  const before = clone(s.spaceOf('f'));
+  s.runtime._disposeLiveEditor(); // cancels this card's actual shared microtask queue
+  await Promise.resolve();
+  assert.deepEqual(s.spaceOf('f'), before, 'disposed queued backdrop work cannot mutate the canonical record');
+  assert.equal(s.geometryHistory.size, 1, 'reset/dispose never add a history entry');
 });

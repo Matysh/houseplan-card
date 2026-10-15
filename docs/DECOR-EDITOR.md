@@ -89,6 +89,12 @@ The plan image is interactive only while **Plan backdrop** is selected:
 - `Esc` restores the transform at pointer-down;
 - release creates one named command in the shared 50-step history.
 
+The editor-only `BackdropFrameGestureRuntime` owns the live drag, derived
+rectangle/frame and transform operations through fourteen purpose callbacks.
+The editor runtime still owns dialogs, shared cancellation and persistence;
+the card supplies the existing opaque pointer-queue identity. There is no
+second history, persistence owner or View-side eager editor import (#861).
+
 Move and resulting top-left coordinates are grid-bound. Width and height are
 quantised when resized or entered numerically. There is no positional modifier
 that bypasses the grid.

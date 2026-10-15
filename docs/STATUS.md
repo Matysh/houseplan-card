@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Editor gesture owners (#861) separate physical body/rotation and backdrop
+frame state behind 13/14-purpose editor-only ports. Existing queue/reset,
+history and render boundaries remain; hosted doors/windows now move in the
+held partition preview. The pre-source common native cohort is frozen before
+extraction; the visible preview regression is a separate ordinary witness.
+
 Device-card toggles (#849) share confirmation visibility and exact-entity
 security authority with marker actions, rechecking current card membership and
 the existing HA-context claim at acceptance. A retained outgoing DOM listener

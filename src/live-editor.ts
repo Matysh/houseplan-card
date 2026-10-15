@@ -28,12 +28,13 @@ interface LiveEditorHost {
   _mode: 'view' | 'plan' | 'devices' | 'decor';
   _tool: string;
   _deviceDrag: { id: string } | null;
-  _physicalDrag?: unknown;
-  _physicalRotate?: unknown;
+  _editorRuntime?: {
+    readonly physicalGesture?: { readonly active: boolean; readonly drag: { kind: string; id: string; moved: boolean } | null };
+    readonly backdropGesture?: { readonly active: boolean; renderFrame(view: unknown): unknown };
+  } | null;
   _decorDraft?: unknown;
   _decorMove?: { id: string } | null;
   _dtDrag?: { id: string } | null;
-  _bdDrag?: unknown;
   _opDrag?: unknown;
   _resize?: { dragging: boolean; plan?: { roomIds: string[]; movingOpeningIds: string[] } | null };
   _layout: unknown;
@@ -47,7 +48,7 @@ interface LiveEditorHost {
   _spaceDisplayForRender: () => SpaceDisplay;
   _renderWallBodies: (display: unknown) => unknown;
   _renderResizeMeasurements: () => unknown;
-  _renderOpenings: (display: unknown, onlyIds?: readonly string[]) => unknown;
+  _renderOpenings: (display: unknown, onlyIds?: readonly string[], interactive?: boolean) => unknown;
   _renderResizeLayer: (view: unknown, roomIds?: readonly string[]) => unknown;
   _renderMarkupLayer: (viewBox: number[]) => unknown;
   _renderHiddenWallDiagnosticOverlay: () => unknown;
@@ -58,7 +59,6 @@ interface LiveEditorHost {
   _renderPlanSnapOverlay: () => unknown;
   _renderWallThickUi: () => unknown;
   _renderDecorLayer: (onlyId?: string | null) => unknown;
-  _renderBackdropFrame: (view: unknown) => unknown;
   _renderTextFrame: (view: unknown) => unknown;
   _renderLiveEditorMeasurements: (view: unknown) => unknown;
   /** #521: guides for the gesture in flight; `nothing` while the runtime loads. */
@@ -77,12 +77,12 @@ interface LiveEditorHost {
 const states = new WeakMap<object, LiveEditorState>();
 
 const liveProperties = new Set<PropertyKey>([
-  '_cursorPt', '_opMeasure', '_physicalDrag', '_physicalRotate',
-  '_decorDraft', '_dtBox', '_dtDrag', '_bdDrag', '_furnPreviewInput', '_layout',
+  '_cursorPt', '_opMeasure',
+  '_decorDraft', '_dtBox', '_dtDrag', '_furnPreviewInput', '_layout',
 ]);
 const hoverProperties = new Set<PropertyKey>(['_cursorPt', '_opMeasure', '_furnPreviewInput']);
 const gestureProperties = new Set<PropertyKey>([
-  '_physicalDrag', '_physicalRotate', '_decorDraft', '_dtDrag', '_bdDrag',
+  '_decorDraft', '_dtDrag',
 ]);
 
 const stateOf = (host: object): LiveEditorState => {
@@ -105,8 +105,8 @@ const finishRevision = (state: LiveEditorState, revision: number): void => {
 };
 
 const activeEditorGesture = (host: LiveEditorHost): boolean => host._mode !== 'view' && (
-  !!host._deviceDrag || !!host._physicalDrag || !!host._physicalRotate
-  || !!host._decorDraft || !!host._decorMove || !!host._dtDrag || !!host._bdDrag
+  !!host._deviceDrag || !!host._editorRuntime?.physicalGesture?.active
+  || !!host._decorDraft || !!host._decorMove || !!host._dtDrag || !!host._editorRuntime?.backdropGesture?.active
   || !!host._opDrag
   || !!host._resize?.dragging
 );
@@ -242,6 +242,12 @@ const resizePreviewWalls = (
   </g>`;
 };
 
+const physicalOpeningIds = (host: LiveEditorHost): string[] => {
+  const drag = host._editorRuntime?.physicalGesture?.drag;
+  return drag?.kind === 'partition' && drag.moved
+    ? host._openingsR.filter(o => o.host?.kind === 'partition' && o.host.id === drag.id && !o.orphanReason).map(o => o.id) : [];
+};
+
 const planTemplate = (host: LiveEditorHost): TemplateResult => {
   const vb = host._baseVb();
   const view = host._viewOr(vb);
@@ -257,6 +263,7 @@ const planTemplate = (host: LiveEditorHost): TemplateResult => {
     </g>`;
   }
   const display = host._spaceDisplayForRender();
+  const moving = physicalOpeningIds(host);
   return svg`<g class="hp-live-plan" aria-hidden="true" pointer-events="none">
     ${host._opDrag ? host._renderWallBodies(display) : nothing}
     ${host._renderMarkupLayer(vb)}
@@ -270,7 +277,7 @@ const planTemplate = (host: LiveEditorHost): TemplateResult => {
     ${host._renderAlignGuides()}
     ${host._tool === 'draw' ? nothing : host._renderPlanSnapOverlay()}
     ${host._renderWallThickUi()}
-    ${host._opDrag ? host._renderOpenings(display) : nothing}
+    ${host._opDrag ? host._renderOpenings(display) : moving.length ? host._renderOpenings(display, moving, false) : nothing}
   </g>`;
 };
 
@@ -282,7 +289,7 @@ const editorTemplate = (host: LiveEditorHost): TemplateResult | typeof nothing =
     return svg`<g class="hp-live-decor" aria-hidden="true" pointer-events="none">
       ${host._renderDecorLayer(activeId)}
       ${host._renderAlignGuides()}
-      ${host._renderBackdropFrame(view)}
+      ${host._editorRuntime?.backdropGesture?.renderFrame(view)}
       ${host._renderTextFrame(view)}
     </g>`;
   }
@@ -371,6 +378,7 @@ export function paintHouseplanEditor(value: object): void {
       makeMovingOpeningsTransparent(state, root, host._resize.plan?.movingOpeningIds || []);
     }
     if (host._opDrag) makeTransparent(state, root, '.openinglayer');
+    makeMovingOpeningsTransparent(state, root, physicalOpeningIds(host));
   } else if (host._mode === 'decor') {
     const activeId = host._dtDrag?.id || host._decorMove?.id;
     if (activeId) makeDecorShapeTransparent(state, root, activeId);

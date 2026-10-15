@@ -3,6 +3,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import test from 'node:test';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import ts from 'typescript';
 
 import { EditorRuntimeLoader, safeRuntimeDiagnostic } from '../test-build/editor-runtime-loader.js';
 
@@ -33,7 +34,6 @@ test('runtime diagnostics expose only allowlisted metadata', () => {
     kind: 'runtime-load', fingerprint: 'abc123', terminal: false,
   });
 });
-
 test('editor runtime loader deduplicates concurrent intent and installs atomically', async () => {
   const pending = deferred();
   const states = [];
@@ -310,4 +310,56 @@ test('user-facing card loaders route their toast through lazyLoadFailureMessage 
   }
   assert.equal(forwardedCallbacks, 3,
     'editor, onboarding and PDF are user-facing; all must forward terminality to the toast');
+});
+const parse = path => ts.createSourceFile(path, readFileSync(path, 'utf8'), ts.ScriptTarget.Latest, true,
+  path.endsWith('.ts') ? ts.ScriptKind.TS : ts.ScriptKind.JS);
+const walk = (node, visit) => { visit(node); ts.forEachChild(node, child => walk(child, visit)); };
+const removed = new Set([
+  '_physicalDrag', '_physicalRotate', '_physicalLastTap', '_physicalPickCycle',
+  '_physicalDown', '_physicalMove', '_physicalUp', '_cancelPhysicalGesture',
+  '_physicalRotateDown', '_physicalRotateMove', '_physicalRotateUp', '_physicalRegisterTap',
+  '_bdDrag', '_bdBase', '_bdRect', '_bdParams', '_bdActive', '_bdMovable', '_bdMoved', '_bdLive',
+  '_bdApply', '_bdStart', '_bdMove', '_bdMoveNow', '_bdReset', '_bdUp', '_renderBackdropFrame',
+]);
+
+test('#861 gesture owners replace state, delegates and port members, not just their forwarding bodies', () => {
+  for (const file of ['src/houseplan-card.ts', 'src/houseplan-editor-runtime.ts']) {
+    walk(parse(file), node => {
+      if (ts.isPropertyAccessExpression(node)) assert.ok(!removed.has(node.name.text), `${file}: ${node.name.text}`);
+      if (ts.isClassElement(node) || ts.isTypeElement(node))
+        assert.ok(!removed.has(node.name?.getText().replace(/^['"]|['"]$/g, '')), `${file}: old declaration ${node.name?.getText()}`);
+    });
+  }
+});
+
+test('#861 both owners have bounded purpose ports and no card/HostPort value dependency', () => {
+  for (const [file, port, count] of [
+    ['src/physical-body-gesture.ts', 'PhysicalBodyGesturePort', 13],
+    ['src/backdrop-frame-gesture.ts', 'BackdropFrameGesturePort', 14],
+  ]) {
+    const source = parse(file);
+    const declaration = source.statements.find(node => ts.isInterfaceDeclaration(node) && node.name.text === port);
+    assert.equal(declaration.members.length, count);
+    assert.ok(declaration.members.length <= 16);
+    walk(source, node => {
+      if (ts.isImportDeclaration(node)) assert.ok(!/houseplan-(?:card|editor-runtime)/.test(node.moduleSpecifier.text));
+      if (ts.isIdentifier(node)) assert.notEqual(node.text, 'HouseplanEditorHostPort');
+      assert.notEqual(node.kind, ts.SyntaxKind.AnyKeyword);
+    });
+  }
+});
+
+test('#861 owner modules remain editor-lazy and callers cannot retain the removed aliases', () => {
+  const card = parse('src/houseplan-card.ts');
+  for (const node of card.statements.filter(ts.isImportDeclaration)) {
+    if (!node.importClause?.isTypeOnly)
+      assert.ok(!/(?:physical-body|backdrop-frame)-gesture/.test(node.moduleSpecifier.text));
+  }
+  const files = ['src/live-editor.ts', 'src/live-interaction-runtime.ts', 'src/version-recovery-card.ts',
+    ...readdirSync('demo').filter(name => name.endsWith('.mjs')).map(name => join('demo', name))];
+  for (const file of files) walk(parse(file), node => {
+    if (ts.isPropertyAccessExpression(node)) assert.ok(!removed.has(node.name.text), `${file}: ${node.name.text}`);
+    if (ts.isElementAccessExpression(node) && ts.isStringLiteral(node.argumentExpression))
+      assert.ok(!removed.has(node.argumentExpression.text), `${file}: ${node.argumentExpression.text}`);
+  });
 });

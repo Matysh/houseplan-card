@@ -884,6 +884,11 @@ never changed automatically. In 2.5D the symbol is flat on the floor. See
 
 ![Selected partition and its Plan context tray](images/05-plan-context-tray.png)
 
+Dragging a partition in **Select** moves its doors and windows in the live
+preview as well. There is only one visible copy of each opening; their width,
+flips and settings stay unchanged. Release saves one Undo step. Press **Esc**
+or Undo while holding to cancel without saving.
+
 ### Merge
 
 - Rooms must share a boundary.

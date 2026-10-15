@@ -7,6 +7,8 @@
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
 import { html, svg, nothing, TemplateResult } from 'lit';
+import { PhysicalBodyGestureRuntime, type PhysicalBodyGesturePort } from './physical-body-gesture';
+import { BackdropFrameGestureRuntime, type BackdropPlan } from './backdrop-frame-gesture';
 import { displayVersion } from './card-version';
 import { entryBuildLabel } from './build-identity';
 import { finishWarmModeAdoption, resumeWarmMode, type WarmModeHost } from './warm-mode-adoption';
@@ -181,7 +183,7 @@ import type { OptimizePlansDialogState } from './optimize-plans-dialog';
 import { LazyOptimizePlansDialog } from './optimize-plans-loader';
 import {
   BodyObstaclesMemo, COLUMN_MAX_CM, canonicalColumnAngle, clampColumnCm, columnBody, floorMinusObstacles, geometryArea,
-  partitionBody, pointInPhysicalBody, sameColumnPlacement, type PartitionOpeningCut,
+  partitionBody, sameColumnPlacement, type PartitionOpeningCut,
 } from './physical-geometry';
 import {
   hostedOpeningIntervalsOverlap, materializePartitionOpening, partitionOpeningJambMargin,
@@ -478,13 +480,6 @@ export interface HouseplanEditorHostPort {
   _canImportBackup: boolean;
   _backupImportDialog: { filename: string; size: number; token: string; preview: any; expectedConfigRev: number; expectedLayoutRev: number; duplicatePolicy: "skip" | "virtual"; confirmMissing: boolean; busy: boolean; error: string; } | null;
   _baseVb: (projection?: 'flat' | 'iso') => number[];
-  _bdActive: boolean;
-  _bdBase: Rect | null;
-  _bdDrag: { kind: "move" | "scale" | "rotate"; pid: number; sx: number; sy: number; base: Rect; p0: { dx: number; dy: number; sx: number; sy: number; angle: number; }; fx: number; fy: number; sgx: number; sgy: number; rect0: DecorBox; before: SpaceGeometryState | null; moved: boolean; } | null;
-  _bdMovable: boolean;
-  _bdMoved: boolean;
-  _bdParams: { dx: number; dy: number; sx: number; sy: number; angle: number; };
-  _bdRect: (Rect & { angle?: number; }) | null;
   _bindingEntities: (binding: string) => string[];
   _bindingHasAlarm: (binding: string) => boolean;
   _bindingHasClimate: (binding: string) => boolean;
@@ -685,10 +680,6 @@ export interface HouseplanEditorHostPort {
   _physicalBodiesCache: { key: string; drafts: number[][][]; partitions: number[][][]; columns: number[][][]; patches: number[][][]; all: number[][][]; } | null;
   _physicalBodiesR: (space?: SpaceModel | undefined) => number[][][];
   _physicalDialog: { kind: "partition" | "column"; id: string; cm: string; shape?: "square" | "circle"; angle?: string; length?: string; } | null;
-  _physicalDrag: { pid: number; kind: "partition" | "column"; id: string; start: number[]; startClient: number[]; before: SpaceGeometryState | null; moved: boolean; base: PartitionCfg | WallColumnCfg; delta: number[]; } | null;
-  _physicalLastTap: { kind: "partition" | "column"; id: string; at: number; } | null;
-  _physicalPickCycle: { signature: string; index: number; x: number; y: number; at: number; } | null;
-  _physicalRotate: { pid: number; id: string; center: number[]; startAngle: number; baseAngle: number; angle: number; before: SpaceGeometryState | null; moved: boolean; } | null;
   _physicalSel: { kind: "partition" | "column"; id: string; } | null;
   _pinchStart: { dist: number; zoom: number; } | null;
   _planEntityAvailable: (eid: string | null | undefined) => boolean;
@@ -830,6 +821,9 @@ export const EDITOR_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 export { EDITOR_LANGUAGE_RUNTIME }; // #627: see src/i18n/editor-language.ts
 
 export class HouseplanEditorRuntime {
+  public readonly physicalGesture: PhysicalBodyGestureRuntime;
+  public readonly backdropGesture: BackdropFrameGestureRuntime;
+  private _gestureBoundary = false;
   /** The same winning #885 endpoint as the cursor/commit, never a second snap query. */
   private _wallEndGuide: AlignGuide | null = null;
   private readonly physicalWriteHistory = new PhysicalWriteHistory();
@@ -869,6 +863,29 @@ export class HouseplanEditorRuntime {
     // #805: editor-only CSS, adopted at the loader's create() — before install, so before any editor frame.
     if (!adoptEditorStyles(host)) void host.updateComplete.then(() => adoptEditorStyles(host));
     const owner = host;
+    this.physicalGesture = new PhysicalBodyGestureRuntime({
+      queueTarget: host, space: () => host._spaceModel() ?? null,
+      storedGeometry: () => host._curSpaceCfg as ReturnType<PhysicalBodyGesturePort['storedGeometry']>,
+      units: () => ({ cellCm: host._cellCm, gridPitch: host._gridPitch }),
+      point: (event) => this._svgPoint(event), snap: (point) => this._snap(point),
+      snapshot: () => this._geometrySnapshot(),
+      commit: (key, before) => this._commitPhysicalGeometry(host._t(key), before),
+      select: (selection) => { host._physicalSel = selection; },
+      openDialog: (kind, id) => this._openPhysicalDialog(kind, id),
+      toast: (key) => host._showToast(host._t(key)),
+      publish: (phase) => this._publishGesture(phase), now: () => performance.now(),
+    });
+    this.backdropGesture = new BackdropFrameGestureRuntime({
+      queueTarget: host, plan: () => host._curSpaceCfg as BackdropPlan | null,
+      mode: () => host._mode, tool: () => host._decorTool,
+      point: (event) => this._svgPoint(event), snap: (point) => this._snap(point),
+      gridPitch: () => host._gridPitch, snapshot: () => this._geometrySnapshot(),
+      record: (key, before) => this._recordGeometry(host._t(key), before),
+      save: () => this._saveConfig(), toast: (key) => host._showToast(host._t(key)),
+      configChanged: () => { host._cfgEpoch++; },
+      publish: (phase) => this._publishGesture(phase),
+      formatLength: (a, b) => host._fmtLen(a, b),
+    });
     this.roomGear = new RoomGearDragController({
       mode: () => owner._mode, spaceId: () => owner._space,
       currentRoom: (roomId) => owner._spaceModel()?.rooms.find((room) => room.id === roomId),
@@ -978,10 +995,15 @@ export class HouseplanEditorRuntime {
         if (epoch !== this._nodeMoveEpoch && this.host.isConnected) this.host.requestUpdate();
       });
   }
+private _publishGesture(phase: 'begin' | 'move' | 'end'): void {
+    const boundary = this._gestureBoundary;
+    if (phase !== 'move') { this._gestureBoundary = true; this.host._terminalFrame = 0; }
+    try { this.host.requestUpdate(); } finally { this._gestureBoundary = boundary; }
+  }
 public _routeLiveEditorUpdate(name?: PropertyKey, oldValue?: unknown): boolean {
     const gearSpace = this.host._mode === 'plan' ? this.host._spaceModel() : null;
     if (gearSpace) this.roomGear.adoptPlan(gearSpace);
-    const live = routeHouseplanEditorUpdate(this.host, name, oldValue);
+    const live = !this._gestureBoundary && routeHouseplanEditorUpdate(this.host, name, oldValue);
     if (!live && this.host._resize.preview) this._resizeBaseFrameStable = false;
     return live;
   }
@@ -1089,7 +1111,7 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
     // A live decor transform is a transaction. Switching tabs must cancel and
     // restore it, not merely forget its pointer record after the config has
     // already been mutated by move/resize.
-    if (this.host._decorMove || this.host._dtDrag || this.host._bdDrag) this._cancelDecorGesture();
+    if (this.host._decorMove || this.host._dtDrag || this.backdropGesture.active) this._cancelDecorGesture();
     const baseChanges = !space.bg && (mode === 'view') !== (previousMode === 'view');
     // A running/preparing transition has not committed its target to `_zoom`
     // yet. Retarget from the painted frame, but preserve the latest camera
@@ -1227,7 +1249,7 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
     this.host._selId = null;
     this.host._physicalSel = null;
     this.host._physicalDialog = null;
-    this.host._physicalDrag = null;
+    this.physicalGesture.resetMove();
     this._rszResetController();
     this.host._tip = null;
     this.host._hoverRoom = null;
@@ -1238,7 +1260,7 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
     // Every Background session starts predictably on Select. The image has an
     // explicit tool of its own; only that tool may claim its body or frame.
     this.host._decorTool = 'select';
-    this.host._bdDrag = null;
+    this.backdropGesture.reset();
     this.host._dtDrag = null;
     this.host._dtBox = null;
     if (mode === 'plan') this._primeDrawWallField();
@@ -2112,8 +2134,7 @@ public _clearGeometryGesture(preserveWallChainRedo = false): void {
     this.host._wallDialog = null;
     this.host._physicalDialog = null;
     this.host._physicalSel = null;
-    this.host._physicalDrag = null;
-    this.host._physicalRotate = null;
+    this.physicalGesture.reset();
     this.host._activeWallChainId = null;
     this.host._activeWallChainPartitionIds = [];
     this.host._wallChainSegmentCms = [];
@@ -2124,7 +2145,7 @@ public _clearGeometryGesture(preserveWallChainRedo = false): void {
     this.host._decorDraft = null;
     this.host._decorMove = null;
     this.host._dtDrag = null;
-    this.host._bdDrag = null;
+    this.backdropGesture.reset();
   }
 
 public _stagePointerCancel(ev: PointerEvent): void {
@@ -2136,8 +2157,8 @@ public _stagePointerCancel(ev: PointerEvent): void {
       this.host.requestUpdate();
       return;
     }
-    if (this.host._physicalDrag?.pid === ev.pointerId || this.host._physicalRotate?.pid === ev.pointerId) {
-      this._cancelPhysicalGesture();
+    if (this.physicalGesture.drag?.pid === ev.pointerId || this.physicalGesture.rotation?.pid === ev.pointerId) {
+      this.physicalGesture.cancel();
       return;
     }
     if (this.host._decorDraft?.pid === ev.pointerId) {
@@ -2146,7 +2167,7 @@ public _stagePointerCancel(ev: PointerEvent): void {
       return;
     }
     if (this.host._decorMove?.pid === ev.pointerId || this.host._dtDrag?.pid === ev.pointerId
-        || this.host._bdDrag?.pid === ev.pointerId) {
+        || this.backdropGesture.owns(ev.pointerId)) {
       this._cancelDecorGesture();
       return;
     }
@@ -2263,9 +2284,9 @@ private _runNodeHistory(direction: 'undo' | 'redo'): void {
 private _historyGestureFirst(): boolean {
     const host = this.host;
     if (this.nodeMove?.busy || this.nodeMove?.cancel()) return true;
-    if (host._physicalDrag || host._physicalRotate) this._cancelPhysicalGesture();
+    if (this.physicalGesture.drag || this.physicalGesture.rotation) this.physicalGesture.cancel();
     else if (host._decorDraft) { host._decorDraft = null; host.requestUpdate(); }
-    else if (host._decorMove || host._dtDrag || host._bdDrag) this._cancelDecorGesture();
+    else if (host._decorMove || host._dtDrag || this.backdropGesture.active) this._cancelDecorGesture();
     else if (host._resize.dragging) this._rszCancelDrag();
     else return false;
     return true;
@@ -2828,220 +2849,6 @@ public _confirmPartitionDelete = (): void => {
     this.host._physicalDialog = null;
     this._commitPhysicalGeometry(this.host._t('history.physical_delete'), before);
   };
-
-
-public _physicalDown(ev: PointerEvent, kind: 'partition' | 'column', id: string): void {
-    const model = this.host._spaceModel();
-    if (!model) return;
-    ev.stopPropagation();
-    capturePointer(ev);
-    const point = this._svgPoint(ev);
-    const candidates: Array<{ kind: 'partition' | 'column'; id: string }> = [];
-    for (const c of [...model.wall_columns].reverse()) {
-      if (pointInPhysicalBody(point, columnBody(c, this.host._cellCm, this.host._gridPitch)))
-        candidates.push({ kind: 'column', id: c.id });
-    }
-    for (const p of [...model.partitions].reverse()) {
-      const body = partitionBody(p.a, p.b, p.cm, this.host._cellCm, this.host._gridPitch);
-      if (body && pointInPhysicalBody(point, body)) candidates.push({ kind: 'partition', id: p.id });
-    }
-    if (!candidates.some((x) => x.kind === kind && x.id === id)) candidates.unshift({ kind, id });
-    const signature = candidates.map((x) => `${x.kind}:${x.id}`).sort().join('|');
-    const now = performance.now();
-    const cycle = this.host._physicalPickCycle;
-    const repeat = candidates.length > 1 && cycle?.signature === signature
-      && now - cycle.at > 380 && now - cycle.at <= 1200
-      && Math.hypot(ev.clientX - cycle.x, ev.clientY - cycle.y) <= 10;
-    const index = repeat ? (cycle.index + 1) % candidates.length
-      : Math.max(0, candidates.findIndex((x) => x.kind === kind && x.id === id));
-    this.host._physicalPickCycle = { signature, index, x: ev.clientX, y: ev.clientY, at: now };
-    kind = candidates[index].kind;
-    id = candidates[index].id;
-    const base = kind === 'partition'
-      ? model.partitions.find((x) => x.id === id)
-      : model.wall_columns.find((x) => x.id === id);
-    if (!base) return;
-    this.host._physicalSel = { kind, id };
-    this.host._physicalDrag = {
-      pid: ev.pointerId, kind, id, start: this._svgPoint(ev),
-      startClient: [ev.clientX, ev.clientY],
-      before: this._geometrySnapshot(), moved: false,
-      base: JSON.parse(JSON.stringify(base)), delta: [0, 0],
-    };
-  }
-
-public _clampPhysicalDelta(
-    kind: 'partition' | 'column', base: PartitionCfg | WallColumnCfg, delta: number[],
-  ): number[] {
-    const points = kind === 'partition'
-      ? [(base as PartitionCfg).a, (base as PartitionCfg).b]
-      : [(base as WallColumnCfg).center];
-    const xs = points.map((p) => p[0]), ys = points.map((p) => p[1]);
-    return [
-      Math.max(-CANVAS_LIMIT * NORM_W - Math.min(...xs),
-        Math.min(CANVAS_LIMIT * NORM_W - Math.max(...xs), delta[0])),
-      Math.max(-CANVAS_LIMIT * NORM_W - Math.min(...ys),
-        Math.min(CANVAS_LIMIT * NORM_W - Math.max(...ys), delta[1])),
-    ];
-  }
-
-public _physicalMove(ev: PointerEvent): void {
-    ev.stopPropagation();
-    queueHouseplanPointerMove(this.host, 'physical', () => this._physicalMoveNow(ev));
-  }
-
-private _physicalMoveNow(ev: PointerEvent): void {
-    const drag = this.host._physicalDrag;
-    if (!drag || drag.pid !== ev.pointerId) return;
-    ev.stopPropagation();
-    const raw = this._svgPoint(ev);
-    const anchor = drag.kind === 'partition'
-      ? (drag.base as PartitionCfg).a : (drag.base as WallColumnCfg).center;
-    const target = this._snap([
-      anchor[0] + raw[0] - drag.start[0], anchor[1] + raw[1] - drag.start[1],
-    ]);
-    const delta = this._clampPhysicalDelta(
-      drag.kind, drag.base, [target[0] - anchor[0], target[1] - anchor[1]],
-    );
-    this.host._physicalDrag = {
-      ...drag, delta,
-      moved: drag.moved || Math.hypot(
-        ev.clientX - drag.startClient[0], ev.clientY - drag.startClient[1],
-      ) >= 5,
-    };
-  }
-
-public _physicalUp(ev: PointerEvent): void {
-    flushHouseplanPointerMove(this.host, 'physical');
-    const drag = this.host._physicalDrag;
-    if (!drag || drag.pid !== ev.pointerId) return;
-    ev.stopPropagation();
-    this.host._physicalDrag = null;
-    if (!drag.moved) {
-      this._registerPhysicalTap(drag.kind, drag.id);
-      return;
-    }
-    const model = this.host._spaceModel();
-    if (!this.host._curSpaceCfg || !model) return;
-    const sp = this.host._curSpaceCfg as any;
-    if (drag.kind === 'partition') {
-      const p = (sp.partitions || []).find((x: any) => x.id === drag.id);
-      const base = drag.base as PartitionCfg;
-      if (p) {
-        const moved: PartitionCfg = {
-          ...base,
-          a: [base.a[0] + drag.delta[0], base.a[1] + drag.delta[1]],
-          b: [base.b[0] + drag.delta[0], base.b[1] + drag.delta[1]],
-        };
-        p.a = [moved.a[0] / NORM_W, moved.a[1] / NORM_W];
-        p.b = [moved.b[0] / NORM_W, moved.b[1] / NORM_W];
-        for (const opening of sp.openings || []) {
-          if (opening.host?.kind !== 'partition' || opening.host.id !== drag.id) continue;
-          const resolved = resolvePartitionOpeningCompat(
-            opening, [moved], NORM_W, this.host._cellCm, this.host._gridPitch,
-          ).resolved;
-          if (resolved) Object.assign(
-            opening, materializePartitionOpening(opening, resolved, NORM_W),
-          );
-        }
-      }
-    } else {
-      const c = (sp.wall_columns || []).find((x: any) => x.id === drag.id);
-      const base = drag.base as WallColumnCfg;
-      const candidate: WallColumnCfg = {
-        ...base,
-        center: [base.center[0] + drag.delta[0], base.center[1] + drag.delta[1]],
-      } as WallColumnCfg;
-      if (model.wall_columns.some((x) => x.id !== drag.id
-          && sameColumnPlacement(x, candidate, this.host._gridPitch * 0.02))) {
-        this.host._showToast(this.host._t('toast.column_duplicate'));
-        return;
-      }
-      if (c) c.center = [
-        (base.center[0] + drag.delta[0]) / NORM_W,
-        (base.center[1] + drag.delta[1]) / NORM_W,
-      ];
-    }
-    this._commitPhysicalGeometry(this.host._t('history.physical_move'), drag.before);
-  }
-
-public _registerPhysicalTap(
-    kind: 'partition' | 'column', id: string,
-  ): void {
-    const now = performance.now();
-    const twice = this.host._physicalLastTap?.kind === kind
-      && this.host._physicalLastTap.id === id
-      && now - this.host._physicalLastTap.at <= 360;
-    this.host._physicalLastTap = { kind, id, at: now };
-    if (twice) {
-      this.host._physicalLastTap = null;
-      this._openPhysicalDialog(kind, id);
-    }
-  }
-
-public _cancelPhysicalGesture(): void {
-    cancelHouseplanPointerMove(this.host, 'physical');
-    cancelHouseplanPointerMove(this.host, 'physical-rotate');
-    this.host._physicalDrag = null;
-    this.host._physicalRotate = null;
-    this.host.requestUpdate();
-  }
-
-public _physicalRotateDown(ev: PointerEvent, c: WallColumnCfg): void {
-    if (c.shape !== 'square' || !this.host._spaceModel()) return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    capturePointer(ev);
-    const p = this._svgPoint(ev);
-    this.host._physicalSel = { kind: 'column', id: c.id };
-    this.host._physicalRotate = {
-      pid: ev.pointerId, id: c.id, center: [...c.center],
-      startAngle: Math.atan2(p[1] - c.center[1], p[0] - c.center[0]) * 180 / Math.PI,
-      baseAngle: canonicalColumnAngle(c.angle), angle: canonicalColumnAngle(c.angle),
-      before: this._geometrySnapshot(), moved: false,
-    };
-  }
-
-public _physicalRotateMove(ev: PointerEvent): void {
-    ev.preventDefault();
-    ev.stopPropagation();
-    queueHouseplanPointerMove(this.host, 'physical-rotate', () => this._physicalRotateMoveNow(ev));
-  }
-
-private _physicalRotateMoveNow(ev: PointerEvent): void {
-    const drag = this.host._physicalRotate;
-    if (!drag || drag.pid !== ev.pointerId) return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    const p = this._svgPoint(ev);
-    const pointerAngle = Math.atan2(p[1] - drag.center[1], p[0] - drag.center[0]) * 180 / Math.PI;
-    const raw = drag.baseAngle + pointerAngle - drag.startAngle;
-    const angle = canonicalColumnAngle(ev.shiftKey ? raw : Math.round(raw / 5) * 5);
-    this.host._physicalRotate = { ...drag, angle, moved: drag.moved || Math.abs(raw - drag.baseAngle) >= 0.5 };
-  }
-
-public _physicalRotateUp(ev: PointerEvent): void {
-    flushHouseplanPointerMove(this.host, 'physical-rotate');
-    const drag = this.host._physicalRotate;
-    if (!drag || drag.pid !== ev.pointerId) return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    this.host._physicalRotate = null;
-    const model = this.host._spaceModel();
-    if (!drag.moved || !this.host._curSpaceCfg || !model) return;
-    const current = model.wall_columns.find((c) => c.id === drag.id);
-    if (!current || current.shape !== 'square') return;
-    const candidate: WallColumnCfg = { ...current, angle: drag.angle };
-    if (model.wall_columns.some((c) => c.id !== drag.id
-        && sameColumnPlacement(c, candidate, this.host._gridPitch * 0.02))) {
-      this.host._showToast(this.host._t('toast.column_duplicate'));
-      return;
-    }
-    const stored = (this.host._curSpaceCfg as any).wall_columns?.find((c: any) => c.id === drag.id);
-    if (!stored) return;
-    stored.angle = drag.angle;
-    this._commitPhysicalGeometry(this.host._t('history.physical_edit'), drag.before);
-  }
 
 public _rszRooms(): { id: string; poly: number[][]; wall_ids?: string[] }[] {
     const out: { id: string; poly: number[][]; wall_ids?: string[] }[] = [];
@@ -3813,7 +3620,7 @@ public _cancelDecorGesture(): void {
     cancelHouseplanPointerMove(this.host, 'decor-transform');
     cancelHouseplanPointerMove(this.host, 'decor-move');
     cancelHouseplanPointerMove(this.host, 'backdrop');
-    const before = this.host._decorMove?.before || this.host._dtDrag?.before || this.host._bdDrag?.before;
+    const before = this.host._decorMove?.before || this.host._dtDrag?.before || this.backdropGesture.before;
     const sp = before && this.host._serverCfg?.spaces.find((space) => space.id === before.spaceId);
     if (before && sp) {
       const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
@@ -3827,7 +3634,7 @@ public _cancelDecorGesture(): void {
     }
     this.host._decorMove = null;
     this.host._dtDrag = null;
-    this.host._bdDrag = null;
+    this.backdropGesture.reset();
     // Mark after named terminal setters; only the unnamed cancel frame may be retained.
     if (before && sp && this.host._mode === 'decor') this.host._terminalFrame = 1;
     this.host.requestUpdate();
@@ -3910,8 +3717,8 @@ public _decorPointerDown(ev: PointerEvent): boolean {
     // …and under its own tool the picture is grabbable by its body
     // (docs/DECOR-EDITOR.md §3.2). Only INSIDE the image rect: press beside the
     // picture and the plane still pans with one finger.
-    if (this.host._bdMovable) {
-      const r = this.host._bdRect!;
+    if (this.backdropGesture.movable) {
+      const r = this.backdropGesture.rect!;
       const p = this._svgPoint(ev);
       const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
       const a = (-normalizeAngle(r.angle) * Math.PI) / 180;
@@ -3919,7 +3726,7 @@ public _decorPointerDown(ev: PointerEvent): boolean {
       const local = [cx + dx * Math.cos(a) - dy * Math.sin(a), cy + dx * Math.sin(a) + dy * Math.cos(a)];
       if (local[0] >= r.x && local[0] <= r.x + r.w && local[1] >= r.y && local[1] <= r.y + r.h) {
         ev.preventDefault();
-        return this._bdStart(ev);
+        return this.backdropGesture.begin(ev);
       }
     }
     return false; // pan is allowed
@@ -4821,11 +4628,11 @@ public _renderFurnPalette(): TemplateResult {
   }
 
 public _openBackdropDialog(ev?: Event): void {
-    if (!this.host._bdMovable || !this.host._bdRect) return;
+    if (!this.backdropGesture.movable || !this.backdropGesture.rect) return;
     ev?.preventDefault();
     ev?.stopPropagation();
-    this.host._bdDrag = null;
-    const r = this.host._bdRect;
+    this.backdropGesture.reset();
+    const r = this.backdropGesture.rect;
     this.host._backdropDialog = {
       widthCm: decorUnitsToCm(r.w, this.host._cellCm, this.host._gridPitch),
       heightCm: decorUnitsToCm(r.h, this.host._cellCm, this.host._gridPitch),
@@ -4835,7 +4642,7 @@ public _openBackdropDialog(ev?: Event): void {
 
 public _saveBackdropDialog(): void {
     const d = this.host._backdropDialog;
-    const base = this.host._bdBase, current = this.host._bdRect;
+    const base = this.backdropGesture.base, current = this.backdropGesture.rect;
     if (!d || !base || !current) return;
     const angle = normalizeAngle(d.angle);
     const before = this._geometrySnapshot();
@@ -4854,161 +4661,11 @@ public _saveBackdropDialog(): void {
       { x: cx - w / 2, y: cy - h / 2 }, angle,
       (point) => this._snap(point),
     );
-    this._bdApply((topLeft[0] - base.x) / NORM_W, (topLeft[1] - base.y) / NORM_W,
+    this.backdropGesture.apply((topLeft[0] - base.x) / NORM_W, (topLeft[1] - base.y) / NORM_W,
       w / base.w, h / base.h, angle);
     this.host._backdropDialog = null;
     this._recordGeometry(this.host._t('history.backdrop_transform'), before);
     this._saveConfig();
-  }
-
-public _bdApply(dx: number, dy: number, sx: number, sy: number, angle: number): void {
-    const sp = this.host._curSpaceCfg;
-    if (!sp) return;
-    // 6 decimals: the same precision the rest of the normalised config keeps,
-    // and enough for a 1000-unit canvas to be exact to a thousandth of a pixel
-    sp.plan_x = Number(clampCanvasN(dx).toFixed(6));
-    sp.plan_y = Number(clampCanvasN(dy).toFixed(6));
-    delete sp.plan_scale;
-    sp.plan_scale_x = Number(Math.min(PLAN_SCALE_MAX, Math.max(PLAN_SCALE_MIN, sx)).toFixed(6));
-    sp.plan_scale_y = Number(Math.min(PLAN_SCALE_MAX, Math.max(PLAN_SCALE_MIN, sy)).toFixed(6));
-    const a = normalizeAngle(angle);
-    if (a) sp.plan_angle = Number(a.toFixed(2));
-    else delete sp.plan_angle;
-    this.host._cfgEpoch++;
-    this.host.requestUpdate();
-  }
-
-public _bdStart(ev: PointerEvent, corner?: number[], rotate = false): boolean {
-    const base = this.host._bdBase, r = this.host._bdRect;
-    if (!base || !r) return false;
-    const p = this._svgPoint(ev);
-    const sgx = corner ? corner[0] : 0;
-    const sgy = corner ? corner[1] : 0;
-    // the corner that stays put is the OPPOSITE one
-    const fx = sgx > 0 ? r.x : r.x + r.w;
-    const fy = sgy > 0 ? r.y : r.y + r.h;
-    this.host._bdDrag = {
-      kind: rotate ? 'rotate' : corner ? 'scale' : 'move',
-      pid: ev.pointerId,
-      sx: p[0], sy: p[1],
-      base, p0: this.host._bdParams,
-      fx, fy, sgx, sgy,
-      rect0: { x: r.x, y: r.y, w: r.w, h: r.h, angle: r.angle },
-      before: this._geometrySnapshot(),
-      moved: false,
-    };
-    capturePointer(ev);
-    return true;
-  }
-
-public _bdMove(ev: PointerEvent): void {
-    queueHouseplanPointerMove(this.host, 'backdrop', () => this._bdMoveNow(ev));
-  }
-
-private _bdMoveNow(ev: PointerEvent): void {
-    const d = this.host._bdDrag;
-    if (!d) return;
-    const p = this._svgPoint(ev);
-    const b = d.base;
-    if (d.kind === 'move') {
-      const x0 = d.rect0.x, y0 = d.rect0.y;
-      const at = this._snap([x0 + (p[0] - d.sx), y0 + (p[1] - d.sy)]);
-      const changed = Math.abs(at[0] - x0) > 1e-9 || Math.abs(at[1] - y0) > 1e-9;
-      if (!changed && !d.moved) return;
-      d.moved ||= changed;
-      this._bdApply((at[0] - b.x) / NORM_W, (at[1] - b.y) / NORM_W,
-        d.p0.sx, d.p0.sy, d.p0.angle);
-      return;
-    }
-    if (d.kind === 'rotate') {
-      const cx = d.rect0.x + d.rect0.w / 2, cy = d.rect0.y + d.rect0.h / 2;
-      const a0 = Math.atan2(d.sy - cy, d.sx - cx) * 180 / Math.PI;
-      let angle = d.p0.angle + (Math.atan2(p[1] - cy, p[0] - cx) * 180 / Math.PI - a0);
-      if (!ev.shiftKey) angle = Math.round(angle / DT_ANGLE_STEP) * DT_ANGLE_STEP;
-      angle = normalizeAngle(angle);
-      const changed = Math.abs(angle - d.p0.angle) > 1e-9;
-      if (!changed && !d.moved) return;
-      d.moved ||= changed;
-      this._bdApply(d.p0.dx, d.p0.dy, d.p0.sx, d.p0.sy, angle);
-      return;
-    }
-    const box = resizeDecorBox(
-      d.rect0, d.sgx, d.sgy, p[0], p[1], !ev.shiftKey,
-      this.host._gridPitch, Math.min(b.w, b.h) * PLAN_SCALE_MIN,
-    );
-    const sx = box.w / Math.max(1e-9, b.w), sy = box.h / Math.max(1e-9, b.h);
-    const changed = Math.abs(sx - d.p0.sx) > 1e-9 || Math.abs(sy - d.p0.sy) > 1e-9
-      || Math.abs(box.x - d.rect0.x) > 1e-9 || Math.abs(box.y - d.rect0.y) > 1e-9;
-    if (!changed && !d.moved) return;
-    d.moved ||= changed;
-    const topLeft = resizedBoxTopLeft(
-      box, d.p0.angle, (point) => this._snap(point),
-    );
-    this._bdApply((topLeft[0] - b.x) / NORM_W, (topLeft[1] - b.y) / NORM_W,
-      sx, sy, d.p0.angle);
-  }
-
-public _bdReset(): void {
-    const sp = this.host._curSpaceCfg;
-    if (!sp) return;
-    const before = this._geometrySnapshot();
-    delete sp.plan_x; delete sp.plan_y; delete sp.plan_scale;
-    delete sp.plan_scale_x; delete sp.plan_scale_y; delete sp.plan_angle;
-    this.host._bdDrag = null;
-    this._recordGeometry(this.host._t('history.backdrop_transform'), before);
-    this._saveConfig();
-    this.host._showToast(this.host._t('decor.backdrop_reset_done'));
-    this.host.requestUpdate();
-  }
-
-public _bdUp(): void {
-    flushHouseplanPointerMove(this.host, 'backdrop');
-    const d = this.host._bdDrag;
-    this.host._bdDrag = null;
-    if (d?.moved) {
-      this._recordGeometry(this.host._t('history.backdrop_transform'), d.before);
-      this._saveConfig();
-    }
-    this.host.requestUpdate();
-  }
-
-public _renderBackdropFrame(view: { x: number; y: number; w: number; h: number }): TemplateResult | typeof nothing {
-    const r = this.host._bdRect;
-    if (!this.host._bdActive || !r) return nothing;
-    // Two radii, one gesture — the split the text frame uses (docs/DECOR-EDITOR.md §5
-    // §3) and, since 2026-08-05, every corner handle in the card. `hr` is the
-    // HIT radius: a fraction of the visible view, so the target stays
-    // finger-sized at any zoom. `kr` is what you SEE — a quarter of it, because
-    // a blob the size of a room is not a handle, it is an occlusion (owner:
-    // «уменьшить в 4 раза… они постоянно гигантские»). The clickable area is
-    // unchanged; only the ink shrank.
-    const hr = Math.max(view.w, view.h) * 0.02;
-    const kr = hr / 4;
-    const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
-    const angle = normalizeAngle(r.angle);
-    const arm = hr * 2.2;
-    const corners: [number, number, string][] = [
-      [-1, -1, 'nwse'], [1, -1, 'nesw'], [1, 1, 'nwse'], [-1, 1, 'nesw'],
-    ];
-    return svg`<g class="bdframe" transform=${angle ? `rotate(${angle} ${cx} ${cy})` : nothing}>
-      <rect class="bdbox" x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}"></rect>
-      <line class="dtstem" x1="${cx}" y1="${r.y}" x2="${cx}" y2="${r.y - arm}"></line>
-      <circle class="bdhandle dtrot" cx="${cx}" cy="${r.y - arm}" r="${hr.toFixed(1)}"
-        @pointerdown=${(e: PointerEvent) => {
-          e.stopPropagation(); e.preventDefault(); this._bdStart(e, undefined, true);
-        }}></circle>
-      <circle class="bdknob" cx="${cx}" cy="${r.y - arm}" r="${kr.toFixed(2)}"></circle>
-      ${corners.map(([sx, sy, cur]) => {
-        const cx = sx < 0 ? r.x : r.x + r.w;
-        const cy = sy < 0 ? r.y : r.y + r.h;
-        return svg`<circle
-          class="bdhandle bd-${cur}" data-corner="${sx + ',' + sy}"
-          cx="${cx}" cy="${cy}" r="${hr.toFixed(1)}"
-          @pointerdown=${(e: PointerEvent) => {
-            e.stopPropagation(); e.preventDefault(); this._bdStart(e, [sx, sy]);
-          }}></circle><circle class="bdknob" cx="${cx}" cy="${cy}" r="${kr.toFixed(2)}"></circle>`;
-      })}
-    </g>` as unknown as TemplateResult;
   }
 
 public _renderEditorGroupLauncher(group: EditorToolbarGroup): TemplateResult {
@@ -5171,7 +4828,7 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
 
     const draws = this.host._decorTool === 'line' || this.host._decorTool === 'rect' || this.host._decorTool === 'ellipse';
     const canFill = this.host._decorTool === 'rect' || this.host._decorTool === 'ellipse';
-    const backdrop = this.host._decorTool === 'backdrop' && !!this.host._bdRect;
+    const backdrop = this.host._decorTool === 'backdrop' && !!this.backdropGesture.rect;
     if (!draws && !backdrop) return null;
     return {
       contextId,
@@ -5210,10 +4867,10 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
   }
 
 public _withBackdropReset(model: EditorSecondaryModel | null): EditorSecondaryModel | null {
-    if (!this.host._bdMoved || this.host._bdDrag || model?.kind === 'palette') return model;
+    if (!this.backdropGesture.transformed || this.backdropGesture.active || model?.kind === 'palette') return model;
     const contextId = this.host._editorSecondaryContextId;
     const reset = html`<button class="btn bdreset" title=${this.host._t('decor.backdrop_reset')}
-      @click=${() => this._runEditorContext(contextId, () => this._bdReset())}>
+      @click=${() => this._runEditorContext(contextId, () => this.backdropGesture.resetTransform())}>
       <ha-icon icon="mdi:image-refresh-outline"></ha-icon>${this.host._t('decor.backdrop_reset')}
     </button>`;
     if (!model) {
@@ -5246,7 +4903,7 @@ public _renderDecorBar(): TemplateResult {
       ['select', 'mdi:cursor-default-outline', 'decor.select'],
       // moving the picture is a TOOL (docs/DECOR-EDITOR.md §3.2) — offered only when
       // there IS a picture, so a hand-drawn space's bar is unchanged
-      ...(this.host._bdRect ? [['backdrop', 'mdi:image-move', 'decor.backdrop'] as const] : []),
+      ...(this.backdropGesture.rect ? [['backdrop', 'mdi:image-move', 'decor.backdrop'] as const] : []),
       ['line', 'mdi:vector-line', 'decor.line'],
       ['rect', 'mdi:rectangle-outline', 'decor.rect'],
       ['ellipse', 'mdi:ellipse-outline', 'decor.ellipse'],
@@ -7161,8 +6818,7 @@ public _cancelPath(): void {
     this.host._mergeSel = null;
     this.host._mergeDialog = null;
     this.host._physicalSel = null;
-    this.host._physicalDrag = null;
-    this.host._physicalRotate = null;
+    this.physicalGesture.reset();
     this._clearOpeningPlacement(true);
   }
 
@@ -10892,29 +10548,29 @@ public _renderPhysicalEditorLayer(): TemplateResult {
         ? svg`<path class="physical-hit ${selected('partition', p.id) ? 'selected' : ''}"
             data-hp="partition" data-kind="partition" data-id=${p.id} d=${path(body)}
             stroke-width=${touchStroke} vector-effect="non-scaling-stroke"
-            @pointerdown=${(e: PointerEvent) => this._physicalDown(e, 'partition', p.id)}
-            @pointermove=${(e: PointerEvent) => this._physicalMove(e)}
-            @pointerup=${(e: PointerEvent) => this._physicalUp(e)}></path>`
+            @pointerdown=${(e: PointerEvent) => this.physicalGesture.begin(e, 'partition', p.id)}
+            @pointermove=${(e: PointerEvent) => this.physicalGesture.move(e)}
+            @pointerup=${(e: PointerEvent) => this.physicalGesture.end(e)}></path>`
         : svg`<line class="physical-hit ${selected('partition', p.id) ? 'selected' : ''}"
             data-hp="partition" data-kind="partition" data-id=${p.id}
             x1=${p.a[0]} y1=${p.a[1]} x2=${p.b[0]} y2=${p.b[1]}
             stroke-width=${touchStroke} vector-effect="non-scaling-stroke"
-            @pointerdown=${(e: PointerEvent) => this._physicalDown(e, 'partition', p.id)}
-            @pointermove=${(e: PointerEvent) => this._physicalMove(e)}
-            @pointerup=${(e: PointerEvent) => this._physicalUp(e)}></line>`;
+            @pointerdown=${(e: PointerEvent) => this.physicalGesture.begin(e, 'partition', p.id)}
+            @pointermove=${(e: PointerEvent) => this.physicalGesture.move(e)}
+            @pointerup=${(e: PointerEvent) => this.physicalGesture.end(e)}></line>`;
     });
     const columns = (space.wall_columns || []).map((c) => {
-      const shown = this.host._physicalRotate?.id === c.id
-        ? { ...c, angle: this.host._physicalRotate.angle } as WallColumnCfg : c;
+      const shown = this.physicalGesture.rotation?.id === c.id
+        ? { ...c, angle: this.physicalGesture.rotation.angle } as WallColumnCfg : c;
       const body = columnBody(shown, this.host._cellCm, this.host._gridPitch);
       return svg`<path class="physical-hit ${selected('column', c.id) ? 'selected' : ''}"
         data-hp="wall-column" data-kind=${c.shape} data-id=${c.id} d=${path(body)}
         stroke-width=${touchStroke} vector-effect="non-scaling-stroke"
-        @pointerdown=${(e: PointerEvent) => this._physicalDown(e, 'column', c.id)}
-        @pointermove=${(e: PointerEvent) => this._physicalMove(e)}
-        @pointerup=${(e: PointerEvent) => this._physicalUp(e)}></path>`;
+        @pointerdown=${(e: PointerEvent) => this.physicalGesture.begin(e, 'column', c.id)}
+        @pointermove=${(e: PointerEvent) => this.physicalGesture.move(e)}
+        @pointerup=${(e: PointerEvent) => this.physicalGesture.end(e)}></path>`;
     });
-    const drag = this.host._physicalDrag;
+    const drag = this.physicalGesture.drag;
     const ghost = (() => {
       if (!drag?.moved) return nothing;
       if (drag.kind === 'partition' && Number((drag.base as PartitionCfg).cm) === 0) {
@@ -10951,8 +10607,8 @@ public _renderPhysicalEditorLayer(): TemplateResult {
       }
       const base = space.wall_columns.find((x) => x.id === sel.id);
       if (!base) return nothing;
-      const c = this.host._physicalRotate?.id === base.id
-        ? { ...base, angle: this.host._physicalRotate.angle } as WallColumnCfg : base;
+      const c = this.physicalGesture.rotation?.id === base.id
+        ? { ...base, angle: this.physicalGesture.rotation.angle } as WallColumnCfg : base;
       const body = columnBody(c, this.host._cellCm, this.host._gridPitch);
       if (c.shape !== 'square') return svg`<g class="physical-chrome" data-kind="circle-selection">
         <path class="frame" d=${path(body)}></path>
@@ -10969,9 +10625,9 @@ public _renderPhysicalEditorLayer(): TemplateResult {
         <circle class="move-dot" cx=${c.center[0]} cy=${c.center[1]} r=${handleR}></circle>
         <line class="stem" x1=${edge[0]} y1=${edge[1]} x2=${handle[0]} y2=${handle[1]}></line>
         <circle class="rotate-handle" cx=${handle[0]} cy=${handle[1]} r=${rotateHandleR}
-          data-kind="rotate" @pointerdown=${(e: PointerEvent) => this._physicalRotateDown(e, base)}
-          @pointermove=${(e: PointerEvent) => this._physicalRotateMove(e)}
-          @pointerup=${(e: PointerEvent) => this._physicalRotateUp(e)}></circle>
+          data-kind="rotate" @pointerdown=${(e: PointerEvent) => this.physicalGesture.rotateBegin(e, base)}
+          @pointermove=${(e: PointerEvent) => this.physicalGesture.rotateMove(e)}
+          @pointerup=${(e: PointerEvent) => this.physicalGesture.rotateEnd(e)}></circle>
       </g>`;
     })();
     return svg`<g class="physical-editor">${partitions}${columns}${ghost}${chrome}</g>`;

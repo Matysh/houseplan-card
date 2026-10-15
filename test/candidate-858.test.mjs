@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildCandidate, candidateInputs, candidatePolicy, digest, NATIVE_PROFILES, intentionalDrift, ownerRecord } from '../scripts/candidate-readiness.mjs';
+import { buildCandidate, candidateInputs, candidatePolicy, digest, NATIVE_PROFILES, intentionalDrift, ownerRecord, requiredProfiles } from '../scripts/candidate-readiness.mjs';
 import { prepareCandidate, assertCandidateAcceptance } from '../scripts/release-prepare.mjs';
 import { judgeNativeOutput, runCandidateNative, NATIVE_CHECK_FLOORS } from '../scripts/candidate-native.mjs';
 import { diagnoseNight, diagnosticLines } from '../scripts/night-diagnostics.mjs';
@@ -181,6 +181,20 @@ test('#858 native receipt refuses exit0 without real observed floor, timeout and
     execute: (_node, args, opts) => { calls.push({ args, opts }); return { status: 0, stdout: args[1].includes('topology') ? '{"scenarios":7,"cycles":100}\nOK\n' : stdout }; } });
   assert.equal(report.pass, true); assert.equal(report.ownerAcceptance, false); assert.equal(calls.length, 2);
   assert.ok(calls.every(c => c.args[0] === 'scripts/candidate-native.mjs' && c.opts.timeout === 180000));
+});
+
+test('#861 gesture candidates require their exact ordinary and held-preview native floors', () => {
+  for (const file of ['src/physical-body-gesture.ts', 'src/backdrop-frame-gesture.ts', 'src/live-editor.ts'])
+    assert.ok(requiredProfiles({ category: 'stable-fix' }, [file]).includes('editor'));
+  assert.deepEqual(requiredProfiles({ category: 'infra' }, ['src/physical-body-gesture.ts']), []);
+  assert.equal(NATIVE_PROFILES.editor.length, 3);
+  for (const item of NATIVE_PROFILES.editor) {
+    const checks = NATIVE_CHECK_FLOORS[item.script];
+    const output = names => ({ status: 0, stdout: `HP_SMOKE_CHECKS ${JSON.stringify(names)}\nOK\n` });
+    assert.equal(judgeNativeOutput(item.script, output(checks)).pass, true);
+    for (let i = 0; i < checks.length; i++)
+      assert.equal(judgeNativeOutput(item.script, output(checks.filter((_, index) => index !== i))).pass, false);
+  }
 });
 test('#858 red categories use exact complete attempt/environment evidence, never declare a gate PASS', () => {
   const run = { id: 10, run_attempt: 2, head_sha: a, status: 'completed', conclusion: 'failure', html_url: 'https://github.com/o/r/actions/runs/10' };

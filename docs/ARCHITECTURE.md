@@ -739,6 +739,18 @@ the same geometry with its existing monochrome ink palette.
 
 ## Editor chrome and contextual controls
 
+E1 gestures have two editor-lazy owners (#861): `PhysicalBodyGestureRuntime`
+owns body drag, square-column rotation and tap/cycle state (13-purpose port);
+`BackdropFrameGestureRuntime` owns backdrop drag, derived frame and transforms
+(14-purpose port). Neither imports the card or its broad HostPort. Selection,
+dialogs, canonical transactions and history remain in their existing owners.
+Queue keys use the opaque card identity; state-only reset callers preserve
+their existing asymmetry. Begin/end publish a full editor boundary; moves use
+the existing live route. The live renderer paints only the moved partition's
+hosted openings from the shared resolved preview, suppresses their settled
+copies and omits preview hit targets. Other openings are untouched. This is
+the sole visible change; E2–E7 editor extraction is not part of E1.
+
 One stable `.editbar` per editor: `.editbar-tools` (persistent tools,
 Undo/Redo) and pinned `.editbar-end` (Close); transient controls never enter
 this measured row. Selection actions, tool parameters, hints, palettes and the

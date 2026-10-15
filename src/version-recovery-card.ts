@@ -141,13 +141,14 @@ export interface VersionRecoveryCardPort {
   readonly _deviceDrag: unknown;
   readonly _rlResize: unknown;
   readonly _resize: { readonly dragging?: boolean } | null;
-  readonly _physicalDrag: unknown;
-  readonly _physicalRotate: unknown;
+  readonly _editorRuntime?: {
+    readonly physicalGesture?: { readonly active: boolean };
+    readonly backdropGesture?: { readonly active: boolean };
+  } | null;
   readonly _opDrag: unknown;
   readonly _decorDraft: unknown;
   readonly _decorMove: unknown;
   readonly _dtDrag: unknown;
-  readonly _bdDrag: unknown;
   readonly _furnTouchPending: unknown;
   readonly _compassDrag: unknown;
   readonly _viewportGestureDirty: boolean;
@@ -224,8 +225,8 @@ export function cardInteractionIdleSnapshot(host: VersionRecoveryCardPort): {
     && !host._touchSequenceMultitouch && !host._roomPointer && !host._panStart && !host._panLock
     && !host._pinchStart && !host._swipeStart && !host._tabDrag && !host._tabDragRelease
     && !host._drag && !host._deviceDrag && !host._rlResize && !host._resize?.dragging
-    && !host._physicalDrag && !host._physicalRotate && !host._opDrag && !host._decorDraft
-    && !host._decorMove && !host._dtDrag && !host._bdDrag && !host._furnTouchPending
+    && !host._editorRuntime?.physicalGesture?.active && !host._opDrag && !host._decorDraft
+    && !host._decorMove && !host._dtDrag && !host._editorRuntime?.backdropGesture?.active && !host._furnTouchPending
     && !host._compassDrag && !host._viewportGestureDirty && !host._devicePositionBusy
     && !host._modeTransitionBusy && !host._cameraTransition.active && !host._slide
     && host._warmModeRequest === 0;

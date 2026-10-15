@@ -123,7 +123,7 @@ import {
 } from './virtual-light-state';
 import type { SpaceGeometryState } from './geometry-history-state';
 import type {
-  OpeningCfg, PartitionOpeningHost, RoomCfg, PartitionCfg, WallColumnCfg, SpaceModel, PdfRef,
+  OpeningCfg, PartitionOpeningHost, RoomCfg, SpaceModel, PdfRef,
   Marker, ServerConfig, DevItem, CardConfig, MarkerValueBadge, ValueBadgePosition,
   ValueBadgeSource,
 } from './types';
@@ -162,7 +162,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { type EditorSecondaryCopy, type EditorToolbarGroup } from './editor-secondary';
 import {
-  fitInSquare, planRect, spaceModels, contentFrame, contentItems, spaceFrame, spaceCenter,
+  spaceModels, contentFrame, contentItems, spaceFrame, spaceCenter,
   iconUnit, iconCqw, itemOf, snapPt, MIN_ZOOM, PAN_SLACK, CANVAS_LIMIT, GRID_PITCH, GRID_STEP_N,
   clampCanvasR, clampCanvasN, type ContentItem, type Rect,
 } from './space-geometry';
@@ -992,29 +992,6 @@ export class HouseplanCard extends LitElement {
     lineEnd?: 0 | 1;
     moved: boolean;
   } | null = null;
-  /**
-   * The live backdrop gesture (docs/DECOR-EDITOR.md §3.2): moving the picture by its
-   * body, scaling it by a corner handle or rotating it by the upper handle.
-   * `base` is the untransformed, centred rectangle the transform is measured
-   * from, so a gesture never accumulates rounding of its own.
-   */
-  private _bdDrag: {
-    kind: 'move' | 'scale' | 'rotate';
-    pid: number;
-    /** pointer down, render units */
-    sx: number; sy: number;
-    /** the centred default rect (render units) — the transform's origin */
-    base: Rect;
-    /** transform at pointer down */
-    p0: { dx: number; dy: number; sx: number; sy: number; angle: number };
-    /** the corner that STAYS PUT while scaling (render units) */
-    fx: number; fy: number;
-    /** which way the dragged corner points from the fixed one (±1) */
-    sgx: number; sgy: number;
-    rect0: DecorBox;
-    before: SpaceGeometryState | null;
-    moved: boolean;
-  } | null = null;
 
   /** Edit tabs are offered to admins only (hass.user missing → assume admin). */
   /**
@@ -1520,7 +1497,7 @@ export class HouseplanCard extends LitElement {
     this._physicalSel = null;
     this._editorSecondary?.closeForNavigation();
     this._physicalDialog = null;
-    this._physicalDrag = null;
+    this._editorRuntime?.physicalGesture.resetMove();
     this._restoreZoom(carousel);
     if (reduce) return true;
     this._slide = dir;
@@ -1774,22 +1751,6 @@ export class HouseplanCard extends LitElement {
   } | null = null;
   private _partitionDeleteDialog: { id: string; openings: OpeningCfg[] } | null = null;
   private _roomDeleteDialog: { roomId: string; name: string } | null = null;
-  /** Drag preview is render-only; config is committed once on pointerup. */
-  private _physicalDrag: {
-    pid: number; kind: 'partition' | 'column'; id: string;
-    start: number[]; startClient: number[]; before: SpaceGeometryState | null; moved: boolean;
-    base: PartitionCfg | WallColumnCfg; delta: number[];
-  } | null = null;
-  private _physicalRotate: {
-    pid: number; id: string; center: number[]; startAngle: number;
-    baseAngle: number; angle: number; before: SpaceGeometryState | null; moved: boolean;
-  } | null = null;
-  private _physicalLastTap: {
-    kind: 'partition' | 'column'; id: string; at: number;
-  } | null = null;
-  private _physicalPickCycle: {
-    signature: string; index: number; x: number; y: number; at: number;
-  } | null = null;
   private _wallUnionCacheValue: {
     key: string;
     value: ReturnType<typeof wallBodiesUnionPath>;
@@ -2595,8 +2556,6 @@ export class HouseplanCard extends LitElement {
     _physicalDialog: { state: true },
     _partitionDeleteDialog: { state: true },
     _roomDeleteDialog: { state: true },
-    _physicalDrag: { state: true },
-    _physicalRotate: { state: true },
     _duplicateColumnId: { state: true },
     _opMeasure: { state: true },
     _path: { state: true },
@@ -2621,7 +2580,6 @@ export class HouseplanCard extends LitElement {
     _decorAssetBusy: { state: true },
     _furnCategory: { state: true },
     _furnPreviewInput: { state: true },
-    _bdDrag: { state: true },
     _dtBox: { state: true },
     _dtDrag: { state: true },
     _kioskDialog: { state: true },
@@ -3000,7 +2958,7 @@ export class HouseplanCard extends LitElement {
       if (undo) {
         e.preventDefault();
         if (this._decorDraft) { this._decorDraft = null; return; }
-        if (this._decorMove || this._dtDrag || this._bdDrag) {
+        if (this._decorMove || this._dtDrag || this._editorRuntime?.backdropGesture.active) {
           this._cancelDecorGesture();
           return;
         }
@@ -3020,7 +2978,7 @@ export class HouseplanCard extends LitElement {
               : null;
       if (arrow && !mod && !e.altKey && this._decorTool === 'select' && this._decorSel
           && this._decorList.some((shape) => shape.id === this._decorSel)
-          && !this._decorDraft && !this._decorMove && !this._dtDrag && !this._bdDrag
+          && !this._decorDraft && !this._decorMove && !this._dtDrag && !this._editorRuntime?.backdropGesture.active
           && !inField && !inEditorSecondary && !this._editorSecondaryDialogBlocked) {
         e.preventDefault();
         this._decorNudge(arrow[0], arrow[1]);
@@ -3029,7 +2987,7 @@ export class HouseplanCard extends LitElement {
       if (e.key === 'Escape') {
         e.preventDefault();
         if (this._decorDraft) this._decorDraft = null;
-        else if (this._decorMove || this._dtDrag || this._bdDrag) this._cancelDecorGesture();
+        else if (this._decorMove || this._dtDrag || this._editorRuntime?.backdropGesture.active) this._cancelDecorGesture();
         else if (this._decorTool === 'furniture') {
           this._editorRuntime?._clearFurniturePreview();
           this._editorRuntime?._furnShiftDetach(); // #369(д) r2-H1
@@ -3113,9 +3071,9 @@ export class HouseplanCard extends LitElement {
     if (e.key !== 'Escape') return;
     if (this._editorRuntime?.nodeMove?.cancel()) { e.preventDefault(); return; }
     if (this._editorRuntime?.stairs.escape()) { e.preventDefault(); return; }
-    if (this._physicalDrag || this._physicalRotate) {
+    if (this._editorRuntime?.physicalGesture.drag || this._editorRuntime?.physicalGesture.rotation) {
       e.preventDefault();
-      this._cancelPhysicalGesture();
+      this._editorRuntime?.physicalGesture.cancel();
       return;
     }
     if (this._roomDialog) {
@@ -6006,7 +5964,7 @@ export class HouseplanCard extends LitElement {
     // rescales the view, which changes how many plan units a screen pixel is
     // worth, mid-gesture: the picture then runs away from the finger and no
     // drag lands where it was aimed. The frame catches up on release.
-    if (f && f.id === m.id && this._bdDrag) return f;
+    if (f && f.id === m.id && this._editorRuntime?.backdropGesture.active) return f;
     if (f && f.id === m.id && f.model === m && f.layout === this._layout
         && f.devs === this._devices && f.far === this._showFar && f.grow === grow) return f;
     const cf = contentFrame(this._contentItems(m));
@@ -6825,20 +6783,20 @@ export class HouseplanCard extends LitElement {
 
   private _stagePointerMove(ev: PointerEvent): void {
     if (this._editorRuntime?.stairs.pointerMove(ev)) return;
-    if (this._physicalRotate?.pid === ev.pointerId) {
-      this._physicalRotateMove(ev);
+    if (this._editorRuntime?.physicalGesture.rotation?.pid === ev.pointerId) {
+      this._editorRuntime?.physicalGesture.rotateMove(ev);
       return;
     }
-    if (this._physicalDrag?.pid === ev.pointerId) {
-      this._physicalMove(ev);
+    if (this._editorRuntime?.physicalGesture.drag?.pid === ev.pointerId) {
+      this._editorRuntime?.physicalGesture.move(ev);
       return;
     }
     if (this._dtDrag?.pid === ev.pointerId) {
       this._dtMove(ev);
       return;
     }
-    if (this._bdDrag?.pid === ev.pointerId) {
-      this._bdMove(ev);
+    if (this._editorRuntime?.backdropGesture.owns(ev.pointerId)) {
+      this._editorRuntime?.backdropGesture.move(ev);
       return;
     }
     if (this._decorDraft?.pid === ev.pointerId) {
@@ -6989,20 +6947,20 @@ export class HouseplanCard extends LitElement {
     }
     this._stairsView.pointerUp(ev);
     if (this._editorRuntime?.stairs.pointerUp(ev)) return;
-    if (this._physicalDrag?.pid === ev.pointerId) {
-      this._physicalUp(ev);
+    if (this._editorRuntime?.physicalGesture.drag?.pid === ev.pointerId) {
+      this._editorRuntime?.physicalGesture.end(ev);
       return;
     }
-    if (this._physicalRotate?.pid === ev.pointerId) {
-      this._physicalRotateUp(ev);
+    if (this._editorRuntime?.physicalGesture.rotation?.pid === ev.pointerId) {
+      this._editorRuntime?.physicalGesture.rotateEnd(ev);
       return;
     }
     if (this._dtDrag?.pid === ev.pointerId) {
       this._dtUp();
       return;
     }
-    if (this._bdDrag?.pid === ev.pointerId) {
-      this._bdUp();
+    if (this._editorRuntime?.backdropGesture.owns(ev.pointerId)) {
+      this._editorRuntime?.backdropGesture.end();
       return;
     }
     if (this._decorDraft?.pid === ev.pointerId) {
@@ -7806,8 +7764,6 @@ export class HouseplanCard extends LitElement {
       this._wallDialog = null;
       this._physicalDialog = null;
       this._physicalSel = null;
-      this._physicalDrag = null;
-      this._physicalRotate = null;
       this._activeWallChainId = null;
       this._wallChainSegmentCms = [];
       this._closingWallCm = null;
@@ -7816,7 +7772,6 @@ export class HouseplanCard extends LitElement {
       this._decorDraft = null;
       this._decorMove = null;
       this._dtDrag = null;
-      this._bdDrag = null;
       this._stairsView.clearGesture();
       return;
     }
@@ -7936,26 +7891,6 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._confirmPartitionDelete();
   }
 
-  private _physicalMove(ev: PointerEvent): void {
-    return this._editorRuntimeOrThrow()._physicalMove(ev);
-  }
-
-  private _physicalUp(ev: PointerEvent): void {
-    return this._editorRuntimeOrThrow()._physicalUp(ev);
-  }
-
-  private _cancelPhysicalGesture(): void {
-    return this._editorRuntimeOrThrow()._cancelPhysicalGesture();
-  }
-
-  private _physicalRotateMove(ev: PointerEvent): void {
-    return this._editorRuntimeOrThrow()._physicalRotateMove(ev);
-  }
-
-  private _physicalRotateUp(ev: PointerEvent): void {
-    return this._editorRuntimeOrThrow()._physicalRotateUp(ev);
-  }
-
   // ================= room resize tool (docs/RESIZE.md) =================
 
   /** Rooms of the current space as render-unit polygons (legacy rects converted). */
@@ -8051,7 +7986,7 @@ export class HouseplanCard extends LitElement {
           : [];
       }
       let [rx, ry] = resolution.resolved.center;
-      const drag = this._physicalDrag;
+      const drag = this._editorRuntime?.physicalGesture.drag;
       if (drag?.moved && drag.kind === 'partition' && drag.id === o.host.id) {
         rx += drag.delta[0];
         ry += drag.delta[1];
@@ -8229,7 +8164,7 @@ export class HouseplanCard extends LitElement {
 
   private _decorNudge(renderDx: number, renderDy: number): boolean {
     if (this._mode !== 'decor' || this._decorTool !== 'select'
-        || !this._decorSel || this._decorDraft || this._decorMove || this._dtDrag || this._bdDrag)
+        || !this._decorSel || this._decorDraft || this._decorMove || this._dtDrag || this._editorRuntime?.backdropGesture.active)
       return false;
     const selected = this._decorList.find((shape) => shape.id === this._decorSel);
     const sp = this._curSpaceCfg;
@@ -8333,118 +8268,9 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._confirmDecorErase();
   }
 
-  // ============ backdrop transform frame (docs/DECOR-EDITOR.md §3) ============
-
-  /** The centred, UNTRANSFORMED rectangle of the current backdrop image. */
-  private get _bdBase(): Rect | null {
-    const sp = this._curSpaceCfg;
-    return sp?.plan_url ? { ...fitInSquare(sp.plan_aspect, NORM_W) } : null;
-  }
-
-  /** Where the backdrop image sits right now, render units (null: no image). */
-  private get _bdRect(): (Rect & { angle?: number }) | null {
-    const sp = this._curSpaceCfg;
-    return sp?.plan_url ? planRect(sp, NORM_W) : null;
-  }
-
-  /** The stored transform of the current space (defaults = the old behaviour). */
-  private get _bdParams(): { dx: number; dy: number; sx: number; sy: number; angle: number } {
-    const sp = this._curSpaceCfg;
-    const dx = Number(sp?.plan_x), dy = Number(sp?.plan_y);
-    const legacy = Number(sp?.plan_scale);
-    const sxRaw = Number(sp?.plan_scale_x), syRaw = Number(sp?.plan_scale_y);
-    const baseScale = Number.isFinite(legacy) && legacy > 0 ? legacy : 1;
-    return {
-      dx: Number.isFinite(dx) ? dx : 0,
-      dy: Number.isFinite(dy) ? dy : 0,
-      sx: Number.isFinite(sxRaw) && sxRaw > 0 ? sxRaw : baseScale,
-      sy: Number.isFinite(syRaw) && syRaw > 0 ? syRaw : baseScale,
-      angle: normalizeAngle(sp?.plan_angle),
-    };
-  }
-
   private _openBackdropDialog(ev?: Event): void {
     if (!this._editorRuntime) return;
     return this._editorRuntime._openBackdropDialog(ev);
-  }
-
-  /**
-   * The transform frame belongs exclusively to the backdrop tool. It is never
-   * active in Select and can never swallow a decor gesture.
-   */
-  private get _bdActive(): boolean {
-    return this._mode === 'decor' && !!this._bdRect && this._decorTool === 'backdrop';
-  }
-
-  /**
-   * …and may the picture be dragged by its BODY? Only under its own tool.
-   *
-   * The corner handles are precise targets and are live as soon as the frame
-   * is, but the body is the whole picture, i.e. most of the screen — claiming
-   * it under the select tool would take away the one-finger pan the owner
-   * asked for on 2026-08-04 («таскать план при любом масштабе»), which
-   * smoke_pan_any_zoom guards. So moving the picture is a tool, exactly like
-   * drawing a line is.
-   */
-  private get _bdMovable(): boolean {
-    return this._mode === 'decor' && this._decorTool === 'backdrop' && !!this._bdRect;
-  }
-
-  /**
-   * One step of the gesture.
-   *
-   * MOVE — the resulting TOP-LEFT CORNER is snapped, not the delta, so one
-   * drag is enough to put a legacy off-grid picture on the lattice
-   * (docs/CANVAS.md §9.3, the same rule decor already follows).
-   *
-   * SCALE — proportional about the fixed corner by default; Shift allows the
-   * two axes to diverge. ROTATE — 5° by default, free with Shift.
-   *
-   * Positional snapping is mandatory (UX-05).
-   */
-  private _bdMove(ev: PointerEvent): void {
-    return this._editorRuntimeOrThrow()._bdMove(ev);
-  }
-
-  /** Has this space's picture been moved or scaled at all? */
-  private get _bdMoved(): boolean {
-    if (this._mode !== 'decor' || !this._bdRect) return false;
-    const p = this._bdParams;
-    return p.dx !== 0 || p.dy !== 0 || p.sx !== 1 || p.sy !== 1 || p.angle !== 0;
-  }
-
-  /** Put the picture back where an untouched plan has it: centred, own size. */
-  private _bdReset(): void {
-    return this._editorRuntimeOrThrow()._bdReset();
-  }
-
-  /** Release: persist only when something actually moved. */
-  private _bdUp(): void {
-    return this._editorRuntimeOrThrow()._bdUp();
-  }
-
-  /**
-   * Live size badge while the picture is dragged or scaled (owner 2026-08-04):
-   * its REAL width × height through `cell_cm`, in the HA unit system — the
-   * same `_fmtLen` (`segmentCm`/`formatLength`) and the same `.measurelabel`
-   * the wall ruler and the room resize use, so there is one way the card ever
-   * states a length.
-   */
-  private get _bdLive(): { x: number; y: number; text: string } | null {
-    if (!this._bdDrag) return null;
-    const r = this._bdRect;
-    if (!r) return null;
-    return {
-      x: r.x + r.w / 2,
-      y: r.y + r.h / 2,
-      text: `${this._fmtLen([0, 0], [r.w, 0])} × ${this._fmtLen([0, 0], [0, r.h])}`,
-    };
-  }
-
-  /** The transform frame itself: a dashed outline and four corner handles. */
-  private _renderBackdropFrame(view: { x: number; y: number; w: number; h: number }): TemplateResult | typeof nothing {
-    if (!this._editorRuntime) return nothing;
-    return this._editorRuntimeOrThrow()._renderBackdropFrame(view);
   }
 
   /**
@@ -8726,7 +8552,7 @@ export class HouseplanCard extends LitElement {
         return `${base}:palette:image:${this._decorImagePalette?.asset_id || 'none'}`;
       if (this._decorTool === 'select' && this._decorSel)
         return `${base}:selection:decor:${this._decorSel}`;
-      return `${base}:tool:${this._decorTool}:${this._bdMoved ? 1 : 0}:${this._bdDrag ? 1 : 0}`;
+      return `${base}:tool:${this._decorTool}:${this._editorRuntime?.backdropGesture.transformed ? 1 : 0}:${this._editorRuntime?.backdropGesture.active ? 1 : 0}`;
     }
     return `${base}:none`;
   }
@@ -11030,7 +10856,7 @@ export class HouseplanCard extends LitElement {
           : nothing}
         </div>
 
-        <div class="stage ${iso ? `projection-iso ${deviceThemeClass(this._renderPlanHass)}` : ''} ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}${this._safeDayCycleOutline ? ' hp-safe-daycycle-outline' : ''}` : ''}${this._booting ? ' hpboot' : ''}${isoFirstFramePending ? ' hpiso-pending' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._modeTransitionBusy ? ' mode-transition' : ''}"
+        <div class="stage ${iso ? `projection-iso ${deviceThemeClass(this._renderPlanHass)}` : ''} ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._editorRuntime?.backdropGesture.movable ? ' bdgrab' : ''}${this._editorRuntime?.backdropGesture.active ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}${this._safeDayCycleOutline ? ' hp-safe-daycycle-outline' : ''}` : ''}${this._booting ? ' hpboot' : ''}${isoFirstFramePending ? ' hpiso-pending' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._modeTransitionBusy ? ' mode-transition' : ''}"
           data-hp-iso-stage=${iso ? '4' : nothing} data-hp-iso-structural-builds=${iso ? this._isoStructuralBuildCount : nothing}
           data-hp-iso-readiness=${this._isoFirstFrame.readiness(this._desiredProjection, projection, !!this._isoSceneRuntime) ?? nothing}
           ?inert=${this._modeTransitionBusy}
@@ -11296,7 +11122,7 @@ export class HouseplanCard extends LitElement {
                    top of everything the plan draws so its handles stay
                    grabbable (docs/DECOR-EDITOR.md §3.2). It exists only in the
                    backdrop editor, where rooms and devices are pointer-inert. */}
-            ${this._renderBackdropFrame(view)}
+            ${this._editorRuntime?.backdropGesture.renderFrame(view)}
             ${this._renderTextFrame(view)}
             ${this._mode === 'plan' && this._editorRuntime ? this._editorRuntime.stairs.renderFrame(view) : nothing}
             <g data-hp-live-editor></g>
@@ -12302,7 +12128,7 @@ export class HouseplanCard extends LitElement {
   /** Pointer-owned HTML painted by the live child renderer, outside the host Lit tree. */
   public _renderLiveEditorMeasurements(value: unknown): TemplateResult | typeof nothing {
     const view = value as { x: number; y: number; w: number; h: number };
-    const opMeasure = this._opMeasureView, decorMeasure = this._decorMeasure, bdLive = this._bdLive,
+    const opMeasure = this._opMeasureView, decorMeasure = this._decorMeasure, bdLive = this._editorRuntime?.backdropGesture.live,
       furnLive = this._editorRuntime?._furnLive() ?? null;
     return html`
       ${this._measureAnchor
@@ -12519,7 +12345,7 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._renderOpeningPlacementPreview();
   }
 
-  private _renderOpenings(disp: SpaceDisplay, onlyIds?: readonly string[]): TemplateResult {
+  private _renderOpenings(disp: SpaceDisplay, onlyIds?: readonly string[], interactive = true): TemplateResult {
     const items = onlyIds ? this._openingsR.filter((item) => onlyIds.includes(item.id)) : this._openingsR;
     if (!items.length) return svg``;
     const space = this._spaceModel();
@@ -12572,13 +12398,13 @@ export class HouseplanCard extends LitElement {
         <rect class="op-outline" x="${-half - outlinePad}" y="${-outlineHalf}"
           width="${o.rlen + outlinePad * 2}" height="${outlineHalf * 2}"
           rx="${gridVisualUnits(6, this._cellCm)}"></rect>
-        <rect class="op-hit" x="${-half - hitPad}" y="${-hitHalf}"
+        ${interactive ? svg`<rect class="op-hit" x="${-half - hitPad}" y="${-hitHalf}"
           width="${o.rlen + hitPad * 2}" height="${hitHalf * 2}"
           @click=${(e: MouseEvent) => this._opClick(e, o)}
           @pointerdown=${(e: PointerEvent) => this._opPointerDown(e, o)}
           @pointermove=${(e: PointerEvent) => this._opPointerMove(e, o)}
           @pointerup=${(e: PointerEvent) => this._opPointerUp(e, o)}
-          @pointercancel=${(e: PointerEvent) => this._opPointerUp(e, o)}></rect>
+          @pointercancel=${(e: PointerEvent) => this._opPointerUp(e, o)}></rect>` : nothing}
       </g>`;
     }))}</g>`;
   }
