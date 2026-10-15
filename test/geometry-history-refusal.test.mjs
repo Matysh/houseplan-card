@@ -604,3 +604,62 @@ test('#861 actual owner state blocks LiveRuntime and recovery/carousel idle and 
   assert.deepEqual(s.spaceOf('f'), before, 'disposed queued backdrop work cannot mutate the canonical record');
   assert.equal(s.geometryHistory.size, 1, 'reset/dispose never add a history entry');
 });
+
+for (const direction of ['undo', 'redo']) {
+  for (const kind of ['move', 'rotation', 'backdrop']) {
+    test(`#861 actual runtime ${direction} cancels a held ${kind} without history or persistence`, async () => {
+      const s = setup();
+      const column = { id: 'rotate', shape: 'square', center: [1, 1], cm: 10, angle: 0 };
+      Object.assign(s.spaceOf('f'), { plan_url: '/test.svg', plan_aspect: 1, wall_columns: [column] });
+      const step = await s.addWall('f');
+      const before = clone(s.host._serverCfg), sets = s.server.sets;
+      const pointer = { pointerId: 9, clientX: 2, clientY: 1, target: null,
+        stopPropagation() {}, preventDefault() {} };
+      if (kind === 'backdrop') {
+        s.host._mode = 'decor'; s.host._decorTool = 'backdrop';
+        Object.defineProperty(s.host, '_curSpaceCfg', { get: () => s.spaceOf('f') });
+        s.runtime.backdropGesture.begin(pointer);
+        s.runtime.backdropGesture.move({ ...pointer, clientX: 35, clientY: 25 });
+      } else if (kind === 'rotation') {
+        s.runtime.physicalGesture.rotateBegin(pointer, column);
+        s.runtime.physicalGesture.rotateMove({ ...pointer, clientX: 2, clientY: 2 });
+      } else {
+        s.runtime.physicalGesture.begin(pointer, 'partition', 'p-f-1');
+        s.runtime.physicalGesture.move({ ...pointer, clientX: 35, clientY: 25 });
+      }
+      await Promise.resolve();
+      assert.equal(kind === 'backdrop' ? s.runtime.backdropGesture.active : s.runtime.physicalGesture.active, true);
+      s.runtime[direction === 'undo' ? '_undoGeometry' : '_redoGeometry']();
+      assert.deepEqual([s.runtime.physicalGesture.active, s.runtime.backdropGesture.active], [false, false]);
+      s.expectStack([step], [], 'the first press cancels the gesture, not an ordinary command');
+      assert.deepEqual(s.host._serverCfg, before, 'mutated backdrop transform is restored exactly');
+      assert.deepEqual(await s.writes(), { armed: false, sets }, 'no deferred or actual write');
+    });
+  }
+}
+
+test('#861 actual mode/cancel/clear consumers retain their different physical reset subsets', async () => {
+  for (const operation of ['mode', 'cancelPath', 'clear']) {
+    const s = setup(); await s.addWall('f');
+    const pointer = { pointerId: 7, clientX: 2, clientY: 1, target: null,
+      stopPropagation() {}, preventDefault() {} };
+    s.runtime.physicalGesture.begin(pointer, 'partition', 'p-f-1');
+    s.runtime.physicalGesture.rotateBegin({ ...pointer, pointerId: 8 },
+      { id: 'rotate', shape: 'square', center: [1, 1], cm: 10, angle: 0 });
+    const before = clone(s.host._serverCfg), sets = s.server.sets;
+    if (operation === 'mode') {
+      Object.assign(s.host, { _bootSoftCancel() {}, _endTabDrag() {}, _clearTransientHover() {},
+        _cancelDevicePressFeedback() {}, _cancelDangerConfirm() {}, _effectiveProjection: () => 'flat',
+        _currentModeVisual: () => null, _cancelModeTransition() {}, _commitViewModeAtomic() {},
+        _editorSecondary: { closeForNavigation() {} }, _zoom: 1, _modeTransitionRequest: 0 });
+      s.runtime._setMode('view', false);
+    } else if (operation === 'cancelPath') s.runtime._cancelPath();
+    else s.runtime._clearGeometryGesture();
+    assert.equal(s.runtime.physicalGesture.drag, null, `${operation} resets move`);
+    assert.equal(!!s.runtime.physicalGesture.rotation, operation === 'mode',
+      'mode deliberately preserves rotation; path/geometry clearing resets both');
+    assert.deepEqual(s.host._serverCfg, before);
+    assert.deepEqual(await s.writes(), { armed: false, sets });
+    assert.equal(s.geometryHistory.size, 1, 'reset-only consumers never create a command');
+  }
+});
