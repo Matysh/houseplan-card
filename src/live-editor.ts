@@ -242,10 +242,11 @@ const resizePreviewWalls = (
   </g>`;
 };
 
-const physicalOpeningIds = (host: LiveEditorHost): string[] => {
-  const drag = host._editorRuntime?.physicalGesture?.drag;
+export const physicalOpeningIds = (
+  drag: { kind: string; id: string; moved: boolean } | null | undefined, openings: readonly RenderOpening[],
+): string[] => {
   return drag?.kind === 'partition' && drag.moved
-    ? host._openingsR.filter(o => o.host?.kind === 'partition' && o.host.id === drag.id && !o.orphanReason).map(o => o.id) : [];
+    ? openings.filter(o => o.host?.kind === 'partition' && o.host.id === drag.id && !o.orphanReason).map(o => o.id) : [];
 };
 
 const planTemplate = (host: LiveEditorHost): TemplateResult => {
@@ -263,7 +264,7 @@ const planTemplate = (host: LiveEditorHost): TemplateResult => {
     </g>`;
   }
   const display = host._spaceDisplayForRender();
-  const moving = physicalOpeningIds(host);
+  const moving = physicalOpeningIds(host._editorRuntime?.physicalGesture?.drag, host._openingsR);
   return svg`<g class="hp-live-plan" aria-hidden="true" pointer-events="none">
     ${host._opDrag ? host._renderWallBodies(display) : nothing}
     ${host._renderMarkupLayer(vb)}
@@ -378,7 +379,7 @@ export function paintHouseplanEditor(value: object): void {
       makeMovingOpeningsTransparent(state, root, host._resize.plan?.movingOpeningIds || []);
     }
     if (host._opDrag) makeTransparent(state, root, '.openinglayer');
-    makeMovingOpeningsTransparent(state, root, physicalOpeningIds(host));
+    makeMovingOpeningsTransparent(state, root, physicalOpeningIds(host._editorRuntime?.physicalGesture?.drag, host._openingsR));
   } else if (host._mode === 'decor') {
     const activeId = host._dtDrag?.id || host._decorMove?.id;
     if (activeId) makeDecorShapeTransparent(state, root, activeId);

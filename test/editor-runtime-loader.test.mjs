@@ -356,9 +356,10 @@ test('#861 owner modules remain editor-lazy and callers cannot retain the remove
       assert.ok(!/(?:physical-body|backdrop-frame)-gesture/.test(node.moduleSpecifier.text));
   }
   const files = ['src/live-editor.ts', 'src/live-interaction-runtime.ts', 'src/version-recovery-card.ts',
-    ...readdirSync('demo').filter(name => name.endsWith('.mjs')).map(name => join('demo', name))];
+    ...['demo', 'test'].flatMap(dir => readdirSync(dir).filter(name => name.endsWith('.mjs')).map(name => join(dir, name)))];
   for (const file of files) walk(parse(file), node => {
     if (ts.isPropertyAccessExpression(node)) assert.ok(!removed.has(node.name.text), `${file}: ${node.name.text}`);
+    if (ts.isPropertyAssignment(node)) assert.ok(!removed.has(node.name.getText().replace(/^['"]|['"]$/g, '')), `${file}: obsolete owner fixture`);
     if (ts.isElementAccessExpression(node) && ts.isStringLiteral(node.argumentExpression))
       assert.ok(!removed.has(node.argumentExpression.text), `${file}: ${node.argumentExpression.text}`);
   });

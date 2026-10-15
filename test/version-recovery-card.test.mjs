@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { cardVersionReloadSafetySnapshot } from '../test-build/version-recovery-card.js';
+import { PhysicalBodyGestureRuntime } from '../test-build/physical-body-gesture.js';
+import { BackdropFrameGestureRuntime } from '../test-build/backdrop-frame-gesture.js';
 
 const pending = (size = 0) => ({ size });
 const debounce = (value = false) => ({ pending: () => value });
@@ -88,6 +90,29 @@ test('card adapter baseline is safe only after the full rendered card settles', 
     interactionPauseElapsed: true,
     baseZoom: true,
   });
+});
+
+test('#861 version reload safety sees both actual gesture owners until their state-only reset', () => {
+  const plan = { plan_url: '/plan.svg', plan_aspect: 1 }, partition = { id: 'p', a: [0, 0], b: [100, 0], cm: 10 };
+  const common = { queueTarget: {}, point: () => [0, 0], snap: p => p, snapshot: () => null,
+    publish() {}, toast() {} };
+  const physicalGesture = new PhysicalBodyGestureRuntime({ ...common,
+    space: () => ({ partitions: [partition], wall_columns: [] }), storedGeometry: () => null,
+    units: () => ({ cellCm: 1, gridPitch: 25 }), commit() {}, select() {}, openDialog() {}, now: () => 0 });
+  const backdropGesture = new BackdropFrameGestureRuntime({ ...common, plan: () => plan,
+    mode: () => 'decor', tool: () => 'backdrop', gridPitch: () => 25, record() {}, save() {},
+    configChanged() {}, formatLength: () => '1 m' });
+  const host = safeHost({ _editorRuntime: { physicalGesture, backdropGesture } });
+  const pointer = { pointerId: 1, clientX: 0, clientY: 0, stopPropagation() {}, target: null };
+  assert.equal(cardVersionReloadSafetySnapshot(host).gesturesIdle, true);
+  physicalGesture.begin(pointer, 'partition', 'p');
+  assert.equal(cardVersionReloadSafetySnapshot(host).gesturesIdle, false);
+  physicalGesture.reset();
+  assert.equal(cardVersionReloadSafetySnapshot(host).gesturesIdle, true);
+  backdropGesture.begin(pointer);
+  assert.equal(cardVersionReloadSafetySnapshot(host).gesturesIdle, false);
+  backdropGesture.reset();
+  assert.equal(cardVersionReloadSafetySnapshot(host).gesturesIdle, true);
 });
 
 test('card adapter maps editor state into the kiosk reload guard', () => {

@@ -7,7 +7,22 @@ import {
   disposeHouseplanEditor,
   routeHouseplanEditorUpdate,
   whenHouseplanEditorSettled,
+  physicalOpeningIds,
 } from '../test-build/live-editor.js';
+
+test('#861 physical opening projection is exact-host only and shared by live paint/suppression', () => {
+  const openings = [
+    { id: 'door', host: { kind: 'partition', id: 'moved' } },
+    { id: 'window', host: { kind: 'partition', id: 'moved' } },
+    { id: 'other', host: { kind: 'partition', id: 'other' } },
+    { id: 'wall', host: { kind: 'wall', id: 'moved' } },
+    { id: 'orphan', host: { kind: 'partition', id: 'moved' }, orphanReason: 'missing' },
+  ];
+  const drag = { kind: 'partition', id: 'moved', moved: true };
+  assert.deepEqual(physicalOpeningIds(drag, openings), ['door', 'window']);
+  for (const inactive of [null, undefined, { ...drag, moved: false }, { ...drag, kind: 'column' }])
+    assert.deepEqual(physicalOpeningIds(inactive, openings), []);
+});
 import {
   cancelHouseplanPointerMove,
   flushHouseplanPointerMove,

@@ -77,6 +77,49 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'physical-owner-rotation-loses-five-degree-step',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/physical-body-gesture.test.mjs',
+    because: '#861 AC1: ordinary rotation snaps to five degrees while Shift preserves the raw angle.',
+    patches: [{ file: 'src/physical-body-gesture.ts',
+      find: 'canonicalColumnAngle(ev.shiftKey ? raw : Math.round(raw / 5) * 5)', replace: 'canonicalColumnAngle(raw)' }],
+  },
+  {
+    id: 'physical-owner-overlap-loses-lower-time-bound',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/physical-body-gesture.test.mjs',
+    because: '#861 AC1: overlap cycling is strictly later than 380 ms, independently of double tap.',
+    patches: [{ file: 'src/physical-body-gesture.ts', find: 'now - cycle.at > 380', replace: 'now - cycle.at >= 0' }],
+  },
+  {
+    id: 'backdrop-owner-reset-keeps-translation',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/backdrop-frame-gesture.test.mjs',
+    because: '#861 AC2/AC4: reset deletes all six existing transform fields but preserves unrelated plan data.',
+    patches: [{ file: 'src/backdrop-frame-gesture.ts', find: '    delete plan.plan_x; delete plan.plan_y;', replace: '    delete plan.plan_y;' }],
+  },
+  {
+    id: 'backdrop-owner-release-records-a-clean-click',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/backdrop-frame-gesture.test.mjs',
+    because: '#861 AC2: release without a changed transform neither records nor saves.',
+    patches: [{ file: 'src/backdrop-frame-gesture.ts', find: '    if (d?.moved) { this.port.record(', replace: '    if (d) { this.port.record(' }],
+  },
+  {
+    id: 'editor-owner-begin-swallowed-by-live-route',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/geometry-history-refusal.test.mjs',
+    because: '#861 AC5: the actual editor publication must retain a full begin boundary even after owner state becomes active.',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts', find: "    if (phase !== 'move') { this._gestureBoundary", replace: "    if (phase === 'end') { this._gestureBoundary" }],
+  },
+  {
+    id: 'editor-recovery-idle-ignores-physical-owner',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/version-recovery-card.test.mjs',
+    because: '#861 AC6: the actual version safety snapshot remains busy while the physical owner owns a gesture.',
+    patches: [{ file: 'src/version-recovery-card.ts', find: '    && !host._editorRuntime?.physicalGesture?.active && !host._opDrag', replace: '    && !host._opDrag' }],
+  },
+  {
+    id: 'partition-held-opening-projection-includes-another-host',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/live-editor.test.mjs',
+    because: '#861 AC11: the shared paint/suppression projection includes only the exact moved partition, never another host.',
+    patches: [{ file: 'src/live-editor.ts', find: 'o.host.id === drag.id && !o.orphanReason', replace: 'o.host.id.length >= 0 && !o.orphanReason' }],
+  },
+  {
     id: 'physical-owner-move-threshold-is-not-inclusive',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/physical-body-gesture.test.mjs',
     because: '#861 AC3: the established five CSS-pixel threshold includes exactly five, independent of plan scale.',
@@ -111,7 +154,7 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_partition_openings_preview.mjs',
     because: '#861 AC11: actual painted leaf groups must have one visible copy, not an old settled symbol behind the translated live one; pure owners cannot observe DOM suppression.',
     patches: [{ file: 'src/live-editor.ts',
-      find: '    makeMovingOpeningsTransparent(state, root, physicalOpeningIds(host));',
+      find: '    makeMovingOpeningsTransparent(state, root, physicalOpeningIds(host._editorRuntime?.physicalGesture?.drag, host._openingsR));',
       replace: '    makeMovingOpeningsTransparent(state, root, []);' }],
   },
   {

@@ -214,6 +214,8 @@ houseplan-card/
 │  ├─ houseplan-panel.ts                 # /houseplan sidebar host around one full card (#486)
 │  ├─ space-card.ts · space-render.ts    # read-only houseplan-space-card and its static renderer
 │  ├─ houseplan-editor-runtime.ts        # lazy Plan/Devices/Background composition root
+│  ├─ physical-body-gesture.ts           # editor-only body/column gesture owner (13-purpose port)
+│  ├─ backdrop-frame-gesture.ts          # editor-only backdrop gesture/frame owner (14-purpose port)
 │  ├─ houseplan-onboarding-runtime.ts    # lazy first-space/import dialogs, independent of the editor
 │  ├─ iso-*.ts · pdf/ · stairs*.ts · furniture*.ts  # 2.5D, PDF export, stairs, furniture (own docs)
 │  ├─ devices.ts · rules.ts              # device list from registries; icon rules and exclusions
@@ -548,6 +550,20 @@ Layout v2 maps `device_id | rl_<roomId>` to `{s, x, y}`. Plan files are
 copy-on-write `<config>/houseplan/plans/<space>.<token>.<ext>`, never deleted for
 age ([`SCOPE.md`](SCOPE.md)). Migrations: [`CONFIG-COMPATIBILITY.md`](CONFIG-COMPATIBILITY.md).
 
+### Editor gesture owners (#861)
+
+E1 gestures have two editor-lazy owners: `PhysicalBodyGestureRuntime`
+owns body drag, square-column rotation and tap/cycle state (13-purpose port);
+`BackdropFrameGestureRuntime` owns backdrop drag, derived frame and transforms
+(14-purpose port). Neither imports the card or its broad HostPort. Selection,
+dialogs, canonical transactions and history remain in their existing owners.
+Queue keys use the opaque card identity; state-only reset callers preserve
+their existing asymmetry. Begin/end publish a full editor boundary; moves use
+the existing live route. The live renderer paints only the moved partition's
+hosted openings from the shared resolved preview, suppresses their settled
+copies and omits preview hit targets. Other openings are untouched. This is
+the sole visible change; E2–E7 editor extraction is not part of E1.
+
 ### Editor draft ownership (#851)
 
 `ConfigAdoption` separates the last confirmed config/layout cache from mutable
@@ -738,18 +754,6 @@ that stair. Screen renderers consume the colour fields; PDF deliberately uses
 the same geometry with its existing monochrome ink palette.
 
 ## Editor chrome and contextual controls
-
-E1 gestures have two editor-lazy owners (#861): `PhysicalBodyGestureRuntime`
-owns body drag, square-column rotation and tap/cycle state (13-purpose port);
-`BackdropFrameGestureRuntime` owns backdrop drag, derived frame and transforms
-(14-purpose port). Neither imports the card or its broad HostPort. Selection,
-dialogs, canonical transactions and history remain in their existing owners.
-Queue keys use the opaque card identity; state-only reset callers preserve
-their existing asymmetry. Begin/end publish a full editor boundary; moves use
-the existing live route. The live renderer paints only the moved partition's
-hosted openings from the shared resolved preview, suppresses their settled
-copies and omits preview hit targets. Other openings are untouched. This is
-the sole visible change; E2–E7 editor extraction is not part of E1.
 
 One stable `.editbar` per editor: `.editbar-tools` (persistent tools,
 Undo/Redo) and pinned `.editbar-end` (Close); transient controls never enter
