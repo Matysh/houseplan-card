@@ -9,7 +9,7 @@ import { buildCandidate, candidateInputs, candidatePolicy, digest, NATIVE_PROFIL
 import { prepareCandidate, assertCandidateAcceptance } from '../scripts/release-prepare.mjs';
 import { judgeNativeOutput, runCandidateNative, NATIVE_CHECK_FLOORS } from '../scripts/candidate-native.mjs';
 import { diagnoseNight, diagnosticLines } from '../scripts/night-diagnostics.mjs';
-import { issueBodyDigest } from '../scripts/review-doc-guard.mjs';
+import { issueBodyDigest, withMaterialAnchors } from '../scripts/review-doc-guard.mjs';
 import { sourceFingerprint } from '../scripts/source-fingerprint.mjs';
 import { findStep, runStep } from './helpers/workflow-step.mjs';
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -243,11 +243,27 @@ test('#858 candidate inspects actual first-parent merge delta and committed bund
   const sync = () => { const m = JSON.parse(readFileSync(join(dir,'dist/houseplan-assets.json'))); m.fingerprint = sourceFingerprint(dir);
     for (const tree of ['dist','custom_components/houseplan/frontend']) put(`${tree}/houseplan-assets.json`, JSON.stringify(m)); };
   sync(); git(dir,'add','.'); git(dir,'commit','-qm','base'); git(dir,'tag','v1.80.1');
+  // #903: an unrelated accepted SPEC must stay traceable without becoming a
+  // release implementation or requiring a premature agent classification.
+  put('docs/reviews/SPEC-REVIEW-2-r1.md', withMaterialAnchors('# SPEC-REVIEW-2-r1\n', {
+    sha: git(dir, 'rev-parse', 'HEAD'), tree: git(dir, 'rev-parse', 'HEAD^{tree}'),
+    issueBody: issueBodyDigest('accepted specification'), verdict: 'green', high: 0,
+  }));
+  put('docs/reviews/INDEX.md', 'SPEC-REVIEW-2-r1.md\n');
+  git(dir, 'add', '.');
+  git(dir, '-c', 'user.name=claude[bot]', '-c', 'user.email=209825114+claude[bot]@users.noreply.github.com',
+    'commit', '--author=claude[bot] <209825114+claude[bot]@users.noreply.github.com>', '-qm',
+    'docs: review document for #2\n\nIssue: #2\nUser-Visible: no\nDelivery-Phase: spec-review/v1');
   git(dir,'switch','-qc','side'); put('src/wall-node-new.ts','export const b = 2;');
   put('docs/release-ledger/v1.80.1/1.json',JSON.stringify({ schema: 1, issue: 1, baseStable: 'v1.80.1', category: 'infra', rationale: 'fixture' }));
   sync(); git(dir,'add','.'); git(dir,'commit','-qm','task\n\nIssue: #1\nUser-Visible: no'); git(dir,'switch','-q','dev');
   git(dir,'merge','--no-ff','side','-m','integrate\n\nIssue: #1\nUser-Visible: no');
   const inputs = candidateInputs({ root: dir }); assert.ok(inputs.issueFiles[1].includes('src/wall-node-new.ts'));
+  assert.deepEqual(inputs.catalogue.entries.map(e => e.issue), [1]);
+  assert.equal(inputs.catalogue.specDeliveries[0].issue, 2);
+  assert.equal(inputs.issueFiles[2], undefined);
+  assert.equal(buildCandidate({ input: inputs, issues: [{ number: 1, body: 'infra', labels: [], comments: [] }],
+    proof: { status: 'green' }, owner: 'Matysh' }).ready, true);
   assert.equal(inputs.sha, git(dir,'rev-parse','HEAD')); assert.equal(inputs.manifest.length,64);
   assert.equal(inputs.version, JSON.parse(git(dir, 'show', 'HEAD:package.json')).version,
     '#889: publication policy is bound to the Git version, not an environment override');

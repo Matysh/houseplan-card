@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 903,
+  "baseStable": "v1.80.1",
+  "category": "infra",
+  "rationale": "Relative to v1.80.1, this task changes only SPEC publication and release accounting tools, their executable fixtures and process documentation. Verified specification delivery is separated from implemented catalogue/membership evidence, while actual A/B work still requires an agent-authored classification. The Houseplan card/integration runtime, persisted user plans and user-facing stable feature set do not change."
+}

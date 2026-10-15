@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+SPEC delivery accounting (#903) preserves accepted review trace separately from
+implemented release entries and close-eligible membership. A shared content and
+provenance check reads versioned phases and existing publisher commits; later
+A/B work must renew any earlier doc-only classification. The agent-authored
+ledger schema and owner release authority remain unchanged.
+
 Nightly mutation evidence (#899) retains the full registry and 60-minute
 deadline while splitting each former modulo shard into two. Preparation
 definitions preserve typed reachable branches; redundant editor/diagnostic

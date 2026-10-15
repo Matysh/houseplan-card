@@ -1770,12 +1770,8 @@ jobs:
           git diff --cached --name-only | node "$TOOLS/scripts/review-doc-guard.mjs"
           # Сообщение коммита — построчно в файл, без heredoc в `run:` (#723).
           msg="$RUNNER_TEMP/review-doc-commit.txt"
-          {
-            echo "docs: review document for #$NUM"
-            echo ""
-            echo "Issue: #$NUM"
-            echo "User-Visible: no"
-          } > "$msg"
+          node "$TOOLS/scripts/task-delivery.mjs" review-message \
+            --issue="$NUM" --stage="$STAGE" > "$msg"
           git -c user.name="claude[bot]" \
               -c user.email="209825114+claude[bot]@users.noreply.github.com" \
               commit -q -F "$msg"

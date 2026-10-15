@@ -20,6 +20,7 @@ import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { isMainModule } from './spawn-portable.mjs';
 import { buildReleaseMembership, issueTrailers, validateReleaseMembership } from './release-membership.mjs';
+import { readTaskCommit, taskDelivery } from './task-delivery.mjs';
 import { classify } from './process-gate.mjs';
 
 export const RELEASE_REVIEW_DIR = 'docs/reviews';
@@ -61,7 +62,8 @@ export function productFiles(files) {
 /** Манифест линии: все issue, чьи трейлеры есть в диапазоне base..candidate. */
 export function buildLineMembership({ tag, candidate, base, commits }) {
   releaseReviewDocPath(tag);
-  const issueNumbers = [...new Set(commits.flatMap((commit) => issueTrailers(commit.message)))];
+  const issueNumbers = [...new Set(commits.filter(commit => taskDelivery(commit) !== 'spec-review'
+    && !/^Release:\s*/m.test(commit.message)).flatMap(commit => issueTrailers(commit.message)))];
   const { manifest } = buildReleaseMembership({ tag, candidate, base, commits, issueNumbers });
   return validateReleaseMembership(manifest, { tag, candidate });
 }
@@ -108,7 +110,7 @@ export function readLine(tag, candidate) {
   const raw = git(['log', '--format=%H%x1f%B%x1e', range]);
   const commits = raw.split('\x1e').map((r) => r.trim()).filter(Boolean).map((record) => {
     const at = record.indexOf('\x1f');
-    return { sha: record.slice(0, at).trim(), message: record.slice(at + 1) };
+    return readTaskCommit({ sha: record.slice(0, at).trim(), message: record.slice(at + 1) }, git);
   });
   const files = base
     ? git(['diff', '--name-only', base.sha, candidate]).split('\n').filter(Boolean)

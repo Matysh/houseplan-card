@@ -10,6 +10,8 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { isMainModule } from './spawn-portable.mjs';
+import { issueTrailers, readTaskCommit, taskDelivery } from './task-delivery.mjs';
+export { issueTrailers } from './task-delivery.mjs';
 
 export const MEMBERSHIP_FILE = 'RELEASE-MEMBERSHIP.json';
 export const MEMBERSHIP_SCHEMA = 1;
@@ -26,15 +28,6 @@ export function parseMembershipIssueList(value = '') {
   return [...new Set(parts.map(Number))].sort((a, b) => a - b);
 }
 
-export function issueTrailers(message = '') {
-  const found = [];
-  for (const line of String(message).split(/\r?\n/)) {
-    const match = /^Issue:\s*#([1-9]\d*)\s*$/.exec(line.trim());
-    if (match) found.push(Number(match[1]));
-  }
-  return [...new Set(found)];
-}
-
 export function buildReleaseMembership({
   tag, candidate, base = null, commits = [], issueNumbers = [], allowUnmatched = false,
 }) {
@@ -42,6 +35,7 @@ export function buildReleaseMembership({
   const evidence = new Map(requested.map((number) => [number, []]));
   for (const commit of commits) {
     if (!SHA_RE.test(commit.sha)) throw new Error(`invalid commit SHA: ${commit.sha}`);
+    if (taskDelivery(commit) === 'spec-review' || /^Release:\s*/m.test(commit.message)) continue;
     for (const number of issueTrailers(commit.message)) {
       if (evidence.has(number)) evidence.get(number).push(commit.sha);
     }
@@ -128,7 +122,8 @@ export function readCandidateHistory(candidate) {
   const commits = raw.split('\x1e').map((record) => record.trim()).filter(Boolean).map((record) => {
     const separator = record.indexOf('\x1f');
     if (separator < 0) throw new Error('cannot parse candidate git history');
-    return { sha: record.slice(0, separator).trim(), message: record.slice(separator + 1) };
+    return readTaskCommit({ sha: record.slice(0, separator).trim(), message: record.slice(separator + 1) },
+      args => git(args).stdout);
   });
   return { base, commits };
 }
@@ -142,6 +137,7 @@ export function verifyReleaseMembershipAgainstGit(manifest, expected = {}) {
   const all = new Set(history.commits.map((commit) => commit.sha));
   const byIssue = new Map();
   for (const commit of history.commits) {
+    if (taskDelivery(commit) === 'spec-review' || /^Release:\s*/m.test(commit.message)) continue;
     for (const number of issueTrailers(commit.message)) {
       if (!byIssue.has(number)) byIssue.set(number, new Set());
       byIssue.get(number).add(commit.sha);

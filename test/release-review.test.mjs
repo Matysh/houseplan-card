@@ -39,7 +39,8 @@ test('#638 база линии — прошлый СТАБИЛЬНЫЙ тег: �
 test('#638 AC1: issue линии — только доказанные трейлерами, в схеме RELEASE-MEMBERSHIP.json', () => {
   const commits = [
     { sha: sha('a'), message: 'fix: x\n\nIssue: #607\nUser-Visible: yes' },
-    { sha: sha('b'), message: 'docs: review document for #607\n\nIssue: #607\nUser-Visible: no' },
+    { sha: sha('b'), message: 'docs: review document for #607\n\nIssue: #607\nUser-Visible: no',
+      files: ['docs/reviews/CODE-REVIEW-607-r1.md'] },
     { sha: sha('c'), message: 'feat: y\n\nIssue: #611\nUser-Visible: yes' },
     { sha: sha('d'), message: 'chore: упоминание #999 в тексте — не трейлер' },
   ];

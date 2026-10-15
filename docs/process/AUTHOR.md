@@ -192,6 +192,13 @@
 
 ## Гейты перед хендоффом
 
+- Публикация SPEC с проверенной фазой `Delivery-Phase: spec-review/v1`
+  сохраняет trace в `specDeliveries`, но не считается реализацией/membership.
+  Старый doc-only placeholder требует новой авторской классификации при
+  первой A/B-доставке; schema 1 и baseStable сохраняются
+  ([§7.1](../../PROCESS.md#71-цепочка),
+  [§11.9](../../PROCESS.md#119-авторский-changelog-стабильного-релиза), #903).
+
 - Классификация релиза — до S7, в `docs/release-ledger/<previous-stable>/<NN>.json`:
   major / infra / stable-fix / line-fix с обоснованием относительно предыдущего
   stable. `User-Visible` и бета-changelog её не заменяют

@@ -52,7 +52,7 @@ function fixture(t, { tamper = false, material: sealedMaterial } = {}) {
   write(work, 'b.mjs', "import { a } from './a.mjs';\nexport const b = a * 2;\n");
   write(work, `docs/release-ledger/v1.0.0/${issue}.json`, JSON.stringify({ schema: 1, issue, baseStable: 'v1.0.0',
     category: 'infra', rationale: 'fixture' }));
-  const material = commitAll(work, 'material');
+  const material = commitAll(work, `material\n\nIssue: #${issue}\nUser-Visible: no`);
   git(work, 'push', '-q', 'origin', branch);
   git(work, 'checkout', '-q', 'dev');
   write(work, 'docs/reviews/CODE-REVIEW-5-r1.md', '# neighbour review\n');

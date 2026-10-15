@@ -4,6 +4,8 @@ import { execFileSync } from 'node:child_process';
 import { isMainModule } from './spawn-portable.mjs';
 import { previousStableTag } from './release-notes.mjs';
 import { issueTrailers } from './release-membership.mjs';
+import { readTaskCommit, taskDelivery } from './task-delivery.mjs';
+import { classify } from './change-classes.mjs';
 
 export const LEDGER = 'docs/release-ledger';
 export const CATEGORIES = Object.freeze(['major', 'infra', 'stable-fix', 'line-fix']);
@@ -45,6 +47,7 @@ export const git = (args) => execFileSync('git', args, {
 }).trim();
 
 export function readMergeEntry(candidate, issue, gitRunner = git) {
+  candidate = gitRunner(['rev-parse', `${candidate}^{commit}`]).trim();
   const cycle = validateCycle(JSON.parse(gitRunner(['show', `${candidate}:${LEDGER}/cycle.json`])));
   const tags = gitRunner(['tag', '--merged', candidate, '--list', 'v*']).split('\n');
   if (tags.includes(cycle.targetStable)) throw new Error('This stable cycle has shipped; open the next cycle before merging tasks');
@@ -54,15 +57,49 @@ export function readMergeEntry(candidate, issue, gitRunner = git) {
   const entry = validateEntry(JSON.parse(gitRunner(['show', `${candidate}:${path}`])), {
     issue, baseStable: cycle.baseStable,
   });
+  const commits = readDeliveryHistory(cycle.baseStable, candidate, gitRunner);
+  if (!commits.some(commit => issueTrailers(commit.message).includes(Number(issue))
+    && !/^Release:\s*/m.test(commit.message) && taskDelivery(commit) === 'implementation'
+    && commit.files.some(file => !file.startsWith('docs/reviews/'))))
+    throw Error(`#${issue}: only SPEC delivery exists; implementation required before merge accounting`);
+  assertImplementationClassification({ candidate, issue: Number(issue), path, commits, gitRunner });
   return { cycle, entry };
+}
+
+function readDeliveryHistory(base, candidate, gitRunner) {
+  const raw = gitRunner(['log', '--first-parent', '--format=%H%x1f%B%x1e', `${base}..${candidate}`]);
+  return raw.split('\x1e').map(record => record.trim()).filter(Boolean).map(record => {
+    const [sha, ...message] = record.split('\x1f');
+    return readTaskCommit({ sha, message: message.join('\x1f') }, gitRunner);
+  });
+}
+
+function assertImplementationClassification({ candidate, issue, path, commits, gitRunner }) {
+  const first = commits.filter(commit => !/^Release:\s*/m.test(commit.message)
+    && issueTrailers(commit.message).includes(issue)
+    && commit.files.some(file => ['A', 'B'].includes(classify(file)))).at(-1);
+  if (!first) return;
+  const previous = gitRunner(['ls-tree', `${first.sha}^`, '--', path]).trim();
+  if (!previous) return;
+  const facts = entry => JSON.stringify([entry.schema, entry.issue, entry.baseStable, entry.category,
+    entry.rationale?.trim(), entry.summary?.ru?.trim(), entry.summary?.en?.trim(), entry.introducedBy]);
+  if (previous === gitRunner(['ls-tree', candidate, '--', path]).trim()
+    || facts(JSON.parse(gitRunner(['show', `${first.sha}^:${path}`])))
+      === facts(JSON.parse(gitRunner(['show', `${candidate}:${path}`]))))
+    throw Error(`#${issue}: stale doc-only classification predates first A/B implementation; agent must reclassify it`);
 }
 
 export function catalogueFromCommits({ cycle, entries, commits }) {
   validateCycle(cycle);
   const byIssue = new Map();
+  const specDeliveries = [];
   for (const commit of commits) {
     // A release promotion repeats issue trailers, but is not task delivery.
     if (/^Release:\s*/m.test(commit.message)) continue;
+    if (taskDelivery(commit) === 'spec-review') {
+      specDeliveries.push({ issue: issueTrailers(commit.message)[0], commit: commit.sha, phase: 'spec-review' });
+      continue;
+    }
     for (const issue of issueTrailers(commit.message)) {
       if (!byIssue.has(issue)) byIssue.set(issue, []);
       byIssue.get(issue).push(commit.sha);
@@ -72,29 +109,29 @@ export function catalogueFromCommits({ cycle, entries, commits }) {
     const entry = validateEntry(entries.get(issue), { issue, baseStable: cycle.baseStable });
     return { ...entry, commits: [...new Set(evidence)].sort() };
   });
-  return { cycle, entries: rows, userIssues: rows.filter(isUserReleaseEntry).map((entry) => entry.issue) };
+  return { cycle, entries: rows, userIssues: rows.filter(isUserReleaseEntry).map((entry) => entry.issue),
+    specDeliveries: specDeliveries.sort((a, b) => a.issue - b.issue || a.commit.localeCompare(b.commit)) };
 }
 
 export function readCatalogue({ candidate = 'HEAD', tag, gitRunner = git } = {}) {
-  const cycle = validateCycle(JSON.parse(gitRunner(['show', `${candidate}:${LEDGER}/cycle.json`])));
+  const candidateSha = gitRunner(['rev-parse', `${candidate}^{commit}`]).trim();
+  const cycle = validateCycle(JSON.parse(gitRunner(['show', `${candidateSha}:${LEDGER}/cycle.json`])));
   if (tag && tag !== cycle.targetStable) throw new Error(`Cycle target ${cycle.targetStable} != ${tag}; curate a new cycle explicitly`);
-  const tags = gitRunner(['tag', '--merged', candidate, '--list', 'v*']).split('\n');
+  const tags = gitRunner(['tag', '--merged', candidateSha, '--list', 'v*']).split('\n');
   if (previousStableTag(cycle.targetStable, tags) !== cycle.baseStable)
     throw new Error('Release cycle base does not match the latest reachable previous stable');
-  const candidateSha = gitRunner(['rev-parse', `${candidate}^{commit}`]);
-  const raw = gitRunner(['log', '--first-parent', '--format=%H%x1f%B%x1e', `${cycle.baseStable}..${candidateSha}`]);
-  const commits = raw.split('\x1e').map((record) => record.trim()).filter(Boolean).map((record) => {
-    const [sha, ...message] = record.split('\x1f');
-    return { sha, message: message.join('\x1f') };
-  });
+  const commits = readDeliveryHistory(cycle.baseStable, candidateSha, gitRunner);
   const entries = new Map();
   for (const commit of commits) {
     if (/^Release:\s*/m.test(commit.message)) continue;
+    if (taskDelivery(commit) === 'spec-review') continue;
     for (const issue of issueTrailers(commit.message)) {
       if (entries.has(issue)) continue;
       try {
         entries.set(issue, JSON.parse(gitRunner(['show', `${candidateSha}:${LEDGER}/${cycle.baseStable}/${issue}.json`])));
       } catch { throw new Error(`Missing classification for #${issue} against ${cycle.baseStable}; agent must classify it`); }
+      assertImplementationClassification({ candidate: candidateSha, issue,
+        path: `${LEDGER}/${cycle.baseStable}/${issue}.json`, commits, gitRunner });
     }
   }
   return { ...catalogueFromCommits({ cycle, entries, commits }), candidate: candidateSha };

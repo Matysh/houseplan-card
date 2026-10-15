@@ -2176,8 +2176,25 @@ npm run release:notes -- vX.Y.Z
 node scripts/release-ledger.mjs catalogue --candidate=HEAD --tag=vX.Y.Z
 ```
 
-The catalogue intersects classified issues with `Issue:` commit evidence in
-previous-stable..candidate, excluding release-promotion trailer repetition.
+The catalogue intersects classified implementations with `Issue:` commit evidence
+in previous-stable..candidate, excluding release-promotion trailer repetition.
+SPEC publication uses the versioned `Delivery-Phase: spec-review/v1` terminal
+trailer (#903). `task-delivery.mjs` checks the publisher identity/subject, exactly
+one new SPEC document for the issue plus optional INDEX, and its own machine
+body/tree/verdict anchors against Git objects. Historical publisher commits
+without the trailer receive the same checks; other C-only commits do not.
+The immutable trace remains in catalogue `specDeliveries`, outside implemented
+entries, prerelease membership, closure evidence and user milestone selection.
+Unknown/malformed phase or an unsuitable diff fails closed. The producer and
+both membership creation/verification use the same phase contract.
+
+The schema-1 agent classification stays mandatory for real implementation.
+At both merge and catalogue boundaries its blob must differ from any entry
+preceding that issue's first A/B delivery in the stable range: a doc-only
+placeholder cannot authorize later code; formatting and unknown extra fields
+do not renew that decision. A record added with implementation
+or afterwards can support subsequent repairs. No runtime plan/schema migration
+or automatic release category inference is involved.
 Missing/stale classifications fail closed: the agent must research and classify,
 not fall back to beta bullets or `User-Visible: yes`. Reconcile eligible records,
 then verify milestone membership is exactly the catalogue's user issues:

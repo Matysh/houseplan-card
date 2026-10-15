@@ -28,6 +28,8 @@ test('missing, stale and unjustified classifications cannot be guessed', () => {
 function gitStub({ absent = false, tags = 'v1.80.1' } = {}) {
   return (args) => {
     if (args[0] === 'tag') return tags;
+    if (args[0] === 'diff-tree') return 'scripts/example.mjs';
+    if (args[0] === 'ls-tree') return '';
     if (args[0] === 'rev-parse') return 'c'.repeat(40);
     if (args[0] === 'log') {
       assert.equal(args.at(-1), `v1.80.1..${'c'.repeat(40)}`);

@@ -1,5 +1,14 @@
 # House Plan architecture
 
+Release delivery phases (#903) share `scripts/task-delivery.mjs` between the
+SPEC publisher, release catalogue and membership create/verify. Versioned
+spec-review trailers require the exact publisher/delta and the document's own
+machine material anchors; old publisher commits receive equivalent checks.
+Spec trace remains separate from implemented entries. The schema-1 authored
+classification must be renewed when an earlier doc-only blob meets its first
+A/B delivery; the same immutable history check guards merge and catalogue.
+No runtime state, owner acceptance or release authority is introduced.
+
 System LQI visibility (#876) has one bounded policy in `signal-visibility.ts`.
 `spaceDisplayOf` projects explicit new modes and historical false; every full,
 static, hover and preview consumer feeds that local override, the exact card
