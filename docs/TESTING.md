@@ -8,6 +8,8 @@ golden, а то, чего автоматика не видит, собрано �
 только то, что действует для любой задачи; маркер `[auto: …]` у пункта обещает
 падающую проверку в том же коммите (`docs/DEVELOPMENT.md`).
 
+Evidence claims: [короткий checklist](DEVELOPMENT.md#evidence-accuracy-and-historical-errata-910) — execution/reuse/equivalence/unknown, raw и true exit.
+
 ## Правила для новых тестов (issue #85) — обязательны
 
 Fixture/capture fidelity (#896): `demo-fixture.test.mjs` covers saved independent

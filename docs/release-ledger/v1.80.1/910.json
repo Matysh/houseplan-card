@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 910,
+  "baseStable": "v1.80.1",
+  "category": "infra",
+  "rationale": "Adds an isolated uniformly-dirty receipt unit, bounded evidence guidance and dated historical errata. No user-visible behaviour changes relative to v1.80.1; no user milestone or new historical execution is claimed."
+}

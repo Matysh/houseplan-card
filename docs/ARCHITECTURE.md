@@ -16,6 +16,13 @@ guard or budget substitutions are mutation execution and remain nightly-only.
 Existing static readiness and outcome classifiers keep their formats/owners;
 no command sandbox, permission change or retrospective verdict rewrite is added.
 
+Evidence accuracy (#910) adds no runtime or evidence-executor owner. A pure
+uniform-dirty receipt test isolates the existing signature refusal; a bounded
+DEVELOPMENT checklist linked from TESTING separates execution, reused proof,
+content equivalence and unknown. Historical corrections are additive dated prose with primary links,
+not edits to original review anchors, raw or verdicts. Text/link checks do not
+claim semantic fact-checking.
+
 Backdrop cancellation (#908) reconciles only its stage `bdgrabbing` class at
 cancel and explicit begin, since a retained terminal can leave Lit's cached
 class value unchanged. The stage routes capture loss only for the active

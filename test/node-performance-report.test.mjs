@@ -120,6 +120,21 @@ test('#888 foreign, dirty, partial, unknown-environment and too-short series are
   assert.equal(nodeSeriesSummary([report(), report()]).comparable, false);
 });
 
+test('#910 AC1 uniformly dirty triples are rejected without a signature mismatch or input changes', () => {
+  const clean = Array.from({ length: 3 }, report), dirty = structuredClone(clean);
+  for (const receipt of dirty) receipt.material.dirty = true;
+  assert.deepEqual(dirty[0], dirty[1], 'all signature inputs, not only material, are identical');
+  assert.deepEqual(dirty[1], dirty[2]);
+  assert.deepEqual(dirty.map(receipt => ({ ...receipt, material: { ...receipt.material, dirty: false } })), clean,
+    'the negative input differs from the clean positive only in dirty');
+  for (const [reports, comparable] of [[clean, true], [dirty, false]]) {
+    const before = structuredClone(reports), summary = nodeSeriesSummary(reports);
+    assert.equal(summary.comparable, comparable, comparable ? 'uniform clean control' : 'uniform dirty refusal');
+    assert.equal(summary.cause, 'unknown');
+    assert.deepEqual(reports, before, 'summarising either input never edits receipts');
+  }
+});
+
 test('#888 diagnostic CLI is read-only, bounded and retains original red plus its recorded budget', () => {
   const dir = mkdtempSync(join(tmpdir(), 'hp-node-report-'));
   try {

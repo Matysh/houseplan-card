@@ -37,6 +37,11 @@ canon/digests/TESTING and actual prompt. Manual temporary substitutions of
 compiled artifacts are not an exception. Text-contract checks do not claim
 physical enforcement or reinterpret historical product verdicts.
 
+Evidence accuracy (#910) isolates uniformly-dirty series rejection with an
+identical clean control and immutable receipt inputs. The bounded checklist and
+dated historical errata preserve execution/reuse/equivalence/unknown boundaries;
+existing guards, budgets, raw and accepted verdicts remain unchanged.
+
 Backdrop terminal presentation (#908) clears its grabbing cursor immediately
 on cancellation and re-arms it at the next begin; pointer capture loss cancels
 only its owning backdrop gesture. Touch editor: best effort / intentionally degraded.

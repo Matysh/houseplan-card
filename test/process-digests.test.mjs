@@ -341,3 +341,26 @@ test('#905 AC3 ordinary input fixtures and static readiness are not caught execu
   assert.equal(isProofOutcome(receipt), true);
   assert.equal(receipt.kind, 'assertion-killed');
 });
+
+test('#910 AC2 evidence checklist keeps explicit distinctions and resolvable local links, not semantic approval', () => {
+  const anchor = 'evidence-accuracy-and-historical-errata-910';
+  const section = sectionText(read('docs/DEVELOPMENT.md'), anchor);
+  assert.ok(section, 'the bounded evidence checklist has an addressed section');
+  assert.ok(markdownLinks(read('docs/TESTING.md')).some(link => link.file === 'DEVELOPMENT.md' && link.anchor === anchor),
+    'TESTING links to the checklist without expanding its fixed line budget');
+  for (const phrase of ['`executed`', '`reused`', '`equivalence`', '`not run / unknown`',
+    'фактически исполненные SHA/tree', 'будущий SHA не называть измеренным',
+    'совпадение содержимого — не новое измерение', 'поздний PASS не объясняет старый неизвестный FAIL',
+    'конечного списка исполненных случаев/счётчиков', 'Golden threshold PASS', 'nonzero differingPixels',
+    'byte-identical witness floor', 'до краткого display сохранить raw stdout/stderr',
+    'material и истинный exit', 'Усечённый tool display не объявлять полным raw',
+    'original verdict, машинные anchors и raw не переписывать', 'не семантическую истинность отчётов'])
+    assert.ok(norm(section).includes(norm(phrase)), 'checklist lost explicit text: ' + phrase);
+  const links = markdownLinks(section);
+  assert.equal(links.length, 1, 'one bounded dated errata, not an evidence platform');
+  for (const link of links) {
+    const target = normalize(join('docs', link.file));
+    assert.ok(existsSync(join(ROOT, target)), 'missing checklist link: ' + target);
+    if (link.anchor) assert.ok(headings(read(target)).some(heading => heading.anchor === link.anchor));
+  }
+});

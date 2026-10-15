@@ -1378,6 +1378,40 @@ follow-up, not commands to reproduce.
 
 ## Maintenance diagnostics
 
+### Evidence accuracy and historical errata (#910)
+
+`node --test test/node-performance-report.test.mjs test/process-digests.test.mjs`
+checks the uniformly-dirty triple against an otherwise identical clean control,
+input immutability and this explicit checklist text/local links. It does not
+change the signature guard or judge prose semantically. The checklist is here,
+linked from TESTING, without expanding its fixed 880-line budget.
+
+Короткая проверка перед итогом автора/ревьюера (не новый исполнитель или
+автоматический fact-checker):
+
+- `executed`: назвать фактически исполненные SHA/tree, команду, время,
+  observable result и истинный child exit; будущий SHA не называть измеренным.
+- `reused`: дать исходный материал и ссылку на прежний proof; переиспользование
+  не выдавать за собственный повторный запуск.
+- `equivalence`: назвать сравниваемые материалы, полный проверенный корпус и
+  пределы эквивалентности; совпадение содержимого — не новое измерение.
+- `not run / unknown`: отсутствие запуска или потерянные имя/stack/причину
+  сохранить явно; поздний PASS не объясняет старый неизвестный FAIL задним числом.
+- Числа брать из конечного списка исполненных случаев/счётчиков, проверять сумму
+  и не удваивать reused checks. Golden threshold PASS, nonzero differingPixels
+  и byte-identical witness floor — разные величины, не взаимозаменяемый допуск.
+- Для длинной команды до краткого display сохранить raw stdout/stderr,
+  команду, material и истинный exit существующим runner или перенаправлением;
+  статус дочернего процесса не терять за `tee`/обвязкой. Усечённый tool display
+  не объявлять полным raw. Секреты и приватные полные transcripts не публиковать.
+- Исторические поправки — датированная additive errata с первичными ссылками;
+  original verdict, машинные anchors и raw не переписывать. Пример:
+  [ограниченная errata](analysis/910-evidence-errata-2026-10-15.md).
+
+`test/process-digests.test.mjs` защищает только явный текстовый контракт и
+локальные ссылки этого раздела, не семантическую истинность отчётов. Только
+восемь названных исторических записей уточняются без benchmark/native/mutant replay.
+
 ### Labs presentation flags
 
 Labs is an internal, presentation-only runtime in `src/labs.ts`; it must never
