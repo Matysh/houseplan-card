@@ -340,6 +340,7 @@ write is a separate negative control. Pure retirement/DOM positioning helpers
 retain cheaper unit guards.
 
 - `hidden-device-drag-not-retired`
+- `space-device-drag-survives-navigation`
 - `retired-device-tail-opens-settings`
 
 #890 pre-release AC6: the public old-server push crosses an already mounted

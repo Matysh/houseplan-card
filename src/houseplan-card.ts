@@ -1478,6 +1478,7 @@ export class HouseplanCard extends LitElement {
         if (this._continuity.state !== 'steady') this._beginContinuityCandidate('space', true); }
       this._cancelPendingWarmMode();
       this._viewHold.cancel();
+      this._cancelDeviceDrag();
       this._clearRoomFocus(true);
       this._resetDeviceHitState();
       this._cancelDangerConfirm();
@@ -5341,7 +5342,7 @@ export class HouseplanCard extends LitElement {
       // Pointer capture may already have ended before the cancellation signal.
     }
     this._previewDevicePlacement(drag.id, drag.before);
-    if (this.isConnected) this._editorRuntime?._commitLiveEditor(drag.id);
+    this._editorRuntime?._commitLiveEditor(drag.id);
     return true;
   }
 

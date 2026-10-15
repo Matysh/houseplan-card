@@ -10,7 +10,8 @@
   information ([#849](https://github.com/Matysh/houseplan-card/issues/849)).
 - Editor guides no longer refer to hidden or LED-replaced icons; Walls guides
   follow the actual snapped endpoint. Leaving a page during an unfinished
-  marker drag restores its visible position without a ghost save or click
+  marker drag, switching floors or reconnecting the card restores its visible
+  position without a ghost save or click
   ([#893](https://github.com/Matysh/houseplan-card/issues/893)).
 
 - Switching Home Assistant connections no longer lets a late old-server

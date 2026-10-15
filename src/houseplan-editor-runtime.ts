@@ -984,7 +984,10 @@ public _routeLiveEditorUpdate(name?: PropertyKey, oldValue?: unknown): boolean {
     if (!live && this.host._resize.preview) this._resizeBaseFrameStable = false;
     return live;
   }
-public _commitLiveEditor(deviceId?: string): void { commitHouseplanEditor(this.host, deviceId); this.nodeMove?.paint(); }
+public _commitLiveEditor(deviceId?: string): void {
+  commitHouseplanEditor(this.host, deviceId);
+  if (this.host.isConnected) this.nodeMove?.paint();
+}
 public _disposeLiveEditor(): void { this.invalidateEditorNavigation(); this._nodeMoveEpoch++; this.nodeMove?.dispose(); this._radarSetup.reset(); this.roomGear.reset(); disposeHouseplanEditor(this.host); }
 public _cancelRadarSetup(): void { this._radarSetup.interrupt(); }
 public async _whenLiveEditorSettled(): Promise<void> {

@@ -152,13 +152,16 @@ try {
     const before = await observation(), box = await marker('d_lamp').boundingBox();
     const x = box.x + box.width / 2, y = box.y + box.height / 2;
     await page.mouse.move(x, y); await page.mouse.down();
-    // The native move queues the product calculation in its marker handler;
-    // the host's bubbling listener delivers lifecycle before that microtask.
+    // Chromium may flush the pointer calculation between target and ancestor
+    // listeners. The trusted move still has an unpainted live RAF at the host:
+    // observe that actual boundary instead of claiming a pending microtask.
     await page.evaluate(kind => {
       const c = window.__card;
+      const painted = c._liveEditorPaintCount;
       c.addEventListener('pointermove', event => {
         window.__guideQueued = { trusted: event.isTrusted, pointerId: event.pointerId,
-          unfinished: c._deviceDrag?.moved === false, source: c._deviceDrag?.source };
+          moved: c._deviceDrag?.moved === true, unpainted: c._liveEditorPaintCount === painted,
+          source: c._deviceDrag?.source };
         if (kind === 'hidden') {
           Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
           document.dispatchEvent(new Event('visibilitychange'));
@@ -172,7 +175,8 @@ try {
       const captured = queued.source?.hasPointerCapture?.(queued.pointerId) ?? false;
       if (kind === 'hidden') { delete document.visibilityState; document.dispatchEvent(new Event('visibilitychange')); }
       else window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
-      return { trusted: queued.trusted, unfinished: queued.unfinished, pointerId: queued.pointerId, captured };
+      return { trusted: queued.trusted, moved: queued.moved, unpainted: queued.unpainted,
+        pointerId: queued.pointerId, captured };
     }, lifecycle);
     await page.mouse.up();
     await page.evaluate(pointerId => {
@@ -184,7 +188,8 @@ try {
     }, retirement.pointerId);
     await page.waitForTimeout(80);
     const after = await observation();
-    check(`${lifecycle}: trusted move was still pending before cancellation`, [retirement.trusted, retirement.unfinished], [true, true]);
+    check(`${lifecycle}: trusted moved preview has not painted its queued frame before cancellation`,
+      [retirement.trusted, retirement.moved, retirement.unpainted], [true, true, true]);
     assert.deepEqual(after.layout, before.layout, `${lifecycle}: every stored coordinate and sibling survives cancellation unchanged`);
     check(`${lifecycle}: cancelled capture, guides and old tail cannot write/history/act/open settings`,
       [retirement.captured, after.drag, after.guides, after.paintedMatches, after.writes - before.writes,
@@ -211,13 +216,31 @@ try {
     assert.equal(typeof oldId, 'number', `${path}: native unfinished drag is really owned`);
     await page.evaluate(async path => {
       if (path === 'editor') await window.__hpTest.setMode('plan');
-      else if (path === 'space') await window.__hpTest.switchSpace('garden');
+      else if (path === 'space') {
+        const c = window.__card;
+        c.addEventListener('click', () => {
+          // Observe the navigation handler synchronously, before Lit removes
+          // the old icon and implicit capture loss could mask missing teardown.
+          window.__guideSpaceRetirement = { space: c._space, drag: c._deviceDrag?.id ?? null };
+        }, { once: true });
+        await window.__hpTest.switchSpace('garden');
+      }
       else window.__card.remove();
     }, path);
+    if (path === 'space') assert.deepEqual(await page.evaluate(() => window.__guideSpaceRetirement),
+      { space: 'garden', drag: null }, 'space: navigation synchronously retires the held drag before DOM removal');
+    if (path === 'disconnect') assert.equal((await observation()).paintedMatches, true,
+      'disconnect: disposed card synchronously restores the already painted marker, before reconnect/render');
     await page.mouse.up();
+    if (path === 'space') {
+      await page.waitForFunction(() => !window.__card._slide);
+      // A deliberate new press, not a compatibility click from the retired
+      // drag, owns return navigation through the shared activation guard.
+      await page.locator('houseplan-card').locator('[data-hp="space-tab"][data-id="f1"]').click();
+      await page.waitForFunction(() => window.__card._space === 'f1' && !window.__card._slide);
+    }
     await page.evaluate(async path => {
-      if (path === 'space') await window.__hpTest.switchSpace('f1');
-      else if (path === 'disconnect') {
+      if (path === 'disconnect') {
         document.getElementById('host').appendChild(window.__card);
         await window.__hpTest.settled();
       }
@@ -260,14 +283,15 @@ try {
   await page.waitForFunction(() => typeof window.__guideAccept === 'function');
   await page.evaluate(() => { window.dispatchEvent(new PageTransitionEvent('pagehide')); });
   check('released pending write has no unfinished drag to retire', (await observation()).drag, null);
-  await page.evaluate(() => { window.__guideDelay = false; window.__guideAccept();
-    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })); });
+  await page.evaluate(() => { window.__guideDelay = false; window.__guideAccept(); });
   await page.waitForFunction(() => !window.__card._devicePositionBusy);
   const afterPending = await observation();
   assert.deepEqual(afterPending.layout.d_lamp, canonicalizePosition(pendingPreview),
     'pagehide after release retains the canonically accepted placement');
   check('pagehide after release retains exactly one accepted command/write',
     [afterPending.writes - beforePending.writes, afterPending.history - beforePending.history], [1, 1]);
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
+  await page.evaluate(() => window.__hpTest.settled());
   await finish(browser, { roster });
 } finally {
   await browser.close();

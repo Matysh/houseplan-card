@@ -436,13 +436,15 @@ export function measureHouseplanDecorText(value: object): void {
 
 export function commitHouseplanEditor(value: object, restoredDeviceId?: string): void {
   const host = value as LiveEditorHost;
+  // A cancelled drag restores the same style string Lit already remembers.
+  // Repaint imperative left/top even on detach, without reviving disposed
+  // WeakMap state or touching the live renderer after its teardown.
+  if (restoredDeviceId && host.renderRoot) paintDevice(host, host.renderRoot, restoredDeviceId);
+  if (!host.isConnected) return;
   const state = stateOf(value);
   if (state.raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(state.raf);
   state.raf = 0;
   restore(state);
-  // A cancelled drag restores the same style string Lit already remembers.
-  // Repaint the imperative live left/top too; requestUpdate alone may skip it.
-  if (restoredDeviceId && host.renderRoot) paintDevice(host, host.renderRoot, restoredDeviceId);
   const target = (host.renderRoot as ParentNode | undefined)
     ?.querySelector<SVGElement>('[data-hp-live-editor]');
   if (target) render(nothing, target);
