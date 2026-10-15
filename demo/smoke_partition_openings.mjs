@@ -2,12 +2,42 @@
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 960, height: 820 }, 1);
+// #861: the physical owner is reached by native input, not a fabricated drag.
+await page.exposeFunction('__partitionNativePhysical', async ({ from, to }) => {
+  await page.mouse.move(from.x, from.y);
+  if (!to) { await page.mouse.click(from.x, from.y); return; }
+  await page.mouse.down();
+  await page.mouse.move(to.x, to.y, { steps: 12 });
+  await page.mouse.up();
+});
 
 const out = await page.evaluate(async () => {
   const result = {};
   const card = window.__card;
   const root = () => card.shadowRoot || card.renderRoot;
   const update = async () => { card.requestUpdate(); await card.updateComplete; };
+  const physicalInput = async (from, to) => {
+    await update();
+    let previous = '', stable = 0;
+    const deadline = performance.now() + 5000;
+    while (stable < 3) {
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      const m = root().querySelector('.stage svg').getScreenCTM();
+      const current = [m.a, m.b, m.c, m.d, m.e, m.f].join(',');
+      stable = current === previous ? stable + 1 : 0;
+      previous = current;
+      if (performance.now() >= deadline) throw new Error('partition native fixture camera did not settle');
+    }
+    const m = root().querySelector('.stage svg').getScreenCTM();
+    const screen = (point) => {
+      const p = new DOMPoint(...point).matrixTransform(m);
+      return { x: p.x, y: p.y };
+    };
+    await window.__partitionNativePhysical({ from: screen(from), to: to && screen(to) });
+    await update();
+  };
+  const solidQuarter = (partition) => [0, 1].map(axis =>
+    partition.a[axis] + (partition.b[axis] - partition.a[axis]) * 0.25);
   const pointIn = (point, body) => {
     let inside = false;
     for (let i = 0, j = body.length - 1; i < body.length; j = i++) {
@@ -131,12 +161,9 @@ const out = await page.evaluate(async () => {
   result.hostBodyHasFullDepthOpeningGap = !bodies.some((body) => pointIn(centre, body));
 
   const base = card._spaceModel().partitions.find((partition) => partition.id === 'host');
-  card._physicalDrag = {
-    pid: 132, kind: 'partition', id: 'host', start: [...base.a],
-    startClient: [0, 0], before: card._geometrySnapshot(), moved: true,
-    base: JSON.parse(JSON.stringify(base)), delta: [50, 25],
-  };
-  card._physicalUp(new PointerEvent('pointerup', { pointerId: 132, bubbles: true }));
+  await window.__hpTest.setTool('select');
+  const from = solidQuarter(base);
+  await physicalInput(from, [from[0] + 50, from[1] + 25]);
   await update();
   space = card._curSpaceCfg;
   const movedOpening = space.openings?.[0];
@@ -145,7 +172,7 @@ const out = await page.evaluate(async () => {
     && Math.abs(movedOpening.x - 0.55) < 1e-9
     && Math.abs(movedOpening.y - 0.525) < 1e-9;
 
-  card._physicalSel = { kind: 'partition', id: 'host' };
+  await physicalInput(solidQuarter(card._spaceModel().partitions.find(partition => partition.id === 'host')));
   card._deletePhysicalSelection();
   await update();
   result.deleteRequiresAccessibleListDialog = !!card._partitionDeleteDialog
@@ -154,7 +181,7 @@ const out = await page.evaluate(async () => {
   card._partitionDeleteDialog = null;
   await update();
   result.deleteCancelIsMutationFree = !!space.partitions?.length && !!space.openings?.length;
-  card._physicalSel = { kind: 'partition', id: 'host' };
+  await physicalInput(solidQuarter(card._spaceModel().partitions.find(partition => partition.id === 'host')));
   card._deletePhysicalSelection();
   card._confirmPartitionDelete();
   await update();

@@ -378,24 +378,39 @@ const openingEdgeAction = async (cellCm) => {
 const backgroundCancel = async (cellCm) => {
   await setTheme('light');
   await page.evaluate((cell) => window.__applyGridScaleFixture(cell, 'decor', 'flat'), cellCm);
-  return page.evaluate(async () => {
+  const input = await page.evaluate(() => {
     const card = window.__card;
     const root = card.renderRoot;
     const handle = root.querySelector('.bdhandle[data-corner="1,1"]');
     const stageNode = root.querySelector('.stage');
     const box = handle?.getBoundingClientRect();
-    if (!handle || !stageNode || !box) return false;
-    const before = structuredClone(card._serverCfg);
-    handle.dispatchEvent(new PointerEvent('pointerdown', {
-      bubbles: true, composed: true, cancelable: true, pointerId: 239,
-      pointerType: 'touch', clientX: box.left + box.width / 2, clientY: box.top + box.height / 2,
-    }));
-    const startedPid = card._bdDrag?.pid ?? null;
-    const cancelEvent = new PointerEvent('pointercancel', {
-      pointerId: 239, pointerType: 'touch',
+    if (!handle || !stageNode || !box) throw new Error('Backdrop cancel needs its real corner handle');
+    // Observe native Chromium delivery, not a removed gesture owner's fields.
+    window.__gridBackdropCancel = { before: structuredClone(card._serverCfg),
+      history: card._geometryHistory.size, pid: null, cancelPid: null };
+    stageNode.addEventListener('pointerdown', (event) => {
+      window.__gridBackdropCancel.pid = event.pointerId;
+    }, { capture: true, once: true });
+    stageNode.addEventListener('pointercancel', (event) => {
+      window.__gridBackdropCancel.cancelPid = event.pointerId;
+    }, { capture: true, once: true });
+    return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+  });
+  const session = await page.context().newCDPSession(page);
+  try {
+    await session.send('Input.dispatchTouchEvent', { type: 'touchStart',
+      touchPoints: [{ x: input.x, y: input.y, id: 239 }] });
+    await page.evaluate(() => window.__hpTest.settled());
+    await page.evaluate(() => {
+      window.__gridBackdropCancel.started = !!window.__card.renderRoot.querySelector('.stage.bdgrabbing');
+      window.__gridBackdropCancel.badgeShown = !!window.__card.renderRoot.querySelector('.bdmeasure');
     });
-    card._stagePointerCancel(cancelEvent);
-    await card.updateComplete;
+    await session.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
+    await page.evaluate(() => window.__hpTest.settled());
+  } finally { await session.detach(); }
+  return page.evaluate(() => {
+    const card = window.__card, probe = window.__gridBackdropCancel;
+    const before = probe.before;
     const after = structuredClone(card._serverCfg);
     const canonical = (value) => {
       if (Array.isArray(value)) return value.map(canonical);
@@ -407,10 +422,13 @@ const backgroundCancel = async (cellCm) => {
     const changedKeys = [...new Set([...Object.keys(before), ...Object.keys(after)])]
       .filter((key) => JSON.stringify(canonical(before[key])) !== JSON.stringify(canonical(after[key])));
     return {
-      ok: startedPid === 239 && cancelEvent.pointerId === 239
-        && !card._bdDrag && changedKeys.length === 0,
-      startedPid, cancelPointerId: cancelEvent.pointerId,
-      dragEnded: !card._bdDrag,
+      ok: probe.started && probe.badgeShown && probe.pid !== null && probe.cancelPid === probe.pid
+        && !card.renderRoot.querySelector('.bdmeasure') && changedKeys.length === 0
+        && card._geometryHistory.size === probe.history,
+      startedPid: probe.pid, cancelPointerId: probe.cancelPid,
+      // The accepted cancel path may retain its settled stage class. Its live
+      // size badge is present only for an active gesture and disappears at cancel.
+      dragEnded: !card.renderRoot.querySelector('.bdmeasure'),
       configSame: changedKeys.length === 0,
       changedKeys,
     };

@@ -184,39 +184,44 @@ checkAll({
 });
 
 // ---- 7) every Background session starts on Select; image has its own tool --
-const armed = await page.evaluate(async () => {
-  const c = window.__card;
-  c._setMode('view'); await c.updateComplete;
-  c._setMode('decor'); await c.updateComplete;
-  const o = {
-    startsOnSelect: c._decorTool === 'select',
-    inertUntilPictureTool: !c._bdMovable,
+await page.evaluate(async () => {
+  await window.__hpTest.setMode('view');
+  await window.__hpTest.setMode('decor');
+});
+await page.waitForFunction(() => !window.__card.renderRoot.querySelector('.stage.mode-transition'));
+const armed = await page.evaluate(() => {
+  const c = window.__card, root = c.renderRoot;
+  return {
+    startsOnSelect: !!root.querySelector('.decorbar .dtool.on[data-tool="select"]'),
+    inertUntilPictureTool: !root.querySelector('.stage.bdgrab'),
     hasPicture: !!c._curSpaceCfg.plan_url,
   };
-  c._decorTool = 'backdrop'; c.requestUpdate(); await c.updateComplete;
-  o.movable = c._bdMovable;
-  // and the picture really moves under it: press inside the body, drag, release
-  const r = c._bdRect;
-  const before = { x: c._curSpaceCfg.plan_x ?? 0, y: c._curSpaceCfg.plan_y ?? 0 };
-  const pt = [r.x + r.w / 2, r.y + r.h / 2];
-  const ev = (x, y) => ({ pointerId: 42, clientX: x, clientY: y, target: c._stageEl,
-    preventDefault() {}, stopPropagation() {}, shiftKey: false });
-  // _svgPoint reads clientX/Y — go through the stage geometry
-  const stage = (c.shadowRoot || c.renderRoot).querySelector('.stage');
-  const box = stage.getBoundingClientRect();
-  const vb = stage.querySelector('svg').getAttribute('viewBox').split(' ').map(Number);
-  const toScreen = (x, y) => [box.left + ((x - vb[0]) / vb[2]) * box.width,
-    box.top + ((y - vb[1]) / vb[3]) * box.height];
-  const [sx, sy] = toScreen(pt[0], pt[1]);
-  const [ex, ey] = toScreen(pt[0] + vb[2] * 0.1, pt[1]);
-  c._stagePointerDown(ev(sx, sy));
-  c._stagePointerMove(ev(ex, ey));
-  c._stagePointerUp(ev(ex, ey));
-  await c.updateComplete;
-  o.moved = (c._curSpaceCfg.plan_x ?? 0) !== before.x;
-  c._setMode('view');
-  return o;
 });
+await page.locator('.decorbar .dtool[data-tool="backdrop"]').click();
+await page.evaluate(() => window.__hpTest.settled());
+const pictureDrag = await page.evaluate(() => {
+  const c = window.__card, root = c.renderRoot;
+  const image = root.querySelector('.stage svg image');
+  const svg = root.querySelector('.stage svg');
+  const x = +image.getAttribute('x') + +image.getAttribute('width') / 2;
+  const y = +image.getAttribute('y') + +image.getAttribute('height') / 2;
+  const viewWidth = svg.viewBox.baseVal.width;
+  const matrix = svg.getScreenCTM();
+  const start = new DOMPoint(x, y).matrixTransform(matrix);
+  const end = new DOMPoint(x + viewWidth * 0.1, y).matrixTransform(matrix);
+  return { movable: !!root.querySelector('.stage.bdgrab'),
+    beforeX: c._curSpaceCfg.plan_x ?? 0,
+    start: { x: start.x, y: start.y }, end: { x: end.x, y: end.y } };
+});
+armed.movable = pictureDrag.movable;
+await page.mouse.move(pictureDrag.start.x, pictureDrag.start.y);
+await page.mouse.down();
+await page.mouse.move(pictureDrag.end.x, pictureDrag.end.y, { steps: 6 });
+await page.mouse.up();
+await page.evaluate(() => window.__hpTest.waitForWrites());
+armed.moved = await page.evaluate((beforeX) => (window.__card._curSpaceCfg.plan_x ?? 0) !== beforeX,
+  pictureDrag.beforeX);
+await page.evaluate(() => window.__hpTest.setMode('view'));
 checkAll({
   backgroundStartsOnSelect: armed.startsOnSelect,
   pictureInertUntilOwnTool: armed.inertUntilPictureTool,

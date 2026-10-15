@@ -508,7 +508,8 @@ const res = await page.evaluate(async () => {
   ];
   c._curSpaceCfg.decor = keyboardShapes;
   c._decorTool = 'select'; c._decorSel = 'key-furniture';
-  c._decorDraft = null; c._decorMove = null; c._dtDrag = null; c._bdDrag = null;
+  c._decorDraft = null; c._decorMove = null; c._dtDrag = null;
+  out.keyboardSetupHasNoBackdropGesture = !sr().querySelector('.stage.bdgrabbing');
   c.requestUpdate(); await c.updateComplete;
   c._geometryHistory.clear();
   c._saveConfigDebounced.cancel();

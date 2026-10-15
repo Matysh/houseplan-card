@@ -17,12 +17,9 @@ import { launch, check, finish } from './serve.mjs';
 const { page, browser } = await launch();
 
 const snap = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
-const restore = () => page.evaluate((s) => {
-  const c = window.__card;
-  c._serverCfg = JSON.parse(s);
-  c._bdDrag = null;
-  c._cfgEpoch++; c.requestUpdate();
-  return c.updateComplete && true;
+const restore = () => page.evaluate(async (s) => {
+  await window.__hpTest.waitForWrites();
+  await window.__hpTest.setServerConfig(JSON.parse(s));
 }, snap);
 
 // A mode switch paints the stage and the paper with interpolated colours for
@@ -77,6 +74,26 @@ const frameRect = () => page.evaluate(() => {
 });
 const badges = () => page.evaluate(() =>
   [...window.__card.renderRoot.querySelectorAll('.measurelabel.bdmeasure')].map((e) => e.textContent.trim()));
+const viewBox = () => page.evaluate(() =>
+  window.__card.renderRoot.querySelector('.stage svg').getAttribute('viewBox'));
+const contentFrame = () => page.evaluate(() => window.__card._baseVb());
+const cameraSettled = async () => {
+  await page.waitForFunction(() => !window.__card._cameraTransition.active, { timeout: 5000 });
+  await settle();
+};
+const grabbing = () => page.evaluate(() =>
+  window.__card.renderRoot.querySelector('.stage').classList.contains('bdgrabbing'));
+// #861 pre-extraction characterization: diagnostic observers only. The spies
+// delegate unchanged to the production renderer, while every gesture below is
+// delivered through Chromium's actual mouse/keyboard input.
+await page.evaluate(() => {
+  const card = window.__card;
+  const renderBody = card._renderBody.bind(card);
+  let full = 0;
+  card._renderBody = (...args) => { full++; return renderBody(...args); };
+  window.__backdropRenderCounts = () => ({ full, live: card._liveEditorPaintCount || 0 });
+});
+const renderCounts = () => page.evaluate(() => window.__backdropRenderCounts());
 /** Screen position of a render-unit point (the svg viewBox fills the stage). */
 const screenPt = (x, y) => page.evaluate(([x, y]) => {
   const stage = window.__card.renderRoot.querySelector('.stage');
@@ -102,11 +119,7 @@ check('no_frame_in_view', await q('.bdframe'), 0);
 await mode('plan');
 await settle();
 check('no_frame_in_plan', await q('.bdframe'), 0);
-const tool = (t) => page.evaluate((t) => {
-  const c = window.__card;
-  c._decorTool = t; c._decorDraft = null; c.requestUpdate();
-  return c.updateComplete && true;
-}, t);
+const tool = (t) => page.evaluate(async (t) => { await window.__hpTest.setTool(t); }, t);
 
 await mode('decor');
 await settle();
@@ -118,7 +131,8 @@ check('no_picture_frame_until_picture_tool', await frameRect(), null);
 check('untouched_picture_is_where_it_always_was', await imageRect(), BASE);
 // …and the picture has a tool of its own, offered because f1 HAS a picture
 check('the_picture_has_a_tool', await q('.decorbar .btn.dtool'), 8);
-check('select_tool_armed_on_open', await page.evaluate(() => window.__card._decorTool), 'select');
+check('select_tool_armed_on_open', await page.evaluate(() =>
+  window.__card.renderRoot.querySelector('.decorbar [data-hp="tool"].on')?.dataset.tool), 'select');
 check('no_grab_cursor_under_select', await page.evaluate(() =>
   window.__card.renderRoot.querySelector('.stage').classList.contains('bdgrab')), false);
 await tool('backdrop');
@@ -144,19 +158,35 @@ const roomsBefore = await page.evaluate(() =>
   // snap has something to do (24 steps = 100, 12 steps = 50)
   const [bx, by] = await screenPt(602, 552);
   await page.mouse.move(ax, ay);
-  await page.mouse.down();
-  await page.mouse.move((ax + bx) / 2, (ay + by) / 2, { steps: 3 });
   await settle();
+  const beforeDown = await renderCounts();
+  await page.mouse.down();
+  await settle();
+  const afterDown = await renderCounts();
+  check('backdrop_body_down_one_full_render', afterDown.full - beforeDown.full, 1);
+  check('backdrop_body_down_grabbing', await grabbing(), true);
+  for (let step = 1; step <= 6; step++) {
+    await page.mouse.move(ax + (bx - ax) * step / 12, ay + (by - ay) * step / 12);
+    await settle();
+  }
   const live = await badges();
   check('live_badge_while_dragging', live.length, 1);
   // the demo's cell_cm is 5 → the untouched picture is 240 cells wide, i.e.
   // 12.00 m by 9.60 m. Moving does not change the size, and the badge says so.
   check('live_badge_is_the_real_size', live[0], `${metres(BASE.w)} × ${metres(BASE.h)}`);
   check('live_badge_is_metres', live[0], '12.00 m × 9.60 m');
-  await page.mouse.move(bx, by, { steps: 3 });
-  await settle();
+  for (let step = 7; step <= 12; step++) {
+    await page.mouse.move(ax + (bx - ax) * step / 12, ay + (by - ay) * step / 12);
+    await settle();
+  }
+  const afterMoves = await renderCounts();
+  check('backdrop_body_twelve_moves_zero_full_renders', afterMoves.full - afterDown.full, 0);
+  check('backdrop_body_twelve_moves_have_live_paint', afterMoves.live > afterDown.live, true);
   await page.mouse.up();
   await settle();
+  const afterUp = await renderCounts();
+  check('backdrop_body_up_one_full_render', afterUp.full - afterMoves.full, 1);
+  check('backdrop_body_up_not_grabbing', await grabbing(), false);
 }
 check('badge_gone_after_release', (await badges()).length, 0);
 {
@@ -173,7 +203,7 @@ check('badge_gone_after_release', (await badges()).length, 0);
   check('corner_lands_on_a_grid_node', onGrid(im.x) && onGrid(im.y), true);
   // …at the node NEAREST the finger: 102 → 100 (24 steps), 152 → 150 (36).
   // Exact, and it is meant to be — nothing may rescale the stage mid-gesture
-  // (the frame is frozen while _bdDrag is live; the toolbar does not reflow),
+  // (the frame is frozen during the gesture; the toolbar does not reflow),
   // or the picture would run away from the finger.
   check('landed_on_the_node_nearest_the_finger', [im.x, im.y], [100, 150]);
   check('frame_follows_the_picture', await frameRect(), im);
@@ -228,22 +258,21 @@ await settle();
     && near(cfg.sy, im.h / BASE.h, 1e-5), true);
   check('proportional_scale_keeps_axes_equal', near(cfg.sx, cfg.sy, 1e-6), true);
   check('scaled_width_is_on_the_grid', onGrid(im.x + im.w), true);
-  // …and the badge states the picture's REAL size through cell_cm
-  check('badge_matches_the_new_size', await page.evaluate(() => {
-    const c = window.__card;
-    c._bdDrag = { kind: 'move', pid: 1, sx: 0, sy: 0, base: { x: 0, y: 100, w: 1000, h: 800 },
-      p0: { dx: 0, dy: 0, k: 1 }, fx: 0, fy: 0, sgx: 0, sgy: 0, moved: false };
-    c.requestUpdate();
-    return c.updateComplete.then(() =>
-      c.renderRoot.querySelector('.measurelabel.bdmeasure')?.textContent.trim() ?? null);
-  }), `${metres(im.w)} × ${metres(im.h)}`);
-  await page.evaluate(() => { const c = window.__card; c._bdDrag = null; c.requestUpdate(); return c.updateComplete; });
+  // …and a genuine no-motion body gesture exposes the new real-size badge.
+  const [cx, cy] = await screenPt(im.x + im.w / 2, im.y + im.h / 2);
+  await page.mouse.move(cx, cy);
+  await page.mouse.down();
+  await settle();
+  check('badge_matches_the_new_size', (await badges())[0] ?? null,
+    `${metres(im.w)} × ${metres(im.h)}`);
+  await page.mouse.up();
+  await settle();
 }
 
 // ---------- 5) the reset button ------------------------------------------
 check('reset_button_offered_once_moved', await q('.editor-secondary .bdreset'), 1);
 check('reset_button_absent_from_primary_bar', await q('.decorbar .bdreset'), 0);
-await page.evaluate(() => { const c = window.__card; c._bdReset?.(); c.requestUpdate(); return c.updateComplete; });
+await page.locator('houseplan-card').locator('.editor-secondary .bdreset').click();
 await settle();
 check('reset_puts_the_picture_back', await imageRect(), BASE);
 check('reset_clears_the_fields', await spaceCfg(), {
@@ -257,17 +286,19 @@ check('reset_button_gone_again', await q('.editor-secondary .bdreset'), 0);
 // moving is a tool. smoke_pan_any_zoom guards the same thing from the outside.
 await tool('select');
 await settle();
-check('select_tool_still_pans_over_the_picture', await page.evaluate(async () => {
-  const c = window.__card;
-  const before = { ...c._viewOr(c._baseVb()) };
-  c._stagePointerDown({ pointerId: 91, clientX: 300, clientY: 300, target: c._stageEl, preventDefault() {} });
-  c._stagePointerMove({ pointerId: 91, clientX: 360, clientY: 350 });
-  const after = { ...c._viewOr(c._baseVb()) };
-  c._stagePointerUp({ pointerId: 91, clientX: 360, clientY: 350 });
-  await c.updateComplete;
-  const sp = c._serverCfg.spaces.find((s) => s.id === 'f1');
-  return Math.abs(after.x - before.x) > 1 && sp.plan_x == null;
-}), true);
+{
+  const before = (await viewBox()).split(' ').map(Number);
+  const [x, y] = await screenPt(500, 500);
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + 60, y + 50, { steps: 3 });
+  await settle();
+  const after = (await viewBox()).split(' ').map(Number);
+  await page.mouse.up();
+  await settle();
+  check('select_tool_still_pans_over_the_picture',
+    Math.abs(after[0] - before[0]) > 1 && (await spaceCfg()).x == null, true);
+}
 
 // ---------- 6) the paper is the ROOMS, and the picture sits on it ---------
 await mode('view');
@@ -334,20 +365,116 @@ check('devices_editor_stage_white_with_backdrop', editorWhite.devices.stageWhite
 check('decor_editor_stage_white_with_backdrop', editorWhite.decor.stageWhite, true);
 check('view_with_backdrop_is_not_forced_white', editorWhite.viewForcedWhite, false);
 
+// ---------- 6c) crossing the edge freezes the frame until release --------
+// These witnesses precede the #861 extraction. They observe only the rendered
+// SVG/config and the existing render diagnostics, never gesture-owner state.
+await mode('decor');
+await tool('backdrop');
+await settle();
+{
+  const before = await viewBox();
+  const bounds = await contentFrame();
+  const [ax, ay] = await screenPt(500, 500);
+  const [bx, by] = await screenPt(1200, 1000);
+  await page.mouse.move(ax, ay);
+  await page.mouse.down();
+  await settle();
+  const during = [await viewBox()];
+  const frames = [await contentFrame()];
+  for (let step = 1; step <= 12; step++) {
+    await page.mouse.move(ax + (bx - ax) * step / 12, ay + (by - ay) * step / 12);
+    await settle();
+    during.push(await viewBox());
+    frames.push(await contentFrame());
+  }
+  const liveImage = await page.evaluate(() => {
+    const box = window.__card.renderRoot.querySelector('[data-hp-live-editor] .bdframe .bdbox');
+    return { x: Number(box.getAttribute('x')), y: Number(box.getAttribute('y')),
+      w: Number(box.getAttribute('width')), h: Number(box.getAttribute('height')) };
+  });
+  check('backdrop_edge_move_really_crosses_frozen_bounds',
+    liveImage.x + liveImage.w > bounds[0] + bounds[2]
+      || liveImage.y + liveImage.h > bounds[1] + bounds[3], true);
+  check('backdrop_edge_move_viewbox_frozen', during.every((value) => value === before), true);
+  check('backdrop_edge_move_content_frame_frozen',
+    frames.every((value) => JSON.stringify(value) === JSON.stringify(bounds)), true);
+  check('backdrop_edge_move_still_grabbing', await grabbing(), true);
+  await page.mouse.up();
+  await settle();
+  const released = await contentFrame();
+  check('backdrop_edge_release_frame_catches_up', JSON.stringify(released) !== JSON.stringify(bounds), true);
+  check('backdrop_edge_release_frame_contains_picture',
+    released[0] <= liveImage.x && released[1] <= liveImage.y
+      && released[0] + released[2] >= liveImage.x + liveImage.w
+      && released[1] + released[3] >= liveImage.y + liveImage.h, true);
+  check('backdrop_edge_release_not_grabbing', await grabbing(), false);
+}
+
+// ---------- 6d) the real upper handle snaps by 5°, Shift stays free -------
+const rotate = async (shift) => {
+  await restore();
+  // A new editor session returns the grown view frame to the restored plan.
+  await mode('view');
+  await mode('decor');
+  await tool('backdrop');
+  // At fit-to-plan the upper handle can be clipped by the stage. A real zoom
+  // button makes the handle centre reachable, without injecting a camera.
+  await page.locator('houseplan-card').locator('[data-hp="zoom-out"]').click();
+  await cameraSettled();
+  await settle();
+  const { from, to } = await page.evaluate(() => {
+    const root = window.__card.renderRoot;
+    const handle = root.querySelector('.bdframe .bdhandle.dtrot');
+    const image = root.querySelector('.stage svg image');
+    const svg = root.querySelector('.stage svg');
+    const matrix = svg.getScreenCTM();
+    const at = (x, y) => new DOMPoint(x, y).matrixTransform(matrix);
+    const cx = Number(image.getAttribute('x')) + Number(image.getAttribute('width')) / 2;
+    const cy = Number(image.getAttribute('y')) + Number(image.getAttribute('height')) / 2;
+    const x = Number(handle.getAttribute('cx')), y = Number(handle.getAttribute('cy'));
+    const radians = 17 * Math.PI / 180;
+    const start = at(x, y);
+    const end = at(cx + (x - cx) * Math.cos(radians) - (y - cy) * Math.sin(radians),
+      cy + (x - cx) * Math.sin(radians) + (y - cy) * Math.cos(radians));
+    return { from: [start.x, start.y], to: [end.x, end.y] };
+  });
+  if (shift) await page.keyboard.down('Shift');
+  await page.mouse.move(...from);
+  await page.mouse.down();
+  await page.mouse.move(...to, { steps: 12 });
+  await settle();
+  await page.mouse.up();
+  if (shift) await page.keyboard.up('Shift');
+  await settle();
+  return (await spaceCfg()).angle;
+};
+check('backdrop_rotate_handle_snaps_five_degrees', await rotate(false), 15);
+const freeAngle = await rotate(true);
+check('backdrop_rotate_shift_preserves_free_angle', near(freeAngle, 17, 0.1), true);
+check('backdrop_rotate_shift_is_not_five_degree_snap', freeAngle % 5 !== 0, true);
+await restore();
+await mode('view');
+await settle();
+
 // ---------- 7) «Вписать всё» keeps a picture that was dragged away --------
-await page.evaluate(() => {
-  const c = window.__card;
-  const sp = c._serverCfg.spaces.find((s) => s.id === 'f1');
-  sp.plan_x = 1.5; sp.plan_y = 1.5; sp.plan_scale = 0.5;
-  c._cfgEpoch++; c._frame = null; c.requestUpdate();
-  return c.updateComplete;
+await page.evaluate(async () => {
+  await window.__hpTest.waitForWrites();
+  await window.__hpTest.setServerConfig((cfg) => {
+    const sp = cfg.spaces.find((s) => s.id === 'f1');
+    sp.plan_x = 1.5; sp.plan_y = 1.5; sp.plan_scale = 0.5;
+    return cfg;
+  });
 });
 await settle();
+await page.locator('houseplan-card').locator('[data-hp="zoom-fit"]').click();
+await cameraSettled();
 const fit = await page.evaluate(() => {
   const c = window.__card;
-  c._fitAll();
-  const b = c._baseVb();
-  const bg = c._spaceModel().bg;
+  const svg = c.renderRoot.querySelector('.stage svg');
+  const b = svg.getAttribute('viewBox').split(' ').map(Number);
+  const image = svg.querySelector('image');
+  const bg = Object.fromEntries(['x', 'y', 'w', 'h'].map((key) =>
+    [key, Number(image.getAttribute({ w: 'width', h: 'height' }[key] || key))]));
   return { b, bg };
 });
 check('the_frame_reaches_the_moved_picture',
