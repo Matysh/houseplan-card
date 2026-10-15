@@ -740,7 +740,10 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_940;
 // becomes this fact, so #873/#869/#850 rebase onto a full band. The band, the
 // initial-View ceiling and the absolute budget stay put.
 // #898, owner decision 2026-10-14: every ceiling with less than 10 % headroom is raised by 10 % (rounded up). 259060 -> 284966 B.
-export const LAZY_EDITOR_GZIP_CEILING = 263_811;
+// #912, owner approval 2026-10-15 (issuecomment-6194871293): combined #900+#912
+// measured 265955 B gzip and 2936529 B total. Adopt only these exact ceilings;
+// both 2000-B bands and every other limit stay unchanged.
+export const LAZY_EDITOR_GZIP_CEILING = 265_955;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
