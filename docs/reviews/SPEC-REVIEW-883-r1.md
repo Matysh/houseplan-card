@@ -17,7 +17,7 @@ Issue: [#883](https://github.com/Matysh/houseplan-card/issues/883) — «Обы�
 точки вызова отвечают `this._geometryHistory.clear()`. Не входит: узловые
 команды и серверный node-write API (#843), история Devices/LED, полный
 аудит старых снимков. Эта задача — Medium-находка, вынесенная из ревью ТЗ
-#843 ([SPEC-REVIEW-843-r1.md](../../houseplan-card/docs/reviews/SPEC-REVIEW-843-r1.md),
+#843 ([SPEC-REVIEW-843-r1.md](SPEC-REVIEW-843-r1.md),
 `docs/reviews/INDEX.md:30`) и оформленная отдельным issue, как того требует
 правило (#202).
 

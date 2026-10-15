@@ -49,6 +49,11 @@ identical clean control and immutable receipt inputs. The bounded checklist and
 dated historical errata preserve execution/reuse/equivalence/unknown boundaries;
 existing guards, budgets, raw and accepted verdicts remain unchanged.
 
+Summary loader cleanup (#909) removes only the unused attachment/slot API;
+the current ViewRuntimeBoundary owns installation/retirement and preserves
+warm code, pending-import dedup, retry and fingerprint guarantees. The one
+historical SPEC883→SPEC843 relative link is corrected without changing verdicts.
+
 Backdrop terminal presentation (#908) clears its grabbing cursor immediately
 on cancellation and re-arms it at the next begin; pointer capture loss cancels
 only its owning backdrop gesture. Touch editor: best effort / intentionally degraded.

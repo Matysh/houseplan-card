@@ -360,6 +360,17 @@ Lit/header work while the actual imports remain held; only then does it release
 the roots and require no construction or late host update. Neither correction
 changes a production guard, baseline, budget or expected final behavior.
 
+### Summary loader cleanup (#909)
+
+`summary-runtime-loader.test.mjs` keeps all five warm/dedup/retry/reset and
+retirement cases on the live `create()`/`ensure()` and `ViewRuntimeBoundary`
+paths. The shared boundary's existing tests still verify synchronous warm
+adoption and stale-context refusal. The unchanged summary native consumers
+verify first/warm/reconnect behavior; cleanup adds no new runtime wrapper.
+The existing `summary-runtime-attaches-after-first-render` declaration now
+targets the actual boundary warm lookup and its current unit guard, not the
+removed attachment method. Static readiness is not mutation execution/caught.
+
 ## Config writer authority witnesses (#890)
 
 `smoke_config_authority` exercises a real GUI Save followed by public setConfig,

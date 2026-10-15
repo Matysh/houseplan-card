@@ -15756,13 +15756,9 @@ const MUTANT_DEFINITIONS = [
       + 'connectedCallback; deferring even a warm factory to a promise lets the first header '
       + 'measurement miss the controls and a late refit follows (#506 AC4/AC5)',
     patches: [{
-      file: 'src/summary-runtime-loader.ts',
-      find: '    const warm = this.create(host);\n'
-        + '    if (warm) {\n'
-        + '      ready(warm);\n'
-        + '      return attachment;\n'
-        + '    }\n',
-      replace: '    // mutant: the warm factory is deferred like a cold import\n',
+      file: 'src/view-runtime-boundary.ts',
+      find: '      const warm = this.code.create(this.host);',
+      replace: '      const warm: Runtime | null = null;',
     }],
   },
   {
@@ -19142,7 +19138,7 @@ const UNIT_GUARD_GROUPS = [
     'live-pan-incoming-edge-clipped',
     'live-pan-rewrites-viewbox-every-frame',
   ]],
-  [unitGuard('test/summary-runtime-loader.test.mjs'), [
+  [unitGuard('test/view-runtime-boundary.test.mjs'), [
     'summary-runtime-attaches-after-first-render',
   ]],
   [unitGuard('test/config-reload-authority.test.mjs'), [

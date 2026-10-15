@@ -18,87 +18,14 @@
  *
  * A pending import is shared by concurrent cold mounts (one network round
  * trip) but never its result-instance. A failed import is forgotten, so the
- * next `attach` may try again; there are no background retries.
+ * next `ensure` may try again; there are no background retries. Per-host
+ * installation and cancellation belong to the current ViewRuntimeBoundary.
  */
 import { ViewRuntimeCode, assertViewRuntimeFingerprint } from './view-runtime-boundary';
 import { ENTRY_BUILD_FINGERPRINT } from './editor-runtime-loader';
 import { viewRuntimeRetryUrl } from './view-runtime-retry';
 
-export type SummaryRuntimeFactory<Host, Runtime> = (host: Host) => Runtime;
-
-export interface SummaryRuntimeAttachment {
-  /** Forget this attempt: a later resolution must not touch the host. */
-  cancel(): void;
-}
-
-export class SummaryRuntimeLoader<Host, Runtime> extends ViewRuntimeCode<Host, Runtime> {
-
-  /**
-   * Build the runtime for `host` as soon as the code is available. When it is
-   * warm, `ready` runs before this returns. Otherwise the shared import is
-   * awaited and `ready` runs once — unless the attachment was cancelled
-   * meanwhile (host disconnected, or a newer attach superseded this one).
-   */
-  public attach(host: Host, ready: (runtime: Runtime) => void): SummaryRuntimeAttachment {
-    let live = true;
-    const attachment = { cancel: () => { live = false; } };
-    const warm = this.create(host);
-    if (warm) {
-      ready(warm);
-      return attachment;
-    }
-    void this.ensure().then((factory) => {
-      if (live) ready(factory(host));
-    }, () => undefined);
-    return attachment;
-  }
-
-}
-
-/** What one host's slot needs from its runtime. */
-export interface SummaryRuntimeLike {
-  connect(): void;
-  disconnect(): void;
-}
-
-/**
- * One host's summary runtime and the pending attachment of its current
- * connection. `connect()` follows the host's `connectedCallback`, `disconnect()`
- * its `disconnectedCallback`; the runtime instance survives a same-node
- * reconnect, a pending cold attach does not survive a disconnect.
- */
-export class SummaryRuntimeSlot<Host, Runtime extends SummaryRuntimeLike> {
-  public runtime: Runtime | undefined;
-  private attachment: SummaryRuntimeAttachment | null = null;
-
-  public constructor(
-    private readonly loader: SummaryRuntimeLoader<Host, Runtime>,
-    private readonly host: Host,
-    /** Runs once per instance, right after adoption; connects when the host is in the tree. */
-    private readonly adopted: (runtime: Runtime) => void,
-  ) {}
-
-  public connect(): void {
-    if (this.runtime) { this.runtime.connect(); return; }
-    this.attachment?.cancel();
-    const attachment = this.loader.attach(this.host, (runtime) => this.adopt(runtime));
-    // Warm code has already run `adopt`; only a cold attach stays pending.
-    if (!this.runtime) this.attachment = attachment;
-  }
-
-  public disconnect(): void {
-    this.attachment?.cancel();
-    this.attachment = null;
-    this.runtime?.disconnect();
-  }
-
-  private adopt(runtime: Runtime): void {
-    this.attachment = null;
-    if (this.runtime) return;
-    this.runtime = runtime;
-    this.adopted(runtime);
-  }
-}
+export class SummaryRuntimeLoader<Host, Runtime> extends ViewRuntimeCode<Host, Runtime> {}
 
 type LoadedSummaryPanelRuntime = import('./summary-panel-runtime-loaded').LoadedSummaryPanelRuntime;
 

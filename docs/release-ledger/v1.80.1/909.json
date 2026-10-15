@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 909,
+  "baseStable": "v1.80.1",
+  "category": "infra",
+  "rationale": "Remove confirmed unused internal summary attachment/slot types and method, retain useful tests on the current code-cache/ViewRuntimeBoundary paths, and correct one historical review relative link. Runtime code-cache/factory/pending/fingerprint/retry, panel behavior, settings and schemas remain unchanged; no measured performance improvement is claimed. This is technical code/documentation cleanup, not a stable-user release change."
+}

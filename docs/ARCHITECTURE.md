@@ -1345,8 +1345,11 @@ reused across state changes; `summary-panel-runtime-loaded.ts` the lazy View
 controller — a screen-space, non-SVG sibling of the camera layer outside content
 bounds, with one minute-aligned timer and a lifecycle generation binding dialog,
 draft, picker and async work to one route/user/permission/kiosk identity.
-`summary-runtime-loader.ts` shares code, never state, and attaches a warm runtime
-before the first render ([#506](specs/506-startup-performance.md)).
+`summary-runtime-loader.ts` shares code, never state, and provides synchronous
+warm `create()` before the first render ([#506](specs/506-startup-performance.md)).
+Only `ViewRuntimeBoundary` owns per-host installation/retirement; the unused
+legacy attachment/slot API is removed (#909). Factory/pending caches,
+fingerprint validation and retry URLs stay on their existing paths.
 `summary-panel-editor.ts` loads on the settings button; its revision-checked
 shared write precedes the local show choice. #505 styles and the 190 ms phases
 stay lazy and never move the camera; editors and the space card never load the
