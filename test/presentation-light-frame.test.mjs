@@ -164,4 +164,10 @@ test('#895 AC2/AC4: unknown proof falls back; topology, disposal and fresh rows 
     () => { host.hass = { ...host.hass, entities: { ...host.hass.entities } }; },
     () => { host._serverCfg = { ...host._serverCfg, settings: { show_device_battery: false } }; },
   ]) { change(); equalComplete(host, reuse, 'structural invalidation'); }
+  const graph = new PresentationLightFrame(resolvedLightSources(host._planHass, host._devices));
+  reuse.begin(host, graph);
+  assert.throws(() => reuse.present('interrupted', false, () => { throw Error('interrupted capture'); }), /interrupted/);
+  const full = reuse.stats.full;
+  equalComplete(host, reuse, 'unfinished capture cannot lend partial dependencies to a new frame');
+  assert.equal(reuse.stats.full, full + 1);
 });

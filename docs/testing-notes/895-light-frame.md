@@ -42,5 +42,34 @@ deduplication, light geometry, LED bands, alarms or diagnostic policy changed.
 - New #895 units: 3 PASS, including 200×100 and unindexed canonical oracle.
 - Mutation registry static readiness: 1519 definitions, execution 0; existing
   five warnings remain. Two new Node-only declarations; no browser growth.
-- Paired browser performance, native/golden and mandatory pre-push/exact CI:
-  pending; this checkpoint is not a merge/release verdict.
+- Paired browser performance: all six fixed cold samples PASS, no retries or
+  discarded rows. Base `3e10b8adea6e9bb8050826bc9141a3e58bc6ae2b`, result
+  `c4151b1acf26cc201dd7bd2d258c7c7deeb327fe` (same source as this later B/C
+  evidence-only follow-up). All samples: bootSoft=false, booting=false,
+  continuity=steady, 200 devices, 50 strips. Exact protocol/fixture/observer
+  hashes and pins match. S2 builds **40000 → 200** in each pair (99.5% less),
+  staleStripes=0. Tick p95 24.2/25.2/24.8 ms → 13.7/12.9/12.9 ms; capture
+  wall sums 1058/1078/1051 ms → 201/196/194 ms; sampled product CPU totals
+  1995/2024/2000 ms → 1113/1100/1113 ms. These are bounded observations of
+  this scenario, not compositor/real-GPU acceptance or new timing budgets.
+  This is a **historical independent cohort before #867 integration**, not
+  exact final-source proof after that shared capture projection changes.
+- `light-presentation-report.test.mjs`: 2 PASS. The actual raw receipts pass
+  the same read-only comparator with zero failures; missing CPU/capture rows,
+  dirty/unsettled/mismatched material or <50% reduction fail closed.
+- Raw local `artifacts/895-base-perf.json`: SHA256
+  `bfa79fba63339deb623fba4aad7d8158a86a9df96b3ff9b2950b4d8c47becabc`;
+  `artifacts/895-result-perf.json`:
+  `143de0f7c064e4d723d294352fd0b629b039d5bfd66228f94e4b909547f02a3a`;
+  comparison:
+  `8cfd9b679c0b4d3a33e42c310524abdadf9ca6bf546dcdb8de8a681a65979f51`.
+- Native PASS: controls, linked_virtual_light, cold_view_toggle,
+  device_icon_design, activity_color_settings, danger_confirm_branches,
+  space_card_identity. LED strip smoke reached a separate garden-navigation
+  refusal at line614; the exact same untouched smoke also fails at that same
+  line on accepted base `3e10b8ad`. Earlier exact transition-event witnesses
+  pass on both. Both red logs are retained; cause remains unknown and this is
+  not waived or fixed by changing the fixture here. Final shared regression
+  must account for it before any merge/release verdict.
+- Final accepted #867 integration, full golden, mandatory pre-push/exact CI
+  remain pending. This checkpoint is not a merge/release verdict.
