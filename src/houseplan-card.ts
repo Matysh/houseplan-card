@@ -12846,7 +12846,7 @@ export class HouseplanCard extends LitElement {
       if (!intent.command || !sameToggleOperationTargets(initial, intent)) return;
       this._startDevicePressFeedback(current.id);
       this.hass.callService(intent.command.domain, intent.command.service, intent.command.data)
-        .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
+        .catch((error: unknown) => this._showToast(this._t('toast.error', { err: this._errText(error) })));
     };
     if (infoCardTapConfirmationRequired(device)) {
       this._tapConfirm = {

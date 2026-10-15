@@ -483,7 +483,8 @@ export function infoCardTapConfirmationRequired(device: DevItem): boolean {
 
 /** A card row is its own exact target, never the marker's controls group. */
 export function resolveInfoRowToggleIntent(
-  hass: any, registryHass: any, entityId: string,
+  hass: ResolveToggleOptions['hass'], registryHass: ResolveToggleOptions['registryHass'],
+  entityId: string,
 ): ResolvedToggleIntent {
   return singleIntent('explicit-toggle', resolveEntity(hass, registryHass, entityId, 'binding'));
 }
