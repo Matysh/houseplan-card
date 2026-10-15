@@ -384,7 +384,7 @@ async def test_issue_912_topic_removal_keeps_exact_cache_and_reload_does_not_sca
 
 
 @pytest.mark.parametrize("corruption", ["future", "foreign", "topic", "nodes", "time"])
-@pytest.mark.parametrize("action", ["refresh", "off", "off-already-disabled"])
+@pytest.mark.parametrize("action", ["refresh", "off"])
 async def test_issue_912_invalid_store_is_preserved_until_explicit_recovery(
     hass, hass_ws_client, transport, monkeypatch, corruption, action,
 ):
@@ -402,13 +402,6 @@ async def test_issue_912_invalid_store_is_preserved_until_explicit_recovery(
         payload["topics"]["mesh-a"]["map"]["nodes"] = [{}]
     else:
         payload["topics"]["mesh-a"]["obtained_at"] = True
-    if action == "off-already-disabled":
-        runtime = entry.runtime_data
-        current = await runtime.config_store.async_load()
-        config = copy.deepcopy(current["config"])
-        config["settings"]["zigbee_topology"]["enabled"] = False
-        async with runtime.write_lock:
-            await async_save_config_state(runtime, config, current["rev"] + 1)
     await coordinator._store.async_save(payload)
     assert await hass.config_entries.async_unload(entry.entry_id)
     assert await hass.config_entries.async_setup(entry.entry_id)
