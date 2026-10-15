@@ -14,6 +14,10 @@ import { dirname, join, normalize } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { headings, markdownLinks, sectionText } from '../scripts/md-anchors.mjs';
+import { findStep } from './helpers/workflow-step.mjs';
+import { MUTANTS } from '../scripts/mutation-registry.mjs';
+import { checkMutationRegistry, definitionProblems } from '../scripts/mutation-registry-check.mjs';
+import { classifyCommandResult, isProofOutcome } from '../scripts/mutation-guard-outcome.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const read = (rel) => readFileSync(join(ROOT, rel), 'utf8').replace(/\r\n?/g, '\n');
@@ -93,7 +97,7 @@ const KEY_RULES = {
     ['27-код-ревью', 'проверено чтением, не исполнением'],
     ['27-код-ревью', 'Защитный AC доказывается таблицей «чем краснеет»'],
     ['27-код-ревью', 'Пустой третий столбец — находка Medium, а не примечание'],
-    ['27-код-ревью', '«Тест умеет падать» без названной мутации доказательством не является'],
+    ['27-код-ревью', '«Тест умеет падать» без названного отрицательного свидетеля доказательством не является'],
     ['27-код-ревью', 'Вердикт привязан к SHA (#312)'],
     ['27-код-ревью', 'новое имя в нём — находка ревью, а не запись в список'],
     ['8-гейты', 'ревьюер обязан перечислить, какие гейты прогнал, какие нет и почему'],
@@ -184,7 +188,7 @@ test('#634 промпт ревьюера: конспект вместо пере
     'Материал ревью — ровно `${{ needs.prepare.outputs.material_sha }}`',
     'Не делай `git fetch`, `git pull` и `git checkout` на другой коммит',
     'переменной окружения REVIEW_DOC (абсолютный, ВНЕ репозитория)',
-    'В самом репозитории не создавай файлов вообще',
+    'В репозитории не создавай вручную файлы кода или отчёт ревью',
     'SPEC-REVIEW для этапа spec, CODE-REVIEW для code',
     'Ты НЕ правишь ни ТЗ, ни продуктовый код',
     '«AC · чем доказан · чем краснеет»',
@@ -236,4 +240,104 @@ test('#750 AC2: ссылки промпта на REVIEWER.md ведут в су�
   const delta = norm(bullets('повторный-раунд').join('\n'));
   assert.ok(delta.includes(norm('дифф тела issue')), '«Повторный раунд»: дельта ТЗ — дифф тела issue');
   assert.ok(delta.includes(norm('Сомнение в локальности — полный разбор')), '«Повторный раунд»: сомнение — полный разбор');
+});
+
+// Read the real Review input scalar, bounded by the parsed workflow step.
+// This is deliberately not another copy of the policy or a generic YAML/GHA engine.
+function actualReviewPrompt() {
+  const workflow = read('.github/workflows/_process.yml');
+  const step = findStep(workflow, { name: 'Review' });
+  const source = workflow.split('\n').slice(step.line - 1, step.last).join('\n');
+  const match = /^          prompt: \|\n((?:^            .*\n|^\s*\n)*)/m.exec(source);
+  assert.ok(match, 'Review has the supported literal prompt scalar');
+  return match[1].replace(/^ {12}/gm, '');
+}
+
+function promptFixture(stage, track) {
+  const values = { 'github.event.issue.number': '905', 'github.repository': 'owner/repo',
+    'needs.guard.outputs.stage': stage, 'needs.guard.outputs.cycle': '1',
+    'needs.guard.outputs.spent': '0', 'needs.guard.outputs.limit': '4',
+    'needs.prepare.outputs.material_sha': 'a'.repeat(40) };
+  const emptyNotes = ['rebase_note', 'risk_note', 'route_note', 'validated_note'];
+  return actualReviewPrompt().replace(/\$\{\{([\s\S]*?)\}\}/g, (_, raw) => {
+    const expression = raw.trim();
+    if (expression in values) return values[expression];
+    if (expression === "needs.prepare.outputs.track || 'ask'") return track;
+    if (emptyNotes.some(name => expression === 'needs.prepare.outputs.' + name)) return '';
+    // The unchanged-body fixture legitimately takes the false branch here.
+    if (expression.startsWith("needs.prepare.outputs.spec_body_changed == 'true' && format(")) return '';
+    const strings = [...expression.matchAll(/'((?:[^']|'')*)'/g)].map(match => match[1].replaceAll("''", "'"));
+    if (expression.startsWith("needs.prepare.outputs.track == 'show' && needs.guard.outputs.stage == 'code' &&"))
+      return track === 'show' && stage === 'code' ? strings[2] : strings[3];
+    if (expression.startsWith("needs.guard.outputs.stage == 'spec' &&"))
+      return stage === 'spec' ? strings[1] : track === 'show' ? strings[3] : strings[4];
+    assert.fail('Prompt fixture must explicitly handle the actual expression: ' + expression);
+  });
+}
+
+function policyProblems(source) {
+  const text = norm(source), problems = [];
+  for (const phrase of ['negative-input cases на неизменённой реализации разрешены',
+    'временный ручной патч исполняемой реализации', 'собранной копии (`test-build`/bundle)',
+    'гарда или лимита', 'вне ночного workflow', 'запрещено', 'не исполнялся',
+    'статический `--check`', 'ordinary PASS не являются caught', 'Bash/Write'])
+    if (!text.includes(norm(phrase))) problems.push('missing: ' + phrase);
+  for (const recipe of [/прогона со снятой защитой/, /без названной мутации/,
+    /после проверки «умеет ли тест падать»/, /ревьюер мутирует и затем восстанавливает/,
+    /в ходе проверки «умеет ли тест падать»/])
+    if (recipe.test(text)) problems.push('retired permission/recipe: ' + recipe.source);
+  return problems;
+}
+
+test('#905 AC1/AC2 common policy reaches the actual prompt for every stage/track, without old exceptions', () => {
+  const reviewer = read('docs/process/REVIEWER.md');
+  const common = sectionText(reviewer, 'отрицательные-проверки-и-мутанты');
+  assert.ok(common, 'common policy has its own addressed section');
+  assert.ok(reviewer.indexOf('## Отрицательные проверки и мутанты') < reviewer.indexOf('## Ревью ТЗ'));
+  assert.doesNotMatch(sectionText(reviewer, 'трек-show'), /Мутанты в разработке/,
+    'the common prohibition is not left inside show');
+  for (const text of [sectionText(read(CANON), '27-код-ревью'), common, read('docs/TESTING.md')])
+    assert.deepEqual(policyProblems(text), []);
+  for (const stage of ['spec', 'code']) for (const track of ['ask', 'show', 'ship']) {
+    const prompt = promptFixture(stage, track);
+    assert.deepEqual(policyProblems(prompt), [], stage + '/' + track);
+    assert.ok(prompt.includes('Этап: ' + stage));
+    assert.ok(prompt.includes('Трек: ' + track));
+    assert.ok(prompt.includes('docs/process/REVIEWER.md,\n«Отрицательные проверки и мутанты»'));
+    assert.ok(prompt.includes('Generated outputs обычных build/test допустимы'));
+    assert.ok(!prompt.includes('${{'), 'fixture renders every actual expression');
+  }
+  assert.deepEqual(policyProblems(actualReviewPrompt()), [], 'no conditional legacy exception survives in source');
+  const workflow = read('.github/workflows/_process.yml');
+  assert.doesNotMatch(norm(workflow), /ревьюер мутирует и затем восстанавливает|в ходе проверки «умеет ли тест падать»/);
+  // The #365/#220 isolation is still real, not replaced by a prose ban.
+  assert.match(workflow, /git reset -q --hard "origin\/\$target"/);
+  assert.match(workflow, /git clean -fdq -e node_modules/);
+  assert.match(workflow, /REVIEW_DOC: \$\{\{ runner\.temp \}\}\/review-document\.md/);
+  assert.match(workflow, /--max-turns 150/);
+});
+
+test('#905 AC3 ordinary input fixtures and static readiness are not caught execution evidence', () => {
+  // Negative INPUT to an unchanged text-contract checker, not a filesystem,
+  // implementation, compiled-artifact, budget or guard mutation.
+  const ordinary = policyProblems('Для чистых юнитов достаточно прогона со снятой защитой.');
+  assert.ok(ordinary.some(problem => problem.startsWith('retired permission/recipe:')));
+  const contradictoryInput = actualReviewPrompt() + '\nДля чистых юнитов достаточно прогона со снятой защитой.';
+  assert.ok(policyProblems(contradictoryInput).some(problem => problem.startsWith('retired permission/recipe:')),
+    'Adding the new rule cannot hide an old permission in the same text input; no model receives this fixture');
+  const declared = { id: 'fixture', because: 'ordinary data', guard: 'node --test test/example.test.mjs',
+    patches: [{ file: 'src/example.ts', find: 'guard', replace: 'other' }] };
+  assert.deepEqual(definitionProblems(declared), []);
+  assert.ok(definitionProblems({}).length > 0, 'invalid declaration is an ordinary negative input');
+  assert.equal(isProofOutcome({ kind: 'registered', definition: declared }), false);
+  const lines = [];
+  assert.equal(checkMutationRegistry(MUTANTS, { root: ROOT, log: line => lines.push(line) }), 0);
+  assert.ok(lines.some(line => /static-readiness: .* execution=0 caught=unknown/.test(line)));
+  assert.equal(isProofOutcome({ kind: 'static-readiness', status: 0 }), false);
+  assert.equal(isProofOutcome({ kind: 'ordinary-pass', status: 0 }), false);
+  // Synthetic receipt classification only. No execute/apply/prepare port is
+  // invoked, and this is NOT caught proof for any project definition.
+  const receipt = classifyCommandResult({ status: 1, stdout: 'AssertionError: rejected invalid input' });
+  assert.equal(isProofOutcome(receipt), true);
+  assert.equal(receipt.kind, 'assertion-killed');
 });

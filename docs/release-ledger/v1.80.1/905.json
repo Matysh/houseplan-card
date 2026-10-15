@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 905,
+  "baseStable": "v1.80.1",
+  "category": "infra",
+  "rationale": "Relative to v1.80.1, this task aligns review/testing process instructions and the actual review prompt with nightly-only mutation execution, including manual temporary compiled-artifact/guard/budget substitutions. Text-contract and ordinary metadata fixtures preserve the distinction from negative inputs and static readiness. It changes no Houseplan runtime/user plan, model or gate budget, CI permissions, mutation executor, release authority or historical product verdict."
+}

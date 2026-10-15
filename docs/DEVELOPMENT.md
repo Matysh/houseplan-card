@@ -1353,6 +1353,29 @@ archive. The wizard cannot recover an archive automatically.
   must pass the same source-fingerprint handshake before Iso installs atomically;
   `houseplan-assets.json` records the graph as `lazyIsometricFiles`.
 
+### Negative evidence in development and review (#905)
+
+The common policy in PROCESS §2.7, TESTING, the role digests and the actual
+Review prompt applies to every track/stage. Ordinary negative inputs run
+against unchanged code. A temporary manual patch to implementation, its compiled
+`test-build`/bundle copy, guard or budget followed by execution is a mutation,
+even without the registry and even if restored afterwards; only the nightly
+workflow executes those witnesses. Registration, static `--check` and ordinary
+PASS are not caught proof. A declared witness is reported as not executed.
+
+`test/process-digests.test.mjs` reads the actual Review scalar, renders its
+current expression surface for stage/track fixtures and rejects the retired
+pure-unit/restore permission. Ordinary invalid text/declaration inputs and the
+unchanged static registry reader prove the distinction without applying patches;
+synthetic outcome records test taxonomy, not real nightly caught evidence.
+The prompt word ceiling, tools/permissions, max-turns and verdict schema remain
+unchanged. Normal build/test generated outputs and the external REVIEW_DOC are
+still allowed and isolated by publication's existing index/tree cleanup.
+This is instruction consistency, not a Bash sandbox or a guarantee that a model
+cannot disobey. Historical review documents and accepted product verdicts stay
+immutable; the observed #903/#901 manual substitutions are evidence for this
+follow-up, not commands to reproduce.
+
 ## Maintenance diagnostics
 
 ### Labs presentation flags

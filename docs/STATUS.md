@@ -31,6 +31,12 @@ provenance check reads versioned phases and existing publisher commits; later
 A/B work must renew any earlier doc-only classification. The agent-authored
 ledger schema and owner release authority remain unchanged.
 
+Review negative-evidence instructions (#905) distinguish ordinary input cases,
+static registered-witness readiness and nightly caught proof in the shared
+canon/digests/TESTING and actual prompt. Manual temporary substitutions of
+compiled artifacts are not an exception. Text-contract checks do not claim
+physical enforcement or reinterpret historical product verdicts.
+
 Backdrop terminal presentation (#908) clears its grabbing cursor immediately
 on cancellation and re-arms it at the next begin; pointer capture loss cancels
 only its owning backdrop gesture. Touch editor: best effort / intentionally degraded.

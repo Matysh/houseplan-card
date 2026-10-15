@@ -9,6 +9,13 @@ classification must be renewed when an earlier doc-only blob meets its first
 A/B delivery; the same immutable history check guards merge and catalogue.
 No runtime state, owner acceptance or release authority is introduced.
 
+Review instruction consistency (#905) places negative-evidence policy in the
+common reviewer entry and actual workflow prompt, before track-specific text.
+Ordinary inputs exercise unchanged code; temporary source, compiled-artifact,
+guard or budget substitutions are mutation execution and remain nightly-only.
+Existing static readiness and outcome classifiers keep their formats/owners;
+no command sandbox, permission change or retrospective verdict rewrite is added.
+
 Backdrop cancellation (#908) reconciles only its stage `bdgrabbing` class at
 cancel and explicit begin, since a retained terminal can leave Lit's cached
 class value unchanged. The stage routes capture loss only for the active
