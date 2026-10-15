@@ -201,12 +201,13 @@ for (const mode of ['view', 'kiosk']) test(`#902 AC3 passive ${mode} accepts one
 for (const mode of ['connection', 'user', 'aba', 'detach']) for (const outcome of ['resolve', 'reject']) {
   test(`#902 AC3 retired ${mode} old released-write ${outcome} preserves fresh owner including busy`, async () => {
     const h = harness(); h.releaseDrag(); await tick(); h.change(mode);
-    if (mode !== 'detach') h.releaseDrag(.6);
+    if (mode === 'detach') h.host.isConnected = true;
+    h.releaseDrag(.6);
     const before = h.snapshot();
     h.writes[0].gate[outcome](outcome === 'reject' ? new Error('old write') : undefined);
     await tick();
     assert.deepEqual(h.snapshot(), before, 'old success/error/finally cannot change the new UI or pending map');
-    if (mode !== 'detach') { h.writes[1].gate.resolve(); await tick(); assert.equal(h.host._devicePositionHistory.size, 1); }
+    h.writes[1].gate.resolve(); await tick(); assert.equal(h.host._devicePositionHistory.size, 1);
   });
   for (const seam of ['read', 'adoption']) test(`#902 AC3 retired ${mode} old full ${seam} ${outcome} has no adoption/tail`, async () => {
     const h = harness();

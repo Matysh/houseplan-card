@@ -54,7 +54,9 @@ export function checkCoordinateWriteBarriers(root = defaultRoot) {
     'frontend room discovery config', 300);
 
   const positionWrites = occurrences(frontend, "type: 'houseplan/layout/update'");
-  if (positionWrites.length !== 3) errors.push(`frontend position writer inventory: ${positionWrites.length}`);
+  // #902: debounced label/position saves now reuse the marker point transport.
+  // Keep an exact inventory, not a range permitting another unregistered writer.
+  if (positionWrites.length !== 2) errors.push(`frontend position writer inventory: ${positionWrites.length}`);
   for (const [ordinal, index] of positionWrites.entries()) requireWindow(
     errors, frontend, index,
     /const pos = canonicalizePosition\([^)]+\);[\s\S]*pos(?:[,\s}])/,
