@@ -12710,7 +12710,7 @@ const MUTANT_DEFINITIONS = [
     because: '#906 AC1: an unrelated HA update/new registry wrapper must not repeat exact mapping or registry traversal.',
     patches: [{ file: 'src/zigbee-topology.ts',
       find: '  if (previous && old && previous.owner === input.owner && previous.userIdentity === input.userIdentity',
-      replace: '  if (false && previous && old && previous.owner === input.owner && previous.userIdentity === input.userIdentity' }],
+      replace: '  if (previous && old && previous.owner === input.owner && previous.userIdentity === input.userIdentity && previous.mapped.length < 0' }],
   },
   {
     id: 'zigbee-mapping-ignores-entity-material',
