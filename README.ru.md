@@ -5,6 +5,7 @@
 [![CI](https://github.com/Matysh/houseplan-card/actions/workflows/validate.yml/badge.svg)](https://github.com/Matysh/houseplan-card/actions)
 [![Live demo](https://img.shields.io/badge/демо-попробовать-00c853?logo=homeassistant&logoColor=white)](https://demo.houseplan.tech)
 [![Telegram chat](https://img.shields.io/badge/Telegram-чат-2CA5E0?logo=telegram&logoColor=white)](https://t.me/ha_houseplan)
+[![Поддержать проект](https://img.shields.io/badge/Boosty-%D0%9F%D0%BE%D0%B4%D0%B4%D0%B5%D1%80%D0%B6%D0%B0%D1%82%D1%8C_%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82-F15F2C?logo=boosty&logoColor=white)](https://boosty.to/matysh/donate)
 
 📘 **[Полное руководство](docs/USER-GUIDE.ru.md)** · 🇬🇧 **[English](README.md)** · 🗂 **[Задачи проекта](https://github.com/Matysh/houseplan-card/issues)**
 
