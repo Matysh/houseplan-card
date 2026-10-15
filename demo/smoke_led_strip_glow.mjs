@@ -848,14 +848,72 @@ check('the Glow radius has one wrapper focus outline', JSON.stringify(radiusFocu
 await page.reload();
 await page.waitForFunction(() => window.__card?._loadOk);
 await installHpTestOnPage(page);
-// The preceding real pinches persist their camera. Restore the public Fit all
-// before this separate cold-dialog scenario so the intended d_tv hit is exposed,
-// rather than clicking an overlapping/occluding marker in the enlarged plan.
+await evaluate(() => {
+  window.__899ColdCamera = () => {
+    const card = window.__card, root = card.shadowRoot;
+    return { at: performance.now(), savedZoom: JSON.parse(localStorage.getItem('houseplan_card_zoom_v1') || '{}').f1,
+      state: root.querySelector('ha-card')?.getAttribute('data-hp-state'),
+      mode: root.querySelector('ha-card')?.getAttribute('data-hp-mode'),
+      stage: root.querySelector('.stage')?.className, inert: root.querySelector('.stage')?.hasAttribute('inert'),
+      viewBox: root.querySelector('.plan-svg')?.getAttribute('viewBox'),
+      quality: card.getAttribute('data-led-zoom-quality') };
+  };
+  window.__899ColdTrace = [{ phase: 'before-fit', ...window.__899ColdCamera() }];
+});
+// Reload is not input readiness: _loadOk can precede the boot reveal, and the
+// facade's two frames do not finish the 220 ms Fit or the editor transition.
+// Preserve the preceding real pinches' saved camera, then wait for the actual
+// public View and Fit completion before entering this independent cold scene.
+await page.waitForFunction(() => {
+  const root = window.__card?.shadowRoot;
+  return root?.querySelector('ha-card[data-hp-state="ready"][data-hp-mode="view"]')
+    && root.querySelector('.stage')?.matches('.mode-view:not(.hpboot):not(.mode-transition):not([inert])');
+}, null, { timeout: 5000 });
+const readyView = await evaluate(() => {
+  const sample = { phase: 'view-ready', ...window.__899ColdCamera() };
+  window.__899ColdTrace.push(sample); return sample;
+});
+check('#899 cold scene preserves the saved pinch camera until View is ready',
+  readyView.state === 'ready' && readyView.mode === 'view' && !readyView.inert
+    && Number.isFinite(readyView.savedZoom) && readyView.savedZoom !== 1);
 await page.locator('houseplan-card [data-hp="zoom-fit"]').click();
-await evaluate(() => window.__hpTest.settled());
+await page.waitForFunction(() => {
+  const root = window.__card?.shadowRoot;
+  return JSON.parse(localStorage.getItem('houseplan_card_zoom_v1') || '{}').f1 === 1
+    && root?.querySelector('ha-card[data-hp-state="ready"][data-hp-mode="view"]')
+    && root.querySelector('.stage')?.matches('.mode-view:not(.hpboot):not(.mode-transition):not([inert])');
+}, null, { timeout: 5000 });
+const fittedView = await evaluate(async () => {
+  await window.__hpTest.settled();
+  const sample = { phase: 'fit-terminal', ...window.__899ColdCamera() };
+  window.__899ColdTrace.push(sample); return sample;
+});
+check('#899 Fit all commits base zoom before editor navigation',
+  [fittedView.savedZoom, fittedView.state, fittedView.mode, fittedView.inert], [1, 'ready', 'view', false]);
 ledRequests.length = 0;
 const before = 0;
-await evaluate(async () => { await window.__hpTest.setMode('devices'); await window.__hpTest.openMarkerDialog('d_tv'); });
+await evaluate(async () => {
+  window.__899ColdTrace.push({ phase: 'before-devices', ...window.__899ColdCamera() });
+  await window.__hpTest.setMode('devices');
+  window.__899ColdTrace.push({ phase: 'devices-two-frames', ...window.__899ColdCamera() });
+});
+await page.waitForFunction(() => {
+  const root = window.__card?.shadowRoot;
+  return root?.querySelector('ha-card[data-hp-state="ready"][data-hp-mode="devices"]')
+    && root.querySelector('.stage')?.matches('.mode-devices:not(.hpboot):not(.mode-transition):not([inert])');
+}, null, { timeout: 5000 });
+const readyDevices = await evaluate(() => {
+  const sample = { phase: 'devices-interactive', ...window.__899ColdCamera() };
+  window.__899ColdTrace.push(sample); return sample;
+});
+check('#899 cold Devices is ready and interactive before opening the marker',
+  readyDevices.state === 'ready' && readyDevices.mode === 'devices' && !readyDevices.inert
+    && !readyDevices.stage.includes('mode-transition'));
+console.log('#899 cold-scene public timeline', await evaluate(async () => {
+  await window.__hpTest.openMarkerDialog('d_tv');
+  window.__899ColdTrace.push({ phase: 'dialog-open', ...window.__899ColdCamera() });
+  return window.__899ColdTrace;
+}));
 await page.waitForTimeout(200);
 check('#899 cold LED conversion starts with the intended device dialog',
   await evaluate(() => window.__card._markerDialog?.devId), 'd_tv');

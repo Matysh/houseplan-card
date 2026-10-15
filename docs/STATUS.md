@@ -34,6 +34,9 @@ remain separate from nightly-only compilation/caught evidence.
 Definition metadata assertions live in the existing mutation-registry test
 reader: literal product-path declarations do not add a new text-anchor test,
 and the frozen monolith-reader policy remains unchanged.
+The cold LED guard waits for the revealed View, the public Fit command's saved
+base zoom and interactive Devices DOM; two render frames alone are not camera
+or mode-transition completion.
 
 Editor gesture owners (#861) separate physical body/rotation and backdrop
 frame state behind 13/14-purpose editor-only ports. Existing queue/reset,
