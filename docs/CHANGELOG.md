@@ -21,7 +21,9 @@
   Update removes the old map before scanning; saving links OFF clears all maps.
   A failed durable clear refuses the change instead of reporting success.
   Storage failures are explained without promising that an unsaved map will
-  survive a restart ([#912](https://github.com/Matysh/houseplan-card/issues/912)).
+  survive a restart. Explicit Update or saved OFF can recover a rejected cache;
+  an old read error no longer permanently blocks these actions
+  ([#912](https://github.com/Matysh/houseplan-card/issues/912)).
 
 ## v1.81.0-beta.3 — 2026-10-15
 

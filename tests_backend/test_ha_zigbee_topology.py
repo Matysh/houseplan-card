@@ -384,8 +384,9 @@ async def test_issue_912_topic_removal_keeps_exact_cache_and_reload_does_not_sca
 
 
 @pytest.mark.parametrize("corruption", ["future", "foreign", "topic", "nodes", "time"])
-async def test_issue_912_invalid_store_is_preserved_and_cannot_start_a_radio_scan(
-    hass, hass_ws_client, transport, corruption,
+@pytest.mark.parametrize("action", ["refresh", "off", "off-already-disabled"])
+async def test_issue_912_invalid_store_is_preserved_until_explicit_recovery(
+    hass, hass_ws_client, transport, monkeypatch, corruption, action,
 ):
     entry, coordinator = await _setup(hass)
     payload = {"schema": 1, "entry_id": entry.entry_id, "topics": {
@@ -401,16 +402,72 @@ async def test_issue_912_invalid_store_is_preserved_and_cannot_start_a_radio_sca
         payload["topics"]["mesh-a"]["map"]["nodes"] = [{}]
     else:
         payload["topics"]["mesh-a"]["obtained_at"] = True
+    if action == "off-already-disabled":
+        runtime = entry.runtime_data
+        current = await runtime.config_store.async_load()
+        config = copy.deepcopy(current["config"])
+        config["settings"]["zigbee_topology"]["enabled"] = False
+        async with runtime.write_lock:
+            await async_save_config_state(runtime, config, current["rev"] + 1)
     await coordinator._store.async_save(payload)
     assert await hass.config_entries.async_unload(entry.entry_id)
     assert await hass.config_entries.async_setup(entry.entry_id)
     replacement = entry.runtime_data.zigbee_coordinator
     assert replacement.initial_events()[0]["error"] == "storage_read"
-    client = await hass_ws_client(hass)
-    refused = await _command(client, "start", base_topic="mesh-a")
-    assert not refused["success"] and refused["error"]["code"] == "storage_read"
     assert await replacement._store.async_load() == payload
     assert not transport.published and not transport.subscribes
+
+    client = await hass_ws_client(hass)
+    runtime = entry.runtime_data
+    previous = await runtime.config_store.async_load()
+    off = copy.deepcopy(previous["config"])
+    off["settings"]["zigbee_topology"]["enabled"] = False
+
+    async def recover():
+        if action == "refresh":
+            return await _command(client, "start", base_topic="mesh-b")
+        await client.send_json_auto_id({"type": "houseplan/config/set", "config": off,
+                                       "expected_rev": previous["rev"]})
+        return await client.receive_json()
+
+    real_save = replacement._store.async_save
+    writes = 0
+
+    async def fail_save(_data):
+        nonlocal writes
+        writes += 1
+        raise OSError("disk full")
+
+    monkeypatch.setattr(replacement._store, "async_save", fail_save)
+    refused = await recover()
+    assert not refused["success"] and refused["error"]["code"] == "storage_clear"
+    assert writes == 1, "an explicit action must attempt I/O despite the earlier read error"
+    assert await replacement._store.async_load() == payload
+    assert await runtime.config_store.async_load() == previous
+    assert not transport.published and not transport.subscribes
+
+    monkeypatch.setattr(replacement._store, "async_save", real_save)
+    accepted = await recover()
+    assert accepted["success"], accepted
+    assert "error" not in replacement.initial_events()[0]
+    assert await _durable(replacement) == {}
+    if action == "refresh":
+        job = accepted["result"]["provider"]
+        await _until(lambda: len(transport.published) == 1)
+        transport.respond("mesh-b", job["job_id"])
+        await hass.async_block_till_done()
+        assert replacement.snapshot("mesh-b")["provider"]["persistence"] == "saved"
+        assert set(await _durable(replacement)) == {"mesh-b"}
+    else:
+        assert not (await runtime.config_store.async_load())["config"]["settings"]["zigbee_topology"]["enabled"]
+        assert not transport.published and not transport.subscribes
+
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    restored = entry.runtime_data.zigbee_coordinator
+    assert "error" not in restored.initial_events()[0]
+    assert restored.initial_events()[0]["topics"] == (["mesh-b"] if action == "refresh" else [])
+    assert len(transport.published) == (1 if action == "refresh" else 0)
 
 
 async def _start(client, transport, *, topic="zigbee2mqtt"):

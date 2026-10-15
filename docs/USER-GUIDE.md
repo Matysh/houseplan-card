@@ -418,7 +418,10 @@ the old map before starting a new scan; an error or cancellation does not bring
 it back. Turning links off and **saving** clears all Z2M maps; a draft toggle does
 not. Removing a topic hides its map without deleting it. At the eight-map limit,
 existing maps are kept and another topic is refused. Storage errors are shown;
-a visible map that could not be saved will be lost on restart. ZHA data remains
+a visible map that could not be saved will be lost on restart. A rejected cache
+is preserved on startup; explicit **Update map** or saved OFF can replace it.
+If that write fails, the action is refused and can be retried after fixing storage.
+ZHA data remains
 temporary, and a failed ZHA read keeps its previous cache. Running Z2M jobs are
 not resumed after a restart; turning links off only retires House Plan waiting,
 not the provider's radio scan.

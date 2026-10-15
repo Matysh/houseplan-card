@@ -234,20 +234,20 @@ class ZigbeeScanCoordinator:
 
     async def _save(self, topics: dict[str, dict[str, Any]]) -> None:
         """Caller owns _lock; update in-memory durable truth only after successful I/O."""
-        if self._storage_error:
-            raise ZigbeeScanError(self._storage_error)
         try:
             await self._store.async_save({"schema": 1, "entry_id": self.entry.entry_id,
                                           "topics": topics})
         except Exception as err:  # noqa: BLE001 - stable public error, no provider data in logs
             raise ZigbeeScanError("storage_clear") from err
         self._saved = topics
+        # A historical read error diagnoses restore; an explicit successful write repairs it.
+        self._storage_error = None
 
     async def async_save_config(self, config: dict[str, Any], save: Callable[[], Awaitable]) -> None:
         """Serialize saved OFF with start/result writes; draft UI changes never call this."""
         async with self._lock:
             enabled = _enabled(config)
-            if not enabled and (self._enabled or self._saved):
+            if not enabled and (self._enabled or self._saved or self._storage_error):
                 # Durable clear comes first: a failed clear must not acknowledge a saved OFF.
                 await self._save({})
             await save()

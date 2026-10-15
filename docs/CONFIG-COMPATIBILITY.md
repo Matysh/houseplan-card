@@ -350,6 +350,10 @@ Reload/restart restores maps as stale without MQTT work; age never deletes them.
 Each map retains the 2 MiB / 1000 nodes / 6000 links limits. Unreadable, foreign,
 future-schema or oversized storage is refused without an automatic empty rewrite.
 HA's own corrupt-file handling may retain a recoverable `.corrupt` backup.
+An explicit Update or saved OFF can replace rejected storage with a valid current
+payload: an earlier read error is diagnostic, not a permanent write lock. Only
+that action's real write failure refuses it; a successful write clears the read
+diagnostic. Ordinary startup still preserves the rejected data without rewriting.
 
 An accepted explicit Update durably clears that topic before publishing the new
 request; failure/cancel/restart cannot restore the old map. A repeated Update
