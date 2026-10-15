@@ -285,9 +285,29 @@ Summary's root has a named entry and its editor-shared picker/icon leaves stay
 in a separate lazy shared chunk: otherwise Rollup replaces its public exports
 with internal namespace aliases, breaking the raw URL import. The retry
 URL injection and its missing/duplicate roots are unit-tested by bundle-assets.
-These witnesses are being completed in S6; no full release or GPU acceptance is
-claimed by focused headless evidence. Enlarged non-carousel kiosk integration
-is verified after accepted #894, without copying its unreviewed implementation.
+No full release or GPU acceptance is claimed by focused headless evidence.
+The final integration uses accepted #894, preserving both warm marker/opening
+reconciliation and the existing shared version-recovery controller.
+
+`smoke_view_runtime_dirty_reload` uses a real dirty marker form. Native modal
+input keeps the background Reload inert; Escape and the actual Cancel retain
+the exact draft, while explicit Discard closes it without saving. Only then
+does the reachable Reload perform one real document navigation. This is not
+claimed as GUI execution of the defensive reload/discard resume branch (which
+has its own unit proof). The callWS observer belongs to the pre-navigation
+document only: zero observed writes and no draft before navigation prove the
+discard, not all writes of the new document or durable real-HA persistence.
+
+`smoke_view_runtime_kiosk_recovery` refuses the actual live root and its one
+nonce retry on an enlarged cycle-zero kiosk. A real held pan still blocks
+recovery after the normal pause expires; release allows exactly one real
+document reload with the exact floor, zoom and pan. Browser-native navigation
+history and a lost document-local sentinel observe that boundary: Playwright's
+clock replaces performance entries and keeps its mocked timeOrigin across
+documents. A second terminal failure and warm remount retain the same consumed
+build/session claim and persistent manual Reload, with no new automatic attempt.
+The manual notice calls `_reloadDocument()` through its dirty-navigation guard;
+the automatic controller keeps #894's `_reloadDocument(true)` camera memo.
 
 The resumed #848 unit diagnosis on accepted `3e10b8ad` found 20 failures:
 19 shared-summary preference regressions and one stale exact shell anchor.

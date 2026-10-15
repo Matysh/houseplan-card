@@ -111,9 +111,11 @@ export const SMOKE_LINKS = [
   {
     files: ['src/view-runtime-boundary.ts', 'src/view-runtime-code.ts', 'src/view-runtime-retry.ts',
       'src/view-runtimes.ts', 'src/summary-panel-runtime-entry.ts'],
-    smokes: ['smoke_view_runtime_recovery.mjs', 'smoke_view_runtime_dirty_reload.mjs'],
+    smokes: ['smoke_view_runtime_recovery.mjs', 'smoke_view_runtime_dirty_reload.mjs',
+      'smoke_view_runtime_kiosk_recovery.mjs'],
     because: '#848: real root/dependency404, nonce requests and immutable module-map refusal '
-      + 'are judged via production imports and visible recovery controls, not helper-name references.',
+      + 'are judged via production imports and visible recovery controls; dirty form decisions and '
+      + 'the enlarged-kiosk shared reload claim cross real document navigation, not helper-name references.',
   },
   {
     files: ['src/device-editor-access.ts'],
