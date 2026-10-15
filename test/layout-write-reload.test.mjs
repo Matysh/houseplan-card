@@ -244,6 +244,37 @@ test('#902 same-element short detach retains already accepted history, unlike a 
   assert.equal(h.writes.length, 2);
 });
 
+test('#902 r1 M1 actual card re-arms once after both reads overlap real released writes', async () => {
+  const h = harness(); h.holdRead(true);
+  const load = h.host._loadFromServer(); await tick();
+  assert.equal(h.reads.length, 1);
+  h.releaseDrag(.4); h.writes[0].gate.resolve(); await tick();
+  h.reads[0].gate.resolve(); await tick();
+  assert.equal(h.reads.length, 2, 'the first overlap consumes the one paired retry');
+  h.releaseDrag(.6); h.writes[1].gate.resolve(); await tick();
+  assert.equal(h.host._devicePositionHistory.size, 2, 'both genuine ACKs made commands before old adoption');
+  h.holdRead(false); h.reads[1].gate.resolve();
+  await load; await tick();
+  assert.equal(h.messages.filter(type => type === 'houseplan/config/get').length, 3);
+  assert.equal(h.messages.filter(type => type === 'houseplan/layout/get').length, 3,
+    'layout-raced must reach the real card queueMicrotask re-arm, not stop after two reads');
+  assert.equal(h.messages.filter(type => type === 'houseplan/trail/get').length, 1,
+    'only the re-armed fresh pair reaches the full-load adoption tail');
+  assert.deepEqual(h.host._layout.point, pos(.6));
+  assert.deepEqual(h.store.layout.point, pos(.6));
+  assert.equal(h.host._layoutRev, h.store.rev);
+  assert.equal(h.host._devicePositionHistory.size, 2);
+  assert.equal(h.host._devicePositionHistory.canUndo, true);
+  assert.equal(h.host._devicePositionBusy, false);
+  assert.equal(h.host._loading, false);
+  assert.equal(h.host._loadOk, true);
+  assert.equal(h.host._sentPos.size, 0);
+  const settled = h.snapshot(), messageCount = h.messages.length;
+  await tick();
+  assert.deepEqual(h.snapshot(), settled);
+  assert.equal(h.messages.length, messageCount, 'settled re-arm does not poll or create another load');
+});
+
 test('#902 bounded retry: a second actual overlap re-arms once; idle/retire release only their own waiters', async () => {
   const owner = new LayoutWriteReload(() => () => true); let reads = 0, adopts = 0;
   const finishes = [];

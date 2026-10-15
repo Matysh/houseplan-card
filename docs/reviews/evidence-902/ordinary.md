@@ -60,3 +60,34 @@ Direct owner instruction for this batch: do not create new issues for findings.
 Fix in-scope findings in #902; send out-of-scope symptom/material/evidence/risk/
 links to root for `batch-findings-2026-10-15.json`. This does not permit gate,
 budget, review or GPU acceptance substitutions.
+
+## Code-review r1 M1: actual-card re-arm after the second overlap
+
+The product was already correct; this follow-up changes only the ordinary test,
+this evidence and one static declaration. The complete r1 document was read;
+its manual mutant executions are not replayed or used as author caught proof.
+The current PROCESS #905 policy also explicitly forbids compiled/manual
+substitutions outside the nightly workflow.
+
+The new `#902 r1 M1 actual card re-arms once...` case invokes the real exported
+card `_loadFromServer` through the same ordinary transport/host ports. Read 1
+is held across a genuine released move/ACK to .4. Its one retry is then held
+across another released move/ACK to .6. Neither old pair can adopt. After the
+second pair is released, the real host's `layout-raced` → `queueMicrotask` path
+must issue exactly one additional pair: three config/layout reads total, one
+trail read only from the final adoption tail, exact server/card position and
+revision, two accepted history commands, no busy/loading/pending residue. More
+microtasks leave both state and read counts unchanged (no polling).
+
+| AC | Ordinary witness | Negative witness |
+|---|---|---|
+| AC1 / r1 M1 | The actual-card double-overlap case above; 39/39 PASS with the two existing coordinate inventory tests, raw exit 0 | The ordinary two interrupted reads must never reach adoption; only the third fresh pair reaches its tail. Declaration `layout-full-read-drops-real-overlap-rearm` targets the host call site: **not executed**. A missing re-arm violates exact 3-pair/1-tail assertions. |
+
+`npx tsc -p tsconfig.test.json` → raw0; `node scripts/fix-test-build.mjs` → raw0;
+`node --test test/layout-write-reload.test.mjs test/coordinate-write-barrier-guard.test.mjs`
+→ 39 tests, 39 PASS, 0 failures (202.65 ms). Raw stdout/stderr and true exits:
+`artifacts/902/r1-compile.*`, `artifacts/902/r1-targeted.*`.
+`mutation-gate --check` → raw0, definitions1604, unique-source-reads831,
+execution0 / caught unknown, five existing warnings. The fourth #902 declaration
+uses the same cheaper Node witness and adds no browser guard. Product and
+native witness files are byte-identical to the reviewed material.

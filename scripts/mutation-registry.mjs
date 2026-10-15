@@ -16412,6 +16412,14 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'layout-full-read-drops-real-overlap-rearm',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/layout-write-reload.test.mjs',
+    because: '#902 r1 M1: after two real write/read overlaps, the actual card must re-arm exactly one full load and retain both accepted commands.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: '      if (repeatLayoutRead) queueMicrotask(() => {',
+      replace: '      if (false && repeatLayoutRead) queueMicrotask(() => {' }],
+  },
+  {
     id: 'config-adoption-echo-clears-history',
     guard: 'node --test test/config-adoption.test.mjs',
     because: 'an authoritative echo with identical content must keep local geometry undo and the '
