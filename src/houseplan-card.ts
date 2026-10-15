@@ -5379,7 +5379,7 @@ export class HouseplanCard extends LitElement {
     placement: DevicePlacement | null,
   ): Promise<void> {
     const isCurrent = this._layoutIO.guard();
-    if (this._serverStorage && (!isCurrent() || !this._loadOk)) throw new Error('config authority changed');
+    if (this._serverStorage && (!isCurrent() || !this._loadOk)) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
     this._layout = applyDevicePlacement(this._layout, deviceId, placement);
     if (this._serverStorage) {
       const settled = this._layoutIO.begin();

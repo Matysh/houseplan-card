@@ -412,6 +412,7 @@
   "err.config_write_unauthorized": "You do not have permission to save this plan.",
   "backup.error.storage_clear": "Saved Zigbee maps could not be cleared. Settings were not saved. Check HA storage and retry.",
   "backup.error.storage_read": "Saved Zigbee maps could not be read and were not overwritten. Check HA storage and integration version.",
+  "err.config_context_changed": "Home Assistant context changed. Try again.",
   "err.code": "code {code}",
   "err.too_large": "file larger than {mb} MB",
   "err.bad_ext": "unsupported type (PDF/image expected)",

@@ -263,6 +263,9 @@ title: House plan
 
 The legacy card-level `tap_action` is ignored. Each marker owns its action.
 
+An open device form and its display preview use the same card language,
+including live language changes; `auto` follows the current Home Assistant language.
+
 `auto` recognizes the primary Home Assistant locale: `de`, `de-DE`, `de-AT`
 and `de-CH` use German, while `fr`, `fr-FR`, `fr-CA`, `fr-BE` and `fr-CH` use
 French (a community translation — thank you, @OUARZA). Lazy dictionaries

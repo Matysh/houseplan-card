@@ -1,5 +1,11 @@
 # House Plan architecture
 
+Presentation seams (#907) have no new data or write authority. The marker form
+passes its effective locale to the reactive read-only preview, which retains
+HA fallback when standalone. The existing write-error mapper recognises the
+known context code, supplied by the unchanged early placement refusal. Optimize
+reads own string roster names only; owner classification and cleanup stay intact.
+
 Release delivery phases (#903) share `scripts/task-delivery.mjs` between the
 SPEC publisher, release catalogue and membership create/verify. Versioned
 spec-review trailers require the exact publisher/delta and the document's own

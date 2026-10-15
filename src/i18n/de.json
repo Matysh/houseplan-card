@@ -412,6 +412,7 @@
   "err.config_write_unauthorized": "Sie haben keine Berechtigung, diesen Plan zu speichern.",
   "backup.error.storage_clear": "Zigbee-Karten nicht löschbar. Einstellungen nicht gespeichert. HA-Speicher prüfen und erneut versuchen.",
   "backup.error.storage_read": "Zigbee-Karten nicht lesbar und nicht überschrieben. HA-Speicher und Integrationsversion prüfen.",
+  "err.config_context_changed": "Der Home Assistant-Kontext hat sich geändert. Versuchen Sie es erneut.",
   "err.code": "Code {code}",
   "err.too_large": "Datei größer als {mb} MB",
   "err.bad_ext": "nicht unterstützter Typ (PDF/Bild erwartet)",

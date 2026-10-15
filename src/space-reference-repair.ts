@@ -334,7 +334,10 @@ export function repairSpaceReferences(
       : [],
   );
   const ownerName = (id: string, fallback = ''): string => {
-    const value = String(roster?.names?.[id] || fallback || '').trim();
+    const names = roster?.names;
+    const entry = names && own(names, id) ? names[id] : undefined;
+    const name = typeof entry === 'string' ? entry.trim() : '';
+    const value = name || String(fallback || '').trim();
     return value && value !== id ? value : '';
   };
   const detail = (

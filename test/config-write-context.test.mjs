@@ -52,3 +52,18 @@ test('#912 saved OFF cache failures explain storage and never claim a successful
     assert.notEqual(t(language, configWriteErrorKey({ code: 'storage_read' })), 'backup.error.storage_read');
   }
 });
+
+test('#907 known context refusal has a human RU/EN message, while unknown reasons keep their mapper', () => {
+  const key = configWriteErrorKey(Object.assign(new Error('config authority changed'), { code: 'context-changed' }));
+  assert.equal(key, 'err.config_context_changed');
+  for (const language of ['ru', 'en']) {
+    const message = t(language, key);
+    assert.equal(message, language === 'ru'
+      ? 'Контекст Home Assistant изменился. Повторите действие.'
+      : 'Home Assistant context changed. Try again.');
+    assert.doesNotMatch(message, /context-changed|config authority changed|err\./);
+  }
+  assert.equal(configWriteErrorKey({ code: 'conflict', message: 'keep conflict' }), null);
+  assert.equal(configWriteErrorKey({ code: 'other', message: 'keep vendor detail' }), null);
+  assert.equal(configWriteErrorKey(new Error('config authority changed')), null, 'unknown raw messages are not guessed');
+});

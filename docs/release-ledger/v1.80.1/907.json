@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 907,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "F-BATCH-004 ownerName (36b5a8c36, 2026-08-23) and F-BATCH-017 preview locale (2a8302f4d, 2026-08-08) already existed in v1.80.1 and justify the combined stable-fix milestone. F-BATCH-005 early placement Error was introduced by #890 in c4dca1b46 after that stable; its human-message correction is an intermediate line-fix introducedBy #890, not a separately claimed old-stable defect. The technical beta changelog covers all three; the stable user summary below covers only the two stable defects.",
+  "summary": {
+    "ru": "Предпросмотр устройства следует выбранному языку карточки, а отчёт Optimize показывает только корректные собственные имена владельцев.",
+    "en": "Device previews follow the selected card language, and Optimize reports show only valid own owner names."
+  }
+}

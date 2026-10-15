@@ -1,7 +1,9 @@
 // Shared face parity for the same live light on the full plan, the marker
 // editor preview and houseplan-space-card. #878: the same parity for light
 // groups (Z2M `Group` model, HA `group` platform) before and after Save.
-import { launch, checkAll, finish } from './serve.mjs';
+import { launch, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
+
+requirePinnedBrowser('device preview locale and face parity');
 
 const { page, browser } = await launch({ width: 1100, height: 900 }, 1);
 const res = await page.evaluate(async () => {
@@ -45,6 +47,45 @@ const res = await page.evaluate(async () => {
     && preview?.hasAttribute('data-pointer-hover');
   const previewFace = face(preview?.renderRoot?.querySelector('.dev'));
   const providerShown = /demo/i.test(preview?.renderRoot?.querySelector('.previewfacts')?.textContent || '');
+
+  // #907: public card options/HA updates, with the same dialog left open.
+  const localeHass = c.hass, localeOptions = structuredClone(c._config);
+  const previewLocales = {};
+  const localeObservations = [];
+  for (const [name, ha, card, effective] of [
+    ['haEnCardRu907', 'en', 'ru', 'ru'],
+    ['haRuCardEn907', 'ru', 'en', 'en'],
+    ['haRuAuto907', 'ru', 'auto', 'ru'],
+    ['haEnAuto907', 'en', 'auto', 'en'],
+  ]) {
+    c.hass = { ...localeHass, locale: { ...localeHass.locale, language: ha } };
+    c.setConfig({ ...localeOptions, language: card });
+    await c.updateComplete;
+    await window.__hpTest.settled();
+    const labels = effective === 'ru'
+      ? ['Название', 'Предпросмотр отображения', 'Источник отображения']
+      : ['Name', 'Display preview', 'Display source'];
+    // The lazy parent-language gate is a prerequisite, not the child oracle.
+    // Never wait for preview text: a child that ignores the override must fail.
+    const languageDeadline = performance.now() + 6000;
+    while (sr().querySelector('label[for="marker-name"]')?.textContent.trim() !== labels[0]) {
+      if (performance.now() > languageDeadline) throw new Error(`#907 parent locale did not become ${effective}`);
+      await wait(20);
+    }
+    const current = sr().querySelector('hp-device-preview');
+    await current?.updateComplete;
+    localeObservations.push({ name,
+      form: sr().querySelector('label[for="marker-name"]')?.textContent.trim(),
+      title: current?.renderRoot.querySelector('.previewhead strong')?.textContent.trim(),
+      facts: [...(current?.renderRoot.querySelectorAll('.previewfacts span') || [])].map(node => node.textContent.trim()),
+    });
+    previewLocales[name] = sr().querySelector('label[for="marker-name"]')?.textContent.trim() === labels[0]
+      && current?.renderRoot.querySelector('.previewhead strong')?.textContent.trim() === labels[1]
+      && [...(current?.renderRoot.querySelectorAll('.previewfacts span') || [])]
+        .some(node => node.textContent.trim() === labels[2]);
+  }
+  c.hass = localeHass; c.setConfig(localeOptions);
+  await c.updateComplete; await window.__hpTest.settled(); await preview?.updateComplete;
 
   // Dynamic option creation must not leave a freshly mounted native select on
   // its first row when a different display/room/badge choice is persisted.
@@ -253,6 +294,8 @@ const res = await page.evaluate(async () => {
   const deviceGroupStatic = face(card.renderRoot.querySelector('.dev[data-id="d_hp878_group"]'));
 
   return {
+    ...previewLocales,
+    localeObservations,
     allFacesPresent: !!planFace && !!previewFace && !!staticFace,
     previewHoverGatePropagates,
     planPreviewEqual: JSON.stringify(planFace) === JSON.stringify(previewFace),
@@ -287,5 +330,7 @@ const res = await page.evaluate(async () => {
   };
 });
 
-checkAll(res);
-await finish(browser, res);
+const { localeObservations, ...checks } = res;
+console.log(JSON.stringify({ localeObservations }));
+checkAll(checks);
+await finish(browser, checks);

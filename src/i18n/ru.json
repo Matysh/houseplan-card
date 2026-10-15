@@ -412,6 +412,7 @@
   "err.config_write_unauthorized": "Нет прав на сохранение плана.",
   "backup.error.storage_clear": "Не удалось очистить карты Zigbee. Настройки не сохранены. Проверьте хранилище HA и повторите.",
   "backup.error.storage_read": "Не удалось прочитать карты Zigbee. Они не перезаписаны. Проверьте хранилище HA и версию интеграции.",
+  "err.config_context_changed": "Контекст Home Assistant изменился. Повторите действие.",
   "err.code": "код {code}",
   "err.too_large": "файл больше {mb} МБ",
   "err.bad_ext": "недопустимый тип (нужен PDF/изображение)",

@@ -27,6 +27,7 @@ class HpDevicePreview extends LitElement {
   public presentation?: ResolvedDevicePresentation;
   public registry?: HaRegistrySnapshot;
   public deviceName = '';
+  public language?: Lang;
 
   private _metadataRelease?: () => void;
   private _metadataConnection: any = null;
@@ -46,6 +47,7 @@ class HpDevicePreview extends LitElement {
     presentation: { attribute: false },
     registry: { attribute: false },
     deviceName: { attribute: false },
+    language: { attribute: false },
   };
 
   public connectedCallback(): void {
@@ -123,7 +125,7 @@ class HpDevicePreview extends LitElement {
   };
 
   private get _lang(): Lang {
-    return langOf(this.hass);
+    return this.language ?? langOf(this.hass);
   }
 
   private _t(key: I18nKey, vars?: Record<string, string | number>): string {

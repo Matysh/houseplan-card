@@ -21,6 +21,10 @@ cover → light sources → device role, шторы и медиаплееры) �
   устройства; не меняет функциональный roster и граф управляемых целей.
 - `device-face.ts` только рисует готовую проекцию.
 - View, static card и preview получают один `ResolvedDevicePresentation`.
+- Тексты preview наследуют эффективный язык карточки от родительской формы,
+  включая explicit override, auto и живую смену языка. Самостоятельный preview
+  без language property сохраняет прежний HA fallback. Ключи и lazy registry
+  остаются общими; выбор лица и service targets от языка не меняется (#907).
 - Черновик диалога маркера проецируется `deviceFromMarkerDraft()` через
   `buildDevices` по полному сохранённому roster, где заменён только
   редактируемый маркер; поэтому владение целями, tombstones и лицо контроллера в

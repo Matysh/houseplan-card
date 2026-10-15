@@ -1315,6 +1315,18 @@ archive. The wizard cannot recover an archive automatically.
 
 ## Tests
 
+Presentation seams (#907): `test/config-write-context.test.mjs` checks the known
+RU/EN context mapping while preserving unauthorized/unknown fallbacks;
+`test/space-reference-repair.test.mjs` covers own/inherited prototype-key names,
+empty/non-string values, unchanged classification and immutable inputs.
+`smoke_device_preview_parity` changes public HA/card locale options in the same
+open form, waits only for the parent Name label and then judges child text
+independently. `smoke_placement_context_message` reaches the actual early refusal
+through a registry-Area queue, a normal deferred transport rejection and a public
+HA gap; full wire/server/toast observations exclude another write or false success.
+No guard/ACK/history patch is used. Native baseline/fixed raw and true exits live
+under `artifacts/907/`; these headless witnesses are not owner/real-GPU acceptance.
+
 - Kiosk pan/hold (#825): `smoke_kiosk_scale_no_editor` uses trusted slow mouse
   and touch pans, including return to origin on the same press, and stationary
   jitter on the next hold. `--pan-red-witness` exits with the observed modal

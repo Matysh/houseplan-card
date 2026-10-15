@@ -30,7 +30,7 @@ import { ledStripsByMarker } from '../led-strip-gate';
 import { toggleEntityCandidates } from '../device-toggle';
 import { recommendedValueBadgeSource, valueBadgeCandidates, valueBadgeSourceFromKey, valueBadgeSourceKey } from '../device-value-badge';
 import { forcedLightEntityOf, hasOwnStatefulLightSource, ownControllableEntities, persistedExternalControls, resolveDeviceLightSettings } from '../devices';
-import type { I18nKey } from '../i18n';
+import { langOf, type I18nKey } from '../i18n';
 import {
   DISPLAY_MODES, TAP_ACTIONS, displayIsNeutral, displayWantsValue, normalizeDeviceDisplay,
   parseRoomRef, safeUrl, spaceDisplayOf, type DeviceDisplayMode,
@@ -776,6 +776,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           // заголовок «Display preview · Now» и свой блок на тинте, обёртка не нужна.
           ? html`<hp-device-preview
               .hass=${this.host.hass}
+              .language=${langOf(this.host.hass, this.host._config?.language)}
               .presentation=${previewPresentation}
               .registry=${this.host._haRegistry}
               .deviceName=${d.name.trim() || previewDevice?.name || curLabel || ''}>

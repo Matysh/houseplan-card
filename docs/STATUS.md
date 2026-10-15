@@ -32,6 +32,11 @@ retires pending writers. Topic removal only hides routes, and capacity never
 evicts a successful map. ZHA remains memory-only; storage/capability failures
 remain visible and do not silently fall back to old refresh behavior.
 
+Presentation consistency (#907) shares the marker form's effective locale with
+its preview, maps the early placement context refusal to human text, and keeps
+inherited/non-string owner names out of Optimize diagnostics. Guards, cleanup
+eligibility, permissions and persisted schemas are unchanged.
+
 SPEC delivery accounting (#903) preserves accepted review trace separately from
 implemented release entries and close-eligible membership. A shared content and
 provenance check reads versioned phases and existing publisher commits; later

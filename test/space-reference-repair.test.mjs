@@ -26,6 +26,41 @@ const emptyOwnerReport = {
   registryAuthoritative: false,
 };
 
+for (const id of ['constructor', 'toString', '__proto__']) {
+  for (const [caseName, names, expected] of [
+    ['missing own', {}, 'Fallback'],
+    ['inherited string', Object.create({ [id]: 'Inherited' }), 'Fallback'],
+    ['own string', { [id]: '  Human name  ' }, 'Human name'],
+    ['own empty', { [id]: '' }, 'Fallback'],
+    ['own whitespace', { [id]: '   ' }, 'Fallback'],
+    ['own id', { [id]: id }, ''],
+    ['own number', { [id]: 12 }, 'Fallback'],
+    ['own object', { [id]: { toString: () => 'Invented' } }, 'Fallback'],
+  ]) test(`#907 owner name ${id}: ${caseName} changes display only`, () => {
+    const config = { spaces: [space('home')], markers: [{ id, binding: 'virtual', name: 'Fallback' }], settings: {} };
+    const layout = { [id]: { s: 'gone', x: .2, y: .3 } };
+    const configBefore = structuredClone(config), layoutBefore = structuredClone(layout);
+    const base = repairSpaceReferences(config, layout, { ownerRoster: { authoritative: true, names: {} } });
+    const result = repairSpaceReferences(config, layout, { ownerRoster: { authoritative: true, names } });
+    const details = result.report.liveMissingPositions;
+    assert.equal(details.length, 1);
+    assert.equal(details[0].name, expected);
+    assert.doesNotMatch(details[0].name, /function|native code|\[object/);
+    const classification = report => {
+      const normalized = { ...report };
+      for (const key of ['liveMissingPositions', 'removedPositions', 'unverifiedPositions',
+        'invalidPositionsEligible', 'invalidPositionsRemoved', 'invalidPositionsRetained'])
+        normalized[key] = report[key].map(({ name: _displayOnly, ...detail }) => detail);
+      return normalized;
+    };
+    assert.deepEqual(classification(result.report), classification(base.report));
+    assert.deepEqual(result.config, base.config);
+    assert.deepEqual(result.layout, base.layout);
+    assert.deepEqual(config, configBefore);
+    assert.deepEqual(layout, layoutBefore);
+  });
+}
+
 test('issue 265 Python/TypeScript lineage fixture stays strict and bounded', () => {
   for (const item of lineageFixture.cases) {
     assert.deepEqual(canonicalImportRoot(item.prefix, item.value), {

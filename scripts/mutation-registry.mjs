@@ -77,6 +77,28 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'device-preview-ignores-effective-card-locale',
+    guard: 'node demo/smoke_device_preview_parity.mjs',
+    because: '#907 AC1: a live marker form and its nested Lit preview must share the effective card locale after the parent language gate, across explicit overrides and auto; only the mounted consumer proves that the parent passes the property.',
+    patches: [{ file: 'src/hp-device-preview.ts', find: '    return this.language ?? langOf(this.hass);', replace: '    return langOf(this.hass);' }],
+  },
+  {
+    id: 'placement-early-refusal-loses-human-context-code',
+    guard: 'node demo/smoke_placement_context_message.mjs',
+    because: '#907 AC2: a real registry-Area relocation queue reaches the early refusal during a public HA gap and must paint the human RU/EN toast without an additional write; a mapper-only unit cannot prove this throw site supplies the code.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: "    if (this._serverStorage && (!isCurrent() || !this._loadOk)) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });",
+      replace: "    if (this._serverStorage && (!isCurrent() || !this._loadOk)) throw new Error('config authority changed');" }],
+  },
+  {
+    id: 'optimize-owner-name-trusts-inherited-string',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/space-reference-repair.test.mjs',
+    because: '#907 AC3: inherited human-looking names are not own roster names; the ordinary matrix also preserves owner classification, eligibility and immutable config/layout.',
+    patches: [{ file: 'src/space-reference-repair.ts',
+      find: '    const entry = names && own(names, id) ? names[id] : undefined;',
+      replace: '    const entry = names ? names[id] : undefined;' }],
+  },
+  {
     id: 'backdrop-cancel-retains-grabbing-cursor',
     guard: 'node demo/smoke_grid_scale_invariance.mjs',
     because: '#908 AC1 requires the browser-computed cursor after trusted touchCancel across two real grid layouts; a reset owner alone cannot prove retained DOM presentation.',
