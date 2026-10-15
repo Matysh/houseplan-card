@@ -201,6 +201,11 @@ no colour, status, alarm, battery/LQI, service target or LED geometry policy
 changes. `test/presentation-light-frame.test.mjs` covers 200 markers × 100 lamp
 ticks, complete/unindexed parity and reset/bounded retention.
 
+The [paired 50×50 observations](reviews/evidence-895/README.md) retain all six
+raw samples and exact measured material/input identities. Their 99.5% lower
+independent-light rebuild count is scenario-specific, not a new timing budget
+or an execution claim for a later review commit.
+
 ## LED strip representation (#780)
 
 A marker may be shown as an LED strip instead of an icon (`space.led_strips`,

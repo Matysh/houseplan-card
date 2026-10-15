@@ -1,0 +1,662 @@
+{
+  "schema": "houseplan-light-presentation-evidence/v1",
+  "measuredMaterials": {
+    "base": {
+      "sha": "fcef2752bfea5ef8292dc14495ad1bc3a6fed2e9",
+      "tree": "8b0ddc5bd0b528180ce07a3bdab605c09dd9fcbe",
+      "dirty": false
+    },
+    "result": {
+      "sha": "b6f183533dc2e51abee97bb1933f4021ccbca096",
+      "tree": "a7e726948e43f4c484f7cd4f648467dc0dd7648c",
+      "dirty": false
+    }
+  },
+  "timeWindowUtc": {
+    "start": "2026-10-15 09:00:41 UTC",
+    "end": "2026-10-15 09:02:17 UTC",
+    "source": "clock tool around the two invocations"
+  },
+  "commands": [
+    "node demo/benchmark_light_presentation.mjs --root=/home/matysh/hp-bench-895-final-base-20261015 --output=/home/matysh/hp-batch-895-20261015/artifacts/895-final-base-perf.json",
+    "node demo/benchmark_light_presentation.mjs --root=/home/matysh/hp-batch-895-20261015 --output=/home/matysh/hp-batch-895-20261015/artifacts/895-final-result-perf.json"
+  ],
+  "invocationCount": 2,
+  "coldSamplesPerInvocation": 3,
+  "retries": 0,
+  "discarded": 0,
+  "observerSha256": "fa368de684b968e8120f848a42376f84265dacb581a38519077a732216ec05d3",
+  "protocolSha256": "1a918fc68c94e7c40f6f8a747b74eef7072a11eb6e8b151c2ac24d3c693a7d5e",
+  "fixtureSha256": "60479a958f189fccd73a80d0b2ffc260b427c3e5312221d7d293437c83be3cd5",
+  "environment": {
+    "platform": "linux",
+    "arch": "x64",
+    "release": "6.18.33.2-microsoft-standard-WSL2",
+    "cpuModel": "Intel(R) Core(TM) Ultra 7 155H",
+    "cpuCount": 22,
+    "totalMemory": 16483794944,
+    "loadStart": [
+      0.27,
+      0.27,
+      0.52
+    ],
+    "loadEnd": [
+      0.67,
+      0.36,
+      0.54
+    ],
+    "baseLoadEnd": [
+      0.67,
+      0.36,
+      0.54
+    ],
+    "resultLoadStart": [
+      0.41,
+      0.32,
+      0.52
+    ],
+    "resultLoadEnd": [
+      0.66,
+      0.39,
+      0.54
+    ]
+  },
+  "pins": {
+    "node": "22",
+    "python": "3.14",
+    "homeassistant": "2026.8.3",
+    "pytestHomeAssistant": "0.13.357",
+    "playwright": "1.62.0",
+    "chromium": {
+      "revision": "1234",
+      "version": "151.0.7922.34"
+    },
+    "chromiumHeadlessShell": {
+      "revision": "1234",
+      "version": "151.0.7922.34"
+    }
+  },
+  "node": "v22.23.3",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "dpr": 1,
+  "files": {
+    "base": {
+      "bytes": 9214807,
+      "sha256": "1cf068cb66e9b6fd1c5abbd7ca428fe06e290ef70ff7b4fd751242114a2cb52c",
+      "gzipBytes": 427279,
+      "gzipSha256": "ffe5838db6a0155263fab2909cc0197f98edb1e1d655a928024b3e7d2b84c7b8"
+    },
+    "result": {
+      "bytes": 7887774,
+      "sha256": "775243024528df59521a37da523cacd46bf7d113cde7ec3d4315abfe18cc15ae",
+      "gzipBytes": 367535,
+      "gzipSha256": "7438c15bad99a86e4d2d72063bbf523242baf8dc817e0845f4f228f6770eb82c"
+    },
+    "comparison": {
+      "bytes": 3532,
+      "sha256": "ba44fcf6d5336ba5ff8040d9fcdbd44d8762e80211fb358bd99d2cd22823240c",
+      "gzipBytes": 801,
+      "gzipSha256": "dc28decef1be4914aff45a58c7405c3705ecee1b985dcf8393546babba4c07b7"
+    }
+  },
+  "base": [
+    {
+      "index": 0,
+      "settled": {
+        "bootSoft": false,
+        "booting": false,
+        "continuity": "steady",
+        "liveRuntimeState": "ready",
+        "liveCaptureInstalled": true,
+        "devices": 200,
+        "strips": 50
+      },
+      "failures": [],
+      "fingerprint": "e181a93cc7a7d71273abb734f2b8c3640de89bf179088ee7563afcb73290ed8c",
+      "S2": {
+        "entityId": "light.perf_led_0_0",
+        "ticks": 100,
+        "staleStripes": 0,
+        "intakes": 100,
+        "fullRenders": 100,
+        "snapshots": 100,
+        "presentationsReplaced": 40000,
+        "ledFrames": 100,
+        "ledTubes": 0,
+        "lightGeometry": 0,
+        "presentationBuilds": 40000,
+        "snapshotFull": 0,
+        "snapshotIncremental": 0,
+        "lightGraphs": 0,
+        "lightResolutions": 300,
+        "fieldRecomputes": 0,
+        "tickMs": {
+          "median": 21,
+          "p95": 26.3,
+          "sum": 2151.1
+        },
+        "observed": {
+          "ledFrames": 100,
+          "stripsReplaced": 0,
+          "barrierResolutions": 100
+        }
+      },
+      "captureSumMs": 1104.3,
+      "cpu": {
+        "product": {
+          "ms": 2042.5,
+          "share": 0.9197
+        },
+        "gc": {
+          "ms": 108.6,
+          "share": 0.0489
+        },
+        "idle": {
+          "ms": 1.2,
+          "share": 0.0005
+        },
+        "program": {
+          "ms": 68.6,
+          "share": 0.0309
+        }
+      },
+      "rawCpuNodeCount": 1394,
+      "rawCpuSampleCount": 12731
+    },
+    {
+      "index": 1,
+      "settled": {
+        "bootSoft": false,
+        "booting": false,
+        "continuity": "steady",
+        "liveRuntimeState": "ready",
+        "liveCaptureInstalled": true,
+        "devices": 200,
+        "strips": 50
+      },
+      "failures": [],
+      "fingerprint": "e181a93cc7a7d71273abb734f2b8c3640de89bf179088ee7563afcb73290ed8c",
+      "S2": {
+        "entityId": "light.perf_led_0_0",
+        "ticks": 100,
+        "staleStripes": 0,
+        "intakes": 100,
+        "fullRenders": 100,
+        "snapshots": 100,
+        "presentationsReplaced": 40000,
+        "ledFrames": 100,
+        "ledTubes": 0,
+        "lightGeometry": 0,
+        "presentationBuilds": 40000,
+        "snapshotFull": 0,
+        "snapshotIncremental": 0,
+        "lightGraphs": 0,
+        "lightResolutions": 300,
+        "fieldRecomputes": 0,
+        "tickMs": {
+          "median": 21.2,
+          "p95": 24.3,
+          "sum": 2131.8
+        },
+        "observed": {
+          "ledFrames": 100,
+          "stripsReplaced": 0,
+          "barrierResolutions": 100
+        }
+      },
+      "captureSumMs": 1087.5,
+      "cpu": {
+        "product": {
+          "ms": 2018.5,
+          "share": 0.922
+        },
+        "gc": {
+          "ms": 114,
+          "share": 0.0521
+        },
+        "idle": {
+          "ms": 1.5,
+          "share": 0.0007
+        },
+        "program": {
+          "ms": 55.2,
+          "share": 0.0252
+        }
+      },
+      "rawCpuNodeCount": 1591,
+      "rawCpuSampleCount": 12641
+    },
+    {
+      "index": 2,
+      "settled": {
+        "bootSoft": false,
+        "booting": false,
+        "continuity": "steady",
+        "liveRuntimeState": "ready",
+        "liveCaptureInstalled": true,
+        "devices": 200,
+        "strips": 50
+      },
+      "failures": [],
+      "fingerprint": "e181a93cc7a7d71273abb734f2b8c3640de89bf179088ee7563afcb73290ed8c",
+      "S2": {
+        "entityId": "light.perf_led_0_0",
+        "ticks": 100,
+        "staleStripes": 0,
+        "intakes": 100,
+        "fullRenders": 100,
+        "snapshots": 100,
+        "presentationsReplaced": 40000,
+        "ledFrames": 100,
+        "ledTubes": 0,
+        "lightGeometry": 0,
+        "presentationBuilds": 40000,
+        "snapshotFull": 0,
+        "snapshotIncremental": 0,
+        "lightGraphs": 0,
+        "lightResolutions": 300,
+        "fieldRecomputes": 0,
+        "tickMs": {
+          "median": 21.3,
+          "p95": 24.9,
+          "sum": 2148.4
+        },
+        "observed": {
+          "ledFrames": 100,
+          "stripsReplaced": 0,
+          "barrierResolutions": 100
+        }
+      },
+      "captureSumMs": 1102.8,
+      "cpu": {
+        "product": {
+          "ms": 2028.7,
+          "share": 0.9146
+        },
+        "gc": {
+          "ms": 120.1,
+          "share": 0.0541
+        },
+        "idle": {
+          "ms": 1.4,
+          "share": 0.0006
+        },
+        "program": {
+          "ms": 67.8,
+          "share": 0.0306
+        }
+      },
+      "rawCpuNodeCount": 1389,
+      "rawCpuSampleCount": 12752
+    }
+  ],
+  "result": [
+    {
+      "index": 0,
+      "settled": {
+        "bootSoft": false,
+        "booting": false,
+        "continuity": "steady",
+        "liveRuntimeState": "ready",
+        "liveCaptureInstalled": true,
+        "devices": 200,
+        "strips": 50
+      },
+      "failures": [],
+      "fingerprint": "ee8741e0aee72932150b965b7a7b97b33197d271f7ece5d58a8cb5dab6decf08",
+      "S2": {
+        "entityId": "light.perf_led_0_0",
+        "ticks": 100,
+        "staleStripes": 0,
+        "intakes": 100,
+        "fullRenders": 100,
+        "snapshots": 100,
+        "presentationsReplaced": 200,
+        "ledFrames": 100,
+        "ledTubes": 0,
+        "lightGeometry": 0,
+        "presentationBuilds": 200,
+        "snapshotFull": 0,
+        "snapshotIncremental": 100,
+        "lightGraphs": 0,
+        "lightResolutions": 300,
+        "fieldRecomputes": 0,
+        "tickMs": {
+          "median": 11,
+          "p95": 12.6,
+          "sum": 1106.3
+        },
+        "observed": {
+          "ledFrames": 100,
+          "stripsReplaced": 0,
+          "barrierResolutions": 100
+        }
+      },
+      "captureSumMs": 193.8,
+      "cpu": {
+        "product": {
+          "ms": 1078.1,
+          "share": 0.9289
+        },
+        "gc": {
+          "ms": 28,
+          "share": 0.0241
+        },
+        "idle": {
+          "ms": 1.2,
+          "share": 0.0011
+        },
+        "program": {
+          "ms": 53.4,
+          "share": 0.046
+        }
+      },
+      "rawCpuNodeCount": 943,
+      "rawCpuSampleCount": 6636
+    },
+    {
+      "index": 1,
+      "settled": {
+        "bootSoft": false,
+        "booting": false,
+        "continuity": "steady",
+        "liveRuntimeState": "ready",
+        "liveCaptureInstalled": true,
+        "devices": 200,
+        "strips": 50
+      },
+      "failures": [],
+      "fingerprint": "ee8741e0aee72932150b965b7a7b97b33197d271f7ece5d58a8cb5dab6decf08",
+      "S2": {
+        "entityId": "light.perf_led_0_0",
+        "ticks": 100,
+        "staleStripes": 0,
+        "intakes": 100,
+        "fullRenders": 100,
+        "snapshots": 100,
+        "presentationsReplaced": 200,
+        "ledFrames": 100,
+        "ledTubes": 0,
+        "lightGeometry": 0,
+        "presentationBuilds": 200,
+        "snapshotFull": 0,
+        "snapshotIncremental": 100,
+        "lightGraphs": 0,
+        "lightResolutions": 300,
+        "fieldRecomputes": 0,
+        "tickMs": {
+          "median": 11.4,
+          "p95": 14.2,
+          "sum": 1178
+        },
+        "observed": {
+          "ledFrames": 100,
+          "stripsReplaced": 0,
+          "barrierResolutions": 100
+        }
+      },
+      "captureSumMs": 204.1,
+      "cpu": {
+        "product": {
+          "ms": 1149.6,
+          "share": 0.9345
+        },
+        "gc": {
+          "ms": 29.3,
+          "share": 0.0238
+        },
+        "idle": {
+          "ms": 1.3,
+          "share": 0.0011
+        },
+        "program": {
+          "ms": 50,
+          "share": 0.0406
+        }
+      },
+      "rawCpuNodeCount": 1026,
+      "rawCpuSampleCount": 6974
+    },
+    {
+      "index": 2,
+      "settled": {
+        "bootSoft": false,
+        "booting": false,
+        "continuity": "steady",
+        "liveRuntimeState": "ready",
+        "liveCaptureInstalled": true,
+        "devices": 200,
+        "strips": 50
+      },
+      "failures": [],
+      "fingerprint": "ee8741e0aee72932150b965b7a7b97b33197d271f7ece5d58a8cb5dab6decf08",
+      "S2": {
+        "entityId": "light.perf_led_0_0",
+        "ticks": 100,
+        "staleStripes": 0,
+        "intakes": 100,
+        "fullRenders": 100,
+        "snapshots": 100,
+        "presentationsReplaced": 200,
+        "ledFrames": 100,
+        "ledTubes": 0,
+        "lightGeometry": 0,
+        "presentationBuilds": 200,
+        "snapshotFull": 0,
+        "snapshotIncremental": 100,
+        "lightGraphs": 0,
+        "lightResolutions": 300,
+        "fieldRecomputes": 0,
+        "tickMs": {
+          "median": 12.4,
+          "p95": 22.5,
+          "sum": 1396.7
+        },
+        "observed": {
+          "ledFrames": 100,
+          "stripsReplaced": 0,
+          "barrierResolutions": 100
+        }
+      },
+      "captureSumMs": 251.4,
+      "cpu": {
+        "product": {
+          "ms": 1362.9,
+          "share": 0.9362
+        },
+        "gc": {
+          "ms": 35.9,
+          "share": 0.0246
+        },
+        "idle": {
+          "ms": 1.5,
+          "share": 0.001
+        },
+        "program": {
+          "ms": 55.5,
+          "share": 0.0381
+        }
+      },
+      "rawCpuNodeCount": 1153,
+      "rawCpuSampleCount": 7910
+    }
+  ],
+  "comparison": {
+    "schema": "houseplan-light-presentation-comparison/v1",
+    "base": {
+      "sha": "fcef2752bfea5ef8292dc14495ad1bc3a6fed2e9",
+      "tree": "8b0ddc5bd0b528180ce07a3bdab605c09dd9fcbe",
+      "dirty": false
+    },
+    "result": {
+      "sha": "b6f183533dc2e51abee97bb1933f4021ccbca096",
+      "tree": "a7e726948e43f4c484f7cd4f648467dc0dd7648c",
+      "dirty": false
+    },
+    "failures": [],
+    "pass": true,
+    "rows": [
+      {
+        "index": 0,
+        "baseBuilds": 40000,
+        "resultBuilds": 200,
+        "reduction": 0.995,
+        "baseTickMs": {
+          "median": 21,
+          "p95": 26.3,
+          "sum": 2151.1
+        },
+        "resultTickMs": {
+          "median": 11,
+          "p95": 12.6,
+          "sum": 1106.3
+        },
+        "baseCpu": {
+          "product": {
+            "ms": 2042.5,
+            "share": 0.9197
+          },
+          "gc": {
+            "ms": 108.6,
+            "share": 0.0489
+          },
+          "idle": {
+            "ms": 1.2,
+            "share": 0.0005
+          },
+          "program": {
+            "ms": 68.6,
+            "share": 0.0309
+          }
+        },
+        "resultCpu": {
+          "product": {
+            "ms": 1078.1,
+            "share": 0.9289
+          },
+          "gc": {
+            "ms": 28,
+            "share": 0.0241
+          },
+          "idle": {
+            "ms": 1.2,
+            "share": 0.0011
+          },
+          "program": {
+            "ms": 53.4,
+            "share": 0.046
+          }
+        }
+      },
+      {
+        "index": 1,
+        "baseBuilds": 40000,
+        "resultBuilds": 200,
+        "reduction": 0.995,
+        "baseTickMs": {
+          "median": 21.2,
+          "p95": 24.3,
+          "sum": 2131.8
+        },
+        "resultTickMs": {
+          "median": 11.4,
+          "p95": 14.2,
+          "sum": 1178
+        },
+        "baseCpu": {
+          "product": {
+            "ms": 2018.5,
+            "share": 0.922
+          },
+          "gc": {
+            "ms": 114,
+            "share": 0.0521
+          },
+          "idle": {
+            "ms": 1.5,
+            "share": 0.0007
+          },
+          "program": {
+            "ms": 55.2,
+            "share": 0.0252
+          }
+        },
+        "resultCpu": {
+          "product": {
+            "ms": 1149.6,
+            "share": 0.9345
+          },
+          "gc": {
+            "ms": 29.3,
+            "share": 0.0238
+          },
+          "idle": {
+            "ms": 1.3,
+            "share": 0.0011
+          },
+          "program": {
+            "ms": 50,
+            "share": 0.0406
+          }
+        }
+      },
+      {
+        "index": 2,
+        "baseBuilds": 40000,
+        "resultBuilds": 200,
+        "reduction": 0.995,
+        "baseTickMs": {
+          "median": 21.3,
+          "p95": 24.9,
+          "sum": 2148.4
+        },
+        "resultTickMs": {
+          "median": 12.4,
+          "p95": 22.5,
+          "sum": 1396.7
+        },
+        "baseCpu": {
+          "product": {
+            "ms": 2028.7,
+            "share": 0.9146
+          },
+          "gc": {
+            "ms": 120.1,
+            "share": 0.0541
+          },
+          "idle": {
+            "ms": 1.4,
+            "share": 0.0006
+          },
+          "program": {
+            "ms": 67.8,
+            "share": 0.0306
+          }
+        },
+        "resultCpu": {
+          "product": {
+            "ms": 1362.9,
+            "share": 0.9362
+          },
+          "gc": {
+            "ms": 35.9,
+            "share": 0.0246
+          },
+          "idle": {
+            "ms": 1.5,
+            "share": 0.001
+          },
+          "program": {
+            "ms": 55.5,
+            "share": 0.0381
+          }
+        }
+      }
+    ],
+    "limitations": "Paired wall-time/CPU observations, not compositor or real-GPU acceptance. Official absolute seven-sample profiles remain separate mandatory gates."
+  },
+  "limitations": "Measured exact fcef2752 / b6f183533, not a future review SHA. All six raw CPU/tick/capture records retained. Final accepted-base input equivalence and absolute seven-sample CI remain pending; not GPU/owner field acceptance."
+}
