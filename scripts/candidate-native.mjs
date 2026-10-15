@@ -41,7 +41,7 @@ export function judgeNativeOutput(script, result) {
   if (!ordinary || !Array.isArray(checks) || ordinary.some(name => !checks.includes(name))) return { pass: false, reason: 'ordinary/risky-neighbour oracle missing' };
   return { pass: true, observed: checks.join('; ') };
 }
-export async function runCandidateNative({ input = candidateInputs(), profiles = ['geometry', 'view'], execute = spawnSync,
+export async function runCandidateNative({ input = candidateInputs(), profiles = Object.keys(NATIVE_PROFILES), execute = spawnSync,
   attest = attestStandardLaunch, root = process.cwd() } = {}) {
   if (!profiles.length || profiles.some(p => !NATIVE_PROFILES[p])) throw Error('known native profiles required');
   const environment = await attest({ reason: '#858 candidate-native' });

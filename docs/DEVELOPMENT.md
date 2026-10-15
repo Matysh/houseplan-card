@@ -13,6 +13,9 @@ exact hosted door/window identity at two held targets, one visible copy,
 untouched other hosts, Esc, release, native Undo and trusted CDP pointercancel.
 It records the production write/history path, not field/GPU acceptance. Static
 mutation declarations are checked for applicability; execution remains nightly.
+The candidate `editor` profile registers common physical/backdrop and the
+held-preview ordinary floor; the default native command runs every registered
+profile. Readiness requires this floor for changes to either owner or live editor.
 
 ## Information-card confirmation and lock information (#849)
 
