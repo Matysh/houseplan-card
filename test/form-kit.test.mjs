@@ -130,6 +130,8 @@ test('#597 собранный лист панели совпадает с зам
  * снова пересняты вместе с объявленным изменением UI.
  * #605 меняет только объявленную полировку плиток, кнопок Data и поля иконки;
  * лист панели по-прежнему остаётся замороженным без изменений.
+ * #876 adds only the scoped 44px signal-choice label rule, measured by its
+ * native keyboard/localization matrix; the panel sheet remains unchanged.
  */
 test('#597/#600 лист диалогов карточки совпадает с объявленным', () => {
   assert.equal(formKitCss(CARD_DIALOG_FORM_KIT, { withSwitch: false }), FROZEN_CARD_KIT_CSS);

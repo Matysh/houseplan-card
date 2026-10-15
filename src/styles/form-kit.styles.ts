@@ -409,7 +409,6 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-radios label { display: inline-flex; align-items: center; gap: 7px; min-height: 28px; font-size: .875rem; cursor: pointer; white-space: nowrap; }
   .${p}-radios input { width: 16px; height: 16px; margin: 0; accent-color: var(${tokens.accent}); cursor: pointer; }
   .${p}-radios label:has(input:checked) { color: var(${tokens.accent}); }
-  /* #876: the new three-way signal choice keeps a complete 44px action target. */
   .${p}-signal-visibility .${p}-radios label { min-height: 44px; min-width: 44px; }
   .${p}-callout {
     display: flex;
