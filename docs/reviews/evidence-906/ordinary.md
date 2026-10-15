@@ -82,3 +82,53 @@ delta. Local golden was not run without a ci:golden label; any automatic
 render-risk/golden check on the sealed review material remains a pipeline gate,
 not a waived result. Independent code review/merge and beta publication are
 still required; this author note does not assert S8 or a released version.
+
+## Resumed technical return after accepted #912 — 2026-10-15
+
+Both dependencies were observed before resuming: #912 `S8-merged` at accepted
+dev `50061947a3ee28486799a0f5300967952eac12dd`, and #909 `S7-code-review`,
+freeing the third active implementation slot. Resume claim: issuecomment-6198403242.
+The earlier RED `artifacts/906/gate-after-900-context.*` remains historical:
+raw1/194605ms, seven native PASS, old editor ceiling exceeded by 82 bytes.
+It is not relabelled GREEN or reused as proof of this material.
+
+Frozen `194aeb0b` was normally rebased onto the accepted dev. The only manual
+conflict was the overlay render: keep the #906 memo over the raw topology array,
+then the accepted #912 configured-topic filter, with both hover and involved
+consumers reading `selected`. Pure `src/zigbee-topology.ts` and the complete
+memo test are byte-identical to frozen194a (`git diff --exit-code`, raw0).
+The overlay difference from it is exactly the accepted #912 topic property and
+post-mapping filter/consumers; authority/user invalidation was not changed.
+The three own declarations and DEVELOPMENT block remain outside the shared top
+append hotspot in the original implementation commit.
+
+One separate budget-only commit `63354a6d` adopts precisely the shared measured
+batch centre `bundleBytes: 2940437`, approved in
+[owner decision6197386516](https://github.com/Matysh/houseplan-card/issues/911#issuecomment-6197386516).
+It changes no other value: editor265955, both2000-byte bands and all remaining
+limits stay unchanged. This allowance is not a measurement of a future SHA.
+
+Fresh executions on `63354a6d80c37faa7f1a28e1df37a8d2abc85d90`:
+
+- `npm run gate:small -- --smokes --jobs=1`: PASS226s, true exit0/225817ms,
+  17:40:55.795–17:44:41.612UTC. Build/typecheck23s, unit stage163s,
+  lint6s, all hygiene/integrity/budget checks PASS. All seven selected native
+  consumers above PASS (2/3/4/4/5/11/5s); bundle-sync precedes their execution.
+- The five-file compiled unit command above:98/98 PASS, raw0/152ms, with
+  the same22 memo cases and new accepted runtime neighbours. The actual overlay
+  again reports initial4/repeated0 enumerations with exact placements/routes.
+- `mutation-gate --check`: PASS/raw0/1033ms, definitions1610,
+  unique-source-reads832, execution0/caught unknown, five existing warnings.
+- `process-gate --issues --report`: PASS/raw0, four commits, zero warnings;
+  `git diff --check origin/dev...HEAD`: raw0.
+- `unused-locals-gate`: PASS/raw0/5748ms; actual fresh bundle2938435 bytes,
+  delegates145 / portMembers352 / hostRefs5352 / portPrivates102 /
+  harnessPrivates101. The shared2940437 centre is not raised again.
+
+Full command stdout/stderr and true child exits are paired as
+`artifacts/906/resume-{gate,scoped,static,process,unused}.*`. A later docs-only
+commit records these receipts; the final ordinary push hook runs on its own
+exact material and is reported in the issue handoff, not predeclared here.
+The old ordinary baseline/fixed counts, raw, verdict anchors and AC table remain
+unchanged. No source/compiled/manual mutant was executed, no new issue created,
+no independent code verdict, owner/GPU acceptance or merge is claimed here.
