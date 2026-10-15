@@ -18,6 +18,7 @@ export class PresentationLightFrame {
   readonly states = new Map<string, boolean>();
   private owners = new Map<string, Source[]>();
   private keys = new Map<string, Source[]>();
+  private order = new Map<Source, number>();
   private choices: readonly MarkerState[] | null = null;
   private reading: Set<string> | null = null;
 
@@ -26,6 +27,7 @@ export class PresentationLightFrame {
     let valid = true;
     const topology: unknown[][] = [];
     for (const source of sources) {
+      this.order.set(source, this.order.size);
       if (typeof source.key !== 'string' || typeof source.device?.id !== 'string'
           || typeof source.on !== 'boolean' || !Array.isArray(source.stateEids)
           || !Array.isArray(source.serviceEids) || this.keys.has(source.key)) valid = false;
@@ -48,9 +50,15 @@ export class PresentationLightFrame {
     return sources;
   }
 
-  linked(key: string): readonly Source[] {
-    this.reading?.add(key); // Record absence too: a later valid source matters.
-    return this.keys.get(key) || [];
+  linked(refs: ReadonlySet<string>): readonly Source[] {
+    const result: Source[] = [];
+    for (const key of refs) {
+      this.reading?.add(key); // Record absence too: a later valid source matters.
+      result.push(...this.keys.get(key) || []);
+    }
+    // Canonical projection iterates graph order, NOT saved controls order.
+    // The first source can own colour/signature, so indexing must preserve it.
+    return result.sort((a, b) => this.order.get(a)! - this.order.get(b)!);
   }
 
   markerStates(refs: readonly string[]): readonly MarkerState[] {

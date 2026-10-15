@@ -104,6 +104,8 @@ test('#895 AC2: incoming passive, controls, shared physical, missing refs, cycle
   }
   controller.controls.push('light.perf_0');
   equalComplete(host, reuse, 'direct entity plus shared marker control');
+  controller.controls.reverse();
+  equalComplete(host, reuse, 'reversed controls preserve canonical graph/source/colour order');
   for (const [eid, patch] of [
     ['light.perf_0', { state: 'off' }], ['light.perf_0', { state: 'unavailable' }],
     ['light.perf_0', { state: 'on', attributes: { rgb_color: [3, 70, 255], brightness: 38 } }],

@@ -358,7 +358,7 @@ export function resolvePresentationSources(
   ];
   if (markerRefs.size) {
     const linked = lightFrame
-      ? [...markerRefs].flatMap((ref) => [...lightFrame.linked(ref)])
+      ? lightFrame.linked(markerRefs)
       : globalLights.filter((source) => markerRefs.has(source.key));
     for (const source of linked) {
       const aliasesExisting = source.stateEids.length > 0 && lights.some((existing) =>
