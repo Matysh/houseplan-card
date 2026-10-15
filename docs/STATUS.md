@@ -31,6 +31,9 @@ definitions preserve typed reachable branches; redundant editor/diagnostic
 guards are represented together instead of weakening application defences.
 Ordinary isolated snapshot and trusted LED contact/service-ledger witnesses
 remain separate from nightly-only compilation/caught evidence.
+Definition metadata assertions live in the existing mutation-registry test
+reader: literal product-path declarations do not add a new text-anchor test,
+and the frozen monolith-reader policy remains unchanged.
 
 Editor gesture owners (#861) separate physical body/rotation and backdrop
 frame state behind 13/14-purpose editor-only ports. Existing queue/reset,
