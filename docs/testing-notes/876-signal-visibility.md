@@ -1,7 +1,8 @@
 # Shared Zigbee signal visibility — #876
 
 Accepted contract: issue body `3d96630687985be3d66bf526839fc91917f2af1b17d8e2379958e1655ca9944d`,
-GREEN SPEC r2, owner answers 1A/2A/3A. Base: accepted dev `a7bd08bf`.
+GREEN SPEC r2, owner answers 1A/2A/3A. Initial base: accepted dev `a7bd08bf`;
+integrated base: accepted #867 `dced034b635f21293a0ce4af2eea97d37ee795fc`.
 This is implementation evidence, not a formal review, release or real-GPU acceptance.
 
 ## AC witnesses and negative controls
@@ -10,7 +11,7 @@ This is implementation evidence, not a formal review, release or real-GPU accept
 | --- | --- | --- |
 | 1 | `node --test test/signal-visibility.test.mjs`: complete global × new mode × YAML and legacy matrix, including exact-false-only invalid-data handling | `signal-visibility-card-default-masks-global`, `signal-visibility-legacy-true-becomes-explicit`; contrary matrix rows |
 | 2 | `node demo/smoke_signal_visibility.mjs`: real control order, old true/unrelated Save, old false, on/inherit round-trip, reject; `node demo/smoke_signal_visibility_lifecycle.mjs`: held write, reopened native form, real conflict reload, readonly and late lazy kiosk opening | `signal-visibility-inherit-retains-old-false`, `signal-visibility-old-save-closes-new-dialog`; offline/conflict/readonly/kiosk probes |
-| 3 | Same functional native: actual fixture `config_updated` reaches independent full/static/kiosk cards, Flat/Iso, tooltip and preview; unit explicit derived LQI and battery remain | Actual off/on count contrast; explicit-value/room-label independence rows. #867 integration is verified only after its accepted rebase, not by copying a draft |
+| 3 | Functional native: actual fixture `config_updated` reaches independent full/static/kiosk cards, Flat/Iso, tooltip and preview. `smoke_signal_visibility_device_policy.mjs`: device/entity × global/local/YAML × local hide, battery-off sibling-only update, explicit LQI value/badge, topology, actual marker Save and cold reload | Actual off/on count contrast, exact 137/0 readings and unchanged primary-state identity; explicit-value/room-label independence rows. Shared context and both showLqi projections from accepted #867 remain intact |
 | 4 | `python -m pytest tests_backend/test_settings_signal_visibility.py tests_backend/test_config_schema_manifest.py -q`; `python -m pytest tests_backend/test_ha_import_export.py -k issue_876 -q`; `test/space-copy.test.mjs` and schema parity | `signal-visibility-global-write-coerced`, `signal-visibility-plan-only-drops-mode`; invalid bool/enum and exact target-global equality |
 | 5 | Functional native executes both actual config editors: absent selector and unrelated config-change event preserves YAML false/unknown keys; real card true/invalid/false and explicit On renders | Exact emitted config/visible-number comparisons |
 | 6 | `node demo/smoke_signal_visibility_ui.mjs`: RU/EN × 360/1280 × light/dark, native Space/Tab/radio arrows, measured 44px labels/targets, no clipping/raw key; lifecycle read-only/kiosk probes | Native target-height/readability/focus/checked-state measurements, not a source regex |
@@ -52,6 +53,27 @@ scene ID, geometry limit or accepted PNG is changed to make a check pass.
   retains equality rather than dropping its assertion.
 - Bundle budgets PASS without increases. Final golden/CI proofs are bound to
   the integrated candidate and recorded in the handoff, not claimed here.
+
+## Accepted #867 integration
+
+- Fresh accepted SPEC-r2 digest and owner answers were rechecked before claim
+  `6183665744`. Rebase retains the strict `marker.hide_signal` field and its
+  translations beside the new global/local fields; no draft #867 code copied.
+- Resolver/diagnostic/static-card/incremental snapshot units: 22 PASS. The added
+  bounded joint matrix checks both binding kinds, all global/new-mode/YAML
+  combinations, local hide, explicit derived LQI and battery-off presentation.
+- Joint native: 34 PASS against the freshly built production bundle. The real
+  diagnostic sibling alone changes 137 → 0 while primary state identity stays
+  equal and battery display is off; full/static snapshots retain that sibling.
+  Effective-off hides system line and tooltip, local-hide hides only the system
+  line, explicit LQI badge/value and topology survive both gates. A real marker
+  checkbox Save and cold card reload retain global Off/local On/local hide.
+- Existing own native matrices remain unchanged: functional 31, lifecycle 6,
+  localized/keyboard UI 80 and mounted-work 5 PASS. Strict backend 29 PASS;
+  actual import/export 9 PASS. Mutation definitions: static `--check` only,
+  execution=0, caught=unknown; the existing browser guideline is not raised.
+- Final all-unit/core, published-source full golden and exact CI are recorded
+  in the review handoff. These observations do not substitute for them.
 
 Release classification: `major` against stable `v1.80.1`, milestone `1.81`.
 User-facing stable prose is authored only during stable release preparation.

@@ -7,6 +7,7 @@ import {
 import { spaceDisplayOf } from '../test-build/logic.js';
 import { rememberGeneralBaseline, generalDirty } from '../test-build/editors/general-form-state.js';
 import { resolveDevicePresentation } from '../test-build/device-presentation.js';
+import { createDeviceSignalContext } from '../test-build/device-signal.js';
 
 test('#876 AC1: complete global × space × YAML matrix, including the old true default', () => {
   for (const global of [undefined, true, false]) for (const card of [undefined, true, false]) {
@@ -113,4 +114,37 @@ test('#876 AC3: effective off does not hide an explicit LQI value or a separate 
     assert.equal(presentation.battery?.state, 'normal');
     assert.equal(presentation.lqiText, null, 'the explicitly displayed value is never duplicated');
   }
+});
+
+test('#876/#867 AC3/7: shared/local/YAML policy composes with local hide for both binding kinds', () => {
+  const h = { states: { 'switch.own': { state: 'off', attributes: {} },
+    'sensor.own_linkquality': { state: '137', attributes: {} } },
+  entities: { 'switch.own': { device_id: 'radio' }, 'sensor.own_linkquality': { device_id: 'radio' } },
+  devices: { radio: {} } };
+  const context = createDeviceSignalContext(h);
+  for (const kind of ['device', 'entity']) for (const hide of [false, true])
+    for (const global of [undefined, true, false]) for (const mode of ['inherit', 'on', 'off'])
+      for (const yaml of [undefined, true, false]) {
+        const id = `${kind}-marker`, ref = kind === 'entity' ? 'switch.own' : 'radio';
+        const d = { id, name: id, model: '', icon: 'mdi:toggle-switch', area: 'room', space: 'floor',
+          entities: kind === 'entity' ? ['switch.own'] : Object.keys(h.entities), primary: 'switch.own',
+          bindingKind: kind, bindingRef: ref, bindingStatus: { kind: 'active' },
+          marker: { id, binding: `${kind}:${ref}`, hide_signal: hide, display: 'badge' } };
+        const local = signalVisibilityOverrideOf(mode), show = effectiveShowLqi({ show_lqi: global }, local, yaml);
+        const expected = mode === 'on' || (mode === 'inherit' && yaml !== false && global !== false);
+        const options = { showSignal: show, liveStates: true, showTemperature: true,
+          showBattery: false, signalContext: context };
+        const p = resolveDevicePresentation(h, d, options);
+        const identity = JSON.stringify({ kind, hide, global, mode, yaml });
+        assert.equal(p.lqiText, expected && !hide ? '137' : null, identity);
+        assert.equal(p.lqiTipText, expected ? '137' : null, identity);
+        assert.equal(p.battery, null, identity);
+        const badge = resolveDevicePresentation(h, { ...d, marker: { ...d.marker,
+          value_badge: { enabled: true, source: { kind: 'derived_lqi' } } } }, options);
+        assert.equal(badge.valueBadge.text, '137', identity);
+        assert.equal(badge.lqiText, null, 'the explicit badge is not duplicated');
+        const value = resolveDevicePresentation(h, { ...d, marker: { ...d.marker,
+          display: 'value', value_source: { kind: 'derived_lqi' } } }, options);
+        assert.equal(value.valueText, '137', identity);
+      }
 });

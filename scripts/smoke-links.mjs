@@ -74,6 +74,13 @@ export const SMOKE_LINKS = [
       + 'preview, one guide layer, native zoom and accepted config write, not only the pure result.',
   },
   {
+    files: ['src/signal-visibility.ts'],
+    smokes: ['smoke_signal_visibility.mjs', 'smoke_signal_visibility_lifecycle.mjs',
+      'smoke_signal_visibility_ui.mjs', 'smoke_signal_visibility_work.mjs',
+      'smoke_signal_visibility_device_policy.mjs'],
+    because: '#876: public form saves and HA pushes exercise global/local/YAML precedence through the production bundle, independent full/static consumers, retained diagnostic siblings, explicit values and topology; helper names do not occur in the DOM-driven witnesses.',
+  },
+  {
     files: ['src/device-editor-access.ts'],
     smokes: ['smoke_view_edit_permissions.mjs'],
     because: '#844: real footer/direct/lazy/warm entries and Area-icon navigation/drag '
