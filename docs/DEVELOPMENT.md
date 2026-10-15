@@ -289,6 +289,17 @@ These witnesses are being completed in S6; no full release or GPU acceptance is
 claimed by focused headless evidence. Enlarged non-carousel kiosk integration
 is verified after accepted #894, without copying its unreviewed implementation.
 
+The resumed #848 unit diagnosis on accepted `3e10b8ad` found 20 failures:
+19 shared-summary preference regressions and one stale exact shell anchor.
+The shared preference reader keeps the established `location.pathname` key;
+it must not introduce a `/` fallback from a detached synthetic host. Existing
+Masonry, saved scale, lifecycle and measured-layout expectations are unchanged.
+The shell anchor now requires the recovery notice between the retained body and
+the existing version/danger siblings, preserving their exact order. Focused
+summary runtime/presentation, optional-space shell, loader, version and boundary
+tests pass 77/77. Final mandatory core/native gates and the accepted #894
+enlarged-kiosk coupled regression are separate evidence, not implied here.
+
 The focused native is green (53 assertions): real root404 retry, dependency404,
 foreign fingerprint, aggregated double-click and warm-instance cases execute.
 Its 360px document uses an actually responsive host rather than cropping the

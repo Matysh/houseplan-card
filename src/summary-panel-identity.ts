@@ -18,7 +18,10 @@ export interface SummaryPreferenceHost {
 export function summaryPreferenceKey(host: SummaryPreferenceHost): string | null {
   return summaryLocalKey({
     userId: host.hass?.user?.id || host.hass?.user?.name,
-    path: host.ownerDocument.defaultView?.location.pathname ?? '/',
+    // Preserve the established preference address used before sharing this
+    // reader with the cold-runtime notice. Do not invent a '/' key when a
+    // detached/synthetic host has no owning Window.
+    path: location.pathname,
     host: host.panelHost ? 'panel' : 'lovelace',
     slot: stableSummaryPlacementSlot(host),
   });
