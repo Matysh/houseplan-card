@@ -70,12 +70,20 @@ const res = await page.evaluate(async () => {
     settings: { ...(s.settings||{}), show_lqi: false } })) };
   c.requestUpdate(); await c.updateComplete;
   out.lqiAfter = sr().querySelectorAll('.dev .lqi').length;
-  // The space value is an explicit override, not another condition ANDed with
-  // the card default. This is the projection shared by preview/static cards.
-  c._config = { ...c._config, show_signal: false };
-  c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== 'f1' ? s : ({ ...s,
-    settings: { ...(s.settings||{}), show_lqi: true } })) };
-  c.requestUpdate(); await c.updateComplete;
+  // #876: historical true now inherits; only the new explicit On mode may
+  // override YAML false. Keep both sides of the contrast on the accepted bus.
+  c.setConfig({ ...c._config, show_signal: false });
+  await window.__hpTest.setServerConfig(cfg => {
+    const settings = cfg.spaces.find(space => space.id === 'f1').settings;
+    settings.show_lqi = true; delete settings.show_lqi_mode;
+    return cfg;
+  });
+  out.legacyTrueDoesNotOverrideCardDefault = sr().querySelectorAll('.dev .lqi').length === 0;
+  await window.__hpTest.setServerConfig(cfg => {
+    const settings = cfg.spaces.find(space => space.id === 'f1').settings;
+    settings.show_lqi_mode = 'on'; settings.show_lqi = true;
+    return cfg;
+  });
   out.spaceLqiOverridesCardDefault = sr().querySelectorAll('.dev .lqi').length > 0;
   return out;
 });
