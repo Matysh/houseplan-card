@@ -89,6 +89,13 @@ The plan image is interactive only while **Plan backdrop** is selected:
 - `Esc` restores the transform at pointer-down;
 - release creates one named command in the shared 50-step history.
 
+Cancellation by Esc, pointercancel or loss of that gesture's pointer capture
+restores the transform without a write or history step. The completed terminal
+frame removes the backdrop's grabbing cursor and size badge immediately; the
+armed Plan backdrop tool keeps its normal grab cursor. Its next begin restores
+the grabbing class even after a retained Lit frame. Other tool/camera classes
+remain owned by their existing paths. Moves retain their frame scheduling (#908).
+
 The editor-only `BackdropFrameGestureRuntime` owns the live drag, derived
 rectangle/frame and transform operations through fourteen purpose callbacks.
 The editor runtime still owns dialogs, shared cancellation and persistence;

@@ -5,6 +5,10 @@
 - Late vacuum path replies and Optimize/import Undo completions no longer replace
   a plan, history or busy state after switching Home Assistant connections/users
   or detaching the card ([#901](https://github.com/Matysh/houseplan-card/issues/901)).
+- Cancelling a backdrop move, resize or rotation immediately restores the
+  normal cursor. Esc, touch cancellation and loss of pointer capture clear
+  the preview without saving; the next drag works immediately
+  ([#908](https://github.com/Matysh/houseplan-card/issues/908)).
 
 ## v1.81.0-beta.3 — 2026-10-15
 

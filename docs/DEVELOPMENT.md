@@ -1,5 +1,16 @@
 # Development and deployment
 
+## Backdrop terminal witness (#908)
+
+`smoke_grid_scale_invariance` asserts computed cursor and stage class after
+trusted CDP touchCancel, at 5 cm and 1 cm grid scale. `smoke_backdrop` adds
+move/scale/rotate × touchCancel/Esc/native capture-loss cases, config/layout/
+revision/history/write ledgers, immediate restart and normal release/Undo.
+Capture release is delivered by Chromium on the next native mouse move; the
+oracle requires its trusted lostpointercapture before mouseup. Two completed
+animation frames bound terminal observation, with no artificial HA tick.
+The independent temporary camera-outline class is not a cursor/tool class.
+
 ## Editor gesture owners and held opening preview (#861)
 
 `physical-body-gesture` and `backdrop-frame-gesture` use bounded purpose ports,

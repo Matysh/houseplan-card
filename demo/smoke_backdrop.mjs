@@ -14,6 +14,8 @@
  *   • the static card reads the same three fields.
  */
 import { launch, check, finish } from './serve.mjs';
+import { requirePinnedBrowser } from '../scripts/browser-attestation.mjs';
+requirePinnedBrowser('#908 backdrop terminal input');
 const { page, browser } = await launch();
 
 const snap = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
@@ -524,4 +526,114 @@ check('static_card_has_no_picture_paper', stat.imageSizedPaper, false);
 check('static_card_draws_the_picture_on_the_paper', stat.iImage > stat.iPaper, true);
 
 await restore();
+
+// #908: existing ordinary backdrop scenario, now including actual browser
+// cancellation and the retained terminal cursor rather than only owner fields.
+await page.evaluate(() => {
+  const card = window.__card, call = card.hass.callWS;
+  window.__backdropWrites = [];
+  card.hass.callWS = async message => {
+    if (message.type === 'houseplan/config/set' || message.type === 'houseplan/layout/set')
+      window.__backdropWrites.push(structuredClone(message));
+    return call.call(card.hass, message);
+  };
+});
+const terminalState = () => page.evaluate(() => {
+  const c = window.__card, stage = c.renderRoot.querySelector('.stage');
+  return { active: c._editorRuntime.backdropGesture.active, badge: !!c.renderRoot.querySelector('.bdmeasure'),
+    grabbing: stage.classList.contains('bdgrabbing'), grab: stage.classList.contains('bdgrab'),
+    // The camera owns its independent temporary outline class; compare cursor/tool classes.
+    cursor: getComputedStyle(stage).cursor, classes: [...stage.classList]
+      .filter(v => v !== 'bdgrabbing' && v !== 'hp-safe-daycycle-outline').sort(),
+    transform: JSON.stringify(['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle']
+      .map(key => c._curSpaceCfg[key] ?? null)),
+    config: JSON.stringify(c._serverCfg), layout: JSON.stringify(c._layout), history: c._geometryHistory.size,
+    writes: window.__backdropWrites.length, configRev: c._cfgRev, layoutRev: c._layoutRev };
+});
+const cancelledState = (before, after) => !after.active && !after.badge && !after.grabbing
+  && after.grab && after.cursor === 'grab' && before.config === after.config && before.layout === after.layout
+  && before.history === after.history && before.writes === after.writes
+  && before.configRev === after.configRev && before.layoutRev === after.layoutRev;
+const startPoint = async kind => kind === 'move' ? screenPt(500, 500) : page.evaluate(kind => {
+  const handle = window.__card.renderRoot.querySelector(kind === 'rotate' ? '.bdhandle.dtrot' : '.bdhandle[data-corner="1,1"]');
+  const box = handle.getBoundingClientRect(); return [box.x + box.width / 2, box.y + box.height / 2];
+}, kind);
+const prepareCancel = async () => {
+  await restore();
+  if (await page.evaluate(() => window.__card._mode !== 'decor')) {
+    await page.locator('[data-hp="mode-tab"][data-mode="decor"]').click();
+    await page.waitForFunction(() => window.__card._mode === 'decor' && !window.__card._modeTransitionBusy);
+  }
+  // Native header input re-arms the compatibility-click barrier after touch.
+  await page.locator('[data-hp="tool"][data-tool="backdrop"]').click();
+  await page.locator('[data-hp="zoom-fit"]').click(); await cameraSettled();
+  await page.locator('[data-hp="zoom-out"]').click(); await cameraSettled(); await settle();
+  await page.evaluate(() => window.__hpTest.waitForWrites());
+  await page.evaluate(() => {
+    const stage = window.__card.renderRoot.querySelector('.stage');
+    window.__backdropTerminal = { pid: null, source: null, terminals: [] };
+    stage.addEventListener('pointerdown', e => {
+      window.__backdropTerminal.pid = e.pointerId; window.__backdropTerminal.source = e.target;
+    }, { capture: true, once: true });
+    for (const type of ['pointercancel', 'lostpointercapture']) stage.addEventListener(type, e => {
+      window.__backdropTerminal.terminals.push({ type: e.type, id: e.pointerId, trusted: e.isTrusted });
+    }, { capture: true, once: true });
+  });
+};
+for (const terminal of ['touchCancel', 'Escape', 'lostpointercapture']) for (const kind of ['move', 'scale', 'rotate']) {
+  console.log('908-scenario', terminal, kind);
+  await prepareCancel(); const before = await terminalState(), from = await startPoint(kind);
+  let session;
+  if (terminal === 'touchCancel') {
+    session = await page.context().newCDPSession(page);
+    await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: from[0], y: from[1], id: 908 }] });
+  } else { await page.mouse.move(...from); await page.mouse.down(); }
+  await settle(); const begun = await terminalState(), counts = await renderCounts();
+  for (let step = 1; step <= 6; step++) {
+    const x = from[0] + step * 5, y = from[1] + step * 3;
+    if (session) await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y, id: 908 }] });
+    else await page.mouse.move(x, y);
+    await settle();
+  }
+  const moving = await terminalState(), movedCounts = await renderCounts();
+  check(`908 ${terminal} ${kind} starts real owner and live cursor`, begun.active && begun.grabbing && begun.badge
+    && moving.active && moving.grabbing && moving.config !== before.config);
+  check(`908 ${terminal} ${kind} per-move keeps retained rendering`, movedCounts.full === counts.full && movedCounts.live > counts.live);
+  if (session) {
+    await session.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] }); await session.detach();
+  } else if (terminal === 'Escape') await page.keyboard.press('Escape');
+  else await page.evaluate(() => {
+    const { source, pid } = window.__backdropTerminal;
+    if (!source?.hasPointerCapture(pid)) throw Error('native backdrop capture was not held');
+    source.releasePointerCapture(pid);
+  });
+  if (terminal === 'lostpointercapture') await page.mouse.move(from[0] + 30, from[1] + 18);
+  // Two completed RAFs are the bounded terminal-frame boundary; no hass tick.
+  await settle(); const after = await terminalState();
+  check(`908 ${terminal} ${kind} terminal cursor config layout history writes`, cancelledState(before, after));
+  check(`908 ${terminal} ${kind} preserves other stage classes`, JSON.stringify(before.classes) === JSON.stringify(after.classes));
+  if (terminal !== 'Escape') check(`908 ${terminal} ${kind} trusted terminal delivered`, await page.evaluate(type => {
+    const probe = window.__backdropTerminal;
+    return probe.terminals.some(e => e.type === (type === 'touchCancel' ? 'pointercancel' : type) && e.id === probe.pid && e.trusted);
+  }, terminal));
+  if (!session) {
+    await page.mouse.up(); await settle();
+    check(`908 ${terminal} ${kind} late physical release stays mutation free`, cancelledState(before, await terminalState()));
+  }
+  const again = await startPoint('move');
+  await page.mouse.move(...again); await page.mouse.down(); await page.mouse.move(again[0] + 25, again[1] + 15); await settle();
+  const restarted = await terminalState();
+  check(`908 ${terminal} ${kind} next native drag immediately owns cursor`, restarted.active && restarted.grabbing && restarted.badge);
+  await page.keyboard.press('Escape'); await page.mouse.up(); await settle();
+  check(`908 ${terminal} ${kind} restarted cancel stays mutation free`, cancelledState(before, await terminalState()));
+}
+await prepareCancel(); const releaseBefore = await terminalState(), releaseFrom = await startPoint('move');
+await page.mouse.move(...releaseFrom); await page.mouse.down(); await page.mouse.move(releaseFrom[0] + 40, releaseFrom[1] + 20);
+await settle(); await page.mouse.up(); await settle(); await page.evaluate(() => window.__hpTest.waitForWrites());
+const releasedState = await terminalState();
+check('908 normal release retains one save and one history step', releasedState.writes === releaseBefore.writes + 1
+  && releasedState.history === releaseBefore.history + 1 && !releasedState.active && !releasedState.grabbing);
+await page.keyboard.press('Control+z'); await settle(); await page.evaluate(() => window.__hpTest.waitForWrites());
+const undoneState = await terminalState();
+check('908 native Undo restores released transform', undoneState.transform === releaseBefore.transform && undoneState.history === releaseBefore.history);
 await finish(browser);

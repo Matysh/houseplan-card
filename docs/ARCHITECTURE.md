@@ -9,6 +9,12 @@ classification must be renewed when an earlier doc-only blob meets its first
 A/B delivery; the same immutable history check guards merge and catalogue.
 No runtime state, owner acceptance or release authority is introduced.
 
+Backdrop cancellation (#908) reconciles only its stage `bdgrabbing` class at
+cancel and explicit begin, since a retained terminal can leave Lit's cached
+class value unchanged. The stage routes capture loss only for the active
+backdrop pointer; normal release has already retired that owner. No per-move
+publication, frame policy, transform builder or history/persistence owner changes.
+
 System LQI visibility (#876) has one bounded policy in `signal-visibility.ts`.
 `spaceDisplayOf` projects explicit new modes and historical false; every full,
 static, hover and preview consumer feeds that local override, the exact card

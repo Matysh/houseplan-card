@@ -10932,6 +10932,9 @@ export class HouseplanCard extends LitElement {
           @pointermove=${(e: PointerEvent) => this._stagePointerMove(e)}
           @pointerleave=${(e: PointerEvent) => this._stagePointerLeave(e)}
           @pointerup=${(e: PointerEvent) => this._stagePointerUp(e)}
+          @lostpointercapture=${(e: PointerEvent) => {
+            if (this._editorRuntime?.backdropGesture.owns(e.pointerId)) this._stagePointerCancel(e);
+          }}
           @pointercancel=${(e: PointerEvent) => this._stagePointerCancel(e)}>
           ${renderDayCycleEnvironment(dayCycle, dayCycleWeight, moonLayer(this, this._sunGlobal(), dayCycle))}
           ${moonLayer(this, this._sunGlobal(), this._moonSkyState(), dayCycleWeight)}

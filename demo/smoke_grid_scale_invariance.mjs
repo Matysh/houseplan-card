@@ -424,11 +424,15 @@ const backgroundCancel = async (cellCm) => {
     return {
       ok: probe.started && probe.badgeShown && probe.pid !== null && probe.cancelPid === probe.pid
         && !card.renderRoot.querySelector('.bdmeasure') && changedKeys.length === 0
-        && card._geometryHistory.size === probe.history,
+        && card._geometryHistory.size === probe.history
+        && !card.renderRoot.querySelector('.stage.bdgrabbing')
+        && getComputedStyle(card.renderRoot.querySelector('.stage')).cursor === 'grab'
+        && !card._editorRuntime.backdropGesture.active,
       startedPid: probe.pid, cancelPointerId: probe.cancelPid,
-      // The accepted cancel path may retain its settled stage class. Its live
-      // size badge is present only for an active gesture and disappears at cancel.
-      dragEnded: !card.renderRoot.querySelector('.bdmeasure'),
+      // #908: the retained terminal must reconcile the visible cursor too.
+      dragEnded: !card.renderRoot.querySelector('.bdmeasure')
+        && !card.renderRoot.querySelector('.stage.bdgrabbing'),
+      cursor: getComputedStyle(card.renderRoot.querySelector('.stage')).cursor,
       configSame: changedKeys.length === 0,
       changedKeys,
     };

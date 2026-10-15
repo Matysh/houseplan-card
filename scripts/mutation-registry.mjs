@@ -77,6 +77,24 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'backdrop-cancel-retains-grabbing-cursor',
+    guard: 'node demo/smoke_grid_scale_invariance.mjs',
+    because: '#908 AC1 requires the browser-computed cursor after trusted touchCancel across two real grid layouts; a reset owner alone cannot prove retained DOM presentation.',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts', find: "    if (backdropActive) this.host._stageEl?.classList.remove('bdgrabbing');", replace: '    if (backdropActive) void 0;' }],
+  },
+  {
+    id: 'backdrop-next-begin-forgets-grabbing-cursor',
+    guard: 'node demo/smoke_backdrop.mjs',
+    because: '#908 AC2 requires native pointer capture and Lit retained class binding across cancel then immediate begin; only the mounted DOM exposes its cached true value.',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts', find: "        if (phase === 'begin') host._stageEl?.classList.add('bdgrabbing');", replace: "        if (phase === 'begin') void 0;" }],
+  },
+  {
+    id: 'backdrop-capture-loss-retains-owner',
+    guard: 'node demo/smoke_backdrop.mjs',
+    because: '#908 AC1/AC2 require an actual trusted lostpointercapture from Chromium before mouse release, with cursor, badge and config/history/write oracles in the mounted card.',
+    patches: [{ file: 'src/houseplan-card.ts', find: '            if (this._editorRuntime?.backdropGesture.owns(e.pointerId)) this._stagePointerCancel(e);', replace: '            if (false && this._editorRuntime?.backdropGesture.owns(e.pointerId)) this._stagePointerCancel(e);' }],
+  },
+  {
     id: 'physical-owner-rotation-loses-five-degree-step',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/physical-body-gesture.test.mjs',
     because: '#861 AC1: ordinary rotation snaps to five degrees while Shift preserves the raw angle.',

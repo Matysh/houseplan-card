@@ -31,6 +31,10 @@ provenance check reads versioned phases and existing publisher commits; later
 A/B work must renew any earlier doc-only classification. The agent-authored
 ledger schema and owner release authority remain unchanged.
 
+Backdrop terminal presentation (#908) clears its grabbing cursor immediately
+on cancellation and re-arms it at the next begin; pointer capture loss cancels
+only its owning backdrop gesture. Touch editor: best effort / intentionally degraded.
+
 Nightly mutation evidence (#899) retains the full registry and 60-minute
 deadline while splitting each former modulo shard into two. Preparation
 definitions preserve typed reachable branches; redundant editor/diagnostic

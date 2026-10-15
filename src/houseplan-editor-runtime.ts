@@ -885,7 +885,12 @@ export class HouseplanEditorRuntime {
       record: (key, before) => this._recordGeometry(host._t(key), before),
       save: () => this._saveConfig(), toast: (key) => host._showToast(host._t(key)),
       configChanged: () => { host._cfgEpoch++; },
-      publish: (phase) => this._publishGesture(phase),
+      publish: (phase) => {
+        // A retained cancel can leave Lit remembering the previous true class.
+        // Re-arm that owner's presentation at its next explicit begin too.
+        if (phase === 'begin') host._stageEl?.classList.add('bdgrabbing');
+        this._publishGesture(phase);
+      },
       formatLength: (a, b) => host._fmtLen(a, b),
     });
     this.roomGear = new RoomGearDragController({
@@ -3620,6 +3625,7 @@ public _replaceDecor(id: string, patch: Partial<DecorShape>): void {
   }
 
 public _cancelDecorGesture(): void {
+    const backdropActive = this.backdropGesture.active;
     cancelHouseplanPointerMove(this.host, 'decor-transform');
     cancelHouseplanPointerMove(this.host, 'decor-move');
     cancelHouseplanPointerMove(this.host, 'backdrop');
@@ -3638,6 +3644,9 @@ public _cancelDecorGesture(): void {
     this.host._decorMove = null;
     this.host._dtDrag = null;
     this.backdropGesture.reset();
+    // The cancel frame may retain Lit's stage binding. Retire only this
+    // owner's grabbing class; the selected backdrop tool keeps its grab cursor.
+    if (backdropActive) this.host._stageEl?.classList.remove('bdgrabbing');
     // Mark after named terminal setters; only the unnamed cancel frame may be retained.
     if (before && sp && this.host._mode === 'decor') this.host._terminalFrame = 1;
     this.host.requestUpdate();

@@ -1823,6 +1823,8 @@ its empty bounding box.
 furniture and uploaded images; these authored transforms are not grid debt.
 The plan image is interactive only with Backdrop selected. Undo/Redo shares the
 50-command editor history.
+Cancelling its move, resize or rotation restores the normal cursor immediately;
+you can start another drag without waiting for a Home Assistant update.
 
 New shapes are at least half a grid cell. The created object stays selected.
 Arrow keys in **Select** move the chosen decor by exactly one current grid cell
