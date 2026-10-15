@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 901,
+  "baseStable": "v1.80.1",
+  "category": "stable-fix",
+  "rationale": "v1.80.1 already ships live trail subscriptions and the shared Optimize/full-import Undo. This repairs ownership of their late client continuations; it adds no feature, persisted field or server protocol.",
+  "summary": {
+    "ru": "Поздний ответ пути пылесоса или серверной отмены не меняет план и историю после смены подключения или пользователя Home Assistant.",
+    "en": "Late vacuum path or server Undo replies no longer change the plan or history after switching Home Assistant connections or users."
+  }
+}

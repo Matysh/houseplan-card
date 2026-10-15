@@ -1133,6 +1133,12 @@ not adopted. Optimize/Undo use the existing Houseplan `may_write` policy, not a 
 administrator-only rule; kiosk refuses these UI actions. Existing paired
 storage intent/rollback/one-deep Undo and compatibility schemas are unchanged.
 
+The shared Optimize/full-import Undo tail also retains its original HA transport
+and connection/user generation through the paired reads and backdrop adoption
+(#901). A foreign context or detach retires only its local UI completion; it
+does not reverse a write already accepted by the original server. The new context
+reads its own Undo availability. No persisted field or protocol revision changes.
+
 `alignAllToGrid(spaces, layout)` (`src/align-grid.ts`) is pure: it
 copies its input, never mutates it, and returns the new spaces, the new
 layout and the report. The dialog therefore measures and commits the

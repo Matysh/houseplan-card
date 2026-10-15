@@ -634,7 +634,15 @@ when both installations have identical content and numeric revisions.
 Already subscribed live callbacks also capture that context plus connection
 and subscription generation. Retired delivery is refused before any read or
 mutation, including the gap before the new paired load installs subscriptions.
-This early fence does not certify async work already started by a valid event.
+The trail callback additionally owns its captured transport and latest request
+through `vacuum-trail-refresh.ts` (#901); it rechecks after the read, so an old
+success/rejection cannot replace the new trail or its format.
+`plan-optimize-undo.ts` owns the existing shared Optimize/full-import Undo tail.
+It captures write authority and transport before sending, guards config-read
+capabilities and paired adoption (including the backdrop await), then guards
+success/error/finally. Foreign HA assignment and detach retire its local lifecycle
+and busy/capability state; a fresh operation never waits for the retired transport.
+This changes no server CAS/ACL or paired-write protocol and does not touch Apply.
 `new-device-ack` owns one explicit visit's attention change and restores
 only that ID after rejection, without a background retry loop. Vacuum routes
 pass the same optimistic attempt through write-time canonicalization.

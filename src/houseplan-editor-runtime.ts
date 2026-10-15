@@ -140,6 +140,7 @@ import { guardDraftNavigation, requestMarkerClose, requestRoomClose } from './ed
 import { EditorChainExit, finishWallChainForNavigation } from './editor-chain-exit';
 import { forgetMarkerBaseline, rememberMarkerBaseline } from './editors/marker-form-state';
 import { commitPlanOptimization } from './plan-optimize-write';
+import { PlanOptimizationUndo, type UndoHass } from './plan-optimize-undo';
 import { saveSpaceCopy } from './space-copy-runtime';
 import {
   Affine, applyAffine, readVacTelemetry, autoCalibrate, vacTrailMode, areaCentroid,
@@ -594,7 +595,7 @@ export interface HouseplanEditorHostPort {
   } | null;
   _gearPtCache: WeakMap<number[][], number[]>;
   _geometryHistory: CommandStack<SpaceGeometryState>;
-  _getAuthoritativeConfig: () => Promise<AuthoritativeConfigResponse>;
+  _getAuthoritativeConfig: (hass?: UndoHass, isCurrent?: () => boolean) => Promise<AuthoritativeConfigResponse>;
   _glowRadiusCm: number;
   _glowRadiusPlaceholder: string;
   _gridPitch: number;
@@ -795,7 +796,7 @@ export interface HouseplanEditorHostPort {
   _writeChain: Promise<void>;
   _writesPending: number;
   _sendConfigCandidate: (candidate: ServerConfig) => Promise<void>;
-  _configWriteGuard?: (pendingOnly?: boolean) => () => boolean;
+  _configWriteGuard: (pendingOnly?: boolean) => () => boolean;
   _writeConfig: () => Promise<void>;
   _requestMode: (mode: 'view' | 'plan' | 'devices' | 'decor', animate?: boolean) => Promise<void>;
   _checkOptimizeGeometry: (config: ServerConfig) => OptimizeGeometryPreflightResult;
@@ -858,6 +859,7 @@ export class HouseplanEditorRuntime {
   public readonly _radarSetup: RadarSetupController;
   /** #642: «Оптимизировать планы» — свой модуль с узким портом; #869: ленивый чанк. */
   public readonly optimizePlans: LazyOptimizePlansDialog;
+  public readonly optimizationUndo: PlanOptimizationUndo;
   public constructor(public readonly host: HouseplanEditorHostPort) {
     this.chainExit = new EditorChainExit(request => host._confirmDanger(request), () => host._cancelDangerConfirm());
     // #805: editor-only CSS, adopted at the loader's create() — before install, so before any editor frame.
@@ -919,6 +921,7 @@ export class HouseplanEditorRuntime {
       },
       confirmDiscard: () => host._confirmDanger(radarDiscardRequest((key) => host._t(key))),
     });
+    this.optimizationUndo = new PlanOptimizationUndo(host, () => this._clearGeometryGesture());
     this.optimizePlans = new LazyOptimizePlansDialog({
       dialog: () => host._alignDialog,
       setDialog: (next) => { host._alignDialog = next; },
@@ -1011,7 +1014,7 @@ public _commitLiveEditor(deviceId?: string): void {
   commitHouseplanEditor(this.host, deviceId);
   if (this.host.isConnected) this.nodeMove?.paint();
 }
-public _disposeLiveEditor(): void { this.invalidateEditorNavigation(); this._nodeMoveEpoch++; this.nodeMove?.dispose(); this._radarSetup.reset(); this.roomGear.reset(); disposeHouseplanEditor(this.host); }
+public _disposeLiveEditor(): void { this.optimizationUndo.retire(); this.invalidateEditorNavigation(); this._nodeMoveEpoch++; this.nodeMove?.dispose(); this._radarSetup.reset(); this.roomGear.reset(); disposeHouseplanEditor(this.host); }
 public _cancelRadarSetup(): void { this._radarSetup.interrupt(); }
 public async _whenLiveEditorSettled(): Promise<void> {
   // An already queued pointer calculation runs before this continuation.
@@ -8904,49 +8907,7 @@ public async _undoPlanOptimization(): Promise<void> {
       this.host._showToast(settingsT(langOf(this.host.hass, this.host._config?.language), 'gs.optimize_write_required'));
       return;
     }
-    if (!this.host._canOptimizeUndo || this.host._optimizeUndoBusy) return;
-    const connection = this.host.hass?.connection;
-    const undoKind = this.host._undoKind;
-    this._clearGeometryGesture();
-    this.host._optimizeUndoBusy = true;
-    this.host.requestUpdate();
-    try {
-      await this.host.hass.callWS({
-        type: 'houseplan/plan/optimize_undo',
-        expected_config_rev: this.host._cfgRev,
-        expected_layout_rev: this.host._layoutRev,
-      });
-      const [cfgResp, layResp] = await Promise.all([
-        this.host._getAuthoritativeConfig(),
-        this.host.hass.callWS({ type: 'houseplan/layout/get' }),
-      ]);
-      if (this.host.hass?.connection !== connection) return;
-      // config/get is the sole authority for runtime capabilities, including
-      // integration_version. Reuse the full-card adopter instead of leaving
-      // this direct optimization-undo path with stale version state (#462).
-      const adopted = await this.host._adoptAuthoritative({ cfgResp, layResp, reason: 'optimize-undo', profile: 'post-write' });
-      if (adopted.status !== 'adopted') return; // asset wait: the scheduled reload owns the tail
-      this.host._geometryHistory.clear();
-      this.host._cancelDeviceDrag();
-      this.host._devicePositionHistory.clear();
-      this.host._canOptimizeUndo = false;
-      this.host._undoKind = null;
-      this.host._cfgEpoch++;
-      this.host._modelCache = null;
-      this.host._frame = null;
-      this.host._regSignature = '';
-      this.host._maybeRebuildDevices();
-      this.host._cacheSnapshot();
-      this.host.requestUpdate();
-      this.host._showToast(this.host._t(undoKind === 'import' ? 'backup.import_undone' : 'gs.optimize_undone'));
-    } catch (e: any) {
-      this.host._canOptimizeUndo = false;
-      this.host._undoKind = null;
-      this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
-    } finally {
-      this.host._optimizeUndoBusy = false;
-      this.host.requestUpdate();
-    }
+    return this.optimizationUndo.run();
   }
 
 public _openBackupExport = (): void => {

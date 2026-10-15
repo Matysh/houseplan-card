@@ -272,6 +272,12 @@ registry subscription is installed.
 
 ## Storage and lifecycle
 
+An event-driven `trail/get` keeps the connection/user and subscription generation
+that started it (#901), rechecked after the response. Only the latest request of
+that subscription may publish trails/format. A replaced context, detach or late
+rejection leaves the new owner's last-good path unchanged; ordinary same-owner
+updates continue without an added timer or server request.
+
 ```text
 marker.vacuum = {
   live?, trail?, trail_mode?, source?,

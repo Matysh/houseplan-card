@@ -103,10 +103,12 @@ export const runningBuild = (): RuntimeBuildFacts => ({
 
 export function getAuthoritativeCardConfig(
   host: ConfigCapabilitiesCardPort,
+  hass = host.hass,
+  isCurrent: () => boolean = () => true,
 ): Promise<AuthoritativeConfigResponse> {
   return fetchAuthoritativeConfig(
-    () => host.hass.callWS<AuthoritativeConfigResponse>({ type: 'houseplan/config/get' }),
-    (response) => adoptCardConfigCapabilities(host, response),
+    () => hass.callWS<AuthoritativeConfigResponse>({ type: 'houseplan/config/get' }),
+    (response) => { if (isCurrent()) adoptCardConfigCapabilities(host, response); },
   );
 }
 

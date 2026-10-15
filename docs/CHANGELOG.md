@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Late vacuum path replies and Optimize/import Undo completions no longer replace
+  a plan, history or busy state after switching Home Assistant connections/users
+  or detaching the card ([#901](https://github.com/Matysh/houseplan-card/issues/901)).
+
 ## v1.81.0-beta.3 — 2026-10-15
 
 - Doors and windows hosted by a partition now follow it while dragging,

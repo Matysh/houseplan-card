@@ -134,6 +134,8 @@ import {
 } from './config-adoption';
 import { recoverConfigWriteConflict } from './config-write-conflict';
 import { ConfigWriteContext, configWriteErrorKey } from './config-write-context';
+import { vacuumTrailRefresh } from './vacuum-trail-refresh';
+import type { UndoHass } from './plan-optimize-undo';
 import { acknowledgeNewDevice } from './new-device-ack';
 import {
   beginConfigReload, configReloadClaimCurrent,
@@ -561,6 +563,7 @@ export class HouseplanCard extends LitElement {
         this._writeChain = Promise.resolve(); this._writesPending = 0;
         this._persistLayout.cancel(); this._dirtyPos.clear(); this._sentPos.clear();
         this._editorRuntime?.roomDeviceDiscovery.clear();
+        this._editorRuntime?.optimizationUndo.retire();
         this._geometryHistory.clear(); this._devicePositionHistory.clear();
         this._pendingPhysicalWrites.clear(); this._newSyncKey = ''; this._regSignature = '';
       }
@@ -4360,8 +4363,8 @@ export class HouseplanCard extends LitElement {
     return true;
   }
 
-  private _getAuthoritativeConfig(): Promise<AuthoritativeConfigResponse> {
-    return getAuthoritativeCardConfig(this as unknown as ConfigCapabilitiesCardPort);
+  private _getAuthoritativeConfig(hass?: UndoHass, isCurrent?: () => boolean): Promise<AuthoritativeConfigResponse> {
+    return getAuthoritativeCardConfig(this as unknown as ConfigCapabilitiesCardPort, hass, isCurrent);
   }
 
   private async _loadFromServer(): Promise<void> {
@@ -4515,18 +4518,20 @@ export class HouseplanCard extends LitElement {
         if (observedRev !== this._cfgRev) void this._reloadConfigOnly(false, observedRev);
       },
     );
+    const trailHass = this.hass;
     subscribe(
       () => this._unsubTrail,
       (unsubscribe) => { this._unsubTrail = unsubscribe; },
       'houseplan_trail_updated',
-      async () => {
-        try {
-          const r: any = await this.hass.callWS({ type: 'houseplan/trail/get' });
+      vacuumTrailRefresh(
+        () => trailHass.callWS({ type: 'houseplan/trail/get' }),
+        ownsContext,
+        (r: { trails?: unknown; trail_format?: number }) => {
           this._vacSrvTrails = vacuumTrailMaterial(r?.trails);
           this._vacTrailFormat = r?.trail_format === 2 ? 2 : 1;
           this.requestUpdate();
-        } catch { /* transient WS hiccup — the next event retries */ }
-      },
+        },
+      ),
     );
     subscribe(
       () => this._unsubLayout,
