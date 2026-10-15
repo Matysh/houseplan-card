@@ -24,8 +24,7 @@ test('one host seam owns every full-card config/get request', () => {
   assert.equal(matches(onboarding, direct), 0, 'onboarding flows must use the host seam');
   assert.equal(matches(spaceDelete, direct), 0, 'shared space deletion must use the host seam');
 
-  assert.match(card,
-    /private _getAuthoritativeConfig\([^)]*\): Promise<AuthoritativeConfigResponse>/);
+  // Signature shape is exercised by the compiled #901 wiring harness.
   assert.equal(
     occurrences(card, 'this._getAuthoritativeConfig()')
       + occurrences(configReload, 'host._getAuthoritativeConfig()'),

@@ -83,6 +83,7 @@ test('AC2: the former host seam is gone and every module adopts through the one 
     'src/editors/space-delete.ts',
     'src/houseplan-card.ts',
     'src/houseplan-editor-runtime.ts',
+    'src/plan-optimize-undo.ts',
     'src/summary-panel-runtime-loaded.ts',
   ]);
   const owner = readFileSync(join(repoRoot, OWNER), 'utf8');
