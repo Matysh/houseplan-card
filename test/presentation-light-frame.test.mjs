@@ -109,6 +109,22 @@ test('#895 AC2: incoming passive, controls, shared physical, missing refs, cycle
   for (const [eid, patch] of [
     ['light.perf_0', { state: 'off' }], ['light.perf_0', { state: 'unavailable' }],
     ['light.perf_0', { state: 'on', attributes: { rgb_color: [3, 70, 255], brightness: 38 } }],
+  ]) { tick(host, eid, patch); previous = equalComplete(host, reuse, `${eid}: ${JSON.stringify(patch)}`); }
+  for (const attributes of [
+    { rgb_color: [255, 80, 9], brightness: 38 },
+    { rgb_color: [255, 80, 9], brightness: 210 },
+  ]) {
+    const incremental = reuse.stats.incremental, builds = reuse.stats.presentations;
+    tick(host, 'light.perf_0', { state: 'on', attributes });
+    const next = equalComplete(host, reuse, `same-on attributes: ${JSON.stringify(attributes)}`);
+    assert.equal(reuse.stats.incremental, incremental + 1, 'same-on attribute change uses actual reuse');
+    assert.notEqual(next.presentations.get('perf-device-0:1'), previous.presentations.get('perf-device-0:1'),
+      'tracked source row rebuilds its face even when the resolved on bit is unchanged');
+    assert.ok(reuse.stats.presentations - builds < host._devices.length * 2,
+      'same-on attribute change retains independent faces, not a disguised full rebuild');
+    previous = next;
+  }
+  for (const [eid, patch] of [
     ['sensor.perf_0_battery', { state: '3' }], ['sensor.perf_3_linkquality', { state: '8' }],
     ['binary_sensor.perf_door_0', { state: 'on', attributes: { device_class: 'smoke' } }],
   ]) { tick(host, eid, patch); equalComplete(host, reuse, `${eid}: ${JSON.stringify(patch)}`); }
