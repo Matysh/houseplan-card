@@ -153,7 +153,7 @@ test('#278 production source routes physical writers through one barrier and dec
   const source = readHouseplanProductionSource();
   for (const historyKey of [
     'column_add', 'physical_edit', 'physical_delete',
-    'physical_move', 'resize_room', 'wall_thickness',
+    'resize_room', 'wall_thickness',
     'move_opening', 'delete_opening', 'merge_rooms',
   ]) {
     // The pattern tolerates a line break after the opening parenthesis: a
@@ -164,6 +164,24 @@ test('#278 production source routes physical writers through one barrier and dec
   const runtime = readFileSync(
     new URL('../src/houseplan-editor-runtime.ts', import.meta.url), 'utf8',
   );
+  // #861 moves body gestures, not their approval/persistence authority. Check
+  // both owner writers AND the real constructor port into the same barrier;
+  // a bare history literal in the old monolith is no longer that path.
+  const physicalOwner = readFileSync(
+    new URL('../src/physical-body-gesture.ts', import.meta.url), 'utf8',
+  );
+  for (const historyKey of ['physical_move', 'physical_edit']) {
+    assert.match(physicalOwner, new RegExp(
+      `this\\.port\\.commit\\('history\\.${historyKey}', drag\\.before\\)`,
+    ), `the ${historyKey} owner writer uses its bounded commit port`);
+  }
+  assert.equal((physicalOwner.match(/this\.port\.commit\(/g) || []).length, 2,
+    'move and rotation are the only physical owner commit points');
+  assert.doesNotMatch(physicalOwner, /_recordGeometry|_saveConfig|_writeConfig/,
+    'the gesture owner cannot bypass the physical persistence barrier');
+  assert.match(runtime,
+    /this\.physicalGesture = new PhysicalBodyGestureRuntime\(\{[\s\S]{0,800}commit: \(key, before\) => this\._commitPhysicalGeometry\(host\._t\(key\), before\)/,
+    'the actual physical owner commit port routes to the shared approval barrier');
   assert.match(runtime,
     /commitWallChainSegmentGeometry\(this, this\.host\._t\('history\.wall_segment'/,
     'an intermediate wall append uses its dedicated bounded physical barrier');

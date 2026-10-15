@@ -494,7 +494,7 @@ wall runs diagonally is broken geometry, not a tidy plan:
 
 | Element | Where |
 | --- | --- |
-| the backdrop picture: move (its top-left corner) and proportional/independent corner scale | `_bdMove` → `_snap` / `snapToGrid` (docs/DECOR-EDITOR.md §3) |
+| the backdrop picture: move (its top-left corner) and proportional/independent corner scale | `BackdropFrameGestureRuntime.move` → `port.snap` / `snapToGrid` (docs/DECOR-EDITOR.md §3) |
 | room vertices (draw tool) | `_markupClick` → `_snap` |
 | split tool's interior vertices | `_splitClick` → `_snap` |
 | fixed-topology room-wall resize | `_rszMove` → `_snap`; the last safe node before a corner/opening/third room wins |
