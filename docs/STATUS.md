@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.81.0** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.81.0` |
 | Latest prerelease tag | `v1.81.0-beta.4` |
-| Tests | Node unit 4668 · pure backend 494 · HA-harness backend 397 · browser smokes 365 (`npm run inventory`) |
+| Tests | Node unit 4674 · pure backend 494 · HA-harness backend 397 · browser smokes 365 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -28,6 +28,11 @@ Everything computable from the tree and git; regenerate, never edit by hand
 Outside-findings routing (#926) accepts only a bounded Actions issue-ID setting,
 frozen by prepare and checked through result publication. File mode publishes
 one companion under reviews; default issues and all blocking gates stay intact.
+
+Explicit amend (#923) uses the owner's approved `commit:amend -- --no-edit`
+command and the normal commit-msg hook. The full pinned index is judged against
+HEAD's parent (empty tree for a root); new commits and historical provenance
+are not relaxed. Native Git amend is deliberately not guessed from metadata.
 
 Device contacts (#866) are derived Flat presentation, not stored groups. The
 individual point writer/history remains authoritative; only a selected exact

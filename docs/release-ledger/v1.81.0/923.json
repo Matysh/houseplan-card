@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 923,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Adds the owner-approved explicit commit:amend -- --no-edit command. The real commit-msg hook validates the full pinned index delta against HEAD's parent (empty tree for a root commit), with one-use local context and no hook bypass. Ordinary new commits and historical CI retain existing provenance/changelog rules; no product or milestone change."
+}

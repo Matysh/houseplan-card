@@ -1508,6 +1508,16 @@ allows only that added same-issue/stage/round companion, expected header, blob,
 size and publisher proof; it remains spec-only trace, not implementation or
 release/close membership. The existing SPEC/index and foreign-path checks stay.
 
+## Explicit local amend (#923)
+
+`commit-amend.mjs` owns the narrow npm invocation, pins HEAD/parent/index and
+launches Git with fixed `commit --amend --no-edit` arguments. The existing
+provenance validator consumes its one-use local context only in staged-message
+mode and selects the parent/empty-tree diff. It keeps the same message,
+changelog, bundle and golden checks. Native Git's ambiguous hook metadata is
+not guessed; ordinary staged commits and historical ranges remain separate.
+This is a local workflow contract, not a new CI or author-identity authority.
+
 ## Review handoff provenance (#904)
 
 `review-handoff.mjs` owns a bounded syntactic parser and edited-comment selector

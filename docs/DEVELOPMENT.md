@@ -1,5 +1,24 @@
 # Development and deployment
 
+## Explicit amend provenance (#923)
+
+Stage the intended correction, then use `npm run commit:amend -- --no-edit`.
+This replaces HEAD while retaining its message; only `--no-edit` is supported.
+It runs the real Git hook with a one-use local context pinned to the repository,
+HEAD/parent and index tree. The hook judges the complete proposed commit, not
+only the increment since HEAD. Thus both changelogs already in that commit
+count, but reverting/removing either required change does not. The index must
+not change in pre-commit: inspect/restage those edits and retry if it does.
+
+No automatic detection of native `git commit --amend`, environment-only mode
+switch, `--no-verify`, custom hook path or pathspec is offered. The private
+context file is consumed once and removed on success/failure; it is a local
+invocation contract, not protection against an author who controls their own
+Git hooks. Ordinary `-m`/`-C HEAD` new commits and historical CI stay strict.
+Merge commits are intentionally unsupported by this command. Root commits use
+an empty-tree base. Tests: `node --test test/commit-amend.test.mjs
+test/commit-provenance.test.mjs` (real Git, real commit-msg and npm entrypoint).
+
 ## Device-contact evidence (#866)
 
 The frozen designer corpus is `test/fixtures/866-designer`; the original geometry

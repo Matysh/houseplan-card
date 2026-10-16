@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { bundleCommitErrors } from './bundle-policy.mjs';
 import { classify } from './change-classes.mjs';
+import { consumeAmendBase } from './commit-amend.mjs';
 
 const TRAILER = /^([A-Za-z][A-Za-z0-9-]*):\s*(.*?)\s*$/;
 export const ENFORCEMENT_BOUNDARY = '8e2973fa7a7cb1a80204ff95ecf3f2d7c36ed2ce';
@@ -200,8 +201,9 @@ function main(argv) {
     const messageFile = argv[fileAt + 1];
     if (!messageFile) throw new Error('--message-file requires a path');
     if (basename(messageFile) === 'MERGE_MSG') return;
+    const amendBase = argv.includes('--staged') ? consumeAmendBase(messageFile) : null;
     const files = argv.includes('--staged')
-      ? git(['diff', '--cached', '--name-only', '--diff-filter=ACMR']).split('\n').filter(Boolean)
+      ? git(['diff', '--cached', '--name-only', '--diff-filter=ACMR', ...(amendBase ? [amendBase] : [])]).split('\n').filter(Boolean)
       : [];
     let baselineIndex;
     if (files.some((file) => /^demo\/golden\/baselines\/.*\.(png|json)$/.test(file))) {
