@@ -1960,6 +1960,7 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'device-contact-near-walls-includes-entire-floor',
     guard: 'node --test test/device-contact.test.mjs',
+    because: '#866 AC9: ordinary geometry inputs retain every reachable rotated/asymmetric badge contact while rejecting 1,000 distant faces before exact saved-contact checks.',
     patches: [{file:'src/device-contact-geometry.ts',
       find:'  return walls.filter((wall) => Math.min(wall.a[0],wall.b[0]) <= marker.x+reach',
       replace:'  return walls.filter((wall) => true || Math.min(wall.a[0],wall.b[0]) <= marker.x+reach'}],
