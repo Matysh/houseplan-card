@@ -37,7 +37,8 @@ test('section selection is tag-specific and rejects missing/duplicate tags, wron
   const fenced = '# Example\n```md\n<!-- release: v1.80.1 -->\n```\n';
   assert.throws(() => userStableSection(fenced, { tag, language: 'ru' }), /exactly one/);
   assert.throws(() => compose({ changelogRu: `${ru}\n${ru}` }), /exactly one/);
-  assert.throws(() => compose({ changelogEn: en.replace(tag, 'v1.80.0') }), /exactly one/);
+  // A newer release may name this tag in its base marker before its own section.
+  assert.throws(() => compose({ changelogEn: en.replace(`<!-- release: ${tag} -->`, '<!-- release: v1.80.0 -->') }), /exactly one/);
   assert.throws(() => compose({ changelogEn: en.replace('Houseplan 1.80.1 release', 'Релиз Houseplan 1.80.1') }), /exact release heading/);
   assert.throws(() => compose({ changelogRu: ru.replace('Релиз Houseplan 1.80.1', 'Новый релиз - HousePlan 1.80.1') }), /exact release heading/);
   assert.throws(() => compose({ changelogEn: en.replace('Houseplan 1.80.1 release', 'New release - HousePlan 1.80.1') }), /exact release heading/);
