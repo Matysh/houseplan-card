@@ -10,10 +10,11 @@ await page.evaluate(async()=>{
       partitions:[{id:'work-wall',a:[.03,.025],b:[.97,.025],cm:36}],settings:{show_borders:true,show_names:false}}];
     cfg.markers=Array.from({length:200},(_,i)=>({id:`work-${i}`,binding:'virtual',space:c._space,icon:'mdi:thermometer',
       display:i%10?'static_icon':'badge',size:20/45,value_badge:{enabled:i%10===0,position:'right',
-        source:{kind:'entity_state',entity_id:'sensor.work_value'}}}));return cfg;
+        source:{kind:'entity_state',entity_id:i===0?'sensor.work_value':`sensor.work_value_${i}`}}}));return cfg;
   });
-  c.hass={...c.hass,entities:{...c.hass.entities,'sensor.work_value':{entity_id:'sensor.work_value',platform:'demo'}},
-    states:{...c.hass.states,'sensor.work_value':{entity_id:'sensor.work_value',state:'26%',attributes:{}}}};
+  const sources=Array.from({length:20},(_,i)=>i===0?'sensor.work_value':`sensor.work_value_${i*10}`);
+  c.hass={...c.hass,entities:{...c.hass.entities,...Object.fromEntries(sources.map(id=>[id,{entity_id:id,platform:'demo'}]))},
+    states:{...c.hass.states,...Object.fromEntries(sources.map((id,i)=>[id,{entity_id:id,state:i===0?'26%':`${30+i}%`,attributes:{}}]))}};
   await window.__hpTest.setLayout(Object.fromEntries(Array.from({length:200},(_,i)=>[`work-${i}`,{
     s:c._space,x:.08+(i%20)*.0225,y:.12+Math.floor(i/20)*.07}])));
   await window.__hpTest.setMode('view');
@@ -23,6 +24,8 @@ await settle();
 const work=()=>page.evaluate(()=>({render:{...window.__card._deviceContacts.work},scene:{...window.__card._deviceContacts.scene.work},
   size:window.__card._deviceContacts.scene.shapes.size}));
 const before=await work();check('200-real-shapes',before.size,200);
+check('distinct-cold-faces-share-layout-batches',before.render.measurements>=20
+  && before.render.measurementBatches<before.render.measurements/2,true);
 check('real-joined-rows',await page.locator('houseplan-card .device-contact-contour.grouped').count()>=10,true);
 for(let i=0;i<30;i++){
   await page.evaluate(i=>{const c=window.__card;c.hass={...c.hass,states:{...c.hass.states,'sensor.unrelated_contact':{

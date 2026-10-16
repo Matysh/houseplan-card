@@ -67,13 +67,16 @@ new baselines still require complete reviewed-source capture/acceptance.
   passed with execution=0; caught evidence remains unknown/nightly-only.
 - The initial full gate was red: new explicit any, core growth, matrix metadata,
   two stale registry anchors/corpus inventory and two monolith limits. The
-  addressed failures were rerun as above; a full green gate is NOT claimed.
+  addressed failures were rerun as above. Full `gate:small` passed on
+  `31e384449a47` at 18:35:05–18:37:23 UTC (5,075 units passed, one existing
+  skip); light Validate [38948944582](https://github.com/Matysh/houseplan-card/actions/runs/38948944582)
+  also passed. Later batching changes require their fresh gate below.
 
 Raw commands, UTC start/end, exit status and logs live under `artifacts/866`.
 Performance reports use `.report.json` separately from wrapper receipts; early
 same-name outputs were overwritten by receipts and are not comparison evidence.
 The before/after diagnostic uses the same current runner and historical base
-source, three measured samples and one warmup; exact-SHA Linux CI remains the
+source, seven measured samples and one warmup; exact-SHA Linux CI remains the
 performance gate. Do not promote concurrent or dirty exploratory runs to proof.
 
 ## Remaining before S7
@@ -133,3 +136,29 @@ fixed ordinary run passes while preserving group ink. Earlier r2/r3 probes timed
 out waiting for the HA-only virtual source repaint; they are not contact-index
 regression evidence. The final test explicitly reconciles the new value through
 the unchanged public card-options entry and does not claim HA classifier proof.
+
+## Cold-face layout batching
+
+The seven-sample sequential comparison against the unchanged historical base
+was naturally red at `31e384449a47`: long-task count P95 10 > 8, total P95
+1,685 > 1,654.9 ms and editor maximum 178 > 165 ms. Timings for pan/HA were
+green. Cold distinct faces interleaved a DOM insertion, rectangle reads and
+removal, forcing layout for each value. The renderer now inserts all distinct
+probes, reads them, then removes them as one batch. Metrics remain bounded to
+256 cached faces; the temporary result retains all faces even above that limit.
+The expanded ordinary 200-marker case has twenty distinct badge values and
+passes the measured-faces-to-batches check. The additional registered witness
+`device-contact-measures-cold-faces-separately` is static-only, never executed.
+Fresh final performance/visual/gate results are still required before handoff.
+
+The full 207-frame capture on the earlier source correctly refused acceptance
+until all toolbar consequences were declared. Five old/new frame pairs were
+inspected: `geometry-devices-editor-dark`, `device-dialog-desktop-en` and
+`toggle-entity-dialog-desktop-en` differ only at the new Magnets button behind
+the dialog. In `device-inbox-narrow-ru-dark` and
+`device-help-popover-light-ru`, the extra button wraps the narrow toolbar and
+changes the plan viewport behind the unchanged dialog/popover. The two new
+`device-contacts-designer-light/dark` boards contain all twelve complete cases
+with 32 real glyphs and seven joined groups. Only these five changes and two
+new frames are intended for the final attested acceptance; no other baseline
+may be updated.

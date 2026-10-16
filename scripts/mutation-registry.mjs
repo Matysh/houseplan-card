@@ -1958,6 +1958,14 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'device-contact-measures-cold-faces-separately',
+    guard: 'node demo/smoke_device_contact_work.mjs',
+    because: '#866 AC9: twenty distinct real badge values must share layout batches on a cold 200-marker floor; one write/read layout per distinct face is not bounded incremental work.',
+    patches: [{file:'src/device-contact-render.ts',
+      find:'    const fresh = this.measure(pending);',
+      replace:'    const fresh = new Map<string, ContactRect>(); for (const [key, element] of pending) for (const [k, metric] of this.measure(new Map([[key, element]]))) fresh.set(k, metric);'}],
+  },
+  {
     id: 'device-contact-rebuilds-identical-value-geometry',
     guard: 'node demo/smoke_device_contact_work.mjs',
     because: '#866 AC9: a real 200-marker board paints an updated badge value through public options reconciliation while preserving its identical geometry and full-index build count.',

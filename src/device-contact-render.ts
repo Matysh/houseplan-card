@@ -38,7 +38,7 @@ export class DeviceContactRenderer {
     candidate.contains = (p) => contact.contains((p.x-x)/width,(p.y-y)/height);
   };
   public scene: DeviceContactScene | null = null;
-  public readonly work = { measurements: 0, rebuilds: 0, paints: 0 };
+  public readonly work = { measurements: 0, measurementBatches: 0, rebuilds: 0, paints: 0 };
   private readonly metrics = new Map<string, ContactRect>();
   private elements = new Map<string, MeasuredMarker>();
   private frameKey = '';
@@ -53,11 +53,8 @@ export class DeviceContactRenderer {
     const cached = this.metrics.get(key);
     if (cached) { render(nothing, sample); return cached; }
     parent.append(sample);
-    const metric = this.measure(sample); render(nothing, sample); sample.remove();
-    if (metric) {
-      this.metrics.set(key, metric);
-      while (this.metrics.size > 256) this.metrics.delete(this.metrics.keys().next().value!);
-    }
+    const metric = this.measure(new Map([[key, sample]])).get(key);
+    render(nothing, sample); sample.remove();
     return metric;
   }
 
@@ -82,18 +79,22 @@ export class DeviceContactRenderer {
     if (key === this.frameKey && frame.markers.every((m) => this.elements.get(m.id)?.element === nodes.get(m.id))) return false;
     const measured: ContactMarker[] = [];
     const nextElements = new Map<string, MeasuredMarker>();
+    const pending = new Map<string, HTMLElement>();
+    for (const m of frame.markers) {
+      const element = nodes.get(m.id), shell = element?.querySelector('.device-shell');
+      if (element && shell) {
+        const faceKey = metricKey(shell);
+        if (!this.metrics.has(faceKey)) pending.set(faceKey, element);
+      }
+    }
+    const fresh = this.measure(pending);
     for (const m of frame.markers) {
       const element = nodes.get(m.id), shell = element?.querySelector<HTMLElement>('.device-shell');
       const ink = element?.querySelector<HTMLElement>('.device-contact-ink');
       if (!element || !shell || !ink || !(m.diameter > 0)) continue;
       const faceKey = metricKey(shell);
-      let metric = this.metrics.get(faceKey);
-      if (!metric) {
-        metric = this.measure(element);
-        if (!metric) continue;
-        this.metrics.set(faceKey, metric);
-        while (this.metrics.size > 256) this.metrics.delete(this.metrics.keys().next().value!);
-      }
+      const metric = fresh.get(faceKey) || this.metrics.get(faceKey);
+      if (!metric) continue;
       const box = Object.fromEntries(Object.entries(metric).map(([k,v]) => [k, v * m.diameter])) as unknown as ContactRect;
       measured.push({ ...m, box }); nextElements.set(m.id, { element, ink, key: faceKey, metric });
     }
@@ -119,24 +120,36 @@ export class DeviceContactRenderer {
    * It is the real face and its real inherited font/CSS, not a second renderer
    * or a glyph-count approximation. Cached per distinct visible face metric.
    */
-  private measure(element: HTMLElement): ContactRect | undefined {
-    const probe = element.cloneNode(true) as HTMLElement;
-    // Measure the future contact variant, including its designer badge fit.
-    // A standalone marker keeps its old CSS face until a real edge exists.
-    probe.setAttribute('data-hp-device-contact', ''); probe.removeAttribute('data-id');
-    probe.removeAttribute('data-hp'); probe.setAttribute('aria-hidden', 'true'); probe.inert = true;
-    probe.style.cssText = 'position:absolute;left:0;top:0;margin:0;width:800px;height:800px;--dev-size:800px;visibility:hidden;pointer-events:none';
-    probe.querySelector('.device-contact-ink')?.replaceChildren();
-    element.parentElement?.append(probe);
-    const core = probe.getBoundingClientRect(), face = probe.querySelector('.device-shell-frame')?.getBoundingClientRect();
-    const metric = face && core.width > 0 ? {
-      left: (face.left - core.left - core.width / 2) / core.width,
-      right: (face.right - core.left - core.width / 2) / core.width,
-      top: (face.top - core.top - core.height / 2) / core.width,
-      bottom: (face.bottom - core.top - core.height / 2) / core.width,
-    } : undefined;
-    probe.remove(); this.work.measurements++;
-    return metric;
+  private measure(elements: ReadonlyMap<string, HTMLElement>): Map<string, ContactRect> {
+    const result = new Map<string, ContactRect>();
+    if (!elements.size) return result;
+    // Write every probe before reading any rectangle: unique values must not
+    // force a complete layout once per device on a cold floor/editor entry.
+    const probes = [...elements].map(([key, element]) => {
+      const probe = element.cloneNode(true) as HTMLElement;
+      // Measure the future contact variant, including its designer badge fit.
+      // A standalone marker keeps its old CSS face until a real edge exists.
+      probe.setAttribute('data-hp-device-contact', ''); probe.removeAttribute('data-id');
+      probe.removeAttribute('data-hp'); probe.setAttribute('aria-hidden', 'true'); probe.inert = true;
+      probe.style.cssText = 'position:absolute;left:0;top:0;margin:0;width:800px;height:800px;--dev-size:800px;visibility:hidden;pointer-events:none';
+      probe.querySelector('.device-contact-ink')?.replaceChildren();
+      element.parentElement?.append(probe);
+      return { key, probe };
+    });
+    for (const { key, probe } of probes) {
+      const core = probe.getBoundingClientRect(), face = probe.querySelector('.device-shell-frame')?.getBoundingClientRect();
+      if (face && core.width > 0) result.set(key, {
+        left: (face.left - core.left - core.width / 2) / core.width,
+        right: (face.right - core.left - core.width / 2) / core.width,
+        top: (face.top - core.top - core.height / 2) / core.width,
+        bottom: (face.bottom - core.top - core.height / 2) / core.width,
+      });
+    }
+    for (const { probe } of probes) probe.remove();
+    for (const [key, metric] of result) this.metrics.set(key, metric);
+    while (this.metrics.size > 256) this.metrics.delete(this.metrics.keys().next().value!);
+    this.work.measurements += probes.length; this.work.measurementBatches++;
+    return result;
   }
 
   public move(id: string, x: number, y: number): void {
