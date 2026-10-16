@@ -2219,6 +2219,18 @@ is a warning, and the findings are the owner's call. Manual run:
 `gh workflow run release-review.yml --ref dev -f tag=vX.Y.Z`; a repeat for a
 tag whose document already exists is skipped unless `-f force=true`.
 
+**Transient proof reads (#921).** Local release readiness may encounter a dead
+socket after blocking catalogue reads. Stale keepalive reuse is a hypothesis,
+not a proven historical root cause. `release-gate.mjs` now applies the same
+bodyless-GET-only transport to its workflow list, candidate tree and proof
+context reads: at most three attempts, with 100/400 ms pauses, only for EPIPE,
+ECONNRESET or UND_ERR_SOCKET. HTTP errors (including auth/rate limits), malformed
+JSON/evidence, aborts and exhausted transport failures still fail closed; no
+release/tag/asset write is retried. `node --test test/release-read-retry.test.mjs`
+covers provider failures and a real loopback socket close, exact/foreign/red or
+missing readiness, bounded exhaustion and the no-write boundary. This is not an
+actual publication and does not claim to reproduce the original keepalive cause.
+
 **Stable releases** go through `.github/workflows/release.yml`, the only
 publisher of installable assets (#540). Run it with `workflow_dispatch` on
 `main` with the exact tag: when the tag does not exist yet it is created on the

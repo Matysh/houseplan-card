@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.81.0** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.81.0` |
 | Latest prerelease tag | `v1.81.0-beta.4` |
-| Tests | Node unit 4646 · pure backend 494 · HA-harness backend 397 · browser smokes 365 (`npm run inventory`) |
+| Tests | Node unit 4655 · pure backend 494 · HA-harness backend 397 · browser smokes 365 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -49,6 +49,10 @@ The subsequent #929 decision makes manual owner dev/GPU acceptance optional
 for every channel and every task, without requiring JSON, GPU details or links.
 Missing optional observations do not block; full automatic proofs, scene intent,
 baseline review and an explicit current owner veto still govern publication.
+
+Release proof reads (#921) recover known transient socket failures with at
+most three GET attempts. Candidate admission and publication writes are unchanged;
+the historical keepalive explanation remains a hypothesis, not an established cause.
 
 GitHub funding metadata (#915) is an exact non-input of Validate. The guarded
 `.github` root and YAML/workflow selection remain unchanged; ordinary coverage

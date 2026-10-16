@@ -1501,3 +1501,12 @@ id/URL/timestamps and exact-text digest. Its canonical snapshot is carried by
 the existing sealed prepare artifact and rechecked against fresh API reads at
 the model boundary. Scalar material guards, verdict schema, permissions and
 merge authority keep their existing owners.
+
+## Read-only release transport (#921)
+
+`release-gate.mjs` wraps its workflow, candidate-tree and proof-context GETs in
+`read-only-fetch.mjs`. That boundary refuses request bodies and non-GET methods;
+only EPIPE, ECONNRESET and UND_ERR_SOCKET transport failures get two bounded
+retries. It returns HTTP responses unchanged, preserves the final transport
+error, and does not interpret candidate evidence. Publication writes and other
+consumers of `ci-proof.mjs` are not wrapped or retried by this policy.

@@ -4,6 +4,7 @@
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { retryingReadFetch } from './read-only-fetch.mjs';
 import {
   CI_PROOF_POLICIES, evaluateCiProof, githubApiBase, githubCandidateTree, localEvidence,
   loadGithubProofContext, selectCiProofVerdict,
@@ -97,14 +98,15 @@ const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 export async function probeGreenWorkflow({ repo, sha, token, workflow = 'validate.yml', root = process.cwd(),
   tree = null, expected = undefined, fetchImpl = fetch } = {}) {
   if (!repo || !/^[a-f0-9]{40}$/.test(sha || '') || !token) throw Error('exact repo/SHA/token required');
-  const response = await fetchImpl(workflowRunsUrl({ repo, workflow, sha }), { headers: {
+  const readFetch = retryingReadFetch(fetchImpl);
+  const response = await readFetch(workflowRunsUrl({ repo, workflow, sha }), { headers: {
     Accept: 'application/vnd.github+json', Authorization: `Bearer ${token}`, 'User-Agent': 'houseplan-release-gate',
     'X-GitHub-Api-Version': '2022-11-28',
   } });
   if (!response.ok) throw Error(`GitHub Actions API ${response.status}`);
   const runs = (await response.json()).workflow_runs || [];
   if (workflow === 'validate.yml') return classifyValidateProofs({ runs, repo, sha,
-    tree: tree || await githubCandidateTree({ repo, sha, token, fetchImpl }), token, fetchImpl,
+    tree: tree || await githubCandidateTree({ repo, sha, token, fetchImpl: readFetch }), token, fetchImpl: readFetch,
     expected: expected === undefined ? candidateExpectations({ sha, root }) : expected });
   const run = latestRelevantRun(runs);
   if (run && (run.repository?.full_name !== repo || run.head_repository?.full_name !== repo
@@ -115,20 +117,21 @@ export async function probeGreenWorkflow({ repo, sha, token, workflow = 'validat
 
 export async function waitForGreenWorkflow({
   repo, sha, token, workflow = 'validate.yml', label = 'Validate', timeoutMs = 60 * 60 * 1000,
-  root = process.cwd(),
+  root = process.cwd(), fetchImpl = fetch,
 }) {
   if (!repo || !sha || !token || !workflow) throw new Error('repo, sha, token and workflow are required');
   const deadline = Date.now() + timeoutMs;
   const url = workflowRunsUrl({ repo, workflow, sha });
+  const readFetch = retryingReadFetch(fetchImpl);
   const proofRequired = workflow === 'validate.yml';
-  const tree = proofRequired ? await githubCandidateTree({ repo, sha, token }) : null;
+  const tree = proofRequired ? await githubCandidateTree({ repo, sha, token, fetchImpl: readFetch }) : null;
   const expected = proofRequired ? candidateExpectations({ sha, root }) : null;
   if (expected) {
     console.log(`candidate evidence: product tree ${expected.product.tree.slice(0, 12)}, baselines `
       + `${expected.baselines.tree?.slice(0, 12) || 'none'}, reviewed run ${expected.baselines.reviewedRun || 'none'} (#573)`);
   }
   while (true) {
-    const response = await fetch(url, {
+    const response = await readFetch(url, {
       headers: {
         Accept: 'application/vnd.github+json',
         Authorization: `Bearer ${token}`,
@@ -141,7 +144,7 @@ export async function waitForGreenWorkflow({
     const runs = Array.isArray(body?.workflow_runs) ? body.workflow_runs : [];
     const latest = latestRelevantRun(runs);
     const verdict = proofRequired
-      ? await classifyValidateProofs({ runs, repo, sha, tree, token, expected })
+      ? await classifyValidateProofs({ runs, repo, sha, tree, token, expected, fetchImpl: readFetch })
       : { status: classifyValidateRuns(runs) === 'success' ? 'green'
         : classifyValidateRuns(runs) === 'fail' ? 'failed' : 'pending', url: latest?.html_url, note: '' };
     if (verdict.status === 'failed') {

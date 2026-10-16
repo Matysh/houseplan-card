@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 921,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Bounds recovery of transient EPIPE, ECONNRESET and UND_ERR_SOCKET failures in read-only release proof GETs. Candidate identity and proof semantics remain fail-closed, HTTP and cancellation failures are not retried, and public publication writes are untouched. No user-facing product change."
+}
