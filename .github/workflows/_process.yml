@@ -1785,9 +1785,6 @@ jobs:
             cp "$SOURCE" "$doc"
             echo "документ взят из $SOURCE ($(wc -c < "$doc") байт)"
             findings=$(node "$TOOLS/scripts/review-findings-policy.mjs" publish)
-            if [ -n "$findings" ]; then
-              node "$TOOLS/scripts/review-findings-policy.mjs" link >> "$doc"
-            fi
             # Якоря дописывает конвейер, а не ревьюер (#414). Дисциплина здесь
             # уже подводила: на #403 SHA сняли до ребейза и не сверили перед
             # выводом — через раунд команда из §2.10 не работала. Машина же
@@ -1801,6 +1798,7 @@ jobs:
               --usage-details="$USAGE_DETAILS" \
               --verdict="$verdict" --high="$high" \
               --route="$route" --criterion="$criterion"
+            REVIEW_REPORT="$doc" node "$TOOLS/scripts/review-findings-policy.mjs" attach
           else
             echo "::warning::$SOURCE не найден — документа для публикации нет"
           fi

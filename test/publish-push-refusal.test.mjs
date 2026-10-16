@@ -13,6 +13,7 @@ import { findStep, runStep, workflowSteps } from './helpers/workflow-step.mjs';
 import { importClosure } from './helpers/import-closure.mjs';
 import { findingsPolicy } from '../scripts/review-findings-policy.mjs';
 import { readTaskCommit, taskDelivery } from '../scripts/task-delivery.mjs';
+import { ANCHOR_MARKER } from '../scripts/review-doc-guard.mjs';
 
 // #723: два шага публикуют коммит и прежде любой отказ push считали сдвигом
 // ветки — документ ревью релиза в `dev` (release-review.yml, три попытки) и
@@ -328,7 +329,7 @@ function runReviewDoc(box, out = '{"verdict":"green","high":0}', extra = {}) {
   const source = join(box.temp, 'review-result', 'review-document.md');
   mkdirSync(join(box.temp, 'review-result'));
   writeFileSync(source, (extra.STAGE === 'spec' ? '# SPEC-REVIEW-9-r1' : '# Код-ревью #9, раунд 1')
-    + '\n\nВердикт: **зелёный** · High: 0 · Medium: 0\n');
+    + '\n\nВердикт: **зелёный** · High: 0 · Medium: 0\n' + (extra.REVIEW_SOURCE_TAIL ?? ''));
   return box.run(REVIEW_DOC_STEP(), {
     BRANCH, NUM: '9', STAGE: 'code', CYCLE: '1', SOURCE: source, TOOLS: extra.TOOLS ?? devTools(box),
     MATERIAL_SHA: git(box.origin, 'rev-parse', BRANCH), MATERIAL_TREE: git(box.origin, 'rev-parse', `${BRANCH}^{tree}`),
@@ -376,7 +377,9 @@ test('#926 actual SPEC publisher remains spec-only with its blob-bound companion
   const source = join(box.temp, 'outside.md'); writeFileSync(source, 'No outside findings.\r\n');
   const policy = findingsPolicy('[9]', { repo: 'o/r', issue: 9, stage: 'spec', round: 1 });
   const result = runReviewDoc(box, undefined, { STAGE: 'spec', REVIEW_FINDINGS: source, FINDINGS_POLICY_SNAPSHOT: JSON.stringify(policy),
-    MATERIAL_ISSUE_BODY: 'a'.repeat(64), GIT_AUTHOR_NAME: undefined, GIT_AUTHOR_EMAIL: undefined });
+    MATERIAL_ISSUE_BODY: 'a'.repeat(64), GIT_AUTHOR_NAME: undefined, GIT_AUTHOR_EMAIL: undefined,
+    REVIEW_SOURCE_TAIL: '\nPrevious companion\n<!-- hp:outside-findings-blob ' + 'f'.repeat(40) + ' -->\n'
+      + ANCHOR_MARKER + '\n\nStale copied automatic metadata.\n' });
   assert.equal(result.status, 0, result.stderr + result.stdout);
   const sha = git(box.origin, 'rev-parse', BRANCH);
   const commit = readTaskCommit({ sha, message: git(box.origin, 'show', '-s', '--format=%B', sha) },
@@ -386,6 +389,9 @@ test('#926 actual SPEC publisher remains spec-only with its blob-bound companion
   assert.equal(commit.specFindingsBlob, git(box.origin, 'rev-parse', `${sha}:${policy.path}`));
   assert.ok(!git(box.origin, 'show', `${sha}:${policy.path}`).includes('\r'), 'publication normalizes CRLF before hashing/staging');
   assert.equal(lastLine(commit.specDocument), '<!-- hp:usage-none reason=missing -->');
+  assert.ok(commit.specDocument.indexOf('hp:outside-findings-blob') < commit.specDocument.indexOf(ANCHOR_MARKER));
+  assert.equal(commit.specDocument.split('hp:outside-findings-blob').length, 2, 'only this run owns the machine binding');
+  assert.ok(commit.specDocument.includes('Previous companion'), 'review prose survives metadata replacement');
   noSecrets(result);
 });
 

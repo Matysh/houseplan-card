@@ -6,6 +6,7 @@ import { dirname, join } from 'node:path';
 import { TextDecoder } from 'node:util';
 import { isMainModule } from './spawn-portable.mjs';
 import { createHash } from 'node:crypto';
+import { ANCHOR_MARKER } from './review-doc-guard.mjs';
 
 export const FINDINGS_VARIABLE = 'HP_REVIEW_OUTSIDE_FINDINGS_FILE_ISSUES';
 export const FINDINGS_FILE = 'outside-findings.md';
@@ -97,6 +98,16 @@ export function findingsLinkForBlob(policy, hash) {
     + `<!-- hp:outside-findings-blob ${hash} -->\n`;
 }
 
+export function attachFindings(policy, sourceText, report) {
+  const at = report.indexOf(ANCHOR_MARKER);
+  if (at < 0) throw new Error('outside findings: generated material anchors missing');
+  // A model may copy an earlier report. Replace only the reserved machine
+  // binding, keep its prose/old links, and leave the newly generated tail intact.
+  const body = report.slice(0, at).replace(/^<!-- hp:outside-findings-blob [a-f0-9]{40} -->\r?\n?/gm, '').trimEnd();
+  const link = policy.mode === 'file' ? findingsLink(policy, findingsHeader(policy) + sourceText) + '\n' : '';
+  return body + '\n\n' + link + report.slice(at);
+}
+
 export function publishFindings(policy, source, root = '.') {
   if (policy.mode !== 'file') return null;
   const text = readFindingsFile(source);
@@ -130,10 +141,11 @@ if (isMainModule(import.meta.url)) {
       else if (command === 'publish') {
         const path = publishFindings(policy, process.env.REVIEW_FINDINGS);
         if (path) console.log(path);
-      } else if (command === 'link') {
-        if (policy.mode === 'file') process.stdout.write('\n' + findingsLink(policy,
-          findingsHeader(policy) + readFindingsFile(process.env.REVIEW_FINDINGS)));
-      } else throw new Error('expected collect/model/seal/publish/link');
+      } else if (command === 'attach') {
+        const report = process.env.REVIEW_REPORT;
+        writeFileSync(report, attachFindings(policy, policy.mode === 'file' ? readFindingsFile(process.env.REVIEW_FINDINGS) : '',
+          readFileSync(report, 'utf8')));
+      } else throw new Error('expected collect/model/seal/publish/attach');
     }
   } catch (error) { console.error(`::error::${error.message}`); process.exitCode = 1; }
 }
