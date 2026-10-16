@@ -96,7 +96,7 @@ bundle, not substituted implementations. No mutation is claimed caught.
 | AC6 | Native one point write + Undo/Redo | Esc/cancel/capture loss/blur/refused write restore the exact before/group and do not add history; blur was naturally red before its fix |
 | AC7 | Real canonicalizer/backend save + native cold mount/Optimize preview | Removed/moved host receives no exemption; unrelated/outlier/foreign-floor points remain subject to maintenance |
 | AC8 | Static parity and Flat↔iso native checks | Iso must have no Flat contour/contact attributes and must retain old tile shadows; static hit paths must stay passive |
-| AC9 | Native 200-marker work counters | Thirty unrelated HA frames must not measure/rebuild; changed text reconciled through public options with an unchanged box must reuse the graph; drag must not rebuild the full index or scan all pairs |
+| AC9 | Native 200-marker work counters + sequential seven-sample benchmark | Twenty distinct badge values share layout batches; thirty unrelated HA frames must not measure/rebuild; same-box changed text must reuse the graph; drag must not rebuild/scan all pairs. Ordinary geometry input rejects 1,000 distant walls while retaining every reachable inclined/asymmetric badge contact |
 | AC10 | Native RU/EN guide text and canonical docs | No actionable toggle in View; guide disappears after release/cancel/Alt; layout keys stay only existing x/y/s |
 
 Commands: `node --test test/device-contact*.test.mjs` after the ordinary test
@@ -111,8 +111,9 @@ compile; `node demo/smoke_device_contacts.mjs`,
    raw bundle 2,970,705 and host references 5,418 (answer: “Разрешаю”). The old
    2,000/25 bands and all gzip/absolute budgets remain unchanged. No broader
    budget or product-scope exception is inferred.
-2. Fresh full gate and named inherited lifecycle/context/static smokes on the
-   final material; refresh numerical/camera/work evidence after source changes.
+2. Fresh full gate and named inherited lifecycle/context/static smokes are
+   executed as recorded above/below, including refreshed numerical/camera/work
+   evidence after the final product change.
 3. Publish the unblocked task branch, full attested golden capture, inspect and
    accept only explained changed/new frames, then exact-SHA Validate.
 4. Independent S7 review and pipeline merge to S8; author must not merge dev.
@@ -176,3 +177,47 @@ changes the plan viewport behind the unchanged dialog/popover. The two new
 with 32 real glyphs and seven joined groups. Only these five changes and two
 new frames are intended for the final attested acceptance; no other baseline
 may be updated.
+
+## Final performance and refreshed product checks
+
+Sequential, non-concurrent `large-house-interaction-v1`: seven measured samples
+and one warmup, pinned Chromium 151.0.7922.34 / Node 22.23.3, the same current
+runner and identical fixture/runtime. Base source is the unchanged
+`git archive 1bdc5a1a0828bf7bc01b291136e4d3bd61a25b8e` (not a mutant), built
+and run inside one helper invocation. Its archive has no `.git`, so its report
+honestly records sourceSha null; `performance-base-material.json` binds the
+archive SHA and its build fingerprint is
+`91995cdad87404c5ca350ecfcd0b34f4c69e0343cf6e1d8ab0a2b09bfad6dcb7`.
+Candidate report source is `101cd1f3c51403059b2dbf6b68d289f64337a25f`, fingerprint
+`4fa969768a5af72397ecef2e6b03eb9905e55e4eb998b161e78c98fa563c2390`.
+
+`performance-broadphase-comparison-7.report.json`: all checks PASS with the
+unchanged `demo/performance/budgets-large-house-interaction.json`.
+
+| Observed metric | Base | Candidate | Current limit |
+|---|---:|---:|---:|
+| Editor series median | 518.7 ms | 636.0 ms | 750 ms |
+| Twelve warmed floor switches median | 433.3 ms | 483.3 ms | 683.3 ms |
+| Long-task count P95 | 5 | 6 | 8 |
+| Long-task total P95 | 1,273 ms | 1,366 ms | 1,654.9 ms |
+| Maximum editor long task | — | 151 ms | 165 ms |
+| Unrelated HA tick median | 32.7 ms | 32.7 ms | 72.7 ms |
+
+This is a local comparative diagnostic, not a substitute for final exact-SHA
+Linux CI. The final implementation also passes all 36 designer comparisons
+(`final-designer`), all 68 native wall cases (`final-walls`), the full native
+actions/history/cancellation/static/iso cohort (`final-contacts`), and the
+expanded 200-marker work test (`final-work2`). Eighteen targeted geometry,
+maintenance and frozen-reference units pass without skips (`broadphase-units`).
+The new registry entry initially omitted its mandatory explanation: five
+registry-dependent unit assertions consequently failed in `final-gate`.
+The explanation is now present, and `final-registry` passes with execution=0;
+the full `final-green-gate` rerun passed at 19:08:30–19:10:51 UTC, exit 0,
+with all its build/types/units/registry/bundle/no-new-any/private-writes/layout
+and monolith checks. The only later source delta from `101cd1f3` is that
+explanation in registry metadata; product source/build fingerprint is unchanged.
+
+Raw bytes 2,971,726 and host references 5,418 remain inside the approved
+2,970,705+2,000 / 5,418+25 bands. Initial View 323,118 B gzip and lazy editor
+264,819 B gzip pass the unchanged gzip ceilings/bands. No performance or
+gzip threshold was raised to admit these results.
