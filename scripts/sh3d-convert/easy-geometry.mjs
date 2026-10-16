@@ -1,6 +1,7 @@
 import { EasyInputError } from './easy-read.mjs';
 import { wallKey } from './geometry-runtime.generated.mjs';
 import { CELL_LADDER, GRID_N, TARGET_EXTENT } from './units.mjs';
+import { booleanAt } from './easy-style.mjs';
 
 const EPS = 1e-8;
 const round = (value) => Math.round(value * 1e9) / 1e9 || 0;
@@ -119,7 +120,8 @@ export function readFloorGeometry(floor, { ids, cmPerUnit, notes }) {
     if (source.kind === 'railing') { notes.push({ code: 'railing_skipped', id }); return; }
     const thickness = numberAt(source.thickness, `${id}.thickness`, 8);
     const effective = Math.max(2, Math.min(10, thickness)); // pinned Easy renderer's actual range
-    const cm = source.divider ? 0 : Math.max(1, Math.min(100, round(effective * cmPerUnit)));
+    const divider = booleanAt(source.divider, `${id}.divider`);
+    const cm = divider ? 0 : Math.max(1, Math.min(100, round(effective * cmPerUnit)));
     if (effective !== thickness) notes.push({ code: 'source_thickness_clamped', id });
     if (!source.divider && Math.abs(cm - effective * cmPerUnit) > EPS)
       notes.push({ code: 'thickness_clamped', id, count: 1, limit: 100 });

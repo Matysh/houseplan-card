@@ -49,6 +49,7 @@ const rows = [
   ['note.device_room_ambiguous', 'Несколько комнат под устройством; ручная привязка не назначена: {id}.', 'Multiple rooms under the device; no manual room assigned: {id}.'],
   ['note.reading_skipped', 'Некорректный источник значения не перенесён: {id}.', 'Invalid reading source not transferred: {id}.'],
   ['note.badge_selection_approximate', 'Автовыбор значения требует живых данных HA: сохранён ближайший явный источник, проверьте {id}.', 'Automatic reading selection needs live HA data: the nearest explicit source was preserved; check {id}.'],
+  ['note.badge_source_missing', 'Выбранный источник значения отсутствует: сохранён значок, а не значение другой сущности: {id}.', 'Selected reading source is missing: preserved an icon, not another entity’s value: {id}.'],
   ['note.device_face_approximate', 'Вариант без значка/только кольцо заменён близким режимом House Plan: {id}.', 'Label-only/ripple-only face replaced with an approximate House Plan mode: {id}.'],
   ['note.extra_readings_as_text', 'Дополнительные значения вынесены в живую подпись под устройством: {id}, {count}.', 'Extra readings preserved as live text below the device: {id}, {count}.'],
   ['note.device_name_as_text', 'Имя устройства сохранено отдельной подписью: {id}.', 'Device name preserved as a separate text label: {id}.'],

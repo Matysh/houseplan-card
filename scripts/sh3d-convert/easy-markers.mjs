@@ -1,6 +1,6 @@
 import { EasyInputError } from './easy-read.mjs';
 import { numberAt } from './easy-geometry.mjs';
-import { angleOf, itemReadingPool, markerTap, readingToken, stringAt, validEntity } from './easy-style.mjs';
+import { angleOf, booleanAt, itemReadingPool, markerTap, readingToken, stringAt, validEntity } from './easy-style.mjs';
 import { noteFields, reportRemainder, textDecor } from './easy-content.mjs';
 
 const clamp = (value, lo, hi) => Math.max(lo, Math.min(hi, value));
@@ -18,6 +18,7 @@ export function convertItems(items, rooms, spaceId, context) {
   const markers = [], layout = {}, decor = [], strips = [];
   for (const [index, item] of items.entries()) {
     const id = ids('device', item.id, index);
+    for (const key of ['glow', 'showState', 'showName', 'showIcon']) booleanAt(item[key], `${id}.${key}`);
     if (item.readings !== undefined && (!Array.isArray(item.readings)
       || item.readings.some(row => !row || typeof row !== 'object' || Array.isArray(row))))
       throw new EasyInputError('easy_invalid_readings', id);
@@ -45,12 +46,14 @@ export function convertItems(items, rooms, spaceId, context) {
       notes.push({ code: 'reading_skipped', id });
     if (item.entity && !readings.some(row => row.origin === 'primary')) notes.push({ code: 'reading_skipped', id });
     const primary = readings.find(row => row.origin === 'primary');
-    const content = item.badgeContent ?? (item.showIcon === false ? 'none' : 'icon');
+    const content = ['icon', 'value', 'none'].includes(item.badgeContent)
+      ? item.badgeContent : (item.showIcon === false ? 'none' : 'icon');
     let selected = readings.find(row => row.origin === (item.badgeEntity === 'secondary' ? 0 : item.badgeEntity));
     if (item.badgeEntity === 'primary') selected = primary;
-    if (!selected && content === 'value') selected = primary || readings[0];
-    if (content === 'value' && item.badgeEntity !== 'primary' && !readings.some(row => row.origin ===
-        (item.badgeEntity === 'secondary' ? 0 : item.badgeEntity))) notes.push({ code: 'badge_selection_approximate', id });
+    if (content === 'value' && item.badgeEntity === undefined) {
+      selected = primary || readings[0];
+      notes.push({ code: 'badge_selection_approximate', id });
+    } else if (content === 'value' && !selected) notes.push({ code: 'badge_source_missing', id });
     if (selected && content === 'value') { marker.display = 'value'; marker.value_source = selected.source; }
     if (content === 'none' || item.display === 'ripple') notes.push({ code: 'device_face_approximate', id });
     const visible = readings.filter(row => row.visible && !(content === 'value' && row === selected));

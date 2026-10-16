@@ -124,3 +124,16 @@ test('#937 all refused floors retain actionable reasons, not a false successful 
     return true;
   });
 });
+
+test('#937 a missing explicit badge source never silently becomes another entity; boolean strings refuse', () => {
+  const { documents: [doc], report } = convertEasy(card({ walls: [wall], items: [{ entity: 'sensor.primary', x: 10, y: 20,
+    readings: [{ entity: 'sensor.other' }], badgeContent: 'value', badgeEntity: 8,
+  }] }), fixed);
+  assert.equal(doc.payload.config.markers[0].display, 'badge');
+  assert.equal(doc.payload.config.markers[0].value_source, undefined);
+  assert(report.levels[0].notes.some(note => note.code === 'badge_source_missing'));
+  assert.throws(() => convertEasy(card({ walls: [{ ...wall, divider: 'false' }] }), fixed),
+    error => error.report.levels[0].skipped === 'easy_invalid_boolean');
+  assert.throws(() => convertEasy(card({ walls: [wall], items: [{ entity: 'light.a', x: 10, y: 20, glow: 'true' }] }), fixed),
+    error => error.report.levels[0].skipped === 'easy_invalid_boolean');
+});

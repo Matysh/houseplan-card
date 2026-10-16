@@ -19,7 +19,9 @@ try {
     const original = File.prototype.arrayBuffer;
     File.prototype.arrayBuffer = async function () {
       if (this.name === 'slow.json') await new Promise(resolve => { window.releaseSlowRead = resolve; });
-      return original.call(this);
+      const result = await original.call(this);
+      if (this.name === 'slow.json') window.slowReadsSettled = (window.slowReadsSettled || 0) + 1;
+      return result;
     };
   });
   await page.goto(pathToFileURL(root('dist/index.html')).href);
@@ -63,19 +65,26 @@ try {
   await page.locator('#paste').fill('type: wrong-card');
   await page.locator('#convert-paste').click();
   await page.evaluate(() => window.releaseSlowRead());
-  await page.waitForFunction(() => document.getElementById('busy').hidden);
+  await page.waitForFunction(() => window.slowReadsSettled >= 1);
   assert.equal(await page.locator('#result').isVisible(), false);
   assert.equal(await page.locator('#error').isVisible(), true);
   // A second delayed source is invalidated by a format switch too.
+  await page.evaluate(() => { delete window.releaseSlowRead; });
   await page.locator('#file').setInputFiles({ name: 'slow.json', mimeType: 'application/json', buffer: Buffer.from(source) });
   await page.waitForFunction(() => typeof window.releaseSlowRead === 'function');
   await page.locator('#format').selectOption('sh3d');
   await page.evaluate(() => window.releaseSlowRead());
+  await page.waitForFunction(() => window.slowReadsSettled >= 2);
   assert.equal(await page.locator('#result').isVisible(), false);
   // Browser YAML path (not merely JSON), translated report, hostile text and
   // mobile form width. Input text can never create elements or network reads.
   await page.locator('#format').selectOption('easy');
   await page.locator('[data-lang=ru]').click();
+  await page.locator('#paste').fill('type: custom:easy-floorplan-card\nwalls:\n  - {x1: 0, y1: 0, x2: 0, y2: 0}\n');
+  await page.locator('#convert-paste').click();
+  assert.equal(await page.locator('#error').isVisible(), true);
+  assert.equal(await page.locator('.level button').count(), 0, 'refused floors never offer a download');
+  assert.match(await page.locator('#levels').innerText(), /отклонён/);
   await page.locator('#paste').fill('type: custom:easy-floorplan-card\nwalls:\n  - {x1: 0, y1: 0, x2: 400, y2: 0}\ntexts:\n  - {x: 20, y: 30, text: "<img src=https://evil.invalid/x>"}\n');
   await page.locator('#convert-paste').click();
   await page.locator('#result').waitFor({ state: 'visible' });

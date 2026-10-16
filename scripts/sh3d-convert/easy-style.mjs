@@ -72,12 +72,12 @@ export function itemReadingPool(item) {
     const source = readingSource(entity, attribute);
     if (source) result.push({ source, visible, origin });
   };
-  push(item.entity, item.attribute, item.showState === true, 'primary');
+  push(item.entity, item.attribute, booleanAt(item.showState, 'showState'), 'primary');
   if (item.secondaryEntity || item.secondaryAttribute)
     push(item.secondaryEntity || item.entity, item.secondaryAttribute, true, 0);
   const offset = item.secondaryEntity || item.secondaryAttribute ? 1 : 0;
   for (const [index, row] of (item.readings || []).entries())
-    push(row.entity || item.entity, row.attribute, row.showState !== false, index + offset);
+    push(row.entity || item.entity, row.attribute, booleanAt(row.showState, 'readings.showState', true), index + offset);
   return result;
 }
 

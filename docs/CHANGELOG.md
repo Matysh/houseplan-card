@@ -8,6 +8,8 @@
   reported before download. Sweet Home 3D now emits the current wall model and
   retains independent walls and wall-only floors
   ([#937](https://github.com/Matysh/houseplan-card/issues/937)).
+  A missing explicitly selected Easy reading keeps an icon instead of silently
+  switching to another entity; malformed boolean settings are refused.
 
 - Devices can snap to physical wall faces and join nearby markers into a shared
   Flat outline, following the designer reference. Dragging still moves only one
