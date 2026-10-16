@@ -913,8 +913,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node --test test/candidate-858.test.mjs',
     because: '#929 AC1: no release channel requires a manual owner field/GPU receipt; scene intent remains independently enforced.',
     patches: [{ file: 'scripts/candidate-readiness.mjs',
-      find: "return { channel: beta ? 'beta' : 'strict', scenePlanRequired: !beta, manualAcceptanceRequired: false };",
-      replace: "return { channel: beta ? 'beta' : 'strict', scenePlanRequired: !beta, manualAcceptanceRequired: true };" }],
+      find: '    else if (refusal) warnings.push(`#${entry.issue}: optional field observation: ${refusal}`);',
+      replace: '    else if (refusal || !record) blockers.push(`#${entry.issue}: manual field acceptance required`);' }],
   },
   {
     id: 'candidate-beta-forgets-full-proof',
