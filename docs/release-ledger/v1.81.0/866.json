@@ -3,5 +3,9 @@
   "issue": 866,
   "baseStable": "v1.81.0",
   "category": "major",
-  "rationale": "New user-visible device wall snapping and derived shared Flat outlines, absent from stable v1.81.0. Individual actions/history and previous 2.5D tiles are preserved; not a repair of an intermediate release regression."
+  "rationale": "New user-visible device wall snapping and derived shared Flat outlines, absent from stable v1.81.0. Individual actions/history and previous 2.5D tiles are preserved; not a repair of an intermediate release regression.",
+  "summary": {
+    "ru": "Значки устройств прилипают к стенам и соседям, а соприкасающиеся устройства объединяются общим контуром. Магниты можно отключить кнопкой или временно клавишей Alt; каждое устройство по-прежнему перемещается отдельно.",
+    "en": "Device markers snap to walls and nearby devices, with touching devices sharing an outline. Turn magnets off with the toolbar button or temporarily with Alt; each device still moves individually."
+  }
 }
