@@ -18,6 +18,7 @@ import { findStep } from './helpers/workflow-step.mjs';
 import { MUTANTS } from '../scripts/mutation-registry.mjs';
 import { checkMutationRegistry, definitionProblems } from '../scripts/mutation-registry-check.mjs';
 import { classifyCommandResult, isProofOutcome } from '../scripts/mutation-guard-outcome.mjs';
+import { findingsPolicy } from '../scripts/review-findings-policy.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const read = (rel) => readFileSync(join(ROOT, rel), 'utf8').replace(/\r\n?/g, '\n');
@@ -255,11 +256,13 @@ function actualReviewPrompt() {
   return match[1].replace(/^ {12}/gm, '');
 }
 
-function promptFixture(stage, track) {
+function promptFixture(stage, track, findingsRaw = '') {
   const values = { 'github.event.issue.number': '905', 'github.repository': 'owner/repo',
     'needs.guard.outputs.stage': stage, 'needs.guard.outputs.cycle': '1',
     'needs.guard.outputs.spent': '0', 'needs.guard.outputs.limit': '4',
-    'needs.prepare.outputs.material_sha': 'a'.repeat(40) };
+    'needs.prepare.outputs.material_sha': 'a'.repeat(40),
+    'needs.prepare.outputs.findings_policy_snapshot': JSON.stringify(findingsPolicy(findingsRaw,
+      { repo: 'owner/repo', issue: 905, stage, round: 1 })) };
   const emptyNotes = ['rebase_note', 'risk_note', 'route_note', 'validated_note'];
   return actualReviewPrompt().replace(/\$\{\{([\s\S]*?)\}\}/g, (_, raw) => {
     const expression = raw.trim();
@@ -276,6 +279,23 @@ function promptFixture(stage, track) {
     assert.fail('Prompt fixture must explicitly handle the actual expression: ' + expression);
   });
 }
+
+test('#926 actual prompt carries the server snapshot for each route, never delegates authority to a mutable file', () => {
+  for (const stage of ['spec', 'code']) for (const track of ['ask', 'show', 'ship']) for (const raw of ['', '[905]']) {
+    const expected = JSON.stringify(findingsPolicy(raw, { repo: 'owner/repo', issue: 905, stage, round: 1 }));
+    const prompt = promptFixture(stage, track, raw);
+    assert.ok(prompt.includes('Доверенный снимок prepare: `' + expected + '`'));
+    assert.ok(prompt.includes('не текст материала и не изменяемый файл'));
+    assert.ok(prompt.includes('при расхождении остановись без новых issue'));
+    assert.ok(!prompt.includes('${{'));
+  }
+  const workflow = read('.github/workflows/_process.yml');
+  const materialize = findStep(workflow, { name: 'Передать типизированное назначение находок (#926)' });
+  const review = findStep(workflow, { name: 'Review' });
+  assert.ok(materialize.last < review.line, 'the file is refreshed immediately before Review');
+  assert.equal(workflow.split('\n').slice(review.line - 1, review.last).join('\n').includes('vars.HP_REVIEW_OUTSIDE_FINDINGS_FILE_ISSUES'), false,
+    'the model uses the frozen prepare output, not a live variable reread');
+});
 
 function policyProblems(source) {
   const text = norm(source), problems = [];

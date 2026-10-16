@@ -1546,6 +1546,9 @@ does not enable the variable in the live repository.
 
 Prepare freezes one run's route. To revoke an in-flight route, cancel that run
 and start a new request; editing the variable alone does not change its snapshot.
+The actual Review prompt embeds the server-side prepare snapshot; the JSON
+file is a checkable copy, refreshed after setup. A mismatch stops the reviewer
+without issue creation; the mutable file cannot choose another route.
 File mode publishes `docs/reviews/findings/<issue>-<stage>-r<round>.md` with the
 review; the regular archive link repair keeps its link reachable later. These
 companions remain under reviews, not implementation/release membership.

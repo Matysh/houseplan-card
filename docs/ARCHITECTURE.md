@@ -1495,7 +1495,9 @@ on the next explicit entry. Budgets: `LAZY_LED_GZIP_CEILING` and
 
 Trusted Actions configuration selects only explicit issue IDs; prepare freezes a typed
 identity/mode/deterministic path, bound to its output and artifact passport.
-The model receives that policy outside the checkout. Integration independently
+The actual Review prompt embeds prepare's server-side snapshot; an external
+JSON copy is refreshed immediately before Review and is not the authority.
+Integration independently
 checks the trusted snapshot, exact companion set/hash/text, and publishes only
 the derived reviews/findings path beside the report. Legacy in-flight results
 can use only their old no-companion protocol. No arbitrary instructions, new

@@ -3,5 +3,5 @@
   "issue": 926,
   "baseStable": "v1.81.0",
   "category": "infra",
-  "rationale": "Adds a bounded trusted Actions channel for routing out-of-scope review findings to a published companion instead of new issues. No product behavior, severity waiver, gate relaxation, new model permissions, automatic live setting or historical verdict change."
+  "rationale": "Adds a bounded trusted Actions channel for routing out-of-scope review findings to a published companion instead of new issues. SPEC sidecars require exact publisher/path/header/added-file/blob proof and remain ancillary trace. No product behavior, severity waiver, arbitrary gate bypass, weakening of legacy checks, new model permissions, automatic live setting or historical verdict change."
 }
