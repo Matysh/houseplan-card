@@ -3,9 +3,15 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { convertEasy } from '../scripts/sh3d-convert/easy.mjs';
+import { EASY_FURNITURE } from '../scripts/sh3d-convert/easy-catalog.mjs';
+import { FURNITURE } from '../scripts/sh3d-convert/geometry-runtime.generated.mjs';
 const card = (extra = {}) => JSON.stringify({ type: 'custom:easy-floorplan-card', ...extra });
 const wall = { id: 'wall', x1: 0, y1: 0, x2: 400, y2: 0 };
 const fixed = { now: '2026-10-17T00:00:00Z' };
+test('#937 every mapped furniture ID exists in the actual canonical HP catalogue', () => {
+  const known = new Set(FURNITURE.map(symbol => symbol.id));
+  for (const [source, target] of Object.entries(EASY_FURNITURE)) assert(known.has(target), `${source} -> ${target}`);
+});
 test('#937 full Easy conversion carries bindings, area, values, decor, background, openings and LED geometry', () => {
   const { documents: [document], report } = convertEasy(card({
     width: 600, height: 400, north: -90, sunlight: true,

@@ -90,3 +90,10 @@ async def test_issue_937_ha_applies_exports_and_deduplicates_without_changing_ex
     for marker in bound:
         assert sum(m["binding"] == marker["binding"] for m in second["markers"]) == 1
     assert second["settings"] == before["settings"]
+    third = await import_it("virtual")
+    old_ids = {marker["id"] for marker in second["markers"]}
+    copies = [marker for marker in third["markers"] if marker["id"] not in old_ids]
+    assert len(copies) == len(expected["markers"])
+    assert all(marker["binding"] == "virtual" for marker in copies)
+    assert sum(marker.get("display") == "static_icon" for marker in copies) >= len(bound)
+    assert third["settings"] == before["settings"]
