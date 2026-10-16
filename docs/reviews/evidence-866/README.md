@@ -41,7 +41,7 @@ shrink in product code. The synthetic fixture registers one whole scene by its
 core centres, without per-member fitting. Product MDI glyphs and existing wall
 paint are not replaced with the prototype's demonstration artwork.
 The ordinary golden matrix now includes both-theme twelve-case boards; its
-new baselines still require complete reviewed-source capture/acceptance.
+new baselines have complete reviewed-source capture/acceptance, recorded below.
 
 ## Executed ordinary evidence
 
@@ -114,8 +114,8 @@ compile; `node demo/smoke_device_contacts.mjs`,
 2. Fresh full gate and named inherited lifecycle/context/static smokes are
    executed as recorded above/below, including refreshed numerical/camera/work
    evidence after the final product change.
-3. Publish the unblocked task branch, full attested golden capture, inspect and
-   accept only explained changed/new frames, then exact-SHA Validate.
+3. Published task branch and full attested golden capture/acceptance are done;
+   exact-SHA full Validate on the baseline commit remains required.
 4. Independent S7 review and pipeline merge to S8; author must not merge dev.
 
 The native 200-marker, designer and wall checks are headless pinned-browser
@@ -221,3 +221,16 @@ Raw bytes 2,971,726 and host references 5,418 remain inside the approved
 2,970,705+2,000 / 5,418+25 bands. Initial View 323,118 B gzip and lazy editor
 264,819 B gzip pass the unchanged gzip ceilings/bands. No performance or
 gzip threshold was raised to admit these results.
+
+## Reviewed golden acceptance
+
+The official full WSL capture completed at 19:11:25–19:15:27 UTC on clean
+published source `4406d7a6c2cd4860c427c8d26cf617604b94a676`, matrix 75 / 207
+frames. Its self-hashed passport is
+`069dad275f156dd83b7159c37315ae38260ee898a7d9c5808b2d8db0fdfc40a6`, with
+69 byte-identical environment witnesses (floor 10). All five changed and two
+new final PNG hashes match the already visually inspected candidates exactly.
+The official `golden:accept --reviewed --from=artifacts/golden`, with exactly
+the five `--expect-change` and two `--expect-new` names above, replaced seven
+frames and preserved the other 200 reviewed baseline files byte-for-byte.
+This is an attested WSL source, not a claimed GitHub capture or physical GPU.
