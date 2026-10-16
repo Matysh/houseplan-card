@@ -1312,6 +1312,15 @@ git config core.untrackedCache true
 
 ## Local repository maintenance (#628)
 
+Ship-review test repositories (#925) set `maintenance.auto=false` and
+`gc.auto=0` in their own local config, including the sandbox's bare origin.
+They never change owner/global Git configuration. Both fixture after-hooks use
+native recursive `rmSync` with ten retries and 50 ms linear backoff; exhaustion
+still throws. The ordinary child-fixture test checks effective local settings,
+real commit/push and completed cleanup, while all original patch-id/cherry-pick
+and workflow assertions remain. This hardens the known ENOTEMPTY cleanup path
+without claiming to establish or reproduce its historical race cause.
+
 Owner decision on 2026-09-25: use only a one-time local garbage collection for
 the Windows clone. This issue does **not** introduce Git LFS, stop tracking
 `dist/**`, remove the committed integration bundle, or rewrite published Git

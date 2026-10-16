@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,6 +19,8 @@ import { importClosure } from './helpers/import-closure.mjs';
 
 const sha = (c) => c.repeat(40);
 const MARKER = `<!-- hp:ship-merge material=${sha('a')} -->`;
+// #925: tolerate transient directory contention, but propagate exhaustion.
+const REMOVE_FIXTURE_TREE = Object.freeze({ recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
 
 test('#696 документ — по тегу беты или стабильному, имя фиксировано', () => {
   assert.equal(shipReviewDocPath('v1.79.0-beta.1'), 'docs/reviews/SHIP-REVIEW-v1.79.0-beta.1.md');
@@ -158,7 +160,7 @@ const shipDoc = (name, fields) => ({
 /** Временный git-репозиторий без конфига и хуков пользователя (#496, #633). */
 function tempRepo(t) {
   const dir = mkdtempSync(join(tmpdir(), 'hp-727-'));
-  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  t.after(() => rmSync(dir, REMOVE_FIXTURE_TREE));
   const env = {
     ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^GIT_/i.test(key))),
     GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t',
@@ -171,6 +173,8 @@ function tempRepo(t) {
   };
   git('init', '-q', '-b', 'dev');
   git('config', 'core.hooksPath', '/dev/null');
+  git('config', 'maintenance.auto', 'false');
+  git('config', 'gc.auto', '0');
   const commit = (files, message) => {
     for (const [path, text] of Object.entries(files)) {
       mkdirSync(dirname(join(dir, path)), { recursive: true });
@@ -182,6 +186,31 @@ function tempRepo(t) {
   };
   return { dir, git, commit };
 }
+
+test('#925: temporary Git fixtures disable automatic maintenance and finish cleanup', async (t) => {
+  let standalone;
+  await t.test('patch-set fixture', (child) => {
+    const repo = tempRepo(child);
+    standalone = repo.dir;
+    assert.equal(repo.git('config', '--local', '--get', 'maintenance.auto'), 'false');
+    assert.equal(repo.git('config', '--local', '--get', 'gc.auto'), '0');
+    repo.commit({ 'input.txt': 'fixture\n' }, 'fixture');
+    assert.equal(repo.git('status', '--porcelain'), '');
+  });
+  assert.equal(existsSync(standalone), false, 'after-hook cleanup completes before the child finishes');
+  if (!hasTools()) return;
+  let sandboxRoot;
+  await t.test('workflow sandbox and its bare origin', (child) => {
+    const box = shipSandbox(child);
+    sandboxRoot = box.root;
+    for (const dir of [box.work, box.origin]) {
+      assert.equal(box.git(dir, 'config', '--local', '--get', 'maintenance.auto'), 'false');
+      assert.equal(box.git(dir, 'config', '--local', '--get', 'gc.auto'), '0');
+    }
+    box.push();
+  });
+  assert.equal(existsSync(sandboxRoot), false, 'workflow sandbox and origin are removed together');
+});
 
 test('#727 AC1 К1: патч-набор — patch-id коммитов задачи; Release: и только docs/reviews/** не входят; cherry-pick тот же', (t) => {
   const repo = tempRepo(t);
@@ -470,7 +499,7 @@ const runnable = (name) => ({
 
 function shipSandbox(t) {
   const root = mkdtempSync(join(tmpdir(), 'hp-727-wf-'));
-  t.after(() => rmSync(root, { recursive: true, force: true }));
+  t.after(() => rmSync(root, REMOVE_FIXTURE_TREE));
   const origin = join(root, 'origin.git');
   const work = join(root, 'work');
   const temp = join(root, 'runner');
@@ -484,6 +513,10 @@ function shipSandbox(t) {
   };
   git(root, 'init', '--bare', '-q', origin);
   git(root, 'clone', '-q', origin, work);
+  for (const dir of [origin, work]) {
+    git(dir, 'config', 'maintenance.auto', 'false');
+    git(dir, 'config', 'gc.auto', '0');
+  }
   git(work, 'checkout', '-q', '-b', 'dev');
   mkdirSync(join(work, 'scripts'));
   const scripts = ['ship-review.mjs', 'reviews-index.mjs', 'review-doc-guard.mjs']

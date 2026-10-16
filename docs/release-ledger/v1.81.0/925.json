@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 925,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Hardens isolated ship-review Git fixtures: local automatic maintenance/gc disabled and recursive cleanup uses bounded native retries without swallowing final errors. Original patch-set/cherry-pick/workflow assertions remain. Historical ENOTEMPTY race cause is not claimed proven; no product change or milestone."
+}
