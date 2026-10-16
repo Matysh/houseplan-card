@@ -73,6 +73,9 @@ its preview, maps the early placement context refusal to human text, and keeps
 inherited/non-string owner names out of Optimize diagnostics. Guards, cleanup
 eligibility, permissions and persisted schemas are unchanged.
 
+Historical review clarifications (#927) add dated primary-source corrections
+for four later reports, keeping originals, verdicts, anchors and raw unchanged.
+
 SPEC delivery accounting (#903) preserves accepted review trace separately from
 implemented release entries and close-eligible membership. A shared content and
 provenance check reads versioned phases and existing publisher commits; later

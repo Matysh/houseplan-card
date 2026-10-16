@@ -1508,6 +1508,14 @@ linked from TESTING, without expanding its fixed 880-line budget.
 локальные ссылки этого раздела, не семантическую истинность отчётов. Только
 восемь названных исторических записей уточняются без benchmark/native/mutant replay.
 
+### Later review clarifications (#927)
+
+[Four dated clarifications](analysis/927-evidence-errata-2026-10-17.md) separate
+literal counts, module loading from validation, native cohorts from unit/CI
+execution, and profile selection. They supplement #910 without editing the
+four original reports, verdicts, machine anchors or raw, and without historical
+test/benchmark/native/mutant replay or a new semantic-checking mechanism.
+
 ### Labs presentation flags
 
 Labs is an internal, presentation-only runtime in `src/labs.ts`; it must never

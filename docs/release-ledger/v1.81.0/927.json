@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 927,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Adds dated primary-source clarifications to four historical review reports without rewriting their text, verdicts, machine anchors, raw or accepted S8 outcomes. Documentation only; no semantic-checking platform, historical replay or user-facing milestone."
+}
