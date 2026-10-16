@@ -22,7 +22,7 @@ GOLDEN = Path(__file__).resolve().parent.parent / "scripts" / "sh3d-convert" / "
 
 
 def golden_documents() -> list[tuple[str, dict]]:
-    files = sorted(GOLDEN.glob("*.space-*.json"))
+    files = sorted(path for path in GOLDEN.glob("*.space-*.json") if not path.name.startswith("easy-"))
     assert files, "golden конвертера пропали"
     return [(path.name, json.loads(path.read_text(encoding="utf-8"))) for path in files]
 
@@ -47,7 +47,7 @@ def test_issue_446_import_preview_accepts_the_converted_document(
     preview = response["preview"]
     assert response["token"], name
     assert preview["counts"]["spaces"] == 1, name
-    assert preview["counts"]["rooms"] >= 1, name
+    assert preview["counts"]["rooms"] == len(document["payload"]["config"]["spaces"][0]["rooms"]), name
     assert preview["counts"]["markers"] == 0, "конвертер не приносит устройств"
     assert preview["content"] == [], "и не приносит файлов"
     # Чужой источник — законное состояние: документ сделан не этой установкой.

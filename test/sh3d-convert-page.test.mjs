@@ -59,18 +59,23 @@ test('#446 конвертер внутри страницы даёт тот же
   assert.ok(script, 'в странице нет модульного скрипта');
   const dir = mkdtempSync(join(tmpdir(), 'hp-convert-page-'));
   try {
-    const source = `${script[1].replace(/\nmount\(\);\s*$/, '\n')}\nexport { convertHome, readSh3d };\n`;
+    const source = script[1].replace(/\nmount\(\);\s*$/, '\n');
     const file = join(dir, 'bundle.mjs');
     writeFileSync(file, source);
     const bundle = await import(pathToFileURL(file).href);
     const bytes = new Uint8Array(readFileSync(root('scripts/sh3d-convert/fixtures/flat-two-rooms.sh3d')));
     const home = await bundle.readSh3d(bytes);
     const { documents } = bundle.convertHome(home, {
-      now: '1970-01-01T00:00:00Z', toolVersion: 'sh3d-convert 0.1',
+      now: '1970-01-01T00:00:00Z', toolVersion: 'plan-convert 0.2',
     });
     const golden = JSON.parse(
       readFileSync(root('scripts/sh3d-convert/golden/flat-two-rooms.space-1.json'), 'utf8'));
     assert.deepEqual(documents[0], golden, 'страница конвертирует иначе, чем модули репозитория');
+    const easyInput = readFileSync(root('scripts/sh3d-convert/fixtures/easy-public-demo.json'), 'utf8');
+    const easy = bundle.convertEasy(easyInput, { now: '1970-01-01T00:00:00Z', toolVersion: 'plan-convert 0.2' });
+    for (const [index, document] of easy.documents.entries()) {
+      assert.deepEqual(document, JSON.parse(readFileSync(root(`scripts/sh3d-convert/golden/easy-public-demo.space-${index + 1}.json`), 'utf8')));
+    }
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -86,6 +91,11 @@ test('#446 переводы полны: пустых подписей на ст�
   }
   assert.deepEqual(Object.keys(TEXT.ru).sort(), Object.keys(TEXT.en).sort(),
     'словари разъехались: часть страницы останется на другом языке');
+  for (const stem of ['easy-public-demo', 'easy-content']) {
+    const report = JSON.parse(readFileSync(root(`scripts/sh3d-convert/golden/${stem}.report.json`), 'utf8'));
+    for (const note of [...report.items, ...report.levels.flatMap(level => level.notes || [])])
+      for (const language of ['ru', 'en']) assert(TEXT[language][`note.${note.code}`], `${language}: ${note.code}`);
+  }
   // Коды отчёта и отказов тоже переводятся: иначе человек увидит `not_zip`.
   for (const code of [
     'vertices_snapped', 'curved_wall_straightened', 'thickness_clamped',

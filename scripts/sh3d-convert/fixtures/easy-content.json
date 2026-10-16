@@ -1,0 +1,18 @@
+{
+  "type": "custom:easy-floorplan-card",
+  "width": 800, "height": 600, "north": 45, "sunlight": true,
+  "floors": [{
+    "id": "home", "name": "Full transfer", "image": "/local/plan.png",
+    "walls": [{ "id": "top", "x1": 0, "y1": 0, "x2": 600, "y2": 0 }],
+    "areas": [{ "id": "room", "name": "Room", "haArea": "living", "color": "#abcdef",
+      "points": [{"x":0,"y":0},{"x":600,"y":0},{"x":600,"y":400},{"x":0,"y":400}] }],
+    "openings": [{"id":"door","type":"door","x":200,"y":0,"length":90,"entity":"binary_sensor.door"}],
+    "items": [
+      {"id":"strip","entity":"light.strip","x":300,"y":200,"glow":true,"glowRadius":150,"glowColor":"#aabbcc","stripLength":160,"stripAngle":90},
+      {"id":"sensor","entity":"sensor.temp","x":200,"y":200,"badgeContent":"value","readings":[{"entity":"sensor.hum"},{"entity":"sensor.co2"}],"tap_action":{"action":"none"}},
+      {"id":"virtual","name":"Unbound","x":400,"y":200,"glow":false}
+    ],
+    "furniture":[{"id":"sofa","type":"sofa","x":300,"y":300,"w":200,"h":80,"angle":90}],
+    "texts":[{"id":"power","x":100,"y":100,"text":"Power","entity":"sensor.power","attribute":"value"}]
+  }]
+}

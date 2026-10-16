@@ -20,7 +20,7 @@ import { XmlError, parseXml } from '../scripts/sh3d-convert/xml.mjs';
 import { ZipError, readZipEntry } from '../scripts/sh3d-convert/zip.mjs';
 
 const NOW = '1970-01-01T00:00:00Z';
-const TOOL = 'sh3d-convert 0.1';
+const TOOL = 'plan-convert 0.2';
 const bytes = (name) =>
   new Uint8Array(readFileSync(fileURLToPath(
     new URL(`../scripts/sh3d-convert/fixtures/${name}`, import.meta.url))));
@@ -38,7 +38,7 @@ test('#446 квартира из двух комнат: контуры по гр
   assert.equal(documents.length, 1);
   const space = documents[0].payload.config.spaces[0];
   assert.deepEqual(space.rooms.map((room) => room.name), ['Кухня', 'Спальня']);
-  assert.equal(space.walls.length, 7, 'четыре внешних, одна общая, две половины стены — 7 рёбер');
+  assert.equal(space.wall_segments.length, 7, 'четыре внешних, одна общая, две половины стены — 7 рёбер');
   const shared = space.rooms[0].poly.filter((point) =>
     space.rooms[1].poly.some((other) => other[0] === point[0] && other[1] === point[1]));
   assert.equal(shared.length, 2, 'общая граница должна совпасть точка-в-точку');
@@ -78,7 +78,7 @@ test('#446 уровни разъезжаются по документам, не
 
 test('#446 кривые случаи попадают в отчёт, а не в тишину', async () => {
   const { documents, report } = await convert('awkward.sh3d');
-  assert.equal(documents.length, 1, 'уровень без комнат конвертировать нечем');
+  assert.equal(documents.length, 2, '#937: независимые стены второго этажа больше не теряются');
   const codes = report.levels[0].notes.map((note) => note.code);
   for (const code of [
     'room_without_polygon', 'curved_wall_straightened', 'thickness_clamped',
@@ -86,16 +86,17 @@ test('#446 кривые случаи попадают в отчёт, а не в 
   ]) {
     assert.ok(codes.includes(code), `${code} обязан быть в отчёте: ${codes.join(', ')}`);
   }
-  assert.ok(report.items.some((item) => item.code === 'level_without_rooms'));
+  assert.equal(documents[1].payload.config.spaces[0].rooms.length, 0);
+  assert(documents[1].payload.config.spaces[0].partitions.length > 0);
   assert.ok(report.items.some((item) => item.code === 'furniture_dropped'),
     'мебель не читается вовсе — человек обязан узнать это из отчёта, а не из плана');
   const space = documents[0].payload.config.spaces[0];
-  assert.ok(space.walls.every((wall) => wall.cm >= 1 && wall.cm <= 100), 'толщина в пределах схемы');
+  assert.ok(space.wall_segments.every((wall) => wall.cm >= 0 && wall.cm <= 100), 'толщина в пределах схемы');
   // Проём шире ребра обрезается до ребра: иначе сервер откажется его привязать,
   // потому что хост требует, чтобы проём лежал в сегменте целиком.
   assert.ok(codes.includes('opening_shortened'), `opening_shortened: ${codes.join(', ')}`);
   const [wide] = space.openings;
-  const edge = space.walls.find((wall) => wall.a[1] === wide.y && wall.b[1] === wide.y);
+  const edge = space.wall_segments.find((wall) => wall.a[1] === wide.y && wall.b[1] === wide.y);
   assert.ok(edge, 'обрезанный проём лежит на горизонтальном ребре');
   const span = Math.abs(edge.b[0] - edge.a[0]);
   assert.ok(Math.abs(wide.length - span) < 1e-9, `длина ${wide.length} обязана равняться ребру ${span}`);
@@ -111,7 +112,8 @@ test('#446 общая граница без стены сваривается и
   const shared = left.poly.filter((point) =>
     right.poly.some((other) => other[0] === point[0] && other[1] === point[1]));
   assert.equal(shared.length, 2, 'граница обязана совпасть точка-в-точку');
-  assert.equal(space.walls.length, 6, 'четыре внешние стены плюс две половины — общей стены нет');
+  assert.equal(space.wall_segments.filter(wall => wall.cm > 0).length, 6,
+    'четыре внешние стены плюс две половины — общая граница имеет cm:0');
 });
 
 test('#446 golden совпадает с прогоном конвертера', async () => {
@@ -122,7 +124,7 @@ test('#446 golden совпадает с прогоном конвертера', 
     ['flat-two-rooms.sh3d', ['flat-two-rooms.space-1.json']],
     ['two-levels.sh3d', ['two-levels.space-1.json', 'two-levels.space-2.json']],
     ['noisy-shared-edge.sh3d', ['noisy-shared-edge.space-1.json']],
-    ['awkward.sh3d', ['awkward.space-1.json']],
+    ['awkward.sh3d', ['awkward.space-1.json', 'awkward.space-2.json']],
   ]) {
     const { documents } = await convert(fixture);
     assert.equal(documents.length, files.length, fixture);
@@ -146,11 +148,14 @@ test('#446 отказ вместо догадки', async () => {
   assert.throws(() => parseXml('<home name="&evil;"/>'),
     (error) => error.code === 'entity_reference');
   assert.equal(parseXml("<!DOCTYPE home SYSTEM 'x.dtd'><home name='a'/>").attrs.name, 'a');
-  // План без комнат: House Plan строит геометрию по комнатам, и это отказ.
+  // #937: план без комнат теперь законен, реальные стены становятся перегородками.
   const wallsOnly = parseHomeXml(
     "<home name='w'><wall id='w1' xStart='0' yStart='0' xEnd='100' yEnd='0' thickness='10'/></home>");
-  assert.throws(() => convertHome(wallsOnly, { now: NOW }),
-    (error) => error instanceof ConvertError && error.code === 'nothing_to_convert');
+  const wallDocument = convertHome(wallsOnly, { now: NOW }).documents[0];
+  assert.equal(wallDocument.payload.config.spaces[0].partitions.length, 1);
+  assert.equal(wallDocument.payload.config.spaces[0].rooms.length, 0);
+  assert.throws(() => convertHome(parseHomeXml('<home/>'), { now: NOW }),
+    error => error instanceof ConvertError && error.code === 'nothing_to_convert');
   // Слишком сложная комната — предел схемы, а не наш вкус.
   const points = Array.from({ length: 501 }, (_, index) =>
     `<point x='${index}' y='${index % 2 ? 10 : 0}'/>`).join('');

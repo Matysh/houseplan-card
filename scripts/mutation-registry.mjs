@@ -77,6 +77,14 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'plan-converter-forgets-input-generation',
+    guard: 'node scripts/sh3d-convert/build-page.mjs && node demo/smoke_plan_converter.mjs',
+    because: '#937 AC7: delayed source A must not restore its download or replace source B after an input/format change; the offline artifact browser witness exercises controlled delayed File reads and retained old button closures.',
+    patches: [{ file: 'scripts/sh3d-convert/page/app.mjs',
+      find: '  generation++; lastResult = null;',
+      replace: '  lastResult = null;' }],
+  },
+  {
     id: 'device-preview-ignores-effective-card-locale',
     guard: 'node demo/smoke_device_preview_parity.mjs',
     because: '#907 AC1: a live marker form and its nested Lit preview must share the effective card locale after the parent language gate, across explicit overrides and auto; only the mounted consumer proves that the parent passes the property.',

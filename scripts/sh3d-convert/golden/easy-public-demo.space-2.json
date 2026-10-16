@@ -1,0 +1,195 @@
+{
+  "format": "houseplan-export",
+  "export_version": 2,
+  "kind": "space",
+  "created_at": "1970-01-01T00:00:00Z",
+  "card_version": "plan-convert 0.2",
+  "integration_version": "plan-convert 0.2",
+  "model_version": 10,
+  "payload": {
+    "config": {
+      "spaces": [
+        {
+          "id": "easy-2",
+          "title": "Upstairs",
+          "cell_cm": 5,
+          "view_box": [
+            0.146666667,
+            0.313333333,
+            0.706666667,
+            0.373333333
+          ],
+          "rooms": [],
+          "partitions": [
+            {
+              "id": "easy-2-partition-easy-2-wall-uw1-0",
+              "a": [
+                0.25,
+                0.375
+              ],
+              "b": [
+                0.43333333333333335,
+                0.375
+              ],
+              "cm": 8
+            },
+            {
+              "id": "easy-2-partition-easy-2-wall-uw1-1",
+              "a": [
+                0.43333333333333335,
+                0.375
+              ],
+              "b": [
+                0.75,
+                0.375
+              ],
+              "cm": 8
+            },
+            {
+              "id": "easy-2-partition-easy-2-wall-uw2-0",
+              "a": [
+                0.75,
+                0.375
+              ],
+              "b": [
+                0.75,
+                0.625
+              ],
+              "cm": 8
+            },
+            {
+              "id": "easy-2-partition-easy-2-wall-uw3-0",
+              "a": [
+                0.75,
+                0.625
+              ],
+              "b": [
+                0.43333333333333335,
+                0.625
+              ],
+              "cm": 8
+            },
+            {
+              "id": "easy-2-partition-easy-2-wall-uw3-1",
+              "a": [
+                0.43333333333333335,
+                0.625
+              ],
+              "b": [
+                0.25,
+                0.625
+              ],
+              "cm": 8
+            },
+            {
+              "id": "easy-2-partition-easy-2-wall-uw4-0",
+              "a": [
+                0.25,
+                0.625
+              ],
+              "b": [
+                0.25,
+                0.375
+              ],
+              "cm": 8
+            },
+            {
+              "id": "easy-2-partition-easy-2-wall-uw5-0",
+              "a": [
+                0.43333333333333335,
+                0.375
+              ],
+              "b": [
+                0.43333333333333335,
+                0.625
+              ],
+              "cm": 8
+            }
+          ],
+          "decor": [
+            {
+              "id": "easy-2-furniture-ust",
+              "x": 0.5833333333333334,
+              "y": 0.44166666666666665,
+              "w": 0.06666666666666667,
+              "h": 0.11666666666666667,
+              "angle": 0,
+              "color": "#808080",
+              "kind": "furniture",
+              "symbol": "stairs"
+            }
+          ],
+          "display": {
+            "glow_enabled": true,
+            "sun_rays": true
+          },
+          "wall_segments": [],
+          "openings": [
+            {
+              "id": "easy-2-opening-uo1",
+              "type": "door",
+              "x": 0.5,
+              "y": 0.625,
+              "length": 0.075,
+              "angle": 0,
+              "host": {
+                "kind": "partition",
+                "id": "easy-2-partition-easy-2-wall-uw3-0",
+                "t": 0.789473684
+              }
+            },
+            {
+              "id": "easy-2-opening-up1",
+              "type": "passage",
+              "x": 0.43333333333333335,
+              "y": 0.5,
+              "length": 0.075,
+              "angle": 90,
+              "host": {
+                "kind": "partition",
+                "id": "easy-2-partition-easy-2-wall-uw5-0",
+                "t": 0.5
+              }
+            }
+          ]
+        }
+      ],
+      "markers": [
+        {
+          "id": "easy-2-device-ui1",
+          "binding": "entity:light.bed_light",
+          "space": "easy-2",
+          "name": "light.bed_light",
+          "tap_action": "toggle",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          }
+        }
+      ]
+    },
+    "layout": {
+      "easy-2-device-ui1": {
+        "s": "easy-2",
+        "x": 0.375,
+        "y": 0.5
+      }
+    }
+  },
+  "placement_manifest": [
+    {
+      "layout_id": "easy-2-device-ui1",
+      "space_id": "easy-2",
+      "owner": "marker",
+      "owner_id": "easy-2-device-ui1",
+      "binding": "entity:light.bed_light",
+      "label": "light.bed_light",
+      "icon": null
+    }
+  ],
+  "content_manifest": []
+}

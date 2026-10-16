@@ -34,6 +34,12 @@ command and the normal commit-msg hook. The full pinned index is judged against
 HEAD's parent (empty tree for a root); new commits and historical provenance
 are not relaxed. Native Git amend is deliberately not guessed from metadata.
 
+The external converter (#937) has a current-model SH3D writer and an extended
+Easy Floorplan profile. Scale is estimated without a mandatory user step;
+compatible devices/bindings/content are retained, omissions reported. Its
+accepted-code site rollout is separate from HACS releases and preserves the
+existing site wrapper. Build/verification/rollback lives in the converter README.
+
 Device contacts (#866) are derived Flat presentation, not stored groups. The
 individual point writer/history remains authoritative; only a selected exact
 wall/device contact bypasses grid rounding. Session Snapping/Alt does not disable

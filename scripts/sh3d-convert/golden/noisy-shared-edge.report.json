@@ -6,7 +6,7 @@
       "spaceId": "sh3d-1-flat",
       "cellCm": 5,
       "rooms": 2,
-      "walls": 6,
+      "walls": 7,
       "openings": 0,
       "notes": [
         {
@@ -25,6 +25,6 @@
       "code": "furniture_dropped"
     }
   ],
-  "toolVersion": "sh3d-convert 0.1",
-  "minHouseplan": "1.71"
+  "toolVersion": "plan-convert 0.2",
+  "minHouseplan": "1.81.0"
 }

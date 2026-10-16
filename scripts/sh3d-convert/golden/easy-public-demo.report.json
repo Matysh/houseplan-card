@@ -1,0 +1,191 @@
+{
+  "levels": [
+    {
+      "id": "ground",
+      "title": "Ground floor",
+      "notes": [
+        {
+          "code": "room_behavior_skipped",
+          "id": "easy-1-room-a1",
+          "fields": "showName"
+        },
+        {
+          "code": "room_behavior_skipped",
+          "id": "easy-1-room-a2",
+          "fields": "showName"
+        },
+        {
+          "code": "device_behavior_skipped",
+          "id": "easy-1-device-garage",
+          "fields": "activeColor, inactiveColor"
+        },
+        {
+          "code": "extra_readings_as_text",
+          "id": "easy-1-device-i1",
+          "count": 1
+        },
+        {
+          "code": "light_runtime_semantics",
+          "id": "easy-1-device-glow-warm"
+        },
+        {
+          "code": "light_runtime_semantics",
+          "id": "easy-1-device-glow-cool"
+        },
+        {
+          "code": "light_runtime_semantics",
+          "id": "easy-1-device-glow-dim"
+        },
+        {
+          "code": "light_runtime_semantics",
+          "id": "easy-1-device-glow-plain"
+        },
+        {
+          "code": "device_behavior_skipped",
+          "id": "easy-1-device-i3",
+          "fields": "activeColor"
+        },
+        {
+          "code": "badge_selection_approximate",
+          "id": "easy-1-device-i5"
+        },
+        {
+          "code": "device_behavior_skipped",
+          "id": "easy-1-device-i7",
+          "fields": "iconAnimation"
+        },
+        {
+          "code": "furniture_behavior_skipped",
+          "id": "easy-1-furniture-fu3",
+          "fields": "goToFloor"
+        },
+        {
+          "code": "furniture_behavior_skipped",
+          "id": "easy-1-furniture-fu2",
+          "fields": "entity, stateColor"
+        },
+        {
+          "code": "opening_shape_approximate",
+          "id": "easy-1-opening-o1"
+        },
+        {
+          "code": "opening_shape_approximate",
+          "id": "easy-1-opening-o3"
+        },
+        {
+          "code": "opening_shape_approximate",
+          "id": "easy-1-opening-o8"
+        },
+        {
+          "code": "opening_behavior_skipped",
+          "id": "easy-1-opening-o4",
+          "fields": "activeColor, inactiveColor"
+        },
+        {
+          "code": "opening_behavior_skipped",
+          "id": "easy-1-opening-o5",
+          "fields": "secondaryEntity"
+        },
+        {
+          "code": "opening_shape_approximate",
+          "id": "easy-1-opening-o6"
+        },
+        {
+          "code": "opening_behavior_skipped",
+          "id": "easy-1-opening-o6",
+          "fields": "secondaryEntity"
+        },
+        {
+          "code": "opening_behavior_skipped",
+          "id": "easy-1-opening-o7",
+          "fields": "shutterEntity, shutterSecondaryEntity"
+        },
+        {
+          "code": "source_fields_unsupported",
+          "id": "easy-1-opening-o7",
+          "fields": "shutterStyle"
+        },
+        {
+          "code": "skylight_skipped",
+          "id": "easy-1-opening-sk1"
+        },
+        {
+          "code": "skylight_skipped",
+          "id": "easy-1-opening-sk2"
+        },
+        {
+          "code": "sun_runtime_semantics",
+          "id": "easy-1"
+        },
+        {
+          "code": "opening_unhosted",
+          "id": "easy-1-opening-o1"
+        },
+        {
+          "code": "opening_unhosted",
+          "id": "easy-1-opening-o2"
+        },
+        {
+          "code": "trackers_skipped",
+          "count": 1
+        },
+        {
+          "code": "source_fields_unsupported",
+          "id": "ground",
+          "fields": "short"
+        }
+      ],
+      "spaceId": "easy-1",
+      "cellCm": 5,
+      "rooms": 2,
+      "walls": 11,
+      "openings": 6,
+      "devices": 14,
+      "decor": 4
+    },
+    {
+      "id": "upstairs",
+      "title": "Upstairs",
+      "notes": [
+        {
+          "code": "furniture_behavior_skipped",
+          "id": "easy-2-furniture-ust",
+          "fields": "goToFloor"
+        },
+        {
+          "code": "sun_runtime_semantics",
+          "id": "easy-2"
+        },
+        {
+          "code": "source_fields_unsupported",
+          "id": "upstairs",
+          "fields": "short"
+        }
+      ],
+      "spaceId": "easy-2",
+      "cellCm": 5,
+      "rooms": 0,
+      "walls": 7,
+      "openings": 2,
+      "devices": 1,
+      "decor": 1
+    }
+  ],
+  "items": [
+    {
+      "code": "scale_doors",
+      "cmPerUnit": 1,
+      "count": 2
+    },
+    {
+      "code": "easy_compatibility"
+    },
+    {
+      "code": "source_fields_unsupported",
+      "id": "card",
+      "fields": "grid, snap, showDeadSpaces, historyReplay, sunDimming"
+    }
+  ],
+  "toolVersion": "plan-convert 0.2",
+  "minHouseplan": "1.81.0"
+}

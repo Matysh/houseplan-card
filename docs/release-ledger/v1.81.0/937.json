@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 937,
+  "baseStable": "v1.81.0",
+  "category": "major",
+  "rationale": "Adds an external user-facing Easy Floorplan migration path with geometry, HA bindings, devices, readings, decor, image references and lighting settings; updates Sweet Home 3D output to the canonical current model and retains independent walls. It serves administrators moving an existing plan, although its implementation is tooling-class and deployed separately from the HACS package."
+}

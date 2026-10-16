@@ -2459,9 +2459,28 @@ windows. Not carried over: furniture, materials, textures, lights, cameras —
 and the binding of rooms to Home Assistant areas together with device
 placement, because the file has neither; both are done in the editor. Curved
 walls are straightened, walls thicker than 100 cm are clamped to the limit, and
-a level with no drawn rooms cannot be converted at all — House Plan builds
-geometry from rooms. The page lists every such case before you download
-anything.
+independent walls and wall-only floors are retained too. The page lists every
+limitation before download. Output uses the current data model and requires
+House Plan 1.81.0 or newer.
+
+### Importing from Easy Floorplan
+
+On the same page choose **Easy Floorplan** and paste the YAML of one
+`custom:easy-floorplan-card` from the HA editor, or choose its YAML/JSON file.
+Do not paste the entire Lovelace dashboard. Each floor downloads separately and
+uses the ordinary space import, without replacing your existing plan.
+
+Besides rooms, walls and openings, compatible entity/Area bindings, device
+positions/settings, values, furniture, static/live text, backdrop references and
+light settings are retained. This is not a pixel-identical copy of the original
+card: unsupported symbols, actions and styles are reported before download.
+Unknown furniture keeps a footprint and a label.
+
+Scale is estimated automatically from ordinary doors, known furniture, or a
+1 cm/unit fallback. Calibrate it in space settings after import if necessary;
+all floors use one coefficient. Images are **references only**, without bytes:
+on another HA copy them or replace the backdrop. Check entity IDs and Areas
+too: the converter does not create them in Home Assistant.
 
 ### Storage locations
 

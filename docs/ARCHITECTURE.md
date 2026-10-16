@@ -1,5 +1,14 @@
 # House Plan architecture
 
+External plan migration (#937) is isolated in `scripts/sh3d-convert/`, not a
+Lovelace runtime dependency. Both readers emit the current space envelope through
+a generated tool-only bundle of the canonical wall writer. SH3D retains physical
+units and plan-only privacy; Easy Floorplan carries explicit compatible content
+and manifests, with an automatic estimated common scale. The bounded YAML parser
+and wall runtime are bundled into the offline page. No source actions are executed,
+images are references only, and the existing authenticated HA import remains the
+only writer. See [converter boundaries and deployment](../scripts/sh3d-convert/README.md).
+
 Nightly witness maintenance (#917) changes no product owner or runtime. The
 gesture-entry witness calls the live-update router; the tool-boundary witness
 calls the actual lazy renderer with a retained dialog/cache, independently of

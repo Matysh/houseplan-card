@@ -13,8 +13,11 @@
  */
 import { readSh3d } from '../sh3d.mjs';
 import { ConvertError, MIN_HOUSEPLAN, convertHome } from '../convert.mjs';
+import { convertEasy, TOOL_VERSION } from '../easy.mjs';
+import { MAX_EASY_BYTES } from '../easy-read.mjs';
+import { EXTRA_TEXT } from './extra-text.mjs';
+export { convertHome, readSh3d, convertEasy };
 
-const TOOL_VERSION = 'sh3d-convert 0.1';
 const MAX_FILE_BYTES = 64 * 1024 * 1024;
 
 /** Словари вынесены в экспорт: полноту ключей проверяет тест страницы. */
@@ -118,6 +121,7 @@ export const TEXT = {
     'code.unknown': 'Unknown error while reading the file.',
   },
 };
+for (const language of ['ru', 'en']) Object.assign(TEXT[language], EXTRA_TEXT[language]);
 
 let lang = 'en';
 
@@ -142,9 +146,17 @@ function applyLanguage(next) {
     node.classList.toggle('on', node.dataset.lang === lang);
   }
   if (lastResult) renderResult(lastResult);
+  document.getElementById('drop').querySelector('h3').textContent = t(format() === 'easy' ? 'drop.easy' : 'drop.title');
 }
 
 let lastResult = null;
+let generation = 0;
+const format = () => document.getElementById('format').value;
+function invalidate() {
+  generation++; lastResult = null;
+  show('result', false); show('error', false); show('busy', false);
+  document.getElementById('levels').replaceChildren();
+}
 
 const element = (tag, className, text) => {
   const node = document.createElement(tag);
@@ -160,7 +172,8 @@ const show = (id, visible) => {
 function noteText(note) {
   const key = `note.${note.code}`;
   const known = TEXT[lang][key] || TEXT.en[key];
-  return known ? fill(known, note) : `${note.code}: ${JSON.stringify(note)}`;
+  const values = note.reason ? { ...note, reason: t(`code.${note.reason}`) } : note;
+  return known ? fill(known, values) : `${note.code}: ${JSON.stringify(note)}`;
 }
 
 function download(name, document_) {
@@ -194,12 +207,15 @@ function renderResult(result) {
         `${level.walls} ${t('result.walls')}`,
         `${level.openings} ${t('result.openings')}`,
         `${t('result.cell')}: ${level.cellCm} cm`,
+        ...(level.devices !== undefined ? [`${level.devices} ${t('result.devices')}`, `${level.decor} ${t('result.decor')}`] : []),
       ].join(' · ');
       card.append(stats);
       const index = downloadIndex++;
       const button = element('button', 'btn primary', t('result.download'));
-      button.addEventListener('click', () =>
-        download(`${stem}.${level.spaceId}.json`, documents[index]));
+      const token = generation;
+      button.addEventListener('click', () => {
+        if (token === generation && lastResult === result) download(`${stem}.${level.spaceId}.json`, documents[index]);
+      });
       card.append(button);
     }
     const notes = [...(level.notes || [])];
@@ -219,7 +235,7 @@ function renderResult(result) {
   show('busy', false);
 }
 
-function renderError(code, detail) {
+function renderError(code, detail, report = null) {
   const key = `code.${code}`;
   const known = TEXT[lang][key] || TEXT.en[key];
   document.getElementById('error-text').textContent = known || t('code.unknown');
@@ -229,36 +245,56 @@ function renderError(code, detail) {
   show('error', true);
   show('result', false);
   show('busy', false);
+  if (report) {
+    renderResult({ documents: [], report, stem: 'refused' });
+    show('error', true);
+  }
 }
 
 async function handleFile(file) {
   if (!file) return;
-  lastResult = null;
+  invalidate();
+  const token = generation, sourceFormat = format();
   show('busy', true);
   show('error', false);
   show('result', false);
   try {
-    if (file.size > MAX_FILE_BYTES) {
-      renderError('file_too_large');
+    if (file.size > (sourceFormat === 'easy' ? MAX_EASY_BYTES : MAX_FILE_BYTES)) {
+      renderError(sourceFormat === 'easy' ? 'easy_file_too_large' : 'file_too_large');
       return;
     }
     const bytes = new Uint8Array(await file.arrayBuffer());
-    const home = await readSh3d(bytes);
-    const { documents, report } = convertHome(home, { toolVersion: TOOL_VERSION });
+    if (token !== generation) return;
+    const converted = sourceFormat === 'easy' ? convertEasy(new TextDecoder('utf-8', { fatal: true }).decode(bytes), { toolVersion: TOOL_VERSION })
+      : convertHome(await readSh3d(bytes), { toolVersion: TOOL_VERSION });
+    if (token !== generation) return;
+    const { documents, report } = converted;
     renderResult({
       documents,
       report,
-      stem: file.name.replace(/\.sh3d$/i, '') || 'plan',
+      stem: file.name.replace(/\.(sh3d|json|ya?ml)$/i, '') || 'plan',
     });
   } catch (error) {
+    if (token !== generation) return;
     const code = error && error.code ? error.code : 'unknown';
-    renderError(code, error instanceof ConvertError ? error.message : String(error?.message || ''));
+    renderError(code, error instanceof ConvertError ? error.message : String(error?.message || ''), error.report);
   }
 }
 
 export function mount() {
   const input = document.getElementById('file');
   const zone = document.getElementById('drop');
+  document.getElementById('format').addEventListener('change', () => {
+    invalidate(); input.value = '';
+    input.accept = format() === 'easy' ? '.yaml,.yml,.json,text/yaml,application/json' : '.sh3d,application/zip';
+    show('easy-input', format() === 'easy'); applyLanguage(lang);
+  });
+  document.getElementById('paste').addEventListener('input', invalidate);
+  document.getElementById('convert-paste').addEventListener('click', () => {
+    invalidate();
+    try { renderResult({ ...convertEasy(document.getElementById('paste').value, { toolVersion: TOOL_VERSION }), stem: 'easy-plan' }); }
+    catch (error) { renderError(error.code || 'unknown', '', error.report); }
+  });
   input.addEventListener('change', () => handleFile(input.files[0]));
   document.getElementById('pick').addEventListener('click', () => input.click());
   document.getElementById('retry').addEventListener('click', () => input.click());

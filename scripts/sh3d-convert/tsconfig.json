@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "../..",
+    "outDir": ".build",
+    "incremental": true,
+    "tsBuildInfoFile": ".build/.tsbuildinfo"
+  },
+  "include": ["geometry-entry.ts"]
+}

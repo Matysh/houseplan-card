@@ -1,0 +1,923 @@
+{
+  "format": "houseplan-export",
+  "export_version": 2,
+  "kind": "space",
+  "created_at": "1970-01-01T00:00:00Z",
+  "card_version": "plan-convert 0.2",
+  "integration_version": "plan-convert 0.2",
+  "model_version": 10,
+  "payload": {
+    "config": {
+      "spaces": [
+        {
+          "id": "easy-1",
+          "title": "Ground floor",
+          "cell_cm": 5,
+          "view_box": [
+            0.146666667,
+            0.313333333,
+            0.706666667,
+            0.373333333
+          ],
+          "rooms": [
+            {
+              "id": "easy-1-room-a1",
+              "name": "Living Room",
+              "area": null,
+              "poly": [
+                [
+                  0.16666666666666666,
+                  0.3333333333333333
+                ],
+                [
+                  0.2833333333333333,
+                  0.3333333333333333
+                ],
+                [
+                  0.5,
+                  0.3333333333333333
+                ],
+                [
+                  0.5,
+                  0.6666666666666666
+                ],
+                [
+                  0.16666666666666666,
+                  0.6666666666666666
+                ],
+                [
+                  0.16666666666666666,
+                  0.43333333333333335
+                ]
+              ],
+              "settings": {
+                "fill_mode": "custom",
+                "custom_fill": {
+                  "c": "#26c6da",
+                  "a": 0.15
+                }
+              },
+              "wall_ids": [
+                "wall-pkl6mp3ycni2fewjrgkx",
+                "wall-d3bty47y7b7oct2u53ti",
+                "wall-yp3htio2i57zcedlu2fa",
+                "wall-yashdopf2zwgeyqxl5ll",
+                "wall-uqv4lc3peo5wslyyqtoi",
+                "wall-ljtr763q73mdhslji3x7"
+              ]
+            },
+            {
+              "id": "easy-1-room-a2",
+              "name": "Kitchen",
+              "area": null,
+              "poly": [
+                [
+                  0.5,
+                  0.3333333333333333
+                ],
+                [
+                  0.8333333333333334,
+                  0.3333333333333333
+                ],
+                [
+                  0.8333333333333334,
+                  0.6666666666666666
+                ],
+                [
+                  0.5,
+                  0.6666666666666666
+                ]
+              ],
+              "settings": {
+                "fill_mode": "custom",
+                "custom_fill": {
+                  "c": "#ffa726",
+                  "a": 0.15
+                }
+              },
+              "wall_ids": [
+                "wall-6y36nzo7xgb6ada2rqpu",
+                "wall-wmgl34ndkuiy5wyfnhjs",
+                "wall-ondreirl3x2odtmwlxyb",
+                "wall-yp3htio2i57zcedlu2fa"
+              ]
+            }
+          ],
+          "walls": [
+            {
+              "key": "0.166667,0.383333@1.5706",
+              "cm": 8,
+              "a": [
+                0.16666666666666666,
+                0.3333333333333333
+              ],
+              "b": [
+                0.16666666666666666,
+                0.43333333333333335
+              ]
+            },
+            {
+              "key": "0.225000,0.333333@0.0000",
+              "cm": 8,
+              "a": [
+                0.16666666666666666,
+                0.3333333333333333
+              ],
+              "b": [
+                0.2833333333333333,
+                0.3333333333333333
+              ]
+            },
+            {
+              "key": "0.166667,0.550000@1.5706",
+              "cm": 8,
+              "a": [
+                0.16666666666666666,
+                0.43333333333333335
+              ],
+              "b": [
+                0.16666666666666666,
+                0.6666666666666666
+              ]
+            },
+            {
+              "key": "0.333333,0.666667@0.0000",
+              "cm": 8,
+              "a": [
+                0.16666666666666666,
+                0.6666666666666666
+              ],
+              "b": [
+                0.5,
+                0.6666666666666666
+              ]
+            },
+            {
+              "key": "0.391667,0.333333@0.0000",
+              "cm": 8,
+              "a": [
+                0.2833333333333333,
+                0.3333333333333333
+              ],
+              "b": [
+                0.5,
+                0.3333333333333333
+              ]
+            },
+            {
+              "key": "0.666667,0.333333@0.0000",
+              "cm": 8,
+              "a": [
+                0.5,
+                0.3333333333333333
+              ],
+              "b": [
+                0.8333333333333334,
+                0.3333333333333333
+              ]
+            },
+            {
+              "key": "0.666667,0.666667@0.0000",
+              "cm": 8,
+              "a": [
+                0.5,
+                0.6666666666666666
+              ],
+              "b": [
+                0.8333333333333334,
+                0.6666666666666666
+              ]
+            },
+            {
+              "key": "0.833333,0.500000@1.5706",
+              "cm": 8,
+              "a": [
+                0.8333333333333334,
+                0.3333333333333333
+              ],
+              "b": [
+                0.8333333333333334,
+                0.6666666666666666
+              ]
+            }
+          ],
+          "partitions": [
+            {
+              "id": "easy-1-partition-easy-1-wall-w5-0",
+              "a": [
+                0.16666666666666666,
+                0.43333333333333335
+              ],
+              "b": [
+                0.2833333333333333,
+                0.43333333333333335
+              ],
+              "cm": 8
+            },
+            {
+              "id": "easy-1-partition-easy-1-wall-w6-0",
+              "a": [
+                0.2833333333333333,
+                0.43333333333333335
+              ],
+              "b": [
+                0.2833333333333333,
+                0.3333333333333333
+              ],
+              "cm": 8
+            }
+          ],
+          "decor": [
+            {
+              "id": "easy-1-text-i1-readings",
+              "kind": "text",
+              "x": 0.5,
+              "y": 0.530833333,
+              "size_cm": 12,
+              "color": "#808080",
+              "text": "{sensor.ficus_soil_moisture}"
+            },
+            {
+              "id": "easy-1-furniture-fu3",
+              "x": 0.5833333333333334,
+              "y": 0.44166666666666665,
+              "w": 0.06666666666666667,
+              "h": 0.11666666666666667,
+              "angle": 0,
+              "color": "#808080",
+              "kind": "furniture",
+              "symbol": "stairs"
+            },
+            {
+              "id": "easy-1-furniture-fu1",
+              "x": 0.2,
+              "y": 0.5416666666666666,
+              "w": 0.1,
+              "h": 0.05,
+              "angle": 0,
+              "color": "#808080",
+              "kind": "furniture",
+              "symbol": "sofa"
+            },
+            {
+              "id": "easy-1-furniture-fu2",
+              "x": 0.6416666666666667,
+              "y": 0.5416666666666666,
+              "w": 0.05,
+              "h": 0.05,
+              "angle": 0,
+              "color": "#808080",
+              "kind": "furniture",
+              "symbol": "plant"
+            }
+          ],
+          "display": {
+            "glow_enabled": true,
+            "sun_rays": true
+          },
+          "wall_segments": [
+            {
+              "id": "wall-ljtr763q73mdhslji3x7",
+              "a": [
+                0.16666666666666666,
+                0.3333333333333333
+              ],
+              "b": [
+                0.16666666666666666,
+                0.43333333333333335
+              ],
+              "cm": 8
+            },
+            {
+              "id": "wall-pkl6mp3ycni2fewjrgkx",
+              "a": [
+                0.16666666666666666,
+                0.3333333333333333
+              ],
+              "b": [
+                0.2833333333333333,
+                0.3333333333333333
+              ],
+              "cm": 8
+            },
+            {
+              "id": "wall-uqv4lc3peo5wslyyqtoi",
+              "a": [
+                0.16666666666666666,
+                0.43333333333333335
+              ],
+              "b": [
+                0.16666666666666666,
+                0.6666666666666666
+              ],
+              "cm": 8
+            },
+            {
+              "id": "wall-yashdopf2zwgeyqxl5ll",
+              "a": [
+                0.16666666666666666,
+                0.6666666666666666
+              ],
+              "b": [
+                0.5,
+                0.6666666666666666
+              ],
+              "cm": 8
+            },
+            {
+              "id": "wall-d3bty47y7b7oct2u53ti",
+              "a": [
+                0.2833333333333333,
+                0.3333333333333333
+              ],
+              "b": [
+                0.5,
+                0.3333333333333333
+              ],
+              "cm": 8
+            },
+            {
+              "id": "wall-yp3htio2i57zcedlu2fa",
+              "a": [
+                0.5,
+                0.3333333333333333
+              ],
+              "b": [
+                0.5,
+                0.6666666666666666
+              ],
+              "cm": 0
+            },
+            {
+              "id": "wall-6y36nzo7xgb6ada2rqpu",
+              "a": [
+                0.5,
+                0.3333333333333333
+              ],
+              "b": [
+                0.8333333333333334,
+                0.3333333333333333
+              ],
+              "cm": 8
+            },
+            {
+              "id": "wall-ondreirl3x2odtmwlxyb",
+              "a": [
+                0.5,
+                0.6666666666666666
+              ],
+              "b": [
+                0.8333333333333334,
+                0.6666666666666666
+              ],
+              "cm": 8
+            },
+            {
+              "id": "wall-wmgl34ndkuiy5wyfnhjs",
+              "a": [
+                0.8333333333333334,
+                0.3333333333333333
+              ],
+              "b": [
+                0.8333333333333334,
+                0.6666666666666666
+              ],
+              "cm": 8
+            }
+          ],
+          "openings": [
+            {
+              "id": "easy-1-opening-o3",
+              "type": "door",
+              "x": 0.8333333333333334,
+              "y": 0.5,
+              "length": 0.116666667,
+              "angle": 90,
+              "contact": "cover.garage_door",
+              "host": {
+                "kind": "wall",
+                "id": "wall-wmgl34ndkuiy5wyfnhjs",
+                "t": 0.5
+              }
+            },
+            {
+              "id": "easy-1-opening-o8",
+              "type": "window",
+              "x": 0.7875,
+              "y": 0.6666666666666666,
+              "length": 0.075,
+              "angle": 0,
+              "contact": "binary_sensor.front_door",
+              "host": {
+                "kind": "wall",
+                "id": "wall-ondreirl3x2odtmwlxyb",
+                "t": 0.8625
+              }
+            },
+            {
+              "id": "easy-1-opening-o4",
+              "type": "window",
+              "x": 0.3333333333333333,
+              "y": 0.6666666666666666,
+              "length": 0.1,
+              "angle": 0,
+              "contact": "binary_sensor.front_door",
+              "host": {
+                "kind": "wall",
+                "id": "wall-yashdopf2zwgeyqxl5ll",
+                "t": 0.5
+              }
+            },
+            {
+              "id": "easy-1-opening-o5",
+              "type": "window",
+              "x": 0.7,
+              "y": 0.3333333333333333,
+              "length": 0.116666667,
+              "angle": 0,
+              "contact": "binary_sensor.left_leaf",
+              "host": {
+                "kind": "wall",
+                "id": "wall-6y36nzo7xgb6ada2rqpu",
+                "t": 0.6
+              }
+            },
+            {
+              "id": "easy-1-opening-o6",
+              "type": "door",
+              "x": 0.6833333333333333,
+              "y": 0.6666666666666666,
+              "length": 0.116666667,
+              "angle": 0,
+              "contact": "binary_sensor.left_leaf",
+              "host": {
+                "kind": "wall",
+                "id": "wall-ondreirl3x2odtmwlxyb",
+                "t": 0.55
+              }
+            },
+            {
+              "id": "easy-1-opening-o7",
+              "type": "window",
+              "x": 0.16666666666666666,
+              "y": 0.5666666666666667,
+              "length": 0.1,
+              "angle": 90,
+              "host": {
+                "kind": "wall",
+                "id": "wall-uqv4lc3peo5wslyyqtoi",
+                "t": 0.571428571
+              }
+            }
+          ]
+        }
+      ],
+      "markers": [
+        {
+          "id": "easy-1-device-garage",
+          "binding": "entity:cover.garage_door",
+          "space": "easy-1",
+          "name": "cover.garage_door",
+          "tap_action": "info",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          }
+        },
+        {
+          "id": "easy-1-device-i1",
+          "binding": "entity:sensor.living_area_temperature",
+          "space": "easy-1",
+          "name": "sensor.living_area_temperature",
+          "tap_action": "info",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": true,
+            "position": "bottom",
+            "source": {
+              "kind": "entity_state",
+              "entity_id": "sensor.living_area_humidity"
+            }
+          },
+          "room_id": "easy-1-room-a2"
+        },
+        {
+          "id": "easy-1-device-glow-warm",
+          "binding": "entity:light.bed_light",
+          "space": "easy-1",
+          "name": "light.bed_light",
+          "tap_action": "toggle",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": true,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          },
+          "room_id": "easy-1-room-a1",
+          "glow_radius_cm": 200
+        },
+        {
+          "id": "easy-1-device-glow-cool",
+          "binding": "entity:light.office_rgbw_lights",
+          "space": "easy-1",
+          "name": "light.office_rgbw_lights",
+          "tap_action": "toggle",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": true,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          },
+          "room_id": "easy-1-room-a2",
+          "glow_radius_cm": 200
+        },
+        {
+          "id": "easy-1-device-glow-dim",
+          "binding": "entity:light.ceiling_lights",
+          "space": "easy-1",
+          "name": "light.ceiling_lights",
+          "tap_action": "toggle",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": true,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          },
+          "room_id": "easy-1-room-a2",
+          "glow_radius_cm": 120
+        },
+        {
+          "id": "easy-1-device-glow-plain",
+          "binding": "entity:light.kitchen_lights",
+          "space": "easy-1",
+          "name": "light.kitchen_lights",
+          "tap_action": "toggle",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": true,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          },
+          "room_id": "easy-1-room-a2",
+          "glow_radius_cm": 110,
+          "glow_color": {
+            "c": "#b0ffd0"
+          }
+        },
+        {
+          "id": "easy-1-device-i3",
+          "binding": "entity:cover.living_room_window",
+          "space": "easy-1",
+          "name": "cover.living_room_window",
+          "tap_action": "info",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          },
+          "room_id": "easy-1-room-a1"
+        },
+        {
+          "id": "easy-1-device-i4",
+          "binding": "entity:fan.living_room_fan",
+          "space": "easy-1",
+          "name": "fan.living_room_fan",
+          "tap_action": "toggle",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": true,
+            "position": "left",
+            "source": {
+              "kind": "entity_attribute",
+              "entity_id": "fan.living_room_fan",
+              "attribute": "percentage"
+            }
+          },
+          "room_id": "easy-1-room-a1"
+        },
+        {
+          "id": "easy-1-device-i5",
+          "binding": "entity:sensor.flaky_sensor",
+          "space": "easy-1",
+          "name": "sensor.flaky_sensor",
+          "tap_action": "info",
+          "display": "value",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          },
+          "room_id": "easy-1-room-a2",
+          "value_source": {
+            "kind": "entity_state",
+            "entity_id": "sensor.flaky_sensor"
+          }
+        },
+        {
+          "id": "easy-1-device-i6",
+          "binding": "entity:light.deleted_by_accident",
+          "space": "easy-1",
+          "name": "Missing entity",
+          "tap_action": "toggle",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          },
+          "room_id": "easy-1-room-a1"
+        },
+        {
+          "id": "easy-1-device-i7",
+          "binding": "entity:climate.hvac",
+          "space": "easy-1",
+          "name": "climate.hvac",
+          "tap_action": "info",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          },
+          "room_id": "easy-1-room-a2"
+        },
+        {
+          "id": "easy-1-device-i8",
+          "binding": "entity:weather.demo_weather_south",
+          "space": "easy-1",
+          "name": "weather.demo_weather_south",
+          "tap_action": "info",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          },
+          "room_id": "easy-1-room-a1"
+        },
+        {
+          "id": "easy-1-device-i9",
+          "binding": "entity:weather.demo_weather_north",
+          "space": "easy-1",
+          "name": "weather.demo_weather_north",
+          "tap_action": "info",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          },
+          "room_id": "easy-1-room-a1"
+        },
+        {
+          "id": "easy-1-device-i10",
+          "binding": "entity:media_player.walkman",
+          "space": "easy-1",
+          "name": "media_player.walkman",
+          "tap_action": "info",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          },
+          "room_id": "easy-1-room-a2"
+        }
+      ]
+    },
+    "layout": {
+      "easy-1-device-garage": {
+        "s": "easy-1",
+        "x": 0.833333333,
+        "y": 0.45
+      },
+      "easy-1-device-i1": {
+        "s": "easy-1",
+        "x": 0.5,
+        "y": 0.5
+      },
+      "easy-1-device-glow-warm": {
+        "s": "easy-1",
+        "x": 0.416666667,
+        "y": 0.566666667
+      },
+      "easy-1-device-glow-cool": {
+        "s": "easy-1",
+        "x": 0.583333333,
+        "y": 0.566666667
+      },
+      "easy-1-device-glow-dim": {
+        "s": "easy-1",
+        "x": 0.733333333,
+        "y": 0.416666667
+      },
+      "easy-1-device-glow-plain": {
+        "s": "easy-1",
+        "x": 0.733333333,
+        "y": 0.608333333
+      },
+      "easy-1-device-i3": {
+        "s": "easy-1",
+        "x": 0.4,
+        "y": 0.4
+      },
+      "easy-1-device-i4": {
+        "s": "easy-1",
+        "x": 0.266666667,
+        "y": 0.4
+      },
+      "easy-1-device-i5": {
+        "s": "easy-1",
+        "x": 0.6,
+        "y": 0.4
+      },
+      "easy-1-device-i6": {
+        "s": "easy-1",
+        "x": 0.333333333,
+        "y": 0.5
+      },
+      "easy-1-device-i7": {
+        "s": "easy-1",
+        "x": 0.8,
+        "y": 0.466666667
+      },
+      "easy-1-device-i8": {
+        "s": "easy-1",
+        "x": 0.3,
+        "y": 0.633333333
+      },
+      "easy-1-device-i9": {
+        "s": "easy-1",
+        "x": 0.366666667,
+        "y": 0.633333333
+      },
+      "easy-1-device-i10": {
+        "s": "easy-1",
+        "x": 0.6,
+        "y": 0.633333333
+      }
+    }
+  },
+  "placement_manifest": [
+    {
+      "layout_id": "easy-1-device-garage",
+      "space_id": "easy-1",
+      "owner": "marker",
+      "owner_id": "easy-1-device-garage",
+      "binding": "entity:cover.garage_door",
+      "label": "cover.garage_door",
+      "icon": null
+    },
+    {
+      "layout_id": "easy-1-device-i1",
+      "space_id": "easy-1",
+      "owner": "marker",
+      "owner_id": "easy-1-device-i1",
+      "binding": "entity:sensor.living_area_temperature",
+      "label": "sensor.living_area_temperature",
+      "icon": null
+    },
+    {
+      "layout_id": "easy-1-device-glow-warm",
+      "space_id": "easy-1",
+      "owner": "marker",
+      "owner_id": "easy-1-device-glow-warm",
+      "binding": "entity:light.bed_light",
+      "label": "light.bed_light",
+      "icon": null
+    },
+    {
+      "layout_id": "easy-1-device-glow-cool",
+      "space_id": "easy-1",
+      "owner": "marker",
+      "owner_id": "easy-1-device-glow-cool",
+      "binding": "entity:light.office_rgbw_lights",
+      "label": "light.office_rgbw_lights",
+      "icon": null
+    },
+    {
+      "layout_id": "easy-1-device-glow-dim",
+      "space_id": "easy-1",
+      "owner": "marker",
+      "owner_id": "easy-1-device-glow-dim",
+      "binding": "entity:light.ceiling_lights",
+      "label": "light.ceiling_lights",
+      "icon": null
+    },
+    {
+      "layout_id": "easy-1-device-glow-plain",
+      "space_id": "easy-1",
+      "owner": "marker",
+      "owner_id": "easy-1-device-glow-plain",
+      "binding": "entity:light.kitchen_lights",
+      "label": "light.kitchen_lights",
+      "icon": null
+    },
+    {
+      "layout_id": "easy-1-device-i3",
+      "space_id": "easy-1",
+      "owner": "marker",
+      "owner_id": "easy-1-device-i3",
+      "binding": "entity:cover.living_room_window",
+      "label": "cover.living_room_window",
+      "icon": null
+    },
+    {
+      "layout_id": "easy-1-device-i4",
+      "space_id": "easy-1",
+      "owner": "marker",
+      "owner_id": "easy-1-device-i4",
+      "binding": "entity:fan.living_room_fan",
+      "label": "fan.living_room_fan",
+      "icon": null
+    },
+    {
+      "layout_id": "easy-1-device-i5",
+      "space_id": "easy-1",
+      "owner": "marker",
+      "owner_id": "easy-1-device-i5",
+      "binding": "entity:sensor.flaky_sensor",
+      "label": "sensor.flaky_sensor",
+      "icon": null
+    },
+    {
+      "layout_id": "easy-1-device-i6",
+      "space_id": "easy-1",
+      "owner": "marker",
+      "owner_id": "easy-1-device-i6",
+      "binding": "entity:light.deleted_by_accident",
+      "label": "Missing entity",
+      "icon": null
+    },
+    {
+      "layout_id": "easy-1-device-i7",
+      "space_id": "easy-1",
+      "owner": "marker",
+      "owner_id": "easy-1-device-i7",
+      "binding": "entity:climate.hvac",
+      "label": "climate.hvac",
+      "icon": null
+    },
+    {
+      "layout_id": "easy-1-device-i8",
+      "space_id": "easy-1",
+      "owner": "marker",
+      "owner_id": "easy-1-device-i8",
+      "binding": "entity:weather.demo_weather_south",
+      "label": "weather.demo_weather_south",
+      "icon": null
+    },
+    {
+      "layout_id": "easy-1-device-i9",
+      "space_id": "easy-1",
+      "owner": "marker",
+      "owner_id": "easy-1-device-i9",
+      "binding": "entity:weather.demo_weather_north",
+      "label": "weather.demo_weather_north",
+      "icon": null
+    },
+    {
+      "layout_id": "easy-1-device-i10",
+      "space_id": "easy-1",
+      "owner": "marker",
+      "owner_id": "easy-1-device-i10",
+      "binding": "entity:media_player.walkman",
+      "label": "media_player.walkman",
+      "icon": null
+    }
+  ],
+  "content_manifest": []
+}

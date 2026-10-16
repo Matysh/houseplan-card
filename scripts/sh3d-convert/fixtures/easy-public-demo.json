@@ -1,0 +1,527 @@
+{
+  "type": "custom:easy-floorplan-card",
+  "title": "Dev floorplan",
+  "width": 1000,
+  "height": 600,
+  "grid": 20,
+  "snap": 0,
+  "showDeadSpaces": true,
+  "palette": [
+    {
+      "name": "Living",
+      "color": "#26c6da"
+    },
+    {
+      "name": "Kitchen",
+      "color": "#ffa726"
+    },
+    {
+      "name": "Good",
+      "color": "#2e7d32"
+    },
+    {
+      "name": "Warning",
+      "color": "#f9a825"
+    },
+    {
+      "name": "Bad",
+      "color": "#c62828"
+    }
+  ],
+  "historyReplay": {
+    "enabled": true,
+    "lookbackSeconds": 7200,
+    "defaultSpeed": 1,
+    "numericSteps": 25
+  },
+  "sunDimming": true,
+  "sunlight": true,
+  "floors": [
+    {
+      "id": "ground",
+      "name": "Ground floor",
+      "short": "GF",
+      "walls": [
+        {
+          "id": "w1",
+          "x1": 100,
+          "y1": 100,
+          "x2": 900,
+          "y2": 100
+        },
+        {
+          "id": "w2",
+          "x1": 900,
+          "y1": 100,
+          "x2": 900,
+          "y2": 500
+        },
+        {
+          "id": "w3",
+          "x1": 900,
+          "y1": 500,
+          "x2": 100,
+          "y2": 500
+        },
+        {
+          "id": "w4",
+          "x1": 100,
+          "y1": 500,
+          "x2": 100,
+          "y2": 100
+        },
+        {
+          "id": "w5",
+          "x1": 100,
+          "y1": 220,
+          "x2": 240,
+          "y2": 220
+        },
+        {
+          "id": "w6",
+          "x1": 240,
+          "y1": 220,
+          "x2": 240,
+          "y2": 100
+        }
+      ],
+      "openings": [
+        {
+          "id": "o1",
+          "type": "window",
+          "x": 500,
+          "y": 100,
+          "length": 140,
+          "angle": 0,
+          "motion": "roll",
+          "entity": "cover.living_room_window"
+        },
+        {
+          "id": "o2",
+          "type": "door",
+          "x": 500,
+          "y": 500,
+          "length": 90,
+          "angle": 0
+        },
+        {
+          "id": "o3",
+          "type": "door",
+          "motion": "roll",
+          "x": 900,
+          "y": 300,
+          "length": 140,
+          "angle": 90,
+          "entity": "cover.garage_door"
+        },
+        {
+          "id": "o8",
+          "type": "window",
+          "motion": "awning",
+          "x": 845,
+          "y": 500,
+          "length": 90,
+          "angle": 0,
+          "entity": "binary_sensor.front_door"
+        },
+        {
+          "id": "o4",
+          "type": "window",
+          "x": 300,
+          "y": 500,
+          "length": 120,
+          "angle": 0,
+          "entity": "binary_sensor.front_door",
+          "activeColor": "var(--fp-color-good)",
+          "inactiveColor": "var(--fp-color-bad)"
+        },
+        {
+          "id": "o5",
+          "type": "window",
+          "x": 740,
+          "y": 100,
+          "length": 140,
+          "angle": 0,
+          "entity": "binary_sensor.left_leaf",
+          "secondaryEntity": "binary_sensor.right_leaf"
+        },
+        {
+          "id": "o6",
+          "type": "door",
+          "sash": "double",
+          "x": 720,
+          "y": 500,
+          "length": 140,
+          "angle": 0,
+          "entity": "binary_sensor.left_leaf",
+          "secondaryEntity": "binary_sensor.right_leaf"
+        },
+        {
+          "id": "o7",
+          "type": "window",
+          "sash": "single",
+          "x": 100,
+          "y": 380,
+          "length": 120,
+          "angle": 90,
+          "shutterEntity": "binary_sensor.left_leaf",
+          "shutterStyle": "swing",
+          "shutterSecondaryEntity": "binary_sensor.right_leaf"
+        },
+        {
+          "id": "sk1",
+          "type": "skylight",
+          "x": 450,
+          "y": 220,
+          "length": 100,
+          "width": 60,
+          "angle": 0,
+          "entity": "binary_sensor.front_door",
+          "shutterEntity": "cover.living_room_window"
+        },
+        {
+          "id": "sk2",
+          "type": "skylight",
+          "glazed": false,
+          "x": 170,
+          "y": 330,
+          "length": 90,
+          "width": 50,
+          "angle": 90,
+          "entity": "cover.garage_door"
+        }
+      ],
+      "items": [
+        {
+          "id": "garage",
+          "entity": "cover.garage_door",
+          "x": 900,
+          "y": 240,
+          "activeColor": "var(--fp-color-good)",
+          "inactiveColor": "var(--fp-color-bad)"
+        },
+        {
+          "id": "i1",
+          "entity": "sensor.living_area_temperature",
+          "secondaryEntity": "sensor.living_area_humidity",
+          "readings": [
+            {
+              "entity": "sensor.ficus_soil_moisture"
+            }
+          ],
+          "x": 500,
+          "y": 300,
+          "kind": "sensor"
+        },
+        {
+          "id": "glow_warm",
+          "entity": "light.bed_light",
+          "x": 400,
+          "y": 380,
+          "kind": "light",
+          "glow": true,
+          "glowRadius": 200
+        },
+        {
+          "id": "glow_cool",
+          "entity": "light.office_rgbw_lights",
+          "x": 600,
+          "y": 380,
+          "kind": "light",
+          "glow": true,
+          "glowRadius": 200
+        },
+        {
+          "id": "glow_dim",
+          "entity": "light.ceiling_lights",
+          "x": 780,
+          "y": 200,
+          "kind": "light",
+          "glow": true,
+          "glowRadius": 120
+        },
+        {
+          "id": "glow_plain",
+          "entity": "light.kitchen_lights",
+          "x": 780,
+          "y": 430,
+          "kind": "light",
+          "glow": true,
+          "glowRadius": 110,
+          "glowColor": "#b0ffd0"
+        },
+        {
+          "id": "i3",
+          "entity": "cover.living_room_window",
+          "x": 380,
+          "y": 180,
+          "kind": "cover",
+          "activeColor": "#8e24aa"
+        },
+        {
+          "id": "i4",
+          "entity": "fan.living_room_fan",
+          "showState": false,
+          "readings": [
+            {
+              "attribute": "percentage"
+            }
+          ],
+          "labelPosition": "left",
+          "x": 220,
+          "y": 180,
+          "kind": "fan"
+        },
+        {
+          "id": "i5",
+          "entity": "sensor.flaky_sensor",
+          "x": 620,
+          "y": 180,
+          "kind": "sensor",
+          "badgeContent": "value",
+          "showState": true
+        },
+        {
+          "id": "i6",
+          "entity": "light.deleted_by_accident",
+          "name": "Missing entity",
+          "x": 300,
+          "y": 300,
+          "kind": "light"
+        },
+        {
+          "id": "i7",
+          "entity": "climate.hvac",
+          "iconAnimation": "spin",
+          "x": 860,
+          "y": 260,
+          "kind": "climate"
+        },
+        {
+          "id": "i8",
+          "entity": "weather.demo_weather_south",
+          "x": 260,
+          "y": 460,
+          "kind": "generic"
+        },
+        {
+          "id": "i9",
+          "entity": "weather.demo_weather_north",
+          "x": 340,
+          "y": 460,
+          "kind": "generic"
+        },
+        {
+          "id": "i10",
+          "entity": "media_player.walkman",
+          "x": 620,
+          "y": 460,
+          "kind": "media_player"
+        }
+      ],
+      "furniture": [
+        {
+          "id": "fu3",
+          "type": "stairs",
+          "x": 640,
+          "y": 300,
+          "w": 80,
+          "h": 140,
+          "goToFloor": "up"
+        },
+        {
+          "id": "fu1",
+          "type": "sofa",
+          "x": 200,
+          "y": 380,
+          "w": 120,
+          "h": 60
+        },
+        {
+          "id": "fu2",
+          "type": "plant",
+          "x": 700,
+          "y": 380,
+          "w": 60,
+          "h": 60,
+          "entity": "sensor.ficus_soil_moisture",
+          "stateColor": [
+            {
+              "above": 80,
+              "color": "var(--fp-color-good)"
+            },
+            {
+              "above": 65,
+              "color": "var(--fp-color-warning)"
+            },
+            {
+              "color": "var(--fp-color-bad)"
+            }
+          ]
+        }
+      ],
+      "trackers": [
+        {
+          "id": "t1",
+          "x": 120,
+          "y": 120,
+          "w": 360,
+          "h": 360,
+          "color": "var(--fp-color-living)",
+          "dotSize": 16,
+          "xSensor": {
+            "entity": "sensor.tracker_distance_x",
+            "min": 0,
+            "max": 500,
+            "presence": {
+              "entity": "binary_sensor.living_presence"
+            }
+          },
+          "ySensor": {
+            "entity": "sensor.tracker_distance_y",
+            "min": 0,
+            "max": 500,
+            "presence": {
+              "entity": "binary_sensor.living_presence"
+            }
+          }
+        }
+      ],
+      "areas": [
+        {
+          "id": "a1",
+          "name": "Living Room",
+          "showName": true,
+          "color": "var(--fp-color-living)",
+          "opacity": 0.15,
+          "points": [
+            {
+              "x": 100,
+              "y": 100
+            },
+            {
+              "x": 500,
+              "y": 100
+            },
+            {
+              "x": 500,
+              "y": 500
+            },
+            {
+              "x": 100,
+              "y": 500
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "name": "Kitchen",
+          "showName": true,
+          "color": "var(--fp-color-kitchen)",
+          "opacity": 0.15,
+          "points": [
+            {
+              "x": 500,
+              "y": 100
+            },
+            {
+              "x": 900,
+              "y": 100
+            },
+            {
+              "x": 900,
+              "y": 500
+            },
+            {
+              "x": 500,
+              "y": 500
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "upstairs",
+      "name": "Upstairs",
+      "short": "1st",
+      "walls": [
+        {
+          "id": "uw1",
+          "x1": 200,
+          "y1": 150,
+          "x2": 800,
+          "y2": 150
+        },
+        {
+          "id": "uw2",
+          "x1": 800,
+          "y1": 150,
+          "x2": 800,
+          "y2": 450
+        },
+        {
+          "id": "uw3",
+          "x1": 800,
+          "y1": 450,
+          "x2": 200,
+          "y2": 450
+        },
+        {
+          "id": "uw4",
+          "x1": 200,
+          "y1": 450,
+          "x2": 200,
+          "y2": 150
+        },
+        {
+          "id": "uw5",
+          "x1": 420,
+          "y1": 150,
+          "x2": 420,
+          "y2": 450
+        }
+      ],
+      "openings": [
+        {
+          "id": "uo1",
+          "type": "door",
+          "x": 500,
+          "y": 450,
+          "length": 90,
+          "angle": 0
+        },
+        {
+          "id": "up1",
+          "type": "passage",
+          "x": 420,
+          "y": 300,
+          "length": 90,
+          "angle": 90
+        }
+      ],
+      "items": [
+        {
+          "id": "ui1",
+          "entity": "light.bed_light",
+          "x": 350,
+          "y": 300,
+          "kind": "light"
+        }
+      ],
+      "texts": [],
+      "furniture": [
+        {
+          "id": "ust",
+          "type": "stairs",
+          "x": 640,
+          "y": 300,
+          "w": 80,
+          "h": 140,
+          "goToFloor": "down"
+        }
+      ],
+      "trackers": [],
+      "areas": []
+    }
+  ]
+}

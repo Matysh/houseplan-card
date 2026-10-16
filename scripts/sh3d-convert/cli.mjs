@@ -9,29 +9,37 @@
  * между тем, что проверяет CI, и тем, что получает человек, — то, ради чего
  * инструмент вообще живёт в этом репозитории.
  */
-import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { readFileSync, mkdirSync, statSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
+import { parseArgs } from 'node:util';
 import { readSh3d } from './sh3d.mjs';
 import { convertHome } from './convert.mjs';
+import { convertEasy, TOOL_VERSION } from './easy.mjs';
 
-const args = process.argv.slice(2);
-const input = args.find((arg) => !arg.startsWith('--'));
-const outIndex = args.indexOf('--out');
-const outDir = outIndex >= 0 ? args[outIndex + 1] : null;
-const now = args.includes('--now') ? args[args.indexOf('--now') + 1] : undefined;
+let args;
+try { args = parseArgs({ allowPositionals: true, options: {
+  out: { type: 'string' }, format: { type: 'string' }, now: { type: 'string' }, report: { type: 'boolean' },
+} }); } catch (error) { console.error(error.message); process.exit(2); }
+const input = args.positionals[0], outDir = args.values.out, now = args.values.now;
 
-if (!input) {
-  console.error('использование: cli.mjs <файл.sh3d> [--out <каталог>] [--report] [--now <iso>]');
+if (!input || args.positionals.length !== 1) {
+  console.error('использование: cli.mjs <файл.sh3d|yaml|json> [--format sh3d|easy] [--out <каталог>] [--report] [--now <iso>]');
   process.exit(2);
 }
 
 try {
-  const home = await readSh3d(new Uint8Array(readFileSync(input)));
-  const { documents, report } = convertHome(home, {
+  const format = args.values.format || (/\.sh3d$/i.test(input) ? 'sh3d' : 'easy');
+  if (!['sh3d', 'easy'].includes(format)) throw new Error('format: sh3d | easy');
+  if (statSync(input).size > (format === 'easy' ? 8 : 64) * 1024 * 1024)
+    throw Object.assign(new Error('Input file exceeds the size limit'), { code: 'file_too_large' });
+  const source = readFileSync(input);
+  const options = {
     now: now || '1970-01-01T00:00:00Z',
-    toolVersion: 'sh3d-convert 0.1',
-  });
-  const stem = basename(input).replace(/\.sh3d$/i, '');
+    toolVersion: TOOL_VERSION,
+  };
+  const { documents, report } = format === 'sh3d'
+    ? convertHome(await readSh3d(new Uint8Array(source)), options) : convertEasy(source.toString('utf8'), options);
+  const stem = basename(input).replace(/\.(sh3d|json|ya?ml)$/i, '');
   if (outDir) {
     mkdirSync(outDir, { recursive: true });
     for (const [index, document] of documents.entries()) {
@@ -42,7 +50,7 @@ try {
     writeFileSync(join(outDir, `${stem}.report.json`), `${JSON.stringify(report, null, 2)}\n`);
     console.log(`${stem}.report.json`);
   } else {
-    process.stdout.write(`${JSON.stringify(args.includes('--report') ? report : documents, null, 2)}\n`);
+    process.stdout.write(`${JSON.stringify(args.values.report ? report : documents, null, 2)}\n`);
   }
 } catch (error) {
   console.error(`FAILED ${error.code || 'error'}: ${error.message}`);

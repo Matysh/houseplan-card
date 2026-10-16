@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -35,7 +36,7 @@ CONVERT = REPO / "scripts" / "sh3d-convert" / "convert.mjs"
 
 
 def documents() -> list[tuple[str, dict]]:
-    files = sorted(GOLDEN.glob("*.space-*.json"))
+    files = sorted(path for path in GOLDEN.glob("*.space-*.json") if not path.name.startswith("easy-"))
     assert files, "golden конвертера пропали — гейт остался бы зелёным ни на чём"
     return [(path.name, json.loads(path.read_text(encoding="utf-8"))) for path in files]
 
@@ -54,7 +55,7 @@ def test_issue_446_envelope_matches_the_import_contract(name: str, document: dic
     assert document["format"] == "houseplan-export", name
     assert document["export_version"] in (1, EXPORT_VERSION), name
     assert document["kind"] == "space", name
-    assert 0 <= document["model_version"] <= PLAN_MODEL_VERSION, name
+    assert document["model_version"] == PLAN_MODEL_VERSION, name
     assert document["transfer"] == {"plan_only": True}, name
     assert document["placement_manifest"] == [], name
     assert document["content_manifest"] == [], name
@@ -71,12 +72,10 @@ def test_issue_446_converter_declares_a_version_the_import_accepts() -> None:
     хосты проёмов) собирает серверный писатель импорта. Значение больше
     `PLAN_MODEL_VERSION` импорт отвергнет как `future_model`.
     """
-    declared = int(_source_constant("MODEL_VERSION"))
-    assert declared <= PLAN_MODEL_VERSION
-    assert declared < WALL_SEGMENT_MODEL_VERSION, (
-        "форма v7 выбрана намеренно: при v8+ схема требует полный каталог сегментов,"
-        " и конвертер обязан был бы повторить серверный алгоритм"
-    )
+    declared = subprocess.run(["node", "--input-type=module", "-e",
+        "import { MODEL_VERSION } from './scripts/sh3d-convert/convert.mjs'; console.log(MODEL_VERSION)"],
+        cwd=REPO, check=True, capture_output=True, text=True)
+    assert int(declared.stdout) == PLAN_MODEL_VERSION == WALL_SEGMENT_MODEL_VERSION
     assert int(_source_constant("EXPORT_VERSION")) in (1, EXPORT_VERSION)
 
 
@@ -86,8 +85,8 @@ def test_issue_446_golden_passes_the_real_config_schema(name: str, document: dic
     config["model_version"] = document["model_version"]
     validated = CONFIG_SCHEMA(json.loads(json.dumps(config)))
     space = validated["spaces"][0]
-    assert space["rooms"], name
-    assert "wall_segments" not in space, "форма v7 не несёт каталога сегментов"
+    assert space["rooms"] or space["partitions"], name
+    assert isinstance(space["wall_segments"], list), "#937 emits the complete current catalogue"
 
 
 @pytest.mark.parametrize(("name", "document"), documents())
@@ -101,7 +100,7 @@ def test_issue_446_server_writer_turns_the_document_into_a_valid_plan(
     assert migrated["model_version"] == WALL_SEGMENT_MODEL_VERSION
     space = migrated["spaces"][0]
     segments = space["wall_segments"]
-    assert segments, name
+    assert segments or space["partitions"], name
     for room in space["rooms"]:
         assert len(room["wall_ids"]) == len(room["poly"]), "по идентификатору на ребро"
     owners: dict[str, int] = {segment["id"]: 0 for segment in segments}

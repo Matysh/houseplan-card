@@ -1,0 +1,324 @@
+{
+  "format": "houseplan-export",
+  "export_version": 2,
+  "kind": "space",
+  "created_at": "1970-01-01T00:00:00Z",
+  "card_version": "plan-convert 0.2",
+  "integration_version": "plan-convert 0.2",
+  "model_version": 10,
+  "payload": {
+    "config": {
+      "spaces": [
+        {
+          "id": "easy-1",
+          "title": "Full transfer",
+          "cell_cm": 5,
+          "view_box": [
+            0.146666667,
+            0.23,
+            0.706666667,
+            0.54
+          ],
+          "rooms": [
+            {
+              "id": "easy-1-room-room",
+              "name": "Room",
+              "area": "living",
+              "poly": [
+                [
+                  0.16666666666666666,
+                  0.25
+                ],
+                [
+                  0.6666666666666666,
+                  0.25
+                ],
+                [
+                  0.6666666666666666,
+                  0.5833333333333334
+                ],
+                [
+                  0.16666666666666666,
+                  0.5833333333333334
+                ]
+              ],
+              "settings": {
+                "fill_mode": "custom",
+                "custom_fill": {
+                  "c": "#abcdef",
+                  "a": 0.12
+                }
+              },
+              "wall_ids": [
+                "wall-552eygiu4pvxg4bcgizc",
+                "wall-65gqc6agzfpghjq4hu52",
+                "wall-rbhz654pb7vvoibjwhao",
+                "wall-ybl5bug3k26ybkksqiqd"
+              ]
+            }
+          ],
+          "walls": [
+            {
+              "key": "0.416667,0.250000@0.0000",
+              "cm": 8,
+              "a": [
+                0.16666666666666666,
+                0.25
+              ],
+              "b": [
+                0.6666666666666666,
+                0.25
+              ]
+            }
+          ],
+          "partitions": [],
+          "decor": [
+            {
+              "id": "easy-1-text-sensor-readings",
+              "kind": "text",
+              "x": 0.3333333333333333,
+              "y": 0.4475,
+              "size_cm": 12,
+              "color": "#808080",
+              "text": "{sensor.co2}"
+            },
+            {
+              "id": "easy-1-furniture-sofa",
+              "x": 0.3333333333333333,
+              "y": 0.4666666666666667,
+              "w": 0.16666666666666666,
+              "h": 0.06666666666666667,
+              "angle": 90,
+              "color": "#808080",
+              "kind": "furniture",
+              "symbol": "sofa"
+            },
+            {
+              "id": "easy-1-text-power",
+              "kind": "text",
+              "x": 0.25,
+              "y": 0.3333333333333333,
+              "text": "Power {sensor.power:value}",
+              "size_cm": 16,
+              "angle": 0,
+              "color": "#808080"
+            }
+          ],
+          "display": {
+            "glow_enabled": true,
+            "north_deg": 45,
+            "sun_rays": true
+          },
+          "led_strips": [
+            {
+              "id": "easy-1-led-strip",
+              "marker": "easy-1-device-strip",
+              "active": true,
+              "points": [
+                [
+                  0.416666667,
+                  0.35
+                ],
+                [
+                  0.416666667,
+                  0.483333333
+                ]
+              ]
+            }
+          ],
+          "plan_url": "/local/plan.png",
+          "plan_aspect": 1.3333333333333333,
+          "plan_x": 0.166666667,
+          "plan_y": 0.125,
+          "plan_scale_x": 0.666666667,
+          "plan_scale_y": 0.666666667,
+          "wall_segments": [
+            {
+              "id": "wall-ybl5bug3k26ybkksqiqd",
+              "a": [
+                0.16666666666666666,
+                0.25
+              ],
+              "b": [
+                0.16666666666666666,
+                0.5833333333333334
+              ],
+              "cm": 0
+            },
+            {
+              "id": "wall-552eygiu4pvxg4bcgizc",
+              "a": [
+                0.16666666666666666,
+                0.25
+              ],
+              "b": [
+                0.6666666666666666,
+                0.25
+              ],
+              "cm": 8
+            },
+            {
+              "id": "wall-rbhz654pb7vvoibjwhao",
+              "a": [
+                0.16666666666666666,
+                0.5833333333333334
+              ],
+              "b": [
+                0.6666666666666666,
+                0.5833333333333334
+              ],
+              "cm": 0
+            },
+            {
+              "id": "wall-65gqc6agzfpghjq4hu52",
+              "a": [
+                0.6666666666666666,
+                0.25
+              ],
+              "b": [
+                0.6666666666666666,
+                0.5833333333333334
+              ],
+              "cm": 0
+            }
+          ],
+          "openings": [
+            {
+              "id": "easy-1-opening-door",
+              "type": "door",
+              "x": 0.3333333333333333,
+              "y": 0.25,
+              "length": 0.075,
+              "angle": 0,
+              "contact": "binary_sensor.door",
+              "host": {
+                "kind": "wall",
+                "id": "wall-552eygiu4pvxg4bcgizc",
+                "t": 0.333333333
+              }
+            }
+          ]
+        }
+      ],
+      "markers": [
+        {
+          "id": "easy-1-device-strip",
+          "binding": "entity:light.strip",
+          "space": "easy-1",
+          "name": "light.strip",
+          "tap_action": "toggle",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": true,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          },
+          "area": "living",
+          "glow_radius_cm": 150,
+          "glow_color": {
+            "c": "#aabbcc"
+          }
+        },
+        {
+          "id": "easy-1-device-sensor",
+          "binding": "entity:sensor.temp",
+          "space": "easy-1",
+          "name": "sensor.temp",
+          "tap_action": "none",
+          "display": "value",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": true,
+            "position": "bottom",
+            "source": {
+              "kind": "entity_state",
+              "entity_id": "sensor.hum"
+            }
+          },
+          "area": "living",
+          "value_source": {
+            "kind": "entity_state",
+            "entity_id": "sensor.temp"
+          }
+        },
+        {
+          "id": "easy-1-device-virtual",
+          "binding": "virtual",
+          "space": "easy-1",
+          "name": "Unbound",
+          "tap_action": "info",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          },
+          "area": "living"
+        }
+      ]
+    },
+    "layout": {
+      "easy-1-device-strip": {
+        "s": "easy-1",
+        "x": 0.416666667,
+        "y": 0.416666667
+      },
+      "easy-1-device-sensor": {
+        "s": "easy-1",
+        "x": 0.333333333,
+        "y": 0.416666667
+      },
+      "easy-1-device-virtual": {
+        "s": "easy-1",
+        "x": 0.5,
+        "y": 0.416666667
+      }
+    }
+  },
+  "placement_manifest": [
+    {
+      "layout_id": "easy-1-device-strip",
+      "space_id": "easy-1",
+      "owner": "marker",
+      "owner_id": "easy-1-device-strip",
+      "binding": "entity:light.strip",
+      "label": "light.strip",
+      "icon": null
+    },
+    {
+      "layout_id": "easy-1-device-sensor",
+      "space_id": "easy-1",
+      "owner": "marker",
+      "owner_id": "easy-1-device-sensor",
+      "binding": "entity:sensor.temp",
+      "label": "sensor.temp",
+      "icon": null
+    },
+    {
+      "layout_id": "easy-1-device-virtual",
+      "space_id": "easy-1",
+      "owner": "marker",
+      "owner_id": "easy-1-device-virtual",
+      "binding": "virtual",
+      "label": "Unbound",
+      "icon": null
+    }
+  ],
+  "content_manifest": [
+    {
+      "kind": "plan",
+      "owner": "space",
+      "owner_id": "easy-1",
+      "field": "plan_url",
+      "url": "/local/plan.png",
+      "storage": "external",
+      "exists_at_export": null
+    }
+  ]
+}

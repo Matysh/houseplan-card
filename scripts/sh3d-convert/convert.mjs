@@ -1,34 +1,24 @@
 /**
  * Маппинг модели Sweet Home 3D в документ импорта House Plan (#446).
  *
- * Форма выхода — «v7»: комнаты с полигонами, стены с толщиной, проёмы по
- * координатам. Ни сегментов, ни `wall_ids`, ни хостов проёмов конвертер не
- * строит: их собирает серверный писатель импорта (`commit_wall_segment_model`),
- * тот же, которым едут старые бэкапы. Проверено прогоном: v7 → валидный v9,
- * общая граница двух комнат склеивается в один сегмент, дверь получает хозяина
- * сама. Строить каталог сегментов на стороне сайта означало бы повторить этот
- * алгоритм и разойтись с ним на первом же изменении модели.
- *
- * Главное геометрическое решение: **план строится по комнатам.** Стена в нашей
- * модели существует как ребро контура комнаты (валидатор требует у сегмента
- * одного-двух владельцев-комнат), поэтому стены Sweet Home 3D дают рёбрам
- * только толщину. Уровень, где комнат нет, конвертировать нечем — и это отказ
- * с объяснением, а не пустой план.
+ * #937: emits the current catalogue through the shared canonical writer.
+ * Room outlines still align to SH3D wall centrelines; independent remainders
+ * and wall-only floors become partitions, never fictitious rooms.
  */
+import { CURRENT_MODEL_VERSION, MIN_CURRENT_HOUSEPLAN, modernDocument } from './output.mjs';
+import { atomizeSourceWalls, makeIds, projectFloorGeometry } from './easy-geometry.mjs';
+import { CELL_LADDER, TARGET_EXTENT, GRID_N } from './units.mjs';
+export { CELL_LADDER, TARGET_EXTENT, GRID_N } from './units.mjs';
 
 export const FORMAT = 'houseplan-export';
 export const EXPORT_VERSION = 2;
-/** Форма документа: структуру из неё собирает сервер (см. шапку). */
-export const MODEL_VERSION = 7;
+export const MODEL_VERSION = CURRENT_MODEL_VERSION;
 /** Версия House Plan, на которой проверен путь импорта. */
-export const MIN_HOUSEPLAN = '1.71';
+export const MIN_HOUSEPLAN = MIN_CURRENT_HOUSEPLAN;
 
 /** Сантиметров в клетке. Выбирается из лестницы — «красивый» масштаб читаем. */
-export const CELL_LADDER = [1, 2, 2.5, 5, 10, 20, 25, 50, 100, 200, 500];
 /** Доля единичного квадрата под план: остаток — поля. */
-export const TARGET_EXTENT = 0.86;
 /** Решётка нашего редактора: 240 клеток на ширину плана. */
-export const GRID_N = 240;
 /** Сварка вершин: две точки ближе этого считаются одной (см).  */
 export const WELD_CM = 1;
 /** Допуск привязки вершины к осевой линии стены сверх её полутолщины (см). */
@@ -292,7 +282,7 @@ export function convertHome(home, options = {}) {
     if (thick.length) {
       notes.push({ code: 'thickness_clamped', count: thick.length, limit: MAX_THICKNESS_CM });
     }
-    if (!rawRooms.length) {
+    if (!rawRooms.length && !walls.length) {
       report.levels.push({
         id: level.id, title: level.name, rooms: 0, walls: 0, openings: 0,
         skipped: 'no_rooms', notes,
@@ -315,7 +305,7 @@ export function convertHome(home, options = {}) {
       }
       polygons.push({ ...room, points: polygon });
     }
-    if (!polygons.length) {
+    if (!polygons.length && !walls.length) {
       report.levels.push({
         id: level.id, title: level.name, rooms: 0, walls: 0, openings: 0,
         skipped: 'no_rooms', notes,
@@ -325,13 +315,14 @@ export function convertHome(home, options = {}) {
     }
 
     // Масштаб и сдвиг: план центрируется в единичном квадрате.
-    const xs = polygons.flatMap((room) => room.points.map((point) => point[0]));
-    const ys = polygons.flatMap((room) => room.points.map((point) => point[1]));
+    const points = [...polygons.flatMap(room => room.points), ...walls.flatMap(wall => [wall.a, wall.b])];
+    const xs = points.map(point => point[0]);
+    const ys = points.map(point => point[1]);
     const minX = Math.min(...xs);
     const minY = Math.min(...ys);
     const width = Math.max(...xs) - minX;
     const height = Math.max(...ys) - minY;
-    if (!(width > 0 && height > 0)) {
+    if (!(Math.max(width, height) > 0)) {
       throw new ConvertError('degenerate_level',
         `Уровень «${level.name || level.id}»: у плана нет площади`);
     }
@@ -349,6 +340,13 @@ export function convertHome(home, options = {}) {
       name: room.name || `Room ${roomIndex + 1}`,
       poly: room.points.map(toNorm),
     }));
+    const ids = makeIds(`sh3d-${index + 1}`);
+    const atoms = atomizeSourceWalls(walls.filter(wall => wall.thickness > 0).map((wall, wallIndex) => ({
+      id: String(wall.id ?? wallIndex), a: wall.a.map(weld), b: wall.b.map(weld), cm: clampThickness(wall.thickness),
+    })));
+    const projected = projectFloorGeometry({ rooms: rooms.map(room => ({ ...room, poly: room.poly })),
+      walls: atoms.map(wall => ({ ...wall, a: toNorm(wall.a), b: toNorm(wall.b) })) },
+    { point: point => point }, ids);
 
     // Стены: одна запись на уникальное ребро контура. Толщина берётся у стены
     // Sweet Home 3D, накрывающей это ребро; ребро без стены остаётся открытой
@@ -368,6 +366,12 @@ export function convertHome(home, options = {}) {
     }
     const openBoundaries = [...spanByKey.values()].filter((span) => span.cm <= 0).length;
     if (openBoundaries) notes.push({ code: 'edge_without_wall', count: openBoundaries });
+    // The old converter silently dropped these walls and every wall-only floor.
+    for (const partition of projected.partitions) {
+      const fromNorm = point => [(point[0] - offsetX) * unitCm + minX, (point[1] - offsetY) * unitCm + minY];
+      const a = fromNorm(partition.a), b = fromNorm(partition.b);
+      spanByKey.set(spanKey(a, b), { a, b, cm: partition.cm });
+    }
 
     // Проёмы: центр проецируется на ребро, угол берётся у ребра. Полагаться на
     // угол из файла нельзя — в нём иначе заданы единицы, и проверка хоста на
@@ -380,14 +384,16 @@ export function convertHome(home, options = {}) {
         continue;
       }
       let best = null;
+      let ambiguous = false;
       for (const span of spanByKey.values()) {
         if (span.cm <= 0) continue;
         const distance = distanceToSegment([piece.x, piece.y], span.a, span.b);
         if (distance > span.cm / 2 + OPENING_TOL_CM) continue;
-        if (!best || distance < best.distance) best = { span, distance };
+        if (!best || distance < best.distance - 1e-7) { best = { span, distance }; ambiguous = false; }
+        else if (Math.abs(distance - best.distance) <= 1e-7) ambiguous = true;
       }
-      if (!best) {
-        notes.push({ code: 'opening_unhosted', id: piece.id, kind: piece.kind });
+      if (!best || ambiguous) {
+        notes.push({ code: ambiguous ? 'opening_ambiguous' : 'opening_unhosted', id: piece.id, kind: piece.kind });
         continue;
       }
       const { a, b } = best.span;
@@ -414,7 +420,7 @@ export function convertHome(home, options = {}) {
       });
     }
 
-    const polyPoints = rooms.flatMap((room) => room.poly);
+    const polyPoints = [...rooms.flatMap(room => room.poly), ...projected.partitions.flatMap(wall => [wall.a, wall.b])];
     const boxMinX = Math.min(...polyPoints.map((point) => point[0]));
     const boxMinY = Math.min(...polyPoints.map((point) => point[1]));
     const boxMaxX = Math.max(...polyPoints.map((point) => point[0]));
@@ -431,38 +437,29 @@ export function convertHome(home, options = {}) {
         canonicalizeNumber(boxMaxY - boxMinY + margin * 2),
       ],
       rooms,
+      partitions: projected.partitions,
       ...(wallByKey.size ? { walls: [...wallByKey.values()] } : {}),
       ...(openings.length ? { openings } : {}),
     };
-    documents.push({
-      format: FORMAT,
-      export_version: EXPORT_VERSION,
-      kind: 'space',
-      created_at: createdAt,
-      card_version: toolVersion,
-      integration_version: toolVersion,
-      model_version: MODEL_VERSION,
-      payload: { config: { spaces: [space], markers: [] }, layout: {} },
-      placement_manifest: [],
-      content_manifest: [],
-      transfer: { plan_only: true },
-    });
+    const converted = modernDocument(space, { planOnly: true, now: createdAt, toolVersion });
+    documents.push(converted.document);
+    notes.push(...converted.notes);
+    const saved = converted.document.payload.config.spaces[0];
     report.levels.push({
       id: level.id,
       title: space.title,
       spaceId: space.id,
       cellCm: cellCm,
       rooms: rooms.length,
-      walls: wallByKey.size,
-      openings: openings.length,
+      walls: saved.wall_segments.length + saved.partitions.length,
+      openings: saved.openings?.length || 0,
       notes,
     });
   }
 
   if (!documents.length) {
     throw new ConvertError('nothing_to_convert',
-      'В плане нет ни одной комнаты: House Plan строит геометрию по комнатам, '
-      + 'нарисуйте их в Sweet Home 3D и сохраните файл заново');
+      'В плане нет стен или комнат для переноса');
   }
   // Мебель и прочее не читается вовсе — но человек должен знать, что её нет.
   report.items.push({ code: 'furniture_dropped' });

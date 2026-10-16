@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- The external plan converter supports Easy Floorplan YAML/JSON, including
+  compatible device/Area bindings, values, furniture, text, backdrop references
+  and lighting settings. Scale is estimated automatically and losses are
+  reported before download. Sweet Home 3D now emits the current wall model and
+  retains independent walls and wall-only floors
+  ([#937](https://github.com/Matysh/houseplan-card/issues/937)).
+
 - Devices can snap to physical wall faces and join nearby markers into a shared
   Flat outline, following the designer reference. Dragging still moves only one
   device, with exact-position Undo/Redo. Snapping/Alt controls only these new

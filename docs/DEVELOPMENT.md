@@ -21,6 +21,17 @@ Merge commits are intentionally unsupported by this command. Root commits use
 an empty-tree base. Tests: `node --test test/commit-amend.test.mjs
 test/commit-provenance.test.mjs` (real Git, real commit-msg and npm entrypoint).
 
+## External converter (#937)
+
+`scripts/sh3d-convert/README.md` owns the two-source converter build, fixture
+provenance, limits and separate-site deployment/rollback. Build with
+`node scripts/sh3d-convert/build-page.mjs`; `--check` also checks the generated
+canonical wall runtime. It is not a card bundle and adds no YAML parser to the
+HACS frontend. Run the named Node, pure/HA backend and offline browser commands
+from that README before handing it off. Deploy the accepted payload only to the
+existing `/convert/index.html`, preserving the site's extra analytics wrapper,
+with a timestamped backup and digest check. No stand restart or release tag.
+
 ## Device-contact evidence (#866)
 
 The frozen designer corpus is `test/fixtures/866-designer`; the original geometry

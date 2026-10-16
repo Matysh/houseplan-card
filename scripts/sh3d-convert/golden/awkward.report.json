@@ -6,7 +6,7 @@
       "spaceId": "sh3d-1-main",
       "cellCm": 2,
       "rooms": 1,
-      "walls": 3,
+      "walls": 7,
       "openings": 1,
       "notes": [
         {
@@ -44,23 +44,19 @@
     {
       "id": "empty",
       "title": "Walls only",
+      "spaceId": "sh3d-2-walls-only",
+      "cellCm": 1,
       "rooms": 0,
-      "walls": 0,
+      "walls": 2,
       "openings": 0,
-      "skipped": "no_rooms",
       "notes": []
     }
   ],
   "items": [
     {
-      "code": "level_without_rooms",
-      "id": "empty",
-      "title": "Walls only"
-    },
-    {
       "code": "furniture_dropped"
     }
   ],
-  "toolVersion": "sh3d-convert 0.1",
-  "minHouseplan": "1.71"
+  "toolVersion": "plan-convert 0.2",
+  "minHouseplan": "1.81.0"
 }

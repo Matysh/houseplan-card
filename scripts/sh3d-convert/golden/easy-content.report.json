@@ -1,0 +1,58 @@
+{
+  "levels": [
+    {
+      "id": "home",
+      "title": "Full transfer",
+      "notes": [
+        {
+          "code": "light_runtime_semantics",
+          "id": "easy-1-device-strip"
+        },
+        {
+          "code": "badge_selection_approximate",
+          "id": "easy-1-device-sensor"
+        },
+        {
+          "code": "extra_readings_as_text",
+          "id": "easy-1-device-sensor",
+          "count": 1
+        },
+        {
+          "code": "reading_skipped",
+          "id": "easy-1-device-virtual"
+        },
+        {
+          "code": "text_metrics_approximate",
+          "id": "easy-1-text-power"
+        },
+        {
+          "code": "sun_runtime_semantics",
+          "id": "easy-1"
+        },
+        {
+          "code": "image_external_reference",
+          "id": "home"
+        }
+      ],
+      "spaceId": "easy-1",
+      "cellCm": 5,
+      "rooms": 1,
+      "walls": 4,
+      "openings": 1,
+      "devices": 3,
+      "decor": 3
+    }
+  ],
+  "items": [
+    {
+      "code": "scale_doors",
+      "cmPerUnit": 1,
+      "count": 1
+    },
+    {
+      "code": "easy_compatibility"
+    }
+  ],
+  "toolVersion": "plan-convert 0.2",
+  "minHouseplan": "1.81.0"
+}
