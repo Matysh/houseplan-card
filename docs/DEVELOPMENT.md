@@ -32,6 +32,12 @@ from that README before handing it off. Deploy the accepted payload only to the
 existing `/convert/index.html`, preserving the site's extra analytics wrapper,
 with a timestamped backup and digest check. No stand restart or release tag.
 
+The #937 dependency changes the common build fingerprint, not the card's import
+graph. Fresh control/task builds measured 2,972,687/2,972,707 raw bytes (different
+internal aliases in two chunks); the raw-byte accounting base is 2,972,707.
+The 2,000-byte band and other coupling metrics are unchanged. The issue records
+the exact control material and comparison; this is not a YAML runtime addition.
+
 ## Device-contact evidence (#866)
 
 The frozen designer corpus is `test/fixtures/866-designer`; the original geometry

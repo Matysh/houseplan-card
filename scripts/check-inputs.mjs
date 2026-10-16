@@ -83,7 +83,6 @@ export const NOT_AN_INPUT = [
   ['scripts/golden-container.mjs', 'локальная съёмка в пиновом образе (#334), ручной запуск'],
   ['scripts/benchmark-wall-segment-model.mjs', 'ручной бенчмарк (npm run benchmark:wall-model)'],
   ['scripts/wall-strip-containment.mjs', 'ручной гейт внешних бэкапов планов (docs/WALL-THICKNESS.md)'],
-  ['scripts/sh3d-convert/cli.mjs', 'CLI конвертера для человека'],
   ['scripts/sh3d-convert/make-fixtures.mjs', 'генератор фикстур конвертера, ручной'],
   ['scripts/support-relay/deploy/**', 'деплой relay на стенд'],
   ['scripts/wsl-setup.sh', 'установка локального Linux/WSL-контура с пинами CI (#496), ручной запуск'],
@@ -357,7 +356,11 @@ export const CHECKS = {
     entries: ['test/*.test.mjs', 'scripts/no-new-any.mjs', 'scripts/no-new-private-writes.mjs', 'scripts/render-layout-read.mjs', 'scripts/bundle-budget.mjs',
       'scripts/fix-test-build.mjs', 'scripts/unused-locals-gate.mjs', 'scripts/frontend-proof.mjs'],
     // demo/helpers/** — область no-new-private-writes (#629): гейт читает их текст.
-    roots: [...BUILD_INPUTS, '.nvmrc', '.python-version', 'assets/furniture/**', 'assets/moon/**', 'test/**', 'tsconfig*.json', 'scripts/monolith-baseline.json', 'demo/smoke_*.mjs', 'demo/benchmark_*.mjs', 'demo/guard/*.mjs', 'demo/helpers/**', ...WORKFLOW],
+    roots: [...BUILD_INPUTS, '.nvmrc', '.python-version', 'assets/furniture/**', 'assets/moon/**', 'test/**', 'tsconfig*.json', 'scripts/monolith-baseline.json', 'demo/smoke_*.mjs', 'demo/benchmark_*.mjs', 'demo/guard/*.mjs', 'demo/helpers/**',
+      // #937: the converter producer invokes tsc and reads fixture paths through
+      // dynamic joins; the lexical graph cannot infer these exact inputs.
+      'scripts/sh3d-convert/build-runtime.mjs', 'scripts/sh3d-convert/geometry-entry.ts',
+      'scripts/sh3d-convert/tsconfig.json', 'scripts/sh3d-convert/fixtures/easy-content.json', ...WORKFLOW],
   },
   changed_mutants: {
     entries: ['scripts/mutation-*.mjs', 'scripts/*-guard.mjs', 'test/*.test.mjs', 'demo/smoke_*.mjs', 'tests_backend/**/*.py'],

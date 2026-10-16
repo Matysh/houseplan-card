@@ -98,6 +98,13 @@ then HTTP-check both format controls and source version. No service restart is
 needed. Rollback atomically restores the saved page, never rewrites user plans.
 Do not publish HACS tags/releases as part of an external-site deployment.
 
+`site-page.mjs --previous <downloaded-live.html> --artifact <dist/index.html>
+--commit <full-accepted-sha> --out <prepared.html>` is a local preparer, not a
+publisher. It preserves the existing Google/Yandex wrapper byte-for-byte, refuses
+missing/duplicate/unexpected wrappers, asserts exact executable module identity
+and prints old/artifact/wrapper/page digests. Its output remains local until the
+accepted-material deployment described above.
+
 ## Public source fixture and license
 
 `fixtures/easy-public-demo.json` is the card at
