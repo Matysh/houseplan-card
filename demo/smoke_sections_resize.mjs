@@ -1,9 +1,11 @@
 // #648: Home Assistant Sections owns the card height.  The production bundle
 // must fill that slot at every row count instead of leaking its viewport-sized
 // stage through the dashboard, including while editor chrome opens/closes.
-import { launch, checkAll, finish } from './serve.mjs';
+import { launch, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
 
+requirePinnedBrowser();
 const { page, browser } = await launch({ width: 1000, height: 940 }, 1);
+console.log('SECTIONS_ENVIRONMENT ' + JSON.stringify({ browser: browser.version(), node: process.version }));
 
 const out = await page.evaluate(async () => {
   const card = window.__card;
@@ -11,6 +13,21 @@ const out = await page.evaluate(async () => {
   const root = card.shadowRoot || card.renderRoot;
   const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const diagnostics = [];
+  const record = (label) => {
+    let sample;
+    try {
+      const state = card._modeTransition.state;
+      sample = { label, atMs: performance.now(), mode: card._mode,
+        busy: card._modeTransitionBusy, preparing: card._modeTransitionPreparing,
+        phase: state?.phase ?? null, targetMode: state?.targetMode ?? null,
+        transitionStartedAt: state?.startedAt ?? null, transitionDuration: state?.duration ?? null,
+        ...geometry() };
+    } catch (error) { sample = { label, atMs: performance.now(), snapshotError: String(error) }; }
+    diagnostics.push(sample);
+    if (diagnostics.length > 48) diagnostics.shift();
+    return sample;
+  };
   const waitFor = async (probe, label, timeout = 6000) => {
     const end = performance.now() + timeout;
     while (performance.now() < end) {
@@ -18,14 +35,24 @@ const out = await page.evaluate(async () => {
       if (value) return value;
       await sleep(20);
     }
-    throw new Error(`Sections smoke timed out: ${label}`);
+    record('timeout: ' + label);
+    throw new Error(`Sections smoke timed out: ${label}; diagnostics=${JSON.stringify(diagnostics)}`);
   };
   const rowHeight = (rows) => rows * 64 - 8;
-  const settle = async () => {
+  const settle = async (label = 'settle') => {
     await card.updateComplete;
+    // Read lifecycle state, not the geometry/style value that we assert below.
+    // Three RAFs alone can still be inside a legitimate measured transition.
+    await waitFor(() => !card._modeTransitionBusy, `${label}: lifecycle steady`);
     await frame(); await frame(); await frame();
+    await card.updateComplete;
+    await waitFor(() => !card._modeTransitionBusy, `${label}: steady after layout`);
+    record(label);
   };
-  const rect = (node) => node.getBoundingClientRect();
+  const rect = (node) => {
+    const { x, y, width, height } = node.getBoundingClientRect();
+    return { x, y, width, height };
+  };
   const geometry = () => {
     const haCard = root.querySelector('ha-card');
     const header = root.querySelector('.hdr');
@@ -51,7 +78,7 @@ const out = await page.evaluate(async () => {
     host.style.height = `${expected}px`;
     await waitFor(() => Math.abs(card.getBoundingClientRect().height - expected) <= 1,
       `${rows} rows card height`);
-    await settle();
+    await settle(`${rows} rows`);
     return geometry();
   };
   const center = () => {
@@ -78,6 +105,20 @@ const out = await page.evaluate(async () => {
   await settle();
   const defaults = card.getGridOptions();
   const defaultGeometry = await setRows(10);
+
+  // Ordinary setup while a real mode transition is active must not treat its
+  // intermediate pixel height as the container-owned steady presentation.
+  const setupTransition = window.__hpTest.setMode('plan');
+  await waitFor(() => card._modeTransitionBusy
+    && card._modeTransition.state?.targetMode === 'plan', 'setup during a real transition');
+  const setupDuringTransition = geometry();
+  record('setup during active transition');
+  const setupAfterSettle = await setRows(10);
+  const setupSettled = !card._modeTransitionBusy;
+  await setupTransition;
+  await window.__hpTest.setMode('view');
+  await waitFor(() => card._mode === 'view' && !card._modeTransitionBusy, 'return from setup transition');
+  await settle();
 
   // Absence of HA's grid signal retains the ordinary viewport contract.  This
   // is checked on the real rendered inline style, then the fixture returns to
@@ -188,13 +229,16 @@ const out = await page.evaluate(async () => {
     : null;
   const finalCenter = center();
 
-  return {
+  return { diagnostics, checks: {
     executableGridDefaults: JSON.stringify(defaults)
       === JSON.stringify({ columns: 'full', rows: 10, min_rows: 6 })
       && !Object.prototype.hasOwnProperty.call(defaults, 'max_rows')
       && card.getCardSize() === 12,
     gridSignalReflectsForScopedCss: card.getAttribute('layout') === 'grid',
     gridUsesContainerOwnedInlineHeight: defaultGeometry.stageStyle === 'auto',
+    setupDuringTransitionWaitsForSteadyLayout: setupDuringTransition.stageStyle !== ''
+      && setupSettled && setupAfterSettle.stageStyle === 'auto'
+      && fillsSlot(setupAfterSettle, rowHeight(10)),
     defaultTenRowsFillTheSlot: fillsSlot(defaultGeometry, rowHeight(10)),
     minimumSixRowsStayContainedInRuAndDe: minimumGeometry.length === 2
       && minimumGeometry.every((entry) => fillsSlot(entry.sample, rowHeight(6))
@@ -218,8 +262,9 @@ const out = await page.evaluate(async () => {
       && near([finalPoint.x, finalPoint.y], finalCenter, 0.001)
       && Math.abs(card._view.w / card._view.h
         - finalGeometry.stage.width / finalGeometry.stage.height) < 0.001,
-  };
-});
+  } };
+}).catch(async (error) => { await browser.close(); throw error; });
 
-checkAll(out);
-await finish(browser, out);
+console.log('SECTIONS_DIAGNOSTICS ' + JSON.stringify(out.diagnostics));
+checkAll(out.checks);
+await finish(browser, out.checks);

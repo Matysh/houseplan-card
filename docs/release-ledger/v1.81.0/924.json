@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 924,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Makes the Sections resize smoke wait for independent mode-transition idle state and records bounded geometry/lifecycle/browser diagnostics. Preserves all original geometry/style assertions and timeout bounds, adding a real setup-during-transition regression. No product changes or milestone."
+}

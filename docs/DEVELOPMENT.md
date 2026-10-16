@@ -1206,6 +1206,16 @@ release/publish-prerelease dispatch). Never clear a live claim to retry blindly.
 
 ## Local Windows workstation
 
+Sections resize smoke (#924) waits for the real mode-transition busy flag to
+clear before sampling steady geometry; it never waits for the asserted `auto`
+style as readiness. Its active-transition setup scenario retains all fourteen
+original checks and adds one regression. Pinned Chromium identity and bounded
+`SECTIONS_DIAGNOSTICS` samples report actual rectangles, inline height, mode,
+phase/busy/preparing flags and timing, also in timeout errors. The historical
+isolated false result did not record those flags, so its precise cause remains
+unknown; the new ordinary scenario proves a sufficient legal timing path only.
+Run `HP_SMOKE_CHECKS=1 node demo/smoke_sections_resize.mjs` after coherent build.
+
 The CI contract is **Node.js 22 + Python 3.14**. Do not use Codex's bundled
 Node 24 or an unpinned machine Python environment as proof that a release will
 pass. The pins are not declared twice: `node scripts/toolchain-pins.mjs` reads

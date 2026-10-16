@@ -61,6 +61,10 @@ and affected-check witnesses keep unknown neighbouring files fail-closed.
 Review format preflight (#922) keeps a criterion's first AC token when later
 tokens are cross-references; numbering/evidence/track checks are unchanged.
 
+Sections harness (#924) samples steady geometry only after mode transitions
+settle and logs bounded actual geometry/lifecycle/browser diagnostics. Original
+height/style/camera/transition/resize-storm checks and timeouts remain intact.
+
 Successful Z2M maps (#912) have an entry-owned atomic HA Store separate from
 plan/export/support data. Reload restores them stale without a scan. Explicit
 Update durably clears its topic first; saved links OFF clears all maps and
