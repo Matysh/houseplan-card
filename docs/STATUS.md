@@ -18,12 +18,18 @@ Everything computable from the tree and git; regenerate, never edit by hand
 |---|---|
 | Generated | 2026-10-16 — rerun `node scripts/status-snapshot.mjs` for the current tree |
 | Version | **1.81.0** in all 7 version sources (`scripts/release-contract.mjs`) |
-| Latest stable tag | `v1.80.1` |
+| Latest stable tag | `v1.81.0` |
 | Latest prerelease tag | `v1.81.0-beta.4` |
-| Tests | Node unit 4620 · pure backend 493 · HA-harness backend 397 · browser smokes 361 (`npm run inventory`) |
+| Tests | Node unit 4624 · pure backend 493 · HA-harness backend 397 · browser smokes 361 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+The next accounting cycle is 1.82 against stable `v1.81.0`, using the owner's
+existing milestone 1.82 (#7). Nightly witness repair (#917) is infrastructure
+only, excluded from the user-facing milestone/changelog. Its five definitions
+and ordinary witnesses are repaired without changing product code or budgets;
+static readiness is distinct from executed mutation evidence.
 
 Stable preparation (#916) includes reachable second-parent task deliveries and
 uses a bounded 8 MiB GitHub transport. The owner's explicit stand acceptance

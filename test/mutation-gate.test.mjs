@@ -86,6 +86,30 @@ test('#899 LED definition models an unsafe touch release, not equivalent propaga
   assert.doesNotMatch(led.patches[0].replace, /stopPropagation/);
 });
 
+test('#917 preparation fixes preserve broad JSON typing and reachable callback narrowing', () => {
+  const details = definition('error-details-json-branch-cut');
+  assert.equal(details.guard, 'node --test test/open-passage-contract.test.mjs');
+  assert.ok(details.patches[0].replace.includes("const details = JSON.parse('{}'); void raw;"));
+  const rearm = definition('layout-full-read-drops-real-overlap-rearm');
+  assert.ok(rearm.patches[0].replace.includes('if (Boolean(false) && repeatLayoutRead)'));
+  assert.doesNotMatch(rearm.patches[0].replace, /if \(false &&/,
+    'a statically unreachable callback loses the load-claim narrowing before its oracle');
+});
+
+test('#917 stale-door definition bypasses both protections; tool boundary has a direct renderer witness', () => {
+  const door = definition('kiosk-space-change-retains-old-door');
+  assert.equal(door.guard, 'node demo/smoke_kiosk_cycle_context.mjs');
+  assert.equal(door.patches.length, 2);
+  assert.ok(door.patches.every(patch => patch.file === 'src/houseplan-card.ts'));
+  assert.ok(door.patches[0].find.includes('this._openingInfo = null;'));
+  assert.ok(door.patches[1].replace.includes('this._openingInfoSpace !== this._space) return;'));
+  const tool = definition('wall-selection-ignores-tool-boundary');
+  assert.equal(tool.guard, 'node --test test/wall-thickness-selection.test.mjs');
+  assert.equal(tool.patches.length, 1);
+  assert.ok(tool.patches[0].find.includes("this.host._tool === 'wallthick'"));
+  assert.ok(!tool.patches[0].replace.includes('this.host._tool'));
+});
+
 // Дешёвая половина гейта, идёт с обычными юнитами на каждом прогоне. Полный
 // прогон с пересборкой бандла на мутанта — ночное расписание (#513), он в
 // .github/workflows/_mutation-gate.yml.

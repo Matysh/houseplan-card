@@ -1,5 +1,12 @@
 # House Plan architecture
 
+Nightly witness maintenance (#917) changes no product owner or runtime. The
+gesture-entry witness calls the live-update router; the tool-boundary witness
+calls the actual lazy renderer with a retained dialog/cache, independently of
+toolbar cleanup. The stale-door mutation spans both redundant protections.
+Two preparation definitions retain TypeScript's original broad JSON typing
+and reachable callback narrowing instead of failing before their oracle.
+
 Stable field decisions (#916) are release metadata, not product state or native
 receipts. A reviewed tag/SHA binding plus the latest authenticated owner comment
 can authorize promotion of an owner-tested public beta with unchanged product,

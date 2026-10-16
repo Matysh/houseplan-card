@@ -103,6 +103,46 @@ test('pointer-following editor hover routes while View remains reactive', () => 
   }
 });
 
+test('#917 gesture entry stays reactive before subsequent moves use one live frame', () => {
+  const beforeRaf = globalThis.requestAnimationFrame;
+  const beforeCancel = globalThis.cancelAnimationFrame;
+  const frames = new Map();
+  let nextFrame = 1;
+  globalThis.requestAnimationFrame = callback => {
+    const id = nextFrame++;
+    frames.set(id, callback);
+    return id;
+  };
+  globalThis.cancelAnimationFrame = id => frames.delete(id);
+  try {
+    for (const property of ['_decorDraft', '_dtDrag']) {
+      for (const previous of [null, undefined]) {
+        const host = { isConnected: true, _mode: 'plan', [property]: {} };
+        try {
+          assert.equal(routeHouseplanEditorUpdate(host, property, previous), false,
+            `${property}: pointerdown must reconcile selection/chrome through Lit`);
+          assert.equal(frames.size, 0, 'gesture entry cannot schedule a live-only frame');
+          const started = host[property];
+          host[property] = {};
+          assert.equal(routeHouseplanEditorUpdate(host, property, started), true);
+          assert.equal(routeHouseplanEditorUpdate(host, property, started), true);
+          assert.equal(frames.size, 1, 'subsequent moves share one pending live frame');
+          commitHouseplanEditor(host);
+          assert.equal(frames.size, 0);
+          const moving = host[property];
+          host[property] = null;
+          assert.equal(routeHouseplanEditorUpdate(host, property, moving), false,
+            'terminal state must reconcile through Lit too');
+          assert.equal(frames.size, 0);
+        } finally { disposeHouseplanEditor(host); }
+      }
+    }
+  } finally {
+    globalThis.requestAnimationFrame = beforeRaf;
+    globalThis.cancelAnimationFrame = beforeCancel;
+  }
+});
+
 test('pointer move queue is event-turn coalesced, last-wins and flushable', async () => {
   const host = {};
   const seen = [];

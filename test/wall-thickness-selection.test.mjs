@@ -3,6 +3,10 @@ import assert from 'node:assert/strict';
 import { wallThicknessSelection } from '../test-build/wall-thickness-selection.js';
 import { drawWallPreviewD } from '../test-build/wall-thickness.js';
 
+// Import the real lazy renderer without constructing browser-owned controls.
+globalThis.window ??= {};
+const { HouseplanEditorRuntime } = await import('../test-build/houseplan-editor-runtime.js');
+
 const a = [200, 150], b = [700, 150], pitch = 5;
 const room = { id: 'room', name: 'Room', area: null, poly: [a, b, [700, 500], [200, 500]] };
 const space = { id: 'floor', rooms: [room], partitions: [{ id: 'partition', a, b, cm: 20 }] };
@@ -48,4 +52,37 @@ test('reversed current room span resolves; malformed physical owner fails closed
     const bad = { ...space, partitions: [{ id: 'partition', a, b, cm }] };
     assert.equal(resolve(bad, { ...target, source: { kind: 'partition', id: 'partition' } }), null);
   }
+});
+
+test('#917 actual renderer rejects a retained dialog/cache outside the wall-thickness tool', () => {
+  const before = structuredClone({ space, target, walls });
+  const host = {
+    _wallDialog: target, _markup: true, _tool: 'wallthick', _cfgEpoch: 1,
+    _spaceModel: () => space, _spaceWalls: walls, _openCuts: () => [],
+    _wallKeyPitch: 1 / 240, _cellCm: 5, _gridPitch: pitch,
+    _wallThickHover: { d: 'stale cursor shape', open: false },
+  };
+  const receiver = { host, wallThickSpace: 'floor', wallThickSelectionCache: null };
+  const render = () => HouseplanEditorRuntime.prototype._renderWallThickUi.call(receiver);
+  const expected = resolve();
+  for (const tool of ['select', 'draw']) {
+    host._tool = 'wallthick';
+    const valid = render();
+    assert.ok(valid.strings.join('').includes('wallthick-hover'));
+    assert.ok(valid.values.includes('wallthick-selected hp-editor-only-layer'));
+    assert.ok(valid.values.includes(expected.d), 'positive control uses current resolved wall');
+    assert.ok(receiver.wallThickSelectionCache, 'negative control starts with a populated cache');
+    host._tool = tool;
+    const invalid = render();
+    assert.equal(invalid.strings.join(''), '', `${tool}: no selected or cursor-fallback path`);
+    assert.equal(invalid.values.length, 0);
+    assert.equal(receiver.wallThickSelectionCache, null, 'old selected geometry is retired');
+    assert.equal(host._wallDialog, target, 'the renderer guard does not rely on toolbar cleanup');
+  }
+  host._tool = 'wallthick';
+  render();
+  host._markup = false;
+  assert.equal(render().strings.join(''), '');
+  assert.equal(receiver.wallThickSelectionCache, null);
+  assert.deepEqual({ space, target, walls }, before, 'rendering never mutates plan data');
 });

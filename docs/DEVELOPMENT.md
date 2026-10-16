@@ -1,5 +1,20 @@
 # Development and deployment
 
+## Nightly witness repair (#917)
+
+The five failures in run `38853768073` belong to test infrastructure: two
+mutation preparations failed TypeScript compilation; the first-gesture branch
+lacked a direct ordinary input case; two isolated omissions were masked by
+independent healthy protections. Keep those protections in production.
+The stale-door definition bypasses immediate cleanup and stale-floor
+reconciliation together. The wall-tool witness now calls the compiled real
+renderer with a retained valid dialog/cache; mounted paint remains covered by
+the other wall-selection browser witnesses. JSON substitution retains
+`JSON.parse` typing, and the re-arm substitution keeps callback narrowing.
+Ordinary units plus `mutation-gate --check` establish baseline and static
+readiness only; actual caught claims require nightly execution or an explicit
+owner-authorized exception under PROCESS §2.7.
+
 ## Backdrop terminal witness (#908)
 
 `smoke_grid_scale_invariance` asserts computed cursor and stage class after

@@ -130,8 +130,8 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'wall-selection-ignores-tool-boundary',
-    guard: compiledNodeSmoke('smoke_wallthick_standalone'),
-    because: '#911 AC4 needs the public toolbar/Lit lifecycle while the dialog target exists; pure resolution cannot prove selected paint retirement.',
+    guard: 'node --test test/wall-thickness-selection.test.mjs',
+    because: '#911 AC4 / #917: call the actual lazy renderer with a retained valid dialog and populated cache after tool change; the renderer must fail closed independently of toolbar cleanup. Mounted paint/lifecycle coverage stays in the other #911 browser guards.',
     patches: [{ file: 'src/houseplan-editor-runtime.ts', find: "    if (d && this.host._markup && this.host._tool === 'wallthick') {", replace: '    if (d && this.host._markup) {' }],
   },
   {
@@ -524,10 +524,13 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'kiosk-space-change-retains-old-door',
     guard: 'node demo/smoke_kiosk_cycle_context.mjs',
-    because: '#846 AC5: actual hash/tab custom-element navigation must close the rendered old-floor door without an HA service call.',
+    because: '#846 AC5 / #917: actual hash/tab navigation must close the rendered old-floor door without an HA service call. Omit both immediate navigation cleanup and the redundant #894 stale-floor reconciliation, so the mutant represents an observable retained popup rather than equivalent safe behavior.',
     patches: [{file:'src/houseplan-card.ts',
       find:'      this._closeInfoCard(); this._openingInfo = null; this._openingInfoSpace = null;',
-      replace:'      this._closeInfoCard(); // retain old door popup'}],
+      replace:'      this._closeInfoCard(); // retain old door popup'},
+    {file:'src/houseplan-card.ts',
+      find:'    const before = this._openingInfo;',
+      replace:'    const before = this._openingInfo;\n    if (before && this._openingInfoSpace !== this._space) return;'}],
   },
   {
     id: 'kiosk-door-dispatch-trusts-stale-dom',
@@ -6421,7 +6424,7 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/houseplan-card.ts',
       find: "      let spaceId = '', fieldList: string[] = [];\n      try {\n        const details = JSON.parse(raw);",
-      replace: "      let spaceId = '', fieldList: string[] = [];\n      try {\n        const details = { space: null, fields: null }; void raw;",
+      replace: "      let spaceId = '', fieldList: string[] = [];\n      try {\n        const details = JSON.parse('{}'); void raw;",
     }],
   },
   {
@@ -16495,7 +16498,7 @@ const MUTANT_DEFINITIONS = [
     because: '#902 r1 M1: after two real write/read overlaps, the actual card must re-arm exactly one full load and retain both accepted commands.',
     patches: [{ file: 'src/houseplan-card.ts',
       find: '      if (repeatLayoutRead) queueMicrotask(() => {',
-      replace: '      if (false && repeatLayoutRead) queueMicrotask(() => {' }],
+      replace: '      if (Boolean(false) && repeatLayoutRead) queueMicrotask(() => {' }],
   },
   {
     id: 'config-adoption-echo-clears-history',

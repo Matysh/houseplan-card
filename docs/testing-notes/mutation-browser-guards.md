@@ -34,10 +34,10 @@ that transition events alone prove disposal.
 | Performance threshold | 5 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 3 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 54 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 81 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Pointer geometry and trusted interaction | 80 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 43 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
 | Custom-element and HA browser lifecycle | 191 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **377 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| **Total** | **376 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -187,7 +187,12 @@ stay in Node.
 
 - `wall-selection-hidden-with-dialog`
 - `wall-selection-not-live-owned`
-- `wall-selection-ignores-tool-boundary`
+
+`wall-selection-ignores-tool-boundary` moved to the actual renderer unit in
+`test/wall-thickness-selection.test.mjs` (#917). Normal toolbar navigation
+already clears the dialog, masking omission of the independent renderer guard.
+The Node witness retains a valid dialog and populated cache with the wrong tool;
+the browser witnesses above still own mounted paint and live-layer behavior.
 
 #908: trusted cancellation/capture and Lit's retained class binding need the
 mounted cursor/badge and immediate-next-drag oracles.

@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 917,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Repairs five nightly mutation witnesses: two type-safe mutation definitions, coverage of gesture entry and renderer tool boundaries, and a stale-door mutation spanning redundant protections. Product runtime, behavior, budgets and nightly coverage are unchanged."
+}

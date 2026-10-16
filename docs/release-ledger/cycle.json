@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "baseStable": "v1.80.1",
-  "targetStable": "v1.81.0",
-  "milestone": { "number": 3, "title": "1.81" }
+  "baseStable": "v1.81.0",
+  "targetStable": "v1.82.0",
+  "milestone": { "number": 7, "title": "1.82" }
 }
