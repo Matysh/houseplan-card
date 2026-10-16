@@ -11,6 +11,14 @@ export async function prepareCandidate({ repo, candidate = 'HEAD', root = proces
   request = get, probe = probeGreenWorkflow, token = process.env.GH_TOKEN } = {}) {
   if (!/^[\w.-]+\/[\w.-]+$/.test(repo || '')) throw Error('repo=owner/name required');
   input ||= candidateInputs({ candidate, root, publicationCheck });
+  if (input.fieldDecision) {
+    const decision = input.fieldDecision;
+    const published = request(`repos/${repo}/releases/tags/${decision.testedTag}`);
+    const commit = request(`repos/${repo}/commits/${decision.testedTag}`);
+    if (published.tag_name !== decision.testedTag || published.draft !== false || published.prerelease !== true
+      || !published.published_at || commit.sha !== decision.testedSha)
+      throw Error('Owner-tested prerelease is not published at the approved exact SHA');
+  }
   token ||= execFileSync('gh', ['auth', 'token'], { encoding: 'utf8' }).trim();
   const issues = input.catalogue.entries.map(entry => {
     const issue = request(`repos/${repo}/issues/${entry.issue}`);

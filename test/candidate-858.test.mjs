@@ -11,6 +11,7 @@ import { judgeNativeOutput, runCandidateNative, NATIVE_CHECK_FLOORS } from '../s
 import { diagnoseNight, diagnosticLines } from '../scripts/night-diagnostics.mjs';
 import { issueBodyDigest, withMaterialAnchors } from '../scripts/review-doc-guard.mjs';
 import { sourceFingerprint } from '../scripts/source-fingerprint.mjs';
+import { stableFieldDecisionRefusal } from '../scripts/stable-field-decision.mjs';
 import { findStep, runStep } from './helpers/workflow-step.mjs';
 const root = fileURLToPath(new URL('..', import.meta.url));
 const a = 'a'.repeat(40), b = 'b'.repeat(40), k = 'e'.repeat(64);
@@ -276,3 +277,83 @@ test('#858 candidate inspects actual first-parent merge delta and committed bund
   rmSync(join(dir,'src/untracked.ts')); rmSync(join(dir,'houseplan.zip'));
   put('dist/houseplan-card.js','corrupt'); assert.throws(() => candidateInputs({ root: dir }), /clean exact-candidate/);
 });
+
+// #916: candidate policy consumes the explicit owner decision without
+// manufacturing any per-issue field/native/GPU observation.
+{
+const tag = 'v1.81.0', beta = `${tag}-beta.4`, version = tag.slice(1), testedSha = 'c'.repeat(40);
+const decision = { schema: 1, tag, testedTag: beta, testedSha, issue: 916, productEquivalent: true };
+const acceptance = { schema: 1, tag, testedTag: beta, testedSha, owner: 'Matysh', verdict: 'accepted',
+  source: 'owner-chat', recordedBy: 'agent', acceptance: 'stand-passed',
+  linkedPerIssueRecords: 'waived-for-this-promotion', statements: ['Owner says the stand acceptance passed; their message is sufficient.'] };
+const ownerComment = (value, login = 'Matysh', marker = 'stable-field-decision') => ({ id: 1, user: { login },
+  html_url: 'https://github.com/Matysh/houseplan-card/issues/916#issuecomment-1',
+  body: `<!-- hp:${marker}\n${JSON.stringify(value)}\n-->` });
+
+function candidateFixture() {
+  const input = { sha: 'a'.repeat(40), tree: 'b'.repeat(40), version, manifest: 'd'.repeat(64), pins: {}, scripts: {},
+    catalogue: { entries: [{ issue: 1, category: 'major' }, { issue: 916, category: 'infra' }] },
+    issueFiles: { 1: ['src/wall-node-move.ts'], 916: ['scripts/release-ledger.mjs'] }, issueMaterials: { 1: 'e'.repeat(64) },
+    fieldDecision: structuredClone(decision) };
+  const issues = [{ number: 1, body: 'implemented', state: 'closed', labels: ['ci:golden'], comments: [] },
+    { number: 916, body: 'owner promotion decision', labels: [], comments: [ownerComment(acceptance)] }];
+  const proof = { status: 'green' };
+  return { input, issues, proof, build: () => buildCandidate({ input, issues, proof, owner: 'Matysh', sceneIds: ['one'] }) };
+}
+
+test('#916 explicit owner chat promotion preserves missing-record truth, strict default and automatic proof', () => {
+  const f = candidateFixture(); const value = f.build();
+  assert.equal(value.ready, true); assert.equal(value.publish, false);
+  assert.equal(value.policy.channel, 'strict'); assert.equal(value.policy.fieldAcceptance, 'owner-confirmed-prerelease-promotion');
+  assert.equal(value.receipts[0].record, null, 'never fabricate per-issue/native/GPU records');
+  assert.ok(value.receipts[0].refusal); assert.equal(value.gpu, true);
+  assert.deepEqual(value.scenes, { change: [], new: [] });
+  assert.match(value.warnings[0], /No native\/GPU observation is fabricated/);
+  delete f.input.fieldDecision;
+  assert.equal(f.build().ready, false, 'stable without explicit reviewed promotion remains strict');
+  f.input.fieldDecision = structuredClone(decision);
+  for (const status of ['failed', 'pending', 'stale', 'missing', 'cancelled']) {
+    f.proof.status = status; assert.equal(f.build().ready, false, status);
+  }
+});
+
+test('#916 changed promotion, foreign/malformed/revoked latest decision and owner veto never revive an older approval', () => {
+  for (const mutate of [
+    f => f.input.version = '1.81.1', f => f.input.fieldDecision.productEquivalent = false,
+    f => f.input.fieldDecision.testedSha = 'e'.repeat(40),
+    f => f.issues[1].comments[0].user.login = 'intruder',
+    f => f.issues[1].comments.push(ownerComment({ ...acceptance, verdict: 'revoked' })),
+    f => f.issues[1].comments.push({ ...ownerComment(acceptance), body: '<!-- hp:stable-field-decision\nnot-json\n-->' }),
+    f => f.issues[0].comments.push({ ...ownerComment({}, 'Matysh', 'candidate-plan'), body: '<!-- hp:candidate-plan\nnot-json\n-->' }),
+  ]) {
+    const f = candidateFixture(); mutate(f); assert.equal(f.build().ready, false);
+  }
+  const f = candidateFixture();
+  f.issues[0].comments.push(ownerComment({ schema: 1, material: f.build().material, verdict: 'rejected' }, 'Matysh', 'candidate-acceptance'));
+  assert.equal(f.build().ready, false);
+  assert.ok(stableFieldDecisionRefusal(decision, { ...acceptance, statements: [] }, { version, owner: 'Matysh' }));
+});
+
+test('#916 prepare independently checks the approved beta is publicly published at the exact SHA', async () => {
+  const f = candidateFixture(); const calls = [];
+  const published = { tag_name: beta, prerelease: true, draft: false, published_at: '2026-10-15T21:29:36Z' };
+  const request = path => {
+    calls.push(path);
+    if (path.includes('/releases/tags/')) return published;
+    if (path.includes('/commits/')) return { sha: testedSha };
+    const issue = f.issues.find(item => path.includes(`/issues/${item.number}`));
+    return path.includes('/comments?') ? issue.comments : issue;
+  };
+  const options = { repo: 'Matysh/houseplan-card', input: f.input, token: 'fixture', request, probe: async () => f.proof };
+  assert.equal((await prepareCandidate(options)).ready, true);
+  assert.ok(calls.some(path => path.endsWith(`/commits/${beta}`)));
+  for (const mutate of [() => published.draft = true, () => published.prerelease = false,
+    () => published.tag_name = 'v1.81.0-beta.3', () => published.published_at = null]) {
+    Object.assign(published, { tag_name: beta, prerelease: true, draft: false, published_at: '2026-10-15T21:29:36Z' });
+    mutate(); await assert.rejects(prepareCandidate(options), /not published at the approved exact SHA/);
+  }
+  Object.assign(published, { tag_name: beta, prerelease: true, draft: false, published_at: '2026-10-15T21:29:36Z' });
+  await assert.rejects(prepareCandidate({ ...options,
+    request: path => path.includes('/commits/') ? { sha: 'f'.repeat(40) } : request(path) }), /approved exact SHA/);
+});
+}

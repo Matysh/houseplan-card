@@ -11,6 +11,7 @@ import { sourceFingerprint } from './source-fingerprint.mjs';
 import { goldenAcceptanceRefusal } from './golden-acceptance.mjs';
 import { GOLDEN_SCENARIOS } from '../demo/golden/matrix.mjs';
 import { versionFromTag } from './release-contract.mjs';
+import { readStableFieldDecision, stableFieldDecisionRefusal } from './stable-field-decision.mjs';
 
 export const digest = value => createHash('sha256').update(typeof value === 'string' || Buffer.isBuffer(value)
   ? value : JSON.stringify(value)).digest('hex');
@@ -103,6 +104,19 @@ export function buildCandidate({ input, issues, proof, owner, sceneIds = GOLDEN_
   if (!SHA.test(input.sha || '') || !SHA.test(input.tree || '')) throw Error('exact candidate SHA/tree required');
   const policy = candidatePolicy(input.version);
   const blockers = [], warnings = [], plans = [], profiles = new Set();
+  let fieldDecision = null;
+  if (input.fieldDecision) {
+    const issue = issues.find(i => i.number === input.fieldDecision.issue);
+    const record = ownerRecord(issue?.comments || [], 'stable-field-decision', owner);
+    const refusal = stableFieldDecisionRefusal(input.fieldDecision, record, { version: input.version, owner });
+    fieldDecision = { input: input.fieldDecision, record, refusal };
+    if (refusal) blockers.push(refusal);
+    else {
+      policy.manualAcceptanceRequired = false;
+      policy.fieldAcceptance = 'owner-confirmed-prerelease-promotion';
+      warnings.push(`Owner accepted ${record.testedTag} on the stand by chat; linked per-issue records waived for ${record.tag} only. No native/GPU observation is fabricated.`);
+    }
+  }
   for (const entry of input.catalogue.entries) {
     const issue = issues.find(i => i.number === entry.issue);
     if (!issue) throw Error(`missing fresh issue #${entry.issue}`);
@@ -114,7 +128,7 @@ export function buildCandidate({ input, issues, proof, owner, sceneIds = GOLDEN_
       required: golden && policy.manualAcceptanceRequired });
     if (delta.blocker) blockers.push(delta.blocker);
     if (golden && !policy.manualAcceptanceRequired && !delta.review && !delta.blocker)
-      warnings.push(`#${issue.number}: beta has no additional owner scene plan; no intentional pixel changes declared`);
+      warnings.push(`#${issue.number}: ${policy.channel === 'beta' ? 'beta' : 'owner-confirmed promotion'} has no additional owner scene plan; no intentional pixel changes declared`);
     plans.push({ issue: entry.issue, body: issueBodyDigest(issue.body), issueMaterial: filesKey, ...delta });
   }
   const cases = [...profiles].sort().flatMap(p => NATIVE_PROFILES[p]);
@@ -139,7 +153,7 @@ export function buildCandidate({ input, issues, proof, owner, sceneIds = GOLDEN_
     receipts.push({ issue: entry.issue, record, refusal });
   }
   if (proof.status !== 'green') blockers.push(`full exact-SHA Validate is ${proof.status}: ${proof.note || 'proof unavailable'} ${proof.url || ''}`);
-  const record = { schema: 1, material, input, policy, plans, scenes, cases, gpu, receipts, proof, blockers, warnings };
+  const record = { schema: 1, material, input, policy, ...(fieldDecision ? { fieldDecision } : {}), plans, scenes, cases, gpu, receipts, proof, blockers, warnings };
   return { ...record, identity: digest(record), ready: blockers.length === 0, publish: false,
     planTemplates: plans.filter(p => p.blocker).map(p => ({ schema: 1, issue: p.issue, body: p.body,
       issueMaterial: p.issueMaterial, change: [], new: [], reason: 'Explain reviewed intent; empty arrays are an explicit no-scene-change declaration.' })),
@@ -177,5 +191,7 @@ export function candidateInputs({ candidate = 'HEAD', root = process.cwd(), gitR
   // Read the channel from the exact committed material, never a CLI/env waiver.
   const version = JSON.parse(git(['show', `${sha}:package.json`])).version;
   candidatePolicy(version);
-  return { sha, tree: git(['rev-parse', `${sha}^{tree}`]), version, manifest: digest(manifest), pins, catalogue, issueFiles, issueMaterials, scripts };
+  const fieldDecision = readStableFieldDecision({ candidate: sha, version, root, git });
+  return { sha, tree: git(['rev-parse', `${sha}^{tree}`]), version, manifest: digest(manifest), pins, catalogue, issueFiles, issueMaterials, scripts,
+    ...(fieldDecision ? { fieldDecision } : {}) };
 }

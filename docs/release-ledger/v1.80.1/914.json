@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 914,
+  "baseStable": "v1.80.1",
+  "category": "infra",
+  "rationale": "README Boosty support links and GitHub funding metadata delivered on main at cdd992c8. Repository/documentation metadata, not installed product behavior relative to v1.80.1. Classified during stable preparation before returning main ancestry to dev."
+}

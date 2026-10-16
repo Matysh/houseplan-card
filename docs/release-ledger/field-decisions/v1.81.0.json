@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "tag": "v1.81.0",
+  "testedTag": "v1.81.0-beta.4",
+  "testedSha": "caf81566e2190cfeea4facac9fb286fb11040a3d",
+  "issue": 916
+}

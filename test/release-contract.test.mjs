@@ -7,6 +7,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { milestoneQuery } from '../scripts/release-ledger.mjs';
+import { readStableFieldDecision } from '../scripts/stable-field-decision.mjs';
 import { narrativeLanguages } from '../scripts/release-narrative.mjs';
 import { TELEGRAM_LIMIT } from '../scripts/telegram-release.mjs';
 import {
@@ -330,3 +331,62 @@ test('manual publish workflow is draft-first, exact-SHA gated and self-contained
   assert.ok(local.includes("['SIGINT'"));
   assert.ok(!local.includes("run('tar'"));
 });
+
+// #916: version-only promotion belongs to this existing release version-source
+// fixture reader. The frozen monolith-reader inventory is unchanged.
+{
+const tag = 'v1.81.0', beta = `${tag}-beta.4`, version = tag.slice(1), testedSha = 'c'.repeat(40);
+const decision = { schema: 1, tag, testedTag: beta, testedSha, issue: 916, productEquivalent: true };
+function fixture(t) {
+  const root = mkdtempSync(join(tmpdir(), 'hp-promotion-916-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const env = { ...process.env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: process.platform === 'win32' ? 'NUL' : '/dev/null',
+    GIT_AUTHOR_NAME: 'fixture', GIT_AUTHOR_EMAIL: 'fixture@test', GIT_COMMITTER_NAME: 'fixture', GIT_COMMITTER_EMAIL: 'fixture@test' };
+  const git = args => execFileSync('git', args, { cwd: root, env, encoding: 'utf8', stdio: ['ignore','pipe','pipe'] }).trim();
+  const put = (path, value) => { mkdirSync(join(root, path, '..'), { recursive: true }); writeFileSync(join(root, path), value); };
+  const commit = () => { git(['add', '.']); git(['commit', '-qm', 'fixture']); };
+  const versions = value => {
+    put('package.json', JSON.stringify({ version: value, dependencies: { unchanged: '1.0.0' } }));
+    put('package-lock.json', JSON.stringify({ version: value, packages: { '': { version: value }, dep: { version: '1.0.0' } } }));
+    put('custom_components/houseplan/manifest.json', JSON.stringify({ domain: 'houseplan', version: value }));
+    put('custom_components/houseplan/const.py', `VERSION = '${value}'\nUNCHANGED = True\n`);
+    put('src/houseplan-card.ts', `const CARD_VERSION = '${value}';\nexport const card = true;\n`);
+    put('src/houseplan-editor-runtime.ts', `const CARD_VERSION = '${value}';\nexport const editor = true;\n`);
+  };
+  git(['init', '-q', '-b', 'dev']); versions(beta.slice(1));
+  put('src/device.ts', 'export const device = true;');
+  put('scripts/css-template-minifier.mjs', 'export const minifier = true;');
+  commit(); const base = git(['rev-parse', 'HEAD']); git(['tag', beta]);
+  versions(version);
+  put(`docs/release-ledger/field-decisions/${tag}.json`, JSON.stringify({ ...decision, testedSha: base }));
+  put('scripts/release-ledger.mjs', 'export const bookkeepingOnly = true;');
+  commit();
+  return { root, git, put, commit, base, read: () => readStableFieldDecision({ root, git, candidate: 'HEAD', version }) };
+}
+
+test('#916 promotion proves every product byte unchanged except the seven exact version values', t => {
+  const f = fixture(t); const result = f.read();
+  assert.equal(result.productEquivalent, true); assert.equal(result.testedSha, f.base);
+  assert.ok(result.changes.includes('package-lock.json'));
+  assert.equal(readStableFieldDecision({ root: f.root, git: f.git, candidate: 'HEAD', version: '1.81.1' }), null);
+  assert.equal(readStableFieldDecision({ root: f.root, git: f.git, candidate: 'HEAD', version: '1.81.0-rc.1' }), null);
+  f.git(['tag', '-f', beta]);
+  assert.throws(f.read, /tag changed/);
+});
+
+for (const [path, value] of [
+  ['src/device.ts', 'export const device = false;'],
+  ['package.json', JSON.stringify({ version, dependencies: { unchanged: '2.0.0' } })],
+  ['package-lock.json', JSON.stringify({ version, packages: { '': { version }, dep: { version: '2.0.0' } } })],
+  ['custom_components/houseplan/manifest.json', JSON.stringify({ domain: 'other', version })],
+  ['src/houseplan-card.ts', `const CARD_VERSION = '${version}';\nexport const card = false;\n`],
+  ['custom_components/houseplan/const.py', `VERSION = '${version}'\nUNCHANGED = False\n`],
+  ['scripts/css-template-minifier.mjs', 'export const minifier = false;'],
+  ['scripts/unknown-builder.mjs', 'export const unknown = true;'],
+  ['demo/golden/changed.mjs', 'export const capture = true;'],
+  ['.nvmrc', '24.0.0'],
+]) test(`#916 owner-tested promotion refuses changed product/dependency/build/capture input: ${path}`, t => {
+  const f = fixture(t); f.put(path, value); f.commit();
+  assert.throws(f.read, /Product changed|Unreviewed product\/build\/capture/);
+});
+}

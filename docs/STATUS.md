@@ -25,6 +25,13 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Stable preparation (#916) includes reachable second-parent task deliveries and
+uses a bounded 8 MiB GitHub transport. The owner's explicit stand acceptance
+of beta.4 by chat permits only product-equivalent 1.81.0 promotion; the reviewed
+decision and fresh authenticated comment are checked separately from absent
+native/GPU receipts. Existing automatic gates, scene boundaries and vetoes
+remain mandatory, and other stable/RC versions keep their strict default.
+
 GitHub funding metadata (#915) is an exact non-input of Validate. The guarded
 `.github` root and YAML/workflow selection remain unchanged; ordinary coverage
 and affected-check witnesses keep unknown neighbouring files fail-closed.

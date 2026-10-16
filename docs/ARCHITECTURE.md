@@ -1,5 +1,14 @@
 # House Plan architecture
 
+Stable field decisions (#916) are release metadata, not product state or native
+receipts. A reviewed tag/SHA binding plus the latest authenticated owner comment
+can authorize promotion of an owner-tested public beta with unchanged product,
+dependencies and capture/build inputs except exact version fields. The reader
+keeps missing per-issue records visible as warnings, never fabricates GPU proof,
+and cannot override explicit vetoes, supplied invalid plans or automatic gates.
+Release accounting reads all reachable parents, retaining each task's original
+implementation provenance instead of borrowing a merge's unrelated issue.
+
 Presentation seams (#907) have no new data or write authority. The marker form
 passes its effective locale to the reactive read-only preview, which retains
 HA fallback when standalone. The existing write-error mapper recognises the

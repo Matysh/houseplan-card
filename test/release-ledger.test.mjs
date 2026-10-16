@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { catalogueFromCommits, readCatalogue, readMergeEntry, reconcileEntry, validateEntry, verifyMilestone } from '../scripts/release-ledger.mjs';
+import { execFileSync } from 'node:child_process';
+import { catalogueFromCommits, ghApi, readCatalogue, readMergeEntry, reconcileEntry, validateEntry, verifyMilestone } from '../scripts/release-ledger.mjs';
 
 const cycle = { schema: 1, baseStable: 'v1.80.1', targetStable: 'v1.81.0', milestone: { number: 3, title: '1.81' } };
 const entry = (issue, category) => ({ schema: 1, issue, baseStable: cycle.baseStable, category,
@@ -77,4 +78,20 @@ test('public collection includes closed issues and rejects extra unmerged/infra 
   assert.doesNotThrow(() => verifyMilestone({ catalogue, repo: 'x/y', api }));
   const extra = (method, path) => path.includes('/milestones/') ? { title: '1.81' } : [...api(method, path), { number: 2 }];
   assert.throws(() => verifyMilestone({ catalogue, repo: 'x/y', api: extra }), /exactly candidate/);
+});
+
+test('#916 GitHub transport reads a full >1 MiB child response and fails closed on malformed/failed/oversized output', () => {
+  const execute = script => (command, args, options) => {
+    assert.equal(command, 'gh');
+    assert.deepEqual(args, ['api', '--method', 'GET', 'repos/x/y/issues']);
+    return execFileSync(process.execPath, ['-e', script], options);
+  };
+  const payload = "process.stdout.write(JSON.stringify({body:'x'.repeat(1500000),tail:'complete'}))";
+  const value = ghApi('GET', 'repos/x/y/issues', undefined, execute(payload));
+  assert.equal(value.body.length, 1500000);
+  assert.equal(value.tail, 'complete');
+  assert.throws(() => ghApi('GET', 'repos/x/y/issues', undefined, execute("process.stdout.write('{broken')")), SyntaxError);
+  assert.throws(() => ghApi('GET', 'repos/x/y/issues', undefined, execute("process.exit(7)")), error => error.status === 7);
+  assert.throws(() => ghApi('GET', 'repos/x/y/issues', undefined,
+    execute("process.stdout.write(JSON.stringify({body:'x'.repeat(9*1024*1024)}))")), error => error.code === 'ENOBUFS');
 });

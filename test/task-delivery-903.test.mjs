@@ -145,3 +145,32 @@ test('#903 stale base and immutable candidate checks survive spec phase separati
   f.run(['tag', 'v1.80.2']);
   assert.throws(f.catalogue, /latest reachable previous stable/);
 });
+
+test('#916 a second-parent task retains its own implementation and classification, not the merge task or promotion trailers', t => {
+  const f = fixture(t);
+  f.run(['switch', '-qc', 'not-merged']);
+  f.put('scripts/unreachable.mjs', 'unreachable');
+  f.commit('unreachable\n\nIssue: #999\nUser-Visible: no');
+  f.run(['switch', '-q', 'dev']);
+  f.spec();
+  f.run(['switch', '-qc', 'side']);
+  f.put('scripts/feature.mjs', 'export const value = 1;');
+  f.put('docs/release-ledger/v1.80.1/2.json', JSON.stringify(classification('Implemented CLI change')));
+  const implementation = f.commit('side implementation\n\nIssue: #2\nUser-Visible: no');
+  f.run(['switch', '-q', 'dev']);
+  f.put('scripts/other.mjs', 'export const other = 2;');
+  f.put('docs/release-ledger/v1.80.1/9.json', JSON.stringify({ ...classification('Other CLI task'), issue: 9 }));
+  f.commit('other implementation\n\nIssue: #9\nUser-Visible: no');
+  f.run(['merge', '--no-ff', 'side', '-m', 'merge side into other task\n\nIssue: #9\nUser-Visible: no']);
+  f.put('docs/promotion.md', 'promotion only');
+  f.commit('promotion\n\nRelease: v1.81.0-beta.4\nIssue: #66\nUser-Visible: no');
+  const result = f.catalogue();
+  assert.deepEqual(result.entries.map(row => row.issue), [2, 9]);
+  assert.deepEqual(result.entries.find(row => row.issue === 2).commits, [implementation]);
+  assert.equal(readMergeEntry('HEAD', 2, f.run).entry.issue, 2);
+  assert.equal(result.specDeliveries[0].issue, 2);
+  // A reachable side implementation must still renew an older placeholder.
+  f.put('docs/release-ledger/v1.80.1/2.json', JSON.stringify(classification('Renewed reviewed CLI facts')));
+  f.commit('renew facts\n\nIssue: #2\nUser-Visible: no');
+  assert.doesNotThrow(f.catalogue);
+});

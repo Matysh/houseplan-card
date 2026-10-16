@@ -67,7 +67,9 @@ export function readMergeEntry(candidate, issue, gitRunner = git) {
 }
 
 function readDeliveryHistory(base, candidate, gitRunner) {
-  const raw = gitRunner(['log', '--first-parent', '--format=%H%x1f%B%x1e', `${base}..${candidate}`]);
+  // A merge may name its own task while delivering another task through its
+  // second parent. Reachability, not the chosen mainline, proves delivery.
+  const raw = gitRunner(['log', '--topo-order', '--format=%H%x1f%B%x1e', `${base}..${candidate}`]);
   return raw.split('\x1e').map(record => record.trim()).filter(Boolean).map(record => {
     const [sha, ...message] = record.split('\x1f');
     return readTaskCommit({ sha, message: message.join('\x1f') }, gitRunner);
@@ -155,9 +157,9 @@ export function reconcileEntry({ cycle, entry, api, repo }) {
   return { changed: true, milestone: desired };
 }
 
-export const ghApi = (method, endpoint, body) => JSON.parse(execFileSync('gh', [
+export const ghApi = (method, endpoint, body, execute = execFileSync) => JSON.parse(execute('gh', [
   'api', '--method', method, endpoint, ...(body ? ['--input', '-'] : []),
-], { encoding: 'utf8', ...(body ? { input: JSON.stringify(body) } : {}) }));
+], { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024, ...(body ? { input: JSON.stringify(body) } : {}) }));
 
 export function verifyMilestone({ catalogue, repo, api = ghApi }) {
   const { cycle, userIssues } = catalogue;

@@ -2002,6 +2002,20 @@ baseline acceptance, declared scene boundaries, witness floor, ship review and
 public asset passport remain mandatory on every channel; there is no CLI/env
 waiver. Channel policy is read from the candidate's committed package version.
 
+The owner explicitly accepted `v1.81.0-beta.4` on the stand by chat on
+2026-10-16 and said that message was sufficient without an evidence link
+(#916). The reviewed `field-decisions/v1.81.0.json` binds this one promotion
+to the exact public beta SHA. Preparation checks its published status, ancestry,
+unchanged product/dependencies/build/capture inputs (apart from the seven
+version values), and the latest authenticated `hp:stable-field-decision`
+comment in #916. The comment is transparently agent-recorded from the human's
+words, not a fabricated per-issue/native/GPU receipt. Missing additional human
+records become explicit warnings only for this product-equivalent promotion;
+vetoes, malformed supplied plans, undeclared golden drift and all automatic
+checks still refuse. Other stable/RC versions remain strict unless the owner
+makes a separate explicit decision and its implementation is reviewed. There
+is no CLI/env override. New product or capture changes invalidate this approval.
+
 ### Primary prerelease path
 
 Before the existing owner publish command, run `npm run release:prepare` on a
@@ -2329,6 +2343,10 @@ node scripts/release-ledger.mjs catalogue --candidate=HEAD --tag=vX.Y.Z
 
 The catalogue intersects classified implementations with `Issue:` commit evidence
 in previous-stable..candidate, excluding release-promotion trailer repetition.
+All reachable parents are read in topological order: a merge's own issue
+trailer must not hide another task delivered through its second parent (#916).
+The bounded GitHub JSON transport accepts up to 8 MiB per response and still
+fails explicitly on overflow, invalid JSON or CLI failure.
 SPEC publication uses the versioned `Delivery-Phase: spec-review/v1` terminal
 trailer (#903). `task-delivery.mjs` checks the publisher identity/subject, exactly
 one new SPEC document for the issue plus optional INDEX, and its own machine

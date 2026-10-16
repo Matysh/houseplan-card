@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 916,
+  "baseStable": "v1.80.1",
+  "category": "infra",
+  "rationale": "Stable preparation tooling: account for reachable second-parent implementations, bound larger GitHub responses, and record the owner's explicit beta.4 stand-acceptance decision for product-equivalent 1.81.0 promotion. No runtime product behavior changes."
+}
