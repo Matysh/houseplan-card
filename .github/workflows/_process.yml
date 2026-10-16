@@ -1779,10 +1779,15 @@ jobs:
           # уборка generated outputs сносила и untracked-артефакт ревью.
           # Теперь его место — RUNNER_TEMP, и уборка дерева ему не
           # страшна.
+          findings=''
           if [ -f "$SOURCE" ]; then
             mkdir -p docs/reviews
             cp "$SOURCE" "$doc"
             echo "документ взят из $SOURCE ($(wc -c < "$doc") байт)"
+            findings=$(node "$TOOLS/scripts/review-findings-policy.mjs" publish)
+            if [ -n "$findings" ]; then
+              printf '\nПобочные находки: [%s](findings/%s).\n' "$findings" "${findings##*/}" >> "$doc"
+            fi
             # Якоря дописывает конвейер, а не ревьюер (#414). Дисциплина здесь
             # уже подводила: на #403 SHA сняли до ребейза и не сверили перед
             # выводом — через раунд команда из §2.10 не работала. Машина же
@@ -1803,10 +1808,8 @@ jobs:
           # забрал бы всё, что там окажется, а после reset там не должно быть
           # ничего постороннего — но полагаться на «не должно» здесь нельзя.
           git add -- "$doc" 2>/dev/null || true
-          findings=$(node "$TOOLS/scripts/review-findings-policy.mjs" publish)
           if [ -n "$findings" ]; then
-            printf '\nПобочные находки: [%s](findings/%s).\n' "$findings" "${findings##*/}" >> "$doc"
-            git add -- "$doc" "$findings"
+            git add -- "$findings"
           fi
           # #635/#657 (1б): индекс пересобирается тем же коммитом, что и
           # документ, только когда документ идёт прямо в dev (ревью ТЗ). В ветку

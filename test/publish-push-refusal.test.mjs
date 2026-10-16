@@ -350,6 +350,8 @@ test('#926 actual publisher persists file-mode findings beside the review, survi
   const stored = git(box.origin, 'show', `${BRANCH}:${policy.path}`);
   assert.ok(stored.includes('Reproduce: unrelated fixture'));
   assert.ok(git(box.origin, 'show', `${BRANCH}:${REVIEW_DOC}`).includes('(findings/9-code-r1.md)'));
+  assert.equal(lastLine(git(box.origin, 'show', `${BRANCH}:${REVIEW_DOC}`)), '<!-- hp:usage-none reason=missing -->',
+    'file mode retains #737 usage as the last machine-anchor line');
   const paths = git(box.origin, 'diff', '--name-only', `${BRANCH}~1`, BRANCH).split('\n').sort();
   assert.deepEqual(paths, [REVIEW_DOC, policy.path].sort(), 'no product or settings writes');
   noSecrets(result);
