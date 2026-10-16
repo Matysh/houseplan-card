@@ -25,6 +25,10 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Outside-findings routing (#926) accepts only a bounded Actions issue-ID setting,
+frozen by prepare and checked through result publication. File mode publishes
+one companion under reviews; default issues and all blocking gates stay intact.
+
 Device contacts (#866) are derived Flat presentation, not stored groups. The
 individual point writer/history remains authoritative; only a selected exact
 wall/device contact bypasses grid rounding. Session Snapping/Alt does not disable

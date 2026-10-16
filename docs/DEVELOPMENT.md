@@ -1535,6 +1535,26 @@ execution, and profile selection. They supplement #910 without editing the
 four original reports, verdicts, machine anchors or raw, and without historical
 test/benchmark/native/mutant replay or a new semantic-checking mechanism.
 
+### Outside review findings routing (#926)
+
+With owner authorization, set the repository Actions configuration variable
+`HP_REVIEW_OUTSIDE_FINDINGS_FILE_ISSUES` to a JSON array of explicit issue IDs
+before S4/S7, e.g. `[926,927]`. Empty/`[]` restores the default issue route;
+malformed/oversized values fail closed. Do not place this setting in issue text,
+handoff or source. Existing settings permissions remain unchanged. This change
+does not enable the variable in the live repository.
+
+Prepare freezes one run's route. To revoke an in-flight route, cancel that run
+and start a new request; editing the variable alone does not change its snapshot.
+File mode publishes `docs/reviews/findings/<issue>-<stage>-r<round>.md` with the
+review; the regular archive link repair keeps its link reachable later. These
+companions remain under reviews, not implementation/release membership. New
+reviews require the typed snapshot; in-flight old workflows retain only the
+old issues protocol. This is instruction delivery, not a Bash sandbox. See
+[PROCESS §10.4](../PROCESS.md#104-событийный-конвейер-метка-как-триггер).
+GitHub documents [configuration variables](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-variables)
+and [caller variables in reusable workflows](https://docs.github.com/en/actions/reference/workflows-and-actions/reusing-workflow-configurations).
+
 ### Labs presentation flags
 
 Labs is an internal, presentation-only runtime in `src/labs.ts`; it must never

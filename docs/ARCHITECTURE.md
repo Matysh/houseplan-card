@@ -1491,6 +1491,17 @@ build fingerprint; a failed load is fail-dark for the strips only and retried
 on the next explicit entry. Budgets: `LAZY_LED_GZIP_CEILING` and
 `LAZY_LED_EDITOR_GZIP_CEILING` in `scripts/bundle-budget.mjs`.
 
+## Outside-findings routing (#926)
+
+Trusted
+Actions configuration selects only explicit issue IDs; prepare freezes a typed
+identity/mode/deterministic path, bound to its output and artifact passport.
+The model receives that policy outside the checkout. Integration independently
+checks the trusted snapshot, exact companion set/hash/text, and publishes only
+the derived reviews/findings path beside the report. Legacy in-flight results
+can use only their old no-companion protocol. No arbitrary instructions, new
+model capabilities, severity waivers or merge authority are introduced.
+
 ## Review handoff provenance (#904)
 
 `review-handoff.mjs` owns a bounded syntactic parser and edited-comment selector

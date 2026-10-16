@@ -9,6 +9,7 @@ import { checkReviewInput, collectReviewInput, preflightApplies, preflightCommen
 import { handoffDigest, handoffSnapshot, parseHandoff, selectHandoff } from '../scripts/review-handoff.mjs';
 import { issueBodyDigest } from '../scripts/review-doc-guard.mjs';
 import { findStep, runStep } from './helpers/workflow-step.mjs';
+import { findingsPolicy } from '../scripts/review-findings-policy.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const workflow = readFileSync(join(ROOT, '.github/workflows/_process.yml'), 'utf8');
@@ -167,7 +168,8 @@ test('#855 actual workflow shell: valid format reaches reviewer; malformed ledge
     NUM: '7', STAGE: 'code', CYCLE: '1', BRANCH: 'issue/7-test', MATERIAL_SHA: git('rev-parse', 'HEAD'),
     MATERIAL_TREE: git('rev-parse', 'HEAD^{tree}'), MATERIAL_SPECS: '', MATERIAL_ISSUE_BODY: issueBodyDigest(''),
     VALIDATE_RESULT: 'green', VALIDATE_URL: 'https://example.test/validate', REBASE_NOTE: '', VALIDATED_NOTE: '',
-    SPEC_BODY_CHANGED: 'false', SPEC_BODY_DOC: '', SPEC_BODY_RECORDED: '', HANDOFF_SNAPSHOT: selectedSnapshot };
+    SPEC_BODY_CHANGED: 'false', SPEC_BODY_DOC: '', SPEC_BODY_RECORDED: '', HANDOFF_SNAPSHOT: selectedSnapshot,
+    FINDINGS_POLICY_SNAPSHOT: JSON.stringify(findingsPolicy('', { repo: 'owner/repo', issue: 7, stage: 'code', round: 1 })) };
   const preparedStep = findStep(workflow, { id: 'prepared' });
   assert.equal(runStep(preparedStep, preparedStep.run, { cwd: dir, env: preparedEnv }).status, 0);
   const verifyStep = findStep(workflow, { name: 'Проверить контракт и exact material' });
@@ -176,6 +178,11 @@ test('#855 actual workflow shell: valid format reaches reviewer; malformed ledge
   const packetDir = join(dir, 'review-prepared'), packetPath = join(packetDir, 'prepared.json');
   const packet = JSON.parse(readFileSync(packetPath));
   assert.equal(packet.handoff_snapshot, selectedSnapshot);
+  writeFileSync(packetPath, JSON.stringify({ ...packet, findings_policy_snapshot: JSON.stringify(findingsPolicy('[7]',
+    { repo: 'owner/repo', issue: 7, stage: 'code', round: 1 })) }));
+  writeFileSync(join(packetDir, 'manifest.sha256'), execFileSync('sha256sum', ['prepared.json'], { cwd: packetDir }));
+  assert.notEqual(runStep(verifyStep, verifyStep.run, { cwd: dir, env: preparedEnv }).status, 0,
+    'A rehashed packet cannot replace the Actions routing policy');
   writeFileSync(packetPath, JSON.stringify({ ...packet, handoff_snapshot: handoffSnapshot(provenance('foreign text')) }));
   writeFileSync(join(packetDir, 'manifest.sha256'), execFileSync('sha256sum', ['prepared.json'], { cwd: packetDir }));
   assert.notEqual(runStep(verifyStep, verifyStep.run, { cwd: dir, env: preparedEnv }).status, 0,

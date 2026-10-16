@@ -6,12 +6,15 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
+import { findingsPolicy } from '../scripts/review-findings-policy.mjs';
 
 import {
   reviewResultProblems, parseManifest, sha256, REQUIRED_FILES, PASSPORT_FIELDS, ROUTES, verdictRoute,
 } from '../scripts/review-result-gate.mjs';
 
 const EXPECTED = Object.fromEntries(PASSPORT_FIELDS.map((f) => [f, `значение-${f}`]));
+Object.assign(EXPECTED, { repo: 'owner/repo', issue: '7', stage: 'code', cycle: '1',
+  findings_policy_snapshot: JSON.stringify(findingsPolicy('', { repo: 'owner/repo', issue: 7, stage: 'code', round: 1 })) });
 
 /** Честный artifact стадии модели. */
 function fixture(over = {}) {

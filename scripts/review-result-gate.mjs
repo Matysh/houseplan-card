@@ -20,6 +20,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { FINDINGS_FILE, findingsTextProblems, readFindingsPolicy } from './review-findings-policy.mjs';
 
 /** Ровно эти файлы и ни одного больше: лишний файл — это уже чужой artifact. */
 export const REQUIRED_FILES = ['manifest.sha256', 'prepared.json', 'review-document.md', 'verdict.json'];
@@ -29,6 +30,7 @@ export const PASSPORT_FIELDS = [
   'material_sha', 'material_tree', 'material_specs', 'material_issue_body',
   'validate_result', 'validate_url', 'rebase_note', 'validated_note',
   'spec_body_changed', 'spec_body_doc', 'spec_body_recorded',
+  'findings_policy_snapshot',
 ];
 export const VERDICTS = ['green', 'yellow', 'red'];
 /**
@@ -88,8 +90,17 @@ export function parseManifest(text) {
  */
 export function reviewResultProblems({ files, read, expected }) {
   const problems = [];
+  let policy;
+  try {
+    // In-flight pre-#926 workflow has no trusted output: retain only its old
+    // four-file issues protocol. It can never authorize a companion/path.
+    policy = expected.findings_policy_snapshot ? readFindingsPolicy(expected.findings_policy_snapshot, {
+      repo: expected.repo, issue: Number(expected.issue), stage: expected.stage, round: Number(expected.cycle),
+    }) : { mode: 'issues' };
+  } catch (error) { return [`доверенная политика находок: ${error.message}`]; }
+  const required = [...REQUIRED_FILES, ...(policy.mode === 'file' ? [FINDINGS_FILE] : [])];
   const actual = [...files].sort();
-  const wanted = [...REQUIRED_FILES].sort();
+  const wanted = [...required].sort();
   if (actual.join(',') !== wanted.join(',')) {
     return [`набор файлов не тот: ожидалось ${wanted.join(', ')}, получено ${actual.join(', ') || '(пусто)'}`];
   }
@@ -97,17 +108,18 @@ export function reviewResultProblems({ files, read, expected }) {
   const manifest = parseManifest(read('manifest.sha256'));
   if (!manifest) return ['manifest.sha256 не разобран'];
   const covered = manifest.map((row) => row.name).sort();
-  const mustCover = REQUIRED_FILES.filter((name) => name !== 'manifest.sha256').sort();
+  const mustCover = required.filter((name) => name !== 'manifest.sha256').sort();
   if (covered.join(',') !== mustCover.join(',')) {
     problems.push(`manifest покрывает не те файлы: ${covered.join(', ') || '(пусто)'}`);
   }
   for (const row of manifest) {
-    if (!REQUIRED_FILES.includes(row.name)) continue;
+    if (!required.includes(row.name)) continue;
     const digest = sha256(read(row.name));
     if (digest !== row.hash) problems.push(`контрольная сумма не сходится: ${row.name}`);
   }
 
   if (!String(read('review-document.md')).trim()) problems.push('документ ревью пуст');
+  if (policy.mode === 'file') problems.push(...findingsTextProblems(read(FINDINGS_FILE)));
 
   let prepared;
   try {
@@ -142,6 +154,7 @@ if (invokedDirectly) {
   const expected = Object.fromEntries(PASSPORT_FIELDS.map((field) => [field, env(field)]));
   expected.run_id = process.env.GITHUB_RUN_ID ?? '';
   expected.run_attempt = process.env.GITHUB_RUN_ATTEMPT ?? '';
+  expected.repo = process.env.REPO ?? '';
   const problems = reviewResultProblems({
     files: readdirSync(dir, { withFileTypes: true }).filter((e) => e.isFile()).map((e) => e.name),
     read: (name) => readFileSync(resolve(dir, name), 'utf8'),

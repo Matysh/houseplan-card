@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 926,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Adds a bounded trusted Actions channel for routing out-of-scope review findings to a published companion instead of new issues. No product behavior, severity waiver, gate relaxation, new model permissions, automatic live setting or historical verdict change."
+}

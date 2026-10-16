@@ -11,6 +11,7 @@ import { PUSH_REFUSAL, classifyPushRefusal, refusalSummary } from '../scripts/me
 import { buildIndex } from '../scripts/reviews-index.mjs';
 import { findStep, runStep, workflowSteps } from './helpers/workflow-step.mjs';
 import { importClosure } from './helpers/import-closure.mjs';
+import { findingsPolicy } from '../scripts/review-findings-policy.mjs';
 
 // #723: два шага публикуют коммит и прежде любой отказ push считали сдвигом
 // ветки — документ ревью релиза в `dev` (release-review.yml, три попытки) и
@@ -51,7 +52,7 @@ const git = (cwd, ...args) => execFileSync('git', args, {
 const commitAll = (cwd, msg) => { git(cwd, 'add', '-A'); git(cwd, 'commit', '-q', '-m', msg); };
 
 /** Скрипты, которые зовут шаги, — с замыканием импортов. */
-const STEP_SCRIPTS = ['release-review.mjs', 'ship-review.mjs', 'reviews-index.mjs', 'review-doc-guard.mjs', 'merge-candidate.mjs']
+const STEP_SCRIPTS = ['release-review.mjs', 'ship-review.mjs', 'reviews-index.mjs', 'review-doc-guard.mjs', 'merge-candidate.mjs', 'review-findings-policy.mjs']
   .reduce((seen, name) => importClosure(join(SCRIPTS, name), seen), new Set());
 
 const hasTools = () => process.platform !== 'win32'
@@ -330,8 +331,40 @@ function runReviewDoc(box, out = '{"verdict":"green","high":0}', extra = {}) {
     BRANCH, NUM: '9', STAGE: 'code', CYCLE: '1', SOURCE: source, TOOLS: extra.TOOLS ?? devTools(box),
     MATERIAL_SHA: git(box.origin, 'rev-parse', BRANCH), MATERIAL_TREE: git(box.origin, 'rev-parse', `${BRANCH}^{tree}`),
     MATERIAL_SPECS: '', MATERIAL_ISSUE_BODY: '', OUT: out, ...extra,
+    REPO: 'o/r', FINDINGS_POLICY_SNAPSHOT: extra.FINDINGS_POLICY_SNAPSHOT ?? JSON.stringify(findingsPolicy('',
+      { repo: 'o/r', issue: 9, stage: 'code', round: 1 })),
   });
 }
+
+test('#926 actual publisher persists file-mode findings beside the review, surviving a real rebase', t => {
+  if (!hasTools()) { t.skip('bash/tar/jq/sha256sum unavailable'); return; }
+  const box = sandbox(tempRoot(t, 'hp-926-publish-'));
+  taskBranch(box);
+  box.neighbour(BRANCH, 1, 'neighbour.txt', 'concurrent change\n');
+  const source = join(box.temp, 'outside.md');
+  writeFileSync(source, '## Medium outside scope\nReproduce: unrelated fixture, expected X; priority P2.\n');
+  const policy = findingsPolicy('[9]', { repo: 'o/r', issue: 9, stage: 'code', round: 1 });
+  const result = runReviewDoc(box, undefined, { REVIEW_FINDINGS: source, FINDINGS_POLICY_SNAPSHOT: JSON.stringify(policy) });
+  assert.equal(result.status, 0, result.stderr + result.stdout);
+  assert.equal(result.pushes, 2, 'real stale-lease rebase is retained');
+  const stored = git(box.origin, 'show', `${BRANCH}:${policy.path}`);
+  assert.ok(stored.includes('Reproduce: unrelated fixture'));
+  assert.ok(git(box.origin, 'show', `${BRANCH}:${REVIEW_DOC}`).includes('(findings/9-code-r1.md)'));
+  const paths = git(box.origin, 'diff', '--name-only', `${BRANCH}~1`, BRANCH).split('\n').sort();
+  assert.deepEqual(paths, [REVIEW_DOC, policy.path].sort(), 'no product or settings writes');
+  noSecrets(result);
+});
+
+test('#926 actual publisher refuses a forged companion path before any push', t => {
+  if (!hasTools()) { t.skip('bash/tar/jq/sha256sum unavailable'); return; }
+  const box = sandbox(tempRoot(t, 'hp-926-forged-'));
+  taskBranch(box);
+  const policy = { ...findingsPolicy('[9]', { repo: 'o/r', issue: 9, stage: 'code', round: 1 }), path: 'src/evil.ts' };
+  const result = runReviewDoc(box, undefined, { FINDINGS_POLICY_SNAPSHOT: JSON.stringify(policy) });
+  assert.notEqual(result.status, 0);
+  assert.equal(result.pushes, 0);
+  assert.match(result.stderr, /identity\/path\/source mismatch/);
+});
 
 test('#723 _process.yml на настоящем bash: ветка ушла вперёд — прежний ребейз и второй push, документ на ветке', (t) => {
   if (!hasTools()) { t.skip('bash/tar/jq/sha256sum недоступны'); return; }
