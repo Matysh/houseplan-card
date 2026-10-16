@@ -32,7 +32,7 @@ INDEX сохраняет существующий генератор/истор�
 появление нового документа всё равно создаёт нужный index commit.
 Read-only weight report хранит host/phase/SHA/raw object KiB/logical assets,
 не вызывает GC/clone/LFS/history writes. Cross-clone acceptance всегда false.
-[Результаты и ограничения](../process/ENTRY-MEASUREMENTS-860.md): прежний
+[Результаты и ограничения](../../../docs/process/ENTRY-MEASUREMENTS-860.md): прежний
 Windows проект здесь недоступен; WSL 94255 KiB нельзя объявить экономией от
 Windows post-GC. Настоящее сравнение #628 остаётся на 25.10 с тем же clone/phase.
 

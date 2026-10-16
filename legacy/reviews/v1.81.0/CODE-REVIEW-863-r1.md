@@ -39,16 +39,16 @@ Daycycle сохраняет три чередующиеся пары × 60 ша�
 
 | Запуск | static median ms | daynight median ms | median paired ratio | Исходный отчёт |
 |---|---:|---:|---:|---|
-| 01 | 144.421 | 160.169 | 1.12149 | [JSON](evidence-863/daycycle-01.json) |
-| 02 | 138.393 | 174.460 | 1.18513 | [JSON](evidence-863/daycycle-02.json) |
-| 03 | 145.190 | 156.036 | 1.06883 | [JSON](evidence-863/daycycle-03.json) |
-| 04 | 122.386 | 166.658 | 1.31991 | [JSON](evidence-863/daycycle-04.json) |
-| 05 | 136.002 | 151.063 | 1.08751 | [JSON](evidence-863/daycycle-05.json) |
+| 01 | 144.421 | 160.169 | 1.12149 | [JSON](../../../docs/reviews/evidence-863/daycycle-01.json) |
+| 02 | 138.393 | 174.460 | 1.18513 | [JSON](../../../docs/reviews/evidence-863/daycycle-02.json) |
+| 03 | 145.190 | 156.036 | 1.06883 | [JSON](../../../docs/reviews/evidence-863/daycycle-03.json) |
+| 04 | 122.386 | 166.658 | 1.31991 | [JSON](../../../docs/reviews/evidence-863/daycycle-04.json) |
+| 05 | 136.002 | 151.063 | 1.08751 | [JSON](../../../docs/reviews/evidence-863/daycycle-05.json) |
 
-Также сохранён [первый диагностический JSON](evidence-863/daycycle-.json),
+Также сохранён [первый диагностический JSON](../../../docs/reviews/evidence-863/daycycle-.json),
 ratio 1.05241. Ошибка оболочки в первой команде серии потеряла имя `$n`:
 следующий процесс отказался перезаписывать тот же report, серия остановлена;
-[лог отказа](evidence-863/report-collision.txt). Это ошибка запуска, не flaky
+[лог отказа](../../../docs/reviews/evidence-863/report-collision.txt). Это ошибка запуска, не flaky
 product PASS/retry; затем пять процессов вызваны с отдельными буквальными путями.
 Ни один имеющийся raw report не удалён. Историческую причину красного RasterTask
 CI не воспроизвели и не приписываем runner: нужны его contemporaneous traces.
