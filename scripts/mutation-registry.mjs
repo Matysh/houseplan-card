@@ -1958,6 +1958,13 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'device-contact-near-walls-includes-entire-floor',
+    guard: 'node --test test/device-contact.test.mjs',
+    patches: [{file:'src/device-contact-geometry.ts',
+      find:'  return walls.filter((wall) => Math.min(wall.a[0],wall.b[0]) <= marker.x+reach',
+      replace:'  return walls.filter((wall) => true || Math.min(wall.a[0],wall.b[0]) <= marker.x+reach'}],
+  },
+  {
     id: 'device-contact-measures-cold-faces-separately',
     guard: 'node demo/smoke_device_contact_work.mjs',
     because: '#866 AC9: twenty distinct real badge values must share layout batches on a cold 200-marker floor; one write/read layout per distinct face is not bounded incremental work.',

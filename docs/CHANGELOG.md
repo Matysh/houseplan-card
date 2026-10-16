@@ -7,7 +7,8 @@
   device, with exact-position Undo/Redo. Snapping/Alt controls only these new
   magnets; equal spacing remains independent. 2.5D keeps its previous tiles
   and unchanged fitted badge geometry reuses the contact index. Cold face sizes
-  are measured in one layout batch rather than separately for every value
+  are measured in one layout batch rather than separately for every value;
+  saved contacts first discard distant wall faces before exact geometry checks
   ([#866](https://github.com/Matysh/houseplan-card/issues/866)).
 
 ## v1.81.0 — 2026-10-16

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { CONTACT_EPS, contactAtWall, contactBoxIn, contactContains, contactJoinDepth, contactOutline,
-  contactRotate, deriveContactShape, freeContactShape, joinedContactSide } from '../test-build/device-contact-geometry.js';
+  contactRotate, contactWallsNear, deriveContactShape, freeContactShape, joinedContactSide } from '../test-build/device-contact-geometry.js';
 import { DeviceContactScene } from '../test-build/device-contact-scene.js';
 import { DeviceContactMagnet } from '../test-build/device-contact-snap.js';
 import { deviceContactWalls } from '../test-build/device-contact-walls.js';
@@ -46,6 +46,27 @@ test('#866 finite physical H/V and inclined faces, both sides, rotate shell only
   assert.equal(contactAtWall(marker('m'), { ...wall(), a: [0, 0], b: [20, 0] }).length, 0);
   assert.equal(contactAtWall(marker('m', NaN), wall()).length, 0);
   assert.equal(contactAtWall(marker('m'), { ...wall(), a: [0, 0], b: [0, 0] }).length, 0);
+});
+
+test('#866 conservative wall broad phase keeps every exact/captured badge contact, not distant floor faces', () => {
+  const far=Array.from({length:1000},(_,i)=>({id:`far-${i}`,a:[3000+i,3000],b:[3000+i,4000],normal:null}));
+  for(const degrees of [0,90,30,-30,45,-45,75,-75]) for(const side of [-1,1])
+    for(const box of [undefined,{left:-50.75,right:250,top:-50.75,bottom:50.75},
+      {left:-50.75,right:50.75,top:-250,bottom:50.75}]) {
+      const w=wall(degrees*Math.PI/180,side), m=marker('m',0,0,80,box), p=contactAtWall(m,w)[0];
+      if(!p)continue;
+      const saved={...m,...canonical(p.x,p.y)};
+      const near=contactWallsNear(saved,[...far,w]);
+      assert.deepEqual(near,[w]);
+      const found=deriveContactShape(saved,near);
+      assert.equal(Object.keys(found.walls).length,1);
+      for(const zoom of [.35,.5,1,2]){
+        const raw={...saved,x:saved.x+w.normal[0]*8.5/zoom,y:saved.y+w.normal[1]*8.5/zoom};
+        assert.deepEqual(contactWallsNear(raw,[...far,w],9/zoom),[w]);
+      }
+    }
+  assert.deepEqual(contactWallsNear(marker('m',NaN),far),[]);
+  assert.deepEqual(contactWallsNear(marker('m'),far,Infinity),[]);
 });
 
 test('#866 wall shape contains the unchanged upright full badge capsule at an incline', () => {

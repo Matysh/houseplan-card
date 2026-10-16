@@ -151,6 +151,20 @@ passes the measured-faces-to-batches check. The additional registered witness
 `device-contact-measures-cold-faces-separately` is static-only, never executed.
 Fresh final performance/visual/gate results are still required before handoff.
 
+Batching alone did not resolve the comparative failure: the next seven-sample
+run still had count P95 11 > 8, total P95 1,830 > 1,654.9 ms and editor maximum
+182 > 165 ms. A read-only CDP CPU profile of twelve warmed floor switches
+(`switch-profile`) showed only three cached face measurements but 136 samples
+inside `contactAtWall` and 15 at its all-wall traversal. The dominant added
+CPU was exact saved-contact recognition against every floor face, not cold
+layout. A conservative circumscribed-box broad phase now excludes distant
+wall faces before the unchanged exact check; snap candidates include the full
+9 CSS px release radius converted to world units. Ordinary unit input compares
+all slopes, both sides, asymmetrical right/top badges and four zooms against
+1,000 distant faces; the exact face always remains and distant faces do not.
+Its registered unit witness `device-contact-near-walls-includes-entire-floor`
+was not executed. Final time-budget success is not inferred from profiling.
+
 The full 207-frame capture on the earlier source correctly refused acceptance
 until all toolbar consequences were declared. Five old/new frame pairs were
 inspected: `geometry-devices-editor-dark`, `device-dialog-desktop-en` and

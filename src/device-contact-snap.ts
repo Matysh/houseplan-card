@@ -1,7 +1,7 @@
 /** One gesture's wall/device resolver; the existing #873 remains the fallback. */
 import {
   CONTACT_EPS, contactAtWall, contactBoxIn, contactCoresOverlap, contactRotate, contactShapeJoinDepth,
-  deriveContactShape, freeContactShape, joinedContactSide, rotatedContactCapsule, validContactMarker,
+  contactWallsNear, deriveContactShape, freeContactShape, joinedContactSide, rotatedContactCapsule, validContactMarker,
   type ContactMarker, type ContactShape,
 } from './device-contact-geometry';
 import { contactBounds, DeviceContactScene } from './device-contact-scene';
@@ -31,7 +31,7 @@ export class DeviceContactMagnet {
       if (!this.valid(shape, neighbors)) return;
       candidates.push({ ...p, ...stored, distance });
     };
-    for (const wall of this.scene.walls) for (const p of contactAtWall(raw, wall)) {
+    for (const wall of contactWallsNear(raw, this.scene.walls, 9 / Math.min(px,py))) for (const p of contactAtWall(raw, wall)) {
       add({ x: p.x, y: p.y, kind: 'wall', key: p.key, line: p.line });
     }
     const near = this.scene.query(contactBounds(freeContactShape(raw)), 22 / Math.min(px, py));

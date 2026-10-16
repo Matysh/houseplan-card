@@ -92,9 +92,20 @@ export function contactAtWall(marker: ContactMarker, wall: ContactWall): WallCon
       line: [x + a[0], y + a[1], x + b[0], y + b[1]] as [number, number, number, number] };
   });
 }
+/** Conservative world-space broad phase. The circumscribed free box covers
+ * every rotated capsule, including an off-centre badge and contact padding.
+ * Exact face length/normal/contact checks still belong to contactAtWall. */
+export function contactWallsNear(marker: ContactMarker, walls: readonly ContactWall[], padding = 0): readonly ContactWall[] {
+  if (!validContactMarker(marker) || !finite(padding) || padding < 0) return [];
+  const reach = Math.hypot(Math.max(Math.abs(marker.box.left),Math.abs(marker.box.right)),
+    Math.max(Math.abs(marker.box.top),Math.abs(marker.box.bottom))) + marker.diameter*.009375 + CONTACT_EPS + padding;
+  return walls.filter((wall) => Math.min(wall.a[0],wall.b[0]) <= marker.x+reach
+    && Math.max(wall.a[0],wall.b[0]) >= marker.x-reach && Math.min(wall.a[1],wall.b[1]) <= marker.y+reach
+    && Math.max(wall.a[1],wall.b[1]) >= marker.y-reach);
+}
 /** Saved contacts are recognised independently of zoom/capture radii. */
 export function deriveContactShape(marker: ContactMarker, walls: readonly ContactWall[]): ContactShape {
-  const found = walls.flatMap((wall) => contactAtWall(marker, wall))
+  const found = contactWallsNear(marker, walls).flatMap((wall) => contactAtWall(marker, wall))
     .filter((p) => near(p.x, marker.x) && near(p.y, marker.y))
     .sort((a, b) => a.key.localeCompare(b.key));
   if (!found.length) return freeContactShape(marker);
