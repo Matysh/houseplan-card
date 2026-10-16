@@ -302,6 +302,11 @@ export function editorRuntimeRetryUrlPlugin() {
       const moon = chunks.find((chunk) => Object.keys(chunk.modules)
         .some((id) => id.replaceAll('\\', '/').endsWith('/src/moon-runtime.ts')));
       if (!editor) throw new Error('editor runtime chunk was not emitted');
+      // The nonce retry imports the raw URL, not Rollup's namespace wrapper.
+      // A cross-chunk leaf can otherwise silently turn these into a/b/h.
+      for (const name of ['EDITOR_RUNTIME_FINGERPRINT', 'EDITOR_LANGUAGE_RUNTIME', 'HouseplanEditorRuntime']) {
+        if (!editor.exports?.includes(name)) throw new Error(`editor runtime raw-URL retry missing named export ${name}`);
+      }
       if (!onboarding) throw new Error('onboarding runtime chunk was not emitted');
       if (!isometric) throw new Error('isometric runtime chunk was not emitted');
       if (!german) throw new Error('German locale chunk was not emitted');

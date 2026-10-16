@@ -647,6 +647,7 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
     ...namespaceLocaleBundleChunks(() => ''),
     'houseplan-assets/houseplan-editor-runtime-HASH.js': {
       type: 'chunk', fileName: 'houseplan-assets/houseplan-editor-runtime-HASH.js', code: '',
+      exports: ['EDITOR_RUNTIME_FINGERPRINT', 'EDITOR_LANGUAGE_RUNTIME', 'HouseplanEditorRuntime'],
       modules: { '/repo/src/houseplan-editor-runtime.ts': {} },
     },
     'houseplan-assets/houseplan-onboarding-runtime-HASH.js': {
@@ -748,6 +749,8 @@ test('#627 namespace retry tokens stay strict: exactly one each, every chunk emi
         ['led-strip-editor', '/src/led-strip-editor.ts'],
       ].map(([name, module]) => [`houseplan-assets/${name}-HASH.js`, {
         type: 'chunk', fileName: `houseplan-assets/${name}-HASH.js`, code: '', modules: { [`/repo${module}`]: {} },
+        exports: name === 'houseplan-editor-runtime'
+          ? ['EDITOR_RUNTIME_FINGERPRINT', 'EDITOR_LANGUAGE_RUNTIME', 'HouseplanEditorRuntime'] : [],
       }])),
       'houseplan-assets/lazy-HASH.js': {
         type: 'chunk', fileName: 'houseplan-assets/lazy-HASH.js', modules: {},
@@ -760,6 +763,12 @@ test('#627 namespace retry tokens stay strict: exactly one each, every chunk emi
     return bundle;
   };
   assert.doesNotThrow(() => run(() => {}));
+  for (const name of ['EDITOR_RUNTIME_FINGERPRINT', 'EDITOR_LANGUAGE_RUNTIME', 'HouseplanEditorRuntime']) {
+    assert.throws(() => run(bundle => {
+      bundle['houseplan-assets/houseplan-editor-runtime-HASH.js'].exports =
+        ['EDITOR_RUNTIME_FINGERPRINT', 'EDITOR_LANGUAGE_RUNTIME', 'HouseplanEditorRuntime'].filter(key => key !== name);
+    }), new RegExp(`raw-URL retry missing named export ${name}`));
+  }
   const token = NAMESPACE_LOCALE_CHUNKS[4].token;
   assert.throws(() => run((bundle) => {
     bundle['houseplan-assets/lazy-HASH.js'].code = bundle['houseplan-assets/lazy-HASH.js'].code.replace(`"${token}"`, '""');

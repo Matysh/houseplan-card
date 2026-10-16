@@ -35,8 +35,11 @@ export default {
       // immutable-URL retry as well as Rollup's literal dynamic import.
       if (['/src/summary-panel-picker.ts', '/src/summary-panel-icons.ts']
         .some((suffix) => path.endsWith(suffix))) return 'summary-shared';
+      // #866: the newly lazy Optimize boundary must not statically import
+      // leaves housed in the runtime facade: that mangles its raw-URL ABI.
       if (['/src/pointer-move-queue.ts', '/src/live-editor.ts', '/src/i18n/tools.ts', '/src/wall-segment-model.ts',
-        '/src/wall-end-align.ts'].some((suffix) => path.endsWith(suffix))) return 'editor-shared';
+        '/src/wall-end-align.ts', '/src/wall-merge.ts', '/src/coincident-partitions.ts',
+        '/src/device-contact-collision.ts'].some((suffix) => path.endsWith(suffix))) return 'editor-shared';
     },
     format: 'es',
     sourcemap: false,

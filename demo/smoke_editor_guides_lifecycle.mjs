@@ -275,10 +275,22 @@ try {
         document.getElementById('host').appendChild(window.__card);
         await window.__hpTest.settled();
       }
-      await window.__hpTest.setMode('devices');
-      await window.__hpTest.settled();
     }, path);
+    // A cancelled physical gesture deliberately arms the activation barrier.
+    // Restore the editor with a fresh native press, not element.click() while
+    // the test is asserting that the stale pointer tail remains suppressed.
+    if (await page.evaluate(() => window.__card._mode !== 'devices')) {
+      await page.locator('houseplan-card [data-hp="mode-tab"][data-mode="devices"]').click().catch(async error => {
+      console.log('diagnostic guide lifecycle before mode restore', await page.evaluate(path => {
+        const c=window.__card;
+        return {path,mode:c._mode,busy:c._modeTransitionBusy,drag:c._deviceDrag?.id,
+          guard:c._touchClickGuard.clickBlocked,suppress:c._suppressClick,continuity:c._continuity.state};
+      },path));
+      throw error;
+      });
+    }
     await page.waitForFunction(() => !window.__card._modeTransitionBusy && !window.__card._loading);
+    await page.evaluate(() => window.__hpTest.settled());
     await page.evaluate(pointerId => {
       const n = window.__card.renderRoot.querySelector('[data-hp="device"][data-id="d_lamp"]');
       for (const type of ['pointermove', 'pointerup', 'click']) n.dispatchEvent(new PointerEvent(type, {

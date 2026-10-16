@@ -234,3 +234,42 @@ The official `golden:accept --reviewed --from=artifacts/golden`, with exactly
 the five `--expect-change` and two `--expect-new` names above, replaced seven
 frames and preserved the other 200 reviewed baseline files byte-for-byte.
 This is an attested WSL source, not a claimed GitHub capture or physical GPU.
+
+## First full GitHub Validate — RED, not review-ready
+
+[38953677242](https://github.com/Matysh/houseplan-card/actions/runs/38953677242)
+on `5ef696395ace2f3d028e474ab32f86bd9b639e91`: frontend, golden and performance
+passed, but all three browser shards were red. No S7 request was made.
+Complete smoke logs for all three shards are retained in `artifacts/866/ci-shard*`.
+
+- `smoke_align_guides`: the new higher-priority contact magnet supersedes the
+  old alignment proposal. This inherited layer/ordinary-axis witness now
+  explicitly switches the new magnets OFF through the real toolbar and keeps
+  all its original geometry, painter-ownership and frame-count assertions.
+- `smoke_editor_tabs`: expected six old buttons/index 2 for inbox; the new
+  seventh Magnets control is now explicitly expected, and Add/inbox are found
+  through their existing semantic tool attributes.
+- `smoke_editor_guides_lifecycle`: cancellation correctly left the activation
+  barrier armed; a programmatic element.click() could not restore Devices from
+  Plan. Restoration now makes a fresh native press. All old-pointer-tail,
+  no-write/history, visible rollback and next deliberate drag checks remain;
+  the diagnostic records path/mode/guard state on failure. Natural RED and
+  focused PASS are retained (`guides-lifecycle-diagnostic`, `fixture-lifecycle-fixed`).
+- `smoke_lazy_editor_chunk`, `smoke_editor_styles_lazy` and the import retry
+  scenario: read-only CDP exception observation found `fingerprint: undefined`
+  on the raw nonce URL. The new lazy optimizer statically imported shared
+  leaves packed into the editor runtime, so Rollup changed its exports to
+  internal aliases. Those leaves now join the existing editor-shared chunk;
+  the normal raw named ABI returns and the unchanged nonce retry reaches ready.
+  The build plugin additionally rejects emitted export metadata missing any
+  of the three public editor ABI names. Ordinary malformed metadata tests
+  exercise the refusal without executing a mutant or disabling fingerprint
+  protection.
+- `smoke_signal_visibility_lifecycle` also timed out waiting for the delayed
+  editor install; its focused rerun is required before claiming it repaired.
+
+The first attempted local empty-import reproduction used a stale committed
+`dist` manifest after bundle cleanup and could not target the current retry
+chunk; it was stopped as invalid diagnostic material. After a fresh build the
+original CI line-389 retry failure was reproduced. No such invalid local run
+is presented as a product regression or PASS.

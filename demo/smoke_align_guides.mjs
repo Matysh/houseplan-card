@@ -94,6 +94,12 @@ const res = await page.evaluate(async () => {
   out.markerIsOnTheStage = !!marker;
   const live = () => c._livePos(c._devices.find((d) => d.id === dragged.id));
   await quiet();
+  // #866 adds a higher-priority physical contact proposal. This inherited
+  // witness isolates the independent ordinary alignment guide/layer path.
+  const magnets = sr().querySelector('[data-tool="device-magnets"]');
+  if (magnets?.getAttribute('aria-pressed') === 'true') magnets.click();
+  await c.updateComplete; await quiet();
+  out.legacyAlignmentWithContactMagnetsOff = magnets?.getAttribute('aria-pressed') === 'false';
   const box = marker.getBoundingClientRect();
   const sx = box.x + box.width / 2;
   const sy = box.y + box.height / 2;

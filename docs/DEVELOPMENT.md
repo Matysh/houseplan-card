@@ -947,6 +947,12 @@ bands change. Re-run both node raster smokes and the floor-cache-reuse smoke.
 Shared tools/queue/live-editor/identity helpers have an explicit `editor-shared` chunk:
 otherwise Rollup adds internal exports to the runtime and its opaque retry URL
 can lose the named fingerprint/constructor API. Both cold retry smokes must pass.
+The lazy Optimize boundary also shares wall-merge, coincident-partition and
+device-contact collision leaves (#866); none may introduce a static import
+back into the editor runtime. The retry-URL build plugin checks the emitted
+chunk's actual export metadata for the fingerprint, language runtime and
+constructor before injecting its opaque URL; mangled internal aliases fail
+the build rather than silently breaking the second network attempt.
 
 ## Device battery icons (#792)
 
