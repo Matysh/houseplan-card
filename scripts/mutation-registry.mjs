@@ -1978,8 +1978,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_device_contact_work.mjs',
     because: '#866 AC9: a real 200-marker board paints an updated badge value through public options reconciliation while preserving its identical geometry and full-index build count.',
     patches: [{file:'src/device-contact-render.ts',
-      find:'    if (sameGeometry) { this.elements = nextElements; this.frameKey = key; this.frame = frame; return false; }',
-      replace:'    if (false && sameGeometry) { this.elements = nextElements; this.frameKey = key; this.frame = frame; return false; }'}],
+      find:'    if (sameGeometry) { this.elements = nextElements; this.frameKey = key; return false; }',
+      replace:'    if (false && sameGeometry) { this.elements = nextElements; this.frameKey = key; return false; }'}],
   },
   {
     id: 'device-contact-rounds-exact-drop-to-grid',

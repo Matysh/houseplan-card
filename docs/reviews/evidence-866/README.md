@@ -266,10 +266,24 @@ Complete smoke logs for all three shards are retained in `artifacts/866/ci-shard
   exercise the refusal without executing a mutant or disabling fingerprint
   protection.
 - `smoke_signal_visibility_lifecycle` also timed out waiting for the delayed
-  editor install; its focused rerun is required before claiming it repaired.
+  editor install. Its focused rerun passes after the ABI correction.
 
 The first attempted local empty-import reproduction used a stale committed
 `dist` manifest after bundle cleanup and could not target the current retry
 chunk; it was stopped as invalid diagnostic material. After a fresh build the
 original CI line-389 retry failure was reproduced. No such invalid local run
 is presented as a product regression or PASS.
+
+All seven formerly failed smokes now execute PASS on the corrected chunk graph
+(`ci-correction-smokes`, 19:49:53–19:51:21 UTC). They are actual full scenarios,
+not a retry-until-green replacement for the first RED. The local
+`ci-corrections-gate` passed every check except raw bundle growth: the preserved
+ABI measured 2,972,742 B, 37 B outside the already approved band. No limit was
+changed. The renderer no longer retains unused per-element face keys/metric
+references or the entire previous input frame; only its floor identity is
+needed alongside the actual scene/cache. This reduces retained state and
+restores the approved range at 2,972,687 B (host references still 5,418).
+Static registry readiness and the full native 200-marker/contact-action cohorts
+pass on that state simplification (`compact-state-registry/work/contacts`).
+A fresh full local gate and a new exact-SHA full Validate are still required;
+the first full GitHub run remains RED.

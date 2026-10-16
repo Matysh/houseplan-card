@@ -21,7 +21,7 @@ export interface DeviceContactFrame {
   masonry?: ContactMasonry;
   floor?: { config: unknown; model: SpaceModel };
 }
-interface MeasuredMarker { element: HTMLElement; ink: HTMLElement; key: string; metric: ContactRect }
+interface MeasuredMarker { element: HTMLElement; ink: HTMLElement }
 const metricKey = (shell: Element | null | undefined): string => shell
   ? JSON.stringify([shell.className, ...[...shell.querySelectorAll('.valtext,.value-badge')]
     .map((node) => [node.textContent, node.getAttribute('style')])]) : '';
@@ -42,7 +42,7 @@ export class DeviceContactRenderer {
   private readonly metrics = new Map<string, ContactRect>();
   private elements = new Map<string, MeasuredMarker>();
   private frameKey = '';
-  private frame: DeviceContactFrame | null = null;
+  private floorKey = '';
 
   /** Optimize supplies positive owner/face evidence for all floors, including
    * ones not currently mounted. Uses this same production face/metric cache. */
@@ -64,7 +64,7 @@ export class DeviceContactRenderer {
       element.removeAttribute('data-hp-device-component');
       this.hitShapes.delete(element); render(nothing, ink);
     }
-    this.elements.clear(); this.frameKey = ''; this.frame = null; this.scene = null;
+    this.elements.clear(); this.frameKey = ''; this.floorKey = ''; this.scene = null;
   }
 
   public sync(root: ParentNode, frame: DeviceContactFrame): boolean {
@@ -96,10 +96,10 @@ export class DeviceContactRenderer {
       const metric = fresh.get(faceKey) || this.metrics.get(faceKey);
       if (!metric) continue;
       const box = Object.fromEntries(Object.entries(metric).map(([k,v]) => [k, v * m.diameter])) as unknown as ContactRect;
-      measured.push({ ...m, box }); nextElements.set(m.id, { element, ink, key: faceKey, metric });
+      measured.push({ ...m, box }); nextElements.set(m.id, { element, ink });
     }
     const previous = this.scene;
-    const sameGeometry = previous && this.frame?.key === frame.key && measured.length === previous.shapes.size
+    const sameGeometry = previous && this.floorKey === frame.key && measured.length === previous.shapes.size
       && measured.every((m) => {
         const old = previous.shapes.get(m.id)?.marker;
         return old && old.x === m.x && old.y === m.y && old.diameter === m.diameter
@@ -108,9 +108,9 @@ export class DeviceContactRenderer {
       });
     // A new value can have the exact same fitted box. Refresh its metric key,
     // not the complete spatial graph; the shared face already paints the text.
-    if (sameGeometry) { this.elements = nextElements; this.frameKey = key; this.frame = frame; return false; }
+    if (sameGeometry) { this.elements = nextElements; this.frameKey = key; return false; }
     this.clear(); this.elements = nextElements;
-    this.frameKey = key; this.frame = frame;
+    this.frameKey = key; this.floorKey = frame.key;
     this.scene = new DeviceContactScene(measured, frame.walls || floor?.walls || [], frame.masonry || floor?.masonry);
     this.work.rebuilds++; this.paint(this.scene.shapes.keys());
     return true;
@@ -157,7 +157,7 @@ export class DeviceContactRenderer {
     this.paint(this.scene.move(id, x, y));
     // A subsequent ordinary render recognises this live position without
     // retaining a stale preview key or measuring/reindexing every other face.
-    if (this.frame) this.frameKey = '';
+    this.frameKey = '';
   }
 
   private paint(ids: Iterable<string>): void {
