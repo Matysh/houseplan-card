@@ -1493,8 +1493,7 @@ on the next explicit entry. Budgets: `LAZY_LED_GZIP_CEILING` and
 
 ## Outside-findings routing (#926)
 
-Trusted
-Actions configuration selects only explicit issue IDs; prepare freezes a typed
+Trusted Actions configuration selects only explicit issue IDs; prepare freezes a typed
 identity/mode/deterministic path, bound to its output and artifact passport.
 The model receives that policy outside the checkout. Integration independently
 checks the trusted snapshot, exact companion set/hash/text, and publishes only

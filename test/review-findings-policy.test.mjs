@@ -134,6 +134,11 @@ test('#926 file validation rejects invalid UTF-8 and unauthorized source, archiv
     symlinkSync(dir, join(destination, 'docs/reviews'), 'dir');
     assert.throws(() => publishFindings(findingsPolicy('[926]', target), source, destination), /real directory/);
     assert.equal(existsSync(join(dir, 'findings')), false, 'no write through checkout symlink');
+    const other = join(dir, 'other'); mkdirSync(join(other, 'docs/reviews/findings'), { recursive: true });
+    const policy = findingsPolicy('[926]', target), escape = join(dir, 'not-created.md');
+    symlinkSync(escape, join(other, policy.path));
+    assert.throws(() => publishFindings(policy, source, other), /regular file/);
+    assert.equal(existsSync(escape), false, 'a broken destination symlink must not be followed');
   }
   const path = 'legacy/reviews/v1.82.0/CODE-REVIEW-926-r2.md';
   const repaired = repairLinks({ text: '[findings](findings/926-code-r2.md)', path,

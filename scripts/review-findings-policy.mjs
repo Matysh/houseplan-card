@@ -64,6 +64,11 @@ function readFindingsFile(path) {
   return text;
 }
 
+function statOrMissing(path) {
+  try { return lstatSync(path); }
+  catch (error) { if (error.code === 'ENOENT') return null; throw error; }
+}
+
 // Source and destination are runner-owned paths. The document cannot select its
 // repository destination; that comes only from the trusted frozen snapshot.
 export function sealFindings(policy, source, directory) {
@@ -79,11 +84,13 @@ export function publishFindings(policy, source, root = '.') {
   let parent = root;
   for (const part of policy.path.split('/').slice(0, -1)) {
     parent = join(parent, part);
-    if (existsSync(parent) && !lstatSync(parent).isDirectory())
+    const stat = statOrMissing(parent);
+    if (stat && !stat.isDirectory())
       throw new Error('outside findings: destination parent is not a real directory');
   }
   const path = join(root, policy.path);
-  if (existsSync(path) && !lstatSync(path).isFile()) throw new Error('outside findings: destination is not a regular file');
+  const stat = statOrMissing(path);
+  if (stat && !stat.isFile()) throw new Error('outside findings: destination is not a regular file');
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, `# Outside findings — #${policy.issue}, ${policy.stage}, r${policy.round}\n\n`
     + 'Routing: trusted Actions configuration; no new issues for out-of-scope findings.\n\n' + text);
