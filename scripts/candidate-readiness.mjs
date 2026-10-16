@@ -89,7 +89,13 @@ export function sceneDelta({ issue, filesKey, owner, sceneIds, required = false 
     || plan.change.some(id => plan.new.includes(id))) return { change: [], new: [], blocker: `#${issue.number}: unknown or overlapping scene IDs` };
   return { change: unique(plan.change), new: unique(plan.new), review: { comment: plan.comment, url: plan.url } };
 }
-export function acceptanceRefusal(record, { material, cases, scripts, gpu, input }) {
+export function acceptanceRefusal(record, context) {
+  // Optional, user-authored JSON is not a publication dependency. Any bad
+  // shape remains an unverified observation, never a thrown readiness gate.
+  try { return optionalObservationRefusal(record, context); }
+  catch { return 'optional field observation is malformed'; }
+}
+function optionalObservationRefusal(record, { material, cases, scripts, gpu, input }) {
   if (!record || record.schema !== 1 || record.material !== material || record.verdict !== 'accepted'
     || record.surface !== 'dev' || !record.environment?.browser || !record.environment?.os
     || !Array.isArray(record.cases)) return 'optional field observation is incomplete or stale';

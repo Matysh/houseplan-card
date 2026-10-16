@@ -89,6 +89,26 @@ test('#929 optional observation never fabricates native or real-GPU proof and ne
   assert.equal(f.build().receipts[0].record, null, 'do not invent an authenticated owner observation');
 });
 
+test('#929 malformed optional JSON shapes cannot throw or block on any channel', () => {
+  for (const version of ['1.82.0', '1.82.0-rc.1', '1.82.0-beta.1', undefined]) {
+    for (const mutate of [r => r.cases = [null], r => r.cases = [42],
+      r => r.cases[0].observed = 42, r => r.cases[0].evidence = 42,
+      r => r.native.cases = [null], r => delete r.native.pins,
+      r => r.environment.gpu = 42]) {
+      const f = fixture();
+      f.input.version = version;
+      f.issue.comments.pop();
+      f.acceptance.material = f.build().material;
+      mutate(f.acceptance);
+      f.issue.comments.push(comment('candidate-acceptance', f.acceptance, 'Matysh', 3));
+      const result = f.build();
+      assert.equal(result.ready, true, `${String(version)} malformed optional observation`);
+      assert.ok(result.receipts[0].refusal, 'malformed JSON cannot become accepted field evidence');
+      assert.ok(result.warnings.some(w => w.includes('optional field observation')));
+    }
+  }
+});
+
 test('#889 beta missing field/scene records are advisory, not a fabricated owner acceptance', () => {
   const f = fixture();
   f.input.version = '1.81.0-beta.2';
