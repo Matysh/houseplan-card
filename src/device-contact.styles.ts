@@ -12,7 +12,7 @@ export const deviceContactStyles = css`
   .device-contact-contour.grouped { stroke: var(--device-shell-base-stroke); }
   .device-contact-hit { fill: transparent; stroke: none; pointer-events: all; }
   .hp-static-stage .device-contact-hit { pointer-events: none; }
-  .dev[data-hp-device-contact] .device-shell-frame { opacity: 0; pointer-events: none; }
+  .dev[data-hp-device-contact] .device-shell-frame { opacity: 0; pointer-events: none; transition: none; }
   /* marker.mjs dimensions expressed through the unchanged 80-unit core.
      Actual flex/text fit owns the bbox, not the approximate 2.15/1.16/1.8
      prototype boxes. Standalone badges keep their existing presentation. */

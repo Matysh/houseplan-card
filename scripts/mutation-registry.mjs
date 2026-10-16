@@ -1958,6 +1958,30 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'device-contact-rounds-exact-drop-to-grid',
+    guard: 'node demo/smoke_device_contacts.mjs',
+    because: '#866 AC4/6/7: a real native join must save its previewed off-grid point once and restore it with Undo/Redo, not a separately rounded grid proposal.',
+    patches: [{file:'src/houseplan-card.ts',
+      find:'contact ? this._devicePlacementForCanvas(d, contact.x, contact.y, true) : fallback',
+      replace:'contact ? this._devicePlacementForCanvas(d, contact.x, contact.y, false) : fallback'}],
+  },
+  {
+    id: 'device-contact-window-blur-keeps-preview',
+    guard: 'node demo/smoke_device_contacts.mjs',
+    because: '#866 AC6: after a joined marker is dragged out, real window blur must restore its saved point and component; a later mouseup must not write or create history.',
+    patches: [{file:'src/houseplan-card.ts',
+      find:'    if (this._cancelDeviceDrag()) return;\n    if (this._pointers.size || this._kioskHold.pointerId !== null) this._interruptViewGesture();',
+      replace:'    if (this._pointers.size || this._kioskHold.pointerId !== null) this._interruptViewGesture();'}],
+  },
+  {
+    id: 'device-contact-retains-individual-frame-seams',
+    guard: 'node demo/smoke_device_contacts.mjs',
+    because: '#866 AC1/3: the actual grouped face must hide every original per-member frame, not draw shared and individual outlines together.',
+    patches: [{file:'src/device-contact.styles.ts',
+      find:'.dev[data-hp-device-contact] .device-shell-frame { opacity: 0; pointer-events: none; transition: none; }',
+      replace:'.dev[data-hp-device-contact] .device-shell-frame { opacity: 1; pointer-events: none; transition: none; }'}],
+  },
+  {
     id: 'space-reattach-skips-authoritative-read',
     guard: 'node demo/smoke_view_recovery.mjs',
     because: '#824 AC1 crosses real custom-element detach/attach and missed HA events: '

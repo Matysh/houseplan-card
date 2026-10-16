@@ -85,7 +85,7 @@ bundle, not substituted implementations. No mutation is claimed caught.
 
 | AC | Positive witness | Negative witness / what the assertion rejects |
 |---|---|---|
-| AC1 | 36 frozen comparisons + both-theme golden boards | Pinned original-file hashes; missing glyph and clipped-stage checks reject empty or hidden production frames |
+| AC1 | 36 frozen comparisons + both-theme golden boards | Pinned original-file hashes; missing glyph/clipped-stage guards and native zero old-frame opacity reject empty/hidden/duplicate production paint |
 | AC2 | Native 68-case wall matrix | `device-contact` short face/invalid normal/masonry intersection; maintenance suite door/window/passage holes reject a target across an opening |
 | AC3 | Row/column/L/grid units + native detach | Diagonal/bbox-only proximity cannot join; extraction of the middle of ten produces separate components and unchanged neighbours |
 | AC4 | Native Alt/toggle plus independent spacing smoke | Bypass yields no contact; resolver rejects outside release radii; reversed candidate arrays yield the same result |
@@ -117,3 +117,11 @@ compile; `node demo/smoke_device_contacts.mjs`,
 The native 200-marker, designer and wall checks are headless pinned-browser
 observations, not physical GPU/owner field acceptance. No schema migration,
 shape choice, group action, group drag, release/tag or main push is included.
+
+Registered expensive witnesses (static check only, not executed):
+`device-contact-rounds-exact-drop-to-grid`,
+`device-contact-window-blur-keeps-preview`,
+`device-contact-retains-individual-frame-seams`. The ordinary immediate-frame
+assertion found the old frame's inherited 200ms opacity transition: contact now
+retires that frame without fading underneath the new contour. Free frames keep
+their original transitions.

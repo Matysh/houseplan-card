@@ -70,6 +70,8 @@ await page.mouse.move(to.x+3,to.y,{steps:12}); await settle();
 const preview = await state();
 checkAll({ previewContactGuide: preview.guides.includes('Join outlines'), noWriteDuringDrag: preview.writes===before.writes,
   connectedPreview: preview.components.every(id=>id==='contact-a'), noMeasurementDuringDrag: preview.work.measurements===before.work.measurements });
+check('group-has-no-duplicate-individual-frames',await page.evaluate(()=>[...window.__card.renderRoot
+  .querySelectorAll('.dev[data-hp-device-contact] .device-shell-frame')].every(n=>getComputedStyle(n).opacity==='0')),true);
 await page.screenshot({ path: `${dir}/join-preview.png` });
 await page.keyboard.down('Alt'); await settle();
 check('Alt-removes-contact-guide', (await state()).guides.length, 0);
