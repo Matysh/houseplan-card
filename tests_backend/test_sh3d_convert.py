@@ -66,14 +66,14 @@ def test_issue_446_envelope_matches_the_import_contract(name: str, document: dic
 
 
 def test_issue_446_converter_declares_a_version_the_import_accepts() -> None:
-    """Модель документа не должна обогнать установку.
+    """The standalone runtime agrees with Python; no npm install in backend CI.
 
-    Конвертер объявляет форму v7 сознательно: структуру (сегменты, wall_ids,
-    хосты проёмов) собирает серверный писатель импорта. Значение больше
-    `PLAN_MODEL_VERSION` импорт отвергнет как `future_model`.
+    Frontend units rebuild the emitter and compare its actual documents. This
+    half imports only the self-contained canonical runtime, not the YAML reader.
     """
+    assert _source_constant("MODEL_VERSION") == "CURRENT_MODEL_VERSION"
     declared = subprocess.run(["node", "--input-type=module", "-e",
-        "import { MODEL_VERSION } from './scripts/sh3d-convert/convert.mjs'; console.log(MODEL_VERSION)"],
+        "import { WALL_SEGMENT_MODEL_VERSION } from './scripts/sh3d-convert/geometry-runtime.generated.mjs'; console.log(WALL_SEGMENT_MODEL_VERSION)"],
         cwd=REPO, check=True, capture_output=True, text=True)
     assert int(declared.stdout) == PLAN_MODEL_VERSION == WALL_SEGMENT_MODEL_VERSION
     assert int(_source_constant("EXPORT_VERSION")) in (1, EXPORT_VERSION)
@@ -93,7 +93,7 @@ def test_issue_446_golden_passes_the_real_config_schema(name: str, document: dic
 def test_issue_446_server_writer_turns_the_document_into_a_valid_plan(
     name: str, document: dict,
 ) -> None:
-    """То, что делает apply: миграция v7 → v9 и повторная проверка схемой."""
+    """The apply writer accepts the already current catalogue and validates it again."""
     config = dict(document["payload"]["config"])
     config["model_version"] = document["model_version"]
     migrated, _ = commit_wall_segment_model(CONFIG_SCHEMA(json.loads(json.dumps(config))))
