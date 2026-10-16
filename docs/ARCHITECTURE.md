@@ -15,8 +15,10 @@ Stable field decisions (#916) are release metadata, not product state or native
 receipts. A reviewed tag/SHA binding plus the latest authenticated owner comment
 can authorize promotion of an owner-tested public beta with unchanged product,
 dependencies and capture/build inputs except exact version fields. The reader
-keeps missing per-issue records visible as warnings, never fabricates GPU proof,
-and cannot override explicit vetoes, supplied invalid plans or automatic gates.
+now treats manual owner dev/GPU observations as optional on every channel
+(#929), never fabricates GPU proof, and cannot override explicit vetoes,
+supplied invalid scene plans or automatic gates. The historical #916 scene-plan
+waiver remains scoped to its exact promotion; future field receipts need no waiver.
 Release accounting reads all reachable parents, retaining each task's original
 implementation provenance instead of borrowing a merge's unrelated issue.
 

@@ -686,7 +686,7 @@ and no full render per pointer move. It includes integration/server/local
 paths, gaps, multiple robots and lifecycle retirement. Raw frame/matrix
 evidence is `demo/out/vacuum-camera-871/frames.json`. Matrix failure/recovery
 and read-before-write ordering also have Node witnesses. Headless geometry
-and golden do not replace real-GPU owner acceptance; full-path limits and witnesses live in `VACUUM.md`.
+and golden are not real-GPU observations; owner field QA is optional (#929). Full-path limits and witnesses live in `VACUUM.md`.
 
 `npm run golden:capture` records the data-only scenarios from
 `demo/golden/matrix.mjs` into ignored `artifacts/golden/actual/`; it never

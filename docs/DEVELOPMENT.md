@@ -467,7 +467,7 @@ import to make collection green.
 native endpoints/gaps, stale-quality diagnostics and shared render quota;
 `smoke_vacuum_camera.mjs` remains the native pan/pinch ownership witness.
 The owner's personal map is never committed. Static mutation readiness does
-not mean mutants ran. Installed-version snapshot and owner/GPU acceptance
+not mean mutants ran. Installed-version snapshot and voluntary owner/GPU observations
 remain separate from synthetic and upstream evidence. Canon: `VACUUM.md`.
 
 ## Ordinary history refusals (#883)
@@ -527,7 +527,7 @@ Raw evidence lives in `demo/out/vacuum-camera-871/frames.json`, not in git.
 The old dev witness gave 93.41px path and 186.80px tip displacement; a settled
 frame alone concealed both. Existing multi-floor and live-pan coverage are
 companion gates. Mutation anchors are checked statically; execution belongs
-to the night. Real-GPU owner acceptance remains separate from headless green.
+to the night. Optional real-GPU owner observations remain separate from headless green.
 No source/route/calibration/schema, smoothing or UI settings change.
 The raw bundle ratchet deliberately moves from 2,803,783 to 2,806,821 B
 (+3,038 B) for the typed inverse/batched DOM guard and bounded inherited paint
