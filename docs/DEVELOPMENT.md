@@ -59,7 +59,8 @@ It records the production write/history path, not field/GPU acceptance. Static
 mutation declarations are checked for applicability; execution remains nightly.
 The candidate `editor` profile registers common physical/backdrop and the
 held-preview ordinary floor; the default native command runs every registered
-profile. Readiness requires this floor for changes to either owner or live editor.
+profile. Its observable floor remains enforced by the automated native runner;
+the report does not require a manual owner field/GPU receipt (#929).
 
 ## Information-card confirmation and lock information (#849)
 
@@ -2012,17 +2013,22 @@ by `release.yml`. Installations then update through HACS by tag («Deployment»
 above); the dev stand takes the head of `dev` from the `dev-build` branch
 (`demo/stand/README.md`).
 
-Beta field policy (#889, owner decision 2026-10-14): only committed canonical
-`X.Y.Z-beta.N` versions make the additional #858 owner dev/native/GPU receipts
-advisory rather than publication blockers. Missing additional owner scene-plan
-JSON declares no intentional pixel changes; invalid or revoked supplied plans
-still refuse. Prepare reports these missing records as warnings and never
-claims field/GPU acceptance. Stable, RC, other and unknown channels keep #858's
-strict owner contract. A current explicit owner veto or malformed latest owner
-record is still a blocker, including on beta. The exact full CI proof, fresh coherent bundle, reviewed
-baseline acceptance, declared scene boundaries, witness floor, ship review and
-public asset passport remain mandatory on every channel; there is no CLI/env
-waiver. Channel policy is read from the candidate's committed package version.
+Field policy (#929, owner decision 2026-10-16): manual owner dev/stand/GPU
+acceptance is optional on **every** channel, including stable and RC. No special
+owner receipt, GPU model, video/trace link or repeated human attestation is
+required. Missing optional observations produce neither a blocker nor a request
+to perform them. Supplied incomplete/stale observations are diagnostic warnings,
+never accepted as real field proof. An explicit authenticated rejection or
+revocation of the current material still blocks publication.
+
+Scene intent is separate: #889 still permits an absent additional scene plan
+only for committed canonical `X.Y.Z-beta.N`, declaring no intentional pixel
+changes. Strict channels retain the reviewed scene-plan requirement for
+`ci:golden` tasks; invalid supplied plans refuse on every channel. The exact
+full CI proof, fresh coherent bundle, reviewed baseline acceptance, declared
+scene boundaries, witness floor, ship review and public asset passport remain
+mandatory. There is no CLI/env waiver, and the channel is read from the
+candidate's committed package version.
 
 The owner explicitly accepted `v1.81.0-beta.4` on the stand by chat on
 2026-10-16 and said that message was sufficient without an evidence link
@@ -2031,12 +2037,13 @@ to the exact public beta SHA. Preparation checks its published status, ancestry,
 unchanged product/dependencies/build/capture inputs (apart from the seven
 version values), and the latest authenticated `hp:stable-field-decision`
 comment in #916. The comment is transparently agent-recorded from the human's
-words, not a fabricated per-issue/native/GPU receipt. Missing additional human
-records become explicit warnings only for this product-equivalent promotion;
-vetoes, malformed supplied plans, undeclared golden drift and all automatic
-checks still refuse. Other stable/RC versions remain strict unless the owner
-makes a separate explicit decision and its implementation is reviewed. There
-is no CLI/env override. New product or capture changes invalidate this approval.
+words, not a fabricated per-issue/native/GPU receipt. This historical decision
+also waives additional scene plans only for that product-equivalent promotion;
+its identity and declared scenes remain checked. #929 removes mandatory field
+receipts generally, without changing this recorded history or its scene-plan
+scope. Vetoes, malformed supplied plans, undeclared golden drift and all
+automatic checks still refuse. New product/capture changes invalidate this
+historical promotion approval; future stable versions need no field waiver.
 
 ### Primary prerelease path
 
@@ -2068,7 +2075,8 @@ golden acceptance commands still review the declared artifact; prepare never
 executes them. Undeclared differences/new scenes remain forbidden.
 
 For large frontend features and geometry/viewport changes the report supplies
-ordinary and risky-neighbour cases, scripts and observable oracles. Run
+ordinary and risky-neighbour cases, scripts and observable oracles. To run the
+additional automated native diagnostic, use
 `npm run release:native` (or `-- --profiles=geometry,view`) on the clean
 committed candidate after preparing its emitted test helpers/demo bundle.
 The runner uses real browser pointers in the existing node/topology and live
@@ -2077,22 +2085,14 @@ environment, script/output hashes and observed checks. Timeout/exit0 without
 the required check inventory is not PASS. Native evidence is **not** human
 acceptance; a successful headless run never claims field/GPU acceptance.
 
-The following field workflow is required on strict channels and advisory on
-canonical betas. Install that exact material on the existing dev stand; the owner observes each
-listed case and posts `hp:candidate-acceptance` JSON in the relevant issue:
-`schema:1`, `material:<prepare material key>`, `verdict:"accepted"`,
-`surface:"dev"`, `native:<native report metadata, including pass/SHA/tree/
-bundle/pins/actual environment>`, and `cases` containing each required id,
-script/scriptHash/nativeOutput, `pass:true`, an actual `observed` result and
-HTTPS `evidence` URL (trace/video/native report). Include `environment.browser`
-and `environment.os`. For raster/compositor risk also include
-`environment.realGpu:true`, named `gpu`, `headless:false`, and `gpuEvidence`.
-This is an authenticated owner's field attestation, not automated verification
-of a video's contents; never manufacture it as an agent. A new candidate,
-body/pin/ledger/scene change or missing ordinary/neighbour evidence requires a
-fresh attestation on strict channels. Adding an acceptance does not change its material key, but
-does change the complete readiness identity. No receipt means no publication
-on strict channels; canonical beta publication retains an explicit advisory.
+The owner may voluntarily inspect the dev stand or their ordinary browser;
+this is not a gate for tasks, merges, betas, RCs or stable releases. Do not ask
+for a `hp:candidate-acceptance` JSON record, GPU details or evidence links as a
+condition of progress. Existing optional records retain their exact-material
+limits and diagnostics; malformed or stale field records do not block or
+require renewal. An explicit current owner rejection/revocation is different
+from a missing observation and remains a publication veto. Neither automated
+native output nor an agent-authored note may fabricate a human/GPU observation.
 
 `release-prerelease.mjs`, `publish-prerelease.yml` and `release.yml` all check
 fresh candidate readiness before public work. Prepare alone grants no publish

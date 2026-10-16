@@ -35,12 +35,12 @@ export const NATIVE_PROFILES = Object.freeze({
     { id: 'view-neighbour', script: 'demo/smoke_live_pan_coverage.mjs', oracle: 'native touch pinch, 2.5D and kiosk: held coverage and terminal cleanup' },
   ],
 });
-/** #889: only the committed canonical beta channel has advisory field QA. */
+/** #929: field QA is optional on every channel; scene intent keeps #889's boundary. */
 export function candidatePolicy(version) {
   const beta = typeof version === 'string'
     && versionFromTag(`v${version}`).prerelease
     && /^\d+\.\d+\.\d+-beta\.[1-9]\d*$/.test(version);
-  return { channel: beta ? 'beta' : 'strict', manualAcceptanceRequired: !beta };
+  return { channel: beta ? 'beta' : 'strict', scenePlanRequired: !beta, manualAcceptanceRequired: false };
 }
 export function requiredProfiles(entry, files) {
   if (entry.category === 'infra') return [];
@@ -65,6 +65,17 @@ export function ownerRecord(comments, marker, owner) {
   }
   return null;
 }
+// An incomplete optional observation cannot erase a separate explicit veto.
+// Only a newer authenticated decision about this exact material supersedes it.
+function fieldVeto(comments, material, owner) {
+  for (const comment of [...comments].reverse()) {
+    const record = ownerRecord([comment], 'candidate-acceptance', owner);
+    if (record?.schema !== 1 || record.material !== material) continue;
+    if (record.verdict === 'accepted') return null;
+    if (['rejected', 'revoked'].includes(record.verdict)) return record;
+  }
+  return null;
+}
 export function sceneDelta({ issue, filesKey, owner, sceneIds, required = false }) {
   const plan = ownerRecord(issue.comments || [], 'candidate-plan', owner);
   if (!plan) return { change: [], new: [], blocker: required ? `#${issue.number}: ci:golden needs an owner-reviewed scene plan (including an explicit empty plan)` : null };
@@ -81,11 +92,11 @@ export function sceneDelta({ issue, filesKey, owner, sceneIds, required = false 
 export function acceptanceRefusal(record, { material, cases, scripts, gpu, input }) {
   if (!record || record.schema !== 1 || record.material !== material || record.verdict !== 'accepted'
     || record.surface !== 'dev' || !record.environment?.browser || !record.environment?.os
-    || !Array.isArray(record.cases)) return 'missing/stale owner dev interactive acceptance';
+    || !Array.isArray(record.cases)) return 'optional field observation is incomplete or stale';
   if (!record.native || record.native.pass !== true || record.native.sha !== input.sha || record.native.tree !== input.tree
     || record.native.bundle !== input.manifest || digest(record.native.pins) !== digest(input.pins)
     || !record.native.environment?.browser || !record.native.environment?.node || !Array.isArray(record.native.cases))
-    return 'native report does not bind candidate bundle/pins/actual environment';
+    return 'optional native report does not bind candidate bundle/pins/actual environment';
   for (const item of cases) {
     const proof = record.cases.find(c => c.id === item.id);
     const native = record.native.cases.find(c => c.id === item.id);
@@ -93,11 +104,11 @@ export function acceptanceRefusal(record, { material, cases, scripts, gpu, input
       || proof.script !== item.script || proof.scriptHash !== scripts[item.script]
       || !HASH.test(proof.nativeOutput || '') || native?.pass !== true || native.script !== item.script
       || native.scriptHash !== proof.scriptHash || native.nativeOutput !== proof.nativeOutput)
-      return `missing native ordinary/neighbour observable: ${item.id}`;
+      return `optional observation lacks native ordinary/neighbour observable: ${item.id}`;
   }
   if (gpu && (record.environment.realGpu !== true || !record.environment.gpu?.trim()
     || record.environment.headless !== false || !record.gpuEvidence?.match(/^https:\/\//)))
-    return 'owner real-GPU/browser proof required; headless is not a substitute';
+    return 'optional observation does not establish real-GPU/browser evidence; headless is not a substitute';
   return null;
 }
 export function buildCandidate({ input, issues, proof, owner, sceneIds = GOLDEN_SCENARIOS.map(s => s.id) }) {
@@ -112,7 +123,7 @@ export function buildCandidate({ input, issues, proof, owner, sceneIds = GOLDEN_
     fieldDecision = { input: input.fieldDecision, record, refusal };
     if (refusal) blockers.push(refusal);
     else {
-      policy.manualAcceptanceRequired = false;
+      policy.scenePlanRequired = false;
       policy.fieldAcceptance = 'owner-confirmed-prerelease-promotion';
       warnings.push(`Owner accepted ${record.testedTag} on the stand by chat; linked per-issue records waived for ${record.tag} only. No native/GPU observation is fabricated.`);
     }
@@ -125,9 +136,9 @@ export function buildCandidate({ input, issues, proof, owner, sceneIds = GOLDEN_
     const filesKey = input.issueMaterials[entry.issue];
     const golden = issue.labels?.some(l => (l.name || l) === 'ci:golden');
     const delta = sceneDelta({ issue, filesKey, owner, sceneIds,
-      required: golden && policy.manualAcceptanceRequired });
+      required: golden && policy.scenePlanRequired });
     if (delta.blocker) blockers.push(delta.blocker);
-    if (golden && !policy.manualAcceptanceRequired && !delta.review && !delta.blocker)
+    if (golden && !policy.scenePlanRequired && !delta.review && !delta.blocker)
       warnings.push(`#${issue.number}: ${policy.channel === 'beta' ? 'beta' : 'owner-confirmed promotion'} has no additional owner scene plan; no intentional pixel changes declared`);
     plans.push({ issue: entry.issue, body: issueBodyDigest(issue.body), issueMaterial: filesKey, ...delta });
   }
@@ -143,13 +154,16 @@ export function buildCandidate({ input, issues, proof, owner, sceneIds = GOLDEN_
   for (const entry of input.catalogue.entries) {
     const localCases = requiredProfiles(entry, input.issueFiles[entry.issue] || []).flatMap(p => NATIVE_PROFILES[p]);
     if (!localCases.length) continue;
-    const record = ownerRecord(issues.find(i => i.number === entry.issue).comments || [], 'candidate-acceptance', owner);
-    const refusal = acceptanceRefusal(record, { material, cases: localCases, scripts: input.scripts, gpu, input });
-    // Advice is not permission to ignore an explicit current owner veto or
-    // revive older approval after a malformed/revoked latest owner record.
-    const veto = record && (record.invalid
-      || (record.material === material && record.verdict !== 'accepted'));
-    if (refusal) (policy.manualAcceptanceRequired || veto ? blockers : warnings).push(`#${entry.issue}: ${refusal}`);
+    const comments = issues.find(i => i.number === entry.issue).comments || [];
+    const record = ownerRecord(comments, 'candidate-acceptance', owner);
+    // No receipt is required, and missing optional QA is not another warning
+    // asking the owner to perform it. Supplied observations retain their limits.
+    const refusal = record ? acceptanceRefusal(record, { material, cases: localCases, scripts: input.scripts, gpu, input }) : null;
+    // Only an explicit authenticated rejection of THIS material blocks; a bad
+    // optional receipt must not resurrect the retired mandatory field gate.
+    const veto = fieldVeto(comments, material, owner);
+    if (veto) blockers.push(`#${entry.issue}: explicit owner ${veto.verdict} for this candidate`);
+    else if (refusal) warnings.push(`#${entry.issue}: optional field observation: ${refusal}`);
     receipts.push({ issue: entry.issue, record, refusal });
   }
   if (proof.status !== 'green') blockers.push(`full exact-SHA Validate is ${proof.status}: ${proof.note || 'proof unavailable'} ${proof.url || ''}`);
@@ -157,7 +171,7 @@ export function buildCandidate({ input, issues, proof, owner, sceneIds = GOLDEN_
   return { ...record, identity: digest(record), ready: blockers.length === 0, publish: false,
     planTemplates: plans.filter(p => p.blocker).map(p => ({ schema: 1, issue: p.issue, body: p.body,
       issueMaterial: p.issueMaterial, change: [], new: [], reason: 'Explain reviewed intent; empty arrays are an explicit no-scene-change declaration.' })),
-    next: blockers.length ? 'Repair named blockers; re-run read-only prepare. Scene catalogue: --list-scenes. Native scenes: npm run release:native. Never accept unrelated golden regions.'
+    next: blockers.length ? 'Repair named blockers; re-run read-only prepare. Scene catalogue: --list-scenes. Optional native scenes: npm run release:native. Never accept unrelated golden regions.'
       : 'Prepared only. Use the existing owner release command; full gates and publication confirmation remain mandatory.' };
 }
 export function intentionalDrift(results, scenes, sceneIds = GOLDEN_SCENARIOS.map(s => s.id)) {

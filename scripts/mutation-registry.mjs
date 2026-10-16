@@ -909,12 +909,12 @@ const MUTANT_DEFINITIONS = [
       replace: "      if (!rolledBack && host._adoption.configRev === attempt.revision && host._adoption.adoptionEpoch === epoch && String(id) === 'mutant-never-restore-new-device-ack') {" }],
   },
   {
-    id: 'candidate-beta-field-policy-leaks-to-stable',
+    id: 'candidate-optional-field-qa-becomes-mandatory',
     guard: 'node --test test/candidate-858.test.mjs',
-    because: '#889 AC2: stable, RC and unknown channels still require independent field/GPU acceptance.',
+    because: '#929 AC1: no release channel requires a manual owner field/GPU receipt; scene intent remains independently enforced.',
     patches: [{ file: 'scripts/candidate-readiness.mjs',
-      find: "return { channel: beta ? 'beta' : 'strict', manualAcceptanceRequired: !beta };",
-      replace: "return { channel: beta ? 'beta' : 'strict', manualAcceptanceRequired: false };" }],
+      find: "return { channel: beta ? 'beta' : 'strict', scenePlanRequired: !beta, manualAcceptanceRequired: false };",
+      replace: "return { channel: beta ? 'beta' : 'strict', scenePlanRequired: !beta, manualAcceptanceRequired: true };" }],
   },
   {
     id: 'candidate-beta-forgets-full-proof',
@@ -1849,8 +1849,8 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'candidate-headless-substitutes-owner-gpu',
-    guard: 'node --test --test-name-pattern="#858 interactive floor" test/candidate-858.test.mjs',
-    because: '#858: native/headless green must not stand in for an authenticated owner real-GPU dev receipt',
+    guard: 'node --test --test-name-pattern="#929 optional observation" test/candidate-858.test.mjs',
+    because: '#929: an optional headless observation must not claim real-GPU evidence; this truth check is advisory, not a publication gate',
     patches: [{ file: 'scripts/candidate-readiness.mjs',
       find: '  if (gpu && (record.environment.realGpu !== true || !record.environment.gpu?.trim()',
       replace: '  if (false && (record.environment.realGpu !== true || !record.environment.gpu?.trim()',

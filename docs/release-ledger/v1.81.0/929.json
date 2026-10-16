@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 929,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Implements the owner's general retirement of mandatory manual dev/GPU acceptance for tasks and all release channels. Keeps automated exact-candidate proofs, scene intent and baseline controls, explicit owner vetoes and honest limits of optional field evidence; product runtime and user-facing behavior are unchanged."
+}

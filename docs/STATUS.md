@@ -38,8 +38,11 @@ Stable preparation (#916) includes reachable second-parent task deliveries and
 uses a bounded 8 MiB GitHub transport. The owner's explicit stand acceptance
 of beta.4 by chat permits only product-equivalent 1.81.0 promotion; the reviewed
 decision and fresh authenticated comment are checked separately from absent
-native/GPU receipts. Existing automatic gates, scene boundaries and vetoes
-remain mandatory, and other stable/RC versions keep their strict default.
+native/GPU receipts. Its scene-plan scope and automatic guards stay intact.
+The subsequent #929 decision makes manual owner dev/GPU acceptance optional
+for every channel and every task, without requiring JSON, GPU details or links.
+Missing optional observations do not block; full automatic proofs, scene intent,
+baseline review and an explicit current owner veto still govern publication.
 
 GitHub funding metadata (#915) is an exact non-input of Validate. The guarded
 `.github` root and YAML/workflow selection remain unchanged; ordinary coverage
@@ -226,10 +229,10 @@ Protected-only records keep a disabled cleanup control with an explanation.
 Optimize/Undo use Houseplan write permission outside kiosk; paired storage and
 one-deep Undo remain authoritative.
 
-Beta publication (#889) treats additional owner scene/dev/native/GPU records
-as advice when absent, not as fabricated acceptance. Only the committed beta
-version selects this policy; stable/RC/unknown channels stay strict. Exact full
-CI, coherent artifacts and reviewed baseline boundaries remain mandatory.
+Beta publication (#889) permits an absent additional owner scene plan with no
+intentional pixel drift declared; stable/RC/unknown retain strict scene intent.
+Manual dev/native/GPU field receipts are optional on all channels under #929.
+Exact full CI, coherent artifacts and reviewed baseline boundaries stay mandatory.
 
 Golden overlap capture (#881, owner option b) repaints only the focused
 `device-battery-zigbee-overlap-dark` scene before its final screenshot, with
@@ -287,7 +290,7 @@ Vacuum camera attachment (#871) has one camera owner for the passive trail
 SVG and a current composed inverse for animated tip endpoints. The bounded
 paint window follows the existing anchor budget; source data and stacking
 remain unchanged. Native frame evidence, matrix guards and lifecycle witnesses
-are distinct from required real-GPU owner acceptance.
+are distinct from optional real-GPU owner observations (#929).
 
 The empty authoritative server screen has an Import backup entry (#875) next
 to Add space. It uses the existing JSON preview/confirmation/apply flow without
@@ -310,8 +313,8 @@ coverage. Model identity, opening-host rules and View rendering are unchanged.
 
 Candidate preparation (#858) is read-only and deterministic over exact material,
 pins, ledger, fresh issue bodies and full proof. Owner-reviewed scene intent and
-native ordinary/risky-neighbour dev acceptance are separate from CI green;
-headless never substitutes for required real-GPU field proof. Night diagnostics
+native ordinary/risky-neighbour diagnostics are separate from CI green;
+manual real-GPU field observations are optional (#929), never fabricated. Night diagnostics
 retain exact failing job/step and unknown cause rather than inferring guilt.
 
 Frontend producer reuse and remaining workflow waits (#856) are proof-bound:

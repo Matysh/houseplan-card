@@ -47,9 +47,14 @@ test('#858 candidate identity is deterministic; exact material/body/pins/proof i
   const f = fixture(); const first = f.build();
   assert.equal(first.ready, true); assert.equal(first.publish, false);
   assert.deepEqual(f.build(), first);
-  for (const mutate of [f => f.input.sha = b, f => f.input.tree = a, f => f.input.manifest = 'f'.repeat(64),
-    f => f.input.pins.lock = 'f'.repeat(64), f => f.issue.body += 'changed', f => f.input.issueMaterials[1] = 'f'.repeat(64)]) {
+  for (const mutate of [f => f.issue.body += 'changed', f => f.input.issueMaterials[1] = 'f'.repeat(64)]) {
     const n = fixture(); mutate(n); const next = n.build(); assert.notEqual(next.identity, first.identity); assert.equal(next.ready, false);
+  }
+  for (const mutate of [f => f.input.sha = b, f => f.input.tree = a, f => f.input.manifest = 'f'.repeat(64),
+    f => f.input.pins.lock = 'f'.repeat(64)]) {
+    const n = fixture(); mutate(n); const next = n.build(); assert.notEqual(next.identity, first.identity);
+    assert.equal(next.receipts[0].refusal, 'optional field observation is incomplete or stale');
+    assert.equal(next.ready, true, '#929: a stale optional human receipt does not block an otherwise valid candidate');
   }
   f.proof.status = 'pending'; assert.equal(f.build().ready, false);
   for (const status of ['failed','stale','cancelled','missing']) { f.proof.status = status; assert.equal(f.build().ready, false); }
@@ -69,14 +74,19 @@ test('#858 owner scene intent is authenticated, reviewed and scoped; unrelated d
   f.issue.comments.push({ ...comment('candidate-plan', {}), body: '<!-- hp:candidate-plan\nnot-json\n-->' });
   assert.equal(f.build().ready, false, 'new malformed owner record does not revive older approval');
 });
-test('#858 interactive floor needs native ordinary+neighbour and independent owner real-GPU receipt', () => {
+test('#929 optional observation never fabricates native or real-GPU proof and never blocks publication', () => {
   for (const mutate of [r => r.cases.pop(), r => r.cases[0].pass = false, r => r.cases[0].observed = '',
     r => r.environment.headless = true, r => r.environment.realGpu = false, r => delete r.gpuEvidence,
     r => r.native.sha = b, r => r.native.pins = {}, r => r.native.environment = {}, r => r.native.pass = false, r => r.native.cases.pop()]) {
     const f = fixture(); mutate(f.acceptance); f.issue.comments[1] = comment('candidate-acceptance', f.acceptance, 'Matysh', 2);
-    assert.equal(f.build().ready, false);
+    const result = f.build();
+    assert.equal(result.ready, true);
+    assert.ok(result.receipts[0].refusal, 'invalid optional observation is not claimed as accepted evidence');
+    assert.ok(result.warnings.some(w => w.includes('optional field observation')));
   }
-  const f = fixture(); f.issue.comments[1].user.login = 'agent'; assert.equal(f.build().ready, false);
+  const f = fixture(); f.issue.comments[1].user.login = 'agent';
+  assert.equal(f.build().ready, true);
+  assert.equal(f.build().receipts[0].record, null, 'do not invent an authenticated owner observation');
 });
 
 test('#889 beta missing field/scene records are advisory, not a fabricated owner acceptance', () => {
@@ -86,19 +96,19 @@ test('#889 beta missing field/scene records are advisory, not a fabricated owner
   const result = f.build();
   assert.equal(result.ready, true);
   assert.equal(result.publish, false);
-  assert.deepEqual(result.policy, { channel: 'beta', manualAcceptanceRequired: false });
+  assert.deepEqual(result.policy, { channel: 'beta', scenePlanRequired: false, manualAcceptanceRequired: false });
   assert.deepEqual(result.scenes, { change: [], new: [] });
   assert.equal(result.cases.length, 4, 'retain ordinary/neighbour risk inventory');
   assert.equal(result.gpu, true, 'do not hide the GPU risk');
   assert.equal(result.receipts[0].record, null);
-  assert.match(result.receipts[0].refusal, /missing\/stale owner dev interactive acceptance/);
-  assert.equal(result.warnings.length, 2);
+  assert.equal(result.receipts[0].refusal, null, '#929: no receipt is required');
+  assert.equal(result.warnings.length, 1);
   assert.match(result.warnings[0], /no intentional pixel changes declared/);
   assert.equal(intentionalDrift([{ id: 'one', status: 'different' }, { id: 'two', status: 'passed' }],
     result.scenes, ['one', 'two']), false);
 });
 
-test('#889 stable, RC, unknown and malformed versions cannot use the beta field policy', () => {
+test('#929 all channels allow absent owner QA while strict scene plans remain required', () => {
   for (const version of ['1.81.0', '1.81.0-rc.1', '1.81.0-alpha.1',
     '1.81.0-rc-beta.1', '1.81.0-dev-beta.1', '1.81.0-alpha.beta.1',
     '1.81.0-beta.1+build', '1.81.0-beta.0', undefined]) {
@@ -107,9 +117,21 @@ test('#889 stable, RC, unknown and malformed versions cannot use the beta field 
     f.issue.comments = [];
     const result = f.build();
     assert.equal(result.ready, false, String(version));
-    assert.equal(result.policy.manualAcceptanceRequired, true);
+    assert.equal(result.policy.manualAcceptanceRequired, false);
+    assert.equal(result.policy.scenePlanRequired, true);
     assert.ok(result.blockers.some(b => b.includes('owner-reviewed scene plan')));
-    assert.ok(result.blockers.some(b => b.includes('owner dev interactive acceptance')));
+    assert.ok(result.blockers.every(b => !b.includes('owner dev interactive acceptance')));
+    f.issue.comments = [comment('candidate-plan', f.plan)];
+    const ready = f.build();
+    assert.equal(ready.ready, true, `${String(version)} with scene plan and no field receipt`);
+    assert.equal(ready.publish, false);
+    assert.equal(ready.receipts[0].record, null);
+    assert.equal(ready.receipts[0].refusal, null);
+    assert.deepEqual(ready.warnings, []);
+    for (const status of ['failed', 'pending', 'cancelled', 'stale', 'missing']) {
+      f.proof.status = status;
+      assert.equal(f.build().ready, false, `${String(version)} full proof ${status}`);
+    }
   }
   for (const version of ['not-a-version', '1.81.0-beta.02', '1.81.0-beta.2 extra'])
     assert.throws(() => candidatePolicy(version), /SemVer|leading zeroes/);
@@ -141,7 +163,7 @@ test('#889 beta still blocks every non-green full proof and invalid/revoked owne
   assert.equal(f.build().ready, false);
 });
 
-test('#889 advisory beta field QA cannot override a current owner veto or malformed latest record', () => {
+test('#929 optional field QA preserves only explicit current owner vetoes, not malformed-record blockers', () => {
   for (const verdict of ['rejected', 'revoked']) {
     const f = fixture();
     f.input.version = '1.81.0-beta.2';
@@ -154,7 +176,30 @@ test('#889 advisory beta field QA cannot override a current owner veto or malfor
   f.input.version = '1.81.0-beta.2';
   f.issue.comments.push({ ...comment('candidate-acceptance', {}),
     body: '<!-- hp:candidate-acceptance\nnot-json\n-->' });
-  assert.equal(f.build().ready, false);
+  assert.equal(f.build().ready, true);
+  assert.equal(f.build().receipts[0].record.invalid, 'invalid owner JSON');
+  assert.ok(f.build().warnings.some(w => w.includes('optional field observation')));
+  for (const version of ['1.82.0', '1.82.0-rc.1', '1.82.0-beta.1', undefined]) {
+    for (const verdict of ['rejected', 'revoked']) {
+      const current = fixture(); current.input.version = version;
+      const material = current.build().material;
+      current.issue.comments.push(comment('candidate-acceptance', { schema: 1, material, verdict }, 'Matysh', 3));
+      assert.equal(current.build().ready, false, `${String(version)} ${verdict}`);
+      assert.ok(current.build().blockers.some(b => b.includes(`explicit owner ${verdict}`)));
+      current.issue.comments.at(-1).user.login = 'intruder';
+      assert.equal(current.build().ready, true, 'foreign actor cannot veto');
+      current.issue.comments.at(-1).user.login = 'Matysh';
+      current.issue.comments.at(-1).body = comment('candidate-acceptance', { schema: 1, material: 'stale', verdict }).body;
+      assert.equal(current.build().ready, true, 'a different material does not veto this candidate');
+      current.issue.comments.at(-1).body = comment('candidate-acceptance', { schema: 1, material, verdict }).body;
+      current.issue.comments.push({ ...comment('candidate-acceptance', {}), body: '<!-- hp:candidate-acceptance\nnot-json\n-->' });
+      assert.equal(current.build().ready, false, 'malformed optional observation cannot erase an explicit veto');
+      current.issue.comments.push(comment('candidate-acceptance', { schema: 1, material, verdict: 'accepted' }, 'intruder', 5));
+      assert.equal(current.build().ready, false, 'foreign acceptance cannot lift the owner veto');
+      current.issue.comments.at(-1).user.login = 'Matysh';
+      assert.equal(current.build().ready, true, 'new explicit owner decision lifts its own veto without GPU proof');
+    }
+  }
 });
 test('#858 prepare only performs GETs, calls existing full proof, never dispatches/publishes', async () => {
   const f = fixture('infra'); f.issue.labels = []; f.issue.comments = [];
@@ -223,8 +268,8 @@ test('#858 actual publisher workflow steps refuse an unprepared candidate before
   const before = git(dir, 'status', '--porcelain');
   for (const workflow of ['release.yml', 'publish-prerelease.yml']) {
     const yaml = readFileSync(join(root, '.github/workflows', workflow), 'utf8');
-    const step = findStep(yaml, { name: 'Candidate scenes and owner native/GPU acceptance are current' });
-    assert.match(yaml.slice(yaml.indexOf('      - name: Candidate scenes')), /if: steps.readiness.outputs.proceed == 'true'/);
+    const step = findStep(yaml, { name: 'Candidate scene intent and automatic proofs are current' });
+    assert.match(yaml.slice(yaml.indexOf('      - name: Candidate scene intent')), /if: steps.readiness.outputs.proceed == 'true'/);
     const result = runStep(step, step.run, { cwd: dir, env: { ...env, SHA: git(dir, 'rev-parse', 'HEAD'), GITHUB_REPOSITORY: 'Matysh/houseplan-card' } });
     assert.notEqual(result.status, 0); assert.match(result.stderr + result.stdout, /clean exact-candidate checkout|release-ledger/);
   }
@@ -306,11 +351,16 @@ test('#916 explicit owner chat promotion preserves missing-record truth, strict 
   assert.equal(value.ready, true); assert.equal(value.publish, false);
   assert.equal(value.policy.channel, 'strict'); assert.equal(value.policy.fieldAcceptance, 'owner-confirmed-prerelease-promotion');
   assert.equal(value.receipts[0].record, null, 'never fabricate per-issue/native/GPU records');
-  assert.ok(value.receipts[0].refusal); assert.equal(value.gpu, true);
+  assert.equal(value.receipts[0].refusal, null); assert.equal(value.gpu, true);
   assert.deepEqual(value.scenes, { change: [], new: [] });
   assert.match(value.warnings[0], /No native\/GPU observation is fabricated/);
   delete f.input.fieldDecision;
-  assert.equal(f.build().ready, false, 'stable without explicit reviewed promotion remains strict');
+  assert.equal(f.build().ready, false, 'stable without the historical scene-plan waiver still needs scene intent');
+  f.issues[0].comments.push(comment('candidate-plan', { schema: 1, issue: 1,
+    body: issueBodyDigest(f.issues[0].body), issueMaterial: f.input.issueMaterials[1],
+    change: [], new: [], reason: 'No intentional scene changes' }));
+  assert.equal(f.build().ready, true, '#929: normal stable path needs no field decision or manual QA receipt');
+  f.issues[0].comments = [];
   f.input.fieldDecision = structuredClone(decision);
   for (const status of ['failed', 'pending', 'stale', 'missing', 'cancelled']) {
     f.proof.status = status; assert.equal(f.build().ready, false, status);

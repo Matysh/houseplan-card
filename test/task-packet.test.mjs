@@ -412,7 +412,8 @@ test('#707 AC11: changelog и визуальное свидетельство', 
   assert.deepEqual(packetOf({ branch: branchWith({ commits, changedFiles: ['docs/CHANGELOG.md', 'docs/CHANGELOG.ru.md'] }) }).changelog.missing, []);
   assert.deepEqual(packetOf({ branch: branchWith({ commits: [commits[1]] }) }).changelog.missing, [], 'User-Visible: no changelog не требует');
   const visual = renderPacket(packetOf({ branch: branchWith({ diff: RENDER }) }));
-  assert.match(visual, /дефект растра или резкости требует свидетеля, красного на старом коде, и подтверждения владельца в GPU-браузере \(§7\.1\)/);
+  assert.match(visual, /дефект растра или резкости требует свидетеля, красного на старом коде; ручная dev\/GPU-приёмка владельцем добровольна и не блокирует задачу или выпуск/);
+  assert.doesNotMatch(visual, /требует.*подтверждения владельца в GPU-браузере/);
   assert.doesNotMatch(renderPacket(packetOf({ branch: branchWith({ diff: STYLE }) })), /## Changelog/, 'нет коммитов и нет визуала — раздел не печатается');
 });
 
