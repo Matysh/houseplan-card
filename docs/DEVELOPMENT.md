@@ -12,7 +12,9 @@ not change in pre-commit: inspect/restage those edits and retry if it does.
 
 No automatic detection of native `git commit --amend`, environment-only mode
 switch, `--no-verify`, custom hook path or pathspec is offered. The private
-context file is consumed once and removed on success/failure; it is a local
+context file is bounded and accepted only in this Git directory's private
+temporary subdirectory (no symlink); unrelated environment paths are never
+consumed. It is consumed once and removed on success/failure, and is a local
 invocation contract, not protection against an author who controls their own
 Git hooks. Ordinary `-m`/`-C HEAD` new commits and historical CI stay strict.
 Merge commits are intentionally unsupported by this command. Root commits use

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { spawnSync } from 'node:child_process';
-import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -135,7 +135,9 @@ test('#923: stale repository/HEAD/index contexts and a reused context fail close
   const before = f.head();
   const snapshot = { version: 1, root: f.root, head: before,
     parents: f.ok(f.git('show', '-s', '--format=%P', 'HEAD')), tree: f.ok(f.git('write-tree')) };
-  const context = join(f.root, '.git/negative-context.json');
+  const directory = mkdtempSync(join(f.root, '.git/hp-amend-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 }));
+  const context = join(directory, 'context.json');
   for (const patch of [{ head: 'a'.repeat(40) }, { root: join(f.root, 'other') },
     { tree: 'b'.repeat(40) }, { parents: 'c'.repeat(40) }, { version: 2 }, { extra: true }]) {
     writeFileSync(context, JSON.stringify({ ...snapshot, ...patch }));
@@ -153,4 +155,50 @@ test('#923: stale repository/HEAD/index contexts and a reused context fail close
   assert.match(reused.stderr, /ENOENT/);
   assert.equal(f.head(), after);
   assert.equal(consumeAmendBase('not-a-message', ''), null, 'no context means ordinary mode');
+});
+
+test('#923: an inherited environment path cannot consume an unrelated JSON file', t => {
+  const f = fixture(t);
+  f.stage();
+  const before = f.head();
+  const unrelated = join(f.root, 'unrelated.json');
+  const content = JSON.stringify({ version: 1, root: f.root, head: before,
+    parents: f.ok(f.git('show', '-s', '--format=%P', 'HEAD')), tree: f.ok(f.git('write-tree')) });
+  writeFileSync(unrelated, content);
+  const result = f.run('git', ['commit', '--amend', '--no-edit'], { [AMEND_CONTEXT]: unrelated });
+  assert.notEqual(result.status, 0);
+  assert.equal(f.head(), before);
+  assert.equal(readFileSync(unrelated, 'utf8'), content);
+});
+
+test('#923: oversized or symlinked context is rejected without consuming its target', t => {
+  const f = fixture(t);
+  f.stage();
+  const before = f.head();
+  const directory = mkdtempSync(join(f.root, '.git/hp-amend-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 }));
+  const context = join(directory, 'context.json');
+  const check = () => {
+    assert.notEqual(f.run('git', ['commit', '--amend', '--no-edit'], { [AMEND_CONTEXT]: context }).status, 0);
+    assert.equal(f.head(), before);
+  };
+  writeFileSync(context, ' '.repeat(4097));
+  check();
+  assert.equal(readFileSync(context, 'utf8').length, 4097);
+  rmSync(context);
+  if (process.platform !== 'win32') {
+    const target = join(f.root, 'preserved.json');
+    writeFileSync(target, '{}');
+    symlinkSync(target, context);
+    check();
+    assert.equal(readFileSync(target, 'utf8'), '{}');
+    rmSync(context);
+    rmSync(directory, { recursive: true });
+    const outside = join(f.root, 'outside-context');
+    mkdirSync(outside);
+    writeFileSync(join(outside, 'context.json'), '{}');
+    symlinkSync(outside, directory, 'dir');
+    check();
+    assert.equal(readFileSync(join(outside, 'context.json'), 'utf8'), '{}');
+  }
 });

@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 import { execFileSync, spawnSync } from 'node:child_process';
-import { accessSync, constants, mkdtempSync, readFileSync, realpathSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { accessSync, constants, lstatSync, mkdtempSync, readFileSync, realpathSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { basename, dirname, isAbsolute, join } from 'node:path';
 import { isMainModule } from './spawn-portable.mjs';
 
 export const AMEND_CONTEXT = 'HP_COMMIT_AMEND_CONTEXT';
 const git = args => execFileSync('git', args, { encoding: 'utf8' }).trim();
 const root = () => realpathSync(git(['rev-parse', '--show-toplevel']));
+const gitDirectory = () => realpathSync(git(['rev-parse', '--absolute-git-dir']));
 const tree = () => git(['write-tree']);
 const parents = () => git(['show', '-s', '--format=%P', 'HEAD']);
 
@@ -16,6 +17,15 @@ const parents = () => git(['show', '-s', '--format=%P', 'HEAD']);
 // COMMIT_EDITMSG, editor metadata, reused messages or the parent process.
 export function consumeAmendBase(messageFile, path = process.env[AMEND_CONTEXT]) {
   if (!path) return null;
+  // Never read/unlink an arbitrary path inherited from the shell. Only the
+  // wrapper's private directory in this exact Git dir is consumable.
+  if (!isAbsolute(path) || basename(path) !== 'context.json'
+    || !basename(dirname(path)).startsWith('hp-amend-')
+    || dirname(dirname(path)) !== gitDirectory()
+    || lstatSync(dirname(path)).isSymbolicLink() || !lstatSync(path).isFile()
+    || lstatSync(path).size > 4096) {
+    throw new Error('invalid amend context location/type/size');
+  }
   const snapshot = JSON.parse(readFileSync(path, 'utf8'));
   unlinkSync(path); // one use: a nested/new commit cannot inherit this mode
   if (Object.keys(snapshot).sort().join(',') !== 'head,parents,root,tree,version'
@@ -48,7 +58,7 @@ export function amend(argv) {
   accessSync(join(repoRoot, '.githooks/commit-msg'), constants.R_OK | constants.X_OK);
   const snapshot = { version: 1, root: repoRoot, head: git(['rev-parse', 'HEAD']), parents: parents(), tree: tree() };
   if (snapshot.parents.includes(' ')) throw new Error('amending merge commits is not supported');
-  const directory = mkdtempSync(join(git(['rev-parse', '--absolute-git-dir']), 'hp-amend-'));
+  const directory = mkdtempSync(join(gitDirectory(), 'hp-amend-'));
   const contextFile = join(directory, 'context.json');
   try {
     writeFileSync(contextFile, JSON.stringify(snapshot), { mode: 0o600, flag: 'wx' });
