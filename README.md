@@ -5,6 +5,7 @@
 [![CI](https://github.com/Matysh/houseplan-card/actions/workflows/validate.yml/badge.svg)](https://github.com/Matysh/houseplan-card/actions)
 [![Live demo](https://img.shields.io/badge/demo-try_it_live-00c853?logo=homeassistant&logoColor=white)](https://demo.houseplan.tech)
 [![Telegram chat](https://img.shields.io/badge/Telegram-chat-2CA5E0?logo=telegram&logoColor=white)](https://t.me/ha_houseplan)
+[![Support the project](https://img.shields.io/badge/Boosty-Support_the_project-F15F2C?logo=boosty&logoColor=white)](https://boosty.to/matysh/donate)
 
 📘 **[Full user guide](docs/USER-GUIDE.md)** · 🇷🇺 **[Русский](README.ru.md)** · 🗂 **[Project issues](https://github.com/Matysh/houseplan-card/issues)**
 
@@ -19,7 +20,9 @@ the area's devices appear automatically. You can immediately see where a light
 is on, a door is open, a room is too cold, Zigbee signal is weak, or a leak
 sensor has fired.
 
-![Synthetic home in View mode with rooms, devices, light and climate](docs/images/01-view-desktop.png)
+![House Plan with rooms, devices and Zigbee network connections](docs/images/houseplan-overview.png)
+
+[▶ Watch the video on YouTube](https://www.youtube.com/watch?v=DAG92u8xZKY)
 
 Setup is entirely graphical: no floor-plan YAML, Inkscape, or external editor.
 Plan data and device positions live on the Home Assistant server and stay in
@@ -52,7 +55,7 @@ sync across screens.
 - **Wall-display kiosk.** A plan-only view with fullscreen navigation and icon
   sizes saved for that display.
 
-![The same synthetic home in touch View mode](docs/images/02-view-touch.png)
+![Synthetic home in touch View mode](docs/images/02-view-touch.png)
 
 <!-- docs-section: first-run -->
 

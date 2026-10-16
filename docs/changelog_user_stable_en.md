@@ -8,6 +8,26 @@ The 1.80.1 entry below is the owner's approved style example, translated into
 English. It does not rewrite the published release; its historical milestone
 collection has not yet been curated under the new rules.
 
+<!-- release: v1.81.0 -->
+<!-- base: v1.80.1 -->
+## Houseplan 1.81.0 release
+
+Aligning your plan is easier, vacuum maps show more detail, and Zigbee indicators can be tailored to your home. Zigbee2MQTT links now survive Home Assistant restarts.
+
+📡 **Show only the signal you need.** Set Zigbee indicators for the whole home, a floor or an individual device. Battery and signal readings are also available for individual device entities. [#867](https://github.com/Matysh/houseplan-card/issues/867), [#876](https://github.com/Matysh/houseplan-card/issues/876)
+
+🔗 **Links survive a restart.** Your saved Zigbee2MQTT map stays on the plan, marked as stale, until you refresh it or turn links off. [#912](https://github.com/Matysh/houseplan-card/issues/912)
+
+🤖 **See more of your vacuum's work.** Supported maps show the full route, preserving turns and short stretches of the path. [#872](https://github.com/Matysh/houseplan-card/issues/872)
+
+📏 **Space devices evenly.** A new snap helps keep equal gaps between icons and highlights the spacing. [#873](https://github.com/Matysh/houseplan-card/issues/873)
+
+📐 **Line up walls more easily.** While drawing or moving nodes, horizontal and vertical wall endpoints snap into line with a parallel wall's end — even off the grid. [#885](https://github.com/Matysh/houseplan-card/issues/885)
+
+Large-plan updates and wall-node dragging are faster. Undo and saving after errors are more reliable, and Optimize explains how to clean up old records. You can move the wall-thickness dialog while the wall being edited stays highlighted.
+
+[All user-facing changes in this release](https://github.com/Matysh/houseplan-card/issues?q=is%3Aissue%20milestone%3A%221.81%22)
+
 <!-- release: v1.80.1 -->
 <!-- base: v1.79.0 -->
 ## Houseplan 1.80.1 release

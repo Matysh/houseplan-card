@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v1.81.0 — 2026-10-16
+
+- Stable promotion of the owner-accepted v1.81.0-beta.4 product, with no further
+  runtime changes. User-facing release notes cover the changes since v1.80.1;
+  the detailed beta history remains below.
+
 ## v1.81.0-beta.4 — 2026-10-15
 
 - Returning to the page while a released marker move is being saved no longer

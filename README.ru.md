@@ -5,6 +5,7 @@
 [![CI](https://github.com/Matysh/houseplan-card/actions/workflows/validate.yml/badge.svg)](https://github.com/Matysh/houseplan-card/actions)
 [![Live demo](https://img.shields.io/badge/демо-попробовать-00c853?logo=homeassistant&logoColor=white)](https://demo.houseplan.tech)
 [![Telegram chat](https://img.shields.io/badge/Telegram-чат-2CA5E0?logo=telegram&logoColor=white)](https://t.me/ha_houseplan)
+[![Поддержать проект](https://img.shields.io/badge/Boosty-%D0%9F%D0%BE%D0%B4%D0%B4%D0%B5%D1%80%D0%B6%D0%B0%D1%82%D1%8C_%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82-F15F2C?logo=boosty&logoColor=white)](https://boosty.to/matysh/donate)
 
 📘 **[Полное руководство](docs/USER-GUIDE.ru.md)** · 🇬🇧 **[English](README.md)** · 🗂 **[Задачи проекта](https://github.com/Matysh/houseplan-card/issues)**
 
@@ -19,7 +20,9 @@ Assistant — и устройства появятся на плане авто�
 горит свет, открыта дверь, слишком холодно, слабый Zigbee-сигнал или сработал
 датчик протечки.
 
-![Синтетический дом в режиме просмотра: комнаты, устройства, свет и климат](docs/images/01-view-desktop.png)
+![House Plan: комнаты, устройства и связи сети Zigbee](docs/images/houseplan-overview.png)
+
+[▶ Смотреть видео на YouTube](https://www.youtube.com/watch?v=DAG92u8xZKY)
 
 Настройка выполняется в графическом интерфейсе: без YAML-разметки, Inkscape и
 внешнего редактора плана. Данные плана и расположение устройств хранятся на
@@ -53,7 +56,7 @@ Assistant — и устройства появятся на плане авто�
 - **Киоск для настенного экрана.** Только план, полноэкранная навигация и размеры
   значков, сохранённые отдельно для этого устройства.
 
-![Тот же синтетический дом в touch-режиме просмотра](docs/images/02-view-touch.png)
+![Синтетический дом в touch-режиме просмотра](docs/images/02-view-touch.png)
 
 <!-- docs-section: first-run -->
 
