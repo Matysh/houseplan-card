@@ -444,6 +444,40 @@ test('§8.1 обратная проба (AC6): UI — не вход backend, bac
   }
 });
 
+test('#915 AC1: GitHub funding metadata is not a Validate input', () => {
+  const funding = p('.github', 'FUNDING.yml');
+  const isolated = Object.fromEntries(CHECK_NAMES.map((name) => [name, new Set()]));
+  // Use an ordinary tracked inventory even on dev, where main-only metadata
+  // has not yet arrived. Split paths keep this test out of data dependencies.
+  assert.ok(isExecutableInput(funding), 'the general YAML guard stays active');
+  assert.ok(isDeclaredNotAnInput(funding), 'only the explicit metadata exception applies');
+  const report = coverage(ROOT, { tracked: [funding], manifest: isolated });
+  assert.deepEqual(report.unknown, []);
+  assert.deepEqual(report.declaredButCovered, []);
+  const affected = checksAffectedBy([funding], ROOT, { manifest: isolated });
+  assert.deepEqual(affected.unknown, []);
+  assert.equal(affected.affected.size, 0);
+});
+
+test('#915 AC2: nearby unknown YAML and workflows remain guarded', () => {
+  const files = [
+    p('.github', 'OTHER.yml'),
+    p('.github', 'FUNDING.yaml'),
+    p('.github', 'workflows', 'FUNDING.yml'),
+  ];
+  const isolated = Object.fromEntries(CHECK_NAMES.map((name) => [name, new Set()]));
+  for (const file of files) {
+    assert.ok(isExecutableInput(file), file);
+    assert.ok(!isDeclaredNotAnInput(file), file);
+  }
+  assert.deepEqual(coverage(ROOT, { tracked: files, manifest: isolated }).unknown, files);
+  for (const file of files) {
+    const affected = checksAffectedBy([file], ROOT, { manifest: isolated });
+    assert.deepEqual(affected.unknown, [file]);
+    assert.deepEqual([...affected.affected].sort(), [...CHECK_NAMES].sort());
+  }
+});
+
 test('§5.5 лист покрытия: ни одного неизвестного исполняемого файла, ни одной лишней записи NOT_AN_INPUT', () => {
   const { unknown, declaredButCovered } = coverage(ROOT, { manifest: MANIFEST });
   assert.deepEqual(unknown, [], 'исполняемый файл без хозяина: впишите в CHECKS или в NOT_AN_INPUT с причиной');

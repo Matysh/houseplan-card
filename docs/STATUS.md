@@ -25,6 +25,10 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+GitHub funding metadata (#915) is an exact non-input of Validate. The guarded
+`.github` root and YAML/workflow selection remain unchanged; ordinary coverage
+and affected-check witnesses keep unknown neighbouring files fail-closed.
+
 Successful Z2M maps (#912) have an entry-owned atomic HA Store separate from
 plan/export/support data. Reload restores them stale without a scan. Explicit
 Update durably clears its topic first; saved links OFF clears all maps and

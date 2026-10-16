@@ -90,6 +90,7 @@ export const NOT_AN_INPUT = [
   ['scripts/windows-toolchain.ps1', 'изолированная установка и запуск Windows toolchain с пинами CI (#557), ручной запуск'],
   ['assets/fonts/**', 'исходный TTF читает только ручной generate-pdf-font.mjs; Validate использует закоммиченный результат'],
   ['.github/ISSUE_TEMPLATE/**', 'шаблоны issue GitHub, не исполняются'],
+  ['.github/FUNDING.yml', 'метаданные кнопки поддержки GitHub; Validate их не читает и не исполняет'],
   ['.githooks/**', 'локальные хуки'],
 ];
 
