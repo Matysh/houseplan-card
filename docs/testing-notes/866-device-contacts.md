@@ -78,9 +78,36 @@ performance gate. Do not promote concurrent or dirty exploratory runs to proof.
 
 ## Remaining before S7
 
-1. Owner decision on the two monolith counters, requested in issue comment
-   `6220661409`: raw bundle 2,970,705 and host references 5,418; keep the old
-   2,000/25 bands and all gzip/absolute budgets. No ceilings have been changed.
+### Protective AC negative evidence
+
+Ordinary inputs below run against unchanged production helpers or the mounted
+bundle, not substituted implementations. No mutation is claimed caught.
+
+| AC | Positive witness | Negative witness / what the assertion rejects |
+|---|---|---|
+| AC1 | 36 frozen comparisons + both-theme golden boards | Pinned original-file hashes; missing glyph and clipped-stage checks reject empty or hidden production frames |
+| AC2 | Native 68-case wall matrix | `device-contact` short face/invalid normal/masonry intersection; maintenance suite door/window/passage holes reject a target across an opening |
+| AC3 | Row/column/L/grid units + native detach | Diagonal/bbox-only proximity cannot join; extraction of the middle of ten produces separate components and unchanged neighbours |
+| AC4 | Native Alt/toggle plus independent spacing smoke | Bypass yields no contact; resolver rejects outside release radii; reversed candidate arrays yield the same result |
+| AC5 | Native own mouse/touch/Enter + inherited capsules | Unit overlapping 44px floors choose the painted member; the empty L corner is not a group target |
+| AC6 | Native one point write + Undo/Redo | Esc/cancel/capture loss/blur/refused write restore the exact before/group and do not add history; blur was naturally red before its fix |
+| AC7 | Real canonicalizer/backend save + native cold mount/Optimize preview | Removed/moved host receives no exemption; unrelated/outlier/foreign-floor points remain subject to maintenance |
+| AC8 | Static parity and Flat↔iso native checks | Iso must have no Flat contour/contact attributes and must retain old tile shadows; static hit paths must stay passive |
+| AC9 | Native 200-marker work counters | Thirty unrelated HA frames must not measure/rebuild; drag must not rebuild the full index or scan all pairs |
+| AC10 | Native RU/EN guide text and canonical docs | No actionable toggle in View; guide disappears after release/cancel/Alt; layout keys stay only existing x/y/s |
+
+Commands: `node --test test/device-contact*.test.mjs` after the ordinary test
+compile; `node demo/smoke_device_contacts.mjs`,
+`node demo/smoke_device_contact_walls.mjs`,
+`node demo/smoke_device_contact_work.mjs`,
+`node demo/smoke_device_contact_designer.mjs`,
+`node demo/smoke_device_equal_spacing.mjs`,
+`node demo/smoke_device_hit_capsules.mjs`.
+
+1. Owner approved the two requested monolith ceilings in the current chat:
+   raw bundle 2,970,705 and host references 5,418 (answer: “Разрешаю”). The old
+   2,000/25 bands and all gzip/absolute budgets remain unchanged. No broader
+   budget or product-scope exception is inferred.
 2. Fresh full gate and named inherited lifecycle/context/static smokes on the
    final material; refresh numerical/camera/work evidence after source changes.
 3. Publish the unblocked task branch, full attested golden capture, inspect and
