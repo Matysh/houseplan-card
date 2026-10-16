@@ -1548,8 +1548,12 @@ Prepare freezes one run's route. To revoke an in-flight route, cancel that run
 and start a new request; editing the variable alone does not change its snapshot.
 File mode publishes `docs/reviews/findings/<issue>-<stage>-r<round>.md` with the
 review; the regular archive link repair keeps its link reachable later. These
-companions remain under reviews, not implementation/release membership. New
-reviews require the typed snapshot; in-flight old workflows retain only the
+companions remain under reviews, not implementation/release membership.
+Publication normalizes line endings and records an exact Git blob binding
+before the unchanged machine-anchor tail. SPEC companions need the same
+publisher, exact path/header/blob and added-file proof; they never confer
+implementation/close eligibility. New reviews require the typed snapshot;
+in-flight old workflows retain only the
 old issues protocol. This is instruction delivery, not a Bash sandbox. See
 [PROCESS §10.4](../PROCESS.md#104-событийный-конвейер-метка-как-триггер).
 GitHub documents [configuration variables](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-variables)

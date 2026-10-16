@@ -9,6 +9,7 @@ import { buildReleaseMembership, readCandidateHistory, verifyReleaseMembershipAg
 import { taskDelivery, reviewPublicationMessage } from '../scripts/task-delivery.mjs';
 import { withMaterialAnchors } from '../scripts/review-doc-guard.mjs';
 import { readLine, buildLineMembership } from '../scripts/release-review.mjs';
+import { findingsPolicy, findingsHeader, findingsLink } from '../scripts/review-findings-policy.mjs';
 
 const cycle = { schema: 1, baseStable: 'v1.80.1', targetStable: 'v1.81.0', milestone: { number: 3, title: '1.81' } };
 const publisher = 'claude[bot] <209825114+claude[bot]@users.noreply.github.com>';
@@ -27,12 +28,14 @@ function fixture(t) {
   run(['init', '-q', '-b', 'dev']);
   put('docs/release-ledger/cycle.json', JSON.stringify(cycle));
   commit('base'); run(['tag', cycle.baseStable]);
-  const spec = ({ trailer = phase, extra, malformed = false, author = publisher } = {}) => {
+  const spec = ({ trailer = phase, extra, malformed = false, author = publisher, findings } = {}) => {
     const path = 'docs/reviews/SPEC-REVIEW-2-r1.md';
-    put(path, malformed ? '# SPEC-REVIEW-2-r1\nno machine evidence' : withMaterialAnchors('# SPEC-REVIEW-2-r1\n', {
+    put(path, malformed ? '# SPEC-REVIEW-2-r1\nno machine evidence' : withMaterialAnchors('# SPEC-REVIEW-2-r1\n'
+      + (findings?.link ?? ''), {
       sha: run(['rev-parse', 'HEAD']), tree: run(['rev-parse', 'HEAD^{tree}']), issueBody: 'a'.repeat(64), verdict: 'green', high: 0,
     }));
     put('docs/reviews/INDEX.md', 'SPEC-REVIEW-2-r1.md\n');
+    if (findings) put(findings.path, findings.text);
     if (extra) put(extra, 'extra');
     return commit(`docs: review document for #2\n\nIssue: #2\nUser-Visible: no${trailer ? `\n${trailer}` : ''}`, author);
   };
@@ -58,6 +61,51 @@ for (const trailer of [phase, '']) test(`#903 verified ${trailer ? 'v1' : 'legac
     assert.deepEqual(buildLineMembership({ tag: 'v1.81.0', candidate: sha, ...line }).issues, []);
   } finally { process.chdir(old); }
   assert.equal(f.run(['status', '--porcelain']), before);
+});
+
+test('#926 SPEC companion is content-bound ancillary evidence, never implementation membership', t => {
+  const f = fixture(t), policy = findingsPolicy('[2]', { repo: 'o/r', issue: 2, stage: 'spec', round: 1 });
+  const text = findingsHeader(policy) + 'No outside findings.\n';
+  const sha = f.spec({ findings: { path: policy.path, text, link: findingsLink(policy, text) } });
+  const result = f.catalogue();
+  assert.deepEqual(result.entries, []);
+  assert.deepEqual(result.specDeliveries, [{ issue: 2, commit: sha, phase: 'spec-review' }]);
+  const old = process.cwd(); process.chdir(f.dir);
+  try {
+    const history = readCandidateHistory(sha);
+    const { manifest } = buildReleaseMembership({ tag: 'v1.81.0-beta.4', candidate: sha,
+      ...history, issueNumbers: [2], allowUnmatched: true });
+    assert.deepEqual(manifest.issues, []);
+    assert.doesNotThrow(() => verifyReleaseMembershipAgainstGit(manifest));
+    assert.throws(() => verifyReleaseMembershipAgainstGit({ ...manifest, issues: [{ number: 2, commits: [sha] }] }), /does not prove/);
+  } finally { process.chdir(old); }
+});
+
+test('#926 SPEC sidecar exception refuses wrong content/hash/path/publisher and modifications', t => {
+  const policy = findingsPolicy('[2]', { repo: 'o/r', issue: 2, stage: 'spec', round: 1 });
+  const text = findingsHeader(policy) + 'No outside findings.\n';
+  const valid = { path: policy.path, text, link: findingsLink(policy, text) };
+  for (const [label, over, author, prior] of [
+    ['content', { text: text + 'tampered' }],
+    ['header', { text: 'foreign header\n', link: findingsLink(policy, 'foreign header\n') }],
+    ['missing hash', { link: '' }],
+    ['duplicate hash', { link: valid.link + valid.link }],
+    ['foreign round', { path: 'docs/reviews/findings/2-spec-r2.md' }],
+    ['foreign issue', { path: 'docs/reviews/findings/3-spec-r1.md' }],
+    ['code stage', { path: 'docs/reviews/findings/2-code-r1.md' }],
+    ['foreign publisher', {}, 'someone <someone@example.com>'],
+    ['modified sidecar', { text: text + ' changed', link: findingsLink(policy, text + ' changed') }, publisher, true],
+    ['NUL', { text: text + '\0', link: findingsLink(policy, text + '\0') }],
+    ['oversized', { text: text + ' '.repeat(262145), link: findingsLink(policy, text + ' '.repeat(262145)) }],
+  ]) {
+    const f = fixture(t);
+    if (prior) { f.put(policy.path, text); f.commit('prior unrelated file'); }
+    f.spec({ findings: { ...valid, ...over }, ...(author ? { author } : {}) });
+    assert.throws(f.catalogue, /Unproven spec-only/, label);
+  }
+  const mixed = fixture(t);
+  mixed.spec({ findings: valid, extra: 'src/hidden-with-companion.ts' });
+  assert.throws(mixed.catalogue, /Unproven spec-only/, 'valid companion cannot hide product delivery');
 });
 
 test('#903 later A/B delivery rejects absent/unchanged doc placeholder at catalogue and merge boundaries', t => {

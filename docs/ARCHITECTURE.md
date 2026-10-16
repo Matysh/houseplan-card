@@ -1500,6 +1500,11 @@ checks the trusted snapshot, exact companion set/hash/text, and publishes only
 the derived reviews/findings path beside the report. Legacy in-flight results
 can use only their old no-companion protocol. No arbitrary instructions, new
 model capabilities, severity waivers or merge authority are introduced.
+Publication normalizes line endings before sealing/writing and binds the exact
+Git blob in the report before its machine anchors. SPEC delivery accounting
+allows only that added same-issue/stage/round companion, expected header, blob,
+size and publisher proof; it remains spec-only trace, not implementation or
+release/close membership. The existing SPEC/index and foreign-path checks stay.
 
 ## Review handoff provenance (#904)
 

@@ -2,6 +2,7 @@
 import { anchorIssueBodyFrom, anchorTreeFrom, anchorVerdictFrom } from './review-doc-guard.mjs';
 import { terminalTrailers } from './validate-commit-provenance.mjs';
 import { isMainModule } from './spawn-portable.mjs';
+import { findingsHeader, findingsLinkForBlob, findingsTextProblems } from './review-findings-policy.mjs';
 
 export const SPEC_DELIVERY_PHASE = 'spec-review/v1';
 const PUBLISHER = '209825114+claude[bot]@users.noreply.github.com';
@@ -20,6 +21,25 @@ export function reviewPublicationMessage(issue, stage) {
     + (stage === 'spec' ? `Delivery-Phase: ${SPEC_DELIVERY_PHASE}\n` : '');
 }
 
+// #926: the sole optional SPEC sidecar is ancillary, content-bound machine
+// evidence from the same publisher. This does not allow arbitrary C paths.
+function provenSpecFindings(commit, doc, issue) {
+  const round = /^docs\/reviews\/SPEC-REVIEW-\d+-r([1-9]\d*)\.md$/.exec(doc || '')?.[1];
+  if (!round || !Number.isSafeInteger(Number(round)) || typeof commit.specDocument !== 'string') return null;
+  const policy = { issue, stage: 'spec', round: Number(round), path: `docs/reviews/findings/${issue}-spec-r${round}.md` };
+  if (!commit.files.includes(policy.path)) return null;
+  const text = commit.specFindingsDocument;
+  const header = findingsHeader(policy);
+  if (typeof text !== 'string' || !text.startsWith(header) || commit.specFindingsStatus !== 'A'
+    || !/^[a-f0-9]{40}$/.test(commit.specFindingsBlob || '')
+    || !Number.isSafeInteger(commit.specFindingsSize) || commit.specFindingsSize <= Buffer.byteLength(header)
+    || commit.specFindingsSize > Buffer.byteLength(header) + 262144
+    || findingsTextProblems(text.slice(header.length)).length) return null;
+  const link = findingsLinkForBlob(policy, commit.specFindingsBlob);
+  return commit.specDocument.includes(link)
+    && commit.specDocument.split('<!-- hp:outside-findings-blob ').length === 2 ? policy.path : null;
+}
+
 export function taskDelivery(commit) {
   const phases = [...String(commit.message).matchAll(/^Delivery-Phase:[ \t]*(.*)$/gm)].map(m => m[1].trim());
   if (phases.length > 1 || (phases.length && phases[0] !== SPEC_DELIVERY_PHASE))
@@ -32,6 +52,7 @@ export function taskDelivery(commit) {
   const trailers = terminalTrailers(commit.message);
   const issue = issues[0];
   const docs = (commit.files || []).filter(f => new RegExp(`^docs/reviews/SPEC-REVIEW-${issue}-r[1-9]\\d*\\.md$`).test(f));
+  const findings = provenSpecFindings(commit, docs[0], issue);
   // CODE-REVIEW publication is ordinary evidence attached to implementation.
   if (!phases.length && !docs.length && (commit.files || []).some(f => /\/CODE-REVIEW-/.test(f))) return 'implementation';
   const visible = [...String(commit.message).matchAll(/^User-Visible:[ \t]*(.*)$/gm)].map(m => m[1].trim());
@@ -40,12 +61,12 @@ export function taskDelivery(commit) {
     || (phases.length && trailers.get('Delivery-Phase')?.[0] !== SPEC_DELIVERY_PHASE)
     || commit.author !== PUBLISHER || visible.length !== 1 || visible[0] !== 'no'
     || docs.length !== 1 || !commit.files.length
-    || commit.files.some(f => f !== docs[0] && f !== 'docs/reviews/INDEX.md')
+    || commit.files.some(f => f !== docs[0] && f !== 'docs/reviews/INDEX.md' && f !== findings)
     || !new RegExp(`^# SPEC-REVIEW-${issue}-r[1-9]\\d*\\s*$`, 'm').test(commit.specDocument || '')
     || !anchorIssueBodyFrom(commit.specDocument) || !anchorTreeFrom(commit.specDocument)
     || !anchorVerdictFrom(commit.specDocument) || commit.specTreeType !== 'tree'
     || commit.specStatus !== 'A')
-    throw Error(`Unproven spec-only delivery at ${commit.sha}; publisher, exact SPEC/index delta and machine anchors required`);
+    throw Error(`Unproven spec-only delivery at ${commit.sha}; publisher, exact SPEC/index/digest-bound findings delta and machine anchors required`);
   return 'spec-review';
 }
 
@@ -61,6 +82,14 @@ export function readTaskCommit(commit, gitRunner) {
       const tree = anchorTreeFrom(result.specDocument);
       result.specTreeType = tree ? gitRunner(['cat-file', '-t', tree]).trim() : null;
       result.specStatus = gitRunner(['diff-tree', '--first-parent', '-m', '--root', '--no-commit-id', '-r', '--name-status', commit.sha, '--', doc]).trim().split('\t')[0];
+      const match = /SPEC-REVIEW-([1-9]\d*)-r([1-9]\d*)\.md$/.exec(doc);
+      const findings = `docs/reviews/findings/${match[1]}-spec-r${match[2]}.md`;
+      if (files.includes(findings)) {
+        result.specFindingsDocument = gitRunner(['show', `${commit.sha}:${findings}`]);
+        result.specFindingsBlob = gitRunner(['rev-parse', `${commit.sha}:${findings}`]).trim();
+        result.specFindingsSize = Number(gitRunner(['cat-file', '-s', `${commit.sha}:${findings}`]).trim());
+        result.specFindingsStatus = gitRunner(['diff-tree', '--first-parent', '-m', '--root', '--no-commit-id', '-r', '--name-status', commit.sha, '--', findings]).trim().split('\t')[0];
+      }
     }
   }
   taskDelivery(result);

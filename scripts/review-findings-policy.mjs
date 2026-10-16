@@ -5,6 +5,7 @@ import { appendFileSync, existsSync, lstatSync, mkdirSync, readFileSync, writeFi
 import { dirname, join } from 'node:path';
 import { TextDecoder } from 'node:util';
 import { isMainModule } from './spawn-portable.mjs';
+import { createHash } from 'node:crypto';
 
 export const FINDINGS_VARIABLE = 'HP_REVIEW_OUTSIDE_FINDINGS_FILE_ISSUES';
 export const FINDINGS_FILE = 'outside-findings.md';
@@ -61,7 +62,7 @@ function readFindingsFile(path) {
   const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
   const problems = findingsTextProblems(text);
   if (problems.length) throw new Error(problems.join('; '));
-  return text;
+  return text.replace(/\r\n?/g, '\n');
 }
 
 function statOrMissing(path) {
@@ -78,6 +79,24 @@ export function sealFindings(policy, source, directory) {
   } else if (existsSync(source)) throw new Error('outside findings file without file-mode authorization');
 }
 
+export function findingsHeader(policy) {
+  return `# Outside findings — #${policy.issue}, ${policy.stage}, r${policy.round}\n\n`
+    + 'Routing: trusted Actions configuration; no new issues for out-of-scope findings.\n\n';
+}
+
+export function findingsLink(policy, publishedText) {
+  // Git blob identity preserves exact bytes even when a historical gitRunner
+  // trims its textual output. This repository's material anchors use SHA-1 Git.
+  const hash = createHash('sha1').update(`blob ${Buffer.byteLength(publishedText)}\0`).update(publishedText).digest('hex');
+  return findingsLinkForBlob(policy, hash);
+}
+
+export function findingsLinkForBlob(policy, hash) {
+  if (!/^[a-f0-9]{40}$/.test(hash || '')) throw new Error('outside findings: invalid Git blob identity');
+  return `Побочные находки: [${policy.path}](findings/${policy.issue}-${policy.stage}-r${policy.round}.md).\n`
+    + `<!-- hp:outside-findings-blob ${hash} -->\n`;
+}
+
 export function publishFindings(policy, source, root = '.') {
   if (policy.mode !== 'file') return null;
   const text = readFindingsFile(source);
@@ -92,8 +111,7 @@ export function publishFindings(policy, source, root = '.') {
   const stat = statOrMissing(path);
   if (stat && !stat.isFile()) throw new Error('outside findings: destination is not a regular file');
   mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, `# Outside findings — #${policy.issue}, ${policy.stage}, r${policy.round}\n\n`
-    + 'Routing: trusted Actions configuration; no new issues for out-of-scope findings.\n\n' + text);
+  writeFileSync(path, findingsHeader(policy) + text);
   return policy.path;
 }
 
@@ -112,7 +130,10 @@ if (isMainModule(import.meta.url)) {
       else if (command === 'publish') {
         const path = publishFindings(policy, process.env.REVIEW_FINDINGS);
         if (path) console.log(path);
-      } else throw new Error('expected collect/model/seal/publish');
+      } else if (command === 'link') {
+        if (policy.mode === 'file') process.stdout.write('\n' + findingsLink(policy,
+          findingsHeader(policy) + readFindingsFile(process.env.REVIEW_FINDINGS)));
+      } else throw new Error('expected collect/model/seal/publish/link');
     }
   } catch (error) { console.error(`::error::${error.message}`); process.exitCode = 1; }
 }

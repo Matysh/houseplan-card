@@ -12,6 +12,7 @@ import { buildIndex } from '../scripts/reviews-index.mjs';
 import { findStep, runStep, workflowSteps } from './helpers/workflow-step.mjs';
 import { importClosure } from './helpers/import-closure.mjs';
 import { findingsPolicy } from '../scripts/review-findings-policy.mjs';
+import { readTaskCommit, taskDelivery } from '../scripts/task-delivery.mjs';
 
 // #723: два шага публикуют коммит и прежде любой отказ push считали сдвигом
 // ветки — документ ревью релиза в `dev` (release-review.yml, три попытки) и
@@ -326,7 +327,8 @@ function devTools(box) {
 function runReviewDoc(box, out = '{"verdict":"green","high":0}', extra = {}) {
   const source = join(box.temp, 'review-result', 'review-document.md');
   mkdirSync(join(box.temp, 'review-result'));
-  writeFileSync(source, '# Код-ревью #9, раунд 1\n\nВердикт: **зелёный** · High: 0 · Medium: 0\n');
+  writeFileSync(source, (extra.STAGE === 'spec' ? '# SPEC-REVIEW-9-r1' : '# Код-ревью #9, раунд 1')
+    + '\n\nВердикт: **зелёный** · High: 0 · Medium: 0\n');
   return box.run(REVIEW_DOC_STEP(), {
     BRANCH, NUM: '9', STAGE: 'code', CYCLE: '1', SOURCE: source, TOOLS: extra.TOOLS ?? devTools(box),
     MATERIAL_SHA: git(box.origin, 'rev-parse', BRANCH), MATERIAL_TREE: git(box.origin, 'rev-parse', `${BRANCH}^{tree}`),
@@ -366,6 +368,25 @@ test('#926 actual publisher refuses a forged companion path before any push', t 
   assert.notEqual(result.status, 0);
   assert.equal(result.pushes, 0);
   assert.match(result.stderr, /identity\/path\/source mismatch/);
+});
+
+test('#926 actual SPEC publisher remains spec-only with its blob-bound companion', t => {
+  if (!hasTools()) { t.skip('bash/tar/jq/sha256sum unavailable'); return; }
+  const box = sandbox(tempRoot(t, 'hp-926-spec-publish-')); taskBranch(box);
+  const source = join(box.temp, 'outside.md'); writeFileSync(source, 'No outside findings.\r\n');
+  const policy = findingsPolicy('[9]', { repo: 'o/r', issue: 9, stage: 'spec', round: 1 });
+  const result = runReviewDoc(box, undefined, { STAGE: 'spec', REVIEW_FINDINGS: source, FINDINGS_POLICY_SNAPSHOT: JSON.stringify(policy),
+    MATERIAL_ISSUE_BODY: 'a'.repeat(64), GIT_AUTHOR_NAME: undefined, GIT_AUTHOR_EMAIL: undefined });
+  assert.equal(result.status, 0, result.stderr + result.stdout);
+  const sha = git(box.origin, 'rev-parse', BRANCH);
+  const commit = readTaskCommit({ sha, message: git(box.origin, 'show', '-s', '--format=%B', sha) },
+    args => git(box.origin, ...args));
+  assert.equal(taskDelivery(commit), 'spec-review');
+  assert.equal(commit.author, '209825114+claude[bot]@users.noreply.github.com', 'actual publisher -c identity, not fixture GIT_AUTHOR_*');
+  assert.equal(commit.specFindingsBlob, git(box.origin, 'rev-parse', `${sha}:${policy.path}`));
+  assert.ok(!git(box.origin, 'show', `${sha}:${policy.path}`).includes('\r'), 'publication normalizes CRLF before hashing/staging');
+  assert.equal(lastLine(commit.specDocument), '<!-- hp:usage-none reason=missing -->');
+  noSecrets(result);
 });
 
 test('#723 _process.yml на настоящем bash: ветка ушла вперёд — прежний ребейз и второй push, документ на ветке', (t) => {

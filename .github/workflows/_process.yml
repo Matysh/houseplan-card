@@ -1786,7 +1786,7 @@ jobs:
             echo "документ взят из $SOURCE ($(wc -c < "$doc") байт)"
             findings=$(node "$TOOLS/scripts/review-findings-policy.mjs" publish)
             if [ -n "$findings" ]; then
-              printf '\nПобочные находки: [%s](findings/%s).\n' "$findings" "${findings##*/}" >> "$doc"
+              node "$TOOLS/scripts/review-findings-policy.mjs" link >> "$doc"
             fi
             # Якоря дописывает конвейер, а не ревьюер (#414). Дисциплина здесь
             # уже подводила: на #403 SHA сняли до ребейза и не сверили перед
