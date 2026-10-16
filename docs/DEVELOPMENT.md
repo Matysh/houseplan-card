@@ -704,6 +704,16 @@ archive. The wizard cannot recover an archive automatically.
   must pass the same source-fingerprint handshake before Iso installs atomically;
   `houseplan-assets.json` records the graph as `lazyIsometricFiles`.
 
+### GitHub funding metadata in the CI input inventory (#915)
+
+The Sponsor button file is repository metadata, not an executable Validate
+input. `scripts/check-inputs.mjs` declares its exact path in `NOT_AN_INPUT`
+with a reason; adding it to a branch must not fail the coverage inventory or
+select every check. Do not exclude the whole `.github` directory or YAML:
+unknown neighbouring files and workflows remain guarded. The ordinary
+inventory and affected-check cases in `test/check-inputs.test.mjs` work even
+before the metadata file arrives from `main`.
+
 ## Maintenance diagnostics
 
 ### Labs presentation flags

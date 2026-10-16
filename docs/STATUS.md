@@ -25,6 +25,10 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+GitHub funding metadata (#915) is an exact non-input of Validate. The guarded
+`.github` root and YAML/workflow selection remain unchanged; ordinary coverage
+and affected-check witnesses keep unknown neighbouring files fail-closed.
+
 Select node movement (#834): native input is coalesced at the frame boundary,
 with synchronous latest-input flush before release and complete cancellation
 of pending work. A repeated snapped target retains its accepted or refused
