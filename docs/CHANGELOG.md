@@ -6,6 +6,7 @@
   Flat outline, following the designer reference. Dragging still moves only one
   device, with exact-position Undo/Redo. Snapping/Alt controls only these new
   magnets; equal spacing remains independent. 2.5D keeps its previous tiles
+  and unchanged fitted badge geometry reuses the contact index
   ([#866](https://github.com/Matysh/houseplan-card/issues/866)).
 
 ## v1.81.0 — 2026-10-16

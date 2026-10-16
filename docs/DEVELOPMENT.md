@@ -11,6 +11,10 @@ paired PNGs, numerical errors and material/browser metadata under
 `smoke_device_contact_walls` uses native camera/drag input for the 35/50/100/200%
 matrix and both sides of H/V and ±30/45/75-degree walls. `smoke_device_contacts`
 covers actions, cancellation, exact writer/history, static and projection parity.
+`smoke_device_contact_work` adds 200 real markers with joined rows and badges:
+unrelated HA frames and a changed value reconciled through unchanged public card
+options retain the index when its fitted box is unchanged. This does not claim
+that the separate HA dependency classifier is itself tested by that options step.
 These headless witnesses are not physical GPU or owner field observations.
 The normal golden matrix additionally captures the twelve arrangements together
 in both themes. Keep its reviewed-source acceptance independent of the numerical

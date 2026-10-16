@@ -1958,6 +1958,14 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'device-contact-rebuilds-identical-value-geometry',
+    guard: 'node demo/smoke_device_contact_work.mjs',
+    because: '#866 AC9: a real 200-marker board paints an updated badge value through public options reconciliation while preserving its identical geometry and full-index build count.',
+    patches: [{file:'src/device-contact-render.ts',
+      find:'    if (sameGeometry) { this.elements = nextElements; this.frameKey = key; this.frame = frame; return false; }',
+      replace:'    if (false && sameGeometry) { this.elements = nextElements; this.frameKey = key; this.frame = frame; return false; }'}],
+  },
+  {
     id: 'device-contact-rounds-exact-drop-to-grid',
     guard: 'node demo/smoke_device_contacts.mjs',
     because: '#866 AC4/6/7: a real native join must save its previewed off-grid point once and restore it with Undo/Redo, not a separately rounded grid proposal.',

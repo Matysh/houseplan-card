@@ -552,7 +552,8 @@ opening-aware physical contacts, a spatial index, connected components and a
 rounded union contour. A gesture moves one indexed marker and repaints only
 affected components. `device-contact-render` measures the real shared face at a
 fixed core scale and caches bounded metric variants; the lazy fingerprinted live
-runtime owns it and its stylesheet. Full/static adapters share the same geometry.
+runtime owns it and its stylesheet. A changed value with the same fitted box and
+DOM identity reuses the spatial graph. Full/static adapters share the same geometry.
 The hit controller consumes each member's own rounded contact silhouette, never
 the whole group's bbox. Icon/text/actions and passive diagnostics stay individual.
 The lazy editor resolves contact before independent spacing/grid and carries

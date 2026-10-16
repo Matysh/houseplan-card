@@ -80,8 +80,8 @@ export class DeviceContactRenderer {
     const key = frame.key + '|' + frame.markers.map((m) => [m.id, m.x, m.y, m.diameter,
       metricKey(nodes.get(m.id)?.querySelector('.device-shell'))].join(':')).join('|');
     if (key === this.frameKey && frame.markers.every((m) => this.elements.get(m.id)?.element === nodes.get(m.id))) return false;
-    this.clear();
     const measured: ContactMarker[] = [];
+    const nextElements = new Map<string, MeasuredMarker>();
     for (const m of frame.markers) {
       const element = nodes.get(m.id), shell = element?.querySelector<HTMLElement>('.device-shell');
       const ink = element?.querySelector<HTMLElement>('.device-contact-ink');
@@ -95,8 +95,20 @@ export class DeviceContactRenderer {
         while (this.metrics.size > 256) this.metrics.delete(this.metrics.keys().next().value!);
       }
       const box = Object.fromEntries(Object.entries(metric).map(([k,v]) => [k, v * m.diameter])) as unknown as ContactRect;
-      measured.push({ ...m, box }); this.elements.set(m.id, { element, ink, key: faceKey, metric });
+      measured.push({ ...m, box }); nextElements.set(m.id, { element, ink, key: faceKey, metric });
     }
+    const previous = this.scene;
+    const sameGeometry = previous && this.frame?.key === frame.key && measured.length === previous.shapes.size
+      && measured.every((m) => {
+        const old = previous.shapes.get(m.id)?.marker;
+        return old && old.x === m.x && old.y === m.y && old.diameter === m.diameter
+          && (['left','right','top','bottom'] as const).every((side) => old.box[side] === m.box[side])
+          && this.elements.get(m.id)?.element === nextElements.get(m.id)?.element;
+      });
+    // A new value can have the exact same fitted box. Refresh its metric key,
+    // not the complete spatial graph; the shared face already paints the text.
+    if (sameGeometry) { this.elements = nextElements; this.frameKey = key; this.frame = frame; return false; }
+    this.clear(); this.elements = nextElements;
     this.frameKey = key; this.frame = frame;
     this.scene = new DeviceContactScene(measured, frame.walls || floor?.walls || [], frame.masonry || floor?.masonry);
     this.work.rebuilds++; this.paint(this.scene.shapes.keys());

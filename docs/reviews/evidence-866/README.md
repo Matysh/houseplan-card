@@ -93,7 +93,7 @@ bundle, not substituted implementations. No mutation is claimed caught.
 | AC6 | Native one point write + Undo/Redo | Esc/cancel/capture loss/blur/refused write restore the exact before/group and do not add history; blur was naturally red before its fix |
 | AC7 | Real canonicalizer/backend save + native cold mount/Optimize preview | Removed/moved host receives no exemption; unrelated/outlier/foreign-floor points remain subject to maintenance |
 | AC8 | Static parity and Flat↔iso native checks | Iso must have no Flat contour/contact attributes and must retain old tile shadows; static hit paths must stay passive |
-| AC9 | Native 200-marker work counters | Thirty unrelated HA frames must not measure/rebuild; drag must not rebuild the full index or scan all pairs |
+| AC9 | Native 200-marker work counters | Thirty unrelated HA frames must not measure/rebuild; changed text reconciled through public options with an unchanged box must reuse the graph; drag must not rebuild the full index or scan all pairs |
 | AC10 | Native RU/EN guide text and canonical docs | No actionable toggle in View; guide disappears after release/cancel/Alt; layout keys stay only existing x/y/s |
 
 Commands: `node --test test/device-contact*.test.mjs` after the ordinary test
@@ -119,9 +119,17 @@ observations, not physical GPU/owner field acceptance. No schema migration,
 shape choice, group action, group drag, release/tag or main push is included.
 
 Registered expensive witnesses (static check only, not executed):
+`device-contact-rebuilds-identical-value-geometry`,
 `device-contact-rounds-exact-drop-to-grid`,
 `device-contact-window-blur-keeps-preview`,
 `device-contact-retains-individual-frame-seams`. The ordinary immediate-frame
 assertion found the old frame's inherited 200ms opacity transition: contact now
 retires that frame without fading underneath the new contour. Free frames keep
 their original transitions.
+
+The expanded 200-marker case first failed on `sameMetricValueNoIndexBuild`
+with actual visible 27% and index builds 7→8 (`same-metric-before-fix-r4`). The
+fixed ordinary run passes while preserving group ink. Earlier r2/r3 probes timed
+out waiting for the HA-only virtual source repaint; they are not contact-index
+regression evidence. The final test explicitly reconciles the new value through
+the unchanged public card-options entry and does not claim HA classifier proof.
