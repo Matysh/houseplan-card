@@ -15,6 +15,13 @@ Ordinary units plus `mutation-gate --check` establish baseline and static
 readiness only; actual caught claims require nightly execution or an explicit
 owner-authorized exception under PROCESS §2.7.
 
+The ordinary repository metadata unit opts into `verifyPublishedStable` after
+a stable ships. If its version is the next cycle's previous stable, it verifies
+the reachable exact tag's catalogue and unchanged release body, then the current
+authored RU/EN sections as usual. Missing/foreign tags and changed old notes
+fail closed. The option cannot be combined with stable publication; the CLI
+does not expose it, and a new publication still checks the HEAD catalogue.
+
 ## Backdrop terminal witness (#908)
 
 `smoke_grid_scale_invariance` asserts computed cursor and stage class after
@@ -2331,7 +2338,7 @@ their existing per-commit contract.
 `docs/release-ledger/cycle.json` explicitly binds the previous stable, the
 intended stable tag and an existing GitHub milestone number/title. Do not guess
 a milestone from an issue label or whichever milestone happens to be open.
-Current planning binds `v1.81.0` to milestone 3 (`1.81`). If the owner chooses
+Current planning binds `v1.82.0` to milestone 7 (`1.82`). If the owner chooses
 a different next stable (for example a hotfix), the release author explicitly
 updates that binding before collecting facts. After a stable ships, the next
 task opens the next cycle with the new base and reclassifies carried tasks;

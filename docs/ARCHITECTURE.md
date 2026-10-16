@@ -6,6 +6,10 @@ calls the actual lazy renderer with a retained dialog/cache, independently of
 toolbar cleanup. The stale-door mutation spans both redundant protections.
 Two preparation definitions retain TypeScript's original broad JSON typing
 and reachable callback narrowing instead of failing before their oracle.
+An explicit read-only published-stable metadata check may use the reachable
+previous stable tag's catalogue after the next cycle opens. It requires the
+unchanged tagged notes and current authored RU/EN sections. Publication stays
+HEAD-bound and rejects this historical-verification option.
 
 Stable field decisions (#916) are release metadata, not product state or native
 receipts. A reviewed tag/SHA binding plus the latest authenticated owner comment

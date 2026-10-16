@@ -157,10 +157,16 @@ export function readReleaseContract(root = process.cwd()) {
 
 export function assertReleaseContract({
   root = process.cwd(), tag, repo = 'Matysh/houseplan-card', requirePrerelease = true, requireStable = false,
+  verifyPublishedStable = false,
 } = {}) {
+  if (verifyPublishedStable && requireStable)
+    throw new Error('Published metadata verification cannot authorize stable publication');
   const contract = readReleaseContract(root);
   const parsed = validateVersionSources(tag, contract.sources, { requirePrerelease, requireStable });
   const narrative = contract.notes.includes(NARRATIVE_MARKER);
+  const gitRunner = (args) => execFileSync('git', ['-C', root, ...args], {
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
+  }).trim();
   // Historical published notes stay intact. Only the recorded previous stable
   // may use the legacy format; new stable publication cannot silently fall back.
   const cyclePath = resolve(root, 'docs/release-ledger/cycle.json');
@@ -172,9 +178,17 @@ export function assertReleaseContract({
     throw new Error(`docs/CHANGELOG.ru.md has no dated ${tag} section`);
   if (!changelogContainsVersion(contract.changelogEn, tag, { allowParagraphs: narrative }))
     throw new Error(`docs/CHANGELOG.md has no dated ${tag} section`);
-  const catalogue = narrative ? readCatalogue({ tag, gitRunner: (args) => execFileSync('git', ['-C', root, ...args], {
-    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
-  }).trim() }) : null;
+  let candidate = 'HEAD';
+  if (narrative && verifyPublishedStable && !parsed.prerelease) {
+    const cycle = JSON.parse(gitRunner(['show', 'HEAD:docs/release-ledger/cycle.json']));
+    if (tag === cycle.baseStable && tag !== cycle.targetStable) {
+      candidate = `refs/tags/${tag}`;
+      gitRunner(['merge-base', '--is-ancestor', candidate, 'HEAD']);
+      if (contract.notes.trim() !== gitRunner(['show', `${candidate}:docs/RELEASE-NOTES.md`]))
+        throw new Error('Published stable notes must match their immutable tag');
+    }
+  }
+  const catalogue = narrative ? readCatalogue({ tag, candidate, gitRunner }) : null;
   validateReleaseNotes(contract.notes, { tag, repo, ...(narrative ? { catalogue } : {}) });
   if (narrative) {
     const authored = readUserStableNotes(root, { tag, baseStable: catalogue.cycle.baseStable });

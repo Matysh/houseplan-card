@@ -123,12 +123,13 @@ test('release notes enforce the canonical bilingual short body and pinned links'
 });
 
 test('current repository release metadata satisfies its own publication contract', () => {
-  const result = assertReleaseContract({ tag, repo, requirePrerelease: packageIsPrerelease });
+  const result = assertReleaseContract({ tag, repo, requirePrerelease: packageIsPrerelease,
+    verifyPublishedStable: true });
   assert.equal(result.version, packageVersion);
   assert.equal(result.prerelease, packageIsPrerelease);
 });
 
-test('#838 real candidate contract checks selected root, exact changelog prose and announcement length BEFORE publishing', (t) => {
+test('#838/#917 real candidate contract checks publication and previous-stable metadata across cycles', async (t) => {
   // Keep the complete publication/version-authority fixture with its contract tests.
   // Narrative-unit tests operate on exported behaviour, not frontend source paths.
   const tag = 'v1.81.0', repo = 'x/y';
@@ -177,6 +178,44 @@ test('#838 real candidate contract checks selected root, exact changelog prose a
   assert.throws(() => assertReleaseContract({ root, tag, repo, requirePrerelease: false, requireStable: true }), /exact authored/);
   installNotes(mixed.replaceAll('Теперь редактировать план удобнее.', 'я'.repeat(TELEGRAM_LIMIT)));
   assert.throws(() => assertReleaseContract({ root, tag, repo, requirePrerelease: false, requireStable: true }), /agent must shorten/);
+
+  // Ordinary inputs in an isolated repository: no source, guard or budget mutation.
+  installNotes(mixed);
+  git('add', '.'); git('commit', '--allow-empty', '-qm', 'published stable metadata');
+  const published = git('rev-parse', 'HEAD').trim();
+  git('tag', tag);
+  const nextCycle = { schema: 1, baseStable: tag, targetStable: 'v1.82.0', milestone: { number: 7, title: '1.82' } };
+  write('docs/release-ledger/cycle.json', JSON.stringify(nextCycle));
+  git('add', '.'); git('commit', '-qm', 'open next accounting cycle');
+  const verify = () => assertReleaseContract({ root, tag, repo, requirePrerelease: false,
+    verifyPublishedStable: true });
+  await t.test('#917 published stable uses its own reachable catalogue; new publication stays strict', () => {
+    assert.equal(verify().version, version);
+    assert.throws(() => assertReleaseContract({ root, tag, repo, requirePrerelease: false }), /Cycle target/);
+    assert.throws(() => assertReleaseContract({ root, tag, repo, requirePrerelease: false, requireStable: true }), /Cycle target/);
+    assert.throws(() => assertReleaseContract({ root, tag, repo, requirePrerelease: false,
+      requireStable: true, verifyPublishedStable: true }), /cannot authorize stable publication/);
+    assert.throws(() => assertReleaseContract({ root, tag: 'v1.80.1', repo, requirePrerelease: false,
+      verifyPublishedStable: true }), /not synchronized/);
+  });
+  await t.test('#917 even jointly reauthored current notes cannot rewrite the published previous stable', () => {
+    installNotes(mixed.replaceAll('Двигайте стены.', 'Новый, не опубликованный текст.'));
+    assert.throws(verify, /immutable tag/);
+    installNotes(mixed);
+    write('docs/changelog_user_stable_en.md', '# Missing English release');
+    assert.throws(verify, /exactly one/);
+    installNotes(mixed);
+    assert.equal(verify().version, version);
+  });
+  await t.test('#917 missing or unrelated stable tags cannot become historical authority', () => {
+    git('tag', '-d', tag);
+    assert.throws(verify, /Command failed/);
+    const unrelated = git('commit-tree', 'HEAD^{tree}', '-m', 'unrelated root').trim();
+    git('tag', tag, unrelated);
+    assert.throws(verify, /Command failed/);
+    git('tag', '-d', tag); git('tag', tag, published);
+    assert.equal(verify().version, version);
+  });
 });
 
 test('local orchestrator validates issue lists and public release assets', () => {

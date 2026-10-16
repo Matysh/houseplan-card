@@ -30,6 +30,9 @@ existing milestone 1.82 (#7). Nightly witness repair (#917) is infrastructure
 only, excluded from the user-facing milestone/changelog. Its five definitions
 and ordinary witnesses are repaired without changing product code or budgets;
 static readiness is distinct from executed mutation evidence.
+The owner-approved prerequisite separates the read-only check of published
+1.81.0 metadata from the new cycle's HEAD-bound publication contract. Reachable
+tag identity and unchanged notes remain mandatory; no gate is bypassed.
 
 Stable preparation (#916) includes reachable second-parent task deliveries and
 uses a bounded 8 MiB GitHub transport. The owner's explicit stand acceptance
