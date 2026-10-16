@@ -1,5 +1,5 @@
 /** The same current-model envelope for browser and CLI, not a second writer. */
-import { commitWallSegmentModel, WALL_SEGMENT_MODEL_VERSION } from './geometry-runtime.generated.mjs';
+import { commitWallSegmentModel, WALL_SEGMENT_MODEL_VERSION, CONVERTER_LIMITS as LIMITS } from './geometry-runtime.generated.mjs';
 
 export const CURRENT_MODEL_VERSION = WALL_SEGMENT_MODEL_VERSION;
 export const MAX_OUTPUT_BYTES = 8 * 1024 * 1024;
@@ -15,6 +15,29 @@ export class OutputError extends Error {
 function finiteTree(value) {
   if (typeof value === 'number' && !Number.isFinite(value)) throw new OutputError('non_finite_output');
   if (value && typeof value === 'object') for (const item of Object.values(value)) finiteTree(item);
+}
+
+function targetLimits(space, markers, layout) {
+  const check = (count, maximum) => { if (count > maximum) throw new OutputError('output_too_complex'); };
+  for (const [key, maximum] of [['rooms', LIMITS.MAX_ROOMS], ['openings', LIMITS.MAX_OPENINGS],
+    ['decor', LIMITS.MAX_DECOR], ['partitions', LIMITS.MAX_PARTITIONS], ['wall_segments', LIMITS.MAX_WALL_SEGMENTS],
+    ['led_strips', LIMITS.MAX_LED_STRIPS]]) check(space[key]?.length || 0, maximum);
+  check(markers.length, LIMITS.MAX_MARKERS); check(Object.keys(layout).length, LIMITS.MAX_LAYOUT);
+  const point = p => {
+    if (p.some(value => !Number.isFinite(value) || Math.abs(value) > LIMITS.CANVAS_LIMIT))
+      throw new OutputError('output_invalid_geometry');
+  };
+  for (const room of space.rooms || []) {
+    check(room.poly.length, LIMITS.MAX_POLY_POINTS); room.poly.forEach(point);
+  }
+  for (const wall of [...(space.wall_segments || []), ...(space.partitions || [])]) { point(wall.a); point(wall.b); }
+  for (const strip of space.led_strips || []) { check(strip.points.length, LIMITS.MAX_LED_POINTS); strip.points.forEach(point); }
+  for (const item of space.decor || []) {
+    point([item.x, item.y]);
+    if (item.w !== undefined && (!(item.w > 0) || !(item.h > 0)
+        || Math.max(item.w, item.h) > LIMITS.CANVAS_LIMIT)) throw new OutputError('output_invalid_geometry');
+  }
+  for (const position of Object.values(layout)) point([position.x, position.y]);
 }
 
 export function placementManifest(config, layout) {
@@ -65,6 +88,7 @@ export function modernDocument(space, options = {}) {
   const raw = clone(space);
   const openings = raw.openings || [];
   delete raw.openings;
+  targetLimits(raw, options.markers || [], options.layout || {});
   let config = commitWallSegmentModel({ spaces: [raw], markers: clone(options.markers || []) }).config;
   const current = config.spaces[0];
   const notes = [];
@@ -74,6 +98,9 @@ export function modernDocument(space, options = {}) {
   ];
   current.openings = [];
   for (const opening of openings) {
+    if (!(opening.length >= 0.001 && opening.length <= LIMITS.CANVAS_LIMIT)) {
+      notes.push({ code: 'opening_size_unsupported', id: opening.id }); continue;
+    }
     let candidates = carriers.map(([item, kind]) => hostCandidate(opening, item, kind)).filter(Boolean);
     if (opening.host) candidates = candidates.filter((candidate) =>
       candidate.id === opening.host.id && candidate.kind === opening.host.kind);
@@ -91,6 +118,7 @@ export function modernDocument(space, options = {}) {
   config = commitWallSegmentModel(config).config;
   delete config.model_version;
   const layout = clone(options.layout || {});
+  targetLimits(config.spaces[0], config.markers, layout);
   const document = {
     format: 'houseplan-export', export_version: 2, kind: 'space',
     created_at: options.now || new Date().toISOString().replace(/\.\d+Z$/, 'Z'),

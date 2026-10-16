@@ -44,3 +44,10 @@ test('#937 ambiguous opening carriers are reported, not chosen by array order', 
   assert.throws(() => modernDocument({ ...space, plan_url: '/local/a.png' }, { planOnly: true }), /invalid_plan_only/);
   assert.throws(() => modernDocument({ ...space, oversized: 'x'.repeat(2 * 1024 * 1024) }), /output_too_large/);
 });
+
+test('#937 input geometry budget is not permission to exceed the real target partition limit', () => {
+  const space = { id: 'limit', title: 'Limit', cell_cm: 5, view_box: [0, 0, 1, 1], rooms: [],
+    partitions: Array.from({ length: 2001 }, (_, index) => ({ id: `p-${index}`, cm: 10,
+      a: [0, index / 5000], b: [1, index / 5000] })) };
+  assert.throws(() => modernDocument(space), error => error.code === 'output_too_complex');
+});

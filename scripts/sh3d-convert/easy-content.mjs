@@ -96,8 +96,7 @@ export function roomConfig(room, context) {
       a: clamp(numberAt(source.opacity, `${room.id}.opacity`, 0.12), 0, 1) }; }
     else notes.push({ code: 'color_fallback', id: room.id });
   }
-  if (source.haArea !== undefined && typeof source.haArea !== 'string')
-    throw new EasyInputError('easy_invalid_text', `${room.id}.haArea`);
+  if (source.haArea !== undefined) stringAt(source.haArea, `${room.id}.haArea`);
   noteFields(source, ['showName', 'labelSize', 'zoom', 'entity', 'attribute', 'stateColor', 'activeColor',
     'activeOpacity', 'outlineColor', 'outlineWidth', 'tap_action', 'hold_action', 'double_tap_action', 'locked'],
   'room_behavior_skipped', room.id, notes);

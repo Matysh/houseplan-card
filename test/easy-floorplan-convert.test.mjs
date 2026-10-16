@@ -45,7 +45,8 @@ test('#937 full Easy conversion carries bindings, area, values, decor, backgroun
   assert.equal(space.led_strips[0].points.length, 2);
   assert.equal(space.rooms[0].area, 'living'); assert.equal(space.rooms[0].source, undefined);
   assert.deepEqual(space.rooms[0].settings.custom_fill, { c: '#aabbcc', a: 0.4 });
-  assert.equal(space.display.north_deg, 270); assert.equal(space.display.sun_rays, true);
+  assert.equal(space.settings.north_deg, 270); assert.equal(space.settings.sun_rays, true);
+  assert.equal(space.display, undefined, 'no inert forward-compatible field pretending to be effective settings');
   assert.equal(space.openings[0].contact, 'binary_sensor.door'); assert.equal(space.openings[0].flip_v, true);
   assert.equal(space.openings[0].host.kind, 'wall');
   const sofa = space.decor.find(d => d.symbol === 'sofa');

@@ -10,6 +10,8 @@
   ([#937](https://github.com/Matysh/houseplan-card/issues/937)).
   A missing explicitly selected Easy reading keeps an icon instead of silently
   switching to another entity; malformed boolean settings are refused.
+  Imported lighting/compass options use effective space settings; output also
+  respects the current backend's object and geometry limits.
 
 - Devices can snap to physical wall faces and join nearby markers into a shared
   Flat outline, following the designer reference. Dragging still moves only one

@@ -3,5 +3,9 @@
   "issue": 937,
   "baseStable": "v1.81.0",
   "category": "major",
-  "rationale": "Adds an external user-facing Easy Floorplan migration path with geometry, HA bindings, devices, readings, decor, image references and lighting settings; updates Sweet Home 3D output to the canonical current model and retains independent walls. It serves administrators moving an existing plan, although its implementation is tooling-class and deployed separately from the HACS package."
+  "rationale": "Adds an external user-facing Easy Floorplan migration path with geometry, HA bindings, devices, readings, decor, image references and lighting settings; updates Sweet Home 3D output to the canonical current model and retains independent walls. It serves administrators moving an existing plan, although its implementation is tooling-class and deployed separately from the HACS package.",
+  "summary": {
+    "ru": "Внешний конвертер переносит план из Easy Floorplan вместе с совместимыми устройствами, значениями, оформлением и светом. Масштаб подбирается автоматически, потери перечисляются до скачивания. Sweet Home 3D сохраняет независимые стены и выдаёт актуальную модель данных.",
+    "en": "The external converter brings Easy Floorplan geometry, compatible devices, values, decor and lighting into House Plan, with automatic scale estimates and a loss report before download. Sweet Home 3D retains independent walls and emits the current data model."
+  }
 }

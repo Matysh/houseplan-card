@@ -17,6 +17,7 @@ const rows = [
   ['note.scale_default', 'Нет ориентиров масштаба: принято 1 см/ед. При необходимости откалибруйте пространство после импорта.', 'No scale references: using 1 cm/unit. Calibrate the space after import if needed.'],
   ['note.easy_compatibility', 'Переносятся совместимые данные, не точная копия оформления Easy Floorplan. При переносе в другую HA проверьте entity_id и Area. Внешние изображения не включаются в файл.', 'Compatible data is transferred, not a pixel-identical Easy Floorplan skin. Check entity IDs and Areas on another HA installation. External image bytes are not included.'],
   ['note.opening_ambiguous', 'Неоднозначная стена проёма, проём пропущен: {id}.', 'Opening has ambiguous wall ownership and was skipped: {id}.'],
+  ['note.opening_size_unsupported', 'Размер проёма за пределами формата House Plan, проём пропущен: {id}.', 'Opening size is outside the House Plan format; opening skipped: {id}.'],
   ['note.source_fields_unsupported', 'Не перенесены настройки {id}: {fields}.', 'Settings not transferred for {id}: {fields}.'],
   ['note.floor_refused', 'Этаж {id} отклонён: {reason}. Остальные корректные этажи доступны отдельно.', 'Floor {id} refused: {reason}. Other valid floors can be downloaded separately.'],
   ['note.railing_skipped', 'Ограждение пропущено (не превращено в непрозрачную стену): {id}.', 'Railing skipped, not turned into an opaque wall: {id}.'],
@@ -75,6 +76,8 @@ const errors = [
   ['easy_self_intersection', 'Контур комнаты пересекает сам себя.', 'A room outline intersects itself.'],
   ['easy_text_too_long', 'Подпись после переноса превышает 200 символов.', 'Converted text exceeds 200 characters.'],
   ['output_too_large', 'Результат превышает допустимый размер импорта.', 'Output exceeds the supported import size.'],
+  ['output_too_complex', 'Результат превышает допустимое число объектов формата House Plan.', 'Output exceeds the object-count limits of the House Plan format.'],
+  ['output_invalid_geometry', 'Размеры или координаты результата выходят за пределы формата House Plan.', 'Output sizes or coordinates exceed the House Plan format bounds.'],
 ];
 for (const code of ['easy_invalid_key', 'easy_invalid_size', 'easy_invalid_floors', 'easy_invalid_floor', 'easy_invalid_collection',
   'easy_invalid_object', 'easy_invalid_number', 'easy_invalid_polygon', 'easy_invalid_side_walls', 'easy_invalid_text',

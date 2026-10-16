@@ -104,7 +104,7 @@
               "color": "#808080"
             }
           ],
-          "display": {
+          "settings": {
             "glow_enabled": true,
             "north_deg": 45,
             "sun_rays": true

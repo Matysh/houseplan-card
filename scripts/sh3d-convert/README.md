@@ -49,12 +49,19 @@ support for an older backend just because it can read export-v2 envelopes.
 
 ## Build and verify
 
+Target object-count/coordinate caps are generated from the trusted numeric
+declarations in the real Python validators, not a second hand-maintained table.
+The compiled-consumer unit reads the resulting space with the actual HP
+lighting/compass/backdrop helpers, so an ignored forward-compatible field is
+not mistaken for a working setting.
+
 Run from the repository root after normal `npm ci`:
 
 ```sh
 node scripts/sh3d-convert/build-page.mjs
 node scripts/sh3d-convert/build-page.mjs --check
-node --test test/sh3d-convert*.test.mjs test/easy-floorplan-*.test.mjs test/converter-output.test.mjs
+npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs
+node --test test/sh3d-convert*.test.mjs test/easy-floorplan-*.test.mjs test/converter*.test.mjs
 .venv-backend/bin/python -m pytest tests_backend/test_sh3d_convert.py tests_backend/test_easy_floorplan_convert.py tests_backend/test_ha_sh3d_convert.py tests_backend/test_ha_easy_floorplan_convert.py -q
 node demo/smoke_plan_converter.mjs
 ```

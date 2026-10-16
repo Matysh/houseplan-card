@@ -119,8 +119,9 @@
               "symbol": "stairs"
             }
           ],
-          "display": {
+          "settings": {
             "glow_enabled": true,
+            "north_deg": 0,
             "sun_rays": true
           },
           "wall_segments": [],

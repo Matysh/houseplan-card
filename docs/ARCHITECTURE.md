@@ -9,6 +9,11 @@ and wall runtime are bundled into the offline page. No source actions are execut
 images are references only, and the existing authenticated HA import remains the
 only writer. See [converter boundaries and deployment](../scripts/sh3d-convert/README.md).
 
+Converter target limits are generated from the real Python numeric declarations;
+they are independent of the more generous source-reader budget. Consumer tests
+exercise the actual space-display/sun/backdrop helpers, not just an extra-key
+tolerant schema, so stored `space.settings` remains effective in the runtime.
+
 Nightly witness maintenance (#917) changes no product owner or runtime. The
 gesture-entry witness calls the live-update router; the tool-boundary witness
 calls the actual lazy renderer with a retained dialog/cache, independently of

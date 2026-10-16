@@ -1,16 +1,30 @@
 """#937 current-model output meets the real backend, not a lookalike schema."""
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
 
 from custom_components.houseplan.const import PLAN_MODEL_VERSION
 from custom_components.houseplan.validation import CONFIG_SCHEMA
+from custom_components.houseplan import validation
+from custom_components.houseplan import led_strips
 from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
 
 GOLDEN = Path(__file__).resolve().parent.parent / "scripts/sh3d-convert/golden"
 FILES = sorted(GOLDEN.glob("easy-*.space-*.json"))
 assert FILES, "Easy converter fixtures must not disappear"
+
+
+def test_issue_937_converter_limits_come_from_the_real_backend():
+    run = subprocess.run(["node", "--input-type=module", "-e",
+        "import { CONVERTER_LIMITS } from './scripts/sh3d-convert/geometry-runtime.generated.mjs'; console.log(JSON.stringify(CONVERTER_LIMITS))"],
+        cwd=GOLDEN.parents[2], check=True, capture_output=True, text=True)
+    actual = json.loads(run.stdout)
+    for key, value in actual.items():
+        owner = led_strips if key in ("MAX_LED_STRIPS", "MAX_LED_POINTS") else validation
+        assert value == getattr(owner, key), key
+    assert actual["MAX_PARTITIONS"] == validation.MAX_PARTITIONS
 
 
 @pytest.mark.parametrize("path", FILES, ids=lambda path: path.name)

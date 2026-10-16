@@ -3,7 +3,7 @@ import { EasyInputError, easyFloors, readEasy } from './easy-read.mjs';
 import { estimateEasyScale } from './easy-scale.mjs';
 import { frameForEasy, makeIds, numberAt, projectFloorGeometry, readFloorGeometry } from './easy-geometry.mjs';
 import { FURNITURE } from './geometry-runtime.generated.mjs';
-import { colorResolver, stringAt } from './easy-style.mjs';
+import { booleanAt, colorResolver, stringAt } from './easy-style.mjs';
 import { backgroundFields, furnitureDecor, openingConfig, roomConfig, textDecor } from './easy-content.mjs';
 import { convertItems } from './easy-markers.mjs';
 import { MIN_CURRENT_HOUSEPLAN, modernDocument } from './output.mjs';
@@ -57,17 +57,16 @@ export function convertEasy(text, options = {}) {
       const decor = [...items.decor, ...(floor.furniture || []).flatMap(source => furnitureDecor(source, context)),
         ...(floor.texts || []).map(source => textDecor(source, context)).filter(Boolean)];
       const openings = (floor.openings || []).map(source => openingConfig(source, context)).filter(Boolean);
-      const display = { glow_enabled: true };
-      if (config.north !== undefined) display.north_deg = ((Math.round(numberAt(config.north, 'north')) % 360) + 360) % 360;
+      const settings = { glow_enabled: true,
+        north_deg: ((Math.round(numberAt(config.north, 'north', 0)) % 360) + 360) % 360,
+        sun_rays: booleanAt(config.sunlight, 'sunlight') };
       if (config.sunlight !== undefined) {
-        if (typeof config.sunlight !== 'boolean') throw new EasyInputError('easy_invalid_boolean', 'sunlight');
-        display.sun_rays = config.sunlight;
         notes.push({ code: 'sun_runtime_semantics', id: spaceId });
       }
       if (items.markers.length > 2000 || decor.length > 1000 || items.strips.length > 50 || rooms.length > 400)
         throw new EasyInputError('easy_too_complex', spaceId);
       const space = { id: spaceId, title: record.title, cell_cm: frame.cellCm, view_box: frame.viewBox,
-        rooms, walls: projected.walls, partitions: projected.partitions, openings, decor, display,
+        rooms, walls: projected.walls, partitions: projected.partitions, openings, decor, settings,
         ...(items.strips.length ? { led_strips: items.strips } : {}), ...backgroundFields(config, floor, frame, notes) };
       const converted = modernDocument(space, { markers: items.markers, layout: items.layout,
         now: options.now, toolVersion: options.toolVersion || TOOL_VERSION });
