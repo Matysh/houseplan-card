@@ -134,3 +134,18 @@ async def test_storage_helpers_are_the_final_canonical_barrier(monkeypatch) -> N
     )
     assert layout_payload["layout"] == fixture["layoutExpected"]
     assert layout_store.async_save.await_args.args[0] == layout_payload
+
+
+@pytest.mark.asyncio
+async def test_device_contacts_keep_exact_positions_and_future_fields_in_real_storage() -> None:
+    """#866: the actual POS/LAYOUT schemas and save helper, not a mock canonicalizer."""
+    path = Path(__file__).parents[1] / "test/fixtures/866-device-contacts.json"
+    layout = json.loads(path.read_text(encoding="utf-8"))["layout"]
+    assert LAYOUT_SCHEMA(layout) == layout
+    assert POS_SCHEMA(layout["a"]) == layout["a"]
+    store = AsyncMock()
+    runtime = SimpleNamespace(store=store)
+    payload = await async_save_layout_state(runtime, {}, layout, 2)
+    assert payload["layout"] == layout
+    assert payload["layout"]["b"]["x"] - payload["layout"]["a"]["x"] == pytest.approx(.09)
+    assert store.async_save.await_args.args[0] == payload

@@ -1,4 +1,5 @@
 import { makeLargeHouseFixture } from '../fixtures/large-house.mjs';
+import { makeDeviceContactsFixture, prepareDeviceContacts } from './device-contacts.mjs';
 import { fixtureWallKey, makeVisualMatrixFixture } from '../fixtures/visual-matrix.mjs';
 import { readFileSync } from 'node:fs';
 import { installStaticStability, resetGoldenStability } from './static-stability.mjs';
@@ -45,7 +46,8 @@ const wallUnionIsolationFixture = JSON.parse(readFileSync(
 const cardVersion = '0.0.0-golden';
 const VERSION_RELOAD_ATTEMPT_KEY = 'houseplan-card:version-reload-target:v1';
 
-const fixtureFor = (scenario) => scenario.batteryBoard ? makeBatteryBoardFixture(scenario.batteryBoard)
+const fixtureFor = (scenario) => scenario.deviceContacts ? makeDeviceContactsFixture()
+  : scenario.batteryBoard ? makeBatteryBoardFixture(scenario.batteryBoard)
   : scenario.batteryZigbeeOverlap ? makeBatteryZigbeeFixture()
   : scenario.fixture === 'large'
   ? makeLargeHouseFixture({ includeStairs: false })
@@ -2516,6 +2518,7 @@ export async function prepareGoldenScenario(page, scenario) {
     await page.mouse.move(point.x, point.y);
   }
   if (scenario.batteryBoard) result.batteryBoard = await prepareBatteryBoard(page, scenario);
+  if (scenario.deviceContacts) result.deviceContacts = await prepareDeviceContacts(page);
   if (scenario.batteryZigbeeOverlap) result.batteryZigbeeOverlap = await prepareBatteryZigbeeOverlap(page);
   return result;
 }

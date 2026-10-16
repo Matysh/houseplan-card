@@ -64,6 +64,7 @@ interface LiveEditorHost {
   /** #521: guides for the gesture in flight; `nothing` while the runtime loads. */
   _renderAlignGuides: () => unknown;
   _livePos: (device: { id: string }) => { x: number; y: number };
+  _deviceContacts?: { move(id: string, x: number, y: number): void };
   _renderProjection: string;
   _spaceModel: () => SpaceModel | null;
   _spaceWalls: WallEntry[];
@@ -320,6 +321,7 @@ const paintDevice = (host: LiveEditorHost, root: ParentNode, id = host._deviceDr
   const view = host._viewOr(host._baseVb());
   element.style.left = `${((position.x - view.x) / view.w) * 100}%`;
   element.style.top = `${((position.y - view.y) / view.h) * 100}%`;
+  host._deviceContacts?.move(id, position.x, position.y);
 };
 
 const makeDecorShapeTransparent = (

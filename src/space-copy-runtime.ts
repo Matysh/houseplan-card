@@ -2,7 +2,7 @@ import { html, type TemplateResult } from 'lit';
 import { isGeometryCleanupRefusal } from './config-adoption';
 import type { HouseplanEditorHostPort } from './houseplan-editor-runtime';
 import type { I18nKey } from './i18n';
-import { optimizePlans } from './plan-optimizer';
+import type { optimizePlans } from './plan-optimizer';
 import { commitPlanOptimization } from './plan-optimize-write';
 import {
   createSpaceCopyCandidate, newSpaceCopySeed, nextSpaceCopyTitle,
@@ -164,7 +164,15 @@ export async function saveSpaceCopy(
     const layoutFingerprint = contentFingerprint(host._layout);
     let optimized;
     try {
-      optimized = (services.optimize ?? optimizePlans)(
+      const optimize = services.optimize ?? (await import('./plan-optimizer')).optimizePlans;
+      // Import latency must not optimise a different config/layout than the
+      // revision/fingerprint bound above. The ordinary changed guard stays.
+      if (!setBusy(host, token, true)) return;
+      if (host._cfgRev !== configRevision || host._layoutRev !== layoutRevision
+        || contentFingerprint(host._serverCfg) !== configFingerprint || contentFingerprint(host._layout) !== layoutFingerprint) {
+        setBusy(host, token, false); host._showToast(host._t('space.copy_error_changed')); return;
+      }
+      optimized = optimize(
         host._serverCfg, host._layout, services.optimizeReferenceContext(),
       );
     } catch (error) {

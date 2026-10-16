@@ -1,5 +1,6 @@
 import type { DevicePlacement } from './device-position-history';
 import type { SpacingMagnet } from './device-spacing';
+import type { DeviceContactMagnet } from './device-contact-snap';
 import type { OpeningDimension } from './opening-dimensions';
 import type { OpeningPlacementCore } from './opening-placement';
 import type { OpeningFaceOffset } from './opening-symbol-placement';
@@ -38,4 +39,6 @@ export interface DeviceDragState {
   start: DevicePlacement;
   /** #873: the equal-spacing magnet lives and dies with the gesture. */
   spacing: SpacingMagnet<DevicePlacement> | null;
+  contact: DeviceContactMagnet | null;
+  lastPointer?: { clientX: number; clientY: number; altKey: boolean };
 }

@@ -1,4 +1,8 @@
 {
+  "editor.device_magnets": "Einrasten",
+  "editor.device_magnets_help": "An Wänden und benachbarten Geräten einrasten. Alt setzt dies vorübergehend aus. Gleiche Abstände funktionieren unabhängig.",
+  "editor.device_snap_wall": "An der Wand",
+  "editor.device_snap_join": "Gemeinsame Kontur",
   "node_move_hint": "Wandknoten ziehen. Ursprüngliche Wandachsen und horizontale/vertikale Wände rasten ein. Esc bricht ab; Rückgängig stellt die gesamte Bewegung wieder her.",
   "node_move_ambiguous": "Die Knoten liegen zu nahe beieinander. Zum Auswählen vergrößern.",
   "node_move_choose_axis": "Entlang einer ursprünglichen Wand ziehen, um die Gleitachse zu wählen.",

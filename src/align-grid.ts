@@ -149,6 +149,7 @@ const cellCmOf = (sp: any): number => {
  */
 export function alignAllToGrid(
   spacesIn: any[], layoutIn: Record<string, any>,
+  layoutExemptions?: (candidateSpaces: any[], layout: Record<string, any>) => ReadonlySet<string>,
 ): AlignResult {
   const spaces = JSON.parse(JSON.stringify(spacesIn || []));
   const layout: Record<string, any> = JSON.parse(JSON.stringify(layoutIn || {}));
@@ -343,12 +344,13 @@ export function alignAllToGrid(
   }
 
   // ---- layout: device markers AND room labels (rl_<id>) ----------------
+  const exactPositions = layoutExemptions?.(spaces, layout);
   for (const [k, v] of Object.entries(layout)) {
     if (!v || typeof v !== 'object') continue;
     const p: any = v;
     if (typeof p.x !== 'number' || typeof p.y !== 'number') continue;
     total++;
-    const nx = snapN(p.x), ny = snapN(p.y);
+    const nx = exactPositions?.has(k) ? p.x : snapN(p.x), ny = exactPositions?.has(k) ? p.y : snapN(p.y);
     const d = dist(p.x, p.y, nx, ny);
     layout[k] = { ...p, x: nx, y: ny };
     noteCanonicalCoordinate(p.x, nx);

@@ -8,6 +8,12 @@
 
 ## Principle
 
+Devices editor (#866) has a session-local Snapping toggle (default ON) and
+Alt bypass for wall/device contacts only; #873 equal spacing remains independent.
+Dragging moves one marker, never its connected neighbours. Flat View/kiosk may
+show derived shared outlines but no editor toggle, drag handle or group action.
+Individual tap/hold/confirmation authority remains unchanged.
+
 The dedicated **House Plan** sidebar panel is the primary host for this mode
 system. It contributes the HA app bar and drawer button, then embeds the same
 full card used on dashboards. In panel-host mode only the duplicated product

@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 866,
+  "baseStable": "v1.81.0",
+  "category": "major",
+  "rationale": "New user-visible device wall snapping and derived shared Flat outlines, absent from stable v1.81.0. Individual actions/history and previous 2.5D tiles are preserved; not a repair of an intermediate release regression."
+}

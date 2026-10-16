@@ -510,7 +510,7 @@ wall runs diagonally is broken geometry, not a tidy plan:
 | fixed-topology room-wall resize | `_rszMove` → `_snap`; the last safe node before a corner/opening/third room wins |
 | decor draft endpoints, text anchor | `_decorPointerDown` / `_stagePointerMove` → `_snap` |
 | decor move | `_decorMoveUpdate` → `_snap` of the resulting ANCHOR |
-| device markers | `_devicePlacementForCanvas` → `_persistDevicePlacement` |
+| device markers without a selected wall/device contact | `_devicePlacementForCanvas` → `_persistDevicePlacement` |
 | a device marker pulled to an equal-spacing target (#873) | `SpacingMagnet.resolve` (`src/device-spacing.ts`): the target itself is a node |
 | room labels | `_labelMove` → `_savePos` |
 | auto-placed markers (`defaultPositions`), the `spaceCenter` fallback, an undragged room label | `snapPt` |
@@ -523,7 +523,18 @@ there and stays GRID-BOUND, and both gaps stay equal after saving; a row of
 markers between nodes offers no target (Optimize moves them onto nodes). The
 pull is 6 CSS px in and 10 px out, measured from the raw pointer point, the
 same at every zoom; outside it the nearest node applies as before. Alignment
-guides remain indication only.
+guides remain indication only. This rule remains independent of #866's
+Snapping switch and Alt bypass.
+
+**Continuous device contact (#866).** A selected safe contact to a visible
+physical wall face (including opening cuts), or compatible neighbouring shell,
+is the device-placement exception: the same nine-decimal canonical point is
+previewed and saved without grid rounding. Wall capture/release is 6/9 CSS px;
+device contact is 14/22 CSS px. Without a contact, independent #873 spacing and
+the grid remain fallback. Snapping defaults ON for this session; OFF/Alt bypass
+only wall/device magnets, not spacing, and do not dissolve existing outlines.
+Only one marker moves. Optimize preserves proven contacts against unchanged
+candidate hosts, not arbitrary off-grid positions. No group data is persisted.
 
 Device alignment and equal-spacing references come from the actually painted
 icon roster (`device-icon-roster.ts`), not the full discovered device list.

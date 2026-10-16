@@ -48,6 +48,7 @@ import { PresentationLightFrame } from './presentation-light-frame';
 import { presentationSnapshotKey } from './render-device-snapshot';
 import { deviceFaceStyle, deviceThemeClass, renderDeviceFace, renderDeviceShadowFace } from './device-face';
 import { effectiveDeviceBaseSize } from './device-marker-geometry';
+import type { DeviceContactFrame } from './device-contact-render';
 import { valueBadgeTitle } from './device-value-badge';
 import { contentFingerprint } from './visual-continuity';
 import type { VirtualLightSnapshot } from './virtual-light-state';
@@ -55,7 +56,7 @@ import { renderOpeningTunnelFills } from './render/opening-tunnels';
 import { renderPaperShapes, type PaperShape } from './render/paper-scene';
 import { gridVisualScale, gridVisualUnits } from './grid-scale';
 import {
-  spaceModels, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,
+  spaceModels, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, iconUnit, NORM_W,
   GRID_STEP_N, GRID_PITCH, staticPassageOpenings,
   decorBoxItem, expandItem, itemOfGeometry, roomItem, structuralFrame, resolveSpaceCardFit,
   type Layout, type ContentItem, type SpaceCardFit,
@@ -200,6 +201,7 @@ export interface StaticGlowRuntime {
 }
 
 export interface StaticRenderOpts {
+  contactFrame?: (frame: DeviceContactFrame) => void;
   hass: any;
   registry?: HaRegistrySnapshot;
   cfg: ServerConfig;
@@ -652,6 +654,14 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   }) : nothing;
   // #764: markers and opening symbols are keyed like the rooms above (#745): `.device-core`
   // and `.op-leaf`/`.op-arc` transition, and a positional node animated a stranger's state.
+  // Static's cheap paint union historically cuts only passages. Contact/hit
+  // safety uses the shared canonical inputs for every door/window opening.
+  o.contactFrame?.({ key: `${space.id}|${contentFingerprint(spCfg)}|${disp.showBorders}`, enabled: true,
+    floor: disp.showBorders ? { config: spCfg, model: space } : undefined,
+    markers: iconDevs.filter((d) => d.bindingStatus?.kind !== 'ha_disabled').map((d) => ({
+      id: d.id, ...markerPos(d, o.layout, o.cfg, defPos, space, areaRelocationIds),
+      diameter: deviceBasePct / 100 * iconUnit(space) * presentationOf(d).scale,
+    })) });
   const markers = keyed(space.id, repeat(iconDevs, (d) => d.id, (d) => {
     const p = markerPos(d, o.layout, o.cfg, defPos, space, areaRelocationIds);
     const left = ((p.x - vb[0]) / vb[2]) * 100;

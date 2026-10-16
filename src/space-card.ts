@@ -7,6 +7,10 @@
  */
 import { LitElement, html, nothing, noChange, css, type TemplateResult, type PropertyValues, type PropertyDeclaration } from 'lit';
 import { cardStyles } from './styles';
+import type { DeviceContactFrame } from './device-contact-render';
+import type { LiveRuntime } from './live-interaction-runtime';
+import { liveRuntimeCode } from './view-runtime-code';
+import { ViewRuntimeBoundary } from './view-runtime-boundary';
 import { buildSpaceDevices, renderSpaceStatic, spaceModels } from './space-render';
 import { resolveDeviceAreaRelocations } from './device-area-relocation';
 import { resolveSpaceCardFit, type SpaceCardFit } from './space-geometry';
@@ -85,6 +89,13 @@ interface SpaceCardConfig {
 }
 
 class HouseplanSpaceCard extends LitElement {
+  private _contactRuntime: LiveRuntime | null = null;
+  private readonly _contactBoundary = new ViewRuntimeBoundary(this, liveRuntimeCode, {
+    owner: () => this, current: (owner) => owner === this && this.isConnected,
+    install: (runtime) => { this._contactRuntime = runtime; }, changed: () => this.requestUpdate(),
+  });
+  private get _deviceContacts() { return this._contactRuntime?.contacts; }
+  private _deviceContactFrame: DeviceContactFrame | null = null;
   public requestUpdate(name?: PropertyKey, oldValue?: unknown, options?: PropertyDeclaration): void {
     // Observe intermediate HA authorities before Lit coalesces their renders.
     if (name === 'hass' && this._read.observe(configReloadContext(this))) {
@@ -343,6 +354,7 @@ class HouseplanSpaceCard extends LitElement {
       this._continuityDisposed = false;
     }
     super.connectedCallback();
+    this._contactBoundary.connect();
     this._attachReload = true;
     this._pointerModality.connect(this.ownerDocument.defaultView);
     this._motionMedia = window.matchMedia?.('(prefers-reduced-motion: reduce)');
@@ -363,6 +375,7 @@ class HouseplanSpaceCard extends LitElement {
   }
 
   public disconnectedCallback(): void {
+    this._contactBoundary.disconnect(); this._deviceContacts?.clear();
     this._read.invalidate(); this._loading = false;
     this._attachReload = false;
     this._reloadQueued = false; this._forceReloadQueued = false;
@@ -693,6 +706,7 @@ class HouseplanSpaceCard extends LitElement {
   };
 
   protected updated(changed: PropertyValues): void {
+    if (this._deviceContactFrame) this._deviceContacts?.sync(this.renderRoot, this._deviceContactFrame);
     const stage = this.renderRoot.querySelector<HTMLElement>('.hp-static-stage') || undefined;
     if (stage !== this._observedStage) {
       this._stageObserver?.disconnect();
@@ -907,6 +921,7 @@ class HouseplanSpaceCard extends LitElement {
     const title = this._config.title !== undefined ? this._config.title : sp?.title || '';
     const deviceSnapshot = this._renderDeviceSnapshot;
     const stage = renderSpaceStatic({
+      contactFrame: (frame) => { this._deviceContactFrame = frame; },
       hass: deviceSnapshot?.hass || this.hass,
       cfg,
       layout: this._snap?.layout || {},
@@ -968,6 +983,12 @@ class HouseplanSpaceCard extends LitElement {
         @pointerdown=${(event: PointerEvent) => this._pointerModality.note(event)}
         @pointermove=${(event: PointerEvent) => this._pointerModality.note(event)}>
         ${title ? html`<div class="hp-static-title">${title}</div>` : nothing}
+        ${this._contactBoundary.unavailable ? html`<div class="hp-static-foot" role="status">
+          ${t(this._lang, 'view.runtime_failed')}
+          ${this._contactBoundary.canRetry ? html`<button class="hp-static-btn" @click=${(e: Event) => {
+            if (e.isTrusted) void this._contactBoundary.retry();
+          }}>${t(this._lang, 'view.runtime_retry')}</button>` : t(this._lang, 'editor.refresh_advice')}
+        </div>` : nothing}
         <div class="hp-static-body">
           ${stage}
           ${this._renderRecoveryOverlay()}

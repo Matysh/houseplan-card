@@ -14,7 +14,6 @@ import type { I18nKey, Lang } from './i18n';
 import { hasSettingsTranslation, settingsT } from './i18n/settings';
 import type { OptimizePlansDialog, OptimizePlansDialogPort } from './optimize-plans-dialog';
 import type { OptimizeGeometryPreflightResult } from './plan-geometry-preflight';
-import { optimizePlans } from './plan-optimizer';
 import { sameOptimizeSource } from './optimize-source';
 import type { ServerConfig } from './types';
 
@@ -35,7 +34,7 @@ export class LazyOptimizePlansDialog {
   /** The loaded dialog; a failed import is retried on the next call. */
   public load(): Promise<OptimizePlansDialog> {
     if (this.dialog) return Promise.resolve(this.dialog);
-    this.loading ??= import('./optimize-plans-dialog').then(({ OptimizePlansDialog: Dialog }) => {
+    this.loading ??= Promise.all([import('./optimize-plans-dialog'), import('./plan-optimizer')]).then(([{ OptimizePlansDialog: Dialog }, { optimizePlans }]) => {
       const port = this.port;
       this.dialog = new Dialog({
         ...port,

@@ -9,6 +9,7 @@
  */
 
 import { alignAllToGrid, type AlignReport } from './align-grid';
+import { contactPositionExceptions } from './device-contact-maintenance';
 import {
   canonicalizeConfigGeometryInPlace, canonicalizeLayoutGeometryInPlace,
   latticeCanonicalizationReport, type LatticeSpaceReport,
@@ -466,7 +467,8 @@ export function optimizePlans(
   }
 
   const beforeSpaces = clone(config.spaces || []);
-  const aligned = alignAllToGrid(config.spaces || [], references.layout);
+  const exactContacts = (spaces: any[], layout: Record<string, any>) => contactPositionExceptions(spaces, layout, context.deviceContactFaces);
+  const aligned = alignAllToGrid(config.spaces || [], references.layout, exactContacts);
   let wallsStraightened = 0;
   let wallsStraightenSkipped = 0;
   let maxStraightenShiftCm = 0;
@@ -487,7 +489,7 @@ export function optimizePlans(
   // the same production alignment once more so their centres/angles follow
   // the final host instead of the pre-repair edge.
   const finalAligned = wallsStraightened
-    ? alignAllToGrid(straightenedSpaces, aligned.layout)
+    ? alignAllToGrid(straightenedSpaces, aligned.layout, exactContacts)
     : { ...aligned, spaces: straightenedSpaces };
   config.spaces = finalAligned.spaces;
   const alignReport: AlignReport = wallsStraightened ? {

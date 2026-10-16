@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Devices can snap to physical wall faces and join nearby markers into a shared
+  Flat outline, following the designer reference. Dragging still moves only one
+  device, with exact-position Undo/Redo. Snapping/Alt controls only these new
+  magnets; equal spacing remains independent. 2.5D keeps its previous tiles
+  ([#866](https://github.com/Matysh/houseplan-card/issues/866)).
+
 ## v1.81.0 — 2026-10-16
 
 - Stable promotion of the owner-accepted v1.81.0-beta.4 product, with no further

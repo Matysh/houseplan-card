@@ -12,6 +12,11 @@ stage, is in the ADRs (`docs/adr/089-…`, `122-…`, `160-…`,
 
 ## Activation
 
+Flat device contacts (#866) do not change 2.5D tiles. Shared/contact contours,
+wall-derived rotations and Flat contact styling are cleared in iso; individual
+tile edges/shadows, actions and exact saved anchor positions remain unchanged.
+Returning to Flat rederives its contours without layout/config writes.
+
 One installation-wide setting, `settings.volumetric_view: boolean`, switched in
 **General settings › Display › Show the plan in 2.5D** (third item after «Show
 live presence on the plan»). It is stored only when `true`; missing or `false`

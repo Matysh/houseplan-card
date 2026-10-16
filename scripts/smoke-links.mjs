@@ -30,6 +30,18 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/device-contact-geometry.ts','src/device-contact-snap.ts','src/device-contact-render.ts',
+      'src/device-contact-card.ts','src/device-contact.styles.ts','src/device-contact-scene.ts',
+      'src/device-contact-walls.ts','src/device-contact-floor.ts','src/device-contact-collision.ts',
+      'src/device-contact-editor.ts','src/device-contact-maintenance.ts'],
+    smokes: ['smoke_device_contacts.mjs','smoke_device_contact_walls.mjs','smoke_device_contact_designer.mjs','smoke_device_contact_work.mjs',
+      'smoke_device_equal_spacing.mjs','smoke_device_hit_capsules.mjs','smoke_device_position_history.mjs',
+      'smoke_pageshow_layout_ack.mjs','smoke_optimize_context.mjs'],
+    because: '#866: mounted native input observes independent actions, one-point history/cancellation, '
+      + 'unchanged spacing, real wall-face hysteresis and frozen-designer contour comparison; '
+      + 'existing writer/context consumers observe external guards without naming these new adapters.',
+  },
+  {
     symbols: ['LayoutWriteReload'],
     smokes: ['smoke_pageshow_layout_ack.mjs'],
     because: '#902: native released marker drag and public pagehide/pageshow cross '

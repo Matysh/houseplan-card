@@ -8,6 +8,8 @@
  */
 
 export interface SpaceReferenceRepairContext {
+  /** Runtime-only positive face evidence; never a config/layout field. */
+  deviceContactFaces?: readonly import('./device-contact-maintenance').DeviceContactFaceEvidence[];
   /** Effective Area from the same buildDevices snapshot used by View. */
   effectiveAreaByMarker?: Readonly<Record<string, string>>;
   /** Full HA owner evidence. Absence is meaningful only when authoritative. */

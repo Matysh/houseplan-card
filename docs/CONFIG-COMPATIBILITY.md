@@ -168,6 +168,18 @@ Older clients ignore the shared setting/new enum but read explicit mode mirrors;
 inherited floors temporarily follow their old card default after downgrade.
 Before downgrade, enable the shared setting if that old appearance is required.
 
+## Derived device contacts (#866)
+
+No schema/model bump, shape selector, group/attachment ID or saved shell angle.
+The anchor remains the icon-core centre in layout x/y/s. Only a proven safe
+wall/device contact is saved continuously (nine-decimal canonical point), rather
+than rounded to the placement grid. Save/load/export/import retain that point
+and unknown sibling fields. Optimize rederives all-floor positive contacts
+against candidate wall geometry; changed/removed hosts get no blanket exemption.
+Snapping is session-local, ON by default; Alt bypasses only wall/device magnets.
+An older client reads the same positions and shows independent shells; exact
+contact preservation through an older Optimize is not promised.
+
 ## Device battery indicators (#792, #807)
 
 `settings.show_device_battery` is an optional global setting, enabled by

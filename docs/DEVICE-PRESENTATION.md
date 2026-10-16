@@ -230,6 +230,23 @@ catalogue the marker stays «On the plan».
 
 ## Implementation notes
 
+### Derived Flat contacts (#866)
+
+The frozen designer handoff governs the shared outer silhouette. A free core
+keeps D and its historical 101.5/80 outer-shell ratio; contact calibration changes
+only empty outer space, never shrinks the core. Connected shells have one neutral
+union outline, convex corners limited by the small participant and square inner
+corners; the empty corner of an L is neither filled nor a group hit target.
+At a visible physical wall the complete contact edge is flat, closed and flush.
+Inclined-wall contact rotates only the outer geometry; content and the user's
+icon angle stay upright/unchanged. Badge bounds come from the shared real face,
+not prototype bbox approximations. Each member keeps its own status, alarm,
+activity, focus, tooltip, confirmation and action owner. Passive battery/LQI
+satellites do not enlarge the outline or hit area. Individual own silhouette
+wins before the usual core-centred 44px fallback. Static cards remain passive;
+isolated previews have no neighbours. In 2.5D all contact ink/style is removed:
+the previous individual tiles and exact saved coordinates remain authoritative.
+
 - `device-value-badge.ts` owns candidate discovery, source keys, HA formatting,
   units and unavailable handling for `marker.value_source` (inner Value face)
   and `marker.value_badge` (satellite). Absent `value_source` keeps the legacy

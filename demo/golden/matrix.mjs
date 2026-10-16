@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 74;
+export const GOLDEN_MATRIX_VERSION = 75;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -1345,6 +1345,8 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'card-editor-invalid-default-floor-dark-ru', fixture: 'visual',
     cardEditorInvalidDefaultFloor: 'removed-floor', language: 'ru', theme: 'dark',
     viewport: { width: 900, height: 760 }, ...page },
+  ...['light','dark'].map(theme=>({id:`device-contacts-designer-${theme}`,fixture:'visual',deviceContacts:true,
+    space:'golden-contacts',mode:'view',iconSize:5,language:'en',theme,viewport:{width:1400,height:1100},...stage})),
   // #780: LED strips. The two design references keep all four strips of the
   // designer's composition at once (free, wall face, corner polyline, closed
   // loop) on the reference floor #868D94; the others pin the dark Glow field,

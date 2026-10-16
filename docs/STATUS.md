@@ -20,10 +20,15 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.81.0** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.81.0` |
 | Latest prerelease tag | `v1.81.0-beta.4` |
-| Tests | Node unit 4624 · pure backend 493 · HA-harness backend 397 · browser smokes 361 (`npm run inventory`) |
+| Tests | Node unit 4644 · pure backend 494 · HA-harness backend 397 · browser smokes 365 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Device contacts (#866) are derived Flat presentation, not stored groups. The
+individual point writer/history remains authoritative; only a selected exact
+wall/device contact bypasses grid rounding. Session Snapping/Alt does not disable
+equal spacing. The previous 2.5D tiles and saved positions remain unchanged.
 
 The next accounting cycle is 1.82 against stable `v1.81.0`, using the owner's
 existing milestone 1.82 (#7). Nightly witness repair (#917) is infrastructure

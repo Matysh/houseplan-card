@@ -19,6 +19,8 @@ export interface DeviceHitCandidate {
   painted: DeviceHitRect;
   /** Radius of the invisible core-centred minimum target. */
   floorRadius: number;
+  /** Optional Flat contact contour; never a shared component's bounding box. */
+  contains?: (point: DeviceHitPoint) => boolean;
 }
 
 /**
@@ -171,7 +173,8 @@ export function resolveDeviceHitOwner(
   candidates: readonly DeviceHitCandidate[],
   point: DeviceHitPoint,
 ): DeviceHitCandidate | null {
-  const painted = candidates.filter((candidate) => pointInDeviceCapsule(point, candidate.painted));
+  const painted = candidates.filter((candidate) => candidate.contains
+    ? candidate.contains(point) : pointInDeviceCapsule(point, candidate.painted));
   if (painted.length) return nearest(painted, point);
   const floor = candidates.filter((candidate) => {
     const radius = Math.max(0, candidate.floorRadius);
@@ -271,6 +274,8 @@ interface RenderedDeviceHitItem {
 
 /** DOM adapter and lifecycle state around the pure screen-space resolver. */
 export class DeviceHitController {
+  /** Optional geometry installed by the fingerprinted live renderer. */
+  public contactGeometry?: (marker: HTMLElement, candidate: DeviceHitCandidate, width: number, height: number) => void;
   private index: DeviceHitIndex | null = null;
   private readonly pointers = new DevicePointerOwnerLatch();
   private hoverId: string | null = null;
@@ -310,7 +315,7 @@ export class DeviceHitController {
       if (!marker.dataset.id || !marker.isConnected || !painted
           || core.width <= 0 || core.height <= 0
           || painted.width <= 0 || painted.height <= 0) continue;
-      candidates.push({
+      const candidate: DeviceHitCandidate = {
         id: marker.dataset.id,
         center: { x: core.left + core.width / 2, y: core.top + core.height / 2 },
         painted: {
@@ -319,7 +324,9 @@ export class DeviceHitController {
         // The painted shell's short side is the CSS shell size. The floor is
         // exactly max(44 px, shell size), so no pseudo-style read is needed.
         floorRadius: Math.max(22, Math.min(painted.width, painted.height) / 2),
-      });
+      };
+      this.contactGeometry?.(marker, candidate, core.width, core.height);
+      candidates.push(candidate);
     }
     this.index = new DeviceHitIndex(candidates);
     return this.index;

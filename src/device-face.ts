@@ -120,6 +120,7 @@ export function renderDeviceFace(
     ${presentation.haDisabled
       ? html`<span class="habadge" title=${options.disabledTitle || ''} aria-hidden="true"><ha-icon icon="mdi:power-plug-off-outline"></ha-icon></span>`
       : nothing}
+    ${options.surface !== 'preview' ? html`<span class="device-contact-ink" aria-hidden="true"></span>` : nothing}
     <span class=${shellClasses} aria-hidden="true">
       <span class="device-shell-frame"></span>
       <span class="device-core">

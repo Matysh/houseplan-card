@@ -236,3 +236,19 @@ test('#456 a rejected copy rolls back only the copy and keeps accepted Optimize'
   assert.equal(host._spaceDialog.copy.busy, false);
   assert.ok(events.includes('reload-config'));
 });
+
+test('#866 lazy Optimize import rechecks its actual config/layout material before copying',async()=>{
+  const {host,services,events,toasts}=runtimeHarness();delete services.optimize;
+  const pending=saveSpaceCopy(host,services);
+  queueMicrotask(()=>host._adoption.acceptConfigWrite({...host._serverCfg,settings:{changedWhileLoading:true}},{rev:host._cfgRev+1}));
+  await pending;
+  assert.equal(events.includes('config-write'),false);assert.equal(events.includes('houseplan/plan/optimize'),false);
+  assert.equal(host._serverCfg.spaces.length,1);assert.equal(toasts.at(-1),'space.copy_error_changed');
+});
+
+test('#866 retiring the dialog while the real lazy optimizer loads stays silent and performs no write',async()=>{
+  const {host,services,events,toasts}=runtimeHarness();delete services.optimize;
+  const pending=saveSpaceCopy(host,services);queueMicrotask(()=>{host._spaceDialog=null;});await pending;
+  assert.equal(events.includes('config-write'),false);assert.equal(events.includes('houseplan/plan/optimize'),false);
+  assert.equal(host._serverCfg.spaces.length,1);assert.deepEqual(toasts,[]);
+});

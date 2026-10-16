@@ -1,4 +1,8 @@
 {
+  "editor.device_magnets": "Magnétisme",
+  "editor.device_magnets_help": "Aligner contre les murs et les appareils voisins. Maintenir Alt pour suspendre. Les espacements égaux restent indépendants.",
+  "editor.device_snap_wall": "Contre le mur",
+  "editor.device_snap_join": "Contour commun",
   "node_move_hint": "Faites glisser le nœud du mur. Les axes initiaux et les murs horizontaux/verticaux s'aimantent. Échap annule ; Annuler restaure tout le déplacement.",
   "node_move_ambiguous": "Ces nœuds sont trop proches. Zoomez pour en choisir un.",
   "node_move_choose_axis": "Déplacez-vous le long d'un mur initial pour choisir l'axe de glissement.",

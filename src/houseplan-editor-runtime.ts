@@ -263,11 +263,15 @@ import { renderBackdropGuard, renderPlanBackdropGuard, stagePlanFile, uploadPlan
 import { CommandStack } from './command-stack';
 import type { DeviceLayout, DevicePlacement, DevicePositionState } from './device-position-history';
 import { SpacingMagnet, spacingMarkers, spacingRows } from './device-spacing'; // #873
+import { DeviceContactMagnet } from './device-contact-snap';
+import type { DeviceContactRenderer } from './device-contact-render';
+import { deviceContactAlt, deviceContactMaintenanceFaces, renderDeviceContactGuide } from './device-contact-editor';
 import { positionableIconMarkers } from './device-icon-roster';
 import { ledStripsByMarker } from './led-strip-gate';
 import { effectiveDeviceBaseSize } from './device-marker-geometry';
 import { contentFingerprint } from './visual-continuity';
 import { settingsT } from './i18n/settings';
+import { toolsT } from './i18n/tools';
 import { physicalBodiesKey, wallUnionKey, writeWallUnionPool } from './floor-geometry-key';
 import { PointerModalityController } from './pointer-modality';
 import { type ResolvedDevicePresentation } from './device-presentation';
@@ -565,7 +569,9 @@ export interface HouseplanEditorHostPort {
   /** #400: device dragging has its own state since #74; `_drag` is null in
    *  the devices mode, so anything excluding "the thing being dragged" there
    *  must read this instead. Only the id is needed by the editor runtime. */
-  _deviceDrag: { id: string; spacing?: SpacingMagnet<DevicePlacement> | null } | null;
+  _deviceDrag: { id: string; spacing?: SpacingMagnet<DevicePlacement> | null; contact?: DeviceContactMagnet | null } | null;
+  _deviceContacts: DeviceContactRenderer | undefined;
+  _deviceMagnets: boolean;
   _drawWallCm: number | null;
   _drawWallField: string | null;
   _drawWallFieldValue: string;
@@ -8914,6 +8920,7 @@ public _optimizeReferenceContext(
       );
     }
     return {
+      deviceContactFaces: deviceContactMaintenanceFaces(this.host),
       effectiveAreaByMarker: Object.fromEntries(
         this.host._devices
           .filter((device) => !device.virtual && !!device.area)
@@ -10193,6 +10200,12 @@ public _alignCandidates(): number[][] {
   }
 
 /** #873: the equal-spacing magnet of a device gesture; the markers are fixed here, at its start. */
+public _deviceContact(d: DevItem, canonical: (x: number, y: number) => { x: number; y: number }): DeviceContactMagnet | null {
+    const scene = this.host._deviceContacts?.scene, marker = scene?.shapes.get(d.id)?.marker;
+    return scene && marker ? new DeviceContactMagnet(scene, marker, canonical) : null;
+}
+public _deviceContactKey(e: KeyboardEvent): void { deviceContactAlt(this.host,e,()=>this._flushPointerMove('device')); }
+
 public _deviceSpacing(d: DevItem, place: (x: number, y: number) => DevicePlacement): SpacingMagnet<DevicePlacement> {
     const space = this.host._spaceModel();
     const size = this.host._config?.icon_size ?? 2.5; // the card's rule: above 8 is the default
@@ -10207,6 +10220,8 @@ public _deviceSpacing(d: DevItem, place: (x: number, y: number) => DevicePlaceme
 }
 
 public _renderAlignGuides(): TemplateResult {
+    const contactGuide = renderDeviceContactGuide(this.host,px=>this._cssPxToRender(px));
+    if (contactGuide) return contactGuide;
     const pt = this.host._alignPoint;
     // #873: equal-spacing rows are drawn and labelled here, in the guides layer
     // (one owner, #521); a shown row replaces the alignment guide of its axis
@@ -11065,6 +11080,12 @@ public _renderDevicesBar(): TemplateResult {
           <ha-icon icon="mdi:plus-box-outline"></ha-icon>${this.host._t('devbar.add')}
         </button>
         ${this.host._ledButton()}
+        <button class="btn ${this.host._deviceMagnets ? 'on' : ''}" data-hp="tool" data-tool="device-magnets"
+          ?disabled=${!this.host._deviceContacts}
+          aria-pressed=${this.host._deviceMagnets ? 'true' : 'false'} title=${toolsT(langOf(this.host.hass, this.host._config?.language), 'editor.device_magnets_help')}
+          @click=${() => { this.host._deviceMagnets = !this.host._deviceMagnets; this.host.requestUpdate(); }}>
+          <ha-icon icon="mdi:magnet"></ha-icon>${toolsT(langOf(this.host.hass, this.host._config?.language), 'editor.device_magnets')}
+        </button>
         <button class="btn ${this.host._showAll ? 'on' : ''}" data-hp="tool" data-tool="device-inbox" @click=${() => this._openDeviceInbox()}
           title=${this.host._t('device_inbox.title')}>
           <ha-icon icon="mdi:devices"></ha-icon>${this.host._t('device_inbox.button')}

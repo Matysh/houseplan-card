@@ -18,6 +18,9 @@ import { makeLargeHouseFixture } from './fixtures/large-house.mjs';
 const out = {};
 {
   const { page, browser } = await launch();
+  await page.exposeFunction('__fixtureSpacingOnly', async () => {
+    await page.locator('houseplan-card').locator('[data-tool="device-magnets"]').click();
+  });
   await page.exposeFunction('__fixtureNativeMode', async mode => {
     const root = page.locator('houseplan-card');
     await root.locator(mode === 'view' ? '[data-hp="editor-close"]'
@@ -58,6 +61,9 @@ const out = {};
     } };
 
     await window.__hpTest.setMode('devices');
+    // #866 has its own higher-priority contact oracle. This fixture isolates
+    // #873 via the real toggle and proves spacing works independently of it.
+    await window.__fixtureSpacingOnly();
     const space = c._space;
     const N = (x, y) => ({ s: space, x: x / 1000, y: y / 1000 });
     // A, B — ряд; C, D — сохранённые; E — новый на автоматическом месте;

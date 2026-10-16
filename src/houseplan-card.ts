@@ -757,7 +757,8 @@ export class HouseplanCard extends LitElement {
   }
 
   public async _ensureEditorRuntime(): Promise<boolean> {
-    return this._editorRuntimeLoader.ensure();
+    const [ready] = await Promise.all([this._editorRuntimeLoader.ensure(), this._viewRuntimes.live.ensure()]);
+    return ready;
   }
 
   public async _ensureOnboardingRuntime(): Promise<boolean> {
@@ -2236,6 +2237,7 @@ export class HouseplanCard extends LitElement {
   } | null = null;
   private _spaceDialog: SpaceDialogState | null = null;
   private _keyHandler = (e: KeyboardEvent) => this._onKey(e);
+  private _deviceAltHandler = (e: KeyboardEvent) => this._editorRuntime?._deviceContactKey(e);
   /** DEV-B703-03 warm re-mount: the dead instance's viewport, and the two
    *  flags that keep the restore from being undone (the server load's centred
    *  _restoreZoom) or applied twice (the dialog revival). */
@@ -2388,6 +2390,7 @@ export class HouseplanCard extends LitElement {
       this._holdFired = false;
       return;
     }
+    if (this._cancelDeviceDrag()) return;
     if (this._pointers.size || this._kioskHold.pointerId !== null) this._interruptViewGesture();
   };
   private readonly _onViewPointerTerminal = (event: PointerEvent): void => {
@@ -2526,6 +2529,8 @@ export class HouseplanCard extends LitElement {
 
   private _drag: { id: string; sx: number; sy: number; ox: number; oy: number; moved: boolean } | null = null;
   private _deviceDrag: DeviceDragState | null = null;
+  private get _deviceContacts() { return this._liveRt?.contacts; }
+  private _deviceMagnets = true;
   private readonly _deviceDragRetirement = new DeviceDragRetirement();
   private _rlResize: { id: string; space: string; k0: number; cx: number; cy: number; d0: number } | null = null;
   private readonly _viewHold = new ViewHoldGesture();
@@ -2695,6 +2700,8 @@ export class HouseplanCard extends LitElement {
     });
     if (this.hass) this._ensureHaRegistryAuthority();
     window.addEventListener('keydown', this._keyHandler);
+    window.addEventListener('keydown', this._deviceAltHandler);
+    window.addEventListener('keyup', this._deviceAltHandler);
     window.addEventListener('blur', this._onWindowBlur);
     window.addEventListener('pointerup', this._onViewPointerTerminal, true);
     window.addEventListener('pointercancel', this._onViewPointerTerminal, true);
@@ -2788,6 +2795,9 @@ export class HouseplanCard extends LitElement {
     this._bootSettling = false;
     for (const rt of this._activityRt.values()) clearTimeout(rt.timer); // pending activity-window repaints
     window.removeEventListener('keydown', this._keyHandler);
+    window.removeEventListener('keydown', this._deviceAltHandler);
+    window.removeEventListener('keyup', this._deviceAltHandler);
+    this._deviceContacts?.clear();
     window.removeEventListener('blur', this._onWindowBlur);
     window.removeEventListener('pointerup', this._onViewPointerTerminal, true);
     window.removeEventListener('pointercancel', this._onViewPointerTerminal, true);
@@ -4225,6 +4235,7 @@ export class HouseplanCard extends LitElement {
     this._syncCycleTimer();
     if (this._isoFirstFrame.sync(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes), () => parseCssColor(this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)')) ?? [17, 17, 17])) this.requestUpdate(); this._summary?.updated(); this._liveRt?.commit(); this._headerMenu.revealActiveTab();
     this._editorRuntime?._commitLiveEditor();
+    this._liveRt?.syncContacts();
     this._pruneDevicePressFeedback();
     this._syncDayCycleClock();
     this._syncRadarLive();
@@ -5346,6 +5357,12 @@ export class HouseplanCard extends LitElement {
       x: clampCanvasN(gx / NORM_W),
       y: clampCanvasN(gy / NORM_W),
     };
+  }
+
+  /** #866: only true contacts bypass the normal lattice, never the writer. */
+  private _exactDevicePlacement(d: DevItem, x: number, y: number): DevicePlacement {
+    return this._norm ? canonicalizePosition({ s: d.space, x: clampCanvasN(x / NORM_W), y: clampCanvasN(y / NORM_W) })
+      : { x: Math.round(x), y: Math.round(y) };
   }
 
   private _previewDevicePlacement(deviceId: string, placement: DevicePlacement | null): void {
@@ -7119,8 +7136,12 @@ export class HouseplanCard extends LitElement {
       oy: p.y,
       moved: false,
       before: devicePlacement(this._layout, d.id),
-      start: this._devicePlacementForCanvas(d, p.x, p.y),
+      start: this._exactDevicePlacement(d, p.x, p.y),
       spacing: this._editorRuntime?._deviceSpacing(d, (x, y) => this._devicePlacementForCanvas(d, x, y)) ?? null, // #873
+      contact: this._editorRuntime?._deviceContact(d, (x, y) => {
+        const saved = this._exactDevicePlacement(d, x, y), k = this._norm ? NORM_W : 1;
+        return { x: saved.x * k, y: saved.y * k };
+      }) ?? null,
     };
     capturePointer(ev);
     this._tip = null;
@@ -7141,6 +7162,7 @@ export class HouseplanCard extends LitElement {
     if (this._mode !== 'devices') return;
     const drag = this._deviceDrag;
     if (!drag || drag.id !== d.id || drag.pointerId !== ev.pointerId) return;
+    drag.lastPointer = { clientX: ev.clientX, clientY: ev.clientY, altKey: ev.altKey };
     const stage = this.renderRoot.querySelector('.stage') as HTMLElement;
     if (!stage) return;
     const vb = this._baseVb();
@@ -7152,6 +7174,7 @@ export class HouseplanCard extends LitElement {
       drag.moved = true;
       this._viewHold.cancel();
     }
+    if (!drag.moved) return;
     // DEV-B58-01. This used to be clamped into `vb` — the CONTENT FRAME — with
     // a 0.8 % margin, which is exactly the "old canvas border" the owner ran
     // into: a marker could never be dragged past the outline of whatever was
@@ -7161,8 +7184,11 @@ export class HouseplanCard extends LitElement {
     // enforces, and it is the SAME ±5000 on both sides of the wire.
     const nx = clampCanvasR(drag.ox + dx);
     const ny = clampCanvasR(drag.oy + dy);
-    this._previewDevicePlacement(d.id, drag.spacing?.resolve(nx, ny, rect.width / v.w, rect.height / v.h)
-      ?? this._devicePlacementForCanvas(d, nx, ny));
+    const px = rect.width / v.w, py = rect.height / v.h;
+    const fallback = drag.spacing?.resolve(nx, ny, px, py) ?? this._devicePlacementForCanvas(d, nx, ny);
+    const contact = drag.contact?.resolve(nx, ny, px, py, this._deviceMagnets && !ev.altKey);
+    if (contact && drag.spacing) drag.spacing.hint = drag.spacing.hint.filter((t) => Math.hypot(t.x - contact.x, t.y - contact.y) <= 2e-6);
+    this._previewDevicePlacement(d.id, contact ? this._exactDevicePlacement(d, contact.x, contact.y) : fallback);
   }
   private _pointerUp(ev: PointerEvent, d: DevItem): void {
     d = this._deviceForPointerEvent(ev, d);

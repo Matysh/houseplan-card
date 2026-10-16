@@ -1,5 +1,21 @@
 # Development and deployment
 
+## Device-contact evidence (#866)
+
+The frozen designer corpus is `test/fixtures/866-designer`; the original geometry
+hash is `1e5076ac432af256ecff2fca0a013a86381cd72e7dff8fa63a726eb309160660`.
+`smoke_device_contact_designer` compares actual production paths and core centres
+with the frozen renderer, all twelve cases at 32/56/96 reference pixels. It saves
+paired PNGs, numerical errors and material/browser metadata under
+`artifacts/866/designer`; no per-marker registration or baseline fitting is used.
+`smoke_device_contact_walls` uses native camera/drag input for the 35/50/100/200%
+matrix and both sides of H/V and ±30/45/75-degree walls. `smoke_device_contacts`
+covers actions, cancellation, exact writer/history, static and projection parity.
+These headless witnesses are not physical GPU or owner field observations.
+The normal golden matrix additionally captures the twelve arrangements together
+in both themes. Keep its reviewed-source acceptance independent of the numerical
+designer comparison; neither reference-only tests nor a new baseline prove AC1.
+
 ## Nightly witness repair (#917)
 
 The five failures in run `38853768073` belong to test infrastructure: two

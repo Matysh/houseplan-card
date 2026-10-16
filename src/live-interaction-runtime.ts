@@ -14,6 +14,8 @@ import { RenderSnapshotReuseWindow } from './render-snapshot-reuse';
 import { lightWork } from './devices';
 import { lightGeometryFingerprint } from './glow-scene';
 import type { DevItem } from './types';
+import { DeviceContactRenderer } from './device-contact-render';
+import { syncHouseplanDeviceContacts } from './device-contact-card';
 
 export const LIVE_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
@@ -39,6 +41,7 @@ interface LiveRuntimeHost {
 
 /** Lazily loaded DOM-only fast paths; the card keeps a full-render fallback. */
 export class LiveRuntime {
+  public readonly contacts = new DeviceContactRenderer();
   private deferredHass = false;
   /** #850: the incremental render-device snapshot capture of this card. */
   public readonly capture = new RenderSnapshotReuseWindow();
@@ -97,6 +100,7 @@ export class LiveRuntime {
     return pending;
   }
   public viewport(now = false): void { scheduleHouseplanViewport(this.host, now); }
+  public syncContacts(): void { syncHouseplanDeviceContacts(this.host, this.contacts); }
   public hover(): void { syncHouseplanHover(this.host); }
   public devicePointerTip(event: PointerEvent, device: DevItem): void {
     showDevicePointerTip(this.host, event, device);
@@ -122,6 +126,7 @@ export class LiveRuntime {
     syncHouseplanHover(this.host);
   }
   public dispose(): void {
+    this.contacts.clear();
     this.capture.reset();
     this.fingerprints = new WeakMap();
     disposeHouseplanViewport(this.host);

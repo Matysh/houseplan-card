@@ -1,0 +1,9 @@
+{
+  "core": 80,
+  "layout": {
+    "a": {"s":"floor","x":0.321234567,"y":0.312345678,"future":{"source":"kept"}},
+    "b": {"s":"floor","x":0.411234567,"y":0.312345678,"future":{"source":"also kept"}},
+    "unrelated": {"s":"floor","x":0.484321234,"y":0.716543219},
+    "rl_label": {"s":"floor","x":0.184321234,"y":0.216543219}
+  }
+}
