@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.81.0** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.81.0` |
 | Latest prerelease tag | `v1.81.0-beta.4` |
-| Tests | Node unit 4655 · pure backend 494 · HA-harness backend 397 · browser smokes 365 (`npm run inventory`) |
+| Tests | Node unit 4657 · pure backend 494 · HA-harness backend 397 · browser smokes 365 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -57,6 +57,9 @@ the historical keepalive explanation remains a hypothesis, not an established ca
 GitHub funding metadata (#915) is an exact non-input of Validate. The guarded
 `.github` root and YAML/workflow selection remain unchanged; ordinary coverage
 and affected-check witnesses keep unknown neighbouring files fail-closed.
+
+Review format preflight (#922) keeps a criterion's first AC token when later
+tokens are cross-references; numbering/evidence/track checks are unchanged.
 
 Successful Z2M maps (#912) have an entry-owned atomic HA Store separate from
 plan/export/support data. Reload restores them stale without a scan. Explicit

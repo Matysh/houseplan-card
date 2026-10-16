@@ -5,7 +5,7 @@ import { chmodSync, cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeF
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { checkReviewInput, collectReviewInput, preflightApplies, preflightComment, rejectPreflight } from '../scripts/review-preflight.mjs';
+import { checkReviewInput, collectReviewInput, preflightApplies, preflightComment, rejectPreflight, specFormatErrors } from '../scripts/review-preflight.mjs';
 import { handoffDigest, handoffSnapshot, parseHandoff, selectHandoff } from '../scripts/review-handoff.mjs';
 import { issueBodyDigest } from '../scripts/review-doc-guard.mjs';
 import { findStep, runStep } from './helpers/workflow-step.mjs';
@@ -57,6 +57,31 @@ test('#855 required sections, acceptance numbers and evidence give field-address
     [input({ infrastructure: true }), 'infrastructure'],
   ];
   for (const [data, field] of cases) assert.ok(run(data).errors.some((error) => error.field === field), field);
+});
+
+test('#922: trailing AC references do not replace a criterion number or its evidence block', () => {
+  const prefix = ask.slice(0, ask.lastIndexOf('\n- AC1'));
+  for (const reference of ['AC1-4', 'AC1–AC4', 'AC1, AC2 и AC4', '**AC1** / `AC4`']) {
+    const rows = Array.from({ length: 7 }, (_, index) => `- AC${index + 1} — requirement; unit.`);
+    rows[5] += ` Согласовано с ${reference}.`;
+    assert.deepEqual(specFormatErrors(prefix + '\n' + rows.join('\n'), 'ask'), [], reference);
+    rows[5] = `| AC6 | requirement; согласовано с ${reference}. |\n  Доказательство: smoke.`;
+    assert.deepEqual(specFormatErrors(prefix + '\n' + rows.join('\n'), 'ask'), [], 'table + next-line evidence: ' + reference);
+  }
+});
+
+test('#922: cross-references still cannot excuse missing criteria, evidence or the show limit', () => {
+  const rows = Array.from({ length: 7 }, (_, index) => `- AC${index + 1} — unit.`);
+  rows[5] += ' Согласовано с AC1-4.';
+  const prefix = ask.slice(0, ask.lastIndexOf('\n- AC1'));
+  const missing = [...rows]; missing.splice(5, 1);
+  assert.ok(specFormatErrors(prefix + '\n' + missing.join('\n'), 'ask').some(error => error.field === 'body.spec.AC'));
+  const noEvidence = [...rows]; noEvidence[5] = '- AC6 — criterion with reference AC1-4.';
+  assert.ok(specFormatErrors(prefix + '\n' + noEvidence.join('\n'), 'ask').some(error => error.field === 'body.spec.AC6'));
+  const show = '## ТЗ\nAC1 unit\nAC2 unit\nAC3 unit\nAC4 unit; see AC1.';
+  assert.ok(specFormatErrors(show, 'show').some(error => error.message === 'Show allows at most three AC'));
+  const hidden = '## ТЗ\nAC1 unit\nAC3 unit\n> AC2 unit; AC1\n```md\nAC2 unit\n```';
+  assert.ok(specFormatErrors(hidden, 'show').some(error => error.field === 'body.spec.AC'));
 });
 
 test('#855 malformed ledger, terminal trailers and missing linked report are rejected', () => {

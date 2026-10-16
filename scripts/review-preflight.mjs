@@ -48,7 +48,8 @@ export function specFormatErrors(body, track, infrastructure = false) {
     if (!headers.some((header) => pattern.test(header)))
       errors.push({ field: 'body.spec.' + name, message: 'Missing required section: ' + name });
   }
-  const rows = [...spec.matchAll(/^.*\bAC([1-9]\d*)\b.*$/gm)];
+  // The first AC token identifies the row; later tokens may be cross-references.
+  const rows = [...spec.matchAll(/^.*?\bAC([1-9]\d*)\b.*$/gm)];
   const ids = [...new Set(rows.map((m) => Number(m[1])))].sort((a, b) => a - b);
   if (!ids.length || ids.some((id, i) => id !== i + 1))
     errors.push({ field: 'body.spec.AC', message: 'Numbered contiguous AC1..ACn required' });

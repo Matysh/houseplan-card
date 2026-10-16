@@ -1502,6 +1502,11 @@ the existing sealed prepare artifact and rechecked against fresh API reads at
 the model boundary. Scalar material guards, verdict schema, permissions and
 merge authority keep their existing owners.
 
+The separate format check (#922) identifies an acceptance row by its first AC
+token, so later cross-references cannot replace that row's number. It retains
+the existing section, contiguous-number, evidence and track-limit checks; it
+does not interpret or approve the meaning of an acceptance criterion.
+
 ## Read-only release transport (#921)
 
 `release-gate.mjs` wraps its workflow, candidate-tree and proof-context GETs in

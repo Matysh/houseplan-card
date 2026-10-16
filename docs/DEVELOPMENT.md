@@ -1919,6 +1919,12 @@ edits — not a commit, not a merge (that is decided in `integrate` from the sea
 
 ## Review handoff identity (#904)
 
+Acceptance formatting (#922) uses the first AC token on a line; references
+such as `AC6 … согласовано с AC1-4` no longer hide AC6. This is not a new spec
+grammar or semantic approval. Missing AC/evidence and the three-AC show limit
+are still rejected, and quoted/fenced examples remain excluded. Regression:
+`node --test test/review-preflight.test.mjs`.
+
 `scripts/review-handoff.mjs` shares the colon/heading grammar between collection
 and validation. A handoff starts with Done after quoted/fenced examples are
 removed; ordinary reviewer prose is not a candidate. This is syntactic selection,

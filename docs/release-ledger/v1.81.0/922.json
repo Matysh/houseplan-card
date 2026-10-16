@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 922,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Corrects syntactic acceptance-criterion parsing in review preflight: the first AC token identifies a row, not its final cross-reference. Contiguous numbering, evidence methods, required sections and the show limit remain enforced. No product behavior or release milestone."
+}
