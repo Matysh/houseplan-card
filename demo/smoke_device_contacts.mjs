@@ -113,6 +113,16 @@ for(const terminal of ['pointercancel','lostpointercapture','blur']){
     [`${terminal}:exact-restore`]:isDeepStrictEqual(after.layout,saved.layout),[`${terminal}:group-restored`]:after.components.every(id=>id==='contact-a'),
     [`${terminal}:guide-cleared`]:!after.guides.length&&!after.drag});
 }
+await page.evaluate(()=>{const c=window.__card;c.setConfig({...c._config,language:'ru'});});await settle();
+{
+  const start=await client('contact-m'),target=await client('contact-b',true);
+  await page.mouse.move(start.x,start.y);await page.mouse.down();
+  await page.mouse.move(start.x+140,start.y+60,{steps:6});
+  await page.mouse.move(target.x+3,target.y,{steps:6});await settle();
+  check('ru-contact-guide-visible',(await state()).guides.includes('Общая обводка'),true);
+  await page.keyboard.press('Escape');await page.mouse.up();await settle();
+}
+await page.evaluate(()=>{const c=window.__card;c.setConfig({...c._config,language:'en'});});await settle();
 {
   const saved=await state(),start=await client('contact-m');
   await page.evaluate(()=>{window.__contactRefuseNext=true;});
@@ -135,6 +145,9 @@ for (const id of ['contact-a','contact-b','contact-m']) {
   await page.keyboard.press('Escape'); await settle();
   await page.touchscreen.tap(p.x,p.y); await settle();
   check(`touch-core-opens-own-info:${id}`,await page.evaluate(()=>window.__card._infoCard?.id),id);
+  await page.keyboard.press('Escape');await settle();
+  await card.locator(`.dev[data-id="${id}"]`).focus();await page.keyboard.press('Enter');await settle();
+  check(`keyboard-opens-own-info:${id}`,await page.evaluate(()=>window.__card._infoCard?.id),id);
   await page.keyboard.press('Escape');await settle();
 }
 const parityBefore=await state();

@@ -123,6 +123,14 @@
       "configs": 2
     },
     {
+      "file": "test/fixtures/866-designer/devices.json",
+      "configs": 0
+    },
+    {
+      "file": "test/fixtures/866-device-contacts.json",
+      "configs": 0
+    },
+    {
       "file": "test/fixtures/874-room-closure.json",
       "configs": 0
     },
@@ -192,6 +200,10 @@
     },
     {
       "file": "test/fixtures/zigbee2mqtt-networkmap-real-anonymized.json",
+      "configs": 0
+    },
+    {
+      "file": "demo/fixtures/device-contact-designer-866.mjs",
       "configs": 0
     },
     {

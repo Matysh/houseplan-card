@@ -1,0 +1,92 @@
+# #866 author evidence — 16 October 2026
+
+This is an author handoff, not an independent review or an S8 declaration.
+Base: `1bdc5a1a0828bf7bc01b291136e4d3bd61a25b8e` (origin/dev).
+Accepted specification: issue comment `6218320949`, body SHA256
+`dde691787346fa9595a3a9bd33775b915f033b9886ff2f782c1f8e26e6ce24c3`.
+
+## Designer comparison (AC1)
+
+[Frozen designer archive](https://github.com/user-attachments/files/33533153/issue-866-snapping-handoff-2026-10-16.zip)
+SHA256: `d03cf880dbfc4482eac38d51b3f5b386c88e94204baa3a1390bcb93a2e59482b`.
+Four original renderer/style files are pinned byte-for-byte by
+`test/device-contact-designer.test.mjs`. Reference glyph records are the three
+required records, not a replacement production renderer.
+
+Run `npm run bundle:sync`, then `node demo/smoke_device_contact_designer.mjs`.
+The command produces paired `SCENE-SIZE-reference.png` and
+`SCENE-SIZE-production.png`, `comparison.json` and `material.json` in
+`artifacts/866/designer`. All twelve arrangements × 32/56/96 reference pixels
+passed numerical contour/core comparisons, glyph paint and visible-frame guards.
+The author inspected the paired contact sheet, not only the PASS strings.
+
+| Frozen example / production filename stem | Maximum boundary error over 32/56/96 | Visual conclusion |
+|---|---:|---|
+| Near wall / `wall-near` | 0.725 px | Free circle unchanged, no invented attachment |
+| Left contact / `wall-left` | <0.001 px | Closed flush side, two square contact corners |
+| Top contact / `wall-top` | <0.001 px | Flat upper edge; original circular core |
+| Right contact / `wall-right` | 0.011 px | Symmetric right contact, no masonry overlap |
+| Double at wall / `wall-double` | 0.116 px | Whole badge included, upright readable content |
+| Wall row / `wall-row` | <0.001 px | Single shared contour, no internal seams |
+| Row / `row` | 0.727 px | Correct pitch, no cumulative drift |
+| Column / `column` | 0.709 px | Continuous narrow silhouette, separate cores |
+| L / `l-shape` | 0.999 px | Empty inner corner preserved; no group rectangle |
+| 2×5 / `grid` | 0.440 px | One outer contour, small-member convex radius |
+| Badge link / `badge` | 0.720 px | Badge and core share outline, not actions |
+| Detachment / `detach` | 0.719 px | Connected pair plus unchanged free circle |
+
+Core error was ≤0.023 CSS px. The known free shell 101.5/80 versus reference
+103/80 empty-field difference is retained; D never receives an extra 80/103
+shrink in product code. The synthetic fixture registers one whole scene by its
+core centres, without per-member fitting. Product MDI glyphs and existing wall
+paint are not replaced with the prototype's demonstration artwork.
+The ordinary golden matrix now includes both-theme twelve-case boards; its
+new baselines still require complete reviewed-source capture/acceptance.
+
+## Executed ordinary evidence
+
+- `smoke_device_contacts`: native mouse/touch/keyboard target ownership, one
+  point write and one Undo/Redo, Alt press/release, RU/EN visible join guide,
+  toggle independence, detach/Esc, pointercancel, actual capture release, blur,
+  refused-write rollback, exact future siblings, cold accepted-pair remount,
+  native Optimize preview, passive static parity and Flat↔iso round trip: PASS.
+- `smoke_device_contact_walls`: all 68 cases PASS — 35/50/100/200% actual
+  editor zoom; both sides of H/V and ±30/45/75°; four badge sides at 45°;
+  6/9 px hysteresis, exact one-point drop and upright manual 37° icon angle.
+- `smoke_device_contact_work`: 200 actual markers with rows, badges and a wall;
+  30 unrelated HA frames caused zero face remeasure/index rebuild. Drag used
+  incremental local moves, not an all-plan pair scan; cancellation restored all
+  200 positions. PASS.
+- Inherited `smoke_device_equal_spacing`, `smoke_device_hit_capsules` and
+  `smoke_device_position_history`: executed PASS, not inferred from source.
+- Backend coordinate canonicalization suites: 10 passed, no skips. Includes
+  existing schema + real saved-layout-state canonicalization of the shared fixture.
+- After correcting matrix metadata, two moved registry anchors, new corpus
+  inventory membership, explicit callback types and the core line count:
+  199 targeted ordinary units passed, no skips. Static mutation registry check
+  passed with execution=0; caught evidence remains unknown/nightly-only.
+- The initial full gate was red: new explicit any, core growth, matrix metadata,
+  two stale registry anchors/corpus inventory and two monolith limits. The
+  addressed failures were rerun as above; a full green gate is NOT claimed.
+
+Raw commands, UTC start/end, exit status and logs live under `artifacts/866`.
+Performance reports use `.report.json` separately from wrapper receipts; early
+same-name outputs were overwritten by receipts and are not comparison evidence.
+The before/after diagnostic uses the same current runner and historical base
+source, three measured samples and one warmup; exact-SHA Linux CI remains the
+performance gate. Do not promote concurrent or dirty exploratory runs to proof.
+
+## Remaining before S7
+
+1. Owner decision on the two monolith counters, requested in issue comment
+   `6220661409`: raw bundle 2,970,705 and host references 5,418; keep the old
+   2,000/25 bands and all gzip/absolute budgets. No ceilings have been changed.
+2. Fresh full gate and named inherited lifecycle/context/static smokes on the
+   final material; refresh numerical/camera/work evidence after source changes.
+3. Publish the unblocked task branch, full attested golden capture, inspect and
+   accept only explained changed/new frames, then exact-SHA Validate.
+4. Independent S7 review and pipeline merge to S8; author must not merge dev.
+
+The native 200-marker, designer and wall checks are headless pinned-browser
+observations, not physical GPU/owner field acceptance. No schema migration,
+shape choice, group action, group drag, release/tag or main push is included.

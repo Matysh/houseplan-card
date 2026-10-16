@@ -467,7 +467,7 @@ export function optimizePlans(
   }
 
   const beforeSpaces = clone(config.spaces || []);
-  const exactContacts = (spaces: any[], layout: Record<string, any>) => contactPositionExceptions(spaces, layout, context.deviceContactFaces);
+    const exactContacts = (spaces: Parameters<typeof contactPositionExceptions>[0], layout: Parameters<typeof contactPositionExceptions>[1]) => contactPositionExceptions(spaces, layout, context.deviceContactFaces);
   const aligned = alignAllToGrid(config.spaces || [], references.layout, exactContacts);
   let wallsStraightened = 0;
   let wallsStraightenSkipped = 0;

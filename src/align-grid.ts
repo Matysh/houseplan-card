@@ -149,7 +149,8 @@ const cellCmOf = (sp: any): number => {
  */
 export function alignAllToGrid(
   spacesIn: any[], layoutIn: Record<string, any>,
-  layoutExemptions?: (candidateSpaces: any[], layout: Record<string, any>) => ReadonlySet<string>,
+  layoutExemptions?: (candidateSpaces: import('./types').ServerConfig['spaces'],
+    layout: Parameters<typeof import('./device-contact-maintenance').contactPositionExceptions>[1]) => ReadonlySet<string>,
 ): AlignResult {
   const spaces = JSON.parse(JSON.stringify(spacesIn || []));
   const layout: Record<string, any> = JSON.parse(JSON.stringify(layoutIn || {}));

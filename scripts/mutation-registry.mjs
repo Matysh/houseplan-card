@@ -1964,8 +1964,8 @@ const MUTANT_DEFINITIONS = [
       + 'the same loaded static card must read authoritative config/layout and paint four rooms becoming three.',
     patches: [{
       file: 'src/space-card.ts',
-      find: '    super.connectedCallback();\n    this._attachReload = true;',
-      replace: '    super.connectedCallback();\n    this._attachReload = !this._loadedOnce;',
+      find: '    this._attachReload = true;\n    this._pointerModality.connect(this.ownerDocument.defaultView);',
+      replace: '    this._attachReload = !this._loadedOnce;\n    this._pointerModality.connect(this.ownerDocument.defaultView);',
     }, {
       file: 'src/space-card.ts',
       find: '    if (this.hass?.callWS) void this._load(true);',
@@ -10439,8 +10439,8 @@ const MUTANT_DEFINITIONS = [
       + 'room card with the old SVG name even when the full card is correct',
     patches: [{
       file: 'src/space-render.ts',
-      find: '  spaceModels, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,',
-      replace: '  spaceModels, roomCenter, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,',
+      find: '  spaceModels, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, iconUnit, NORM_W,',
+      replace: '  spaceModels, roomCenter, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, iconUnit, NORM_W,',
     }, {
       file: 'src/space-render.ts',
       find: '        ${passageGlowTunnels}\n'

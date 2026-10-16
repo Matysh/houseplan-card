@@ -236,11 +236,11 @@ test('состав исключения объявлен списком, а не
   assert.deepEqual(postCaptureInputs(), ['demo/golden/accept.mjs', 'demo/golden/policy.mjs']);
 });
 
-test('в корпусе настоящего репозитория все шесть golden capture inputs (#344, #792, #881, #896)', () => {
+test('в корпусе настоящего репозитория все семь golden capture inputs (#344, #792, #881, #896, #866)', () => {
   const corpus = fingerprintCorpus(fileURLToPath(new URL('..', import.meta.url)));
   const golden = corpus.filter((file) => file.startsWith('demo/golden/')).sort();
   assert.deepEqual(golden, [
-    'demo/golden/device-battery.mjs', 'demo/golden/harness.mjs',
+    'demo/golden/device-battery.mjs', 'demo/golden/device-contacts.mjs', 'demo/golden/harness.mjs',
     'demo/golden/matrix.mjs', 'demo/golden/run.mjs',
     'demo/golden/scene-repaint.mjs',
     'demo/golden/static-stability.mjs',

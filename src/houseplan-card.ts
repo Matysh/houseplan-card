@@ -5347,8 +5347,10 @@ export class HouseplanCard extends LitElement {
     return snapPt(spaceCenter(s));
   }
 
-  private _devicePlacementForCanvas(d: DevItem, x: number, y: number): DevicePlacement {
+  private _devicePlacementForCanvas(d: DevItem, x: number, y: number, exact = false): DevicePlacement {
     if (!this._norm) return { x: Math.round(x), y: Math.round(y) };
+    // Only a proven contact bypasses the lattice, never canonicalization/writer.
+    if (exact) return canonicalizePosition({ s: d.space, x: clampCanvasN(x / NORM_W), y: clampCanvasN(y / NORM_W) });
     const g = this._gridPitch;
     const gx = Math.round(x / g) * g;
     const gy = Math.round(y / g) * g;
@@ -5357,12 +5359,6 @@ export class HouseplanCard extends LitElement {
       x: clampCanvasN(gx / NORM_W),
       y: clampCanvasN(gy / NORM_W),
     };
-  }
-
-  /** #866: only true contacts bypass the normal lattice, never the writer. */
-  private _exactDevicePlacement(d: DevItem, x: number, y: number): DevicePlacement {
-    return this._norm ? canonicalizePosition({ s: d.space, x: clampCanvasN(x / NORM_W), y: clampCanvasN(y / NORM_W) })
-      : { x: Math.round(x), y: Math.round(y) };
   }
 
   private _previewDevicePlacement(deviceId: string, placement: DevicePlacement | null): void {
@@ -7136,10 +7132,10 @@ export class HouseplanCard extends LitElement {
       oy: p.y,
       moved: false,
       before: devicePlacement(this._layout, d.id),
-      start: this._exactDevicePlacement(d, p.x, p.y),
+      start: this._devicePlacementForCanvas(d, p.x, p.y, true),
       spacing: this._editorRuntime?._deviceSpacing(d, (x, y) => this._devicePlacementForCanvas(d, x, y)) ?? null, // #873
       contact: this._editorRuntime?._deviceContact(d, (x, y) => {
-        const saved = this._exactDevicePlacement(d, x, y), k = this._norm ? NORM_W : 1;
+        const saved = this._devicePlacementForCanvas(d, x, y, true), k = this._norm ? NORM_W : 1;
         return { x: saved.x * k, y: saved.y * k };
       }) ?? null,
     };
@@ -7188,7 +7184,7 @@ export class HouseplanCard extends LitElement {
     const fallback = drag.spacing?.resolve(nx, ny, px, py) ?? this._devicePlacementForCanvas(d, nx, ny);
     const contact = drag.contact?.resolve(nx, ny, px, py, this._deviceMagnets && !ev.altKey);
     if (contact && drag.spacing) drag.spacing.hint = drag.spacing.hint.filter((t) => Math.hypot(t.x - contact.x, t.y - contact.y) <= 2e-6);
-    this._previewDevicePlacement(d.id, contact ? this._exactDevicePlacement(d, contact.x, contact.y) : fallback);
+    this._previewDevicePlacement(d.id, contact ? this._devicePlacementForCanvas(d, contact.x, contact.y, true) : fallback);
   }
   private _pointerUp(ev: PointerEvent, d: DevItem): void {
     d = this._deviceForPointerEvent(ev, d);

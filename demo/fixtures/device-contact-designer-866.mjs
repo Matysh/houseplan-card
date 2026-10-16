@@ -1,10 +1,12 @@
 // Frozen numerical cases from review.js of the owner's designer handoff.
 // Archive SHA256 d03cf880dbfc4482eac38d51b3f5b386c88e94204baa3a1390bcb93a2e59482b.
 // Coordinates and core registration are shared per scene, never fitted per marker.
-import { clusters, groupOutline, joinDepth } from '../../test/fixtures/866-designer/geometry.mjs';
+import { clusters, groupOutline } from '../../test/fixtures/866-designer/geometry.mjs';
 const d=(x,y,size=96,badge='none')=>({x,y,size,badge,value:'26%'});
 const w=(x,y,width,height)=>({x,y,w:width,h:height,right:x+width,bottom:y+height});
-const step=s=>s-joinDepth({size:s},{size:s});
+// Frozen layout data: do not let changing an external reference oracle alter
+// the golden fixture. All pixel-producing inputs stay in demo/fixtures.
+const step=s=>s*90/103;
 const row=(n,x,y,s=96)=>Array.from({length:n},(_,i)=>d(x+i*step(s),y,s));
 export const designerContactCases = [
   { id:'wall-near', title:'Рядом со стеной', devices:[d(165,108)], walls:[w(55,0,40,214)] },
