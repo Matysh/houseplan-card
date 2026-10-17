@@ -34,6 +34,7 @@ export type HeaderMenuActions = {
   settings(): void;
   pdf(): void;
   support(): void;
+  toggleHidden?(): void;
 };
 
 export type HeaderMenuInput = {
@@ -41,6 +42,7 @@ export type HeaderMenuInput = {
   kiosk: boolean;
   mode: HeaderMode;
   hasFixedFloor: boolean;
+  showHidden?: boolean;
   /** Пункты сводной панели; мобильное меню добавляет их только в просмотре. */
   summary: HeaderMenuItem[];
   t: (key: I18nKey) => string;
@@ -76,6 +78,8 @@ export function headerMenuItems(input: HeaderMenuInput): HeaderMenuItem[] {
       { id: 'support', icon: 'mdi:help-circle-outline', label: t('support.title'), run: actions.support },
     );
   }
+  if (actions.toggleHidden) items.push({ id: 'hidden-devices', icon: input.showHidden ? 'mdi:eye-outline' : 'mdi:eye-off-outline',
+    label: t('hidden_devices.show'), pressed: input.showHidden === true, run: actions.toggleHidden });
   if (input.mode === 'view') items.push(...input.summary);
   return items;
 }
@@ -162,6 +166,12 @@ export class HeaderMenu {
 }
 
 /** Прежние кнопки шапки (> 480 px): вынесены сюда, чтобы шапка карточки не росла. */
+export function renderHiddenDevicesToggle(t: (key: I18nKey) => string, shown: boolean, run: () => void): TemplateResult {
+  return html`<button class="btn header-action hidden-devices-button ${shown ? 'on' : ''}" data-hp="hidden-devices"
+    title=${t('hidden_devices.show')} aria-label=${t('hidden_devices.show')} aria-pressed=${String(shown)} @click=${run}>
+    <ha-icon icon=${shown ? 'mdi:eye-outline' : 'mdi:eye-off-outline'}></ha-icon></button>`;
+}
+
 export function renderHeaderActions(
   t: (key: I18nKey) => string, open: { settings(): void; pdf(): void; support(): void },
 ): TemplateResult {

@@ -653,6 +653,13 @@ locale/themes, manual lights, the light graph's topology, an activity window —
 rebuilds every presentation or the whole snapshot. Without the live chunk
 every capture is complete (#848).
 
+The full card's `hidden-device-visibility` owner (#919) keeps browser-local
+display intent apart from saved visibility. A bounded projection of the raw
+roster reveals only positively active user-hidden rows; snapshots, light,
+actions, frame and icon contacts consume those display rows. Raw discovery,
+metadata, catalog categories and auto-grid slots retain saved intent. Reuse
+keys include the projection and preference; the static card never opts in.
+
 The capture-local `PresentationLightFrame` (#895) indexes that resolved graph
 by source key and owner once, with one lazy marker-state choice projection
 only when a derived value consumes it. Reuse records the exact consumed light

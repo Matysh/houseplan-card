@@ -98,11 +98,16 @@
       "since": "1.78.0-beta.3",
       "audience": ["styling", "test"]
     },
+    "hidden-devices": {
+      "elements": ["button"],
+      "since": "1.82.0",
+      "audience": ["styling", "test"]
+    },
     "header-menu-item": {
       "elements": ["button"],
       "since": "1.78.0-beta.3",
       "audience": ["styling", "test"],
-      "attributes": { "data-id": ["mode-plan", "mode-devices", "mode-decor", "space-settings", "space-add", "settings", "pdf", "support", "summary-settings", "summary-toggle"] }
+      "attributes": { "data-id": ["mode-plan", "mode-devices", "mode-decor", "space-settings", "space-add", "settings", "pdf", "support", "hidden-devices", "summary-settings", "summary-toggle"] }
     },
     "header-menu-scrim": {
       "elements": ["div"],

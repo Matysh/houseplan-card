@@ -1,4 +1,5 @@
 {
+  "hidden_devices.show": "Show hidden devices",
   "view.runtime_failed": "Some plan features are unavailable. Try loading again or reload the page.",
   "view.runtime_retry": "Try again",
   "view.runtime_reload": "Reload page",
@@ -657,7 +658,7 @@
   "device_inbox.only_new": "New only",
   "device_inbox.show_entities": "Show entities",
   "device_inbox.show_hidden": "Show hidden on plan",
-  "device_inbox.show_hidden.help": "Temporarily shows hidden and disabled markers as editor-only ghosts on the plan. Saved device visibility does not change.",
+  "device_inbox.show_hidden.help": "Shows hidden devices normally in every mode. This browser remembers the choice; saved hidden flags stay unchanged. Home Assistant-disabled devices are not activated.",
   "device_inbox.show_hidden.help.aria": "Help: show hidden devices on the plan",
   "device_inbox.new": "New",
   "device_inbox.find": "Find on plan",

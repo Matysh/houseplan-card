@@ -1244,9 +1244,11 @@ and its other entities remain deleted. The complete device stays available in
   candidate names its integration in the catalog;
 - **Add virtual device** lives at the top of that catalog. Enable **Show
   entities** in **Available** to place an individual entity;
-- **Show hidden on plan** is a local catalog switch. It reveals user-hidden
-  and HA-disabled records as service ghosts only until you leave the Device
-  editor; it never changes the saved Hidden flag;
+- **Show hidden on plan** mirrors the header eye **Show hidden devices** (on
+  phones, in the gear menu after Help). Active hidden devices appear normally
+  in every mode, with ordinary effects, lights and controls. This browser
+  remembers the choice per user/card without changing the saved Hidden flag
+  or switching real lamps. HA-disabled devices remain editor-only service ghosts;
 - **Icon rules** edits the first-match regular-expression list.
 
 An automatically discovered marker is already **On plan** even before it has
@@ -1365,13 +1367,21 @@ attachments and a vacuum trail are deleted with the marker.
 
 ### Hidden devices
 
-A hidden marker:
+A hidden marker with the eye Off:
 
-- is absent from View and appears in Device only while **Show hidden on plan**
-  is enabled;
+- is absent from View and all editors;
 - has no state colour, value, temperature, humidity, LQI, Glow or light-source
   contribution;
 - may still contribute LQI and climate data to the explicitly assigned room.
+
+The header eye **Show hidden devices** temporarily reveals active hidden
+devices as ordinary devices in View and every editor. **Show hidden on plan**
+in the catalog controls the same choice; the Hidden category does not change.
+This browser remembers the choice separately for each HA user and card.
+Toggling never changes saved visibility, controls real devices or moves the
+camera; the next **Fit all** includes revealed devices. Kiosk adds no new
+button, and the independent static space card does not inherit the choice.
+Disabled, removed or unverified bindings never become ordinary active devices.
 
 Use **Devices → On plan**, row checkboxes or **Select all (N)** and **Hide
 selected** for a batch; reverse it under **Hidden → Show selected**. Disabled,

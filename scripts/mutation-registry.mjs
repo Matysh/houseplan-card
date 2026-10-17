@@ -130,6 +130,30 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'hidden-display-rewrites-saved-visibility',
+    guard: 'node demo/smoke_hidden_device_toggle.mjs',
+    because: '#919 AC5: a mounted native eye click must leave the current stored marker and wire config unchanged across Lit mode transitions; helper-only tests cannot prove this UI wiring.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: '    this._showHidden = shown;\n',
+      replace: '    this._showHidden = shown;\n    for (const marker of this._serverCfg?.markers || []) marker.hidden = false;\n' }],
+  },
+  {
+    id: 'hidden-display-resets-current-camera',
+    guard: 'node demo/smoke_hidden_device_toggle.mjs',
+    because: '#919 AC7: a native eye click after measured zoom must preserve the browser camera and visible marker boxes/screen size. Real camera animation and mounted DOM geometry require Chromium.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: '      this._view = view;\n      this._zoom = fitView(this._baseVb(), this._stageAspect()).w / view.w;',
+      replace: '      this._view = null;\n      this._zoom = 1;' }],
+  },
+  {
+    id: 'hidden-display-toggle-uses-hidden-source-roster',
+    guard: 'node demo/smoke_hidden_device_toggle.mjs',
+    because: '#919 AC2: the actual mounted revealed light must dispatch its ordinary HA action through the full-card handler and lazy runtime boundary; a resolver-only fixture cannot prove the consumer passes projected rows.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: '    devices: readonly DevItem[] = this._displayDevices,',
+      replace: '    devices: readonly DevItem[] = this._devices,' }],
+  },
+  {
     id: 'contact-wall-key-includes-decor',
     guard: 'node --test test/device-contact-card.test.mjs',
     because: '#935: a real decor-size input must leave the contact wall cache warm; architectural inputs and different model/current records must still invalidate it.',
@@ -664,7 +688,7 @@ const MUTANT_DEFINITIONS = [
     id: 'kiosk-marker-dispatch-trusts-old-floor',
     guard: 'node demo/smoke_kiosk_cycle_context.mjs',
     because: '#846 AC6: real toggle confirmation survives a server marker relocation; the captured DOM intent must refuse the new floor even with identical HA entity ids.',
-    patches: [{file:'src/houseplan-card.ts',find:'      if (current) return current;',replace:'      if (current || true) return actionDevice;'}],
+    patches: [{file:'src/houseplan-card.ts',find:'      if (current && !current.hidden) return current;',replace:'      if (current || true) return actionDevice;'}],
   },
   {
     id: 'kiosk-dialog-close-forgets-fresh-pause',
@@ -7398,7 +7422,7 @@ const MUTANT_DEFINITIONS = [
       file: 'src/houseplan-card.ts',
       find: '  public _toggleIntent(\n'
         + '    device: DevItem,\n'
-        + '    devices: readonly DevItem[] = this._devices,\n'
+        + '    devices: readonly DevItem[] = this._displayDevices,\n'
         + '  ): ResolvedToggleIntent | null {\n'
         + '    return resolveToggleIntent({\n'
         + '      hass: this._planHass,\n'
@@ -18445,7 +18469,7 @@ const MUTANT_DEFINITIONS = [
     because: '#780 r1 M4: a hidden marker or an HA-disabled device decides before import() — no LED chunk request in the browser network log',
     patches: [{
       file: 'src/led-strip-gate.ts',
-      find: "    && (!d.hidden || showHidden) && !hidden(d.id));",
+      find: "    && (!d.hidden || showHidden) && !hidden(d));",
       replace: ");",
     }],
   },
@@ -19185,7 +19209,7 @@ const MUTANT_DEFINITIONS = [
       + 'and presentations stay stale (smoke_vacuum: previous run and resting integration path lost)',
     patches: [{
       file: 'src/render-snapshot-reuse.ts',
-      find: '      JSON.stringify([host._devices, host._serverCfg?.settings]),\n',
+      find: '      JSON.stringify([devices, host._serverCfg?.settings]),\n',
       replace: '',
     }],
   },

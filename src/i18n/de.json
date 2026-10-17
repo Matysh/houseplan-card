@@ -1,4 +1,5 @@
 {
+  "hidden_devices.show": "Ausgeblendete Geräte anzeigen",
   "view.runtime_failed": "Einige Planfunktionen sind nicht verfügbar. Laden Sie sie erneut oder laden Sie die Seite neu.",
   "view.runtime_retry": "Erneut versuchen",
   "view.runtime_reload": "Seite neu laden",
@@ -657,7 +658,7 @@
   "device_inbox.only_new": "Nur neu",
   "device_inbox.show_entities": "Entitäten anzeigen",
   "device_inbox.show_hidden": "Versteckte auf Plan anzeigen",
-  "device_inbox.show_hidden.help": "Zeigt ausgeblendete und deaktivierte Marker vorübergehend als Bearbeitungs-Geister auf dem Plan. Die gespeicherte Sichtbarkeit der Geräte bleibt unverändert.",
+  "device_inbox.show_hidden.help": "Zeigt ausgeblendete Geräte in jedem Modus normal an. Dieser Browser merkt sich die Auswahl; gespeicherte Ausblendungen bleiben unverändert. In Home Assistant deaktivierte Geräte werden nicht aktiviert.",
   "device_inbox.show_hidden.help.aria": "Hilfe: ausgeblendete Geräte auf dem Plan anzeigen",
   "device_inbox.new": "Neu",
   "device_inbox.find": "Auf dem Plan finden",

@@ -83,7 +83,7 @@ const closeDialogs = async () => {
 const mode = () => page.evaluate(() => window.__card.shadowRoot.querySelector('ha-card[data-hp-mode]')?.getAttribute('data-hp-mode'));
 
 // ---- администратор (стенд) --------------------------------------------------
-const ADMIN_VIEW = ['mode-plan', 'mode-devices', 'mode-decor', 'space-settings', 'space-add', 'settings', 'pdf', 'support', 'summary-settings', 'summary-toggle'];
+const ADMIN_VIEW = ['mode-plan', 'mode-devices', 'mode-decor', 'space-settings', 'space-add', 'settings', 'pdf', 'support', 'hidden-devices', 'summary-settings', 'summary-toggle'];
 for (const width of [390, 320]) {
   await size(width);
   const h = await header();
@@ -94,6 +94,11 @@ for (const width of [390, 320]) {
   const m = await menuState();
   out[`admin${width}_menuItems`] = m.ids.join(',') === ADMIN_VIEW.join(',') ? true : m.ids.join(',');
   out[`admin${width}_menuTargets`] = m.items44 && m.inViewport && m.expanded === 'true';
+  const eyeBefore = m.pressed['hidden-devices'];
+  await clickAt('[data-hp="header-menu-item"][data-id="hidden-devices"]');
+  out[`admin${width}_eyeClosesMenu`] = !(await menuState()).open;
+  await openMenu();
+  out[`admin${width}_eyeFlips`] = (await menuState()).pressed['hidden-devices'] !== eyeBefore;
   await clickAt('[data-hp="header-menu"]');
   out[`admin${width}_gearToggles`] = !(await menuState()).open;
 }
@@ -249,7 +254,13 @@ for (const width of [390, 320]) {
   out[`household${width}_rowContent`] = !h.title && h.tabs && h.zoom && h.gear && !h.tabEditInDom;
   await openMenu();
   const m = await menuState();
-  out[`household${width}_menuItems`] = m.ids.join(',') === 'summary-settings,summary-toggle' ? true : m.ids.join(',');
+  out[`household${width}_menuItems`] = m.ids.join(',') === 'hidden-devices,summary-settings,summary-toggle' ? true : m.ids.join(',');
+  out[`household${width}_eyeOwnPreference`] = m.pressed['hidden-devices'] === 'false';
+  await clickAt('[data-hp="header-menu-item"][data-id="hidden-devices"]');
+  await openMenu();
+  out[`household${width}_eyeWorksWithoutWritePermission`] = (await menuState()).pressed['hidden-devices'] === 'true';
+  await clickAt('[data-hp="header-menu-item"][data-id="hidden-devices"]');
+  await openMenu();
   await page.keyboard.press('Escape');
   await settle();
 }

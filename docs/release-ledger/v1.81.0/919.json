@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 919,
+  "baseStable": "v1.81.0",
+  "category": "major",
+  "rationale": "A new full-card/panel display choice absent from v1.81.0: reveal user-hidden active devices as ordinary devices in every mode, without changing saved visibility. Not a fix for an intermediate release regression.",
+  "summary": {
+    "ru": "Показывайте скрытые устройства одним нажатием на глаз — с обычным светом, эффектами и управлением, без изменения сохранённых настроек.",
+    "en": "Reveal hidden devices with the header eye, keeping ordinary lighting, effects and controls without changing saved visibility."
+  }
+}

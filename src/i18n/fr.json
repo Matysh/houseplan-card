@@ -1,4 +1,5 @@
 {
+  "hidden_devices.show": "Afficher les appareils masqués",
   "view.runtime_failed": "Certaines fonctions du plan sont indisponibles. Réessayez de les charger ou rechargez la page.",
   "view.runtime_retry": "Réessayer",
   "view.runtime_reload": "Recharger la page",
@@ -657,7 +658,7 @@
   "device_inbox.only_new": "Nouveaux uniquement",
   "device_inbox.show_entities": "Afficher les entités",
   "device_inbox.show_hidden": "Afficher les masqués sur le plan",
-  "device_inbox.show_hidden.help": "Affiche temporairement les marqueurs masqués et désactivés sous forme de fantômes réservés à l’éditeur. La visibilité enregistrée des appareils ne change pas.",
+  "device_inbox.show_hidden.help": "Affiche normalement les appareils masqués dans tous les modes. Ce navigateur mémorise le choix ; les masquages enregistrés ne changent pas. Les appareils désactivés dans Home Assistant ne sont pas activés.",
   "device_inbox.show_hidden.help.aria": "Aide : afficher les appareils masqués sur le plan",
   "device_inbox.new": "Nouveau",
   "device_inbox.find": "Trouver sur le plan",

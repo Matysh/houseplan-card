@@ -36,6 +36,9 @@ export interface RenderSnapshotHost {
   _hassSequence: number;
   _cfgEpoch: number;
   _devices: readonly DevItem[];
+  /** Optional full-card display projection; the canonical roster stays untouched. */
+  _displayDevices?: readonly DevItem[];
+  _showHidden?: boolean;
   _layout: unknown;
   _settings: any; // any-ok: the installation settings record of the card
   _config: { live_states?: boolean; show_temperature?: boolean } | null | undefined;
@@ -67,7 +70,7 @@ export interface RenderSnapshotWindow {
 
 /** The live runtime's incremental capture (render-snapshot-reuse.ts). */
 export interface RenderSnapshotReuse {
-  begin(host: RenderSnapshotHost, lightSources: unknown): RenderSnapshotWindow;
+  begin(host: RenderSnapshotHost, lightSources: unknown, devices?: readonly DevItem[]): RenderSnapshotWindow;
   present(id: string, showLqi: boolean, build: () => ResolvedDevicePresentation): ResolvedDevicePresentation;
   end(snapshot: RenderDeviceSnapshot): void;
 }
@@ -78,7 +81,7 @@ export interface RenderSnapshotReuse {
  * disagree. `options` adds what differs: battery, light graph, registry.
  */
 export function presentDevice(
-  host: Pick<RenderSnapshotHost, '_config' | '_activityRt' | '_reducedMotion'>,
+  host: Pick<RenderSnapshotHost, '_config' | '_activityRt' | '_reducedMotion' | '_showHidden'>,
   hass: any, device: DevItem, showLqi: boolean, // any-ok: the card's HA projection
   options: Omit<ResolvePresentationOptions, 'liveStates' | 'showTemperature' | 'showSignal'>,
 ): ResolvedDevicePresentation {
@@ -92,6 +95,7 @@ export function presentDevice(
     activityRuntime: host._activityRt.get(device.id),
     sourceDetails: false,
     reducedMotion: host._reducedMotion,
+    showUserHidden: host._showHidden === true,
     ...options,
   });
 }
@@ -99,13 +103,14 @@ export function presentDevice(
 export function captureRenderDeviceSnapshot(
   host: RenderSnapshotHost, reuse?: RenderSnapshotReuse | null,
 ): RenderDeviceSnapshot {
+  const devices = host._displayDevices || host._devices;
   // One plan-wide graph/index per capture; reuse observes consumed source keys
   // separately from structural topology and recorded HA state rows.
   const planLightSources = resolvedLightSources(
-    host._planHass, host._devices, null, host._virtualLights,
+    host._planHass, devices, null, host._virtualLights,
   );
   const lightFrame = new PresentationLightFrame(planLightSources);
-  const window = reuse?.begin(host, lightFrame);
+  const window = reuse?.begin(host, lightFrame, devices);
   const planHass = window?.hass || host._planHass;
   const registryHass = window?.registry || host._fullRegistryHass;
   const presentations = new Map<string, ResolvedDevicePresentation>();
@@ -159,14 +164,14 @@ export function captureRenderDeviceSnapshot(
       ));
     }
   }
-  for (const device of host._devices) {
+  for (const device of devices) {
     for (const showLqi of [false, true]) {
       const build = (): ResolvedDevicePresentation => presentDevice(host, planHass, device, showLqi, {
         showBattery: showBattery && !ledMarkerIds.has(device.id),
         batteryLowOnly,
         batteryContext,
         signalContext,
-        lightDevices: host._devices,
+        lightDevices: devices,
         lightSources: planLightSources,
         lightFrame,
         registryHass,
@@ -193,10 +198,10 @@ export function captureRenderDeviceSnapshot(
   }
   const snapshot = createRenderDeviceSnapshot({
     sourceSequence: host._hassSequence, hass: planHass,
-    devices: host._devices, presentations,
+    devices, presentations,
     positions: renderDeviceSnapshotPositions(
       host._model.length > 0,
-      host._devices,
+      devices,
       (device) => host._livePos(device),
     ),
     facts,

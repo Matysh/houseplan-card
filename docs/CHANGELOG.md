@@ -7,6 +7,10 @@
   path and live tip use the same map camera; unrelated camera updates no
   longer interrupt that run. Diagnostics explain why stored points are hidden
   ([#918](https://github.com/Matysh/houseplan-card/issues/918)).
+- The header eye reveals hidden devices as ordinary devices, with their light,
+  effects and controls. This browser remembers the choice per user and card;
+  saved visibility and the current camera stay unchanged
+  ([#919](https://github.com/Matysh/houseplan-card/issues/919)).
 
 ## v1.82.0-beta.1 — 2026-10-17
 

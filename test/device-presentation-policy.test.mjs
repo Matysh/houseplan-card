@@ -24,6 +24,22 @@ const device = (overrides = {}) => ({
   ...overrides,
 });
 const options = { liveStates: true, showTemperature: true, showSignal: true, now: 2_000 };
+
+test('#919 full-card reveal restores ordinary live face, never an inactive lifecycle', () => {
+  const h = hass({ 'switch.main': state('switch.main', 'on') });
+  const shown = device(), hidden = device({ hidden: true, userHidden: true,
+    marker: { id: 'd1', binding: 'device:d1', hidden: true } });
+  const ordinary = resolveDevicePresentation(h, shown, options);
+  const revealed = resolveDevicePresentation(h, hidden, { ...options, showUserHidden: true });
+  assert.equal(revealed.userHidden, false);
+  assert.deepEqual(revealed.visual, ordinary.visual);
+  assert.deepEqual(revealed.classes, ordinary.classes);
+  assert.equal(resolveDevicePresentation(h, hidden, options).userHidden, true, 'static/default does not opt in');
+  for (const kind of ['ha_disabled', 'orphaned', 'unverified']) {
+    const protectedRow = resolveDevicePresentation(h, { ...hidden, bindingStatus: { kind } }, { ...options, showUserHidden: true });
+    assert.equal(protectedRow.userHidden, true);
+  }
+});
 const neutral = { availability: 'available', status: 'neutral', activity: 'none' };
 
 const basePolicy = (overrides = {}) => ({

@@ -14,6 +14,7 @@
  */
 import { ENTRY_BUILD_FINGERPRINT } from './editor-runtime-loader';
 import type { LedStripModel, SpaceModel } from './types';
+import { canRevealUserHidden, type HiddenDevice } from './hidden-device-visibility';
 
 type LedRuntime = typeof import('./led-strip-runtime');
 type LedEditorModule = typeof import('./led-strip-editor');
@@ -56,16 +57,18 @@ export function ledStripsByMarker(space: SpaceModel | null | undefined): Map<str
  */
 export function ledVisible(
   space: SpaceModel | null | undefined,
-  devices: readonly { id: string; space: string; hidden?: boolean; marker?: { hidden?: boolean } | null }[],
+  devices: readonly (HiddenDevice & { id: string; space: string })[],
   showHidden: boolean,
   markers?: readonly { id: string; hidden?: boolean }[],
 ): boolean {
   const leds = ledStripsByMarker(space);
   // The stored marker is checked too: the device list may still be the one
   // built before this config (a just-hidden marker must not load the chunk).
-  const hidden = (id: string) => !showHidden && !!markers?.some((m) => m.id === id && m.hidden === true);
+  const hidden = (d: HiddenDevice & { id: string }) => !showHidden
+    && !(d.hidden === false && canRevealUserHidden(d))
+    && !!markers?.some((m) => m.id === d.id && m.hidden === true);
   return leds.size > 0 && devices.some((d) => d.space === space?.id && leds.has(d.id)
-    && (!d.hidden || showHidden) && !hidden(d.id));
+    && (!d.hidden || showHidden) && !hidden(d));
 }
 
 /** The point at half the polyline length (ТЗ §5), in render units (`scale` = NORM_W). */

@@ -114,9 +114,20 @@ browser/golden — матрица батарей #792, `demo/smoke_device_batter
 | L01 | `marker.removed:true` | `pre.lifecycle.removed` | marker отсутствует в roster/DOM | отсутствует | `devices` tombstone test; `presentation-row-contract` |
 | L02 | HA-disabled, View/киоск/static | `lifecycle.ha_disabled_hidden` | face скрыт, live state не участвует | отсутствует на View | `device-presentation-policy-lifecycle`; `presentation-row-contract` |
 | L03 | HA-disabled, Device editor | `lifecycle.ha_disabled_hidden` | служебный ghost/preview с причиной `ha_disabled`, без live face | editor-owned, без service action | `device-presentation-policy-lifecycle`; `presentation-row-contract` |
-| L04 | user-hidden, View/киоск/static | `lifecycle.user_hidden` | marker и hit-area скрыты | отсутствует | `device-presentation-policy-user-hidden`; `presentation-row-contract` |
+| L04 | user-hidden, local eye Off; static always | `lifecycle.user_hidden` | marker и hit-area скрыты | отсутствует | `device-presentation-policy-user-hidden`; `presentation-row-contract` |
 | L05 | user-hidden, design preview | `lifecycle.user_hidden_preview` | сохранённый дизайн видим; notice `hidden_design_preview` | preview inert | `device-presentation-policy-user-hidden-preview`; `presentation-row-contract` |
 | L06 | orphaned binding | `lifecycle.orphaned_diagnostic` | нейтральная диагностическая проекция с причиной, pulse/service не оживают | surface-owned safe path | `device-presentation-policy-orphaned`; `presentation-row-contract` |
+
+#919: the full card/panel may reveal an **active** user-hidden row through its
+browser-local eye. `HiddenDeviceRoster` supplies a cached shallow display copy
+with `hidden:false`; the raw roster and `marker.hidden` remain unchanged.
+`showUserHidden` in `resolveDevicePresentation` permits that ordinary face only
+with positive active/virtual lifecycle authority. Disabled, removed, orphaned
+and unverified rows never inherit the override. Snapshot reuse keys include
+the display roster and choice; its live updates equal a complete capture.
+The static card never supplies this override. LED replacement, activity,
+contacts, light fill/Glow and actions consume the same display rows; room
+climate and LQI retain their existing registry-scoped single contributions.
 
 ## Источник лица и доступность
 

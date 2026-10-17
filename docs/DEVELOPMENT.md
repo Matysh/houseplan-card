@@ -22,6 +22,19 @@ No reporter export is shipped. Full HA coverage requires Linux/WSL; a native
 Windows pure-subset pass is not a Store/lifecycle result. Mutation definitions
 are registered and checked statically; execution remains a nightly responsibility.
 
+## Local hidden-device display (#919)
+
+`hidden-device-visibility` owns the per-user/card browser preference and one
+bounded display roster; saved marker and raw discovery rows are never changed.
+The default-off roster retains its original identity. Node tests cover positive
+lifecycle authority, immutable projection, identity/storage failure and complete
+versus incremental snapshots. `smoke_hidden_device_toggle` enters through native
+desktop/catalog/touch actions and checks reload isolation, no mutation writes,
+ordinary HA toggle/drag, lighting parity, explicit Fit and the static card.
+`smoke_mobile_view_header` includes read-only users and 320/390 px targets.
+Three golden scenes cover ordinary reveal, disabled service ghosts and 2.5D LED.
+Mutation witnesses are registered for nightly execution only (PROCESS §2.7).
+
 ## Device copying (#935)
 
 `test/device-copy.test.mjs` covers first-free numbering, effective appearance,

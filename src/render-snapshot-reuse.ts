@@ -41,6 +41,7 @@ import { presentationSnapshotKey, type RenderDeviceSnapshot } from './render-dev
 import type { RenderSnapshotHost, RenderSnapshotReuse, RenderSnapshotWindow } from './render-snapshot-capture';
 import type { ResolvedDevicePresentation } from './device-presentation';
 import { PresentationLightFrame } from './presentation-light-frame';
+import type { DevItem } from './types';
 
 /** A recorded iteration of the states map: the device depends on every row. */
 const EVERY_ROW = '\u0000*';
@@ -76,7 +77,7 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
   private raw: Readonly<Record<string, unknown>> = {};
   private open = false;
 
-  public begin(host: RenderSnapshotHost, lightSources: unknown): RenderSnapshotWindow {
+  public begin(host: RenderSnapshotHost, lightSources: unknown, devices: readonly DevItem[] = host._devices): RenderSnapshotWindow {
     if (this.open) this.reset();
     this.open = true;
     this.fresh.clear();
@@ -84,17 +85,17 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
     const hass = host._planHass, registry = host._fullRegistryHass;
     const now = Date.now();
     const sources: unknown[] = [
-      hass?.entities, hass?.devices, registry?.entities, registry?.devices, host._devices, host._layout,
+      hass?.entities, hass?.devices, registry?.entities, registry?.devices, devices, host._layout,
       host._cfgEpoch, host._serverCfg, host._serverCfg?.settings, host._model, host._vacFit?.source,
       [...host._summary?.entityIds() || []].join('\n'),
       // The card's own records keep their identity through an edit in place
       // (a marker's `vacuum.trail_mode` with no epoch, the stored settings); a
       // complete capture read them anew, so their content is a source too
       // (fail-open, ТЗ п.2). The card config's content is a presentation input.
-      JSON.stringify([host._devices, host._serverCfg?.settings]),
+      JSON.stringify([devices, host._serverCfg?.settings]),
     ];
     const inputs: unknown[] = [host._config, JSON.stringify(host._config), host._virtualLights, frame?.topology,
-      host._reducedMotion];
+      host._reducedMotion, host._showHidden === true];
     for (const name of Object.keys(host.hass || {}).sort()) if (name !== 'states') inputs.push(name, host.hass[name]);
     for (const [id, runtime] of host._activityRt) {
       const expires = runtime.expiresAt || runtime.flashTs + ACTIVITY_WINDOW_MS;
@@ -117,7 +118,7 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
       this.previous = null;
       this.memo = new WeakMap();
     } else if (!reusable) {
-      this.memo = this.lend(host);
+      this.memo = this.lend(host, devices);
     }
     // The raw HA rows: the active projection holds the same row objects or,
     // for a registry-disabled entity (a source-key change), none.
@@ -195,14 +196,14 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
    * DevItems, of every state row HA did not replace (camera rows are rewritten
    * copies, never lent) and of the registry device rows stay valid and are lent.
    */
-  private lend(host: RenderSnapshotHost): WeakMap<object, unknown> {
+  private lend(host: RenderSnapshotHost, devices: readonly DevItem[]): WeakMap<object, unknown> {
     const memo = new WeakMap<object, unknown>();
     const previous = this.previous!;
     const pair = (source: unknown, clone: unknown): void => {
       if (source && typeof source === 'object' && clone) memo.set(source, clone);
     };
-    pair(host._devices, previous.devices);
-    host._devices.forEach((device, index) => pair(device, previous.devices[index]));
+    pair(devices, previous.devices);
+    devices.forEach((device, index) => pair(device, previous.devices[index]));
     for (const [id, row] of Object.entries(previous.hass.states)) if (!id.startsWith('camera.')) pair(this.raw[id], row);
     for (const [id, row] of Object.entries(previous.hass.devices)) pair(host._planHass?.devices?.[id], row);
     return memo;

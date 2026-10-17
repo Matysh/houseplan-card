@@ -78,7 +78,7 @@ test('issue 381 consumes an explicit no-op before any action side effect', () =>
     card.indexOf('private _showUnavailableToggleTargets('),
   );
   const stop = click.indexOf('ev.stopPropagation();');
-  const live = click.indexOf('const actionDevice = this._devices.find');
+  const live = click.indexOf('const actionDevice = this._displayDevices.find');
   const projection = click.indexOf('const action = projectedTapAction(');
   const noOp = click.indexOf("if (action === 'none') return;");
   const guard = click.indexOf('const guarded =');

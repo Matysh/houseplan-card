@@ -2,6 +2,22 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { visibleIconMarkers, positionableIconMarkers } from '../test-build/device-icon-roster.js';
 import { spacingMarkers } from '../test-build/device-spacing.js';
+import { HiddenDeviceRoster } from '../test-build/hidden-device-visibility.js';
+
+test('#919 visible revealed icons enter contacts/spacing, while Off, disabled and LED stay out', () => {
+  const rows = ['moving', 'anchor', 'led', 'disabled'].map(id => ({ id, space: 'f',
+    hidden: id !== 'moving', userHidden: id !== 'moving', marker: { hidden: id !== 'moving' },
+    bindingStatus: { kind: id === 'disabled' ? 'ha_disabled' : 'active' } }));
+  const roster = new HiddenDeviceRoster(), leds = new Set(['led']);
+  const ids = devices => positionableIconMarkers(devices, 'f', leds, 'moving').map(d => d.id);
+  assert.deepEqual(ids(roster.read(rows, false)), []);
+  assert.deepEqual(ids(roster.read(rows, true)), ['anchor']);
+  const references = [];
+  spacingMarkers(roster.read(rows, true), rows[0], leds, d => { references.push(d.id); return { x: 0, y: 0 }; });
+  assert.deepEqual(references, ['anchor']);
+  assert.deepEqual(ids(roster.read(rows, false)), [], 'Off leaves no invisible anchor');
+  assert.equal(rows[1].hidden, true);
+});
 
 test('#893 references are painted, positionable icons, not hidden/service/LED/tombstone entries', () => {
   const devices = [

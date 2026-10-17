@@ -13,6 +13,7 @@ import { captureHost, oracleFixture, prng } from './render-snapshot-fixture.mjs'
 import { captureRenderDeviceSnapshot } from '../test-build/render-snapshot-capture.js';
 import { RenderSnapshotReuseWindow } from '../test-build/render-snapshot-reuse.js';
 import { presentationSnapshotKey } from '../test-build/render-device-snapshot.js';
+import { HiddenDeviceRoster } from '../test-build/hidden-device-visibility.js';
 
 /** A comparable projection of a snapshot: maps become entry lists, the capture time is dropped. */
 const plain = (snapshot) => ({
@@ -25,6 +26,36 @@ const plain = (snapshot) => ({
   facts: [...snapshot.facts],
   entityIds: snapshot.entityIds,
   geometry: snapshot.geometry,
+});
+
+test('#919 local reveal invalidates reuse, preserves raw intent and follows live updates like a complete capture', () => {
+  const fixture = oracleFixture();
+  const id = 'perf-device-0';
+  fixture.config.settings.filter_seeded = true;
+  fixture.config.markers = fixture.config.markers.filter(marker => marker.id !== id);
+  fixture.config.markers.push({ id, binding: `device:${id}`, hidden: true, is_light: true });
+  const host = captureHost(fixture), roster = new HiddenDeviceRoster();
+  Object.defineProperty(host, '_displayDevices', { get() { return roster.read(this._devices, this._showHidden, this._cfgEpoch); } });
+  const reuse = new RenderSnapshotReuseWindow(), key = presentationSnapshotKey(id, true);
+  const raw = host._devices.find(device => device.id === id);
+  assert.equal(raw.hidden, true);
+  for (const shown of [false, true, false, true]) {
+    host._showHidden = shown;
+    const snapshot = captureRenderDeviceSnapshot(host, reuse);
+    assert.deepEqual(plain(snapshot), plain(captureRenderDeviceSnapshot(host, null)));
+    assert.equal(snapshot.presentations.get(key).userHidden, !shown);
+    assert.equal(snapshot.devices.find(device => device.id === id).hidden, !shown);
+    assert.equal(raw.hidden, true); assert.equal(raw.marker.hidden, true);
+    assertDeepFrozen(snapshot);
+    for (const state of ['unavailable', 'off', 'on']) {
+      const eid = 'light.perf_0';
+      host.hass = { ...host.hass, states: { ...host.hass.states, [eid]: { ...host.hass.states[eid], state } } };
+      host._hassSequence++;
+      const live = captureRenderDeviceSnapshot(host, reuse);
+      assert.deepEqual(plain(live), plain(captureRenderDeviceSnapshot(host, null)), `shown=${shown}, state=${state}`);
+      if (shown) assert.equal(live.presentations.get(key).visual.availability, state === 'unavailable' ? 'unavailable' : 'available');
+    }
+  }
 });
 
 const assertDeepFrozen = (value, path = 'snapshot', seen = new Set()) => {

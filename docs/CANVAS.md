@@ -150,6 +150,11 @@ tested. Input is a list of **items**, one per drawn/placed object:
   it simply is not an item here. Ghosts in the device editor are not items
   either — reaching them is §5's job, not the opening view's.
 
+The full card's local eye (#919) reveals active user-hidden devices as ordinary
+content. Fit/outliers then include them, while toggling the eye preserves the
+current camera and screen icon sizes. Inside an editor the frame still only
+grows. Disabled service ghosts and the independent static card are unchanged.
+
 Output:
 
 ```ts

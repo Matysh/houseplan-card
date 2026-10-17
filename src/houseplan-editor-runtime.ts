@@ -749,6 +749,7 @@ export interface HouseplanEditorHostPort {
   _supportDialog: SupportDialogState | null;
   _showAll: boolean;
   _showHidden: boolean;
+  _setShowHidden: (shown: boolean) => void;
   _showToast: (msg: string) => void;
   _signer: ContentSigner;
   _space: string;
@@ -1182,7 +1183,6 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
     this.host._mode = mode;
     if (previousMode === 'plan' && mode !== 'plan') this.roomGear.reset();
     if (previousMode === 'devices' && mode !== 'devices') {
-      this.host._showHidden = false;
       this.host._deviceInbox = null;
       this.host._deviceInboxReturn = null;
       this.host._deviceInboxMemo = null;
@@ -11353,9 +11353,9 @@ public _renderDeviceInbox(): TemplateResult {
             <label>
               <input type="checkbox" .checked=${this.host._showAll}
                 @change=${(event: Event) => {
-                  this.host._showHidden = (event.target as HTMLInputElement).checked;
-                  this.host._deviceInboxMemo = null;
-                  this.host.requestUpdate();
+                  const input = event.target as HTMLInputElement;
+                  this.host._setShowHidden(input.checked);
+                  input.checked = this.host._showAll;
                 }} />${this.host._t('device_inbox.show_hidden')}
             </label>
             ${this._help('device_inbox.show_hidden.help')}

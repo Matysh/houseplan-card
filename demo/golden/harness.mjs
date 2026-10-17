@@ -880,6 +880,8 @@ export function prepareGoldenFixture(scenario) {
       ...structuredClone(scenario.markerOverrides),
     ];
   }
+  if (scenario.revealHiddenDevices) fixture.config.settings.filter_seeded = true;
+  if (scenario.hiddenDisabledDevice) fixture.devices[scenario.hiddenDisabledDevice].disabled_by = 'user';
   if (scenario.markerAreaSnapshot) {
     fixture.config.settings = {
       ...(fixture.config.settings || {}),
@@ -2519,6 +2521,26 @@ export async function prepareGoldenScenario(page, scenario) {
   }
   if (scenario.batteryBoard) result.batteryBoard = await prepareBatteryBoard(page, scenario);
   if (scenario.deviceContacts) result.deviceContacts = await prepareDeviceContacts(page);
+  if (scenario.revealHiddenDevices) {
+    // #919 enters through the same native header action as the user. No
+    // private visibility writes: a missing/wrong face fails before capture.
+    await page.waitForFunction(() => !window.__goldenCard._modeTransitionBusy && !window.__goldenCard._cameraTransition.active);
+    await page.locator('houseplan-card').locator('[data-hp="hidden-devices"]').click();
+    await page.waitForFunction((ids) => {
+      const card = window.__goldenCard;
+      return ids.every(id => {
+        const face = card.renderRoot.querySelector(`.dev[data-id="${id}"]`);
+        const saved = card._serverCfg.markers.find(marker => marker.id === id);
+        return face && !face.classList.contains('ghost') && saved?.hidden === true;
+      });
+    }, scenario.revealHiddenDevices);
+    if (scenario.hiddenDisabledDevice) await page.waitForFunction(id =>
+      !!window.__goldenCard.renderRoot.querySelector(`.dev.ha-disabled.ghost[data-id="${id}"]`), scenario.hiddenDisabledDevice);
+    if (scenario.revealHiddenLedMarker) await page.waitForFunction(id =>
+      !!window.__goldenCard.renderRoot.querySelector(`[data-led-strip][data-marker="${id}"]`)
+        && !window.__goldenCard.renderRoot.querySelector(`.dev[data-id="${id}"]`), scenario.revealHiddenLedMarker);
+    await page.mouse.move(0, 0);
+  }
   if (scenario.batteryZigbeeOverlap) result.batteryZigbeeOverlap = await prepareBatteryZigbeeOverlap(page);
   return result;
 }

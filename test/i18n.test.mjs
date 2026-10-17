@@ -377,8 +377,8 @@ test('issue 86 Party 1 has the exact help inventory and canonical RU/EN copy', (
       'Пунктирные стены нулевой толщины пропускают Glow и солнечные лучи, сплошные блокируют их как барьер нулевой площади. Выбор меняет все такие стены пространства, даже когда их линии скрыты в просмотре.',
     ],
     'device_inbox.show_hidden.help': [
-      'Temporarily shows hidden and disabled markers as editor-only ghosts on the plan. Saved device visibility does not change.',
-      'Временно показывает на плане скрытые и деактивированные маркеры служебными призраками только в редакторе устройств. Сохранённая видимость устройств не меняется.',
+      'Shows hidden devices normally in every mode. This browser remembers the choice; saved hidden flags stay unchanged. Home Assistant-disabled devices are not activated.',
+      'Показывает скрытые устройства как обычные во всех режимах. Выбор запоминается в этом браузере; сохранённый флаг скрытия не меняется. Деактивированные в Home Assistant устройства не включаются.',
     ],
   };
   const calls = [...helpSource.matchAll(/this\._help\('([^']+\.help)'\)/g)]

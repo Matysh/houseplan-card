@@ -1,6 +1,6 @@
 // docs/FILTERING.md: скрытие — явная галка. Конфиг материализуется сеятелем
 // (filter_seeded), галка в диалоге у всех устройств, «Показать скрытые» —
-// локальный режим редактора, скрытые рисуются призраками и только там.
+// локальный показ (#919), скрытые активные устройства рисуются как обычные.
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const out = {};
@@ -37,23 +37,20 @@ Object.assign(out, await page.evaluate(async () => {
   o.countExcludesHidden = c._devices.filter((x) => x.space === 'f1' && !x.hidden).length
     === c._devices.filter((x) => x.space === 'f1').length - 1;
 
-  // Ghost-режим теперь включается из единого каталога. В View каталога нет,
-  // а призраки по-прежнему существуют только в Device editor.
+  // Catalogue and header expose the same local display choice (#919).
   o.noGhostsInView = !sr().querySelector('.dev.ghost');
-  c._setMode('devices'); c._openDeviceInbox(); await c.updateComplete;
+  await window.__hpTest.setMode('devices');
+  while (c._modeTransitionBusy || c._cameraTransition.active) await new Promise(resolve => requestAnimationFrame(resolve));
+  c._openDeviceInbox(); await c.updateComplete;
   const ghostToggle = [...sr().querySelectorAll('.device-inbox-filters input[type="checkbox"]')].at(-1);
   o.ghostToggleMovedIntoCatalog = !!ghostToggle;
   ghostToggle?.click(); await c.updateComplete;
   c._deviceInbox = null; await c.updateComplete;
-  o.ghostInEditor = !!sr().querySelector('.dev.ghost');
-  // призрак — конфигурация, не статус: ни жёлтого, ни unavail, ни тревоги
-  const g = sr().querySelector('.dev.ghost');
-  o.ghostHasNoState = !!g && !g.classList.contains('on') && !g.classList.contains('open')
-    && !g.classList.contains('unavail') && !g.classList.contains('alarm');
-  // и он синий, а не тёмный — отличим от недоступного устройства
+  const g = sr().querySelector(`.dev[data-id="${d.id}"]`);
+  o.revealedInEditor = !!g && !g.classList.contains('ghost');
+  o.revealedKeepsIcon = !!g?.querySelector('ha-icon');
   const ghostShell = g?.querySelector('.device-shell-frame');
-  o.ghostIsBlue = !!ghostShell && getComputedStyle(ghostShell).borderStyle.includes('dashed')
-    && getComputedStyle(ghostShell).borderColor !== 'rgb(255, 255, 255)';
+  o.revealedHasOrdinaryBorder = !!ghostShell && !getComputedStyle(ghostShell).borderStyle.includes('dashed');
   // тумблер локальный: конфиг не трогается
   o.toggleIsLocal = c._serverCfg.settings.show_all === undefined;
 
@@ -118,7 +115,7 @@ Object.assign(out, await page.evaluate(async () => {
   return o;
 }));
 
-// --- HP-1510-02: призрак не показывает live-значения ----------------------
+// --- Revealed scalar source keeps its live value --------------------------
 Object.assign(out, await page.evaluate(async () => {
   const o = {};
   const c = window.__card;
@@ -133,19 +130,14 @@ Object.assign(out, await page.evaluate(async () => {
   c._maybeRebuildDevices();
   c._setMode('devices'); c._showHidden = true;
   c.requestUpdate(); await c.updateComplete;
-  const ghosts = [...sr().querySelectorAll('.dev.ghost')];
-  const pm = ghosts.find((g) => g.textContent.includes('42')) || null;
-  o.ghostHidesValue = pm === null; // «42 kW» не отрисован
-  o.ghostNoLiveBadges = ghosts.every((g) =>
-    !g.querySelector('.valtext') && !g.querySelector('.tval') && !g.querySelector('.hval') && !g.querySelector('.lqi'));
-  // у КАЖДОГО призрака есть базовая иконка — «noicon» не оправдание
-  // (HP-1511-02: ripple-призрак был безликим пульсом)
-  o.ghostKeepsIcon = ghosts.every((g) => !!g.querySelector('ha-icon') && !g.classList.contains('noicon'));
+  const scalar = sr().querySelector('.dev[data-id="pm"]');
+  o.revealedScalarIsOrdinary = !!scalar && !scalar.classList.contains('ghost');
+  o.revealedScalarShowsValue = !!scalar && scalar.textContent.includes('42');
   c._setMode('view'); c._showHidden = false;
   return o;
 }));
 
-// --- Legacy ripple → icon+activity; ghost keeps icon and has no effect -----
+// --- Legacy ripple → icon+activity; revealed face uses ordinary presentation
 Object.assign(out, await page.evaluate(async () => {
   const o = {};
   const c = window.__card;
@@ -159,10 +151,10 @@ Object.assign(out, await page.evaluate(async () => {
   c._maybeRebuildDevices();
   c._setMode('devices'); c._showHidden = true;
   c.requestUpdate(); await c.updateComplete;
-  const ghosts = [...sr().querySelectorAll('.dev.ghost')];
-  o.rippleGhostHasIcon = ghosts.length > 0 && ghosts.every((x) => !!x.querySelector('ha-icon'));
-  o.rippleGhostNoNoicon = ghosts.every((x) => !x.classList.contains('noicon'));
-  o.rippleGhostNoRipple = ghosts.every((x) => !x.querySelector('.device-pulse'));
+  const face = sr().querySelector(`.dev[data-id="${lamp.id}"]`);
+  o.rippleRevealHasIcon = !!face?.querySelector('ha-icon');
+  o.rippleRevealNotGhost = !!face && !face.classList.contains('ghost');
+  o.rippleRevealNotNoicon = !!face && !face.classList.contains('noicon');
   c._serverCfg.markers = c._serverCfg.markers.filter((m) => m.id !== lamp.id);
   c._cfgEpoch++; c._regSignature = ''; c._maybeRebuildDevices();
   c._setMode('view'); c._showHidden = false;

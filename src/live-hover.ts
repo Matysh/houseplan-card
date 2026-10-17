@@ -87,7 +87,7 @@ const deviceTipContent = (
   const presentation = host._devicePresentation(device, showLqi);
   const ghostLabel = presentation.haDisabled
     ? host._t((`marker.ha_disabled_${presentation.disabledReason}`) as I18nKey)
-    : device.userHidden ? host._t('marker.hidden_ghost') : device.name;
+    : device.hidden && device.userHidden ? host._t('marker.hidden_ghost') : device.name;
   const metrics = [
     device.model,
     presentation.valueBadge?.fullText || '',

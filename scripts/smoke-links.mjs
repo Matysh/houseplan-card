@@ -30,6 +30,11 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['HiddenDeviceRoster', 'HiddenDevicePreference', 'hiddenDevicePreferenceKey', 'canRevealUserHidden', '_setShowHidden'],
+    smokes: ['smoke_hidden_device_toggle.mjs'],
+    because: '#919: native header/catalog actions prove ordinary reveal, no config writes, lifecycle safety and isolated reloadable preferences.',
+  },
+  {
     symbols: ['DeviceCopyEditor', 'virtualDeviceCopy', 'deviceCopyIncoming', 'deviceCopyPosition'],
     smokes: ['smoke_device_copy.mjs'],
     because: '#935: native context-menu action, saved pair and cold reader cover the copy command without naming its internal helpers.',

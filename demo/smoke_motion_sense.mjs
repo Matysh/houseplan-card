@@ -6,7 +6,7 @@
 // висит в on (это cool-down датчика, а не движение). Новый цикл off→on —
 // новая вспышка. Датчики ПРИСУТСТВИЯ (occupancy/presence) при on несут
 // activity-presence — статичное кольцо без анимации (opacity 0.4). Жёлтая
-// заливка .dev.on в обоих случаях не участвует; ghost — без кольца
+// заливка .dev.on в обоих случаях не участвует; локальный показ сохраняет кольцо
 // (призрак — конфигурация, не статус).
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
@@ -141,7 +141,7 @@ const res = await page.evaluate(async () => {
   delete liveMarker.controls;
   c._regSignature = ''; c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
 
-  // --- ghost не рисует ничего (призрак — конфигурация, не статус) ---------
+  // --- #919 revealed active marker keeps its normal live activity --------
   await setMotion('off', 'motion');
   await setMotion('on', 'motion');
   const d = c._devices.find((x) => x.entities.includes('binary_sensor.hall_motion'));
@@ -152,9 +152,13 @@ const res = await page.evaluate(async () => {
   c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
   out.hiddenNotInView = sr().querySelectorAll('.dev.activity-event, .dev.activity-presence').length === 0;
   c._showHidden = true; c._setMode('devices'); c.requestUpdate(); await c.updateComplete;
-  const ghost = sr().querySelector('.dev.ghost');
-  out.ghostNoSense = !!ghost && !ghost.classList.contains('activity-event') && !ghost.classList.contains('activity-presence')
-    && !ghost.querySelector('.device-pulse');
+  // An event that happened while hidden need not be replayed. A fresh live
+  // update after reveal must have exactly the same pulse as an ordinary row.
+  await setMotion('off', 'motion');
+  await setMotion('on', 'motion');
+  const face = sr().querySelector(`.dev[data-id="${d.id}"]`);
+  out.revealedActivityIsOrdinary = !!face && !face.classList.contains('ghost')
+    && face.classList.contains('activity-event') && !!face.querySelector('.device-pulse');
   return out;
 });
 checkAll(res, {});

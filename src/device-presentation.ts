@@ -23,6 +23,7 @@ import {
 import { resolveToggleIntent, toggleCoverEntity } from './device-toggle';
 import type { DevItem } from './types';
 import { safeStoredColor } from './color';
+import { canRevealUserHidden } from './hidden-device-visibility';
 import {
   createDeviceBatteryContext, resolveDeviceBattery,
   type DeviceBatteryContext, type ResolvedDeviceBattery,
@@ -149,6 +150,8 @@ export interface ResolvePresentationOptions {
   signalContext?: DeviceSignalContext;
   /** User-hidden markers show their real design inside the editor preview. */
   designPreview?: boolean;
+  /** Full-card local reveal; lifecycle authority is still checked independently. */
+  showUserHidden?: boolean;
   activityRuntime?: PresentationActivityRuntime | null;
   /** The preview needs real source facts even for a static face. Plan surfaces
    * may skip that work because the static projection cannot consume it. */
@@ -726,7 +729,8 @@ export function resolveDevicePresentation(
   const orphaned = status?.kind === 'orphaned';
   const lifecycle: BindingPresentationLifecycle = haDisabled ? 'ha_disabled'
     : orphaned ? 'orphaned' : 'active';
-  const userHidden = d.userHidden === true || d.marker?.hidden === true;
+  const userHidden = (d.userHidden === true || d.marker?.hidden === true)
+    && !(options.showUserHidden && canRevealUserHidden(d));
   const combined = combineVisualSamples(sources.samples);
   const lockSource = sources.visualSources.find((source) => source.eid.startsWith('lock.'));
   const lockState: DeviceLockState = lockSource

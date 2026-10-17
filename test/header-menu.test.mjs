@@ -62,3 +62,25 @@ test('#616 подписи — существующие ключи интерфе
     '«title.general_settings»', '«title.export_pdf»', '«support.title»',
   ]);
 });
+
+test('#919 reveal is local presentation available in every full-card mode and to read-only users', () => {
+  for (const mode of ['view', 'plan', 'devices', 'decor']) {
+    for (const canEdit of [true, false]) {
+      let runs = 0;
+      const supplied = { ...actions, toggleHidden: () => runs++ };
+      const items = headerMenuItems(input({ mode, canEdit, showHidden: true, actions: supplied }));
+      const eye = items.find(item => item.id === 'hidden-devices');
+      assert.ok(eye);
+      assert.equal(eye.pressed, true);
+      assert.equal(eye.icon, 'mdi:eye-outline');
+      assert.equal(eye.label, '«hidden_devices.show»');
+      if (canEdit) assert.equal(items[items.indexOf(eye) - 1].id, 'support');
+      if (mode === 'view') assert.equal(items[items.indexOf(eye) + 1].id, 'summary-settings');
+      eye.run(); assert.equal(runs, 1);
+    }
+  }
+  const actionsWithEye = { ...actions, toggleHidden() {} };
+  assert.equal(headerMenuItems(input({ showHidden: false, actions: actionsWithEye }))
+    .find(item => item.id === 'hidden-devices').icon, 'mdi:eye-off-outline');
+  assert.deepEqual(headerMenuItems(input({ kiosk: true, actions: actionsWithEye })), []);
+});

@@ -2,7 +2,8 @@
 // §13.1, §13.2; AC2, AC7, AC9, AC11, AC17 unit parts).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ledAnchor, ledStripsByMarker } from '../test-build/led-strip-gate.js';
+import { ledAnchor, ledStripsByMarker, ledVisible } from '../test-build/led-strip-gate.js';
+import { HiddenDeviceRoster } from '../test-build/hidden-device-visibility.js';
 import { faceContext, ledFrame, ledStripView, stripRoom } from '../test-build/led-strip-runtime.js';
 import { LED_FIELD_BANDS, LedFieldCache, buildFieldGeometry, falloffAt } from '../test-build/led-strip-field.js';
 import { GLOW_FALLOFF } from '../test-build/glow-scene.js';
@@ -66,6 +67,20 @@ test('#784: the continuous field has enough bands to avoid visible gradient step
 
 const device = (extra = {}) => ({ id: 'm1', name: 'Kitchen LED', primary: 'light.led', space: 's', ...extra });
 const strip = { id: 'a', points: [[0, 0], [1, 0]], marker: 'm1' };
+
+test('#919 revealed LED crosses the lazy gate as an ordinary row, without bypassing lifecycle or recent hide', () => {
+  const owner = device({ hidden: true, userHidden: true, marker: { id: 'm1', hidden: true }, bindingStatus: { kind: 'active' } });
+  const s = space([strip]), roster = new HiddenDeviceRoster(), markers = [owner.marker];
+  assert.equal(ledVisible(s, roster.read([owner], false), false, markers), false);
+  const shown = roster.read([owner], true);
+  assert.equal(ledVisible(s, shown, false, markers), true);
+  assert.equal(ledVisible(s, [{ ...owner, hidden: false, userHidden: false, marker: { id: 'm1' } }], false, markers), false,
+    'an old ordinary roster cannot bypass a newer saved hide');
+  for (const kind of ['ha_disabled', 'orphaned', 'unverified']) {
+    assert.equal(ledVisible(s, roster.read([{ ...owner, bindingStatus: { kind } }], true), false, markers), false);
+  }
+  assert.equal(owner.marker.hidden, true);
+});
 
 test('#784/AC7: states — off white, on, unavailable without a field; radius 30 cm or the own one', () => {
   const base = { strip, defaultRadius: 6, cellCm: 5, gridPitch: 1, glow: true };

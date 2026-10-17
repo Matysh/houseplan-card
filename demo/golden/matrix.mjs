@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 75;
+export const GOLDEN_MATRIX_VERSION = 76;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -721,6 +721,24 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'device-inbox-desktop-en-light', fixture: 'visual', space: 'golden-lighting',
     dialog: 'device-inbox', language: 'en', theme: 'light',
     viewport: { width: 1180, height: 900 }, ...page },
+  ...[
+    ['hidden-devices-view-light', 'view', 'light', 'flat'],
+    ['hidden-devices-editor-dark', 'devices', 'dark', 'flat'],
+  ].map(([id, mode, theme, projection]) => ({ id, fixture: 'visual', space: 'golden-lighting',
+    mode, theme, projection, revealHiddenDevices: ['golden-light-one', 'golden-climate'],
+    ...(mode === 'devices' ? { hiddenDisabledDevice: 'golden-light-two' } : {}),
+    markerOverrides: [
+      { id: 'golden-light-one', binding: 'device:golden-light-one', hidden: true },
+      { id: 'golden-climate', binding: 'device:golden-climate', hidden: true },
+    ], language: 'ru', viewport: { width: 1180, height: 900 }, ...stage })),
+  { id: 'hidden-devices-iso-dark', fixture: 'visual', ledStrips: true, space: 'golden-led',
+    mode: 'view', theme: 'dark', projection: 'iso', revealHiddenDevices: ['golden-climate'],
+    revealHiddenLedMarker: 'demo-led-strip-loop',
+    markerOverrides: [
+      { id: 'demo-led-strip-loop', binding: 'device:demo-led-strip-loop', space: 'golden-led', hidden: true },
+      { id: 'golden-climate', binding: 'device:golden-climate', space: 'golden-led', area: 'golden_led_studio', hidden: true },
+    ], layoutOverrides: { 'golden-climate': { s: 'golden-led', x: .33, y: .35 } },
+    language: 'ru', viewport: { width: 1180, height: 900 }, ...stage },
   { id: 'device-inbox-desktop-ru-dark', fixture: 'visual', space: 'golden-lighting',
     dialog: 'device-inbox', language: 'ru', theme: 'dark',
     viewport: { width: 1180, height: 900 }, ...page },

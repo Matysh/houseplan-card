@@ -332,7 +332,8 @@ import {
   reorderSpaceIds,
 } from './space-order';
 import { ViewRuntimes, type ViewRuntimeHost } from './view-runtimes';
-import { HeaderMenu, headerMenuItems, renderHeaderActions } from './header-menu';
+import { HeaderMenu, headerMenuItems, renderHeaderActions, renderHiddenDevicesToggle } from './header-menu';
+import { HiddenDevicePreference, HiddenDeviceRoster, hiddenDevicePreferenceKey, hiddenDeviceStorage } from './hidden-device-visibility';
 import { isoWallMaterialVars, parseCssColor } from './iso-materials'; import { IsoFirstFrameState, isoPaperContext } from './iso-first-frame';
 import { renderIsoTileShadow } from './iso-tiles';
 import { displayVersion } from './card-version';
@@ -2299,7 +2300,7 @@ export class HouseplanCard extends LitElement {
   private _candidateDeviceSnapshot: RenderDeviceSnapshot | null = null;
   private _stagedToken = -1;
   private _capturedSeq = -1;
-  private _capturedSnapshotDevices: DevItem[] | null = null;
+  private _capturedSnapshotDevices: readonly DevItem[] | null = null;
   private _capturedSnapshotLayout: Record<string, { x: number; y: number; s?: string; k?: number }> | null = null;
   private _capturedSnapshotActivity = '';
   private _capturedSnapshotConfigEpoch = -1;
@@ -3494,7 +3495,7 @@ export class HouseplanCard extends LitElement {
     this._projectionShown = projection;
     this._tool = normalizeMarkupTool(vp.tool);
     this._decorTool = vp.decorTool;
-    this._showHidden = vp.showHidden;
+    // Local display preference owns hidden visibility, not a stale warm viewport.
     if (this._showFar !== vp.showFar) { this._showFar = vp.showFar; this._frame = null; }
     this._selId = vp.selId;
     this._resize?.restoreSelection(vp.rszSel);
@@ -4105,14 +4106,34 @@ export class HouseplanCard extends LitElement {
     return this._serverCfg?.settings || {};
   }
 
-  /** LOCAL editor tool (docs/FILTERING.md): show the hidden devices ghosted.
-   *  The old toggle wrote settings.show_all — shared state that flipped the
-   *  plan for every wall tablet at once. Legacy configs still honour it
-   *  through buildDevices until they are seeded. */
+  /** Local display intent, independent of saved visibility and HA lifecycle. */
   private _showHidden = false;
+  private readonly _hiddenDevicePreference = new HiddenDevicePreference();
+  private readonly _hiddenDeviceRoster = new HiddenDeviceRoster<DevItem>();
+  private get _displayDevices(): readonly DevItem[] {
+    return this._hiddenDeviceRoster.read(this._devices, this._showHidden, this._cfgEpoch);
+  }
 
   private get _showAll(): boolean {
-    return this._showHidden || (!this._settings.filter_seeded && !!this._settings.show_all);
+    return this._showHidden;
+  }
+
+  private _setShowHidden(shown: boolean, remember = true): void {
+    if (remember && !cardInteractionIdleSnapshot(this as unknown as VersionRecoveryCardPort).gesturesIdle) return;
+    if (remember) this._hiddenDevicePreference.set(shown, hiddenDeviceStorage());
+    if (shown === this._showHidden) return;
+    const view = (remember || this._continuity.hasCompleteFrame) && this._spaceModel()
+      ? { ...this._viewOr(this._baseVb()) } : null;
+    this._showHidden = shown;
+    // Roster identity invalidates the frame while preserving editor-only growth.
+    this._capturedSeq = -1; this._deviceInboxMemo = null;
+    this._clearPointerHover(); this._tapConfirm = null; this._cancelDevicePressFeedback();
+    if (this._infoCard && !this._displayDevices.some(d => d.id === this._infoCard!.id && !d.hidden)) this._closeInfoCard();
+    if (view) {
+      this._view = view;
+      this._zoom = fitView(this._baseVb(), this._stageAspect()).w / view.w;
+    }
+    this._syncActivityRuntime(); this.requestUpdate();
   }
 
   /**
@@ -4230,6 +4251,10 @@ export class HouseplanCard extends LitElement {
     }
     if (this._continuity.hasCompleteFrame && this._continuity.state === 'steady') {
       this._continuity.refreshCompleteFrame(this._visualFrameFingerprint());
+    }
+    const hiddenKey = hiddenDevicePreferenceKey(this);
+    if (hiddenKey !== this._hiddenDevicePreference.address) {
+      this._setShowHidden(this._hiddenDevicePreference.sync(hiddenKey, hiddenDeviceStorage()), false);
     }
     this._captureRenderDeviceSnapshot();
   }
@@ -4686,7 +4711,7 @@ export class HouseplanCard extends LitElement {
       .join('|');
     const virtualFingerprint = virtualLightFingerprint(this._virtualLights);
     if (this._capturedSeq === this._hassSequence
-        && this._capturedSnapshotDevices === this._devices
+        && this._capturedSnapshotDevices === this._displayDevices
         && this._capturedSnapshotLayout === this._layout
         && this._capturedSnapshotConfigEpoch === this._cfgEpoch
         && this._capturedSnapshotVirtual === virtualFingerprint
@@ -4696,7 +4721,7 @@ export class HouseplanCard extends LitElement {
     // #850: the live runtime lends its reuse window (render-snapshot-reuse.ts).
     const snapshot = captureRenderDeviceSnapshot(this as never, this._liveRt?.capture);
     this._capturedSeq = this._hassSequence;
-    this._capturedSnapshotDevices = this._devices;
+    this._capturedSnapshotDevices = this._displayDevices;
     this._capturedSnapshotLayout = this._layout;
     this._capturedSnapshotActivity = activity;
     this._capturedSnapshotConfigEpoch = this._cfgEpoch;
@@ -4724,12 +4749,12 @@ export class HouseplanCard extends LitElement {
   }
 
   private get _renderDevices(): readonly DevItem[] {
-    return this._renderDeviceSnapshot?.devices || this._devices;
+    return this._renderDeviceSnapshot?.devices || this._displayDevices;
   }
 
   /** Normal frames reuse the vacuum-only subset captured with their facts. */
   private get _renderVacuumDevices(): readonly DevItem[] {
-    return this._renderDeviceSnapshot?.vacuumDevices || this._devices;
+    return this._renderDeviceSnapshot?.vacuumDevices || this._displayDevices;
   }
 
   /**
@@ -4995,7 +5020,7 @@ export class HouseplanCard extends LitElement {
       markers: this._markers,
       settings: this._settings,
       excluded: this._excluded,
-      showAll: this._showAll,
+      showAll: !this._settings.filter_seeded && !!this._settings.show_all,
       firstSpaceId: this._model[0]?.id || '',
       loc: (k) => this._t(k),
       iconRules: this._iconRules,
@@ -5042,7 +5067,7 @@ export class HouseplanCard extends LitElement {
     // Rebuilds also happen without a hass update (marker save/rebind). Establish
     // new baselines and clear old flashes synchronously, before the next paint.
     this._syncActivityRuntime();
-    const liveVac = new Set(this._devices.filter((d) => !d.hidden).map((d) => d.id));
+    const liveVac = new Set(this._displayDevices.filter((d) => !d.hidden).map((d) => d.id));
     for (const id of this._vacRt.keys()) if (!liveVac.has(id)) this._vacRt.delete(id);
     if (this._infoCard) {
       const current = this._devices.find((d) => d.id === this._infoCard!.id);
@@ -5725,13 +5750,13 @@ export class HouseplanCard extends LitElement {
     // on screen while a new HA/config frame is being committed (#73). Actions
     // must never inherit that visual staleness: resolve the current DevItem by
     // stable marker id before reading tap_action, controls or the binding.
-    const actionDevice = this._devices.find((item) => item.id === d.id);
+    const actionDevice = this._displayDevices.find((item) => item.id === d.id && !item.hidden);
     if (!actionDevice || actionDevice.space !== this._space || d.space !== this._space) return;
     const actionSpace = this._space;
     const currentActionDevice = (): DevItem | null => {
-      const current = currentMarkerActionDevice(this._devices, this._space,
+      const current = currentMarkerActionDevice(this._displayDevices, this._space,
         { spaceId: actionSpace, id: actionDevice.id });
-      if (current) return current;
+      if (current && !current.hidden) return current;
       this._tapConfirm = null; this._closeInfoCard();
       this._showToast(this._t('toast.tap_target_changed'));
       return null;
@@ -5976,7 +6001,7 @@ export class HouseplanCard extends LitElement {
    */
   private _contentItems(m: SpaceModel): ContentItem[] {
     const extra: ContentItem[] = [];
-    for (const d of this._devices) {
+    for (const d of this._displayDevices) {
       if (d.space !== m.id || d.hidden) continue;
       const p = this._pos(d);
       extra.push({ minX: p.x, minY: p.y, maxX: p.x, maxY: p.y });
@@ -6059,7 +6084,7 @@ export class HouseplanCard extends LitElement {
     // drag lands where it was aimed. The frame catches up on release.
     if (f && f.id === m.id && this._editorRuntime?.backdropGesture.active) return f;
     if (f && f.id === m.id && f.model === m && f.layout === this._layout
-        && f.devs === this._devices && f.far === this._showFar && f.grow === grow) return f;
+        && f.devs === this._displayDevices && f.far === this._showFar && f.grow === grow) return f;
     const cf = contentFrame(this._contentItems(m));
     let all = cf.all || spaceFrame(m);
     let rect = this._showFar ? all : (cf.core || spaceFrame(m));
@@ -6072,7 +6097,7 @@ export class HouseplanCard extends LitElement {
       all = unionRect(f.all, all);
     }
     this._frame = {
-      id: m.id, model: m, layout: this._layout, devs: this._devices,
+      id: m.id, model: m, layout: this._layout, devs: this._displayDevices,
       far: this._showFar, grow, rect, all, outliers: cf.outliers,
     };
     return this._frame;
@@ -7543,7 +7568,7 @@ export class HouseplanCard extends LitElement {
     this._wallChainSegmentCms = [];
     this._closingWallCm = null;
     this._drawWallField = null;
-    this._showHidden = false;
+    // Route departure does not reset the browser-local display preference.
 
     // A same-element reattach must not render an editor-only modal over View.
     this._tapConfirm = null;
@@ -10786,9 +10811,8 @@ export class HouseplanCard extends LitElement {
     if (this._labs.active.length) noteLabsRender();
     let iso = projection === 'iso';
     const isoRuntime = iso ? this._isoSceneRuntime : null;
-    // hidden devices render ONLY in the device editor with "show hidden" on
-    // (ghosted); everywhere else the flag removes them from sight — but not
-    // from the build, so room LQI still counts them (docs/FILTERING.md)
+    // Active user-hidden devices are ordinary projected rows. Only disabled
+    // service ghosts remain exclusive to the Devices editor.
     const showGhosts = this._mode === 'devices' && this._showAll;
     const leds = ledStripsByMarker(space);
     const devs = visibleIconMarkers(this._renderDevices, space.id, leds, showGhosts);
@@ -10943,13 +10967,14 @@ export class HouseplanCard extends LitElement {
               title=${this._t('title.zoom_fit')}><ha-icon icon="mdi:fit-to-page-outline"></ha-icon></button>
             <button class="btn zb" data-hp="zoom-in" @click=${() => this._stepZoom(1)} title=${this._t('title.zoom_in')}><ha-icon icon="mdi:plus"></ha-icon></button>
           </div>
+          ${this._kiosk ? nothing : renderHiddenDevicesToggle((k) => this._t(k), this._showHidden, () => this._setShowHidden(!this._showHidden))}
           ${this._norm && this._canEdit ? renderHeaderActions((k) => this._t(k), { settings: this._openSettingsDialog, pdf: this._openPdfDialog, support: this._openSupportDialog }) : nothing}
           ${!this._kiosk ? this._summary?.renderControls(false) : nothing}
           ${''/* #616: ≤ 480 px — one gear holds everything the phone row drops */}${this._kiosk ? nothing : this._headerMenu.render(headerMenuItems({
-            canEdit: this._norm && this._canEdit, kiosk: this._kiosk, mode: this._mode, hasFixedFloor: this._hasFixedFloor,
+            canEdit: this._norm && this._canEdit, kiosk: this._kiosk, mode: this._mode, hasFixedFloor: this._hasFixedFloor, showHidden: this._showHidden,
             summary: this._summary?.menuItems() ?? [], t: (k) => this._t(k),
             actions: { setMode: (m) => this._setMode(m), configureSpace: () => this._openSpaceDialog('edit', this._space), addSpace: () => this._openSpaceDialog('create'),
-              settings: this._openSettingsDialog, pdf: this._openPdfDialog, support: this._openSupportDialog },
+              settings: this._openSettingsDialog, pdf: this._openPdfDialog, support: this._openSupportDialog, toggleHidden: () => this._setShowHidden(!this._showHidden) },
           }), this._t('title.header_menu'))}
         </div>
         ${this._canEdit && !this._kiosk
@@ -11513,11 +11538,11 @@ export class HouseplanCard extends LitElement {
   private _activitySnapshot(
     d: DevItem,
     planLightSources = resolvedLightSources(
-      this._planHass, this._devices, null, this._virtualLights,
+      this._planHass, this._displayDevices, null, this._virtualLights,
     ),
   ): { samples: EntityVisualSample[]; sourceKey: string } {
     const sources = resolvePresentationSources(
-      this._planHass, d, this._devices, planLightSources, this._fullRegistryHass,
+      this._planHass, d, this._displayDevices, planLightSources, this._fullRegistryHass,
     );
     return {
       samples: sources.samples,
@@ -11554,9 +11579,9 @@ export class HouseplanCard extends LitElement {
     }
     const live = new Set<string>();
     const planLightSources = resolvedLightSources(
-      this._planHass, this._devices, null, this._virtualLights,
+      this._planHass, this._displayDevices, null, this._virtualLights,
     );
-    for (const d of this._devices) {
+    for (const d of this._displayDevices) {
       if (d.hidden) continue;
       // Alarm/continuous semantics are resolved from the current samples and
       // need no finite history. Keep that history only while its display mode
@@ -11593,7 +11618,7 @@ export class HouseplanCard extends LitElement {
   private _activityTick(): void {
     if (!this.hass) return;
     const snapshots = this._syncActivityRuntime();
-    for (const d of this._devices) {
+    for (const d of this._displayDevices) {
       if (d.hidden) continue;
       if (normalizeDeviceDisplay(d.marker?.display) !== 'icon_ripple') continue;
       const snapshot = snapshots.get(d.id) || this._activitySnapshot(d);
@@ -11615,7 +11640,7 @@ export class HouseplanCard extends LitElement {
    */
   private _vacTick(): void {
     if (!this.hass) return;
-    for (const d of this._devices) {
+    for (const d of this._displayDevices) {
       if (d.hidden || !this._isVacDev(d)) continue;
       if (displayIsNeutral(normalizeDeviceDisplay(d.marker?.display))) {
         this._vacRt.delete(d.id);
@@ -11911,7 +11936,7 @@ export class HouseplanCard extends LitElement {
     const disabledReason = presentation.disabledReason;
     const ghostLabel = presentation.haDisabled
       ? this._t((`marker.ha_disabled_${disabledReason}`) as any)
-      : d.userHidden ? this._t('marker.hidden_ghost') : d.name;
+      : d.hidden && d.userHidden ? this._t('marker.hidden_ghost') : d.name;
     const a11yState = deviceA11yState(presentation);
     const interactive = this._mode === 'view' || this._mode === 'devices';
     const deviceAriaLabel = deviceAccessibleLabel([
@@ -12808,7 +12833,7 @@ export class HouseplanCard extends LitElement {
       else if (['sensor', 'binary_sensor', 'number', 'select'].includes(dom))
         out.push({ eid, kind: 'value' });
     };
-    for (const source of resolvedLightSources(h, this._devices, null, this._virtualLights)) {
+    for (const source of resolvedLightSources(h, this._displayDevices, null, this._virtualLights)) {
       if (source.device.id !== d.id) continue;
       for (const eid of [...source.serviceEids, ...source.stateEids]) push(eid);
     }
@@ -12956,7 +12981,7 @@ export class HouseplanCard extends LitElement {
    */
   public _toggleIntent(
     device: DevItem,
-    devices: readonly DevItem[] = this._devices,
+    devices: readonly DevItem[] = this._displayDevices,
   ): ResolvedToggleIntent | null {
     return resolveToggleIntent({
       hass: this._planHass,

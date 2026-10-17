@@ -31,6 +31,11 @@ history; previously unassigned points are retained without adopting them into
 a new recorded route. Path-display diagnostics explain suppression separately
 from path quality and final confirmation.
 
+- #919: the full card/panel has one browser-local eye for ordinary display of
+  active user-hidden devices in every mode. Saved visibility stays untouched;
+  the choice is isolated per HA user/card, with no automatic camera change.
+  Static cards and HA-disabled lifecycle remain separate (`FILTERING.md`).
+
 Device copying (#935) creates independent virtual markers through a narrow
 revision-checked paired writer. Incoming links are appended, original LED forms
 and files stay intact, and copy preparation/creation sends no equipment commands.

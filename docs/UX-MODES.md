@@ -372,7 +372,8 @@ layer you cannot see is a layer you cannot edit.
   lifecycle or Plan/Background edits.
 - + add device/entity/virtual, the bottom-left "Hide" / "Show" action in an
   existing device dialog (the one hiding mechanism, docs/FILTERING.md),
-  👁 "Show hidden" (local editor tool; replaced the shared show-all toggle),
+  👁 "Show hidden" (the same browser-local display choice as the full-card
+  header eye, available in every mode; active hidden rows behave normally),
   ⬡ icon rules.
 
 - **LED strip** (#780) — the only place a strip is drawn or edited. The tool

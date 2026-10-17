@@ -44,7 +44,7 @@ as the SEEDER of initial hidden flags.
   confused with `marker.hidden`.
 - `settings.filter_seeded: true` — this config has been materialised.
 - `settings.show_all` — removed (deleted during materialisation). The old
-  toggle was shared config state; the new one is a local editor tool.
+  toggle was shared config state; the new one is browser-local display intent.
 
 ## Seeding
 
@@ -85,15 +85,19 @@ the old behaviour until an editing client materialises it.
 | State | Renders | Devices catalog | Room/light/climate data | Add/re-add action |
 |---|---:|---:|---:|---:|
 | visible marker/device | yes | — | yes | no duplicate |
-| `hidden: true` | no | ghost | LQI/climate yes, visible light no | no duplicate |
+| `hidden: true`, local eye Off | no | hidden category | LQI/climate yes, visible light no | no duplicate |
+| `hidden: true`, local eye On (#919) | ordinary active face | still hidden category | ordinary light/Glow/LED; unchanged LQI/climate | no duplicate |
 | HA `disabled_by != null` (device/entity/all children) | no | disabled ghost | no | no |
 | registry access limited, binding unverified | no, no false ghost | support status only | no | no |
 | `removed: true` | no | no | no | yes |
 
-- Hidden devices ARE built (flagged `hidden`), but not rendered in any mode,
-  except the device editor with "Show hidden devices" on — there they render
-  ghosted (translucent, dashed) and clicking opens the dialog, where the
-  bottom-left "Show" action restores it after saving.
+- Hidden devices ARE built (flagged `hidden`). The full card/panel's eye
+  **Show hidden devices** reveals active user-hidden rows as ordinary devices
+  in View, Plan, Devices and Background. Saved `hidden` stays true. Status,
+  values, activity, permitted actions, light fill/Glow and LED representation
+  behave normally; Background/Plan retain their ordinary passive layer rules.
+  This never revives removed, HA-disabled, orphaned or unverified bindings.
+  `houseplan-space-card` does not inherit the full card's display choice.
 - The Device editor exposes one lifecycle catalog built by the pure
   `device-inbox.ts` projection. Exact bindings stay in one user-intent category
   (`on_plan`, `available`, `hidden`, `readd`); HA disabled/orphaned/unverified
@@ -103,8 +107,12 @@ the old behaviour until an editing client materialises it.
   snapshot, so large registries cannot hide later exact entities.
   `buildDeviceInbox()` combines runtime devices, markers, tombstones, HA binding
   statuses and `new_device_ids` without owning persistence or Lit state.
-- **Show hidden on plan** in that catalog is LOCAL, ephemeral state of the
-  current editor session. A disabled ghost is grey and explicitly labelled;
+- **Show hidden on plan** in that catalog mirrors the eye; it is not a second
+  choice. The browser remembers the choice per HA user, route and stable card
+  placement, default Off for a new/unknown identity. Storage failure keeps
+  session-only behavior. No config/layout write, history command or HA service
+  is emitted by toggling. The catalog category remains Hidden. In Devices only,
+  a disabled ghost is grey and explicitly labelled;
   it cannot be dragged or shown until the binding is activated in HA. Its
   dialog still permits metadata edits, Open in HA and Delete. Opening,
   searching, filtering and Find are read-only.
@@ -136,18 +144,19 @@ the old behaviour until an editing client materialises it.
   exact binding exists in the full registry, a relevant empty namespace is
   never destructive, and a missing binding needs two distinct non-empty
   authoritative revisions before its Area provenance is removed.
-- Hidden devices are NOT content for the CONTENT FRAME (docs/CANVAS.md §4,
+- With the eye Off, hidden devices are NOT content for the CONTENT FRAME (docs/CANVAS.md §4,
   audit DEV-2C947-01). The frame is presentation: an object the plan does not
   draw may not decide what the plan opens on. Hiding a marker that had once
   been dragged into the yard used to leave the visible house a dot in the
   corner of a frame 112x too wide — on the full card and on
   `houseplan-space-card` alike. They keep their place in the auto-grid roster
   (so a visible neighbour does not move when one is hidden) and in every
-  aggregation listed here; only the frame stops seeing them, ghosts in the
-  device editor included — reaching a ghost is the pan slack's job (§5).
-- Light fill and glow do NOT count hidden devices — an invisible device casts
-  no visible light (owner's decision). Room climate is registry-wide and
-  unaffected, as before.
+  aggregation listed here. With the eye On, active revealed rows are ordinary
+  frame content (including Fit all/outlier handling). The eye itself preserves
+  the current camera and screen icon sizes; the editor frame only grows.
+- Light fill and glow do NOT count hidden devices with the eye Off. With it On,
+  revealed active lights contribute normally. Room climate is registry-wide and
+  unaffected; the reveal adds no second LQI/climate vote.
 - Batch Hide/Show (#618) on the catalog's `on_plan` / `hidden` tabs writes the
   same markers as the single-row action (`applyInboxVisibility` is shared: a
   single row is a batch of one) in ONE `houseplan/config/set`. Show keeps the
