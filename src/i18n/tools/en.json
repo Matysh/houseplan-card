@@ -1,5 +1,6 @@
 {
   "device.copy": "Copy device",
+  "device.copy_links_failed": "The copy's control links could not be saved. Check the original device's links.",
   "device.copy_created": "Copy created",
   "device.copy_fallback": "Device",
   "device.copy_changed": "The plan or device has changed. Refresh the plan and try copying again.",

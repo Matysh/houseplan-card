@@ -81,3 +81,13 @@ test('#935 delayed reply after floor change adopts no foreign viewport or succes
   assert.equal(f.adoptions.length,1,'same HA may adopt the already accepted global pair');
   assert.equal(f.h._space,'f2');assert.equal(f.toasts.length,0);
 });
+
+test('#935 invalid graph refusal tells the user to check links rather than blindly refresh',async()=>{
+  for(const code of ['marker_control_cycle','marker_control_self','marker_control_missing','invalid_marker_control','duplicate_marker_control']) {
+    const f=fixture();f.h.transport=()=>Promise.reject(Object.assign(new Error('private backend detail'),{code}));
+    f.open();f.action()();await done(f.editor);
+    assert.match(f.toasts.at(-1),/control links.*Check the original/);
+    assert.equal(f.adoptions.length,0);assert.equal(f.h._serverCfg.markers.length,1);
+    assert.equal(f.messages.length,1,'no automatic retry after graph refusal');
+  }
+});

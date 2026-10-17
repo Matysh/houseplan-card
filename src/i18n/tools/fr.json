@@ -1,5 +1,6 @@
 {
   "device.copy": "Copier l’appareil",
+  "device.copy_links_failed": "Impossible d’enregistrer les liens de commande de la copie. Vérifiez ceux de l’original.",
   "device.copy_created": "Copie créée",
   "device.copy_fallback": "Appareil",
   "device.copy_changed": "Le plan ou l’appareil a changé. Actualisez le plan et réessayez.",

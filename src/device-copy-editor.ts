@@ -163,8 +163,11 @@ export class DeviceCopyEditor {
         }
       }
       const detail = error as { code?: string; copyKey?: ToolsI18nKey };
+      const linksFailed = detail.code?.startsWith('marker_control_')
+        || detail.code === 'invalid_marker_control' || detail.code === 'duplicate_marker_control';
       const key = detail.copyKey || (detail.code === 'conflict' ? 'device.copy_changed'
         : detail.code === 'unauthorized' ? 'device.copy_access'
+        : linksFailed ? 'device.copy_links_failed'
         : detail.code === 'unknown_command' ? 'device.copy_backend' : 'device.copy_failed');
       h._showToast(this.t(key));
     } finally {

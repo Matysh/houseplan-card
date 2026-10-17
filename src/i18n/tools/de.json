@@ -1,5 +1,6 @@
 {
   "device.copy": "Gerät kopieren",
+  "device.copy_links_failed": "Die Steuerverknüpfungen konnten nicht kopiert werden. Verknüpfungen des Originals prüfen.",
   "device.copy_created": "Kopie erstellt",
   "device.copy_fallback": "Gerät",
   "device.copy_changed": "Plan oder Gerät wurde geändert. Plan aktualisieren und erneut kopieren.",
