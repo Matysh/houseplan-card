@@ -74,9 +74,9 @@ const out = await page.evaluate(async () => {
     async () => {
       c._openSettingsDialog(); await upd();
       q('settings', '#gs-room-tooltip').click(); await upd();
-      input(qa('settings', '.hpf-card[data-card="fills"] .hpf-colortile')[0].querySelector('.hpf-colortile-meta input'), '33'); await upd();
+      qa('settings', '.hpf-card[data-card="fills"] hp-color-opacity')[0].dispatchEvent(new CustomEvent('hp-color-opacity-change',{detail:{color:c._settingsDialog.colors.light_on.c,opacity:.33},bubbles:true,composed:true})); await upd();
       input(q('settings', '#gs-glow-radius'), '4.5'); await upd();
-      radio('settings', 'gs-bg-mode', 'daynight'); await upd();
+      change(q('settings', 'select[name="gs-bg-mode"]'), 'daynight'); await upd();
       input(q('settings', '#gs-north'), '45'); await upd();
       await saveViaUi('settings');
     },

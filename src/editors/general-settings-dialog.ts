@@ -1,19 +1,13 @@
-/**
- * Диалог «Общие настройки» по референсу `docs/design/600-settings-dialogs/`
- * (#600, серия 2; §5 SPEC.md).
- *
- * Семь карточек #598 остались на месте — менялось содержимое, не состав:
- * строки-тумблеры с иконкой и подписью, плитки цвета по три в ряд, компактный
- * компас, сегмент источника лучей, футер со статусом. Каждый контрол пишет в
- * тот же ключ `_settingsDialog`, что и раньше (К1); сообщение о состоянии
- * `gs.sun_missing` остаётся callout'ом (К5).
- */
+/** Shared settings layout; existing general draft and operations (#948). */
 import { html, nothing, type TemplateResult } from 'lit';
 
 import {
   callout, colorField, colorRow, colorTile, colorTiles, ensureFormKitStyles, field, footerStatus,
-  formCard, segmented, subsection, textLink, toggleRow, unitInput,
+  formCard, selectControl, subsection, textLink, toggleRow, unitInput,
 } from './form-kit';
+import { settingsSections, revealSettingsField, selectedSettingsSection } from './settings-sections';
+import { settingsNorth } from './settings-north';
+import { settingsBackgroundPreviews } from './settings-background-previews';
 import { forgetGeneralBaseline, generalDirty, generalProblems, type GeneralSettingsDraft } from './general-form-state';
 import { moonStatusOf, moonStatusText } from './moon-status';
 import { langOf, type I18nKey } from '../i18n';
@@ -28,6 +22,7 @@ import { zigbeeTopologySettingsOf } from '../zigbee-topology-settings';
 import type { ZigbeeTopologySettings } from '../zigbee-topology-settings';
 import type { DeviceBatteryMode } from '../device-battery-settings';
 import type { HouseplanEditorRuntime } from '../houseplan-editor-runtime';
+import { signalVisibilityModeOf, type SignalSpaceSettings } from '../signal-visibility';
 
 export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): TemplateResult {
   ensureFormKitStyles(this.host);
@@ -53,12 +48,22 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
     });
     if (discard) close(); else dialog?.rejectClose?.();
   };
+  const leaveFor = async (action: () => void | Promise<void>) => {
+    if (d.busy) return;
+    if (dirty && !await host._confirmDanger({
+      key: 'discard-settings-dialog', kind: 'warning',
+      title: st('dialog.discard_title'), message: st('dialog.discard_message'),
+      confirmLabel: st('dialog.discard_confirm'), cancelLabel: st('dialog.discard_keep'),
+      icon: 'mdi:content-save-off-outline', confirmIcon: 'mdi:content-save-off-outline',
+    })) return;
+    close();
+    await action();
+  };
   const reviewFirst = () => {
     const first = problems[0];
     if (!first) return;
     const node = (host.renderRoot as ParentNode).querySelector<HTMLElement>(`#${first.field}`);
-    node?.scrollIntoView({ block: 'center' });
-    node?.focus();
+    if (node) revealSettingsField(host, node);
   };
   /** Плитка цвета палитры: свотч — trigger пикера с той же атомарной записью. */
   const tile = (key: keyof FillColors, labelKey: I18nKey) => {
@@ -66,7 +71,6 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
     const label = t(labelKey);
     return colorTile({
       label, hex: v.c, opacity: v.a, opacityLabel: st('gs.opacity_of', { name: label }),
-      onOpacity: (a) => this._setFillColor(key, { c: v.c, a }),
       picker: html`<hp-color-opacity .label=${label} hide-label flat-swatch cover-swatch
         .opacityLabel=${t('space.opacity')}
         .pickerLabels=${host._colorPickerLabels}
@@ -78,18 +82,22 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
   };
   const glowProblem = problemFor('gs-glow-radius');
   const northProblem = problemFor('gs-north');
+  const lqiOverrides = (host._serverCfg?.spaces || [])
+    .filter((space: { settings?: SignalSpaceSettings }) => signalVisibilityModeOf(space.settings) !== 'inherit')
+    .map((space: { title?: string; id: string }) => space.title || space.id);
   // #718 K7: the second caption line, once the moon chunk judged this opening.
   const moonStatus = moonStatusOf(host);
   const zigbeeHelp = hasTopologyTranslation(lang, 'help') && hasTopologyTranslation(lang, 'help_aria')
-    ? html`<hp-help data-help-key="topology.help" .text=${topologyT(lang, 'help')} .ariaLabel=${topologyT(lang, 'help_aria')}></hp-help>`
+    ? html`<hp-help instant data-help-key="topology.help" .text=${topologyT(lang, 'help')} .ariaLabel=${topologyT(lang, 'help_aria')}></hp-help>`
     : nothing;
 
-  return html`<hp-dialog .hass=${host.hass} data-kind="settings" form-shell wide
-      .title=${st('gs.title')} icon="mdi:cog-outline" @hp-close=${requestClose}>
-    <div class="body hpf-form">
-      ${formCard({
+  return html`<hp-dialog .hass=${host.hass} data-kind="settings" form-shell settings-layout wide
+      .title=${st('gs.title')} .subtitle=${st('gs.scope')} icon="mdi:cog-outline" @hp-close=${requestClose}>
+    <div class="body hpf-form hpf-settings-form">
+      ${settingsSections(host, 'general', [
+        { id: 'display', title: st('gs.section_info'), body: html`${formCard({
         id: 'display',
-        title: t('gs.card_display'),
+        title: st('gs.section_info'),
         body: html`
           ${toggleRow({
             id: 'gs-room-tooltip', icon: 'mdi:tooltip-text-outline',
@@ -108,7 +116,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           })}
           ${field({
             label: st('gs.show_device_battery'),
-            control: segmented<DeviceBatteryMode>({
+            control: selectControl<DeviceBatteryMode>({
               name: 'gs-device-battery',
               value: d.deviceBattery,
               ariaLabel: st('gs.show_device_battery'),
@@ -119,63 +127,24 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
               ],
               onChange: (deviceBattery) => set({ deviceBattery }),
             }),
-            hint: st('gs.show_device_battery_hint'),
+            
           })}
           ${toggleRow({
             id: 'gs-show-lqi', icon: 'mdi:zigbee',
-            title: st('gs.show_lqi'), caption: st('gs.show_lqi_hint'),
+            title: st('gs.show_lqi'),
             checked: d.showLqi, onChange: (showLqi) => set({ showLqi }),
-          })}`,
-      })}
-      ${formCard({
-        id: 'zigbee',
-        title: t('gs.card_zigbee'),
-        help: zigbeeHelp,
-        body: html`<hp-zigbee-topology-settings embedded .hass=${host.hass} .value=${d.zigbeeTopology}
-          .savedEnabled=${zigbeeTopologySettingsOf(host._settings).enabled} .devices=${host._devices} .registry=${host._haRegistry}
-          @hp-topology-settings-change=${(event: CustomEvent<ZigbeeTopologySettings>) => set({ zigbeeTopology: event.detail })}></hp-zigbee-topology-settings>`,
-      })}
-      ${formCard({
-        id: 'fills',
-        title: t('gs.card_fills'),
-        help: this._help('gs.card_fills.help'),
-        body: html`
-          ${subsection({ title: st('gs.light_group') })}
-          ${colorTiles([tile('light_on', 'gs.light_on'), tile('light_off', 'gs.light_off'), tile('light_none', 'gs.light_none')])}
-          ${subsection({ title: st('gs.temp_group') })}
-          ${colorTiles([tile('temp_cold', 'gs.temp_cold'), tile('temp_ok', 'gs.temp_ok'), tile('temp_hot', 'gs.temp_hot')])}
-          ${subsection({ title: st('gs.lqi_group') })}
-          ${colorTiles([tile('lqi_low', 'gs.lqi_low'), tile('lqi_high', 'gs.lqi_high')])}`,
-      })}
-      ${formCard({
-        id: 'glow',
-        title: t('gs.glow_group'),
-        body: html`
-          ${colorTiles([tile('glow_light', 'gs.glow_light')])}
-          ${field({
-            label: st('gs.glow_radius'), htmlFor: 'gs-glow-radius', help: this._help('gs.glow_radius.help'),
-            error: glowProblem ? st(glowProblem.message) : undefined,
-            control: unitInput({
-              id: 'gs-glow-radius', value: d.glowRadiusInput, min: 0.5, step: 0.5, invalid: !!glowProblem,
-              unit: host._imperial ? t('gs.unit_ft') : t('gs.unit_m'),
-              onInput: (raw) => {
-                const v = strictNumber(raw);
-                set({ glowRadiusInput: raw, ...(v != null && v > 0 ? { glowRadius: v } : {}) });
-              },
-            }),
-          })}`,
-      })}
-      ${formCard({
+          })}
+          ${lqiOverrides.length ? callout({ text: st('gs.space_overrides', { names: lqiOverrides.join(', ') }) }) : nothing}`,
+      })}` },
+        { id: 'plan', title: st('gs.section_appearance'), body: html`${formCard({
         id: 'plan',
-        title: t('gs.card_plan'),
+        title: st('gs.section_appearance'),
         body: html`
           ${colorRow({
             label: st('gs.wall_fill'),
             picker: colorField({
               hex: d.colors.wall_fill.c, opacity: d.colors.wall_fill.a, opacityLabel: t('space.opacity'),
-              onOpacity: (a) => this._setFillColor('wall_fill', { c: d.colors.wall_fill.c, a }),
-              resetLabel: t('btn.reset'),
-              onReset: () => this._setFillColor('wall_fill', { ...DEFAULT_FILL_COLORS.wall_fill }),
+              
               picker: html`<hp-color-opacity .label=${st('gs.wall_fill')} hide-label flat-swatch
                 .opacityLabel=${t('space.opacity')} .pickerLabels=${host._colorPickerLabels}
                 .color=${d.colors.wall_fill.c} .opacity=${d.colors.wall_fill.a} .showOpacity=${true}
@@ -186,7 +155,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           })}
           ${field({
             label: st('gs.bg_mode'), help: this._help('gs.bg_mode.help'),
-            control: segmented({
+            control: selectControl({
               name: 'gs-bg-mode',
               value: d.bgMode === 'daynight' ? 'daynight' : 'static',
               ariaLabel: st('gs.bg_mode'),
@@ -200,72 +169,82 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           ${d.bgMode === 'static'
             ? field({
                 label: t('gs.bg_color'),
-                hint: st(d.bgColor ? 'gs.bg_custom_hint' : 'gs.bg_theme_hint'),
-                control: colorField({
+                
+                control: html`<div class="hpf-color-with-action">${colorField({
                   hex: d.bgColor || host._stageBgHex(),
-                  resetLabel: d.bgColor ? t('gs.bg_default') : undefined,
-                  onReset: () => set({ bgColor: null }),
                   picker: html`<hp-color-opacity .label=${t('gs.bg_color')} hide-label flat-swatch
                     .pickerLabels=${host._colorPickerLabels}
                     .color=${d.bgColor || host._stageBgHex()} .opacity=${1} .showOpacity=${false}
                     @hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => set({ bgColor: e.detail.color })}></hp-color-opacity>`,
-                }),
+                })}<button class="btn ghost" type="button" @click=${() => set({ bgColor: null })}>${t('gs.bg_default')}</button></div>`,
               })
-            : nothing}`,
-      })}
-      ${formCard({
-        id: 'sun',
-        title: t('gs.sun_group'),
-        body: html`
+            : settingsBackgroundPreviews([st('gs.phase_day'), st('gs.phase_dawn'), st('gs.phase_dusk'), st('gs.phase_night')], st('gs.daynight_rules'))}`,
+      })}` },
+        { id: 'fills', title: t('gs.card_fills'), body: html`${formCard({
+        id: 'fills',
+        title: t('gs.card_fills'),
+        help: nothing,
+        body: html`<p class="hpf-hint">${st('gs.palette_shared')}</p>
+          ${subsection({ title: st('gs.light_group') })}
+          ${colorTiles([tile('light_on', 'gs.light_on'), tile('light_off', 'gs.light_off'), tile('light_none', 'gs.light_none')])}
+          ${subsection({ title: st('gs.temp_group') })}
+          ${colorTiles([tile('temp_cold', 'gs.temp_cold'), tile('temp_ok', 'gs.temp_ok'), tile('temp_hot', 'gs.temp_hot')])}
+          ${subsection({ title: st('gs.lqi_group') })}
+          ${colorTiles([tile('lqi_low', 'gs.lqi_low'), tile('lqi_high', 'gs.lqi_high')])}`,
+      })}` },
+        { id: 'sun', title: st('gs.section_light'), body: html`${formCard({ id: 'sun', title: st('gs.section_light'), body: html`
+          ${colorRow({ label: st('gs.default_light'), picker: tile('glow_light', 'gs.glow_light') })}
+          ${field({
+            label: st('gs.glow_radius'), htmlFor: 'gs-glow-radius', help: this._help('gs.glow_radius.help'),
+            error: glowProblem ? st(glowProblem.message) : undefined,
+            control: unitInput({
+              id: 'gs-glow-radius', value: d.glowRadiusInput, min: 0.5, step: 0.5, invalid: !!glowProblem,
+              unit: host._imperial ? t('gs.unit_ft') : t('gs.unit_m'),
+              onInput: (raw) => {
+                const v = strictNumber(raw);
+                set({ glowRadiusInput: raw, ...(v != null && v > 0 ? { glowRadius: v } : {}) });
+              },
+            }),
+          })}
           ${!sunStateOf(host.hass)
             ? callout({ kind: 'warning', role: 'status', text: t('gs.sun_missing') })
             : nothing}
-          <div class="hpf-north">
-            <span class="hpf-labelrow"><label for="gs-north">${t('gs.north')}</label>${this._help('gs.north.help')}</span>
-            <div class="hpf-inline hpf-wrap">
-              ${unitInput({
-                id: 'gs-north', value: d.northDegInput, unit: '°',
-                min: 0, max: 359, step: 1, placeholder: st('gs.north_ph'), invalid: !!northProblem,
-                onInput: (raw) => {
-                  const trimmed = raw.trim();
-                  const n = trimmed === '' ? null : strictNumber(trimmed);
-                  set({
-                    northDegInput: raw,
-                    ...(trimmed === '' ? { northDeg: null }
-                      : n !== null && Number.isInteger(n) && n >= 0 && n <= 359 ? { northDeg: n } : {}),
-                  });
-                },
-              })}
-              ${d.northDeg !== null || d.northDegInput.trim()
-                ? textLink(t('gs.north_clear'), () => set({ northDeg: null, northDegInput: '' })) : nothing}
-            </div>
-            <span class="hpf-north-n" aria-hidden="true">${t('gs.north_letter')}</span>
-            ${host._renderCompass()}
-          </div>
+          ${field({ label: t('gs.north'), htmlFor: 'gs-north', help: this._help('gs.north.help'),
+            control: settingsNorth({ id: 'gs-north', value: d.northDeg, raw: d.northDegInput,
+              label: t('gs.north'), invalid: !!northProblem,
+              onInput: (raw) => {
+                const trimmed = raw.trim(), n = trimmed === '' ? null : strictNumber(trimmed);
+                set({ northDegInput: raw, ...(trimmed === '' ? { northDeg: null } : n !== null && Number.isInteger(n) && n >= 0 && n <= 359 ? { northDeg: n } : {}) });
+              }, onChange: (v) => set({ northDeg: v, northDegInput: String(v) }),
+            }), hint: st('gs.north_description'),
+          })}
           ${northProblem ? html`<p class="hpf-error" role="alert">${st(northProblem.message)}</p>` : nothing}
           ${toggleRow({
             id: 'gs-sun-rays', icon: 'mdi:weather-sunny',
-            title: st('gs.sun_rays'), caption: st('gs.sun_rays_hint'),
+            title: st('gs.sun_rays'), caption: st(d.sunRays ? 'gs.sun_rays_override' : 'gs.sun_rays_override_off'),
             checked: d.sunRays, onChange: (v) => set({ sunRays: v }),
           })}
           ${renderSunRayOriginSegment(d.sunRayOrigin, (key) => t(key), (sunRayOrigin) => set({ sunRayOrigin }))}
-          ${toggleRow({
-            id: 'gs-moon', icon: 'mdi:moon-waning-crescent',
-            title: st('gs.moon'),
-            caption: moonStatus
-              ? html`${st('gs.moon_hint')}<span style="display:block" data-moon-status=${moonStatus.reason}>${moonStatusText(moonStatus, st)}</span>`
-              : st('gs.moon_hint'),
+          ${toggleRow({ id: 'gs-moon', icon: 'mdi:moon-waning-crescent', title: st('gs.moon'),
             checked: d.moon, onChange: (v) => set({ moon: v }),
-          })}`,
-      })}
-      ${formCard({
+          })}
+          ${callout({ text: moonStatus ? moonStatusText(moonStatus, st) : st('gs.moon_hint') })}`, })}` },
+        { id: 'zigbee', title: t('gs.card_zigbee'), body: html`${formCard({
+        id: 'zigbee',
+        title: t('gs.card_zigbee'),
+        help: zigbeeHelp,
+        body: html`<hp-zigbee-topology-settings embedded .active=${selectedSettingsSection(host, 'general') === 'zigbee'} .hass=${host.hass} .value=${d.zigbeeTopology}
+          .savedEnabled=${zigbeeTopologySettingsOf(host._settings).enabled} .devices=${host._devices} .registry=${host._haRegistry}
+          @hp-topology-settings-change=${(event: CustomEvent<ZigbeeTopologySettings>) => set({ zigbeeTopology: event.detail })}></hp-zigbee-topology-settings>`,
+      })}` },
+        { id: 'data', title: st('gs.section_maintenance'), body: html`${formCard({
         id: 'data',
-        title: t('gs.card_data'),
+        title: st('gs.section_maintenance'),
         body: html`
           ${host._canEdit ? html`
-            ${subsection({ title: t('gs.backup_group'), help: this._help('gs.backup_group.help') })}
+            
             <div class="hpf-actions">
-              <button class="btn" @click=${() => this._openBackupExport()}>
+              <button class="btn" @click=${() => leaveFor(() => this._openBackupExport())}>
                 <ha-icon icon="mdi:download"></ha-icon>${st('backup.export_open')}
               </button>
               <span class="backupupload">
@@ -273,25 +252,31 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
                   ((e.currentTarget as HTMLElement).nextElementSibling as HTMLInputElement | null)?.click()}>
                   <ha-icon icon="mdi:upload"></ha-icon>${st('backup.import_open')}
                 </button>
-                <input type="file" accept="application/json,.json" @change=${(event: Event) => this._pickBackupImport(event)} />
+                <input type="file" accept="application/json,.json" @change=${(event: Event) => {
+                  const input = event.target as HTMLInputElement;
+                  const file = input.files?.[0]; input.value = '';
+                  if (file && host._canImportBackup) void leaveFor(() => this._importBackupFile(file));
+                }} />
               </span>
               ${host._canOptimizeUndo && host._undoKind === 'import' ? html`
                 <button class="btn" @click=${() => this._undoPlanOptimization()} ?disabled=${host._optimizeUndoBusy}>
                   <ha-icon icon="mdi:undo-variant"></ha-icon>${st('backup.undo_import')}
                 </button>` : nothing}
             </div>` : nothing}
-          ${subsection({ title: st('gs.grid_group'), help: this._help('gs.grid_group.help') })}
+          
           <div class="hpf-actions">
             <button class="btn" @click=${() => this.optimizePlans.open()} ?disabled=${!host._canEdit || host._kiosk}>
               <ha-icon icon="mdi:broom"></ha-icon>${t('gs.align_all')}
             </button>
-            ${host._canOptimizeUndo && host._undoKind !== 'import' ? html`
-              <button class="btn" @click=${() => this._undoPlanOptimization()} ?disabled=${host._optimizeUndoBusy || !host._canEdit || host._kiosk}>
+            ${html`
+              <button class="btn" @click=${() => this._undoPlanOptimization()} ?disabled=${!host._canOptimizeUndo || host._undoKind === 'import' || host._optimizeUndoBusy || !host._canEdit || host._kiosk}>
                 <ha-icon icon="mdi:undo-variant"></ha-icon>${st('gs.optimize_undo')}
-              </button>` : nothing}
+              </button>`}
           </div>
+          ${callout({ text: html`${st('gs.converter_description')} <a href="https://houseplan.tech/convert" target="_blank" rel="noopener noreferrer">${st('gs.converter_link')}</a><br />${st('gs.converter_result')}` })}
           ${!host._canEdit || host._kiosk ? html`<p class="rhint">${st('gs.optimize_write_required')}</p>` : nothing}`,
-      })}
+      })}` },
+      ], st('dialog.section'))}
     </div>
     <div class="row dialog-action-footer hpf-footer" slot="footer">
       <div class="dialog-action-group">

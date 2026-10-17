@@ -196,8 +196,8 @@ const sameBox = (a, b) => !!a && !!b && a.every((value, index) => Math.abs(value
   await page.evaluate(async () => { window.__card._openSettingsDialog(); await window.__card.updateComplete; });
   const pick = (value) => page.evaluate(async (value) => {
     const card = window.__card;
-    const input = card.renderRoot.querySelector(`hp-dialog input[name="gs-bg-mode"][value="${value}"]`);
-    input?.click();
+    const input = card.renderRoot.querySelector('hp-dialog select[name="gs-bg-mode"]');
+    if(input){input.value=value;input.dispatchEvent(new Event("change",{bubbles:true}));}
     await card.updateComplete;
     return !!input;
   }, value);

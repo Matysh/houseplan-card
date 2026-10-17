@@ -27,8 +27,8 @@
   "scan_unavailable": "MQTT n’est pas disponible ou n’est pas pris en charge dans Home Assistant.",
   "status_idle": "Données non chargées",
   "status_loading": "Chargement…",
-  "status_ready": "Reçu : {time}",
-  "status_stale": "Reçu : {time} · obsolète",
+  "status_ready": "Données reçues : {time}",
+  "status_stale": "Données reçues : {time} · anciennes et potentiellement incomplètes",
   "status_partial": "Reçu : {time} · données incomplètes",
   "status_no_links": "Reçu : {time} · aucune route confirmée",
   "error_permission": "Les droits administrateur sont requis.",
@@ -52,5 +52,12 @@
   "error_storage_read": "Cartes enregistrées illisibles, non écrasées. Vérifiez le stockage HA et la version de l’intégration.",
   "error_storage_clear": "Suppression impossible. Aucune nouvelle analyse lancée. Vérifiez le stockage HA et réessayez.",
   "error_capacity_exceeded": "Limite de 8 cartes ou requêtes actives atteinte. Les cartes enregistrées sont conservées.",
-  "error_disabled": "Activez et enregistrez les liens Zigbee avant d’actualiser."
+  "error_disabled": "Activez et enregistrez les liens Zigbee avant d’actualiser.",
+  "scan_new_hint": "La requête continue en arrière-plan et peut prendre 10 minutes ou plus. Vous pouvez fermer les paramètres.",
+  "scan_replace_hint": "La carte enregistrée de ce topic sera supprimée avant la nouvelle requête. Elle continue en arrière-plan pendant 10 minutes ou plus ; vous pouvez fermer les paramètres.",
+  "z2m_duration": "Le scan peut durer plus de 10 minutes et ralentir temporairement le réseau Zigbee.",
+  "discovery_unknown": "Certaines intégrations n’ont pas pu être identifiées. Les sources enregistrées et la configuration manuelle restent disponibles.",
+  "zha_manual": "Configurer ZHA manuellement",
+  "z2m_manual": "Configurer Zigbee2MQTT manuellement",
+  "scan_unknown_hint": "Si une carte est enregistrée pour ce topic, elle sera supprimée avant le scan. La requête continue en arrière-plan et peut durer environ 10 minutes ou plus."
 }

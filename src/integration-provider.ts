@@ -12,6 +12,7 @@ export interface IntegrationProvider {
 export interface IntegrationMetadataSnapshot {
   revision: number;
   loaded: boolean;
+  entriesAvailable?: boolean;
   configEntries: Record<string, any>;
   manifests: Record<string, any>;
 }
@@ -19,6 +20,7 @@ export interface IntegrationMetadataSnapshot {
 interface MetadataCache {
   revision: number;
   loaded: boolean;
+  entriesAvailable?: boolean;
   configEntries: Record<string, any>;
   manifests: Record<string, any>;
   listeners: Set<() => void>;
@@ -73,6 +75,7 @@ async function loadMetadata(hass: any, cache: MetadataCache): Promise<void> {
       hass.callWS({ type: 'manifest/list' }),
     ]);
     if (entriesResult.status === 'fulfilled' && Array.isArray(entriesResult.value)) {
+      cache.entriesAvailable = true;
       cache.configEntries = Object.fromEntries(
         entriesResult.value
           .filter((entry: any) => typeof entry?.entry_id === 'string')
@@ -169,6 +172,7 @@ export function integrationMetadataSnapshot(hass: any): IntegrationMetadataSnaps
     ? {
         revision: cache.revision,
         loaded: cache.loaded,
+        entriesAvailable: cache.entriesAvailable === true,
         configEntries: cache.configEntries,
         manifests: cache.manifests,
       }

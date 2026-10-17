@@ -19,6 +19,7 @@ export class HpHelp extends LitElement {
     text: { type: String },
     ariaLabel: { type: String, attribute: 'aria-label' },
     pointerHover: { type: Boolean, attribute: 'data-pointer-hover', reflect: true },
+    instant: { type: Boolean, reflect: true },
     _open: { state: true },
     _forceFallback: { state: true },
   };
@@ -57,6 +58,9 @@ export class HpHelp extends LitElement {
       height: 18px;
       fill: currentColor;
     }
+
+    :host([instant]) .trigger { cursor:pointer; transition:color 150ms,background 150ms; }
+    :host([instant]) .trigger svg { width:20px; height:20px; }
 
     :host([data-pointer-hover]) .trigger:hover,
     .trigger:focus-visible,
@@ -152,6 +156,7 @@ export class HpHelp extends LitElement {
   text = '';
   ariaLabel = '';
   pointerHover = false;
+  instant = false;
 
   private _open = false;
   private _openTimer = 0;
@@ -229,6 +234,11 @@ export class HpHelp extends LitElement {
     if (!this.pointerHover || !win || this._open || this._openTimer) return;
     if (this._closeTimer) win.clearTimeout(this._closeTimer);
     this._closeTimer = 0;
+    if (this.instant) {
+      this._hoverOwned = true;
+      void this._openHelp();
+      return;
+    }
     this._openTimer = win.setTimeout(() => {
       this._openTimer = 0;
       if (!this.isConnected) return;

@@ -40,7 +40,7 @@ test('#659 common dialogs and keyboard markers keep their source-level wiring', 
   );
   contains('src/editors/form-kit.ts', 'onInput: () => undefined,');
   contains('src/hp-dialog.ts',
-    '--ha-dialog-width-md: 560px;',
+    '--ha-dialog-width-md: var(--hp-dialog-wide-width);',
     '--ha-dialog-min-height: var(--safe-height, 100dvh);',
     '--ha-dialog-max-height: var(--safe-height, 100dvh);',
   );
@@ -119,8 +119,8 @@ test('#659 settings handlers preserve dirty, discard, inversion and field owners
     "? callout({ kind: 'warning', role: 'status', text: t('gs.sun_missing') })",
     "title: t('gs.card_fills'),",
     'const canSave = dirty && problems.length === 0 && !d.busy;',
-    'onOpacity: (a) => this._setFillColor(key, { c: v.c, a }),',
-    "textLink(t('gs.north_clear'), () => set({ northDeg: null, northDegInput: '' }))",
+    'this._setFillColor(key, { c: e.detail.color, a: e.detail.opacity });',
+    "trimmed === '' ? { northDeg: null }",
   );
   contains('src/hp-zigbee-topology-settings.ts',
     'if (this.embedded) return this._renderEmbedded();');

@@ -3582,7 +3582,7 @@ const MUTANT_DEFINITIONS = [
       + 'width; falling back to HA generic medium width recreates the released/native mismatch',
     patches: [{
       file: 'src/hp-dialog.ts',
-      find: '      --ha-dialog-width-md: 560px;',
+      find: '      --ha-dialog-width-md: var(--hp-dialog-wide-width);',
       replace: '      --ha-dialog-width-md: 580px;',
     }],
   },
@@ -17355,13 +17355,13 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'general-tile-opacity-writes-a-neighbour-key',
     guard: 'node demo/smoke_general_settings_form.mjs',
-    because: '#600 К1/AC3: у плитки цвета своё число прозрачности, и оно обязано писать '
+    because: '#948 AC3: прозрачность в пикере плитки обязана писать '
       + 'в свой цвет палитры. Восемь одинаковых плиток подряд — соседний ключ на глаз '
       + 'не отличить, а в конфиг уедет чужая прозрачность',
     patches: [{
       file: 'src/editors/general-settings-dialog.ts',
-      find: "      onOpacity: (a) => this._setFillColor(key, { c: v.c, a }),",
-      replace: "      onOpacity: (a) => this._setFillColor(key === 'light_on' ? 'light_off' : key, { c: v.c, a }),",
+      find: "          this._setFillColor(key, { c: e.detail.color, a: e.detail.opacity });",
+      replace: "          this._setFillColor(key === 'light_on' ? 'light_off' : key, { c: e.detail.color, a: e.detail.opacity });",
     }],
   },
   {
@@ -17406,12 +17406,12 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'general-north-clear-writes-zero',
     guard: 'node demo/smoke_general_settings_form.mjs',
-    because: '#600 §5.2: «Clear» возвращает север в «не задан» (null), а не в 0°: ноль — '
+    because: '#948: пустое поле возвращает север в «не задан» (null), а не в 0°: ноль — '
       + 'это направление, и лучи через окна с ним считаются, а с null — нет',
     patches: [{
       file: 'src/editors/general-settings-dialog.ts',
-      find: "textLink(t('gs.north_clear'), () => set({ northDeg: null, northDegInput: '' }))",
-      replace: "textLink(t('gs.north_clear'), () => set({ northDeg: 0, northDegInput: '0' }))",
+      find: "trimmed === '' ? { northDeg: null }",
+      replace: "trimmed === '' ? { northDeg: 0 }",
     }],
   },
   {

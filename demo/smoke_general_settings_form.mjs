@@ -21,21 +21,20 @@ const out = await page.evaluate(async () => {
 
   c._openSettingsDialog(); await upd();
   const d0 = JSON.parse(JSON.stringify(c._settingsDialog));
-  // #807: three segments, the same control as «Is this device a light source?».
-  const batteryRadio = (mode) => q(`input[type="radio"][name="gs-device-battery"][value="${mode}"]`);
-  const batteryField = batteryRadio('all')?.closest('.hpf-field');
-  o.batteryDefaultAllInDisplay = d0.deviceBattery === 'all' && batteryRadio('all')?.checked === true
+  const batterySelect = () => q('select[name="gs-device-battery"]');
+  const batteryRadio = mode => ({
+    checked: batterySelect()?.value === mode,
+    click: () => { const el=batterySelect(); el.value=mode; el.dispatchEvent(new Event('change',{bubbles:true})); },
+  });
+  const batteryField = batterySelect()?.closest('.hpf-field');
+  o.batteryDefaultAllInDisplay = d0.deviceBattery === 'all' && batterySelect()?.value === 'all'
     && batteryField?.closest('.hpf-card')?.dataset.card === 'display'
-    && batteryField?.querySelector('.hpf-label')?.textContent.trim() === 'Show device battery status'
-    && JSON.stringify([...(batteryField?.querySelectorAll('.hpf-seg label') || [])].map((l) => l.textContent.trim()))
-      === JSON.stringify(['All', 'Low only', 'None'])
-    && batteryField?.querySelector('.hpf-seg')?.getAttribute('role') === 'radiogroup';
-
+    && batteryField.querySelectorAll('option').length === 3 && !batteryField.querySelector('.hpf-hint');
   // --- AC1: семь карточек по §5.1, старой разметки нет ----------------------
-  o.sevenCardsInOrder = JSON.stringify(qa('.hpf-card').map((card) => card.dataset.card))
-    === JSON.stringify(['display', 'zigbee', 'fills', 'glow', 'plan', 'sun', 'data']);
+  o.sixCardsInOrder = JSON.stringify(qa('.hpf-card').map((card) => card.dataset.card))
+    === JSON.stringify(['display', 'plan', 'fills', 'sun', 'zigbee', 'data']);
   o.noLegacyMarkup = qa('.rhint, .srcrow, .dispsection, fieldset, .gsrow, .colorrow, .helpfieldlabel, select.areasel').length === 0;
-  o.noNativeSelects = qa('select').length === 0;
+  o.namedSelects = qa('select[name]').length === 3 && qa('select[name]').every(el => el.getAttribute('aria-label'));
   // Дефект 1 из #600: у карточки Zigbee один заголовок — свой, а компонент
   // внутри в режиме embedded заголовок не рисует.
   const zigbee = q('.hpf-card[data-card="zigbee"]');
@@ -46,15 +45,17 @@ const out = await page.evaluate(async () => {
     && !!topo.shadowRoot.querySelector('.hpf-toggle input[type="checkbox"]');
   o.colorTilesCount = qa('.hpf-colortile').length === 9; // 8 заливок + цвет свечения, без затемнения #943
   o.wallFillIsAPlate = !!q('.hpf-card[data-card="plan"] .hpf-colorrow .hpf-colorfield');
-  o.compassIs44 = (() => { const b = q('.compass')?.getBoundingClientRect(); return !!b && Math.round(b.width) === 44 && Math.round(b.height) === 44; })();
+  q('[data-section-target="sun"]').click(); await upd();
+  o.compassIs148 = (() => { const b = q('.hpf-north-dial')?.getBoundingClientRect(); return !!b && Math.round(b.width) === 148 && Math.round(b.height) === 148; })();
+  q('[data-section-target="display"]').click(); await upd();
   o.sunMissingIsACallout = !c.hass.states['sun.sun']
     ? !!qa('.hpf-callout').find((n) => n.textContent.trim() === c._t('gs.sun_missing'))
     : true;
 
   // --- AC9 ----------------------------------------------------------------
-  const toggles = qa('.hpf-toggle > input[type="checkbox"]');
+  const toggles = qa('.hpf-settings-pane:not([hidden]) .hpf-toggle > input[type="checkbox"]');
   o.toggleTargetsAre44 = toggles.length >= 3 && toggles.every((i) => { const b = i.getBoundingClientRect(); return b.width >= 44 && b.height >= 44; });
-  o.segmentsAreRadiogroups = qa('.hpf-seg').length === 3 && qa('.hpf-seg').every((s) => s.getAttribute('role') === 'radiogroup');
+  o.noRedundantSegments = qa('.hpf-seg').length === 0;
 
   // --- К10 ------------------------------------------------------------------
   o.saveDisabledWhenClean = saveBtn().disabled === true && statusText() === '';
@@ -66,12 +67,12 @@ const out = await page.evaluate(async () => {
 
   // --- К1: плитки, плашки, поля -------------------------------------------
   const lightsOnTile = qa('.hpf-card[data-card="fills"] .hpf-colortile')[0];
-  input(lightsOnTile.querySelector('.hpf-colortile-meta input'), '33'); await upd();
+  lightsOnTile.querySelector('hp-color-opacity').dispatchEvent(new CustomEvent('hp-color-opacity-change', {detail:{color:d0.colors.light_on.c,opacity:.33},bubbles:true,composed:true})); await upd();
   o.tileOpacityWritesOwnKey = Math.abs(c._settingsDialog.colors.light_on.a - 0.33) < 1e-9
     && c._settingsDialog.colors.light_on.c === d0.colors.light_on.c
     && c._settingsDialog.colors.light_off.a === d0.colors.light_off.a;
   o.tileHexPrinted = lightsOnTile.querySelector('.hpf-hex').textContent === d0.colors.light_on.c.toUpperCase();
-  input(q('.hpf-card[data-card="plan"] .hpf-colorrow .hpf-opacity input'), '40'); await upd();
+  q('.hpf-card[data-card="plan"] hp-color-opacity').dispatchEvent(new CustomEvent('hp-color-opacity-change', {detail:{color:d0.colors.wall_fill.c,opacity:.4},bubbles:true,composed:true})); await upd();
   o.wallFillOpacityWritesOwnKey = Math.abs(c._settingsDialog.colors.wall_fill.a - 0.4) < 1e-9;
   input(q('#gs-glow-radius'), '4.5'); await upd();
   o.glowRadiusWrites = c._settingsDialog.glowRadius === 4.5;
@@ -86,17 +87,18 @@ const out = await page.evaluate(async () => {
     && c._settingsDialog.northDegInput === '400' && q('#gs-north').value === '400' && saveBtn().disabled === true
     && q('#gs-north').getAttribute('aria-invalid') === 'true' && !!q('.hpf-status .hpf-link');
   input(q('#gs-north'), '45'); await upd();
-  o.northWritesAndClearLinkAppears = c._settingsDialog.northDeg === 45
-    && q('.compass svg').style.transform === 'rotate(45deg)'
-    && [...qa('.hpf-card[data-card="sun"] .hpf-link')].some((l) => l.textContent === c._t('gs.north_clear'));
-  [...qa('.hpf-card[data-card="sun"] .hpf-link')].find((l) => l.textContent === c._t('gs.north_clear')).click(); await upd();
-  o.clearResetsNorth = c._settingsDialog.northDeg === null && c._settingsDialog.northDegInput === '';
-  const outer = qa('input[name="gs-sun-ray-origin"]').find((r) => !r.checked);
-  outer.click(); await upd();
-  o.originSegmentWrites = c._settingsDialog.sunRayOrigin !== d0.sunRayOrigin && c._settingsDialog.sunRays === d0.sunRays;
-  const daynight = qa('input[name="gs-bg-mode"]').find((r) => r.closest('label').textContent.includes(c._t('gs.bg_daynight')));
-  daynight.click(); await upd();
-  o.bgSegmentWritesAndHidesColor = c._settingsDialog.bgMode === 'daynight' && !q('.hpf-card[data-card="plan"] .hpf-field .hpf-colorfield');
+  o.northWritesWithoutReset = c._settingsDialog.northDeg === 45
+    && q('.hpf-north-dial g').getAttribute('transform') === 'rotate(45 74 74)'
+    && !qa('.hpf-card[data-card="sun"] .hpf-link').some(el => el.textContent === c._t('gs.north_clear'));
+  input(q('#gs-north'), ''); await upd();
+  o.emptyNorthStaysUnset = c._settingsDialog.northDeg === null && c._settingsDialog.northDegInput === '';
+  const origin = q('select[name="gs-sun-ray-origin"]'); origin.value = d0.sunRayOrigin === 'inner' ? 'outer' : 'inner';
+  origin.dispatchEvent(new Event('change',{bubbles:true})); await upd();
+  o.originSelectWrites = c._settingsDialog.sunRayOrigin !== d0.sunRayOrigin && c._settingsDialog.sunRays === d0.sunRays;
+  const bg = q('select[name="gs-bg-mode"]'); bg.value='daynight'; bg.dispatchEvent(new Event('change',{bubbles:true})); await upd();
+  o.bgSelectWritesAndHidesColor = c._settingsDialog.bgMode === 'daynight' && !q('.hpf-card[data-card="plan"] .hpf-field .hpf-colorfield');
+  o.fourBackgroundPreviews = qa('.hpf-background-grid figure').length === 4;
+  o.noSeparateOpacityInputs = !q('.hpf-colorfield input') && !q('.hpf-colortile-meta input');
   o.noNativeColorInputs = qa('input[type="color"]').length === 0;
 
   // --- К10: закрытие с изменениями спрашивает ------------------------------

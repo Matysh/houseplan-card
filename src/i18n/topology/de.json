@@ -27,8 +27,8 @@
   "scan_unavailable": "MQTT ist in Home Assistant nicht verfügbar oder wird nicht unterstützt.",
   "status_idle": "Daten nicht geladen",
   "status_loading": "Wird geladen…",
-  "status_ready": "Empfangen: {time}",
-  "status_stale": "Empfangen: {time} · veraltet",
+  "status_ready": "Daten erhalten: {time}",
+  "status_stale": "Daten erhalten: {time} · veraltet und möglicherweise unvollständig",
   "status_partial": "Empfangen: {time} · unvollständige Daten",
   "status_no_links": "Empfangen: {time} · keine bestätigten Routen",
   "error_permission": "Administratorrechte sind erforderlich.",
@@ -52,5 +52,12 @@
   "error_storage_read": "Gespeicherte Karten nicht lesbar und nicht überschrieben. HA-Speicher und Integrationsversion prüfen.",
   "error_storage_clear": "Gespeicherte Karte nicht löschbar. Kein neuer Scan gestartet. HA-Speicher prüfen und erneut versuchen.",
   "error_capacity_exceeded": "Limit von 8 Karten oder aktiven Anfragen erreicht. Gespeicherte Karten bleiben erhalten.",
-  "error_disabled": "Zigbee-Verbindungen zuerst aktivieren und speichern."
+  "error_disabled": "Zigbee-Verbindungen zuerst aktivieren und speichern.",
+  "scan_new_hint": "Die Abfrage läuft im Hintergrund und kann etwa 10 Minuten oder länger dauern. Die Einstellungen können geschlossen werden.",
+  "scan_replace_hint": "Die gespeicherte Karte dieses Topics wird vor der neuen Abfrage gelöscht. Sie läuft etwa 10 Minuten oder länger im Hintergrund; die Einstellungen können geschlossen werden.",
+  "z2m_duration": "Der Scan kann länger als 10 Minuten dauern und das Zigbee-Netz vorübergehend verlangsamen.",
+  "discovery_unknown": "Nicht alle Integrationen wurden erkannt. Gespeicherte Quellen und manuelle Einrichtung bleiben verfügbar.",
+  "zha_manual": "ZHA manuell einrichten",
+  "z2m_manual": "Zigbee2MQTT manuell einrichten",
+  "scan_unknown_hint": "Falls für dieses Topic eine Karte gespeichert ist, wird sie vor dem Scan gelöscht. Die Anfrage läuft im Hintergrund und kann etwa 10 Minuten oder länger dauern."
 }

@@ -24,7 +24,7 @@ export function settingsCopy(host: Pick<HouseplanEditorHostPort, 'hass' | '_conf
     shelp: (key) => {
       const ariaKey = `${key}.aria`;
       if (!hasSettingsTranslation(lang, key) || !hasSettingsTranslation(lang, ariaKey)) return nothing;
-      return html`<hp-help data-help-key=${key} .text=${settingsT(lang, key)} .ariaLabel=${settingsT(lang, ariaKey)}></hp-help>`;
+      return html`<hp-help instant data-help-key=${key} .text=${settingsT(lang, key)} .ariaLabel=${settingsT(lang, ariaKey)}></hp-help>`;
     },
   };
 }

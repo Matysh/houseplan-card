@@ -34,6 +34,7 @@ let dialogSequence = 0;
 export class HpDialog extends LitElement {
   static properties = {
     title: { type: String },
+    subtitle: { type: String },
     icon: { type: String },
     wide: { type: Boolean, reflect: true },
     alert: { type: Boolean, reflect: true },
@@ -110,6 +111,7 @@ export class HpDialog extends LitElement {
     .title ha-icon {
       flex: none;
       color: var(--hp-accent, #d89300);
+      --mdc-icon-size: var(--hp-dialog-icon-size, 24px);
     }
 
     .title-text {
@@ -203,10 +205,11 @@ export class HpDialog extends LitElement {
          geometry as the native form shell without reaching into HA's shadow
          tree. The light-DOM form owns its 16 px canvas padding, so HA must not
          add a second inset around it. */
-      --ha-dialog-width-md: 560px;
+      --ha-dialog-width-md: var(--hp-dialog-wide-width);
       --ha-dialog-max-height: min(940px, calc(100dvh - 48px));
       --dialog-content-padding: 0;
     }
+    .subtitle { display:block; margin-top:5px; font-size:12px; font-weight:400; color:var(--secondary-text-color); }
     :host([form-shell]) .surface { max-height: min(940px, calc(100vh - 48px)); }
     :host([form-shell]) .content {
       flex: 1 1 auto;
@@ -267,12 +270,15 @@ export class HpDialog extends LitElement {
       border: 0;
       border-radius: 50%;
       cursor: pointer;
+      transition:var(--hp-dialog-close-transition,none);
     }
+    .close ha-icon { transition:var(--hp-dialog-close-transition,none); }
 
     :host([data-pointer-hover]) .close:hover,
     .close:focus-visible {
       background: rgb(127 127 127 / 0.16);
     }
+    :host([data-pointer-hover]) .close:hover ha-icon { transform:var(--hp-dialog-close-hover-transform,none); }
 
     .content {
       min-height: 0;
@@ -301,6 +307,7 @@ export class HpDialog extends LitElement {
   icon = '';
   badge = '';
   formShell = false;
+  subtitle = '';
   wide = false;
   alert = false;
   describedBy = '';
@@ -618,7 +625,7 @@ export class HpDialog extends LitElement {
   protected render() {
     const title = html`<span class="title" id=${this._titleId}>
       ${this.icon ? html`<ha-icon icon=${this.icon}></ha-icon>` : nothing}
-      <span class="title-text">${this.title}</span>
+      <span class="title-text">${this.title}${this.subtitle ? html`<span class="subtitle">${this.subtitle}</span>` : nothing}</span>
       ${this.badge ? html`<span class="badge" title=${this.badge}>${this.badge}</span>` : nothing}
     </span>`;
 

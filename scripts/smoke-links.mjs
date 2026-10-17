@@ -37,6 +37,11 @@ export const SMOKE_LINKS = [
     because: '#920: native settings, source picker, write refusal, live row/tooltip, preview, Flat/2.5D/kiosk and unchanged static surface. The CO2 resolver is reached through rendered DOM, not called by the smoke.',
   },
   {
+    files: ['src/styles/settings-dialogs.styles.ts', 'src/editors/settings-sections.ts', 'src/editors/settings-north.ts'],
+    smokes: ['smoke_settings_navigation.mjs'],
+    because: '#948: native form navigation observes draft nodes, compass values, live theme changes and mobile geometry without importing the layout helpers.',
+  },
+  {
     files: ['src/device-contact.styles.ts'],
     smokes: ['smoke_device_contact_zoom.mjs'],
     because: '#951: native zoom observes the actual SVG screen matrix and the ordinary shell border, not stylesheet text; covers small cores, DPR, themes and static cards.',

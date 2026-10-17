@@ -14,6 +14,7 @@ import { html, nothing, type TemplateResult } from 'lit';
 
 import { CARD_DIALOG_FORM_KIT, cardDialogFormKitTokens, formKitCss } from '../styles/form-kit.styles';
 import { colorTileInk } from './color-tile-ink';
+import { settingsDialogCss } from '../styles/settings-dialogs.styles';
 
 /**
  * Лист набора живёт в ленивом редакторском графе, а не в `cardStyles` (#594 AC8).
@@ -25,7 +26,7 @@ import { colorTileInk } from './color-tile-ink';
  * на `<style>` там, где конструируемых листов нет.
  */
 const FORM_KIT_CSS = cardDialogFormKitTokens
-  + formKitCss(CARD_DIALOG_FORM_KIT, { withSwitch: false });
+  + formKitCss(CARD_DIALOG_FORM_KIT, { withSwitch: false }) + settingsDialogCss;
 const adopted = new WeakSet<ShadowRoot>();
 let sheet: CSSStyleSheet | null = null;
 
@@ -220,6 +221,16 @@ export function segmented<T extends string>({
   </div>`;
 }
 
+/** Shared single-choice list; the same value contract as the existing segments. */
+export function selectControl<T extends string>({
+  name, value, options, onChange, ariaLabel, disabled = false,
+}: SegmentedOptions<T>): TemplateResult {
+  return html`<select class="hpf-select" name=${name} .value=${value} aria-label=${ariaLabel ?? nothing}
+    ?disabled=${disabled} @change=${(event: Event) => onChange((event.target as HTMLSelectElement).value as T)}>
+    ${options.map(option => html`<option value=${option.value} ?selected=${option.value === value} ?disabled=${option.disabled}>${option.label}</option>`)}
+  </select>`;
+}
+
 export interface ValueTile {
   label: string;
   icon: string;
@@ -276,13 +287,13 @@ export function colorField({
   return html`<div class="hpf-colorfield">
     ${picker}
     <code class="hpf-hex">${hex.toUpperCase()}</code>
-    ${pct === null ? nothing : html`<span class="hpf-opacity">${opacityLabel ?? ''}
+    ${pct === null ? nothing : onOpacity ? html`<span class="hpf-opacity">${opacityLabel ?? ''}
       <span class="hpf-unit"><input type="number" inputmode="numeric" min="0" max="100" step="1"
         .value=${String(pct)} ?disabled=${disabled} aria-label=${opacityLabel ?? 'Opacity'}
         @input=${(e: Event) => {
           const n = Number((e.target as HTMLInputElement).value);
-          if (Number.isFinite(n) && onOpacity) onOpacity(Math.min(1, Math.max(0, n / 100)));
-        }} /><span>%</span></span></span>`}
+          if (Number.isFinite(n)) onOpacity(Math.min(1, Math.max(0, n / 100)));
+        }} /><span>%</span></span></span>` : html`<span class="hpf-opacity" aria-label=${opacityLabel ?? nothing}>${pct}%</span>`}
     ${resetLabel && onReset ? html`<button class="hpf-link" type="button" ?disabled=${disabled} @click=${onReset}>${resetLabel}</button>` : nothing}
   </div>`;
 }
@@ -295,7 +306,8 @@ export interface ColorTileOptions {
   opacityLabel: string;
   /** Готовый `hp-color-opacity` (Q5): свотч открывает существующую панель. */
   picker: TemplateResult;
-  onOpacity: (opacity: number) => void;
+  /** @deprecated Opacity is edited by the atomic picker; retained during form migration. */
+  onOpacity?: (opacity: number) => void;
 }
 
 export { isLightHex } from './color-tile-ink';
@@ -316,12 +328,12 @@ export function colorTile({ label, hex, opacity, opacityLabel, picker, onOpacity
     </div>
     <div class="hpf-colortile-meta">
       <code class="hpf-hex">${hex.toUpperCase()}</code>
-      <span class="hpf-unit" title=${opacityLabel}><input type="number" inputmode="numeric" min="0" max="100" step="1"
+      ${onOpacity ? html`<span class="hpf-unit"><input type="number" inputmode="numeric" min="0" max="100" step="1"
         .value=${String(pct)} aria-label=${opacityLabel}
         @input=${(e: Event) => {
           const n = Number((e.target as HTMLInputElement).value);
           if (Number.isFinite(n)) onOpacity(Math.min(1, Math.max(0, n / 100)));
-        }} /><span>%</span></span>
+        }} /><span>%</span></span>` : html`<span class="hpf-opacity" aria-label=${opacityLabel}>${pct}%</span>`}
     </div>
   </div>`;
 }

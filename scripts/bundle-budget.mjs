@@ -751,7 +751,11 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // Matched source builds b8964e5f7 -> room CO2 add 926 B gzip to this graph.
 // Only that measured cost enters the reference; bands, absolute budgets and
 // other ceilings are unchanged. Room preview/copy remain in the lazy graph.
-export const LAZY_EDITOR_GZIP_CEILING = 270_411;
+// #948: matched 24f7ab2f source is 270966 B; the shared settings/navigation,
+// compass/previews and integration-aware diagnostics add 5099 B. Carry only
+// that measured cost into the reference; preserve the inherited 1481-B gap,
+// the 2000-B band and the initial/absolute View limits. View itself shrinks 412 B.
+export const LAZY_EDITOR_GZIP_CEILING = 275_510;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

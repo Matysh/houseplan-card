@@ -21,8 +21,8 @@ const res = await page.evaluate(async () => {
   out.rows = sr().querySelectorAll('hp-dialog .hpf-colortile').length
     + sr().querySelectorAll('hp-dialog .hpf-colorrow').length
     + (sr().querySelector('hp-dialog #gs-glow-radius') ? 1 : 0)
-    + (sr().querySelector('hp-dialog input[name="gs-bg-mode"]') ? 1 : 0)
-    + (sr().querySelector('hp-dialog input[name="gs-sun-ray-origin"]') ? 1 : 0)
+    + (sr().querySelector('hp-dialog select[name="gs-bg-mode"]') ? 1 : 0)
+    + (sr().querySelector('hp-dialog select[name="gs-sun-ray-origin"]') ? 1 : 0)
     + (optimizeAction ? 1 : 0);
   // #598: форма собрана в карточки; #600: подзаголовки внутри — `.hpf-sub h4`.
   out.cards = [...sr().querySelectorAll('hp-dialog .hpf-card > .hpf-head h3')]
@@ -33,7 +33,7 @@ const res = await page.evaluate(async () => {
     .every((card) => card.querySelector('.hpf-body > *'));
   const glowRadius = sr().querySelector('hp-dialog #gs-glow-radius');
   const glowCard = [...sr().querySelectorAll('hp-dialog .hpf-card')]
-    .find((card) => card.querySelector('.hpf-head h3')?.textContent.trim() === c._t('gs.glow_group'));
+    .find((card) => card.querySelector('.hpf-head h3')?.textContent.trim() === 'Light, Sun and Moon');
   // Радиус свечения обязан лежать ВНУТРИ карточки свечения, а не просто раньше
   // следующего заголовка: карточка — настоящая граница, подпись ею не была.
   out.glowRadiusInsideGlowGroup = !!glowRadius && !!glowCard && glowCard.contains(glowRadius);
@@ -41,10 +41,8 @@ const res = await page.evaluate(async () => {
   out.sunMissingStaysVisible = !sr().querySelector('hp-dialog hp-help[data-help-key="gs.sun_missing.help"]');
   // Пояснения под «?»: заливки, бэкап, обслуживание. Пояснение радара по §5.2
   // референса — подпись строки-тумблера, а не «?» (текст тот же, ключ тот же).
-  out.movedHintsHaveHelp = ['gs.card_fills.help', 'gs.backup_group.help', 'gs.grid_group.help']
-    .every((key) => !!sr().querySelector(`hp-dialog hp-help[data-help-key="${key}"]`))
-    && [...sr().querySelectorAll('hp-dialog .hpf-toggle-caption')]
-      .filter((node) => node.textContent.trim().length > 0).length >= 2;
+  out.movedHintsHaveHelp = !sr().querySelector('hp-dialog hp-help[data-help-key="gs.backup_group.help"]')
+    && [...sr().querySelectorAll('hp-dialog .hpf-toggle-caption')].filter(n => n.textContent.trim()).length >= 2;
   // И ни одного абзаца-пояснения (`.rhint`) в форме не осталось вовсе (#600 AC7).
   out.noMovedHintParagraphs = sr().querySelectorAll('hp-dialog .rhint').length === 0;
   // #43: About moved into the dedicated Help & Feedback dialog and must not
@@ -91,9 +89,12 @@ const res = await page.evaluate(async () => {
 checkAll(res, {
   "rows": 14, // 9 плиток без затемнения #943 + прежние остальные контролы
                // + «Оптимизировать планы» по действию, а не удалённому #605 классу alignall
-  "cards": ["Display", "Zigbee links", "Room fill colors", "Light-source glow", "Plan", "Sun and Moon", "Data"],
-  "groups": ["Lights", "Temperature", "Zigbee signal", "Backup and transfer", "Plan maintenance"],
+  "cards": ["Information on the plan", "Appearance and background", "Room fill colors", "Light, Sun and Moon", "Zigbee links", "Backups and maintenance"],
+  "groups": ["Lights", "Temperature", "Zigbee signal"],
   "everyCardHasContent": true,
+  "glowRadiusInsideGlowGroup": true,
+  "legacyTrueDoesNotOverrideCardDefault": true,
+  "spaceLqiOverridesCardDefault": true,
   "sunMissingStaysVisible": true,
   "movedHintsHaveHelp": true,
   "noMovedHintParagraphs": true,

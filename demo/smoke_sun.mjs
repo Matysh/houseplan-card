@@ -175,10 +175,11 @@ await page.evaluate(async () => {
   c._openSettingsDialog();
   c.requestUpdate();
   await c.updateComplete;
-  c.shadowRoot.querySelector('.compass').scrollIntoView({ block: 'center' });
+  c.shadowRoot.querySelector('[data-section-target="sun"]').click(); await c.updateComplete;
+  c.shadowRoot.querySelector('.hpf-north-dial').scrollIntoView({ block: 'center' });
 });
 const box = await page.evaluate(() => {
-  const r = window.__card.shadowRoot.querySelector('.compass').getBoundingClientRect();
+  const r = window.__card.shadowRoot.querySelector('.hpf-north-dial').getBoundingClientRect();
   return { cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
 });
 // #600 §3.1: компас — индикатор 44 px; тянуть по-прежнему можно, радиус кольца ~18.
@@ -191,12 +192,13 @@ const dlg = await page.evaluate(async () => {
   const sr = c.shadowRoot;
   // #600 §5.1: источник лучей — сегмент (радиогруппа `gs-sun-ray-origin`),
   // а не `<select>`; лучи — строка-тумблер набора; север — поле `#gs-north`.
-  const originRadios = () => [...sr.querySelectorAll('hp-dialog input[name="gs-sun-ray-origin"]')];
-  const originValue = () => originRadios().find((r) => r.checked)?.closest('label')?.textContent.trim();
-  const pick = (labelKey) => originRadios().find((r) => r.closest('label').textContent.trim() === c._t(labelKey));
+  const originSelect = () => sr.querySelector('hp-dialog select[name="gs-sun-ray-origin"]');
+  const originRadios = () => [...originSelect().options];
+  const originValue = () => originSelect().selectedOptions[0]?.textContent.trim();
+  const pick = labelKey => ({click(){const el=originSelect();el.value=[...el.options].find(o=>o.textContent.trim()===c._t(labelKey)).value;el.dispatchEvent(new Event('change',{bubbles:true}));}});
   const out = {
     compassDragSets180: c._settingsDialog?.northDeg === 180,
-    dialogHasBgSegment: sr.querySelectorAll('hp-dialog input[name="gs-bg-mode"]').length === 2,
+    dialogHasBgSegment: sr.querySelectorAll('hp-dialog select[name="gs-bg-mode"] option').length === 2,
     dialogHasRaysToggle: !!sr.querySelector('hp-dialog #gs-sun-rays'),
     dialogHasOriginSegment: originRadios().length === 2,
     originDefaultsInner: originValue() === c._t('gs.sun_ray_origin.inner') && c._settingsDialog?.sunRayOrigin === 'inner',
