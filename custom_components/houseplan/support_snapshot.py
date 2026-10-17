@@ -234,12 +234,21 @@ def capture_snapshot(
                     source = value.get("source")
                     if isinstance(source, dict) and source.get("entity_id"):
                         refs.add(source["entity_id"])
+                    if isinstance(source, dict) and source.get("ref"):
+                        refs.add(source["ref"])
             action = row.get("action") or {}
             refs.update(action.get("targets") or [])
             refs.update(
                 item["ref"] for item in action.get("skipped") or [] if item.get("ref")
             )
             marker_refs = {ref for ref in refs if ref.startswith("marker:")}
+            # Derived virtual values may depend on incoming controllers, not
+            # just the target binding. With any denied dependency in this cut
+            # we cannot prove that graph readable without another resolver:
+            # conservatively omit the claim rather than export its state.
+            if marker_refs and denied:
+                reasons.add("access_denied")
+                continue
             for ref in marker_refs:
                 target = markers.get(ref[7:])
                 if target is None:

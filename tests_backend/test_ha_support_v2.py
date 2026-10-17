@@ -322,6 +322,7 @@ async def test_client_action_panel_claims_and_foreign_runs_cannot_bypass_read_ac
             }
         },
     }
+    cfg["markers"].append({"id": "v", "binding": "virtual"})
     obs = observations()
     obs["devices"] = [
         {
@@ -330,6 +331,18 @@ async def test_client_action_panel_claims_and_foreign_runs_cannot_bypass_read_ac
             "action": {"targets": ["sensor.secret"]},
         }
     ]
+    obs["devices"].append(
+        {
+            "id": "v",
+            "binding": "virtual",
+            "sources": ["marker:m"],
+            "face": {
+                "source": {"kind": "derived_marker_state", "ref": "marker:m"},
+                "shape": "known_enum",
+                "outcome": "value",
+            },
+        }
+    )
     obs["environment"]["panel"] = {
         "status": "loaded",
         "values": [
@@ -355,6 +368,9 @@ async def test_client_action_panel_claims_and_foreign_runs_cannot_bypass_read_ac
     assert "current" not in snapshot["vacuums"][0]
     assert "sensor.secret" not in scope and "camera.foreign" not in scope
     assert "access_denied" in snapshot["reasons"]
+    monkeypatch.setattr(type(user.permissions), "check_entity", lambda *args: True)
+    readable, _ = capture_snapshot(hass, user, cfg, obs)
+    assert {row["id"] for row in readable["client"]["devices"]} == {"m", "v"}
 
 
 async def test_capture_never_writes_stores_services_or_registry(
