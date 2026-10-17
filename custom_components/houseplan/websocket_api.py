@@ -110,7 +110,11 @@ from .store import (
 from .store import (
     OPTIMIZE_PENDING as _OPTIMIZE_PENDING,
 )
-from .support_package import PACKAGE_VERSIONS, SupportPackageError, build_support_package
+from .support_package import (
+    PACKAGE_VERSIONS,
+    SupportPackageError,
+    build_support_package,
+)
 from .support_preview import async_build_preview
 from .support_snapshot import scope_readable
 from .support_transport import SupportTransportError, async_submit_report

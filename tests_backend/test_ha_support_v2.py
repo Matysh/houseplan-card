@@ -402,3 +402,193 @@ async def test_capture_never_writes_stores_services_or_registry(
         hass, user, {"settings": {}, "spaces": [], "markers": []}, observations()
     )
     assert snapshot["client"]["devices"] == []
+
+
+async def test_populated_ha_capture_projects_real_cached_paths_sources_and_attribute_shapes(
+    hass, hass_ws_client
+):
+    from homeassistant.helpers import entity_registry as er
+    from test_support_package import _facts
+
+    from custom_components.houseplan.support_package import build_support_package
+    from custom_components.houseplan.support_snapshot import capture_snapshot
+
+    await _setup(hass)
+    await hass_ws_client(hass)
+    user = next(user for user in await hass.auth.async_get_users() if user.is_admin)
+    for domain, key in (
+        ("vacuum", "robot"),
+        ("camera", "synthetic"),
+        ("sensor", "reading"),
+    ):
+        er.async_get(hass).async_get_or_create(
+            domain, "mqtt", key, suggested_object_id=key
+        )
+    hass.states.async_set("vacuum.robot", "cleaning")
+    hass.states.async_set(
+        "sensor.reading", "private text", {"signal": "27.34567890123"}
+    )
+    hass.states.async_set(
+        "camera.synthetic",
+        "idle",
+        {
+            "map_name": "",
+            "vacuum_position": {"x": 10, "y": 20},
+            "path": [[0, 0], [1, 1], [True, 2], [3, 3]],
+        },
+    )
+    cfg = {
+        "settings": {},
+        "spaces": [
+            {
+                "id": "floor",
+                "rooms": [
+                    {
+                        "id": "room",
+                        "name": "private room",
+                        "points": [[0, 0], [10, 0], [10, 10]],
+                        "settings": {"temp_source": "entity:sensor.reading"},
+                    }
+                ],
+                "wall_segments": [],
+            }
+        ],
+        "markers": [
+            {
+                "id": "m",
+                "space": "floor",
+                "binding": "entity:vacuum.robot",
+                "vacuum": {
+                    "source": "camera.synthetic",
+                    "map_routes": [
+                        {
+                            "id": "route",
+                            "source": "camera.synthetic",
+                            "map_id": "",
+                            "space": "floor",
+                            "calibration": [1, 0, 0, 1, 10, 20],
+                        }
+                    ],
+                },
+            }
+        ],
+    }
+    obs = observations(7, 9)
+    obs["devices"] = [
+        {
+            "id": "m",
+            "binding": "entity:vacuum.robot",
+            "sources": ["camera.synthetic"],
+            "face": {
+                "source": {
+                    "kind": "entity_attribute",
+                    "entity_id": "sensor.reading",
+                    "attribute": "signal",
+                },
+                "shape": "numeric",
+                "attribute_present": True,
+                "outcome": "value",
+            },
+        }
+    ]
+    obs["vacuums"] = [
+        {
+            "marker": "m",
+            "source": "camera.synthetic",
+            "source_status": "ok",
+            "moving": True,
+            "route": "route",
+            "map_id": "",
+            "rooms": [{"id": "segment", "anchor": [10, 20], "plan_room": "room"}],
+        }
+    ]
+
+    class Recorder:
+        class book:
+            data = {
+                "m": {
+                    "current": {
+                        "path_format": 2,
+                        "source": "camera.synthetic",
+                        "map_id": "",
+                        "route_id": "route",
+                        "paths": [[[0, 0], [1, 1]]],
+                        "started": 100.25,
+                        "ended": None,
+                        "received_at": 110,
+                        "quality": {
+                            "source": "native",
+                            "reason": "ok",
+                            "raw_points": 8,
+                            "stored_points": 2,
+                        },
+                        "provenance": {
+                            "provider": "dreame",
+                            "schema": "tasshack-2.0.2",
+                        },
+                        "final_status": "unconfirmed",
+                    },
+                    "previous": {
+                        "path_format": 2,
+                        "source": "camera.synthetic",
+                        "map_id": "",
+                        "route_id": "route",
+                        "paths": [[[90, 90]]],
+                        "ended": 90,
+                        "final_status": "confirmed",
+                    },
+                }
+            }
+
+    hass.data["houseplan"]["trail_recorder"] = Recorder()
+    snapshot, scope = capture_snapshot(hass, user, cfg, obs)
+    assert {"vacuum.robot", "camera.synthetic", "sensor.reading"} <= set(scope)
+    raw, _ = build_support_package(
+        cfg,
+        {},
+        config_rev=7,
+        layout_rev=9,
+        card_version="1.82.0-beta.1",
+        integration_version="1.82.0-beta.1",
+        home_assistant_version="2026.10.2",
+        runtime=_facts(),
+        package_version=2,
+        diagnostics=obs,
+        server_snapshot=snapshot,
+        namespace="populated",
+    )
+    package = json.loads(raw)
+    vacuum = package["diagnostics"]["vacuums"][0]
+    config = package["plan_backup"]["config"]["markers"][0]["vacuum"]
+    assert (
+        vacuum["current"]["source"]
+        == vacuum["sources"][0]["source"]
+        == config["source"]
+    )
+    assert vacuum["current"]["map_id"] == config["map_routes"][0]["map_id"]
+    assert vacuum["current"]["route_id"] == config["map_routes"][0]["id"]
+    assert vacuum["current"]["quality"]["raw_points"] == 8
+    assert vacuum["current"]["sample"]["fragments"][0]["points"] == [[0, 0], [1, 1]]
+    assert vacuum["previous"]["sample"]["fragments"][0]["points"] == [[90, 90]]
+    assert vacuum["sources"][0]["input"]["invalid_points"] == 1
+    assert len(vacuum["sources"][0]["input"]["fragments"]) == 2
+    assert vacuum["sources"][0]["position"] == [10, 20]
+    assert vacuum["current"]["provenance"]["schema"] == "tasshack-2.0.2"
+    face = package["diagnostics"]["devices"]["client"][0]["face"]
+    fact = next(
+        row
+        for row in package["diagnostics"]["devices"]["entities"]
+        if row["id"] == face["source"]["entity_id"]
+    )
+    assert fact["attributes"] == [
+        {"id": face["source"]["attribute"], "present": True, "shape": "numeric"}
+    ]
+    assert all(
+        value not in raw.decode()
+        for value in (
+            "private text",
+            "private room",
+            "27.34567890123",
+            "camera.synthetic",
+        )
+    )
