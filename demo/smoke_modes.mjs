@@ -11,7 +11,9 @@ const st = () => page.evaluate(() => {
     modeTabs: sr.querySelectorAll('.modetab').length,
     active: sr.querySelector('.modetab.active')?.textContent.trim(),
     // #616: the phone gear (.header-menu-button) is in the DOM but hidden above 480 px.
-    editBtns: sr.querySelectorAll('.head .btn:not(.zb):not(.header-menu-button)').length,
+    // #919: the eye is a separate display control, not an editor action.
+    editBtns: sr.querySelectorAll('.head .btn:not(.zb):not(.header-menu-button):not([data-hp="hidden-devices"])').length,
+    hiddenToggle: sr.querySelectorAll('.head [data-hp="hidden-devices"][aria-pressed="false"]').length,
     gears: sr.querySelectorAll('.tabedit').length,
     // The last bar stays mounted for the exit animation; only an open chrome
     // is an active/visible editor bar.
@@ -85,12 +87,12 @@ out.devClickOpensEditor = await page.evaluate(async () => {
 await page.evaluate(() => window.__card._setMode('view'));
 await page.waitForFunction(() => window.__card._modeTransitionBusy === false);
 out.backToView = (await st()).mode;
-// значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
+// v1.43.1 editor-action oracle (audit T1), plus the separate default-off #919 eye.
 checkAll(out, {
-  "start": {"mode": "view", "modeTabs": 3, "editBtns": 3, "gears": 2, "markupBar": false, "stageClass": "stage mode-view"},
+  "start": {"mode": "view", "modeTabs": 3, "editBtns": 3, "hiddenToggle": 1, "gears": 2, "markupBar": false, "stageClass": "stage mode-view"},
   "viewDragMoved": false,
-  "plan": {"mode": "plan", "modeTabs": 3, "active": "Plan editor", "editBtns": 3, "gears": 2, "markupBar": true, "stageClass": "stage markup tool-draw mode-plan"},
-  "devices": {"mode": "devices", "modeTabs": 3, "active": "Device editor", "editBtns": 3, "gears": 2, "markupBar": true, "stageClass": "stage mode-devices"},
+  "plan": {"mode": "plan", "modeTabs": 3, "active": "Plan editor", "editBtns": 3, "hiddenToggle": 1, "gears": 2, "markupBar": true, "stageClass": "stage markup tool-draw mode-plan"},
+  "devices": {"mode": "devices", "modeTabs": 3, "active": "Device editor", "editBtns": 3, "hiddenToggle": 1, "gears": 2, "markupBar": true, "stageClass": "stage mode-devices"},
   "backToView": "view",
 });
 await finish(browser, out);
