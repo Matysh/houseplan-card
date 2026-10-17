@@ -2,10 +2,11 @@
 import { html, nothing, type TemplateResult } from 'lit';
 
 import {
-  callout, colorField, colorRow, colorTile, colorTiles, ensureFormKitStyles, field, footerStatus,
+  callout, colorField, colorRow, colorTile, colorTiles, field, footerStatus,
   formCard, selectControl, subsection, textLink, toggleRow, unitInput,
 } from './form-kit';
 import { settingsSections, revealSettingsField, selectedSettingsSection } from './settings-sections';
+import { ensureSettingsDialogStyles } from './settings-styles';
 import { settingsNorth } from './settings-north';
 import { settingsBackgroundPreviews } from './settings-background-previews';
 import { forgetGeneralBaseline, generalDirty, generalProblems, type GeneralSettingsDraft } from './general-form-state';
@@ -25,7 +26,7 @@ import type { HouseplanEditorRuntime } from '../houseplan-editor-runtime';
 import { signalVisibilityModeOf, type SignalSpaceSettings } from '../signal-visibility';
 
 export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): TemplateResult {
-  ensureFormKitStyles(this.host);
+  ensureSettingsDialogStyles(this.host);
   const host = this.host;
   const d = host._settingsDialog!;
   const t = host._t.bind(host);
@@ -193,7 +194,14 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           ${colorTiles([tile('lqi_low', 'gs.lqi_low'), tile('lqi_high', 'gs.lqi_high')])}`,
       })}` },
         { id: 'sun', title: st('gs.section_light'), body: html`${formCard({ id: 'sun', title: st('gs.section_light'), body: html`
-          ${colorRow({ label: st('gs.default_light'), picker: tile('glow_light', 'gs.glow_light') })}
+          ${colorRow({ label: st('gs.default_light'), picker: colorField({
+            hex: d.colors.glow_light.c, opacity: d.colors.glow_light.a, opacityLabel: t('space.opacity'),
+            picker: html`<hp-color-opacity .label=${t('gs.glow_light')} hide-label flat-swatch
+              .opacityLabel=${t('space.opacity')} .pickerLabels=${host._colorPickerLabels}
+              .color=${d.colors.glow_light.c} .opacity=${d.colors.glow_light.a} .showOpacity=${true}
+              @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
+                this._setFillColor('glow_light', { c: e.detail.color, a: e.detail.opacity })}></hp-color-opacity>`,
+          }) })}
           ${field({
             label: st('gs.glow_radius'), htmlFor: 'gs-glow-radius', help: this._help('gs.glow_radius.help'),
             error: glowProblem ? st(glowProblem.message) : undefined,
@@ -226,9 +234,12 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           })}
           ${renderSunRayOriginSegment(d.sunRayOrigin, (key) => t(key), (sunRayOrigin) => set({ sunRayOrigin }))}
           ${toggleRow({ id: 'gs-moon', icon: 'mdi:moon-waning-crescent', title: st('gs.moon'),
+            describedBy: 'gs-moon-status',
             checked: d.moon, onChange: (v) => set({ moon: v }),
           })}
-          ${callout({ text: moonStatus ? moonStatusText(moonStatus, st) : st('gs.moon_hint') })}`, })}` },
+          ${callout({ id: 'gs-moon-status', text: moonStatus
+            ? html`<span data-moon-status=${moonStatus.reason}>${moonStatusText(moonStatus, st)}</span>`
+            : st('gs.moon_hint') })}`, })}` },
         { id: 'zigbee', title: t('gs.card_zigbee'), body: html`${formCard({
         id: 'zigbee',
         title: t('gs.card_zigbee'),

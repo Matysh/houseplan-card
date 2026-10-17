@@ -412,6 +412,7 @@ const zoomedLayout = await zoomed.page.evaluate(async () => {
   await card.updateComplete;
   await frame();
 
+  root.querySelector('[data-section-target="plan"]').click(); await card.updateComplete;
   const help = root.querySelector('hp-help[data-help-key="gs.bg_mode.help"]');
   const trigger = help?.shadowRoot?.querySelector('.trigger');
   const stage = root.querySelector('.stage');

@@ -753,10 +753,10 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // other ceilings are unchanged. Room preview/copy remain in the lazy graph.
 // #936: preserve demand-loaded portable backups; combined cost is remeasured after rebase.
 // #948: matched 24f7ab2f source is 270966 B; the shared settings/navigation,
-// compass/previews and integration-aware diagnostics add 5099 B. Carry only
+// compass/previews and integration-aware diagnostics add 5758 B. Carry only
 // that measured cost into the reference; preserve the inherited 1481-B gap,
-// the 2000-B band and the initial/absolute View limits. View itself shrinks 412 B.
-export const LAZY_EDITOR_GZIP_CEILING = 275_510;
+// the 2000-B band and the initial/absolute View limits. View itself shrinks 407 B.
+export const LAZY_EDITOR_GZIP_CEILING = 276_169;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

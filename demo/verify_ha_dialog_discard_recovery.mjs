@@ -52,6 +52,8 @@ const open = async (testCase) => {
       card._openSpaceDialog('edit', card._space);
     } else {
       card._openSettingsDialog();
+      await card.updateComplete;
+      card.shadowRoot.querySelector('[data-section-target="sun"]').click();
     }
     card.requestUpdate();
     await card.updateComplete;

@@ -71,7 +71,7 @@ test('#792 AC9: the general battery setting has complete RU/EN/DE/FR wording', (
   const read = (lang) => JSON.parse(readFileSync(new URL(`../src/i18n/settings/${lang}.json`, import.meta.url), 'utf8'));
   for (const lang of ['ru', 'en', 'de', 'fr']) {
     const dictionary = read(lang);
-    for (const key of ['gs.show_device_battery', 'gs.show_device_battery_hint',
+    for (const key of ['gs.show_device_battery',
       'gs.device_battery_all', 'gs.device_battery_low', 'gs.device_battery_off']) {
       assert.ok(typeof dictionary[key] === 'string' && dictionary[key].trim(), `${lang}: ${key}`);
     }

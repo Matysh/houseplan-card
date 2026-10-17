@@ -10,6 +10,7 @@ const settings = () => page.locator('hp-dialog[data-kind="settings"][icon="mdi:c
 const optimize = () => page.locator('hp-dialog[data-kind="settings"][icon="mdi:broom"]');
 async function open() {
   if (!await settings().count()) await page.locator('[data-hp="settings"]').click();
+  await settings().locator('[data-section-target="data"]').click();
   await settings().locator('button:has(ha-icon[icon="mdi:broom"])').click();
   await optimize().waitFor();
   await page.evaluate(() => window.__hpTest.settled());

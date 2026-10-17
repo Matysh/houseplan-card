@@ -12,6 +12,7 @@ const dev = id => root.locator(`[data-hp="device"][data-id="${id}"]`);
 const settle = () => page.evaluate(() => window.__hpTest.settled());
 const readZha = async () => {
   await root.locator('[data-hp="settings"]').click();
+  await root.locator('[data-section-target="zigbee"]').click();
   const settings = root.locator('hp-zigbee-topology-settings');
   await settings.locator('.hpf-actions button').first().click();
   await page.waitForFunction(() => window.__card.shadowRoot.querySelector('hp-zigbee-topology-settings')
@@ -45,7 +46,8 @@ try {
     window.__addRegistryEntity('switch.hp867_second', null, 'off', 'demo', { device_id: 'd_temp' });
     window.__topology867 = { ambiguous: false };
     const original = card.hass.callWS;
-    card.hass = { ...card.hass, callWS: async message => message.type === 'zha/devices' ? [
+    card.hass = { ...card.hass, callWS: async message => message.type === 'config_entries/get'
+      ? [{ entry_id: 'hp867-zha', domain: 'zha', title: 'Fixture ZHA' }] : message.type === 'zha/devices' ? [
       { ieee: '00124b0000000001', nwk: 0, device_reg_id: 'd_light1', device_type: 'Coordinator', neighbors: [] },
       { ieee: '00124b0000000002', nwk: 2,
         ...(window.__topology867.ambiguous ? {} : { device_reg_id: 'd_temp' }), device_type: 'Router',

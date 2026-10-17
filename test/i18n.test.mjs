@@ -484,11 +484,9 @@ test('i18n: German values equal to English are explicitly reviewed', () => {
     'wallthick.unit_in',
     'marker.value_badge_position',
     'marker.value_badge_attr_current_position',
-    'gs.north_letter',
     'gs.optimize_live_names',
     'gs.optimize_details',
     // #598: 'Plan' и 'Details' — одни и те же слова в EN и DE
-    'gs.card_plan',
     'marker.card_details',
     'vac.diag_platform',
     'vac.diag_status',
@@ -523,12 +521,10 @@ test('i18n: French values equal to English are explicitly reviewed (#371)', () =
     'color_picker.saturation',
     'confirm.delete_partition_openings_item',
     // #598: 'Plan' — одно и то же слово в EN, DE и FR
-    'gs.card_plan',
     'decor.rect',
     'decor.image',
     'err.code',
     'gs.about_version',
-    'gs.north_letter',
     'gs.unit_m',
     // #605: Rotation is the same noun in English and French.
     'marker.angle_label',

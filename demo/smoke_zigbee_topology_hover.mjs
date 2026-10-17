@@ -74,6 +74,7 @@ const result = await page.evaluate(async () => {
   await card._ensureEditorRuntime();
   card._openSettingsDialog();
   await card.updateComplete;
+  root().querySelector('[data-section-target="zigbee"]').click(); await card.updateComplete;
   let settings = root().querySelector('hp-zigbee-topology-settings');
   await wait(() => !!settings?.shadowRoot, 'settings mounted');
   settings._emit({ enabled: true, z2mBaseTopics: [] });
@@ -103,14 +104,14 @@ const result = await page.evaluate(async () => {
   out.explicitZhaRead = zhaCalls === 1;
   const settingsSnapshot = settings._snapshot;
   const renderedProviderStatus = () => [...settings.shadowRoot.querySelectorAll('.status,.hpf-actions .hpf-hint')]
-    .map((node) => node.textContent).find((value) => /Received /.test(value)) || '';
+    .map((node) => node.textContent).find((value) => /Data received: /.test(value)) || '';
   const ageFixtureTime = Date.now() - 60 * 60 * 1000 + 300;
   settings._acceptSnapshot({ ...settingsSnapshot, states: { ...settingsSnapshot.states,
     zha: { phase: 'ready', obtainedAt: ageFixtureTime },
   } });
   await settings.updateComplete;
-  const initiallyFreshSettings = !/stale/i.test(renderedProviderStatus());
-  await wait(() => /stale/i.test(renderedProviderStatus()), 'mounted settings snapshot ages');
+  const initiallyFreshSettings = !/outdated/i.test(renderedProviderStatus());
+  await wait(() => /outdated/i.test(renderedProviderStatus()), 'mounted settings snapshot ages');
   out.settingsAgeTimerWithoutRefetch = initiallyFreshSettings && zhaCalls === 1
     && settings._snapshot.states.zha.obtainedAt === ageFixtureTime;
   settings._acceptSnapshot(settingsSnapshot);
