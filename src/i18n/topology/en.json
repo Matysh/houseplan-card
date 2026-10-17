@@ -27,8 +27,8 @@
   "scan_unavailable": "MQTT is unavailable or unsupported in Home Assistant.",
   "status_idle": "Data not loaded",
   "status_loading": "Loading…",
-  "status_ready": "Received {time}",
-  "status_stale": "Received {time} · stale",
+  "status_ready": "Data received: {time}",
+  "status_stale": "Data received: {time} · outdated and possibly incomplete",
   "status_partial": "Received {time} · incomplete data",
   "status_no_links": "Received {time} · no confirmed routes",
   "error_permission": "Administrator permission is required.",
@@ -52,5 +52,12 @@
   "error_storage_read": "Saved maps could not be read. They were not overwritten. Check HA storage and integration version.",
   "error_storage_clear": "The saved map could not be removed. No new scan was started. Check HA storage and retry.",
   "error_capacity_exceeded": "The limit of 8 maps or active requests is reached. Saved maps were kept.",
-  "error_disabled": "Save the enabled Zigbee links setting before updating a map."
+  "error_disabled": "Save the enabled Zigbee links setting before updating a map.",
+  "scan_new_hint": "The request runs in the background and may take about 10 minutes or longer. You can close settings.",
+  "scan_replace_hint": "The saved map for this topic is removed before the new request. It runs in the background for about 10 minutes or longer; settings can be closed.",
+  "z2m_duration": "Scanning may take more than 10 minutes and temporarily slow the Zigbee network.",
+  "discovery_unknown": "Some integrations could not be identified. Saved sources and manual setup remain available.",
+  "zha_manual": "Set up ZHA manually",
+  "z2m_manual": "Set up Zigbee2MQTT manually",
+  "scan_unknown_hint": "If this topic has a saved map, it will be deleted before scanning. The request runs in the background and can take about 10 minutes or longer."
 }

@@ -80,6 +80,22 @@ lazy editor 270966→271892 B gzip and total dist 3026587→3026930 B. Only the
 editor rolling reference increases by its measured 926 B (269485→270411);
 absolute budgets, both 2000-B bands, all other ceilings and monolith limits stay.
 
+## General settings redesign (#948)
+
+`smoke_general_settings_form` covers save/cancel/error, exact stored battery
+modes, color picker writes and numeric validation. `smoke_settings_navigation`
+checks mounted draft retention, compass synchronization, button/select cursors,
+three live HA palettes and 320/390 px field/footer geometry. The topology-job
+smoke remains the server-scan lifecycle oracle. Mutant definitions for the
+former Clear button and opacity input now target the corresponding empty-north
+and atomic picker writes; static readiness is not caught evidence.
+
+Matched baseline 24f7ab2f (same product as 9c6d58c1) measures initial View
+324822 B gzip, lazy editor 270966 B and total 3026587 B. The new forms measure
+324410 / 276065 / 3046922 B: View shrinks 412 B; lazy editor grows 5099 B,
+total grows 20335 B. Only those measured costs move the rolling editor/total
+references; inherited gaps, bands and initial/absolute budgets remain intact.
+
 ## Removing room darkness (#943)
 
 After `npm run bundle:sync`, run `node demo/smoke_room_dimming_removed.mjs`

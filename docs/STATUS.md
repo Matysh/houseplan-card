@@ -45,6 +45,10 @@ ordinary writers and space transfer retain JSON. Apply/Undo share the durable
 pair journal and cache-generation fence, never overwrite existing images or
 infer orphan deletion. Help diagnostics remain a separate privacy contract.
 
+General settings (#948, part of #944) adopt six sections and shared responsive,
+theme-driven form presentation. Configuration, draft/save contracts and
+independent Zigbee scan jobs remain owned by their original components.
+
 Room darkness (#943) is removed from the palette, General settings and all
 full/static/2.5D render paths. Light pools and actual data fills retain their
 own contracts. Valid old plans/backups stay readable without load-time writes;

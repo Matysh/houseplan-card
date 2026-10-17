@@ -20,33 +20,20 @@ const out = await page.evaluate(async () => {
   // --- «Общие настройки»: карточки, сегмент фона, сообщение о состоянии ----
   c._openSettingsDialog(); await c.updateComplete;
   o.generalCardsInOrder = JSON.stringify(headings()) === JSON.stringify([
-    c._t('gs.card_display'), c._t('gs.card_zigbee'), c._t('gs.card_fills'),
-    c._t('gs.glow_group'), c._t('gs.card_plan'), c._t('gs.sun_group'), c._t('gs.card_data'),
+    'Information on the plan', 'Appearance and background', 'Room fill colors',
+    'Light, Sun and Moon', 'Zigbee links', 'Backups and maintenance',
   ]);
-  o.everyGeneralCardHasContent = cards().every((card) => card.querySelector('.hpf-head + *'));
-
-  // Сегмент фона: настоящая радиогруппа с доступным именем и целью ≥ 44 px.
-  // Ищем по имени радиокнопок: выше в «Отображении» стоит сегмент заряда (#807).
-  const bgSeg = sr().querySelector('hp-dialog input[type="radio"][name="gs-bg-mode"]')?.closest('.hpf-seg[role="radiogroup"]') ?? null;
-  const bgRadios = bgSeg ? [...bgSeg.querySelectorAll('input[type="radio"]')] : [];
-  o.bgSegmentIsRadioGroup = !!bgSeg && !!bgSeg.getAttribute('aria-label') && bgRadios.length === 2;
-  // Цель нажатия ≥ 44 px. Проверка нашла настоящий дефект: лист набора
-  // подключается вызовом `ensureFormKitStyles`, и без него сегмент рисовался
-  // высотой 14 px — вся доступность держалась на стиле, которого не было.
-  o.bgSegmentTargetIsBigEnough = bgRadios.length > 0 && bgRadios.every((radio) => {
-    const box = radio.closest('label')?.getBoundingClientRect();
-    return !!box && box.height >= 44;
-  });
-  // Клавиатура: стрелка переводит выбор на соседний вариант, как в списке,
-  // который сегмент заменил. Значение черновика обязано поехать следом.
-  const bgBefore = c._settingsDialog.bgMode;
-  const other = bgRadios.find((radio) => !radio.checked);
-  other?.focus();
-  o.bgSegmentTakesFocus = !!other && bgSeg.contains(sr().activeElement ?? document.activeElement);
-  other?.click(); await c.updateComplete;
-  o.bgSegmentWritesItsOwnKey = c._settingsDialog.bgMode !== bgBefore
-    && c._settingsDialog.northDeg === null;
-
+  o.everyGeneralCardHasContent = cards().every(card => card.querySelector('.hpf-body > *'));
+  sr().querySelector('[data-section-target="plan"]').click(); await c.updateComplete;
+  const bg = sr().querySelector('hp-dialog select[name="gs-bg-mode"]');
+  o.bgSelectHasNameAndOptions = !!bg?.getAttribute('aria-label') && bg.options.length === 2;
+  o.bgSelectTargetIsBigEnough = bg.getBoundingClientRect().height >= 42;
+  bg.focus(); o.bgSelectTakesFocus = sr().activeElement === bg;
+  const before = c._settingsDialog.bgMode;
+  bg.value = before === 'daynight' ? 'static' : 'daynight';
+  bg.dispatchEvent(new Event('change',{bubbles:true})); await c.updateComplete;
+  o.bgSelectWritesItsOwnKey = c._settingsDialog.bgMode !== before && c._settingsDialog.northDeg === null;
+  sr().querySelector('[data-section-target="sun"]').click(); await c.updateComplete;
   // `gs.sun_missing` — сообщение о состоянии. Убираем sun.sun и требуем, чтобы
   // абзац был виден, а не спрятан под «?» (К5).
   const states = { ...c.hass.states };

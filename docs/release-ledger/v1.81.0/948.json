@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 948,
+  "baseStable": "v1.81.0",
+  "category": "major",
+  "rationale": "Reorganizes the whole General settings dialog into six responsive sections with shared controls, a compass, explanatory previews and integration-aware diagnostics. This is a visible workflow redesign compared with stable 1.81.0, while preserving configuration and plan rendering.",
+  "summary": {
+    "ru": "Общие настройки разделены на понятные разделы с компасом, примерами фона и подробными состояниями диагностики Zigbee. Диалог адаптируется к телефону и теме Home Assistant.",
+    "en": "General settings are organized into clear sections with a compass, background previews and explanatory Zigbee diagnostics. The dialog adapts to mobile screens and the Home Assistant theme."
+  }
+}

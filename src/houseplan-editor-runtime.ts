@@ -1069,7 +1069,7 @@ public _help(key: Extract<I18nKey, `${string}.help`>): TemplateResult | typeof n
     const ariaKey = `${key}.aria` as I18nKey;
     const lang = langOf(this.host.hass, this.host._config?.language);
     if (!hasTranslation(lang, key) || !hasTranslation(lang, ariaKey)) return nothing;
-    return html`<hp-help data-help-key=${key}
+    return html`<hp-help instant data-help-key=${key}
       .text=${t(lang, key)} .ariaLabel=${t(lang, ariaKey)}></hp-help>`;
   }
 

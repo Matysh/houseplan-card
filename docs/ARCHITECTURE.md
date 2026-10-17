@@ -399,6 +399,15 @@ clicks (`detail=0`); it cannot immobilise header/toolbar controls after a drag.
 
 ## Styles (#266)
 
+Settings redesign (#944/#948) extends the lazy form-kit with
+`settings-dialogs.styles.ts`, `settings-sections.ts`, a shared north control
+and background previews. Section selection is per host/dialog runtime state;
+panes remain mounted while hidden, so navigation preserves input nodes and the
+existing draft/dirty baseline. The shared shell consumes theme variables live.
+Topology discovery distinguishes absent from unknown and never scans during
+discovery. Saved maps/configured topics remain reachable when the integration
+cannot be detected. UI navigation state never enters persisted config.
+
 `src/styles.ts` composes `cardStyles = [base, plan, devices, chrome, dialogs,
 isoTiles]` from `src/styles/*.styles.ts`; the order is a cascade contract (the
 golden set is accepted against it; `isoTiles` last so 2.5D tiles beat

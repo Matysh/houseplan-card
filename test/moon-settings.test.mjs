@@ -19,15 +19,15 @@ const json = (path) => JSON.parse(read(path));
 test('#661 AC10: the switch sits in the «Sun and Moon» card under «Sunlight through windows»', () => {
   const dialog = read('src/editors/general-settings-dialog.ts');
   const sun = dialog.slice(dialog.indexOf("id: 'sun',"), dialog.indexOf("id: 'data',"));
-  assert.match(sun, /title: t\('gs\.sun_group'\)/);
+  assert.match(sun, /title: st\('gs\.section_light'\)/);
   const rays = sun.indexOf("id: 'gs-sun-rays'");
   const moon = sun.indexOf("id: 'gs-moon'");
   assert.ok(rays > 0 && moon > rays, 'moon row follows the sun-rays row');
   const row = sun.slice(moon, sun.indexOf('})}', moon));
   assert.match(row, /icon: 'mdi:moon-waning-crescent'/);
   assert.match(row, /title: st\('gs\.moon'\),/);
-  // #718 K7: the hint alone until the chunk judged this opening, then the status as its second line.
-  assert.match(row, /caption: moonStatus\s+\? html`\$\{st\('gs\.moon_hint'\)\}<span style="display:block" data-moon-status=\$\{moonStatus\.reason\}>\$\{moonStatusText\(moonStatus, st\)\}<\/span>`\s+: st\('gs\.moon_hint'\)/);
+  // #948: the actual moon status is permanently visible below the switch.
+  assert.match(sun, /callout\(\{ text: moonStatus \? moonStatusText\(moonStatus, st\) : st\('gs\.moon_hint'\) \}\)/);
   assert.doesNotMatch(row, /aria-live/);
   assert.match(row, /checked: d\.moon, onChange: \(v\) => set\(\{ moon: v \}\)/);
   const reset = dialog.slice(dialog.indexOf("${t('gs.reset')}") - 600, dialog.indexOf("${t('gs.reset')}"));
@@ -49,9 +49,9 @@ test('#661 AC10: opening reads only an explicit true; saving writes true or remo
 });
 
 test('#661 AC10: strings in all four dictionaries, section renamed', () => {
-  const group = { en: 'Sun and Moon', ru: 'Солнце и Луна', de: 'Sonne und Mond', fr: 'Soleil et Lune' };
+  const group = { en: 'Light, Sun and Moon', ru: 'Свет, Солнце и Луна', de: 'Licht, Sonne und Mond', fr: 'Lumière, Soleil et Lune' };
   for (const lang of ['en', 'ru', 'de', 'fr']) {
-    assert.equal(json(`src/i18n/${lang}.json`)['gs.sun_group'], group[lang], lang);
+    assert.equal(json(`src/i18n/settings/${lang}.json`)['gs.section_light'], group[lang], lang);
     const settings = json(`src/i18n/settings/${lang}.json`);
     for (const key of ['gs.moon', 'gs.moon_hint']) {
       assert.ok(typeof settings[key] === 'string' && settings[key].trim(), `${lang} ${key}`);
