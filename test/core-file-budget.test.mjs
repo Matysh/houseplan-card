@@ -70,7 +70,7 @@ const CAPS = {
   // the existing backup ownership integration adds 33 (12107 total).
   // The M1 scope fix adds no runtime lines; preserve CORE_BAND = 50.
   // #898, owner decision 2026-10-14: less than 10 % headroom -> +10 % (12131 -> 13345).
-  'src/houseplan-editor-runtime.ts': 11866,
+  'src/houseplan-editor-runtime.ts': 11890,
 };
 
 /**

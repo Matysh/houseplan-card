@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.82.0-beta.1 — 2026-10-17
+
 - Background resizing no longer rebuilds unchanged walls for device outlines,
   avoiding a pause when a decor transform ends
   ([#935](https://github.com/Matysh/houseplan-card/issues/935)).
