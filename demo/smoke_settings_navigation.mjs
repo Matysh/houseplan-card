@@ -67,4 +67,22 @@ for (const width of [320, 390]) {
   checkAll(mobile);
   Object.assign(out, Object.fromEntries(Object.entries(mobile).map(([key,value])=>[`${width}.${key}`,value])));
 }
+// A separate wizard cannot silently discard this still-dirty form.
+const general=page.locator('hp-dialog[data-kind="settings"][icon="mdi:cog-outline"]');
+await general.locator('.hpf-settings-mobile select').selectOption('data');
+const exportButton=general.locator('[data-card="data"] .hpf-actions > button').first();
+await exportButton.click();
+const confirm=page.locator('hp-confirm hp-dialog');
+out.exportAsksBeforeLeaving=await confirm.count()===1 && await general.count()===1;
+checkAll({exportAsksBeforeLeaving:out.exportAsksBeforeLeaving});
+if(out.exportAsksBeforeLeaving){
+  await confirm.locator('.btn[data-hp="dialog-cancel"]').click();
+  out.keepEditingRetainsDraft=await page.evaluate(()=>window.__card._settingsDialog?.northDeg===32 && !window.__card._backupExportDialog);
+  await exportButton.click();
+  await confirm.locator('[data-hp="dialog-confirm"]').click();
+  await page.waitForFunction(()=>!window.__card._settingsDialog && !!window.__card._backupExportDialog);
+  out.discardOpensOnlyExport=await page.evaluate(()=>!!window.__card._backupExportDialog && !window.__card._settingsDialog
+    && window.__card._settings.north_deg!==32);
+  checkAll({keepEditingRetainsDraft:out.keepEditingRetainsDraft,discardOpensOnlyExport:out.discardOpensOnlyExport});
+}
 await finish(browser, out);
