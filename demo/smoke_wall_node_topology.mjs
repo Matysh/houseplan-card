@@ -137,14 +137,14 @@ for (const scenario of scenarios) {
 // 100 repeated terminals, including accepted moves and Undo. Only a bounded
 // current-snapshot graph may be retained; live DOM/masks/sessions all retire.
 const cycle = scenarios[3]; await mount(cycle.cfg);
-const graphSize = await page.evaluate(() => window.__card._editorRuntime.nodeMove.cache.nodes.length);
+const graphSize = await page.evaluate(() => window.__card._editorRuntime.nodeMove.cache.data.nodes.length);
 for (let i = 0; i < 100; i++) {
   await drag(cycle.point, cycle.target);
   if (i % 2) { await page.mouse.up(); await idle(); await page.keyboard.press('Control+z'); await idle(); }
   else { await page.keyboard.press('Escape'); await page.mouse.up(); await idle(); }
   const state = await page.evaluate(() => {
     const e = window.__card._editorRuntime.nodeMove;
-    return [e.liveRoots.length, e.touched.size, e.session, e.cache?.nodes.length || 0];
+    return [e.liveRoots.length, e.touched.size, e.session, e.cache?.data?.nodes.length || 0];
   });
   assert.deepEqual(state.slice(0, 3), [0, 0, null]); assert.ok(state[3] <= graphSize);
 }
