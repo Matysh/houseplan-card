@@ -247,6 +247,10 @@ wins before the usual core-centred 44px fallback. Static cards remain passive;
 isolated previews have no neighbours. In 2.5D all contact ink/style is removed:
 the previous individual tiles and exact saved coordinates remain authoritative.
 
+Decor-only edits do not invalidate contact walls or the contact graph (#935).
+The wall key excludes only decor from the existing floor-record fingerprint;
+architectural edits, scale, visibility and distinct preview records still count.
+
 - `device-value-badge.ts` owns candidate discovery, source keys, HA formatting,
   units and unavailable handling for `marker.value_source` (inner Value face)
   and `marker.value_badge` (satellite). Absent `value_source` keeps the legacy

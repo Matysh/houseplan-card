@@ -20,12 +20,23 @@ Use `crypto.getRandomValues`, not secure-context-only `randomUUID`, so copying
 works on ordinary HTTP HA installations too. The command stays in the lazy editor
 graph; the fixture stores cloned accepted bodies rather than echoing requests.
 
-Six #935 mutation definitions protect the native right-button order, copy ACL,
+Seven #935 mutation definitions protect the native right-button order, copy ACL,
 both revision checks, graph validation, paired commit call site and shared file quota. Only static
 readiness is run in development; compilation/caught outcomes belong to nightly.
 File COPY uses the same upload lock and unchanged byte/count/disk limits as a
 normal attachment upload. The negative fixture fills the real quota with small
 files; it does not patch a limit or execute a mutant.
+
+The owner-approved editor-performance extension fixes contact-wall invalidation,
+not the benchmark. A read-only CPU profile attributed 128 ms of the local decor
+terminal update to `syncContacts`, 123 ms of it to `_wallUnionGeometry`.
+`test/device-contact-card.test.mjs` failed on the original real floor key for an
+ordinary decor resize input, then passed with the contact-only projection. It
+also checks real architectural changes, visibility and differing preview/model
+records. The 200-face contact-work browser smoke verifies changed decor preview,
+exact cancel, unchanged positions/ink and zero wall/contact rebuilds. The
+`contact-wall-key-includes-decor` definition is static-only until nightly.
+Timing proof remains the unchanged interaction profile and its existing limits.
 
 ## Explicit amend provenance (#923)
 

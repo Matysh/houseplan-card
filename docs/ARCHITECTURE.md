@@ -1,5 +1,13 @@
 # House Plan architecture
 
+The Flat device-contact wall cache (#935 performance correction) uses the
+existing floor-record reader with one narrow fingerprint projection: omit only
+the top-level `decor` field from each model/current record. Decor cannot alter
+masonry. All other fields, including unknown compatible ones, epoch/identity
+refresh, mismatched preview records and border visibility remain authoritative.
+The general floor caches keep their original keys. A decor transform/cancel
+therefore does not cold-build the contact wall union or its spatial graph.
+
 Device copying (#935) is an editor-only `DeviceCopyEditor` command backed by
 pure template/name/reverse-link/placement helpers in `device-copy.ts`. It creates
 a new virtual Marker, never rebinds the source or moves LED geometry. Effective

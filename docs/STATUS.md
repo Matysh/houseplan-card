@@ -29,6 +29,8 @@ Device copying (#935) creates independent virtual markers through a narrow
 revision-checked paired writer. Incoming links are appended, original LED forms
 and files stay intact, and copy preparation/creation sends no equipment commands.
 The context menu belongs only to Devices; View more-info is unchanged.
+Its owner-approved performance correction retains contact walls/graph across
+decor-only transforms; every non-decor floor input still invalidates them.
 
 Converter backdrop references (#941) omit signed/unknown query URLs and fragments
 with a loss note; plain links and bounded image selectors remain supported.

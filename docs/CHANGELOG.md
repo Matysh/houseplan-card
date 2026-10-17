@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Background resizing no longer rebuilds unchanged walls for device outlines,
+  avoiding a pause when a decor transform ends
+  ([#935](https://github.com/Matysh/houseplan-card/issues/935)).
+
 - In the device editor, right-click → “Copy device” creates an independent
   virtual copy nearby, retaining appearance, attachments and incoming/outgoing
   control links. Names use the first free number from 2; an LED source becomes

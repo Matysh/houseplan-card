@@ -77,9 +77,13 @@ export function floorRecordKeyMemo(
   };
 }
 
-/** A reader `spaceId → key`, remembered per epoch and per source record. */
-export function floorGeometryKeyReader(source: FloorKeySource): (spaceId: string) => string {
-  const keyOf = floorRecordKeyMemo();
+/** A reader `spaceId → key`, remembered per epoch and per source record.
+ * A consumer may fingerprint a narrower, proved-independent projection;
+ * both model/current records still enter that projection on a mismatch. */
+export function floorGeometryKeyReader(
+  source: FloorKeySource, fingerprint: (value: unknown) => string = contentFingerprint,
+): (spaceId: string) => string {
+  const keyOf = floorRecordKeyMemo(fingerprint);
   return (spaceId) => keyOf(
     source._cfgEpoch, spaceId, spaceId,
     source._renderCfg?.spaces
