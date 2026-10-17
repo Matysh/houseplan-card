@@ -89,3 +89,14 @@ its ordinary unit suite includes the new readiness negatives.
 `static-witness` ran `node scripts/mutation-gate.mjs --check` and passed with
 execution=0, caught=unknown. These are local observations, not a substitute
 for the requested exact-SHA full Validate or independent review.
+
+The first published material `93a2c5cde97424f57bdfecdd0982675c9b657c15`
+failed both [push CI](https://github.com/Matysh/houseplan-card/actions/runs/39059907972)
+and [full CI](https://github.com/Matysh/houseplan-card/actions/runs/39059969271)
+at `test/testing-doc.test.mjs`: this evidence note had been placed in
+`docs/testing-notes/`, whose sole permitted file is the mutation inventory.
+It was added while the local gate was already running, after its documentation
+inventory check. That local PASS did not cover the final documentation tree.
+The correction moves the note to dated `docs/analysis/` and fixes its link;
+the inventory guard is unchanged. These red outcomes are retained, not retried
+on unchanged material or described as kiosk failures.

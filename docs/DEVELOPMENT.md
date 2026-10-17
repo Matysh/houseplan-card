@@ -444,7 +444,7 @@ height animation state, positive live/accepted size, fonts and pending Lit/refit
 not the expected zoom. Its 5s bounded failure prints the actual setup state.
 `test/kiosk-viewport-ready.test.mjs` covers running/paused animation with equal
 boxes and queued refit; the original 60s/90s/300ms assertions remain unchanged.
-Evidence and retained red outcomes: [kiosk clock diagnosis](testing-notes/949-kiosk-clock-evidence.md).
+Evidence and retained red outcomes: [kiosk clock diagnosis](analysis/949-kiosk-clock-evidence-2026-10-17.md).
 
 ## Synthetic QA boundary (#896)
 
