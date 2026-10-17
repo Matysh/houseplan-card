@@ -35,6 +35,11 @@ export const SMOKE_LINKS = [
     because: '#930: native catalog filters, virtual selection, confirmation and accepted wire pair prove exact deletion and refusal without calling the shared helpers.',
   },
   {
+    symbols: ['planEntryTool'],
+    smokes: ['smoke_plan_entry_tool.mjs'],
+    because: '#928: native mode/tool actions and server-delivered geometry observe entry, first-click safety and warm tool ownership without naming the helper.',
+  },
+  {
     symbols: ['HiddenDeviceRoster', 'HiddenDevicePreference', 'hiddenDevicePreferenceKey', 'canRevealUserHidden', '_setShowHidden'],
     smokes: ['smoke_hidden_device_toggle.mjs'],
     because: '#919: native header/catalog actions prove ordinary reveal, no config writes, lifecycle safety and isolated reloadable preferences.',

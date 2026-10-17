@@ -45,6 +45,16 @@ Run the real online `process-gate --issues` separately with that wrapper, then
 keep it out of the normal push/test PATH. The standard pre-push hook and full
 `gate:small` still execute; do not disable either to hide this environment leak.
 
+## Initial Plan tool (#928)
+
+`plan-entry-tool.test.mjs` covers every geometry collection independently,
+including opening-only, zero-thickness and non-geometry negative inputs.
+After `npm run bundle:sync`, `node demo/smoke_plan_entry_tool.mjs` uses real
+editor/tool buttons and server config delivery, then checks first-click draft
+behaviour and config/layout write absence. Drawing scenarios on an existing
+plan must explicitly select Walls instead of relying on the former default.
+Warm adoption and the explicit space-copy/new-space Walls start are separate.
+
 ## Vacuum route recovery (#918)
 
 `test/vacuum-routes.test.mjs` exercises the common route-source resolver;

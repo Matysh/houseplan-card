@@ -214,6 +214,14 @@ tabs, the editor-close reserve, zoom and one gear whose menu holds the rest.
 
 ## Plan — geometry and appearance of the space
 
+Ordinary entry selects **Select** when the current space has rooms, contour
+wall segments, independent walls (including zero-thickness), columns, openings
+or stairs; without these it selects **Walls** (#928). Background images, decor,
+devices and LED strips alone do not count. A real exit/reentry recomputes this;
+rendering, an active-tab click and warm session adoption do not replace the
+manual tool. Explicit new-space/onboarding and space-copy workflows retain
+their Walls start. Entering does not write geometry or start a chain.
+
 - **Select** also moves wall nodes (#803): a saved endpoint, shared room corner
   or supported T/X intersection has a `grab` cursor; capture uses `grabbing`.
   The 12 CSS-pixel node hit wins there, while dragging a wall body outside it

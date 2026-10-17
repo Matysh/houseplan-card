@@ -7,6 +7,10 @@
   can be deleted without pretending they can be shown or hidden. The add button
   is now called “Add device” ([#930](https://github.com/Matysh/houseplan-card/issues/930)).
 
+- Opening an existing plan starts with Select, so the first click does not
+  begin a new wall. Empty floors still start with Walls; new-space and copy
+  workflows keep their drawing start
+  ([#928](https://github.com/Matysh/houseplan-card/issues/928)).
 - Vacuum paths recover when an exact map route becomes available and restore
   already recorded positions when the card opens during cleaning. The robot,
   path and live tip use the same map camera; unrelated camera updates no

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 928,
+  "baseStable": "v1.81.0",
+  "category": "stable-fix",
+  "rationale": "Polishes the Plan editor's existing entry behaviour from v1.81.0: existing geometry opens Select rather than starting accidental wall drafts. Not a fix for a feature introduced only within the current release line.",
+  "summary": {
+    "ru": "Готовый план открывается с «Выбрать», а пустой этаж — со «Стенами».",
+    "en": "Existing plans open with Select; empty floors start with Walls."
+  }
+}

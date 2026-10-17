@@ -140,7 +140,7 @@ await step('AC1 Resize toolbar Undo', () => toolbar('plan', 'mdi:undo-variant'),
 await step('AC1 Resize toolbar Redo', () => toolbar('plan', 'mdi:redo-variant'), 'Redo');
 check('AC1 Resize: tool and editor stay, no handles', (await state()).tool + (await state()).mode + (await state()).handles, 'resizeplan0');
 await page.evaluate(async () => { await window.__hpTest.setMode('view'); await window.__hpTest.setMode('plan'); });
-check('AC1 Plan→View→Plan resets the tool to Draw', (await state()).tool, 'draw');
+check('AC1 Plan→View→Plan selects existing geometry (#928)', (await state()).tool, 'select');
 await step('AC1 Plan→View→Plan Ctrl+Z', () => page.keyboard.press('Control+z'), 'Undo');
 await step('AC1 Plan→View→Plan Ctrl+Y', () => page.keyboard.press('Control+y'), 'Redo');
 await page.evaluate(() => window.__hpTest.setMode('decor'));

@@ -17,6 +17,7 @@ import { displayVersion } from './card-version';
 import { entryBuildLabel } from './build-identity';
 import { finishWarmModeAdoption, resumeWarmMode, type WarmModeHost } from './warm-mode-adoption';
 import { deviceEditorAllowed } from './device-editor-access';
+import { planEntryTool } from './plan-entry-tool';
 import { guard } from 'lit/directives/guard.js';
 import { renderVacuumMapsSection } from './editors/vacuum-maps-section';
 import { renderVacuumPathDiagnostics } from './editors/vacuum-path-diagnostics';
@@ -1070,7 +1071,12 @@ public finishWarmModeAdoption(request: number): void {
   finishWarmModeAdoption(this.host as unknown as WarmModeHost, request);
 }
 public resumeWarmMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate: boolean): void {
-  resumeWarmMode(this.host as unknown as WarmModeHost, mode, () => this.host._setMode(mode, animate, true));
+  const tool = this.host._tool;
+  resumeWarmMode(this.host as unknown as WarmModeHost, mode, () => {
+    this.host._setMode(mode, animate, true);
+    // A delayed permission answer resumes a session, not an ordinary Plan entry.
+    if (mode === 'plan' && this.host._mode === mode) this.host._tool = tool;
+  });
 }
 /** An open room editor implies an installed runtime; View never constructs this payload. */
 public warmRoomDraft() {
@@ -1274,7 +1280,9 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
     this.host._path = [];
     this._clearPlanSnapHover();
     this._clearOpeningPlacement(true);
-    this.host._tool = 'draw';
+    this.host._tool = mode === 'plan'
+      ? planEntryTool(space, this.host._serverCfg?.spaces.find(s => s.id === space.id)?.openings)
+      : 'draw';
     this.host._mergeSel = null;
     this.host._mergeDialog = null;
     this.host._splitSel = null;

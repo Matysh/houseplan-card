@@ -77,6 +77,22 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'plan-entry-ignores-existing-geometry',
+    guard: 'node demo/smoke_plan_entry_tool.mjs',
+    because: '#928 AC1: public Plan entry and its first click must not start Walls on an existing plan.',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts',
+      find: "? planEntryTool(space, this.host._serverCfg?.spaces.find(s => s.id === space.id)?.openings)",
+      replace: "? (planEntryTool(space), 'draw')" }],
+  },
+  {
+    id: 'plan-entry-replaces-delayed-warm-tool',
+    guard: 'node demo/smoke_plan_entry_tool.mjs',
+    because: '#928 AC3: a delayed permission grant must preserve the warm session tool rather than apply the new-entry default.',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts',
+      find: "if (mode === 'plan' && this.host._mode === mode) this.host._tool = tool;",
+      replace: "if (mode === 'plan' && this.host._mode === mode) this.host._tool = tool === 'draw' ? 'select' : tool;" }],
+  },
+  {
     id: 'support-v2-effective-source-skips-read-scope',
     guard: 'node scripts/backend-test-guard.mjs test_effective_route_source_requires_read_permission_even_without_candidates tests_backend/test_ha_support_v2.py',
     because: '#942 after #918: an effective route source can differ from the discovery root and be absent from candidates. Its claims still require entity read scope.',

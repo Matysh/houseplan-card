@@ -13,6 +13,12 @@ origin dialog and HA generation after import. Catalog-only strings use the
 existing tools namespace and editor styles; View pays for neither. The shared
 translation leaf is explicitly chunked to preserve the runtime raw-URL retry ABI.
 
+Plan entry (#928) reads the current `SpaceModel` geometry and that space's raw
+opening list through pure `planEntryTool`; images/decor/devices/LED do not count.
+Only successful ordinary mode entry applies the result. Same-mode no-op, warm
+adoption and explicit onboarding/copy tool ownership remain independent; no
+config/layout writer, geometry preflight or persistent preference is involved.
+
 The Flat device-contact wall cache (#935 performance correction) uses the
 existing floor-record reader with one narrow fingerprint projection: omit only
 the top-level `decor` field from each model/current record. Decor cannot alter

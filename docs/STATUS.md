@@ -34,6 +34,10 @@ every lifecycle tab. Batch Delete shares the single-device candidate/cleanup
 owner, confirms the named set once and refuses stale targets; Hide/Show never
 silently applies only the active part of a mixed selection. No migration.
 
+Ordinary Plan entry (#928) starts Select for existing geometry and Walls for an
+empty floor; backdrop/decor/devices/LED alone do not count. Explicit copy/create
+workflows retain Walls, and manual in-session choice remains session-owned.
+
 Vacuum route recovery (#918) ties recording, the live robot and its path to
 one exact available source/map pair. Reopening the card restores server
 history; previously unassigned points are retained without adopting them into
