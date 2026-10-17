@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 949,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Waits for real native CSS height animation and accepted viewport refit before freezing the kiosk smoke clock. Keeps the 60s/90s/300ms behavior assertions and product code unchanged; no user changelog or milestone."
+}

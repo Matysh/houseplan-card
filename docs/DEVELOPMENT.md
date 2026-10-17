@@ -435,6 +435,17 @@ opens a canonical door through its actual badge and accepts/cancels the actual
 dialog, instead of inventing an unowned `_openingInfo`.
 No new config fields, migration, private test writes or budget relaxation.
 
+The #949 startup barrier `demo/helpers/kiosk-viewport-ready.mjs` runs before
+freezing the clock, while native CSS can still complete. Hiding the kiosk header
+can trigger `.stage.hpsettle`'s 250ms height transition after boot. Jumping JS
+time to the 60s idle deadline does not advance that CSS timeline; a legitimate
+ResizeObserver callback can then cancel the fit being tested. Readiness checks
+height animation state, positive live/accepted size, fonts and pending Lit/refit,
+not the expected zoom. Its 5s bounded failure prints the actual setup state.
+`test/kiosk-viewport-ready.test.mjs` covers running/paused animation with equal
+boxes and queued refit; the original 60s/90s/300ms assertions remain unchanged.
+Evidence and retained red outcomes: [kiosk clock diagnosis](testing-notes/949-kiosk-clock-evidence.md).
+
 ## Synthetic QA boundary (#896)
 
 `demo/srv/fixture-state.js` is an in-memory wire fixture, not a backend validator.

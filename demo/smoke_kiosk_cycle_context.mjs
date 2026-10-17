@@ -1,6 +1,7 @@
 // #846: real card, DOM/HA intent and real browser timers under a boundary clock.
 import { launch, check, checkAll, finish } from './serve.mjs';
 import { installHpTestOnPage } from './helpers/hp-test.mjs';
+import { waitForKioskViewport } from './helpers/kiosk-viewport-ready.mjs';
 const { page, browser } = await launch({width:1000,height:800});
 await page.clock.install();
 await page.evaluate(()=>localStorage.setItem('houseplan_card_zoom_v1',JSON.stringify({f1:1,garden:2,unrelated:3})));
@@ -22,6 +23,9 @@ await page.evaluate(async () => {
   c.hass={...c.hass,callService:async (...args)=>{window.__cycleCalls.push({space:c._space,args});}};
 });
 await page.waitForFunction(()=>window.__card.shadowRoot.querySelector('[data-hp="room-label"][data-id="r1"]'));
+// Kiosk hides the header during the post-boot height transition. A JS clock
+// jump can put the 60s deadline inside that real CSS resize and cancel its fit.
+await waitForKioskViewport(page);
 // Leave a transport margin between the browser-time read and pause command;
 // under parallel CI load a10ms target can already be in the past at delivery.
 const freeze=async()=>page.clock.pauseAt(await page.evaluate(()=>Date.now()+1000));

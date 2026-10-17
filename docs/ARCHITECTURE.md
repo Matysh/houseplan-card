@@ -1276,6 +1276,11 @@ surfaces on a different accepted id. `view-action-context.ts` resolves exact
 current marker/floor and canonical opening/lock identities before service calls;
 stale confirmation never becomes permission to act on another floor.
 
+The kiosk smoke's setup barrier (#949) lives only in the demo harness. It waits
+for native stage height transitions and accepted ResizeObserver/Lit geometry
+before freezing page time: JS fake-clock jumps do not advance the CSS timeline.
+It never waits for the asserted zoom or changes the product's resize/camera policy.
+
 The existing `STAGE_TAP_DISTANCE_PX` pan/swipe classifier cancels the owning
 `KioskHoldGesture` as soon as navigation is recognized (#825). Returning to
 the press origin cannot re-arm it; sub-threshold jitter is still a hold.

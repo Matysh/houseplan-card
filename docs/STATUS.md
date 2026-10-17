@@ -25,6 +25,11 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Kiosk smoke readiness (#949) separates the native CSS height timeline from
+Playwright's JS clock before the scenario begins. The bounded setup-only
+barrier does not wait for fit success or alter product timing/resize behavior;
+all original carousel/action assertions and red diagnostic evidence remain.
+
 Contact-outline zoom repair (#951) removes the inline SVG line-box offset and
 the independent fixed stroke. Full/static Flat contacts use the ordinary shell
 thickness without new geometry, camera or storage ownership.

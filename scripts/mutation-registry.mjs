@@ -763,6 +763,14 @@ const MUTANT_DEFINITIONS = [
     patches: [{file:'src/houseplan-card.ts',find:'      if (current && !current.hidden) return current;',replace:'      if (current || true) return actionDevice;'}],
   },
   {
+    id: 'kiosk-idle-deadline-skips-fit',
+    guard: 'node --test test/kiosk-carousel.test.mjs',
+    because: '#949 AC2: the ordinary injected-clock witness requires fit exactly at 60s, independently of the 90s carousel tick. No browser is needed to prove the deadline callback.',
+    patches: [{ file: 'src/kiosk-carousel.ts',
+      find: '      this.handledUntil = current.pausedUntil;\n      this.port.fitAll();',
+      replace: '      this.handledUntil = current.pausedUntil;\n      // omit idle fit' }],
+  },
+  {
     id: 'kiosk-dialog-close-forgets-fresh-pause',
     guard: 'node --test test/kiosk-carousel.test.mjs',
     because: '#846 AC3: deterministic injected clocks prove close restarts a full pause after arbitrarily long holds.',
