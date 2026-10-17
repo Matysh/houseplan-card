@@ -44,7 +44,11 @@ the unchanged baseline frame/log is retained in `artifacts/943/prechange-pixel`.
 Unit palette tests, backend strict legacy validation/full-backup round trips
 and the support-package palette parity/export test cover the separate data
 boundaries. Run the full `python3 -m pytest -q tests_backend`, not just frontend
-checks. No load-time migration or new schema version is required. The frozen
+checks. Keep the byte-identical `scripts/support-relay/hp_relay/support_wire_schema.py`
+mirror in sync and run `python3 -m unittest discover -s scripts/support-relay/tests -q`;
+that separate CI suite checks both real validators and rejects a retired role
+in diagnostic wire data while full user backups retain storage compatibility.
+No load-time migration or new schema version is required. The frozen
 base-only text assertion is retired, not replaced with a monolith regex.
 Accept only visually reviewed full golden artifacts through the normal pinned
 Linux or attested-WSL workflow. Mutants are not executed during development;

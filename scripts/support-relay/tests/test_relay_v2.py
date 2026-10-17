@@ -52,6 +52,8 @@ class V2TestCase(unittest.TestCase):
             (("plan_backup", "config", "spaces"), [{"settings": {"label_co2": "true"}}]),
             (("plan_backup", "config", "spaces"), [{"rooms": [{"settings": {"co2_source": "sensor.raw"}}]}]),
             (("plan_backup", "config", "spaces"), [{"rooms": [{"settings": {"co2_source_kind": "future"}}]}]),
+            # #943: legacy storage may keep this role, diagnostic wire must not.
+            (("plan_backup", "config", "settings", "fill_colors"), {"glow_base": {"c": "#15ff2a", "a": 1}}),
         ]:
             bad = copy.deepcopy(package)
             parent = bad
