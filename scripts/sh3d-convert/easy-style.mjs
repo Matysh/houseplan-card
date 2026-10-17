@@ -44,7 +44,19 @@ export function colorResolver(palette = []) {
   return resolve;
 }
 
-/** A file reference, not a fetch permission. Credentials are never copied. */
+// Query names are an allowlist, not a list of every provider's credential names.
+// An unrecognised/signed URL is omitted whole, never "sanitised" into a broken URL.
+const IMAGE_QUERY = {
+  v: /^[a-z0-9_.-]{1,64}$/i, version: /^[a-z0-9_.-]{1,64}$/i,
+  w: /^(?:[1-9]\d{0,3}|10000)$/, width: /^(?:[1-9]\d{0,3}|10000)$/,
+  h: /^(?:[1-9]\d{0,3}|10000)$/, height: /^(?:[1-9]\d{0,3}|10000)$/,
+  q: /^(?:[1-9]\d?|100)$/, quality: /^(?:[1-9]\d?|100)$/,
+  dpr: /^(?:[1-3](?:\.\d{1,2})?|4(?:\.0{1,2})?)$/,
+  format: /^(?:png|jpe?g|webp|avif|gif|svg)$/i,
+  fit: /^(?:contain|cover|fill|inside|outside)$/,
+};
+
+/** A file reference, not a fetch permission. Only bounded image selectors survive. */
 export function safeImageReference(value) {
   if (typeof value !== 'string' || value.length > 2000 || /[\\\s]/.test(value)) return null;
   const relative = value.startsWith('/local/');
@@ -52,8 +64,12 @@ export function safeImageReference(value) {
   let url;
   try { url = new URL(value, 'https://houseplan-local.invalid'); } catch { return null; }
   if (url.username || url.password || (relative && !url.pathname.startsWith('/local/'))) return null;
-  if ([...url.searchParams.keys()].some(key => /token|password|secret|auth|api[_-]?key/i.test(key))) return null;
-  if (/token|password|secret|auth|api[_-]?key/i.test(url.hash)) return null;
+  if (url.hash) return null;
+  const seen = new Set();
+  for (const [key, selector] of url.searchParams) {
+    if (!Object.hasOwn(IMAGE_QUERY, key) || seen.has(key) || !IMAGE_QUERY[key].test(selector)) return null;
+    seen.add(key);
+  }
   return value;
 }
 

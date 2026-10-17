@@ -22,6 +22,21 @@ test('#937 image references preserve safe URLs but never source credentials or u
     assert.equal(safeImageReference(value), null);
 });
 
+test('#941 only bounded image selectors survive; signatures and unknown parameters are omitted', () => {
+  for (const value of [
+    '/local/plan.png?v=2026-10-17&w=1200&h=800&format=webp',
+    'https://example.org/plan.png?version=a1b2c3&width=640&height=480',
+    'https://example.org/plan.png?q=80&dpr=2&fit=contain',
+  ]) assert.equal(safeImageReference(value), value);
+  for (const suffix of [
+    '?sig=synthetic', '?signature=synthetic', '?X-Amz-Credential=synthetic&X-Amz-Signature=synthetic',
+    '?sv=2026-01-01&sp=r&sig=synthetic', '?session=synthetic', '?ticket=synthetic',
+    '?unknown=synthetic', '?s%2569g=synthetic', '?w=9999999', '?w=640&w=320',
+    '?format=unrecognized', '?v=one%26sig%3Dsynthetic', '?width=-1', '?q=101', '?dpr=9',
+    '#sig=synthetic', '#arbitrary',
+  ]) assert.equal(safeImageReference(`https://example.org/plan.png${suffix}`), null, suffix);
+});
+
 test('#937 readings stay exact, static text cannot turn into an unintended HA template', () => {
   assert.deepEqual(readingSource('sensor.room', 'value'), { kind: 'entity_attribute', entity_id: 'sensor.room', attribute: 'value' });
   assert.equal(readingToken(readingSource('sensor.room')), '{sensor.room}');

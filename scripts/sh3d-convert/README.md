@@ -38,6 +38,12 @@ support for an older backend just because it can read export-v2 envelopes.
   backdrop **references**, never credentials or bytes, are retained. A different
   HA must copy/replace the image; contain/cover becomes reported stretch because
   native image dimensions cannot be discovered without fetching the image.
+  Query parameters are restricted to literal `v`/`version` (1–64 alphanumeric,
+  dot, underscore, dash), `w`/`width`/`h`/`height` (1–10000), `q`/`quality`
+  (1–100), `dpr` (1–4, up to two decimals), `format`
+  (png/jpeg/jpg/webp/avif/gif/svg), and `fit` (contain/cover/fill/inside/outside).
+  Unknown/duplicate names, invalid values and fragments omit the entire reference
+  with `image_reference_skipped`; signed URLs are never stripped into broken ones.
 - Eight MiB Easy input/export and two MiB config limits, YAML AST depth/node and
   geometry/object caps are enforced. Aliases/anchors/tags/directives, duplicate
   or prototype keys, non-finite numbers and ambiguous carriers fail closed.

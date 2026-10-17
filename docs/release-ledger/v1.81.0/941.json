@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 941,
+  "baseStable": "v1.81.0",
+  "category": "line-fix",
+  "rationale": "Tightens the new Easy Floorplan converter introduced by #937 in the current development line before its first external-site rollout. The previous stable did not contain this migration path. Signed or unrecognised image queries are omitted with the existing loss report; card behaviour and HA import remain unchanged."
+}

@@ -2481,6 +2481,9 @@ Scale is estimated automatically from ordinary doors, known furniture, or a
 all floors use one coefficient. Images are **references only**, without bytes:
 on another HA copy them or replace the backdrop. Check entity IDs and Areas
 too: the converter does not create them in Home Assistant.
+Signed URLs, unknown query parameters and fragments after `#` are omitted with
+a loss report. Use an ordinary image link without an access key, or replace the
+backdrop after importing.
 
 ### Storage locations
 

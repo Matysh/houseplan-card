@@ -101,6 +101,16 @@ test('#937 legacy reading indexes include the hidden legacy secondary row withou
   assert.equal(doc.payload.config.markers[0].value_source.entity_id, 'sensor.visible');
 });
 
+test('#941 signed image credentials never appear in the document or loss report', () => {
+  for (const query of ['sig=synthetic-private', 'X-Amz-Credential=synthetic-private&X-Amz-Signature=synthetic-private']) {
+    const result = convertEasy(card({ floors: [{ id: 'home', walls: [wall], image: `https://host/img?${query}` }] }), fixed);
+    assert.equal(result.documents[0].payload.config.spaces[0].plan_url, undefined);
+    assert.equal(result.documents[0].content_manifest.length, 0);
+    assert.equal(JSON.stringify(result).includes('synthetic-private'), false);
+    assert(result.report.levels[0].notes.some(note => note.code === 'image_reference_skipped'));
+  }
+});
+
 test('#937 point-only floor remains transferable without inventing a room, long LED participates in frame', () => {
   const single = convertEasy(card({ items: [{ entity: 'sensor.only', x: 20, y: 30 }] }), fixed).documents[0];
   assert.equal(single.payload.config.spaces[0].rooms.length, 0);

@@ -14,6 +14,10 @@ they are independent of the more generous source-reader budget. Consumer tests
 exercise the actual space-display/sun/backdrop helpers, not just an extra-key
 tolerant schema, so stored `space.settings` remains effective in the runtime.
 
+Backdrop references (#941) accept only bounded image-selector query parameters;
+unknown names, duplicates and fragments are omitted with the existing loss report.
+This avoids an unbounded credential-name denylist or stripping a required signature.
+
 Nightly witness maintenance (#917) changes no product owner or runtime. The
 gesture-entry witness calls the live-update router; the tool-boundary witness
 calls the actual lazy renderer with a retained dialog/cache, independently of

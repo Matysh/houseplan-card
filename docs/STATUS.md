@@ -25,6 +25,10 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Converter backdrop references (#941) omit signed/unknown query URLs and fragments
+with a loss note; plain links and bounded image selectors remain supported.
+This pre-rollout privacy correction does not change the card or HA import model.
+
 Outside-findings routing (#926) accepts only a bounded Actions issue-ID setting,
 frozen by prepare and checked through result publication. File mode publishes
 one companion under reviews; default issues and all blocking gates stay intact.

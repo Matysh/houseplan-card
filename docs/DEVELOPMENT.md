@@ -32,6 +32,11 @@ from that README before handing it off. Deploy the accepted payload only to the
 existing `/convert/index.html`, preserving the site's extra analytics wrapper,
 with a timestamped backup and digest check. No stand restart or release tag.
 
+The #941 URL regression is covered by ordinary negative inputs (signed/unknown
+queries and fragments) and a full conversion asserting no sensitive URL in the
+document or report. Only bounded literal image selectors are accepted; keep the
+standalone artifact rebuilt before the offline browser smoke and site rollout.
+
 The #937 dependency changes the common build fingerprint, not the card's import
 graph. Fresh control/task builds measured 2,972,687/2,972,707 raw bytes (different
 internal aliases in two chunks); the raw-byte accounting base is 2,972,707.

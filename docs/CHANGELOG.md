@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- The converter omits signed or unrecognised backdrop URLs with a visible loss
+  report, rather than carrying access signatures into an export. Plain image
+  links and bounded version/size/format selectors remain supported
+  ([#941](https://github.com/Matysh/houseplan-card/issues/941)).
+
 - The external plan converter supports Easy Floorplan YAML/JSON, including
   compatible device/Area bindings, values, furniture, text, backdrop references
   and lighting settings. Scale is estimated automatically and losses are
