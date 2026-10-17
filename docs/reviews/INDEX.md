@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 43, issue: 26. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 44, issue: 27. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -9,6 +9,7 @@
 | #950 | [CODE-REVIEW-950-r1.md](CODE-REVIEW-950-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #949 | [CODE-REVIEW-949-r1.md](CODE-REVIEW-949-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #949 | [CODE-REVIEW-949-r2.md](CODE-REVIEW-949-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #946 | [SPEC-REVIEW-946-r1.md](SPEC-REVIEW-946-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | «связанный переход» Room → Space входит в AC5, но не | `room-settings-v4.html` `.fragment.html` `.data.json` `README.md` `draft-decisions.md` `docs/USER-GUIDE.ru.md` |
 | #943 | [SPEC-REVIEW-943-r1.md](SPEC-REVIEW-943-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | «Затронутые модули» не называют parity-контракт | `validation.py` `custom_components/houseplan/support_package.py` `custom_components/houseplan/support_wire_schema.py` `docs/SUPPORT-PRIVACY.md` `tests_backend/test_support_package.py` `src/logic.ts` `logic.ts` `support_package.py` |
 | #943 | [SPEC-REVIEW-943-r2.md](SPEC-REVIEW-943-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #942 | [SPEC-REVIEW-942-r1.md](SPEC-REVIEW-942-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | несуществующее поле «size visibility» у сводной панели | `docs/specs/505-summary-panel-design-parity.md` `AGENTS.md` `src/summary-panel-editor-style.ts` |
