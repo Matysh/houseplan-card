@@ -3,7 +3,7 @@ import type { HouseplanEditorHostPort } from './houseplan-editor-runtime';
 import type { DevItem } from './types';
 import type { I18nKey } from './i18n';
 import { displayIsNeutral, normalizeDeviceDisplay } from './logic';
-import { vacTrailMode } from './vacuum';
+import { vacTrailMode, type VacPath } from './vacuum';
 import { planVacuumOverlay, type VacuumRouteResolution } from './vacuum-routes';
 import { VAC_RENDER_POINT_BUDGET } from './vacuum-path-geometry';
 import { currentVacuumTrailFrame, selectVacuumTrail } from './vacuum-trail-material';
@@ -12,9 +12,11 @@ export interface VacuumTrailDiagnostic {
   source: string; reason: string; raw: number; stored: number; rendered: number;
   receivedAt?: number; final: boolean; display: I18nKey;
 }
-type Host = Pick<HouseplanEditorHostPort, '_vacSrvTrails' | '_vacRt' | '_vacTrailFormat'
+type Host = Pick<HouseplanEditorHostPort, '_vacSrvTrails' | '_vacTrailFormat'
   | '_devices' | '_isVacDev' | '_vacRuntimeSource'
-  | '_space' | '_vacGeometryCache' | '_cellCm' | '_gridPitch'>;
+  | '_space' | '_vacGeometryCache' | '_cellCm' | '_gridPitch'> & {
+    readonly _vacRt: ReadonlyMap<string, { moving: boolean; material: VacPath }>;
+  };
 
 function routeDisplayReason(resolution: VacuumRouteResolution, unavailable: boolean): I18nKey | null {
   switch (resolution.kind) {

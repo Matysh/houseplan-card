@@ -1157,13 +1157,17 @@ belongs to the nightly gate. No rendering, input or model migration is involved.
 
 ## Support diagnostics v2 (#942)
 
-Measured accounting change after beta.1: portMembers 355→359, hostRefs 5425→5471,
-raw emitted tree 2,985,923→3,006,663 B. The additional references are read-only, opt-in
+Measured accounting after integrating #918: the dev baseline 355 port members,
+5425 host references and 2,990,164 emitted bytes becomes 360 / 5466 / 3,011,299 B.
+This includes #918's new runtime-source port and #942's four diagnostic adapters;
+the shared batched reader keeps #918's source, display priority and counters.
+The additional references are read-only, opt-in
 diagnostic adapters to existing accepted presentation/overlay/panel decisions;
 there is no new delegate or background collector. A separate lazy diagnostic
 chunk and four lazy translated coverage dictionaries account for the new bytes.
 The preview parser was extracted from the editor rather than growing its core.
-The measured baseline is updated in the same issue/commit; ratchet bands,
+The accepted frame's immutable source/runtime/server cut is used even while a
+newer WS event is awaiting paint. The measured baseline is updated in the same issue/commit; ratchet bands,
 core-file ceilings and actual entry/chunk budget limits are unchanged.
 
 API1 is not the package schema: config/get advertises `[1,2]`; old requests

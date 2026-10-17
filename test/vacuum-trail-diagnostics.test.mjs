@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { diagnoseVacuumTrail } from '../test-build/vacuum-trail-diagnostics.js';
+import { diagnoseVacuumTrail, diagnoseVacuumTrails } from '../test-build/vacuum-trail-diagnostics.js';
+import { collectSupportDiagnostics } from '../test-build/support-diagnostics.js';
 import { VacuumPathGeometryCache } from '../test-build/vacuum-path-geometry.js';
 import { currentVacuumTrailFrame } from '../test-build/vacuum-trail-material.js';
 import { renderVacuumPathDiagnostics } from '../test-build/editors/vacuum-path-diagnostics.js';
@@ -101,4 +102,44 @@ test('#918 the real diagnostic template renders the display reason in Russian an
     assert.ok(text.includes(t(lang, 'vac.path_sampled')));
     assert.doesNotMatch(text, /vac\./);
   }
+});
+
+test('#942 batch diagnostics keep #918 counters/display priority and resolve each robot once', () => {
+  const f = fixture();
+  const expected = f.diagnose();
+  let calls = 0;
+  f.host._vacRuntimeSource = () => { calls++; return f.runtimeSource; };
+  assert.deepEqual(diagnoseVacuumTrails(f.host).get('robot'), expected);
+  assert.equal(calls, 1);
+  f.host._vacRt.get('robot').moving = false;
+  const stopped = diagnoseVacuumTrails(f.host).get('robot');
+  assert.equal(stopped.display, 'vac.trail_display_stopped');
+  assert.deepEqual([stopped.raw, stopped.stored, stopped.rendered], [12, 12, 0]);
+});
+
+test('#942 collector separates unavailable picker A from the #918 rendered route source B', () => {
+  const f = fixture();
+  Object.assign(f.device, { entities: ['vacuum.robot'], primary: 'vacuum.robot', area: null });
+  Object.assign(f.runtimeSource.telemetry, { rooms: [], mapId: 'Map 1' });
+  const facts = new Map([['vacuum:robot', { ...f.runtimeSource,
+    runtime: { moving: true, trail: [points] }, server: f.host._vacSrvTrails.robot }]]);
+  Object.assign(f.host, {
+    _renderDeviceSnapshot: { devices: [f.device], hass: f.host.hass, presentations: new Map(), facts,
+      geometry: 1, capturedAt: Date.now() },
+    _vacSourceResolution: () => ({ entityId: 'camera.a', status: 'unavailable', candidates: [] }),
+    _serverCfg: { spaces: [] }, _settings: {}, _cfgEpoch: 1, _loadOk: false,
+    _cfgRev: 7, _layoutRev: 9, _mode: 'view', _effectiveProjection: () => 'flat',
+    _writesPending: 0, _saveConfigDebounced: { pending: () => false }, _dirtyPos: new Set(), _sentPos: new Map(),
+    _virtualLights: { rev: 0, configRev: 7, off: new Set() },
+  });
+  // A newer event is pending, but the accepted frame still shows B's run.
+  f.host._vacSrvTrails = { robot: { current: { ...f.run, route_id: 'new-foreign-route' } } };
+  f.host._vacRt = new Map([['robot', { moving: false, material: [] }]]);
+  f.host._vacRuntimeSource = () => { throw new Error('collector re-resolved a newer source'); };
+  const info = collectSupportDiagnostics(f.host).vacuums[0];
+  assert.equal(info.source, 'camera.a');
+  assert.equal(info.source_status, 'unavailable');
+  assert.equal(info.effective_source, 'camera.b');
+  assert.ok(info.rendered > 0);
+  assert.deepEqual(info.reasons, ['drawable'], 'unavailable discovery/root is not a false render blocker');
 });

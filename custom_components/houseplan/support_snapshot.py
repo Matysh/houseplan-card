@@ -268,8 +268,9 @@ def capture_snapshot(
         filtered["vacuums"] = []
         for row in client["vacuums"]:
             refs = {item["source"] for item in row.get("candidates") or []}
-            if row.get("source"):
-                refs.add(row["source"])
+            for key in ("source", "effective_source"):
+                if row.get(key):
+                    refs.add(row[key])
             if row["marker"] not in observations or not refs <= scope:
                 reasons.add("access_denied" if refs & denied else "unknown_reference")
                 continue

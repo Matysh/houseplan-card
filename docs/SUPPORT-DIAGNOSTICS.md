@@ -38,6 +38,14 @@ normalization, empty/null/absent remain distinct. No independent coordinate
 rounding. Unknown matrices/versions are marked rather than repaired. Absolute
 timestamps become exact signed ages; invalid/null/missing times remain distinct.
 
+After #918 the picker/root `source` and the accepted frame's `effective_source`
+can differ. Both remain explicit and share the entity namespace; an unavailable
+root A is not reported as a drawing blocker when the exact available route B
+owns the frame. Batched path diagnostics preserve the actual #918 display
+priority, stored counters and shared roster quota, without N² UI calls.
+The support adapter uses the accepted frame's source, runtime and server book;
+a newer WS event awaiting paint cannot replace those observations mid-report.
+
 One physical build per user/draft, four globally, ten-second deadline including
 capture waits. Cancellation/timeout cannot release an executing job. The
 HA-lifetime pool survives integration reload and late completion cannot publish

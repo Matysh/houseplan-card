@@ -77,6 +77,14 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'support-v2-effective-source-skips-read-scope',
+    guard: 'node scripts/backend-test-guard.mjs test_effective_route_source_requires_read_permission_even_without_candidates tests_backend/test_ha_support_v2.py',
+    because: '#942 after #918: an effective route source can differ from the discovery root and be absent from candidates. Its claims still require entity read scope.',
+    patches: [{ file: 'custom_components/houseplan/support_snapshot.py',
+      find: '            for key in ("source", "effective_source"):',
+      replace: '            for key in ("source",):' }],
+  },
+  {
     id: 'vacuum-server-event-keeps-old-render-snapshot',
     guard: 'node demo/smoke_vacuum_route_recovery.mjs',
     because: '#918 AC4/AC8: a real trail websocket event without a coincident HA state tick '

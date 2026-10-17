@@ -9,8 +9,9 @@ import { projectedTapAction, resolveToggleIntent } from './device-toggle';
 import { roomFillModeOf, roomGlowOf, spaceDisplayOf, displayIsNeutral } from './logic';
 import { contentFingerprint } from './visual-continuity';
 import { sunRaysOn } from './sun';
-import { planVacuumOverlay, type VacuumMapRoute, type VacuumRouteResolution } from './vacuum-routes';
-import { vacRoomNameKey, vacTrailMode, type VacTelemetry } from './vacuum';
+import { planVacuumOverlay } from './vacuum-routes';
+import { vacRoomNameKey, vacTrailMode, type VacPath } from './vacuum';
+import type { VacuumRuntimeSource } from './vacuum-runtime-source';
 import { diagnoseVacuumTrails } from './vacuum-trail-diagnostics';
 import type { VacuumServerBook } from './vacuum-trail-material';
 
@@ -19,10 +20,8 @@ type Host = HouseplanEditorHostPort & {
   readonly _summary?: { supportFacts(): Record<string, unknown> };
 };
 type Row = Record<string, unknown>;
-interface VacuumFrame {
-  source: string | null; telemetry: VacTelemetry | null;
-  routes: VacuumMapRoute[]; resolution: VacuumRouteResolution;
-  runtime: { trail: unknown; moving: boolean } | null;
+interface VacuumFrame extends VacuumRuntimeSource {
+  runtime: { trail: VacPath; moving: boolean } | null;
   server: VacuumServerBook[string] | null;
 }
 
@@ -161,22 +160,36 @@ export function collectSupportDiagnostics(host: Host): SupportDiagnosticInput {
     if (d.entities.length > 512 || p.visualSources.length > 512 || (intent?.targets.length || 0) > 512) limited = true;
     observations.push(row);
   }
-  const diagnostics = diagnoseVacuumTrails({ _devices: devices, _vacSrvTrails: host._vacSrvTrails,
-    _vacRt: host._vacRt, _vacTrailFormat: host._vacTrailFormat, _isVacDev: d => host._isVacDev(d),
-    _vacSource: d => host._vacSource(d, hass), _vacObservedMapId: (d, source) => host._vacObservedMapId(d, source),
-    _model: host._model, _space: host._space, _vacGeometryCache: host._vacGeometryCache,
-    _cellCm: host._cellCm, _gridPitch: host._gridPitch, hass });
+  // Preserve the accepted frame's cut even if a newer WS event is waiting for
+  // paint. The shared #918 decision code must not borrow a newer run/position.
+  const frames = new Map<string, VacuumFrame>();
+  const frameRuns: VacuumServerBook = {};
+  const frameRuntime = new Map<string, { moving: boolean; material: VacPath }>();
+  for (const d of devices) {
+    const frame = snapshot?.facts.get(`vacuum:${d.id}`) as VacuumFrame | undefined;
+    if (!frame || !host._isVacDev(d)) continue;
+    frames.set(d.id, frame);
+    if (frame.server) frameRuns[d.id] = frame.server;
+    if (frame.runtime) frameRuntime.set(d.id, { moving: frame.runtime.moving, material: frame.runtime.trail });
+  }
+  const diagnostics = diagnoseVacuumTrails({ _devices: devices.filter(d => frames.has(d.id)), _vacSrvTrails: frameRuns,
+    _vacRt: frameRuntime, _vacTrailFormat: host._vacTrailFormat, _isVacDev: d => host._isVacDev(d),
+    _vacRuntimeSource: d => frames.get(d.id)!,
+    _space: host._space, _vacGeometryCache: host._vacGeometryCache,
+    _cellCm: host._cellCm, _gridPitch: host._gridPitch });
   const vacuums: Row[] = [];
   const budget = { points: 4096, fragments: 256 };
   for (const d of devices) {
     if (!host._isVacDev(d)) continue;
     if (vacuums.length >= 32) { limited = true; break; }
-    const frame = snapshot?.facts.get(`vacuum:${d.id}`) as VacuumFrame | undefined;
+    const frame = frames.get(d.id);
     const source = host._vacSourceResolution(d, false, hass);
-    const { reasons, plan } = vacuumSupportReasons(d, frame, host._space, source.status);
+    // #918: an available explicit route can use B while picker/root A is
+    // unavailable. The accepted frame, not A, owns the rendered path.
+    const { reasons, plan } = vacuumSupportReasons(d, frame, host._space, frame?.source ? 'ok' : source.status);
     const diagnostic = diagnostics.get(d.id);
     if (diagnostic?.reason === 'limited') reasons.push('budget_limited');
-    if (!diagnostic?.stored) reasons.push('no_path');
+    if (diagnostic && !diagnostic.stored) reasons.push('no_path');
     if (!reasons.length && diagnostic?.rendered) reasons.push('drawable');
     const active = frame?.resolution.kind === 'ready' ? frame.resolution.route : null;
     const candidates = [...source.candidates].sort((a, b) => Number(b.entityId === source.entityId) - Number(a.entityId === source.entityId));
@@ -191,6 +204,7 @@ export function collectSupportDiagnostics(host: Host): SupportDiagnosticInput {
         has_position: c.hasPosition, has_rooms: c.hasRooms, has_path: c.hasPath, has_map_id: c.hasMapId })),
     };
     if (frame) Object.assign(row, { resolution: frame.resolution.kind, space: active?.space ?? null,
+      effective_source: frame.source,
       route: active?.id ?? null, map_id: active?.map_id ?? null, current_matches: plan?.currentRunMatches ?? false,
       previous_visible: !!plan?.previous,
       local: supportPathSample(frame.runtime?.trail, budget),

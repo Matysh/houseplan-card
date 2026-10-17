@@ -495,6 +495,7 @@ async def test_populated_ha_capture_projects_real_cached_paths_sources_and_attri
         {
             "marker": "m",
             "source": "camera.synthetic",
+            "effective_source": "camera.synthetic",
             "source_status": "ok",
             "moving": True,
             "route": "route",
@@ -566,6 +567,7 @@ async def test_populated_ha_capture_projects_real_cached_paths_sources_and_attri
         == config["source"]
     )
     assert vacuum["current"]["map_id"] == config["map_routes"][0]["map_id"]
+    assert vacuum["client"]["effective_source"] == vacuum["current"]["source"]
     assert vacuum["current"]["route_id"] == config["map_routes"][0]["id"]
     assert vacuum["current"]["quality"]["raw_points"] == 8
     assert vacuum["current"]["sample"]["fragments"][0]["points"] == [[0, 0], [1, 1]]
@@ -592,3 +594,65 @@ async def test_populated_ha_capture_projects_real_cached_paths_sources_and_attri
             "camera.synthetic",
         )
     )
+
+
+async def test_effective_route_source_requires_read_permission_even_without_candidates(
+    hass, hass_ws_client, monkeypatch
+):
+    from custom_components.houseplan.support_snapshot import capture_snapshot
+
+    await _setup(hass, options={CONF_ADMIN_ONLY: False})
+    await _access_token_for_group(hass, GROUP_ID_USER)
+    user = next(
+        user
+        for user in await hass.auth.async_get_users()
+        if user.name == f"House Plan {GROUP_ID_USER}"
+    )
+    original = type(user.permissions).check_entity
+    monkeypatch.setattr(
+        type(user.permissions),
+        "check_entity",
+        lambda self, eid, policy: (
+            False if eid == "camera.private" else original(self, eid, policy)
+        ),
+    )
+    for entity in ("vacuum.robot", "camera.public", "camera.private"):
+        hass.states.async_set(entity, "idle")
+    cfg = {
+        "spaces": [],
+        "settings": {},
+        "markers": [
+            {
+                "id": "m",
+                "binding": "entity:vacuum.robot",
+                "vacuum": {
+                    "source": "camera.public",
+                    "map_routes": [
+                        {
+                            "id": "r",
+                            "source": "camera.private",
+                            "map_id": "1",
+                            "space": "s",
+                        }
+                    ],
+                },
+            }
+        ],
+    }
+    obs = observations()
+    obs["devices"] = [{"id": "m", "binding": "entity:vacuum.robot"}]
+    obs["vacuums"] = [
+        {
+            "marker": "m",
+            "source": "camera.public",
+            "effective_source": "camera.private",
+            "rendered": 12,
+        }
+    ]
+    snapshot, scope = capture_snapshot(hass, user, cfg, obs)
+    assert "camera.private" not in scope
+    assert snapshot["client"]["devices"], "the marker itself is allowed"
+    assert snapshot["client"]["vacuums"] == [], (
+        "an implicit effective source cannot bypass read ACL"
+    )
+    assert "access_denied" in snapshot["reasons"]

@@ -655,6 +655,7 @@ VAC_CLIENT = Object(
     {
         "marker": Reference("marker"),
         "source": nullable(Reference("entity")),
+        "effective_source": nullable(Reference("entity")),
         "source_status": SOURCE_STATUS,
         "resolution": enum(
             "ready",
