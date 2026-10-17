@@ -37,8 +37,10 @@ const mount = async versions => page.evaluate(async versions => {
       if (window.__supportFail) throw { code: 'support_unavailable' };
       const pair = await original({ type: 'houseplan/config/get' });
       const positions = await original({ type: 'houseplan/layout/get' });
-      return window.buildSupportV2Fixture({ request: message, config: pair.config, layout: positions.layout,
+      const preview = await window.buildSupportV2Fixture({ request: message, config: pair.config, layout: positions.layout,
         config_rev: pair.rev, layout_rev: positions.rev });
+      if (window.__supportDefer) await new Promise(resolve => { window.__supportRelease = resolve; });
+      return preview;
     }
     if (message.type === 'houseplan/support/submit') {
       window.__supportSent.push(message); return { report_id: 'hpr-942-smoke' };
@@ -148,6 +150,37 @@ Object.assign(results, await page.evaluate(async () => {
   return { oldBackendLimited: legacyRequest && warning,
     refreshCannotExpandConsent: pinnedConsent && newConsent,
     failedBuildCannotSendAttachment: card._supportDialog?.status === 'error' && !card._supportDialog.preview };
+}));
+Object.assign(results, await page.evaluate(async () => {
+  const card = document.querySelector('houseplan-card'), root = card.renderRoot;
+  const until = async (predicate, label) => {
+    for (let i = 0; i < 500; i++) {
+      if (predicate()) return;
+      await new Promise(resolve => setTimeout(resolve, 20));
+    }
+    throw new Error('close-during-build: ' + label);
+  };
+  root.querySelector('#support-dialog [data-hp="dialog-cancel"]').click();
+  await until(() => !card._supportDialog, 'close prior draft');
+  root.querySelector('.support-button').click();
+  await until(() => root.querySelector('.supportattach input'), 'open fresh draft');
+  window.__supportFail = false;
+  window.__supportDefer = true;
+  root.querySelector('.supportattach input').click();
+  await until(() => window.__supportRelease && card._supportDialog?.status === 'building', 'pending preview');
+  root.querySelector('#support-dialog [data-hp="dialog-cancel"]').click();
+  await until(() => root.querySelector('hp-confirm [data-hp="dialog-confirm"]'), 'busy confirmation');
+  window.__supportRelease();
+  await until(() => card._supportDialog?.status === 'ready', 'preview completed before decision');
+  const token = card._supportDialog.preview.token;
+  const discardedBeforeClose = window.__supportCalls.filter(call =>
+    call.type === 'houseplan/support/preview/discard' && call.token === token).length;
+  root.querySelector('hp-confirm [data-hp="dialog-confirm"]').click();
+  await until(() => !card._supportDialog, 'confirmed close');
+  await until(() => window.__supportCalls.filter(call => call.type === 'houseplan/support/preview/discard'
+    && call.token === token).length > discardedBeforeClose, 'latest token discarded');
+  return { closeDiscardsPreviewFinishedDuringConfirmation: window.__supportCalls.filter(call =>
+    call.type === 'houseplan/support/preview/discard' && call.token === token).length === discardedBeforeClose + 1 };
 }));
 checkAll(results);
 await finish(browser, results);

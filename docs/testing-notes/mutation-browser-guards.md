@@ -387,6 +387,11 @@ public HA config/capability adoption. Refresh stays on v1 until the actual
 checkbox is turned off and on; a helper-only test cannot prove that wiring.
 
 - `support-v2-refresh-expands-consent`
+- `support-v2-close-discards-stale-snapshot`
+
+Preview completion also crosses the mounted close-confirmation boundary; pure
+parser tests cannot prove that the latest owned token is discarded rather than
+the pre-confirmation snapshot.
 
 - `plan-converter-forgets-input-generation`
 

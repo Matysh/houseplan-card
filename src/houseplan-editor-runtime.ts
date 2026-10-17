@@ -8449,7 +8449,7 @@ public async _discardSupportPreview(token: string): Promise<void> {
   }
 
 public async _closeSupportDialog(): Promise<void> {
-    const dialog = this.host._supportDialog;
+    let dialog = this.host._supportDialog;
     if (!dialog) return;
     if (dialog.status === 'building' || dialog.status === 'sending') {
       const lang = langOf(this.host.hass, this.host._config?.language);
@@ -8461,9 +8461,16 @@ public async _closeSupportDialog(): Promise<void> {
         confirmLabel: this.host._t('btn.close'),
         cancelLabel: this.host._t('btn.cancel'),
       });
+      // The build/submit may finish while confirmation is open. Close only
+      // this draft, and clean up its latest token, not the pre-await snapshot.
+      const latest = this.host._supportDialog;
+      if (!latest || latest.draftId !== dialog.draftId) return;
+      dialog = latest;
       if (!accepted) {
         await this.host.updateComplete;
-        this.host.renderRoot.querySelector<HpDialog>('#support-dialog')?.rejectClose();
+        if (this.host._supportDialog?.draftId === dialog.draftId) {
+          this.host.renderRoot.querySelector<HpDialog>('#support-dialog')?.rejectClose();
+        }
         return;
       }
     }

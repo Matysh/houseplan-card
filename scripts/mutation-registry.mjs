@@ -154,6 +154,14 @@ const MUTANT_DEFINITIONS = [
       replace: '    devices: readonly DevItem[] = this._devices,' }],
   },
   {
+    id: 'support-v2-close-discards-stale-snapshot',
+    guard: 'node demo/smoke_support_diagnostics.mjs',
+    because: '#942 AC5: a real mounted form can finish building while the close confirmation is open. Closing must discard the latest preview exactly once, not leak it until TTL.',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts',
+      find: '      dialog = latest;',
+      replace: '      // mutation: retain the pre-confirmation snapshot' }],
+  },
+  {
     id: 'support-v2-refresh-expands-consent',
     guard: 'node demo/smoke_support_diagnostics.mjs',
     because: '#942 AC5/AC8: an ordinary config event can advertise package2 while Help still holds package1 consent. Refresh must stay1 until the user explicitly checks attachment again.',

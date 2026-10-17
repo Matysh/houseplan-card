@@ -52,6 +52,10 @@ the existing HA support tests, `node --test test/support-diagnostics.test.mjs`,
 The new browser scenario uses public cold mount/config/HA inputs and the actual
 Python builder, not a hand-written preview. Captures live under ignored
 `artifacts/support-diagnostics/`; inspect 360/1100 light/dark before handoff.
+It also completes a real preview while the busy-close confirmation is open:
+accepting that confirmation discards the latest token exactly once, rather
+than the stale pre-confirmation snapshot. The registered protective witness
+is `support-v2-close-discards-stale-snapshot`; mutation execution stays nightly.
 Private reports are never fixtures. Upper-marker/capped-path fixtures and an
 executor heartbeat test establish bounded work, not a wall-clock speed claim.
 
