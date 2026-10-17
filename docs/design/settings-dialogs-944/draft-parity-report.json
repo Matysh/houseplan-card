@@ -2,14 +2,19 @@
   {
     "case": "space",
     "parent": null,
-    "fields": 44,
+    "fields": 47,
     "parity": "PASS",
     "intentionalChanges": {
       "afterOnly": [
-        "s-label-co2"
+        "s-label-co2",
+        "s-name-font",
+        "s-caption-font",
+        "s-battery-mode"
       ],
       "removedAfter": [
         "s-room-color-reset",
+        "s-custom-reset",
+        "s-card-font",
         "s-card-font-reset",
         "s-layer-openings",
         "s-glow",
@@ -19,6 +24,9 @@
       "footer": [
         "s-copy",
         "s-delete"
+      ],
+      "changedBehavior": [
+        "s-show-borders controls borders and openings"
       ]
     }
   },
