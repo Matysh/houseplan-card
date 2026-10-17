@@ -16,15 +16,19 @@ still sends no write. Mutation execution remains nightly-only.
 The measured #930 source graph keeps 361 port members and 103 ported privates;
 host references grow 5463→5539 (+76) because the shared single/batch deletion
 owner reuses the existing adoption, cleanup and identity ports instead of a
-second command implementation. Fresh emitted JS grows 3014526→3026010 bytes
-(+11484), including four lazy locale dictionaries, space projection and deletion UI.
+second command implementation. Final source `c4df5e57e` emits 3026029 JS bytes
+(+11503 over 3014526), including four lazy locale dictionaries, space projection
+and deletion UI. The ratchet reference remains the earlier 3026010-B measurement;
+the last 19 B do not need a further reference increase.
 Matched clean dev `d36364b2` measures initial View 324886 B gzip and lazy editor
-269876 B; the task measures 324800 (−86) and 270829 (+953). Delete loads only
+269876 B; final source `c4df5e57e` measures 324826 (−60) and 270889 (+1013).
+Delete loads only
 on demand; its locale labels stay in the editor graph; the shared confirmation
 shell retains its narrowly keyed list rule. The existing
 raw-URL retry ABI keeps the shared translation adapter in `editor-shared`.
-Only the task's 953-B editor cost is added to its rolling reference
-(268532→269485), retaining the inherited 1344-B gap. Absolute budgets, both
+Only the earlier measured 953-B editor cost is added to its rolling reference
+(268532→269485); the final extra 60 B are absorbed by the existing band rather
+than increasing the reference again (the inherited gap was 1344 B). Absolute budgets, both
 2000-B bands, initial-View ceiling, core ceilings and browser guideline stay put.
 
 Area/room membership is indexed once per catalog projection; the 2000-row unit
