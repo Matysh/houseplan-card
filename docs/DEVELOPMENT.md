@@ -1,5 +1,32 @@
 # Development and deployment
 
+## Device copying (#935)
+
+`test/device-copy.test.mjs` covers first-free numbering, effective appearance,
+deep independence, incoming entity/marker aliases, unavailable sources, measured
+capsule footprints and internal-only attachment mappings. `device-copy-editor`
+units execute the actual command callbacks for stale revisions, source retirement,
+failed attachments and foreign-HA replies, including a newer operation in flight.
+`tests_backend/test_ha_marker_copy.py` uses authenticated HA WS, real schemas and
+Store I/O fault injection to hold ACL/CAS, graph validation, coherent rollback,
+concurrent copies and independent file bytes. Ordinary faults are not mutants.
+
+`HP_SMOKE_CHECKS=1 node demo/smoke_device_copy.mjs` uses native context clicks,
+ordinary and automatic devices, LED selection, lost/rejected replies and a cold
+reader of the saved wire pair. Horizontal SVG strokes have zero bbox height:
+click their actual transformed midpoint, never `force` visibility or invoke a
+private handler. Right-button pointerdown must not arm a device drag/hold.
+Use `crypto.getRandomValues`, not secure-context-only `randomUUID`, so copying
+works on ordinary HTTP HA installations too. The command stays in the lazy editor
+graph; the fixture stores cloned accepted bodies rather than echoing requests.
+
+Six #935 mutation definitions protect the native right-button order, copy ACL,
+both revision checks, graph validation, paired commit call site and shared file quota. Only static
+readiness is run in development; compilation/caught outcomes belong to nightly.
+File COPY uses the same upload lock and unchanged byte/count/disk limits as a
+normal attachment upload. The negative fixture fills the real quota with small
+files; it does not patch a limit or execute a mutant.
+
 ## Explicit amend provenance (#923)
 
 Stage the intended correction, then use `npm run commit:amend -- --no-edit`.

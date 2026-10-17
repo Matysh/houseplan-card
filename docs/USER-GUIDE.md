@@ -1426,7 +1426,7 @@ layer. See [Presence radars](RADAR.md) for supported profiles, setup and privacy
 |---|---|---|
 | Short click/tap | Configured action | Open marker settings |
 | Hold 600 ms | House Plan device card | No device control |
-| Right click | Native HA more-info for the primary entity | Browser/editor context |
+| Right click | Native HA more-info for the primary entity | “Copy device” menu |
 
 A cancelled press, a release beside the marker or window focus loss neither
 opens a card later nor switches the device. After returning from the background,
@@ -1438,6 +1438,29 @@ shrinks by 5% and returns over 0.2 s. Merely opening information, an editor or a
 confirmation does not trigger feedback; with confirmation it starts only after
 approval and dispatch. Reduced motion replaces the scale with a brief steady
 accent.
+
+### Copying in the device editor
+
+In **Devices**, right-click an ordinary marker or LED strip and choose
+**Copy device** to create an independent virtual marker nearby. Real HA devices,
+including automatically placed ones without saved overrides, can be copied too.
+Appearance, description, files and incoming/outgoing light links are retained;
+the original's own HA binding and live equipment state are not. The base HA icon
+is pinned; the light's own HA colour/brightness become manual values. The copy
+uses the Always light role when needed for its source or incoming links.
+Normal virtual-light rules still apply: a new unlinked manual lamp starts on.
+
+Names fill the first free number from 2: copying “Lamp 4” can produce “Lamp 2”;
+another numeric suffix is never appended. The copy keeps the same floor and room
+assignment but may be placed outside the room outline when space is tight.
+Neither the original nor its neighbours move. An LED is copied as an **ordinary
+icon**; its existing strip remains with the original.
+
+Attachments are independent, as are later edits. A changed plan or failed save
+asks you to refresh before retrying; damaged links are never silently discarded.
+Copying itself sends no equipment commands. Escape or an outside click closes
+the menu. No new touch copying gesture is introduced; position Undo is unchanged,
+and a created copy can be removed with the existing delete command.
 
 ### Actions
 

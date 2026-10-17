@@ -30,6 +30,11 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['DeviceCopyEditor', 'virtualDeviceCopy', 'deviceCopyIncoming', 'deviceCopyPosition'],
+    smokes: ['smoke_device_copy.mjs'],
+    because: '#935: native context-menu action, saved pair and cold reader cover the copy command without naming its internal helpers.',
+  },
+  {
     files: ['src/device-contact-geometry.ts','src/device-contact-snap.ts','src/device-contact-render.ts',
       'src/device-contact-card.ts','src/device-contact.styles.ts','src/device-contact-scene.ts',
       'src/device-contact-walls.ts','src/device-contact-floor.ts','src/device-contact-collision.ts',

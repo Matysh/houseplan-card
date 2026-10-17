@@ -146,6 +146,7 @@ import { forgetMarkerBaseline, rememberMarkerBaseline } from './editors/marker-f
 import { commitPlanOptimization } from './plan-optimize-write';
 import { PlanOptimizationUndo, type UndoHass } from './plan-optimize-undo';
 import { saveSpaceCopy } from './space-copy-runtime';
+import { DeviceCopyEditor } from './device-copy-editor';
 import {
   Affine, applyAffine, readVacTelemetry, autoCalibrate, vacTrailMode, areaCentroid,
   vacCalibrationResidualCm, vacRoomNameMatchCount, VAC_CALIBRATION_WARN_CM, FitParams, fitMatrix,
@@ -456,6 +457,7 @@ interface DeviceInboxDialogState {
 }
 
 export interface HouseplanEditorHostPort {
+  readonly _configWriteContext: import('./config-write-context').ConfigWriteContext;
   /** #780: the LED tool lives in its own lazy chunk; the card owns its loader. */
   _ledEditor: import('./led-strip-editor').LedStripEditor | null;
   _ledButton(): TemplateResult;
@@ -832,6 +834,7 @@ export const EDITOR_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 export { EDITOR_LANGUAGE_RUNTIME }; // #627: see src/i18n/editor-language.ts
 
 export class HouseplanEditorRuntime {
+  public readonly deviceCopy = new DeviceCopyEditor(this.host);
   public readonly physicalGesture: PhysicalBodyGestureRuntime;
   public readonly backdropGesture: BackdropFrameGestureRuntime;
   private _gestureBoundary = false;
@@ -841,7 +844,7 @@ export class HouseplanEditorRuntime {
   public readonly chainExit: EditorChainExit;
   private _navigationIntent = 0;
   public get navigationIntent(): number { return this._navigationIntent; }
-  public invalidateEditorNavigation(): void { this._navigationIntent++; this.chainExit.invalidate(); }
+  public invalidateEditorNavigation(): void { this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); }
   public get roomSaveBusy(): boolean { return roomSaveBusy(this.host); }
   public readonly roomDeviceDiscovery = new RoomDeviceDiscovery();
   public readonly languageRuntime = EDITOR_LANGUAGE_RUNTIME;

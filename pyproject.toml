@@ -43,5 +43,6 @@ module = [
     "custom_components.houseplan.junction_limits",
     "custom_components.houseplan.plans",
     "custom_components.houseplan.led_strips",
+    "custom_components.houseplan.marker_copy",
 ]
 strict = true

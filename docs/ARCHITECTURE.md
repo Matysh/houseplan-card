@@ -1,5 +1,26 @@
 # House Plan architecture
 
+Device copying (#935) is an editor-only `DeviceCopyEditor` command backed by
+pure template/name/reverse-link/placement helpers in `device-copy.ts`. It creates
+a new virtual Marker, never rebinds the source or moves LED geometry. Effective
+HA icon and own light appearance are materialised; own light/toggle selectors
+are removed, operational state is not cloned. Existing explicit external sources
+and unknown compatible settings remain deep-independent.
+
+`houseplan/marker/copy` accepts source identity/binding, one new marker/position
+and both expected revisions. The server reconstructs the narrow delta from the
+locked stored pair, derives incoming additions from marker refs and the source's
+own HA entities, validates the new graph/settings and commits via `_commit_pair`.
+Source availability and writer permission are checked again after executor work.
+No Optimize/migration or full-layout client overwrite is involved. The response
+contains both accepted bodies/revisions. A lost reply triggers reads for the
+same new ID, not another write. Foreign HA replies cannot adopt or retire a
+newer command. Uploaded attachments are COPY-prepared with exact name mappings;
+original folders are never cleaned by this command. Failed preparations may
+leave unreferenced staged files under the new ID, not partial visible markers.
+File COPY and uploads share `upload_lock` and the same existing store quotas,
+so concurrent duplication cannot spend the same remaining slot twice.
+
 External plan migration (#937) is isolated in `scripts/sh3d-convert/`, not a
 Lovelace runtime dependency. Both readers emit the current space envelope through
 a generated tool-only bundle of the canonical wall writer. SH3D retains physical

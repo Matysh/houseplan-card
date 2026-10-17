@@ -32,6 +32,8 @@ from .const import (
     DOMAIN,
     EXPORT_VERSION,
     FILES_DIR,
+    MAX_FILES_BYTES,
+    MAX_FILES_COUNT,
     MAX_PLANS_BYTES,
     MAX_PLANS_FILES,
     MAX_PLANS_LISTED,
@@ -72,8 +74,10 @@ from .import_export import (
 )
 from .junction_limits import JunctionLimitError, validate_junction_limits
 from .led_strips import led_strip_link_report, preserve_led_strips
+from .marker_copy import marker_copy_candidate
 from .plans import (
     QuotaError,
+    check_quota,
     collect_attachments,
     collect_plans,
     is_plan_file,
@@ -273,6 +277,7 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_config_get)
     websocket_api.async_register_command(hass, ws_virtual_light_toggle)
     websocket_api.async_register_command(hass, ws_config_set)
+    websocket_api.async_register_command(hass, ws_marker_copy)
     websocket_api.async_register_command(hass, ws_wall_node_move)
     websocket_api.async_register_command(hass, ws_plan_optimize)
     websocket_api.async_register_command(hass, ws_plan_optimize_undo)
@@ -443,6 +448,110 @@ async def _commit_pair(
         )
         raise PairCommitFailure(recovery_pending=True) from rollback_error
     raise PairCommitFailure(recovery_pending=False)
+
+
+@websocket_api.websocket_command({
+    vol.Required("type"): "houseplan/marker/copy",
+    vol.Required("source_id"): str,
+    vol.Required("source_binding"): vol.Match(r"^(device:.+|entity:.+|virtual)$"),
+    vol.Required("marker"): dict,
+    vol.Required("position"): POS_SCHEMA,
+    vol.Required("expected_config_rev"): int,
+    vol.Required("expected_layout_rev"): int,
+})
+@websocket_api.async_response
+async def ws_marker_copy(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
+    """Create a virtual copy and reverse edges as one recoverable store pair (#935)."""
+    if not _check_write(hass, connection):
+        connection.send_error(msg["id"], "unauthorized", "Only editors may copy devices")
+        return
+    rt = _runtime(hass, connection, msg["id"])
+    if rt is None:
+        return
+    from homeassistant.helpers import device_registry as dr
+    from homeassistant.helpers import entity_registry as er
+
+    try:
+        async with rt.write_lock:
+            resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
+            if resolved is None:
+                return
+            cd, ld = resolved.config_data, resolved.layout_data
+            cr, lr = int(cd.get("rev", 0)), int(ld.get("rev", 0))
+            if msg["expected_config_rev"] != cr or msg["expected_layout_rev"] != lr:
+                connection.send_error(msg["id"], "conflict", "Plan changed elsewhere")
+                return
+            previous, layout = cd.get("config") or DEFAULT_CONFIG, ld.get("layout") or {}
+            binding = msg["source_binding"]
+            kind, _, ref = binding.partition(":")
+            def source_available():
+                if kind == "virtual":
+                    return True
+                registry = import_registry_snapshot(hass)
+                entity = er.async_get(hass).async_get(ref) if kind == "entity" else None
+                parent = dr.async_get(hass).async_get(entity.device_id) if entity and entity.device_id else None
+                return (ref in registry["active_" + kind]
+                        and not (entity and entity.disabled_by is not None)
+                        and not (parent and parent.disabled_by is not None))
+
+            if not source_available():
+                connection.send_error(msg["id"], "invalid_data", "Source is no longer available")
+                return
+            own_entities = ({ref} if kind == "entity" else {
+                entry.entity_id for entry in er.async_get(hass).entities.values()
+                if entry.device_id == ref and not entry.disabled_by
+                and entry.entity_id.startswith(("light.", "switch."))
+            }) if kind != "virtual" else set()
+            radar_registry = radar_registry_evidence(hass)
+
+            def validate():
+                candidate, positions = marker_copy_candidate(
+                    previous, layout, msg["source_id"], binding, msg["marker"],
+                    msg["position"], own_entities,
+                )
+                candidate = CONFIG_SCHEMA(candidate)
+                positions = LAYOUT_SCHEMA(positions)
+                if len(json.dumps(candidate, separators=(",", ":"))) > MAX_CONFIG_BYTES:
+                    raise vol.Invalid("Configuration is too large")
+                validate_active_marker_ids(candidate, previous)
+                validate_marker_controls(candidate, previous)
+                validate_marker_light_entities(candidate, previous)
+                validate_marker_radars(candidate, previous, registry=radar_registry)
+                validate_marker_value_badges(candidate, previous)
+                validate_marker_vacuum_routes(candidate, previous)
+                return candidate, positions
+
+            target, positions = await hass.async_add_executor_job(validate)
+            # The lock spans validation and the commit. Recheck authority after CPU I/O.
+            if not _check_write(hass, connection):
+                connection.send_error(msg["id"], "unauthorized", "Editing permission was lost")
+                return
+            if not source_available():
+                connection.send_error(msg["id"], "invalid_data", "Source is no longer available")
+                return
+            original_metadata = _layout_metadata(ld)
+            final_metadata = {k: v for k, v in original_metadata.items()
+                              if k not in {_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING, "repair_backup", "geom_pending"}}
+            pending = {"kind": "marker_copy", "config": target, "layout": positions,
+                       "config_rev": cr + 1, "layout_rev": lr + 1, "final_metadata": final_metadata}
+            rollback = {"kind": "marker_copy_rollback", "config": previous, "layout": layout,
+                        "config_rev": cr, "layout_rev": lr, "final_metadata": original_metadata}
+            await _commit_pair(rt, pending, rollback)
+    except (DuplicateMarkerIdError, MarkerControlError, RadarValidationError) as err:
+        connection.send_error(msg["id"], err.code, str(err))
+        return
+    except vol.Invalid as err:
+        connection.send_error(msg["id"], "invalid_format", str(err))
+        return
+    except Exception:  # noqa: BLE001 - paired writer has already recovered or retained rollback
+        _LOGGER.exception("House Plan device copy failed")
+        connection.send_error(msg["id"], "commit_failed", "Device copy failed; reload the plan")
+        return
+    hass.bus.async_fire("houseplan_config_updated", {"rev": cr + 1})
+    hass.bus.async_fire("houseplan_layout_updated", {"rev": lr + 1})
+    _refresh_trail_recorder(hass)
+    connection.send_result(msg["id"], {"config": target, "layout": positions,
+                                      "config_rev": cr + 1, "layout_rev": lr + 1})
 
 
 # ---------------- portable backup / transfer ----------------
@@ -1016,6 +1125,9 @@ async def ws_files_migrate(hass: HomeAssistant, connection, msg: dict[str, Any])
     if not _check_write(hass, connection):
         connection.send_error(msg["id"], "unauthorized", "Only administrators may edit files")
         return
+    rt = _runtime(hass, connection, msg["id"])
+    if rt is None:
+        return
     import shutil
     from pathlib import Path
 
@@ -1039,6 +1151,8 @@ async def ws_files_migrate(hass: HomeAssistant, connection, msg: dict[str, Any])
         for f in sorted(src.iterdir()):
             if not f.is_file():
                 continue
+            # #935: permanent copies share the upload store's unchanged limits.
+            check_quota(base, f.stat().st_size, MAX_FILES_BYTES, MAX_FILES_COUNT)
             # a different file may already own this name — do NOT silently point
             # the url at it. The shared helper CLAIMS a free one atomically, so
             # a concurrent migrate or upload cannot pick the same one, and the
@@ -1054,7 +1168,11 @@ async def ws_files_migrate(hass: HomeAssistant, connection, msg: dict[str, Any])
         return mapping
 
     try:
-        mapping = await hass.async_add_executor_job(_copy)
+        async with rt.upload_lock:
+            mapping = await hass.async_add_executor_job(_copy)
+    except QuotaError as err:
+        connection.send_error(msg["id"], "too_large", "Could not copy marker files: " + err.detail)
+        return
     except OSError as err:
         connection.send_error(msg["id"], "io_error", f"Could not copy marker files: {err}")
         return

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 935,
+  "baseStable": "v1.81.0",
+  "category": "major",
+  "rationale": "New device-editor copy workflow, absent from stable v1.81.0; not a repair of an intermediate development regression. Creates independent virtual markers while retaining appearance, attachments and control links.",
+  "summary": {
+    "ru": "Копируйте настроенные устройства правым кликом: рядом появляется независимый виртуальный значок с тем же оформлением, файлами и световыми связями.",
+    "en": "Right-click to copy configured devices into independent virtual markers, retaining appearance, files and light-control links."
+  }
+}

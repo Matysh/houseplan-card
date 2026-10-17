@@ -1,4 +1,13 @@
 {
+  "device.copy": "Gerät kopieren",
+  "device.copy_created": "Kopie erstellt",
+  "device.copy_fallback": "Gerät",
+  "device.copy_changed": "Plan oder Gerät wurde geändert. Plan aktualisieren und erneut kopieren.",
+  "device.copy_access": "Keine Berechtigung mehr zum Kopieren von Geräten.",
+  "device.copy_backend": "Home Assistant nach dem Houseplan-Update neu starten, um Geräte zu kopieren.",
+  "device.copy_no_space": "Kein freier Platz in der Nähe. Original verschieben und erneut versuchen.",
+  "device.copy_files_failed": "Anhänge konnten nicht kopiert werden. Kein Gerät erstellt.",
+  "device.copy_failed": "Gerät konnte nicht kopiert werden. Plan vor einem weiteren Versuch aktualisieren.",
   "editor.device_magnets": "Einrasten",
   "editor.device_magnets_help": "An Wänden und benachbarten Geräten einrasten. Alt setzt dies vorübergehend aus. Gleiche Abstände funktionieren unabhängig.",
   "editor.device_snap_wall": "An der Wand",

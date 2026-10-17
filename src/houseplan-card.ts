@@ -5692,8 +5692,9 @@ export class HouseplanCard extends LitElement {
 
   /** Right click in VIEW mode always opens HA's more-info (owner's decision). */
   private _ctxDevice(ev: MouseEvent, d: DevItem): void {
-    if (this._mode !== 'view') return; // editors keep the native context menu
     d = this._deviceForPointerEvent(ev as PointerEvent, d);
+    if (this._mode === 'devices') { this._editorRuntime?.deviceCopy.open(ev, d); return; }
+    if (this._mode !== 'view') return;
     ev.preventDefault();
     ev.stopPropagation();
     if (!this._deviceBindingActive(d)) return;
@@ -7092,6 +7093,7 @@ export class HouseplanCard extends LitElement {
     // event must keep bubbling to the active decor tool; do not prevent it,
     // capture it or create a layout drag.
     if (this._mode !== 'view' && this._mode !== 'devices') return;
+    if (ev.button !== 0) return; // context-menu input must not arm a drag or hold
     this._deviceDragRetirement.begin(ev.pointerId);
     if (this._mode === 'view' && ev.pointerType === 'touch' && this._touchSequenceMultitouch) return;
     d = this._deviceHits.begin(
@@ -11303,6 +11305,7 @@ export class HouseplanCard extends LitElement {
             : nothing}
         </div>
 
+        ${this._editorRuntime?.deviceCopy.render()}
         ${this._roomDialog ? this._editorRuntime ? this._renderRoomDialog() : nothing : nothing}
         ${this._mergeDialog ? this._editorRuntime ? this._renderMergeDialog() : nothing : nothing}
         ${this._openingDialog ? this._editorRuntime ? this._renderOpeningDialog() : nothing : nothing}

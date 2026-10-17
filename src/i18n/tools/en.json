@@ -1,4 +1,13 @@
 {
+  "device.copy": "Copy device",
+  "device.copy_created": "Copy created",
+  "device.copy_fallback": "Device",
+  "device.copy_changed": "The plan or device has changed. Refresh the plan and try copying again.",
+  "device.copy_access": "You no longer have permission to copy devices.",
+  "device.copy_backend": "Restart Home Assistant after updating Houseplan to copy devices.",
+  "device.copy_no_space": "No nearby free place was found. Move the original and try again.",
+  "device.copy_files_failed": "Attachments could not be copied. No device was created.",
+  "device.copy_failed": "The device could not be copied. Refresh the plan before trying again.",
   "editor.device_magnets": "Snapping",
   "editor.device_magnets_help": "Snap to walls and nearby devices. Hold Alt to bypass. Equal spacing works independently.",
   "editor.device_snap_wall": "Snap to wall",

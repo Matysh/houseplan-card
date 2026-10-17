@@ -1,4 +1,13 @@
 {
+  "device.copy": "Copier l’appareil",
+  "device.copy_created": "Copie créée",
+  "device.copy_fallback": "Appareil",
+  "device.copy_changed": "Le plan ou l’appareil a changé. Actualisez le plan et réessayez.",
+  "device.copy_access": "Vous n’avez plus le droit de copier des appareils.",
+  "device.copy_backend": "Redémarrez Home Assistant après la mise à jour de Houseplan pour copier des appareils.",
+  "device.copy_no_space": "Aucune place libre à proximité. Déplacez l’original et réessayez.",
+  "device.copy_files_failed": "Impossible de copier les pièces jointes. Aucun appareil créé.",
+  "device.copy_failed": "Impossible de copier l’appareil. Actualisez le plan avant de réessayer.",
   "editor.device_magnets": "Magnétisme",
   "editor.device_magnets_help": "Aligner contre les murs et les appareils voisins. Maintenir Alt pour suspendre. Les espacements égaux restent indépendants.",
   "editor.device_snap_wall": "Contre le mur",

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- In the device editor, right-click → “Copy device” creates an independent
+  virtual copy nearby, retaining appearance, attachments and incoming/outgoing
+  control links. Names use the first free number from 2; an LED source becomes
+  an ordinary copied icon without taking the original strip. Copying sends no
+  equipment commands ([#935](https://github.com/Matysh/houseplan-card/issues/935)).
+
 - The converter omits signed or unrecognised backdrop URLs with a visible loss
   report, rather than carrying access signatures into an export. Plain image
   links and bounded version/size/format selectors remain supported

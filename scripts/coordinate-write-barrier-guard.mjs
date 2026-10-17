@@ -33,6 +33,12 @@ export function checkCoordinateWriteBarriers(root = defaultRoot) {
   const optimize = readFileSync(resolve(root, 'src/plan-optimize-write.ts'), 'utf8')
     .replaceAll('host.', 'this.');
   const frontend = `${card}\n${editor}\n${optimize}`;
+  const copy = readFileSync(resolve(root, 'src/device-copy-editor.ts'), 'utf8');
+  const copyWrites = occurrences(copy, "type: 'houseplan/marker/copy'");
+  if (copyWrites.length !== 1) errors.push(`frontend marker copy writer inventory: ${copyWrites.length}`);
+  for (const index of copyWrites) requireWindow(errors, copy, index,
+    /const pos = canonicalizePosition\([\s\S]*position: pos, expected_config_rev: m\.cr, expected_layout_rev: m\.lr/,
+    'frontend marker copy transaction', 150);
 
   const configWrites = occurrences(frontend, "type: 'houseplan/config/set'");
   if (configWrites.length !== 1) errors.push(`frontend config writer inventory: ${configWrites.length}`);

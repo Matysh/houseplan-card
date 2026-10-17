@@ -743,7 +743,8 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_938;
 // #912, owner approval 2026-10-15 (issuecomment-6194871293): combined #900+#912
 // measured 265955 B gzip and 2936529 B total. Adopt only these exact ceilings;
 // both 2000-B bands and every other limit stay unchanged.
-export const LAZY_EDITOR_GZIP_CEILING = 265_955;
+// #935: independent virtual copy command, measured/justified in the task; band unchanged.
+export const LAZY_EDITOR_GZIP_CEILING = 268_449;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

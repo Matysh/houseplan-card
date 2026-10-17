@@ -19,10 +19,27 @@ export function createFixtureStore(config, layout, emit = () => {}) {
     pushLayout(value) { positions = structuredClone(value); layoutRev++; changed('layout'); return layoutRev; },
     // The old optimizer stub is deliberately not a geometry implementation.
     advanceOptimizer() { return { config_rev: ++configRev, layout_rev: ++layoutRev }; },
-    handle(m) {
+    handle(m, registryEntities = []) {
       switch (m.type) {
         case 'houseplan/config/get': return { config: structuredClone(cfg), rev: configRev, can_write: true };
         case 'houseplan/layout/get': return { layout: structuredClone(positions), rev: layoutRev };
+        case 'houseplan/marker/copy': {
+          cas({ expected_rev: m.expected_config_rev }, configRev);
+          cas({ expected_rev: m.expected_layout_rev }, layoutRev);
+          const target = structuredClone(cfg), marker = structuredClone(m.marker);
+          const own = m.source_binding.startsWith('entity:') ? [m.source_binding.slice(7)]
+            : registryEntities.filter(row => row.device_id === m.source_binding.slice(7) && !row.disabled_by).map(row => row.entity_id);
+          target.markers ||= [];
+          if (target.markers.some(row => row.id === marker.id) || positions[marker.id]) throw new Error('duplicate copy id');
+          for (const controller of target.markers) if (controller.id !== m.source_id && !controller.removed
+            && controller.controls?.some(id => id === `marker:${m.source_id}` || own.includes(id))) {
+            controller.controls = [...controller.controls, `marker:${marker.id}`];
+          }
+          target.markers.push(marker);
+          cfg = target; positions = { ...positions, [marker.id]: structuredClone(m.position) };
+          configRev++; layoutRev++; changed('config'); changed('layout');
+          return { config: structuredClone(cfg), layout: structuredClone(positions), config_rev: configRev, layout_rev: layoutRev };
+        }
         case 'houseplan/config/set': {
           cas(m, configRev);
           const next = structuredClone(m.config);

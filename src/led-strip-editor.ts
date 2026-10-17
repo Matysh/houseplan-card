@@ -89,6 +89,7 @@ export interface LedEditorHost {
 
 /** The editor runtime methods the tool calls. */
 export interface LedEditorRuntime {
+  deviceCopy?: { open(event: MouseEvent, device: DevItem): void };
   _svgPoint(ev: MouseEvent): number[];
   _snap(p: number[]): number[];
   _prepareConfigCandidate(config: ServerConfig): ServerConfig;
@@ -633,11 +634,15 @@ export class LedStripEditor {
         stroke-opacity="0.45" stroke-width="${10 / per}" stroke-linecap="round" stroke-linejoin="round"
         pointer-events="none"></path>` : nothing}
       ${this.tool ? nothing : strips.map((strip) => svg`<path class="led-select-hit" data-led-select="${strip.id}"
+        data-hp=${strip.marker ? 'device' : nothing} data-id=${strip.marker || nothing}
         d="${geometry(strip)}" fill="none" stroke="transparent" stroke-width="${(2 * HIT_PX) / per}"
         stroke-linecap="round" stroke-linejoin="round" pointer-events="stroke" style="cursor:pointer"
         @click=${(e: MouseEvent) => {
           e.stopPropagation();
           if (!this.host._suppressClick) this.select(strip.id);
+        }} @contextmenu=${(e: MouseEvent) => {
+          const device = this.device(strip.marker);
+          if (device) this.host._editorRuntime?.deviceCopy?.open(e, device);
         }}></path>`)}
       ${sel && !this.tool ? this.handles(sel, per) : nothing}
       ${preview.length ? svg`<polyline class="led-chain" points="${preview.map((p) => `${p[0]},${p[1]}`).join(' ')}"

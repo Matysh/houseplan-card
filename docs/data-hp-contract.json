@@ -6,6 +6,8 @@
     "additionsAreCompatible": true
   },
   "hooks": {
+    "device-context-menu": { "elements": ["div"], "since": "1.82.0", "audience": ["test"] },
+    "device-copy": { "elements": ["button"], "since": "1.82.0", "audience": ["test"] },
     "room-area-link": {
       "elements": ["button"],
       "since": "1.81.0",
@@ -35,7 +37,7 @@
       "audience": ["styling", "test"]
     },
     "device": {
-      "elements": ["div"],
+      "elements": ["div", "path"],
       "since": "1.59.0-beta.3",
       "audience": ["styling", "test"]
     },

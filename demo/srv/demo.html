@@ -178,7 +178,7 @@ function mkHass(){
       if(m.type==='manifest/list')return[{domain:'demo',name:'House Plan Demo'}];
       if(m.type==='houseplan/config/get')SERVED.config=server.configRev;
       if(m.type==='houseplan/layout/get')SERVED.layout=server.layoutRev;
-      const reply=server.handle(m);
+      const reply=server.handle(m,Object.values(ENTITIES));
       if(reply!==undefined)return reply;
       if(m.type==='houseplan/plan/optimize')return{
         ok:true,...server.advanceOptimizer(),can_undo:true};
