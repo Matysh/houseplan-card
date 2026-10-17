@@ -221,6 +221,8 @@ devices and LED strips alone do not count. A real exit/reentry recomputes this;
 rendering, an active-tab click and warm session adoption do not replace the
 manual tool. Explicit new-space/onboarding and space-copy workflows retain
 their Walls start. Entering does not write geometry or start a chain.
+If a legacy wall model cannot be safely projected, Select stays usable without
+node handles; it never repairs stored data or relaxes the write preflight.
 
 - **Select** also moves wall nodes (#803): a saved endpoint, shared room corner
   or supported T/X intersection has a `grab` cursor; capture uses `grabbing`.

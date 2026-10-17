@@ -2,7 +2,7 @@
  * Preview has no route into a config/history writer. */
 import { nothing, render, svg, type TemplateResult } from 'lit';
 import { NORM_W, GRID_STEP_N } from './canvas-constants';
-import { commitWallSegmentModel } from './wall-segment-model';
+import { commitWallSegmentModel, WallSegmentModelError } from './wall-segment-model';
 import { canonicalizeConfigGeometryInPlace } from './coordinate-canonicalization';
 import { applyNodeMove, pickWallNode, prepareNodeMove, resolveNodeMoveSnap, structuralNodeWalls,
   structuralWallNodes, sameNodePoint, type NodeMoveIntent, type NodeMovePlan,
@@ -49,6 +49,7 @@ interface Session {
 interface PendingNodeMove {
   session: Session; point: NodePoint; axis: string | null; guide: string | null;
 }
+interface NodeTopology { nodes: WallNode[]; source: NodeMoveSpace }
 type NodePaintStyle = Partial<Record<'mask' | 'opacity' | 'transition', string>>;
 interface NodePaintOverride { original: NodePaintStyle; applied: NodePaintStyle; requested: NodePaintStyle }
 const nodePaintProperties = ['mask', 'opacity', 'transition'] as const;
@@ -62,7 +63,7 @@ const nodeMasonrySelector = '.wallbodies, .room-outline, .seg, .zerowall, .plan-
 
 export class WallNodeEditor {
   private session: Session | null = null;
-  private cache: { space: string; identity: string; nodes: WallNode[]; source: NodeMoveSpace } | null = null;
+  private cache: { space: string; identity: string; data: NodeTopology | null } | null = null;
   private tail = false;
   private touched = new Map<SVGElement, NodePaintOverride>();
   private liveRoots: SVGGElement[] = [];
@@ -85,18 +86,27 @@ export class WallNodeEditor {
   get invalid(): NodeMoveReason | null { return this.session?.invalid || null; }
   get unitsPerPixel(): number { return this.port.unitsPerPixel(); }
 
-  private nodes(): { nodes: WallNode[]; source: NodeMoveSpace } | null {
+  private nodes(): NodeTopology | null {
     const ctx = this.port.context(), config = this.port.config();
     const raw = config?.spaces.find(s => s.id === ctx.space) as NodeMoveSpace | undefined;
     if (!raw || !config) return null;
     const identity = JSON.stringify(raw);
-    if (this.cache?.space === ctx.space && this.cache.identity === identity) return this.cache;
+    if (this.cache?.space === ctx.space && this.cache.identity === identity) return this.cache.data;
     // A legacy read/hover is never materialised into the authoritative carrier.
     // Its local snapshot is discarded on cancel; accepted edit migrates once.
-    const source = commitWallSegmentModel({ ...config, spaces: [raw] }).config.spaces[0] as NodeMoveSpace;
+    let source: NodeMoveSpace;
+    try {
+      source = commitWallSegmentModel({ ...config, spaces: [raw] }).config.spaces[0] as NodeMoveSpace;
+    } catch (error) {
+      if (!(error instanceof WallSegmentModelError)) throw error;
+      // Reads may contain legacy-invalid IDs. Never repair them or crash Select:
+      // omit unsafe handles and retain the strict validation of actual writes.
+      this.cache = { space: ctx.space, identity, data: null };
+      return null;
+    }
     const nodes = structuralWallNodes(source);
-    this.cache = { space: ctx.space, identity, source, nodes };
-    return this.cache;
+    this.cache = { space: ctx.space, identity, data: { source, nodes } };
+    return this.cache.data;
   }
 
   /** Invoked by the existing capture-phase input owner, ahead of wall bodies. */

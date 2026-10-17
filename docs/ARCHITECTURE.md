@@ -18,6 +18,10 @@ opening list through pure `planEntryTool`; images/decor/devices/LED do not count
 Only successful ordinary mode entry applies the result. Same-mode no-op, warm
 adoption and explicit onboarding/copy tool ownership remain independent; no
 config/layout writer, geometry preflight or persistent preference is involved.
+The node handle projection caches known `WallSegmentModelError` refusals as
+no topology: legacy-invalid data cannot crash the default Select render, and
+an updated valid snapshot restores handles. Unknown errors remain visible;
+the authoritative data and strict write validation remain untouched.
 
 The Flat device-contact wall cache (#935 performance correction) uses the
 existing floor-record reader with one narrow fingerprint projection: omit only

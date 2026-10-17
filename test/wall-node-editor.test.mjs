@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { nothing } from 'lit';
 import { WallNodeEditor } from '../test-build/wall-node-editor.js';
+import { commitWallSegmentModel, WallSegmentModelError } from '../test-build/wall-segment-model.js';
 import { applyNodeMove, prepareNodeMove, structuralWallNodes } from '../test-build/wall-node-move.js';
 
 function setup() {
@@ -52,6 +54,32 @@ function setup() {
 }
 const settle = () => new Promise(resolve => setImmediate(resolve));
 const deferred = () => { let resolve; return { promise: new Promise(r => { resolve = r; }), resolve: v => resolve(v) }; };
+
+test('#928: Select omits unsafe legacy handles without repairing data or weakening writes', () => {
+  const s = setup();
+  const bad = { id: 'duplicate-contour', a: [0, 0], b: [0, 1], cm: 15 };
+  s.cfg.spaces[0].wall_segments = [bad, structuredClone(bad)];
+  const before = structuredClone(s.cfg);
+  for (let i = 0; i < 3; i++) assert.equal(s.editor.render(), nothing);
+  assert.equal(s.editor.guardEvent(s.ev('pointerdown')), false);
+  assert.equal(s.editor.dragging, false);
+  assert.equal(s.capture.size, 0);
+  assert.equal(s.writes.length, 0); assert.equal(s.recorded.length, 0);
+  assert.deepEqual(s.cfg, before);
+  assert.throws(() => commitWallSegmentModel(s.cfg),
+    error => error instanceof WallSegmentModelError && error.reason === 'duplicate-id');
+  s.cfg.spaces[0].wall_segments = [];
+  assert.notEqual(s.editor.render(), nothing, 'a new valid snapshot restores handles');
+  assert.equal(s.editor.guardEvent(s.ev('pointerdown')), true);
+  s.editor.dispose();
+});
+
+test('#928: unexpected topology exceptions remain visible instead of being swallowed', () => {
+  const s = setup();
+  Object.defineProperty(s.cfg, 'markers', { get() { throw new TypeError('unexpected source failure'); } });
+  assert.throws(() => s.editor.render(), /unexpected source failure/);
+  s.editor.dispose();
+});
 
 test('a successful node capture freezes the presented viewport before the first preview paint', async () => {
   const s = setup(); s.holdFrames();

@@ -11,6 +11,8 @@
   begin a new wall. Empty floors still start with Walls; new-space and copy
   workflows keep their drawing start
   ([#928](https://github.com/Matysh/houseplan-card/issues/928)).
+  Legacy-invalid wall identifiers no longer prevent entering Select; unsafe
+  node handles stay hidden without changing or repairing saved geometry.
 - Vacuum paths recover when an exact map route becomes available and restore
   already recorded positions when the card opens during cleaning. The robot,
   path and live tip use the same map camera; unrelated camera updates no

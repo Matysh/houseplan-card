@@ -54,6 +54,10 @@ editor/tool buttons and server config delivery, then checks first-click draft
 behaviour and config/layout write absence. Drawing scenarios on an existing
 plan must explicitly select Walls instead of relying on the former default.
 Warm adoption and the explicit space-copy/new-space Walls start are separate.
+`wall-node-editor.test.mjs` checks legacy duplicate-ID entry, no mutation/capture,
+strict-write rejection, recovery on a valid snapshot and unknown-error rethrow.
+`smoke_wall_face_lineage` retains its real duplicate rollback scenario: it must
+remain reachable through default Select without weakening the malformed fixture.
 
 ## Vacuum route recovery (#918)
 
