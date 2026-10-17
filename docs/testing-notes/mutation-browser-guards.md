@@ -382,6 +382,12 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 - `hidden-display-rewrites-saved-visibility`
 - `hidden-display-toggle-uses-hidden-source-roster`
 
+#942: the mounted form must retain its consented package version through a
+public HA config/capability adoption. Refresh stays on v1 until the actual
+checkbox is turned off and on; a helper-only test cannot prove that wiring.
+
+- `support-v2-refresh-expands-consent`
+
 - `plan-converter-forgets-input-generation`
 
 - `device-contact-window-blur-keeps-preview`
