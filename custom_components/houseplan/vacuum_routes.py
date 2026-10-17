@@ -158,7 +158,7 @@ def resolve_route(
     saw_telemetry = False
     fallback_source = ""
     fallback_map_id = ""
-    for route in routes:
+    for route in sorted(routes, key=lambda item: str(item.get("source") or "")):
         source = route.get("source")
         if source not in observed:
             continue
@@ -185,6 +185,18 @@ def resolve_route(
         source = sorted(observed)[0]
         return {"kind": "unmapped", "source": source, "mapId": observed[source]}
     return {"kind": "none"}
+
+
+def recording_route(
+    routes: list[dict[str, Any]], observed: dict[str, str],
+) -> dict[str, Any] | None:
+    """One exact, available source/map owns recording, independently of paint.
+
+    The caller supplies only available sources. Calibration and floor geometry
+    decide whether stored coordinates can be drawn, never who may write them.
+    """
+    resolution = resolve_route(routes, observed, None)
+    return resolution["route"] if resolution["kind"] in ("ready", "needs_calibration") else None
 
 
 def adopt_legacy_run(

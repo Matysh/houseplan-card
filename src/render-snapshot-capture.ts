@@ -23,8 +23,7 @@ import {
   createRenderDeviceSnapshot, presentationSnapshotKey, renderDeviceSnapshotPositions,
   type RenderDeviceSnapshot,
 } from './render-device-snapshot';
-import { readVacTelemetry } from './vacuum';
-import { effectiveRoutes, observedMapIds, resolveRoute } from './vacuum-routes';
+import type { VacuumRuntimeSource } from './vacuum-runtime-source';
 import type { VirtualLightSnapshot } from './virtual-light-state';
 import { PresentationLightFrame } from './presentation-light-frame';
 import type { DevItem, Marker, SpaceModel } from './types';
@@ -51,9 +50,7 @@ export interface RenderSnapshotHost {
   _vacRt: ReadonlyMap<string, { material: unknown; lastTs: number; moving: boolean; jump: boolean }>;
   _vacSrvTrails: Record<string, unknown>;
   _isVacDev(device: DevItem): boolean;
-  _vacSource(device: DevItem, planHass: any): string | null; // any-ok: card projection
-  _vacObservedMapId(device: DevItem, source: string, planHass: any): string | undefined; // any-ok: card projection
-  _vacMapId(device: DevItem, telemetry: any, planHass: any): string; // any-ok: card projection
+  _vacRuntimeSource(device: DevItem, planHass: any): VacuumRuntimeSource; // any-ok: card projection
   _livePos(device: DevItem): { x: number; y: number };
 }
 
@@ -178,23 +175,12 @@ export function captureRenderDeviceSnapshot(
         reuse ? reuse.present(device.id, showLqi, build) : build());
     }
     if (host._isVacDev(device)) {
-      const source = host._vacSource(device, planHass);
-      const telemetry = source ? readVacTelemetry(planHass?.states?.[source]?.attributes) : null;
+      const selected = host._vacRuntimeSource(device, planHass);
       const runtime = host._vacRt.get(device.id);
       // One routing authority per frame: render() must not re-derive which
       // map the robot is on, or two answers become possible (#162).
-      const routes = effectiveRoutes(device.id, device.marker?.vacuum ?? null, device.space, source);
-      const resolution = resolveRoute({
-        routes,
-        observed: observedMapIds(routes, [source], (src) => host._vacObservedMapId(device, src, planHass)),
-        spaceIds: new Set(host._model.map((space) => space.id)),
-      });
       facts.set(`vacuum:${device.id}`, {
-        source,
-        telemetry,
-        routes,
-        resolution,
-        mapId: telemetry ? host._vacMapId(device, telemetry, planHass) : null,
+        ...selected,
         runtime: runtime ? {
           trail: runtime.material,
           lastTs: runtime.lastTs,

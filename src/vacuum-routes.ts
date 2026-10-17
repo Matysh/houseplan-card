@@ -198,7 +198,9 @@ export function resolveRoute(input: RouteResolveInput): VacuumRouteResolution {
     const observed = observedOf(input.observed, route.source);
     if (observed === undefined) continue;
     sawTelemetry = true;
-    if (!fallbackSource) { fallbackSource = route.source; fallbackMapId = observed; }
+    if (!fallbackSource || route.source < fallbackSource) {
+      fallbackSource = route.source; fallbackMapId = observed;
+    }
     if (observed === route.map_id) matched.push(route);
   }
   if (matched.length > 1) {
@@ -216,7 +218,7 @@ export function resolveRoute(input: RouteResolveInput): VacuumRouteResolution {
     ? [...input.observed.entries()]
     : Object.entries(input.observed || {});
   if (entries.length) {
-    const pick = entries.slice().sort((a, b) => a[0].localeCompare(b[0]))[0];
+    const pick = entries.slice().sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0)[0];
     return { kind: 'unmapped', source: pick[0], mapId: pick[1] };
   }
   return { kind: 'none' };

@@ -944,7 +944,7 @@ def test_sample_files_the_point_under_its_route():
     assert run["points"] == [[5.0, 6.0]]
 
 
-def test_sample_without_a_matching_route_records_legacy_shaped_run():
+def test_sample_without_matching_route_only_records_in_legacy_configuration():
     states = {
         "vacuum.x50": S("cleaning", {}),
         "camera.map": S("idle", {"vacuum_position": {"x": 1, "y": 2}, "map_name": "неизвестная"}),
@@ -954,8 +954,177 @@ def test_sample_without_a_matching_route_records_legacy_shaped_run():
     rec.routes_by_marker = {"m1": [
         {"id": "vr1", "source": "camera.map", "map_id": "b", "space": "floor1"},
     ]}
+    rec.explicit_route_markers = {"m1"}
+    rec._on_state(E("camera.map"))
+    assert rec.book.data == {}, "#918 explicit unmatched samples do not create pseudo-legacy history"
+    rec.explicit_route_markers = set()
     rec._on_state(E("camera.map"))
     run = rec.book.data["m1"]["current"]
     assert "route_id" not in run, "чужой маршрут прогону не приписывается"
     assert run["map_id"] == "неизвестная"
     assert run["points"] == [[1.0, 2.0]]
+
+
+def _issue918_recorder(root_map="1", route_map="Map 1"):
+    states = {
+        "vacuum.robot": S("cleaning", {}),
+        "camera.root": S("idle", {"map_name": root_map, "vacuum_position": {"x": 900, "y": 900}}),
+        "camera.route": S("idle", {"map_name": route_map, "vacuum_position": {"x": 100, "y": 100}}),
+    }
+    rec = trails.TrailRecorder(Hass(states), None)
+    rec.pairs = {source: [("m", "vacuum.robot")] for source in ("camera.root", "camera.route")}
+    rec.routes_by_marker = {"m": [{"id": "route", "source": "camera.route", "map_id": route_map,
+                                   "space": "f1", "calibration": [1, 0, 0, 0, 1, 0]}]}
+    rec.explicit_route_markers = {"m"}
+    rec._spaces = {"f1": {"id": "f1", "cell_cm": 5}}
+    for index in range(12):
+        rec.book.on_point("m", root_map, 900 + index, 900, float(index))
+    return rec, states
+
+
+def test_issue918_route_recovers_from_orphan_without_root_points_in_either_event_order():
+    import copy
+    for same_map in (False, True):
+        for order in (("camera.root", "camera.route"), ("camera.route", "camera.root")):
+            rec, states = _issue918_recorder(route_map="1" if same_map else "Map 1")
+            orphan = copy.deepcopy(rec.book.data["m"]["current"])
+            for index, point in enumerate(((100, 100), (300, 100), (300, 400))):
+                states["camera.route"].attributes["vacuum_position"] = dict(zip(("x", "y"), point))
+                for source in order:
+                    rec._sample(source, 100.0 + index * 10)
+            current = rec.book.data["m"]["current"]
+            assert current.get("route_id") == "route"
+            assert current.get("source") == "camera.route"
+            assert current["paths"] == [[[100.0, 100.0], [300.0, 100.0], [300.0, 400.0]]]
+            assert current["_generation"] != orphan["_generation"]
+            assert rec.book.data["m"]["previous"] == orphan
+
+
+def test_issue918_foreign_source_cannot_change_current_lifecycle_or_native_context():
+    import copy
+    rec, states = _issue918_recorder()
+    rec._sample("camera.route", 100.0)
+    before = copy.deepcopy(rec.book.data)
+    context = rec._path_contexts()
+    assert len(context) == 1 and context[0].source == "camera.route"
+    states["camera.root"].state = "unavailable"
+    assert rec._sample("camera.root", 101.0) is False
+    assert rec.book.data == before
+    states["vacuum.robot"].state = "docked"
+    assert rec._sample("camera.root", 102.0) is False
+    assert rec.book.data == before
+    assert rec._sample("camera.route", 102.0) is True
+    assert rec.book.data["m"]["current"]["ended"] == 102.0
+
+
+def test_issue918_ambiguous_wrong_map_and_explicit_empty_do_not_write_orphan():
+    import copy
+    for mode in ("ambiguous", "wrong_map", "empty", "unavailable"):
+        rec, states = _issue918_recorder()
+        if mode == "ambiguous":
+            rec.routes_by_marker["m"].append({"id": "other", "source": "camera.root", "map_id": "1",
+                                             "space": "f1", "calibration": [1, 0, 0, 0, 1, 0]})
+        elif mode == "wrong_map":
+            states["camera.route"].attributes["map_name"] = "1"
+        elif mode == "empty":
+            rec.routes_by_marker["m"] = []
+        else:
+            states["camera.route"].state = "unavailable"
+        before = copy.deepcopy(rec.book.data)
+        for source in rec.pairs:
+            assert rec._sample(source, 100.0) is False
+        assert rec.book.data == before
+        assert rec._path_contexts() == []
+
+
+def test_issue918_owner_source_loss_marks_gap_and_recovers_without_editor():
+    rec, states = _issue918_recorder()
+    rec._sample("camera.route", 100.0)
+    states["camera.route"].state = "unavailable"
+    rec._sample("camera.route", 101.0)
+    assert rec.book.data["m"]["current"].get("_gap_pending") is True
+    states["camera.route"].state = "idle"
+    states["camera.route"].attributes["vacuum_position"] = {"x": 150, "y": 120}
+    rec._sample("camera.route", 102.0)
+    current = rec.book.data["m"]["current"]
+    assert current["paths"] == [[[100.0, 100.0]], [[150.0, 120.0]]]
+    assert current["route_id"] == "route"
+
+
+def test_issue918_refresh_selects_route_without_editor_and_legacy_mode_stays_compatible():
+    import copy
+    from types import SimpleNamespace
+    rec, states = _issue918_recorder(route_map="1")
+    old = copy.deepcopy(rec.book.data["m"]["current"])
+    config = {"spaces": [{"id": "f1", "cell_cm": 5}], "markers": [{
+        "id": "m", "binding": "entity:vacuum.robot", "space": "f1", "vacuum": {
+            "source": "camera.root", "map_routes": rec.routes_by_marker["m"],
+        }}]}
+    class Config:
+        async def async_load(self):
+            return {"config": config}
+    rec.rt = SimpleNamespace(config_store=Config())
+    rec.explicit_route_markers.clear()
+    _run_isolated(rec.async_refresh())
+    current = rec.book.data["m"]["current"]
+    assert rec.explicit_route_markers == {"m"}
+    assert current["route_id"] == "route" and current["paths"] == [[[100.0, 100.0]]]
+    assert rec.book.data["m"]["previous"] == old
+    assert rec.hass.bus.fired == [("houseplan_trail_updated", {})]
+    generation = current["_generation"]
+    _run_isolated(rec.async_refresh())
+    assert rec.book.data["m"]["current"]["_generation"] == generation
+    assert rec.book.data["m"]["current"]["paths"] == [[[100.0, 100.0]]]
+    assert rec.book.data["m"]["previous"] == old
+
+    # A genuinely legacy config keeps a pre-route run and its coordinates.
+    legacy, _hass, _states = _rec()
+    legacy.book.on_point("m1", "1", 900, 900, 1.0)
+    generation = legacy.book.data["m1"]["current"]["_generation"]
+    legacy.routes_by_marker = {"m1": [{"id": "legacy:m1 camera.map 1", "source": "camera.map",
+                                      "map_id": "1", "space": "f1"}]}
+    legacy._sample("camera.map", 100.0)
+    assert legacy.book.data["m1"]["current"]["_generation"] == generation
+    assert legacy.book.data["m1"]["current"]["paths"] == [[[900, 900], [1000.0, -500.0]]]
+    assert "previous" not in legacy.book.data["m1"]
+
+
+def test_issue918_native_callbacks_cannot_cross_owner_or_mode_generation():
+    import copy
+    rec, states = _issue918_recorder()
+    rec._sample("camera.route", 100.0)
+    context = rec._path_contexts()[0]
+    # No provider access: exercise the same acceptance boundary after an await.
+    snap = trails.PathSnapshot("test", "test", [[[1, 2], [3, 4]]], "provider", None, False, "digest")
+    before = copy.deepcopy(rec.book.data)
+    rec.explicit_route_markers.clear()
+    assert rec._path_contexts()[0].identity != context.identity
+    rec._accept_path(context, snap, True)
+    rec._path_reason(context, "unsupported")
+    assert rec.book.data == before
+    rec.explicit_route_markers.add("m")
+    rec.routes_by_marker["m"][0]["id"] = "new-route"
+    rec._sample("camera.route", 110.0)
+    changed = copy.deepcopy(rec.book.data)
+    rec._accept_path(context, snap, True)
+    assert rec.book.data == changed
+    rec.teardown()
+    rec._accept_path(rec._path_contexts()[0], snap, True)
+    assert rec.book.data == changed
+
+
+def test_issue918_available_exact_source_can_record_without_position_or_calibration(monkeypatch):
+    from types import SimpleNamespace
+    rec, states = _issue918_recorder()
+    states["camera.route"].attributes.pop("vacuum_position")
+    rec.routes_by_marker["m"][0].pop("calibration")
+    assert rec._sample("camera.route", 100.0) is True
+    assert rec.book.data["m"]["current"]["route_id"] == "route"
+    assert len(rec._path_contexts()) == 1, "native-only source owns its context"
+    before_generation = rec.book.data["m"]["current"]["_generation"]
+    monkeypatch.setattr(trails.er, "async_get", lambda _: SimpleNamespace(
+        async_get=lambda source: SimpleNamespace(disabled_by="user") if source == "camera.route" else None))
+    assert rec._recording_route("m", {}) is None
+    assert rec._path_contexts() == []
+    rec._sample("camera.root", 101.0)
+    assert rec.book.data["m"]["current"]["_generation"] == before_generation

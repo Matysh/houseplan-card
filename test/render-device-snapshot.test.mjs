@@ -13,6 +13,53 @@ import { resolveDevicePresentation } from '../test-build/device-presentation.js'
 import { classifyHassRenderChange } from '../test-build/render-invalidation.js';
 import { freezeVacuumPath } from '../test-build/vacuum-path-geometry.js';
 
+test('#918 an external route camera remains in the painted frame and invalidates its state', () => {
+  const root = 'camera.robot_map', route = 'camera.robot_map_1';
+  const hass = { entities: { [root]: {}, [route]: {} }, devices: {}, states: {
+    [root]: { state: 'idle', attributes: { map_index: 1, robot_position: { x: 9000, y: 9000 } } },
+    [route]: { state: 'idle', attributes: { map_name: 'Map 1', robot_position: { x: 100, y: 200 } } },
+  } };
+  const devices = [{ id: 'robot', entities: ['vacuum.robot'], marker: { vacuum: {
+    source: root, map_routes: [{ id: 'r', source: route, map_id: 'Map 1', space: 'floor' }],
+  } } }];
+  const frame = createRenderDeviceSnapshot({ sourceSequence: 1, hass, devices, presentations: new Map() });
+  assert.deepEqual(frame.hass.states[route]?.attributes.robot_position, { x: 100, y: 200 });
+  const next = { ...hass, states: { ...hass.states, [route]: { ...hass.states[route],
+    attributes: { ...hass.states[route].attributes, robot_position: { x: 300, y: 200 } } } } };
+  assert.equal(classifyHassRenderChange(hass, next, frame), 'state');
+});
+
+test('#918 capture freezes the selected route telemetry instead of re-reading root', async () => {
+  const { captureHost, oracleFixture } = await import('./render-snapshot-fixture.mjs');
+  const { captureRenderDeviceSnapshot } = await import('../test-build/render-snapshot-capture.js');
+  const { resolveVacuumRuntimeSource } = await import('../test-build/vacuum-runtime-source.js');
+  const { readVacTelemetry } = await import('../test-build/vacuum.js');
+  const host = captureHost(oracleFixture()), device = host._devices[0];
+  const root = 'camera.robot_map', routed = 'camera.robot_map_1';
+  const marker = { source: root, map_routes: [{ id: 'r', source: routed, map_id: 'Map 1',
+    space: host._model[0].id, calibration: [1, 0, 0, 0, 1, 0] }] };
+  device.marker = { ...device.marker, vacuum: marker };
+  host.hass.states[root] = { state: 'idle', attributes: { map_index: 1, robot_position: { x: 9000, y: 9000 } } };
+  host.hass.states[routed] = { state: 'idle', attributes: { map_name: 'Map 1', robot_position: { x: 100, y: 200, a: 45 } } };
+  host.hass.entities[root] = { entity_id: root, disabled_by: null };
+  host.hass.entities[routed] = { entity_id: routed, disabled_by: null };
+  host._isVacDev = (value) => value === device;
+  host._vacRuntimeSource = (value, planHass) => resolveVacuumRuntimeSource({
+    markerId: value.id, marker: value.marker.vacuum, dockSpace: value.space,
+    rootSource: root, spaceIds: new Set(host._model.map((space) => space.id)),
+    read: (source) => {
+      const telemetry = readVacTelemetry(planHass.states[source]?.attributes);
+      return telemetry ? { mapId: telemetry.mapId, telemetry } : undefined;
+    },
+  });
+  const frame = captureRenderDeviceSnapshot(host), fact = frame.facts.get(`vacuum:${device.id}`);
+  assert.equal(fact.source, routed);
+  assert.deepEqual(fact.telemetry.pos, { x: 100, y: 200, a: 45 });
+  host.hass.states[routed].attributes.robot_position.x = 300;
+  assert.equal(fact.telemetry.pos.x, 100, 'the active frame owns its selected coordinates');
+  assert.equal(frame.hass.states[routed].attributes.robot_position.x, 100);
+});
+
 test('#872 render frames reuse owned geometry but isolate mutable HA attributes', () => {
   const source = { path: [[0, 0], [1, 1]] };
   const material = freezeVacuumPath([[[0, 0], [1, 1]]]);

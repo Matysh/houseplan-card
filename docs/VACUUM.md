@@ -107,6 +107,13 @@ floor makes the plan a false statement about the house. While the robot is
 moving, the dock shows an amber `mdi:alert-outline` badge whose accessible name
 carries the exact reason.
 
+With explicit routes, recording and live rendering use the same unique,
+available exact `(source, map_id)` match (#918). The root source remains the
+saved discovery/setup choice; it cannot supply the puck, tip or samples for
+another camera's route, even if both cameras report the same map ID. A route
+without calibration may still record raw positions for later display.
+Unmatched/ambiguous events do not replace a trusted current/previous run.
+
 Rules that follow from the identity being exact:
 
 - source and `map_id` of a saved route are immutable; a wrong identity is
@@ -223,6 +230,14 @@ new run. `unavailable`, `unknown` and a missing state remain neutral. Without a
 vendor task id, two genuinely separate same-map cleanups started inside the
 grace may therefore appear as one run.
 
+Opening or reopening the card during cleaning restores positions already
+recorded on the server. If an old run has no route identity and an exact
+explicit route becomes available, recording starts a new identified run;
+the old points stay in the previous slot without being relabelled. The
+transition also happens on refresh/restart or source recovery, without an
+editor save or a new cleanup. Missing historical samples cannot be recovered
+from a camera that only supplies the current position.
+
 The position teleport guard splits when calibrated distance exceeds
 max(100 cm, 200 cm/s × trustworthy positive elapsed seconds). Unknown periods,
 map/source changes and pause/resume break fragments even without physical
@@ -251,6 +266,11 @@ The device editor's existing diagnostics separately show source health, path
 source, quality/reason, received/stored/drawn counts, last sample/snapshot time
 and whether the source explicitly confirmed the final snapshot. No new user
 controls, banners or cleanup commands are added.
+The **Path display** row explains a suppressed path separately from recording
+quality: display mode or stop, unavailable/ambiguous/unassigned map, missing
+calibration, another floor, unmatched stored run, or insufficient consecutive
+points. It uses the same route applicability, target trim and rendering quota
+as View. A sampled path with unconfirmed final status remains drawable.
 
 Store version stays 1 with additive per-run `path_format:2`, `paths`, `quality`,
 `provenance` and private generation/provider identity. Legacy `points` projects
@@ -327,6 +347,9 @@ debounced persistence and live-update path as a later state event.
   `render-device-snapshot.ts` (`facts.get('vacuum:<id>')`) so `render()` cannot
   derive a second answer; `planVacuumOverlay()` decides what the visible space
   draws.
+- `src/vacuum-runtime-source.ts` composes that route result with the source's
+  telemetry for the recorder-equivalent View choice. Snapshot capture retains
+  all configured route sources, including cameras on another HA device.
 - Route editing lives only in the lazy editor graph (`vacuum-route-edit.ts`,
   `editors/vacuum-maps-section.ts`); the View card never loads it.
 - `custom_components/houseplan/vacuum_routes.py` mirrors the resolver and the

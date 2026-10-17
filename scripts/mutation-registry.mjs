@@ -77,6 +77,59 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'vacuum-server-event-keeps-old-render-snapshot',
+    guard: 'node demo/smoke_vacuum_route_recovery.mjs',
+    because: '#918 AC4/AC8: a real trail websocket event without a coincident HA state tick '
+      + 'must paint the new native/current/previous payload; pure route selection cannot '
+      + 'observe the Lit capture cache retaining old server geometry.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: '        && this._capturedSnapshotTrails === this._vacSrvTrails',
+      replace: '        && this._capturedSnapshotTrails !== undefined',
+    }],
+  },
+  {
+    id: 'vacuum-route-owner-borrows-root-coordinates',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/vacuum-routes.test.mjs',
+    because: '#918 AC4/AC5: an exact B route must supply coordinates and heading even when '
+      + 'the root A is healthy; equal map names cannot establish source identity.',
+    patches: [{ file: 'src/vacuum-runtime-source.ts',
+      find: '    ? resolution.route.source : !explicit && root && observations.has(root) ? root : null;',
+      replace: '    ? root || resolution.route.source : !explicit && root && observations.has(root) ? root : null;',
+    }],
+  },
+  {
+    id: 'vacuum-format2-rejected-run-uses-local-path',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/vacuum-path-geometry.test.mjs',
+    because: '#918 AC8: rejected format-2 server ownership cannot be bypassed through '
+      + 'raw integration attributes or a local buffer retained from an older backend.',
+    patches: [{ file: 'src/vacuum-trail-material.ts',
+      find: '  if (serverFormat >= 2) {',
+      replace: '  if (serverFormat >= 3) {',
+    }],
+  },
+  {
+    id: 'vacuum-recorder-foreign-source-writes-current',
+    guard: 'node scripts/backend-test-guard.mjs issue918 tests_backend/test_trail_recorder.py',
+    because: '#918 AC1/AC2: unrelated root events must leave the selected route current, '
+      + 'generation, gaps, quality and previous slot untouched in both delivery orders.',
+    patches: [{ file: 'custom_components/houseplan/trails.py',
+      find: '                if owner is not None and owner["source"] != src:\n                    continue',
+      replace: '                if False and owner is not None and owner["source"] != src:\n                    continue',
+    }],
+  },
+  {
+    id: 'vacuum-mixed-identity-promotes-orphan',
+    guard: 'node scripts/backend-test-guard.mjs issue918 tests_backend/test_trails.py',
+    because: '#918 AC3: equal map IDs cannot promote unknown old coordinates into an '
+      + 'identified route; rollover must create a new generation and preserve the orphan.',
+    patches: [{ file: 'custom_components/houseplan/trails.py',
+      find: '    if (route_id or stored_route) and not (legacy and (not route_id or not stored_route)):',
+      replace: '    if route_id and stored_route:',
+    }],
+  },
+  {
     id: 'contact-wall-key-includes-decor',
     guard: 'node --test test/device-contact-card.test.mjs',
     because: '#935: a real decor-size input must leave the contact wall cache warm; architectural inputs and different model/current records must still invalidate it.',
@@ -10626,8 +10679,8 @@ const MUTANT_DEFINITIONS = [
       + 'of rotating into previous; focused pure and recorder sequences must reject the old unconditional split',
     patches: [{
       file: 'custom_components/houseplan/trails.py',
-      find: '        resumed = bool(cur and not changed_job and same_run_identity(cur, route_id, map_id)\n'
-        + '                       and (same_job or can_resume_trail_run(cur, map_id, now, route_id)))',
+      find: '        resumed = bool(cur and not changed_job and same_run_identity(cur, route_id, map_id, source, legacy=legacy)\n'
+        + '                       and (same_job or can_resume_trail_run(cur, map_id, now, route_id, source, legacy=legacy)))',
       replace: '        resumed = False',
     }],
   },

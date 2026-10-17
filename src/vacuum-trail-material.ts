@@ -1,5 +1,6 @@
-import { normalizeVacPath, resolveCurrentVacPath, type VacPath } from './vacuum';
-import { ownVacuumPathInput, vacuumPathLimited } from './vacuum-path-geometry';
+import { normalizeVacPath, resolveCurrentVacPath, trimVacPathTarget, type Affine, type VacPath } from './vacuum';
+import { ownVacuumPathInput, vacuumPathLimited, type VacuumPathGeometryCache } from './vacuum-path-geometry';
+import { vacuumTrailSvg, type VacuumSvgFrame } from './vacuum-trail-render';
 
 export interface VacuumServerRun {
   points?: unknown;
@@ -54,4 +55,23 @@ export function selectVacuumTrail(
   return { path: legacy.path, native: legacy.source === 'integration',
     allowTip: !limited && legacy.source !== 'integration' && (legacy.source !== 'local' || (Array.isArray(localTail) && localTail.length >= 2)),
     reason: limited ? 'limited' : legacy.source === 'none' ? 'none' : 'sampled', source: legacy.source };
+}
+
+/** View and its diagnostic counter consume the same arbitration, trim and quota. */
+export function currentVacuumTrailFrame(input: {
+  telemetry: { path?: unknown } | null;
+  server: VacuumServerRun | null;
+  local: unknown;
+  serverFormat: number;
+  moving: boolean;
+  matrix: Affine;
+  cache: VacuumPathGeometryCache;
+  cmPerUnit: number;
+  budget: number;
+}): { current: ReturnType<typeof selectVacuumTrail>; path: VacPath; frame: VacuumSvgFrame } {
+  const current = selectVacuumTrail(input.telemetry, input.server, input.local, input.serverFormat);
+  const path = input.moving && !current.native && current.allowTip && current.source !== 'local'
+    ? trimVacPathTarget(current.path) : current.path;
+  const frame = vacuumTrailSvg(input.cache, path, input.matrix, input.cmPerUnit, input.budget);
+  return { current, path, frame };
 }

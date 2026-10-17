@@ -578,6 +578,11 @@ is the server/legacy authority and `vacuum-trail-render.ts` memoizes commands.
 diagnostics are a read-only projection in `vacuum-trail-diagnostics.ts`;
 their UI lives in lazy `editors/vacuum-path-diagnostics.ts`, not either monolith.
 Source health, map routing, path quality and final confirmation remain distinct.
+For explicit maps (#918), `vacuum-runtime-source.ts` composes route resolution
+with the same source's telemetry; both snapshot capture and live sampling use
+it. Backend observation remains broad, but only the uniquely matched source
+may mutate the current run. `currentVacuumTrailFrame()` shares current-path
+arbitration, target trimming and SVG/quota counts between View and diagnostics.
 
 ## Sizes
 

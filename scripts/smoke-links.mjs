@@ -162,6 +162,15 @@ export const SMOKE_LINKS = [
       + 'clipboard fallback.',
   },
   {
+    files: ['src/vacuum-routes.ts', 'src/vacuum-runtime-source.ts', 'src/vacuum-trail-diagnostics.ts',
+      'src/editors/vacuum-path-diagnostics.ts', 'src/vacuum-trail-material.ts'],
+    symbols: ['planVacuumOverlay', '_vacTrailDiagnostics', '_vacSource', '_vacObservedMapId'],
+    smokes: ['smoke_vacuum_route_recovery.mjs'],
+    because: '#918: real recorder public payload loads in cold View; exact route source drives '
+      + 'Flat/2.5D path, tip and puck on desktop/mobile; foreign root events, map ambiguity, '
+      + 'other floors and format-2 rejected runs cannot borrow local or foreign coordinates.',
+  },
+  {
     files: ['src/vacuum-path-geometry.ts', 'src/vacuum-trail-material.ts',
       'src/vacuum-trail-render.ts', 'src/vacuum-local-trail.ts', 'src/vacuum-trail-diagnostics.ts'],
     smokes: ['smoke_vacuum_path_fidelity.mjs', 'smoke_vacuum_camera.mjs',

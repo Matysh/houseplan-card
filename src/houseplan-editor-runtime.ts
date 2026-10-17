@@ -785,6 +785,7 @@ export interface HouseplanEditorHostPort {
   _vacOpenAllCameras: (d: DevItem) => void;
   _vacRt: Map<string, { trail: VacPt[]; material: import('./vacuum').VacPath; lastKey: string; lastTs: number; moving: boolean; jump: boolean; endedTs: number; lastPos: VacPt | null; }>;
   _vacSource: (d: DevItem, planHass?: any) => string | null;
+  _vacRuntimeSource: (d: DevItem, planHass?: any) => import('./vacuum-runtime-source').VacuumRuntimeSource; // any-ok: card projection
   _vacObservedMapId: (d: DevItem, source: string) => string | undefined;
   _vacSourceResolution: (d: DevItem, includeAllCameras?: boolean, planHass?: any) => VacSourceResolution;
   _vacSrvTrails: import('./vacuum-trail-material').VacuumServerBook;

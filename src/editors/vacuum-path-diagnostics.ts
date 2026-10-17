@@ -12,6 +12,7 @@ export function renderVacuumPathDiagnostics(host: Pick<HouseplanEditorHostPort, 
   return html`
     <div><span>${host._t('vac.diag_trail_source')}</span><b>${host._t(sources[info.source as keyof typeof sources] ?? 'vac.path_none')}</b></div>
     <div><span>${host._t('vac.diag_trail_quality')}</span><b>${host._t(reasons[info.reason as keyof typeof reasons] ?? 'vac.path_unsupported')}</b></div>
+    <div><span>${host._t('vac.diag_trail_display')}</span><b>${host._t(info.display)}</b></div>
     <div><span>${host._t('vac.diag_trail_counts')}</span><b>${info.raw} / ${info.stored} / ${info.rendered}</b></div>
     <div><span>${host._t('vac.diag_trail_received')}</span><b>${Number.isFinite(info.receivedAt) ? new Date(info.receivedAt! * 1000).toLocaleTimeString() : '—'}</b></div>
     <div><span>${host._t('vac.diag_trail_final')}</span><b>${host._t(info.final ? 'common.yes' : 'vac.path_final_unconfirmed')}</b></div>`;

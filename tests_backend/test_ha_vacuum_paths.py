@@ -332,3 +332,81 @@ async def test_recorder_native_without_position_fanout_store_and_stale_delete(ha
     await recorder.async_teardown()
     stored = await recorder.store.async_load()
     assert "a" not in stored and stored["b"]["current"]["paths"] == value.paths
+
+
+async def test_issue918_exact_owner_recovers_and_survives_real_ha_store_restart(hass):
+    """The backend records before any card exists, then rehydrates honest gaps."""
+    from custom_components.houseplan.vacuum_paths import public_trails
+    route = {"id": "route", "source": "camera.route918", "map_id": "Map 1",
+             "space": "f1", "calibration": [1, 0, 0, 0, 1, 0]}
+    config = {"spaces": [{"id": "f1", "cell_cm": 5}], "markers": [{
+        "id": "m", "binding": "entity:vacuum.robot918", "space": "f1", "vacuum": {
+            "source": "camera.root918", "map_routes": [route]}}]}
+
+    class Config:
+        async def async_load(self):
+            return {"config": config}
+
+    runtime = SimpleNamespace(config_store=Config())
+    hass.states.async_set("vacuum.robot918", "cleaning")
+    hass.states.async_set("camera.root918", "idle", {
+        "map_name": "1", "vacuum_position": {"x": 900, "y": 900}})
+    hass.states.async_set("camera.route918", "idle", {
+        "map_name": "Map 1", "vacuum_position": {"x": 10, "y": 10}})
+    await hass.async_block_till_done()
+    recorder = TrailRecorder(hass, runtime)
+    recorder.collector.read_camera = lambda _: None
+    for index in range(12):
+        recorder.book.on_point("m", "1", 900 + index, 900, float(index))
+    old_points = copy.deepcopy(recorder.book.data["m"]["current"]["paths"])
+    await recorder.store.async_save(recorder.book.data)
+    await recorder.async_setup()
+    await hass.async_block_till_done()
+    current = recorder.book.data["m"]["current"]
+    generation = current["_generation"]
+    assert current["route_id"] == "route" and current["source"] == "camera.route918"
+    assert current["paths"] == [[[10.0, 10.0]]]
+    assert recorder.book.data["m"]["previous"]["paths"] == old_points
+    assert "route_id" not in recorder.book.data["m"]["previous"]
+
+    for x, y in ((20, 10), (30, 20)):
+        hass.states.async_set("camera.route918", "idle", {
+            "map_name": "Map 1", "vacuum_position": {"x": x, "y": y}})
+        await hass.async_block_till_done()
+    before_root = copy.deepcopy(recorder.book.data)
+    hass.states.async_set("camera.root918", "unavailable", {
+        "map_name": "1", "vacuum_position": {"x": -900, "y": -900}})
+    await hass.async_block_till_done()
+    assert recorder.book.data == before_root
+    expected = [[[10.0, 10.0], [20.0, 10.0], [30.0, 20.0]]]
+    assert public_trails(recorder.book.data)["m"]["current"]["paths"] == expected
+    late_context = recorder._path_contexts()[0]
+    await recorder.async_teardown()
+    assert (await recorder.store.async_load())["m"]["current"]["paths"] == expected
+
+    hass.states.async_set("camera.route918", "idle", {
+        "map_name": "Map 1", "vacuum_position": {"x": 40, "y": 30}})
+    await hass.async_block_till_done()
+    restarted = TrailRecorder(hass, runtime)
+    restarted.collector.read_camera = lambda _: None
+    await restarted.async_setup()
+    await hass.async_block_till_done()
+    current = restarted.book.data["m"]["current"]
+    assert current["_generation"] == generation
+    assert current["route_id"] == "route" and current["source"] == "camera.route918"
+    assert current["paths"] == expected + [[[40.0, 30.0]]]
+    assert restarted.book.data["m"]["previous"]["paths"] == old_points
+
+    # A late answer held by the torn-down owner cannot alter its stored run.
+    before_late = copy.deepcopy(recorder.book.data)
+    recorder._accept_path(late_context, snapshot("test", "test", [[[700, 700], [800, 800]]], "map"), True)
+    assert recorder.book.data == before_late
+    # Nor can a live old-generation context overwrite a new route.
+    old_context = restarted._path_contexts()[0]
+    route["id"] = "new-route"
+    await restarted.async_refresh()
+    after_rebind = copy.deepcopy(restarted.book.data)
+    restarted._accept_path(old_context, snapshot("test", "test", [[[700, 700], [800, 800]]], "map"), True)
+    assert restarted.book.data == after_rebind
+    assert restarted.book.data["m"]["current"]["route_id"] == "new-route"
+    await restarted.async_teardown()

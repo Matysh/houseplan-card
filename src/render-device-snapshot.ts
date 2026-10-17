@@ -165,6 +165,7 @@ export function createRenderDeviceSnapshot(options: {
     if (device.primary) entityIds.add(device.primary);
     for (const entityId of device.controls || []) entityIds.add(entityId);
     if (device.marker?.vacuum?.source) entityIds.add(device.marker.vacuum.source);
+    for (const route of device.marker?.vacuum?.map_routes || []) if (route.source) entityIds.add(route.source);
     if (device.bindingKind === 'device' && device.bindingRef) deviceIds.add(device.bindingRef);
     if (device.bindingKind === 'entity' && device.bindingRef) entityIds.add(device.bindingRef);
   }

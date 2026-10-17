@@ -1,5 +1,27 @@
 # Development and deployment
 
+## Vacuum route recovery (#918)
+
+`test/vacuum-routes.test.mjs` exercises the common route-source resolver;
+snapshot tests retain cameras outside the vacuum's HA device. The executed
+diagnostic consumer tests check suppression priority, the shared SVG count,
+quota exhaustion and RU/EN output independently of sampled/native quality.
+`tests_backend/test_trail_recorder.py` covers source/event order, refresh,
+unavailable and ambiguous maps, and strict orphan-to-route generations;
+`test_ha_vacuum_paths.py` exercises real Store teardown/restart and late callbacks.
+
+After a fresh `npm run bundle:sync`, run
+`node demo/smoke_vacuum_route_recovery.mjs`,
+`node demo/smoke_vacuum_path_fidelity.mjs` and
+`node demo/smoke_vacuum_multifloor.mjs`.
+The recovery fixture uses the actual Python recorder and public serializer
+with synthetic sources; its output is installed before mounting the card.
+The browser checks painted SVG and puck geometry in Flat/2.5D desktop/mobile,
+cold opening/reopening during cleaning, negative routes and diagnostic text.
+No reporter export is shipped. Full HA coverage requires Linux/WSL; a native
+Windows pure-subset pass is not a Store/lifecycle result. Mutation definitions
+are registered and checked statically; execution remains a nightly responsibility.
+
 ## Device copying (#935)
 
 `test/device-copy.test.mjs` covers first-free numbering, effective appearance,

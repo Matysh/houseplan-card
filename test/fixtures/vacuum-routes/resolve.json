@@ -1,5 +1,24 @@
 [
   {
+    "name": "#918 root A/1 не заменяет точный маршрут B/Map 1",
+    "routes": [
+      { "id": "r918", "source": "camera.map_b", "map_id": "Map 1", "space": "floor1", "calibration": [1, 0, 0, 0, 1, 0] }
+    ],
+    "observed": { "camera.map_a": "1", "camera.map_b": "Map 1" },
+    "spaces": ["floor1"],
+    "expected": { "kind": "ready", "route_id": "r918", "space": "floor1" }
+  },
+  {
+    "name": "#918 несовпавшие источники выбираются лексически независимо от порядка",
+    "routes": [
+      { "id": "r_lower", "source": "camera.a", "map_id": "saved-a", "space": "floor1" },
+      { "id": "r_upper", "source": "camera.Z", "map_id": "saved-Z", "space": "floor1" }
+    ],
+    "observed": { "camera.a": "wrong-a", "camera.Z": "wrong-Z" },
+    "spaces": ["floor1"],
+    "expected": { "kind": "unmapped", "source": "camera.Z", "map_id": "wrong-Z" }
+  },
+  {
     "name": "один динамический источник: активна вторая карта",
     "routes": [
       { "id": "r1", "source": "camera.robot", "map_id": "m1", "space": "floor1", "calibration": [1, 0, 0, 0, 1, 0] },

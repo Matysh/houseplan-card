@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Vacuum paths recover when an exact map route becomes available and restore
+  already recorded positions when the card opens during cleaning. The robot,
+  path and live tip use the same map camera; unrelated camera updates no
+  longer interrupt that run. Diagnostics explain why stored points are hidden
+  ([#918](https://github.com/Matysh/houseplan-card/issues/918)).
+
 ## v1.82.0-beta.1 — 2026-10-17
 
 - Background resizing no longer rebuilds unchanged walls for device outlines,

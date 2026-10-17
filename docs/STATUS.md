@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Vacuum route recovery (#918) ties recording, the live robot and its path to
+one exact available source/map pair. Reopening the card restores server
+history; previously unassigned points are retained without adopting them into
+a new recorded route. Path-display diagnostics explain suppression separately
+from path quality and final confirmation.
+
 Device copying (#935) creates independent virtual markers through a narrow
 revision-checked paired writer. Incoming links are appended, original LED forms
 and files stay intact, and copy preparation/creation sends no equipment commands.

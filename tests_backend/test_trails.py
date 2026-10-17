@@ -221,8 +221,35 @@ def test_drop_unknown_routes_touches_only_runs_that_name_a_route():
 
 def test_same_run_identity_contract():
     same = ns["same_run_identity"]
-    assert same({"route_id": "vr_a", "map_id": "x"}, "vr_a", "y") is True
+    assert same({"route_id": "vr_a", "map_id": "x"}, "vr_a", "y") is False
+    assert same({"route_id": "vr_a", "map_id": "x"}, "vr_a", "x") is True
     assert same({"route_id": "vr_a", "map_id": "x"}, "vr_b", "x") is False
-    assert same({"map_id": "x"}, "vr_a", "x") is True, "легаси-прогон опознаётся картой"
+    assert same({"map_id": "x"}, "vr_a", "x") is False, "#918 unknown history is not an identified route"
+    assert same({"route_id": "vr_a", "map_id": "x"}, "", "x") is False
+    assert same({"map_id": "x"}, "vr_a", "x", legacy=True) is True, "only legacy-only config retains map adoption"
+    assert same({"route_id": "vr_a", "map_id": "x", "source": "camera.a"}, "vr_a", "x", "camera.b") is False
     assert same({"map_id": "x"}, "", "y") is False
     assert same(None, "vr", "x") is False
+
+
+def test_issue918_orphan_rotation_never_promotes_or_joins_old_points():
+    import copy
+    b = TrailBook()
+    b.on_point("m", "same", 900, 900, 1.0)
+    old = copy.deepcopy(b.data["m"]["current"])
+    b.on_point("m", "same", 10, 10, 2.0, route_id="r", source="camera.b")
+    assert b.data["m"]["previous"] == old
+    assert b.data["m"]["current"]["paths"] == [[[10, 10]]]
+    assert b.data["m"]["current"]["_generation"] != old["_generation"]
+    b.on_point("m", "same", 900, 900, 3.0)
+    assert "route_id" not in b.data["m"]["current"]
+    assert b.data["m"]["previous"]["source"] == "camera.b"
+
+
+def test_issue918_future_format_is_not_rewritten_by_identity_repair():
+    import copy
+    b = TrailBook()
+    b.data = {"m": {"current": {"path_format": 3, "map_id": "same", "opaque": [1, 2, 3]}}}
+    before = copy.deepcopy(b.data)
+    assert b.on_point("m", "same", 10, 10, 2.0, route_id="r", source="camera.b") is False
+    assert b.data == before

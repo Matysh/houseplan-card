@@ -112,3 +112,15 @@ def test_adopt_legacy_run_shared_fixture():
 def test_adopt_rejects_run_without_map_id():
     for run in (None, {}, {"map_id": 1}):
         assert vr.adopt_legacy_run(run, [_route()], "camera.robot")["kind"] == "orphan_run"
+
+
+def test_issue918_recording_owner_is_exact_unique_and_independent_of_paint():
+    route = _route(source="camera.route", map_id="Map 1", space="gone", calibration=None)
+    observed = {"camera.root": "1", "camera.route": "Map 1"}
+    assert vr.recording_route([route], observed) == route
+    assert vr.recording_route([route], {"camera.root": "Map 1"}) is None
+    assert vr.recording_route([route], {"camera.route": "1"}) is None
+    assert vr.recording_route([], observed) is None
+    second = _route(id="root", source="camera.root", map_id="1")
+    for routes in ([route, second], [second, route]):
+        assert vr.recording_route(routes, observed) is None

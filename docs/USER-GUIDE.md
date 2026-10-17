@@ -2116,6 +2116,14 @@ changes until **Apply**; manual fitting and Cancel remain available.
   point counts and snapshot time. An unconfirmed final snapshot does not mean
   the path was lost: the integration may not provide a final marker. Upstream
   compatibility does not replace checks on the installed version and device.
+- **Path display** explains why stored points are not shown: another floor,
+  an unmatched map, missing calibration, the display mode, or too few
+  consecutive points. With several cameras, the robot and its path use the
+  source from the matching **Maps and floors** assignment.
+- Opening the plan during cleaning restores the path already recorded by the
+  server, which continues recording with the plan closed. Correcting a map
+  assignment lets new points accumulate automatically; older points of unknown
+  origin are not joined to another map.
 - Stop, pause or docking hides the current trail in **During cleaning**. Motion
   on the same map within 30 minutes resumes that run; another map or a longer
   stop starts a new one. Mere entity unavailability does not end a run.

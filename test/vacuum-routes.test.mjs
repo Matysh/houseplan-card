@@ -11,6 +11,7 @@ import {
   writeVacuumMatrix, planVacuumFit, calibrationTarget, beginVacuumRouteDraft,
   chooseVacuumRouteSpace, commitVacuumRouteDraft,
 } from '../test-build/vacuum-route-edit.js';
+import { resolveVacuumRuntimeSource } from '../test-build/vacuum-runtime-source.js';
 
 const fixture = (name) => JSON.parse(readFileSync(
   new URL(`./fixtures/vacuum-routes/${name}.json`, import.meta.url), 'utf8',
@@ -22,6 +23,81 @@ const route = (over = {}) => ({
   calibration: IDENTITY, ...over,
 });
 const spaces = (...ids) => new Set(ids);
+
+const ROOT = 'camera.robot_map', ROUTED = 'camera.robot_map_1';
+const liveObservation = (mapId, x) => ({ mapId,
+  telemetry: { mapId, pos: { x, y: x + 10, a: x }, path: [], rooms: [] } });
+const mixedSource = (patch = {}, observations = {
+  [ROOT]: liveObservation('1', 9000), [ROUTED]: liveObservation('Map 1', 100),
+}) => resolveVacuumRuntimeSource({ markerId: 'robot', dockSpace: 'floor1', rootSource: ROOT,
+  marker: { source: ROOT, calibration: { '1': IDENTITY }, map_routes: [route({ source: ROUTED, map_id: 'Map 1' })] },
+  spaceIds: spaces('floor1', 'floor2'), read: (source) => observations[source], ...patch });
+
+test('#918 live coordinates, heading and map come from the exact route instead of sticky root', () => {
+  const input = { source: ROOT, calibration: { '1': IDENTITY }, map_routes: [route({ source: ROUTED, map_id: 'Map 1' })] };
+  const selected = mixedSource({ marker: input });
+  assert.equal(selected.source, ROUTED);
+  assert.equal(selected.mapId, 'Map 1');
+  assert.deepEqual(selected.telemetry.pos, { x: 100, y: 110, a: 100 });
+  assert.equal(selected.resolution.kind, 'ready');
+  assert.equal(input.source, ROOT, 'runtime selection never edits sticky configuration');
+  assert.deepEqual(mixedSource({}, { [ROUTED]: liveObservation('Map 1', 100) }), selected,
+    'an unavailable unrelated root cannot suppress a ready route');
+});
+
+test('#918 runtime selection never aliases map IDs or falls back through explicit routes', () => {
+  const observations = { [ROOT]: liveObservation('1', 9000), [ROUTED]: liveObservation('1', 100) };
+  assert.equal(mixedSource({}, observations).source, null, '1 is not Map 1');
+  assert.equal(mixedSource({}, observations).resolution.kind, 'unmapped');
+  const empty = mixedSource({ marker: { source: ROOT, calibration: { '1': IDENTITY }, map_routes: [] } });
+  assert.equal(empty.source, null, 'empty explicit authority never revives legacy calibration');
+  assert.deepEqual(empty.routes, []);
+  const unavailable = mixedSource({}, { [ROOT]: observations[ROOT] });
+  assert.equal(unavailable.source, null);
+  assert.equal(unavailable.unavailable, true, 'root health cannot stand in for route health');
+  assert.equal(mixedSource({}, observations).unavailable, false, 'wrong map differs from unavailable');
+});
+
+test('#918 exact equal map IDs still select by source and ambiguity never picks first', () => {
+  const observations = { [ROOT]: liveObservation('same', 9000), [ROUTED]: liveObservation('same', 100) };
+  const onlyB = route({ source: ROUTED, map_id: 'same' });
+  assert.equal(mixedSource({ marker: { source: ROOT, map_routes: [onlyB] } }, observations).telemetry.pos.x, 100);
+  const rows = [onlyB, route({ id: 'root', source: ROOT, map_id: 'same' })];
+  const first = mixedSource({ marker: { source: ROOT, map_routes: rows } }, observations);
+  const second = mixedSource({ marker: { source: ROOT, map_routes: rows.slice().reverse() } }, observations);
+  assert.equal(first.source, null);
+  assert.deepEqual(first.resolution, { kind: 'ambiguous', routeIds: ['r1', 'root'] });
+  assert.deepEqual(second.resolution, first.resolution);
+});
+
+test('#918 missing calibration does not select another source; native map-only data retain identity', () => {
+  const marker = { source: ROOT, map_routes: [route({ source: ROUTED, map_id: 'Map 1', calibration: null })] };
+  const selected = mixedSource({ marker });
+  assert.equal(selected.source, ROUTED);
+  assert.equal(selected.resolution.kind, 'needs_calibration');
+  const native = mixedSource({}, { [ROUTED]: { mapId: 'Map 1', telemetry: null } });
+  assert.equal(native.source, ROUTED);
+  assert.equal(native.resolution.kind, 'ready');
+  assert.equal(native.telemetry, null);
+  assert.equal(native.unavailable, false);
+});
+
+test('#918 legacy-only discovery and read adoption keep their established source', () => {
+  const legacy = mixedSource({ marker: { source: ROOT, calibration: { '1': IDENTITY } } });
+  assert.equal(legacy.source, ROOT);
+  assert.equal(legacy.telemetry.pos.x, 9000);
+  assert.equal(runRoute({ map_id: '1', points: [[1, 2], [3, 4]] }, legacy.routes, ROOT)?.source, ROOT);
+  const unconfigured = mixedSource({ marker: null });
+  assert.equal(unconfigured.source, ROOT, 'discovery remains usable before the first calibration');
+  const routed = mixedSource();
+  assert.equal(runRoute({ map_id: '1', points: [[1, 2], [3, 4]] }, routed.routes, ROOT), null);
+});
+
+test('#918 unmatched diagnostic identity is deterministic across route order', () => {
+  const rows = [route({ source: 'camera.z', map_id: 'saved-z' }), route({ id: 'a', source: 'camera.a', map_id: 'saved-a' })];
+  const input = { observed: { 'camera.z': 'wrong-z', 'camera.a': 'wrong-a' }, spaceIds: spaces('floor1') };
+  assert.deepEqual(resolveRoute({ ...input, routes: rows }), resolveRoute({ ...input, routes: rows.slice().reverse() }));
+});
 
 test('маршрут признаётся валидным только целиком', () => {
   assert.deepEqual(validateMarkerRoutes('mk', [route()], spaces('floor1')), []);
@@ -228,6 +304,24 @@ test('прошлый прогон остаётся в пространстве �
   });
   assert.deepEqual(plan.previous, M1, 'прошлый прогон виден на своём этаже');
   assert.equal(plan.live, null, 'а робот при этом здесь не рисуется');
+});
+
+test('#918 unresolved current keeps exact previous-route geometry without reviving legacy history', () => {
+  for (const resolution of [
+    { kind: 'none' }, { kind: 'unmapped', source: 'camera.robot', mapId: 'unknown' },
+    { kind: 'ambiguous', routeIds: ['r1', 'r2'] },
+  ]) {
+    const input = { resolution, routes: twoFloors, renderSpace: 'floor1', rootSource: 'camera.robot',
+      serverCurrent: { map_id: 'unknown' }, serverPrevious: { route_id: 'r1', map_id: 'm1' } };
+    const explicit = planVacuumOverlay({ ...input, explicitRoutes: true });
+    assert.equal(explicit.live, null);
+    assert.equal(explicit.currentRunMatches, false);
+    assert.deepEqual(explicit.previous, M1);
+    assert.equal(planVacuumOverlay({ ...input, explicitRoutes: false }).previous, null,
+      'legacy history still requires the currently active map');
+    assert.equal(planVacuumOverlay({ ...input, explicitRoutes: true, renderSpace: 'floor2' }).previous, null,
+      'unresolved current never relocates past geometry to another floor');
+  }
 });
 
 test('текущий серверный прогон принимается только от активного маршрута', () => {

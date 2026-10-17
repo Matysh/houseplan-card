@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 918,
+  "baseStable": "v1.81.0",
+  "category": "stable-fix",
+  "rationale": "Repairs vacuum path recording and rendering already present in v1.81.0: explicit map-route sources must own the run and the live robot together, with server-recorded history visible when a client opens during cleaning.",
+  "summary": {
+    "ru": "Исправлено исчезновение пути пылесоса при нескольких камерах карты; уже записанный путь виден при открытии плана во время уборки.",
+    "en": "Fixed missing vacuum trails with multiple map cameras; opening the plan during cleaning restores the path already recorded."
+  }
+}
