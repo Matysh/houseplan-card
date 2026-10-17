@@ -100,6 +100,14 @@ for (const mode of ['plan', 'devices', 'decor', 'view']) {
   if (mode === 'devices') check('disabledOnlyServiceGhost', await card.locator(`[data-hp="device"][data-id="${await page.evaluate(() => window.__hiddenTargets.disabled)}"].ha-disabled.ghost`).count(), 1);
   else check(`${mode}DoesNotRevealDisabled`, !receipt.disabled);
 }
+const floors = await page.evaluate(() => ({ first: window.__card._space,
+  other: window.__card._model.find(space => space.id !== window.__card._space)?.id }));
+if (!floors.other) throw Error('fixture needs a second floor');
+await page.evaluate(id => window.__hpTest.switchSpace(id), floors.other); await settle();
+check('floorSwitchKeepsLocalRevealChoice', (await state()).shown, 'true');
+await page.evaluate(id => window.__hpTest.switchSpace(id), floors.first); await settle();
+const returned = await state();
+check('floorReturnKeepsOrdinaryRevealedFace', returned.shown === 'true' && returned.exists && !returned.ghost);
 check('displayAndModesDoNotWritePair', await stored(), before);
 check('displayDoesNotMutateWS', await page.evaluate(() => window.__hiddenWrites.length), 0);
 check('displayDoesNotCallHA', await page.evaluate(() => window.__serviceCalls.length), 0);
