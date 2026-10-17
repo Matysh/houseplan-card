@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 76,
-  "acceptedAt": "2026-10-17T14:32:58.561Z",
-  "sourceFingerprint": "4ead5319241e44a2a9414e7c68f2c874d9062db7f535a6844ab40a9d172f1245",
+  "acceptedAt": "2026-10-17T18:14:57.253Z",
+  "sourceFingerprint": "429bb81ee433c2dbc99568ed6176d16d891b544157473f4096c4c9a9605d4adf",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,18 +10,45 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "4ead5319241e44a2a9414e7c68f2c874d9062db7f535a6844ab40a9d172f1245",
-    "ci": {
+    "buildFingerprint": "429bb81ee433c2dbc99568ed6176d16d891b544157473f4096c4c9a9605d4adf",
+    "ci": null
+  },
+  "localAttestation": {
+    "schema": "houseplan-golden-wsl/v2",
+    "sha256": "75204e870666ce291708066fcde3bedd9baaf7f9d00e171a3718cb2de63e5662",
+    "artifactSha256": "cfa553a9f5c9ff05bdb14a951a060b4a0ea66ccf46da08a074cef12e5ffdc41b",
+    "createdAt": "2026-10-17T18:13:44.407Z",
+    "source": {
       "repository": "Matysh/houseplan-card",
-      "run": 39040447294,
-      "attempt": 1,
-      "sha": "1e3a50733cec34fe0e882f7734753c653da5668a"
+      "branch": "issue/951-contact-outline-zoom",
+      "commit": "65de7ab1d7e07446a61834ee93b898891ed36067",
+      "tree": "bfb44dd2428d5fa97ad179b4e6dbac6338daa806",
+      "remoteSha": "65de7ab1d7e07446a61834ee93b898891ed36067",
+      "clean": true,
+      "status": ""
+    },
+    "environment": {
+      "platform": "linux",
+      "arch": "x64",
+      "kernel": "6.18.33.2-microsoft-standard-WSL2",
+      "wsl": true,
+      "distro": "Ubuntu-24.04",
+      "filesystem": "ext2/ext3"
+    },
+    "toolchain": {
+      "node": "22.23.2",
+      "npm": "10.9.8",
+      "playwright": "1.62.0",
+      "browser": {
+        "version": "151.0.7922.34",
+        "resolvedExecutable": "/home/sergey/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell",
+        "executableSha256": "e11fc9ce65c96313476f7ee9844b6fb6a9220fb048693cfe9eee00acf4170a9f"
+      }
     }
   },
-  "localAttestation": null,
   "foreignCapture": null,
   "witnesses": {
-    "count": 108,
+    "count": 115,
     "floor": 10
   },
   "scenarios": {
@@ -225,8 +252,8 @@
     "optimize-orphan-references-light-ru": "1b5986257e547d2763975175725a1fa58cd40a36911b8fe4cfd32fce4408e4e2",
     "card-editor-invalid-default-floor-light-en": "670d01d9a7feabe70391cde9dc00c57e5e8ef29e45e6496a2bc791e0fdfcfe06",
     "card-editor-invalid-default-floor-dark-ru": "01828da5c582231b16495ad17c98a84b1038813fe82a843c5cb466781a0ce214",
-    "device-contacts-designer-light": "89ba6911fa5de2632e0ea7084aaaf300bd403cf3b611450217a3b778d9a1f8aa",
-    "device-contacts-designer-dark": "99fa4069361099b864e5430397c66bf1972f6edfaebf7c89d96f790b06bf08cb",
+    "device-contacts-designer-light": "32ffacdad62a5ca2298e6c1759a37f77bd490968f4b1735680546897103889c3",
+    "device-contacts-designer-dark": "d4591b3a6147016224eee03c12ec7ad7030baa774464727d458e87839eb275e4",
     "led-strip-design-reference-off-light": "1a558111dbeb1962b10f47baad20b4689248a347510261152f0d6196906044fd",
     "led-strip-design-reference-on-light": "1d6b4c2cfac2e1aeb9ce17ae2b3ddb62707e3f46c2ad3967b3669712a8e577fd",
     "lighting-led-strip-glow-dark": "e6cdec5a16fde53bd1eca255eff554a5923f710d2b6e24904e46e39d8e5ab4ab",
