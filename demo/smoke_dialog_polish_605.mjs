@@ -56,7 +56,9 @@ for (const theme of ['light', 'dark']) {
         return { picker, opacity: Number(getComputedStyle(painted).opacity),
           checker: getComputedStyle(trigger).backgroundImage.includes('linear-gradient') };
       };
-      const tileAlpha = tiles.length === 10 && tiles.every((tile) => {
+      // #943 removes the room-darkness tile; all nine remaining tiles must
+      // still paint their own alpha and checkerboard.
+      const tileAlpha = tiles.length === 9 && tiles.every((tile) => {
         const { picker, opacity, checker } = layer(tile);
         return checker && Math.abs(opacity - Math.round(picker.opacity * 100) / 100) <= 0.01;
       });

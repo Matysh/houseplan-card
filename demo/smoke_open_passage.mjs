@@ -154,12 +154,42 @@ const out = await page.evaluate(async () => {
   const staticWallBodyPaths = [...staticRoot.querySelectorAll('.wallbodies path')];
   const passagePoint = new DOMPoint(500, 450);
   const solidWallPoint = new DOMPoint(500, 260);
-  result.staticCutsAndFillsPassage = staticWallBodyPaths.length > 0
+  result.staticCutsEmptyPassageWithoutDarkness = staticWallBodyPaths.length > 0
     && staticWallBodyPaths.every((path) => !path.isPointInFill(passagePoint))
     && staticWallBodyPaths.some((path) => path.isPointInFill(solidWallPoint))
-    && !!staticRoot.querySelector('.static-opening-tunnels [data-kind="passage"]');
+    && !staticRoot.querySelector('.static-opening-tunnels [data-kind="passage"]')
+    && !staticRoot.querySelector('.glow-base-layer,.glow-base-tunnels');
   result.staticDoesNotInventPassageSymbol = staticRoot.querySelectorAll('[data-hp="opening"]').length === 0;
   staticCard.remove();
+
+  // #943: rooms with fill:none no longer add a darkness-filled tunnel.
+  // Keep a separate real data-fill witness instead of deleting tunnel coverage.
+  await window.__hpTest.setServerConfig(cfg => ({ ...cfg, spaces: cfg.spaces.map(space => space.id !== c._space ? space : ({
+    ...space, rooms: space.rooms.map((room, index) => ({ ...room,
+      settings: { ...room.settings, fill_mode: 'custom',
+        custom_fill: { c: index === 0 ? '#224466' : '#668822', a: index === 0 ? 0.42 : 0.6 } },
+    })),
+  })) }));
+  const dataCard = document.createElement('houseplan-space-card');
+  dataCard.setConfig({ type: 'custom:houseplan-space-card', space: c._space, show_button: false });
+  dataCard.hass = c.hass;
+  document.body.append(dataCard);
+  const dataRoot = () => dataCard.shadowRoot || dataCard.renderRoot;
+  const dataTunnel = () => dataRoot()?.querySelector('.static-opening-tunnels[data-layer="data"] [data-kind="passage"]');
+  const started = performance.now();
+  while (!dataTunnel()) {
+    if (performance.now() - started > 3000) throw new Error('Static passage data fill did not load');
+    await new Promise(resolve => requestAnimationFrame(resolve));
+  }
+  await dataCard.updateComplete;
+  const colors = [...dataTunnel().querySelectorAll('stop')].map(stop => [stop.getAttribute('stop-color'), Number(stop.getAttribute('stop-opacity'))]);
+  const dataWalls = [...dataRoot().querySelectorAll('.wallbodies path')];
+  result.staticDataFillStillRepeatsBothRooms = colors.some(([c, a]) => c === '#224466' && a === 0.42)
+    && colors.some(([c, a]) => c === '#668822' && a === 0.6)
+    && dataWalls.length > 0 && dataWalls.every(path => !path.isPointInFill(passagePoint))
+    && dataWalls.some(path => path.isPointInFill(solidWallPoint))
+    && !dataRoot().querySelector('.glow-base-layer,.glow-base-tunnels');
+  dataCard.remove();
 
   return result;
 });
