@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 30, issue: 19. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 31, issue: 20. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -14,6 +14,7 @@
 | #935 | [SPEC-REVIEW-935-r1.md](SPEC-REVIEW-935-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #935 | [CODE-REVIEW-935-r1.md](CODE-REVIEW-935-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #931 | [SPEC-REVIEW-931-r1.md](SPEC-REVIEW-931-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #930 | [SPEC-REVIEW-930-r1.md](SPEC-REVIEW-930-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | решение о виртуальных устройствах не отражено в списке release-артефактов, docs/SCOPE.m… | `docs/SCOPE.md` `USER-GUIDE.ru.md` `USER-GUIDE.md` `FILTERING.md` `ARCHITECTURE.md` `DEVELOPMENT.md` `STATUS.md` `SCOPE.md` |
 | #929 | [CODE-REVIEW-929-r1.md](CODE-REVIEW-929-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #928 | [SPEC-REVIEW-928-r1.md](SPEC-REVIEW-928-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #927 | [CODE-REVIEW-927-r1.md](CODE-REVIEW-927-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
