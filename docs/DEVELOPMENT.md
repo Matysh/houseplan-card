@@ -1157,9 +1157,9 @@ belongs to the nightly gate. No rendering, input or model migration is involved.
 
 ## Support diagnostics v2 (#942)
 
-Measured accounting after integrating #918: the dev baseline 355 port members,
-5425 host references and 2,990,164 emitted bytes becomes 360 / 5466 / 3,011,299 B.
-This includes #918's new runtime-source port and #942's four diagnostic adapters;
+Measured accounting after integrating #918/#919: the dev baseline 355 port members,
+5425 host references and 2,993,396 emitted bytes becomes 361 / 5463 / 3,014,526 B.
+This includes the new runtime-source/display ports of #918/#919 and #942's four diagnostic adapters;
 the shared batched reader keeps #918's source, display priority and counters.
 The additional references are read-only, opt-in
 diagnostic adapters to existing accepted presentation/overlay/panel decisions;
