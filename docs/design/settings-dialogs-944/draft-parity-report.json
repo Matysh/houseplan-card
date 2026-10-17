@@ -1,0 +1,74 @@
+[
+  {
+    "case": "space",
+    "parent": null,
+    "fields": 43,
+    "parity": "PASS"
+  },
+  {
+    "case": "room",
+    "parent": null,
+    "fields": 22,
+    "parity": "PASS"
+  },
+  {
+    "case": "led",
+    "parent": null,
+    "fields": 50,
+    "parity": "PASS"
+  },
+  {
+    "case": "climate",
+    "parent": null,
+    "fields": 50,
+    "parity": "PASS"
+  },
+  {
+    "case": "vacuum",
+    "parent": null,
+    "fields": 66,
+    "parity": "PASS"
+  },
+  {
+    "case": "radar",
+    "parent": null,
+    "fields": 72,
+    "parity": "PASS"
+  },
+  {
+    "case": "space-plan-library",
+    "parent": "space",
+    "fields": 9,
+    "parity": "PASS"
+  },
+  {
+    "case": "vacuum-source",
+    "parent": "vacuum",
+    "fields": 5,
+    "parity": "PASS"
+  },
+  {
+    "case": "vacuum-map-add",
+    "parent": "vacuum",
+    "fields": 3,
+    "parity": "PASS"
+  },
+  {
+    "case": "vacuum-fit",
+    "parent": "vacuum",
+    "fields": 3,
+    "parity": "PASS"
+  },
+  {
+    "case": "vacuum-autocal-proposal",
+    "parent": "vacuum",
+    "fields": 2,
+    "parity": "PASS"
+  },
+  {
+    "case": "radar-setup",
+    "parent": "radar",
+    "fields": 4,
+    "parity": "PASS"
+  }
+]

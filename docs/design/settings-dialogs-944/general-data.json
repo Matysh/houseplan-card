@@ -1,0 +1,857 @@
+{
+  "baseline": "104a63f1e218eede610dd621a62346ceb3eab2e6",
+  "cases": [
+    {
+      "id": "general",
+      "name": "Общие настройки",
+      "kind": "Настройки всей установки",
+      "context": "Синтетический дом: два этажа и гараж; администратор HA; метрические единицы; sun.sun доступен, высота Солнца 11°; ZHA и два экземпляра Zigbee2MQTT. Данные сохранены, черновик исходно чистый. До — реконструкция состава и порядка формы по коду, не screenshot.",
+      "beforeTitle": "Общие настройки",
+      "afterTitle": "Общие настройки",
+      "summary": "Общие настройки — финальная редакция v7. Сохранены все правки v6; исправлено превью лучей от внешних углов: оконный откос отсекает часть ширины луча. Общие поля в обоих вариантах используют один набор данных. Изменения в макете остаются локальными.",
+      "initialAfterGroup": "g-after-light",
+      "sources": [
+        "https://github.com/Matysh/houseplan-card/issues/943",
+        "https://github.com/Matysh/houseplan-card/blob/104a63f1e218eede610dd621a62346ceb3eab2e6/src/editors/general-settings-dialog.ts#L87",
+        "https://github.com/Matysh/houseplan-card/blob/104a63f1e218eede610dd621a62346ceb3eab2e6/src/hp-zigbee-topology-settings.ts#L362",
+        "https://github.com/Matysh/houseplan-card/blob/104a63f1e218eede610dd621a62346ceb3eab2e6/src/houseplan-editor-runtime.ts#L8345",
+        "https://github.com/Matysh/houseplan-card/blob/104a63f1e218eede610dd621a62346ceb3eab2e6/src/houseplan-editor-runtime.ts#L9398",
+        "https://github.com/Matysh/houseplan-card/blob/104a63f1e218eede610dd621a62346ceb3eab2e6/src/houseplan-editor-runtime.ts#L8956",
+        "https://github.com/Matysh/houseplan-card/blob/104a63f1e218eede610dd621a62346ceb3eab2e6/src/i18n/ru.json",
+        "https://github.com/Matysh/houseplan-card/blob/104a63f1e218eede610dd621a62346ceb3eab2e6/src/i18n/settings/ru.json",
+        "https://github.com/Matysh/houseplan-card/blob/104a63f1e218eede610dd621a62346ceb3eab2e6/src/i18n/topology/ru.json",
+        "https://github.com/Matysh/houseplan-card/blob/104a63f1e218eede610dd621a62346ceb3eab2e6/src/i18n/support/ru.json",
+        "https://github.com/Matysh/houseplan-card/issues/938"
+      ],
+      "footer": {
+        "beforeSave": "Сохранить",
+        "afterSave": "Сохранить",
+        "resetLabel": "Сбросить к умолчаниям"
+      },
+      "fields": [
+        {
+          "boundary": "draft",
+          "id": "g-room-tooltip",
+          "label": "Показывать окно с информацией при наведении на комнату",
+          "type": "toggle",
+          "value": true,
+          "help": "Наведите на комнату на плане, чтобы увидеть сводку.",
+          "source": "Общее значение для всей установки"
+        },
+        {
+          "boundary": "draft",
+          "id": "g-radar-live",
+          "label": "Показывать текущее присутствие на плане",
+          "type": "toggle",
+          "value": true,
+          "help": "Показывает или скрывает все живые цели радаров. Запись наблюдения не запускается и не останавливается."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-volumetric",
+          "label": "Объёмный вид плана (2.5D)",
+          "type": "toggle",
+          "value": true,
+          "help": "Стены, двери, окна и значки устройств с объёмом. Декор и обычный план не меняются."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-battery",
+          "label": "Показывать заряд устройств",
+          "type": "select",
+          "value": "low",
+          "options": [
+            {
+              "value": "all",
+              "label": "Все"
+            },
+            {
+              "value": "low",
+              "label": "Только низкий"
+            },
+            {
+              "value": "off",
+              "label": "Нет"
+            }
+          ],
+          "help": "Иконки заряда рядом с батарейными устройствами. «Только низкий» — только красные иконки, ниже 20%.",
+          "helpAfter": "Общий режим. Отдельное устройство может дополнительно скрыть свою батарейку; включить её поверх общего «Нет» нельзя.",
+          "effective": "Только низкий заряд"
+        },
+        {
+          "boundary": "draft",
+          "id": "g-lqi",
+          "label": "Показывать Zigbee-сигнал",
+          "type": "toggle",
+          "value": false,
+          "help": "Применяется к пространствам без собственной настройки",
+          "helpAfter": "Системные числа LQI рядом с устройствами. Не скрывает заливку Zigbee, метрику комнаты, выбранный бейдж LQI или линии связей Zigbee.",
+          "effective": "Выкл; пространство «1 этаж · жилой» наследует это значение"
+        },
+        {
+          "boundary": "draft",
+          "id": "g-zigbee-enabled",
+          "label": "Показывать связи Zigbee при наведении на устройство",
+          "type": "toggle",
+          "value": true,
+          "help": "Показываются родители и следующие узлы по сведениям интеграции. Наведение ничего не запрашивает.",
+          "helpAfter": "Показывает линии связей при наведении на устройство. Чтобы читать и обновлять карты ниже, сначала включите связи и сохраните настройки.",
+          "effective": "Включено и уже сохранено"
+        },
+        {
+          "boundary": "read",
+          "id": "g-zha-read",
+          "label": "Прочитать данные ZHA",
+          "type": "action",
+          "value": "Прочитать данные ZHA",
+          "actionStyle": "secondary",
+          "showIf": {
+            "field": "g-zigbee-enabled",
+            "oneOf": [
+              true
+            ]
+          },
+          "help": "Читает сохранённую топологию ZHA и не запускает радио-сканирование.",
+          "suppressHelpAfter": true
+        },
+        {
+          "boundary": "read",
+          "id": "g-zha-status",
+          "label": "ZHA",
+          "type": "info",
+          "value": "Получено: 16.10.2026, 18:42 · Кеш интеграции; время радиосканирования неизвестно",
+          "readOnly": true,
+          "showIf": {
+            "field": "g-zigbee-enabled",
+            "oneOf": [
+              true
+            ]
+          },
+          "help": "Синтетический статус последнего чтения. Он не является редактируемой настройкой.",
+          "suppressHelpAfter": true
+        },
+        {
+          "boundary": "draft",
+          "id": "g-z2m-topics",
+          "label": "Базовые топики (по одному в строке)",
+          "type": "textarea",
+          "value": "zigbee2mqtt\nzigbee2mqtt_garage",
+          "showIf": {
+            "field": "g-zigbee-enabled",
+            "oneOf": [
+              true
+            ]
+          },
+          "help": "Zigbee2MQTT",
+          "helpAfter": "Укажите базовые топики ваших экземпляров Zigbee2MQTT. Изменённый список сохраняется кнопкой «Сохранить».",
+          "labelAfter": "Базовые топики · по одному в строке"
+        },
+        {
+          "boundary": "read",
+          "id": "g-z2m-warning",
+          "label": "Zigbee2MQTT",
+          "type": "info",
+          "value": "Сканирование может идти больше 10 минут и временно замедлять Zigbee. Успешные карты сохраняются после перезапуска HA с пометкой «устаревшие». «Обновить карту» удаляет старую карту до сканирования; выключение связей с сохранением настройки удаляет все карты.",
+          "readOnly": true,
+          "showIf": {
+            "field": "g-zigbee-enabled",
+            "oneOf": [
+              true
+            ]
+          },
+          "valueAfter": "Сканирование обычно занимает около 10 минут, иногда дольше, и может временно замедлять Zigbee.",
+          "suppressHelpAfter": true
+        },
+        {
+          "boundary": "immediate",
+          "id": "g-z2m-update-house",
+          "label": "Обновить карту · zigbee2mqtt",
+          "type": "action",
+          "value": "Обновить карту · zigbee2mqtt",
+          "actionStyle": "secondary",
+          "showIf": {
+            "field": "g-zigbee-enabled",
+            "oneOf": [
+              true
+            ]
+          },
+          "help": "Отдельный запрос сканирования. Доступен администратору при сохранённом включении связей; не ждёт общей кнопки «Сохранить».",
+          "labelAfter": "Обновить карту",
+          "suppressHelpAfter": true
+        },
+        {
+          "boundary": "read",
+          "id": "g-z2m-house-status",
+          "label": "zigbee2mqtt",
+          "type": "info",
+          "value": "Получено: 16.10.2026, 18:39",
+          "readOnly": true,
+          "showIf": {
+            "field": "g-zigbee-enabled",
+            "oneOf": [
+              true
+            ]
+          },
+          "help": "Синтетическая успешно сохранённая карта; активного запроса сейчас нет.",
+          "receivedAt": "16.10.2026 в 18:39",
+          "suppressHelpAfter": true
+        },
+        {
+          "boundary": "immediate",
+          "id": "g-z2m-update-garage",
+          "label": "Обновить карту · zigbee2mqtt_garage",
+          "type": "action",
+          "value": "Обновить карту · zigbee2mqtt_garage",
+          "actionStyle": "secondary",
+          "showIf": {
+            "field": "g-zigbee-enabled",
+            "oneOf": [
+              true
+            ]
+          },
+          "help": "Отдельный запрос второго экземпляра Zigbee2MQTT.",
+          "labelAfter": "Обновить карту",
+          "suppressHelpAfter": true
+        },
+        {
+          "boundary": "read",
+          "id": "g-z2m-garage-status",
+          "label": "zigbee2mqtt_garage",
+          "type": "info",
+          "value": "Получено: 15.10.2026, 17:05 · данные устарели · Неполные данные",
+          "readOnly": true,
+          "showIf": {
+            "field": "g-zigbee-enabled",
+            "oneOf": [
+              true
+            ]
+          },
+          "help": "Синтетическая старая карта. При запущенном запросе текущая форма дополнительно показывает стадию, время ожидания и, когда разрешено, «Отменить запрос»; эти runtime-состояния не активны в данном снимке.",
+          "receivedAt": "15.10.2026 в 17:05",
+          "suppressHelpAfter": true
+        },
+        {
+          "boundary": "draft",
+          "id": "g-light-on-color",
+          "label": "Свет включён",
+          "type": "color",
+          "value": "#FFD45C",
+          "help": "Освещение",
+          "source": "Общая палитра для всех пространств",
+          "helpAfter": "Используется комнатами с соответствующим режимом заливки. Сам режим выбирается в пространстве или комнате."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-light-on-opacity",
+          "label": "Прозрачность: Свет включён",
+          "type": "number",
+          "value": 22,
+          "unit": "%",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "help": "При 0% заливка не видна; цвет и этот процент сохраняются вместе."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-light-off-color",
+          "label": "Весь свет выключен",
+          "type": "color",
+          "value": "#8793A3",
+          "help": "Освещение",
+          "source": "Общая палитра для всех пространств",
+          "helpAfter": "Используется комнатами с соответствующим режимом заливки. Сам режим выбирается в пространстве или комнате."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-light-off-opacity",
+          "label": "Прозрачность: Весь свет выключен",
+          "type": "number",
+          "value": 12,
+          "unit": "%",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "help": "При 0% заливка не видна; цвет и этот процент сохраняются вместе."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-light-none-color",
+          "label": "Нет источников света",
+          "type": "color",
+          "value": "#6B7480",
+          "help": "Освещение",
+          "source": "Общая палитра для всех пространств",
+          "helpAfter": "Используется комнатами с соответствующим режимом заливки. Сам режим выбирается в пространстве или комнате."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-light-none-opacity",
+          "label": "Прозрачность: Нет источников света",
+          "type": "number",
+          "value": 0,
+          "unit": "%",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "help": "При 0% заливка не видна; цвет и этот процент сохраняются вместе."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-temp-cold-color",
+          "label": "Холодно",
+          "type": "color",
+          "value": "#4FC3F7",
+          "help": "Температура",
+          "source": "Общая палитра для всех пространств",
+          "helpAfter": "Используется комнатами с соответствующим режимом заливки. Сам режим выбирается в пространстве или комнате."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-temp-cold-opacity",
+          "label": "Прозрачность: Холодно",
+          "type": "number",
+          "value": 24,
+          "unit": "%",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "help": "При 0% заливка не видна; цвет и этот процент сохраняются вместе."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-temp-ok-color",
+          "label": "Комфорт",
+          "type": "color",
+          "value": "#66D17A",
+          "help": "Температура",
+          "source": "Общая палитра для всех пространств",
+          "helpAfter": "Используется комнатами с соответствующим режимом заливки. Сам режим выбирается в пространстве или комнате."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-temp-ok-opacity",
+          "label": "Прозрачность: Комфорт",
+          "type": "number",
+          "value": 16,
+          "unit": "%",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "help": "При 0% заливка не видна; цвет и этот процент сохраняются вместе."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-temp-hot-color",
+          "label": "Жарко",
+          "type": "color",
+          "value": "#FFB45C",
+          "help": "Температура",
+          "source": "Общая палитра для всех пространств",
+          "helpAfter": "Используется комнатами с соответствующим режимом заливки. Сам режим выбирается в пространстве или комнате."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-temp-hot-opacity",
+          "label": "Прозрачность: Жарко",
+          "type": "number",
+          "value": 26,
+          "unit": "%",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "help": "При 0% заливка не видна; цвет и этот процент сохраняются вместе."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-lqi-low-color",
+          "label": "Слабый сигнал",
+          "type": "color",
+          "value": "#F25A4A",
+          "help": "Сигнал Zigbee",
+          "source": "Общая палитра для всех пространств",
+          "helpAfter": "Используется комнатами с соответствующим режимом заливки. Сам режим выбирается в пространстве или комнате."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-lqi-low-opacity",
+          "label": "Прозрачность: Слабый сигнал",
+          "type": "number",
+          "value": 24,
+          "unit": "%",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "help": "При 0% заливка не видна; цвет и этот процент сохраняются вместе."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-lqi-high-color",
+          "label": "Сильный сигнал",
+          "type": "color",
+          "value": "#4BD28F",
+          "help": "Сигнал Zigbee",
+          "source": "Общая палитра для всех пространств",
+          "helpAfter": "Используется комнатами с соответствующим режимом заливки. Сам режим выбирается в пространстве или комнате."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-lqi-high-opacity",
+          "label": "Прозрачность: Сильный сигнал",
+          "type": "number",
+          "value": 18,
+          "unit": "%",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "help": "При 0% заливка не видна; цвет и этот процент сохраняются вместе."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-glow-base-color",
+          "label": "Темнота дома",
+          "type": "color",
+          "value": "#0D1B2A",
+          "source": "",
+          "helpAfter": "Тёмный фон, на котором лучше видно свечение ламп. Он появляется при включённом эффекте свечения. Если у комнаты уже есть цветовая заливка, например по температуре, затемнение не добавляется.",
+          "labelAfter": "Затемнение комнат"
+        },
+        {
+          "boundary": "draft",
+          "id": "g-glow-base-opacity",
+          "label": "Прозрачность: Темнота дома",
+          "type": "number",
+          "value": 45,
+          "unit": "%",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "labelAfter": "Интенсивность"
+        },
+        {
+          "boundary": "draft",
+          "id": "g-glow-light-color",
+          "label": "Цвет света по умолчанию / интенсивность",
+          "type": "color",
+          "value": "#FFD9A0",
+          "source": "",
+          "helpAfter": "Используется для ламп без своего цвета. Цвет из Home Assistant или настройка отдельной лампы заменяют это значение.",
+          "labelAfter": "Цвет света по умолчанию"
+        },
+        {
+          "boundary": "draft",
+          "id": "g-glow-light-opacity",
+          "label": "Прозрачность: Цвет света по умолчанию / интенсивность",
+          "type": "number",
+          "value": 80,
+          "unit": "%",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "labelAfter": "Интенсивность"
+        },
+        {
+          "boundary": "draft",
+          "id": "g-glow-radius",
+          "label": "Радиус свечения",
+          "type": "number",
+          "value": 3.5,
+          "unit": "м",
+          "min": 0.5,
+          "step": 0.5,
+          "help": "Задаёт общий радиус светового пятна в метрах или футах; персональный радиус устройства заменяет это значение.",
+          "effective": "Общий радиус 3,5 м; локальный радиус устройства сильнее"
+        },
+        {
+          "boundary": "draft",
+          "id": "g-wall-color",
+          "label": "Цвет заливки стен",
+          "type": "color",
+          "value": "#E8E5DD",
+          "help": "Цвет тела толстых стен; это не заливка комнаты и не цвет границ/названий пространства."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-wall-opacity",
+          "label": "Прозрачность",
+          "labelAfter": "Прозрачность",
+          "type": "number",
+          "value": 100,
+          "unit": "%",
+          "min": 0,
+          "max": 100,
+          "step": 1
+        },
+        {
+          "boundary": "draft",
+          "id": "g-wall-reset",
+          "label": "Сброс",
+          "labelAfter": "Сбросить цвет и прозрачность стен",
+          "type": "action",
+          "value": "Сброс",
+          "actionStyle": "secondary",
+          "help": "Меняет только черновик: белый #FFFFFF и 100%. Применяется общей кнопкой «Сохранить»."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-bg-mode",
+          "label": "Фон плана",
+          "labelAfter": "Фон вокруг плана",
+          "type": "select",
+          "value": "daynight",
+          "options": [
+            {
+              "value": "static",
+              "label": "Статичный цвет"
+            },
+            {
+              "value": "daynight",
+              "label": "Следует за Солнцем"
+            }
+          ],
+          "help": "«Следует за Солнцем» использует sun.sun, а при недоступности — локальные часы браузера; статичный режим всегда показывает выбранный цвет.",
+          "helpAfter": "Это окружающий холст. Изображение плана и заливки комнат настраиваются отдельно."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-bg-color",
+          "label": "Цвет фона вокруг плана",
+          "type": "color",
+          "value": "#17212B",
+          "showIf": {
+            "field": "g-bg-mode",
+            "oneOf": [
+              "static"
+            ]
+          },
+          "help": "Свой цвет фона.",
+          "source": "Своё общее значение"
+        },
+        {
+          "boundary": "draft",
+          "id": "g-bg-reset",
+          "label": "Как в теме",
+          "type": "action",
+          "value": "Как в теме",
+          "actionStyle": "secondary",
+          "showIf": {
+            "field": "g-bg-mode",
+            "oneOf": [
+              "static"
+            ]
+          },
+          "help": "Удаляет собственный цвет из черновика; после сохранения общий статичный фон следует теме. Не сбрасывает локальные цвета пространств.",
+          "suppressHelpAfter": true
+        },
+        {
+          "boundary": "draft",
+          "id": "g-north",
+          "label": "Север на плане",
+          "type": "number",
+          "value": 32,
+          "unit": "°",
+          "min": 0,
+          "max": 359,
+          "step": 1,
+          "help": "Угол отсчитывается по часовой стрелке от верхней вертикали плана; север нужен для оконных лучей, а не для фона «Следует за Солнцем».",
+          "effective": "",
+          "afterOnlyNote": "",
+          "helpAfter": "Укажите, куда направлен север относительно плана. Угол отсчитывается по часовой стрелке: 0° — вверх, 90° — вправо, 180° — вниз, 270° — влево. Направление нужно для солнечных лучей в окнах."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-north-reset",
+          "label": "Сбросить",
+          "labelAfter": "Снять общее направление севера",
+          "type": "action",
+          "value": "Сбросить",
+          "actionStyle": "secondary",
+          "help": "Очищает север в черновике. Пространства с собственным севером сохраняют его."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-sun-rays",
+          "label": "Солнце в окнах",
+          "type": "toggle",
+          "value": true,
+          "help": "Рисовать солнечные лучи через оконные проёмы.",
+          "helpAfter": "Нужны sun.sun, север и подходящее наружное окно. Скрытие символов проёмов не выключает лучи.",
+          "effective": "Включено; пространство наследует"
+        },
+        {
+          "boundary": "draft",
+          "id": "g-sun-origin",
+          "label": "Лучи солнца",
+          "labelAfter": "Откуда начинаются оконные лучи",
+          "type": "select",
+          "value": "outer",
+          "options": [
+            {
+              "value": "inner",
+              "label": "От внутренних углов окон"
+            },
+            {
+              "value": "outer",
+              "label": "От внешних углов окон"
+            }
+          ],
+          "help": "Общая настройка всех пространств. Доступна и при выключенных лучах."
+        },
+        {
+          "boundary": "draft",
+          "id": "g-moon",
+          "label": "Луна на плане в сумерках и ночью",
+          "type": "toggle",
+          "value": true,
+          "help": "Видна за планом при любом фоне, от 3° над горизонтом, кроме новолуния; положение считается по координатам дома из Home Assistant.",
+          "helpAfter": "Независима от режима фона и переключателя оконных лучей."
+        },
+        {
+          "boundary": "read",
+          "id": "g-moon-status",
+          "label": "",
+          "type": "info",
+          "value": "Луна сейчас не видна: Солнце на 11° над горизонтом. Она может появиться, когда Солнце опустится ниже 6°.",
+          "readOnly": true,
+          "help": "Синтетический снимок состояния на момент открытия. Строка показывается после загрузки данных и не зависит от положения чернового тумблера.",
+          "labelAfter": "",
+          "helpAfter": "",
+          "suppressHelpAfter": true
+        },
+        {
+          "boundary": "workflow",
+          "id": "g-backup-export",
+          "label": "Экспорт",
+          "type": "action",
+          "value": "Экспорт",
+          "actionStyle": "secondary",
+          "help": "Резервная копия и перенос. Открывает отдельный мастер экспорта и закрывает форму общих настроек. Это не сохранение её черновика.",
+          "suppressHelpAfter": true
+        },
+        {
+          "boundary": "workflow",
+          "id": "g-backup-import",
+          "label": "Импорт",
+          "type": "action",
+          "value": "Импорт",
+          "actionStyle": "secondary",
+          "help": "Резервная копия и перенос. Выбор JSON → отдельный предпросмотр/подтверждение импорта. Это не поле общего черновика.",
+          "suppressHelpAfter": true
+        },
+        {
+          "boundary": "workflow",
+          "id": "g-optimize",
+          "label": "Оптимизировать планы",
+          "type": "action",
+          "value": "Оптимизировать планы",
+          "actionStyle": "secondary",
+          "help": "Обновляет модели данных, выравнивает элементы по сетке и объединяет лишние фрагменты стен. Перед записью будет показан точный отчёт.",
+          "suppressHelpAfter": true
+        },
+        {
+          "boundary": "workflow",
+          "id": "g-optimize-undo",
+          "label": "Отменить последнюю оптимизацию",
+          "type": "action",
+          "value": "Отменить последнюю оптимизацию",
+          "actionStyle": "secondary",
+          "help": "В фикстуре доступна отмена последней оптимизации. Если последняя операция — полный импорт, вместо этой кнопки текущая форма показывает «Отменить последний полный импорт» в блоке резервной копии. Две кнопки одновременно не существуют.",
+          "suppressHelpAfter": true
+        }
+      ],
+      "beforeGroups": [
+        {
+          "id": "g-before-display",
+          "title": "Отображение",
+          "fields": [
+            "g-room-tooltip",
+            "g-radar-live",
+            "g-volumetric",
+            "g-battery",
+            "g-lqi"
+          ]
+        },
+        {
+          "id": "g-before-zigbee",
+          "title": "Связи Zigbee",
+          "fields": [
+            "g-zigbee-enabled",
+            "g-zha-read",
+            "g-zha-status",
+            "g-z2m-topics",
+            "g-z2m-warning",
+            "g-z2m-update-house",
+            "g-z2m-house-status",
+            "g-z2m-update-garage",
+            "g-z2m-garage-status"
+          ]
+        },
+        {
+          "id": "g-before-fills",
+          "title": "Цвета заливки комнат",
+          "fields": [
+            "g-light-on-color",
+            "g-light-on-opacity",
+            "g-light-off-color",
+            "g-light-off-opacity",
+            "g-light-none-color",
+            "g-light-none-opacity",
+            "g-temp-cold-color",
+            "g-temp-cold-opacity",
+            "g-temp-ok-color",
+            "g-temp-ok-opacity",
+            "g-temp-hot-color",
+            "g-temp-hot-opacity",
+            "g-lqi-low-color",
+            "g-lqi-low-opacity",
+            "g-lqi-high-color",
+            "g-lqi-high-opacity"
+          ]
+        },
+        {
+          "id": "g-before-glow",
+          "title": "Свечение источников света",
+          "fields": [
+            "g-glow-base-color",
+            "g-glow-base-opacity",
+            "g-glow-light-color",
+            "g-glow-light-opacity",
+            "g-glow-radius"
+          ]
+        },
+        {
+          "id": "g-before-plan",
+          "title": "План",
+          "fields": [
+            "g-wall-color",
+            "g-wall-opacity",
+            "g-wall-reset",
+            "g-bg-mode",
+            "g-bg-color",
+            "g-bg-reset"
+          ]
+        },
+        {
+          "id": "g-before-sun",
+          "title": "Солнце и Луна",
+          "fields": [
+            "g-north",
+            "g-north-reset",
+            "g-sun-rays",
+            "g-sun-origin",
+            "g-moon",
+            "g-moon-status"
+          ]
+        },
+        {
+          "id": "g-before-data",
+          "title": "Данные",
+          "fields": [
+            "g-backup-export",
+            "g-backup-import",
+            "g-optimize",
+            "g-optimize-undo"
+          ]
+        }
+      ],
+      "afterGroups": [
+        {
+          "id": "g-after-view",
+          "title": "Информация на плане",
+          "fields": [
+            "g-room-tooltip",
+            "g-radar-live",
+            "g-battery",
+            "g-lqi"
+          ]
+        },
+        {
+          "id": "g-after-appearance",
+          "title": "Оформление и фон",
+          "fields": [
+            "g-volumetric",
+            "g-wall-color",
+            "g-wall-opacity",
+            "g-bg-mode",
+            "g-bg-color",
+            "g-bg-reset"
+          ]
+        },
+        {
+          "id": "g-after-fills",
+          "title": "Заливки комнат",
+          "fields": [
+            "g-light-on-color",
+            "g-light-on-opacity",
+            "g-light-off-color",
+            "g-light-off-opacity",
+            "g-light-none-color",
+            "g-light-none-opacity",
+            "g-temp-cold-color",
+            "g-temp-cold-opacity",
+            "g-temp-ok-color",
+            "g-temp-ok-opacity",
+            "g-temp-hot-color",
+            "g-temp-hot-opacity",
+            "g-lqi-low-color",
+            "g-lqi-low-opacity",
+            "g-lqi-high-color",
+            "g-lqi-high-opacity"
+          ]
+        },
+        {
+          "id": "g-after-light",
+          "title": "Свет, Солнце и Луна",
+          "fields": [
+            "g-glow-light-color",
+            "g-glow-light-opacity",
+            "g-glow-radius",
+            "g-north",
+            "g-sun-rays",
+            "g-sun-origin",
+            "g-moon",
+            "g-moon-status"
+          ]
+        },
+        {
+          "id": "g-after-zigbee",
+          "title": "Диагностика Zigbee",
+          "fields": [
+            "g-zigbee-enabled",
+            "g-zha-status",
+            "g-zha-read",
+            "g-z2m-warning",
+            "g-z2m-topics",
+            "g-z2m-house-status",
+            "g-z2m-update-house",
+            "g-z2m-garage-status",
+            "g-z2m-update-garage"
+          ]
+        },
+        {
+          "id": "g-after-data",
+          "title": "Резервные копии и обслуживание",
+          "fields": [
+            "g-backup-import",
+            "g-backup-export",
+            "g-optimize",
+            "g-optimize-undo"
+          ]
+        }
+      ],
+      "optimizationHistory": true,
+      "spaces": [
+        {
+          "name": "1 этаж · жилой",
+          "overrides": {}
+        },
+        {
+          "name": "2 этаж",
+          "overrides": {
+            "g-lqi": true
+          }
+        }
+      ]
+    }
+  ]
+}
