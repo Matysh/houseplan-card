@@ -1,0 +1,10 @@
+{
+  "javascript_syntax": "pass",
+  "rendered_icons": ["thermometer", "droplet", "lightbulb"],
+  "co2_has_no_icon": true,
+  "default_preview": {"name_px": 22, "metrics_px": 13.5, "icon_px": 14.1719},
+  "caption_140_percent": {"name_px": 22, "metrics_px": 21, "icon_px": 22.0469},
+  "mobile_320_preview_wrap": "visually verified",
+  "console_errors": [],
+  "before_view_and_original_fields_unchanged": true
+}
