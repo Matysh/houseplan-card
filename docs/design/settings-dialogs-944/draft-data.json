@@ -10,7 +10,7 @@
       "beforeTitle": "Пространство",
       "afterTitle": "Пространство · 1 этаж · жилой",
       "summary": "Сохраняются все параметры и отдельные операции. Фон, север, лучи и LQI оставлены наследуемыми; температура заливки и размер карточек собственные. Условные ветки «Свой цвет» и собственного севера доступны теми же переключателями. Картинка плана не является фоном вокруг плана.",
-      "initialAfterGroup": "s-after-rooms",
+      "initialAfterGroup": "s-after-plan",
       "sources": [
         "https://github.com/Matysh/houseplan-card/blob/104a63f1e218eede610dd621a62346ceb3eab2e6/src/editors/space-form.ts#L153",
         "https://github.com/Matysh/houseplan-card/blob/104a63f1e218eede610dd621a62346ceb3eab2e6/src/editors/space-form.ts#L298",
