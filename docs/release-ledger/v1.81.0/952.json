@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 952,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Use one complete fixed 32-probe CDP calibration series with the unchanged 1 ms precision guard and explicit unavailable-clock diagnostics. Only the test harness changes; no product performance budget, user behavior, milestone or user changelog."
+}

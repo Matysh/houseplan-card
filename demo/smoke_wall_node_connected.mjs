@@ -11,7 +11,7 @@ import { performance } from 'node:perf_hooks';
 import { setTimeout as delay } from 'node:timers/promises';
 import { launch, finish, requirePinnedBrowser, watchPage } from './serve.mjs';
 import { installNodePaintObserver } from './helpers/node-paint-observer.mjs';
-import { assertNodeClockBounds, assertUniqueNodeInputPositions, calibrateNodeInputClock, installNodeInputObserver, settleNodeInputLedger } from './helpers/node-input-ledger.mjs';
+import { assertNodeClockBounds, assertUniqueNodeInputPositions, calibrateNodeInputClock, installNodeInputObserver, NODE_INPUT_CLOCK_PROBES, settleNodeInputLedger } from './helpers/node-input-ledger.mjs';
 import { writeNodeCiReport } from './helpers/node-ci-report.mjs';
 import { nodeBudgetVerdict, nodeLatencyAttribution, nodeQuantiles as quantiles } from './helpers/node-performance-report.mjs';
 import { sendNodeNativeMove } from './helpers/node-native-input.mjs';
@@ -58,7 +58,7 @@ const report = { schema: 'houseplan-connected-node/v1', issue: 834, material, ha
   counts: { rooms: 8, walls: 30, openings: 14 }, viewport, dpr: 1, node: process.version,
   chromium: browser.version(), budgets, warmupGestures: 3, measuredGestures: 5,
   latencyDefinition: 'Per submitted native input to a post-paint opportunity of the latest candidate. The same RAF-phase observer uses next RAF after a synchronous RAF producer, second RAF after a task/microtask producer. Unconditional two-RAF is retained separately. Superseded inputs are labelled, not claimed rendered.',
-  clockDefinition: 'Eight fixed independent Node/browser monotonic RTT probes before mouse-down choose the tightest conservative lower offset (including 0.1ms quantisation on each side, uncertainty at most 1ms). Source clocks are frozen before dispatch. Native CDP input uses no epoch timestamp. After-gesture independent bounds must overlap; all probes and source clocks are retained.',
+  clockDefinition: `${NODE_INPUT_CLOCK_PROBES} fixed independent Node/browser monotonic RTT probes before mouse-down choose the tightest conservative lower offset (including 0.1ms quantisation on each side, uncertainty at most 1ms). The complete series always runs, without precision retries. Source clocks are frozen before dispatch. Native CDP input uses no epoch timestamp. After-gesture ${NODE_INPUT_CLOCK_PROBES} independent bounds must overlap; all probes and source clocks are retained.`,
   raw: [], failures: [] };
 mkdirSync(dirname(output), { recursive: true });
 try {
@@ -200,7 +200,7 @@ try {
   const timeOrigin = await page.evaluate(() => performance.timeOrigin);
   report.browserTimeOrigin = timeOrigin;
   for (let gesture = 0; gesture < 8; gesture++) {
-    const clockCalibration = await calibrateNodeInputClock(cdp);
+    const clockCalibration = await calibrateNodeInputClock(cdp, { context: { gesture, phase: 'before' } });
     await down();
     const pointerId = await page.evaluate(index => {
       const perf = window.__connectedNodePerf;
@@ -276,7 +276,7 @@ try {
     assert.ok(raw.samples.some(s => s.invalid) && raw.samples.some(s => !s.invalid), 'valid and unsafe-neighbour paths measured');
     assert.ok(raw.sourceMatches.every(match => raw.events[match.observationIndex].inputToPaintMs >= 0)
       && raw.inputs.every(e => Number.isFinite(e.inputToPaintMs) && e.inputToPaintMs >= 0), 'every input retains a valid browser-clock paint latency');
-    raw.clockAfter = await calibrateNodeInputClock(cdp);
+    raw.clockAfter = await calibrateNodeInputClock(cdp, { context: { gesture, phase: 'after' } });
     assertNodeClockBounds(clockCalibration, raw.clockAfter);
     await cancel();
   }
@@ -386,8 +386,8 @@ try {
 } catch (error) {
   report.pass = false;
   report.error = { name: error.name, message: error.message,
-    stage: report.pass === false && report.budgetFailures?.length ? 'budget-verdict' : 'smoke' };
-  if (error.clockProbes) report.clockFailure = { message: error.message, probes: error.clockProbes };
+    stage: error.clockProbes ? 'clock-calibration' : report.budgetFailures?.length ? 'budget-verdict' : 'smoke' };
+  if (error.clockProbes) report.clockFailure = { ...error.clockCalibration, message: error.message, probes: error.clockProbes };
   throw error;
 } finally {
   Object.assign(report, nodeBudgetVerdict(report));

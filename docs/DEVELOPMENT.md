@@ -879,9 +879,14 @@ round-trip probes before each mouse-down bound the offset from the injector's
 monotonic clock to the browser's monotonic clock. The lower offset bound is
 conservative: it cannot make the source input appear later and under-report
 latency. Source clocks are frozen before dispatch and never fitted to measured
-inputs. Eight fixed probes include 0.1 ms clock-quantisation bounds, require at
+inputs. 32 fixed probes (#952) include 0.1 ms clock-quantisation bounds, require at
 most 1 ms uncertainty, and must remain consistent with independent post-gesture
-probes; there is no retry-until-pass loop. Native CDP events use their own
+probes; the complete fixed series runs regardless of early precision, without
+adaptive extension or retry-until-pass. Unavailable calibration stays FAIL with
+gesture/phase, all received raw probes and precision/count diagnostics; invalid
+transport retains partial evidence. The original eight-probe CI failure is not
+retroactively accepted, and different probe-count protocols are not pooled in
+the fixed-series comparison. Native CDP events use their own
 monotonic timestamp, without an epoch
 timestamp override. Unique exact positions identify the source inputs; order,
 ownership, causal timestamps and the final input remain mandatory. A missing

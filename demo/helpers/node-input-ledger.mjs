@@ -1,10 +1,13 @@
 import assert from 'node:assert/strict';
 import { performance } from 'node:perf_hooks';
 
+export const NODE_INPUT_CLOCK_PROBES = 32;
+const resolutionMs = .1; // unisolated Chromium performance.now() coarsening
+const maxUncertaintyMs = 1;
+
 /** Independent monotonic clocks, never fitted to the measured input stream. */
 export function nodeInputClockCalibration(probes) {
-  assert.equal(probes.length, 8, 'clock calibration needs exactly eight independent RTT probes');
-  const resolutionMs = .1; // unisolated Chromium performance.now() coarsening
+  assert.equal(probes.length, NODE_INPUT_CLOCK_PROBES, `clock calibration needs exactly ${NODE_INPUT_CLOCK_PROBES} independent RTT probes`);
   const pairs = probes.map(probe => {
     const { nodeBefore, browserNow, nodeAfter } = probe;
     assert.ok([nodeBefore, browserNow, nodeAfter].every(Number.isFinite) && nodeAfter >= nodeBefore,
@@ -16,29 +19,37 @@ export function nodeInputClockCalibration(probes) {
   assert.ok(intersection.lower <= intersection.upper, 'independent clock probe intervals must have a common intersection');
   const chosen = pairs.reduce((best, pair, index) => pair.uncertaintyMs < pairs[best].uncertaintyMs ? index : best, 0);
   const { lower, upper, uncertaintyMs } = pairs[chosen];
-  assert.ok(uncertaintyMs <= 1, `native clock calibration uncertainty must be at most 1ms (${uncertaintyMs}ms)`);
+  assert.ok(uncertaintyMs <= maxUncertaintyMs, `native clock calibration uncertainty must be at most 1ms (${uncertaintyMs}ms)`);
   // Keep the lower edge of the independently tightest RTT bracket. The source
   // can only appear earlier than its true browser time, never spuriously later.
   return { offsetMs: lower, lower, upper, uncertaintyMs, resolutionMs, chosen, intersection, pairs };
 }
 
-/** Fixed probe count outside the gesture: no retries, native input or pacing. */
-export async function calibrateNodeInputClock(cdp) {
+/** One complete fixed series outside the gesture; never stop/retry on precision. */
+export async function calibrateNodeInputClock(cdp, { now = () => performance.now(), context } = {}) {
   const probes = [];
   try {
-    for (let index = 0; index < 8; index++) {
-      const nodeBefore = performance.now();
+    for (let index = 0; index < NODE_INPUT_CLOCK_PROBES; index++) {
+      const nodeBefore = now();
       // Same page/session as native input; avoid the additional Playwright
       // evaluate-wrapper RPC while retaining an independent renderer-clock read.
       const reply = await cdp.send('Runtime.evaluate', { expression: 'performance.now()', returnByValue: true });
-      const nodeAfter = performance.now(), browserNow = reply.result?.value;
+      const nodeAfter = now(), browserNow = reply.result?.value;
       probes.push({ nodeBefore, browserNow, nodeAfter });
       assert.ok(!reply.exceptionDetails && reply.result?.type === 'number' && Number.isFinite(browserNow),
         'independent CDP clock probe must return a finite browser number');
     }
     return nodeInputClockCalibration(probes);
   }
-  catch (error) { error.clockProbes = probes; throw error; }
+  catch (error) {
+    error.clockProbes = probes;
+    const finite = probes.filter(p => [p.nodeBefore, p.nodeAfter, p.browserNow].every(Number.isFinite)
+      && p.nodeAfter >= p.nodeBefore);
+    error.clockCalibration = { status: 'unavailable', context, requiredProbes: NODE_INPUT_CLOCK_PROBES,
+      receivedProbes: probes.length, validTimestampProbes: finite.length, maxUncertaintyMs, resolutionMs,
+      bestUncertaintyMs: finite.length ? Math.min(...finite.map(p => p.nodeAfter - p.nodeBefore + 2 * resolutionMs)) : null };
+    throw error;
+  }
 }
 
 export function assertNodeClockBounds(before, after) {

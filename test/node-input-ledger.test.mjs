@@ -10,20 +10,20 @@ const source = () => Array.from({ length: 60 }, (_, id) => Object.freeze({ id,
 const observation = (input, extra = {}) => ({ ...input, eventTime: input.eventTime + .1,
   dispatched: input.eventTime + 5, firstRaf: input.eventTime + 40, twoRafOpportunity: input.eventTime + 56,
   paintOpportunity: input.eventTime + 40, producerWasRaf: true, coalesced: false, isTrusted: true, ...extra });
-const probes = () => Array.from({ length: 8 }, (_, index) => {
+const probes = () => Array.from({ length: 32 }, (_, index) => {
   const nodeBefore = 100 + index * 16, rtt = index === 3 ? .2 : .4;
   return { nodeBefore, nodeAfter: nodeBefore + rtt, browserNow: nodeBefore + rtt / 2 + 500 };
 });
 
-test('#834 calibration performs exactly eight independent direct CDP clock reads with no native input', async () => {
+test('#834 calibration performs exactly 32 independent direct CDP clock reads with no native input', async () => {
   const calls = [];
   const cdp = { async send(method, params) {
     calls.push({ method, params });
     return { result: { type: 'number', value: performance.now() + 500 } };
   } };
   const result = await calibrateNodeInputClock(cdp);
-  assert.equal(calls.length, 8);
-  assert.equal(result.pairs.length, 8);
+  assert.equal(calls.length, 32);
+  assert.equal(result.pairs.length, 32);
   for (const call of calls) assert.deepEqual(call, { method: 'Runtime.evaluate', params: { expression: 'performance.now()', returnByValue: true } });
   assert.ok(result.offsetMs <= 500);
   assert.ok(result.uncertaintyMs <= 1);
@@ -40,7 +40,7 @@ test('#834 independent monotonic RTT calibration fixes a conservative lower offs
   assert.ok(Math.abs(calibration.uncertaintyMs - .4) < 1e-8);
   assert.equal(calibration.offsetMs, calibration.lower);
   assert.equal(calibration.resolutionMs, .1);
-  assert.equal(calibration.pairs.length, 8);
+  assert.equal(calibration.pairs.length, 32);
   const nodeSend = 5000, actualBrowserSend = nodeSend + 500;
   assert.ok(nodeSend + calibration.offsetMs <= actualBrowserSend);
   assert.ok(actualBrowserSend + 80 - (nodeSend + calibration.offsetMs) >= 80,
@@ -52,11 +52,106 @@ test('#834 clock calibration rejects inconsistent, imprecise, missing and non-mo
   assert.throws(() => nodeInputClockCalibration(inconsistent), /common intersection/);
   const imprecise = probes().map(p => ({ ...p, nodeAfter: p.nodeBefore + 2, browserNow: p.nodeBefore + 501 }));
   assert.throws(() => nodeInputClockCalibration(imprecise), /at most 1ms/);
-  assert.throws(() => nodeInputClockCalibration(probes().slice(1)), /exactly eight/);
+  assert.throws(() => nodeInputClockCalibration(probes().slice(1)), /exactly 32/);
   const backwards = probes(); backwards[0].nodeAfter = backwards[0].nodeBefore - 1;
   assert.throws(() => nodeInputClockCalibration(backwards), /finite and monotonic/);
   const invalid = probes(); invalid[0].browserNow = Infinity;
   assert.throws(() => nodeInputClockCalibration(invalid), /finite and monotonic/);
+});
+
+// Deterministic transport inputs, not a replacement for the native smoke clock.
+function clockPort(raw, failAt = -1) {
+  let reads = 0, calls = 0;
+  return { now: () => {
+    const probe = raw[Math.floor(reads / 2)];
+    return reads++ % 2 ? probe.nodeAfter : probe.nodeBefore;
+  }, cdp: { async send() {
+    const index = calls++;
+    if (index === failAt) throw Error('transport disconnected');
+    return { result: { type: 'number', value: raw[index].browserNow } };
+  } }, calls: () => calls };
+}
+
+test('#952 one fixed series includes late precise probes and never exits on early success', async () => {
+  for (const preciseAt of [0, 8, 31]) {
+    const raw = probes().map((p, index) => ({ ...p, nodeAfter: p.nodeBefore + (index === preciseAt ? .2 : 2),
+      browserNow: p.nodeBefore + (index === preciseAt ? .1 : 1) + 500 }));
+    const port = clockPort(raw);
+    const calibration = await calibrateNodeInputClock(port.cdp, { now: port.now });
+    assert.equal(port.calls(), 32, 'neither early success nor the first eight slow probes ends/retries the series');
+    assert.equal(calibration.chosen, preciseAt);
+    assert.equal(calibration.pairs.length, 32);
+    assert.ok(calibration.uncertaintyMs < 1);
+    assert.ok(calibration.offsetMs <= 500);
+  }
+});
+
+test('#952 all imprecise probes remain unavailable with complete phase diagnostics', async () => {
+  const raw = probes().map(p => ({ ...p, nodeAfter: p.nodeBefore + 2, browserNow: p.nodeBefore + 501 }));
+  const port = clockPort(raw), context = { gesture: 2, phase: 'after' };
+  await assert.rejects(calibrateNodeInputClock(port.cdp, { now: port.now, context }), error => {
+    assert.match(error.message, /at most 1ms/);
+    assert.deepEqual(error.clockProbes, raw);
+    assert.deepEqual(error.clockCalibration, { status: 'unavailable', context, requiredProbes: 32,
+      receivedProbes: 32, validTimestampProbes: 32, maxUncertaintyMs: 1, resolutionMs: .1, bestUncertaintyMs: 2.2 });
+    return true;
+  });
+  assert.equal(port.calls(), 32, 'no second series on inadequate precision');
+});
+
+test('#952 a precise probe cannot hide inconsistent bounds or broken transport', async () => {
+  const raw = probes(); raw[31].browserNow += 2;
+  const inconsistent = clockPort(raw);
+  await assert.rejects(calibrateNodeInputClock(inconsistent.cdp, { now: inconsistent.now }), error => {
+    assert.match(error.message, /common intersection/);
+    assert.equal(error.clockProbes.length, 32);
+    assert.ok(error.clockCalibration.bestUncertaintyMs < 1);
+    return true;
+  });
+  const broken = clockPort(probes(), 16);
+  await assert.rejects(calibrateNodeInputClock(broken.cdp, { now: broken.now }), error => {
+    assert.match(error.message, /transport disconnected/);
+    assert.equal(error.clockCalibration.receivedProbes, 16);
+    assert.equal(error.clockProbes.length, 16);
+    return true;
+  });
+  assert.equal(broken.calls(), 17, 'a transport error is not retried');
+  const malformed = clockPort(probes());
+  const send = malformed.cdp.send;
+  malformed.cdp.send = async () => {
+    const reply = await send();
+    return malformed.calls() === 17 ? { result: { type: 'undefined' } } : reply;
+  };
+  await assert.rejects(calibrateNodeInputClock(malformed.cdp, { now: malformed.now }), error => {
+    assert.match(error.message, /finite browser number/);
+    assert.equal(error.clockCalibration.receivedProbes, 17);
+    assert.equal(error.clockCalibration.validTimestampProbes, 16);
+    return true;
+  });
+  assert.equal(malformed.calls(), 17);
+});
+
+test('#952 exact precision boundary passes, above it and historical CI input stay red', () => {
+  const atLimit = probes().map(p => ({ ...p, nodeBefore: 0, nodeAfter: .8, browserNow: 500.4 }));
+  assert.equal(nodeInputClockCalibration(atLimit).uncertaintyMs, 1);
+  assert.throws(() => nodeInputClockCalibration(atLimit.map(p => ({ ...p, nodeAfter: .800001 }))), /at most 1ms/);
+  // Exact raw data: run39057481605/attempt1, artifact12110956411,
+  // SHA d4cbd165027aeb617f2996eb8a08fef6b71525f4, smoke_wall_node_connected.log.
+  const historical = [
+    { nodeBefore: 6392.948965, browserNow: 5560.900000000023, nodeAfter: 6395.538679 },
+    { nodeBefore: 6395.544951, browserNow: 5562.900000000023, nodeAfter: 6397.260931 },
+    { nodeBefore: 6397.265289, browserNow: 5564.400000000023, nodeAfter: 6398.720504 },
+    { nodeBefore: 6398.725424, browserNow: 5566.099999999977, nodeAfter: 6400.520571 },
+    { nodeBefore: 6400.525630, browserNow: 5567.599999999977, nodeAfter: 6401.825889 },
+    { nodeBefore: 6401.829316, browserNow: 5568.900000000023, nodeAfter: 6402.969947 },
+    { nodeBefore: 6402.973273, browserNow: 5569.900000000023, nodeAfter: 6404.098833 },
+    { nodeBefore: 6404.102429, browserNow: 5571.099999999977, nodeAfter: 6405.154144 },
+  ];
+  assert.equal(historical.length, 8);
+  // Repetition supplies 32 negative inputs, NOT additional historical measurements.
+  const repeated = Array.from({ length: 4 }, () => historical).flat();
+  assert.throws(() => nodeInputClockCalibration(repeated), /at most 1ms \(1\.251715/);
+  assert.throws(() => nodeInputClockCalibration(historical), /exactly 32/);
 });
 
 test('#834 after-gesture clock check requires overlapping feasible brackets, not a refitted source clock', () => {

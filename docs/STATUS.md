@@ -25,6 +25,11 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Connected-node clock sampling (#952) uses 32 fixed independent probes instead
+of eight, always completing the series without precision retries. The 1 ms
+accuracy guard, conservative source clocks and performance budgets stay strict;
+unavailable calibration preserves a FAIL with raw/gesture/phase diagnostics.
+
 Kiosk smoke readiness (#949) separates the native CSS height timeline from
 Playwright's JS clock before the scenario begins. The bounded setup-only
 barrier does not wait for fit success or alter product timing/resize behavior;

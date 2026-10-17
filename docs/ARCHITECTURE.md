@@ -1276,6 +1276,12 @@ surfaces on a different accepted id. `view-action-context.ts` resolves exact
 current marker/floor and canonical opening/lock identities before service calls;
 stale confirmation never becomes permission to act on another floor.
 
+The connected-node harness clock (#952) uses one complete fixed series of 32
+independent CDP RTT probes before/after each gesture. It still requires the
+tightest conservative bound within 1 ms, all intervals consistent and before/
+after overlap; source clocks never refit. Unavailable clocks remain a distinct
+calibration failure with raw/phase evidence, not a product-performance verdict.
+
 The kiosk smoke's setup barrier (#949) lives only in the demo harness. It waits
 for native stage height transitions and accepted ResizeObserver/Lit geometry
 before freezing page time: JS fake-clock jumps do not advance the CSS timeline.

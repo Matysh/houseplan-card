@@ -12,23 +12,32 @@ accounting. Historical reports retain their own recorded thresholds.
 
 ## Clock contract
 
-Before mouse-down, exactly eight independent RTT probes record Node
+Before mouse-down, exactly 32 independent RTT probes record Node
 `performance.now()` immediately before and after reading browser
 `performance.now()` directly through `Runtime.evaluate` on the same page CDP
 session used for native input (no additional Playwright evaluation wrapper).
 Each yields an offset interval
 `[browser - nodeAfter - 0.1, browser - nodeBefore + 0.1]` ms. Chromium's coarse
 clock can round in either direction, so the 0.1 ms padding is conservative.
-All eight intervals must intersect. The narrowest measured interval must have
+All 32 intervals must intersect. The narrowest measured interval must have
 uncertainty at most 1 ms; its **lower** offset is fixed for the whole gesture.
-There is no retry-until-calibration-passes loop.
+The entire fixed series always runs, even if its first probe is precise. There
+is no early success, adaptive extension or retry-until-calibration-passes loop.
+The larger fixed sample window (#952) replaces the former eight probes; it
+does not make the original imprecise CI samples valid or relax the 1 ms bound.
 
 Every source clock is `nodeSendTime + lowerOffset`, frozen before dispatch.
 Using the lower offset can increase the reported latency, never improve it.
-Eight further independent probes after the measurement must share a feasible
+32 further independent probes after the measurement must share a feasible
 offset with the before-probe intersection. This check never refits or rewrites
 the already frozen source clocks. Raw before/after probes and the chosen pair
 remain in the report, including calibration failures.
+An unavailable calibration remains FAIL with `clock-calibration` stage, gesture
+and before/after phase, received/valid/required counts, best observed uncertainty
+and all available raw probes. Transport/invalid replies retain partial evidence;
+no partial gesture becomes performance acceptance. This does not diagnose why
+the host/transport was slow, and historical eight-probe reports have a different
+protocol identity rather than being pooled with current 32-probe reports.
 
 Native CDP events deliberately omit `timestamp`: their receipt timestamps use
 Chromium's monotonic clock. The old `Date.now() - performance.timeOrigin` bridge
