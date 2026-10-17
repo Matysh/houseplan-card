@@ -14,6 +14,10 @@ software versions and an idempotency key. The diagnostic JSON is optional and
 off by default. If selected, the integration sends the exact canonical bytes
 shown in the preview together with their size and SHA-256.
 
+The selected package version is bound to that consent. An integration update
+while the dialog is open cannot expand a v1 attachment to v2 on Refresh;
+disable and enable the checkbox again to agree to the extended contents.
+
 The package is constructed field by field. It contains plan geometry and
 dimensions, safe display settings (the fill palette only by the eleven slot
 names the card defines; any other key is dropped), structural counts,

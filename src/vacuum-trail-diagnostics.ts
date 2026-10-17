@@ -39,7 +39,6 @@ function initialDiagnostic(
   host: Host, device: DevItem, selected: ReturnType<Host['_vacRuntimeSource']>,
 ): VacuumTrailDiagnostic {
   const run = host._vacSrvTrails[device.id]?.current;
-  const selected = host._vacRuntimeSource(device);
   const chosen = selectVacuumTrail(selected.telemetry, run ?? null, host._vacRt.get(device.id)?.material ?? [], host._vacTrailFormat);
   const raw = run?.quality?.raw_points ?? chosen.path.reduce((n, p) => n + p.length, 0);
   const stored = run?.quality?.stored_points ?? chosen.path.reduce((n, p) => n + p.length, 0);

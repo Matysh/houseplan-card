@@ -154,6 +154,14 @@ const MUTANT_DEFINITIONS = [
       replace: '    devices: readonly DevItem[] = this._devices,' }],
   },
   {
+    id: 'support-v2-refresh-expands-consent',
+    guard: 'node demo/smoke_support_diagnostics.mjs',
+    because: '#942 AC5/AC8: an ordinary config event can advertise package2 while Help still holds package1 consent. Refresh must stay1 until the user explicitly checks attachment again.',
+    patches: [{ file: 'src/houseplan-editor-runtime.ts',
+      find: '      const requestedVersion = supportConsentVersion(current.packageVersion, this.host._haSupportPackageVersions);',
+      replace: '      const requestedVersion = supportPackageVersion(this.host._haSupportPackageVersions);' }],
+  },
+  {
     id: 'support-v2-publish-skips-read-acl',
     guard: 'node scripts/backend-test-guard.mjs test_read_revoked_during_executor_prevents_preview_publication tests_backend/test_ha_support_v2.py',
     because: '#942 AC8: entity read permission can be revoked while the physical executor builds; may_write alone must not publish a preview.',

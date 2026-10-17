@@ -13,6 +13,11 @@ export function supportPackageVersion(versions: unknown): 1 | 2 {
   return Array.isArray(versions) && versions.includes(2) ? 2 : 1;
 }
 
+/** A capability update must not broaden already-granted attachment consent. */
+export function supportConsentVersion(consented: 1 | 2 | null, versions: unknown): 1 | 2 {
+  return consented ?? supportPackageVersion(versions);
+}
+
 export const SUPPORT_COVERAGE_CATEGORIES = ['config', 'devices', 'vacuums', 'environment'] as const;
 export const SUPPORT_COVERAGE_STATUSES = ['complete', 'partial', 'unavailable', 'not_applicable', 'unsupported_version'] as const;
 export const SUPPORT_COVERAGE_REASONS = ['runtime_not_loaded', 'revision_mismatch', 'missing_client', 'access_denied',
@@ -98,6 +103,7 @@ export interface SupportDialogState {
   contact: string;
   message: string;
   attach: boolean;
+  packageVersion: 1 | 2 | null;
   status: SupportDialogStatus;
   preview: SupportPreview | null;
   rawOpen: boolean;
@@ -150,6 +156,7 @@ export function newSupportDialogState(): SupportDialogState {
     contact: '',
     message: '',
     attach: false,
+    packageVersion: null,
     status: 'idle',
     preview: null,
     rawOpen: false,

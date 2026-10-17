@@ -2709,6 +2709,8 @@ include exact room/wall/opening geometry and home dimensions. Four coverage
 categories explain what was collected and what is incomplete; one snapshot
 cannot diagnose every transient problem. With an older integration, the form
 explicitly labels package v1 as limited diagnostics. Use
+the attachment checkbox again after an integration update in an already-open
+dialog to agree to v2; Refresh alone never expands existing consent. Use
 **Show data** to inspect the exact bytes and **Download JSON** to keep them.
 The preview expires after ten minutes; refresh it before sending if required.
 

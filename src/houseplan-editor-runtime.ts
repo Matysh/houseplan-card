@@ -252,6 +252,7 @@ import {
   newSupportDialogState,
   supportApiCompatible,
   supportPackageVersion,
+  supportConsentVersion,
   parseSupportPreview,
   supportResponseToken,
   supportCanSubmit,
@@ -8513,7 +8514,7 @@ private async _buildSupportPreview(draftId: string): Promise<void> {
     this._supportPatch(draftId, { status: 'building', errorCode: '' });
     let issuedToken = '';
     try {
-      const requestedVersion = supportPackageVersion(this.host._haSupportPackageVersions);
+      const requestedVersion = supportConsentVersion(current.packageVersion, this.host._haSupportPackageVersions);
       const diagnostics = requestedVersion === 2
         ? (await import('./support-diagnostics')).collectSupportDiagnostics(this.host) : null;
       if (!this._supportPreviewRequestIsCurrent(draftId, generation)) return;
@@ -8572,6 +8573,7 @@ public async _setSupportAttachment(attach: boolean): Promise<void> {
       this._supportExpiryTimer = undefined;
       this._supportPatch(current.draftId, {
         attach: false,
+        packageVersion: null,
         status: 'idle',
         preview: null,
         rawOpen: false,
@@ -8580,7 +8582,8 @@ public async _setSupportAttachment(attach: boolean): Promise<void> {
       if (token) void this._discardSupportPreview(token);
       return;
     }
-    this._supportPatch(current.draftId, { attach: true, errorCode: '' });
+    this._supportPatch(current.draftId, { attach: true, errorCode: '',
+      packageVersion: supportPackageVersion(this.host._haSupportPackageVersions) });
     await this._buildSupportPreview(current.draftId);
   }
 
@@ -8691,7 +8694,7 @@ public _renderSupportDialog(): TemplateResult {
       ? 'https://github.com/Matysh/houseplan-card/blob/main/docs/USER-GUIDE.ru.md'
       : 'https://github.com/Matysh/houseplan-card/blob/main/docs/USER-GUIDE.md';
     const compatible = supportApiCompatible(this.host._haSupportApi);
-    const packageVersion = state.preview?.version ?? supportPackageVersion(this.host._haSupportPackageVersions);
+    const packageVersion = supportConsentVersion(state.packageVersion, this.host._haSupportPackageVersions);
     const st = (key: SupportI18nKey, vars?: Record<string, string | number>): string =>
       supportT(lang, key, vars);
     const busy = state.status === 'building' || state.status === 'sending';

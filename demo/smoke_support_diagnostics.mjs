@@ -23,21 +23,22 @@ const mount = async versions => page.evaluate(async versions => {
   const old = document.querySelector('houseplan-card');
   const hass = old.hass, original = hass.callWS.bind(hass);
   const parent = old.parentElement, cfg = { ...old._config, language: 'en' };
-  const config = await original({ type: 'houseplan/config/get' });
-  const layout = await original({ type: 'houseplan/layout/get' });
   old.remove();
   const card = document.createElement('houseplan-card');
+  window.__supportVersions = versions;
   window.__supportCalls = []; window.__supportSent = []; window.__supportFail = false;
   card.setConfig(cfg);
   card.hass = { ...hass, callWS: async message => {
     if (message.type === 'houseplan/config/get') return { ...await original(message),
-      support_api: 1, support_package_versions: versions };
+      support_api: 1, support_package_versions: window.__supportVersions };
     if (!message.type.startsWith('houseplan/support/')) return original(message);
     window.__supportCalls.push(structuredClone(message));
     if (message.type === 'houseplan/support/preview') {
       if (window.__supportFail) throw { code: 'support_unavailable' };
-      return window.buildSupportV2Fixture({ request: message, config: config.config, layout: layout.layout,
-        config_rev: config.rev, layout_rev: layout.rev });
+      const pair = await original({ type: 'houseplan/config/get' });
+      const positions = await original({ type: 'houseplan/layout/get' });
+      return window.buildSupportV2Fixture({ request: message, config: pair.config, layout: positions.layout,
+        config_rev: pair.rev, layout_rev: positions.rev });
     }
     if (message.type === 'houseplan/support/submit') {
       window.__supportSent.push(message); return { report_id: 'hpr-942-smoke' };
@@ -122,6 +123,22 @@ Object.assign(results, await page.evaluate(async () => {
   const request = window.__supportCalls[0];
   const legacyRequest = !('package_version' in request) && !('diagnostics' in request);
   const warning = root.textContent.includes('Limited diagnostics');
+  const pair = await card.hass.callWS({ type: 'houseplan/config/get' });
+  window.__supportVersions = [1, 2];
+  window.__pushServerConfig(pair.config);
+  for (let i = 0; i < 200 && !card._haSupportPackageVersions.includes(2); i++) await new Promise(r => setTimeout(r, 20));
+  if (!card._haSupportPackageVersions.includes(2)) throw new Error('public config event did not adopt upgraded capability');
+  [...root.querySelectorAll('.supportpreview button')].find(button => button.textContent.trim() === 'Refresh snapshot').click();
+  for (let i = 0; i < 500 && card._supportDialog?.status === 'building'; i++) await new Promise(r => setTimeout(r, 20));
+  await card.updateComplete;
+  const refreshed = window.__supportCalls.filter(call => call.type === 'houseplan/support/preview').at(-1);
+  const pinnedConsent = card._supportDialog?.preview?.version === 1 && !('package_version' in refreshed);
+  root.querySelector('.supportattach input').click();
+  await card.updateComplete;
+  root.querySelector('.supportattach input').click();
+  for (let i = 0; i < 500 && card._supportDialog?.status === 'building'; i++) await new Promise(r => setTimeout(r, 20));
+  await card.updateComplete;
+  const newConsent = card._supportDialog?.preview?.version === 2;
   root.querySelector('.supportattach input').click();
   await card.updateComplete;
   window.__supportFail = true;
@@ -129,6 +146,7 @@ Object.assign(results, await page.evaluate(async () => {
   for (let i = 0; i < 100 && card._supportDialog?.status === 'building'; i++) await new Promise(r => setTimeout(r, 20));
   await card.updateComplete;
   return { oldBackendLimited: legacyRequest && warning,
+    refreshCannotExpandConsent: pinnedConsent && newConsent,
     failedBuildCannotSendAttachment: card._supportDialog?.status === 'error' && !card._supportDialog.preview };
 }));
 checkAll(results);

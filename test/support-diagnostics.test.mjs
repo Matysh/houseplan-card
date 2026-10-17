@@ -1,10 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { supportPathSample, supportValueShape, vacuumSupportReasons } from '../test-build/support-diagnostics.js';
-import { parseSupportCoverage, parseSupportPreview, supportResponseToken, supportPackageVersion, SUPPORT_COVERAGE_CATEGORIES } from '../test-build/support-feedback.js';
+import { parseSupportCoverage, parseSupportPreview, supportResponseToken, supportConsentVersion, supportPackageVersion, SUPPORT_COVERAGE_CATEGORIES } from '../test-build/support-feedback.js';
 
 test('#942 exact version negotiation and closed coverage reject future/malformed data', () => {
   assert.equal(supportPackageVersion([1, 2]), 2);
+  assert.equal(supportConsentVersion(1, [1, 2]), 1, 'an upgrade cannot expand consent on Refresh');
+  assert.equal(supportConsentVersion(2, [1]), 2, 'a downgrade must fail explicitly, not silently replace package2');
+  assert.equal(supportConsentVersion(null, [1, 2]), 2, 'new consent follows the explicit advertisement');
   for (const legacy of [undefined, null, [1], ['2'], true]) assert.equal(supportPackageVersion(legacy), 1);
   const rows = SUPPORT_COVERAGE_CATEGORIES.map(category => ({ category, status: 'partial', reasons: ['missing_client'], observed: 0, total: 1 }));
   assert.deepEqual(parseSupportCoverage(rows), rows);
