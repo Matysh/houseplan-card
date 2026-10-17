@@ -2625,6 +2625,12 @@ trailer (#903). `task-delivery.mjs` checks the publisher identity/subject, exact
 one new SPEC document for the issue plus optional INDEX, and its own machine
 body/tree/verdict anchors against Git objects. Historical publisher commits
 without the trailer receive the same checks; other C-only commits do not.
+The heading accepts `# SPEC-REVIEW-NN-rN` and the publisher's existing
+`# SPEC-REVIEW — issue #NN, заход rN` form (#950). Both must name the exact
+issue and round of the sole added SPEC file; this is not a title-only exception
+to provenance. The original #928 publication is read unchanged. To exercise the
+compatibility and negative inputs, run `node --test test/task-delivery-903.test.mjs
+test/release-ledger.test.mjs test/review-preflight.test.mjs`.
 The immutable trace remains in catalogue `specDeliveries`, outside implemented
 entries, prerelease membership, closure evidence and user milestone selection.
 Unknown/malformed phase or an unsuitable diff fails closed. The producer and

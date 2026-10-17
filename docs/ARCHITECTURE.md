@@ -87,6 +87,8 @@ Release delivery phases (#903) share `scripts/task-delivery.mjs` between the
 SPEC publisher, release catalogue and membership create/verify. Versioned
 spec-review trailers require the exact publisher/delta and the document's own
 machine material anchors; old publisher commits receive equivalent checks.
+Both published heading forms bind their issue/round to the added SPEC filename
+(#950); neither title alone nor a historical filename confers delivery status.
 Spec trace remains separate from implemented entries. The schema-1 authored
 classification must be renewed when an earlier doc-only blob meets its first
 A/B delivery; the same immutable history check guards merge and catalogue.

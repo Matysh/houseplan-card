@@ -52,6 +52,9 @@ export function taskDelivery(commit) {
   const trailers = terminalTrailers(commit.message);
   const issue = issues[0];
   const docs = (commit.files || []).filter(f => new RegExp(`^docs/reviews/SPEC-REVIEW-${issue}-r[1-9]\\d*\\.md$`).test(f));
+  const round = /-r([1-9]\d*)\.md$/.exec(docs[0] || '')?.[1];
+  // #950: the publisher has emitted both headings; neither may name another round.
+  const heading = new RegExp(`^# (?:SPEC-REVIEW-${issue}-r${round}|SPEC-REVIEW — issue #${issue}, заход r${round})\\s*$`, 'm');
   const findings = provenSpecFindings(commit, docs[0], issue);
   // CODE-REVIEW publication is ordinary evidence attached to implementation.
   if (!phases.length && !docs.length && (commit.files || []).some(f => /\/CODE-REVIEW-/.test(f))) return 'implementation';
@@ -62,7 +65,7 @@ export function taskDelivery(commit) {
     || commit.author !== PUBLISHER || visible.length !== 1 || visible[0] !== 'no'
     || docs.length !== 1 || !commit.files.length
     || commit.files.some(f => f !== docs[0] && f !== 'docs/reviews/INDEX.md' && f !== findings)
-    || !new RegExp(`^# SPEC-REVIEW-${issue}-r[1-9]\\d*\\s*$`, 'm').test(commit.specDocument || '')
+    || !heading.test(commit.specDocument || '')
     || !anchorIssueBodyFrom(commit.specDocument) || !anchorTreeFrom(commit.specDocument)
     || !anchorVerdictFrom(commit.specDocument) || commit.specTreeType !== 'tree'
     || commit.specStatus !== 'A')

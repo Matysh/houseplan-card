@@ -25,6 +25,10 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+SPEC heading compatibility (#950) accepts the publisher's canonical and
+issue/round headings only for the exact added SPEC file. Publisher, delta and
+machine material proof stay strict; historical documents remain unchanged.
+
 Vacuum route recovery (#918) ties recording, the live robot and its path to
 one exact available source/map pair. Reopening the card restores server
 history; previously unassigned points are retained without adopting them into

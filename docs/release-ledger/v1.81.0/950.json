@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 950,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Restore delivery-ledger compatibility with a heading already emitted by the trusted SPEC publisher. Exact issue/round, publisher, added-file delta and machine material anchors remain required; no product behavior or user-facing feature changes relative to stable 1.81.0."
+}
