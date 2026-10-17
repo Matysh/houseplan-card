@@ -140,6 +140,34 @@ def test_issue_867_signal_override_survives_export_parse_and_import(tmp_path: Pa
     assert any(marker.get("hide_signal") is value and marker.get("hide_battery") is True for marker in imported["markers"])
 
 
+@pytest.mark.parametrize("kind", ["full", "space"])
+@pytest.mark.parametrize("visible", [True, False])
+def test_issue_920_co2_settings_survive_full_and_space_backup(tmp_path: Path, kind: str, visible: bool) -> None:
+    config = _config()
+    config["spaces"][0].setdefault("settings", {})["label_co2"] = visible
+    config["spaces"][0]["rooms"][0].setdefault("settings", {}).update({
+        "co2_source": "entity:sensor.room_co2", "future_co2": {"keep": True},
+    })
+    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+        {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
+        card_version="review", config_root=tmp_path)
+    parsed = parse_document(json.dumps(document).encode())
+    exported = parsed["payload"]["config"]["spaces"][0]
+    assert exported["settings"]["label_co2"] is visible
+    assert exported["rooms"][0]["settings"]["co2_source"] == "entity:sensor.room_co2"
+    runtime = SimpleNamespace(instance_id="same", import_previews={})
+    current = _config()
+    current["markers"] = []
+    preview = create_preview(runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": current, "rev": 4}, current_layout_data={"layout": {}, "rev": 5}, config_root=tmp_path)
+    candidate = get_candidate(runtime, preview["token"], "alice")
+    imported, _layout, _details = prepare_apply(candidate, current, {}, confirm_missing_content=True)
+    matching = [space for space in imported["spaces"] if space.get("settings", {}).get("label_co2") is visible
+        and any(room.get("settings", {}).get("co2_source") == "entity:sensor.room_co2" for room in space["rooms"])]
+    assert matching
+    assert matching[0]["rooms"][0]["settings"]["future_co2"] == {"keep": True}
+
+
 def _missing_decor_export(
     source: Path, *, kind: str = "full", plan_only: bool = False,
     asset_id: str = "a" * 64,
@@ -1074,6 +1102,8 @@ def _plan_only_source() -> tuple[dict[str, Any], dict[str, Any]]:
 
 def test_plan_only_export_projects_geometry_and_round_trips_room_labels(tmp_path: Path) -> None:
     config, layout = _plan_only_source()
+    config['spaces'][0]['settings']['label_co2'] = True
+    config['spaces'][0]['rooms'][0]['settings']['co2_source'] = 'entity:sensor.room_co2'
     runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
     document, _ = create_export(
         runtime, {"config": config}, {"layout": layout}, kind="space",
@@ -1096,6 +1126,7 @@ def test_plan_only_export_projects_geometry_and_round_trips_room_labels(tmp_path
     assert "future_space" not in exported
     assert exported["settings"] == {
         "show_names": True, "north_deg": 90, "sun_rays": True, "bg_mode": "static",
+        "label_co2": True,
     }
     room = exported["rooms"][0]
     assert "area" not in room and "future_room" not in room

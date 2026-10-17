@@ -28,6 +28,23 @@ const plain = (snapshot) => ({
   geometry: snapshot.geometry,
 });
 
+test('#920 an explicit CO2 source outside every room remains in the immutable live snapshot', () => {
+  const fixture = oracleFixture();
+  const id = 'sensor.external_co2';
+  fixture.entities[id] = { entity_id: id, area_id: null, device_id: null, platform: 'houseplan_perf', disabled_by: null };
+  fixture.states[id] = { entity_id: id, state: '850', attributes: { device_class: 'carbon_dioxide', unit_of_measurement: 'ppm' } };
+  fixture.config.spaces[0].rooms[0].settings = { co2_source: `entity:${id}` };
+  const host = captureHost(fixture), reuse = new RenderSnapshotReuseWindow();
+  const first = captureRenderDeviceSnapshot(host, reuse);
+  assert.equal(first.hass.states[id].state, '850');
+  host.hass = { ...host.hass, states: { ...host.hass.states, [id]: { ...host.hass.states[id], state: '1375' } } };
+  host._hassSequence++;
+  const next = captureRenderDeviceSnapshot(host, reuse);
+  assert.equal(next.hass.states[id].state, '1375');
+  assert.equal(first.hass.states[id].state, '850');
+  assert.deepEqual(plain(next), plain(captureRenderDeviceSnapshot(host, null)));
+});
+
 test('#919 local reveal invalidates reuse, preserves raw intent and follows live updates like a complete capture', () => {
   const fixture = oracleFixture();
   const id = 'perf-device-0';

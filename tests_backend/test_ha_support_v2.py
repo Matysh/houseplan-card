@@ -656,3 +656,29 @@ async def test_effective_route_source_requires_read_permission_even_without_cand
         "an implicit effective source cannot bypass read ACL"
     )
     assert "access_denied" in snapshot["reasons"]
+
+
+async def test_issue_920_explicit_co2_outside_area_is_collected_but_read_acl_wins(
+    hass, hass_ws_client, monkeypatch
+):
+    from custom_components.houseplan.support_snapshot import capture_snapshot
+
+    await _setup(hass, options={CONF_ADMIN_ONLY: False})
+    await _access_token_for_group(hass, GROUP_ID_USER)
+    user = next(user for user in await hass.auth.async_get_users()
+                if user.name == f"House Plan {GROUP_ID_USER}")
+    entity = "sensor.external_co2"
+    hass.states.async_set(entity, "850", {
+        "device_class": "carbon_dioxide", "unit_of_measurement": "ppm",
+    })
+    cfg = {"settings": {}, "markers": [], "spaces": [{"rooms": [{
+        "settings": {"co2_source": f"entity:{entity}"},
+    }]}]}
+    _, scope = capture_snapshot(hass, user, cfg, observations())
+    assert entity in scope
+    original = type(user.permissions).check_entity
+    monkeypatch.setattr(type(user.permissions), "check_entity", lambda self, eid, policy:
+                        False if eid == entity else original(self, eid, policy))
+    snapshot, scope = capture_snapshot(hass, user, cfg, observations())
+    assert entity not in scope
+    assert "access_denied" in snapshot["reasons"]

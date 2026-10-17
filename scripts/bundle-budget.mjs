@@ -747,7 +747,11 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // #930: matched clean dev d36364b2 is 269876 B; catalog/virtual UI adds 953 B
 // after Delete is split out. Move only this task's cost into the rolling
 // reference, preserving the inherited 1344-B gap and every absolute/band limit.
-export const LAZY_EDITOR_GZIP_CEILING = 269_485;
+// #920: owner permits a modest increase (issuecomment-6241350905).
+// Matched source builds b8964e5f7 -> room CO2 add 926 B gzip to this graph.
+// Only that measured cost enters the reference; bands, absolute budgets and
+// other ceilings are unchanged. Room preview/copy remain in the lazy graph.
+export const LAZY_EDITOR_GZIP_CEILING = 270_411;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

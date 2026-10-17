@@ -37,6 +37,8 @@ export async function saveRoomEdit(runtime: HouseplanEditorRuntime): Promise<voi
   else delete next.temp_source;
   if (host._roomHumSrc) next.hum_source = host._roomHumSrc;
   else delete next.hum_source;
+  if (host._roomCo2Src) next.co2_source = host._roomCo2Src;
+  else delete next.co2_source;
   if (host._roomNameScale !== 1) next.name_scale = host._roomNameScale;
   else delete next.name_scale;
   if (host._roomLabelScale !== 1) next.label_scale = host._roomLabelScale;

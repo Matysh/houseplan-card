@@ -18,6 +18,8 @@
  */
 import { html, nothing, type TemplateResult } from 'lit';
 
+import { ROOM_CO2_PREVIEW } from '../room-co2';
+import { roomCardPreview } from './room-card-preview';
 import {
   callout, choiceCards, colorField, colorRow, compass, divider, ensureFormKitStyles, field,
   fieldGrid, footerStatus, formCard, radioRow, rangeEnds, rangeLine, segmented, subsection,
@@ -438,6 +440,7 @@ function renderRoomCards(port: SpaceFormPort, d: SpaceDialogState, id: (n: strin
   const tiles = ([
     ['labelTemp', 'space.label_temp', 'mdi:thermometer', undefined],
     ['labelHum', 'space.label_hum', 'mdi:water-outline', undefined],
+    ['labelCo2', 'space.label_co2', 'mdi:molecule-co2', undefined],
     ['labelLqi', 'space.label_lqi_short', 'mdi:zigbee', 'space.label_lqi'],
     ['labelLight', 'space.label_light', 'mdi:lightbulb-outline', undefined],
   ] as const).map(([key, label, icon, full]) => ({
@@ -480,7 +483,7 @@ function renderRoomCards(port: SpaceFormPort, d: SpaceDialogState, id: (n: strin
         ${rangeEnds('50%', '300%')}
         <p class="hpf-hint">${st('space.card_font_hint')}</p>
       </div>
-      <div class="hpf-tint hpf-preview">${host._renderCardPreview(d.cardFontScale, 1, 1)}</div>`,
+      <div class="hpf-tint hpf-preview">${roomCardPreview(t, st('preview.room_name'), d.cardFontScale, 1, 1, d.labelCo2 ? ROOM_CO2_PREVIEW : undefined)}</div>`,
   });
 }
 

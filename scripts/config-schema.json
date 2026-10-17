@@ -1226,6 +1226,11 @@
       "nullable": true,
       "required": false
     },
+    "config.spaces[].rooms[].settings.co2_source": {
+      "nullable": true,
+      "required": false,
+      "type": "str"
+    },
     "config.spaces[].rooms[].settings.custom_fill": {
       "nullable": true,
       "required": false
@@ -1374,6 +1379,10 @@
       "type": "bool"
     },
     "config.spaces[].settings.hide_openings": {
+      "required": false,
+      "type": "bool"
+    },
+    "config.spaces[].settings.label_co2": {
       "required": false,
       "type": "bool"
     },

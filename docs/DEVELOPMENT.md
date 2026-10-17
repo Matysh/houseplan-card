@@ -1,5 +1,35 @@
 # Development and deployment
 
+## Room CO₂ (#920)
+
+Compile the usual test-build and run `node --test test/room-co2.test.mjs
+test/devices.test.mjs test/render-snapshot-incremental.test.mjs`; after
+`npm run bundle:sync`, run `node demo/smoke_room_co2.mjs`, plus the room-climate,
+tooltip and isometric-label smokes named in the issue. The new native-input
+witness covers default/off, source selection outside every HA Area, unsaved
+preview, cancel/save/reopen, refused write and retry, unavailable/real-zero
+states, stationary hover updates, kiosk and static-card non-expansion.
+Screenshots are generated under `artifacts/room-co2`. The golden matrix adds
+`room-co2-flat-light` and `room-co2-iso-dark`; accept only those new scenes and
+the intentionally changed room/space source forms after full attested capture.
+Backend validation, full/space backup round-trip, diagnostic pseudonyms and
+HA read-ACL capture have named tests in the corresponding backend suites.
+CO₂ mutations are readiness-only during development, execution is nightly.
+No subscriptions, timers or geometry migration are introduced. The editor
+previews a newly selected unsaved source against the active registry; the
+painted plan keeps its immutable accepted snapshot.
+
+To bound the feature cost, preview rendering and room-only source
+copy/help stay in the lazy settings graph. `space-dialog-draft.ts` projects
+the same saved/default fields for editor and onboarding/import; queued imports
+retain their intentional `customFill: null` distinction. Unit vectors and the
+existing create/default/copy/room/space form smokes cover this shared projection.
+The owner allowed modest increases in issuecomment-6241350905. Matched builds
+of b8964e5f7/current source measure initial View 324822→324687 B gzip,
+lazy editor 270966→271892 B gzip and total dist 3026587→3026930 B. Only the
+editor rolling reference increases by its measured 926 B (269485→270411);
+absolute budgets, both 2000-B bands, all other ceilings and monolith limits stay.
+
 ## Contact outlines during zoom (#951)
 
 After `npm run bundle:sync`, run `node demo/smoke_device_contact_zoom.mjs` and

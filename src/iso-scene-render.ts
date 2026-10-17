@@ -200,6 +200,8 @@ export const ISO_RAISED_FOOTPRINT = Object.freeze({
   roomMetricTextCharacters: Object.freeze({
     temperature: 10,
     humidity: 8,
+    // Longest finite JS number (23 characters) plus the explicit " ppm".
+    co2: 27,
     lqi: 6,
     light: 24,
   }),
@@ -211,7 +213,7 @@ type IsoRaisedFootprintInput =
       kind: 'room-label';
       font: number;
       room: RoomCfg;
-      display: Pick<SpaceDisplay, 'labelTemp' | 'labelHum' | 'labelLqi' | 'labelLight'>;
+      display: Pick<SpaceDisplay, 'labelTemp' | 'labelHum' | 'labelCo2' | 'labelLqi' | 'labelLight'>;
     }
   | { kind: 'opening-lock'; size: number };
 
@@ -254,6 +256,7 @@ export function isoRaisedOverlayHalfSize(input: IsoRaisedFootprintInput): PlanPo
     const metricSlots = [
       input.display.labelTemp ? ISO_RAISED_FOOTPRINT.roomMetricTextCharacters.temperature : 0,
       input.display.labelHum ? ISO_RAISED_FOOTPRINT.roomMetricTextCharacters.humidity : 0,
+      input.display.labelCo2 ? ISO_RAISED_FOOTPRINT.roomMetricTextCharacters.co2 : 0,
       input.display.labelLqi && input.room.area
         ? ISO_RAISED_FOOTPRINT.roomMetricTextCharacters.lqi : 0,
       input.display.labelLight ? ISO_RAISED_FOOTPRINT.roomMetricTextCharacters.light : 0,

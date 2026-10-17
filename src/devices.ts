@@ -4,6 +4,7 @@
  */
 import { iconFor, iconFromDeviceClasses, DOMAIN_PRIORITY, FALLBACK_ICON, type CompiledIconRule, EXCLUDED_DOMAINS } from './rules';
 import { averageLqi, isControllable } from './logic';
+import { co2DeviceValue, co2For, co2Value } from './room-co2';
 import { createDeviceSignalContext, deviceLqi, deviceSignalPhysicalId, type DeviceSignalDevice, type DeviceSignalHass } from './device-signal';
 export { lqiFor } from './device-signal';
 import {
@@ -1398,7 +1399,7 @@ export function areaLights(hass: any, devices: readonly LightSourceDevice[], are
  * humFor). Used by the room-settings override (tier 3).
  */
 export function sourceValue(
-  hass: any, src: string | null | undefined, kind: 'temp' | 'hum',
+  hass: any, src: string | null | undefined, kind: 'temp' | 'hum' | 'co2', // any-ok: existing HA registry boundary; CO₂ reads through typed RoomCo2Hass
   markers?: readonly Marker[] | null,
 ): number | null {
   if (!src) return null;
@@ -1409,11 +1410,16 @@ export function sourceValue(
   const ref = src.slice(i + 1);
   if (!ref) return null;
   if (k === 'entity') {
+    if (kind === 'co2') {
+      const value = co2Value(hass, ref);
+      return value === null ? null : Math.round(value);
+    }
     const v = parseFloat(hass.states[ref]?.state);
     if (!Number.isFinite(v)) return null;
     return kind === 'temp' ? Math.round(v * 10) / 10 : Math.round(v);
   }
   if (k === 'device') {
+    if (kind === 'co2') return co2DeviceValue(hass, ref);
     const entIds = Object.entries(hass.entities as Record<string, any>)
       .filter(([, r]) => (r as any).device_id === ref)
       .map(([eid]) => eid);
@@ -1465,7 +1471,7 @@ const NON_AIR_RE = new RegExp(
  * The AUTO icon is used on purpose — a custom marker icon must not change what
  * a device measures.
  */
-export interface AreaClimate { temp: number | null; hum: number | null }
+export interface AreaClimate { temp: number | null; hum: number | null; co2: number | null }
 
 /**
  * Stable lookup key for one room's automatic climate aggregate.
@@ -1594,6 +1600,7 @@ export function roomClimateMap(
   for (const [target, groups] of byTarget) {
     const temps: number[] = [];
     const hums: number[] = [];
+    const co2s: number[] = [];
     for (const [key, g] of groups) {
       const icon = resolveIcon(hass, g.name, g.model, g.ents, rules);
       const air = icon === 'mdi:thermometer' || icon === 'mdi:air-filter';
@@ -1610,11 +1617,14 @@ export function roomClimateMap(
         const h = humFor(hass, g.ents);
         if (h != null) hums.push(h);
       }
+      const co2 = co2For(hass, g.ents);
+      if (co2 !== null) co2s.push(co2);
     }
-    if (!temps.length && !hums.length) continue;
+    if (!temps.length && !hums.length && !co2s.length) continue;
     out.set(target, {
       temp: temps.length ? Math.round((temps.reduce((a, b) => a + b, 0) / temps.length) * 10) / 10 : null,
       hum: hums.length ? Math.round(hums.reduce((a, b) => a + b, 0) / hums.length) : null,
+      co2: co2s.length ? Math.round(co2s.reduce((mean, value) => mean + value / co2s.length, 0)) : null,
     });
   }
   return out;

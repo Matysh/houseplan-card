@@ -68,7 +68,7 @@ const out = await page.evaluate(async () => {
     return Math.abs((inputBox.top + inputBox.bottom - titleBox.top - titleBox.bottom) / 2) <= 1;
   });
   o.segmentsAreRadiogroups = qa('.hpf-seg').length === 3 && qa('.hpf-seg').every((s) => s.getAttribute('role') === 'radiogroup' && s.getAttribute('aria-label'));
-  o.tilesAreAGroupOfCheckboxes = q('.hpf-tiles')?.getAttribute('role') === 'group' && qa('.hpf-tiles input[type="checkbox"]').length === 4;
+  o.tilesAreAGroupOfCheckboxes = q('.hpf-tiles')?.getAttribute('role') === 'group' && qa('.hpf-tiles input[type="checkbox"]').length === 5;
   o.segmentLabelsAre38 = qa('.hpf-seg label').every((l) => l.getBoundingClientRect().height >= 38);
 
   // --- К10: Save только при изменениях -------------------------------------

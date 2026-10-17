@@ -50,6 +50,7 @@ export interface SpaceDialogState {
   cardFontScale: number;
   labelTemp: boolean;
   labelHum: boolean;
+  labelCo2: boolean;
   labelLqi: boolean;
   labelLight: boolean;
   cellCm: number;

@@ -1,5 +1,15 @@
 # House Plan — complete user guide
 
+Room **CO₂** is an optional fifth value tile in Space settings, after humidity,
+off by default. It works in the main plan and kiosk (Flat and 2.5D), not the
+static card. Room Sources offers an average or a selected sensor/device,
+including one outside the room's HA Area. Only carbon-dioxide sensors
+(`device_class: carbon_dioxide`) measured in `ppm` qualify. Physical devices
+vote once per room; plan placement overrides their HA Area. An unavailable
+explicit source hides the reading rather than falling back to the average.
+Tooltips use the same value independently of the tile; previews follow unsaved
+choices. Fill colours, thresholds and device actions are unchanged.
+
 Current for **v1.78.0-beta.5**. This guide describes the interface implemented by the
 current source. [Русская версия](USER-GUIDE.ru.md).
 
@@ -733,7 +743,7 @@ fully nested island room is supported.
 
 The room dialog is grouped into four cards: the first has no heading (display
 name and Home Assistant area side by side), followed by **Fill**, **Sensor
-sources** (temperature and humidity) and **Font sizes**. The area help is next
+sources** (temperature, humidity and CO₂) and **Font sizes**. The area help is next
 to its field; the other cards keep their `?` beside their heading.
 
 **Fill** starts with an **As the space** switch row: while it is on, the room

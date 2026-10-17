@@ -30,6 +30,13 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['_roomCo2', 'co2Value', 'co2For', 'co2DeviceValue', 'isCo2Entity', 'renderRoomSource',
+      'renderRoomSettingsDialog', 'renderRoomCards', 'roomClimateMap', 'sourceValue'],
+    files: ['src/room-co2.ts', 'src/styles/dialogs.styles.ts'],
+    smokes: ['smoke_room_co2.mjs'],
+    because: '#920: native settings, source picker, write refusal, live row/tooltip, preview, Flat/2.5D/kiosk and unchanged static surface. The CO2 resolver is reached through rendered DOM, not called by the smoke.',
+  },
+  {
     files: ['src/device-contact.styles.ts'],
     smokes: ['smoke_device_contact_zoom.mjs'],
     because: '#951: native zoom observes the actual SVG screen matrix and the ordinary shell border, not stylesheet text; covers small cores, DPR, themes and static cards.',

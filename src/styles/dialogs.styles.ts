@@ -262,11 +262,15 @@ export const dialogsStyles = css`
     .cardpreview .cpname { font-weight: 700; letter-spacing: 0.04em; }
     .cardpreview .cpmeta {
       display: inline-flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 100%;
       align-items: center;
       gap: 0.3em;
       font-weight: 600;
       opacity: 0.85;
     }
+    .cardpreview .cpco2 { display: inline-flex; align-items: center; white-space: nowrap; }
     .cardpreview .cpmeta ha-icon { --mdc-icon-size: 1.05em; }
   .colorrow {
       display: flex;

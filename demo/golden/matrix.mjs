@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 76;
+export const GOLDEN_MATRIX_VERSION = 77;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -530,6 +530,10 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'room-label-parity-view-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     roomLabelParity: true, theme: 'dark', viewport: { width: 1000, height: 900 }, ...page },
+  { id: 'room-co2-flat-light', fixture: 'visual', space: 'golden-lighting', mode: 'view',
+    roomLabelParity: true, roomCo2: true, theme: 'light', viewport: { width: 1000, height: 900 }, ...page },
+  { id: 'room-co2-iso-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view', projection: 'iso',
+    roomLabelParity: true, roomCo2: true, theme: 'dark', viewport: { width: 1000, height: 900 }, ...page },
   { id: 'room-label-parity-plan-dark', fixture: 'visual', space: 'golden-lighting', mode: 'plan',
     roomLabelParity: true, theme: 'dark', viewport: { width: 1000, height: 900 }, ...page },
   { id: 'room-label-parity-view-light', fixture: 'visual', space: 'golden-lighting', mode: 'view',

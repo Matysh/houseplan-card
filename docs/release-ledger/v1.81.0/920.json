@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 920,
+  "baseStable": "v1.81.0",
+  "category": "major",
+  "rationale": "Adds a new opt-in room CO2 metric and editable source selection to the main plan and kiosk, absent from v1.81.0. Static cards, temperature fills and device badges are unchanged.",
+  "summary": {
+    "ru": "CO₂ в комнатах: среднее или выбранный датчик, с предпросмотром и подсказкой.",
+    "en": "Room CO2 readings: automatic average or a selected sensor, with preview and tooltip."
+  }
+}

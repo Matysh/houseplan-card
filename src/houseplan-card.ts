@@ -8,6 +8,7 @@
  */
 import { ledAnchor, ledRelease, ledRuntime, ledStripsByMarker, ledVisible } from './led-strip-gate';
 import { visibleIconMarkers } from './device-icon-roster';
+import { roomCo2Text } from './room-co2';
 import { sceneGestureFromPath } from './canvas-surface-gestures';
 import { DeviceDragRetirement } from './device-drag-retirement';
 import { BackupImportIntent, backupImportAllowed } from './backup-import-intent';
@@ -903,6 +904,7 @@ export class HouseplanCard extends LitElement {
     lqi?: number | null;
     temp?: number | null;
     hum?: number | null;
+    co2?: number | null;
     room?: boolean;
     source?: 'pointer' | 'focus'; deviceId?: string;
   } | null = null;
@@ -1950,7 +1952,8 @@ export class HouseplanCard extends LitElement {
   private _roomCustomFill: FillColorEntry | null = null;
   private _roomTempMin = ''; private _roomTempMax = ''; private _roomTempSrc = ''; // blank inherits; zero is explicit
   private _roomHumSrc = '';
-  private _roomSrcOpen: 'temp' | 'hum' | null = null;
+  private _roomCo2Src = '';
+  private _roomSrcOpen: 'temp' | 'hum' | 'co2' | null = null;
   private _roomSrcFilter = '';
   private _roomNameScale = 1;
   private _roomLabelScale = 1;
@@ -2632,6 +2635,7 @@ export class HouseplanCard extends LitElement {
     _roomTempMin: { state: true }, _roomTempMax: { state: true },
     _roomTempSrc: { state: true },
     _roomHumSrc: { state: true },
+    _roomCo2Src: { state: true },
     _roomSrcOpen: { state: true },
     _roomSrcFilter: { state: true },
     _roomNameScale: { state: true },
@@ -3680,7 +3684,8 @@ export class HouseplanCard extends LitElement {
         this._roomEditId = r.editId; this._roomFill = r.fill;
         this._roomCustomFill = r.customFill || null; this._roomTempMin = r.tempMin || '';
         this._roomTempMax = r.tempMax || ''; this._roomTempSrc = r.tempSrc;
-        this._roomHumSrc = r.humSrc; this._roomSrcOpen = r.srcOpen; this._roomSrcFilter = r.srcFilter;
+        this._roomHumSrc = r.humSrc; this._roomCo2Src = r.co2Src || '';
+        this._roomSrcOpen = r.srcOpen; this._roomSrcFilter = r.srcFilter;
         this._roomNameScale = r.nameScale; this._roomLabelScale = r.labelScale;
         this._areaSel = r.areaSel; this._nameSel = r.nameSel;
         this._pendingSplit = r.pendingSplit; this._wallFaceBatch = r.wallFaceBatch || null;
@@ -4261,6 +4266,7 @@ export class HouseplanCard extends LitElement {
     this._captureRenderDeviceSnapshot();
   }
   protected updated(changed: PropertyValues): void {
+    if (this._tip?.room && this._hoverRoom) this._tip.co2 = this._roomCo2(this._hoverRoom.room);
     this._syncCycleTimer();
     if (this._isoFirstFrame.sync(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes), () => parseCssColor(this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)')) ?? [17, 17, 17])) this.requestUpdate(); this._summary?.updated(); this._liveRt?.commit(); this._headerMenu.revealActiveTab();
     this._editorRuntime?._commitLiveEditor();
@@ -7452,12 +7458,13 @@ export class HouseplanCard extends LitElement {
     temp?: number | null,
     hum?: number | null,
     room = false,
+    co2?: number | null,
   ): void {
     this._notePointer(ev);
     if (!this._pointerModality.hoverEnabled) return;
     if (this._drag || this._deviceDrag) return;
     if (room && this._liveRt?.deviceFocusActive()) return;
-    this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi, temp, hum, room, source: 'pointer' };
+    this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi, temp, hum, co2, room, source: 'pointer' };
     this._syncLiveHover();
   }
 
@@ -8982,6 +8989,7 @@ export class HouseplanCard extends LitElement {
       cardFontScale: dialog.cardFontScale,
       labelTemp: dialog.labelTemp,
       labelHum: dialog.labelHum,
+      labelCo2: dialog.labelCo2,
       labelLqi: dialog.labelLqi,
       labelLight: dialog.labelLight,
     };
@@ -11115,6 +11123,7 @@ export class HouseplanCard extends LitElement {
                   this._roomTemp(r),
                   this._roomHum(r),
                   true,
+                  this._roomCo2(r),
                 );
               };
               const enterRoom = (event: PointerEvent) => {
@@ -12064,6 +12073,13 @@ export class HouseplanCard extends LitElement {
     return src ? sourceValue(this._renderPlanHass, src, 'hum', this._markers)
       : key ? this._climate().get(key)?.hum ?? null : null;
   }
+  private _roomCo2(r: RoomCfg, draft = false): number | null {
+    const source = r.settings?.co2_source, key = roomClimateKey(this._spaceModel()?.id, r);
+    // An unsaved picker choice is not a dependency of the painted plan yet.
+    // Preview against the same active registry without changing the held frame.
+    return source ? sourceValue(draft ? this._planHass : this._renderPlanHass, source, 'co2', this._markers)
+      : key ? this._climate().get(key)?.co2 ?? null : null;
+  }
 
   // Ключи сравниваются только по ссылке (`===`), значение не читается ни разу.
   // Поэтому `unknown` для hass точнее любого структурного типа: он и запрещает
@@ -12199,7 +12215,7 @@ export class HouseplanCard extends LitElement {
     // Optional metrics row. Temperature/humidity and light sources may use an
     // explicit room_id even when this room has no HA Area. LQI remains area-only.
     const rows: TemplateResult[] = [];
-    if (disp.labelTemp || disp.labelHum || (disp.labelLqi && r.area) || disp.labelLight) {
+    if (disp.labelTemp || disp.labelHum || disp.labelCo2 || (disp.labelLqi && r.area) || disp.labelLight) {
       if (disp.labelTemp) {
         const t = this._roomTemp(r);
         if (t != null) rows.push(html`<span class="rlm"><ha-icon icon="mdi:thermometer"></ha-icon>${t}°</span>`);
@@ -12207,6 +12223,12 @@ export class HouseplanCard extends LitElement {
       if (disp.labelHum) {
         const hm = this._roomHum(r);
         if (hm != null) rows.push(html`<span class="rlm"><ha-icon icon="mdi:water-percent"></ha-icon>${hm}%</span>`);
+      }
+      if (disp.labelCo2) {
+        const co2 = this._roomCo2(r);
+        if (co2 !== null) rows.push(html`<span class="rlm"
+          aria-label=${this._t('roomcard.co2_label', { value: co2 })}
+          ><ha-icon icon="mdi:molecule-co2"></ha-icon>${roomCo2Text(co2)}</span>`);
       }
       if (disp.labelLqi && r.area) {
         const l = this._roomLqi(r.area);
@@ -13091,20 +13113,6 @@ export class HouseplanCard extends LitElement {
 
   private _renderMergeDialog(): TemplateResult {
     return this._editorRuntimeOrThrow()._renderMergeDialog();
-  }
-
-  /** Live sample of a room card at the given multipliers (dialog preview). */
-  private _renderCardPreview(spaceScale: number, nameScale: number, labelScale: number): TemplateResult {
-    const base = 18 * spaceScale;
-    return html`<div class="cardpreview">
-      <span class="cpname" style="font-size:${(base * nameScale).toFixed(1)}px">
-        ${this._t('preview.room_name')}</span>
-      <span class="cpmeta" style="font-size:${(base * 0.62 * labelScale).toFixed(1)}px">
-        <ha-icon icon="mdi:thermometer"></ha-icon>22.4° ·
-        <ha-icon icon="mdi:water-percent"></ha-icon>45% ·
-        <ha-icon icon="mdi:lightbulb-on"></ha-icon>${this._t('roomcard.light_partial', { on: 1, total: 3 })}
-      </span>
-    </div>`;
   }
 
   private _renderRoomDialog(): TemplateResult {

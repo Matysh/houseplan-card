@@ -1152,6 +1152,22 @@ def test_room_temperature_thresholds_are_optional_strict_finite_numbers():
                 v.ROOM_SCHEMA(invalid)
 
 
+def test_issue_920_optional_co2_settings_preserve_old_and_future_data():
+    room = {"id": "r1", "name": "R", "x": 0.1, "y": 0.1, "w": 0.2, "h": 0.2}
+    assert "co2_source" not in v.ROOM_SCHEMA(room).get("settings", {})
+    for source in (None, "", "entity:sensor.air_co2", "device:air", "future:reference"):
+        settings = {"co2_source": source, "future": {"keep": True}}
+        assert v.ROOM_SCHEMA({**room, "settings": settings})["settings"] == settings
+    for source in (True, 850, [], {}):
+        with pytest.raises(vol.Invalid):
+            v.ROOM_SCHEMA({**room, "settings": {"co2_source": source}})
+    for value in (True, False):
+        assert v.SPACE_SCHEMA(_space(label_co2=value))["settings"]["label_co2"] is value
+    for value in ("true", 1, None):
+        with pytest.raises(vol.Invalid):
+            v.SPACE_SCHEMA(_space(label_co2=value))
+
+
 def test_independent_glow_fields_and_legacy_tokens_are_accepted():
     # Current UI writes two independent fields; old dashboard bundles remain
     # valid writers of the legacy enum forever.

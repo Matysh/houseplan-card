@@ -125,7 +125,7 @@ test('#659 settings handlers preserve dirty, discard, inversion and field owners
   contains('src/hp-zigbee-topology-settings.ts',
     'if (this.embedded) return this._renderEmbedded();');
   contains('src/editors/room-settings-dialog.ts',
-    "if (kind === 'temp') host._roomTempSrc = v;\n    else host._roomHumSrc = v;",
+    "if (kind === 'temp') host._roomTempSrc = v;\n    else if (kind === 'hum') host._roomHumSrc = v;\n    else host._roomCo2Src = v;",
     'const canSave = !this.roomSaveBusy && problems.length === 0 && tempValid && (edit ? dirty : true);',
     'const requestClose = () => { void this._requestRoomDialogClose(); };',
     "onChange: (v) => setFill(v ? '' : startMode()),",

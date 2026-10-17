@@ -169,7 +169,7 @@ def capture_snapshot(
         for room in space.get("rooms") or []:
             settings = room.get("settings") if isinstance(room, dict) else None
             if isinstance(settings, dict):
-                for key in ("temp_source", "hum_source"):
+                for key in ("temp_source", "hum_source", "co2_source"):
                     binding(settings.get(key))
         for opening in space.get("openings") or []:
             if isinstance(opening, dict):

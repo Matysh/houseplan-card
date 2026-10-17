@@ -27,6 +27,8 @@ import {
 } from './editors/space-settings-dialog';
 import { renderGeneralSettingsDialog } from './editors/general-settings-dialog';
 import { renderRoomSettingsDialog } from './editors/room-settings-dialog';
+import { isCo2Entity } from './room-co2';
+import { newSpaceDialogDraft, savedSpaceDialogDraft, spaceDialogSettings } from './editors/space-dialog-draft';
 import { calibrationTarget, planVacuumFit } from './vacuum-route-edit';
 import {
   cancelHouseplanPointerMove, flushHouseplanPointerMove, queueHouseplanPointerMove,
@@ -61,9 +63,9 @@ import {
   segmentAngle, type AlignGuide, clampScale, migratePdfUrls, snapToWall, snapPointAlongPoly,
   openingAmount, openingShoulders, filterOpeningEntityCandidates, poleOfInaccessibility, subst,
   type FloorInfo, parseRoomRef, resolveGlowValues, normalizeGlowColorOverride, isControllable,
-  spaceDisplayOf, DEFAULT_FILL_COLORS, customFillOf, DEFAULT_CUSTOM_FILL, type FillColors,
-  type FillColorEntry, RUN_TARGET_DOMAINS, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, stageBgOf,
-  showRoomTooltipOf, volumetricViewOf, DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, normalizeDeviceDisplay,
+  spaceDisplayOf, DEFAULT_FILL_COLORS, customFillOf, type FillColors,
+  type FillColorEntry, RUN_TARGET_DOMAINS, stageBgOf,
+  showRoomTooltipOf, volumetricViewOf, normalizeDeviceDisplay,
   type DeviceDisplayMode, liveTextReference, liveTextToken, DECOR_TEXT_BASE, fitView,
 } from './logic';
 import {
@@ -127,7 +129,7 @@ import { type InitialSpaceSelection } from './initial-load';
 import { selectSpaceModelById } from './space-model-selection';
 import { findGeometryRemoval, normalizeLegacyGeometryInPlace, refuseGeometryWrite } from './geometry-cleanup';
 import {
-  applyRoomTempThresholdDraft, createEmptySpaceConfig, initialSpaceDisplayDraft,
+  applyRoomTempThresholdDraft, createEmptySpaceConfig,
   roomTempThresholdDraft, roomTempThresholdInputValues, strictNumber, type SpaceDialogState,
 } from './space-dialog';
 import { rememberSpaceDialogBaseline, spaceDialogProblems } from './editors/space-form-state';
@@ -137,7 +139,7 @@ import {
 } from './device-battery-settings';
 import { markerSignalFields } from './device-signal';
 import { openMoonStatus } from './editors/moon-status';
-import { globalSignalVisibleOf, signalVisibilityModeOf, writeGlobalSignalVisibility, writeSpaceSignalVisibility } from './signal-visibility';
+import { globalSignalVisibleOf, writeGlobalSignalVisibility } from './signal-visibility';
 import { forgetRoomBaseline, rememberRoomBaseline } from './editors/room-form-state';
 import { roomSaveBusy, saveRoomEdit } from './editors/room-save';
 import { dialogSession } from './editors/dialog-baseline';
@@ -317,7 +319,7 @@ import {
 } from './opening-dimensions';
 import type { OpeningPlacementCandidate, OpMeasure, RenderOpening } from './interaction-types';
 import { safeStoredColor } from './color';
-import { gridCellFieldValue, gridVisualUnits, newSpaceCellCm } from './grid-scale';
+import { gridVisualUnits } from './grid-scale';
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 import { reconcileCoincidentPartitions } from './coincident-partitions';
 import { selectWallFaceLineage, settleWallFaceLineage } from './wall-face-lineage';
@@ -719,7 +721,7 @@ export interface HouseplanEditorHostPort {
   _regSignature: string;
   _reloadConfigOnly: (force?: boolean, observedRev?: number) => Promise<void>;
   _reloadLayoutOnly: () => Promise<void>;
-  _renderCardPreview: (spaceScale: number, nameScale: number, labelScale: number) => TemplateResult;
+  _roomCo2: (room: RoomCfg, draft?: boolean) => number | null;
   _renderCompass: () => TemplateResult;
   _renderPlanHass: any;
   _resign: () => void;
@@ -736,11 +738,12 @@ export interface HouseplanEditorHostPort {
   _roomEditId: string | null;
   _roomFill: "" | "none" | "lqi" | "light" | "temp" | "custom";
   _roomHumSrc: string;
+  _roomCo2Src: string;
   _roomLabelScale: number;
   _roomNameScale: number;
   _roomTempMin: string; _roomTempMax: string; _roomTempSrc: string;
   _roomSrcFilter: string;
-  _roomSrcOpen: "temp" | "hum" | null;
+  _roomSrcOpen: "temp" | "hum" | "co2" | null;
   _roomWallOpeningInputs: (openings?: readonly RenderOpening[], space?: SpaceModel | undefined) => Array<{ x: number; y: number; angle: number; length: number; }>;
   _rszLimitViolation: JunctionLimitViolation | null;
   _rulesDialog: { rules: IconRule[]; test: string; busy: boolean; } | null;
@@ -1084,7 +1087,7 @@ public warmRoomDraft() {
   return {
     editId: host._roomEditId, fill: host._roomFill, customFill: host._roomCustomFill,
     tempMin: host._roomTempMin, tempMax: host._roomTempMax, tempSrc: host._roomTempSrc,
-    humSrc: host._roomHumSrc, srcOpen: host._roomSrcOpen, srcFilter: host._roomSrcFilter,
+    humSrc: host._roomHumSrc, co2Src: host._roomCo2Src, srcOpen: host._roomSrcOpen, srcFilter: host._roomSrcFilter,
     nameScale: host._roomNameScale, labelScale: host._roomLabelScale,
     areaSel: host._areaSel, nameSel: host._nameSel,
     pendingSplit: host._pendingSplit, wallFaceBatch: host._wallFaceBatch,
@@ -7784,69 +7787,9 @@ public _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
     if (mode === 'edit') {
       const sp = this.host._serverCfg!.spaces.find((x: any) => x.id === spaceId);
       if (!sp) return;
-      const disp = spaceDisplayOf(sp);
-      const storedCustom = sp.settings?.custom_fill && typeof sp.settings.custom_fill === 'object'
-        ? customFillOf(sp.settings.custom_fill) : null;
-      // Space-level None is no longer a separate UI choice. Project it to the
-      // same custom colour at zero opacity, so merely opening/saving settings
-      // cannot change either the visible floor or the Glow darkness.
-      const dialogCustom = disp.fill === 'none'
-        ? { ...(storedCustom || DEFAULT_CUSTOM_FILL), a: 0 }
-        : storedCustom;
-      this.host._spaceDialog = {
-        mode, spaceId, title: sp.title, planUrl: sp.plan_url || null, planFile: null,
-        source: sp.plan_url ? 'file' : 'draw',
-        showBorders: disp.showBorders, showNames: disp.showNames,
-        zeroWallStyle: zeroWallStyleOf(sp),
-        displayTouched: true,
-        hideDecor: disp.hideDecor, hideOpenings: disp.hideOpenings,
-        roomColor: disp.color, roomOpacity: disp.opacity,
-        // `none` is a legacy space token. The current editor represents its
-        // exact appearance as a transparent user colour.
-        fillMode: disp.fill === 'none' ? 'custom' : disp.fill,
-        customFill: dialogCustom,
-        glowEnabled: disp.glow,
-        bgColor: disp.bgColor,
-        bgMode: sp.settings?.bg_mode === 'static' || sp.settings?.bg_mode === 'daynight' ? sp.settings.bg_mode : null,
-        northDeg: northDegOf({}, sp.settings),
-        northDegInput: northDegOf({}, sp.settings) === null ? '' : String(northDegOf({}, sp.settings)),
-        sunRays: typeof sp.settings?.sun_rays === 'boolean' ? sp.settings.sun_rays : null,
-        tempMin: disp.tempMin, tempMax: disp.tempMax,
-        tempMinInput: String(disp.tempMin), tempMaxInput: String(disp.tempMax),
-        showLqiMode: signalVisibilityModeOf(sp.settings),
-        cardFontScale: disp.cardFontScale,
-        labelTemp: disp.labelTemp, labelHum: disp.labelHum,
-        labelLqi: disp.labelLqi, labelLight: disp.labelLight,
-        cellCm: Number(sp.cell_cm) > 0 ? Number(sp.cell_cm) : 5,
-        cellCmInput: gridCellFieldValue(
-          Number(sp.cell_cm) > 0 ? Number(sp.cell_cm) : 5, this.host._imperial,
-        ),
-        cellCmTouched: false,
-        busy: false,
-      };
+      this.host._spaceDialog = savedSpaceDialogDraft(sp, this.host._imperial);
     } else {
-      this.host._spaceDialog = {
-        mode, title: '', planUrl: null, planFile: null,
-        ...initialSpaceDisplayDraft(),
-        hideDecor: false, hideOpenings: false, zeroWallStyle: 'dashed',
-        roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'custom',
-        // `custom` replaces the old `none` choice in the editor, but creating
-        // a space must preserve the old no-floor visual by default. The user
-        // can make this colour visible explicitly with the opacity control.
-        customFill: { ...DEFAULT_CUSTOM_FILL, a: 0 },
-        glowEnabled: true,
-        bgColor: null,
-        bgMode: 'daynight', northDeg: null, northDegInput: '', sunRays: null,
-        tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
-        tempMinInput: String(DEFAULT_TEMP_MIN), tempMaxInput: String(DEFAULT_TEMP_MAX),
-        showLqiMode: 'inherit',
-        cardFontScale: 1,
-        labelTemp: false, labelHum: false, labelLqi: false, labelLight: false,
-        cellCm: newSpaceCellCm(this.host._imperial),
-        cellCmInput: gridCellFieldValue(newSpaceCellCm(this.host._imperial), this.host._imperial),
-        cellCmTouched: false,
-        busy: false,
-      };
+      this.host._spaceDialog = newSpaceDialogDraft(this.host._imperial);
     }
     // #600 К10: снимок на момент открытия — от него считается «есть изменения».
     if (this.host._spaceDialog) rememberSpaceDialogBaseline(this.host, this.host._spaceDialog);
@@ -8073,33 +8016,7 @@ public async _saveSpaceDialog(): Promise<void> {
       }
       // Persist exactly what the dialog showed. Source defaults are projected
       // visibly while editing the create state, never hidden here at Save.
-      sp.settings = writeSpaceSignalVisibility({
-        ...(sp.settings || {}),
-        show_borders: d.showBorders,
-        show_names: d.showNames,
-        // written only when ON: a plan that never hid anything stores nothing
-        hide_decor: d.hideDecor || undefined,
-        hide_openings: d.hideOpenings || undefined,
-        room_color: d.roomColor,
-        room_opacity: d.roomOpacity,
-        bg_color: d.bgColor || undefined, // empty = inherit the general setting
-        bg_mode: d.bgMode || undefined,    // sun on the plan (docs/SUN.md); empty = inherit
-        north_deg: d.northDeg ?? undefined,
-        sun_rays: d.sunRays ?? undefined,
-        fill_mode: d.fillMode,
-        custom_fill: d.customFill || undefined,
-        // Always materialize the independent value. In particular, editing a
-        // legacy fill_mode:'glow' space preserves its appearance atomically
-        // while replacing the old token with the selected data fill.
-        glow_enabled: d.glowEnabled,
-        temp_min: Number.isFinite(d.tempMin) ? Math.min(d.tempMin, d.tempMax) : DEFAULT_TEMP_MIN,
-        temp_max: Number.isFinite(d.tempMax) ? Math.max(d.tempMin, d.tempMax) : DEFAULT_TEMP_MAX,
-        card_font_scale: d.cardFontScale !== 1 ? d.cardFontScale : undefined,
-        label_temp: d.labelTemp,
-        label_hum: d.labelHum,
-        label_lqi: d.labelLqi,
-        label_light: d.labelLight,
-      }, d.showLqiMode);
+      sp.settings = spaceDialogSettings(d, sp.settings);
       // This is a geometry policy of the space, not a visual room setting.
       sp.zero_wall_style = d.zeroWallStyle;
       sp.cell_cm = Number.isFinite(d.cellCm) && d.cellCm > 0
@@ -8240,25 +8157,7 @@ public _startImport(): void {
 public _openNextImport(): void {
     const title = this.host._importQueue.shift();
     if (title === undefined) return;
-    this.host._spaceDialog = {
-      mode: 'create', title, planUrl: null, planFile: null,
-      ...initialSpaceDisplayDraft(),
-      hideDecor: false, hideOpenings: false, zeroWallStyle: 'dashed',
-      roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'custom',
-      customFill: null,
-      glowEnabled: true,
-      bgColor: null,
-      bgMode: 'daynight', northDeg: null, northDegInput: '', sunRays: null,
-      tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
-      tempMinInput: String(DEFAULT_TEMP_MIN), tempMaxInput: String(DEFAULT_TEMP_MAX),
-      showLqiMode: 'inherit',
-      cardFontScale: 1,
-      labelTemp: false, labelHum: false, labelLqi: false, labelLight: false,
-      cellCm: newSpaceCellCm(this.host._imperial),
-      cellCmInput: gridCellFieldValue(newSpaceCellCm(this.host._imperial), this.host._imperial),
-      cellCmTouched: false,
-      busy: false,
-    };
+    this.host._spaceDialog = { ...newSpaceDialogDraft(this.host._imperial), title, customFill: null };
   }
 
 public _skipImport(): void {
@@ -9896,6 +9795,7 @@ public _resetRoomDialogFields(): void {
     this.host._roomTempMin = ''; this.host._roomTempMax = '';
     this.host._roomTempSrc = '';
     this.host._roomHumSrc = '';
+    this.host._roomCo2Src = '';
     this.host._roomSrcOpen = null;
     this.host._roomSrcFilter = '';
     this.host._roomNameScale = 1;
@@ -9917,6 +9817,7 @@ public _openRoomEdit(r: RoomCfg): void {
     [this.host._roomTempMin, this.host._roomTempMax] = roomTempThresholdInputValues(r.settings);
     this.host._roomTempSrc = r.settings?.temp_source || '';
     this.host._roomHumSrc = r.settings?.hum_source || '';
+    this.host._roomCo2Src = r.settings?.co2_source || '';
     this.host._roomNameScale = clampScale(r.settings?.name_scale);
     this.host._roomLabelScale = clampScale(r.settings?.label_scale);
     this.host._roomSrcOpen = null;
@@ -9931,6 +9832,7 @@ public _roomSettingsFromDialog(): RoomCfg['settings'] {
     if (this.host._roomFill === 'custom' && this.host._roomCustomFill) st.custom_fill = this.host._roomCustomFill; // #581
     if (this.host._roomTempSrc) st.temp_source = this.host._roomTempSrc;
     if (this.host._roomHumSrc) st.hum_source = this.host._roomHumSrc;
+    if (this.host._roomCo2Src) st.co2_source = this.host._roomCo2Src;
     applyRoomTempThresholdDraft(st, this.host._roomTempMin, this.host._roomTempMax);
     if (this.host._roomNameScale !== 1) st.name_scale = this.host._roomNameScale;
     if (this.host._roomLabelScale !== 1) st.label_scale = this.host._roomLabelScale;
@@ -9947,17 +9849,25 @@ public _saveRoomEdit(): Promise<void> { return saveRoomEdit(this); }
 public _roomSrcCandidates(): { value: string; label: string; sub: string }[] {
     const h = this.host._planHass;
     const removed = removedPlanBindings(this.host._markers);
+    const co2 = this.host._roomSrcOpen === 'co2';
+    const co2Devices = new Set<string>();
+    if (co2) for (const entityId of Object.keys(h.entities || {})) {
+      const deviceId = h.entities[entityId]?.device_id;
+      if (typeof deviceId === 'string' && isCo2Entity(h, entityId)) co2Devices.add(deviceId);
+    }
     const q = this.host._roomSrcFilter.trim().toLowerCase();
     const list: { value: string; label: string; sub: string }[] = [];
     for (const dev of Object.values<any>(h.devices)) {
       if (dev.entry_type === 'service') continue;
       if (removed.devices.has(dev.id)) continue;
+      if (co2 && !co2Devices.has(dev.id)) continue;
       const name = (dev.name_by_user || dev.name || dev.id).trim();
       if (q && !name.toLowerCase().includes(q)) continue;
       list.push({ value: 'device:' + dev.id, label: name, sub: dev.model || this.host._t('marker.sub_device') });
     }
     for (const [eid, reg] of Object.entries<any>(h.entities)) {
       if (!eid.startsWith('sensor.') || reg.hidden) continue;
+      if (co2 && !isCo2Entity(h, eid)) continue;
       if (isRemovedPlanEntity(h, eid, removed)) continue;
       const label = reg.name || h.states[eid]?.attributes?.friendly_name || eid;
       if (q && !(label + ' ' + eid).toLowerCase().includes(q)) continue;

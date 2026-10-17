@@ -711,6 +711,22 @@ export function prepareGoldenFixture(scenario) {
       'rl_light-right': { s: space.id, x: 0.72, y: 0.24 },
     };
   }
+  if (scenario.roomCo2) {
+    const space = requireSpace();
+    space.settings.label_co2 = true;
+    for (const [room, value] of space.rooms.map((room, index) => [room, index ? '1234' : '850'])) {
+      const entityId = `sensor.co2_${room.id.replaceAll('-', '_')}`;
+      fixture.entities[entityId] = { entity_id: entityId, area_id: room.area,
+        platform: 'houseplan_golden', disabled_by: null };
+      fixture.states[entityId] = { entity_id: entityId, state: value,
+        attributes: { device_class: 'carbon_dioxide', unit_of_measurement: 'ppm' } };
+      const humidityId = entityId.replace('co2_', 'humidity_');
+      fixture.entities[humidityId] = { entity_id: humidityId, area_id: room.area,
+        platform: 'houseplan_golden', disabled_by: null };
+      fixture.states[humidityId] = { entity_id: humidityId, state: '45',
+        attributes: { device_class: 'humidity', unit_of_measurement: '%' } };
+    }
+  }
   if (scenario.deviceName) {
     if (!scenario.deviceId || !fixture.devices?.[scenario.deviceId])
       throw new Error(`golden deviceName references missing device: ${scenario.deviceId || '<empty>'}`);
@@ -1358,6 +1374,13 @@ export async function prepareGoldenScenario(page, scenario) {
           || labels.some((label) => !label.querySelector('.rlmetrics')?.textContent?.trim())) {
         throw new Error(`golden room-label parity core is incomplete: ${scenario.id}`);
       }
+    }
+    if (scenario.roomCo2) {
+      const metrics = [...card.renderRoot.querySelectorAll('.rlm:has(ha-icon[icon="mdi:molecule-co2"])')];
+      if (metrics.map(node => node.textContent.trim()).sort().join('|') !== '1234 ppm|850 ppm')
+        throw new Error(`golden room CO2 readings missing: ${scenario.id}`);
+      if ([...card.renderRoot.querySelectorAll('.rlmetrics')].some(row => row.querySelectorAll('.rlm').length !== 5))
+        throw new Error(`golden room CO2 five-metric row missing: ${scenario.id}`);
     }
     if (scenario.projection === 'iso') {
       await ensureIsoRuntime(card);

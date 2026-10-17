@@ -137,6 +137,7 @@ export function captureRenderDeviceSnapshot(
     if (room.area) areaIds.add(room.area);
     addSource(room.settings?.temp_source);
     addSource(room.settings?.hum_source);
+    addSource(room.settings?.co2_source);
   }
   for (const rawSpace of host._serverCfg?.spaces || []) for (const opening of rawSpace.openings || []) {
     for (const entityId of openingEntityReferences(opening)) entityIds.add(entityId);

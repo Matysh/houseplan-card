@@ -28,6 +28,29 @@ def project(config):
     return result, ids
 
 
+def test_issue_920_co2_source_is_pseudonymized_and_fits_the_closed_wire_schema():
+    from custom_components.houseplan.support_wire_schema import CONFIG, validate
+
+    private = "sensor.owner_private_co2"
+    config = {
+        "model_version": 10,
+        "spaces": [{"id": "s", "settings": {"label_co2": True}, "rooms": [
+            {"id": "r", "name": "Private room", "settings": {"co2_source": f"entity:{private}"}},
+            {"id": "r2", "name": "Other", "settings": {"co2_source": None}},
+        ]}],
+        "markers": [{"id": "m", "binding": f"entity:{private}", "space": "s"}],
+    }
+    result, _ids = project(config)
+    result["model_version"] = 10
+    validate(result, CONFIG)
+    assert result["spaces"][0]["settings"]["label_co2"] is True
+    settings = result["spaces"][0]["rooms"][0]["settings"]
+    assert settings["co2_source"] == result["markers"][0]["binding"]
+    assert settings["co2_source_kind"] == "entity"
+    assert result["spaces"][0]["rooms"][1]["settings"]["co2_source"] is None
+    assert private not in json.dumps(result)
+
+
 def test_config_minimum_joins_value_route_area_summary_led_and_radar_references():
     config = {
         "settings": {

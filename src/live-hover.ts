@@ -5,6 +5,7 @@ import type { ResolvedDevicePresentation } from './device-presentation';
 import type { DevItem, ValueBadgeSource } from './types';
 import { placeDeviceTooltip } from './live-tip-placement';
 import { floatingViewport } from './floating-surface';
+import { roomCo2Text } from './room-co2';
 import {
   createDeviceBatteryContext, deviceBatteryReading,
   type DeviceBatteryContext, type DeviceBatteryDevice, type DeviceBatteryHass,
@@ -19,6 +20,7 @@ export interface LiveTip {
   lqi?: number | null;
   temp?: number | null;
   hum?: number | null;
+  co2?: number | null;
   room?: boolean;
   source?: 'pointer' | 'focus';
   deviceId?: string;
@@ -32,7 +34,7 @@ interface HoverState {
 interface LiveHoverHost {
   renderRoot: ParentNode;
   _tip: LiveTip | null;
-  _t: (key: 'tip.temp_avg' | 'tip.hum_avg' | 'tip.lqi') => string;
+  _t: (key: 'tip.temp_avg' | 'tip.hum_avg' | 'tip.lqi' | 'space.label_co2') => string;
   _hoverRoom: { space: string; room: unknown } | null;
   _spaceModel: () => unknown;
   _roomHoverPaths: (model: unknown) => { fillD: string; outlineD: string } | null;
@@ -192,6 +194,7 @@ const syncTip = (host: LiveHoverHost, root: ParentNode): void => {
   appendMeta(element, '', tip.battery);
   appendMeta(element, host._t('tip.temp_avg'), tip.temp == null ? '' : `${tip.temp}°`);
   appendMeta(element, host._t('tip.hum_avg'), tip.hum == null ? '' : `${tip.hum}%`);
+  appendMeta(element, host._t('space.label_co2'), tip.co2 == null ? '' : roomCo2Text(tip.co2));
   appendMeta(element, host._t('tip.lqi'), tip.lqi == null ? '' : String(tip.lqi),
     tip.lqi == null ? undefined : lqiColor(tip.lqi));
   element.hidden = false;

@@ -8,6 +8,26 @@
  */
 export const CONFIG_FIELD_REGISTRY = Object.freeze([
   {
+    id: 'space.settings.label_co2',
+    enforcedBy: 'logic.ts + validation.py + room card native smoke; #920',
+    selector: { path: ['spaces', '*', 'settings', 'label_co2'] },
+    storage: 'House Plan server config', type: 'boolean', default: 'unset (= off)',
+    level: 'space', ui: 'Space → Room cards → CO₂',
+    runtime: 'room-card CO₂ visibility on the full plan/kiosk only; no static-card metric',
+    introduced: '#920', status: 'current', migration: 'none; reading never writes a default',
+    compatibility: 'only strict true enables; full backup and plan-only transfer retain the flag',
+  },
+  {
+    id: 'room.settings.co2_source',
+    enforcedBy: 'devices.ts + room-co2.ts + validation.py + support projection; #920',
+    selector: { path: ['spaces', '*', 'rooms', '*', 'settings', 'co2_source'] },
+    storage: 'House Plan server config', type: 'string | null', default: 'unset (= room average)',
+    level: 'room', ui: 'Room → Data sources → CO₂ source',
+    runtime: 'exact active entity/device CO₂ measurement in ppm overrides the room average',
+    introduced: '#920', status: 'current', migration: 'none; Average removes the override',
+    compatibility: 'full backup/copy preserve references; plan-only transfer drops HA bindings; support remaps IDs',
+  },
+  {
     id: 'markers[].hide_signal',
     enforcedBy: 'device-signal.ts + validation.py + config-schema parity; #867',
     selector: { path: ['markers', '*', 'hide_signal'] },

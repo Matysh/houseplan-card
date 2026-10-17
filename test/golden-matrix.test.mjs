@@ -214,7 +214,7 @@ test('golden matrix covers required geometry, rendering and adaptive surfaces', 
 });
 
 test('room-label parity goldens pair View and Plan in light and dark themes', () => {
-  const scenarios = GOLDEN_SCENARIOS.filter((scenario) => scenario.roomLabelParity);
+  const scenarios = GOLDEN_SCENARIOS.filter((scenario) => scenario.roomLabelParity && !scenario.roomCo2);
   assert.deepEqual(scenarios.map(({ mode, theme }) => `${mode}-${theme}`).sort(), [
     'plan-dark', 'plan-light', 'view-dark', 'view-light',
   ]);
@@ -228,6 +228,19 @@ test('room-label parity goldens pair View and Plan in light and dark themes', ()
     assert.deepEqual(Object.keys(fixture.layout).filter((id) => id.startsWith('rl_')).sort(), [
       'rl_light-left', 'rl_light-right',
     ]);
+  }
+});
+
+test('#920 CO2 goldens cover Flat and 2.5D with two independent room readings', () => {
+  const scenes = GOLDEN_SCENARIOS.filter(scene => scene.roomCo2);
+  assert.deepEqual(scenes.map(scene => scene.id), ['room-co2-flat-light', 'room-co2-iso-dark']);
+  for (const scene of scenes) {
+    const fixture = prepareGoldenFixture(scene);
+    const space = fixture.config.spaces.find(space => space.id === scene.space);
+    assert.equal(space.settings.label_co2, true);
+    const rows = Object.values(fixture.states).filter(row => row.attributes.device_class === 'carbon_dioxide');
+    assert.deepEqual(rows.map(row => row.state).sort(), ['1234', '850']);
+    assert.ok(rows.every(row => row.attributes.unit_of_measurement === 'ppm'));
   }
 });
 
@@ -446,7 +459,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 76);
+  assert.equal(GOLDEN_MATRIX_VERSION, 77);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -940,7 +953,7 @@ test('issue 570 Stage 4 reuses the historical iso goldens for visual handoff cov
 
 test('#673 Stage 6 designer acceptance scenes are canonical golden entries', () => {
   const ids = STAGE6_ACCEPTANCE_SCENARIOS.map((scenario) => scenario.id);
-  assert.equal(GOLDEN_MATRIX_VERSION, 76);
+  assert.equal(GOLDEN_MATRIX_VERSION, 77);
   assert.deepEqual(ids, [
     'isometric-stage6-light-lightfloor',
     'isometric-stage6-light-darkfloor',

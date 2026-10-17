@@ -463,6 +463,7 @@ test('i18n: German catalog keeps the product glossary and has no translation sen
 
 test('i18n: German values equal to English are explicitly reviewed', () => {
   const allowed = new Set([
+    'space.label_co2', 'roomcard.co2_label', // #920: CO₂ and ppm are language-neutral scientific symbols.
     'color_picker.confirm',
     'editor.palette',
     'opening.info_named', // #894: the shared {kind}: {name} format is language-neutral.
@@ -517,6 +518,7 @@ test('i18n: French values equal to English are explicitly reviewed (#371)', () =
   // Every entry here is a legitimate French/English homograph or a unit,
   // template or brand token — reviewed with the contributed dictionary.
   const allowed = new Set([
+    'space.label_co2', // #920: chemical formula, not untranslated prose.
     'color_picker.confirm',
     'color_picker.saturation',
     'confirm.delete_partition_openings_item',

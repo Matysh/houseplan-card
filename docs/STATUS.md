@@ -19,8 +19,8 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Generated | 2026-10-17 — rerun `node scripts/status-snapshot.mjs` for the current tree |
 | Version | **1.82.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.81.0` |
-| Latest prerelease tag | `v1.81.0-beta.4` |
-| Tests | Node unit 4718 · pure backend 496 · HA-harness backend 407 · browser smokes 367 (`npm run inventory`) |
+| Latest prerelease tag | `v1.82.0-beta.1` |
+| Tests | Node unit 4785 · pure backend 528 · HA-harness backend 419 · browser smokes 374 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -29,6 +29,11 @@ Connected-node clock sampling (#952) uses 32 fixed independent probes instead
 of eight, always completing the series without precision retries. The 1 ms
 accuracy guard, conservative source clocks and performance budgets stay strict;
 unavailable calibration preserves a FAIL with raw/gesture/phase diagnostics.
+
+Room CO₂ (#920) is opt-in in the full plan/kiosk, not the static card. Only
+active `sensor` entities with `device_class: carbon_dioxide` and unit `ppm`
+contribute, once per physical device per room; explicit room sources override
+the average without fallback on unavailability. No CO₂ colours or thresholds.
 
 Kiosk smoke readiness (#949) separates the native CSS height timeline from
 Playwright's JS clock before the scenario begins. The bounded setup-only

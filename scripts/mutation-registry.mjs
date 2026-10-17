@@ -77,6 +77,30 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'room-co2-loses-explicit-snapshot-source',
+    guard: 'node demo/smoke_room_co2.mjs',
+    because: '#920 AC5: a selected sensor outside every room must feed row, preview and stationary tooltip through the held snapshot.',
+    patches: [{ file: 'src/render-snapshot-capture.ts',
+      find: '    addSource(room.settings?.co2_source);',
+      replace: '    /* CO2 dependency omitted */' }],
+  },
+  {
+    id: 'room-co2-tooltip-keeps-old-state',
+    guard: 'node demo/smoke_room_co2.mjs',
+    because: '#920 AC5: state-only HA frames refresh CO2 without another pointer move.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: '    if (this._tip?.room && this._hoverRoom) this._tip.co2 = this._roomCo2(this._hoverRoom.room);',
+      replace: '    /* leave the old CO2 pointer sample */' }],
+  },
+  {
+    id: 'room-co2-source-not-saved',
+    guard: 'node demo/smoke_room_co2.mjs',
+    because: '#920 AC3: the CO2 source selected in the real editor must survive accepted save/reopen, not just update the draft preview.',
+    patches: [{ file: 'src/editors/room-save.ts',
+      find: '  if (host._roomCo2Src) next.co2_source = host._roomCo2Src;',
+      replace: '  if (host._roomCo2Src) delete next.co2_source;' }],
+  },
+  {
     id: 'plan-entry-ignores-existing-geometry',
     guard: 'node demo/smoke_plan_entry_tool.mjs',
     because: '#928 AC1: public Plan entry and its first click must not start Walls on an existing plan.',
@@ -10816,10 +10840,10 @@ const MUTANT_DEFINITIONS = [
     because: 'Save must persist the two booleans visibly chosen for a new hand-drawn space; '
       + 'the production smoke saves and reopens a mixed pair so the old hidden true/true override cannot return',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: '        show_borders: d.showBorders,\n        show_names: d.showNames,',
-      replace: "        show_borders: d.source === 'draw' && d.mode === 'create' ? true : d.showBorders,\n"
-        + "        show_names: d.source === 'draw' && d.mode === 'create' ? true : d.showNames,",
+      file: 'src/editors/space-dialog-draft.ts',
+      find: '    show_borders: d.showBorders,\n    show_names: d.showNames,',
+      replace: "    show_borders: d.source === 'draw' && d.mode === 'create' ? true : d.showBorders,\n"
+        + "    show_names: d.source === 'draw' && d.mode === 'create' ? true : d.showNames,",
     }],
   },
   {
@@ -17267,7 +17291,7 @@ const MUTANT_DEFINITIONS = [
       + 'просто уезжает в соседнее поле черновика и сохраняется туда же',
     patches: [{
       file: 'src/editors/room-settings-dialog.ts',
-      find: "    if (kind === 'temp') host._roomTempSrc = v;\n    else host._roomHumSrc = v;",
+      find: "    if (kind === 'temp') host._roomTempSrc = v;\n    else if (kind === 'hum') host._roomHumSrc = v;\n    else host._roomCo2Src = v;",
       replace: '    host._roomTempSrc = v;',
     }],
   },

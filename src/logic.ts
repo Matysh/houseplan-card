@@ -1275,6 +1275,7 @@ export interface SpaceDisplay {
   /** Room-card metrics under the room name (all default off). */
   labelTemp: boolean;
   labelHum: boolean;
+  labelCo2: boolean;
   labelLqi: boolean;
   labelLight: boolean;
   /** Background around the plan; null = inherit the global setting / theme. */
@@ -1381,6 +1382,7 @@ export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
       : 1,
     labelTemp: s.label_temp === true,
     labelHum: s.label_hum === true,
+    labelCo2: s.label_co2 === true,
     labelLqi: s.label_lqi === true,
     labelLight: s.label_light === true,
     bgColor: safeStoredColor(s.bg_color, null),

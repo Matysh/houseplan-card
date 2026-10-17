@@ -95,7 +95,7 @@ _SPACE_DISPLAY_FIELDS = (
     "show_borders", "show_names", "room_color", "bg_color", "room_opacity",
     "fill_mode", "custom_fill", "glow_enabled", "temp_min", "temp_max",
     "show_lqi", "show_lqi_mode", "hide_decor", "hide_openings", "label_temp", "label_hum",
-    "label_lqi", "label_light", "card_font_scale", "north_deg", "bg_mode",
+    "label_co2", "label_lqi", "label_light", "card_font_scale", "north_deg", "bg_mode",
     "sun_rays",
 )
 _ROOM_PLAN_FIELDS = ("id", "name", "open_to", "x", "y", "w", "h", "poly", "wall_ids")

@@ -1205,6 +1205,12 @@ still recognised in stored config but no longer served
 - Room climate is one `roomClimateMap()` pass per hass snapshot (#317) shared
   by full and static cards; exact `entity:` placement beats its parent
   `device:` (no double vote); never call the `areaClimate()` wrapper in render.
+  CO₂ (#920) is an independent third result: only carbon-dioxide sensors in
+  ppm, a stable valid sibling per physical device and final-only rounding.
+  `room-co2.ts` owns strict parsing and formatting; the resolved number feeds
+  full-plan/kiosk labels, tooltip and room-source preview. Static stays
+  name-only. Explicit sources enter snapshot dependencies; unsaved choices
+  use the active registry without changing that frame.
 - Load, continuity and fixed-floor rules: `WARM-REMOUNT.md` § 5.
 - `warm-mode-adoption.ts` completes immediate and delayed editor adoption with
   the original View return snapshot and a request-owned refit hold. Explicit

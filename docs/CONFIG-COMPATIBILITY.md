@@ -1,5 +1,13 @@
 # Config compatibility registry
 
+Room CO₂ (#920) adds optional `spaces[].settings.label_co2` (only exact `true`
+enables it, absence means off) and `rooms[].settings.co2_source` (missing,
+null or empty means automatic). Unknown saved source strings survive unrelated
+edits but do not invent a reading. Geometry/model versions stay the same.
+Full and space backups/copies preserve both fields; plan-only transfer keeps
+the display flag but drops HA-bound room sources, including CO₂. Support
+projection pseudonymises sources; capture applies the existing read ACL.
+
 House Plan accepts some fields that are no longer written by the current UI.
 They are not all equivalent: some preserve an old visual exactly, some are
 losslessly migrated on an explicit edit, some are immediately discarded by

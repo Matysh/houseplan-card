@@ -11,12 +11,13 @@ import { dialogDirty, forgetDialogBaseline, rememberDialogBaseline, stableKey } 
 
 type RoomDraftHost = Pick<HouseplanEditorHostPort,
   '_nameSel' | '_areaSel' | '_roomFill' | '_roomCustomFill' | '_roomTempMin' | '_roomTempMax'
-  | '_roomTempSrc' | '_roomHumSrc' | '_roomNameScale' | '_roomLabelScale' | '_roomEditId'>;
+  | '_roomTempSrc' | '_roomHumSrc' | '_roomCo2Src' | '_roomNameScale' | '_roomLabelScale' | '_roomEditId'>;
 
 export function roomDraftKey(h: RoomDraftHost): string {
   return stableKey({
     name: h._nameSel, area: h._areaSel, fill: h._roomFill, customFill: h._roomCustomFill,
     tempMin: h._roomTempMin, tempMax: h._roomTempMax, tempSrc: h._roomTempSrc, humSrc: h._roomHumSrc,
+    co2Src: h._roomCo2Src,
     nameScale: h._roomNameScale, labelScale: h._roomLabelScale,
   });
 }

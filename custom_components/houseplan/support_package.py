@@ -219,6 +219,7 @@ def _space_settings(value: object) -> dict[str, Any]:
             "hide_openings",
             "label_temp",
             "label_hum",
+            "label_co2",
             "label_lqi",
             "label_light",
             "card_font_scale",
@@ -244,7 +245,7 @@ def _room_settings(ids: _Pseudonyms, value: object) -> dict[str, Any]:
         return out
     if "custom_fill" in value:
         out["custom_fill"] = _custom_fill(value.get("custom_fill"))
-    for key in ("temp_source", "hum_source"):
+    for key in ("temp_source", "hum_source", "co2_source"):
         source = value.get(key)
         if source:
             kind, pseudo = _binding(ids, source)

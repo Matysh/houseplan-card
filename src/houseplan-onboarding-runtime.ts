@@ -6,26 +6,10 @@ import { surfaceLanguageRuntime } from './i18n/namespace-language';
 import './hp-help';
 
 import {
-  DEFAULT_CUSTOM_FILL,
-  DEFAULT_ROOM_COLOR,
-  DEFAULT_ROOM_OPACITY,
-  DEFAULT_TEMP_MAX,
-  DEFAULT_TEMP_MIN,
-  customFillOf,
-  spaceDisplayOf,
-} from './logic';
-import { northDegOf } from './sun';
-import { signalVisibilityModeOf, writeSpaceSignalVisibility } from './signal-visibility';
-import {
   createEmptySpaceConfig,
-  initialSpaceDisplayDraft,
 } from './space-dialog';
 import { rememberSpaceDialogBaseline, spaceDialogProblems } from './editors/space-form-state';
-import {
-  gridCellFieldValue,
-  newSpaceCellCm,
-} from './grid-scale';
-import { zeroWallStyleOf } from './zero-walls';
+import { newSpaceDialogDraft, savedSpaceDialogDraft, spaceDialogSettings } from './editors/space-dialog-draft';
 import type { HouseplanEditorHostPort } from './houseplan-editor-runtime';
 // #600: форма и границы шага сетки — из одного модуля с редактором; прежняя
 // локальная копия констант и `strictNumber` нарушала «одно число — один источник».
@@ -66,64 +50,10 @@ export class HouseplanOnboardingRuntime {
     if (mode === 'edit') {
       const sp = this.host._serverCfg.spaces.find((space) => space.id === spaceId);
       if (!sp) return;
-      const disp = spaceDisplayOf(sp);
-      const storedCustom = sp.settings?.custom_fill && typeof sp.settings.custom_fill === 'object'
-        ? customFillOf(sp.settings.custom_fill) : null;
-      const dialogCustom = disp.fill === 'none'
-        ? { ...(storedCustom || DEFAULT_CUSTOM_FILL), a: 0 }
-        : storedCustom;
-      this.host._spaceDialog = {
-        mode, spaceId, title: sp.title, planUrl: sp.plan_url || null, planFile: null,
-        source: sp.plan_url ? 'file' : 'draw',
-        showBorders: disp.showBorders, showNames: disp.showNames,
-        zeroWallStyle: zeroWallStyleOf(sp),
-        displayTouched: true,
-        hideDecor: disp.hideDecor, hideOpenings: disp.hideOpenings,
-        roomColor: disp.color, roomOpacity: disp.opacity,
-        fillMode: disp.fill === 'none' ? 'custom' : disp.fill,
-        customFill: dialogCustom,
-        glowEnabled: disp.glow,
-        bgColor: disp.bgColor,
-        bgMode: sp.settings?.bg_mode === 'static' || sp.settings?.bg_mode === 'daynight'
-          ? sp.settings.bg_mode : null,
-        northDeg: northDegOf({}, sp.settings),
-        northDegInput: northDegOf({}, sp.settings) === null ? '' : String(northDegOf({}, sp.settings)),
-        sunRays: typeof sp.settings?.sun_rays === 'boolean' ? sp.settings.sun_rays : null,
-        tempMin: disp.tempMin, tempMax: disp.tempMax,
-        tempMinInput: String(disp.tempMin), tempMaxInput: String(disp.tempMax),
-        showLqiMode: signalVisibilityModeOf(sp.settings),
-        cardFontScale: disp.cardFontScale,
-        labelTemp: disp.labelTemp, labelHum: disp.labelHum,
-        labelLqi: disp.labelLqi, labelLight: disp.labelLight,
-        cellCm: Number(sp.cell_cm) > 0 ? Number(sp.cell_cm) : 5,
-        cellCmInput: gridCellFieldValue(
-          Number(sp.cell_cm) > 0 ? Number(sp.cell_cm) : 5, this.host._imperial,
-        ),
-        cellCmTouched: false,
-        busy: false,
-      };
+      this.host._spaceDialog = savedSpaceDialogDraft(sp, this.host._imperial);
       return;
     }
-    const cellCm = newSpaceCellCm(this.host._imperial);
-    this.host._spaceDialog = {
-      mode, title: '', planUrl: null, planFile: null,
-      ...initialSpaceDisplayDraft(),
-      hideDecor: false, hideOpenings: false, zeroWallStyle: 'dashed',
-      roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'custom',
-      customFill: { ...DEFAULT_CUSTOM_FILL, a: 0 },
-      glowEnabled: true,
-      bgColor: null,
-      bgMode: 'daynight', northDeg: null, northDegInput: '', sunRays: null,
-      tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
-      tempMinInput: String(DEFAULT_TEMP_MIN), tempMaxInput: String(DEFAULT_TEMP_MAX),
-      showLqiMode: 'inherit',
-      cardFontScale: 1,
-      labelTemp: false, labelHum: false, labelLqi: false, labelLight: false,
-      cellCm,
-      cellCmInput: gridCellFieldValue(cellCm, this.host._imperial),
-      cellCmTouched: false,
-      busy: false,
-    };
+    this.host._spaceDialog = newSpaceDialogDraft(this.host._imperial);
     // #600 К10: снимок на момент открытия — от него считается «есть изменения».
     rememberSpaceDialogBaseline(this.host, this.host._spaceDialog);
   }
@@ -340,31 +270,7 @@ export class HouseplanOnboardingRuntime {
         delete space.plan_scale_y;
         delete space.plan_angle;
       }
-      space.settings = writeSpaceSignalVisibility({
-        ...(space.settings || {}),
-        show_borders: dialog.showBorders,
-        show_names: dialog.showNames,
-        hide_decor: dialog.hideDecor || undefined,
-        hide_openings: dialog.hideOpenings || undefined,
-        room_color: dialog.roomColor,
-        room_opacity: dialog.roomOpacity,
-        bg_color: dialog.bgColor || undefined,
-        bg_mode: dialog.bgMode || undefined,
-        north_deg: dialog.northDeg ?? undefined,
-        sun_rays: dialog.sunRays ?? undefined,
-        fill_mode: dialog.fillMode,
-        custom_fill: dialog.customFill || undefined,
-        glow_enabled: dialog.glowEnabled,
-        temp_min: Number.isFinite(dialog.tempMin)
-          ? Math.min(dialog.tempMin, dialog.tempMax) : DEFAULT_TEMP_MIN,
-        temp_max: Number.isFinite(dialog.tempMax)
-          ? Math.max(dialog.tempMin, dialog.tempMax) : DEFAULT_TEMP_MAX,
-        card_font_scale: dialog.cardFontScale !== 1 ? dialog.cardFontScale : undefined,
-        label_temp: dialog.labelTemp,
-        label_hum: dialog.labelHum,
-        label_lqi: dialog.labelLqi,
-        label_light: dialog.labelLight,
-      }, dialog.showLqiMode);
+      space.settings = spaceDialogSettings(dialog, space.settings);
       space.zero_wall_style = dialog.zeroWallStyle;
       space.cell_cm = Number.isFinite(dialog.cellCm) && dialog.cellCm > 0
         ? Math.max(CELL_CM_MIN, Math.min(CELL_CM_MAX, dialog.cellCm)) : 5;
@@ -427,26 +333,7 @@ export class HouseplanOnboardingRuntime {
   public _openNextImport(): void {
     const title = this.host._importQueue.shift();
     if (title === undefined) return;
-    const cellCm = newSpaceCellCm(this.host._imperial);
-    this.host._spaceDialog = {
-      mode: 'create', title, planUrl: null, planFile: null,
-      ...initialSpaceDisplayDraft(),
-      hideDecor: false, hideOpenings: false, zeroWallStyle: 'dashed',
-      roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'custom',
-      customFill: null,
-      glowEnabled: true,
-      bgColor: null,
-      bgMode: 'daynight', northDeg: null, northDegInput: '', sunRays: null,
-      tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
-      tempMinInput: String(DEFAULT_TEMP_MIN), tempMaxInput: String(DEFAULT_TEMP_MAX),
-      showLqiMode: 'inherit',
-      cardFontScale: 1,
-      labelTemp: false, labelHum: false, labelLqi: false, labelLight: false,
-      cellCm,
-      cellCmInput: gridCellFieldValue(cellCm, this.host._imperial),
-      cellCmTouched: false,
-      busy: false,
-    };
+    this.host._spaceDialog = { ...newSpaceDialogDraft(this.host._imperial), title, customFill: null };
     // #600 К10: снимок на момент открытия — от него считается «есть изменения».
     rememberSpaceDialogBaseline(this.host, this.host._spaceDialog);
   }

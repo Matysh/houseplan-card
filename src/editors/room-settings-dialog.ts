@@ -11,8 +11,8 @@
  */
 import { html, nothing, type TemplateResult } from 'lit';
 
-import { langOf, type I18nKey } from '../i18n';
-import { settingsT, type SettingsI18nKey } from '../i18n/settings';
+import { type I18nKey } from '../i18n';
+import { settingsCopy } from './settings-copy';
 import { ROOM_FILL_MODES, spaceDisplayOf } from '../logic';
 import { roomTempThresholdDraft, strictNumber } from '../space-dialog';
 import type { HouseplanEditorRuntime } from '../houseplan-editor-runtime';
@@ -21,6 +21,8 @@ import {
   rangeLine, segmented, sourcePicker, subsection, textLink, toggleRow, unitInput,
 } from './form-kit';
 import { roomDirty, roomProblems } from './room-form-state';
+import { ROOM_CO2_PREVIEW } from '../room-co2';
+import { roomCardPreview } from './room-card-preview';
 
 type RoomFillMode = typeof ROOM_FILL_MODES[number];
 
@@ -29,24 +31,26 @@ type RoomFillMode = typeof ROOM_FILL_MODES[number];
  * конкретного — кнопка выбора и панель с поиском в потоке карточки. Кандидаты
  * (`_roomSrcCandidates`) и запись (`_roomTempSrc` / `_roomHumSrc`) прежние.
  */
-function renderRoomSource(runtime: HouseplanEditorRuntime, kind: 'temp' | 'hum'): TemplateResult {
+function renderRoomSource(runtime: HouseplanEditorRuntime, kind: 'temp' | 'hum' | 'co2'): TemplateResult {
   const host = runtime.host;
-  const val = kind === 'temp' ? host._roomTempSrc : host._roomHumSrc;
+  const { st } = settingsCopy(host);
+  const val = kind === 'temp' ? host._roomTempSrc : kind === 'hum' ? host._roomHumSrc : host._roomCo2Src;
   const setVal = (v: string) => {
     if (kind === 'temp') host._roomTempSrc = v;
-    else host._roomHumSrc = v;
+    else if (kind === 'hum') host._roomHumSrc = v;
+    else host._roomCo2Src = v;
     host.requestUpdate();
   };
   const open = host._roomSrcOpen === kind;
-  const label = host._t(kind === 'temp' ? 'room.temp_src_label' : 'room.hum_src_label');
+  const label = st(kind === 'temp' ? 'room.temp_src_label' : kind === 'hum' ? 'room.hum_src_label' : 'room.co2_src_label');
   return html`${subsection({ title: label })}
     ${segmented<'avg' | 'pick'>({
       name: `rsrc-${kind}`,
       value: val ? 'pick' : 'avg',
       ariaLabel: label,
       options: [
-        { value: 'avg', label: host._t('room.src_average') },
-        { value: 'pick', label: host._t('room.src_pick') },
+        { value: 'avg', label: st('room.src_average') },
+        { value: 'pick', label: st('room.src_pick') },
       ],
       onChange: (choice) => {
         if (choice === 'avg') { setVal(''); host._roomSrcOpen = null; return; }
@@ -60,7 +64,7 @@ function renderRoomSource(runtime: HouseplanEditorRuntime, kind: 'temp' | 'hum')
           id: `room-${kind}-source`,
           open,
           current: val ? { label: runtime._roomSrcLabel(val), sub: val } : null,
-          placeholder: host._t('room.src_ph'),
+          placeholder: st('room.src_ph'),
           ariaLabel: label,
           filter: host._roomSrcFilter,
           filterPlaceholder: host._t('marker.search_ph'),
@@ -78,14 +82,18 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
   ensureFormKitStyles(this.host);
   const host = this.host;
   const t = host._t.bind(host);
-  const lang = langOf(host.hass, host._config?.language);
-  const st = (key: SettingsI18nKey, vars?: Record<string, string | number>) => settingsT(lang, key, vars);
+  const { st, shelp } = settingsCopy(host);
   const edit = !!host._roomEditId;
   const faceBatch = !edit ? host._wallFaceBatch : null;
   const batchProgress = faceBatch && faceBatch.candidates.length > 1
     ? t('room.queue_progress', { current: faceBatch.index + 1, total: faceBatch.candidates.length })
     : '';
   const spaceDisplay = spaceDisplayOf(host._curSpaceCfg);
+  const savedRoom = host._spaceModel()?.rooms.find((room) => room.id === host._roomEditId);
+  const co2Preview = spaceDisplay.labelCo2 ? (savedRoom || host._areaSel || host._roomCo2Src ? host._roomCo2({
+    ...savedRoom, name: host._nameSel, area: host._areaSel || null,
+    settings: { ...savedRoom?.settings, co2_source: host._roomCo2Src || undefined },
+  }, true) : ROOM_CO2_PREVIEW) : undefined;
   const inherit = host._roomFill === '';
   const effectiveFill = host._roomFill || spaceDisplay.fill;
   const customFill = host._roomCustomFill || spaceDisplay.customFill;
@@ -147,7 +155,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
                 @input=${(e: Event) => { host._nameSel = (e.target as HTMLInputElement).value; host.requestUpdate(); }} />`,
             }),
             field({
-              label: t('room.area_label'), htmlFor: 'room-area', help: this._help('room.group_basics.help'),
+              label: t('room.area_label'), htmlFor: 'room-area', help: shelp('room.group_basics.help'),
               control: html`<select id="room-area" class="hpf-select"
                 @change=${(e: Event) => {
                   host._areaSel = (e.target as HTMLSelectElement).value;
@@ -163,7 +171,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
         ${formCard({
           id: 'fill',
           title: t('room.group_fill'),
-          help: this._help('room.group_fill.help'),
+          help: shelp('room.group_fill.help'),
           body: html`
             ${toggleRow({
               id: 'room-fill-inherit', icon: 'mdi:layers-outline',
@@ -206,7 +214,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
               : nothing}
             ${effectiveFill === 'temp'
               ? html`<div class="hpf-field hpf-temprange">
-                  <span class="hpf-label hpf-labelrow">${t('room.temp_range_label')}${this._help('room.temp_range.help')}</span>
+                  <span class="hpf-label hpf-labelrow">${t('room.temp_range_label')}${shelp('room.temp_range.help')}</span>
                   ${fieldGrid([
                     field({
                       label: st('room.temp_min_label'), htmlFor: 'room-temp-min',
@@ -239,14 +247,14 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
         })}
         ${formCard({
           id: 'sources',
-          title: t('room.group_sources'),
-          help: this._help('room.group_sources.help'),
-          body: html`${renderRoomSource(this, 'temp')}${renderRoomSource(this, 'hum')}`,
+          title: st('room.group_sources'),
+          help: shelp('room.group_sources.help'),
+          body: html`${renderRoomSource(this, 'temp')}${renderRoomSource(this, 'hum')}${renderRoomSource(this, 'co2')}`,
         })}
         ${formCard({
           id: 'sizes',
           title: t('room.sizes_section'),
-          help: this._help('room.sizes_section.help'),
+          help: shelp('room.sizes_section.help'),
           body: html`
             ${sizeRows.map(([key, labelKey, value, write]) => html`<div class="hpf-field">
                 <div class="hpf-headline">
@@ -261,7 +269,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
                 ${rangeEnds('50%', '300%')}
               </div>`)}
             <p class="hpf-hint">${st('room.sizes_hint', { v: String(pct(spaceDisplay.cardFontScale)) })}</p>
-            <div class="hpf-tint hpf-preview">${host._renderCardPreview(spaceDisplay.cardFontScale, host._roomNameScale, host._roomLabelScale)}</div>`,
+            <div class="hpf-tint hpf-preview">${roomCardPreview(t, st('preview.room_name'), spaceDisplay.cardFontScale, host._roomNameScale, host._roomLabelScale, co2Preview)}</div>`,
         })}
       </div>
       <div class="row dialog-action-footer hpf-footer" slot="footer">

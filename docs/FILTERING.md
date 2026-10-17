@@ -217,6 +217,13 @@ the old behaviour until an editing client materialises it.
 
 ## What a marker shows
 
+Room CO₂ (#920) follows the active-registry and placement policy of room
+temperature/humidity: hidden or unplaced sources count, deleted, disabled,
+orphaned or unverified sources do not. One physical device votes once per room,
+even with both device and entity markers. An explicit source overrides
+automatic discovery filters, never lifecycle/read access; unavailability
+yields no reading, not a fallback to the average.
+
 Presentation — which entity the plate, icon morph and activity follow, and the
 owner's rules for covers and media players — is not filtering. Its source of
 truth is `DEVICE-PRESENTATION.md`, section «Source precedence: what a marker

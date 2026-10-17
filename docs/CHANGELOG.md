@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Room cards can show CO₂ in ppm, with an automatic room average or a selected
+  sensor. Off by default; room tooltips and previews use the same reading.
+  Main plan and kiosk, Flat and 2.5D ([#920](https://github.com/Matysh/houseplan-card/issues/920)).
+
 - Grouped and wall-snapped device outlines stay aligned when zooming and use
   the same border thickness as ordinary markers
   ([#951](https://github.com/Matysh/houseplan-card/issues/951)).

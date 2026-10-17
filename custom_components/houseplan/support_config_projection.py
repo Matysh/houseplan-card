@@ -379,7 +379,7 @@ def extend_config_projection(config: dict, projected: dict, ids: DiagnosticIds) 
                 room.setdefault("settings", {}).update(
                     _scalars(settings, numbers=("temp_min", "temp_max"))
                 )
-                for key in ("temp_source", "hum_source"):
+                for key in ("temp_source", "hum_source", "co2_source"):
                     if key in settings and settings[key] is None:
                         room["settings"][key] = None
         if "led_strips" in source:

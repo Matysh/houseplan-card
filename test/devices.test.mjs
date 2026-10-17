@@ -1284,7 +1284,7 @@ test('areaClimateMap: комната только с климат-источни
   };
   assert.equal(areaClimateMap(hass).get('bed'), undefined);
   const markers = [{ id: 'm1', binding: 'device:dac', use_climate_temp: true }];
-  assert.deepEqual(areaClimateMap(hass, undefined, markers).get('bed'), { temp: 24.2, hum: null });
+  assert.deepEqual(areaClimateMap(hass, undefined, markers).get('bed'), { temp: 24.2, hum: null, co2: null });
 });
 
 test('areaClimateMap: температура и влажность живут в одной записи', () => {
@@ -1299,7 +1299,7 @@ test('areaClimateMap: температура и влажность живут в
       'sensor.q_h': { state: '48', attributes: { device_class: 'humidity', unit_of_measurement: '%' } },
     },
   };
-  assert.deepEqual(areaClimateMap(hass).get('hall'), { temp: 21.4, hum: 48 });
+  assert.deepEqual(areaClimateMap(hass).get('hall'), { temp: 21.4, hum: 48, co2: null });
 });
 
 test('issue 317: explicit device placement moves one climate vote between HA areas', () => {
@@ -1321,12 +1321,12 @@ test('issue 317: explicit device placement moves one climate vote between HA are
     id: 'moved', binding: 'device:moved', space: 'f1', area: 'new', hidden: true,
   }];
   const map = roomClimateMap(hass, undefined, moved);
-  assert.deepEqual(map.get('old'), { temp: 30, hum: null });
-  assert.deepEqual(map.get('new'), { temp: 20, hum: null });
+  assert.deepEqual(map.get('old'), { temp: 30, hum: null, co2: null });
+  assert.deepEqual(map.get('new'), { temp: 20, hum: null, co2: null });
 
   // Explicit and registry placement agree: the physical device still votes once.
   const same = [{ id: 'moved', binding: 'device:moved', space: 'f1', area: 'old' }];
-  assert.deepEqual(roomClimateMap(hass, undefined, same).get('old'), { temp: 25, hum: null });
+  assert.deepEqual(roomClimateMap(hass, undefined, same).get('old'), { temp: 25, hum: null, co2: null });
 });
 
 test('issue 317: a hidden real sensor supplies an area-less House Plan room', () => {
@@ -1347,7 +1347,7 @@ test('issue 317: a hidden real sensor supplies an area-less House Plan room', ()
   const key = roomClimateKey('garden', { id: 'shed', area: null });
   assert.equal(key, '@room/garden/shed');
   const map = roomClimateMap(hass, undefined, [marker]);
-  assert.deepEqual(map.get(key), { temp: 21.4, hum: 48 });
+  assert.deepEqual(map.get(key), { temp: 21.4, hum: 48, co2: null });
   assert.equal(map.get('registry-room'), undefined, 'manual placement owns the readings');
   assert.equal(roomClimateKey('other', { id: 'shed', area: null }), '@room/other/shed');
   assert.equal(roomClimateKey('', { id: 'shed', area: null }), null);
@@ -1373,9 +1373,9 @@ test('issue 317: exact entity placement wins over its parent marker only for tha
     },
   ];
   const map = roomClimateMap(hass, undefined, markers);
-  assert.deepEqual(map.get('parent-room'), { temp: 40, hum: null });
+  assert.deepEqual(map.get('parent-room'), { temp: 40, hum: null, co2: null });
   assert.deepEqual(map.get(roomClimateKey('f1', { id: 'local-room', area: null })), {
-    temp: 20, hum: null,
+    temp: 20, hum: null, co2: null,
   });
   assert.equal(map.get('registry-room'), undefined);
 });
@@ -1410,7 +1410,7 @@ test('issue 317: removed and HA-disabled bindings cannot feed a local room', () 
   ];
   assert.deepEqual(
     roomClimateMap(hass, undefined, markers).get('@room/f1/local-room'),
-    { temp: 20, hum: null },
+    { temp: 20, hum: null, co2: null },
   );
 });
 
@@ -1425,7 +1425,7 @@ test('issue 317: opted climate current_temperature follows manual placement', ()
     use_climate_temp: true,
   };
   const map = roomClimateMap(hass, undefined, [marker]);
-  assert.deepEqual(map.get('@room/f2/bed'), { temp: 23.5, hum: null });
+  assert.deepEqual(map.get('@room/f2/bed'), { temp: 23.5, hum: null, co2: null });
   assert.equal(map.get('old'), undefined);
 });
 
@@ -1489,7 +1489,7 @@ test('areaClimateMap: whole device tombstone wins; entity tombstone stays bindin
     { id: 'a', binding: 'device:a', removed: true },
     { id: 'b-temp', binding: 'entity:sensor.b_temperature', removed: true },
   ];
-  assert.deepEqual(areaClimateMap(hass, undefined, markers).get('living'), { temp: 30, hum: null });
+  assert.deepEqual(areaClimateMap(hass, undefined, markers).get('living'), { temp: 30, hum: null, co2: null });
 });
 
 test('issue 262 room climate restores only the exact live child of a tombstoned device', () => {
@@ -1508,7 +1508,7 @@ test('issue 262 room climate restores only the exact live child of a tombstoned 
     { id: 'hub', binding: 'device:hub', removed: true },
     { id: 'room-temp', binding: 'entity:sensor.room_temperature' },
   ];
-  assert.deepEqual(areaClimateMap(hass, undefined, markers).get('living'), { temp: 20, hum: null });
+  assert.deepEqual(areaClimateMap(hass, undefined, markers).get('living'), { temp: 20, hum: null, co2: null });
 });
 
 test('resolvedLightSources: one source set feeds room fill, card, glow and controls', () => {
@@ -2156,16 +2156,16 @@ test('issue 369в: легаси-маркер без ключа area размещ
   // ключ area ОТСУТСТВУЕТ (экспорт/легаси), а не явный null
   const absent = [{ id: 'legacy', binding: 'device:legacy', space: 'f1', room_id: 'shed' }];
   const map = roomClimateMap(hass, undefined, absent);
-  assert.deepEqual(map.get('@room/f1/shed'), { temp: 19, hum: null },
+  assert.deepEqual(map.get('@room/f1/shed'), { temp: 19, hum: null, co2: null },
     'undefined area == null area: комната получает голос');
   // явный null даёт тот же ключ (регресс #317)
   const explicit = [{ id: 'legacy', binding: 'device:legacy', space: 'f1', room_id: 'shed', area: null }];
   assert.deepEqual(roomClimateMap(hass, undefined, explicit).get('@room/f1/shed'),
-    { temp: 19, hum: null });
+    { temp: 19, hum: null, co2: null });
   // строковая area по-прежнему побеждает (регресс-защита)
   const areaMarker = [{ id: 'legacy', binding: 'device:legacy', space: 'f1', room_id: 'shed', area: 'kitchen' }];
   assert.deepEqual(roomClimateMap(hass, undefined, areaMarker).get('kitchen'),
-    { temp: 19, hum: null });
+    { temp: 19, hum: null, co2: null });
 });
 
 
@@ -2196,7 +2196,7 @@ test('#44 AC4b: roomClimateMap filters by the configured exclusion set', () => {
     },
   };
   // default (no user key): demo_x is not in the product list -> climate counts
-  assert.deepEqual(roomClimateMap(hass, undefined, []).get('old'), { temp: 21, hum: null });
+  assert.deepEqual(roomClimateMap(hass, undefined, []).get('old'), { temp: 21, hum: null, co2: null });
   // the user excludes demo_x -> the SAME reading disappears from room climate
   const excluded = effectiveExcludedIntegrations({ exclude_integrations: ['demo_x'] });
   assert.equal(roomClimateMap(hass, undefined, [], excluded).get('old'), undefined,
@@ -2211,7 +2211,7 @@ test('#44 AC4b: roomClimateMap filters by the configured exclusion set', () => {
     states: { 'climate.thermo': { state: 'heat', attributes: { current_temperature: 23 } } },
   };
   assert.deepEqual(roomClimateMap(hassClimate, undefined, opted, excluded).get('old'),
-    { temp: 23, hum: null }, 'explicit opt-in stays stronger than the exclusion');
+    { temp: 23, hum: null, co2: null }, 'explicit opt-in stays stronger than the exclusion');
 });
 
 // #44 AC6: the preview must run the real discovery, not a copy of the filter.
