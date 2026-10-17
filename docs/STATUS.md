@@ -25,6 +25,10 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Contact-outline zoom repair (#951) removes the inline SVG line-box offset and
+the independent fixed stroke. Full/static Flat contacts use the ordinary shell
+thickness without new geometry, camera or storage ownership.
+
 SPEC heading compatibility (#950) accepts the publisher's canonical and
 issue/round headings only for the exact added SPEC file. Publisher, delta and
 machine material proof stay strict; historical documents remain unchanged.

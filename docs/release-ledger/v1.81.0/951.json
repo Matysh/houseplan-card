@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 951,
+  "baseStable": "v1.81.0",
+  "category": "line-fix",
+  "rationale": "Fixes zoom registration and stroke thickness of the Flat contact/group outlines introduced by #866 in this release cycle, absent from v1.81.0. No new feature or stable-version contract is introduced.",
+  "summary": {
+    "ru": "Обводка групп и устройств у стен не смещается при зуме и совпадает по толщине с обычными маркерами.",
+    "en": "Grouped and wall-snapped outlines stay aligned during zoom and match ordinary marker borders."
+  }
+}

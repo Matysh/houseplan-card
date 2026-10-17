@@ -262,6 +262,14 @@ Decor-only edits do not invalidate contact walls or the contact graph (#935).
 The wall key excludes only decor from the existing floor-record fingerprint;
 architectural edits, scale, visibility and distinct preview records still count.
 
+Contact SVGs are block-level boxes, not font-line participants (#951): even a
+core smaller than the inherited line height keeps its path registered during
+zoom. Their non-scaling stroke uses the ordinary shell's effective border-width
+variable, rounded down to the same whole CSS-pixel used width, with the shared
+width as a fallback for older engines without CSS `round()`. There is no separate
+1.5 px contact thickness. Camera changes update CSS sizes, not the contact graph
+or saved positions; full and static cards share these rules.
+
 - `device-value-badge.ts` owns candidate discovery, source keys, HA formatting,
   units and unavailable handling for `marker.value_source` (inner Value face)
   and `marker.value_badge` (satellite). Absent `value_source` keeps the legacy

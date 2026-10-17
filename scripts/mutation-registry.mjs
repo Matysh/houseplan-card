@@ -2222,6 +2222,22 @@ const MUTANT_DEFINITIONS = [
       replace:'.dev[data-hp-device-contact] .device-shell-frame { opacity: 1; pointer-events: none; transition: none; }'}],
   },
   {
+    id: 'device-contact-inline-zoom-drift-951',
+    guard: 'node demo/smoke_device_contact_zoom.mjs',
+    because: '#951 AC1: actual path screen coordinates must stay registered below the font line height during native pinch, not merely after returning to fit.',
+    patches: [{file:'src/device-contact.styles.ts',
+      find:'.device-contact-ink > svg { display: block;',
+      replace:'.device-contact-ink > svg { display: inline;'}],
+  },
+  {
+    id: 'device-contact-fixed-stroke-951',
+    guard: 'node demo/smoke_device_contact_zoom.mjs',
+    because: '#951 AC2: the painted contact stroke must equal the effective ordinary border over small/large scales rather than stay at an independent 1.5 pixels.',
+    patches: [{file:'src/device-contact.styles.ts',
+      find:'stroke-width: round(down, var(--device-shell-border-width), 1px);',
+      replace:'stroke-width: 1.5;'}],
+  },
+  {
     id: 'space-reattach-skips-authoritative-read',
     guard: 'node demo/smoke_view_recovery.mjs',
     because: '#824 AC1 crosses real custom-element detach/attach and missed HA events: '

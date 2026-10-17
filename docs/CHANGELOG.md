@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Grouped and wall-snapped device outlines stay aligned when zooming and use
+  the same border thickness as ordinary markers
+  ([#951](https://github.com/Matysh/houseplan-card/issues/951)).
+
 - Devices includes virtual markers, a precise space filter and confirmed batch
   deletion. Selection stays within the filtered list; unavailable HA bindings
   can be deleted without pretending they can be shown or hidden. The add button

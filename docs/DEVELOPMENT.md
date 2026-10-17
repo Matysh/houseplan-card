@@ -1,5 +1,23 @@
 # Development and deployment
 
+## Contact outlines during zoom (#951)
+
+After `npm run bundle:sync`, run `node demo/smoke_device_contact_zoom.mjs` and
+`node demo/smoke_device_contacts.mjs`. The zoom witness uses the existing frozen
+designer board (45-unit core calibration), an inclined wall and real native
+pinch/button/wheel/pan input. It checks the screen matrix of the actual path,
+effective border widths, accepted config/layout and contact work counters during
+intermediate frames, plus the shared static card. Its PNGs live in
+`artifacts/951/zoom`; `HP_CONTACT_ZOOM_ARTIFACTS` changes only the output folder.
+An inline SVG drifts when a core is smaller than its inherited font line; a
+fixed SVG stroke also differs from ordinary CSS borders. The repair is local
+CSS, including the ordinary border's whole-pixel rounding (`round(down, …, 1px)`;
+[CSS round](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/round)).
+The shared-width fallback remains for older engines. No per-frame DOM measuring
+or geometry/cache policy is added. Mutation declarations are static readiness
+only; execution remains nightly-only. Accept only the two intentionally changed
+device-contact goldens through the normal full Linux/attested-WSL workflow.
+
 ## Device catalog operations (#930)
 
 Run `node --test test/device-inbox.test.mjs test/device-inbox-930.test.mjs`

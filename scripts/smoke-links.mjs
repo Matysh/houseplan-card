@@ -30,6 +30,11 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/device-contact.styles.ts'],
+    smokes: ['smoke_device_contact_zoom.mjs'],
+    because: '#951: native zoom observes the actual SVG screen matrix and the ordinary shell border, not stylesheet text; covers small cores, DPR, themes and static cards.',
+  },
+  {
     files: ['src/device-inbox.ts', 'src/device-inbox-batch.ts', 'src/marker-deletion.ts'],
     smokes: ['smoke_device_inbox_delete.mjs'],
     because: '#930: native catalog filters, virtual selection, confirmation and accepted wire pair prove exact deletion and refusal without calling the shared helpers.',

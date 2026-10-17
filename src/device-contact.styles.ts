@@ -3,9 +3,14 @@ import { css } from 'lit';
 
 export const deviceContactStyles = css`
   .device-contact-ink { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
-  .device-contact-ink > svg { width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+  /* An inline SVG joins a font-sized line box and drifts below small cores. */
+  .device-contact-ink > svg { display: block; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
   .device-contact-contour {
-    fill: none; stroke: var(--device-shell-stroke); stroke-width: 1.5;
+    fill: none; stroke: var(--device-shell-stroke);
+    stroke-width: var(--device-shell-border-width);
+    /* Match the ordinary CSS border's used whole-pixel width, not an
+       independently scaled SVG user-unit stroke. Keep the fallback above. */
+    stroke-width: round(down, var(--device-shell-border-width), 1px);
     vector-effect: non-scaling-stroke; pointer-events: none;
     filter: drop-shadow(0 2px 3px rgb(37 40 45 / 16%));
   }

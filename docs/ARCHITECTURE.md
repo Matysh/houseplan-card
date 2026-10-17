@@ -633,6 +633,9 @@ runtime owns it and its stylesheet. A changed value with the same fitted box and
 DOM identity reuses the spatial graph. Full/static adapters share the same geometry.
 The hit controller consumes each member's own rounded contact silhouette, never
 the whole group's bbox. Icon/text/actions and passive diagnostics stay individual.
+Contact SVGs are block boxes and reuse the normal shell border-width (#951),
+including its whole-pixel used width; zoom does not require a new measurement,
+graph rebuild, layout writer or camera hook to keep paths and strokes aligned.
 The lazy editor resolves contact before independent spacing/grid and carries
 one canonical point through preview and the existing writer/history. Optimize
 receives positive all-floor face evidence and rechecks contacts against its
