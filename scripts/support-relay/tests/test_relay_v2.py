@@ -29,10 +29,19 @@ class V2TestCase(unittest.TestCase):
         sys.modules[spec.name] = module
         spec.loader.exec_module(module)
         package = json.loads(FIXTURE.read_bytes())
+        # #920: the new optional room metric must pass the actual deployed
+        # boundary, not just the integration's copy of the closed schema.
+        package["plan_backup"]["config"]["spaces"] = [{
+            "id": "space-case-1", "settings": {"label_co2": True},
+            "rooms": [{"id": "room-case-1", "settings": {
+                "co2_source": "entity:entity-case-1", "co2_source_kind": "entity",
+            }}],
+        }]
         module.validate_package(package)
-        status, payload = self.post(request_json(FIXTURE.read_bytes()), FIXTURE.read_bytes())
+        positive = json.dumps(package).encode()
+        status, payload = self.post(request_json(positive), positive)
         self.assertEqual(status, 200, payload)
-        self.assertEqual(self.provider.calls[0][2], FIXTURE.read_bytes())
+        self.assertEqual(self.provider.calls[0][2], positive)
         bad_inputs = []
         for path, value in [
             (("diagnostics", "environment", "opaque"), "secret"),
@@ -40,6 +49,9 @@ class V2TestCase(unittest.TestCase):
             (("version",), 3),
             (("diagnostics", "devices", "entities"), [{"id": "sensor.raw", "shape": "numeric"}]),
             (("diagnostics", "vacuums"), [{"marker": "marker-case-1", "current": {"sample": {"kept_points": True}}}]),
+            (("plan_backup", "config", "spaces"), [{"settings": {"label_co2": "true"}}]),
+            (("plan_backup", "config", "spaces"), [{"rooms": [{"settings": {"co2_source": "sensor.raw"}}]}]),
+            (("plan_backup", "config", "spaces"), [{"rooms": [{"settings": {"co2_source_kind": "future"}}]}]),
         ]:
             bad = copy.deepcopy(package)
             parent = bad

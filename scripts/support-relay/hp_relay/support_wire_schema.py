@@ -307,7 +307,7 @@ GLOBAL_SETTINGS = Object(
 SPACE_SETTINGS = Object(
     {
         **fields(
-            "show_borders show_names glow_enabled show_lqi hide_decor hide_openings label_temp label_hum label_lqi label_light sun_rays",
+            "show_borders show_names glow_enabled show_lqi hide_decor hide_openings label_temp label_hum label_co2 label_lqi label_light sun_rays",
             nullable(BOOL),
         ),
         **fields("room_color bg_color", nullable(COLOR)),
@@ -336,11 +336,11 @@ ROOM = Object(
                 "glow": nullable(BOOL),
                 **fields("name_scale label_scale temp_min temp_max", nullable(NUMBER)),
                 **fields(
-                    "temp_source hum_source",
+                    "temp_source hum_source co2_source",
                     Choice((None, re.compile(r"(?:device|entity):" + REF.pattern))),
                 ),
                 **fields(
-                    "temp_source_kind hum_source_kind",
+                    "temp_source_kind hum_source_kind co2_source_kind",
                     enum("device", "entity", "virtual", "unknown"),
                 ),
             }

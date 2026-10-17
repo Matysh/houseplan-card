@@ -14,6 +14,10 @@ Screenshots are generated under `artifacts/room-co2`. The golden matrix adds
 the intentionally changed room/space source forms after full attested capture.
 Backend validation, full/space backup round-trip, diagnostic pseudonyms and
 HA read-ACL capture have named tests in the corresponding backend suites.
+The closed support schema is mirrored byte-for-byte into the relay; run
+`python -m unittest discover -s scripts/support-relay/tests -q` as well.
+Before a HACS build with these fields ships, deploy the accepted relay schema
+through the staging/discard then backed-up production sequence in its README.
 CO₂ mutations are readiness-only during development, execution is nightly.
 No subscriptions, timers or geometry migration are introduced. The editor
 previews a newly selected unsaved source against the active registry; the
