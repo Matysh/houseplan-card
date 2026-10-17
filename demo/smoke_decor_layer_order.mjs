@@ -155,9 +155,8 @@ const glow = await page.evaluate(async () => {
   const follows = (lower, upper) => !!lower && !!upper
     && !!(lower.compareDocumentPosition(upper) & Node.DOCUMENT_POSITION_FOLLOWING);
   return {
-    glowBaseExists: !!base,
-    glowTunnelExists: !!tunnel,
-    glowBaseBeforeDecor: follows(base, decor) && follows(tunnel, decor),
+    noRetiredGlowBase: !base,
+    noRetiredGlowTunnel: !tunnel,
     decorBeforeLiveGlow: follows(decor, liveGlow),
   };
 });

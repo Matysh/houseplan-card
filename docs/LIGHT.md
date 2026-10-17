@@ -402,14 +402,15 @@ cycles and cross-space transfer — `tests_backend/`.
 Glow is an overlay, not a fill mode: space `settings.glow_enabled` and room
 `settings.glow` (`null` inherits) are independent of the data `fill_mode`; the
 legacy `fill_mode: 'glow'` projection is in `CONFIG-COMPATIBILITY.md`. Floor
-order is paper → resolved data room/tunnel fill → Glow base → decor
-(`DECOR-EDITOR.md` §3.3) → radial pools → sun and interactive layers. The dark,
-pointer-free Glow base is painted only for rooms whose fill resolver returned
-nothing or a fully transparent colour: explicit `none`, a zero-opacity
-`custom`, a dynamic mode without usable data. A resolved `lqi`, `light`, `temp`
-or `custom` fill never receives it, so its exact colour and alpha stay visible.
-Pools render independently of the base; the static card uses the same data/base
-projection and omits empty base groups.
+order is paper → resolved data room/tunnel fill → decor
+(`DECOR-EDITOR.md` §3.3) → radial pools → sun and interactive layers.
+Since #943 there is no uniform room darkness layer, including opening tunnels
+and the 2.5D light-floor classification. `none`, zero-opacity `custom` and
+missing dynamic data stay empty; visible data fills keep their exact colour
+and alpha. Switching Glow without active sources does not repaint the floor.
+Light pools, LED fields, source brightness/colour/radius, fades, barrier clips
+and blending are unchanged. Old `settings.fill_colors.glow_base` is accepted
+but ignored; loading never rewrites it (`CONFIG-COMPATIBILITY.md`).
 
 ## Which surfaces render pools
 
@@ -418,7 +419,7 @@ The full `houseplan-card` always renders pools for rooms where Glow is enabled.
 visibility clip and SVG pool renderer when its public `light_pools: true` option
 is enabled. It remains off by default: in that path the static card builds no
 barrier/visibility geometry, starts no Glow transition timers and paints only
-the shared room/data/base projection.
+the shared room/data projection, with no uniform darkness fallback.
 
 The opt-in remains fully static — `.hp-static-stage` and the Glow layer have
 `pointer-events:none`. It is independent from the card's `live_states` marker

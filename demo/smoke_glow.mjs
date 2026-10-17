@@ -13,10 +13,9 @@ const res = await page.evaluate(async () => {
   await hp.setServerConfig((cfg) => inSpace(cfg, (s) => ({
     ...s, settings: { ...(s.settings || {}), fill_mode: 'glow' } })));
   await new Promise((r) => setTimeout(r, 250));
-  // 1) legacy glow переносится в отдельный base-overlay, не в data-fill комнат
-  const modelRooms = c._spaceModel().rooms.length;
+  // #943: legacy Glow leaves data fills empty and paints only actual light pools.
   out.dataFillSeparated = sr().querySelectorAll('.room.filled').length === 0;
-  out.glowBaseRooms = sr().querySelectorAll('.glow-base-layer .glow-base').length === modelRooms;
+  out.noRetiredGlowBase = sr().querySelectorAll('.glow-base-layer, .glow-base-tunnels').length === 0;
   // 2) пятна от включённых ламп
   const litLight = c._devices.find((d) => d.space === spId && d.entities.some((e) => e.startsWith('light.') && c.hass.states[e]?.state === 'on'));
   out.hasLitLight = !!litLight;

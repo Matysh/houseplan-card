@@ -149,7 +149,7 @@ checkAll(res, {
   "fillHasNone": false,
   "legacyNoneProjection": "custom",
   "legacyNoneAlpha": 0,
-  "legacyNoneGlowBases": 4,
+  "legacyNoneGlowBases": 0,
   "tempInputs": 2,
   "dialogWidth": 560,
 });

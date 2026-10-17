@@ -443,14 +443,12 @@ export const planStyles = css`
       fill: var(--room-fill, transparent);
       fill-opacity: var(--room-fill-op, 0);
     }
-    .glow-base-layer,
-    .glow-base-tunnels,
     .glow-pools-frame,
     .glow-pools,
     .glow-spot {
       pointer-events: none;
     }
-    /* The parent isolates all source spots from the room data fill, Glow base,
+    /* The parent isolates all source spots from the room data fill,
        paper and backdrop. A spot is one circle clipped to the floor its lamp
        can see, so the whole spot screen-blends as a single primitive — there is
        no mask left to be dropped on a promoted layer. Per-stop alpha already
@@ -1130,7 +1128,6 @@ export const planStyles = css`
     .stage .room-outline,
     .stage .wallbodies,
     .stage .opening-tunnels,
-    .stage .glow-base-layer,
     .stage .glow-pools-frame,
     .stage .zero-walls {
       opacity: var(--hp-mode-architecture-opacity, 1);

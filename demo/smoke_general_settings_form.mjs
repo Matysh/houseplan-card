@@ -44,7 +44,7 @@ const out = await page.evaluate(async () => {
     && !!zigbee.querySelector('.hpf-head hp-help[data-help-key="topology.help"]')
     && !!topo?.hasAttribute('embedded') && !topo.shadowRoot.querySelector('.section')
     && !!topo.shadowRoot.querySelector('.hpf-toggle input[type="checkbox"]');
-  o.colorTilesCount = qa('.hpf-colortile').length === 10; // 8 заливок + 2 свечения
+  o.colorTilesCount = qa('.hpf-colortile').length === 9; // 8 заливок + цвет свечения, без затемнения #943
   o.wallFillIsAPlate = !!q('.hpf-card[data-card="plan"] .hpf-colorrow .hpf-colorfield');
   o.compassIs44 = (() => { const b = q('.compass')?.getBoundingClientRect(); return !!b && Math.round(b.width) === 44 && Math.round(b.height) === 44; })();
   o.sunMissingIsACallout = !c.hass.states['sun.sun']

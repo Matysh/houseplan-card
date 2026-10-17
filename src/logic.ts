@@ -1433,8 +1433,6 @@ export interface FillColors {
   temp_hot: FillColorEntry;
   lqi_low: FillColorEntry;
   lqi_high: FillColorEntry;
-  /** Glow darkness for rooms whose effective data/static fill is `none`. */
-  glow_base: FillColorEntry;
   glow_light: FillColorEntry;
   /** Thick-wall body fill (docs/WALL-THICKNESS.md); default opaque white. */
   wall_fill: FillColorEntry;
@@ -1449,7 +1447,6 @@ export const DEFAULT_FILL_COLORS: FillColors = {
   temp_hot: { c: '#ffd45c', a: 0.18 },
   lqi_low: { c: '#f25a4a', a: 0.18 },
   lqi_high: { c: '#4bd28f', a: 0.18 },
-  glow_base: { c: '#0d1b2a', a: 0.5 },
   glow_light: { c: '#ffd9a0', a: 0.85 },
   wall_fill: { c: '#ffffff', a: 1 },
 };

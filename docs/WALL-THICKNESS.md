@@ -592,8 +592,8 @@ invoke it.
   centre overlap, so fractional rasterisation can neither cancel the fill into a
   seam nor stack its opacity. `render/opening-tunnels.ts` only projects these
   immutable inputs.
-- A fully nested room is legal (`polyContainsPoly`): the parent's floor, data
-  fill and Glow base are evenodd paths with the island rings as holes
+- A fully nested room is legal (`polyContainsPoly`): the parent's floor and data
+  fill are evenodd paths with the island rings as holes
   (`islandsOf`).
 
 ## 5. Sun

@@ -141,7 +141,7 @@ def _custom_fill(value: object) -> dict[str, Any] | None:
     return _copy_keys(value, ("c", "a"))
 
 
-# The eleven palette slots the card reads (src/logic.ts DEFAULT_FILL_COLORS).
+# The ten active palette slots the card reads (src/logic.ts DEFAULT_FILL_COLORS).
 # The config schema stays open on purpose so older or extended configs keep
 # loading; a package must not carry a key the product never defined (#498).
 SUPPORT_FILL_COLOR_KEYS = (
@@ -153,7 +153,6 @@ SUPPORT_FILL_COLOR_KEYS = (
     "temp_hot",
     "lqi_low",
     "lqi_high",
-    "glow_base",
     "glow_light",
     "wall_fill",
 )

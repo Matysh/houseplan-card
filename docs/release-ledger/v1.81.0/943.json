@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 943,
+  "baseStable": "v1.81.0",
+  "category": "stable-fix",
+  "rationale": "Removes the confusing uniform room-darkness feature that existed in v1.81.0, while preserving real lamp/LED light pools, room fills and compatibility with existing plans. This is polish of stable user behaviour, not a correction of a feature introduced only in this release cycle.",
+  "summary": {
+    "ru": "Убрана «Темнота дома»: комнаты больше не затемняются равномерной подложкой, свечение ламп и LED сохранено.",
+    "en": "Removed uniform room darkness while preserving lamp and LED glow."
+  }
+}

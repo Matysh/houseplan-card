@@ -342,6 +342,9 @@ byte-for-byte unchanged. Side-by-side acceptance frames:
 - Light or dark floor is decided per room: the room fill at its opacity over
   the plan paper, luma > 0.55 is light (`isoLightFloorRooms`). A marker belongs
   to the room of its overlay owner or, without walls, to the room under it.
+  Empty/transparent data uses paper only, never the retired `glow_base` (#943).
+  This may change tile contrast/shadows on a newly brighter floor, not wall
+  material colours or geometry. Cold and warm instances use the same input.
 - A raised room label keeps its 44 × 44 px touch floor in an invisible
   `::before`, like door locks; the label box itself is sized by its text, so
   the metrics row keeps the Flat distance from the name at every zoom (#665).

@@ -151,7 +151,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
         id: 'glow',
         title: t('gs.glow_group'),
         body: html`
-          ${colorTiles([tile('glow_base', 'gs.glow_base'), tile('glow_light', 'gs.glow_light')])}
+          ${colorTiles([tile('glow_light', 'gs.glow_light')])}
           ${field({
             label: st('gs.glow_radius'), htmlFor: 'gs-glow-radius', help: this._help('gs.glow_radius.help'),
             error: glowProblem ? st(glowProblem.message) : undefined,

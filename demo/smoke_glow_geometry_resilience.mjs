@@ -24,7 +24,7 @@ const out = await page.evaluate(async () => {
       fixtureHasLight: false,
       ulpFloorKeepsGlow: false,
       ulpNoiseNeedsNoFallback: false,
-      glowBaseKeepsAllRooms: false,
+      noRetiredGlowBase: false,
       malformedRoomKeepsHealthyGlow: false,
       fallbackWarningDeduplicated: false,
       fallbackWarningIsRedacted: false,
@@ -95,8 +95,7 @@ const out = await page.evaluate(async () => {
     && !!ulpPath?.getAttribute('d')
     && Number(root().querySelector('.glow-pool')?.dataset.litParts) > 0;
   result.ulpNoiseNeedsNoFallback = warnings.length === 0;
-  result.glowBaseKeepsAllRooms = root().querySelectorAll('.glow-base-layer .glow-base').length
-    === noisyFloor.length;
+  result.noRetiredGlowBase = root().querySelectorAll('.glow-base-layer, .glow-base-tunnels').length === 0;
 
   const healthy = [[3, 0], [5, 0], [5, 2], [3, 2]];
   const malformed = [[2, 1], [0, 0], [2, 2], [1, 0], [0, 2], [2, 0]];

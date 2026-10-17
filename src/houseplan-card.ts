@@ -9026,16 +9026,10 @@ export class HouseplanCard extends LitElement {
   private _renderOpeningTunnelFills(
     space: SpaceModel,
     roomFills: RoomFillFrame,
-    layer: 'data' | 'glow-base' = 'data',
   ): TemplateResult {
     // Plan mode replaces live fills with its blue editing wash. A coloured
     // tunnel there would no longer repeat the room and could obstruct handles.
     if (this._markup || !this._spaceWalls.length || !this._openingsR.length)
-      return svg`` as unknown as TemplateResult;
-    // Do not leave an empty presentation layer behind when Glow is disabled
-    // for every room. Besides keeping the DOM contract explicit, this avoids
-    // needless opening-index work on plans that do not use the overlay.
-    if (layer === 'glow-base' && ![...roomFills.byRoom.values()].some(Boolean))
       return svg`` as unknown as TemplateResult;
     const openCuts = this._openCuts();
     const geometryInputs = this._openingsR.map((opening) => ({
@@ -9054,77 +9048,10 @@ export class HouseplanCard extends LitElement {
       openings: this._openingsR,
       geometries: tunnels.value,
       fillsByRoomId: roomFills.byId,
-      idPrefix: `${space.id}-${layer}`,
-      groupClass: layer === 'data' ? 'opening-tunnels' : 'opening-tunnels glow-base-tunnels',
-      dataLayer: layer,
+      idPrefix: `${space.id}-data`,
+      groupClass: 'opening-tunnels',
+      dataLayer: 'data',
     });
-  }
-
-  /** Frame-local Glow-base projection. Data/static fills keep their exact
-   * colors; a room receives darkness only when its selected data mode resolves
-   * to no visible data object (for example Temperature without a sensor). */
-  private _resolvedGlowBase(
-    space: SpaceModel, disp: SpaceDisplay, dataFills: RoomFillFrame,
-  ): RoomFillFrame {
-    const byRoom = new Map<RoomCfg, ResolvedRoomFill | null>();
-    const byId = new Map<string, ResolvedRoomFill | null>();
-    const base = this._fillColors.glow_base;
-    for (const room of space.rooms) {
-      const dataFill = dataFills.byRoom.get(room);
-      const resolved: ResolvedRoomFill | null = roomGlowOf(disp.glow, room)
-        && (!dataFill || dataFill.opacity <= 0)
-        ? { color: base.c, opacity: base.a, mode: 'glow' }
-        : null;
-      byRoom.set(room, resolved);
-      if (room.id) byId.set(room.id, resolved);
-    }
-    return { byRoom, byId };
-  }
-
-  /**
-   * Paint the same clean-floor geometry as the interactive room layer, but as
-   * a pointer-transparent source-over overlay above the resolved data fill.
-   */
-  private _renderGlowBaseRooms(space: SpaceModel, frame: RoomFillFrame): TemplateResult {
-    if (this._markup || ![...frame.byRoom.values()].some(Boolean))
-      return svg`` as unknown as TemplateResult;
-    const polys = new Map<RoomCfg, number[][] | null>(
-      space.rooms.map((room) => [room, roomPoly(room)]),
-    );
-    const openCuts = this._openCuts();
-    const roomWalls = this._wallUnionGeometry()?.roomGeom;
-    const pathD = (points: number[][]) =>
-      'M ' + points.map((point) => point[0] + ' ' + point[1]).join(' L ') + ' Z';
-    const shapes = space.rooms.map((room) => {
-      const fill = frame.byRoom.get(room) || null;
-      const ownPoly = polys.get(room) || null;
-      if (!fill || !ownPoly) return nothing;
-      const floor = this._spaceWalls.length && room.id
-        ? (this._innerRoomContour(space, room.id, openCuts, roomWalls) || ownPoly)
-        : ownPoly;
-      const otherPolys = space.rooms
-        .filter((other) => other !== room)
-        .map((other) => polys.get(other))
-        .filter((poly): poly is number[][] => !!poly);
-      const holes = islandsOf(floor, otherPolys);
-      const cleanPath = this._cleanFloor(room, floor, space).path;
-      if (cleanPath || holes.length) {
-        return svg`<path class="glow-base" data-room-id=${room.id || nothing}
-          d="${[cleanPath || pathD(floor), ...holes.map(pathD)].join(' ')}"
-          fill=${fill.color} fill-opacity=${fill.opacity} fill-rule="evenodd"
-          pointer-events="none"></path>`;
-      }
-      if (room.poly || floor !== ownPoly) {
-        return svg`<polygon class="glow-base" data-room-id=${room.id || nothing}
-          points="${floor.map((point) => point.join(',')).join(' ')}"
-          fill=${fill.color} fill-opacity=${fill.opacity} pointer-events="none"></polygon>`;
-      }
-      return svg`<rect class="glow-base" data-room-id=${room.id || nothing}
-        x=${room.x} y=${room.y} width=${room.w} height=${room.h}
-        rx=${Math.min(room.w!, room.h!) * 0.03}
-        fill=${fill.color} fill-opacity=${fill.opacity} pointer-events="none"></rect>`;
-    });
-    return svg`<g class="glow-base-layer" aria-hidden="true" pointer-events="none">${shapes}</g>` as unknown as TemplateResult;
   }
 
   private _renderWallBodies(disp: SpaceDisplay): TemplateResult {
@@ -10831,8 +10758,7 @@ export class HouseplanCard extends LitElement {
     const deviceSnapshot = this._renderDeviceSnapshot;
     const disp = this._spaceDisplayForRender();
     const roomFills = this._resolvedRoomFills(space, disp);
-    const glowBase = this._resolvedGlowBase(space, disp, roomFills);
-    this._isoLightFloors = iso ? this._isoFirstFrame.lightFloors(new Map([...roomFills.byId].map(([id, fill]) => [id, fill && fill.opacity > 0 ? fill : glowBase.byId.get(id) ?? null]))) : null;
+    this._isoLightFloors = iso ? this._isoFirstFrame.lightFloors(roomFills.byId) : null;
     const showLqi = effectiveShowLqi(this._settings, disp.showLqi, this._config.show_signal);
     const cfgSize = this._config.icon_size ?? 2.5;
     const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
@@ -11210,10 +11136,8 @@ export class HouseplanCard extends LitElement {
             })()}
             ${this._renderRoomHoverFill(roomHover)}
             ${this._renderOpeningTunnelFills(space, roomFills)}
-            ${this._renderGlowBaseRooms(space, glowBase)}
-            ${this._renderOpeningTunnelFills(space, glowBase, 'glow-base')}
             ${''/* Decor is one composition layer above every floor treatment
-                   (room fill/hover, opening tunnels and Glow base) and below
+                   (room fill/hover and opening tunnels) and below
                    live lighting, physical plan geometry and devices. Keep
                    hide_decor visual-only: the decor editor must always paint
                    stored shapes so they remain editable. */}

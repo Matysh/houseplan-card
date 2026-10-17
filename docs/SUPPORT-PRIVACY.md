@@ -19,7 +19,7 @@ while the dialog is open cannot expand a v1 attachment to v2 on Refresh;
 disable and enable the checkbox again to agree to the extended contents.
 
 The package is constructed field by field. It contains plan geometry and
-dimensions, safe display settings (the fill palette only by the eleven slot
+dimensions, safe display settings (the fill palette only by the ten active slot
 names the card defines; any other key is dropped), structural counts,
 validation/repair families and bounded browser/registry capability enums. Space, room, wall,
 opening, marker and binding references receive random package-local names.

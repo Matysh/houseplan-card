@@ -89,7 +89,7 @@ const res = await page.evaluate(async () => {
 });
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
 checkAll(res, {
-  "rows": 15, // 10 плиток + плашка стены + радиус свечения + фон + грань окна #577
+  "rows": 14, // 9 плиток без затемнения #943 + прежние остальные контролы
                // + «Оптимизировать планы» по действию, а не удалённому #605 классу alignall
   "cards": ["Display", "Zigbee links", "Room fill colors", "Light-source glow", "Plan", "Sun and Moon", "Data"],
   "groups": ["Lights", "Temperature", "Zigbee signal", "Backup and transfer", "Plan maintenance"],

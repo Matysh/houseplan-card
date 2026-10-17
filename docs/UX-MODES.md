@@ -41,7 +41,7 @@ obvious at a glance:
 **[ 📐 Plan editor ] [ 🔧 Device editor ] [ ✏️ Background editor ]** — View has
 NO tab (since v1.30.2). The Background editor (v1.33.0) manages a purely visual
 decor layer (lines/rects/ovals/text/furniture/images in `space.decor`, one layer
-above room fills and Glow base and below live Glow, walls, devices and labels —
+above room fills and below live Glow, walls, devices and labels —
 `DECOR-EDITOR.md` §1; inert everywhere outside its editor).
 
 - **View** is the implicit default state: no editor tab is active. Navigation

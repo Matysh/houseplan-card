@@ -120,6 +120,28 @@ def _config_with_decor_image(asset_id: str) -> tuple[dict, dict]:
     return config, shape
 
 
+@pytest.mark.parametrize("alpha", [0, 1])
+def test_issue_943_legacy_darkness_survives_full_backup_without_forced_migration(tmp_path: Path, alpha: float) -> None:
+    config = _config()
+    config["settings"]["fill_colors"] = {
+        "glow_base": {"c": "#15ff2a", "a": alpha},
+        "glow_light": {"c": "#ffeedd", "a": 0.62},
+    }
+    config["spaces"][0]["settings"] = {"fill_mode": "glow", "glow_enabled": False}
+    before = copy.deepcopy(config)
+    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+        {"layout": {}, "rev": 3}, kind="full", space_id=None, card_version="review", config_root=tmp_path)
+    parsed = parse_document(json.dumps(document).encode())
+    assert parsed["payload"]["config"]["settings"]["fill_colors"] == config["settings"]["fill_colors"]
+    runtime = SimpleNamespace(instance_id="same", import_previews={})
+    preview = create_preview(runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": _config(), "rev": 4}, current_layout_data={"layout": {}, "rev": 5}, config_root=tmp_path)
+    imported, _, _ = prepare_apply(get_candidate(runtime, preview["token"], "alice"), _config(), {}, confirm_missing_content=True)
+    assert imported["settings"]["fill_colors"] == config["settings"]["fill_colors"]
+    assert imported["spaces"][0]["settings"] == config["spaces"][0]["settings"]
+    assert config == before
+
+
 @pytest.mark.parametrize("value", [True, False])
 @pytest.mark.parametrize("kind", ["full", "space"])
 def test_issue_867_signal_override_survives_export_parse_and_import(tmp_path: Path, value: bool, kind: str) -> None:

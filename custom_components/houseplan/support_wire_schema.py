@@ -288,7 +288,7 @@ GLOBAL_SETTINGS = Object(
         "show_device_battery": Choice((None, BOOL, enum("low"))),
         "fill_colors": Object(
             fields(
-                "light_on light_off light_none temp_cold temp_ok temp_hot lqi_low lqi_high glow_base glow_light wall_fill",
+                "light_on light_off light_none temp_cold temp_ok temp_hot lqi_low lqi_high glow_light wall_fill",
                 FILL_COLOR,
             )
         ),

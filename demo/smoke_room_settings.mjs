@@ -103,7 +103,8 @@ const res = await page.evaluate(async () => {
   c._setMode('view'); c.requestUpdate(); await c.updateComplete;
   await new Promise((r) => setTimeout(r, 250));
   out.fillDoesNotOptOutGlow = !sr().querySelector('clipPath#hp-glow-enabled')
-    && sr().querySelectorAll('.glow-base-layer .glow-base').length === c._spaceModel().rooms.length;
+    && sr().querySelectorAll('.glow-base-layer .glow-base').length === 0
+    && sr().querySelectorAll('.glow-pool').length > 0;
   // 7) #581: «Как у пространства» забывает свой цвет комнаты; сироты лечатся при чтении.
   //    Пространство — «Свой цвет» A; комната получает свой цвет B, потом возвращается
   //    к пространству: в конфиге не остаётся ни режима, ни цвета, план красит A.

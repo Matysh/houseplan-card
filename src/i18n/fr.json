@@ -762,7 +762,6 @@
   "mode.decor_tip": "Éditeur d’arrière-plan — décoration purement visuelle sous le plan : lignes, rectangles, ovales et étiquettes de texte qui ne réagissent jamais aux clics",
   "space.glow_enabled": "Halo des sources lumineuses",
   "gs.glow_group": "Halo des sources lumineuses",
-  "gs.glow_base": "Obscurité de la maison",
   "gs.glow_light": "Couleur / intensité de lumière par défaut",
   "gs.glow_radius.help": "Définit le rayon général du halo en mètres ou en pieds ; le rayon propre à un appareil remplace cette valeur.",
   "gs.glow_radius.help.aria": "Aide : rayon général du halo",

@@ -25,6 +25,11 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Room darkness (#943) is removed from the palette, General settings and all
+full/static/2.5D render paths. Light pools and actual data fills retain their
+own contracts. Valid old plans/backups stay readable without load-time writes;
+explicit General Save omits the retired role, as do diagnostic exports.
+
 Connected-node clock sampling (#952) uses 32 fixed independent probes instead
 of eight, always completing the series without precision retries. The 1 ms
 accuracy guard, conservative source clocks and performance budgets stay strict;

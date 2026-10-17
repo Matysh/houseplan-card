@@ -1253,6 +1253,9 @@ ignores `#space=`.
   independent of the data fill (#55): [LIGHT](LIGHT.md). Shared source entry
   scheduling is owner-local; `LightBarrierPass` shares revisions only inside
   the main card's synchronous render, never across subsequent edits (#789).
+  The retired uniform darkness layer and palette role are absent from full,
+  static and 2.5D consumers (#943); old raw settings remain readable without
+  load-time writes. Diagnostic palette projection follows the active roles.
   **Room fill** —
   `resolveEffectiveRoomFill()` is the single projection for room floors,
   clean-floor holes and opening tunnels; `room_color` styles only borders and

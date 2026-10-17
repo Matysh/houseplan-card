@@ -762,7 +762,6 @@
   "mode.decor_tip": "Hintergrundeditor — rein visuelle Dekoration unter dem Plan: Linien, Rechtecke, Ellipsen und Textbeschriftungen, die niemals auf Klicks reagieren",
   "space.glow_enabled": "Lichtquellen-Glühen",
   "gs.glow_group": "Glow von Lichtquellen",
-  "gs.glow_base": "Grunddunkelheit des Hauses",
   "gs.glow_light": "Standardlichtfarbe / Intensität",
   "gs.glow_radius.help": "Legt den allgemeinen Radius des Lichtscheins in Metern oder Fuß fest; ein gerätespezifischer Radius überschreibt diesen Wert.",
   "gs.glow_radius.help.aria": "Hilfe: allgemeiner Glow-Radius",

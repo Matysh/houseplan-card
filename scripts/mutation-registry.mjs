@@ -10257,12 +10257,12 @@ const MUTANT_DEFINITIONS = [
     id: 'decor-restored-below-room-fills',
     guard: 'node demo/smoke_decor_layer_order.mjs',
     because: 'moving decor back before room fills reproduces #231: opaque custom floors, room '
-      + 'hover and Glow base erase stored decor even though the decor group still exists in the DOM; '
+      + 'hover erase stored decor even though the decor group still exists in the DOM; '
       + 'the raster probes must catch the visual regression, including the filled opening tunnel',
     patches: [{
       file: 'src/houseplan-card.ts',
       find: "            ${''/* Decor is one composition layer above every floor treatment\n"
-        + '                   (room fill/hover, opening tunnels and Glow base) and below\n'
+        + '                   (room fill/hover and opening tunnels) and below\n'
         + '                   live lighting, physical plan geometry and devices. Keep\n'
         + '                   hide_decor visual-only: the decor editor must always paint\n'
         + '                   stored shapes so they remain editable. */}\n'
@@ -10785,12 +10785,10 @@ const MUTANT_DEFINITIONS = [
       replace: '  spaceModels, roomCenter, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, iconUnit, NORM_W,',
     }, {
       file: 'src/space-render.ts',
-      find: '        ${passageGlowTunnels}\n'
-        + '        <g class="decorlayer" pointer-events="none">${decorImages}</g>\n'
+      find: '        <g class="decorlayer" pointer-events="none">${decorImages}</g>\n'
         + '        <g class="hp-stairs-layer" pointer-events="none">${stairShapes}</g>\n'
         + '        ${glowPools}\n        ${showLed ?',
-      replace: '        ${passageGlowTunnels}\n'
-        + '        ${!space.bg && !disp.showNames ? svg`<g class="room-svg-labels" pointer-events="none">${space.rooms.map((room) => {\n'
+      replace: '        ${!space.bg && !disp.showNames ? svg`<g class="room-svg-labels" pointer-events="none">${space.rooms.map((room) => {\n'
         + '          const center = roomCenter(room);\n'
         + '          return svg`<text class="rlabel" data-hp="room-label" data-id=${room.id || nothing}\n'
         + '            data-area=${room.area || nothing} x=${center[0]} y=${center[1]}>${room.name}</text>`;\n'
@@ -17850,8 +17848,12 @@ const MUTANT_DEFINITIONS = [
       + 'that regression independently of formatting or comments',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: 'this._isoFirstFrame.lightFloors(new Map([...roomFills.byId].map(([id, fill]) => [id, fill && fill.opacity > 0 ? fill : glowBase.byId.get(id) ?? null])))',
-      replace: "memoIsoLightFloorRooms(null, new Map([...roomFills.byId].map(([id, fill]) => [id, fill && fill.opacity > 0 ? fill : glowBase.byId.get(id) ?? null])), parseCssColor(getComputedStyle(this.renderRoot.querySelector('.hp-paper') ?? this).fill) ?? [255, 255, 255]).rooms",
+      find: "import { isoWallMaterialVars, parseCssColor } from './iso-materials';",
+      replace: "import { isoWallMaterialVars, parseCssColor, memoIsoLightFloorRooms } from './iso-materials';",
+    }, {
+      file: 'src/houseplan-card.ts',
+      find: 'this._isoFirstFrame.lightFloors(roomFills.byId)',
+      replace: "memoIsoLightFloorRooms(null, roomFills.byId, parseCssColor(getComputedStyle(this.renderRoot.querySelector('.hp-paper') ?? this).fill) ?? [255, 255, 255]).rooms",
     }],
   },
   {

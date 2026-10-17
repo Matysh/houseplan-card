@@ -1142,7 +1142,7 @@ windows and windows on independent walls do not.
 
 Openings may slide along joined corners. Double-click in Plan opens properties.
 The static card also cuts an open passage through the wall and carries the
-current fill/Glow base through its tunnel.
+current room fill through its tunnel.
 
 <!-- docs-section: devices -->
 
@@ -1803,12 +1803,14 @@ non-interactive.
 | Custom color | Space or room setting | Constant colour and opacity | Safe `#607d8b` at 18% |
 
 **Light-source Glow** is an independent switch and works with every fill. With
-no data, room-level None or a zero-opacity custom colour it adds base dimming
-plus light pools. When an LQI, light, temperature or visible custom fill exists,
-base dimming is omitted and the chosen colour/opacity stays exact while pools
-remain visible. A new manual space starts with Custom color at 0% and Glow on,
+no data, room-level None or a zero-opacity custom colour the ordinary paper
+remains visible: Glow adds only the light pools of active lamps and LEDs.
+“House darkness” is removed, including its General settings controls; legacy
+darkness settings are ignored without a reset or an automatic config save.
+Visible fills keep their exact colour/opacity beneath light pools.
+A new manual space starts with Custom color at 0% and Glow on,
 which looks like the former None default. Legacy light-source and None settings
-are read without visual change and migrate on the next normal save.
+keep independent light pools and migrate on the next normal save.
 
 Space fill modes include user colour, temperature comfort range and LQI. Room
 settings may override the space. A room has its own colour only while its fill
@@ -1820,7 +1822,7 @@ from the base fill.
 
 | Level | Overrides |
 |---|---|
-| General settings | Fill-state colours/opacity, Glow colours and radius, wall colour |
+| General settings | Fill-state colours/opacity, light-pool colour/intensity and radius, wall colour |
 | Space | Fill mode and custom colour, Glow switch, temperature bounds, LQI display and background |
 | Room | Inherit or select None/LQI/Lights/Temperature/Custom; independent lower/upper temperature bounds and a colour only in room Custom mode |
 | Device | Auto/Always/Never own light role, Glow colour, brightness and radius |

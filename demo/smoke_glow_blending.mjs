@@ -98,9 +98,7 @@ try {
     await staticOffCard.updateComplete;
     const staticBase = staticOffCard.renderRoot.querySelector('.glow-base-layer .glow-base');
     const staticOffPools = staticOffCard.renderRoot.querySelectorAll('.glow-pool, .glowlayer').length;
-    const baseParity = !!fullBase && !!staticBase
-      && fullBase.getAttribute('fill') === staticBase.getAttribute('fill')
-      && fullBase.getAttribute('fill-opacity') === staticBase.getAttribute('fill-opacity');
+    const noStaticBaseTunnel = !staticOffCard.renderRoot.querySelector('.glow-base-tunnels');
 
     const staticCard = document.createElement('houseplan-space-card');
     staticCard.setConfig({
@@ -136,10 +134,8 @@ try {
     staticOffCard.remove();
     staticCard.remove();
 
-    // The fixture deliberately has Temperature mode without temperature
-    // entities, which verifies the Glow fallback above. Now switch the same
-    // mounted plan to a real data fill and verify that the base disappears
-    // without changing the data colour/alpha or its layer order.
+    // #943: missing Temperature data remains empty. A real data fill keeps
+    // its exact colour/alpha and order below the unchanged radial pools.
     const spaceCfg = card._serverCfg.spaces[0];
     spaceCfg.settings = {
       ...(spaceCfg.settings || {}),
@@ -159,10 +155,9 @@ try {
       poolFrameHasOpacity: poolFrame?.hasAttribute('opacity'),
       pools: card.renderRoot.querySelectorAll('.glow-pool').length,
       clippedPools,
-      baseLayerOrder: follows(dataTunnel, fullBase)
-        && follows(fullBase, baseTunnel) && follows(baseTunnel, poolFrame),
+      dataBeforePools: follows(dataTunnel, poolFrame),
       fullBase: !!fullBase, baseTunnel: !!baseTunnel,
-      staticBase: !!staticBase, staticOffPools, baseParity,
+      staticBase: !!staticBase, staticOffPools, noStaticBaseTunnel,
       staticPools: staticPoolNodes.length, staticClippedPools,
       staticBlend: staticPoolGroup?.getAttribute('data-blend'),
       staticPointerEvents, fullFirst, staticFirst,
@@ -205,9 +200,9 @@ try {
     throw new Error(`same-colour dim overlap did not brighten without clipping: ${singleDim} -> ${overlapDim}`);
   if (!close(pixel(out.forward, 3), [106, 123, 140, 255])) throw new Error('non-pool sector/background changed');
   if (out.clippedPools !== out.pools) throw new Error(`lost per-source clips: ${out.clippedPools}/${out.pools}`);
-  if (!out.baseLayerOrder) throw new Error('data/base/tunnel/pool layer order changed');
-  if (!out.fullBase || !out.baseTunnel || !out.staticBase || out.staticOffPools !== 0 || !out.baseParity)
-    throw new Error(`missing-data Glow fallback/parity failed: full=${out.fullBase}, tunnel=${out.baseTunnel}, static=${out.staticBase}, offPools=${out.staticOffPools}, parity=${out.baseParity}`);
+  if (!out.dataBeforePools) throw new Error('data/tunnel/pool layer order changed');
+  if (out.fullBase || out.baseTunnel || out.staticBase || out.staticOffPools !== 0 || !out.noStaticBaseTunnel)
+    throw new Error(`retired base or default static pools returned: full=${out.fullBase}, tunnel=${out.baseTunnel}, static=${out.staticBase}, offPools=${out.staticOffPools}`);
   if (out.staticPools !== out.pools || out.staticClippedPools !== out.staticPools)
     throw new Error(`static pools/clips differ: pools=${out.staticPools}/${out.pools}, clips=${out.staticClippedPools}`);
   if (out.staticBlend !== 'screen' || out.staticPointerEvents !== 'none')

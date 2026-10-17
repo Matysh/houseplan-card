@@ -55,7 +55,6 @@ test('static passage cuts and tunnels are passage-only additions', () => {
   assert.match(staticRender, /passages: staticPassages\.map/);
   assert.match(staticRender, /renderOpeningTunnelFills/);
   assert.match(staticRender, /passageDataTunnels/);
-  assert.match(staticRender, /passageGlowTunnels/);
 });
 
 test('placement preview adds passage-only cut geometry without changing saved symbols', () => {

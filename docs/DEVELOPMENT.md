@@ -34,6 +34,22 @@ lazy editor 270966→271892 B gzip and total dist 3026587→3026930 B. Only the
 editor rolling reference increases by its measured 926 B (269485→270411);
 absolute budgets, both 2000-B bands, all other ceilings and monolith limits stay.
 
+## Removing room darkness (#943)
+
+After `npm run bundle:sync`, run `node demo/smoke_room_dimming_removed.mjs`
+(actual screenshot RGB comparisons and public settings controls), alongside
+the Glow/LED, opening-tunnel, decor, live-pan and isometric AC smokes. Before
+the renderer change the same no-light legacy input fails at RGB delta 234;
+the unchanged baseline frame/log is retained in `artifacts/943/prechange-pixel`.
+Unit palette tests, backend strict legacy validation/full-backup round trips
+and the support-package palette parity/export test cover the separate data
+boundaries. Run the full `python3 -m pytest -q tests_backend`, not just frontend
+checks. No load-time migration or new schema version is required. The frozen
+base-only text assertion is retired, not replaced with a monolith regex.
+Accept only visually reviewed full golden artifacts through the normal pinned
+Linux or attested-WSL workflow. Mutants are not executed during development;
+ordinary old-code RED evidence is not mutation execution. Budgets stay fixed.
+
 ## Contact outlines during zoom (#951)
 
 After `npm run bundle:sync`, run `node demo/smoke_device_contact_zoom.mjs` and

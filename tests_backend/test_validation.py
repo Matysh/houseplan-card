@@ -598,6 +598,18 @@ def test_all_persisted_color_fields_share_the_strict_hex_contract():
                 call()
 
 
+@pytest.mark.parametrize("alpha", [0, 1, 0.5])
+def test_issue_943_retired_darkness_still_accepts_valid_legacy_settings(alpha):
+    settings = {"fill_colors": {"glow_base": {"c": "#15ff2a", "a": alpha}}}
+    assert v.CONFIG_SCHEMA({"spaces": [], "settings": settings})["settings"] == settings
+
+
+@pytest.mark.parametrize("alpha", [-0.1, 1.1, "not-a-number", None])
+def test_issue_943_retired_darkness_does_not_relax_alpha_validation(alpha):
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [], "settings": {"fill_colors": {"glow_base": {"c": "#15ff2a", "a": alpha}}}})
+
+
 def test_sun_settings_global():
     """Active sun settings plus the accepted-but-ignored legacy weather field."""
     v.CONFIG_SCHEMA({"spaces": [], "settings": {

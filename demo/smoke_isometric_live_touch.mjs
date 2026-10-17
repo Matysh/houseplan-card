@@ -180,7 +180,6 @@ const out = await page.evaluate(async () => {
     root(original).querySelector('.iso-underlay-svg'),
     root(original).querySelector('.hp-backdrop'),
     root(original).querySelector('[data-hp="room"]'),
-    root(original).querySelector('.glow-base-layer'),
     root(original).querySelector('.decorlayer'),
     root(original).querySelector('.glowlayer'),
     root(original).querySelector('.sunlayer'),
@@ -215,7 +214,7 @@ const out = await page.evaluate(async () => {
         === JSON.stringify(before)
       && JSON.stringify(flatSpillParts) === JSON.stringify(beforeSpillParts),
     liveLayersPresent: before.rooms > 0 && before.roomFills > 0 && before.decor >= 2
-      && before.furniture > 0 && before.backdrop > 0 && before.glowBase > 0
+      && before.furniture > 0 && before.backdrop > 0 && before.glowBase === 0
       && before.glowSources >= 2 && before.sun > 0 && before.openings === 0
       && before.verticalOpenings >= 5
       && before.devices > 0 && before.hover > 0 && before.vacuumPucks > 0

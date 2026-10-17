@@ -487,7 +487,7 @@ def test_issue_498_palette_allowlist_matches_the_card_defaults():
     assert block, "DEFAULT_FILL_COLORS not found in src/logic.ts"
     card_keys = re.findall(r"^\s*([a-z_]+):\s*\{", block.group(1), re.M)
     assert set(card_keys) == set(support_package.SUPPORT_FILL_COLOR_KEYS)
-    assert len(card_keys) == len(support_package.SUPPORT_FILL_COLOR_KEYS) == 11
+    assert len(card_keys) == len(support_package.SUPPORT_FILL_COLOR_KEYS) == 10
 
 
 def test_issue_498_projection_omits_an_empty_palette():
@@ -496,3 +496,30 @@ def test_issue_498_projection_omits_an_empty_palette():
     assert support_package._global_settings({"fill_colors": {"wall_fill": {"c": "#fff", "a": 1, "x": 1}}}) == {
         "fill_colors": {"wall_fill": {"c": "#fff", "a": 1}},
     }
+
+
+def test_issue_943_support_export_ignores_retired_darkness_without_changing_input():
+    """A legacy plan remains loadable, but its diagnostic palette is current."""
+    import copy
+    from custom_components.houseplan.support_wire_schema import GLOBAL_SETTINGS, validate
+
+    config, layout, _ = _source()
+    config["settings"]["fill_colors"] = {
+        "glow_base": {"c": "#15ff2a", "a": 1},
+        "glow_light": {"c": "#ffeedd", "a": 0.62},
+        "light_on": {"c": "#aabbcc", "a": 0.37},
+        "unknown-private-name": {"c": "#123456", "a": 1},
+    }
+    before = copy.deepcopy(config)
+    raw, _ = build_support_package(
+        config, layout, config_rev=17, layout_rev=24,
+        card_version="1.82.0", integration_version="1.82.0",
+        home_assistant_version="2026.8.3", runtime=_facts(), namespace="retired943",
+    )
+    package = json.loads(raw)
+    validate(package["plan_backup"]["config"]["settings"], GLOBAL_SETTINGS)
+    assert package["plan_backup"]["config"]["settings"]["fill_colors"] == {
+        "glow_light": {"c": "#ffeedd", "a": 0.62},
+        "light_on": {"c": "#aabbcc", "a": 0.37},
+    }
+    assert config == before

@@ -819,6 +819,18 @@ A normal edit that replaces the legacy token writes the resolved boolean in the
 same operation. Optimize Plans applies the same lossless, idempotent model-v7
 migration while preserving unknown sibling settings.
 
+Since #943 the uniform room-darkness feature is removed. Valid historical
+`settings.fill_colors.glow_base` remains readable/importable/exportable but is
+excluded from the active runtime palette and every rendering surface. Reading,
+rendering and switching modes send no write. New defaults and Reset omit it;
+an explicit General settings Save writes the active palette without this role,
+preserving the existing save semantics for all other settings. No model/store
+version bump or forced migration is involved. The legacy `fill_mode: glow`
+still projects independent light pools with the existing explicit-boolean
+precedence; it never revives uniform darkness. A diagnostic support export
+includes only the ten active palette roles; a full user backup may retain the
+raw legacy key. Downgrading to old executable code can restore its old effect.
+
 ## Space reference repair (model v7)
 
 Missing `marker.space`, `marker.room_id`, `vacuum.segment_map` and layout
@@ -873,9 +885,9 @@ instead of offering a separate `none` choice. A historical space-level `none`
 is still rendered losslessly until edited, then the dialog projects it to
 `custom` with the existing/default color at zero opacity and materializes that
 visually equivalent choice on Save. Newly created spaces use the same
-zero-opacity custom value, so the UI change does not introduce a visible floor
-or remove the Glow base by default. A zero-opacity resolved fill still receives
-the Glow base. `none` remains accepted by the model and exposed at room level,
+zero-opacity custom value, so the UI change does not introduce a visible floor.
+Neither zero-opacity custom nor `none` adds uniform darkness (#943).
+`none` remains accepted by the model and exposed at room level,
 where it is still required to suppress an inherited
 LQI/light/temperature/custom fill for one room.
 

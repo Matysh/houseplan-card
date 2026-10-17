@@ -60,7 +60,8 @@ const res = await page.evaluate(async () => {
       settings: { ...(room.settings || {}), fill_mode: 'none' } })),
   })) };
   c.requestUpdate(); await c.updateComplete;
-  out.noneOverrideGetsGlowBase = sr().querySelectorAll('.glow-base-layer .glow-base').length === 1;
+  out.noneOverrideHasNoDarkness = sr().querySelectorAll('.glow-base-layer .glow-base').length === 0
+    && sr().querySelectorAll('.glow-pool').length > 0;
   // 5) drag лейбла → layout rl_ (только в редакторе плана, с v1.25)
   c._setMode('plan'); await c.updateComplete;
   const lbl = sr().querySelector('.roomlabel');

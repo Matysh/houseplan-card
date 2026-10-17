@@ -534,9 +534,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   }
   const vb = [fr.x, fr.y, fr.w, fr.h];
 
-  // Resolve once per room and reuse the exact result for the visible fill and
-  // the Glow fallback. A selected data mode with no data is effectively empty
-  // and therefore receives the same base darkness as explicit `none`.
+  // Missing/transparent data stays empty; light pools never add a uniform base.
   const resolvedRoomFills = new Map(space.rooms.map((room) => {
     const fill = roomFillModeOf(disp.fill, room);
     const tempRange = roomTempRangeOf(disp.tempMin, disp.tempMax, room);
@@ -593,31 +591,8 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       return shape;
     }));
 
-  // Base projection is independent of radial pools: opt-in pools are painted
-  // above it through the same room-level Glow gates as the full plan.
+  // Opt-in radial pools share the full plan's independent room-level Glow gates.
   const glowEnabledRooms = space.rooms.filter((room) => roomGlowOf(disp.glow, room));
-  const glowBaseShapes = glowEnabledRooms
-    .filter((room) => {
-      const fill = resolvedRoomFills.get(room);
-      return !fill || fill.opacity <= 0;
-    })
-    .map((room) => room.poly
-      ? svg`<polygon class="glow-base" aria-hidden="true" pointer-events="none"
-          data-room-id=${room.id || nothing}
-          points="${room.poly.map((point) => point.join(',')).join(' ')}"
-          fill=${colors.glow_base.c} fill-opacity=${colors.glow_base.a}></polygon>`
-      : svg`<rect class="glow-base" aria-hidden="true" pointer-events="none"
-          data-room-id=${room.id || nothing}
-          x=${room.x} y=${room.y} width=${room.w} height=${room.h}
-          rx=${Math.min(room.w!, room.h!) * 0.03}
-          fill=${colors.glow_base.c} fill-opacity=${colors.glow_base.a}></rect>`);
-  const glowBaseFillsById = new Map<string, ResolvedRoomFill | null>();
-  for (const room of space.rooms) if (room.id) {
-    const fill = resolvedRoomFills.get(room) || null;
-    glowBaseFillsById.set(room.id, roomGlowOf(disp.glow, room) && (!fill || fill.opacity <= 0)
-      ? { color: colors.glow_base.c, opacity: colors.glow_base.a, mode: 'glow' }
-      : null);
-  }
   const planLightSources = resolvedLightSources(planHass, devs, null, o.virtualLights);
   let lightFrame: PresentationLightFrame | undefined;
   const showLqi = effectiveShowLqi(o.cfg.settings, disp.showLqi, o.showSignal);
@@ -761,16 +736,6 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       idPrefix: `${space.id}-static-data`,
       groupClass: 'opening-tunnels static-opening-tunnels',
       dataLayer: 'data',
-    })
-    : nothing;
-  const passageGlowTunnels = staticPassages.length
-    ? renderOpeningTunnelFills({
-      openings: staticPassages,
-      geometries: passageTunnelGeometry,
-      fillsByRoomId: glowBaseFillsById,
-      idPrefix: `${space.id}-static-glow`,
-      groupClass: 'opening-tunnels glow-base-tunnels static-opening-tunnels',
-      dataLayer: 'glow-base',
     })
     : nothing;
   const paperShapes: PaperShape[] = walls.length && canonicalWallGeometry?.paperD
@@ -1035,10 +1000,6 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
             </g>`
           : nothing}
         ${passageDataTunnels}
-        ${glowBaseShapes.length
-          ? svg`<g class="glow-base-layer" aria-hidden="true" pointer-events="none">${glowBaseShapes}</g>`
-          : nothing}
-        ${passageGlowTunnels}
         <g class="decorlayer" pointer-events="none">${decorImages}</g>
         <g class="hp-stairs-layer" pointer-events="none">${stairShapes}</g>
         ${glowPools}

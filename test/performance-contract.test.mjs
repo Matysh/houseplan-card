@@ -260,7 +260,7 @@ test('view render resolves structural wall cuts once per frame, not once per roo
   );
 });
 
-test('room inner faces are structurally cached and shared by both fill layers', () => {
+test('room inner faces are structurally cached for data fills', () => {
   const source = readHouseplanProductionSource();
   const helperStart = source.indexOf('private _innerRoomContour(');
   const helperEnd = source.indexOf('\n  /**', helperStart);
@@ -275,12 +275,6 @@ test('room inner faces are structurally cached and shared by both fill layers', 
   // #769: the resize seed from the preflight artifact was dead since #451
   // (`artifact: null`) and is gone; the miss branch builds the preview union.
   assert.doesNotMatch(source, /wallBodiesGeometryPath\(/);
-
-  const glowStart = source.indexOf('private _renderGlowBaseRooms(');
-  const glowEnd = source.indexOf('\n  private _renderWallBodies(', glowStart);
-  const glowBase = source.slice(glowStart, glowEnd);
-  assert.equal([...glowBase.matchAll(/innerContourForRoom\(/g)].length, 0);
-  assert.match(glowBase, /this\._innerRoomContour\(space, room\.id, openCuts, roomWalls\)/);
 
   const viewStart = source.indexOf('const allZeroCuts = this._openCuts();');
   const viewEnd = source.indexOf('${this._renderOpeningTunnelFills(space, roomFills)}', viewStart);
