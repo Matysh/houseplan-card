@@ -27,7 +27,14 @@
       ],
       "changedBehavior": [
         "s-show-borders controls borders and openings"
-      ]
+      ],
+      "migration": {
+        "s-layer-openings": {
+          "before": false,
+          "after": true,
+          "rule": "Opening visibility follows resolved room-border visibility during upgrade; no intermediate state."
+        }
+      }
     }
   },
   {
