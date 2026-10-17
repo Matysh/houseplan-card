@@ -70,12 +70,13 @@ const res = await page.evaluate(async () => {
   c._setMode('plan'); c._tool = 'draw'; await c.updateComplete;
   c._resetRoomDialogFields(); c._roomDialog = true; c.requestUpdate(); await c.updateComplete;
   // #594: одна секция «Настройки комнаты» заменена четырьмя карточками-группами.
-  const groupTitles = () => [...sr().querySelectorAll('hp-dialog .hpf-card .hpf-head h3')]
-    .map((h) => h.textContent.trim());
-  out.createHasGroups = JSON.stringify(groupTitles()) === JSON.stringify([
-    c._t('room.group_fill'),
-    c._t('room.group_sources'), c._t('room.sizes_section'),
-  ]);
+  const groups = [...sr().querySelectorAll('hp-dialog .hpf-card')]
+    .filter((g) => g.querySelector('.hpf-head h3'));
+  // #920: Sources copy is lazy; locate form groups by their stable machine IDs,
+  // not by asking the cold View dictionary for an editor-only translation.
+  out.createHasGroups = JSON.stringify(groups.map((g) => g.dataset.card))
+    === JSON.stringify(['fill', 'sources', 'sizes'])
+    && groups.every((g) => !!g.querySelector('.hpf-head h3')?.textContent.trim());
   // #600 (Q4): «Как у пространства» — строка-тумблер, а не радио в списке.
   out.createHasInherit = sr().querySelector('hp-dialog #room-fill-inherit')?.checked === true
     && !sr().querySelector('hp-dialog input[name="rfill"]');
@@ -171,18 +172,15 @@ const res = await page.evaluate(async () => {
   const draft = () => JSON.stringify({
     name: c._nameSel, area: c._areaSel, fill: c._roomFill, custom: c._roomCustomFill,
     tempMin: c._roomTempMin, tempMax: c._roomTempMax,
-    tempSrc: c._roomTempSrc, humSrc: c._roomHumSrc,
+    tempSrc: c._roomTempSrc, humSrc: c._roomHumSrc, co2Src: c._roomCo2Src,
     nameScale: c._roomNameScale, labelScale: c._roomLabelScale,
   });
   const changedFields = (before, after) => {
     const a = JSON.parse(before); const b = JSON.parse(after);
     return Object.keys(a).filter((k) => JSON.stringify(a[k]) !== JSON.stringify(b[k]));
   };
-  const segmentOf = (kind) => {
-    const groups = [...sr().querySelectorAll('hp-dialog .hpf-seg')];
-    return groups.find((g) => (g.getAttribute('aria-label') || '')
-      === c._t(kind === 'temp' ? 'room.temp_src_label' : 'room.hum_src_label'));
-  };
+  const segmentOf = (kind) => sr().querySelector(`hp-dialog input[name="rsrc-${kind}"]`)
+    ?.closest('.hpf-seg');
   const pickSecond = (group) => {
     const input = [...group.querySelectorAll('input[type="radio"]')][1];
     input.checked = true;
