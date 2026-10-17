@@ -46,9 +46,13 @@ and atomic picker writes; static readiness is not caught evidence.
 
 Matched baseline 24f7ab2f (same product as 9c6d58c1) measures initial View
 324822 B gzip, lazy editor 270966 B and total 3026587 B. The new forms measure
-324410 / 276065 / 3046922 B: View shrinks 412 B; lazy editor grows 5099 B,
-total grows 20335 B. Only those measured costs move the rolling editor/total
+324415 / 276724 / 3048067 B: View shrinks 407 B; lazy editor grows 5758 B,
+total grows 21480 B. Only those measured costs move the rolling editor/total
 references; inherited gaps, bands and initial/absolute budgets remain intact.
+Settings-only CSS has a separate adoption module so onboarding does not pay for
+the new navigation/presentation sheet. Its graph is 29839 B gzip, within its
+unchanged ceiling/band. WSL tooling units run with a Linux-only PATH: inherited
+Windows folders can turn a deliberately missing command's ENOENT into EACCES.
 
 ## Removing room darkness (#943)
 

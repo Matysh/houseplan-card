@@ -76,7 +76,7 @@ const out = await page.evaluate(async (translated) => {
         const lb = label.getBoundingClientRect(); const sb = span.getBoundingClientRect();
         if (sb.left < lb.left - 0.5 || sb.right > lb.right + 0.5) outside.push(`${lang}/${kind}: «${span.textContent.trim()}» шире кнопки`);
       }
-      o[`${lang}_${kind}_hasSegments`] = labels.length >= 2;
+      o[`${lang}_${kind}_hasChoiceControls`] = kind === 'settings' ? dlg.querySelectorAll('select[name] option').length >= 7 : labels.length >= 2;
       o[`${lang}_${kind}_noMidWordBreak`] = broken.length === 0 || broken;
       o[`${lang}_${kind}_labelsInsideButtons`] = outside.length === 0 || outside;
     }

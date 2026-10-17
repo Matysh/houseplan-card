@@ -52,6 +52,7 @@ try {
     window.__signal876 = { primary: card.hass.states['sensor.living_temp'], providerReads: 0 };
     const original = card.hass.callWS;
     card.hass = { ...card.hass, callWS: async message => {
+      if (message.type === 'config_entries/get') return [{ entry_id: 'hp876-zha', domain: 'zha', title: 'Fixture ZHA' }];
       if (message.type === 'zha/devices') {
         window.__signal876.providerReads++;
         return [
@@ -142,6 +143,7 @@ try {
 
   // Provider reads/topology are independent of the system-line and tooltip gate.
   await root.locator('[data-hp="settings"]').click();
+  await root.locator('[data-section-target="zigbee"]').click();
   await root.locator('hp-zigbee-topology-settings .hpf-actions button').first().click();
   await page.waitForFunction(() => window.__card.shadowRoot.querySelector('hp-zigbee-topology-settings')
     ?._snapshot?.states?.zha?.phase === 'ready');

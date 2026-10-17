@@ -9,7 +9,7 @@
   Lamp/LED glow, room colours and backgrounds remain; old plans open without
   requiring a settings reset ([#943](https://github.com/Matysh/houseplan-card/issues/943)).
 - General settings use six named sections, a full compass, four background
-  previews and one color/opacity picker per color. Zigbee diagnostics explain
+  previews, one color/opacity picker per color and a permanent Moon status. Zigbee diagnostics explain
   installed integrations, dated maps and background scans; import/export keep
   unsaved changes behind the existing discard confirmation. The form adapts to
   mobile screens and live Home Assistant themes

@@ -217,13 +217,13 @@ try {
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.__card?._booting === false);
   await install(); await waitState('ready');
-  await settings().getByText(/Data received .*stale/i).waitFor({ state: 'visible' });
+  await settings().getByText(/Data received: .*outdated/).waitFor({ state: 'visible' });
   record('restoredMapIsStaleWithOriginalTimeAndNoAutomaticScan', server.publishes === 3
     && await page.evaluate((time) => {
       const snapshot = document.getElementById('scan-settings')._snapshot;
       return snapshot.topologies.length === 1 && snapshot.topologies[0].obtainedAt === time
         && snapshot.states['z2m:zigbee2mqtt'].stale === true;
-    }, receivedAt) && await settings().getByText(/Data received .*stale/i).isVisible());
+    }, receivedAt) && await settings().getByText(/Data received: .*outdated/).isVisible());
   await refresh().focus(); await page.keyboard.press('Enter'); await waitState('loading');
   record('keyboardRefreshImmediatelyRemovesOldRoutes', server.publishes === 4
     && await page.evaluate(() => document.getElementById('scan-settings')._snapshot.topologies.length === 0));

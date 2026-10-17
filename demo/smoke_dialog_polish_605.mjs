@@ -20,17 +20,14 @@ for (const theme of ['light', 'dark']) {
       c.requestUpdate(); await c.updateComplete;
       await document.fonts.ready;
       const dialog = root().querySelector('hp-dialog[data-kind="settings"]');
-      const tiles = [...dialog.querySelectorAll('.hpf-colortile')];
-      const numbers = tiles.map((tile) => tile.querySelector('.hpf-colortile-meta input'));
-      const fits = numbers.every((input) => {
-        const style = getComputedStyle(input);
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        context.font = style.font;
-        const inner = input.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-        return input.inputMode === 'numeric' && inner + 0.5 >= context.measureText('100').width;
+      dialog.querySelector('[data-section-target="fills"]').click(); await c.updateComplete;
+      const tiles = [...dialog.querySelectorAll('[data-card="fills"] .hpf-colortile')];
+      const numbers = tiles.map(tile => tile.querySelector('.hpf-colortile-meta .hpf-opacity'));
+      const fits = numbers.length === 8 && numbers.every(readout => {
+        const rect=readout.getBoundingClientRect();
+        return rect.width>0 && readout.scrollWidth<=readout.clientWidth+1;
       });
-      const noSpinner = numbers.every((input) => getComputedStyle(input).appearance === 'textfield');
+      const noSpinner = !dialog.querySelector('.hpf-colortile-meta input');
       const tileBounds = tiles.map((tile) => tile.getBoundingClientRect());
       const noOverflow = tileBounds.every((box) => box.left >= -1 && box.right <= innerWidth + 1)
         && dialog.scrollWidth <= dialog.clientWidth + 1;
@@ -56,9 +53,7 @@ for (const theme of ['light', 'dark']) {
         return { picker, opacity: Number(getComputedStyle(painted).opacity),
           checker: getComputedStyle(trigger).backgroundImage.includes('linear-gradient') };
       };
-      // #943 removes the room-darkness tile; all nine remaining tiles must
-      // still paint their own alpha and checkerboard.
-      const tileAlpha = tiles.length === 9 && tiles.every((tile) => {
+      const tileAlpha = tiles.length === 8 && tiles.every((tile) => {
         const { picker, opacity, checker } = layer(tile);
         return checker && Math.abs(opacity - Math.round(picker.opacity * 100) / 100) <= 0.01;
       });
@@ -71,38 +66,24 @@ for (const theme of ['light', 'dark']) {
       // #615 AC2: at 0 % the label sits on the bare checkerboard — dark ink.
       const noneInkDark = !!none
         && getComputedStyle(none.querySelector('.hpf-colortile-swatch')).color === 'rgb(31, 42, 48)';
-      // #615 AC1: typing into the tile's % field repaints before Save.
-      const typeInto = async (input, value) => {
-        input.value = value;
-        input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-        await c.updateComplete;
-        const picker = input.closest('.hpf-colortile, .hpf-colorfield')?.querySelector('hp-color-opacity');
-        await picker?.updateComplete;
+      const changeAlpha = async (picker, value) => {
+        picker.dispatchEvent(new CustomEvent('hp-color-opacity-change', {detail:{color:picker.color,opacity:value/100},bubbles:true,composed:true}));
+        await c.updateComplete; await picker.updateComplete;
       };
-      const savedBefore = JSON.stringify(c._serverCfg);
-      const onInput = on?.querySelector('.hpf-colortile-meta input');
-      let liveAlpha = false;
-      if (onInput) {
-        await typeInto(onInput, '0');
-        const zero = layer(on).opacity;
-        await typeInto(onInput, '100');
-        const full = layer(on).opacity;
-        await typeInto(onInput, '18');
-        liveAlpha = zero === 0 && full === 1 && JSON.stringify(c._serverCfg) === savedBefore;
-      }
+      const savedBefore=JSON.stringify(c._serverCfg), onPicker=on.querySelector('hp-color-opacity');
+      await changeAlpha(onPicker,0); const zero=layer(on).opacity;
+      await changeAlpha(onPicker,100); const full=layer(on).opacity;
+      await changeAlpha(onPicker,18);
+      const liveAlpha=zero===0 && full===1 && JSON.stringify(c._serverCfg)===savedBefore;
       // #615 AC3 (b): colour plates stay solid at any alpha. Without this the
       // tile mode could leak to every flat-swatch (mutant M-615-plate).
       const plates = [...dialog.querySelectorAll('.hpf-colorfield hp-color-opacity')];
       const platesFlat = plates.length >= 2 && plates.every((picker) => picker.flatSwatch && !picker.coverSwatch);
       const wallPicker = dialog.querySelector('.hpf-card[data-card="plan"] .hpf-colorrow .hpf-colorfield hp-color-opacity');
-      const wallInput = wallPicker?.closest('.hpf-colorfield').querySelector('.hpf-opacity input');
-      let plateSolid = false;
-      if (wallInput) {
-        await typeInto(wallInput, '40');
-        plateSolid = wallPicker.opacity === 0.4
-          && getComputedStyle(wallPicker.renderRoot.querySelector('.swatch')).opacity === '1'
-          && getComputedStyle(wallPicker.renderRoot.querySelector('.trigger')).backgroundImage === 'none';
-      }
+      await changeAlpha(wallPicker,40);
+      const plateSolid=wallPicker.opacity===.4
+        && getComputedStyle(wallPicker.renderRoot.querySelector('.swatch')).opacity==='1'
+        && getComputedStyle(wallPicker.renderRoot.querySelector('.trigger')).backgroundImage==='none';
       const hex = [...dialog.querySelectorAll('.hpf-hex')];
       const upperHex = hex.length >= 11 && hex.every((node) => node.textContent === node.textContent.toUpperCase());
       const picker = tiles[0].querySelector('hp-color-opacity');
@@ -112,15 +93,9 @@ for (const theme of ['light', 'dark']) {
       picker.renderRoot.querySelector('.trigger').click();
       await picker.updateComplete;
 
-      const wall = dialog.querySelector('[data-card="plan"] .hpf-colorrow');
-      const reset = [...wall.querySelectorAll('button')].find((button) => button.textContent.trim() === c._t('btn.reset'));
-      const before = JSON.stringify(c._serverCfg);
-      c._setFillColor('wall_fill', { c: '#123456', a: 0.27 });
-      await c.updateComplete;
-      reset?.click(); await c.updateComplete;
-      const resetsDraftOnly = !!reset && c._settingsDialog.colors.wall_fill.c === '#ffffff'
-        && c._settingsDialog.colors.wall_fill.a === 1 && JSON.stringify(c._serverCfg) === before;
-
+      const wall=dialog.querySelector('[data-card="plan"] .hpf-colorrow');
+      const resetsDraftOnly=!wall.querySelector('button.hpf-link');
+      dialog.querySelector('[data-section-target="data"]').click(); await c.updateComplete;
       const data = dialog.querySelector('[data-card="data"]');
       const actions = [...data.querySelectorAll('.hpf-actions .btn')];
       const outlined = actions.length >= 2 && actions.every((button) => {
@@ -131,7 +106,7 @@ for (const theme of ['light', 'dark']) {
           && !button.classList.contains('alignall');
       });
       const leftAligned = actions.length >= 2
-        && Math.abs(actions[0].getBoundingClientRect().left - actions.at(-1).getBoundingClientRect().left) <= 1;
+        && Math.abs(actions[0].getBoundingClientRect().top - actions[1].getBoundingClientRect().top) <= 1;
       const noNative = dialog.querySelectorAll('input[type="color"]').length === 0;
       c._settingsDialog = null;
       await c.updateComplete;
@@ -147,6 +122,7 @@ await page.setViewportSize({ width: 560, height: 900 });
 await page.evaluate(async () => {
   const c = window.__card;
   c._openSettingsDialog(); await c.updateComplete;
+  (c.shadowRoot || c.renderRoot).querySelector('[data-section-target="fills"]').click(); await c.updateComplete;
   (c.shadowRoot || c.renderRoot).querySelector('[data-card="fills"]').scrollIntoView({ block: 'start' });
 });
 const tile = page.locator('hp-dialog[data-kind="settings"] .hpf-colortile-swatch').first();

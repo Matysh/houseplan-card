@@ -2,7 +2,7 @@ import { LitElement, css, html, nothing, type PropertyValues, type TemplateResul
 import { langOf } from './i18n';
 import { hasTopologyTranslation, topologyT, type TopologyI18nKey } from './i18n/topology';
 import './hp-help';
-import { ensureFormKitStyles } from './editors/form-kit';
+import { ensureSettingsDialogStyles } from './editors/settings-styles';
 import {
   normalizeZ2mBaseTopic, type ZigbeeTopologySettings,
 } from './zigbee-topology-settings';
@@ -388,7 +388,7 @@ export class HpZigbeeTopologySettings extends LitElement {
    * `topology.help`), иначе заголовок удваивался (дефект 1 из #600).
    */
   private _renderEmbedded(): TemplateResult {
-    ensureFormKitStyles(this);
+    ensureSettingsDialogStyles(this);
     const admin = this._admin, enabled = this.value.enabled;
     const mayLoad = admin && this.savedEnabled;
     const presence = zigbeeIntegrationPresence(integrationMetadataSnapshot(this.hass), this.registry);

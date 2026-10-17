@@ -14,7 +14,6 @@ import { html, nothing, type TemplateResult } from 'lit';
 
 import { CARD_DIALOG_FORM_KIT, cardDialogFormKitTokens, formKitCss } from '../styles/form-kit.styles';
 import { colorTileInk } from './color-tile-ink';
-import { settingsDialogCss } from '../styles/settings-dialogs.styles';
 
 /**
  * Лист набора живёт в ленивом редакторском графе, а не в `cardStyles` (#594 AC8).
@@ -26,7 +25,7 @@ import { settingsDialogCss } from '../styles/settings-dialogs.styles';
  * на `<style>` там, где конструируемых листов нет.
  */
 const FORM_KIT_CSS = cardDialogFormKitTokens
-  + formKitCss(CARD_DIALOG_FORM_KIT, { withSwitch: false }) + settingsDialogCss;
+  + formKitCss(CARD_DIALOG_FORM_KIT, { withSwitch: false });
 const adopted = new WeakSet<ShadowRoot>();
 let sheet: CSSStyleSheet | null = null;
 
@@ -131,6 +130,8 @@ export interface ToggleRowOptions {
   onChange: (checked: boolean) => void;
   /** `id` чекбокса — для смоков и `aria-describedby`. */
   id?: string;
+  /** An always-visible status may describe a switch without becoming its caption. */
+  describedBy?: string;
 }
 
 /**
@@ -140,7 +141,7 @@ export interface ToggleRowOptions {
  * остаётся тем, что смоки умеют переключать.
  */
 export function toggleRow({
-  icon, title, caption, help, checked, disabled = false, compact = false, onChange, id,
+  icon, title, caption, help, checked, disabled = false, compact = false, onChange, id, describedBy,
 }: ToggleRowOptions): TemplateResult {
   const captionId = id && caption ? `${id}-caption` : undefined;
   return html`<label class="hpf-toggle ${icon ? '' : 'hpf-noicon'} ${compact ? 'hpf-compact' : ''}">
@@ -148,7 +149,7 @@ export function toggleRow({
     <span class="hpf-toggle-title"><span>${title}</span>${help ?? nothing}</span>
     ${caption && !compact ? html`<span class="hpf-toggle-caption" id=${captionId ?? nothing}>${caption}</span>` : nothing}
     <input type="checkbox" id=${id ?? nothing} .checked=${checked} ?disabled=${disabled}
-      aria-label=${title} aria-describedby=${captionId ?? nothing}
+      aria-label=${title} aria-describedby=${describedBy ?? captionId ?? nothing}
       @change=${(e: Event) => onChange((e.target as HTMLInputElement).checked)} />
   </label>`;
 }

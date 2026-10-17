@@ -27,7 +27,7 @@ test('#661 AC10: the switch sits in the «Sun and Moon» card under «Sunlight t
   assert.match(row, /icon: 'mdi:moon-waning-crescent'/);
   assert.match(row, /title: st\('gs\.moon'\),/);
   // #948: the actual moon status is permanently visible below the switch.
-  assert.match(sun, /callout\(\{ text: moonStatus \? moonStatusText\(moonStatus, st\) : st\('gs\.moon_hint'\) \}\)/);
+  assert.match(sun, /data-moon-status=\$\{moonStatus\.reason\}/);
   assert.doesNotMatch(row, /aria-live/);
   assert.match(row, /checked: d\.moon, onChange: \(v\) => set\(\{ moon: v \}\)/);
   const reset = dialog.slice(dialog.indexOf("${t('gs.reset')}") - 600, dialog.indexOf("${t('gs.reset')}"));

@@ -54,7 +54,7 @@ const openDialog = (page) => page.evaluate(async () => {
   const lines = card.renderRoot.querySelectorAll('hp-dialog [data-moon-status]');
   return {
     lines: lines.length,
-    caption: card.renderRoot.querySelector('hp-dialog #gs-moon-caption')?.textContent.trim() ?? null,
+    caption: card.renderRoot.querySelector('hp-dialog #gs-moon-status')?.textContent.trim() ?? null,
   };
 });
 const line = (page) => page.evaluate(() => {
@@ -66,7 +66,7 @@ const line = (page) => page.evaluate(() => {
     reason: node?.dataset.moonStatus ?? null,
     text: node?.textContent.trim() ?? null,
     describedBy: root.querySelector('hp-dialog #gs-moon')?.getAttribute('aria-describedby') ?? null,
-    inCaption: !!node?.closest('#gs-moon-caption'),
+    inCaption: !!node?.closest('#gs-moon-status'),
     live: !!node?.closest('[aria-live]'),
     saveDisabled: !!root.querySelector('hp-dialog [data-hp="dialog-confirm"]')?.disabled,
   };
@@ -117,8 +117,8 @@ const draftOf = (page) => page.evaluate(() => JSON.stringify(window.__card._sett
   report.ac11 = { planMoon, first, shown };
   checks.ac11_shownText = shown.text === SHOWN && shown.reason === 'shown';
   checks.ac11_percentIsThePlanMoon = planMoon !== null && Math.round(Number(planMoon) * 100) === 79;
-  checks.ac11_lineIsTheSecondCaptionLine = shown.inCaption && shown.describedBy === 'gs-moon-caption'
-    && !shown.live && first.caption === `${HINT}${SHOWN}`;
+  checks.ac11_statusIsPermanentCallout = shown.inCaption && shown.describedBy === 'gs-moon-status'
+    && !shown.live && first.caption === SHOWN;
   checks.ac11_lineLeavesTheDraftClean = shown.saveDisabled;
   const toggled = [];
   for (let i = 0; i < 2; i++) {

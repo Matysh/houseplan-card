@@ -6,12 +6,10 @@ const result = await page.evaluate(async () => {
   const root = () => card.shadowRoot || card.renderRoot;
   card._openSettingsDialog();
   await card.updateComplete;
-  // #600 §5.1: подзаголовок карточки «Данные» — `.hpf-sub h4`, кнопки — в
-  // строке действий набора под ним.
-  const groupNode = [...root().querySelectorAll('.hpf-sub h4')]
-    .find((node) => node.textContent.trim() === card._t('gs.backup_group'));
-  const group = !!groupNode;
-  const actions = groupNode?.closest('.hpf-sub')?.nextElementSibling?.querySelectorAll('.btn').length ?? 0;
+  root().querySelector('[data-section-target="data"]').click(); await card.updateComplete;
+  const groupNode = root().querySelector('[data-card="data"]');
+  const group = groupNode?.querySelector('h3')?.textContent.trim() === 'Backups and maintenance';
+  const actions = groupNode?.querySelector('.hpf-actions')?.querySelectorAll('.btn').length ?? 0;
   const importTrigger = root().querySelector('.backupupload > button');
   importTrigger?.focus();
   const keyboardImport = importTrigger?.tagName === 'BUTTON'

@@ -35,6 +35,7 @@ const result = await page.evaluate(async () => {
     && card._settingsDialog.colors.light_on.a === 0.37
     && JSON.stringify(card._settingsDialog.colors.temp_cold) === JSON.stringify(previousTemp);
 
+  dialog.querySelector('[data-section-target="fills"]').click(); await card.updateComplete;
   lightOn.renderRoot.querySelector('.trigger').click();
   await lightOn.updateComplete;
   await frame();
@@ -64,6 +65,7 @@ const result = await page.evaluate(async () => {
     ?.getAttribute('aria-expanded') === 'false'
     && pickerSurfaceClicks === 0;
 
+  dialog.querySelector('[data-section-target="plan"]').click(); await card.updateComplete;
   const originalGlobalBg = card._settingsDialog.bgColor;
   globalBg.renderRoot.querySelector('.trigger').click();
   await globalBg.updateComplete;

@@ -7,6 +7,7 @@ const settings = page => page.locator('hp-dialog[data-kind="settings"][icon="mdi
 const optimize = page => page.locator('hp-dialog[data-kind="settings"][icon="mdi:broom"]');
 async function open(page) {
   if (!await settings(page).count()) await page.locator('[data-hp="settings"]').click();
+  await settings(page).locator('[data-section-target="data"]').click();
   await settings(page).locator('button:has(ha-icon[icon="mdi:broom"])').click();
   await optimize(page).waitFor();
   await page.evaluate(() => window.__hpTest.settled());
@@ -143,6 +144,7 @@ for (const kind of ['state', 'connection', 'user']) {
         return base.callWS(message);
       } };
     });
+    await settings(page).locator('[data-section-target="display"]').click();
     await settings(page).locator('#gs-room-tooltip').click();
     await settings(page).locator('.btn[data-hp="dialog-confirm"]').click();
     await page.waitForFunction(() => window.__892Pending.entered);
@@ -283,6 +285,7 @@ for (const direction of ['full-to-partial', 'partial-to-full']) {
     check('persistence:coldInstanceReadsDeletedRecordAndLiveUndo', await page.evaluate(() =>
       !window.__card._layout.grp_persistence && window.__card._canOptimizeUndo));
     await page.locator('[data-hp="settings"]').click();
+    await settings(page).locator('[data-section-target="data"]').click();
     await settings(page).locator('button:has(ha-icon[icon="mdi:undo-variant"])').click();
     await page.waitForFunction(() => !window.__card._optimizeUndoBusy && !!window.__card._layout.grp_persistence);
     check('persistence:actualGuiUndoRestoresWholeRecord', await page.evaluate(() =>

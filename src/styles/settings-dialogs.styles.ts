@@ -17,6 +17,7 @@ export const settingsDialogCss = `
   .hpf-settings-pane .hpf-body > * + * { margin-top:18px; padding-top:18px; border-top:1px solid var(--hpf-line); }
   .hpf-settings-pane .hpf-sub { min-height:0; }
   .hpf-settings-pane .hpf-sub h4 { font-size:14px; }
+  .hpf-settings-pane .hpf-body > .hpf-sub + * { margin-top:12px; padding-top:0; border-top:0; }
   .hpf-settings-pane .hpf-labelrow,.hpf-settings-pane .hpf-field > .hpf-label { color:var(--primary-text-color); font-size:13px; }
   .hpf-settings-pane .hpf-toggle { grid-template-columns:minmax(0,1fr) 44px; }
   .hpf-settings-pane .hpf-toggle-icon { display:none; }
@@ -59,6 +60,7 @@ export const settingsDialogCss = `
   .hpf-sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
   .hpf-settings-form select { transition:background 160ms ease,border-color 160ms ease; }
   @supports (appearance:base-select) {
+    .hpf-settings-form select { background-image:none; }
     .hpf-settings-form select,.hpf-settings-form select::picker(select) { appearance:base-select; }
     .hpf-settings-form select::picker-icon { margin-inline-start:12px; transition:rotate 160ms ease; }
     .hpf-settings-form select:open::picker-icon { rotate:180deg; }
