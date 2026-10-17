@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 916,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "The delivery after stable 1.81.0 only archives that released line's review documents and repairs their links and index. The earlier implementation of release preparation shipped in 1.81.0 and is outside this cycle's product delta. This documentation maintenance changes no user behavior."
+}

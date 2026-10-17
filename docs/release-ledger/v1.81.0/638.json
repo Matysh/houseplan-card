@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 638,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "The reachable delivery only records the independent review document and index for the previous stable 1.81.0 line. It changes no runtime behavior and does not constitute a review verdict for 1.82.0; the historical document and its recorded limitations remain unchanged."
+}
