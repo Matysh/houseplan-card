@@ -814,6 +814,8 @@ export const editorDialogsStyles = css`
       gap: var(--sp-2);
       cursor: pointer;
     }
+    .device-inbox-space-filter { min-width: 0; max-width: 100%; flex-wrap: wrap; }
+    .device-inbox-space-filter select { min-width: 0; max-width: 100%; width: 240px; }
     .device-inbox-filter-help {
       display: inline-flex;
       align-items: center;

@@ -55,6 +55,7 @@ test('all dangerous-action call sites use the shared confirmation contract', () 
   const files = [
     '../src/houseplan-card.ts',
     '../src/houseplan-editor-runtime.ts',
+    '../src/marker-deletion.ts',
     '../src/decor-image-editor.ts',
     '../src/houseplan-onboarding-runtime.ts',
   ];
@@ -62,12 +63,12 @@ test('all dangerous-action call sites use the shared confirmation contract', () 
   const nativeCalls = source.match(
     /(?:\bwindow\.confirm|\bglobalThis\.confirm|(?<![\w.])confirm)\s*\(/g,
   ) || [];
-  const sharedCalls = source.match(/await this(?:\.host)?\._confirmDanger\s*\(\{/g) || [];
+  const sharedCalls = source.match(/await (?:this(?:\.host)?|host)\._confirmDanger\s*\(\{/g) || [];
 
   assert.equal(nativeCalls.length, 0, 'native browser confirmation must not return');
-  assert.equal(sharedCalls.length, 7, '#826 removes only the unreachable onboarding space-delete confirmation');
+  assert.equal(sharedCalls.length, 8, '#930 moves single Delete to its shared owner and adds one batch confirmation');
   for (const key of [
-    'remove-marker', 'delete-plan', 'delete-space', 'unlock', 'close-support-busy',
+    'remove-marker', 'remove-markers', 'delete-plan', 'delete-space', 'unlock', 'close-support-busy',
   ]) {
     assert.match(source, new RegExp(`key: '${key}'`));
   }

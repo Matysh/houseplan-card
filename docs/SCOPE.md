@@ -150,7 +150,10 @@ the file — and if a future version wants to reclaim that space, it asks.
 - **Device metadata: links & PDF manuals** — not spatial, but tiny, server-side,
   and used in real installs. Verdict: **keep, frozen** (no growth).
 - **Virtual devices** — placeholders for not-yet-installed hardware; serves J6.
-  Verdict: **keep, frozen**.
+  Verdict: **keep, frozen**, except the owner's 2026-10-17 decision
+  ([#930](https://github.com/Matysh/houseplan-card/issues/930)): include existing
+  virtual markers in the Devices catalog, space filter and batch Hide/Show/Delete
+  with marker-ID identity. This grants no other growth of virtual-device scope.
 - **LQI diagnostics** — promoted to J7 (differentiator), not excess.
 - Nothing found that warrants removal; the mode redesign already moved every
   interaction to where it belongs.

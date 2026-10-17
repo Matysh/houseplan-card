@@ -386,6 +386,12 @@ export const dialogsStyles = css`
       font-size: var(--fs-l);
       line-height: 1.3;
     }
+    hp-dialog [data-confirm-key="remove-markers"] .danger-confirm-object {
+      white-space: pre-line;
+      max-height: 35vh;
+      overflow-y: auto;
+      font-size: var(--fs-m);
+    }
     .vaccalbar {
       position: fixed;
       left: 50%;

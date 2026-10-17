@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Devices includes virtual markers, a precise space filter and confirmed batch
+  deletion. Selection stays within the filtered list; unavailable HA bindings
+  can be deleted without pretending they can be shown or hidden. The add button
+  is now called “Add device” ([#930](https://github.com/Matysh/houseplan-card/issues/930)).
+
 - Vacuum paths recover when an exact map route becomes available and restore
   already recorded positions when the card opens during cleaning. The robot,
   path and live tip use the same map camera; unrelated camera updates no

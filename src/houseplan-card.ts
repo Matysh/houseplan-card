@@ -110,7 +110,7 @@ import {
   sourceValue, roomClimateKey, roomClimateMap, resolvedLightSources, resolvedLightState,
   resolvedLightStats, removedPlanBindings, isRemovedPlanEntity, autoIconForBinding, type AreaClimate,
 } from './devices';
-import { type DeviceInboxCategory, type DeviceInboxRow } from './device-inbox';
+import type { DeviceInboxCategory, DeviceInboxRow } from './device-inbox';
 import type { CreatedAreaRoom } from './room-device-discovery';
 import {
   formatToggleConfirmation, infoCardTapConfirmationRequired, projectedTapAction,
@@ -536,6 +536,7 @@ interface DeviceInboxDialogState {
   showEntities: boolean;
   onlyNew: boolean;
   limit: number;
+  spaceFilter?: string;
   /** Logical row restored after a nested marker dialog closes. */
   anchor?: string;
   busy?: string;

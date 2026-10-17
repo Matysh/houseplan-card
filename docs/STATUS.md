@@ -29,6 +29,11 @@ SPEC heading compatibility (#950) accepts the publisher's canonical and
 issue/round headings only for the exact added SPEC file. Publisher, delta and
 machine material proof stay strict; historical documents remain unchanged.
 
+Device catalog (#930) includes virtual-ID rows and one exact space filter on
+every lifecycle tab. Batch Delete shares the single-device candidate/cleanup
+owner, confirms the named set once and refuses stale targets; Hide/Show never
+silently applies only the active part of a mixed selection. No migration.
+
 Vacuum route recovery (#918) ties recording, the live robot and its path to
 one exact available source/map pair. Reopening the card restores server
 history; previously unassigned points are retained without adopting them into

@@ -191,20 +191,21 @@ function batchFixture() {
   return { markers, rows };
 }
 
-test('issue 618: only active rows of On plan / Hidden are selectable', () => {
+test('issue 930: inactive plan rows are deletable but retain the 618 Hide/Show refusal', () => {
   const { rows } = batchFixture();
   const keys = (list) => list.map((row) => row.key).sort();
   assert.deepEqual(keys(selectableInboxRows(filterDeviceInbox(rows, 'on_plan', ''))),
-    ['device:auto', 'device:explicit', 'entity:sensor.temp']);
+    ['device:auto', 'device:explicit', 'entity:sensor.orphan', 'entity:sensor.temp', 'entity:sensor.unknown']);
   assert.deepEqual(keys(selectableInboxRows(filterDeviceInbox(rows, 'hidden', ''))),
-    ['device:manual', 'device:stub']);
+    ['device:hidden-off', 'device:manual', 'device:stub']);
   assert.deepEqual(selectableInboxRows(filterDeviceInbox(rows, 'available', '')), []);
-  // Inactive HA statuses are listed but never selectable.
+  // Inactive HA statuses can be deleted, never hidden/shown as a side effect.
   for (const binding of ['entity:sensor.orphan', 'entity:sensor.unknown', 'device:hidden-off']) {
     const row = rows.find((item) => item.binding === binding);
     assert.ok(row, binding);
     assert.equal(inboxVisibilityAllowed(row.category, row.status), false, binding);
     assert.equal(row.canHide || row.canShow, false, binding);
+    assert.equal(row.canDelete, true, binding);
   }
   // Single-row buttons read the same predicate.
   for (const row of rows) {
@@ -235,7 +236,7 @@ test('issue 618: effective selection keeps only still-selectable keys in row ord
   const chosen = effectiveInboxSelection(
     ['entity:sensor.orphan', 'device:explicit', 'device:gone', 'device:auto'], selectable,
   );
-  assert.deepEqual(chosen.map((row) => row.key), ['device:auto', 'device:explicit']);
+  assert.deepEqual(chosen.map((row) => row.key), ['device:auto', 'entity:sensor.orphan', 'device:explicit']);
   assert.deepEqual(effectiveInboxSelection(undefined, selectable), []);
   assert.deepEqual(effectiveInboxSelection([], selectable), []);
 });

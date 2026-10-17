@@ -1231,9 +1231,9 @@ and its other entities remain deleted. The complete device stays available in
   “Selected: K”, the action button with the count and **Clear selection**. The
   whole batch is saved in one write and confirmed by a “Hidden: K” / “Shown: K”
   toast. There is no confirmation prompt — the same tab reverses it. Rows that
-  are disabled or missing in Home Assistant, or unverified, cannot be
-  selected. The selection resets when you switch tabs, edit the search or
-  toggle **New only**, survives opening a device from the catalog, and is
+  are disabled or missing in HA, or unverified, may be selected for deletion
+  but disable Hide/Show for the entire mixed selection. Selection resets on
+  space/tab/search/entity-visibility/**New only** changes, survives opening a device from the catalog, and is
   cleared after a successful save; a failed save changes nothing and keeps it;
 - **Discovery filters** (#44) live on the **Available** tab: a switch that
   groups room lights into one marker (on by default) and the list of excluded
@@ -1242,7 +1242,8 @@ and its other entities remain deleted. The complete device stays available in
   settings once. Filters only affect automatic candidates — a device you
   placed explicitly never disappears because of them, and an excluded
   candidate names its integration in the catalog;
-- **Add virtual device** lives at the top of that catalog. Enable **Show
+- **Add device** is the renamed **Add virtual device** button: it opens the
+  same new-marker form without saving automatically. Enable **Show
   entities** in **Available** to place an individual entity;
 - **Show hidden on plan** mirrors the header eye **Show hidden devices** (on
   phones, in the gear menu after Help). Active hidden devices appear normally
@@ -1250,6 +1251,22 @@ and its other entities remain deleted. The complete device stays available in
   remembers the choice per user/card without changing the saved Hidden flag
   or switching real lamps. HA-disabled devices remain editor-only service ghosts;
 - **Icon rules** edits the first-match regular-expression list.
+
+The catalog also includes virtual devices, identified individually by marker
+ID. They support Find, settings, Hide/Show and Delete without invented HA
+statuses or an Available-again entry after deletion.
+
+**Space** filters every tab together with search, without switching the plan.
+A new catalog starts at **All spaces**; **No space** includes unassigned or
+ambiguous candidates rather than guessing a floor from the current tab.
+Placed devices use their actual plan space. Tab counters reflect the space
+filter but not search; Select all includes matching rows behind Show more.
+
+**Delete selected (N)** on On plan/Hidden asks once for the exact named set.
+It removes settings, positions, attachments and saved robot paths; LED shapes
+stay unbound. HA devices/entities and opening contact/lock links are not deleted.
+One config write commits the batch. Undo cannot restore it: use a prior backup
+for the old settings. A stale confirmation requires checking the list again.
 
 An automatically discovered marker is already **On plan** even before it has
 saved marker settings. The **New** badge is independent and remains until the
@@ -1385,8 +1402,8 @@ Disabled, removed or unverified bindings never become ordinary active devices.
 
 Use **Devices → On plan**, row checkboxes or **Select all (N)** and **Hide
 selected** for a batch; reverse it under **Hidden → Show selected**. Disabled,
-missing or unverified bindings cannot be selected and explain why. Selection
-resets on tab/search/**New only** changes, survives opening one device, clears
+missing or unverified bindings can be selected for Delete but disable Hide/Show
+for the entire selection. Selection resets on space/tab/search/entity-visibility/**New only** changes, survives opening one device, clears
 after a successful save and remains after a failed one.
 
 ### Disabled in Home Assistant

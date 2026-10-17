@@ -5552,9 +5552,9 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'device-inbox-batch-eligibility-active',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="issue 618" test/device-inbox.test.mjs',
-    because: 'an HA-disabled, orphaned or unverified binding must be neither selectable nor counted in '
-      + '"Select all (N)"; otherwise a batch writes hidden flags the single-row action refuses (#618 B2)',
+      + '&& node --test --test-name-pattern="issue (618|930)" test/device-inbox.test.mjs',
+    because: 'an HA-disabled, orphaned or unverified binding is deletable under #930 but must still refuse '
+      + 'Hide/Show; otherwise a batch writes hidden flags the single-row action refuses (#618 B2)',
     patches: [{
       file: 'src/device-inbox.ts',
       find: "  return isInboxBatchTab(category) && status.kind === 'active';",
@@ -5569,9 +5569,39 @@ const MUTANT_DEFINITIONS = [
       + 'hide the device again on the next rebuild (docs/FILTERING.md, #618 B5)',
     patches: [{
       file: 'src/device-inbox.ts',
-      find: '        && (marker.binding !== row.binding || marker.removed === true)),\n      updated,\n    ];',
-      replace: '        && (marker.binding !== row.binding || marker.removed === true)),\n'
+      find: '        && (row.binding === \'virtual\' || marker.binding !== row.binding || marker.removed === true)),\n      updated,\n    ];',
+      replace: '        && (row.binding === \'virtual\' || marker.binding !== row.binding || marker.removed === true)),\n'
         + '      ...(hidden ? [updated] : []),\n    ];',
+    }],
+  },
+  {
+    id: 'inbox-delete-stale-placement-930',
+    guard: 'node demo/smoke_device_inbox_delete.mjs',
+    because: '#930: a confirmation must not delete a target moved to another space while it was open.',
+    patches: [{
+      file: 'src/marker-deletion.ts',
+      find: 'signature !== inboxDeletionSignature(selectedRows())',
+      replace: 'signature.length < 0',
+    }],
+  },
+  {
+    id: 'inbox-delete-rollback-930',
+    guard: 'node demo/smoke_device_inbox_delete.mjs',
+    because: '#930: refused config/set cannot leave an optimistic deletion or erase the exact selection.',
+    patches: [{
+      file: 'src/marker-deletion.ts',
+      find: 'restoreDeferred(host._rollbackOptimistic(attempt));',
+      replace: 'restoreDeferred(false);',
+    }],
+  },
+  {
+    id: 'inbox-virtual-id-930',
+    guard: 'node demo/smoke_device_inbox_delete.mjs',
+    because: '#930: hiding one virtual marker must not mutate or replace its virtual neighbours.',
+    patches: [{
+      file: 'src/device-inbox.ts',
+      find: '? marker.id === row.markerId && marker.binding === \'virtual\' : marker.binding === row.binding));',
+      replace: '? marker.binding === row.binding : marker.binding === row.binding));',
     }],
   },
   {

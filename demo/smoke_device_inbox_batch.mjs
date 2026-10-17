@@ -197,7 +197,8 @@ const out = await page.evaluate(async () => {
   result.oneOfThreeStaysHidden = hiddenNow.includes(d) && !hiddenNow.includes(a) && !hiddenNow.includes(b)
     && markerHidden(a).length === 1 && markerHidden(a)[0].hidden === false;
 
-  // ---- AC2: an HA-disabled row is listed but not selectable nor counted ----
+  // #930: disabled rows are selectable for Delete, but the whole Hide/Show
+  // action must refuse a mixed selection rather than writing a subset.
   // (both tabs; the rows keep a marker, so HA deactivation keeps them listed)
   const idOf = (binding) => binding.slice(binding.indexOf(':') + 1);
   const selectAllCount = () => Number((batch()?.querySelector('.device-inbox-select-all')?.textContent || '')
@@ -209,16 +210,21 @@ const out = await page.evaluate(async () => {
     window.__setRegistryDisabled('device', idOf(binding), 'user');
     await refreshHass();
     const box = rowBox(binding);
-    inactiveChecks.push(!!box && box.disabled && !!box.closest('label')?.title
-      && selectAllCount() === countBefore - 1
+    inactiveChecks.push(!!box && !box.disabled
+      && selectAllCount() === countBefore
       && c._deviceInboxRows().find((row) => row.binding === binding)?.status.kind === 'ha_disabled');
     await click(selectAll());
-    inactiveChecks.push(!selected().includes(binding) && selected().length === countBefore - 1);
+    inactiveChecks.push(selected().includes(binding) && selected().length === countBefore
+      && root().querySelector('.device-inbox-batch-apply')?.disabled === true
+      && root().querySelector('.device-inbox-batch-delete')?.disabled === false);
+    const beforeRefusal = configWrites;
+    await click(root().querySelector('.device-inbox-batch-apply'));
+    inactiveChecks.push(configWrites === beforeRefusal);
     await click(root().querySelector('.device-inbox-batch-clear'));
     window.__setRegistryDisabled('device', idOf(binding), null);
     await refreshHass();
   }
-  result.inactiveRowNotSelectable = inactiveChecks.length === 4 && inactiveChecks.every(Boolean);
+  result.inactiveRowsDeleteOnly = inactiveChecks.length === 6 && inactiveChecks.every(Boolean);
   await click(tabButton(2));
 
   // ---- AC5: a rejected write changes nothing and keeps the selection -------

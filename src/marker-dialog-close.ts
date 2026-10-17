@@ -16,7 +16,7 @@ export function finishMarkerDialogClose<T extends { anchor?: string | null }>(
   host._deviceInboxReturn = null;
   if (!restored.anchor) return;
   void host.updateComplete.then(() => requestAnimationFrame(() => {
-    const selector = `.device-inbox-row[data-binding="${CSS.escape(restored.anchor!)}"]`;
+    const selector = `.device-inbox-row[data-key="${CSS.escape(restored.anchor!)}"], .device-inbox-row[data-binding="${CSS.escape(restored.anchor!)}"]`;
     host.renderRoot.querySelector<HTMLElement>(selector)?.scrollIntoView({ block: 'nearest' });
   }));
 }

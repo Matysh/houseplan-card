@@ -16,7 +16,7 @@ export type DeviceInboxReason =
   | 'manual_hidden' | 'automatic_hidden'
   | 'service_entry' | 'excluded_integration' | 'excluded_domain'
   | 'grouped_light' | 'represented_by_parent'
-  | 'removed' | 'available' | 'no_bound_room';
+  | 'removed' | 'available' | 'no_bound_room' | 'virtual';
 
 export interface BindingCandidate {
   value: string;
@@ -145,7 +145,8 @@ export interface DeviceInboxRow {
   areaName: string;
   spaceId: string;
   spaceName: string;
-  kind: 'device' | 'entity';
+  kind: 'device' | 'entity' | 'virtual';
+  canDelete: boolean;
   isNew: boolean;
   searchText: string;
   canFind: boolean;
@@ -165,6 +166,8 @@ export interface DeviceInboxInput {
   areaNames?: Readonly<Record<string, string>>;
   spaceNames?: Readonly<Record<string, string>>;
   spaceByArea?: Readonly<Record<string, string>>;
+  /** Authoritative current plan, unlike the legacy last-wins area map. */
+  spaces?: readonly { id: string; rooms: readonly { id?: string; area?: string | null }[] }[];
   integrationByBinding?: Readonly<Record<string, string>>;
   /** Best-effort explanation of an automatically hidden/represented binding. */
   reasonByBinding?: Readonly<Record<string, DeviceInboxReason>>;
@@ -192,6 +195,7 @@ export function buildDeviceInbox(input: DeviceInboxInput): DeviceInboxRow[] {
     areaNames = {}, spaceNames = {}, spaceByArea = {}, integrationByBinding = {},
     reasonByBinding = {},
   } = input;
+  const resolveSpace = inboxSpaceResolver(input.spaces, spaceByArea);
   const runtimeByBinding = new Map<string, DevItem>();
   for (const device of devices) {
     if (device.virtual || !device.bindingKind || device.bindingKind === 'virtual' || !device.bindingRef) continue;
@@ -199,6 +203,7 @@ export function buildDeviceInbox(input: DeviceInboxInput): DeviceInboxRow[] {
   }
   const liveByBinding = new Map<string, Marker>();
   const removedByBinding = new Map<string, Marker>();
+  const runtimeById = new Map(devices.map((device) => [device.id, device]));
   for (const marker of markers) {
     if (!marker?.binding || marker.binding === 'virtual') continue;
     if (marker.removed) removedByBinding.set(marker.binding, marker);
@@ -212,9 +217,10 @@ export function buildDeviceInbox(input: DeviceInboxInput): DeviceInboxRow[] {
 
   const rows: DeviceInboxRow[] = [];
   for (const binding of keys) {
-    const runtime = runtimeByBinding.get(binding);
     const live = liveByBinding.get(binding);
     const removed = live ? undefined : removedByBinding.get(binding);
+    // A newer tombstone wins over a retained device-render snapshot.
+    const runtime = removed ? undefined : runtimeByBinding.get(binding);
     const candidate = candidateByBinding.get(binding);
     let category: DeviceInboxCategory;
     if (removed && candidate) category = 'readd';
@@ -227,7 +233,7 @@ export function buildDeviceInbox(input: DeviceInboxInput): DeviceInboxRow[] {
     const marker = live || removed;
     const kind = markerBindingKind(binding);
     const areaId = runtime?.area || candidate?.areaId || marker?.area || '';
-    const spaceId = runtime?.space || marker?.space || spaceByArea[areaId] || '';
+    const spaceId = resolveSpace(runtime, live, areaId);
     const name = runtime?.name || marker?.name || candidate?.label || binding;
     const model = runtime?.model || marker?.model || candidate?.model || '';
     const representedByParent = !!candidate?.parentDeviceId
@@ -261,20 +267,67 @@ export function buildDeviceInbox(input: DeviceInboxInput): DeviceInboxRow[] {
       canHide: category === 'on_plan' && visibilityAllowed,
       canShow: category === 'hidden' && visibilityAllowed,
       canAdd: (category === 'available' || category === 'readd') && active,
+      canDelete: !!runtime || !!live,
+    });
+  }
+  // Virtual identity is its ID, never the shared binding literal `virtual`.
+  for (const marker of markers) {
+    if (marker.binding !== 'virtual' || marker.removed) continue;
+    const runtime = runtimeById.get(marker.id);
+    const areaId = runtime?.area || marker.area || '';
+    const spaceId = resolveSpace(runtime, marker, areaId);
+    const hidden = marker.hidden === true;
+    const name = runtime?.name || marker.name || marker.id;
+    rows.push({
+      key: `virtual:${marker.id}`, binding: 'virtual', kind: 'virtual',
+      markerId: marker.id, deviceId: runtime?.id,
+      category: hidden ? 'hidden' : 'on_plan', status: ACTIVE_STATUS, reason: 'virtual',
+      name, icon: runtime?.icon || marker.icon || 'mdi:map-marker', model: marker.model || '',
+      integration: '', areaId, areaName: areaNames[areaId] || '',
+      spaceId, spaceName: spaceNames[spaceId] || '', isNew: false,
+      searchText: [name, marker.model, marker.id, areaNames[areaId], spaceNames[spaceId]].filter(Boolean).join(' ').toLocaleLowerCase(),
+      canFind: !!runtime && (!hidden || showHiddenOnPlan), canEdit: true,
+      canHide: !hidden, canShow: hidden, canAdd: false, canDelete: true,
     });
   }
   const statusRank = (row: DeviceInboxRow): number => row.status.kind === 'active' ? 1 : 0;
   return rows.sort((a, b) => a.category.localeCompare(b.category)
     || Number(b.isNew) - Number(a.isNew)
     || statusRank(a) - statusRank(b)
-    || a.name.localeCompare(b.name) || a.binding.localeCompare(b.binding));
+    || a.name.localeCompare(b.name) || a.key.localeCompare(b.key));
 }
 
+/** Missing/ambiguous membership is a real bucket, not the active floor. */
+function inboxSpaceResolver(
+  spaces: DeviceInboxInput['spaces'], fallback: Readonly<Record<string, string>>,
+): (runtime: DevItem | undefined, marker: Marker | undefined, areaId: string) => string {
+  if (!spaces) return (runtime, marker, areaId) => runtime?.space || marker?.space || fallback[areaId] || '';
+  const ids = new Set(spaces.map((space) => space.id));
+  const byRoom = new Map<string, string>(), byArea = new Map<string, string>();
+  const include = (map: Map<string, string>, key: string | null | undefined, space: string) => {
+    if (key) map.set(key, map.has(key) && map.get(key) !== space ? '' : space);
+  };
+  for (const space of spaces) for (const room of space.rooms) {
+    include(byRoom, room.id, space.id); include(byArea, room.area, space.id);
+  }
+  return (runtime, marker, areaId) => {
+    const explicit = runtime?.space || marker?.space;
+    if (explicit) return ids.has(explicit) ? explicit : '';
+    if (marker?.room_id && byRoom.has(marker.room_id)) return byRoom.get(marker.room_id)!;
+    return byArea.get(areaId) || '';
+  };
+}
+
+export const INBOX_NO_SPACE = '@unassigned';
+export const inboxSpaceFilterMatches = (row: Pick<DeviceInboxRow, 'spaceId'>, filter = ''): boolean =>
+  !filter || (filter === INBOX_NO_SPACE ? !row.spaceId : filter === `space:${row.spaceId}`);
+
 export function filterDeviceInbox(
-  rows: readonly DeviceInboxRow[], category: DeviceInboxCategory, query: string, onlyNew = false,
+  rows: readonly DeviceInboxRow[], category: DeviceInboxCategory, query: string, onlyNew = false, spaceFilter = '',
 ): DeviceInboxRow[] {
   const needle = query.trim().toLocaleLowerCase();
   return rows.filter((row) => row.category === category
+    && inboxSpaceFilterMatches(row, spaceFilter)
     && (!onlyNew || row.isNew)
     && (!needle || row.searchText.includes(needle)));
 }
@@ -293,11 +346,11 @@ export function inboxVisibilityAllowed(category: DeviceInboxCategory, status: Ha
   return isInboxBatchTab(category) && status.kind === 'active';
 }
 
-/** #618 B2/B3: rows of an already filtered tab that may be selected.  The
+/** #930: deletable rows of an already filtered tab; visibility is checked separately. The
  * caller passes the full filtered set (search and "New only" applied, but not
  * the "Show more" limit), so "Select all (N)" covers rows below the fold. */
 export function selectableInboxRows(rows: readonly DeviceInboxRow[]): DeviceInboxRow[] {
-  return rows.filter((row) => inboxVisibilityAllowed(row.category, row.status));
+  return rows.filter((row) => isInboxBatchTab(row.category) && row.canDelete);
 }
 
 /** #618 B4/B9: the part of a stored selection that is still actionable, in
@@ -335,7 +388,9 @@ export function applyInboxVisibility(
   let next: Marker[] = [...markers];
   let changed = 0;
   for (const row of rows) {
-    const live = next.find((marker) => !marker.removed && marker.binding === row.binding);
+    const live = next.find((marker) => !marker.removed && (row.binding === 'virtual'
+      ? marker.id === row.markerId && marker.binding === 'virtual' : marker.binding === row.binding));
+    if (row.binding === 'virtual' && !live) continue;
     if (!hidden && !live) continue;
     const id = live?.id || markerIdForBinding(row.binding, row.markerId, newId);
     const updated: Marker = live
@@ -344,7 +399,7 @@ export function applyInboxVisibility(
     if (!live || live.hidden !== hidden) changed += 1;
     next = [
       ...next.filter((marker) => marker.id !== id
-        && (marker.binding !== row.binding || marker.removed === true)),
+        && (row.binding === 'virtual' || marker.binding !== row.binding || marker.removed === true)),
       updated,
     ];
   }

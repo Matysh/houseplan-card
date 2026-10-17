@@ -126,5 +126,15 @@
   "furn.sym_stairs": "Лестница",
   "furn.sym_fireplace": "Камин",
   "furn.sym_plant": "Растение",
-  "furn.sym_rug": "Ковёр"
+  "furn.sym_rug": "Ковёр",
+  "device_inbox.space_filter": "Пространство",
+  "device_inbox.all_spaces": "Все пространства",
+  "device_inbox.no_space": "Без пространства",
+  "device_inbox.reason_virtual": "Виртуальное устройство",
+  "device_inbox.delete_selected": "Удалить выбранные ({count})",
+  "device_inbox.batch_deleted": "Удалено с плана: {count}",
+  "device_inbox.batch_visibility_unavailable": "Не все выбранные устройства можно скрыть или показать. Снимите их выделение для изменения видимости.",
+  "device_inbox.selection_changed": "Выбранные устройства изменились. Проверьте список и повторите действие.",
+  "confirm.remove_markers_title": "Удалить устройства с плана?",
+  "confirm.remove_markers_body": "Будут удалены выбранные устройства: {count}. Область: {scope}. Их настройки, позиции, вложения и сохранённые пути пылесоса будут удалены. Связанные LED-формы останутся без привязки. Устройства и сущности Home Assistant не удаляются. Это действие нельзя отменить."
 }

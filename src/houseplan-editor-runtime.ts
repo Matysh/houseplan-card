@@ -155,17 +155,18 @@ import {
 import {
   buildDevices, deviceFromMarkerDraft, effectiveExcludedIntegrations, seedHiddenBindings,
   resolvedLightSources, hasOwnSpatialSource, ownControllableEntities, selectSpatialGlowSource,
-  removedPlanBindings, isRemovedPlanEntity, deletePlanMarkerRecords, effectiveMarkerControls,
-  persistedExternalControls, removeMarkerControlReferences, rewriteMarkerControlReferences,
+  removedPlanBindings, isRemovedPlanEntity, effectiveMarkerControls,
+  persistedExternalControls, rewriteMarkerControlReferences,
   markerControlWouldCycle,
 } from './devices';
 import {
-  bindingCandidates, buildDeviceInbox, filterDeviceInbox,
+  bindingCandidates, buildDeviceInbox, filterDeviceInbox, INBOX_NO_SPACE, inboxSpaceFilterMatches,
   type DeviceInboxCategory, type DeviceInboxReason, type DeviceInboxRow,
 } from './device-inbox';
 import {
   inboxBatchView, renderInboxBatchPanel, renderInboxRowSelect, writeInboxVisibility, type InboxBatchDeps,
 } from './device-inbox-batch';
+import { inboxT } from './device-inbox-i18n';
 import {
   formatToggleIntent, projectedTapAction, type ResolvedToggleIntent, type ResolvedToggleTarget,
   type ToggleNextEffect, type ToggleNoneReason, type ToggleSkipReason,
@@ -447,6 +448,7 @@ interface DeviceInboxDialogState {
   showEntities: boolean;
   onlyNew: boolean;
   limit: number;
+  spaceFilter?: string;
   /** #44: Discovery-filters drafts. `undefined` = untouched (mirror the
    * stored settings); draftExcluded `null` = "recommended" (no stored key). */
   filtersOpen?: boolean;
@@ -7030,7 +7032,7 @@ public _deviceInboxRows(): DeviceInboxRow[] {
       statuses,
       newDeviceIds: this.host._newIds,
       showHiddenOnPlan: this.host._showAll,
-      areaNames, spaceNames, spaceByArea, integrationByBinding, reasonByBinding,
+      areaNames, spaceNames, spaceByArea, spaces: this.host._model, integrationByBinding, reasonByBinding,
     });
     this.host._deviceInboxMemo = { key, rows };
     return rows;
@@ -7056,7 +7058,8 @@ public _deviceForInboxRow(row: DeviceInboxRow): DevItem | null {
       primary: row.status.kind === 'active' ? row.status.enabledEntityIds[0] : undefined,
       marker,
       bindingKind: row.kind,
-      bindingRef: row.binding.slice(row.binding.indexOf(':') + 1),
+      bindingRef: row.kind === 'virtual' ? undefined : row.binding.slice(row.binding.indexOf(':') + 1),
+      virtual: row.kind === 'virtual',
       pdfs: marker.pdfs || [],
     };
   }
@@ -7090,7 +7093,29 @@ public async _setInboxHidden(row: DeviceInboxRow, hidden: boolean): Promise<void
     await writeInboxVisibility(this.host, this._inboxBatchDeps(), [row], hidden, false);
   }
 private _inboxBatchDeps(): InboxBatchDeps {
-    return { rows: () => this._deviceInboxRows(), saveConfigNow: () => this._saveConfigNow() };
+    return {
+      rows: () => this._deviceInboxRows(), saveConfigNow: () => this._saveConfigNow(),
+      deleteSelection: async () => {
+        const owner = this.host._deviceInbox;
+        const claim = this.host._configWriteContext.claim();
+        try {
+          const { deleteInboxSelection } = await import('./marker-deletion');
+          if (!this.host.isConnected || this.host._deviceInbox !== owner
+              || !this.host._configWriteContext.current(claim, this.host.hass)) return;
+          await deleteInboxSelection(this, () => {
+        const dialog = this.host._deviceInbox;
+        if (!dialog) return [];
+        return inboxBatchView(dialog, filterDeviceInbox(this._deviceInboxRows(), dialog.tab,
+          dialog.search, dialog.tab === 'on_plan' && dialog.onlyNew, dialog.spaceFilter)).chosen;
+      }, this.host._deviceInbox?.spaceFilter === INBOX_NO_SPACE ? inboxT(this.host, 'device_inbox.no_space')
+        : this.host._model.find((space) => `space:${space.id}` === this.host._deviceInbox?.spaceFilter)?.title
+          || inboxT(this.host, 'device_inbox.all_spaces'));
+        } catch (error) {
+          if (this.host._deviceInbox === owner && this.host._configWriteContext.current(claim, this.host.hass))
+            this.host._showToast(this.host._t('toast.error', { err: this.host._errText(error) }));
+        }
+      },
+    };
   }
 
 public _findInboxDevice(row: DeviceInboxRow): void {
@@ -7728,98 +7753,18 @@ public async _saveMarker(): Promise<void> {
   }
 
 public async _deleteMarker(): Promise<void> {
-    const dlg = this.host._markerDialog;
-    if (!dlg || dlg.busy || !dlg.devId) return;
-    const d = dlg.devId ? this.host._devices.find((x) => x.id === dlg.devId) : null;
-    const persisted = this.host._markers.find((marker) => marker.id === dlg.devId);
-    if (!d && !persisted) return;
-    const expectedBinding = d
-      ? d.bindingKind === 'virtual' ? 'virtual'
-        : d.bindingKind && d.bindingRef ? `${d.bindingKind}:${d.bindingRef}` : ''
-      : persisted!.binding;
-    if (!expectedBinding) return;
-    const label = dlg.name || this.host._t('device.fallback');
-    const targetId = dlg.devId;
-    const owner = dialogSession(this.host, 'marker');
-    const accepted = await this.host._confirmDanger({
-      key: 'remove-marker',
-      kind: 'destructive',
-      title: this.host._t('confirm.remove_marker_title'),
-      message: this.host._t('confirm.remove_marker_body'),
-      objectName: label,
-      confirmLabel: this.host._t('btn.delete'),
-      cancelLabel: this.host._t('btn.cancel'),
-    });
-    const currentDialog = this.host._markerDialog;
-    if (!accepted || !this.host.isConnected || dialogSession(this.host, 'marker') !== owner
-      || !currentDialog || currentDialog.busy || currentDialog.devId !== targetId) return;
-    const currentDevice = this.host._devices.find((item) => item.id === targetId);
-    const currentPersisted = this.host._markers.find((marker) => marker.id === targetId);
-    if (!currentDevice && !currentPersisted) return;
-    const cfg = this.host._serverCfg;
-    if (!cfg) return;
-    cfg.markers = cfg.markers || [];
-    const previousMarkers = cfg.markers;
-    const binding = currentDevice
-      ? currentDevice.bindingKind === 'virtual' ? 'virtual'
-        : currentDevice.bindingKind && currentDevice.bindingRef
-          ? `${currentDevice.bindingKind}:${currentDevice.bindingRef}` : ''
-      : currentPersisted!.binding;
-    if (!binding || binding !== expectedBinding) return;
-    const deletion = deletePlanMarkerRecords(
-      cfg.markers, targetId, binding, binding === 'virtual',
-    );
-      cfg.markers = removeMarkerControlReferences(deletion.markers, deletion.cleanupIds);
-      const cleanupIds = deletion.cleanupIds;
-      this.host._ledEditor?.unlinkMarkers(cfg, cleanupIds);
-      if (cleanupIds.size && cfg.settings?.marker_area_snapshot) {
-        cfg.settings = {
-          ...cfg.settings,
-          marker_area_snapshot: removeMarkerAreaSnapshots(
-            cfg.settings.marker_area_snapshot, cleanupIds,
-          ),
-        };
-      }
-    const deletingDraft = { ...currentDialog, busy: true };
-    this.host._markerDialog = deletingDraft;
+    const session = dialogSession(this.host, 'marker');
+    const targetId = this.host._markerDialog?.devId;
+    const claim = this.host._configWriteContext.claim();
     try {
-      await this._saveConfigNow();
-      // Housekeeping follows the durable config write. Every call is
-      // idempotent and best-effort: the device is already deleted even if an
-      // old integration cannot yet serve one of the cleanup commands.
-      for (const id of cleanupIds) {
-        delete this.host._layout[id];
-        delete this.host._defPos[id];
-        this.host._dirtyPos.delete(id);
-        this.host._sentPos.delete(id);
-        const activity = this.host._activityRt.get(id);
-        if (activity) clearTimeout(activity.timer);
-        this.host._activityRt.delete(id);
-        this.host._vacRt.delete(id);
-        delete this.host._vacSrvTrails[id];
-        await this.host.hass.callWS({ type: 'houseplan/layout/delete', device_id: id })
-          .then((r: any) => this.host._noteLayoutRev(r)).catch(() => undefined);
-        await this.host.hass.callWS({ type: 'houseplan/files/cleanup', marker_id: id })
-          .catch(() => undefined);
-        await this.host.hass.callWS({ type: 'houseplan/trail/delete', marker_id: id })
-          .catch(() => undefined);
-      }
-      if (dialogSession(this.host, 'marker') === owner && this.host._deviceInboxReturn) {
-        this.host._deviceInboxReturn = { ...this.host._deviceInboxReturn, tab: 'readd', anchor: binding };
-      }
-      if (this.host.isConnected && dialogSession(this.host, 'marker') === owner) this._closeMarkerDialog();
-      this.host._cancelDeviceDrag();
-      this.host._devicePositionHistory.clear();
-      if (this.host._infoCard?.id === targetId) this.host._closeInfoCard();
-      if (this.host._selId === targetId) this.host._selId = null;
-      if (this.host._drag?.id === targetId) this.host._drag = null;
-      this.host._regSignature = '';
-      this.host._maybeRebuildDevices();
-      this.host._showToast(this.host._t('toast.marker_removed'));
-    } catch (e: any) {
-      if (this.host._serverCfg === cfg) cfg.markers = previousMarkers;
-      if (this.host._markerDialog === deletingDraft) this.host._markerDialog = { ...deletingDraft, busy: false };
-      if (!isGeometryCleanupRefusal(e)) this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
+      const { deleteMarker } = await import('./marker-deletion');
+      if (!this.host.isConnected || dialogSession(this.host, 'marker') !== session
+          || this.host._markerDialog?.devId !== targetId
+          || !this.host._configWriteContext.current(claim, this.host.hass)) return;
+      await deleteMarker(this);
+    } catch (error) {
+      if (this.host._configWriteContext.current(claim, this.host.hass))
+        this.host._showToast(this.host._t('toast.error', { err: this.host._errText(error) }));
     }
   }
 
@@ -11292,15 +11237,25 @@ public async _saveDiscoveryFilters(dialog: DeviceInboxDialogState): Promise<void
   }
 
 public _renderDeviceInbox(): TemplateResult {
-    const dialog = this.host._deviceInbox!;
+    let dialog = this.host._deviceInbox!;
+    if (!dialog.busy && dialog.spaceFilter && dialog.spaceFilter !== INBOX_NO_SPACE
+        && !this.host._model.some((space) => `space:${space.id}` === dialog.spaceFilter)) {
+      dialog = { ...dialog, spaceFilter: '', selected: [], limit: 100 };
+      this.host._deviceInbox = dialog;
+    }
     const rows = this._deviceInboxRows();
     const counts = Object.fromEntries((['on_plan', 'available', 'hidden', 'readd'] as const)
-      .map((category) => [category, rows.filter((row) => row.category === category).length]));
+      .map((category) => [category, rows.filter((row) => row.category === category
+        && inboxSpaceFilterMatches(row, dialog.spaceFilter)).length]));
     const filtered = filterDeviceInbox(
-      rows, dialog.tab, dialog.search, dialog.tab === 'on_plan' && dialog.onlyNew,
+      rows, dialog.tab, dialog.search, dialog.tab === 'on_plan' && dialog.onlyNew, dialog.spaceFilter,
     );
     const visible = filtered.slice(0, dialog.limit);
     const batch = inboxBatchView(dialog, filtered); // #618 B1: On plan / Hidden only
+    if (!dialog.busy && dialog.selected?.length && batch.chosen.length !== dialog.selected.length) {
+      dialog = { ...dialog, selected: batch.chosen.map((row) => row.key) };
+      this.host._deviceInbox = dialog;
+    }
     const tabLabel = (tab: DeviceInboxCategory) => this.host._t(`device_inbox.tab_${tab}` as I18nKey);
     const emptyKey = `device_inbox.empty_${dialog.tab}` as I18nKey;
     const openVirtual = () => {
@@ -11336,6 +11291,18 @@ public _renderDeviceInbox(): TemplateResult {
             </button>`)}
         </div>
         <div class="device-inbox-filters">
+          <label class="device-inbox-space-filter">${inboxT(this.host, 'device_inbox.space_filter')}
+            <select aria-label=${inboxT(this.host, 'device_inbox.space_filter')}
+              @change=${(event: Event) => {
+                if (!dialog.busy) this.host._deviceInbox = { ...dialog,
+                  spaceFilter: (event.target as HTMLSelectElement).value, selected: [], limit: 100 };
+              }}>
+              <option value="" .selected=${!dialog.spaceFilter}>${inboxT(this.host, 'device_inbox.all_spaces')}</option>
+              ${this.host._model.map((space) => html`<option value=${`space:${space.id}`}
+                .selected=${dialog.spaceFilter === `space:${space.id}`}>${space.title}</option>`)}
+              <option value=${INBOX_NO_SPACE} .selected=${dialog.spaceFilter === INBOX_NO_SPACE}>${inboxT(this.host, 'device_inbox.no_space')}</option>
+            </select>
+          </label>
           ${dialog.tab === 'on_plan' ? html`<label>
             <input type="checkbox" .checked=${dialog.onlyNew}
               @change=${(event: Event) => (this.host._deviceInbox = {
@@ -11347,7 +11314,7 @@ public _renderDeviceInbox(): TemplateResult {
               @change=${(event: Event) => {
                 this.host._deviceInboxMemo = null;
                 this.host._deviceInbox = {
-                  ...dialog, showEntities: (event.target as HTMLInputElement).checked, limit: 100,
+                  ...dialog, showEntities: (event.target as HTMLInputElement).checked, limit: 100, selected: [],
                 };
               }} />${this.host._t('device_inbox.show_entities')}
           </label>` : nothing}
@@ -11382,7 +11349,7 @@ public _renderDeviceInbox(): TemplateResult {
             const status = row.status.kind === 'active' ? ''
               : this.host._t(`device_inbox.status_${row.status.kind}` as I18nKey);
             return html`<article class=${batch.batchTab ? 'device-inbox-row has-select' : 'device-inbox-row'}
-              data-binding=${row.binding} data-category=${row.category} data-status=${row.status.kind}>
+              data-key=${row.key} data-binding=${row.binding} data-category=${row.category} data-status=${row.kind === 'virtual' ? 'virtual' : row.status.kind}>
               ${renderInboxRowSelect(this.host, dialog, batch, row)}
               <ha-icon class="device-inbox-icon" .icon=${row.icon}></ha-icon>
               <div class="device-inbox-copy">
@@ -11390,16 +11357,17 @@ public _renderDeviceInbox(): TemplateResult {
                   ${row.isNew ? html`<span class="device-inbox-new">${this.host._t('device_inbox.new')}</span>` : nothing}
                 </div>
                 <div class="device-inbox-meta">
-                  ${[row.model, row.integration, row.spaceName, row.areaName].filter(Boolean).join(' · ')}
+                  ${[row.model, row.integration, row.spaceName || inboxT(this.host, 'device_inbox.no_space'), row.areaName].filter(Boolean).join(' · ')}
                 </div>
                 <div class="device-inbox-reason">
-                  ${row.reason === 'excluded_integration' && row.integration
+                  ${row.kind === 'virtual' ? inboxT(this.host, 'device_inbox.reason_virtual')
+                    : row.reason === 'excluded_integration' && row.integration
                     ? this.host._t('device_inbox.reason_excluded_integration',
                         { integration: row.integration })
                     : this.host._t(`device_inbox.reason_${row.reason}` as I18nKey)}
                   ${status ? html`<span class="device-inbox-status">${status}</span>` : nothing}
                 </div>
-                <code>${row.binding}</code>
+                <code>${row.kind === 'virtual' ? row.key : row.binding}</code>
               </div>
               <div class="device-inbox-actions">
                 ${primary}

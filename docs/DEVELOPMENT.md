@@ -1,5 +1,46 @@
 # Development and deployment
 
+## Device catalog operations (#930)
+
+Run `node --test test/device-inbox.test.mjs test/device-inbox-930.test.mjs`
+after the usual test-build compilation, and after `npm run bundle:sync` run
+`node demo/smoke_device_inbox_delete.mjs`, `node demo/smoke_device_inbox.mjs`
+and `node demo/smoke_device_inbox_batch.mjs`. The new smoke enters through
+native catalog controls and real fixture config/layout events. Its 155 virtual
+markers cover filtered Select all beyond 100 rows, cancellation/refusal, exact
+accepted deletion and a target moved during confirmation. The existing batch
+oracle `inactiveRowNotSelectable` is intentionally replaced by the stronger
+`inactiveRowsDeleteOnly`: deletion selection is allowed, whole-set Hide/Show
+still sends no write. Mutation execution remains nightly-only.
+
+The measured #930 source graph keeps 361 port members and 103 ported privates;
+host references grow 5463→5539 (+76) because the shared single/batch deletion
+owner reuses the existing adoption, cleanup and identity ports instead of a
+second command implementation. Fresh emitted JS grows 3014526→3026010 bytes
+(+11484), including four lazy locale dictionaries, space projection and deletion UI.
+Matched clean dev `d36364b2` measures initial View 324886 B gzip and lazy editor
+269876 B; the task measures 324800 (−86) and 270829 (+953). Delete loads only
+on demand; its locale labels stay in the editor graph; the shared confirmation
+shell retains its narrowly keyed list rule. The existing
+raw-URL retry ABI keeps the shared translation adapter in `editor-shared`.
+Only the task's 953-B editor cost is added to its rolling reference
+(268532→269485), retaining the inherited 1344-B gap. Absolute budgets, both
+2000-B bands, initial-View ceiling, core ceilings and browser guideline stay put.
+
+Area/room membership is indexed once per catalog projection; the 2000-row unit
+counts actual Area property reads instead of judging a noisy timing threshold.
+
+Three existing catalog golden scenes intentionally change. Accept their fresh
+images only through the normal full Linux/attested-WSL artifact workflow; no
+threshold or baseline waiver. Temporary builds are not task commits: use
+`npm run bundle:clean` before committing ordinary sources.
+
+Local WSL caution: a wrapper forwarding `gh` to the Windows executable does
+not respect the Linux `GH_CONFIG_DIR` used by isolated pre-push unit fixtures.
+Run the real online `process-gate --issues` separately with that wrapper, then
+keep it out of the normal push/test PATH. The standard pre-push hook and full
+`gate:small` still execute; do not disable either to hide this environment leak.
+
 ## Vacuum route recovery (#918)
 
 `test/vacuum-routes.test.mjs` exercises the common route-source resolver;

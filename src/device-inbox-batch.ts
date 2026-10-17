@@ -14,6 +14,7 @@ import {
 import { isGeometryCleanupRefusal } from './config-adoption';
 import type { I18nKey } from './i18n';
 import type { Marker } from './types';
+import { inboxT, type InboxLanguageHost } from './device-inbox-i18n';
 
 /** B6: `busy` sentinel while a batch write is in flight (drives `inert`). */
 export const INBOX_BATCH_BUSY = '__batch__';
@@ -22,12 +23,13 @@ export interface InboxBatchDialog {
   tab: DeviceInboxCategory;
   search: string;
   onlyNew: boolean;
+  spaceFilter?: string;
   anchor?: string;
   busy?: string;
   selected?: string[];
 }
 
-export interface InboxBatchHost<D extends InboxBatchDialog> {
+export interface InboxBatchHost<D extends InboxBatchDialog> extends InboxLanguageHost {
   _deviceInbox: D | null;
   _serverCfg: { markers: Marker[] } | null;
   _regSignature: string;
@@ -36,11 +38,14 @@ export interface InboxBatchHost<D extends InboxBatchDialog> {
   _showToast: (msg: string) => void;
   _t: (key: I18nKey, vars?: Record<string, string | number>) => string;
   _errText: (e: any) => string; // any-ok: mirrors the host port signature
+  _canEdit?: boolean;
+  _kiosk?: boolean;
 }
 
 export interface InboxBatchDeps {
   rows: () => DeviceInboxRow[];
   saveConfigNow: () => Promise<void>;
+  deleteSelection?: () => Promise<void>;
 }
 
 export interface InboxBatchView {
@@ -55,7 +60,7 @@ export interface InboxBatchView {
 export function inboxSelectableFor(rows: readonly DeviceInboxRow[], dialog: InboxBatchDialog): DeviceInboxRow[] {
   if (!isInboxBatchTab(dialog.tab)) return [];
   return selectableInboxRows(filterDeviceInbox(
-    rows, dialog.tab, dialog.search, dialog.tab === 'on_plan' && dialog.onlyNew,
+    rows, dialog.tab, dialog.search, dialog.tab === 'on_plan' && dialog.onlyNew, dialog.spaceFilter,
   ));
 }
 
@@ -94,9 +99,10 @@ export async function setInboxSelectionHidden<D extends InboxBatchDialog>(
   host: InboxBatchHost<D>, deps: InboxBatchDeps, hidden: boolean,
 ): Promise<void> {
   const dialog = host._deviceInbox;
-  if (!dialog || dialog.busy || dialog.tab !== (hidden ? 'on_plan' : 'hidden')) return;
+  if (!dialog || dialog.busy || host._canEdit === false || host._kiosk
+      || dialog.tab !== (hidden ? 'on_plan' : 'hidden')) return;
   const rows = effectiveInboxSelection(dialog.selected, inboxSelectableFor(deps.rows(), dialog));
-  if (!rows.length) return;
+  if (!rows.length || rows.some((row) => !(hidden ? row.canHide : row.canShow))) return;
   await writeInboxVisibility(host, deps, rows, hidden, true);
 }
 
@@ -154,6 +160,7 @@ export function renderInboxBatchPanel<D extends InboxBatchDialog>(
   if (!view.batchTab) return nothing;
   const { selectable, chosen } = view;
   const count = { count: String(chosen.length) };
+  const visibilityAllowed = chosen.length > 0 && chosen.every((row) => dialog.tab === 'on_plan' ? row.canHide : row.canShow);
   return html`<div class="device-inbox-batch">
     <label class="device-inbox-select-all">
       <input type="checkbox" .checked=${selectable.length > 0 && chosen.length === selectable.length}
@@ -164,10 +171,15 @@ export function renderInboxBatchPanel<D extends InboxBatchDialog>(
     </label>
     ${dialog.selected?.length ? html`<div class="device-inbox-batch-actions">
       <span class="device-inbox-selected">${host._t('device_inbox.selected_count', count)}</span>
-      <button type="button" class="btn device-inbox-batch-apply" ?disabled=${!chosen.length}
+      <button type="button" class="btn device-inbox-batch-apply" ?disabled=${!visibilityAllowed}
+        title=${chosen.length && !visibilityAllowed ? inboxT(host, 'device_inbox.batch_visibility_unavailable') : ''}
         @click=${() => setInboxSelectionHidden(host, deps, dialog.tab === 'on_plan')}>
         ${host._t(dialog.tab === 'on_plan' ? 'device_inbox.hide_selected' : 'device_inbox.show_selected', count)}
       </button>
+      ${deps.deleteSelection ? html`<button type="button" class="btn danger device-inbox-batch-delete"
+        ?disabled=${!chosen.length} @click=${() => deps.deleteSelection?.()}>
+        ${inboxT(host, 'device_inbox.delete_selected', count)}
+      </button>` : nothing}
       <button type="button" class="btn ghost device-inbox-batch-clear"
         @click=${() => selectAllInbox(host, deps, false)}>${host._t('device_inbox.clear_selection')}</button>
     </div>` : nothing}
@@ -180,8 +192,7 @@ export function renderInboxRowSelect<D extends InboxBatchDialog>(
 ): TemplateResult | typeof nothing {
   if (!view.batchTab) return nothing;
   const canSelect = view.selectableKeys.has(row.key);
-  const hint = canSelect ? ''
-    : host._t(dialog.tab === 'hidden' ? 'device_inbox.show_disabled' : 'device_inbox.select_inactive');
+  const hint = canSelect ? '' : inboxT(host, 'device_inbox.selection_changed');
   return html`<label class="device-inbox-select" title=${hint}>
     <input type="checkbox" aria-label=${host._t('device_inbox.select_row', { name: row.name })}
       .checked=${view.chosenKeys.has(row.key)} ?disabled=${!canSelect}

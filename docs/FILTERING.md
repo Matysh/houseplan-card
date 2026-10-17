@@ -161,7 +161,16 @@ the old behaviour until an editing client materialises it.
   same markers as the single-row action (`applyInboxVisibility` is shared: a
   single row is a batch of one) in ONE `houseplan/config/set`. Show keeps the
   marker with `hidden: false`, including an automatic `h…` stub, so the seeder
-  does not re-hide it. Only active HA bindings are selectable.
+  does not re-hide it. #930 extends selection to all deletable On-plan/Hidden
+  rows, virtual markers included; inactive HA rows still refuse Hide/Show for
+  the entire mixed set. Select all and every batch use the complete filtered
+  space/search/new result, before paging. Filter changes clear selection.
+  Virtual identity is the marker ID, never the shared `virtual` binding.
+- #930 batch Delete confirms the exact named targets once and writes one config
+  candidate, through the same deletion owner as single Delete. It retains the
+  original tab/filter after success. Space resolution uses actual placed
+  membership; available/re-add candidates require a unique Area→space mapping,
+  with ambiguity kept in No space. Virtual rows have no HA lifecycle candidates.
 - Hide/Show is also available from the lifecycle catalog; the bottom-left
   "Hide" / "Show" action remains in the dialog of every
   existing device kind, virtual included; changing it is applied by "Save".

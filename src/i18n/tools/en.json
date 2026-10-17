@@ -126,5 +126,15 @@
   "furn.sym_stairs": "Stairs",
   "furn.sym_fireplace": "Fireplace",
   "furn.sym_plant": "Plant",
-  "furn.sym_rug": "Rug"
+  "furn.sym_rug": "Rug",
+  "device_inbox.space_filter": "Space",
+  "device_inbox.all_spaces": "All spaces",
+  "device_inbox.no_space": "No space",
+  "device_inbox.reason_virtual": "Virtual device",
+  "device_inbox.delete_selected": "Delete selected ({count})",
+  "device_inbox.batch_deleted": "Deleted from the plan: {count}",
+  "device_inbox.batch_visibility_unavailable": "Some selected devices cannot be shown or hidden. Deselect them to change visibility.",
+  "device_inbox.selection_changed": "The selected devices changed. Check the list and try again.",
+  "confirm.remove_markers_title": "Delete devices from the plan?",
+  "confirm.remove_markers_body": "Delete {count} selected devices from the plan. Scope: {scope}. Their settings, positions, attachments and saved robot paths will be removed. Linked LED shapes remain unbound. Home Assistant devices and entities are not deleted. This cannot be undone."
 }

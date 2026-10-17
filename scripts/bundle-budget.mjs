@@ -744,7 +744,10 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // measured 265955 B gzip and 2936529 B total. Adopt only these exact ceilings;
 // both 2000-B bands and every other limit stay unchanged.
 // #935: independent virtual copy command, measured/justified in the task; band unchanged.
-export const LAZY_EDITOR_GZIP_CEILING = 268_532;
+// #930: matched clean dev d36364b2 is 269876 B; catalog/virtual UI adds 953 B
+// after Delete is split out. Move only this task's cost into the rolling
+// reference, preserving the inherited 1344-B gap and every absolute/band limit.
+export const LAZY_EDITOR_GZIP_CEILING = 269_485;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

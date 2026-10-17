@@ -1,5 +1,18 @@
 # House Plan architecture
 
+Catalog operations (#930) keep space filtering and virtual-ID identity in the
+pure `device-inbox` projection. The same full filtered result drives rendering,
+Select all and post-confirmation revalidation. `marker-deletion.ts` owns a deep
+independent candidate and bounded post-commit housekeeping for single and batch
+Delete; the existing optimistic/adoption queue owns rollback and revisions.
+Confirmation is dialog-, placement-, navigation- and HA-generation-bound.
+Tombstones retain exact HA binding semantics; virtual rows never share identity.
+No backend endpoint, stored filter or HA service action is introduced.
+The deletion command is a second lazy boundary; its caller revalidates the
+origin dialog and HA generation after import. Catalog-only strings use the
+existing tools namespace and editor styles; View pays for neither. The shared
+translation leaf is explicitly chunked to preserve the runtime raw-URL retry ABI.
+
 The Flat device-contact wall cache (#935 performance correction) uses the
 existing floor-record reader with one narrow fingerprint projection: omit only
 the top-level `decor` field from each model/current record. Decor cannot alter

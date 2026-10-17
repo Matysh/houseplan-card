@@ -30,6 +30,11 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/device-inbox.ts', 'src/device-inbox-batch.ts', 'src/marker-deletion.ts'],
+    smokes: ['smoke_device_inbox_delete.mjs'],
+    because: '#930: native catalog filters, virtual selection, confirmation and accepted wire pair prove exact deletion and refusal without calling the shared helpers.',
+  },
+  {
     symbols: ['HiddenDeviceRoster', 'HiddenDevicePreference', 'hiddenDevicePreferenceKey', 'canRevealUserHidden', '_setShowHidden'],
     smokes: ['smoke_hidden_device_toggle.mjs'],
     because: '#919: native header/catalog actions prove ordinary reveal, no config writes, lifecycle safety and isolated reloadable preferences.',

@@ -36,8 +36,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 55 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 83 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 43 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 198 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **389 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 201 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **392 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -736,3 +736,12 @@ owner, with no settled copy surviving the next presented frame.
 - `zigbee-topology-unrelated-markers-raised`
 - `space-delete-with-devices-drops-the-flag`
 - `space-delete-with-devices-ignores-a-moved-plan`
+- `inbox-delete-stale-placement-930`
+- `inbox-delete-rollback-930`
+- `inbox-virtual-id-930`
+
+The #930 witnesses cross native catalog selection, the stacked confirmation,
+authoritative HA config replacement and Lit/adoption rollback. The pure units
+separately exercise the candidate and identity predicates; they cannot prove
+that the mounted UI passes the newly filtered exact targets, retains selection
+after a refused write and never merges neighbours with binding `virtual`.

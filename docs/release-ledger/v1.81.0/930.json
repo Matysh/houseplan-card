@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 930,
+  "baseStable": "v1.81.0",
+  "category": "major",
+  "rationale": "Adds a precise cross-tab space filter, virtual rows and confirmed batch deletion to the device catalog. These are new user-visible administration capabilities relative to stable 1.81.0, not a correction of an existing batch-delete contract.",
+  "summary": {
+    "ru": "Каталог устройств фильтруется по пространству, включает виртуальные устройства и удаляет выбранный набор с одним подтверждением.",
+    "en": "The device catalog filters by space, includes virtual devices and deletes a selected set with one confirmation."
+  }
+}
