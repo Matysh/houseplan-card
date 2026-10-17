@@ -2,73 +2,101 @@
   {
     "case": "space",
     "parent": null,
-    "fields": 43,
-    "parity": "PASS"
+    "fields": 44,
+    "parity": "PASS",
+    "intentionalChanges": {
+      "afterOnly": [
+        "s-label-co2"
+      ],
+      "removedAfter": [
+        "s-room-color-reset",
+        "s-card-font-reset",
+        "s-layer-openings",
+        "s-glow",
+        "s-north-reset",
+        "s-north-compass"
+      ],
+      "footer": [
+        "s-copy",
+        "s-delete"
+      ]
+    }
   },
   {
     "case": "room",
     "parent": null,
     "fields": 22,
-    "parity": "PASS"
+    "parity": "PASS",
+    "intentionalChanges": {}
   },
   {
     "case": "led",
     "parent": null,
     "fields": 50,
-    "parity": "PASS"
+    "parity": "PASS",
+    "intentionalChanges": {}
   },
   {
     "case": "climate",
     "parent": null,
     "fields": 50,
-    "parity": "PASS"
+    "parity": "PASS",
+    "intentionalChanges": {}
   },
   {
     "case": "vacuum",
     "parent": null,
     "fields": 66,
-    "parity": "PASS"
+    "parity": "PASS",
+    "intentionalChanges": {}
   },
   {
     "case": "radar",
     "parent": null,
     "fields": 72,
-    "parity": "PASS"
+    "parity": "PASS",
+    "intentionalChanges": {}
   },
   {
     "case": "space-plan-library",
     "parent": "space",
     "fields": 9,
-    "parity": "PASS"
+    "parity": "PASS",
+    "intentionalChanges": {}
   },
   {
     "case": "vacuum-source",
     "parent": "vacuum",
     "fields": 5,
-    "parity": "PASS"
+    "parity": "PASS",
+    "intentionalChanges": {}
   },
   {
     "case": "vacuum-map-add",
     "parent": "vacuum",
     "fields": 3,
-    "parity": "PASS"
+    "parity": "PASS",
+    "intentionalChanges": {}
   },
   {
     "case": "vacuum-fit",
     "parent": "vacuum",
     "fields": 3,
-    "parity": "PASS"
+    "parity": "PASS",
+    "intentionalChanges": {}
   },
   {
     "case": "vacuum-autocal-proposal",
     "parent": "vacuum",
     "fields": 2,
-    "parity": "PASS"
+    "parity": "PASS",
+    "intentionalChanges": {}
   },
   {
     "case": "radar-setup",
     "parent": "radar",
     "fields": 4,
-    "parity": "PASS"
+    "parity": "PASS",
+    "intentionalChanges": {}
   }
 ]

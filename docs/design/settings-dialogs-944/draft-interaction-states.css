@@ -19,3 +19,4 @@
  #hp-settings-review :is(.hp-after,.hp-color-popup) :is(button,select,input,a[href],summary),
  #hp-settings-review :is(.case-label select,.review-details summary,[data-reopen='after']) { transition:none; }
 }
+
