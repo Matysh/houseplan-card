@@ -1,6 +1,6 @@
 # House Plan private support reports
 
-Updated: 2026-09-02, issue #43.
+Updated: 2026-10-17, issues #43 and #942.
 
 House Plan keeps normal configuration, layout and uploaded content inside the
 user's Home Assistant. The support relay is contacted only after the user
@@ -20,11 +20,25 @@ names the card defines; any other key is dropped), structural counts,
 validation/repair families and bounded browser/registry capability enums. Space, room, wall,
 opening, marker and binding references receive random package-local names.
 
-It excludes original names and text, Home Assistant installation/location,
-device/entity/area IDs, current states and attributes, IP addresses, hostnames,
-URLs, paths, filenames, plan/backdrop/manual bytes, vacuum calibration and
-trails, backup history, message and contact. Unknown fields are dropped rather
-than copied and redacted later.
+Package **v2** also includes allowlisted configuration links (areas, badges,
+actions, panel structure, radar configuration and robot calibration/routes),
+normalized current diagnostic statuses and value **shapes**, effective display
+decisions, and a bounded sample of robot position, room anchors and paths.
+Robot input/current/previous/local paths remain separate; calibration and
+coordinates retain their exact relationship. They can reveal the layout of a
+home, even without names. The preview lists four coverage categories and fixed
+reasons for incomplete data. A snapshot is not a history or proof of every
+transient problem. Older integrations produce explicitly limited **v1** reports
+without these additions; v1's policy remains unchanged.
+
+Neither version includes original names or free text, HA installation/location,
+raw device/entity/area IDs, arbitrary sensor readings or raw attributes, IP
+addresses, hostnames, URLs, file paths/names/bytes, backup history, message or
+contact. V2 allows only fixed state enums (such as on/off/open), presence/shape
+of selected data, and declared geometry—not arbitrary state/attribute values.
+Radar targets, tracking IDs, presence history and heatmaps are excluded.
+Unknown config fields are dropped rather than copied and redacted later;
+unknown diagnostic input fields are rejected.
 
 The Zigbee topology snapshot is never offered to this package: raw provider
 payloads, IEEE addresses, neighbor links, base topics, timestamps and provider
@@ -34,7 +48,12 @@ storage and logs.
 ## Preview and authorization
 
 Only a Home Assistant user allowed to write House Plan can build or send a
-report. Preview bytes live in integration memory for at most ten minutes and
+report. V2 additionally checks entity **read** permission before capturing facts
+and again before publishing the preview and sending it. Denied facts and client
+claims are omitted with an incomplete-coverage reason. A private, bounded list
+of entity IDs exists only in preview memory for those rechecks; it is never
+included in JSON, logs, transport or spool. Editing House Plan is not permission
+to export every HA entity. Preview bytes live in integration memory for at most ten minutes and
 are bound to that HA user and one dialog draft. Closing the dialog, disabling
 the attachment or a successful submit removes the token; process exit also
 removes it. Download uses the same preview text. The backend never rebuilds an

@@ -2107,6 +2107,7 @@ export class HouseplanCard extends LitElement {
   }
   /** #423: support protocol capability from config/get; never persisted. */
   private _haSupportApi: number | null = null;
+  private _haSupportPackageVersions: readonly number[] = [];
   /** #51: custom-image protocol capability from config/get; fail closed. */
   private _haDecorAssetsApi: number | null = null;
   private _haSummaryPanelApi: number | null = null;

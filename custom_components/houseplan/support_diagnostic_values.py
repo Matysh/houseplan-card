@@ -3,6 +3,7 @@
 Only a projector knows which fields it may offer here. These helpers never
 walk an arbitrary config object, stringify provider data, or invent geometry.
 """
+
 from __future__ import annotations
 
 import math
@@ -67,6 +68,7 @@ class GeometryBudget:
 
     points: int = 4096
     fragments: int = 256
+    scans: int = 100_000
 
 
 def sample_path(raw: object, budget: GeometryBudget) -> dict[str, Any]:
@@ -80,17 +82,31 @@ def sample_path(raw: object, budget: GeometryBudget) -> dict[str, Any]:
     if isinstance(raw, dict):
         raw = raw.get("path", raw.get("points"))
     if not isinstance(raw, (list, tuple)):
-        return {"status": "unavailable", "raw_points": 0, "valid_points": 0,
-                "invalid_points": 0, "kept_points": 0, "total_fragments": 0,
-                "scan_limited": False, "truncated": False, "fragments": []}
+        return {
+            "status": "unavailable",
+            "raw_points": 0,
+            "valid_points": 0,
+            "invalid_points": 0,
+            "kept_points": 0,
+            "total_fragments": 0,
+            "scan_limited": False,
+            "truncated": False,
+            "fragments": [],
+        }
 
     def point_shape(value: object) -> bool:
         return isinstance(value, dict) or (
-            isinstance(value, (list, tuple)) and len(value) >= 2
-            and not isinstance(value[0], (list, tuple, dict)))
+            isinstance(value, (list, tuple))
+            and len(value) >= 2
+            and not isinstance(value[0], (list, tuple, dict))
+        )
 
     # Detection and scans have an independent ceiling even on hostile inputs.
-    flat = any(point_shape(item) for item in raw[:1024])
+    first = next(
+        (item for item in raw[:1024] if isinstance(item, (dict, list, tuple)) and item),
+        None,
+    )
+    flat = point_shape(first)
     groups = [raw] if flat else raw
     scan_limited = len(groups) > 1024
     raw_count = valid = invalid = kept = scanned = 0
@@ -102,10 +118,11 @@ def sample_path(raw: object, budget: GeometryBudget) -> dict[str, Any]:
         raw_count += len(group)
         current: dict[str, Any] | None = None
         for index, candidate in enumerate(group):
-            if scanned >= 100_000:
+            if scanned >= 100_000 or budget.scans <= 0:
                 scan_limited = True
                 break
             scanned += 1
+            budget.scans -= 1
             p = point(candidate)
             if p is None:
                 invalid += 1
@@ -116,16 +133,26 @@ def sample_path(raw: object, budget: GeometryBudget) -> dict[str, Any]:
                 current = None
                 continue
             if current is None:
-                current = {"fragment": fragment_index, "start": index,
-                           "end": index, "points": []}
+                current = {
+                    "fragment": fragment_index,
+                    "start": index,
+                    "end": index,
+                    "points": [],
+                }
                 fragments.append(current)
                 budget.fragments -= 1
             current["points"].append(p)
             current["end"] = index + 1
             kept += 1
             budget.points -= 1
-    return {"status": "available", "raw_points": raw_count,
-            "valid_points": valid, "invalid_points": invalid,
-            "kept_points": kept, "total_fragments": len(groups),
-            "scan_limited": scan_limited, "truncated": scan_limited or kept < valid,
-            "fragments": fragments}
+    return {
+        "status": "available",
+        "raw_points": raw_count,
+        "valid_points": valid,
+        "invalid_points": invalid,
+        "kept_points": kept,
+        "total_fragments": len(groups),
+        "scan_limited": scan_limited,
+        "truncated": scan_limited or kept < valid,
+        "fragments": fragments,
+    }

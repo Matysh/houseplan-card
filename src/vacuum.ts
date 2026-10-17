@@ -467,6 +467,9 @@ export function parseVacSourceCandidate(
 
 const canonName = (s: string): string => s.toLowerCase().replace(/[\s_\-.,]+/g, '');
 
+/** The support projection must anonymize the SAME name matches, not the names. */
+export const vacRoomNameKey = (name: string): string => canonName(name);
+
 /** Diagnostic name coverage uses the exact same canonicalisation as solve. */
 export function vacRoomNameMatchCount(vacRooms: VacRoom[], planRoomNames: string[]): number {
   const plan = new Set(planRoomNames.map(canonName).filter(Boolean));

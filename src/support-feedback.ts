@@ -9,6 +9,39 @@ export function supportApiCompatible(value: unknown): boolean {
   return value === SUPPORT_API_VERSION;
 }
 
+export function supportPackageVersion(versions: unknown): 1 | 2 {
+  return Array.isArray(versions) && versions.includes(2) ? 2 : 1;
+}
+
+export const SUPPORT_COVERAGE_CATEGORIES = ['config', 'devices', 'vacuums', 'environment'] as const;
+export const SUPPORT_COVERAGE_STATUSES = ['complete', 'partial', 'unavailable', 'not_applicable', 'unsupported_version'] as const;
+export const SUPPORT_COVERAGE_REASONS = ['runtime_not_loaded', 'revision_mismatch', 'missing_client', 'access_denied',
+  'collection_limit', 'geometry_limit', 'input_limit', 'unknown_reference', 'unsupported_version',
+  'resource_unobserved', 'registry_unavailable', 'not_configured'] as const;
+export interface SupportCoverage {
+  category: typeof SUPPORT_COVERAGE_CATEGORIES[number];
+  status: typeof SUPPORT_COVERAGE_STATUSES[number];
+  reasons: Array<typeof SUPPORT_COVERAGE_REASONS[number]>;
+  observed: number; total: number;
+}
+
+export function parseSupportCoverage(value: unknown): SupportCoverage[] {
+  if (!Array.isArray(value) || value.length !== 4) throw { code: 'support_rejected' };
+  const rows: SupportCoverage[] = [];
+  for (const raw of value) {
+    const row = raw as SupportCoverage;
+    if (!row || typeof row !== 'object' || Array.isArray(row)
+        || Object.keys(row).some(key => !['category', 'status', 'reasons', 'observed', 'total'].includes(key))
+        || !SUPPORT_COVERAGE_CATEGORIES.includes(row.category) || !SUPPORT_COVERAGE_STATUSES.includes(row.status)
+        || !Array.isArray(row.reasons) || row.reasons.length > 16 || row.reasons.some(r => !SUPPORT_COVERAGE_REASONS.includes(r))
+        || !Number.isSafeInteger(row.observed) || !Number.isSafeInteger(row.total)
+        || row.observed < 0 || row.total < row.observed) throw { code: 'support_rejected' };
+    rows.push({ category: row.category, status: row.status, reasons: [...row.reasons], observed: row.observed, total: row.total });
+  }
+  if (new Set(rows.map(row => row.category)).size !== 4) throw { code: 'support_rejected' };
+  return rows;
+}
+
 export interface SupportPreview {
   token: string;
   expiresAt: number;
@@ -19,6 +52,35 @@ export interface SupportPreview {
   version: number;
   text: string;
   preparedAt: number;
+  coverage?: SupportCoverage[];
+}
+
+export function supportResponseToken(response: unknown): string {
+  const token = response && typeof response === 'object' && 'token' in response ? response.token : null;
+  return typeof token === 'string' && /^[0-9a-f]{48}$/.test(token) ? token : '';
+}
+
+export function parseSupportPreview(response: unknown, requestedVersion: 1 | 2, now = Date.now()): SupportPreview {
+  const payload = response && typeof response === 'object' ? response as Record<string, unknown> : {};
+  const text = typeof payload.text === 'string' ? payload.text : '';
+  const size = Number(payload.size), spaces = Number(payload.spaces), expiresIn = Number(payload.expires_in);
+  const token = supportResponseToken(payload), sha256 = String(payload.sha256 || '');
+  if (!token || !/^[0-9a-f]{64}$/.test(sha256) || payload.format !== 'houseplan-support-package'
+      || payload.version !== requestedVersion || !Number.isInteger(size) || size !== new TextEncoder().encode(text).byteLength
+      || !Number.isInteger(spaces) || spaces < 0 || size > 8 * 1024 * 1024
+      || !Number.isFinite(expiresIn) || expiresIn <= 0 || expiresIn > 600 || !text.endsWith('\n')) {
+    throw { code: 'support_rejected' };
+  }
+  const coverage = requestedVersion === 2 ? parseSupportCoverage(payload.coverage) : undefined;
+  if (coverage) {
+    const body: unknown = JSON.parse(text);
+    const row = body && typeof body === 'object' ? body as Record<string, unknown> : {};
+    const diagnostics = row.diagnostics as { coverage?: unknown } | undefined;
+    if (row.format !== payload.format || row.version !== requestedVersion
+        || JSON.stringify(parseSupportCoverage(diagnostics?.coverage)) !== JSON.stringify(coverage)) throw { code: 'support_rejected' };
+  }
+  return { token, sha256, size, spaces, format: payload.format, version: requestedVersion, text,
+    expiresAt: now + expiresIn * 1000, preparedAt: now, ...(coverage ? { coverage } : {}) };
 }
 
 export type SupportDialogStatus =

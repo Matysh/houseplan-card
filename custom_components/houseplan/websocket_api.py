@@ -110,7 +110,9 @@ from .store import (
 from .store import (
     OPTIMIZE_PENDING as _OPTIMIZE_PENDING,
 )
-from .support_package import SupportPackageError, build_support_package
+from .support_package import PACKAGE_VERSIONS, SupportPackageError, build_support_package
+from .support_preview import async_build_preview
+from .support_snapshot import scope_readable
 from .support_transport import SupportTransportError, async_submit_report
 from .vacuum_paths import public_trails
 from .validation import (
@@ -1623,6 +1625,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             "build": _build_identity(rt).build,
             # #423: protocol capability is independent from release skew.
             "support_api": SUPPORT_API_VERSION,
+            "support_package_versions": list(PACKAGE_VERSIONS),
             "wall_node_move_api": 1,
             "decor_assets_api": DECOR_ASSETS_API_VERSION,
             "summary_panel_api": SUMMARY_PANEL_API_VERSION,
@@ -2852,6 +2855,8 @@ _SUPPORT_VERSION = vol.All(
         vol.Required("registry_access"): vol.In(["full", "partial", "unavailable"]),
         vol.Required("registry_age_bucket"): vol.In(["fresh", "stale", "unknown"]),
         vol.Required("draft_id"): _SUPPORT_ID,
+        vol.Optional("package_version"): _support_browser_major,
+        vol.Optional("diagnostics"): dict,
     }
 )
 @websocket_api.async_response
@@ -2872,52 +2877,13 @@ async def ws_support_preview(
         _send_support_error(connection, msg["id"], "support_rate_limited")
         return
 
-    # The write lock guarantees that config/layout and both revisions describe
-    # one accepted pair. Projection happens after the deep copy, so the lock is
-    # not held while JSON is built and a large plan cannot stall an editor save.
-    async with rt.write_lock:
-        config_data = await rt.config_store.async_load() or {}
-        layout_data = await rt.store.async_load() or {}
-        config = copy.deepcopy({**DEFAULT_CONFIG, **(config_data.get("config") or {})})
-        layout = copy.deepcopy(layout_data.get("layout") or {})
-        config_rev = int(config_data.get("rev", 0))
-        layout_rev = int(layout_data.get("rev", 0))
-
-    # A package must not turn malformed stored data into an apparently valid
-    # diagnostic artifact. Validation runs on disposable copies because the
-    # schemas canonicalize coordinates.
-    repairs = _support_repairs(hass)
-    build = _build_identity(rt).build
-
-    def _build_snapshot() -> tuple[bytes, dict[str, Any]]:
-        CONFIG_SCHEMA(copy.deepcopy(config))
-        LAYOUT_SCHEMA(copy.deepcopy(layout))
-        return build_support_package(
-            config,
-            layout,
-            config_rev=config_rev,
-            layout_rev=layout_rev,
-            card_version=msg["card_version"],
-            integration_version=VERSION,
-            home_assistant_version=HA_VERSION,
-            runtime={
-                "browser_family": msg["browser_family"],
-                "browser_major": msg["browser_major"],
-                "language": msg["language"],
-                "coarse_pointer": msg["coarse_pointer"],
-                "hover_capable": msg["hover_capable"],
-                "registry_access": msg["registry_access"],
-                "registry_age_bucket": msg["registry_age_bucket"],
-            },
-            repairs=repairs,
-            build=build,
-        )
-
     try:
-        # The maximum valid package is deliberately large. Keep validation,
-        # pseudonymisation and canonical JSON away from Home Assistant's event
-        # loop while retaining the coherent copies captured under write_lock.
-        raw, preview = await hass.async_add_executor_job(_build_snapshot)
+        raw, preview, read_scope = await async_build_preview(
+            hass, connection, rt, msg, builder=build_support_package,
+            config_schema=CONFIG_SCHEMA, layout_schema=LAYOUT_SCHEMA,
+            repairs=_support_repairs(hass), build=_build_identity(rt).build,
+            integration_version=VERSION, ha_version=HA_VERSION,
+        )
     except (vol.Invalid, ValueError, TypeError, OverflowError) as error:
         code = error.code if isinstance(error, SupportPackageError) else "support_rejected"
         _send_support_error(connection, msg["id"], code)
@@ -2946,6 +2912,7 @@ async def ws_support_preview(
         "bytes": raw,
         "sha256": preview["sha256"],
         "versions": preview["versions"],
+        "read_scope": read_scope,
     }
     connection.send_result(
         msg["id"],
@@ -2958,6 +2925,7 @@ async def ws_support_preview(
             "format": preview["format"],
             "version": preview["version"],
             "text": raw.decode("utf-8"),
+            **({"coverage": preview["coverage"]} if "coverage" in preview else {}),
         },
     )
 
@@ -3022,6 +2990,9 @@ async def ws_support_submit(
     preview = rt.support_previews.get(token) if token else None
     if token and (preview is None or preview.get("owner") != _connection_user_id(connection)):
         _send_support_error(connection, msg["id"], "support_preview_expired")
+        return
+    if preview and not scope_readable(connection.user, preview.get("read_scope", ())):
+        _send_support_error(connection, msg["id"], "unauthorized")
         return
     attachment = preview.get("bytes") if preview else None
     versions = preview.get("versions") if preview else {

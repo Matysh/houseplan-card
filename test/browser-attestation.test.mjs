@@ -236,12 +236,12 @@ test('#827 AC2: общий launch судит уже запущенный бра�
   assert.deepEqual(plain.state, { contexts: 1, closed: 0 });
 });
 
-test('#827 AC2: helper — в трёх названных смоках, обхода через окружение нет', () => {
+test('#827/#942: declared pinned-browser smokes have no environment bypass', () => {
   const declaring = readdirSync(new URL('../demo/', import.meta.url))
     .filter((name) => /^smoke_.*\.mjs$/.test(name))
     .filter((name) => /requirePinnedBrowser\('smoke_/.test(readFileSync(new URL(`../demo/${name}`, import.meta.url), 'utf8')))
     .sort();
-  assert.deepEqual(declaring, ['smoke_editor_styles_lazy.mjs', 'smoke_support_feedback.mjs', 'smoke_zigbee_tooltip_layout.mjs']);
+  assert.deepEqual(declaring, ['smoke_editor_styles_lazy.mjs', 'smoke_support_diagnostics.mjs', 'smoke_support_feedback.mjs', 'smoke_zigbee_tooltip_layout.mjs']);
   for (const name of declaring) {
     const source = readFileSync(new URL(`../demo/${name}`, import.meta.url), 'utf8');
     assert.ok(source.indexOf("requirePinnedBrowser('") < source.search(/await launch(?:ColdView)?\(/),

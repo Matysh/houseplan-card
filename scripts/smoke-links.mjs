@@ -35,6 +35,11 @@ export const SMOKE_LINKS = [
     because: '#919: native header/catalog actions prove ordinary reveal, no config writes, lifecycle safety and isolated reloadable preferences.',
   },
   {
+    files: ['src/support-diagnostics.ts', 'src/support-feedback.ts', 'src/version-recovery-card.ts'],
+    smokes: ['smoke_support_diagnostics.mjs', 'smoke_support_feedback.mjs'],
+    because: '#942: public cold mount, capability negotiation and actual form/WS bytes exercise the lazy collector without calling or naming it.',
+  },
+  {
     symbols: ['DeviceCopyEditor', 'virtualDeviceCopy', 'deviceCopyIncoming', 'deviceCopyPosition'],
     smokes: ['smoke_device_copy.mjs'],
     because: '#935: native context-menu action, saved pair and cold reader cover the copy command without naming its internal helpers.',

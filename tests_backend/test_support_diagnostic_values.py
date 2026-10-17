@@ -1,8 +1,13 @@
 """Ordinary negative-input witnesses; no implementation mutations (#942)."""
+
 import math
 
 from custom_components.houseplan.support_diagnostic_values import (
-    DiagnosticIds, GeometryBudget, point, relative_time, sample_path,
+    DiagnosticIds,
+    GeometryBudget,
+    point,
+    relative_time,
+    sample_path,
 )
 
 
@@ -13,7 +18,9 @@ def test_namespace_preserves_reference_equality_and_empty_map_identity():
     assert ids.get("map", "") != ids.get("map", "0")
     assert ids.get("entity", "camera.private") == ids.get("entity", "camera.private")
     assert ids.get("entity", "camera.private") != ids.get("entity", "camera.other")
-    assert ids.get("entity", "camera.private") != DiagnosticIds("second").get("entity", "camera.private")
+    assert ids.get("entity", "camera.private") != DiagnosticIds("second").get(
+        "entity", "camera.private"
+    )
     assert ids.get("entity", {"private": "text"}) is None
     assert ids.get("map", False) is None
 

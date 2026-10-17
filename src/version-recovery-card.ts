@@ -41,6 +41,7 @@ export interface ConfigCapabilitiesCardPort {
   _haIntegrationVersion: string | null;
   _haBackendBuild?: BackendBuildIdentity | null;
   _haSupportApi: number | null;
+  _haSupportPackageVersions?: readonly number[];
   _haDecorAssetsApi: number | null;
   _haSummaryPanelApi: number | null;
   _haRadarStage1Api: number | null;
@@ -59,6 +60,7 @@ export interface AuthoritativeConfigResponse {
   readonly frontend_fingerprint?: unknown;
   readonly build?: unknown;
   readonly support_api?: unknown;
+  readonly support_package_versions?: unknown;
   readonly decor_assets_api?: unknown;
   readonly summary_panel_api?: unknown;
   readonly radar_stage1_api?: unknown;
@@ -73,7 +75,7 @@ export function adoptCardConfigCapabilities(
   const capabilities = response && typeof response === 'object'
     ? response as Partial<Record<
         'integration_version' | 'frontend_fingerprint' | 'build' | 'support_api' | 'decor_assets_api'
-        | 'summary_panel_api' | 'radar_stage1_api' | 'wall_node_move_api', unknown
+        | 'summary_panel_api' | 'radar_stage1_api' | 'wall_node_move_api' | 'support_package_versions', unknown
       >> : {};
   host._haIntegrationVersion = normalizeRuntimeVersion(capabilities.integration_version);
   host._haBackendBuild = {
@@ -83,6 +85,10 @@ export function adoptCardConfigCapabilities(
   const supportApi = capabilities.support_api;
   host._haSupportApi = typeof supportApi === 'number' && Number.isSafeInteger(supportApi)
     ? supportApi : null;
+  const packages = capabilities.support_package_versions;
+  host._haSupportPackageVersions = Array.isArray(packages) && packages.length <= 8
+    && packages.every(value => typeof value === 'number' && Number.isSafeInteger(value) && value > 0)
+    ? [...packages] : [];
   host._haDecorAssetsApi = capabilities.decor_assets_api === DECOR_ASSETS_API_VERSION
     ? DECOR_ASSETS_API_VERSION : null;
   host._haSummaryPanelApi = capabilities.summary_panel_api === SUMMARY_PANEL_API_VERSION

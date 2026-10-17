@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 942,
+  "baseStable": "v1.81.0",
+  "category": "major",
+  "rationale": "Adds opt-in extended diagnostics with connected configuration/runtime evidence, robot routes and bounded path samples, honest coverage and compatible package negotiation. Stable 1.81.0 support packages lacked these facts and required a separate export; this is a new user-facing support capability, not a robot-path fix.",
+  "summary": {
+    "ru": "Расширенная диагностика в форме помощи собирает настройки, связи и диагностические статусы, включая маршруты и ограниченный образец пути робота. Перед отправкой видны состав и пробелы отчёта; исходные имена и произвольные показания не отправляются.",
+    "en": "Extended Help diagnostics collect settings, links and diagnostic statuses, including robot routes and a bounded path sample. Coverage and gaps are visible before sending; original names and arbitrary readings stay private."
+  }
+}

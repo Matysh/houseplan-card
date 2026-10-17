@@ -128,6 +128,26 @@ export class LoadedSummaryPanelRuntime {
   /** Entity rows that can affect any supported saved summary-panel frame. */
   public entityIds(): readonly string[] { return summaryPanelEntityIds(this.config().config); }
 
+  /** Read existing state only: do not load metrics or schedule an aggregate. */
+  public supportFacts(): Record<string, unknown> {
+    const resolved = this.config(), config = resolved.config;
+    if (!config) return { status: resolved.unsupported ? 'unsupported_version' : 'not_configured' };
+    return { status: 'loaded', shown: this.presentation.mounted, mobile_allowed: config.show_on_mobile,
+      mobile: this.host.narrow === true,
+      values: config.blocks.flatMap(block => block.values.map(value => {
+        const foreign = block.scope.type === 'space' && block.scope.space_id !== this.host._space;
+        const source = value.source;
+        const state = source.type === 'entity' ? this.host.hass?.states?.[source.entity_id] : null;
+        const missing = source.type === 'entity' && !state;
+        const unavailable = state?.state === 'unknown' || state?.state === 'unavailable';
+        return { block: block.id, value: value.id,
+          shape: source.type === 'system' ? source.key === 'datetime' ? 'text' : 'numeric'
+            : missing || unavailable ? 'missing' : Number.isFinite(Number(state?.state)) ? 'numeric' : 'text',
+          reason: !block.visible ? 'hidden_block' : foreign ? 'foreign_space' : missing ? 'missing_source'
+            : unavailable ? 'unavailable' : !this.metricsModule ? 'runtime_unavailable' : 'visible' };
+      })) };
+  }
+
   public connect(): void {
     this.ensureStyle();
     this.connected = true;

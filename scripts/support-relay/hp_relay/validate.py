@@ -20,6 +20,7 @@ import unicodedata
 from dataclasses import dataclass
 
 from . import config
+from .support_wire_schema import WireRejected, validate_package
 
 SCHEMA_VERSION = 1
 
@@ -40,6 +41,7 @@ BUILD_KEYS = frozenset({"channel", "source"})
 BUILD_CHANNEL = "dev"
 PACKAGE_FORMAT = "houseplan-support-package"
 PACKAGE_VERSION = 1
+PACKAGE_VERSIONS = (1, 2)
 
 IDEMPOTENCY_RE = re.compile(r"\A[A-Za-z0-9_.:-]{8,128}\Z")
 SHA256_RE = re.compile(r"\A[0-9a-f]{64}\Z")
@@ -54,6 +56,15 @@ class ValidationError(ValueError):
     def __init__(self, code: str, message: str) -> None:
         super().__init__(message)
         self.code = code
+
+
+def _unique_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("duplicate JSON key")
+        result[key] = value
+    return result
 
 
 def plain_text(value: str, limit: int, field: str) -> str:
@@ -90,8 +101,8 @@ def parse_request(raw: bytes) -> Request:
     if len(raw) > 128 * 1024:
         raise ValidationError("support_rejected", "request part is too large")
     try:
-        payload = json.loads(raw.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        payload = json.loads(raw.decode("utf-8"), object_pairs_hook=_unique_object)
+    except (UnicodeDecodeError, ValueError, RecursionError) as exc:
         raise ValidationError("support_rejected", "request part is not valid JSON") from exc
     if not isinstance(payload, dict):
         raise ValidationError("support_rejected", "request part must be an object")
@@ -166,15 +177,23 @@ def check_attachment(body: bytes, filename: str | None, content_type: str, reque
         if actual != request.attachment_sha256:
             raise ValidationError("support_rejected", "attachment hash does not match the declared one")
     try:
-        package = json.loads(body.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        package = json.loads(body.decode("utf-8"), object_pairs_hook=_unique_object)
+    except (UnicodeDecodeError, ValueError, RecursionError) as exc:
         raise ValidationError("support_rejected", "attachment is not valid JSON") from exc
     if not isinstance(package, dict):
         raise ValidationError("support_rejected", "attachment must be an object")
     if package.get("format") != PACKAGE_FORMAT:
         raise ValidationError("support_rejected", "attachment format is not recognised")
-    if package.get("version") != PACKAGE_VERSION:
+    version = package.get("version")
+    if type(version) is not int or version not in PACKAGE_VERSIONS:
         raise ValidationError("support_rejected", "unsupported attachment version")
+    if version == 2:
+        try:
+            validate_package(package)
+        except WireRejected as error:
+            code = "support_package_too_large" if str(error) == "support_package_too_large" else "support_rejected"
+            raise ValidationError(code, "invalid version-2 package") from error
+        return
     unknown = set(package) - PACKAGE_ALLOWED_TOP_LEVEL
     if unknown:
         raise ValidationError("support_rejected", f"unknown package sections: {sorted(unknown)}")

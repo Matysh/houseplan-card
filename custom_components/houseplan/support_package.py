@@ -7,6 +7,7 @@ contain.  The caller supplies one coherent config/layout copy and bounded,
 already-classified runtime facts; this code constructs a new object field by
 field.  It never serializes the source and then tries to redact it.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -26,6 +27,7 @@ from .led_strips import led_strip_counts
 
 PACKAGE_FORMAT = "houseplan-support-package"
 PACKAGE_VERSION = 1
+PACKAGE_VERSIONS = (1, 2)
 _SAFE_VERSION = re.compile(r"\A[0-9A-Za-z._+-]{1,32}\Z")
 _SAFE_ICON = re.compile(r"\Amdi:[a-z0-9-]{1,80}\Z")
 _LANGUAGES = frozenset({"en", "ru", "de", "fr"})
@@ -103,7 +105,9 @@ def _copy_keys(source: object, keys: tuple[str, ...]) -> dict[str, Any]:
 def _point(value: object) -> list[float] | None:
     if not isinstance(value, (list, tuple)) or len(value) != 2:
         return None
-    if any(isinstance(item, bool) or not isinstance(item, (int, float)) for item in value):
+    if any(
+        isinstance(item, bool) or not isinstance(item, (int, float)) for item in value
+    ):
         return None
     return [value[0], value[1]]
 
@@ -141,13 +145,24 @@ def _custom_fill(value: object) -> dict[str, Any] | None:
 # The config schema stays open on purpose so older or extended configs keep
 # loading; a package must not carry a key the product never defined (#498).
 SUPPORT_FILL_COLOR_KEYS = (
-    "light_on", "light_off", "light_none", "temp_cold", "temp_ok", "temp_hot",
-    "lqi_low", "lqi_high", "glow_base", "glow_light", "wall_fill",
+    "light_on",
+    "light_off",
+    "light_none",
+    "temp_cold",
+    "temp_ok",
+    "temp_hot",
+    "lqi_low",
+    "lqi_high",
+    "glow_base",
+    "glow_light",
+    "wall_fill",
 )
 
 
 def _global_settings(value: object) -> dict[str, Any]:
-    out = _copy_keys(value, ("glow_radius_cm", "bg_color", "north_deg", "bg_mode", "sun_rays"))
+    out = _copy_keys(
+        value, ("glow_radius_cm", "bg_color", "north_deg", "bg_mode", "sun_rays")
+    )
     if not isinstance(value, dict):
         return out
     sun_ray_origin = value.get("sun_ray_origin")
@@ -180,19 +195,43 @@ def _global_settings(value: object) -> dict[str, Any]:
     style = value.get("decor_default_style")
     if isinstance(style, dict):
         out["decor_default_style"] = _copy_keys(
-            style, ("color", "opacity", "width_cm", "fill", "fill_color", "fill_opacity"),
+            style,
+            ("color", "opacity", "width_cm", "fill", "fill_color", "fill_opacity"),
         )
     return out
 
 
 def _space_settings(value: object) -> dict[str, Any]:
-    out = _copy_keys(value, (
-        "show_borders", "show_names", "room_color", "bg_color", "room_opacity",
-        "fill_mode", "glow_enabled", "temp_min", "temp_max", "show_lqi",
-        "hide_decor", "hide_openings", "label_temp", "label_hum", "label_lqi",
-        "label_light", "card_font_scale", "north_deg", "bg_mode", "sun_rays",
-    ))
-    if isinstance(value, dict) and value.get("show_lqi_mode") in ("inherit", "on", "off"):
+    out = _copy_keys(
+        value,
+        (
+            "show_borders",
+            "show_names",
+            "room_color",
+            "bg_color",
+            "room_opacity",
+            "fill_mode",
+            "glow_enabled",
+            "temp_min",
+            "temp_max",
+            "show_lqi",
+            "hide_decor",
+            "hide_openings",
+            "label_temp",
+            "label_hum",
+            "label_lqi",
+            "label_light",
+            "card_font_scale",
+            "north_deg",
+            "bg_mode",
+            "sun_rays",
+        ),
+    )
+    if isinstance(value, dict) and value.get("show_lqi_mode") in (
+        "inherit",
+        "on",
+        "off",
+    ):
         out["show_lqi_mode"] = value["show_lqi_mode"]
     if isinstance(value, dict) and "custom_fill" in value:
         out["custom_fill"] = _custom_fill(value.get("custom_fill"))
@@ -235,11 +274,36 @@ def _project_room(ids: _Pseudonyms, room: dict[str, Any], index: int) -> dict[st
 def _project_decor(ids: _Pseudonyms, item: dict[str, Any]) -> dict[str, Any]:
     kind = str(item.get("kind") or "unknown")
     out: dict[str, Any] = {"id": ids.get("decor", item.get("id")), "kind": kind}
-    out.update(_copy_keys(item, (
-        "color", "opacity", "width_cm", "width", "x1", "y1", "x2", "y2",
-        "line_style", "x", "y", "w", "h", "angle", "fill", "fill_color",
-        "fill_opacity", "size", "size_cm", "scale", "symbol", "flip_h", "flip_v",
-    )))
+    out.update(
+        _copy_keys(
+            item,
+            (
+                "color",
+                "opacity",
+                "width_cm",
+                "width",
+                "x1",
+                "y1",
+                "x2",
+                "y2",
+                "line_style",
+                "x",
+                "y",
+                "w",
+                "h",
+                "angle",
+                "fill",
+                "fill_color",
+                "fill_opacity",
+                "size",
+                "size_cm",
+                "scale",
+                "symbol",
+                "flip_h",
+                "flip_v",
+            ),
+        )
+    )
     if kind == "text":
         out["text"] = "[redacted text]"
         if item.get("entity"):
@@ -252,7 +316,10 @@ def _project_value_source(ids: _Pseudonyms, value: object) -> dict[str, Any] | N
         return None
     kind = value.get("kind")
     if kind in {"entity_state", "entity_attribute"}:
-        out: dict[str, Any] = {"kind": kind, "entity_id": _entity_ref(ids, value.get("entity_id"))}
+        out: dict[str, Any] = {
+            "kind": kind,
+            "entity_id": _entity_ref(ids, value.get("entity_id")),
+        }
         # Attribute names can be arbitrary user strings and are not needed to
         # reproduce geometry or marker placement, so they are deliberately absent.
         return out
@@ -289,11 +356,26 @@ def _project_marker(ids: _Pseudonyms, marker: dict[str, Any]) -> dict[str, Any]:
         "binding": binding,
         "binding_kind": binding_kind,
     }
-    out.update(_copy_keys(marker, (
-        "hidden", "removed", "tap_action", "tap_confirm", "display", "ripple_color",
-        "ripple_size", "size", "angle", "glow_radius_cm", "glow_color", "is_light",
-        "use_climate_temp",
-    )))
+    out.update(
+        _copy_keys(
+            marker,
+            (
+                "hidden",
+                "removed",
+                "tap_action",
+                "tap_confirm",
+                "display",
+                "ripple_color",
+                "ripple_size",
+                "size",
+                "angle",
+                "glow_radius_cm",
+                "glow_color",
+                "is_light",
+                "use_climate_temp",
+            ),
+        )
+    )
     hide_battery = marker.get("hide_battery")
     if isinstance(hide_battery, bool):
         out["hide_battery"] = hide_battery
@@ -315,7 +397,9 @@ def _project_marker(ids: _Pseudonyms, marker: dict[str, Any]) -> dict[str, Any]:
         out["controls"] = [_entity_ref(ids, value) for value in controls]
     vacuum = marker.get("vacuum")
     if isinstance(vacuum, dict):
-        out["vacuum"] = _copy_keys(vacuum, ("live", "trail", "trail_mode", "room_highlight"))
+        out["vacuum"] = _copy_keys(
+            vacuum, ("live", "trail", "trail_mode", "room_highlight")
+        )
     for key in ("value_source",):
         projected = _project_value_source(ids, marker.get(key))
         if projected:
@@ -326,16 +410,31 @@ def _project_marker(ids: _Pseudonyms, marker: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-def _project_space(ids: _Pseudonyms, space: dict[str, Any], index: int) -> dict[str, Any]:
+def _project_space(
+    ids: _Pseudonyms, space: dict[str, Any], index: int
+) -> dict[str, Any]:
     out: dict[str, Any] = {
         "id": ids.get("space", space.get("id")),
         "title": f"Space {index}",
         "has_plan": bool(space.get("plan_url")),
     }
-    out.update(_copy_keys(space, (
-        "cell_cm", "plan_aspect", "plan_x", "plan_y", "plan_scale", "plan_scale_x",
-        "plan_scale_y", "plan_angle", "view_box", "zero_wall_style",
-    )))
+    out.update(
+        _copy_keys(
+            space,
+            (
+                "cell_cm",
+                "plan_aspect",
+                "plan_x",
+                "plan_y",
+                "plan_scale",
+                "plan_scale_x",
+                "plan_scale_y",
+                "plan_angle",
+                "view_box",
+                "zero_wall_style",
+            ),
+        )
+    )
     settings = _space_settings(space.get("settings"))
     if settings:
         out["settings"] = settings
@@ -348,35 +447,64 @@ def _project_space(ids: _Pseudonyms, space: dict[str, Any], index: int) -> dict[
     out["wall_segments"] = [
         {
             "id": ids.get("wall", item.get("id")),
-            "a": _point(item.get("a")), "b": _point(item.get("b")), "cm": item.get("cm"),
+            "a": _point(item.get("a")),
+            "b": _point(item.get("b")),
+            "cm": item.get("cm"),
         }
-        for item in space.get("wall_segments") or [] if isinstance(item, dict)
+        for item in space.get("wall_segments") or []
+        if isinstance(item, dict)
     ]
     out["walls"] = [
         {
-            "key": ids.get("wall", item.get("key")), "cm": item.get("cm"),
-            **({"a": _point(item.get("a")), "b": _point(item.get("b"))}
-               if "a" in item and "b" in item else {}),
+            "key": ids.get("wall", item.get("key")),
+            "cm": item.get("cm"),
+            **(
+                {"a": _point(item.get("a")), "b": _point(item.get("b"))}
+                if "a" in item and "b" in item
+                else {}
+            ),
         }
-        for item in space.get("walls") or [] if isinstance(item, dict)
+        for item in space.get("walls") or []
+        if isinstance(item, dict)
     ]
     out["partitions"] = [
-        {"id": ids.get("partition", item.get("id")), "a": _point(item.get("a")),
-         "b": _point(item.get("b")), "cm": item.get("cm")}
-        for item in space.get("partitions") or [] if isinstance(item, dict)
+        {
+            "id": ids.get("partition", item.get("id")),
+            "a": _point(item.get("a")),
+            "b": _point(item.get("b")),
+            "cm": item.get("cm"),
+        }
+        for item in space.get("partitions") or []
+        if isinstance(item, dict)
     ]
     out["wall_columns"] = [
-        {"id": ids.get("column", item.get("id")), **_copy_keys(item, ("shape", "center", "cm", "angle"))}
-        for item in space.get("wall_columns") or [] if isinstance(item, dict)
+        {
+            "id": ids.get("column", item.get("id")),
+            **_copy_keys(item, ("shape", "center", "cm", "angle")),
+        }
+        for item in space.get("wall_columns") or []
+        if isinstance(item, dict)
     ]
     out["openings"] = []
     for opening in space.get("openings") or []:
         if not isinstance(opening, dict):
             continue
         projected = {"id": ids.get("opening", opening.get("id"))}
-        projected.update(_copy_keys(opening, (
-            "type", "x", "y", "angle", "length", "invert", "flip_h", "flip_v",
-        )))
+        projected.update(
+            _copy_keys(
+                opening,
+                (
+                    "type",
+                    "x",
+                    "y",
+                    "angle",
+                    "length",
+                    "invert",
+                    "flip_h",
+                    "flip_v",
+                ),
+            )
+        )
         for key in ("contact", "lock"):
             if opening.get(key):
                 projected[key] = _entity_ref(ids, opening.get(key))
@@ -390,23 +518,41 @@ def _project_space(ids: _Pseudonyms, space: dict[str, Any], index: int) -> dict[
             }
         out["openings"].append(projected)
     out["decor"] = [
-        _project_decor(ids, item) for item in space.get("decor") or [] if isinstance(item, dict)
+        _project_decor(ids, item)
+        for item in space.get("decor") or []
+        if isinstance(item, dict)
     ]
     out["stairs"] = []
     for item in space.get("stairs") or []:
         if not isinstance(item, dict):
             continue
         projected = {"id": ids.get("stair", item.get("id"))}
-        projected.update(_copy_keys(item, (
-            "kind", "x", "y", "angle", "direction", "length", "width", "radius",
-            "color", "opacity", "fill_color", "fill_opacity",
-        )))
+        projected.update(
+            _copy_keys(
+                item,
+                (
+                    "kind",
+                    "x",
+                    "y",
+                    "angle",
+                    "direction",
+                    "length",
+                    "width",
+                    "radius",
+                    "color",
+                    "opacity",
+                    "fill_color",
+                    "fill_opacity",
+                ),
+            )
+        )
         if item.get("target_space_id"):
             projected["target_space_id"] = ids.get("space", item.get("target_space_id"))
         out["stairs"].append(projected)
     out["open_spans"] = [
         {"a": _point(item.get("a")), "b": _point(item.get("b"))}
-        for item in space.get("open_spans") or [] if isinstance(item, dict)
+        for item in space.get("open_spans") or []
+        if isinstance(item, dict)
     ]
     return out
 
@@ -447,7 +593,11 @@ def _summary(config: object, layout: object) -> dict[str, Any]:
             continue
         bindings[_binding_kind(marker.get("binding"))] += 1
         lifecycles[
-            "removed" if marker.get("removed") else "hidden" if marker.get("hidden") else "active"
+            "removed"
+            if marker.get("removed")
+            else "hidden"
+            if marker.get("hidden")
+            else "active"
         ] += 1
     for space in spaces:
         if not isinstance(space, dict):
@@ -460,13 +610,31 @@ def _summary(config: object, layout: object) -> dict[str, Any]:
                 decor_kinds[str(item.get("kind") or "unknown")] += 1
     return {
         "spaces": len(spaces),
-        "rooms": sum(len(space.get("rooms") or []) for space in spaces if isinstance(space, dict)),
-        "walls": sum(len(space.get("wall_segments") or space.get("walls") or []) for space in spaces if isinstance(space, dict)),
-        "partitions": sum(len(space.get("partitions") or []) for space in spaces if isinstance(space, dict)),
-        "columns": sum(len(space.get("wall_columns") or []) for space in spaces if isinstance(space, dict)),
+        "rooms": sum(
+            len(space.get("rooms") or []) for space in spaces if isinstance(space, dict)
+        ),
+        "walls": sum(
+            len(space.get("wall_segments") or space.get("walls") or [])
+            for space in spaces
+            if isinstance(space, dict)
+        ),
+        "partitions": sum(
+            len(space.get("partitions") or [])
+            for space in spaces
+            if isinstance(space, dict)
+        ),
+        "columns": sum(
+            len(space.get("wall_columns") or [])
+            for space in spaces
+            if isinstance(space, dict)
+        ),
         "openings": dict(sorted(kinds.items())),
         "decor": dict(sorted(decor_kinds.items())),
-        "stairs": sum(len(space.get("stairs") or []) for space in spaces if isinstance(space, dict)),
+        "stairs": sum(
+            len(space.get("stairs") or [])
+            for space in spaces
+            if isinstance(space, dict)
+        ),
         "markers": {
             "total": len(markers),
             "lifecycle": dict(sorted(lifecycles.items())),
@@ -479,7 +647,9 @@ def _summary(config: object, layout: object) -> dict[str, Any]:
 
 
 def _led_strip_summary(spaces: list[Any]) -> dict[str, int]:
-    counts = led_strip_counts({"spaces": [space for space in spaces if isinstance(space, dict)]})
+    counts = led_strip_counts(
+        {"spaces": [space for space in spaces if isinstance(space, dict)]}
+    )
     return {
         "total": counts["led_strips"],
         "unbound": counts["led_strips_unbound"],
@@ -511,10 +681,21 @@ def build_support_package(
     repairs: list[dict[str, Any]] | None = None,
     namespace: str | None = None,
     build: dict[str, str] | None = None,
+    package_version: int = 1,
+    diagnostics: dict[str, Any] | None = None,
+    server_snapshot: dict[str, Any] | None = None,
 ) -> tuple[bytes, dict[str, Any]]:
     """Build canonical bytes and a bounded summary for the preview response."""
+    if type(package_version) is not int or package_version not in PACKAGE_VERSIONS:
+        raise SupportPackageError("support_rejected")
+    if package_version == 1 and diagnostics is not None:
+        raise SupportPackageError("support_rejected")
     facts = validate_frontend_facts(runtime)
     ids = _Pseudonyms(namespace or secrets.token_hex(4))
+    if package_version == 2:
+        from .support_diagnostic_values import DiagnosticIds
+
+        ids = DiagnosticIds(ids.namespace)
     spaces = [item for item in config.get("spaces", []) if isinstance(item, dict)]
     markers = [item for item in config.get("markers", []) if isinstance(item, dict)]
     projected_spaces = [
@@ -524,7 +705,7 @@ def build_support_package(
     summary = _summary(config, layout)
     package = {
         "format": PACKAGE_FORMAT,
-        "version": PACKAGE_VERSION,
+        "version": package_version,
         "versions": {
             "card": _safe_version(card_version),
             "integration": _safe_version(integration_version),
@@ -536,7 +717,9 @@ def build_support_package(
         "revisions": {"config": int(config_rev), "layout": int(layout_rev)},
         "summary": summary,
         "validation": {
-            "config": "valid", "layout": "valid", "unknown_fields": "dropped",
+            "config": "valid",
+            "layout": "valid",
+            "unknown_fields": "dropped",
         },
         "repairs": repairs or [],
         "plan_backup": {
@@ -552,9 +735,36 @@ def build_support_package(
     if build:
         # #836: the dev label only; a release/beta package keeps its bytes.
         package["build"] = {"channel": build["channel"], "source": build["source"]}
-    raw = (json.dumps(
-        package, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False,
-    ) + "\n").encode("utf-8")
+    if package_version == 2:
+        from .support_config_projection import extend_config_projection
+        from .support_diagnostics import build_diagnostics
+        from .support_wire_schema import WireRejected, validate_package
+
+        try:
+            extend_config_projection(config, package["plan_backup"]["config"], ids)
+            package["diagnostics"] = build_diagnostics(
+                config,
+                ids=ids,
+                config_rev=config_rev,
+                layout_rev=layout_rev,
+                client=diagnostics,
+                server=server_snapshot,
+            )
+            # Runtime-only automatic devices have stable marker references too.
+            package["plan_backup"]["layout"] = _project_layout(ids, layout)
+            validate_package(package)
+        except WireRejected as error:
+            raise SupportPackageError(str(error)) from error
+    raw = (
+        json.dumps(
+            package,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        )
+        + "\n"
+    ).encode("utf-8")
     if len(raw) > MAX_SUPPORT_ATTACHMENT_BYTES:
         raise SupportPackageError("support_package_too_large")
     return raw, {
@@ -562,6 +772,11 @@ def build_support_package(
         "sha256": hashlib.sha256(raw).hexdigest(),
         "spaces": summary["spaces"],
         "format": PACKAGE_FORMAT,
-        "version": PACKAGE_VERSION,
+        "version": package_version,
         "versions": package["versions"],
+        **(
+            {"coverage": package["diagnostics"]["coverage"]}
+            if package_version == 2
+            else {}
+        ),
     }

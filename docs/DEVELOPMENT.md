@@ -1155,6 +1155,37 @@ witness this server bug. Register the two backend mutants, but execute only
 `node scripts/mutation-gate.mjs --check` during development; mutation execution
 belongs to the nightly gate. No rendering, input or model migration is involved.
 
+## Support diagnostics v2 (#942)
+
+Measured accounting change after beta.1: portMembers 355→359, hostRefs 5425→5471,
+raw emitted tree 2,985,923→3,006,663 B. The additional references are read-only, opt-in
+diagnostic adapters to existing accepted presentation/overlay/panel decisions;
+there is no new delegate or background collector. A separate lazy diagnostic
+chunk and four lazy translated coverage dictionaries account for the new bytes.
+The preview parser was extracted from the editor rather than growing its core.
+The measured baseline is updated in the same issue/commit; ratchet bands,
+core-file ceilings and actual entry/chunk budget limits are unchanged.
+
+API1 is not the package schema: config/get advertises `[1,2]`; old requests
+default to frozen v1. New frontend + old backend stays visibly limited v1;
+explicit malformed/future v2 fails, never silently downgrades. Persisted model
+and export schemas are unchanged. Inventory and exact tests:
+[SUPPORT-DIAGNOSTICS.md](SUPPORT-DIAGNOSTICS.md).
+
+The stdlib schema source is
+`custom_components/houseplan/support_wire_schema.py`; its relay copy must be
+byte-identical. Update both in one task and run the actual validator/HTTP tests,
+not just a source comparison. The browser v2 smoke bridges synthetic form input
+to the actual Python builder and therefore needs the pinned HA venv on PATH
+(use WSL, not native Windows). The four responsive screenshots are ignored
+artifacts and require visual inspection. No private support report is a fixture.
+
+Relay deployment is a separate post-S8 step: staging in discard mode first,
+then backed-up prod, preserving env/spool/rates/retention. Do not release a
+v2-capable HACS package before the issue records deployment proof. See
+[relay README](../scripts/support-relay/README.md) for the compatibility,
+isolation and rollback sequence. This task does not itself authorize a HACS tag.
+
 ## Input support contract
 
 For View recovery (#824), run `node demo/smoke_view_recovery.mjs` after

@@ -251,6 +251,9 @@ import { supportT, type SupportI18nKey } from './i18n/support'; import { EDITOR_
 import {
   newSupportDialogState,
   supportApiCompatible,
+  supportPackageVersion,
+  parseSupportPreview,
+  supportResponseToken,
   supportCanSubmit,
   supportDraftError,
   supportErrorCode,
@@ -613,6 +616,9 @@ export interface HouseplanEditorHostPort {
   _gridPitch: number;
   _haIntegrationVersion: string | null;
   _haSupportApi: number | null;
+  _haSupportPackageVersions?: readonly number[];
+  readonly _renderDeviceSnapshot: RenderDeviceSnapshot | null;
+  readonly _summary?: { supportFacts(): Record<string, unknown> };
   _haDecorAssetsApi: number | null;
   _haRegistry: HaRegistrySnapshot;
   _hasFixedFloor: boolean;
@@ -789,6 +795,7 @@ export interface HouseplanEditorHostPort {
   _vacRuntimeSource: (d: DevItem, planHass?: any) => import('./vacuum-runtime-source').VacuumRuntimeSource; // any-ok: card projection
   _vacObservedMapId: (d: DevItem, source: string) => string | undefined;
   _vacSourceResolution: (d: DevItem, includeAllCameras?: boolean, planHass?: any) => VacSourceResolution;
+  _vacCandidateStatus: (entityId: string, candidate: VacSourceCandidate | null, planHass?: HouseplanEditorHostPort['_planHass']) => import('./vacuum').VacSourceStatus;
   _vacSrvTrails: import('./vacuum-trail-material').VacuumServerBook;
   _vacTrailFormat: number;
   _vacGeometryCache: import('./vacuum-path-geometry').VacuumPathGeometryCache;
@@ -8506,45 +8513,20 @@ private async _buildSupportPreview(draftId: string): Promise<void> {
     this._supportPatch(draftId, { status: 'building', errorCode: '' });
     let issuedToken = '';
     try {
+      const requestedVersion = supportPackageVersion(this.host._haSupportPackageVersions);
+      const diagnostics = requestedVersion === 2
+        ? (await import('./support-diagnostics')).collectSupportDiagnostics(this.host) : null;
+      if (!this._supportPreviewRequestIsCurrent(draftId, generation)) return;
       const response: unknown = await this.host.hass.callWS({
         type: 'houseplan/support/preview',
         card_version: displayVersion(CARD_VERSION),
         ...this._supportFacts(),
         draft_id: draftId,
+        ...(requestedVersion === 2 ? { package_version: 2, diagnostics } : {}),
       });
-      const payload = response && typeof response === 'object'
-        ? response as Partial<Record<
-          'text' | 'size' | 'expires_in' | 'spaces' | 'token' | 'sha256' | 'version' | 'format',
-          unknown
-        >> : {};
-      const now = Date.now();
-      const text = typeof payload.text === 'string' ? payload.text : '';
-      const size = Number(payload.size);
-      const expiresIn = Number(payload.expires_in);
-      const spaces = Number(payload.spaces);
-      const token = String(payload.token || '');
-      if (/^[0-9a-f]{48}$/.test(token)) issuedToken = token;
-      const sha256 = String(payload.sha256 || '');
-      const version = Number(payload.version);
-      const format = String(payload.format || '');
-      const byteSize = new TextEncoder().encode(text).byteLength;
-      if (!/^[0-9a-f]{48}$/.test(token) || !/^[0-9a-f]{64}$/.test(sha256)
-          || format !== 'houseplan-support-package' || version !== 1
-          || !Number.isInteger(size) || size !== byteSize || !Number.isInteger(spaces) || spaces < 0
-          || !Number.isFinite(expiresIn) || expiresIn <= 0 || expiresIn > 600 || !text.endsWith('\n')) {
-        throw { code: 'support_rejected' };
-      }
-      const preview: SupportPreview = {
-        token,
-        expiresAt: now + expiresIn * 1000,
-        size,
-        sha256,
-        spaces,
-        format,
-        version,
-        text,
-        preparedAt: now,
-      };
+      issuedToken = supportResponseToken(response);
+      const preview = parseSupportPreview(response, requestedVersion);
+      const token = preview.token;
       if (!this._supportPreviewRequestIsCurrent(draftId, generation)) {
         issuedToken = '';
         void this._discardSupportPreview(token);
@@ -8709,6 +8691,7 @@ public _renderSupportDialog(): TemplateResult {
       ? 'https://github.com/Matysh/houseplan-card/blob/main/docs/USER-GUIDE.ru.md'
       : 'https://github.com/Matysh/houseplan-card/blob/main/docs/USER-GUIDE.md';
     const compatible = supportApiCompatible(this.host._haSupportApi);
+    const packageVersion = state.preview?.version ?? supportPackageVersion(this.host._haSupportPackageVersions);
     const st = (key: SupportI18nKey, vars?: Record<string, string | number>): string =>
       supportT(lang, key, vars);
     const busy = state.status === 'building' || state.status === 'sending';
@@ -8767,9 +8750,10 @@ public _renderSupportDialog(): TemplateResult {
                   @change=${(event: Event) => void this._setSupportAttachment(
                     (event.target as HTMLInputElement).checked,
                   )} />
-                <span>${st('support.attach')}</span>
+                <span>${st(packageVersion === 2 ? 'support.attach' : 'support.attach_legacy')}</span>
               </label>
-              <p id="support-attach-hint" class="rhint">${st('support.attach_hint')}</p>
+              <p id="support-attach-hint" class="rhint">${st(packageVersion === 2 ? 'support.attach_hint' : 'support.attach_hint_legacy')}</p>
+              ${packageVersion === 1 ? html`<p class="rhint" role="note">${st('support.legacy_diagnostics')}</p>` : nothing}
               ${state.attach ? html`<p class="supportwarning" role="note">
                 <ha-icon icon="mdi:shield-alert-outline"></ha-icon>
                 <span>${st('support.geometry_warning')}</span>
@@ -8785,6 +8769,14 @@ public _renderSupportDialog(): TemplateResult {
                     size: supportSizeKiB(state.preview.size),
                   })}</div>
                   <div class="supporthash"><span>SHA-256</span><code>${state.preview.sha256}</code></div>
+                  ${state.preview.coverage ? html`<section class="supportcoverage" aria-label=${st('support.coverage_title')}>
+                    <strong>${st('support.coverage_title')}</strong>
+                    <ul>${state.preview.coverage.map(row => html`<li>
+                      ${st(('support.diag.' + row.category) as SupportI18nKey)}:
+                      ${st(('support.coverage_' + row.status) as SupportI18nKey)} (${row.observed}/${row.total})
+                      ${row.reasons.length ? html`<span class="rhint"> — ${row.reasons.map(reason => st(('support.diag.' + reason) as SupportI18nKey)).join('; ')}</span>` : nothing}
+                    </li>`)}</ul>
+                  </section>` : nothing}
                   <div class="rhint">${st('support.prepared', { n: preparedMinutes })}</div>
                   <details ?open=${state.rawOpen}
                     @toggle=${(event: Event) => this._supportPatch(state.draftId, {

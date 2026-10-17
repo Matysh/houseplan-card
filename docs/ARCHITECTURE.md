@@ -1474,7 +1474,7 @@ panel. Device totals need an authoritative registry snapshot and dedupe parent
 device ids before visual filters; clean area unions canonical room floors per
 space with that space's `cell_cm`.
 
-## Private support boundary (#43)
+## Private support boundary (#43, #942)
 
 Help & feedback is rendered by the lazy editor runtime even in View; form state
 is component memory only. Report controls appear only when
@@ -1492,6 +1492,23 @@ compile-time HTTPS URL, no redirects, bounded timeouts and response size, stable
 local failure codes that never reflect the response. The relay
 (`scripts/support-relay/`) deploys separately and is excluded from the HACS
 artifact. Content and retention: [SUPPORT-PRIVACY](SUPPORT-PRIVACY.md).
+
+API 1 negotiates package versions independently: config/get advertises
+`support_package_versions:[1,2]`; omitted `package_version` still requests the
+frozen v1. V2 adds closed diagnostic schema 1, never a persisted model change.
+The lazy browser collector reads accepted presentation/overlay decisions only
+on opt-in. `support_preview.py` owns coherent capture, the HA-lifetime physical
+build pool and final authorization; `support_snapshot.py` captures bounded,
+read-authorized state/registry/recorder facts before yielding. Projection and
+JSON run in the executor. Timeout/cancellation retain the physical lease until
+completion (four globally, one per user/draft); a late result cannot publish.
+`support_diagnostic_values.py` owns shared pseudonyms and contiguous samples;
+`support_config_projection.py` and `support_diagnostics.py` project typed fields.
+`support_wire_schema.py` is stdlib-only and copied byte-for-byte into the relay,
+with actual validator/HTTP parity tests. Read ACLs are rechecked before preview
+publication and submit. Client claims never overwrite server facts; mismatched
+revisions are partial, not a fabricated current renderer snapshot.
+Inventory, budgets and witnesses: [SUPPORT-DIAGNOSTICS](SUPPORT-DIAGNOSTICS.md).
 
 ## Mutation tooling boundaries (#558)
 

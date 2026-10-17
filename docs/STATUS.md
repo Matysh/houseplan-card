@@ -36,6 +36,13 @@ from path quality and final confirmation.
   the choice is isolated per HA user/card, with no automatic camera change.
   Static cards and HA-disabled lifecycle remain separate (`FILTERING.md`).
 
+Extended support diagnostics (#942) negotiate package v2 under API 1. The
+opt-in remains off; coverage identifies incomplete observations. Configuration
+and runtime references share package-local identities, arbitrary readings and
+radar targets stay out, and entity read ACLs apply independently of writer
+permission. Accepted relay code must be deployed before releasing v2-capable
+HACS artifacts; deployment proof belongs to the issue, not this snapshot.
+
 Device copying (#935) creates independent virtual markers through a narrow
 revision-checked paired writer. Incoming links are appended, original LED forms
 and files stay intact, and copy preparation/creation sends no equipment commands.

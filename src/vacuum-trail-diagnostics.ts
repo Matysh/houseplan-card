@@ -35,23 +35,35 @@ function modeDisplayReason(host: Host, device: DevItem, moving: boolean): I18nKe
   return mode === 'cleaning' && !moving ? 'vac.trail_display_stopped' : null;
 }
 
-export function diagnoseVacuumTrail(host: Host, device: DevItem): VacuumTrailDiagnostic {
+function initialDiagnostic(
+  host: Host, device: DevItem, selected: ReturnType<Host['_vacRuntimeSource']>,
+): VacuumTrailDiagnostic {
   const run = host._vacSrvTrails[device.id]?.current;
   const selected = host._vacRuntimeSource(device);
   const chosen = selectVacuumTrail(selected.telemetry, run ?? null, host._vacRt.get(device.id)?.material ?? [], host._vacTrailFormat);
   const raw = run?.quality?.raw_points ?? chosen.path.reduce((n, p) => n + p.length, 0);
   const stored = run?.quality?.stored_points ?? chosen.path.reduce((n, p) => n + p.length, 0);
-  let rendered = 0, limited = false, budget = VAC_RENDER_POINT_BUDGET;
   const targetMoving = host._vacRt.get(device.id)?.moving ?? false;
-  let display: I18nKey = modeDisplayReason(host, device, targetMoving)
+  const display: I18nKey = modeDisplayReason(host, device, targetMoving)
     ?? routeDisplayReason(selected.resolution, selected.unavailable)
     ?? (selected.resolution.kind === 'ready' && selected.resolution.route.space !== host._space
       ? 'vac.trail_display_space' : 'vac.path_none');
+  return { source: chosen.source, reason: chosen.reason, raw, stored, rendered: 0,
+    display, receivedAt: run?.received_at, final: run?.final_status === 'confirmed' };
+}
+
+/** One traversal for a support snapshot of several robots, not N² UI calls. */
+export function diagnoseVacuumTrails(host: Host): Map<string, VacuumTrailDiagnostic> {
+  const results = new Map<string, VacuumTrailDiagnostic>();
+  let budget = VAC_RENDER_POINT_BUDGET;
   // Same current-before-previous / roster order and space quota as View.
   for (const d of host._devices) {
+    if (!host._isVacDev(d)) continue;
+    const runtime = host._vacRuntimeSource(d);
+    const result = initialDiagnostic(host, d, runtime);
+    results.set(d.id, result);
     const moving = host._vacRt.get(d.id)?.moving ?? false;
     if (modeDisplayReason(host, d, moving)) continue;
-    const runtime = d.id === device.id ? selected : host._vacRuntimeSource(d);
     const { source, telemetry, routes, resolution } = runtime;
     if (!source) continue;
     const server = host._vacSrvTrails[d.id];
@@ -65,15 +77,17 @@ export function diagnoseVacuumTrail(host: Host, device: DevItem): VacuumTrailDia
       moving, matrix: plan.live, cache: host._vacGeometryCache,
       cmPerUnit: host._cellCm / host._gridPitch, budget });
     budget -= frame.count;
-    if (d.id === device.id) {
-      rendered = frame.count; limited = frame.limited;
-      display = frame.count > 0 ? 'vac.trail_display_visible'
-        : run && !plan.currentRunMatches ? 'vac.trail_display_run'
+    result.rendered = frame.count;
+    if (frame.limited) result.reason = 'limited';
+    result.display = frame.count > 0 ? 'vac.trail_display_visible'
+        : server?.current && !plan.currentRunMatches ? 'vac.trail_display_run'
         : frame.limited ? 'vac.path_limited'
-        : raw > 0 || stored > 0 ? 'vac.trail_display_points' : 'vac.path_none';
-    }
+        : result.raw > 0 || result.stored > 0 ? 'vac.trail_display_points' : 'vac.path_none';
   }
-  return { source: chosen.source, reason: limited ? 'limited' : chosen.reason, raw,
-    stored, rendered, display,
-    receivedAt: run?.received_at, final: run?.final_status === 'confirmed' };
+  return results;
+}
+
+export function diagnoseVacuumTrail(host: Host, device: DevItem): VacuumTrailDiagnostic {
+  return diagnoseVacuumTrails(host).get(device.id)
+    ?? initialDiagnostic(host, device, host._vacRuntimeSource(device));
 }

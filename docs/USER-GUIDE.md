@@ -2701,8 +2701,14 @@ it is not written to House Plan settings, local storage or Home Assistant.
 The diagnostic attachment is **off by default**. When enabled, House Plan
 builds an allowlisted package in the integration and shows its exact size,
 SHA-256 and JSON before sending. The package excludes names, Home Assistant
-entity/device/area IDs, live states, URLs, paths, files, message and contact.
-It does include exact room/wall/opening geometry and home dimensions. Use
+entity/device/area IDs, arbitrary sensor readings, raw attributes, URLs, files,
+message and contact. Extended diagnostics (package v2) include configuration
+links, normalized current diagnostic statuses and display decisions, robot
+calibration and bounded samples of position, room anchors and paths. They also
+include exact room/wall/opening geometry and home dimensions. Four coverage
+categories explain what was collected and what is incomplete; one snapshot
+cannot diagnose every transient problem. With an older integration, the form
+explicitly labels package v1 as limited diagnostics. Use
 **Show data** to inspect the exact bytes and **Download JSON** to keep them.
 The preview expires after ten minutes; refresh it before sending if required.
 

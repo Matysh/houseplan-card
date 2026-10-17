@@ -13,6 +13,11 @@
   ([#919](https://github.com/Matysh/houseplan-card/issues/919)).
 
 ## v1.82.0-beta.1 — 2026-10-17
+- Help & feedback can attach extended diagnostics: linked settings and display
+  decisions, normalized statuses, robot calibration/routes and bounded path
+  samples. Coverage and gaps are visible before sending; consent remains off
+  by default and older integrations are explicitly labelled as limited
+  ([#942](https://github.com/Matysh/houseplan-card/issues/942)).
 
 - Background resizing no longer rebuilds unchanged walls for device outlines,
   avoiding a pause when a decor transform ends

@@ -11,6 +11,37 @@
 | `POST /v1/reports` | приём отчёта (multipart: часть `request` + необязательная `attachment`) |
 | `GET /health` | режим, состояние рубильника, срок хранения |
 
+## Версия пакета 2 (#942)
+
+API и multipart остаются версии 1. Relay принимает вложения package1 и
+package2; у package2 есть закрытая `diagnostics.schema:1`, и неизвестное
+вложенное поле, неверный тип/enum/reference, повтор JSON-ключа, превышение
+depth/count/bytes — отказ. `support_wire_schema.py` скопирован из интеграции
+байт-в-байт; тест запускает **оба реальных валидатора**, положительный HTTP и
+отрицательные запросы. Запуск: `python3 -m unittest discover -s tests` из этого
+каталога. V1 не интерпретируется как v2, прежние controls не ослабляются.
+
+Порядок выкладки после S8:
+
+1. Взять `scripts/support-relay` из принятого SHA, сохранить SHA и digest дерева.
+   Сохранить предыдущий код и unit/drop-ins; env, spool и секреты не копировать
+   в артефакты и не менять.
+2. Если staging/prod используют один путь к коду, сначала дать staging отдельный
+   versioned каталог и instance drop-in `ExecStart`, чтобы проверка discard не
+   меняла код работающего prod. Перезапустить только свой staging relay.
+3. Проверить `/health` (`mode:discard`, `delivers:false`), HTTP synthetic v1/v2,
+   nested unknown/future/schema/hash negatives. Не отправлять тесты в delivery.
+4. Только после PASS переключить prod на то же принятое дерево, сохранив
+   резервную копию прежнего кода/instance settings. Перезапустить только prod
+   relay; проверить actual SHA/digests и `/health` (`mode:deliver`). HA, Caddy,
+   demo/dev seeds и retention не трогать. Протокол и backup path — в issue.
+5. После этого будущему HACS-выпуску разрешён package2. При невозможности
+   выкладки задача не считается готовой к выпуску.
+
+Откат: вернуть сохранённый prod code/unit и перезапустить только свой relay,
+одновременно запретив выпуск/отправку package2. Уже подготовленный v2 нельзя
+подменять v1 при submit; старые отчёты/данные не переписывать и не удалять.
+
 ## Почему без зависимостей
 
 Сервис написан на стандартной библиотеке Python 3.12. Причина не в аскезе: это
