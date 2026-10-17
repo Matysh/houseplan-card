@@ -1,11 +1,13 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 36, issue: 22. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 38, issue: 23. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | #951 | [CODE-REVIEW-951-r1.md](CODE-REVIEW-951-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #950 | [CODE-REVIEW-950-r1.md](CODE-REVIEW-950-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #949 | [CODE-REVIEW-949-r1.md](CODE-REVIEW-949-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #949 | [CODE-REVIEW-949-r2.md](CODE-REVIEW-949-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #942 | [SPEC-REVIEW-942-r1.md](SPEC-REVIEW-942-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | несуществующее поле «size visibility» у сводной панели | `docs/specs/505-summary-panel-design-parity.md` `AGENTS.md` `src/summary-panel-editor-style.ts` |
 | #942 | [SPEC-REVIEW-942-r2.md](SPEC-REVIEW-942-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #942 | [CODE-REVIEW-942-r1.md](CODE-REVIEW-942-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
