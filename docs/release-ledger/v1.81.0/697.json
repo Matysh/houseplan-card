@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 697,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "The delivery in this release cycle only accepts generated documentation screenshots and their source fingerprint on dev for v1.82.0-beta.1. It records already reviewed product changes without introducing runtime behavior, so it is excluded from the user-facing stable changelog and release milestone."
+}
