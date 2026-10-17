@@ -30,10 +30,12 @@ from __future__ import annotations
 
 import copy
 import math
-from collections.abc import Iterator
 from typing import Any
 
 import voluptuous as vol
+
+from .led_strip_inventory import iter_led_strips as _strips
+from .led_strip_inventory import led_strip_counts as led_strip_counts
 
 MAX_LED_STRIPS = 50
 MAX_LED_POINTS = 50
@@ -151,15 +153,6 @@ def _live_markers(config: dict[str, Any]) -> dict[str, dict[str, Any]]:
         if isinstance(marker_id, str) and marker_id and marker_id not in live:
             live[marker_id] = marker
     return live
-
-
-def _strips(config: dict[str, Any]) -> Iterator[tuple[dict[str, Any], dict[str, Any]]]:
-    for space in config.get("spaces") or []:
-        if not isinstance(space, dict):
-            continue
-        for strip in space.get(LED_KEY) or []:
-            if isinstance(strip, dict):
-                yield space, strip
 
 
 def preserve_led_strips(config: dict[str, Any], previous: dict[str, Any] | None) -> int:
@@ -301,15 +294,3 @@ def plan_only_strips(space: dict[str, Any]) -> list[dict[str, Any]] | None:
             "active": True,
         })
     return projected
-
-
-def led_strip_counts(config: dict[str, Any]) -> dict[str, int]:
-    """Support-package counters: no coordinates, names or HA identifiers."""
-    total = unbound = hidden = 0
-    for _space, strip in _strips(config):
-        total += 1
-        if not isinstance(strip.get("marker"), str):
-            unbound += 1
-        elif strip.get("active") is False:
-            hidden += 1
-    return {"led_strips": total, "led_strips_unbound": unbound, "led_strips_hidden": hidden}

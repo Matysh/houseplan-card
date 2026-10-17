@@ -1176,8 +1176,10 @@ The stdlib schema source is
 `custom_components/houseplan/support_wire_schema.py`; its relay copy must be
 byte-identical. Update both in one task and run the actual validator/HTTP tests,
 not just a source comparison. The browser v2 smoke bridges synthetic form input
-to the actual Python builder and therefore needs the pinned HA venv on PATH
-(use WSL, not native Windows). The four responsive screenshots are ignored
+to the actual pure Python builder in an isolated package namespace; it needs
+only stdlib Python, not HA or pip on browser CI. LED inventory/counts were
+relocated unchanged to a shared pure module to avoid importing validation
+dependencies just to count strips. The four responsive screenshots are ignored
 artifacts and require visual inspection. No private support report is a fixture.
 
 Relay deployment is a separate post-S8 step: staging in discard mode first,

@@ -23,7 +23,7 @@ from .const import (
     MAX_SUPPORT_ATTACHMENT_BYTES,
     PLAN_MODEL_VERSION,
 )
-from .led_strips import led_strip_counts
+from .led_strip_inventory import led_strip_counts
 
 PACKAGE_FORMAT = "houseplan-support-package"
 PACKAGE_VERSION = 1

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { launch, requirePinnedBrowser, checkAll, finish } from './serve.mjs';
 
@@ -90,6 +91,14 @@ for (const width of [1100, 360]) {
     await page.screenshot({ path: fileURLToPath(new URL(`${width}-${theme}.png`, output)) });
   }
 }
+const expected = await page.evaluate(() => document.querySelector('houseplan-card')._supportDialog.preview);
+const [download] = await Promise.all([page.waitForEvent('download'), page.evaluate(() => {
+  const root = document.querySelector('houseplan-card').renderRoot;
+  [...root.querySelectorAll('.supportpreview button')].find(button => button.textContent.trim() === 'Download JSON').click();
+})]);
+const bytes = readFileSync(await download.path());
+results.v2DownloadExact = bytes.toString('utf8') === expected.text
+  && bytes.length === expected.size && createHash('sha256').update(bytes).digest('hex') === expected.sha256;
 Object.assign(results, await page.evaluate(async () => {
   const card = document.querySelector('houseplan-card'), root = card.renderRoot;
   const area = root.querySelector('#support-message');

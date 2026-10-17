@@ -407,6 +407,7 @@ export const CHECKS = {
     entries: ['tests_backend/**/*.py', 'scripts/support-relay/tests/**/*.py', 'scripts/dump-config-schema.py'],
     // manifest.json несёт версию: кандидат релиза обязан прогнать backend заново
     roots: ['custom_components/**/*.py', 'custom_components/houseplan/manifest.json', 'scripts/support-relay/**/*.py',
+      'scripts/support-relay/tests/fixtures/*.json',
       ...BACKEND_DYNAMIC_INPUTS,
       'tests_backend/**', 'pyproject.toml', 'pytest.ini', 'scripts/backend-coverage-baseline.txt',
       'scripts/config-schema.json', ...REUSE_PROTOCOL, ...WORKFLOW],
