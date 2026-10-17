@@ -1,0 +1,21 @@
+/* All proposed-dialog controls share the same interaction feedback. */
+#hp-settings-review :is(.hp-after,.hp-color-popup) :is(button,select,a[href],summary):not(:disabled):not([aria-disabled='true']),
+#hp-settings-review :is(.case-label select,.review-details summary,[data-reopen='after']) { cursor:pointer!important; transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,box-shadow 160ms ease; }
+#hp-settings-review :is(.hp-after,.hp-color-popup) :is(button,select):not(:disabled):not([aria-disabled='true']):is(:hover,:focus-visible),
+#hp-settings-review :is(.case-label select,[data-reopen='after']):is(:hover,:focus-visible) { background:var(--hp-soft); border-color:var(--hp-accent); box-shadow:0 0 0 1px color-mix(in srgb,var(--hp-accent) 24%,transparent); }
+#hp-settings-review .hp-after .hp-footer button.primary:not(:disabled):is(:hover,:focus-visible) { background:light-dark(#00839c,#89dcee); color:light-dark(#fff,#0c222a); border-color:transparent; box-shadow:0 0 0 2px color-mix(in srgb,var(--hp-accent) 22%,transparent); }
+#hp-settings-review .hp-after button.danger:not(:disabled):is(:hover,:focus-visible) { color:var(--hp-danger); border-color:var(--hp-danger); background:color-mix(in srgb,var(--hp-danger) 9%,var(--hp-paper)); }
+#hp-settings-review :is(.hp-after,.hp-color-popup) :is(a[href],summary):is(:hover,:focus-visible),
+#hp-settings-review .review-details summary:is(:hover,:focus-visible) { color:var(--hp-accent); background:var(--hp-soft); text-decoration:underline; text-underline-offset:3px; }
+#hp-settings-review :is(.hp-after,.hp-color-popup) input:is([type='checkbox'],[type='range'],[type='color']):not(:disabled) { cursor:pointer!important; transition:box-shadow 160ms ease; }
+#hp-settings-review :is(.hp-after,.hp-color-popup) input:is([type='checkbox'],[type='range'],[type='color']):not(:disabled):is(:hover,:focus-visible) { box-shadow:0 0 0 3px color-mix(in srgb,var(--hp-accent) 18%,transparent); }
+#hp-settings-review :is(.hp-after,.hp-color-popup) :is(input[type='text'],input[type='number'],textarea) { cursor:text; }
+#hp-settings-review :is(.hp-after,.hp-color-popup) :is(button,select,input,textarea):is(:disabled,[aria-disabled='true']) { cursor:not-allowed!important; box-shadow:none; }
+#hp-settings-review .hp-after select:disabled { color:var(--hp-muted); -webkit-text-fill-color:var(--hp-muted); background:var(--hp-canvas); }
+#hp-settings-review .hp-after .hp-select-wrap:has(select:not(:disabled):is(:hover,:focus-visible)) > svg { color:var(--hp-accent); }
+#hp-settings-review .hp-after button > :is(svg,span) { cursor:inherit; }
+#hp-settings-review .hp-after .hp-color-choice:disabled:is(:hover,:focus-visible) { border-color:var(--hp-line); background:var(--hp-paper); color:var(--hp-text); }
+@media (prefers-reduced-motion:reduce) {
+ #hp-settings-review :is(.hp-after,.hp-color-popup) :is(button,select,input,a[href],summary),
+ #hp-settings-review :is(.case-label select,.review-details summary,[data-reopen='after']) { transition:none; }
+}

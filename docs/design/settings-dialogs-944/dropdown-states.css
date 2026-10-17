@@ -1,0 +1,41 @@
+/* Native customizable select: top-layer menu, native keyboard and dismissal. */
+@supports (appearance:base-select) {
+ #hp-settings-review :is(.hp-after,.case-label) select,
+ #hp-settings-review :is(.hp-after,.case-label) select::picker(select) { appearance:base-select; }
+ #hp-settings-review :is(.hp-after,.case-label) select { align-items:center; gap:12px; }
+ #hp-settings-review :is(.hp-after,.case-label) select:open { border-color:var(--hp-accent); background:var(--hp-soft); }
+ #hp-settings-review :is(.hp-after,.case-label) select::picker(select) {
+  color:var(--hp-text); background:var(--hp-paper); border:1px solid var(--hp-line); border-radius:10px;
+  padding:5px; margin-block:6px; box-sizing:border-box; width:anchor-size(self-inline);
+  max-width:calc(100vw - 24px); max-height:min(320px,60vh); overflow:auto; scrollbar-width:thin;
+  box-shadow:0 8px 24px light-dark(#23354326,#00000066),0 2px 6px light-dark(#23354312,#00000033);
+  opacity:0; transform:translateY(-5px) scale(.985); transform-origin:top center;
+  transition:opacity 160ms ease,transform 160ms ease,display 160ms allow-discrete,overlay 160ms allow-discrete;
+ }
+ #hp-settings-review :is(.hp-after,.case-label) select:open::picker(select) { opacity:1; transform:translateY(0) scale(1); }
+ @starting-style {
+  #hp-settings-review :is(.hp-after,.case-label) select:open::picker(select) { opacity:0; transform:translateY(-5px) scale(.985); }
+ }
+ #hp-settings-review :is(.hp-after,.case-label) select option {
+  display:flex; align-items:center; gap:10px; min-height:39px; padding:10px 12px; border:0; border-radius:6px;
+  background:var(--hp-paper); color:var(--hp-text); font:inherit; white-space:normal; overflow-wrap:anywhere;
+  cursor:pointer!important; transition:background-color 120ms ease,color 120ms ease;
+ }
+ #hp-settings-review :is(.hp-after,.case-label) select option + option { margin-top:2px; }
+ #hp-settings-review :is(.hp-after,.case-label) select option:checked { background:var(--hp-soft); color:var(--hp-accent); font-weight:600; }
+ #hp-settings-review :is(.hp-after,.case-label) select option:not(:disabled):is(:hover,:focus-visible) { background:color-mix(in srgb,var(--hp-accent) 16%,var(--hp-paper)); color:var(--hp-text); }
+ #hp-settings-review :is(.hp-after,.case-label) select option::checkmark { order:1; margin-left:auto; color:var(--hp-accent); }
+ #hp-settings-review :is(.hp-after,.case-label) select option:disabled { cursor:not-allowed!important; color:var(--hp-muted); opacity:.55; }
+ #hp-settings-review :is(.hp-after,.case-label) select::picker-icon { color:var(--hp-muted); transition:rotate 160ms ease; }
+ #hp-settings-review :is(.hp-after,.case-label) select:open::picker-icon { rotate:180deg; color:var(--hp-accent); }
+ #hp-settings-review .hp-after .hp-select-wrap select::picker-icon { display:none; }
+ #hp-settings-review .hp-after .hp-select-wrap > svg { transition:transform 160ms ease,color 160ms ease; }
+ #hp-settings-review .hp-after .hp-select-wrap:has(select:open) > svg { transform:translateY(-50%) rotate(180deg); color:var(--hp-accent); }
+ @media(pointer:coarse) { #hp-settings-review :is(.hp-after,.case-label) select option { min-height:44px; } }
+ @media(prefers-reduced-motion:reduce) {
+  #hp-settings-review :is(.hp-after,.case-label) select::picker(select),
+  #hp-settings-review :is(.hp-after,.case-label) select::picker-icon,
+  #hp-settings-review :is(.hp-after,.case-label) select option,
+  #hp-settings-review .hp-after .hp-select-wrap > svg { transition:none; transform:none; }
+ }
+}

@@ -1,0 +1,615 @@
+<style>
+#hp-general-review-v8 { --hp-paper:light-dark(#fff,#17222e); --hp-canvas:light-dark(#eceeef,#0f1822); --hp-text:light-dark(#223039,#e7eef4); --hp-muted:light-dark(#64747e,#a6b6c3); --hp-line:light-dark(#dce2e6,#354755); --hp-accent:light-dark(#008aa5,#67cfe8); --hp-soft:light-dark(#e6f5fa,#173d4b); --hp-warn:light-dark(#8a5c10,#f3c568); --hp-warn-bg:light-dark(#fff5df,#392f1c); --hp-danger:light-dark(#ab3541,#ff9aa4); color:var(--hp-text); font:14px/1.45 Roboto,Arial,sans-serif; }
+#hp-general-review-v8 * { box-sizing:border-box; }
+#hp-general-review-v8 { position:relative; }
+#hp-general-review-v8 button,#hp-general-review-v8 select,#hp-general-review-v8 input,#hp-general-review-v8 textarea { font:inherit; }
+#hp-general-review-v8 button,#hp-general-review-v8 select { color:var(--hp-text); }
+#hp-general-review-v8 button { min-height:38px; padding:8px 12px; border:1px solid var(--hp-line); border-radius:7px; background:var(--hp-paper); }
+#hp-general-review-v8 button:disabled { opacity:.48; }
+#hp-general-review-v8 .review-tools { display:flex; align-items:flex-end; flex-wrap:wrap; gap:12px; padding:4px 0 12px; }
+#hp-general-review-v8 .case-label { flex:1 1 260px; min-width:0; }
+#hp-general-review-v8 .case-label > span { display:block; font-size:12px; color:var(--hp-muted); margin-bottom:5px; }
+#hp-general-review-v8 .case-label select { width:100%; padding:10px 12px; min-height:43px; background:var(--hp-paper); border:1px solid var(--hp-line); border-radius:8px; }
+#hp-general-review-v8 .review-method { font-size:12px; color:var(--hp-muted); margin:0 0 12px; }
+#hp-general-review-v8 .review-status { min-height:18px; color:var(--hp-muted); font-size:12px; }
+#hp-general-review-v8 .compare-stage { padding:18px 8px 12px; min-height:900px; }
+#hp-general-review-v8 .compare-label { margin:0 auto 10px; max-width:610px; display:flex; align-items:center; justify-content:space-between; gap:14px; font-size:12px; color:var(--hp-muted); }
+#hp-general-review-v8 .compare-label strong { font-size:14px; color:var(--hp-text); font-weight:500; }
+#hp-general-review-v8 .hp-dialog { --hp-row-gap:18px; width:100%; max-width:610px; margin:auto; border:1px solid var(--hp-line); border-radius:13px; background:var(--hp-paper); box-shadow:0 8px 25px light-dark(#293a4418,#00000035); overflow:hidden; }
+#hp-general-review-v8 .hp-before { max-width:560px; }
+#hp-general-review-v8 .hp-header { display:flex; align-items:center; gap:11px; padding:18px 18px 15px; min-height:78px; background:var(--hp-paper); border-bottom:1px solid var(--hp-line); }
+#hp-general-review-v8 .hp-header h2 { font-size:18px; line-height:1.3; font-weight:600; margin:0; }
+#hp-general-review-v8 .hp-header .heading-copy { flex:1; min-width:0; }
+#hp-general-review-v8 .hp-header .context { font-size:12px; color:var(--hp-muted); margin-top:5px; overflow-wrap:anywhere; }
+#hp-general-review-v8 .hp-header .icon { flex:0 0 20px; color:var(--hp-accent); }
+#hp-general-review-v8 .hp-close { border:0; padding:5px; min-height:30px; display:flex; background:transparent; }
+#hp-general-review-v8 .hp-after .hp-close { cursor:pointer!important; align-items:center; justify-content:center; transition:background-color 160ms ease,color 160ms ease; }
+#hp-general-review-v8 .hp-after .hp-close svg { transition:transform 160ms ease; }
+#hp-general-review-v8 .hp-after .hp-close:hover,#hp-general-review-v8 .hp-after .hp-close:focus-visible { background:var(--hp-soft); color:var(--hp-accent); }
+#hp-general-review-v8 .hp-after .hp-close:hover svg,#hp-general-review-v8 .hp-after .hp-close:focus-visible svg { transform:rotate(90deg) scale(1.12); }
+#hp-general-review-v8 .hp-after .hp-header > .icon { flex:0 0 40.48px; width:40.48px!important; height:40.48px!important; }
+#hp-general-review-v8 .hp-after [data-group-button] { cursor:pointer!important; transition:background-color 160ms ease,color 160ms ease; }
+#hp-general-review-v8 .hp-after [data-group-button]:hover,#hp-general-review-v8 .hp-after [data-group-button]:focus-visible { background:var(--hp-soft); color:var(--hp-accent); }
+#hp-general-review-v8 .hp-after [data-group-button][aria-pressed='true']:hover { background:color-mix(in srgb,var(--hp-accent) 16%,var(--hp-paper)); }
+#hp-general-review-v8 .hp-select-wrap { position:relative; width:100%; }
+#hp-general-review-v8 .hp-select-wrap select { appearance:none; padding-right:42px; }
+#hp-general-review-v8 .hp-select-wrap > svg { position:absolute; top:50%; right:13px; width:16px; height:16px; transform:translateY(-50%); pointer-events:none; color:var(--hp-muted); }
+#hp-general-review-v8 .hp-mobile-nav .hp-select-wrap { display:block; }
+#hp-general-review-v8 .hp-after .hp-action.has-icon { display:inline-flex; align-items:center; justify-content:center; gap:7px; }
+#hp-general-review-v8 .hp-action.has-icon svg { width:16px; height:16px; flex-shrink:0; }
+@media(prefers-reduced-motion:reduce) { #hp-general-review-v8 .hp-after .hp-close,#hp-general-review-v8 .hp-after .hp-close svg,#hp-general-review-v8 .hp-after [data-group-button] { transition:none; } #hp-general-review-v8 .hp-after .hp-close:hover svg,#hp-general-review-v8 .hp-after .hp-close:focus-visible svg { transform:none; } }
+#hp-general-review-v8 .hp-scope-tag { background:var(--hp-canvas); border-radius:6px; padding:5px 8px; color:var(--hp-muted); font-size:11px; max-width:130px; }
+#hp-general-review-v8 .hp-scroll { height:605px; overflow:auto; overscroll-behavior:contain; scrollbar-width:thin; padding:16px; background:var(--hp-canvas); }
+#hp-general-review-v8 .hp-group { background:var(--hp-paper); padding:17px; border-radius:10px; margin-bottom:14px; }
+#hp-general-review-v8 .hp-group:last-child { margin-bottom:0; }
+#hp-general-review-v8 .hp-group h3 { font-size:16px; font-weight:600; margin:0 0 18px; }
+#hp-general-review-v8 .hp-group h4 { font-size:14px; font-weight:600; margin:19px 0 13px; }
+#hp-general-review-v8 .hp-field { margin-bottom:var(--hp-row-gap); min-width:0; }
+#hp-general-review-v8 .hp-field:last-child { margin-bottom:0; }
+#hp-general-review-v8 .field-label { display:flex; align-items:center; gap:5px; font-size:12px; font-weight:600; margin-bottom:7px; overflow-wrap:anywhere; }
+#hp-general-review-v8 .hp-after .field-label { font-size:13px; }
+#hp-general-review-v8 .field-help-toggle { padding:0; min-height:20px; width:22px; flex:0 0 22px; border:0; color:var(--hp-muted); background:transparent; font-size:13px; }
+#hp-general-review-v8 .hp-input,#hp-general-review-v8 .hp-select,#hp-general-review-v8 textarea { width:100%; min-height:42px; padding:10px 11px; border:1px solid var(--hp-line); border-radius:7px; background:var(--hp-paper); color:var(--hp-text); opacity:1; resize:vertical; }
+#hp-general-review-v8 select:disabled { opacity:1; -webkit-text-fill-color:var(--hp-text); }
+#hp-general-review-v8 textarea { min-height:80px; }
+#hp-general-review-v8 input[readonly] { color:var(--hp-text); }
+#hp-general-review-v8 .is-unavailable .hp-input,#hp-general-review-v8 .is-unavailable .hp-select { color:var(--hp-muted); background:var(--hp-canvas); }
+#hp-general-review-v8 .field-unit { display:flex; align-items:center; gap:9px; }
+#hp-general-review-v8 .field-unit > span { color:var(--hp-muted); font-size:12px; flex-shrink:0; }
+#hp-general-review-v8 .hp-toggle-line { display:flex; align-items:center; gap:16px; justify-content:space-between; min-height:36px; }
+#hp-general-review-v8 .hp-toggle-line .field-label { margin:0; font-size:13px; }
+#hp-general-review-v8 .hp-switch { appearance:none; width:35px; height:21px; min-width:35px; border:0; border-radius:15px; background:light-dark(#bdc6ca,#566773); position:relative; margin:0; opacity:1; }
+#hp-general-review-v8 .hp-switch:checked { background:light-dark(#00a5c5,#4ebbd5); }
+#hp-general-review-v8 .hp-switch:before { content:''; width:15px; height:15px; border-radius:50%; position:absolute; left:3px; top:3px; background:light-dark(#fff,#14232b); }
+#hp-general-review-v8 .hp-switch:checked:before { left:17px; }
+#hp-general-review-v8 .hp-after .hp-switch,#hp-general-review-v8 .hp-after .hp-switch:checked { width:44px; height:44px; min-width:44px; flex:0 0 44px; background:transparent; border-radius:0; cursor:pointer; }
+#hp-general-review-v8 .hp-after .hp-switch:before { width:36px; height:22px; left:4px; top:11px; border-radius:11px; background:light-dark(#bdc6ca,#566773); }
+#hp-general-review-v8 .hp-after .hp-switch:checked:before { left:4px; background:light-dark(#00a5c5,#4ebbd5); }
+#hp-general-review-v8 .hp-after .hp-switch:after { content:''; position:absolute; width:16px; height:16px; top:14px; left:7px; border-radius:50%; background:light-dark(#fff,#14232b); transition:left .15s; }
+#hp-general-review-v8 .hp-after .hp-switch:checked:after { left:21px; }
+@media(prefers-reduced-motion:reduce) { #hp-general-review-v8 .hp-after .hp-switch:after { transition:none; } }
+#hp-general-review-v8 .hp-color-row { display:flex; align-items:center; gap:10px; }
+#hp-general-review-v8 .hp-color { width:40px; height:38px; padding:3px; border:1px solid var(--hp-line); border-radius:6px; background:var(--hp-paper); opacity:1; }
+#hp-general-review-v8 .hp-color-row code { font:13px/1.4 monospace; color:var(--hp-text); }
+#hp-general-review-v8 .hp-palette { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-bottom:17px; }
+#hp-general-review-v8 .hp-palette-tile { border:1px solid var(--hp-line); border-radius:8px; padding:10px; min-width:0; }
+#hp-general-review-v8 .hp-palette-tile .hp-field { margin:0 0 9px; padding:0; border:0; }
+#hp-general-review-v8 .hp-palette-tile .hp-field:last-child { margin:0; }
+#hp-general-review-v8 .hp-palette-tile .hp-color-row { flex-wrap:wrap; gap:5px; }
+#hp-general-review-v8 .hp-palette-tile .field-label { min-height:30px; font-size:11px; }
+#hp-general-review-v8 .hp-palette-tile .hp-input { padding:6px; min-height:33px; }
+#hp-general-review-v8 .hp-palette-tile .hp-color { width:100%; }
+#hp-general-review-v8 .hp-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-bottom:18px; }
+#hp-general-review-v8 .hp-metrics .hp-field { padding:8px; margin:0; border:1px solid var(--hp-line); border-radius:7px; }
+#hp-general-review-v8 .hp-metrics .field-label { font-size:12px; }
+#hp-general-review-v8 .hp-pair { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:12px; margin-bottom:16px; }
+#hp-general-review-v8 .hp-pair .hp-field { margin-bottom:0; }
+#hp-general-review-v8 .hp-plan { width:210px; max-width:100%; height:125px; display:grid; grid-template-columns:1.3fr 1fr; grid-template-rows:1fr .7fr; gap:4px; padding:7px; border:5px solid light-dark(#6e7d86,#8294a1); background:light-dark(#ece8dd,#273b48); color:light-dark(#4f626b,#c9d7df); font-size:11px; }
+#hp-general-review-v8 .hp-plan > span { display:grid; place-content:center; border:2px solid light-dark(#8b969b,#8c9aa4); background:light-dark(#d7e4e5,#355363); }
+#hp-general-review-v8 .room-preview { display:inline-flex; flex-direction:column; align-items:center; gap:4px; border-radius:8px; padding:11px 16px; color:var(--hp-accent); background:var(--hp-soft); }
+#hp-general-review-v8 .room-preview strong { font-size:16px; }
+#hp-general-review-v8 .room-preview span { font-size:12px; }
+#hp-general-review-v8 .marker-preview { display:flex; flex-wrap:wrap; align-items:center; gap:16px; padding:16px; border-radius:9px; background:var(--hp-canvas); }
+#hp-general-review-v8 .marker-preview .marker-symbol { position:relative; display:flex; align-items:center; justify-content:center; flex:0 0 60px; height:60px; border-radius:50%; background:var(--hp-soft); color:var(--hp-accent); }
+#hp-general-review-v8 .marker-preview .marker-symbol.active { background:light-dark(#ffe6a6,#73551b); color:light-dark(#785500,#ffe29a); }
+#hp-general-review-v8 .marker-preview .marker-symbol > svg { width:28px; height:28px; }
+#hp-general-review-v8 .marker-preview .marker-badge { position:absolute; top:-9px; right:-8px; font-size:11px; padding:2px 5px; background:var(--hp-paper); border:1px solid var(--hp-line); border-radius:5px; color:var(--hp-text); }
+#hp-general-review-v8 .marker-preview .marker-badge[data-position='top'] { left:50%; right:auto; transform:translateX(-50%); }
+#hp-general-review-v8 .marker-preview .marker-badge[data-position='right'] { top:50%; right:-9px; transform:translateY(-50%); }
+#hp-general-review-v8 .marker-preview .preview-text { flex:1 1 170px; font-size:12px; color:var(--hp-muted); white-space:pre-line; overflow-wrap:anywhere; }
+#hp-general-review-v8 .hp-heading-field { margin:12px 0; padding:0; border:0; }
+#hp-general-review-v8 .hp-heading-field h4 { margin:0; }
+#hp-general-review-v8 .hp-diagnostics { margin-top:20px; padding-top:16px; border-top:1px solid var(--hp-line); }
+#hp-general-review-v8 .hp-diagnostics summary { color:var(--hp-accent); font-size:14px; margin-bottom:16px; }
+#hp-general-review-v8 .hp-chip { display:inline-block; padding:6px 9px; background:var(--hp-soft); border-radius:6px; font-size:12px; overflow-wrap:anywhere; }
+#hp-general-review-v8 .hp-scene { width:100%; max-width:420px; margin:auto; aspect-ratio:1.25; min-height:190px; position:relative; background:var(--hp-canvas); border-radius:9px; overflow:hidden; }
+#hp-general-review-v8 .hp-scene > svg { width:100%; height:100%; display:block; }
+#hp-general-review-v8 .hp-scene .scene-room { fill:var(--hp-soft); stroke:var(--hp-muted); stroke-width:7; }
+#hp-general-review-v8 .hp-scene .scene-overlay { fill:light-dark(#33aabb14,#67cfe815); stroke:var(--hp-accent); stroke-width:6; stroke-dasharray:15 8; }
+#hp-general-review-v8 .hp-scene .scene-handle { fill:var(--hp-paper); stroke:var(--hp-accent); stroke-width:5; }
+#hp-general-review-v8 .hp-scene .scene-label { position:absolute; transform:translate(-50%,-50%); color:var(--hp-muted); font-size:11px; background:var(--hp-paper); padding:1px 4px; border-radius:3px; white-space:nowrap; }
+#hp-general-review-v8 .hp-scene .scene-point { position:absolute; transform:translate(-50%,-50%); display:grid; place-content:center; min-width:23px; height:23px; border-radius:50%; color:light-dark(#fff,#11252e); background:var(--hp-accent); font-size:12px; font-weight:600; }
+#hp-general-review-v8 .hp-scene .scene-ref { background:var(--hp-paper); color:var(--hp-accent); border:1px solid var(--hp-accent); }
+#hp-general-review-v8 .hp-scene .scene-caption { position:absolute; bottom:5px; left:5px; font-size:11px; padding:2px 5px; color:var(--hp-muted); background:var(--hp-paper); }
+#hp-general-review-v8 .footer-extra { display:flex; flex-wrap:wrap; gap:6px; margin-right:auto; }
+#hp-general-review-v8 .footer-extra .hp-field { margin:0; }
+#hp-general-review-v8 .hp-range-row { display:flex; align-items:center; gap:12px; }
+#hp-general-review-v8 .hp-range-row input { min-width:0; width:100%; accent-color:var(--hp-accent); opacity:1; }
+#hp-general-review-v8 .hp-range-row output { flex-shrink:0; font-size:13px; }
+#hp-general-review-v8 .field-note { font-size:12px; color:var(--hp-muted); margin-top:7px; overflow-wrap:anywhere; }
+#hp-general-review-v8 .field-note.warning { color:var(--hp-warn); }
+#hp-general-review-v8 .field-info { padding:10px 12px; background:var(--hp-canvas); border-radius:7px; font-size:13px; white-space:pre-wrap; overflow-wrap:anywhere; }
+#hp-general-review-v8 .hp-source { margin-top:8px; font-size:12px; color:var(--hp-muted); overflow-wrap:anywhere; }
+#hp-general-review-v8 .hp-source button { font-size:12px; min-height:25px; padding:2px 0; background:transparent; border:0; color:var(--hp-accent); text-align:left; }
+#hp-general-review-v8 .hp-effective { margin-top:7px; padding:8px 10px; border-left:3px solid var(--hp-accent); background:var(--hp-soft); font-size:12px; overflow-wrap:anywhere; }
+#hp-general-review-v8 .boundary { display:inline-block; border-radius:5px; background:var(--hp-warn-bg); color:var(--hp-warn); padding:3px 6px; font-size:11px; margin:0 0 7px; }
+#hp-general-review-v8 .hp-action { text-align:left; max-width:100%; white-space:normal; }
+#hp-general-review-v8 .hp-action.danger { color:var(--hp-danger); }
+#hp-general-review-v8 .hp-footer { min-height:73px; display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; align-items:center; padding:14px 16px; border-top:1px solid var(--hp-line); background:var(--hp-paper); }
+#hp-general-review-v8 .hp-footer .footer-status { margin-right:auto; font-size:11px; color:var(--hp-muted); flex:1 1 120px; }
+#hp-general-review-v8 .hp-footer .primary { color:light-dark(#fff,#0c222a); background:light-dark(#009bb7,#67cfe8); border-color:transparent; }
+#hp-general-review-v8 .hp-footer .quiet { border:0; background:transparent; }
+#hp-general-review-v8 .hp-after-layout { display:grid; grid-template-columns:155px minmax(0,1fr); }
+#hp-general-review-v8 .hp-navigation { padding:13px 8px; border-right:1px solid var(--hp-line); background:var(--hp-paper); display:flex; flex-direction:column; gap:4px; }
+#hp-general-review-v8 .hp-navigation button { border:0; border-radius:6px; text-align:left; font-size:12px; padding:9px 10px; line-height:1.35; }
+#hp-general-review-v8 .hp-navigation button[aria-pressed='true'] { color:var(--hp-accent); background:var(--hp-soft); font-weight:600; }
+#hp-general-review-v8 .hp-after .hp-scroll { padding:20px; background:var(--hp-paper); }
+#hp-general-review-v8 .hp-after .hp-group { padding:0; border-radius:0; }
+#hp-general-review-v8 .hp-after .hp-group h3 { margin:0 0 var(--hp-row-gap); padding-bottom:var(--hp-row-gap); border-bottom:1px solid var(--hp-line); }
+#hp-general-review-v8 .hp-palette-caption { font-size:12px; color:var(--hp-muted); margin:0 0 var(--hp-row-gap); }
+#hp-general-review-v8 .hp-after .group-subtitle { color:var(--hp-muted); font-size:12px; margin-bottom:20px; }
+#hp-general-review-v8 .hp-after .hp-field { padding-bottom:var(--hp-row-gap); border-bottom:1px solid var(--hp-line); margin-bottom:var(--hp-row-gap); }
+#hp-general-review-v8 .hp-after .hp-field:last-child { border-bottom:0; padding-bottom:0; }
+#hp-general-review-v8 .hp-after .hp-field.compact { padding-bottom:10px; margin-bottom:10px; }
+#hp-general-review-v8 .hp-mobile-nav { display:none; }
+#hp-general-review-v8 .hp-tabs { display:flex; gap:5px; padding:10px 14px; border-bottom:1px solid var(--hp-line); }
+#hp-general-review-v8 .hp-tabs button { border:0; font-size:13px; }
+#hp-general-review-v8 .hp-tabs [aria-pressed='true'] { background:var(--hp-soft); color:var(--hp-accent); }
+#hp-general-review-v8 .hp-after.is-tabs .hp-after-layout { display:block; }
+#hp-general-review-v8 .hp-after.is-tabs .hp-navigation { display:none; }
+#hp-general-review-v8 .hp-after.is-tabs .hp-scroll { height:552px; }
+#hp-general-review-v8 .hp-after.is-single .hp-after-layout { display:block; }
+#hp-general-review-v8 .hp-after.is-single .hp-navigation,#hp-general-review-v8 .hp-after.is-single .hp-tabs,#hp-general-review-v8 .hp-after.is-single .hp-mobile-nav { display:none; }
+#hp-general-review-v8 .file-thumb { background:var(--hp-canvas); border:1px solid var(--hp-line); border-radius:7px; padding:12px; color:var(--hp-muted); display:flex; gap:10px; align-items:center; overflow-wrap:anywhere; }
+#hp-general-review-v8 .file-thumb i,#hp-general-review-v8 .file-thumb svg { width:26px; height:26px; flex-shrink:0; }
+#hp-general-review-v8 .review-details { margin-top:14px; font-size:12px; color:var(--hp-muted); }
+#hp-general-review-v8 .review-details summary { color:var(--hp-text); }
+#hp-general-review-v8 .review-details .review-summary { margin:10px 0; }
+#hp-general-review-v8 .review-details a { color:var(--hp-accent); }
+#hp-general-review-v8 .review-details ul { padding-left:18px; }
+#hp-general-review-v8 .closed-message { min-height:756px; display:grid; place-content:center; text-align:center; gap:15px; }
+#hp-general-review-v8 [hidden] { display:none!important; }
+#hp-general-review-v8 .review-tools { display:none; }
+#hp-general-review-v8 .field-label { display:block; }
+#hp-general-review-v8 .hp-label-end { white-space:nowrap; }
+#hp-general-review-v8 .field-help-toggle { display:inline-flex; align-items:center; justify-content:center; vertical-align:middle; width:21px; height:21px; min-height:21px; margin-left:6px; border:1px solid var(--hp-muted); border-radius:50%; font-size:14px; font-weight:600; line-height:1; padding:0; }
+#hp-general-review-v8 .field-help-toggle { cursor:pointer!important; }
+#hp-general-review-v8 .field-help-toggle:hover,#hp-general-review-v8 .field-help-toggle:focus-visible { font-weight:800; color:var(--hp-accent); border-color:var(--hp-accent); background:var(--hp-soft); }
+#hp-general-review-v8 .hp-help-popup { position:absolute; z-index:100; width:320px; padding:11px 13px; border:1px solid var(--hp-line); border-radius:8px; background:var(--hp-paper); color:var(--hp-text); font-size:13px; line-height:1.5; font-weight:400; box-shadow:0 5px 20px light-dark(#293a4428,#00000070); pointer-events:none; }
+#hp-general-review-v8 .hp-color-choice { display:flex; align-items:center; flex-wrap:wrap; gap:7px; width:100%; text-align:left; cursor:pointer; }
+#hp-general-review-v8 .hp-color-choice:hover,#hp-general-review-v8 .hp-color-choice:focus-visible { border-color:var(--hp-accent); background:var(--hp-soft); }
+#hp-general-review-v8 .hp-color-swatch { flex:0 0 30px; width:30px; height:30px; border:1px solid var(--hp-line); border-radius:4px; position:relative; overflow:hidden; background:repeating-conic-gradient(var(--hp-line) 0% 25%,var(--hp-paper) 0% 50%) 50% / 10px 10px; }
+#hp-general-review-v8 .hp-color-swatch > span { position:absolute; inset:0; }
+#hp-general-review-v8 .hp-color-code { font-size:12px; overflow-wrap:anywhere; }
+#hp-general-review-v8 .hp-color-alpha { color:var(--hp-muted); font-size:12px; white-space:nowrap; }
+#hp-general-review-v8 .hp-after .hp-palette { grid-template-columns:repeat(3,minmax(0,1fr)); }
+#hp-general-review-v8 .hp-palette-tile .hp-color-choice { padding:7px; gap:5px; }
+#hp-general-review-v8 .hp-palette-tile .hp-color-choice .hp-color-swatch { flex-basis:100%; height:34px; width:100%; }
+#hp-general-review-v8 .hp-color-popup { position:absolute; z-index:90; width:300px; padding:16px; border:1px solid var(--hp-line); border-radius:10px; background:var(--hp-paper); color:var(--hp-text); box-shadow:0 8px 25px light-dark(#293a4430,#00000070); }
+#hp-general-review-v8 .hp-color-popup h4 { margin:0 0 12px; font-size:14px; }
+#hp-general-review-v8 .hp-color-popup label { display:block; margin:10px 0; font-size:12px; }
+#hp-general-review-v8 .hp-color-popup label > span:first-child { display:block; margin-bottom:6px; }
+#hp-general-review-v8 .hp-color-popup input[type='color'] { width:100%; height:82px; background:var(--hp-paper); border:1px solid var(--hp-line); border-radius:6px; padding:4px; cursor:pointer; }
+#hp-general-review-v8 .hp-color-popup input[type='range'] { min-width:0; width:100%; accent-color:var(--hp-accent); }
+#hp-general-review-v8 .hp-alpha-controls { display:grid; grid-template-columns:minmax(0,1fr) 68px auto; gap:8px; align-items:center; }
+#hp-general-review-v8 .hp-color-popup .hp-input { font-size:14px; }
+#hp-general-review-v8 .hp-color-popup .hp-color-ok { display:block; margin:14px 0 0 auto; cursor:pointer; color:var(--hp-accent); border-color:var(--hp-accent); }
+#hp-general-review-v8 .hp-color-popup .hp-color-ok:hover { background:var(--hp-soft); }
+#hp-general-review-v8 .hp-color-popup .hp-alpha-note { font-size:11px; color:var(--hp-muted); }
+#hp-general-review-v8 .field-unit > input { min-width:0; flex:1; width:0; }
+#hp-general-review-v8 .hp-after .hp-pair { padding-bottom:var(--hp-row-gap); margin-bottom:var(--hp-row-gap); border-bottom:1px solid var(--hp-line); }
+#hp-general-review-v8 .hp-after .hp-pair .hp-field { border:0; padding:0; margin:0; }
+#hp-general-review-v8 .hp-bg-inline { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:12px; }
+#hp-general-review-v8 .hp-bg-inline .hp-action { min-height:48px; }
+#hp-general-review-v8 .hp-after .hp-field.is-terminal { border-bottom:0; padding-bottom:0; margin-bottom:0; }
+#hp-general-review-v8 .hp-after .hp-bg-inline .hp-field { border:0; padding:0; margin:0; }
+#hp-general-review-v8 .hp-day-previews { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px 10px; margin-top:17px; }
+#hp-general-review-v8 .hp-day-example { min-width:0; margin:0; }
+#hp-general-review-v8 .hp-day-example figcaption { margin-top:7px; font-size:12px; font-weight:600; }
+#hp-general-review-v8 .hp-day-sample { height:100px; border-radius:7px; overflow:hidden; position:relative; }
+#hp-general-review-v8 .hp-day-sample > svg { position:absolute; inset:12px 10%; width:80%; height:76px; }
+#hp-general-review-v8 .hp-mini-floor { fill:light-dark(#ffffffb8,#d5dde1b8); stroke:light-dark(#64747e,#acb7c0); stroke-width:2; }
+#hp-general-review-v8 .hp-mini-wall { fill:none; stroke:light-dark(#64747e,#657680); stroke-width:2; }
+#hp-general-review-v8 .hp-background-rules { margin:13px 0 0; font-size:12px; color:var(--hp-muted); }
+#hp-general-review-v8 .hp-background-rules p { margin:8px 0; }
+#hp-general-review-v8 .hp-background-rules strong { color:var(--hp-text); font-weight:500; }
+#hp-general-review-v8 .hp-actions-row { display:flex; flex-wrap:wrap; gap:10px; padding:0 0 var(--hp-row-gap); margin-bottom:var(--hp-row-gap); border-bottom:1px solid var(--hp-line); }
+#hp-general-review-v8 .hp-after .hp-actions-row .hp-field { border:0; padding:0; margin:0; }
+#hp-general-review-v8 .hp-actions-row button { font-size:12px; padding:9px 10px; }
+#hp-general-review-v8 .hp-inline-status { display:flex; flex-wrap:wrap; gap:4px 9px; align-items:baseline; font-size:12px; color:var(--hp-muted); }
+#hp-general-review-v8 .hp-inline-status strong { color:var(--hp-text); font-size:14px; }
+#hp-general-review-v8 .hp-topology-status { display:flex; flex-direction:column; gap:5px; font-size:12px; color:var(--hp-muted); }
+#hp-general-review-v8 .hp-topology-status code { color:var(--hp-text); font-size:12px; overflow-wrap:anywhere; }
+#hp-general-review-v8 .hp-topic-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px 14px; padding:0 0 var(--hp-row-gap); margin-bottom:var(--hp-row-gap); border-bottom:1px solid var(--hp-line); }
+#hp-general-review-v8 .hp-topic-row:last-child { border-bottom:0; padding-bottom:0; margin-bottom:0; }
+#hp-general-review-v8 .hp-topic-copy { min-width:0; }
+#hp-general-review-v8 .hp-topic-note { grid-column:1 / -1; margin-top:0; }
+#hp-general-review-v8 .hp-after .hp-topic-row .is-scan { border:0; padding:0; margin:0; }
+#hp-general-review-v8 .hp-topic-row .hp-action { white-space:nowrap; font-size:12px; }
+#hp-general-review-v8 .hp-topology-block { font-size:12px; color:var(--hp-muted); }
+#hp-general-review-v8 .hp-topology-block h4 { color:var(--hp-text); margin:6px 0; }
+#hp-general-review-v8 .hp-after .hp-field.is-status { border:0; padding:0; margin-bottom:9px; }
+#hp-general-review-v8 .hp-after .hp-field.is-scan { padding-bottom:20px; }
+#hp-general-review-v8 .hp-converter { font-size:13px; color:var(--hp-muted); }
+#hp-general-review-v8 .hp-converter a { color:var(--hp-accent); text-decoration:underline; }
+#hp-general-review-v8 [data-section='g-after-data'] button:not(:disabled),#hp-general-review-v8 [data-section='g-after-data'] a { cursor:pointer!important; transition:background-color 150ms ease,border-color 150ms ease,color 150ms ease; }
+#hp-general-review-v8 [data-section='g-after-data'] button:not(:disabled):hover,#hp-general-review-v8 [data-section='g-after-data'] button:not(:disabled):focus-visible { background:var(--hp-soft); border-color:var(--hp-accent); color:var(--hp-accent); }
+#hp-general-review-v8 [data-section='g-after-data'] button:disabled { cursor:not-allowed; }
+#hp-general-review-v8 [data-section='g-after-data'] a:hover,#hp-general-review-v8 [data-section='g-after-data'] a:focus-visible { background:var(--hp-soft); text-decoration-thickness:2px; text-underline-offset:3px; }
+#hp-general-review-v8 .hp-compass-wrap { display:flex; flex-wrap:wrap; align-items:center; gap:18px; }
+#hp-general-review-v8 .hp-compass { width:148px; height:148px; flex:0 0 148px; position:relative; }
+#hp-general-review-v8 .hp-compass svg { width:100%; height:100%; display:block; touch-action:none; }
+#hp-general-review-v8 .hp-compass .ring { fill:var(--hp-paper); stroke:var(--hp-line); stroke-width:1.5; }
+#hp-general-review-v8 .hp-compass .tick { stroke:var(--hp-muted); stroke-width:1; }
+#hp-general-review-v8 .hp-compass .north-needle { fill:var(--hp-accent); stroke:none; }
+#hp-general-review-v8 .hp-compass .south-needle { fill:var(--hp-line); stroke:none; }
+#hp-general-review-v8 .hp-compass .center { fill:var(--hp-accent); }
+#hp-general-review-v8 .hp-compass-label { position:absolute; font-size:11px; color:var(--hp-muted); transform:translate(-50%,-50%); pointer-events:none; }
+#hp-general-review-v8 .hp-compass-input { flex:1 1 145px; min-width:0; }
+#hp-general-review-v8 .hp-compass-input .field-note { margin-top:10px; }
+#hp-general-review-v8 .hp-compass-input input[type='range'] { width:100%; accent-color:var(--hp-accent); margin-top:12px; }
+#hp-general-review-v8 .hp-rays-previews { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:12px; }
+#hp-general-review-v8 .hp-ray-example { margin:0; min-width:0; border:1px solid var(--hp-line); border-radius:7px; padding:8px; }
+#hp-general-review-v8 .hp-ray-example.is-selected { border:2px solid var(--hp-accent); padding:7px; }
+#hp-general-review-v8 .hp-ray-example figcaption { font-size:12px; color:var(--hp-muted); display:flex; flex-wrap:wrap; gap:5px; }
+#hp-general-review-v8 .hp-ray-example.is-selected figcaption { color:var(--hp-accent); }
+#hp-general-review-v8 .hp-ray-example svg { width:100%; height:100px; display:block; }
+#hp-general-review-v8 .ray-room { fill:var(--hp-soft); }
+#hp-general-review-v8 .ray-wall { fill:var(--hp-muted); }
+#hp-general-review-v8 .ray-light { fill:light-dark(#ffd45c66,#ffd45c44); }
+#hp-general-review-v8 .ray-window { stroke:var(--hp-accent); stroke-width:3; }
+#hp-general-review-v8 .ray-origin { fill:var(--hp-accent); }
+#hp-general-review-v8 .hp-ray-key { font-size:11px; color:var(--hp-muted); margin:7px 0 0; }
+@media(max-width:550px) {
+ #hp-general-review-v8 .compare-stage { padding:12px 0; min-height:945px; }
+ #hp-general-review-v8 .hp-header { padding:15px 13px; flex-wrap:wrap; }
+ #hp-general-review-v8 .hp-header h2 { font-size:17px; }
+ #hp-general-review-v8 .hp-scope-tag { margin-left:39px; max-width:none; }
+ #hp-general-review-v8 .hp-scroll { padding:12px; height:620px; }
+ #hp-general-review-v8 .hp-group { padding:14px; }
+ #hp-general-review-v8 .hp-after-layout { display:block; }
+ #hp-general-review-v8 .hp-navigation,#hp-general-review-v8 .hp-tabs { display:none; }
+ #hp-general-review-v8 .hp-mobile-nav { display:block; padding:10px 13px; border-bottom:1px solid var(--hp-line); }
+ #hp-general-review-v8 .hp-mobile-nav select { width:100%; padding:9px; border:1px solid var(--hp-line); border-radius:7px; background:var(--hp-paper); font-size:16px; }
+ #hp-general-review-v8 .hp-after .hp-scroll,#hp-general-review-v8 .hp-after.is-tabs .hp-scroll { height:565px; padding:17px 14px; }
+ #hp-general-review-v8 .hp-input,#hp-general-review-v8 .hp-select,#hp-general-review-v8 textarea { font-size:16px; }
+ #hp-general-review-v8 .compare-label { align-items:flex-start; }
+ #hp-general-review-v8 .compare-label span { max-width:62%; text-align:right; }
+ #hp-general-review-v8 .hp-footer { padding:12px; }
+ #hp-general-review-v8 .hp-footer .footer-status { flex-basis:100%; }
+ #hp-general-review-v8 .hp-palette,#hp-general-review-v8 .hp-after .hp-palette { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ #hp-general-review-v8 .hp-pair { grid-template-columns:1fr; }
+ #hp-general-review-v8 .hp-topic-row { grid-template-columns:minmax(0,1fr); }
+ #hp-general-review-v8 .hp-topic-row .is-scan { justify-self:end; }
+ #hp-general-review-v8 .hp-day-previews { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media(pointer:coarse) { #hp-general-review-v8 button,#hp-general-review-v8 select { min-height:44px; } }
+/* All proposed-dialog controls share the same interaction feedback. */
+#hp-general-review-v8 :is(.hp-after,.hp-color-popup) :is(button,select,a[href],summary):not(:disabled):not([aria-disabled='true']),
+#hp-general-review-v8 :is(.case-label select,.review-details summary,[data-reopen='after']) { cursor:pointer!important; transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,box-shadow 160ms ease; }
+#hp-general-review-v8 :is(.hp-after,.hp-color-popup) :is(button,select):not(:disabled):not([aria-disabled='true']):is(:hover,:focus-visible),
+#hp-general-review-v8 :is(.case-label select,[data-reopen='after']):is(:hover,:focus-visible) { background:var(--hp-soft); border-color:var(--hp-accent); box-shadow:0 0 0 1px color-mix(in srgb,var(--hp-accent) 24%,transparent); }
+#hp-general-review-v8 .hp-after .hp-footer button.primary:not(:disabled):is(:hover,:focus-visible) { background:light-dark(#00839c,#89dcee); color:light-dark(#fff,#0c222a); border-color:transparent; box-shadow:0 0 0 2px color-mix(in srgb,var(--hp-accent) 22%,transparent); }
+#hp-general-review-v8 .hp-after button.danger:not(:disabled):is(:hover,:focus-visible) { color:var(--hp-danger); border-color:var(--hp-danger); background:color-mix(in srgb,var(--hp-danger) 9%,var(--hp-paper)); }
+#hp-general-review-v8 :is(.hp-after,.hp-color-popup) :is(a[href],summary):is(:hover,:focus-visible),
+#hp-general-review-v8 .review-details summary:is(:hover,:focus-visible) { color:var(--hp-accent); background:var(--hp-soft); text-decoration:underline; text-underline-offset:3px; }
+#hp-general-review-v8 :is(.hp-after,.hp-color-popup) input:is([type='checkbox'],[type='range'],[type='color']):not(:disabled) { cursor:pointer!important; transition:box-shadow 160ms ease; }
+#hp-general-review-v8 :is(.hp-after,.hp-color-popup) input:is([type='checkbox'],[type='range'],[type='color']):not(:disabled):is(:hover,:focus-visible) { box-shadow:0 0 0 3px color-mix(in srgb,var(--hp-accent) 18%,transparent); }
+#hp-general-review-v8 :is(.hp-after,.hp-color-popup) :is(input[type='text'],input[type='number'],textarea) { cursor:text; }
+#hp-general-review-v8 :is(.hp-after,.hp-color-popup) :is(button,select,input,textarea):is(:disabled,[aria-disabled='true']) { cursor:not-allowed!important; box-shadow:none; }
+#hp-general-review-v8 .hp-after select:disabled { color:var(--hp-muted); -webkit-text-fill-color:var(--hp-muted); background:var(--hp-canvas); }
+#hp-general-review-v8 .hp-after .hp-select-wrap:has(select:not(:disabled):is(:hover,:focus-visible)) > svg { color:var(--hp-accent); }
+#hp-general-review-v8 .hp-after button > :is(svg,span) { cursor:inherit; }
+@media (prefers-reduced-motion:reduce) {
+ #hp-general-review-v8 :is(.hp-after,.hp-color-popup) :is(button,select,input,a[href],summary),
+ #hp-general-review-v8 :is(.case-label select,.review-details summary,[data-reopen='after']) { transition:none; }
+}
+/* Native customizable select: top-layer menu, native keyboard and dismissal. */
+@supports (appearance:base-select) {
+ #hp-general-review-v8 :is(.hp-after,.case-label) select,
+ #hp-general-review-v8 :is(.hp-after,.case-label) select::picker(select) { appearance:base-select; }
+ #hp-general-review-v8 :is(.hp-after,.case-label) select { align-items:center; gap:12px; }
+ #hp-general-review-v8 :is(.hp-after,.case-label) select:open { border-color:var(--hp-accent); background:var(--hp-soft); }
+ #hp-general-review-v8 :is(.hp-after,.case-label) select::picker(select) {
+  color:var(--hp-text); background:var(--hp-paper); border:1px solid var(--hp-line); border-radius:10px;
+  padding:5px; margin-block:6px; box-sizing:border-box; width:anchor-size(self-inline);
+  max-width:calc(100vw - 24px); max-height:min(320px,60vh); overflow:auto; scrollbar-width:thin;
+  box-shadow:0 8px 24px light-dark(#23354326,#00000066),0 2px 6px light-dark(#23354312,#00000033);
+  opacity:0; transform:translateY(-5px) scale(.985); transform-origin:top center;
+  transition:opacity 160ms ease,transform 160ms ease,display 160ms allow-discrete,overlay 160ms allow-discrete;
+ }
+ #hp-general-review-v8 :is(.hp-after,.case-label) select:open::picker(select) { opacity:1; transform:translateY(0) scale(1); }
+ @starting-style {
+  #hp-general-review-v8 :is(.hp-after,.case-label) select:open::picker(select) { opacity:0; transform:translateY(-5px) scale(.985); }
+ }
+ #hp-general-review-v8 :is(.hp-after,.case-label) select option {
+  display:flex; align-items:center; gap:10px; min-height:39px; padding:10px 12px; border:0; border-radius:6px;
+  background:var(--hp-paper); color:var(--hp-text); font:inherit; white-space:normal; overflow-wrap:anywhere;
+  cursor:pointer!important; transition:background-color 120ms ease,color 120ms ease;
+ }
+ #hp-general-review-v8 :is(.hp-after,.case-label) select option + option { margin-top:2px; }
+ #hp-general-review-v8 :is(.hp-after,.case-label) select option:checked { background:var(--hp-soft); color:var(--hp-accent); font-weight:600; }
+ #hp-general-review-v8 :is(.hp-after,.case-label) select option:not(:disabled):is(:hover,:focus-visible) { background:color-mix(in srgb,var(--hp-accent) 16%,var(--hp-paper)); color:var(--hp-text); }
+ #hp-general-review-v8 :is(.hp-after,.case-label) select option::checkmark { order:1; margin-left:auto; color:var(--hp-accent); }
+ #hp-general-review-v8 :is(.hp-after,.case-label) select option:disabled { cursor:not-allowed!important; color:var(--hp-muted); opacity:.55; }
+ #hp-general-review-v8 :is(.hp-after,.case-label) select::picker-icon { color:var(--hp-muted); transition:rotate 160ms ease; }
+ #hp-general-review-v8 :is(.hp-after,.case-label) select:open::picker-icon { rotate:180deg; color:var(--hp-accent); }
+ #hp-general-review-v8 .hp-after .hp-select-wrap select::picker-icon { display:none; }
+ #hp-general-review-v8 .hp-after .hp-select-wrap > svg { transition:transform 160ms ease,color 160ms ease; }
+ #hp-general-review-v8 .hp-after .hp-select-wrap:has(select:open) > svg { transform:translateY(-50%) rotate(180deg); color:var(--hp-accent); }
+ @media(pointer:coarse) { #hp-general-review-v8 :is(.hp-after,.case-label) select option { min-height:44px; } }
+ @media(prefers-reduced-motion:reduce) {
+  #hp-general-review-v8 :is(.hp-after,.case-label) select::picker(select),
+  #hp-general-review-v8 :is(.hp-after,.case-label) select::picker-icon,
+  #hp-general-review-v8 :is(.hp-after,.case-label) select option,
+  #hp-general-review-v8 .hp-after .hp-select-wrap > svg { transition:none; transform:none; }
+ }
+}
+
+</style>
+<div id="hp-general-review-v8">
+ <div class="review-tools"><label class="case-label"><span>Сценарий · одинаковые данные в обеих версиях</span><select id="hp-review-case" aria-label="Сценарий сравнения"></select></label></div>
+ <div class="review-method">Общие настройки · версия после правок. Те же исходные данные; компас и поля работают локально.</div>
+ <div id="hp-settings-pairs" class="viz-carousel viz-dotted-background" aria-label="Настройки Houseplan: сейчас и после" data-previous-label="Предыдущая версия" data-next-label="Следующая версия">
+  <section class="compare-stage" data-variant="Сейчас" aria-label="Текущий диалог">
+   <div class="compare-label"><strong>Сейчас</strong><span>Реконструкция по коду · 104a63f</span></div>
+   <article class="hp-dialog hp-before" data-view="before" aria-label="Текущий диалог Houseplan">
+    <header class="hp-header"><button class="hp-close" data-close aria-label="Закрыть диалог"><i data-lucide="x" aria-hidden="true"></i></button><i class="icon" data-lucide="settings" aria-hidden="true"></i><div class="heading-copy"><h2 data-title></h2><div class="context" data-context hidden></div></div><span class="hp-scope-tag" data-scope></span></header>
+    <div class="hp-scroll" data-content></div>
+    <footer class="hp-footer" data-footer></footer>
+   </article>
+   <div class="closed-message" data-closed="before" hidden><span>Диалог закрыт</span><button data-reopen="before">Открыть снова</button></div>
+  </section>
+  <section class="compare-stage" data-variant="После" aria-label="Предлагаемый диалог" hidden>
+   <div class="compare-label"><strong>После</strong><span>С учётом голосовых правок</span></div>
+   <article class="hp-dialog hp-after" data-view="after" aria-label="Предлагаемый диалог Houseplan">
+    <header class="hp-header"><button class="hp-close" data-close aria-label="Закрыть диалог"><i data-lucide="x" aria-hidden="true"></i></button><i class="icon" data-lucide="settings" aria-hidden="true"></i><div class="heading-copy"><h2 data-title></h2><div class="context" data-context></div></div></header>
+    <div class="hp-tabs" data-tabs hidden></div>
+    <label class="hp-mobile-nav"><span class="hp-select-wrap"><select aria-label="Раздел настроек" data-mobile-nav></select><i data-lucide="chevron-down" aria-hidden="true"></i></span></label>
+    <div class="hp-after-layout"><nav class="hp-navigation" aria-label="Разделы настроек" data-nav></nav><div class="hp-scroll" data-content></div></div>
+    <footer class="hp-footer" data-footer></footer>
+   </article>
+   <div class="closed-message" data-closed="after" hidden><span>Диалог закрыт</span><button data-reopen="after">Открыть снова</button></div>
+  </section>
+ </div>
+ <div class="review-status" id="hp-review-status" aria-live="polite"></div>
+ <details class="review-details"><summary>Что изменилось и на чём основано сравнение</summary><div class="review-summary" id="hp-review-summary"></div><div id="hp-review-parity"></div><ul id="hp-review-sources"></ul></details>
+</div>
+<script type="application/json" id="hp-general-v8-data">{"baseline":"104a63f1e218eede610dd621a62346ceb3eab2e6","cases":[{"id":"general","name":"Общие настройки","kind":"Настройки всей установки","context":"Синтетический дом: два этажа и гараж; администратор HA; метрические единицы; sun.sun доступен, высота Солнца 11°; ZHA и два экземпляра Zigbee2MQTT. Данные сохранены, черновик исходно чистый. До — реконструкция состава и порядка формы по коду, не screenshot.","beforeTitle":"Общие настройки","afterTitle":"Общие настройки","summary":"Общие настройки — финальная редакция v8. Сохранены все правки v7; выровнены курсор и hover для кнопок, списков и остальных интерактивных элементов. Общие поля в обоих вариантах используют один набор данных. Изменения в макете остаются локальными.","initialAfterGroup":"g-after-view","sources":["https://github.com/Matysh/houseplan-card/issues/943","https://github.com/Matysh/houseplan-card/blob/104a63f1e218eede610dd621a62346ceb3eab2e6/src/editors/general-settings-dialog.ts#L87","https://github.com/Matysh/houseplan-card/blob/104a63f1e218eede610dd621a62346ceb3eab2e6/src/hp-zigbee-topology-settings.ts#L362","https://github.com/Matysh/houseplan-card/blob/104a63f1e218eede610dd621a62346ceb3eab2e6/src/houseplan-editor-runtime.ts#L8345","https://github.com/Matysh/houseplan-card/blob/104a63f1e218eede610dd621a62346ceb3eab2e6/src/houseplan-editor-runtime.ts#L9398","https://github.com/Matysh/houseplan-card/blob/104a63f1e218eede610dd621a62346ceb3eab2e6/src/houseplan-editor-runtime.ts#L8956","https://github.com/Matysh/houseplan-card/blob/104a63f1e218eede610dd621a62346ceb3eab2e6/src/i18n/ru.json","https://github.com/Matysh/houseplan-card/blob/104a63f1e218eede610dd621a62346ceb3eab2e6/src/i18n/settings/ru.json","https://github.com/Matysh/houseplan-card/blob/104a63f1e218eede610dd621a62346ceb3eab2e6/src/i18n/topology/ru.json","https://github.com/Matysh/houseplan-card/blob/104a63f1e218eede610dd621a62346ceb3eab2e6/src/i18n/support/ru.json","https://github.com/Matysh/houseplan-card/issues/938"],"footer":{"beforeSave":"Сохранить","afterSave":"Сохранить","resetLabel":"Сбросить к умолчаниям"},"fields":[{"boundary":"draft","id":"g-room-tooltip","label":"Показывать окно с информацией при наведении на комнату","type":"toggle","value":true,"help":"Наведите на комнату на плане, чтобы увидеть сводку.","source":"Общее значение для всей установки"},{"boundary":"draft","id":"g-radar-live","label":"Показывать текущее присутствие на плане","type":"toggle","value":true,"help":"Показывает или скрывает все живые цели радаров. Запись наблюдения не запускается и не останавливается."},{"boundary":"draft","id":"g-volumetric","label":"Объёмный вид плана (2.5D)","type":"toggle","value":true,"help":"Стены, двери, окна и значки устройств с объёмом. Декор и обычный план не меняются."},{"boundary":"draft","id":"g-battery","label":"Показывать заряд устройств","type":"select","value":"low","options":[{"value":"all","label":"Все"},{"value":"low","label":"Только низкий"},{"value":"off","label":"Нет"}],"help":"Иконки заряда рядом с батарейными устройствами. «Только низкий» — только красные иконки, ниже 20%.","helpAfter":"Общий режим. Отдельное устройство может дополнительно скрыть свою батарейку; включить её поверх общего «Нет» нельзя.","effective":"Только низкий заряд"},{"boundary":"draft","id":"g-lqi","label":"Показывать Zigbee-сигнал","type":"toggle","value":false,"help":"Применяется к пространствам без собственной настройки","helpAfter":"Системные числа LQI рядом с устройствами. Не скрывает заливку Zigbee, метрику комнаты, выбранный бейдж LQI или линии связей Zigbee.","effective":"Выкл; пространство «1 этаж · жилой» наследует это значение"},{"boundary":"draft","id":"g-zigbee-enabled","label":"Показывать связи Zigbee при наведении на устройство","type":"toggle","value":true,"help":"Показываются родители и следующие узлы по сведениям интеграции. Наведение ничего не запрашивает.","helpAfter":"Показывает линии связей при наведении на устройство. Чтобы читать и обновлять карты ниже, сначала включите связи и сохраните настройки.","effective":"Включено и уже сохранено"},{"boundary":"read","id":"g-zha-read","label":"Прочитать данные ZHA","type":"action","value":"Прочитать данные ZHA","actionStyle":"secondary","showIf":{"field":"g-zigbee-enabled","oneOf":[true]},"help":"Читает сохранённую топологию ZHA и не запускает радио-сканирование.","suppressHelpAfter":true},{"boundary":"read","id":"g-zha-status","label":"ZHA","type":"info","value":"Получено: 16.10.2026, 18:42 · Кеш интеграции; время радиосканирования неизвестно","readOnly":true,"showIf":{"field":"g-zigbee-enabled","oneOf":[true]},"help":"Синтетический статус последнего чтения. Он не является редактируемой настройкой.","suppressHelpAfter":true},{"boundary":"draft","id":"g-z2m-topics","label":"Базовые топики (по одному в строке)","type":"textarea","value":"zigbee2mqtt\nzigbee2mqtt_garage","showIf":{"field":"g-zigbee-enabled","oneOf":[true]},"help":"Zigbee2MQTT","helpAfter":"Укажите базовые топики ваших экземпляров Zigbee2MQTT. Изменённый список сохраняется кнопкой «Сохранить».","labelAfter":"Базовые топики · по одному в строке"},{"boundary":"read","id":"g-z2m-warning","label":"Zigbee2MQTT","type":"info","value":"Сканирование может идти больше 10 минут и временно замедлять Zigbee. Успешные карты сохраняются после перезапуска HA с пометкой «устаревшие». «Обновить карту» удаляет старую карту до сканирования; выключение связей с сохранением настройки удаляет все карты.","readOnly":true,"showIf":{"field":"g-zigbee-enabled","oneOf":[true]},"valueAfter":"Сканирование обычно занимает около 10 минут, иногда дольше, и может временно замедлять Zigbee.","suppressHelpAfter":true},{"boundary":"immediate","id":"g-z2m-update-house","label":"Обновить карту · zigbee2mqtt","type":"action","value":"Обновить карту · zigbee2mqtt","actionStyle":"secondary","showIf":{"field":"g-zigbee-enabled","oneOf":[true]},"help":"Отдельный запрос сканирования. Доступен администратору при сохранённом включении связей; не ждёт общей кнопки «Сохранить».","labelAfter":"Обновить карту","suppressHelpAfter":true},{"boundary":"read","id":"g-z2m-house-status","label":"zigbee2mqtt","type":"info","value":"Получено: 16.10.2026, 18:39","readOnly":true,"showIf":{"field":"g-zigbee-enabled","oneOf":[true]},"help":"Синтетическая успешно сохранённая карта; активного запроса сейчас нет.","receivedAt":"16.10.2026 в 18:39","suppressHelpAfter":true},{"boundary":"immediate","id":"g-z2m-update-garage","label":"Обновить карту · zigbee2mqtt_garage","type":"action","value":"Обновить карту · zigbee2mqtt_garage","actionStyle":"secondary","showIf":{"field":"g-zigbee-enabled","oneOf":[true]},"help":"Отдельный запрос второго экземпляра Zigbee2MQTT.","labelAfter":"Обновить карту","suppressHelpAfter":true},{"boundary":"read","id":"g-z2m-garage-status","label":"zigbee2mqtt_garage","type":"info","value":"Получено: 15.10.2026, 17:05 · данные устарели · Неполные данные","readOnly":true,"showIf":{"field":"g-zigbee-enabled","oneOf":[true]},"help":"Синтетическая старая карта. При запущенном запросе текущая форма дополнительно показывает стадию, время ожидания и, когда разрешено, «Отменить запрос»; эти runtime-состояния не активны в данном снимке.","receivedAt":"15.10.2026 в 17:05","suppressHelpAfter":true},{"boundary":"draft","id":"g-light-on-color","label":"Свет включён","type":"color","value":"#FFD45C","help":"Освещение","source":"Общая палитра для всех пространств","helpAfter":"Используется комнатами с соответствующим режимом заливки. Сам режим выбирается в пространстве или комнате."},{"boundary":"draft","id":"g-light-on-opacity","label":"Прозрачность: Свет включён","type":"number","value":22,"unit":"%","min":0,"max":100,"step":1,"help":"При 0% заливка не видна; цвет и этот процент сохраняются вместе."},{"boundary":"draft","id":"g-light-off-color","label":"Весь свет выключен","type":"color","value":"#8793A3","help":"Освещение","source":"Общая палитра для всех пространств","helpAfter":"Используется комнатами с соответствующим режимом заливки. Сам режим выбирается в пространстве или комнате."},{"boundary":"draft","id":"g-light-off-opacity","label":"Прозрачность: Весь свет выключен","type":"number","value":12,"unit":"%","min":0,"max":100,"step":1,"help":"При 0% заливка не видна; цвет и этот процент сохраняются вместе."},{"boundary":"draft","id":"g-light-none-color","label":"Нет источников света","type":"color","value":"#6B7480","help":"Освещение","source":"Общая палитра для всех пространств","helpAfter":"Используется комнатами с соответствующим режимом заливки. Сам режим выбирается в пространстве или комнате."},{"boundary":"draft","id":"g-light-none-opacity","label":"Прозрачность: Нет источников света","type":"number","value":0,"unit":"%","min":0,"max":100,"step":1,"help":"При 0% заливка не видна; цвет и этот процент сохраняются вместе."},{"boundary":"draft","id":"g-temp-cold-color","label":"Холодно","type":"color","value":"#4FC3F7","help":"Температура","source":"Общая палитра для всех пространств","helpAfter":"Используется комнатами с соответствующим режимом заливки. Сам режим выбирается в пространстве или комнате."},{"boundary":"draft","id":"g-temp-cold-opacity","label":"Прозрачность: Холодно","type":"number","value":24,"unit":"%","min":0,"max":100,"step":1,"help":"При 0% заливка не видна; цвет и этот процент сохраняются вместе."},{"boundary":"draft","id":"g-temp-ok-color","label":"Комфорт","type":"color","value":"#66D17A","help":"Температура","source":"Общая палитра для всех пространств","helpAfter":"Используется комнатами с соответствующим режимом заливки. Сам режим выбирается в пространстве или комнате."},{"boundary":"draft","id":"g-temp-ok-opacity","label":"Прозрачность: Комфорт","type":"number","value":16,"unit":"%","min":0,"max":100,"step":1,"help":"При 0% заливка не видна; цвет и этот процент сохраняются вместе."},{"boundary":"draft","id":"g-temp-hot-color","label":"Жарко","type":"color","value":"#FFB45C","help":"Температура","source":"Общая палитра для всех пространств","helpAfter":"Используется комнатами с соответствующим режимом заливки. Сам режим выбирается в пространстве или комнате."},{"boundary":"draft","id":"g-temp-hot-opacity","label":"Прозрачность: Жарко","type":"number","value":26,"unit":"%","min":0,"max":100,"step":1,"help":"При 0% заливка не видна; цвет и этот процент сохраняются вместе."},{"boundary":"draft","id":"g-lqi-low-color","label":"Слабый сигнал","type":"color","value":"#F25A4A","help":"Сигнал Zigbee","source":"Общая палитра для всех пространств","helpAfter":"Используется комнатами с соответствующим режимом заливки. Сам режим выбирается в пространстве или комнате."},{"boundary":"draft","id":"g-lqi-low-opacity","label":"Прозрачность: Слабый сигнал","type":"number","value":24,"unit":"%","min":0,"max":100,"step":1,"help":"При 0% заливка не видна; цвет и этот процент сохраняются вместе."},{"boundary":"draft","id":"g-lqi-high-color","label":"Сильный сигнал","type":"color","value":"#4BD28F","help":"Сигнал Zigbee","source":"Общая палитра для всех пространств","helpAfter":"Используется комнатами с соответствующим режимом заливки. Сам режим выбирается в пространстве или комнате."},{"boundary":"draft","id":"g-lqi-high-opacity","label":"Прозрачность: Сильный сигнал","type":"number","value":18,"unit":"%","min":0,"max":100,"step":1,"help":"При 0% заливка не видна; цвет и этот процент сохраняются вместе."},{"boundary":"draft","id":"g-glow-base-color","label":"Темнота дома","type":"color","value":"#0D1B2A","source":"","helpAfter":"Тёмный фон, на котором лучше видно свечение ламп. Он появляется при включённом эффекте свечения. Если у комнаты уже есть цветовая заливка, например по температуре, затемнение не добавляется.","labelAfter":"Затемнение комнат"},{"boundary":"draft","id":"g-glow-base-opacity","label":"Прозрачность: Темнота дома","type":"number","value":45,"unit":"%","min":0,"max":100,"step":1,"labelAfter":"Интенсивность"},{"boundary":"draft","id":"g-glow-light-color","label":"Цвет света по умолчанию / интенсивность","type":"color","value":"#FFD9A0","source":"","helpAfter":"Используется для ламп без своего цвета. Цвет из Home Assistant или настройка отдельной лампы заменяют это значение.","labelAfter":"Цвет света по умолчанию"},{"boundary":"draft","id":"g-glow-light-opacity","label":"Прозрачность: Цвет света по умолчанию / интенсивность","type":"number","value":80,"unit":"%","min":0,"max":100,"step":1,"labelAfter":"Интенсивность"},{"boundary":"draft","id":"g-glow-radius","label":"Радиус свечения","type":"number","value":3.5,"unit":"м","min":0.5,"step":0.5,"help":"Задаёт общий радиус светового пятна в метрах или футах; персональный радиус устройства заменяет это значение.","effective":"Общий радиус 3,5 м; локальный радиус устройства сильнее"},{"boundary":"draft","id":"g-wall-color","label":"Цвет заливки стен","type":"color","value":"#E8E5DD","help":"Цвет тела толстых стен; это не заливка комнаты и не цвет границ/названий пространства."},{"boundary":"draft","id":"g-wall-opacity","label":"Прозрачность","labelAfter":"Прозрачность","type":"number","value":100,"unit":"%","min":0,"max":100,"step":1},{"boundary":"draft","id":"g-wall-reset","label":"Сброс","labelAfter":"Сбросить цвет и прозрачность стен","type":"action","value":"Сброс","actionStyle":"secondary","help":"Меняет только черновик: белый #FFFFFF и 100%. Применяется общей кнопкой «Сохранить»."},{"boundary":"draft","id":"g-bg-mode","label":"Фон плана","labelAfter":"Фон вокруг плана","type":"select","value":"daynight","options":[{"value":"static","label":"Статичный цвет"},{"value":"daynight","label":"Следует за Солнцем"}],"help":"«Следует за Солнцем» использует sun.sun, а при недоступности — локальные часы браузера; статичный режим всегда показывает выбранный цвет.","helpAfter":"Это окружающий холст. Изображение плана и заливки комнат настраиваются отдельно."},{"boundary":"draft","id":"g-bg-color","label":"Цвет фона вокруг плана","type":"color","value":"#17212B","showIf":{"field":"g-bg-mode","oneOf":["static"]},"help":"Свой цвет фона.","source":"Своё общее значение"},{"boundary":"draft","id":"g-bg-reset","label":"Как в теме","type":"action","value":"Как в теме","actionStyle":"secondary","showIf":{"field":"g-bg-mode","oneOf":["static"]},"help":"Удаляет собственный цвет из черновика; после сохранения общий статичный фон следует теме. Не сбрасывает локальные цвета пространств.","suppressHelpAfter":true},{"boundary":"draft","id":"g-north","label":"Север на плане","type":"number","value":32,"unit":"°","min":0,"max":359,"step":1,"help":"Угол отсчитывается по часовой стрелке от верхней вертикали плана; север нужен для оконных лучей, а не для фона «Следует за Солнцем».","effective":"","afterOnlyNote":"","helpAfter":"Укажите, куда направлен север относительно плана. Угол отсчитывается по часовой стрелке: 0° — вверх, 90° — вправо, 180° — вниз, 270° — влево. Направление нужно для солнечных лучей в окнах."},{"boundary":"draft","id":"g-north-reset","label":"Сбросить","labelAfter":"Снять общее направление севера","type":"action","value":"Сбросить","actionStyle":"secondary","help":"Очищает север в черновике. Пространства с собственным севером сохраняют его."},{"boundary":"draft","id":"g-sun-rays","label":"Солнце в окнах","type":"toggle","value":true,"help":"Рисовать солнечные лучи через оконные проёмы.","helpAfter":"Нужны sun.sun, север и подходящее наружное окно. Скрытие символов проёмов не выключает лучи.","effective":"Включено; пространство наследует"},{"boundary":"draft","id":"g-sun-origin","label":"Лучи солнца","labelAfter":"Откуда начинаются оконные лучи","type":"select","value":"outer","options":[{"value":"inner","label":"От внутренних углов окон"},{"value":"outer","label":"От внешних углов окон"}],"help":"Общая настройка всех пространств. Доступна и при выключенных лучах."},{"boundary":"draft","id":"g-moon","label":"Луна на плане в сумерках и ночью","type":"toggle","value":true,"help":"Видна за планом при любом фоне, от 3° над горизонтом, кроме новолуния; положение считается по координатам дома из Home Assistant.","helpAfter":"Независима от режима фона и переключателя оконных лучей."},{"boundary":"read","id":"g-moon-status","label":"","type":"info","value":"Луна сейчас не видна: Солнце на 11° над горизонтом. Она может появиться, когда Солнце опустится ниже 6°.","readOnly":true,"help":"Синтетический снимок состояния на момент открытия. Строка показывается после загрузки данных и не зависит от положения чернового тумблера.","labelAfter":"","helpAfter":"","suppressHelpAfter":true},{"boundary":"workflow","id":"g-backup-export","label":"Экспорт","type":"action","value":"Экспорт","actionStyle":"secondary","help":"Резервная копия и перенос. Открывает отдельный мастер экспорта и закрывает форму общих настроек. Это не сохранение её черновика.","suppressHelpAfter":true},{"boundary":"workflow","id":"g-backup-import","label":"Импорт","type":"action","value":"Импорт","actionStyle":"secondary","help":"Резервная копия и перенос. Выбор JSON → отдельный предпросмотр/подтверждение импорта. Это не поле общего черновика.","suppressHelpAfter":true},{"boundary":"workflow","id":"g-optimize","label":"Оптимизировать планы","type":"action","value":"Оптимизировать планы","actionStyle":"secondary","help":"Обновляет модели данных, выравнивает элементы по сетке и объединяет лишние фрагменты стен. Перед записью будет показан точный отчёт.","suppressHelpAfter":true},{"boundary":"workflow","id":"g-optimize-undo","label":"Отменить последнюю оптимизацию","type":"action","value":"Отменить последнюю оптимизацию","actionStyle":"secondary","help":"В фикстуре доступна отмена последней оптимизации. Если последняя операция — полный импорт, вместо этой кнопки текущая форма показывает «Отменить последний полный импорт» в блоке резервной копии. Две кнопки одновременно не существуют.","suppressHelpAfter":true}],"beforeGroups":[{"id":"g-before-display","title":"Отображение","fields":["g-room-tooltip","g-radar-live","g-volumetric","g-battery","g-lqi"]},{"id":"g-before-zigbee","title":"Связи Zigbee","fields":["g-zigbee-enabled","g-zha-read","g-zha-status","g-z2m-topics","g-z2m-warning","g-z2m-update-house","g-z2m-house-status","g-z2m-update-garage","g-z2m-garage-status"]},{"id":"g-before-fills","title":"Цвета заливки комнат","fields":["g-light-on-color","g-light-on-opacity","g-light-off-color","g-light-off-opacity","g-light-none-color","g-light-none-opacity","g-temp-cold-color","g-temp-cold-opacity","g-temp-ok-color","g-temp-ok-opacity","g-temp-hot-color","g-temp-hot-opacity","g-lqi-low-color","g-lqi-low-opacity","g-lqi-high-color","g-lqi-high-opacity"]},{"id":"g-before-glow","title":"Свечение источников света","fields":["g-glow-base-color","g-glow-base-opacity","g-glow-light-color","g-glow-light-opacity","g-glow-radius"]},{"id":"g-before-plan","title":"План","fields":["g-wall-color","g-wall-opacity","g-wall-reset","g-bg-mode","g-bg-color","g-bg-reset"]},{"id":"g-before-sun","title":"Солнце и Луна","fields":["g-north","g-north-reset","g-sun-rays","g-sun-origin","g-moon","g-moon-status"]},{"id":"g-before-data","title":"Данные","fields":["g-backup-export","g-backup-import","g-optimize","g-optimize-undo"]}],"afterGroups":[{"id":"g-after-view","title":"Информация на плане","fields":["g-room-tooltip","g-radar-live","g-battery","g-lqi"]},{"id":"g-after-appearance","title":"Оформление и фон","fields":["g-volumetric","g-wall-color","g-wall-opacity","g-bg-mode","g-bg-color","g-bg-reset"]},{"id":"g-after-fills","title":"Заливки комнат","fields":["g-light-on-color","g-light-on-opacity","g-light-off-color","g-light-off-opacity","g-light-none-color","g-light-none-opacity","g-temp-cold-color","g-temp-cold-opacity","g-temp-ok-color","g-temp-ok-opacity","g-temp-hot-color","g-temp-hot-opacity","g-lqi-low-color","g-lqi-low-opacity","g-lqi-high-color","g-lqi-high-opacity"]},{"id":"g-after-light","title":"Свет, Солнце и Луна","fields":["g-glow-light-color","g-glow-light-opacity","g-glow-radius","g-north","g-sun-rays","g-sun-origin","g-moon","g-moon-status"]},{"id":"g-after-zigbee","title":"Диагностика Zigbee","fields":["g-zigbee-enabled","g-zha-status","g-zha-read","g-z2m-warning","g-z2m-topics","g-z2m-house-status","g-z2m-update-house","g-z2m-garage-status","g-z2m-update-garage"]},{"id":"g-after-data","title":"Резервные копии и обслуживание","fields":["g-backup-import","g-backup-export","g-optimize","g-optimize-undo"]}],"optimizationHistory":true,"spaces":[{"name":"1 этаж · жилой","overrides":{}},{"name":"2 этаж","overrides":{"g-lqi":true}}]}]}</script>
+<script>
+(() => {
+ const root=document.getElementById('hp-general-review-v8');
+ const dataset=JSON.parse(document.getElementById('hp-general-v8-data').textContent);
+ const cases=new Map(dataset.cases.map(c=>[c.id,c]));
+ const picker=root.querySelector('#hp-review-case');
+ const status=root.querySelector('#hp-review-status');
+ const articles=[...root.querySelectorAll('[data-view]')];
+ let current='general', backstack=[], groups={};
+ let dirty=false,lastSentState='';const scanState={house:'saved',garage:'saved'};
+ let savedValues=new Map(dataset.cases[0].fields.map(f=>[f.id,f.value]));
+ function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=String(text);return e;}
+ const colorPopup=el('div','hp-color-popup');colorPopup.id='hp-general-review-v8-color-picker';colorPopup.hidden=true;colorPopup.setAttribute('role','dialog');colorPopup.setAttribute('aria-modal','false');root.append(colorPopup);let colorSession=null;
+ function hideColorPicker(restoreFocus=false){const trigger=colorSession?.trigger;if(trigger)trigger.setAttribute('aria-expanded','false');colorSession=null;colorPopup.hidden=true;if(restoreFocus&&trigger?.isConnected)trigger.focus();}
+ function positionColorPicker(){if(!colorSession)return;const r=root.getBoundingClientRect(),b=colorSession.trigger.getBoundingClientRect();colorPopup.style.width=Math.min(300,r.width-16)+'px';const p=colorPopup.getBoundingClientRect();const x=Math.max(8,Math.min(b.left-r.left,r.width-p.width-8));const lower=b.bottom+7;const upper=b.top-p.height-7;const top=lower+p.height<=window.innerHeight-8?lower:upper>=8?upper:Math.max(8,Math.min(lower,window.innerHeight-p.height-8));colorPopup.style.left=x+'px';colorPopup.style.top=top-r.top+'px';}
+ function refreshColorValues(f,a){root.querySelectorAll('[data-color-choice="'+f.id+'"]').forEach(button=>{const swatch=button.querySelector('.hp-color-swatch > span');swatch.style.background=f.value||'#607D8B';swatch.style.opacity=a?Number(a.value)/100:1;button.querySelector('.hp-color-code').textContent=f.value===null?'Цвет темы':f.value;const percent=button.querySelector('.hp-color-alpha');if(percent){percent.textContent=a.value+'%';percent.dataset.value=JSON.stringify(a.value);}button.closest('[data-field]').dataset.value=JSON.stringify(f.value);});const before=root.querySelector('[data-view="before"] [data-field="'+f.id+'"]');if(before){before.dataset.value=JSON.stringify(f.value);const input=before.querySelector('input[type="color"]');if(input)input.value=f.value||'#607D8B';const code=before.querySelector('code');if(code)code.textContent=f.value===null?'Цвет темы':f.value;}if(a){const beforeAlpha=root.querySelector('[data-view="before"] [data-field="'+a.id+'"]');if(beforeAlpha){beforeAlpha.dataset.value=JSON.stringify(a.value);const input=beforeAlpha.querySelector('input');if(input)input.value=a.value;}}articles.forEach(article=>{const save=article.querySelector('[data-footer] .primary');if(save)save.disabled=!dirty;});root.querySelector('[data-view="after"] .footer-status').textContent=dirty?'Есть несохранённые изменения':'Все изменения сохранены';}
+ function openColorPicker(f,a,trigger){hideHelp();hideColorPicker();colorSession={f,a,trigger};trigger.setAttribute('aria-expanded','true');colorPopup.replaceChildren();colorPopup.hidden=false;const title=el('h4','',f.labelAfter||f.label);title.id=colorPopup.id+'-title';colorPopup.setAttribute('aria-labelledby',title.id);colorPopup.append(title);
+  const rgbLabel=el('label');rgbLabel.append(el('span','','Цвет'));const rgb=el('input');rgb.type='color';rgb.value=f.value||'#607D8B';rgb.setAttribute('aria-label','Выбрать цвет');rgbLabel.append(rgb);colorPopup.append(rgbLabel);
+  const hexLabel=el('label');hexLabel.append(el('span','','HEX'));const hex=el('input','hp-input');hex.type='text';hex.maxLength=7;hex.value=f.value||'#607D8B';hex.setAttribute('aria-label','HEX цвета');hexLabel.append(hex);colorPopup.append(hexLabel);
+  const updateColor=value=>{f.value=value.toUpperCase();dirty=true;rgb.value=f.value;hex.value=f.value;hex.removeAttribute('aria-invalid');refreshColorValues(f,a);saveState();};rgb.addEventListener('input',()=>updateColor(rgb.value));hex.addEventListener('input',()=>{if(/^#[0-9a-f]{6}$/i.test(hex.value))updateColor(hex.value);else hex.setAttribute('aria-invalid','true');});hex.addEventListener('blur',()=>{hex.value=f.value||'#607D8B';hex.removeAttribute('aria-invalid');});
+  if(a){const label=el('label');label.append(el('span','','Прозрачность'));const controls=el('div','hp-alpha-controls');const range=el('input');range.type='range';range.min=0;range.max=100;range.step=1;range.value=a.value;range.setAttribute('aria-label','Прозрачность цвета');const number=el('input','hp-input');number.type='number';number.min=0;number.max=100;number.step=1;number.value=a.value;number.setAttribute('aria-label','Прозрачность, проценты');const updateAlpha=value=>{a.value=Math.round(Math.max(0,Math.min(100,value)));dirty=true;range.value=a.value;number.value=a.value;refreshColorValues(f,a);saveState();};range.addEventListener('input',()=>updateAlpha(Number(range.value)));number.addEventListener('input',()=>{if(number.value!=='')updateAlpha(Number(number.value));});number.addEventListener('blur',()=>{number.value=a.value;});controls.append(range,number,el('span','','%'));label.append(controls);colorPopup.append(label,el('div','hp-alpha-note',a.id==='g-glow-light-opacity'?'Интенсивность эффекта: 0% — без свечения, 100% — максимальная.':'0% — невидимый цвет, 100% — непрозрачный.'));}
+  if(a?.id==='g-glow-light-opacity')colorPopup.querySelector('.hp-alpha-controls').parentElement.firstElementChild.textContent='Интенсивность свечения';
+  const ok=el('button','hp-color-ok','ОК');ok.type='button';ok.addEventListener('click',()=>hideColorPicker(true));colorPopup.append(ok);positionColorPicker();hex.focus();
+ }
+ function colorField(f,a,c,view){if(view!=='after')return field(f,c,view);const node=field(f,c,view),old=node.querySelector('.hp-color-row');const button=el('button','hp-color-choice');button.type='button';button.dataset.colorChoice=f.id;button.setAttribute('aria-label',(a?'Цвет и прозрачность: ':'Цвет: ')+(f.labelAfter||f.label));button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-expanded','false');button.setAttribute('aria-controls',colorPopup.id);const swatch=el('span','hp-color-swatch'),fill=el('span');fill.style.background=f.value||'#607D8B';fill.style.opacity=a?Number(a.value)/100:1;swatch.append(fill);button.append(swatch,el('span','hp-color-code',f.value===null?'Цвет темы':f.value));if(a){const alpha=el('span','hp-color-alpha',a.value+'%');alpha.dataset.field=a.id;alpha.dataset.value=JSON.stringify(a.value);button.append(alpha);}button.addEventListener('click',()=>{if(colorSession?.trigger===button)hideColorPicker();else openColorPicker(f,a,button);});old.replaceWith(button);return node;}
+ root.addEventListener('pointerdown',e=>{if(colorSession&&!colorPopup.contains(e.target)&&!colorSession.trigger.contains(e.target))hideColorPicker();});root.addEventListener('keydown',e=>{if(e.key==='Escape'&&colorSession){e.stopPropagation();hideColorPicker(true);}});root.addEventListener('focusin',e=>{if(colorSession&&!colorPopup.contains(e.target)&&!colorSession.trigger.contains(e.target))hideColorPicker();});root.addEventListener('scroll',()=>hideColorPicker(),true);window.addEventListener('resize',()=>hideColorPicker());
+ const helpPopup=el('div','hp-help-popup');helpPopup.id='hp-general-review-v8-help';helpPopup.setAttribute('role','tooltip');helpPopup.hidden=true;root.append(helpPopup);let helpTrigger=null,helpPinned=false;
+ function hideHelp(){helpTrigger?.removeAttribute('aria-describedby');helpTrigger=null;helpPinned=false;helpPopup.hidden=true;}
+ function showHelp(button){if(helpTrigger!==button)hideHelp();helpTrigger=button;helpPopup.textContent=button.dataset.helpText;helpPopup.hidden=false;button.setAttribute('aria-describedby',helpPopup.id);const r=root.getBoundingClientRect(),b=button.getBoundingClientRect();helpPopup.style.width=Math.min(320,r.width-16)+'px';const p=helpPopup.getBoundingClientRect();const x=Math.max(8,Math.min(b.left-r.left+b.width/2-p.width/2,r.width-p.width-8));const y=b.top-p.height-8>=Math.max(4,r.top)?b.top-r.top-p.height-8:b.bottom-r.top+8;helpPopup.style.left=x+'px';helpPopup.style.top=y+'px';}
+ function bindHelp(button,text){button.dataset.helpText=text;button.addEventListener('pointerenter',e=>{if(e.pointerType!=='touch')showHelp(button);});button.addEventListener('pointerleave',()=>{if(helpTrigger===button&&!helpPinned&&document.activeElement!==button)hideHelp();});button.addEventListener('focus',()=>showHelp(button));button.addEventListener('blur',hideHelp);button.addEventListener('click',()=>{if(helpTrigger===button&&helpPinned)hideHelp();else{showHelp(button);helpPinned=true;}});}
+ root.addEventListener('keydown',e=>{if(e.key==='Escape')hideHelp();});root.addEventListener('pointerdown',e=>{if(helpTrigger&&!helpTrigger.contains(e.target))hideHelp();});root.addEventListener('scroll',hideHelp,true);window.addEventListener('resize',hideHelp);
+ function icon(name){const e=el('i');e.dataset.lucide=name;e.setAttribute('aria-hidden','true');return e;}
+ function shown(f,c){if(!f.showIf)return true;const value=c.fields.find(x=>x.id===f.showIf.field)?.value;return f.showIf.oneOf.includes(value);}
+ function cleanNote(text){return (text||'').replace(/[^.!?]*фикстур[^.!?]*[.!?]?/gi,'').trim();}
+ function active(){return cases.get(current)||dataset.cases[0];}
+ function topCase(c){let n=c;while(n.parentId&&cases.has(n.parentId))n=cases.get(n.parentId);return n;}
+ function saveState(){const snapshot={groups,dirty,values:Object.fromEntries(active().fields.map(f=>[f.id,f.value])),savedValues:Object.fromEntries(savedValues),scanState,history:active().optimizationHistory};lastSentState=JSON.stringify(snapshot);if(window.openai?.setWidgetState)window.openai.setWidgetState({modelContent:{comparisonCase:'general-v8',section:groups[current]||active().initialAfterGroup,north:active().fields.find(f=>f.id==='g-north').value,windowRayOrigin:active().fields.find(f=>f.id==='g-sun-origin').value},privateContent:{generalSettingsV8:snapshot}}).catch(()=>{});}
+ function restore(s){const x=s?.privateContent?.generalSettingsV8;if(!x||JSON.stringify(x)===lastSentState)return;groups=x.groups&&typeof x.groups==='object'?x.groups:{};dirty=Boolean(x.dirty);if(x.values)active().fields.forEach(f=>{if(Object.hasOwn(x.values,f.id))f.value=x.values[f.id];});if(x.savedValues)savedValues=new Map(Object.entries(x.savedValues));if(x.scanState)Object.assign(scanState,x.scanState);if(typeof x.history==='boolean')active().optimizationHistory=x.history;render();}
+ function go(id,group){if(!cases.has(id))return;backstack.push(current);current=id;if(group)groups[id]=group;render();saveState();}
+ function back(){const c=active();current=backstack.pop()||c.parentId||topCase(c).id;render();saveState();}
+ function relatedTarget(f,c){const s=f.source||'';if(/^https?:/.test(s))return null;
+  if(c.id!=='general'&&/общ/i.test(s)){const group=/glow|north|sun|ray|moon|свеч|радиус/i.test(f.id+' '+f.label)?'g-after-light':/bg|wall|фон|стен/i.test(f.id+' '+f.label)?'g-after-appearance':'g-after-view';return ['general',group];}
+  if(c.id!=='space'&&/пространств/i.test(s)){const group=/scale|font|шрифт/i.test(f.id+' '+f.label)?'s-after-cards':/north|bg|ray|север|фон|луч/i.test(f.id+' '+f.label)?'s-after-environment':'s-after-rooms';return ['space',group];}return null;}
+ function scene(visual,text){const box=el('div','hp-scene');box.setAttribute('role','img');box.setAttribute('aria-label',text);const ns='http://www.w3.org/2000/svg';const svg=document.createElementNS(ns,'svg');const vb=visual.viewBox||[0,0,1000,800];svg.setAttribute('viewBox',vb.join(' '));svg.setAttribute('aria-hidden','true');box.append(svg);
+  function shape(tag,attrs,cls){const n=document.createElementNS(ns,tag);Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,String(v)));n.setAttribute('class',cls);svg.append(n);return n;}
+  function label(x,y,t,cls){const n=el('span',cls,t);n.style.left=(x/vb[2]*100)+'%';n.style.top=(y/vb[3]*100)+'%';box.append(n);}
+  (visual.rooms||[]).forEach(r=>{shape('polygon',{points:r.points.map(p=>p.join(',')).join(' ')},'scene-room');const xs=r.points.map(p=>p[0]),ys=r.points.map(p=>p[1]);label((Math.min(...xs)+Math.max(...xs))/2,(Math.min(...ys)+Math.max(...ys))/2,r.name,'scene-label');});
+  if(visual.overlay){shape('polygon',{points:visual.overlay.corners.map(p=>p.join(',')).join(' ')},'scene-overlay');visual.overlay.corners.forEach(p=>shape('rect',{x:p[0]-10,y:p[1]-10,width:20,height:20},'scene-handle'));}
+  if(visual.robot)label(visual.robot.x,visual.robot.y,'Р','scene-point');if(visual.dock)label(visual.dock.x,visual.dock.y,'База','scene-label');
+  if(visual.mount)label(visual.mount.x,visual.mount.y,'R','scene-point');(visual.targets||[]).forEach(p=>label(p.x,p.y,p.id,'scene-point'));(visual.references||[]).forEach(p=>label(p.x,p.y,p.id,'scene-point scene-ref'));
+  box.append(el('span','scene-caption',visual.type==='radar'?'R — установка · ● цели · ○ точки проверки':'Наложение карты · 90° · отражение'));
+  return box;
+ }
+ function action(f,c,view){
+  if(f.id.startsWith('g-z2m-update-')){const which=f.id.endsWith('house')?'house':'garage';scanState[which]='pending';renderKeepingScroll();status.textContent='Макет: начат фоновый запрос карты. Реальная сеть Zigbee не опрашивается.';return;}
+  if(f.id==='g-optimize-undo'&&c.optimizationHistory){c.optimizationHistory=false;renderKeepingScroll();status.textContent='Макет: последняя оптимизация отменена. Сохранённой истории для повторной отмены нет.';return;}
+  if(f.id==='g-optimize'){c.optimizationHistory=true;renderKeepingScroll();status.textContent='Макет: после просмотра отчёта и подтверждения оптимизации станет доступна её отмена.';return;}
+  if(f.id==='g-north-reset'){setField(c.fields.find(x=>x.id==='g-north'),null);return;}
+  if(f.id==='g-wall-reset'){c.fields.find(x=>x.id==='g-wall-color').value='#FFFFFF';setField(c.fields.find(x=>x.id==='g-wall-opacity'),100);return;}
+  if(f.id==='g-bg-reset'){setField(c.fields.find(x=>x.id==='g-bg-color'),null);return;}
+  status.textContent='Макет: «'+(view==='after'?(f.labelAfter||f.label):f.label)+'». В рабочем интерфейсе откроется соответствующий диалог.';
+ }
+ function renderKeepingScroll(){const scrolls=articles.map(a=>a.querySelector('[data-content]').scrollTop);render();articles.forEach((a,i)=>a.querySelector('[data-content]').scrollTop=scrolls[i]);}
+ function setField(f,value){f.value=value;dirty=true;renderKeepingScroll();saveState();}
+ function setSelect(f,value){
+  f.value=value;dirty=true;const c=active();
+  root.querySelectorAll('[data-field="'+f.id+'"]').forEach(node=>{node.dataset.value=JSON.stringify(value);const select=node.querySelector('select');if(select)select.value=String(value);});
+  c.fields.filter(x=>x.showIf?.field===f.id).forEach(dependent=>root.querySelectorAll('[data-field="'+dependent.id+'"]').forEach(node=>{node.hidden=!shown(dependent,c);const row=node.closest('.hp-bg-inline');if(row)row.hidden=node.hidden;}));
+  if(f.id==='g-bg-mode'){const node=root.querySelector('[data-view="after"] [data-field="g-bg-mode"]');node.classList.toggle('is-terminal',value==='daynight');const preview=node.querySelector('.hp-day-preview-block');if(value==='daynight'&&!preview)node.append(backgroundPreview());else if(value!=='daynight')preview?.remove();}
+  if(f.id==='g-sun-origin'){root.querySelector('[data-view="after"] .hp-rays-previews')?.replaceWith(raysPreview(value));}
+  articles.forEach(a=>{const save=a.querySelector('[data-footer] .primary');if(save)save.disabled=false;});
+  root.querySelector('[data-view="after"] .footer-status').textContent='Есть несохранённые изменения';saveState();
+ }
+ function setToggle(f,value){f.value=value;dirty=true;const c=active();root.querySelectorAll('[data-field="'+f.id+'"]').forEach(node=>{node.dataset.value=JSON.stringify(value);const input=node.querySelector('input[type="checkbox"]');if(input)input.checked=value;});c.fields.filter(x=>x.showIf?.field===f.id).forEach(dependent=>{root.querySelectorAll('[data-field="'+dependent.id+'"]').forEach(node=>{node.hidden=!shown(dependent,c);const topic=node.closest('.hp-topic-row');if(topic)topic.hidden=node.hidden;});});if(f.id==='g-sun-rays'){const note=root.querySelector('[data-view="after"] [data-field="g-sun-rays"] .hp-effective');if(note)note.textContent=(value?'Включено':'Выключено')+'. Пространство может переопределить.';}articles.forEach(article=>{const save=article.querySelector('[data-footer] .primary');if(save)save.disabled=false;});root.querySelector('[data-view="after"] .footer-status').textContent='Есть несохранённые изменения';saveState();}
+ function updateCompass(f,value){f.value=value===null?null:((Math.round(value)%360)+360)%360;dirty=true;root.querySelectorAll('[data-field="g-north"]').forEach(node=>{node.dataset.value=JSON.stringify(f.value);const arrow=node.querySelector('g');if(arrow){arrow.setAttribute('transform','rotate('+(f.value??0)+' 74 74)');arrow.style.visibility=f.value===null?'hidden':'visible';}node.querySelectorAll('input').forEach(input=>{if(input!==document.activeElement)input.value=f.value??'';});node.querySelector('[role="img"]')?.setAttribute('aria-label',f.value===null?'Направление севера не задано':'Направление севера: '+f.value+' градусов по часовой стрелке от верха плана');});articles.forEach(a=>{const save=a.querySelector('[data-footer] .primary');if(save)save.disabled=false;});root.querySelector('[data-view="after"] .footer-status').textContent='Есть несохранённые изменения';}
+ function svgNode(tag,attrs,parent){const n=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,String(v)));if(parent)parent.append(n);return n;}
+ function compass(f,view){const wrap=el('div','hp-compass-wrap');const dial=el('div','hp-compass');dial.setAttribute('role','img');dial.setAttribute('aria-label','Направление севера: '+(f.value===null?'не задано':f.value+' градусов по часовой стрелке от верха плана'));const svg=svgNode('svg',{viewBox:'0 0 148 148','aria-hidden':'true'},dial);svgNode('circle',{cx:74,cy:74,r:54,class:'ring'},svg);
+  for(let i=0;i<36;i++){const a=i*10*Math.PI/180;svgNode('line',{x1:74+Math.sin(a)*49,y1:74-Math.cos(a)*49,x2:74+Math.sin(a)*(i%9===0?40:45),y2:74-Math.cos(a)*(i%9===0?40:45),class:'tick'},svg);}
+  const needle=svgNode('g',{transform:'rotate('+(f.value??0)+' 74 74)'},svg);needle.style.visibility=f.value===null?'hidden':'visible';svgNode('polygon',{points:'74,29 65,79 74,74 83,79',class:'north-needle'},needle);svgNode('polygon',{points:'74,113 65,79 74,74 83,79',class:'south-needle'},needle);svgNode('circle',{cx:74,cy:74,r:4,class:'center'},svg);
+  [[50,5,'0°'],[95,50,'90°'],[50,95,'180°'],[6,50,'270°']].forEach(([x,y,t])=>{const n=el('span','hp-compass-label',t);n.style.left=x+'%';n.style.top=y+'%';dial.append(n);});
+  const controls=el('div','hp-compass-input');const row=el('div','field-unit');const input=el('input','hp-input');input.type='number';input.min=0;input.max=359;input.value=f.value??'';input.readOnly=view==='before';input.setAttribute('aria-label','Север на плане, градусы');input.addEventListener('input',()=>updateCompass(f,input.value===''?null:Number(input.value)));input.addEventListener('change',saveState);row.append(input,el('span','','°'));controls.append(row);
+  if(view==='after'){const slider=el('input');slider.type='range';slider.min=0;slider.max=359;slider.value=f.value??0;slider.setAttribute('aria-label','Повернуть север на плане');slider.addEventListener('input',()=>updateCompass(f,Number(slider.value)));slider.addEventListener('change',saveState);controls.append(slider,el('div','field-note','0° — вверх плана, 90° — вправо. Угол отсчитывается по часовой стрелке.'));svg.addEventListener('click',event=>{const box=svg.getBoundingClientRect();updateCompass(f,Math.atan2(event.clientX-box.left-box.width/2,-(event.clientY-box.top-box.height/2))*180/Math.PI);saveState();});}
+  wrap.append(dial,controls);return wrap;
+ }
+ function raysPreview(value){const grid=el('div','hp-rays-previews');['outer','inner'].forEach(mode=>{const fig=el('figure','hp-ray-example'+(value===mode?' is-selected':''));const svg=svgNode('svg',{viewBox:'0 0 180 130',role:'img','aria-label':mode==='outer'?'Лучи от внешних углов: оконный откос отсекает часть ширины луча':'Лучи от внутренних углов окна'},fig);svgNode('rect',{x:4,y:68,width:172,height:57,class:'ray-room'},svg);svgNode('polygon',{points:mode==='outer'?'64,40 104,40 104,68 137.529,125 114,125':'64,68 104,68 137.529,125 97.529,125',class:'ray-light'},svg);svgNode('rect',{x:4,y:40,width:60,height:28,class:'ray-wall'},svg);svgNode('rect',{x:104,y:40,width:72,height:28,class:'ray-wall'},svg);svgNode('line',{x1:64,y1:54,x2:104,y2:54,class:'ray-window'},svg);[64,104].forEach(x=>svgNode('circle',{cx:x,cy:mode==='outer'?40:68,r:3.5,class:'ray-origin'},svg));const cap=el('figcaption','',mode==='outer'?'Внешние углы':'Внутренние углы');if(value===mode)cap.append(el('span','','· выбрано'));fig.append(cap);grid.append(fig);});return grid;}
+ function backgroundPreview(){
+  const box=el('div','hp-day-preview-block'),grid=el('div','hp-day-previews');
+  const palettes={day:['#dce9ef','#cbdce3','rgba(255,245,220,.45)','rgba(65,91,105,.16)'],night:['#111a27','#1f2f3e','rgba(79,120,151,.16)','rgba(3,8,14,.58)'],dawn:['#aabdd1','#e8c8b7','rgba(255,201,156,.56)','rgba(65,72,99,.21)'],dusk:['#48536c','#9a7380','rgba(242,156,114,.34)','rgba(20,26,44,.39)']};
+  function paint(sample,phase){const p=palettes[phase];sample.style.background='radial-gradient(ellipse at 50% 88%, '+p[2]+' 0%, transparent 54%),linear-gradient(180deg,'+p[0]+' 0%,'+p[1]+' 100%)';sample.style.boxShadow='inset 0 0 45px '+p[3];sample.dataset.phase=phase;sample.setAttribute('aria-label','Пример фона: '+({day:'день',night:'ночь',dawn:'рассвет',dusk:'закат'}[phase]));}
+  [['dawn','Рассвет'],['day','День'],['dusk','Закат'],['night','Ночь']].forEach(([phase,title])=>{const fig=el('figure','hp-day-example'),sample=el('div','hp-day-sample');sample.setAttribute('role','img');paint(sample,phase);const plan=svgNode('svg',{viewBox:'0 0 120 84','aria-hidden':'true'},sample);svgNode('path',{d:'M18 14H102V70H62V60H18Z',class:'hp-mini-floor'},plan);svgNode('path',{d:'M62 14V60M18 40H62M62 42H102',class:'hp-mini-wall'},plan);fig.append(sample,el('figcaption','',title));grid.append(fig);});
+  const rules=el('div','hp-background-rules');rules.append(el('p','','Фон вокруг плана меняется по положению Солнца из Home Assistant. Сам план сохраняет свои цвета.'),el('p','','День — Солнце на 6° над горизонтом или выше. Ночь — на 6° под горизонтом или ниже. Между ними — сумерки: рассвет, когда Солнце поднимается, и закат, когда опускается.'),el('p','','Если данные Солнца недоступны, используется время устройства: рассвет 05:00–08:00, день 08:00–18:00, закат 18:00–21:00, ночь 21:00–05:00.'));box.append(grid,rules);return box;
+ }
+ function field(f,c,view){
+  const afterView=view==='after';const copy={...f,help:'',helpAfter:'',afterOnlyNote:afterView?f.afterOnlyNote:undefined};
+  if(afterView&&f.valueAfter!==undefined)copy.value=f.valueAfter;
+  if(f.id==='g-optimize-undo')copy.readOnly=!c.optimizationHistory;
+  if(f.id==='g-north'){copy.effective='';copy.afterOnlyNote='';}
+  if(f.id==='g-battery'||f.id==='g-zigbee-enabled')copy.effective='';
+  if(f.id==='g-lqi'){const exceptions=(c.spaces||[]).filter(s=>Object.hasOwn(s.overrides,f.id));copy.effective=exceptions.map(s=>'В пространстве «'+s.name+'» задано своё значение: '+(s.overrides[f.id]?'включено':'выключено')+'. Изменение общей настройки на него не повлияет.').join(' ');}
+  if(f.id==='g-sun-rays')copy.effective=(f.value?'Включено':'Выключено')+'. Пространство может переопределить.';
+  if(f.id==='g-glow-radius')copy.effective='Для устройств без собственного радиуса свечения';
+  if(f.id==='g-bg-color')copy.source='';
+  if(afterView&&copy.source==='Общая палитра для всех пространств')copy.source='';
+  const node=baseField(copy,c,view);node.dataset.value=JSON.stringify(f.value);
+  if(afterView&&f.type==='select'){const select=node.querySelector('select');const wrap=el('div','hp-select-wrap');select.replaceWith(wrap);wrap.append(select,icon('chevron-down'));}
+  if(afterView&&['g-backup-import','g-backup-export'].includes(f.id)){const button=node.querySelector('.hp-action');button.classList.add('has-icon');button.prepend(icon(f.id==='g-backup-import'?'upload':'download'));}
+  const label=node.querySelector('.field-label');const help=afterView&&f.suppressHelpAfter?'':cleanNote(afterView?(f.helpAfter??f.help):f.help);
+  if(help&&label){const b=el('button','field-help-toggle cursor-interaction','?');b.type='button';bindHelp(b,help);b.setAttribute('aria-label','Подсказка: '+(afterView?(f.labelAfter||f.label||'Предпросмотр'):(f.label||'Предпросмотр')));if(f.type==='action')node.append(b);else{const text=label.textContent;const split=text.lastIndexOf(' ')+1;const end=el('span','hp-label-end',text.slice(split));end.append(b);label.replaceChildren(document.createTextNode(text.slice(0,split)),end);}}
+  if(afterView&&f.id==='g-bg-mode'&&f.value==='daynight'){node.classList.add('is-terminal');node.append(backgroundPreview());}
+  node.querySelectorAll('.boundary').forEach(n=>n.remove());
+  if(f.id==='g-bg-color'&&f.value===null){const code=node.querySelector('code');if(code)code.textContent='Цвет темы';}
+  if(afterView){node.querySelectorAll('input,select,textarea').forEach(input=>{if(f.readOnly)return;input.disabled=false;input.readOnly=false;if(f.min!==undefined)input.min=f.min;if(f.max!==undefined)input.max=f.max;if(f.step!==undefined)input.step=f.step;input.addEventListener('change',()=>{const value=input.type==='checkbox'?input.checked:['number','range'].includes(input.type)?Number(input.value):input.value;if(input.type==='checkbox')setToggle(f,value);else if(input.tagName==='SELECT')setSelect(f,value);else setField(f,value);});});}
+  if(f.id==='g-north'){node.querySelector('.field-unit')?.remove();node.append(compass(f,view));if(afterView)node.append(el('div','hp-effective','Направление на север помогает правильно показать лучи из окон.'));
+  }
+  if(afterView&&f.id==='g-sun-origin'){node.append(raysPreview(f.value),el('div','hp-ray-key','Вид сверху: снаружи — над стеной, комната — под стеной. Точки отмечают начало лучей.'));}
+  if(afterView&&f.id==='g-moon-status'){node.replaceChildren(el('div','hp-effective',f.value));}
+  if(afterView&&f.id==='g-zha-status'){node.replaceChildren();node.classList.add('is-status');const h=el('div','hp-inline-status');h.append(el('strong','','ZHA'),el('span','','Чтение сохранённых данных, без радиосканирования'));node.append(h,el('div','field-note','Данные получены 16.10.2026 в 18:42. Время радиосканирования неизвестно.'));}
+  if(afterView&&f.id==='g-z2m-warning'){node.replaceChildren();const box=el('div','hp-topology-block');box.append(el('h4','','Zigbee2MQTT'),el('div','',f.valueAfter));node.append(box);}
+  if(afterView&&/g-z2m-(house|garage)-status/.test(f.id)){const which=f.id.includes('house')?'house':'garage';node.replaceChildren();node.classList.add('is-status');const row=el('div','hp-topology-status');row.append(el('code','',f.label));let text=scanState[which]==='pending'?'Запрос отправлен · ожидаем новые данные':scanState[which]==='empty'?'Сохранённых данных нет':'Данные получены '+f.receivedAt;if(which==='garage'&&scanState[which]==='saved')text+=' · устарели и могут быть неполными';row.append(el('span','',text));node.append(row);}
+  if(afterView&&f.id.startsWith('g-z2m-update-')){const which=f.id.endsWith('house')?'house':'garage';node.classList.add('is-scan');const b=node.querySelector('.hp-action');b.textContent=scanState[which]==='pending'?'Запрос выполняется':'Обновить карту';b.disabled=scanState[which]==='pending';const prefix=scanState[which]==='saved'?'Сохранённые связи этого топика будут удалены перед новым сканированием. При ошибке старая карта не восстановится. ':scanState[which]==='pending'?'Ожидаем новую карту связей. ':'Запросим первую карту связей для этого топика. ';node.append(el('div','field-note',prefix+'Запрос идёт в фоне: настройки можно закрыть. Обычно это занимает около 10 минут, иногда дольше.'));}
+  return node;
+ }
+ function baseField(f,c,view){
+  const wrapper=el('div','hp-field');wrapper.dataset.field=f.id;wrapper.dataset.value=JSON.stringify(f.value);wrapper.hidden=!shown(f,c);
+  if(/-heading$/.test(f.id)){wrapper.classList.add('hp-heading-field');wrapper.append(el('h4','',f.value));return wrapper;}
+  const label=el('div','field-label',view==='after'?(f.labelAfter||f.label):f.label);
+  const id='hp-'+view+'-'+c.id+'-'+f.id;
+  const help=view==='after'?cleanNote(f.helpAfter||f.help):cleanNote(f.help);
+  let note;
+  if(help){const helpButton=el('button','field-help-toggle','ⓘ');helpButton.type='button';helpButton.setAttribute('aria-label','Справка: '+(f.label||'Предпросмотр'));helpButton.addEventListener('click',()=>{note.hidden=!note.hidden;});label.append(helpButton);}
+  if(view==='after'&&['immediate','workflow'].includes(f.boundary)&&f.type!=='info'){wrapper.append(el('span','boundary',f.boundary==='immediate'?'Применяется сразу':'Отдельная операция'));}
+  if(f.type==='toggle'){
+   const line=el('div','hp-toggle-line');const input=el('input','hp-switch');input.type='checkbox';input.checked=Boolean(f.value);input.disabled=true;input.id=id;input.setAttribute('aria-label',f.label);line.append(label,input);wrapper.append(line);
+  }else{
+   wrapper.append(label);
+   let control;
+   if(f.type==='select'){
+    control=el('select','hp-select');control.disabled=true;
+    (f.options||[]).forEach(o=>{const option=el('option','',o.label);option.value=String(o.value);option.selected=String(o.value)===String(f.value);control.append(option);});
+    if(!(f.options||[]).some(o=>String(o.value)===String(f.value))){const o=el('option','',f.value===null?'Автоматически':f.value);o.value=String(f.value);o.selected=true;control.append(o);}
+    if(f.id!=='g-battery')control.dataset.tooltip=control.selectedOptions[0]?.textContent||'';
+   }else if(f.type==='number'||f.type==='text'){
+    control=el('input','hp-input');control.type=f.type==='number'?'number':'text';control.value=f.value===null?'':String(f.value);control.readOnly=true;if(f.placeholder)control.placeholder=f.placeholder;
+   }else if(f.type==='textarea'){
+    control=el('textarea');control.value=String(f.value??'');control.readOnly=true;
+   }else if(f.type==='color'){
+    control=el('div','hp-color-row');const color=el('input','hp-color');color.type='color';color.value=/^#[0-9a-f]{6}$/i.test(f.value)?f.value:'#607d8b';color.disabled=true;color.setAttribute('aria-label',f.label);control.append(color,el('code','',f.value));
+   }else if(f.type==='range'){
+    control=el('div','hp-range-row');const range=el('input');range.type='range';range.min=f.min??0;range.max=f.max??300;range.step=f.step??1;range.value=f.value;range.disabled=true;range.setAttribute('aria-label',f.label);control.append(range,el('output','',String(f.value)+(f.unit?' '+f.unit:'')));
+   }else if(f.type==='action'){
+    control=el('button','hp-action '+(f.actionStyle==='danger'?'danger':''),view==='after'?(f.labelAfter||f.value||f.label):(f.value||f.label));control.type='button';control.disabled=Boolean(f.readOnly);if(/preview[-_]details$/.test(f.id)){control.setAttribute('aria-expanded','false');control.addEventListener('click',()=>{note.hidden=!note.hidden;control.setAttribute('aria-expanded',String(!note.hidden));});}else control.addEventListener('click',()=>action(f,c,view));label.hidden=true;
+   }else if(f.type==='file'){
+    control=el('div','file-thumb');if(f.id==='s-plan-image'){const plan=el('div','hp-plan');['Гостиная','Кухня','Холл','Ванная'].forEach(t=>plan.append(el('span','',t)));control.append(plan);if(view==='after')control.append(el('span','',f.value));}else control.append(icon('file-image'),el('span','',typeof f.value==='string'?f.value:JSON.stringify(f.value)));
+   }else{
+    if(f.visual){control=scene(f.visual,f.value);}
+    else if(f.id==='s-card-preview'||/room.*preview|card_preview/.test(f.id)){control=el('div','room-preview');control.append(el('strong','','Гостиная'),el('span','','22.4° · 45% · 1 из 3'));if(f.id==='room.preview'){control.firstElementChild.style.fontSize='24.8px';control.lastElementChild.style.fontSize='12.6px';}}
+    else if(/(?:\.|_)preview$/.test(f.id)){control=el('div','marker-preview');const symbol=el('span','marker-symbol'+(c.id==='led'?' active':''));if(c.id==='vacuum'||c.id==='climate')symbol.append(el('span','',c.id==='vacuum'?'68%':'—'));else symbol.append(icon(c.id==='led'?'lightbulb':c.id==='radar'?'radar':'bot'));const badge=el('span','marker-badge',c.id==='led'?'72%':c.id==='climate'?'—':c.id==='radar'?'2':'34 м²');badge.dataset.position=c.fields.find(x=>/badge[-_]position$/.test(x.id))?.value||'right';symbol.append(badge);control.append(symbol,el('span','preview-text',f.value));}
+    else if(/\.controls$/.test(f.id)){control=el('div');if(f.value)control.append(el('span','hp-chip',f.value));}
+    else control=el('div','field-info',typeof f.value==='string'?f.value:JSON.stringify(f.value));
+   }
+   control.id=id;control.setAttribute('aria-label',view==='after'?(f.labelAfter||f.label):f.label);
+   if(f.unit&&!['range','color','info'].includes(f.type)){const unit=el('div','field-unit');unit.append(control,el('span','',f.unit));wrapper.append(unit);}else wrapper.append(control);
+  }
+  if(f.type==='action'&&help){const helpButton=label.querySelector('button');if(helpButton)wrapper.append(helpButton);}
+  if(help){note=el('div','field-note',/preview[-_]details$/.test(f.id)?help.replace(/^Раскрываемый список текущих источников, состояния и интеграции\.\s*/,''):help);note.hidden=true;wrapper.append(note);}
+  if(view==='after'&&f.source&&!/^https?:/.test(f.source)){const source=el('div','hp-source');const target=relatedTarget(f,c);if(target){const button=el('button','',f.source+' ↗');button.type='button';button.addEventListener('click',()=>go(target[0],target[1]));source.append(button);}else source.textContent=f.source;wrapper.append(source);}
+  if(view==='after'&&f.effective){wrapper.append(el('div','hp-effective',f.effective));}
+  if(view==='after'&&f.afterOnlyNote){wrapper.append(el('div','field-note',cleanNote(f.afterOnlyNote)));}
+  return wrapper;
+ }
+ function selectGroup(id){const c=active();if(!c.afterGroups.some(g=>g.id===id))return;groups[c.id]=id;const article=root.querySelector('[data-view="after"]');article.querySelectorAll('[data-section]').forEach(n=>{n.hidden=n.dataset.section!==id;});article.querySelectorAll('[data-group-button]').forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.groupButton===id));});article.querySelector('[data-mobile-nav]').value=id;article.querySelector('[data-content]').scrollTop=0;saveState();}
+ function footer(article,c,view){
+  const foot=article.querySelector('[data-footer]');foot.replaceChildren();
+  if(view==='before'){const fg=c.beforeGroups.find(g=>/футер/.test(g.title));if(fg){const extra=el('div','footer-extra');fg.fields.forEach(id=>extra.append(field(c.fields.find(f=>f.id===id),c,view)));foot.append(extra);}}
+  const caption=el('span','footer-status');caption.textContent=view==='after'?(dirty?'Есть несохранённые изменения':'Все изменения сохранены'):'';foot.append(caption);
+  if(c.parentId||backstack.length){const b=el('button','quiet','Назад');b.addEventListener('click',back);foot.append(b);}
+  if(c.id==='space-plan-library')return;
+  if(c.footer?.resetLabel&&c.footer.resetLabel!=='Отмена'){const reset=el('button','quiet',c.footer.resetLabel);reset.addEventListener('click',()=>{status.textContent='Макет: сброс изменил бы черновик; демонстрационные значения сохранены.';});foot.append(reset);}
+  const cancel=el('button','quiet','Отмена');cancel.addEventListener('click',()=>{c.fields.forEach(f=>{if(savedValues.has(f.id))f.value=savedValues.get(f.id);});dirty=false;renderKeepingScroll();article.hidden=true;root.querySelector('[data-closed="'+view+'"]').hidden=false;saveState();});foot.append(cancel);
+  const saveLabel=view==='after'?(['vacuum','radar'].includes(c.id)?'Сохранить устройство':c.footer?.afterSave??'Сохранить'):(c.footer?.beforeSave??'Сохранить');
+  if(saveLabel!==''){const save=el('button','primary',saveLabel);save.disabled=!dirty;save.addEventListener('click',()=>{dirty=false;savedValues=new Map(c.fields.map(f=>[f.id,f.value]));renderKeepingScroll();saveState();status.textContent='Изменения сохранены только в макете.';});foot.append(save);}
+ }
+ function groupFields(card,g,c,view){const list=g.fields.map(id=>c.fields.find(f=>f.id===id)).filter(Boolean);let consumed=new Set();let diagnostics;
+  if(view==='after'&&g.id==='g-after-data'){
+   [['g-backup-import','g-backup-export'],['g-optimize','g-optimize-undo']].forEach(ids=>{const row=el('div','hp-actions-row');ids.forEach(id=>row.append(field(c.fields.find(f=>f.id===id),c,view)));card.append(row);});
+   const line=el('div','hp-converter');line.append(el('div','','Если у вас есть план Sweet Home 3D (.sh3d) или Easy Floorplan (YAML / JSON), то вы можете конвертировать его в формат для House Plan:'));const link=el('a','','Конвертировать для House Plan ↗');link.href='https://houseplan.tech/convert/';link.target='_blank';link.rel='noreferrer';line.append(link,el('div','field-note','Результат — JSON, который можно загрузить кнопкой «Импорт».'));card.append(line);return;
+  }
+  if(c.id==='vacuum'&&view==='after'&&g.id==='vacuum'){const ids=['vac_integration','vac_position','vac_rooms','vac_integration_path','vac_path_source','vac_path_quality','vac_path_counts','vac_path_received','vac_path_final','vac_map_id'];diagnostics=el('details','hp-diagnostics');diagnostics.append(el('summary','','Диагностика карты и маршрута'));ids.forEach(id=>{const f=list.find(x=>x.id===id);if(f){diagnostics.append(field(f,c,view));consumed.add(id);}});}
+  if(c.id==='general'&&list.some(f=>f.id==='g-light-on-color')){[['Освещение',['light-on','light-off','light-none']],['Температура',['temp-cold','temp-ok','temp-hot']],['Сигнал Zigbee',['lqi-low','lqi-high']]].forEach(([title,keys])=>{card.append(el('h4','',title));const grid=el('div','hp-palette');keys.forEach(key=>{const tile=el('div','hp-palette-tile');const color=list.find(x=>x.id==='g-'+key+'-color'),alpha=list.find(x=>x.id==='g-'+key+'-opacity');if(view==='after'){tile.append(colorField(color,alpha,c,view));consumed.add(color.id);consumed.add(alpha.id);}else{[color,alpha].forEach(f=>{if(!f)return;const node=field(f,c,view);if(f===alpha){const label=node.querySelector('.field-label');const help=label.querySelector('button');label.replaceChildren(document.createTextNode('Прозрачность'));if(help)label.append(help);}tile.append(node);consumed.add(f.id);});}grid.append(tile);});card.append(grid);});}
+  let metrics;
+  list.forEach((f,index)=>{if(consumed.has(f.id))return;
+   if(view==='after'&&f.id==='g-bg-color'){const row=el('div','hp-bg-inline');row.hidden=!shown(f,c);row.append(colorField(f,null,c,view),field(c.fields.find(x=>x.id==='g-bg-reset'),c,view));card.append(row);consumed.add('g-bg-reset');return;}
+   if(view==='after'&&/g-z2m-(house|garage)-status/.test(f.id)){const which=f.id.includes('house')?'house':'garage';const actionId='g-z2m-update-'+which;const row=el('div','hp-topic-row');row.hidden=!shown(f,c);const left=el('div','hp-topic-copy');const actionNode=field(c.fields.find(x=>x.id===actionId),c,view);left.append(field(f,c,view));const note=actionNode.querySelector('.field-note');row.append(left,actionNode);if(note){note.classList.add('hp-topic-note');row.append(note);}card.append(row);consumed.add(actionId);return;}
+   (g.subheadings||[]).filter(s=>s.beforeField===f.id).forEach(s=>card.append(el('h4','',diagnostics&&f.id==='vac_source'?'Источник и состояние':s.title)));
+   if(c.id==='space'&&['s-label-temp','s-label-hum','s-label-lqi','s-label-light'].includes(f.id)){if(!metrics){metrics=el('div','hp-metrics');card.append(metrics);}metrics.append(field(f,c,view));return;}
+   if(c.id==='general'&&f.id==='g-backup-export')card.append(el('h4','','Резервная копия и перенос'));
+   if(c.id==='general'&&f.id==='g-optimize')card.append(el('h4','','Обслуживание планов'));
+   if(view==='after'&&f.id==='room.name-scale')card.append(el('h4','','Размеры шрифтов'));
+   const next=list[index+1];if(f.type==='color'&&next&&/opacity/.test(next.id)&&shown(f,c)&&shown(next,c)){if(view==='after')card.append(colorField(f,next,c,view));else{const pair=el('div','hp-pair');pair.append(field(f,c,view),field(next,c,view));card.append(pair);}consumed.add(next.id);}else card.append(field(f,c,view));
+  });
+  if(diagnostics)card.append(diagnostics);
+ }
+ function render(){
+  hideColorPicker();
+  hideHelp();
+  const c=active();picker.value=topCase(c).id;status.textContent='';
+  root.querySelector('#hp-review-summary').textContent=c.summary;
+  root.querySelector('#hp-review-parity').textContent='Общие поля используют один набор данных. В «После» по запросу убраны затемнение комнат и кнопки сброса севера и цвета стен, добавлены превью фона и ссылка на конвертер. «Сейчас» — реконструкция текущего интерфейса по коду. Для демонстрации исключений у «2 этажа» есть своя настройка Zigbee-сигнала.';
+  const sourceList=root.querySelector('#hp-review-sources');sourceList.replaceChildren();(c.sources||[]).slice(0,5).forEach(url=>{const li=el('li');const a=el('a','',decodeURIComponent(url.split('/').slice(-1)[0]));a.href=url;a.target='_blank';a.rel='noreferrer';li.append(a);sourceList.append(li);});
+  articles.forEach(article=>{
+   const view=article.dataset.view;article.hidden=false;root.querySelector('[data-closed="'+view+'"]').hidden=true;
+   article.querySelector('[data-title]').textContent=view==='after'?c.afterTitle:c.beforeTitle;
+   const ctx=article.querySelector('[data-context]');const kind={device:'Устройство',workflow:'Настройка',room:'Комната',space:'Пространство',general:'Общие настройки'}[c.kind]||c.kind||'';ctx.textContent=c.parentId?kind+' · '+(cases.get(c.parentId)?.name||''):['led','climate','vacuum','radar'].includes(c.id)?'1 этаж · жилой / Гостиная':c.id==='room'?'Комната · 1 этаж · жилой':kind;
+   if(view==='before'){const scope=article.querySelector('[data-scope]');scope.textContent=['general'].includes(c.id)?'':c.parentId?'Houseplan':'1 этаж · жилой';scope.hidden=c.id==='general';}
+   const body=article.querySelector('[data-content]');body.replaceChildren();body.scrollTop=0;
+   const order=view==='after'?c.afterGroups:c.beforeGroups;
+   const selected=groups[c.id]||c.initialAfterGroup||order[0]?.id;
+   if(view==='after'){
+    groups[c.id]=order.some(g=>g.id===selected)?selected:order[0]?.id;
+    const nav=article.querySelector('[data-nav]'), tabs=article.querySelector('[data-tabs]'), mobile=article.querySelector('[data-mobile-nav]');nav.replaceChildren();tabs.replaceChildren();mobile.replaceChildren();
+    const tabbed=order.length>1&&order.length<=3;article.classList.toggle('is-tabs',tabbed);article.classList.toggle('is-single',order.length===1);tabs.hidden=!tabbed;
+    order.forEach(g=>{[nav,tabs].forEach(parent=>{const b=el('button','',g.title);b.type='button';b.dataset.groupButton=g.id;b.setAttribute('aria-pressed',String(g.id===groups[c.id]));b.addEventListener('click',()=>selectGroup(g.id));parent.append(b);});const opt=el('option','',g.title);opt.value=g.id;mobile.append(opt);});mobile.value=groups[c.id];mobile.onchange=()=>selectGroup(mobile.value);
+   }
+   order.forEach(g=>{
+    if(view==='before'&&/футер/.test(g.title))return;
+    const card=el('section','hp-group');card.dataset.section=g.id;
+    if(g.title)card.append(el('h3','',g.title));
+    if(view==='after'&&g.id==='g-after-fills')card.append(el('div','hp-palette-caption','Общая палитра для всех пространств'));
+    if(view==='after'){card.hidden=g.id!==groups[c.id];}
+    groupFields(card,g,c,view);if(view==='before'&&g.parentGroup){const parent=body.querySelector('[data-section="'+g.parentGroup+'"]');if(parent){card.style.padding='0';card.style.marginTop='20px';parent.append(card);}else body.append(card);}else body.append(card);
+   });footer(article,c,view);
+  });
+  designRender();
+  if(globalThis.lucide)lucide.createIcons({attrs:{width:20,height:20}});
+ }
+ const main=dataset.cases.filter(c=>!c.parentId);main.forEach(c=>{const o=el('option','',c.name);o.value=c.id;picker.append(o);});
+ picker.addEventListener('change',()=>{current=picker.value;backstack=[];render();saveState();});
+ articles.forEach(article=>{article.querySelector('[data-close]').addEventListener('click',()=>{article.hidden=true;root.querySelector('[data-closed="'+article.dataset.view+'"]').hidden=false;});});
+ root.querySelectorAll('[data-reopen]').forEach(b=>b.addEventListener('click',()=>{root.querySelector('[data-view="'+b.dataset.reopen+'"]').hidden=false;b.parentElement.hidden=true;}));
+ const after=root.querySelector('[data-view="after"]');const design={gap:18,origins:true};
+ if(!cases.has(current))current=main[0].id;
+ render();restore(window.openai?.widgetState);
+ window.addEventListener('openai:set_globals',event=>{if(event.detail?.globals?.widgetState)restore(event.detail.globals.widgetState);});
+ function designRender(){after.style.setProperty('--hp-row-gap',design.gap+'px');after.querySelectorAll('.hp-source,.hp-effective').forEach(e=>{e.hidden=!design.origins;});}
+ if(globalThis.Tweak){const conditions={history:true,savedMaps:true};const tweak=new Tweak({container:after,onChange:()=>{active().optimizationHistory=conditions.history;scanState.house=scanState.garage=conditions.savedMaps?'saved':'empty';renderKeepingScroll();saveState();}});tweak.addToggle(conditions,'history',{label:'Есть история оптимизации'});tweak.addToggle(conditions,'savedMaps',{label:'Есть сохранённые карты Zigbee2MQTT'});}
+})();
+</script>
