@@ -28,7 +28,7 @@ await page.evaluate(() => {
   const c = window.__card;
   const d = c._devices.find((x) => x.space === 'f1');
   const before = { ...c._pos(d) };
-  c._pointerDown({ preventDefault(){}, clientX: 10, clientY: 10, target: { setPointerCapture(){} }, pointerId: 1 }, d);
+  c._pointerDown({ button: 0, preventDefault(){}, clientX: 10, clientY: 10, target: { setPointerCapture(){} }, pointerId: 1 }, d);
   c._pointerMove({ clientX: 90, clientY: 60 }, d);
   c._pointerUp({}, d);
   const after = { ...c._pos(d) };
@@ -40,7 +40,7 @@ out.viewDragMoved = await page.evaluate(() => window.__viewDragMoved);
 await page.evaluate(async () => {
   const c = window.__card;
   const d = c._devices.find((x) => x.space === 'f1');
-  c._pointerDown({ preventDefault(){}, clientX: 10, clientY: 10, target: { setPointerCapture(){} }, pointerId: 2 }, d);
+  c._pointerDown({ button: 0, preventDefault(){}, clientX: 10, clientY: 10, target: { setPointerCapture(){} }, pointerId: 2 }, d);
   await new Promise((r) => setTimeout(r, 700));
 });
 out.viewHoldInfo = await page.evaluate(() => { const r = !!window.__card._infoCard; window.__card._infoCard = null; window.__card._holdFired = false; return r; });
@@ -62,7 +62,7 @@ out.devDragWorks = await page.evaluate(async () => {
   const c = window.__card;
   const d = c._devices.find((x) => x.space === 'f1');
   const before = { ...c._pos(d) };
-  c._pointerDown({ preventDefault(){}, clientX: 10, clientY: 10,
+  c._pointerDown({ button: 0, preventDefault(){}, clientX: 10, clientY: 10,
     target: { setPointerCapture(){} }, pointerId: 3 }, d);
   c._pointerMove({ clientX: 100, clientY: 70, pointerId: 3 }, d);
   c._pointerUp({ pointerId: 3 }, d);

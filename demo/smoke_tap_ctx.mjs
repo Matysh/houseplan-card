@@ -27,12 +27,14 @@ const res = await page.evaluate(async () => {
   c._ctxDevice(ev, dev);
   out.ctxMoreInfo = moreInfo === dev.primary;
   out.ctxPrevented = ev.defaultPrevented;
-  // 3) в редакторах правый клик не перехватывается
+  // 3) Devices opens its copy menu, without opening HA more-info.
   c._setMode('devices'); await c.updateComplete;
   moreInfo = null;
   const ev2 = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
   c._ctxDevice(ev2, dev);
-  out.editorNative = moreInfo === null && !ev2.defaultPrevented;
+  await c.updateComplete;
+  out.editorCopyMenu = moreInfo === null && ev2.defaultPrevented
+    && !!sr().querySelector('[data-hp="device-copy"]');
   // 4) виртуальное без primary → инфо-карточка
   c._setMode('view'); await c.updateComplete;
   const virt = c._devices.find((d) => d.virtual && !d.primary) || null;

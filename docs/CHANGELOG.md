@@ -9,6 +9,7 @@
   equipment commands ([#935](https://github.com/Matysh/houseplan-card/issues/935)).
   A refused control graph asks the user to check the original links without
   changing the original settings.
+  The LED selection target keeps a separate test hook from ordinary icons.
 
 - The converter omits signed or unrecognised backdrop URLs with a visible loss
   report, rather than carrying access signatures into an export. Plain image

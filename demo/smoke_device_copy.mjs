@@ -55,7 +55,7 @@ const snapshot = () => page.evaluate(async () => {
     writes: window.__copyWrites.length, services: window.__serviceCalls.length, toast: c._toast };
 });
 const open = async id => {
-  const target=card.locator(`[data-hp="device"][data-id="${id}"]`);
+  const target=card.locator(`[data-hp="device"][data-id="${id}"], [data-hp="led-device-select"][data-id="${id}"]`);
   if(await target.evaluate(el=>el.tagName.toLowerCase()==='path')) {
     // SVG horizontal strokes have zero DOM bbox height but are painted/hittable.
     const point=await target.evaluate(el=>{const p=el.getPointAtLength(el.getTotalLength()/2);
@@ -141,20 +141,24 @@ checkAll({ lostReplyOneWrite:lostAfter.writes===lostBefore.writes+1, lostReplyOn
   acceptedAfterLostReply:lostAfter.toast==='Copy created', lostReplyCopyHasPosition:!!lostAfter.layout[lostAfter.cfg.markers.at(-1).id] });
 
 await open('v_source'); await page.evaluate(()=>window.__hpTest.setMode('view'));
+await settled();
 check('mode-change-closes-menu',await card.locator('[data-hp="device-context-menu"]').count(),0);
 const viewBefore=(await snapshot()).writes;
 await card.locator('[data-hp="device"][data-id="v_source"]').click({button:'right'});
 check('view-keeps-more-info-not-copy-menu',await card.locator('[data-hp="device-copy"]').count(),0);
 check('view-context-no-copy-write',(await snapshot()).writes,viewBefore);
 await page.keyboard.press('Escape');
+await settled();
 
 // A fresh card reads the saved fixture pair, not the optimistic old card objects.
-await page.evaluate(async()=>{
-  const old=window.__card;await window.__hpTest.waitForWrites();
+await page.evaluate(()=>window.__hpTest.waitForWrites());
+await page.evaluate(()=>{
+  const old=window.__card;
   const next=document.createElement('houseplan-card');next.setConfig({type:'custom:houseplan-card',icon_size:3.4});
-  old.replaceWith(next);window.__card=next;next.hass=old.hass;
+  window.__copyCold=next;old.parentNode.append(next);next.hass=old.hass;
 });
-await page.waitForFunction(()=>window.__card._loadOk&&window.__card._devices.some(d=>d.name==='Copy lamp 3'));
+await page.waitForFunction(()=>window.__copyCold._loadOk&&window.__copyCold._devices.some(d=>d.name==='Copy lamp 3'));
+await page.evaluate(()=>{const old=window.__card;window.__card=window.__copyCold;old.remove();});
 await page.evaluate(()=>window.__hpTest.setMode('devices'));await settled();
 check('cold-reader-retains-independent-virtual-copy',await page.evaluate(id=>{
   const c=window.__card,d=c._devices.find(d=>d.id===id);return d?.bindingKind==='virtual'&&d.name==='Copy lamp 3'&&!!c._layout[id];
