@@ -51,6 +51,12 @@ The approved reset glyph and removal instructions (including tooltip line breaks
 and arrow) are retained. Native dialog routing is exercised across all applicable
 families at desktop/narrow widths, with invalid drafts and a real delayed HA ACK.
 The two added mutation declarations remain static-only during development.
+After integrating accepted Room v4 (#946), the r1 source measures hostRefs5830,
+bundleBytes3193747 and editor312959 B gzip, all inside the existing approved
+references/bands. Initial View324246 B gzip remains below its unchanged ceiling.
+No further ceiling or band is raised. Golden reconciliation carries Room's
+three already accepted frames and the previously accepted #931 frames; it is
+not a new visual acceptance. A fresh complete WSL capture follows publication.
 
 The full #931 rebase CI exposed the old dangerous-confirmation witness taking
 its DOM snapshot while the already-revealed boot veil still faded. A controlled

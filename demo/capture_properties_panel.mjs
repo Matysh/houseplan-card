@@ -141,6 +141,10 @@ try {
       const normal=text=>text.replace(/\s+/g,' ').trim();
       if(normal(await panel.locator('[role="tooltip"]').innerText())!==normal(await referencePage.locator('.action-tooltip').innerText()))throw Error('Backdrop removal instructions differ');
     }
+    if(kind==='contour'||kind==='backdrop') {
+      const actual=await panel.locator('[role="tooltip"]').boundingBox(),expected=await referencePage.locator('.action-tooltip').boundingBox();
+      if(['x','y','width','height'].some(key=>Math.abs(actual[key]-expected[key])>1))throw Error(`Tooltip geometry differs: ${name}`);
+    }
     if(kind==='rect' && !await panel.locator('[data-property="fill"] hp-color-opacity').evaluate(el=>
       getComputedStyle(el.shadowRoot.querySelector('.trigger')).backgroundImage==='none'
       && getComputedStyle(el.shadowRoot.querySelector('.swatch')).opacity==='1'))throw Error('Fill swatch is not solid');

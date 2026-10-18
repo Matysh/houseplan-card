@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 78,
-  "acceptedAt": "2026-10-18T15:59:28.269Z",
-  "sourceFingerprint": "68f493ecb931bc18fa30aa0d5e8fda59d091c56c883713b54a3ade0fd63fa58f",
+  "acceptedAt": "2026-10-18T17:59:04.721Z",
+  "sourceFingerprint": "1d2219aacd9f2aa8e8d6c1acfbe6310e7cd411450b95624260d35ac275411135",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,20 +10,20 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "68f493ecb931bc18fa30aa0d5e8fda59d091c56c883713b54a3ade0fd63fa58f",
+    "buildFingerprint": "1d2219aacd9f2aa8e8d6c1acfbe6310e7cd411450b95624260d35ac275411135",
     "ci": null
   },
   "localAttestation": {
     "schema": "houseplan-golden-wsl/v2",
-    "sha256": "73f061aad3ad31208cec7a5ffedbbe7537286a23bbaf3d4d994b5b6109663969",
-    "artifactSha256": "ba8ce405b2767004f4bdcecb4fc7026f5d318b8cf1f5af63ac1bf4b1a7216f1c",
-    "createdAt": "2026-10-18T15:58:51.068Z",
+    "sha256": "021fc7c63b2d31ef823a688deb12b6a34553fcf9070471183c12ba75893fb84e",
+    "artifactSha256": "cd7e9825128c27edee2c1b9f92ee0b787136bcc0af698c799566a5ccb3237660",
+    "createdAt": "2026-10-18T17:54:32.461Z",
     "source": {
       "repository": "Matysh/houseplan-card",
-      "branch": "issue/931-properties-panel",
-      "commit": "a0626bbabe2404965d47c3d26a284b2bebb70f6d",
-      "tree": "9937749896b5f167c7297ae6dcff4adc58e00507",
-      "remoteSha": "a0626bbabe2404965d47c3d26a284b2bebb70f6d",
+      "branch": "issue/946-room-settings",
+      "commit": "32df1b3bdfe0bb4dbb5e896dee86091055b0c2b3",
+      "tree": "dbdaed960c0de588ad85eb9e647d07c7324533fc",
+      "remoteSha": "32df1b3bdfe0bb4dbb5e896dee86091055b0c2b3",
       "clean": true,
       "status": ""
     },
@@ -32,23 +32,23 @@
       "arch": "x64",
       "kernel": "6.18.33.2-microsoft-standard-WSL2",
       "wsl": true,
-      "distro": "Ubuntu",
+      "distro": "Ubuntu-24.04",
       "filesystem": "ext2/ext3"
     },
     "toolchain": {
-      "node": "22.23.3",
-      "npm": "10.9.9",
+      "node": "22.23.2",
+      "npm": "10.9.8",
       "playwright": "1.62.0",
       "browser": {
         "version": "151.0.7922.34",
-        "resolvedExecutable": "/home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell",
+        "resolvedExecutable": "/home/sergey/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell",
         "executableSha256": "e11fc9ce65c96313476f7ee9844b6fb6a9220fb048693cfe9eee00acf4170a9f"
       }
     }
   },
   "foreignCapture": null,
   "witnesses": {
-    "count": 121,
+    "count": 138,
     "floor": 10
   },
   "scenarios": {
@@ -225,9 +225,9 @@
     "device-dialog-desktop-en": "ae04ac55df6fe3d860638ede89c4caa3d39ebce1e374e7c0caea42ad3f5e69df",
     "device-dialog-mobile-ru": "81b18fb223c79e1f5ebdc1fe3fe5eab0820e153a6a75bbc78e5bb2bec941263e",
     "device-dialog-desktop-de": "7bfa359261d24e361de9250e79a09f6387ecfe0d16632273a96bf12d7bcc8406",
-    "room-temperature-dialog-desktop-en": "d481f7c421c7ef1aaa7ec1f53667300dc2d97406776f6d88368bf7e4fd5c3697",
-    "room-temperature-dialog-mobile-ru": "3214cc3820bf792bc0f555f0c00f1b43925d4055ae2e33381b0017e381bfc505",
-    "room-discard-dialog-mobile-ru": "184884863e5fd25a7023bd58ed39979f9afddb8157c3e39cb24a70a74df8ce98",
+    "room-temperature-dialog-desktop-en": "4c42b35ffdc34518259c4e81c431a736a88e970eb2e0ff0679410894c85af305",
+    "room-temperature-dialog-mobile-ru": "0a7a21bdebcc572dd4b2d4ded30439c83af5664f0b284a8fcc20172d3078f757",
+    "room-discard-dialog-mobile-ru": "0652abd33f86bb19fb0c761724997efbb60a792ef45ee205e5474d9a4d6e6b89",
     "german-view-mobile-light": "1c14ef6e97f0f7c616fe61ad72f4dfa7d94c605efc3d8b26931016c8c13a4282",
     "toggle-entity-dialog-desktop-en": "969f72d8a05442821c65ae67b3f3dc5dab2cc6ec2e54029a358ad4ca5d34684b",
     "toggle-entity-dialog-mobile-ru": "16748b5252bbba95f5cb0e49b4b0dd2b765d81a8ce15ce8161cf98b652bae5a4",

@@ -78,7 +78,7 @@ vocabulary remain the implementation target.
   `node demo/smoke_device_position_history.mjs`,
   `node demo/smoke_physical_body_characterization.mjs`: existing neighbouring
   colour, touch/cancel, ordered history and physical gesture contracts passed.
-- The seven `test/properties-*.test.mjs` files: 38 tests covering catalog,
+- The seven `test/properties-*.test.mjs` files: 39 tests including r1 room-context coverage,
   strict parser, field/lane authority, transform/physical semantics, targeted
   patches, actual runtime writer/rollback/history and RU/EN copy.
 - `python -m pytest tests_backend/test_validation.py tests_backend/test_config_schema_manifest.py tests_backend/test_support_package.py tests_backend/test_ha_websocket.py tests_backend/test_ha_import_export.py -q`:
@@ -92,6 +92,23 @@ handoff, not inferred from the targeted checks above. Headless evidence is not
 owner or real-GPU acceptance.
 
 ## Protective AC → witness → negative oracle
+
+### Code review r1 repairs (joint source with accepted #946)
+
+| Finding | Repair and executable oracle |
+|---|---|
+| H1 room context | Named contour owners (canonical IDs or exact legacy edge), resolved opening neighbours. Catalog units reject generic metadata; capture asserts actual room context. Stored names retain case/quotes as explained above, not guessed inflection. |
+| H1 reset/removal | Reset path equals the immutable reference SVG. Removal words and tooltip bounds compare to reference DOM; line breaks/arrow match the panels. |
+| H1 solid swatch | No conflicting cover flag. Computed trigger has no checkerboard, inner opacity is 1, width15px; flat corners/border match the reference. General alpha tiles retain the #615 predicate and checkerboard. |
+| M1 modal exclusivity | Fifteen native object/subtype routes open full dialogs at1920/959. Invalid wide drafts block opening; hidden narrow drafts are invalidated with no write; wide panel is inert. A real held config/set ACK defers the text dialog and then opens it exactly after success. Missing beforeIntent loses that deferred retry and fails. |
+
+The combined-source panel smoke, `smoke_color_picker` and
+`smoke_dialog_polish_605` passed. All nine actual panels/full screens and the
+variable dialog were recaptured; immutable manifest31/31, common controls max0,
+type controls max0.78125 CSS px, tooltip bounds within1. The changed pairs were
+visually re-read against approved PNGs. Complete CI is reported in the handoff,
+not inferred from these targeted checks. New bases are not needed: the r1/Room
+source fits all existing references/bands and the unchanged initial View limit.
 
 | AC | Witness | What goes red |
 |---|---|---|
