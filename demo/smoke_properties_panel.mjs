@@ -171,6 +171,19 @@ try {
   await variable.waitFor({state:'hidden'});
   check('properties.variable_insert_saved',(await savedSpace()).decor.find(s=>s.id==='text').text,'Значение: {sensor.kitchen_temperature}');
   check('properties.variable_insert_caret',await text.evaluate(el=>el.selectionStart),'Значение: {sensor.kitchen_temperature}'.length);
+  await page.evaluate(()=>{
+    const c=window.__card,call=c.hass.callWS.bind(c.hass);
+    let release;const promise=new Promise(resolve=>{release=resolve;});
+    window.__931Pending={hold:true,release:()=>{window.__931Pending.hold=false;release();}};
+    c.hass={...c.hass,callWS:async message=>{if(message.type==='houseplan/config/set'&&window.__931Pending.hold)await promise;return call(message);}};
+  });
+  await text.fill('Сохранение с задержкой');await text.press('Control+Enter');
+  await page.waitForFunction(()=>window.__card._editorRuntime.properties.fields.draft?.pending);
+  check('properties.pending_text_is_disabled',await text.isDisabled(),true);
+  check('properties.pending_sibling_input_is_disabled',await panel.locator('[data-property="x"] input').isDisabled(),true);
+  await page.evaluate(()=>window.__931Pending.release());
+  await page.waitForFunction(()=>!window.__card._editorRuntime.properties.fields.draft);
+  check('properties.pending_text_saved_once',(await savedSpace()).decor.find(s=>s.id==='text').text,'Сохранение с задержкой');
   await select('decor','backdrop','properties');await finishField('opacity',0);
   check('properties.opacity_zero_saved',(await savedSpace()).plan_opacity,0);
   await panel.locator('[data-property="reset"] button').click();await page.evaluate(()=>window.__hpTest.waitForWrites());
@@ -210,6 +223,7 @@ try {
   check('properties.dark_theme',await panel.getAttribute('data-theme'),'dark');
   // Short-height and large text keep the pinned footer and a scrollable form.
   await page.setViewportSize({width:1000,height:480});
+  await page.evaluate(()=>window.__hpTest.settled());
   check('properties.short_footer_accessible',await panel.locator('.hp-prop-foot').evaluate(el=>{const r=el.getBoundingClientRect();return r.bottom<=innerHeight+1&&r.top>=0;}),true);
   check('properties.short_form_scrollable',await panel.locator('.hp-prop-scroll').evaluate(el=>el.scrollHeight>el.clientHeight),true);
   await page.setViewportSize({width:1920,height:1080});

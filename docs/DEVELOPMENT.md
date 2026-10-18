@@ -20,8 +20,8 @@ success is additional regression evidence, not design acceptance.
 
 Owner-approved #931 budget refresh (2026-10-18,
 [decision](https://github.com/Matysh/houseplan-card/issues/931#issuecomment-6250557931)):
-`hostRefs` 5564→5833, total bundle bytes 3088841→3184646, lazy editor gzip
-283610→311542. These are measured reference values, not added tolerance: the
+`hostRefs` 5564→5833, total bundle bytes 3088841→3184653, lazy editor gzip
+283610→311555. These are measured reference values, not added tolerance: the
 25-reference / 2000-byte bands, initial View limits and performance gates stay
 unchanged. The panel and its copy remain demand-loaded in the editor graph.
 

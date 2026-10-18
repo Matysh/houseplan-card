@@ -54,7 +54,8 @@ vocabulary remain the implementation target.
 
 - `node demo/smoke_properties_panel.mjs`: native wall/opening/column/device
   selection, Enter+blur deduplication, invalid/escape, 959/960, suspended number
-  and invalid HEX, colour confirmation/no intermediate writes, ratio/centre,
+  and invalid HEX, colour confirmation/no intermediate writes, delayed-save
+  pending controls (no dropped new input), ratio/centre,
   text cancel/insert/caret/newline, alpha zero/reset, device Undo and zero HA
   services. All matrix families/subtypes render through the production owner;
   selection leaves server config unchanged. Dark/short viewport are exercised.
