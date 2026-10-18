@@ -1956,9 +1956,9 @@ export async function prepareGoldenScenario(page, scenario) {
       await card.updateComplete;
       await frame();
       const dialog = card.renderRoot.querySelector('hp-dialog.roomdialog');
-      // #600: поля границ — `.hpf-temprange input[type=number]`, сброс — текстовая ссылка
+      // #946: the compact bounds retain the same values and explicit inheritance action.
       const inputs = dialog?.querySelectorAll('.hpf-temprange input[type="number"]');
-      const reset = dialog?.querySelector('.hpf-temprange .hpf-link');
+      const reset = dialog?.querySelector('[data-room-range-reset]');
       if (!dialog || inputs?.length !== 2 || inputs[0].placeholder !== '20'
           || inputs[1].placeholder !== '25' || inputs[0].value !== String(thresholds.min)
           || inputs[1].value !== (thresholds.max === null ? '' : String(thresholds.max))
