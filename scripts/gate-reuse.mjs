@@ -29,6 +29,7 @@ import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs
 import { resolve } from 'node:path';
 
 import { REUSE_JOBS, inputsOf } from './check-inputs.mjs';
+import { inputReader } from './content-inputs.mjs';
 
 /**
  * Входы каждой job — из единого manifest (#492 §5.3). Прежний `HARNESS`
@@ -50,19 +51,21 @@ export function harnessFiles(root, job) {
  * Ключ переиспользования: имя job + содержимое всех её входов. Пустой список
  * не молчит: он означал бы job без входов, и такую подмену лучше заметить.
  */
-export function reuseKey(root, job) {
-  const files = harnessFiles(root, job);
+export function reuseKey(root, job, { ref = null, reader = null } = {}) {
+  if (!JOBS.includes(job)) throw new Error(`неизвестная job: ${job}`);
+  const source = ref ? reader || inputReader(root, ref) : null;
+  const files = source ? inputsOf(job, root, { tracked: source.tracked, read: source.text }) : harnessFiles(root, job);
   if (!files.length) throw new Error(`входы job ${job} пусты — проверьте CHECKS в check-inputs.mjs`);
   const hash = createHash('sha256');
   hash.update(`job:${job}\0`);
   for (const rel of files) {
     const abs = resolve(root, rel);
-    if (!existsSync(abs)) continue;
+    if (!source && !existsSync(abs)) continue;
     hash.update(rel);
     hash.update('\0');
     // Текст канонизируется по переводам строк, бинарное берётся как есть:
     // иначе Windows и Linux дали бы разные ключи на одном дереве.
-    const raw = readFileSync(abs);
+    const raw = source ? source.read(rel) : readFileSync(abs);
     const text = raw.includes(0) ? raw : Buffer.from(raw.toString('utf8').replace(/\r\n?/g, '\n'));
     hash.update(text);
     hash.update('\0');

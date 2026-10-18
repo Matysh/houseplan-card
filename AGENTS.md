@@ -173,7 +173,9 @@ the branch against `dev` and the next step — no rebase a clean `show`/`ship`
 merge does not need; risk by changed hunks and what it means on this track; the
 required checks, each with its reason; changelog and visual evidence; the
 previous verdict and the unwitnessed AC; it writes nothing). The local gate is
-`npm run gate:small` (`docs/TESTING.md` › Локальный набор перед пушем); run the
+`npm run gate:small` (`docs/TESTING.md` › Локальный набор перед пушем); a verified
+private receipt may reuse build/pure product units, never fresh metadata/range
+guards or CI authority (#954). Golden and full demand are independent; run the
 smokes named in the AC before `S7-code-review`. **"Verified" without a named
 command and its result is not evidence.** Comment formats — claim, handoff,
 verdict — are `PROCESS.md` §7.2.

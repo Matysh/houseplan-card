@@ -30,6 +30,12 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/backup-archive-client.ts', 'src/backup-archive-lazy.ts'],
+    symbols: ['BackupArchiveClient', 'prepareArchive', '_backupErrorText'],
+    smokes: ['smoke_backup_archive.mjs', 'smoke_backup_transfer.mjs', 'smoke_empty_backup_import.mjs', 'smoke_config_authority.mjs'],
+    because: '#954: native ZIP export/import/consent, legacy JSON, empty input and writer authority; common _config/editor ownership is not proof of every browser contract.',
+  },
+  {
     symbols: ['_roomCo2', 'co2Value', 'co2For', 'co2DeviceValue', 'isCo2Entity', 'renderRoomSource',
       'renderRoomSettingsDialog', 'renderRoomCards', 'roomClimateMap', 'sourceValue'],
     files: ['src/room-co2.ts', 'src/styles/dialogs.styles.ts'],

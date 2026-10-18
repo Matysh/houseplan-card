@@ -12,6 +12,7 @@ import { isMainModule } from './spawn-portable.mjs';
 import { BASELINE_OVERLAY, REUSE_JOBS, globToRegExp } from './check-inputs.mjs';
 import { reuseKey } from './gate-reuse.mjs';
 import { jobInstanceNames, staticNamePrefix, validateJobs } from './workflow-jobs.mjs';
+import { producerEnvironments } from './ci-job-environment.mjs';
 
 export const CI_PROOF_SCHEMA = 'houseplan-ci-proof/v1';
 export const CI_PROOF_ARTIFACT_PREFIX = 'ci-proof';
@@ -247,6 +248,7 @@ export function requiredCheckIds({ request = {}, selection = {} } = {}) {
   if (asBool(selection.integration)) ids.push('integration');
   if (asBool(request.mutants)) ids.push('mutants');
   if (asBool(request.full)) ids.push('smoke', 'golden', 'performance_smoke');
+  else if (asBool(request.golden)) ids.push('golden');
   if (asBool(selection.geometry_parity)) ids.push('geometry_parity');
   if (asBool(selection.backend)) ids.push('backend');
   return ids;
@@ -270,6 +272,7 @@ export function buildCiProof({
     full: asBool(requestedFull) || asBool(changes.heavy),
     mutants: asBool(requestedMutants) || asBool(changes.mutants_requested),
   };
+  if (asBool(changes.golden) && !request.full) request.golden = true;
   const selection = {
     frontend: asBool(changes.frontend),
     geometry_parity: asBool(changes.geometry_parity),
@@ -307,6 +310,7 @@ export function buildCiProof({
     executedOrReused('golden');
     executedOrReused('performance_smoke');
   }
+  else if (request.golden) executedOrReused('golden');
   if (selection.geometry_parity) executedOrReused('geometry_parity');
   if (selection.backend) executedOrReused('backend');
   const requiredChecks = requiredCheckIds({ request, selection });
@@ -374,6 +378,7 @@ export function evaluateCiProof({
   if (run?.event && proof.run?.event !== run.event)
     return result('stale', 'run event differs from proof event');
   if (policy?.full && !asBool(proof.request?.full)) return result('stale', 'proof is light; full gates were not requested');
+  if (policy?.golden && !asBool(proof.request?.full) && !asBool(proof.request?.golden)) return result('stale', 'proof has no requested golden check');
   if (policy?.mutants && !asBool(proof.request?.mutants)) return result('stale', 'proof has no requested mutant jobs');
   // #573: потребитель, у которого есть checkout кандидата (release), сверяет
   // составное evidence, а не верит ему. Proof без блока при наличии ожиданий
@@ -592,6 +597,11 @@ if (isMainModule(import.meta.url)) {
       requestedMutants: process.env.REQUEST_MUTANTS,
       evidence,
     });
+    // Each stamp belongs to its actual producer job (all three for smoke), not
+    // this aggregation runner. Legacy same-branch proofs keep their contract.
+    proof.environments = producerEnvironments(needs);
+    proof.performanceSet = ['glow', asBool(needs?.changes?.outputs?.perf_iso) && 'iso',
+      asBool(needs?.changes?.outputs?.perf_interaction) && 'interaction'].filter(Boolean).join('-');
     const target = resolve(emit);
     mkdirSync(dirname(target), { recursive: true });
     writeFileSync(target, `${JSON.stringify(proof, null, 2)}\n`);

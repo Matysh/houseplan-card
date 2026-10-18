@@ -47,7 +47,7 @@
  */
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { delimiter, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { rebaseAdvice } from './branch-state.mjs';
 import { classify } from './process-gate.mjs';
@@ -139,7 +139,14 @@ export function planHook({ mode, refs, headSha, mergeBase, changedFiles }) {
  * что и при ручном `npm run gate:small`, поэтому все GIT_* снимаются.
  */
 export function gateEnv(env = process.env) {
-  return Object.fromEntries(Object.entries(env).filter(([key]) => !/^GIT_/i.test(key)));
+  const clean = Object.fromEntries(Object.entries(env).filter(([key]) => !/^GIT_/i.test(key)));
+  // Git prepends exactly its own exec path for hooks. Remove that one injected
+  // prefix before the ordinary npm entry; preserve every user PATH component,
+  // including a second identical component already present before Git ran.
+  const pathKey = Object.keys(clean).find(key => key.toLowerCase() === 'path');
+  const prefix = env.GIT_EXEC_PATH && `${env.GIT_EXEC_PATH}${delimiter}`;
+  if (pathKey && prefix && clean[pathKey].startsWith(prefix)) clean[pathKey] = clean[pathKey].slice(prefix.length);
+  return clean;
 }
 
 const gitOut = (args) => {
@@ -154,8 +161,10 @@ export function runHook({
   log = (line) => console.error(line),
   git = gitOut,
   runGate = (base) => {
-    const { cmd, shell } = portableCommand(process.execPath);
-    return spawnSync(cmd, [resolve(ROOT, 'scripts/gate-small.mjs'), `--base=${base}`],
+    // Match the ordinary entry exactly: npm lifecycle/PATH are meaningful
+    // receipt inputs, not variables to ignore just to obtain a cache hit.
+    const { cmd, shell } = portableCommand('npm');
+    return spawnSync(cmd, ['run', 'gate:small', '--', `--base=${base}`],
       { cwd: ROOT, stdio: ['ignore', 'inherit', 'inherit'], shell, env: gateEnv(env) }).status ?? 1;
   },
 } = {}) {

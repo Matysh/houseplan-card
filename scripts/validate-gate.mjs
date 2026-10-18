@@ -46,16 +46,13 @@ export function isMutantRun(run) {
 }
 
 /**
- * #696: какие прогоны годятся в доказательство. С мутантами — только dispatch
- * (push их не запрашивает). Без мутантов (`show`/`ship`) годится и
- * завершённый push-прогон на материале: лёгкий Validate на этом SHA уже
- * исполнен, и dispatch повторил бы его. Ждать же можно только dispatch:
- * продолжение раунда будит его завершение (process-resume.yml слушает
- * `workflow_dispatch`), и push, который ещё идёт, раунд не разбудил бы.
+ * С legacy-запросом мутантов — только dispatch. Без него #954 принимает и
+ * идущий push: план уже учитывает full/golden, а process-resume проверяет
+ * точный ожидаемый run id обоих событий. Завершение всё равно судится по proof.
  */
 export function proofCandidate(run, { mutants = true } = {}) {
   if (mutants) return isMutantRun(run);
-  return run?.event === 'workflow_dispatch' || (run?.event === 'push' && run?.status === 'completed');
+  return run?.event === 'workflow_dispatch' || run?.event === 'push';
 }
 
 // #622: префикс — из контракта ci-proof (JOB_RULES.mutants), который сверяется
@@ -85,13 +82,13 @@ export function provesMutants(jobs) {
  */
 export async function validateGate({
   ref, sha, ops, appearMs = VALIDATE_APPEAR_MS, totalMs = VALIDATE_TOTAL_MS, pollMs = POLL_MS, wait = true,
-  mutants = true, full = false,
+  mutants = true, full = false, golden = false,
 }) {
-  // #697: метки `ci:full`/`ci:golden` заказывают полный набор на материале —
-  // смоки, golden, perf. Лёгкий push-прогон его не несёт и доказательством не
-  // считается (policy.full), поэтому гейт диспатчит `full=true` сам.
+  // #954: full и golden независимы. Несовместимый завершённый proof не
+  // принимается; заранее спланированный push можно дождаться без дубля.
   const base = mutants ? CI_PROOF_POLICIES.review : CI_PROOF_POLICIES.reviewLight;
-  const policy = full ? Object.freeze({ ...base, name: `${base.name}-full`, full: true }) : base;
+  const policy = full ? Object.freeze({ ...base, name: `${base.name}-full`, full: true })
+    : golden ? Object.freeze({ ...base, name: `${base.name}-golden`, golden: true }) : base;
   const label = `${mutants ? 'Validate с мутантами' : 'Validate'}${full ? ' (полный набор)' : ''}`;
   const started = ops.now();
   const candidateTree = await ops.candidateTree(sha);
@@ -198,9 +195,10 @@ if (invokedDirectly) {
   const wait = !process.argv.includes('--no-wait');
   // #696: `--mutants=false` — лёгкое доказательство треков show/ship.
   const mutants = arg('mutants') !== 'false';
-  // #697: `--full=true` — метки ci:full/ci:golden.
+  // #954: ci:full и ci:golden — отдельные требования.
   const full = arg('full') === 'true';
-  const outcome = await validateGate({ ref, sha, wait, mutants, full, ops: realOps({ repo, workflow: arg('workflow') || 'validate.yml' }) });
+  const golden = ['true', 'add', 'present'].includes(arg('golden'));
+  const outcome = await validateGate({ ref, sha, wait, mutants, full, golden, ops: realOps({ repo, workflow: arg('workflow') || 'validate.yml' }) });
   const lines = [`result=${outcome.result}`, `url=${outcome.url || ''}`, `run_id=${outcome.runId || ''}`, `note=${outcome.note}`];
   for (const line of lines) console.log(line);
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `${lines.join('\n')}\n`);

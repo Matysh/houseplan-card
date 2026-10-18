@@ -18034,14 +18034,13 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'light-review-waits-running-push',
-    guard: 'node --test --test-name-pattern="#696" test/validate-gate.test.mjs',
-    because: '#696: a running push run cannot wake the round (process-resume listens to '
-      + 'dispatch only); treating it as proof candidate parks the round forever',
+    id: 'light-review-duplicates-running-push',
+    guard: 'node --test --test-name-pattern="#954 without mutants" test/validate-gate.test.mjs',
+    because: '#954: sealed push completion now wakes the round; rejecting a pending exact push creates a duplicate producer',
     patches: [{
       file: 'scripts/validate-gate.mjs',
-      find: "  return run?.event === 'workflow_dispatch' || (run?.event === 'push' && run?.status === 'completed');",
-      replace: "  return run?.event === 'workflow_dispatch' || run?.event === 'push'; // mutant: running push counts",
+      find: "  return run?.event === 'workflow_dispatch' || run?.event === 'push';",
+      replace: "  return run?.event === 'workflow_dispatch' || (run?.event === 'push' && run?.status === 'completed');",
     }],
   },
   {
@@ -18100,25 +18099,24 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'ci-golden-label-does-not-order-full-set',
-    guard: 'node --test --test-name-pattern="#697" test/process-track.test.mjs',
-    because: '#697: a task that changes visuals on purpose sets ci:golden; without the full set '
-      + 'on its review material its shifted frames surface in the next task again',
+    id: 'ci-golden-label-does-not-order-golden',
+    guard: 'node --test --test-name-pattern="#954 full/golden" test/development-loop-954.test.mjs',
+    because: '#954: separating golden from full must retain explicit golden demand even without a render-risk fallback',
     patches: [{
-      file: 'scripts/process-track.mjs',
-      find: "  const full = labels.includes('ci:full') || labels.includes('ci:golden');",
-      replace: "  const full = labels.includes('ci:full'); // mutant: ci:golden ignored",
+      file: 'scripts/task-ci-plan.mjs',
+      find: "labels.includes('ci:golden')",
+      replace: 'false',
     }],
   },
   {
     id: 'review-gate-accepts-light-proof-for-full',
     guard: 'node --test --test-name-pattern="#697" test/validate-gate.test.mjs',
-    because: '#697: with ci:full/ci:golden a light push run proves nothing about smokes and golden; '
+    because: '#697/#954: with ci:full a light push run proves nothing about the full matrix; '
       + 'the gate must dispatch full=true instead of accepting it',
     patches: [{
       file: 'scripts/validate-gate.mjs',
-      find: "  const policy = full ? Object.freeze({ ...base, name: `${base.name}-full`, full: true }) : base;",
-      replace: '  const policy = base; // mutant: full never required',
+      find: "  const policy = full ? Object.freeze({ ...base, name: `${base.name}-full`, full: true })",
+      replace: "  const policy = false ? Object.freeze({ ...base, name: `${base.name}-full`, full: true })",
     }],
   },
   {

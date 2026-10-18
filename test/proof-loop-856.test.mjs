@@ -240,7 +240,9 @@ test('#856 local groups compose every unit file and preserve producer-before-con
   const workflow = readFileSync(new URL('.github/workflows/validate.yml', root), 'utf8');
   const frontend = workflow.slice(workflow.indexOf('\n  frontend:\n'), workflow.indexOf('\n  dev_build:\n'));
   assert.doesNotMatch(frontend, /run: npm run typecheck/);
-  assert.match(frontend, /run: npm run build/); assert.match(frontend, /run: npm test/); assert.match(frontend, /run: npm run lint:unused/);
+  assert.match(frontend, /run: npm run build/); assert.match(frontend, /npx tsc -p tsconfig.test.json/);
+  assert.match(frontend, /frontend-units.mjs --group=reusable/); assert.match(frontend, /frontend-units.mjs --group=fresh/);
+  assert.match(frontend, /run: npm run lint:unused/);
   const step = findStep(workflow, { name: 'Restore complete compatible frontend producer' });
   const r = runStep(step, step.run.replace(/\$\{\{ github.repository \}\}/g, repo), { cwd: new URL('..', import.meta.url),
     env: { ...process.env, ImageOS: '', ImageVersion: '' } });

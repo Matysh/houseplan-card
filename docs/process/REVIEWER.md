@@ -243,6 +243,11 @@ Usage dimensions — только отчёт, estimate не OAuth billing. Не�
   конвейер до Validate на материале (#827), и ревью идёт уже после golden;
   ревьюер сверяет, что сдвига кадров нет либо он намерен и принят в задаче
   ([§5.1](../../PROCESS.md#51-метки-тяжёлых-проверок-и-прежние-метки)).
+- #954: golden не означает всю матрицу смоков. Проверить split свежих
+  FS/Git/process/dynamic юнитов и reused чистой группы; receipt/cache-hit не
+  заменяют доказанный source run/attempt/job, содержимое входов, окружение и
+  byte inventory. Full release/night coverage неизменна
+  ([§8](../../PROCESS.md#8-гейты)).
 
 ## Пакетное ревью ship
 

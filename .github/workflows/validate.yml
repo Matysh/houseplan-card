@@ -31,12 +31,12 @@ on:
 
 # A new push supersedes an unfinished validation for the same branch or PR.
 # Exact-SHA release gates never depend on an obsolete commit.
-# Полный прогон по кнопке/ночью (#479) живёт в своей группе: первый ручной
-# запуск отменил очередной push конвейера через полторы минуты — ночной
-# результат обнулялся бы любым коммитом, пришедшим в то же окно.
+# Ночной/protected dispatch сохраняет отдельную группу (#479). В issue-ветке
+# dispatch ждёт уже идущий push, а не отменяет его producer; после успеха
+# принимает его content-proof. Новый push по-прежнему заменяет старый материал.
 concurrency:
-  group: validate-${{ github.event_name == 'workflow_dispatch' && 'dispatch-' || '' }}${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: validate-${{ github.event_name == 'workflow_dispatch' && !startsWith(github.ref, 'refs/heads/issue/') && 'dispatch-' || '' }}${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' || !startsWith(github.ref, 'refs/heads/issue/') }}
 
 jobs:
   # Четыре секундных скрипта жили четырьмя job, каждая со своим checkout и
@@ -329,6 +329,7 @@ jobs:
     permissions:
       contents: read
       actions: read
+      issues: read
     outputs:
       frontend: ${{ steps.classify.outputs.frontend }}
       geometry_parity: ${{ steps.classify.outputs.geometry_parity }}
@@ -340,6 +341,7 @@ jobs:
       unknown_inputs: ${{ steps.classify.outputs.unknown_inputs }}
       # Тяжёлые job только на кандидате/по кнопке/на PR (#479), см. шаг heavy.
       heavy: ${{ steps.heavy.outputs.heavy }}
+      golden: ${{ steps.heavy.outputs.golden }}
       mutants_requested: ${{ steps.heavy.outputs.mutants_requested }} # #510
       base: ${{ steps.base.outputs.base }}
       # `base` — до какого коммита классифицировать файлы ветки (#387),
@@ -363,6 +365,8 @@ jobs:
       # её тест — scripts/classify-changes.mjs.
       - id: heavy
         env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
           EVENT_NAME: ${{ github.event_name }}
           HEAD_MESSAGE: ${{ github.event.head_commit.message }}
           FULL_INPUT: ${{ inputs.full }}
@@ -498,6 +502,9 @@ jobs:
     needs: changes
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
     outputs:
       smoke: ${{ steps.probe.outputs.smoke }}
       golden: ${{ steps.probe.outputs.golden }}
@@ -527,6 +534,7 @@ jobs:
       backend_source_sha: ${{ steps.p_backend.outputs.source_sha }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with: { fetch-depth: 0, filter: 'blob:none' }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with: { node-version: 22 }
       - name: Ключи переиспользования
@@ -549,6 +557,14 @@ jobs:
       # Маркер восстанавливается во временный файл: #541 требует не только
       # cache-hit, но и SHA/run исходного успешного job. Между lookup файл
       # удаляется, чтобы один маркер не был принят за другой.
+      - name: Direct accepted producer transfer across branches
+        id: transfer
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PERF_ISO: ${{ needs.changes.outputs.perf_iso }}
+          PERF_INTERACTION: ${{ needs.changes.outputs.perf_interaction }}
+          TRANSFER_CHECKS: '{"smoke":"${{ needs.changes.outputs.heavy }}","golden":"${{ needs.changes.outputs.golden }}","performance_smoke":"${{ needs.changes.outputs.heavy }}","geometry_parity":"${{ needs.changes.outputs.geometry_parity }}","backend":"${{ needs.changes.outputs.backend }}"}'
+        run: node scripts/check-proof-transfer.mjs --repo="${{ github.repository }}"
       - name: Маркер smoke
         id: m_smoke
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
@@ -557,8 +573,8 @@ jobs:
           key: reuse-smoke-${{ steps.keys.outputs.smoke }}
       - name: Доказательство источника smoke
         id: p_smoke
-        if: steps.m_smoke.outputs.cache-hit == 'true'
-        run: node scripts/ci-proof.mjs --marker=.reuse-marker
+        if: steps.m_smoke.outputs.cache-hit == 'true' || steps.transfer.outputs.smoke == 'true'
+        run: node scripts/check-proof-transfer.mjs --job=smoke --marker=.reuse-marker
       - name: Очистить маркер smoke перед следующим lookup
         if: always()
         run: rm -f .reuse-marker
@@ -570,8 +586,8 @@ jobs:
           key: reuse-golden-${{ steps.keys.outputs.golden }}
       - name: Доказательство источника golden
         id: p_golden
-        if: steps.m_golden.outputs.cache-hit == 'true'
-        run: node scripts/ci-proof.mjs --marker=.reuse-marker
+        if: steps.m_golden.outputs.cache-hit == 'true' || steps.transfer.outputs.golden == 'true'
+        run: node scripts/check-proof-transfer.mjs --job=golden --marker=.reuse-marker
       - name: Очистить маркер golden перед следующим lookup
         if: always()
         run: rm -f .reuse-marker
@@ -583,8 +599,8 @@ jobs:
           key: reuse-performance_smoke-${{ steps.keys.outputs.performance_smoke }}-${{ steps.keys.outputs.performance_smoke_set }}
       - name: Доказательство источника performance_smoke
         id: p_perf
-        if: steps.m_perf.outputs.cache-hit == 'true'
-        run: node scripts/ci-proof.mjs --marker=.reuse-marker
+        if: steps.m_perf.outputs.cache-hit == 'true' || steps.transfer.outputs.performance_smoke == 'true'
+        run: node scripts/check-proof-transfer.mjs --job=performance_smoke --marker=.reuse-marker
       - name: Очистить маркер performance_smoke перед следующим lookup
         if: always()
         run: rm -f .reuse-marker
@@ -596,8 +612,8 @@ jobs:
           key: reuse-geometry_parity-${{ steps.keys.outputs.geometry_parity }}
       - name: Доказательство источника geometry_parity
         id: p_geometry_parity
-        if: steps.m_geometry_parity.outputs.cache-hit == 'true'
-        run: node scripts/ci-proof.mjs --marker=.reuse-marker
+        if: steps.m_geometry_parity.outputs.cache-hit == 'true' || steps.transfer.outputs.geometry_parity == 'true'
+        run: node scripts/check-proof-transfer.mjs --job=geometry_parity --marker=.reuse-marker
       - name: Очистить маркер geometry_parity перед следующим lookup
         if: always()
         run: rm -f .reuse-marker
@@ -609,19 +625,19 @@ jobs:
           key: reuse-backend-${{ steps.keys.outputs.backend }}
       - name: Доказательство источника backend
         id: p_backend
-        if: steps.m_backend.outputs.cache-hit == 'true'
-        run: node scripts/ci-proof.mjs --marker=.reuse-marker
+        if: steps.m_backend.outputs.cache-hit == 'true' || steps.transfer.outputs.backend == 'true'
+        run: node scripts/check-proof-transfer.mjs --job=backend --marker=.reuse-marker
       - name: Очистить маркер backend
         if: always()
         run: rm -f .reuse-marker
       - name: Что переиспользуем
         id: probe
         env:
-          SMOKE: ${{ steps.m_smoke.outputs.cache-hit }}
-          GOLDEN: ${{ steps.m_golden.outputs.cache-hit }}
-          PERF: ${{ steps.m_perf.outputs.cache-hit }}
-          GEOMETRY_PARITY: ${{ steps.m_geometry_parity.outputs.cache-hit }}
-          BACKEND: ${{ steps.m_backend.outputs.cache-hit }}
+          SMOKE: ${{ steps.p_smoke.outputs.accepted }}
+          GOLDEN: ${{ steps.p_golden.outputs.accepted }}
+          PERF: ${{ steps.p_perf.outputs.accepted }}
+          GEOMETRY_PARITY: ${{ steps.p_geometry_parity.outputs.accepted }}
+          BACKEND: ${{ steps.p_backend.outputs.accepted }}
         run: |
           # Пропуск обязан быть громким: молчаливый skip — тот самый тихий
           # успех, который уже дважды стоил нам дня (#171, #207).
@@ -757,8 +773,16 @@ jobs:
       # отстаёт от исходников (#657), поэтому юниты обязаны читать свежую
       # сборку — тот же порядок закреплён локальным gate:small.
       - name: Unit tests
-        if: steps.producer.outputs.reused != 'true'
-        run: npm test
+        env:
+          REUSED: ${{ steps.producer.outputs.reused }}
+        run: |
+          set -euo pipefail
+          if [ "$REUSED" != "true" ]; then
+            npx tsc -p tsconfig.test.json
+            node scripts/fix-test-build.mjs
+            node scripts/frontend-units.mjs --group=reusable
+          fi
+          node scripts/frontend-units.mjs --group=fresh
       # Entry, manifest and every content-hashed chunk are one artifact (#337).
       # #657: the committed bundle changes only in a release candidate, so the
       # fresh build must equal it only there; elsewhere the committed copy
@@ -879,6 +903,10 @@ jobs:
     if: needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.smoke != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    outputs:
+      environment_1: ${{ steps.environment.outputs.environment_1 }}
+      environment_2: ${{ steps.environment.outputs.environment_2 }}
+      environment_3: ${{ steps.environment.outputs.environment_3 }}
     # Смоки шардируются: последовательный прогон занимал ~7.5 минут и был
     # критическим путём всего Validate. Три шарда режут его примерно вдвое;
     # цена — трижды `npm ci` и сборка, около двух оплаченных минут раннера.
@@ -971,6 +999,9 @@ jobs:
           # Пустой шард — признак, что деление сломалось, а не что работы нет.
           if [ "$ran" -eq 0 ]; then echo "шард пуст: проверьте деление"; exit 1; fi
           exit $fail
+      - name: Stamp actual producer environment
+        id: environment
+        run: node scripts/ci-job-environment.mjs --output=environment_${{ matrix.shard }}
       - name: Upload smoke logs
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -1008,9 +1039,11 @@ jobs:
     # Deterministic visual correctness stays in every prerelease gate: it is
     # inexpensive and catches a different class of regressions than timings.
     needs: [changes, frontend, reuse]
-    if: needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.golden != 'true'
+    if: needs.changes.outputs.golden == 'true' && needs.reuse.outputs.golden != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    outputs:
+      environment: ${{ steps.environment.outputs.environment }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -1063,6 +1096,9 @@ jobs:
             echo "has_baselines=false" >> "$GITHUB_OUTPUT"
             npm run golden:capture
           fi
+      - name: Stamp actual producer environment
+        id: environment
+        run: node scripts/ci-job-environment.mjs
       - name: Upload golden candidates/diffs
         if: failure() || steps.golden.outputs.has_baselines == 'false'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -1118,6 +1154,8 @@ jobs:
     # job укладывается в те же минуты, что и раньше. Диффозависимые профили
     # (#473) добавляют до двух замеров по 3 образца — окно расширено под них.
     timeout-minutes: 30
+    outputs:
+      environment: ${{ steps.environment.outputs.environment }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -1180,6 +1218,9 @@ jobs:
         run: npm run benchmark:junction-limits
       - name: Быстрый commit точки стены (#461)
         run: npm run benchmark:wall-draw-click -- --output=artifacts/performance-smoke/wall-draw-click.json
+      - name: Stamp actual producer environment
+        id: environment
+        run: node scripts/ci-job-environment.mjs
       - name: Upload performance smoke report
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -1210,6 +1251,8 @@ jobs:
     if: needs.changes.outputs.geometry_parity == 'true' && needs.reuse.outputs.geometry_parity != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    outputs:
+      environment: ${{ steps.environment.outputs.environment }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -1228,6 +1271,9 @@ jobs:
         run: |
           python tests_backend/junction_parity.py --build-dir=test-build/junction-parity
           python tests_backend/wall_node_parity.py --build-dir=test-build/junction-parity
+      - name: Stamp actual producer environment
+        id: environment
+        run: node scripts/ci-job-environment.mjs
       - name: Записать маркер успеха
         run: |
           printf '%s\n' "geometry_parity прогнана успешно" \
@@ -1247,6 +1293,8 @@ jobs:
     if: needs.changes.outputs.backend == 'true' && needs.reuse.outputs.backend != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    outputs:
+      environment: ${{ steps.environment.outputs.environment }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       # Browser fixtures are generated by their real ESM factories and then
@@ -1293,6 +1341,9 @@ jobs:
           --cov-report=xml --cov-report=term
       - name: Support relay unit tests
         run: python -m unittest discover -s scripts/support-relay/tests -q
+      - name: Stamp actual producer environment
+        id: environment
+        run: node scripts/ci-job-environment.mjs
       # #42: гейт «не ниже baseline» — пороги 90/95 поднимаются trivial-правкой числа
       - name: Порог покрытия не ниже baseline
         run: |

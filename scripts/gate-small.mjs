@@ -25,6 +25,7 @@ import { spawn } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { portableCommand } from './spawn-portable.mjs';
+import { localGateKey, restoreLocalGate, invalidateLocalGate, sealLocalGate } from './local-gate-proof.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const npm = 'npm';
@@ -117,14 +118,22 @@ export function summarize(results) {
 
 export async function gateSmall({ cwd = ROOT, base = 'origin/dev', smokes = false, jobs = 2, group = 'all', log = console.log } = {}) {
   const started = Date.now();
+  let key = null, reused = false;
+  if (group === 'all') {
+    try { key = localGateKey(cwd); reused = restoreLocalGate(cwd, key); invalidateLocalGate(cwd); }
+    catch { key = null; }
+  }
+  if (reused) log('local receipt: build + reusable product units restored; range/process/FS/Git units run fresh');
   log(`gate:small — база диапазона ${base}; параллельно: сборка, no-new-any, no-new-private-writes, smoke-select; после сборки: юниты и проверки артефакта${smokes ? `; затем bundle-sync и смоки по диффу (×${jobs})` : ''}`);
-  const planned = parallelSteps(base).filter(step => group !== 'tooling' || !step.args.includes('build'));
+  const planned = parallelSteps(base).filter(step => !(group === 'tooling' || reused) || !step.args.includes('build'));
   if (group === 'tooling') planned.push({ name: 'tooling units (local subset)', cmd: process.execPath, args: ['scripts/unit-groups.mjs', '--group=tooling'] });
   const parallel = await Promise.all(planned.map((step) => runStep(step, cwd)));
-  const buildOk = parallel.find((r) => r.args.includes('build'))?.code === 0;
+  const buildOk = reused || parallel.find((r) => r.args.includes('build'))?.code === 0;
   const serial = [];
-  if (buildOk) for (const step of postBuildSteps()) serial.push(await runStep(group === 'product' && step.args[0] === 'test'
-    ? { ...step, cmd: process.execPath, args: ['scripts/unit-groups.mjs', '--group=product'] } : step, cwd));
+  if (buildOk) for (const step of postBuildSteps()) serial.push(await runStep(reused && step.args[0] === 'test'
+    ? { ...step, cmd: process.execPath, args: ['scripts/frontend-units.mjs', '--group=fresh'] }
+    : group === 'product' && step.args[0] === 'test'
+      ? { ...step, cmd: process.execPath, args: ['scripts/unit-groups.mjs', '--group=product'] } : step, cwd));
   // Browser-consumers — после подготовки артефактов (#496): bundle-sync раскладывает
   // собранное дерево в demo/srv/assets, смоки читают его и отказываются на несвежем.
   let selected = [];
@@ -140,7 +149,13 @@ export async function gateSmall({ cwd = ROOT, base = 'origin/dev', smokes = fals
     }
   }
   const results = [...parallel, ...serial];
-  const { lines, failed } = summarize(results);
+  let { lines, failed } = summarize(results);
+  if (key && !failed) {
+    try {
+      if (localGateKey(cwd) !== key) { failed++; log('FAIL: local inputs changed while gate ran; no receipt'); }
+      else sealLocalGate(cwd, key);
+    } catch (error) { log(`local receipt unavailable: ${error.message}; next push runs fresh`); }
+  }
   log('');
   for (const line of lines) log(line);
   const select = parallel.find((r) => r.args.includes('scripts/smoke-select.mjs'));

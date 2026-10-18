@@ -1508,14 +1508,41 @@ ordinary unit suite; neither subset alone replaces `npm run gate:small` or the
 pre-push hook. Root `tsc --noEmit` is already part of build; test-config emit,
 `fix-test-build` and `noUnusedLocals` have different contracts and remain.
 
-Validate can restore dist/test-build only from a complete successful protected
-producer run/attempt (or an issue producer whose exact SHA has actually reached
-the protected consumer ref), byte inventories, known Node/OS/architecture/runner image
-and the complete frontend content key. V1 also binds HEAD/SHA/tree because unit
-fixtures inspect git metadata: cross-commit equivalence is not presumed.
+Validate restores dist/test-build from a complete successful producer run/attempt,
+byte inventories, known Node/OS/architecture/runner image and proven content inputs.
+V1 remains exact-SHA. Schema2 (#954) independently reads ancestor Git objects as
+data, compares reusable product inputs and binds SHA/tree/run/attempt separately.
+The source must be an ancestor or this same issue's own pre-rebase producer;
+an unrelated sibling issue cannot supply trust merely by matching bytes.
+Only closed pure product units are reused; the disjoint FS/Git/process/dynamic
+and tooling group always runs on the consumer. The full union is still required.
 Red/cancelled/incomplete/expired/foreign or changed config/pin/toolchain evidence
 means a fresh producer. Diff guards, bundle policy/budget and unused checks
 still run fresh. The source run is printed; no cache hit is a green verdict.
+
+Push and dispatch share one up-front task plan: labels and visual/render risk
+select full and golden independently. An already pending exact push can wake
+its sealed review request on completion; it does not need a duplicate dispatch.
+An explicit issue dispatch queues behind the active push; its successful producer
+can then be restored, not cancelled halfway through. New pushes supersede old
+material. Protected dev/night/release concurrency and full coverage stay separate.
+
+Heavy check transfer reads a direct executed producer ci-proof across branch
+cache boundaries. Ancestor/tree, independently recomputed source/consumer keys,
+source run/attempt/jobs, each producer's actual environment (all three smoke
+shards, not the later aggregation runner), 24-hour lifetime and exact perf
+profile set must agree; API absence/unknown evidence means fresh execution.
+No transfer chains, green-by-cache-bit, red/cancelled/partial producer or foreign
+repository is accepted. Only requested groups are searched.
+
+Local gate receipt is private under .git/hp-local-gate-v1. It restores verified
+dist/test-build and the pure unit result for unchanged inputs, including dirty/
+untracked files, environment and policy; fresh groups and guards still execute.
+Receipts are invalidated before an attempt, sealed only after full success and
+unchanged inputs, expire after 24 hours and have no CI/review authority.
+Manual npm and pre-push use the same lifecycle entry; only Git's injected PATH
+prefix and WSL_INTEROP's per-invocation transport socket are normalized. User PATH,
+tool options and otherwise unknown environment variables still invalidate proof.
 
 Night, merge-after-rebase and release readiness free the runner while pending.
 Completion/reconcile authenticate repository, source attempt/path, child SHA
@@ -1546,9 +1573,9 @@ release/publish-prerelease dispatch). Never clear a live claim to retry blindly.
   on by default for `issue/*` branches with an executable diff, skipped when the
   branch diff against `origin/dev` is class C/D only (review documents,
   changelogs, bundle), off with `HP_PREPUSH_GATE=0`, forced for any branch with
-  `HP_PREPUSH_GATE=1`. `gate:small` takes minutes; when a push must fit a
-  3-minute command, run `npm run gate:small` separately and push with
-  `HP_PREPUSH_GATE=0`.
+  `HP_PREPUSH_GATE=1`. Run the final gate once; the unchanged pre-push uses its
+  verified local receipt and reruns metadata/range guards. Do not disable the
+  hook to avoid a duplicate build.
 
 ## Local Windows workstation
 

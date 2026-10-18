@@ -8,6 +8,8 @@ import { join, resolve } from 'node:path';
 import { inputsOf } from './check-inputs.mjs';
 import { sourceFingerprint } from './source-fingerprint.mjs';
 import { isMainModule } from './spawn-portable.mjs';
+import { contentInputKey } from './content-inputs.mjs';
+import { reusableFrontendInputs } from './frontend-units.mjs';
 
 const hash = v => createHash('sha256').update(v).digest('hex');
 const hex = (v, n) => typeof v === 'string' && new RegExp(`^[a-f0-9]{${n}}$`).test(v);
@@ -30,6 +32,8 @@ export function frontendKey(root = process.cwd(), environment = producerEnvironm
   }
   return h.digest('hex');
 }
+export const frontendContentKey = (root = process.cwd(), environment = producerEnvironment(), ref = null) =>
+  contentInputKey(root, 'frontend', { environment, ref, select: reader => reusableFrontendInputs(root, reader) });
 export function artifactTree(directory) {
   if (!existsSync(directory) || lstatSync(directory).isSymbolicLink()) throw Error('missing/unsafe artifact tree');
   const rows = [];
@@ -47,15 +51,16 @@ export function artifactTree(directory) {
   if (!rows.length) throw Error('empty producer artifact');
   return hash(JSON.stringify(rows));
 }
-export function admissibleFrontendProof(proof, { key, fingerprint, environment, run, jobs, artifact, tree, now = Date.now(), repo, promotedSha = null }) {
-  return proof?.schema === 1 && proof.outcome === 'success' && proof.reused === false
+export function admissibleFrontendProof(proof, { key, fingerprint, environment, run, jobs, artifact, tree, now = Date.now(), repo, promotedSha = null, sourceCompatible = false }) {
+  return [1, 2].includes(proof?.schema) && proof.outcome === 'success' && proof.reused === false
+    && (proof.schema === 1 || sourceCompatible)
     && hex(proof.key, 64) && proof.key === key && proof.fingerprint === fingerprint
     && JSON.stringify(proof.environment) === JSON.stringify(environment)
     && Boolean(environment.imageOS && environment.imageVersion)
     && run?.status === 'completed' && run.conclusion === 'success'
     && run.repository?.full_name === repo && run.head_repository?.full_name === repo
     && (['dev', 'main'].includes(run.head_branch) || /^issue\/[1-9]\d+-[\w-]+$/.test(run.head_branch || '')
-      && promotedSha === run.head_sha)
+      && (promotedSha === run.head_sha || proof.schema === 2 && sourceCompatible))
     && run.path === '.github/workflows/validate.yml' && proof.sha === run.head_sha && proof.tree === tree
     && hex(proof.sha, 40) && hex(proof.tree, 40) && String(proof.run) === String(run.id)
     && Number(proof.attempt) === Number(run.run_attempt)
@@ -76,14 +81,25 @@ export function restoreFrontend({ root = process.cwd(), repo, environment = prod
   download = (id, name, dir) => execFileSync('gh', ['run', 'download', String(id), '--repo', repo, '--name', name, '--dir', dir], { stdio: 'pipe' }) } = {}) {
   const key = frontendKey(root, environment), fingerprint = sourceFingerprint(root);
   if (!environment.imageOS || !environment.imageVersion) return { reused: false, key, reason: 'unknown runner environment' };
-  // For dev-after-merge, an issue run becomes trusted only when its exact HEAD
-  // has actually reached the protected consumer ref. No cross-SHA equivalence.
+  // Legacy v1 needs exact promotion. V2 uses independently proven inputs and
+  // accepted ancestry; an issue may also reuse its own pre-rebase producer.
   const localSha = execFileSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
   const promotedSha = ['dev', 'main'].includes(consumerBranch)
     && api(['api', `repos/${repo}/git/ref/heads/${consumerBranch}`]).object?.sha === localSha ? localSha : null;
-  const list = api(['api', `repos/${repo}/actions/workflows/validate.yml/runs?head_sha=${localSha}&status=success&per_page=10`]);
+  const list = api(['api', `repos/${repo}/actions/workflows/validate.yml/runs?status=success&per_page=30`]);
   for (const candidate of list.workflow_runs || []) {
     if (String(candidate.id) === String(process.env.GITHUB_RUN_ID)) continue;
+    if (candidate.head_sha !== localSha) {
+      try {
+        if (candidate.head_branch === consumerBranch && /^issue\/[1-9]\d+-[\w-]+$/.test(consumerBranch || '')
+          && hex(candidate.head_sha, 40)) {
+          try { execFileSync('git', ['-C', root, 'cat-file', '-e', `${candidate.head_sha}^{commit}`], { stdio: 'pipe' }); }
+          catch { execFileSync('git', ['-C', root, 'fetch', '--no-tags', '--filter=blob:none', 'origin', candidate.head_sha], { stdio: 'pipe' }); }
+        }
+        const source = execFileSync('git', ['-C', root, 'show', `${candidate.head_sha}:scripts/frontend-proof.mjs`], { encoding: 'utf8' });
+        if (source.replace(/\r\n?/g, '\n') !== readFileSync(join(root, 'scripts/frontend-proof.mjs'), 'utf8').replace(/\r\n?/g, '\n')) continue;
+      } catch { continue; }
+    }
     const dir = mkdtempSync(join(tmpdir(), 'hp-frontend-proof-'));
     try {
       const run = api(['api', `repos/${repo}/actions/runs/${candidate.id}`]);
@@ -94,7 +110,16 @@ export function restoreFrontend({ root = process.cwd(), repo, environment = prod
       const proof = JSON.parse(readFileSync(join(dir, 'proof.json'), 'utf8'));
       const jobs = api(['api', `repos/${repo}/actions/runs/${run.id}/attempts/${run.run_attempt}/jobs?per_page=100`]).jobs;
       const tree = api(['api', `repos/${repo}/git/commits/${run.head_sha}`]).tree?.sha;
-      if (!admissibleFrontendProof(proof, { key, fingerprint, environment, run, jobs, artifact: artifacts[0], tree, repo, promotedSha })) continue;
+      let sourceCompatible = false;
+      const expectedKey = proof.schema === 1 ? key : frontendContentKey(root, environment);
+      if (proof.schema === 2) {
+        // Read source objects as data, never execute code from another branch.
+        const sameIssue = /^issue\/[1-9]\d+-[\w-]+$/.test(consumerBranch || '') && run.head_branch === consumerBranch;
+        if (!sameIssue) execFileSync('git', ['-C', root, 'merge-base', '--is-ancestor', run.head_sha, localSha], { stdio: 'pipe' });
+        sourceCompatible = frontendContentKey(root, environment, run.head_sha) === expectedKey;
+      }
+      if (proof.schema === 1 && run.head_sha !== localSha) continue;
+      if (!admissibleFrontendProof(proof, { key: expectedKey, fingerprint, environment, run, jobs, artifact: artifacts[0], tree, repo, promotedSha, sourceCompatible })) continue;
       verifyProducerTrees(proof, dir);
       for (const name of ['dist', 'test-build']) {
         const target = resolve(root, name);
@@ -102,7 +127,7 @@ export function restoreFrontend({ root = process.cwd(), repo, environment = prod
         rmSync(target, { recursive: true, force: true });
         cpSync(join(dir, name), target, { recursive: true });
       }
-      return { reused: true, key, sourceRun: run.id, sourceAttempt: run.run_attempt, sourceSha: run.head_sha };
+      return { reused: true, key: expectedKey, sourceRun: run.id, sourceAttempt: run.run_attempt, sourceSha: run.head_sha };
     } catch { /* Missing/invalid/red/expired proof: normal fresh producer, no partial PASS. */ }
     finally { rmSync(dir, { recursive: true, force: true }); }
   }
@@ -113,7 +138,7 @@ if (isMainModule(import.meta.url)) {
   const root = process.cwd();
   if (process.argv.includes('--store')) {
     const environment = producerEnvironment();
-    const proof = { schema: 1, outcome: 'success', reused: false, key: frontendKey(root, environment),
+    const proof = { schema: 2, outcome: 'success', reused: false, key: frontendContentKey(root, environment),
       environment, fingerprint: sourceFingerprint(root), sha: git(['rev-parse', 'HEAD']), tree: git(['rev-parse', 'HEAD^{tree}']),
       run: process.env.GITHUB_RUN_ID, attempt: process.env.GITHUB_RUN_ATTEMPT,
       dist: artifactTree(join(root, 'dist')), testBuild: artifactTree(join(root, 'test-build')) };

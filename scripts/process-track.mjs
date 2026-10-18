@@ -104,7 +104,7 @@ export function resolveTrack({ labels = [], files = [], filesCapped = false } = 
   const infrastructure = !filesCapped && files.length > 0 && files.every((file) => classify(file) !== 'A');
   const track = labelTrack({ labels, infrastructure });
   const mutants = false;
-  const full = labels.includes('ci:full') || labels.includes('ci:golden');
+  const full = labels.includes('ci:full');
   return { track, mutants, full, infrastructure };
 }
 
@@ -335,7 +335,7 @@ export function goldenComment({ risk = null, runUrl = '' } = {}) {
   const parts = [
     '**Конвейер поставил `ci:golden` (#827).** Изменённые участки — путь отрисовки плана (класс `visual`, область `render`, PROCESS.md §5.1):',
     `- ${riskClassLine(risk, 'visual')}`,
-    'Ревью и слияние этого захода — только после Validate с golden на этом материале (`full=true`): лёгкий Validate без golden доказательством не считается. Совместимое полное доказательство на том же материале переиспользуется, а не повторяется.',
+    'Ревью и слияние этого захода — только после Validate с golden на этом материале (отдельный golden-запрос, #954): лёгкий Validate без golden доказательством не считается. Совместимое полное доказательство на том же материале переиспользуется, а не повторяется.',
     'Сдвиг кадров, если он намерен, задача принимает сама (PROCESS.md §3 п.13); ненамеренный покажет красный golden до ревью. Прочие метки не меняются.',
   ];
   if (runUrl) parts.push(`[Прогон](${runUrl}).`);
@@ -395,7 +395,7 @@ export function decideTrack({
   const reasons = [violations.length && 'рамки ship', raise && risk.raising.length && `риск ${risk.raising.join(', ')}`].filter(Boolean);
   const basis = raise ? `повышен конвейером с ship (${reasons.join(' и ')}); было: ${origin.basis}` : origin.basis;
   return {
-    track, mutants: base.mutants, full: base.full || goldenAdd, infrastructure: base.infrastructure, ship, raise, comment, violations,
+    track, mutants: base.mutants, full: base.full, infrastructure: base.infrastructure, ship, raise, comment, violations,
     golden, goldenComment: goldenAdd ? goldenComment({ risk, runUrl }) : '',
     risk, confirmed, basis, warning: origin.warning,
     note: code && !ship ? riskNote({ track, confirmed, risk, labels }) : '',

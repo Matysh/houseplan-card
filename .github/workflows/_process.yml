@@ -826,9 +826,10 @@ jobs:
           BRANCH: ${{ steps.branch.outputs.name }}
           SHA: ${{ steps.material.outputs.sha }}
           MUTANTS: ${{ steps.track.outputs.mutants }}
-          # #697: `ci:full`/`ci:golden` — полный набор на материале; #827:
-          # `ci:golden` мог поставить шаг трека по визуальному риску.
+          # #954: full и golden независимы; #827: шаг трека мог запросить
+          # golden по визуальному render-риску.
           FULL: ${{ steps.track.outputs.full }}
+          GOLDEN: ${{ steps.track.outputs.golden }}
           TOOLS: ${{ steps.tools.outputs.dir }}
         run: |
           if [ "$STAGE" != "code" ] || [ "$REUSE" = "true" ] || [ -z "$BRANCH" ]; then
@@ -844,7 +845,7 @@ jobs:
           # прогон гейт и без ожидания возвращает сразу.
           set +e
           node "$TOOLS/scripts/validate-gate.mjs" --repo="${{ github.repository }}" --ref="$BRANCH" --sha="$SHA" --no-wait \
-            --mutants="${MUTANTS:-false}" --full="${FULL:-false}"
+            --mutants="${MUTANTS:-false}" --full="${FULL:-false}" --golden="${GOLDEN:-none}"
           code=$?
           set -e
           case "$code" in

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Development checks reuse verified unchanged product inputs across metadata
+  commits and pushes, keep Git/process checks fresh, and separate golden from
+  the full smoke matrix. Direct producer evidence bridges branch caches (#954).
+
 - Administrators can back up the complete plan as a ZIP with used images and
   saved Zigbee links, restore it on another installation and undo the restore.
   Missing images require explicit consent; space transfers and ordinary-editor

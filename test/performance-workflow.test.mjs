@@ -20,7 +20,7 @@ test('ordinary Validate keeps only the bounded candidate performance smoke', () 
     '--absolute-only',
     'budgets-glow-smoke.json',
     'budgets-space-glow-smoke.json',
-    'cancel-in-progress: true',
+    "cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' || !startsWith(github.ref, 'refs/heads/issue/') }}",
   ]) assert.ok(workflow.includes(contract), `missing fast-gate contract: ${contract}`);
   assert.ok(!workflow.includes('Capture base and candidate profiles'));
   assert.ok(!workflow.includes('schedule:'));

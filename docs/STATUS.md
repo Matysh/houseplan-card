@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Development-loop reuse (#954) keeps pure product/build evidence content-bound,
+metadata-dependent units and guards fresh. One up-front push plan includes task
+full/golden demand; sealed pending push completion can resume review. Private
+local receipts and direct ancestor CI transfer retain separate trust boundaries;
+golden alone no longer orders the entire smoke matrix. Runtime/release gates stay unchanged.
+
 Portable full backups (#936) use admin-only ZIP with used images and accepted
 saved Zigbee maps. Incomplete copies require separate export/import consent;
 ordinary writers and space transfer retain JSON. Apply/Undo share the durable

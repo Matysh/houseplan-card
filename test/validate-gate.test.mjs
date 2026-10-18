@@ -221,7 +221,7 @@ test('#696: without mutants a completed green push run on the material is proof,
   assert.deepEqual(fake.dispatched, []);
 });
 
-test('#696: without mutants a red push run returns the task, a push still running is not waited for', async () => {
+test('#954 without mutants a red push returns the task; its pending push is tracked without dispatch', async () => {
   const red = fakeOps({ snapshots: [[run({ event: 'push', databaseId: 7, conclusion: 'failure', url: 'https://run/red' })]], jobsById: { 7: OTHER_JOBS } });
   assert.equal((await validateGate({ ref: 'issue/1', sha: SHA, ops: red.ops, mutants: false })).result, 'failed');
   // Идущий push раунд не разбудит (resume слушает dispatch) — гейт диспатчит
@@ -230,8 +230,8 @@ test('#696: without mutants a red push run returns the task, a push still runnin
   const fake = fakeOps({ snapshots: [running, [...running, run({ databaseId: 8, status: 'in_progress', conclusion: null })]], jobsById: { 8: OTHER_JOBS } });
   const outcome = await validateGate({ ref: 'issue/1', sha: SHA, ops: fake.ops, mutants: false, wait: false, pollMs: 1000 });
   assert.equal(outcome.result, 'pending');
-  assert.equal(outcome.runId, 8);
-  assert.deepEqual(fake.dispatched, ['issue/1:light'], 'the light dispatch asks for no mutants');
+  assert.equal(outcome.runId, 7);
+  assert.deepEqual(fake.dispatched, [], 'the exact pending push is the sole producer');
 });
 
 test('#696: a completed run beats a newer running dispatch only without mutants', async () => {
@@ -239,7 +239,7 @@ test('#696: a completed run beats a newer running dispatch only without mutants'
   const running = run({ databaseId: 9, status: 'in_progress', conclusion: null });
   const light = fakeOps({ snapshots: [[running, done]], jobsById: { 7: OTHER_JOBS } });
   assert.equal((await validateGate({ ref: 'issue/1', sha: SHA, ops: light.ops, mutants: false, wait: false })).result, 'green');
-  assert.equal(proofCandidate(run({ event: 'push', status: 'in_progress' }), { mutants: false }), false);
+  assert.equal(proofCandidate(run({ event: 'push', status: 'in_progress' }), { mutants: false }), true);
   assert.equal(proofCandidate(run({ event: 'push' }), { mutants: true }), false);
 });
 
@@ -292,14 +292,14 @@ test('#827 AC4: visual/render на S7 — лёгкий proof не принима
   const diff = 'diff --git a/src/live-hover.ts b/src/live-hover.ts\n--- a/src/live-hover.ts\n+++ b/src/live-hover.ts\n@@ -68,0 +69 @@\n+  const line = t(\'tip.battery_percent\');\n';
   const decision = decideTrack({ stage: 'code', branch: 'issue/1-x', labels: ['track:show', 'S7-code-review'], diff });
   assert.equal(decision.golden, 'add');
-  const gate = (fake) => validateGate({ ref: 'issue/1-x', sha: SHA, ops: fake.ops, mutants: decision.mutants, full: decision.full, wait: false, pollMs: 1000 });
+  const gate = (fake) => validateGate({ ref: 'issue/1-x', sha: SHA, ops: fake.ops, mutants: decision.mutants, full: decision.full, golden: decision.golden !== 'none', wait: false, pollMs: 1000 });
   // Лёгкий push-прогон на материале — не доказательство: гейт диспатчит full=true.
   const push = run({ event: 'push', databaseId: 7, url: 'https://run/push' });
   const started = run({ databaseId: 8, status: 'in_progress', conclusion: null, full: true });
   const light = fullProofOps({ snapshots: [[push], [push], [push, started]] });
   const pending = await gate(light);
   assert.equal(pending.result, 'pending');
-  assert.deepEqual(light.dispatched, ['issue/1-x:light:full']);
+  assert.deepEqual(light.dispatched, ['issue/1-x:light'], 'golden demand is read by the unified CI plan, not a full-matrix dispatch');
   // Совместимый полный прогон на том же материале уже есть — принимается без нового dispatch.
   const complete = fullProofOps({ snapshots: [[push, run({ databaseId: 9, full: true })]] });
   assert.equal((await gate(complete)).result, 'green');

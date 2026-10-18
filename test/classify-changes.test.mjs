@@ -258,13 +258,13 @@ test('CLI --heavy читает событие и сообщение из окр�
   const run = (env) => execFileSync(process.execPath, ['scripts/classify-changes.mjs', '--heavy'], {
     encoding: 'utf8', env: { ...process.env, ...env },
   }).trim();
-  assert.equal(run({ EVENT_NAME: 'push', HEAD_MESSAGE: 'fix: x\n\nIssue: #1\nUser-Visible: no' }), 'heavy=false\nmutants_requested=false');
+  assert.equal(run({ EVENT_NAME: 'push', HEAD_MESSAGE: 'fix: x\n\nIssue: #1\nUser-Visible: no' }), 'heavy=false\ngolden=false\nmutants_requested=false');
   // #601: кандидат беты и полный набор берут тяжёлые job, но не мутантов
-  assert.equal(run({ EVENT_NAME: 'push', HEAD_MESSAGE: 'x\n\nRelease: v1.2.3' }), 'heavy=true\nmutants_requested=false');
-  assert.equal(run({ EVENT_NAME: 'workflow_dispatch', FULL_INPUT: 'true', HEAD_MESSAGE: '' }), 'heavy=true\nmutants_requested=false');
+  assert.equal(run({ EVENT_NAME: 'push', HEAD_MESSAGE: 'x\n\nRelease: v1.2.3' }), 'heavy=true\ngolden=true\nmutants_requested=false');
+  assert.equal(run({ EVENT_NAME: 'workflow_dispatch', FULL_INPUT: 'true', HEAD_MESSAGE: '' }), 'heavy=true\ngolden=true\nmutants_requested=false');
   // #709: `mutants=true` по кнопке мутантов больше не включает — только ночь
-  assert.equal(run({ EVENT_NAME: 'workflow_dispatch', FULL_INPUT: 'false', MUTANTS_INPUT: 'true', HEAD_MESSAGE: '' }), 'heavy=false\nmutants_requested=false');
-  assert.equal(run({ EVENT_NAME: 'workflow_dispatch', FULL_INPUT: 'true', MUTANTS_INPUT: 'true', HEAD_MESSAGE: '' }), 'heavy=true\nmutants_requested=false');
+  assert.equal(run({ EVENT_NAME: 'workflow_dispatch', FULL_INPUT: 'false', MUTANTS_INPUT: 'true', HEAD_MESSAGE: '' }), 'heavy=false\ngolden=false\nmutants_requested=false');
+  assert.equal(run({ EVENT_NAME: 'workflow_dispatch', FULL_INPUT: 'true', MUTANTS_INPUT: 'true', HEAD_MESSAGE: '' }), 'heavy=true\ngolden=true\nmutants_requested=false');
 });
 
 test('#586: режим гейта скриншотов приходит одним значением и на кандидате строгий', () => {
@@ -332,7 +332,9 @@ test('#697: на ветке задачи трейлер Release: тяжёлый 
   const run = (env) => execFileSync(process.execPath, ['scripts/classify-changes.mjs', '--heavy'], {
     encoding: 'utf8', env: { ...process.env, ...env },
   }).trim();
-  assert.equal(run({ EVENT_NAME: 'push', HEAD_MESSAGE: acceptance, REF_NAME: 'issue/687-x' }), 'heavy=false\nmutants_requested=false');
+  assert.equal(run({ EVENT_NAME: 'push', HEAD_MESSAGE: acceptance, REF_NAME: 'issue/687-x',
+    GH_TOKEN: '', GITHUB_TOKEN: '', GH_CONFIG_DIR: '/nonexistent/hp-954-no-auth' }), 'heavy=true\ngolden=true\nmutants_requested=false',
+    '#954: unavailable task demand broadens; a Release trailer alone still does not order full');
   const workflow = readFileSync(new URL('../.github/workflows/validate.yml', import.meta.url), 'utf8');
   assert.equal((workflow.match(/REF_NAME: \$\{\{ github\.ref_name \}\}/g) || []).length >= 2, true, 'оба вызова знают ветку');
 });

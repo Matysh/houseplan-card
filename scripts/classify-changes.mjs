@@ -203,13 +203,15 @@ if (invokedDirectly) {
   } else if (process.argv.includes('--heavy')) {
     // Отдельный вызов: у `heavy` другие входы (событие, сообщение head-коммита),
     // и на dev он нужен даже там, где классификация путей выключена.
-    const heavy = heavyGatesRequested({
+    const inputs = {
       eventName: process.env.EVENT_NAME,
       headMessage: process.env.HEAD_MESSAGE,
       fullInput: process.env.FULL_INPUT,
       refName: process.env.REF_NAME,
-    });
-    process.stdout.write(`heavy=${heavy ? 'true' : 'false'}\n`);
+    };
+    const { taskCiPlan, readTaskDemand } = await import('./task-ci-plan.mjs');
+    const plan = taskCiPlan(inputs, { ...readTaskDemand({ refName: inputs.refName }), baseFull: heavyGatesRequested(inputs) });
+    process.stdout.write(`heavy=${plan.full}\ngolden=${plan.golden}\n`);
     const mutants = mutantsRequested({
       eventName: process.env.EVENT_NAME,
       headMessage: process.env.HEAD_MESSAGE,

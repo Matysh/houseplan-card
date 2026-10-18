@@ -34,9 +34,10 @@ test('#636 the round that waited for exactly this Validate is resumed', () => {
   assert.equal(decision.run.id, 70);
 });
 
-test('#636 push runs, unfinished runs and foreign SHAs never wake a round', () => {
+test('#954 exact awaited push wakes a round; unsupported events, unfinished runs and foreign SHAs do not', () => {
   const base = { labels: [REVIEW_LABEL], sha: SHA, runs: [processRun()], pendingOf };
-  assert.equal(decideResume({ ...base, validateRun: validateRun({ event: 'push' }) }).action, 'noop');
+  assert.equal(decideResume({ ...base, validateRun: validateRun({ event: 'push' }) }).action, 'resume');
+  assert.equal(decideResume({ ...base, validateRun: validateRun({ event: 'pull_request' }) }).action, 'noop');
   assert.equal(decideResume({ ...base, validateRun: validateRun({ status: 'in_progress' }) }).action, 'noop');
   assert.equal(decideResume({ ...base, validateRun: validateRun({ headSha: OTHER }) }).action, 'noop');
 });
@@ -107,7 +108,7 @@ test('#636 workflows: prepare exits pending with a sealed marker, resume relabel
   assert.match(process, /sha256sum pending\.json > manifest\.sha256/);
   assert.match(process, /Validate красный — вернуть автору без ревью\n\s+if: steps\.rebase\.outputs\.conflict != 'true' && steps\.gate\.outputs\.proceed == 'false'/);
   assert.match(resumeCaller, /workflow_run:\n\s+workflows: \["Проверка \(CI\)", "Полные бенчмарки производительности"\]\n\s+types: \[completed\]/);
-  assert.match(resumeWf, /github\.event\.workflow_run\.event == 'workflow_dispatch' && startsWith\(github\.event\.workflow_run\.head_branch, 'issue\/'\)/);
+  assert.match(resumeWf, /contains\(fromJSON\('\["workflow_dispatch", "push"\]'\), github\.event\.workflow_run\.event\) && startsWith\(github\.event\.workflow_run\.head_branch, 'issue\/'\)/);
   assert.match(resumeWf, /GH_TOKEN: \$\{\{ secrets\.HP_PROCESS_TOKEN \}\}/);
   assert.match(resumeWf, /node scripts\/process-resume\.mjs/);
   assert.match(resumeWf, /VALIDATE_RUN_ID: \$\{\{ github\.event\.workflow_run\.id \}\}/);

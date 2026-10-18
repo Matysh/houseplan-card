@@ -340,7 +340,7 @@ Daycycle сохраняет все paired samples/RasterTask/env/SHA, прове
 `scripts/gate-small.mjs` и нигде больше не переписывается (#701). Хук `pre-push`
 гоняет его сам для веток задач — таблица «В хуке» ниже. Ручной
 `node scripts/pre-push-gate.mjs` из этого раздела — расширенный прогон:
-типы, юниты и смоки; мутантов в нём с #709 нет.
+типы, юниты и смоки; мутантов в нём с #709 нет. Receipt/свежие группы (#954) — [DEVELOPMENT](DEVELOPMENT.md#frontend-producer-and-short-local-loops-856).
 
 `mutation-gate --check` также сверяет структуру и числовые ячейки browser inventory
 общим с юнитом parser (#811). Membership и ориентир 200 остаются WARN;

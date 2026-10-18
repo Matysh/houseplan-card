@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { chmodSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, relative, resolve, sep } from 'node:path';
+import { delimiter, dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
@@ -123,6 +123,10 @@ test('runHook: красный gate:small — код 1, зелёный — 0, о�
 test('gateEnv снимает все GIT_*: набор не должен писать в репозиторий хука (#633)', () => {
   const env = gateEnv({ GIT_DIR: '/repo/.git', GIT_CONFIG_PARAMETERS: "'credential.helper'='x'", git_work_tree: 'w', PATH: '/bin', HP_X: '1' });
   assert.deepEqual(env, { PATH: '/bin', HP_X: '1' });
+  assert.equal(gateEnv({ GIT_EXEC_PATH: '/git-core', PATH: `/git-core${delimiter}/bin` }).PATH, '/bin');
+  assert.equal(gateEnv({ GIT_EXEC_PATH: '/git-core', PATH: `/git-core${delimiter}/git-core${delimiter}/bin` }).PATH, `/git-core${delimiter}/bin`,
+    '#954: remove only Git injection, never the original user PATH');
+  assert.equal(gateEnv({ GIT_EXEC_PATH: '/git-core', PATH: `/custom${delimiter}/git-core` }).PATH, `/custom${delimiter}/git-core`);
 });
 
 // ---- настоящая связка хука ------------------------------------------------
@@ -213,8 +217,10 @@ ${readFileSync(usage, 'utf8')}`);
 });
 // Заглушка набора: код выхода и журнал вызовов задаёт тест.
 const GATE_STUB = `import { appendFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 const leaked = Object.keys(process.env).filter((key) => /^GIT_/i.test(key)).sort().join(',');
 if (process.env.HP_TEST_GATE_LOG) appendFileSync(process.env.HP_TEST_GATE_LOG, process.argv.slice(2).join(' ') + ' env:' + leaked + '\\n');
+if (process.env.HP_TEST_GATE_ENVS) appendFileSync(process.env.HP_TEST_GATE_ENVS, JSON.stringify(Object.fromEntries(Object.entries(process.env).map(([k,v]) => [k, createHash('sha256').update(v).digest('hex')]))) + '\\n');
 process.exit(Number(process.env.HP_TEST_GATE_EXIT ?? 0));
 `;
 
@@ -228,7 +234,7 @@ test('настоящий .githooks/pre-push: красный gate:small оста�
   // не должен ходить в сеть.
   // Свои GIT_* тест тоже не наследует: запущенный из хука (gate:small внутри
   // pre-push), он иначе писал бы в репозиторий хука, а не во временный.
-  const env = { ...gateEnv(process.env), GH_TOKEN: '', GITHUB_TOKEN: '', GH_CONFIG_DIR: join(root, 'gh'), HP_TEST_GATE_LOG: gateLog };
+  const env = { ...gateEnv(process.env), GH_TOKEN: '', GITHUB_TOKEN: '', GH_CONFIG_DIR: join(root, 'gh'), HP_TEST_GATE_LOG: gateLog, HP_TEST_GATE_ENVS: join(root, 'envs.jsonl') };
   delete env.HP_PREPUSH_GATE;
   const git = (...args) => {
     const r = spawnSync('git', ['-C', dir, ...args], { encoding: 'utf8', env });
@@ -259,6 +265,7 @@ test('настоящий .githooks/pre-push: красный gate:small оста�
     }
     chmodSync(join(dir, '.githooks/pre-push'), 0o755);
     write('scripts/gate-small.mjs', GATE_STUB);
+    write('package.json', JSON.stringify({ private: true, scripts: { 'gate:small': 'node scripts/gate-small.mjs' } }));
     commit('Base');
     git('remote', 'add', 'origin', origin);
     git('push', '-q', '--no-verify', 'origin', 'dev');
@@ -277,17 +284,22 @@ test('настоящий .githooks/pre-push: красный gate:small оста�
     // выставляет GIT_DIR, и без gateEnv юниты набора писали бы в этот репозиторий.
     assert.deepEqual(gateCalls(), [`--base=${base} env:`], 'набор гонится один раз, от merge-base, без GIT_*');
 
+    const manual = spawnSync(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', 'gate:small', '--', `--base=${base}`],
+      { cwd: dir, env: { ...env, HP_TEST_GATE_EXIT: '0' }, shell: process.platform === 'win32', encoding: 'utf8' });
+    assert.equal(manual.status, 0, manual.stderr);
     const green = push('issue/1-x', { HP_TEST_GATE_EXIT: '0' });
     assert.equal(green.status, 0, green.stderr);
     assert.equal(remoteHas('issue/1-x'), true);
-    assert.equal(gateCalls().length, 2);
+    assert.equal(gateCalls().length, 3);
+    const samples = readFileSync(env.HP_TEST_GATE_ENVS, 'utf8').trim().split('\n').map(JSON.parse);
+    assert.deepEqual(samples[2], samples[1], '#954: manual npm and the real Git hook must present identical meaningful receipt environment');
 
     write('scripts/y.mjs', 'export const y = 1;\n');
     commit('Add y\n\nIssue: #1\nUser-Visible: no');
     const off = push('issue/1-x', { HP_TEST_GATE_EXIT: '1', HP_PREPUSH_GATE: '0' });
     assert.equal(off.status, 0, `HP_PREPUSH_GATE=0 не выключил набор:\n${off.stderr}`);
     assert.match(off.stderr, /HP_PREPUSH_GATE=0/);
-    assert.equal(gateCalls().length, 2, 'выключенный набор не запускается');
+    assert.equal(gateCalls().length, 3, 'выключенный набор не запускается');
 
     git('checkout', '-q', '-b', 'issue/2-docs', 'dev');
     write('docs/reviews/CODE-REVIEW-2-r1.md', '# review\n');
@@ -295,7 +307,7 @@ test('настоящий .githooks/pre-push: красный gate:small оста�
     const docs = push('issue/2-docs', { HP_TEST_GATE_EXIT: '1' });
     assert.equal(docs.status, 0, `дифф класса C не должен гнать набор:\n${docs.stderr}`);
     assert.match(docs.stderr, /только класс C\/D/);
-    assert.equal(gateCalls().length, 2);
+    assert.equal(gateCalls().length, 3);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

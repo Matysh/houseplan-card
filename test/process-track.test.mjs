@@ -184,7 +184,7 @@ test('конвейер: ship в рамках сливается без моде�
 
 test('#697: полный набор на ветке задачи — только по меткам ci:full и ci:golden', () => {
   assert.equal(resolveTrack({ labels: ['track:show'], files: ['src/a.ts'] }).full, false);
-  assert.equal(resolveTrack({ labels: ['track:show', 'ci:golden'], files: ['src/a.ts'] }).full, true);
+  assert.equal(resolveTrack({ labels: ['track:show', 'ci:golden'], files: ['src/a.ts'] }).full, false);
   assert.equal(resolveTrack({ labels: ['track:ask', 'ci:full'], files: ['src/a.ts'] }).full, true);
   assert.equal(resolveTrack({ labels: ['ci:mutants'], files: ['src/a.ts'] }).full, false, 'мутанты полного набора не заказывают');
 });
@@ -651,7 +651,7 @@ test('#707 AC3: решение по ship на S7 — рамки, риск и п�
   }
   assert.equal(s7({ stage: 'spec' }).ship, false, 'ship сливается только на код-ревью');
   // Полный набор — только по меткам.
-  assert.equal(s7({ labels: ['track:show', 'ci:golden'] }).full, true);
+  assert.equal(s7({ labels: ['track:show', 'ci:golden'] }).full, false);
 });
 
 test('#707 AC5: заметка риска ревьюеру show/ask', () => {
@@ -1057,7 +1057,8 @@ test('#755 AC3: шаг трека на настоящем bash — ship с уд�
   assert.match(raised.comment, /- perf: src\/iso-scene-render\.ts:5 \(удалена\) · участок iso-scene-render/);
   // #827: iso-scene-render — путь отрисовки: тот же шаг ставит и ci:golden, вторым комментарием.
   assert.match(raised.comment, /\*\*Конвейер поставил `ci:golden` \(#827\)\.\*\*[^]*- visual \(render\): src\/iso-scene-render\.ts:5 \(удалена\)/);
-  assert.equal(raised.output.full, 'true');
+  assert.equal(raised.output.full, 'false');
+  assert.equal(raised.output.golden, 'add');
 });
 
 test('#707 AC4: шаг трека на настоящем bash — комментарии недоступны, этап spec, show', async (t) => {
@@ -1094,7 +1095,7 @@ const s7render = (over = {}) => decideTrack({
 test('#827 AC4: шаг трека ставит ci:golden при visual/render — полный набор, причина с путями, один раз', () => {
   const added = s7render();
   assert.equal(added.golden, 'add');
-  assert.equal(added.full, true, 'Validate на материале выбирается уже полным');
+  assert.equal(added.full, false, 'golden mandatory, unrelated full smoke matrix not requested');
   assert.equal(added.mutants, false, 'мутантов в разработке по-прежнему нет (#709)');
   assert.equal(added.track, 'show', 'трек по визуальному риску не меняется');
   assert.match(added.goldenComment, /^\*\*Конвейер поставил `ci:golden` \(#827\)\.\*\* Изменённые участки — путь отрисовки плана/);
@@ -1105,13 +1106,13 @@ test('#827 AC4: шаг трека ставит ci:golden при visual/render �
   assert.match(added.note, /конвейер поставил ci:golden \(#827\)/);
   // Повтор события: метка уже стоит — ни флага, ни комментария; полный набор — по метке.
   const again = s7render({ labels: ['track:show', 'S7-code-review', 'P2', 'bug', 'ci:golden'] });
-  assert.deepEqual({ golden: again.golden, full: again.full, comment: again.goldenComment }, { golden: 'present', full: true, comment: '' });
+  assert.deepEqual({ golden: again.golden, full: again.full, comment: again.goldenComment }, { golden: 'present', full: false, comment: '' });
   assert.doesNotMatch(again.note, /ci:golden/);
   // ci:full полный набор и так даёт, но контракт метки ci:golden (приёмка кадров в задаче) — тот же.
   assert.equal(s7render({ labels: ['track:ask', 'ci:full'] }).golden, 'add');
   // ship: visual ship не повышает, но слияние без модели тоже ждёт golden на материале.
   const ship = s7render({ labels: ['track:ship', 'S7-code-review'] });
-  assert.deepEqual({ ship: ship.ship, raise: ship.raise, golden: ship.golden, full: ship.full }, { ship: true, raise: false, golden: 'add', full: true });
+  assert.deepEqual({ ship: ship.ship, raise: ship.raise, golden: ship.golden, full: ship.full }, { ship: true, raise: false, golden: 'add', full: false });
   // Контроль: ui без render, touch, этап spec, нет ветки — прежнее поведение.
   for (const [name, quiet] of [
     ['visual/ui', s7render({ diff: VISUAL, files: ['src/styles/plan.styles.ts'] })], ['touch', s7render({ diff: RISKY })],
@@ -1166,7 +1167,7 @@ test('#827 AC4: шаг трека на настоящем bash — ci:golden д�
     `issue comment 7 --repo o/r --body-file ${join(dirname(box.work), 'runner', 'track', 'golden.md')}`,
   ], 'метка добавляется одна, ничего не снимается');
   assert.deepEqual({ full: first.output.full, golden: first.output.golden, mutants: first.output.mutants, track: first.output.track },
-    { full: 'true', golden: 'add', mutants: 'false', track: 'ask' }, 'гейт материала получает full=true из того же шага');
+    { full: 'false', golden: 'add', mutants: 'false', track: 'ask' }, 'gate receives distinct golden demand');
   assert.match(first.comment, /- visual \(render\): src\/live-hover\.ts:1 · участок live-hover \(render\)/);
   assert.match(first.comment, /<!-- hp:golden-added -->/);
   assert.match(first.summary, /ci:golden поставлен конвейером \(visual\/render\)/);
@@ -1174,7 +1175,7 @@ test('#827 AC4: шаг трека на настоящем bash — ci:golden д�
   const again = box.run(run, trackEnv(`${labels},ci:golden`));
   assert.equal(again.status, 0, again.stderr);
   assert.deepEqual(again.calls, ['issue view 7 --repo o/r --json comments'], 'ни второй метки, ни второго комментария');
-  assert.deepEqual({ full: again.output.full, golden: again.output.golden }, { full: 'true', golden: 'present' });
+  assert.deepEqual({ full: again.output.full, golden: again.output.golden }, { full: 'false', golden: 'present' });
   assert.equal(again.comment, '');
   // Стиль интерфейса без render — прежнее: ни метки, ни полного набора.
   const ui = trackSandbox(t, { change: (work) => writeFileSync(join(work, 'src', 'styles', 'plan.styles.ts'), 'export const css = `\n  .x { color: blue; }\n`;\n') });

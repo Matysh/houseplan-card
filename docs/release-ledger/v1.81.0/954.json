@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 954,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Remove duplicate development checks with content-bound evidence, fresh metadata guards, private local receipts, precise smoke demand and authenticated direct producer transfer. No user runtime or release-gate coverage changes."
+}

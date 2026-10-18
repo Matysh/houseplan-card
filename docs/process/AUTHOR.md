@@ -78,6 +78,8 @@
   проверить». Рамки: дифф `src/**` до 30 строк, без новых файлов, i18n, полей
   конфига и Python ([§5](../../PROCESS.md#5-треки-ship-show-ask--метка-владельца)).
 - Тяжёлые проверки на любом треке — метками `ci:full` и `ci:golden`;
+  #954: full и golden независимы; план push сразу учитывает метки и render-риск,
+  повторный dispatch не нужен, когда подходящий push уже идёт.
   `ci:golden` ставится по сигналу — визуальный риск в пути отрисовки плана: без
   метки её ставит конвейер на `S7`, и ревью начинается после golden на
   материале (#827); прочий риск полного набора не включает; прежние `small` и `trivial` читаются как
@@ -228,6 +230,11 @@
   `pytest tests_backend`, junction parity; `golden:verify` — только с меткой
   `ci:golden` ([§8](../../PROCESS.md#8-гейты); `docs/TESTING.md`, «Локальный
   набор перед пушем»).
+- #954: валидный локальный receipt переиспользует build/чистые продуктовые юниты;
+  FS/Git/process/dynamic, range, budget/policy/unused остаются свежими. Не отключать
+  pre-push ради повторного гейта. Межветочный proof требует реального source
+  run/attempt/job, равных входов/окружения и inventories, не cache-hit
+  ([§8](../../PROCESS.md#8-гейты)).
 - Обязательные проверки с основаниями печатает пакет задачи: `gate:small`,
   смоки `smoke-select` с видом связи, invariants при `geometry`, pytest при
   Python, parity при зеркалах junction limits, `ci:golden` — только при

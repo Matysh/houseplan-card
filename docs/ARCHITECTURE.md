@@ -1,5 +1,14 @@
 # House Plan architecture
 
+Development evidence (#954) separates material identity from content identity.
+Only closed pure product units/build cross a Git commit; metadata/FS/process/
+dynamic consumers remain fresh. Local receipts are private, byte-verified and
+never CI authority. CI schema2 producers independently verify source objects,
+successful run/attempt/jobs, environment and artifact inventory. Heavy transfer
+bridges branch-scoped caches only with direct executed ancestor proof and exact
+profile coverage. Push demand includes labels/render risk up front; golden and
+the full smoke matrix are independent, with release/night coverage unchanged.
+
 Portable full backup (#936) is editor/admin-only and lazy on first use.
 `backup_archive.py` validates a closed ZIP manifest, bounded directory/streams,
 image bytes and SHA-256; it never fetches external URLs or extracts paths from

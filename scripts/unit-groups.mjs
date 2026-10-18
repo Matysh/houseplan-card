@@ -6,25 +6,32 @@ import { join } from 'node:path';
 import { closure, trackedFiles, stripComments } from './check-inputs.mjs';
 import { portableCommand, isMainModule } from './spawn-portable.mjs';
 
-export function unitGroups(root = process.cwd(), { tracked = trackedFiles(root), read = p => readFileSync(join(root, p), 'utf8') } = {}) {
-  const tests = readdirSync(join(root, 'test')).filter(f => f.endsWith('.test.mjs')).map(f => 'test/' + f).sort();
+export function unitGroups(root = process.cwd(), { tracked = trackedFiles(root), read = p => readFileSync(join(root, p), 'utf8'), tests = null } = {}) {
+  tests = tests || readdirSync(join(root, 'test')).filter(f => f.endsWith('.test.mjs')).map(f => 'test/' + f).sort();
   const groups = { product: [], tooling: [] };
   const dependencies = {};
-  const references = new Map(), source = new Map();
+  const references = new Map(), source = new Map(), productInputs = new Map();
+  const allTracked = [...new Set([...tracked, ...tests])];
   const readOnce = p => { if (!source.has(p)) source.set(p, read(p)); return source.get(p); };
+  const isProductInput = p => {
+    if (!productInputs.has(p)) {
+      let product = /^(src|test-build|dist)\//.test(p);
+      if (!product && /\.(mjs|js|cjs|ts)$/.test(p)) {
+        try {
+          const code = stripComments(p, readOnce(p));
+          product = /(?:test-build|\bdist)(?:\/|['"])/.test(code) || /import\(\s*[^'"`\s]/.test(code);
+        } catch { product = true; }
+      }
+      productInputs.set(p, product);
+    }
+    return productInputs.get(p);
+  };
   for (const file of tests) {
-    const inputs = closure(root, [file], { tracked: [...new Set([...tracked, ...tests])], read: readOnce, references });
+    const inputs = closure(root, [file], { tracked: allTracked, read: readOnce, references });
     dependencies[file] = inputs;
     // A producer/bundle consumer is never run before build. Unreadable or
     // unresolved dynamic module dependencies are conservative product cases.
-    const product = inputs.some(p => {
-      if (/^(src|test-build|dist)\//.test(p)) return true;
-      if (!/\.(mjs|js|cjs|ts)$/.test(p)) return false;
-      try {
-        const code = stripComments(p, readOnce(p));
-        return /(?:test-build|\bdist)(?:\/|['"])/.test(code) || /import\(\s*[^'"`\s]/.test(code);
-      } catch { return true; }
-    });
+    const product = inputs.some(isProductInput);
     groups[product ? 'product' : 'tooling'].push(file);
   }
   return { ...groups, tests, dependencies };

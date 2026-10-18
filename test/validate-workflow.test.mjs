@@ -468,14 +468,15 @@ test('#399 AC5: тот же код ловит третий workflow в подс�
 
 // #479: тяжёлые job идут только по выходу `heavy`, а релизные гейты требуют
 // трейлер `Release:` — иначе зелёный Validate мог означать прогон без них.
-test('смоки, golden и performance_smoke условны по heavy (#479)', () => {
+test('#954 full smoke/performance stay on heavy; golden has an independent demand', () => {
   const text = read('validate.yml');
   for (const job of ['smoke', 'smoke_done', 'golden', 'performance_smoke']) {
     const start = text.indexOf(`\n  ${job}:\n`);
     assert.ok(start > 0, `job ${job} есть`);
     const chunk = text.slice(start, start + 600);
     assert.match(chunk, /needs: \[changes,/, `${job}: зависит от changes`);
-    assert.match(chunk, /if: needs\.changes\.outputs\.heavy == 'true' &&/, `${job}: условие heavy`);
+    const output = job === 'golden' ? 'golden' : 'heavy';
+    assert.match(chunk, new RegExp(`if: needs\\.changes\\.outputs\\.${output} == 'true' &&`), `${job}: requested check`);
   }
   assert.match(text, /heavy: \$\{\{ steps\.heavy\.outputs\.heavy \}\}/);
   assert.match(text, /classify-changes\.mjs --heavy/);
@@ -516,9 +517,11 @@ test('#854: development mutant interface is compatible but cannot execute or rep
   assert.match(read('_mutation-gate.yml'), /mutation-gate\.mjs --shard=[^\n]+ --execute-nightly/);
 });
 
-test('ручной/ночной полный прогон не делит concurrency с push (#479)', () => {
+test('#954 only issue dispatch coalesces with push; protected nightly/full concurrency remains separate', () => {
   const text = read('validate.yml');
-  assert.match(text, /group: validate-\$\{\{ github\.event_name == 'workflow_dispatch' && 'dispatch-' \|\| '' \}\}/);
+  assert.match(text, /github\.event_name == 'workflow_dispatch' && !startsWith\(github\.ref, 'refs\/heads\/issue\/'\) && 'dispatch-'/);
+  assert.match(text, /cancel-in-progress: \$\{\{ github\.event_name != 'workflow_dispatch' \|\| !startsWith\(github\.ref, 'refs\/heads\/issue\/'\) \}\}/,
+    'explicit issue dispatch must queue, not cancel the active producer');
 });
 
 // #854: retired development ledger/cache contract removed; nightly evidence tests remain.
@@ -554,7 +557,7 @@ test('#541: Validate всегда публикует proof точной попы
     assert.match(reuse, new RegExp(`${id}_source_attempt:`), `${id}: source attempt output`);
     assert.match(reuse, new RegExp(`${id}_source_sha:`), `${id}: source SHA output`);
   }
-  assert.equal((reuse.match(/node scripts\/ci-proof\.mjs --marker=\.reuse-marker/g) || []).length, 5);
+  assert.equal((reuse.match(/node scripts\/check-proof-transfer\.mjs --job=[\w_]+ --marker=\.reuse-marker/g) || []).length, 5);
   assert.equal(reuse.includes('lookup-only: true'), false,
     'marker contents must be restored and verified, not reduced to a cache-hit bit');
 });

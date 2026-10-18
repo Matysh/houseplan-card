@@ -319,7 +319,7 @@ export function closure(root, entries, { tracked = trackedFiles(root), stopAt = 
 // Проверки Validate и их входы.
 
 /** Что собирает бандл: те же входы, что у sourceFingerprint (#245). */
-const BUILD_INPUTS = ['src/**', 'package.json', 'package-lock.json', 'rollup.config.mjs', 'tsconfig.json',
+export const BUILD_INPUTS = ['src/**', 'package.json', 'package-lock.json', 'rollup.config.mjs', 'tsconfig.json',
   'scripts/source-fingerprint.mjs', 'scripts/css-template-minifier.mjs', 'scripts/bundle-manifest.mjs',
   'scripts/bundle-sync.mjs', 'scripts/bundle-tree.mjs'];
 /** Протокол браузерного харнеса: страница, сервер, гард исключений, compat-хелперы. */

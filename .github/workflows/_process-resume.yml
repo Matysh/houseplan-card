@@ -63,7 +63,7 @@ jobs:
           retention-days: 1
   resume:
     name: "Разбудить раунд, ждавший этот Validate"
-    if: github.event.workflow_run.event == 'workflow_dispatch' && startsWith(github.event.workflow_run.head_branch, 'issue/')
+    if: contains(fromJSON('["workflow_dispatch", "push"]'), github.event.workflow_run.event) && startsWith(github.event.workflow_run.head_branch, 'issue/')
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:

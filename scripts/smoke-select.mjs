@@ -102,7 +102,7 @@ const isDistinctive = (name) => /^_/.test(name)
  * Список именно списком, а не порогом по частоте: `_cellCm` встречается всего в
  * пяти смоках, то есть по частоте он редкий — а различает всё равно ничего.
  */
-const GENERIC_SYMBOLS = new Set(['_cellCm', '_gridPitch', '_wallKeyPitch']);
+const GENERIC_SYMBOLS = new Set(['_cellCm', '_gridPitch', '_wallKeyPitch', '_config', '_editorRuntime', '_showToast']);
 
 const IDENTIFIER = /[A-Za-z_$][\w$]{2,}/g;
 

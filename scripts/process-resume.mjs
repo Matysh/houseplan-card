@@ -53,7 +53,7 @@ export function issueNumberFromBranch(branch) {
  * @returns {{action:'resume'|'noop', reason:string, run?:object, recheck?:boolean}}
  */
 export function decideResume({ labels = [], issue, request, branch, headSha, body, validateRun, sha, runs = [], pendingOf = () => null }) {
-  if (validateRun?.event !== 'workflow_dispatch') return { action: 'noop', reason: 'not a dispatch run — only the awaited dispatch wakes the round' };
+  if (!['workflow_dispatch', 'push'].includes(validateRun?.event)) return { action: 'noop', reason: 'not a supported Validate event' };
   if (validateRun?.status !== 'completed') return { action: 'noop', reason: 'validate run is not completed' };
   if (validateRun?.headSha && sha && validateRun.headSha !== sha) return { action: 'noop', reason: 'validate run head differs from the material' };
   if (!labels.includes(REVIEW_LABEL)) return { action: 'noop', reason: 'issue is not awaiting code review' };
