@@ -767,7 +767,9 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // #948 integrated with #936: matched bd6fb6616 editor273116->283621B
 // (+10505 own bytes). Carry only this delta onto dev's273105 reference;
 // retain its11B inherited gap, the2000B band and every absolute View budget.
-export const LAZY_EDITOR_GZIP_CEILING = 283_610;
+// #945: matched General d496a749 source283621 -> Space v7 source284685
+// (+1064 own bytes); keep the inherited11B gap and unchanged2000B band.
+export const LAZY_EDITOR_GZIP_CEILING = 284_674;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
@@ -784,7 +786,9 @@ export const LAZY_GRAPH_CEILING_BAND = 2_000;
  * «?») и в скоуп #627 не входит.
  */
 // #898, owner decision 2026-10-14: every ceiling with less than 10 % headroom is raised by 10 % (rounded up). 28578 -> 31436 B.
-export const LAZY_ONBOARDING_GZIP_CEILING = 29_374;
+// #945 shared Space fields and lazy English copy: matched31050->31438B
+// (+388 own bytes). Carry only that cost, preserving the inherited1676B gap.
+export const LAZY_ONBOARDING_GZIP_CEILING = 29_762;
 
 /**
  * #780 ТЗ §13.1: the LED chunks are a new feature's own budget, not a raise of

@@ -2237,6 +2237,10 @@ export async function prepareGoldenScenario(page, scenario) {
       card._openSpaceDialog('edit', scenario.space);
       await card.updateComplete;
       const dialog = card.renderRoot.querySelector('hp-dialog');
+      const appearance = dialog?.querySelector('[data-section-target="appearance"]');
+      if (!appearance) throw new Error('golden space appearance navigation missing');
+      appearance.click();
+      await card.updateComplete;
       const picker = [...(dialog?.querySelectorAll('hp-color-opacity') || [])]
         .find((item) => item.label === card._t('space.room_color'));
       await picker?.updateComplete;
