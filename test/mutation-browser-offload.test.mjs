@@ -128,7 +128,7 @@ test('#659 settings handlers preserve dirty, discard, inversion and field owners
     "if (kind === 'temp') host._roomTempSrc = v;\n    else if (kind === 'hum') host._roomHumSrc = v;\n    else host._roomCo2Src = v;",
     'const canSave = !this.roomSaveBusy && problems.length === 0 && tempValid && (edit ? dirty : true);',
     'const requestClose = () => { void this._requestRoomDialogClose(); };',
-    "onChange: (v) => setFill(v ? '' : startMode()),",
+    "name:'rfill',value:host._roomFill as '' | RoomFillMode,ariaLabel:t('room.fill_label'),",
     'onInput: (raw) => { host._roomTempMin = raw; host.requestUpdate(); },',
   );
   contains('src/editors/draft-actions.ts', "host, kind: 'room', dirty: roomDirty(host),");
