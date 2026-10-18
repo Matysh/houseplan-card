@@ -56,6 +56,37 @@ async def _access_token_for_group(hass: HomeAssistant, group_id: str) -> str:
     return hass.auth.async_create_access_token(refresh_token)
 
 
+@pytest.mark.parametrize("opacity", [None, 0, 0.375, 1])
+async def test_issue_931_plan_opacity_ws_store_reload_and_legacy_absence(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, opacity: float | None,
+) -> None:
+    """The real storage path preserves absent/zero/fraction/full, not a frontend default."""
+    from custom_components.houseplan.store import get_data
+
+    entry = await _setup(hass)
+    client = await hass_ws_client(hass)
+    source = {"spaces": [{"id": "floor", "title": "Floor", "rooms": [],
+                          "view_box": [0, 0, 1, 1]}], "markers": [], "settings": {}}
+    if opacity is not None:
+        source["spaces"][0]["plan_opacity"] = opacity
+    await client.send_json_auto_id({"type": "houseplan/config/set", "config": source, "expected_rev": 0})
+    accepted = await client.receive_json()
+    assert accepted["success"], accepted
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    first = (await client.receive_json())["result"]
+    stored = await get_data(hass).config_store.async_load()
+    assert stored["config"] == first["config"]
+    space = first["config"]["spaces"][0]
+    if opacity is None:
+        assert "plan_opacity" not in space
+    else:
+        assert space["plan_opacity"] == opacity
+    assert await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    assert (await client.receive_json())["result"]["config"] == first["config"]
+
+
 @pytest.mark.parametrize(("group_id", "admin_only", "allowed"), [
     (None, True, True),
     (GROUP_ID_USER, False, True),

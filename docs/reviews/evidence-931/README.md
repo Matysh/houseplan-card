@@ -1,0 +1,95 @@
+# #931 implementation evidence
+
+This is author evidence, **not an independent review verdict**. The issue body
+revision 2.1 and `SPEC-REVIEW-931-r3.md` govern acceptance.
+
+## Design comparison
+
+Approved references stay at
+[`approved-2026-10-18`](../../design/931-properties-panel/approved-2026-10-18/README.md),
+publication commit `825d6aef8cb79211830c634c08090080602dcfc5`.
+Their 31-file manifest is verified before and after capture; no reference is
+regenerated, masked or edited. The reference renderer is used read-only for
+control-bound measurements, never substituted for the actual product.
+
+[`actual/index.html`](actual/index.html) pairs all nine panels and the HA variable
+dialog. Each panel also has its full-screen actual PNG. All captures use 1920×1080,
+DPR 1, RU, light theme and the pinned Playwright/Chromium. Installed Segoe UI fonts
+are loaded read-only for typography; no font files are distributed.
+[`capture.json`](actual/capture.json) binds product source/bundle fingerprint,
+reference manifest and all screenshot hashes. [`measurements.json`](actual/measurements.json)
+contains actual panel/group/control bounds and reference deltas. Capture rejects
+panel/group bounds or common/type-specific controls outside 1 CSS px; it also
+checks the 560×448 dialog at (680,300). Images are actual product output, not a
+new golden baseline.
+
+Reproduce from a freshly built/synchronised bundle:
+
+```sh
+HP_PROPERTIES_CAPTURE_DIR=output/properties-931/comparison node demo/capture_properties_panel.mjs
+```
+
+### Semantic differences from illustrative fixture values
+
+- Numeric inputs retain the existing unit adapter (decimal dot, no grouped
+  thousands). They are editable number controls, not static formatted spans.
+- The door's physical inside-corner gap is 244 cm with a 12 cm wall, not the
+  demonstrator's centreline-like 250 cm. The visible reference and field use the
+  **same** physical resolver. Width still keeps centre. Room direction labels use
+  the actual room name in quotes instead of guessing Russian declension.
+- Text bounds are measured from the actual HA-resolved string and font, not
+  forced to the demonstrator's illustrative 200×30 cm. The current resolver
+  supplies `22.4 °C`; no new rounding/locale rule is introduced.
+- The existing device face/HA icon and native full-properties tray remain.
+  Selection adds the approved teal outline/handles/tag; it does not redesign
+  device state colours or unrelated navigation/furniture around the panel.
+- Dynamic metadata describes the actual target/floor. The main-image metadata
+  says “Основная картинка плана”; no synthetic room name is persisted.
+
+These differences are exposed for independent inspection, not masked as a pixel
+match. The accepted shell, grouping, controls, states, actions and selection
+vocabulary remain the implementation target.
+
+## Executed behavioural evidence
+
+- `node demo/smoke_properties_panel.mjs`: native wall/opening/column/device
+  selection, Enter+blur deduplication, invalid/escape, 959/960, suspended number
+  and invalid HEX, colour confirmation/no intermediate writes, ratio/centre,
+  text cancel/insert/caret/newline, alpha zero/reset, device Undo and zero HA
+  services. All matrix families/subtypes render through the production owner;
+  selection leaves server config unchanged. Dark/short viewport are exercised.
+- `node demo/smoke_editor_styles_lazy.mjs`: cold View/kiosk/static/onboarding,
+  first-frame styles, two cards, warm remount and retired/failed imports passed.
+- `node demo/smoke_color_picker.mjs`, `node demo/smoke_editor_gestures.mjs`,
+  `node demo/smoke_device_position_history.mjs`,
+  `node demo/smoke_physical_body_characterization.mjs`: existing neighbouring
+  colour, touch/cancel, ordered history and physical gesture contracts passed.
+- The seven `test/properties-*.test.mjs` files: 38 tests covering catalog,
+  strict parser, field/lane authority, transform/physical semantics, targeted
+  patches, actual runtime writer/rollback/history and RU/EN copy.
+- `python -m pytest tests_backend/test_validation.py tests_backend/test_config_schema_manifest.py tests_backend/test_support_package.py tests_backend/test_ha_websocket.py tests_backend/test_ha_import_export.py -q`:
+  **552 passed, 1 skipped**, including actual HA entry reload/storage and
+  plan-only alpha transfer, not just mocked Python validation.
+- `node scripts/model-invariants.mjs --config test/fixtures/config-lifecycle/current.json --json`:
+  zero violations (four existing legacy wall-key notes, no rewrite).
+
+The complete local gate and branch full/golden CI are reported in the issue
+handoff, not inferred from the targeted checks above. Headless evidence is not
+owner or real-GPU acceptance.
+
+## Protective AC → witness → negative oracle
+
+| AC | Witness | What goes red |
+|---|---|---|
+| AC1/3 | panel smoke, catalog identity tests, cold/lazy smoke | View has no panel; 959 has zero panel nodes; wrong floor/binding resolves null |
+| AC2 | paired PNGs + measured common/type controls + manifest | >1 CSS px or changed approved hash fails capture; independent visual review still required |
+| AC4/6 | transforms/physical/catalog tests, native opening smoke | bad numeric suffix/range, T/X edit, overlap/not-fit or changed physical reference rejects |
+| AC5 | controller/runtime tests + picker/resize smoke | invalid/ESC/no-op have zero writes/history; `properties-resize-forgets-internal-hex-draft` registered, not executed |
+| AC7 | panel smoke, text patch tests | Cancel retains original; Enter is newline; Insert is one saved template at caret; >200 rejected |
+| AC8 | targeted patch/copy tests + HA reload/export tests | sibling/null/absence retained; null/bool/string alpha rejected; plan-only alpha must survive |
+| AC9/10 | panel/native gesture smokes + unchanged command delegates | settings makes panel inert; native full dialogs/actions retain guards, no HA action on selection |
+| AC11/12 | actual runtime writer/history tests + controller authority | failed/preflight/conflict restores owned state/exact cursor; newer sibling/authority cannot be overwritten |
+| AC13/14 | short/dark and existing touch/lazy smokes; budget gates | cancelled gesture writes nothing; cold View requests no editor; old bands/View ceilings remain |
+
+Nine new mutation declarations are static witnesses only. `mutation-gate --check`
+does **not** execute them and is not a caught verdict; execution remains nightly.

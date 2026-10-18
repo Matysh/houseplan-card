@@ -1184,6 +1184,13 @@ def _finite_number_or_none(value):
     return _finite(value)
 
 
+def _finite_number(value):
+    """Strict numeric fields: neither null, strings nor bools are numbers."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise vol.Invalid("value must be a finite number")
+    return _finite(value)
+
+
 # Persisted colours deliberately use one small, browser-independent format.
 # Keep this exact contract in sync with src/color.ts.
 # `^...$` accepts a trailing newline in Python. Persisted CSS tokens must
@@ -1835,6 +1842,8 @@ SPACE_SCHEMA = vol.All(vol.Schema(
         vol.Optional("plan_angle"): vol.Any(
             None, vol.All(_finite, vol.Range(min=-360.0, max=360.0))
         ),
+        # #931: absence is fully opaque; null is not a stored alpha value.
+        vol.Optional("plan_opacity"): vol.All(_finite_number, vol.Range(min=0.0, max=1.0)),
         vol.Required("view_box"): _view_box,
         vol.Required("rooms"): vol.All([ROOM_SCHEMA], vol.Length(max=MAX_ROOMS)),
         vol.Optional("decor"): vol.All([DECOR_SCHEMA], vol.Length(max=MAX_DECOR)),

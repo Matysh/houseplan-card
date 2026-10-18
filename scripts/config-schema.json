@@ -1100,6 +1100,12 @@
       "required": false,
       "type": "float"
     },
+    "config.spaces[].plan_opacity": {
+      "max": 1.0,
+      "min": 0.0,
+      "opaque": "<function _finite_number>",
+      "required": false
+    },
     "config.spaces[].plan_scale": {
       "max": 100.0,
       "min": 0.01,

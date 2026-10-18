@@ -20,6 +20,7 @@ import { cardStyles } from './styles';
 import { dialogsStyles } from './styles/dialogs.styles';
 import { editorDialogsStyles } from './styles/editor-dialogs.styles';
 import { editorSecondaryStyles } from './editor-secondary.styles';
+import { propertiesStyles } from './editors/properties/styles';
 
 export interface EditorStyleHost {
   renderRoot?: DocumentFragment | HTMLElement;
@@ -36,6 +37,8 @@ const flatten = (group: CSSResultGroup): CSSResult[] =>
 /** [Lit sheet to follow, editor sheet] in cascade order. */
 const placements = (): Array<[CSSResult, CSSResult]> => [
   [dialogsStyles, editorDialogsStyles],
+  // Repeated insertion after one anchor is reversed: tray first, properties last.
+  [flatten(cardStyles).pop()!, propertiesStyles],
   [flatten(cardStyles).pop()!, editorSecondaryStyles],
 ];
 

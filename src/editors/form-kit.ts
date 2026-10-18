@@ -265,6 +265,8 @@ export interface ColorFieldOptions {
   picker: TemplateResult;
   /** Текущий цвет `#rrggbb` — печатается рядом со свотчем. */
   hex: string;
+  /** Semantic colour token such as “No fill”, without changing the stored HEX. */
+  valueLabel?: string;
   /** Прозрачность 0–1; `undefined` — поле без прозрачности. */
   opacity?: number;
   opacityLabel?: string;
@@ -282,12 +284,12 @@ export interface ColorFieldOptions {
  * не будет: `nativeColors() === 0` — контракт со свидетелем.
  */
 export function colorField({
-  picker, hex, opacity, opacityLabel, onOpacity, resetLabel, onReset, disabled = false,
+  picker, hex, valueLabel, opacity, opacityLabel, onOpacity, resetLabel, onReset, disabled = false,
 }: ColorFieldOptions): TemplateResult {
   const pct = opacity === undefined ? null : Math.round(Math.min(1, Math.max(0, opacity)) * 100);
   return html`<div class="hpf-colorfield">
     ${picker}
-    <code class="hpf-hex">${hex.toUpperCase()}</code>
+    <code class="hpf-hex">${valueLabel ?? hex.toUpperCase()}</code>
     ${pct === null ? nothing : onOpacity ? html`<span class="hpf-opacity">${opacityLabel ?? ''}
       <span class="hpf-unit"><input type="number" inputmode="numeric" min="0" max="100" step="1"
         .value=${String(pct)} ?disabled=${disabled} aria-label=${opacityLabel ?? 'Opacity'}
@@ -423,6 +425,8 @@ export interface UnitInputOptions {
   disabled?: boolean;
   /** Растянуть на всю ширину контейнера. */
   wide?: boolean;
+  /** Computed numeric value, distinct from an inapplicable/disabled field. */
+  readonly?: boolean;
   onInput: (raw: string) => void;
   /** Необязательный атомарный commit для полей с промежуточным текстовым вводом. */
   onChange?: (raw: string, input: HTMLInputElement) => void;
@@ -430,7 +434,7 @@ export interface UnitInputOptions {
 
 /** Числовое поле с единицей внутри рамки (§3.1 «unit-inside»). */
 export function unitInput({
-  id, describedBy, value, unit, min, max, step, placeholder, ariaLabel, invalid, disabled, wide,
+  id, describedBy, value, unit, min, max, step, placeholder, ariaLabel, invalid, disabled, wide, readonly,
   onInput, onChange,
 }: UnitInputOptions): TemplateResult {
   return html`<span class="hpf-unit ${wide ? 'hpf-unit-wide' : ''}">
@@ -439,6 +443,7 @@ export function unitInput({
       min=${min ?? nothing} max=${max ?? nothing} step=${step ?? nothing}
       placeholder=${placeholder ?? nothing} aria-label=${ariaLabel ?? nothing}
       aria-invalid=${invalid ? 'true' : nothing} ?disabled=${disabled}
+      ?readonly=${readonly}
       @input=${(e: Event) => onInput((e.target as HTMLInputElement).value)}
       @change=${onChange
         ? (e: Event) => onChange((e.target as HTMLInputElement).value, e.target as HTMLInputElement)
@@ -595,6 +600,8 @@ export interface SourceCandidate {
 }
 
 export interface SourcePickerOptions {
+  /** Optional source glyph; existing pickers keep their markup and layout. */
+  leading?: TemplateResult;
   /** Панель раскрыта. */
   open: boolean;
   /** Выбранный кандидат (подпись + идентификатор) или `null` — плейсхолдер. */
@@ -625,11 +632,12 @@ export interface SourcePickerOptions {
  */
 export function sourcePicker({
   open, current, placeholder, ariaLabel, filter, filterPlaceholder, candidates, selected, emptyText,
-  onToggle, onFilter, onPick, id, toolbar, disabled = false,
+  onToggle, onFilter, onPick, id, toolbar, disabled = false, leading,
 }: SourcePickerOptions): TemplateResult {
   return html`<div class="hpf-picker ${open ? 'open' : ''}">
     <button id=${id ?? nothing} type="button" class="hpf-select hpf-pick" aria-haspopup="listbox"
       aria-expanded=${open ? 'true' : 'false'} aria-label=${ariaLabel} ?disabled=${disabled} @click=${onToggle}>
+      ${leading ?? nothing}
       ${current
         ? html`<b>${current.label}</b><span class="hpf-pick-ref">${current.sub}</span>`
         : html`<span class="hpf-pick-ph">${placeholder}</span>`}

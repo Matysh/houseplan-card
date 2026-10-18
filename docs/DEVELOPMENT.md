@@ -7,6 +7,24 @@ The first reset-wait adapter still produced "Resulting promise was garbage
 collected" in CI at setMode; the component-reset step is now absent. Keyboard,
 44px target, translation, inheritance and popup assertions remain unchanged.
 
+## Properties panel (#931)
+
+The editor-only modules are under `src/editors/properties/`; do not import them
+into initial View. `demo/smoke_properties_panel.mjs` checks real controls and
+writers. `demo/capture_properties_panel.mjs` captures the actual product beside
+immutable approved references, verifies their manifest and asserts panel/group
+bounds. Read-only installed Segoe UI fonts are needed for comparable typography
+(`HP_QA_SEGOE_DIR`); fonts are never bundled. Output goes to `output/properties-931`.
+Never update approved references to make the implementation pass. Generic golden
+success is additional regression evidence, not design acceptance.
+
+Owner-approved #931 budget refresh (2026-10-18,
+[decision](https://github.com/Matysh/houseplan-card/issues/931#issuecomment-6250557931)):
+`hostRefs` 5564→5833, total bundle bytes 3088841→3184646, lazy editor gzip
+283610→311542. These are measured reference values, not added tolerance: the
+25-reference / 2000-byte bands, initial View limits and performance gates stay
+unchanged. The panel and its copy remain demand-loaded in the editor graph.
+
 ## Portable full backup (#936)
 
 Container v1: `manifest.json`, the old `document.json`, optional `zigbee.json`,

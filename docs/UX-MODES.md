@@ -371,14 +371,18 @@ layer you cannot see is a layer you cannot edit.
 
 ## Devices — placement and marker configuration
 
-- Icon dragging (ONLY here). Click on a device opens the **edit dialog directly**
+- Icon dragging (ONLY here). At owner-card width ≥960 px, click selects a device
+  in the shared Properties column; double-click / Open device settings opens the
+  full edit dialog. Below that width a click opens the **edit dialog directly**
   (binding, name, icon, size/angle, display as icon / icon + activity / value,
   activity color and size, tap override,
   model/link/description/PDFs, room).
 - The toolbar always keeps position-only Undo/Redo beside Close. One released
   drag is one command; cancellation, no movement and a failed write create no
   command. The independent 50-step session stack also uses `Ctrl/Cmd+Z`,
-  `Ctrl/Cmd+Shift+Z` and `Ctrl+Y` and never absorbs marker configuration,
+  `Ctrl/Cmd+Shift+Z` and `Ctrl+Y`. Panel icon size/angle changes share this ordered
+  history with position/LED commands, preserving unrelated marker keys; other
+  marker configuration is not absorbed, nor are
   lifecycle or Plan/Background edits.
 - + add device/entity/virtual, the bottom-left "Hide" / "Show" action in an
   existing device dialog (the one hiding mechanism, docs/FILTERING.md),
@@ -397,10 +401,11 @@ layer you cannot see is a layer you cannot edit.
   space it was drawn in (never in the one shown next) and opens no picker
   there. A clicked strip is selected (session state only) and
   shows vertex handles and the LED branch of the secondary tray. An ordinary
-  icon clicked while a strip is selected still opens its own dialog. The
+  icon clicked while a strip is selected selects the icon on a wide card (or
+  opens its own dialog on a narrow card). The
   device dialog switches the representation («Show as LED strip» / «Show as
   icon»). Geometry and representation changes are LED commands of the same
-  device history; the stack still never absorbs marker settings or
+  device history; the stack still never absorbs unrelated marker settings or
   Plan/Background edits. Plan and Background show strips as a passive
   translucent mark only — no tool, handles or targets.
 
@@ -414,7 +419,8 @@ layer you cannot see is a layer you cannot edit.
   text/HA-variable form; a line, rectangle, oval or furniture symbol opens the
   complete numeric/style form, with Fill where the shape supports it. Every
   selected kind has the common move/resize/rotate controller; lines use end
-  handles. The image is transformed only in its own tool and fades to 0.5
+  handles. The main plan image is transformed only in its own tool and fades to
+  half its saved opacity
   below the other Background tools.
 - **Live size badge** (owner 2026-08-04): while a LINE is being dragged out, the
   same `.measurelabel` the Plan editor puts on a wall shows «length · angle» —

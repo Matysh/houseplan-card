@@ -104,7 +104,7 @@ test('#659 live editor templates own guides in every editor and hide settled cop
     '${host._renderAlignGuides()}\n  </g>`;',
     '${host._renderDecorLayer(activeId)}\n      ${host._renderAlignGuides()}',
     '${host._renderAlignGuides()}\n    ${host._tool === \'draw\' ? nothing : host._renderPlanSnapOverlay()}',
-    "makeTransparent(state, root, '.hp-editor-only-layer:not(.hp-plan-snap-layer)');\n  if (host._mode === 'plan') {",
+    "makeTransparent(state, root, '.hp-editor-only-layer:not(.hp-plan-snap-layer)');\n  makeTransparent(state, root, '.hp-prop-selection');\n  if (host._mode === 'plan') {",
   );
 });
 

@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "dpr": 1
+  },
+  "language": "ru",
+  "theme": "light",
+  "browser": "151.0.7922.34",
+  "sourceFingerprint": "791e056306a05a45c830fd4a41817f31fe8ec0024c742cd2c5e61211650d4951",
+  "bundleManifestSha256": "83ddd50b764b6d14472e56f4cb4359155182093b66f01c2112b8867ef2d16ba1",
+  "approvedManifestSha256": "ebe32d305fc99b1c3d90c9fd51092f902ff0f0831dde3248bc194c1ab3dc096d",
+  "screenshots": {
+    "01-plan-wall-panel.png": "071c0c383cf2929696ef65e54f0e97bc4b54364eec5d17aadf67104eda7353d3",
+    "01-plan-wall.png": "78df819ce5d05eb347f97d6377eaa07da639f15d07e355378fafb26efb704574",
+    "02-plan-opening-panel.png": "b3d392ef3d26cd0b752f39e429539d5f5cf56dd810bda5cceb998f271411d61c",
+    "02-plan-opening.png": "110efa2bddf44eb6e0044d2331b9f1faff84718d9978be40df635d33eeb339c7",
+    "03-devices-light-panel.png": "b14c8743a4b51e94c52dd01676946dd0d56657caaf3466f62542eaed2d68b960",
+    "03-devices-light.png": "9dc11d023ec72472ac4192f80a493e920af44f39f7bc0ea7a59afe6c7afe9a8a",
+    "04-decor-rectangle-panel.png": "369e17b57f964095ac3462d44712b92899b47c6398d7882de4f95c53a8064774",
+    "04-decor-rectangle.png": "6381e90222f668c59465140db7a647c71385f220d377056f0001f2c421bbf65b",
+    "05-decor-text-panel.png": "8081d16e0ae0be81fde88a0f85fa449d820c8ed9866bc4ac56ad9309c6e8e068",
+    "05-decor-text.png": "2c7957f44a98d6b24c76b375577b7d59849ca907af822de7ce37d810de601382",
+    "06-decor-image-panel.png": "c810d696d39c903f1d7c1570326cfb096ae5cd4bc8265338bb5441a554b738c7",
+    "06-decor-image.png": "acb2fcc0bc2e3e305884d3cde73dbae714095758f9993f945d06472322e28cb0",
+    "07-plan-contour-panel.png": "05b42d2175b6c64ac729c5a1974573f8b262623159056839cc02cb3c46b3ab70",
+    "07-plan-contour.png": "9fb0452ca369803c5071c6d13cbcd4e2b86996163db3303fd728fa25d427db4f",
+    "08-plan-backdrop-panel.png": "b948850390ccddee689eeff74949fddceb5e78296f10a4f00ed1256e50fc9be6",
+    "08-plan-backdrop.png": "b207fe8cc2af3df0b972870b03cd53e37700900bcc58c56d6d3b67c1d77685b4",
+    "09-devices-led-panel.png": "fb37e066739fa1db220ade7f59d5f36c1f671dd3f6cb02f7f87b8adbfde3ec15",
+    "09-devices-led.png": "8e80c9faeab2286124971cc2dbef38f9d98c2af80d5ad8962177ce07f33edfdf",
+    "10-text-variable-dialog.png": "9484f4468c2f490f87f7754c81d51282697067815329425a487654fa7ad67bbf",
+    "11-text-variable-dialog-detail.png": "01240ff5b187f274278f3cf35e939a9a473a2790dd6e4975d78a9ecc89bfc3bd"
+  },
+  "commonControlMaximumDelta": 0,
+  "featureControlMaximumDelta": 0.78125
+}

@@ -380,6 +380,16 @@ def test_decor_physical_style_and_backdrop_transform():
         v.SPACE_SCHEMA({**space, "plan_scale_x": 0})
 
 
+def test_backdrop_opacity_is_optional_finite_not_null():
+    space = {"id": "s", "title": "S", "view_box": [0, 0, 1, 1], "rooms": []}
+    assert "plan_opacity" not in v.SPACE_SCHEMA(space)
+    for alpha in (0, 0.4, 1):
+        assert v.SPACE_SCHEMA({**space, "plan_opacity": alpha})["plan_opacity"] == alpha
+    for alpha in (None, True, False, "0.5", -0.01, 1.01, float("nan"), float("inf")):
+        with pytest.raises(vol.Invalid):
+            v.SPACE_SCHEMA({**space, "plan_opacity": alpha})
+
+
 def test_space_id_matches_SPACE_ID_RE():
     ok = {"id": "f1", "title": "F", "view_box": [0, 0, 1, 1], "rooms": []}
     v.SPACE_SCHEMA(ok)

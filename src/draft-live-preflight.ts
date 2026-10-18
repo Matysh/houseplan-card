@@ -166,7 +166,7 @@ export function isSinglePartitionAppend(
   const transform = asRecord(before.plan_transform) || {};
   const transformAfter: DataRecord = {};
   for (const key of [
-    'plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle',
+    'plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle', 'plan_opacity',
   ]) if (after[key] !== undefined) transformAfter[key] = after[key];
   if (stable(transform) !== stable(transformAfter)) return false;
 

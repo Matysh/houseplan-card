@@ -194,6 +194,7 @@ import {
   type DeviceLayout,
   type DevicePlacement,
   type DevicePositionState,
+  type DeviceEditorHistoryState,
 } from './device-position-history';
 import {
   applyAreaRelocationResolution,
@@ -1247,7 +1248,9 @@ export class HouseplanCard extends LitElement {
       paperColor: paper ? getComputedStyle(paper).fill : 'rgb(255, 255, 255)',
       sceneBrightness: Number.isFinite(brightness) ? brightness : 1,
       architectureOpacity: mode === 'decor' ? 0.35 : 1,
-      backdropOpacity: backdrop ? Number(getComputedStyle(backdrop).opacity) || 1 : 1,
+      backdropOpacity: backdrop && (this._spaceModel()?.bg?.opacity ?? 1) > 0
+        ? Number(getComputedStyle(backdrop).opacity) / (this._spaceModel()?.bg?.opacity ?? 1)
+        : mode === 'decor' && this._decorTool !== 'backdrop' ? 0.5 : 1,
       viewWeight: mode === 'view' ? 1 : 0,
       editorWeight: mode === 'view' ? 0 : 1,
       toolbarContentOpacity: mode === 'view' ? 0 : 1,
@@ -1712,6 +1715,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _pickSpace(id: string): void {
+    if (id !== this._space && this._editorRuntime && !this._editorRuntime.properties.beforeIntent(() => this._pickSpace(id))) return;
     this._endTabDrag();
     if (id === this._space) return;
     const ids = this._model.map((sp) => sp.id);
@@ -1747,7 +1751,7 @@ export class HouseplanCard extends LitElement {
   /** UX-04: one named, 50-step command history for every plan-geometry tool. */
   private _geometryHistory = new CommandStack<SpaceGeometryState>(50);
   /** #74: independent session-local history for manual device placements. */
-  private _devicePositionHistory = new CommandStack<DevicePositionState>(50);
+  private _devicePositionHistory = new CommandStack<DeviceEditorHistoryState>(50);
   private _devicePositionBusy = false;
   /** Wall-thickness tool dialog (docs/WALL-THICKNESS.md). */
   private _wallDialog: {
@@ -2986,7 +2990,8 @@ export class HouseplanCard extends LitElement {
     // The secondary toolbar is a focusable control surface, not the canvas.
     // Delete/Backspace there must never fall through to the selected object.
     const inEditorSecondary = eventPath.some((node: any) =>
-      node?.classList?.contains?.('editor-secondary'));
+      node?.classList?.contains?.('editor-secondary') || node?.classList?.contains?.('hp-properties'));
+    if (!inField && this._editorRuntime?.properties.escape(e)) return;
     const mod = e.ctrlKey || e.metaKey;
     const key = e.key.toLowerCase();
     // A Latin `key` names the shortcut the user actually pressed (including
@@ -3987,7 +3992,7 @@ export class HouseplanCard extends LitElement {
         // the picture would leave the memoized model (and the content frame
         // built from it) showing the old rectangle (docs/DECOR-EDITOR.md §3.2)
         + (x.plan_x ?? '') + ',' + (x.plan_y ?? '') + ',' + (x.plan_scale ?? '') + ','
-        + (x.plan_scale_x ?? '') + ',' + (x.plan_scale_y ?? '') + ',' + (x.plan_angle ?? '') + ','
+        + (x.plan_scale_x ?? '') + ',' + (x.plan_scale_y ?? '') + ',' + (x.plan_angle ?? '') + ',' + (x.plan_opacity ?? '') + ','
         + (x.rooms?.length || 0) + ',' + (x.openings?.length || 0) + ',' + (x.decor?.length || 0) + ';';
       for (const r of x.rooms || []) {
         // O(1) geometry roll-up per room: the count alone said nothing about
@@ -5482,15 +5487,28 @@ export class HouseplanCard extends LitElement {
   }
 
   private async _runDevicePositionHistory(direction: 'undo' | 'redo'): Promise<void> {
+    const properties = this._editorRuntime?.properties;
+    if (properties && !properties.beforeIntent(() => { void this._runDevicePositionHistory(direction); })) return;
+    return properties ? properties.command(() => this._applyDevicePositionHistory(direction)) : this._applyDevicePositionHistory(direction);
+  }
+
+  private async _applyDevicePositionHistory(direction: 'undo' | 'redo'): Promise<void> {
     if (this._cancelDeviceDrag() || this._devicePositionBusy) return;
     const isCurrent = this._layoutIO.guard();
     const ownsPending = this._layoutIO.guard(true);
+    const next = direction === 'undo' ? this._devicePositionHistory.peekUndo() : this._devicePositionHistory.peekRedo();
+    const position = next ? this._devicePositionHistory.positionOf(next) : null;
     const command = direction === 'undo'
       ? this._devicePositionHistory.undo()
       : this._devicePositionHistory.redo();
     if (!command) return;
     const target = direction === 'undo' ? command.before : command.after;
-    if ('kind' in target) return ledHistory(this as never, direction, command); // #780
+    if ('kind' in target) {
+      if (target.kind === 'visual' && 'kind' in command.before && 'kind' in command.after
+        && command.before.kind === 'visual' && command.after.kind === 'visual')
+        return this._editorRuntime?.properties.restoreVisual(direction, command, position);
+      return ledHistory(this as never, direction, command); // #780
+    }
     if (!this._devicePositionStateValid(target)) {
       this._devicePositionHistory.clear();
       this._showToast(this._t('history.device_stale'));
@@ -5750,7 +5768,10 @@ export class HouseplanCard extends LitElement {
     d = this._deviceForClickEvent(ev, d);
     if (this._deviceDrag?.moved || this._suppressClick || this._holdFired) return;
     if (this._mode === 'devices') {
-      this._openMarkerDialog(d);
+      const properties = this._editorRuntime?.properties;
+      if (properties?.wide) {
+        if (properties.selectDevice(d) && (ev as MouseEvent).detail >= 2) this._openMarkerDialog(d);
+      } else this._openMarkerDialog(d);
       return;
     }
     // The renderer may deliberately keep an older, complete visual snapshot
@@ -7132,6 +7153,9 @@ export class HouseplanCard extends LitElement {
     // capture it or create a layout drag.
     if (this._mode !== 'view' && this._mode !== 'devices') return;
     if (ev.button !== 0) return; // context-menu input must not arm a drag or hold
+    if (this._mode === 'devices' && this._editorRuntime?.properties.wide && !this._editorRuntime.properties.selectDevice(d)) {
+      ev.preventDefault(); ev.stopPropagation(); return;
+    }
     this._deviceDragRetirement.begin(ev.pointerId);
     if (this._mode === 'view' && ev.pointerType === 'touch' && this._touchSequenceMultitouch) return;
     d = this._deviceHits.begin(
@@ -7248,8 +7272,10 @@ export class HouseplanCard extends LitElement {
     this.requestUpdate();
     const isCurrent = this._layoutIO.guard();
     const ownsPending = this._layoutIO.guard(true);
-    void this._persistDevicePlacement(d.id, after)
-      .then(() => {
+    void this._editorRuntimeOrThrow()._visualCommand(async () => {
+      if (!isCurrent() || !ownsPending()) return;
+      try {
+        await this._persistDevicePlacement(d.id, after);
         if (!isCurrent()) return;
         const name = this._t('history.device_move', { name: drag.displayName });
         this._devicePositionHistory.push({
@@ -7261,15 +7287,14 @@ export class HouseplanCard extends LitElement {
             deviceId: drag.id, spaceId: drag.spaceId, placement: after,
           },
         });
-      })
-      .catch((error: unknown) => {
+      } catch (error: unknown) {
         if (!isCurrent()) return;
         this._previewDevicePlacement(d.id, drag.before);
         this._showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }));
-      })
-      .finally(() => {
+      } finally {
         if (ownsPending()) { this._devicePositionBusy = false; this.requestUpdate(); }
-      });
+      }
+    });
   }
   private _pointerCancel(ev: PointerEvent, d: DevItem): void {
     this._viewHold.cancel(ev.pointerId);
@@ -8455,7 +8480,8 @@ export class HouseplanCard extends LitElement {
     const corners: [number, number, string][] = [
       [-1, -1, 'nwse'], [1, -1, 'nesw'], [1, 1, 'nwse'], [-1, 1, 'nesw'],
     ];
-    const arm = hr * 2.2;
+    const arm = this._editorRuntime?.properties.wide
+      ? 24 * view.w / (this._stageEl?.clientWidth || 1) : hr * 2.2;
     const furniture = sh.kind === 'furniture' || sh.kind === 'image';
     const sides: [number, number, string][] = furniture ? [
       [0, -1, 'ns'], [1, 0, 'ew'], [0, 1, 'ns'], [-1, 0, 'ew'],
@@ -10818,6 +10844,7 @@ export class HouseplanCard extends LitElement {
       : nothing}</span>`;
     return html`
       <ha-card
+        ?data-hp-properties-wide=${this._editorRuntime?.properties.wide}
         data-hp-state=${this._booting ? 'booting' : 'ready'} data-hp-mode=${this._mode}
         data-continuity-state=${this._continuity.state}
         data-continuity-token=${this._continuity.token}
@@ -10994,7 +11021,7 @@ export class HouseplanCard extends LitElement {
               : nothing}
             ${space.bg && backdropHref
               ? svg`<image class="hp-backdrop" href="${backdropHref}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}"
-                  opacity="${modeVisual?.backdropOpacity ?? (this._mode === 'decor' && this._decorTool !== 'backdrop' ? 0.5 : 1)}"
+                  opacity="${(space.bg.opacity ?? 1) * (modeVisual?.backdropOpacity ?? (this._mode === 'decor' && this._decorTool !== 'backdrop' ? 0.5 : 1))}"
                   @load=${() => this._onBackdropLoaded(space.bg!.href, backdropHref)}
                   transform=${space.bg.angle
                     ? `rotate(${space.bg.angle} ${space.bg.x + space.bg.w / 2} ${space.bg.y + space.bg.h / 2})`
@@ -11203,6 +11230,7 @@ export class HouseplanCard extends LitElement {
                    backdrop editor, where rooms and devices are pointer-inert. */}
             ${this._editorRuntime?.backdropGesture.renderFrame(view)}
             ${this._renderTextFrame(view)}
+            ${this._editorRuntime?.properties.selection()}
             ${this._mode === 'plan' && this._editorRuntime ? this._editorRuntime.stairs.renderFrame(view) : nothing}
             <g data-hp-live-editor></g>
             </g>
@@ -11272,6 +11300,7 @@ export class HouseplanCard extends LitElement {
             : nothing}
         </div>
 
+        ${this._editorRuntime?.properties.render()}
         ${this._editorRuntime?.deviceCopy.render()}
         ${this._roomDialog ? this._editorRuntime ? this._renderRoomDialog() : nothing : nothing}
         ${this._mergeDialog ? this._editorRuntime ? this._renderMergeDialog() : nothing : nothing}
@@ -12465,7 +12494,12 @@ export class HouseplanCard extends LitElement {
         data-id=${o.id} role="button" tabindex="0"
         aria-label=${this._t('opening.partition_orphan')}
         transform="translate(${o.rx} ${o.ry})"
-        @click=${(event: MouseEvent) => { event.stopPropagation(); this._editOpening(o); }}>
+        @click=${(event: MouseEvent) => { event.stopPropagation();
+          const properties = this._editorRuntime?.properties;
+          if (this._mode === 'plan' && this._tool === 'select' && properties?.wide) {
+            if (properties.select('opening', o.id) && event.detail >= 2) this._editOpening(o);
+          } else this._editOpening(o);
+        }}>
         <circle r=${gridVisualUnits(this._gridPitch * 0.55, this._cellCm)}></circle>
         <text text-anchor="middle" dominant-baseline="central">!</text>
       </g>`;

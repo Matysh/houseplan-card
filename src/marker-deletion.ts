@@ -87,6 +87,28 @@ const targetForId = (runtime: HouseplanEditorRuntime, id: string): MarkerDeletio
   return binding ? { id, binding } : null;
 };
 
+/** Panel Delete enters the same durable cleanup command without a fabricated dialog draft. */
+export async function deletePlanDevice(runtime: HouseplanEditorRuntime, id: string, binding: string): Promise<void> {
+  const host = runtime.host;
+  const claim = host._configWriteContext.claim();
+  const current = () => host.isConnected && host._canEdit && !host._kiosk
+    && host._configWriteContext.current(claim, host.hass) && targetForId(runtime, id)?.binding === binding;
+  if (!current()) return;
+  const device = host._devices.find(d => d.id === id);
+  const accepted = await host._confirmDanger({
+    key: 'remove-marker', kind: 'destructive', title: host._t('confirm.remove_marker_title'),
+    message: host._t('confirm.remove_marker_body'), objectName: device?.name || host._t('device.fallback'),
+    confirmLabel: host._t('btn.delete'), cancelLabel: host._t('btn.cancel'),
+  });
+  if (!accepted || !current()) return;
+  try {
+    await commitDeletion(runtime, [{ id, binding }]);
+    if (host._configWriteContext.current(claim, host.hass)) host._showToast(host._t('toast.marker_removed'));
+  } catch (error) {
+    if (current() && !isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }));
+  }
+}
+
 export async function deleteMarker(runtime: HouseplanEditorRuntime): Promise<void> {
   const host = runtime.host;
   const dialog = host._markerDialog;

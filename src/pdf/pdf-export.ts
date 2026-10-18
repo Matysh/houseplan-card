@@ -45,7 +45,7 @@ async function rasters(context: PdfRuntimeContext, options: PdfExportOptions): P
     const image = await imageToJpeg(context.backdropUrl, 'backdrop');
     out.push({ ...image, x: context.space.bg.x, y: context.space.bg.y,
       drawWidth: context.space.bg.w, drawHeight: context.space.bg.h,
-      angle: context.space.bg.angle, opacity: 0.6 });
+      angle: context.space.bg.angle, opacity: 0.6 * (context.space.bg.opacity ?? 1) });
   }
   if (options.decor) {
     let index = 0;

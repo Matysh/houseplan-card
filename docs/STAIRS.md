@@ -7,6 +7,11 @@ creates or changes anything on the target floor.
 
 ## User contract
 
+On wide Plan cards (≥960 px), Properties exposes centre, continuous dimensions
+(30…10000 cm), angle, colours and direction. The rendered 3.6 px stroke stays
+fixed and its field is disabled. Native gestures, full-dialog entry, routing,
+landing geometry and existing history remain unchanged (#931).
+
 The Plan editor has one **Stairs** group with **Straight** and **Spiral** tools.
 Stairs are drawn like decor shapes (#676): press on the plan, drag and release.
 The dominant drag axis is the rise axis, the ascent points from the press to

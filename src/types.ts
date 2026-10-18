@@ -79,7 +79,7 @@ export interface SpaceModel {
   /** Canonical centimetres represented by one stored grid cell. */
   cellCm?: number;
   vb: number[]; // render units
-  bg: { href: string; x: number; y: number; w: number; h: number; angle?: number } | null;
+  bg: { href: string; x: number; y: number; w: number; h: number; angle?: number; opacity?: number } | null;
   rooms: RoomCfg[]; // render units
   /** Canonical contour-wall atoms in render units. */
   wall_segments: WallSegmentEntry[];

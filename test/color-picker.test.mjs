@@ -51,7 +51,7 @@ test('the shared component keeps its API and contains no nested native color pic
   }
   for (const token of [
     'public color', 'public opacity', 'public disabled', 'public showOpacity',
-    'hp-color-opacity-change', 'detail: { color: normalized, opacity: clamped }',
+    'hp-color-opacity-change', 'detail: { color: normalized, opacity: clamped, ...(this.allowNoFill ? { noFill: this.noFill } : {}) }',
     'confirm: string', "confirm: 'OK'",
   ]) assert.match(component, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   assert.match(component, /<button class="confirm" type="button"[^>]*@click=/);

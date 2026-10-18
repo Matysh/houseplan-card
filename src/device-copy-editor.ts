@@ -26,7 +26,7 @@ export class DeviceCopyEditor {
   private busyContext: object | null = null;
   private operation = 0;
   private element: HTMLElement | null = null;
-  constructor(private readonly host: HouseplanEditorHostPort) {}
+  constructor(private readonly host: HouseplanEditorHostPort, private readonly copied?: (id: string, sourceId: string) => void) {}
   private t(key: ToolsI18nKey): string { return toolsT(langOf(this.host.hass, this.host._config?.language), key); }
   private allowed(): boolean {
     const h = this.host;
@@ -81,6 +81,15 @@ export class DeviceCopyEditor {
       @keydown=${(e: KeyboardEvent) => { if (e.key === 'Tab') this.close(); }}>
       <button role="menuitem" data-hp="device-copy" style="font:inherit;color:inherit;background:transparent;border:0;border-radius:6px;padding:10px 14px;cursor:pointer;min-height:44px" @click=${() => void this.copy(m)}>${this.t('device.copy')}</button>
     </div>`;
+  }
+  /** Same guarded command as the context menu; no synthetic pointer event. */
+  async copyDevice(source: DevItem): Promise<void> {
+    const h = this.host;
+    if (!this.allowed() || this.busy || h._devicePositionBusy || h._deviceDrag) return;
+    const current = h._devices.find(d => d.id === source.id && d.space === h._space && !d.hidden);
+    if (!current || current.bindingStatus && current.bindingStatus.kind !== 'active') return;
+    await this.copy({ id: current.id, space: h._space, context: h._configWriteContext.claim(), cr: h._cfgRev, lr: h._layoutRev,
+      cfg: contentFingerprint(h._serverCfg), layout: contentFingerprint(h._layout), x: 0, y: 0, target: null });
   }
   private async copy(m: Menu): Promise<void> {
     if (this.busy || !this.unchanged(m)) { this.close(); this.host._showToast(this.t('device.copy_changed')); return; }
@@ -151,6 +160,7 @@ export class DeviceCopyEditor {
           if (dx || dy) h._applyView(h._zoom, view.x + view.w / 2 - dx, view.y + view.h / 2 - dy);
         }
         h._showToast(this.t('device.copy_created'));
+        this.copied?.(id, m.id);
       }
     } catch (error) {
       if (!authority()) return;
@@ -158,7 +168,7 @@ export class DeviceCopyEditor {
       if (sent) {
         try { await Promise.all([h._reloadConfigOnly(true), h._reloadLayoutOnly()]); } catch { /* retain the failure, never retry the write */ }
         if (h._serverCfg?.markers?.some(marker => marker.id === id) && h._layout[id]) {
-          if (this.contextCurrent(m)) h._showToast(this.t('device.copy_created'));
+          if (this.contextCurrent(m)) { h._showToast(this.t('device.copy_created')); this.copied?.(id, m.id); }
           return;
         }
       }

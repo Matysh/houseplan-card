@@ -26,7 +26,7 @@ export interface PhysicalBodyGesturePort {
   snap(point: number[]): number[];
   snapshot(): SpaceGeometryState | null;
   commit(key: 'history.physical_move' | 'history.physical_edit', before: SpaceGeometryState | null): void;
-  select(selection: PhysicalSelection): void;
+  select(selection: PhysicalSelection): boolean | void;
   openDialog(kind: PhysicalKind, id: string): void;
   toast(key: 'toast.column_duplicate'): void;
   publish(phase: 'begin' | 'move' | 'end'): void;
@@ -65,7 +65,6 @@ export class PhysicalBodyGestureRuntime {
     const model = this.port.space();
     if (!model) return;
     ev.stopPropagation();
-    capturePointer(ev);
     const point = this.port.point(ev);
     const { cellCm, gridPitch } = this.port.units();
     const candidates: PhysicalSelection[] = [];
@@ -92,7 +91,8 @@ export class PhysicalBodyGestureRuntime {
       ? model.partitions.find((item) => item.id === id)
       : model.wall_columns.find((item) => item.id === id);
     if (!base) return;
-    this.port.select({ kind, id });
+    if (this.port.select({ kind, id }) === false) return;
+    capturePointer(ev);
     this._drag = {
       pid: ev.pointerId, kind, id, start: this.port.point(ev),
       startClient: [ev.clientX, ev.clientY], before: this.port.snapshot(), moved: false,

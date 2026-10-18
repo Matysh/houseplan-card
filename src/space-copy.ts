@@ -89,7 +89,7 @@ export function newSpaceCopySeed(now = Date.now(), random = Math.random()): stri
 const COPY_KEYS = [
   'settings', 'zero_wall_style', 'cell_cm', 'view_box',
   'plan_url', 'plan_aspect', 'plan_x', 'plan_y', 'plan_scale',
-  'plan_scale_x', 'plan_scale_y', 'plan_angle',
+  'plan_scale_x', 'plan_scale_y', 'plan_angle', 'plan_opacity',
 ] as const;
 
 /**

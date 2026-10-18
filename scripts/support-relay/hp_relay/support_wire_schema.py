@@ -373,7 +373,7 @@ SPACE = Object(
         "title": re.compile(r"Space [0-9]+\Z"),
         "has_plan": BOOL,
         **fields(
-            "cell_cm plan_aspect plan_x plan_y plan_scale plan_scale_x plan_scale_y plan_angle",
+            "cell_cm plan_aspect plan_x plan_y plan_scale plan_scale_x plan_scale_y plan_angle plan_opacity",
             nullable(NUMBER),
         ),
         "view_box": Array(NUMBER, 4, 4),
