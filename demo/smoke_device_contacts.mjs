@@ -189,7 +189,7 @@ checkAll({coldReadExactPoint:isDeepStrictEqual((await state()).layout,reloaded['
   coldReadRebuildsGroup:(await state()).components.every(id=>id==='contact-a'),coldReadNoWrite:(await state()).writes===returned.writes});
 await card.locator('[data-hp="settings"]').click();
 await page.locator('hp-dialog[icon="mdi:cog-outline"] [data-section-target="data"]').click();
-await page.locator('hp-dialog[icon="mdi:cog-outline"]').locator('button:has(ha-icon[icon="mdi:broom"])').click();
+await page.locator('hp-dialog[icon="mdi:cog-outline"]').getByRole('button',{name:await page.evaluate(()=>window.__card._t('gs.align_all')),exact:true}).click();
 await page.locator('hp-dialog[icon="mdi:broom"]').waitFor();
 check('native-optimize-preview-keeps-contact',await page.evaluate(()=>{
   const c=window.__card,layout=c._alignDialog.layout;

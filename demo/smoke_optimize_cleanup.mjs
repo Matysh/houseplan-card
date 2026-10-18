@@ -11,7 +11,7 @@ const optimize = () => page.locator('hp-dialog[data-kind="settings"][icon="mdi:b
 async function open() {
   if (!await settings().count()) await page.locator('[data-hp="settings"]').click();
   await settings().locator('[data-section-target="data"]').click();
-  await settings().locator('button:has(ha-icon[icon="mdi:broom"])').click();
+  await settings().getByRole('button',{name:await page.evaluate(()=>window.__card._t('gs.align_all')),exact:true}).click();
   await optimize().waitFor();
   await page.evaluate(() => window.__hpTest.settled());
 }
@@ -150,11 +150,9 @@ await page.evaluate(async () => {
 record('currentReadOnlyCapabilityDisablesOptimizeAndUndo', await page.evaluate(() => {
   const dialog = (window.__card.shadowRoot || window.__card.renderRoot)
     .querySelector('hp-dialog[icon="mdi:cog-outline"]');
-  const icons = ['mdi:broom', 'mdi:undo-variant'];
-  return !window.__card._canEdit && icons.every(icon => {
-    const button = dialog?.querySelector(`button:has(ha-icon[icon="${icon}"])`);
-    return icon === 'mdi:broom' ? button?.disabled === true : !button || button.disabled;
-  });
+  const buttons=[...(dialog?.querySelectorAll('[data-card="data"] .hpf-actions button') || [])];
+  const prepare=buttons.find(button=>button.textContent.trim()===window.__card._t('gs.align_all'));
+  return !window.__card._canEdit && prepare?.disabled===true && buttons.every(button=>button.disabled);
 }));
 record('denialHintDoesNotClaimAdminOnly', await settings().locator('.rhint').filter({ hasText: /write permission|права на изменение/ }).count() > 0);
 record('onlyRequestedApplyWasSent', await page.evaluate(() => window.__892.writes.length === 1));

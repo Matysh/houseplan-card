@@ -8,7 +8,7 @@ const optimize = page => page.locator('hp-dialog[data-kind="settings"][icon="mdi
 async function open(page) {
   if (!await settings(page).count()) await page.locator('[data-hp="settings"]').click();
   await settings(page).locator('[data-section-target="data"]').click();
-  await settings(page).locator('button:has(ha-icon[icon="mdi:broom"])').click();
+  await settings(page).getByRole('button',{name:await page.evaluate(()=>window.__card._t('gs.align_all')),exact:true}).click();
   await optimize(page).waitFor();
   await page.evaluate(() => window.__hpTest.settled());
 }
@@ -286,7 +286,7 @@ for (const direction of ['full-to-partial', 'partial-to-full']) {
       !window.__card._layout.grp_persistence && window.__card._canOptimizeUndo));
     await page.locator('[data-hp="settings"]').click();
     await settings(page).locator('[data-section-target="data"]').click();
-    await settings(page).locator('button:has(ha-icon[icon="mdi:undo-variant"])').click();
+    await settings(page).getByRole('button',{name:'Undo last optimization',exact:true}).click();
     await page.waitForFunction(() => !window.__card._optimizeUndoBusy && !!window.__card._layout.grp_persistence);
     check('persistence:actualGuiUndoRestoresWholeRecord', await page.evaluate(() =>
       structuredClone(window.__card._layout.grp_persistence)), position);

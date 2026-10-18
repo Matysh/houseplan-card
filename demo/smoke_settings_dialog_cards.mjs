@@ -20,8 +20,8 @@ const out = await page.evaluate(async () => {
   // --- «Общие настройки»: карточки, сегмент фона, сообщение о состоянии ----
   c._openSettingsDialog(); await c.updateComplete;
   o.generalCardsInOrder = JSON.stringify(headings()) === JSON.stringify([
-    'Information on the plan', 'Appearance and background', 'Room fill colors',
-    'Light, Sun and Moon', 'Zigbee links', 'Backups and maintenance',
+    'Information on the plan', 'Appearance and background', 'Room fills',
+    'Light, Sun and Moon', 'Zigbee diagnostics', 'Backups and maintenance',
   ]);
   o.everyGeneralCardHasContent = cards().every(card => card.querySelector('.hpf-body > *'));
   sr().querySelector('[data-section-target="plan"]').click(); await c.updateComplete;
