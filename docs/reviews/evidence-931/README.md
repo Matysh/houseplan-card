@@ -76,7 +76,7 @@ vocabulary remain the implementation target.
   strict parser, field/lane authority, transform/physical semantics, targeted
   patches, actual runtime writer/rollback/history and RU/EN copy.
 - `python -m pytest tests_backend/test_validation.py tests_backend/test_config_schema_manifest.py tests_backend/test_support_package.py tests_backend/test_ha_websocket.py tests_backend/test_ha_import_export.py -q`:
-  **552 passed, 1 skipped**, including actual HA entry reload/storage and
+  **574 passed, 1 skipped** on the joint #931/#945 source (previously552), including actual HA entry reload/storage and
   plan-only alpha transfer, not just mocked Python validation.
 - `node scripts/model-invariants.mjs --config test/fixtures/config-lifecycle/current.json --json`:
   zero violations (four existing legacy wall-key notes, no rewrite).
