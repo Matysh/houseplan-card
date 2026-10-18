@@ -15,18 +15,18 @@ for (const width of [360, 1280]) for (const language of ['ru', 'en']) for (const
     await page.emulateMedia({ colorScheme: dark ? 'dark' : 'light' });
     await page.evaluate(({ language, dark }) => {
       const card = window.__card;
-      card.setConfig({ type: 'custom:houseplan-card', language });
-      card.hass = { ...card.hass, themes: { darkMode: dark } };
+      card.hass = { ...card.hass, language, locale:{...card.hass.locale,language}, themes: { darkMode: dark } };
       const style = document.documentElement.style;
       style.setProperty('--primary-background-color', dark ? '#111318' : '#fafafa');
       style.setProperty('--card-background-color', dark ? '#202228' : '#fff');
       style.setProperty('--primary-text-color', dark ? '#f2f2f2' : '#202020');
     }, { language, dark });
-    // setConfig starts a new boot/render cycle. Wait for its visible root,
-    // rather than retaining an obsolete updateComplete promise across reset.
+    // Each case starts a fresh card. Set HA's language without tearing that
+    // card down, then observe the public mode instead of a CDP-held promise.
     await page.waitForFunction(() => window.__card?._booting === false
       && !!window.__card?.shadowRoot.querySelector('ha-card[data-hp-mode]'));
-    await page.evaluate(() => window.__hpTest.setMode('devices'));
+    await page.evaluate(() => { void window.__hpTest.setMode('devices'); });
+    await page.waitForFunction(()=>window.__card?.renderRoot.querySelector('ha-card[data-hp-mode]')?.getAttribute('data-hp-mode')==='devices');
     await page.evaluate(async () => {
       const card = window.__card;
       // The same mobile menu is the public entry, not a private opening method.

@@ -1,10 +1,11 @@
 # Development and deployment
 
-The #945 localized signal witness waits for the visible card root after
-`setConfig` restarts boot, then uses the real Devices/settings entry. It no
-longer awaits a superseded `updateComplete` promise during reset. This repairs
-the CI setup error "Resulting promise was garbage collected" without changing
-the keyboard,44px target, translation, inheritance or popup assertions.
+The #945 localized signal witness sets HA language on each fresh card instead
+of restarting it with `setConfig`. It observes the public Devices mode before
+the actual settings entry, rather than awaiting a CDP-held transition promise.
+The first reset-wait adapter still produced "Resulting promise was garbage
+collected" in CI at setMode; the component-reset step is now absent. Keyboard,
+44px target, translation, inheritance and popup assertions remain unchanged.
 
 ## Portable full backup (#936)
 
