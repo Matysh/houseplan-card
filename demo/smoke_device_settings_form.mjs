@@ -53,7 +53,8 @@ const out = await page.evaluate(async () => {
   o.showEntitiesWritesOwnKey = c._markerDialog.showEntities === !d0.showEntities && c._markerDialog.binding === d0.binding;
   q('#marker-binding').click(); await upd();
   o.buttonClosesPanel = !q('.hpf-card[data-card="basics"] .hpf-panel') && c._markerDialog.bindingOpen === false;
-  o.roomIsASelectWithHint = !!q('#marker-room.hpf-select') && !!q('#marker-room')?.closest('.hpf-field')?.querySelector('.hpf-hint');
+  o.roomIsASelectWithContextualHelp = !!q('#marker-room.hpf-select')
+    && !!q('#marker-room')?.closest('.hpf-field')?.querySelector('hp-help[data-help-key="marker.room.help"]')?.text;
 
   q('[data-section-target=actions]').click(); await upd();
   // --- Tap action: подтверждение только у действий (Q8), чипы источников -----

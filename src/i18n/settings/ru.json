@@ -260,5 +260,7 @@
   "marker.display_method": "Способ отображения",
   "marker.hide_battery.help": "Скрывает заряд у этого устройства. Настройки пространства и других устройств не меняются.",
   "marker.hide_battery.help.aria": "Подсказка: скрытие заряда",
-  "marker.binding_search_hint.aria": "Подсказка: выбор устройства Home Assistant"
+  "marker.binding_search_hint.aria": "Подсказка: выбор устройства Home Assistant",
+  "marker.room.help": "Выберите комнату для размещения устройства на плане. Для привязанного устройства можно оставить автоматическое размещение по зоне Home Assistant.",
+  "marker.room.help.aria": "Подсказка: комната устройства"
 }

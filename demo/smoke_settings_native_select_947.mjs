@@ -4,10 +4,11 @@ import {installHpTestOnPage} from './helpers/hp-test.mjs';
 import {ensureHarnessEditorRuntime} from './editor-runtime-compat.mjs';
 import {installSettingsDeviceFixture,openSettingsDeviceDialog} from './helpers/settings-device-947-fixture.mjs';
 import {assertFreshDemoBundle} from './bundle-freshness.mjs';
-import {checkAll} from './serve.mjs';
+import {checkAll,watchPage,finish} from './serve.mjs';
 import {fileURLToPath} from 'node:url';
 const fixture=await launchHaDialogFixture({authentic:true,viewport:{width:320,height:900},extraModules:['16213']});
 const {page}=fixture,out={};
+watchPage(page);
 try{
  await page.goto(fixture.url+'/product.html');
  await page.waitForFunction(()=>window.__card?._booting===false&&window.__card?._devices?.length>0);
@@ -34,5 +35,5 @@ try{
  out.footer_targets=await dialog.locator('.hpf-footer button:not(:disabled)').evaluateAll(nodes=>nodes.every(el=>getComputedStyle(el).cursor==='pointer'&&el.getBoundingClientRect().height>=44));
  await dialog.locator('.hpf-footer [data-hp="dialog-cancel"]').click();await dialog.waitFor({state:'detached'});
  out.cancel_preserves_config=await page.evaluate(original=>JSON.stringify(window.__card._serverCfg)===original,original);
- await fixture.assertClean();checkAll(out);console.log(JSON.stringify(out));
+ await fixture.assertClean();checkAll(out);await finish(fixture.browser,out);
 }finally{await fixture.close();}

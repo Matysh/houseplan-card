@@ -16,7 +16,7 @@ export async function installSettingsDeviceFixture(page) {
     c.setConfig({...c._config,language:'ru'});
     const device=(id,name,model)=>window.__addRegistryDevice(id,name,model,'living_room');
     const entity=(id,owner,state,attributes={},platform='esphome')=>window.__addRegistryEntity(id,'living_room',state,platform,{device_id:owner},attributes);
-    device('demo_led_controller','Подсветка карниза','Двухканальный LED-контроллер');
+    device('demo_led_controller','Контроллер света гостиной','Двухканальный LED-контроллер');
     device('demo_ceiling','Потолочная лампа','Light');device('demo_floor_lamp','Торшер','Light');
     entity('light.living_cornice','demo_led_controller','on',{friendly_name:'Карниз',brightness:184,supported_color_modes:['brightness'],color_mode:'brightness'});
     entity('light.living_accent','demo_led_controller','off',{friendly_name:'Акцент',brightness:128,supported_color_modes:['brightness']});

@@ -10,6 +10,7 @@
 
 - Repair the hidden-device browser witness for linked virtual-light actions;
   keep the existing nightly mutation and product behavior unchanged (#953).
+- Keep room-assignment guidance beside the Device room field and show the Home Assistant binding name separately from the custom plan label. (#947)
 
 - Development checks reuse verified unchanged product inputs across metadata
   commits and pushes, keep Git/process checks fresh, and separate golden from

@@ -3268,3 +3268,9 @@ and all bands/absolute limits. Initial322945 stays under unchanged322937+2000
 and352000. Counter refs remain145/363/5564/103/101, actual hostRefs5574.
 The measured Device A is identical to28e4cece; the parent rebase changes
 accepted tests/review history and generated baselines, not product code.
+
+The native #947 smoke depends on `tests_backend/requirements.txt` solely for the
+verified Home Assistant frontend wheel pin. `check-inputs` asserts that exact
+one-file dependency; backend suites remain outside all browser inputs. Its page
+is registered with `watchPage`, and both fixture integrity and the ordinary
+`finish` error verdict must pass. Approved-reference pages use the same guard.

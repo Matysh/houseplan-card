@@ -296,7 +296,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           help:shelp('marker.binding_search_hint'),error:bindingProblem ? st(bindingProblem.message) : undefined,control:bindingPicker})}
         ${field({
           label: t('marker.room_label'), htmlFor: 'marker-room',
-          hint: d.room ? st('marker.room_hint_override') : isVirtual ? undefined : st('marker.room_hint_auto'),
+          help:html`<hp-help instant data-help-key="marker.room.help" .text=${d.room ? st('marker.room_hint_override') : isVirtual ? st('marker.room.help') : st('marker.room_hint_auto')} .ariaLabel=${st('marker.room.help.aria')}></hp-help>`,
           control: html`<hp-settings-select><select id="marker-room" class="hpf-select"
             @change=${(e: Event) => {
               const room = (e.target as HTMLSelectElement).value;

@@ -260,5 +260,7 @@
   "marker.display_method": "Display method",
   "marker.hide_battery.help": "Hides the battery level for this device. Space and other device settings stay unchanged.",
   "marker.hide_battery.help.aria": "Help: hide battery level",
-  "marker.binding_search_hint.aria": "Help: choose a Home Assistant device"
+  "marker.binding_search_hint.aria": "Help: choose a Home Assistant device",
+  "marker.room.help": "Choose a room for this device on the plan. Linked devices may keep automatic placement by their Home Assistant area.",
+  "marker.room.help.aria": "Help: device room"
 }

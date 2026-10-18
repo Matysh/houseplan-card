@@ -14,7 +14,8 @@ try{
  await installSettingsDeviceFixture(page);
  await page.evaluate(()=>{const c=window.__card,call=c.hass.callService;window.__settings947Commands=0;c.hass={...c.hass,callService:(...args)=>{window.__settings947Commands++;return call(...args);}};});
  const original=await saved();
- const reference=watchPage(await page.context().newPage());
+ const context=page.context();
+ const reference=watchPage(await context.newPage());
  await reference.setContent('<!doctype html><html><body>'+readFileSync('docs/design/settings-dialogs-944/device-settings-v6.html','utf8')+'</body></html>');
  await reference.locator('.hp-after h2').waitFor();
  const samples=[['led','demo_led_controller'],['climate','demo_living_climate'],['vacuum','demo_x50'],['radar','demo_radar']];
