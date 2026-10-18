@@ -1,6 +1,11 @@
 import '../hp-settings-select';
 import { ensureFormKitStyles, type FormKitStyleHost } from './form-kit';
 import { settingsDialogCss } from '../styles/settings-dialogs.styles';
+import { cardDialogFormKitTokens } from '../styles/form-kit.styles';
+
+// The footer is a sibling of the form. Share the same theme tokens at its
+// settings-dialog owner instead of maintaining a second colour palette.
+const SETTINGS_DIALOG_CSS = cardDialogFormKitTokens.replace('hp-dialog .hpf-form', 'hp-dialog[settings-layout]') + settingsDialogCss;
 import type { HpColorOpacity } from '../hp-color-opacity';
 
 const adopted = new WeakSet<ShadowRoot>();
@@ -22,11 +27,11 @@ export function ensureSettingsDialogStyles(host: FormKitStyleHost): void {
   const doc = root.ownerDocument, Sheet = doc.defaultView?.CSSStyleSheet;
   if (Sheet && 'adoptedStyleSheets' in root) {
     let sheet = sheets.get(doc);
-    if (!sheet) { sheet = new Sheet(); sheet.replaceSync(settingsDialogCss); sheets.set(doc, sheet); }
+    if (!sheet) { sheet = new Sheet(); sheet.replaceSync(SETTINGS_DIALOG_CSS); sheets.set(doc, sheet); }
     root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
   } else {
     const style = doc.createElement('style');
-    style.dataset.hpSettingsStyles = 'true'; style.textContent = settingsDialogCss; root.appendChild(style);
+    style.dataset.hpSettingsStyles = 'true'; style.textContent = SETTINGS_DIALOG_CSS; root.appendChild(style);
   }
   adopted.add(root);
 }

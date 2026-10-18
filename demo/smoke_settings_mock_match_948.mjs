@@ -29,6 +29,16 @@ await dialog.locator('[data-section-target=sun]').click();
 await page.evaluate(()=>window.__hpTest.settled());
 output.lightFieldComposition=await dialog.evaluate(el=>{const card=el.querySelector('[data-card=sun]'),color=card.querySelector('.hpf-colorrow'),label=color.querySelector('.hpf-labelrow'),picker=color.querySelector('.hpf-colorfield'),radius=card.querySelector('#gs-glow-radius').closest('.hpf-unit');return picker.getBoundingClientRect().top>label.getBoundingClientRect().bottom&&Math.abs(picker.getBoundingClientRect().width-card.getBoundingClientRect().width)<2&&Math.abs(radius.getBoundingClientRect().width-card.getBoundingClientRect().width)<2&&!!card.querySelector('.hpf-north-values .hpf-hint')&&[...card.querySelectorAll('.hpf-field .hpf-callout')].length>=2;});
 output.footerStatusFirst=await dialog.locator('.hpf-footer').evaluate(el=>el.firstElementChild.classList.contains('hpf-status')&&el.firstElementChild.textContent.trim().length>0);
+const cancel=dialog.locator('.hpf-footer [data-hp=dialog-cancel]');
+for(const dark of [false,true]){
+ await dialog.evaluate((el,dark)=>{const host=el.getRootNode().host;host.style.setProperty('--card-background-color',dark?'#17222e':'#fff');host.style.setProperty('--primary-text-color',dark?'#e7eef4':'#223039');host.style.setProperty('--primary-color',dark?'#67cfe8':'#008aa5');},dark);
+ await page.mouse.move(0,0);await page.waitForTimeout(180);
+ const before=await cancel.evaluate(el=>getComputedStyle(el).backgroundColor);
+ await cancel.hover();await page.waitForTimeout(180);
+ output[`footerVisibleHover${dark?'Dark':'Light'}`]=await cancel.evaluate((el,before)=>{const s=getComputedStyle(el);return s.cursor==='pointer'&&s.backgroundColor!==before&&s.backgroundColor!=='rgba(0, 0, 0, 0)'&&s.boxShadow!=='none';},before);
+}
+await page.mouse.move(0,0);
+await dialog.evaluate(el=>{const host=el.getRootNode().host;host.style.setProperty('--card-background-color','#fff');host.style.setProperty('--primary-text-color','#223039');host.style.setProperty('--primary-color','#008aa5');});
 await dialog.locator('[data-card=sun] .hpf-colorfield .hpf-hex').click();
 output.colourPlateDelegatesToExistingPicker=await dialog.locator('[data-card=sun] hp-color-opacity .trigger').getAttribute('aria-expanded')==='true';
 output.lightPickerNamesEffectIntensity=await dialog.locator('[data-card=sun] hp-color-opacity').getByText('Интенсивность свечения',{exact:true}).isVisible();

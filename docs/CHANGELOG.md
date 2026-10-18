@@ -12,6 +12,8 @@
   backups keep JSON ([#936](https://github.com/Matysh/houseplan-card/issues/936)).
   Proxy size rejections produce a useful message; an HTML gateway page is
   never downloaded as a fake ZIP.
+- Settings actions, including Cancel, have a visible themed hover and focus state. (#948)
+
 - Align maintenance rows and converter copy with approved General v10, including supported YAML/JSON inputs. (#948)
 
 - Match v10 palette cards with separate headings and contextual help, and show actual space override values. (#948)

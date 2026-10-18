@@ -46,6 +46,9 @@ export const settingsDialogCss = `
   .hpf-settings-pane .hpf-hint,.hpf-settings-pane .hpf-toggle-caption { font-size:12px; line-height:1.45; }
   .hpf-settings-form button:not(:disabled),.hpf-settings-form select:not(:disabled),.hpf-footer button:not(:disabled),.hpf-footer a { cursor:pointer; }
   .hpf-settings-form button:not(:disabled):hover,.hpf-footer button:not(:disabled):hover { filter:brightness(1.08); }
+  .hpf-settings-form .btn:not(:disabled):is(:hover,:focus-visible),hp-dialog[settings-layout] .hpf-footer .btn:not(:disabled):is(:hover,:focus-visible) { background:var(--hpf-tint); color:var(--hpf-accent); border-color:var(--hpf-accent); box-shadow:0 0 0 1px var(--hpf-tint-line); }
+  .hpf-settings-form .btn.on:not(:disabled):is(:hover,:focus-visible),hp-dialog[settings-layout] .hpf-footer .btn.on:not(:disabled):is(:hover,:focus-visible) { background:color-mix(in srgb,var(--hpf-accent) 90%,#000); color:var(--text-primary-color,#fff); }
+  .hpf-settings-form .btn.danger:not(:disabled):is(:hover,:focus-visible),hp-dialog[settings-layout] .hpf-footer .btn.danger:not(:disabled):is(:hover,:focus-visible) { background:color-mix(in srgb,var(--hpf-danger) 9%,var(--hpf-surface)); color:var(--hpf-danger); border-color:var(--hpf-danger); }
   .hpf-settings-form :disabled,.hpf-footer button:disabled { cursor:not-allowed; }
   .hpf-settings-form input:not([type=checkbox]):not([type=radio]):not([type=range]) { cursor:text; }
   .hpf-settings-form input[type=range] { cursor:pointer; }
