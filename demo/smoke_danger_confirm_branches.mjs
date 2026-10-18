@@ -17,7 +17,7 @@ const { page, browser } = await launch(
 // launch reveals the ready plan before the 220 ms boot veil fade finishes.
 // Snapshot the committed body only after that unrelated DOM cleanup: otherwise
 // its removal during the ready confirmation is mistaken for a warm-gate redraw.
-await page.waitForFunction(() => !window.__card.renderRoot.querySelector('.bootveil'), { timeout: 9000 });
+await page.waitForFunction(() => !window.__card.renderRoot.querySelector('.bootveil'), undefined, { timeout: 9000 });
 
 // Hold the first German chunk request so the card remains in the real `warm`
 // language gate long enough to exercise it. Aborting would immediately select
