@@ -23,7 +23,7 @@ export async function installSettingsDeviceFixture(page) {
     entity('light.living_ceiling','demo_ceiling','off',{friendly_name:'Потолочная лампа',supported_color_modes:['onoff']});
     entity('light.demo_living_ceiling','demo_ceiling','on',{friendly_name:'Потолочная лампа',supported_color_modes:['onoff']});
     entity('light.demo_living_floor_lamp','demo_floor_lamp','off',{friendly_name:'Торшер',supported_color_modes:['onoff']});
-    device('demo_living_climate','Климат гостиной','Термостат гостиной v2');
+    device('demo_living_climate','Термостат гостиной','Термостат гостиной v2');
     entity('climate.living_room','demo_living_climate','heat',{friendly_name:'Термостат гостиной',current_temperature:22.2,temperature:23,hvac_action:'heating'},'generic_thermostat');
     entity('sensor.living_climate_humidity','demo_living_climate','44',{friendly_name:'Влажность',device_class:'humidity',unit_of_measurement:'%'});
     entity('sensor.living_climate_battery','demo_living_climate','34',{friendly_name:'Батарея',device_class:'battery',unit_of_measurement:'%'});

@@ -36,6 +36,12 @@ The first reset-wait adapter still produced "Resulting promise was garbage
 collected" in CI at setMode; the component-reset step is now absent. Keyboard,
 44px target, translation, inheritance and popup assertions remain unchanged.
 
+The synthetic climate registry now uses the approved v6 HA name “Термостат
+гостиной”, independently of the plan label “Климат гостиной”, just as the LED
+fixture already did. A real picker observation checks both names separately.
+This is a fixture correction, not a product binding change; before/after captures
+must both be refreshed so their data snapshots remain byte-identical.
+
 Final climate-v6 source eca913f9 on matched Linux/ext4 measures
 editor286949/onboarding32058/raw3109289/initial322935. Relative to the same
 Room source284636/31428/3096669, the complete Device feature costs
