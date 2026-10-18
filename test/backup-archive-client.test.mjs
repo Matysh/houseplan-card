@@ -32,7 +32,8 @@ test('incomplete ZIP needs a second distinctly labelled action, bound to its tok
   const files = downloads(t), requests = [];
   let prepares = 0;
   const owner = host({ user: { is_admin: true }, callWS: async () => { prepares++; return prepared(false); },
-    fetchWithAuth: async (path, init) => { requests.push({ path, body: JSON.parse(init.body) }); return new Response('PK zip'); } });
+    fetchWithAuth: async (path, init) => { requests.push({ path, body: JSON.parse(init.body) });
+      return new Response('PK zip', { headers: { 'content-type': 'application/zip' } }); } });
   const client = new BackupArchiveClient(owner);
   await client.export({ card_version: 'review' }, String);
   assert.equal(owner._backupExportDialog.archive.complete, false);
@@ -66,7 +67,8 @@ test('late blob after dialog close is not downloaded even if transport ignores A
   let finish, fetched;
   const ready = new Promise(resolve => { fetched = resolve; });
   const owner = host({ user: { is_admin: true }, callWS: async message => message.type === 'houseplan/export/create' ? prepared() : {},
-    fetchWithAuth: async () => ({ ok: true, blob: () => { fetched(); return new Promise(resolve => { finish = resolve; }); } }) });
+    fetchWithAuth: async () => ({ ok: true, headers: new Headers({ 'content-type': 'application/zip' }),
+      blob: () => { fetched(); return new Promise(resolve => { finish = resolve; }); } }) });
   const client = new BackupArchiveClient(owner);
   const task = client.export({ card_version: 'review' }, String);
   await ready;
@@ -95,7 +97,7 @@ test('late blob from cancelled export cannot steal a newer prepared token', asyn
     if (message.type === 'houseplan/backup/cancel') { cancelled.push(message.token); return {}; }
     prepares++;
     return { ...prepared(prepares === 1), token: prepares === 1 ? 'old' : 'new' };
-  }, fetchWithAuth: async () => ({ ok: true, blob: () => {
+  }, fetchWithAuth: async () => ({ ok: true, headers: new Headers({ 'content-type': 'application/zip' }), blob: () => {
     fetched(); return new Promise(resolve => { finish = resolve; });
   } }) });
   const client = new BackupArchiveClient(owner);
@@ -153,4 +155,20 @@ test('closing a cold import loader sends no upload after its script arrives', as
   client.cancelImport(); finish(archiveModule);
   await assert.rejects(pending, { name: 'AbortError' });
   assert.equal(requests, 0);
+});
+
+test('proxy HTML rejection of a large ZIP is a friendly size error, not a JSON parser exception', async () => {
+  const owner = host({ user: { is_admin: true }, callWS: async () => {},
+    fetchWithAuth: async () => new Response('<h1>Request too large</h1>', { status: 413 }) });
+  await assert.rejects(new BackupArchiveClient(owner).preview(new File(['PK'], 'copy.zip')), { code: 'zip_limit' });
+});
+
+for (const status of [200, 502]) test(`HTML download response (${status}) leaves an actionable error and no fake ZIP`, async t => {
+  const files = downloads(t);
+  const owner = host({ user: { is_admin: true }, callWS: async () => prepared(),
+    fetchWithAuth: async () => new Response('<h1>Gateway error</h1>', { status,
+      headers: { 'content-type': 'text/html' } }) });
+  await new BackupArchiveClient(owner).export({ card_version: 'review' }, error => error.code || error.name);
+  assert.equal(files.length, 0);
+  assert.equal(owner._backupExportDialog.error, 'zip_invalid');
 });

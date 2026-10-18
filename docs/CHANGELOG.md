@@ -6,6 +6,8 @@
   saved Zigbee links, restore it on another installation and undo the restore.
   Missing images require explicit consent; space transfers and ordinary-editor
   backups keep JSON ([#936](https://github.com/Matysh/houseplan-card/issues/936)).
+  Proxy size rejections produce a useful message; an HTML gateway page is
+  never downloaded as a fake ZIP.
 
 - Room cards can show CO₂ in ppm, with an automatic room average or a selected
   sensor. Off by default; room tooltips and previews use the same reading.

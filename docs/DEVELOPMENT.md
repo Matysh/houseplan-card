@@ -32,6 +32,8 @@ capture the `HP_BACKUP_FIXTURE` JSON into `demo/fixtures/backup-archive-v1.json`
 The backend suite rereads those committed ZIP bytes with the real parser.
 Client tests cover consent, raw legacy input, cold loader cancellation and
 late token/blob ownership. Run the old backup-transfer/empty-import smokes too.
+Proxy HTML/413 errors use stable translated backup codes; download also
+requires the authenticated endpoint's ZIP MIME instead of saving a login page.
 New mutation definitions are static-checked only; execution remains nightly.
 
 `backup-archive-lazy.ts` loads ZIP UI/transfer code only for backup operations;

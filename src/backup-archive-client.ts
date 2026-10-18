@@ -99,8 +99,9 @@ export class BackupArchiveClient {
       method: 'POST', body: file, signal: controller.signal,
       headers: { 'content-type': zip ? 'application/zip' : 'application/json' },
     });
-    const data = await response.json() as PreviewReply & { error?: string };
-    if (!response.ok || data.error) throw transferError(data.error || 'invalid_format');
+    const fallback = response.status === 413 ? 'zip_limit' : zip ? 'zip_invalid' : 'invalid_format';
+    const data = await response.json().catch(() => { throw transferError(fallback); }) as PreviewReply & { error?: string };
+    if (!response.ok || data.error) throw transferError(data.error || fallback);
     if (controller.signal.aborted) {
       if (zip) this.discard(data.token);
       throw new DOMException('Cancelled', 'AbortError');
@@ -143,9 +144,10 @@ export class BackupArchiveClient {
           body: JSON.stringify({ confirm_missing_content: !result.complete }),
         });
         if (!response.ok) {
-          const error = await response.json() as { error?: string };
-          throw transferError(error.error || 'zip_invalid');
+          const error = await response.json().catch(() => ({})) as { error?: string };
+          throw transferError(error.error || (response.status === 413 ? 'zip_limit' : 'zip_invalid'));
         }
+        if (response.headers.get('content-type')?.split(';')[0] !== 'application/zip') throw transferError('zip_invalid');
         blob = await response.blob();
         if (this.exportEpoch === epoch) this.exportToken = undefined;
       } else {
