@@ -127,7 +127,6 @@ export const editorDialogsStyles = css`
       color: var(--hp-txt);
       font-weight: 600;
     }
-    .markerlightgroup legend > span { min-width: 0; overflow-wrap: anywhere; }
     .markerlightgroup[disabled] > :not(legend) { opacity: .62; }
     .radargroup {
       display: grid;
@@ -136,9 +135,6 @@ export const editorDialogsStyles = css`
     .radaradditional { display: grid; gap: var(--sp-3); }
     .radaradditional > .markerlightgroup { margin-top: 0; }
     .radargroup > p { margin: 0; }
-    .radargroup > label:not(.srcrow) {
-      margin-top: var(--sp-2);
-    }
     .radarcoordinates {
       align-items: flex-end;
       flex-wrap: wrap;
@@ -216,11 +212,6 @@ export const editorDialogsStyles = css`
       text-anchor: middle;
       dominant-baseline: middle;
       pointer-events: none;
-    }
-    .markerlightgroup .srcrow > span:first-of-type {
-      min-width: 0;
-      white-space: normal;
-      overflow-wrap: anywhere;
     }
     .vacbox .vacbtns { display: flex; gap: var(--sp-4); margin: var(--sp-3) 0; flex-wrap: wrap; }
     .vacdiag { display: grid; gap: 4px; margin-bottom: var(--sp-3); }

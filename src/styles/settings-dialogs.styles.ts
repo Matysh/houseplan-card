@@ -152,15 +152,12 @@ hp-dialog[data-kind=room][settings-layout] .hpf-grid{grid-template-columns:minma
 .hpf-settings-form .hpf-iconfield:focus-within{outline:2px solid var(--hpf-accent);outline-offset:2px;border-radius:8px;}
 .hpf-settings-form .hpf-iconfield .hpf-input:focus-visible{outline:none;box-shadow:none;}
 .hpf-settings-form ha-icon-picker{--mdc-outlined-text-field-focus-outline-color:var(--hpf-accent);}
-.hpf-settings-pane .radargroup{border:0;margin:0;padding:0;min-width:0;}
+.hpf-settings-pane .radargroup{border:0;margin:0;padding:0;min-width:0;display:block;}
 .hpf-settings-pane .radarsetup-head{height:112px;align-items:start;}
 .hpf-settings-pane .radarsetup-head strong{max-height:112px;overflow:auto;}
 .hpf-settings-pane[data-settings-section=details] .hpf-grid{grid-template-columns:minmax(0,1fr);align-items:start;}
 .hpf-settings-pane .radargroup > legend{padding:0 0 18px;margin:0 0 18px;border-bottom:1px solid var(--hpf-line);width:100%;box-sizing:border-box;}
-.hpf-settings-pane .radargroup > label:not(.hpf-toggle):not(.srcrow){display:block;margin:18px 0 8px;}
-.hpf-settings-pane .radartargetheading{display:flex;align-items:center;justify-content:space-between;}
-.hpf-settings-pane .radargroup{display:block;}
-.hpf-settings-pane .hpf-profile-target-heading{display:grid;gap:12px;justify-content:start;}
+.hpf-settings-pane .hpf-profile-target-heading{display:grid;align-items:center;gap:12px;justify-content:start;}
 .hpf-settings-pane .hpf-profile-target > * + *{margin-top:18px;padding-top:18px;border-top:1px solid var(--hpf-line);}
 .hpf-settings-pane .hpf-profile-diagnostics > .vacdiag,.hpf-settings-pane .hpf-profile-maproutes > .vacroutes{margin-top:12px;}
 .hpf-settings-pane .hpf-profile-diagnostics .vacdiag > div{padding:6px 0;}

@@ -271,12 +271,5 @@
   "marker.radar_sources": "Sources communes",
   "marker.radar_service": "Vérification et maintenance",
   "marker.radar_remove_target": "Supprimer l’emplacement cible {n}",
-  "marker.room_metrics": "Indicateurs de la pièce",
-  "marker.vacuum_source_help": "Le choix de la source de données du robot est enregistré immédiatement.",
-  "marker.vacuum_live_help": "Afficher la position actuelle du robot. Enregistré immédiatement.",
-  "marker.vacuum_trail_help": "Enregistré immédiatement ; annuler les propriétés ne rétablit pas ce choix.",
-  "marker.radar_profile_help": "Le profil définit le format : coordonnées, distances, zones ou présence.",
-  "marker.radar_room_help": "Les cibles restent dans cette pièce. Changer la pièce de l’appareil dans cet espace change aussi celle du radar.",
-  "marker.radar_remove_target_help": "Supprime cet emplacement à l’enregistrement. Les entités Home Assistant restent.",
-  "marker.vacuum_documentation_help": "Ouvrir le guide de configuration de l’aspirateur dans un nouvel onglet."
+  "marker.room_metrics": "Indicateurs de la pièce"
 }

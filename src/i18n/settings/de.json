@@ -271,12 +271,5 @@
   "marker.radar_sources": "Gemeinsame Quellen",
   "marker.radar_service": "Prüfung und Wartung",
   "marker.radar_remove_target": "Zielslot {n} entfernen",
-  "marker.room_metrics": "Raumwerte",
-  "marker.vacuum_source_help": "Die Auswahl der Roboterdatenquelle wird sofort gespeichert.",
-  "marker.vacuum_live_help": "Aktuelle Position des Roboters anzeigen. Wird sofort gespeichert.",
-  "marker.vacuum_trail_help": "Wird sofort gespeichert; Abbrechen der Geräteeigenschaften setzt die Auswahl nicht zurück.",
-  "marker.radar_profile_help": "Das Profil bestimmt das Datenformat: Koordinaten, Entfernungen, Zonen oder Anwesenheit.",
-  "marker.radar_room_help": "Live-Ziele bleiben in diesem Raum. Ein anderer Geräteraum in diesem Bereich ändert auch den Radar-Raum.",
-  "marker.radar_remove_target_help": "Entfernt diesen Slot beim Speichern. Home-Assistant-Entitäten bleiben erhalten.",
-  "marker.vacuum_documentation_help": "Anleitung zur Staubsaugereinrichtung in einem neuen Tab öffnen."
+  "marker.room_metrics": "Raumwerte"
 }
