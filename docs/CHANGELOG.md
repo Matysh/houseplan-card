@@ -13,6 +13,8 @@
   images have saved opacity. Fields wait for the current save before accepting
   more input. The panel follows the browser theme when HA supplies no explicit
   mode ([#931](https://github.com/Matysh/houseplan-card/issues/931)).
+- Keep the Room sizing hint and preview in sync with the independent Space
+  name and reading sizes, including the Room multipliers. (#945)
 
 - Repair the hidden-device browser witness for linked virtual-light actions;
   keep the existing nightly mutation and product behavior unchanged (#953).

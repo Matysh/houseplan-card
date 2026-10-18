@@ -767,9 +767,6 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // #948 integrated with #936: matched bd6fb6616 editor273116->283621B
 // (+10505 own bytes). Carry only this delta onto dev's273105 reference;
 // retain its11B inherited gap, the2000B band and every absolute View budget.
-// #945: matched General d496a749 source283621 -> Space v7 source284685
-// (+1064 own bytes); keep the inherited11B gap and unchanged2000B band.
-// #945 final copy cleanup: matched General283621 -> Space284720 (+1099).
 // #946 final Space284720 -> Room284636 (-84 B), same inherited11B gap.
 // #931 owner approval 2026-10-18, issuecomment-6250557931: final checked properties
 // panel measures 311520 B gzip (was 283610); editor-only catalog/controller/copy,
