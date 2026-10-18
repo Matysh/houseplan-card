@@ -13,7 +13,7 @@ for (const width of [360, 1280]) for (const language of ['ru', 'en']) for (const
     // than Chromium mobile's expanded980px layout of that demo document.
     results[`${prefix}-realViewport`] = await page.evaluate(width=>innerWidth===width,width);
     await page.emulateMedia({ colorScheme: dark ? 'dark' : 'light' });
-    await page.evaluate(async ({ language, dark }) => {
+    await page.evaluate(({ language, dark }) => {
       const card = window.__card;
       card.setConfig({ type: 'custom:houseplan-card', language });
       card.hass = { ...card.hass, themes: { darkMode: dark } };
@@ -21,8 +21,14 @@ for (const width of [360, 1280]) for (const language of ['ru', 'en']) for (const
       style.setProperty('--primary-background-color', dark ? '#111318' : '#fafafa');
       style.setProperty('--card-background-color', dark ? '#202228' : '#fff');
       style.setProperty('--primary-text-color', dark ? '#f2f2f2' : '#202020');
-      await window.__hpTest.settled();
-      await window.__hpTest.setMode('devices');
+    }, { language, dark });
+    // setConfig starts a new boot/render cycle. Wait for its visible root,
+    // rather than retaining an obsolete updateComplete promise across reset.
+    await page.waitForFunction(() => window.__card?._booting === false
+      && !!window.__card?.shadowRoot.querySelector('ha-card[data-hp-mode]'));
+    await page.evaluate(() => window.__hpTest.setMode('devices'));
+    await page.evaluate(async () => {
+      const card = window.__card;
       // The same mobile menu is the public entry, not a private opening method.
       let button = card.shadowRoot.querySelector('[data-hp="settings"]');
       if (!button || !button.getBoundingClientRect().width) {
@@ -31,7 +37,7 @@ for (const width of [360, 1280]) for (const language of ['ru', 'en']) for (const
         button = card.shadowRoot.querySelector('[data-hp="header-menu-item"][data-id="settings"]');
       }
       button.click();
-    }, { language, dark });
+    });
     const general = page.locator('houseplan-card hp-dialog[data-kind="settings"]');
     const checkbox = general.locator('#gs-show-lqi');
     await checkbox.waitFor();

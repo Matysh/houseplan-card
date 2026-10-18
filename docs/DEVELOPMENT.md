@@ -1,5 +1,11 @@
 # Development and deployment
 
+The #945 localized signal witness waits for the visible card root after
+`setConfig` restarts boot, then uses the real Devices/settings entry. It no
+longer awaits a superseded `updateComplete` promise during reset. This repairs
+the CI setup error "Resulting promise was garbage collected" without changing
+the keyboard,44px target, translation, inheritance or popup assertions.
+
 ## Portable full backup (#936)
 
 Container v1: `manifest.json`, the old `document.json`, optional `zigbee.json`,
