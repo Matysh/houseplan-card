@@ -977,7 +977,6 @@
   "toast.tap_target_changed": "The action target changed. Try again.",
   "toast.virtual_light_toggle_failed": "Could not toggle the virtual light: {err}",
   "btn.run": "Run",
-  "vac.section": "Robot vacuum: live position",
   "vac.autocal": "Set up automatically",
   "vac.live": "Live position on the plan",
   "vac.trail": "Show the robot's path",

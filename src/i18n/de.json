@@ -977,7 +977,6 @@
   "toast.tap_target_changed": "Das Ziel der Aktion hat sich geändert. Versuchen Sie es erneut.",
   "toast.virtual_light_toggle_failed": "Das virtuelle Licht konnte nicht umgeschaltet werden: {err}",
   "btn.run": "Ausführen",
-  "vac.section": "Roboterstaubsauger: aktuelle Position",
   "vac.autocal": "Automatisch einrichten",
   "vac.live": "Aktuelle Position im Plan",
   "vac.trail": "Roboterpfad anzeigen",

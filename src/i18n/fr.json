@@ -977,7 +977,6 @@
   "toast.tap_target_changed": "La cible de l’action a changé. Réessayez.",
   "toast.virtual_light_toggle_failed": "Impossible de basculer la lumière virtuelle : {err}",
   "btn.run": "Exécuter",
-  "vac.section": "Robot aspirateur : position en direct",
   "vac.autocal": "Configurer automatiquement",
   "vac.live": "Position en direct sur le plan",
   "vac.trail": "Afficher le trajet du robot",

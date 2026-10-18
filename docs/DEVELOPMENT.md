@@ -36,6 +36,11 @@ The first reset-wait adapter still produced "Resulting promise was garbage
 collected" in CI at setMode; the component-reset step is now absent. Keyboard,
 44px target, translation, inheritance and popup assertions remain unchanged.
 
+The complete profile gate ran all selected browser smokes successfully; its
+only failure was the now-unused base dictionary key `vac.section`, replaced
+by the grouped v6 heading. Remove that key from all four locales; the nine
+dead-key/consumer checks pass again. No translation fallback or UI value changes.
+
 The immutable-v6 screenshot comparison exposed two retained legacy profile
 layouts. Vacuum now uses common heading/source/status/path controls and keeps
 every technical map/path value in expandable diagnostics. Its source/live/path
