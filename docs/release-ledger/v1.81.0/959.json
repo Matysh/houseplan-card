@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 959,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Adapt canonical documentation fixture navigation to accepted device settings; no product, renderer, viewport, capture policy or application behavior change."
+}

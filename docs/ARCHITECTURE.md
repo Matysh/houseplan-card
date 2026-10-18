@@ -141,6 +141,10 @@ supplied invalid scene plans or automatic gates. The historical #916 scene-plan
 waiver remains scoped to its exact promotion; future field receipts need no waiver.
 Release accounting reads all reachable parents, retaining each task's original
 implementation provenance instead of borrowing a merge's unrelated issue.
+Documentation capture (#959) follows the device dialog's existing Appearance
+navigation before revealing its real preview. This is fixture presentation only:
+no product renderer, scroll owner, viewport or visibility guard changes.
+
 Beta membership creation and immutable verification share that all-parent range
 (#958); the previous release anchor still follows the first-parent tag line.
 Existing SPEC-only and promotion exclusions retain their content-bound proof.

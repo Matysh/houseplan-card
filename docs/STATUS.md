@@ -173,6 +173,10 @@ The owner-approved prerequisite separates the read-only check of published
 1.81.0 metadata from the new cycle's HEAD-bound publication contract. Reachable
 tag identity and unchanged notes remain mandatory; no gate is bypassed.
 
+Documentation's device preview (#959) uses the accepted settings navigation
+before scrolling. The canonical capture's missing/hidden preview refusal and
+all determinism and byte-witness requirements remain intact.
+
 Beta membership (#958) also includes each reachable second-parent task's own
 delivery SHA, while keeping the previous release's first-parent tag anchor and
 the existing SPEC/promotion exclusions. No product behavior changes.

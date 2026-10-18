@@ -2832,6 +2832,11 @@ scope. Vetoes, malformed supplied plans, undeclared golden drift and all
 automatic checks still refuse. New product/capture changes invalidate this
 historical promotion approval; future stable versions need no field waiver.
 
+Documentation's device-preview scenario (#959) opens the existing Appearance
+section before scrolling the unchanged `.content` owner. It keeps the real
+preview, viewport, clipping and full-visibility refusal; capture determinism,
+stability, pixel witnesses and canonical artifact acceptance remain mandatory.
+
 ### Primary prerelease path
 
 Before the existing owner publish command, run `npm run release:prepare` on a

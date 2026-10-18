@@ -143,6 +143,12 @@ const applyDocumentationState = (page, scenario) => page.evaluate(async (current
 
   if (current.devicePresentationPreview) {
     const dialog = card.renderRoot.querySelector('hp-dialog');
+    const appearance = dialog?.querySelector('[data-section-target="appearance"]');
+    if (!appearance) throw new Error('documentation device appearance navigation is missing');
+    appearance.click();
+    appearance.focus({ preventScroll: true });
+    await card.updateComplete;
+    await frame();
     const scroller = dialog?.renderRoot?.querySelector('.content');
     const preview = dialog?.querySelector('hp-device-preview');
     await preview?.updateComplete;
@@ -150,12 +156,16 @@ const applyDocumentationState = (page, scenario) => page.evaluate(async (current
       throw new Error('documentation device presentation preview is missing');
     const scrollerRect = scroller.getBoundingClientRect();
     const previewRect = preview.getBoundingClientRect();
-    scroller.scrollTop += previewRect.top - scrollerRect.top - 180;
+    const inset = Math.min(180, Math.max(0, (scrollerRect.height - previewRect.height) / 2));
+    scroller.scrollTop += previewRect.top - scrollerRect.top - inset;
     await frame();
     const visibleScroller = scroller.getBoundingClientRect();
     const visiblePreview = preview.getBoundingClientRect();
     if (visiblePreview.top < visibleScroller.top - 1 || visiblePreview.bottom > visibleScroller.bottom + 1)
-      throw new Error('documentation viewport does not show the device presentation preview');
+      throw new Error(`documentation viewport does not show the device presentation preview: ${JSON.stringify({
+        scroller: { top: visibleScroller.top, bottom: visibleScroller.bottom, scroll: scroller.scrollTop },
+        preview: { top: visiblePreview.top, bottom: visiblePreview.bottom },
+      })}`);
   }
 
   await settleCamera();
