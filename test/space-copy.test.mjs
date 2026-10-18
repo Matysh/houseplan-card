@@ -58,6 +58,15 @@ test('#456 chooses the first free numbered copy title', () => {
   assert.equal(nextSpaceCopyTitle('', [{ title: 'Space (2)' }], 'Space'), 'Space (3)');
 });
 
+test('#931 copies backdrop opacity presence, including zero, without materializing old defaults', () => {
+  for (const alpha of [undefined,0,.4,1]) {
+    const input=fixture(); if(alpha!==undefined) input.spaces[1].plan_opacity=alpha;
+    const copied=createSpaceCopyCandidate(input,'source','Copy','alpha').space;
+    assert.equal(Object.hasOwn(copied,'plan_opacity'),alpha!==undefined);
+    if(alpha!==undefined) assert.equal(copied.plan_opacity,alpha);
+  }
+});
+
 test('#876: space copy retains explicit LQI mode and leaves installation defaults unchanged', () => {
   for (const mode of ['inherit', 'on', 'off']) {
     const input = fixture();

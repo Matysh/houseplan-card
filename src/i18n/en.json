@@ -183,7 +183,7 @@
   "opening.passage_binding_warning": "Saving will remove the open/close sensor and lock.",
   "opening.invalid_passage_fields": "The open passage on plan “{room}” has unsupported settings: {fields}.",
   "opening.type_label": "Type",
-  "opening.length_label": "Length, cm",
+  "opening.length_label": "Opening width, cm",
   "opening.contact_label": "Open/close sensor",
   "opening.lock_label": "Lock",
   "opening.lock_info_label": "Door and lock information",

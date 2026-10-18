@@ -78,7 +78,7 @@ export const PLAN_SCALE_MAX = 100;
  * behaviour, so every plan written before renders bit-identically and there is
  * no migration to run.
  */
-export type PlanRect = Rect & { angle?: number };
+export type PlanRect = Rect & { angle?: number; opacity?: number };
 
 export function planRect(space: any, side = NORM_W): PlanRect {
   const base = fitInSquare(space?.plan_aspect, side);
@@ -101,6 +101,8 @@ export function planRect(space: any, side = NORM_W): PlanRect {
     w: base.w * kx,
     h: base.h * ky,
     ...(angle ? { angle } : {}),
+    ...(typeof space?.plan_opacity === 'number' && Number.isFinite(space.plan_opacity)
+      && space.plan_opacity >= 0 && space.plan_opacity <= 1 ? { opacity: space.plan_opacity } : {}),
   };
 }
 

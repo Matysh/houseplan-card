@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 931,
+  "baseStable": "v1.81.0",
+  "category": "major",
+  "rationale": "Adds a persistent properties panel across all three editors, precise visual edits and saved main-image opacity; these user capabilities were absent from v1.81.0, not intermediate-release repairs.",
+  "summary": {
+    "ru": "Общая панель свойств позволяет точно настраивать объекты прямо в редакторе.",
+    "en": "A shared properties panel brings precise object editing directly into each editor."
+  }
+}

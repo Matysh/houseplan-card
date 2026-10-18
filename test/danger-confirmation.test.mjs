@@ -66,7 +66,7 @@ test('all dangerous-action call sites use the shared confirmation contract', () 
   const sharedCalls = source.match(/await (?:this(?:\.host)?|host)\._confirmDanger\s*\(\{/g) || [];
 
   assert.equal(nativeCalls.length, 0, 'native browser confirmation must not return');
-  assert.equal(sharedCalls.length, 8, '#930 moves single Delete to its shared owner and adds one batch confirmation');
+  assert.equal(sharedCalls.length, 9, '#931 panel Delete uses the same confirmation and cleanup without a fabricated dialog');
   for (const key of [
     'remove-marker', 'remove-markers', 'delete-plan', 'delete-space', 'unlock', 'close-support-busy',
   ]) {

@@ -83,9 +83,9 @@ test('#861 backdrop: release without a changed transform does not record or save
 
 test('#861 backdrop: reset removes precisely six transform fields and keeps unrelated data', () => {
   const s = setup({ plan_x: .1, plan_y: .2, plan_scale: 3, plan_scale_x: 2,
-    plan_scale_y: 4, plan_angle: 15, title: 'keep' });
+    plan_scale_y: 4, plan_angle: 15, plan_opacity: .35, title: 'keep' });
   s.owner.resetTransform();
-  assert.deepEqual(s.plan, { plan_url: 'test.svg', plan_aspect: 2, title: 'keep' });
+  assert.deepEqual(s.plan, { plan_url: 'test.svg', plan_aspect: 2, plan_opacity: .35, title: 'keep' });
   assert.deepEqual(s.calls.records, [['history.backdrop_transform', s.before]]);
   assert.equal(s.calls.saves, 1); assert.deepEqual(s.calls.toasts, ['decor.backdrop_reset_done']);
   assert.equal(s.owner.transformed, false);

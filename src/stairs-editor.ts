@@ -100,11 +100,19 @@ export class StairEditorRuntime {
   private drag: StairDrag | null = null;
   private draft: StairDraft | null = null;
 
-  public constructor(private readonly owner: StairEditorHostPort) {}
+  public constructor(private readonly owner: StairEditorHostPort, private readonly properties?: {
+    select(id: string): boolean; beforeDialog(retry: () => void): boolean;
+  }) {}
 
   public get selected(): string | null { return this.selectedId; }
   public get dialogOpen(): boolean { return this.dialog !== null; }
   public get dragging(): boolean { return this.drag !== null || this.draft !== null; }
+
+  public select(id: string | null): void {
+    if (id !== null && !this.stairs.some(stair => stair.id === id)) return;
+    this.selectedId = id;
+    this.owner.requestUpdate();
+  }
 
   public clearSelection(): void {
     this.selectedId = null;
@@ -270,6 +278,9 @@ export class StairEditorRuntime {
   }
 
   private openDialog(stair: Stair): void {
+    if (this.properties && !this.properties.beforeDialog(() => {
+      const current = this.stairs.find(item => item.id === stair.id); if (current) this.openDialog(current);
+    })) return;
     const cellCm = this.owner._cellCm;
     const imperial = this.owner._imperial;
     const fields = {
@@ -364,6 +375,7 @@ export class StairEditorRuntime {
     if (!this.inputEnabled || this.draft) return;
     event.preventDefault();
     event.stopPropagation();
+    if (this.properties && !this.properties.select(stair.id)) return;
     this.selectedId = stair.id;
     this.drag = {
       pid: event.pointerId,
@@ -510,6 +522,7 @@ export class StairEditorRuntime {
     const select = (event: Event): void => {
       if (this.owner._mode === 'plan') {
         event.stopPropagation();
+        if (this.properties && !this.properties.select(stair.id)) return;
         this.selectedId = stair.id;
         this.owner.requestUpdate();
       }

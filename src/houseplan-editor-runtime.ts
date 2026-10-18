@@ -272,7 +272,8 @@ import {
 } from './support-feedback';
 import { renderBackdropGuard, renderPlanBackdropGuard, stagePlanFile, uploadPlanFile } from './backdrop-pick'; import { StairEditorRuntime, type StairEditorHostPort } from './stairs-editor';
 import { CommandStack } from './command-stack';
-import type { DeviceLayout, DevicePlacement, DevicePositionState } from './device-position-history';
+import type { DeviceLayout, DevicePlacement, DeviceEditorHistoryState } from './device-position-history';
+import { PropertiesEditor } from './editors/properties/editor';
 import { SpacingMagnet, spacingMarkers, spacingRows } from './device-spacing'; // #873
 import { DeviceContactMagnet } from './device-contact-snap';
 import type { DeviceContactRenderer } from './device-contact-render';
@@ -572,7 +573,7 @@ export interface HouseplanEditorHostPort {
   _deviceInboxReturn: DeviceInboxDialogState | null;
   _devicePresentation: (d: DevItem, showLqi?: boolean) => ResolvedDevicePresentation;
   _devicePositionBusy: boolean;
-  _devicePositionHistory: CommandStack<DevicePositionState>;
+  _devicePositionHistory: CommandStack<DeviceEditorHistoryState>;
   _devices: DevItem[];
   readonly _renderDevices: readonly DevItem[];
   _dirtyPos: Set<string>;
@@ -718,6 +719,9 @@ export interface HouseplanEditorHostPort {
   _pointerModality: PointerModalityController;
   _pointers: Map<number, { x: number; y: number; }>;
   _pos: (d: DevItem) => { x: number; y: number; };
+  _livePos: (d: DevItem) => { x: number; y: number; };
+  _persistDevicePlacement(deviceId: string, placement: DevicePlacement | null): Promise<void>;
+  _previewDevicePlacement(deviceId: string, placement: DevicePlacement | null): void;
   _prepareModeTransition: (request: number, from: ModeVisualState, targetMode: HouseplanMode, targetZoom: number, targetCenterX?: number, targetCenterY?: number) => void;
   _reducedMotion: boolean;
   _rawPhysicalBodiesR: () => number[][][];
@@ -854,7 +858,13 @@ export { EDITOR_LANGUAGE_RUNTIME }; // #627: see src/i18n/editor-language.ts
 
 export class HouseplanEditorRuntime {
   public readonly backupTransfer = new LazyBackupArchiveClient(this.host);
-  public readonly deviceCopy = new DeviceCopyEditor(this.host);
+  public readonly deviceCopy = new DeviceCopyEditor(this.host, (id, sourceId) => {
+    const selected = this.properties.identity;
+    if (!selected || selected.objectId !== sourceId && selected.binding !== sourceId) return;
+    const device = this.host._devices.find(item => item.id === id);
+    if (device) this.properties.selectDevice(device);
+  });
+  public readonly properties = new PropertiesEditor(this);
   public readonly physicalGesture: PhysicalBodyGestureRuntime;
   public readonly backdropGesture: BackdropFrameGestureRuntime;
   private _gestureBoundary = false;
@@ -868,7 +878,10 @@ export class HouseplanEditorRuntime {
   public get roomSaveBusy(): boolean { return roomSaveBusy(this.host); }
   public readonly roomDeviceDiscovery = new RoomDeviceDiscovery();
   public readonly languageRuntime = EDITOR_LANGUAGE_RUNTIME;
-  public readonly stairs = new StairEditorRuntime(this.host as unknown as StairEditorHostPort);
+  public readonly stairs = new StairEditorRuntime(this.host as unknown as StairEditorHostPort, {
+    select: id => this.properties.select('stair', id),
+    beforeDialog: retry => this.properties.beforeIntent(retry, true),
+  });
   private _junctionBaselineCache = new WeakMap<object, {
     spaceId: string; fingerprint: string; violations: JunctionLimitViolation[];
   }>();
@@ -906,7 +919,10 @@ export class HouseplanEditorRuntime {
       point: (event) => this._svgPoint(event), snap: (point) => this._snap(point),
       snapshot: () => this._geometrySnapshot(),
       commit: (key, before) => this._commitPhysicalGeometry(host._t(key), before),
-      select: (selection) => { host._physicalSel = selection; },
+      select: (selection) => {
+        if (!this.properties.select(selection.kind, selection.id)) return false;
+        host._physicalSel = selection; return true;
+      },
       openDialog: (kind, id) => this._openPhysicalDialog(kind, id),
       toast: (key) => host._showToast(host._t(key)),
       publish: (phase) => this._publishGesture(phase), now: () => performance.now(),
@@ -926,6 +942,7 @@ export class HouseplanEditorRuntime {
         this._publishGesture(phase);
       },
       formatLength: (a, b) => host._fmtLen(a, b),
+      rotationArm: () => this.properties.wide ? this._cssPxToRender(24) : null,
     });
     this.roomGear = new RoomGearDragController({
       mode: () => owner._mode, spaceId: () => owner._space,
@@ -1051,9 +1068,11 @@ public _routeLiveEditorUpdate(name?: PropertyKey, oldValue?: unknown): boolean {
   }
 public _commitLiveEditor(deviceId?: string): void {
   commitHouseplanEditor(this.host, deviceId);
+  this.properties.syncNative();
   if (this.host.isConnected) this.nodeMove?.paint();
 }
-public _disposeLiveEditor(): void { this.optimizationUndo.retire(); this.wallDialogGesture.dispose(); this.invalidateEditorNavigation(); this._nodeMoveEpoch++; this.nodeMove?.dispose(); this._radarSetup.reset(); this.roomGear.reset(); disposeHouseplanEditor(this.host); }
+public _disposeLiveEditor(): void { this.properties.dispose(); this.optimizationUndo.retire(); this.wallDialogGesture.dispose(); this.invalidateEditorNavigation(); this._nodeMoveEpoch++; this.nodeMove?.dispose(); this._radarSetup.reset(); this.roomGear.reset(); disposeHouseplanEditor(this.host); }
+public _visualCommand<T>(command: () => Promise<T>): Promise<T> { return this.properties.command(command); }
 public _cancelRadarSetup(): void { this._radarSetup.interrupt(); }
 public async _whenLiveEditorSettled(): Promise<void> {
   // An already queued pointer calculation runs before this continuation.
@@ -1100,6 +1119,7 @@ public warmRoomDraft() {
 }
 
 public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): void {
+    if (mode !== this.host._mode && !this.properties.beforeIntent(() => this._setMode(mode, animate))) return;
     this.invalidateEditorNavigation();
     // A route departure has already happened; it keeps the existing reset
     // contract. Interactive editor navigation must resolve the open draft.
@@ -1417,6 +1437,7 @@ public _finishWallChainForNavigation(navigate: () => void, interactive = true): 
   }
 
 public _activateMarkupTool(tool: MarkupTool): void {
+    if (!this.properties.beforeIntent(() => this._activateMarkupTool(tool))) return;
     this.invalidateEditorNavigation();
     if (tool === this.host._tool) return;
     if (!this._guardDraftNavigation(() => this._activateMarkupTool(tool))) return;
@@ -1428,6 +1449,7 @@ public _activateMarkupTool(tool: MarkupTool): void {
       else this.host._resize.reset();
     }
     this.host._tool = tool;
+    this.properties.toolChanged(tool);
     if (tool !== 'select' && tool !== 'stairs') this.stairs.clearSelection();
     if (tool === 'resize') this.host._resize.selectRoom(null);
     if (tool === 'wallthick') this.host._wallDialog = null;
@@ -1665,12 +1687,13 @@ public async _reloadRejectedPhysicalWrite(): Promise<void> {
 
 public _prepareConfigCandidate(config: ServerConfig): ServerConfig { this._dropLegacySegments(config); return canonicalizeConfigGeometry(config); }
 
-public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null): Promise<void> {
+public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null, candidateCurrent?: () => boolean): Promise<void> {
     this.host._writesPending++;
     const isCurrent = this.host._configWriteGuard?.() ?? (() => true);
     const ownsPending = this.host._configWriteGuard?.(true) ?? (() => true);
     this.host._writeChain = enqueueSerializedWrite(this.host._writeChain, async () => {
       if (!isCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
+      if (candidateCurrent && !candidateCurrent()) throw Object.assign(new Error('candidate changed before dispatch'), { code: 'conflict' });
       if (!this.host._serverCfg) return;
       // #842 K2: R is judged on the config as handed over; refusal sends nothing, touches nothing.
       const removal = findGeometryRemoval(this.host._serverCfg);
@@ -1753,7 +1776,7 @@ public _geometrySnapshotFromConfig(config: any, spaceId: string): SpaceGeometryS
     if (!sp) return null;
     const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
     const plan_transform: SpaceGeometryState['plan_transform'] = {};
-    for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle'] as const) {
+    for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle', 'plan_opacity'] as const) {
       if (sp[key] !== undefined) plan_transform[key] = sp[key];
     }
     return {
@@ -1838,7 +1861,7 @@ public _restoreGeometryStateInConfig(
         if (!opening.host && old?.host?.kind === 'wall') opening.host = copy(old.host);
       }
     }
-    for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle'] as const)
+    for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle', 'plan_opacity'] as const)
       delete (sp as any)[key];
     Object.assign(sp, copy(state.plan_transform || {}));
     if (state.roomReferences) {
@@ -2364,6 +2387,7 @@ public _stepGeometryHistory(direction: 'undo' | 'redo'): HistoryApply | null {
   }
 
 public _undoGeometry = (): void => {
+    if (!this.properties.beforeIntent(() => this._undoGeometry())) return;
     if (this._historyGestureFirst()) return;
     // Toolbar and keyboard must remove the same terminal point of a live chain.
     if (this.host._tool === 'draw' && this.host._activeWallChainPartitionIds.length
@@ -2375,6 +2399,7 @@ public _undoGeometry = (): void => {
   };
 
 public _redoGeometry = (): void => {
+    if (!this.properties.beforeIntent(() => this._redoGeometry())) return;
     if (this._historyGestureFirst()) return;
     const host = this.host, chainId = host._activeWallChainId, redo = [...host._wallChainRedo];
     if (nodeHistoryNext(host._geometryHistory, 'redo')) { this._runNodeHistory('redo'); return; }
@@ -2450,6 +2475,7 @@ public _canAppendWallPoint(): boolean {
 public _markupClick(ev: MouseEvent): void {
     if (this.host._vacFit) return; // the fit overlay owns all pointer input
     this.host._ledEditor?.backgroundClick(ev);
+    this.properties.backgroundClick(ev);
     if (!this.host._markup) return;
     const space = this.host._spaceModel();
     if (!space) {
@@ -2468,6 +2494,9 @@ public _markupClick(ev: MouseEvent): void {
     if (path.some((n) => n?.classList?.contains?.('physical-hit'))) return;
     const raw = this._svgPoint(ev);
     if (this.host._tool === 'select') {
+      if (this.properties.wide) {
+        this.properties.selectPlanPoint(raw); return;
+      }
       this.host._physicalSel = null; this.stairs.clearSelection();
       return;
     }
@@ -2776,6 +2805,8 @@ public _columnClick(raw: number[]): void {
 public _openPhysicalDialog(
     kind: 'partition' | 'column', id: string,
   ): void {
+    if (!this.properties.beforeIntent(() => this._openPhysicalDialog(kind, id), true)) return;
+    if (!this.properties.select(kind, id)) return;
     const model = this.host._spaceModel();
     if (!model) return;
     if (kind === 'partition') {
@@ -2855,6 +2886,7 @@ public _savePhysicalDialog = (): void => {
   };
 
 public _deletePhysicalSelection = async (): Promise<void> => {
+    if (!this.properties.beforeIntent(() => { void this._deletePhysicalSelection(); })) return;
     const sel = this.host._physicalSel;
     const sp = this.host._curSpaceCfg as any;
     if (!sel || !sp) return;
@@ -3027,7 +3059,7 @@ public _rszProjectPreview(
       if (s[key] !== undefined) (sp as any)[key] = s[key];
       else delete (sp as any)[key];
     }
-    for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle'] as const) {
+    for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle', 'plan_opacity'] as const) {
       if (s.plan_transform?.[key] !== undefined) (sp as any)[key] = s.plan_transform[key];
       else delete (sp as any)[key];
     }
@@ -3675,7 +3707,7 @@ public _cancelDecorGesture(): void {
       const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
       if (before.decor !== undefined) sp.decor = copy(before.decor);
       else delete sp.decor;
-      for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle'] as const)
+      for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle', 'plan_opacity'] as const)
         delete sp[key];
       Object.assign(sp, copy(before.plan_transform || {}));
       // The restored transform is byte-identical; keep geometry caches.
@@ -3765,7 +3797,9 @@ public _decorPointerDown(ev: PointerEvent): boolean {
     // command: a miss must be a true no-op. With SVG text its painted glyphs
     // do not cover the whole logical label box, so clearing here made a click
     // between letters appear to erase only the selection outline.
-    if (t === 'select') this.host._decorSel = null;
+    if (t === 'select') {
+      if (this.properties.wide) this.properties.clear(); else this.host._decorSel = null;
+    }
     // …and under its own tool the picture is grabbable by its body
     // (docs/DECOR-EDITOR.md §3.2). Only INSIDE the image rect: press beside the
     // picture and the plane still pans with one finger.
@@ -3778,6 +3812,7 @@ public _decorPointerDown(ev: PointerEvent): boolean {
       const local = [cx + dx * Math.cos(a) - dy * Math.sin(a), cy + dx * Math.sin(a) + dy * Math.cos(a)];
       if (local[0] >= r.x && local[0] <= r.x + r.w && local[1] >= r.y && local[1] <= r.y + r.h) {
         ev.preventDefault();
+        if (!this.properties.select('backdrop', this.host._space)) return true;
         return this.backdropGesture.begin(ev);
       }
     }
@@ -3838,6 +3873,7 @@ public _decorShapeDown(ev: PointerEvent, shape: DecorShape): void {
     if (t !== 'select' && t !== 'erase') return;
     ev.stopPropagation();
     ev.preventDefault();
+    if (t === 'select' && !this.properties.select(shape.kind, shape.id)) return;
     if (t === 'erase') {
       this.host._decorEraseConfirm = { id: shape.id, kind: shape.kind };
       return;
@@ -3905,7 +3941,12 @@ public _decorShapeDbl(ev: MouseEvent, shape: DecorShape): void {
   }
 
 public _openDecorProperties(shape: DecorShape): void {
+    if (!this.properties.beforeIntent(() => {
+      const current = this.host._decorList.find(item => item.id === shape.id);
+      if (current) this._openDecorProperties(current);
+    }, true)) return;
     if (this.host._mode !== 'decor' || this.host._decorTool !== 'select') return;
+    if (!this.properties.select(shape.kind, shape.id)) return;
     if (shape.kind === 'text') {
       this._decorOpenText(shape);
       return;
@@ -4332,6 +4373,7 @@ public _dtMeasure(): void {
   }
 
 public _deleteDecor(id: string): void {
+    if (!this.properties.beforeIntent(() => this._deleteDecor(id))) return;
     if (!this.host._decorList.some((shape) => shape.id === id)) return;
     const before = this._geometrySnapshot();
     const sp = this.host._curSpaceCfg;
@@ -4680,7 +4722,9 @@ public _renderFurnPalette(): TemplateResult {
   }
 
 public _openBackdropDialog(ev?: Event): void {
+    if (!this.properties.beforeIntent(() => this._openBackdropDialog(), true)) return;
     if (!this.backdropGesture.movable || !this.backdropGesture.rect) return;
+    if (!this.properties.select('backdrop', this.host._space)) return;
     ev?.preventDefault();
     ev?.stopPropagation();
     this.backdropGesture.reset();
@@ -4973,7 +5017,7 @@ public _renderDecorBar(): TemplateResult {
       ${tools.map(
         ([t, ic, k]) => html`<button class="btn dtool ${this.host._decorTool === t ? 'on' : ''}" data-hp="tool" data-tool=${t}
           data-editor-palette=${t === 'furniture' || t === 'image' ? t : nothing}
-          @click=${() => {
+          @click=${() => this.properties.invoke(() => {
             if ((t === 'furniture' || t === 'image') && this.host._decorTool === t) {
               this._clearFurniturePreview();
               this.host._furnPalette = null;
@@ -4986,6 +5030,7 @@ public _renderDecorBar(): TemplateResult {
             if (t === 'furniture' || t === 'image') this.host._editorSecondary.openPalette();
             if (t === 'image') void this._decorImageCatalogLoad();
             this.host._decorTool = t as typeof this.host._decorTool;
+            this.properties.toolChanged(t);
             this.host._decorDraft = null;
             // the palette belongs to its tool and to nothing else: leaving the
             // tool disarms whatever was chosen, so no later click can stamp it
@@ -4999,7 +5044,7 @@ public _renderDecorBar(): TemplateResult {
               this.host._furnCategory = null;
             }
             if (t !== 'image') this.host._decorImagePalette = null;
-          }}
+          })}
           title=${this.host._t(k)}>
           <ha-icon icon=${ic}></ha-icon><span class="ml">${this.host._t(k)}</span>
         </button>`,
@@ -5739,6 +5784,11 @@ public _openingClick(raw: number[]): void {
   }
 
 public _editOpening(o: RenderOpening): void {
+    if (!this.properties.beforeIntent(() => {
+      const current = this.host._openingsR.find(item => item.id === o.id);
+      if (current) this._editOpening(current);
+    }, true)) return;
+    if (!this.properties.select('opening', o.id)) return;
     this.host._openingDialog = {
       id: o.id,
       type: o.type,
@@ -5762,6 +5812,7 @@ public _opPointerDown(ev: PointerEvent, o: OpeningCfg): void {
     if (this.host._tool === 'resize') return;
     ev.preventDefault();
     ev.stopPropagation();
+    if (this.host._tool === 'select' && !this.properties.select('opening', o.id)) return;
     try {
       capturePointer(ev);
     } catch {
@@ -5915,6 +5966,10 @@ public _opClick(ev: MouseEvent, o: RenderOpening): void {
     // the stage (room picking) instead of opening the editor dialog
     if (this.host._mode === 'plan' && this.host._tool === 'resize') return;
     ev.stopPropagation();
+    if (this.host._mode === 'plan' && this.host._tool === 'select' && this.properties.wide) {
+      if (this.properties.select('opening', o.id) && ev.detail >= 2) this._editOpening(o);
+      return;
+    }
     if (this.host._opDrag?.moved) return; // that click was the tail of a drag
     // openings are inert outside Plan mode (owner's decision: View must not
     // interact with them at all); in Plan any click on an opening edits it
@@ -7171,6 +7226,11 @@ public _deviceInboxTabKey = (event: KeyboardEvent): void => {
 
 public _openMarkerDialog(d?: DevItem): void {
     if (!deviceEditorAllowed(this.host._canEdit, this.host._kiosk)) return;
+    if (!this.properties.beforeIntent(() => {
+      const current = d ? this.host._devices.find(item => item.id === d.id) : undefined;
+      if (!d || current) this._openMarkerDialog(current);
+    }, true)) return;
+    if (d && !this.properties.selectDevice(d)) return;
     // A global-camera snapshot belongs to one explicit expansion only; never
     // carry it across device-dialog sessions.
     this.host._vacAllCamerasFor = null;
@@ -7752,7 +7812,11 @@ public async _saveMarker(): Promise<void> {
         forgetMarkerBaseline(this.host);
         this._closeMarkerDialog();
         this.host._cancelDeviceDrag();
-        this.host._devicePositionHistory.clear();
+        // #931: metadata/settings do not retire visual Undo. Identity/space
+        // changes invalidate only this marker's commands, not another device's.
+        if (oldId !== id || previousMarker?.binding !== marker.binding || prevDev?.space !== targetSpaceId)
+          this.host._devicePositionHistory.removeWhere(({ before, after }) =>
+            before.deviceId === oldId || after.deviceId === oldId || before.deviceId === id || after.deviceId === id);
       }
       this.host._regSignature = '';
       this.host._maybeRebuildDevices();
@@ -7790,6 +7854,7 @@ public async _deleteMarker(): Promise<void> {
   }
 
 public _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
+    if (!this.properties.beforeIntent(() => this._openSpaceDialog(mode, spaceId), true)) return;
     if (!this.host._serverStorage || !this.host._serverCfg) {
       this.host._showToast(this.host._t('toast.integration_missing'));
       return;
@@ -8126,12 +8191,12 @@ public async _deleteSpace(withDevices = false): Promise<void> {
     if (accepted) await completeSpaceDeletion(this.host, spaceId, dependencies, removeMarkers);
   }
 
-public async _saveConfigNow(attempt: OptimisticAttempt<ServerConfig> | null = null): Promise<void> {
+public async _saveConfigNow(attempt: OptimisticAttempt<ServerConfig> | null = null, candidateCurrent?: () => boolean): Promise<void> {
     this.host._cfgEpoch++;
     try {
       // same queue as the debounced writer: a dialog saving while a background
       // write is still out must not race it into a self-inflicted conflict
-      await this._writeConfig(attempt);
+      await this._writeConfig(attempt, candidateCurrent);
     } catch (e: any) {
       if (e?.physicalGeometryRolledBack) await this._reloadRejectedPhysicalWrite();
       else if (e?.code === 'conflict') await this.host._reloadConfigOnly();
@@ -8214,6 +8279,7 @@ public _renderImportDialog(): TemplateResult {
   }
 
 public _openSettingsDialog = (): void => {
+    if (!this.properties.beforeIntent(() => this._openSettingsDialog(), true)) return;
     if (!this.host._norm || !this.host._canEdit || this.host._kiosk) return;
     // deep copy so the dialog edits do not leak into the live palette
     const cm = this.host._glowRadiusCm;
@@ -8244,6 +8310,7 @@ public _openSettingsDialog = (): void => {
 public _openMoonStatus(): void { openMoonStatus(this.host); }
 
 public _openSupportDialog = (): void => {
+    if (!this.properties.beforeIntent(() => this._openSupportDialog(), true)) return;
     if (!this.host._norm || !this.host._canEdit) return;
     clearTimeout(this._supportExpiryTimer);
     this._supportExpiryTimer = undefined;
@@ -9207,9 +9274,10 @@ public _setFillColor(key: keyof FillColors, patch: Partial<{ c: string; a: numbe
 /** #377: every UI change of the session default style flows through here —
  * the style updates instantly, the persist is debounced so a palette drag
  * produces one config write. */
-public _updateDecorStyle(next: DecorStyle): void {
+public _updateDecorStyle(next: DecorStyle, immediate = false): void {
     this.host._decorStyle = next;
     if (this._decorStylePersistTimer !== null) window.clearTimeout(this._decorStylePersistTimer);
+    if (immediate) { this._decorStylePersistTimer = null; this._persistDecorStyle(); return; }
     this._decorStylePersistTimer = window.setTimeout(() => {
       this._decorStylePersistTimer = null;
       this._persistDecorStyle();
@@ -9320,6 +9388,7 @@ public _rangeInput(
 public _renderSettingsDialog(): TemplateResult { return renderGeneralSettingsDialog.call(this); }
 
 public _openRulesDialog = (): void => {
+    if (!this.properties.beforeIntent(() => this._openRulesDialog(), true)) return;
     if (!this.host._norm) return;
     const custom = this.host._settings.icon_rules;
     const rules = (custom && custom.length ? custom : DEFAULT_ICON_RULES).map((r) => ({ ...r }));
@@ -9787,6 +9856,10 @@ public _resetRoomDialogFields(): void {
   }
 
 public _openRoomEdit(r: RoomCfg): void {
+    if (!this.properties.beforeIntent(() => {
+      const current = this.host._spaceModel()?.rooms.find(room => room.id === r.id);
+      if (current) this._openRoomEdit(current);
+    }, true)) return;
     if (!r.id) return;
     this.host._roomEditId = r.id;
     this.host._nameSel = r.name || '';

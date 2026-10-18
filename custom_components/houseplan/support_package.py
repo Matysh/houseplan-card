@@ -434,6 +434,7 @@ def _project_space(
                 "plan_scale_x",
                 "plan_scale_y",
                 "plan_angle",
+                "plan_opacity",
                 "view_box",
                 "zero_wall_style",
             ),

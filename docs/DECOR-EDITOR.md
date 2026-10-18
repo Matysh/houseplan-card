@@ -118,6 +118,21 @@ the content frame built from it) showing the old rectangle.
 
 ### 3.3. Rendering and layer order
 
+The optional finite `spaces[].plan_opacity` is 0…1 (absence means 1). It multiplies
+the existing editor context fade: full opacity in View, static and PDF and when
+editing the backdrop, half in other Background tools, with Plan retaining its
+existing context fade. Zero is a real transparent image, not a missing image.
+Resetting the transform preserves this opacity; copy, full/space/plan-only
+export/import and geometry history preserve presence/value without a load rewrite.
+
+Wide editor cards (≥960 px) expose the shared numeric Properties column. Decor
+X/Y are the selection-frame centre. Width/height resizing preserves that centre;
+line length/angle use the native grid, stairs remain continuous. Text dimensions
+are measured, not editable. Image ratio lock is local to the selection and starts
+enabled. Text variable insertion keeps the captured range and uses the existing
+live-text resolver for both preview and rendering. Full dialogs and native
+drag/resize/rotate handles remain the editing authorities.
+
 The image is purely decorative and never changes rooms, walls, openings,
 devices, Glow or sun geometry. It is still a content item for fit/pan bounds;
 for a rotated image all four rotated corners contribute to those bounds. A

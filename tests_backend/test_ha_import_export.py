@@ -1073,6 +1073,7 @@ def _plan_only_source() -> tuple[dict[str, Any], dict[str, Any]]:
         "plan_scale_x": 1.2,
         "plan_scale_y": 0.8,
         "plan_angle": 15,
+        "plan_opacity": 0.375,
         "settings": {
             "show_names": True, "north_deg": 90, "sun_rays": True,
             "future_binding": "sensor.secret",
@@ -1172,6 +1173,7 @@ def test_plan_only_export_projects_geometry_and_round_trips_room_labels(tmp_path
     assert all(item.get("owner") != "marker" for item in document["content_manifest"])
 
     assert "future_space" not in exported
+    assert exported["plan_opacity"] == 0.375
     assert exported["settings"] == {
         "show_names": True, "north_deg": 90, "sun_rays": True, "bg_mode": "static",
         "label_co2": True, "hide_openings": True,
@@ -1228,6 +1230,7 @@ def test_plan_only_export_projects_geometry_and_round_trips_room_labels(tmp_path
         candidate, {"spaces": [], "markers": []}, {}, confirm_missing_content=False,
     )
     assert merged["markers"] == []
+    assert merged["spaces"][0]["plan_opacity"] == 0.375
     imported_room = merged["spaces"][0]["rooms"][0]
     assert imported_room.get("area") is None
     assert merged["spaces"][0]["stairs"][0]["target_space_id"] is None

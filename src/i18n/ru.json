@@ -183,7 +183,7 @@
   "opening.passage_binding_warning": "При сохранении датчик открытия и замок будут удалены.",
   "opening.invalid_passage_fields": "У открытого проёма на плане «{room}» есть недопустимые параметры: {fields}.",
   "opening.type_label": "Тип",
-  "opening.length_label": "Длина, см",
+  "opening.length_label": "Ширина проёма, см",
   "opening.contact_label": "Датчик открытия",
   "opening.lock_label": "Замок",
   "opening.lock_info_label": "Информация о двери и замке",

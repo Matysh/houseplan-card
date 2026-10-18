@@ -1,5 +1,16 @@
 # House Plan architecture
 
+Editor Properties (#931) lives in lazy `src/editors/properties/`: a capability
+catalog and surface, targeted transform/physical adapters, card-local selection,
+field controller and one ordered command lane. Stable floor/editor/object/binding
+identity plus config-write authority retire stale callbacks. Drafts compare only
+their own field, so sibling updates survive and same-field conflicts block.
+All commits use existing config/layout/LED writers and histories; visual device
+history stores changed-key presence/null, not whole markers. Full dialog entry
+finishes the panel writer before reading a fresh target. The card owns the width
+observer; no panel DOM or styles enter the initial View dependency graph.
+`selection.ts` paints cues only: native handles and hit-priority still own gestures.
+
 Development evidence (#954) separates material identity from content identity.
 Only closed pure product units/build cross a Git commit; metadata/FS/process/
 dynamic consumers remain fresh. Local receipts are private, byte-verified and

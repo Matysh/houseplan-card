@@ -38,6 +38,16 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
     compatibility: 'optional field; full backup, plan-only transfer and closed support projections retain it',
   },
   {
+    id: 'spaces[].plan_opacity',
+    enforcedBy: 'validation.py + properties panel + schema parity; #931',
+    selector: { path: ['spaces', '*', 'plan_opacity'] },
+    storage: 'House Plan server config', type: 'number', default: 'unset (= 1)',
+    level: 'space', ui: 'Background properties → Opacity',
+    runtime: 'multiplies only backdrop alpha, including existing editor/PDF fading',
+    introduced: '#931', status: 'current', migration: 'none; reads never materialize a default',
+    compatibility: 'finite 0..1, not null; full backup/copy retain presence; older validators can reject the new key',
+  },
+  {
     id: 'space.settings.label_co2',
     enforcedBy: 'logic.ts + validation.py + room card native smoke; #920',
     selector: { path: ['spaces', '*', 'settings', 'label_co2'] },
