@@ -1,23 +1,20 @@
 # Development and deployment
 
-The latest assembled #955 first failed the fresh Linux gate only on onboarding
-bytes:32452 B gzip versus30382+2000; the two unit failures judge the same
-limit. Removing dead legacy radar label rules and merging duplicate rules is
-valid cleanup but did not address that graph, because settings CSS is already
-editor-only. The actual extra English bytes were Device-only profile help in
-shared settings. Move those seven unchanged values in all four languages to
-the existing tools dictionary already awaited by EDITOR_LANGUAGE_RUNTIME;
-onboarding remains settings-only. Pass the existing private tools translator
-to the two extracted profile presenters and rename its old backup-only method
-name to match its broader use. No new namespace, model, text or loading gate.
-The measured Windows onboarding graph becomes32234 B (all ceilings unchanged).
-Rebuild test-build before namespace units: a standalone run against the old
-compiled JSON correctly differed from the changed source; fresh compiled
-namespace/form/style units all pass. Full canonical Linux validation follows.
+Device-only profile help belongs in the existing tools dictionary, already
+awaited by EDITOR_LANGUAGE_RUNTIME. Onboarding uses the shared settings
+dictionary and must not download these editor-only messages. Both extracted
+profile presenters receive the same private tools translator; no additional
+namespace or language-loading gate is needed (#955).
+
+The four forms use hp-settings-select for every dropdown, including profile
+fields and the mobile section selector. Its native child holds values and
+options only; the visible button, menu, animation and reduced-motion rules
+belong to the component. Do not retain a second native ::picker stylesheet
+in settings-dialogs.styles.ts. First-run onboarding keeps its own controls.
 
 
-#955 AC3 explicitly includes an ordinary sensor as well as the complex Device
-profiles. The genuine-HA matrix adds a ZHA temperature/humidity/battery/LQI
+#955 AC3 includes an ordinary sensor as well as the complex Device profiles.
+The eight-scenario genuine-HA matrix has a ZHA temperature/humidity/battery/LQI
 sensor with five shared sections; its setup lives only in that smoke and does
 not change the immutable four-case comparison dataset. --case=sensor runs a
 bounded supplemental scenario and writes case-sensor.json rather than replacing
