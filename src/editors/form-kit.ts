@@ -104,7 +104,7 @@ export interface FieldOptions {
 /** Поле: подпись сверху, контрол, подсказка или ошибка снизу. */
 export function field({ label, htmlFor, help, control, hint, error }: FieldOptions): TemplateResult {
   return html`<div class="hpf-field">
-    <span class="hpf-label hpf-labelrow">${htmlFor ? html`<label for=${htmlFor}>${label}</label>` : label}${help ?? nothing}</span>
+    <span class="hpf-label hpf-labelrow ${!htmlFor && help ? 'hpf-inline-help' : ''}">${htmlFor ? html`<label for=${htmlFor}>${label}</label>` : helpLabel(label, help)}${htmlFor ? help ?? nothing : nothing}</span>
     ${control}
     ${error ? html`<p class="hpf-error" role="alert">${error}</p>` : hint ? html`<p class="hpf-hint">${hint}</p>` : nothing}
   </div>`;
@@ -134,6 +134,13 @@ export interface ToggleRowOptions {
   describedBy?: string;
 }
 
+/** Keep contextual help on the final text line, never on an empty line. */
+export function helpLabel(label: string, help?: TemplateResult | typeof nothing): TemplateResult {
+  if (!help || help === nothing) return html`<span>${label}</span>`;
+  const tail = label.lastIndexOf(' ') + 1;
+  return html`<span>${label.slice(0, tail)}</span><span class="hpf-label-tail"><span>${label.slice(tail)}</span>${help}</span>`;
+}
+
 /**
  * Полная строка настройки (§3.1): иконка · название + «?» · подпись · тумблер
  * справа. Тумблер — нативный чекбокс, нарисованный CSS, как у редактора
@@ -146,7 +153,7 @@ export function toggleRow({
   const captionId = id && caption ? `${id}-caption` : undefined;
   return html`<label class="hpf-toggle ${icon ? '' : 'hpf-noicon'} ${compact ? 'hpf-compact' : ''}">
     ${icon ? html`<span class="hpf-toggle-icon" aria-hidden="true"><ha-icon icon=${icon}></ha-icon></span>` : nothing}
-    <span class="hpf-toggle-title"><span>${title}</span>${help ?? nothing}</span>
+    <span class="hpf-toggle-title">${helpLabel(title, help)}</span>
     ${caption && !compact ? html`<span class="hpf-toggle-caption" id=${captionId ?? nothing}>${caption}</span>` : nothing}
     <input type="checkbox" id=${id ?? nothing} .checked=${checked} ?disabled=${disabled}
       aria-label=${title} aria-describedby=${describedBy ?? captionId ?? nothing}

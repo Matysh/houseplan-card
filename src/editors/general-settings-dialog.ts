@@ -3,7 +3,7 @@ import { html, nothing, type TemplateResult } from 'lit';
 
 import {
   callout, colorField, colorRow, colorTile, colorTiles, field, footerStatus,
-  formCard, selectControl, subsection, textLink, toggleRow, unitInput,
+  formCard, helpLabel, selectControl, subsection, textLink, toggleRow, unitInput,
 } from './form-kit';
 import { settingsSections, revealSettingsField, selectedSettingsSection } from './settings-sections';
 import { ensureSettingsDialogStyles } from './settings-styles';
@@ -71,9 +71,8 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
   const tile = (key: keyof FillColors, labelKey: I18nKey) => {
     const v = d.colors[key];
     const label = t(labelKey);
-    const tail = label.lastIndexOf(' ') + 1;
     return colorTile({
-      label, heading:html`${label.slice(0,tail)}<span class="hpf-label-tail"><span>${label.slice(tail)}</span>${help(st('gs.fill_palette_help'),label)}</span>`, hex: v.c, opacity: v.a, opacityLabel: st('gs.opacity_of', { name: label }),
+      label, heading:helpLabel(label,help(st('gs.fill_palette_help'),label)), hex: v.c, opacity: v.a, opacityLabel: st('gs.opacity_of', { name: label }),
       picker: html`<hp-color-opacity .label=${label} hide-label flat-swatch cover-swatch
         .opacityLabel=${t('space.opacity')}
         .pickerLabels=${host._colorPickerLabels}
@@ -309,7 +308,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
         <button class="btn ghost" data-hp="dialog-cancel" @click=${requestClose}>${t('btn.cancel')}</button>
         <button class="btn on" data-hp="dialog-confirm" @click=${() => this._saveSettingsDialog()} ?disabled=${!canSave}
           title=${problems[0] ? st(problems[0].message) : ''}>
-          <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : t('btn.save')}
+          <ha-icon icon="mdi:check"></ha-icon><span class="hpf-save-label">${d.busy ? '…' : t('btn.save')}</span>
         </button>
       </div>
     </div>

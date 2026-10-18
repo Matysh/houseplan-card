@@ -187,7 +187,7 @@ export function renderSpaceForm(port: SpaceFormPort): SpaceFormParts {
         <button class="btn ghost" data-hp="dialog-cancel" @click=${requestClose}>${t('btn.cancel')}</button>
         <button class="btn on" data-hp="dialog-confirm" @click=${() => port.save()} ?disabled=${!canSave}
           title=${problems[0] ? st(problems[0].message) : ''}>
-          <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : t('btn.save')}
+          <ha-icon icon="mdi:check"></ha-icon><span class="hpf-save-label">${d.busy ? '…' : t('btn.save')}</span>
         </button>
       </div>
     </div>`,
