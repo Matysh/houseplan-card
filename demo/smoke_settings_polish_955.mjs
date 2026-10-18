@@ -122,6 +122,7 @@ try{
        if(await number.count()){
         await number.fill('100');await number.press('Tab');
         out[prefix+`_opacity_${i}`]=await number.evaluate(el=>{const s=getComputedStyle(el),ctx=document.createElement('canvas').getContext('2d');ctx.font=s.font;const surface=el.closest('.picker');return el.value==='100'&&el.clientWidth-parseFloat(s.paddingLeft)-parseFloat(s.paddingRight)>=ctx.measureText('100').width+16&&surface.scrollWidth<=surface.clientWidth+1;});
+        out[prefix+`_opacity_caption_${i}`]=await picker.locator('.row > .caption').evaluate(el=>el.scrollWidth<=el.clientWidth+1);
        }
        out[prefix+`_picker_confirm_${i}`]=await hoverButton(picker.locator('.confirm'));
        sawColors++;await page.keyboard.press('Escape');
