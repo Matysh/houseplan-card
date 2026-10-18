@@ -3252,3 +3252,19 @@ Clipping the retained native select alone is insufficient: legacy padding and
 overflow must also be contained. The corresponding regression is declared for
 the nightly runner; development checks are ordinary positive tests and static
 registry validation, never a claim that the mutant was executed.
+
+Historical pre-cleanup matched #947 Linux/ext4 build (Room f6063a23 has identical A to measured
+Room fad22f28): editor 284681 -> 286230 B gzip (+1549), onboarding 31448 -> 31991
+(+543), raw bundle 3097197 -> 3105505 (+8308). Carry those own deltas onto the
+Room references: 286219 / 30315 / 3105293, retaining inherited gaps 11 / 1676 /
+212 B and every band/absolute limit. Actual initial View is 323110 B under the
+unchanged 322937 +2000 ceiling and 352000 absolute budget. Counter references
+stay 145/363/5564/103/101; actual host references 5574 fit the existing 25 band.
+
+Final #947 on the final reviewed parent A: fresh Linux/ext4 editor286270,
+onboarding32010, raw3105417, versus final Room284636/31428/3096669. Own deltas
++1634/+582/+8748 produce refs286259/30334/3105205, keeping gaps11/1676/212
+and all bands/absolute limits. Initial322945 stays under unchanged322937+2000
+and352000. Counter refs remain145/363/5564/103/101, actual hostRefs5574.
+The measured Device A is identical to28e4cece; the parent rebase changes
+accepted tests/review history and generated baselines, not product code.
