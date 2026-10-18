@@ -72,10 +72,9 @@ const res = await page.evaluate(async () => {
   out.labelSaved = !!c._layout['rl_r1'];
   // 6) диалог: create + draw
   c._openSpaceDialog('create'); await c.updateComplete;
-  // #600 §4.2: choice-карточки идут «Нарисовать» → «Изображение»; выбираем по
-  // смыслу, а не по индексу.
-  [...sr().querySelectorAll('input[name="plansrc"]')]
-    .find((radio) => radio.closest('label')?.textContent.includes(c._t('space.source_draw')))?.click();
+  // #945: the editor uses the approved single source list.
+  const source = sr().querySelector('select[name="space-plan-source"]');
+  source.value = 'draw'; source.dispatchEvent(new Event('change', { bubbles: true }));
   await c.updateComplete;
   c._spaceDialog = { ...c._spaceDialog, title: 'Attic', orientation: 'square' };
   await c.updateComplete;

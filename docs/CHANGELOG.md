@@ -8,6 +8,7 @@
 - Development checks reuse verified unchanged product inputs across metadata
   commits and pushes, keep Git/process checks fresh, and separate golden from
   the full smoke matrix. Direct producer evidence bridges branch caches (#954).
+- Match Space v7 with one plan-source list, a full image preview, paired image actions, grouped metrics and named mobile footer actions. (#945)
 
 - Administrators can back up the complete plan as a ZIP with used images and
   saved Zigbee links, restore it on another installation and undo the restore.

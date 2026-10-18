@@ -40,7 +40,8 @@ export function renderSpaceSettingsDialog(this: HouseplanEditorRuntime): Templat
     copySpace: () => openSpaceCopyDialog(this.host),
   });
   return html`<hp-dialog .hass=${this.host.hass} data-kind="space" form-shell wide settings-layout
-      .title=${form.title} .badge=${form.badge} icon="mdi:cog-outline" icon-badge="mdi:layers-outline" @hp-close=${form.requestClose}>
+      .title=${d.mode === 'edit' ? `${this.host._t('space.header')} · ${d.title.trim()}` : form.title}
+      .subtitle=${st('space.scope')} icon="mdi:cog-outline" icon-badge="mdi:layers-outline" @hp-close=${form.requestClose}>
     <div class="body hpf-form hpf-settings-form">${settingsSections(this.host,'space',form.sections,st('dialog.section'))}${form.notices}</div>${form.footer}
   </hp-dialog>`;
 }

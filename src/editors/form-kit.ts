@@ -112,9 +112,9 @@ export function field({ label, htmlFor, help, control, hint, error }: FieldOptio
 
 /** Сетка полей: две равные колонки или `1fr / 175px` (`narrow`). */
 export function fieldGrid(
-  children: readonly (TemplateResult | typeof nothing)[], { narrow = false }: { narrow?: boolean } = {},
+  children: readonly (TemplateResult | typeof nothing)[], { narrow = false, stacked = false }: { narrow?: boolean; stacked?: boolean } = {},
 ): TemplateResult {
-  return html`<div class="hpf-grid ${narrow ? 'hpf-grid-narrow' : ''}">${children}</div>`;
+  return html`<div class="hpf-grid ${narrow ? 'hpf-grid-narrow' : ''}${stacked ? ' hpf-grid-stacked' : ''}">${children}</div>`;
 }
 
 export interface ToggleRowOptions {

@@ -11,12 +11,15 @@ const res = await page.evaluate(async () => {
     showNames: c._spaceDialog?.showNames,
     displayTouched: c._spaceDialog?.displayTouched,
   });
-  // #600 §4.2: подложка — две choice-карточки (draw → file), тумблеры —
-  // полные строки набора; выбираем по смыслу, а не по индексу.
+  // #945: one editor list; onboarding retains its existing choice cards.
   const choose = async (source) => {
-    const wanted = c._t(source === 'file' ? 'space.source_file' : 'space.source_draw');
-    [...sr().querySelectorAll('hp-dialog input[name="plansrc"]')]
-      .find((radio) => radio.closest('label')?.textContent.includes(wanted)).click();
+    const select = sr().querySelector('hp-dialog select[name="space-plan-source"]');
+    if (select) { select.value = source; select.dispatchEvent(new Event('change', { bubbles: true })); }
+    else {
+      const wanted = c._t(source === 'file' ? 'space.source_file' : 'space.source_draw');
+      [...sr().querySelectorAll('hp-dialog input[name="plansrc"]')]
+        .find((radio) => radio.closest('label')?.textContent.includes(wanted)).click();
+    }
     await c.updateComplete;
   };
   const toggle = async (key) => {

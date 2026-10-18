@@ -1,6 +1,7 @@
 /** Shared, editor-only presentation for the four approved settings forms (#944). */
 export const settingsDialogCss = `
   hp-dialog[settings-layout] { --hp-dialog-wide-width:610px; --hp-dialog-icon-size:40.48px; --hp-settings-help-size:22px; --hp-settings-help-scale:1.06; --hp-dialog-close-transition:160ms ease; --hp-dialog-close-hover-transform:rotate(90deg) scale(1.12); }
+  hp-dialog[data-kind=space][settings-layout] { --hp-dialog-settings-height:780px; --hp-settings-chrome-height:176px; }
   hp-dialog .hpf-form.hpf-settings-form { display:block; padding:0; background:var(--hpf-surface); --hpf-control-surface:var(--hpf-surface); }
   .hpf-settings-layout { display:grid; grid-template-columns:155px minmax(0,1fr); min-width:0; align-items:start; }
   .hpf-settings-nav { position:sticky; top:0; display:grid; gap:4px; padding:13px 8px; min-width:0; }
@@ -19,6 +20,8 @@ export const settingsDialogCss = `
   .hpf-settings-pane .hpf-sub h4 { font-size:14px; }
   .hpf-settings-pane .hpf-body > .hpf-sub + * { margin-top:12px; padding-top:0; border-top:0; }
   .hpf-settings-pane .hpf-labelrow,.hpf-settings-pane .hpf-field > .hpf-label { min-height:20px; color:var(--primary-text-color); font-size:13px; font-weight:600; }
+  .hpf-settings-form .hpf-settings-pane .hpf-grid-stacked { grid-template-columns:minmax(0,1fr); gap:0; }
+  .hpf-settings-form .hpf-settings-pane .hpf-grid-stacked > .hpf-field + .hpf-field { margin-top:18px; padding-top:18px; border-top:1px solid var(--hpf-line); }
   .hpf-settings-pane .hpf-colorrow { grid-template-columns:minmax(0,1fr); align-items:stretch; min-height:0; }
   .hpf-settings-pane .hpf-colorrow > .hpf-colorfield { justify-self:stretch; width:100%; box-sizing:border-box; }
   .hpf-settings-pane .hpf-colortile-labelled { padding:10px; gap:8px; align-content:start; }
@@ -58,11 +61,26 @@ export const settingsDialogCss = `
   .hpf-temperature-range > .hpf-field { display:flex; flex:1; min-width:0; gap:8px; align-items:center; }
   .hpf-temperature-range .hpf-unit { flex:1; min-width:0; }
   .hpf-temperature-range .hpf-label { flex:none; }
-  .hpf-plan-upload { display:flex; flex-wrap:wrap; gap:8px; }
-  .hpf-plan-upload > .planname,.hpf-plan-upload > .planprev { flex-basis:100%; }
-  .hpf-plan-upload .fileupload,.hpf-plan-upload > button { flex:1; min-width:0; }
-  .hpf-plan-upload button { width:100%; padding-inline:8px; }
+  .hpf-plan-image { display:flex; align-items:center; gap:10px; min-height:148px; padding:12px; box-sizing:border-box; background:var(--hpf-canvas); border:1px solid var(--hpf-line); border-radius:7px; }
+  .hpf-plan-image .planprev { width:210px; max-width:60%; height:124px; max-height:none; object-fit:contain; border:0; border-radius:0; padding:0; background:transparent; }
+  .hpf-plan-filename { min-width:0; overflow-wrap:anywhere; color:var(--hpf-muted); font-size:13px; }
+  .hpf-plan-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+  .hpf-plan-actions .fileupload { display:block; min-width:0; }
+  .hpf-plan-actions .btn { width:100%; min-height:44px; height:100%; box-sizing:border-box; justify-content:center; padding-inline:8px; font-size:12px; }
   .hpf-inherited-swatch { display:inline-block; width:24px; height:24px; border:1px solid var(--hpf-line); border-radius:5px; }
+  .hpf-inherited-color { display:flex; align-items:center; gap:8px; color:var(--hpf-muted); font-size:12px; }
+  .hpf-room-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px 14px; margin-top:10px; }
+  .hpf-settings-pane .hpf-body > .hpf-context-links { margin-top:8px; padding-top:0; border-top:0; }
+  .hpf-context-links .hpf-link { font-size:12px; }
+  hp-dialog[settings-layout] .hpf-footer-object { display:grid; grid-template-columns:auto auto minmax(0,1fr) auto; column-gap:8px; row-gap:10px; padding:12px 16px; }
+  hp-dialog[settings-layout] .hpf-footer-object .hpf-status { grid-column:1 / -1; grid-row:1; }
+  hp-dialog[settings-layout] .hpf-footer-object .dialog-action-copy { grid-column:1; grid-row:2; }
+  hp-dialog[settings-layout] .hpf-footer-object .dialog-action-danger { grid-column:2; grid-row:2; margin:0; }
+  hp-dialog[settings-layout] .hpf-footer-object .dialog-action-commit { grid-column:4; grid-row:2; margin:0; }
+  hp-dialog[settings-layout] .hpf-footer-object .hpf-action-label { display:inline; }
+  hp-dialog[settings-layout] .hpf-footer-object .hpf-mobile-icon { width:auto; min-width:0; padding-inline:10px; }
+  hp-dialog[settings-layout] .hpf-footer-object .btn { white-space:normal; }
+  hp-dialog[settings-layout] .hpf-footer-object .dialog-action-danger .btn:not(:hover):not(:focus-visible) { border-color:transparent; }
   .hpf-color-with-action { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:12px; }
   .hpf-color-with-action > button { min-height:48px; }
   .hpf-color-with-action > .hpf-colorfield { box-sizing:border-box; min-height:48px; }
@@ -109,19 +127,18 @@ export const settingsDialogCss = `
     .hpf-settings-form option:hover { background:var(--hpf-tint); }
   }
   @media(min-width:551px) {
-    .hpf-settings-layout:not(.hpf-settings-single) { min-height:calc(min(756px,100dvh - 48px) - 152px); }
+    .hpf-settings-layout:not(.hpf-settings-single) { min-height:calc(min(var(--hp-dialog-settings-height,756px),100dvh - 48px) - var(--hp-settings-chrome-height,152px)); }
   }
   @media(max-width:550px) {
     .hpf-settings-layout { grid-template-columns:minmax(0,1fr); }
     .hpf-settings-nav { display:none; }
     .hpf-settings-mobile { display:block; position:sticky; top:0; z-index:2; padding:10px 14px; border-bottom:1px solid var(--hpf-line); background:var(--hpf-surface); }
     .hpf-settings-content { border:0; padding:18px 14px; }
+    .hpf-room-metrics { grid-template-columns:minmax(0,1fr); gap:20px; }
+    hp-dialog[settings-layout] .hpf-footer-object { grid-template-columns:auto auto minmax(0,1fr); padding:12px 14px; }
+    hp-dialog[settings-layout] .hpf-footer-object .dialog-action-commit { grid-column:1 / -1; grid-row:3; justify-content:flex-end; }
     .hpf-settings-form input,.hpf-settings-form select,.hpf-settings-form textarea { font-size:16px!important; }
     .hpf-settings-pane .hpf-colortiles { grid-template-columns:repeat(2,minmax(0,1fr)); }
-    .hpf-settings-pane [data-card=data] .hpf-actions { gap:10px; }
-  .hpf-settings-pane [data-card=data] .hpf-actions .btn { font-size:12px; padding-inline:10px; }
-  .hpf-converter .hpf-link { display:inline-block; font-size:12px; padding:0; margin-bottom:7px; transition:color 150ms ease,background 150ms ease; }
-  .hpf-converter .hpf-link:hover { color:var(--primary-text-color); background:var(--hpf-tint); }
   .hpf-north-control { grid-template-columns:112px minmax(0,1fr); gap:12px; }
     .hpf-north-dial { width:112px; height:112px; }
   }

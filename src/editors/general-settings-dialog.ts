@@ -20,7 +20,7 @@ import { sunStateOf } from '../sun';
 import { renderSunRayOriginSegment } from '../sun-settings-view';
 import { zigbeeTopologySettingsOf } from '../zigbee-topology-settings';
 import type { ZigbeeTopologySettings } from '../zigbee-topology-settings';
-import { spaceDeviceBatteryModeOf, type DeviceBatteryMode } from '../device-battery-settings';
+import { deviceBatteryModeOf, spaceDeviceBatteryModeOf, type DeviceBatteryMode } from '../device-battery-settings';
 import type { HouseplanEditorRuntime } from '../houseplan-editor-runtime';
 import { signalVisibilityModeOf, type SignalSpaceSettings } from '../signal-visibility';
 

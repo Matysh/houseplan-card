@@ -207,8 +207,16 @@ const narrow = await page.evaluate(async () => {
       wrapped: !!dangerRect && !!commitRect && commitRect.top >= dangerRect.bottom - 1,
       oneRow: buttons.length > 0 && buttons.every((button) =>
         Math.abs(button.getBoundingClientRect().top - buttons[0].getBoundingClientRect().top) <= 1),
-      iconOnlyDestructive: kind !== 'space' || [...footer.querySelectorAll('.hpf-mobile-icon')].every((button) =>
-        button.getAttribute('aria-label') && getComputedStyle(button.querySelector('.hpf-action-label')).display === 'none'),
+      namedDestructive: kind !== 'space' || (() => {
+        const actions=[...footer.querySelectorAll('.hpf-mobile-icon')];
+        return actions.length===2&&actions.every(button=>button.getAttribute('aria-label')
+          &&getComputedStyle(button.querySelector('.hpf-action-label')).display!=='none'
+          &&button.getBoundingClientRect().height>=44);
+      })(),
+      commitPairOneRow: !!commit&&(() => {
+        const actions=[...commit.querySelectorAll('button')];
+        return actions.length===2&&Math.abs(actions[0].getBoundingClientRect().top-actions[1].getBoundingClientRect().top)<=1;
+      })(),
       buttons: buttons.length,
     };
     card._openingDialog = null;
@@ -236,7 +244,7 @@ for (const metric of desktop.metrics) {
   checks[`${key}_positive_localization_headroom`] = metric.spareWidth > 0;
   checks[`${key}_no_horizontal_overflow`] = metric.noHorizontalOverflow;
 }
-// #600 Q7: диалоги настроек (`form-shell`) — 560 px по референсу; остальные
+// #945: settings use the approved 610 px shell; other wide dialogs retain500px.
 // wide-диалоги остаются на 500 и проверяются циклом выше.
 checks.space_dialog_uses_reference_width = desktop.space.widePreset
   && desktop.space.surfaceWidth >= 609 && desktop.space.surfaceWidth <= 611;
@@ -251,10 +259,10 @@ for (const kind of ['opening', 'physical', 'opening_de', 'physical_de']) {
 }
 checks.space_narrow_not_regressed = narrow.space.buttons === 4
   && narrow.space.insideViewport && narrow.space.noHorizontalOverflow
-  && narrow.space.buttonsContained && narrow.space.oneRow && narrow.space.iconOnlyDestructive;
+  && narrow.space.buttonsContained && narrow.space.wrapped && narrow.space.namedDestructive && narrow.space.commitPairOneRow;
 checks.space_de_narrow_not_regressed = narrow.space_de.buttons === 4
   && narrow.space_de.insideViewport && narrow.space_de.noHorizontalOverflow
-  && narrow.space_de.buttonsContained && narrow.space_de.oneRow && narrow.space_de.iconOnlyDestructive;
+  && narrow.space_de.buttonsContained && narrow.space_de.wrapped && narrow.space_de.namedDestructive && narrow.space_de.commitPairOneRow;
 
 checkAll(checks);
 await finish(browser, {

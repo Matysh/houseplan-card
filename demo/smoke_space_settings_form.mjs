@@ -1,6 +1,7 @@
 // #945: approved space settings, real controls and unchanged persistence boundary.
-import { launch, checkAll, finish } from './serve.mjs';
-import {mkdirSync} from 'node:fs';
+import { launch, watchPage, checkAll, finish } from './serve.mjs';
+import {mkdirSync,readFileSync} from 'node:fs';
+import {installSettingsSpaceFixture} from './helpers/settings-space-945-fixture.mjs';
 const {page,browser} = await launch({width:1280,height:900});
 page.setDefaultTimeout(12000);
 const out = {}, card=page.locator('houseplan-card');
@@ -12,14 +13,26 @@ const select=async (name,value)=>{await dialog.locator(`select[name="${name}"]`)
 const read=()=>page.evaluate(()=>structuredClone(window.__card._spaceDialog));
 const saved=()=>page.evaluate(()=>structuredClone(window.__card._serverCfg.spaces.find(s=>s.id==='f1')));
 try {
+  await installSettingsSpaceFixture(page);
+  const reference=watchPage(await page.context().newPage());
+  await reference.setContent('<!doctype html><html><body style="margin:0;color-scheme:light">'+readFileSync('docs/design/settings-dialogs-944/space-settings-v7.html','utf8')+'</body></html>');
+  await reference.locator('.hp-after h2').waitFor();
+  const expected=await reference.locator('.hp-after').evaluate(el=>({width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height,nav:el.querySelector('[data-nav]').getBoundingClientRect().width,labels:[...el.querySelectorAll('[data-nav] button')].map(n=>n.textContent.trim())}));
   await open();
   const original=await saved(), initial=await read();
+  out.approvedStructure=await dialog.evaluate((el,expected)=>{const box=el.shadowRoot.querySelector('.surface').getBoundingClientRect(),nav=el.querySelector('.hpf-settings-nav');return Math.abs(box.width-expected.width)<2&&Math.abs(box.height-expected.height)<8&&Math.abs(nav.getBoundingClientRect().width-expected.nav)<2&&JSON.stringify([...nav.querySelectorAll('button')].map(n=>n.textContent.trim()))===JSON.stringify(expected.labels);},expected);
+  out.headerNamesTheSpace=await dialog.locator('.title-text').textContent().then(text=>text.includes('Пространство · 1 этаж · жилой')&&text.includes('Настройки одного пространства'));
+  out.stackedIdentityFields=await dialog.evaluate(el=>{const name=el.querySelector('#space-title').getBoundingClientRect(),scale=el.querySelector('#space-cell-cm').closest('.hpf-unit').getBoundingClientRect();return scale.top>name.bottom+18&&Math.abs(name.width-scale.width)<2;});
+  out.singlePlanSource=await dialog.locator('select[name="space-plan-source"]').count()===1&&await dialog.locator('input[name="plansrc"]').count()===0;
+  out.savedStatusFirst=await dialog.locator('.hpf-footer').evaluate(el=>el.firstElementChild.classList.contains('hpf-status')&&el.firstElementChild.textContent.includes('Все изменения сохранены'));
+  out.legacyRawStillPreservedBeforeSave=original.settings.hide_openings===true&&initial.hideOpenings===false;
   out.fourSections=await dialog.locator('.hpf-settings-pane').count()===4;
   out.cleanSaveDisabled=await dialog.locator('[data-hp="dialog-confirm"]').isDisabled();
   await dialog.locator('#space-cell-cm').fill('');await tick();
   out.rawInvalidBlocksSave=(await read()).cellCmInput==='' && await dialog.locator('[data-hp="dialog-confirm"]').isDisabled();
   await dialog.locator('#space-cell-cm').fill(initial.cellCmInput);await tick();
   await dialog.locator('#space-title').fill('Space draft 945');await tick();
+  out.dirtyStatus=await dialog.locator('.hpf-status').textContent().then(text=>text.includes('несохранённые'));
   await section('appearance');
   const beforeBorders=(await read()).showBorders;
   await dialog.locator('#space-show-borders').click();await tick();
@@ -36,6 +49,7 @@ try {
   out.validationRevealsHiddenPane=await dialog.locator('[data-settings-section="appearance"]').isVisible() && await dialog.locator('#space-temp-min').evaluate(el=>el.getRootNode().activeElement===el);
   await dialog.locator('#space-temp-min').fill('20');await dialog.locator('#space-temp-max').fill('24');await tick();
   await section('room-cards');
+  out.metricsInTwoColumns=await dialog.locator('.hpf-room-metrics .hpf-toggle').evaluateAll(nodes=>nodes.length===5&&Math.abs(nodes[0].getBoundingClientRect().top-nodes[1].getBoundingClientRect().top)<1&&nodes[1].getBoundingClientRect().left>nodes[0].getBoundingClientRect().right);
   await dialog.locator('#space-show-names').check();await tick();
   await dialog.locator('#space-name-font').fill('150');await dialog.locator('#space-name-font').press('Tab');await tick();
   await dialog.locator('#space-label-font').fill('75');await dialog.locator('#space-label-font').press('Tab');await tick();
@@ -77,6 +91,9 @@ try {
   await open();
   for (const width of [320,390,1280]) {
     await page.setViewportSize({width,height:800});
+    if(width<550)await dialog.locator('.hpf-settings-mobile select').selectOption('basics');else await section('basics');
+    out[`imageActions${width}`]=await dialog.locator('.hpf-plan-actions .btn').evaluateAll(nodes=>nodes.length===2&&Math.abs(nodes[0].getBoundingClientRect().top-nodes[1].getBoundingClientRect().top)<1&&Math.abs(nodes[0].getBoundingClientRect().height-nodes[1].getBoundingClientRect().height)<1&&nodes.every(n=>n.getBoundingClientRect().height>=44));
+    out[`objectLabels${width}`]=await dialog.locator('.hpf-footer .hpf-action-label').evaluateAll(nodes=>nodes.length===2&&nodes.every(n=>getComputedStyle(n).display!=='none'&&n.getBoundingClientRect().width>20));
     const fit=await page.evaluate(async()=>{
       const c=window.__card,d=c.shadowRoot.querySelector('hp-dialog[data-kind="space"][settings-layout]');
       const mobile=d.querySelector('.hpf-settings-mobile select');let fits=true;
@@ -92,6 +109,7 @@ try {
     });
     out[`fits${width}`]=fit;
   }
+  await reference.close();
   out.liveThemes=await page.evaluate(async()=>{
     const c=window.__card,d=c.shadowRoot.querySelector('hp-dialog[data-kind="space"]'),colors=[];
     for(const [paper,text,accent] of [['#ffffff','#17212b','#007d93'],['#17212b','#ffffff','#5bcce6'],['#f5f0ff','#231235','#a32191']]){
