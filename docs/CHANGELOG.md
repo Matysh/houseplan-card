@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Restore agreed vacuum and radar field help, including immediate vacuum saves and the radar room. (#947)
+
 - Room settings use the approved “No fill” label; all five own fill-mode
   labels are checked against the immutable reference. (#946)
 - Restore the approved Room metrics group in climate-device basics, with

@@ -63,6 +63,7 @@ export function renderRadarSection(
   placement: 'main' | 'additional' = 'main',
 ): TemplateResult {
   const { dialog: d, device } = options;
+  const help=(key:SettingsI18nKey,label:string)=>html`<hp-help instant .text=${options.st(key)} .ariaLabel=${options.st('dialog.help_for',{name:label})}></hp-help>`;
   if (!device) return html``;
   options.setup.syncMarker(device.marker?.id || device.id);
   const recognition = recognizeRadar(device, options.registryHass);
@@ -279,7 +280,7 @@ export function renderRadarSection(
     ${subsection({title:options.st('marker.radar_data'),help:options.help('radar.help')})}
     ${toggleRow({id:'marker-radar-presence',title:options.t('radar.enabled'),checked:radar.enabled,onChange:(enabled)=>change({enabled},false)})}
     ${toggleRow({id:'marker-radar-show-live',title:options.t('radar.show_live'),checked:radar.showLive,onChange:(showLive)=>change({showLive},false)})}
-    ${field({label:options.t('radar.profile'),htmlFor:'radar-profile',control:html`<hp-settings-select><select id="radar-profile" class="areasel" @change=${(event: Event) => change({
+    ${field({label:options.t('radar.profile'),help:help('marker.radar_profile_help',options.t('radar.profile')),htmlFor:'radar-profile',control:html`<hp-settings-select><select id="radar-profile" class="areasel" @change=${(event: Event) => change({
       profile: (event.target as HTMLSelectElement).value as RadarEditorDraft['profile'],
     })}>
       ${(['esphome_ld2450_v1', 'cartesian_v1', 'polar_v1', 'range_v1', 'zones_v1', 'presence_v1'] as const)
@@ -287,7 +288,7 @@ export function renderRadarSection(
           ${options.t(`radar.profile_${profile}` as I18nKey)}
         </option>`)}
     </select></hp-settings-select>`})}
-    ${field({label:options.t('radar.room'),htmlFor:'radar-room',control:html`<hp-settings-select><select id="radar-room" class="areasel" @change=${(event: Event) => change({
+    ${field({label:options.t('radar.room'),help:help('marker.radar_room_help',options.t('radar.room')),htmlFor:'radar-room',control:html`<hp-settings-select><select id="radar-room" class="areasel" @change=${(event: Event) => change({
       roomId: (event.target as HTMLSelectElement).value,
     })}>
       <option value="" ?selected=${!radar.roomId}>${options.t('radar.room_choose')}</option>
@@ -300,8 +301,8 @@ export function renderRadarSection(
       <div class="radartargetheading hpf-profile-target-heading">
         <strong>${options.t('radar.target', { n: index + 1 })}</strong>
         ${radar.profile === 'cartesian_v1' && radar.xEntities.length > 1
-          ? html`<button class="btn ghost danger" type="button" title=${options.t('btn.delete')}
-              @click=${() => removeTarget(index)}>${options.st('marker.radar_remove_target',{n:index+1})}</button>`
+          ? html`<span class="hpf-labelrow"><button class="btn ghost danger" type="button" title=${options.t('btn.delete')}
+              @click=${() => removeTarget(index)}>${options.st('marker.radar_remove_target',{n:index+1})}</button>${help('marker.radar_remove_target_help',options.st('marker.radar_remove_target',{n:index+1}))}</span>`
           : nothing}
       </div>
       ${field({label:options.t('radar.axis_x'),control:entitySelect(xEntity, candidates.numeric, (value) => setAxis('xEntities', index, value))})}

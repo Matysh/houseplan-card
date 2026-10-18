@@ -63,15 +63,20 @@ try{
   if(name==='climate')out.unavailable_stays_dash=(await dialog.locator('hp-device-preview .valtext').textContent()).trim()==='—';
   if(name==='vacuum')out.vacuum68and34=(await dialog.locator('hp-device-preview .valtext').textContent()).includes('68')&&(await dialog.locator('hp-device-preview .value-badge').textContent()).includes('34');
   if(name==='vacuum'){
-   await section('vacuum');out.vacuum_profile_has_approved_heading=await dialog.locator('[data-card=vacuum] h3').textContent()==='Пылесос';
+   await section('vacuum');out.vacuum_source_help_present=await dialog.locator('details.vacpicker > summary hp-help[instant]').count()===1;out.vacuum_live_help_present=await dialog.locator('#marker-vacuum-live').evaluate(el=>!!el.closest('.hpf-toggle').querySelector('hp-help[instant]'));out.vacuum_path_help_present=await dialog.locator('[data-help=vacuum-trail][instant]').count()===1;out.vacuum_profile_has_approved_heading=await dialog.locator('[data-card=vacuum] h3').textContent()==='Пылесос';
+   const picker=dialog.locator('details.vacpicker'),sourceHelp=picker.locator('summary hp-help');
+   await sourceHelp.locator('button.trigger').hover();await sourceHelp.locator('.tooltip').waitFor({state:'visible'});
+   out.vacuum_documentation_help_present=await dialog.locator('.vacbtns .hpf-labelrow hp-help[instant]').count()===1;out.vacuum_source_help_hover_keeps_picker_closed=!await picker.evaluate(el=>el.open);
+   await sourceHelp.locator('button.trigger').click();out.vacuum_source_help_click_keeps_picker_closed=!await picker.evaluate(el=>el.open);
+   await dialog.locator('[data-card=vacuum] h3').hover();
    const diagnostics=dialog.locator('.hpf-profile-diagnostics');out.vacuum_diagnostics_start_collapsed=!await diagnostics.locator('.vacdiag').isVisible();
    await diagnostics.locator('summary').click();out.vacuum_diagnostics_still_available=await diagnostics.locator('.vacdiag').isVisible()&&(await diagnostics.textContent()).includes('camera.demo_x50_map');await diagnostics.locator('summary').click();
    out.vacuum_path_uses_shared_menu=await dialog.locator('[data-card=vacuum] hp-settings-select:has(select)').first().locator('select').inputValue()==='always';
    await section('appearance');
   }
   if(name==='radar'){
-   await section('radar');out.radar_profile_has_approved_heading=await dialog.locator('[data-card=radar] h3').textContent()==='Радар';
-   out.radar_targets_keep_named_removal=await dialog.getByRole('button',{name:'Удалить слот цели 1',exact:true}).count()===1&&await dialog.getByRole('button',{name:'Удалить слот цели 2',exact:true}).count()===1;
+   await section('radar');out.radar_field_help_present=await dialog.locator('#radar-profile').evaluate(el=>!!el.closest('.hpf-field').querySelector('hp-help[instant]'))&&await dialog.locator('#radar-room').evaluate(el=>!!el.closest('.hpf-field').querySelector('hp-help[instant]'));out.radar_profile_has_approved_heading=await dialog.locator('[data-card=radar] h3').textContent()==='Радар';
+   out.radar_remove_target_help_present=await dialog.locator('.hpf-profile-target-heading hp-help[instant]').count()===2;out.radar_targets_keep_named_removal=await dialog.getByRole('button',{name:'Удалить слот цели 1',exact:true}).count()===1&&await dialog.getByRole('button',{name:'Удалить слот цели 2',exact:true}).count()===1;
    out.radar_profile_value_preserved=await dialog.locator('#radar-profile').inputValue()==='cartesian_v1';await section('appearance');
   }
   for(const width of [320,390,1280]){

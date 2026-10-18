@@ -1,5 +1,19 @@
 # Development and deployment
 
+Seven approved Device profile hints in four lazy locales add raw bytes: the
+current full build is3113735 B versus3109077 B (+4658 B). The ordinary unused
+gate refused only that metric, with no dead code. Per PROCESS §3/§8, record
+the reason in #947 and set only bundleBytes to this measured fact in the same
+product commit. The2000 B band, other metrics and all gzip/hard ceilings stay
+unchanged (View322935, editor287470, onboarding32296 B gzip). Final Linux
+validation still judges the exact published material.
+
+A visual comparison with the immutable Device v6 found missing profile help
+that layout-only checks could not detect. Ordinary unchanged-product checks
+reproduced missing source/live/path and radar profile/room help. Restore those
+shared instant help controls without changing write boundaries or source values;
+clicking the help inside the vacuum disclosure must not toggle the picker.
+
 The Device witness additionally selects a second external light through the
 real search UI, observes two friendly-name chips, and discards that draft before
 reopening the immutable-v6 visual fixture. This exercises the complex two-target

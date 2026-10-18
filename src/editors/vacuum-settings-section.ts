@@ -1,6 +1,7 @@
 /** Device settings presentation; vacuum writes retain their existing boundaries. */
 import {html,nothing,type TemplateResult} from 'lit';
 import type {I18nKey} from '../i18n';
+import type {SettingsI18nKey} from '../i18n/settings';
 import type {HouseplanEditorRuntime} from '../houseplan-editor-runtime';
 import {readVacTelemetry,vacTrailMode,vacRoomNameMatchCount,type VacSourceCandidate} from '../vacuum';
 import {subst} from '../logic';
@@ -11,6 +12,7 @@ import {settingsCopy} from './settings-copy';
 
 export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:NonNullable<HouseplanEditorRuntime['host']['_markerDialog']>):TemplateResult|typeof nothing {
     const {st}=settingsCopy(runtime.host);
+    const help=(key:SettingsI18nKey,label:string)=>html`<hp-help instant .text=${st(key)} .ariaLabel=${st('dialog.help_for',{name:label})}></hp-help>`;
     const dev = runtime.host._devices.find((x) => x.id === dlg.devId);
     if (!dev || !runtime.host._isVacDev(dev)) return nothing;
     const v = dev.marker?.vacuum || {};
@@ -100,7 +102,7 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
   - map_name</pre>
         </div>` : nothing}
         <details class="vacpicker" data-dev-id=${dev.id}>
-          <summary class="btn ghostbtn">${runtime.host._t('vac.choose_source')}</summary>
+          <summary class="hpf-labelrow"><span class="btn ghostbtn">${runtime.host._t('vac.choose_source')}</span><hp-help instant .text=${st('marker.vacuum_source_help')} .ariaLabel=${st('dialog.help_for',{name:runtime.host._t('vac.choose_source')})} @click=${(e:Event)=>{e.preventDefault();e.stopPropagation();}}></hp-help></summary>
           <div class="vacsource-list">
             <button type="button" class="vacsource ${!resolution.pinned ? 'on' : ''}"
               @click=${() => setVac({ source: null })}>
@@ -126,8 +128,8 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
           </div>
         </details>
         ${tele ? html`
-          ${toggleRow({id:'marker-vacuum-live',title:runtime.host._t('vac.live'),checked:v.live!==false,onChange:on=>setVac({live:on?null:false})})}
-          ${field({label:runtime.host._t('vac.trail'),control:html`<hp-settings-select><select class="areasel"
+          ${toggleRow({id:'marker-vacuum-live',title:runtime.host._t('vac.live'),help:help('marker.vacuum_live_help',runtime.host._t('vac.live')),checked:v.live!==false,onChange:on=>setVac({live:on?null:false})})}
+          ${field({label:runtime.host._t('vac.trail'),help:html`<hp-help instant data-help="vacuum-trail" .text=${st('marker.vacuum_trail_help')} .ariaLabel=${st('dialog.help_for',{name:runtime.host._t('vac.trail')})}></hp-help>`,control:html`<hp-settings-select><select class="areasel"
             @change=${(e: Event) => setVac({ trail_mode: (e.target as HTMLSelectElement).value, trail: null })}>
             ${(['never', 'cleaning', 'always'] as const).map((mv) => html`
               <option value=${mv} ?selected=${vacTrailMode(v) === mv}>${runtime.host._t(('vac.trail_' + mv) as I18nKey)}</option>`)}
@@ -138,8 +140,8 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
           ${canUseSource
             ? html`<button class="btn ghostbtn" ?disabled=${runtime.host._markerDialog?.busy} @click=${() => runtime._vacStartFit(dev)}>${runtime.host._t('vac.fit')}</button>`
             : nothing}
-          <a class="btn ghostbtn" href="https://github.com/Matysh/houseplan-card/blob/main/docs/VACUUM.md"
-            target="_blank" rel="noopener">${runtime.host._t('vac.documentation')}</a>
+          <span class="hpf-labelrow"><a class="btn ghostbtn" href="https://github.com/Matysh/houseplan-card/blob/main/docs/VACUUM.md"
+            target="_blank" rel="noopener">${runtime.host._t('vac.documentation')}</a>${help('marker.vacuum_documentation_help',runtime.host._t('vac.documentation'))}</span>
         </div>
         ${tele ? renderVacuumMapsSection(runtime,dev,resolution,st('marker.vacuum_maps_calibration')) : nothing}
         <details class="hpf-profile-diagnostics"><summary class="btn ghost">${st('marker.vacuum_diagnostics')}</summary>${diagnostics}</details>
