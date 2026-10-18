@@ -50,6 +50,10 @@ try{
    await section('light');out.fixed65=await dialog.locator('#marker-glow-brightness').inputValue()==='65';
    out.radius_filled_but_not_materialized=await dialog.locator('#marker-glow-radius').inputValue().then(v=>Number(v)>0)&&await page.evaluate(()=>window.__card._markerDialog.glowRadius==='');
    await section('actions');out.control_friendly_name=(await dialog.locator('.hpf-chip').allTextContents()).some(t=>t.includes('Потолочная лампа')&&!t.includes('light.living_ceiling'));
+   await dialog.locator('#marker-controls-filter').fill('Торшер');await tick();
+   await dialog.getByRole('option',{name:/Торшер/}).first().click();await tick();
+   const linkedNames=await dialog.locator('.hpf-field:has(#marker-controls-filter) .hpf-chips .hpf-chip').allTextContents();
+   out.two_external_controls_use_device_names=linkedNames.length===2&&linkedNames.some(t=>t.includes('Потолочная лампа'))&&linkedNames.some(t=>t.includes('Торшер'))&&linkedNames.every(t=>!/light\.|marker:|device:/.test(t));
    out.action_guidance_uses_shared_note=await dialog.locator('#marker-toggle-hint.hpf-note').count()===1;
    out.confirmation_help_is_contextual=await dialog.locator('#marker-tap-confirm').evaluate(el=>!!el.closest('.hpf-toggle').querySelector('hp-help[instant]')&&!el.closest('.hpf-toggle').querySelector('.hpf-toggle-caption'));
    await section('details');out.model_link_share_stacked_divider=await dialog.locator('#marker-link').evaluate(el=>getComputedStyle(el.closest('.hpf-field')).borderTopWidth==='1px');

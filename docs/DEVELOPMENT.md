@@ -1,5 +1,11 @@
 # Development and deployment
 
+The Device witness additionally selects a second external light through the
+real search UI, observes two friendly-name chips, and discards that draft before
+reopening the immutable-v6 visual fixture. This exercises the complex two-target
+case without changing the agreed one-chip reference dataset or before/after
+snapshot values. The final ordinary Cancel/no-command checks cover that addition.
+
 The first post-r1 normal push was correctly refused by the unit gate: replacing
 Room's generic fill.none consumer left that base key unused. Remove it from all
 four base locales; the new lazy room.fill_none remains the sole label owner.
