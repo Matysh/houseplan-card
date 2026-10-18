@@ -1,5 +1,12 @@
 # Development and deployment
 
+Action-plus-help wrappers must not inherit form-label typography. Keep the
+real vacuum summary button; position its separate help beside the border,
+and use the shared hpf-button-help row for actual links/buttons. A label-row
+span styled as a button shrank the control and made Documentation bold/underlined
+in native captures. The ordinary Device smoke checks real summary ownership,
+context help and no unintended picker toggle; native viewport checks follow.
+
 Seven approved Device profile hints in four lazy locales add raw bytes: the
 current full build is3113735 B versus3109077 B (+4658 B). The ordinary unused
 gate refused only that metric, with no dead code. Per PROCESS §3/§8, record

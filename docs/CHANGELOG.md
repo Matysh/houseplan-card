@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep normal device profile button sizing and typography beside contextual help. (#947)
+
 - Restore agreed vacuum and radar field help, including immediate vacuum saves and the radar room. (#947)
 
 - Room settings use the approved “No fill” label; all five own fill-mode

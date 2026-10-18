@@ -19,6 +19,9 @@ export const settingsDialogCss = `
   .hpf-settings-pane .hpf-sub { min-height:0; }
   .hpf-settings-pane .hpf-sub h4 { font-size:14px; }
   .hpf-settings-pane .hpf-body > .hpf-sub + * { margin-top:12px; padding-top:0; border-top:0; }
+  .hpf-button-help { display:inline-flex; align-items:center; gap:4px; }
+  .hpf-settings-form .vacpicker > summary { position:relative; margin-inline-end:24px; }
+  .hpf-settings-form .vacpicker > summary > hp-help { position:absolute; inset-inline-start:calc(100% + 4px); top:50%; transform:translateY(-50%); }
   .hpf-settings-pane .hpf-labelrow,.hpf-settings-pane .hpf-field > .hpf-label { min-height:20px; color:var(--primary-text-color); font-size:13px; font-weight:600; }
   .hpf-settings-form .hpf-settings-pane .hpf-grid-stacked { grid-template-columns:minmax(0,1fr); gap:0; }
   .hpf-settings-form .hpf-settings-pane .hpf-grid-stacked > .hpf-field + .hpf-field { margin-top:18px; padding-top:18px; border-top:1px solid var(--hpf-line); }

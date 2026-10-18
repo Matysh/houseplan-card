@@ -301,7 +301,7 @@ export function renderRadarSection(
       <div class="radartargetheading hpf-profile-target-heading">
         <strong>${options.t('radar.target', { n: index + 1 })}</strong>
         ${radar.profile === 'cartesian_v1' && radar.xEntities.length > 1
-          ? html`<span class="hpf-labelrow"><button class="btn ghost danger" type="button" title=${options.t('btn.delete')}
+          ? html`<span class="hpf-button-help"><button class="btn ghost danger" type="button" title=${options.t('btn.delete')}
               @click=${() => removeTarget(index)}>${options.st('marker.radar_remove_target',{n:index+1})}</button>${help('marker.radar_remove_target_help',options.st('marker.radar_remove_target',{n:index+1}))}</span>`
           : nothing}
       </div>

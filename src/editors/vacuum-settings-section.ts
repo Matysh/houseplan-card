@@ -102,7 +102,7 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
   - map_name</pre>
         </div>` : nothing}
         <details class="vacpicker" data-dev-id=${dev.id}>
-          <summary class="hpf-labelrow"><span class="btn ghostbtn">${runtime.host._t('vac.choose_source')}</span><hp-help instant .text=${st('marker.vacuum_source_help')} .ariaLabel=${st('dialog.help_for',{name:runtime.host._t('vac.choose_source')})} @click=${(e:Event)=>{e.preventDefault();e.stopPropagation();}}></hp-help></summary>
+          <summary class="btn ghostbtn">${runtime.host._t('vac.choose_source')}<hp-help instant .text=${st('marker.vacuum_source_help')} .ariaLabel=${st('dialog.help_for',{name:runtime.host._t('vac.choose_source')})} @click=${(e:Event)=>{e.preventDefault();e.stopPropagation();}}></hp-help></summary>
           <div class="vacsource-list">
             <button type="button" class="vacsource ${!resolution.pinned ? 'on' : ''}"
               @click=${() => setVac({ source: null })}>
@@ -140,7 +140,7 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
           ${canUseSource
             ? html`<button class="btn ghostbtn" ?disabled=${runtime.host._markerDialog?.busy} @click=${() => runtime._vacStartFit(dev)}>${runtime.host._t('vac.fit')}</button>`
             : nothing}
-          <span class="hpf-labelrow"><a class="btn ghostbtn" href="https://github.com/Matysh/houseplan-card/blob/main/docs/VACUUM.md"
+          <span class="hpf-button-help"><a class="btn ghostbtn" href="https://github.com/Matysh/houseplan-card/blob/main/docs/VACUUM.md"
             target="_blank" rel="noopener">${runtime.host._t('vac.documentation')}</a>${help('marker.vacuum_documentation_help',runtime.host._t('vac.documentation'))}</span>
         </div>
         ${tele ? renderVacuumMapsSection(runtime,dev,resolution,st('marker.vacuum_maps_calibration')) : nothing}
