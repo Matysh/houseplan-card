@@ -113,6 +113,9 @@ export const settingsDialogCss = `
   .hpf-settings-single { grid-template-columns:minmax(0,1fr); }
   .hpf-settings-single .hpf-settings-content { border:0; }
   .hpf-settings-single .hpf-card + .hpf-card { margin-top:24px; }
+  hp-dialog[data-kind=room][settings-layout] .hpf-grid { grid-template-columns:minmax(0,1fr); }
+  .hpf-settings-form .cardpreview { border:0; width:100%; margin:0; color:var(--hpf-accent); }
+  .hpf-settings-form .cardpreview .cpmeta > span { display:inline-flex; align-items:center; gap:.2em; white-space:nowrap; }
   .hpf-sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
   .hpf-settings-form select { transition:background 160ms ease,border-color 160ms ease; }
   @supports (appearance:base-select) {

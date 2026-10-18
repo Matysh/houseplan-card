@@ -94,8 +94,8 @@ const out = await page.evaluate(async () => {
       c._setMode('plan'); await upd();
       c._openRoomEdit(c._curSpaceCfg.rooms.find((r) => r.id === roomId)); await upd();
       input(q('room', '#room-name'), 'Parity room'); await upd();
-      q('room', '#room-fill-inherit').click(); await upd();
-      radio('room', 'rfill', 'temp'); await upd();
+      const fill = q('room', 'select[name="rfill"]');
+      fill.value = 'temp'; fill.dispatchEvent(new Event('change', { bubbles: true })); await upd();
       input(q('room', '#room-temp-min'), '19'); await upd();
       input(q('room', '#room-name-scale'), '150'); await upd();
       await saveViaUi('room');

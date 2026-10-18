@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 946,
+  "baseStable": "v1.81.0",
+  "category": "major",
+  "rationale": "Reorganizes Room settings into a compact shared form with one inherited fill selector and independently scaled, explicitly synthetic previews.",
+  "summary": {
+    "ru": "Настройки комнаты: единая компактная форма, понятное наследование заливки и независимые размеры названия и показателей.",
+    "en": "Room settings gain a compact form, one inherited fill menu and independent name and metric sizes."
+  }
+}

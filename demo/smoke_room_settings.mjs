@@ -78,8 +78,8 @@ const res = await page.evaluate(async () => {
     === JSON.stringify(['fill', 'sources', 'sizes'])
     && groups.every((g) => !!g.querySelector('.hpf-head h3')?.textContent.trim());
   // #600 (Q4): «Как у пространства» — строка-тумблер, а не радио в списке.
-  out.createHasInherit = sr().querySelector('hp-dialog #room-fill-inherit')?.checked === true
-    && !sr().querySelector('hp-dialog input[name="rfill"]');
+  out.createHasInherit = sr().querySelector('hp-dialog select[name="rfill"]')?.value === ''
+    && !sr().querySelector('hp-dialog #room-fill-inherit');
   // AC6: у каждой группы есть «?» с доступным именем — пояснения не исчезли, а уехали.
   // #600 §6.1: у Basics «?» стоит у поля зоны, а не у заголовка карточки.
   const helps = [...sr().querySelectorAll('hp-dialog .hpf-card .hpf-head hp-help'),
@@ -126,7 +126,7 @@ const res = await page.evaluate(async () => {
   };
   const colorRow = () => !!sr().querySelector('hp-dialog hp-color-opacity');
   // #600 (Q4): возврат к пространству — выключить тумблер, а не выбрать радио.
-  const inheritToggle = () => sr().querySelector('hp-dialog #room-fill-inherit');
+  const fillSelect = () => sr().querySelector('hp-dialog select[name="rfill"]');
   const cfgRoom = () => c._curSpaceCfg.rooms.find((r) => r.id === editedId);
   // own colour: mode + colour stored, plan paints B
   c._openRoomEdit(cfgRoom()); await c.updateComplete;
@@ -140,7 +140,7 @@ const res = await page.evaluate(async () => {
   // AC5: back to "as the space" in the open dialog — the frame resolver answers A at once
   c._openRoomEdit(cfgRoom()); await c.updateComplete;
   out.reopenedWithOwnColour = c._roomFill === 'custom' && c._roomCustomFill?.c === B.c && colorRow();
-  inheritToggle().checked = true; inheritToggle().dispatchEvent(new Event('change', { bubbles: true }));
+  fillSelect().value = ''; fillSelect().dispatchEvent(new Event('change', { bubbles: true }));
   await c.updateComplete;
   out.inheritClearsDraft = c._roomFill === '' && c._roomCustomFill === null && !colorRow();
   out.inheritDraftResolvesSpace = resolves(editedId, A);
@@ -215,19 +215,12 @@ const res = await page.evaluate(async () => {
   areaSelect.dispatchEvent(new Event('change', { bubbles: true }));
   await c.updateComplete;
   out.areaWritesOnlyItsOwnKey = JSON.stringify(changedFields(before, draft())) === JSON.stringify(['area']);
-  // Режим заливки (#600 Q4): тумблер выключается — сегмент стартует с режима
-  // пространства; выбор «Температура» в сегменте пишет в _roomFill и, уходя
-  // с «Свой цвет», обнуляет цвет — это его давний контракт (#581), а не сосед.
+  // #946: one select includes inheritance and five own modes.
   before = draft();
-  inheritToggle().checked = false; inheritToggle().dispatchEvent(new Event('change', { bubbles: true }));
-  await c.updateComplete;
-  // пространство выше переведено в «Свой цвет» (A) — сегмент стартует с него
-  out.fillSegmentStartsAtSpaceMode = c._roomFill === 'custom'
-    && !!sr().querySelector('hp-dialog input[name="rfill"]:checked');
-  const tempRadio = [...sr().querySelectorAll('hp-dialog input[name="rfill"]')].find((r) => r.value === 'temp');
-  out.fillOptionAvailable = !!tempRadio;
-  tempRadio.checked = true;
-  tempRadio.dispatchEvent(new Event('change', { bubbles: true }));
+  out.fillSelectKeepsInheritance = c._roomFill === '' && fillSelect().value === '';
+  out.fillOptionAvailable = [...fillSelect().options].some(o => o.value === 'temp');
+  fillSelect().value = 'temp';
+  fillSelect().dispatchEvent(new Event('change', { bubbles: true }));
   await c.updateComplete;
   out.fillWritesOnlyItsOwnKey = JSON.stringify(changedFields(before, draft())) === JSON.stringify(['fill'])
     && c._roomFill === 'temp';
