@@ -10,12 +10,16 @@ import {assertFreshDemoBundle} from './bundle-freshness.mjs';
 import {checkAll,watchPage,finish} from './serve.mjs';
 import {fileURLToPath} from 'node:url';
 
-const out={};
+const out={},demoFont=process.argv.includes('--demo-font');
+const lineHeight=process.argv.find(arg=>arg.startsWith('--line-height='))?.slice(14);
+if(lineHeight&&!/^\d+(?:\.\d+)?$/.test(lineHeight))throw Error('Invalid line height');
 for(const language of ['ru','en','de','fr']){
  const f=await launchHaDialogFixture({viewport:{width:1280,height:900},extraModules:['16213']}),p=f.page;
  watchPage(p);
  try{
   await p.goto(f.url+'/product.html');await applyHaDialogTypography(p);
+  if(demoFont)await p.addStyleTag({content:"html,body{font-family:'Segoe UI',Roboto,Arial,sans-serif}"});
+  if(lineHeight)await p.addStyleTag({content:`html,body{line-height:${lineHeight}}`});
   await p.waitForFunction(()=>window.__card?._booting===false&&window.__card?._devices?.length>0);
   await assertFreshDemoBundle(p,fileURLToPath(new URL('..',import.meta.url)));
   await p.evaluate(ensureHarnessEditorRuntime);await installHpTestOnPage(p);

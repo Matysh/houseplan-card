@@ -3511,11 +3511,11 @@ rule removes the extra18px, and the matrix measures the visible gap in every
 consumer rather than checking a CSS property name.
 
 The four dialog roots carry their resolved interface language. English Save
-captions keep their natural baseline; Russian, German and French use the optical
+captions use a smaller adjustment; Russian, German and French use the optical
 adjustment. `smoke_settings_button_alignment_955` verifies actual letter ink and
 nested SVG centres for all four forms at1280/390px in all four languages (32
 combinations). Before the English exception its visible letters sat1.5px high;
-afterwards their offset is0.5px, Russian0px and German/French-0.5px. The shared
+afterwards the absolute offset is at most0.5px with HA Roboto. The shared
 profile body actions also retain44px targets, checked across all seven cases.
 
 Paired screenshots exposed a second avoidable navigation line: the extra1px
@@ -3523,3 +3523,11 @@ button border left117px for Space's active Appearance caption, while the
 approved borderless button had119px. The ordinary native probe was red with
 two lines at1280px. Matching the reference's borderless navigation restores one
 line without forced nowrap; the full geometry matrix checks this visible result.
+
+An ordinary inherited-font input exposed English Save1.5px low in Segoe with
+body line-height2.1. The smaller English adjustment also centres that neighbour;
+the focused guard supports `--demo-font --line-height=2.1`, changing only host
+typography, never injecting a fix into the component. The font stack falls back
+to Roboto when Segoe is absent; the actual Segoe neighbour was measured on
+Windows. The existing optical-lettering registry witness stays static checked
+only; no development mutation execution.
