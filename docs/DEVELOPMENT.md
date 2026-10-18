@@ -36,6 +36,15 @@ The first reset-wait adapter still produced "Resulting promise was garbage
 collected" in CI at setMode; the component-reset step is now absent. Keyboard,
 44px target, translation, inheritance and popup assertions remain unchanged.
 
+Owner arbitration on #947 (18 October 2026) requires the whole Device dialog's
+documentation, not only the radar subsection. Both USER-GUIDE languages now
+describe the same five shared tabs, conditional Vacuum/Radar sections, actual
+picker/preview, climate and charge/signal field locations, named control chips,
+metadata/files and footer/save boundaries. RADAR.md also documents the section
+selector, operational pause versus removal and compatibility entry. Obsolete
+Additional actions/manual-declaration instructions have been removed from the
+current guides; immutable mocks and historical review findings remain intact.
+
 The complete profile gate ran all selected browser smokes successfully; its
 only failure was the now-unused base dictionary key `vac.section`, replaced
 by the grouped v6 heading. Remove that key from all four locales; the nine

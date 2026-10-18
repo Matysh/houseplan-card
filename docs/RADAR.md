@@ -46,6 +46,9 @@ defines an exact pair rule such as LD2450's `(0,0)`. Empty strings,
 2. For automatically recognized LD2450 hardware with target1 X/Y sources, open
    the **Radar** tab. There is no manual declaration of a new radar. Existing
    manual profiles remain available through **Details → Open previous radar settings**.
+   The five shared tabs remain Basics, Display on plan, Actions and links,
+   Light and glow, and Details; Radar is an additional profile section. On a
+   narrow screen use the section selector instead of the side menu.
 3. Enable the radar, choose the room and verify every exact source. For generic
    profiles, specify units and coordinate conventions explicitly.
 4. Use **Check live data** before calibration. Correct unavailable, stale,
@@ -57,6 +60,13 @@ defines an exact pair rule such as LD2450's `(0,0)`. Empty strings,
    the solved transform.
 7. Apply the setup, then use the ordinary marker **Save**. Until that final Save,
    Cancel, Escape, page hide or a config revision conflict discards the draft.
+
+The **Use this presence radar** switch pauses an existing radar without erasing
+its configuration. **Remove radar settings** is a separate draft operation;
+ordinary Save confirms it and never removes the device marker. Previous manual
+profiles keep all six supported source adapters above. Their compatibility
+entry is available only while a saved profile exists; it does not let an
+unrecognized device declare a new radar.
 
 The physical mount is not the decorative icon position. Moving the icon later
 does not move or recalibrate the radar. Changing the radar source/profile,

@@ -1319,24 +1319,44 @@ reports strips passing through walls and changes nothing in them.
 
 ### Marker basics
 
-The dialog has five cards: **Basics**, a compact tap-action card without a
-repeated heading, **Light and glow**, **Appearance** and **Details**. **Hide**
-and **Delete** sit on the left of the
-footer, **Cancel** and **Save** on the right; Save is enabled only when
-something changed. Binding is a **Virtual device / Pick from the HA list**
-segment; in the second case a picker button opens a panel inside the card with
-search, the **Show entities** checkbox and the device list — until a binding is
-chosen, Save stays disabled and the reason is written under the field.
-**Ask for confirmation** is shown only for actions that do something (toggle or
-run). The light-source role and the glow mode are segments; with **Never** the
-whole glow block is dimmed and explains why. The glow radius is a field with a
-unit — empty means the general radius, and the hint names it; a value that is
-not a positive number is saved as the general radius too, as before. The dialog shows
-binding provenance, exact next tap result, skipped targets and a live
-presentation preview in a tinted **Display preview** block. Icon size and
-rotation are two sliders with compact numbers. **Additional actions** are near
-the end of **Details**; the device-temperature switch follows them. A saved
-missing source is shown as missing rather than silently replaced.
+Every device has the same five sections: **Basics**, **Display on plan**,
+**Actions and links**, **Light and glow** and **Details**. A vacuum or an
+automatically recognized radar has an additional section below a divider.
+LED strips have no empty extra tab: choose their representation in **Display
+on plan** and edit the strip shape with the existing plan tool. A section
+selector replaces the side menu on narrow screens. All four settings dialogs
+follow the current Home Assistant theme, including theme changes while open.
+
+**Basics** contains the name, Home Assistant binding, room and any applicable
+climate-source options. Binding is a **Virtual device / Pick from the HA list**
+segment. The picker searches devices and, with **Show entities**, individual
+entities. Its selected binding occupies one row; search help belongs to the
+picker, while the binding-mode hint explains what the two modes mean. A required
+missing binding disables Save and shows the reason below the field.
+
+**Display on plan** contains the existing searchable MDI picker, LED
+representation, icon/value and badge sources, adjacent battery/Zigbee hide
+switches, size, rotation and the actual device preview. Clearing the picker
+restores the automatic icon. The preview uses the same presentation as the plan
+at a standard size: size changes apply to the saved plan marker, while rotation
+updates the preview icon and leaves values and badges upright. Saved missing
+sources remain visible as missing rather than being silently replaced.
+
+**Actions and links** contains tap actions, their exact target/result, optional
+confirmation and **Controls other light sources**. Linked sources appear as
+chips with their device names. **Ask for confirmation** appears only for toggle
+or run actions. **Light and glow** contains the source role, leading entity,
+glow mode, colour, brightness and radius. Auto reports its resolved result;
+Never dims the glow controls and explains why. **Details** contains model,
+manufacturer/product link, description and attachments. Each attached file has
+its own remove action; removing a chip is part of the draft.
+
+The footer keeps **Hide / Delete** on the left and **Cancel / Save** on the
+right. Hide is a draft change; Delete confirms before removing the marker, not
+the Home Assistant device. Switching sections preserves the draft. Save status
+shows unsaved changes; a failed save keeps the form and draft for a retry.
+Vacuum live-source/path controls, map/calibration workflows and radar setup keep
+their existing separate confirmation and save boundaries.
 
 | Field | Purpose |
 |---|---|
@@ -1344,13 +1364,13 @@ missing source is shown as missing rather than silently replaced.
 | Binding | Virtual device or an HA picker with search and **Show entities**; Save stays disabled until a required binding is chosen |
 | Room | Automatic HA area or an explicit room, including one with no HA area |
 | Tap action | House Plan card, HA more-info, Toggle, Run or **Do nothing**, with the exact target/result shown below |
-| Controls other light sources | Other placed `light.*`/`switch.*` markers or forced sources; the marker's own entities are not listed |
+| Controls other light sources | **Actions and links**: named chips for other placed `light.*`/`switch.*` markers or forced sources; the marker's own entities are not listed |
 | Is a light source | **Auto / Always / Never**; Auto shows its resolved result, Always may choose a leading entity, Never disables only the marker's own source |
 | Glow colour and brightness | From source, fixed colour, or fixed colour and brightness; manual brightness is 1–100% |
-| Glow radius | Empty means the current General setting; valid stored range is 0.1–100 m |
+| Glow radius | Shows the current General value until overridden; leaving that displayed value untouched does not save a local override. Empty or non-positive input uses the General radius; valid stored range is 0.1–100 m |
 | Icon and display | Automatic or manual `mdi:*`; icon/state/activity, value/state, static icon or value/static icon |
-| Icon size and rotation | ×0.5–×3 and a 5° angle step |
-| Device temperature | After **Additional actions**; includes climate `current_temperature` in the marker and its room average |
+| Icon size and rotation | ×0.5–×3 and a 5° angle step; the preview stays at standard size and rotates only the icon |
+| Device temperature | **Basics**: includes climate `current_temperature` in the marker and its room average |
 | Model, link, description and instructions | Informational card data and multiple PDF/PNG/JPG/WebP/TXT attachments |
 
 The footer keeps **Hide** and **Delete** on the left and **Cancel**/**Save** on
@@ -1434,13 +1454,18 @@ work; unverified ones safely stay out of the plan until registry access returns.
 
 ### Presence radars
 
-For a recognized presence radar, **Additional actions** contains the enabled
-**This is a presence radar** switch and its settings directly below it. Verify
-the exact Home Assistant sources and select the room whose contour must contain
-the observations. Unknown/custom real devices can enable the same switch and
-choose an explicit data profile. Turning the switch off removes the radar setup
-on Save; turning it back on before Save restores the current draft. The editor
-never guesses coordinate units, axis directions or a bearing from entity names.
+An automatically recognized LD2450 with target1 X/Y sources has a **Radar**
+tab. Verify its exact sources and room, then enable **Use this presence radar**.
+Disabling this operational switch retains the setup. The separate remove
+action removes radar settings only after the ordinary device Save; it does not
+delete the marker. New radars cannot be declared manually.
+
+Previously saved manual profiles continue to work. If the current binding is
+not recognized as a radar, **Details → Open previous radar settings** opens the
+existing profile for correction or removal. Explicit removal also removes this
+compatibility entry. Unknown future versions stay preserved and inactive until
+explicitly removed. The editor never guesses coordinate units, axis directions
+or a bearing from entity names.
 
 **Configure on plan** records the physical sensor position and direction,
 independently of the decorative marker. Coordinate profiles can then use two
@@ -1717,7 +1742,7 @@ information appears above it.
 red indicators (below 20 % or a low binary sensor) and hides the green, yellow
 and grey ones, **None** hides them all. The choice applies installation-wide,
 including static space cards and the editor preview. In an individual device's
-**Appearance** settings, **Hide battery status on plan** suppresses only that
+**Display on plan** section, **Hide battery status on plan** suppresses only that
 device in every mode; it is off by default and has no effect on the ordinary
 value badge. Battery icons use a soft size-aware shadow to stay legible over
 light and mixed plan backgrounds. Full configuration export/import preserves
