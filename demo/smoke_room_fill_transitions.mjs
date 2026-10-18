@@ -140,15 +140,19 @@ measured.openSettings = await run(() => window.__fillWitness.measure(
   () => window.__hpTest.openSpaceDialog('edit', 'f1')));
 
 // AC1 (2): preview alpha 18 % in the dialog, then cancel it: styled → overlay.
+await page.locator('houseplan-card hp-dialog[data-kind=space] [data-section-target=appearance]').click();
 await run(async () => {
   const dialog = window.__card.renderRoot.querySelector('[data-hp="dialog"][data-kind="space"]');
   // the custom-fill row: its picker holds the default fill colour at alpha 0
   const field = [...dialog.querySelectorAll('.hpf-colorfield')]
     .find((node) => node.querySelector('hp-color-opacity')?.color?.toLowerCase() === '#607d8b');
   if (!field) throw new Error('#746: the space dialog shows no custom-fill row');
-  await window.__hpTest.input(field.querySelector('input[type="number"]'), '18');
-  await window.__fillWitness.settle();
+  field.querySelector('hp-color-opacity').shadowRoot.querySelector('.trigger').click();
+  await window.__hpTest.settled();
 });
+const alpha=page.locator('houseplan-card hp-dialog[data-kind=space] hp-color-opacity input[type=number]').filter({visible:true});
+await alpha.fill('18');await alpha.press('Tab');await page.keyboard.press('Escape');
+await run(()=>window.__fillWitness.settle());
 const preview = await run(() => window.__fillWitness.paint());
 measured.cancelSettings = await run(() => window.__fillWitness.measure(async () => {
   const T = window.__hpTest;

@@ -192,11 +192,16 @@ const res = await page.evaluate(async () => {
   hostContourOpenings();
   await upd();
 
-  sp().settings = { ...(sp().settings || {}), hide_openings: true, show_borders: true };
+  sp().settings = { ...(sp().settings || {}), hide_openings: true, show_borders: false };
   c._setMode('view');
   await upd();
+  const hiddenSymbols = sr().querySelectorAll('[data-hp="opening"]').length === 0;
+  // #945 hides boundaries and symbols together. Restoring boundaries must
+  // restore the original masonry cut, not silently fill the physical opening.
+  sp().settings.show_borders = true;
+  await upd();
   const cutD = sr().querySelector('[data-hp="wall"]')?.getAttribute('d') || '';
-  out.hideKeepsCut = sr().querySelectorAll('[data-hp="opening"]').length === 0
+  out.hideKeepsCut = hiddenSymbols && sr().querySelectorAll('[data-hp="opening"]').length > 0
     && (cutD.match(/\bM\b/g) || []).length >= 2;
 
   c._setMode('plan');

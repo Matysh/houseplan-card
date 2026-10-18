@@ -3156,3 +3156,18 @@ cleanup. Pre-push/golden wrappers restore committed D files on exit: a restored
 dist manifest is never a measurement of current source; use fresh bundle:sync.
 Golden matrix78 keeps both hidden-opening View scenes aligned with the coupled
 borders/openings choice. All geometry/pixel oracles and thresholds stay intact.
+
+The final #945 full CI exposed six older browser witnesses outside the selected
+smokes. Their adapters now use the coupled boundary/opening visibility policy:
+tunnels remain painted with hidden boundaries; masonry cuts are checked again
+after restoring visible boundaries; a legacy hide_openings flag alone leaves
+the visible isometric structure and its physical cuts intact. Styling-hook
+fixtures explicitly enable boundaries before checking opening selectors.
+The fill-transition witness edits alpha in the actual picker, retaining the
+same deterministic transition sampling and tolerance. Signal visibility uses
+the approved three-option select with real keyboard input. Its synthetic
+touch context now verifies an actual360px CSS viewport (the old mobile context
+expanded the desktop demo to980px and never exercised the narrow section menu).
+Popup target geometry is measured after its opening animation with0.01px
+floating-point tolerance around44px. This is a test-only repair: no product A,
+golden baseline, pixel threshold, physical geometry oracle or budget changed.

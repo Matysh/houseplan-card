@@ -117,6 +117,7 @@ const res = await page.evaluate(async () => {
   disp.show_names = wasNames; await redraw();
 
   // ============ 4. проёмы ============
+  disp.show_borders = true; // #945: visible symbols require visible boundaries.
   c._curSpaceCfg.openings = [
     { id: 'op_d', type: 'door', x: 0.55, y: 0.3, angle: 90, length: 0.09 },
     { id: 'op_w', type: 'window', x: 0.3, y: 0.14, angle: 0, length: 0.12 },

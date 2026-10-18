@@ -263,10 +263,10 @@ const out = await page.evaluate(async () => {
   original._cfgEpoch++;
   original.requestUpdate();
   await original.updateComplete;
-  result.hideOpeningsKeepsStructure = !!root(original).querySelector('[data-hp="iso-walls"]')
-    && !root(original).querySelector('[data-hp="iso-openings"]')
+  // #945: a legacy hide_openings override no longer defeats visible borders.
+  result.legacyOpeningFlagKeepsVisibleStructure = !!root(original).querySelector('[data-hp="iso-walls"]')
+    && !!root(original).querySelector('[data-hp="iso-openings"]')
     && !root(original).querySelector('[data-hp="opening"]')
-    && !root(original).querySelector('.iso-contact-shadow, .iso-leaf-shadow')
     && !!root(original).querySelector('.oplock[data-hp-iso-raised="true"]')
     && root(original).querySelectorAll('.glowlayer [data-glow-source]').length >= 2
     && JSON.stringify([...root(original).querySelectorAll('.iso-wall-top')]
@@ -306,7 +306,7 @@ const out = await page.evaluate(async () => {
     && root(original).querySelector('.stage')?.getAttribute('data-hp-iso-stage') === '4'
     && root(original).querySelector('.plan-svg')?.getAttribute('data-hp-live-viewbox') === 'camera'
     && !!noBordersFloor && !noBordersFloor.hasAttribute('transform')
-    && root(original).querySelectorAll('[data-hp="opening"]').length === 3
+    && root(original).querySelectorAll('[data-hp="opening"]').length === 0
     && [noBordersDevice, noBordersRoom, noBordersLock].every((node) => node
       && !node.hasAttribute('data-hp-iso-raised'));
   result.noBordersHasNoRaisedOrVolumeLayers = !root(original).querySelector('[data-hp="iso-walls"]')

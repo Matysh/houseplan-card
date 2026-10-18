@@ -100,6 +100,7 @@ const result = await page.evaluate(async () => {
     && !!(tunnelGroup.compareDocumentPosition(wallGroup) & Node.DOCUMENT_POSITION_FOLLOWING);
 
   sp.settings.hide_openings = true;
+  sp.settings.show_borders = false; // #945: one visibility policy, including symbols.
   await update();
   out.hideSymbolKeepsTunnel = root().querySelectorAll('[data-hp="opening"]').length === 0
     && tunnels('data').length === 2 && tunnels('glow-base').length === 0;
@@ -135,7 +136,7 @@ const result = await page.evaluate(async () => {
   sp.walls = atomicSegments.map(([x0, x1]) => wall([x0, 0.2], [x1, 0.2], 15));
   sp.openings = [{ id: 'atomic-door', type: 'door', x: 0.5, y: 0.2, angle: 0, length: 0.6 }];
   sp.settings.hide_openings = true;
-  sp.settings.show_borders = true;
+  sp.settings.show_borders = false;
   await update(); await settleMode();
   const sameDepth = byId('atomic-door', 'data');
   out.equalAtomicPiecesAreOneSurface = sameDepth?.tagName.toLowerCase() === 'path'

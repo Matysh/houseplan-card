@@ -6,8 +6,12 @@ const results = {};
 for (const width of [360, 1280]) for (const language of ['ru', 'en']) for (const dark of [false, true]) {
   const prefix = `${width}-${language}-${dark ? 'dark' : 'light'}`;
   const { page, browser } = await launch({ width, height: 900 }, 1, [],
-    width === 360 ? { hasTouch: true, isMobile: true } : {});
+    width === 360 ? { hasTouch: true } : {});
   try {
+    // The synthetic demo is an overflowing desktop document, unlike the HA
+    // host. Keep touch input but require the actual360px CSS viewport rather
+    // than Chromium mobile's expanded980px layout of that demo document.
+    results[`${prefix}-realViewport`] = await page.evaluate(width=>innerWidth===width,width);
     await page.emulateMedia({ colorScheme: dark ? 'dark' : 'light' });
     await page.evaluate(async ({ language, dark }) => {
       const card = window.__card;
@@ -22,7 +26,7 @@ for (const width of [360, 1280]) for (const language of ['ru', 'en']) for (const
       // The same mobile menu is the public entry, not a private opening method.
       let button = card.shadowRoot.querySelector('[data-hp="settings"]');
       if (!button || !button.getBoundingClientRect().width) {
-        card.shadowRoot.querySelector('[data-hp="header-menu-toggle"]').click();
+        card.shadowRoot.querySelector('[data-hp="header-menu"]').click();
         await window.__hpTest.settled();
         button = card.shadowRoot.querySelector('[data-hp="header-menu-item"][data-id="settings"]');
       }
@@ -54,18 +58,28 @@ for (const width of [360, 1280]) for (const language of ['ru', 'en']) for (const
       await window.__hpTest.close(document.querySelector('houseplan-card').shadowRoot.querySelector('hp-dialog[data-kind="settings"]'), { via: 'cancel' });
       await window.__hpTest.openSpaceDialog('edit', 'f1');
     });
-    const radios = page.locator('houseplan-card hp-dialog[data-kind="space"] input[name$="-show-lqi"]');
-    await radios.first().scrollIntoViewIfNeeded();
-    await radios.first().focus();
-    await page.keyboard.press('ArrowRight');
-    results[`${prefix}-radioKeyboard`] = await radios.nth(1).isChecked();
-    await page.keyboard.press('ArrowLeft');
-    results[`${prefix}-radioInheritRestored`] = await radios.first().isChecked();
-    results[`${prefix}-localChoicesFit`] = await radios.evaluateAll(inputs => inputs.length === 3 && inputs.every(input => {
-      const label = input.closest('label'), box = label.getBoundingClientRect();
-      return box.left >= 0 && box.right <= innerWidth + 1 && box.height >= 44;
+    const space = page.locator('houseplan-card hp-dialog[data-kind="space"]');
+    if(width===360){
+      const nav=space.locator('.hpf-settings-mobile hp-settings-select');
+      const label=await nav.locator('select option[value=room-cards]').textContent();
+      await nav.locator('button').first().click();await nav.getByRole('option',{name:label.trim(),exact:true}).click();
+    }else await space.locator('[data-section-target=room-cards]').click();
+    const native = space.locator('select[name$="-show-lqi"]');
+    const select = space.locator('hp-settings-select:has(select[name$="-show-lqi"])');
+    const button = select.locator('button').first();await button.focus();
+    await page.keyboard.press('ArrowDown');await page.keyboard.press('Home');
+    await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');
+    results[`${prefix}-selectKeyboard`] = await native.inputValue()==='on';
+    await page.keyboard.press('ArrowDown');await page.keyboard.press('Home');await page.keyboard.press('Enter');
+    results[`${prefix}-selectInheritRestored`] = await native.inputValue()==='inherit';
+    await button.click();
+    await select.locator('[role=listbox].visible').waitFor({state:'visible'});
+    await select.locator('[role=listbox]').evaluate(async el=>{el.getBoundingClientRect();await Promise.all(el.getAnimations().map(a=>a.finished.catch(()=>{})));});
+    results[`${prefix}-localChoicesFit`] = await select.locator('[role=option]').evaluateAll(options => options.length===3&&options.every(option=>{
+      const box=option.getBoundingClientRect();return box.left>=0&&box.right<=innerWidth+1&&box.height>=44-.01;
     }));
-    results[`${prefix}-noRawKeys`] = !(await radios.first().evaluate(input => input.closest('.hpf-inline').textContent)).includes('space.lqi_');
+    results[`${prefix}-noRawKeys`] = !(await select.locator('[role=listbox]').innerText()).includes('space.lqi_');
+    await page.keyboard.press('Escape');
   } finally {
     checkAll(Object.fromEntries(Object.entries(results).filter(([key]) => key.startsWith(prefix))));
     await finish(browser, { [prefix]: 'observed' });
