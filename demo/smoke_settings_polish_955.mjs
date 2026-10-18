@@ -90,6 +90,11 @@ try{
       const walker=document.createTreeWalker(parent,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.textContent.trim()?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT});let text,last;while(text=walker.nextNode())last=text;if(!last)return false;
       const range=document.createRange();range.selectNodeContents(last);const a=parent.querySelector('label')?.getBoundingClientRect()||[...range.getClientRects()].at(-1),b=h.shadowRoot.querySelector('svg').getBoundingClientRect();return Math.abs((a.top+a.bottom-b.top-b.bottom)/2)<=1.25&&(!parent.matches('.hpf-label-tail')||Math.abs(h.getBoundingClientRect().left-a.right-4)<=.25);
      }));
+     if(kind==='marker'&&id==='appearance')out[prefix+'_led_single_separator']=await d.locator('.led-representation').filter({visible:true}).evaluateAll(groups=>groups.every(group=>{
+      const row=group.querySelector('.row'),button=row?.querySelector('button');if(!row||!button)return false;
+      const separators=[group,row].filter(n=>parseFloat(getComputedStyle(n).borderTopWidth)>0).length;
+      return separators===1&&Math.abs(button.getBoundingClientRect().left-group.getBoundingClientRect().left)<=.25;
+     }));
      if(name==='general'&&id==='zigbee')out[prefix+'_zigbee_wrap']=await toggles.first().evaluate(el=>{
       const span=el.querySelector('.hpf-toggle-title > span'),node=document.createTreeWalker(span,NodeFilter.SHOW_TEXT).nextNode();
       const words=[...node.textContent.matchAll(/\S+/g)].map(word=>{const r=document.createRange();r.setStart(node,word.index);r.setEnd(node,word.index+word[0].length);return r.getBoundingClientRect().top;});

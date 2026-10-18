@@ -77,6 +77,15 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id:'settings-led-actions-inherit-footer-border-955',
+    guard:'node demo/smoke_settings_polish_955.mjs --case=led --geometry',
+    because:'#955: only the composed dialog cascade exposes the legacy footer border and inset inside the LED action row; actual border boxes and button geometry reveal the duplicate divider.',
+    patches:[{file:'src/styles/settings-dialogs.styles.ts',
+      find:'.hpf-settings-form .led-representation > .row{justify-content:flex-start;border:0;padding:0;}',
+      replace:'.hpf-settings-form .led-representation > .row{justify-content:flex-start;}',
+    }],
+  },
+  {
     id:'settings-save-lettering-sits-low-955',
     guard:'node demo/smoke_settings_polish_955.mjs --fast',
     because:'#955: the visible lettering inside Save must be optically centred, not merely its font line box; a PNG ink-bound witness checks the actual button.',
