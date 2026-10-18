@@ -469,7 +469,6 @@
   "space.fill_label": "Room fill",
   "space.fill_mode.help": "“Custom colour” is styling, while “Light”, “Temperature” and “LQI” use current Home Assistant data; Glow is enabled separately.",
   "space.fill_mode.help.aria": "Help: room fill mode",
-  "fill.none": "None",
   "space.custom_fill": "Fill color",
   "space.source_file": "Use a floor-plan image",
   "space.source_draw": "Draw it myself",

@@ -469,7 +469,6 @@
   "space.fill_label": "Raumausfüllung",
   "space.fill_mode.help": "„Eigene Farbe“ gestaltet den Bereich; „Licht“, „Temperatur“ und „LQI“ verwenden aktuelle Daten aus Home Assistant. Glow wird separat aktiviert.",
   "space.fill_mode.help.aria": "Hilfe: Modus der Raumausfüllung",
-  "fill.none": "Keine",
   "space.custom_fill": "Füllfarbe",
   "space.source_file": "Grundrissbild verwenden",
   "space.source_draw": "Selbst zeichnen",
