@@ -3517,3 +3517,9 @@ nested SVG centres for all four forms at1280/390px in all four languages (32
 combinations). Before the English exception its visible letters sat1.5px high;
 afterwards their offset is0.5px, Russian0px and German/French-0.5px. The shared
 profile body actions also retain44px targets, checked across all seven cases.
+
+Paired screenshots exposed a second avoidable navigation line: the extra1px
+button border left117px for Space's active Appearance caption, while the
+approved borderless button had119px. The ordinary native probe was red with
+two lines at1280px. Matching the reference's borderless navigation restores one
+line without forced nowrap; the full geometry matrix checks this visible result.
