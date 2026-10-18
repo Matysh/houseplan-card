@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 77;
+export const GOLDEN_MATRIX_VERSION = 78;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -868,7 +868,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     fillMode: 'none', glowEnabled: false, theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'openings-filled-tunnel-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     fillMode: 'custom', customFill: { c: '#66717c', a: 0.55 }, glowEnabled: false,
-    hideOpenings: true,
+    hideOpenings: true, showBorders: false,
     wallReplacements: [{
       match: { a: [0.5, 0.1], b: [0.5, 0.88] },
       segments: [
@@ -890,7 +890,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     decorOverride: decorLayerFixture, decorPixelProbes: decorLayerProbes,
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'openings-hidden-view-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
-    fillMode: 'none', glowEnabled: false, hideOpenings: true, theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+    fillMode: 'none', glowEnabled: false, hideOpenings: true, showBorders: false, theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'lighting-glow-sun-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'device-value-badge-positions-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
