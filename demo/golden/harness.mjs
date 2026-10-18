@@ -1973,6 +1973,12 @@ export async function prepareGoldenScenario(page, scenario) {
       if (!device) throw new Error(`golden device missing: ${scenario.deviceId}`);
       card._openMarkerDialog(device);
       await card.updateComplete;
+      const settings = card.renderRoot.querySelector('hp-dialog');
+      const target = scenario.deviceLightControls ? 'light' : scenario.deviceToggleEntity ? 'actions' : 'basics';
+      const navigation = settings?.querySelector(`[data-section-target="${target}"]`);
+      if (!navigation) throw new Error(`golden device settings section missing: ${target}`);
+      navigation.click();
+      await card.updateComplete;
       if (scenario.deviceLightControls) {
         card._setMarkerLightRole('always');
         await card.updateComplete;
@@ -2224,6 +2230,10 @@ export async function prepareGoldenScenario(page, scenario) {
       card.requestUpdate();
       await card.updateComplete;
       const dialog = card.renderRoot.querySelector('hp-dialog');
+      const appearance = dialog?.querySelector('[data-section-target="appearance"]');
+      if (!appearance) throw new Error('golden device appearance navigation missing');
+      appearance.click();
+      await card.updateComplete;
       const picker = [...(dialog?.querySelectorAll('hp-color-opacity') || [])]
         .find((item) => item.label === card._t('marker.activity_color'));
       await picker?.updateComplete;
