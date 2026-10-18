@@ -2,10 +2,10 @@
   "schema": 1,
   "date": "2026-10-18",
   "source": {
-    "commit": "4cae95596b629e4820598df98ce88225f48f1624",
-    "srcTree": "e916c1de6044400ab3fd5a74d54b2094d2633a4b",
+    "commit": "b2127723258b004d5140929b397b0a7ba7a7c3e4",
+    "srcTree": "7a908776ec7c90023f2d70003ae1f9e086f3b4c8",
     "sha256": {
-      "src/styles/settings-dialogs.styles.ts": "b7012d9f4470891ec7f7576d6ded4270bcd05d30dd2e4d2b725c693508c77d36",
+      "src/styles/settings-dialogs.styles.ts": "e4e720fc4fb2be01357355132e7082ccf12f6af36bc883999148df26da62cef7",
       "src/styles/settings-action.styles.ts": "567b032708b245ae45e903f06e0a48a3a4808912a1c0e9bcf13715edf8a73127",
       "src/editors/form-kit.ts": "3089dee7d5e71cc088ccb862731ced8155188d8cc2d7591452b8b988cf5f4a8e",
       "src/hp-help.ts": "23fffab11d6b8433fe40b697118d2d0be0211bb455674aeaab1d6bb89ed0612a",
@@ -58,28 +58,28 @@
       "sha256": "9b97f33b7dcf45df92c8e7db8200d457bb9060276c92e45a4511720f278177cb"
     },
     "space-appearance.png": {
-      "sha256": "18ab558fbd25288eabf16db043ef4f4222a7404d5c3ea9b3fd7d5f9b4dfb61f9"
+      "sha256": "fc4e610558aee991d18b94561152c0fe732bc2bbcf80a1db93a21f4c2b0d7647"
     },
     "room-form.png": {
-      "sha256": "e554d066c92b577d04fcb42899b3d62970c9e56979d9d02301e403c91ef7ca14"
+      "sha256": "361966bc2ec46ce0068af9909ccfea72afe881c22ddc6a69a3c9c2732839828d"
     },
     "device-appearance.png": {
-      "sha256": "87a54806abb9da80b1c365e752b2bf0cf6d498045b7fec68f6aba8fa2f8f925d"
+      "sha256": "d9b4c7a848788e91912834e7cc46f335e251ccabd329d4950f86f22947468b24"
     },
     "vacuum.png": {
-      "sha256": "5a779c261b8f2b46e918e29cd89188920bb2b05b4578376207b128a3b559562a"
+      "sha256": "016949c930078a5cb66cd36aaedba2a8d828ce855b4351d4fa6561dd78c2125f"
     },
     "radar.png": {
-      "sha256": "0e7440494e256c307682680750e56b41f00f6f43a5485666c3fac8ce1101a600"
+      "sha256": "a5c45fd6a6389fa53b2ebff2833deb162953ca299bba6820616c040c59040bb7"
     },
     "general-mobile.png": {
       "sha256": "30add4892aa6277d84ba9e6ef112735a012b680becb7e59459cb5557c68fefa0"
     },
     "space-mobile.png": {
-      "sha256": "d42ddcd7dff9a375ec1dee799dfefc58dbc4f9509b46513a4cb00d0205997c5d"
+      "sha256": "ebbdec4f1016e31ec96b424f1203dd4abc724075ec08bbfcd181125afad67db4"
     },
     "room-mobile.png": {
-      "sha256": "d8da6275a114234a21bdee5769b7961f22f833fa3ee8cb02d5d59aa0a070267b"
+      "sha256": "a28705afd166c58233302091897ed7925a4c6d92954a42aa70096e77b8899c1b"
     },
     "device-mobile.png": {
       "sha256": "a3c9f6043dba809c882576dc650096be1da91d9888d2164a772805177c321863"
