@@ -43,17 +43,24 @@ times room-multiplier checks and the Cancel persistence assertion (#946).
 ## Properties panel (#931)
 
 Code-review r1 repairs preserve the existing colour-picker mode contract:
-the panel uses `flat-swatch` alone, which now fits its 15px slot; colour tiles
+the panel uses `flat-swatch compact-swatch`, fitting its 15px slot; colour tiles
 keep `cover-swatch` and their alpha checkerboard. Opening metadata names resolved
 adjacent rooms in plan order, contour metadata uses canonical ownership or exact
 legacy boundary containment. Stored names are quoted, never auto-inflected.
 The approved reset glyph and removal instructions (including tooltip line breaks
 and arrow) are retained. Native dialog routing is exercised across all applicable
 families at desktop/narrow widths, with invalid drafts and a real delayed HA ACK.
-The two added mutation declarations remain static-only during development.
+The full golden capture rejected a compact-layout leak into native solid colour
+plates; none of those unrelated frames was accepted. `flat-swatch` governs paint
+only, `compact-swatch` opts the new panel into the tiny host layout. Native
+plates keep the original inline-flex/40px geometry (computed flex as a flex item).
+The rejected full golden capture records the original visible regression;
+the layout oracle now measures the revealed Appearance section at all six
+light/dark320/360/560 combinations, not hidden controls. Three r1 declarations remain
+static-only during development.
 After integrating accepted Room v4 (#946), the r1 source measures hostRefs5830,
-bundleBytes3193747 and editor312959 B gzip, all inside the existing approved
-references/bands. Initial View324246 B gzip remains below its unchanged ceiling.
+bundleBytes3193871 and editor313015 B gzip, all inside the existing approved
+references/bands. Initial View324274 B gzip remains below its unchanged ceiling.
 No further ceiling or band is raised. Golden reconciliation carries Room's
 three already accepted frames and the previously accepted #931 frames; it is
 not a new visual acceptance. A fresh complete WSL capture follows publication.

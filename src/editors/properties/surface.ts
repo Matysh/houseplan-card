@@ -94,7 +94,7 @@ function fieldView(field: PropertiesField, port: PropertiesSurfacePort): Templat
       : colorField({ hex: color.color.toUpperCase(), valueLabel: color.noFill ? t('no_fill') : undefined, opacity: color.opacity,
         picker: html`<hp-color-opacity ${ref(el=>{if(el)port.attachColor(field.key,el as HpColorOpacity);})} .label=${label} .color=${color.color} .opacity=${color.opacity}
           .allowNoFill=${color.noFill !== undefined} .noFill=${color.noFill ?? false} .noFillLabel=${t('no_fill')}
-          .pickerLabels=${port.pickerLabels} .disabled=${pending} hide-label flat-swatch
+          .pickerLabels=${port.pickerLabels} .disabled=${pending} hide-label flat-swatch compact-swatch
           @hp-color-opacity-open=${() => port.edit(field, JSON.stringify(color))}
           @hp-color-opacity-change=${(e: CustomEvent) => port.edit(field, JSON.stringify(e.detail))}
           @hp-color-opacity-commit=${(e: CustomEvent) => port.edit(field, JSON.stringify(e.detail), true)}

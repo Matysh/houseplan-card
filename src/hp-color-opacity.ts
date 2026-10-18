@@ -43,6 +43,8 @@ export class HpColorOpacity extends LitElement {
   public hideLabel = false;
   /** Settings form-kit uses a solid swatch instead of the alpha checkerboard. */
   public flatSwatch = false;
+  /** A tiny swatch-only host in Properties; independent of solid/alpha paint. */
+  public compactSwatch = false;
   /**
    * Let the existing trigger cover an entire settings colour tile. #615: the
    * tile is the one flat-swatch surface that still shows alpha — checkerboard
@@ -111,6 +113,7 @@ export class HpColorOpacity extends LitElement {
     // остаётся источником title/aria триггера и заголовка панели.
     hideLabel: { type: Boolean, attribute: 'hide-label' },
     flatSwatch: { type: Boolean, attribute: 'flat-swatch' },
+    compactSwatch: { type: Boolean, attribute: 'compact-swatch' },
     coverSwatch: { type: Boolean, attribute: 'cover-swatch' },
     allowNoFill: { type: Boolean, attribute: 'allow-no-fill' },
     noFill: { type: Boolean, attribute: 'no-fill' },
@@ -153,15 +156,15 @@ export class HpColorOpacity extends LitElement {
       cursor: pointer;
     }
     .trigger.solid { background: none; }
-    :host([cover-swatch]), :host([flat-swatch]) { display: block; width: 100%; height: 100%; }
-    :host([cover-swatch]) .trigger, :host([flat-swatch]) .trigger {
+    :host([cover-swatch]), :host([compact-swatch]) { display: block; width: 100%; height: 100%; }
+    :host([cover-swatch]) .trigger, :host([compact-swatch]) .trigger {
       width: 100%; height: 100%; padding: 0; border: 0; border-radius: 6px;
     }
-    :host([cover-swatch]) .swatch, :host([flat-swatch]) .swatch { border-radius: 6px; box-shadow: none; }
-    :host([flat-swatch]:not([cover-swatch])) .trigger,
-    :host([flat-swatch]:not([cover-swatch])) .swatch { border-radius: 3px; }
-    :host([flat-swatch]:not([cover-swatch])) .swatch { box-shadow: inset 0 0 0 1px #00000010; }
-    :host([cover-swatch]) .trigger:focus-visible, :host([flat-swatch]) .trigger:focus-visible { outline-offset: -2px; }
+    :host([cover-swatch]) .swatch, :host([compact-swatch]) .swatch { border-radius: 6px; box-shadow: none; }
+    :host([compact-swatch]:not([cover-swatch])) .trigger,
+    :host([compact-swatch]:not([cover-swatch])) .swatch { border-radius: 3px; }
+    :host([compact-swatch]:not([cover-swatch])) .swatch { box-shadow: inset 0 0 0 1px #00000010; }
+    :host([cover-swatch]) .trigger:focus-visible, :host([compact-swatch]) .trigger:focus-visible { outline-offset: -2px; }
     :host([data-pointer-hover]) .trigger:hover {
       border-color: var(--primary-color, #03a9f4);
     }

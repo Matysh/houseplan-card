@@ -99,7 +99,7 @@ owner or real-GPU acceptance.
 |---|---|
 | H1 room context | Named contour owners (canonical IDs or exact legacy edge), resolved opening neighbours. Catalog units reject generic metadata; capture asserts actual room context. Stored names retain case/quotes as explained above, not guessed inflection. |
 | H1 reset/removal | Reset path equals the immutable reference SVG. Removal words and tooltip bounds compare to reference DOM; line breaks/arrow match the panels. |
-| H1 solid swatch | No conflicting cover flag. Computed trigger has no checkerboard, inner opacity is 1, width15px; flat corners/border match the reference. General alpha tiles retain the #615 predicate and checkerboard. |
+| H1 solid swatch | No conflicting cover flag. Computed trigger has no checkerboard, inner opacity is 1, width15px; flat corners/border match the reference. `compact-swatch` scopes layout separately from paint. General alpha tiles retain the #615 predicate/checkerboard, native solid plates retain inline-flex/40px layout. |
 | M1 modal exclusivity | Fifteen native object/subtype routes open full dialogs at1920/959. Invalid wide drafts block opening; hidden narrow drafts are invalidated with no write; wide panel is inert. A real held config/set ACK defers the text dialog and then opens it exactly after success. Missing beforeIntent loses that deferred retry and fails. |
 
 The combined-source panel smoke, `smoke_color_picker` and
@@ -122,7 +122,17 @@ source fits all existing references/bands and the unchanged initial View limit.
 | AC11/12 | actual runtime writer/history tests + controller authority | failed/preflight/conflict restores owned state/exact cursor; newer sibling/authority cannot be overwritten |
 | AC13/14 | short/dark and existing touch/lazy smokes; budget gates | cancelled gesture writes nothing; cold View requests no editor; old bands/View ceilings remain |
 
-Twelve new mutation declarations are static witnesses only. The r1 additions
-cover the solid swatch and deferred native dialog handoff; existing #615 colour
+Thirteen new mutation declarations are static witnesses only. The r1 additions
+cover the solid swatch, deferred native dialog handoff and isolation of compact
+Properties layout from native colour plates; existing #615 colour
 tile/plate guards keep their source contract. `mutation-gate --check`
 does **not** execute them and is not a caught verdict; execution remains nightly.
+
+The first joint-source full golden capture at4ee5666a rejected six unrelated
+native-form scenes. It exposed a real compact-layout leak, not intended new
+baselines; its212-frame report is preserved locally in
+`output/properties-931/golden-rejected-4ee5666a` and was not accepted. The corrected
+`smoke_dialog_polish_605` reveals the Appearance section before measuring the
+native solid plates (40px; computed flex as a flex item) across six theme/width
+combinations. Properties remains15px. The registered isolation witness is
+`properties-compact-swatch-leaks-to-color-plates`, not executed during development.

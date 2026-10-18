@@ -19568,6 +19568,12 @@ const MUTANT_DEFINITIONS = [
       if (current) this._openDecorProperties(current);
     }, true)) return;`,replace:''}],
   },
+  {
+    id: 'properties-compact-swatch-leaks-to-color-plates',
+    guard: 'node demo/smoke_dialog_polish_605.mjs',
+    because: '#931 r1: Chromium computed host display and real 40px trigger boxes at three viewport widths prove compact Properties layout cannot leak to ordinary solid native-form plates; pure colour values cannot expose the wrapping/overflow.',
+    patches: [{file:'src/hp-color-opacity.ts',find:'    :host([cover-swatch]), :host([compact-swatch]) { display: block; width: 100%; height: 100%; }',replace:'    :host([cover-swatch]), :host([flat-swatch]) { display: block; width: 100%; height: 100%; }'}],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');
