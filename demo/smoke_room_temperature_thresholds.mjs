@@ -47,7 +47,7 @@ const result = await page.evaluate(async () => {
     && card._roomSettingsFromDialog().temp_max === 23;
 
   card._roomFill = 'temp'; card.requestUpdate(); await card.updateComplete;
-  root().querySelector('.hpf-temprange .hpf-link')?.click();
+  root().querySelector('[data-room-range-reset]')?.click();
   await card.updateComplete;
   fields = tempFields();
   out.resetRestoresInheritance = card._roomTempMin === '' && card._roomTempMax === ''

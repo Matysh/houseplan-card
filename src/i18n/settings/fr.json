@@ -237,5 +237,6 @@
   "room.fill_inherited": "Comme dans l’espace · {mode}",
   "room.save": "Enregistrer la pièce",
   "room.title": "{name} · réglages de la pièce",
-  "room.context": "Pièce · {space}"
+  "room.context": "Pièce · {space}",
+  "room.area_optional": "Zone Home Assistant · facultative"
 }

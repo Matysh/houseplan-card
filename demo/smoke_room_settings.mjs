@@ -83,6 +83,7 @@ const res = await page.evaluate(async () => {
   // AC6: у каждой группы есть «?» с доступным именем — пояснения не исчезли, а уехали.
   // #600 §6.1: у Basics «?» стоит у поля зоны, а не у заголовка карточки.
   const helps = [...sr().querySelectorAll('hp-dialog .hpf-card .hpf-head hp-help'),
+    sr().querySelector('hp-dialog select[name="rfill"]')?.closest('.hpf-field')?.querySelector('hp-help'),
     sr().querySelector('hp-dialog #room-area')?.closest('.hpf-field')?.querySelector('hp-help')].filter(Boolean);
   out.everyGroupHasHelp = helps.length === 4
     && helps.every((h) => !!h.text && !!h.ariaLabel);
