@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "acceptedBase": "510bab19d90aa45b5b254cc12df16beafd71b77b",
+  "rebasedTip": "a888835d8ca0f447e02ee2bebf0919f2f3c60f00",
+  "method": "Private unpublished task rebase after #947 S8; original executed SHA fields retained, source and capture inputs compared as exact Git objects. No new execution is claimed merely because the commit identity changed.",
+  "mappings": [
+    {
+      "captured": "b9332831a408027374ddd895a73319be002faca3",
+      "equivalent": "602d578df4ccf362e99dab4a8ccce3a81c9a3899",
+      "scope": "native304, nine symptoms, Save64 and eight interaction scenarios",
+      "equalGitObjects": {
+        "src": "119d393ace90591c1ffc948b535c076436c28ff7",
+        "package-lock.json": "b5d3379ffb1e25528edf8fa3b361f94d57360e7a",
+        "rollup.config.mjs": "542f6d2be5f9e20ece6fd9e7aa4ea6e0ca511869",
+        "demo/helpers/ha-dialog-fixture.mjs": "ba9a4a7230995a73a1d386e9d89952fe2d9ba23c",
+        "demo/helpers/button-paint.mjs": "b5290c239f2d41fc479ea3176458ac5e00015ca3",
+        "demo/smoke_settings_polish_955.mjs": "5adb24b3a6ca99fdcfaeb7b1d3a05a6c4dd44d8f"
+      }
+    },
+    {
+      "captured": "3c68d217cc2de815519979b4edcd6fa2e7696146",
+      "equivalent": "685ace91670577f6e44e9757fcda2813631383ff",
+      "scope": "ordinary pre-fix LED separator observation",
+      "equalGitObjects": {
+        "src": "a551d91837502506ed856e62dc9b47c5d8f47612",
+        "package-lock.json": "b5d3379ffb1e25528edf8fa3b361f94d57360e7a",
+        "rollup.config.mjs": "542f6d2be5f9e20ece6fd9e7aa4ea6e0ca511869",
+        "demo/helpers/ha-dialog-fixture.mjs": "ba9a4a7230995a73a1d386e9d89952fe2d9ba23c",
+        "demo/helpers/button-paint.mjs": "b5290c239f2d41fc479ea3176458ac5e00015ca3",
+        "demo/smoke_settings_polish_955.mjs": "72732daca835f41129fb68f790b179f101b7fb64"
+      }
+    }
+  ]
+}
