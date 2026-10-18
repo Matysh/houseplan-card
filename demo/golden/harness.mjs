@@ -2109,6 +2109,15 @@ export async function prepareGoldenScenario(page, scenario) {
       const dialog = card.renderRoot.querySelector('hp-dialog');
       const picker = [...(dialog?.querySelectorAll('hp-color-opacity') || [])]
         .find((item) => item.label === card._t('gs.light_on'));
+      const pane = picker?.closest('[data-settings-section]');
+      const section = pane?.dataset.settingsSection;
+      if (section) {
+        const mobile = dialog.querySelector('.hpf-settings-mobile select');
+        if (mobile?.getBoundingClientRect().width > 0) {
+          mobile.value=section; mobile.dispatchEvent(new Event('change',{bubbles:true}));
+        } else dialog.querySelector(`[data-section-target="${section}"]`)?.click();
+        await card.updateComplete;
+      }
       await picker?.updateComplete;
       const trigger = picker?.renderRoot?.querySelector('.trigger');
       if (!trigger) throw new Error('golden general-settings color trigger missing');
@@ -2122,6 +2131,15 @@ export async function prepareGoldenScenario(page, scenario) {
       await moonStatusSettled(card);
       const dialog = card.renderRoot.querySelector('hp-dialog');
       const help = dialog?.querySelector(`hp-help[data-help-key="${scenario.openHelp}"]`);
+      const pane = help?.closest('[data-settings-section]');
+      const section = pane?.dataset.settingsSection;
+      if (section) {
+        const mobile = dialog.querySelector('.hpf-settings-mobile select');
+        if (mobile?.getBoundingClientRect().width > 0) {
+          mobile.value=section; mobile.dispatchEvent(new Event('change',{bubbles:true}));
+        } else dialog.querySelector(`[data-section-target="${section}"]`)?.click();
+        await card.updateComplete;
+      }
       await help?.updateComplete;
       const trigger = help?.renderRoot?.querySelector('.trigger');
       if (!dialog || !trigger)

@@ -205,6 +205,7 @@ for (const provider of ['z2m', 'zha']) {
       card.hass = { ...original, devices: fixture.devices, connection,
         callWS: async (message) => {
           if (message.type === 'config/device_registry/list') return Object.values(fixture.devices);
+          if (message.type === 'config_entries/get') return [{ entry_id:'tooltip-802-entry', domain:provider === 'zha' ? 'zha' : 'mqtt', title:provider, state:'loaded' }];
           if (message.type === 'zha/devices') { fixture.calls.zha++; return fixture.zha; }
           if (message.type === 'houseplan/zigbee/start') { fixture.calls.start++; return fixture.event(); }
           const response = await original.callWS(message);
@@ -225,6 +226,7 @@ for (const provider of ['z2m', 'zha']) {
     if (provider === 'zha') {
       await page.evaluate(() => window.__hpTest.setMode('plan'));
       await root.locator('[data-hp="settings"]').click();
+      await root.locator('[data-section-target="zigbee"]').click();
       await root.locator('hp-zigbee-topology-settings').getByRole('button', { name: /Read ZHA/ }).click();
       await page.waitForFunction(() => window.__tooltipFixture.calls.zha === 1);
       await page.evaluate(() => window.__hpTest.close());

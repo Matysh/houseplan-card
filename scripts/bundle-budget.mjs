@@ -756,7 +756,10 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // compass/previews and integration-aware diagnostics add 5758 B. Carry only
 // that measured cost into the reference; preserve the inherited 1481-B gap,
 // the 2000-B band and the initial/absolute View limits. View itself shrinks 407 B.
-export const LAZY_EDITOR_GZIP_CEILING = 276_169;
+// #948 follow-up: the same 93f49edf build is 277557 B; the common accessible
+// animated select (including dialog-owned fallback) adds 2815 B gzip. Carry
+// only this cost, retaining inherited headroom, both bands and View budgets.
+export const LAZY_EDITOR_GZIP_CEILING = 278_984;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

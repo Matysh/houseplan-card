@@ -128,7 +128,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
               ],
               onChange: (deviceBattery) => set({ deviceBattery }),
             }),
-            
+
           })}
           ${toggleRow({
             id: 'gs-show-lqi', icon: 'mdi:zigbee',
@@ -145,7 +145,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             label: st('gs.wall_fill'),
             picker: colorField({
               hex: d.colors.wall_fill.c, opacity: d.colors.wall_fill.a, opacityLabel: t('space.opacity'),
-              
+
               picker: html`<hp-color-opacity .label=${st('gs.wall_fill')} hide-label flat-swatch
                 .opacityLabel=${t('space.opacity')} .pickerLabels=${host._colorPickerLabels}
                 .color=${d.colors.wall_fill.c} .opacity=${d.colors.wall_fill.a} .showOpacity=${true}
@@ -170,7 +170,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           ${d.bgMode === 'static'
             ? field({
                 label: t('gs.bg_color'),
-                
+
                 control: html`<div class="hpf-color-with-action">${colorField({
                   hex: d.bgColor || host._stageBgHex(),
                   picker: html`<hp-color-opacity .label=${t('gs.bg_color')} hide-label flat-swatch
@@ -253,7 +253,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
         title: st('gs.section_maintenance'),
         body: html`
           ${host._canEdit ? html`
-            
+
             <div class="hpf-actions">
               <button class="btn" @click=${() => leaveFor(() => this._openBackupExport())}>
                 <ha-icon icon="mdi:download"></ha-icon>${st('backup.export_open')}
@@ -274,7 +274,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
                   <ha-icon icon="mdi:undo-variant"></ha-icon>${st('backup.undo_import')}
                 </button>` : nothing}
             </div>` : nothing}
-          
+
           <div class="hpf-actions">
             <button class="btn" @click=${() => this.optimizePlans.open()} ?disabled=${!host._canEdit || host._kiosk}>
               <ha-icon icon="mdi:broom"></ha-icon>${t('gs.align_all')}

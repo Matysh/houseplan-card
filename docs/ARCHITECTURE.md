@@ -399,6 +399,14 @@ clicks (`detail=0`); it cannot immobilise header/toolbar controls after a drag.
 
 ## Styles (#266)
 
+The lazy `hp-settings-select` enhances a light-DOM select while retaining its
+value/change and option contract. It owns one accessible animated listbox;
+`FloatingSurfaceController` places it in the native top layer or the dialog's
+portal fallback. Transient overlay registration keeps Escape, outside click,
+section navigation and focus restoration with the existing dialog owner.
+The component is registered by settings styles, not imported into form-kit or
+the separate first-run onboarding graph.
+
 Settings redesign (#944/#948) extends the lazy form-kit with
 `settings-dialogs.styles.ts`, `settings-sections.ts`, a shared north control
 and background previews. Section selection is per host/dialog runtime state;

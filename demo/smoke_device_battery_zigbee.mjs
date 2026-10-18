@@ -52,6 +52,8 @@ try {
     }));
     card.shadowRoot.querySelector('[data-hp="settings"]').click();
     await window.__hpTest.settled();
+    card.shadowRoot.querySelector('[data-section-target="zigbee"]').click();
+    await window.__hpTest.settled();
   });
   await page.waitForFunction(() => {
     const root = window.__card.shadowRoot.querySelector('hp-zigbee-topology-settings')?.shadowRoot;

@@ -1,3 +1,4 @@
+import '../hp-settings-select';
 import { ensureFormKitStyles, type FormKitStyleHost } from './form-kit';
 import { settingsDialogCss } from '../styles/settings-dialogs.styles';
 

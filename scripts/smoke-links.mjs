@@ -36,6 +36,11 @@ export const SMOKE_LINKS = [
     because: '#954: native ZIP export/import/consent, legacy JSON, empty input and writer authority; common _config/editor ownership is not proof of every browser contract.',
   },
   {
+    files: ['src/hp-settings-select.ts', 'src/editors/settings-styles.ts', 'src/editors/form-kit.ts'],
+    smokes: ['smoke_settings_select.mjs'],
+    because: '#948: actual native/capability-fallback popup, keyboard, focus, closing animation, live themes and reduced motion are observable only through rendered controls.',
+  },
+  {
     symbols: ['_roomCo2', 'co2Value', 'co2For', 'co2DeviceValue', 'isCo2Entity', 'renderRoomSource',
       'renderRoomSettingsDialog', 'renderRoomCards', 'roomClimateMap', 'sourceValue'],
     files: ['src/room-co2.ts', 'src/styles/dialogs.styles.ts'],

@@ -13,6 +13,7 @@
   Proxy size rejections produce a useful message; an HTML gateway page is
   never downloaded as a fake ZIP.
 
+- Settings lists share an animated, keyboard-accessible menu across supported browsers, including the dialog-owned fallback when Popover is unavailable ([#948](https://github.com/Matysh/houseplan-card/issues/948)).
 - Room cards can show CO₂ in ppm, with an automatic room average or a selected
   sensor. Off by default; room tooltips and previews use the same reading.
   Main plan and kiosk, Flat and 2.5D ([#920](https://github.com/Matysh/houseplan-card/issues/920)).
