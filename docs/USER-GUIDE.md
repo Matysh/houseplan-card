@@ -2133,6 +2133,16 @@ the same device is selected deterministically; an unrelated XCME camera must be
 chosen explicitly through **All cameras**. A saved source is pinned and is not
 silently replaced when it is disabled, missing, unavailable or unreadable.
 
+Open the device's **Vacuum** section. **Source and status** shows the current
+source and health; **Source and path display** contains the source picker,
+live-position switch and trail mode. **Maps and calibration** keeps map/floor
+assignments and fitting. Expand **Map and route diagnostics** for integration,
+position, room counts, map ID and detailed path counters. These values remain
+available without filling the ordinary settings view with technical rows.
+Changing the source, live-position switch or trail mode saves immediately as
+before; cancelling other device edits does not undo those operations. Map
+assignment and calibration retain their own Apply/confirmation workflows.
+
 ### Calibration
 
 | Mode | Requirement | Result |
