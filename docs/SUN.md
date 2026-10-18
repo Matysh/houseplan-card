@@ -168,8 +168,10 @@ when BOTH hold:
   perpendicular depth (`len · cos`, see «Dissolving») would be thinner
   than the wall it came through.
 
-The wedge is a PARALLELOGRAM. The global `settings.sun_ray_origin` enum selects
-its full source span: `inner` starts at the two room-side corners (the default
+The wedge is a PARALLELOGRAM. General settings uses two directly selectable,
+labelled window previews (#955), without a duplicate dropdown. The existing
+global `settings.sun_ray_origin` enum selects its full source span:
+`inner` starts at the two room-side corners (the default
 and the exact pre-#577 behaviour), while `outer` starts at the two exterior
 corners. Missing or unknown values resolve to `inner`; this setting has no
 per-space override. The selected span is extruded by the same

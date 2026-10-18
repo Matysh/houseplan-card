@@ -1,4 +1,5 @@
-import { LitElement, css, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
+import { LitElement, css, html, nothing, unsafeCSS, type PropertyValues, type TemplateResult } from 'lit';
+import { settingsActionTransition, settingsPrimaryActionHover } from './styles/settings-action.styles';
 import { safeStoredColor } from './color';
 import { hexToRgb, hsvToHex, normalizeHexColor, rgbToHsv } from './color-picker';
 import { floatingViewport, placeFloatingSurface } from './floating-surface';
@@ -127,7 +128,7 @@ export class HpColorOpacity extends LitElement {
     _hexInvalid: { state: true },
   };
 
-  static styles = css`
+  static styles = [css`
     :host {
       position: relative;
       display: inline-flex;
@@ -352,7 +353,9 @@ export class HpColorOpacity extends LitElement {
       width: 100%;
     }
     input[type='number'] {
-      width: 50px;
+      /* Three digits, padding and the native stepper must fit together. */
+      width: 5.5em;
+      min-width: 5.5em;
       flex: none;
     }
     input:focus-visible,
@@ -394,7 +397,7 @@ export class HpColorOpacity extends LitElement {
       pointer-events: none;
     }
     @media (prefers-reduced-motion: reduce) {
-      .picker { transition: none !important; }
+      .picker,.confirm { transition: none !important; }
     }
     @media (forced-colors: active) {
       .hue-range::-webkit-slider-runnable-track {
@@ -418,7 +421,7 @@ export class HpColorOpacity extends LitElement {
         forced-color-adjust: none;
       }
     }
-  `;
+  `, unsafeCSS(`.confirm { ${settingsActionTransition} } .confirm:is(:hover,:focus-visible) { ${settingsPrimaryActionHover} }`)];
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -568,7 +571,7 @@ export class HpColorOpacity extends LitElement {
   }
 
   private _renderFallback(): void {
-    const styleText = (HpColorOpacity.styles as unknown as { cssText: string }).cssText;
+    const styleText = HpColorOpacity.styles.map(style => style.cssText).join('\n');
     this._floating.renderFallback(this._pickerTemplate(false), styleText);
   }
 

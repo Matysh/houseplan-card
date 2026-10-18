@@ -77,6 +77,30 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id:'settings-help-needs-host-hover-955',
+    guard:'node demo/smoke_settings_polish_955.mjs --fast',
+    because:'#955: the embedded Zigbee help lacks a host pointerHover flag; only real pointer entry on its mounted HA form proves immediate popup parity.',
+    patches:[{file:'src/hp-help.ts',find:"if ((this.pointerHover || this.instant) && event.pointerType === 'mouse')",replace:"if (this.pointerHover && event.pointerType === 'mouse')"}],
+  },
+  {
+    id:'settings-height-follows-scrollbar-955',
+    guard:'node demo/smoke_settings_polish_955.mjs --fast',
+    because:'#955: actual HA dialog geometry across short and scrolling panes exposes the outer-height jump; native fallback constraints alone do not.',
+    patches:[{file:'src/hp-dialog.ts',find:'--ha-dialog-min-height:min(var(--hp-dialog-settings-height,756px), calc(100dvh - 48px)); ',replace:''}],
+  },
+  {
+    id:'settings-opacity-crops-100-955',
+    guard:'node demo/smoke_settings_polish_955.mjs --fast',
+    because:'#955: the measured font, padding and native number stepper must jointly leave room for100 inside every shared colour popup.',
+    patches:[{file:'src/hp-color-opacity.ts',find:'      width: 5.5em;\n      min-width: 5.5em;',replace:'      width: 50px;'}],
+  },
+  {
+    id:'settings-ray-preview-is-passive-955',
+    guard:'node demo/smoke_settings_polish_955.mjs --fast',
+    because:'#955: trusted label click and native radio keyboard selection must change the existing ray-origin draft, without a second dropdown.',
+    patches:[{file:'src/sun-settings-view.ts',find:'@change=${() => changed(origin)}',replace:'@change=${() => {}}'}],
+  },
+  {
     id: 'native-radar-select-overflows-ha-body-947',
     guard: 'node demo/smoke_settings_native_select_947.mjs',
     because: '#947: only the real HA body scroll extent exposes overflowing clipped legacy select options at 320 px; the fallback dialog remains within bounds.',

@@ -192,10 +192,9 @@ const dlg = await page.evaluate(async () => {
   const sr = c.shadowRoot;
   // #600 §5.1: источник лучей — сегмент (радиогруппа `gs-sun-ray-origin`),
   // а не `<select>`; лучи — строка-тумблер набора; север — поле `#gs-north`.
-  const originSelect = () => sr.querySelector('hp-dialog select[name="gs-sun-ray-origin"]');
-  const originRadios = () => [...originSelect().options];
-  const originValue = () => originSelect().selectedOptions[0]?.textContent.trim();
-  const pick = labelKey => ({click(){const el=originSelect();el.value=[...el.options].find(o=>o.textContent.trim()===c._t(labelKey)).value;el.dispatchEvent(new Event('change',{bubbles:true}));}});
+  const originRadios = () => [...sr.querySelectorAll('hp-dialog input[type="radio"][name="gs-sun-ray-origin"]')];
+  const originValue = () => originRadios().find(r=>r.checked)?.getAttribute('aria-label');
+  const pick = labelKey => originRadios().find(r=>r.getAttribute('aria-label')===c._t(labelKey));
   const out = {
     compassDragSets180: c._settingsDialog?.northDeg === 180,
     dialogHasBgSegment: sr.querySelectorAll('hp-dialog select[name="gs-bg-mode"] option').length === 2,

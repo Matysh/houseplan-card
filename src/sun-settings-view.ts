@@ -1,5 +1,5 @@
 import { html, svg, type TemplateResult } from 'lit';
-import { field, selectControl } from './editors/form-kit';
+import { field } from './editors/form-kit';
 import type { I18nKey } from './i18n';
 import type { SunRayOrigin } from './sun';
 
@@ -15,16 +15,11 @@ export function renderSunRayOriginSegment(
 ): TemplateResult {
   return field({
     label: translate('gs.sun_ray_origin'),
-    control: html`${selectControl<SunRayOrigin>({
-      name: 'gs-sun-ray-origin',
-      value,
-      ariaLabel: translate('gs.sun_ray_origin'),
-      options: [
-        { value: 'inner', label: translate('gs.sun_ray_origin.inner') },
-        { value: 'outer', label: translate('gs.sun_ray_origin.outer') },
-      ],
-      onChange: (next) => changed(next === 'outer' ? 'outer' : 'inner'),
-    })}<div class="hpf-ray-examples">${(['outer', 'inner'] as const).map(origin => html`
+    control: html`<div class="hpf-ray-examples" role="radiogroup" aria-label=${translate('gs.sun_ray_origin')}>${(['outer', 'inner'] as const).map(origin => html`
+      <label class="hpf-ray-choice">
+      <input class="hpf-sr-only" type="radio" name="gs-sun-ray-origin" value=${origin}
+        aria-label=${translate(`gs.sun_ray_origin.${origin}`)} .checked=${origin === value}
+        @change=${() => changed(origin)} />
       <figure class=${origin === value ? 'is-selected' : ''}>
         <svg viewBox="0 0 180 130" role="img" aria-label=${translate(`gs.sun_ray_origin.${origin}`)}>
           <rect x="4" y="68" width="172" height="57" fill="var(--hpf-canvas)" />
@@ -35,6 +30,6 @@ export function renderSunRayOriginSegment(
             <circle cx="104" cy=${origin === 'outer' ? 40 : 68} r="3.5" fill="var(--primary-color)" />`}
         </svg>
         <figcaption>${translate(`gs.sun_ray_origin.${origin}`)}${origin === value && selectedLabel ? html` · ${selectedLabel}` : ''}</figcaption>
-      </figure>`)}</div>`,
+      </figure></label>`)}</div>`,
   });
 }
