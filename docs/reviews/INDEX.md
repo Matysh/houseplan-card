@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 59, issue: 32. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 61, issue: 32. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -11,6 +11,8 @@
 | #949 | [CODE-REVIEW-949-r1.md](CODE-REVIEW-949-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #949 | [CODE-REVIEW-949-r2.md](CODE-REVIEW-949-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #948 | [SPEC-REVIEW-948-r1.md](SPEC-REVIEW-948-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #948 | [CODE-REVIEW-948-r1.md](CODE-REVIEW-948-r1.md) | code · r1 | 🟡 жёлтый | 0 | 3 | Medium — автоопределение ZHA не отличает игнорируемую запись от настроенной (devices, §…; Medium — две независимые кнопки отмены одновременно (§10 ТЗ, AC14); Medium — у опций hp-settings-select нет анимированного hover/active-перехода (ux, уточн…; / к сведению (не блокируют, записаны для автора) | `settings-dialogs.styles.ts` `sun-settings-view.ts` |
+| #948 | [CODE-REVIEW-948-r2.md](CODE-REVIEW-948-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | числа бюджета бандла в комментариях bundle-budget.mjs трудно проверить построчно | `bundle-budget.mjs` `scripts/bundle-budget.mjs` |
 | #947 | [SPEC-REVIEW-947-r1.md](SPEC-REVIEW-947-r1.md) | spec · r1 | 🔴 красный | 1 | 1 | AC5 и раздел «Модель данных» молча убирают единственный способ завести НОВЫЙ радар пяти…; раздел «Модель данных» предписывает добавить | `src/houseplan-editor-runtime.ts` `src/editors/radar-section.ts` `docs/RADAR.md` `docs/SCOPE.md` `src/radar-editor.ts` `docs/CONFIG-COMPATIBILITY.md` `src/types.ts` `src/device-signal.ts` |
 | #947 | [SPEC-REVIEW-947-r2.md](SPEC-REVIEW-947-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | новый пункт раздела «Модель данных» подтверждает удаление единственного пути настройки …; абзац «Модель данных и совместимость» не отредактирован и дословно противоречит более п… | `AGENTS.md` `docs/RADAR.md` `docs/USER-GUIDE.ru.md` `src/editors/marker-dialog.ts` `hp-device-preview.ts` |
 | #947 | [SPEC-REVIEW-947-r3.md](SPEC-REVIEW-947-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 1 | новый раздел «Документация» сужает объём правки docs/RADAR.md до одного подраздела, но … | `docs/RADAR.md` `docs/USER-GUIDE.ru.md` |
