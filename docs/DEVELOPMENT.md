@@ -1,12 +1,5 @@
 # Development and deployment
 
-The #945 localized signal witness sets HA language on each fresh card instead
-of restarting it with `setConfig`. It observes the public Devices mode before
-the actual settings entry, rather than awaiting a CDP-held transition promise.
-The first reset-wait adapter still produced "Resulting promise was garbage
-collected" in CI at setMode; the component-reset step is now absent. Keyboard,
-44px target, translation, inheritance and popup assertions remain unchanged.
-
 ## Properties panel (#931)
 
 The editor-only modules are under `src/editors/properties/`; do not import them
