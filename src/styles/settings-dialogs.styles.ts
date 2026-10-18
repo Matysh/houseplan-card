@@ -44,7 +44,7 @@ hp-dialog .hpf-form.hpf-settings-form{display:block;padding:0;background:var(--h
 hp-dialog[settings-layout] .hpf-footer .hpf-status{margin:0 auto 0 0;font-size:11px;}
 hp-dialog[settings-layout] .hpf-footer .btn > ha-icon{display:inline-flex;align-items:center;line-height:1;}
 .hpf-footer .hpf-save-label{transform:translateY(-.15em);}
-.hpf-footer .hpf-save-label:lang(en){transform:none;}
+.hpf-footer .hpf-save-label:lang(en){transform:translateY(-.05em);}
 .hpf-settings-pane .hpf-toggle{grid-template-columns:minmax(0,1fr) 44px;min-height:44px;padding:0;}
 .hpf-settings-pane .hpf-body > .hpf-toggle:not(:first-child){padding-top:18px;}
 .hpf-settings-pane .hpf-body > .hpf-sub + .hpf-toggle{padding-top:0;}

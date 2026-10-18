@@ -17,7 +17,8 @@
 - Restore the approved Room metrics group in climate-device basics, with
   contextual temperature help pointing to the current value/badge section. (#947)
 - Centre Save lettering across the four interface languages and keep profile
-  action buttons at the common touch size; avoid an extra navigation wrap. (#955)
+  action buttons at the common touch size; avoid an extra navigation wrap.
+  Preserve alignment with inherited demo typography as well. (#955)
 
 - Match the approved Vacuum and Radar sections: clear property groups, shared
   switches and menus, named target actions, and expandable map/route diagnostics.
