@@ -14,6 +14,7 @@
 // of another build. AC7 — opening the editor requests only the editor graph.
 import { readFileSync } from 'node:fs';
 import { launchColdView, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
+import { installSettingsDeviceFixture } from './helpers/settings-device-947-fixture.mjs';
 
 const manifest = JSON.parse(readFileSync('dist/houseplan-assets.json', 'utf8'));
 const runtimePath = manifest.files.map((file) => file.path)
@@ -161,7 +162,7 @@ function installHelpers() {
         };
         if (probe()) return;
         const observer = new MutationObserver(() => { if (probe()) observer.disconnect(); });
-        observer.observe(root, { childList: true, subtree: true });
+        observer.observe(root, { childList: true, subtree: true, attributes:true, attributeFilter:['hidden'] });
         setTimeout(() => { observer.disconnect(); finish({ value: 'never shown', kinds: [], phase: 'none', rendered: false }); }, 10000);
       });
     },
@@ -414,11 +415,12 @@ try {
         selector: '.rtest', property: 'display', expected: 'flex',
         open: async () => { await window.__hpTest.close(); void window.__hpTest.setTool('icon-rules'); },
       }, {
-        selector: '.radarcoordinates', property: 'flex-wrap', expected: 'wrap',
+        selector: '.hpf-settings-pane:not([hidden]) .radarcoordinates', property: 'flex-wrap', expected: 'wrap',
+        prepare: installSettingsDeviceFixture,
         open: async () => {
           await window.__hpTest.close();
-          await window.__hpTest.openMarkerDialog('d_lamp');
-          window.__card.renderRoot.querySelector('#marker-radar-presence').click();
+          await window.__hpTest.openMarkerDialog('demo_radar');
+          window.__card.renderRoot.querySelector('[data-section-target="radar"]').click();
         },
       }, {
         selector: '.radarsetup', property: 'display', expected: 'grid',
@@ -438,7 +440,7 @@ try {
           root.querySelector('.radargroup button ha-icon[icon="mdi:map-marker-radius"]').closest('button').click();
         },
       }, {
-        selector: '.vacdiag', property: 'display', expected: 'grid',
+        selector: '.hpf-settings-pane:not([hidden]) .vacdiag', property: 'display', expected: 'grid',
         open: async () => {
           const card = window.__card;
           await window.__hpTest.close();
@@ -449,12 +451,13 @@ try {
               'camera.robo_map': { state: 'idle', attributes: { vacuum_position: { x: 500, y: 500, a: 0 }, map_name: 'm2',
                 rooms: { 1: { name: 'Kitchen', x0: 0, y0: 0, x1: 1000, y1: 800 } } } } } };
           await window.__hpTest.setServerConfig((cfg) => {
-            cfg.markers = [...(cfg.markers || []), { id: 'e_vacuum_robo', binding: 'entity:vacuum.robo', space: 'f1',
+            cfg.markers = [...(cfg.markers || []), { id: 'e_vacuum_robo', binding: 'entity:vacuum.robo', space: 'floor01',
               vacuum: { source: 'camera.robo_map', calibration: { m1: [0.5, 0, 0, 0, 0.5, 0] } } }];
             return cfg;
           });
-          await window.__hpTest.setLayout((layout) => ({ ...layout, e_vacuum_robo: { s: 'f1', x: 0.1, y: 0.1 } }));
-          void window.__hpTest.openMarkerDialog('e_vacuum_robo');
+          await window.__hpTest.setLayout((layout) => ({ ...layout, e_vacuum_robo: { s: 'floor01', x: 0.1, y: 0.1 } }));
+          await window.__hpTest.openMarkerDialog('e_vacuum_robo');
+          card.renderRoot.querySelector('[data-section-target="vacuum"]').click();
         },
       }, {
         selector: '.vacfit', property: 'position', expected: 'absolute',
@@ -491,6 +494,7 @@ try {
     const session = await open(DESKTOP);
     const results = [];
     for (const check of family.checks) {
+      if (check.prepare) await check.prepare(session.page);
       // The observer writes into a slot: a promise left pending across two evaluate
       // calls can be collected by CDP before it settles.
       await session.page.evaluate(({ selector, property }) => {

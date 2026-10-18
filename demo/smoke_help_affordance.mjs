@@ -94,6 +94,8 @@ const res = await page.evaluate(async () => {
   const marker = card._devices[0];
   card._openMarkerDialog(marker);
   await card.updateComplete;
+  root().querySelector('[data-section-target="light"]').click();
+  await card.updateComplete;
   await frame();
 
   const dialogBody = root().querySelector('hp-dialog .body');
@@ -124,7 +126,9 @@ const res = await page.evaluate(async () => {
 
   // Escape dismisses a mouse-hovered bubble without moving keyboard focus
   // away from the form control the user was editing.
-  const nameInput = root().querySelector('hp-dialog #marker-name'); // #600: поле набора
+  // #947: Name is in the hidden Basics pane. Preserve focus on the actual
+  // visible section selector while opening help in the Light pane.
+  const nameInput = root().querySelector('hp-dialog .hpf-settings-mobile hp-settings-select')?.shadowRoot?.querySelector('button');
   nameInput?.focus();
   enterWithRealMouse(roleButton);
   await wait(330);

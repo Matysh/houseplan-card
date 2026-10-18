@@ -18,6 +18,8 @@ const settle = () => page.evaluate(() => window.__hpTest.settled());
 const open = async () => page.evaluate(async () => {
   await window.__hpTest.setMode('devices'); await window.__hpTest.openMarkerDialog('lg_sensor.living_temp');
   await window.__hpTest.waitForWrites();
+  window.__card.shadowRoot.querySelector('[data-section-target="appearance"]').click();
+  await window.__hpTest.settled();
 });
 const close = () => page.evaluate(async () => {
   const closed = await window.__hpTest.close(undefined, { via: 'cancel' });

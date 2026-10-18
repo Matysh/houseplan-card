@@ -829,7 +829,11 @@ await page.locator('.led-select-hit[data-led-select="ceiling"]').dispatchEvent('
 await page.waitForTimeout(100);
 await page.click('[data-led-action="settings"]');
 await page.waitForTimeout(100);
-const radiusFocus = await evaluate(() => {
+await evaluate(() => {
+  window.__card.shadowRoot.querySelector('[data-section-target="light"]').click();
+});
+await evaluate(()=>window.__hpTest.settled());
+const visibleRadiusFocus = await evaluate(() => {
   const input = window.__card.shadowRoot.querySelector('#marker-glow-radius');
   const unit = input?.closest('.hpf-unit');
   input?.focus();
@@ -838,7 +842,7 @@ const radiusFocus = await evaluate(() => {
     wrapper: getComputedStyle(unit).outlineStyle,
   } : null;
 });
-check('the Glow radius has one wrapper focus outline', JSON.stringify(radiusFocus),
+check('the Glow radius has one wrapper focus outline', JSON.stringify(visibleRadiusFocus),
   JSON.stringify({ input: 'none', wrapper: 'solid' }));
 
 // The device dialog offers «Show as LED strip» before the tool is loaded:
@@ -921,6 +925,7 @@ check('static «Show as LED strip» without the tool chunk', await evaluate(() =
   !!window.__card.shadowRoot.querySelector('[data-led-representation="icon"] [data-led-action="show-strip"]')),
   true);
 check('the dialog alone loads no LED tool', ledRequests.filter((name) => name.startsWith('led-strip-editor-')).length, before);
+await page.locator('[data-section-target="appearance"]').click();
 await page.click('[data-led-representation] [data-led-action="show-strip"]');
 await page.waitForTimeout(600);
 console.log('#899 LED tool-entry observation', await evaluate(() => {

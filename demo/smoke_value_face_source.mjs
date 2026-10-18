@@ -163,8 +163,7 @@ const res = await page.evaluate(async () => {
   c._setMode('devices');
   c._openMarkerDialog(item());
   await c.updateComplete;
-  const virtualBinding = [...sr().querySelectorAll('input[name="bmode"]')]
-    .find((node) => node.closest('label')?.textContent?.includes(c._t('marker.virtual_option')));
+  const virtualBinding = sr().querySelector('input[name="bmode"][value="virtual"]');
   virtualBinding?.click();
   await c.updateComplete;
   const bindingResetToAuto = !!virtualBinding && c._markerDialog?.binding === 'virtual'

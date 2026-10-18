@@ -40,6 +40,14 @@ The inherited #945 preview witness uses Room v4's own sample typography
 (16px name and 12px metrics), while retaining the independent space-base
 times room-multiplier checks and the Cancel persistence assertion (#946).
 
+The #947 full-suite adapters navigate the approved panes before clicking or
+focusing their controls. The automatic MDI icon is checked in the actual picker
+or glyph fallback, and the static preview retains plan parity for icon/state/
+satellites/rotation while using standard size (the plan keeps its1.4x size).
+Binding mode is selected by stable radio value instead of its shortened label.
+The first-paint style witness uses a recognized radar fixture, watches hidden
+pane visibility as well as mounts, and keeps all cold-View/lazy-sheet checks.
+
 ## Portable full backup (#936)
 
 Container v1: `manifest.json`, the old `document.json`, optional `zigbee.json`,

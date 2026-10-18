@@ -70,11 +70,8 @@ Object.assign(out, await page.evaluate(async () => {
   const row = sr().querySelector('hp-dialog #marker-use-climate-temp');
   o.checkboxForClimate = !!row;
   o.uncheckedByDefault = !!row && !row.checked;
-  const details = row?.closest('.hpf-card[data-card="details"]');
-  const additional = [...(details?.querySelectorAll('.hpf-sub h4') || [])]
-    .find((heading) => heading.textContent.trim() === c._t('radar.additional_actions'));
-  o.climateToggleFollowsAdditionalActions = !!additional
-    && (additional.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+  o.climateToggleInCommonBasics = !!row?.closest('.hpf-card[data-card="basics"]')
+    && !row.closest('.hpf-settings-pane')?.hidden;
   if (row) row.scrollIntoView({ block: 'center' });
   return o;
 }));

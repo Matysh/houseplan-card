@@ -11,6 +11,7 @@ const out = await page.evaluate(async () => {
   const preview = () => dialog()?.querySelector('hp-device-preview')?.presentation;
   const stored = () => c._serverCfg.markers.find(m => m.id === id);
   const settle = () => hp.settled();
+  const appearance = async () => { dialog().querySelector('[data-section-target="appearance"]').click(); await settle(); };
   const waitFor = async fn => {
     const end = performance.now() + 5000;
     while (!fn()) { if (performance.now() > end) throw new Error('#865 timed out waiting for UI save'); await new Promise(r => setTimeout(r, 20)); }
@@ -33,6 +34,7 @@ const out = await page.evaluate(async () => {
   ] }));
   await hp.setLayout(layout => ({ ...layout, [id]: { s: 'f1', x: 0.4, y: 0.4 } }));
   await hp.setMode('devices'); await hp.openMarkerDialog(id);
+  await appearance();
   out.presenceProjectionIsGreen = preview()?.pulse.color === '#1DC21D';
   out.automaticFieldMatchesProjection = picker()?.color?.toLowerCase() === '#1dc21d'
     && dialog()?.querySelector('.ripple-colorrow .hpf-hex')?.textContent.trim().toLowerCase() === '#1dc21d';
@@ -45,6 +47,7 @@ const out = await page.evaluate(async () => {
   await save();
   out.saveOtherFieldKeepsAutomatic = stored().ripple_color == null;
   await hp.openMarkerDialog(id);
+  await appearance();
   picker().shadowRoot.querySelector('.trigger').click(); await settle();
   await hp.input(picker().shadowRoot.querySelector('input[type="text"]'), 'x');
   await setState('off');
@@ -75,6 +78,7 @@ const out = await page.evaluate(async () => {
     out[`save_${display}_retainsSize`] = stored().ripple_size === 3;
   }
   await hp.openMarkerDialog(id);
+  await appearance();
   out.reopenMatchesSaved = picker().color === '#123456' && c._markerDialog.rippleSize === 3;
   picker().shadowRoot.querySelector('.trigger').click(); await settle();
   await hp.input(picker().shadowRoot.querySelector('input[type="text"]'), '#abcdef');

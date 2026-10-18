@@ -3,6 +3,7 @@
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch();
+page.on('console', message => { if (message.text().startsWith('static preview witness')) console.log(message.text()); });
 const out = await page.evaluate(async () => {
   const card = window.__card;
   const saved = card.hass;
@@ -136,6 +137,9 @@ const out = await page.evaluate(async () => {
   const preview = root().querySelector('hp-device-preview');
   await preview?.updateComplete;
   const previewFace = domFace(preview?.renderRoot?.querySelector('.dev'));
+  // #947: the agreed preview uses standard size, while the plan keeps 1.4×.
+  const previewAtPlanScale = previewFace && { ...previewFace, scale: planFace?.scale };
+  console.log('static preview witness', JSON.stringify({planFace,previewFace}));
   const staticPreviewHasNoDemo = !preview?.renderRoot?.querySelector('.previewdemo');
 
   const savedMarker = card._serverCfg.markers.find((marker) => marker.id === markerId);
@@ -341,7 +345,8 @@ const out = await page.evaluate(async () => {
     planPreviewStaticParity: !!planFace && !!previewFace
       && planFace.classes.includes('static-icon')
       && previewFace.classes.includes('static-icon')
-      && JSON.stringify(planFace) === JSON.stringify(previewFace),
+      && (previewFace.scale || '1') === '1' && planFace.scale === '1.4'
+      && JSON.stringify(planFace) === JSON.stringify(previewAtPlanScale),
     planStaticCardParity: !!planFace && !!staticCardFace
       && planFace.classes.includes('static-icon')
       && staticCardFace.classes.includes('static-icon')
