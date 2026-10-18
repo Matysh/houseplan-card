@@ -31,6 +31,14 @@ full/golden demand; sealed pending push completion can resume review. Private
 local receipts and direct ancestor CI transfer retain separate trust boundaries;
 golden alone no longer orders the entire smoke matrix. Runtime/release gates stay unchanged.
 
+Validation snapshot (#954, 2026-10-18): local cold gate 146.845s, actual receipt-backed
+pre-push gate 126s; all metadata/range guards remained fresh. First branch Validate
+[39112990382](https://github.com/Matysh/houseplan-card/actions/runs/39112990382) passed:
+258s elapsed, 532 summed successful-job seconds (not billed time), one frontend
+producer. Whole #936 material (`026b71d3^..792c70b2`) now selects 8/376 smokes,
+previously 120; all three backup contracts remain. Same-material CI reuse is
+measured on the following documentation-only transition, not inferred from cache bits.
+
 Portable full backups (#936) use admin-only ZIP with used images and accepted
 saved Zigbee maps. Incomplete copies require separate export/import consent;
 ordinary writers and space transfer retain JSON. Apply/Undo share the durable
