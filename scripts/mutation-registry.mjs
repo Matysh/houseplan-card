@@ -77,6 +77,12 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id:'settings-opacity-caption-cropped-955',
+    guard:'node demo/smoke_settings_polish_955.mjs --fast',
+    because:'#955: computed font and flex allocation in the real popup must fit the complete opacity caption beside the three-digit native input; Russian transparency and intensity expose the ellipsis.',
+    patches:[{file:'src/hp-color-opacity.ts',find:'    .row > .caption { flex: none; }\n',replace:''}],
+  },
+  {
     id:'settings-led-actions-inherit-footer-border-955',
     guard:'node demo/smoke_settings_polish_955.mjs --case=led --geometry',
     because:'#955: only the composed dialog cascade exposes the legacy footer border and inset inside the LED action row; actual border boxes and button geometry reveal the duplicate divider.',

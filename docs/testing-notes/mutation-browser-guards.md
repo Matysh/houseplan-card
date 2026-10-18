@@ -35,9 +35,9 @@ that transition events alone prove disposal.
 | Browser harness integrity | 3 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 59 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 85 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
-| Responsive DOM layout | 53 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
+| Responsive DOM layout | 54 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
 | Custom-element and HA browser lifecycle | 210 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **417 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| **Total** | **418 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -345,6 +345,8 @@ toggles; ordinary fresh-click and fade/lifecycle controls remain in the smoke.
 - `wall-draw-rejection-rollback-skipped`
 
 ### Responsive DOM layout
+
+- `settings-opacity-caption-cropped-955`
 
 - `settings-led-actions-inherit-footer-border-955`
 
