@@ -9,12 +9,11 @@ import { settingsSections, revealSettingsField, selectedSettingsSection } from '
 import { ensureSettingsDialogStyles } from './settings-styles';
 import { settingsNorth } from './settings-north';
 import { settingsBackgroundPreviews } from './settings-background-previews';
-import { forgetGeneralBaseline, generalDirty, generalProblems, type GeneralSettingsDraft } from './general-form-state';
+import { forgetGeneralBaseline, generalDirty, generalProblems, settingsUndoVisibility, type GeneralSettingsDraft } from './general-form-state';
 import { moonStatusOf, moonStatusText } from './moon-status';
 import { langOf, type I18nKey } from '../i18n';
 import { settingsT, type SettingsI18nKey } from '../i18n/settings';
 import { supportT } from '../i18n/support';
-import { hasTopologyTranslation, topologyT } from '../i18n/topology';
 import { DEFAULT_FILL_COLORS, type FillColors } from '../logic';
 import { strictNumber } from '../space-dialog';
 import { sunStateOf } from '../sun';
@@ -37,6 +36,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
   const problemFor = (fieldId: string) => problems.find((p) => p.field === fieldId);
   const dirty = generalDirty(host, d);
   const canSave = dirty && problems.length === 0 && !d.busy;
+  const undo = settingsUndoVisibility(host._undoKind, host._canOptimizeUndo);
   const close = () => { forgetGeneralBaseline(host); host._settingsDialog = null; };
   const requestClose = async (event: Event) => {
     if (!dirty || d.busy) { close(); return; }
@@ -88,9 +88,6 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
     .map((space: { title?: string; id: string }) => space.title || space.id);
   // #718 K7: the second caption line, once the moon chunk judged this opening.
   const moonStatus = moonStatusOf(host);
-  const zigbeeHelp = hasTopologyTranslation(lang, 'help') && hasTopologyTranslation(lang, 'help_aria')
-    ? html`<hp-help instant data-help-key="topology.help" .text=${topologyT(lang, 'help')} .ariaLabel=${topologyT(lang, 'help_aria')}></hp-help>`
-    : nothing;
 
   return html`<hp-dialog .hass=${host.hass} data-kind="settings" form-shell settings-layout wide
       .title=${st('gs.title')} .subtitle=${st('gs.scope')} icon="mdi:cog-outline" @hp-close=${requestClose}>
@@ -232,7 +229,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             title: st('gs.sun_rays'), caption: st(d.sunRays ? 'gs.sun_rays_override' : 'gs.sun_rays_override_off'),
             checked: d.sunRays, onChange: (v) => set({ sunRays: v }),
           })}
-          ${renderSunRayOriginSegment(d.sunRayOrigin, (key) => t(key), (sunRayOrigin) => set({ sunRayOrigin }))}
+          ${renderSunRayOriginSegment(d.sunRayOrigin, (key) => t(key), (sunRayOrigin) => set({ sunRayOrigin }), st('gs.preview_selected'))}
           ${toggleRow({ id: 'gs-moon', icon: 'mdi:moon-waning-crescent', title: st('gs.moon'),
             describedBy: 'gs-moon-status',
             checked: d.moon, onChange: (v) => set({ moon: v }),
@@ -243,8 +240,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
         { id: 'zigbee', title: st('gs.section_zigbee'), body: html`${formCard({
         id: 'zigbee',
         title: st('gs.section_zigbee'),
-        help: zigbeeHelp,
-        body: html`<hp-zigbee-topology-settings embedded .active=${selectedSettingsSection(host, 'general') === 'zigbee'} .hass=${host.hass} .value=${d.zigbeeTopology}
+        body: html`<hp-zigbee-topology-settings embedded .language=${lang} .active=${selectedSettingsSection(host, 'general') === 'zigbee'} .hass=${host.hass} .value=${d.zigbeeTopology}
           .savedEnabled=${zigbeeTopologySettingsOf(host._settings).enabled} .devices=${host._devices} .registry=${host._haRegistry}
           @hp-topology-settings-change=${(event: CustomEvent<ZigbeeTopologySettings>) => set({ zigbeeTopology: event.detail })}></hp-zigbee-topology-settings>`,
       })}` },
@@ -269,7 +265,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
                   if (file && host._canImportBackup) void leaveFor(() => this._importBackupFile(file));
                 }} />
               </span>
-              ${host._canOptimizeUndo && host._undoKind === 'import' ? html`
+              ${undo.fullImport ? html`
                 <button class="btn" @click=${() => this._undoPlanOptimization()} ?disabled=${host._optimizeUndoBusy}>
                   <ha-icon icon="mdi:undo-variant"></ha-icon>${st('backup.undo_import')}
                 </button>` : nothing}
@@ -279,12 +275,12 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             <button class="btn" @click=${() => this.optimizePlans.open()} ?disabled=${!host._canEdit || host._kiosk}>
               <ha-icon icon="mdi:broom"></ha-icon>${t('gs.align_all')}
             </button>
-            ${html`
+            ${undo.optimization ? html`
               <button class="btn" @click=${() => this._undoPlanOptimization()} ?disabled=${!host._canOptimizeUndo || host._undoKind === 'import' || host._optimizeUndoBusy || !host._canEdit || host._kiosk}>
                 <ha-icon icon="mdi:undo-variant"></ha-icon>${st('gs.optimize_undo')}
-              </button>`}
+              </button>` : nothing}
           </div>
-          ${callout({ text: html`${st('gs.converter_description')} <a href="https://houseplan.tech/convert" target="_blank" rel="noopener noreferrer">${st('gs.converter_link')}</a><br />${st('gs.converter_result')}` })}
+          ${callout({ text: html`${st('gs.converter_description')} <a href="https://houseplan.tech/convert/" target="_blank" rel="noopener noreferrer">${st('gs.converter_link')}</a><br />${st('gs.converter_result')}` })}
           ${!host._canEdit || host._kiosk ? html`<p class="rhint">${st('gs.optimize_write_required')}</p>` : nothing}`,
       })}` },
       ], st('dialog.section'))}

@@ -198,5 +198,6 @@
   "dialog.saved": "Alle Änderungen gespeichert",
   "dialog.dirty": "Ungespeicherte Änderungen",
   "gs.default_light_help": "Lichtfarbe und Intensität für Geräte ohne eigene Leuchtfarbe.",
-  "gs.default_light_help.aria": "Hilfe: Standardlichtfarbe"
+  "gs.default_light_help.aria": "Hilfe: Standardlichtfarbe",
+  "gs.preview_selected": "Ausgewählt"
 }

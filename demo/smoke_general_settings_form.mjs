@@ -40,9 +40,10 @@ const out = await page.evaluate(async () => {
   const zigbee = q('.hpf-card[data-card="zigbee"]');
   const topo = zigbee?.querySelector('hp-zigbee-topology-settings');
   o.zigbeeHeadingOnce = !!zigbee && zigbee.querySelectorAll('h3').length === 1
-    && !!zigbee.querySelector('.hpf-head hp-help[data-help-key="topology.help"]')
+    && !zigbee.querySelector('.hpf-head hp-help')
     && !!topo?.hasAttribute('embedded') && !topo.shadowRoot.querySelector('.section')
-    && !!topo.shadowRoot.querySelector('.hpf-toggle input[type="checkbox"]');
+    && !!topo.shadowRoot.querySelector('.hpf-toggle input[type="checkbox"]')
+    && !!topo.shadowRoot.querySelector('.hpf-toggle hp-help[instant]');
   o.colorTilesCount = qa('.hpf-colortile').length === 8; // 8 заливок; свет вынесен в отдельную плашку
   o.wallFillIsAPlate = !!q('.hpf-card[data-card="plan"] .hpf-colorrow .hpf-colorfield');
   q('[data-section-target="sun"]').click(); await upd();

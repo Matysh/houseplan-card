@@ -18,10 +18,9 @@ const EMPTY_RUNTIME: ZigbeeTopologyRuntimeSnapshot = { revision: 0, topologies: 
 export class HpZigbeeTopologySettings extends LitElement {
   static properties = {
     hass: { attribute: false },
+    language: { type: String },
     value: { attribute: false },
-    // #600 §5.1: внутри карточки «Zigbee links» заголовок и «?» рисует карточка,
-    // а блок раскладывается контролами набора: строка-тумблер, callout,
-    // подзаголовки ZHA / Zigbee2MQTT, поле тем и строки действий.
+    // One outer card heading; contextual help belongs to the toggle/topics.
     embedded: { type: Boolean, reflect: true },
     savedEnabled: { type: Boolean, attribute: 'saved-enabled' },
     devices: { attribute: false },
@@ -30,6 +29,7 @@ export class HpZigbeeTopologySettings extends LitElement {
   };
 
   hass!: ZigbeeTopologyHass;
+  language?: string;
   value: ZigbeeTopologySettings = { enabled: false, z2mBaseTopics: [] };
   savedEnabled = false;
   devices: readonly DevItem[] = [];
@@ -91,13 +91,16 @@ export class HpZigbeeTopologySettings extends LitElement {
       border-color: var(--hpf-line, var(--divider-color, #666)); }
     :host([embedded]) .hpf-hint { margin: 0; }
     .hpf-provider { display:grid; gap:12px; min-width:0; }
+    .provider-heading { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 8px; }
+    .provider-heading h4 { margin:0; font-size:14px; }
+    .provider-heading .hpf-hint { flex:1 1 220px; font-size:12px; }
+    .topic-meta { display:grid; gap:7px; min-width:0; }
     .topic-head { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:center; }
     .topic-head strong { overflow-wrap:anywhere; }
     .scan-row { border-top:1px solid var(--hpf-line,var(--divider-color)); padding-top:18px; margin-top:18px; }
     .scan-row .status,.scan-row .hint { grid-column:1/-1; }
     details > summary { cursor:pointer; padding:10px 0; color:var(--primary-color); }
     button:hover:not(:disabled) { background:var(--hpf-tint,color-mix(in srgb,var(--primary-color) 10%,transparent)); }
-    @media(max-width:400px) { .topic-head { grid-template-columns:minmax(0,1fr); } .topic-head button { justify-self:end; } }
   `;
 
   connectedCallback(): void {
@@ -170,7 +173,7 @@ export class HpZigbeeTopologySettings extends LitElement {
   public embedded = false;
 
   private _t(key: TopologyI18nKey, vars?: Record<string, string | number>): string {
-    return topologyT(langOf(this.hass), key, vars);
+    return topologyT(langOf(this.hass, this.language), key, vars);
   }
 
   /**
@@ -185,12 +188,11 @@ export class HpZigbeeTopologySettings extends LitElement {
    * not of the resolved string: `topologyT` answers a missing key with the key
    * itself, and «help» is a perfectly non-empty string.
    */
-  private _help(): TemplateResult | typeof nothing {
-    const lang = langOf(this.hass);
-    if (!hasTopologyTranslation(lang, 'help')
-        || !hasTopologyTranslation(lang, 'help_aria')) return nothing;
-    return html`<hp-help .text=${this._t('help')}
-      .ariaLabel=${this._t('help_aria')}></hp-help>`;
+  private _help(key: TopologyI18nKey = 'help', aria: TopologyI18nKey = 'help_aria'): TemplateResult | typeof nothing {
+    const lang = langOf(this.hass, this.language);
+    if (!hasTopologyTranslation(lang, key) || !hasTopologyTranslation(lang, aria)) return nothing;
+    return html`<hp-help .instant=${this.embedded} data-help-key=${`topology.${key}`} .text=${this._t(key)}
+      .ariaLabel=${this._t(aria)}></hp-help>`;
   }
 
   private async _ensureRuntime(): Promise<typeof import('./zigbee-topology-runtime')> {
@@ -263,7 +265,7 @@ export class HpZigbeeTopologySettings extends LitElement {
       : current.phase === 'cancelled' ? this._t('scan_cancelled')
       : current.phase === 'error' ? this._errorText(current.error) : '';
     if (current.obtainedAt === undefined) return phase || (current.phase === 'loading' ? '' : this._t('status_idle'));
-    const time = new Date(current.obtainedAt).toLocaleString(langOf(this.hass), {
+    const time = new Date(current.obtainedAt).toLocaleString(langOf(this.hass, this.language), {
       year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
     });
     const topology = this._snapshot.topologies.find((item) =>
@@ -311,11 +313,10 @@ export class HpZigbeeTopologySettings extends LitElement {
     const disconnected = this._snapshot.backendConnected === false && !this._snapshot.backendError;
     return html`<div class="scan-row" data-topic=${topic}>
       <div class="topic-head">
-        <strong>${topic}</strong>
+        <div class="topic-meta"><strong>${topic}</strong><span class="status" role="status">${this._status(key)}</span></div>
         <button class=${embedded ? 'btn ghost' : ''} ?disabled=${!mayLoad || this._invalidTopic || this._busy(key)}
           @click=${() => this._refreshZ2m(topic)}><ha-icon icon="mdi:refresh"></ha-icon>${this._t('z2m_update')}</button>
       </div>
-      <span class="status" role="status">${this._status(key)}</span>
       ${!active ? html`<span class="hint">${this._t(this._snapshot.topologies.some(item => item.provider === 'z2m' && item.instanceId === topic)
         ? 'scan_replace_hint' : this._snapshot.backendConnected === true ? 'scan_new_hint' : 'scan_unknown_hint')}</span>` : nothing}
       ${active ? html`
@@ -383,9 +384,8 @@ export class HpZigbeeTopologySettings extends LitElement {
   /**
    * Раскладка внутри карточки общего набора (#600, §5.1 SPEC.md). Лист набора
    * вносится в свой теневой корень: селекторы примитивов не привязаны к форме,
-   * а токены `--hpf-*` наследуются с хоста через границу тени. Заголовок и «?»
-   * функции здесь не рисуются — их даёт карточка (`topology.title` /
-   * `topology.help`), иначе заголовок удваивался (дефект 1 из #600).
+   * а токены `--hpf-*` наследуются с хоста через границу тени. Единственный
+   * заголовок даёт карточка; пояснения и «?» относятся к своим контролам.
    */
   private _renderEmbedded(): TemplateResult {
     ensureSettingsDialogStyles(this);
@@ -395,20 +395,19 @@ export class HpZigbeeTopologySettings extends LitElement {
     const storedZha = this._snapshot.topologies.some(item => item.provider === 'zha') || !!this._snapshot.states.zha;
     const storedZ2m = this.value.z2mBaseTopics.length > 0 || this._snapshot.topologies.some(item => item.provider === 'z2m');
     const zha = html`<section class="hpf-provider">
-      <div class="hpf-sub"><h4>${this._t('zha')}</h4></div>
-      <p class="hpf-hint">${this._t('zha_hint')}</p>
+      <div class="provider-heading"><h4>${this._t('zha')}</h4><p class="hpf-hint">${this._t('zha_hint')}</p></div>
+      <p class="status" role="status">${this._status('zha')}</p>
       <div class="hpf-actions">
         <button class="btn ghost" ?disabled=${!mayLoad || this._busy('zha')} @click=${this._readZha}>
           <ha-icon icon="mdi:access-point-network"></ha-icon>${this._t('zha_read')}
         </button>
       </div>
-      <p class="status" role="status">${this._status('zha')}</p>
     </section>`;
     const z2m = html`<section class="hpf-provider">
       <div class="hpf-sub"><h4>${this._t('z2m')}</h4></div>
       <p class="hpf-hint">${this._t('z2m_duration')}</p>
       <div class="hpf-field">
-        <span class="hpf-label hpf-labelrow"><label for="z2m-topics">${this._t('z2m_topics')}</label></span>
+        <span class="hpf-label hpf-labelrow"><label for="z2m-topics">${this._t('z2m_topics')}</label>${this._help('topics_help','topics_help_aria')}</span>
         <textarea id="z2m-topics" class="hpf-input" rows="2" spellcheck="false" ?disabled=${!admin}
           aria-invalid=${this._invalidTopic ? 'true' : nothing}
           .value=${this._topicText} @input=${(event: Event) => this._editTopics((event.target as HTMLTextAreaElement).value)}></textarea>
@@ -418,7 +417,7 @@ export class HpZigbeeTopologySettings extends LitElement {
     </section>`;
     return html`<div class="hpf-form hpf-settings-form"><section class="hpf-settings-pane"><div class="hpf-body">
       <label class="hpf-toggle hpf-noicon">
-        <span class="hpf-toggle-title"><span>${this._t('toggle')}</span></span>
+        <span class="hpf-toggle-title"><span>${this._t('toggle')}</span>${this._help()}</span>
         <input type="checkbox" .checked=${enabled} ?disabled=${!admin} aria-label=${this._t('toggle')}
           @change=${(event: Event) => this._emit({ ...this.value, enabled: (event.target as HTMLInputElement).checked })} />
       </label>

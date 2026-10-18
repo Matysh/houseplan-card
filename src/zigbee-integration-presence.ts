@@ -6,9 +6,12 @@ export type IntegrationPresence = 'present' | 'absent' | 'unknown';
 export function zigbeeIntegrationPresence(
   metadata: IntegrationMetadataSnapshot, registry?: HaRegistrySnapshot,
 ): { zha: IntegrationPresence; z2m: IntegrationPresence } {
-  const entries = Object.values(metadata.configEntries) as Record<string, unknown>[];
-  const entities = Object.values(registry?.entities || {}) as Record<string, unknown>[];
-  const devices = Object.values(registry?.devices || {}) as Record<string, unknown>[];
+  const ignored = new Set(Object.entries(metadata.configEntries).filter(([,entry]) => entry.source === 'ignore').map(([id]) => id));
+  const entries = (Object.values(metadata.configEntries) as Record<string, unknown>[]).filter(entry => entry.source !== 'ignore');
+  const entities = (Object.values(registry?.entities || {}) as Record<string, unknown>[])
+    .filter(entity => !ignored.has(String(entity.config_entry_id || '')));
+  const devices = (Object.values(registry?.devices || {}) as Record<string, unknown>[])
+    .filter(device => !Array.isArray(device.config_entries) || !device.config_entries.length || !device.config_entries.every(id => ignored.has(String(id))));
   const zha = entries.some(entry => entry.domain === 'zha') || entities.some(entity => entity.platform === 'zha');
   const bridge = devices.some(device => /zigbee2mqtt/i.test([
     device.name, device.name_by_user, device.model, device.manufacturer, JSON.stringify(device.identifiers || []),

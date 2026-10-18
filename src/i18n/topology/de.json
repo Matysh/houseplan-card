@@ -59,5 +59,7 @@
   "discovery_unknown": "Nicht alle Integrationen wurden erkannt. Gespeicherte Quellen und manuelle Einrichtung bleiben verfügbar.",
   "zha_manual": "ZHA manuell einrichten",
   "z2m_manual": "Zigbee2MQTT manuell einrichten",
-  "scan_unknown_hint": "Falls für dieses Topic eine Karte gespeichert ist, wird sie vor dem Scan gelöscht. Die Anfrage läuft im Hintergrund und kann etwa 10 Minuten oder länger dauern."
+  "scan_unknown_hint": "Falls für dieses Topic eine Karte gespeichert ist, wird sie vor dem Scan gelöscht. Die Anfrage läuft im Hintergrund und kann etwa 10 Minuten oder länger dauern.",
+  "topics_help": "MQTT-Basisthemen Ihrer Zigbee2MQTT-Instanzen, eines pro Zeile, zum Beispiel zigbee2mqtt.",
+  "topics_help_aria": "Hilfe: Zigbee2MQTT-Basisthemen"
 }

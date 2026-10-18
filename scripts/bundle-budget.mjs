@@ -762,7 +762,9 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // #948 visual acceptance: matched 6ffed73a/68735d36 source is 280396 B;
 // approved field/shell/copy refinements measure 280863 B (+467). Carry only
 // this own delta; the inherited 1412 B gap, band and all other ceilings stay.
-export const LAZY_EDITOR_GZIP_CEILING = 279_451;
+// #948 r1: matched 28597553 source 280863 -> 281160 B (+297) for the reviewed
+// discovery/undo/menu corrections and approved embedded layout/copy. Own cost only.
+export const LAZY_EDITOR_GZIP_CEILING = 279_748;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

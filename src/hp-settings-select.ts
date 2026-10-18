@@ -36,13 +36,13 @@ export class HpSettingsSelect extends LitElement {
     .menu.visible { opacity:1; transform:none; }
     .menu:not(.visible) { pointer-events:none; }
     [role=option] { display:flex; gap:12px; align-items:center; min-height:44px; box-sizing:border-box;
-      padding:10px 12px; border-radius:6px; cursor:pointer; overflow-wrap:anywhere; }
+      padding:10px 12px; border-radius:6px; cursor:pointer; overflow-wrap:anywhere; transition:background-color 160ms,color 160ms; }
     [role=option] span { flex:1; min-width:0; }
     [role=option][aria-selected=true] { color:var(--hpf-accent,var(--primary-color,#03a9f4)); }
     [role=option].active,[role=option]:hover { background:var(--hpf-tint,color-mix(in srgb,var(--primary-color,#03a9f4) 12%,transparent)); }
     [role=option][aria-disabled=true] { opacity:.45; cursor:not-allowed; background:transparent; }
-    @media(max-width:600px) { button { font-size:16px; } }
-    @media(prefers-reduced-motion:reduce) { button,button svg,.menu { transition:none; } }
+    @media(max-width:550px) { button { font-size:16px; } }
+    @media(prefers-reduced-motion:reduce) { button,button svg,.menu,[role=option] { transition:none; } }
   `;
   declare private _version: number;
   private _open = false;

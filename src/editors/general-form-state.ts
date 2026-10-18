@@ -8,6 +8,11 @@ import { dialogDirty, forgetDialogBaseline, rememberDialogBaseline, stableKey } 
 
 export type GeneralSettingsDraft = NonNullable<HouseplanEditorHostPort['_settingsDialog']>;
 
+/** The backend has one undo slot. Never offer two independent undo operations. */
+export function settingsUndoVisibility(kind: string | null | undefined, available: boolean): { fullImport: boolean; optimization: boolean } {
+  return { fullImport: available && kind === 'import', optimization: kind !== 'import' };
+}
+
 const TRANSIENT: ReadonlySet<string> = new Set(['busy', 'glowRadiusInput', 'northDegInput']);
 
 export function generalDraftKey(d: GeneralSettingsDraft): string {

@@ -59,7 +59,7 @@ layout only, not an icon raster comparison. Inspect actual icons separately.
 This focused witness complements the full golden matrix and the other forms'
 visual comparison; it does not certify all four dialogs by itself.
 Matched Linux builds of the pre-refinement `6ffed73a` source (product-identical
-to pipeline `68735d36`) and this candidate measure 280396 → 280863 B gzip in
+to pipeline `68735d36`) and the visual refinement before review-r1 fixes measure 280396 → 280863 B gzip in
 the lazy editor. Only its own +467 B enters the rolling reference, preserving
 the inherited 1412 B gap and 2000 B band. Initial View is 323416 → 323450 B;
 its reference/absolute ceiling and the onboarding ceiling are unchanged.
@@ -67,6 +67,19 @@ Raw files in the same isolated published base/candidate builds are 3054747 →
 3058911 B (+4164, chiefly the approved lazy copy and shared presentation). Carry
 only +4164 into `bundleBytes`; its inherited −2098 B gap and 2000 B band remain.
 All other coupling metrics are unchanged and their references are preserved.
+Review-r1 adds ordinary negative unit inputs for ignored discovery plus stale
+registry rows, configured-disabled/failed entries and the single undo slot in
+`settings-sections.test.mjs`. The actual render consumes that undo projection.
+`smoke_settings_select` checks 160 ms item transitions and reduced motion in
+the actual list and its dialog-owned fallback. Desktop navigation changes at
+550 px as approved; outer/inner ray captions identify the selected example.
+The embedded Zigbee form shares that same layout, uses the card's explicit
+language, places contextual help on controls and keeps topic status beside its
+heading with full-width scan guidance below. A live HEAD request to the approved
+`https://houseplan.tech/convert/` returned HTTP 200 on 2026-10-18.
+Matched `28597553` and r1 builds measure editor 280863 → 281160 B (+297) and raw
+3058911 → 3060586 B (+1675). Carry only those own deltas into the same rolling
+references; bands, initial/onboarding limits and all coupling counts stay fixed.
 
 ## Room CO₂ (#920)
 

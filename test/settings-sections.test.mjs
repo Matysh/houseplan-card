@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { settingsSectionOf, selectSettingsSection } from '../test-build/editors/settings-sections.js';
 import { zigbeeIntegrationPresence } from '../test-build/zigbee-integration-presence.js';
+import { settingsUndoVisibility } from '../test-build/editors/general-form-state.js';
 
 test('#948 section choice is per host and dialog, and invalidated safely when a profile disappears', () => {
   const host = { requestUpdate() {}, renderRoot: { querySelector() { return null; } } }, other = { requestUpdate() {} };
@@ -26,4 +27,23 @@ test('#948 ZHA-only discovery, both integrations, and generic MQTT stay distinct
   assert.equal(zigbeeIntegrationPresence(metadata, registry).z2m, 'unknown');
   registry.devices.bridge = { model: 'Zigbee2MQTT Bridge' };
   assert.deepEqual(zigbeeIntegrationPresence(metadata, registry), { zha: 'present', z2m: 'present' });
+});
+
+test('#948 ignored discovery entries do not become configured integrations, even with stale registry rows', () => {
+  const metadata={loaded:true,entriesAvailable:true,revision:1,manifests:{},configEntries:{z:{domain:'zha',source:'ignore'},m:{domain:'mqtt',source:'ignore'}}};
+  const registry={authoritative:true,entities:{old:{platform:'zha',config_entry_id:'z'}},devices:{bridge:{model:'Zigbee2MQTT Bridge',config_entries:['m']}}};
+  assert.deepEqual(zigbeeIntegrationPresence(metadata,registry),{zha:'absent',z2m:'absent'});
+  metadata.configEntries.z={domain:'zha',source:'user',disabled_by:'user',state:'not_loaded'};
+  assert.equal(zigbeeIntegrationPresence(metadata,registry).zha,'present');
+  delete metadata.configEntries.z.disabled_by;
+  metadata.configEntries.z.state='setup_error';
+  assert.equal(zigbeeIntegrationPresence(metadata,registry).zha,'present');
+});
+
+test('#948 one backend undo slot cannot expose two undo operations', () => {
+  assert.deepEqual(settingsUndoVisibility('import',true),{fullImport:true,optimization:false});
+  assert.deepEqual(settingsUndoVisibility('import',false),{fullImport:false,optimization:false});
+  for(const kind of ['align','optimize',null,undefined])for(const available of [true,false]){
+    assert.deepEqual(settingsUndoVisibility(kind,available),{fullImport:false,optimization:true});
+  }
 });

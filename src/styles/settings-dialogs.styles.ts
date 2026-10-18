@@ -34,6 +34,7 @@ export const settingsDialogCss = `
   .hpf-settings-pane .hpf-callout { padding:8px 10px; font-size:12px; line-height:1.45; border-inline-start:3px solid var(--info-color,var(--primary-color)); border-radius:0; background:color-mix(in srgb,var(--info-color,var(--primary-color)) 10%,var(--hpf-surface)); }
   .hpf-settings-pane .hpf-callout > ha-icon { display:none; }
   .hpf-settings-pane .hpf-callout p { margin:0; font-size:inherit; }
+  .hpf-settings-pane .hpf-hint,.hpf-settings-pane .hpf-toggle-caption { font-size:12px; line-height:1.45; }
   .hpf-settings-form button:not(:disabled),.hpf-settings-form select:not(:disabled),.hpf-footer button:not(:disabled),.hpf-footer a { cursor:pointer; }
   .hpf-settings-form button:not(:disabled):hover,.hpf-footer button:not(:disabled):hover { filter:brightness(1.08); }
   .hpf-settings-form :disabled,.hpf-footer button:disabled { cursor:not-allowed; }
@@ -78,7 +79,7 @@ export const settingsDialogCss = `
     .hpf-settings-form option { padding:10px 12px; border-radius:6px; white-space:normal; }
     .hpf-settings-form option:hover { background:var(--hpf-tint); }
   }
-  @media(max-width:600px) {
+  @media(max-width:550px) {
     .hpf-settings-layout { grid-template-columns:minmax(0,1fr); }
     .hpf-settings-nav { display:none; }
     .hpf-settings-mobile { display:block; position:sticky; top:0; z-index:2; padding:10px 14px; border-bottom:1px solid var(--hpf-line); background:var(--hpf-surface); }

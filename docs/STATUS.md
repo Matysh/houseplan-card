@@ -51,6 +51,8 @@ independent Zigbee scan jobs remain owned by their original components.
 The AC1 comparison against the approved v10 also fixes field widths, guidance
 placement, compact navigation, header and save-status order. Functional smoke
 success by itself is not visual acceptance; the four-dialog beta remains pending.
+Review-r1 corrections distinguish ignored discovery from disabled configured
+integrations, keep only the current undo owner visible and animate list items.
 
 Room darkness (#943) is removed from the palette, General settings and all
 full/static/2.5D render paths. Light pools and actual data fills retain their

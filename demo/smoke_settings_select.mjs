@@ -10,6 +10,7 @@ try {
  await trigger.click();
  out.openListbox=await navigation.locator('[role="listbox"]').isVisible();
  out.openAnimation=await navigation.locator('[role="listbox"]').evaluate(el=>getComputedStyle(el).transitionDuration==='0.16s, 0.16s');
+ out.optionHoverTransition=await navigation.locator('[role="option"]').first().evaluate(el=>getComputedStyle(el).transitionDuration==='0.16s, 0.16s');
  await navigation.locator('[role="listbox"]').press('End');
  await navigation.locator('[role="listbox"]').press('Enter');
  out.keyboardChoosesSection=await dialog.locator('[data-settings-section="data"]').isVisible();
@@ -45,6 +46,7 @@ try {
  await page.emulateMedia({reducedMotion:'reduce'});await page.waitForTimeout(180);
  await menu.locator('button').click();
  out.reducedMotion=await dialog.locator('[data-hp-overlay="select"] .menu').evaluate(el=>getComputedStyle(el).transitionDuration==='0s');
+ out.optionReducedMotion=await dialog.locator('[data-hp-overlay="select"] [role="option"]').first().evaluate(el=>getComputedStyle(el).transitionDuration==='0s');
  await dialog.locator('[data-hp-overlay="select"] [role="listbox"]').press('Escape');
  await page.evaluate(()=>{Object.assign(HTMLElement.prototype,{showPopover:window.__selectNativePopover.show,hidePopover:window.__selectNativePopover.hide});});
 } catch(error){console.error(error);out.completed=false;}
