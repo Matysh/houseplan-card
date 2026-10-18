@@ -36,7 +36,7 @@ const out = await page.evaluate(async () => {
   o.subtitleShowsRoomAndSpace = dlg().subtitle.includes(c._spaceModel().title) && !!dlg().shadowRoot.querySelector('.subtitle');
   o.previewKept = !!q('.hpf-card[data-card="sizes"] .hpf-tint.hpf-preview .cardpreview'); // Q2
   const nameBox = q('#room-name').getBoundingClientRect();
-  const areaBox = q('#room-area').getBoundingClientRect();
+  const areaBox = q('#room-area').closest('hp-settings-select').getBoundingClientRect();
   o.basicsStackedLikeMock = areaBox.top > nameBox.bottom && Math.abs(areaBox.width - nameBox.width) < 2;
   o.everyCardHasHelp = qa('.hpf-card .hpf-head hp-help').length === 3 && !!q('#room-area')?.closest('.hpf-field')?.querySelector('hp-help'); // §6.1: у Basics «?» — у зоны
 
