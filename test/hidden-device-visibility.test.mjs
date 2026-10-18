@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   canRevealUserHidden, HiddenDeviceRoster, HiddenDevicePreference, hiddenDevicePreferenceKey,
 } from '../test-build/hidden-device-visibility.js';
+import { resolveToggleIntent, toggleOperation } from '../test-build/device-toggle.js';
 
 const hidden = (kind = 'active') => ({
   id: kind, hidden: true, userHidden: true, marker: { hidden: true, binding: 'device:x' },
@@ -39,6 +40,33 @@ test('#919 projected visibility preserves saved metadata, raw array and unrelate
   assert.notEqual(roster.read(rows, true, 2), shown, 'accepted source epoch retires the projection');
   assert.equal(roster.read(rows, false, 2), rows);
   assert.equal(roster.read([visible], true)[0], visible);
+});
+
+test('#953 hidden linked-light actions need the display roster, not the saved-hidden source', () => {
+  const lamp = { id: 'lamp', name: 'Hidden linked lamp', hidden: true, userHidden: true,
+    virtual: true, bindingKind: 'virtual', entities: [], controls: [], tapAction: 'toggle',
+    marker: { id: 'lamp', binding: 'virtual', hidden: true, is_light: true, tap_action: 'toggle', controls: [] } };
+  const driver = { id: 'driver', name: 'Hidden relay', hidden: true, userHidden: true,
+    bindingKind: 'entity', bindingRef: 'switch.relay', primary: 'switch.relay', entities: ['switch.relay'],
+    bindingStatus: { kind: 'active' }, controls: [],
+    marker: { id: 'driver', binding: 'entity:switch.relay', hidden: true, controls: ['marker:lamp'] } };
+  const source = [driver, lamp], roster = new HiddenDeviceRoster();
+  const display = roster.read(source, true);
+  const selected = display.find(row => row.id === 'lamp');
+  const hass = { states: { 'switch.relay': { state: 'on', attributes: {} } },
+    entities: {}, devices: {}, services: { homeassistant: { turn_on: {}, turn_off: {} } } };
+  const options = { hass, device: selected, virtualLights: { rev: 1, configRev: 1, off: new Set(['lamp']) } };
+  assert.deepEqual(toggleOperation(resolveToggleIntent({ ...options, devices: display })),
+    { kind: 'ha-service', command: { domain: 'homeassistant', service: 'turn_off', data: { entity_id: ['switch.relay'] } } });
+  // A real alternative input: with the saved-hidden roster there is no visible
+  // target in the incoming graph, so the existing manual fallback is expected.
+  assert.deepEqual(toggleOperation(resolveToggleIntent({ ...options, devices: source })),
+    { kind: 'virtual-light', markerId: 'lamp' });
+  const unlinked = display.map(row => row.id === 'driver' ? { ...row, marker: { ...row.marker, controls: [] } } : row);
+  assert.deepEqual(toggleOperation(resolveToggleIntent({ ...options, devices: unlinked })),
+    { kind: 'virtual-light', markerId: 'lamp' });
+  assert.equal(lamp.hidden, true);
+  assert.equal(driver.hidden, true);
 });
 
 test('#919 saved choice survives a new owner instance and stays isolated by user/card address', () => {

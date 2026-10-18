@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Repair the hidden-device browser witness for linked virtual-light actions;
+  keep the existing nightly mutation and product behavior unchanged (#953).
+
 - Development checks reuse verified unchanged product inputs across metadata
   commits and pushes, keep Git/process checks fresh, and separate golden from
   the full smoke matrix. Direct producer evidence bridges branch caches (#954).

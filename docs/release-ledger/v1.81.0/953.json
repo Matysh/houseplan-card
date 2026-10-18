@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 953,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Repair the existing hidden linked-light browser witness after a nightly survivor; retain its mutation and strict nightly execution policy. No product behavior change."
+}

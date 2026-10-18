@@ -227,7 +227,7 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'hidden-display-toggle-uses-hidden-source-roster',
     guard: 'node demo/smoke_hidden_device_toggle.mjs',
-    because: '#919 AC2: the actual mounted revealed light must dispatch its ordinary HA action through the full-card handler and lazy runtime boundary; a resolver-only fixture cannot prove the consumer passes projected rows.',
+    because: '#919 AC2 / #953: a native click on a saved-hidden virtual light with an incoming HA driver must dispatch that exact driver, never the dormant manual toggle. A direct HA lamp alone cannot distinguish the source roster from the display projection.',
     patches: [{ file: 'src/houseplan-card.ts',
       find: '    devices: readonly DevItem[] = this._displayDevices,',
       replace: '    devices: readonly DevItem[] = this._devices,' }],

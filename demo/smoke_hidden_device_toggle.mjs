@@ -270,5 +270,63 @@ check('touchEyeClosesWithoutDeviceAction', await card.locator('#hp-header-menu')
 check('touchEyeHidesFace', await card.locator('[data-hp="device"][data-id="hidden-far"]').count(), 0);
 check('touchEyeKeepsWirePair', await stored(), mobilePair);
 check('touchEyeDoesNotCallHA', await page.evaluate(() => window.__serviceCalls.length), mobileServices);
+
+// #953: a direct HA lamp does not depend on the resolver's device roster.
+// A revealed virtual lamp with an incoming driver does: the saved-hidden target
+// must enter the display graph, otherwise this native click changes its dormant
+// manual bit instead of operating the real relay.
+await page.setViewportSize({ width: 1440, height: 1000 });
+await page.evaluate(async () => {
+  const c = window.__card;
+  if (!['on', 'off'].includes(c.hass.states['switch.kettle']?.state)) throw Error('linked fixture needs its active HA relay');
+  await window.__hpTest.setServerConfig(cfg => ({ ...cfg,
+    spaces: [{ id: 'f1', title: 'Hidden linked light', rooms: [{ id: 'linked-room', name: 'Linked room',
+      area: 'kitchen', poly: [[.1,.1],[.9,.1],[.9,.9],[.1,.9]] }] }],
+    markers: [
+      { id: 'hidden-linked-driver', binding: 'device:d_kettle', name: 'Hidden HA relay',
+        space: 'f1', area: 'kitchen', room_id: 'linked-room', hidden: true,
+        controls: ['marker:hidden-linked-light'] },
+      { id: 'hidden-linked-light', binding: 'virtual', name: 'Hidden linked light',
+        space: 'f1', area: 'kitchen', room_id: 'linked-room', hidden: true,
+        is_light: true, tap_action: 'toggle', tap_confirm: false },
+    ], settings: { filter_seeded: true } }));
+  await window.__hpTest.setLayout({
+    'hidden-linked-driver': { s: 'f1', x: .35, y: .5 },
+    'hidden-linked-light': { s: 'f1', x: .65, y: .5 },
+  });
+  window.__hiddenLinkedWrites = [];
+  const original = c.hass.callWS;
+  c.hass = { ...c.hass, callWS: async message => {
+    if (/^houseplan\//.test(message.type) && !/\/(get|list|subscribe)$/.test(message.type)) window.__hiddenLinkedWrites.push(structuredClone(message));
+    return original(message);
+  } };
+}); await settle();
+const linkedFace = card.locator('[data-hp="device"][data-id="hidden-linked-light"]');
+check('linkedLightAbsentWithEyeOff', await linkedFace.count(), 0);
+const linkedPair = await stored();
+await toggle();
+await card.locator('[data-hp="zoom-fit"]').click(); await settle();
+check('linkedLightRevealedAsOrdinary', await linkedFace.evaluate(el => !el.classList.contains('ghost')));
+const linkedBefore = await page.evaluate(() => ({ calls: window.__serviceCalls.length,
+  state: window.__card.hass.states['switch.kettle'].state }));
+await linkedFace.click(); await settle();
+check('revealedLinkedLightDispatchesExactHADriver', await page.evaluate(start => window.__serviceCalls.slice(start), linkedBefore.calls),
+  [['homeassistant', linkedBefore.state === 'on' ? 'turn_off' : 'turn_on', { entity_id: ['switch.kettle'] }]]);
+check('revealedLinkedLightNeverTogglesDormantManualState', await page.evaluate(() => window.__hiddenLinkedWrites), []);
+check('revealedLinkedLightPreservesSavedPair', await stored(), linkedPair);
+
+// Ordinary negative input, not a patched implementation: unlinking restores
+// manual ownership and must no longer send any command to the former driver.
+await page.evaluate(() => window.__hpTest.setServerConfig(cfg => {
+  cfg.markers.find(marker => marker.id === 'hidden-linked-driver').controls = [];
+  return cfg;
+})); await settle();
+const unlinkedPair = await stored();
+const unlinkedBefore = await page.evaluate(() => ({ calls: window.__serviceCalls.length, writes: window.__hiddenLinkedWrites.length }));
+await linkedFace.click(); await settle();
+check('unlinkedRevealedLightDoesNotOperateFormerDriver', await page.evaluate(() => window.__serviceCalls.length), unlinkedBefore.calls);
+check('unlinkedRevealedLightUsesOnlyManualToggle', await page.evaluate(start => window.__hiddenLinkedWrites.slice(start), unlinkedBefore.writes),
+  [{ type: 'houseplan/virtual_light/toggle', marker_id: 'hidden-linked-light' }]);
+check('unlinkedRevealedLightPreservesSavedPair', await stored(), unlinkedPair);
 await finish(browser);
 } finally { await browser.close(); }

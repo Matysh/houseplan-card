@@ -25,6 +25,11 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Hidden-display witness repair (#953) exercises a revealed virtual light with an
+incoming real HA driver, not only a direct HA lamp. Native action checks retain
+the exact target and forbid dormant manual writes; ordinary unlink restores
+manual ownership. The existing mutation stays registered for nightly execution.
+
 Development-loop reuse (#954) keeps pure product/build evidence content-bound,
 metadata-dependent units and guards fresh. One up-front push plan includes task
 full/golden demand; sealed pending push completion can resume review. Private

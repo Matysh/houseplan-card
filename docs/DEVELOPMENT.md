@@ -276,6 +276,9 @@ desktop/catalog/touch actions and checks reload isolation, no mutation writes,
 ordinary HA toggle/drag, lighting parity, explicit Fit and the static card.
 `smoke_mobile_view_header` includes read-only users and 320/390 px targets.
 Three golden scenes cover ordinary reveal, disabled service ghosts and 2.5D LED.
+The #953 linked-light phase also checks an exact HA driver call and no dormant
+manual toggle after revealing saved-hidden rows; an ordinary unlink input checks
+the inverse ownership. A direct bound HA lamp cannot witness this roster boundary.
 Mutation witnesses are registered for nightly execution only (PROCESS §2.7).
 
 ## Device copying (#935)
