@@ -64,7 +64,9 @@ try{
      const prefix=`${name}_${width}x${height}_${theme}_${id}`;
      out[prefix+'_fit']=await d.evaluate(el=>{const ha=el.shadowRoot.querySelector('ha-dialog'),body=ha.shadowRoot.querySelector('.body'),r=ha.shadowRoot.querySelector('wa-dialog').shadowRoot.querySelector('dialog').getBoundingClientRect(),f=el.querySelector('.hpf-footer').getBoundingClientRect();return body.scrollWidth<=body.clientWidth+1&&r.left>=-1&&r.right<=innerWidth+1&&r.top>=-1&&r.bottom<=innerHeight+1&&f.bottom<=r.bottom+1;});
      out[prefix+'_compact_temperature_fields']=await d.locator('.hpf-temperature-range .hpf-unit').filter({visible:true}).evaluateAll(nodes=>nodes.every(el=>Math.abs(parseFloat(getComputedStyle(el).width)-96)<.1));
+     out[prefix+'_body_action_targets']=await d.locator('.hpf-settings-pane .btn').filter({visible:true}).evaluateAll(nodes=>nodes.every(el=>el.getBoundingClientRect().height>=44-.1));
      const toggles=d.locator('.hpf-settings-pane .hpf-toggle').filter({visible:true});sawToggles+=await toggles.count();
+     out[prefix+'_heading_to_toggle_spacing']=await d.locator('.hpf-sub + .hpf-toggle').filter({visible:true}).evaluateAll(rows=>rows.every(row=>{const walker=document.createTreeWalker(row.querySelector('.hpf-toggle-title'),NodeFilter.SHOW_TEXT,{acceptNode:n=>n.textContent.trim()?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT}),range=document.createRange();range.selectNodeContents(walker.nextNode());const gap=range.getBoundingClientRect().top-row.previousElementSibling.getBoundingClientRect().bottom;return gap>=10&&gap<=30;}));
      // The title container can be centred while its actual text still sits
      // several pixels above the switch. Measure the rendered text, not its box.
      out[prefix+'_toggle_alignment']=await toggles.evaluateAll(nodes=>nodes.every(n=>{

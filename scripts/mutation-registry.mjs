@@ -86,7 +86,7 @@ const MUTANT_DEFINITIONS = [
     id:'settings-help-orphans-last-line-955',
     guard:'node demo/smoke_settings_polish_955.mjs --fast',
     because:'#955: the final word and contextual help must stay together; actual text/paint bounds expose an icon stranded on its own line.',
-    patches:[{file:'src/styles/settings-dialogs.styles.ts',find:'.hpf-label-tail {white-space:nowrap;}',replace:'.hpf-label-tail {white-space:normal;}'}],
+    patches:[{file:'src/styles/settings-dialogs.styles.ts',find:'.hpf-label-tail{white-space:nowrap;}',replace:'.hpf-label-tail{white-space:normal;}'}],
   },
   {
     id:'settings-help-needs-host-hover-955',

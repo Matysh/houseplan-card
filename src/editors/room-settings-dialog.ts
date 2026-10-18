@@ -1,7 +1,7 @@
 /** Compact room settings (#946), sharing controls and save ownership with the existing editor. */
 import { html, nothing, type TemplateResult } from 'lit';
 
-import { type I18nKey } from '../i18n';
+import { langOf, type I18nKey } from '../i18n';
 import { settingsCopy } from './settings-copy';
 import { ROOM_FILL_MODES, spaceDisplayOf } from '../logic';
 import { roomTempThresholdDraft, strictNumber } from '../space-dialog';
@@ -118,7 +118,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
     ['label', 'room.label_scale', host._roomLabelScale, (v) => { host._roomLabelScale = v; }],
   ];
 
-  return html`<hp-dialog class="roomdialog" .hass=${host.hass} data-kind="room" form-shell settings-layout wide
+  return html`<hp-dialog class="roomdialog" .hass=${host.hass} lang=${langOf(host.hass,host._config?.language)} data-kind="room" form-shell settings-layout wide
     .title=${edit ? st('room.title', {name:host._nameSel || t('room.settings_title')}) : batchProgress || t('room.new')}
     .subtitle=${st('room.context', {space:host._spaceModel()?.title ?? ''})}
     icon="mdi:cog-outline" icon-badge="mdi:door-open" @hp-close=${requestClose}>
