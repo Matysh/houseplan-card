@@ -14,6 +14,7 @@ export type ColorPickerLabels = {
   invalidHex: string;
   confirm: string;
 };
+export type ColorHexDraft = { raw: string; needsValidInput: boolean };
 
 const DEFAULT_LABELS: ColorPickerLabels = {
   title: 'Color picker',
@@ -42,17 +43,43 @@ export class HpColorOpacity extends LitElement {
   public hideLabel = false;
   /** Settings form-kit uses a solid swatch instead of the alpha checkerboard. */
   public flatSwatch = false;
+  /** A tiny swatch-only host in Properties; independent of solid/alpha paint. */
+  public compactSwatch = false;
   /**
    * Let the existing trigger cover an entire settings colour tile. #615: the
    * tile is the one flat-swatch surface that still shows alpha — checkerboard
    * under the colour, colour at its opacity — so the picture matches the `%`.
    */
   public coverSwatch = false;
+  /** Optional fill semantics; alpha zero remains a real colour, not "no fill". */
+  public allowNoFill = false;
+  public noFill = false;
+  public noFillLabel = 'No fill';
   public pickerLabels: ColorPickerLabels = DEFAULT_LABELS;
 
   private _open = false;
   /** Consumers may hold live-derived properties steady while HEX is edited. */
   public get pickerOpen(): boolean { return this._open; }
+  private resumedHex: ColorHexDraft | null = null;
+  /** Session-only owner handoff when a responsive surface is temporarily unmounted. */
+  public captureHexDraft(): ColorHexDraft | null {
+    return this._open ? {raw:this._hexDraft,needsValidInput:this._hexNeedsValidInput} : this.resumedHex;
+  }
+  public resumeHexDraft(value: ColorHexDraft): void { this.resumedHex = {...value}; }
+  /** A compound-field owner may finish on navigation without bypassing an invalid HEX draft. */
+  public prepareCompletion(): boolean {
+    if (!this._open) {
+      if (!this.resumedHex) return true;
+      if (!this.resumedHex.needsValidInput && normalizeHexColor(this.resumedHex.raw)) return true;
+      void this.togglePicker(); return false;
+    }
+    if (this._emitRaf) { this._cancelQueuedEmit(); this._emitHsv(); }
+    this._commitHex();
+    if (!this._hexInvalid && !this._hexNeedsValidInput) return true;
+    void this.updateComplete.then(()=>this._surface()?.querySelector<HTMLInputElement>('input[type="text"]')?.focus());
+    return false;
+  }
+  public closePicker(): void { this._closePicker(); }
   /** A settings colour plate delegates to the same trigger and overlay owner. */
   public async togglePicker(): Promise<void> {
     if (this.disabled) return;
@@ -86,7 +113,11 @@ export class HpColorOpacity extends LitElement {
     // остаётся источником title/aria триггера и заголовка панели.
     hideLabel: { type: Boolean, attribute: 'hide-label' },
     flatSwatch: { type: Boolean, attribute: 'flat-swatch' },
+    compactSwatch: { type: Boolean, attribute: 'compact-swatch' },
     coverSwatch: { type: Boolean, attribute: 'cover-swatch' },
+    allowNoFill: { type: Boolean, attribute: 'allow-no-fill' },
+    noFill: { type: Boolean, attribute: 'no-fill' },
+    noFillLabel: { type: String, attribute: 'no-fill-label' },
     pickerLabels: { attribute: false },
     _open: { state: true },
     _hue: { state: true },
@@ -125,12 +156,15 @@ export class HpColorOpacity extends LitElement {
       cursor: pointer;
     }
     .trigger.solid { background: none; }
-    :host([cover-swatch]) { display: block; width: 100%; height: 100%; }
-    :host([cover-swatch]) .trigger {
+    :host([cover-swatch]), :host([compact-swatch]) { display: block; width: 100%; height: 100%; }
+    :host([cover-swatch]) .trigger, :host([compact-swatch]) .trigger {
       width: 100%; height: 100%; padding: 0; border: 0; border-radius: 6px;
     }
-    :host([cover-swatch]) .swatch { border-radius: 6px; box-shadow: none; }
-    :host([cover-swatch]) .trigger:focus-visible { outline-offset: -2px; }
+    :host([cover-swatch]) .swatch, :host([compact-swatch]) .swatch { border-radius: 6px; box-shadow: none; }
+    :host([compact-swatch]:not([cover-swatch])) .trigger,
+    :host([compact-swatch]:not([cover-swatch])) .swatch { border-radius: 3px; }
+    :host([compact-swatch]:not([cover-swatch])) .swatch { box-shadow: inset 0 0 0 1px #00000010; }
+    :host([cover-swatch]) .trigger:focus-visible, :host([compact-swatch]) .trigger:focus-visible { outline-offset: -2px; }
     :host([data-pointer-hover]) .trigger:hover {
       border-color: var(--primary-color, #03a9f4);
     }
@@ -471,11 +505,14 @@ export class HpColorOpacity extends LitElement {
       return;
     }
     this._forceFallback = false;
+    const resumed = this.resumedHex; this.resumedHex = null;
     this._syncFromColor(this.color, false);
-    this._hexInvalid = false;
-    this._hexNeedsValidInput = false;
+    this._hexInvalid = resumed?.needsValidInput ?? false;
+    this._hexNeedsValidInput = resumed?.needsValidInput ?? false;
+    if (resumed) this._hexDraft = resumed.raw;
     this._activePointerId = null;
     this._open = true;
+    this.dispatchEvent(new CustomEvent('hp-color-opacity-open', { bubbles: true, composed: true }));
     await this.updateComplete;
     if (!this._open) return;
     if (!this._supportsPopover()) this._renderFallback();
@@ -509,6 +546,7 @@ export class HpColorOpacity extends LitElement {
     this._cancelQueuedEmit();
     this._activePointerId = null;
     this._floating.destroy();
+    this.dispatchEvent(new CustomEvent('hp-color-opacity-close', { bubbles: true, composed: true }));
     if (refocus) {
       this.updateComplete.then(() => this.renderRoot.querySelector<HTMLButtonElement>('.trigger')?.focus());
     }
@@ -752,6 +790,9 @@ export class HpColorOpacity extends LitElement {
       });
       return;
     }
+    this.dispatchEvent(new CustomEvent('hp-color-opacity-commit', {
+      detail: { color: this.color, opacity: this.opacity, ...(this.allowNoFill ? { noFill: this.noFill } : {}) }, bubbles: true, composed: true,
+    }));
     this._closePicker(true);
   }
 
@@ -774,7 +815,7 @@ export class HpColorOpacity extends LitElement {
     if (!preserveHexDraft) this._hexDraft = normalized;
     this._hexInvalid = this._hexNeedsValidInput;
     this.dispatchEvent(new CustomEvent('hp-color-opacity-change', {
-      detail: { color: normalized, opacity: clamped },
+      detail: { color: normalized, opacity: clamped, ...(this.allowNoFill ? { noFill: this.noFill } : {}) },
       bubbles: true,
       composed: true,
     }));
@@ -846,6 +887,8 @@ export class HpColorOpacity extends LitElement {
             @change=${(e: Event) => this._setOpacity(Number((e.target as HTMLInputElement).value) / 100)} />
           <span class="pct">%</span>
         </div>` : nothing}
+        ${this.allowNoFill ? html`<label class="row"><input type="checkbox" .checked=${this.noFill}
+          @change=${(e: Event) => { this.noFill = (e.target as HTMLInputElement).checked; this._emit(this.color, this.opacity); }} />${this.noFillLabel}</label>` : nothing}
         <button class="confirm" type="button" @click=${(e: Event) => this._confirm(e)}>${labels.confirm}</button>
       </div>`;
   }
@@ -871,7 +914,9 @@ export class HpColorOpacity extends LitElement {
       <button class=${solid ? 'trigger solid' : 'trigger'} type="button" .disabled=${this.disabled}
         aria-label=${title} aria-haspopup="dialog" aria-expanded=${this._open ? 'true' : 'false'}
         title=${title} @click=${this._toggle}>
-        <span class="swatch" style=${`background:${color};opacity:${solid ? 1 : this.showOpacity ? pct / 100 : 1}`}></span>
+        <span class="swatch" style=${this.allowNoFill && this.noFill
+          ? 'background:linear-gradient(135deg,transparent 45%,currentColor 46%,currentColor 53%,transparent 54%)'
+          : `background:${color};opacity:${solid ? 1 : this.showOpacity ? pct / 100 : 1}`}></span>
       </button>
       ${this._open && !this.disabled && this._supportsPopover() ? this._pickerTemplate(true) : nothing}
     `;

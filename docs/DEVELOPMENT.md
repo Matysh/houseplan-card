@@ -137,6 +137,77 @@ satellites/rotation while using standard size (the plan keeps its1.4x size).
 Binding mode is selected by stable radio value instead of its shortened label.
 The first-paint style witness uses a recognized radar fixture, watches hidden
 pane visibility as well as mounts, and keeps all cold-View/lazy-sheet checks.
+## Properties panel (#931)
+
+Code-review r1 repairs preserve the existing colour-picker mode contract:
+the panel uses `flat-swatch compact-swatch`, fitting its 15px slot; colour tiles
+keep `cover-swatch` and their alpha checkerboard. Opening metadata names resolved
+adjacent rooms in plan order, contour metadata uses canonical ownership or exact
+legacy boundary containment. Stored names are quoted, never auto-inflected.
+The approved reset glyph and removal instructions (including tooltip line breaks
+and arrow) are retained. Native dialog routing is exercised across all applicable
+families at desktop/narrow widths, with invalid drafts and a real delayed HA ACK.
+The full golden capture rejected a compact-layout leak into native solid colour
+plates; none of those unrelated frames was accepted. `flat-swatch` governs paint
+only, `compact-swatch` opts the new panel into the tiny host layout. Native
+plates keep the original inline-flex/40px geometry (computed flex as a flex item).
+The rejected full golden capture records the original visible regression;
+the layout oracle now measures the revealed Appearance section at all six
+light/dark320/360/560 combinations, not hidden controls. Three r1 declarations remain
+static-only during development.
+After integrating accepted Room v4 (#946), the r1 source measures hostRefs5830,
+bundleBytes3193871 and editor313015 B gzip, all inside the existing approved
+references/bands. Initial View324274 B gzip remains below its unchanged ceiling.
+No further ceiling or band is raised. Golden reconciliation carries Room's
+three already accepted frames and the previously accepted #931 frames; it is
+not a new visual acceptance. A fresh complete WSL capture follows publication.
+
+The full #931 rebase CI exposed the old dangerous-confirmation witness taking
+its DOM snapshot while the already-revealed boot veil still faded. A controlled
+1.2 s gap reproduced the same failure 3/3 times: only `.bootveil.off` disappeared
+before the warm gate; the warm body itself stayed identical. The witness now
+waits for the public veil and the stage's `hpsettle` startup grace to leave
+before its snapshot, without a fixed sleep, normalization, weaker assertion or
+product change. The latter also prevents a later class-only cleanup from
+polluting the same exact DOM oracle. Failure diagnostics
+separate pre-gate settling from an actual warm-gate body mutation.
+The corrected witness passed 3/3 normal and 3/3 controlled-gap runs; the
+diagnostic gap and CPU throttling were removed before publication.
+
+The editor-only modules are under `src/editors/properties/`; do not import them
+into initial View. `demo/smoke_properties_panel.mjs` checks real controls and
+writers. `demo/capture_properties_panel.mjs` captures the actual product beside
+immutable approved references, verifies their manifest and asserts panel/group
+bounds. Read-only installed Segoe UI fonts are needed for comparable typography
+(`HP_QA_SEGOE_DIR`); fonts are never bundled. Output goes to `output/properties-931`.
+Never update approved references to make the implementation pass. Generic golden
+success is additional regression evidence, not design acceptance.
+
+The theme smoke checks computed colours for six browser/HA-mode combinations;
+absent HA `darkMode` uses CSS colour scheme, while an explicit HA mode wins.
+The test facade opens full device settings through the native double-click
+entrypoint in wide editors, where one click now selects the properties target.
+
+Owner-approved #931 budget refresh (2026-10-18,
+[decision](https://github.com/Matysh/houseplan-card/issues/931#issuecomment-6250557931)):
+`hostRefs` 5564→5833, total bundle bytes 3088841→3184691, lazy editor gzip
+283610→311520 (including the CSS-theme correction). These are measured reference values, not added tolerance: the
+25-reference / 2000-byte bands, initial View limits and performance gates stay
+unchanged. The panel and its copy remain demand-loaded in the editor graph.
+
+After accepted Space v7 (#945) landed while the #931 full CI was running, the
+combined source measures hostRefs5844, bundleBytes3193692 and editor312703 B
+gzip. The same owner-approved three references are refreshed to those joint
+facts; Space's onboarding reference and all bands/View/performance limits remain
+unchanged. The previous #931 material passed full CI39139573032, but does not
+stand in for the combined-source checks or matrix78 capture.
+
+The #945 localized signal witness sets HA language on each fresh card instead
+of restarting it with `setConfig`. It observes the public Devices mode before
+the actual settings entry, rather than awaiting a CDP-held transition promise.
+The first reset-wait adapter still produced "Resulting promise was garbage
+collected" in CI at setMode; the component-reset step is now absent. Keyboard,
+44px target, translation, inheritance and popup assertions remain unchanged.
 
 ## Portable full backup (#936)
 

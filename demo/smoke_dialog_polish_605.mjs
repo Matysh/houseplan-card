@@ -83,6 +83,18 @@ for (const theme of ['light', 'dark']) {
       const plateSolid=wallPicker.opacity===.4
         && getComputedStyle(wallPicker.renderRoot.querySelector('.swatch')).opacity==='1'
         && getComputedStyle(wallPicker.renderRoot.querySelector('.trigger')).backgroundImage==='none';
+      // #931: solid colour is independent of compact Properties layout. Native
+      // form plates keep their 40px trigger and inline label/hex at every width.
+      dialog.querySelector('[data-section-target="plan"]').click(); await c.updateComplete;
+      const visiblePlates = [...dialog.querySelectorAll('[data-card="plan"] .hpf-colorfield hp-color-opacity')];
+      const plateBoxes = visiblePlates.map((plate) => {
+        const trigger = plate.renderRoot.querySelector('.trigger').getBoundingClientRect();
+        return { display: getComputedStyle(plate).display, width: trigger.width, height: trigger.height };
+      });
+      // A flex item blockifies inline-flex to flex in getComputedStyle.
+      const plateLayout = plateBoxes.length >= 2 && plateBoxes.every((box) => box.display === 'flex'
+        && Math.abs(box.width - 40) <= 1 && Math.abs(box.height - 40) <= 1);
+      dialog.querySelector('[data-section-target="fills"]').click(); await c.updateComplete;
       const hex = [...dialog.querySelectorAll('.hpf-hex')];
       const upperHex = hex.length >= 11 && hex.every((node) => node.textContent === node.textContent.toUpperCase());
       const picker = tiles[0].querySelector('hp-color-opacity');
@@ -110,10 +122,12 @@ for (const theme of ['light', 'dark']) {
       c._settingsDialog = null;
       await c.updateComplete;
       return { fits, noSpinner, noOverflow, oneSurface, tileAlpha, defaultsDiffer, noneInkDark,
-        liveAlpha, platesFlat, plateSolid, upperHex, opensPicker,
+        liveAlpha, platesFlat, plateSolid, plateLayout, plateBoxes, upperHex, opensPicker,
         resetsDraftOnly, outlined, leftAligned, noNative };
     });
-    for (const [key, ok] of Object.entries(out)) result[`${theme}_${width}_${key}`] = ok;
+    const {plateBoxes, ...checks} = out;
+    if (!checks.plateLayout) console.error('native plate layout', theme, width, plateBoxes);
+    for (const [key, ok] of Object.entries(checks)) result[`${theme}_${width}_${key}`] = ok;
   }
 }
 

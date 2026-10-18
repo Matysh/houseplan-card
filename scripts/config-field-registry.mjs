@@ -8,6 +8,16 @@
  */
 export const CONFIG_FIELD_REGISTRY = Object.freeze([
   {
+    id: 'spaces[].plan_opacity',
+    enforcedBy: 'validation.py + properties panel + schema parity; #931',
+    selector: { path: ['spaces', '*', 'plan_opacity'] },
+    storage: 'House Plan server config', type: 'number', default: 'unset (= 1)',
+    level: 'space', ui: 'Background properties → Opacity',
+    runtime: 'multiplies only backdrop alpha, including existing editor/PDF fading',
+    introduced: '#931', status: 'current', migration: 'none; reads never materialize a default',
+    compatibility: 'finite 0..1, not null; full backup/copy retain presence; older validators can reject the new key',
+  },
+  {
     id: 'space.settings.card_name_scale',
     enforcedBy: 'logic.ts + device-battery-settings.ts + validation.py; #945',
     selector: { path: ['spaces', '*', 'settings', 'card_name_scale'] },

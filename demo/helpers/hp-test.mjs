@@ -34,6 +34,7 @@ export const SELECTORS = Object.freeze({
   roomSettings: '[data-hp="room-settings"][data-room="{room}"]',
   addDevice: '[data-hp="toolbar"] [data-hp="tool"][data-tool="add-device"]',
   device: '[data-hp="device"][data-id="{id}"]',
+  propertiesPanel: '[data-hp="properties-panel"]',
   spaceAdd: '[data-hp="space-add"]',
   createSpace: '[data-hp="create-space"]',
   spaceSettings: '[data-hp="space-settings"][data-id="{id}"]',
@@ -217,6 +218,14 @@ export function installHpTest(selectors) {
           : missing('openMarkerDialog', c, 'device', { id: deviceId });
       }
       target.click();
+      await settled();
+      if (deviceId !== undefined && find(c, 'propertiesPanel') && !find(c, 'dialogOfKind', { kind: 'marker' })) {
+        // #931: a single click now selects; the native double-click keeps the
+        // full settings entrypoint. Never bypass that handler via private state.
+        const selected = find(c, 'device', { id: deviceId });
+        if (!selected) throw missing('openMarkerDialog', c, 'device', { id: deviceId });
+        selected.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true, detail: 2 }));
+      }
       return openDialog('openMarkerDialog', c, 'marker');
     },
 

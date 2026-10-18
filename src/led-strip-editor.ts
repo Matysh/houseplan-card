@@ -33,6 +33,7 @@ import type { DevItem, LedStripModel, Marker, OpeningCfg, ServerConfig, SpaceMod
 import type { EditorSecondaryModel } from './editor-secondary';
 import type { OptimisticAttempt } from './serialized-write-queue';
 import { isGeometryCleanupRefusal, supersedeDeferredWrite, type DeferredConfigWrite } from './config-adoption';
+import type { ConfigWriteContext } from './config-write-context';
 
 export const LED_EDITOR_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
@@ -48,9 +49,10 @@ type Opening = OpeningCfg & { rx: number; ry: number; rlen: number };
 
 /** What the tool reads from the card (structurally; the card is passed in). */
 export interface LedEditorHost {
-  hass: { states: Record<string, unknown> } & Record<string, unknown>;
+  hass: { states: Record<string, unknown>; connection?: unknown; callWS?: unknown; user?: { id?: string } } & Record<string, unknown>;
   _config?: { language?: string } | null;
   _serverCfg: ServerConfig | null;
+  _configWriteContext?: ConfigWriteContext;
   _curSpaceCfg: { walls?: unknown } | null | undefined;
   _space: string;
   _mode: string;
@@ -89,6 +91,8 @@ export interface LedEditorHost {
 
 /** The editor runtime methods the tool calls. */
 export interface LedEditorRuntime {
+  properties?: { select(kind: string, id: string, binding?: string): boolean };
+  _visualCommand?<T>(command: () => Promise<T>): Promise<T>;
   deviceCopy?: { open(event: MouseEvent, device: DevItem): void };
   _svgPoint(ev: MouseEvent): number[];
   _snap(p: number[]): number[];
@@ -448,6 +452,18 @@ export class LedStripEditor {
     name: string, spaceId: string, stripId: string,
     next: (current: LedStripModel | null) => LedStripModel | null, record = true,
   ): Promise<boolean> {
+    const context = this.host._configWriteContext, claim = context?.claim();
+    return record && this.rt._visualCommand ? this.rt._visualCommand(() => {
+      if (context && !context.current(claim!, this.host.hass)) return Promise.resolve(false);
+      return this.writeNow(name, spaceId, stripId, next, record);
+    })
+      : this.writeNow(name, spaceId, stripId, next, record);
+  }
+
+  private async writeNow(
+    name: string, spaceId: string, stripId: string,
+    next: (current: LedStripModel | null) => LedStripModel | null, record = true,
+  ): Promise<boolean> {
     const cfg = this.host._serverCfg;
     if (!cfg || this.busy) return false;
     let candidate = clone(cfg);
@@ -639,7 +655,7 @@ export class LedStripEditor {
         stroke-linecap="round" stroke-linejoin="round" pointer-events="stroke" style="cursor:pointer"
         @click=${(e: MouseEvent) => {
           e.stopPropagation();
-          if (!this.host._suppressClick) this.select(strip.id);
+          if (!this.host._suppressClick && this.rt.properties?.select('led', strip.id, strip.marker ?? '') !== false) this.select(strip.id);
         }} @contextmenu=${(e: MouseEvent) => {
           const device = this.device(strip.marker);
           if (device) this.host._editorRuntime?.deviceCopy?.open(e, device);

@@ -335,7 +335,7 @@ test('#861 gesture owners replace state, delegates and port members, not just th
 test('#861 both owners have bounded purpose ports and no card/HostPort value dependency', () => {
   for (const [file, port, count] of [
     ['src/physical-body-gesture.ts', 'PhysicalBodyGesturePort', 13],
-    ['src/backdrop-frame-gesture.ts', 'BackdropFrameGesturePort', 14],
+    ['src/backdrop-frame-gesture.ts', 'BackdropFrameGesturePort', 15],
   ]) {
     const source = parse(file);
     const declaration = source.statements.find(node => ts.isInterfaceDeclaration(node) && node.name.text === port);

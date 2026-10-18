@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Properties panel (#931) implementation adds a 360 px shared column to wide
+Plan/Devices/Background cards, with native writer/history adapters and explicit
+full-dialog handoff. Optional main image opacity is model-v10 compatible.
+Issue labels, independent review and immutable design comparisons remain the
+authority for acceptance; this paragraph does not declare S8 or a release.
+
 Hidden-display witness repair (#953) exercises a revealed virtual light with an
 incoming real HA driver, not only a direct HA lamp. Native action checks retain
 the exact target and forbid dormant manual writes; ordinary unlink restores

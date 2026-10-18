@@ -1,5 +1,28 @@
 # House Plan — complete user guide
 
+### Editor properties panel
+
+At a card width of 960 px or more, Plan, Devices and Background show a persistent
+**Properties** column. Click an object to edit its position, dimensions and
+appearance. Grey fields are unavailable; locked fields are computed. Contour
+endpoints move only through node dragging. Opening width keeps its centre; its
+gap measures to the nearest opening edge from the physical corner/end marked
+on the plan, not from a guessed centreline endpoint.
+
+`Enter` or leaving a field applies one change; `Esc` cancels the draft. Invalid
+input or a failed save keeps the selection and explains the problem. Text uses
+`Enter` for a newline and `Ctrl/Cmd+Enter` to apply; **Insert HA variable** inserts
+an entity state or attribute at the captured caret. Images have a local aspect
+ratio lock. Main plan image opacity is saved independently and survives resetting
+its transform.
+
+Double-click and the existing **Properties** / **Open device settings** buttons
+still open full dialogs; the panel is inert while a dialog is open. Narrow cards
+retain the previous UI, including single-click device settings. Resizing does
+not save a draft: it waits for the panel to return; opening a narrow full dialog
+discards that local draft. View and kiosk never show the panel. Device Undo/Redo
+also covers panel icon scale/angle without rewinding unrelated marker settings.
+
 Room **CO₂** is an optional fifth value tile in Space settings, after humidity,
 off by default. It works in the main plan and kiosk (Flat and 2.5D), not the
 static card. Room Sources offers an average or a selected sensor/device,
@@ -1224,7 +1247,8 @@ and its other entities remain deleted. The complete device stays available in
   puts them on nodes. The drop is an ordinary position save with one history
   step, Undo restores the previous point without snapping, and no other marker
   moves. View and kiosk have no snapping;
-- persistent Undo/Redo buttons affect marker positions only. The same
+- persistent Undo/Redo buttons affect marker positions, LED commands and panel
+  icon scale/rotation (not unrelated marker settings). The same
   session-local history is available through `Ctrl/Cmd+Z`,
   `Ctrl/Cmd+Shift+Z` and `Ctrl+Y`, keeps up to 50 completed moves, and is not
   restored after reopening the card;
@@ -1487,7 +1511,7 @@ layer. See [Presence radars](RADAR.md) for supported profiles, setup and privacy
 
 | Gesture | View | Device editor |
 |---|---|---|
-| Short click/tap | Configured action | Open marker settings |
+| Short click/tap | Configured action | Select in Properties on wide cards (≥960 px); open marker settings on narrow cards |
 | Hold 600 ms | House Plan device card | No device control |
 | Right click | Native HA more-info for the primary entity | “Copy device” menu |
 

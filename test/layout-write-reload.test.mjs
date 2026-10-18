@@ -6,6 +6,7 @@ import { ConfigReloadAuthority } from '../test-build/config-reload-authority.js'
 import { ConfigWriteContext } from '../test-build/config-write-context.js';
 import { createConfigAdoption, adoptAuthoritativeGated, adoptStructuralResponses } from '../test-build/config-adoption.js';
 import { CommandStack } from '../test-build/command-stack.js';
+import { PropertiesCommandLane } from '../test-build/editors/properties/controller.js';
 
 globalThis.window ??= {};
 window.setTimeout = setTimeout;
@@ -25,6 +26,7 @@ const pos = x => ({ x, y: .2, s: 'f1' });
 function harness() {
   const events = [], messages = [], reads = [], writes = [], assets = [];
   const adoption = createConfigAdoption(), context = new ConfigWriteContext();
+  const visualCommands = new PropertiesCommandLane();
   let holdRead = false, holdWrite = true, holdAsset = false;
   const store = { config: config('A'), layout: { point: pos(.1) }, cfgRev: 1, rev: 1 };
   const transport = (saved, connection = {}, user = 'a') => ({ connection, user: { id: user }, callWS: async message => {
@@ -74,7 +76,8 @@ function harness() {
     _devicePositionStateValid: () => true, _commitSpace: noop,
     _cancelDeviceDrag: () => false, _deviceForPointerEvent: (_event, device) => device,
     _deviceHits: { release: noop, cancel: noop }, _viewHold: { cancel: noop },
-    _editorRuntimeOrThrow: () => ({ _flushPointerMove: noop }),
+    _editorRuntimeOrThrow: () => ({ _flushPointerMove: noop, _visualCommand: run => visualCommands.run(run),
+      properties: { beforeIntent: () => true } }),
     _previewDevicePlacement(id, placement) {
       const next = { ...adoption.layout };
       if (placement === null) delete next[id]; else next[id] = placement;
@@ -84,6 +87,7 @@ function harness() {
     _getAuthoritativeConfig: (hass = host.hass) => hass.callWS({ type: 'houseplan/config/get' }),
     _adoptAuthoritative: input => adoptAuthoritativeGated(host, input),
     _persistDevicePlacement: (...args) => proto._persistDevicePlacement.call(host, ...args),
+    _applyDevicePositionHistory: direction => proto._applyDevicePositionHistory.call(host, direction),
     _loadFromServer: () => proto._loadFromServer.call(host),
   };
   context.observe(host.hass);
@@ -96,6 +100,7 @@ function harness() {
     proto._pointerUp.call(host, { pointerId: 7 }, { id: 'point' });
   };
   const change = mode => {
+    visualCommands.retire();
     host._layoutIO.retire(); host._read.invalidate(); host._configReloadAuthority.invalidateLifecycle();
     host._devicePositionBusy = false; host._sentPos.clear();
     if (mode === 'detach') { host.isConnected = false; return; }

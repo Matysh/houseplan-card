@@ -19,6 +19,32 @@ export interface DevicePositionState {
   placement: DevicePlacement | null;
 }
 
+/** #931: only changed visual keys, including absence/null, belong to this command. */
+export interface DeviceVisualState {
+  kind: 'visual'; deviceId: string; spaceId: string; binding: string;
+  fields: Array<{ key: 'angle' | 'size'; present: boolean; value?: number | null }>;
+}
+
+export type DeviceEditorHistoryState = DevicePositionState | DeviceVisualState;
+
+export function deviceVisualFields(
+  marker: { angle?: number | null; size?: number | null }, keys: Array<'angle' | 'size'>,
+): DeviceVisualState['fields'] {
+  return keys.map(key => ({ key, present: Object.prototype.hasOwnProperty.call(marker, key),
+    ...(Object.prototype.hasOwnProperty.call(marker, key) ? { value: marker[key] } : {}) }));
+}
+
+export function applyDeviceVisualFields<T extends { angle?: number | null; size?: number | null }>(
+  marker: T, fields: DeviceVisualState['fields'],
+): T {
+  const result = { ...marker };
+  for (const field of fields) {
+    if (field.present) result[field.key] = field.value;
+    else delete result[field.key];
+  }
+  return result;
+}
+
 export function devicePlacement(layout: DeviceLayout, deviceId: string): DevicePlacement | null {
   const entry = layout[deviceId];
   if (!entry || !Number.isFinite(entry.x) || !Number.isFinite(entry.y)) return null;

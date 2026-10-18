@@ -1,5 +1,14 @@
 # Config compatibility registry
 
+Properties panel (#931) adds only optional `spaces[].plan_opacity`: a strict
+finite JSON number in [0,1]; null, booleans and numeric strings are rejected.
+Absence renders as 1 and stays absent until an explicit edit. Model v10 does not
+change. Full, space and plan-only transfer, copying, support projection and
+geometry history preserve the field. Older strict validators do not recognise
+this field: keep a backup before downgrade; no automatic downgrade rewrite is
+performed. Selection, collapsed groups, image ratio lock, unfinished fields and
+colour/text picker state are session-only, never persisted config keys.
+
 Full ZIP backup (#936) is a separate `houseplan-full-backup` container v1,
 not a model-version bump (plan model remains v10). Its `document.json` uses
 the existing validated export envelope and unknown-field round-trip policy.

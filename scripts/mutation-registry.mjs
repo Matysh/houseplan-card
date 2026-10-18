@@ -13812,10 +13812,12 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/live-editor.ts',
       find: "  makeTransparent(state, root, '.hp-editor-only-layer:not(.hp-plan-snap-layer)');\n"
+        + "  makeTransparent(state, root, '.hp-prop-selection');\n"
         + "  if (host._mode === 'plan') {\n"
         + '    if (host._opDrag) hide(state, root, \'.wallbodies\');',
       replace: "  if (host._mode === 'plan') {\n"
         + "    makeTransparent(state, root, '.hp-editor-only-layer:not(.hp-plan-snap-layer)');\n"
+        + "    makeTransparent(state, root, '.hp-prop-selection');\n"
         + '    if (host._opDrag) hide(state, root, \'.wallbodies\');',
     }],
   },
@@ -19527,6 +19529,95 @@ const MUTANT_DEFINITIONS = [
     patches: [{ file: 'src/zigbee-topology-runtime.ts',
       find: 'cache.topologies = cache.topologies.filter(t => t.provider !== \'z2m\' || t.instanceId !== topic);',
       replace: 'cache.topologies = cache.topologies.filter(t => t.provider !== \'z2m\' || t.instanceId !== topic || !topology);' }],
+  },
+  {
+    id: 'properties-draft-ignores-authority',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/properties-controller.test.mjs',
+    because: '#931 AC12: an old HA/user callback must not own the next field draft.',
+    patches: [{file:'src/editors/properties/controller.ts',find:'draft.authority === this.port.authority()',replace:'true'}],
+  },
+  {
+    id: 'properties-finish-rebases-edited-field',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/properties-controller.test.mjs',
+    because: '#931 AC5/AC12: a same-field external edit cannot be overwritten by finishing an obsolete draft.',
+    patches: [{file:'src/editors/properties/controller.ts',
+      find:"    if (draft.error?.key === 'external_change'\n      || !samePropertiesValue(draft.before, this.port.read(draft.identity, draft.field))) {",
+      replace:'    if (false) {'}],
+  },
+  {
+    id: 'properties-image-ratio-ignored',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/properties-transforms.test.mjs',
+    because: '#931 AC4/AC8: locked image resize changes both axes atomically around the current centre.',
+    patches: [{file:'src/editors/properties/transforms.ts',find:"if (shape.kind === 'image' && ratio !== null)",replace:"if (shape.kind === 'image' && ratio !== null && false)"}],
+  },
+  {
+    id: 'properties-opening-reference-follows-nearest',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/properties-physical.test.mjs',
+    because: '#931 AC6: the same physical corner remains the reference after passing the midpoint.',
+    patches: [{file:'src/editors/properties/physical.ts',find:'return matching.length === 1 ? matching[0] : null;',replace:'return selectOpeningReference(core, context);'}],
+  },
+  {
+    id: 'properties-visual-history-rewinds-marker-siblings',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/properties-patch.test.mjs test/properties-editor.test.mjs',
+    because: '#931 AC11: changed-key visual history cannot reset a later size/name or unknown field.',
+    patches: [{file:'src/device-position-history.ts',find:'  const result = { ...marker };',replace:'  const result = { ...marker, size: 1 };'}],
+  },
+  {
+    id: 'properties-null-opacity-becomes-zero',
+    guard: 'python -m pytest tests_backend/test_validation.py -q -k plan_opacity',
+    because: '#931 AC8: absent is the only default; null/bool/string are not alpha values.',
+    patches: [{file:'custom_components/houseplan/validation.py',
+      find:'vol.Optional("plan_opacity"): vol.All(_finite_number, vol.Range(min=0.0, max=1.0)),',
+      replace:'vol.Optional("plan_opacity"): vol.All(lambda value: 0 if value is None else value, _finite_number, vol.Range(min=0.0, max=1.0)),'}],
+  },
+  {
+    id: 'properties-plan-only-export-drops-opacity',
+    guard: 'python -m pytest tests_backend/test_ha_import_export.py -q -k plan_only_export_projects_geometry',
+    because: '#931 AC8: plan-only transfer retains the image appearance as well as its transform.',
+    patches: [{file:'custom_components/houseplan/import_export.py',
+      find:'"plan_scale", "plan_scale_x", "plan_scale_y", "plan_angle", "plan_opacity", "view_box",',
+      replace:'"plan_scale", "plan_scale_x", "plan_scale_y", "plan_angle", "view_box",'}],
+  },
+  {
+    id: 'properties-position-confuses-canvas-units',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/properties-transforms.test.mjs',
+    because: '#931 AC4/AC8: normalized CANVAS_LIMIT must not become an artificial 5000-render-unit border.',
+    patches: [{file:'src/editors/properties/transforms.ts',find:'if (Math.abs(value) > CANVAS_LIMIT) return null;',replace:'if (Math.abs(value * NORM_W) > CANVAS_LIMIT) return null;'}],
+  },
+  {
+    id: 'properties-resize-forgets-internal-hex-draft',
+    guard: 'node demo/smoke_properties_panel.mjs',
+    because: '#931 AC5/AC13: only Chromium owns the mounted picker, responsive unmount and its internal invalid HEX input; pure controller tests cannot observe their handoff.',
+    patches: [{file:'src/hp-color-opacity.ts',
+      find:'return this._open ? {raw:this._hexDraft,needsValidInput:this._hexNeedsValidInput} : this.resumedHex;',
+      replace:'return null;'}],
+  },
+  {
+    id: 'properties-theme-ignores-css-fallback',
+    guard: 'node demo/smoke_properties_panel.mjs',
+    because: '#931 AC13: without an explicit HA darkMode the mounted panel palette must follow browser colour scheme; only computed Chromium colours distinguish the real cascade from a theme attribute.',
+    patches: [{file:'src/editors/properties/styles.ts',find:'    color-scheme: light dark;',replace:'    color-scheme: light;'}],
+  },
+  {
+    id: 'properties-swatch-restores-conflicting-cover',
+    guard: 'node demo/smoke_properties_panel.mjs',
+    because: '#931 r1 AC2: only computed custom-element paint reveals a cover-swatch overriding the solid plate and leaking checkerboard/alpha through the properties swatch.',
+    patches: [{file:'src/editors/properties/surface.ts',find:'.pickerLabels=${port.pickerLabels} .disabled=${pending} hide-label flat-swatch',replace:'.pickerLabels=${port.pickerLabels} .disabled=${pending} hide-label flat-swatch cover-swatch'}],
+  },
+  {
+    id: 'properties-decor-dialog-skips-draft-gate',
+    guard: 'node demo/smoke_properties_panel.mjs',
+    because: '#931 r1 AC10: a deferred native dialog must actually open after the current HA ACK, not lose the intent; mounted inert and hidden responsive drafts require Chromium lifecycle. The matrix also retains invalid wide drafts.',
+    patches: [{file:'src/houseplan-editor-runtime.ts',find:`    if (!this.properties.beforeIntent(() => {
+      const current = this.host._decorList.find(item => item.id === shape.id);
+      if (current) this._openDecorProperties(current);
+    }, true)) return;`,replace:''}],
+  },
+  {
+    id: 'properties-compact-swatch-leaks-to-color-plates',
+    guard: 'node demo/smoke_dialog_polish_605.mjs',
+    because: '#931 r1: Chromium computed host display and real 40px trigger boxes at three viewport widths prove compact Properties layout cannot leak to ordinary solid native-form plates; pure colour values cannot expose the wrapping/overflow.',
+    patches: [{file:'src/hp-color-opacity.ts',find:'    :host([cover-swatch]), :host([compact-swatch]) { display: block; width: 100%; height: 100%; }',replace:'    :host([cover-swatch]), :host([flat-swatch]) { display: block; width: 100%; height: 100%; }'}],
   },
 ];
 

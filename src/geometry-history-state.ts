@@ -28,6 +28,7 @@ export interface SpaceGeometryState {
   plan_transform: {
     plan_x?: number; plan_y?: number; plan_scale?: number;
     plan_scale_x?: number; plan_scale_y?: number; plan_angle?: number;
+    plan_opacity?: number;
   };
   /** Session-only: current-writer normalisation scope for wall-chain history. */
   wallChainSeedIds?: string[];

@@ -88,7 +88,7 @@ _DECOR_ASSET_MIME_TYPES = frozenset(_DECOR_ASSET_MIME_BY_SUFFIX.values())
 
 _SPACE_PLAN_FIELDS = (
     "id", "title", "cell_cm", "plan_url", "plan_aspect", "plan_x", "plan_y",
-    "plan_scale", "plan_scale_x", "plan_scale_y", "plan_angle", "view_box",
+    "plan_scale", "plan_scale_x", "plan_scale_y", "plan_angle", "plan_opacity", "view_box",
     "zero_wall_style",
 )
 _SPACE_DISPLAY_FIELDS = (

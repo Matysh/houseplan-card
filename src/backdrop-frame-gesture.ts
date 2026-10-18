@@ -16,7 +16,7 @@ type BackdropDrag = {
   rect0: DecorBox; before: SpaceGeometryState | null; moved: boolean;
 };
 
-/** Fourteen purposes, not a card-shaped compatibility facade. */
+/** Bounded gesture purposes, not a card-shaped compatibility facade. */
 export interface BackdropFrameGesturePort {
   readonly queueTarget: object;
   plan(): BackdropPlan | null;
@@ -32,6 +32,7 @@ export interface BackdropFrameGesturePort {
   configChanged(): void;
   publish(phase: 'begin' | 'move' | 'end'): void;
   formatLength(a: number[], b: number[]): string;
+  rotationArm?(): number | null;
 }
 
 export class BackdropFrameGestureRuntime {
@@ -167,7 +168,7 @@ export class BackdropFrameGestureRuntime {
     const r = this.rect;
     if (!this.frameActive || !r) return nothing;
     const hr = Math.max(view.w, view.h) * 0.02, kr = hr / 4;
-    const cx = r.x + r.w / 2, cy = r.y + r.h / 2, angle = normalizeAngle(r.angle), arm = hr * 2.2;
+    const cx = r.x + r.w / 2, cy = r.y + r.h / 2, angle = normalizeAngle(r.angle), arm = this.port.rotationArm?.() ?? hr * 2.2;
     const corners: [number, number, string][] = [[-1, -1, 'nwse'], [1, -1, 'nesw'], [1, 1, 'nwse'], [-1, 1, 'nesw']];
     return svg`<g class="bdframe" transform=${angle ? `rotate(${angle} ${cx} ${cy})` : nothing}>
       <rect class="bdbox" x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}"></rect>

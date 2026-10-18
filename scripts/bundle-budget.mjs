@@ -767,13 +767,23 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // #948 integrated with #936: matched bd6fb6616 editor273116->283621B
 // (+10505 own bytes). Carry only this delta onto dev's273105 reference;
 // retain its11B inherited gap, the2000B band and every absolute View budget.
+// #946 final Space284720 -> Room284636 (-84 B), same inherited11B gap.
+// #931 owner approval 2026-10-18, issuecomment-6250557931: final checked properties
+// panel measures 311520 B gzip (was 283610); editor-only catalog/controller/copy,
+// native writer/history adapters and reference selection cues. Rebase this one
+// lazy ceiling to the measured fact; keep its 2000-B band, all initial View
+// ceilings, absolute budgets and performance limits unchanged.
 // #945: matched General d496a749 source283621 -> Space v7 source284685
 // (+1064 own bytes); keep the inherited11B gap and unchanged2000B band.
 // #945 final copy cleanup: matched General283621 -> Space284720 (+1099).
 // #946 final Space284720 -> Room284636 (-84 B), same inherited11B gap.
 // #947 complete v6 profiles: matched Room284636 -> Device286949 (+2313),
 // including the approved Vacuum/Radar groups; same inherited11B gap.
-export const LAZY_EDITOR_GZIP_CEILING = 286_938;
+// #931 integrated with accepted #945: final checked joint source312703B;
+// only the owner-approved editor reference is refreshed, not the2000B band.
+// #947/#931 joint tree carries the same Device-only +2313B onto that accepted
+// reference:312703+2313=315016. No added band or absolute budget.
+export const LAZY_EDITOR_GZIP_CEILING = 315_016;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

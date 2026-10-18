@@ -979,6 +979,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         ${renderPaperShapes(paperShapes)}
         ${bgHref
           ? svg`<image href="${bgHref}" x="${space.bg!.x}" y="${space.bg!.y}" width="${space.bg!.w}" height="${space.bg!.h}"
+              opacity=${space.bg!.opacity ?? 1}
               @load=${() => o.assetLoaded?.(space.bg!.href, bgHref)}
               transform=${space.bg!.angle
                 ? `rotate(${space.bg!.angle} ${space.bg!.x + space.bg!.w / 2} ${space.bg!.y + space.bg!.h / 2})`

@@ -29,6 +29,7 @@ interface LiveEditorHost {
   _tool: string;
   _deviceDrag: { id: string } | null;
   _editorRuntime?: {
+    readonly properties?: { selection(): unknown };
     readonly physicalGesture?: { readonly active: boolean; readonly drag: { kind: string; id: string; moved: boolean } | null };
     readonly backdropGesture?: { readonly active: boolean; renderFrame(view: unknown): unknown };
   } | null;
@@ -373,6 +374,7 @@ export function paintHouseplanEditor(value: object): void {
   // its own guides behind, and the next live paint then adds a second copy —
   // measured: two `.alignline`, the settled one a step behind the marker.
   makeTransparent(state, root, '.hp-editor-only-layer:not(.hp-plan-snap-layer)');
+  makeTransparent(state, root, '.hp-prop-selection');
   if (host._mode === 'plan') {
     if (host._opDrag) hide(state, root, '.wallbodies');
     if (host._resize?.dragging) {
@@ -387,7 +389,7 @@ export function paintHouseplanEditor(value: object): void {
     if (activeId) makeDecorShapeTransparent(state, root, activeId);
     makeTransparent(state, root, '.dtframe, .backdropframe');
   }
-  render(editorTemplate(host), target);
+  render(svg`${editorTemplate(host)}${host._editorRuntime?.properties?.selection() ?? nothing}`, target);
   const htmlTarget = root.querySelector<HTMLElement>('[data-hp-live-editor-html]');
   if (htmlTarget) {
     const view = host._viewOr(host._baseVb());

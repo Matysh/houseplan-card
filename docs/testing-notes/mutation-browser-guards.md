@@ -33,11 +33,11 @@ that transition events alone prove disposal.
 | --- | ---: | --- |
 | Performance threshold | 7 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 3 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
-| Paint, cascade and layer composition | 57 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
+| Paint, cascade and layer composition | 59 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 83 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
-| Responsive DOM layout | 47 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 208 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **405 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Responsive DOM layout | 48 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
+| Custom-element and HA browser lifecycle | 210 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **410 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -98,6 +98,13 @@ premature counter snapshot. The unchanged Chromium probes still check the
 real Playwright page-error channel.
 
 ### Paint, cascade and layer composition
+
+The #931 theme witness checks actual panel background and text colours for both
+browser schemes, absent HA mode and explicit HA overrides in either direction.
+A data-theme attribute alone cannot prove the effective palette.
+
+- `properties-theme-ignores-css-fallback`
+- `properties-swatch-restores-conflicting-cover`
 
 The #951 witnesses require the browser's inline line-box layout and effective
 CSS border/SVG stroke widths while the actual camera is moving. A source-string
@@ -337,6 +344,7 @@ toggles; ordinary fresh-click and fade/lifecycle controls remain in the smoke.
 ### Responsive DOM layout
 
 - `native-radar-select-overflows-ha-body-947`
+- `properties-compact-swatch-leaks-to-color-plates`
 
 - `settings-toggle-track-box-model-603`
 
@@ -775,6 +783,12 @@ owner, with no settled copy surviving the next presented frame.
 - `inbox-delete-stale-placement-930`
 - `inbox-delete-rollback-930`
 - `inbox-virtual-id-930`
+- `properties-resize-forgets-internal-hex-draft`
+- `properties-decor-dialog-skips-draft-gate`
+
+The #931 witness crosses responsive unmount/remount of the real colour picker,
+its uncommitted internal HEX input and the card-local draft owner. A pure field
+controller cannot prove that the mounted custom element retains this input.
 
 The #930 witnesses cross native catalog selection, the stacked confirmation,
 authoritative HA config replacement and Lit/adoption rollback. The pure units
