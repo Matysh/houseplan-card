@@ -141,6 +141,7 @@ const icon = await page.evaluate(async () => {
   const refresh = async () => { c.requestUpdate(); await c.updateComplete; };
   c._setMode('devices');
   c._openMarkerDialog(); await refresh();
+  root().querySelector('hp-dialog[data-kind="marker"] [data-section-target="appearance"]').click(); await refresh();
   let field = root().querySelector('hp-dialog[data-kind="marker"] .hpf-iconfield');
   const fallback = field && field.querySelectorAll('.hpf-iconpreview').length === 1
     && field.querySelector('.hpf-iconfield-control input')
@@ -150,6 +151,7 @@ const icon = await page.evaluate(async () => {
     customElements.define('ha-icon-picker', class extends HTMLElement {});
   }
   c._openMarkerDialog(); await refresh();
+  root().querySelector('hp-dialog[data-kind="marker"] [data-section-target="appearance"]').click(); await refresh();
   field = root().querySelector('hp-dialog[data-kind="marker"] .hpf-iconfield');
   const picker = field?.querySelector('ha-icon-picker');
   const onePreview = !!picker && field.querySelectorAll('.hpf-iconpreview').length === 0
@@ -162,7 +164,8 @@ const icon = await page.evaluate(async () => {
   await refresh();
   const selects = c._markerDialog.icon === 'mdi:home';
   field = root().querySelector('hp-dialog[data-kind="marker"] .hpf-iconfield');
-  field?.querySelector('.hpf-iconclear')?.click(); await refresh();
+  // #947: clearing is owned by the retained native HA picker; no duplicate reset button.
+  field?.querySelector('ha-icon-picker')?.dispatchEvent(new CustomEvent('value-changed', { detail: { value: '' } })); await refresh();
   const clears = c._markerDialog.icon === '' && iconValue !== 'mdi:home';
   const rotation = root().querySelector('hp-dialog[data-kind="marker"] label[for="marker-angle"]')?.textContent.trim();
   c._markerDialog = null; await refresh();
