@@ -2,7 +2,7 @@
   "schema": 1,
   "date": "2026-10-18",
   "source": {
-    "commit": "dca56238322bf1bd86df1780a7c87d7273298ae6",
+    "commit": "e508d00e96d80f1282b748bbada8769e1dd68187",
     "srcTree": "8bc7b1eda42fb4a6020503a94e7904af85f43ee9",
     "sha256": {
       "src/styles/settings-dialogs.styles.ts": "e4e720fc4fb2be01357355132e7082ccf12f6af36bc883999148df26da62cef7",
@@ -49,8 +49,8 @@
       "after": "b172d89cbcd75d4ce04f3cf699f24c907a22de2ba542da36ca364a220876add8"
     },
     "device": {
-      "before": "ec7c2b71d484c9dde53b1442ad1f060a2b2c70a93d0aa73878f747d82ae97b76",
-      "after": "ec7c2b71d484c9dde53b1442ad1f060a2b2c70a93d0aa73878f747d82ae97b76"
+      "before": "b4ff99f405917ff9d2598b9db80d8c52d97a4b5b7878855c531b27db16fe70c3",
+      "after": "b4ff99f405917ff9d2598b9db80d8c52d97a4b5b7878855c531b27db16fe70c3"
     }
   },
   "images": {
@@ -67,10 +67,10 @@
       "sha256": "91fc7fb4817eed4a5b4a7e2b5c70e89a5df49bb6738d3f0c0c8985c6f4d06ce3"
     },
     "vacuum.png": {
-      "sha256": "0ea1cc34069fc41c4c14653cee71c7f816d9c8e69e65c7d96987d6580ff25c28"
+      "sha256": "782f35419fa9744e73a3b3fc8b97a8685065a92fa5605f47c47ffcffb8a92f8a"
     },
     "radar.png": {
-      "sha256": "af50a00ee1d42953e0d35019dd08840dcd61d6dd985dffe50c6725a66ad15978"
+      "sha256": "3cacb8189278e9a561ea9109a05035a2f7d05024dd075cbe005b92a3b5d28109"
     },
     "general-mobile.png": {
       "sha256": "30add4892aa6277d84ba9e6ef112735a012b680becb7e59459cb5557c68fefa0"
@@ -82,7 +82,7 @@
       "sha256": "b275168f60d1e2d054fe48041aadfe78e2855f8d845d95af648de950b62e366e"
     },
     "device-mobile.png": {
-      "sha256": "020ea92bbf9e7b36ea3c597b7d8147c45f38bad65cee47d348ffbd4d49cac08a"
+      "sha256": "a3c9f6043dba809c882576dc650096be1da91d9888d2164a772805177c321863"
     }
   },
   "checks": {
