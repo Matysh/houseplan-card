@@ -770,7 +770,8 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // #945: matched General d496a749 source283621 -> Space v7 source284685
 // (+1064 own bytes); keep the inherited11B gap and unchanged2000B band.
 // #945 final copy cleanup: matched General283621 -> Space284720 (+1099).
-export const LAZY_EDITOR_GZIP_CEILING = 284_709;
+// #946 final Space284720 -> Room284636 (-84 B), same inherited11B gap.
+export const LAZY_EDITOR_GZIP_CEILING = 284_625;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
@@ -790,7 +791,8 @@ export const LAZY_GRAPH_CEILING_BAND = 2_000;
 // #945 shared Space fields and lazy English copy: matched31050->31438B
 // (+388 own bytes). Carry only that cost, preserving the inherited1676B gap.
 // #945 same final source: General31050 -> Space31445 (+395).
-export const LAZY_ONBOARDING_GZIP_CEILING = 29_769;
+// #946 final Space31445 -> Room31428 (-17 B), same inherited1676B gap.
+export const LAZY_ONBOARDING_GZIP_CEILING = 29_752;
 
 /**
  * #780 ТЗ §13.1: the LED chunks are a new feature's own budget, not a raise of
