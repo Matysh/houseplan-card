@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 78,
-  "acceptedAt": "2026-10-18T17:59:04.721Z",
-  "sourceFingerprint": "1d2219aacd9f2aa8e8d6c1acfbe6310e7cd411450b95624260d35ac275411135",
+  "acceptedAt": "2026-10-18T19:11:39.990Z",
+  "sourceFingerprint": "39b6dcd4d772c9ea4de2c894b3ce2f367a89ddbe4b8153949a3153ab7df93f8b",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,20 +10,20 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "1d2219aacd9f2aa8e8d6c1acfbe6310e7cd411450b95624260d35ac275411135",
+    "buildFingerprint": "39b6dcd4d772c9ea4de2c894b3ce2f367a89ddbe4b8153949a3153ab7df93f8b",
     "ci": null
   },
   "localAttestation": {
     "schema": "houseplan-golden-wsl/v2",
-    "sha256": "021fc7c63b2d31ef823a688deb12b6a34553fcf9070471183c12ba75893fb84e",
-    "artifactSha256": "cd7e9825128c27edee2c1b9f92ee0b787136bcc0af698c799566a5ccb3237660",
-    "createdAt": "2026-10-18T17:54:32.461Z",
+    "sha256": "b3249120ecbbb50f34609c712fc2005cf4da439efe7b0a3944e5e79d52224074",
+    "artifactSha256": "4a6c4dbf6e2ef0ac15369154bcfaf66c87f53660d80d1f3dd4f3381dc53767e6",
+    "createdAt": "2026-10-18T19:11:26.612Z",
     "source": {
       "repository": "Matysh/houseplan-card",
-      "branch": "issue/946-room-settings",
-      "commit": "32df1b3bdfe0bb4dbb5e896dee86091055b0c2b3",
-      "tree": "dbdaed960c0de588ad85eb9e647d07c7324533fc",
-      "remoteSha": "32df1b3bdfe0bb4dbb5e896dee86091055b0c2b3",
+      "branch": "issue/931-properties-panel",
+      "commit": "c24b170d00b581052e94718889017861e73d6233",
+      "tree": "72b9f482d0c6c02fa988e3773e0e88a0fef07531",
+      "remoteSha": "c24b170d00b581052e94718889017861e73d6233",
       "clean": true,
       "status": ""
     },
@@ -32,23 +32,23 @@
       "arch": "x64",
       "kernel": "6.18.33.2-microsoft-standard-WSL2",
       "wsl": true,
-      "distro": "Ubuntu-24.04",
+      "distro": "Ubuntu",
       "filesystem": "ext2/ext3"
     },
     "toolchain": {
-      "node": "22.23.2",
-      "npm": "10.9.8",
+      "node": "22.23.3",
+      "npm": "10.9.9",
       "playwright": "1.62.0",
       "browser": {
         "version": "151.0.7922.34",
-        "resolvedExecutable": "/home/sergey/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell",
+        "resolvedExecutable": "/home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell",
         "executableSha256": "e11fc9ce65c96313476f7ee9844b6fb6a9220fb048693cfe9eee00acf4170a9f"
       }
     }
   },
   "foreignCapture": null,
   "witnesses": {
-    "count": 138,
+    "count": 152,
     "floor": 10
   },
   "scenarios": {

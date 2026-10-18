@@ -75,3 +75,31 @@ exactly those 31 `--expect-change` IDs. It replaced 31 baselines and retained
 comparison thresholds, renderer fixtures or approved designer references changed.
 The committed baseline manifest contains the local provenance. A fresh full
 GitHub Validate must still verify the resulting commit before S7/merge.
+
+## Code-review r1 repairs, accepted #946 integration (current)
+
+The first full joint-source capture at `4ee5666a` exposed an unintended compact
+colour-swatch layout leak into native forms. Its six unrelated frame changes
+were rejected, not added to acceptance intent. `c24b170d` isolates the compact
+host layout from the existing solid-paint mode; the native plate dimensions are
+also guarded by `smoke_dialog_polish_605` on three widths and both themes.
+
+The final complete capture used the clean published commit
+`c24b170d00b581052e94718889017861e73d6233`, tree
+`72b9f482d0c6c02fa988e3773e0e88a0fef07531`, matrix78 and the same pinned
+Playwright1.62.0/Chromium151.0.7922.34 revision1234. Source fingerprint:
+`39b6dcd4d772c9ea4de2c894b3ce2f367a89ddbe4b8153949a3153ab7df93f8b`.
+`npm run golden:wsl:capture` passed all212 scenes with zero capture errors and
+152 byte-identical environment witnesses (floor10). There are **no declared
+changes or new scenes** in this final acceptance. The complete original report,
+frames and attestation are preserved locally in
+`output/properties-931/golden-c24b170d`.
+
+`npm run golden:accept -- --reviewed --from=artifacts/golden` used the actual
+WSL attestation `b3249120ecbbb50f34609c712fc2005cf4da439efe7b0a3944e5e79d52224074`.
+It replaced **zero** PNGs and preserved all212 baseline files and their hashes,
+including the previously accepted #931/#945/#946 frames. Only the index's source
+provenance was refreshed. Native mobile device/settings/space colour frames were
+inspected again after the repair; no clipping or label wrapping was accepted.
+Thresholds, masks, matrix and designer references remain unchanged. Exact-SHA
+full GitHub Validate is still required before the independent r2/merge.
