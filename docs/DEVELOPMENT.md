@@ -3498,3 +3498,7 @@ Wrapped help shares one final-word renderer; non-input field headings use the
 same inline layout, while real input labels retain their native for linkage.
 Emitted settings CSS drops redundant whitespace to stay inside the existing
 raw-bundle band; source rules retain one line each and no ceiling is raised.
+
+The inherited #605 alpha witness identifies the complete colour-tile caption,
+including its final-word span, rather than assuming one child holds all text.
+Its alpha, checkerboard, foreground and draft-persistence oracles are unchanged.
