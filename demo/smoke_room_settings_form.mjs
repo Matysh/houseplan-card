@@ -24,6 +24,8 @@ const out = await page.evaluate(async () => {
   c._setMode('plan'); await upd();
   const room = c._curSpaceCfg.rooms[0];
   c._openRoomEdit(room); await upd();
+  const pristineStatus = statusText();
+  o.savedStatusVisible = pristineStatus.length > 0;
 
   // --- AC1: четыре карточки по §6.1, старой разметки нет --------------------
   o.fourCardsInOrder = JSON.stringify(qa('.hpf-card').map((card) => card.dataset.card))
@@ -38,7 +40,9 @@ const out = await page.evaluate(async () => {
   const nameBox = q('#room-name').getBoundingClientRect();
   const areaBox = q('#room-area').closest('hp-settings-select').getBoundingClientRect();
   o.basicsStackedLikeMock = areaBox.top > nameBox.bottom && Math.abs(areaBox.width - nameBox.width) < 2;
-  o.everyCardHasHelp = qa('.hpf-card .hpf-head hp-help').length === 3 && !!q('#room-area')?.closest('.hpf-field')?.querySelector('hp-help'); // §6.1: у Basics «?» — у зоны
+  o.contextualHelpAtTheRelevantField = qa('.hpf-card .hpf-head hp-help').length === 2
+    && !!q('select[name="rfill"]')?.closest('.hpf-field')?.querySelector('hp-help')
+    && !!q('#room-area')?.closest('.hpf-field')?.querySelector('hp-help');
 
   // --- AC2: оболочка — 560, один скроллер -----------------------------------
   const shell = dlg().shadowRoot;
@@ -62,18 +66,18 @@ const out = await page.evaluate(async () => {
   // --- границы комфорта: два поля с единицей, легенда, ссылка «Как у пространства»
   await pickMode('temp');
   o.tempRangeIsTwoUnitFields = c._roomCustomFill === null && !!q('#room-temp-min') && !!q('#room-temp-max')
-    && qa('.hpf-temprange .hpf-unit').length === 2 && !!q('.hpf-templegend')
-    && !q('.hpf-temprange .hpf-link');
+    && qa('.hpf-temprange .hpf-unit').length === 2 && !!q('.hpf-temprange .hpf-callout')
+    && !q('[data-room-range-reset]');
   input(q('#room-temp-min'), '30'); input(q('#room-temp-max'), '10'); await upd();
   // перевёрнутый диапазон валиден — границы меняются местами при чтении (roomTempThresholdDraft)
   o.typedBoundsWriteOwnKeys = c._roomTempMin === '30' && c._roomTempMax === '10' && saveBtn().disabled === false;
   // нечисло в поле type=number браузер не пропустит — ломаем черновик напрямую, как smoke_room_temperature_thresholds
   c._roomTempMin = 'broken'; await upd();
   o.brokenBoundBlocksSave = saveBtn().disabled === true && !!q('.hpf-temprange .hpf-error')
-    && !!q('.hpf-status .hpf-link') && !!q('.hpf-temprange .hpf-link');
+    && !!q('.hpf-status .hpf-link') && !!q('[data-room-range-reset]');
   q('.hpf-status .hpf-link').click(); await upd();
   o.reviewLinkFocusesFirstProblem = (sr().activeElement ?? document.activeElement)?.id === 'room-temp-min';
-  q('.hpf-temprange .hpf-link').click(); await upd();
+  q('[data-room-range-reset]').click(); await upd();
   o.resetRestoresInheritedBounds = c._roomTempMin === '' && c._roomTempMax === '' && !q('.hpf-temprange .hpf-error');
   await pickMode('');
   o.inheritUsesOneSelectedOption = c._roomFill === '' && fill().value === ''
@@ -128,11 +132,11 @@ const out = await page.evaluate(async () => {
   // --- К10: Save только при изменениях, вопрос при закрытии -------------------
   c._roomDialogCancel(); await upd();
   c._openRoomEdit(c._curSpaceCfg.rooms[0]); await upd();
-  o.saveDisabledWhenClean = saveBtn().disabled === true && statusText() === '';
+  o.saveDisabledWhenClean = saveBtn().disabled === true && statusText() === pristineStatus;
   input(q('#room-name'), `${c._nameSel} x`); await upd();
-  o.saveEnabledWhenDirtyWithoutDuplicateStatus = saveBtn().disabled === false && statusText() === '';
+  o.saveEnabledWhenDirtyWithStatus = saveBtn().disabled === false && statusText().length > 0 && statusText() !== pristineStatus;
   input(q('#room-name'), c._nameSel.slice(0, -2)); await upd();
-  o.cleanAgainWhenReverted = saveBtn().disabled === true && statusText() === '';
+  o.cleanAgainWhenReverted = saveBtn().disabled === true && statusText() === pristineStatus;
   input(q('#room-name'), ''); await upd();
   o.emptyNameIsAProblem = saveBtn().disabled === true && !!q('#room-name[aria-invalid="true"]')
     && !!q('.hpf-card[data-card="basics"] .hpf-error') && !!q('.hpf-status .hpf-link');
@@ -164,7 +168,7 @@ const out = await page.evaluate(async () => {
   })();
   o.createSaveBlockedUntilNameOrArea = saveBtn().disabled === true && !!q('.hpf-status .hpf-link');
   input(q('#room-name'), 'New 600'); await upd();
-  o.createSaveEnabledWithName = saveBtn().disabled === false && statusText() === '';
+  o.createSaveEnabledWithName = saveBtn().disabled === false && statusText().length > 0 && !q('.hpf-status .hpf-link');
   dlg().dispatchEvent(new CustomEvent('hp-close', { bubbles: true, composed: true }));
   await upd(); await new Promise((r) => setTimeout(r, 60));
   o.dirtyCreateAsksBeforeCancel = !!dlg() && !!confirm() && c._roomDialog === true;
