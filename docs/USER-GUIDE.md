@@ -1328,7 +1328,7 @@ selector replaces the side menu on narrow screens. All four settings dialogs
 follow the current Home Assistant theme, including theme changes while open.
 
 **Basics** contains the name, Home Assistant binding, room and any applicable
-climate-source options under **Room metrics**. Binding is a **Virtual device / Pick from the HA list**
+climate-source options under **Room metrics**. Binding is a **Virtual / Home Assistant**
 segment. The picker searches devices and, with **Show entities**, individual
 entities. Its selected binding occupies one row; search help belongs to the
 picker, while the binding-mode hint explains what the two modes mean. A required
@@ -1370,7 +1370,7 @@ their existing separate confirmation and save boundaries.
 | Glow radius | Shows the current General value until overridden; leaving that displayed value untouched does not save a local override. Empty or non-positive input uses the General radius; valid stored range is 0.1–100 m |
 | Icon and display | Automatic or manual `mdi:*`; icon/state/activity, value/state, static icon or value/static icon |
 | Icon size and rotation | ×0.5–×3 and a 5° angle step; the preview stays at standard size and rotates only the icon |
-| Device temperature | **Basics**: includes climate `current_temperature` in the marker and its room average |
+| Include the device temperature in the room | **Basics → Room metrics**: includes climate `current_temperature` in the marker and its room average |
 | Model, link, description and instructions | Informational card data and multiple PDF/PNG/JPG/WebP/TXT attachments |
 
 The footer keeps **Hide** and **Delete** on the left and **Cancel**/**Save** on
