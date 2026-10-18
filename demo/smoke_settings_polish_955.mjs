@@ -10,9 +10,12 @@ import {checkAll,watchPage,finish} from './serve.mjs';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 const touch=process.argv.includes('--touch');
+const fast=process.argv.includes('--fast');
+const caseName=process.argv.find(a=>a.startsWith('--case='))?.slice(7);
+if(caseName&&(!['general','space','room','sensor','led','climate','vacuum','radar'].includes(caseName)||fast))throw Error('Use --case with one known full scenario, without --fast');
+const receiptName=caseName?'case-'+caseName:fast?touch?'touch-matrix':'fast-matrix':'matrix';
 const fixture=await launchHaDialogFixture({authentic:true,viewport:{width:1280,height:900},extraModules:['16213'],hasTouch:touch});
 const {page}=fixture,out={},matrix=[];
-const fast=process.argv.includes('--fast');
 const geometryOnly=process.argv.includes('--geometry');
 const palettes={light:['#fff','#eceeef','#223039','#64747e','#dce2e6','#008aa5'],dark:['#17222e','#0f1822','#e7eef4','#a6b6c3','#354755','#67cfe8'],custom:['#fff6e9','#f0e2d0','#35291d','#75634e','#d6c3ac','#9b45b7']};
 watchPage(page);
@@ -36,11 +39,18 @@ try{
  if(!await page.evaluate(ensureHarnessEditorRuntime))throw new Error('Editor preload failed');
  await installHpTestOnPage(page);await installSettingsDeviceFixture(page);await installSettingsSpaceFixture(page);
  await page.evaluate(async()=>{
+  window.__addRegistryDevice('demo_plain_sensor','Датчик гостиной','Temperature and humidity sensor','living_room');
+  for(const [id,value,attributes]of [['sensor.demo_plain_temperature','21.7',{friendly_name:'Температура',device_class:'temperature',unit_of_measurement:'°C'}],['sensor.demo_plain_humidity','48',{friendly_name:'Влажность',device_class:'humidity',unit_of_measurement:'%'}],['sensor.demo_plain_battery','82',{friendly_name:'Заряд',device_class:'battery',unit_of_measurement:'%'}],['sensor.demo_plain_lqi','177',{friendly_name:'Zigbee',unit_of_measurement:'lqi'}]])window.__addRegistryEntity(id,'living_room',value,'zha',{device_id:'demo_plain_sensor'},attributes);
+  window.__card.hass=window.__mkHass();
+  await window.__hpTest.setServerConfig(cfg=>{cfg.markers.push({id:'demo_plain_sensor',binding:'device:demo_plain_sensor',name:'Датчик гостиной',space:'floor01',room_id:'living',area:null,display:'value',value_source:{kind:'entity_state',entity_id:'sensor.demo_plain_temperature'},hide_battery:false,hide_signal:false});});
+  await window.__hpTest.waitForWrites();
+ });
+ await page.evaluate(async()=>{
   await window.__hpTest.setServerConfig(cfg=>{const r=cfg.spaces.find(s=>s.id==='f1').rooms.find(r=>r.id==='r1');r.name='Гостиная';r.settings={...r.settings,temp_max:23,temp_source:'entity:sensor.demo_room_temperature',co2_source:'entity:sensor.demo_room_co2'};});
   await window.__hpTest.setMode('plan');
  });
  const original=await page.evaluate(()=>JSON.stringify(window.__card._serverCfg));
- for(const [name,kind,device] of [['general','settings'],['space','space'],['room','room'],['led','marker','demo_led_controller'],['climate','marker','demo_living_climate'],['vacuum','marker','demo_x50'],['radar','marker','demo_radar']].filter(([name])=>!fast||name==='general')){
+ for(const [name,kind,device] of [['general','settings'],['space','space'],['room','room'],['sensor','marker','demo_plain_sensor'],['led','marker','demo_led_controller'],['climate','marker','demo_living_climate'],['vacuum','marker','demo_x50'],['radar','marker','demo_radar']].filter(([name])=>(!fast||name==='general')&&(!caseName||name===caseName))){
   await page.setViewportSize({width:1280,height:900});
   await page.evaluate(async device=>{await window.__hpTest.switchSpace(device?'floor01':'f1');await window.__hpTest.setMode(device?'devices':'plan');},!!device);
   if(device)await openSettingsDeviceDialog(page,device);
@@ -164,5 +174,5 @@ try{
   matrix.push({form:name,sections,helpPaths:sawHelp,colorPaths:sawColors,toggleRows:sawToggles,selectPaths:sawSelects});
   console.log('#955 checked '+name);
  }
- await fixture.assertClean();mkdirSync('artifacts/polish-955',{recursive:true});writeFileSync(`artifacts/polish-955/${fast?touch?'touch-matrix':'fast-matrix':'matrix'}.json`,JSON.stringify({matrix,out},null,2));checkAll(out);await finish(fixture.browser,out);
-}finally{mkdirSync('artifacts/polish-955',{recursive:true});writeFileSync(`artifacts/polish-955/${fast?touch?'touch-matrix':'fast-matrix':'matrix'}.json`,JSON.stringify({matrix,out},null,2));await fixture.close();}
+ await fixture.assertClean();mkdirSync('artifacts/polish-955',{recursive:true});writeFileSync(`artifacts/polish-955/${receiptName}.json`,JSON.stringify({matrix,out},null,2));checkAll(out);await finish(fixture.browser,out);
+}finally{mkdirSync('artifacts/polish-955',{recursive:true});writeFileSync(`artifacts/polish-955/${receiptName}.json`,JSON.stringify({matrix,out},null,2));await fixture.close();}

@@ -1,5 +1,13 @@
 # Development and deployment
 
+#955 AC3 explicitly includes an ordinary sensor as well as the complex Device
+profiles. The genuine-HA matrix adds a ZHA temperature/humidity/battery/LQI
+sensor with five shared sections; its setup lives only in that smoke and does
+not change the immutable four-case comparison dataset. --case=sensor runs a
+bounded supplemental scenario and writes case-sensor.json rather than replacing
+the full-matrix receipt. The default remains all scenarios; unknown case names
+and mixing --case with --fast refuse, so an empty selection cannot look green.
+
 Action-plus-help wrappers must not inherit form-label typography. Keep the
 real vacuum summary button; position its separate help beside the border,
 and use the shared hpf-button-help row for actual links/buttons. A label-row
