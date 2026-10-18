@@ -57,6 +57,12 @@ export class HpSettingsSelect extends LitElement {
   private typeahead = '';
   private lastType = 0;
   private get native(): HTMLSelectElement | null { return this.querySelector('select'); }
+  private get label(): string {
+    return this.native?.getAttribute('aria-label') || this.native?.labels?.[0]?.textContent?.trim()
+      || this.closest('.hpf-field')?.querySelector('.hpf-label')?.textContent?.trim()
+      || (this.previousElementSibling?.tagName === 'LABEL' ? this.previousElementSibling.textContent?.trim() : '')
+      || this.native?.name || '';
+  }
   private get options(): HTMLOptionElement[] { return Array.from(this.native?.options || []).filter(o => !o.hidden); }
   private disabled(option: HTMLOptionElement): boolean { return option.disabled || (option.parentElement instanceof HTMLOptGroupElement && option.parentElement.disabled); }
   private sync = (): void => {
@@ -81,7 +87,7 @@ export class HpSettingsSelect extends LitElement {
   private menu(popover: boolean): TemplateResult {
     const options = this.options;
     return html`<div class="menu" role="listbox" tabindex="-1" popover=${popover ? 'manual' : nothing}
-      aria-label=${this.native?.getAttribute('aria-label') || this.native?.name || ''}
+      aria-label=${this.label}
       aria-activedescendant=${this._active >= 0 ? `${this.uid}-${this._active}` : nothing}
       @keydown=${(e: KeyboardEvent) => this.keydown(e)}>
       ${options.map((option, i) => html`<div role="option" id=${`${this.uid}-${i}`}
@@ -184,7 +190,7 @@ export class HpSettingsSelect extends LitElement {
   }
   render(): TemplateResult {
     return html`<slot @slotchange=${this.sync}></slot><button type="button" ?disabled=${this.native?.disabled}
-      aria-label=${this.native?.getAttribute('aria-label') ? `${this.native.getAttribute('aria-label')}: ${this.native.selectedOptions[0]?.label || ''}` : nothing} aria-haspopup="listbox" aria-expanded=${String(this._open)}
+      aria-label=${this.label ? `${this.label}: ${this.native?.selectedOptions[0]?.label || ''}` : nothing} aria-haspopup="listbox" aria-expanded=${String(this._open)}
       @keydown=${(e: KeyboardEvent) => this.keydown(e)} @click=${() => this._open ? this.close(true) : void this.open()}>
       <span>${this.native?.selectedOptions[0]?.label || ''}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5z"/></svg>
     </button>${!this.fallback ? this.menu(true) : nothing}`;

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { settingsSectionOf, selectSettingsSection } from '../test-build/editors/settings-sections.js';
+import { settingsSectionOf, selectSettingsSection, settingsSections } from '../test-build/editors/settings-sections.js';
 import { zigbeeIntegrationPresence } from '../test-build/zigbee-integration-presence.js';
 import { settingsUndoVisibility } from '../test-build/editors/general-form-state.js';
 
@@ -17,6 +17,18 @@ test('#948 section choice is per host and dialog, and invalidated safely when a 
 test('#948 a metadata failure never claims an integration is absent', () => {
   assert.deepEqual(zigbeeIntegrationPresence({ loaded: true, configEntries: {}, manifests: {}, revision: 1 }),
     { zha: 'unknown', z2m: 'unknown' });
+});
+
+test('#947 a newly opened device starts at Basics while its own draft retains section choice', () => {
+  const host = {requestUpdate(){},renderRoot:{querySelector(){return null;}}};
+  const sections = [{id:'basics',title:'Basics'},{id:'details',title:'Details'}];
+  const first = {}, second = {};
+  settingsSections(host,'marker',sections,'Sections',first);
+  selectSettingsSection(host,'marker','details');
+  settingsSections(host,'marker',sections,'Sections',first);
+  assert.equal(settingsSectionOf(host,'marker',sections),'details');
+  settingsSections(host,'marker',sections,'Sections',second);
+  assert.equal(settingsSectionOf(host,'marker',sections),'basics');
 });
 
 test('#948 ZHA-only discovery, both integrations, and generic MQTT stay distinct', () => {

@@ -112,6 +112,14 @@ export function recognizeRadar(
     }
     return { eligible: true, profile: 'presence_v1', reason: 'saved_unsupported' };
   }
+  return recognizeRadarBinding(device, registryHass);
+}
+
+/** Hardware recognition for UI eligibility; saved profiles are compatibility data. */
+export function recognizeRadarBinding(device: DevItem, registryHass: RadarHassLike): RadarRecognition {
+  if ((device.bindingKind !== 'device' && device.bindingKind !== 'entity') || !device.bindingRef) {
+    return {eligible:false,profile:'presence_v1',reason:'none'};
+  }
   const registryEntity = device.bindingKind === 'entity'
     ? registryHass?.entities?.[device.bindingRef || ''] : null;
   const deviceId = device.bindingKind === 'device'

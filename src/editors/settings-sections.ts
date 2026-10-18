@@ -12,6 +12,7 @@ export interface SettingsSectionHost {
   renderRoot: DocumentFragment | HTMLElement;
 }
 const selections = new WeakMap<object, Map<string, string>>();
+const sessions = new WeakMap<object, Map<string, object>>();
 
 export function selectedSettingsSection(host: object, kind: string): string | undefined {
   return selections.get(host)?.get(kind);
@@ -32,8 +33,13 @@ export function selectSettingsSection(host: SettingsSectionHost, kind: string, i
 
 /** The fields stay mounted: navigation never replaces the draft or its controls. */
 export function settingsSections(
-  host: SettingsSectionHost, kind: string, sections: readonly SettingsSection[], navigationLabel: string,
+  host: SettingsSectionHost, kind: string, sections: readonly SettingsSection[], navigationLabel: string, session?: object,
 ): TemplateResult {
+  if (session) {
+    let owners = sessions.get(host);
+    if (!owners) { owners = new Map(); sessions.set(host, owners); }
+    if (owners.get(kind) !== session) { selections.get(host)?.delete(kind); owners.set(kind, session); }
+  }
   const selected = settingsSectionOf(host, kind, sections);
   const multiple = sections.length > 1;
   return html`<div class="hpf-settings-layout ${multiple ? '' : 'hpf-settings-single'}" data-settings-kind=${kind}>

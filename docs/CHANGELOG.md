@@ -46,6 +46,8 @@
 
 - General settings follow the approved layout: full-width colour and radius controls,
   compass guidance beside its value, and a persistent save status ([#948](https://github.com/Matysh/houseplan-card/issues/948)).
+- Device settings share five consistent sections, with extra Vacuum/Radar pages only when applicable. The real MDI picker and live face remain; previews keep a standard size, rotate the icon and retain unavailable sources. Old manual radar profiles remain editable in Details; new radar setup is offered only for recognized hardware. Shared settings surfaces, footers and controls follow the approved mockups and active HA theme ([#947](https://github.com/Matysh/houseplan-card/issues/947)).
+
 - Room settings use one compact form and one inherited fill menu. Name and metric sizes have independent controls and a clearly labelled sample with icons and CO₂ ([#946](https://github.com/Matysh/houseplan-card/issues/946)).
 
 - Space settings now have four clear sections, independent room-name and metric sizes, and a local battery-display policy. One switch controls room borders and opening symbols; inherited background and north controls show their source ([#945](https://github.com/Matysh/houseplan-card/issues/945)).

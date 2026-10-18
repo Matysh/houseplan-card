@@ -4,7 +4,7 @@ import { html, nothing, type TemplateResult } from 'lit';
 import type { I18nKey } from '../i18n';
 import {
   freshRadarInstallationId, radarConfigFromDraft, radarDraft, radarSourceCandidates,
-  recognizeRadar,
+  recognizeRadar, recognizeRadarBinding,
   type RadarEditorDraft, type RadarHassLike,
 } from '../radar-editor';
 import { radarSetupFrame, type RadarSetupController } from '../radar-setup';
@@ -64,6 +64,9 @@ export function renderRadarSection(
   if (!device) return html``;
   options.setup.syncMarker(device.marker?.id || device.id);
   const recognition = recognizeRadar(device, options.registryHass);
+  const automatic = d.bindingMode !== 'virtual' && recognizeRadarBinding(device, options.registryHass).eligible;
+  if (placement === 'main' && !automatic) return html``;
+  if (placement === 'additional' && !device.marker?.radar) return html``;
   const savedUnsupported = recognition.reason === 'saved_unsupported';
   const remove = () => options.updateDialog({
     // Keep the draft in memory until Save/close.  Turning the switch back on
@@ -77,13 +80,13 @@ export function renderRadarSection(
     const radar = radarDraft(device, space, [point.x, point.y], options.registryHass, true);
     if (!radar) return;
     options.updateDialog({
-      radar, radarEligible: true, radarTouched: true, radarRemove: false,
+      radar: {...radar,enabled:true}, radarEligible: true, radarTouched: true, radarRemove: false,
     });
   };
   const restoreOrBegin = () => {
     if (d.radar) {
       options.updateDialog({
-        radar: d.radar, radarEligible: true, radarTouched: true, radarRemove: false,
+        radar: {...d.radar,enabled:true}, radarEligible: true, radarTouched: true, radarRemove: false,
       });
       return;
     }
@@ -91,17 +94,16 @@ export function renderRadarSection(
   };
   const active = !!d.radar && !d.radarRemove;
   if (!active && options.setup.isActive()) options.setup.reset();
-  const radarToggle = toggleRow({
+  const radarToggle = automatic ? toggleRow({
     id: 'marker-radar-presence',
     icon: 'mdi:radar',
-    title: options.t('radar.declare'),
+    title: options.t('radar.enabled'),
     caption: recognition.reason === 'ld2450' ? options.t('radar.detected_ld2450')
       : recognition.reason === 'radar_metadata' ? options.t('radar.detected') : undefined,
     checked: active || savedUnsupported,
     disabled: savedUnsupported || d.bindingMode === 'virtual',
     onChange: (checked) => { if (checked) restoreOrBegin(); else remove(); },
-  });
-  void placement; // Kept in the adapter signature for compatibility with the lazy runtime.
+  }) : nothing;
   if (savedUnsupported || d.bindingMode === 'virtual' && !!device.marker?.radar) {
     return html`<div class="radaradditional">
       ${radarToggle}
@@ -117,7 +119,7 @@ export function renderRadarSection(
     </div>`;
   }
   if (d.bindingMode === 'virtual') return html``;
-  if (!active) return html`<div class="radaradditional">${radarToggle}</div>`;
+  if (!active) return automatic ? html`<div class="radaradditional">${radarToggle}</div>` : html``;
 
   const radar = d.radar!;
   const candidates = radarSourceCandidates(device, options.planHass);
@@ -126,7 +128,7 @@ export function renderRadarSection(
     values: readonly string[],
     update: (value: string) => void,
     emptyKey: I18nKey = 'radar.source_choose',
-  ) => html`<select class="areasel" @change=${(event: Event) =>
+  ) => html`<hp-settings-select><select class="areasel" @change=${(event: Event) =>
     update((event.target as HTMLSelectElement).value)}>
     <option value="" ?selected=${!value}>${options.t(emptyKey)}</option>
     ${value && !values.includes(value)
@@ -142,7 +144,7 @@ export function renderRadarSection(
         ${sourceName} · ${entityId}${deviceName ? ` · ${deviceName}` : ''}
       </option>`;
     })}
-  </select>`;
+  </select></hp-settings-select>`;
   const change = (patch: Partial<RadarEditorDraft>, resetCalibration = true) => {
     options.setup.reset();
     options.updateDialog({
@@ -269,34 +271,27 @@ export function renderRadarSection(
   });
 
   return html`<div class="radaradditional">
-    ${radarToggle}
     <fieldset class="markerlightgroup radargroup">
     <legend><span>${options.t('radar.title')}</span>${options.help('radar.help')}</legend>
-    <label class="srcrow">
-      ${options.boolInput(radar.enabled, (enabled) => change({ enabled }, false))}
-      <span>${options.t('radar.enabled')}</span>
-    </label>
-    <label class="srcrow">
-      ${options.boolInput(radar.showLive, (showLive) => change({ showLive }, false))}
-      <span>${options.t('radar.show_live')}</span>
-    </label>
+    ${toggleRow({id:'marker-radar-presence',title:options.t('radar.enabled'),checked:radar.enabled,onChange:(enabled)=>change({enabled},false)})}
+    ${toggleRow({id:'marker-radar-show-live',title:options.t('radar.show_live'),checked:radar.showLive,onChange:(showLive)=>change({showLive},false)})}
     <label for="radar-profile">${options.t('radar.profile')}</label>
-    <select id="radar-profile" class="areasel" @change=${(event: Event) => change({
+    <hp-settings-select><select id="radar-profile" class="areasel" @change=${(event: Event) => change({
       profile: (event.target as HTMLSelectElement).value as RadarEditorDraft['profile'],
     })}>
       ${(['esphome_ld2450_v1', 'cartesian_v1', 'polar_v1', 'range_v1', 'zones_v1', 'presence_v1'] as const)
         .map((profile) => html`<option value=${profile} ?selected=${profile === radar.profile}>
           ${options.t(`radar.profile_${profile}` as I18nKey)}
         </option>`)}
-    </select>
+    </select></hp-settings-select>
     <label for="radar-room">${options.t('radar.room')}</label>
-    <select id="radar-room" class="areasel" @change=${(event: Event) => change({
+    <hp-settings-select><select id="radar-room" class="areasel" @change=${(event: Event) => change({
       roomId: (event.target as HTMLSelectElement).value,
     })}>
       <option value="" ?selected=${!radar.roomId}>${options.t('radar.room_choose')}</option>
       ${roomOptions.map((room) => html`<option value=${room.id || ''}
         ?selected=${room.id === radar.roomId}>${room.name}</option>`)}
-    </select>
+    </select></hp-settings-select>
 
     ${coordinateProfile ? radar.xEntities.map((xEntity, index) => html`
       <div class="radartargetheading">
@@ -318,18 +313,18 @@ export function renderRadarSection(
           <span>${options.t('radar.swap_axes')}</span>
         </label>
         <div class="colorrow radarcoordinates">
-          <label>${options.t('radar.axis_x_sign')}<select class="areasel"
+          <label>${options.t('radar.axis_x_sign')}<hp-settings-select><select class="areasel"
             @change=${(event: Event) => setSignAt('xSigns', index,
               Number((event.target as HTMLSelectElement).value) === -1 ? -1 : 1)}>
             <option value="1" ?selected=${radar.xSigns[index] !== -1}>+1</option>
             <option value="-1" ?selected=${radar.xSigns[index] === -1}>−1</option>
-          </select></label>
-          <label>${options.t('radar.axis_y_sign')}<select class="areasel"
+          </select></hp-settings-select></label>
+          <label>${options.t('radar.axis_y_sign')}<hp-settings-select><select class="areasel"
             @change=${(event: Event) => setSignAt('ySigns', index,
               Number((event.target as HTMLSelectElement).value) === -1 ? -1 : 1)}>
             <option value="1" ?selected=${radar.ySigns[index] !== -1}>+1</option>
             <option value="-1" ?selected=${radar.ySigns[index] === -1}>−1</option>
-          </select></label>
+          </select></hp-settings-select></label>
         </div>
       ` : nothing}
       <label>${options.t('radar.presence_gate')}</label>
@@ -361,19 +356,19 @@ export function renderRadarSection(
       ${radar.distanceEntities.length < 8 ? html`<button class="btn ghost" type="button"
         @click=${addTarget}><ha-icon icon="mdi:plus"></ha-icon>${options.t('radar.add_target')}</button>` : nothing}
       <label>${options.t('radar.angle_unit')}</label>
-      <select class="areasel" @change=${(event: Event) => change({
+      <hp-settings-select><select class="areasel" @change=${(event: Event) => change({
         angleUnit: (event.target as HTMLSelectElement).value as RadarEditorDraft['angleUnit'],
       })}>
         <option value="degrees" ?selected=${radar.angleUnit === 'degrees'}>${options.t('radar.degrees')}</option>
         <option value="radians" ?selected=${radar.angleUnit === 'radians'}>${options.t('radar.radians')}</option>
-      </select>
+      </select></hp-settings-select>
       <label>${options.t('radar.angle_zero')}</label>
-      <select class="areasel" @change=${(event: Event) => change({
+      <hp-settings-select><select class="areasel" @change=${(event: Event) => change({
         angleZero: (event.target as HTMLSelectElement).value as RadarEditorDraft['angleZero'],
       })}>
         <option value="forward" ?selected=${radar.angleZero === 'forward'}>${options.t('radar.angle_forward')}</option>
         <option value="right" ?selected=${radar.angleZero === 'right'}>${options.t('radar.angle_right')}</option>
-      </select>
+      </select></hp-settings-select>
       <label class="srcrow">
         ${options.boolInput(radar.angleClockwise, (angleClockwise) => change({ angleClockwise }))}
         <span>${options.t('radar.angle_clockwise')}</span>
@@ -402,13 +397,13 @@ export function renderRadarSection(
       ${entitySelect(radar.zoneEntity,
         radar.zoneKind === 'occupancy' ? candidates.binary : candidates.numeric,
         (zoneEntity) => change({ zoneEntity }))}
-      <select class="areasel" @change=${(event: Event) => change({
+      <hp-settings-select><select class="areasel" @change=${(event: Event) => change({
         zoneKind: (event.target as HTMLSelectElement).value as 'occupancy' | 'count',
         zoneEntity: '',
       })}>
         <option value="occupancy" ?selected=${radar.zoneKind === 'occupancy'}>${options.t('radar.occupancy')}</option>
         <option value="count" ?selected=${radar.zoneKind === 'count'}>${options.t('radar.count')}</option>
-      </select>
+      </select></hp-settings-select>
     ` : nothing}
     <label>${options.t('radar.occupancy_source')}</label>
     ${entitySelect(radar.occupancyEntity, candidates.binary,
@@ -439,15 +434,12 @@ export function renderRadarSection(
     ${radar.profile !== 'esphome_ld2450_v1' && radar.profile !== 'zones_v1'
       && radar.profile !== 'presence_v1' ? html`
       <label>${options.t('radar.unit')}</label>
-      <select class="areasel" @change=${(event: Event) => change({
+      <hp-settings-select><select class="areasel" @change=${(event: Event) => change({
         unit: (event.target as HTMLSelectElement).value as RadarEditorDraft['unit'],
       })}>${(['mm', 'cm', 'm', 'in', 'ft'] as const).map((unit) => html`
-        <option value=${unit} ?selected=${unit === radar.unit}>${unit}</option>`)}</select>
+        <option value=${unit} ?selected=${unit === radar.unit}>${unit}</option>`)}</select></hp-settings-select>
     ` : nothing}
-    <label class="srcrow">
-      ${options.boolInput(radar.mirror, (mirror) => change({ mirror }))}
-      <span>${options.t('radar.mirror')}</span>
-    </label>
+    ${toggleRow({id:'marker-radar-mirror',title:options.t('radar.mirror'),checked:radar.mirror,onChange:(mirror)=>change({mirror})})}
     <div class="row">
       <button class="btn" type="button" @click=${() => configureOnPlan()}>
         <ha-icon icon="mdi:map-marker-radius"></ha-icon>${options.t('radar.configure_on_plan')}

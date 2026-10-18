@@ -135,6 +135,7 @@ const res = await page.evaluate(async () => {
   c.hass.states['sensor.hp_preview_long'] = {
     entity_id: 'sensor.hp_preview_long', state: '12345678901234567890', attributes: {},
   };
+  sr().querySelector('[data-section-target=appearance]')?.click(); await c.updateComplete;
   let badgeBounds = true;
   for (const position of ['right', 'bottom', 'left', 'top']) {
     c._markerDialog = {
@@ -148,7 +149,7 @@ const res = await page.evaluate(async () => {
     await c.updateComplete;
     const currentPreview = sr().querySelector('hp-device-preview');
     await currentPreview?.updateComplete;
-    const stage = currentPreview?.renderRoot?.querySelector('.previewstage')?.getBoundingClientRect();
+    const stage = currentPreview?.renderRoot?.querySelector('.previewcanvas')?.getBoundingClientRect();
     const badge = currentPreview?.renderRoot?.querySelector('.value-badge')?.getBoundingClientRect();
     const gap = 3;
     badgeBounds &&= !!stage && !!badge
@@ -222,7 +223,8 @@ const res = await page.evaluate(async () => {
     await node?.updateComplete;
     return face(node?.renderRoot?.querySelector('.dev'));
   };
-  const autoField = () => markerDialog()?.querySelector('.iconauto')?.textContent?.replace(/\s+/g, ' ').trim() || '';
+  const autoField = () => markerDialog()?.querySelector('.hpf-iconpreview ha-icon')?.getAttribute('icon')
+    || markerDialog()?.querySelector('ha-icon-picker')?.value || '';
   const waitUntil = async (predicate, what) => {
     const end = performance.now() + 6000;
     while (!predicate()) {

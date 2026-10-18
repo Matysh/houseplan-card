@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   freshRadarInstallationId, radarAfterBindingChange, radarConfigFromDraft, radarDraft,
-  radarSourceCandidates, recognizeRadar,
+  radarSourceCandidates, recognizeRadar, recognizeRadarBinding,
 } from '../test-build/radar-editor.js';
 
 const space = { id: 'floor', title: 'Floor', cellCm: 5, rooms: [
@@ -44,6 +44,19 @@ test('ordinary devices stay hidden until explicit manual declaration', () => {
   assert.ok(draft);
   assert.equal(draft.enabled, false);
   assert.equal(draft.profile, 'presence_v1');
+});
+
+test('#947 UI hardware eligibility ignores saved profiles without deleting their compatibility data', () => {
+  const legacy = device({marker:{...device().marker,radar:{version:17,enabled:true}}});
+  assert.equal(recognizeRadar(legacy,{}).reason,'saved_unsupported');
+  assert.equal(recognizeRadarBinding(legacy,{}).eligible,false);
+  assert.equal(legacy.marker.radar.version,17);
+  const supported = {...legacy,model:'HLK-LD2450',allEntities:['sensor.target_1_x','sensor.target_1_y']};
+  assert.equal(recognizeRadarBinding(supported,{}).reason,'ld2450');
+  assert.equal(recognizeRadar(supported,{}).reason,'saved_unsupported','runtime compatibility keeps its owner');
+  assert.equal(recognizeRadarBinding({...supported,bindingKind:'virtual',bindingRef:''},{}).eligible,false);
+  assert.equal(recognizeRadarBinding({...supported,bindingRef:''},{}).eligible,false);
+  assert.equal(recognizeRadarBinding({...supported,model:'Other radar'},{}).eligible,false);
 });
 
 test('coordinate-looking entity names alone do not claim an LD2450 adapter', () => {

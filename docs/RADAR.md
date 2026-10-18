@@ -43,8 +43,9 @@ defines an exact pair rule such as LD2450's `(0,0)`. Empty strings,
 ## Configure a radar
 
 1. Add or open the real device marker in the **Device editor**.
-2. For a recognized radar, open **Presence on the plan**. For custom hardware,
-   use **Additional actions → This is a presence radar**.
+2. For automatically recognized LD2450 hardware with target1 X/Y sources, open
+   the **Radar** tab. There is no manual declaration of a new radar. Existing
+   manual profiles remain available through **Details → Open previous radar settings**.
 3. Enable the radar, choose the room and verify every exact source. For generic
    profiles, specify units and coordinate conventions explicitly.
 4. Use **Check live data** before calibration. Correct unavailable, stale,
@@ -127,9 +128,14 @@ Unknown future radar versions remain preserved but inert until supported.
 
 ## Troubleshooting
 
-- **The section is absent:** only positively recognized hardware or an already
-  saved radar gets the main section. Use the manual action for a custom real
-  device. Virtual markers cannot own a radar binding.
+- **The tab is absent:** the current real binding must be positively recognized
+  as LD2450 with target1 X/Y. A saved manual profile does not qualify for a new
+  tab: open its compatibility entry in Details. Opening or editing another
+  field does not delete that profile. Virtual/empty bindings cannot qualify.
+- **Stop versus remove:** the operational enable switch retains the profile.
+  Explicit removal is a draft until the ordinary marker Save; it does not
+  delete the marker or a Home Assistant device. Unknown saved versions remain
+  inert and preserved until explicit removal.
 - **The source list is incomplete:** ensure the entity is enabled and readable
   by the current Home Assistant user. Manual mapping can use exact entities from
   different devices.

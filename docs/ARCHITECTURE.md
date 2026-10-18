@@ -1736,3 +1736,6 @@ consumers of `ci-proof.mjs` are not wrapped or retried by this policy.
 
 
 Room settings (#946) use the shared settings shell in its single-section mode. The single fill select maps directly to the existing empty inherited value or own mode. Source pickers and optimistic save ownership are unchanged. The size sample uses independent Space bases and Room multipliers; sample values never enter persistence.
+
+
+Device settings (#947) reuse shared settings sections/controls. Hardware-only `recognizeRadarBinding` owns new-tab eligibility; `recognizeRadar` retains saved-profile runtime compatibility. A transient Details entry exposes persisted legacy profiles without reintroducing manual declaration. Preview uses the canonical presentation at scale=1; an unscaled scrollable canvas contains long faces/rings. Radius input editing state is UI-only and does not materialize inherited defaults. Radar setup reserves instruction height so phase changes do not move the measured map.

@@ -3234,3 +3234,12 @@ Own deltas -84/-17/-824 produce refs284625/29752/3096457, preserving inherited
 gaps11/1676/212 and every band/absolute limit. Source counters stay unchanged;
 actual hostRefs5567 remains inside5564+25. The measured Room A is identical to
 ce6c75d1; the parent rebase adds accepted test/review changes, not product code.
+
+
+Device settings #947: smoke_device_settings_947 uses the four approved synthetic datasets and captures 390px light/dark plus desktop, checking 320/390/1280 in three live HA palettes, fixed preview size, rotation, unavailable source, friendly chips, clean/cancel and no commands. smoke_radar_setup retains its independent SVG matrix, calibration and save-boundary oracles through the legacy Details entry. Run actual HA dialog/picker checks separately; a fallback text input is not proof of the real HA MDI picker.
+
+Matched #947 size evidence: Room source `3a969edd` in Linux/ext4 measures
+279944 B gzip for the lazy editor; the Device implementation and shared visual
+corrections measure 281142 B (+1198 B). Only that measured cost moves the rolling
+editor reference 278984 → 280182. The inherited 960-B gap, 2000-B band, initial
+View limits and absolute budgets remain; the total-byte reference is unchanged.

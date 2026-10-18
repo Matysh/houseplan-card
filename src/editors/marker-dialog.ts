@@ -1,22 +1,13 @@
-/**
- * Диалог «Устройство на плане» по референсу `docs/design/600-settings-dialogs/`
- * (#600, серия 4; §7 SPEC.md).
- *
- * #592 вынес тело, #598 разложил его на пять карточек, #600 переложил
- * содержимое контролами набора: привязка — сегмент и кнопка выбора с панелью
- * в потоке (чекбокс «Show entities» внутри панели, Q8), роль источника и режим
- * свечения — сегменты, цвета — плашки вокруг прежнего `hp-color-opacity` (Q5),
- * тумблеры — строки набора, чипы, поля с единицами, «Display preview» —
- * прежний `hp-device-preview` целиком в блоке на тинте (Q3). Все ключи
- * `_markerDialog` и все записи в них прежние (§7.2); секции радара и пылесоса
- * рисуются своими модулями без изменений.
- */
+/** Existing Device settings regrouped into the shared settings shell (#947). */
 import { html, nothing, type TemplateResult } from 'lit';
 
 import {
-  callout, colorField, ensureFormKitStyles, field, fieldGrid, footerStatus, formCard, rangeEnds,
+  callout, colorField, field, fieldGrid, footerStatus, formCard, rangeEnds,
   rangeLine, segmented, sourcePicker, subsection, textLink, tintBlock, toggleRow, unitInput,
 } from './form-kit';
+import { ensureSettingsDialogStyles } from './settings-styles';
+import { settingsSections, revealSettingsField } from './settings-sections';
+import { dialogSession } from './dialog-baseline';
 import { markerDirty, markerProblems } from './marker-form-state';
 import { settingsCopy } from './settings-copy';
 
@@ -35,7 +26,7 @@ import {
   DISPLAY_MODES, TAP_ACTIONS, displayIsNeutral, displayWantsValue, normalizeDeviceDisplay,
   parseRoomRef, safeUrl, spaceDisplayOf, type DeviceDisplayMode,
 } from '../logic';
-import { radarAfterBindingChange } from '../radar-editor';
+import { radarAfterBindingChange, recognizeRadarBinding } from '../radar-editor';
 import type { ValueBadgePosition } from '../types';
 import type { HouseplanEditorRuntime } from '../houseplan-editor-runtime';
 /* #592: словари ярлыков и подсказок режима переехали вместе со своим
@@ -55,13 +46,14 @@ const BADGE_POSITIONS: readonly ValueBadgePosition[] = ['top', 'right', 'bottom'
 /** Сообщение о состоянии рядом с полем: предупреждение или заметка с иконкой. */
 function note(text: string, kind: 'warning' | 'info', id?: string): TemplateResult {
   return html`<span id=${id ?? nothing} class="hpf-note ${kind === 'warning' ? 'hpf-note-warning' : ''}"
-    role=${kind === 'warning' ? 'status' : 'note'}>
-    <ha-icon icon=${kind === 'warning' ? 'mdi:alert-outline' : 'mdi:information-outline'}></ha-icon><span>${text}</span>
-  </span>`;
+    role=${kind === 'warning' ? 'status' : 'note'}>${text}</span>`;
 }
 
+const radiusInputs = new WeakMap<object, { owner: object | undefined; raw: string }>();
+const legacyRadarPanels = new WeakMap<object, { owner: object | undefined; open: boolean }>();
+
 export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult {
-  ensureFormKitStyles(this.host);
+  ensureSettingsDialogStyles(this.host);
     const d = this.host._markerDialog!;
     const t = this.host._t.bind(this.host);
     const { st, shelp } = settingsCopy(this.host);
@@ -187,8 +179,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
       const first = problems[0];
       if (!first) return;
       const node = (this.host.renderRoot as ParentNode).querySelector<HTMLElement>(`#${first.field}`);
-      node?.scrollIntoView({ block: 'center' });
-      node?.focus();
+      if (node) revealSettingsField(this.host, node);
     };
     const bindingProblem = problemFor('marker-binding');
     const nameProblem = problemFor('marker-name');
@@ -212,7 +203,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           id: 'marker-binding',
           open: d.bindingOpen,
           current: curLabel
-            ? { label: curLabel, sub: `${d.binding}${bindingStatus?.kind === 'ha_disabled' ? ` · ${t('marker.binding_disabled')}` : ''}` }
+            ? { label: curLabel, sub: '' }
             : null,
           placeholder: t('marker.pick_ph'),
           ariaLabel: t('marker.binding_label'),
@@ -249,12 +240,12 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             <input id="marker-show-entities" type="checkbox" .checked=${d.showEntities}
               @change=${(e: Event) => (this.host._markerDialog = { ...d, showEntities: (e.target as HTMLInputElement).checked })} />
             <span>${t('marker.show_entities')}</span>
-          </label>`,
+          </label>${callout({text:st('marker.binding_search_hint')})}`,
         })
       : nothing;
     const basics = formCard({
       id: 'basics',
-      title: t('marker.card_basics'),
+      title: st('marker.section_basics'),
       body: html`
         ${bindingBanner}
         ${field({
@@ -268,7 +259,6 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
         ${field({
           label: t('marker.binding_label'), help: shelp('marker.binding.help'),
           error: bindingProblem ? st(bindingProblem.message) : undefined,
-          hint: isVirtual ? st('marker.binding_virtual_hint') : undefined,
           control: html`${segmented<'virtual' | 'ha'>({
             name: 'bmode',
             value: d.bindingMode,
@@ -306,7 +296,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
         ${field({
           label: t('marker.room_label'), htmlFor: 'marker-room',
           hint: d.room ? st('marker.room_hint_override') : isVirtual ? undefined : st('marker.room_hint_auto'),
-          control: html`<select id="marker-room" class="hpf-select"
+          control: html`<hp-settings-select><select id="marker-room" class="hpf-select"
             @change=${(e: Event) => {
               const room = (e.target as HTMLSelectElement).value;
               const ref = parseRoomRef(room);
@@ -323,16 +313,17 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             ${this.host._allRoomsFlat().map(
               (r) => html`<option value=${r.value} ?selected=${r.value === d.room}>${r.label}</option>`,
             )}
-          </select>`,
+          </select></hp-settings-select>`,
         })}
-        ${this._renderVacSection(d)}`,
+        ${this.host._bindingHasClimate(d.binding)
+          ? toggleRow({id:'marker-use-climate-temp',icon:'mdi:thermometer',title:t('marker.use_climate_temp'),caption:t('marker.use_climate_temp_tip'),checked:d.useClimateTemp,onChange:(value)=>(this.host._markerDialog={...d,useClimateTemp:value})}) : nothing}`,
     });
 
     // --------------------------------------------------------- Tap action
     const toggleEntityField = effectiveTapAction === 'toggle' && (toggleEntities.length > 1 || staleToggleEntity)
       ? html`<div class="markertoggleentity">${field({
           label: t('marker.toggle_entity_label'), htmlFor: 'marker-toggle-entity', help: this._help('marker.toggle_entity.help'),
-          control: html`<select id="marker-toggle-entity" class="hpf-select"
+          control: html`<hp-settings-select><select id="marker-toggle-entity" class="hpf-select"
             @change=${(e: Event) => {
               const next = {
                 ...d,
@@ -350,7 +341,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               ?selected=${!staleToggleEntity && eid === d.toggleEntity}>
               ${entityName(eid)} · ${eid}
             </option>`)}
-          </select>`,
+          </select></hp-settings-select>`,
           hint: staleToggleEntity
             ? note(t('marker.toggle_entity_missing', {
                 entity: d.toggleEntity,
@@ -396,10 +387,11 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
     const controlCands = d.controlsFilter.trim() ? this._controlCandidates(d) : [];
     const tap = formCard({
       id: 'tap',
+      title: st('marker.section_actions'),
       body: html`
         ${field({
           label: t('marker.tap_label'), htmlFor: 'marker-tap-action',
-          control: html`<select id="marker-tap-action" class="hpf-select"
+          control: html`<hp-settings-select><select id="marker-tap-action" class="hpf-select"
             aria-describedby=${effectiveTapAction === 'toggle' ? 'marker-toggle-hint' : nothing}
             @change=${(e: Event) => {
               const next = {
@@ -412,7 +404,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             ${TAP_ACTIONS.map((v) => html`<option value=${v} ?selected=${v === effectiveTapAction}>
                 ${t(`tap.${v.replace('-', '_')}` as I18nKey)}
               </option>`)}
-          </select>`,
+          </select></hp-settings-select>`,
           hint: effectiveTapAction === 'toggle'
             ? html`<span id="marker-toggle-hint">${toggleHintLines.map((line) => html`<span class="hpf-hint-line">${line}</span>`)}</span>
               <span class="sr-only" role="status" aria-live="polite">${d.tapHintAnnouncement}</span>`
@@ -503,9 +495,12 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             </div>`
           : nothing}</div>`
       : nothing;
+    const owner = dialogSession(this.host, 'marker');
+    const radiusInput = radiusInputs.get(this.host);
+    const radiusValue = radiusInput && radiusInput.owner === owner ? radiusInput.raw : d.glowRadius || this.host._glowRadiusPlaceholder;
     const light = formCard({
       id: 'light',
-      title: t('marker.card_light'),
+      title: st('marker.section_light'),
       body: html`
         ${field({
           label: t('marker.light_role_label'), help: this._help('marker.light_role.help'),
@@ -514,18 +509,17 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             value: d.lightRole,
             ariaLabel: t('marker.light_role_label'),
             options: [
-              { value: 'auto', label: st('marker.light_role_seg_auto') },
+              { value: 'auto', label: st('marker.light_auto_state',{state:st(autoHasSpatialSource?'marker.light_current_yes':'marker.light_current_no')}) },
               { value: 'always', label: st('marker.light_role_seg_always') },
               { value: 'never', label: st('marker.light_role_seg_never') },
             ],
             onChange: (role) => this._setMarkerLightRole(role),
           }),
-          hint: d.lightRole === 'auto' ? t(autoHasSpatialSource ? 'marker.light_role_auto_yes' : 'marker.light_role_auto_no') : undefined,
         })}
         ${d.lightRole === 'always' && (leadingEntities.length > 1 || staleLeading)
           ? html`<div class="markerleadingentity">${field({
               label: t('marker.light_entity_label'), htmlFor: 'marker-light-entity', help: this._help('marker.light_entity.help'),
-              control: html`<select id="marker-light-entity" class="hpf-select"
+              control: html`<hp-settings-select><select id="marker-light-entity" class="hpf-select"
                 @change=${(e: Event) => (this.host._markerDialog = {
                   ...d,
                   lightEntity: (e.target as HTMLSelectElement).value,
@@ -540,7 +534,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                   ?selected=${!staleLeading && eid === d.lightEntity}>
                   ${entityName(eid)} · ${eid}
                 </option>`)}
-              </select>`,
+              </select></hp-settings-select>`,
               hint: staleLeading
                 ? note(t('marker.light_entity_missing', { entity: d.lightEntity, fallback: effectiveLeading || '—' }), 'warning')
                 : undefined,
@@ -567,11 +561,11 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             label: t('marker.glow_radius_label'), htmlFor: 'marker-glow-radius', help: this._help('marker.glow_radius.help'),
             hint: d.glowRadius.trim() ? undefined : st('marker.glow_radius_empty_hint', { v: `${this.host._glowRadiusPlaceholder} ${unit}` }),
             control: unitInput({
-              id: 'marker-glow-radius', unit, min: 0.5, step: 0.5, value: d.glowRadius,
+              id: 'marker-glow-radius', unit, min: 0.5, step: 0.5, value: radiusValue,
               placeholder: this.host._glowRadiusPlaceholder, ariaLabel: t('marker.glow_radius_label'),
               disabled: glowSourceDisabled,
               describedBy: glowSourceDisabled || passiveSource ? 'marker-glow-disabled-hint' : undefined,
-              onInput: (raw) => (this.host._markerDialog = { ...d, glowRadius: raw }),
+              onInput: (raw) => { radiusInputs.set(this.host,{owner,raw}); this.host._markerDialog = { ...d, glowRadius: raw }; },
             }),
           })}
           ${glowSourceDisabled || passiveSource
@@ -602,8 +596,9 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
     const badgeToggleDisabled = displayIsNeutral(d.display) || (!badgeCandidates.length && !d.valueBadgeSource);
     const appearance = formCard({
       id: 'appearance',
-      title: t('marker.card_appearance'),
+      title: st('marker.section_appearance'),
       body: html`
+        ${this.host._ledSection(d.devId)}
         ${field({
           label: t('marker.icon_label'), htmlFor: 'marker-icon', help: shelp('marker.icon.help'),
           control: html`<div class="hpf-iconfield">
@@ -612,19 +607,11 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                 <span class="hpf-iconpreview" aria-hidden="true"><ha-icon icon=${d.icon || d.autoIcon || 'mdi:shape-outline'}></ha-icon></span>`}
               ${iconControl}
             </div>
-            ${d.icon
-              ? html`<button class="btn ghost hpf-iconclear" type="button" aria-label=${t('btn.reset')} title=${t('btn.reset')}
-                  @click=${() => (this.host._markerDialog = { ...d, icon: '' })}><ha-icon icon="mdi:close"></ha-icon></button>`
-              : nothing}
           </div>`,
-          hint: !d.icon && d.autoIcon
-            ? html`<span class="iconauto"><ha-icon icon=${d.autoIcon} aria-hidden="true"></ha-icon> ${t('marker.icon_auto', { icon: d.autoIcon })}
-                ${textLink(t('marker.icon_pin_auto'), () => (this.host._markerDialog = { ...d, icon: d.autoIcon }))}</span>`
-            : d.icon ? st('marker.icon_custom_hint') : undefined,
         })}
         ${field({
           label: t('marker.display_label'), htmlFor: 'marker-display', help: shelp('marker.display.help'),
-          control: html`<select id="marker-display" class="hpf-select"
+          control: html`<hp-settings-select><select id="marker-display" class="hpf-select"
             @change=${(e: Event) => (this.host._markerDialog = {
               ...d,
               display: normalizeDeviceDisplay((e.target as HTMLSelectElement).value),
@@ -632,7 +619,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             ${DISPLAY_MODES.map((v) => html`<option value=${v} ?selected=${v === d.display}>
               ${t(DISPLAY_LABEL_KEYS[v])}
             </option>`)}
-          </select>`,
+          </select></hp-settings-select>`,
           hint: t(DISPLAY_HINT_KEYS[d.display]),
         })}
         ${toggleRow({
@@ -672,8 +659,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           : nothing}
         ${displayWantsValue(d.display)
           ? html`<div class="markervaluesource">${field({
-              label: t('marker.value_source'), htmlFor: 'marker-value-source', help: this._help('marker.value_source.help'),
-              control: html`<select id="marker-value-source" class="hpf-select" ?disabled=${isVirtual}
+              label: st('marker.value_source_instead'), htmlFor: 'marker-value-source', help: this._help('marker.value_source.help'),
+              control: html`<hp-settings-select><select id="marker-value-source" class="hpf-select" ?disabled=${isVirtual}
                 @change=${(e: Event) => (this.host._markerDialog = {
                   ...d,
                   valueSource: valueBadgeSourceFromKey((e.target as HTMLSelectElement).value),
@@ -690,7 +677,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                   title=${candidate.technical}>
                   ${this._valueBadgeCandidateLabel(candidate)} · ${candidate.value}
                 </option>`)}
-              </select>`,
+              </select></hp-settings-select>`,
               hint: isVirtual
                 ? note(t('marker.preview.reason.value_virtual'), 'info')
                 : valueSourceMissing
@@ -728,7 +715,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             ${field({
               label: t('marker.value_badge_source'), htmlFor: 'marker-value-badge-source', help: this._help('marker.value_badge_source.help'),
               error: valueBadgeSourceProblem ? st(valueBadgeSourceProblem.message) : undefined,
-              control: html`<select id="marker-value-badge-source" class="hpf-select"
+              control: html`<hp-settings-select><select id="marker-value-badge-source" class="hpf-select"
                 aria-invalid=${valueBadgeSourceProblem ? 'true' : nothing}
                 @change=${(e: Event) => (this.host._markerDialog = {
                   ...d,
@@ -744,7 +731,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                   title=${candidate.technical}>
                   ${this._valueBadgeCandidateLabel(candidate)} · ${candidate.value}
                 </option>`)}
-              </select>`,
+              </select></hp-settings-select>`,
               hint: badgeSourceMissing
                 ? note(t('marker.value_badge_missing_hint'), 'warning')
                 : displayWantsValue(d.display) && badgeSourceKey === innerValueSourceKey
@@ -771,23 +758,6 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             })}
           ` : nothing}
         </div>
-        ${previewPresentation
-          // Q3 (решение владельца): hp-device-preview целиком — у него свой
-          // заголовок «Display preview · Now» и свой блок на тинте, обёртка не нужна.
-          ? html`<hp-device-preview
-              .hass=${this.host.hass}
-              .language=${langOf(this.host.hass, this.host._config?.language)}
-              .presentation=${previewPresentation}
-              .registry=${this.host._haRegistry}
-              .deviceName=${d.name.trim() || previewDevice?.name || curLabel || ''}>
-            </hp-device-preview>`
-          : tintBlock({
-              title: t('marker.preview.title'),
-              body: html`<div class="devicepreview-empty">
-                <ha-icon icon="mdi:eye-outline"></ha-icon>
-                <span>${t('marker.preview.select_source')}</span>
-              </div>`,
-            })}
         ${subsection({ title: t('marker.size_label'), help: shelp('marker.size.help') })}
         ${fieldGrid([
           html`<div class="hpf-field markersize">
@@ -810,13 +780,39 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             })}
             ${rangeEnds('0°', '355°')}
           </div>`,
-        ])}`,
+        ])}
+        ${callout({text:st('marker.sources_explanation')})}
+        ${previewPresentation
+          // Q3 (решение владельца): hp-device-preview целиком — у него свой
+          // заголовок «Display preview · Now» и свой блок на тинте, обёртка не нужна.
+          ? html`<hp-device-preview
+              .hass=${this.host.hass}
+              .language=${langOf(this.host.hass, this.host._config?.language)}
+              .presentation=${previewPresentation}
+              .registry=${this.host._haRegistry}
+              .deviceName=${d.name.trim() || previewDevice?.name || curLabel || ''}>
+            </hp-device-preview>`
+          : tintBlock({
+              title: t('marker.preview.title'),
+              body: html`<div class="devicepreview-empty">
+                <ha-icon icon="mdi:eye-outline"></ha-icon>
+                <span>${t('marker.preview.select_source')}</span>
+              </div>`,
+            })}
+        `,
     });
 
     // ------------------------------------------------------------ Details
+    const automaticRadar = !!previewDevice && !isVirtual && recognizeRadarBinding(previewDevice,this.host._fullRegistryHass).eligible;
+    const persistedMarker = this.host._markers.find(marker => marker.id === d.devId);
+    const radarDevice = previewDevice && persistedMarker?.radar
+      ? {...previewDevice,marker:{...(previewDevice.marker || persistedMarker),radar:persistedMarker.radar}}
+      : previewDevice;
+    const legacyRadar = !automaticRadar && !d.radarRemove && !!persistedMarker?.radar;
+    const legacyPanel = legacyRadarPanels.get(this.host);
     const details = formCard({
       id: 'details',
-      title: t('marker.card_details'),
+      title: st('marker.section_details'),
       body: html`
         ${fieldGrid([
           field({
@@ -827,6 +823,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           }),
           field({
             label: t('marker.link_label'), htmlFor: 'marker-link',
+            hint: note(st('marker.link_hint'),'info'),
             control: html`<input id="marker-link" class="hpf-input" type="url" placeholder="https://…"
               .value=${d.link}
               @input=${(e: Event) => (this.host._markerDialog = { ...d, link: (e.target as HTMLInputElement).value })} />`,
@@ -858,25 +855,25 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                 @change=${(e: Event) => this._pickMarkerFiles(e)} />
             </div>`,
         })}
-        ${!isVirtual ? subsection({ title: t('radar.additional_actions') }) : nothing}
-        ${this._renderRadarSection(d, previewDevice, 'additional')}
-        ${this.host._bindingHasClimate(d.binding)
-          ? toggleRow({
-              id: 'marker-use-climate-temp', icon: 'mdi:thermometer',
-              title: t('marker.use_climate_temp'), caption: t('marker.use_climate_temp_tip'),
-              checked: d.useClimateTemp,
-              onChange: (v) => (this.host._markerDialog = { ...d, useClimateTemp: v }),
-            })
-          : nothing}`,
+        ${legacyRadar ? callout({kind:'warning',text:st('marker.legacy_radar_hint'),action:textLink(st('marker.legacy_radar_open'),()=>{legacyRadarPanels.set(this.host,{owner,open:true});this.host.requestUpdate();})}) : nothing}
+        ${legacyRadar && legacyPanel && legacyPanel.owner===owner && legacyPanel.open ? this._renderRadarSection(d,radarDevice,'additional') : nothing}`,
     });
 
     const hidden = d.hideFromPlan || bindingStatus?.kind === 'ha_disabled';
-    return html`<hp-dialog id="marker-dialog" .hass=${this.host.hass} data-kind="marker" form-shell
-      .title=${d.devId ? t('info.device_header') : t('marker.new_device')}
-      .badge=${previewDevice ? this.host._spaceModelById(previewDevice.space)?.title ?? '' : this.host._spaceModel()?.title ?? ''}
-      icon="mdi:shape-plus" wide @hp-close=${requestClose}>
-        <div class="body hpf-form">
-          ${basics}${this.host._ledSection(d.devId)}${tap}${light}${appearance}${details}
+    return html`<hp-dialog id="marker-dialog" .hass=${this.host.hass} data-kind="marker" form-shell settings-layout
+      .title=${d.devId ? st('marker.settings_title',{name:d.name.trim() || previewDevice?.name || t('info.device_header')}) : t('marker.new_device')}
+      .subtitle=${st('marker.scope',{space:(previewDevice ? this.host._spaceModelById(previewDevice.space)?.title : this.host._spaceModel()?.title) || ''})}
+      icon="mdi:cog-outline" icon-badge="mdi:devices" wide @hp-close=${requestClose}>
+        <div class="body hpf-form hpf-settings-form">
+          ${settingsSections(this.host,'marker',[
+            {id:'basics',title:st('marker.section_basics'),body:basics},
+            {id:'appearance',title:st('marker.section_appearance'),body:appearance},
+            {id:'actions',title:st('marker.section_actions'),body:tap},
+            {id:'light',title:st('marker.section_light'),body:light},
+            {id:'details',title:st('marker.section_details'),body:details},
+            ...(previewDevice && this.host._isVacDev(previewDevice) ? [{id:'vacuum',title:st('marker.section_vacuum'),body:html`${this._renderVacSection(d)}`,specialized:true}] : []),
+            ...(automaticRadar ? [{id:'radar',title:st('marker.section_radar'),body:this._renderRadarSection(d,radarDevice,'main'),specialized:true}] : []),
+          ],st('dialog.section'),owner)}
         </div>
         <div class="row dialog-action-footer hpf-footer" slot="footer">
           <div class="dialog-action-group markeractions">
@@ -899,7 +896,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           </div>
           ${footerStatus(problems.length
             ? { action: textLink(st('dialog.review_fields', { n: String(problems.length) }), reviewFirst) }
-            : {})}
+            : {text:st(dirty ? 'dialog.dirty' : 'dialog.saved')})}
           <div class="dialog-action-group dialog-action-commit">
             <button class="btn ghost" data-hp="dialog-cancel" ?disabled=${d.busy} @click=${requestClose}>${t('btn.cancel')}</button>
             <button class="btn on" data-hp="dialog-confirm" @click=${() => { void this._saveMarker(); }}

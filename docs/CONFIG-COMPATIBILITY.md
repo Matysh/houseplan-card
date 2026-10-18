@@ -1420,3 +1420,6 @@ led_strips?: Array<{ id: string; points: [number, number][]; marker: string | nu
 
 
 Room settings #946 introduce no new stored keys. Empty fill selection keeps inheritance; min/max retain independent omission and unknown fields remain. An ordinary Room save retires a legacy `glow:false` override by writing `glow:true`; opening/cancelling the form never writes it. Sample values and effective Space values are not materialized.
+
+
+Device settings #947 add no persisted fields. Existing hide_signal/hide_battery flags, missing sources and unknown fields keep their owners. Showing a default Glow radius or a normalized preview size does not write an override. Saved manual/future radar data remains preserved and runtime behavior unchanged; new tab eligibility reads hardware recognition independently of stored radar data.

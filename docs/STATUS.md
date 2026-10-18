@@ -708,3 +708,6 @@ user guide; the former parallel list is archived in
 
 
 Room settings #946: implemented locally against the accepted compact v4, using the shared form controls; independent review and release remain pending.
+
+
+Device settings #947: local implementation uses the shared five-section shell with real picker/presentation and hardware-only Radar eligibility. Independent validation/review and the combined beta remain pending.

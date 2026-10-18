@@ -1,11 +1,4 @@
-// #600, серия 4: «Устройство на плане» по референсу docs/design/600-settings-dialogs/
-// (§7 SPEC.md). Фокусный свидетель формы: состав карточек и отсутствие старой
-// разметки (AC1), оболочка и полосы экранов (AC2), привязка сегментом и кнопкой
-// выбора с «Show entities» внутри панели (Q8), «Ask for confirmation» только у
-// действий (Q8), сегменты роли/свечения/стороны бейджа и плашки цвета (Q5),
-// блок свечения отключается целиком с объяснением, Display preview целиком в
-// блоке на тинте (Q3), размеры с числом, чипы источников, Save только при
-// изменениях и вопрос при закрытии (AC6/К10), цели и семантика (AC9).
+// #947: shared device sections and the existing functional fields/save guards.
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 1280, height: 900 });
@@ -35,12 +28,12 @@ const out = await page.evaluate(async () => {
 
   // --- AC1: пять карточек по §7.1, старой разметки нет --------------------
   o.fiveCardsInOrder = JSON.stringify(qa('.hpf-card').map((card) => card.dataset.card))
-    === JSON.stringify(['basics', 'tap', 'light', 'appearance', 'details']);
+    === JSON.stringify(['basics', 'appearance', 'tap', 'light', 'details']);
   o.noLegacyMarkup = qa('.srcrow, .namein, .areasel, .dropbtn, .droppanel, .candlist, fieldset, .markerlightgroup, .markerradios, '
     + '.colorrow, .habindingbanner, .bindsel, .bindharow, .entcheck, .ctrlchips, .ctrllist, .ctrlopt, .opl, .opv, .descin, .tempin, '
     + '.markerhelpfield, .markerhelplabel, .helpfieldlabel, .rhint, .markerlightdisabled, .markerlightwarning').length === 0;
-  o.badgeShowsSpaceTitle = dlg().badge === c._spaceModelById(lamp.space)?.title && !!dlg().shadowRoot.querySelector('.badge');
-  o.shellIs560 = dlg().hasAttribute('form-shell') && Math.round(dlg().shadowRoot.querySelector('.surface').getBoundingClientRect().width) === 560;
+  o.subtitleShowsSpace = dlg().subtitle.includes(c._spaceModelById(lamp.space)?.title) && !!dlg().shadowRoot.querySelector('.subtitle');
+  o.shellIs560 = dlg().hasAttribute('form-shell') && Math.round(dlg().shadowRoot.querySelector('.surface').getBoundingClientRect().width) === 610;
   o.bodyHasNoOwnScroller = getComputedStyle(q('.body')).overflowY === 'visible' && getComputedStyle(q('.body')).maxHeight === 'none';
   o.footerGroups = !!q('.markeractions .btn.danger') && q('.markeractions').getBoundingClientRect().left < saveBtn().getBoundingClientRect().left;
 
@@ -62,8 +55,9 @@ const out = await page.evaluate(async () => {
   o.buttonClosesPanel = !q('.hpf-card[data-card="basics"] .hpf-panel') && c._markerDialog.bindingOpen === false;
   o.roomIsASelectWithHint = !!q('#marker-room.hpf-select') && !!q('#marker-room')?.closest('.hpf-field')?.querySelector('.hpf-hint');
 
+  q('[data-section-target=actions]').click(); await upd();
   // --- Tap action: подтверждение только у действий (Q8), чипы источников -----
-  o.tapActionCardHasNoLargeHeading = !q('.hpf-card[data-card="tap"] > .hpf-head');
+  o.tapActionCardHasHeading = !!q('.hpf-card[data-card="tap"] > .hpf-head');
   await select(q('#marker-tap-action'), 'none');
   o.noConfirmForDoNothing = !q('#marker-tap-confirm') && !q('#marker-toggle-hint');
   await select(q('#marker-tap-action'), 'toggle');
@@ -81,10 +75,11 @@ const out = await page.evaluate(async () => {
   q('.hpf-card[data-card="tap"] .hpf-chip button').click(); await upd();
   o.chipRemoveWritesControls = c._markerDialog.controls.length === controlsBefore;
 
+  q('[data-section-target=light]').click(); await upd();
   // --- Light and glow: сегменты, блок свечения отключается целиком -----------
   o.roleIsASegmentWithAutoHint = qa('input[name="marker-light-role"]').length === 3
     && !!q('input[name="marker-light-role"]')?.closest('.hpf-seg[role="radiogroup"]')
-    && (c._markerDialog.lightRole !== 'auto' || !!q('input[name="marker-light-role"]')?.closest('.hpf-field')?.querySelector('.hpf-hint'));
+    && q('input[name="marker-light-role"][value="auto"]')?.closest('label').textContent.includes('(');
   await pickSeg('marker-light-role', 'never');
   o.neverDisablesGlowBlock = c._markerDialog.lightRole === 'never'
     && q('.markerglowblock')?.classList.contains('hpf-disabled') && q('.markerglowblock').getAttribute('aria-disabled') === 'true'
@@ -113,14 +108,17 @@ const out = await page.evaluate(async () => {
   o.zeroRadiusKeepsSaveEnabled = saveBtn().disabled === false;
   input(q('#marker-glow-radius'), ''); await upd();
 
+  q('[data-section-target=appearance]').click(); await upd();
   // --- Appearance: иконка, display, бейдж, превью (Q3), размеры ----------------
   o.iconFieldHasPreview = !!q('#marker-icon') && !!q('.hpf-iconfield .hpf-iconpreview ha-icon');
-  const pin = q('.iconauto .hpf-link');
-  o.autoIconHintHasPinLink = !c._markerDialog.icon ? !!pin : true;
-  if (pin) { pin.click(); await upd(); }
-  o.pinWritesIcon = !!c._markerDialog.icon && c._markerDialog.icon === c._markerDialog.autoIcon && !!q('.hpf-iconclear');
-  q('.hpf-iconclear').click(); await upd();
-  o.clearResetsIcon = c._markerDialog.icon === '';
+  o.noAutoPinOrResetButton = !q('.iconauto .hpf-link') && !q('.hpf-iconclear');
+  const icon = q('#marker-icon');
+  if (icon.tagName === 'HA-ICON-PICKER') icon.dispatchEvent(new CustomEvent('value-changed',{detail:{value:'mdi:home'}}));
+  else input(icon,'mdi:home');
+  await upd(); o.manualIconWrites = c._markerDialog.icon === 'mdi:home';
+  if (icon.tagName === 'HA-ICON-PICKER') icon.dispatchEvent(new CustomEvent('value-changed',{detail:{value:''}}));
+  else input(icon,'');
+  await upd(); o.clearResetsIcon = c._markerDialog.icon === '';
   o.displaySelectWithHint = !!q('#marker-display.hpf-select') && !!q('#marker-display')?.closest('.hpf-field')?.querySelector('.hpf-hint');
   o.hideBatteryIsAnAppearanceToggle = !!q('#marker-hide-battery')
     && !!q('#marker-hide-battery')?.closest('.hpf-toggle.hpf-compact');
@@ -146,55 +144,40 @@ const out = await page.evaluate(async () => {
   input(q('#marker-angle'), '35'); change(q('#marker-angle')); await upd();
   o.sizeAndAngleNumbersWrite = c._markerDialog.size === 2 && c._markerDialog.angle === 35;
 
+  q('[data-section-target=details]').click(); await upd();
   // --- Details: Model и Link в ряд, описание, вложения ------------------------
   const modelBox = q('#marker-model').getBoundingClientRect();
   const linkBox = q('#marker-link').getBoundingClientRect();
-  o.modelAndLinkInOneRow = Math.abs(modelBox.top - linkBox.top) < 2 && linkBox.left > modelBox.right;
+  o.modelAndLinkUseAvailableWidth = linkBox.top > modelBox.bottom && Math.abs(linkBox.width-modelBox.width)<2;
   o.descriptionIsAKitTextarea = q('#marker-description')?.tagName === 'TEXTAREA' && q('#marker-description').classList.contains('hpf-input');
   o.attachInActions = !!q('.hpf-card[data-card="details"] .hpf-actions .filebtn');
-  const radarToggle = q('#marker-radar-presence');
-  o.radarEntryIsAToggleInAdditionalActions = !!radarToggle
-    && !!radarToggle.closest('.hpf-card[data-card="details"] .radaradditional')
-    && !q('.hpf-card[data-card="basics"] .radargroup');
-  if (radarToggle && !radarToggle.checked) { radarToggle.click(); await upd(); }
-  const firstRadarDraft = c._markerDialog.radar;
-  const firstInstallation = firstRadarDraft?.installationId;
-  o.radarExpandsImmediatelyBelowToggle = !!firstRadarDraft && !c._markerDialog.radarRemove
-    && !!q('#marker-radar-presence')?.closest('.radaradditional')?.querySelector(':scope > .radargroup')
-    && !q('.hpf-card[data-card="basics"] .radargroup');
-  q('#marker-radar-presence')?.click(); await upd();
-  o.radarOffKeepsSessionDraft = c._markerDialog.radar === firstRadarDraft
-    && c._markerDialog.radarRemove === true && !q('.radaradditional > .radargroup');
-  q('#marker-radar-presence')?.click(); await upd();
-  o.radarOnRestoresSessionDraft = c._markerDialog.radar === firstRadarDraft
-    && c._markerDialog.radar?.installationId === firstInstallation
-    && c._markerDialog.radarRemove === false && !!q('.radaradditional > .radargroup');
+  o.ordinaryDeviceHasNoRadarDeclaration = !q('#marker-radar-presence') && !q('[data-section-target=radar]') && !q('.radaradditional');
   input(q('#marker-model'), 'Model 600'); await upd();
   o.modelWritesOwnKey = c._markerDialog.model === 'Model 600' && c._markerDialog.link === d0.link;
 
   // --- AC9: цели ≥ 44 ---------------------------------------------------------
-  o.toggleTargetsAre44 = qa('.hpf-toggle > input[type="checkbox"]').every((i) => { const b = i.getBoundingClientRect(); return b.width >= 44 && b.height >= 44; });
+  o.toggleTargetsAre44 = qa('.hpf-toggle > input[type="checkbox"]').filter(i=>i.getBoundingClientRect().width>0).every((i) => { const b = i.getBoundingClientRect(); return b.width >= 44 && b.height >= 44; });
   o.segmentsAreRadiogroups = qa('.hpf-seg').length >= 4 && qa('.hpf-seg').every((s) => s.getAttribute('role') === 'radiogroup' && s.getAttribute('aria-label'));
 
   // --- К10: Save только при изменениях, вопрос при закрытии --------------------
   c._closeMarkerDialog(); await upd();
   c._openMarkerDialog(lamp); await upd();
-  o.saveDisabledWhenClean = saveBtn().disabled === true && statusText() === '';
+  o.saveDisabledWhenClean = saveBtn().disabled === true && statusText().length > 0;
   q('#marker-hide-battery').click(); await upd();
   o.hideBatteryWritesOwnKeyAndMakesDirty = c._markerDialog.hideBattery === true && saveBtn().disabled === false;
   q('#marker-hide-battery').click(); await upd();
   o.hideBatteryRevertsToClean = c._markerDialog.hideBattery === false && saveBtn().disabled === true;
   const editName0 = c._markerDialog.name;
   input(q('#marker-name'), `${editName0} x`); await upd();
-  o.saveEnabledWhenDirtyWithoutDuplicateStatus = saveBtn().disabled === false && statusText() === '';
+  o.saveEnabledWhenDirtyWithoutDuplicateStatus = saveBtn().disabled === false && statusText().length > 0;
   input(q('#marker-name'), editName0); await upd();
-  o.cleanAgainWhenReverted = saveBtn().disabled === true && statusText() === '';
+  o.cleanAgainWhenReverted = saveBtn().disabled === true && statusText().length > 0;
   input(q('#marker-name'), `${editName0} staged`); await upd();
-  const runtime = c._editorRuntime;
-  const saveMarker = runtime._saveMarker;
-  runtime._saveMarker = async () => undefined;
-  saveBtn().click(); await upd();
-  runtime._saveMarker = saveMarker;
+  const callWS = c.hass.callWS;
+  c.hass = {...c.hass,callWS:message=>message.type==='houseplan/config/set'
+    ? Promise.reject({code:'not_allowed',message:'Device write refusal'}) : callWS(message)};
+  saveBtn().click(); await window.__hpTest.waitForWrites().catch(()=>{}); await upd();
+  c.hass = {...c.hass,callWS}; await upd();
   input(q('#marker-name'), editName0); await upd();
   o.saveAttemptDoesNotForgetBaseline = saveBtn().disabled === true;
   q('.markeractions .btn:not(.danger)').click(); await upd();
@@ -227,8 +210,8 @@ const out = await page.evaluate(async () => {
   q('.hpf-status .hpf-link').click(); await upd();
   o.reviewLinkFocusesBinding = (sr().activeElement ?? document.activeElement)?.id === 'marker-binding';
   await pickSeg('bmode', 'virtual');
-  o.createVirtualHasHint = c._markerDialog.binding === 'virtual' && saveBtn().disabled === true
-    && !!q('input[name="bmode"]')?.closest('.hpf-field')?.querySelector('.hpf-hint');
+  o.virtualHasNoRedundantHint = c._markerDialog.binding === 'virtual' && saveBtn().disabled === true
+    && !q('input[name="bmode"]')?.closest('.hpf-field')?.querySelector('.hpf-hint');
   input(q('#marker-name'), 'Virtual sensor'); await upd();
   o.virtualNameUnblocksSave = saveBtn().disabled === false && !q('#marker-name[aria-invalid="true"]');
   await select(q('#marker-tap-action'), 'run');
@@ -261,11 +244,12 @@ for (const width of [320, 390, 480, 560, 768, 1280, 1920]) {
     c.requestUpdate(); await c.updateComplete;
     await new Promise((r) => setTimeout(r, 60));
     const dlg = sr().querySelector('hp-dialog[data-kind="marker"]');
+    dlg.querySelector('[data-section-target=details]').click(); c.requestUpdate(); await c.updateComplete;
     const surface = dlg.shadowRoot.querySelector('.surface');
     const content = dlg.shadowRoot.querySelector('.content');
     const body = dlg.querySelector('.body');
     const sw = Math.round(surface.getBoundingClientRect().width);
-    const expected = w >= 600 ? sw === 560 : w > 480 ? sw <= Math.round(w * 0.94) + 1 : sw === w;
+    const expected = w >= 600 ? sw === 610 : w > 480 ? sw <= Math.round(w * 0.94) + 1 : sw === w;
     const noHorizontal = content.scrollWidth <= content.clientWidth + 1 && body.scrollWidth <= body.clientWidth + 1;
     const gridCols = getComputedStyle(dlg.querySelector('.hpf-card[data-card="details"] .hpf-grid')).gridTemplateColumns.split(' ').length;
     const footer = dlg.querySelector('.dialog-action-footer');
@@ -279,7 +263,7 @@ for (const width of [320, 390, 480, 560, 768, 1280, 1920]) {
   bands[`w${width}_surfaceWidth`] = m.expected;
   bands[`w${width}_noHorizontalScroll`] = m.noHorizontal;
   bands[`w${width}_footerVisible`] = m.footerVisible;
-  bands[`w${width}_detailsColumns`] = m.gridCols === (width <= 480 ? 1 : 2);
+  bands[`w${width}_detailsColumns`] = m.gridCols === 1;
   bands[`w${width}_segmentsFit`] = m.segFits;
 }
 

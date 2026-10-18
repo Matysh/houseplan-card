@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 947,
+  "baseStable": "v1.81.0",
+  "category": "major",
+  "rationale": "Reorganizes Device settings into five shared sections plus actual profile tabs, preserves canonical display and save owners, and replaces manual radar declaration with a compatibility entry for saved data.",
+  "summary": {
+    "ru": "Настройки устройства: пять общих разделов, профильные вкладки, реальное превью и единое оформление с темами Home Assistant.",
+    "en": "Device settings gain five consistent sections, real profile tabs, canonical previews and shared Home Assistant themed controls."
+  }
+}

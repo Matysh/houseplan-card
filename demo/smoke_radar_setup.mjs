@@ -12,15 +12,18 @@ const out = await page.evaluate(async () => {
   };
   card._setMode('devices');
   await update();
-  const ordinary = card._devices.find((device) => device.bindingKind !== 'virtual'
-    && !device.marker?.radar && device.id === 'd_lamp')
-    || card._devices.find((device) => device.bindingKind !== 'virtual' && !device.marker?.radar);
-  card._openMarkerDialog(ordinary);
-  await update();
-  const noAutomaticSection = !root().querySelector('.radargroup');
+  window.__addRegistryDevice('radar947','Living radar','LD2450','living_room');
+  window.__addRegistryEntity('sensor.radar947_target_1_x','living_room','1200','esphome',{device_id:'radar947'},{unit_of_measurement:'mm'});
+  window.__addRegistryEntity('sensor.radar947_target_1_y','living_room','1800','esphome',{device_id:'radar947'},{unit_of_measurement:'mm'});
+  card.hass=window.__mkHass(); await update();
+  const deadline=performance.now()+5000;
+  while(!card._devices.some(device=>device.id==='radar947')){if(performance.now()>deadline)throw new Error('Radar registry fixture was not adopted');await new Promise(resolve=>setTimeout(resolve,20));await update();}
+  const ordinary = card._devices.find(device=>device.id==='radar947');
+  card._openMarkerDialog(ordinary); await update();
+  root().querySelector('[data-section-target=radar]').click(); await update();
+  const noAutomaticSection = !!root().querySelector('.radargroup');
   const manualToggle = root().querySelector('#marker-radar-presence');
-  manualToggle?.click();
-  await update();
+  manualToggle?.click(); await update();
   const declared = !!card._markerDialog?.radar && !!root().querySelector('.radargroup');
 
   const room = card._spaceModelById(ordinary.space)?.rooms?.[0];
@@ -126,10 +129,11 @@ const out = await page.evaluate(async () => {
   await update();
   const savedToggle = root().querySelector('#marker-radar-presence');
   const savedReopensInline = savedToggle?.checked === true
-    && !!savedToggle.closest('.hpf-card[data-card="details"] .radaradditional')?.querySelector('.radargroup')
+    && !!savedToggle.closest('[data-settings-section="radar"] .radaradditional')?.querySelector('.radargroup')
     && !root().querySelector('.hpf-card[data-card="basics"] .radargroup');
   savedToggle?.click(); await update();
-  const savedOffKeepsOriginal = card._markerDialog?.radarRemove === true
+  const savedOffKeepsOriginal = card._markerDialog?.radarRemove === false
+    && card._markerDialog?.radar?.enabled === false
     && card._markerDialog?.radar?.original?.mount?.installation_id === 'saved-radar-smoke';
   root().querySelector('#marker-radar-presence')?.click(); await update();
   const savedOnRestoresOriginal = card._markerDialog?.radarRemove === false
@@ -291,12 +295,18 @@ const out774 = await page.evaluate(async ({ fixture, layout, poly, frame, saved 
     }
     return realCallWS(message);
   };
+  const openSavedRadar = async () => {
+    await hp.openMarkerDialog('m_radar');
+    // A saved manual profile remains editable through the Details compatibility path.
+    root().querySelector('[data-section-target=details]').click(); await hp.settled();
+    root().querySelector('.hpf-card[data-card=details] .hpf-callout .hpf-link').click(); await hp.settled();
+  };
   try {
     await hp.setServerConfig(fixture);
     await hp.setLayout(layout);
     if (card._space !== 'rs') await hp.switchSpace('rs');
     await hp.setMode('devices');
-    await hp.openMarkerDialog('m_radar');
+    await openSavedRadar();
     const saved0 = savedRadar();
     const persisted = () => savedRadar() === saved0 && radarWrites.every((radar) => radar === saved0);
     result.fixtureLoaded = saved0 === JSON.stringify(saved) && !!roomSelect();
@@ -415,7 +425,7 @@ const out774 = await page.evaluate(async ({ fixture, layout, poly, frame, saved 
     result.closeWithoutSaveDiscards = await closeMarker() && persisted();
 
     // -------------------------------------------------- reopen: saved calibration untouched
-    await hp.openMarkerDialog('m_radar');
+    await openSavedRadar();
     result.reopenShowsSavedCalibration = JSON.stringify(card._markerDialog?.radar?.original) === saved0
       && roomSelect()?.value === 'r_l';
     // AC1: the ordinary non-rectangular room, same frame
@@ -431,7 +441,7 @@ const out774 = await page.evaluate(async ({ fixture, layout, poly, frame, saved 
     result.escapeWithDirtySetupDiscards = !!markOf('mount') && await closeMarker() && persisted();
 
     // -------------------------------------------------- AC5: no contour / unknown room
-    await hp.openMarkerDialog('m_radar');
+    await openSavedRadar();
     await choose(roomSelect(), 'r_rect');
     svg = await configure();
     result.noContourWarns = toast() === card._t('radar.no_contour');
@@ -445,7 +455,7 @@ const out774 = await page.evaluate(async ({ fixture, layout, poly, frame, saved 
       cfg.markers.find((m) => m.id === 'm_radar').radar.room_id = 'r_gone';
       return cfg;
     });
-    await hp.openMarkerDialog('m_radar');
+    await openSavedRadar();
     svg = await configure();
     result.unknownRoomIsAnError = !svg && toast() === card._t('radar.invalid');
     await closeMarker();
@@ -456,7 +466,7 @@ const out774 = await page.evaluate(async ({ fixture, layout, poly, frame, saved 
       cfg.markers.find((m) => m.id === 'm_radar').radar.room_id = 'r_l';
       return cfg;
     });
-    await hp.openMarkerDialog('m_radar');
+    await openSavedRadar();
     svg = await configure();
     result.storedViewBoxIgnoredWithContent = sameFrame(viewBoxOf(svg), frame);
     setup().querySelector('.radarsetup-head .iconbtn')?.click();
@@ -469,7 +479,7 @@ const out774 = await page.evaluate(async ({ fixture, layout, poly, frame, saved 
         poly: [[40, 40], [40.5, 40], [40.5, 40.5], [40, 40.5]] });
       return cfg;
     });
-    await hp.openMarkerDialog('m_radar');
+    await openSavedRadar();
     svg = await configure();
     result.mainMassRoomKeepsCore = sameFrame(viewBoxOf(svg), frame);
     setup().querySelector('.radarsetup-head .iconbtn')?.click();

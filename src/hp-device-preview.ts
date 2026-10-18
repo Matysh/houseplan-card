@@ -187,8 +187,9 @@ class HpDevicePreview extends LitElement {
   }
 
   protected render(): TemplateResult | typeof nothing {
-    const actual = this.presentation;
-    if (!actual) return nothing;
+    const projection = this.presentation;
+    if (!projection) return nothing;
+    const actual = {...projection, scale:1};
     const demoActive = !!this._demoKind && this._demoUntil > Date.now()
       && actual.display === 'icon_ripple'
       && actual.pulse.kind === 'none';
@@ -276,14 +277,13 @@ class HpDevicePreview extends LitElement {
       top = Math.min(top, bounds.top / 54);
       bottom = Math.max(bottom, bounds.bottom / 54);
     }
-    const fit = Math.min(1, 2.35 / Math.max(1, right - left), 2.35 / Math.max(1, bottom - top));
-    const fitPct = Math.round(fit * 100);
+    const canvasWidth = Math.max(168,(right-left)*54+24);
+    const canvasHeight = Math.max(168,(bottom-top)*54+24);
     const centerX = (left + right) / 2;
     const centerY = (top + bottom) / 2;
     const previewFitStyle = [
-      `left:calc(50% - ${centerX * 54 * fit}px)`,
-      `top:calc(50% - ${centerY * 54 * fit}px)`,
-      fit < 1 ? `transform:scale(${fit})` : '',
+      `left:calc(50% - ${centerX * 54}px)`,
+      `top:calc(50% - ${centerY * 54}px)`,
     ].filter(Boolean).join(';');
     const rootClasses = [
       'dev', deviceThemeClass(this.hass), ...shown.classes,
@@ -317,14 +317,14 @@ class HpDevicePreview extends LitElement {
       </div>
       <div class="previewgrid">
         <div class="previewstage" role="img" aria-label=${aria}>
-          <div class="previewfit" style=${previewFitStyle}>
+          <div class="previewcanvas" style="width:${canvasWidth}px;height:${canvasHeight}px"><div class="previewfit" style=${previewFitStyle}>
             <div class=${rootClasses} style=${faceStyle}>
               ${renderDeviceFace(shown, {
                 surface: 'preview',
                 disabledTitle: this._reason('ha_disabled'),
               })}
             </div>
-          </div>
+          </div></div>
         </div>
         <div class="previewfacts" aria-live="polite">
           <div><span>${this._t('marker.preview.integration')}</span><b>${this._providerSummary(providers)}</b></div>
@@ -334,15 +334,12 @@ class HpDevicePreview extends LitElement {
           ${actual.fallbackReason
             ? html`<p class="previewnotice">${this._reason(actual.fallbackReason)}</p>` : nothing}
           ${actual.explanation.notices.map((reason) => html`<p class="previewnotice">${this._reason(reason)}</p>`)}
-          ${fit < 1
-            ? html`<p class="previewnotice">${this._t('marker.preview.scaled', { n: fitPct })}</p>` : nothing}
           ${demoActive && this._reducedMotion
             ? html`<p class="previewnotice">${this._t('marker.preview.reduced_motion')}</p>` : nothing}
         </div>
       </div>
       ${actual.visualSources.length || actual.criticalSources.length
-        ? html`<details class="previewdetails">
-            <summary>${this._t('marker.preview.details')}</summary>
+        ? html`<div class="previewdetails">
             <div class="previewtable">
               ${[...actual.visualSources, ...actual.criticalSources].map((source) => html`
                 <div class="previewsource">
@@ -351,7 +348,7 @@ class HpDevicePreview extends LitElement {
                   <span>${this._sourceProvider(source.eid)}</span>
                 </div>`)}
             </div>
-          </details>` : nothing}
+          </div>` : nothing}
       ${actual.display === 'icon_ripple'
         ? html`<div class="previewdemos">
             <button class="previewdemo" type="button"
@@ -396,20 +393,21 @@ class HpDevicePreview extends LitElement {
         font-weight: 700;
       }
       .previewbadge.example { color: var(--warning-color, #ffb300); }
-      .previewgrid { display: grid; grid-template-columns: minmax(170px, 0.8fr) minmax(240px, 1.2fr); gap: 16px; align-items: stretch; }
+      .previewgrid { display: grid; grid-template-columns: minmax(120px, .65fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
+      .previewcanvas { position:relative; min-width:100%; margin:auto; }
       .previewstage {
         position: relative;
         min-height: 168px;
         border-radius: 12px;
         background: var(--secondary-background-color, rgba(0, 0, 0, 0.16));
-        overflow: hidden;
-        pointer-events: none;
+        overflow: auto;
+        pointer-events: auto;
         container-type: inline-size;
         --icon-size: 54px;
         --device-base-size: 48.6px;
       }
       .previewfit { position: absolute; left: 50%; top: 50%; transform-origin: center; }
-      .previewstage .dev { left: 0; top: 0; cursor: default; }
+      .previewstage .dev { left: 0; top: 0; cursor: default; pointer-events:none; }
       :host([data-pointer-hover]) .previewstage .dev:hover { z-index: 2; }
       .previewfacts { min-width: 0; display: grid; align-content: start; gap: 8px; }
       .previewfacts > div { display: grid; grid-template-columns: minmax(115px, 0.8fr) minmax(0, 1.3fr); gap: 8px; }
@@ -417,7 +415,6 @@ class HpDevicePreview extends LitElement {
       .previewfacts b { min-width: 0; overflow-wrap: anywhere; }
       .previewnotice { margin: 2px 0 0; color: var(--secondary-text-color, #9aa0aa); font-size: 13px; }
       .previewdetails { margin-top: 12px; }
-      .previewdetails summary { cursor: pointer; color: var(--secondary-text-color, #9aa0aa); }
       .previewtable { display: grid; gap: 8px; margin-top: 9px; }
       .previewsource { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3px 10px; font-size: 13px; }
       .previewsource > * { min-width: 0; overflow-wrap: anywhere; }

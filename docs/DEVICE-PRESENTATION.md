@@ -486,3 +486,6 @@ WHAT KEEPS THE FRAME. `.dev.open` is untouched everywhere else: door / window
 valve is deliberately left out of the owner's rule — no icon pair morphs for
 it, so the frame is the only thing it has to say «открыт» with. If the owner
 ever wants the two domains to read alike, a valve needs an icon pair first.
+
+
+Device editor preview (#947) projects the same resolved face at scale=1 regardless of marker size; icon rotation remains from the projection, while values/badges remain upright. Oversized effects and long faces use an unscaled scrollable preview canvas. This editor-only normalization does not change plan/static/kiosk geometry, source precedence, availability or service targets.

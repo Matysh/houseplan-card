@@ -11576,8 +11576,13 @@ public _setMarkerLightRole(role: 'auto' | 'always' | 'never'): void {
 
 public _controlRefInfo(ref: string): { label: string; sub: string; icon: string; warning: boolean } {
     if (!ref.startsWith('marker:')) {
+      const deviceId = this.host._fullRegistryHass.entities[ref]?.device_id;
+      const registryDevice = deviceId ? this.host._fullRegistryHass.devices[deviceId] : null;
+      const saved = this.host._markers.find(marker => marker.binding === `entity:${ref}`
+        || !!deviceId && marker.binding === `device:${deviceId}`);
       return {
-        label: this.host.hass.states[ref]?.attributes?.friendly_name || ref,
+        label: saved?.name || registryDevice?.name_by_user || registryDevice?.name
+          || this.host.hass.states[ref]?.attributes?.friendly_name || ref,
         sub: ref,
         icon: ref.startsWith('light.') ? 'mdi:lightbulb' : 'mdi:toggle-switch',
         warning: !this.host._planEntityAvailable(ref),

@@ -631,7 +631,7 @@ export function sourcePicker({
     <button id=${id ?? nothing} type="button" class="hpf-select hpf-pick" aria-haspopup="listbox"
       aria-expanded=${open ? 'true' : 'false'} aria-label=${ariaLabel} ?disabled=${disabled} @click=${onToggle}>
       ${current
-        ? html`<b>${current.label}</b><span class="hpf-pick-ref">${current.sub}</span>`
+        ? html`<b>${current.label}</b>${current.sub ? html`<span class="hpf-pick-ref">${current.sub}</span>` : nothing}`
         : html`<span class="hpf-pick-ph">${placeholder}</span>`}
     </button>
     ${open

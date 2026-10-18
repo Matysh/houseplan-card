@@ -120,6 +120,28 @@ export const settingsDialogCss = `
   hp-dialog[data-kind=room][settings-layout] .hpf-grid { grid-template-columns:minmax(0,1fr); }
   .hpf-settings-form .cardpreview { border:0; width:100%; margin:0; color:var(--hpf-accent); }
   .hpf-settings-form .cardpreview .cpmeta > span { display:inline-flex; align-items:center; gap:.2em; white-space:nowrap; }
+  .hpf-settings-form .iconbtn { width:44px; height:44px; min-width:44px; padding:0; display:inline-flex; align-items:center; justify-content:center; border:0; border-radius:50%; color:inherit; background:transparent; transition:background 160ms; }
+  .hpf-settings-form .iconbtn:hover { background:var(--hpf-tint); }
+  .hpf-settings-form .hpf-seg:has(input[name=bmode]) { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .hpf-settings-form .hpf-toolbar { flex-wrap:wrap; }
+  .hpf-settings-form .hpf-toolbar > .hpf-callout { flex-basis:100%; }
+  .hpf-settings-form .hpf-note { display:block; border-inline-start:3px solid var(--info-color,var(--primary-color)); background:color-mix(in srgb,var(--info-color,var(--primary-color)) 10%,var(--hpf-surface)); padding:10px 12px; }
+  .hpf-settings-form .hpf-note-warning { border-color:var(--warning-color); background:color-mix(in srgb,var(--warning-color) 10%,var(--hpf-surface)); }
+  .hpf-settings-form .hpf-field > .hpf-hint { margin-top:12px; }
+  .hpf-settings-form .hpf-chip > button { flex:0 0 28px; width:28px; height:28px; min-width:28px; min-height:28px; padding:0; border-radius:50%; }
+  .hpf-settings-form .hpf-iconfield:focus-within { outline:2px solid var(--hpf-accent); outline-offset:2px; border-radius:8px; }
+  .hpf-settings-form .hpf-iconfield .hpf-input:focus-visible { outline:none; box-shadow:none; }
+  .hpf-settings-form ha-icon-picker { --mdc-outlined-text-field-focus-outline-color:var(--hpf-accent); }
+  .hpf-settings-pane .radargroup { border:0; margin:0; padding:0; min-width:0; }
+  .hpf-settings-pane .radarsetup-head { height:112px; align-items:start; }
+  .hpf-settings-pane .radarsetup-head strong { max-height:112px; overflow:auto; }
+  .hpf-settings-pane[data-settings-section=details] .hpf-grid { grid-template-columns:minmax(0,1fr); align-items:start; }
+  .hpf-settings-pane .radargroup > legend { padding:0 0 18px; margin:0 0 18px; border-bottom:1px solid var(--hpf-line); width:100%; box-sizing:border-box; }
+  .hpf-settings-pane .radargroup > label:not(.hpf-toggle):not(.srcrow) { display:block; margin:18px 0 8px; }
+  .hpf-settings-pane .radartargetheading { display:flex; align-items:center; justify-content:space-between; }
+  .hpf-settings-pane .radarcoordinates { display:flex; flex-wrap:wrap; gap:12px; }
+  .hpf-settings-pane .radarcoordinates > label { flex:1; min-width:72px; }
+  .hpf-settings-pane .radarcoordinates input { width:100%; box-sizing:border-box; }
   .hpf-sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
   .hpf-settings-form select { transition:background 160ms ease,border-color 160ms ease; }
   @supports (appearance:base-select) {
