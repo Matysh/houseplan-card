@@ -262,5 +262,13 @@
   "marker.hide_battery.help.aria": "Help: hide battery level",
   "marker.binding_search_hint.aria": "Help: choose a Home Assistant device",
   "marker.room.help": "Choose a room for this device on the plan. Linked devices may keep automatic placement by their Home Assistant area.",
-  "marker.room.help.aria": "Help: device room"
+  "marker.room.help.aria": "Help: device room",
+  "marker.vacuum_source_state": "Source and status",
+  "marker.vacuum_source_path": "Source and path display",
+  "marker.vacuum_diagnostics": "Map and route diagnostics",
+  "marker.vacuum_maps_calibration": "Maps and calibration",
+  "marker.radar_data": "Data and activation",
+  "marker.radar_sources": "Common sources",
+  "marker.radar_service": "Checks and maintenance",
+  "marker.radar_remove_target": "Remove target slot {n}"
 }

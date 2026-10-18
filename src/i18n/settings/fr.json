@@ -262,5 +262,13 @@
   "marker.hide_battery.help.aria": "Aide : masquer la batterie",
   "marker.binding_search_hint.aria": "Aide : choisir un appareil Home Assistant",
   "marker.room.help": "Choisissez une pièce pour cet appareil sur le plan. Un appareil lié peut conserver le placement automatique selon sa zone Home Assistant.",
-  "marker.room.help.aria": "Aide : pièce de l’appareil"
+  "marker.room.help.aria": "Aide : pièce de l’appareil",
+  "marker.vacuum_source_state": "Source et état",
+  "marker.vacuum_source_path": "Source et affichage du trajet",
+  "marker.vacuum_diagnostics": "Diagnostic de la carte et du trajet",
+  "marker.vacuum_maps_calibration": "Cartes et étalonnage",
+  "marker.radar_data": "Données et activation",
+  "marker.radar_sources": "Sources communes",
+  "marker.radar_service": "Vérification et maintenance",
+  "marker.radar_remove_target": "Supprimer l’emplacement cible {n}"
 }

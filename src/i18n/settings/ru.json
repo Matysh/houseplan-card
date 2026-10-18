@@ -262,5 +262,13 @@
   "marker.hide_battery.help.aria": "Подсказка: скрытие заряда",
   "marker.binding_search_hint.aria": "Подсказка: выбор устройства Home Assistant",
   "marker.room.help": "Выберите комнату для размещения устройства на плане. Для привязанного устройства можно оставить автоматическое размещение по зоне Home Assistant.",
-  "marker.room.help.aria": "Подсказка: комната устройства"
+  "marker.room.help.aria": "Подсказка: комната устройства",
+  "marker.vacuum_source_state": "Источники и состояние",
+  "marker.vacuum_source_path": "Источник и показ пути",
+  "marker.vacuum_diagnostics": "Диагностика карты и маршрута",
+  "marker.vacuum_maps_calibration": "Карты и калибровка",
+  "marker.radar_data": "Данные и включение",
+  "marker.radar_sources": "Общие источники",
+  "marker.radar_service": "Проверка и обслуживание",
+  "marker.radar_remove_target": "Удалить слот цели {n}"
 }

@@ -2,6 +2,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { launch, checkAll, finish } from './serve.mjs';
+import {settingsSection} from './helpers/settings-section.mjs';
 import { installBatteryFixture } from './helpers/device-battery-fixture.mjs';
 
 const { page, browser } = await launch();
@@ -14,7 +15,7 @@ try {
   for (const [language, darkMode, width] of [['en', false, 360], ['en', true, 1280], ['ru', false, 1280], ['ru', true, 360]]) {
     const key = `${language}-${darkMode ? 'dark' : 'light'}-${width}`;
     await page.setViewportSize({ width, height: 900 });
-    await page.evaluate(async ({ language, darkMode }) => {
+    await page.evaluate(({ language, darkMode }) => {
       const variables = darkMode ? {
         '--primary-color': '#3ea6ff', '--primary-text-color': '#e6e7eb', '--secondary-text-color': '#9aa4ad',
         '--card-background-color': '#202126', '--ha-card-background': '#202126', '--divider-color': '#3a3d45',
@@ -27,11 +28,15 @@ try {
       const card = window.__card;
       card.setConfig({ type: 'custom:houseplan-card', language });
       card.hass = { ...card.hass, themes: { ...card.hass.themes, darkMode } };
+    }, { language, darkMode });
+    await page.waitForFunction(()=>window.__card?._booting===false&&!!window.__card?.renderRoot.querySelector('ha-card[data-hp-mode]'));
+    await page.evaluate(async()=>{
       await window.__hpTest.setMode('devices');
       await window.__hpTest.openMarkerDialog('d_temp');
       await window.__hpTest.waitForWrites();
-    }, { language, darkMode });
+    });
     const dialog = page.locator('#host houseplan-card hp-dialog[data-kind="marker"]');
+    await settingsSection(dialog,'appearance');
     const checkbox = dialog.locator('#marker-hide-signal');
     await checkbox.scrollIntoViewIfNeeded();
     out[`${key}-localizedAccessibleDefault`] = !await checkbox.isChecked()

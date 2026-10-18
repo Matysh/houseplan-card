@@ -65,6 +65,7 @@ const spaceName = (host: VacuumMapsCardHost, spaceId: string): string => {
  */
 export function renderVacuumMapsSection(
   runtime: VacuumMapsHost, dev: DevItem, sources: VacSourceResolution,
+  title?: string,
 ): TemplateResult | typeof nothing {
   const host = runtime.host;
   const lang = langOf(host.hass, host._config?.language);
@@ -273,7 +274,7 @@ export function renderVacuumMapsSection(
       <div class="vacroute-status">${statusOf(route)}</div>
       <label class="srcrow">
         <span>${t('vac.route_space')}</span>
-        <select class="areasel" @change=${(event: Event) => {
+        <hp-settings-select><select class="areasel" @change=${(event: Event) => {
           const select = event.target as HTMLSelectElement;
           const next = select.value;
           select.value = route.space;
@@ -282,7 +283,7 @@ export function renderVacuumMapsSection(
           <option value="" ?selected=${!route.space}>${t('vac.route_space_none')}</option>
           ${spaces.map((space) => html`
             <option value=${space.id} ?selected=${space.id === route.space}>${space.name}</option>`)}
-        </select>
+        </select></hp-settings-select>
       </label>
       <div class="vacbtns">
         <button type="button" class="btn ghostbtn"
@@ -294,7 +295,7 @@ export function renderVacuumMapsSection(
   const missingGroupTitleId = `vacroute-missing-${dev.id.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
 
   return html`
-    <label>${t('vac.routes_section')}</label>
+    <section class="hpf-profile-maproutes"><div class="hpf-sub"><h4>${title || t('vac.routes_section')}</h4></div>
     <div class="bindbox vacroutes">
       <div class="vacdiag" role="status">
         <div><span>${t('vac.routes_current_map')}</span><b>${currentMapId === undefined
@@ -308,12 +309,12 @@ export function renderVacuumMapsSection(
             <small>${draft.source}</small>
             <label class="srcrow">
               <span>${t('vac.route_space')}</span>
-              <select class="areasel vacroute-draft-space" ?disabled=${!!draft.saving}
+              <hp-settings-select><select class="areasel vacroute-draft-space" ?disabled=${!!draft.saving}
                 @change=${(event: Event) => selectDraftSpace((event.target as HTMLSelectElement).value)}>
                 <option value="" ?selected=${!draft.space}>${t('vac.route_space_none')}</option>
                 ${spaces.map((space) => html`
                   <option value=${space.id} ?selected=${space.id === draft!.space}>${space.name}</option>`)}
-              </select>
+              </select></hp-settings-select>
             </label>
             <div class="vacbtns">
               <button type="button" class="btn ghostbtn" ?disabled=${!!draft.saving}
@@ -362,5 +363,5 @@ export function renderVacuumMapsSection(
       ${rows.length ? html`<div class="rhint">${t('vac.route_target_hint', {
         space: spaceName(host, dev.space),
       })}</div>` : nothing}
-    </div>`;
+    </div></section>`;
 }

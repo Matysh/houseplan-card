@@ -141,6 +141,12 @@ export const settingsDialogCss = `
   .hpf-settings-pane .radargroup > legend { padding:0 0 18px; margin:0 0 18px; border-bottom:1px solid var(--hpf-line); width:100%; box-sizing:border-box; }
   .hpf-settings-pane .radargroup > label:not(.hpf-toggle):not(.srcrow) { display:block; margin:18px 0 8px; }
   .hpf-settings-pane .radartargetheading { display:flex; align-items:center; justify-content:space-between; }
+  .hpf-settings-pane .radargroup { display:block; }
+  .hpf-settings-pane .hpf-profile-target-heading { display:grid; gap:12px; justify-content:start; }
+  .hpf-settings-pane .hpf-profile-target > * + * { margin-top:18px; padding-top:18px; border-top:1px solid var(--hpf-line); }
+  .hpf-settings-pane .hpf-profile-diagnostics > .vacdiag,.hpf-settings-pane .hpf-profile-maproutes > .vacroutes { margin-top:12px; }
+  .hpf-settings-pane .hpf-profile-diagnostics .vacdiag > div { padding:6px 0; }
+  .hpf-settings-pane .hpf-profile-target-heading .btn { justify-self:start; }
   .hpf-settings-pane .radarcoordinates { display:flex; flex-wrap:wrap; gap:12px; }
   .hpf-settings-pane .radarcoordinates > label { flex:1; min-width:72px; }
   .hpf-settings-pane .radarcoordinates input { width:100%; box-sizing:border-box; }

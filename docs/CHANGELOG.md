@@ -4,6 +4,9 @@
 
 - Room settings use the approved “No fill” label; all five own fill-mode
   labels are checked against the immutable reference. (#946)
+- Match the approved Vacuum and Radar sections: clear property groups, shared
+  switches and menus, named target actions, and expandable map/route diagnostics.
+  Existing device values, calibration and write boundaries are preserved. (#947)
 
 - Keep the Room sizing hint and preview in sync with the independent Space
   name and reading sizes, including the Room multipliers. (#945)

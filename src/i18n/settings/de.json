@@ -262,5 +262,13 @@
   "marker.hide_battery.help.aria": "Hilfe: Akkustand ausblenden",
   "marker.binding_search_hint.aria": "Hilfe: Home-Assistant-Gerät auswählen",
   "marker.room.help": "Wählen Sie einen Raum für das Gerät auf dem Plan. Verknüpfte Geräte können automatisch ihrem Home-Assistant-Bereich folgen.",
-  "marker.room.help.aria": "Hilfe: Raum des Geräts"
+  "marker.room.help.aria": "Hilfe: Raum des Geräts",
+  "marker.vacuum_source_state": "Quelle und Status",
+  "marker.vacuum_source_path": "Quelle und Pfadanzeige",
+  "marker.vacuum_diagnostics": "Karten- und Routendiagnose",
+  "marker.vacuum_maps_calibration": "Karten und Kalibrierung",
+  "marker.radar_data": "Daten und Aktivierung",
+  "marker.radar_sources": "Gemeinsame Quellen",
+  "marker.radar_service": "Prüfung und Wartung",
+  "marker.radar_remove_target": "Zielslot {n} entfernen"
 }

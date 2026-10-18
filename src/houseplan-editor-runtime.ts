@@ -21,8 +21,7 @@ import { finishWarmModeAdoption, resumeWarmMode, type WarmModeHost } from './war
 import { deviceEditorAllowed } from './device-editor-access';
 import { planEntryTool } from './plan-entry-tool';
 import { guard } from 'lit/directives/guard.js';
-import { renderVacuumMapsSection } from './editors/vacuum-maps-section';
-import { renderVacuumPathDiagnostics } from './editors/vacuum-path-diagnostics';
+import { renderVacuumSettingsSection } from './editors/vacuum-settings-section';
 import { renderMarkerDialog } from './editors/marker-dialog';
 import {
   CELL_CM_MAX, CELL_CM_MIN, renderSpaceSettingsDialog,
@@ -63,7 +62,7 @@ import {
   pointStrictlyInside, roomsOverlap, pointOnBoundary, mergeRooms, splitRoomPath, polygonArea,
   closestPointOnBoundary, pointStrictlyInside as ptInside, distToSegment, cutSegments, alignGuides,
   segmentAngle, type AlignGuide, clampScale, migratePdfUrls, snapToWall, snapPointAlongPoly,
-  openingAmount, openingShoulders, filterOpeningEntityCandidates, poleOfInaccessibility, subst,
+  openingAmount, openingShoulders, filterOpeningEntityCandidates, poleOfInaccessibility,
   type FloorInfo, parseRoomRef, resolveGlowValues, normalizeGlowColorOverride, isControllable,
   spaceDisplayOf, DEFAULT_FILL_COLORS, customFillOf, type FillColors,
   type FillColorEntry, RUN_TARGET_DOMAINS, stageBgOf,
@@ -153,8 +152,8 @@ import { PlanOptimizationUndo, type UndoHass } from './plan-optimize-undo';
 import { saveSpaceCopy } from './space-copy-runtime';
 import { DeviceCopyEditor } from './device-copy-editor';
 import {
-  Affine, applyAffine, readVacTelemetry, autoCalibrate, vacTrailMode, areaCentroid,
-  vacCalibrationResidualCm, vacRoomNameMatchCount, VAC_CALIBRATION_WARN_CM, FitParams, fitMatrix,
+  Affine, applyAffine, readVacTelemetry, autoCalibrate, areaCentroid,
+  vacCalibrationResidualCm, VAC_CALIBRATION_WARN_CM, FitParams, fitMatrix,
   reanchorFit, VacRoom, Pt as VacPt, type VacSourceCandidate, type VacSourceResolution,
 } from './vacuum';
 import {
@@ -9424,140 +9423,7 @@ public _renderRulesDialog(): TemplateResult {
   }
 
 public _renderVacSection(dlg: any): TemplateResult | typeof nothing {
-    const dev = this.host._devices.find((x) => x.id === dlg.devId);
-    if (!dev || !this.host._isVacDev(dev)) return nothing;
-    const v = dev.marker?.vacuum || {};
-    const includeAllCameras = this.host._vacAllCamerasFor === dev.id;
-    const resolution = this.host._vacSourceResolution(dev, includeAllCameras);
-    const src = resolution.entityId;
-    const selected = resolution.candidates.find((candidate) => candidate.entityId === src) || null;
-    const tele = src ? readVacTelemetry(this.host.hass?.states[src]?.attributes) : null;
-    const canUseSource = v.live !== false
-      && (resolution.status === 'ok' || resolution.status === 'unsupported');
-    const planRooms = this._vacPlanRoomAnchors(dev.space);
-    const roomMatches = tele
-      ? vacRoomNameMatchCount(tele.rooms, planRooms.map((room) => room.name)) : 0;
-    const tierA = !!(canUseSource && tele && roomMatches >= 3);
-    const setVac = (patch: Record<string, unknown>) => {
-      // HP-1540-01: materialise the marker first — find() alone silently
-      // dropped every edit for a vacuum that had never been saved
-      const m = this.host._vacEnsureMarker(dev);
-      if (!m) return;
-      m.vacuum = { ...(m.vacuum || {}), ...patch };
-      this.host._regSignature = '';
-      // First-use markers are materialised above, so the dialog must rebuild
-      // immediately instead of waiting for an unrelated HA state tick.
-      this.host._maybeRebuildDevices();
-      this._saveConfig();
-      this.host.requestUpdate();
-    };
-    const sameDevice = new Set(dev.entities || []);
-    const primaryCandidates = resolution.candidates.filter((candidate) =>
-      sameDevice.has(candidate.entityId) || candidate.entityId === v.source);
-    const globalCandidates = includeAllCameras
-      ? resolution.candidates.filter((candidate) => candidate.entityId.startsWith('camera.')
-        && !primaryCandidates.some((entry) => entry.entityId === candidate.entityId))
-      : [];
-    const capability = (candidate: VacSourceCandidate) => [
-      candidate.hasPosition ? this.host._t('vac.cap_position') : '',
-      candidate.hasRooms ? this.host._t('vac.cap_rooms_short') : '',
-      candidate.hasPath ? this.host._t('vac.cap_path') : '',
-      candidate.hasMapId ? this.host._t('vac.cap_map') : '',
-    ].filter(Boolean).join(' · ') || this.host._t('vac.cap_none');
-    const candidateButton = (candidate: VacSourceCandidate) => html`
-      <button type="button" class="vacsource ${candidate.entityId === src ? 'on' : ''}"
-        @click=${() => setVac({ source: candidate.entityId })}>
-        <span><b>${candidate.name}</b><small>${candidate.entityId}</small></span>
-        <span class="vacsource-meta">${candidate.platform || this.host._t('vac.platform_unknown')} · ${capability(candidate)}</span>
-      </button>`;
-    const knownSameDeviceXcme = resolution.candidates.some((candidate) =>
-      sameDevice.has(candidate.entityId) && candidate.category === 'known_xcme_incomplete');
-    const showXcmeHint = knownSameDeviceXcme
-      || (!!resolution.pinned && !!src?.startsWith('camera.') && !selected?.hasPosition);
-    const openPicker = () => {
-      const picker = [...this.host.renderRoot.querySelectorAll<HTMLDetailsElement>('details.vacpicker')]
-        .find((details) => details.dataset.devId === dev.id);
-      if (!picker) return;
-      picker.open = true;
-      picker.querySelector<HTMLElement>('summary')?.focus();
-    };
-    return html`
-      <label>${this.host._t('vac.section')}</label>
-      <div class="bindbox vacbox">
-        <div class="vacdiag" role="status">
-          <div><span>${this.host._t('vac.diag_source')}</span><b>${src || this.host._t('vac.source_none')}</b></div>
-          ${selected?.platform ? html`<div><span>${this.host._t('vac.diag_platform')}</span><b>${selected.platform}</b></div>` : nothing}
-          <div><span>${this.host._t('vac.diag_status')}</span><b>${this.host._t((`vac.source_status_${resolution.status}`) as any)}</b></div>
-          <div><span>${this.host._t('vac.diag_position')}</span><b>${tele?.pos ? this.host._t('common.yes') : this.host._t('common.no')}</b></div>
-          <div><span>${this.host._t('vac.diag_rooms')}</span><b>${subst(this.host._t('vac.diag_rooms_value'), {
-            total: String(tele?.rooms.length || 0), matched: String(roomMatches),
-            readiness: this.host._t(roomMatches >= 3 ? 'vac.autocal_ready' : 'vac.autocal_not_ready'),
-          })}</b></div>
-          <div><span>${this.host._t('vac.diag_path')}</span><b>${tele?.path.length ? this.host._t('common.yes') : this.host._t('common.no')}</b></div>
-          ${renderVacuumPathDiagnostics(this.host, dev)}
-          <div><span>${this.host._t('vac.diag_map')}</span><b>${tele?.mapId ?? 'default'}</b></div>
-        </div>
-        ${(resolution.status === 'missing' || resolution.status === 'disabled' || resolution.status === 'unverified')
-          ? html`<div class="warn vacsource-warning">
-              <span>${this.host._t((`vac.source_banner_${resolution.status}`) as any)}</span>
-              <button type="button" class="btn ghostbtn" @click=${openPicker}>${this.host._t('vac.choose_source')}</button>
-            </div>` : nothing}
-        ${showXcmeHint ? html`<div class="warn vacxcme">
-          <b>${this.host._t('vac.xcme_hint')}</b>
-          <pre>attributes:
-  - vacuum_position
-  - rooms
-  - path
-  - map_name</pre>
-        </div>` : nothing}
-        <details class="vacpicker" data-dev-id=${dev.id}>
-          <summary class="btn ghostbtn">${this.host._t('vac.choose_source')}</summary>
-          <div class="vacsource-list">
-            <button type="button" class="vacsource ${!resolution.pinned ? 'on' : ''}"
-              @click=${() => setVac({ source: null })}>
-              <span><b>${this.host._t('vac.source_auto')}</b><small>${this.host._t('vac.source_auto_hint')}</small></span>
-            </button>
-            ${primaryCandidates.map(candidateButton)}
-            <details ?open=${includeAllCameras}
-              @toggle=${(event: Event) => {
-                const open = (event.currentTarget as HTMLDetailsElement).open;
-                if (open) this.host._vacOpenAllCameras(dev);
-                else {
-                  this.host._vacAllCamerasFor = null;
-                  this.host._vacAllCameraCache = null;
-                }
-              }}>
-              <summary>${this.host._t('vac.all_cameras')}</summary>
-              <div class="rhint">${this.host._t('vac.all_cameras_warn')}</div>
-              ${includeAllCameras
-                ? (globalCandidates.length ? globalCandidates.map(candidateButton)
-                  : html`<div class="rhint">${this.host._t('vac.all_cameras_empty')}</div>`)
-                : nothing}
-            </details>
-          </div>
-        </details>
-        <div class="vacbtns">
-          ${tierA ? html`<button class="btn" ?disabled=${this.host._markerDialog?.busy} @click=${() => this._vacAutoCalibrate(dev)}>${this.host._t('vac.autocal')}</button>` : nothing}
-          ${canUseSource
-            ? html`<button class="btn ghostbtn" ?disabled=${this.host._markerDialog?.busy} @click=${() => this._vacStartFit(dev)}>${this.host._t('vac.fit')}</button>`
-            : nothing}
-          <a class="btn ghostbtn" href="https://github.com/Matysh/houseplan-card/blob/main/docs/VACUUM.md"
-            target="_blank" rel="noopener">${this.host._t('vac.documentation')}</a>
-        </div>
-        ${tele ? html`
-          <label class="srcrow">
-            ${this._boolInput(v.live !== false, (on) => setVac({ live: on ? null : false }))}
-            <span>${this.host._t('vac.live')}</span>
-          </label>
-          <label>${this.host._t('vac.trail')}</label>
-          <select class="areasel"
-            @change=${(e: Event) => setVac({ trail_mode: (e.target as HTMLSelectElement).value, trail: null })}>
-            ${(['never', 'cleaning', 'always'] as const).map((mv) => html`
-              <option value=${mv} ?selected=${vacTrailMode(v) === mv}>${this.host._t(('vac.trail_' + mv) as any)}</option>`)}
-          </select>
-          ${renderVacuumMapsSection(this, dev, resolution)}
-        ` : nothing}
-      </div>`;
+    return renderVacuumSettingsSection(this,dlg);
   }
 
 public _vacMapId(d: DevItem, tele: { mapId: string }, planHass = this.host._planHass): string {
@@ -11721,6 +11587,7 @@ public _renderRadarSection(d: NonNullable<HouseplanEditorHostPort['_markerDialog
       },
       dialogDeviceId: () => this.host._markerDialog?.devId,
       t: (key, vars) => this.host._t(key, vars),
+      st: settingsCopy(this.host).st,
       help: (key) => this._help(key),
       boolInput: (value, change) => this._boolInput(value, change),
       toast: (message) => this.host._showToast(message),

@@ -56,6 +56,18 @@ try{
   }
   if(name==='climate')out.unavailable_stays_dash=(await dialog.locator('hp-device-preview .valtext').textContent()).trim()==='—';
   if(name==='vacuum')out.vacuum68and34=(await dialog.locator('hp-device-preview .valtext').textContent()).includes('68')&&(await dialog.locator('hp-device-preview .value-badge').textContent()).includes('34');
+  if(name==='vacuum'){
+   await section('vacuum');out.vacuum_profile_has_approved_heading=await dialog.locator('[data-card=vacuum] h3').textContent()==='Пылесос';
+   const diagnostics=dialog.locator('.hpf-profile-diagnostics');out.vacuum_diagnostics_start_collapsed=!await diagnostics.locator('.vacdiag').isVisible();
+   await diagnostics.locator('summary').click();out.vacuum_diagnostics_still_available=await diagnostics.locator('.vacdiag').isVisible()&&(await diagnostics.textContent()).includes('camera.demo_x50_map');await diagnostics.locator('summary').click();
+   out.vacuum_path_uses_shared_menu=await dialog.locator('[data-card=vacuum] hp-settings-select:has(select)').first().locator('select').inputValue()==='always';
+   await section('appearance');
+  }
+  if(name==='radar'){
+   await section('radar');out.radar_profile_has_approved_heading=await dialog.locator('[data-card=radar] h3').textContent()==='Радар';
+   out.radar_targets_keep_named_removal=await dialog.getByRole('button',{name:'Удалить слот цели 1',exact:true}).count()===1&&await dialog.getByRole('button',{name:'Удалить слот цели 2',exact:true}).count()===1;
+   out.radar_profile_value_preserved=await dialog.locator('#radar-profile').inputValue()==='cartesian_v1';await section('appearance');
+  }
   for(const width of [320,390,1280]){
    await page.setViewportSize({width,height:900});
    for(const theme of ['light','dark','custom']){

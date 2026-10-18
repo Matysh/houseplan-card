@@ -434,8 +434,8 @@ try {
           };
           await choose(root.querySelector('#radar-profile'), () => 'presence_v1');
           await choose(root.querySelector('#radar-room'), (values) => values.find(Boolean));
-          const occupancy = [...root.querySelectorAll('.radargroup label')]
-            .find((label) => label.textContent.trim() === card._t('radar.occupancy_source'))?.nextElementSibling;
+          const occupancy = [...root.querySelectorAll('.radargroup .hpf-field')]
+            .find((field) => field.querySelector('.hpf-label')?.textContent.trim() === card._t('radar.occupancy_source'))?.querySelector('select');
           await choose(occupancy, (values) => values.find((value) => value.startsWith('binary_sensor.')));
           root.querySelector('.radargroup button ha-icon[icon="mdi:map-marker-radius"]').closest('button').click();
         },
@@ -458,6 +458,7 @@ try {
           await window.__hpTest.setLayout((layout) => ({ ...layout, e_vacuum_robo: { s: 'floor01', x: 0.1, y: 0.1 } }));
           await window.__hpTest.openMarkerDialog('e_vacuum_robo');
           card.renderRoot.querySelector('[data-section-target="vacuum"]').click();
+          card.renderRoot.querySelector('.hpf-profile-diagnostics').open=true;
         },
       }, {
         selector: '.vacfit', property: 'position', expected: 'absolute',
@@ -500,6 +501,7 @@ try {
       await session.page.evaluate(({ selector, property }) => {
         window.__hp805.watch(window.__card, selector, property);
       }, { selector: check.selector, property: check.property });
+      console.log('opening first-frame surface',family.name,check.selector);
       await session.page.evaluate(check.open);
       results.push(await frameOf(session.page));
     }

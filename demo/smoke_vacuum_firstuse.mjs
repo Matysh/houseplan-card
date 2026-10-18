@@ -196,7 +196,7 @@ const out = await page.evaluate(async () => {
   c._openMarkerDialog(c._devices.find((x) => x.id === 'd_mower')); await c.updateComplete;
   const vacPicker = sr().querySelector('.vacpicker');
   o.sourcePickerPresent = !!vacPicker;
-  const diagnostics = sr().querySelector('.vacdiag')?.textContent || '';
+  const diagnostics = sr().querySelector('.hpf-profile-diagnostics .vacdiag')?.textContent || '';
   o.sourceDiagnostics = ['camera.mower_map', c._t('vac.diag_position'), c._t('vac.diag_rooms'),
     c._t('vac.diag_path'), c._t('vac.diag_map'), c._t('vac.autocal_ready')]
     .every((text) => diagnostics.includes(text));

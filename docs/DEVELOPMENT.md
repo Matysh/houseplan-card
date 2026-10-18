@@ -36,6 +36,21 @@ The first reset-wait adapter still produced "Resulting promise was garbage
 collected" in CI at setMode; the component-reset step is now absent. Keyboard,
 44px target, translation, inheritance and popup assertions remain unchanged.
 
+The immutable-v6 screenshot comparison exposed two retained legacy profile
+layouts. Vacuum now uses common heading/source/status/path controls and keeps
+every technical map/path value in expandable diagnostics. Its source/live/path
+writes and calibration/routing workflows retain their existing semantics.
+`vacuum-settings-section.ts` extracts that presentation from the runtime;
+the runtime remains a delegate. Radar uses the approved data/target/shared
+source/mount/service groups, common fields/switches and named target removal.
+No sensor recognition, source math, config shape or setup state machine changes.
+Vacuum map selects also use the shared animated list. New labels cover all four
+locales. Full-suite witnesses navigate each newly opened Device dialog to its
+visible pane; the first-frame observer opens the collapsed diagnostic content
+and still measures its first painted frame. Technical values are not removed.
+Matched feature-cost references are recorded after the fresh Linux build;
+the earlier “final #947” paragraph below describes the pre-profile material.
+
 The inherited #945 preview witness uses Room v4's own sample typography
 (16px name and 12px metrics), while retaining the independent space-base
 times room-multiplier checks and the Cancel persistence assertion (#946).

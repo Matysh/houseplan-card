@@ -9,6 +9,7 @@
  * and records no command; Undo/Redo of the switch is one command each.
  */
 import { launch, check, finish } from './serve.mjs';
+import {settingsSection} from './helpers/settings-section.mjs';
 
 const { page, browser } = await launch({ width: 1000, height: 820 }, 1);
 const evaluate = (fn, arg) => page.evaluate(fn, arg);
@@ -61,6 +62,7 @@ check('the device keeps its catalogue place', await evaluate(() => window.__card
 await evaluate(() => window.__card._ledEditor.select('led-a'));
 await page.waitForTimeout(100);
 await evaluate(() => window.__hpTest.openMarkerDialog('d_lamp'));
+await settingsSection(page.locator('houseplan-card hp-dialog[data-kind=marker]'),'appearance');
 await page.waitForTimeout(200);
 check('an icon dialog drops the strip selection', await evaluate(() => window.__card._ledEditor.sel), null);
 await evaluate(() => window.__hpTest.close());
@@ -86,6 +88,7 @@ check('Redo hides it again', await evaluate(() => window.__card._serverCfg.space
 
 // Device dialog: «Show as LED strip» restores the hidden shape at once.
 await evaluate(() => window.__hpTest.openMarkerDialog('d_bedlight'));
+await settingsSection(page.locator('houseplan-card hp-dialog[data-kind=marker]'),'appearance');
 await page.waitForTimeout(300);
 check('the dialog offers unbind/delete for a hidden shape', await evaluate(() => [...window.__card.shadowRoot
   .querySelectorAll('[data-led-representation] [data-led-action]')].map((b) => b.dataset.ledAction).join()), 'show-strip,unbind,delete');
@@ -108,6 +111,7 @@ await evaluate(() => { window.__ledFail = false; });
 
 // Converting a plain icon by drawing: one write, the same marker.
 await evaluate(() => window.__hpTest.openMarkerDialog('d_lamp'));
+await settingsSection(page.locator('houseplan-card hp-dialog[data-kind=marker]'),'appearance');
 await page.waitForTimeout(300);
 await page.click('[data-led-representation] [data-led-action="show-strip"]');
 await page.waitForTimeout(400);
