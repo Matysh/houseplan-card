@@ -1,5 +1,13 @@
 # Development and deployment
 
+`smoke_room_save_retry_946` rejects the first real public config/set call and
+uses the visible Room footer twice. It verifies the retained field and accepted
+config, a rendered error alert, re-enabled Save and exactly one accepted retry.
+The pinned native-HA screenshot exposed the pre-existing notification paint
+order issue #956, reproduced on24f7ab2 too; DOM visibility is not claimed as
+proof of visible notification. This adds the AC5 draft/rollback/retry witness
+without changing product or capture inputs.
+
 The #945 localized signal witness sets HA language on each fresh card instead
 of restarting it with `setConfig`. It observes the public Devices mode before
 the actual settings entry, rather than awaiting a CDP-held transition promise.
