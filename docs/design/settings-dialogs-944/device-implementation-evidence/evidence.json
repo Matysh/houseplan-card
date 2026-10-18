@@ -1,5 +1,5 @@
 {
-  "source": "86142c97457052d6f40c674191aac6dfe4912ef3",
+  "source": "024e2061fbcf7313f488f61d1b32bb0ad772a367",
   "reference": "24f7ab2f266eb89f785192eac563915732a081ab",
   "referenceHtmlSha256": "708442b6a17cfa580118fb418d1529f49614883c80003033d416804dd475df9b",
   "ha": "20260729.7",
@@ -15,8 +15,8 @@
         "height": 780
       },
       "referenceSha256": "9a12ed10c0d6b47c9460431b7084d9118cb3e6b32b2ba9dffc290703dab79686",
-      "actualSha256": "f11a13eb0fb100570b5494661dc4a20141d076352b18cb2d8c65f23efb436cd3",
-      "sha256": "993be2726b43f7405f2d8d021d56930919dc8874bfcd48f5c3a72adec8889af8"
+      "actualSha256": "96bc673d76527fe95471d2ac26d86574ad83207c677c8d91abee96b315d57fd4",
+      "sha256": "84f4076a87c50ac49b13c03d4de3b1adae755109b7b9cbdd32aaf86ac22b7848"
     },
     "climate-1280-pair.png": {
       "reference": {
@@ -28,8 +28,8 @@
         "height": 780
       },
       "referenceSha256": "7c636c926aa7a390d47d98187fc4e9c7c87551636309d01bf18e6b53d73df6dd",
-      "actualSha256": "cd065907fc43d6f153201e35856b83df10bb09016160a3f82c6078a40d9855ff",
-      "sha256": "b8870d3ee0d0ba06b0eb218bb2c6ad4189aa90adb1c217367e525ff316d2546d"
+      "actualSha256": "6f4849b5840176ab081b72f61f91a6d1fbd265f15f6428d18ddf9f731c974c97",
+      "sha256": "b048d0a5ae454cf31202a4dcb89dfe51b6f3292f97f34a60b9e6d82a41b91b73"
     },
     "vacuum-1280-pair.png": {
       "reference": {
@@ -41,8 +41,8 @@
         "height": 780
       },
       "referenceSha256": "4191e634b2b31cb3271efad13b6a5c1618b71fef443c89de47838bb237569c09",
-      "actualSha256": "a864e8341c24fcb41b74dd197fb70807b6fd79ab99258a137acb8437ea4e810d",
-      "sha256": "d2807c72d2dc2f4c15c07100d23b14cfdf46065d1f82b0528fb3490dcaf7b848"
+      "actualSha256": "ac49f2ac898d6dbde5b093596b13229fb6f3009f783fab593f2e3b30dd5f605b",
+      "sha256": "c3b8768774bfc0d5ad640b2699d71bafcaa1ad72d402022fd7009971d15b2c76"
     },
     "radar-1280-pair.png": {
       "reference": {
@@ -54,8 +54,8 @@
         "height": 780
       },
       "referenceSha256": "599b7836911b7342aa9b254bb1c389650d399d80195c46bca1ff2aed4c042d84",
-      "actualSha256": "f508cf812a93bf74c264c7bfd60771fb7bf07febc98ae7fea05cbf7f86bd2ce6",
-      "sha256": "ae5fc8333597a591de305214ab0b9e48fa4355773da6f37a50f3e22a9cdf72b9"
+      "actualSha256": "20e6ce7ddd033b373385f5002ed61a02e46375a64e561c5571f311df085d932b",
+      "sha256": "c0ef5b122ec7156c1de568ff0417ea708140f7f467f76b2a2c1b0156cc49a0a6"
     },
     "led-390-pair.png": {
       "reference": {
@@ -67,8 +67,21 @@
         "height": 900
       },
       "referenceSha256": "e3b5d000f082ffb2ea7075815adba5d5fc13eb9ee5d70fede7d416bf9eff2c5c",
-      "actualSha256": "e56fcf474595cba590285778d97e6c0762ef1f60415c52a288ecdfea1e11236c",
-      "sha256": "bac63b9c7bd49e4dbc6868562d14dbfc0842344e219da2b4b7bb0ff88a28e1c3"
+      "actualSha256": "8879b1cbf88b92193d0be6baa7f29dd3852c65fecdde696bc17335e43d3add82",
+      "sha256": "92b81403e24322966908de7cb0d33c882bba4057128ef6e6599442e0af393beb"
+    },
+    "led-light-1280-pair.png": {
+      "reference": {
+        "width": 610,
+        "height": 779
+      },
+      "actual": {
+        "width": 610,
+        "height": 780
+      },
+      "referenceSha256": "3a3124ec45fe95cff9c97912e7984b616c8052a3a34af8059d57a315410f649e",
+      "actualSha256": "69635a8eb70a1e3ad0dd5db54ce0287a914884a0863e614bbfa1213704ba3439",
+      "sha256": "4876bd4a40e8d57d9394772eb77931f24d2c559697307105855a28fad84cda50"
     }
   },
   "nativeChecks": 202,
