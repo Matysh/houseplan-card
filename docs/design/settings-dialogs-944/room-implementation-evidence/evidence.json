@@ -1,0 +1,31 @@
+{
+  "source": "43c7d3e710c75e62d07554f57880d3fa64016352",
+  "reference": "24f7ab2f266eb89f785192eac563915732a081ab",
+  "ha": "20260729.7",
+  "font": "Roboto 400/500/700 on both sides",
+  "images": {
+    "room-1280-pair.png": {
+      "reference": {
+        "width": 610,
+        "height": 760
+      },
+      "actual": {
+        "width": 610,
+        "height": 756
+      },
+      "sha256": "5f1f8f7e6bbaf15f52267040af38355ed528dd1f2591ee6ae88a277820d7fc26"
+    },
+    "room-390-pair.png": {
+      "reference": {
+        "width": 390,
+        "height": 733
+      },
+      "actual": {
+        "width": 390,
+        "height": 900
+      },
+      "sha256": "5fb000326b9d7e7c11725dc0e497844f09c8a215b0fddf398f123a09061ac32d"
+    }
+  },
+  "syntheticDataSha256": "8ace72aca0ae5379b589ad3e09d15b0004225898f8d344b3b3ee348581272e42"
+}
