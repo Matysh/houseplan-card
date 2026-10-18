@@ -196,11 +196,12 @@ test('подсказка вызывается из блока настройки
   const source = readFileSync(
     new URL('../src/hp-zigbee-topology-settings.ts', import.meta.url), 'utf8',
   );
-  // Кружок стоит у ЗАГОЛОВКА функции, а не у тумблера: он объясняет функцию,
-  // а не то, что делает галочка.
+  // Standalone keeps its heading help. The approved embedded settings place
+  // contextual help on the toggle/topics without duplicating the card heading.
   assert.match(source, /<div class="section">\$\{this\._t\('title'\)\}\$\{this\._help\(\)\}<\/div>/);
-  assert.match(source, /<hp-help \.text=/);
+  assert.match(source, /<hp-help[^>]*\.text=/);
   // Fail-closed: оба ключа обязательны, иначе не рисуется ничего.
-  assert.match(source, /hasTopologyTranslation\(lang, 'help'\)/);
-  assert.match(source, /hasTopologyTranslation\(lang, 'help_aria'\)/);
+  assert.match(source, /hasTopologyTranslation\(lang, key\)/);
+  assert.match(source, /hasTopologyTranslation\(lang, aria\)/);
+  assert.match(source, /\.instant=\$\{this\.embedded\}/);
 });

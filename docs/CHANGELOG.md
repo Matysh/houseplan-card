@@ -12,6 +12,9 @@
   backups keep JSON ([#936](https://github.com/Matysh/houseplan-card/issues/936)).
   Proxy size rejections produce a useful message; an HTML gateway page is
   never downloaded as a fake ZIP.
+- Settings toggles use the same compact spacing and keep help next to wrapped
+  labels across all four forms ([#948](https://github.com/Matysh/houseplan-card/issues/948)).
+
 - Zigbee settings ignore dismissed discovery entries, and General settings show
   only the applicable undo operation. Menu items animate hover and respect reduced
   motion ([#948](https://github.com/Matysh/houseplan-card/issues/948)).

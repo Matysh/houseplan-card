@@ -80,6 +80,10 @@ heading with full-width scan guidance below. A live HEAD request to the approved
 Matched `28597553` and r1 builds measure editor 280863 → 281160 B (+297) and raw
 3058911 → 3060586 B (+1675). Carry only those own deltas into the same rolling
 references; bands, initial/onboarding limits and all coupling counts stay fixed.
+Settings-only toggle rows remove the legacy 11 px vertical padding, retaining
+44 px targets and the shared 18 px section separators. Help flows inline after
+wrapped labels. The old standalone topology heading/help contract remains; its
+unit witness accepts the embedded instance flag and still checks both locale keys.
 
 ## Room CO₂ (#920)
 
