@@ -1,0 +1,155 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1560" height="928" viewBox="0 0 1560 928">
+  <defs>
+    <pattern id="floor-grid" width="80" height="80" patternUnits="userSpaceOnUse">
+      <path d="M 80 0 H 0 V 80" fill="none" stroke="#dce2e6" stroke-width="1" opacity=".48"/>
+    </pattern>
+    <pattern id="bath-tile" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#dce3e6" stroke-width="1"/>
+    </pattern>
+    <style>
+      text { font-family: Inter, 'Segoe UI', Arial, sans-serif; }
+      .room-label { fill:#7b858f; font-size:18px; font-weight:500; text-anchor:middle; }
+      .room-area { fill:#9aa3ac; font-size:12px; font-weight:400; text-anchor:middle; }
+      .wall { fill:none; stroke:#75808b; stroke-linejoin:miter; stroke-linecap:butt; }
+      .door { fill:none; stroke:#9aa4ad; stroke-width:1.8; }
+      .furniture { fill:#e5e9ec; stroke:#c2cbd2; stroke-width:1.5; }
+      .detail { fill:none; stroke:#c4cdd4; stroke-width:1.3; }
+      .measurement { fill:#a2abb3; font-size:12px; text-anchor:middle; }
+    </style>
+  </defs>
+
+  <g class="architecture">
+    <g class="floors">
+      <rect x="240" y="160" width="1080" height="640" fill="#fafbfc"/>
+      <path d="M240 160H800V550H240Z" fill="#f6f7f8"/>
+      <path d="M240 550H570V800H240Z" fill="#f5f6f7"/>
+      <path d="M570 550H800V800H570Z" fill="#f8f9fa"/>
+      <path d="M800 160H1320V480H800Z" fill="#f8f9fa"/>
+      <path d="M800 480H1050V800H800Z" fill="#f0f4f5"/>
+      <path d="M800 480H1050V800H800Z" fill="url(#bath-tile)"/>
+      <path d="M1050 480H1320V800H1050Z" fill="#f7f8f9"/>
+      <rect x="245" y="165" width="1070" height="630" fill="url(#floor-grid)" opacity=".28"/>
+    </g>
+
+    <g class="walls wall">
+      <path d="M240 160H1320V800H240Z" stroke-width="10"/>
+      <path d="M800 160V360 M800 440V800 M240 550H660 M740 550H800 M800 480H1140 M1220 480H1320 M570 550V800 M1050 480V800" stroke-width="8"/>
+    </g>
+
+    <g class="windows" fill="#f7fbfd" stroke="#a8bdcb" stroke-width="1.5">
+      <rect x="350" y="154" width="230" height="12"/>
+      <path d="M350 160H580 M465 155V165"/>
+      <rect x="960" y="154" width="210" height="12"/>
+      <path d="M960 160H1170 M1065 155V165"/>
+      <rect x="234" y="300" width="12" height="150"/>
+      <path d="M240 300V450 M235 375H245"/>
+      <rect x="315" y="794" width="180" height="12"/>
+      <path d="M315 800H495 M405 795V805"/>
+      <rect x="1100" y="794" width="150" height="12"/>
+      <path d="M1100 800H1250 M1175 795V805"/>
+      <rect x="1314" y="260" width="12" height="140"/>
+      <path d="M1320 260V400 M1315 330H1325"/>
+    </g>
+
+    <g class="doors door">
+      <path d="M800 360H880 M800 440A80 80 0 0 0 880 360"/>
+      <path d="M740 550V630 M660 550A80 80 0 0 0 740 630"/>
+      <path d="M1220 480V560 M1140 480A80 80 0 0 0 1220 560"/>
+    </g>
+
+    <g class="dimensions" stroke="#c3cbd1" stroke-width="1" fill="none">
+      <path d="M240 138V100 M1320 138V100 M240 114H742 M818 114H1320"/>
+      <path d="M234 120L246 108 M1314 120L1326 108"/>
+      <path d="M1350 160H1390 M1350 800H1390 M1376 160V445 M1376 515V800"/>
+      <path d="M1370 166L1382 154 M1370 806L1382 794"/>
+    </g>
+    <text class="measurement" x="780" y="118">13,50 м</text>
+    <text class="measurement" x="1376" y="484" transform="rotate(-90 1376 484)">8,00 м</text>
+  </g>
+
+  <g class="decor">
+    <g class="furniture living-sofa">
+      <rect x="298" y="194" width="278" height="63" rx="10"/>
+      <rect x="309" y="202" width="256" height="16" rx="5" fill="#dde3e7"/>
+      <rect x="310" y="222" width="79" height="26" rx="4"/>
+      <rect x="398" y="222" width="79" height="26" rx="4"/>
+      <rect x="486" y="222" width="79" height="26" rx="4"/>
+    </g>
+    <g class="furniture lounge-chair">
+      <rect x="687" y="215" width="66" height="74" rx="12"/>
+      <rect x="696" y="231" width="48" height="46" rx="6" fill="#edf0f2"/>
+      <path d="M695 224H745" fill="none"/>
+    </g>
+    <g class="furniture bedroom">
+      <rect x="288" y="628" width="152" height="140" rx="5"/>
+      <rect x="288" y="628" width="152" height="16" rx="4" fill="#dce3e8"/>
+      <rect x="301" y="649" width="54" height="28" rx="6" fill="#f8fafb"/>
+      <rect x="372" y="649" width="54" height="28" rx="6" fill="#f8fafb"/>
+      <path d="M289 689H439 M305 700H423" fill="none"/>
+      <rect x="455" y="635" width="34" height="35" rx="3"/>
+      <rect x="505" y="588" width="39" height="163" rx="2"/>
+      <path d="M505 642H544 M505 696H544" fill="none"/>
+    </g>
+    <g class="furniture hallway">
+      <rect x="613" y="752" width="123" height="27" rx="4"/>
+      <path d="M654 753V778 M695 753V778" fill="none"/>
+    </g>
+    <g class="furniture kitchen">
+      <rect x="834" y="187" width="447" height="52" rx="2"/>
+      <path d="M898 188V238 M962 188V238 M1026 188V238 M1090 188V238 M1154 188V238 M1218 188V238" fill="none"/>
+      <rect x="850" y="197" width="33" height="31" rx="5" fill="#f6f9fa"/>
+      <path d="M867 201V194H879" fill="none"/>
+      <rect x="1103" y="194" width="40" height="37" rx="3" fill="#dbe2e7"/>
+      <g fill="none" stroke="#adb9c2" stroke-width="1.3">
+        <circle cx="1114" cy="204" r="5"/><circle cx="1132" cy="204" r="5"/>
+        <circle cx="1114" cy="222" r="5"/><circle cx="1132" cy="222" r="5"/>
+      </g>
+      <rect x="1244" y="247" width="37" height="174" rx="2"/>
+      <path d="M1245 305H1280 M1245 363H1280" fill="none"/>
+    </g>
+    <g class="furniture dining">
+      <rect x="1125" y="327" width="73" height="88" rx="11" fill="#edf0f2"/>
+      <rect x="1141" y="311" width="41" height="13" rx="4"/>
+      <rect x="1141" y="418" width="41" height="13" rx="4"/>
+    </g>
+    <g class="furniture bathroom">
+      <rect x="823" y="679" width="202" height="93" rx="14" fill="#f7fafb"/>
+      <rect x="834" y="690" width="180" height="71" rx="24" fill="#e9eff2"/>
+      <circle cx="852" cy="724" r="4" fill="#bdcbd4" stroke="none"/>
+      <rect x="825" y="504" width="67" height="49" rx="4"/>
+      <ellipse cx="859" cy="528" rx="23" ry="15" fill="#f7fafb"/>
+      <path d="M858 512V503" fill="none"/>
+      <rect x="968" y="505" width="47" height="18" rx="3"/>
+      <path d="M972 524H1011V546C1011 571 972 571 972 546Z" fill="#f7fafb"/>
+      <ellipse cx="991.5" cy="543" rx="12.5" ry="16" fill="#eaf0f3"/>
+    </g>
+    <g class="furniture office">
+      <rect x="1264" y="585" width="31" height="134" rx="4"/>
+      <path d="M1265 630H1294 M1265 674H1294" fill="none"/>
+      <rect x="1082" y="506" width="91" height="25" rx="3"/>
+      <path d="M1112 507V530 M1143 507V530" fill="none"/>
+    </g>
+  </g>
+
+  <g class="room-labels">
+    <text class="room-label" x="497" y="493">Гостиная</text>
+    <text class="room-area" x="497" y="514">34,1 м²</text>
+    <text class="room-label" x="369" y="588">Спальня</text>
+    <text class="room-area" x="369" y="609">12,9 м²</text>
+    <text class="room-label" x="678" y="582">Холл</text>
+    <text class="room-area" x="678" y="603">9,0 м²</text>
+    <text class="room-label" x="984" y="431">Кухня</text>
+    <text class="room-area" x="984" y="452">26,0 м²</text>
+    <text class="room-label" x="925" y="618">Ванная</text>
+    <text class="room-area" x="925" y="639">12,5 м²</text>
+    <text class="room-label" x="1268" y="510">Кабинет</text>
+    <text class="room-area" x="1268" y="531">13,5 м²</text>
+  </g>
+
+  <g class="architecture scale-key" transform="translate(240 859)">
+    <path d="M0 -5V5 M0 0H160 M80 -5V5 M160 -5V5" fill="none" stroke="#9da8b2" stroke-width="1.4"/>
+    <text x="0" y="23" class="measurement">0</text>
+    <text x="80" y="23" class="measurement">1</text>
+    <text x="160" y="23" class="measurement">2 м</text>
+  </g>
+</svg>
