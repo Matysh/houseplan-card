@@ -7432,7 +7432,7 @@ public _keepClosedAsPartitions = (): void => {
     this.host.requestUpdate();
   };
 
-private _backupT(key: ToolsI18nKey, vars?: Record<string, string>): string {
+private _toolsT(key: ToolsI18nKey, vars?: Record<string, string>): string {
     return toolsT(langOf(this.host.hass, this.host._config?.language), key, vars);
   }
 
@@ -7440,7 +7440,7 @@ public _backupErrorText(e: any): string {
     const code = e?.code ?? e?.error;
     if (typeof code === 'string') {
       const key = `backup.error.${code}`;
-      const editorText = this._backupT(key as ToolsI18nKey);
+      const editorText = this._toolsT(key as ToolsI18nKey);
       if (editorText !== key) return editorText;
       const translated = this.host._t(key as I18nKey);
       if (translated !== key) return translated;
@@ -9106,9 +9106,9 @@ public _renderBackupExportDialog(): TemplateResult {
             })} />
           <span><b>${this.host._t('backup.plan_only')}</b><small>${this.host._t('backup.plan_only_hint')}</small></span>
         </label>` : nothing}
-        ${d.kind === 'full' ? html`<div class="rhint">${this._backupT(this.host.hass?.user?.is_admin === true ? 'backup.zip_format' : 'backup.json_legacy')}</div>` : nothing}
-        ${this.backupTransfer.renderSummary((key, values) => this._backupT(key, values), d.archive)}
-        <div class="backupwarn">${d.kind === 'full' && this.host.hass?.user?.is_admin === true ? this._backupT('backup.zip_privacy_warning') : this.host._t('backup.privacy_warning')}</div>
+        ${d.kind === 'full' ? html`<div class="rhint">${this._toolsT(this.host.hass?.user?.is_admin === true ? 'backup.zip_format' : 'backup.json_legacy')}</div>` : nothing}
+        ${this.backupTransfer.renderSummary((key, values) => this._toolsT(key, values), d.archive)}
+        <div class="backupwarn">${d.kind === 'full' && this.host.hass?.user?.is_admin === true ? this._toolsT('backup.zip_privacy_warning') : this.host._t('backup.privacy_warning')}</div>
         ${d.error ? html`<div class="backuperror" role="alert">${d.error}</div>` : nothing}
       </div>
       <div class="row" slot="footer">
@@ -9116,7 +9116,7 @@ public _renderBackupExportDialog(): TemplateResult {
         <span class="spacer"></span>
         <button class="btn on" data-hp="dialog-confirm" ?disabled=${d.busy || (d.kind === 'space' && !currentSpace)}
           @click=${() => this._runBackupExport()}>
-          <ha-icon icon="mdi:download"></ha-icon>${d.busy ? this._backupT('backup.zip_preparing') : d.archive && !d.archive.complete ? this._backupT('backup.zip_download_incomplete') : this.host._t('backup.download')}
+          <ha-icon icon="mdi:download"></ha-icon>${d.busy ? this._toolsT('backup.zip_preparing') : d.archive && !d.archive.complete ? this._toolsT('backup.zip_download_incomplete') : this.host._t('backup.download')}
         </button>
       </div>
     </hp-dialog>`;
@@ -9167,7 +9167,7 @@ public _renderBackupImportDialog(): TemplateResult {
               model: String(p.model_version ?? '—'),
             })}</span>
           </div>
-          ${this.backupTransfer.renderSummary((key, values) => this._backupT(key, values), p.archive as ArchiveSummary | undefined, true)}
+          ${this.backupTransfer.renderSummary((key, values) => this._toolsT(key, values), p.archive as ArchiveSummary | undefined, true)}
           <div class="backupcounts">
             <span>${this.host._t('backup.count_spaces', { n: p.kind === 'full'
               ? `${p.current_counts?.spaces || 0} → ${counts.spaces || 0}` : String(counts.spaces || 0) })}</span>
@@ -9248,7 +9248,7 @@ public _renderBackupImportDialog(): TemplateResult {
           ${p.confirmation_required ? html`<label class="srcrow backupconfirm">
             <input type="checkbox" .checked=${d.confirmMissing}
               @change=${(e: Event) => (this.host._backupImportDialog = { ...d, confirmMissing: (e.target as HTMLInputElement).checked })} />
-            <span>${p.archive && !p.archive.complete ? this._backupT('backup.zip_confirm_incomplete') : this.host._t(missingDecor.length
+            <span>${p.archive && !p.archive.complete ? this._toolsT('backup.zip_confirm_incomplete') : this.host._t(missingDecor.length
               ? 'backup.confirm_missing_images' : 'backup.confirm_detach')}</span>
           </label>` : nothing}
         ` : nothing}
@@ -9492,7 +9492,7 @@ public _renderRulesDialog(): TemplateResult {
   }
 
 public _renderVacSection(dlg: any): TemplateResult | typeof nothing {
-    return renderVacuumSettingsSection(this,dlg);
+    return renderVacuumSettingsSection(this,dlg,key=>this._toolsT(key));
   }
 
 public _vacMapId(d: DevItem, tele: { mapId: string }, planHass = this.host._planHass): string {
@@ -11664,6 +11664,7 @@ public _renderRadarSection(d: NonNullable<HouseplanEditorHostPort['_markerDialog
       dialogDeviceId: () => this.host._markerDialog?.devId,
       t: (key, vars) => this.host._t(key, vars),
       st: settingsCopy(this.host).st,
+      toolsT: key => this._toolsT(key),
       help: (key) => this._help(key),
       boolInput: (value, change) => this._boolInput(value, change),
       toast: (message) => this.host._showToast(message),

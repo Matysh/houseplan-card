@@ -1,6 +1,6 @@
 /**
  * Lazy dictionary of the plan editors' tools (#780): the furniture library and
- * the LED strip tool. Приём #627: строки инструментов администратора живут в
+ * the LED strip tool and Device-only profile help. Приём #627: строки инструментов администратора живут в
  * ленивом графе редактора, а не в первом кадре View — их перенос из основных
  * словарей освобождает стартовый граф под LED-ленты (ТЗ #780 §13.1).
  *

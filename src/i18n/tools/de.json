@@ -163,5 +163,12 @@
   "confirm.remove_markers_title": "Geräte aus dem Plan löschen?",
   "confirm.remove_markers_body": "{count} ausgewählte Geräte aus dem Plan löschen. Bereich: {scope}. Einstellungen, Positionen, Anhänge und gespeicherte Roboterpfade werden gelöscht. Verknüpfte LED-Formen bleiben ohne Bindung bestehen. Home-Assistant-Geräte und -Entitäten werden nicht gelöscht. Dies kann nicht rückgängig gemacht werden.",
   "marker.legacy_radar_removed_hint": "Die Radar-Einstellungen werden beim Speichern entfernt.",
-  "marker.legacy_radar_restore": "Entfernen rückgängig machen"
+  "marker.legacy_radar_restore": "Entfernen rückgängig machen",
+  "marker.vacuum_source_help": "Die Auswahl der Roboterdatenquelle wird sofort gespeichert.",
+  "marker.vacuum_live_help": "Aktuelle Position des Roboters anzeigen. Wird sofort gespeichert.",
+  "marker.vacuum_trail_help": "Wird sofort gespeichert; Abbrechen der Geräteeigenschaften setzt die Auswahl nicht zurück.",
+  "marker.vacuum_documentation_help": "Anleitung zur Staubsaugereinrichtung in einem neuen Tab öffnen.",
+  "marker.radar_profile_help": "Das Profil bestimmt das Datenformat: Koordinaten, Entfernungen, Zonen oder Anwesenheit.",
+  "marker.radar_room_help": "Live-Ziele bleiben in diesem Raum. Ein anderer Geräteraum in diesem Bereich ändert auch den Radar-Raum.",
+  "marker.radar_remove_target_help": "Entfernt diesen Slot beim Speichern. Home-Assistant-Entitäten bleiben erhalten."
 }

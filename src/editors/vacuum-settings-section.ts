@@ -1,7 +1,7 @@
 /** Device settings presentation; vacuum writes retain their existing boundaries. */
 import {html,nothing,type TemplateResult} from 'lit';
 import type {I18nKey} from '../i18n';
-import type {SettingsI18nKey} from '../i18n/settings';
+import type {ToolsI18nKey} from '../i18n/tools';
 import type {HouseplanEditorRuntime} from '../houseplan-editor-runtime';
 import {readVacTelemetry,vacTrailMode,vacRoomNameMatchCount,type VacSourceCandidate} from '../vacuum';
 import {subst} from '../logic';
@@ -10,9 +10,9 @@ import {renderVacuumPathDiagnostics} from './vacuum-path-diagnostics';
 import {field,formCard,subsection,toggleRow} from './form-kit';
 import {settingsCopy} from './settings-copy';
 
-export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:NonNullable<HouseplanEditorRuntime['host']['_markerDialog']>):TemplateResult|typeof nothing {
+export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:NonNullable<HouseplanEditorRuntime['host']['_markerDialog']>,toolsT:(key:ToolsI18nKey)=>string):TemplateResult|typeof nothing {
     const {st}=settingsCopy(runtime.host);
-    const help=(key:SettingsI18nKey,label:string)=>html`<hp-help instant .text=${st(key)} .ariaLabel=${st('dialog.help_for',{name:label})}></hp-help>`;
+    const help=(key:ToolsI18nKey,label:string)=>html`<hp-help instant .text=${toolsT(key)} .ariaLabel=${st('dialog.help_for',{name:label})}></hp-help>`;
     const dev = runtime.host._devices.find((x) => x.id === dlg.devId);
     if (!dev || !runtime.host._isVacDev(dev)) return nothing;
     const v = dev.marker?.vacuum || {};
@@ -102,7 +102,7 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
   - map_name</pre>
         </div>` : nothing}
         <details class="vacpicker" data-dev-id=${dev.id}>
-          <summary class="btn ghostbtn">${runtime.host._t('vac.choose_source')}<hp-help instant .text=${st('marker.vacuum_source_help')} .ariaLabel=${st('dialog.help_for',{name:runtime.host._t('vac.choose_source')})} @click=${(e:Event)=>{e.preventDefault();e.stopPropagation();}}></hp-help></summary>
+          <summary class="btn ghostbtn">${runtime.host._t('vac.choose_source')}<hp-help instant .text=${toolsT('marker.vacuum_source_help')} .ariaLabel=${st('dialog.help_for',{name:runtime.host._t('vac.choose_source')})} @click=${(e:Event)=>{e.preventDefault();e.stopPropagation();}}></hp-help></summary>
           <div class="vacsource-list">
             <button type="button" class="vacsource ${!resolution.pinned ? 'on' : ''}"
               @click=${() => setVac({ source: null })}>
@@ -129,7 +129,7 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
         </details>
         ${tele ? html`
           ${toggleRow({id:'marker-vacuum-live',title:runtime.host._t('vac.live'),help:help('marker.vacuum_live_help',runtime.host._t('vac.live')),checked:v.live!==false,onChange:on=>setVac({live:on?null:false})})}
-          ${field({label:runtime.host._t('vac.trail'),help:html`<hp-help instant data-help="vacuum-trail" .text=${st('marker.vacuum_trail_help')} .ariaLabel=${st('dialog.help_for',{name:runtime.host._t('vac.trail')})}></hp-help>`,control:html`<hp-settings-select><select class="areasel"
+          ${field({label:runtime.host._t('vac.trail'),help:html`<hp-help instant data-help="vacuum-trail" .text=${toolsT('marker.vacuum_trail_help')} .ariaLabel=${st('dialog.help_for',{name:runtime.host._t('vac.trail')})}></hp-help>`,control:html`<hp-settings-select><select class="areasel"
             @change=${(e: Event) => setVac({ trail_mode: (e.target as HTMLSelectElement).value, trail: null })}>
             ${(['never', 'cleaning', 'always'] as const).map((mv) => html`
               <option value=${mv} ?selected=${vacTrailMode(v) === mv}>${runtime.host._t(('vac.trail_' + mv) as I18nKey)}</option>`)}

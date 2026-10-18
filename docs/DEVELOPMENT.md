@@ -1,5 +1,21 @@
 # Development and deployment
 
+The latest assembled #955 first failed the fresh Linux gate only on onboarding
+bytes:32452 B gzip versus30382+2000; the two unit failures judge the same
+limit. Removing dead legacy radar label rules and merging duplicate rules is
+valid cleanup but did not address that graph, because settings CSS is already
+editor-only. The actual extra English bytes were Device-only profile help in
+shared settings. Move those seven unchanged values in all four languages to
+the existing tools dictionary already awaited by EDITOR_LANGUAGE_RUNTIME;
+onboarding remains settings-only. Pass the existing private tools translator
+to the two extracted profile presenters and rename its old backup-only method
+name to match its broader use. No new namespace, model, text or loading gate.
+The measured Windows onboarding graph becomes32234 B (all ceilings unchanged).
+Rebuild test-build before namespace units: a standalone run against the old
+compiled JSON correctly differed from the changed source; fresh compiled
+namespace/form/style units all pass. Full canonical Linux validation follows.
+
+
 #955 AC3 explicitly includes an ordinary sensor as well as the complex Device
 profiles. The genuine-HA matrix adds a ZHA temperature/humidity/battery/LQI
 sensor with five shared sections; its setup lives only in that smoke and does

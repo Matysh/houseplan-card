@@ -3,6 +3,7 @@ import { html, nothing, type TemplateResult } from 'lit';
 
 import type { I18nKey } from '../i18n';
 import type { SettingsI18nKey } from '../i18n/settings';
+import type { ToolsI18nKey } from '../i18n/tools';
 import {
   freshRadarInstallationId, radarConfigFromDraft, radarDraft, radarSourceCandidates,
   recognizeRadar, recognizeRadarBinding,
@@ -50,6 +51,7 @@ export interface RadarSectionOptions {
   dialogDeviceId(): string | undefined;
   t(key: I18nKey, vars?: Record<string, string | number>): string;
   st(key: SettingsI18nKey, vars?: Record<string, string | number>): string;
+  toolsT(key:ToolsI18nKey): string;
   help(key: 'radar.help'): TemplateResult | typeof nothing;
   boolInput(value: boolean, change: (value: boolean) => void): TemplateResult;
   toast(message: string): void;
@@ -63,7 +65,7 @@ export function renderRadarSection(
   placement: 'main' | 'additional' = 'main',
 ): TemplateResult {
   const { dialog: d, device } = options;
-  const help=(key:SettingsI18nKey,label:string)=>html`<hp-help instant .text=${options.st(key)} .ariaLabel=${options.st('dialog.help_for',{name:label})}></hp-help>`;
+  const help=(key:ToolsI18nKey,label:string)=>html`<hp-help instant .text=${options.toolsT(key)} .ariaLabel=${options.st('dialog.help_for',{name:label})}></hp-help>`;
   if (!device) return html``;
   options.setup.syncMarker(device.marker?.id || device.id);
   const recognition = recognizeRadar(device, options.registryHass);
