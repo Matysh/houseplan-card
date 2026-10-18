@@ -30,6 +30,20 @@ Owner-approved #931 budget refresh (2026-10-18,
 25-reference / 2000-byte bands, initial View limits and performance gates stay
 unchanged. The panel and its copy remain demand-loaded in the editor graph.
 
+After accepted Space v7 (#945) landed while the #931 full CI was running, the
+combined source measures hostRefs5844, bundleBytes3193692 and editor312703 B
+gzip. The same owner-approved three references are refreshed to those joint
+facts; Space's onboarding reference and all bands/View/performance limits remain
+unchanged. The previous #931 material passed full CI39139573032, but does not
+stand in for the combined-source checks or matrix78 capture.
+
+The #945 localized signal witness sets HA language on each fresh card instead
+of restarting it with `setConfig`. It observes the public Devices mode before
+the actual settings entry, rather than awaiting a CDP-held transition promise.
+The first reset-wait adapter still produced "Resulting promise was garbage
+collected" in CI at setMode; the component-reset step is now absent. Keyboard,
+44px target, translation, inheritance and popup assertions remain unchanged.
+
 ## Portable full backup (#936)
 
 Container v1: `manifest.json`, the old `document.json`, optional `zigbee.json`,
