@@ -419,7 +419,7 @@ export class HpZigbeeTopologySettings extends LitElement {
     </section>`;
     return html`<div class="hpf-form hpf-settings-form"><section class="hpf-settings-pane"><div class="hpf-body">
       <label class="hpf-toggle hpf-noicon">
-        <span class="hpf-toggle-title"><span>${this._t('toggle')}</span>${this._help()}</span>
+        <span class="hpf-toggle-title hpf-balanced"><span>${this._t('toggle')}</span>${this._help()}</span>
         <input type="checkbox" .checked=${enabled} ?disabled=${!admin} aria-label=${this._t('toggle')}
           @change=${(event: Event) => this._emit({ ...this.value, enabled: (event.target as HTMLInputElement).checked })} />
       </label>

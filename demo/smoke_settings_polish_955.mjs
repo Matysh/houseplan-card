@@ -1,5 +1,5 @@
 // #955: shared interaction/layout evidence in real HA, across all four forms.
-import {launchHaDialogFixture} from './helpers/ha-dialog-fixture.mjs';
+import {launchHaDialogFixture,applyHaDialogTypography} from './helpers/ha-dialog-fixture.mjs';
 import {installHpTestOnPage} from './helpers/hp-test.mjs';
 import {ensureHarnessEditorRuntime} from './editor-runtime-compat.mjs';
 import {installSettingsDeviceFixture,openSettingsDeviceDialog} from './helpers/settings-device-947-fixture.mjs';
@@ -8,7 +8,8 @@ import {assertFreshDemoBundle} from './bundle-freshness.mjs';
 import {checkAll,watchPage,finish} from './serve.mjs';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-const fixture=await launchHaDialogFixture({authentic:true,viewport:{width:1280,height:900},extraModules:['16213']});
+const touch=process.argv.includes('--touch');
+const fixture=await launchHaDialogFixture({authentic:true,viewport:{width:1280,height:900},extraModules:['16213'],hasTouch:touch});
 const {page}=fixture,out={},matrix=[];
 const fast=process.argv.includes('--fast');
 const palettes={light:['#fff','#eceeef','#223039','#64747e','#dce2e6','#008aa5'],dark:['#17222e','#0f1822','#e7eef4','#a6b6c3','#354755','#67cfe8'],custom:['#fff6e9','#f0e2d0','#35291d','#75634e','#d6c3ac','#9b45b7']};
@@ -26,6 +27,7 @@ const hoverButton=async b=>{
 };
 try{
  await page.goto(fixture.url+'/product.html');
+ await applyHaDialogTypography(page);
  await page.waitForFunction(()=>window.__card?._booting===false&&window.__card?._devices?.length>0);
  await assertFreshDemoBundle(page,fileURLToPath(new URL('..',import.meta.url)));
  if(!await page.evaluate(ensureHarnessEditorRuntime))throw new Error('Editor preload failed');
@@ -45,8 +47,10 @@ try{
   const d=page.locator(`houseplan-card hp-dialog[data-kind="${kind}"]`);await d.waitFor();await settled();
   const sections=await d.locator('[data-section-target]').evaluateAll(nodes=>nodes.map(n=>n.dataset.sectionTarget));if(!sections.length)sections.push('form');
   let sawHelp=0,sawColors=0,sawToggles=0,sawSelects=0;
-  for(const [width,height] of fast?[[1280,900]]:[[1280,900],[390,900],[320,480],[1280,480]]){
+  for(const [width,height] of fast?[[touch?390:1280,900]]:[[1280,900],[390,900],[320,480],[1280,480]]){
    await page.setViewportSize({width,height});
+   // HA's entry/resize motion scales the surface before its final geometry.
+   await page.waitForTimeout(250);
    for(const [theme,palette] of Object.entries(fast?{light:palettes.light}:palettes)){
     await d.evaluate((el,p)=>{const c=el.getRootNode().host;['--card-background-color','--primary-background-color','--primary-text-color','--secondary-text-color','--divider-color','--primary-color'].forEach((k,i)=>c.style.setProperty(k,p[i]));c.style.setProperty('--secondary-background-color',p[1]);},palette);
     const heights=[];
@@ -56,18 +60,19 @@ try{
      heights.push(await d.locator('ha-dialog wa-dialog dialog').evaluate(el=>el.getBoundingClientRect().height));
      const prefix=`${name}_${width}x${height}_${theme}_${id}`;
      out[prefix+'_fit']=await d.evaluate(el=>{const ha=el.shadowRoot.querySelector('ha-dialog'),body=ha.shadowRoot.querySelector('.body'),r=ha.shadowRoot.querySelector('wa-dialog').shadowRoot.querySelector('dialog').getBoundingClientRect(),f=el.querySelector('.hpf-footer').getBoundingClientRect();return body.scrollWidth<=body.clientWidth+1&&r.left>=-1&&r.right<=innerWidth+1&&r.top>=-1&&r.bottom<=innerHeight+1&&f.bottom<=r.bottom+1;});
+     out[prefix+'_compact_temperature_fields']=await d.locator('.hpf-temperature-range .hpf-unit').filter({visible:true}).evaluateAll(nodes=>nodes.every(el=>Math.abs(parseFloat(getComputedStyle(el).width)-96)<.1));
      const toggles=d.locator('.hpf-settings-pane .hpf-toggle').filter({visible:true});sawToggles+=await toggles.count();
      // The title container can be centred while its actual text still sits
      // several pixels above the switch. Measure the rendered text, not its box.
      out[prefix+'_toggle_alignment']=await toggles.evaluateAll(nodes=>nodes.every(n=>{
       const title=n.querySelector('.hpf-toggle-title'),range=document.createRange();range.selectNodeContents(title.firstElementChild);
-      const a=range.getBoundingClientRect(),b=n.querySelector('input').getBoundingClientRect(),help=title.querySelector('hp-help')?.shadowRoot.querySelector('svg')?.getBoundingClientRect();
-      return Math.abs((a.top+a.bottom-b.top-b.bottom)/2)<=1.25&&a.right<=b.left+1&&(!help||Math.abs((help.top+help.bottom-a.top-a.bottom)/2)<=1.25);
+      const a=range.getBoundingClientRect(),lines=[...range.getClientRects()],last=lines.at(-1),b=n.querySelector('input').getBoundingClientRect(),host=title.querySelector('hp-help'),help=host?.shadowRoot.querySelector('svg')?.getBoundingClientRect();
+      return Math.abs((a.top+a.bottom-b.top-b.bottom)/2)<=1.25&&a.right<=b.left+1&&(!help||(Math.abs((help.top+help.bottom-last.top-last.bottom)/2)<=1.25&&Math.abs(host.getBoundingClientRect().left-last.right-4)<=.25));
      }));
      out[prefix+'_help_alignment']=await d.locator('hp-help').filter({visible:true}).evaluateAll(nodes=>nodes.every(h=>{
-      const parent=h.parentElement;if(!parent.matches('.hpf-labelrow,.hpf-label,.hpf-colortile-heading'))return true;
-      const walker=document.createTreeWalker(parent,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.textContent.trim()?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT}),text=walker.nextNode();if(!text)return false;
-      const range=document.createRange();range.selectNodeContents(text);const a=range.getBoundingClientRect(),b=h.shadowRoot.querySelector('svg').getBoundingClientRect();return Math.abs((a.top+a.bottom-b.top-b.bottom)/2)<=1.25;
+      const parent=h.parentElement;if(!parent.matches('.hpf-labelrow,.hpf-label,.hpf-label-tail'))return true;
+      const walker=document.createTreeWalker(parent,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.textContent.trim()?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT});let text,last;while(text=walker.nextNode())last=text;if(!last)return false;
+      const range=document.createRange();range.selectNodeContents(last);const a=[...range.getClientRects()].at(-1),b=h.shadowRoot.querySelector('svg').getBoundingClientRect();return Math.abs((a.top+a.bottom-b.top-b.bottom)/2)<=1.25&&(!parent.matches('.hpf-label-tail')||Math.abs(h.getBoundingClientRect().left-a.right-4)<=.25);
      }));
      if(name==='general'&&id==='zigbee')out[prefix+'_zigbee_wrap']=await toggles.first().evaluate(el=>{
       const span=el.querySelector('.hpf-toggle-title > span'),node=document.createTreeWalker(span,NodeFilter.SHOW_TEXT).nextNode();
@@ -130,6 +135,7 @@ try{
      }
     }
     out[`${name}_${width}x${height}_${theme}_stable_height`]=Math.max(...heights)-Math.min(...heights)<=1;
+    if(!out[`${name}_${width}x${height}_${theme}_stable_height`])console.log('dialog heights',name,width,height,theme,heights);
     for(let i=0;i<await d.locator('.hpf-footer .btn:not(:disabled)').count();i++)out[`${name}_${width}x${height}_${theme}_footer_${i}`]=await hoverButton(d.locator('.hpf-footer .btn:not(:disabled)').nth(i));
    }
   }
@@ -146,5 +152,5 @@ try{
   matrix.push({form:name,sections,helpPaths:sawHelp,colorPaths:sawColors,toggleRows:sawToggles,selectPaths:sawSelects});
   console.log('#955 checked '+name);
  }
- await fixture.assertClean();mkdirSync('artifacts/polish-955',{recursive:true});writeFileSync(`artifacts/polish-955/${fast?'fast-matrix':'matrix'}.json`,JSON.stringify({matrix,out},null,2));checkAll(out);await finish(fixture.browser,out);
-}finally{mkdirSync('artifacts/polish-955',{recursive:true});writeFileSync(`artifacts/polish-955/${fast?'fast-matrix':'matrix'}.json`,JSON.stringify({matrix,out},null,2));await fixture.close();}
+ await fixture.assertClean();mkdirSync('artifacts/polish-955',{recursive:true});writeFileSync(`artifacts/polish-955/${fast?touch?'touch-matrix':'fast-matrix':'matrix'}.json`,JSON.stringify({matrix,out},null,2));checkAll(out);await finish(fixture.browser,out);
+}finally{mkdirSync('artifacts/polish-955',{recursive:true});writeFileSync(`artifacts/polish-955/${fast?touch?'touch-matrix':'fast-matrix':'matrix'}.json`,JSON.stringify({matrix,out},null,2));await fixture.close();}

@@ -71,8 +71,9 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
   const tile = (key: keyof FillColors, labelKey: I18nKey) => {
     const v = d.colors[key];
     const label = t(labelKey);
+    const tail = label.lastIndexOf(' ') + 1;
     return colorTile({
-      label, heading:html`<span>${label}</span>${help(st('gs.fill_palette_help'),label)}`, hex: v.c, opacity: v.a, opacityLabel: st('gs.opacity_of', { name: label }),
+      label, heading:html`${label.slice(0,tail)}<span class="hpf-label-tail"><span>${label.slice(tail)}</span>${help(st('gs.fill_palette_help'),label)}</span>`, hex: v.c, opacity: v.a, opacityLabel: st('gs.opacity_of', { name: label }),
       picker: html`<hp-color-opacity .label=${label} hide-label flat-swatch cover-swatch
         .opacityLabel=${t('space.opacity')}
         .pickerLabels=${host._colorPickerLabels}

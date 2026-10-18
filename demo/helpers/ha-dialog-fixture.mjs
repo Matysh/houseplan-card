@@ -50,10 +50,26 @@ async function bootstrap(pin, extraModules = []) {
   window.__ha505Ready = { version: pin.version, chunks: [...loaded] };
 }
 
+/** Opt-in screenshot typography from the pinned HA frontend, not the host OS. */
+export async function applyHaDialogTypography(page) {
+  await page.addStyleTag({content: `
+    @font-face{font-family:Roboto;font-style:normal;font-weight:400;src:url('/static/fonts/roboto/Roboto-Regular.woff2') format('woff2')}
+    @font-face{font-family:Roboto;font-style:normal;font-weight:500;src:url('/static/fonts/roboto/Roboto-Medium.woff2') format('woff2')}
+    @font-face{font-family:Roboto;font-style:normal;font-weight:700;src:url('/static/fonts/roboto/Roboto-Bold.woff2') format('woff2')}
+    :root{--ha-font-family-body:Roboto,Noto,sans-serif;--primary-font-family:var(--ha-font-family-body)}
+    html,body{font-family:var(--ha-font-family-body)}
+  `});
+  await page.evaluate(async () => {
+    await Promise.all([400,500,700].map(weight => document.fonts.load(`${weight} 14px Roboto`)));
+    await document.fonts.ready;
+    if (!document.fonts.check('400 14px Roboto')) throw new Error('Pinned HA Roboto did not load');
+  });
+}
+
 /** Starts a synthetic loopback-only page; `authentic:false` keeps native hp-dialog. */
 export async function launchHaDialogFixture({
   authentic = true, viewport = { width: 1600, height: 1000 },
-  cacheDir, wheelPath, assets, colorScheme = 'light', extraModules = [],
+  cacheDir, wheelPath, assets, colorScheme = 'light', extraModules = [], hasTouch = false,
 } = {}) {
   const ha = authentic ? assets || await prepareHaDialogAssets({ cacheDir, wheelPath }) : null;
   const errors = [], externalRequests = [], websocketAttempts = [];
@@ -62,6 +78,9 @@ export async function launchHaDialogFixture({
     try {
       const pathname = decodeURIComponent(new URL(request.url, 'http://127.0.0.1').pathname);
       if (pathname === '/ha505-bootstrap.mjs' && ha) body = `await (${bootstrap})(${JSON.stringify(HA_DIALOG_PIN)},${JSON.stringify(extraModules)});`;
+      else if (pathname === '/ha505-static.html' && ha) {
+        type = 'text/html'; body = '<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">';
+      }
       else if (pathname === '/ha505-probe.html' && ha) {
         type = 'text/html';
         body = '<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><script type="module">await import("/ha505-bootstrap.mjs"); const parent=document.createElement("section"); parent.id="parent"; const dialog=document.createElement("ha-dialog"); dialog.width="small"; dialog.headerTitle="Authentic HA dialog — offline diagnostic"; dialog.innerHTML="<p>Official pinned component; synthetic content; no HA server.</p>"; parent.append(dialog); document.body.append(parent); dialog.open=true;</script>';
@@ -106,7 +125,7 @@ export async function launchHaDialogFixture({
   let browser;
   try {
     browser = await chromium.launch();
-    const context = await browser.newContext({ viewport, deviceScaleFactor: 1, colorScheme, timezoneId: 'Europe/Moscow', serviceWorkers: 'block' });
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1, colorScheme, hasTouch, timezoneId: 'Europe/Moscow', serviceWorkers: 'block' });
     await context.route('**/*', async (route) => {
       if (new URL(route.request().url()).origin !== url) {
         externalRequests.push(route.request().url()); await route.abort();
