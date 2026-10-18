@@ -3171,3 +3171,10 @@ expanded the desktop demo to980px and never exercised the narrow section menu).
 Popup target geometry is measured after its opening animation with0.01px
 floating-point tolerance around44px. This is a test-only repair: no product A,
 golden baseline, pixel threshold, physical geometry oracle or budget changed.
+
+Review #945 r1 M1: the existing Room dialog now reads cardNameScale and
+cardLabelScale separately. Its legacy hint remains unchanged when both bases
+match; a translated split hint names both bases when they differ. The preview
+multiplies each base by its corresponding Room multiplier. The executed Space
+form witness saves150%/75%, edits Room200%/150%, and checks the rendered54px/
+12.6px preview plus both named bases and cancellation without a config write.

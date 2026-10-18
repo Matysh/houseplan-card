@@ -74,6 +74,7 @@
   "room.temp_min_label": "Minimum",
   "room.temp_max_label": "Maximum",
   "room.sizes_hint": "En plus de la taille des cartes de l’espace ({v} %).",
+  "room.sizes_hint_split": "En plus des tailles de l’espace : nom {name}%, mesures {metrics}%.",
   "room.error_temp_range": "Saisissez des nombres pour les bornes de confort.",
   "room.error_name": "Saisissez un nom ou choisissez une zone.",
   "marker.binding.help": "Un marqueur lié affiche l’état en direct d’un appareil ou d’une entité Home Assistant et peut agir dessus. Un appareil virtuel est un simple marqueur sans liaison.",

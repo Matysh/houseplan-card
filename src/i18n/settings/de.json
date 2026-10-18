@@ -74,6 +74,7 @@
   "room.temp_min_label": "Minimum",
   "room.temp_max_label": "Maximum",
   "room.sizes_hint": "Zusätzlich zur bereichsweiten Kartengröße ({v} %).",
+  "room.sizes_hint_split": "Zusätzlich zu den Bereichsgrößen: Name {name}%, Messwerte {metrics}%.",
   "room.error_temp_range": "Geben Sie Zahlen für die Komfortgrenzen ein.",
   "room.error_name": "Geben Sie einen Namen ein oder wählen Sie einen Bereich.",
   "marker.binding.help": "Ein verknüpfter Marker zeigt den Live-Zustand eines Home-Assistant-Geräts oder einer Entität und kann darauf wirken. Ein virtuelles Gerät ist ein einfacher Marker ohne Verknüpfung.",

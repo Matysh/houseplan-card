@@ -268,8 +268,10 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
                 })}
                 ${rangeEnds('50%', '300%')}
               </div>`)}
-            <p class="hpf-hint">${st('room.sizes_hint', { v: String(pct(spaceDisplay.cardFontScale)) })}</p>
-            <div class="hpf-tint hpf-preview">${roomCardPreview(t, st('preview.room_name'), spaceDisplay.cardFontScale, host._roomNameScale, host._roomLabelScale, co2Preview)}</div>`,
+            <p class="hpf-hint">${spaceDisplay.cardNameScale === spaceDisplay.cardLabelScale
+              ? st('room.sizes_hint', { v: String(pct(spaceDisplay.cardNameScale)) })
+              : st('room.sizes_hint_split', { name: pct(spaceDisplay.cardNameScale), metrics: pct(spaceDisplay.cardLabelScale) })}</p>
+            <div class="hpf-tint hpf-preview">${roomCardPreview(t, st('preview.room_name'), spaceDisplay.cardNameScale, host._roomNameScale, host._roomLabelScale, co2Preview, spaceDisplay.cardLabelScale)}</div>`,
         })}
       </div>
       <div class="row dialog-action-footer hpf-footer" slot="footer">

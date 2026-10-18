@@ -89,6 +89,16 @@ try {
   await dialog.locator('#space-title').fill('Discard this');await tick();
   await dialog.locator('.btn[data-hp="dialog-cancel"]').click();await confirm.locator('[data-hp="dialog-confirm"]').click();await tick();
   out.discardDidNotWrite=(await saved()).title==='Space draft 945';
+  await page.evaluate(async()=>{await window.__hpTest.setMode('plan');await window.__hpTest.openRoomEdit('r1');});
+  const room=card.locator('hp-dialog[data-kind="room"]');
+  await room.locator('#room-name-scale').fill('200');await room.locator('#room-name-scale').press('Tab');await tick();
+  await room.locator('#room-label-scale').fill('150');await room.locator('#room-label-scale').press('Tab');await tick();
+  out.roomPreviewUsesBothSpaceBases=await room.locator('.cardpreview').evaluate(el=>
+    parseFloat(getComputedStyle(el.querySelector('.cpname')).fontSize)===54
+    && parseFloat(getComputedStyle(el.querySelector('.cpmeta')).fontSize)===12.6);
+  out.roomHintNamesBothSpaceBases=await room.locator('[data-card="sizes"] .hpf-hint').textContent().then(text=>text.includes('150%')&&text.includes('75%'));
+  await room.locator('.hpf-footer [data-hp="dialog-cancel"]').click();await confirm.locator('[data-hp="dialog-confirm"]').click();await tick();
+  out.roomPreviewCancelKeepsSpace=JSON.stringify(await saved())===JSON.stringify(result);
   await open();
   for (const width of [320,390,1280]) {
     await page.setViewportSize({width,height:800});
