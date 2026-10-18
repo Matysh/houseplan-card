@@ -1,0 +1,130 @@
+{
+  "label": "after",
+  "probeSha256": "067d7738529c04efc42639d4bedcb623461a7d8da79adba71b735c27a4ac1411",
+  "typographySha256": "443ba920a92acb2f05abbdb622673b3881fe4ef6d54a9bd9c7bb68a536e42800",
+  "source": "b9332831a408027374ddd895a73319be002faca3",
+  "srcTree": "119d393ace90591c1ffc948b535c076436c28ff7",
+  "checks": {
+    "8_theme_ring": true,
+    "6_alpha_100": true,
+    "3_preview_selection": true,
+    "5_moon_divider": true,
+    "2_help_hover": true,
+    "1_zigbee_wrap": true,
+    "4_toggle_alignment": true,
+    "7_stable_height": true,
+    "9_common_button_hover": true
+  },
+  "measurements": {
+    "clipped1280": [],
+    "alpha1280": {
+      "value": "100",
+      "width": 75,
+      "padding": 16,
+      "ink": 24
+    },
+    "origins": {
+      "selects": 0,
+      "radios": 2
+    },
+    "moonBorder": "0px",
+    "help1280": {
+      "open": "true",
+      "cursor": "pointer",
+      "background": "rgba(127, 127, 127, 0.063)"
+    },
+    "heights1280": {
+      "display": 756,
+      "plan": 756,
+      "fills": 756,
+      "sun": 756,
+      "zigbee": 756,
+      "data": 756
+    },
+    "clipped390": [],
+    "alpha390": {
+      "value": "100",
+      "width": 75,
+      "padding": 16,
+      "ink": 24
+    },
+    "help390": {
+      "open": "true",
+      "cursor": "pointer",
+      "background": "rgba(127, 127, 127, 0.063)"
+    },
+    "lastLine": [
+      "наведении",
+      "на",
+      "устройство"
+    ],
+    "heights390": {
+      "display": 900,
+      "plan": 900,
+      "fills": 900,
+      "sun": 900,
+      "zigbee": 900,
+      "data": 900
+    },
+    "toggleOffsets": [
+      -0.5,
+      -0.5,
+      -0.5,
+      -0.5,
+      -0.5,
+      -0.5,
+      -0.5,
+      -0.5,
+      -0.5,
+      -0.5,
+      -0.5,
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    "confirmation": [
+      {
+        "cursor": "pointer",
+        "shadow": "color(srgb 0.160471 0.337333 0.496706) 0px 0px 0px 1px",
+        "background": "color(srgb 0.123137 0.195686 0.269412)",
+        "pass": true
+      },
+      {
+        "cursor": "pointer",
+        "shadow": "color(srgb 0.160471 0.337333 0.496706) 0px 0px 0px 1px",
+        "background": "color(srgb 0.218824 0.585882 0.9)",
+        "pass": true
+      }
+    ]
+  },
+  "images": [
+    {
+      "file": "after-1280-plan.png",
+      "sha256": "ada539326c5483bec134cde5528cf60c598165f8d5ec228878dbee6d43275e54"
+    },
+    {
+      "file": "after-1280-sun.png",
+      "sha256": "1344f600b762068ed6ae4afd4deb0a26540326d31087393f1bda6b5d18d45141"
+    },
+    {
+      "file": "after-1280-zigbee.png",
+      "sha256": "317a00be14bae0832ac7aec5fae199538fc74fcd79300356a699e847f3a2926f"
+    },
+    {
+      "file": "after-390-plan.png",
+      "sha256": "0d38532427662a81deb4ac030e65e3736f27488153102baafbb4f2b06bb6ca3d"
+    },
+    {
+      "file": "after-390-sun.png",
+      "sha256": "f562c9a9050269080313800ff4c4018796c7ce2d79972bceee55c42467cb2834"
+    },
+    {
+      "file": "after-390-zigbee.png",
+      "sha256": "212fa2909b080775a6191bb5fb8e4052ed55e131aec3149fd9659c5a0cc205ac"
+    }
+  ],
+  "syntheticDataSha256": "103b09ac2cb56a1bda19b67484272717d9568e52bab3512bad1ed9c450ee78ab",
+  "savedDataUnchanged": true,
+  "errors": [],
+  "external": []
+}

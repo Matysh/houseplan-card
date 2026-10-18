@@ -1,0 +1,27 @@
+{
+  "before": "ecbb1e520a63cbef0fe6033d270dfd2643cdfc4b",
+  "after": "b9332831a408027374ddd895a73319be002faca3",
+  "cases": 64,
+  "beforeFailed": 48,
+  "afterFailed": 0,
+  "inputs": {
+    "ha_ru": "e0dd6b49f59c12ac7baf3558b7b875af59cc8f8805c01021e81b2c5d67578672",
+    "ha_en": "e0dd6b49f59c12ac7baf3558b7b875af59cc8f8805c01021e81b2c5d67578672",
+    "ha_de": "e0dd6b49f59c12ac7baf3558b7b875af59cc8f8805c01021e81b2c5d67578672",
+    "ha_fr": "e0dd6b49f59c12ac7baf3558b7b875af59cc8f8805c01021e81b2c5d67578672",
+    "inherited_ru": "e0dd6b49f59c12ac7baf3558b7b875af59cc8f8805c01021e81b2c5d67578672",
+    "inherited_en": "e0dd6b49f59c12ac7baf3558b7b875af59cc8f8805c01021e81b2c5d67578672",
+    "inherited_de": "e0dd6b49f59c12ac7baf3558b7b875af59cc8f8805c01021e81b2c5d67578672",
+    "inherited_fr": "e0dd6b49f59c12ac7baf3558b7b875af59cc8f8805c01021e81b2c5d67578672"
+  },
+  "probeSha256": "2416088c84cf6627ef496c0fe015010e324a33cdbd2cae881dbc2fb50aa94c09",
+  "helperSha256": "f3cb10b3c63339c2a98098aab1f48b027a728bd388158b7c3f9feb1cfb5d14d6",
+  "afterMaxInkOffset": 0.5,
+  "afterMaxSvgOffset": 0,
+  "typography": "HA Roboto; inherited profile configures Segoe UI/Roboto/Arial stack and line-height2.1, without asserting that a host font is installed",
+  "files": {
+    "before.json": "af5ecdea5c49ceaa3b0cc4087ad7909f92170f7d6ac1095cbd655b054b85aad0",
+    "after.json": "c68cfcc6ab08e2c58dc10f66b1620faca35f193e5817845d10b37d610f8903ee",
+    "probe.mjs": "2416088c84cf6627ef496c0fe015010e324a33cdbd2cae881dbc2fb50aa94c09"
+  }
+}

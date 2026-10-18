@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Settings polish (#955) uses common help, action, select and colour components
+across the four approved forms. Native comparisons retain the immutable mocks
+and identical synthetic data. The eight-scenario interaction matrix, ordinary
+nine-symptom comparison and 64-case visible Save paint proof complement the
+golden gate; none of them substitutes independent acceptance or publication.
+
 Properties panel (#931) implementation adds a 360 px shared column to wide
 Plan/Devices/Background cards, with native writer/history adapters and explicit
 full-dialog handoff. Optional main image opacity is model-v10 compatible.
@@ -717,7 +723,7 @@ user guide; the former parallel list is archived in
    Assistant instance by hand (`PROCESS.md` §12).
 
 
-Room settings #946: implemented locally against the accepted compact v4, using the shared form controls; independent review and release remain pending.
+Room settings #946 use the compact v4 form, shared controls and a single inherited fill choice. Current acceptance is read from the issue labels; the combined beta remains pending.
 
 
-Device settings #947: local implementation uses the shared five-section shell with real picker/presentation and hardware-only Radar eligibility. Independent validation/review and the combined beta remain pending.
+Device settings #947 use the shared five-section shell with real picker/presentation and hardware-only Radar eligibility. Removing a saved legacy profile remains an undoable draft operation. Current acceptance is read from the issue labels; the combined beta remains pending.

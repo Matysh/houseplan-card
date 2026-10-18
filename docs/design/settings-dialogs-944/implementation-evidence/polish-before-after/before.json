@@ -1,0 +1,132 @@
+{
+  "label": "before",
+  "probeSha256": "067d7738529c04efc42639d4bedcb623461a7d8da79adba71b735c27a4ac1411",
+  "typographySha256": "443ba920a92acb2f05abbdb622673b3881fe4ef6d54a9bd9c7bb68a536e42800",
+  "source": "ecbb1e520a63cbef0fe6033d270dfd2643cdfc4b",
+  "srcTree": "3963743a55751ec115cb1520ab14f447909ca3ee",
+  "checks": {
+    "8_theme_ring": false,
+    "6_alpha_100": false,
+    "3_preview_selection": false,
+    "5_moon_divider": false,
+    "2_help_hover": false,
+    "1_zigbee_wrap": false,
+    "4_toggle_alignment": false,
+    "7_stable_height": false,
+    "9_common_button_hover": false
+  },
+  "measurements": {
+    "clipped1280": [
+      "hpf-card"
+    ],
+    "alpha1280": {
+      "value": "100",
+      "width": 48,
+      "padding": 16,
+      "ink": 24
+    },
+    "origins": {
+      "selects": 1,
+      "radios": 0
+    },
+    "moonBorder": "1px",
+    "help1280": {
+      "open": "false",
+      "cursor": "pointer",
+      "background": "rgba(0, 0, 0, 0)"
+    },
+    "heights1280": {
+      "display": 751,
+      "plan": 751,
+      "fills": 756,
+      "sun": 756,
+      "zigbee": 756,
+      "data": 751
+    },
+    "clipped390": [
+      "hpf-card"
+    ],
+    "alpha390": {
+      "value": "100",
+      "width": 48,
+      "padding": 16,
+      "ink": 24
+    },
+    "help390": {
+      "open": "false",
+      "cursor": "pointer",
+      "background": "rgba(0, 0, 0, 0)"
+    },
+    "lastLine": [
+      "устройство"
+    ],
+    "heights390": {
+      "display": 900,
+      "plan": 900,
+      "fills": 900,
+      "sun": 900,
+      "zigbee": 900,
+      "data": 900
+    },
+    "toggleOffsets": [
+      -12.46875,
+      -12.0625,
+      -12.0625,
+      -12.0625,
+      -16.1875,
+      -13.5,
+      -16.921875,
+      -12.46875,
+      -12.0625,
+      -12.0625,
+      -12.0625,
+      -16.1875,
+      -13.5,
+      -6.78125
+    ],
+    "confirmation": [
+      {
+        "cursor": "pointer",
+        "shadow": "none",
+        "background": "rgba(0, 0, 0, 0)",
+        "pass": false
+      },
+      {
+        "cursor": "pointer",
+        "shadow": "none",
+        "background": "rgb(62, 166, 255)",
+        "pass": false
+      }
+    ]
+  },
+  "images": [
+    {
+      "file": "before-1280-plan.png",
+      "sha256": "ad34641dfc6527451c095f15e74ba53c27232a5b88f32802bdd550719e8862c8"
+    },
+    {
+      "file": "before-1280-sun.png",
+      "sha256": "35fb910d6ba9f200b227ae7c1a3d3390bf2d01fac62d2c773cd4b12fb1d692bb"
+    },
+    {
+      "file": "before-1280-zigbee.png",
+      "sha256": "01ab56ec6fd6cd31e18a2c6464df07b99d7e7e1aa6d6fa5fa8f323e6ba555686"
+    },
+    {
+      "file": "before-390-plan.png",
+      "sha256": "e25e712f562e91e238767a64634eba48ba78355e7e68aa1306dfd4a8adc3aa3f"
+    },
+    {
+      "file": "before-390-sun.png",
+      "sha256": "5e000782efe389843b9dfb7e6177bbe7e132dffcacabcd13c3a472dd6f8a9936"
+    },
+    {
+      "file": "before-390-zigbee.png",
+      "sha256": "1b0a08abfb53068556a2e8e20b37495b9f4ef5397cecfe96e94b870526510c74"
+    }
+  ],
+  "syntheticDataSha256": "103b09ac2cb56a1bda19b67484272717d9568e52bab3512bad1ed9c450ee78ab",
+  "savedDataUnchanged": true,
+  "errors": [],
+  "external": []
+}
