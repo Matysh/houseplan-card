@@ -12,7 +12,8 @@ await page.evaluate(async()=>{
 });
 const dlg=page.locator('houseplan-card hp-dialog[data-kind=room]');
 await page.waitForFunction(()=>window.__card.getAttribute('lang')==='ru'&&!window.__card.hasAttribute('aria-busy'));
-const reference=watchPage(await page.context().newPage());
+const context=page.context();
+const reference=watchPage(await context.newPage());
 await reference.setContent('<!doctype html><html><body>'+readFileSync('docs/design/settings-dialogs-944/room-settings-v4.html','utf8')+'</body></html>');
 await reference.locator('.hp-after h2').waitFor();
 const expected=await reference.locator('.hp-after').evaluate(el=>({width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height,title:el.querySelector('h2').textContent.trim()}));
