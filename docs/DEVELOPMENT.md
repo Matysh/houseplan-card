@@ -3146,3 +3146,13 @@ After integrating accepted #936, the final #948 cost is remeasured against the s
 Space v7 visual parity (#945): editor-only optional north/navigation ports select the single source list and stacked identity fields; onboarding keeps its existing choice cards and persistence. The shared fieldGrid stacked variant, settings-only image/actions, metric grid, object footer and HA height variables preserve the default General layout. The object footer retains visible action names at320px and a separate commit row; the old footer-width smoke now witnesses that approved layout while preserving all containment/44px and non-settings wide-dialog checks. `smoke_space_settings_form` reads the unchanged v7 reference and exercises real source/save/validation/font/CO₂ controls against the public synthetic fixture. Source legacy show_borders=true/hide_openings=true is deliberately retained before Save; derived openings follow borders under the accepted migration. Authentic before/after raw input hash399cc1d32b61150ed80e3e859ce82f91b93739a3284f5ab1034ebad56a22bd6e;36fit/theme checks cover4sections×320/390/1280×3themes. SVG bytes are installed before seeding the image URL, avoiding a misleading cached thumbnail in captures. No agreed HTML is edited.
 
 Matched WSL own-cost accounting for final #945 on General d496a749: editor283621→284685B gzip (+1064), onboarding31050→31438B (+388), raw3089053→3098026B (+8973). References become284674/29762/3097814, retaining inherited gaps11/1676/212B and all existing bands. Initial View323648 remains below unchanged322937+2000 and352000 budgets. Static metric references are unchanged; hostRefs5581 remains inside5564+25. This accounts for the shared source-list/image/metric UI and localized help, not a claimed performance improvement.
+
+Final #945 after unused-copy cleanup, measured with an explicit fresh bundle:sync
+on published fee606da in Linux/ext4: editor284720, onboarding31445, raw3097493.
+Against the same General A (283621/31050/3089053), own deltas are1099/395/8440.
+Final rolling refs284709/29769/3097281 retain inherited gaps11/1676/212 and all
+bands/absolute limits. Prior Space visual-cost measurements above predate copy
+cleanup. Pre-push/golden wrappers restore committed D files on exit: a restored
+dist manifest is never a measurement of current source; use fresh bundle:sync.
+Golden matrix78 keeps both hidden-opening View scenes aligned with the coupled
+borders/openings choice. All geometry/pixel oracles and thresholds stay intact.

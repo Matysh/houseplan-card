@@ -769,7 +769,8 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // retain its11B inherited gap, the2000B band and every absolute View budget.
 // #945: matched General d496a749 source283621 -> Space v7 source284685
 // (+1064 own bytes); keep the inherited11B gap and unchanged2000B band.
-export const LAZY_EDITOR_GZIP_CEILING = 284_674;
+// #945 final copy cleanup: matched General283621 -> Space284720 (+1099).
+export const LAZY_EDITOR_GZIP_CEILING = 284_709;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
@@ -788,7 +789,8 @@ export const LAZY_GRAPH_CEILING_BAND = 2_000;
 // #898, owner decision 2026-10-14: every ceiling with less than 10 % headroom is raised by 10 % (rounded up). 28578 -> 31436 B.
 // #945 shared Space fields and lazy English copy: matched31050->31438B
 // (+388 own bytes). Carry only that cost, preserving the inherited1676B gap.
-export const LAZY_ONBOARDING_GZIP_CEILING = 29_762;
+// #945 same final source: General31050 -> Space31445 (+395).
+export const LAZY_ONBOARDING_GZIP_CEILING = 29_769;
 
 /**
  * #780 ТЗ §13.1: the LED chunks are a new feature's own budget, not a raise of
