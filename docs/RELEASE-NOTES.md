@@ -1,18 +1,18 @@
-<!-- release: v1.82.0-beta.1 -->
+<!-- release: v1.82.0-beta.2 -->
 
 ## Основное
 
-- Значки прилипают к стенам и объединяются общей обводкой в плоском плане. Каждый значок по-прежнему перемещается отдельно.
-- Правый клик в редакторе устройств → «Копировать устройство»: рядом появляется независимая виртуальная копия с оформлением, файлами и связями.
-- В репозитории подготовлен обновлённый внешний конвертер для Easy Floorplan и Sweet Home 3D; публикация самого сайта выполняется отдельно.
+- Переработаны все четыре диалога настроек: связанные разделы, понятное наследование, общие контролы и тема Home Assistant. Компактная форма комнаты и адаптация для телефона. Убрано базовое затемнение комнат, свечение источников света сохранено.
+- В редакторах появилась единая панель свойств выбранного объекта. Готовый план открывается с инструментом «Выбрать», пустой — со «Стенами».
+- Добавлены показатели CO₂, фильтр устройств по пространствам и пакетное удаление. Полный ZIP-бэкап включает изображения и сохранённые связи Zigbee; исправлено восстановление пути пылесоса.
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Devices snap to walls and share an outline in Flat view. Each device still moves independently.
-- Right-click in the device editor → “Copy device” creates an independent virtual copy with its appearance, files and control links.
-- The repository includes the updated external converter for Easy Floorplan and Sweet Home 3D; the converter website has a separate rollout.
+- Redesigned all four settings dialogs with linked sections, clearer inheritance, shared controls and Home Assistant themes. Compact room settings and responsive phone layouts. Removed base room dimming while preserving light-source glow.
+- Editors now share a selected-object properties panel. Existing plans start in Select; empty plans start with Walls.
+- Added room CO₂ readings, a space filter and batch deletion in the device list. Full ZIP backups include images and stored Zigbee links; fixed vacuum path restoration.
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.82.0-beta.1/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.82.0-beta.1/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.82.0-beta.2/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.82.0-beta.2/docs/CHANGELOG.md)

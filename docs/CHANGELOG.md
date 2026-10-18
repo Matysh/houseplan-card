@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.82.0-beta.2 — 2026-10-19
+
 - Keep the complete opacity caption visible beside the wider numeric field
   in the shared colour picker. (#955)
 

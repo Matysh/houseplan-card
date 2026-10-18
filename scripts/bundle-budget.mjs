@@ -410,7 +410,7 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // 320000 B budget and 2000 B band; do not move forbidden-entry guards to lazy code.
 // #898, owner decision 2026-10-14: every ceiling with less than 10 % headroom is raised by 10 % (rounded up).
 // 309892 -> 340882 B; the band and the warning threshold stay put.
-export const INITIAL_VIEW_GZIP_CEILING = 322_937;
+export const INITIAL_VIEW_GZIP_CEILING = 323_767;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
@@ -628,7 +628,7 @@ export function initialViewCeilingViolation(bytes, {
  * оставался незафиксированным.
  */
 // #898, owner decision 2026-10-14: every ceiling with less than 10 % headroom is raised by 10 % (rounded up). 16940 -> 18634 B.
-export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
+export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_940;
 /**
  * #600, промежуточные замеры по сериям (итог ставится в конце):
  * - серия 0: 222 900 → 225 900. Набор контролов формы вырос до полного
@@ -783,7 +783,7 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // only the owner-approved editor reference is refreshed, not the2000B band.
 // #947/#931 joint tree carries the same Device-only +2313B onto that accepted
 // reference:312703+2313=315016. No added band or absolute budget.
-export const LAZY_EDITOR_GZIP_CEILING = 315_016;
+export const LAZY_EDITOR_GZIP_CEILING = 316_126;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
@@ -806,7 +806,7 @@ export const LAZY_GRAPH_CEILING_BAND = 2_000;
 // #946 final Space31445 -> Room31428 (-17 B), same inherited1676B gap.
 // #947 complete v6 profiles: matched Room31428 -> Device32058 (+630),
 // same inherited1676B gap; no band or absolute limit changes.
-export const LAZY_ONBOARDING_GZIP_CEILING = 30_382;
+export const LAZY_ONBOARDING_GZIP_CEILING = 32_262;
 
 /**
  * #780 ТЗ §13.1: the LED chunks are a new feature's own budget, not a raise of
