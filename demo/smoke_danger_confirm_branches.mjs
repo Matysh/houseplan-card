@@ -14,10 +14,11 @@ import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch(
   { width: 390, height: 760 }, 1, [], { hasTouch: true, isMobile: true },
 );
-// launch reveals the ready plan before the 220 ms boot veil fade finishes.
-// Snapshot the committed body only after that unrelated DOM cleanup: otherwise
-// its removal during the ready confirmation is mistaken for a warm-gate redraw.
-await page.waitForFunction(() => !window.__card.renderRoot.querySelector('.bootveil'), undefined, { timeout: 9000 });
+// launch reveals the ready plan before the veil fade and soft-stage grace end.
+// Snapshot only after that unrelated startup DOM cleanup: otherwise removing
+// the veil or hpsettle class is mistaken for a warm-gate redraw.
+await page.waitForFunction(() => !window.__card.renderRoot.querySelector('.bootveil, .stage.hpsettle'),
+  undefined, { timeout: 9000 });
 
 // Hold the first German chunk request so the card remains in the real `warm`
 // language gate long enough to exercise it. Aborting would immediately select
