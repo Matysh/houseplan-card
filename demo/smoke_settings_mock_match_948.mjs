@@ -32,6 +32,11 @@ await reference.locator('.hp-after').screenshot({path:`${dir}/approved-light-des
 await dialog.locator('.surface').screenshot({path:`${dir}/actual-light-desktop.png`});
 for(const width of [320,390]){await page.setViewportSize({width,height:900});await dialog.locator('.hpf-settings-mobile select').selectOption('sun');await page.evaluate(()=>window.__hpTest.settled());output[`mobile${width}`]=await dialog.evaluate(el=>{const content=el.shadowRoot.querySelector('.content');return content.scrollWidth<=content.clientWidth+1&&el.querySelector('.hpf-footer').getBoundingClientRect().bottom<=innerHeight+1;});await dialog.locator('.surface').screenshot({path:`${dir}/actual-light-${width}.png`});}
 output.settingsHelpIsCompact=await dialog.locator('hp-help').filter({visible:true}).first().locator('.trigger').evaluate(el=>getComputedStyle(el).width==='22px');
+await page.emulateMedia({reducedMotion:'no-preference'});
+output.toggleUsesProductMotion=await dialog.locator('#gs-sun-rays').evaluate(el=>getComputedStyle(el,'::after').transitionDuration==='0.15s');
+await page.emulateMedia({reducedMotion:'reduce'});
+output.toggleRespectsReducedMotion=await dialog.locator('#gs-sun-rays').evaluate(el=>getComputedStyle(el,'::after').transitionDuration==='0s');
+await page.emulateMedia({reducedMotion:'no-preference'});
 await dialog.locator('.hpf-footer [data-hp=dialog-cancel]').click();await dialog.waitFor({state:'detached'});
 await page.evaluate(()=>window.__hpTest.setMode('devices'));
 await page.locator('[data-hp=tool][data-tool=device-inbox]').filter({visible:true}).first().click();
