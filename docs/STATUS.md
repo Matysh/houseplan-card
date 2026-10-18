@@ -167,6 +167,10 @@ The owner-approved prerequisite separates the read-only check of published
 1.81.0 metadata from the new cycle's HEAD-bound publication contract. Reachable
 tag identity and unchanged notes remain mandatory; no gate is bypassed.
 
+Beta membership (#958) also includes each reachable second-parent task's own
+delivery SHA, while keeping the previous release's first-parent tag anchor and
+the existing SPEC/promotion exclusions. No product behavior changes.
+
 Stable preparation (#916) includes reachable second-parent task deliveries and
 uses a bounded 8 MiB GitHub transport. The owner's explicit stand acceptance
 of beta.4 by chat permits only product-equivalent 1.81.0 promotion; the reviewed

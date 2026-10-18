@@ -1,0 +1,34 @@
+TAP version 13
+# Subtest: \#916/\#958 second-parent delivery retains its own catalogue and beta membership evidence
+not ok 1 - \#916/\#958 second-parent delivery retains its own catalogue and beta membership evidence
+  ---
+  duration_ms: 206.306769
+  type: 'test'
+  location: '/home/sergey/houseplan-beta-membership-958-20261019/test/task-delivery-903.test.mjs:241:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    own second-parent delivery is reachable
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/sergey/houseplan-beta-membership-958-20261019/test/task-delivery-903.test.mjs:275:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 258.650619

@@ -2908,7 +2908,12 @@ annotated exact-SHA tag, builds `houseplan.zip` directly from that committed
 tree, verifies its manifest and embedded frontend against the candidate hash,
 and creates `RELEASE-MEMBERSHIP.json`. Every explicitly supplied issue must have
 an `Issue: #NN` trailer in the candidate history since the previous release;
-issue authorship is irrelevant. The prerelease is staged as a draft and receives
+issue authorship is irrelevant. Membership creation and immutable verification
+read all reachable parents in that range (#958), preserving each task's own
+delivery SHA even when a merge names another issue. The previous release tag
+is still selected on the first-parent line; unreachable branches, history before
+that tag, proven SPEC-only delivery and Release-only repetitions stay excluded.
+The prerelease is staged as a draft and receives
 both installable assets, the membership manifest and their `SHA256SUMS` passport.
 Only then does it become public. The downloaded public bytes and membership are
 verified against the candidate, followed by the paginated HACS order and

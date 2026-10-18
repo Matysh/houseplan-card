@@ -141,6 +141,9 @@ supplied invalid scene plans or automatic gates. The historical #916 scene-plan
 waiver remains scoped to its exact promotion; future field receipts need no waiver.
 Release accounting reads all reachable parents, retaining each task's original
 implementation provenance instead of borrowing a merge's unrelated issue.
+Beta membership creation and immutable verification share that all-parent range
+(#958); the previous release anchor still follows the first-parent tag line.
+Existing SPEC-only and promotion exclusions retain their content-bound proof.
 
 Presentation seams (#907) have no new data or write authority. The marker form
 passes its effective locale to the reactive read-only preview, which retains

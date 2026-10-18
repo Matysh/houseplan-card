@@ -238,17 +238,21 @@ test('#903 stale base and immutable candidate checks survive spec phase separati
   assert.throws(f.catalogue, /latest reachable previous stable/);
 });
 
-test('#916 a second-parent task retains its own implementation and classification, not the merge task or promotion trailers', t => {
+test('#916/#958 second-parent delivery retains its own catalogue and beta membership evidence', t => {
   const f = fixture(t);
+  f.put('docs/previous-release.md', 'already released');
+  const previous = f.commit('previous release delivery\n\nIssue: #88\nUser-Visible: no');
+  f.run(['tag', '-f', cycle.baseStable]);
   f.run(['switch', '-qc', 'not-merged']);
   f.put('scripts/unreachable.mjs', 'unreachable');
-  f.commit('unreachable\n\nIssue: #999\nUser-Visible: no');
+  const unreachable = f.commit('unreachable\n\nIssue: #999\nUser-Visible: no');
   f.run(['switch', '-q', 'dev']);
   f.spec();
   f.run(['switch', '-qc', 'side']);
   f.put('scripts/feature.mjs', 'export const value = 1;');
   f.put('docs/release-ledger/v1.80.1/2.json', JSON.stringify(classification('Implemented CLI change')));
   const implementation = f.commit('side implementation\n\nIssue: #2\nUser-Visible: no');
+  f.run(['tag', 'v1.81.0-beta.3']); // A side tag cannot replace the first-parent release anchor.
   f.run(['switch', '-q', 'dev']);
   f.put('scripts/other.mjs', 'export const other = 2;');
   f.put('docs/release-ledger/v1.80.1/9.json', JSON.stringify({ ...classification('Other CLI task'), issue: 9 }));
@@ -261,8 +265,31 @@ test('#916 a second-parent task retains its own implementation and classificatio
   assert.deepEqual(result.entries.find(row => row.issue === 2).commits, [implementation]);
   assert.equal(readMergeEntry('HEAD', 2, f.run).entry.issue, 2);
   assert.equal(result.specDeliveries[0].issue, 2);
+  const candidate = f.run(['rev-parse', 'HEAD']);
+  const before = f.run(['status', '--porcelain']);
+  const old = process.cwd(); process.chdir(f.dir);
+  let immutable;
+  try {
+    const history = readCandidateHistory(candidate);
+    assert.deepEqual(history.base, { tag: cycle.baseStable, sha: previous });
+    assert.equal(history.commits.some(row => row.sha === implementation), true, 'own second-parent delivery is reachable');
+    assert.equal(history.commits.some(row => row.sha === previous || row.sha === unreachable), false, 'base and unmerged branch are outside candidate history');
+    const { manifest, unmatched } = buildReleaseMembership({ tag: 'v1.81.0-beta.4', candidate,
+      ...history, issueNumbers: [2, 9, 66, 88, 999], allowUnmatched: true });
+    assert.deepEqual(manifest.issues.map(row => row.number), [2, 9]);
+    assert.deepEqual(manifest.issues.find(row => row.number === 2).commits, [implementation], 'merge/promotion/SPEC trailers never substitute task evidence');
+    assert.deepEqual(unmatched, [66, 88, 999]);
+    assert.doesNotThrow(() => verifyReleaseMembershipAgainstGit(manifest));
+    assert.throws(() => verifyReleaseMembershipAgainstGit({ ...manifest,
+      issues: [{ number: 2, commits: [implementation, candidate].sort() }] }), /does not prove issue/);
+    immutable = manifest;
+  } finally { process.chdir(old); }
+  assert.equal(f.run(['status', '--porcelain']), before);
   // A reachable side implementation must still renew an older placeholder.
   f.put('docs/release-ledger/v1.80.1/2.json', JSON.stringify(classification('Renewed reviewed CLI facts')));
   f.commit('renew facts\n\nIssue: #2\nUser-Visible: no');
   assert.doesNotThrow(f.catalogue);
+  process.chdir(f.dir);
+  try { assert.doesNotThrow(() => verifyReleaseMembershipAgainstGit(immutable), 'later HEAD cannot change pinned candidate membership'); }
+  finally { process.chdir(old); }
 });

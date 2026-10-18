@@ -118,7 +118,7 @@ export function readCandidateHistory(candidate) {
     ? { tag: previous.stdout, sha: git(['rev-list', '-n', '1', previous.stdout]).stdout }
     : null;
   const range = base ? `${base.sha}..${candidate}` : candidate;
-  const raw = git(['log', '--first-parent', '--format=%H%x1f%B%x1e', range]).stdout;
+  const raw = git(['log', '--topo-order', '--format=%H%x1f%B%x1e', range]).stdout;
   const commits = raw.split('\x1e').map((record) => record.trim()).filter(Boolean).map((record) => {
     const separator = record.indexOf('\x1f');
     if (separator < 0) throw new Error('cannot parse candidate git history');

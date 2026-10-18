@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 958,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Correct beta membership traversal of reachable second-parent task deliveries; changes release accounting only, with no application behavior change."
+}
