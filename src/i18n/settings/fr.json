@@ -199,5 +199,6 @@
   "dialog.dirty": "Modifications non enregistrées",
   "gs.default_light_help": "Couleur et intensité pour les appareils sans couleur lumineuse propre.",
   "gs.default_light_help.aria": "Aide : couleur de lumière par défaut",
-  "gs.preview_selected": "Sélectionné"
+  "gs.preview_selected": "Sélectionné",
+  "gs.light_intensity": "Intensité lumineuse"
 }

@@ -192,9 +192,9 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
       })}` },
         { id: 'sun', title: st('gs.section_light'), body: html`${formCard({ id: 'sun', title: st('gs.section_light'), body: html`
           ${colorRow({ label: st('gs.default_light'), help:html`<hp-help instant .text=${st('gs.default_light_help')} .ariaLabel=${st('gs.default_light_help.aria')}></hp-help>`, picker: colorField({
-            hex: d.colors.glow_light.c, opacity: d.colors.glow_light.a, opacityLabel: t('space.opacity'),
+            hex: d.colors.glow_light.c, opacity: d.colors.glow_light.a, opacityLabel: st('gs.light_intensity'),
             picker: html`<hp-color-opacity .label=${t('gs.glow_light')} hide-label flat-swatch
-              .opacityLabel=${t('space.opacity')} .pickerLabels=${host._colorPickerLabels}
+              .opacityLabel=${st('gs.light_intensity')} .pickerLabels=${host._colorPickerLabels}
               .color=${d.colors.glow_light.c} .opacity=${d.colors.glow_light.a} .showOpacity=${true}
               @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
                 this._setFillColor('glow_light', { c: e.detail.color, a: e.detail.opacity })}></hp-color-opacity>`,

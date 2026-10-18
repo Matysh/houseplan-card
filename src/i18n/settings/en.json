@@ -199,5 +199,6 @@
   "dialog.dirty": "Unsaved changes",
   "gs.default_light_help": "Light colour and intensity for devices without their own glow colour.",
   "gs.default_light_help.aria": "Help: default light colour",
-  "gs.preview_selected": "Selected"
+  "gs.preview_selected": "Selected",
+  "gs.light_intensity": "Glow intensity"
 }

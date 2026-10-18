@@ -17313,6 +17313,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'settings-help-size-leaks-into-catalogue-948',
+    guard: 'node demo/smoke_settings_mock_match_948.mjs',
+    because: '#948 AC1: settings-only help sizing must preserve the catalogue. The guard measures computed dimensions '
+      + 'in inherited CSS across custom-element shadow roots and actual dialog contexts; a pure unit cannot observe that cascade.',
+    patches: [{
+      file: 'src/hp-help.ts',
+      find: '      width: var(--hp-settings-help-size,32px);',
+      replace: '      width: var(--hp-settings-help-size,22px);',
+    }],
+  },
+  {
     id: 'form-kit-writes-to-a-neighbour-key',
     guard: 'node demo/smoke_room_settings.mjs',
     because: '#594: два источника комнаты — две одинаковые строки, отличающиеся одним словом. '

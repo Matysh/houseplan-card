@@ -25,9 +25,16 @@ output.lightFieldComposition=await dialog.evaluate(el=>{const card=el.querySelec
 output.footerStatusFirst=await dialog.locator('.hpf-footer').evaluate(el=>el.firstElementChild.classList.contains('hpf-status')&&el.firstElementChild.textContent.trim().length>0);
 await dialog.locator('[data-card=sun] .hpf-colorfield .hpf-hex').click();
 output.colourPlateDelegatesToExistingPicker=await dialog.locator('[data-card=sun] hp-color-opacity .trigger').getAttribute('aria-expanded')==='true';
+output.lightPickerNamesEffectIntensity=await dialog.locator('[data-card=sun] hp-color-opacity').getByText('Интенсивность свечения',{exact:true}).isVisible();
 await page.keyboard.press('Escape');
 await reference.locator('.hp-after [data-nav] [data-group-button=g-after-light]').click();
 await reference.locator('.hp-after').screenshot({path:`${dir}/approved-light-desktop.png`});
 await dialog.locator('.surface').screenshot({path:`${dir}/actual-light-desktop.png`});
 for(const width of [320,390]){await page.setViewportSize({width,height:900});await dialog.locator('.hpf-settings-mobile select').selectOption('sun');await page.evaluate(()=>window.__hpTest.settled());output[`mobile${width}`]=await dialog.evaluate(el=>{const content=el.shadowRoot.querySelector('.content');return content.scrollWidth<=content.clientWidth+1&&el.querySelector('.hpf-footer').getBoundingClientRect().bottom<=innerHeight+1;});await dialog.locator('.surface').screenshot({path:`${dir}/actual-light-${width}.png`});}
+output.settingsHelpIsCompact=await dialog.locator('hp-help').filter({visible:true}).first().locator('.trigger').evaluate(el=>getComputedStyle(el).width==='22px');
+await dialog.locator('.hpf-footer [data-hp=dialog-cancel]').click();await dialog.waitFor({state:'detached'});
+await page.evaluate(()=>window.__hpTest.setMode('devices'));
+await page.locator('[data-hp=tool][data-tool=device-inbox]').filter({visible:true}).first().click();
+const inbox=page.locator('hp-dialog[data-kind=device-inbox]');
+output.catalogueKeepsExistingHelpSize=await inbox.locator('hp-help').filter({visible:true}).first().locator('.trigger').evaluate(el=>getComputedStyle(el).width==='32px');
 checkAll(output);await reference.close();await finish(browser,output);

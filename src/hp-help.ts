@@ -36,8 +36,8 @@ export class HpHelp extends LitElement {
     }
 
     .trigger {
-      width: 32px;
-      height: 32px;
+      width: var(--hp-settings-help-size,32px);
+      height: var(--hp-settings-help-size,32px);
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -59,10 +59,10 @@ export class HpHelp extends LitElement {
       fill: currentColor;
     }
 
-    :host([instant]) .trigger { width:22px; height:22px; cursor:pointer; transition:color 150ms,background 150ms; }
+    :host([instant]) .trigger { cursor:pointer; transition:color 150ms,background 150ms; }
     :host([instant]) .trigger svg { width:20px; height:20px; }
     :host([data-pointer-hover]):host([instant]) .trigger:hover svg,
-    :host([instant]) .trigger:focus-visible svg { transform:scale(1.06); }
+    :host([instant]) .trigger:focus-visible svg { transform:scale(var(--hp-settings-help-scale,1)); }
 
     :host([data-pointer-hover]) .trigger:hover,
     .trigger:focus-visible,

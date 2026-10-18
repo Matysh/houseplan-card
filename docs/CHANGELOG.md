@@ -12,6 +12,9 @@
   backups keep JSON ([#936](https://github.com/Matysh/houseplan-card/issues/936)).
   Proxy size rejections produce a useful message; an HTML gateway page is
   never downloaded as a fake ZIP.
+- Compact help controls inherit their size from each settings dialog, preserving
+  the layout of the device catalogue ([#948](https://github.com/Matysh/houseplan-card/issues/948)).
+
 - Settings toggles use the same compact spacing and keep help next to wrapped
   labels across all four forms ([#948](https://github.com/Matysh/houseplan-card/issues/948)).
 

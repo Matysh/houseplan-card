@@ -1,6 +1,6 @@
 /** Shared, editor-only presentation for the four approved settings forms (#944). */
 export const settingsDialogCss = `
-  hp-dialog[settings-layout] { --hp-dialog-wide-width:610px; --hp-dialog-icon-size:40.48px; --hp-dialog-close-transition:160ms ease; --hp-dialog-close-hover-transform:rotate(90deg) scale(1.12); }
+  hp-dialog[settings-layout] { --hp-dialog-wide-width:610px; --hp-dialog-icon-size:40.48px; --hp-settings-help-size:22px; --hp-settings-help-scale:1.06; --hp-dialog-close-transition:160ms ease; --hp-dialog-close-hover-transform:rotate(90deg) scale(1.12); }
   hp-dialog .hpf-form.hpf-settings-form { display:block; padding:0; background:var(--hpf-surface); --hpf-control-surface:var(--hpf-surface); }
   .hpf-settings-layout { display:grid; grid-template-columns:155px minmax(0,1fr); min-width:0; align-items:start; }
   .hpf-settings-nav { position:sticky; top:0; display:grid; gap:4px; padding:13px 8px; min-width:0; }

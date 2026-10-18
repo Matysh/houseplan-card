@@ -199,5 +199,6 @@
   "dialog.dirty": "Есть несохранённые изменения",
   "gs.default_light_help": "Цвет и интенсивность света для устройств без собственного цвета свечения.",
   "gs.default_light_help.aria": "Подсказка: цвет света по умолчанию",
-  "gs.preview_selected": "Выбрано"
+  "gs.preview_selected": "Выбрано",
+  "gs.light_intensity": "Интенсивность свечения"
 }

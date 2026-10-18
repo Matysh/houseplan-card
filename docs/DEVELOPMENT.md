@@ -84,6 +84,13 @@ Settings-only toggle rows remove the legacy 11 px vertical padding, retaining
 44 px targets and the shared 18 px section separators. Help flows inline after
 wrapped labels. The old standalone topology heading/help contract remains; its
 unit witness accepts the embedded instance flag and still checks both locale keys.
+The full `f11b709a` capture correctly refused three unexpected device-catalogue
+frames: shrinking every `instant` help trigger moved that unrelated dialog.
+Keep size/hover scale as custom properties inherited only from `settings-layout`
+hosts, with the original 32 px default elsewhere. The ordinary cross-dialog
+scenario in `smoke_settings_mock_match_948` measures settings 22 px / catalogue
+32 px. Its new browser-dependent mutant is registered, not executed; a fresh full
+published-source capture must prove the catalogue frames unchanged before acceptance.
 
 ## Room CO₂ (#920)
 
