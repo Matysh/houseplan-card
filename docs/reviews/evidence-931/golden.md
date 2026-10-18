@@ -3,6 +3,28 @@
 Author visual acceptance of this task's declared shifts under PROCESS §3.13 / §8,
 not an independent code-review verdict or an owner/GPU acceptance.
 
+## Current joint-source acceptance (matrix 78)
+
+The matrix77 record below is historical; its complete GitHub Validate
+[39139573032](https://github.com/Matysh/houseplan-card/actions/runs/39139573032)
+passed before accepted #945 landed in dev. The branch then integrated #945,
+preserving all of its schema, forms and accepted baseline provenance rather
+than asserting that the old receipt covered new source.
+
+The new complete attested capture uses the clean published joint commit
+`a0626bbabe2404965d47c3d26a284b2bebb70f6d`, matrix78, the same pinned browser,
+and attestation `73f061aad3ad31208cec7a5ffedbbe7537286a23bbaf3d4d994b5b6109663969`.
+All212 scenes were captured without errors; 121 undeclared frames are
+byte-identical environment witnesses (floor10). Every one of the31 declared
+#931 frames is byte-identical to the already-inspected accepted frame in
+`a1b3eb52`; its visual decision therefore remains unchanged. The same exact
+31-ID acceptance below replaces only those frames, retaining181 references,
+including the four accepted #945 changes, without touching thresholds/fixtures.
+The new baseline manifest carries this joint-source provenance. Fresh exact-SHA
+GitHub validation of the baseline commit remains required before review/merge.
+
+## Original visual decision (matrix 77)
+
 The first [CI run](https://github.com/Matysh/houseplan-card/actions/runs/39136209087)
 captured all 212 scenes. All 31 differences were inspected against the old
 baselines. Inspection found a real light panel in dark CSS-only themes; those
