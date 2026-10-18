@@ -62,6 +62,7 @@ try{
      await d.evaluate(el=>el.shadowRoot.querySelector('ha-dialog').shadowRoot.querySelector('.body').scrollTop=0);
      heights.push(await d.locator('ha-dialog wa-dialog dialog').evaluate(el=>el.getBoundingClientRect().height));
      const prefix=`${name}_${width}x${height}_${theme}_${id}`;
+     if(name==='space'&&id==='appearance'&&width===1280)out[prefix+'_approved_nav_wrap']=await d.locator('[data-section-target=appearance]').evaluate(el=>{const range=document.createRange();range.selectNodeContents(el);return range.getClientRects().length===1;});
      out[prefix+'_fit']=await d.evaluate(el=>{const ha=el.shadowRoot.querySelector('ha-dialog'),body=ha.shadowRoot.querySelector('.body'),r=ha.shadowRoot.querySelector('wa-dialog').shadowRoot.querySelector('dialog').getBoundingClientRect(),f=el.querySelector('.hpf-footer').getBoundingClientRect();return body.scrollWidth<=body.clientWidth+1&&r.left>=-1&&r.right<=innerWidth+1&&r.top>=-1&&r.bottom<=innerHeight+1&&f.bottom<=r.bottom+1;});
      out[prefix+'_compact_temperature_fields']=await d.locator('.hpf-temperature-range .hpf-unit').filter({visible:true}).evaluateAll(nodes=>nodes.every(el=>Math.abs(parseFloat(getComputedStyle(el).width)-96)<.1));
      out[prefix+'_body_action_targets']=await d.locator('.hpf-settings-pane .btn').filter({visible:true}).evaluateAll(nodes=>nodes.every(el=>el.getBoundingClientRect().height>=44-.1));
