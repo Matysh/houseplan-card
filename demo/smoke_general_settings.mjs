@@ -89,7 +89,7 @@ const res = await page.evaluate(async () => {
 checkAll(res, {
   "rows": 14, // 9 плиток без затемнения #943 + прежние остальные контролы
                // + «Оптимизировать планы» по действию, а не удалённому #605 классу alignall
-  "cards": ["Information on the plan", "Appearance and background", "Room fill colors", "Light, Sun and Moon", "Zigbee links", "Backups and maintenance"],
+  "cards": ["Information on the plan", "Appearance and background", "Room fills", "Light, Sun and Moon", "Zigbee diagnostics", "Backups and maintenance"],
   "groups": ["Lights", "Temperature", "Zigbee signal"],
   "everyCardHasContent": true,
   "glowRadiusInsideGlowGroup": true,
