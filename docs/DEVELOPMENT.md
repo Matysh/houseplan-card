@@ -51,10 +51,15 @@ bounds. Read-only installed Segoe UI fonts are needed for comparable typography
 Never update approved references to make the implementation pass. Generic golden
 success is additional regression evidence, not design acceptance.
 
+The theme smoke checks computed colours for six browser/HA-mode combinations;
+absent HA `darkMode` uses CSS colour scheme, while an explicit HA mode wins.
+The test facade opens full device settings through the native double-click
+entrypoint in wide editors, where one click now selects the properties target.
+
 Owner-approved #931 budget refresh (2026-10-18,
 [decision](https://github.com/Matysh/houseplan-card/issues/931#issuecomment-6250557931)):
-`hostRefs` 5564→5833, total bundle bytes 3088841→3184653, lazy editor gzip
-283610→311555. These are measured reference values, not added tolerance: the
+`hostRefs` 5564→5833, total bundle bytes 3088841→3184691, lazy editor gzip
+283610→311520 (including the CSS-theme correction). These are measured reference values, not added tolerance: the
 25-reference / 2000-byte bands, initial View limits and performance gates stay
 unchanged. The panel and its copy remain demand-loaded in the editor graph.
 

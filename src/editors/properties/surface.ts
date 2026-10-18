@@ -28,7 +28,7 @@ export interface PropertiesSurface {
 }
 export interface PropertiesSurfacePort {
   t(key: PropertiesString, vars?: Record<string, string | number>): string;
-  imperial: boolean; dark: boolean; controller: PropertiesFieldController; pickerLabels: ColorPickerLabels;
+  imperial: boolean; dark?: boolean; controller: PropertiesFieldController; pickerLabels: ColorPickerLabels;
   collapsed: Set<string>; toggleGroup(key: string): void;
   clear(): void; action(key: string): void;
   edit(field: PropertiesField, raw: string, finish?: boolean): void;
@@ -134,7 +134,7 @@ function fieldView(field: PropertiesField, port: PropertiesSurfacePort): Templat
 
 export function renderPropertiesSurface(model: PropertiesSurface, port: PropertiesSurfacePort, inert: boolean): TemplateResult {
   const { t, controller } = port;
-  return html`<aside class="hp-properties" data-theme=${port.dark ? 'dark' : 'light'} data-hp="properties-panel" aria-label=${t('title')} ?inert=${inert}
+  return html`<aside class="hp-properties" data-theme=${port.dark == null ? 'auto' : port.dark ? 'dark' : 'light'} data-hp="properties-panel" aria-label=${t('title')} ?inert=${inert}
     aria-busy=${String(!!controller.draft?.pending)} @pointerdown=${(e: Event) => e.stopPropagation()}
     @click=${(e: Event) => e.stopPropagation()} @wheel=${(e: Event) => e.stopPropagation()}>
     <header class="hp-prop-head"><div class="hp-prop-heading">${t('title')}<button type="button" class="hp-prop-clear" @click=${() => port.clear()}>

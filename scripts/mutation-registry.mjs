@@ -19547,6 +19547,12 @@ const MUTANT_DEFINITIONS = [
       find:'return this._open ? {raw:this._hexDraft,needsValidInput:this._hexNeedsValidInput} : this.resumedHex;',
       replace:'return null;'}],
   },
+  {
+    id: 'properties-theme-ignores-css-fallback',
+    guard: 'node demo/smoke_properties_panel.mjs',
+    because: '#931 AC13: without an explicit HA darkMode the mounted panel palette must follow browser colour scheme; only computed Chromium colours distinguish the real cascade from a theme attribute.',
+    patches: [{file:'src/editors/properties/styles.ts',find:'    color-scheme: light dark;',replace:'    color-scheme: light;'}],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

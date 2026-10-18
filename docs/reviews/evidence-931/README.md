@@ -58,7 +58,9 @@ vocabulary remain the implementation target.
   pending controls (no dropped new input), ratio/centre,
   text cancel/insert/caret/newline, alpha zero/reset, device Undo and zero HA
   services. All matrix families/subtypes render through the production owner;
-  selection leaves server config unchanged. Dark/short viewport are exercised.
+  selection leaves server config unchanged. Short viewport and six theme
+  combinations are exercised through computed background/text colours, not
+  just a theme attribute. Missing HA mode follows browser CSS; explicit HA wins.
 - `node demo/smoke_editor_styles_lazy.mjs`: cold View/kiosk/static/onboarding,
   first-frame styles, two cards, warm remount and retired/failed imports passed.
 - `node demo/smoke_color_picker.mjs`, `node demo/smoke_editor_gestures.mjs`,
@@ -92,5 +94,5 @@ owner or real-GPU acceptance.
 | AC11/12 | actual runtime writer/history tests + controller authority | failed/preflight/conflict restores owned state/exact cursor; newer sibling/authority cannot be overwritten |
 | AC13/14 | short/dark and existing touch/lazy smokes; budget gates | cancelled gesture writes nothing; cold View requests no editor; old bands/View ceilings remain |
 
-Nine new mutation declarations are static witnesses only. `mutation-gate --check`
+Ten new mutation declarations are static witnesses only. `mutation-gate --check`
 does **not** execute them and is not a caught verdict; execution remains nightly.
