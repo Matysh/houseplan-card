@@ -36,8 +36,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 57 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 83 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 45 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 206 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **401 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 207 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **402 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -765,6 +765,11 @@ owner, with no settled copy surviving the next presented frame.
 - `inbox-delete-stale-placement-930`
 - `inbox-delete-rollback-930`
 - `inbox-virtual-id-930`
+- `properties-resize-forgets-internal-hex-draft`
+
+The #931 witness crosses responsive unmount/remount of the real colour picker,
+its uncommitted internal HEX input and the card-local draft owner. A pure field
+controller cannot prove that the mounted custom element retains this input.
 
 The #930 witnesses cross native catalog selection, the stacked confirmation,
 authoritative HA config replacement and Lit/adoption rollback. The pure units

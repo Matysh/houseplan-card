@@ -10,7 +10,8 @@
 - Wide Plan, Devices and Background editors share a Properties panel for precise
   position, dimensions and appearance. Full dialogs remain available; device
   size/angle join Undo, text supports caret-aware HA variables, and main plan
-  images have saved opacity ([#931](https://github.com/Matysh/houseplan-card/issues/931)).
+  images have saved opacity. Fields wait for the current save before accepting
+  more input ([#931](https://github.com/Matysh/houseplan-card/issues/931)).
 
 - Repair the hidden-device browser witness for linked virtual-light actions;
   keep the existing nightly mutation and product behavior unchanged (#953).

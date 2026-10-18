@@ -772,11 +772,11 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // #945 final copy cleanup: matched General283621 -> Space284720 (+1099).
 // #946 final Space284720 -> Room284636 (-84 B), same inherited11B gap.
 // #931 owner approval 2026-10-18, issuecomment-6250557931: final checked properties
-// panel measures 311542 B gzip (was 283610); editor-only catalog/controller/copy,
+// panel measures 311555 B gzip (was 283610); editor-only catalog/controller/copy,
 // native writer/history adapters and reference selection cues. Rebase this one
 // lazy ceiling to the measured fact; keep its 2000-B band, all initial View
 // ceilings, absolute budgets and performance limits unchanged.
-export const LAZY_EDITOR_GZIP_CEILING = 311_542;
+export const LAZY_EDITOR_GZIP_CEILING = 311_555;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

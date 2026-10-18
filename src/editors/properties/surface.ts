@@ -70,6 +70,7 @@ function fieldView(field: PropertiesField, port: PropertiesSurfacePort): Templat
   const draft = controller.draft?.field === field.key ? controller.draft : null;
   const label = t(field.label), id = `hp-property-${field.key}`;
   const disabled = field.mode === 'disabled', readonly = field.mode === 'readonly';
+  const pending = !!controller.draft?.pending;
   const keydown = (event: KeyboardEvent) => {
     event.stopPropagation();
     if (!port.mayFinish()) return;
@@ -92,7 +93,7 @@ function fieldView(field: PropertiesField, port: PropertiesSurfacePort): Templat
       : colorField({ hex: color.color.toUpperCase(), valueLabel: color.noFill ? t('no_fill') : undefined, opacity: color.opacity,
         picker: html`<hp-color-opacity ${ref(el=>{if(el)port.attachColor(field.key,el as HpColorOpacity);})} .label=${label} .color=${color.color} .opacity=${color.opacity} cover-swatch
           .allowNoFill=${color.noFill !== undefined} .noFill=${color.noFill ?? false} .noFillLabel=${t('no_fill')}
-          .pickerLabels=${port.pickerLabels} hide-label flat-swatch
+          .pickerLabels=${port.pickerLabels} .disabled=${pending} hide-label flat-swatch
           @hp-color-opacity-open=${() => port.edit(field, JSON.stringify(color))}
           @hp-color-opacity-change=${(e: CustomEvent) => port.edit(field, JSON.stringify(e.detail))}
           @hp-color-opacity-commit=${(e: CustomEvent) => port.edit(field, JSON.stringify(e.detail), true)}
@@ -101,15 +102,15 @@ function fieldView(field: PropertiesField, port: PropertiesSurfacePort): Templat
       @click=${() => port.action(field.action ?? field.key)}>${propertiesIcon(field.icon ?? 'settings')}${label}</button>`;
   else if (field.control === 'choices') control = html`<div class="hp-prop-choices" role="group" aria-label=${label}>
       ${field.options?.map(option => html`<button type="button" class="hp-prop-choice ${value === option.value ? 'active' : ''}"
-        aria-pressed=${String(value === option.value)} ?disabled=${disabled || readonly || !!draft?.pending}
+        aria-pressed=${String(value === option.value)} ?disabled=${disabled || readonly || pending}
         @click=${() => port.edit(field, option.value, true)}>${option.label}</button>`)}</div>`;
-  else if (field.control === 'select') control = html`<select id=${id} class="hp-prop-control" aria-label=${label} ?disabled=${disabled || readonly || !!draft?.pending}
+  else if (field.control === 'select') control = html`<select id=${id} class="hp-prop-control" aria-label=${label} ?disabled=${disabled || readonly || pending}
       .value=${value} @change=${(e: Event) => port.edit(field, (e.target as HTMLSelectElement).value, true)}>
       ${field.options?.map(option => html`<option value=${option.value} ?selected=${value===option.value}>${option.label}</option>`)}</select>`;
   else if (field.control === 'toggle') control = html`<button id=${id} type="button" class="hp-prop-choice ${field.value === true ? 'active' : ''}"
-      aria-label=${label} aria-pressed=${String(field.value === true)} ?disabled=${disabled || readonly || !!draft?.pending}
+      aria-label=${label} aria-pressed=${String(field.value === true)} ?disabled=${disabled || readonly || pending}
       @click=${() => port.edit(field, String(field.value !== true), true)}>${field.icon ? propertiesIcon(field.icon) : nothing}${label}</button>`;
-  else if (field.control === 'text') control = html`<textarea id=${id} class="hp-prop-text" rows="2" maxlength="200" aria-label=${label}
+  else if (field.control === 'text') control = html`<textarea id=${id} class="hp-prop-text" rows="2" maxlength="200" aria-label=${label} ?disabled=${pending}
       .value=${value} @input=${(e: Event) => port.edit(field, (e.target as HTMLTextAreaElement).value)}
       @select=${(e: Event) => port.textSelection(e.target as HTMLTextAreaElement)}
       @keyup=${(e: Event) => port.textSelection(e.target as HTMLTextAreaElement)}
@@ -119,7 +120,7 @@ function fieldView(field: PropertiesField, port: PropertiesSurfacePort): Templat
       min: field.min === undefined ? undefined : field.min / (port.imperial && field.unit === 'cm' ? 2.54 : 1),
       max: field.max === undefined ? undefined : field.max / (port.imperial && field.unit === 'cm' ? 2.54 : 1),
       step: field.step === undefined ? 'any' : field.step / (port.imperial && field.unit === 'cm' ? 2.54 : 1), ariaLabel: label,
-      readonly, invalid: !!draft?.error, disabled: !!draft?.pending,
+      readonly, invalid: !!draft?.error, disabled: pending,
       onInput: raw => port.edit(field, raw) });
   return html`${field.section ? html`<div class="hp-prop-feature-label">${t(field.section)}</div>` : nothing}<div class="hp-prop-field ${field.mode ?? ''} ${field.control === 'text' || field.wide ? 'wide' : ''}" data-property=${field.key}
       @keydown=${keydown} @focusout=${blur} @focusin=${() => port.enterField(field.key)} title=${field.reason ? t(field.reason) : nothing}>
