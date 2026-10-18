@@ -144,13 +144,20 @@ try {
   const before = await page.evaluate(async () => (await window.__card.hass.callWS({ type: 'houseplan/config/get' })).config);
   const openSettings = async () => {
     await page.locator('[data-hp="settings"]').click();
+    await page.locator('hp-dialog[data-kind="settings"] [data-section-target="sun"]').click();
     await page.locator('hp-dialog[data-kind="settings"] #gs-glow-radius').waitFor();
   };
   const dialog = page.locator('hp-dialog[data-kind="settings"]');
-  const opacity = dialog.locator('.hpf-card[data-card="glow"] .hpf-colortile-meta input');
+  const picker = dialog.locator('.hpf-card[data-card="sun"] hp-color-opacity');
+  const editOpacity = async value => {
+    await picker.locator('button.trigger').click();
+    await picker.locator('.picker input[type="number"]').fill(value);
+    await picker.locator('.picker input[type="number"]').press('Tab');
+    await picker.locator('button.confirm').click();
+  };
   await openSettings();
-  assert.equal(await dialog.locator('.hpf-card[data-card="glow"] .hpf-colortile').count(), 1);
-  await opacity.fill('42');
+  assert.equal(await picker.count(), 1);
+  await editOpacity('42');
   await dialog.locator('#gs-glow-radius').fill('4.5');
   await dialog.locator('.dialog-action-commit [data-hp="dialog-cancel"]').click();
   await page.locator('hp-confirm [data-hp="dialog-confirm"]').click();
@@ -158,7 +165,7 @@ try {
   assert.deepEqual(await page.evaluate(async () => (await window.__card.hass.callWS({ type: 'houseplan/config/get' })).config), before,
     'discarding the draft preserves raw legacy and active settings');
   await openSettings();
-  await opacity.fill('42');
+  await editOpacity('42');
   await dialog.locator('#gs-glow-radius').fill('4.5');
   await dialog.locator('[data-hp="dialog-confirm"]').click();
   await dialog.waitFor({ state: 'detached' });
@@ -173,10 +180,12 @@ try {
   assert.equal(await page.evaluate(() => window.__dimming943Wire.filter(m => m.type === 'houseplan/config/set').length), 1,
     'only explicit Save writes the config');
   await openSettings();
-  assert.equal(await opacity.inputValue(), '42');
+  await picker.locator('button.trigger').click();
+  assert.equal(await picker.locator('.picker input[type="number"]').inputValue(), '42');
+  await picker.locator('button.confirm').click();
   assert.equal(await dialog.locator('#gs-glow-radius').inputValue(), '4.5');
   await dialog.locator('.dialog-action-group > button').filter({ hasText: 'Reset' }).click();
-  assert.equal(await dialog.locator('.hpf-card[data-card="glow"] .hpf-colortile').count(), 1);
+  assert.equal(await picker.count(), 1);
   assert.equal(await page.evaluate(() => Object.hasOwn(window.__card._settingsDialog.colors, 'glow_base')), false,
     'Reset does not recreate the retired role');
   await dialog.locator('.dialog-action-commit [data-hp="dialog-cancel"]').click();
