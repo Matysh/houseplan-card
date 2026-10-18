@@ -58,7 +58,7 @@ for (const theme of ['light', 'dark']) {
         return checker && Math.abs(opacity - Math.round(picker.opacity * 100) / 100) <= 0.01;
       });
       const tileByLabel = (key) => tiles.find((tile) =>
-        tile.querySelector('.hpf-colortile-heading > span')?.textContent.trim() === c._t(key));
+        tile.querySelector('.hpf-colortile-heading')?.textContent.trim() === c._t(key));
       const none = tileByLabel('gs.light_none');
       const on = tileByLabel('gs.light_on');
       const defaultsDiffer = !!none && !!on
