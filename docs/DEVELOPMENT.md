@@ -3185,3 +3185,5 @@ match; a translated split hint names both bases when they differ. The preview
 multiplies each base by its corresponding Room multiplier. The executed Space
 form witness saves150%/75%, edits Room200%/150%, and checks the rendered54px/
 12.6px preview plus both named bases and cancellation without a config write.
+
+Room settings #946: exercise the inherited/own fill select and independent bounds, all three source pickers, name/metric sizing, dirty/discard and WS refusal. The labelled preview is synthetic; assert actual readings on the plan and tooltip separately.

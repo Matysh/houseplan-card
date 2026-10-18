@@ -32,7 +32,7 @@ export async function saveRoomEdit(runtime: HouseplanEditorRuntime): Promise<voi
   else delete next.fill_mode;
   if (host._roomFill === 'custom' && host._roomCustomFill) next.custom_fill = host._roomCustomFill;
   else delete next.custom_fill;
-  if (previous.fill_mode === 'glow' && typeof previous.glow !== 'boolean') next.glow = true;
+  if (previous.glow === false || previous.fill_mode === 'glow') next.glow = true;
   if (host._roomTempSrc) next.temp_source = host._roomTempSrc;
   else delete next.temp_source;
   if (host._roomHumSrc) next.hum_source = host._roomHumSrc;
