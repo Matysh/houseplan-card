@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 77, issue: 35. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 79, issue: 35. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -22,6 +22,8 @@
 | #947 | [SPEC-REVIEW-947-r3.md](SPEC-REVIEW-947-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 1 | новый раздел «Документация» сужает объём правки docs/RADAR.md до одного подраздела, но … | `docs/RADAR.md` `docs/USER-GUIDE.ru.md` |
 | #947 | [SPEC-REVIEW-947-r4.md](SPEC-REVIEW-947-r4.md) | spec · r4 | 🟢 зелёный | 0 | 0 | — | — |
 | #947 | [SPEC-REVIEW-947-r5.md](SPEC-REVIEW-947-r5.md) | spec · r5 | 🟡 жёлтый | 0 | 1 | документация устройства не ограничивается разделом про радар, а ТЗ называет только его; слипшееся предложение в AC1 | `docs/USER-GUIDE.ru.md` `docs/USER-GUIDE.md` `docs/SCOPE.md` |
+| #947 | [CODE-REVIEW-947-r1.md](CODE-REVIEW-947-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | потеря возможности отменить «Remove» у устаревшего; задвоенный абзац футера в английском гайде | `docs/RADAR.md` `marker-dialog.ts` `radar-section.ts` `demo/smoke_radar_setup.mjs` `docs/USER-GUIDE.md` `docs/USER-GUIDE.ru.md` |
+| #947 | [CODE-REVIEW-947-r2.md](CODE-REVIEW-947-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #946 | [SPEC-REVIEW-946-r1.md](SPEC-REVIEW-946-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | «связанный переход» Room → Space входит в AC5, но не | `room-settings-v4.html` `.fragment.html` `.data.json` `README.md` `draft-decisions.md` `docs/USER-GUIDE.ru.md` |
 | #946 | [SPEC-REVIEW-946-r2.md](SPEC-REVIEW-946-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #946 | [SPEC-REVIEW-946-r3.md](SPEC-REVIEW-946-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
