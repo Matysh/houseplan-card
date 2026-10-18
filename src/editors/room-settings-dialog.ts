@@ -137,7 +137,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
                 @input=${(e: Event) => { host._nameSel = (e.target as HTMLInputElement).value; host.requestUpdate(); }} />`,
             }),
             field({
-              label: t('room.area_label'), htmlFor: 'room-area', help: shelp('room.group_basics.help'),
+              label: st('room.area_optional'), htmlFor: 'room-area', help: shelp('room.group_basics.help'),
               control: html`<hp-settings-select><select id="room-area" class="hpf-select" aria-label=${t('room.area_label')}
                 @change=${(e: Event) => {
                   host._areaSel = (e.target as HTMLSelectElement).value;
@@ -148,15 +148,14 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
                 ${areas.map((a) => html`<option value=${a.area_id} ?selected=${a.area_id === host._areaSel}>${a.name}</option>`)}
               </select></hp-settings-select>`,
             }),
-          ]),
+          ], {stacked:true}),
         })}
         ${formCard({
           id: 'fill',
           title: t('room.group_fill'),
-          help: shelp('room.group_fill.help'),
           body: html`
             ${field({
-              label: st('room.fill_mode_label'),
+              label: st('room.fill_mode_label'), help: shelp('room.group_fill.help'),
               control: selectControl<'' | RoomFillMode>({
                 name:'rfill',value:host._roomFill as '' | RoomFillMode,ariaLabel:t('room.fill_label'),
                 options:[{value:'',label:st('room.fill_inherited',{mode:fillLabel(spaceDisplay.fill)})},
@@ -184,7 +183,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
             ${effectiveFill === 'temp'
               ? html`<div class="hpf-field hpf-temprange">
                   <span class="hpf-label hpf-labelrow">${t('room.temp_range_label')}${shelp('room.temp_range.help')}</span>
-                  <div class="hpf-temperature-range">${[
+                  <div class="hpf-temperature-range hpf-range-compact">${[
                     field({
                       label: st('space.range_from'), htmlFor: 'room-temp-min',
                       control: unitInput({
@@ -205,11 +204,10 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
                     }),
                   ]}</div>
                   ${tempProblem ? html`<p class="hpf-error" role="alert">${st(tempProblem.message)}</p>` : nothing}
-                  <div class="hpf-templegend" aria-hidden="true">
-                    <span>${t('gs.temp_cold')}</span><span>${t('gs.temp_ok')}</span><span>${t('gs.temp_hot')}</span>
-                  </div>
+                  ${callout({text:`${t('gs.temp_cold')} · ${t('gs.temp_ok')} · ${t('gs.temp_hot')}`})}
                   ${host._roomTempMin.trim() || host._roomTempMax.trim()
-                    ? textLink(t('room.temp_range_reset'), () => { host._roomTempMin = ''; host._roomTempMax = ''; host.requestUpdate(); })
+                    ? html`<div class="hpf-actions"><button class="btn ghost" data-room-range-reset
+                        @click=${() => {host._roomTempMin='';host._roomTempMax='';host.requestUpdate();}}>${t('room.temp_range_reset')}</button>${shelp('room.temp_range.help')}</div>`
                     : nothing}
                 </div>`
               : nothing}`,
@@ -249,7 +247,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
           : nothing}
         ${footerStatus(problems.length
           ? { action: textLink(st('dialog.review_fields', { n: String(problems.length) }), reviewFirst) }
-          : {})}
+          : {text:st(dirty ? 'dialog.dirty' : 'dialog.saved')})}
         <div class="dialog-action-group dialog-action-commit">
           <button class="btn ghost" data-hp="dialog-cancel" @click=${requestClose}>${t('btn.cancel')}</button>
           ${edit

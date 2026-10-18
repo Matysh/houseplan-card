@@ -237,5 +237,6 @@
   "room.fill_inherited": "Как у пространства · {mode}",
   "room.save": "Сохранить комнату",
   "room.title": "{name} · настройки комнаты",
-  "room.context": "Комната · {space}"
+  "room.context": "Комната · {space}",
+  "room.area_optional": "Зона Home Assistant · необязательно"
 }

@@ -112,7 +112,11 @@ export const settingsDialogCss = `
   .hpf-north-values input[type=range] { width:100%; min-width:0; accent-color:var(--hpf-accent); }
   .hpf-settings-single { grid-template-columns:minmax(0,1fr); }
   .hpf-settings-single .hpf-settings-content { border:0; }
-  .hpf-settings-single .hpf-card + .hpf-card { margin-top:24px; }
+  .hpf-settings-single .hpf-card + .hpf-card { margin-top:18px; padding-top:18px; border-top:1px solid var(--hpf-line); }
+  .hpf-settings-single .hpf-head { padding:0; margin:0 0 18px; border:0; }
+  .hpf-settings-single .hpf-head h3 { font-size:14px; }
+  .hpf-temperature-range.hpf-range-compact { max-width:360px; gap:32px; }
+  .hpf-range-compact .hpf-unit { width:112px; max-width:112px; }
   hp-dialog[data-kind=room][settings-layout] .hpf-grid { grid-template-columns:minmax(0,1fr); }
   .hpf-settings-form .cardpreview { border:0; width:100%; margin:0; color:var(--hpf-accent); }
   .hpf-settings-form .cardpreview .cpmeta > span { display:inline-flex; align-items:center; gap:.2em; white-space:nowrap; }

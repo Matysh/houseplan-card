@@ -237,5 +237,6 @@
   "room.fill_inherited": "As in space · {mode}",
   "room.save": "Save room",
   "room.title": "{name} · room settings",
-  "room.context": "Room · {space}"
+  "room.context": "Room · {space}",
+  "room.area_optional": "Home Assistant area · optional"
 }

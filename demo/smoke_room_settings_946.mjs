@@ -1,5 +1,5 @@
-import {launch,checkAll,finish} from './serve.mjs';
-import {mkdirSync} from 'node:fs';
+import {launch,watchPage,checkAll,finish} from './serve.mjs';
+import {mkdirSync,readFileSync} from 'node:fs';
 const {page,browser}=await launch({width:1280,height:900});
 const out={};const dir='artifacts/settings-mobile';mkdirSync(dir,{recursive:true});
 await page.evaluate(async()=>{
@@ -12,6 +12,12 @@ await page.evaluate(async()=>{
 });
 const dlg=page.locator('houseplan-card hp-dialog[data-kind=room]');
 await page.waitForFunction(()=>window.__card.getAttribute('lang')==='ru'&&!window.__card.hasAttribute('aria-busy'));
+const reference=watchPage(await page.context().newPage());
+await reference.setContent('<!doctype html><html><body>'+readFileSync('docs/design/settings-dialogs-944/room-settings-v4.html','utf8')+'</body></html>');
+await reference.locator('.hp-after h2').waitFor();
+const expected=await reference.locator('.hp-after').evaluate(el=>({width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height,title:el.querySelector('h2').textContent.trim()}));
+out.approvedRoomV4=await dlg.evaluate((el,expected)=>{const surface=el.shadowRoot.querySelector('.surface').getBoundingClientRect(),name=el.querySelector('#room-name').getBoundingClientRect(),area=el.querySelector('#room-area').closest('hp-settings-select').getBoundingClientRect(),bounds=el.querySelector('.hpf-temperature-range').getBoundingClientRect();return Math.abs(surface.width-expected.width)<2&&Math.abs(surface.height-expected.height)<8&&el.title===expected.title&&!el.querySelector('.hpf-settings-nav')&&area.top>name.bottom+24&&Math.abs(name.width-area.width)<2&&bounds.width<=360&&el.querySelector('.hpf-status').textContent.trim().length>0;},expected);
+await reference.close();
 for(const width of [320,390,1280]){
  await page.setViewportSize({width,height:900});
  for(const theme of ['light','dark','custom']){
