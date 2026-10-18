@@ -486,8 +486,6 @@ test('i18n: German values equal to English are explicitly reviewed', () => {
     'marker.value_badge_attr_current_position',
     'gs.optimize_live_names',
     'gs.optimize_details',
-    // #598: 'Plan' и 'Details' — одни и те же слова в EN и DE
-    'marker.card_details',
     'vac.diag_platform',
     'vac.diag_status',
     'vac.diag_position',
