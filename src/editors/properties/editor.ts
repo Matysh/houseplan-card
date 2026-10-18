@@ -501,7 +501,7 @@ export class PropertiesEditor {
       && this.host._configWriteContext.current(authority, this.host.hass)
       && propertiesIdentityKey(this.identity) === propertiesIdentityKey(owner);
     const view = renderPropertiesSurface(model, {
-      t: this.t, imperial: this.host._imperial, dark: this.host.hass?.themes?.darkMode === true, controller: this.fields, pickerLabels: this.host._colorPickerLabels,
+      t: this.t, imperial: this.host._imperial, dark: this.host.hass?.themes?.darkMode, controller: this.fields, pickerLabels: this.host._colorPickerLabels,
       collapsed: this.collapsed, toggleGroup: key => { this.collapsed.has(key) ? this.collapsed.delete(key) : this.collapsed.add(key); this.host.requestUpdate(); },
       clear: () => { if (current()) this.clear(); }, action: key => { if (current()) void this.fields.finishThen(() => this.action(key)); },
       edit: (field, raw, finish) => { if (current()) this.edit(field, raw, finish); },

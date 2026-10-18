@@ -7,29 +7,33 @@ export const propertiesStyles = css`
   ha-card[data-hp-properties-wide] .editorchrome { width: calc(100% - 360px); }
   ha-card[data-hp-properties-wide] > .hdr > .head { padding-block: 8px; }
   .hp-properties {
-    --prop-ink: #28343c; --prop-muted: #74818a; --prop-line: #e1e6e9;
-    --prop-accent: #078a9e; --prop-soft: #e8f5f6; --prop-disabled: #f5f7f8;
-    --prop-bg: #fff; --prop-input: #fbfcfc; --prop-border: #d6dfe4;
-    --prop-value: #33424c; --prop-ro: #63717b; --prop-unit: #89959d;
-    --prop-disabled-ink: #bdc5cb; --prop-disabled-line: #edf0f2; --prop-label: #78868f;
-    --prop-disabled-label: #aab3ba; --prop-read-border: #e7ecef; --prop-hint: #8a969e;
+    color-scheme: light dark;
+    --prop-ink: light-dark(#28343c,var(--primary-text-color,#e6edf3));
+    --prop-muted: light-dark(#74818a,var(--secondary-text-color,#8aa0b3));
+    --prop-line: light-dark(#e1e6e9,var(--divider-color,#2b3d4f));
+    --prop-accent: light-dark(#078a9e,var(--primary-color,#3ea6ff));
+    --prop-soft: light-dark(#e8f5f6,var(--secondary-background-color,#1d2b3a));
+    --prop-disabled: light-dark(#f5f7f8,var(--secondary-background-color,#1d2b3a));
+    --prop-bg: light-dark(#fff,var(--card-background-color,#16212e));
+    --prop-input: light-dark(#fbfcfc,var(--secondary-background-color,#1d2b3a));
+    --prop-border: light-dark(#d6dfe4,var(--divider-color,#2b3d4f));
+    --prop-value: light-dark(#33424c,var(--primary-text-color,#e6edf3));
+    --prop-ro: light-dark(#63717b,var(--secondary-text-color,#8aa0b3));
+    --prop-unit: light-dark(#89959d,var(--secondary-text-color,#8aa0b3));
+    --prop-disabled-ink: light-dark(#bdc5cb,var(--disabled-text-color,#5c7184));
+    --prop-disabled-line: light-dark(#edf0f2,var(--divider-color,#2b3d4f));
+    --prop-label: light-dark(#78868f,var(--secondary-text-color,#8aa0b3));
+    --prop-disabled-label: light-dark(#aab3ba,var(--disabled-text-color,#5c7184));
+    --prop-read-border: light-dark(#e7ecef,var(--divider-color,#2b3d4f));
+    --prop-hint: light-dark(#8a969e,var(--secondary-text-color,#8aa0b3));
     position: absolute; right: 0; top: calc(var(--hp-properties-top, 64px) - 1px); bottom: 0;
     width: 360px; min-height: 0; display: flex; flex-direction: column;
     border-left: 1px solid var(--prop-border); background: var(--prop-bg);
     color: var(--prop-ink); font: 14px/1.4 'Segoe UI', Arial, sans-serif;
     box-sizing: border-box; z-index: 21; text-align: left;
   }
-  .hp-properties[data-theme='dark'] {
-    --prop-ink: var(--primary-text-color, #e6edf3); --prop-muted: var(--secondary-text-color, #8aa0b3);
-    --prop-line: var(--divider-color, #2b3d4f); --prop-border: var(--divider-color, #2b3d4f);
-    --prop-bg: var(--card-background-color, #16212e); --prop-input: var(--secondary-background-color, #1d2b3a);
-    --prop-disabled: var(--secondary-background-color, #1d2b3a); --prop-disabled-line: var(--divider-color, #2b3d4f);
-    --prop-value: var(--primary-text-color, #e6edf3); --prop-ro: var(--secondary-text-color, #8aa0b3);
-    --prop-accent: var(--primary-color, #3ea6ff); --prop-soft: var(--secondary-background-color, #1d2b3a);
-    --prop-disabled-ink: var(--disabled-text-color, #5c7184); --prop-unit: var(--secondary-text-color, #8aa0b3);
-    --prop-label: var(--secondary-text-color,#8aa0b3); --prop-disabled-label: var(--disabled-text-color,#5c7184);
-    --prop-read-border: var(--divider-color,#2b3d4f); --prop-hint: var(--secondary-text-color,#8aa0b3);
-  }
+  .hp-properties[data-theme='light'] { color-scheme: light; }
+  .hp-properties[data-theme='dark'] { color-scheme: dark; }
   .hp-properties *, .hp-properties *::before, .hp-properties *::after { box-sizing: border-box; }
   .hp-properties button, .hp-properties input, .hp-properties textarea, .hp-properties select { font-family: inherit; }
   .hp-properties button { cursor: pointer; }
@@ -91,8 +95,7 @@ export const propertiesStyles = css`
   .hp-prop-choice.active { border-color: var(--prop-accent); background: var(--prop-soft); color: var(--prop-accent); }
   .hp-prop-choices { display: flex; gap: 8px; }
   .hp-prop-choices > button { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-  .hp-prop-settings { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 39px; width: 100%; padding: 5px; border: 1px solid #a4ccd2; background: #f5fbfb; color: #187e8d; border-radius: 5px; font-size: 12px; font-weight: 550; }
-  [data-theme='dark'] .hp-prop-settings { border-color:var(--prop-accent);background:var(--prop-soft);color:var(--prop-accent); }
+  .hp-prop-settings { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 39px; width: 100%; padding: 5px; border: 1px solid light-dark(#a4ccd2,var(--prop-accent)); background: light-dark(#f5fbfb,var(--prop-soft)); color: light-dark(#187e8d,var(--prop-accent)); border-radius: 5px; font-size: 12px; font-weight: 550; }
   .hp-prop-settings .hp-prop-icon { width: 16px; height: 16px; }
   .hp-prop-group.features .hp-prop-hint { margin: 10px 0 0; padding: 0; text-align: justify; text-align-last: left; }
   .hp-prop-variable { display: flex; align-items: center; justify-content: center; gap: 8px; height: 33px; min-height: 0; margin-top: 9px; color: var(--prop-accent); }

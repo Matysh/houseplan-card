@@ -219,8 +219,26 @@ try {
     check(`properties.matrix_${id}_no_error`,await panel.locator('[role="alert"]').count(),0);
   }
   check('properties.selection_matrix_no_config_write',await page.evaluate(async()=>(await window.__card.hass.callWS({type:'houseplan/config/get'})).config),beforeSelectionOnly);
-  await page.evaluate(()=>{const c=window.__card;c.hass={...c.hass,themes:{...c.hass.themes,darkMode:true}};});
-  check('properties.dark_theme',await panel.getAttribute('data-theme'),'dark');
+  // HA's explicit mode wins; without it the actual CSS palette follows the
+  // browser scheme. Checking the data attribute alone missed the golden defect.
+  for (const media of ['dark','light']) {
+    await page.emulateMedia({colorScheme:media});
+    for (const dark of [undefined,false,true]) {
+      await page.evaluate(async dark=>{
+        const c=window.__card, themes={...c.hass.themes};
+        if(dark==null) delete themes.darkMode; else themes.darkMode=dark;
+        c.style.setProperty('--card-background-color','#152331');
+        c.style.setProperty('--primary-text-color','#e5edf5');
+        c.hass={...c.hass,themes}; await c.updateComplete;
+      },dark);
+      const actual=await panel.evaluate(el=>{const s=getComputedStyle(el);return {background:s.backgroundColor,ink:s.color};});
+      const isDark=dark??media==='dark';
+      check(`properties.theme_pixels_${media}_${dark??'auto'}`,actual,isDark
+        ? {background:'rgb(21, 35, 49)',ink:'rgb(229, 237, 245)'}
+        : {background:'rgb(255, 255, 255)',ink:'rgb(40, 52, 60)'});
+    }
+  }
+  await page.evaluate(()=>{const c=window.__card;c.style.removeProperty('--card-background-color');c.style.removeProperty('--primary-text-color');c.hass={...c.hass,themes:{...c.hass.themes,darkMode:true}};});
   // Short-height and large text keep the pinned footer and a scrollable form.
   await page.setViewportSize({width:1000,height:480});
   await page.evaluate(()=>window.__hpTest.settled());
