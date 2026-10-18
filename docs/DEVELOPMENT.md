@@ -7,6 +7,10 @@ The first reset-wait adapter still produced "Resulting promise was garbage
 collected" in CI at setMode; the component-reset step is now absent. Keyboard,
 44px target, translation, inheritance and popup assertions remain unchanged.
 
+The inherited #945 preview witness uses Room v4's own sample typography
+(16px name and 12px metrics), while retaining the independent space-base
+times room-multiplier checks and the Cancel persistence assertion (#946).
+
 ## Portable full backup (#936)
 
 Container v1: `manifest.json`, the old `document.json`, optional `zigbee.json`,
