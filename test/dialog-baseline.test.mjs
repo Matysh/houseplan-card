@@ -19,7 +19,38 @@ import {
 } from '../test-build/editors/general-form-state.js';
 import {
   MARKER_DIALOG_TRANSIENT_KEYS, forgetMarkerBaseline, markerDirty, markerDraftKey, rememberMarkerBaseline,
+  rememberMarkerRadarRemoval, restoreMarkerRadarRemoval,
 } from '../test-build/editors/marker-form-state.js';
+
+test('#947 undo radar removal restores dirty meaning and keeps unrelated edits', () => {
+  for (const touched of [false, true]) {
+    const host = {}, radar = { sources: { slots: [{ x_entity: 'sensor.x' }] } };
+    const original = { radar, radarTouched: touched, radarRemove: false, name: 'Sensor' };
+    rememberMarkerBaseline(host, original);
+    rememberMarkerRadarRemoval(host, original);
+    const restored = restoreMarkerRadarRemoval(host, {
+      ...original, radarTouched: true, radarRemove: true, name: 'Renamed',
+    });
+    assert.equal(restored.radar, radar);
+    assert.equal(restored.radarTouched, touched);
+    assert.equal(restored.radarRemove, false);
+    assert.equal(restored.name, 'Renamed');
+    assert.equal(markerDirty(host, restored), true);
+    assert.equal(markerDirty(host, { ...restored, name: 'Sensor' }), false);
+  }
+});
+
+test('#947 opaque future profiles and new sessions do not inherit removal state', () => {
+  const host = {}, opaque = { radar: null, radarTouched: false, radarRemove: false };
+  rememberMarkerBaseline(host, opaque);
+  rememberMarkerRadarRemoval(host, opaque);
+  assert.equal(restoreMarkerRadarRemoval(host, { ...opaque, radarTouched: true, radarRemove: true }).radarTouched, false);
+  rememberMarkerRadarRemoval(host, opaque);
+  forgetMarkerBaseline(host);
+  const newRadar = { radar: {}, radarTouched: true, radarRemove: false };
+  rememberMarkerBaseline(host, newRadar);
+  assert.equal(restoreMarkerRadarRemoval(host, { ...newRadar, radarRemove: true }).radarTouched, true);
+});
 import {
   forgetRoomBaseline, rememberRoomBaseline, roomDirty, roomDraftKey,
 } from '../test-build/editors/room-form-state.js';

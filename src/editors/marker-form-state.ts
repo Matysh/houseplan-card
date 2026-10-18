@@ -7,9 +7,33 @@
  * только действием человека, и это тоже изменение.
  */
 import type { HouseplanEditorHostPort } from '../houseplan-editor-runtime';
-import { dialogDirty, forgetDialogBaseline, rememberDialogBaseline, stableKey } from './dialog-baseline';
+import { dialogDirty, dialogSession, forgetDialogBaseline, rememberDialogBaseline, stableKey } from './dialog-baseline';
 
 export type MarkerDialogDraft = NonNullable<HouseplanEditorHostPort['_markerDialog']>;
+
+// UI-only undo state: never add a removal snapshot to the saved marker/draft.
+const radarRemovals = new WeakMap<object, {
+  owner: object | undefined;
+  radar: MarkerDialogDraft['radar'];
+  touched: boolean;
+}>();
+
+export function rememberMarkerRadarRemoval(host: object, d: MarkerDialogDraft): void {
+  radarRemovals.set(host, { owner: dialogSession(host, 'marker'), radar: d.radar, touched: d.radarTouched });
+}
+
+export function restoreMarkerRadarRemoval(host: object, d: MarkerDialogDraft): MarkerDialogDraft {
+  const saved = radarRemovals.get(host);
+  radarRemovals.delete(host);
+  return {
+    ...d,
+    radarRemove: false,
+    // Preserve edits made before removal. An untouched opaque future profile
+    // has no editable draft: restoring it must keep the raw saved configuration.
+    radarTouched: saved && saved.owner === dialogSession(host, 'marker') && saved.radar === d.radar
+      ? saved.touched : d.radar ? d.radarTouched : false,
+  };
+}
 
 export const MARKER_DIALOG_TRANSIENT_KEYS: ReadonlySet<string> = new Set([
   'bindingOpen', 'bindingFilter', 'runFilter', 'controlsFilter', 'busy', 'tapHintAnnouncement', 'uploadId', 'autoIcon',
@@ -20,10 +44,12 @@ export function markerDraftKey(d: MarkerDialogDraft): string {
 }
 
 export function rememberMarkerBaseline(host: object, d: MarkerDialogDraft): void {
+  radarRemovals.delete(host);
   rememberDialogBaseline(host, 'marker', markerDraftKey(d));
 }
 
 export function forgetMarkerBaseline(host: object): void {
+  radarRemovals.delete(host);
   forgetDialogBaseline(host, 'marker');
 }
 

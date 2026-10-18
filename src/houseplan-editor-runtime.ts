@@ -146,7 +146,7 @@ import { roomSaveBusy, saveRoomEdit } from './editors/room-save';
 import { dialogSession } from './editors/dialog-baseline';
 import { guardDraftNavigation, requestMarkerClose, requestRoomClose } from './editors/draft-actions';
 import { EditorChainExit, finishWallChainForNavigation } from './editor-chain-exit';
-import { forgetMarkerBaseline, rememberMarkerBaseline } from './editors/marker-form-state';
+import { forgetMarkerBaseline, rememberMarkerBaseline, rememberMarkerRadarRemoval } from './editors/marker-form-state';
 import { commitPlanOptimization } from './plan-optimize-write';
 import { PlanOptimizationUndo, type UndoHass } from './plan-optimize-undo';
 import { saveSpaceCopy } from './space-copy-runtime';
@@ -11583,7 +11583,10 @@ public _renderRadarSection(d: NonNullable<HouseplanEditorHostPort['_markerDialog
       contentItems: (space) => this.host._contentItems(space),
       position: (item) => this.host._pos(item),
       updateDialog: (patch) => {
-        if (this.host._markerDialog) this.host._markerDialog = { ...this.host._markerDialog, ...patch };
+        const current = this.host._markerDialog;
+        if (!current) return;
+        if (patch.radarRemove && !current.radarRemove) rememberMarkerRadarRemoval(this.host, current);
+        this.host._markerDialog = { ...current, ...patch };
       },
       dialogDeviceId: () => this.host._markerDialog?.devId,
       t: (key, vars) => this.host._t(key, vars),

@@ -161,5 +161,7 @@
   "device_inbox.batch_visibility_unavailable": "Some selected devices cannot be shown or hidden. Deselect them to change visibility.",
   "device_inbox.selection_changed": "The selected devices changed. Check the list and try again.",
   "confirm.remove_markers_title": "Delete devices from the plan?",
-  "confirm.remove_markers_body": "Delete {count} selected devices from the plan. Scope: {scope}. Their settings, positions, attachments and saved robot paths will be removed. Linked LED shapes remain unbound. Home Assistant devices and entities are not deleted. This cannot be undone."
+  "confirm.remove_markers_body": "Delete {count} selected devices from the plan. Scope: {scope}. Their settings, positions, attachments and saved robot paths will be removed. Linked LED shapes remain unbound. Home Assistant devices and entities are not deleted. This cannot be undone.",
+  "marker.legacy_radar_removed_hint": "Radar settings will be removed when you save.",
+  "marker.legacy_radar_restore": "Undo removal"
 }

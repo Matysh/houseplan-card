@@ -1463,9 +1463,10 @@ delete the marker. New radars cannot be declared manually.
 Previously saved manual profiles continue to work. If the current binding is
 not recognized as a radar, **Details → Open previous radar settings** opens the
 existing profile for correction or removal. Explicit removal also removes this
-compatibility entry. Unknown future versions stay preserved and inactive until
-explicitly removed. The editor never guesses coordinate units, axis directions
-or a bearing from entity names.
+compatibility entry after Save. Until then, **Undo removal** restores the profile
+without discarding other Device edits. Unknown future versions stay preserved
+and inactive until explicitly removed. The editor never guesses coordinate
+units, axis directions or a bearing from entity names.
 
 **Configure on plan** records the physical sensor position and direction,
 independently of the decorative marker. Coordinate profiles can then use two

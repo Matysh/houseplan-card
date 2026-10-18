@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Undo removal of a previously saved manual radar inside Device settings,
+  preserving other edits, calibration and opaque future profiles. (#947)
+
 - Keep normal device profile button sizing and typography beside contextual help. (#947)
 
 - Restore agreed vacuum and radar field help, including immediate vacuum saves and the radar room. (#947)

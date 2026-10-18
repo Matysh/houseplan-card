@@ -64,7 +64,9 @@ defines an exact pair rule such as LD2450's `(0,0)`. Empty strings,
 The **Use this presence radar** switch pauses an existing radar without erasing
 its configuration. **Remove radar settings** is a separate draft operation;
 ordinary Save confirms it and never removes the device marker. Previous manual
-profiles keep all six supported source adapters above. Their compatibility
+profiles show **Undo removal** until Save; it restores their exact draft and
+keeps changes on the other tabs. Unknown future profiles retain their raw data.
+Previous manual profiles keep all six supported source adapters above. Their compatibility
 entry is available only while a saved profile exists; it does not let an
 unrecognized device declare a new radar.
 

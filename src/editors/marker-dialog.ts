@@ -8,7 +8,7 @@ import {
 import { ensureSettingsDialogStyles } from './settings-styles';
 import { settingsSections, revealSettingsField } from './settings-sections';
 import { dialogSession } from './dialog-baseline';
-import { markerDirty, markerProblems } from './marker-form-state';
+import { markerDirty, markerProblems, restoreMarkerRadarRemoval } from './marker-form-state';
 import { settingsCopy } from './settings-copy';
 
 import { resolveDevicePresentation } from '../device-presentation';
@@ -22,6 +22,7 @@ import { toggleEntityCandidates } from '../device-toggle';
 import { recommendedValueBadgeSource, valueBadgeCandidates, valueBadgeSourceFromKey, valueBadgeSourceKey } from '../device-value-badge';
 import { forcedLightEntityOf, hasOwnStatefulLightSource, ownControllableEntities, persistedExternalControls, resolveDeviceLightSettings } from '../devices';
 import { langOf, type I18nKey } from '../i18n';
+import { toolsT } from '../i18n/tools';
 import {
   DISPLAY_MODES, TAP_ACTIONS, displayIsNeutral, displayWantsValue, normalizeDeviceDisplay,
   parseRoomRef, safeUrl, spaceDisplayOf, type DeviceDisplayMode,
@@ -57,6 +58,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
     const d = this.host._markerDialog!;
     const t = this.host._t.bind(this.host);
     const { st, shelp } = settingsCopy(this.host);
+    const lang = langOf(this.host.hass, this.host._config?.language);
     const isVirtual = d.bindingMode === 'virtual';
     const cands = this._bindingCandidates();
     const bindingStatus = isVirtual ? null : this.host._bindingStatus(d.binding);
@@ -794,7 +796,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           // заголовок «Display preview · Now» и свой блок на тинте, обёртка не нужна.
           ? html`<hp-device-preview
               .hass=${this.host.hass}
-              .language=${langOf(this.host.hass, this.host._config?.language)}
+              .language=${lang}
               .presentation=${previewPresentation}
               .registry=${this.host._haRegistry}
               .deviceName=${d.name.trim() || previewDevice?.name || curLabel || ''}>
@@ -815,7 +817,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
     const radarDevice = previewDevice && persistedMarker?.radar
       ? {...previewDevice,marker:{...(previewDevice.marker || persistedMarker),radar:persistedMarker.radar}}
       : previewDevice;
-    const legacyRadar = !automaticRadar && !d.radarRemove && !!persistedMarker?.radar;
+    const legacyRadar = !automaticRadar && !!persistedMarker?.radar;
     const legacyPanel = legacyRadarPanels.get(this.host);
     const details = formCard({
       id: 'details',
@@ -862,7 +864,15 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                 @change=${(e: Event) => this._pickMarkerFiles(e)} />
             </div>`,
         })}
-        ${legacyRadar ? callout({kind:'warning',text:st('marker.legacy_radar_hint'),action:textLink(st('marker.legacy_radar_open'),()=>{legacyRadarPanels.set(this.host,{owner,open:true});this.host.requestUpdate();})}) : nothing}
+        ${legacyRadar ? callout({
+          kind: 'warning',
+          text: d.radarRemove ? toolsT(lang, 'marker.legacy_radar_removed_hint') : st('marker.legacy_radar_hint'),
+          action: textLink(d.radarRemove ? toolsT(lang, 'marker.legacy_radar_restore') : st('marker.legacy_radar_open'), () => {
+            if (d.radarRemove) this.host._markerDialog = restoreMarkerRadarRemoval(this.host, d);
+            legacyRadarPanels.set(this.host, { owner, open: true });
+            this.host.requestUpdate();
+          }),
+        }) : nothing}
         ${legacyRadar && legacyPanel && legacyPanel.owner===owner && legacyPanel.open ? this._renderRadarSection(d,radarDevice,'additional') : nothing}`,
     });
 

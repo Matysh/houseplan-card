@@ -161,5 +161,7 @@
   "device_inbox.batch_visibility_unavailable": "Certains appareils sélectionnés ne peuvent pas être affichés ou masqués. Désélectionnez-les pour modifier la visibilité.",
   "device_inbox.selection_changed": "Les appareils sélectionnés ont changé. Vérifiez la liste et réessayez.",
   "confirm.remove_markers_title": "Supprimer les appareils du plan ?",
-  "confirm.remove_markers_body": "Supprimer {count} appareils sélectionnés du plan. Périmètre : {scope}. Leurs réglages, positions, pièces jointes et trajets de robot enregistrés seront supprimés. Les formes LED liées restent sans liaison. Les appareils et entités Home Assistant ne sont pas supprimés. Cette action ne peut pas être annulée."
+  "confirm.remove_markers_body": "Supprimer {count} appareils sélectionnés du plan. Périmètre : {scope}. Leurs réglages, positions, pièces jointes et trajets de robot enregistrés seront supprimés. Les formes LED liées restent sans liaison. Les appareils et entités Home Assistant ne sont pas supprimés. Cette action ne peut pas être annulée.",
+  "marker.legacy_radar_removed_hint": "Les réglages du radar seront supprimés à l’enregistrement.",
+  "marker.legacy_radar_restore": "Annuler la suppression"
 }
