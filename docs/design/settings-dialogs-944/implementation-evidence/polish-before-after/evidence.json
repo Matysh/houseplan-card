@@ -1,0 +1,25 @@
+{
+  "before": "ecbb1e520a63cbef0fe6033d270dfd2643cdfc4b",
+  "after": "b9332831a408027374ddd895a73319be002faca3",
+  "syntheticDataSha256": "103b09ac2cb56a1bda19b67484272717d9568e52bab3512bad1ed9c450ee78ab",
+  "probeSha256": "067d7738529c04efc42639d4bedcb623461a7d8da79adba71b735c27a4ac1411",
+  "typographySha256": "443ba920a92acb2f05abbdb622673b3881fe4ef6d54a9bd9c7bb68a536e42800",
+  "checks": [
+    "8_theme_ring",
+    "6_alpha_100",
+    "3_preview_selection",
+    "5_moon_divider",
+    "2_help_hover",
+    "1_zigbee_wrap",
+    "4_toggle_alignment",
+    "7_stable_height",
+    "9_common_button_hover"
+  ],
+  "files": {
+    "before.json": "b064f56a4cc8fcb1c633c10eae849535aaa6c41d3f28068264b523f1b2dd309d",
+    "after.json": "d7b7dfef79f221e5c8bb9d09c5054f76fa61844e46f5eed10bc0db2991e1f571",
+    "synthetic-data.json": "103b09ac2cb56a1bda19b67484272717d9568e52bab3512bad1ed9c450ee78ab",
+    "probe.mjs": "067d7738529c04efc42639d4bedcb623461a7d8da79adba71b735c27a4ac1411"
+  },
+  "scope": "Nine requested polish symptoms on unmodified previous code and current implementation; separate from approved mock comparison and golden acceptance."
+}
