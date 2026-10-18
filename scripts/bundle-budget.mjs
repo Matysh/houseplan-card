@@ -765,9 +765,9 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // #948 r1: matched 28597553 source 280863 -> 281160 B (+297) for the reviewed
 // discovery/undo/menu corrections and approved embedded layout/copy. Own cost only.
 // #948 final v10 parity and themed action states: matched aaea81353
-// editor281245->282350B (+1105);
+// editor281245->282379B (+1134);
 // carry only the own delta, retaining inherited1497B gap and2000B band.
-export const LAZY_EDITOR_GZIP_CEILING = 280_853;
+export const LAZY_EDITOR_GZIP_CEILING = 280_882;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

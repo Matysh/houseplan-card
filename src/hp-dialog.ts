@@ -223,6 +223,7 @@ export class HpDialog extends LitElement {
     :host([settings-layout]) ha-dialog { --ha-dialog-max-height:min(756px, calc(100dvh - 48px)); --ha-dialog-border-radius:13px; }
     :host([settings-layout]) .surface { max-height:min(756px, calc(100vh - 48px)); border-color:var(--divider-color,#dce2e6); border-radius:13px; }
     :host([settings-layout]) .header { min-height:78px; }
+    :host([settings-layout]) .footer { padding:0; }
     :host([settings-layout]) .header .close { order:-1; }
     :host([settings-layout]) .title-text { font-size:18px; }
     :host([settings-layout]) .content { background:var(--card-background-color,var(--hp-bg,#202126)); }
@@ -631,11 +632,19 @@ export class HpDialog extends LitElement {
   };
 
   protected render() {
+    const closeButton = () => html`<button class="close" type="button"
+      data-hp="dialog-cancel" aria-label=${this.hass?.localize?.('ui.common.close') || 'Close'}
+      @click=${this._requestClose}><ha-icon icon="mdi:close"></ha-icon></button>`;
     const title = html`<span class="title" id=${this._titleId}>
       ${this.icon ? html`<ha-icon icon=${this.icon}></ha-icon>` : nothing}
       <span class="title-text">${this.title}${this.subtitle ? html`<span class="subtitle">${this.subtitle}</span>` : nothing}</span>
       ${this.badge ? html`<span class="badge" title=${this.badge}>${this.badge}</span>` : nothing}
     </span>`;
+    const heading = (slot?: string) => html`<header class="header" slot=${slot || nothing}>${title}${closeButton()}</header>`;
+    // HA's public header slot lets both shells share the approved geometry and
+    // close affordance. Modal lifecycle and the body scroller remain HA-owned.
+    const haHeading = this.hasAttribute('settings-layout')
+      ? heading('header') : html`<span class="header-title-slot" slot="headerTitle">${title}</span>`;
 
     if (this._usesHaDialog()) {
       if (this.describedBy) {
@@ -650,7 +659,7 @@ export class HpDialog extends LitElement {
           @opened=${this._focusInitial}
           @closed=${this._requestClose}
         >
-          <span class="header-title-slot" slot="headerTitle">${title}</span>
+          ${haHeading}
           <slot></slot>
           <span class="footer" slot="footer"><slot name="footer"></slot></span>
         </ha-dialog><div class="overlay-portal"></div>`;
@@ -665,7 +674,7 @@ export class HpDialog extends LitElement {
         @opened=${this._focusInitial}
         @closed=${this._requestClose}
       >
-        <span class="header-title-slot" slot="headerTitle">${title}</span>
+        ${haHeading}
         <slot></slot>
         <span class="footer" slot="footer"><slot name="footer"></slot></span>
       </ha-dialog><div class="overlay-portal"></div>`;
@@ -680,15 +689,7 @@ export class HpDialog extends LitElement {
       @click=${this._onFallbackClick}
     >
       <section class="surface" tabindex="-1">
-        <header class="header">
-          ${title}
-          <button class="close" type="button"
-            data-hp="dialog-cancel"
-            aria-label=${this.hass?.localize?.('ui.common.close') || 'Close'}
-            @click=${this._requestClose}>
-            <ha-icon icon="mdi:close"></ha-icon>
-          </button>
-        </header>
+        ${heading()}
         <div class="content"><slot></slot></div>
         <div class="footer"><slot name="footer"></slot></div>
       </section>

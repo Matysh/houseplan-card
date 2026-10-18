@@ -207,5 +207,6 @@
   "gs.fill_palette_help": "Für Räume mit dem entsprechenden Füllmodus. Den Modus wählen Sie beim Bereich oder Raum.",
   "gs.battery_help": "Standard für Geräte. Ein Bereich kann ihn überschreiben; ein Gerät kann seine Batterieanzeige ausblenden.",
   "gs.signal_help": "LQI-Zahlen neben Geräten. Zigbee-Füllungen, Raumwerte, gewählte LQI-Badges und Verbindungen bleiben sichtbar.",
-  "gs.wall_help": "Farbe massiver Wände, getrennt von Raumfüllungen und Farben der Bereichsgrenzen und Namen."
+  "gs.wall_help": "Farbe massiver Wände, getrennt von Raumfüllungen und Farben der Bereichsgrenzen und Namen.",
+  "gs.global_value_caption": "Globaler Wert für die gesamte Installation"
 }

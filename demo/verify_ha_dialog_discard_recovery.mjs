@@ -1,7 +1,7 @@
 // #607: explicit authentic Home Assistant dialog diagnostic. This is not a
 // regular smoke: it loads the pinned official HA frontend fixture (~124 MB),
-// then exercises all four settings-dialog owners through HA's real close
-// button and WebAwesome modal surface.
+// then exercises all four settings-dialog owners through the actual product
+// header close control and HA's WebAwesome modal surface.
 import assert from 'node:assert/strict';
 import { assertFreshDemoBundle } from './bundle-freshness.mjs';
 import { launchHaDialogFixture } from './helpers/ha-dialog-fixture.mjs';
@@ -77,7 +77,8 @@ const clickAuthenticClose = async (testCase) => page.evaluate(({ kind }) => {
   const card = window.__card;
   const dialog = card.shadowRoot.querySelector(`hp-dialog[data-kind="${kind}"]`);
   const ha = dialog?.shadowRoot.querySelector('ha-dialog');
-  const button = ha?.shadowRoot.querySelector('ha-icon-button[data-dialog="close"]');
+  const button = dialog?.shadowRoot.querySelector('.header button.close')
+    || ha?.shadowRoot.querySelector('ha-icon-button[data-dialog="close"]');
   if (!button) throw new Error(`${kind}: authentic HA close button not found`);
   dialog.__hp607CloseCount = dialog.__hp607CloseCount || 0;
   if (!dialog.__hp607Counting) {

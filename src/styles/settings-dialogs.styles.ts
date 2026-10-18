@@ -8,7 +8,7 @@ export const settingsDialogCss = `
   .hpf-settings-nav button:hover { background:var(--hpf-canvas); }
   .hpf-settings-nav button[aria-current=page] { background:var(--hpf-tint); color:var(--hpf-accent); font-weight:600; }
   .hpf-settings-nav hr { width:100%; border:0; border-top:1px solid var(--hpf-line); margin:14px 0; }
-  .hpf-settings-content { min-width:0; border-inline-start:1px solid var(--hpf-line); padding:20px; }
+  .hpf-settings-content { min-width:0; align-self:stretch; border-inline-start:1px solid var(--hpf-line); padding:20px; }
   .hpf-settings-pane[hidden] { display:none!important; }
   .hpf-settings-pane .hpf-card { border:0; border-radius:0; background:transparent; overflow:visible; }
   .hpf-settings-pane .hpf-head { padding:0 0 18px; margin:0 0 18px; border-bottom:1px solid var(--hpf-line); }
@@ -34,6 +34,7 @@ export const settingsDialogCss = `
   .hpf-settings-pane .hpf-unit { box-sizing:border-box; }
   hp-dialog[settings-layout] .hpf-footer .hpf-status { margin:0 auto 0 0; font-size:11px; }
   .hpf-settings-pane .hpf-toggle { grid-template-columns:minmax(0,1fr) 44px; min-height:44px; padding:0; }
+  .hpf-settings-pane .hpf-body > .hpf-toggle:not(:first-child) { padding-top:18px; }
   .hpf-settings-form .hpf-settings-pane .hpf-toggle > .hpf-toggle-title { display:block; font-size:13px; line-height:1.45; }
   .hpf-settings-pane .hpf-toggle-title hp-help { display:inline-flex; vertical-align:middle; margin-inline-start:3px; }
   .hpf-settings-pane .hpf-toggle-icon { display:none; }

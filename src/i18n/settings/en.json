@@ -207,5 +207,6 @@
   "gs.fill_palette_help": "Used by rooms with the corresponding fill mode. Choose the mode in space or room settings.",
   "gs.battery_help": "The default device mode. A space can override it, and a device can hide its own battery indicator.",
   "gs.signal_help": "System LQI numbers beside devices. Does not hide Zigbee fills, room metrics, a selected LQI badge or Zigbee links.",
-  "gs.wall_help": "The body of thick walls, separate from room fills and space boundary or name colours."
+  "gs.wall_help": "The body of thick walls, separate from room fills and space boundary or name colours.",
+  "gs.global_value_caption": "Global value for the whole installation"
 }

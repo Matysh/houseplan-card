@@ -207,5 +207,6 @@
   "gs.fill_palette_help": "Utilisé par les pièces avec le mode de remplissage correspondant, choisi dans les réglages de l’espace ou de la pièce.",
   "gs.battery_help": "Mode par défaut des appareils. Un espace peut le remplacer et un appareil peut masquer son indicateur de batterie.",
   "gs.signal_help": "Valeurs LQI près des appareils. Ne masque pas les remplissages Zigbee, valeurs des pièces, badges LQI choisis ou liens Zigbee.",
-  "gs.wall_help": "Couleur des murs épais, distincte des remplissages des pièces et des couleurs des contours et noms."
+  "gs.wall_help": "Couleur des murs épais, distincte des remplissages des pièces et des couleurs des contours et noms.",
+  "gs.global_value_caption": "Valeur générale pour toute l’installation"
 }

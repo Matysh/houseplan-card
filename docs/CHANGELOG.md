@@ -12,6 +12,8 @@
   backups keep JSON ([#936](https://github.com/Matysh/houseplan-card/issues/936)).
   Proxy size rejections produce a useful message; an HTML gateway page is
   never downloaded as a fake ZIP.
+- Keep the approved header, footer insets and section dividers in Home Assistant's native dialog. (#948)
+
 - Settings actions, including Cancel, have a visible themed hover and focus state. (#948)
 
 - Align maintenance rows and converter copy with approved General v10, including supported YAML/JSON inputs. (#948)

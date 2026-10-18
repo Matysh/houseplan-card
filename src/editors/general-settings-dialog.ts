@@ -100,7 +100,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
         body: html`
           ${toggleRow({
             id: 'gs-room-tooltip', icon: 'mdi:tooltip-text-outline',
-            title: supportT(lang, 'gs.show_room_tooltip'), help: help(st('gs.show_room_tooltip_hint'),supportT(lang, 'gs.show_room_tooltip')),
+            title: supportT(lang, 'gs.show_room_tooltip'), caption:st('gs.global_value_caption'), help: help(st('gs.show_room_tooltip_hint'),supportT(lang, 'gs.show_room_tooltip')),
             checked: d.showRoomTooltip, onChange: (v) => set({ showRoomTooltip: v }),
           })}
           ${toggleRow({
