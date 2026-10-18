@@ -53,10 +53,10 @@ Vacuum map selects also use the shared animated list. New labels cover all four
 locales. Full-suite witnesses navigate each newly opened Device dialog to its
 visible pane; the first-frame observer opens the collapsed diagnostic content
 and still measures its first painted frame. Technical values are not removed.
-Fresh matched Linux/ext480ee74f8 measures editor286930/onboarding32052/
-raw3109030/initial322947. The unchanged Room A is284636/31428/3096669;
-own complete-feature deltas are+2294/+624/+12361. Carrying those deltas onto
-the Room references gives286919/30376/3108818, preserving inherited gaps
+Fresh matched Linux/ext4d356fc8a measures editor286937/onboarding32058/
+raw3108819/initial322918. The unchanged Room A is284636/31428/3096669;
+own complete-feature deltas are+2301/+630/+12150. Carrying those deltas onto
+the Room references gives286926/30382/3108607, preserving inherited gaps
 11/1676/212, all bands and every absolute/initial limit. Counter references
 stay145/363/5564/103/101; actual hostRefs5577 stays inside its25band.
 The earlier “final #947” paragraph below is historical pre-profile material.
