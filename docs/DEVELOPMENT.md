@@ -1534,6 +1534,7 @@ shards, not the later aggregation runner), 24-hour lifetime and exact perf
 profile set must agree; API absence/unknown evidence means fresh execution.
 No transfer chains, green-by-cache-bit, red/cancelled/partial producer or foreign
 repository is accepted. Only requested groups are searched.
+The source's stamp-producer script must match too, not only its proof aggregator.
 
 Local gate receipt is private under .git/hp-local-gate-v1. It restores verified
 dist/test-build and the pure unit result for unchanged inputs, including dirty/

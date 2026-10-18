@@ -11,6 +11,16 @@ import { CI_PROOF_POLICIES, evaluateCiProof, loadGithubProofContext, parseReuseM
 import { runnerEnvironment, matchingProducerEnvironment } from './ci-job-environment.mjs';
 
 export const transferEnvironment = runnerEnvironment;
+export function transferProtocolMatches(root, sha) {
+  if (!/^[a-f0-9]{40}$/.test(sha || '')) return false;
+  try {
+    return ['ci-proof', 'ci-job-environment'].every(name => {
+      const path = `scripts/${name}.mjs`;
+      const source = execFileSync('git', ['-C', root, 'show', `${sha}:${path}`], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+      return source.replace(/\r\n?/g, '\n') === readFileSync(resolve(root, path), 'utf8').replace(/\r\n?/g, '\n');
+    });
+  } catch { return false; }
+}
 export function directTransfer({ repo, run, context, job, key, sourceKey, tree, environment, performanceSet = 'glow', now = Date.now() }) {
   if (!REUSE_JOBS.includes(job) || !environment.imageOS || !environment.imageVersion) return null;
   if (run.repository?.full_name !== repo || run.head_repository?.full_name !== repo
@@ -74,8 +84,8 @@ if (isMainModule(import.meta.url)) {
         contextOf: run => loadGithubProofContext({ repo, run, token: process.env.GH_TOKEN || process.env.GITHUB_TOKEN }),
         ancestor: sha => { try {
           git(['merge-base', '--is-ancestor', sha, 'HEAD']);
-          // Old protocols cannot supply the new trusted environment stamp.
-          return git(['show', `${sha}:scripts/ci-proof.mjs`]).replace(/\r\n?/g, '\n') === readFileSync(resolve(root, 'scripts/ci-proof.mjs'), 'utf8').trim().replace(/\r\n?/g, '\n');
+          // The stamp producer is part of trust too, not only its aggregator.
+          return transferProtocolMatches(root, sha);
         } catch { return false; } },
         treeOf: sha => git(['rev-parse', `${sha}^{tree}`]),
         keyOf: (job, ref = null) => {

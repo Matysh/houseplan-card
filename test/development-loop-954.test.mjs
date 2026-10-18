@@ -11,7 +11,7 @@ import { localGateKey, sealLocalGate, restoreLocalGate, invalidateLocalGate } fr
 import { frontendContentKey, artifactTree, restoreFrontend } from '../scripts/frontend-proof.mjs';
 import { sourceFingerprint } from '../scripts/source-fingerprint.mjs';
 import { taskCiPlan } from '../scripts/task-ci-plan.mjs';
-import { directTransfer, discoverTransfers } from '../scripts/check-proof-transfer.mjs';
+import { directTransfer, discoverTransfers, transferProtocolMatches } from '../scripts/check-proof-transfer.mjs';
 import { runnerEnvironment, matchingProducerEnvironment, producerEnvironments } from '../scripts/ci-job-environment.mjs';
 import { buildCiProof, JOB_RULES, requiredCheckIds, resolveJobRules } from '../scripts/ci-proof.mjs';
 import { selectSmokes } from '../scripts/smoke-select.mjs';
@@ -21,7 +21,7 @@ function fixture(t) {
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const put = (p, s) => { mkdirSync(join(root, p, '..'), { recursive: true }); writeFileSync(join(root, p), s); };
   const git = (...args) => execFileSync('git', ['-C', root, '-c', 'user.name=t', '-c', 'user.email=t@x', ...args], { encoding: 'utf8' }).trim();
-  for (const p of ['frontend-proof', 'frontend-units', 'content-inputs', 'check-inputs', 'local-gate-proof', 'gate-small']) put(`scripts/${p}.mjs`, '// fixture protocol');
+  for (const p of ['frontend-proof', 'frontend-units', 'content-inputs', 'check-inputs', 'local-gate-proof', 'gate-small', 'ci-proof', 'ci-job-environment']) put(`scripts/${p}.mjs`, '// fixture protocol');
   put('src/a.ts', 'export const a=1;'); put('test/a.test.mjs', 'import "../test-build/a.js";'); put('.nvmrc', '22'); put('.python-version', '3.14'); put('package.json', '{}');
   put('.github/workflows/validate.yml', 'name: fixture');
   git('init', '-q'); git('add', '.'); git('commit', '-qm', 'source');
@@ -184,6 +184,17 @@ test('#954 cache marker cannot override or replace independently verified transf
     url: 'https://github.com/o/r/actions/runs/11' } }));
   assert.match(run(), /accepted=true\nsource_run=11\nsource_attempt=2\n/);
   assert.doesNotMatch(readFileSync(marker, 'utf8'), /foreign|runs\/99/, 'foreign cached source cannot shadow the verified source');
+});
+
+test('#954 source stamp implementation must match too, not just the proof aggregator', t => {
+  const { root, put, git } = fixture(t), sha = git('rev-parse', 'HEAD');
+  assert.equal(transferProtocolMatches(root, sha), true);
+  for (const name of ['ci-proof', 'ci-job-environment']) {
+    put(`scripts/${name}.mjs`, '// changed protocol data, never executed');
+    assert.equal(transferProtocolMatches(root, sha), false, name);
+    git('restore', `scripts/${name}.mjs`);
+  }
+  assert.equal(transferProtocolMatches(root, '--invalid-ref'), false);
 });
 
 test('#954 common orchestration fields cannot select unrelated smoke contracts', () => {
