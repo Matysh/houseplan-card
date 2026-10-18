@@ -3187,3 +3187,17 @@ form witness saves150%/75%, edits Room200%/150%, and checks the rendered54px/
 12.6px preview plus both named bases and cancellation without a config write.
 
 Room settings #946: exercise the inherited/own fill select and independent bounds, all three source pickers, name/metric sizing, dirty/discard and WS refusal. The labelled preview is synthetic; assert actual readings on the plan and tooltip separately.
+
+Historical pre-cleanup #946 Linux/ext4 build: Space v7 -> Room v4 changes lazy editor
+284685 -> 284681 B gzip (-4), onboarding 31438 -> 31448 (+10), and raw bundle
+3098026 -> 3097197 (-829). Carry only those own deltas: rolling references become
+284670 / 29772 / 3096985, retaining the inherited 11 / 1676 / 212 B gaps and all
+bands/absolute limits. Source counters remain 145/363/5564/103/101; actual Room
+host references are 5567, within the existing band.
+
+Final #946 on the reviewed Space A after copy cleanup: fresh Linux/ext4 bundle
+editor284636/onboarding31428/raw3096669, versus final Space284720/31445/3097493.
+Own deltas -84/-17/-824 produce refs284625/29752/3096457, preserving inherited
+gaps11/1676/212 and every band/absolute limit. Source counters stay unchanged;
+actual hostRefs5567 remains inside5564+25. The measured Room A is identical to
+ce6c75d1; the parent rebase adds accepted test/review changes, not product code.
