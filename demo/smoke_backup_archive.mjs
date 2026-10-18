@@ -17,7 +17,10 @@ await page.route('**/api/houseplan/content/**', route => route.fulfill({
 const out = {};
 const dialog = () => page.locator('hp-dialog[data-kind="backup"]');
 const label = key => settingsLabels[key];
-async function settings() { await page.locator('[data-hp="settings"]').click(); }
+async function settings() {
+  await page.locator('[data-hp="settings"]').click();
+  await page.locator('hp-dialog[data-kind="settings"] [data-section-target="data"]').click();
+}
 async function choose(name, incomplete = false, empty = false) {
   const file = { name, mimeType: 'application/zip',
     buffer: Buffer.from((incomplete ? fixture.incomplete : fixture).zip, 'base64') };
