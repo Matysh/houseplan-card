@@ -1,4 +1,4 @@
-/** #505: authentic, pinned HA assets for explicit diagnostics, never ordinary smokes. */
+/** #505: authentic, pinned HA assets for explicit native witnesses; no HA host/auth. */
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { existsSync, readFileSync, writeFileSync, mkdirSync, createWriteStream, readdirSync } from 'node:fs';
