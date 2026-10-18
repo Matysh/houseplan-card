@@ -77,6 +77,18 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id:'settings-save-lettering-sits-low-955',
+    guard:'node demo/smoke_settings_polish_955.mjs --fast',
+    because:'#955: the visible lettering inside Save must be optically centred, not merely its font line box; a PNG ink-bound witness checks the actual button.',
+    patches:[{file:'src/styles/settings-dialogs.styles.ts',find:'transform:translateY(-.15em);',replace:'transform:none;'}],
+  },
+  {
+    id:'settings-help-orphans-last-line-955',
+    guard:'node demo/smoke_settings_polish_955.mjs --fast',
+    because:'#955: the final word and contextual help must stay together; actual text/paint bounds expose an icon stranded on its own line.',
+    patches:[{file:'src/styles/settings-dialogs.styles.ts',find:'.hpf-label-tail {white-space:nowrap;}',replace:'.hpf-label-tail {white-space:normal;}'}],
+  },
+  {
     id:'settings-help-needs-host-hover-955',
     guard:'node demo/smoke_settings_polish_955.mjs --fast',
     because:'#955: the embedded Zigbee shadow root must forward the card-owned pointer modality to its help; real pointer entry proves immediate popup parity without sticky touch hover.',
@@ -17390,8 +17402,8 @@ const MUTANT_DEFINITIONS = [
       + 'in inherited CSS across custom-element shadow roots and actual dialog contexts; a pure unit cannot observe that cascade.',
     patches: [{
       file: 'src/hp-help.ts',
-      find: '      width: var(--hp-settings-help-size,32px);',
-      replace: '      width: var(--hp-settings-help-size,22px);',
+      find: '    .trigger {\n      width: var(--hp-settings-help-size,32px);',
+      replace: '    .trigger {\n      width: var(--hp-settings-help-size,22px);',
     }],
   },
   {

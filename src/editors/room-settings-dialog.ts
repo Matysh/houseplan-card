@@ -254,12 +254,12 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
             ? html`<button class="btn on" data-hp="dialog-confirm" ?disabled=${!canSave}
                 title=${problems[0] ? st(problems[0].message) : nothing}
                 @click=${() => { void this._saveRoomEdit(); }}>
-                <ha-icon icon="mdi:check"></ha-icon>${st('room.save')}
+                <ha-icon icon="mdi:check"></ha-icon><span class="hpf-save-label">${st('room.save')}</span>
               </button>`
             : html`<button class="btn on room-save" data-hp="dialog-confirm" ?disabled=${!canSave}
                 title=${problems[0] ? st(problems[0].message) : nothing}
                 @click=${() => { this._saveRoom(); }}>
-                <ha-icon icon="mdi:check"></ha-icon>${st('room.save')}
+                <ha-icon icon="mdi:check"></ha-icon><span class="hpf-save-label">${st('room.save')}</span>
               </button>`}
         </div>
       </div>

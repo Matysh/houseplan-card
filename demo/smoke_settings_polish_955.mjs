@@ -4,6 +4,7 @@ import {installHpTestOnPage} from './helpers/hp-test.mjs';
 import {ensureHarnessEditorRuntime} from './editor-runtime-compat.mjs';
 import {installSettingsDeviceFixture,openSettingsDeviceDialog} from './helpers/settings-device-947-fixture.mjs';
 import {installSettingsSpaceFixture} from './helpers/settings-space-945-fixture.mjs';
+import {buttonPaint} from './helpers/button-paint.mjs';
 import {assertFreshDemoBundle} from './bundle-freshness.mjs';
 import {checkAll,watchPage,finish} from './serve.mjs';
 import {mkdirSync,writeFileSync} from 'node:fs';
@@ -12,6 +13,7 @@ const touch=process.argv.includes('--touch');
 const fixture=await launchHaDialogFixture({authentic:true,viewport:{width:1280,height:900},extraModules:['16213'],hasTouch:touch});
 const {page}=fixture,out={},matrix=[];
 const fast=process.argv.includes('--fast');
+const geometryOnly=process.argv.includes('--geometry');
 const palettes={light:['#fff','#eceeef','#223039','#64747e','#dce2e6','#008aa5'],dark:['#17222e','#0f1822','#e7eef4','#a6b6c3','#354755','#67cfe8'],custom:['#fff6e9','#f0e2d0','#35291d','#75634e','#d6c3ac','#9b45b7']};
 watchPage(page);
 const settled=()=>page.evaluate(()=>window.__hpTest.settled());
@@ -28,6 +30,7 @@ const hoverButton=async b=>{
 try{
  await page.goto(fixture.url+'/product.html');
  await applyHaDialogTypography(page);
+ if(process.argv.includes('--demo-font'))await page.addStyleTag({content:"html,body{font-family:'Segoe UI',Roboto,Arial,sans-serif}"});
  await page.waitForFunction(()=>window.__card?._booting===false&&window.__card?._devices?.length>0);
  await assertFreshDemoBundle(page,fileURLToPath(new URL('..',import.meta.url)));
  if(!await page.evaluate(ensureHarnessEditorRuntime))throw new Error('Editor preload failed');
@@ -65,14 +68,14 @@ try{
      // The title container can be centred while its actual text still sits
      // several pixels above the switch. Measure the rendered text, not its box.
      out[prefix+'_toggle_alignment']=await toggles.evaluateAll(nodes=>nodes.every(n=>{
-      const title=n.querySelector('.hpf-toggle-title'),range=document.createRange();range.selectNodeContents(title.firstElementChild);
-      const a=range.getBoundingClientRect(),lines=[...range.getClientRects()],last=lines.at(-1),b=n.querySelector('input').getBoundingClientRect(),host=title.querySelector('hp-help'),help=host?.shadowRoot.querySelector('svg')?.getBoundingClientRect();
-      return Math.abs((a.top+a.bottom-b.top-b.bottom)/2)<=1.25&&a.right<=b.left+1&&(!help||(Math.abs((help.top+help.bottom-last.top-last.bottom)/2)<=1.25&&Math.abs(host.getBoundingClientRect().left-last.right-4)<=.25));
+      const title=n.querySelector('.hpf-toggle-title'),walker=document.createTreeWalker(title,NodeFilter.SHOW_TEXT,{acceptNode:t=>t.textContent.trim()?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT}),lines=[];let text;while(text=walker.nextNode()){const r=document.createRange();r.selectNodeContents(text);lines.push(...r.getClientRects());}
+      const top=Math.min(...lines.map(r=>r.top)),bottom=Math.max(...lines.map(r=>r.bottom)),right=Math.max(...lines.map(r=>r.right)),last=lines.at(-1),b=n.querySelector('input').getBoundingClientRect(),host=title.querySelector('hp-help'),help=host?.shadowRoot.querySelector('svg')?.getBoundingClientRect();
+      return Math.abs((top+bottom-b.top-b.bottom)/2)<=1.25&&right<=b.left+1&&(!help||(Math.abs((help.top+help.bottom-last.top-last.bottom)/2)<=1.25&&Math.abs(host.getBoundingClientRect().left-last.right-4)<=.25));
      }));
      out[prefix+'_help_alignment']=await d.locator('hp-help').filter({visible:true}).evaluateAll(nodes=>nodes.every(h=>{
       const parent=h.parentElement;if(!parent.matches('.hpf-labelrow,.hpf-label,.hpf-label-tail'))return true;
       const walker=document.createTreeWalker(parent,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.textContent.trim()?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT});let text,last;while(text=walker.nextNode())last=text;if(!last)return false;
-      const range=document.createRange();range.selectNodeContents(last);const a=[...range.getClientRects()].at(-1),b=h.shadowRoot.querySelector('svg').getBoundingClientRect();return Math.abs((a.top+a.bottom-b.top-b.bottom)/2)<=1.25&&(!parent.matches('.hpf-label-tail')||Math.abs(h.getBoundingClientRect().left-a.right-4)<=.25);
+      const range=document.createRange();range.selectNodeContents(last);const a=parent.querySelector('label')?.getBoundingClientRect()||[...range.getClientRects()].at(-1),b=h.shadowRoot.querySelector('svg').getBoundingClientRect();return Math.abs((a.top+a.bottom-b.top-b.bottom)/2)<=1.25&&(!parent.matches('.hpf-label-tail')||Math.abs(h.getBoundingClientRect().left-a.right-4)<=.25);
      }));
      if(name==='general'&&id==='zigbee')out[prefix+'_zigbee_wrap']=await toggles.first().evaluate(el=>{
       const span=el.querySelector('.hpf-toggle-title > span'),node=document.createTreeWalker(span,NodeFilter.SHOW_TEXT).nextNode();
@@ -81,7 +84,7 @@ try{
      });
      // Exercise every help/colour path once per palette on desktop; the same
      // nodes also pass narrow/low viewport geometry above, without reloading HA.
-     if(width===1280&&height===900){
+     if(width===1280&&height===900&&!geometryOnly){
       if(kind==='room'&&theme==='light'){
        const fill=d.locator('hp-settings-select:has(select[name=rfill])');
        const label=await fill.locator('option[value=custom]').textContent();
@@ -137,6 +140,12 @@ try{
     out[`${name}_${width}x${height}_${theme}_stable_height`]=Math.max(...heights)-Math.min(...heights)<=1;
     if(!out[`${name}_${width}x${height}_${theme}_stable_height`])console.log('dialog heights',name,width,height,theme,heights);
     for(let i=0;i<await d.locator('.hpf-footer .btn:not(:disabled)').count();i++)out[`${name}_${width}x${height}_${theme}_footer_${i}`]=await hoverButton(d.locator('.hpf-footer .btn:not(:disabled)').nth(i));
+    if((width===1280||width===390)&&height===900&&theme==='light'){
+     await page.mouse.move(0,0);await page.waitForTimeout(180);
+     const paint=await buttonPaint(d.locator('.hpf-footer .btn.on[data-hp=dialog-confirm]'));
+     out[`${name}_${width}_save_visible_content_centred`]=paint.height>=44&&paint.textInkOffset!==null&&Math.abs(paint.textInkOffset)<=1.25&&Math.abs(paint.iconOffset)<=.25;
+     if(!out[`${name}_${width}_save_visible_content_centred`])console.log('Save paint',name,width,paint);
+    }
    }
   }
   await page.setViewportSize({width:1280,height:900});if(sections[0]!=='form')await section(d,sections[0]);

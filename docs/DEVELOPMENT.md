@@ -3485,3 +3485,16 @@ ordinary tests retain their existing fixture environment. Before/After captures
 use identical data and font setup. Side-by-side, opacity overlay and a blurred,
 adjustable-threshold difference map support review; a pixel ratio alone never
 accepts the design. Shared checks cover all four forms and conditional profiles.
+
+Save uses an optical label adjustment independent of its HA icon's line box.
+The #955 smoke reads rendered PNG ink bounds inside the text region and the
+actual nested SVG centre; a centred anonymous text line was a false oracle.
+The unchanged-code witness observed2px lower lettering with pinned HA Roboto
+and3px with the Windows demo font, plus1.125px icon line-box drift. The common
+fix centres Roboto ink exactly and leaves at most1px with the demo font, with
+SVG centred in both. `--fast --demo-font` exercises that neighbour. The two
+new registry definitions are static checked only, never executed in development.
+Wrapped help shares one final-word renderer; non-input field headings use the
+same inline layout, while real input labels retain their native for linkage.
+Emitted settings CSS drops redundant whitespace to stay inside the existing
+raw-bundle band; source rules retain one line each and no ceiling is raised.

@@ -928,7 +928,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             <button class="btn ghost" data-hp="dialog-cancel" ?disabled=${d.busy} @click=${requestClose}>${t('btn.cancel')}</button>
             <button class="btn on" data-hp="dialog-confirm" @click=${() => { void this._saveMarker(); }}
               ?disabled=${!canSave} title=${saveTitle}>
-              <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : t('btn.save')}
+              <ha-icon icon="mdi:check"></ha-icon><span class="hpf-save-label">${d.busy ? '…' : t('btn.save')}</span>
             </button>
           </div>
         </div>
