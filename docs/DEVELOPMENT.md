@@ -126,6 +126,23 @@ lazy editor 270966→271892 B gzip and total dist 3026587→3026930 B. Only the
 editor rolling reference increases by its measured 926 B (269485→270411);
 absolute budgets, both 2000-B bands, all other ceilings and monolith limits stay.
 
+## Space settings redesign (#945)
+
+`smoke_space_settings_form` exercises actual controls, independent font bases,
+CO₂ text, raw invalid values, validation across sections, links to General,
+dirty/save/cancel/reopen and 320/390/1280 px layouts. The existing font, battery,
+signal, layer, create/default and CO₂ smokes retain their functional oracles;
+only control discovery/intentional visibility expectations follow the new UI.
+`test/space-settings-945.test.mjs` covers fallback, explicit 100% over legacy
+200%, invalid scalars, local battery overrides, background compatibility and
+coupled borders. Snapshot reuse tests include in-place battery-policy edits.
+Backend validation and transfer vectors cover all three new scalar settings,
+normalisation idempotency and unknown-field preservation. The support schema
+mirror must remain byte-identical and be deployed before the beta. No mutants
+are executed during development; registry checks are static readiness only.
+The shared animated selector is already delivered in #948; its cost is not
+charged a second time here. Existing ceilings and bands remain unchanged.
+
 ## General settings redesign (#948)
 
 `smoke_general_settings_form` covers save/cancel/error, exact stored battery

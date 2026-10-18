@@ -17343,8 +17343,8 @@ const MUTANT_DEFINITIONS = [
       + 'исправной, а стиль нулевых стен уезжает в конфиг при сохранении',
     patches: [{
       file: 'src/editors/space-form.ts',
-      find: "        onChange: (v) => set(port, { ...d, fillMode: v }),",
-      replace: "        onChange: (v) => set(port, { ...d, fillMode: v, zeroWallStyle: d.zeroWallStyle === 'solid' ? 'dashed' : 'solid' }),",
+      find: "      onChange:v => set(port,{...d,fillMode:v})})})}",
+      replace: "      onChange:v => set(port,{...d,fillMode:v,zeroWallStyle:d.zeroWallStyle === 'solid' ? 'dashed' : 'solid'})})})}",
     }],
   },
   {
@@ -17379,8 +17379,8 @@ const MUTANT_DEFINITIONS = [
       + 'начинает писать противоположное тому, что показывает',
     patches: [{
       file: 'src/editors/space-form.ts',
-      find: "          checked: !d.hideDecor, onChange: (v) => set(port, { ...d, hideDecor: !v }),",
-      replace: "          checked: !d.hideDecor, onChange: (v) => set(port, { ...d, hideDecor: v }),",
+      find: "      ${toggleRow({id:id('layer-decor'), title:st('space.layer_decor'), checked:!d.hideDecor, onChange:v => set(port,{...d,hideDecor:!v})})}`,",
+      replace: "      ${toggleRow({id:id('layer-decor'), title:st('space.layer_decor'), checked:!d.hideDecor, onChange:v => set(port,{...d,hideDecor:v})})}`,",
     }],
   },
   {
@@ -19407,7 +19407,7 @@ const MUTANT_DEFINITIONS = [
       + 'and presentations stay stale (smoke_vacuum: previous run and resting integration path lost)',
     patches: [{
       file: 'src/render-snapshot-reuse.ts',
-      find: '      JSON.stringify([devices, host._serverCfg?.settings]),\n',
+      find: '      JSON.stringify([devices, host._serverCfg?.settings,\n        host._serverCfg?.spaces?.map(space => [space.id,space.settings?.show_device_battery_mode])]),\n',
       replace: '',
     }],
   },

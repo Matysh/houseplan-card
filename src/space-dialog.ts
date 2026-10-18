@@ -1,4 +1,5 @@
 import { roomTempRangeOf, type FillColorEntry, type RoomTempRange } from './logic';
+import type { SpaceDeviceBatteryMode } from './device-battery-settings';
 import type { ZeroWallStyle } from './types';
 import type { SignalVisibilityMode } from './signal-visibility';
 
@@ -48,6 +49,9 @@ export interface SpaceDialogState {
   tempMaxInput?: string;
   showLqiMode: SignalVisibilityMode;
   cardFontScale: number;
+  cardNameScale: number;
+  cardLabelScale: number;
+  deviceBatteryMode: SpaceDeviceBatteryMode;
   labelTemp: boolean;
   labelHum: boolean;
   labelCo2: boolean;

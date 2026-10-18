@@ -8,6 +8,36 @@
  */
 export const CONFIG_FIELD_REGISTRY = Object.freeze([
   {
+    id: 'space.settings.card_name_scale',
+    enforcedBy: 'logic.ts + device-battery-settings.ts + validation.py; #945',
+    selector: { path: ['spaces', '*', 'settings', 'card_name_scale'] },
+    storage: 'House Plan server config', type: 'number 0.5..3', default: 'unset (= legacy card_font_scale or 1)',
+    level: 'space', ui: 'Space → Names and readings → Name size',
+    runtime: 'name base, multiplied by the room name_scale', introduced: '#945', status: 'current',
+    migration: 'materialised independently on space settings Save',
+    compatibility: 'optional field; full backup, plan-only transfer and closed support projections retain it',
+  },
+  {
+    id: 'space.settings.card_label_scale',
+    enforcedBy: 'logic.ts + device-battery-settings.ts + validation.py; #945',
+    selector: { path: ['spaces', '*', 'settings', 'card_label_scale'] },
+    storage: 'House Plan server config', type: 'number 0.5..3', default: 'unset (= legacy card_font_scale or 1)',
+    level: 'space', ui: 'Space → Names and readings → Reading size',
+    runtime: 'metric and icon base, multiplied by the room label_scale', introduced: '#945', status: 'current',
+    migration: 'materialised independently on space settings Save',
+    compatibility: 'optional field; full backup, plan-only transfer and closed support projections retain it',
+  },
+  {
+    id: 'space.settings.show_device_battery_mode',
+    enforcedBy: 'logic.ts + device-battery-settings.ts + validation.py; #945',
+    selector: { path: ['spaces', '*', 'settings', 'show_device_battery_mode'] },
+    storage: 'House Plan server config', type: 'inherit | all | low | off', default: 'unset (= inherit)',
+    level: 'space', ui: 'Space → Names and readings → Device battery level',
+    runtime: 'global → space → additional marker hide; explicit all overrides global off', introduced: '#945', status: 'current',
+    migration: 'inherit removes only this local key',
+    compatibility: 'optional field; full backup, plan-only transfer and closed support projections retain it',
+  },
+  {
     id: 'space.settings.label_co2',
     enforcedBy: 'logic.ts + validation.py + room card native smoke; #920',
     selector: { path: ['spaces', '*', 'settings', 'label_co2'] },

@@ -190,6 +190,32 @@ def test_issue_920_co2_settings_survive_full_and_space_backup(tmp_path: Path, ki
     assert matching[0]["rooms"][0]["settings"]["future_co2"] == {"keep": True}
 
 
+@pytest.mark.parametrize("kind,plan_only", [("full", False), ("space", False), ("space", True)])
+@pytest.mark.parametrize("mode", [None, "inherit", "all", "low", "off"])
+def test_issue_945_display_settings_survive_transfer(tmp_path: Path, kind: str, plan_only: bool, mode: str | None) -> None:
+    config = _config()
+    fields = {"card_name_scale": 1.25, "card_label_scale": 0.75}
+    if mode is not None:
+        fields["show_device_battery_mode"] = mode
+    config["spaces"][0].setdefault("settings", {}).update(fields)
+    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+        {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
+        plan_only=plan_only, card_version="review", config_root=tmp_path)
+    parsed = parse_document(json.dumps(document).encode())
+    settings = parsed["payload"]["config"]["spaces"][0]["settings"]
+    for key, value in fields.items():
+        assert settings[key] == value
+    assert ("show_device_battery_mode" in settings) is (mode is not None)
+    runtime = SimpleNamespace(instance_id="same", import_previews={})
+    current = _config()
+    current["markers"] = []
+    preview = create_preview(runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": current, "rev": 4}, current_layout_data={"layout": {}, "rev": 5}, config_root=tmp_path)
+    candidate = get_candidate(runtime, preview["token"], "alice")
+    imported, _layout, _details = prepare_apply(candidate, current, {}, confirm_missing_content=True)
+    assert any(all(space.get("settings", {}).get(key) == value for key, value in fields.items()) for space in imported["spaces"])
+
+
 def _missing_decor_export(
     source: Path, *, kind: str = "full", plan_only: bool = False,
     asset_id: str = "a" * 64,
@@ -1148,7 +1174,7 @@ def test_plan_only_export_projects_geometry_and_round_trips_room_labels(tmp_path
     assert "future_space" not in exported
     assert exported["settings"] == {
         "show_names": True, "north_deg": 90, "sun_rays": True, "bg_mode": "static",
-        "label_co2": True,
+        "label_co2": True, "hide_openings": True,
     }
     room = exported["rooms"][0]
     assert "area" not in room and "future_room" not in room

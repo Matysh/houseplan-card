@@ -45,11 +45,11 @@ const out = await page.evaluate(async () => {
     async () => {
       c._setMode('view'); c._openSpaceDialog('edit', spId); await upd();
       q('space', '#space-show-borders').click(); await upd();
-      radio('space', 'space-fill-mode', 'temp'); await upd();
+      change(q('space','select[name="space-fill-mode"]'),'temp'); await upd();
       input(q('space', '#space-temp-max'), '27'); await upd();
       change(q('space', '#space-north-mode'), 'custom'); await upd();
       input(q('space', '#space-north-deg'), '90'); await upd();
-      input(q('space', '#space-card-font'), '150'); await upd();
+      input(q('space', '#space-name-font'), '150'); await upd();
       await saveViaUi('space');
     },
     async () => {
@@ -61,10 +61,9 @@ const out = await page.evaluate(async () => {
         fillMode: 'temp',
         tempMax: 27,
         tempMaxInput: '27',
-        northMode: 'custom',
         northDeg: 90,
         northDegInput: '90',
-        cardFontScale: 1.5,
+        cardNameScale: 1.5,
       };
       await upd(); await c._saveSpaceDialog(); await settle();
     });

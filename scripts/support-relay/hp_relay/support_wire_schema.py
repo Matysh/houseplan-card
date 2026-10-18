@@ -312,12 +312,13 @@ SPACE_SETTINGS = Object(
         ),
         **fields("room_color bg_color", nullable(COLOR)),
         **fields(
-            "room_opacity temp_min temp_max card_font_scale north_deg", nullable(NUMBER)
+            "room_opacity temp_min temp_max card_font_scale card_name_scale card_label_scale north_deg", nullable(NUMBER)
         ),
         "fill_mode": nullable(FILL),
         "bg_mode": nullable(enum("static", "daynight")),
         "custom_fill": nullable(FILL_COLOR),
         "show_lqi_mode": enum("inherit", "on", "off"),
+        "show_device_battery_mode": enum("inherit", "all", "low", "off"),
     }
 )
 ROOM = Object(

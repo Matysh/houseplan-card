@@ -265,3 +265,16 @@ def test_future_namespaces_are_explicitly_unsupported_not_opaque_serialized():
     assert result["settings"]["summary_panel"] == {"status": "unsupported_version"}
     assert result["markers"][0]["radar"] == {"status": "unsupported_version"}
     assert "private" not in json.dumps(result)
+
+
+def test_issue_945_display_settings_fit_the_closed_private_safe_snapshot():
+    from custom_components.houseplan.support_wire_schema import CONFIG, validate
+
+    fields = {"card_name_scale": 1.25, "card_label_scale": 0.75}
+    for mode in (None, "inherit", "all", "low", "off"):
+        settings = {**fields, **({"show_device_battery_mode": mode} if mode is not None else {})}
+        result, _ids = project({"spaces": [{"id": "private-floor", "settings": settings}], "markers": []})
+        result["model_version"] = 10
+        validate(result, CONFIG)
+        assert result["spaces"][0]["settings"] == settings
+        assert "private-floor" not in json.dumps(result)

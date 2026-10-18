@@ -89,7 +89,8 @@ const res = await page.evaluate(async () => {
   c._openSpaceDialog('edit', c._space);
   await c.updateComplete;
   out.spaceDialogPrefilled = c._spaceDialog.bgColor === '#4a0a2a';
-  c._spaceDialog = { ...c._spaceDialog, bgColor: null };
+  const inherit = sr().querySelector('select[name="space-bg-mode"]');
+  inherit.value=''; inherit.dispatchEvent(new Event('change',{bubbles:true})); await c.updateComplete;
   await c._saveSpaceDialog();
   // over the wire `undefined` keys vanish — check the JSON form, like the backend sees it
   const wire = JSON.parse(JSON.stringify(saved));

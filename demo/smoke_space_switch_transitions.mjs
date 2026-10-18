@@ -168,6 +168,7 @@ const res = await page.evaluate(async () => {
 
   // ---- фикстура: дверь на одном месте в двух пространствах ---------------
   const physicalize = (space) => {
+    space.settings = { ...space.settings, show_borders: true };
     for (const room of [...(space.rooms || [])]) {
       const rendered = c._spaceModelById(space.id)?.rooms?.find((item) => item.id === room.id);
       if (!rendered?.poly?.length) continue;

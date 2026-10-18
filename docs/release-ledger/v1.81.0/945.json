@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 945,
+  "baseStable": "v1.81.0",
+  "category": "major",
+  "rationale": "Reorganizes Space settings into four responsive shared sections and introduces independently inherited font bases and device battery policy, with explicit compatibility for coupled opening visibility and background colour.",
+  "summary": {
+    "ru": "Настройки пространства получили четыре раздела, независимые размеры названий и показателей, наследование заряда и понятные переходы к общим параметрам.",
+    "en": "Space settings gain four sections, independent name and metric sizes, inherited battery policy and direct links to General settings."
+  }
+}

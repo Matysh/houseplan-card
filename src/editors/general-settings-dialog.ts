@@ -20,7 +20,7 @@ import { sunStateOf } from '../sun';
 import { renderSunRayOriginSegment } from '../sun-settings-view';
 import { zigbeeTopologySettingsOf } from '../zigbee-topology-settings';
 import type { ZigbeeTopologySettings } from '../zigbee-topology-settings';
-import type { DeviceBatteryMode } from '../device-battery-settings';
+import { spaceDeviceBatteryModeOf, type DeviceBatteryMode } from '../device-battery-settings';
 import type { HouseplanEditorRuntime } from '../houseplan-editor-runtime';
 import { signalVisibilityModeOf, type SignalSpaceSettings } from '../signal-visibility';
 
@@ -87,6 +87,9 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
   const lqiOverrides = (host._serverCfg?.spaces || [])
     .filter((space: { settings?: SignalSpaceSettings }) => signalVisibilityModeOf(space.settings) !== 'inherit')
     .map(space => `${space.title || space.id} — ${t(signalVisibilityModeOf(space.settings) === 'on' ? 'space.sun_on' : 'space.sun_off')}`);
+  const batteryOverrides = (host._serverCfg?.spaces || [])
+    .filter(space => spaceDeviceBatteryModeOf(space.settings) !== 'inherit')
+    .map(space => `${space.title || space.id} — ${st(`gs.device_battery_${deviceBatteryModeOf(host._settings,space.settings)}`)}`);
   // #718 K7: the second caption line, once the moon chunk judged this opening.
   const moonStatus = moonStatusOf(host);
 
@@ -123,6 +126,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             }),
 
           })}
+          ${batteryOverrides.length ? callout({ text: st('gs.space_overrides', { names: batteryOverrides.join(', ') }) }) : nothing}
           ${toggleRow({
             id: 'gs-show-lqi', icon: 'mdi:zigbee',
             title: st('gs.show_lqi'), help:help(st('gs.signal_help'),st('gs.show_lqi')),

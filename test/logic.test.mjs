@@ -282,18 +282,19 @@ test('spaceDisplayOf: defaults differ for spaces with and without a plan', () =>
   });
 });
 
-test('spaceDisplayOf: the two hide switches are opt-in and strictly boolean', () => {
-  // absent = today's rendering, so no stored plan changes by being read
-  const off = spaceDisplayOf({ plan_url: '/x.svg' });
-  assert.equal(off.hideDecor, false);
-  assert.equal(off.hideOpenings, false);
-  const on = spaceDisplayOf({ settings: { hide_decor: true, hide_openings: true } });
-  assert.equal(on.hideDecor, true);
-  assert.equal(on.hideOpenings, true);
-  // only a real `true` hides: a stray string must not blank the plan
-  const junk = spaceDisplayOf({ settings: { hide_decor: 'yes', hide_openings: 1 } });
-  assert.equal(junk.hideDecor, false);
-  assert.equal(junk.hideOpenings, false);
+test('#945 boundaries own opening visibility; decor remains a separate opt-in', () => {
+  for (const plan_url of [null,'/x.svg']) for (const show_borders of [undefined,true,false]) {
+    for (const hide_openings of [undefined,true,false]) {
+      const settings = {show_borders,hide_openings};
+      const before = structuredClone(settings);
+      const display = spaceDisplayOf({plan_url,settings});
+      assert.equal(display.hideOpenings, !(show_borders ?? !plan_url));
+      assert.equal(display.hideDecor,false);
+      assert.deepEqual(settings,before,'reading does not write');
+    }
+  }
+  assert.equal(spaceDisplayOf({settings:{hide_decor:true}}).hideDecor,true);
+  assert.equal(spaceDisplayOf({settings:{hide_decor:'yes'}}).hideDecor,false);
 });
 
 test('roomFillColor: lqi gradient, light tri-state, none', () => {

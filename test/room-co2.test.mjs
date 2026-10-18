@@ -33,7 +33,7 @@ test('#920 shared space drafts retain legacy source, display, fill and calibrati
     const written = spaceDialogSettings(saved, { future: 'preserve', label_co2: false });
     assert.equal(written.future, 'preserve'); assert.equal(written.label_co2, true);
     assert.equal(written.sun_rays, false); assert.equal(written.north_deg, 42);
-    assert.equal(written.card_font_scale, 1.5); assert.equal(written.custom_fill.a, 0);
+    assert.equal(written.card_name_scale, 1.5); assert.equal(written.card_label_scale, 1.5); assert.equal(written.custom_fill.a, 0);
     assert.equal(savedSpaceDialogDraft({ id: 's', title: 'Floor' }, imperial).source, 'draw');
     assert.deepEqual(settings, { label_co2: true, label_temp: true, label_hum: true, label_light: true,
       label_lqi: true, fill_mode: 'none', north_deg: 42, sun_rays: false, card_font_scale: 1.5 });

@@ -54,6 +54,15 @@ export const settingsDialogCss = `
   .hpf-settings-form input:not([type=checkbox]):not([type=radio]):not([type=range]) { cursor:text; }
   .hpf-settings-form input[type=range] { cursor:pointer; }
   .hpf-settings-mobile { display:none; }
+  .hpf-temperature-range { display:flex; gap:12px; align-items:start; margin-top:12px; }
+  .hpf-temperature-range > .hpf-field { display:flex; flex:1; min-width:0; gap:8px; align-items:center; }
+  .hpf-temperature-range .hpf-unit { flex:1; min-width:0; }
+  .hpf-temperature-range .hpf-label { flex:none; }
+  .hpf-plan-upload { display:flex; flex-wrap:wrap; gap:8px; }
+  .hpf-plan-upload > .planname,.hpf-plan-upload > .planprev { flex-basis:100%; }
+  .hpf-plan-upload .fileupload,.hpf-plan-upload > button { flex:1; min-width:0; }
+  .hpf-plan-upload button { width:100%; padding-inline:8px; }
+  .hpf-inherited-swatch { display:inline-block; width:24px; height:24px; border:1px solid var(--hpf-line); border-radius:5px; }
   .hpf-color-with-action { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:12px; }
   .hpf-color-with-action > button { min-height:48px; }
   .hpf-color-with-action > .hpf-colorfield { box-sizing:border-box; min-height:48px; }

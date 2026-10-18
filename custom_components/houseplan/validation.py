@@ -1422,6 +1422,7 @@ SPACE_DISPLAY_SCHEMA = vol.Schema(
         vol.Optional("temp_max"): vol.Coerce(float),
         vol.Optional("show_lqi"): bool,
         vol.Optional("show_lqi_mode"): vol.In(["inherit", "on", "off"]),
+        vol.Optional("show_device_battery_mode"): vol.In(["inherit", "all", "low", "off"]),
         # "draw less" switches; absent = False = everything is drawn as before
         vol.Optional("hide_decor"): bool,
         vol.Optional("hide_openings"): bool,
@@ -1431,6 +1432,8 @@ SPACE_DISPLAY_SCHEMA = vol.Schema(
         vol.Optional("label_lqi"): bool,
         vol.Optional("label_light"): bool,
         vol.Optional("card_font_scale"): vol.All(vol.Coerce(float), vol.Range(min=0.5, max=3)),
+        vol.Optional("card_name_scale"): vol.All(_finite_number_or_none, vol.Range(min=0.5, max=3)),
+        vol.Optional("card_label_scale"): vol.All(_finite_number_or_none, vol.Range(min=0.5, max=3)),
         # sun on the plan (docs/SUN.md): per-space overrides, absent = inherit
         vol.Optional("north_deg"): vol.Any(None, _north_deg),
         vol.Optional("bg_mode"): vol.Any(None, _BG_MODE),
@@ -2300,6 +2303,23 @@ def prepare_ordinary_summary_candidate(
     return checked
 
 
+def normalize_space_display(config: dict) -> dict:
+    """#945: normalise the validated copy; persistence belongs to an ordinary write."""
+    general = config.get("settings") or {}
+    global_mode = general.get("bg_mode") or "static"
+    for space in config.get("spaces", []):
+        settings = space.get("settings", {})
+        borders = settings.get("show_borders", not bool(space.get("plan_url")))
+        # Absence already means visible. Do not add an empty settings object or
+        # a redundant false to unrelated geometry-only writes.
+        if "hide_openings" in settings or not borders:
+            settings["hide_openings"] = not borders
+            space["settings"] = settings
+        if settings.get("bg_mode") not in ("static", "daynight") and settings.get("bg_color") and global_mode == "static":
+            settings["bg_mode"] = "static"
+    return config
+
+
 CONFIG_SCHEMA = vol.All(
     vol.Schema(
         {
@@ -2378,4 +2398,5 @@ CONFIG_SCHEMA = vol.All(
     # #780: after canonicalisation — shape invariants judge stored numbers;
     # orphan links become unbound strips, foreign/duplicate links reject.
     config_led_strip_links,
+    normalize_space_display,
 )

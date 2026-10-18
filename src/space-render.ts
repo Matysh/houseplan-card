@@ -596,8 +596,8 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const planLightSources = resolvedLightSources(planHass, devs, null, o.virtualLights);
   let lightFrame: PresentationLightFrame | undefined;
   const showLqi = effectiveShowLqi(o.cfg.settings, disp.showLqi, o.showSignal);
-  const showBattery = showDeviceBatteryOf(o.cfg.settings);
-  const batteryLowOnly = deviceBatteryModeOf(o.cfg.settings) === 'low';
+  const showBattery = showDeviceBatteryOf(o.cfg.settings, spCfg.settings);
+  const batteryLowOnly = deviceBatteryModeOf(o.cfg.settings, spCfg.settings) === 'low';
   let batteryContext: ReturnType<typeof createDeviceBatteryContext> | undefined;
   const presentationOf = (d: DevItem) => {
     const captured = o.presentations?.get(presentationSnapshotKey(d.id, showLqi));

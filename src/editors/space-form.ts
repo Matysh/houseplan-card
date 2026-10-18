@@ -1,36 +1,22 @@
-/**
- * Форма «Пространство» по референсу `docs/design/600-settings-dialogs/`
- * (#600, серия 1; §4 SPEC.md).
- *
- * Один рендерер на двух потребителей: редакторский рантайм (edit/create,
- * `space-settings-dialog.ts`) и онбординг (первое пространство, импорт). До
- * #600 у онбординга была своя копия разметки на 300 строк — теперь обе стороны
- * подают узкий порт с тем, что у них различается (кто открывает файлы, кто
- * сохраняет, кто удаляет), а форму рисует одно место. Состояние остаётся на
- * хосте (#592 К2); `SpaceDialogState` не получил ни одного нового ключа.
- *
- * Модуль намеренно не импортирует ничего редакторского (копирование
- * пространства, рантайм): онбординг — отдельный ленивый граф первого запуска,
- * и тянуть в него редактор ради общей формы нельзя (К8).
- *
- * Расхождение с референсом здесь — находка, а не вкус: каждый блок назван
- * пунктом §4.2, чтобы ревью сверяло по документу, а не на глаз.
- */
+/** Shared space form for editor and onboarding (#945).
+ * Persistence remains in their existing writers. Optional navigation and north
+ * controls are injected by the editor, keeping its graph out of onboarding. */
 import { html, nothing, type TemplateResult } from 'lit';
 
-import { ROOM_CO2_PREVIEW } from '../room-co2';
+import type { settingsNorth } from './settings-north';
+import { deviceBatteryModeOf, type SpaceDeviceBatteryMode } from '../device-battery-settings';
 import { roomCardPreview } from './room-card-preview';
 import {
-  callout, choiceCards, colorField, colorRow, compass, divider, ensureFormKitStyles, field,
-  fieldGrid, footerStatus, formCard, radioRow, rangeEnds, rangeLine, segmented, subsection,
-  textLink, toggleRow, compactList, unitInput, valueTiles,
+  callout, choiceCards, colorField, colorRow, compass, ensureFormKitStyles, field,
+  fieldGrid, footerStatus, formCard, rangeLine, subsection,
+  textLink, toggleRow, unitInput, selectControl,
 } from './form-kit';
 
 import {
   GRID_CELL_CM_MAX, GRID_CELL_CM_MIN, gridCellFieldToCm, gridCellFieldValue,
 } from '../grid-scale';
 import {
-  DEFAULT_CUSTOM_FILL, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, SPACE_FILL_UI_MODES, stageBgOf,
+  DEFAULT_CUSTOM_FILL, SPACE_FILL_UI_MODES, stageBgOf,
 } from '../logic';
 import { forgetSpaceDialogBaseline, spaceDialogDirty, spaceDialogProblems } from './space-form-state';
 import {
@@ -69,6 +55,9 @@ export interface SpaceFormPort {
   /** Только редактор: онбординг создаёт, а не правит. `withDevices` — #819. */
   deleteSpace?(withDevices?: boolean): void | Promise<void>;
   copySpace?(): void;
+  northControl?: typeof settingsNorth;
+  openGeneral?(section: string): void;
+  revealField?(field: HTMLElement): void;
 }
 
 const set = (port: SpaceFormPort, next: SpaceDialogState): void => { port.host._spaceDialog = next; };
@@ -100,6 +89,8 @@ export interface SpaceFormParts {
   title: string;
   badge: string;
   body: TemplateResult;
+  sections: Array<{ id: string; title: string; body: TemplateResult }>;
+  notices: TemplateResult | typeof nothing;
   footer: TemplateResult;
   /** Обработчик `@hp-close`: с изменениями спрашивает (К10), без — закрывает. */
   requestClose: (event: Event) => Promise<void>;
@@ -148,31 +139,27 @@ export function renderSpaceForm(port: SpaceFormPort): SpaceFormParts {
     if (!first) return;
     const root = host.renderRoot as ParentNode;
     const node = root.querySelector<HTMLElement>(`#${first.field}`);
-    node?.scrollIntoView({ block: 'center' });
-    node?.focus();
+    if (node && port.revealField) port.revealField(node);
+    else { node?.scrollIntoView({ block: 'center' }); node?.focus(); }
   };
 
+  const sections = [
+    { id: 'basics', title: st('space.section_plan'), body: renderBasics(port, d, id, problemFor) },
+    { id: 'appearance', title: st('space.section_rooms'), body: renderAppearance(port, d, id, problemFor) },
+    { id: 'room-cards', title: st('space.section_metrics'), body: renderRoomCards(port, d, id) },
+    { id: 'sun', title: st('space.section_background'), body: renderSunAndLight(port, d, id, problemFor) },
+  ];
+  const notices = d.deleteBlockers
+    ? callout({ kind:'warning', role:'alert', id:id('delete-blocked'), focusable:true,
+        text:t('space.delete_blocked', {n:String(d.deleteBlockers)}),
+        action:port.deleteSpace ? html`<button class="btn danger" ?disabled=${d.busy} @click=${() => port.deleteSpace!(true)}>${st('space.delete_with_devices')}</button>` : nothing })
+    : nothing;
   return {
+    sections, notices,
     title: `${d.mode === 'create' ? t('space.new') : t('space.header')}${progress ? ` · ${progress}` : ''}`,
     badge: d.mode === 'edit' ? d.title.trim() : '',
     requestClose,
-    body: html`<div class="body hpf-form">
-      ${renderBasics(port, d, id, problemFor)}
-      ${renderAppearance(port, d, id, problemFor)}
-      ${renderRoomCards(port, d, id)}
-      ${renderSunAndLight(port, d, id, problemFor)}
-      ${d.deleteBlockers
-        ? callout({
-          kind: 'warning', role: 'alert', id: id('delete-blocked'), focusable: true,
-          text: t('space.delete_blocked', { n: String(d.deleteBlockers) }),
-          // #819: the way out of the block, right where it is explained.
-          action: port.deleteSpace
-            ? html`<br><button class="btn danger" ?disabled=${d.busy} @click=${() => port.deleteSpace!(true)}>${
-              st('space.delete_with_devices')}</button>`
-            : nothing,
-        })
-        : nothing}
-    </div>`,
+    body: html`<div class="body hpf-form">${sections.map(section => section.body)}${notices}</div>`,
     footer: html`<div class="row dialog-action-footer hpf-footer hpf-footer-space" slot="footer">
       ${d.mode === 'edit' && port.copySpace
         ? html`<div class="dialog-action-group dialog-action-copy">
@@ -223,7 +210,7 @@ function renderBasics(port: SpaceFormPort, d: SpaceDialogState, id: (n: string) 
   const planProblem = problemFor(id('plan'));
   return formCard({
     id: 'basics',
-    title: t('space.card_basics'),
+    title: st('space.section_plan'),
     body: html`
       ${fieldGrid([
         field({
@@ -258,16 +245,17 @@ function renderBasics(port: SpaceFormPort, d: SpaceDialogState, id: (n: string) 
         }),
       ], { narrow: true })}
       ${scaleChanged ? callout({ kind: 'warning', text: st('space.scale_changed') }) : nothing}
-      ${subsection({ title: t('space.plan_label'), help: shelp('space.plan.help') })}
+      ${subsection({ title: st('space.plan_source'), help: shelp('space.plan.help') })}
       <div id=${id('plan')} tabindex="-1" aria-invalid=${planProblem ? 'true' : nothing}>
         ${choiceCards('plansrc', d.source, [
           { value: 'draw', title: t('space.source_draw'), caption: st('space.source_draw_hint') },
           { value: 'file', title: t('space.source_file'), caption: st('space.source_file_hint') },
-        ], (value) => set(port, switchSpacePlanSource(d, value)), t('space.plan_label'))}
+        ], (value) => set(port, switchSpacePlanSource(d, value)), st('space.plan_source'))}
       </div>
       ${d.source === 'file' ? renderPlanUpload(port, d) : nothing}
       ${d.source === 'draw' && d.planUrl ? callout({ text: st('space.plan_kept') }) : nothing}
-      ${planProblem ? html`<p class="hpf-error" role="alert">${st(planProblem.message)}</p>` : nothing}`,
+      ${planProblem ? html`<p class="hpf-error" role="alert">${st(planProblem.message)}</p>` : nothing}
+      ${toggleRow({id:id('layer-decor'), title:st('space.layer_decor'), checked:!d.hideDecor, onChange:v => set(port,{...d,hideDecor:!v})})}`,
   });
 }
 
@@ -275,7 +263,7 @@ function renderBasics(port: SpaceFormPort, d: SpaceDialogState, id: (n: string) 
 function renderPlanUpload(port: SpaceFormPort, d: SpaceDialogState): TemplateResult {
   const { host } = port;
   const t = host._t.bind(host);
-  return html`<div class="planrow">
+  return html`<div class="planrow hpf-plan-upload">
       ${d.planFile
         ? html`<span class="planname">${d.planFile.name}</span>`
         : d.planUrl
@@ -297,287 +285,126 @@ function renderPlanUpload(port: SpaceFormPort, d: SpaceDialogState): TemplateRes
     ${d.pickSaved ? port.renderServerPlans(d) : nothing}`;
 }
 
-/** §4.2 карточка 2: Appearance — границы, стены, цвет, заливка, слои. */
 function renderAppearance(port: SpaceFormPort, d: SpaceDialogState, id: (n: string) => string, problemFor: ProblemFor): TemplateResult {
-  const { host } = port;
-  const t = host._t.bind(host);
-  const { st, shelp } = settingsCopy(host);
-  const tempMinProblem = problemFor(id('temp-min'));
-  const tempMaxProblem = problemFor(id('temp-max'));
-  const fillDetail = d.fillMode === 'custom'
-    ? colorRow({
-        label: t('space.custom_fill'),
-        picker: colorField({
-          hex: (d.customFill || DEFAULT_CUSTOM_FILL).c,
-          opacity: (d.customFill || DEFAULT_CUSTOM_FILL).a,
-          opacityLabel: t('space.opacity'),
-          onOpacity: (a) => set(port, { ...d, customFill: { c: (d.customFill || DEFAULT_CUSTOM_FILL).c, a } }),
-          resetLabel: d.customFill ? t('btn.reset') : undefined,
-          onReset: () => set(port, { ...d, customFill: null }),
-          picker: html`<hp-color-opacity .label=${t('space.custom_fill')} hide-label flat-swatch .opacityLabel=${t('space.opacity')}
-            .pickerLabels=${host._colorPickerLabels}
-            .color=${(d.customFill || DEFAULT_CUSTOM_FILL).c} .opacity=${(d.customFill || DEFAULT_CUSTOM_FILL).a}
-            @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {
-              set(port, { ...d, customFill: { c: e.detail.color, a: e.detail.opacity } });
-            }}></hp-color-opacity>`,
-        }),
-      })
-    : d.fillMode === 'temp'
-      ? html`<div class="hpf-field">
-          <span class="hpf-label hpf-labelrow">${st('space.temp_range')}</span>
-          ${fieldGrid([
-            field({
-              label: st('space.temp_min'), htmlFor: id('temp-min'),
-              error: tempMinProblem ? st(tempMinProblem.message) : undefined,
-              control: unitInput({
-                id: id('temp-min'), wide: true, value: d.tempMinInput ?? String(d.tempMin), unit: '°C', step: 0.5,
-                invalid: !!tempMinProblem,
-                onInput: (raw) => {
-                  const n = strictNumber(raw);
-                  set(port, { ...d, tempMinInput: raw, ...(n !== null ? { tempMin: n } : {}) });
-                },
-              }),
-            }),
-            field({
-              label: st('space.temp_max'), htmlFor: id('temp-max'),
-              error: tempMaxProblem ? st(tempMaxProblem.message) : undefined,
-              control: unitInput({
-                id: id('temp-max'), wide: true, value: d.tempMaxInput ?? String(d.tempMax), unit: '°C', step: 0.5, invalid: !!tempMaxProblem,
-                onInput: (raw) => {
-                  const n = strictNumber(raw);
-                  set(port, { ...d, tempMaxInput: raw, ...(n !== null ? { tempMax: n } : {}) });
-                },
-              }),
-            }),
-          ])}
-          <div class="hpf-templegend" aria-hidden="true">
-            <span>${t('gs.temp_cold')}</span><span>${t('gs.temp_ok')}</span><span>${t('gs.temp_hot')}</span>
-          </div>
-          <p class="hpf-hint">${st('space.temp_range_hint')}</p>
-        </div>`
-      : html`<p class="hpf-hint">${st(d.fillMode === 'lqi' ? 'space.fill_lqi_hint' : 'space.fill_light_hint')}</p>`;
-
-  return formCard({
-    id: 'appearance',
-    title: t('space.display_section'),
-    body: html`
-      ${toggleRow({
-        id: id('show-borders'), icon: 'mdi:border-none-variant',
-        title: t('space.show_borders'), caption: st('space.show_borders_hint'),
-        help: shelp('space.show_borders.help'),
-        checked: d.showBorders, onChange: (v) => set(port, touchSpaceDisplay(d, 'showBorders', v)),
-      })}
-      ${field({
-        label: t('space.zero_wall_style'), help: port.help('space.zero_wall_style.help'),
-        control: segmented({
-          name: `${port.idPrefix}-zero-wall-style`,
-          value: d.zeroWallStyle === 'solid' ? 'solid' : 'dashed',
-          ariaLabel: t('space.zero_wall_style'),
-          options: [
-            { value: 'dashed', label: t('space.zero_wall_dashed'), sample: 'dashed' },
-            { value: 'solid', label: t('space.zero_wall_solid'), sample: 'solid' },
-          ],
-          onChange: (value) => set(port, { ...d, zeroWallStyle: value === 'solid' ? 'solid' : 'dashed' }),
-        }),
-      })}
-      ${colorRow({
-        label: t('space.room_color'),
-        picker: colorField({
-          hex: d.roomColor, opacity: d.roomOpacity, opacityLabel: t('space.opacity'),
-          onOpacity: (a) => set(port, { ...d, roomOpacity: a }),
-          resetLabel: d.roomColor !== DEFAULT_ROOM_COLOR || d.roomOpacity !== DEFAULT_ROOM_OPACITY ? t('btn.reset') : undefined,
-          onReset: () => set(port, { ...d, roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY }),
-          picker: html`<hp-color-opacity .label=${t('space.room_color')} hide-label flat-swatch .opacityLabel=${t('space.opacity')}
-            .pickerLabels=${host._colorPickerLabels}
-            .color=${d.roomColor} .opacity=${d.roomOpacity} .showOpacity=${true}
-            @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {
-              set(port, { ...d, roomColor: e.detail.color, roomOpacity: e.detail.opacity });
-            }}></hp-color-opacity>`,
-        }),
-      })}
-      ${subsection({ title: t('space.fill_label'), help: port.help('space.fill_mode.help') })}
-      ${segmented({
-        name: `${port.idPrefix}-fill-mode`,
-        value: d.fillMode === 'none' ? 'custom' : d.fillMode,
-        ariaLabel: t('space.fill_label'),
-        // §4.2 референса: Custom | Zigbee | Lights | Temperature — короткие подписи сегмента (общие с комнатой)
-        options: SPACE_FILL_UI_MODES.map((v) => ({ value: v, label: st(`fill.seg_${v}`) })),
-        onChange: (v) => set(port, { ...d, fillMode: v }),
-      })}
-      ${fillDetail}
-      ${subsection({ title: st('space.layers_label'), help: shelp('space.layers.help') })}
-      ${compactList([
-        toggleRow({
-          id: id('layer-decor'), compact: true, icon: 'mdi:sofa-outline', title: st('space.layer_decor'),
-          checked: !d.hideDecor, onChange: (v) => set(port, { ...d, hideDecor: !v }),
-        }),
-        toggleRow({
-          id: id('layer-openings'), compact: true, icon: 'mdi:door', title: st('space.layer_openings'),
-          checked: !d.hideOpenings, onChange: (v) => set(port, { ...d, hideOpenings: !v }),
-        }),
-      ])}
-      <div class="hpf-signal-visibility">${radioRow<SignalVisibilityMode>({
-        label: t('space.show_lqi'), name: `${port.idPrefix}-show-lqi`,
-        value: d.showLqiMode,
-        options: [
-          { value: 'inherit', label: st('space.lqi_inherit', {
-            state: st(globalSignalVisibleOf(host._settings) ? 'space.lqi_on' : 'space.lqi_off'),
-          }) },
-          { value: 'on', label: st('space.lqi_on') },
-          { value: 'off', label: st('space.lqi_off') },
-        ],
-        onChange: (showLqiMode) => set(port, { ...d, showLqiMode }),
-      })}</div>`,
-  });
+  const { host } = port, t = host._t.bind(host), { st } = settingsCopy(host);
+  const color = (kind: 'border' | 'fill') => {
+    const fill = d.customFill || DEFAULT_CUSTOM_FILL;
+    const label = kind === 'border' ? t('space.room_color') : t('space.custom_fill');
+    return colorRow({label, picker:colorField({hex:kind === 'border' ? d.roomColor : fill.c,
+      opacity:kind === 'border' ? d.roomOpacity : fill.a,
+      picker:html`<hp-color-opacity .label=${label} hide-label flat-swatch .opacityLabel=${t('space.opacity')}
+        .pickerLabels=${host._colorPickerLabels} .color=${kind === 'border' ? d.roomColor : fill.c}
+        .opacity=${kind === 'border' ? d.roomOpacity : fill.a}
+        @hp-color-opacity-change=${(e: CustomEvent<{color:string;opacity:number}>) => set(port, kind === 'border'
+          ? {...d,roomColor:e.detail.color,roomOpacity:e.detail.opacity}
+          : {...d,customFill:{c:e.detail.color,a:e.detail.opacity}})}></hp-color-opacity>`})});
+  };
+  const temperature = (side: 'min' | 'max') => {
+    const fieldId = id(`temp-${side}`), problem = problemFor(fieldId);
+    return field({label:st(side === 'min' ? 'space.range_from' : 'space.range_to'), htmlFor:fieldId,
+      error:problem ? st(problem.message) : undefined,
+      control:unitInput({id:fieldId,wide:true,step:0.5,unit:'°C', invalid:!!problem,
+        value:side === 'min' ? d.tempMinInput ?? String(d.tempMin) : d.tempMaxInput ?? String(d.tempMax),
+        onInput:raw => {
+          const n = strictNumber(raw);
+          set(port,side === 'min' ? {...d,tempMinInput:raw,...(n !== null ? {tempMin:n} : {})}
+            : {...d,tempMaxInput:raw,...(n !== null ? {tempMax:n} : {})});
+        }})});
+  };
+  return formCard({id:'appearance',title:st('space.section_rooms'),body:html`
+    ${toggleRow({id:id('show-borders'),title:st('space.borders_openings'),caption:st('space.borders_openings_hint'),
+      checked:d.showBorders,onChange:v => set(port,{...touchSpaceDisplay(d,'showBorders',v),hideOpenings:!v})})}
+    ${field({label:st('space.virtual_walls'),help:port.help('space.zero_wall_style.help'),control:selectControl({
+      name:id('zero-wall-style'),value:d.zeroWallStyle,ariaLabel:st('space.virtual_walls'),
+      options:[{value:'dashed',label:st('space.virtual_dashed')},{value:'solid',label:st('space.virtual_solid')}],
+      onChange:v => set(port,{...d,zeroWallStyle:v})})})}
+    ${color('border')}
+    ${field({label:t('space.fill_label'),help:port.help('space.fill_mode.help'),control:selectControl({
+      name:id('fill-mode'),value:d.fillMode === 'none' ? 'custom' : d.fillMode,ariaLabel:t('space.fill_label'),
+      options:SPACE_FILL_UI_MODES.map(value => ({value,label:st(`space.fill_${value}`)})),
+      onChange:v => set(port,{...d,fillMode:v})})})}
+    ${d.fillMode === 'custom' || d.fillMode === 'none' ? color('fill') : nothing}
+    ${d.fillMode === 'temp' ? html`<div class="hpf-field">
+      <span class="hpf-label">${st('space.temp_range')}</span>
+      <div class="hpf-temperature-range">${temperature('min')}${temperature('max')}</div>
+      <div class="hpf-templegend" aria-hidden="true"><span>${t('gs.temp_cold')}</span><span>${t('gs.temp_ok')}</span><span>${t('gs.temp_hot')}</span></div>
+    </div>` : nothing}
+  `});
 }
 
-/** §4.2 карточка 3: Room cards — названия, плитки значений, размер шрифта, образец (Q2). */
-function renderRoomCards(port: SpaceFormPort, d: SpaceDialogState, id: (n: string) => string): TemplateResult {
-  const { host } = port;
-  const t = host._t.bind(host);
-  const { st, shelp } = settingsCopy(host);
-  const pct = Math.round(d.cardFontScale * 100);
+function renderRoomCards(port: SpaceFormPort, d: SpaceDialogState, id: (n:string) => string): TemplateResult {
+  const {host} = port, t = host._t.bind(host), {st} = settingsCopy(host);
+  const sizes = (['cardNameScale','cardLabelScale'] as const).map((key,index) => {
+    const label = st(index === 0 ? 'space.name_size' : 'space.metrics_size'), value = Math.round(d[key]*100);
+    const change = (n:number) => set(port,{...d,[key]:n/100});
+    return field({label,htmlFor:id(index === 0 ? 'name-font' : 'label-font'),control:rangeLine({
+      id:id(index === 0 ? 'name-font' : 'label-font'),min:50,max:300,step:5,value,unit:'%',ariaLabel:label,
+      slider:port.rangeInput(50,300,5,value,change,false,label),onInput:change})});
+  });
   const tiles = ([
-    ['labelTemp', 'space.label_temp', 'mdi:thermometer', undefined],
-    ['labelHum', 'space.label_hum', 'mdi:water-outline', undefined],
-    ['labelCo2', 'space.label_co2', 'mdi:molecule-co2', undefined],
-    ['labelLqi', 'space.label_lqi_short', 'mdi:zigbee', 'space.label_lqi'],
-    ['labelLight', 'space.label_light', 'mdi:lightbulb-outline', undefined],
-  ] as const).map(([key, label, icon, full]) => ({
-    id: id(`tile-${key}`),
-    label: label === 'space.label_lqi_short' ? st(label) : t(label),
-    icon, title: full ? t(full) : undefined,
-    checked: d[key], disabled: !d.showNames,
-    onChange: (v: boolean) => set(port, { ...d, [key]: v }),
-  }));
-  return formCard({
-    id: 'room-cards',
-    title: t('space.roomcard_section'),
-    body: html`
-      ${toggleRow({
-        id: id('show-names'), icon: 'mdi:format-text',
-        title: t('space.show_names'), caption: st('space.show_names_hint'),
-        help: shelp('space.show_names.help'),
-        checked: d.showNames, onChange: (v) => set(port, touchSpaceDisplay(d, 'showNames', v)),
-      })}
-      <div class="hpf-field">
-        <span class="hpf-label hpf-labelrow">${st('space.card_values')}</span>
-        ${valueTiles(tiles, st('space.card_values'))}
-        ${!d.showNames
-          ? callout({
-              icon: 'mdi:eye-off-outline', text: st('space.values_hidden'),
-              action: textLink(st('space.values_hidden_action'), () => set(port, touchSpaceDisplay(d, 'showNames', true))),
-            })
-          : nothing}
-      </div>
-      <div class="hpf-field">
-        <div class="hpf-headline">
-          <span class="hpf-label hpf-labelrow"><label for=${id('card-font')}>${t('space.card_font')}</label>${shelp('space.card_font.help')}</span>
-          ${textLink(st('btn.reset_100'), () => set(port, { ...d, cardFontScale: 1 }), { disabled: pct === 100 })}
-        </div>
-        ${rangeLine({
-          id: id('card-font'), min: 50, max: 300, step: 5, value: pct, unit: '%', ariaLabel: t('space.card_font'),
-          slider: port.rangeInput(50, 300, 5, pct, (n) => set(port, { ...d, cardFontScale: n / 100 }), false, t('space.card_font')),
-          onInput: (n) => set(port, { ...d, cardFontScale: n / 100 }),
-        })}
-        ${rangeEnds('50%', '300%')}
-        <p class="hpf-hint">${st('space.card_font_hint')}</p>
-      </div>
-      <div class="hpf-tint hpf-preview">${roomCardPreview(t, st('preview.room_name'), d.cardFontScale, 1, 1, d.labelCo2 ? ROOM_CO2_PREVIEW : undefined)}</div>`,
-  });
+    ['labelTemp','space.label_temp','mdi:thermometer'],['labelHum','space.label_hum','mdi:water-percent'],
+    ['labelCo2','space.label_co2',''],['labelLqi','space.label_lqi','mdi:zigbee'],['labelLight','space.label_light','mdi:lightbulb-outline'],
+  ] as const).map(([key,label,icon]) => ({id:id(`tile-${key}`),label:t(label),icon,checked:d[key],
+    onChange:(v:boolean) => set(port,{...d,[key]:v})}));
+  const inheritedBattery = deviceBatteryModeOf(host._settings);
+  const batteryLabel = (mode: 'all'|'low'|'off') => st(`space.battery_${mode}`);
+  const sourceLink = (section:string) => port.openGeneral ? textLink(st('space.open_general'),() => port.openGeneral!(section)) : nothing;
+  return formCard({id:'room-cards',title:st('space.section_metrics'),body:html`
+    ${toggleRow({id:id('show-names'),title:t('space.show_names'),checked:d.showNames,
+      onChange:v => set(port,touchSpaceDisplay(d,'showNames',v))})}
+    <div class="hpf-field"><span class="hpf-label">${st('space.room_metrics')}</span>
+      <p class="hpf-hint">${st('space.metrics_source_hint')}</p>${tiles.map(tile => toggleRow({id:tile.id,title:tile.label,checked:tile.checked,disabled:!d.showNames,onChange:tile.onChange}))}</div>
+    ${sizes}
+    <div class="hpf-tint hpf-preview">${roomCardPreview(t,st('preview.room_name'),d.cardNameScale,1,1,
+      d.labelCo2 ? 820 : undefined,d.cardLabelScale,{temp:d.labelTemp,hum:d.labelHum,lqi:d.labelLqi,light:d.labelLight,showName:d.showNames})}</div>
+    ${subsection({title:st('space.device_metrics')})}
+    ${field({label:st('space.device_battery'),control:selectControl<SpaceDeviceBatteryMode>({
+      name:id('battery-mode'),value:d.deviceBatteryMode,ariaLabel:st('space.device_battery'),
+      options:[{value:'inherit',label:st('space.inherited_value',{v:batteryLabel(inheritedBattery)})},
+        ...(['all','low','off'] as const).map(value => ({value,label:batteryLabel(value)}))],
+      onChange:deviceBatteryMode => set(port,{...d,deviceBatteryMode})})})}
+    ${field({label:t('space.show_lqi'),control:selectControl<SignalVisibilityMode>({
+      name:id('show-lqi'),value:d.showLqiMode,ariaLabel:t('space.show_lqi'),
+      options:[{value:'inherit',label:st('space.inherited_value',{v:st(globalSignalVisibleOf(host._settings) ? 'space.lqi_on' : 'space.lqi_off')})},
+        {value:'on',label:st('space.lqi_on')},{value:'off',label:st('space.lqi_off')}],
+      onChange:showLqiMode => set(port,{...d,showLqiMode})})})}
+    ${sourceLink('display')}
+  `});
 }
 
-/** §4.2 карточка 4: Sun & light — фон, лучи, север с компасом, свечение. */
-function renderSunAndLight(port: SpaceFormPort, d: SpaceDialogState, id: (n: string) => string, problemFor: ProblemFor): TemplateResult {
-  const { host } = port;
-  const t = host._t.bind(host);
-  const { st, shelp } = settingsCopy(host);
-  const inheritedNorth = northDegOf(host._settings, {});
-  const effectiveNorth = d.northDeg ?? inheritedNorth;
+function renderSunAndLight(port: SpaceFormPort, d: SpaceDialogState, id:(n:string) => string, problemFor:ProblemFor): TemplateResult {
+  const {host} = port, t = host._t.bind(host), {st} = settingsCopy(host);
+  const inheritedNorth = northDegOf(host._settings,{}), inheritedColor = stageBgOf(host._settings,{bgColor:null}) || host._stageBgHex();
   const northProblem = problemFor(id('north-deg'));
-  const inheritedLabel = inheritedNorth === null ? '—' : `${inheritedNorth}°`;
-  return formCard({
-    id: 'sun',
-    title: t('space.card_sun'),
-    body: html`
-      ${field({
-        label: t('space.bg_mode'), help: port.help('space.bg_mode.help'),
-        control: segmented({
-          name: `${port.idPrefix}-bg-mode`,
-          value: d.bgMode ?? '',
-          ariaLabel: t('space.bg_mode'),
-          options: [
-            { value: '', label: t('space.sun_inherit') },
-            { value: 'static', label: t('gs.bg_static') },
-            { value: 'daynight', label: t('gs.bg_daynight') },
-          ],
-          onChange: (v) => set(port, { ...d, bgMode: v === 'static' || v === 'daynight' ? v : null }),
-        }),
-      })}
-      ${(d.bgMode ?? bgModeOf(host._settings, {})) === 'static'
-        ? colorRow({
-            label: t('space.bg_color'),
-            picker: colorField({
-              hex: d.bgColor || stageBgOf(host._settings, { bgColor: null }) || host._stageBgHex(),
-              resetLabel: d.bgColor ? t('space.bg_inherit') : undefined,
-              onReset: () => set(port, { ...d, bgColor: null }),
-              picker: html`<hp-color-opacity .label=${t('space.bg_color')} hide-label flat-swatch .pickerLabels=${host._colorPickerLabels}
-                .color=${d.bgColor || stageBgOf(host._settings, { bgColor: null }) || host._stageBgHex()}
-                .opacity=${1} .showOpacity=${false}
-                @hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => set(port, { ...d, bgColor: e.detail.color })}></hp-color-opacity>`,
-            }),
-          })
-        : nothing}
-      ${radioRow({
-        label: t('space.sun_rays'), name: `${port.idPrefix}-sun-rays`,
-        value: d.sunRays === null ? '' : d.sunRays ? '1' : '0',
-        options: [
-          { value: '', label: st('space.sun_inherit_short') },
-          { value: '1', label: t('space.sun_on') },
-          { value: '0', label: t('space.sun_off') },
-        ],
-        onChange: (v) => set(port, { ...d, sunRays: v === '' ? null : v === '1' }),
-      })}
-      ${divider()}
-      <div class="hpf-north">
-        <span class="hpf-labelrow"><label for=${id('north-mode')}>${t('space.north')}</label>${port.help('space.north.help')}</span>
-        <select id=${id('north-mode')} class="hpf-select"
-          @change=${(e: Event) => {
-            const custom = (e.target as HTMLSelectElement).value === 'custom';
-            const northDeg = custom ? (inheritedNorth ?? 0) : null;
-            set(port, { ...d, northDeg, northDegInput: northDeg === null ? '' : String(northDeg) });
-          }}>
-          <option value="inherit" ?selected=${d.northDeg === null}>${st('space.north_general', { v: inheritedLabel })}</option>
-          <option value="custom" ?selected=${d.northDeg !== null}>${st('space.north_custom')}</option>
-        </select>
-        <span class="hpf-north-n" aria-hidden="true">N</span>
-        ${compass(effectiveNorth, st('space.compass_aria', { v: effectiveNorth === null ? '—' : `${effectiveNorth}°` }))}
-      </div>
-      ${d.northDeg !== null
-        ? field({
-            label: st('space.north_deg'), htmlFor: id('north-deg'),
-            error: northProblem ? st(northProblem.message) : undefined,
-            control: html`<div class="hpf-inline hpf-wrap">
-              ${unitInput({
-                id: id('north-deg'), value: d.northDegInput ?? String(d.northDeg), unit: '°', min: 0, max: 359, step: 1, invalid: !!northProblem,
-                onInput: (raw) => {
-                  const n = strictNumber(raw);
-                  set(port, {
-                    ...d,
-                    northDegInput: raw,
-                    ...(n !== null && Number.isInteger(n) && n >= 0 && n <= 359 ? { northDeg: n } : {}),
-                  });
-                },
-              })}
-              ${textLink(st('space.sun_inherit_short'), () => set(port, { ...d, northDeg: null, northDegInput: '' }))}
-            </div>`,
-          })
-        : nothing}
-      ${toggleRow({
-        id: id('glow'), icon: 'mdi:lightbulb-outline',
-        title: t('space.glow_enabled'), caption: st('space.glow_enabled_hint'),
-        help: shelp('space.glow_enabled.help'),
-        checked: d.glowEnabled, onChange: (v) => set(port, { ...d, glowEnabled: v }),
-      })}`,
-  });
+  const northInput = (raw:string) => {
+    const n = strictNumber(raw);
+    set(port,{...d,northDegInput:raw,...(n !== null && Number.isInteger(n) && n >= 0 && n <= 359 ? {northDeg:n} : {})});
+  };
+  return formCard({id:'sun',title:st('space.section_background'),body:html`
+    ${field({label:t('space.bg_mode'),help:port.help('space.bg_mode.help'),control:selectControl({
+      name:id('bg-mode'),value:d.bgMode ?? '',ariaLabel:t('space.bg_mode'),
+      options:[{value:'',label:st('space.inherited_value',{v:t(bgModeOf(host._settings,{}) === 'static' ? 'gs.bg_static' : 'gs.bg_daynight')})},
+        {value:'static',label:t('gs.bg_static')},{value:'daynight',label:t('gs.bg_daynight')}],
+      onChange:v => set(port,{...d,bgMode:v === 'static' || v === 'daynight' ? v : null,...(v === '' ? {bgColor:null} : {})})})})}
+    ${d.bgMode === 'static' ? colorRow({label:t('space.bg_color'),picker:colorField({hex:d.bgColor || inheritedColor,
+      picker:html`<hp-color-opacity .label=${t('space.bg_color')} hide-label flat-swatch .pickerLabels=${host._colorPickerLabels}
+        .color=${d.bgColor || inheritedColor} .opacity=${1} .showOpacity=${false}
+        @hp-color-opacity-change=${(e:CustomEvent<{color:string}>) => set(port,{...d,bgColor:e.detail.color})}></hp-color-opacity>`})})
+      : d.bgMode === null && bgModeOf(host._settings,{}) === 'static' ? callout({text:st('space.inherited_color',{v:inheritedColor}),
+        action:html`<span class="hpf-inherited-swatch" style=${`background:${inheritedColor}`} aria-hidden="true"></span>`}) : nothing}
+    ${port.openGeneral ? textLink(st('space.open_general'),() => port.openGeneral!('plan')) : nothing}
+    ${field({label:t('space.sun_rays'),control:selectControl({name:id('sun-rays'),value:d.sunRays === null ? '' : d.sunRays ? '1' : '0',ariaLabel:t('space.sun_rays'),
+      options:[{value:'',label:st('space.sun_inherit_short')},{value:'1',label:t('space.sun_on')},{value:'0',label:t('space.sun_off')}],
+      onChange:v => set(port,{...d,sunRays:v === '' ? null : v === '1'})})})}
+    ${field({label:t('space.north'),help:port.help('space.north.help'),control:selectControl({name:id('north-mode'),value:d.northDeg === null ? 'inherit' : 'custom',ariaLabel:t('space.north'),
+      options:[{value:'inherit',label:st('space.north_general',{v:inheritedNorth === null ? '—' : `${inheritedNorth}°`})},{value:'custom',label:st('space.north_custom')}],
+      onChange:v => {const northDeg = v === 'custom' ? inheritedNorth ?? 0 : null;set(port,{...d,northDeg,northDegInput:northDeg === null ? '' : String(northDeg)});}})})}
+    ${d.northDeg !== null ? html`<div class="hpf-field">
+      ${port.northControl ? port.northControl({id:id('north-deg'),value:d.northDeg,raw:d.northDegInput ?? String(d.northDeg),label:t('space.north'),invalid:!!northProblem,
+        onInput:northInput,onChange:n => set(port,{...d,northDeg:n,northDegInput:String(n)})})
+        : html`${compass(d.northDeg,t('space.north'))}${unitInput({id:id('north-deg'),value:d.northDegInput ?? String(d.northDeg),unit:'°',min:0,max:359,step:1,onInput:northInput})}`}
+      ${northProblem ? html`<p class="hpf-error" role="alert">${st(northProblem.message)}</p>` : nothing}
+    </div>` : nothing}
+    ${port.openGeneral ? textLink(st('space.open_general'),() => port.openGeneral!('sun')) : nothing}
+  `});
 }

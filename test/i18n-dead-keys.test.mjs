@@ -77,7 +77,7 @@ test('help accessibility copy is derived from every literal help consumer', () =
   // четыре «?» референса из ленивого словаря (привязка, иконка, режим
   // отображения, размер и поворот) — 34 → 38.
   // #948 removes the three redundant fill/backup/maintenance help popups.
-  assert.equal(consumers.derivedHelpAria.size, 35, 'the current settings surface has 35 statically derived help descriptions');
+  assert.equal(consumers.derivedHelpAria.size, 30, '#945 replaces five redundant space popups with permanent contextual copy');
   for (const key of consumers.derivedHelpAria) {
     assert.equal(typeof dictionary[key], 'string', `${key} must accompany its .help consumer`);
   }

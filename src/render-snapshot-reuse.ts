@@ -92,7 +92,8 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
       // (a marker's `vacuum.trail_mode` with no epoch, the stored settings); a
       // complete capture read them anew, so their content is a source too
       // (fail-open, ТЗ п.2). The card config's content is a presentation input.
-      JSON.stringify([devices, host._serverCfg?.settings]),
+      JSON.stringify([devices, host._serverCfg?.settings,
+        host._serverCfg?.spaces?.map(space => [space.id,space.settings?.show_device_battery_mode])]),
     ];
     const inputs: unknown[] = [host._config, JSON.stringify(host._config), host._virtualLights, frame?.topology,
       host._reducedMotion, host._showHidden === true];

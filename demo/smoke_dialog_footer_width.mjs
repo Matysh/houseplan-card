@@ -239,7 +239,7 @@ for (const metric of desktop.metrics) {
 // #600 Q7: диалоги настроек (`form-shell`) — 560 px по референсу; остальные
 // wide-диалоги остаются на 500 и проверяются циклом выше.
 checks.space_dialog_uses_reference_width = desktop.space.widePreset
-  && desktop.space.surfaceWidth >= 559 && desktop.space.surfaceWidth <= 561;
+  && desktop.space.surfaceWidth >= 609 && desktop.space.surfaceWidth <= 611;
 checks.space_dialog_footer_not_regressed = desktop.space.buttons === 4
   && desktop.space.oneRow && desktop.space.noHorizontalOverflow;
 

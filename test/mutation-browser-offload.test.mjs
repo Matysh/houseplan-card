@@ -110,10 +110,10 @@ test('#659 live editor templates own guides in every editor and hide settled cop
 
 test('#659 settings handlers preserve dirty, discard, inversion and field ownership', () => {
   contains('src/editors/space-form.ts',
-    'onChange: (v) => set(port, { ...d, fillMode: v }),',
+    'onChange:v => set(port,{...d,fillMode:v})',
     'const canSave = dirty && problems.length === 0 && !d.busy;',
     'if (!dirty || d.busy) { close(); return; }',
-    'checked: !d.hideDecor, onChange: (v) => set(port, { ...d, hideDecor: !v }),',
+    'checked:!d.hideDecor, onChange:v => set(port,{...d,hideDecor:!v})',
   );
   contains('src/editors/general-settings-dialog.ts',
     "? callout({ kind: 'warning', role: 'status', text: t('gs.sun_missing') })",

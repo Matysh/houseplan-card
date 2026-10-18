@@ -281,6 +281,7 @@ test('#850 AC3: an in-place edit of a marker record, the stored settings or the 
   for (const [label, edit] of [
     ['marker record', () => { device.marker.vacuum = { trail_mode: 'always' }; device.marker.display = 'value'; }],
     ['stored settings', () => { host._serverCfg.settings.show_device_battery = false; }],
+    ['space battery policy', () => { const space=host._serverCfg.spaces.find(s=>s.id===device.space); space.settings={...space.settings,show_device_battery_mode:'all'}; }],
     ['card config', () => { host._config.show_temperature = false; }],
   ]) {
     edit();

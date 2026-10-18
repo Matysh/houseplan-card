@@ -98,10 +98,11 @@ const out = await page.evaluate(async () => {
   await hp.close(markerForm, { via: 'cancel' });
 
   let spaceForm = await hp.openSpaceDialog('edit', 'f1');
-  const radios = () => [...spaceForm.querySelectorAll('input[name$="-show-lqi"]')];
-  results.localThreeModes = radios().length === 3 && radios()[0].checked;
-  results.inheritedCaptionOff = radios()[0].closest('label').textContent.includes('Off');
-  radios()[1].click();
+  const lqi = () => spaceForm.querySelector('select[name$="-show-lqi"]');
+  const chooseLqi = async value => { lqi().value = value; lqi().dispatchEvent(new Event('change', {bubbles:true})); await hp.settled(); };
+  results.localThreeModes = lqi().options.length === 3 && lqi().value === 'inherit';
+  results.inheritedCaptionOff = lqi().options[0].textContent.includes('Off');
+  await chooseLqi('on');
   await hp.settled();
   await save('space');
   await hp.setMode('view');
@@ -122,7 +123,7 @@ const out = await page.evaluate(async () => {
 
   await hp.setMode('devices');
   spaceForm = await hp.openSpaceDialog('edit', 'f1');
-  radios()[0].click();
+  await chooseLqi('inherit');
   await hp.settled();
   await save('space');
   const inherited = card._serverCfg.spaces.find(s => s.id === 'f1').settings;
@@ -138,14 +139,14 @@ const out = await page.evaluate(async () => {
   await accepted(cfg => { cfg.spaces[0].settings.show_lqi = true; });
   await hp.setMode('devices');
   spaceForm = await hp.openSpaceDialog('edit', 'f1');
-  results.oldTrueOpensInherited = radios()[0].checked;
+  results.oldTrueOpensInherited = lqi().value === 'inherit';
   await hp.input(spaceForm.querySelector('input[id$="-title"]'), 'Inherited floor');
   await save('space');
   results.unrelatedSaveStaysInherited = !Object.hasOwn(card._serverCfg.spaces[0].settings, 'show_lqi_mode')
     && !Object.hasOwn(card._serverCfg.spaces[0].settings, 'show_lqi');
   await accepted(cfg => { cfg.spaces[0].settings.show_lqi = false; });
   spaceForm = await hp.openSpaceDialog('edit', 'f1');
-  results.oldFalseOpensOff = radios()[2].checked;
+  results.oldFalseOpensOff = lqi().value === 'off';
   await hp.input(spaceForm.querySelector('input[id$="-title"]'), 'Off floor');
   await save('space');
   results.oldFalseSaveKeepsOff = card._serverCfg.spaces[0].settings.show_lqi_mode === 'off'
@@ -186,7 +187,7 @@ const out = await page.evaluate(async () => {
   const seed = structuredClone(card._serverCfg);
   await accepted(cfg => { cfg.spaces = []; cfg.markers = []; });
   const onboarding = await hp.openSpaceDialog();
-  results.onboardingStartsInherited = [...onboarding.querySelectorAll('input[name$="-show-lqi"]')][0]?.checked;
+  results.onboardingStartsInherited = onboarding.querySelector('select[name$="-show-lqi"]')?.value === 'inherit';
   await hp.close(onboarding, { via: 'cancel' });
   await hp.setServerConfig(seed);
   peer.remove(); mini.remove(); kiosk.remove();

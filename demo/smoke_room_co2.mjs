@@ -33,7 +33,7 @@ const closeDiscard = async (dialog) => {
   if (await confirm.count()) await confirm.locator('[data-hp="dialog-confirm"]').last().click();
   await dialog.waitFor({ state: 'detached' });
 };
-const openSpace = () => page.evaluate(() => window.__hpTest.openSpaceDialog('edit', 'f1').then(() => null));
+const openSpace = async () => { await page.evaluate(() => window.__hpTest.openSpaceDialog('edit', 'f1').then(() => null)); await spaceDialog.locator('[data-section-target=room-cards]').click(); };
 const openRoom = () => page.evaluate(() => window.__hpTest.openRoomEdit('r1').then(() => null));
 const pickSource = async (id) => {
   await roomDialog.locator('label:has(input[name="rsrc-co2"][value="pick"])').click();
@@ -80,7 +80,7 @@ try {
   const tile = spaceDialog.locator('#space-tile-labelCo2');
   out.tileDefaultOff = !await tile.isChecked();
   await tile.check();
-  out.spaceDraftPreview = (await spaceDialog.locator('.cpco2').textContent()).trim() === '850 ppm';
+  out.spaceDraftPreview = (await spaceDialog.locator('.cpco2').textContent()).trim() === 'CO₂ 820 ppm';
   await spaceDialog.locator('#space-show-names').uncheck();
   out.namesOffDisablesAndRetains = await tile.isDisabled() && await tile.isChecked();
   await spaceDialog.locator('#space-show-names').check();
@@ -164,8 +164,8 @@ try {
   // Large fonts/narrow settings: the actual content must not add horizontal scrolling.
   await page.setViewportSize({ width: 820, height: 900 });
   await openSpace();
-  await spaceDialog.locator('#space-card-font').fill('300');
-  await spaceDialog.locator('#space-card-font').press('Tab');
+  await spaceDialog.locator('#space-label-font').fill('300');
+  await spaceDialog.locator('#space-label-font').press('Tab');
   await settle();
   out.previewNoHorizontalScroll = await spaceDialog.evaluate(d => {
     const p = d.querySelector('.cardpreview'), body = d.querySelector('.body');

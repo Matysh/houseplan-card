@@ -35,6 +35,7 @@ export class HpDialog extends LitElement {
   static properties = {
     title: { type: String },
     subtitle: { type: String },
+    iconBadge: { type: String, attribute: 'icon-badge' },
     icon: { type: String },
     wide: { type: Boolean, reflect: true },
     alert: { type: Boolean, reflect: true },
@@ -53,7 +54,11 @@ export class HpDialog extends LitElement {
     hass: { attribute: false },
   };
 
+  iconBadge = '';
+
   static styles = css`
+    .context-icon { position:relative; display:inline-flex; flex:none; }
+    .context-icon ha-icon:last-child { position:absolute; inset:auto -4px -4px auto; --mdc-icon-size:20px; border-radius:4px; background:var(--card-background-color,var(--hp-bg,#202126)); }
     :host {
       display: contents;
       color: var(--primary-text-color, #e6e7eb);
@@ -636,7 +641,7 @@ export class HpDialog extends LitElement {
       data-hp="dialog-cancel" aria-label=${this.hass?.localize?.('ui.common.close') || 'Close'}
       @click=${this._requestClose}><ha-icon icon="mdi:close"></ha-icon></button>`;
     const title = html`<span class="title" id=${this._titleId}>
-      ${this.icon ? html`<ha-icon icon=${this.icon}></ha-icon>` : nothing}
+      ${this.icon ? this.iconBadge ? html`<span class="context-icon" aria-hidden="true"><ha-icon icon=${this.icon}></ha-icon><ha-icon icon=${this.iconBadge}></ha-icon></span>` : html`<ha-icon icon=${this.icon}></ha-icon>` : nothing}
       <span class="title-text">${this.title}${this.subtitle ? html`<span class="subtitle">${this.subtitle}</span>` : nothing}</span>
       ${this.badge ? html`<span class="badge" title=${this.badge}>${this.badge}</span>` : nothing}
     </span>`;

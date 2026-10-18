@@ -6,7 +6,7 @@ const res = await page.evaluate(async () => {
   const sr = () => c.shadowRoot || c.renderRoot;
   // добавить открывание на f1
   c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== 'f1' ? s : ({
-    ...s, openings: [{ id: 'op1', type: 'door', rx: 550, ry: 200, angle: 90, len_cm: 90 }] })) };
+    ...s, settings: { ...s.settings, show_borders: true }, openings: [{ id: 'op1', type: 'door', rx: 550, ry: 200, angle: 90, len_cm: 90 }] })) };
   c.requestUpdate(); await c.updateComplete;
   const hit = sr().querySelector('.op-hit');
   out.hasOpening = !!hit;

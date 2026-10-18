@@ -65,7 +65,7 @@ const res = await page.evaluate(async () => {
   // ---- 3) hide the openings ---------------------------------------------
   const opCount = () => n('[data-hp="opening"]');
   const before = opCount();
-  await set({ hide_openings: true });
+  await set({ show_borders: false });
   out.openingsHiddenInView = opCount() === 0 && before > 0;
   await mode('plan');
   c._tool = 'opening';
@@ -74,7 +74,7 @@ const res = await page.evaluate(async () => {
   await mode('view');
   // the opening is still an opening: it stayed in the config untouched
   out.openingKept = (sp().openings || []).length === 1;
-  await set({ hide_openings: undefined });
+  await set({ show_borders: true });
   out.openingsBackAfterOff = opCount() === before;
 
   // ---- 4) zero walls follow the borders switch ---------------------------
@@ -107,36 +107,24 @@ const res = await page.evaluate(async () => {
   // ---- 5) the dialog carries both switches round trip --------------------
   c._openSpaceDialog('edit', c._space);
   await upd();
-  // #600 §4.2: два тумблера «скрыть» стали компактными строками «Видимые слои»
-  // с логикой «включено = видно» (К2). В UI инверсия, в состоянии — нет:
-  // проверяем и подпись строки, и что при hideX=false тумблер стоит во «вкл».
-  const layerRows = [...sr().querySelectorAll('hp-dialog .hpf-compact-list .hpf-toggle')];
-  const rowText = (r) => r.querySelector('.hpf-toggle-title')?.textContent.trim() || '';
-  const decorRow = layerRows.find((r) => /декорат|decorative|dekorativ|décoratif/i.test(rowText(r)));
-  const openingsRow = layerRows.find((r) => /двери|doors|türen|portes/i.test(rowText(r)));
-  out.dialogOffersHideDecor = !!decorRow && decorRow.querySelector('input[type="checkbox"]').checked === true;
-  out.dialogOffersHideOpenings = !!openingsRow && openingsRow.querySelector('input[type="checkbox"]').checked === true;
+  const layerRows = [...sr().querySelectorAll('hp-dialog .hpf-toggle')];
+  const rowText = r => r.querySelector('.hpf-toggle-title')?.textContent.trim() || '';
+  const decorRow = layerRows.find(r => /декорат|decorative|dekorativ|décoratif/i.test(rowText(r)));
+  const borders = sr().querySelector('#space-show-borders');
+  out.dialogOffersHideDecor = !!decorRow && decorRow.querySelector('input').checked;
+  out.dialogOffersCoupledOpenings = !!borders && borders.checked && !sr().querySelector('#space-layer-openings');
   out.dialogReadsOff = c._spaceDialog.hideDecor === false && c._spaceDialog.hideOpenings === false;
-  // Клик по «видимому» слою пишет hideDecor=true — то же значение в тот же ключ (К1).
-  decorRow.querySelector('input[type="checkbox"]').click();
-  await upd();
+  decorRow.querySelector('input').click(); await upd();
   out.layerToggleWritesInvertedKey = c._spaceDialog.hideDecor === true && c._spaceDialog.hideOpenings === false;
-  c._spaceDialog = { ...c._spaceDialog, hideDecor: false };
-  await upd();
-  c._spaceDialog = { ...c._spaceDialog, hideDecor: true, hideOpenings: true };
-  await c._saveSpaceDialog();
-  await upd();
+  borders.click(); await upd();
+  await c._saveSpaceDialog(); await upd();
   out.savedBoth = sp().settings.hide_decor === true && sp().settings.hide_openings === true;
-  c._openSpaceDialog('edit', c._space);
-  await upd();
+  c._openSpaceDialog('edit',c._space); await upd();
   out.dialogReadsOn = c._spaceDialog.hideDecor === true && c._spaceDialog.hideOpenings === true;
-  c._spaceDialog = { ...c._spaceDialog, hideDecor: false, hideOpenings: false };
-  await c._saveSpaceDialog();
-  await upd();
-  // switched off = nothing is stored (undefined, which JSON drops on the way
-  // to the server), not a stored `false` — the same rule bg_color follows
-  out.clearedNotStored = sp().settings.hide_decor === undefined
-    && sp().settings.hide_openings === undefined
+  sr().querySelector('#space-layer-decor').click(); await upd();
+  sr().querySelector('#space-show-borders').click(); await upd();
+  await c._saveSpaceDialog(); await upd();
+  out.clearedNotStored = sp().settings.hide_decor === undefined && sp().settings.hide_openings === undefined
     && !('hide_decor' in JSON.parse(JSON.stringify(sp().settings)));
   c._spaceDialog = null;
   await upd();

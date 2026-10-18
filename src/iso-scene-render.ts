@@ -213,7 +213,7 @@ type IsoRaisedFootprintInput =
       kind: 'room-label';
       font: number;
       room: RoomCfg;
-      display: Pick<SpaceDisplay, 'labelTemp' | 'labelHum' | 'labelCo2' | 'labelLqi' | 'labelLight'>;
+      display: Pick<SpaceDisplay, 'labelTemp' | 'labelHum' | 'labelCo2' | 'labelLqi' | 'labelLight'> & Partial<Pick<SpaceDisplay, 'cardNameScale' | 'cardLabelScale' | 'cardFontScale'>>;
     }
   | { kind: 'opening-lock'; size: number };
 
@@ -249,7 +249,8 @@ export function isoRaisedOverlayHalfSize(input: IsoRaisedFootprintInput): PlanPo
   if (input.kind === 'room-label') {
     const font = Number.isFinite(input.font) && input.font > 0 ? input.font : 0;
     const nameScale = clampScale(input.room.settings?.name_scale);
-    const metricScale = clampScale(input.room.settings?.label_scale);
+    const metricScale = clampScale(input.room.settings?.label_scale)
+      * (input.display.cardLabelScale ?? input.display.cardFontScale ?? 1) / (input.display.cardNameScale ?? input.display.cardFontScale ?? 1);
     const nameWidth = (conservativeTextAdvance(input.room.name || '')
       + (input.room.area ? ISO_RAISED_FOOTPRINT.roomAreaLinkWidth : 0)) * nameScale;
     const nameHeight = ISO_RAISED_FOOTPRINT.roomNameLineHeight * nameScale;
@@ -852,7 +853,7 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
   for (const { room, overlayRoom } of roomRows) {
     if (!input.display.showNames || !room.name) continue;
     const pos = input.labelPositionOf(room, input.space.id);
-    const scale = input.labelScaleOf(room) * input.kioskFontScale * input.display.cardFontScale;
+    const scale = input.labelScaleOf(room) * input.kioskFontScale * (input.display.cardNameScale ?? input.display.cardFontScale ?? 1);
     const font = baseIconUnits * 0.5 * scale;
     const halfSize = isoRaisedOverlayHalfSize({
       kind: 'room-label', font, room, display: input.display,

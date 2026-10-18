@@ -20,9 +20,7 @@ const res = await page.evaluate(async () => {
     await c.updateComplete;
   };
   const toggle = async (key) => {
-    const label = [...sr().querySelectorAll('hp-dialog .hpf-toggle')]
-      .find((row) => row.querySelector('.hpf-toggle-title')?.textContent.includes(c._t(key)));
-    label.querySelector('input[type="checkbox"]').click();
+    sr().querySelector(key === 'space.show_borders' ? '[id$="-show-borders"]' : '[id$="-show-names"]').click();
     await c.updateComplete;
   };
 

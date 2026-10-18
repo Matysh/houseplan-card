@@ -417,6 +417,17 @@ section navigation and focus restoration with the existing dialog owner.
 The component is registered by settings styles, not imported into form-kit or
 the separate first-run onboarding graph.
 
+Space settings (#945) share the same form with onboarding/import through
+`SpaceFormPort`; only the editor injects section navigation, the shared north
+dial and links to General. Those links retain the mounted Space draft. Two
+space font bases resolve separately from `card_font_scale`; room multipliers
+remain independent. Battery policy is resolved from each device's own space in
+View, static cards, preview and captured snapshots; snapshot reuse includes
+that space-policy content. No UI navigation state is persisted. Validated config
+copies align `hide_openings` with resolved `show_borders` without touching wall
+geometry, opening sources or light calculations. Legacy active background colour
+becomes explicit static; choosing inheritance clears both local mode and colour.
+
 Settings redesign (#944/#948) extends the lazy form-kit with
 `settings-dialogs.styles.ts`, `settings-sections.ts`, a shared north control
 and background previews. Section selection is per host/dialog runtime state;

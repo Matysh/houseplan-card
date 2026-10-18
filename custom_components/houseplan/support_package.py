@@ -222,6 +222,8 @@ def _space_settings(value: object) -> dict[str, Any]:
             "label_lqi",
             "label_light",
             "card_font_scale",
+            "card_name_scale",
+            "card_label_scale",
             "north_deg",
             "bg_mode",
             "sun_rays",
@@ -233,6 +235,8 @@ def _space_settings(value: object) -> dict[str, Any]:
         "off",
     ):
         out["show_lqi_mode"] = value["show_lqi_mode"]
+    if isinstance(value, dict) and value.get("show_device_battery_mode") in ("inherit", "all", "low", "off"):
+        out["show_device_battery_mode"] = value["show_device_battery_mode"]
     if isinstance(value, dict) and "custom_fill" in value:
         out["custom_fill"] = _custom_fill(value.get("custom_fill"))
     return out

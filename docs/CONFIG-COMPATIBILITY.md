@@ -823,11 +823,47 @@ still have a live, enabled service target may continue to work while registry
 metadata is refreshing. Persisted actions are preserved in both cases so a
 temporarily unavailable binding recovers without a config rewrite.
 
+## Space settings compatibility (#945)
+
+`space.settings.card_name_scale` and `card_label_scale` are independent finite
+0.5–3 multipliers. Each missing/invalid value reads the old numeric
+`card_font_scale`, or 1. They replace that base rather than multiply it; room
+`name_scale` and `label_scale` multiply the corresponding base. Ordinary Space
+Save materialises both resolved new keys, including explicit 1 over a legacy 2,
+and preserves the legacy key and unknown siblings for rollback. Opening a form
+alone never writes configuration.
+
+`show_device_battery_mode` is `inherit | all | low | off`; absence inherits.
+An explicit local `all` wins over global `off`. The marker `hide_battery` flag
+can only hide the resulting system indicator; explicit values/badges retain
+their own policy. All full/static/snapshot/preview consumers use the device's
+space. Inherit Save removes only the local key. Full/space/plan-only transfer
+and the closed pseudonymous support projection retain these display settings.
+
+Validated copies resolve legacy `show_borders` by the previous default (true
+without a plan image, false with one) and set `hide_openings` to its inverse.
+Absence still represents false; an unrelated geometry write does not gain a
+redundant false key or an empty settings object. The read-side resolver applies
+the same rule immediately, before any Save.
+This intentionally replaces the formerly independent opening visibility;
+objects, sensors, wall bodies and light geometry remain unchanged. Repeating
+normalisation is idempotent. Persisting the validated copy stays in existing
+write owners; there is no background write on opening settings.
+
+An inherited static background with an active local colour becomes explicit
+local static, preserving its current appearance. An inactive local colour under
+global day/night does not become active. Selecting “As in General” clears both
+local mode and colour in the draft; untouched effective values are never stored.
+
 ## Independent Glow compatibility
 
 The historical space and room token `fill_mode: glow` remains accepted on read
 indefinitely. Runtime projects it into an ordinary inherited data fill plus an
-enabled Glow overlay; explicit `glow_enabled` / room `glow` booleans always win.
+enabled Glow overlay; explicit `glow_enabled` / room `glow` booleans win until
+their owning form is saved. #945 removes the Space suppression control; an
+ordinary Space Save writes `glow_enabled: true`, while Cancel/read preserve the
+legacy false. Room suppression is retained until its own redesigned form (#946)
+is saved. Device light role `never` remains a distinct supported control.
 A normal edit that replaces the legacy token writes the resolved boolean in the
 same operation. Optimize Plans applies the same lossless, idempotent model-v7
 migration while preserving unknown sibling settings.

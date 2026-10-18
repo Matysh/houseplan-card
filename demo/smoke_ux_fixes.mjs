@@ -102,13 +102,11 @@ const res = await page.evaluate(async () => {
   c._openSpaceDialog('edit', 'f1'); await c.updateComplete;
   // #600 §4.2: заливка — сегмент (радиогруппа `space-fill-mode`), свечение —
   // полная строка-тумблер, границы температуры — поля с единицей внутри рамки.
-  out.fillRadios = sr().querySelectorAll('input[name="space-fill-mode"]').length;
-  out.fillLabels = [...sr().querySelectorAll('input[name="space-fill-mode"]')]
-    .map((input) => input.closest('label')?.querySelector('span:last-of-type')?.textContent?.trim());
+  const fill = sr().querySelector('select[name="space-fill-mode"]');
+  out.fillRadios = fill.options.length;
+  out.fillLabels = [...fill.options].map(option => option.textContent.trim());
   out.fillHasNone = out.fillLabels.includes(c._t('fill.none'));
-  out.glowToggle = [...sr().querySelectorAll('hp-dialog .hpf-toggle')].some((label) =>
-    label.querySelector('.hpf-toggle-title')?.textContent.trim() === c._t('space.glow_enabled')
-      && !!label.querySelector('input[type="checkbox"]'));
+  out.glowToggleRemoved = !sr().querySelector('#space-glow-enabled');
   out.tempInputs = sr().querySelectorAll('#space-temp-min, #space-temp-max').length;
   const hpDialog = sr().querySelector('hp-dialog');
   out.dialogWide = !!hpDialog?.hasAttribute('wide') && !!hpDialog.querySelector('.hpf-toggle');
@@ -145,12 +143,12 @@ checkAll(res, {
   "tipTemp": 22.4,
   "tipHum": 48,
   "fillRadios": 4,
-  "fillLabels": ["Свой цвет", "Zigbee", "Свет", "Температура"],
+  "fillLabels": ["Свой цвет", "По уровню сигнала Zigbee", "Вкл/выкл свет", "По температуре"],
   "fillHasNone": false,
   "legacyNoneProjection": "custom",
   "legacyNoneAlpha": 0,
   "legacyNoneGlowBases": 0,
   "tempInputs": 2,
-  "dialogWidth": 560,
+  "dialogWidth": 602,
 });
 await finish(browser, res);

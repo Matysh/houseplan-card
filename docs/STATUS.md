@@ -50,6 +50,12 @@ ordinary writers and space transfer retain JSON. Apply/Undo share the durable
 pair journal and cache-generation fence, never overwrite existing images or
 infer orphan deletion. Help diagnostics remain a separate privacy contract.
 
+Space settings (#945) use four shared responsive sections. Independent name and
+metric scales fall back to the legacy scale without multiplying it twice;
+space battery policy overrides the global default. Room borders and opening
+symbols now share the resolved borders setting, while their geometry and light
+meaning stay unchanged. Retired space Glow suppression is cleared only on Save.
+
 General settings (#948, part of #944) adopt six sections and shared responsive,
 theme-driven form presentation. Configuration, draft/save contracts and
 independent Zigbee scan jobs remain owned by their original components.

@@ -2807,3 +2807,43 @@ def test_issue_378_value_face_marker_reference_and_id_rename_are_delta_safe():
     }]}
     future_renamed = {"markers": [{**future_old["markers"][0], "id": "new"}]}
     v.validate_marker_value_badges(future_renamed, future_old)
+
+
+@pytest.mark.parametrize("key", ["card_name_scale", "card_label_scale"])
+def test_issue_945_independent_font_keys_validate_without_changing_legacy(key):
+    for value in (0.5, 1, 1.25, 3):
+        settings = {key: value, "card_font_scale": 2, "future": {"keep": True}}
+        assert v.SPACE_SCHEMA(_space(**settings))["settings"] == settings
+    for value in (True, False, 0.49, 3.01, None, "1.25", float("inf")):
+        with pytest.raises(vol.Invalid):
+            v.SPACE_SCHEMA(_space(**{key: value}))
+
+
+@pytest.mark.parametrize("mode", ["inherit", "all", "low", "off"])
+def test_issue_945_space_battery_modes_are_lossless(mode):
+    settings = {"show_device_battery_mode": mode, "future": "keep"}
+    assert v.SPACE_SCHEMA(_space(**settings))["settings"] == settings
+    assert "show_device_battery_mode" not in v.SPACE_SCHEMA(_space())["settings"]
+
+
+def test_issue_945_display_normalization_is_idempotent_and_keeps_geometry():
+    import copy
+    for image in (None, "/plan.svg"):
+        for border in (None, True, False):
+            for opening in (None, True, False):
+                settings = {"future": {"keep": True}, "glow_enabled": False}
+                if border is not None:
+                    settings["show_borders"] = border
+                if opening is not None:
+                    settings["hide_openings"] = opening
+                original = {"settings": {}, "spaces": [{"id": "s", "plan_url": image, "rooms": [], "settings": settings}]}
+                candidate = copy.deepcopy(original)
+                result = v.normalize_space_display(candidate)
+                assert result["spaces"][0]["settings"].get("hide_openings", False) is not (border if border is not None else not image)
+                assert result["spaces"][0]["rooms"] == original["spaces"][0]["rooms"]
+                assert result["spaces"][0]["settings"]["glow_enabled"] is False
+                assert v.normalize_space_display(copy.deepcopy(result)) == result
+                assert original["spaces"][0]["settings"] == settings
+    for mode in ("static", "daynight"):
+        result = v.normalize_space_display({"settings": {"bg_mode": mode}, "spaces": [{"settings": {"bg_color": "#123456"}}]})
+        assert result["spaces"][0]["settings"].get("bg_mode") == ("static" if mode == "static" else None)

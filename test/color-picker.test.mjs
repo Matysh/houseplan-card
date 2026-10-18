@@ -77,8 +77,10 @@ test('the shared component keeps its API and contains no nested native color pic
   assert.equal((card.match(/\.showOpacity=\$\{false\}/g) || []).length, 4,
     'Glow, ripple and both background pickers stay color-only');
   // #948 separates the default light plate from the room-fill tiles.
-  assert.equal((card.match(/\.showOpacity=\$\{true\}/g) || []).length, 4,
-    'fill tiles, wall fill, default light and room color explicitly keep their existing opacity');
+  assert.equal((card.match(/\.showOpacity=\$\{true\}/g) || []).length, 3,
+    'general fill tiles, wall fill and default light explicitly retain opacity');
+  const space = readFileSync(new URL('../src/editors/space-form.ts', import.meta.url), 'utf8');
+  assert.match(space, /\.opacity=\$\{kind === 'border' \? d.roomOpacity : fill.a\}/, 'space colour helper retains alpha for room colours');
   assert.match(card, /confirm:\s*this\._t\('color_picker\.confirm'\)/);
   for (const locale of ['en', 'ru', 'de', 'fr']) {
     const messages = JSON.parse(readFileSync(new URL(`../src/i18n/${locale}.json`, import.meta.url), 'utf8'));

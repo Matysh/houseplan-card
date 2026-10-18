@@ -5548,9 +5548,9 @@ export class HouseplanCard extends LitElement {
     // #850: the design preview resolves its own draft (marker-dialog.ts); no caller passed it here.
     return this._renderDeviceSnapshot?.presentations.get(presentationSnapshotKey(d.id, showLqi))
       ?? presentDevice(this as never, this._renderPlanHass, d, showLqi, {
-        showBattery: showDeviceBatteryOf(this._settings)
+        showBattery: showDeviceBatteryOf(this._settings, this._serverCfg?.spaces.find(space => space.id === d.space)?.settings)
           && !this._model.some((space) => ledStripsByMarker(space).has(d.id)),
-        batteryLowOnly: deviceBatteryModeOf(this._settings) === 'low',
+        batteryLowOnly: deviceBatteryModeOf(this._settings, this._serverCfg?.spaces.find(space => space.id === d.space)?.settings) === 'low',
         lightDevices: this._renderDevices,
         registryHass: this._fullRegistryHass,
       });
@@ -8977,7 +8977,7 @@ export class HouseplanCard extends LitElement {
       showBorders: dialog.showBorders,
       showNames: dialog.showNames,
       hideDecor: dialog.hideDecor,
-      hideOpenings: dialog.hideOpenings,
+      hideOpenings: !dialog.showBorders,
       color: dialog.roomColor,
       opacity: dialog.roomOpacity,
       fill: dialog.fillMode,
@@ -8987,6 +8987,7 @@ export class HouseplanCard extends LitElement {
       tempMax: dialog.tempMax,
       showLqi: signalVisibilityOverrideOf(dialog.showLqiMode),
       cardFontScale: dialog.cardFontScale,
+      cardNameScale: dialog.cardNameScale, cardLabelScale: dialog.cardLabelScale,
       labelTemp: dialog.labelTemp,
       labelHum: dialog.labelHum,
       labelCo2: dialog.labelCo2,
@@ -12190,7 +12191,7 @@ export class HouseplanCard extends LitElement {
       role=${this._mode === 'view' && !separateAreaAction ? 'button' : nothing}
       tabindex=${this._mode === 'view' && !separateAreaAction ? '0' : nothing}
       aria-label=${this._mode === 'view' && !separateAreaAction ? this._t('room.fit_action', { name: r.name || '' }) : nothing}
-      style="left:${left}%;top:${top}%;color:${disp.color};opacity:${op};--rl-scale:${k};--rl-space:${disp.cardFontScale};--rl-name:${clampScale(r.settings?.name_scale)};--rl-meta:${clampScale(r.settings?.label_scale)}"
+      style="left:${left}%;top:${top}%;color:${disp.color};opacity:${op};--rl-scale:${k};--rl-space:${disp.cardNameScale};--rl-name:${clampScale(r.settings?.name_scale)};--rl-meta:${clampScale(r.settings?.label_scale) * disp.cardLabelScale / disp.cardNameScale}"
       @keydown=${this._mode === 'view' && !separateAreaAction && r.id
         ? (e: KeyboardEvent) => this._roomLabelKey(e, r.id!) : nothing}
       @pointerdown=${this._markup

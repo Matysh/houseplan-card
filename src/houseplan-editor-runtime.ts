@@ -7797,7 +7797,7 @@ public _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
     if (mode === 'edit') {
       const sp = this.host._serverCfg!.spaces.find((x: any) => x.id === spaceId);
       if (!sp) return;
-      this.host._spaceDialog = savedSpaceDialogDraft(sp, this.host._imperial);
+      this.host._spaceDialog = savedSpaceDialogDraft(sp, this.host._imperial, this.host._serverCfg?.settings?.bg_mode);
     } else {
       this.host._spaceDialog = newSpaceDialogDraft(this.host._imperial);
     }

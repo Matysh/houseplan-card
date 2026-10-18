@@ -51,20 +51,14 @@ const out = await page.evaluate(async () => {
   // --- «Пространство»: карточки и три сегмента (стены, заливка, фон) -------
   c._openSpaceDialog('edit', c._space); await c.updateComplete;
   o.spaceCardsInOrder = JSON.stringify(headings()) === JSON.stringify([
-    c._t('space.card_basics'), c._t('space.display_section'),
-    c._t('space.roomcard_section'), c._t('space.card_sun'),
+    'Plan and scale','Room appearance','Names and readings','Background and lighting',
   ]);
-  const spaceSegs = [...sr().querySelectorAll('hp-dialog .hpf-seg[role="radiogroup"]')];
-  // #600 §4.2: стиль нулевых стен, режим заливки и фон плана — три сегмента.
-  o.spaceHasThreeSegments = spaceSegs.length === 3
-    && spaceSegs.every((seg) => !!seg.getAttribute('aria-label'));
-  const zeroBefore = c._spaceDialog.zeroWallStyle;
-  const titleBefore = c._spaceDialog.title;
-  const zeroOther = [...sr().querySelectorAll('hp-dialog input[name="space-zero-wall-style"]')]
-    .find((radio) => !radio.checked);
-  zeroOther?.click(); await c.updateComplete;
-  o.zeroWallSegmentWritesItsOwnKey = c._spaceDialog.zeroWallStyle !== zeroBefore
-    && c._spaceDialog.title === titleBefore;
+  const spaceSelects=[...sr().querySelectorAll('hp-dialog select[name]')];
+  o.spaceHasNamedChoiceLists=spaceSelects.length>=6 && spaceSelects.every(select=>!!select.getAttribute('aria-label'));
+  const zeroBefore=c._spaceDialog.zeroWallStyle,titleBefore=c._spaceDialog.title;
+  const select=sr().querySelector('select[name="space-zero-wall-style"]');
+  select.value=zeroBefore==='solid'?'dashed':'solid';select.dispatchEvent(new Event('change',{bubbles:true}));await c.updateComplete;
+  o.zeroWallSelectWritesItsOwnKey=c._spaceDialog.zeroWallStyle!==zeroBefore&&c._spaceDialog.title===titleBefore;
   c._spaceDialog = null; await c.updateComplete;
 
   return o;

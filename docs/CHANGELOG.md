@@ -37,6 +37,7 @@
 
 - General settings follow the approved layout: full-width colour and radius controls,
   compass guidance beside its value, and a persistent save status ([#948](https://github.com/Matysh/houseplan-card/issues/948)).
+- Space settings now have four clear sections, independent room-name and metric sizes, and a local battery-display policy. One switch controls room borders and opening symbols; inherited background and north controls show their source ([#945](https://github.com/Matysh/houseplan-card/issues/945)).
 
 - Settings lists share an animated, keyboard-accessible menu across supported browsers, including the dialog-owned fallback when Popover is unavailable ([#948](https://github.com/Matysh/houseplan-card/issues/948)).
 - Room cards can show CO₂ in ppm, with an automatic room average or a selected

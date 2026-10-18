@@ -1272,6 +1272,8 @@ export interface SpaceDisplay {
   showLqi: boolean | null;
   /** Base font multiplier for room cards (tier 2; rooms multiply on top). */
   cardFontScale: number;
+  cardNameScale: number;
+  cardLabelScale: number;
   /** Room-card metrics under the room name (all default off). */
   labelTemp: boolean;
   labelHum: boolean;
@@ -1365,6 +1367,10 @@ export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
   const s = spaceCfg?.settings || {};
   const noPlan = !spaceCfg?.plan_url;
   const legacyGlow = s.fill_mode === 'glow';
+  const legacyFontScale = typeof s.card_font_scale === 'number' && s.card_font_scale > 0
+    ? Math.min(3, Math.max(0.5, s.card_font_scale)) : 1;
+  const fontScale = (value: unknown) => typeof value === 'number' && Number.isFinite(value) && value > 0
+    ? clampScale(value) : legacyFontScale;
   return {
     showBorders: s.show_borders ?? noPlan,
     showNames: s.show_names ?? noPlan,
@@ -1377,9 +1383,9 @@ export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
     tempMin: typeof s.temp_min === 'number' ? s.temp_min : DEFAULT_TEMP_MIN,
     tempMax: typeof s.temp_max === 'number' ? s.temp_max : DEFAULT_TEMP_MAX,
     showLqi: signalVisibilityOverrideOf(signalVisibilityModeOf(s)),
-    cardFontScale: typeof s.card_font_scale === 'number' && s.card_font_scale > 0
-      ? Math.min(3, Math.max(0.5, s.card_font_scale))
-      : 1,
+    cardFontScale: legacyFontScale,
+    cardNameScale: fontScale(s.card_name_scale),
+    cardLabelScale: fontScale(s.card_label_scale),
     labelTemp: s.label_temp === true,
     labelHum: s.label_hum === true,
     labelCo2: s.label_co2 === true,
@@ -1388,7 +1394,8 @@ export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
     bgColor: safeStoredColor(s.bg_color, null),
     // absent = false = today's rendering, so no plan changes by being read
     hideDecor: s.hide_decor === true,
-    hideOpenings: s.hide_openings === true,
+    // #945: one display choice owns borders and opening symbols; light geometry is independent.
+    hideOpenings: !(s.show_borders ?? noPlan),
   };
 }
 

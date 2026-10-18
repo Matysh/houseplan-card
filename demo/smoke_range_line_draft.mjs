@@ -78,7 +78,8 @@ await page.evaluate(async () => {
 });
 await settle();
 
-const spaceInput = page.locator('hp-dialog[data-kind="space"] #space-card-font');
+await page.locator('[data-settings-kind=space] [data-section-target=room-cards]').click();
+const spaceInput = page.locator('hp-dialog[data-kind="space"] #space-name-font');
 await spaceInput.focus();
 await spaceInput.fill('');
 await spaceInput.pressSequentially('123');
@@ -86,8 +87,8 @@ Object.assign(out, await page.evaluate(() => {
   const c = window.__card;
   const dialog = (c.shadowRoot || c.renderRoot).querySelector('hp-dialog[data-kind="space"]');
   return {
-    spacePartialDoesNotWriteDraft: c._spaceDialog.cardFontScale === 1,
-    spacePartialTextStaysVisible: dialog.querySelector('#space-card-font').value === '123',
+    spacePartialDoesNotWriteDraft: c._spaceDialog.cardNameScale === 1,
+    spacePartialTextStaysVisible: dialog.querySelector('#space-name-font').value === '123',
   };
 }));
 await spaceInput.dispatchEvent('change');
@@ -95,10 +96,10 @@ await settle();
 Object.assign(out, await page.evaluate(() => {
   const c = window.__card;
   const dialog = (c.shadowRoot || c.renderRoot).querySelector('hp-dialog[data-kind="space"]');
-  const input = dialog.querySelector('#space-card-font');
+  const input = dialog.querySelector('#space-name-font');
   const slider = input.closest('.hpf-range').querySelector('ha-slider, input[type="range"]');
   return {
-    offStepCommitSnapsTo125: c._spaceDialog.cardFontScale === 1.25,
+    offStepCommitSnapsTo125: c._spaceDialog.cardNameScale === 1.25,
     offStepCommitSynchronizesFieldAndSlider: input.value === '125' && Number(slider.value) === 125,
   };
 }));
@@ -109,7 +110,7 @@ await spaceInput.pressSequentially('222');
 await page.evaluate(() => {
   const c = window.__card;
   const dialog = (c.shadowRoot || c.renderRoot).querySelector('hp-dialog[data-kind="space"]');
-  const input = dialog.querySelector('#space-card-font');
+  const input = dialog.querySelector('#space-name-font');
   const slider = input.closest('.hpf-range').querySelector('ha-slider, input[type="range"]');
   slider.value = 175;
   slider.dispatchEvent(new Event('input', { bubbles: true }));
@@ -118,10 +119,10 @@ await settle();
 Object.assign(out, await page.evaluate(() => {
   const c = window.__card;
   const dialog = (c.shadowRoot || c.renderRoot).querySelector('hp-dialog[data-kind="space"]');
-  const input = dialog.querySelector('#space-card-font');
+  const input = dialog.querySelector('#space-name-font');
   const slider = input.closest('.hpf-range').querySelector('ha-slider, input[type="range"]');
   return {
-    sliderWinsOverPartialText: c._spaceDialog.cardFontScale === 1.75,
+    sliderWinsOverPartialText: c._spaceDialog.cardNameScale === 1.75,
     sliderSynchronizesField: input.value === '175' && Number(slider.value) === 175,
   };
 }));

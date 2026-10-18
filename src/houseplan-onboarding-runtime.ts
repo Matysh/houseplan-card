@@ -50,7 +50,7 @@ export class HouseplanOnboardingRuntime {
     if (mode === 'edit') {
       const sp = this.host._serverCfg.spaces.find((space) => space.id === spaceId);
       if (!sp) return;
-      this.host._spaceDialog = savedSpaceDialogDraft(sp, this.host._imperial);
+      this.host._spaceDialog = savedSpaceDialogDraft(sp, this.host._imperial, this.host._serverCfg?.settings?.bg_mode);
       return;
     }
     this.host._spaceDialog = newSpaceDialogDraft(this.host._imperial);

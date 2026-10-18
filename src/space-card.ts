@@ -25,7 +25,7 @@ import { normalizeDeviceDisplay, openingEntityReferences, referencedContentUrls 
 import { acquireHaRegistries, activeRegistryHass, fullRegistryHass, haRegistrySnapshot } from './ha-binding-status';
 import { createDeviceBatteryContext } from './device-battery';
 import { createDeviceSignalContext } from './device-signal';
-import { deviceBatteryModeOf, showDeviceBatteryOf } from './device-battery-settings';
+import { deviceBatteryModeOf } from './device-battery-settings';
 import { resolvedLightSources } from './devices';
 import { ledRelease, ledStripsByMarker } from './led-strip-gate';
 import {
@@ -140,6 +140,7 @@ class HouseplanSpaceCard extends LitElement {
   private _candidateDeviceSnapshot: RenderDeviceSnapshot | null = null;
   private _stagedToken = -1;
   private _capturedSeq = -1;
+  private _capturedBatteryMode = '';
   private _capturedSnapshotDevices: DevItem[] | null = null;
   private _capturedSnapshotActivity = '';
   private _capturedSnapshotVirtual = '';
@@ -524,14 +525,16 @@ class HouseplanSpaceCard extends LitElement {
       .join('|');
     const virtualFingerprint = this._snap?.virtualLights
       ? `${this._snap.virtualLights.configRev}:${this._snap.virtualLights.rev}` : '';
-    if (this._capturedSeq === this._hassSequence
+    const selectedSettings = this._snap?.config?.spaces?.find((space: {id:string}) => space.id === this._config?.space)?.settings;
+    const batteryMode = deviceBatteryModeOf(this._snap?.config?.settings,selectedSettings);
+    if (this._capturedBatteryMode === batteryMode && this._capturedSeq === this._hassSequence
         && this._capturedSnapshotDevices === this._devices
         && this._capturedSnapshotActivity === activity
         && this._capturedSnapshotVirtual === virtualFingerprint) return;
     const planHass = activeRegistryHass(this.hass, haRegistrySnapshot(this.hass));
     const registryHass = fullRegistryHass(this.hass, haRegistrySnapshot(this.hass));
-    const showBattery = showDeviceBatteryOf(this._snap?.config?.settings);
-    const batteryLowOnly = deviceBatteryModeOf(this._snap?.config?.settings) === 'low';
+    const showBattery = batteryMode !== 'off';
+    const batteryLowOnly = batteryMode === 'low';
     const batteryContext = showBattery ? createDeviceBatteryContext(planHass, registryHass) : undefined;
     const signalContext = createDeviceSignalContext(planHass, registryHass);
     const presentations = new Map<string, ReturnType<typeof resolveDevicePresentation>>();
@@ -589,6 +592,7 @@ class HouseplanSpaceCard extends LitElement {
       devices: this._devices, presentations, entityIds, deviceIds, areaIds, showBattery, batteryContext, signalContext,
       geometry: this._snapshotGeometry(),
     });
+    this._capturedBatteryMode = batteryMode;
     this._capturedSeq = this._hassSequence;
     this._capturedSnapshotDevices = this._devices;
     this._capturedSnapshotActivity = activity;

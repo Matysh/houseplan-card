@@ -1,241 +1,116 @@
-// #600, серия 1: диалог «Пространство» по референсу
-// docs/design/600-settings-dialogs/ (§4 SPEC.md).
-//
-// Фокусный свидетель формы: состав карточек и отсутствие старой разметки (AC1),
-// оболочка и три полосы экранов (AC2), запись каждого нового контрола в тот же
-// ключ (AC3/К1), Save только при изменениях и вопрос при закрытии (AC6/К10),
-// цели и семантика (AC9/К7). Существующие смоки записи полей продолжают жить
-// своей жизнью — здесь проверяется то, чего до #600 не проверял никто.
+// #945: approved space settings, real controls and unchanged persistence boundary.
 import { launch, checkAll, finish } from './serve.mjs';
-
-const { page, browser } = await launch({ width: 1280, height: 900 });
-
-const out = await page.evaluate(async () => {
-  const o = {};
-  const c = window.__card;
-  const sr = () => c.shadowRoot || c.renderRoot;
-  const upd = async () => { c.requestUpdate(); await c.updateComplete; await new Promise((r) => setTimeout(r, 30)); };
-  const dlg = () => sr().querySelector('hp-dialog[data-kind="space"]');
-  const q = (sel) => dlg()?.querySelector(sel);
-  const qa = (sel) => [...(dlg()?.querySelectorAll(sel) || [])];
-  const saveBtn = () => q('[data-hp="dialog-confirm"]');
-  const statusText = () => q('.hpf-status')?.textContent.trim() || '';
-  const input = (el, value) => { el.value = value; el.dispatchEvent(new Event('input', { bubbles: true })); };
-
-  c._setMode('view');
-  c._openSpaceDialog('edit', c._space);
-  await upd();
-  const d0 = c._spaceDialog;
-
-  // --- AC1: карточки по §4.2, старой разметки нет ---------------------------
-  o.fourCardsInOrder = JSON.stringify(qa('.hpf-card').map((card) => card.dataset.card))
-    === JSON.stringify(['basics', 'appearance', 'room-cards', 'sun']);
-  o.everyCardHasHeadingAndBody = qa('.hpf-card').every((card) =>
-    card.querySelector(':scope > .hpf-head h3')?.textContent.trim() && card.querySelector(':scope > .hpf-body'));
-  o.noLegacyMarkup = qa('.rhint, .srcrow, .dispsection, fieldset, .helpfieldlabel, .colorrow.gsrow').length === 0;
-  o.badgeShowsSpaceTitle = dlg().badge === d0.title.trim() && !!dlg().shadowRoot.querySelector('.badge');
-  o.previewKeptInsideCard = !!q('.hpf-card[data-card="room-cards"] .hpf-preview');
-  o.subsectionsPresent = qa('.hpf-sub h4').length === 3; // Floor plan · Room fill · Visible layers
-  o.redundantBasicsHintsRemoved = !q('#space-title')?.closest('.hpf-field')?.querySelector('.hpf-hint')
-    && !q('#space-cell-cm')?.closest('.hpf-field')?.querySelector('.hpf-hint');
-
-  // --- AC2: оболочка — 560, один скроллер --------------------------------
-  const shell = dlg().shadowRoot;
-  const surface = shell.querySelector('.surface');
-  const content = shell.querySelector('.content');
-  const body = q('.body');
-  o.shellIs560 = dlg().hasAttribute('form-shell') && Math.round(surface.getBoundingClientRect().width) === 560;
-  o.singleScroller = getComputedStyle(content).overflowY === 'auto'
-    && getComputedStyle(body).overflowY === 'visible'
-    && content.scrollHeight > content.clientHeight;
-  o.bodyHasNoOwnMaxHeight = getComputedStyle(body).maxHeight === 'none';
-
-  // --- AC9: цели ≥ 44, семантика ------------------------------------------
-  const toggles = qa('.hpf-toggle > input[type="checkbox"]');
-  // #876: system LQI is now an inherited three-way choice, not a sixth switch.
-  o.togglesArePresent = toggles.length >= 5 && qa('input[name="space-show-lqi"]').length === 3;
-  o.toggleTargetsAre44 = toggles.every((i) => { const b = i.getBoundingClientRect(); return b.width >= 44 && b.height >= 44; });
-  o.switchPartsAreGeometricallyCentered = toggles.every((input) => {
-    const track = getComputedStyle(input, '::before');
-    const knob = getComputedStyle(input, '::after');
-    const center = input.getBoundingClientRect().height / 2;
-    return Math.abs(parseFloat(track.top) + parseFloat(track.height) / 2 - center) < 0.6
-      && Math.abs(parseFloat(knob.top) - center) < 0.6;
+import {mkdirSync} from 'node:fs';
+const {page,browser} = await launch({width:1280,height:900});
+page.setDefaultTimeout(12000);
+const out = {}, card=page.locator('houseplan-card');
+const dialog=card.locator('hp-dialog[data-kind="space"][settings-layout]');
+const tick=()=>page.evaluate(()=>window.__hpTest.settled());
+const open=()=>page.evaluate(()=>window.__hpTest.openSpaceDialog('edit','f1').then(()=>null));
+const section=async name=>{await dialog.locator(`[data-section-target="${name}"]`).click();await tick();};
+const select=async (name,value)=>{await dialog.locator(`select[name="${name}"]`).selectOption(value);await tick();};
+const read=()=>page.evaluate(()=>structuredClone(window.__card._spaceDialog));
+const saved=()=>page.evaluate(()=>structuredClone(window.__card._serverCfg.spaces.find(s=>s.id==='f1')));
+try {
+  await open();
+  const original=await saved(), initial=await read();
+  out.fourSections=await dialog.locator('.hpf-settings-pane').count()===4;
+  out.cleanSaveDisabled=await dialog.locator('[data-hp="dialog-confirm"]').isDisabled();
+  await dialog.locator('#space-cell-cm').fill('');await tick();
+  out.rawInvalidBlocksSave=(await read()).cellCmInput==='' && await dialog.locator('[data-hp="dialog-confirm"]').isDisabled();
+  await dialog.locator('#space-cell-cm').fill(initial.cellCmInput);await tick();
+  await dialog.locator('#space-title').fill('Space draft 945');await tick();
+  await section('appearance');
+  const beforeBorders=(await read()).showBorders;
+  await dialog.locator('#space-show-borders').click();await tick();
+  const changed=await read();
+  out.boundariesOwnOpenings=changed.showBorders===!beforeBorders && changed.hideOpenings===beforeBorders;
+  await dialog.locator('#space-show-borders').click();await tick();
+  const walls=(await read()).zeroWallStyle;
+  await select('space-fill-mode','temp');
+  out.fillKeepsWallStyle=(await read()).zeroWallStyle===walls;
+  await dialog.locator('#space-temp-min').fill('');await dialog.locator('#space-temp-max').fill('');await tick();
+  out.twoInvalidTemperatures=await dialog.locator('.hpf-status .hpf-link').textContent().then(t=>t.includes('2')) && await dialog.locator('[data-hp="dialog-confirm"]').isDisabled();
+  await section('basics');
+  await dialog.locator('.hpf-status .hpf-link').click();await tick();
+  out.validationRevealsHiddenPane=await dialog.locator('[data-settings-section="appearance"]').isVisible() && await dialog.locator('#space-temp-min').evaluate(el=>el.getRootNode().activeElement===el);
+  await dialog.locator('#space-temp-min').fill('20');await dialog.locator('#space-temp-max').fill('24');await tick();
+  await section('room-cards');
+  await dialog.locator('#space-show-names').check();await tick();
+  await dialog.locator('#space-name-font').fill('150');await dialog.locator('#space-name-font').press('Tab');await tick();
+  await dialog.locator('#space-label-font').fill('75');await dialog.locator('#space-label-font').press('Tab');await tick();
+  const fonts=await read();
+  out.independentFonts=fonts.cardNameScale===1.5 && fonts.cardLabelScale===.75;
+  out.previewIndependentFonts=await dialog.locator('.cpname').evaluate(el=>parseFloat(getComputedStyle(el).fontSize)===24);
+  await select('space-battery-mode','all');await select('space-show-lqi','off');
+  const battery=await read();out.adjacentBatteryAndSignal=battery.deviceBatteryMode==='all'&&battery.showLqiMode==='off';
+  const checkbox=dialog.locator('#space-tile-labelCo2');await checkbox.check();await tick();
+  out.co2PreviewIsText=await dialog.locator('.cpco2').textContent().then(t=>t.includes('CO₂')) && await dialog.locator('.cpco2 ha-icon').count()===0;
+  await section('sun');
+  await select('space-bg-mode','');
+  out.inheritedBackgroundReadOnly=await dialog.locator('[data-card="sun"] hp-color-opacity').count()===0;
+  await select('space-north-mode','custom');
+  await dialog.locator('#space-north-deg').fill('400');await tick();
+  out.invalidNorthBlocksSave=(await read()).northDegInput==='400' && await dialog.locator('[data-hp="dialog-confirm"]').isDisabled();
+  await dialog.locator('#space-north-deg').fill('32');await tick();
+  out.sharedCompass=await dialog.locator('.hpf-north-dial g').getAttribute('transform')==='rotate(32 74 74)';
+  await select('space-sun-rays','0');out.sunFalse=(await read()).sunRays===false;
+  await dialog.locator('[data-card="sun"] .hpf-link').last().click();await tick();
+  const general=card.locator('hp-dialog[data-kind="settings"][settings-layout]');
+  out.generalOpensAtSource=await general.locator('[data-settings-section="sun"]').isVisible();
+  await general.locator('.btn[data-hp="dialog-cancel"]').click();await tick();
+  out.returnKeepsSpaceDraft=(await read()).title==='Space draft 945' && await dialog.locator('[data-settings-section="sun"]').isVisible();
+  out.noWriteWhileEditing=JSON.stringify(await saved())===JSON.stringify(original);
+  await dialog.locator('.btn[data-hp="dialog-cancel"]').click();
+  const confirm=card.locator('hp-confirm hp-dialog');await confirm.locator('.btn[data-hp="dialog-cancel"]').click();await tick();
+  out.keepEditingPreservesDraft=(await read()).northDeg===32;
+  await dialog.locator('[data-hp="dialog-confirm"]').click();await page.evaluate(()=>window.__hpTest.waitForWrites());
+  const result=await saved();
+  out.savedActualKeys=result.settings.card_name_scale===1.5 && result.settings.card_label_scale===.75 && result.settings.show_device_battery_mode==='all'
+    && result.settings.show_lqi_mode==='off' && result.settings.north_deg===32 && result.settings.sun_rays===false && result.settings.temp_min===20 && result.settings.temp_max===24;
+  await open();
+  out.reopensSavedValues=(await read()).cardLabelScale===.75 && (await read()).deviceBatteryMode==='all';
+  await section('basics');
+  await dialog.locator('#space-title').fill('Discard this');await tick();
+  await dialog.locator('.btn[data-hp="dialog-cancel"]').click();await confirm.locator('[data-hp="dialog-confirm"]').click();await tick();
+  out.discardDidNotWrite=(await saved()).title==='Space draft 945';
+  await open();
+  for (const width of [320,390,1280]) {
+    await page.setViewportSize({width,height:800});
+    const fit=await page.evaluate(async()=>{
+      const c=window.__card,d=c.shadowRoot.querySelector('hp-dialog[data-kind="space"][settings-layout]');
+      const mobile=d.querySelector('.hpf-settings-mobile select');let fits=true;
+      for(const option of mobile.options){
+        mobile.value=option.value;mobile.dispatchEvent(new Event('change',{bubbles:true}));await c.updateComplete;await new Promise(requestAnimationFrame);
+        for(const el of d.querySelectorAll('.hpf-settings-pane:not([hidden]) input,.hpf-settings-pane:not([hidden]) hp-settings-select,.hpf-settings-pane:not([hidden]) button')){
+          const r=el.getBoundingClientRect();if(r.width>1&&(r.left<0||r.right>innerWidth+1))fits=false;
+        }
+      }
+      const f=d.querySelector('[slot="footer"]').getBoundingClientRect();
+      const cancel=d.querySelector('[data-hp="dialog-cancel"]');
+      return fits&&f.left>=0&&f.right<=innerWidth+1&&f.bottom<=innerHeight+1&&getComputedStyle(cancel).cursor==='pointer';
+    });
+    out[`fits${width}`]=fit;
+  }
+  out.liveThemes=await page.evaluate(async()=>{
+    const c=window.__card,d=c.shadowRoot.querySelector('hp-dialog[data-kind="space"]'),colors=[];
+    for(const [paper,text,accent] of [['#ffffff','#17212b','#007d93'],['#17212b','#ffffff','#5bcce6'],['#f5f0ff','#231235','#a32191']]){
+      c.style.setProperty('--card-background-color',paper);c.style.setProperty('--primary-text-color',text);c.style.setProperty('--primary-color',accent);
+      await new Promise(requestAnimationFrame);colors.push(getComputedStyle(d.querySelector('.hpf-settings-pane:not([hidden]) .hpf-label')).color);
+    }
+    return new Set(colors).size===3;
   });
-  o.compactLayerSwitchesAlignWithTheirRows = qa('.hpf-compact-list .hpf-toggle').every((row) => {
-    const inputBox = row.querySelector('input').getBoundingClientRect();
-    const titleBox = row.querySelector('.hpf-toggle-title').getBoundingClientRect();
-    return Math.abs((inputBox.top + inputBox.bottom - titleBox.top - titleBox.bottom) / 2) <= 1;
-  });
-  o.segmentsAreRadiogroups = qa('.hpf-seg').length === 3 && qa('.hpf-seg').every((s) => s.getAttribute('role') === 'radiogroup' && s.getAttribute('aria-label'));
-  o.tilesAreAGroupOfCheckboxes = q('.hpf-tiles')?.getAttribute('role') === 'group' && qa('.hpf-tiles input[type="checkbox"]').length === 5;
-  o.segmentLabelsAre38 = qa('.hpf-seg label').every((l) => l.getBoundingClientRect().height >= 38);
-
-  // --- К10: Save только при изменениях -------------------------------------
-  o.saveDisabledWhenClean = saveBtn().disabled === true && statusText() === '';
-  const cellBeforeInvalid = c._spaceDialog.cellCm;
-  input(q('#space-cell-cm'), ''); await upd();
-  o.invalidScaleKeepsRawAndBlocksOldValue = c._spaceDialog.cellCm === cellBeforeInvalid
-    && c._spaceDialog.cellCmInput === '' && q('#space-cell-cm').value === ''
-    && saveBtn().disabled === true && q('#space-cell-cm').getAttribute('aria-invalid') === 'true';
-  input(q('#space-cell-cm'), d0.cellCmInput); await upd();
-  q('#space-show-borders').click(); await upd();
-  o.toggleWritesShowBorders = c._spaceDialog.showBorders === !d0.showBorders && c._spaceDialog.showNames === d0.showNames;
-  // #602: доступная Save уже выражает dirty-state; дублирующей строки нет.
-  o.saveEnabledWhenDirtyWithoutDuplicateStatus = saveBtn().disabled === false && statusText() === '';
-  q('#space-show-borders').click(); await upd();
-  o.saveDisabledAgainWhenReverted = saveBtn().disabled === true && statusText() === '';
-
-  // --- К1: каждый новый контрол пишет в свой ключ ---------------------------
-  const seg = (name, value) => qa(`input[name="${name}"]`).find((r) => r.closest('label').textContent.includes(value)) || null;
-  const fillBefore = c._spaceDialog.fillMode;
-  const tempRadio = qa('input[name="space-fill-mode"]').find((r) => !r.checked);
-  tempRadio.click(); await upd();
-  o.fillSegmentWritesFillMode = c._spaceDialog.fillMode !== fillBefore && c._spaceDialog.zeroWallStyle === d0.zeroWallStyle;
-  c._spaceDialog = { ...c._spaceDialog, fillMode: 'temp' }; await upd();
-  o.tempRangeAppearsForTemp = !!q('#space-temp-min') && !!q('#space-temp-max');
-  const tempMinBeforeInvalid = c._spaceDialog.tempMin;
-  const tempMaxBeforeInvalid = c._spaceDialog.tempMax;
-  input(q('#space-temp-min'), ''); await upd();
-  input(q('#space-temp-max'), ''); await upd();
-  o.twoInvalidTempsKeepRawAndCountSeparately = c._spaceDialog.tempMin === tempMinBeforeInvalid
-    && c._spaceDialog.tempMax === tempMaxBeforeInvalid
-    && c._spaceDialog.tempMinInput === '' && c._spaceDialog.tempMaxInput === ''
-    && /2/.test(q('.hpf-status .hpf-link').textContent)
-    && q('#space-temp-min').getAttribute('aria-invalid') === 'true'
-    && q('#space-temp-max').getAttribute('aria-invalid') === 'true';
-  q('.hpf-status .hpf-link').click(); await upd();
-  o.reviewLinkFocusesFirstInvalidTemp = (sr().activeElement ?? document.activeElement)?.id === 'space-temp-min';
-  input(q('#space-temp-min'), String(d0.tempMin)); await upd();
-  input(q('#space-temp-max'), '10'); await upd();
-  o.tempRangeErrorBlocksSave = c._spaceDialog.tempMax === 10 && c._spaceDialog.tempMin > 10
-    && saveBtn().disabled === true && !!q('.hpf-status .hpf-link')
-    && /1/.test(q('.hpf-status .hpf-link').textContent)
-    && q('#space-temp-max').getAttribute('aria-invalid') === 'true';
-  q('.hpf-status .hpf-link').click(); await upd();
-  o.reviewLinkFocusesFirstProblem = (sr().activeElement ?? document.activeElement)?.id === 'space-temp-max';
-  c._spaceDialog = {
-    ...c._spaceDialog, fillMode: d0.fillMode, tempMin: d0.tempMin, tempMax: d0.tempMax,
-    tempMinInput: d0.tempMinInput, tempMaxInput: d0.tempMaxInput,
-  }; await upd();
-
-  const tile = q('#space-tile-labelTemp');
-  const namesOn = c._spaceDialog.showNames;
-  if (!namesOn) { q('#space-show-names').click(); await upd(); }
-  q('#space-tile-labelTemp').click(); await upd();
-  o.tileWritesLabelTemp = c._spaceDialog.labelTemp === !d0.labelTemp && c._spaceDialog.labelHum === d0.labelHum;
-  q('#space-show-names').click(); await upd();
-  o.tilesDisabledWithoutNames = c._spaceDialog.showNames === false
-    && qa('.hpf-tiles input').every((i) => i.disabled) && !!q('.hpf-callout .hpf-link');
-  q('.hpf-callout .hpf-link').click(); await upd();
-  o.calloutLinkTurnsNamesOn = c._spaceDialog.showNames === true;
-  void tile;
-
-  const opacityInput = q('.hpf-card[data-card="appearance"] .hpf-colorrow .hpf-opacity input');
-  opacityInput.value = '100'; opacityInput.dispatchEvent(new Event('input', { bubbles: true })); await upd();
-  o.opacity100FitsTheNumberField = opacityInput.value === '100' && opacityInput.clientWidth >= 60;
-  opacityInput.value = '25'; opacityInput.dispatchEvent(new Event('input', { bubbles: true })); await upd();
-  o.opacityNumberWritesRoomOpacity = Math.abs(c._spaceDialog.roomOpacity - 0.25) < 1e-9 && c._spaceDialog.roomColor === d0.roomColor;
-  o.hexIsPrinted = q('.hpf-card[data-card="appearance"] .hpf-colorrow .hpf-hex')?.textContent === d0.roomColor.toUpperCase();
-  o.noNativeColorInputs = qa('input[type="color"]').length === 0;
-
-  const northSelect = q('#space-north-mode');
-  northSelect.value = 'custom'; northSelect.dispatchEvent(new Event('change', { bubbles: true })); await upd();
-  o.northCustomShowsDegrees = c._spaceDialog.northDeg !== null && !!q('#space-north-deg') && !!q('.hpf-compass');
-  const northBeforeInvalid = c._spaceDialog.northDeg;
-  input(q('#space-north-deg'), '400'); await upd();
-  o.northOutOfRangeIsAProblem = c._spaceDialog.northDeg === northBeforeInvalid
-    && c._spaceDialog.northDegInput === '400' && q('#space-north-deg').value === '400'
-    && saveBtn().disabled === true && q('#space-north-deg').getAttribute('aria-invalid') === 'true';
-  input(q('#space-north-deg'), '90'); await upd();
-  o.northWritesDegrees = c._spaceDialog.northDeg === 90
-    && q('.hpf-compass svg').style.transform === 'rotate(90deg)';
-  const sunOff = qa('input[name="space-sun-rays"]').find((r) => r.closest('label').textContent.includes(c._t('space.sun_off')));
-  sunOff.click(); await upd();
-  o.sunRadioWritesFalse = c._spaceDialog.sunRays === false;
-
-  // Reset to 100% disabled at 100, enabled after change, restores 1
-  const resetLink = [...qa('.hpf-headline .hpf-link')][0];
-  const cardFontRange = q('#space-card-font').closest('.hpf-range');
-  const sliderBox = cardFontRange.querySelector('ha-slider, input[type="range"]').getBoundingClientRect();
-  const endsBox = cardFontRange.nextElementSibling.querySelector('.hpf-range-ends-track').getBoundingClientRect();
-  o.fontScaleEndsMatchTheSlider = Math.abs(sliderBox.left - endsBox.left) <= 1
-    && Math.abs(sliderBox.right - endsBox.right) <= 1
-    && endsBox.bottom <= cardFontRange.nextElementSibling.getBoundingClientRect().bottom + 1;
-  o.resetDisabledAt100 = resetLink.disabled === true;
-  const cardFontInput = q('#space-card-font');
-  cardFontInput.value = '150';
-  cardFontInput.dispatchEvent(new Event('input', { bubbles: true }));
-  o.fontDraftWaitsForChange = c._spaceDialog.cardFontScale === 1;
-  cardFontInput.dispatchEvent(new Event('change', { bubbles: true })); await upd();
-  o.fontNumberCommitsThroughDom = c._spaceDialog.cardFontScale === 1.5
-    && [...qa('.hpf-headline .hpf-link')][0].disabled === false;
-  [...qa('.hpf-headline .hpf-link')][0].click(); await upd();
-  o.resetRestores100 = c._spaceDialog.cardFontScale === 1;
-
-  // --- К10: закрытие с изменениями спрашивает -------------------------------
-  o.stillDirty = saveBtn().disabled === false;
-  dlg().dispatchEvent(new CustomEvent('hp-close', { bubbles: true, composed: true }));
-  await upd(); await new Promise((r) => setTimeout(r, 60));
-  const confirm = () => sr().querySelector('hp-confirm hp-dialog');
-  o.discardAsksFirst = !!confirm() && !!dlg();
-  const confirmFooter = confirm()?.querySelector('.danger-confirm-footer');
-  const confirmButtons = [...(confirmFooter?.querySelectorAll('button') || [])].map((button) => button.getBoundingClientRect());
-  o.discardActionsShareOneRow = confirmButtons.length === 2
-    && Math.abs(confirmButtons[0].top - confirmButtons[1].top) <= 1
-    && confirmFooter.scrollWidth <= confirmFooter.clientWidth + 1;
-  confirm()?.querySelector('[data-hp="dialog-cancel"]')?.click(); await upd(); await new Promise((r) => setTimeout(r, 60));
-  o.keepEditingKeepsDialog = !!dlg() && !confirm() && c._spaceDialog !== null;
-  dlg().dispatchEvent(new CustomEvent('hp-close', { bubbles: true, composed: true }));
-  await upd(); await new Promise((r) => setTimeout(r, 60));
-  confirm()?.querySelector('[data-hp="dialog-confirm"]')?.click(); await upd(); await new Promise((r) => setTimeout(r, 60));
-  o.discardCloses = !dlg() && c._spaceDialog === null;
-
-  // Без изменений — закрывается сразу, без вопроса.
-  c._openSpaceDialog('edit', c._space); await upd();
-  dlg().dispatchEvent(new CustomEvent('hp-close', { bubbles: true, composed: true }));
-  await upd(); await new Promise((r) => setTimeout(r, 60));
-  o.cleanClosesImmediately = !dlg() && !confirm() && c._spaceDialog === null;
-
-  // Create-режим: та же форма, без Copy/Delete, Save заблокирован до имени
-  c._openSpaceDialog('create'); await upd();
-  o.createHasNoCopyDelete = !!dlg() && !q('.dialog-action-danger') && qa('.hpf-card').length === 4;
-  o.createSaveBlockedUntilTitle = saveBtn().disabled === true;
-  c._spaceDialog = null; await upd();
-  return o;
-});
-
-// --- AC2: три полосы экранов ------------------------------------------------
-const bands = {};
-for (const width of [320, 390, 480, 560, 768, 1280, 1920]) {
-  await page.setViewportSize({ width, height: 900 });
-  const m = await page.evaluate(async (w) => {
-    const c = window.__card;
-    const sr = () => c.shadowRoot || c.renderRoot;
-    c._spaceDialog = null; c.requestUpdate(); await c.updateComplete;
-    c._openSpaceDialog('edit', c._space); c.requestUpdate(); await c.updateComplete;
-    await new Promise((r) => setTimeout(r, 60));
-    const dlg = sr().querySelector('hp-dialog[data-kind="space"]');
-    const surface = dlg.shadowRoot.querySelector('.surface');
-    const content = dlg.shadowRoot.querySelector('.content');
-    const body = dlg.querySelector('.body');
-    const sw = Math.round(surface.getBoundingClientRect().width);
-    const expected = w >= 600 ? sw === 560 : w > 480 ? sw <= Math.round(w * 0.94) + 1 : sw === w;
-    const noHorizontal = content.scrollWidth <= content.clientWidth + 1 && body.scrollWidth <= body.clientWidth + 1;
-    const tiles = getComputedStyle(dlg.querySelector('.hpf-tiles')).gridTemplateColumns.split(' ').length;
-    const gridCols = getComputedStyle(dlg.querySelector('.hpf-grid')).gridTemplateColumns.split(' ').length;
-    const footer = dlg.querySelector('.dialog-action-footer');
-    const footerVisible = footer.getBoundingClientRect().bottom <= innerHeight + 1;
-    c._spaceDialog = null; c.requestUpdate(); await c.updateComplete;
-    return { sw, expected, noHorizontal, tiles, gridCols, footerVisible };
-  }, width);
-  bands[`w${width}_surfaceWidth`] = m.expected;
-  bands[`w${width}_noHorizontalScroll`] = m.noHorizontal;
-  bands[`w${width}_footerVisible`] = m.footerVisible;
-  bands[`w${width}_tilesColumns`] = m.tiles === (width <= 480 ? 2 : 4);
-  bands[`w${width}_basicsColumns`] = m.gridCols === (width <= 480 ? 1 : 2);
-}
-
-checkAll(out);
-checkAll(bands);
-await finish(browser, { ...out, ...bands });
+  mkdirSync('artifacts/settings-mobile',{recursive:true});
+  await page.setViewportSize({width:390,height:844});
+  for(const theme of ['light','dark']){
+    await page.evaluate(theme=>{
+      const c=window.__card;
+      for(const [key,value] of Object.entries(theme==='light'?{'--card-background-color':'#fff','--secondary-background-color':'#eceeef','--primary-text-color':'#17212b','--secondary-text-color':'#586674','--primary-color':'#007d93'}:{'--card-background-color':'#17212b','--secondary-background-color':'#252e39','--primary-text-color':'#fff','--secondary-text-color':'#b5c0cc','--primary-color':'#5bcce6'}))c.style.setProperty(key,value);
+    },theme);
+    for(const pane of ['basics','appearance','room-cards','sun']){
+      await dialog.locator('.hpf-settings-mobile select').selectOption(pane);await tick();
+      await page.screenshot({path:`artifacts/settings-mobile/space-${pane}-${theme}.png`});
+    }
+  }
+} catch(error){console.error(error);out.completed=false;}
+checkAll(out);await finish(browser,out);

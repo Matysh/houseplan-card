@@ -114,8 +114,7 @@ export function captureRenderDeviceSnapshot(
   const planHass = window?.hass || host._planHass;
   const registryHass = window?.registry || host._fullRegistryHass;
   const presentations = new Map<string, ResolvedDevicePresentation>();
-  const showBattery = showDeviceBatteryOf(host._settings);
-  const batteryLowOnly = deviceBatteryModeOf(host._settings) === 'low';
+  const showBattery = showDeviceBatteryOf(host._settings) || (host._serverCfg?.spaces || []).some(space => showDeviceBatteryOf(host._settings, space.settings));
   const batteryContext = showBattery ? createDeviceBatteryContext(planHass, registryHass) : undefined;
   const signalContext = createDeviceSignalContext(planHass, registryHass);
   const ledMarkerIds = showBattery
@@ -166,10 +165,12 @@ export function captureRenderDeviceSnapshot(
     }
   }
   for (const device of devices) {
+    const spaceSettings = host._serverCfg?.spaces?.find(space => space.id === device.space)?.settings;
+    const mode = deviceBatteryModeOf(host._settings, spaceSettings);
     for (const showLqi of [false, true]) {
       const build = (): ResolvedDevicePresentation => presentDevice(host, planHass, device, showLqi, {
-        showBattery: showBattery && !ledMarkerIds.has(device.id),
-        batteryLowOnly,
+        showBattery: mode !== 'off' && !ledMarkerIds.has(device.id),
+        batteryLowOnly: mode === 'low',
         batteryContext,
         signalContext,
         lightDevices: devices,

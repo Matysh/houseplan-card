@@ -1345,6 +1345,18 @@
       "required": false,
       "type": "float"
     },
+    "config.spaces[].settings.card_label_scale": {
+      "max": 3,
+      "min": 0.5,
+      "opaque": "<function _finite_number_or_none>",
+      "required": false
+    },
+    "config.spaces[].settings.card_name_scale": {
+      "max": 3,
+      "min": 0.5,
+      "opaque": "<function _finite_number_or_none>",
+      "required": false
+    },
     "config.spaces[].settings.custom_fill": {
       "nullable": true,
       "required": false
@@ -1420,6 +1432,15 @@
     "config.spaces[].settings.show_borders": {
       "required": false,
       "type": "bool"
+    },
+    "config.spaces[].settings.show_device_battery_mode": {
+      "enum": [
+        "all",
+        "inherit",
+        "low",
+        "off"
+      ],
+      "required": false
     },
     "config.spaces[].settings.show_lqi": {
       "required": false,

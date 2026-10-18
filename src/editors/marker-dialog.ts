@@ -91,9 +91,9 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           liveStates: this.host._config?.live_states !== false,
           showTemperature: this.host._config?.show_temperature !== false,
           showSignal: effectiveShowLqi(this.host._settings, previewSpaceDisplay?.showLqi, this.host._config?.show_signal),
-          showBattery: showDeviceBatteryOf(this.host._settings)
+          showBattery: showDeviceBatteryOf(this.host._settings, this.host._serverCfg?.spaces.find(space => space.id === previewDevice.space)?.settings)
             && !this.host._model.some((space) => ledStripsByMarker(space).has(previewDevice.id)),
-          batteryLowOnly: deviceBatteryModeOf(this.host._settings) === 'low',
+          batteryLowOnly: deviceBatteryModeOf(this.host._settings, this.host._serverCfg?.spaces.find(space => space.id === previewDevice.space)?.settings) === 'low',
           designPreview: true,
           activityRuntime: this.host._activityRt.get(previewDevice.id),
           lightDevices: previewLightDevices,
