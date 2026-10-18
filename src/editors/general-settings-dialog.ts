@@ -252,9 +252,6 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           ${host._canEdit ? html`
 
             <div class="hpf-actions">
-              <button class="btn" @click=${() => leaveFor(() => this._openBackupExport())}>
-                <ha-icon icon="mdi:download"></ha-icon>${st('backup.export_open')}
-              </button>
               <span class="backupupload">
                 <button class="btn" type="button" @click=${(e: Event) =>
                   ((e.currentTarget as HTMLElement).nextElementSibling as HTMLInputElement | null)?.click()}>
@@ -266,6 +263,9 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
                   if (file && host._canImportBackup) void leaveFor(() => this._importBackupFile(file));
                 }} />
               </span>
+              <button class="btn" data-backup-action="export" @click=${() => leaveFor(() => this._openBackupExport())}>
+                <ha-icon icon="mdi:download"></ha-icon>${st('backup.export_open')}
+              </button>
               ${undo.fullImport ? html`
                 <button class="btn" @click=${() => this._undoPlanOptimization()} ?disabled=${host._optimizeUndoBusy}>
                   <ha-icon icon="mdi:undo-variant"></ha-icon>${st('backup.undo_import')}
@@ -274,14 +274,16 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
 
           <div class="hpf-actions">
             <button class="btn" @click=${() => this.optimizePlans.open()} ?disabled=${!host._canEdit || host._kiosk}>
-              <ha-icon icon="mdi:broom"></ha-icon>${t('gs.align_all')}
+              ${t('gs.align_all')}
             </button>
             ${undo.optimization ? html`
               <button class="btn" @click=${() => this._undoPlanOptimization()} ?disabled=${!host._canOptimizeUndo || host._undoKind === 'import' || host._optimizeUndoBusy || !host._canEdit || host._kiosk}>
-                <ha-icon icon="mdi:undo-variant"></ha-icon>${st('gs.optimize_undo')}
+                ${st('gs.optimize_undo')}
               </button>` : nothing}
           </div>
-          ${callout({ text: html`${st('gs.converter_description')} <a class="hpf-link" href="https://houseplan.tech/convert/" target="_blank" rel="noopener noreferrer">${st('gs.converter_link')}</a><br />${st('gs.converter_result')}` })}
+          <div class="hpf-converter"><p class="hpf-hint">${st('gs.converter_description')}</p>
+            <a class="hpf-link" href="https://houseplan.tech/convert/" target="_blank" rel="noopener noreferrer">${st('gs.converter_link')} ↗</a>
+            <p class="hpf-hint">${st('gs.converter_result')}</p></div>
           ${!host._canEdit || host._kiosk ? html`<p class="rhint">${st('gs.optimize_write_required')}</p>` : nothing}`,
       })}` },
       ], st('dialog.section'))}

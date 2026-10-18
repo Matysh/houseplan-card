@@ -68,6 +68,10 @@ export const settingsDialogCss = `
   .hpf-background-grid figcaption { margin-top:5px; color:var(--primary-text-color); font-size:12px; font-weight:600; }
   .hpf-background-rules { margin-top:14px; }
   .hpf-background-rules .hpf-hint { margin:0 0 7px; }
+  .hpf-settings-pane [data-card=data] .hpf-actions { gap:10px; }
+  .hpf-settings-pane [data-card=data] .hpf-actions .btn { font-size:12px; padding-inline:10px; }
+  .hpf-converter .hpf-link { display:inline-block; font-size:12px; padding:0; margin-bottom:7px; transition:color 150ms ease,background 150ms ease; }
+  .hpf-converter .hpf-link:hover { color:var(--primary-text-color); background:var(--hpf-tint); }
   .hpf-north-control { display:grid; grid-template-columns:148px minmax(0,1fr); align-items:center; gap:18px; }
   .hpf-north-dial { width:148px; height:148px; min-width:0; border:0; padding:0; border-radius:50%; background:transparent; color:var(--primary-text-color); cursor:pointer; touch-action:none; }
   .hpf-north-dial svg { width:100%; height:100%; font-size:10px; }
@@ -101,7 +105,11 @@ export const settingsDialogCss = `
     .hpf-settings-content { border:0; padding:18px 14px; }
     .hpf-settings-form input,.hpf-settings-form select,.hpf-settings-form textarea { font-size:16px!important; }
     .hpf-settings-pane .hpf-colortiles { grid-template-columns:repeat(2,minmax(0,1fr)); }
-    .hpf-north-control { grid-template-columns:112px minmax(0,1fr); gap:12px; }
+    .hpf-settings-pane [data-card=data] .hpf-actions { gap:10px; }
+  .hpf-settings-pane [data-card=data] .hpf-actions .btn { font-size:12px; padding-inline:10px; }
+  .hpf-converter .hpf-link { display:inline-block; font-size:12px; padding:0; margin-bottom:7px; transition:color 150ms ease,background 150ms ease; }
+  .hpf-converter .hpf-link:hover { color:var(--primary-text-color); background:var(--hpf-tint); }
+  .hpf-north-control { grid-template-columns:112px minmax(0,1fr); gap:12px; }
     .hpf-north-dial { width:112px; height:112px; }
   }
   @media(prefers-reduced-motion:reduce) {

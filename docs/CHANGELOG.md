@@ -12,6 +12,8 @@
   backups keep JSON ([#936](https://github.com/Matysh/houseplan-card/issues/936)).
   Proxy size rejections produce a useful message; an HTML gateway page is
   never downloaded as a fake ZIP.
+- Align maintenance rows and converter copy with approved General v10, including supported YAML/JSON inputs. (#948)
+
 - Match v10 palette cards with separate headings and contextual help, and show actual space override values. (#948)
 
 - General v10 visual acceptance: place the 2.5D switch in Appearance and use the real day-cycle palette for dawn/day/dusk/night previews and complete fallback guidance. (#948)

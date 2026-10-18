@@ -70,7 +70,7 @@ for (const width of [320, 390]) {
 // A separate wizard cannot silently discard this still-dirty form.
 const general=page.locator('hp-dialog[data-kind="settings"][icon="mdi:cog-outline"]');
 await general.locator('.hpf-settings-mobile select').selectOption('data');
-const exportButton=general.locator('[data-card="data"] .hpf-actions > button').first();
+const exportButton=general.locator('[data-card="data"] .hpf-actions > button[data-backup-action=export]').first();
 await exportButton.click();
 const confirm=page.locator('hp-confirm hp-dialog');
 out.exportAsksBeforeLeaving=await confirm.count()===1 && await general.count()===1;

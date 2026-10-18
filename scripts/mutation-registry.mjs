@@ -17407,6 +17407,12 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'settings-toggle-track-box-model-603',
+    guard: 'node demo/smoke_dialog_polish_603.mjs',
+    because: '#603/#948: actual pseudo-element boxes must keep the knob centred in both states with a44px target; browser geometry is not proven by a CSS source assertion. The legacy temporary style probe is moved to nightly execution only.',
+    patches: [{file:'src/styles/form-kit.styles.ts', find:"  .${p}-toggle > input::before {\n    content: '';\n    position: absolute;\n    box-sizing: border-box;", replace:"  .${p}-toggle > input::before {\n    content: '';\n    position: absolute;\n    box-sizing: content-box;"}],
+  },
+  {
     id: 'M-615-tile',
     guard: 'node demo/smoke_dialog_polish_605.mjs',
     because: '#615 AC1: плитка цвета General обязана показывать прозрачность шахматкой — '

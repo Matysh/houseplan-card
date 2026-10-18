@@ -60,7 +60,14 @@ for (const dpr of [1, 2]) {
             && !!basics.querySelector('#room-area')?.closest('.hpf-field')?.querySelector('hp-help')
             && [...dialog.querySelectorAll('.hpf-head h3')].length === 3;
 
-          const toggle = dialog.querySelector('#room-fill-inherit');
+          // Measure the shared product toggle in General; Room v4 uses a single fill select.
+          c._roomDialogCancel(); await settle();
+          root().querySelector('[data-hp="settings"]').click(); await settle();
+          const general = await waitFor('General dialog', () => root().querySelector('hp-dialog[data-kind="settings"]'));
+          general.querySelector('[data-section-target="display"]').click(); await settle();
+          const toggle = await waitFor('shared toggle laid out', () => {
+            const input=general.querySelector('#gs-room-tooltip');return laidOut(input)?input:null;
+          });
           const measure = () => {
             const track = getComputedStyle(toggle, '::before');
             const knob = getComputedStyle(toggle, '::after');
@@ -107,21 +114,15 @@ for (const dpr of [1, 2]) {
             && Math.abs(on.topGap - on.bottomGap) <= 1
             && Math.abs(off.leftGap - on.rightGap) <= 1
             && off.target.width >= 44 && off.target.height >= 44;
-          // Negative probe: revert just the old track box model. The same
-          // geometry oracle must turn red instead of merely reading a CSS token.
-          const mutant = document.createElement('style');
-          mutant.textContent = '.hpf-toggle > input::before { box-sizing: content-box !important; }';
-          root().append(mutant);
-          const oldTrack = measure();
-          mutant.remove();
-          const rejectsOldTrack = Math.abs(oldTrack.topGap - oldTrack.bottomGap) > 1
-            && Math.abs(off.leftGap - oldTrack.rightGap) > 1;
-
-          const name = dialog.querySelector('#room-name');
+          // The old content-box regression is registered for the nightly runner.
+          // Ordinary smoke never modifies product CSS or executes a mutant.
+          general.querySelector('[data-hp="dialog-cancel"]').click(); await settle();
+          const editDialog = await hp.openRoomEdit(c._curSpaceCfg.rooms[0].id);
+          const name = editDialog.querySelector('#room-name');
           name.value = `${name.value} x`;
           name.dispatchEvent(new Event('input', { bubbles: true }));
           await settle();
-          dialog.dispatchEvent(new CustomEvent('hp-close', { bubbles: true, composed: true }));
+          editDialog.dispatchEvent(new CustomEvent('hp-close', { bubbles: true, composed: true }));
           await settle();
           const confirm = root().querySelector('hp-confirm hp-dialog');
           const buttons = [...(confirm?.querySelectorAll('.danger-confirm-footer button') || [])];
@@ -157,10 +158,10 @@ for (const dpr of [1, 2]) {
             && !root().querySelector('hp-confirm hp-dialog');
           c._roomDialogCancel();
           await settle();
-          return { roomFields, switchAligned, rejectsOldTrack, fits, labels, discardIcons, safeFocus, kept,
+          return { roomFields, switchAligned, fits, labels, discardIcons, safeFocus, kept,
             gaps: { off: [off.topGap, off.bottomGap, off.leftGap], on: [on.topGap, on.bottomGap, on.rightGap] } };
         }, { language });
-        results[key] = result.roomFields && result.switchAligned && result.rejectsOldTrack && result.fits
+        results[key] = result.roomFields && result.switchAligned && result.fits
           && JSON.stringify(result.labels) === JSON.stringify(expected[language])
           && result.discardIcons && result.safeFocus && result.kept;
         if (!results[key]) console.log(key, result);
