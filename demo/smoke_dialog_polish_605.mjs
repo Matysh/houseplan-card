@@ -58,14 +58,13 @@ for (const theme of ['light', 'dark']) {
         return checker && Math.abs(opacity - Math.round(picker.opacity * 100) / 100) <= 0.01;
       });
       const tileByLabel = (key) => tiles.find((tile) =>
-        tile.querySelector('.hpf-colortile-swatch > span')?.textContent.trim() === c._t(key));
+        tile.querySelector('.hpf-colortile-heading > span')?.textContent.trim() === c._t(key));
       const none = tileByLabel('gs.light_none');
       const on = tileByLabel('gs.light_on');
       const defaultsDiffer = !!none && !!on
         && layer(none).opacity === 0 && Math.abs(layer(on).opacity - 0.18) <= 0.01;
-      // #615 AC2: at 0 % the label sits on the bare checkerboard — dark ink.
-      const noneInkDark = !!none
-        && getComputedStyle(none.querySelector('.hpf-colortile-swatch')).color === 'rgb(31, 42, 48)';
+      // v10 keeps the caption outside the alpha swatch, on the theme surface.
+      const noneInkDark = !!none && getComputedStyle(none.querySelector('.hpf-colortile-heading')).color === getComputedStyle(dialog).color;
       const changeAlpha = async (picker, value) => {
         picker.dispatchEvent(new CustomEvent('hp-color-opacity-change', {detail:{color:picker.color,opacity:value/100},bubbles:true,composed:true}));
         await c.updateComplete; await picker.updateComplete;

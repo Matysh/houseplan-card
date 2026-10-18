@@ -39,10 +39,12 @@ const res = await page.evaluate(async () => {
   out.glowRadiusInsideGlowGroup = !!glowRadius && !!glowCard && glowCard.contains(glowRadius);
   // Сообщение о состоянии остаётся абзацем на виду, а не уезжает под «?» (#598 К5).
   out.sunMissingStaysVisible = !sr().querySelector('hp-dialog hp-help[data-help-key="gs.sun_missing.help"]');
-  // Пояснения под «?»: заливки, бэкап, обслуживание. Пояснение радара по §5.2
-  // референса — подпись строки-тумблера, а не «?» (текст тот же, ключ тот же).
+  // v10 puts explanatory copy beside the label, in immediate help popovers.
   out.movedHintsHaveHelp = !sr().querySelector('hp-dialog hp-help[data-help-key="gs.backup_group.help"]')
-    && [...sr().querySelectorAll('hp-dialog .hpf-toggle-caption')].filter(n => n.textContent.trim()).length >= 2;
+    && ['gs-room-tooltip','gs-radar-live','gs-volumetric-view'].every(id => {
+      const row=sr().querySelector(`hp-dialog #${id}`)?.closest('.hpf-toggle');
+      return !!row?.querySelector('hp-help[instant]') && !row?.querySelector('.hpf-toggle-caption');
+    });
   // И ни одного абзаца-пояснения (`.rhint`) в форме не осталось вовсе (#600 AC7).
   out.noMovedHintParagraphs = sr().querySelectorAll('hp-dialog .rhint').length === 0;
   // #43: About moved into the dedicated Help & Feedback dialog and must not

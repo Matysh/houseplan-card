@@ -21,6 +21,13 @@ export const settingsDialogCss = `
   .hpf-settings-pane .hpf-labelrow,.hpf-settings-pane .hpf-field > .hpf-label { min-height:20px; color:var(--primary-text-color); font-size:13px; font-weight:600; }
   .hpf-settings-pane .hpf-colorrow { grid-template-columns:minmax(0,1fr); align-items:stretch; min-height:0; }
   .hpf-settings-pane .hpf-colorrow > .hpf-colorfield { justify-self:stretch; width:100%; box-sizing:border-box; }
+  .hpf-settings-pane .hpf-colortile-labelled { padding:10px; gap:8px; align-content:start; }
+  .hpf-colortile-heading { min-height:38px; font-size:12px; font-weight:600; line-height:1.45; color:var(--primary-text-color); }
+  .hpf-colortile-heading hp-help { display:inline-flex; vertical-align:middle; margin-inline-start:3px; }
+  .hpf-settings-pane .hpf-colortile-labelled > .hpf-colortile-swatch { min-height:34px; }
+  .hpf-settings-pane .hpf-colortile-labelled .hpf-colortile-meta { justify-content:flex-start; gap:4px; font-size:12px; }
+  .hpf-settings-pane .hpf-colortile-labelled .hpf-hex { font-size:12px; }
+  .hpf-settings-pane [data-card=fills] .hpf-body > .hpf-sub { border-top:0; padding-top:0; }
   .hpf-settings-pane .hpf-colorfield,.hpf-settings-form .hpf-input { background:var(--hpf-surface); }
   .hpf-settings-pane .hpf-colorfield { cursor:pointer; transition:border-color 160ms; }
   .hpf-settings-pane .hpf-colorfield:hover { border-color:var(--hpf-accent); }
@@ -28,7 +35,7 @@ export const settingsDialogCss = `
   hp-dialog[settings-layout] .hpf-footer .hpf-status { margin:0 auto 0 0; font-size:11px; }
   .hpf-settings-pane .hpf-toggle { grid-template-columns:minmax(0,1fr) 44px; min-height:44px; padding:0; }
   .hpf-settings-form .hpf-settings-pane .hpf-toggle > .hpf-toggle-title { display:block; font-size:13px; line-height:1.45; }
-  .hpf-settings-pane .hpf-toggle-title hp-help { display:inline-flex; vertical-align:middle; }
+  .hpf-settings-pane .hpf-toggle-title hp-help { display:inline-flex; vertical-align:middle; margin-inline-start:3px; }
   .hpf-settings-pane .hpf-toggle-icon { display:none; }
   .hpf-settings-form .hpf-settings-pane .hpf-toggle > .hpf-toggle-title { grid-column:1; }
   .hpf-settings-form .hpf-settings-pane .hpf-toggle > .hpf-toggle-caption { grid-column:1; }
@@ -46,18 +53,21 @@ export const settingsDialogCss = `
   .hpf-color-with-action { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:12px; }
   .hpf-color-with-action > button { min-height:48px; }
   .hpf-color-with-action > .hpf-colorfield { box-sizing:border-box; min-height:48px; }
-  .hpf-background-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+  .hpf-background-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px 10px; margin-top:17px; }
   .hpf-ray-examples { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:12px; }
   .hpf-ray-examples figure { margin:0; min-width:0; border:1px solid var(--hpf-line); border-radius:8px; overflow:hidden; }
   .hpf-ray-examples figure.is-selected { border-color:var(--hpf-accent); }
   .hpf-ray-examples svg { display:block; width:100%; height:auto; }
   .hpf-ray-examples figcaption { font-size:12px; text-align:center; padding:6px; }
   .hpf-background-grid figure { margin:0; min-width:0; }
-  .hpf-background-stage { position:relative; border-radius:8px; min-height:90px; overflow:hidden; }
-  .hpf-background-stage svg { display:block; width:100%; height:90px; opacity:.85; }
-  .hpf-background-stage ha-icon { position:absolute; inset:7px 7px auto auto; color:var(--primary-text-color); --mdc-icon-size:18px; }
-  .hpf-background-grid figcaption { margin-top:5px; color:var(--secondary-text-color); font-size:12px; }
-  .hpf-settings-pane .hpf-background-examples > .hpf-hint { margin-top:12px; }
+  .hpf-settings-pane .hpf-body > .hpf-background-examples { border-top:0; padding-top:0; margin-top:0; }
+  .hpf-background-stage { position:relative; border-radius:7px; height:100px; overflow:hidden; }
+  .hpf-background-stage svg { position:absolute; inset:12px 10%; width:80%; height:76px; }
+  .hpf-mini-floor { fill:color-mix(in srgb,var(--hpf-surface) 72%,transparent); stroke:var(--secondary-text-color); stroke-width:2; }
+  .hpf-mini-wall { fill:none; stroke:var(--secondary-text-color); stroke-width:2; }
+  .hpf-background-grid figcaption { margin-top:5px; color:var(--primary-text-color); font-size:12px; font-weight:600; }
+  .hpf-background-rules { margin-top:14px; }
+  .hpf-background-rules .hpf-hint { margin:0 0 7px; }
   .hpf-north-control { display:grid; grid-template-columns:148px minmax(0,1fr); align-items:center; gap:18px; }
   .hpf-north-dial { width:148px; height:148px; min-width:0; border:0; padding:0; border-radius:50%; background:transparent; color:var(--primary-text-color); cursor:pointer; touch-action:none; }
   .hpf-north-dial svg { width:100%; height:100%; font-size:10px; }
@@ -80,6 +90,9 @@ export const settingsDialogCss = `
     @starting-style { .hpf-settings-form select:open::picker(select) { opacity:0; transform:translateY(-5px) scale(.985); } }
     .hpf-settings-form option { padding:10px 12px; border-radius:6px; white-space:normal; }
     .hpf-settings-form option:hover { background:var(--hpf-tint); }
+  }
+  @media(min-width:551px) {
+    .hpf-settings-layout:not(.hpf-settings-single) { min-height:calc(min(756px,100dvh - 48px) - 152px); }
   }
   @media(max-width:550px) {
     .hpf-settings-layout { grid-template-columns:minmax(0,1fr); }

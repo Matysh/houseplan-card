@@ -1,5 +1,5 @@
 // #649 п.4 (docs/ISOMETRIC.md, Stage 6): 2.5D is the installation-wide switch
-// «General settings › Display», third after «Show live presence on the plan».
+// «General settings › Appearance and background», first as approved in v10.
 // Saving it changes the View at once in every space and in the kiosk; editors
 // stay Flat; «Reset» turns it off; there is no card toggle and no alpha entry.
 import { launch, checkAll, finish } from './serve.mjs';
@@ -38,11 +38,11 @@ const res = await page.evaluate(async () => {
   const display = q('.hpf-card[data-card="display"]');
   const controls = [...display.querySelectorAll('input,select')];
   const ids = controls.filter((i) => i.type === 'checkbox').map((i) => i.id);
-  out.thirdInDisplay = JSON.stringify(ids.slice(0, 3)) === JSON.stringify(['gs-room-tooltip', 'gs-radar-live', 'gs-volumetric-view']);
+  out.firstInAppearance = q('[data-card=plan] .hpf-body').firstElementChild.querySelector('#gs-volumetric-view') !== null;
   // #792/#807 appends battery without moving the established settings;
   // #876 then adds the shared signal checkbox immediately after battery.
   out.batteryFollowsExisting = JSON.stringify(controls.map((i) => i.type === 'checkbox' ? i.id : `${i.name}:${i.value}`)) === JSON.stringify([
-    'gs-room-tooltip', 'gs-radar-live', 'gs-volumetric-view',
+    'gs-room-tooltip', 'gs-radar-live',
     'gs-device-battery:all',
     'gs-show-lqi',
   ]);
@@ -51,6 +51,7 @@ const res = await page.evaluate(async () => {
     && !!row.querySelector('ha-icon[icon="mdi:cube-outline"]');
   out.offByDefault = q('#gs-volumetric-view').checked === false;
 
+  q('[data-section-target=plan]').click(); await t.settled();
   q('#gs-volumetric-view').click();
   await t.settled();
   out.previewDoesNotSwitch = !iso();

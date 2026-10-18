@@ -18,8 +18,7 @@ tile edges/shadows, actions and exact saved anchor positions remain unchanged.
 Returning to Flat rederives its contours without layout/config writes.
 
 One installation-wide setting, `settings.volumetric_view: boolean`, switched in
-**General settings › Display › Show the plan in 2.5D** (third item after «Show
-live presence on the plan»). It is stored only when `true`; missing or `false`
+**General settings › Appearance and background › Show the plan in 2.5D** (first item). It is stored only when `true`; missing or `false`
 means Flat, which is also the rollback. The rule is one for the card, the
 sidebar page and the kiosk: the View is 2.5D when the setting is on and Flat
 otherwise. Editors and `houseplan-space-card` are always Flat.

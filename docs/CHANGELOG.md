@@ -12,6 +12,10 @@
   backups keep JSON ([#936](https://github.com/Matysh/houseplan-card/issues/936)).
   Proxy size rejections produce a useful message; an HTML gateway page is
   never downloaded as a fake ZIP.
+- Match v10 palette cards with separate headings and contextual help, and show actual space override values. (#948)
+
+- General v10 visual acceptance: place the 2.5D switch in Appearance and use the real day-cycle palette for dawn/day/dusk/night previews and complete fallback guidance. (#948)
+
 - Compact help controls inherit their size from each settings dialog, preserving
   the layout of the device catalogue ([#948](https://github.com/Matysh/houseplan-card/issues/948)).
 

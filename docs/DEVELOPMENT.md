@@ -3112,3 +3112,7 @@ movement, complete no-write snapshots, Apply/Undo, floor/tool/View and remount
 retirement. Its synthetic setup uses the canonical model helper and server
 facade, never a private dialog assignment. `wall-thickness-selection.test.mjs`
 covers current target/width resolution and stale/foreign refusal without a browser.
+
+General v10 visual acceptance (#948) compares the composed approved HTML, not only raw field tables: the 2.5D switch is first in Appearance. Four phase previews reuse DAY_CYCLE_PALETTES in dawn/day/dusk/night order; no View colour or phase rule is changed.
+
+Matched WSL builds for final #948 v10 (base aaea81353): editor 281245→282065B gzip (+820), raw 3061177→3067306B (+6129). Only those deltas carry into editor/raw references (280568/3068813); inherited gaps1497/−1507B and bands remain. Onboarding 30661→31024 stays within unchanged29374+2000 band. Initial View 323451→323485 stays within its unchanged ceiling/budget. No absolute ceiling is raised.

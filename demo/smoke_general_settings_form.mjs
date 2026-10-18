@@ -55,7 +55,7 @@ const out = await page.evaluate(async () => {
 
   // --- AC9 ----------------------------------------------------------------
   const toggles = qa('.hpf-settings-pane:not([hidden]) .hpf-toggle > input[type="checkbox"]');
-  o.toggleTargetsAre44 = toggles.length >= 3 && toggles.every((i) => { const b = i.getBoundingClientRect(); return b.width >= 44 && b.height >= 44; });
+  o.toggleTargetsAre44 = toggles.length >= 2 && toggles.every((i) => { const b = i.getBoundingClientRect(); return b.width >= 44 && b.height >= 44; });
   o.noRedundantSegments = qa('.hpf-seg').length === 0;
 
   // --- К10 ------------------------------------------------------------------

@@ -400,7 +400,7 @@ information window on hover**. The option is on by default and does not affect
 device tooltips.
 
 An administrator turns the volumetric plan on once: **General settings →
-Display → Show the plan in 2.5D**. After saving, View and kiosk in every space
+Appearance and background → Show the plan in 2.5D**. After saving, View and kiosk in every space
 and on every device show walls, doors, windows and device markers with depth.
 The plan itself does not move: rooms, furniture, other decor and room names
 stay exactly where they are on the flat plan, and walls grow straight up from

@@ -301,6 +301,8 @@ export function colorField({
 
 export interface ColorTileOptions {
   label: string;
+  /** Settings v10: a separate heading keeps labels readable at every alpha. */
+  heading?: TemplateResult;
   /** Текущий цвет `#rrggbb` — фон плитки и печать hex. */
   hex: string;
   opacity: number;
@@ -321,11 +323,12 @@ export { isLightHex } from './color-tile-ink';
  * поверх неё с непрозрачностью α, поэтому у обёртки своего фона нет. Подпись
  * выбирается по видимому цвету (`colorTileInk`), а не по одному `hex`.
  */
-export function colorTile({ label, hex, opacity, opacityLabel, picker, onOpacity }: ColorTileOptions): TemplateResult {
+export function colorTile({ label, heading, hex, opacity, opacityLabel, picker, onOpacity }: ColorTileOptions): TemplateResult {
   const pct = Math.round(Math.min(1, Math.max(0, opacity)) * 100);
-  return html`<div class="hpf-colortile">
+  return html`<div class="hpf-colortile ${heading ? 'hpf-colortile-labelled' : ''}">
+    ${heading ? html`<div class="hpf-colortile-heading">${heading}</div>` : nothing}
     <div class="hpf-colortile-swatch" style=${`color:${colorTileInk(hex, opacity)}`}>
-      ${picker}<span>${label}</span>
+      ${picker}${heading ? nothing : html`<span>${label}</span>`}
     </div>
     <div class="hpf-colortile-meta">
       <code class="hpf-hex">${hex.toUpperCase()}</code>
