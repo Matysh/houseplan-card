@@ -3451,9 +3451,9 @@ is registered with `watchPage`, and both fixture integrity and the ordinary
 
 Settings polish #955 keeps one interaction-paint module for form/footer actions,
 discard confirmations and colour-picker confirmation, including the fallback
-portal's complete CSS. Settings help opens immediately on an actual mouse entry
-even inside a child shadow root without the card's modality attribute; focus/tap
-and coarse-pointer sizing remain available. The shared settings shell fixes its
+portal's complete CSS. Settings help opens immediately on an actual mouse entry;
+embedded hosts forward the card's pointer modality. Focus/tap and coarse-pointer
+sizing remain available. The shared settings shell fixes its
 outer height via HA's public min/max-height tokens; its body alone scrolls.
 Toggle labels and switches share the first grid row; captions occupy the next
 row. Label wrapping balances complete words instead of leaving an orphaned tail.
@@ -3476,8 +3476,17 @@ never claims that the new mutants have executed.
 
 Follow-up alignment checks compare a Range over the rendered label text with
 the switch and help SVG centres. Comparing only the title container missed its
-unused bottom space. Flex alignment also keeps help beside wrapped colour-tile
-titles. Embedded Zigbee forwards the card-owned pointer modality through its
+unused bottom space. Inline help follows the final text line, with a4px gap.
+Palette titles keep the last word and help together so the icon cannot become
+an orphaned line. Embedded Zigbee forwards pointer modality through its
 shadow root, so instant mouse help keeps the shared no-sticky-touch contract.
 The unclipped Room comfort block uses a shrinkable grid track at320px instead
 of hiding overflowing number fields behind the card boundary.
+
+Screenshot comparison uses the immutable approved HTML and real HA dialogs at
+the same viewport/DPR with the pinned frontend's Roboto400/500/700 font files.
+`applyHaDialogTypography` is opt-in fixture setup, not a product font override;
+ordinary tests retain their existing fixture environment. Before/After captures
+use identical data and font setup. Side-by-side, opacity overlay and a blurred,
+adjustable-threshold difference map support review; a pixel ratio alone never
+accepts the design. Shared checks cover all four forms and conditional profiles.

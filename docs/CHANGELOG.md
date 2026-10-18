@@ -40,7 +40,8 @@
 - Unify help, button hover and stable sizing across all four settings dialogs;
   select window-ray origins directly from previews and keep100% fully visible
   in the shared colour picker. Align switch tracks and help icons with rendered
-  label text, including wrapped labels. (#955)
+  label text, including wrapped labels. Keep palette help beside its final word,
+  compact temperature fields and consistent full-width glow controls. (#955)
 - Repair the hidden-device browser witness for linked virtual-light actions;
   keep the existing nightly mutation and product behavior unchanged (#953).
 - Keep room-assignment guidance beside the Device room field and show the Home Assistant binding name separately from the custom plan label. (#947)

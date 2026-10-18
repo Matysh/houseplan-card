@@ -35,6 +35,12 @@ export class HpHelp extends LitElement {
       display: inline-flex;
     }
 
+    :host([instant]) {
+      position: relative;
+      width: var(--hp-settings-help-size,32px);
+      aspect-ratio: 1;
+    }
+
     .trigger {
       width: var(--hp-settings-help-size,32px);
       height: var(--hp-settings-help-size,32px);
@@ -142,7 +148,12 @@ export class HpHelp extends LitElement {
     }
 
     @media (pointer: coarse) {
-      :host([instant]) .trigger { width:40px; height:40px; }
+      :host([instant]) .trigger {
+        position:absolute;
+        top:50%; left:50%;
+        width:40px; height:40px;
+        transform:translate(-50%,-50%);
+      }
       .trigger {
         width: 40px;
         height: 40px;

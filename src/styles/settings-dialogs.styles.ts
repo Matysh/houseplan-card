@@ -25,13 +25,13 @@ export const settingsDialogCss = `
   .hpf-settings-form .vacpicker > summary > hp-help { position:absolute; inset-inline-start:calc(100% + 4px); top:50%; transform:translateY(-50%); }
   .hpf-settings-pane .hpf-labelrow,.hpf-settings-pane .hpf-field > .hpf-label { min-height:20px; color:var(--primary-text-color); font-size:13px; font-weight:600; }
   .hpf-settings-form .hpf-settings-pane .hpf-grid-stacked { grid-template-columns:minmax(0,1fr); gap:0; }
-  .hpf-settings-form .hpf-settings-pane .hpf-grid-stacked > .hpf-field + .hpf-field { margin-top:18px; padding-top:18px; border-top:1px solid var(--hpf-line); }
+  .hpf-settings-form .hpf-settings-pane .hpf-grid-stacked > .hpf-field + .hpf-field,.hpf-settings-pane .markerglowvalue > .hpf-field + .hpf-field { margin-top:18px; padding-top:18px; border-top:1px solid var(--hpf-line); }
   .hpf-settings-pane .hpf-colorrow { grid-template-columns:minmax(0,1fr); align-items:stretch; min-height:0; }
-  .hpf-settings-pane .hpf-colorrow > .hpf-colorfield { justify-self:stretch; width:100%; box-sizing:border-box; }
+  .hpf-settings-pane .hpf-colorfield { width:100%; box-sizing:border-box; }
   .hpf-settings-pane .hpf-colortile-labelled { padding:10px; gap:8px; align-content:start; }
-  .hpf-colortile-heading { display:flex; align-items:center; gap:4px; min-height:38px; font-size:12px; font-weight:600; line-height:1.45; color:var(--primary-text-color); }
-  .hpf-colortile-heading > span { min-width:0; }
-  .hpf-colortile-heading hp-help { display:inline-flex; vertical-align:middle; margin-inline-start:3px; }
+  .hpf-colortile-heading { min-height:38px; font-size:12px; font-weight:600; line-height:22px; color:var(--primary-text-color); }
+  .hpf-colortile-heading hp-help { vertical-align:top; margin-inline-start:4px; }
+  .hpf-label-tail { white-space:nowrap; }
   .hpf-settings-pane .hpf-colortile-labelled > .hpf-colortile-swatch { min-height:34px; }
   .hpf-settings-pane .hpf-colortile-labelled .hpf-colortile-meta { justify-content:flex-start; gap:4px; font-size:12px; }
   .hpf-settings-pane .hpf-colortile-labelled .hpf-hex { font-size:12px; }
@@ -43,18 +43,19 @@ export const settingsDialogCss = `
   hp-dialog[settings-layout] .hpf-footer .hpf-status { margin:0 auto 0 0; font-size:11px; }
   .hpf-settings-pane .hpf-toggle { grid-template-columns:minmax(0,1fr) 44px; min-height:44px; padding:0; }
   .hpf-settings-pane .hpf-body > .hpf-toggle:not(:first-child) { padding-top:18px; }
-  .hpf-settings-form .hpf-settings-pane .hpf-toggle > .hpf-toggle-title { display:flex; align-items:center; font-size:13px; line-height:1.45; text-wrap:balance; }
+  .hpf-settings-form .hpf-settings-pane .hpf-toggle > .hpf-toggle-title { grid-column:1; display:block; min-height:0; font-size:13px; line-height:22px; }
+  .hpf-settings-pane .hpf-balanced { text-wrap:balance; }
   .hpf-settings-form .hpf-settings-pane .hpf-toggle > .hpf-toggle-title > span { overflow-wrap:normal; word-break:normal; }
-  .hpf-settings-pane .hpf-toggle-title hp-help { display:inline-flex; vertical-align:middle; margin-inline-start:3px; }
+  .hpf-settings-pane .hpf-toggle-title hp-help { vertical-align:top; margin-inline-start:4px; }
   .hpf-settings-pane .hpf-toggle-icon { display:none; }
-  .hpf-settings-form .hpf-settings-pane .hpf-toggle > .hpf-toggle-title { grid-column:1; }
   .hpf-settings-form .hpf-settings-pane .hpf-toggle > .hpf-toggle-caption { grid-column:1; }
-  .hpf-settings-form .hpf-settings-pane .hpf-toggle > input { grid-column:2; grid-row:1; }
+  .hpf-settings-form .hpf-settings-pane .hpf-toggle > input { grid-area:1/2; }
   .hpf-settings-pane .hpf-body > #gs-moon-status { border-top:0; margin-top:8px; padding-top:8px; }
   .hpf-settings-pane .hpf-callout { padding:8px 10px; font-size:12px; line-height:1.45; border-inline-start:3px solid var(--info-color,var(--primary-color)); border-radius:0; background:color-mix(in srgb,var(--info-color,var(--primary-color)) 10%,var(--hpf-surface)); }
   .hpf-settings-pane .hpf-callout > ha-icon { display:none; }
   .hpf-settings-pane .hpf-callout p { margin:0; font-size:inherit; }
   .hpf-settings-pane .hpf-hint,.hpf-settings-pane .hpf-toggle-caption { font-size:12px; line-height:1.45; }
+  .hpf-settings-pane .ghost { border:1px solid var(--hpf-line); }
   .hpf-settings-form button:not(:disabled),.hpf-settings-form select:not(:disabled),.hpf-footer button:not(:disabled),.hpf-footer a { cursor:pointer; }
   .hpf-settings-form button:not(:disabled):hover,.hpf-footer button:not(:disabled):hover { filter:brightness(1.08); }
   :is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn:not(:disabled) { cursor:pointer; ${settingsActionTransition} }
@@ -67,7 +68,7 @@ export const settingsDialogCss = `
   .hpf-settings-mobile { display:none; }
   .hpf-temperature-range { display:flex; gap:12px; align-items:start; margin-top:12px; }
   .hpf-temperature-range > .hpf-field { display:flex; flex:1; min-width:0; gap:8px; align-items:center; }
-  .hpf-temperature-range .hpf-unit { flex:1; min-width:0; }
+  .hpf-temperature-range .hpf-unit { flex:0 1 96px; min-width:0; }
   .hpf-temperature-range .hpf-label { flex:none; }
   .hpf-plan-image { display:flex; align-items:center; gap:10px; min-height:148px; padding:12px; box-sizing:border-box; background:var(--hpf-canvas); border:1px solid var(--hpf-line); border-radius:7px; }
   .hpf-plan-image .planprev { width:210px; max-width:60%; height:124px; max-height:none; object-fit:contain; border:0; border-radius:0; padding:0; background:transparent; }
@@ -126,9 +127,8 @@ export const settingsDialogCss = `
   .hpf-settings-single .hpf-card + .hpf-card { margin-top:18px; padding-top:18px; border-top:1px solid var(--hpf-line); }
   .hpf-settings-single .hpf-head { padding:0; margin:0 0 18px; border:0; }
   .hpf-settings-single .hpf-head h3 { font-size:14px; }
-  .hpf-temperature-range.hpf-range-compact { max-width:360px; gap:32px; }
+  .hpf-temperature-range.hpf-range-compact { max-width:340px; gap:32px; }
   .hpf-settings-pane .hpf-temprange { min-width:0; grid-template-columns:minmax(0,1fr); }
-  .hpf-range-compact .hpf-unit { width:112px; max-width:112px; }
   hp-dialog[data-kind=room][settings-layout] .hpf-grid { grid-template-columns:minmax(0,1fr); }
   .hpf-settings-form .cardpreview { border:0; width:100%; margin:0; color:var(--hpf-accent); }
   .hpf-settings-form .cardpreview .cpmeta > span { display:inline-flex; align-items:center; gap:.2em; white-space:nowrap; }
