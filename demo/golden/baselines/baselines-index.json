@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 78,
-  "acceptedAt": "2026-10-18T10:57:11.310Z",
-  "sourceFingerprint": "a2f18bc14582cff806e83fe6e4aa629260cd4de55f3f4692ca84c937379dd7d2",
+  "acceptedAt": "2026-10-18T15:36:09.250Z",
+  "sourceFingerprint": "41b9b0a32f723f366c711bed98140769fd411eca843c828c976781b7219245fb",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,20 +10,20 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "a2f18bc14582cff806e83fe6e4aa629260cd4de55f3f4692ca84c937379dd7d2",
+    "buildFingerprint": "41b9b0a32f723f366c711bed98140769fd411eca843c828c976781b7219245fb",
     "ci": null
   },
   "localAttestation": {
     "schema": "houseplan-golden-wsl/v2",
-    "sha256": "66598b6cfc86829645017ffd96f0a87520ba10b207a0d3ad628a12caa104b42a",
-    "artifactSha256": "ac11bb9e2b1c64b28a3c22804bbaf4fdcf813d2da2d268c2983a8cfb50299483",
-    "createdAt": "2026-10-18T10:50:48.533Z",
+    "sha256": "311197e0b0e661b5d383cbe74435896c01c6a75f1c0b2fb408996ef529860841",
+    "artifactSha256": "73d675fe0de3b9b254a9777d8e210b923a9068bc6d6e9abc35ab45636e1a5cc5",
+    "createdAt": "2026-10-18T15:32:35.567Z",
     "source": {
       "repository": "Matysh/houseplan-card",
-      "branch": "issue/945-space-settings",
-      "commit": "fee606daebba0790413b30462006afef291406cb",
-      "tree": "fe6e445da9418ffe422db6f6eef30d2aa214aa13",
-      "remoteSha": "fee606daebba0790413b30462006afef291406cb",
+      "branch": "issue/946-room-settings",
+      "commit": "33a6676a9503e045f903528634ec51bfa943f563",
+      "tree": "2ca596f24cd3b91147915014449d98c9a5b216d8",
+      "remoteSha": "33a6676a9503e045f903528634ec51bfa943f563",
       "clean": true,
       "status": ""
     },
@@ -48,7 +48,7 @@
   },
   "foreignCapture": null,
   "witnesses": {
-    "count": 135,
+    "count": 137,
     "floor": 10
   },
   "scenarios": {
@@ -225,9 +225,9 @@
     "device-dialog-desktop-en": "4b27b82f0d0744426d33ca5124e1de0e4bdbe3110d158f16fb47d407d97b720b",
     "device-dialog-mobile-ru": "81b18fb223c79e1f5ebdc1fe3fe5eab0820e153a6a75bbc78e5bb2bec941263e",
     "device-dialog-desktop-de": "c8ded760814a5e40471b3af86e28b2edb731c1fef909ba9825d88b0e46a235f1",
-    "room-temperature-dialog-desktop-en": "d481f7c421c7ef1aaa7ec1f53667300dc2d97406776f6d88368bf7e4fd5c3697",
-    "room-temperature-dialog-mobile-ru": "3214cc3820bf792bc0f555f0c00f1b43925d4055ae2e33381b0017e381bfc505",
-    "room-discard-dialog-mobile-ru": "184884863e5fd25a7023bd58ed39979f9afddb8157c3e39cb24a70a74df8ce98",
+    "room-temperature-dialog-desktop-en": "4c42b35ffdc34518259c4e81c431a736a88e970eb2e0ff0679410894c85af305",
+    "room-temperature-dialog-mobile-ru": "0a7a21bdebcc572dd4b2d4ded30439c83af5664f0b284a8fcc20172d3078f757",
+    "room-discard-dialog-mobile-ru": "b80b3d75e9a6f604a5e929d6993aa447ec5c879f3f9266c49612ecb82bfebfb0",
     "german-view-mobile-light": "1c14ef6e97f0f7c616fe61ad72f4dfa7d94c605efc3d8b26931016c8c13a4282",
     "toggle-entity-dialog-desktop-en": "93a19632d552d89137a4ba8e91ed960b7cd6e2c186409616461a717adef7c79b",
     "toggle-entity-dialog-mobile-ru": "16748b5252bbba95f5cb0e49b4b0dd2b765d81a8ce15ce8161cf98b652bae5a4",
