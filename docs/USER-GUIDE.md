@@ -1328,7 +1328,7 @@ selector replaces the side menu on narrow screens. All four settings dialogs
 follow the current Home Assistant theme, including theme changes while open.
 
 **Basics** contains the name, Home Assistant binding, room and any applicable
-climate-source options. Binding is a **Virtual device / Pick from the HA list**
+climate-source options under **Room metrics**. Binding is a **Virtual device / Pick from the HA list**
 segment. The picker searches devices and, with **Show entities**, individual
 entities. Its selected binding occupies one row; search help belongs to the
 picker, while the binding-mode hint explains what the two modes mean. A required

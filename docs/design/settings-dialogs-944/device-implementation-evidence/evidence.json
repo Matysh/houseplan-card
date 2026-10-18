@@ -1,0 +1,76 @@
+{
+  "source": "eca913f9e235db53511c21bc113fe6dae9fcbe22",
+  "reference": "24f7ab2f266eb89f785192eac563915732a081ab",
+  "referenceHtmlSha256": "708442b6a17cfa580118fb418d1529f49614883c80003033d416804dd475df9b",
+  "ha": "20260729.7",
+  "font": "Roboto 400/500/700 on both sides",
+  "images": {
+    "led-1280-pair.png": {
+      "reference": {
+        "width": 610,
+        "height": 779
+      },
+      "actual": {
+        "width": 610,
+        "height": 780
+      },
+      "referenceSha256": "9a12ed10c0d6b47c9460431b7084d9118cb3e6b32b2ba9dffc290703dab79686",
+      "actualSha256": "915143dea5c2da4180d8fe12871eb7ff536fe9ab087b3fffa0dd7e6a07b12037",
+      "sha256": "09aaf3f5584f8f45efbc0bce4f5f4aeda98c79789d92917d503a50c76f77633e"
+    },
+    "climate-1280-pair.png": {
+      "reference": {
+        "width": 610,
+        "height": 779
+      },
+      "actual": {
+        "width": 610,
+        "height": 780
+      },
+      "referenceSha256": "7c636c926aa7a390d47d98187fc4e9c7c87551636309d01bf18e6b53d73df6dd",
+      "actualSha256": "c1945654537b1a37b69b4a6387ad5cedbefdd8f275f652c706e8e7d2c4c2b208",
+      "sha256": "54fb08b4ae593203688f5d89d2eb71c3b5409a7c373d35256213f30b2e2b24b6"
+    },
+    "vacuum-1280-pair.png": {
+      "reference": {
+        "width": 610,
+        "height": 779
+      },
+      "actual": {
+        "width": 610,
+        "height": 780
+      },
+      "referenceSha256": "4191e634b2b31cb3271efad13b6a5c1618b71fef443c89de47838bb237569c09",
+      "actualSha256": "e751e01b4670d03734ba18013a932585676d2b8e196107a71f4fc786604ab44e",
+      "sha256": "a17eb476f111f28d8b741adceb9c9cf01c37183f821b476ffc08d63a1d6ce38b"
+    },
+    "radar-1280-pair.png": {
+      "reference": {
+        "width": 610,
+        "height": 779
+      },
+      "actual": {
+        "width": 610,
+        "height": 780
+      },
+      "referenceSha256": "599b7836911b7342aa9b254bb1c389650d399d80195c46bca1ff2aed4c042d84",
+      "actualSha256": "f4bed836305e54961839f96ac67f8dbac6d48e1752fe6818cee276b23a5b9b52",
+      "sha256": "004524508a8bf9484ef8ea6a86c9c97fb387ef43602003c777ac7e2fd0c4548b"
+    },
+    "led-390-pair.png": {
+      "reference": {
+        "width": 390,
+        "height": 863
+      },
+      "actual": {
+        "width": 390,
+        "height": 900
+      },
+      "referenceSha256": "e3b5d000f082ffb2ea7075815adba5d5fc13eb9ee5d70fede7d416bf9eff2c5c",
+      "actualSha256": "3beef09fc59766aa2b2b829bb21b896be24f809d918fe32bd413e61e0e842677",
+      "sha256": "750c08835725960c914ecab3f83b37178d9e277c0dd8290a6a24919a842d6aba"
+    }
+  },
+  "nativeChecks": 202,
+  "syntheticDataSha256": "af1cefcd46126c81a805215e4b8e67459f6f94677649530253a1cc2dd388caba"
+}

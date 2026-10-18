@@ -771,9 +771,9 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // (+1064 own bytes); keep the inherited11B gap and unchanged2000B band.
 // #945 final copy cleanup: matched General283621 -> Space284720 (+1099).
 // #946 final Space284720 -> Room284636 (-84 B), same inherited11B gap.
-// #947 complete v6 profiles: matched Room284636 -> Device286937 (+2301),
+// #947 complete v6 profiles: matched Room284636 -> Device286949 (+2313),
 // including the approved Vacuum/Radar groups; same inherited11B gap.
-export const LAZY_EDITOR_GZIP_CEILING = 286_926;
+export const LAZY_EDITOR_GZIP_CEILING = 286_938;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

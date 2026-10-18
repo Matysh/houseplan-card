@@ -36,6 +36,16 @@ The first reset-wait adapter still produced "Resulting promise was garbage
 collected" in CI at setMode; the component-reset step is now absent. Keyboard,
 44px target, translation, inheritance and popup assertions remain unchanged.
 
+Final climate-v6 source eca913f9 on matched Linux/ext4 measures
+editor286949/onboarding32058/raw3109289/initial322935. Relative to the same
+Room source284636/31428/3096669, the complete Device feature costs
++2313/+630/+12620. References286938/30382/3109077 preserve the inherited
+11/1676/212 gaps; every band and absolute initial limit stays unchanged.
+The additional climate visual correction costs12B editor and470B raw against
+the prior full-profile measurement, rather than borrowing #955's polish band.
+Its existing four-profile smoke and neighbouring climate average/save/reopen
+smoke pass. Native202checks pass again with the unchanged synthetic dataset.
+
 The exact Device v6 comparison also exposed a retained climate caption replacing
 the approved Room metrics heading and contextual help. Restore the shared
 subheading/compact toggle/help primitives; keep the same useClimateTemp draft
