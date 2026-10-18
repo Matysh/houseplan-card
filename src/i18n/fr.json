@@ -469,7 +469,6 @@
   "space.fill_label": "Remplissage de la pièce",
   "space.fill_mode.help": "« Couleur personnalisée » définit le style, tandis que « Lumière », « Température » et « LQI » utilisent les données actuelles de Home Assistant. Le halo s’active séparément.",
   "space.fill_mode.help.aria": "Aide : mode de remplissage des pièces",
-  "fill.none": "Aucun",
   "space.custom_fill": "Couleur de remplissage",
   "space.source_file": "Utiliser une image du plan",
   "space.source_draw": "Dessiner moi-même",

@@ -1,5 +1,11 @@
 # Development and deployment
 
+The first post-r1 normal push was correctly refused by the unit gate: replacing
+Room's generic fill.none consumer left that base key unused. Remove it from all
+four base locales; the new lazy room.fill_none remains the sole label owner.
+No test allowlist or gate was weakened. The other build/budget/unused gates in
+that attempt passed; only the dead-key consumer check failed.
+
 Code review #946 r1 found one copy mismatch: the Room none option reused the
 generic “Нет” instead of the approved “Без заливки”. Add the specific lazy
 Room label in all four languages. The v4 smoke now compares all five real option
