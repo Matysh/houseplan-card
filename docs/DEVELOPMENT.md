@@ -42,6 +42,16 @@ times room-multiplier checks and the Cancel persistence assertion (#946).
 
 ## Properties panel (#931)
 
+The full #931 rebase CI exposed the old dangerous-confirmation witness taking
+its DOM snapshot while the already-revealed boot veil still faded. A controlled
+1.2 s gap reproduced the same failure 3/3 times: only `.bootveil.off` disappeared
+before the warm gate; the warm body itself stayed identical. The witness now
+waits for the public veil to leave the DOM before its snapshot, without a fixed
+sleep, normalization, weaker assertion or product change. Failure diagnostics
+separate pre-gate settling from an actual warm-gate body mutation.
+The corrected witness passed 3/3 normal and 3/3 controlled-gap runs; the
+diagnostic gap and CPU throttling were removed before publication.
+
 The editor-only modules are under `src/editors/properties/`; do not import them
 into initial View. `demo/smoke_properties_panel.mjs` checks real controls and
 writers. `demo/capture_properties_panel.mjs` captures the actual product beside

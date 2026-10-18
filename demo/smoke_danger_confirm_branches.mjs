@@ -14,6 +14,10 @@ import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch(
   { width: 390, height: 760 }, 1, [], { hasTouch: true, isMobile: true },
 );
+// launch reveals the ready plan before the 220 ms boot veil fade finishes.
+// Snapshot the committed body only after that unrelated DOM cleanup: otherwise
+// its removal during the ready confirmation is mistaken for a warm-gate redraw.
+await page.waitForFunction(() => !window.__card.renderRoot.querySelector('.bootveil'), { timeout: 9000 });
 
 // Hold the first German chunk request so the card remains in the real `warm`
 // language gate long enough to exercise it. Aborting would immediately select
@@ -33,7 +37,7 @@ const holdGerman = async (route) => {
 };
 await page.route(germanAsset, holdGerman);
 
-const warmGate = await page.evaluate(async () => {
+const { bodyDiagnostic, ...warmGate } = await page.evaluate(async () => {
   const card = window.__card;
   const root = () => card.shadowRoot || card.renderRoot;
   const settle = async () => {
@@ -52,6 +56,7 @@ const warmGate = await page.evaluate(async () => {
   });
   await settle();
   const openedWhileReady = !!root().querySelector('hp-confirm');
+  const immediatelyBeforeWarm = root().querySelector('ha-card')?.outerHTML;
   card._config = { ...card._config, language: 'de' };
   card.requestUpdate();
   for (let attempt = 0; attempt < 50 && !card.inert; attempt++) {
@@ -81,7 +86,16 @@ const warmGate = await page.evaluate(async () => {
     warmDecision,
     new Promise((resolve) => setTimeout(() => resolve('timeout'), 100)),
   ]);
+  const afterWarm = root().querySelector('ha-card')?.outerHTML;
+  const difference = (before, after) => {
+    if (before === after) return null;
+    const index = [...(before || '')].findIndex((char, i) => char !== after?.[i]);
+    return { index, before: before?.slice(Math.max(0, index - 140), index + 220),
+      after: after?.slice(Math.max(0, index - 140), index + 220) };
+  };
   const result = {
+    bodyDiagnostic: { beforeOpen: difference(committedBody, immediatelyBeforeWarm),
+      duringWarm: difference(immediatelyBeforeWarm, afterWarm) },
     warmLanguageGateActuallyEntered: entered,
     readyConfirmationOpenedBeforeWarm: openedWhileReady,
     readyToWarmCancelsOpenConfirmation: cancelledOnTransition === false,
@@ -112,6 +126,9 @@ const warmGate = await page.evaluate(async () => {
   await settle();
   return result;
 });
+if (bodyDiagnostic.beforeOpen || bodyDiagnostic.duringWarm) {
+  console.log('warm body diagnostic', JSON.stringify(bodyDiagnostic));
+}
 
 await Promise.race([
   germanStarted,
