@@ -148,7 +148,7 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_radar_setup.mjs',
     because: '#947 AC5: old manual profiles retain a real editable Details path and the existing on-plan setup; the browser independently checks projection and save boundaries through that entry',
     patches: [{file:'src/editors/marker-dialog.ts',
-      find:'    const legacyRadar = !automaticRadar && !d.radarRemove && !!persistedMarker?.radar;',
+      find:'    const legacyRadar = !automaticRadar && !!persistedMarker?.radar;',
       replace:'    const legacyRadar = false;',
     }],
   },
@@ -17685,8 +17685,8 @@ const MUTANT_DEFINITIONS = [
       + 'successful commit or explicit close may do that',
     patches: [{
       file: 'src/editors/marker-dialog.ts',
-      find: "import { markerDirty, markerProblems } from './marker-form-state';",
-      replace: "import { forgetMarkerBaseline, markerDirty, markerProblems } from './marker-form-state';",
+      find: "import { markerDirty, markerProblems, restoreMarkerRadarRemoval } from './marker-form-state';",
+      replace: "import { forgetMarkerBaseline, markerDirty, markerProblems, restoreMarkerRadarRemoval } from './marker-form-state';",
     }, {
       file: 'src/editors/marker-dialog.ts',
       find: '@click=${() => { void this._saveMarker(); }}',
