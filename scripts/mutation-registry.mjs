@@ -17379,8 +17379,8 @@ const MUTANT_DEFINITIONS = [
       + 'начинает писать противоположное тому, что показывает',
     patches: [{
       file: 'src/editors/space-form.ts',
-      find: "      ${toggleRow({id:id('layer-decor'), title:st('space.layer_decor'), checked:!d.hideDecor, onChange:v => set(port,{...d,hideDecor:!v})})}`,",
-      replace: "      ${toggleRow({id:id('layer-decor'), title:st('space.layer_decor'), checked:!d.hideDecor, onChange:v => set(port,{...d,hideDecor:v})})}`,",
+      find: "      ${toggleRow({id:id('layer-decor'), title:st('space.layer_decor'), help:shelp('space.decor.help'),checked:!d.hideDecor, onChange:v => set(port,{...d,hideDecor:!v})})}`,",
+      replace: "      ${toggleRow({id:id('layer-decor'), title:st('space.layer_decor'), help:shelp('space.decor.help'),checked:!d.hideDecor, onChange:v => set(port,{...d,hideDecor:v})})}`,",
     }],
   },
   {
