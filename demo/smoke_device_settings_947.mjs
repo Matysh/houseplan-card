@@ -37,6 +37,7 @@ try{
   out[`${name}_no_fit_notice`]=!await dialog.locator('hp-device-preview .previewnotice').allTextContents().then(text=>text.some(t=>/78|уменьшен|scaled/i.test(t)));
   out[`${name}_battery_then_signal`]=await dialog.evaluate(el=>el.querySelector('#marker-hide-battery').closest('.hpf-toggle').nextElementSibling?.contains(el.querySelector('#marker-hide-signal')));
   if(name==='led'){
+   out.owned_led_note_is_contextual=await dialog.locator('.led-representation').evaluate(el=>!el.querySelector('.hpf-note,.hpf-callout')&&!!el.querySelector('hp-help[instant]')?.text?.trim());
    out.owned_led_action_after_icon=await dialog.evaluate(el=>{const icon=el.querySelector('.hpf-iconfield'),led=el.querySelector('[data-led-action="show-icon"]'),display=el.querySelector('#marker-display');return !!led&&!!(icon.compareDocumentPosition(led)&Node.DOCUMENT_POSITION_FOLLOWING)&&!!(led.compareDocumentPosition(display)&Node.DOCUMENT_POSITION_FOLLOWING);});
    out.led72=await dialog.locator('hp-device-preview .value-badge').textContent().then(t=>t.includes('72'));
    const width=await face.locator('.device-core').evaluate(el=>el.getBoundingClientRect().width);
@@ -47,6 +48,9 @@ try{
    await section('light');out.fixed65=await dialog.locator('#marker-glow-brightness').inputValue()==='65';
    out.radius_filled_but_not_materialized=await dialog.locator('#marker-glow-radius').inputValue().then(v=>Number(v)>0)&&await page.evaluate(()=>window.__card._markerDialog.glowRadius==='');
    await section('actions');out.control_friendly_name=(await dialog.locator('.hpf-chip').allTextContents()).some(t=>t.includes('Потолочная лампа')&&!t.includes('light.living_ceiling'));
+   out.action_guidance_uses_shared_note=await dialog.locator('#marker-toggle-hint.hpf-note').count()===1;
+   out.confirmation_help_is_contextual=await dialog.locator('#marker-tap-confirm').evaluate(el=>!!el.closest('.hpf-toggle').querySelector('hp-help[instant]')&&!el.closest('.hpf-toggle').querySelector('.hpf-toggle-caption'));
+   await section('details');out.model_link_share_stacked_divider=await dialog.locator('#marker-link').evaluate(el=>getComputedStyle(el.closest('.hpf-field')).borderTopWidth==='1px');
    // Return to the exact approved values before visual capture.
    await close();await openSettingsDeviceDialog(page,id);
   }

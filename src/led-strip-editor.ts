@@ -877,13 +877,14 @@ export class LedStripEditor {
       html`<button class="btn ${cls}" type="button" data-led-action=${name} ?disabled=${this.busy}
         @click=${then(run)}><ha-icon icon=${icon}></ha-icon>${text}</button>`;
     return html`<div class="hpf-group led-representation" data-led-representation=${active ? 'strip' : 'icon'}>
-      ${active ? html`<span class="hpf-note">${this.t('led.type_note')}</span>` : nothing}
-      <div class="row" style="flex-wrap:wrap;gap:6px">
+      <div class="row" style="flex-wrap:wrap;gap:4px">
         ${active
           ? button('show-icon', 'mdi:lightbulb-outline', this.t('led.show_icon'),
             () => this.setActive(owner.strip.id, false, owner.spaceId))
           : button('show-strip', 'mdi:led-strip-variant', this.t('led.show_strip'),
             () => (owner ? this.setActive(owner.strip.id, true, owner.spaceId) : this.open(devId)))}
+        ${active ? html`<hp-help instant .text=${this.t('led.type_note')}
+          .ariaLabel=${this.t('led.type_note')}></hp-help>` : nothing}
         ${owner && !active ? html`
           ${button('unbind', 'mdi:link-variant-off', this.t('led.unbind'),
             () => this.bind(owner.strip.id, null, owner.spaceId))}

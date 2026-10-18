@@ -407,7 +407,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               </option>`)}
           </select></hp-settings-select>`,
           hint: effectiveTapAction === 'toggle'
-            ? html`<span id="marker-toggle-hint">${toggleHintLines.map((line) => html`<span class="hpf-hint-line">${line}</span>`)}</span>
+            ? html`<span id="marker-toggle-hint" class="hpf-note" role="note">${toggleHintLines.map((line) => html`<span class="hpf-hint-line">${line}</span>`)}</span>
               <span class="sr-only" role="status" aria-live="polite">${d.tapHintAnnouncement}</span>`
             : undefined,
         })}
@@ -416,7 +416,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
         ${effectiveTapAction === 'run' || effectiveTapAction === 'toggle'
           ? toggleRow({
               id: 'marker-tap-confirm', icon: 'mdi:check-decagram-outline',
-              title: t('marker.tap_confirm'), caption: t('marker.tap_confirm_tip'),
+              title: t('marker.tap_confirm'),
+              help: html`<hp-help instant .text=${t('marker.tap_confirm_tip')} .ariaLabel=${t('marker.tap_confirm')}></hp-help>`,
               checked: d.tapConfirm,
               onChange: (v) => (this.host._markerDialog = { ...d, tapConfirm: v }),
             })
@@ -829,7 +830,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               .value=${d.link}
               @input=${(e: Event) => (this.host._markerDialog = { ...d, link: (e.target as HTMLInputElement).value })} />`,
           }),
-        ])}
+        ], { stacked: true })}
         ${field({
           label: t('marker.desc_label'), htmlFor: 'marker-description',
           control: html`<textarea id="marker-description" class="hpf-input" rows="4" placeholder=${t('marker.desc_ph')}

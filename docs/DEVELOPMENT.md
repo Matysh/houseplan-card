@@ -40,6 +40,11 @@ The inherited #945 preview witness uses Room v4's own sample typography
 (16px name and 12px metrics), while retaining the independent space-base
 times room-multiplier checks and the Cancel persistence assertion (#946).
 
+Device screenshot comparison against immutable v6 keeps the LED explanation
+contextual, places tap-confirmation help beside its label, uses the common
+information callout for toggle guidance, and separates the model/link fields.
+These are presentation changes; the action guards and saved values are unchanged.
+
 The #947 full-suite adapters navigate the approved panes before clicking or
 focusing their controls. The automatic MDI icon is checked in the actual picker
 or glyph fallback, and the static preview retains plan parity for icon/state/
