@@ -1,4 +1,6 @@
-/** Shared, editor-only presentation for the four approved settings forms (#944). */
+/** Shared, editor-only presentation for the four approved settings forms (#944).
+ * Menus are owned by hp-settings-select; its hidden native child holds values only.
+ */
 import{ settingsActionHover, settingsActionTransition, settingsPrimaryActionHover } from './settings-action.styles';
 export const settingsDialogCss = `
   .hpf-button-help { display:inline-flex; align-items:center; gap:4px; }
@@ -166,18 +168,6 @@ hp-dialog[data-kind=room][settings-layout] .hpf-grid{grid-template-columns:minma
 .hpf-settings-pane .radarcoordinates > label{flex:1;min-width:72px;}
 .hpf-settings-pane .radarcoordinates input{width:100%;box-sizing:border-box;}
 .hpf-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);}
-.hpf-settings-form select{transition:background 160ms ease,border-color 160ms ease;}
-@supports (appearance:base-select){
-.hpf-settings-form select{background-image:none;}
-.hpf-settings-form select,.hpf-settings-form select::picker(select){appearance:base-select;}
-.hpf-settings-form select::picker-icon{margin-inline-start:12px;transition:rotate 160ms ease;}
-.hpf-settings-form select:open::picker-icon{rotate:180deg;}
-.hpf-settings-form select::picker(select){color:var(--primary-text-color);background:var(--hpf-surface);border:1px solid var(--hpf-line);border-radius:10px;padding:5px;box-shadow:0 8px 28px #0003;opacity:0;transform:translateY(-5px) scale(.985);transition:opacity 160ms,transform 160ms,display 160ms allow-discrete,overlay 160ms allow-discrete;}
-.hpf-settings-form select:open::picker(select){opacity:1;transform:none;}
-@starting-style{.hpf-settings-form select:open::picker(select){opacity:0;transform:translateY(-5px) scale(.985);}}
-.hpf-settings-form option{padding:10px 12px;border-radius:6px;white-space:normal;}
-.hpf-settings-form option:hover{background:var(--hpf-tint);}
-}
 @media(min-width:551px){
 .hpf-settings-layout:not(.hpf-settings-single){min-height:calc(min(var(--hp-dialog-settings-height,756px),100dvh - 48px) - var(--hp-settings-chrome-height,152px));}
 }
@@ -196,6 +186,6 @@ hp-dialog[settings-layout] .hpf-footer-object .dialog-action-commit{grid-column:
 }
 @media(prefers-reduced-motion:reduce){
 hp-dialog[settings-layout]{--hp-dialog-close-transition:none;--hp-dialog-close-hover-transform:none;}
-.hpf-settings-form *,hp-dialog[settings-layout] .hpf-footer .btn,.danger-confirm-footer .btn,.hpf-settings-form *::picker(select){transition:none!important;animation:none!important;}
+.hpf-settings-form *,hp-dialog[settings-layout] .hpf-footer .btn,.danger-confirm-footer .btn{transition:none!important;animation:none!important;}
 }
 `;
