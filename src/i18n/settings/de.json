@@ -77,7 +77,7 @@
   "marker.room_hint_override": "Überschreibt die Platzierung nach Gerätebereich.",
   "marker.light_role_seg_always": "Immer",
   "marker.light_role_seg_never": "Nie",
-  "marker.glow_radius_empty_hint": "Leer: allgemeiner Radius ({v}).",
+  "marker.glow_radius_empty_hint": "Allgemeiner Radius ({v}) wird verwendet.",
   "marker.icon.help": "Leer bedeutet automatisch: Das Symbol kommt aus den Symbolregeln für dieses Gerät. Wählen Sie eines zum Überschreiben oder heften Sie die automatische Wahl an.",
   "marker.icon.help.aria": "Hilfe: Marker-Symbol",
   "marker.display.help": "Wie das Marker-Gesicht auf Zustand und Aktivität reagiert. Die Wert-Modi ersetzen das Symbol durch einen Home-Assistant-Wert.",

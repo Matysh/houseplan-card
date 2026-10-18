@@ -749,7 +749,7 @@
   "marker.controls_filter": "Rechercher des lumières et interrupteurs…",
   "info.controls": "Contrôle",
   "marker.glow_radius_label": "Rayon du halo",
-  "marker.glow_radius.help": "Définit le rayon du halo en mètres ou en pieds ; une valeur vide utilise le rayon des paramètres généraux.",
+  "marker.glow_radius.help": "Le rayon des réglages généraux est utilisé par défaut. Saisissez un autre rayon pour cet appareil. Effacez le champ pour réutiliser le rayon général.",
   "marker.glow_radius.help.aria": "Aide : rayon du halo",
   "markup.wallthick": "Épaisseur",
   "markup.select": "Sélectionner",

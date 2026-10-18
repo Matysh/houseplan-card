@@ -749,7 +749,7 @@
   "marker.controls_filter": "Suchlichter und Schalter…",
   "info.controls": "Steuerungen",
   "marker.glow_radius_label": "Leuchtradius",
-  "marker.glow_radius.help": "Legt den Leuchtradius in Metern oder Fuß fest; ein leerer Wert verwendet den Radius aus den allgemeinen Einstellungen.",
+  "marker.glow_radius.help": "Standardmäßig gilt der Radius aus den allgemeinen Einstellungen. Geben Sie einen anderen Radius für dieses Gerät ein. Leeren Sie das Feld, um wieder den allgemeinen Radius zu verwenden.",
   "marker.glow_radius.help.aria": "Hilfe: Leuchtradius",
   "markup.wallthick": "Dicke",
   "markup.select": "Auswählen",

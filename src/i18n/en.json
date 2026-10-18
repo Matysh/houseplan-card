@@ -749,7 +749,7 @@
   "marker.controls_filter": "Search lights and switches…",
   "info.controls": "Controls",
   "marker.glow_radius_label": "Glow radius",
-  "marker.glow_radius.help": "Sets the glow radius in metres or feet; an empty value uses the radius from general settings.",
+  "marker.glow_radius.help": "The radius from general settings is used by default. Enter another radius for this device. Clear the field to use the general radius again.",
   "marker.glow_radius.help.aria": "Help: glow radius",
   "markup.wallthick": "Thickness",
   "markup.select": "Select",

@@ -49,6 +49,9 @@ try{
    out.rotation_changes_only_icon=await face.evaluate(el=>{const icon=el.querySelector('.device-core > ha-icon');return getComputedStyle(icon).transform!=='none'&&getComputedStyle(el.querySelector('.value-badge')).rotate==='none';});
    await section('light');out.fixed65=await dialog.locator('#marker-glow-brightness').inputValue()==='65';
    out.radius_filled_but_not_materialized=await dialog.locator('#marker-glow-radius').inputValue().then(v=>Number(v)>0)&&await page.evaluate(()=>window.__card._markerDialog.glowRadius==='');
+   const radiusField=dialog.locator('.hpf-field:has(#marker-glow-radius)');
+   out.radius_caption_describes_inheritance=!(await radiusField.locator('.hpf-hint').innerText()).includes('Пусто:');
+   out.radius_help_explains_override_and_clear=await radiusField.locator('hp-help').evaluate(el=>/Введите другой радиус/.test(el.text)&&/Очистите поле/.test(el.text));
    await section('actions');out.control_friendly_name=(await dialog.locator('.hpf-chip').allTextContents()).some(t=>t.includes('Потолочная лампа')&&!t.includes('light.living_ceiling'));
    await dialog.locator('#marker-controls-filter').fill('Торшер');await tick();
    await dialog.getByRole('option',{name:/Торшер/}).first().click();await tick();

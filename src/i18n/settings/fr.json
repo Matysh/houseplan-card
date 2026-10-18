@@ -77,7 +77,7 @@
   "marker.room_hint_override": "Remplace le placement par zone de l’appareil.",
   "marker.light_role_seg_always": "Toujours",
   "marker.light_role_seg_never": "Jamais",
-  "marker.glow_radius_empty_hint": "Vide : rayon général ({v}).",
+  "marker.glow_radius_empty_hint": "Rayon des réglages généraux utilisé ({v}).",
   "marker.icon.help": "Vide signifie automatique : l’icône vient des règles d’icônes de cet appareil. Choisissez-en une pour remplacer, ou épinglez le choix automatique.",
   "marker.icon.help.aria": "Aide : icône du marqueur",
   "marker.display.help": "Comment la face du marqueur réagit à l’état et à l’activité. Les modes valeur remplacent l’icône par une valeur Home Assistant.",

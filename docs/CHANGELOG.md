@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Clarify inherited glow radius and explain how to override or clear it,
+  matching the approved Device guidance without storing the displayed default. (#947)
+
 - Undo removal of a previously saved manual radar inside Device settings,
   preserving other edits, calibration and opaque future profiles. (#947)
 

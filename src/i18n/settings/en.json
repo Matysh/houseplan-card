@@ -77,7 +77,7 @@
   "marker.room_hint_override": "Overrides the placement by device area.",
   "marker.light_role_seg_always": "Always",
   "marker.light_role_seg_never": "Never",
-  "marker.glow_radius_empty_hint": "Empty: uses the general radius ({v}).",
+  "marker.glow_radius_empty_hint": "Using the general radius ({v}).",
   "marker.icon.help": "Empty means automatic: the icon comes from the icon rules for this device. Pick one to override, or pin the automatic choice.",
   "marker.icon.help.aria": "Help: marker icon",
   "marker.display.help": "How the marker face reacts to state and activity. The value modes replace the icon with a Home Assistant value.",
