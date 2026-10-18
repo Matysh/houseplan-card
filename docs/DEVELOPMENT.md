@@ -48,8 +48,15 @@ Vacuum map selects also use the shared animated list. New labels cover all four
 locales. Full-suite witnesses navigate each newly opened Device dialog to its
 visible pane; the first-frame observer opens the collapsed diagnostic content
 and still measures its first painted frame. Technical values are not removed.
-Matched feature-cost references are recorded after the fresh Linux build;
-the earlier “final #947” paragraph below describes the pre-profile material.
+Fresh matched Linux/ext480ee74f8 measures editor286930/onboarding32052/
+raw3109030/initial322947. The unchanged Room A is284636/31428/3096669;
+own complete-feature deltas are+2294/+624/+12361. Carrying those deltas onto
+the Room references gives286919/30376/3108818, preserving inherited gaps
+11/1676/212, all bands and every absolute/initial limit. Counter references
+stay145/363/5564/103/101; actual hostRefs5577 stays inside its25band.
+The earlier “final #947” paragraph below is historical pre-profile material.
+This cost belongs to the approved complete Device v6 feature; #955 still has
+to fit its own existing band relative to the accepted Device material.
 
 The inherited #945 preview witness uses Room v4's own sample typography
 (16px name and 12px metrics), while retaining the independent space-base
@@ -3289,7 +3296,7 @@ Room references: 286219 / 30315 / 3105293, retaining inherited gaps 11 / 1676 /
 unchanged 322937 +2000 ceiling and 352000 absolute budget. Counter references
 stay 145/363/5564/103/101; actual host references 5574 fit the existing 25 band.
 
-Final #947 on the final reviewed parent A: fresh Linux/ext4 editor286270,
+Historical pre-profile #947 on its reviewed parent A: fresh Linux/ext4 editor286270,
 onboarding32010, raw3105417, versus final Room284636/31428/3096669. Own deltas
 +1634/+582/+8748 produce refs286259/30334/3105205, keeping gaps11/1676/212
 and all bands/absolute limits. Initial322945 stays under unchanged322937+2000
