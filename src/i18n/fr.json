@@ -1329,8 +1329,6 @@
   "backdrop.too_large_title": "Image trop grande",
   "backdrop.too_large_body": "Cette image dépasse ce que les navigateurs peuvent afficher ({w}×{h}, limite {limit} px par côté). Réduisez-la dans un éditeur de bureau puis téléversez-la à nouveau.",
   "backdrop.downscale_failed": "Impossible de créer la copie réduite. Le plan actuel n'a pas été modifié.",
-  "gs.card_zigbee": "Liens Zigbee",
-  "gs.card_fills": "Couleurs de remplissage des pièces",
   "space.card_basics": "Général",
   "space.card_sun": "Soleil et lumière",
   "marker.card_basics": "Général",

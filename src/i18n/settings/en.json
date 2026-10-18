@@ -177,8 +177,8 @@
   "gs.section_light": "Light, Sun and Moon",
   "gs.section_maintenance": "Backups and maintenance",
   "gs.palette_shared": "Shared palette for all spaces",
-  "gs.default_light": "Default light colour / intensity",
-  "gs.north_description": "North helps position rays from windows correctly. 0° points up; angles run clockwise.",
+  "gs.default_light": "Default light colour",
+  "gs.north_description": "North helps position rays from windows correctly.",
   "gs.sun_rays_override": "Enabled. A space can override this.",
   "gs.phase_day": "Day",
   "gs.phase_dawn": "Dawn",
@@ -190,5 +190,13 @@
   "gs.converter_result": "Import the resulting JSON into House Plan.",
   "gs.space_overrides": "These spaces use their own setting: {names}.",
   "gs.scope": "Settings for the whole installation",
-  "gs.sun_rays_override_off": "Disabled. A space can override this."
+  "gs.sun_rays_override_off": "Disabled. A space can override this.",
+  "gs.section_fills": "Room fills",
+  "gs.section_zigbee": "Zigbee diagnostics",
+  "gs.glow_radius_hint": "For devices without their own glow radius",
+  "gs.north_angle_hint": "0° points up the plan, 90° to the right. Angles run clockwise.",
+  "dialog.saved": "All changes saved",
+  "dialog.dirty": "Unsaved changes",
+  "gs.default_light_help": "Light colour and intensity for devices without their own glow colour.",
+  "gs.default_light_help.aria": "Help: default light colour"
 }

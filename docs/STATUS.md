@@ -48,6 +48,9 @@ infer orphan deletion. Help diagnostics remain a separate privacy contract.
 General settings (#948, part of #944) adopt six sections and shared responsive,
 theme-driven form presentation. Configuration, draft/save contracts and
 independent Zigbee scan jobs remain owned by their original components.
+The AC1 comparison against the approved v10 also fixes field widths, guidance
+placement, compact navigation, header and save-status order. Functional smoke
+success by itself is not visual acceptance; the four-dialog beta remains pending.
 
 Room darkness (#943) is removed from the palette, General settings and all
 full/static/2.5D render paths. Light pools and actual data fills retain their

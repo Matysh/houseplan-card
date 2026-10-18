@@ -117,7 +117,7 @@ test('#659 settings handlers preserve dirty, discard, inversion and field owners
   );
   contains('src/editors/general-settings-dialog.ts',
     "? callout({ kind: 'warning', role: 'status', text: t('gs.sun_missing') })",
-    "title: t('gs.card_fills'),",
+    "title: st('gs.section_fills'),",
     'const canSave = dirty && problems.length === 0 && !d.busy;',
     'this._setFillColor(key, { c: e.detail.color, a: e.detail.opacity });',
     "trimmed === '' ? { northDeg: null }",

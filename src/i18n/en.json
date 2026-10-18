@@ -1329,8 +1329,6 @@
   "backdrop.too_large_title": "Image is too large",
   "backdrop.too_large_body": "This image exceeds what browsers can display ({w}×{h}, limit {limit} px per side). Please reduce it in a desktop editor and upload again.",
   "backdrop.downscale_failed": "Could not create the reduced copy. The original plan was not changed.",
-  "gs.card_zigbee": "Zigbee links",
-  "gs.card_fills": "Room fill colors",
   "space.card_basics": "Basics",
   "space.card_sun": "Sun & light",
   "marker.card_basics": "Basics",

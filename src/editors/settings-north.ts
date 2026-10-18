@@ -2,9 +2,9 @@ import { html, svg, type TemplateResult } from 'lit';
 import { unitInput } from './form-kit';
 
 export function settingsNorth({
-  id, value, raw, label, invalid, onInput, onChange,
+  id, value, raw, label, invalid, angleHint, onInput, onChange,
 }: {
-  id: string; value: number | null; raw: string; label: string; invalid?: boolean;
+  id: string; value: number | null; raw: string; label: string; invalid?: boolean; angleHint?: string;
   onInput: (raw: string) => void; onChange: (value: number) => void;
 }): TemplateResult {
   const angle = value ?? 0;
@@ -56,9 +56,10 @@ export function settingsNorth({
       </svg>
     </button>
     <div class="hpf-north-values">
-      ${unitInput({ id, value: raw, min: 0, max: 359, step: 1, unit: '°', ariaLabel: label, invalid, onInput })}
+      ${unitInput({ id, value: raw, wide:true, min: 0, max: 359, step: 1, unit: '°', ariaLabel: label, invalid, onInput })}
       <input type="range" min="0" max="359" step="1" .value=${String(angle)} aria-label=${label}
         @input=${(event: Event) => onChange(Number((event.target as HTMLInputElement).value))} />
+      ${angleHint ? html`<p class="hpf-hint">${angleHint}</p>` : ''}
     </div>
   </div>`;
 }

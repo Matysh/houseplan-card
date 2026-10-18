@@ -17308,7 +17308,7 @@ const MUTANT_DEFINITIONS = [
       + 'Заголовок и есть то, ради чего задача делалась, и его потеря обязана краснеть',
     patches: [{
       file: 'src/editors/general-settings-dialog.ts',
-      find: "        title: t('gs.card_fills'),",
+      find: "        title: st('gs.section_fills'),",
       replace: "        title: '',",
     }],
   },

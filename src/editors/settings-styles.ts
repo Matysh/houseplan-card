@@ -1,6 +1,7 @@
 import '../hp-settings-select';
 import { ensureFormKitStyles, type FormKitStyleHost } from './form-kit';
 import { settingsDialogCss } from '../styles/settings-dialogs.styles';
+import type { HpColorOpacity } from '../hp-color-opacity';
 
 const adopted = new WeakSet<ShadowRoot>();
 const sheets = new WeakMap<Document, CSSStyleSheet>();
@@ -10,6 +11,14 @@ export function ensureSettingsDialogStyles(host: FormKitStyleHost): void {
   ensureFormKitStyles(host);
   const root = host.renderRoot as ShadowRoot;
   if (!root || adopted.has(root)) return;
+  // Editor-only delegation: leave onboarding and ordinary colour fields alone.
+  root.addEventListener('click', event => {
+    const path=event.composedPath();
+    if (path.some(node => node instanceof HTMLElement && node.matches('button,input,hp-color-opacity'))) return;
+    const target=path.find((node): node is HTMLElement => node instanceof HTMLElement);
+    const plate=target?.closest('.hpf-colorfield');
+    if (plate?.closest('hp-dialog[settings-layout]')) void plate.querySelector<HpColorOpacity>('hp-color-opacity')?.togglePicker();
+  });
   const doc = root.ownerDocument, Sheet = doc.defaultView?.CSSStyleSheet;
   if (Sheet && 'adoptedStyleSheets' in root) {
     let sheet = sheets.get(doc);

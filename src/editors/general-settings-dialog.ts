@@ -181,9 +181,9 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
               })
             : settingsBackgroundPreviews([st('gs.phase_day'), st('gs.phase_dawn'), st('gs.phase_dusk'), st('gs.phase_night')], st('gs.daynight_rules'))}`,
       })}` },
-        { id: 'fills', title: t('gs.card_fills'), body: html`${formCard({
+        { id: 'fills', title: st('gs.section_fills'), body: html`${formCard({
         id: 'fills',
-        title: t('gs.card_fills'),
+        title: st('gs.section_fills'),
         help: nothing,
         body: html`<p class="hpf-hint">${st('gs.palette_shared')}</p>
           ${subsection({ title: st('gs.light_group') })}
@@ -194,7 +194,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           ${colorTiles([tile('lqi_low', 'gs.lqi_low'), tile('lqi_high', 'gs.lqi_high')])}`,
       })}` },
         { id: 'sun', title: st('gs.section_light'), body: html`${formCard({ id: 'sun', title: st('gs.section_light'), body: html`
-          ${colorRow({ label: st('gs.default_light'), picker: colorField({
+          ${colorRow({ label: st('gs.default_light'), help:html`<hp-help instant .text=${st('gs.default_light_help')} .ariaLabel=${st('gs.default_light_help.aria')}></hp-help>`, picker: colorField({
             hex: d.colors.glow_light.c, opacity: d.colors.glow_light.a, opacityLabel: t('space.opacity'),
             picker: html`<hp-color-opacity .label=${t('gs.glow_light')} hide-label flat-swatch
               .opacityLabel=${t('space.opacity')} .pickerLabels=${host._colorPickerLabels}
@@ -205,26 +205,26 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           ${field({
             label: st('gs.glow_radius'), htmlFor: 'gs-glow-radius', help: this._help('gs.glow_radius.help'),
             error: glowProblem ? st(glowProblem.message) : undefined,
-            control: unitInput({
-              id: 'gs-glow-radius', value: d.glowRadiusInput, min: 0.5, step: 0.5, invalid: !!glowProblem,
+            control: html`${unitInput({
+              id: 'gs-glow-radius', value: d.glowRadiusInput, wide:true, min: 0.5, step: 0.5, invalid: !!glowProblem,
               unit: host._imperial ? t('gs.unit_ft') : t('gs.unit_m'),
               onInput: (raw) => {
                 const v = strictNumber(raw);
                 set({ glowRadiusInput: raw, ...(v != null && v > 0 ? { glowRadius: v } : {}) });
               },
-            }),
+            })}${callout({text:st('gs.glow_radius_hint')})}`,
           })}
           ${!sunStateOf(host.hass)
             ? callout({ kind: 'warning', role: 'status', text: t('gs.sun_missing') })
             : nothing}
           ${field({ label: t('gs.north'), htmlFor: 'gs-north', help: this._help('gs.north.help'),
-            control: settingsNorth({ id: 'gs-north', value: d.northDeg, raw: d.northDegInput,
-              label: t('gs.north'), invalid: !!northProblem,
+            control: html`${settingsNorth({ id: 'gs-north', value: d.northDeg, raw: d.northDegInput,
+              label: t('gs.north'), invalid: !!northProblem, angleHint:st('gs.north_angle_hint'),
               onInput: (raw) => {
                 const trimmed = raw.trim(), n = trimmed === '' ? null : strictNumber(trimmed);
                 set({ northDegInput: raw, ...(trimmed === '' ? { northDeg: null } : n !== null && Number.isInteger(n) && n >= 0 && n <= 359 ? { northDeg: n } : {}) });
               }, onChange: (v) => set({ northDeg: v, northDegInput: String(v) }),
-            }), hint: st('gs.north_description'),
+            })}${callout({text:st('gs.north_description')})}`,
           })}
           ${northProblem ? html`<p class="hpf-error" role="alert">${st(northProblem.message)}</p>` : nothing}
           ${toggleRow({
@@ -240,9 +240,9 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           ${callout({ id: 'gs-moon-status', text: moonStatus
             ? html`<span data-moon-status=${moonStatus.reason}>${moonStatusText(moonStatus, st)}</span>`
             : st('gs.moon_hint') })}`, })}` },
-        { id: 'zigbee', title: t('gs.card_zigbee'), body: html`${formCard({
+        { id: 'zigbee', title: st('gs.section_zigbee'), body: html`${formCard({
         id: 'zigbee',
-        title: t('gs.card_zigbee'),
+        title: st('gs.section_zigbee'),
         help: zigbeeHelp,
         body: html`<hp-zigbee-topology-settings embedded .active=${selectedSettingsSection(host, 'general') === 'zigbee'} .hass=${host.hass} .value=${d.zigbeeTopology}
           .savedEnabled=${zigbeeTopologySettingsOf(host._settings).enabled} .devices=${host._devices} .registry=${host._haRegistry}
@@ -290,6 +290,9 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
       ], st('dialog.section'))}
     </div>
     <div class="row dialog-action-footer hpf-footer" slot="footer">
+      ${footerStatus(problems.length
+        ? { action: textLink(st('dialog.review_fields', { n: String(problems.length) }), reviewFirst) }
+        : {text:st(dirty ? 'dialog.dirty' : 'dialog.saved')})}
       <div class="dialog-action-group">
         <button class="btn ghost" @click=${() => set({
           colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: host._imperial ? 9.8 : 3,
@@ -298,9 +301,6 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           showRoomTooltip: true, showLqi: true, deviceBattery: 'all', radarShowLive: true, volumetricView: false, moon: true, zigbeeTopology: { enabled: false, z2mBaseTopics: [] },
         })}>${t('gs.reset')}</button>
       </div>
-      ${footerStatus(problems.length
-        ? { action: textLink(st('dialog.review_fields', { n: String(problems.length) }), reviewFirst) }
-        : {})}
       <div class="dialog-action-group dialog-action-commit">
         <button class="btn ghost" data-hp="dialog-cancel" @click=${requestClose}>${t('btn.cancel')}</button>
         <button class="btn on" data-hp="dialog-confirm" @click=${() => this._saveSettingsDialog()} ?disabled=${!canSave}

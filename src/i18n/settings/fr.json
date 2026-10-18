@@ -177,8 +177,8 @@
   "gs.section_light": "Lumière, Soleil et Lune",
   "gs.section_maintenance": "Sauvegarde et maintenance",
   "gs.palette_shared": "Palette commune à tous les espaces",
-  "gs.default_light": "Couleur de lumière par défaut / intensité",
-  "gs.north_description": "Le nord permet de placer les rayons des fenêtres. 0° pointe vers le haut ; angles dans le sens horaire.",
+  "gs.default_light": "Couleur de lumière par défaut",
+  "gs.north_description": "Le nord permet de placer les rayons des fenêtres.",
   "gs.sun_rays_override": "Activé. Un espace peut remplacer ce réglage.",
   "gs.phase_day": "Jour",
   "gs.phase_dawn": "Aube",
@@ -190,5 +190,13 @@
   "gs.converter_result": "Importez le fichier JSON obtenu dans House Plan.",
   "gs.space_overrides": "Ces espaces utilisent leur propre réglage : {names}.",
   "gs.scope": "Réglages de toute l’installation",
-  "gs.sun_rays_override_off": "Désactivé. Un espace peut remplacer ce réglage."
+  "gs.sun_rays_override_off": "Désactivé. Un espace peut remplacer ce réglage.",
+  "gs.section_fills": "Remplissages des pièces",
+  "gs.section_zigbee": "Diagnostic Zigbee",
+  "gs.glow_radius_hint": "Pour les appareils sans rayon lumineux propre",
+  "gs.north_angle_hint": "0° pointe vers le haut du plan, 90° vers la droite. Angles dans le sens horaire.",
+  "dialog.saved": "Toutes les modifications sont enregistrées",
+  "dialog.dirty": "Modifications non enregistrées",
+  "gs.default_light_help": "Couleur et intensité pour les appareils sans couleur lumineuse propre.",
+  "gs.default_light_help.aria": "Aide : couleur de lumière par défaut"
 }

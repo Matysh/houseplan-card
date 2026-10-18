@@ -12,6 +12,8 @@
   backups keep JSON ([#936](https://github.com/Matysh/houseplan-card/issues/936)).
   Proxy size rejections produce a useful message; an HTML gateway page is
   never downloaded as a fake ZIP.
+- General settings follow the approved layout: full-width colour and radius controls,
+  compass guidance beside its value, and a persistent save status ([#948](https://github.com/Matysh/houseplan-card/issues/948)).
 
 - Settings lists share an animated, keyboard-accessible menu across supported browsers, including the dialog-owned fallback when Popover is unavailable ([#948](https://github.com/Matysh/houseplan-card/issues/948)).
 - Room cards can show CO₂ in ppm, with an automatic room average or a selected

@@ -18,7 +18,7 @@ export class HpSettingsSelect extends LitElement {
       clip-path:inset(50%); opacity:0; pointer-events:none; }
     button { box-sizing:border-box; width:100%; min-height:44px; padding:10px 14px;
       display:flex; align-items:center; gap:14px; text-align:start; border:1px solid var(--hpf-line,var(--divider-color,#7776));
-      border-radius:8px; background:var(--hpf-canvas,var(--secondary-background-color,#282930));
+      border-radius:8px; background:var(--hpf-control-surface,var(--hpf-canvas,var(--secondary-background-color,#282930)));
       color:var(--primary-text-color,#e6e7eb); font:inherit; cursor:pointer;
       transition:background 160ms,border-color 160ms; }
     button span { flex:1; min-width:0; overflow-wrap:anywhere; }

@@ -1329,8 +1329,6 @@
   "backdrop.too_large_title": "Bild ist zu groß",
   "backdrop.too_large_body": "Dieses Bild überschreitet die Anzeigegrenzen des Browsers ({w}×{h}, Limit {limit} px pro Seite). Bitte verkleinern Sie es in einem Desktop-Editor und laden Sie es erneut hoch.",
   "backdrop.downscale_failed": "Die verkleinerte Kopie konnte nicht erstellt werden. Der aktuelle Plan wurde nicht geändert.",
-  "gs.card_zigbee": "Zigbee-Verbindungen",
-  "gs.card_fills": "Füllfarben der Räume",
   "space.card_basics": "Allgemein",
   "space.card_sun": "Sonne und Licht",
   "marker.card_basics": "Allgemein",

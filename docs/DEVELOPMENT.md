@@ -46,6 +46,28 @@ Before downgrade, resolve durable pending restore/Undo with this backend;
 never let an old version ignore a new recovery journal. Existing image files
 are retained, including after Undo; no orphan inference is allowed.
 
+## Approved settings visual contract (#948)
+
+Compare actual dialogs to the immutable `docs/design/settings-dialogs-944`
+references with identical data and viewport. `smoke_settings_mock_match_948`
+checks General's reference labels, width/navigation proportions, left close,
+full-width light/radius controls, compass guidance and footer-status order,
+plus the real colour-plate interaction and 320/390 px fitting. It writes paired
+reference/actual desktop images. The raw reference uses runtime Lucide icons;
+without that runtime its icon pixels are absent, so those images establish
+layout only, not an icon raster comparison. Inspect actual icons separately.
+This focused witness complements the full golden matrix and the other forms'
+visual comparison; it does not certify all four dialogs by itself.
+Matched Linux builds of the pre-refinement `6ffed73a` source (product-identical
+to pipeline `68735d36`) and this candidate measure 280396 → 280863 B gzip in
+the lazy editor. Only its own +467 B enters the rolling reference, preserving
+the inherited 1412 B gap and 2000 B band. Initial View is 323416 → 323450 B;
+its reference/absolute ceiling and the onboarding ceiling are unchanged.
+Raw files in the same isolated published base/candidate builds are 3054747 →
+3058911 B (+4164, chiefly the approved lazy copy and shared presentation). Carry
+only +4164 into `bundleBytes`; its inherited −2098 B gap and 2000 B band remain.
+All other coupling metrics are unchanged and their references are preserved.
+
 ## Room CO₂ (#920)
 
 Compile the usual test-build and run `node --test test/room-co2.test.mjs

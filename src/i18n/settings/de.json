@@ -177,8 +177,8 @@
   "gs.section_light": "Licht, Sonne und Mond",
   "gs.section_maintenance": "Sicherung und Wartung",
   "gs.palette_shared": "Gemeinsame Palette für alle Bereiche",
-  "gs.default_light": "Standardlichtfarbe / Intensität",
-  "gs.north_description": "Norden richtet Fensterstrahlen korrekt aus. 0° zeigt nach oben; Winkel im Uhrzeigersinn.",
+  "gs.default_light": "Standardlichtfarbe",
+  "gs.north_description": "Norden richtet Fensterstrahlen korrekt aus.",
   "gs.sun_rays_override": "Aktiviert. Ein Bereich kann dies überschreiben.",
   "gs.phase_day": "Tag",
   "gs.phase_dawn": "Morgendämmerung",
@@ -190,5 +190,13 @@
   "gs.converter_result": "Die erzeugte JSON-Datei in House Plan importieren.",
   "gs.space_overrides": "Diese Bereiche verwenden eigene Werte: {names}.",
   "gs.scope": "Einstellungen für die gesamte Installation",
-  "gs.sun_rays_override_off": "Deaktiviert. Ein Bereich kann dies überschreiben."
+  "gs.sun_rays_override_off": "Deaktiviert. Ein Bereich kann dies überschreiben.",
+  "gs.section_fills": "Raumfüllungen",
+  "gs.section_zigbee": "Zigbee-Diagnose",
+  "gs.glow_radius_hint": "Für Geräte ohne eigenen Leuchtradius",
+  "gs.north_angle_hint": "0° zeigt im Plan nach oben, 90° nach rechts. Winkel im Uhrzeigersinn.",
+  "dialog.saved": "Alle Änderungen gespeichert",
+  "dialog.dirty": "Ungespeicherte Änderungen",
+  "gs.default_light_help": "Lichtfarbe und Intensität für Geräte ohne eigene Leuchtfarbe.",
+  "gs.default_light_help.aria": "Hilfe: Standardlichtfarbe"
 }

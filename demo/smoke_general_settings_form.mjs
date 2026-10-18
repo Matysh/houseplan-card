@@ -58,10 +58,10 @@ const out = await page.evaluate(async () => {
   o.noRedundantSegments = qa('.hpf-seg').length === 0;
 
   // --- К10 ------------------------------------------------------------------
-  o.saveDisabledWhenClean = saveBtn().disabled === true && statusText() === '';
+  o.saveDisabledWhenClean = saveBtn().disabled === true && statusText().length > 0;
   q('#gs-room-tooltip').click(); await upd();
   o.toggleWritesShowRoomTooltip = c._settingsDialog.showRoomTooltip === !d0.showRoomTooltip && c._settingsDialog.radarShowLive === d0.radarShowLive;
-  o.saveEnabledWhenDirtyWithoutDuplicateStatus = saveBtn().disabled === false && statusText() === '';
+  o.saveEnabledWhenDirtyWithStatus = saveBtn().disabled === false && statusText().length > 0;
   q('#gs-room-tooltip').click(); await upd();
   o.cleanAgainWhenReverted = saveBtn().disabled === true;
 

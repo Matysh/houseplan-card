@@ -29,6 +29,12 @@ their central writer contracts. Missing/OFF snapshot replaces with empty cache.
 The frontend transfers opaque candidates/raw files; it never parses imported
 JSON or trusts browser-produced file paths. Legacy JSON and Help stay separate.
 
+Approved settings presentation (#948) is scoped by `settings-layout`: its
+responsive shell, white/theme-derived controls and colour-plate delegation do
+not alter ordinary dialogs or onboarding. A colour plate activates the existing
+`hp-color-opacity` trigger/overlay owner, so keyboard focus, draft ownership and
+close behavior remain in one component. Compass guidance is display-only.
+
 Catalog operations (#930) keep space filtering and virtual-ID identity in the
 pure `device-inbox` projection. The same full filtered result drives rendering,
 Select all and post-confirmation revalidation. `marker-deletion.ts` owns a deep

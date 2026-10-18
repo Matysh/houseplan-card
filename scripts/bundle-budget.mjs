@@ -759,7 +759,10 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // #948 follow-up: the same 93f49edf build is 277557 B; the common accessible
 // animated select (including dialog-owned fallback) adds 2815 B gzip. Carry
 // only this cost, retaining inherited headroom, both bands and View budgets.
-export const LAZY_EDITOR_GZIP_CEILING = 278_984;
+// #948 visual acceptance: matched 6ffed73a/68735d36 source is 280396 B;
+// approved field/shell/copy refinements measure 280863 B (+467). Carry only
+// this own delta; the inherited 1412 B gap, band and all other ceilings stay.
+export const LAZY_EDITOR_GZIP_CEILING = 279_451;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

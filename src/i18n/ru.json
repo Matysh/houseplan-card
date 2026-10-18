@@ -1329,8 +1329,6 @@
   "backdrop.too_large_title": "Изображение слишком большое",
   "backdrop.too_large_body": "Изображение превышает возможности браузера ({w}×{h}, предел {limit} px по стороне). Уменьшите его в редакторе на компьютере и загрузите снова.",
   "backdrop.downscale_failed": "Не удалось создать уменьшенную копию. Текущий план не изменён.",
-  "gs.card_zigbee": "Связи Zigbee",
-  "gs.card_fills": "Цвета заливки комнат",
   "space.card_basics": "Основное",
   "space.card_sun": "Солнце и свет",
   "marker.card_basics": "Основное",

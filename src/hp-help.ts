@@ -59,8 +59,10 @@ export class HpHelp extends LitElement {
       fill: currentColor;
     }
 
-    :host([instant]) .trigger { cursor:pointer; transition:color 150ms,background 150ms; }
+    :host([instant]) .trigger { width:22px; height:22px; cursor:pointer; transition:color 150ms,background 150ms; }
     :host([instant]) .trigger svg { width:20px; height:20px; }
+    :host([data-pointer-hover]):host([instant]) .trigger:hover svg,
+    :host([instant]) .trigger:focus-visible svg { transform:scale(1.06); }
 
     :host([data-pointer-hover]) .trigger:hover,
     .trigger:focus-visible,
@@ -140,6 +142,7 @@ export class HpHelp extends LitElement {
     }
 
     @media (pointer: coarse) {
+      :host([instant]) .trigger { width:40px; height:40px; }
       .trigger {
         width: 40px;
         height: 40px;
@@ -170,6 +173,7 @@ export class HpHelp extends LitElement {
 
   connectedCallback(): void {
     super.connectedCallback();
+    if (this.closest('hp-dialog[settings-layout]')) this.instant = true;
     this.addEventListener('keydown', this._keyDown, true);
   }
 

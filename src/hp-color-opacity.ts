@@ -53,6 +53,12 @@ export class HpColorOpacity extends LitElement {
   private _open = false;
   /** Consumers may hold live-derived properties steady while HEX is edited. */
   public get pickerOpen(): boolean { return this._open; }
+  /** A settings colour plate delegates to the same trigger and overlay owner. */
+  public async togglePicker(): Promise<void> {
+    if (this.disabled) return;
+    this.renderRoot.querySelector<HTMLButtonElement>('.trigger')?.focus();
+    await this._toggle();
+  }
   private _pickerRaf = 0;
   private _emitRaf = 0;
   private _forceFallback = false;

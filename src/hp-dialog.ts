@@ -220,7 +220,15 @@ export class HpDialog extends LitElement {
     }
     :host([form-shell]) .close { width: 44px; height: 44px; }
     :host([form-shell]) .header { min-height: 70px; }
+    :host([settings-layout]) ha-dialog { --ha-dialog-max-height:min(756px, calc(100dvh - 48px)); --ha-dialog-border-radius:13px; }
+    :host([settings-layout]) .surface { max-height:min(756px, calc(100vh - 48px)); border-color:var(--divider-color,#dce2e6); border-radius:13px; }
+    :host([settings-layout]) .header { min-height:78px; }
+    :host([settings-layout]) .header .close { order:-1; }
+    :host([settings-layout]) .title-text { font-size:18px; }
+    :host([settings-layout]) .content { background:var(--card-background-color,var(--hp-bg,#202126)); }
     @media (max-width: 480px) {
+      :host([settings-layout]) .surface { max-height:100dvh; }
+      :host([settings-layout]) ha-dialog { --ha-dialog-max-height:100dvh; }
       :host([form-shell]) ha-dialog {
         --ha-dialog-width-md: var(--safe-width, 100vw);
         --ha-dialog-width-full: var(--safe-width, 100vw);
