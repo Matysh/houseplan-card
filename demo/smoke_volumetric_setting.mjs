@@ -36,14 +36,14 @@ const res = await page.evaluate(async () => {
   out.startsFlat = !iso();
   out.dialogOpens = await openSettings();
   const display = q('.hpf-card[data-card="display"]');
-  const controls = [...display.querySelectorAll('input')];
+  const controls = [...display.querySelectorAll('input,select')];
   const ids = controls.filter((i) => i.type === 'checkbox').map((i) => i.id);
   out.thirdInDisplay = JSON.stringify(ids.slice(0, 3)) === JSON.stringify(['gs-room-tooltip', 'gs-radar-live', 'gs-volumetric-view']);
   // #792/#807 appends battery without moving the established settings;
   // #876 then adds the shared signal checkbox immediately after battery.
   out.batteryFollowsExisting = JSON.stringify(controls.map((i) => i.type === 'checkbox' ? i.id : `${i.name}:${i.value}`)) === JSON.stringify([
     'gs-room-tooltip', 'gs-radar-live', 'gs-volumetric-view',
-    'gs-device-battery:all', 'gs-device-battery:low', 'gs-device-battery:off',
+    'gs-device-battery:all',
     'gs-show-lqi',
   ]);
   const row = q('#gs-volumetric-view').closest('.hpf-toggle')?.parentElement ?? null;

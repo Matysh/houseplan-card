@@ -30,6 +30,11 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/hp-settings-select.ts', 'src/editors/settings-styles.ts', 'src/editors/form-kit.ts'],
+    smokes: ['smoke_settings_select.mjs'],
+    because: '#948: actual native/capability-fallback popup, keyboard, focus, closing animation, live themes and reduced motion are observable only through rendered controls.',
+  },
+  {
     symbols: ['_roomCo2', 'co2Value', 'co2For', 'co2DeviceValue', 'isCo2Entity', 'renderRoomSource',
       'renderRoomSettingsDialog', 'renderRoomCards', 'roomClimateMap', 'sourceValue'],
     files: ['src/room-co2.ts', 'src/styles/dialogs.styles.ts'],

@@ -310,6 +310,8 @@ export async function prepareBatteryZigbeeOverlap(page) {
   // Open/refresh/close the real General Settings UI; __hpTest still points at
   // the old demo card after golden remounts and must not seed this scene.
   await page.evaluate(() => window.__goldenCard.renderRoot.querySelector('[data-hp="settings"]').click());
+  await page.waitForFunction(() => window.__goldenCard.renderRoot.querySelector('[data-section-target="zigbee"]'));
+  await page.evaluate(() => window.__goldenCard.renderRoot.querySelector('[data-section-target="zigbee"]').click());
   await page.waitForFunction(() => [...(window.__goldenCard.renderRoot
     .querySelector('hp-zigbee-topology-settings')?.shadowRoot?.querySelectorAll('button') || [])]
     .some((button) => button.querySelector('ha-icon[icon="mdi:access-point-network"]') && !button.disabled));

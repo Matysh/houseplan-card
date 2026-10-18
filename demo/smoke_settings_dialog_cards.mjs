@@ -27,8 +27,9 @@ const out = await page.evaluate(async () => {
   sr().querySelector('[data-section-target="plan"]').click(); await c.updateComplete;
   const bg = sr().querySelector('hp-dialog select[name="gs-bg-mode"]');
   o.bgSelectHasNameAndOptions = !!bg?.getAttribute('aria-label') && bg.options.length === 2;
-  o.bgSelectTargetIsBigEnough = bg.getBoundingClientRect().height >= 42;
-  bg.focus(); o.bgSelectTakesFocus = sr().activeElement === bg;
+  const trigger=bg.closest('hp-settings-select').shadowRoot.querySelector('button');
+  o.bgSelectTargetIsBigEnough=trigger.getBoundingClientRect().height>=42;
+  trigger.focus();o.bgSelectTakesFocus=trigger.getRootNode().activeElement===trigger;
   const before = c._settingsDialog.bgMode;
   bg.value = before === 'daynight' ? 'static' : 'daynight';
   bg.dispatchEvent(new Event('change',{bubbles:true})); await c.updateComplete;

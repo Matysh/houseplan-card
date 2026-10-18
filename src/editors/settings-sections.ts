@@ -45,10 +45,10 @@ export function settingsSections(
             @click=${() => selectSettingsSection(host, kind, section.id)}>${section.title}</button>`)}
       </nav>
       <label class="hpf-settings-mobile"><span class="hpf-sr-only">${navigationLabel}</span>
-        <select class="hpf-select" aria-label=${navigationLabel} .value=${selected}
+        <hp-settings-select><select class="hpf-select" aria-label=${navigationLabel} .value=${selected}
           @change=${(event: Event) => selectSettingsSection(host, kind, (event.target as HTMLSelectElement).value)}>
           ${sections.map(section => html`<option value=${section.id} ?selected=${section.id === selected}>${section.title}</option>`)}
-        </select>
+        </select></hp-settings-select>
       </label>` : nothing}
     <div class="hpf-settings-content">
       ${sections.map(section => html`<section class="hpf-settings-pane" data-settings-section=${section.id}
