@@ -20,6 +20,20 @@ const context = { space, cellCm: 5, t: (key,values) => propertiesT('en',key,valu
 const model = (target) => propertiesCatalog(target, context);
 const fields = m => Object.fromEntries(m.groups.flatMap(g=>g.fields).map(f=>[f.key,f]));
 
+test('#931 r1 metadata names only owning contour rooms and resolved opening sides without inflecting custom names',()=>{
+  const local={...context,space:{...space,rooms:[
+    {name:'Детская Элины',wall_ids:['c']},{name:'Кухня',wall_ids:['other']} ]},
+    t:(key,vars)=>propertiesT('ru',key,vars),openingRooms:['Гостиная','Кухня']};
+  assert.equal(propertiesCatalog({kind:'contour',value:space.wall_segments[0]},local).meta,'Контур «Детская Элины» · Floor');
+  assert.equal(propertiesCatalog({kind:'opening',value:space.openings[0]},local).meta,'Floor · Гостиная — Кухня');
+  assert.equal(propertiesCatalog({kind:'opening',value:space.openings[0]},{...local,openingRooms:[]}).meta,'Дверной проём · Floor');
+  assert.equal(propertiesCatalog({kind:'contour',value:space.wall_segments[0]}, {...local,space:{...space,rooms:[
+    {name:'Legacy',poly:[[.1,.2],[.8,.2],[.8,.5],[.1,.5]]},
+    {name:'Not an owner',poly:[[.1,.3],[.8,.3],[.8,.6],[.1,.6]]} ]}}).meta,'Контур «Legacy» · Floor');
+  assert.equal(fields(propertiesCatalog({kind:'backdrop',value:space},local)).reset.icon,'reset');
+  assert.equal(propertiesT('ru','backdrop_delete_reason').replace(/\s+/g,' '),'Чтобы убрать картинку, измените вид подложки в настройках пространства.');
+});
+
 test('#931 stable selection rejects another floor, deleted ID, rebinding and a retired strip binding', () => {
   const id = { spaceId:'one',editor:'devices',kind:'device',objectId:'marker',binding:'virtual' };
   assert.equal(resolvePropertiesTarget(id,space,[device],[marker]).value,device);

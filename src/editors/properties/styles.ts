@@ -110,7 +110,8 @@ export const propertiesStyles = css`
   .hp-prop-action.display_device { color:#187e8d; border-color:#a4ccd2; background:#f5fbfb; }
   .hp-prop-action.display_device span { white-space:pre-line; }
   .hp-prop-action[aria-disabled='true'] { color: var(--prop-disabled-ink); background: var(--prop-disabled); border-color: var(--prop-line); cursor: default; }
-  .hp-prop-tooltip { display: none; position: absolute; left: 0; right: 0; bottom: calc(100% + 12px); padding: 12px 14px; background: #344750; color: #fff; border-radius: 6px; font-size: 12px; line-height: 1.55; box-shadow: 0 4px 15px #263e4320; z-index: 2; }
+  .hp-prop-tooltip { display: none; position: absolute; left: 0; right: 0; bottom: calc(100% + 12px); padding: 12px 14px; background: #344750; color: #fff; border-radius: 6px; font-size: 12px; line-height: 1.55; white-space: pre-line; box-shadow: 0 4px 15px #263e4320; z-index: 2; }
+  .hp-prop-tooltip::after { content: ''; position: absolute; bottom: -6px; left: 50%; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid #344750; transform: translateX(-50%); }
   .hp-prop-action-wrap:hover .hp-prop-tooltip, .hp-prop-action-wrap:focus-within .hp-prop-tooltip { display: block; }
   .hp-prop-help { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; color: var(--prop-muted); font-size: 10px; }
   .hp-prop-help > div { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }

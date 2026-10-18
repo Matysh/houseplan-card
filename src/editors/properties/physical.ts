@@ -72,6 +72,15 @@ export function patchPartitionEndpoint(
 export type PropertiesOpeningCore = Pick<OpeningPlacementCore, 'x' | 'y' | 'angle' | 'renderedLength' | 'target' | 'host'>;
 
 export type OpeningSideName = { kind: 'room'; name: string } | { kind: 'outside' } | { kind: 'fallback'; side: 'A' | 'B' };
+/** Canonical ownership, or exact legacy boundary containment; never nearest-room guessing. */
+export function propertiesContourRooms(wall: WallSegmentEntry, rooms: readonly RoomCfg[]): string[] {
+  return rooms.filter(room => {
+    if (room.wall_ids?.length) return room.wall_ids.includes(wall.id);
+    const poly = roomPoly(room);
+    return poly?.some((a, i) => pointOn(wall.a, a, poly[(i + 1) % poly.length])
+      && pointOn(wall.b, a, poly[(i + 1) % poly.length]));
+  }).map(room => room.name.trim()).filter(Boolean);
+}
 /** No guessed declension, nearest-room search or conflation of a gate's face with invert. */
 export function propertiesOpeningSides(
   core: PropertiesOpeningCore, rooms: readonly RoomCfg[], signs: readonly [number, number] = [-1, 1],

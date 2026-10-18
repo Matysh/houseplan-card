@@ -48,6 +48,7 @@ const paths: Record<string, string> = {
   close: 'm6 6 12 12M6 18 18 6', lock: 'M8 10V7a4 4 0 1 1 8 0v3',
   copy: 'M16 8V3H3v13h5', delete: 'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7',
   settings: 'M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2',
+  reset: 'M3 8h11a7 7 0 0 1 0 14M3 8l5-5M3 8l5 5',
   link: 'm8 15-2 2a4 4 0 0 1-6-6l5-5a4 4 0 0 1 6 0m5 3 2-2a4 4 0 0 1 6 6l-5 5a4 4 0 0 1-6 0M8 16l8-8',
   image: 'M3 18l6-6 4 4 3-4 5 5', variable: 'M8 3H6a2 2 0 0 0-2 2v4l-2 3 2 3v4a2 2 0 0 0 2 2h2M16 3h2a2 2 0 0 1 2 2v4l2 3-2 3v4a2 2 0 0 1-2 2h-2M10 9l4 6m0-6-4 6',
   swap: 'M4 7h15l-4-4m4 4-4 4M20 17H5l4-4m-4 4 4 4',
@@ -91,7 +92,7 @@ function fieldView(field: PropertiesField, port: PropertiesSurfacePort): Templat
       : field.value as { color: string; opacity: number; noFill?: boolean } | null;
     control = disabled || !color ? html`<div class="hp-prop-control hp-prop-color"><span class="hp-prop-swatch hp-prop-swatch-empty"></span><span>—</span></div>`
       : colorField({ hex: color.color.toUpperCase(), valueLabel: color.noFill ? t('no_fill') : undefined, opacity: color.opacity,
-        picker: html`<hp-color-opacity ${ref(el=>{if(el)port.attachColor(field.key,el as HpColorOpacity);})} .label=${label} .color=${color.color} .opacity=${color.opacity} cover-swatch
+        picker: html`<hp-color-opacity ${ref(el=>{if(el)port.attachColor(field.key,el as HpColorOpacity);})} .label=${label} .color=${color.color} .opacity=${color.opacity}
           .allowNoFill=${color.noFill !== undefined} .noFill=${color.noFill ?? false} .noFillLabel=${t('no_fill')}
           .pickerLabels=${port.pickerLabels} .disabled=${pending} hide-label flat-swatch
           @hp-color-opacity-open=${() => port.edit(field, JSON.stringify(color))}
@@ -138,7 +139,7 @@ export function renderPropertiesSurface(model: PropertiesSurface, port: Properti
     aria-busy=${String(!!controller.draft?.pending)} @pointerdown=${(e: Event) => e.stopPropagation()}
     @click=${(e: Event) => e.stopPropagation()} @wheel=${(e: Event) => e.stopPropagation()}>
     <header class="hp-prop-head"><div class="hp-prop-heading">${t('title')}<button type="button" class="hp-prop-clear" @click=${() => port.clear()}>
-      ${propertiesIcon('close')}${t('clear')}</button></div><div class="hp-prop-title" title=${model.title}>${model.title}</div><div class="hp-prop-meta">${model.meta}</div></header>
+      ${propertiesIcon('close')}${t('clear')}</button></div><div class="hp-prop-title" title=${model.title}>${model.title}</div><div class="hp-prop-meta" title=${model.meta}>${model.meta}</div></header>
     <div class="hp-prop-scroll">
       ${repeat(model.groups, group => group.key, group => html`<section class="hp-prop-group ${group.key} ${group.hint==='gap_unavailable' ? 'long-hint' : ''} ${port.collapsed.has(group.key) ? 'collapsed' : ''}">
         ${group.title ? html`<button type="button" class="hp-prop-group-title" aria-expanded=${String(!port.collapsed.has(group.key))}

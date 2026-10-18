@@ -107,6 +107,11 @@ try {
   const rect = await page.evaluate(async () => (await window.__card.hass.callWS({ type: 'houseplan/config/get' })).config.spaces.find(s=>s.id==='properties').decor.find(s=>s.id==='rect'));
   check('properties.decor_centre_preserved', Math.abs(rect.x + rect.w/2 - .275) < 1e-12);
   check('properties.decor_fill_unchanged', rect.fill_opacity, .65);
+  check('properties.fill_swatch_solid',await panel.locator('[data-property="fill"] hp-color-opacity').evaluate(el=>{
+    const trigger=el.shadowRoot.querySelector('.trigger'),swatch=el.shadowRoot.querySelector('.swatch');
+    return !el.coverSwatch && el.flatSwatch && getComputedStyle(trigger).backgroundImage==='none'
+      && getComputedStyle(swatch).opacity==='1' && Math.round(trigger.getBoundingClientRect().width)===15;
+  }),true);
   const select=async(mode,kind,id,binding)=>{
     await page.evaluate(async({mode,kind,id,binding})=>{await window.__hpTest.setMode(mode);window.__card._editorRuntime.properties.select(kind,id,binding);},{mode,kind,id,binding});
     await page.waitForFunction(()=>!window.__card._modeTransitionBusy);
@@ -181,10 +186,19 @@ try {
   await page.waitForFunction(()=>window.__card._editorRuntime.properties.fields.draft?.pending);
   check('properties.pending_text_is_disabled',await text.isDisabled(),true);
   check('properties.pending_sibling_input_is_disabled',await panel.locator('[data-property="x"] input').isDisabled(),true);
+  await page.evaluate(async()=>{
+    const c=window.__card;c._editorRuntime._openDecorProperties(c._decorList.find(s=>s.id==='text'));await c.updateComplete;
+  });
+  check('properties.pending_native_dialog_waits_for_ack',await card.locator('hp-dialog').count(),0);
   await page.evaluate(()=>window.__931Pending.release());
   await page.waitForFunction(()=>!window.__card._editorRuntime.properties.fields.draft);
+  await card.locator('hp-dialog').waitFor();
+  check('properties.pending_native_dialog_inert_after_ack',await panel.getAttribute('inert'),'');
+  await page.keyboard.press('Escape');await card.locator('hp-dialog').waitFor({state:'hidden'});
   check('properties.pending_text_saved_once',(await savedSpace()).decor.find(s=>s.id==='text').text,'Сохранение с задержкой');
   await select('decor','backdrop','properties');await finishField('opacity',0);
+  check('properties.reset_uses_reference_glyph',await panel.locator('[data-property="reset"] path').getAttribute('d'),'M3 8h11a7 7 0 0 1 0 14M3 8l5-5M3 8l5 5');
+  check('properties.backdrop_delete_explains_action',(await panel.locator('.hp-prop-tooltip').innerText()).replace(/\s+/g,' '),'Чтобы убрать картинку, измените вид подложки в настройках пространства.');
   check('properties.opacity_zero_saved',(await savedSpace()).plan_opacity,0);
   await panel.locator('[data-property="reset"] button').click();await page.evaluate(()=>window.__hpTest.waitForWrites());
   check('properties.reset_preserves_zero_opacity',(await savedSpace()).plan_opacity,0);
@@ -214,9 +228,37 @@ try {
     ['decor','backdrop','matrix'],['devices','led','led'],
   ]){
     await select(mode,kind,id,kind==='led'?'':undefined);
+    if(kind==='backdrop')await page.evaluate(()=>window.__hpTest.setTool('backdrop'));
     check(`properties.matrix_${id}_selected`,await panel.locator('.hp-prop-title').innerText()!=='Ничего не выбрано',true);
     check(`properties.matrix_${id}_three_common_groups`,await panel.locator('.position,.geometry,.appearance').count(),3);
     check(`properties.matrix_${id}_no_error`,await panel.locator('[role="alert"]').count(),0);
+    if(kind!=='led') {
+      console.log('dialog matrix',mode,kind,id);
+      const openFull=()=>page.evaluate(async({kind,id})=>{
+        const c=window.__card,r=c._editorRuntime;
+        if(kind==='partition'||kind==='column')r._openPhysicalDialog(kind,id);
+        else if(kind==='opening')r._editOpening(c._openingsR.find(o=>o.id===id));
+        else if(kind==='stair')c.renderRoot.querySelector(`[data-hp="stair"][data-id="${id}"]`).dispatchEvent(new MouseEvent('dblclick',{bubbles:true,composed:true}));
+        else if(kind==='backdrop')r._openBackdropDialog();
+        else r._openDecorProperties(c._decorList.find(s=>s.id===id));
+        c.requestUpdate();await c.updateComplete;
+      },{kind,id});
+      const input=panel.locator('.hp-prop-field:not(.readonly):not(.disabled) input').first();
+      await input.fill('');await openFull();
+      await page.waitForFunction(()=>!window.__card._editorRuntime.properties.handoff);
+      check(`properties.dialog_${id}_invalid_blocks`,await card.locator('hp-dialog').count(),0);
+      check(`properties.dialog_${id}_invalid_retained`,await panel.locator('[role="alert"]').count(),1);
+      await input.press('Escape');
+      await openFull();await card.locator('hp-dialog').waitFor();
+      check(`properties.dialog_${id}_wide_inert`,await panel.getAttribute('inert'),'');
+      await page.keyboard.press('Escape');await card.locator('hp-dialog').waitFor({state:'hidden'});
+      await input.fill('');
+      await page.setViewportSize({width:959,height:1080});await panel.waitFor({state:'hidden'});
+      await openFull();await card.locator('hp-dialog').waitFor();
+      check(`properties.dialog_${id}_narrow_discards_hidden_draft`,await page.evaluate(()=>window.__card._editorRuntime.properties.fields.draft),null);
+      await page.keyboard.press('Escape');await card.locator('hp-dialog').waitFor({state:'hidden'});
+      await page.setViewportSize({width:1920,height:1080});await panel.waitFor();
+    }
   }
   check('properties.selection_matrix_no_config_write',await page.evaluate(async()=>(await window.__card.hass.callWS({type:'houseplan/config/get'})).config),beforeSelectionOnly);
   // HA's explicit mode wins; without it the actual CSS palette follows the

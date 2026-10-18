@@ -42,6 +42,16 @@ times room-multiplier checks and the Cancel persistence assertion (#946).
 
 ## Properties panel (#931)
 
+Code-review r1 repairs preserve the existing colour-picker mode contract:
+the panel uses `flat-swatch` alone, which now fits its 15px slot; colour tiles
+keep `cover-swatch` and their alpha checkerboard. Opening metadata names resolved
+adjacent rooms in plan order, contour metadata uses canonical ownership or exact
+legacy boundary containment. Stored names are quoted, never auto-inflected.
+The approved reset glyph and removal instructions (including tooltip line breaks
+and arrow) are retained. Native dialog routing is exercised across all applicable
+families at desktop/narrow widths, with invalid drafts and a real delayed HA ACK.
+The two added mutation declarations remain static-only during development.
+
 The full #931 rebase CI exposed the old dangerous-confirmation witness taking
 its DOM snapshot while the already-revealed boot veil still faded. A controlled
 1.2 s gap reproduced the same failure 3/3 times: only `.bootveil.off` disappeared

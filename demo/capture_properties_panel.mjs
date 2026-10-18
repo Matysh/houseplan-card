@@ -127,11 +127,23 @@ try {
       return {panel:box(el),groups:[...el.querySelectorAll('.hp-prop-group')].map(e=>({key:e.className,box:box(e)})),
         controls:[...el.querySelectorAll('.hp-prop-control,.hpf-unit,.hpf-colorfield')].map(e=>box(e)),
         featureControls:[...el.querySelectorAll('.features .hp-prop-choice,.features .hp-prop-settings,.features .hp-prop-text,.features .hp-prop-variable')].map(e=>box(e)),
-        title:el.querySelector('.hp-prop-title').textContent,groupTitle:box(el.querySelector('.hp-prop-group-title')),overflow:el.scrollWidth>el.clientWidth+1};
+        title:el.querySelector('.hp-prop-title').textContent,meta:el.querySelector('.hp-prop-meta').textContent,
+        groupTitle:box(el.querySelector('.hp-prop-group-title')),overflow:el.scrollWidth>el.clientWidth+1};
     });
     measurements.push({name,...data});
     await referencePage.goto('http://reference.local/screen.html?variant='+variant[name]);
     await referencePage.addStyleTag({content:fontCss});await referencePage.evaluate(()=>document.fonts.ready);
+    if(kind==='opening' && data.meta!=='Первый этаж · Гостиная — Кухня')throw Error(`Opening room context missing: ${data.meta}`);
+    if(kind==='contour' && data.meta!=='Контур «Гостиная» · Первый этаж')throw Error(`Contour owner missing: ${data.meta}`);
+    if(kind==='backdrop') {
+      const glyph=await panel.locator('[data-property="reset"] path').getAttribute('d');
+      if(glyph!==await referencePage.locator('.features .action-button path').getAttribute('d'))throw Error('Backdrop reset glyph differs');
+      const normal=text=>text.replace(/\s+/g,' ').trim();
+      if(normal(await panel.locator('[role="tooltip"]').innerText())!==normal(await referencePage.locator('.action-tooltip').innerText()))throw Error('Backdrop removal instructions differ');
+    }
+    if(kind==='rect' && !await panel.locator('[data-property="fill"] hp-color-opacity').evaluate(el=>
+      getComputedStyle(el.shadowRoot.querySelector('.trigger')).backgroundImage==='none'
+      && getComputedStyle(el.shadowRoot.querySelector('.swatch')).opacity==='1'))throw Error('Fill swatch is not solid');
     const referenceControls=await referencePage.locator('.panel .control').evaluateAll(nodes=>nodes.map(node=>{const r=node.getBoundingClientRect();return{x:r.x,y:r.y,w:r.width,h:r.height};}));
     const deltas=referenceControls.map((ref,i)=>Object.fromEntries(['x','y','w','h'].map(key=>[key,data.controls[i]?.[key]-ref[key]])));
     measurements.at(-1).controlDeltas=deltas;

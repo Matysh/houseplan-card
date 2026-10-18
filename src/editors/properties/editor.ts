@@ -271,7 +271,7 @@ export class PropertiesEditor {
     }
     return this.frozenReference ? refreshOpeningReference(core, context, this.frozenReference) : null;
   }
-  private openingSides(target: PropertiesTarget | null): { labels: [string,string]; fallback: boolean } {
+  private openingSides(target: PropertiesTarget | null): { labels: [string,string]; fallback: boolean; rooms?: string[] } {
     if (target?.kind !== 'opening') return { labels: [this.t('side_a'),this.t('side_b')], fallback: true };
     const host=this.host, space=host._curSpaceCfg as PropertiesSpace;
     const core=openingPropertiesCore(target.value,space.partitions??[],space.wall_segments??[],host._cellCm);
@@ -287,10 +287,14 @@ export class PropertiesEditor {
     const sides=propertiesOpeningSides(core,model.rooms,signs);
     return { labels: sides.map(side=>side.kind === 'room' ? this.t('into_room',{name:side.name})
       : side.kind === 'outside' ? this.t('outside') : this.t(side.side === 'A' ? 'side_a' : 'side_b')) as [string,string],
-      fallback: sides.some(side=>side.kind==='fallback') };
+      fallback: sides.some(side=>side.kind==='fallback'),
+      rooms: sides.some(side=>side.kind==='fallback') ? [] : [
+        ...model.rooms.filter(room=>sides.some(side=>side.kind==='room' && side.name===room.name)).map(room=>room.name),
+        ...(sides.some(side=>side.kind==='outside') ? [this.t('outside')] : [])] };
   }
   private model(identity = this.identity): PropertiesSurface {
     const target = this.target(identity), host = this.host;
+    const openingSides = this.openingSides(target);
     return propertiesCatalog(target, {
       space: host._curSpaceCfg as PropertiesSpace, cellCm: host._cellCm, t: this.t,
       position: d => { const p = host._livePos(d); return { x: p.x / NORM_W, y: p.y / NORM_W }; },
@@ -301,7 +305,7 @@ export class PropertiesEditor {
         const entity = /\{([a-z_]+\.[\w]+)(?::[^}]*)?\}/i.exec(shape.text)?.[1];
         return entity ? host.hass.states?.[entity]?.attributes?.friendly_name || this.t('text') : shape.text.split('\n')[0];
       },
-      openingReference: this.reference(target), openingSides: this.openingSides(target).labels, ratioLocked: this.ratioLocked,
+      openingReference: this.reference(target), openingSides: openingSides.labels, openingRooms: openingSides.rooms, ratioLocked: this.ratioLocked,
       stairFallback: { color: host._decorStyle.color, opacity: host._decorStyle.opacity, fillColor: host._decorStyle.color, fillOpacity: 0 },
     });
   }

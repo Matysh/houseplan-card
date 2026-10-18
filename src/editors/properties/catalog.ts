@@ -1,6 +1,6 @@
 import { CANVAS_LIMIT, GRID_PITCH, NORM_W } from '../../canvas-constants';
 import { planRect } from '../../space-geometry';
-import type { DevItem, LedStripModel, Marker, OpeningCfg, PartitionCfg, WallColumnCfg, WallSegmentEntry } from '../../types';
+import type { DevItem, LedStripModel, Marker, OpeningCfg, PartitionCfg, RoomCfg, WallColumnCfg, WallSegmentEntry } from '../../types';
 import type { DecorShape } from '../decor/types';
 import { decorStyleOf } from '../decor/geometry';
 import { stairVisualStyle, type Stair, type StairVisualStyle } from '../../stairs';
@@ -8,11 +8,12 @@ import type { PropertiesIdentity } from './controller';
 import type { PropertiesField, PropertiesGroup, PropertiesSurface, PropertiesAction } from './surface';
 import type { PropertiesString } from './strings';
 import { cmPerNorm, decorPropertiesBox, canonicalPropertiesAngle, type PropertiesBackdrop } from './transforms';
-import { freePartitionEnds } from './physical';
+import { freePartitionEnds, propertiesContourRooms } from './physical';
 import type { OpeningDimension } from '../../opening-dimensions';
 
 export interface PropertiesSpace extends PropertiesBackdrop {
   id: string; title: string; plan_url?: string;
+  rooms?: RoomCfg[];
   partitions?: PartitionCfg[]; wall_segments?: WallSegmentEntry[]; wall_columns?: WallColumnCfg[];
   openings?: OpeningCfg[]; decor?: DecorShape[]; stairs?: Stair[]; led_strips?: LedStripModel[];
 }
@@ -71,6 +72,7 @@ export interface PropertiesCatalogContext {
   textName?(shape: DecorShape): string;
   openingReference: OpeningDimension | null;
   openingSides: [string, string];
+  openingRooms?: readonly string[];
   stairFallback?: StairVisualStyle;
   ratioLocked: boolean;
 }
@@ -186,7 +188,7 @@ export function propertiesCatalog(target: PropertiesTarget | null, context: Prop
       position = [numericPos('x', (rect.x + rect.w / 2) / NORM_W), numericPos('y', (rect.y + rect.h / 2) / NORM_W)];
       geometry = [number('w', 'width', rect.w / NORM_W * factor, 'cm'), number('h', 'height', rect.h / NORM_W * factor, 'cm'), angle(rect.angle ?? 0), disabled('scale', 'scale', '%')];
       appearance[2] = number('opacity', 'opacity', (target.value.plan_opacity ?? 1) * 100, '%', { min: 0, max: 100 });
-      positionHint = 'backdrop_hint'; featureHint = 'reset_hint'; features.push({ key: 'reset', label: 'reset_backdrop', value: '', control: 'action', action: 'reset', wide: true });
+      positionHint = 'backdrop_hint'; featureHint = 'reset_hint'; features.push({ key: 'reset', label: 'reset_backdrop', value: '', control: 'action', action: 'reset', icon: 'reset', wide: true });
       actions = [action('delete', 'delete', 'delete', 'backdrop_delete_reason')];
     } else if (target.kind === 'decor') {
       const shape = target.value, box = decorPropertiesBox(shape, context.textBox(shape)); kind = shape.kind;
@@ -228,8 +230,10 @@ export function propertiesCatalog(target: PropertiesTarget | null, context: Prop
   if (features.length || featureHint) groups.push({ key: 'features', title: featureTitle,
     icon: target?.kind==='opening' ? target.value.type : target?.kind==='decor' ? target.value.kind : undefined,
     fields: features, hint: featureHint });
+  const owners = target?.kind === 'contour' ? propertiesContourRooms(target.value, space.rooms ?? []) : [];
   const meta = !target ? '' : target.kind === 'partition' ? t('wall_meta', {space:space.title})
-    : target.kind === 'contour' ? t('contour_meta', {space:space.title})
+    : target.kind === 'contour' ? owners.length ? t('contour_named_meta', {room: owners.join(' — '), space:space.title}) : t('contour_meta', {space:space.title})
+    : target.kind === 'opening' && context.openingRooms?.length ? `${space.title} · ${context.openingRooms.join(' — ')}`
     : target.kind === 'decor' && ['rect','ellipse','line'].includes(target.value.kind) ? t('decor_meta', {space:space.title})
     : `${kind ? t(kind) + ' · ' : ''}${space.title}`;
   return { title, meta, groups, actions };

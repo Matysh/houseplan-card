@@ -45,6 +45,12 @@ HP_PROPERTIES_CAPTURE_DIR=output/properties-931/comparison node demo/capture_pro
   device state colours or unrelated navigation/furniture around the panel.
 - Dynamic metadata describes the actual target/floor. The main-image metadata
   says “Основная картинка плана”; no synthetic room name is persisted.
+  Following r1, opening metadata lists the resolved adjacent names in room-list
+  order; a contour lists its actual owner(s), including exact legacy boundary
+  matching. RU preserves the stored case/name in quotes (“Контур «Гостиная»”),
+  rather than attempting the demonstrator's illustrative genitive “гостиной”;
+  this applies the same no-guessed-declension rule as §7.3. Empty/ambiguous
+  context retains the generic type/floor instead of inventing a room.
 - After accepted #945, opening symbols follow the same saved display choice as
   borders. The fixture has a plan image and no explicit show_borders override,
   so Devices/Background full-screen frames no longer show the unrelated door;
@@ -95,9 +101,11 @@ owner or real-GPU acceptance.
 | AC5 | controller/runtime tests + picker/resize smoke | invalid/ESC/no-op have zero writes/history; `properties-resize-forgets-internal-hex-draft` registered, not executed |
 | AC7 | panel smoke, text patch tests | Cancel retains original; Enter is newline; Insert is one saved template at caret; >200 rejected |
 | AC8 | targeted patch/copy tests + HA reload/export tests | sibling/null/absence retained; null/bool/string alpha rejected; plan-only alpha must survive |
-| AC9/10 | panel/native gesture smokes + unchanged command delegates | settings makes panel inert; native full dialogs/actions retain guards, no HA action on selection |
+| AC9/10 | table-driven native dialog smoke at 1920/959 + delayed real HA writer | each non-device family rejects invalid wide drafts, makes the wide panel inert and invalidates hidden narrow drafts; a pending text edit opens its full dialog only after ACK; missing deferred retry or an omitted inert flag fails |
 | AC11/12 | actual runtime writer/history tests + controller authority | failed/preflight/conflict restores owned state/exact cursor; newer sibling/authority cannot be overwritten |
 | AC13/14 | short/dark and existing touch/lazy smokes; budget gates | cancelled gesture writes nothing; cold View requests no editor; old bands/View ceilings remain |
 
-Ten new mutation declarations are static witnesses only. `mutation-gate --check`
+Twelve new mutation declarations are static witnesses only. The r1 additions
+cover the solid swatch and deferred native dialog handoff; existing #615 colour
+tile/plate guards keep their source contract. `mutation-gate --check`
 does **not** execute them and is not a caught verdict; execution remains nightly.

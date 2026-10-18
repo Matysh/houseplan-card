@@ -19553,6 +19553,21 @@ const MUTANT_DEFINITIONS = [
     because: '#931 AC13: without an explicit HA darkMode the mounted panel palette must follow browser colour scheme; only computed Chromium colours distinguish the real cascade from a theme attribute.',
     patches: [{file:'src/editors/properties/styles.ts',find:'    color-scheme: light dark;',replace:'    color-scheme: light;'}],
   },
+  {
+    id: 'properties-swatch-restores-conflicting-cover',
+    guard: 'node demo/smoke_properties_panel.mjs',
+    because: '#931 r1 AC2: only computed custom-element paint reveals a cover-swatch overriding the solid plate and leaking checkerboard/alpha through the properties swatch.',
+    patches: [{file:'src/editors/properties/surface.ts',find:'.pickerLabels=${port.pickerLabels} .disabled=${pending} hide-label flat-swatch',replace:'.pickerLabels=${port.pickerLabels} .disabled=${pending} hide-label flat-swatch cover-swatch'}],
+  },
+  {
+    id: 'properties-decor-dialog-skips-draft-gate',
+    guard: 'node demo/smoke_properties_panel.mjs',
+    because: '#931 r1 AC10: a deferred native dialog must actually open after the current HA ACK, not lose the intent; mounted inert and hidden responsive drafts require Chromium lifecycle. The matrix also retains invalid wide drafts.',
+    patches: [{file:'src/houseplan-editor-runtime.ts',find:`    if (!this.properties.beforeIntent(() => {
+      const current = this.host._decorList.find(item => item.id === shape.id);
+      if (current) this._openDecorProperties(current);
+    }, true)) return;`,replace:''}],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');
