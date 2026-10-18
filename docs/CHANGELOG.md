@@ -4,6 +4,9 @@
 
 - Room settings use the approved “No fill” label; all five own fill-mode
   labels are checked against the immutable reference. (#946)
+- Restore the approved Room metrics group in climate-device basics, with
+  contextual temperature help pointing to the current value/badge section. (#947)
+
 - Match the approved Vacuum and Radar sections: clear property groups, shared
   switches and menus, named target actions, and expandable map/route diagnostics.
   Existing device values, calibration and write boundaries are preserved. (#947)

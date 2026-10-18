@@ -270,5 +270,6 @@
   "marker.radar_data": "Données et activation",
   "marker.radar_sources": "Sources communes",
   "marker.radar_service": "Vérification et maintenance",
-  "marker.radar_remove_target": "Supprimer l’emplacement cible {n}"
+  "marker.radar_remove_target": "Supprimer l’emplacement cible {n}",
+  "marker.room_metrics": "Indicateurs de la pièce"
 }

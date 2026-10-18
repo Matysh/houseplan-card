@@ -317,7 +317,12 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           </select></hp-settings-select>`,
         })}
         ${this.host._bindingHasClimate(d.binding)
-          ? toggleRow({id:'marker-use-climate-temp',icon:'mdi:thermometer',title:t('marker.use_climate_temp'),caption:t('marker.use_climate_temp_tip'),checked:d.useClimateTemp,onChange:(value)=>(this.host._markerDialog={...d,useClimateTemp:value})}) : nothing}`,
+          ? html`${subsection({title:st('marker.room_metrics')})}${toggleRow({
+              id:'marker-use-climate-temp',compact:true,title:t('marker.use_climate_temp'),
+              help:html`<hp-help instant data-help-key="marker.use_climate_temp_tip"
+                .text=${t('marker.use_climate_temp_tip')} .ariaLabel=${t('marker.use_climate_temp')}></hp-help>`,
+              checked:d.useClimateTemp,onChange:(value)=>(this.host._markerDialog={...d,useClimateTemp:value}),
+            })}` : nothing}`,
     });
 
     // --------------------------------------------------------- Tap action

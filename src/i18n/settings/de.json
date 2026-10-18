@@ -270,5 +270,6 @@
   "marker.radar_data": "Daten und Aktivierung",
   "marker.radar_sources": "Gemeinsame Quellen",
   "marker.radar_service": "Prüfung und Wartung",
-  "marker.radar_remove_target": "Zielslot {n} entfernen"
+  "marker.radar_remove_target": "Zielslot {n} entfernen",
+  "marker.room_metrics": "Raumwerte"
 }

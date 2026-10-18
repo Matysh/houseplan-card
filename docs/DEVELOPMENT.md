@@ -36,6 +36,12 @@ The first reset-wait adapter still produced "Resulting promise was garbage
 collected" in CI at setMode; the component-reset step is now absent. Keyboard,
 44px target, translation, inheritance and popup assertions remain unchanged.
 
+The exact Device v6 comparison also exposed a retained climate caption replacing
+the approved Room metrics heading and contextual help. Restore the shared
+subheading/compact toggle/help primitives; keep the same useClimateTemp draft
+writer. The existing four-profile smoke observes the heading and immediate help
+without a duplicated permanent caption. No climate aggregation changes.
+
 Owner arbitration on #947 (18 October 2026) requires the whole Device dialog's
 documentation, not only the radar subsection. Both USER-GUIDE languages now
 describe the same five shared tabs, conditional Vacuum/Radar sections, actual
