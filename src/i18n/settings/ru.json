@@ -238,5 +238,6 @@
   "room.save": "Сохранить комнату",
   "room.title": "{name} · настройки комнаты",
   "room.context": "Комната · {space}",
-  "room.area_optional": "Зона Home Assistant · необязательно"
+  "room.area_optional": "Зона Home Assistant · необязательно",
+  "room.fill_none": "Без заливки"
 }

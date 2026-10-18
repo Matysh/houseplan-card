@@ -112,7 +112,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
   };
   const pct = (v: number) => Math.round(v * 100);
   const customLabel = t('room.custom_fill_own');
-  const fillLabel = (mode: string): string => mode === 'none' ? t('fill.none') : st(`space.fill_${mode}` as 'space.fill_custom' | 'space.fill_lqi' | 'space.fill_light' | 'space.fill_temp');
+  const fillLabel = (mode: string): string => mode === 'none' ? st('room.fill_none') : st(`space.fill_${mode}` as 'space.fill_custom' | 'space.fill_lqi' | 'space.fill_light' | 'space.fill_temp');
   const sizeRows: readonly [key: 'name' | 'label', labelKey: I18nKey, value: number, write: (v: number) => void][] = [
     ['name', 'room.name_scale', host._roomNameScale, (v) => { host._roomNameScale = v; }],
     ['label', 'room.label_scale', host._roomLabelScale, (v) => { host._roomLabelScale = v; }],

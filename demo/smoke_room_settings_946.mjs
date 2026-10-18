@@ -18,6 +18,10 @@ await reference.setContent('<!doctype html><html><body>'+readFileSync('docs/desi
 await reference.locator('.hp-after h2').waitFor();
 const expected=await reference.locator('.hp-after').evaluate(el=>({width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height,title:el.querySelector('h2').textContent.trim()}));
 out.approvedRoomV4=await dlg.evaluate((el,expected)=>{const surface=el.shadowRoot.querySelector('.surface').getBoundingClientRect(),name=el.querySelector('#room-name').getBoundingClientRect(),area=el.querySelector('#room-area').closest('hp-settings-select').getBoundingClientRect(),bounds=el.querySelector('.hpf-temperature-range').getBoundingClientRect();return Math.abs(surface.width-expected.width)<2&&Math.abs(surface.height-expected.height)<8&&el.title===expected.title&&!el.querySelector('.hpf-settings-nav')&&area.top>name.bottom+24&&Math.abs(name.width-area.width)<2&&bounds.width<=360&&el.querySelector('.hpf-status').textContent.trim().length>0;},expected);
+const expectedFills=await reference.locator('.hp-after [data-field="room.fill-choice"] select option').evaluateAll(nodes=>nodes.filter(n=>n.value!=='inherit').map(n=>({value:n.value,label:n.textContent.trim()})));
+const actualFills=await dlg.locator('select[name="rfill"] option').evaluateAll(nodes=>nodes.filter(n=>n.value).map(n=>({value:n.value,label:n.textContent.trim()})));
+out.approvedOwnFillLabels=expectedFills.length===5&&JSON.stringify(actualFills)===JSON.stringify(expectedFills);
+if(!out.approvedOwnFillLabels){await browser.close();throw Error('Approved v4 fill options differ: '+JSON.stringify({expected:expectedFills,actual:actualFills}));}
 await reference.close();
 for(const width of [320,390,1280]){
  await page.setViewportSize({width,height:900});

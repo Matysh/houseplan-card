@@ -1,5 +1,15 @@
 # Development and deployment
 
+Code review #946 r1 found one copy mismatch: the Room none option reused the
+generic “Нет” instead of the approved “Без заливки”. Add the specific lazy
+Room label in all four languages. The v4 smoke now compares all five real option
+value/label pairs to the immutable reference DOM. On the unchanged r1 product
+it failed with exactly none/Нет versus none/Без заливки; this was an ordinary
+new regression check, not a temporarily patched implementation or mutation run.
+The other four labels already matched. Space has no separate None UI option
+(its accepted custom/0% representation remains unchanged). Save/resolvers and
+all six control values are unchanged.
+
 `smoke_room_save_retry_946` rejects the first real public config/set call and
 uses the visible Room footer twice. It verifies the retained field and accepted
 config, a rendered error alert, re-enabled Save and exactly one accepted retry.
