@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 936,
+  "baseStable": "v1.81.0",
+  "category": "major",
+  "rationale": "Adds portable full-plan ZIP backup with actual image bytes, saved Zigbee snapshot and coherent restore/Undo, which did not exist in v1.81.0. Legacy JSON transfer remains supported. This is a new user capability, not internal-cycle polish.",
+  "summary": {
+    "ru": "Полная ZIP-копия переносит план вместе с картинками и сохранёнными связями Zigbee.",
+    "en": "Full ZIP backups transfer the plan together with used images and saved Zigbee links."
+  }
+}

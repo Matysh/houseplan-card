@@ -335,6 +335,7 @@
     "zigbee-topology-"
   ],
   "internalExactValues": [
+    "archive-summary",
     "opening-orphan",
     "vacuum-route-missing-group"
   ]

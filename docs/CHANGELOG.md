@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Administrators can back up the complete plan as a ZIP with used images and
+  saved Zigbee links, restore it on another installation and undo the restore.
+  Missing images require explicit consent; space transfers and ordinary-editor
+  backups keep JSON ([#936](https://github.com/Matysh/houseplan-card/issues/936)).
+
 - Room cards can show CO₂ in ppm, with an automatic room average or a selected
   sensor. Off by default; room tooltips and previews use the same reading.
   Main plan and kiosk, Flat and 2.5D ([#920](https://github.com/Matysh/houseplan-card/issues/920)).

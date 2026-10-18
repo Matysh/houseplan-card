@@ -1,0 +1,402 @@
+{
+  "provenance": "Synthetic output of House Plan ZIP builder and HA preview service (#936)",
+  "zip": "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",
+  "png": "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAFElEQVR4nGM0dgllwAaYsIoOWgkApK4A3Orfk3QAAAAASUVORK5CYII=",
+  "response": {
+    "token": "synthetic-backup-preview",
+    "preview": {
+      "kind": "full",
+      "plan_only": false,
+      "created_at": "2026-10-18T05:54:17.547108Z",
+      "card_version": "review",
+      "integration_version": "1.82.0-beta.1",
+      "model_version": 10,
+      "source": "foreign",
+      "counts": {
+        "spaces": 2,
+        "rooms": 0,
+        "walls": 0,
+        "markers": 1,
+        "openings": 0,
+        "decor": 1,
+        "stairs": 0,
+        "layout": 1
+      },
+      "current_counts": {
+        "spaces": 1,
+        "rooms": 0,
+        "walls": 0,
+        "markers": 0,
+        "openings": 0,
+        "decor": 0,
+        "stairs": 0,
+        "layout": 0
+      },
+      "legacy_positions": 0,
+      "bindings": {
+        "device": 0,
+        "entity": 0,
+        "virtual": 1,
+        "active": 0,
+        "disabled": 0,
+        "missing": 0
+      },
+      "missing_areas": [],
+      "content": [
+        {
+          "kind": "plan",
+          "owner": "space",
+          "owner_id": "a",
+          "field": "plan_url",
+          "url": "/api/houseplan/content/plans/_/backup.0800d35c0ffe42338ae1ed3f6c86a569-0.png",
+          "storage": "internal",
+          "exists_at_export": false,
+          "exists_on_target": false,
+          "state": "available"
+        },
+        {
+          "kind": "plan",
+          "owner": "space",
+          "owner_id": "b",
+          "field": "plan_url",
+          "url": "/api/houseplan/content/plans/_/backup.0800d35c0ffe42338ae1ed3f6c86a569-2.png",
+          "storage": "internal",
+          "exists_at_export": false,
+          "exists_on_target": false,
+          "state": "available"
+        },
+        {
+          "kind": "attachment",
+          "owner": "marker",
+          "owner_id": "lamp",
+          "field": "pdfs[0].url",
+          "url": "/api/houseplan/content/files/lamp/backup-0800d35c0ffe42338ae1ed3f6c86a569-3.png",
+          "storage": "internal",
+          "exists_at_export": false,
+          "exists_on_target": false,
+          "state": "available"
+        },
+        {
+          "kind": "decor_asset",
+          "owner": "decor",
+          "owner_id": "a:art",
+          "field": "asset_id",
+          "url": "825571be9858622096599703ca32c9208e36631e61ef5dd66da828a83a45763f",
+          "asset_id": "825571be9858622096599703ca32c9208e36631e61ef5dd66da828a83a45763f",
+          "storage": "internal",
+          "mime": null,
+          "hash": "825571be9858622096599703ca32c9208e36631e61ef5dd66da828a83a45763f",
+          "exists_at_export": false,
+          "exists_on_target": false,
+          "state": "available"
+        }
+      ],
+      "confirmation_required": false,
+      "warnings": [
+        "foreign_source",
+        "instance_bookkeeping_dropped",
+        "full_replaces_current"
+      ],
+      "dropped_marker_links": 0,
+      "unbound_led_strips": 0,
+      "migration": {
+        "room_drafts": 0,
+        "room_draft_segments": 0
+      },
+      "archive": {
+        "complete": true,
+        "images": 4,
+        "missing": [],
+        "snapshot": [
+          {
+            "obtained_at": 12345
+          }
+        ],
+        "snapshot_ignored_off": false
+      }
+    },
+    "expected_config_rev": 1,
+    "expected_layout_rev": 1,
+    "expires_at": "2099-01-01T00:00:00Z"
+  },
+  "config": {
+    "spaces": [
+      {
+        "id": "a",
+        "title": "Ground",
+        "view_box": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "rooms": [],
+        "plan_aspect": 1,
+        "plan_url": "/api/houseplan/content/plans/_/backup.0800d35c0ffe42338ae1ed3f6c86a569-0.png",
+        "decor": [
+          {
+            "id": "art",
+            "kind": "image",
+            "asset_id": "825571be9858622096599703ca32c9208e36631e61ef5dd66da828a83a45763f",
+            "x": 0.2,
+            "y": 0.3,
+            "w": 0.25,
+            "h": 0.35,
+            "angle": 23,
+            "opacity": 0.6,
+            "flip_h": true
+          }
+        ],
+        "wall_segments": []
+      },
+      {
+        "id": "b",
+        "title": "Upper",
+        "view_box": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "rooms": [],
+        "plan_aspect": 1,
+        "plan_url": "/api/houseplan/content/plans/_/backup.0800d35c0ffe42338ae1ed3f6c86a569-2.png",
+        "wall_segments": []
+      }
+    ],
+    "markers": [
+      {
+        "id": "lamp",
+        "binding": "virtual",
+        "pdfs": [
+          {
+            "url": "/api/houseplan/content/files/lamp/backup-0800d35c0ffe42338ae1ed3f6c86a569-3.png",
+            "name": "Picture"
+          }
+        ]
+      }
+    ],
+    "settings": {
+      "filter_seeded": true,
+      "bg_mode": "static",
+      "zigbee_topology": {
+        "enabled": true
+      }
+    },
+    "model_version": 10
+  },
+  "layout": {
+    "lamp": {
+      "s": "a",
+      "x": 0.4,
+      "y": 0.5
+    }
+  },
+  "incomplete": {
+    "zip": "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",
+    "response": {
+      "token": "synthetic-incomplete-preview",
+      "preview": {
+        "kind": "full",
+        "plan_only": false,
+        "created_at": "2026-10-18T05:54:17.547108Z",
+        "card_version": "review",
+        "integration_version": "1.82.0-beta.1",
+        "model_version": 10,
+        "source": "foreign",
+        "counts": {
+          "spaces": 2,
+          "rooms": 0,
+          "walls": 0,
+          "markers": 1,
+          "openings": 0,
+          "decor": 1,
+          "stairs": 0,
+          "layout": 1
+        },
+        "current_counts": {
+          "spaces": 1,
+          "rooms": 0,
+          "walls": 0,
+          "markers": 0,
+          "openings": 0,
+          "decor": 0,
+          "stairs": 0,
+          "layout": 0
+        },
+        "legacy_positions": 0,
+        "bindings": {
+          "device": 0,
+          "entity": 0,
+          "virtual": 1,
+          "active": 0,
+          "disabled": 0,
+          "missing": 0
+        },
+        "missing_areas": [],
+        "content": [
+          {
+            "kind": "plan",
+            "owner": "space",
+            "owner_id": "a",
+            "field": "plan_url",
+            "url": "/api/houseplan/content/plans/_/a.copy.png?v=1",
+            "storage": "internal",
+            "exists_at_export": false,
+            "exists_on_target": false,
+            "state": "detach_required"
+          },
+          {
+            "kind": "plan",
+            "owner": "space",
+            "owner_id": "b",
+            "field": "plan_url",
+            "url": "/api/houseplan/content/plans/_/a.copy.png",
+            "storage": "internal",
+            "exists_at_export": false,
+            "exists_on_target": false,
+            "state": "detach_required"
+          },
+          {
+            "kind": "attachment",
+            "owner": "marker",
+            "owner_id": "lamp",
+            "field": "pdfs[0].url",
+            "url": "/api/houseplan/content/files/lamp/backup-37e9fa7901c54358b2c456bcb3126e11-3.png",
+            "storage": "internal",
+            "exists_at_export": false,
+            "exists_on_target": false,
+            "state": "available"
+          },
+          {
+            "kind": "decor_asset",
+            "owner": "decor",
+            "owner_id": "a:art",
+            "field": "asset_id",
+            "url": "825571be9858622096599703ca32c9208e36631e61ef5dd66da828a83a45763f",
+            "asset_id": "825571be9858622096599703ca32c9208e36631e61ef5dd66da828a83a45763f",
+            "storage": "internal",
+            "mime": null,
+            "hash": "825571be9858622096599703ca32c9208e36631e61ef5dd66da828a83a45763f",
+            "exists_at_export": false,
+            "exists_on_target": false,
+            "state": "available"
+          }
+        ],
+        "confirmation_required": true,
+        "warnings": [
+          "foreign_source",
+          "instance_bookkeeping_dropped",
+          "content_detach_required",
+          "full_replaces_current"
+        ],
+        "dropped_marker_links": 0,
+        "unbound_led_strips": 0,
+        "migration": {
+          "room_drafts": 0,
+          "room_draft_segments": 0
+        },
+        "archive": {
+          "complete": false,
+          "images": 2,
+          "missing": [
+            {
+              "name": "Ground",
+              "reason": "missing",
+              "kind": "plan",
+              "owner_id": "a"
+            },
+            {
+              "name": "Upper",
+              "reason": "missing",
+              "kind": "plan",
+              "owner_id": "b"
+            }
+          ],
+          "snapshot": [
+            {
+              "obtained_at": 12345
+            }
+          ],
+          "snapshot_ignored_off": false
+        }
+      },
+      "expected_config_rev": 1,
+      "expected_layout_rev": 1,
+      "expires_at": "2099-01-01T00:00:00Z"
+    },
+    "config": {
+      "spaces": [
+        {
+          "id": "a",
+          "title": "Ground",
+          "view_box": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "rooms": [],
+          "plan_aspect": 1,
+          "plan_url": null,
+          "decor": [
+            {
+              "id": "art",
+              "kind": "image",
+              "asset_id": "825571be9858622096599703ca32c9208e36631e61ef5dd66da828a83a45763f",
+              "x": 0.2,
+              "y": 0.3,
+              "w": 0.25,
+              "h": 0.35,
+              "angle": 23,
+              "opacity": 0.6,
+              "flip_h": true
+            }
+          ],
+          "wall_segments": []
+        },
+        {
+          "id": "b",
+          "title": "Upper",
+          "view_box": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "rooms": [],
+          "plan_aspect": 1,
+          "plan_url": null,
+          "wall_segments": []
+        }
+      ],
+      "markers": [
+        {
+          "id": "lamp",
+          "binding": "virtual",
+          "pdfs": [
+            {
+              "url": "/api/houseplan/content/files/lamp/backup-37e9fa7901c54358b2c456bcb3126e11-3.png",
+              "name": "Picture"
+            }
+          ]
+        }
+      ],
+      "settings": {
+        "filter_seeded": true,
+        "bg_mode": "static",
+        "zigbee_topology": {
+          "enabled": true
+        }
+      },
+      "model_version": 10
+    },
+    "layout": {
+      "lamp": {
+        "s": "a",
+        "x": 0.4,
+        "y": 0.5
+      }
+    }
+  }
+}

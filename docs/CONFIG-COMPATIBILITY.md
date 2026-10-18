@@ -1,5 +1,18 @@
 # Config compatibility registry
 
+Full ZIP backup (#936) is a separate `houseplan-full-backup` container v1,
+not a model-version bump (plan model remains v10). Its `document.json` uses
+the existing validated export envelope and unknown-field round-trip policy.
+Space/plan-only and ordinary-editor full JSON remain byte-contract compatible.
+Saved Z2M schema1 gains optional `generation`; old caches without it receive
+a digest generation. Portable snapshots contain accepted topics/maps/dates,
+never source entry/job ownership; restore binds the current entry and marks
+maps stale. ZIP intents extend the existing pair journal conditionally with
+server-chosen files and cache state; legacy JSON transactions are unchanged.
+Finish/recover a pending ZIP transaction before downgrading: older backends
+cannot interpret that journal or the ZIP container. No load-time model rewrite
+or file garbage collection is introduced.
+
 Room CO₂ (#920) adds optional `spaces[].settings.label_co2` (only exact `true`
 enables it, absence means off) and `rooms[].settings.co2_source` (missing,
 null or empty means automatic). Unknown saved source strings survive unrelated

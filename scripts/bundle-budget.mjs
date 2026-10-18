@@ -751,7 +751,9 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // Matched source builds b8964e5f7 -> room CO2 add 926 B gzip to this graph.
 // Only that measured cost enters the reference; bands, absolute budgets and
 // other ceilings are unchanged. Room preview/copy remain in the lazy graph.
-export const LAZY_EDITOR_GZIP_CEILING = 270_411;
+// #936, owner-approved exact build: portable backup transfer/UI is demand-loaded;
+// the editor adds ZIP orchestration and lazy locale copy. Keep the 2000 B band.
+export const LAZY_EDITOR_GZIP_CEILING = 273_105;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

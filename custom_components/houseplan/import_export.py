@@ -1745,7 +1745,8 @@ def build_space_merge(
     }
 
 
-def _content_state(document: dict[str, Any], same_source: bool, config_root: Path) -> tuple[list[dict[str, Any]], bool]:
+def _content_state(document: dict[str, Any], same_source: bool, config_root: Path,
+                   portable_content: frozenset[tuple[str, ...]] = frozenset()) -> tuple[list[dict[str, Any]], bool]:
     """Validate the manifest against payload refs and resolve local policy.
 
     The manifest is descriptive, never authoritative: otherwise a crafted file
@@ -1809,8 +1810,9 @@ def _content_state(document: dict[str, Any], same_source: bool, config_root: Pat
                 except OSError:
                     pass
             row["exists_on_target"] = exists
-            row["state"] = "available" if exists else "missing_preserved"
-            confirmation = confirmation or not exists
+            included = identity(item) in portable_content
+            row["state"] = "available" if exists or included else "missing_preserved"
+            confirmation = confirmation or not (exists or included)
             rows.append(row)
             continue
         internal = _internal_path(config_root, item["url"])
@@ -1819,7 +1821,7 @@ def _content_state(document: dict[str, Any], same_source: bool, config_root: Pat
         if internal is not None:
             exists = bool(internal and internal[1].is_file())
             row["exists_on_target"] = exists
-            state = "available" if same_source and exists else "detach_required"
+            state = "available" if (same_source and exists) or identity(item) in portable_content else "detach_required"
             confirmation = confirmation or state == "detach_required"
         else:
             state = "external"
@@ -1985,6 +1987,8 @@ def _candidate_digest(candidate: dict[str, Any]) -> str:
         "target_config": candidate.get("target_config"),
         "target_layout": candidate.get("target_layout"),
         "details": candidate.get("details"),
+        "portable_content": candidate.get("portable_content"),
+        "archive": candidate.get("archive"),
     })
 
 
@@ -1998,6 +2002,7 @@ def create_preview(
     current_layout_data: dict[str, Any],
     config_root: Path,
     registry_snapshot: dict[str, set[str]] | None = None,
+    portable_content: frozenset[tuple[str, ...]] = frozenset(),
 ) -> dict[str, Any]:
     document = parse_document(raw)
     same_source = document.get("source_fingerprint") == source_fingerprint(runtime.instance_id)
@@ -2027,7 +2032,7 @@ def create_preview(
             raise ImportFailure(err.code, str(err)) from err
         except vol.Invalid as err:
             raise ImportFailure("invalid_config", str(err)) from err
-    content, confirmation = _content_state(document, same_source, config_root)
+    content, confirmation = _content_state(document, same_source, config_root, portable_content)
     target_config, target_layout, details = _materialize_import_candidate(
         document, current_config, current_layout,
         duplicate_policy=duplicate_policy,
@@ -2051,6 +2056,7 @@ def create_preview(
         "target_config": target_config,
         "target_layout": target_layout,
         "details": details,
+        "portable_content": sorted(portable_content),
     }
     candidate["digest"] = _candidate_digest(candidate)
     # Opportunistic expiry and per-user oldest-first eviction.
@@ -2129,7 +2135,8 @@ def revalidate_candidate(
     current_layout = current_layout_data.get("layout") or {}
     if config_root is not None:
         content, confirmation = _content_state(
-            document, bool(candidate.get("same_source")), config_root
+            document, bool(candidate.get("same_source")), config_root,
+            frozenset(tuple(row) for row in candidate.get("portable_content") or []),
         )
         candidate["content"] = content
         candidate["confirmation_required"] = confirmation

@@ -273,7 +273,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
                   ((e.currentTarget as HTMLElement).nextElementSibling as HTMLInputElement | null)?.click()}>
                   <ha-icon icon="mdi:upload"></ha-icon>${st('backup.import_open')}
                 </button>
-                <input type="file" accept="application/json,.json" @change=${(event: Event) => this._pickBackupImport(event)} />
+                <input type="file" accept="application/json,.json,application/zip,.zip" @change=${(event: Event) => this._pickBackupImport(event)} />
               </span>
               ${host._canOptimizeUndo && host._undoKind === 'import' ? html`
                 <button class="btn" @click=${() => this._undoPlanOptimization()} ?disabled=${host._optimizeUndoBusy}>

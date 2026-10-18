@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import logging
 import math
 import re
 from collections.abc import Awaitable, Callable
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from time import monotonic, time
@@ -141,6 +143,31 @@ def _enabled(config: dict[str, Any]) -> bool:
     return isinstance(topology, dict) and topology.get("enabled") is True
 
 
+def validate_saved_topics(value: object) -> dict[str, dict[str, Any]]:
+    """Validate a portable snapshot without trusting source entry/job metadata."""
+    if not isinstance(value, dict) or len(value) > MAX_TOPICS:
+        raise ValueError("invalid snapshot")
+    encoded = json.dumps(value, ensure_ascii=False, allow_nan=False, separators=(",", ":")).encode()
+    if len(encoded) > MAX_CACHE_BYTES:
+        raise ValueError("oversized snapshot")
+    out = {}
+    for topic, item in value.items():
+        try:
+            normalized = normalize_base_topic(topic)
+        except ZigbeeScanError as err:
+            raise ValueError("invalid snapshot") from err
+        if (normalized != topic or not isinstance(item, dict)
+                or set(item) != {"map", "obtained_at"}
+                or type(item.get("obtained_at")) is not int or item["obtained_at"] < 0):
+            raise ValueError("invalid snapshot")
+        raw = json.dumps(item["map"], ensure_ascii=False, allow_nan=False, separators=(",", ":")).encode()
+        parsed = _parse_payload(raw)
+        if parsed is None or not _valid_map(parsed) or "transaction" in parsed:
+            raise ValueError("invalid snapshot")
+        out[topic] = {"obtained_at": item["obtained_at"], "map": parsed}
+    return out
+
+
 def _cache_exists(path: str) -> bool:
     file = Path(path)
     if not file.exists():
@@ -189,6 +216,11 @@ class ZigbeeScanCoordinator:
         self._lock = asyncio.Lock()
         self._writes: set[asyncio.Task] = set()
         self._enabled = False
+        self.cache_generation = str(uuid4())
+        self._backup_owner: asyncio.Task | None = None
+        self._backup_pending = False
+        self._backup_ready = asyncio.Event()
+        self._backup_ready.set()
 
     async def async_setup(self, config: dict[str, Any]) -> None:
         """Restore successful maps only; loading never subscribes or publishes MQTT."""
@@ -214,6 +246,9 @@ class ZigbeeScanCoordinator:
                         or not _valid_map(item["map"])):
                     raise ValueError("invalid map cache")
             self._saved = payload["topics"]
+            self.cache_generation = str(payload.get("generation") or hashlib.sha256(
+                json.dumps(self._saved, sort_keys=True, separators=(",", ":")).encode()
+            ).hexdigest())
             if not self._enabled:
                 # A saved OFF decision is authoritative, including after an interrupted shutdown.
                 if self._saved:
@@ -235,16 +270,23 @@ class ZigbeeScanCoordinator:
     async def _save(self, topics: dict[str, dict[str, Any]]) -> None:
         """Caller owns _lock; update in-memory durable truth only after successful I/O."""
         try:
+            generation = str(uuid4())
             await self._store.async_save({"schema": 1, "entry_id": self.entry.entry_id,
-                                          "topics": topics})
+                                          "topics": topics, "generation": generation})
         except Exception as err:  # noqa: BLE001 - stable public error, no provider data in logs
             raise ZigbeeScanError("storage_clear") from err
         self._saved = topics
+        self.cache_generation = generation
         # A historical read error diagnoses restore; an explicit successful write repairs it.
         self._storage_error = None
 
     async def async_save_config(self, config: dict[str, Any], save: Callable[[], Awaitable]) -> None:
         """Serialize saved OFF with start/result writes; draft UI changes never call this."""
+        if self._backup_owner is asyncio.current_task():
+            # The paired ZIP writer owns the lifecycle lock. It writes cache
+            # and emits/reset jobs only at the durable transaction boundary.
+            await save()
+            return
         async with self._lock:
             enabled = _enabled(config)
             if not enabled and (self._enabled or self._saved or self._storage_error):
@@ -262,9 +304,97 @@ class ZigbeeScanCoordinator:
                 self._emit({"kind": "reset", "session_id": self.session_id,
                             "revision": self.revision, "topics": []})
 
-    async def _persist(self, job: _Job) -> None:
+    async def async_backup_snapshot(self) -> dict[str, Any]:
+        """Caller takes write_lock first, as for config-save and ZIP recovery."""
+        if self.backup_owned():
+            if self._storage_error:
+                raise ZigbeeScanError("storage_read")
+            topics = await self.hass.async_add_executor_job(validate_saved_topics, self._saved)
+            return {"topics": topics, "generation": self.cache_generation}
         async with self._lock:
-            if self._jobs.get(job.topic) is not job or not self._enabled or job.result is None:
+            if self.closed or self._backup_pending:
+                raise ZigbeeScanError("conflict")
+            if self._storage_error:
+                raise ZigbeeScanError("storage_read")
+            topics = await self.hass.async_add_executor_job(validate_saved_topics, self._saved)
+            return {"topics": topics, "generation": self.cache_generation}
+
+    def backup_owned(self) -> bool:
+        return self._backup_owner is asyncio.current_task()
+
+    @asynccontextmanager
+    async def backup_transaction(self):
+        """Fence radio writes until the complete pending pair has converged.
+
+        On failure the fence deliberately remains. Every later writer/startup
+        resolves the durable intent before accepting a new operation.
+        """
+        async with self._lock:
+            if self.closed:
+                raise ZigbeeScanError("not_ready")
+            self._backup_owner = asyncio.current_task()
+            self._backup_pending = True
+            self._backup_ready.clear()
+            try:
+                yield
+            finally:
+                self._backup_owner = None
+
+    async def async_backup_cache(self, config: dict[str, Any], snapshot: dict[str, Any]) -> None:
+        """Converge exact cache bytes; a fail-after-write is not a failed write."""
+        if self._backup_owner is not asyncio.current_task():
+            raise RuntimeError("backup lifecycle lock required")
+        topics = await self.hass.async_add_executor_job(validate_saved_topics, snapshot["topics"])
+        generation = snapshot["generation"]
+        if not isinstance(generation, str) or not re.fullmatch(r"[a-f0-9-]{32,64}", generation):
+            raise ValueError("invalid cache generation")
+        topics = topics if _enabled(config) else {}
+        payload = {"schema": 1, "entry_id": self.entry.entry_id,
+                   "topics": topics, "generation": generation}
+        try:
+            await self._store.async_save(payload)
+        except Exception as err:  # noqa: BLE001 - compare exact durable truth
+            if await self._store.async_load() != payload:
+                raise ZigbeeScanError("storage_clear") from err
+        self._saved = topics
+        self.cache_generation = generation
+        self._storage_error = None
+        self._enabled = _enabled(config)
+
+    def finish_backup_transaction(self) -> None:
+        """Publish stale maps only AFTER config/layout/cache/files are durable."""
+        if self._backup_owner is not asyncio.current_task():
+            raise RuntimeError("backup lifecycle lock required")
+        for job in self._jobs.values():
+            self._release(job)
+            if job.task is not None:
+                job.task.cancel()
+        self._jobs.clear()
+        for topic, item in self._saved.items():
+            now = monotonic()
+            job = _Job(topic, f"restored-{uuid4()}", item["obtained_at"], now,
+                       self.hass.loop.create_future(), phase="ready", finished=now,
+                       stale=True, result={"data": {"value": item["map"]}},
+                       obtained_at=item["obtained_at"], persistence="saved")
+            job.info.cancel()
+            self._jobs[topic] = job
+        self.revision += 1
+        self.release_backup_fence()
+        for event in self.initial_events():
+            self._emit(event)
+
+    def release_backup_fence(self) -> None:
+        """A rejected pre-intent candidate must not cancel an existing radio job."""
+        if not self.backup_owned():
+            raise RuntimeError("backup lifecycle lock required")
+        self._backup_pending = False
+        self._backup_ready.set()
+
+    async def _persist(self, job: _Job) -> None:
+        await self._backup_ready.wait()
+        async with self._lock:
+            if (self.closed or self._backup_pending or self._jobs.get(job.topic) is not job
+                    or not self._enabled or job.result is None):
                 return
             try:
                 await self._save({**self._saved, job.topic: {
@@ -341,6 +471,8 @@ class ZigbeeScanCoordinator:
         """Reserve before creating any task: concurrent WS clients join one job."""
         if self.closed:
             raise ZigbeeScanError("not_ready")
+        if self._backup_pending:
+            raise ZigbeeScanError("conflict")
         if not self._enabled:
             raise ZigbeeScanError("disabled")
         topic = normalize_base_topic(base_topic)
@@ -560,6 +692,7 @@ class ZigbeeScanCoordinator:
         if self.closed:
             return
         self.closed = True
+        self._backup_ready.set()
         # Reload does not disconnect HA WebSockets. Tell their observers that
         # this session and its volatile cache are gone before dropping them.
         self.revision += 1

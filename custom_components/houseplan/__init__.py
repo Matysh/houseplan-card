@@ -50,6 +50,12 @@ async def _async_flush_runtime(
     writers are independently guarded so one failed store cannot prevent the
     other from reaching disk during shutdown.
     """
+    backup_service = getattr(entry.runtime_data, "backup_service", None)
+    if backup_service is not None:
+        try:
+            await backup_service.close()
+        except Exception:  # noqa: BLE001 - do not skip other shutdown writers
+            _LOGGER.warning("House Plan: backup staging cleanup deferred")
     zigbee = getattr(entry.runtime_data, "zigbee_coordinator", None)
     if zigbee is not None:
         await zigbee.async_close()
@@ -73,6 +79,7 @@ async def async_setup(hass: HomeAssistant, config) -> bool:
     """Register global handlers (survive config-entry reloads): WS commands, HTTP view."""
     hass.data.setdefault(DOMAIN, {})
     hp_ws.async_register(hass)
+    from .backup_http import HouseplanArchiveDownloadView, HouseplanArchivePreviewView
     from .frontend_assets import HouseplanFrontendAssetView
     from .http_api import (
         HouseplanContentView,
@@ -87,6 +94,8 @@ async def async_setup(hass: HomeAssistant, config) -> bool:
     hass.http.register_view(HouseplanPlanUploadView())
     hass.http.register_view(HouseplanContentView())
     hass.http.register_view(HouseplanImportPreviewView())
+    hass.http.register_view(HouseplanArchivePreviewView())
+    hass.http.register_view(HouseplanArchiveDownloadView())
     hass.http.register_view(HouseplanFrontendAssetView())
     return True
 
@@ -94,6 +103,7 @@ async def async_setup(hass: HomeAssistant, config) -> bool:
 async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) -> bool:
     """Config entry: stores in runtime_data, static paths, card auto-registration."""
     data = create_data(hass)
+    data.backup_root = hass.config.path("")
     # Home Assistant's installation id never leaves the instance.  Exports
     # carry only a salted SHA-256 fingerprint so same-instance internal files
     # can be distinguished from cross-instance references.
@@ -237,6 +247,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
     # A pre-recovery half of an interrupted import must not erase the map cache.
     config_payload = await data.config_store.async_load() or {}
     await data.zigbee_coordinator.async_setup(config_payload.get("config") or {})
+    from .backup_service import get_backup_service
+    await get_backup_service(hass, data).sweep()
 
     await async_check_plan_files(hass, entry)
 

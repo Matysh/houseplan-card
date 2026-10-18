@@ -81,11 +81,13 @@ class ValidatedAsset:
         return hashlib.sha256(self.data).hexdigest()
 
 
-def _check_size(data: bytes) -> None:
+def _check_size(data: bytes, max_bytes: int = MAX_DECOR_ASSET_BYTES) -> None:
     if not data:
         raise DecorAssetError("invalid_image", "The image is empty")
-    if len(data) > MAX_DECOR_ASSET_BYTES:
-        raise DecorAssetError("too_large", "The image exceeds the 2 MiB limit")
+    if len(data) > max_bytes:
+        message = ("The image exceeds the 2 MiB limit" if max_bytes == MAX_DECOR_ASSET_BYTES
+                   else "The image exceeds its storage limit")
+        raise DecorAssetError("too_large", message)
 
 
 def _raster_dimensions(data: bytes, ext: str) -> tuple[int, int]:
@@ -345,9 +347,10 @@ def _walk_reference_graph(ids: set[str], ref_graph: dict[str, set[str]]) -> None
 
 def validate_asset(
     data: bytes, filename: str, declared_mime: str | None = None,
+    *, max_bytes: int = MAX_DECOR_ASSET_BYTES,
 ) -> ValidatedAsset:
     """Validate and canonicalise one complete upload."""
-    _check_size(data)
+    _check_size(data, max_bytes)
     ext = Path(filename).suffix.lower()
     if ext not in ASSET_EXTENSIONS:
         raise DecorAssetError("unsupported_image", "Use PNG, JPEG, WebP or SVG")

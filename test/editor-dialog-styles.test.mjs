@@ -16,6 +16,7 @@ import { resolve } from 'node:path';
 import {
   EDITOR_ENTRY, REPO_ROOT, VIEW_ENTRIES, classesOf, cssOfSource, editorOnlyRules,
   isEditorOnlySelector, ownershipIndex, parseRules, readRepo, staticGraph,
+  moduleEdges,
 } from './helpers/editor-style-ownership.mjs';
 
 const LAZY_SHEET = 'src/styles/editor-dialogs.styles.ts';
@@ -138,6 +139,20 @@ test('#805 AC1 the lazy sheets and their adoption live only in the editor runtim
     assert.equal(editor.has(file), true, `${file} is not in the editor runtime graph`);
   }
   // The tray back in the card's static styles imports its sheet into the View graph: red above.
+});
+
+test('#936 backup child renders only inside the already styled editor root', () => {
+  const archive = resolve(REPO_ROOT, 'src/backup-archive-client.ts');
+  const loader = resolve(REPO_ROOT, 'src/backup-archive-lazy.ts');
+  const view = staticGraph(VIEW_ENTRIES);
+  const editor = staticGraph([EDITOR_ENTRY]);
+  assert.equal(view.has(archive), false);
+  assert.equal(view.has(loader), false);
+  assert.equal(editor.has(loader), true);
+  assert.equal(editor.has(archive), false, 'archive remains demand-loaded');
+  assert.ok(moduleEdges(loader).dynamics.includes(archive));
+  assert.equal(index().otherFiles.has(archive), false);
+  assert.equal(index().editorFiles.has(archive), true);
 });
 
 // ---- adoption on fake roots --------------------------------------------------

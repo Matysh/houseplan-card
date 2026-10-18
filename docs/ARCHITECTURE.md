@@ -1,5 +1,25 @@
 # House Plan architecture
 
+Portable full backup (#936) is editor/admin-only and lazy on first use.
+`backup_archive.py` validates a closed ZIP manifest, bounded directory/streams,
+image bytes and SHA-256; it never fetches external URLs or extracts paths from
+the archive. `backup_files.py` prepares server-chosen copy-on-write destinations
+in private marked staging, publishes exclusive hardlinks and rolls back only
+proven-owned links. Existing files are never overwritten or inferred unused.
+`backup_service.py` owns expiring per-user sessions and disk/worker limits;
+`backup_http.py` authenticates chunked upload/download. WS export opts in with
+`archive:true`; cancel, revalidate, Apply and Undo recheck ownership/HA-admin.
+
+`backup_transaction.py` extends the existing durable pair journal, not a
+parallel state engine: write → upload → coordinator lifecycle locks precede
+intent. Config/layout/files/cache converge before success/events; startup
+resolves that intent before new writers. One-deep Undo retains previous cache
+and file references; revisions and cache generation reject stale use. A cache
+fence invalidates late scan jobs only on accepted convergence. OFF/Update keep
+their central writer contracts. Missing/OFF snapshot replaces with empty cache.
+The frontend transfers opaque candidates/raw files; it never parses imported
+JSON or trusts browser-produced file paths. Legacy JSON and Help stay separate.
+
 Catalog operations (#930) keep space filtering and virtual-ID identity in the
 pure `device-inbox` projection. The same full filtered result drives rendering,
 Select all and post-confirmation revalidation. `marker-deletion.ts` owns a deep

@@ -106,6 +106,8 @@ DEFAULT_CONFIG: dict[str, object] = {
 # outside this set (fail-closed), and every fixed code has a localized
 # `backup.error.<code>` message on the frontend.
 ERROR_CODES: frozenset[str] = frozenset({
+    "zip_invalid", "zip_limit", "zip_cancelled", "zip_changed", "zip_collision", "zip_busy",
+    "zip_admin_only",
     "capacity_exceeded", "commit_failed", "conflict",
     "content_confirmation_required", "duplicate_marker_control",
     "future_model", "in_use", "invalid_config", "invalid_content",

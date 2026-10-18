@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Portable full backups (#936) use admin-only ZIP with used images and accepted
+saved Zigbee maps. Incomplete copies require separate export/import consent;
+ordinary writers and space transfer retain JSON. Apply/Undo share the durable
+pair journal and cache-generation fence, never overwrite existing images or
+infer orphan deletion. Help diagnostics remain a separate privacy contract.
+
 Room darkness (#943) is removed from the palette, General settings and all
 full/static/2.5D render paths. Light pools and actual data fills retain their
 own contracts. Valid old plans/backups stay readable without load-time writes;

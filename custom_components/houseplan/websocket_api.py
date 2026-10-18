@@ -1,6 +1,7 @@
 """House Plan WS commands: layout, space configuration, plan uploads."""
 from __future__ import annotations
 
+import asyncio
 import base64
 import binascii
 import copy
@@ -32,6 +33,7 @@ from .const import (
     DOMAIN,
     EXPORT_VERSION,
     FILES_DIR,
+    IMPORT_PREVIEW_TTL_S,
     MAX_FILES_BYTES,
     MAX_FILES_COUNT,
     MAX_PLANS_BYTES,
@@ -298,6 +300,7 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_assets_delete)
     websocket_api.async_register_command(hass, ws_content_sign)
     websocket_api.async_register_command(hass, ws_export_create)
+    websocket_api.async_register_command(hass, ws_backup_cancel)
     websocket_api.async_register_command(hass, ws_import_revalidate)
     websocket_api.async_register_command(hass, ws_import_apply)
     websocket_api.async_register_command(hass, ws_support_preview)
@@ -405,14 +408,19 @@ async def _persist_pair_intent(
     stored = await rt.store.async_load() or {}
     metadata = dict(pending.get("final_metadata") or {})
     metadata[_OPTIMIZE_PENDING] = pending
-    await async_save_layout_state(
-        rt,
-        stored,
-        stored.get("layout") or {},
-        int(stored.get("rev", 0)),
-        metadata=metadata,
-        replace_metadata=True,
-    )
+    try:
+        await async_save_layout_state(
+            rt, stored, stored.get("layout") or {}, int(stored.get("rev", 0)),
+            metadata=metadata, replace_metadata=True,
+        )
+    except Exception:
+        if "archive" not in pending:
+            raise  # Preserve legacy callers; ZIP must also survive lost intent ACKs.
+        from .store import layout_store_payload
+        expected = layout_store_payload(stored, stored.get("layout") or {},
+                                        int(stored.get("rev", 0)), metadata=metadata, replace_metadata=True)
+        if await rt.store.async_load() != expected:
+            raise
 
 
 async def _converge_pair(rt: HouseplanData, pending: dict[str, Any]) -> None:
@@ -570,6 +578,7 @@ async def ws_marker_copy(hass: HomeAssistant, connection, msg: dict[str, Any]) -
         vol.Optional("space_id"): str,
         vol.Optional("plan_only", default=False): bool,
         vol.Optional("card_version", default=""): str,
+        vol.Optional("archive", default=False): bool,
     }
 )
 @websocket_api.async_response
@@ -580,6 +589,29 @@ async def ws_export_create(hass: HomeAssistant, connection, msg: dict[str, Any])
         return
     rt = _runtime(hass, connection, msg["id"])
     if rt is None:
+        return
+    if msg.get("archive"):
+        from .backup_http import archive_admin
+        from .backup_service import get_backup_service
+
+        if not archive_admin(hass, connection.user) or msg["kind"] != "full" or msg.get("plan_only"):
+            connection.send_error(msg["id"], "unauthorized", "Full ZIP requires an administrator")
+            return
+        service = get_backup_service(hass, rt)
+        try:
+            async with asyncio.timeout(IMPORT_PREVIEW_TTL_S):
+                result = await service.export(_connection_user_id(connection), msg.get("card_version", ""), _build_identity(rt).build)
+            if not archive_admin(hass, connection.user):
+                await service.release(service.get(result["token"], _connection_user_id(connection)))
+                connection.send_error(msg["id"], "unauthorized", "Administrator permission was lost")
+                return
+        except ImportFailure as err:
+            _send_import_error(connection, msg["id"], err)
+            return
+        except Exception:  # noqa: BLE001 - no paths/provider data at the public boundary
+            connection.send_error(msg["id"], "zip_invalid", "Could not prepare full ZIP")
+            return
+        connection.send_result(msg["id"], result)
         return
     try:
         async with rt.write_lock:
@@ -611,6 +643,37 @@ async def ws_export_create(hass: HomeAssistant, connection, msg: dict[str, Any])
     connection.send_result(msg["id"], {"document": document, "filename": filename})
 
 
+@websocket_api.websocket_command({
+    vol.Required("type"): "houseplan/backup/cancel",
+    vol.Required("token"): str,
+})
+@websocket_api.async_response
+async def ws_backup_cancel(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
+    from .backup_http import archive_admin
+    from .backup_service import get_backup_service
+
+    if not archive_admin(hass, connection.user):
+        connection.send_error(msg["id"], "unauthorized", "Administrator permission required")
+        return
+    rt = _runtime(hass, connection, msg["id"])
+    if rt is None:
+        return
+    service = get_backup_service(hass, rt)
+    try:
+        # Import UI knows its preview token, not the internal ZIP session token.
+        session = service.sessions.get(msg["token"])
+        if session is None:
+            session = next((s for s in service.sessions.values() if s.preview_token == msg["token"]), None)
+        if session is not None:
+            if session.owner != _connection_user_id(connection):
+                raise ImportFailure("preview_owner_mismatch")
+            await service.release(session)
+    except ImportFailure as err:
+        _send_import_error(connection, msg["id"], err)
+        return
+    connection.send_result(msg["id"], {"ok": True})
+
+
 @websocket_api.websocket_command(
     {
         vol.Required("type"): "houseplan/import/revalidate",
@@ -630,8 +693,19 @@ async def ws_import_revalidate(hass: HomeAssistant, connection, msg: dict[str, A
     try:
         async with rt.write_lock:
             candidate = get_candidate(rt, msg["token"], _connection_user_id(connection))
-            config_data = await rt.config_store.async_load() or {}
-            layout_data = await rt.store.async_load() or {}
+            archive_session = None
+            if "archive" in candidate:
+                from .backup_http import archive_admin
+                from .backup_service import get_backup_service
+                if not archive_admin(hass, connection.user):
+                    raise ImportFailure("unauthorized")
+                service = get_backup_service(hass, rt)
+                archive_session = service.candidate_session(candidate, _connection_user_id(connection))
+                pair = await async_resolve_pending_pair(rt)
+                config_data, layout_data = pair.config_data, pair.layout_data
+            else:
+                config_data = await rt.config_store.async_load() or {}
+                layout_data = await rt.store.async_load() or {}
             try:
                 registry_snapshot = import_registry_snapshot(hass)
             except Exception:  # noqa: BLE001 - summary must not block revalidation
@@ -649,6 +723,17 @@ async def ws_import_revalidate(hass: HomeAssistant, connection, msg: dict[str, A
                 )
             )
             result["token"] = msg["token"]
+            if archive_session is not None:
+                from .import_export import _candidate_digest
+                try:
+                    snapshot = await rt.zigbee_coordinator.async_backup_snapshot()
+                except Exception as err:  # noqa: BLE001 - no raw lifecycle/storage exception in UI
+                    raise ImportFailure("conflict") from err
+                candidate["archive"]["cache_generation"] = snapshot["generation"]
+                candidate["confirmation_required"] = candidate["confirmation_required"] or not archive_session.manifest["complete"]
+                candidate["digest"] = _candidate_digest(candidate)
+                result["preview"]["confirmation_required"] = candidate["confirmation_required"]
+                result["preview"]["archive"] = service.summary(archive_session, candidate["target_config"])
             result["expires_at"] = datetime.fromtimestamp(
                 candidate["expires"], UTC
             ).isoformat().replace("+00:00", "Z")
@@ -676,6 +761,10 @@ async def ws_import_apply(hass: HomeAssistant, connection, msg: dict[str, Any]) 
         return
     rt = _runtime(hass, connection, msg["id"])
     if rt is None:
+        return
+    if "archive" in (rt.import_previews.get(msg["token"]) or {}):
+        from .backup_transaction import apply_archive
+        await apply_archive(hass, connection, msg, rt)
         return
     kind = ""
     details: dict[str, Any] = {}
@@ -2646,6 +2735,10 @@ async def ws_plan_optimize_undo(hass: HomeAssistant, connection, msg: dict[str, 
             return
 
         backup = layout_data[_OPTIMIZE_BACKUP]
+        if "archive_snapshot" in backup:
+            from .backup_transaction import undo_archive_locked
+            await undo_archive_locked(hass, connection, msg, rt, config_data, layout_data)
+            return
         restored_kind = str(backup.get("kind") or "optimize")
         restored_config = canonicalize_config_geometry(
             backup.get("config") or DEFAULT_CONFIG

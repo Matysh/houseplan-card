@@ -2129,9 +2129,7 @@ export class HouseplanCard extends LitElement {
   } | null = null;
   private _pdfDialog = false;
   private _supportDialog: SupportDialogState | null = null;
-  private _backupExportDialog: {
-    kind: 'full' | 'space'; planOnly: boolean; busy: boolean; error: string;
-  } | null = null;
+  private _backupExportDialog: import('./backup-archive-client').BackupExportState | null = null;
   public readonly _backupImportIntent = new BackupImportIntent();
   private _backupImportDialog: {
     filename: string; size: number; token: string; preview: any;
@@ -2766,6 +2764,7 @@ export class HouseplanCard extends LitElement {
     );
     this._warmMarker.cancel();
     this._backupImportIntent.cancel(false);
+    this._editorRuntime?.backupTransfer.dispose();
     this._backupImportDialog = null;
     // Stop the independent kiosk timer before any teardown flush can mutate
     // config/layout state or this detached instance can reload the document.
@@ -2953,7 +2952,7 @@ export class HouseplanCard extends LitElement {
       if (this._rulesDialog) { this._rulesDialog = null; return; }
       if (this._alignDialog) { this._alignDialog = null; return; }
       if (this._backupImportDialog) { this._editorRuntime?._closeBackupImport(); return; }
-      if (this._backupExportDialog) { this._backupExportDialog = null; return; }
+      if (this._backupExportDialog) { this._editorRuntime?._closeBackupExport(); return; }
       if (this._pdfDialog) { this._pdfDialog = false; return; }
       if (this._supportDialog) { void this._editorRuntime?._closeSupportDialog(); return; }
       if (this._settingsDialog) { this._settingsDialog = null; return; }
@@ -7587,6 +7586,7 @@ export class HouseplanCard extends LitElement {
     this._closeInfoCard();
     this._rulesDialog = null;
     this._alignDialog = null;
+    this._editorRuntime?.backupTransfer.dispose();
     this._backupImportIntent.cancel(false);
     this._backupImportDialog = null;
     this._backupExportDialog = null;
@@ -10725,7 +10725,7 @@ export class HouseplanCard extends LitElement {
                     ((e.currentTarget as HTMLElement).nextElementSibling as HTMLInputElement)?.click()}>
                     <ha-icon icon="mdi:upload"></ha-icon>${this._t('empty.import_backup')}
                   </button>
-                  <input type="file" accept="application/json,.json" tabindex="-1"
+                  <input type="file" accept="application/json,.json,application/zip,.zip" tabindex="-1"
                     @change=${(e: Event) => this._pickEmptyBackupImport(e)} />
                 </span>` : nothing}
                 </div>`

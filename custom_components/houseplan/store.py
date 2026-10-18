@@ -6,6 +6,7 @@ import copy
 import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
@@ -117,6 +118,9 @@ class HouseplanData:
     radar_coordinator: Any | None = None
     # #912: volatile MQTT jobs own a separate entry-scoped durable map Store.
     zigbee_coordinator: Any | None = None
+    # #936: private ZIP sessions; no archive bytes or tokens enter config/export.
+    backup_service: Any | None = None
+    backup_root: str = ""
     # #836: frontend fingerprint and dev label, read once at entry setup.
     build_identity: BuildIdentity = UNKNOWN_BUILD
 
@@ -288,6 +292,50 @@ def _pending_target(
 
 
 async def async_converge_store_pair(
+    runtime: HouseplanData,
+    pending: dict[str, Any],
+    *,
+    config_data: dict[str, Any] | None = None,
+    layout_data: dict[str, Any] | None = None,
+) -> ResolvedStorePair:
+    """Converge legacy pairs, or one fenced ZIP files/cache/config/layout unit."""
+    archive = pending.get("archive")
+    if archive is None:
+        return await _async_converge_pair_documents(
+            runtime, pending, config_data=config_data, layout_data=layout_data,
+        )
+    if not isinstance(archive, dict) or archive.get("action") not in {"publish", "rollback", "cache"}:
+        raise ValueError("invalid backup intent")
+    coordinator = runtime.zigbee_coordinator
+    if coordinator is None or not runtime.backup_root:
+        raise ValueError("backup recovery unavailable")
+    from .backup_files import check_files, durable_file_job, rollback_files
+
+    async def converge_archive() -> ResolvedStorePair:
+        if archive["action"] in {"publish", "rollback"}:
+            if archive["action"] == "publish":
+                await durable_file_job(coordinator.hass,
+                    lambda: check_files(Path(runtime.backup_root), archive, publish=True)
+                )
+            else:
+                await durable_file_job(coordinator.hass, rollback_files, Path(runtime.backup_root), archive)
+        await coordinator.async_backup_cache(pending["config"], archive["snapshot"])
+        resolved = await _async_converge_pair_documents(
+            runtime, pending, config_data=config_data, layout_data=layout_data,
+        )
+        coordinator.finish_backup_transaction()
+        return resolved
+
+    if coordinator.backup_owned():
+        # The new writer already owns write -> upload -> lifecycle, before
+        # persisting intent. Recovery enters the same order here.
+        return await converge_archive()
+    async with runtime.upload_lock:
+        async with coordinator.backup_transaction():
+            return await converge_archive()
+
+
+async def _async_converge_pair_documents(
     runtime: HouseplanData,
     pending: dict[str, Any],
     *,

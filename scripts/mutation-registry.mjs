@@ -77,6 +77,37 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'backup-zip-opens-to-ordinary-editors',
+    guard: 'python -m pytest tests_backend/test_ha_backup_archive.py -q -k real_http_zip_preview',
+    because: '#936 AC5: a real authenticated household editor still cannot upload/admin-restore raw-mesh ZIP data.',
+    patches: [{ file: 'custom_components/houseplan/backup_http.py',
+      find: 'return bool(user and user.is_admin and may_write(hass, user))',
+      replace: 'return may_write(hass, user)' }],
+  },
+  {
+    id: 'backup-zip-overwrites-changed-mesh-generation',
+    guard: 'python -m pytest tests_backend/test_ha_backup_archive.py -q -k changed_cache_without_writes',
+    because: '#936 AC7: an accepted Update/OFF after preview must cause a conflict, never replacement by the old candidate.',
+    patches: [{ file: 'custom_components/houseplan/backup_transaction.py',
+      find: 'if expected_generation != coordinator.cache_generation:', replace: 'if False:' }],
+  },
+  {
+    id: 'backup-zip-undo-forgets-previous-saved-mesh',
+    guard: 'python -m pytest tests_backend/test_ha_backup_archive.py -q -k cross_root_apply_and_one_undo',
+    because: '#936 AC10: one real paired Undo restores the previous accepted saved maps and their original dates, not an empty cache.',
+    patches: [{ file: 'custom_components/houseplan/backup_transaction.py',
+      find: 'target_snapshot = {"topics": backup["archive_snapshot"]["topics"], "generation": secrets.token_hex(16)}',
+      replace: 'target_snapshot = {"topics": {}, "generation": secrets.token_hex(16)}' }],
+  },
+  {
+    id: 'backup-zip-failed-publication-keeps-owned-hardlinks',
+    guard: 'python -m pytest tests_backend/test_ha_backup_archive.py -q -k apply_target_write_failure',
+    because: '#936 AC9: failure after publishing some images rolls back all four surfaces and removes only proven operation-owned links.',
+    patches: [{ file: 'custom_components/houseplan/backup_files.py',
+      find: '    """Unlink ONLY proven operation-owned hardlinks, never an inferred orphan."""\n    staged =',
+      replace: '    """Unlink ONLY proven operation-owned hardlinks, never an inferred orphan."""\n    return\n    staged =' }],
+  },
+  {
     id: 'room-co2-loses-explicit-snapshot-source',
     guard: 'node demo/smoke_room_co2.mjs',
     because: '#920 AC5: a selected sensor outside every room must feed row, preview and stationary tooltip through the held snapshot.',
@@ -19422,7 +19453,7 @@ const MUTANT_DEFINITIONS = [
     guard: 'python -m pytest tests_backend/test_ha_zigbee_topology.py -q -k issue_912_success_survives',
     because: '#912 AC1: real entry reload restores a successful raw map stale with its original time and no radio request.',
     patches: [{ file: 'custom_components/houseplan/zigbee_topology.py',
-      find: 'for topic, item in self._saved.items():', replace: 'for topic, item in {}.items():' }],
+      find: '            for topic, item in self._saved.items():', replace: '            for topic, item in {}.items():' }],
   },
   {
     id: 'zigbee-durable-refresh-keeps-old-map-on-disk',

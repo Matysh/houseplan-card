@@ -100,8 +100,11 @@ def test_issue_42_every_emitted_code_is_registered_and_localized():
     # variable-passed subfamily is proven (spec rev6 м1c target)
     assert "invalid_light_entity" in fixed and "invalid_value_source" in fixed
     en = json.loads((REPO / "src" / "i18n" / "en.json").read_text(encoding="utf-8"))
+    # Backup errors resolve through toolsT first, then the original core
+    # dictionary. Rare ZIP-only copy must not inflate every View download.
+    tools = json.loads((REPO / "src" / "i18n" / "tools" / "en.json").read_text(encoding="utf-8"))
     missing = {code for code in const.ERROR_CODES
-               if f"backup.error.{code}" not in en}
+               if f"backup.error.{code}" not in en and f"backup.error.{code}" not in tools}
     assert not missing, f"ERROR_CODES without an en message: {sorted(missing)}"
 
 

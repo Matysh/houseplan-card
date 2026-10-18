@@ -371,8 +371,14 @@ in any space.
 Missing or hash-mismatched content fails dark in View and the static card. In
 Background it becomes a bounded selectable crossed placeholder so the user can
 replace it without losing position, size, rotation, mirror or layer order.
-Export v2 records hashes and availability but never embeds image bytes; an
+JSON export v2 records hashes and availability but never embeds image bytes; an
 import with missing bytes requires confirmation and preserves that placeholder.
+Full admin ZIP (#936) wraps that document and includes referenced canonical
+image bytes, deduplicated by hash. Restore regenerates validated sidecars and
+immediately resolves their metadata before rendering decor, without waiting
+for a later HA update. Transforms/asset identity and the 2 MiB/decode/SVG
+policy stay unchanged. Missing images in an explicitly incomplete ZIP retain
+the same repairable placeholder. Publishing/Undo never garbage-collect assets.
 
 **Backend invariants.** Raster input is fully decoded and SVG passes a strict
 allowlist before promotion. `houseplan/assets/resolve` takes its reference

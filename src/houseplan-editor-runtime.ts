@@ -7,6 +7,8 @@
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
 import { html, svg, nothing, TemplateResult } from 'lit';
+import { LazyBackupArchiveClient } from './backup-archive-lazy';
+import type { BackupExportState, ArchiveSummary } from './backup-archive-client';
 import { ref } from 'lit/directives/ref.js';
 import { keyed } from 'lit/directives/keyed.js';
 import { WallThicknessDialogGesture } from './wall-thickness-dialog-gesture';
@@ -280,7 +282,7 @@ import { ledStripsByMarker } from './led-strip-gate';
 import { effectiveDeviceBaseSize } from './device-marker-geometry';
 import { contentFingerprint } from './visual-continuity';
 import { settingsT } from './i18n/settings';
-import { toolsT } from './i18n/tools';
+import { toolsT, type ToolsI18nKey } from './i18n/tools';
 import { physicalBodiesKey, wallUnionKey, writeWallUnionPool } from './floor-geometry-key';
 import { PointerModalityController } from './pointer-modality';
 import { type ResolvedDevicePresentation } from './device-presentation';
@@ -482,6 +484,7 @@ export interface HouseplanEditorHostPort {
   _activityRt: Map<string, FiniteActivityRuntime>;
   _adoptInitialSpace: (models: SpaceModel[], authoritative?: boolean) => InitialSpaceSelection;
   _adoptAuthoritative: (input: GatedAdoptionInput) => Promise<GatedAdoptionResult>; // #500: the one adoption entry
+  _syncDecorAssets: (config: ServerConfig | null) => Promise<void>;
   _rollbackOptimistic: (attempt: OptimisticAttempt<ServerConfig>) => boolean;
   readonly _adoption: ConfigAdoption; // #500: identity owner; _serverCfg/_cfgRev/_layout/_layoutRev delegate to it
   _alignDialog: OptimizePlansDialogState | null;
@@ -495,7 +498,7 @@ export interface HouseplanEditorHostPort {
   _autoIconForBinding: (binding: string) => string;
   _backdropGuard: import('./backdrop-pick').BackdropGuardState | null;
   _backdropDialog: { widthCm: number; heightCm: number; angle: string; } | null;
-  _backupExportDialog: { kind: "full" | "space"; planOnly: boolean; busy: boolean; error: string; } | null;
+  _backupExportDialog: BackupExportState | null;
   _backupImportIntent: import('./backup-import-intent').BackupImportIntent;
   _canImportBackup: boolean;
   _backupImportDialog: { filename: string; size: number; token: string; preview: any; expectedConfigRev: number; expectedLayoutRev: number; duplicatePolicy: "skip" | "virtual"; confirmMissing: boolean; busy: boolean; error: string; } | null;
@@ -850,6 +853,7 @@ export const EDITOR_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 export { EDITOR_LANGUAGE_RUNTIME }; // #627: see src/i18n/editor-language.ts
 
 export class HouseplanEditorRuntime {
+  public readonly backupTransfer = new LazyBackupArchiveClient(this.host);
   public readonly deviceCopy = new DeviceCopyEditor(this.host);
   public readonly physicalGesture: PhysicalBodyGestureRuntime;
   public readonly backdropGesture: BackdropFrameGestureRuntime;
@@ -7369,10 +7373,16 @@ public _keepClosedAsPartitions = (): void => {
     this.host.requestUpdate();
   };
 
+private _backupT(key: ToolsI18nKey, vars?: Record<string, string>): string {
+    return toolsT(langOf(this.host.hass, this.host._config?.language), key, vars);
+  }
+
 public _backupErrorText(e: any): string {
     const code = e?.code ?? e?.error;
     if (typeof code === 'string') {
       const key = `backup.error.${code}`;
+      const editorText = this._backupT(key as ToolsI18nKey);
+      if (editorText !== key) return editorText;
       const translated = this.host._t(key as I18nKey);
       if (translated !== key) return translated;
     }
@@ -8809,46 +8819,24 @@ public async _undoPlanOptimization(): Promise<void> {
   }
 
 public _openBackupExport = (): void => {
+    this.backupTransfer.cancelExport();
     this.host._settingsDialog = null;
     this.host._backupExportDialog = { kind: 'full', planOnly: false, busy: false, error: '' };
   };
 
 public async _runBackupExport(): Promise<void> {
-    const d = this.host._backupExportDialog;
-    if (!d || d.busy) return;
-    this.host._backupExportDialog = { ...d, busy: true, error: '' };
-    try {
-      const response: any = await this.host.hass.callWS({
-        type: 'houseplan/export/create',
-        kind: d.kind,
-        space_id: d.kind === 'space' ? this.host._space : undefined,
-        ...(d.kind === 'space' && d.planOnly ? { plan_only: true } : {}),
-        card_version: displayVersion(CARD_VERSION),
-      });
-      const blob = new Blob([JSON.stringify(response.document, null, 2) + '\n'], {
-        type: 'application/json;charset=utf-8',
-      });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = response.filename || `houseplan-${d.kind}.json`;
-      anchor.style.display = 'none';
-      document.body.append(anchor);
-      anchor.click();
-      anchor.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 0);
-      this.host._backupExportDialog = null;
-      this.host._showToast(this.host._t('backup.export_done'));
-    } catch (error: any) {
-      if (this.host._backupExportDialog) {
-        this.host._backupExportDialog = { ...this.host._backupExportDialog, busy: false, error: this._backupErrorText(error) };
-      }
-    }
+    await this.backupTransfer.export({ card_version: displayVersion(CARD_VERSION) }, error => this._backupErrorText(error));
+  }
+
+public _closeBackupExport(): void {
+    this.backupTransfer.cancelExport();
+    this.host._backupExportDialog = null;
   }
 
 private _backupImportRequest = 0;
 
 public _closeBackupImport(): void {
+    this.backupTransfer.cancelImport();
     this.host._backupImportDialog = null;
     this.host._backupImportIntent.cancel();
   }
@@ -8881,20 +8869,7 @@ public async _importBackupFile(file: File, request = this.host._backupImportInte
       if (this.host._persistLayout.pending()) this.host._persistLayout.flush();
       if (!this._ownsBackupImport(request)) return;
       if (!this.host._canImportBackup) throw new Error(this.host._t('empty.read_only'));
-      const path = '/api/houseplan/import/preview?duplicate_policy=skip';
-      const init = { method: 'POST', body: file, headers: { 'content-type': 'application/json' } };
-      const response: Response = this.host.hass?.fetchWithAuth
-        ? await this.host.hass.fetchWithAuth(path, init)
-        : await fetch(path, {
-            ...init,
-            headers: {
-              ...init.headers,
-              ...(this.host.hass?.auth?.data?.access_token
-                ? { authorization: `Bearer ${this.host.hass.auth.data.access_token}` } : {}),
-            },
-          });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.error) throw Object.assign(new Error(data.message || data.error || `HTTP ${response.status}`), { code: data.error });
+      const data = await this.backupTransfer.preview(file);
       if (this._ownsBackupImport(request) && this.host._backupImportDialog) {
         this.host._backupImportDialog = {
           ...this.host._backupImportDialog,
@@ -8904,6 +8879,8 @@ public async _importBackupFile(file: File, request = this.host._backupImportInte
           expectedLayoutRev: data.expected_layout_rev,
           busy: false,
         };
+      } else if (data.preview?.archive) {
+        this.backupTransfer.discard(data.token);
       }
     } catch (error: unknown) {
       if (this._ownsBackupImport(request) && this.host._backupImportDialog) {
@@ -8973,6 +8950,10 @@ public async _applyBackupImport(): Promise<void> {
       const adopted = await this.host._adoptAuthoritative({ cfgResp: configResponse, layResp: layoutResponse, reason: 'import-apply', profile: 'post-write' });
       if (!this._ownsBackupImport(request)) return;
       if (adopted.status !== 'adopted') { this.host._backupImportDialog = { ...d, busy: false, error: '' }; this.host.requestUpdate(); return; }
+      if (d.preview.archive) {
+        await this.host._syncDecorAssets(this.host._serverCfg).catch(() => undefined);
+        if (!this._ownsBackupImport(request)) return;
+      }
       this.host._geometryHistory.clear();
       this.host._dirtyPos.clear();
       this.host._sentPos.clear();
@@ -9039,16 +9020,16 @@ public _renderBackupExportDialog(): TemplateResult {
     const d = this.host._backupExportDialog!;
     const currentSpace = (this.host._serverCfg?.spaces || []).find((space) => space.id === this.host._space);
     return html`<hp-dialog .hass=${this.host.hass} data-kind="backup" .title=${this.host._t('backup.export_title')}
-      icon="mdi:download" dismiss-on-scrim @hp-close=${() => (this.host._backupExportDialog = null)}>
+      icon="mdi:download" dismiss-on-scrim @hp-close=${() => this._closeBackupExport()}>
       <div class="body backupbody">
         <div class="rhint">${this.host._t('backup.export_hint')}</div>
         <label class="srcrow"><input type="radio" name="backup-kind" value="full"
           .checked=${d.kind === 'full'}
-          @change=${() => (this.host._backupExportDialog = { ...d, kind: 'full', planOnly: false })} />
+          ?disabled=${d.busy} @change=${() => this.backupTransfer.selectKind('full')} />
           <span>${this.host._t('backup.full')}</span></label>
         <label class="srcrow"><input type="radio" name="backup-kind" value="space"
-          .checked=${d.kind === 'space'} ?disabled=${!currentSpace}
-          @change=${() => (this.host._backupExportDialog = { ...d, kind: 'space' })} />
+          .checked=${d.kind === 'space'} ?disabled=${d.busy || !currentSpace}
+          @change=${() => this.backupTransfer.selectKind('space')} />
           <span>${currentSpace
             ? this.host._t('backup.current_space_title', { title: currentSpace.title || currentSpace.id })
             : this.host._t('backup.no_current_space')}</span></label>
@@ -9059,15 +9040,17 @@ public _renderBackupExportDialog(): TemplateResult {
             })} />
           <span><b>${this.host._t('backup.plan_only')}</b><small>${this.host._t('backup.plan_only_hint')}</small></span>
         </label>` : nothing}
-        <div class="backupwarn">${this.host._t('backup.privacy_warning')}</div>
+        ${d.kind === 'full' ? html`<div class="rhint">${this._backupT(this.host.hass?.user?.is_admin === true ? 'backup.zip_format' : 'backup.json_legacy')}</div>` : nothing}
+        ${this.backupTransfer.renderSummary((key, values) => this._backupT(key, values), d.archive)}
+        <div class="backupwarn">${d.kind === 'full' && this.host.hass?.user?.is_admin === true ? this._backupT('backup.zip_privacy_warning') : this.host._t('backup.privacy_warning')}</div>
         ${d.error ? html`<div class="backuperror" role="alert">${d.error}</div>` : nothing}
       </div>
       <div class="row" slot="footer">
-        <button class="btn ghost" autofocus data-hp="dialog-cancel" @click=${() => (this.host._backupExportDialog = null)}>${this.host._t('btn.cancel')}</button>
+        <button class="btn ghost" autofocus data-hp="dialog-cancel" @click=${() => this._closeBackupExport()}>${this.host._t('btn.cancel')}</button>
         <span class="spacer"></span>
         <button class="btn on" data-hp="dialog-confirm" ?disabled=${d.busy || (d.kind === 'space' && !currentSpace)}
           @click=${() => this._runBackupExport()}>
-          <ha-icon icon="mdi:download"></ha-icon>${d.busy ? '…' : this.host._t('backup.download')}
+          <ha-icon icon="mdi:download"></ha-icon>${d.busy ? this._backupT('backup.zip_preparing') : d.archive && !d.archive.complete ? this._backupT('backup.zip_download_incomplete') : this.host._t('backup.download')}
         </button>
       </div>
     </hp-dialog>`;
@@ -9118,6 +9101,7 @@ public _renderBackupImportDialog(): TemplateResult {
               model: String(p.model_version ?? '—'),
             })}</span>
           </div>
+          ${this.backupTransfer.renderSummary((key, values) => this._backupT(key, values), p.archive as ArchiveSummary | undefined, true)}
           <div class="backupcounts">
             <span>${this.host._t('backup.count_spaces', { n: p.kind === 'full'
               ? `${p.current_counts?.spaces || 0} → ${counts.spaces || 0}` : String(counts.spaces || 0) })}</span>
@@ -9198,7 +9182,7 @@ public _renderBackupImportDialog(): TemplateResult {
           ${p.confirmation_required ? html`<label class="srcrow backupconfirm">
             <input type="checkbox" .checked=${d.confirmMissing}
               @change=${(e: Event) => (this.host._backupImportDialog = { ...d, confirmMissing: (e.target as HTMLInputElement).checked })} />
-            <span>${this.host._t(missingDecor.length
+            <span>${p.archive && !p.archive.complete ? this._backupT('backup.zip_confirm_incomplete') : this.host._t(missingDecor.length
               ? 'backup.confirm_missing_images' : 'backup.confirm_detach')}</span>
           </label>` : nothing}
         ` : nothing}

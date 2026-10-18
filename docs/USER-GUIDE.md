@@ -2470,11 +2470,41 @@ The maintenance catalog of stored plan files (names, sizes and usage) is
 writer-only. Vacuum coordinates remain available because View renders the path,
 but the map source's internal entity ID is removed from the response.
 
-### Portable JSON backup
+### Portable backup: full ZIP and JSON
+
+For Home Assistant administrators, **Full backup** creates a ZIP containing
+the complete model, used background images, custom-image decor, graphical
+device attachments and the saved Zigbee link snapshot. Images are copied, not
+just linked; PDFs and text attachments are not packed. ZIP export, restore and
+its Undo require administrator permission. Ordinary editors keep full JSON;
+**Current space** and **Plan only** remain JSON for everyone.
+
+If an image is missing, unsafe or external, the report names it and explains
+how to repair it. Nothing downloads automatically: **Download incomplete
+backup** is a separate confirmation and the filename marks the incomplete
+copy. The restore preview repeats the report and requires consent before
+detaching missing backgrounds/attachments; missing custom images remain
+repairable placeholders. External image bytes are never downloaded by HA.
+
+Both import entries accept the new ZIP and older JSON. The preview shows
+image counts and the snapshot's original dates. Restoring replaces the current
+saved Zigbee snapshot, including clearing it when absent; if Zigbee links are
+disabled in the restored plan, the saved cache is cleared. Restored links are
+outdated and no radio scan starts. **Undo import** restores the previous plan
+and saved links once, until later plan or cache changes make that Undo stale.
+Export itself changes neither plan nor images. Keep backups private: they
+contain names, identifiers, exact geometry and potentially network topology.
+This is separate from the diagnostic JSON in **Help & feedback**.
+
+ZIP limits: 2 GiB compressed and unpacked, 1600 entries; existing individual
+image/storage limits still apply. Only one ZIP operation per user and two per
+installation may be active, with a ten-minute preview lifetime. Cancel and
+retry after a timeout; errors leave the accepted plan intact. Older House Plan
+versions cannot read this ZIP; their JSON import/export remains unchanged.
 
 With no spaces yet, choose **Import backup** next to **Add space** on the empty
 screen. Close the automatic first-space/floor dialog if it is open, select a
-House Plan JSON backup and confirm the normal preview; no temporary space is
+House Plan ZIP (administrator) or JSON backup and confirm the normal preview; no temporary space is
 needed. Nothing changes before confirmation, and Cancel returns to the empty
 screen. This entry requires editing permission and is unavailable in House
 Plan kiosk mode. It does not import a complete Home Assistant backup.
@@ -2495,7 +2525,7 @@ prepared candidate. **Import reference details** reports links updated inside
 the copy and in the existing plan. If more than one target is possible, House
 Plan preserves the reference instead of guessing and recommends running
 **Optimize plans** after the import.
-Internal uploaded files are not embedded in JSON; an import to another HA
+Internal uploaded files are not embedded in JSON (unlike full ZIP); an import to another HA
 instance must explicitly detach those links.
 
 For **Current space**, enable **Plan only** to transfer the architectural

@@ -1,5 +1,49 @@
 # Development and deployment
 
+## Portable full backup (#936)
+
+Container v1: `manifest.json`, the old `document.json`, optional `zigbee.json`,
+deduplicated `images/<sha256>.<ext>`. Closed manifest descriptors bind actual
+sizes/hashes/refs and explicit incomplete reasons; transport `authSig` is
+removed from image URLs. Version, duplicate/extra entries, unsafe paths,
+symlink/special/encrypted entries, CRC/hash and actual image decoding fail
+closed. No `extractall` or network fetching. ZIP is not diagnostic Help JSON.
+Session directory creation fsyncs its parent before any durable intent;
+file opens use no-follow/nonblocking and check regular descriptors, so a FIFO
+cannot hang a worker before validation.
+
+Caps: compressed/expanded 2 GiB each; 1600 entries; manifest 2 MiB; document
+8 MiB; snapshot uses existing provider limits. Plan/decor/attachment image caps
+stay 8/2/50 MiB with existing aggregate quotas. 64 KiB streams and executor
+image validation keep ZIP bytes off the HA loop. Private marked staging has
+4 GiB aggregate reservation, 512 MiB minimum free space, one heavy session per
+user/two globally and ten-minute TTL. Durable pending intent owns its files
+instead of expiry; no public URL or token goes into the archive.
+
+Run `python -m pytest tests_backend/test_ha_backup_archive.py` in the real HA
+venv plus existing import/Zigbee/support suites. Tests inject failed/lost-ACK
+Store writes and filesystem publication failures at I/O boundaries (not
+mutated guards), then verify disk reload/entry restart. The native witness is
+`node demo/smoke_backup_archive.mjs`: actual entrypoints, native chooser and
+Python-produced archive bytes with synthetic HA transport, not live-HA proof.
+Regenerate its synthetic frozen fixture via
+`python -m pytest -s -q tests_backend/helpers/backup_archive_fixture.py` and
+capture the `HP_BACKUP_FIXTURE` JSON into `demo/fixtures/backup-archive-v1.json`.
+The backend suite rereads those committed ZIP bytes with the real parser.
+Client tests cover consent, raw legacy input, cold loader cancellation and
+late token/blob ownership. Run the old backup-transfer/empty-import smokes too.
+New mutation definitions are static-checked only; execution remains nightly.
+
+`backup-archive-lazy.ts` loads ZIP UI/transfer code only for backup operations;
+localized new copy uses the existing tools namespace. No renderer/frame work.
+Owner approval for #936 accepts exact total 3,042,858 B and lazy editor
+273,105 B gzip, retaining both 2,000 B bands and every other budget. This is
+an explicit feature-cost acceptance, not a performance improvement.
+Keep the generated bundle out of ordinary commits (`npm run bundle:clean`).
+Before downgrade, resolve durable pending restore/Undo with this backend;
+never let an old version ignore a new recovery journal. Existing image files
+are retained, including after Undo; no orphan inference is allowed.
+
 ## Room CO₂ (#920)
 
 Compile the usual test-build and run `node --test test/room-co2.test.mjs

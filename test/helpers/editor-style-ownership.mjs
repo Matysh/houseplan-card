@@ -33,7 +33,7 @@ export const PANEL_ENTRY = 'src/houseplan-panel.ts';
  * планы» — `import()` загрузчика рантайма). Их разметка — разметка редактора:
  * без рантайма они не открываются, поэтому и в «другие ленивые графы» не идут.
  */
-export const EDITOR_LAZY_SURFACES = ['src/optimize-plans-dialog.ts'];
+export const EDITOR_LAZY_SURFACES = ['src/optimize-plans-dialog.ts', 'src/backup-archive-client.ts'];
 
 /**
  * Модули-таблицы стилей не являются «использованием» класса: в них есть все
