@@ -434,9 +434,11 @@ test('§8.1 обратная проба (AC6): UI — не вход backend, bac
     assert.ok(!checksAffectedBy([file], ROOT, { manifest: MANIFEST }).affected.has('backend'), file);
   }
   // smoke_infinite_canvas запускает backend-валидацию как процесс — это
-  // честная зависимость; но tests_backend/** браузерным job не нужны
+  // честная зависимость. #946's native HA retry witness reads the pinned
+  // frontend wheel version from requirements; backend suites stay out.
   for (const job of ['smoke', 'golden', 'performance_smoke']) {
-    assert.ok(![...MANIFEST[job]].some((f) => f.startsWith('tests_backend/')), `${job} читает tests_backend`);
+    const backendInputs=[...MANIFEST[job]].filter(f=>f.startsWith('tests_backend/'));
+    assert.deepEqual(backendInputs,job==='smoke'?['tests_backend/requirements.txt']:[],`${job}: only the declared HA fixture pin is a browser input`);
   }
   for (const file of ['src/houseplan-card.ts', 'src/houseplan-editor-runtime.ts',
     'custom_components/houseplan/websocket_api.py']) {

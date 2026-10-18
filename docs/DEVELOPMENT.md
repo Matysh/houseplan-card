@@ -7,6 +7,11 @@ The pinned native-HA screenshot exposed the pre-existing notification paint
 order issue #956, reproduced on24f7ab2 too; DOM visibility is not claimed as
 proof of visible notification. This adds the AC5 draft/rollback/retry witness
 without changing product or capture inputs.
+The native asset loader really reads `tests_backend/requirements.txt` to
+authenticate its frontend pin. The browser-input guard therefore permits exactly
+that metadata file for smoke, while still excluding all backend suites and all
+backend inputs from golden/performance. This is the same narrow protocol later
+used by #947, brought forward with its first Room consumer; no dependency is hidden.
 
 The #945 localized signal witness sets HA language on each fresh card instead
 of restarting it with `setConfig`. It observes the public Devices mode before
