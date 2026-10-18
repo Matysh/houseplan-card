@@ -17,7 +17,7 @@
   "room.group_sources.help": "Ausgewählte Quellen ersetzen den Raumdurchschnitt. Temperatur steuert auch die Temperaturfüllung. CO₂: Kohlendioxidsensoren in ppm.",
   "room.group_sources.help.aria": "Hilfe: Temperatur-, Feuchte- und CO₂-Quellen",
   "preview.room_name": "Wohnzimmer",
-  "marker.hide_signal": "Zigbee-Signal auf dem Grundriss ausblenden",
+  "marker.hide_signal": "Zigbee-Signalstärke auf dem Plan ausblenden",
   "marker.hide_signal_help.aria": "Hilfe: Zigbee-Signal ausblenden",
   "marker.hide_signal_help": "Blendet nur die systemeigene LQI-Zeile dieses Symbols aus. Gewählte Werte und Badges, Tooltip und Zigbee-Verbindungen bleiben verfügbar.",
   "gs.show_lqi": "Zigbee-Signal anzeigen",
@@ -254,5 +254,11 @@
   "marker.binding_search_hint": "Nach Gerätenamen suchen. Für eine einzelne Entität „Entitäten anzeigen“ aktivieren.",
   "marker.settings_title": "{name} · Geräteeinstellungen",
   "marker.section_vacuum": "Saugroboter",
-  "marker.section_radar": "Radar"
+  "marker.section_radar": "Radar",
+  "marker.ha_device_label": "Home-Assistant-Gerät",
+  "marker.binding_virtual_short": "Virtuell",
+  "marker.display_method": "Darstellung",
+  "marker.hide_battery.help": "Blendet den Akkustand dieses Geräts aus. Einstellungen des Bereichs und anderer Geräte bleiben unverändert.",
+  "marker.hide_battery.help.aria": "Hilfe: Akkustand ausblenden",
+  "marker.binding_search_hint.aria": "Hilfe: Home-Assistant-Gerät auswählen"
 }

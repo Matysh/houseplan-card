@@ -17,7 +17,7 @@
   "room.group_sources.help": "Selected sources replace room averages. Temperature also sets the temperature fill. CO₂ requires carbon dioxide sensors in ppm.",
   "room.group_sources.help.aria": "Help: temperature, humidity and CO₂ sources",
   "preview.room_name": "Living room",
-  "marker.hide_signal": "Hide Zigbee signal on the plan",
+  "marker.hide_signal": "Hide the Zigbee signal level on the plan",
   "marker.hide_signal_help.aria": "Help: hide Zigbee signal",
   "marker.hide_signal_help": "Hides only this marker’s system LQI line. Your selected values and badges, tooltip and Zigbee routes remain available.",
   "gs.show_lqi": "Show Zigbee signal",
@@ -254,5 +254,11 @@
   "marker.binding_search_hint": "Search by device name. To select an individual entity, enable “Show entities”.",
   "marker.settings_title": "{name} · device settings",
   "marker.section_vacuum": "Vacuum",
-  "marker.section_radar": "Radar"
+  "marker.section_radar": "Radar",
+  "marker.ha_device_label": "Home Assistant device",
+  "marker.binding_virtual_short": "Virtual",
+  "marker.display_method": "Display method",
+  "marker.hide_battery.help": "Hides the battery level for this device. Space and other device settings stay unchanged.",
+  "marker.hide_battery.help.aria": "Help: hide battery level",
+  "marker.binding_search_hint.aria": "Help: choose a Home Assistant device"
 }

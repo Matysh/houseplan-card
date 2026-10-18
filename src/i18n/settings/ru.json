@@ -17,7 +17,7 @@
   "room.group_sources.help": "Выбранные источники заменяют среднее по комнате. Температура влияет и на заливку. CO₂: датчики углекислого газа с единицей ppm.",
   "room.group_sources.help.aria": "Подсказка: источники температуры, влажности и CO₂",
   "preview.room_name": "Гостиная",
-  "marker.hide_signal": "Скрыть уровень Zigbee-сигнала на плане",
+  "marker.hide_signal": "Скрыть отображение уровня Zigbee-сигнала на плане",
   "marker.hide_signal_help.aria": "Справка: скрытие Zigbee-сигнала",
   "marker.hide_signal_help": "Убирает только подпись LQI у этого значка. Выбранные вами значения и бейджи, подсказка и Zigbee-связи остаются доступны.",
   "gs.show_lqi": "Показывать Zigbee-сигнал",
@@ -254,5 +254,11 @@
   "marker.binding_search_hint": "Найдите устройство по имени. Чтобы выбрать отдельную сущность, включите «Показывать сущности».",
   "marker.settings_title": "{name} · настройки устройства",
   "marker.section_vacuum": "Пылесос",
-  "marker.section_radar": "Радар"
+  "marker.section_radar": "Радар",
+  "marker.ha_device_label": "Устройство Home Assistant",
+  "marker.binding_virtual_short": "Виртуальное",
+  "marker.display_method": "Способ отображения",
+  "marker.hide_battery.help": "Скрывает заряд у этого устройства. Настройки пространства и других устройств не меняются.",
+  "marker.hide_battery.help.aria": "Подсказка: скрытие заряда",
+  "marker.binding_search_hint.aria": "Подсказка: выбор устройства Home Assistant"
 }

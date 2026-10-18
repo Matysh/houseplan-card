@@ -15,6 +15,8 @@ export class HpSettingsSelect extends LitElement {
   static styles = css`
     :host { display:block; min-width:0; font:inherit; }
     ::slotted(select) { position:absolute!important; width:1px!important; height:1px!important;
+      min-width:0!important; min-height:0!important; padding:0!important; margin:0!important;
+      border:0!important; overflow:hidden!important; contain:strict;
       clip-path:inset(50%); opacity:0; pointer-events:none; }
     button { box-sizing:border-box; width:100%; min-height:44px; padding:10px 14px;
       display:flex; align-items:center; gap:14px; text-align:start; border:1px solid var(--hpf-line,var(--divider-color,#7776));

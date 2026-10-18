@@ -3238,8 +3238,17 @@ ce6c75d1; the parent rebase adds accepted test/review changes, not product code.
 
 Device settings #947: smoke_device_settings_947 uses the four approved synthetic datasets and captures 390px light/dark plus desktop, checking 320/390/1280 in three live HA palettes, fixed preview size, rotation, unavailable source, friendly chips, clean/cancel and no commands. smoke_radar_setup retains its independent SVG matrix, calibration and save-boundary oracles through the legacy Details entry. Run actual HA dialog/picker checks separately; a fallback text input is not proof of the real HA MDI picker.
 
-Matched #947 size evidence: Room source `3a969edd` in Linux/ext4 measures
+Historical pre-fidelity #947 size evidence (superseded by the final matched build): Room source `3a969edd` in Linux/ext4 measures
 279944 B gzip for the lazy editor; the Device implementation and shared visual
 corrections measure 281142 B (+1198 B). Only that measured cost moves the rolling
 editor reference 278984 → 280182. The inherited 960-B gap, 2000-B band, initial
 View limits and absolute budgets remain; the total-byte reference is unchanged.
+
+Final #947 visual acceptance compares the immutable Device v6 structure on all
+four approved datasets. `smoke_settings_native_select_947` mounts genuine pinned
+HA components, opens the radar's long lists at 320/390/1280 px and verifies the
+real body's scroll extent, popup keyboard/focus and unchanged config on Cancel.
+Clipping the retained native select alone is insufficient: legacy padding and
+overflow must also be contained. The corresponding regression is declared for
+the nightly runner; development checks are ordinary positive tests and static
+registry validation, never a claim that the mutant was executed.

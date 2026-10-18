@@ -1,4 +1,15 @@
 /** Synthetic values from the approved device v6 comparison; no live installation. */
+export async function openSettingsDeviceDialog(page, id) {
+  if(id==='demo_led_controller') {
+    const hit=page.locator('houseplan-card .led-select-hit[data-led-select="led-cornice"]');
+    await hit.waitFor();
+    await hit.dispatchEvent('click');
+    await page.locator('houseplan-card [data-led-action="settings"]').click();
+    await page.locator('houseplan-card hp-dialog[data-kind="marker"]').waitFor();
+    await page.evaluate(()=>window.__hpTest.settled());
+  } else await page.evaluate(id=>window.__hpTest.openMarkerDialog(id).then(()=>null),id);
+}
+
 export async function installSettingsDeviceFixture(page) {
   await page.evaluate(async () => {
     const c=window.__card;
@@ -34,9 +45,10 @@ export async function installSettingsDeviceFixture(page) {
     c.hass=window.__mkHass();
     await window.__hpTest.waitForWrites();
     await window.__hpTest.setServerConfig(cfg=>{
+      cfg.settings={...cfg.settings,glow_radius_cm:350};
       const source=cfg.spaces.find(s=>s.id==='f1');
       const living={...source.rooms[0],id:'living',name:'Гостиная',area:null};
-      cfg.spaces.push({...structuredClone(source),id:'floor01',title:'1 этаж · жилой',rooms:[living],wall_segments:[],led_strips:[]});
+      cfg.spaces.push({...structuredClone(source),id:'floor01',title:'1 этаж · жилой',rooms:[living],wall_segments:[],led_strips:[{id:'led-cornice',marker:'demo_led_controller',points:[[.05,.05],[.15,.05],[.15,.12]],active:true}]});
       cfg.spaces.push({...structuredClone(source),id:'floor2',title:'2 этаж',rooms:[],wall_segments:[],led_strips:[]});
       const common={space:'floor01',area:null,room_id:'living',hide_battery:false,hide_signal:false};
       const pdf=(name)=>({name,url:`/local/houseplan/files/${name}`});

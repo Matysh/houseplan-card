@@ -14,6 +14,8 @@
 - Development checks reuse verified unchanged product inputs across metadata
   commits and pushes, keep Git/process checks fresh, and separate golden from
   the full smoke matrix. Direct producer evidence bridges branch caches (#954).
+- Match Device v6 with compact binding choices, a separate Home Assistant field, the existing MDI picker and named footer actions; long radar lists also fit the native HA dialog on phones. (#947)
+
 - Match the approved compact Room v4: separated identity fields, a compact comfort range and visible saved/draft status. (#946)
 
 - Match Space v7 with one plan-source list, a full image preview, paired image actions, grouped metrics and named mobile footer actions. (#945)

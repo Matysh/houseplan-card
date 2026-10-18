@@ -206,7 +206,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             ? { label: curLabel, sub: '' }
             : null,
           placeholder: t('marker.pick_ph'),
-          ariaLabel: t('marker.binding_label'),
+          ariaLabel: st('marker.ha_device_label'),
           filter: d.bindingFilter,
           filterPlaceholder: t('marker.search_ph'),
           candidates: cands,
@@ -240,7 +240,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             <input id="marker-show-entities" type="checkbox" .checked=${d.showEntities}
               @change=${(e: Event) => (this.host._markerDialog = { ...d, showEntities: (e.target as HTMLInputElement).checked })} />
             <span>${t('marker.show_entities')}</span>
-          </label>${callout({text:st('marker.binding_search_hint')})}`,
+          </label>`,
         })
       : nothing;
     const basics = formCard({
@@ -258,14 +258,13 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
         })}
         ${field({
           label: t('marker.binding_label'), help: shelp('marker.binding.help'),
-          error: bindingProblem ? st(bindingProblem.message) : undefined,
           control: html`${segmented<'virtual' | 'ha'>({
             name: 'bmode',
             value: d.bindingMode,
             ariaLabel: t('marker.binding_label'),
             options: [
-              { value: 'virtual', label: t('marker.virtual_option') },
-              { value: 'ha', label: t('marker.from_ha_option') },
+              { value: 'virtual', label: st('marker.binding_virtual_short') },
+              { value: 'ha', label: 'Home Assistant' },
             ],
             onChange: (mode) => {
               if (mode === 'virtual') {
@@ -291,8 +290,10 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                 bindingOpen: d.binding === 'virtual' || !d.binding,
               });
             },
-          })}${bindingPicker}`,
+          })}`,
         })}
+        ${isVirtual ? nothing : field({label:st('marker.ha_device_label'),htmlFor:'marker-binding',
+          help:shelp('marker.binding_search_hint'),error:bindingProblem ? st(bindingProblem.message) : undefined,control:bindingPicker})}
         ${field({
           label: t('marker.room_label'), htmlFor: 'marker-room',
           hint: d.room ? st('marker.room_hint_override') : isVirtual ? undefined : st('marker.room_hint_auto'),
@@ -561,7 +562,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             label: t('marker.glow_radius_label'), htmlFor: 'marker-glow-radius', help: this._help('marker.glow_radius.help'),
             hint: d.glowRadius.trim() ? undefined : st('marker.glow_radius_empty_hint', { v: `${this.host._glowRadiusPlaceholder} ${unit}` }),
             control: unitInput({
-              id: 'marker-glow-radius', unit, min: 0.5, step: 0.5, value: radiusValue,
+              id: 'marker-glow-radius', unit, min: 0.5, step: 0.5, value: radiusValue, wide:true,
               placeholder: this.host._glowRadiusPlaceholder, ariaLabel: t('marker.glow_radius_label'),
               disabled: glowSourceDisabled,
               describedBy: glowSourceDisabled || passiveSource ? 'marker-glow-disabled-hint' : undefined,
@@ -598,7 +599,6 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
       id: 'appearance',
       title: st('marker.section_appearance'),
       body: html`
-        ${this.host._ledSection(d.devId)}
         ${field({
           label: t('marker.icon_label'), htmlFor: 'marker-icon', help: shelp('marker.icon.help'),
           control: html`<div class="hpf-iconfield">
@@ -609,8 +609,10 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             </div>
           </div>`,
         })}
+        ${this.host._ledSection(d.devId)}
         ${field({
-          label: t('marker.display_label'), htmlFor: 'marker-display', help: shelp('marker.display.help'),
+          label: st('marker.display_method'), htmlFor: 'marker-display',
+          help:html`<hp-help instant data-help-key="marker.display.help" .text=${`${st('marker.display.help')} ${t(DISPLAY_HINT_KEYS[d.display])}`} .ariaLabel=${st('marker.display.help.aria')}></hp-help>`,
           control: html`<hp-settings-select><select id="marker-display" class="hpf-select"
             @change=${(e: Event) => (this.host._markerDialog = {
               ...d,
@@ -620,11 +622,10 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               ${t(DISPLAY_LABEL_KEYS[v])}
             </option>`)}
           </select></hp-settings-select>`,
-          hint: t(DISPLAY_HINT_KEYS[d.display]),
         })}
         ${toggleRow({
           id: 'marker-hide-battery', compact: true, icon: 'mdi:battery-off-outline',
-          title: t('marker.hide_battery'),
+          title: t('marker.hide_battery'), help:shelp('marker.hide_battery.help'),
           checked: d.hideBattery,
           onChange: (hidden) => (this.host._markerDialog = { ...d, hideBattery: hidden }),
         })}
@@ -860,9 +861,17 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
     });
 
     const hidden = d.hideFromPlan || bindingStatus?.kind === 'ha_disabled';
+    const roomRef = parseRoomRef(d.room);
+    const contextSpace = this.host._serverCfg?.spaces.find(space => space.id === (roomRef?.space || previewDevice?.space || this.host._space));
+    const contextRoom = contextSpace?.rooms.find(room => roomRef?.roomId
+      ? room.id === roomRef.roomId : roomRef?.area ? room.area === roomRef.area
+        : previewDevice?.marker?.room_id ? room.id === previewDevice.marker.room_id
+          : !!previewDevice?.area && room.area === previewDevice.area);
+    const deviceTitle = d.name.trim() || previewDevice?.name || t('info.device_header');
+    const specialized = automaticRadar || (!!previewDevice && this.host._isVacDev(previewDevice));
     return html`<hp-dialog id="marker-dialog" .hass=${this.host.hass} data-kind="marker" form-shell settings-layout
-      .title=${d.devId ? st('marker.settings_title',{name:d.name.trim() || previewDevice?.name || t('info.device_header')}) : t('marker.new_device')}
-      .subtitle=${st('marker.scope',{space:(previewDevice ? this.host._spaceModelById(previewDevice.space)?.title : this.host._spaceModel()?.title) || ''})}
+      .title=${d.devId ? specialized ? deviceTitle : st('marker.settings_title',{name:deviceTitle}) : t('marker.new_device')}
+      .subtitle=${[contextSpace?.title,contextRoom?.name].filter(Boolean).join(' / ')}
       icon="mdi:cog-outline" icon-badge="mdi:devices" wide @hp-close=${requestClose}>
         <div class="body hpf-form hpf-settings-form">
           ${settingsSections(this.host,'marker',[
@@ -875,8 +884,11 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             ...(automaticRadar ? [{id:'radar',title:st('marker.section_radar'),body:this._renderRadarSection(d,radarDevice,'main'),specialized:true}] : []),
           ],st('dialog.section'),owner)}
         </div>
-        <div class="row dialog-action-footer hpf-footer" slot="footer">
-          <div class="dialog-action-group markeractions">
+        <div class="row dialog-action-footer hpf-footer hpf-footer-object" slot="footer">
+          ${footerStatus(problems.length
+            ? { action: textLink(st('dialog.review_fields', { n: String(problems.length) }), reviewFirst) }
+            : {text:st(dirty ? 'dialog.dirty' : 'dialog.saved')})}
+          <div class="dialog-action-group dialog-action-copy markeractions">
             ${d.devId
               ? html`<button class="btn ghost" type="button"
                   ?disabled=${d.busy || this._radarSetup.isActive()}
@@ -887,6 +899,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                   ${t(hidden ? 'marker.show' : 'marker.hide')}
                 </button>`
               : nothing}
+          </div>
+          <div class="dialog-action-group dialog-action-danger markeractions">
             ${d.devId
               ? html`<button class="btn ghost danger" type="button" ?disabled=${d.busy || this._radarSetup.isActive()}
                   title=${t('marker.delete_tip')} @click=${() => this._deleteMarker()}>
@@ -894,9 +908,6 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                 </button>`
               : nothing}
           </div>
-          ${footerStatus(problems.length
-            ? { action: textLink(st('dialog.review_fields', { n: String(problems.length) }), reviewFirst) }
-            : {text:st(dirty ? 'dialog.dirty' : 'dialog.saved')})}
           <div class="dialog-action-group dialog-action-commit">
             <button class="btn ghost" data-hp="dialog-cancel" ?disabled=${d.busy} @click=${requestClose}>${t('btn.cancel')}</button>
             <button class="btn on" data-hp="dialog-confirm" @click=${() => { void this._saveMarker(); }}

@@ -119,7 +119,10 @@ const out = await page.evaluate(async () => {
   if (icon.tagName === 'HA-ICON-PICKER') icon.dispatchEvent(new CustomEvent('value-changed',{detail:{value:''}}));
   else input(icon,'');
   await upd(); o.clearResetsIcon = c._markerDialog.icon === '';
-  o.displaySelectWithHint = !!q('#marker-display.hpf-select') && !!q('#marker-display')?.closest('.hpf-field')?.querySelector('.hpf-hint');
+  const displayField=q('#marker-display')?.closest('.hpf-field');
+  o.displaySelectWithContextualHelp = !!q('#marker-display.hpf-select')
+    && !!displayField?.querySelector('hp-help[data-help-key="marker.display.help"]')?.text
+    && !displayField.querySelector('.hpf-hint');
   o.hideBatteryIsAnAppearanceToggle = !!q('#marker-hide-battery')
     && !!q('#marker-hide-battery')?.closest('.hpf-toggle.hpf-compact');
   o.badgeBlock = !!q('.markerbadgegroup.hpf-block .hpf-sub h4') && !!q('#marker-value-badge')?.closest('.hpf-toggle.hpf-compact');

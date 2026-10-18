@@ -77,6 +77,15 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'native-radar-select-overflows-ha-body-947',
+    guard: 'node demo/smoke_settings_native_select_947.mjs',
+    because: '#947: only the real HA body scroll extent exposes overflowing clipped legacy select options at 320 px; the fallback dialog remains within bounds.',
+    patches: [{file:'src/hp-settings-select.ts',
+      find:'      min-width:0!important; min-height:0!important; padding:0!important; margin:0!important;\n      border:0!important; overflow:hidden!important; contain:strict;\n',
+      replace:'',
+    }],
+  },
+  {
     id: 'backup-zip-opens-to-ordinary-editors',
     guard: 'python -m pytest tests_backend/test_ha_backup_archive.py -q -k real_http_zip_preview',
     because: '#936 AC5: a real authenticated household editor still cannot upload/admin-restore raw-mesh ZIP data.',

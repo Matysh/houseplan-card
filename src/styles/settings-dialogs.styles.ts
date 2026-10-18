@@ -1,7 +1,7 @@
 /** Shared, editor-only presentation for the four approved settings forms (#944). */
 export const settingsDialogCss = `
   hp-dialog[settings-layout] { --hp-dialog-wide-width:610px; --hp-dialog-icon-size:40.48px; --hp-settings-help-size:22px; --hp-settings-help-scale:1.06; --hp-dialog-close-transition:160ms ease; --hp-dialog-close-hover-transform:rotate(90deg) scale(1.12); }
-  hp-dialog[data-kind=space][settings-layout] { --hp-dialog-settings-height:780px; --hp-settings-chrome-height:176px; }
+  hp-dialog:is([data-kind=space],[data-kind=marker])[settings-layout] { --hp-dialog-settings-height:780px; --hp-settings-chrome-height:176px; }
   hp-dialog .hpf-form.hpf-settings-form { display:block; padding:0; background:var(--hpf-surface); --hpf-control-surface:var(--hpf-surface); }
   .hpf-settings-layout { display:grid; grid-template-columns:155px minmax(0,1fr); min-width:0; align-items:start; }
   .hpf-settings-nav { position:sticky; top:0; display:grid; gap:4px; padding:13px 8px; min-width:0; }
@@ -123,11 +123,13 @@ export const settingsDialogCss = `
   .hpf-settings-form .iconbtn { width:44px; height:44px; min-width:44px; padding:0; display:inline-flex; align-items:center; justify-content:center; border:0; border-radius:50%; color:inherit; background:transparent; transition:background 160ms; }
   .hpf-settings-form .iconbtn:hover { background:var(--hpf-tint); }
   .hpf-settings-form .hpf-seg:has(input[name=bmode]) { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .hpf-settings-form .hpf-seg:has(input[name=bmode]) label { min-width:0; white-space:nowrap; font-size:12px; }
+  .hpf-settings-form .led-representation > .row { justify-content:flex-start; }
   .hpf-settings-form .hpf-toolbar { flex-wrap:wrap; }
   .hpf-settings-form .hpf-toolbar > .hpf-callout { flex-basis:100%; }
   .hpf-settings-form .hpf-note { display:block; border-inline-start:3px solid var(--info-color,var(--primary-color)); background:color-mix(in srgb,var(--info-color,var(--primary-color)) 10%,var(--hpf-surface)); padding:10px 12px; }
   .hpf-settings-form .hpf-note-warning { border-color:var(--warning-color); background:color-mix(in srgb,var(--warning-color) 10%,var(--hpf-surface)); }
-  .hpf-settings-form .hpf-field > .hpf-hint { margin-top:12px; }
+  .hpf-settings-pane[data-settings-section=details] .hpf-field > .hpf-hint { margin-top:12px; }
   .hpf-settings-form .hpf-chip > button { flex:0 0 28px; width:28px; height:28px; min-width:28px; min-height:28px; padding:0; border-radius:50%; }
   .hpf-settings-form .hpf-iconfield:focus-within { outline:2px solid var(--hpf-accent); outline-offset:2px; border-radius:8px; }
   .hpf-settings-form .hpf-iconfield .hpf-input:focus-visible { outline:none; box-shadow:none; }
