@@ -14,7 +14,8 @@ const read=()=>page.evaluate(()=>structuredClone(window.__card._spaceDialog));
 const saved=()=>page.evaluate(()=>structuredClone(window.__card._serverCfg.spaces.find(s=>s.id==='f1')));
 try {
   await installSettingsSpaceFixture(page);
-  const reference=watchPage(await page.context().newPage());
+  const context=page.context();
+  const reference=watchPage(await context.newPage());
   await reference.setContent('<!doctype html><html><body style="margin:0;color-scheme:light">'+readFileSync('docs/design/settings-dialogs-944/space-settings-v7.html','utf8')+'</body></html>');
   await reference.locator('.hp-after h2').waitFor();
   const expected=await reference.locator('.hp-after').evaluate(el=>({width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height,nav:el.querySelector('[data-nav]').getBoundingClientRect().width,labels:[...el.querySelectorAll('[data-nav] button')].map(n=>n.textContent.trim())}));

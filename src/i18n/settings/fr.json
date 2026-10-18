@@ -33,7 +33,6 @@
   "space.fill_lqi_hint": "Selon le LQI moyen de la pièce : faible à 40 ou moins, fort à 180 ou plus. Couleurs et opacité suivent la palette générale.",
   "space.fill_light_hint": "Couleurs distinctes pour « au moins une lampe allumée », « toutes éteintes » et « aucune source ». Couleurs et opacité suivent la palette générale.",
   "space.temp_range": "Température de confort",
-  "space.sun_inherit_short": "Comme les réglages généraux",
   "space.north_general": "Comme dans les réglages généraux · {v}",
   "space.north_custom": "Direction personnalisée",
   "space.error_title": "Saisissez un nom pour l’espace.",

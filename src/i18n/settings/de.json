@@ -33,7 +33,6 @@
   "space.fill_lqi_hint": "Nach mittlerem LQI des Raums: schwach bei 40 oder weniger, stark bei 180 oder mehr. Farben und Deckkraft folgen der allgemeinen Palette.",
   "space.fill_light_hint": "Eigene Farben für „mindestens eine Lampe an“, „alle aus“ und „keine Lichtquellen“. Farben und Deckkraft folgen der allgemeinen Palette.",
   "space.temp_range": "Komforttemperatur",
-  "space.sun_inherit_short": "Wie allgemein",
   "space.north_general": "Wie in den allgemeinen Einstellungen · {v}",
   "space.north_custom": "Eigene Richtung",
   "space.error_title": "Geben Sie einen Namen für den Bereich ein.",

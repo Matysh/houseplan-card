@@ -33,7 +33,6 @@
   "space.fill_lqi_hint": "Uses average room LQI: low at 40 or below, high at 180 or above. Colors and opacity follow the general palette.",
   "space.fill_light_hint": "Uses separate colors for any light on, all lights off, and no light sources. Colors and opacity follow the general palette.",
   "space.temp_range": "Comfort temperature",
-  "space.sun_inherit_short": "Use general settings",
   "space.north_general": "General settings · {v}",
   "space.north_custom": "Custom direction",
   "space.error_title": "Enter a name for the space.",
