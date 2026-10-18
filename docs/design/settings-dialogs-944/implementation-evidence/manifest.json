@@ -1,0 +1,105 @@
+{
+  "schema": 1,
+  "date": "2026-10-18",
+  "source": {
+    "commit": "4cae95596b629e4820598df98ce88225f48f1624",
+    "srcTree": "e916c1de6044400ab3fd5a74d54b2094d2633a4b",
+    "sha256": {
+      "src/styles/settings-dialogs.styles.ts": "b7012d9f4470891ec7f7576d6ded4270bcd05d30dd2e4d2b725c693508c77d36",
+      "src/styles/settings-action.styles.ts": "567b032708b245ae45e903f06e0a48a3a4808912a1c0e9bcf13715edf8a73127",
+      "src/editors/form-kit.ts": "3089dee7d5e71cc088ccb862731ced8155188d8cc2d7591452b8b988cf5f4a8e",
+      "src/hp-help.ts": "23fffab11d6b8433fe40b697118d2d0be0211bb455674aeaab1d6bb89ed0612a",
+      "src/hp-color-opacity.ts": "059aa24792953320c555712868246706263699247b6d905acd55648828c47255",
+      "src/hp-settings-select.ts": "ded4e2c78c6ba97e02cd3f7f3c2ba72dd5e41ff3de65d1874f9b4a0504d28969",
+      "src/hp-dialog.ts": "d3dbee6d097970bbf041aa237d133ab7deb7ce04ff04e620d6d73858ac03c2a1",
+      "src/editors/general-settings-dialog.ts": "848be7667d9d068ee98aadd9c0e404a390f6dbf5b8b5dc29f4c5393153b38387",
+      "src/editors/space-settings-dialog.ts": "e7775c1d3d26c526c90a49bcec9e05ae2034b6baa6ae5c7b3da24c672956bda4",
+      "src/editors/room-settings-dialog.ts": "c59fbc92c72f6eccde82ecf705adc1f84a736b78c8dcb63d1867cff93a3cffb1",
+      "src/editors/marker-dialog.ts": "fbad520a61e6133b76ebe9e923eb28902a74ba258fc59563f9320770ef3563d0",
+      "src/editors/vacuum-settings-section.ts": "e3a84035205fcab838f856a8661f763d6681cb70c96ab6e4ab69e3b4cd653725",
+      "src/editors/radar-section.ts": "e5a839d8d02c004457009ef7baa0b195e7dc082c8357a0421e1efde0c964b3e3"
+    }
+  },
+  "approved": {
+    "commit": "24f7ab2f266eb89f785192eac563915732a081ab",
+    "sha256": {
+      "general-settings-v10.html": "1debfb79c3119d11e76769b0a5038ef524c8fe118f37902ac4fe6625cde175db",
+      "space-settings-v7.html": "7a9fc840114c02c81677b5ae638d104d342128be043554bbc54627945c7edb94",
+      "room-settings-v4.html": "9b5dfa1110d533c72386d379134cb8c6422d9f67f4f92317e1e875c6e2b55227",
+      "device-settings-v6.html": "708442b6a17cfa580118fb418d1529f49614883c80003033d416804dd475df9b"
+    }
+  },
+  "ha": {
+    "frontend": "20260729.7",
+    "wheelSha256": "ba01782297e9506d3185f99a74d829f3811df322623848af21bcc0b8ea834c12",
+    "font": "HA Roboto 400/500/700; same reference and native setup"
+  },
+  "inputSerialization": "SHA-256 of JSON.stringify(JSON.parse(synthetic snapshot JSON))",
+  "inputs": {
+    "general": {
+      "before": "b172d89cbcd75d4ce04f3cf699f24c907a22de2ba542da36ca364a220876add8",
+      "after": "b172d89cbcd75d4ce04f3cf699f24c907a22de2ba542da36ca364a220876add8"
+    },
+    "space": {
+      "before": "5b828e05b2fe454332c7554f84bb2e1444faa7852bd46cc9390c1e0c3ee0037b",
+      "after": "5b828e05b2fe454332c7554f84bb2e1444faa7852bd46cc9390c1e0c3ee0037b"
+    },
+    "room": {
+      "before": "b172d89cbcd75d4ce04f3cf699f24c907a22de2ba542da36ca364a220876add8",
+      "after": "b172d89cbcd75d4ce04f3cf699f24c907a22de2ba542da36ca364a220876add8"
+    },
+    "device": {
+      "before": "ec7c2b71d484c9dde53b1442ad1f060a2b2c70a93d0aa73878f747d82ae97b76",
+      "after": "ec7c2b71d484c9dde53b1442ad1f060a2b2c70a93d0aa73878f747d82ae97b76"
+    }
+  },
+  "images": {
+    "general-appearance.png": {
+      "sha256": "9b97f33b7dcf45df92c8e7db8200d457bb9060276c92e45a4511720f278177cb"
+    },
+    "space-appearance.png": {
+      "sha256": "18ab558fbd25288eabf16db043ef4f4222a7404d5c3ea9b3fd7d5f9b4dfb61f9"
+    },
+    "room-form.png": {
+      "sha256": "e554d066c92b577d04fcb42899b3d62970c9e56979d9d02301e403c91ef7ca14"
+    },
+    "device-appearance.png": {
+      "sha256": "87a54806abb9da80b1c365e752b2bf0cf6d498045b7fec68f6aba8fa2f8f925d"
+    },
+    "vacuum.png": {
+      "sha256": "5a779c261b8f2b46e918e29cd89188920bb2b05b4578376207b128a3b559562a"
+    },
+    "radar.png": {
+      "sha256": "0e7440494e256c307682680750e56b41f00f6f43a5485666c3fac8ce1101a600"
+    },
+    "general-mobile.png": {
+      "sha256": "30add4892aa6277d84ba9e6ef112735a012b680becb7e59459cb5557c68fefa0"
+    },
+    "space-mobile.png": {
+      "sha256": "d42ddcd7dff9a375ec1dee799dfefc58dbc4f9509b46513a4cb00d0205997c5d"
+    },
+    "room-mobile.png": {
+      "sha256": "d8da6275a114234a21bdee5769b7961f22f833fa3ee8cb02d5d59aa0a070267b"
+    },
+    "device-mobile.png": {
+      "sha256": "a3c9f6043dba809c882576dc650096be1da91d9888d2164a772805177c321863"
+    }
+  },
+  "checks": {
+    "nativeLayoutTheme": 304,
+    "pairedSections": 33,
+    "overlayCases": 4,
+    "differenceCases": 4,
+    "saveLocales": [
+      "ru",
+      "en",
+      "de",
+      "fr"
+    ],
+    "saveCases": 32
+  },
+  "limitations": [
+    "Synthetic data and offline authentic HA component factories; no HA host/auth/device access.",
+    "Visual comparison evidence does not substitute golden acceptance or independent review."
+  ]
+}
