@@ -1,4 +1,5 @@
 /** Shared, editor-only presentation for the four approved settings forms (#944). */
+import { settingsActionHover, settingsActionTransition, settingsPrimaryActionHover } from './settings-action.styles';
 export const settingsDialogCss = `
   hp-dialog[settings-layout] { --hp-dialog-wide-width:610px; --hp-dialog-icon-size:40.48px; --hp-settings-help-size:22px; --hp-settings-help-scale:1.06; --hp-dialog-close-transition:160ms ease; --hp-dialog-close-hover-transform:rotate(90deg) scale(1.12); }
   hp-dialog:is([data-kind=space],[data-kind=marker])[settings-layout] { --hp-dialog-settings-height:780px; --hp-settings-chrome-height:176px; }
@@ -11,7 +12,7 @@ export const settingsDialogCss = `
   .hpf-settings-nav hr { width:100%; border:0; border-top:1px solid var(--hpf-line); margin:14px 0; }
   .hpf-settings-content { min-width:0; align-self:stretch; border-inline-start:1px solid var(--hpf-line); padding:20px; }
   .hpf-settings-pane[hidden] { display:none!important; }
-  .hpf-settings-pane .hpf-card { border:0; border-radius:0; background:transparent; overflow:visible; }
+  .hpf-settings-form .hpf-settings-pane .hpf-card { border:0; border-radius:0; background:transparent; overflow:visible; }
   .hpf-settings-pane .hpf-head { padding:0 0 18px; margin:0 0 18px; border-bottom:1px solid var(--hpf-line); }
   .hpf-settings-pane .hpf-head h3 { font-size:16px; line-height:1.45; }
   .hpf-settings-pane .hpf-body { padding:0; gap:0; }
@@ -41,21 +42,24 @@ export const settingsDialogCss = `
   hp-dialog[settings-layout] .hpf-footer .hpf-status { margin:0 auto 0 0; font-size:11px; }
   .hpf-settings-pane .hpf-toggle { grid-template-columns:minmax(0,1fr) 44px; min-height:44px; padding:0; }
   .hpf-settings-pane .hpf-body > .hpf-toggle:not(:first-child) { padding-top:18px; }
-  .hpf-settings-form .hpf-settings-pane .hpf-toggle > .hpf-toggle-title { display:block; font-size:13px; line-height:1.45; }
+  .hpf-settings-form .hpf-settings-pane .hpf-toggle > .hpf-toggle-title { display:block; font-size:13px; line-height:1.45; text-wrap:balance; }
+  .hpf-settings-form .hpf-settings-pane .hpf-toggle > .hpf-toggle-title > span { overflow-wrap:normal; word-break:normal; }
   .hpf-settings-pane .hpf-toggle-title hp-help { display:inline-flex; vertical-align:middle; margin-inline-start:3px; }
   .hpf-settings-pane .hpf-toggle-icon { display:none; }
   .hpf-settings-form .hpf-settings-pane .hpf-toggle > .hpf-toggle-title { grid-column:1; }
   .hpf-settings-form .hpf-settings-pane .hpf-toggle > .hpf-toggle-caption { grid-column:1; }
-  .hpf-settings-form .hpf-settings-pane .hpf-toggle > input { grid-column:2; }
+  .hpf-settings-form .hpf-settings-pane .hpf-toggle > input { grid-column:2; grid-row:1; }
+  .hpf-settings-pane .hpf-body > #gs-moon-status { border-top:0; margin-top:8px; padding-top:8px; }
   .hpf-settings-pane .hpf-callout { padding:8px 10px; font-size:12px; line-height:1.45; border-inline-start:3px solid var(--info-color,var(--primary-color)); border-radius:0; background:color-mix(in srgb,var(--info-color,var(--primary-color)) 10%,var(--hpf-surface)); }
   .hpf-settings-pane .hpf-callout > ha-icon { display:none; }
   .hpf-settings-pane .hpf-callout p { margin:0; font-size:inherit; }
   .hpf-settings-pane .hpf-hint,.hpf-settings-pane .hpf-toggle-caption { font-size:12px; line-height:1.45; }
   .hpf-settings-form button:not(:disabled),.hpf-settings-form select:not(:disabled),.hpf-footer button:not(:disabled),.hpf-footer a { cursor:pointer; }
   .hpf-settings-form button:not(:disabled):hover,.hpf-footer button:not(:disabled):hover { filter:brightness(1.08); }
-  .hpf-settings-form .btn:not(:disabled):is(:hover,:focus-visible),hp-dialog[settings-layout] .hpf-footer .btn:not(:disabled):is(:hover,:focus-visible) { background:var(--hpf-tint); color:var(--hpf-accent); border-color:var(--hpf-accent); box-shadow:0 0 0 1px var(--hpf-tint-line); }
-  .hpf-settings-form .btn.on:not(:disabled):is(:hover,:focus-visible),hp-dialog[settings-layout] .hpf-footer .btn.on:not(:disabled):is(:hover,:focus-visible) { background:color-mix(in srgb,var(--hpf-accent) 90%,#000); color:var(--text-primary-color,#fff); }
-  .hpf-settings-form .btn.danger:not(:disabled):is(:hover,:focus-visible),hp-dialog[settings-layout] .hpf-footer .btn.danger:not(:disabled):is(:hover,:focus-visible) { background:color-mix(in srgb,var(--hpf-danger) 9%,var(--hpf-surface)); color:var(--hpf-danger); border-color:var(--hpf-danger); }
+  :is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn:not(:disabled) { cursor:pointer; ${settingsActionTransition} }
+  :is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn:not(:disabled):is(:hover,:focus-visible) { ${settingsActionHover} }
+  :is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn.on:not(:disabled):is(:hover,:focus-visible) { ${settingsPrimaryActionHover} }
+  :is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn.danger:not(:disabled):is(:hover,:focus-visible) { background:color-mix(in srgb,var(--hpf-danger) 9%,var(--hpf-surface)); color:var(--hpf-danger); border-color:var(--hpf-danger); }
   .hpf-settings-form :disabled,.hpf-footer button:disabled { cursor:not-allowed; }
   .hpf-settings-form input:not([type=checkbox]):not([type=radio]):not([type=range]) { cursor:text; }
   .hpf-settings-form input[type=range] { cursor:pointer; }
@@ -89,8 +93,11 @@ export const settingsDialogCss = `
   .hpf-color-with-action > .hpf-colorfield { box-sizing:border-box; min-height:48px; }
   .hpf-background-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px 10px; margin-top:17px; }
   .hpf-ray-examples { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:12px; }
+  .hpf-ray-choice { position:relative; min-width:0; border-radius:8px; cursor:pointer; }
   .hpf-ray-examples figure { margin:0; min-width:0; border:1px solid var(--hpf-line); border-radius:8px; overflow:hidden; }
   .hpf-ray-examples figure.is-selected { border-color:var(--hpf-accent); }
+  .hpf-ray-choice:is(:hover,:focus-within) { box-shadow:0 0 0 2px var(--hpf-tint-line); }
+  .hpf-ray-choice:hover figure { border-color:var(--hpf-accent); }
   .hpf-ray-examples svg { display:block; width:100%; height:auto; }
   .hpf-ray-examples figcaption { font-size:12px; text-align:center; padding:6px; }
   .hpf-background-grid figure { margin:0; min-width:0; }
@@ -184,6 +191,6 @@ export const settingsDialogCss = `
   }
   @media(prefers-reduced-motion:reduce) {
     hp-dialog[settings-layout] { --hp-dialog-close-transition:none; --hp-dialog-close-hover-transform:none; }
-    .hpf-settings-form *,.hpf-settings-form *::picker(select) { transition:none!important; animation:none!important; }
+    .hpf-settings-form *,hp-dialog[settings-layout] .hpf-footer .btn,.danger-confirm-footer .btn,.hpf-settings-form *::picker(select) { transition:none!important; animation:none!important; }
   }
 `;

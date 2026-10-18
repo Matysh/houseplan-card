@@ -5,7 +5,7 @@ import { cardDialogFormKitTokens } from '../styles/form-kit.styles';
 
 // The footer is a sibling of the form. Share the same theme tokens at its
 // settings-dialog owner instead of maintaining a second colour palette.
-const SETTINGS_DIALOG_CSS = cardDialogFormKitTokens.replace('hp-dialog .hpf-form', 'hp-dialog[settings-layout]') + settingsDialogCss;
+const SETTINGS_DIALOG_CSS = cardDialogFormKitTokens.replace('hp-dialog .hpf-form', 'hp-dialog:is([settings-layout],.danger-confirm-dialog)') + settingsDialogCss;
 import type { HpColorOpacity } from '../hp-color-opacity';
 
 const adopted = new WeakSet<ShadowRoot>();

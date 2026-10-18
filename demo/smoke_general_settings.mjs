@@ -22,7 +22,7 @@ const res = await page.evaluate(async () => {
     + sr().querySelectorAll('hp-dialog .hpf-colorrow').length
     + (sr().querySelector('hp-dialog #gs-glow-radius') ? 1 : 0)
     + (sr().querySelector('hp-dialog select[name="gs-bg-mode"]') ? 1 : 0)
-    + (sr().querySelector('hp-dialog select[name="gs-sun-ray-origin"]') ? 1 : 0)
+    + (sr().querySelector('hp-dialog input[type="radio"][name="gs-sun-ray-origin"]') ? 1 : 0)
     + (optimizeAction ? 1 : 0);
   // #598: форма собрана в карточки; #600: подзаголовки внутри — `.hpf-sub h4`.
   out.cards = [...sr().querySelectorAll('hp-dialog .hpf-card > .hpf-head h3')]

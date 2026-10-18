@@ -93,9 +93,9 @@ const out = await page.evaluate(async () => {
     && !qa('.hpf-card[data-card="sun"] .hpf-link').some(el => el.textContent === c._t('gs.north_clear'));
   input(q('#gs-north'), ''); await upd();
   o.emptyNorthStaysUnset = c._settingsDialog.northDeg === null && c._settingsDialog.northDegInput === '';
-  const origin = q('select[name="gs-sun-ray-origin"]'); origin.value = d0.sunRayOrigin === 'inner' ? 'outer' : 'inner';
-  origin.dispatchEvent(new Event('change',{bubbles:true})); await upd();
-  o.originSelectWrites = c._settingsDialog.sunRayOrigin !== d0.sunRayOrigin && c._settingsDialog.sunRays === d0.sunRays;
+  const origin = q(`input[name="gs-sun-ray-origin"][value="${d0.sunRayOrigin === 'inner' ? 'outer' : 'inner'}"]`);
+  origin.click(); await upd();
+  o.originPreviewWrites = c._settingsDialog.sunRayOrigin !== d0.sunRayOrigin && c._settingsDialog.sunRays === d0.sunRays;
   const bg = q('select[name="gs-bg-mode"]'); bg.value='daynight'; bg.dispatchEvent(new Event('change',{bubbles:true})); await upd();
   o.bgSelectWritesAndHidesColor = c._settingsDialog.bgMode === 'daynight' && !q('.hpf-card[data-card="plan"] .hpf-field .hpf-colorfield');
   o.fourBackgroundPreviews = qa('.hpf-background-grid figure').length === 4;

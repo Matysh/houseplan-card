@@ -225,8 +225,8 @@ export class HpDialog extends LitElement {
     }
     :host([form-shell]) .close { width: 44px; height: 44px; }
     :host([form-shell]) .header { min-height: 70px; }
-    :host([settings-layout]) ha-dialog { --ha-dialog-max-height:min(var(--hp-dialog-settings-height,756px), calc(100dvh - 48px)); --ha-dialog-border-radius:13px; }
-    :host([settings-layout]) .surface { max-height:min(var(--hp-dialog-settings-height,756px), calc(100vh - 48px)); border-color:var(--divider-color,#dce2e6); border-radius:13px; }
+    :host([settings-layout]) ha-dialog { --ha-dialog-min-height:min(var(--hp-dialog-settings-height,756px), calc(100dvh - 48px)); --ha-dialog-max-height:min(var(--hp-dialog-settings-height,756px), calc(100dvh - 48px)); --ha-dialog-border-radius:13px; }
+    :host([settings-layout]) .surface { height:min(var(--hp-dialog-settings-height,756px), calc(100dvh - 48px)); max-height:min(var(--hp-dialog-settings-height,756px), calc(100dvh - 48px)); border-color:var(--divider-color,#dce2e6); border-radius:13px; }
     :host([settings-layout]) .header { min-height:78px; }
     :host([settings-layout]) .footer { padding:0; }
     :host([settings-layout]) .header .close { order:-1; }
@@ -245,7 +245,7 @@ export class HpDialog extends LitElement {
       :host([properties-shell]) .surface, :host([properties-shell]) ha-dialog::part(dialog) { transform:translateY(-16px); }
     }
     @media (max-width: 480px) {
-      :host([settings-layout]) .surface { max-height:100dvh; }
+      :host([settings-layout]) .surface { height:100dvh; max-height:100dvh; }
       :host([settings-layout]) ha-dialog { --ha-dialog-max-height:100dvh; }
       :host([form-shell]) ha-dialog {
         --ha-dialog-width-md: var(--safe-width, 100vw);

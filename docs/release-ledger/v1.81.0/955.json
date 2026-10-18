@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "issue": 955,
+  "baseStable": "v1.81.0",
+  "category": "line-fix",
+  "introducedBy": 948,
+  "rationale": "Polishes the four settings forms introduced in this release cycle: shared interaction states, native dialog sizing and direct ray-preview selection. No new stored setting or View behavior.",
+  "summary": {
+    "ru": "Четыре диалога настроек используют единые подсказки и hover; исправлены переносы, выравнивание, прозрачность и стабильная высота, начало лучей выбирается по превью.",
+    "en": "The four settings dialogs share help and hover states; wrapping, alignment, opacity and stable height are fixed, and ray origins are selected directly from previews."
+  }
+}

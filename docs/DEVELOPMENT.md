@@ -3448,3 +3448,28 @@ verified Home Assistant frontend wheel pin. `check-inputs` asserts that exact
 one-file dependency; backend suites remain outside all browser inputs. Its page
 is registered with `watchPage`, and both fixture integrity and the ordinary
 `finish` error verdict must pass. Approved-reference pages use the same guard.
+
+Settings polish #955 keeps one interaction-paint module for form/footer actions,
+discard confirmations and colour-picker confirmation, including the fallback
+portal's complete CSS. Settings help opens immediately on an actual mouse entry
+even inside a child shadow root without the card's modality attribute; focus/tap
+and coarse-pointer sizing remain available. The shared settings shell fixes its
+outer height via HA's public min/max-height tokens; its body alone scrolls.
+Toggle labels and switches share the first grid row; captions occupy the next
+row. Label wrapping balances complete words instead of leaving an orphaned tail.
+The colour number field reserves space for100 and the native stepper. Settings
+cards override the form-kit's clipping at sufficient specificity, preserving
+compact action hover/focus rings. Ray-origin cards are native labelled radios,
+with direct click and arrow-key selection of the existing setting; SUN rendering
+and stored values are unchanged.
+
+`smoke_settings_polish_955` mounts pinned real HA factories/CSS, checks all four
+forms and four Device cases at1280/390/320px, including480px height and three
+theme palettes, then verifies Keep/Discard and unchanged server config. It
+exercises every available help/colour path, representative select paths and
+all visible form/footer actions, including picker confirmation. `--fast` is the
+same General-only positive witness for declared nightly mutations; it is not a
+substitute for the full cross-dialog matrix. Geometry waits for popup animation
+where appropriate; immediate help is checked separately before its hover paint
+settles. Development runs the stock positive tests and static registry readiness,
+never claims that the new mutants have executed.

@@ -61,10 +61,11 @@ export class HpHelp extends LitElement {
 
     :host([instant]) .trigger { cursor:pointer; transition:color 150ms,background 150ms; }
     :host([instant]) .trigger svg { width:20px; height:20px; }
-    :host([data-pointer-hover]):host([instant]) .trigger:hover svg,
+    :host([instant]) .trigger:hover svg,
     :host([instant]) .trigger:focus-visible svg { transform:scale(var(--hp-settings-help-scale,1)); }
 
     :host([data-pointer-hover]) .trigger:hover,
+    :host([instant]) .trigger:hover,
     .trigger:focus-visible,
     .trigger[aria-expanded='true'] {
       color: var(--primary-text-color, #fff);
@@ -150,6 +151,7 @@ export class HpHelp extends LitElement {
     }
 
     @media (prefers-reduced-motion: reduce) {
+      .trigger { transition: none; }
       .tooltip {
         transition: none;
       }
@@ -235,7 +237,7 @@ export class HpHelp extends LitElement {
 
   private _scheduleOpen(): void {
     const win = this._window();
-    if (!this.pointerHover || !win || this._open || this._openTimer) return;
+    if ((!this.pointerHover && !this.instant) || !win || this._open || this._openTimer) return;
     if (this._closeTimer) win.clearTimeout(this._closeTimer);
     this._closeTimer = 0;
     if (this.instant) {
@@ -266,7 +268,7 @@ export class HpHelp extends LitElement {
   }
 
   private _triggerPointerEnter(event: PointerEvent): void {
-    if (this.pointerHover && event.pointerType === 'mouse') this._scheduleOpen();
+    if ((this.pointerHover || this.instant) && event.pointerType === 'mouse') this._scheduleOpen();
   }
 
   private _triggerPointerLeave(event: PointerEvent): void {
