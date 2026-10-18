@@ -238,5 +238,6 @@
   "room.save": "Raum speichern",
   "room.title": "{name} · Raumeinstellungen",
   "room.context": "Raum · {space}",
-  "room.area_optional": "Home-Assistant-Bereich · optional"
+  "room.area_optional": "Home-Assistant-Bereich · optional",
+  "room.fill_none": "Keine Füllung"
 }

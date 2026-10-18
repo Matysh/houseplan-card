@@ -238,5 +238,6 @@
   "room.save": "Save room",
   "room.title": "{name} · room settings",
   "room.context": "Room · {space}",
-  "room.area_optional": "Home Assistant area · optional"
+  "room.area_optional": "Home Assistant area · optional",
+  "room.fill_none": "No fill"
 }

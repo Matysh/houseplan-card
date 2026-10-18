@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Room settings use the approved “No fill” label; all five own fill-mode
+  labels are checked against the immutable reference. (#946)
+
 - Keep the Room sizing hint and preview in sync with the independent Space
   name and reading sizes, including the Room multipliers. (#945)
 

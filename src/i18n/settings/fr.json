@@ -238,5 +238,6 @@
   "room.save": "Enregistrer la pièce",
   "room.title": "{name} · réglages de la pièce",
   "room.context": "Pièce · {space}",
-  "room.area_optional": "Zone Home Assistant · facultative"
+  "room.area_optional": "Zone Home Assistant · facultative",
+  "room.fill_none": "Aucun remplissage"
 }
