@@ -94,9 +94,9 @@ try {
   await room.locator('#room-name-scale').fill('200');await room.locator('#room-name-scale').press('Tab');await tick();
   await room.locator('#room-label-scale').fill('150');await room.locator('#room-label-scale').press('Tab');await tick();
   out.roomPreviewUsesBothSpaceBases=await room.locator('.cardpreview').evaluate(el=>
-    parseFloat(getComputedStyle(el.querySelector('.cpname')).fontSize)===54
-    && parseFloat(getComputedStyle(el.querySelector('.cpmeta')).fontSize)===12.6);
-  out.roomHintNamesBothSpaceBases=await room.locator('[data-card="sizes"] .hpf-hint').textContent().then(text=>text.includes('150%')&&text.includes('75%'));
+    parseFloat(getComputedStyle(el.querySelector('.cpname')).fontSize)===48
+    && parseFloat(getComputedStyle(el.querySelector('.cpmeta')).fontSize)===13.5);
+  out.roomHintNamesBothSpaceBases=await room.locator('[data-card="sizes"] .hpf-callout').textContent().then(text=>text.includes('150%')&&text.includes('75%'));
   await room.locator('.hpf-footer [data-hp="dialog-cancel"]').click();await confirm.locator('[data-hp="dialog-confirm"]').click();await tick();
   out.roomPreviewCancelKeepsSpace=JSON.stringify(await saved())===JSON.stringify(result);
   await open();
