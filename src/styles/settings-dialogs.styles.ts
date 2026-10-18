@@ -144,7 +144,7 @@ hp-dialog[data-kind=room][settings-layout] .hpf-grid{grid-template-columns:minma
 .hpf-settings-form .iconbtn:hover{background:var(--hpf-tint);}
 .hpf-settings-form .hpf-seg:has(input[name=bmode]){grid-template-columns:repeat(2,minmax(0,1fr));}
 .hpf-settings-form .hpf-seg:has(input[name=bmode]) label{min-width:0;white-space:nowrap;font-size:12px;}
-.hpf-settings-form .led-representation > .row{justify-content:flex-start;}
+.hpf-settings-form .led-representation > .row{justify-content:flex-start;border:0;padding:0;}
 .hpf-settings-form .hpf-toolbar{flex-wrap:wrap;}
 .hpf-settings-form .hpf-toolbar > .hpf-callout{flex-basis:100%;}
 .hpf-settings-form .hpf-note{display:block;border-inline-start:3px solid var(--info-color,var(--primary-color));background:color-mix(in srgb,var(--info-color,var(--primary-color)) 10%,var(--hpf-surface));padding:10px 12px;}

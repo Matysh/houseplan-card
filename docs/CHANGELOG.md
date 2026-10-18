@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Remove the old footer border and inset from LED representation actions in
+  Device settings, keeping a single divider and the approved field alignment. (#955)
+
 - Clarify inherited glow radius and explain how to override or clear it,
   matching the approved Device guidance without storing the displayed default. (#947)
 

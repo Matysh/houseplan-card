@@ -1,5 +1,11 @@
 # Development and deployment
 
+The LED representation action row in the four-form settings shell inherits
+spacing and the single divider from its section. Its inner legacy `.row` must
+not inherit the generic dialog footer border or padding. The LED geometry
+scenario measures the actual two border boxes and first button alignment;
+other dialog footers retain their existing contract (#955).
+
 Device-only profile help belongs in the existing tools dictionary, already
 awaited by EDITOR_LANGUAGE_RUNTIME. Onboarding uses the shared settings
 dictionary and must not download these editor-only messages. Both extracted
