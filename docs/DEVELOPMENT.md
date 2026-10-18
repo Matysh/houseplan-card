@@ -3502,3 +3502,18 @@ raw-bundle band; source rules retain one line each and no ceiling is raised.
 The inherited #605 alpha witness identifies the complete colour-tile caption,
 including its final-word span, rather than assuming one child holds all text.
 Its alpha, checkerboard, foreground and draft-persistence oracles are unchanged.
+
+The final profile comparison found a cascade conflict: the generic later-row
+toggle padding overrode the subsection's no-border spacing. The unchanged-code
+native Radar probe measured41px from its subsection to the first rendered
+label, instead of the intended10–30px range. The shared adjacent-subsection
+rule removes the extra18px, and the matrix measures the visible gap in every
+consumer rather than checking a CSS property name.
+
+The four dialog roots carry their resolved interface language. English Save
+captions keep their natural baseline; Russian, German and French use the optical
+adjustment. `smoke_settings_button_alignment_955` verifies actual letter ink and
+nested SVG centres for all four forms at1280/390px in all four languages (32
+combinations). Before the English exception its visible letters sat1.5px high;
+afterwards their offset is0.5px, Russian0px and German/French-0.5px. The shared
+profile body actions also retain44px targets, checked across all seven cases.

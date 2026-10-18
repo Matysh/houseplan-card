@@ -93,7 +93,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
   // #718 K7: the second caption line, once the moon chunk judged this opening.
   const moonStatus = moonStatusOf(host);
 
-  return html`<hp-dialog .hass=${host.hass} data-kind="settings" form-shell settings-layout wide
+  return html`<hp-dialog .hass=${host.hass} lang=${lang} data-kind="settings" form-shell settings-layout wide
       .title=${st('gs.title')} .subtitle=${st('gs.scope')} icon="mdi:cog-outline" @hp-close=${requestClose}>
     <div class="body hpf-form hpf-settings-form">
       ${settingsSections(host, 'general', [
