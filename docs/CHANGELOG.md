@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Keep the complete opacity caption visible beside the wider numeric field
+  in the shared colour picker. (#955)
+
 - Remove the old footer border and inset from LED representation actions in
   Device settings, keeping a single divider and the approved field alignment. (#955)
 

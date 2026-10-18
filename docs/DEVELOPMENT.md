@@ -1,5 +1,10 @@
 # Development and deployment
 
+The shared colour popup keeps the full opacity caption at intrinsic width;
+the adjacent range absorbs remaining space. The number input still reserves
+three digits and its native stepper. Both text and numeric content are measured
+in the browser so solving one crop cannot silently introduce the other (#955).
+
 The LED representation action row in the four-form settings shell inherits
 spacing and the single divider from its section. Its inner legacy `.row` must
 not inherit the generic dialog footer border or padding. The LED geometry

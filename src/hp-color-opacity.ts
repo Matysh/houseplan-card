@@ -248,6 +248,7 @@ export class HpColorOpacity extends LitElement {
         linear-gradient(45deg, transparent 75%, #b8b8b8 75%) 5px -5px / 10px 10px,
         linear-gradient(45deg, #b8b8b8 25%, #eee 25%) 5px 5px / 10px 10px;
     }
+    .row > .caption { flex: none; }
     .preview > span {
       display: block;
       width: 100%;
