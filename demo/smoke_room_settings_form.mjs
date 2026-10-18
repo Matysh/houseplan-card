@@ -2,6 +2,7 @@
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 1280, height: 900 });
+page.on('console', message => { if (message.text().startsWith('room overflow')) console.log(message.text()); });
 
 const out = await page.evaluate(async () => {
   const o = {};
@@ -196,6 +197,7 @@ for (const width of [320, 390, 480, 560, 768, 1280, 1920]) {
     const sw = Math.round(surface.getBoundingClientRect().width);
     const expected = w >= 600 ? sw === 610 : w > 480 ? sw <= Math.round(w * 0.94) + 1 : sw === w;
     const noHorizontal = content.scrollWidth <= content.clientWidth + 1 && body.scrollWidth <= body.clientWidth + 1;
+    if (!noHorizontal) console.log('room overflow', JSON.stringify({width:w,content:[content.clientWidth,content.scrollWidth],body:[body.clientWidth,body.scrollWidth],nodes:[...body.querySelectorAll('*')].filter(n=>n.getBoundingClientRect().right>body.getBoundingClientRect().right+1).map(n=>({tag:n.tagName,cls:n.className,width:n.getBoundingClientRect().width,right:n.getBoundingClientRect().right})).slice(0,15)}));
     const gridCols = getComputedStyle(dlg.querySelector('.hpf-card[data-card="basics"] .hpf-grid')).gridTemplateColumns.split(' ').length;
     const footer = dlg.querySelector('.dialog-action-footer');
     const footerVisible = footer.getBoundingClientRect().bottom <= innerHeight + 1;

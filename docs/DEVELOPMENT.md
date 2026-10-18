@@ -3468,3 +3468,11 @@ substitute for the full cross-dialog matrix. Geometry waits for popup animation
 where appropriate; immediate help is checked separately before its hover paint
 settles. Development runs the stock positive tests and static registry readiness,
 never claims that the new mutants have executed.
+
+Follow-up alignment checks compare a Range over the rendered label text with
+the switch and help SVG centres. Comparing only the title container missed its
+unused bottom space. Flex alignment also keeps help beside wrapped colour-tile
+titles. Embedded Zigbee forwards the card-owned pointer modality through its
+shadow root, so instant mouse help keeps the shared no-sticky-touch contract.
+The unclipped Room comfort block uses a shrinkable grid track at320px instead
+of hiding overflowing number fields behind the card boundary.

@@ -22,6 +22,7 @@ export class HpZigbeeTopologySettings extends LitElement {
     value: { attribute: false },
     // One outer card heading; contextual help belongs to the toggle/topics.
     embedded: { type: Boolean, reflect: true },
+    pointerHover: { type: Boolean, attribute: 'data-pointer-hover', reflect: true },
     savedEnabled: { type: Boolean, attribute: 'saved-enabled' },
     devices: { attribute: false },
     registry: { attribute: false },
@@ -32,6 +33,7 @@ export class HpZigbeeTopologySettings extends LitElement {
   language?: string;
   value: ZigbeeTopologySettings = { enabled: false, z2mBaseTopics: [] };
   savedEnabled = false;
+  pointerHover = false;
   devices: readonly DevItem[] = [];
   registry?: HaRegistrySnapshot;
   active = true;
@@ -191,7 +193,7 @@ export class HpZigbeeTopologySettings extends LitElement {
   private _help(key: TopologyI18nKey = 'help', aria: TopologyI18nKey = 'help_aria'): TemplateResult | typeof nothing {
     const lang = langOf(this.hass, this.language);
     if (!hasTopologyTranslation(lang, key) || !hasTopologyTranslation(lang, aria)) return nothing;
-    return html`<hp-help .instant=${this.embedded} data-help-key=${`topology.${key}`} .text=${this._t(key)}
+    return html`<hp-help .instant=${this.embedded} .pointerHover=${this.pointerHover} data-help-key=${`topology.${key}`} .text=${this._t(key)}
       .ariaLabel=${this._t(aria)}></hp-help>`;
   }
 

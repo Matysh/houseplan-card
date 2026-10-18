@@ -29,7 +29,8 @@ export const settingsDialogCss = `
   .hpf-settings-pane .hpf-colorrow { grid-template-columns:minmax(0,1fr); align-items:stretch; min-height:0; }
   .hpf-settings-pane .hpf-colorrow > .hpf-colorfield { justify-self:stretch; width:100%; box-sizing:border-box; }
   .hpf-settings-pane .hpf-colortile-labelled { padding:10px; gap:8px; align-content:start; }
-  .hpf-colortile-heading { min-height:38px; font-size:12px; font-weight:600; line-height:1.45; color:var(--primary-text-color); }
+  .hpf-colortile-heading { display:flex; align-items:center; gap:4px; min-height:38px; font-size:12px; font-weight:600; line-height:1.45; color:var(--primary-text-color); }
+  .hpf-colortile-heading > span { min-width:0; }
   .hpf-colortile-heading hp-help { display:inline-flex; vertical-align:middle; margin-inline-start:3px; }
   .hpf-settings-pane .hpf-colortile-labelled > .hpf-colortile-swatch { min-height:34px; }
   .hpf-settings-pane .hpf-colortile-labelled .hpf-colortile-meta { justify-content:flex-start; gap:4px; font-size:12px; }
@@ -42,7 +43,7 @@ export const settingsDialogCss = `
   hp-dialog[settings-layout] .hpf-footer .hpf-status { margin:0 auto 0 0; font-size:11px; }
   .hpf-settings-pane .hpf-toggle { grid-template-columns:minmax(0,1fr) 44px; min-height:44px; padding:0; }
   .hpf-settings-pane .hpf-body > .hpf-toggle:not(:first-child) { padding-top:18px; }
-  .hpf-settings-form .hpf-settings-pane .hpf-toggle > .hpf-toggle-title { display:block; font-size:13px; line-height:1.45; text-wrap:balance; }
+  .hpf-settings-form .hpf-settings-pane .hpf-toggle > .hpf-toggle-title { display:flex; align-items:center; font-size:13px; line-height:1.45; text-wrap:balance; }
   .hpf-settings-form .hpf-settings-pane .hpf-toggle > .hpf-toggle-title > span { overflow-wrap:normal; word-break:normal; }
   .hpf-settings-pane .hpf-toggle-title hp-help { display:inline-flex; vertical-align:middle; margin-inline-start:3px; }
   .hpf-settings-pane .hpf-toggle-icon { display:none; }
@@ -126,6 +127,7 @@ export const settingsDialogCss = `
   .hpf-settings-single .hpf-head { padding:0; margin:0 0 18px; border:0; }
   .hpf-settings-single .hpf-head h3 { font-size:14px; }
   .hpf-temperature-range.hpf-range-compact { max-width:360px; gap:32px; }
+  .hpf-settings-pane .hpf-temprange { min-width:0; grid-template-columns:minmax(0,1fr); }
   .hpf-range-compact .hpf-unit { width:112px; max-width:112px; }
   hp-dialog[data-kind=room][settings-layout] .hpf-grid { grid-template-columns:minmax(0,1fr); }
   .hpf-settings-form .cardpreview { border:0; width:100%; margin:0; color:var(--hpf-accent); }
