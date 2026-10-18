@@ -79,8 +79,8 @@ const MUTANT_DEFINITIONS = [
   {
     id:'settings-help-needs-host-hover-955',
     guard:'node demo/smoke_settings_polish_955.mjs --fast',
-    because:'#955: the embedded Zigbee help lacks a host pointerHover flag; only real pointer entry on its mounted HA form proves immediate popup parity.',
-    patches:[{file:'src/hp-help.ts',find:"if ((this.pointerHover || this.instant) && event.pointerType === 'mouse')",replace:"if (this.pointerHover && event.pointerType === 'mouse')"}],
+    because:'#955: the embedded Zigbee shadow root must forward the card-owned pointer modality to its help; real pointer entry proves immediate popup parity without sticky touch hover.',
+    patches:[{file:'src/hp-zigbee-topology-settings.ts',find:'.instant=${this.embedded} .pointerHover=${this.pointerHover}',replace:'.instant=${this.embedded}'}],
   },
   {
     id:'settings-height-follows-scrollbar-955',

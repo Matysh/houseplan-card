@@ -57,7 +57,18 @@ try{
      const prefix=`${name}_${width}x${height}_${theme}_${id}`;
      out[prefix+'_fit']=await d.evaluate(el=>{const ha=el.shadowRoot.querySelector('ha-dialog'),body=ha.shadowRoot.querySelector('.body'),r=ha.shadowRoot.querySelector('wa-dialog').shadowRoot.querySelector('dialog').getBoundingClientRect(),f=el.querySelector('.hpf-footer').getBoundingClientRect();return body.scrollWidth<=body.clientWidth+1&&r.left>=-1&&r.right<=innerWidth+1&&r.top>=-1&&r.bottom<=innerHeight+1&&f.bottom<=r.bottom+1;});
      const toggles=d.locator('.hpf-settings-pane .hpf-toggle').filter({visible:true});sawToggles+=await toggles.count();
-     out[prefix+'_toggle_alignment']=await toggles.evaluateAll(nodes=>nodes.every(n=>{const a=n.querySelector('.hpf-toggle-title').getBoundingClientRect(),b=n.querySelector('input').getBoundingClientRect();return Math.abs((a.top+a.bottom-b.top-b.bottom)/2)<1&&a.right<=b.left+1;}));
+     // The title container can be centred while its actual text still sits
+     // several pixels above the switch. Measure the rendered text, not its box.
+     out[prefix+'_toggle_alignment']=await toggles.evaluateAll(nodes=>nodes.every(n=>{
+      const title=n.querySelector('.hpf-toggle-title'),range=document.createRange();range.selectNodeContents(title.firstElementChild);
+      const a=range.getBoundingClientRect(),b=n.querySelector('input').getBoundingClientRect(),help=title.querySelector('hp-help')?.shadowRoot.querySelector('svg')?.getBoundingClientRect();
+      return Math.abs((a.top+a.bottom-b.top-b.bottom)/2)<=1.25&&a.right<=b.left+1&&(!help||Math.abs((help.top+help.bottom-a.top-a.bottom)/2)<=1.25);
+     }));
+     out[prefix+'_help_alignment']=await d.locator('hp-help').filter({visible:true}).evaluateAll(nodes=>nodes.every(h=>{
+      const parent=h.parentElement;if(!parent.matches('.hpf-labelrow,.hpf-label,.hpf-colortile-heading'))return true;
+      const walker=document.createTreeWalker(parent,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.textContent.trim()?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT}),text=walker.nextNode();if(!text)return false;
+      const range=document.createRange();range.selectNodeContents(text);const a=range.getBoundingClientRect(),b=h.shadowRoot.querySelector('svg').getBoundingClientRect();return Math.abs((a.top+a.bottom-b.top-b.bottom)/2)<=1.25;
+     }));
      if(name==='general'&&id==='zigbee')out[prefix+'_zigbee_wrap']=await toggles.first().evaluate(el=>{
       const span=el.querySelector('.hpf-toggle-title > span'),node=document.createTreeWalker(span,NodeFilter.SHOW_TEXT).nextNode();
       const words=[...node.textContent.matchAll(/\S+/g)].map(word=>{const r=document.createRange();r.setStart(node,word.index);r.setEnd(node,word.index+word[0].length);return r.getBoundingClientRect().top;});

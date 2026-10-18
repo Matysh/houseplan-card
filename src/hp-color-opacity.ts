@@ -421,7 +421,7 @@ export class HpColorOpacity extends LitElement {
         forced-color-adjust: none;
       }
     }
-  `, unsafeCSS(`.confirm { ${settingsActionTransition} } .confirm:is(:hover,:focus-visible) { ${settingsPrimaryActionHover} }`)];
+  `, unsafeCSS(`.confirm { ${settingsActionTransition} } :host([data-pointer-hover]) .confirm:hover, .confirm:focus-visible { ${settingsPrimaryActionHover} }`)];
 
   connectedCallback(): void {
     super.connectedCallback();

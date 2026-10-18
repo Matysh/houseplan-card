@@ -34,7 +34,8 @@ const out = await page.evaluate(async () => {
   o.sixCardsInOrder = JSON.stringify(qa('.hpf-card').map((card) => card.dataset.card))
     === JSON.stringify(['display', 'plan', 'fills', 'sun', 'zigbee', 'data']);
   o.noLegacyMarkup = qa('.rhint, .srcrow, .dispsection, fieldset, .gsrow, .colorrow, .helpfieldlabel, select.areasel').length === 0;
-  o.namedSelects = qa('select[name]').length === 3 && qa('select[name]').every(el => el.getAttribute('aria-label'));
+  o.namedSelects = qa('select[name]').length === 2 && qa('select[name]').every(el => el.getAttribute('aria-label'))
+    && qa('input[type="radio"][name="gs-sun-ray-origin"]').length === 2;
   // Дефект 1 из #600: у карточки Zigbee один заголовок — свой, а компонент
   // внутри в режиме embedded заголовок не рисует.
   const zigbee = q('.hpf-card[data-card="zigbee"]');
