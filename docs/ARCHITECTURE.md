@@ -1733,3 +1733,6 @@ only EPIPE, ECONNRESET and UND_ERR_SOCKET transport failures get two bounded
 retries. It returns HTTP responses unchanged, preserves the final transport
 error, and does not interpret candidate evidence. Publication writes and other
 consumers of `ci-proof.mjs` are not wrapped or retried by this policy.
+
+
+Room settings (#946) use the shared settings shell in its single-section mode. The single fill select maps directly to the existing empty inherited value or own mode. Source pickers and optimistic save ownership are unchanged. The size sample uses independent Space bases and Room multipliers; sample values never enter persistence.

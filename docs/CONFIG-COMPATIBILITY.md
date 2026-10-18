@@ -1417,3 +1417,6 @@ led_strips?: Array<{ id: string; points: [number, number][]; marker: string | nu
 - **Diagnostics** count strips, unbound and hidden ones only — no ids,
   coordinates, room names or HA identifiers.
 - **Optimize plans** reports strips passing through walls and never edits them.
+
+
+Room settings #946 introduce no new stored keys. Empty fill selection keeps inheritance; min/max retain independent omission and unknown fields remain. An ordinary Room save retires a legacy `glow:false` override by writing `glow:true`; opening/cancelling the form never writes it. Sample values and effective Space values are not materialized.

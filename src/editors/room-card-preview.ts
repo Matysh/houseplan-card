@@ -13,7 +13,7 @@ export function roomCardPreview(
     <span class="cpname" style="font-size:${(base * nameScale).toFixed(1)}px">
       ${metrics?.showName === false ? nothing : name}</span>
     <span class="cpmeta" style="font-size:${((metrics ? 12 : 18 * 0.62) * labelSpaceScale * labelScale).toFixed(1)}px">
-      ${!metrics || metrics.temp ? html`<span><ha-icon icon="mdi:thermometer"></ha-icon>22.4°</span>` : nothing}
+      ${!metrics || metrics.temp ? html`<span><ha-icon icon="mdi:thermometer"></ha-icon>${metrics ? '22.4 °C' : '22.4°'}</span>` : nothing}
       ${!metrics || metrics.hum ? html`<span><ha-icon icon="mdi:water-percent"></ha-icon>45%</span>` : nothing}
       ${co2 == null ? nothing : html`<span class="cpco2" aria-label=${t('roomcard.co2_label', { value: co2 })}
         >${metrics ? 'CO₂ ' : html`<ha-icon icon="mdi:molecule-co2"></ha-icon>`}${roomCo2Text(co2)}</span>`}

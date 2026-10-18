@@ -17522,14 +17522,11 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'room-fill-segment-starts-at-none',
     guard: 'node demo/smoke_room_settings_form.mjs',
-    because: '#600 Q4 (решение владельца): при выключении «Как у пространства» сегмент '
-      + 'стартует с действующего режима пространства, а не с «None» — человек видит то, '
-      + 'что уже действует, и меняет дальше. Старт с None выключил бы заливку комнаты '
-      + 'одним щелчком тумблера',
+    because: '#946 replaces the old toggle with one menu: inheritance must remain a distinct empty value, not an own none override',
     patches: [{
       file: 'src/editors/room-settings-dialog.ts',
-      find: "              onChange: (v) => setFill(v ? '' : startMode()),",
-      replace: "              onChange: (v) => setFill(v ? '' : 'none'),",
+      find: "                name:'rfill',value:host._roomFill as '' | RoomFillMode,ariaLabel:t('room.fill_label'),",
+      replace: "                name:'rfill',value:(host._roomFill || 'none') as '' | RoomFillMode,ariaLabel:t('room.fill_label'),",
     }],
   },
   {

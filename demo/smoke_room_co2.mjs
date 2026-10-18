@@ -104,7 +104,7 @@ try {
   out.onlyCo2Candidates = candidates.some(s => s.includes('sensor.manual_co2'))
     && !candidates.some(s => s.includes('wrong_co2_unit') || s.includes('voc_not_co2'));
   await roomDialog.locator('.hpf-cand').filter({ has: page.locator('small', { hasText: 'sensor.manual_co2' }) }).click();
-  out.roomDraftPreview = (await roomDialog.locator('.cpco2').textContent()).trim() === '1234 ppm';
+  out.roomDraftPreview = (await roomDialog.locator('.cpco2').textContent()).trim() === 'CO₂ 820 ppm';
   await closeDiscard(roomDialog);
   out.roomCancelKeepsAutomatic = (await metric.textContent()).trim() === '850 ppm';
   await openRoom();
@@ -129,7 +129,7 @@ try {
       && !c._serverCfg.spaces.find(s => s.id === 'f1').rooms.find(r => r.id === 'r1').settings?.co2_source;
   });
   out.refusalKeepsDraft = (await roomDialog.locator('#room-co2-source').textContent()).includes('sensor.manual_co2')
-    && (await roomDialog.locator('.cpco2').textContent()).trim() === '1234 ppm';
+    && (await roomDialog.locator('.cpco2').textContent()).trim() === 'CO₂ 820 ppm';
   await save(roomDialog).click();
   await roomDialog.waitFor({ state: 'detached' });
   await barrier();

@@ -1,10 +1,4 @@
-// #600, серия 3: «Настройки комнаты» по референсу docs/design/600-settings-dialogs/
-// (§6 SPEC.md). Фокусный свидетель формы: состав карточек и отсутствие старой
-// разметки (AC1), оболочка и полосы экранов (AC2), «Как у пространства»
-// тумблером с сегментом от режима пространства (Q4), плашка цвета вокруг
-// прежнего пикера (Q5), границы комфорта полями, кнопка выбора источника с
-// панелью в потоке, размеры с числом и сбросом, образец карточки (Q2), Save
-// только при изменениях и вопрос при закрытии (AC6/К10), цели и семантика (AC9).
+// #946: compact room form, one inherited fill select, independent sizing and existing save guards.
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 1280, height: 900 });
@@ -39,44 +33,32 @@ const out = await page.evaluate(async () => {
     && !!q('.hpf-card[data-card="basics"] #room-area')
     && !!q('#room-area')?.closest('.hpf-field')?.querySelector('hp-help');
   o.noLegacyMarkup = qa('.srcrow, .namein, .areasel, .dropbtn, .droppanel, .candlist, .roomtemprange, .hpf-scale, .opv, fieldset').length === 0;
-  o.badgeShowsSpaceTitle = dlg().badge === c._spaceModel().title && !!dlg().shadowRoot.querySelector('.badge');
+  o.subtitleShowsRoomAndSpace = dlg().subtitle.includes(c._spaceModel().title) && !!dlg().shadowRoot.querySelector('.subtitle');
   o.previewKept = !!q('.hpf-card[data-card="sizes"] .hpf-tint.hpf-preview .cardpreview'); // Q2
   const nameBox = q('#room-name').getBoundingClientRect();
   const areaBox = q('#room-area').getBoundingClientRect();
-  o.basicsInOneRow = Math.abs(nameBox.top - areaBox.top) < 2 && areaBox.left > nameBox.right;
+  o.basicsStackedLikeMock = areaBox.top > nameBox.bottom && Math.abs(areaBox.width - nameBox.width) < 2;
   o.everyCardHasHelp = qa('.hpf-card .hpf-head hp-help').length === 3 && !!q('#room-area')?.closest('.hpf-field')?.querySelector('hp-help'); // §6.1: у Basics «?» — у зоны
 
   // --- AC2: оболочка — 560, один скроллер -----------------------------------
   const shell = dlg().shadowRoot;
-  o.shellIs560 = dlg().hasAttribute('form-shell') && Math.round(shell.querySelector('.surface').getBoundingClientRect().width) === 560;
+  o.shellIs560 = dlg().hasAttribute('form-shell') && Math.round(shell.querySelector('.surface').getBoundingClientRect().width) === 610;
   o.bodyHasNoOwnScroller = getComputedStyle(q('.body')).overflowY === 'visible' && getComputedStyle(q('.body')).maxHeight === 'none';
 
-  // --- Q4: «Как у пространства» — тумблер; сегмент стартует с режима пространства
-  const inherit = () => q('#room-fill-inherit');
-  o.inheritIsAToggle = inherit()?.type === 'checkbox' && inherit().checked === true
-    && !q('input[name="rfill"]') && !!q('.hpf-card[data-card="fill"] .hpf-hint');
-  const toggleBox = inherit().getBoundingClientRect();
-  o.toggleTargetIs44 = toggleBox.width >= 44 && toggleBox.height >= 44;
-  inherit().checked = false; change(inherit()); await upd();
-  o.segmentStartsAtSpaceMode = c._roomFill === 'light'
-    && qa('input[name="rfill"]').length === 5
-    && qa('input[name="rfill"]').find((r) => r.checked)?.value === 'light'
-    && q('.hpf-seg[role="radiogroup"]') !== null;
-  // Сегмент — радио с value режима (короткие подписи у lqi/custom из ленивого словаря)
-  const pickMode = async (mode) => {
-    const r = qa('input[name="rfill"]').find((x) => x.value === mode);
-    r.checked = true; change(r); await upd();
-  };
-  // --- Q5: свой цвет — плашка вокруг прежнего hp-color-opacity ---------------
+  // --- #946: one inherited fill menu and atomic color/opacity picker.
+  const fill = () => q('select[name="rfill"]');
+  o.oneFillSelect = fill()?.value === '' && fill().options.length === 6
+    && !q('#room-fill-inherit') && !q('input[name="rfill"]');
+  o.noSectionNavigation = !q('.hpf-settings-nav') && !q('.hpf-settings-mobile');
+  const pickMode = async (mode) => { fill().value = mode; change(fill()); await upd(); };
   await pickMode('custom');
   o.customShowsColorPlate = c._roomFill === 'custom' && !!q('.hpf-colorrow .hpf-colorfield hp-color-opacity[hide-label]')
     && !!q('.hpf-colorfield .hpf-hex') && qa('input[type="color"]').length === 0
-    && !q('.hpf-colorfield .hpf-link'); // Reset появляется только у своего цвета
-  input(q('.hpf-colorfield .hpf-opacity input'), '45'); await upd();
-  o.opacityWritesOwnColour = c._roomCustomFill !== null && Math.abs(c._roomCustomFill.a - 0.45) < 1e-9
-    && !!q('.hpf-colorfield .hpf-link');
-  q('.hpf-colorfield .hpf-link').click(); await upd();
-  o.resetForgetsOwnColour = c._roomCustomFill === null;
+    && !q('.hpf-colorfield .hpf-link') && !q('.hpf-colorfield .hpf-opacity input');
+  q('hp-color-opacity').dispatchEvent(new CustomEvent('hp-color-opacity-change', {detail:{color:'#12ab34',opacity:0.45},bubbles:true}));
+  await upd();
+  o.atomicColorAndOpacity = c._roomCustomFill?.c === '#12ab34' && Math.abs(c._roomCustomFill.a - 0.45) < 1e-9
+    && !q('.hpf-colorfield .hpf-link');
   // --- границы комфорта: два поля с единицей, легенда, ссылка «Как у пространства»
   await pickMode('temp');
   o.tempRangeIsTwoUnitFields = c._roomCustomFill === null && !!q('#room-temp-min') && !!q('#room-temp-max')
@@ -93,9 +75,9 @@ const out = await page.evaluate(async () => {
   o.reviewLinkFocusesFirstProblem = (sr().activeElement ?? document.activeElement)?.id === 'room-temp-min';
   q('.hpf-temprange .hpf-link').click(); await upd();
   o.resetRestoresInheritedBounds = c._roomTempMin === '' && c._roomTempMax === '' && !q('.hpf-temprange .hpf-error');
-  inherit().checked = true; change(inherit()); await upd();
-  o.inheritHidesSegmentAndShowsHint = c._roomFill === '' && !q('input[name="rfill"]') && !!q('.hpf-card[data-card="fill"] .hpf-hint')
-    && !q('.hpf-temprange');
+  await pickMode('');
+  o.inheritUsesOneSelectedOption = c._roomFill === '' && fill().value === ''
+    && !q('.hpf-temprange') && !q('#room-fill-inherit');
 
   // --- источники: сегмент → кнопка выбора → панель в потоке --------------------
   c.hass = { ...c.hass, states: { ...c.hass.states, 'sensor.room_form_temp': { state: '21.5', attributes: { friendly_name: 'Form temp' } } },
@@ -122,19 +104,26 @@ const out = await page.evaluate(async () => {
   seg('rsrc-temp')[0].checked = true; change(seg('rsrc-temp')[0]); await upd();
   o.averageClearsSource = c._roomTempSrc === '' && !q('.hpf-pick');
 
-  // --- размеры: слайдер + число + Reset to 100%, подсказка, образец ---------
-  o.sizeRowsHaveNumberAndReset = !!q('#room-name-scale') && !!q('#room-label-scale')
-    && qa('.hpf-card[data-card="sizes"] .hpf-headline .hpf-link').length === 2
-    && qa('.hpf-card[data-card="sizes"] .hpf-headline .hpf-link').every((l) => l.disabled)
+  // --- independent numbers + sliders, no reset buttons; sample is synthetic.
+  const preview = () => q('.cardpreview');
+  const px = cls => parseFloat(getComputedStyle(preview().querySelector(cls)).fontSize);
+  o.sizesHaveNoReset = !!q('#room-name-scale') && !!q('#room-label-scale')
+    && qa('.hpf-card[data-card="sizes"] .hpf-link').length === 0
     && qa('.hpf-card[data-card="sizes"] .hpf-range-ends').length === 2
-    && q('.hpf-card[data-card="sizes"] > .hpf-body > .hpf-hint')?.textContent.includes('120');
-  input(q('#room-name-scale'), '150');
-  change(q('#room-name-scale')); await upd();
+    && q('.hpf-card[data-card="sizes"] .hpf-callout')?.textContent.includes('120');
+  const beforeMetrics = px('.cpmeta');
+  input(q('#room-name-scale'), '150'); change(q('#room-name-scale')); await upd();
   o.numberWritesNameScaleOnly = Math.abs(c._roomNameScale - 1.5) < 1e-9 && c._roomLabelScale === 1
-    && qa('.hpf-card[data-card="sizes"] .hpf-headline .hpf-link')[0].disabled === false
-    && qa('.hpf-card[data-card="sizes"] .hpf-headline .hpf-link')[1].disabled === true;
-  qa('.hpf-card[data-card="sizes"] .hpf-headline .hpf-link')[0].click(); await upd();
-  o.resetRestores100 = c._roomNameScale === 1;
+    && Math.abs(px('.cpmeta') - beforeMetrics) < .01 && Math.abs(px('.cpname') - 28.8) < .01;
+  const beforeName = px('.cpname');
+  const ranges = qa('.hpf-card[data-card="sizes"] input[type=range]');
+  input(ranges[1], '140'); await upd();
+  o.sliderWritesMetricScaleOnly = c._roomLabelScale === 1.4 && px('.cpname') === beforeName
+    && Math.abs(px('.cpmeta') - 20.2) < .06;
+  o.previewHasIconsAndTextCo2 = !!preview().querySelector('ha-icon[icon="mdi:thermometer"]')
+    && !!preview().querySelector('ha-icon[icon="mdi:water-percent"]')
+    && !!preview().querySelector('ha-icon[icon="mdi:lightbulb-on"]')
+    && !preview().querySelector('.cpco2 ha-icon') && preview().textContent.includes('CO₂ 820 ppm');
 
   // --- К10: Save только при изменениях, вопрос при закрытии -------------------
   c._roomDialogCancel(); await upd();
@@ -201,7 +190,7 @@ for (const width of [320, 390, 480, 560, 768, 1280, 1920]) {
     const content = dlg.shadowRoot.querySelector('.content');
     const body = dlg.querySelector('.body');
     const sw = Math.round(surface.getBoundingClientRect().width);
-    const expected = w >= 600 ? sw === 560 : w > 480 ? sw <= Math.round(w * 0.94) + 1 : sw === w;
+    const expected = w >= 600 ? sw === 610 : w > 480 ? sw <= Math.round(w * 0.94) + 1 : sw === w;
     const noHorizontal = content.scrollWidth <= content.clientWidth + 1 && body.scrollWidth <= body.clientWidth + 1;
     const gridCols = getComputedStyle(dlg.querySelector('.hpf-card[data-card="basics"] .hpf-grid')).gridTemplateColumns.split(' ').length;
     const footer = dlg.querySelector('.dialog-action-footer');
@@ -215,7 +204,7 @@ for (const width of [320, 390, 480, 560, 768, 1280, 1920]) {
   bands[`w${width}_surfaceWidth`] = m.expected;
   bands[`w${width}_noHorizontalScroll`] = m.noHorizontal;
   bands[`w${width}_footerVisible`] = m.footerVisible;
-  bands[`w${width}_basicsColumns`] = m.gridCols === (width <= 480 ? 1 : 2);
+  bands[`w${width}_basicsColumns`] = m.gridCols === 1;
   bands[`w${width}_segmentsFit`] = m.segFits;
 }
 

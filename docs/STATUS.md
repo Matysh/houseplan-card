@@ -705,3 +705,6 @@ user guide; the former parallel list is archived in
 3. Start a task from its packet: `node scripts/task-packet.mjs --issue NN`.
 4. The task's local gate is `npm run gate:small`; nothing is copied to a Home
    Assistant instance by hand (`PROCESS.md` §12).
+
+
+Room settings #946: implemented locally against the accepted compact v4, using the shared form controls; independent review and release remain pending.
