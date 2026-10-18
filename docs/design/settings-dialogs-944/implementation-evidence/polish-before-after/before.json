@@ -1,6 +1,6 @@
 {
   "label": "before",
-  "probeSha256": "067d7738529c04efc42639d4bedcb623461a7d8da79adba71b735c27a4ac1411",
+  "probeSha256": "fa580475fb233b9dd64691c91a7987fb2d444fd11e0652844040990886ec043b",
   "typographySha256": "443ba920a92acb2f05abbdb622673b3881fe4ef6d54a9bd9c7bb68a536e42800",
   "source": "ecbb1e520a63cbef0fe6033d270dfd2643cdfc4b",
   "srcTree": "3963743a55751ec115cb1520ab14f447909ca3ee",
@@ -102,7 +102,7 @@
   "images": [
     {
       "file": "before-1280-plan.png",
-      "sha256": "ad34641dfc6527451c095f15e74ba53c27232a5b88f32802bdd550719e8862c8"
+      "sha256": "8be3163819b1b256525699f97f5ce4430c11fd60ed2aaabe03d99f0d7d32fabb"
     },
     {
       "file": "before-1280-sun.png",
@@ -114,11 +114,11 @@
     },
     {
       "file": "before-390-plan.png",
-      "sha256": "e25e712f562e91e238767a64634eba48ba78355e7e68aa1306dfd4a8adc3aa3f"
+      "sha256": "86f63f2100aed8204c8792d1ae907b860fa3c375aba26341ac60f87920b5f876"
     },
     {
       "file": "before-390-sun.png",
-      "sha256": "5e000782efe389843b9dfb7e6177bbe7e132dffcacabcd13c3a472dd6f8a9936"
+      "sha256": "eafe15e86908e0f768edd3c36c242e1d5604e38a0fec521b2609d6f47b37aa91"
     },
     {
       "file": "before-390-zigbee.png",
