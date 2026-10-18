@@ -1,5 +1,7 @@
 {
   "schema": 1,
+  "historicalOnly": true,
+  "supersededByNewExecution": "f3ef87f2f1a165116e4ca30c826a46aad580a125",
   "acceptedBase": "510bab19d90aa45b5b254cc12df16beafd71b77b",
   "rebasedTip": "a888835d8ca0f447e02ee2bebf0919f2f3c60f00",
   "method": "Private unpublished task rebase after #947 S8; original executed SHA fields retained, source and capture inputs compared as exact Git objects. No new execution is claimed merely because the commit identity changed.",

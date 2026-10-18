@@ -2,14 +2,14 @@
   "schema": 1,
   "date": "2026-10-19",
   "source": {
-    "commit": "b9332831a408027374ddd895a73319be002faca3",
-    "srcTree": "119d393ace90591c1ffc948b535c076436c28ff7",
+    "commit": "f3ef87f2f1a165116e4ca30c826a46aad580a125",
+    "srcTree": "d02e01656a4f1e86ca0cc24babc048c70de16bc4",
     "sha256": {
       "src/styles/settings-dialogs.styles.ts": "4485d5ddaf52c1191e91a134a463986fdadb7f248ba28c851d9ef1f297871a7a",
       "src/styles/settings-action.styles.ts": "567b032708b245ae45e903f06e0a48a3a4808912a1c0e9bcf13715edf8a73127",
       "src/editors/form-kit.ts": "f32ca92f5fb15602870bf13f51014b1ca0a9e50db1a642905f45db26116e82e0",
       "src/hp-help.ts": "23fffab11d6b8433fe40b697118d2d0be0211bb455674aeaab1d6bb89ed0612a",
-      "src/hp-color-opacity.ts": "28700c619e4741280a8d016d2c28d12fed8391d7176c701d27cf3cb54cfcf26b",
+      "src/hp-color-opacity.ts": "d63ff7eb9cde53f64cd520743ac72e7815dab0ae50f8842b7a03147bc66165ab",
       "src/hp-settings-select.ts": "ded4e2c78c6ba97e02cd3f7f3c2ba72dd5e41ff3de65d1874f9b4a0504d28969",
       "src/hp-dialog.ts": "618b40a39375c3a9951382ea87014f25654383465cdf332349e5d410c3e11330",
       "src/editors/general-settings-dialog.ts": "848be7667d9d068ee98aadd9c0e404a390f6dbf5b8b5dc29f4c5393153b38387",
@@ -79,7 +79,7 @@
       "sha256": "54b01523eee7f01d891c8e753536b183669ded5be41ad08d5624ca86f61eaed5"
     },
     "room-mobile.png": {
-      "sha256": "3c3fcb98256c04ed1fd956bad5db9da7b995388376cb39bcfa89f73fa5030c8e"
+      "sha256": "01b48ebaef40fc901f7c924f3ecf38df1e7ac6c58efaaef4d690ac944326264f"
     },
     "device-mobile.png": {
       "sha256": "47bad4e03ed8b012b23bc1223f6b726d94369cb32c57e46b8a53222ebdfb5b5a"
