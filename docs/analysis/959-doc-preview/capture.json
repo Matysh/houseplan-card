@@ -1,0 +1,132 @@
+{
+  "version": 2,
+  "fixture": "synthetic-only",
+  "chromium": "151.0.7922.34",
+  "oxipng": null,
+  "sourceFingerprint": "513a0def86f523963d69afafc8209eab603cb72ee0993442efe4929c110c639f",
+  "captureScriptSha256": "2cbf1e2cf86a6efa5c42c217f51fcd019c9d03e6e2e57db9fa22ec1672759b16",
+  "command": "npm run build && node demo/docs/capture.mjs",
+  "scenarios": {
+    "view-desktop": {
+      "file": "01-view-desktop.png",
+      "viewport": {
+        "width": 1180,
+        "height": 900
+      },
+      "theme": "dark",
+      "language": "en",
+      "sourceSha256": "513a0def86f523963d69afafc8209eab603cb72ee0993442efe4929c110c639f",
+      "imageSha256": "17f5bd4a901e56f6c9235fff1f986f390041e2aed8b57c9cc785c30bc0f52f7b"
+    },
+    "view-touch": {
+      "file": "02-view-touch.png",
+      "viewport": {
+        "width": 390,
+        "height": 760
+      },
+      "theme": "dark",
+      "language": "en",
+      "sourceSha256": "513a0def86f523963d69afafc8209eab603cb72ee0993442efe4929c110c639f",
+      "imageSha256": "451c336d6906167e4a6a0e6c9bb5d1f882891d9583f450dae9a5b1a0351899c0"
+    },
+    "space-create": {
+      "file": "03-space-create.png",
+      "viewport": {
+        "width": 900,
+        "height": 850
+      },
+      "theme": "dark",
+      "language": "en",
+      "sourceSha256": "513a0def86f523963d69afafc8209eab603cb72ee0993442efe4929c110c639f",
+      "imageSha256": "24bfcdbdf8b7b94e7cda34b93158e76fff14659e525c32ca09d379a5f43cde47"
+    },
+    "room-contour-close": {
+      "file": "04-room-contour-close.png",
+      "viewport": {
+        "width": 1180,
+        "height": 900
+      },
+      "theme": "dark",
+      "language": "en",
+      "sourceSha256": "513a0def86f523963d69afafc8209eab603cb72ee0993442efe4929c110c639f",
+      "imageSha256": "3495a8bf6706382e0131367e52fee27fad04e9d14164e494cbb4670dbbc0d6ed"
+    },
+    "plan-context-tray": {
+      "file": "05-plan-context-tray.png",
+      "viewport": {
+        "width": 1180,
+        "height": 900
+      },
+      "theme": "dark",
+      "language": "en",
+      "sourceSha256": "513a0def86f523963d69afafc8209eab603cb72ee0993442efe4929c110c639f",
+      "imageSha256": "01111a0d7706665ec16c158b069bc7182ec5a3ad7aa7a7bbea91f791b5487981"
+    },
+    "device-editor": {
+      "file": "06-device-editor.png",
+      "viewport": {
+        "width": 1180,
+        "height": 1100
+      },
+      "theme": "dark",
+      "language": "en",
+      "sourceSha256": "513a0def86f523963d69afafc8209eab603cb72ee0993442efe4929c110c639f",
+      "imageSha256": "b24b156f1ea416396bd2153346a922746a82e9e032ddec03967b910fd2bb3517"
+    },
+    "device-display-preview": {
+      "file": "06-device-display-preview.png",
+      "viewport": {
+        "width": 1180,
+        "height": 1100
+      },
+      "theme": "dark",
+      "language": "en",
+      "sourceSha256": "513a0def86f523963d69afafc8209eab603cb72ee0993442efe4929c110c639f",
+      "imageSha256": "8830044cf407ac13cb7eac7a781a2872808bc999b0ae144b91d604ef914ed9b3"
+    },
+    "background-editor": {
+      "file": "07-background-editor.png",
+      "viewport": {
+        "width": 1180,
+        "height": 900
+      },
+      "theme": "dark",
+      "language": "en",
+      "sourceSha256": "513a0def86f523963d69afafc8209eab603cb72ee0993442efe4929c110c639f",
+      "imageSha256": "481d777f3196ef4fda7f4234e91f6366b425ca7f7a5785fe0ed900cfc011ec12"
+    },
+    "room-card": {
+      "file": "08-room-card.png",
+      "viewport": {
+        "width": 1180,
+        "height": 900
+      },
+      "theme": "dark",
+      "language": "en",
+      "sourceSha256": "513a0def86f523963d69afafc8209eab603cb72ee0993442efe4929c110c639f",
+      "imageSha256": "daed8ed20653cdeb136a858a8099f0153a6d6a57ab1d033c6f57e0b0d6f365c1"
+    },
+    "device-info": {
+      "file": "09-device-info.png",
+      "viewport": {
+        "width": 1000,
+        "height": 900
+      },
+      "theme": "dark",
+      "language": "en",
+      "sourceSha256": "513a0def86f523963d69afafc8209eab603cb72ee0993442efe4929c110c639f",
+      "imageSha256": "6b09519e7b51b3473760222008ce6ea342100e9c5c678d182895320c2a60babb"
+    },
+    "pdf-export": {
+      "file": "10-pdf-export.png",
+      "viewport": {
+        "width": 900,
+        "height": 760
+      },
+      "theme": "light",
+      "language": "en",
+      "sourceSha256": "513a0def86f523963d69afafc8209eab603cb72ee0993442efe4929c110c639f",
+      "imageSha256": "50cc79cef52c67045070dcc1c959d3e2384aaecf23d5d9e636f21710f553814b"
+    }
+  }
+}

@@ -1,0 +1,28 @@
+browser-attestation ok (ok) [docs capture] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/sergey/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-eh1pII --remote-debugging-pipe --no-startup-window → /home/sergey/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+бандл-дерево → demo/srv/assets
+oxipng не найден: кадры пишутся как есть, без перепаковки
+captured view-desktop -> docs/images/01-view-desktop.png
+captured view-touch -> docs/images/02-view-touch.png
+captured space-create -> docs/images/03-space-create.png
+captured room-contour-close -> docs/images/04-room-contour-close.png
+captured plan-context-tray -> docs/images/05-plan-context-tray.png
+captured device-editor -> docs/images/06-device-editor.png
+captured device-display-preview -> docs/images/06-device-display-preview.png
+captured background-editor -> docs/images/07-background-editor.png
+captured room-card -> docs/images/08-room-card.png
+captured device-info -> docs/images/09-device-info.png
+captured pdf-export -> docs/images/10-pdf-export.png
+бандл-дерево → demo/srv/assets
+oxipng не найден: кадры пишутся как есть, без перепаковки
+captured view-desktop -> docs/images/01-view-desktop.png
+captured view-touch -> docs/images/02-view-touch.png
+captured space-create -> docs/images/03-space-create.png
+captured room-contour-close -> docs/images/04-room-contour-close.png
+captured plan-context-tray -> docs/images/05-plan-context-tray.png
+captured device-editor -> docs/images/06-device-editor.png
+captured device-display-preview -> docs/images/06-device-display-preview.png
+captured background-editor -> docs/images/07-background-editor.png
+captured room-card -> docs/images/08-room-card.png
+captured device-info -> docs/images/09-device-info.png
+captured pdf-export -> docs/images/10-pdf-export.png
+съёмка воспроизводима: 12 кадров совпали между прогонами
