@@ -776,7 +776,12 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // native writer/history adapters and reference selection cues. Rebase this one
 // lazy ceiling to the measured fact; keep its 2000-B band, all initial View
 // ceilings, absolute budgets and performance limits unchanged.
-export const LAZY_EDITOR_GZIP_CEILING = 311_520;
+// #945: matched General d496a749 source283621 -> Space v7 source284685
+// (+1064 own bytes); keep the inherited11B gap and unchanged2000B band.
+// #945 final copy cleanup: matched General283621 -> Space284720 (+1099).
+// #931 integrated with accepted #945: final checked joint source312703B;
+// only the owner-approved editor reference is refreshed, not the2000B band.
+export const LAZY_EDITOR_GZIP_CEILING = 312_703;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

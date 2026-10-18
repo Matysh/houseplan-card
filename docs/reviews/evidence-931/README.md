@@ -45,6 +45,11 @@ HP_PROPERTIES_CAPTURE_DIR=output/properties-931/comparison node demo/capture_pro
   device state colours or unrelated navigation/furniture around the panel.
 - Dynamic metadata describes the actual target/floor. The main-image metadata
   says “Основная картинка плана”; no synthetic room name is persisted.
+- After accepted #945, opening symbols follow the same saved display choice as
+  borders. The fixture has a plan image and no explicit show_borders override,
+  so Devices/Background full-screen frames no longer show the unrelated door;
+  the Plan editor still exposes its physical opening. Panel controls, crop
+  bounds and approved designer files remain unchanged.
 
 These differences are exposed for independent inspection, not masked as a pixel
 match. The accepted shell, grouping, controls, states, actions and selection
