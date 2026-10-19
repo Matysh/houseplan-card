@@ -71,15 +71,20 @@ formatters and unused translations leave the product with their removed UI.
 The owner's 2026-10-19 size allowance raised the initial View ceiling by
 2317 B (323767→326084), retaining the 2000-B band and 352000-B hard wall.
 After the independently accepted #939 delta, the combined reference carries
-the same allowance: 325453 + 2317 = 327770 B. The combined WSL build measured
+the same allowance: 325453 + 2317 = 327770 B. The initial combined WSL build measured
 3231084 raw bytes, 114 B above #939's 3228970 baseline plus its 2000-B band.
 The same owner allowance carries only that 114-B excess into the raw baseline
 (3229084), retaining the band and #939's host-reference values. Avoid changing
 accepted rendering or adding another extraction solely for this 0.004% excess.
+Restoring both descriptive toolbar hints adds 488 raw bytes: matched Windows
+and WSL builds measure 3231572 B. The same allowance carries that text into
+the raw baseline (3229572); its 2000-B band remains unchanged.
 
 `demo/smoke_ui_polish_963.mjs` measures the expanded intrinsic panel, native
 commands/rotation, keyboard filter, tooltip timing/lifecycle, data preservation
-and narrow headers. `smoke_ui_polish_963_reference.mjs` reconstructs the exact
+and narrow headers. The device-toolbar hint matrix hovers both descriptive
+actions in all four locales, checks the visible shared bubble and its real
+ARIA owner, and preserves server config/layout. `smoke_ui_polish_963_reference.mjs` reconstructs the exact
 approved prototype from immutable generic sources and the original public Git
 bundle (see `docs/design/963-ui-polish/README.md`). Both sides use synthetic
 fixtures, identical camera/font/DPR and official HA Frontend20260930.4. This

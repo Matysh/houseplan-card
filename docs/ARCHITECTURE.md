@@ -17,6 +17,7 @@ animations. Static section headings carry no collapse state. Rooms/Shapes and
 history call the original commands through editor-secondary's context fence.
 The initial card contains a small tooltip event bridge; presentation loads on
 first use. One shadow-owned manual popover shares hp-help's surface tokens,
+retains substantive device-catalog and icon-rule hints in each locale,
 preserves accessible names/descriptions and retires delayed work on context,
 focus, pointer, visibility and mount changes. No observers or UI Lab proxies
 are installed in product model/command paths.

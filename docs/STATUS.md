@@ -42,7 +42,8 @@ issue labels and the review pipeline own acceptance and merge status.
 Approved UI Lab polish (#963) uses normal editor render/command paths. Properties
 sections stay expanded at intrinsic height; Rooms/Shapes menus and history keep
 their existing commands. Header and editor hints use a card-local delayed
-top-layer tooltip. Reference comparisons reconstruct the frozen public prototype
+top-layer tooltip. Descriptive device-toolbar hints retain their localized
+content. Reference comparisons reconstruct the frozen public prototype
 on the original Git bundle with synthetic data and pinned HA 20260930.4; private
 owner exports remain outside the repository. Task #964 owns the UI Lab tool.
 

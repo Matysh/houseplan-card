@@ -121,6 +121,30 @@ try {
   const deleteBox=await deleteButton.boundingBox();await page.mouse.click(deleteBox.x+deleteBox.width/2,deleteBox.y+deleteBox.height/2);await settle();out.disabled_delete_preserves_wall=await page.evaluate(()=>window.__card._spaceModel().wall_segments.some(w=>w.id==='contour'));
   await zoom.hover();await page.waitForTimeout(80);await mode('decor');await page.waitForTimeout(360);out.editor_change_retires_tooltip=!(await tip.isVisible());
   await mode('devices');out.devices_history_at_end=await card.locator('.devbar .editbar-end button').count()===3;
+  const originalLanguage=await page.evaluate(()=>window.__card._config.language);
+  const deviceHints={
+    en:['Devices on the plan','Icon rules: which MDI icon devices get by name'],
+    ru:['Устройства на плане','Правила иконок: какая MDI-иконка достаётся устройству по имени'],
+    de:['Geräte auf dem Plan','Symbolregeln: welche MDI-Symbole Geräte nach Namen erhalten'],
+    fr:['Appareils sur le plan','Règles d’icônes : quelle icône MDI attribuer aux appareils selon leur nom'],
+  };
+  for(const [language,hints] of Object.entries(deviceHints)){
+    await page.mouse.move(0,0);
+    await page.evaluate(language=>window.__card.setConfig({...window.__card._config,language}),language);
+    await mode('devices');await settle();
+    for(const [index,tool] of ['device-inbox','icon-rules'].entries()){
+      const button=card.locator(`[data-tool=${tool}]`);
+      await button.hover();await page.waitForTimeout(350);
+      out[`devices_${language}_${tool}_meaningful_hint`]=await tip.isVisible()
+        &&await tip.innerText()===hints[index]&&await button.innerText()!==hints[index]
+        &&await button.getAttribute('aria-describedby')===await tip.getAttribute('id')
+        &&await button.getAttribute('title')===null;
+      await page.mouse.move(0,0);await page.waitForTimeout(150);
+    }
+  }
+  await page.evaluate(language=>window.__card.setConfig({...window.__card._config,language}),originalLanguage);
+  await mode('devices');await settle();
+  out.device_hints_preserve_data=await page.evaluate(baseline=>JSON.stringify({config:window.__card._serverCfg,layout:window.__card._layout})===baseline,baseline);
   await card.locator('[data-tool=device-inbox]').click();await settle();
   const inbox=card.locator('hp-dialog[data-kind=device-inbox]');
   const filter=inbox.locator('.device-inbox-space-filter hp-settings-select');

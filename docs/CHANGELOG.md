@@ -14,7 +14,8 @@
   bubbles and grouped header actions. Touch taps keep their original actions.
   Clarify window opening sides, simplify selection cues, unify column rotation,
   dim stairs in Background, and align Inbox filters and Save captions. Summary
-  controls respect reduced motion. (#963)
+  controls respect reduced motion. Keep the descriptive Devices and Icon rules
+  hints in all four interface languages. (#963)
 
 - Prefer the integration's complete vacuum path and session information over
   inferred dock/time boundaries, including when opening a plan mid-cleanup.

@@ -10824,10 +10824,10 @@ public _renderDevicesBar(): TemplateResult {
           <ha-icon icon="mdi:magnet"></ha-icon>${toolsT(langOf(this.host.hass, this.host._config?.language), 'editor.device_magnets')}
         </button>
         <button class="btn ${this.host._showAll ? 'on' : ''}" data-hp="tool" data-tool="device-inbox" @click=${() => this._openDeviceInbox()}
-          >
+          data-hp-tooltip=${this.host._t('device_inbox.title')}>
           <ha-icon icon="mdi:devices"></ha-icon>${this.host._t('device_inbox.button')}
         </button>
-        <button class="btn" data-hp="tool" data-tool="icon-rules" @click=${() => this._openRulesDialog()} >
+        <button class="btn" data-hp="tool" data-tool="icon-rules" @click=${() => this._openRulesDialog()} data-hp-tooltip=${this.host._t('title.icon_rules')}>
           <ha-icon icon="mdi:shape-plus-outline"></ha-icon>${this.host._t('devbar.rules')}
         </button>
         ${this.host._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
