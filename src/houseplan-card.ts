@@ -11413,9 +11413,9 @@ export class HouseplanCard extends LitElement {
     const response = packet as { trails?: unknown; trail_format?: number } | null;
     this._vacSrvTrails = vacuumTrailMaterial(response?.trails);
     this._vacTrailFormat = response?.trail_format === 2 ? 2 : 1;
-    adoptEcovacsSources(this, packet, context);
+    const imageRobots = adoptEcovacsSources(this, packet, context);
     this._planHassMemo = null;
-    this._vacTick();
+    if (imageRobots.size) this._vacTick(imageRobots);
     this.requestUpdate();
   }
 
@@ -11623,10 +11623,11 @@ export class HouseplanCard extends LitElement {
    * position, so the trail survives view switches and zoom without ever being
    * part of reactive state (600 points re-rendering the world would hurt).
    */
-  private _vacTick(): void {
+  private _vacTick(robots?: ReadonlySet<string>): void {
     if (!this.hass) return;
     for (const d of this._displayDevices) {
       if (d.hidden || !this._isVacDev(d)) continue;
+      if (robots && !robots.has(this._vacEntity(d) || '')) continue;
       if (displayIsNeutral(normalizeDeviceDisplay(d.marker?.display))) {
         this._vacRt.delete(d.id);
         continue;

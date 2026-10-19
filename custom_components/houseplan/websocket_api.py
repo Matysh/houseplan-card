@@ -273,8 +273,8 @@ async def _resolved_write_pair(
 def async_register(hass: HomeAssistant) -> None:
     """Register the WS commands."""
     from .radar_websocket import async_register as async_register_radar
-    from .zigbee_websocket import async_register as async_register_zigbee
     from .vacuum_ecovacs_websocket import async_register as async_register_ecovacs
+    from .zigbee_websocket import async_register as async_register_zigbee
 
     websocket_api.async_register_command(hass, ws_layout_get)
     websocket_api.async_register_command(hass, ws_trail_get)

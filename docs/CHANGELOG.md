@@ -4,7 +4,8 @@
 
 - Add live position and native paths for supported official Ecovacs maps,
   with context-owned manual alignment of the translucent floor image on an existing plan
-  and current telemetry across equivalent HA timestamp formats. (#939)
+  and current telemetry across equivalent HA timestamp formats, without
+  changing position sampling for other vacuum integrations. (#939)
 
 - Keep save errors readable above Home Assistant and native dialogs without
   losing edits or changing retry behaviour. Nested dialogs share one notice. (#956)

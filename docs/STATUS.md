@@ -30,6 +30,8 @@ image API. Server-only numeric decoding feeds the existing recorder even with
 no open card; a writer-only sanitized PNG preview enables manual fit without
 room geometry. There is no auto-generation of House Plan walls or rooms.
 Source/map/reload ownership and one physical read lease apply across clients.
+Image events sample only their Ecovacs robots; ordinary trail reads do not
+add position ticks for unrelated integrations, including mixed installations.
 
 Offline UI Lab (#964) is a separate development tool under `demo/ui-lab/`, with
 synthetic defaults, real pinned HA controls, local-only state and explicit

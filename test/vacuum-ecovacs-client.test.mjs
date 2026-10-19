@@ -15,6 +15,20 @@ const hass = () => ({ ...context, states: { 'image.map': { state: stamp, last_up
   attributes: { map_name: 'floor', access_token: 'local-only' } } },
   entities: { 'image.map': { platform: 'ecovacs' } } });
 
+test('only adopting or clearing image frames requests a position tick, not ordinary trail reads', () => {
+  const owner = {};
+  for (const legacy of [{}, { trail_format: 2, trails: {} },
+    { trail_format: 2, vacuum_source_format: 1, vacuum_sources: {} }]) {
+    assert.equal(adoptEcovacsSources(owner, legacy, context).size, 0);
+  }
+  assert.deepEqual([...adoptEcovacsSources(owner, packet(), context)], ['vacuum.robot']);
+  assert.deepEqual([...adoptEcovacsSources(owner, packet({ ...frame, vacuum: 'vacuum.other', position: { x: 8, y: 9 } }), context)],
+    ['vacuum.robot', 'vacuum.other']);
+  assert.deepEqual([...adoptEcovacsSources(owner, { trail_format: 2, vacuum_source_format: 1, vacuum_sources: {} }, context)], ['vacuum.other']);
+  assert.equal(projectEcovacsSources(owner, hass(), context).states['image.map'].attributes.vacuum_position, undefined);
+  assert.equal(adoptEcovacsSources(owner, {}, context).size, 0);
+});
+
 test('one Ecovacs image cannot lend another robot its projected geometry', () => {
   const base = { entities: { 'image.map': { platform: 'ecovacs', device_id: 'a' },
     'vacuum.robot': { platform: 'ecovacs', device_id: 'a' },

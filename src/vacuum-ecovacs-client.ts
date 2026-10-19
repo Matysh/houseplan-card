@@ -28,8 +28,9 @@ export function vacuumMapBounds(value: unknown): VacuumMapBounds | null {
     && value[2] > 0 && value[3] > 0 ? [...value] as VacuumMapBounds : null;
 }
 
-/** The ordinary subscription/load claim is checked by the owner before this call. */
-export function adoptEcovacsSources(owner: object, packet: unknown, context: Context): void {
+/** Only robots with adopted/removed image frames need a tick, never unrelated legacy sources. */
+export function adoptEcovacsSources(owner: object, packet: unknown, context: Context): ReadonlySet<string> {
+  const robots = new Set(Object.values(current(owner, context)?.frames || {}).map(frame => frame.vacuum));
   const response = record(packet);
   const supported = response?.vacuum_source_format === 1 && response.trail_format === 2;
   const frames: Record<string, EcovacsSourceFrame> = Object.create(null);
@@ -51,8 +52,10 @@ export function adoptEcovacsSources(owner: object, packet: unknown, context: Con
       state_revision: value.state_revision as string | null,
       position: position ? { x: position.x as number, y: position.y as number } : null,
       bounds, native_path: value.native_path, reason: value.reason as string | null };
+    robots.add(value.vacuum);
   }
   states.set(owner, { connection: context.connection, user: context.user?.id, supported, frames });
+  return robots;
 }
 
 function current(owner: object, context: Context): State | undefined {

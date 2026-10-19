@@ -53,6 +53,11 @@ try {
  });
  out.nativeWithMoveGaps=await page.locator('.vactrail > path.core').evaluate(p=>(p.getAttribute('d').match(/M /g)||[]).length===2);
  out.dockDoesNotMove=await page.locator('[data-hp="device"][data-id="e_vacuum_ecovacs"]').count()===1;
+ const pose=await page.locator('.vacpuck').boundingBox();
+ await page.evaluate(async()=>{window.__ecovacs.frame.position={x:70,y:45};
+  await window.__ecovacs.notify({data:{}});await window.__hpTest.settled();});
+ await page.waitForFunction(previous=>window.__card.renderRoot.querySelector('.vacpuck')?.getBoundingClientRect().x>previous.x+20,pose);
+ out.imageEventMovesPuckWithoutHassTick=true;
  const start=async()=>{
   await page.evaluate(async()=>{await window.__hpTest.setMode('devices');await window.__hpTest.openMarkerDialog('e_vacuum_ecovacs');});
   await page.locator('[data-section-target="vacuum"]').click();
