@@ -155,7 +155,8 @@ async def test_940_delayed_attribute_executor_cannot_publish_older_value_in_same
     collector.close()
 
 
-async def test_940_positional_dock_proof_survives_real_store_and_live_off_cancels_it(hass, monkeypatch):
+@pytest.mark.parametrize("disable", ["live_off", "removed"])
+async def test_940_positional_dock_proof_survives_real_store_and_disable_cancels_it(hass, monkeypatch, disable):
     now = [1000.0]
     monkeypatch.setattr(trails, "time", SimpleNamespace(time=lambda: now[0]))
     await state(hass, "vacuum.robot940", "cleaning")
@@ -179,10 +180,14 @@ async def test_940_positional_dock_proof_survives_real_store_and_live_off_cancel
     assert current["_generation"] != generation
     assert restarted.book.data["robot"]["previous"]["_generation"] == generation
     await state(hass, "vacuum.robot940", "docked")
-    cfg["markers"][0]["vacuum"]["live"] = False
+    if disable == "removed":
+        cfg["markers"][0]["removed"] = True
+    else:
+        cfg["markers"][0]["vacuum"]["live"] = False
     await restarted.async_refresh()
     assert "_policy" not in restarted.book.data["robot"]
     await state(hass, "vacuum.robot940", "cleaning")
+    cfg["markers"][0].pop("removed", None)
     cfg["markers"][0]["vacuum"]["live"] = True
     await restarted.async_refresh()
     assert restarted.book.data["robot"]["current"] is current

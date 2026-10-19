@@ -102,6 +102,16 @@ try {
  await dialog.getByRole('button',{name:'Cancel',exact:true}).click();
  await page.setViewportSize({width:1200,height:900});
  await page.evaluate(async()=>{
+  const card=window.__card,source=card.hass.states['camera.policy940'];
+  const attributes={...source.attributes};delete attributes.robot_position;
+  card.hass={...card.hass,states:{...card.hass.states,'camera.policy940':{...source,attributes}}};
+  await window.__hpTest.setServerConfig(cfg=>({...cfg,markers:cfg.markers.map(m=>m.id==='e_vacuum_policy940'?{...m,vacuum:{...m.vacuum,live:false}}:m)}));
+  await window.__hpTest.openMarkerDialog('e_vacuum_policy940');
+ });
+ await dialog.locator('[data-section-target="vacuum"]').click();
+ out.policy_available_without_position_and_live_off=await toggle.isVisible()&&!(await toggle.isDisabled())&&await toggle.isChecked();
+ await dialog.getByRole('button',{name:'Cancel',exact:true}).click();
+ await page.evaluate(async()=>{
   window.__vac940.capability=undefined;
   await window.__hpTest.setServerConfig(cfg=>({...cfg,settings:{...cfg.settings,show_room_tooltip:false}}));
   await window.__hpTest.openMarkerDialog('e_vacuum_policy940');
