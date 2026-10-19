@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.82.0-beta.3 — 2026-10-19
+
 - Add live position and native paths for supported official Ecovacs maps,
   with context-owned manual alignment of the translucent floor image on an existing plan
   and current telemetry across equivalent HA timestamp formats, without
@@ -21,6 +23,11 @@
   inferred dock/time boundaries, including when opening a plan mid-cleanup.
   A valid empty response now removes the stale current trail. Add an optional
   new path after docking for position-only fallback sources. (#940)
+
+- Improve review-material retention, Windows checks, sealed review continuation,
+  nightly witnesses, full smoke execution and bounded Git-fixture cleanup.
+  Add the portable local UI Lab development tool.
+  (#957, #960, #961, #962, #964, #965, #966, #967, #968, #969)
 
 ## v1.82.0-beta.2 — 2026-10-19
 

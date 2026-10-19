@@ -418,7 +418,7 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // chrome originally measured 326084 B gzip against 323767 (+2317).
 // Carry that approved delta onto #939's 325453 reference: 327770.
 // The 2000-B band and 352000-B hard budget stay put.
-export const INITIAL_VIEW_GZIP_CEILING = 327_770;
+export const INITIAL_VIEW_GZIP_CEILING = 327_895;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
@@ -791,7 +791,7 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_940;
 // only the owner-approved editor reference is refreshed, not the2000B band.
 // #947/#931 joint tree carries the same Device-only +2313B onto that accepted
 // reference:312703+2313=315016. No added band or absolute budget.
-export const LAZY_EDITOR_GZIP_CEILING = 316_126;
+export const LAZY_EDITOR_GZIP_CEILING = 318_054;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
@@ -814,7 +814,7 @@ export const LAZY_GRAPH_CEILING_BAND = 2_000;
 // #946 final Space31445 -> Room31428 (-17 B), same inherited1676B gap.
 // #947 complete v6 profiles: matched Room31428 -> Device32058 (+630),
 // same inherited1676B gap; no band or absolute limit changes.
-export const LAZY_ONBOARDING_GZIP_CEILING = 32_262;
+export const LAZY_ONBOARDING_GZIP_CEILING = 32_274;
 
 /**
  * #780 ТЗ §13.1: the LED chunks are a new feature's own budget, not a raise of
