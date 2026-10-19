@@ -13,6 +13,11 @@ try{
  await prepareUi963Page(page,f.url);
  await assertFreshDemoBundle(page,fileURLToPath(new URL('..',import.meta.url)));
  const card=page.locator('houseplan-card'),zoom=card.locator('[data-hp=zoom-in]');
+ // Warm the real keyboard path before the independent touch-focus neighbour.
+ const keyboard=card.locator('[data-hp=zoom-out]');
+ for(let i=0;i<100;i++){await page.keyboard.press('Tab');if(await keyboard.evaluate(el=>el===el.getRootNode().activeElement))break;}
+ await page.waitForTimeout(350);out.keyboard_hint_before_touch=await card.locator('.hp-chrome-tooltip').isVisible();
+ await page.keyboard.press('Escape');
  const before=await page.evaluate(()=>({zoom:window.__card._zoom,data:JSON.stringify({config:window.__card._serverCfg,layout:window.__card._layout})}));
  const r=await zoom.boundingBox();await page.touchscreen.tap(r.x+r.width/2,r.y+r.height/2);
  await page.waitForFunction(()=>!window.__card._cameraTransition.active);await page.waitForTimeout(400);

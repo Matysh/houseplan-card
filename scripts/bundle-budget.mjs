@@ -413,7 +413,12 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // #939: matched Windows source builds: base 325049, Ecovacs 326735 (+1686).
 // Carry only this feature's delta onto the reference; the inherited 1282-B
 // gap, absolute wall and 2000-B band are unchanged. Preview UI stays lazy.
-export const INITIAL_VIEW_GZIP_CEILING = 325_453;
+// #963, owner decision 2026-10-19: allow a small measured excess when
+// eliminating it would add disproportionate complexity. Approved shared
+// chrome originally measured 326084 B gzip against 323767 (+2317).
+// Carry that approved delta onto #939's 325453 reference: 327770.
+// The 2000-B band and 352000-B hard budget stay put.
+export const INITIAL_VIEW_GZIP_CEILING = 327_770;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не

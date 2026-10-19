@@ -158,14 +158,6 @@ const chromeCoreStyles = unsafeCSS(css`
     .hdr > .head .zoomctl .zb:last-child { border-radius: 0 var(--rad-m) var(--rad-m) 0; }
     :host([data-pointer-hover]) .hdr > .head .zoomctl .zb:not(:disabled):hover { border-color: var(--hp-accent); z-index: 1; }
     .hdr > .head .zoomctl .zb:focus-visible { z-index: 2; }
-    .hdr > .head .summary-control { height: 44px; box-sizing: border-box; gap: 0; border: 0; border-radius: var(--rad-m); background: transparent; overflow: visible; }
-    .hdr > .head .summary-control > button { position: relative; box-sizing: border-box; width: 44px; height: 44px; margin: 0; padding: 0; border: 1px solid var(--hp-line); border-radius: 0; color: var(--hp-txt); background: transparent; transition: .15s; }
-    .hdr > .head .summary-control > button:first-child { width: 24px; overflow: hidden; border-radius: var(--rad-m) 0 0 var(--rad-m); }
-    .hdr > .head .summary-control > button:first-child > svg.summary-icon { position: absolute; right: -10px; width: 20px; height: 20px; pointer-events: none; }
-    .hdr > .head .summary-control > button:last-child { margin-inline-start: -1px; border-radius: 0 var(--rad-m) var(--rad-m) 0; }
-    .hdr > .head .summary-control > button.on { background: var(--primary-color); color: var(--text-primary-color,#fff); border-color: var(--hp-accent); }
-    :host([data-pointer-hover]) .hdr > .head .summary-control > button:not(:disabled):hover { border-color: var(--hp-accent); z-index: 1; }
-    .hdr > .head .summary-control > button:focus-visible { z-index: 2; }
     @media (max-width: 620px) and (min-width: 481px) {
       .head > .spacer { flex-basis: 28.5px; }
     }
