@@ -111,7 +111,9 @@ export function resumeEvidence({ repo, issue, run, artifacts, loadJson, loadResu
     const why = preparedEvidenceError(prepared, { issue: { number: issue }, stage: 'code', run });
     if (why) throw Error(why);
     const receipt = loadResult(result);
-    const problems = reviewResultProblems({ ...receipt, expected: prepared });
+    // prepared.json carries the frozen passport, not repository authority.
+    // Bind findings to the controller's repo even if the artifact claims one.
+    const problems = reviewResultProblems({ ...receipt, expected: { ...prepared, repo } });
     if (problems.length) throw Error(`completed model seal invalid: ${problems.join('; ')}`);
     const verdict = JSON.parse(receipt.read('verdict.json'));
     const p = loadJson(mergeArtifact, 'pending.json');

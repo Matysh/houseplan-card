@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 961,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Bind resumed sealed review findings to the trusted controller repository so completed green reviews produce the intended verified no-op, preserving policy, seal and continuation identity refusals without product changes."
+}

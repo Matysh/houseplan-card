@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { resume, resumeEvidence } from '../scripts/process-resume.mjs';
 import { sha256 } from '../scripts/review-result-gate.mjs';
+import { FINDINGS_FILE, findingsPolicy } from '../scripts/review-findings-policy.mjs';
 import { issueBodyDigest } from '../scripts/review-doc-guard.mjs';
 import { continuationFailure, diagnoseOnce, resumeMergeContinuation } from '../scripts/workflow-continuation.mjs';
 import { realOps } from '../scripts/merge-candidate.mjs';
@@ -26,8 +27,8 @@ const prepared = { schema: 1, issue, run_id: 70, run_attempt: 1, stage: 'code', 
 const token = 'ghs_' + 'Z'.repeat(36), credentials = `https://user:password@github.com/o/r ${token}`;
 const temp = t => { const dir = mkdtempSync(join(tmpdir(), 'hp-897-')); t.after(() => rmSync(dir, { recursive: true, force: true })); return dir; };
 
-function sealedResult(over = {}) {
-  const bytes = { 'prepared.json': JSON.stringify(prepared), 'verdict.json': JSON.stringify({ verdict: 'green', high: 0, medium: 0, summary: 'accepted' }),
+function sealedResult(over = {}, passport = prepared) {
+  const bytes = { 'prepared.json': JSON.stringify(passport), 'verdict.json': JSON.stringify({ verdict: 'green', high: 0, medium: 0, summary: 'accepted' }),
     'review-document.md': '# Independent review', ...over };
   bytes['manifest.sha256'] = Object.entries(bytes).map(([name, text]) => `${sha256(text)}  ${name}`).join('\n');
   return { files: Object.keys(bytes), read: name => bytes[name], bytes };
@@ -46,6 +47,60 @@ test('#897 AC1 complete deferred model receipt is a successful noop, never a sec
   assert.equal(writes, 0); assert.equal(result.applied, false);
 });
 
+// #961: old #897 fixtures predated findings_policy_snapshot and never exercised
+// the current identity boundary. Repository authority comes from the controller,
+// not from an optional field in the downloaded prepared/result artifact.
+const policyTarget = { repo: 'o/r', issue, stage: 'code', round: 1 };
+function policyEvidence({ raw = '', target = policyTarget, policyOver = {}, preparedOver = {}, resultOver = {}, mergeOver = {}, tamper = () => {} } = {}) {
+  const policy = { ...findingsPolicy(raw, target), ...policyOver };
+  const passport = { ...prepared, findings_policy_snapshot: JSON.stringify(policy), ...preparedOver };
+  const result = sealedResult({ ...(policy.mode === 'file' ? { [FINDINGS_FILE]: 'No outside findings.\n' } : {}), ...resultOver }, passport);
+  tamper(result.bytes);
+  result.files = Object.keys(result.bytes);
+  return evidence({ loadJson: (_artifact, file) => file === 'prepared.json' ? passport : { ...p, ...mergeOver }, loadResult: () => result });
+}
+
+for (const raw of ['', `[${issue}]`]) test(`#961 sealed ${raw ? 'file' : 'issues'} policy result stays a verified noop for push and dispatch`, async () => {
+  for (const event of ['push', 'workflow_dispatch']) {
+    const result = await resume({ repo: 'o/r', branch, sha: b,
+      validateRun: { id: 80, event, status: 'completed', headSha: b },
+      ops: { state: () => ({ labels: ['S7-code-review'], body, request, headSha: b }), runs: () => [run],
+        pendingOf: () => policyEvidence({ raw }), relabel: () => assert.fail('completed review must not relabel') },
+      sleep: () => assert.fail('completed review must not retry') });
+    assert.equal(result.action, 'noop'); assert.match(result.reason, /merge continuation owns/);
+    assert.equal(result.applied, false);
+  }
+});
+
+test('#961 trusted controller repo defeats foreign policy even with self-consistent resealed artifacts', () => {
+  for (const over of [{ repo: 'foreign/repo' }, { issue: issue + 1 }, { stage: 'spec' }, { round: 2 }]) {
+    assert.throws(() => policyEvidence({ target: { ...policyTarget, ...over }, preparedOver: { repo: 'foreign/repo' } }), /seal invalid.*identity/);
+  }
+  assert.equal(policyEvidence({ preparedOver: { repo: 'untrusted/claim' } }).completedModel, true,
+    'an extra artifact field is not the repository authority');
+  for (const policyOver of [{ path: '../../outside.md' }, { source: 'issue-body' }, { extra: true }]) {
+    assert.throws(() => policyEvidence({ raw: `[${issue}]`, policyOver }), /seal invalid.*findings policy/);
+  }
+});
+
+test('#961 current policy never bypasses result seal, companion or exact epoch/body/material guards', async () => {
+  assert.throws(() => policyEvidence({ preparedOver: { findings_policy_snapshot: '{' } }), /seal invalid.*доверенная политика/);
+  assert.throws(() => policyEvidence({ raw: `[${issue}]`, resultOver: { [FINDINGS_FILE]: '' } }), /seal invalid.*outside findings/);
+  assert.throws(() => policyEvidence({ resultOver: { [FINDINGS_FILE]: 'unauthorized companion' } }), /seal invalid.*набор файлов/);
+  assert.throws(() => policyEvidence({ resultOver: { 'prepared.json': JSON.stringify(prepared) } }), /seal invalid.*findings_policy_snapshot/);
+  assert.throws(() => policyEvidence({ tamper: bytes => { bytes['manifest.sha256'] = 'corrupt seal'; } }), /seal invalid.*manifest/);
+  assert.throws(() => policyEvidence({ raw: `[${issue}]`, tamper: bytes => { delete bytes[FINDINGS_FILE]; } }), /seal invalid.*набор файлов/);
+  assert.throws(() => policyEvidence({ raw: `[${issue}]`, tamper: bytes => { bytes[FINDINGS_FILE] += 'tampered'; } }), /seal invalid.*контрольная сумма/);
+  assert.throws(() => policyEvidence({ mergeOver: { material: c } }), /receipt identity differ/);
+  for (const [mergeOver, reason] of [[{ epoch: 'another-epoch' }, /another epoch\/body\/material/],
+    [{ bodyDigest: issueBodyDigest('changed body') }, /receipt identity differ/], [{ candidate: c }, /another epoch\/body\/material/]]) {
+    await assert.rejects(resume({ repo: 'o/r', branch, sha: b,
+      validateRun: { id: 80, event: 'push', status: 'completed', headSha: b },
+      ops: { state: () => ({ labels: ['S7-code-review'], body, request, headSha: b }), runs: () => [run],
+        pendingOf: () => policyEvidence({ mergeOver }), relabel: () => assert.fail('foreign continuation must not relabel') } }), reason);
+  }
+});
+
 test('#897 AC1 corrupt/incomplete/foreign result never earns the completed-model noop', async () => {
   const corrupt = sealedResult(); corrupt.bytes['review-document.md'] += 'tampered';
   for (const over of [{ artifacts: artifacts.slice(0, 1) }, { artifacts: [...artifacts, artifacts[0]] },
@@ -59,17 +114,20 @@ test('#897 AC1 corrupt/incomplete/foreign result never earns the completed-model
       pendingOf: () => ({ ...evidence(), continuation: { ...p, epoch: 'foreign' } }), relabel: () => assert.fail('foreign noop must not relabel') } }), /another epoch/);
 });
 
-test('#897 AC1 actual resume CLI exits zero for the verified receipt, nonzero on corrupt seal, no write commands', t => {
+for (const raw of [null, '', `[${issue}]`]) test(`#897/#961 actual resume CLI: ${raw === null ? 'legacy' : raw ? 'file' : 'issues'} policy exits zero only for verified receipts, no writes`, t => {
   if (process.platform === 'win32') { t.skip('POSIX Actions entrypoint'); return; }
   const dir = temp(t), bin = join(dir, 'bin'), fixture = join(dir, 'fixture.json'), calls = join(dir, 'calls');
   mkdirSync(bin);
-  const result = sealedResult();
+  const policy = raw === null ? null : findingsPolicy(raw, policyTarget);
+  const passport = { ...prepared, ...(policy ? { findings_policy_snapshot: JSON.stringify(policy) } : {}) };
+  const companions = policy?.mode === 'file' ? { [FINDINGS_FILE]: 'No outside findings.\n' } : {};
+  const result = sealedResult(companions, passport);
   const jsonArtifact = (name, file, value) => {
-    const location = join(dir, name); mkdirSync(location);
+    const location = join(dir, name); mkdirSync(location, { recursive: true });
     const text = JSON.stringify(value); writeFileSync(join(location, file), text);
     writeFileSync(join(location, 'manifest.sha256'), `${sha256(text)}  ${file}\n`);
   };
-  jsonArtifact(artifacts[1].name, 'prepared.json', prepared);
+  jsonArtifact(artifacts[1].name, 'prepared.json', passport);
   jsonArtifact(artifacts[2].name, 'pending.json', p);
   const resultDir = join(dir, artifacts[0].name); mkdirSync(resultDir);
   for (const [name, bytes] of Object.entries(result.bytes)) writeFileSync(join(resultDir, name), bytes);
@@ -96,8 +154,17 @@ test('#897 AC1 actual resume CLI exits zero for the verified receipt, nonzero on
     env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, FAKE_FIXTURE: fixture, FAKE_CALLS: calls, FAKE_ARTIFACTS: dir,
       GITHUB_OUTPUT: join(dir, 'output') } });
   const normal = execute(); assert.equal(normal.status, 0, normal.stderr); assert.match(normal.stdout, /action=noop/);
+  assert.match(normal.stdout, /reason=completed sealed model review; merge continuation owns/);
+  assert.match(normal.stdout, /applied=false/);
   writeFileSync(join(resultDir, 'review-document.md'), '# tampered after seal');
   const corrupt = execute(); assert.notEqual(corrupt.status, 0); assert.match(corrupt.stderr, /seal invalid/);
+  if (policy) {
+    const foreign = { ...passport, repo: 'foreign/repo', findings_policy_snapshot: JSON.stringify({ ...policy, repo: 'foreign/repo' }) };
+    jsonArtifact(artifacts[1].name, 'prepared.json', foreign);
+    const forged = sealedResult(companions, foreign);
+    for (const [name, bytes] of Object.entries(forged.bytes)) writeFileSync(join(resultDir, name), bytes);
+    const rejected = execute(); assert.notEqual(rejected.status, 0); assert.match(rejected.stderr, /seal invalid.*identity/);
+  }
   assert.doesNotMatch(readFileSync(calls, 'utf8'), /"edit"|"comment"|"POST"|"PATCH"|"DELETE"|"workflow","run"/);
 });
 

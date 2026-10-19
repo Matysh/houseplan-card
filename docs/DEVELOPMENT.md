@@ -2271,6 +2271,18 @@ test/benchmark/native/mutant replay or a new semantic-checking mechanism.
 
 ### Outside review findings routing (#926)
 
+Legacy `process-resume` binds the frozen findings snapshot to its trusted `repo`
+argument as well as the prepared issue/stage/cycle (#961). `prepared.json` does
+not supply repository authority; an extra `repo` field cannot override the
+controller. A complete sealed green result with its exact merge intent remains
+a successful no-op, leaving Validate completion to merge continuation. Foreign
+or corrupt policy, broken seal/companion and epoch/body/material drift still
+refuse without relabel/model dispatch. Pre-#926 issues-mode receipts remain
+compatible. `test/pipeline-outcomes-897.test.mjs` exercises both current modes
+through the real Linux CLI with an offline API fixture, plus hostile resealed
+inputs and no-write assertions. Historical #957 artifacts reproduce the original
+failure and validate unchanged after the authority fix; they are never rewritten.
+
 With owner authorization, set the repository Actions configuration variable
 `HP_REVIEW_OUTSIDE_FINDINGS_FILE_ISSUES` to a JSON array of explicit issue IDs
 before S4/S7, e.g. `[926,927]`. Empty/`[]` restores the default issue route;

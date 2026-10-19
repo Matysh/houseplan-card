@@ -25,6 +25,11 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Legacy review resume (#961) supplies trusted repository identity to the findings
+snapshot verifier. Completed sealed green reviews remain verified no-ops; their
+exact merge continuation owns completion. Corrupt/foreign evidence and current
+epoch/body/material refusals are unchanged, with no second model dispatch.
+
 Native Windows gate fixtures (#960) execute Linux workflow shell bodies with
 Git Bash and real jq, preserving runner failure semantics. The credential-free
 candidate index prevents libuv's implicit Windows environment inheritance.
