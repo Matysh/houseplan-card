@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 968,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Allow a bounded 400-path review context inventory after a legitimate 281-path golden refresh was rejected before the model. Preserve every changed path, required role sources, immutable SHA/tree/body checks, the 256 KiB body limit and fail-closed validation. No product behavior changes."
+}

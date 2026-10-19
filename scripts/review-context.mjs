@@ -7,10 +7,11 @@ import { roleEntry } from './entry-cost.mjs';
 import { isMainModule } from './spawn-portable.mjs';
 
 export function reviewContext({ prepared, body, changedFiles = [] }) {
+  // #968: golden refreshes can exceed 200 paths; keep every path in a finite inventory.
   if (prepared?.schema !== 1 || !['code', 'spec'].includes(prepared.stage)
     || !/^[a-f0-9]{40}$/.test(prepared.material_sha || '') || !/^[a-f0-9]{40}$/.test(prepared.material_tree || '')
     || !/^[1-9]\d*$/.test(String(prepared.issue || '')) || typeof body !== 'string' || body.length > 256 * 1024
-    || issueBodyDigest(body) !== prepared.material_issue_body || !Array.isArray(changedFiles) || changedFiles.length > 200
+    || issueBodyDigest(body) !== prepared.material_issue_body || !Array.isArray(changedFiles) || changedFiles.length > 400
     || changedFiles.some(p => typeof p !== 'string' || p.startsWith('/') || p.split('/').includes('..')))
     throw Error('review-context: missing/stale/oversized immutable input');
   return { schema: 1, ...roleEntry('reviewer', changedFiles), issue: Number(prepared.issue), stage: prepared.stage,
