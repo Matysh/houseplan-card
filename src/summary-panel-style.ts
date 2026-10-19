@@ -197,10 +197,10 @@ export const summaryPanelCss = `
     pointer-events: none;
   }
   @media (prefers-reduced-motion: reduce) {
-    .summary-control > button { transition: none; }
+    .hdr > .head .summary-control > button { transition: none; }
   }
     .hdr > .head .summary-control { height: 44px; box-sizing: border-box; gap: 0; border: 0; border-radius: var(--rad-m); background: transparent; overflow: visible; }
-    .hdr > .head .summary-control > button { position: relative; box-sizing: border-box; width: 44px; height: 44px; margin: 0; padding: 0; border: 1px solid var(--hp-line); border-radius: 0; color: var(--hp-txt); background: transparent; transition: .15s; }
+    .hdr > .head .summary-control > button { position: relative; box-sizing: border-box; width: 44px; height: 44px; margin: 0; padding: 0; border: 1px solid var(--hp-line); border-radius: 0; color: var(--hp-txt); background: transparent; }
     .hdr > .head .summary-control > button:first-child { width: 24px; overflow: hidden; border-radius: var(--rad-m) 0 0 var(--rad-m); }
     .hdr > .head .summary-control > button:first-child > svg.summary-icon { position: absolute; right: -10px; width: 20px; height: 20px; pointer-events: none; }
     .hdr > .head .summary-control > button:last-child { margin-inline-start: -1px; border-radius: 0 var(--rad-m) var(--rad-m) 0; }

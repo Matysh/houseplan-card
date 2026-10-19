@@ -110,6 +110,7 @@ try {
   await page.emulateMedia({reducedMotion:'reduce'});
   const currentWallBox=await wall.boundingBox();await wall.click({position:{x:currentWallBox.width*.25,y:currentWallBox.height/2}});await settle();
   out.reduced_motion_no_section_animation=await panel.evaluate(el=>el.getAnimations({subtree:true}).every(a=>a.playState!=='running'));
+  out.reduced_motion_summary_controls=await card.locator('.summary-control > button').evaluateAll(els=>els.length>0&&els.every(el=>getComputedStyle(el).transitionDuration.split(',').every(value=>parseFloat(value)===0)));
   await page.emulateMedia({reducedMotion:'no-preference'});
   const point=await card.locator('.plan-svg').evaluate(el=>{const p=new DOMPoint(400,100).matrixTransform(el.getScreenCTM());return {x:p.x,y:p.y};});await page.mouse.click(point.x,point.y);await settle();
   out.contour_note_in_position=await panel.locator('.hp-prop-group.position .hp-prop-hint').innerText().then(text=>text.includes('A')&&text.includes('B'));

@@ -13,7 +13,8 @@
   menus, icon-only history, shared delayed tooltips, matching information
   bubbles and grouped header actions. Touch taps keep their original actions.
   Clarify window opening sides, simplify selection cues, unify column rotation,
-  dim stairs in Background, and align Inbox filters and Save captions. (#963)
+  dim stairs in Background, and align Inbox filters and Save captions. Summary
+  controls respect reduced motion. (#963)
 
 - Prefer the integration's complete vacuum path and session information over
   inferred dock/time boundaries, including when opening a plan mid-cleanup.
