@@ -85,7 +85,7 @@ export function projectEcovacsSources<T extends PlanHass>(owner: object, base: T
     const entry = base.entities[source], row = base.states[source];
     if (entry?.platform !== 'ecovacs' || entry.disabled_by != null || !row
       || row.state === 'unknown' || row.state === 'unavailable' || frame.reason
-      || frame.state_revision !== row.last_updated
+      || Date.parse(frame.state_revision || '') !== Date.parse(row.last_updated || '')
       || frame.map_id !== String(row.attributes?.map_name ?? base.states[frame.vacuum]?.attributes?.selected_map ?? 'default')) continue;
     projected ??= { ...base.states };
     projected[source] = { ...row, attributes: { ...row.attributes,

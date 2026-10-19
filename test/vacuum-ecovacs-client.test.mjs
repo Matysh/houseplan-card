@@ -38,6 +38,15 @@ test('current same-source projection changes no HA state and keeps shared SVG un
   assert.equal(ecovacsSourceState(owner, context, 'image.map').supported, true);
 });
 
+test('HA timestamps compare by instant, including Z and millisecond serialization', () => {
+  const owner = {}, base = hass();
+  base.states['image.map'].last_updated = '2026-10-19T10:00:00.123Z';
+  adoptEcovacsSources(owner, packet({ ...frame, state_revision: '2026-10-19T10:00:00.123456+00:00' }), context);
+  assert.notEqual(projectEcovacsSources(owner, base, context), base);
+  base.states['image.map'].last_updated = '2026-10-19T10:00:00.124Z';
+  assert.equal(projectEcovacsSources(owner, base, context), base);
+});
+
 test('old backend, connection/user replacement, stale revision and unavailable registry rows do not project', () => {
   const owner = {};
   adoptEcovacsSources(owner, packet(), context);
