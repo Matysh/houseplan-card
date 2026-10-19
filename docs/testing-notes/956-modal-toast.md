@@ -86,5 +86,11 @@ device/GPU or manual screen-reader execution is claimed.
 
 Stable classification is `stable-fix`: both root `_showToast` and z-index120
 already exist in tag v1.81.0. No release, relay deployment, issue closing or
-manual merge is part of this task. Next: resolve the raw-size baseline decision,
-fresh gate/process metadata, one push/handoff and independent S7 review.
+manual merge is part of this task.
+
+The owner approved base bundleBytes3,219,838 for #956 in the chat and the
+issue-linked decision on 2026-10-19. Only that value changes; the2,000-byte band,
+gzip/initial-View limits and other metric bases stay unchanged. The original
+failed gate above remains historical evidence, not relabelled PASS.
+The branch was rebased onto current dev `e3fc7069` before the fresh gate.
+Next: fresh gate/process metadata, one push/handoff and independent S7 review.
