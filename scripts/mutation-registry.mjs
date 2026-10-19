@@ -18861,7 +18861,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'editor-styles-adoption-dropped-from-runtime',
-    guard: 'node demo/smoke_editor_styles_lazy.mjs',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node demo/smoke_editor_styles_lazy.mjs',
     because: '#805 AC3: the editor sheets are adopted in the runtime constructor, before install, '
       + 'so the first frame of every editor surface is styled; without that call the cold View is '
       + 'unchanged and only the computed style of editor surfaces in Chromium shows the loss',
@@ -18873,7 +18873,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'editor-styles-adopted-once-per-page',
-    guard: 'node demo/smoke_editor_styles_lazy.mjs',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node demo/smoke_editor_styles_lazy.mjs',
     because: '#805 AC5: adoption is accounted per shadow root; a page-wide "already adopted" flag '
       + 'leaves the second card and the warm-remounted card without editor styles — a lifecycle '
       + 'of real custom elements and their roots',
