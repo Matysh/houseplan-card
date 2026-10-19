@@ -1,7 +1,9 @@
 # #956 — modal notice evidence
 
 Author implementation checkpoint, 2026-10-19. Not a code-review verdict or S8.
-Product base: `1231b21231d3c31a228226d4441a977e7565ddb3` (dev after #961).
+Product base: `1231b21231d3c31a228226d4441a977e7565ddb3` (dev including SPEC956).
+Later dev commits through `e3fc7069` are infrastructure #961 only; their size
+baseline is unchanged. Rebase onto that current dev before handoff.
 Product implementation: `987eea86`; subsequent changes only stabilize browser
 test observation of HA's public closing phase and the announcement frame.
 
