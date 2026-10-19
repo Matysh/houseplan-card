@@ -1,5 +1,6 @@
 /** #876/#867: accepted global/local policy composes with own-radio diagnostics. */
 import { launch, checkAll, finish } from './serve.mjs';
+import { settingsSection } from './helpers/settings-section.mjs';
 
 const { page, browser } = await launch({ width: 1200, height: 900 });
 const root = page.locator('#host > houseplan-card');
@@ -163,6 +164,7 @@ try {
     await window.__hpTest.openMarkerDialog(id);
   }, ids[1]);
   const markerDialog = root.locator('hp-dialog[data-kind="marker"]');
+  await settingsSection(markerDialog, 'appearance');
   await markerDialog.locator('#marker-hide-signal').check();
   await page.waitForFunction(() => !window.__card.shadowRoot.querySelector('hp-device-preview')?.shadowRoot?.querySelector('.lqi'));
   out.draftLocalHideDoesNotChangeAcceptedPolicy = await page.evaluate(id => {
