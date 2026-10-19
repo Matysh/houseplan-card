@@ -73,16 +73,16 @@ test('#968 bounded golden refresh context retains every path and mandatory role 
   const paths = [
     ...Array.from({ length: 200 }, (_, i) => `demo/golden/baselines/scene-${i}.png`),
     '.github/workflows/_process.yml',
-    ...Array.from({ length: 80 }, (_, i) => `src/component-${i}.ts`),
+    ...Array.from({ length: 78 }, (_, i) => `src/component-${i}.ts`),
   ];
   const context = reviewContext({ prepared, body, changedFiles: paths });
-  assert.equal(paths.length, 281);
+  assert.equal(paths.length, 279);
   assert.deepEqual(context.fullHunkReads, paths, 'golden names are neither filtered nor truncated');
   assert.equal(context.requiredRole, 'canon');
   assert.ok(context.files.includes('PROCESS.md'));
   assert.equal(context.body, body);
   assert.deepEqual(context.material, { sha, tree, bodyDigest: issueBodyDigest(body) });
-  const boundary = [...paths, ...Array.from({ length: 119 }, (_, i) => `src/boundary-${i}.ts`)];
+  const boundary = [...paths, ...Array.from({ length: 121 }, (_, i) => `src/boundary-${i}.ts`)];
   assert.deepEqual(reviewContext({ prepared, body, changedFiles: boundary }).fullHunkReads, boundary);
   assert.throws(() => reviewContext({ prepared, body, changedFiles: [...boundary, 'src/overflow.ts'] }), /oversized immutable input/);
 });
