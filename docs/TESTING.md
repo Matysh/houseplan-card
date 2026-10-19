@@ -244,11 +244,6 @@ node scripts/no-new-any.mjs --total                      # весь долг src
 
 ## Тестовый фасад и приватное состояние (#629)
 
-`__hpTest.toast()` читает настоящий узел сообщения в области текущей карточки,
-включая portal активного диалога. Перед чтением опубликованного текста —
-`settled()`, перед новым независимым случаем — `waitForToastClear()`;
-сброс приватного backing field не заменяет нормальное исчезновение DOM (#965).
-
 Проверяя отказ операции, вводите draft через UI; fault injection допустима на
 границе preflight/WS с явным `private-ok`, но не вместо пользовательского ввода.
 После вложенного подтверждения проверяйте точный draft и фокус редактируемого
@@ -277,7 +272,7 @@ Escape и крестик не нажимал никто. Фасад харнес
 | `input(el, text, {clear})` | `keydown` → значение → `InputEvent(insertText)` → `keyup` на символ, в конце `change` | `updateComplete` |
 | `close(dialog?, {via})` | `escape` — keydown на активном элементе; `x` — крестик окна; `cancel` — `[data-hp="dialog-cancel"]` содержимого | диалог отсоединён или открыт `[data-kind="confirm"]`; `{closed, confirm}` |
 
-`settled()` — `updateComplete` и два кадра, общий шаг ожидания.
+`settled()` — `updateComplete` и два кадра. После него `toast()` читает DOM notice текущей карточки, включая modal portal; `waitForToastClear()` наблюдает нормальное исчезновение без сброса backing field (#965).
 
 Правила фасада:
 
