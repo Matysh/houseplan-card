@@ -155,7 +155,11 @@ try {
           && svg.getAttribute('aria-hidden') === 'true' && box.width >= 18 && box.width <= 22
           && box.height >= 18 && box.height <= 22;
       }),
-      controlsHaveTouchTargets: rects.every((rect) => rect.width >= 44 && rect.height >= 44),
+      // #963 explicitly crops the desktop settings tab to 24px; the toggle
+      // remains 44px. The independent kiosk pair below keeps both 44px targets.
+      headerControlGeometryMatches963: rects.length === 2
+        && Math.abs(rects[0].width-24) <= .5 && Math.abs(rects[1].width-44) <= .5
+        && rects.every(rect=>Math.abs(rect.height-44) <= .5),
       onlyToggleHasAccent: getComputedStyle(buttons[0]).backgroundColor !== getComputedStyle(buttons[1]).backgroundColor,
       summaryOutsideCamera: !group.closest('.zoomwrap') && !f.panel()?.closest('.zoomwrap'),
     };
