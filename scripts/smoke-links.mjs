@@ -30,6 +30,12 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/toast-presentation.ts', 'src/styles/toast.styles.ts'],
+    symbols: ['ToastPresentation', 'setToastOwner'],
+    smokes: ['smoke_modal_toast_956.mjs'],
+    because: '#956: public rejected Save must paint above the actual modal; the consumer uses DOM/HA controls rather than calling the presentation controller.',
+  },
+  {
     files: ['src/backup-archive-client.ts', 'src/backup-archive-lazy.ts'],
     symbols: ['BackupArchiveClient', 'prepareArchive', '_backupErrorText'],
     smokes: ['smoke_backup_archive.mjs', 'smoke_backup_transfer.mjs', 'smoke_empty_backup_import.mjs', 'smoke_config_authority.mjs'],

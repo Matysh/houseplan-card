@@ -1,5 +1,7 @@
 import { LitElement, css, html, nothing, type PropertyValues } from 'lit';
 import { live } from 'lit/directives/live.js';
+import {setToastOwner, toastRootOf, type ToastOwner} from './toast-presentation';
+import {toastStyles} from './styles/toast.styles';
 
 type FocusSession = {
   dialogs: Set<HpDialog>;
@@ -56,7 +58,7 @@ export class HpDialog extends LitElement {
 
   iconBadge = '';
 
-  static styles = css`
+  static styles = [toastStyles, css`
     .context-icon { position:relative; display:inline-flex; flex:none; }
     .context-icon ha-icon:last-child { position:absolute; inset:auto -4px -4px auto; --mdc-icon-size:20px; border-radius:4px; background:var(--card-background-color,var(--hp-bg,#202126)); }
     :host {
@@ -327,7 +329,7 @@ export class HpDialog extends LitElement {
     .overlay-portal > * {
       pointer-events: auto;
     }
-  `;
+  `];
 
   title = '';
   icon = '';
@@ -345,6 +347,13 @@ export class HpDialog extends LitElement {
   private _focusRoot: Node | null = null;
   private _useHaDialog: boolean | null = null;
   private _closing = false;
+  private _toastRoot: Node | null = null;
+  private readonly _toastOwner: ToastOwner = {
+    host: this, portal: () => this.renderRoot.querySelector('.toast-portal'),
+  };
+  private _syncToastOwner(active = !this._closing): void {
+    if (this._toastRoot) setToastOwner(this._toastRoot, this._toastOwner, active);
+  }
   private _lastInputFocus: HTMLElement | null = null;
   private _restoreInputFocus = false;
   private readonly _rememberInputFocus = (event: FocusEvent): void => {
@@ -368,6 +377,8 @@ export class HpDialog extends LitElement {
     this._opener = this._deepActiveElement();
     const root = this.getRootNode();
     this._focusRoot = root;
+    this._toastRoot = toastRootOf(this);
+    this._syncToastOwner();
     const current = focusSessions.get(root);
     const session = current || { dialogs: new Set<HpDialog>(), opener: this._opener };
     session.dialogs.add(this);
@@ -393,6 +404,8 @@ export class HpDialog extends LitElement {
   }
 
   disconnectedCallback(): void {
+    this._syncToastOwner(false);
+    this._toastRoot = null;
     this._restoreInputFocus = false;
     this.removeEventListener('keydown', this._onKeyDown, true);
     this.removeEventListener('focusin', this._rememberInputFocus, true);
@@ -428,6 +441,7 @@ export class HpDialog extends LitElement {
   protected firstUpdated(changed: PropertyValues): void {
     super.firstUpdated(changed);
     this._ensureNativeModal();
+    this._syncToastOwner();
     queueMicrotask(() => this._focusInitial());
   }
 
@@ -539,6 +553,7 @@ export class HpDialog extends LitElement {
   private _requestClose = (): void => {
     if (this._closing) return;
     this._closing = true;
+    this._syncToastOwner(false);
     // HA's close control can dismiss the nested WebAwesome surface before the
     // public ha-dialog.open property reflects that transition. Commit an
     // explicit closed phase so a later rejectClose() has a real false -> true
@@ -555,6 +570,7 @@ export class HpDialog extends LitElement {
    */
   public rejectClose(): void {
     this._closing = false;
+    this._syncToastOwner();
     this._restoreInputFocus = true;
     if (this.isConnected) {
       this.requestUpdate();
@@ -678,7 +694,7 @@ export class HpDialog extends LitElement {
         >
           ${haHeading}
           <slot></slot>
-          <span class="footer" slot="footer"><slot name="footer"></slot></span>
+          <span class="footer toast-portal" slot="footer"><slot name="footer"></slot></span>
         </ha-dialog><div class="overlay-portal"></div>`;
       }
       return html`<ha-dialog
@@ -693,7 +709,7 @@ export class HpDialog extends LitElement {
       >
         ${haHeading}
         <slot></slot>
-        <span class="footer" slot="footer"><slot name="footer"></slot></span>
+        <span class="footer toast-portal" slot="footer"><slot name="footer"></slot></span>
       </ha-dialog><div class="overlay-portal"></div>`;
     }
 
@@ -708,7 +724,7 @@ export class HpDialog extends LitElement {
       <section class="surface" tabindex="-1">
         ${heading()}
         <div class="content"><slot></slot></div>
-        <div class="footer"><slot name="footer"></slot></div>
+        <div class="footer toast-portal"><slot name="footer"></slot></div>
       </section>
       <div class="overlay-portal"></div>
     </dialog>`;

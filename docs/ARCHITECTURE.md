@@ -597,6 +597,14 @@ chunks. Commands and gates: `DEVELOPMENT.md` › Build, › Tests, › Release.
    `hp-confirm` (#32): replace-not-queue, every dismissal cancels, a token
    rejects stale decisions, callers re-resolve targets after `await`. Native
    `confirm()` is not a supported surface.
+   One card-owned `ToastPresentation` moves a single notice node between the
+   root placeholder and the active `hp-dialog` footer, inside the actual modal
+   flat tree (#956). A shadow-root-scoped owner stack follows connect, ready,
+   close/reject and detach; nested component roots resolve to the same card.
+   The absolute footer notice does not change form geometry or cover actions.
+   New messages announce once; rerouting retains ordinary accessible text with
+   live announcements disabled. Only `_showToast` owns the replace-not-queue
+   3500ms deadline; routing does not restart it. Detach cancels pending paint.
 5. **Open passages are negative architecture (#157).** `type=passage` shares
    placement, wall cut and tunnels with other openings but has no leaf, binding
    or 2.5D panel; static wall fingerprints add only passage cuts, so door/window/

@@ -77,6 +77,24 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id:'modal-toast-below-top-layer-956',
+    guard:'node demo/smoke_modal_toast_956.mjs',
+    because:'#956 AC1: only genuine HA/native browser modal paint can prove that error lettering is visible; DOM presence and root z-index are insufficient. Independent foreground ink pixels expose routing below the modal.',
+    patches:[{file:'src/toast-presentation.ts',
+      find:'const target = owners[owners.length - 1]?.portal() || root.querySelector',
+      replace:'const target = owners[owners.length]?.portal() || root.querySelector',
+    }],
+  },
+  {
+    id:'modal-toast-reannounces-on-route-956',
+    guard:'node --test test/toast-presentation.test.mjs',
+    because:'#956 AC4: the same visible message must become non-live before moving to another owner; the controller unit exercises ownership and exact live-region attributes without a browser.',
+    patches:[{file:'src/toast-presentation.ts',
+      find:"    notice.setAttribute('aria-live', 'off');\n    notice.removeAttribute('role');",
+      replace:'    // Keep old live-region semantics while moving.',
+    }],
+  },
+  {
     id:'vacuum-dock-toggle-shows-unaccepted-value-940',
     guard:'node demo/smoke_vacuum_dock_restart.mjs',
     because:'#940 AC13: trusted Space changes the native checked property before Lit renders; only the mounted control under a held/refused HA ACK exposes the unaccepted visual value.',

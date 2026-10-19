@@ -22,6 +22,7 @@ import { keyed } from 'lit/directives/keyed.js';
 import { repeat } from 'lit/directives/repeat.js';
 import './hp-dialog';
 import type { HpDialog } from './hp-dialog';
+import {ToastPresentation} from './toast-presentation';
 import type { OptimizePlansDialogState } from './optimize-plans-dialog';
 import './hp-confirm';
 import {
@@ -921,6 +922,7 @@ export class HouseplanCard extends LitElement {
   private _devicePressAnimations = new Map<string, Animation>();
   private _selId: string | null = null;
   private _toast = '';
+  private readonly _toastPresentation = new ToastPresentation();
   private _toastTimer?: number;
 
   // --- room markup editor ---
@@ -2680,6 +2682,7 @@ export class HouseplanCard extends LitElement {
       this._showToast(this._t('toast.locale_load_failed'));
     }), subscribeFurnitureArtLoadFailures(() => this._showToast(this._t('toast.furniture_art_load_failed')))); // #474
     super.connectedCallback();
+    this._toastPresentation.connect(this.renderRoot as ShadowRoot);
     for (const type of ['pointerdown', 'wheel', 'keydown']) this.addEventListener(
       type, this._kioskInteraction, { capture: true, passive: true },
     );
@@ -2843,6 +2846,8 @@ export class HouseplanCard extends LitElement {
     this._haRegistryConnection = null;
     this._signer.dispose();
     clearTimeout(this._toastTimer);
+    this._toast = '';
+    this._toastPresentation.disconnect();
     clearTimeout(this._slideTimer);
     clearTimeout(this._editorRuntimeLoadingTimer);
     this._editorRuntimeLoadingTimer = undefined;
@@ -4272,6 +4277,7 @@ export class HouseplanCard extends LitElement {
     this._captureRenderDeviceSnapshot();
   }
   protected updated(changed: PropertyValues): void {
+    this._toastPresentation.refresh();
     if (this._tip?.room && this._hoverRoom) this._tip.co2 = this._roomCo2(this._hoverRoom.room);
     this._syncCycleTimer();
     if (this._isoFirstFrame.sync(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes), () => parseCssColor(this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)')) ?? [17, 17, 17])) this.requestUpdate(); this._summary?.updated(); this._liveRt?.commit(); this._headerMenu.revealActiveTab();
@@ -7307,15 +7313,18 @@ export class HouseplanCard extends LitElement {
   }
 
   private _showToast(msg: string): void {
+    if (!this.isConnected) return;
     // A toast supersedes transient explanatory surfaces in this card only.
     // Dialogs own their portal/overlay registry, so another card stays intact.
     for (const dialog of this.renderRoot.querySelectorAll<HpDialog>('hp-dialog')) {
       dialog.closeTransientOverlays('toast');
     }
     this._toast = msg;
+    this._toastPresentation.show(this._toast);
     clearTimeout(this._toastTimer);
     this._toastTimer = window.setTimeout(() => {
       this._toast = '';
+      this._toastPresentation.clear();
     }, 3500);
   }
 
@@ -10765,7 +10774,7 @@ export class HouseplanCard extends LitElement {
           : nothing}
         ${this._importDialog ? this._onboardingRuntime ? this._renderImportDialog() : nothing : nothing}
         ${this._backupImportDialog && this._editorRuntime ? this._renderBackupImportDialog() : nothing}
-        ${this._toast ? html`<div class="toast" data-hp="toast" data-kind="message" role="alert" aria-live="assertive">${this._toast}</div>` : nothing}
+        <div data-hp="toast-portal"></div>
       </ha-card>`;
     }
     const space = this._spaceModel();
@@ -11395,7 +11404,7 @@ export class HouseplanCard extends LitElement {
                 </div>
             </hp-dialog>`
           : nothing}
-        ${this._toast ? html`<div class="toast" data-hp="toast" data-kind="message" role="alert" aria-live="assertive">${this._toast}</div>` : nothing}
+        <div data-hp="toast-portal"></div>
       </ha-card>
     `;
   }

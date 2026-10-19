@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 956,
+  "baseStable": "v1.81.0",
+  "category": "stable-fix",
+  "rationale": "The stable v1.81.0 card already renders its root toast below native/HA top-layer modals. This repairs that existing save-error visibility defect; it is not a regression introduced by the four redesigned settings forms.",
+  "summary": {
+    "ru": "Ошибки сохранения видны поверх открытого диалога, без потери правок и повторных объявлений во вложенных окнах.",
+    "en": "Save errors stay visible above the active dialog, without losing edits or repeating announcements in nested windows."
+  }
+}

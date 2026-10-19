@@ -1,7 +1,8 @@
 /** Host, variables, resets and cross-surface rules (#266, split from styles.ts). */
 import { css } from 'lit';
+import {toastStyles} from './toast.styles';
 
-export const baseStyles = css`
+export const baseStyles = [toastStyles, css`
     :host {
       --hp-bg: var(--card-background-color, #16212e);
       --hp-line: var(--divider-color, #2b3d4f);
@@ -297,20 +298,4 @@ export const baseStyles = css`
       white-space: nowrap !important;
       border: 0 !important;
     }
-    .toast {
-      position: fixed;
-      pointer-events: none;
-      left: 50%;
-      bottom: 22px;
-      transform: translateX(-50%);
-      background: var(--hp-bg);
-      border: 1px solid var(--hp-accent);
-      color: var(--hp-txt);
-      padding: var(--sp-4) var(--sp-6);
-      border-radius: var(--rad-l);
-      font-size: var(--fs-m);
-      box-shadow: var(--shadow-2);
-      z-index: 120;
-      max-width: 90vw;
-    }
-`;
+`];

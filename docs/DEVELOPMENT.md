@@ -12,6 +12,23 @@ The lab is a presentation tool, not evidence of backend correctness or release
 acceptance. Its focused checks are `node --test test/ui-lab-*.test.mjs` and
 `npm run ui-lab:smoke` after preparation; ordinary task gates still apply.
 
+#956: a root z-index cannot overtake a browser top-layer modal. HA's public
+footer slot and the native footer both provide an in-modal, out-of-flow notice
+mount; do not put the message in the HA shell's external fallback overlay
+portal. The presenter owns one DOM node, never a Lit-owned child part or a
+hidden second live region. Its reroute disables live announcements before
+moving already announced text. The shared style uses a Lit CSS array (the
+static CSS minifier deliberately rejects template interpolation).
+`node demo/smoke_modal_toast_956.mjs --matrix` checks real failed saves in all
+four forms, both themes and two viewports. `--lifecycle` checks nested confirm,
+AX/live-region events, keyboard input, replacement/expiry and detach; repeat
+with `--native` for the fallback. The independent lettering reference is an
+oracle-owned manual popover captured only AFTER the actual product pixels;
+it uses the same loaded document fonts, but cannot hide an actual failure.
+Ink contrast tolerates LCD/grayscale antialiasing and one-pixel raster phase,
+not absence of text. These are synthetic/headless checks, not manual assistive
+technology or physical-device acceptance.
+
 #940 vacuum source-first: a schema-valid explicit empty is a complete native
 value, not failed normalization. Keep that distinction before the normalizer
 loses it; all-invalid nonempty input must fail. Provider path/session authority

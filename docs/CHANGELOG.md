@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Keep save errors readable above Home Assistant and native dialogs without
+  losing edits or changing retry behaviour. Nested dialogs share one notice. (#956)
+
 - Prefer the integration's complete vacuum path and session information over
   inferred dock/time boundaries, including when opening a plan mid-cleanup.
   A valid empty response now removes the stale current trail. Add an optional
