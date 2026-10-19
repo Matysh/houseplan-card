@@ -132,7 +132,9 @@ check('no_handles_until_picture_tool', await q('.bdframe .bdhandle'), 0);
 check('no_picture_frame_until_picture_tool', await frameRect(), null);
 check('untouched_picture_is_where_it_always_was', await imageRect(), BASE);
 // …and the picture has a tool of its own, offered because f1 HAS a picture
-check('the_picture_has_a_tool', await q('.decorbar .btn.dtool'), 8);
+check('the_picture_and_shapes_keep_their_tools', await page.evaluate(() =>
+  [...window.__card.renderRoot.querySelectorAll('.decorbar [data-hp="tool"]')].map(button=>button.dataset.tool)),
+  ['select','backdrop','shapes','text','furniture','erase']);
 check('select_tool_armed_on_open', await page.evaluate(() =>
   window.__card.renderRoot.querySelector('.decorbar [data-hp="tool"].on')?.dataset.tool), 'select');
 check('no_grab_cursor_under_select', await page.evaluate(() =>

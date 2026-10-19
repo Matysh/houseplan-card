@@ -182,7 +182,7 @@ const res = await page.evaluate(async () => {
   out.addDeviceShortcutUsesNativeKeyboardSemantics = addDeviceButton?.tagName === 'BUTTON'
     && addDeviceButton.disabled === false;
   out.addDeviceShortcut = addDeviceButton?.textContent.trim() === c._t('devbar.add')
-    && addDeviceButton.title === c._t('title.add_device')
+    && addDeviceButton.getAttribute('data-hp-tooltip') === c._t('title.add_device')
     && addDeviceButton.querySelector('ha-icon')?.getAttribute('icon') === 'mdi:plus-box-outline'
     && sr().querySelector('[data-tool="device-inbox"]')?.textContent.trim() === c._t('device_inbox.button');
   const swapChrome = sr().querySelector('.editorchrome');
