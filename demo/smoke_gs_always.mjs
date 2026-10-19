@@ -4,12 +4,12 @@ const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
-  const gs = () => !!sr().querySelector('.head .btn[title="' + c._t('title.general_settings') + '"]');
+  const gs = () => sr().querySelector('[data-hp="settings"]')?.getAttribute('aria-label') === c._t('title.general_settings');
   out.view = gs();
   c._setMode('plan'); await c.updateComplete; out.plan = gs();
   c._setMode('devices'); await c.updateComplete; out.devices = gs();
   c._setMode('view'); await c.updateComplete;
-  sr().querySelector('.head .btn[title="' + c._t('title.general_settings') + '"]').click();
+  sr().querySelector('[data-hp="settings"]').click();
   await c.updateComplete;
   out.opensInView = !!c._settingsDialog;
   return out;

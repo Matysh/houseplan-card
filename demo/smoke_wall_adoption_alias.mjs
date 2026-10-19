@@ -36,8 +36,7 @@ await page.waitForFunction(() => window.__card._booting === false && window.__ca
 await page.evaluate(async () => {
   const card = window.__card;
   await card._requestMode('plan'); await card.updateComplete;
-  [...card.renderRoot.querySelectorAll('button')].find(button => button.textContent?.trim() === 'Resize')?.click();
-  await card.updateComplete;
+  await window.__hpTest.setTool('resize');
 });
 await page.waitForFunction(() => !window.__card._modeTransitionBusy && window.__card.renderRoot.querySelector('.rszhandle'));
 const settle = () => page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));

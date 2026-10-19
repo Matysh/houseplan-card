@@ -58,7 +58,10 @@ const result = await page.evaluate(async () => {
   )].map((button) => (button.textContent || '').trim());
   out.oneWallsButton = toolbarLabels.filter((label) => ['Walls', 'Стены'].includes(label)).length === 1;
   out.partitionButtonRemoved = !toolbarLabels.some((label) => ['Partition', 'Перегородка'].includes(label));
-  out.splitRemains = toolbarLabels.some((label) => ['Split', 'Разделить'].includes(label));
+  const rooms = root().querySelector('[data-editor-group="rooms"]');
+  rooms?.click(); await update();
+  out.splitRemains = !!root().querySelector('[data-group-item="split"]');
+  rooms?.click(); await update();
 
   await draw([[100, 100], [300, 100], [300, 250]], [12, 23]);
   out.eachAcceptedSegmentIsCanonical = space().partitions.length === 2

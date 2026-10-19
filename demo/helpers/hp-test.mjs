@@ -29,7 +29,8 @@ export const SELECTORS = Object.freeze({
   modeRoot: 'ha-card[data-hp-mode]',
   modeTab: '[data-hp="mode-tab"][data-mode="{mode}"]',
   editorClose: '[data-hp="editor-close"]',
-  tool: '[data-hp="toolbar"] [data-hp="tool"][data-tool="{tool}"]',
+  // Group items live in the secondary tray, outside the primary toolbar.
+  tool: '[data-hp="tool"][data-tool="{tool}"]',
   toast: '[data-hp="toast"]',
   spaceTab: '[data-hp="space-tab"][data-id="{id}"]',
   roomSettings: '[data-hp="room-settings"][data-room="{room}"]',

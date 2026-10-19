@@ -84,8 +84,8 @@ const res = await page.evaluate(async () => {
     const x = +handle.getAttribute('cx');
     const y = +handle.getAttribute('cy');
     out.partialSharedDisabled = handle.getAttribute('aria-disabled') === 'true';
-    out.disabledReasonExposed = !!handle.getAttribute('aria-label')
-      && !!handle.querySelector('title')?.textContent;
+      out.disabledReasonExposed = !!handle.getAttribute('aria-label')
+        && handle.getAttribute('data-hp-tooltip') === handle.getAttribute('aria-label');
     pointer('pointerdown', handle, x, y);
     pointer('pointermove', handle, x, y + c._gridPitch);
     pointer('pointerup', handle, x, y + c._gridPitch);

@@ -60,12 +60,7 @@ await page.waitForFunction(() => {
 await page.locator('[data-hp="mode-tab"][data-mode="plan"]').click();
 await page.waitForFunction(() => window.__card._editorRuntime && !window.__card._modeTransitionBusy);
 await page.evaluate(async () => {
-  const card = window.__card;
-  await card.updateComplete;
-  const button = [...card.renderRoot.querySelectorAll('button')]
-    .find((entry) => entry.textContent?.trim() === 'Resize');
-  button?.click();
-  await card.updateComplete;
+  await window.__hpTest.setTool('resize');
 });
 await page.waitForFunction(() => window.__card.renderRoot.querySelectorAll('.rszhandle').length > 0);
 // Entering Plan animates the editor chrome and stage for 220 ms. Reading a

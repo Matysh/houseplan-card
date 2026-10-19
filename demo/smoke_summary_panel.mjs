@@ -75,8 +75,7 @@ const smallCardKeepsLocalIntent = await page.evaluate(() => {
   const card = window.__card;
   const root = card.shadowRoot || card.renderRoot;
   const toggle = root.querySelector('.summary-control button:last-child');
-  return toggle?.title === card._summary?.['t']?.('summary.hidden_small')
-    || /space|мест|Platz|espace/i.test(toggle?.title || '');
+  return toggle?.getAttribute('data-hp-tooltip') === card._summary?.['t']?.('summary.hidden_small');
 });
 
 await page.setViewportSize({ width: 960, height: 640 });

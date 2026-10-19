@@ -47,9 +47,9 @@ const res = await page.evaluate(async () => {
   out.toastHasStableKind = q('[data-hp="toast"][data-kind="message"]')?.textContent === 'contract smoke';
 
   const modeTools = {
-    plan: ['select', 'draw', 'column', 'merge', 'split', 'resize', 'opening', 'wall-thickness', 'delete-room'],
+    plan: ['select', 'draw', 'column', 'rooms', 'merge', 'split', 'resize', 'opening', 'wall-thickness', 'delete-room'],
     devices: ['add-device', 'device-inbox', 'icon-rules'],
-    decor: ['select', 'backdrop', 'line', 'rect', 'ellipse', 'text', 'furniture', 'erase'],
+    decor: ['select', 'backdrop', 'shapes', 'line', 'rect', 'ellipse', 'text', 'furniture', 'erase'],
   };
   for (const [mode, tools] of Object.entries(modeTools)) {
     c._setMode(mode, false);
@@ -58,8 +58,13 @@ const res = await page.evaluate(async () => {
     const toolbar = q(`[data-hp="toolbar"][data-kind="${mode === 'devices' ? 'device' : mode}"]`);
     out[`mode_${mode}_isPublished`] = card?.getAttribute('data-hp-mode') === mode;
     out[`toolbar_${mode}_isPublished`] = !!toolbar && !!toolbar.querySelector('[data-hp="editor-close"]');
-    out[`tools_${mode}_arePublished`] = tools.every((tool) =>
-      !!toolbar?.querySelector(`[data-hp="tool"][data-tool="${tool}"]`));
+    const published = new Set([...toolbar.querySelectorAll('[data-hp="tool"]')].map(button=>button.dataset.tool));
+    for (const launcher of toolbar.querySelectorAll('[data-editor-group]')) {
+      launcher.click(); await window.__hpTest.settled();
+      for (const button of qa('[data-hp="tray"] [data-hp="tool"]')) published.add(button.dataset.tool);
+      launcher.click(); await window.__hpTest.settled();
+    }
+    out[`tools_${mode}_arePublished`] = tools.every(tool=>published.has(tool));
     if (mode === 'plan') {
       toolbar?.querySelector('[data-hp="tool"][data-tool="opening"]')?.click();
       await c.updateComplete; await sleep(30); await c.updateComplete;
