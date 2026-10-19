@@ -4,6 +4,7 @@
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
+| #961 | [CODE-REVIEW-961-r1.md](CODE-REVIEW-961-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #960 | [CODE-REVIEW-960-r1.md](CODE-REVIEW-960-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | Windows-ветка candidate-reviews-index.mjs не инъецируется по платформе, поэтому не испо… | `candidate-reviews-index.mjs` `scripts/candidate-reviews-index.mjs` `scripts/local-gate-environment.mjs` `test/development-loop-954.test.mjs` `test/candidate-reviews-index.test.mjs` `test/pre-push-gate.test.mjs` |
 | #959 | [CODE-REVIEW-959-r1.md](CODE-REVIEW-959-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #958 | [CODE-REVIEW-958-r1.md](CODE-REVIEW-958-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
