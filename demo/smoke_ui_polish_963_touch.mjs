@@ -3,12 +3,15 @@ import {launchHaDialogFixture} from './helpers/ha-dialog-fixture.mjs';
 import {UI_POLISH_963_HA_PIN} from './helpers/ui-polish-963-pin.mjs';
 import {prepareUi963Page} from './helpers/ui-polish-963-reference.mjs';
 import {enforcePinnedBrowser} from '../scripts/browser-attestation.mjs';
+import {assertFreshDemoBundle} from './bundle-freshness.mjs';
+import {fileURLToPath} from 'node:url';
 import {checkAll,watchPage,finish} from './serve.mjs';
 const f=await launchHaDialogFixture({hasTouch:true,pin:UI_POLISH_963_HA_PIN,
  wheelPath:process.env.HP_UI_963_HA_WHEEL,extraModules:['33396','95788'],viewport:{width:390,height:900}});
 const {page}=f,out={};watchPage(page);await enforcePinnedBrowser(f.browser);
 try{
  await prepareUi963Page(page,f.url);
+ await assertFreshDemoBundle(page,fileURLToPath(new URL('..',import.meta.url)));
  const card=page.locator('houseplan-card'),zoom=card.locator('[data-hp=zoom-in]');
  const before=await page.evaluate(()=>({zoom:window.__card._zoom,data:JSON.stringify({config:window.__card._serverCfg,layout:window.__card._layout})}));
  const r=await zoom.boundingBox();await page.touchscreen.tap(r.x+r.width/2,r.y+r.height/2);

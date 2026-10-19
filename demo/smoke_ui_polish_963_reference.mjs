@@ -5,6 +5,8 @@ import {UI_POLISH_963_HA_PIN} from './helpers/ui-polish-963-pin.mjs';
 import {prepareUi963Page,createUi963Reference,UI_963_BASE} from './helpers/ui-polish-963-reference.mjs';
 import {buttonPaint} from './helpers/button-paint.mjs';
 import {enforcePinnedBrowser} from '../scripts/browser-attestation.mjs';
+import {assertFreshDemoBundle} from './bundle-freshness.mjs';
+import {fileURLToPath} from 'node:url';
 import {checkAll,watchPage,finish} from './serve.mjs';
 import {mkdirSync,writeFileSync,readFileSync} from 'node:fs';
 import {join} from 'node:path';
@@ -49,7 +51,8 @@ const metrics=p=>p.locator('houseplan-card [data-hp=properties-panel]').evaluate
  })), title:panel.querySelector('.hp-prop-title')?.textContent.trim(),actions:[...panel.querySelectorAll('.hp-prop-action')].map(el=>{const s=getComputedStyle(el);return {text:el.textContent.trim(),border:s.borderColor,color:s.color,background:s.backgroundColor};})};
 });
 try{
- await prepareUi963Page(page,fixture.url);const reference=await createUi963Reference(fixture);await setup(page);await setup(reference);
+ await prepareUi963Page(page,fixture.url);await assertFreshDemoBundle(page,fileURLToPath(new URL('..',import.meta.url)));
+ const reference=await createUi963Reference(fixture);await setup(page);await setup(reference);
  const scenes=[['wall','plan','[data-hp=partition][data-id=wall]'],['column','plan','[data-hp=wall-column][data-id=column]'],
  ['window','plan','.opening[data-id=window] .op-hit'],['door','plan','.opening[data-id=door] .op-hit'],
  ['rectangle','decor','.decorlayer [data-id=rect]'],['text','decor','.decorlayer [data-id=text]'],
@@ -87,7 +90,10 @@ try{
   save.push({lang,theme:name,approved:paints[0],actual:paints[1]});
   console.log(lang,name,'Save paint',JSON.stringify(paints));
  }
- writeFileSync(join(output,'comparison.json'),JSON.stringify({base:UI_963_BASE,ha:fixture.provenance,font:process.env.HP_QA_SEGOE_DIR?'Segoe UI':'pinned HA Roboto',dpr:1,out,measurements,save},null,2));
+ writeFileSync(join(output,'comparison.json'),JSON.stringify({base:UI_963_BASE,
+  productFingerprint:await page.evaluate(()=>globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__),
+  referenceFingerprint:await reference.evaluate(()=>globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__),
+  ha:fixture.provenance,font:process.env.HP_QA_SEGOE_DIR?'Segoe UI':'pinned HA Roboto',dpr:1,out,measurements,save},null,2));
  await fixture.assertClean();checkAll(out);await finish(fixture.browser,out);
 }finally{
  writeFileSync(join(output,'measurements.json'),JSON.stringify({out,measurements},null,2));await fixture.close();

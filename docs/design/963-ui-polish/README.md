@@ -15,3 +15,11 @@ No owner config, layout, registry, states, images, session export or captures ar
 included. The private ZIP remains on the owner's machine. The prototype's
 observers/proxies are used only in the reference page; product changes use
 normal component render/command/lifecycle paths.
+
+Run `demo/smoke_ui_polish_963_reference.mjs` after a fresh build. It rejects a
+stale product bundle and writes paired PNGs and geometry/paint measurements to
+ignored `artifacts/ui-polish-963/`. `HP_UI_963_VIDEO=1` records object switches;
+`HP_QA_SEGOE_DIR` supplies read-only installed Segoe UI, otherwise both pages
+use pinned HA Roboto. The original public Git bundle must be available in the
+clone's history. Execution results belong in issue #963; derived captures and
+receipts stay outside the committed source tree.
