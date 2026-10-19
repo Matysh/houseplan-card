@@ -251,6 +251,8 @@ import {
 import { enqueueSerializedWrite, type OptimisticAttempt } from './serialized-write-queue';
 import { applyCalibrationProposal, saveAutomaticCalibration, saveManualCalibration, saveVacuumMatrix,
   type CalibrationProposal, type VacuumFit } from './vacuum-calibration-write';
+import { renderVacuumFitOverlay, vacuumFitCentre } from './editors/vacuum-fit-overlay';
+import { loadVacuumImageFit, vacuumImageFitCurrent } from './editors/vacuum-image-fit';
 import { hasTranslation, langOf, t, type I18nKey } from './i18n';
 import { supportT, type SupportI18nKey } from './i18n/support'; import { EDITOR_LANGUAGE_RUNTIME } from './i18n/editor-language'; import { writeZigbeeTopologySettings, zigbeeTopologySettingsOf, type ZigbeeTopologySettings } from './zigbee-topology-settings';
 import {
@@ -9560,34 +9562,40 @@ public _vacApplyCalibrationProposal(manual: boolean): Promise<void> {
     return applyCalibrationProposal(this, manual);
   }
 
-public _vacStartFit(d: DevItem, routeId = ''): void {
+public async _vacStartFit(d: DevItem, routeId = ''): Promise<void> {
     if (this.host._markerDialog?.busy) return;
     const src = this.host._vacSource(d);
-    const tele = src ? readVacTelemetry(this.host.hass?.states[src]?.attributes) : null;
+    const tele = src ? readVacTelemetry(this.host._planHass?.states[src]?.attributes) : null;
     if (!src || !tele) {
       this.host._showToast(this.host._t('vac.cal_need_pos'));
       return;
     }
     const mapId = this._vacMapId(d, tele);
+    const preview = tele.mapBounds ? await loadVacuumImageFit(this, d, src, mapId) : undefined;
+    if (tele.mapBounds && !preview) return;
+    d = this.host._devices.find(item => item.id === d.id) || d;
     const plan = planVacuumFit(d.id, d.marker?.vacuum ?? null, {
       routeId, source: src, mapId, dockSpace: d.space, rooms: tele.rooms,
+      mapBounds: preview?.bounds,
       viewBoxOf: (id) => (this.host._spaceModelById(id)?.vb as [number, number, number, number]) ?? null,
     });
     if (!plan) return;
     this.host._markerDialog = null;
     if (plan.space !== this.host._space && !this.host._commitSpace(plan.space)) return;
-    this.host._vacFit = { markerId: d.id, source: src, mapId, routeId: plan.routeId, p: plan.params, drag: null };
+    this.host._vacFit = { markerId: d.id, source: src, mapId, routeId: plan.routeId,
+      p: plan.params, drag: null, ...(preview ? { preview } : {}) };
   }
 
 public _vacFitSave(): Promise<void> {
+    if (!vacuumImageFitCurrent(this)) return Promise.resolve();
     return saveManualCalibration(this, fitMatrix);
   }
 
 public _vacFitTurn(patch: Partial<FitParams>): void {
     const f = this.host._vacFit;
     if (!f || f.busy) return;
-    const tele = readVacTelemetry(this.host.hass?.states[f.source]?.attributes);
-    const c = this._vacGhostCentre(tele?.rooms || []);
+    const tele = readVacTelemetry(this.host._planHass?.states[f.source]?.attributes);
+    const c = f.preview || tele?.mapBounds ? vacuumFitCentre(tele, f.preview) : this._vacGhostCentre(tele?.rooms || []);
     const next = { ...f.p, ...patch } as FitParams;
     this.host._vacFit = { ...f, p: reanchorFit(next, f.p, c[0], c[1]) };
   }
@@ -9634,8 +9642,8 @@ public _vacFitPointer(ev: PointerEvent, view: { x: number; y: number; w: number;
       } else {
         // corner-stretch: uniform scale about the OPPOSITE corner (fx, fy —
         // the fixed corner in robot coords), like a graphics-editor frame
-        const tele = readVacTelemetry(this.host.hass?.states[f.source]?.attributes);
-        const c = this._vacGhostCentre(tele?.rooms || []);
+        const tele = readVacTelemetry(this.host._planHass?.states[f.source]?.attributes);
+        const c = f.preview || tele?.mapBounds ? vacuumFitCentre(tele, f.preview) : this._vacGhostCentre(tele?.rooms || []);
         const m0 = fitMatrix(d.p0);
         const [gx, gy] = applyAffine(m0, c[0], c[1]);
         const [px0, py0] = applyAffine(m0, d.fx, d.fy);
@@ -9655,57 +9663,7 @@ public _vacFitPointer(ev: PointerEvent, view: { x: number; y: number; w: number;
   }
 
 public _renderVacFit(view: { x: number; y: number; w: number; h: number }): TemplateResult | typeof nothing {
-    const f = this.host._vacFit;
-    if (!f) return nothing;
-    const tele = readVacTelemetry(this.host._renderPlanHass?.states?.[f.source]?.attributes);
-    if (!tele) return nothing;
-    const m = fitMatrix(f.p);
-    const rects: TemplateResult[] = [];
-    const xs: number[] = [], ys: number[] = [];
-    for (const r of tele.rooms) {
-      if (r.x0 == null) continue;
-      const cs = [[r.x0!, r.y0!], [r.x1!, r.y0!], [r.x1!, r.y1!], [r.x0!, r.y1!]]
-        .map(([x, y]) => applyAffine(m, x, y));
-      cs.forEach(([x, y]) => { xs.push(x); ys.push(y); });
-      const [lx, ly] = applyAffine(m, r.cx, r.cy);
-      rects.push(svg`<polygon points="${cs.map((q) => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' ')}"></polygon>
-        <text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}">${r.name}</text>`);
-    }
-    let dot: TemplateResult | typeof nothing = nothing;
-    if (tele.pos) {
-      const [dx2, dy2] = applyAffine(m, tele.pos.x, tele.pos.y);
-      dot = svg`<circle class="vacfitdot" cx="${dx2.toFixed(1)}" cy="${dy2.toFixed(1)}" r="${(view.w * 0.012).toFixed(1)}"></circle>`;
-    }
-    // corner handles on the ghost bbox; data-corner carries the FIXED corner
-    // (the opposite one) in robot coordinates
-    const handles: TemplateResult[] = [];
-    if (xs.length) {
-      const inv = ((): ((x: number, y: number) => VacPt) => {
-        const det = m[0] * m[4] - m[1] * m[3];
-        return (x, y) => [
-          (m[4] * (x - m[2]) - m[1] * (y - m[5])) / det,
-          (-m[3] * (x - m[2]) + m[0] * (y - m[5])) / det,
-        ];
-      })();
-      const x0 = Math.min(...xs), x1 = Math.max(...xs);
-      const y0 = Math.min(...ys), y1 = Math.max(...ys);
-      // hit radius (finger-sized: these are grabbed on tablets) and the bead
-      // you actually see, a quarter of it — same split as .bdhandle/.bdknob
-      const r = view.w * 0.022;
-      const kr = r / 4;
-      for (const [hx, hy, ox2, oy2] of [[x0, y0, x1, y1], [x1, y0, x0, y1], [x1, y1, x0, y0], [x0, y1, x1, y0]] as number[][]) {
-        const fixed = inv(ox2, oy2);
-        handles.push(svg`<circle class="vacfithandle" data-corner="${fixed[0] + ',' + fixed[1]}"
-          cx="${hx.toFixed(1)}" cy="${hy.toFixed(1)}" r="${r.toFixed(1)}"></circle>
-          <circle class="vacfitknob" cx="${hx.toFixed(1)}" cy="${hy.toFixed(1)}" r="${kr.toFixed(2)}"></circle>`);
-      }
-    }
-    return html`<svg class="vacfit" viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
-        preserveAspectRatio="none"
-        @pointerdown=${(e: PointerEvent) => this._vacFitPointer(e, view)}
-        @pointermove=${(e: PointerEvent) => this._vacFitPointer(e, view)}
-        @pointerup=${(e: PointerEvent) => this._vacFitPointer(e, view)}
-        @pointercancel=${(e: PointerEvent) => this._vacFitPointer(e, view)}>${rects}${dot}${handles}</svg>`;
+    return renderVacuumFitOverlay(this, view);
   }
 
 public _resetRoomDialogFields(): void {

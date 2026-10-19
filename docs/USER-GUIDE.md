@@ -2150,12 +2150,21 @@ line — the general hint stays.
 
 ## 16. Robot vacuums
 
+Official Ecovacs works with the verified map format (first example: X1 Omni).
+Choose this robot's `image.*` source; the global list is now **All cameras and
+maps**. Once telemetry arrives, **Fit manually** shows the translucent floor
+image: move it, resize from four corners, rotate by 90° or mirror, then Save.
+Ecovacs room names have no geometry for automatic fitting. This does not create
+House Plan rooms or walls; it aligns the robot to an existing plan. Update the
+House Plan integration and restart HA if requested. Another device's image or
+an unsupported format never supplies guessed coordinates.
+
 Live position needs finite `vacuum_position` or `robot_position` coordinates.
 Xiaomi Cloud Map Extractor, Tasshack dreame-vacuum and Valetudo-like cameras are
 supported; Roomba's string `position` is not. **Live position** reports source,
 integration, health, position, rooms, path and map ID. A source belonging to
 the same device is selected deterministically; an unrelated XCME camera must be
-chosen explicitly through **All cameras**. A saved source is pinned and is not
+chosen explicitly through **All cameras and maps**. A saved source is pinned and is not
 silently replaced when it is disabled, missing, unavailable or unreadable.
 
 Open the device's **Vacuum** section. **Source and status** shows the current

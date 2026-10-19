@@ -169,6 +169,7 @@ export function planVacuumFit(
   vacuum: MarkerVacuumCfg | null | undefined,
   opts: {
     routeId?: string; source: string; mapId: string; dockSpace: string; rooms: VacRoom[];
+    mapBounds?: [number, number, number, number];
     viewBoxOf: (spaceId: string) => [number, number, number, number] | null;
   },
 ): VacuumFitPlan | null {
@@ -180,7 +181,13 @@ export function planVacuumFit(
   const viewBox = opts.viewBoxOf(space);
   if (!viewBox) return null;
   const stored = normalizeRouteMatrix(route ? route.calibration : vacuum?.calibration?.[opts.mapId]);
-  const params = (stored && fitFromMatrix(stored)) || initialFit(opts.rooms, viewBox);
+  let params = (stored && fitFromMatrix(stored)) || initialFit(opts.rooms, viewBox);
+  if (!stored && opts.mapBounds) {
+    const [x, y, width, height] = opts.mapBounds;
+    const scale = Math.min(viewBox[2], viewBox[3]) * .6 / Math.max(width, height);
+    params = { ox: viewBox[0] + viewBox[2] / 2 - (x + width / 2) * scale,
+      oy: viewBox[1] + viewBox[3] / 2 - (y + height / 2) * scale, s: scale, rot: 0, mir: false };
+  }
   return { space, routeId: route?.id || '', params };
 }
 

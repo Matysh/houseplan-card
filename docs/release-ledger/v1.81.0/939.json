@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 939,
+  "baseStable": "v1.81.0",
+  "category": "major",
+  "rationale": "Adds the official Ecovacs image family to live vacuum tracking and complete server path recording, including a new safe image-only manual alignment surface. This family was unsupported in v1.81.0; it is not a repair of an intermediate beta implementation.",
+  "summary": {
+    "ru": "Позиция и маршрут Ecovacs на готовом плане, с ручной подгонкой карты пола.",
+    "en": "Ecovacs position and native paths on an existing plan, with manual floor-map alignment."
+  }
+}

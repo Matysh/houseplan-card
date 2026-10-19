@@ -16,6 +16,7 @@ import math
 import time
 import uuid
 from collections.abc import Callable
+from types import SimpleNamespace
 from typing import Any
 
 from homeassistant.core import HomeAssistant, callback
@@ -24,6 +25,7 @@ from homeassistant.helpers.event import async_call_later, async_track_state_chan
 from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN
+from .vacuum_ecovacs_reader import EcovacsReader, automatic_ecovacs_source, ecovacs_pair
 from .vacuum_path_collector import PathCollector, PathContext
 from .vacuum_paths import (
     MAX_ENTRY_BYTES,
@@ -503,6 +505,7 @@ class TrailRecorder:
         self._unsub_fire: Callable[[], None] | None = None
         self._spaces: dict[str, dict[str, Any]] = {}
         self.collector = PathCollector(hass, self._accept_path, self._path_reason)
+        self.ecovacs = EcovacsReader(hass, self._ecovacs_changed)
 
     async def async_setup(self) -> None:
         stored = await self.store.async_load() or {}
@@ -538,6 +541,8 @@ class TrailRecorder:
                     continue
                 marker_id = str(m.get("id"))
                 vac = self._vacuum_entity(m)
+                if not src and vac:
+                    src = automatic_ecovacs_source(self.hass, vac)
                 if vac:
                     policy_markers.add(marker_id)
                     changed |= self.book.configure_policy(marker_id, vac, v.get("new_run_after_dock") is True)
@@ -567,6 +572,7 @@ class TrailRecorder:
             self.pairs = pairs
             self.routes_by_marker = routes_by_marker
             self.explicit_route_markers = explicit_route_markers
+            self.ecovacs.refresh(pairs)
             self._resubscribe()
             # A run already in progress (HA restarted mid-cleanup, or the user
             # just finished calibrating) must start recording NOW, not at the
@@ -578,10 +584,38 @@ class TrailRecorder:
             contexts = self._path_contexts()
             self.collector.refresh(contexts)
             for context in contexts:
-                state = self.hass.states.get(context.source)
+                state = self._source_state(context.source)
                 if state and "path" in state.attributes:
                     self.collector.observe(context, event=False, attribute_path=state.attributes["path"])
             self._handle_sample_change(changed, now)
+
+    def _source_state(self, source: str) -> Any:
+        """A private projection, never a write to HA's entity state machine."""
+        state = self.hass.states.get(source)
+        attrs = self.ecovacs.telemetry(source)
+        return SimpleNamespace(state=state.state, attributes={**state.attributes, **attrs},
+                               last_updated=state.last_updated) if state and attrs else state
+
+    def _ecovacs_changed(self, source: str) -> None:
+        if self._closed:
+            return
+        now = time.time()
+        changed = self._sample(source, now)
+        contexts = self._path_contexts()
+        self.collector.refresh(contexts)
+        attrs = self.ecovacs.telemetry(source)
+        for context in contexts:
+            if context.source != source:
+                continue
+            if attrs is not None:
+                self.collector.observe(context, attribute_path=attrs["path"])
+            else:
+                lease = self.ecovacs.sources.get(source)
+                if lease and lease.reason:
+                    self._path_reason(context, lease.reason)
+        # A changed live position must notify View even when native geometry is
+        # identical; it must not force a redundant trail Store write.
+        self._handle_sample_change(True, now, persist=changed)
 
     def _source_failure_reason(self, source: str) -> str | None:
         """Classify only refresh-time health evidence.
@@ -792,6 +826,7 @@ class TrailRecorder:
         # not re-subscribe after this cleanup has already run.
         self._closed = True
         self.collector.close()
+        self.ecovacs.close()
         if self._unsub_fire:
             self._unsub_fire()
             self._unsub_fire = None
@@ -836,10 +871,14 @@ class TrailRecorder:
         for marker, vac in self.pairs.get(src) or ():
             st_vac = self.hass.states.get(vac)
             registry = er.async_get(self.hass)
+            entry = registry.async_get(src) if registry is not None and hasattr(registry, "async_get") else None
+            if src.startswith("image.") and getattr(entry, "platform", None) == "ecovacs" \
+                    and not ecovacs_pair(self.hass, src, vac):
+                continue
             vac_entry = registry.async_get(vac) if registry is not None and hasattr(registry, "async_get") else None
             if getattr(vac_entry, "disabled_by", None) is not None:
                 st_vac = None
-            st_src = self.hass.states.get(src)
+            st_src = self._source_state(src)
             native = self._native_channel(src, st_src, vac)
             validity = self.collector.channel_validity(src, vac, st_src.attributes.get("path") if st_src else None)
             owner = None
@@ -929,6 +968,9 @@ class TrailRecorder:
         """Capability, not a guessed job or an empty-path inference."""
         if state is None or state.state in ("unknown", "unavailable"):
             return False
+        ecovacs = self.ecovacs.sources.get(source)
+        if ecovacs is not None:
+            return ecovacs.value is not None
         if isinstance(state.attributes.get("path"), (list, tuple, dict)):
             return self.collector.channel_validity(source, vacuum, state.attributes["path"]) is not False
         registry = er.async_get(self.hass)
@@ -941,7 +983,7 @@ class TrailRecorder:
         routes = self.routes_by_marker.get(marker) or []
         observed = {}
         for source in {str(route["source"]) for route in routes if route.get("source")}:
-            state = self.hass.states.get(source)
+            state = self._source_state(source)
             if state is not None and state.state not in ("unknown", "unavailable") \
                     and self._source_failure_reason(source) is None:
                 observed[source] = resolve_map_id(state.attributes, vac_attrs)
@@ -981,10 +1023,12 @@ class TrailRecorder:
         contexts: list[PathContext] = []
         registry = er.async_get(self.hass)
         for src, pairs in self.pairs.items():
-            st_src = self.hass.states.get(src)
+            st_src = self._source_state(src)
             entry = registry.async_get(src) if registry is not None and hasattr(registry, "async_get") else None
             platform = getattr(entry, "platform", None)
             for vac in sorted({v for _, v in pairs}):
+                if src.startswith("image.") and platform == "ecovacs" and not ecovacs_pair(self.hass, src, vac):
+                    continue
                 st_vac = self.hass.states.get(vac)
                 vac_entry = registry.async_get(vac) if registry is not None and hasattr(registry, "async_get") else None
                 available = bool(st_src and st_src.state not in ("unknown", "unavailable")
@@ -1063,19 +1107,21 @@ class TrailRecorder:
         changed = False
         for src, pair_list in self.pairs.items():
             if eid == src or any(eid == vac for _, vac in pair_list):
+                self.ecovacs.observe(src)
                 changed |= self._sample(src, now)
         for context in self._path_contexts():
             if eid == context.source or eid == context.vacuum:
-                state = self.hass.states.get(context.source)
+                state = self._source_state(context.source)
                 attrs = state.attributes if state else {}
                 raw_path = attrs.get("path") if "path" in attrs else None
                 self.collector.observe(context, attribute_path=raw_path)
         self._handle_sample_change(changed, now)
 
-    def _handle_sample_change(self, changed: bool, now: float) -> None:
+    def _handle_sample_change(self, changed: bool, now: float, *, persist: bool = True) -> None:
         """Persist and announce one logical sampling pass when it changed."""
         if changed:
-            self._schedule_save()
+            if persist:
+                self._schedule_save()
             if now - self._last_fire >= FIRE_THROTTLE_S:
                 if self._unsub_fire:
                     self._unsub_fire()

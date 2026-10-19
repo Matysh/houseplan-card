@@ -274,10 +274,12 @@ def async_register(hass: HomeAssistant) -> None:
     """Register the WS commands."""
     from .radar_websocket import async_register as async_register_radar
     from .zigbee_websocket import async_register as async_register_zigbee
+    from .vacuum_ecovacs_websocket import async_register as async_register_ecovacs
 
     websocket_api.async_register_command(hass, ws_layout_get)
     websocket_api.async_register_command(hass, ws_trail_get)
     websocket_api.async_register_command(hass, ws_trail_delete)
+    async_register_ecovacs(hass)
     websocket_api.async_register_command(hass, ws_layout_set)
     websocket_api.async_register_command(hass, ws_geometry_repair)
     websocket_api.async_register_command(hass, ws_layout_update)
@@ -2886,7 +2888,8 @@ async def ws_trail_get(hass: HomeAssistant, connection: websocket_api.ActiveConn
     """Current + previous runs and raw coordinates, without source entity ids."""
     rec = hass.data.get(DOMAIN, {}).get("trail_recorder")
     connection.send_result(
-        msg["id"], {"trail_format": 2, "trails": _public_trails(rec.book.data) if rec else {}}
+        msg["id"], {"trail_format": 2, "trails": _public_trails(rec.book.data) if rec else {},
+                    "vacuum_source_format": 1, "vacuum_sources": rec.ecovacs.public() if rec else {}}
     )
 
 

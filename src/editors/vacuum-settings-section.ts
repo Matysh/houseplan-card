@@ -10,6 +10,7 @@ import {renderVacuumPathDiagnostics} from './vacuum-path-diagnostics';
 import {field,formCard,subsection,toggleRow} from './form-kit';
 import {settingsCopy} from './settings-copy';
 import {saveVacuumDockRestart,vacuumDockRestartPending} from '../vacuum-dock-restart-write';
+import {ecovacsSourceState,ecovacsSourceAllowed} from '../vacuum-ecovacs-client';
 
 export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:NonNullable<HouseplanEditorRuntime['host']['_markerDialog']>,toolsT:(key:ToolsI18nKey)=>string):TemplateResult|typeof nothing {
     const {st}=settingsCopy(runtime.host);
@@ -21,8 +22,12 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
     const resolution = runtime.host._vacSourceResolution(dev, includeAllCameras);
     const src = resolution.entityId;
     const selected = resolution.candidates.find((candidate) => candidate.entityId === src) || null;
-    const tele = src ? readVacTelemetry(runtime.host.hass?.states[src]?.attributes) : null;
-    const canUseSource = v.live !== false
+    const allowed = !src || ecovacsSourceAllowed(runtime.host._planHass, src,
+      dev.primary?.startsWith('vacuum.') ? dev.primary : (dev.entities || []).find(id => id.startsWith('vacuum.')) || null);
+    const tele = src && allowed ? readVacTelemetry(runtime.host._planHass?.states[src]?.attributes) : null;
+    const ecovacs = src?.startsWith('image.') && selected?.platform === 'ecovacs'
+      ? ecovacsSourceState(runtime.host, runtime.host.hass, src) : null;
+    const canUseSource = v.live !== false && allowed
       && (resolution.status === 'ok' || resolution.status === 'unsupported');
     const planRooms = runtime._vacPlanRoomAnchors(dev.space);
     const roomMatches = tele
@@ -45,7 +50,7 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
     const primaryCandidates = resolution.candidates.filter((candidate) =>
       sameDevice.has(candidate.entityId) || candidate.entityId === v.source);
     const globalCandidates = includeAllCameras
-      ? resolution.candidates.filter((candidate) => candidate.entityId.startsWith('camera.')
+      ? resolution.candidates.filter((candidate) => (candidate.entityId.startsWith('camera.') || candidate.entityId.startsWith('image.'))
         && !primaryCandidates.some((entry) => entry.entityId === candidate.entityId))
       : [];
     const capability = (candidate: VacSourceCandidate) => [
@@ -80,7 +85,7 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
             total: String(tele?.rooms.length || 0), matched: String(roomMatches),
             readiness: runtime.host._t(roomMatches >= 3 ? 'vac.autocal_ready' : 'vac.autocal_not_ready'),
           })}</b></div>
-          <div><span>${runtime.host._t('vac.diag_path')}</span><b>${tele?.path.length ? runtime.host._t('common.yes') : runtime.host._t('common.no')}</b></div>
+          <div><span>${runtime.host._t('vac.diag_path')}</span><b>${tele?.nativePath || tele?.path.length ? runtime.host._t('common.yes') : runtime.host._t('common.no')}</b></div>
           ${renderVacuumPathDiagnostics(runtime.host, dev)}
           <div><span>${runtime.host._t('vac.diag_map')}</span><b>${tele?.mapId ?? 'default'}</b></div>
         </div>`;
@@ -102,6 +107,10 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
   - path
   - map_name</pre>
         </div>` : nothing}
+        ${ecovacs ? html`<div class="rhint" data-hp="ecovacs-source-hint">${runtime.host._t(
+          !allowed ? 'vac.ecovacs_wrong_device' : !ecovacs.supported ? 'vac.ecovacs_update_backend'
+            : ecovacs.frame?.reason ? 'vac.ecovacs_unsupported'
+              : !tele && v.live !== false ? 'vac.ecovacs_waiting' : 'vac.ecovacs_manual_hint')}</div>` : nothing}
         <details class="vacpicker" data-dev-id=${dev.id}>
           <summary class="btn ghostbtn">${runtime.host._t('vac.choose_source')}<hp-help instant .text=${toolsT('marker.vacuum_source_help')} .ariaLabel=${st('dialog.help_for',{name:runtime.host._t('vac.choose_source')})} @click=${(e:Event)=>{e.preventDefault();e.stopPropagation();}}></hp-help></summary>
           <div class="vacsource-list">
@@ -128,7 +137,7 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
             </details>
           </div>
         </details>
-        ${tele ? html`
+        ${tele || ecovacs ? html`
           ${toggleRow({id:'marker-vacuum-live',title:runtime.host._t('vac.live'),help:help('marker.vacuum_live_help',runtime.host._t('vac.live')),checked:v.live!==false,onChange:on=>setVac({live:on?null:false})})}
           ${field({label:runtime.host._t('vac.trail'),help:html`<hp-help instant data-help="vacuum-trail" .text=${toolsT('marker.vacuum_trail_help')} .ariaLabel=${st('dialog.help_for',{name:runtime.host._t('vac.trail')})}></hp-help>`,control:html`<hp-settings-select><select class="areasel"
             @change=${(e: Event) => setVac({ trail_mode: (e.target as HTMLSelectElement).value, trail: null })}>
@@ -146,7 +155,7 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
           }})}
         <div class="vacbtns hpf-actions">
           ${tierA ? html`<button class="btn" ?disabled=${runtime.host._markerDialog?.busy} @click=${() => runtime._vacAutoCalibrate(dev)}>${runtime.host._t('vac.autocal')}</button>` : nothing}
-          ${canUseSource
+          ${canUseSource && !!tele
             ? html`<button class="btn ghostbtn" ?disabled=${runtime.host._markerDialog?.busy} @click=${() => runtime._vacStartFit(dev)}>${runtime.host._t('vac.fit')}</button>`
             : nothing}
           <span class="hpf-button-help"><a class="btn ghostbtn" href="https://github.com/Matysh/houseplan-card/blob/main/docs/VACUUM.md"

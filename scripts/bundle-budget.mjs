@@ -410,7 +410,10 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // 320000 B budget and 2000 B band; do not move forbidden-entry guards to lazy code.
 // #898, owner decision 2026-10-14: every ceiling with less than 10 % headroom is raised by 10 % (rounded up).
 // 309892 -> 340882 B; the band and the warning threshold stay put.
-export const INITIAL_VIEW_GZIP_CEILING = 323_767;
+// #939: matched Windows source builds: base 325049, Ecovacs 326735 (+1686).
+// Carry only this feature's delta onto the reference; the inherited 1282-B
+// gap, absolute wall and 2000-B band are unchanged. Preview UI stays lazy.
+export const INITIAL_VIEW_GZIP_CEILING = 325_453;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не

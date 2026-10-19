@@ -77,6 +77,33 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id:'ecovacs-svg-resource-limit-939',
+    guard:'node scripts/backend-test-guard.mjs resource_limits tests_backend/test_vacuum_ecovacs.py',
+    because:'#939 AC5: the real over-limit payload must be rejected as limited before XML parsing; no temporary test limit is allowed.',
+    patches:[{file:'custom_components/houseplan/vacuum_ecovacs.py',
+      find:'    if len(payload) > MAX_SVG_BYTES:',
+      replace:'    if len(payload) > MAX_SVG_BYTES and False:',
+    }],
+  },
+  {
+    id:'ecovacs-old-map-answer-939',
+    guard:'node scripts/backend-test-guard.mjs map_switch_during_read tests_backend/test_ha_vacuum_ecovacs.py',
+    because:'#939 AC5: an in-flight image from the old map must never become a newly accepted frame after its HA source changes map.',
+    patches:[{file:'custom_components/houseplan/vacuum_ecovacs_reader.py',
+      find:'            and self._identity(lease) == identity',
+      replace:'            and identity is not None',
+    }],
+  },
+  {
+    id:'ecovacs-raster-invisible-939',
+    guard:'node demo/smoke_vacuum_ecovacs.mjs',
+    because:'#939 AC2: real screenshot pixels must contain the translucent floor image, not just an image element or four handles.',
+    patches:[{file:'src/editors/vacuum-fit-overlay.ts',
+      find:'width=${width} height=${height} opacity="0.45"',
+      replace:'width=${width} height=${height} opacity="0"',
+    }],
+  },
+  {
     id:'modal-toast-below-top-layer-956',
     guard:'node demo/smoke_modal_toast_956.mjs',
     because:'#956 AC1: only genuine HA/native browser modal paint can prove that error lettering is visible; DOM presence and root z-index are insufficient. Independent foreground ink pixels expose routing below the modal.',

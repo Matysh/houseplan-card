@@ -6,6 +6,8 @@
     "additionsAreCompatible": true
   },
   "hooks": {
+    "vacuum-map-preview": { "elements": ["image"], "since": "1.82.0", "audience": ["test"] },
+    "ecovacs-source-hint": { "elements": ["div"], "since": "1.82.0", "audience": ["test"] },
     "properties-panel": { "elements": ["aside"], "since": "1.82.0", "audience": ["styling", "test"] },
     "device-context-menu": { "elements": ["div"], "since": "1.82.0", "audience": ["test"] },
     "device-copy": { "elements": ["button"], "since": "1.82.0", "audience": ["test"] },

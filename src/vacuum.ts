@@ -8,6 +8,7 @@
  */
 
 import { normalizeVacuumGeometry, simplifyOrderedPath, VAC_RAW_MAX_POINTS, VAC_RAW_MAX_SEGMENTS } from './vacuum-path-geometry';
+import { vacuumMapBounds, type VacuumMapBounds } from './vacuum-ecovacs-client';
 
 export type Affine = [number, number, number, number, number, number];
 export type Pt = [number, number];
@@ -87,6 +88,8 @@ export interface VacTelemetry {
   path: VacPath;          // integration-provided drawable subpaths, vacuum coords
   rooms: VacRoom[];       // for auto-calibration; empty when unknown
   mapId: string;          // multi-floor robots: one calibration per map
+  mapBounds?: VacuumMapBounds;
+  nativePath?: boolean;
 }
 
 const num = (v: unknown): number | null => {
@@ -340,8 +343,10 @@ export function readVacTelemetry(attrs: Record<string, any> | null | undefined):
     }
   }
   const mapId = vacMapIdFromAttrs(attrs);
-  if (!pos && !rooms.length && !path.length) return null;
-  return { pos, path, rooms, mapId };
+  const mapBounds = vacuumMapBounds(attrs.houseplan_map_bounds);
+  if (!pos && !rooms.length && !path.length && !mapBounds) return null;
+  return { pos, path, rooms, mapId, ...(mapBounds ? { mapBounds } : {}),
+    ...(attrs.houseplan_native_path === true ? { nativePath: true } : {}) };
 }
 
 /** Attribute sets that mark an entity as a live-position source. */
@@ -437,7 +442,8 @@ export function parseVacSourceCandidate(
   const platform = registryEntry?.platform != null ? String(registryEntry.platform) : null;
   const hasPosition = !!pointOf(attrs.vacuum_position ?? attrs.robot_position);
   const hasRooms = !!(attrs.rooms && typeof attrs.rooms === 'object');
-  const hasPath = normalizeVacPath(attrs.path?.path ?? attrs.path?.points ?? attrs.path).length > 0;
+  const hasPath = normalizeVacPath(attrs.path?.path ?? attrs.path?.points ?? attrs.path).length > 0
+    || attrs.houseplan_native_path === true;
   const hasMapId = [attrs.map_name, attrs.current_map, attrs.map_index, attrs.selected_map]
     .some((value) => value != null);
   const knownXcme = platform === 'xiaomi_cloud_map_extractor';
@@ -446,6 +452,7 @@ export function parseVacSourceCandidate(
   if (hasPosition) category = 'compatible';
   else if (knownXcme) category = 'known_xcme_incomplete';
   else if (hasVacuumClue) category = 'partial';
+  else if (domain === 'image' && platform === 'ecovacs') category = 'partial';
   else if (domain === 'camera') category = 'camera';
   if (!category) return null;
   const score = hasPosition ? (domain === 'camera' ? 300 : 200)

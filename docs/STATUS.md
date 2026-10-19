@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Ecovacs (#939) reads a bounded, recognized official SVG through HA's public
+image API. Server-only numeric decoding feeds the existing recorder even with
+no open card; a writer-only sanitized PNG preview enables manual fit without
+room geometry. There is no auto-generation of House Plan walls or rooms.
+Source/map/reload ownership and one physical read lease apply across clients.
+
 Offline UI Lab (#964) is a separate development tool under `demo/ui-lab/`, with
 synthetic defaults, real pinned HA controls, local-only state and explicit
 private inputs. It neither replaces demo/CI nor ships the cosmetic prototype

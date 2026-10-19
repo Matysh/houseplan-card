@@ -4,6 +4,7 @@ import type { DevItem, Marker, ServerConfig } from './types';
 import { fitFromMatrix, type Affine, type FitParams } from './vacuum';
 import { writeVacuumMatrix } from './vacuum-route-edit';
 import type { OptimisticAttempt } from './serialized-write-queue';
+import type { VacuumMapPreview } from './vacuum-ecovacs-client';
 import { isGeometryCleanupRefusal, supersedeDeferredWrite, type ConfigAdoption, type DeferredConfigWrite } from './config-adoption';
 
 export type CalibrationProposal = {
@@ -23,6 +24,7 @@ export type VacuumFit = {
   source: string;
   mapId: string;
   routeId?: string;
+  preview?: VacuumMapPreview;
   p: FitParams;
   busy?: boolean;
   drag: null | {

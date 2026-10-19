@@ -35,6 +35,7 @@ or visible page. It never becomes a second camera or per-pointer Lit render.
 | Xiaomi Cloud Map Extractor | Yes, when the attributes below are enabled | Yes | Yes, including `path.path` subpaths | `map_name` when exposed | Usually explicit camera selection |
 | dreame-vacuum (Tasshack) | Yes | Yes; explicit room `x/y` is the anchor | Yes, through the supported ordinary-camera serializer below | Vacuum `selected_map` fallback | Automatic on the same HA device |
 | Valetudo camera conventions | Yes | Yes when room data is exposed | No | Often `default`; no stable multi-floor promise | Automatic on the same HA device |
+| Official Ecovacs, recognized SVG dialect (#939) | Yes, from SVG robot use | No room geometry; manual PNG fit | Yes, SVG linear trace | Image `map_name`, ordinary nullish fallback | Same-device `image.*`; explicit initial choice |
 | Roomba core `position` string | Not covered | No | No | — | not covered |
 
 For Xiaomi Cloud Map Extractor the camera must expose:
@@ -58,7 +59,62 @@ the selected entity, integration, status, position, room count, integration
 path and map ID. Automatic mode considers compatible entities attached to the
 same HA device. Candidate order cannot change the result; a compatible camera
 outranks a non-camera candidate. The collapsed **All cameras** section is
-scanned only when opened and is never used for automatic binding.
+scanned only when opened and is never used for automatic binding. Its label is
+now **All cameras and maps**, including registered Ecovacs image entities.
+
+### Official Ecovacs images (#939)
+
+The first verified family is X1 Omni / official HA Ecovacs 2026.10.2 /
+deebot-client 18.7.0. Other models work only when they expose the same recognized
+SVG dialect; compatibility with every Ecovacs model is not promised. A map and
+robot must be enabled Ecovacs registry entities on the same HA device. A
+different robot's image cannot supply coordinates even if another marker has
+already activated that image. Pins are preserved on unsupported/missing data.
+
+Select the robot's `image.*` in **Choose source**. Once current server telemetry
+arrives, **Fit manually** shows its translucent embedded floor PNG and four
+corner handles, without inventing room geometry from the rooms' names/IDs.
+Move, uniform resize, quarter-turn, mirror, Cancel and Save/Retry retain the
+ordinary calibration transaction. An in-flight preview belongs to the exact
+dialog, HA user/connection, source and map; a changed owner cannot open or save
+the stale fit. A changed map ID needs its own existing route/calibration.
+An older House Plan backend displays an update/restart hint. Unrecognized maps
+report unsupported data rather than drawing a guessed position.
+
+The backend uses HA's public Image API and one physical read per exact source,
+regardless of cards or markers. Event reads coalesce with a two-second minimum;
+while moving there is a ten-second reserve poll. After stopping, final checks
+are due at 0/15/45 seconds (subject to the minimum interval), bounded by sixty
+seconds, then polling stops. A ten-second timeout marks telemetry stale;
+errors back off 30/60/120/300 seconds. A timed-out/unloaded owner cannot release
+still-running physical work for another overlapping read or publish its answer.
+
+Robot use coordinates, viewBox, trace and PNG share SVG coordinates. The trace
+parser accepts compact absolute/relative `M/L/H/V`, preserves move gaps and
+revisits, and applies only its explicit scale transform. Absent trace in a
+recognized whole SVG means empty drawable geometry, not a failed read. Received
+point counts count decoded SVG vertices, not hidden upstream samples. Valid
+native empty replaces current geometry under the existing source-first policy;
+read errors retain the last native geometry with a reason, not sampled additions.
+The fixed House Plan dock never follows the robot. No job ID, heading, metric
+scale or architecture is inferred from a digest, a viewBox or raw-position API.
+
+Limits: SVG 8 MiB / 20,000 XML nodes / depth 32, 100,000 path vertices / 1,024
+fragments; preview PNG 2 MiB / 4,096 pixels per side / 16 million pixels. The
+pinned non-interlaced 8-bit PNG form is validated, including bounded decompression
+and CRCs, and metadata is removed. Unsupported preview does not destroy valid
+numeric telemetry. XML DTD/entities, event handlers, scripts, external resources
+and unsupported transforms are rejected. No raw SVG enters the browser.
+
+`houseplan/trail/get` adds `vacuum_source_format:1` and small `vacuum_sources`
+frames: exact source/robot, map/revision, position, bounds, native capability and
+reason. They contain no SVG, PNG, image tokens or URL. The ordinary subscription
+refreshes those frames; there is no client poll. `houseplan/vacuum/map_preview`
+requires current editing permission and an authoritative configured marker,
+source and map. Only that endpoint returns the sanitized PNG. Images/caches do
+not enter trail storage, config, backups or support reports. No storage version
+or user config migration is introduced. Auto-building House Plan from a robot
+map is outside this feature.
 
 Choosing a candidate stores `marker.vacuum.source`. A stored source is pinned:
 it is never silently replaced when it becomes missing, disabled, unavailable,

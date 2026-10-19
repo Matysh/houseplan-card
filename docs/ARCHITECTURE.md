@@ -686,6 +686,17 @@ normative limits: [`specs/485-radar-presence-stage1.md`](specs/485-radar-presenc
 
 ### Robot vacuums
 
+Official Ecovacs images (#939) add a separate bounded SVG decoder
+`vacuum_ecovacs.py` and HA reader `vacuum_ecovacs_reader.py`. The reader proves
+same-device registry identity, owns one HA-lifetime physical read per source,
+and projects coordinates/path privately into TrailRecorder; it never writes
+HA entity states. Existing native snapshot authority, route selection and Store
+remain unchanged. `vacuum-ecovacs-client.ts` receives small schema-1 source
+frames alongside format-2 trails and projects only exact current HA revisions.
+The writer-only map-preview websocket returns a sanitized embedded PNG, not
+the source SVG; lazy `editors/vacuum-image-fit.ts` fences async preview ownership
+and `vacuum-fit-overlay.ts` paints it in the existing affine/ACK transaction.
+
 `src/vacuum-routes.ts` is the only map-to-space authority (six fail-closed
 results, #162; mirrored byte-for-byte by `vacuum_routes.py`), `src/vacuum.ts`
 owns telemetry normalization, path arbitration and smoothing, and `trails.py`

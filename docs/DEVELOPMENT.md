@@ -1,5 +1,34 @@
 # Development and deployment
 
+## Ecovacs image bridge (#939)
+
+Use the public `homeassistant.components.image.async_get_image`, never a
+self-HTTP token URL, coordinator or vendor service. Decode the recognized
+deebot-client 18.7.0 SVG in the executor. Source and robot must be enabled
+Ecovacs registry entries on the same device; an invalid second marker cannot
+poison the legitimate source lease or borrow its geometry. Inactive sources
+have no continuing poll after their final checks; reload must not cancel an
+underlying physical read and start an overlapping replacement.
+
+`tests_backend/test_vacuum_ecovacs.py` uses synthetic renderer-shaped payloads;
+`test_ha_vacuum_ecovacs.py` exercises the real Image API, authenticated writer
+ACL, recorder/Store, coalescing, backoff, final checks and the shipped ten-second
+timeout. It requires the pinned Linux HA harness, not native Windows pytest.
+`node --test test/vacuum-ecovacs-client.test.mjs` follows test-build compilation.
+`node demo/smoke_vacuum_ecovacs.mjs` follows `npm run bundle:sync`: visible raster
+pixels, manual fit controls, Cancel, rejected Save/Retry, late preview and all
+four View/kiosk Flat/2.5D combinations. The synthetic fixture is not field
+evidence of update frequency on every Ecovacs model. No user's map is committed.
+
+Matched Windows/pinned Node builds at base `2e2830ca0` and the complete #939
+feature measure initial View 325049→326735 B gzip (+1686), total bundle
+3219833→3228965 B (+9132), host references 5891→5916 (+25). The references carry
+only those deltas: initial ceiling 323767→325453, bundle baseline
+3219838→3228970, hostRefs 5888→5913. Inherited gaps (1282 B, -5 B and +3 refs),
+all bands and the absolute View wall stay unchanged. The eager cost is the
+small frame validator/projection needed by ordinary View; SVG decoding and
+image bytes stay server-side, manual preview/fit controls remain editor-lazy.
+
 ## Offline UI Lab (#964)
 
 For fast interface iterations use the separate [UI Lab](../demo/ui-lab/README.md):

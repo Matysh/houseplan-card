@@ -89,6 +89,7 @@ import { DeviceHitController, deviceLayerMutated, observeDeviceHitGeometryScroll
 import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
 import { roomTempRangeFromDraft, type SpaceDialogState } from './space-dialog';
 import { mdiHomeCityOutline } from '@mdi/js';
+import { adoptEcovacsSources, projectEcovacsSources, ecovacsSourceAllowed } from './vacuum-ecovacs-client';
 import {
   Affine, applyAffine, readVacTelemetry, isVacMoving, vacTrailMode,
   vacMapIdFromAttrs, vacMapIdWithFallback, parseVacSourceCandidate, resolveVacSource,
@@ -4491,7 +4492,7 @@ export class HouseplanCard extends LitElement {
       // A read-only HA session may reject these; that must never roll the
       // accepted config back into the mandatory load catch.
       void hass.callWS({ type: 'houseplan/trail/get' })
-        .then((r: { trails?: unknown; trail_format?: number }) => { if (this.isConnected && this._read.isCurrent(loadClaim) && this.hass?.connection === hass.connection) { this._vacSrvTrails = vacuumTrailMaterial(r?.trails); this._vacTrailFormat = r?.trail_format === 2 ? 2 : 1; this.requestUpdate(); } })
+        .then((r: unknown) => { if (this.isConnected && this._read.isCurrent(loadClaim) && this.hass?.connection === hass.connection) this._adoptVacuumTrails(r, hass); })
         .catch(() => undefined);
       this._ensureLiveSyncSubscriptions();
     } catch (e) {
@@ -4595,11 +4596,7 @@ export class HouseplanCard extends LitElement {
       vacuumTrailRefresh(
         () => trailHass.callWS({ type: 'houseplan/trail/get' }),
         ownsContext,
-        (r: { trails?: unknown; trail_format?: number }) => {
-          this._vacSrvTrails = vacuumTrailMaterial(r?.trails);
-          this._vacTrailFormat = r?.trail_format === 2 ? 2 : 1;
-          this.requestUpdate();
-        },
+        (r: unknown) => this._adoptVacuumTrails(r, trailHass),
       ),
     );
     subscribe(
@@ -4715,7 +4712,7 @@ export class HouseplanCard extends LitElement {
     if (memo && memo.hass === this.hass && memo.sig === sig) {
       return memo.active;
     }
-    const active = activeRegistryHass(this.hass, snapshot, memo?.sig === sig && memo.active);
+    const active = projectEcovacsSources(this, activeRegistryHass(this.hass, snapshot, memo?.sig === sig && memo.active), this.hass);
     const full = fullRegistryHass(this.hass, snapshot);
     this._planHassMemo = { hass: this.hass, sig, active, full };
     return active;
@@ -11412,6 +11409,16 @@ export class HouseplanCard extends LitElement {
 
   // ---------------- live robot vacuums (docs/VACUUM.md) ----------------
 
+  private _adoptVacuumTrails(packet: unknown, context: Parameters<typeof adoptEcovacsSources>[2]): void {
+    const response = packet as { trails?: unknown; trail_format?: number } | null;
+    this._vacSrvTrails = vacuumTrailMaterial(response?.trails);
+    this._vacTrailFormat = response?.trail_format === 2 ? 2 : 1;
+    adoptEcovacsSources(this, packet, context);
+    this._planHassMemo = null;
+    this._vacTick();
+    this.requestUpdate();
+  }
+
   private _vacCandidateStatus(
     entityId: string, candidate: VacSourceCandidate | null, planHass = this._planHass,
   ): VacSourceStatus {
@@ -11428,8 +11435,9 @@ export class HouseplanCard extends LitElement {
   private _vacOpenAllCameras(d: DevItem): void {
     const registry = this._haRegistry.entities || {};
     const candidates: VacSourceCandidate[] = [];
-    for (const [entityId, state] of Object.entries<any>(this.hass?.states || {})) {
-      if (!entityId.startsWith('camera.')) continue;
+    for (const [entityId, state] of Object.entries<{ attributes?: Record<string, unknown> }>(this._planHass?.states || {})) {
+      if (!entityId.startsWith('camera.')
+        && !(entityId.startsWith('image.') && registry[entityId]?.platform === 'ecovacs')) continue;
       const candidate = parseVacSourceCandidate(entityId, state, registry[entityId]);
       if (candidate) candidates.push(candidate);
     }
@@ -11479,6 +11487,7 @@ export class HouseplanCard extends LitElement {
   private _vacSource(d: DevItem, planHass = this._planHass): string | null {
     if (d.marker?.vacuum?.live === false) return null;
     const resolution = this._vacSourceResolution(d, false, planHass);
+    if (resolution.entityId && !ecovacsSourceAllowed(planHass, resolution.entityId, this._vacEntity(d))) return null;
     // A disabled/unavailable/unverified source must never leak stale HA
     // attributes into plan overlays. `unsupported` remains usable because it
     // may still provide rooms/path for calibration and trail rendering.
@@ -11736,6 +11745,7 @@ export class HouseplanCard extends LitElement {
 
   /** The map id an exact source reports right now, or undefined if silent. */
   public _vacObservedMapId(d: DevItem, source: string, planHass = this._planHass): string | undefined {
+    if (!ecovacsSourceAllowed(planHass, source, this._vacEntity(d))) return undefined;
     const state = planHass?.states?.[source], status = this._vacCandidateStatus(source, null, planHass);
     if (!state || state.state === 'unknown' || state.state === 'unavailable'
       || (status !== 'ok' && status !== 'unsupported')) return undefined;
@@ -11752,7 +11762,7 @@ export class HouseplanCard extends LitElement {
   }
 
   /** «Подогнать вручную»: open the fit overlay and leave the dialog. */
-  private _vacStartFit(d: DevItem): void {
+  private _vacStartFit(d: DevItem): Promise<void> {
     return this._editorRuntimeOrThrow()._vacStartFit(d);
   }
 
