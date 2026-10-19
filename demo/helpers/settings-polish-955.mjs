@@ -6,12 +6,12 @@ import {installSettingsDeviceFixture,openSettingsDeviceDialog} from './settings-
 import {installSettingsSpaceFixture} from './settings-space-945-fixture.mjs';
 import {buttonPaint} from './button-paint.mjs';
 import {assertFreshDemoBundle} from '../bundle-freshness.mjs';
-import {checkAll,watchPage,finish} from '../serve.mjs';
+import {checkAll,watchPage} from '../serve.mjs';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 
 // Keep every interaction/viewport/theme assertion in one shared implementation.
-export async function runSettingsPolish955(defaultCases) {
+export async function runSettingsPolish955(defaultCases, finish) {
 const touch=process.argv.includes('--touch');
 const fast=process.argv.includes('--fast');
 const caseName=process.argv.find(a=>a.startsWith('--case='))?.slice(7);
