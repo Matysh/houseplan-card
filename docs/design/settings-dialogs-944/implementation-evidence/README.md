@@ -110,7 +110,7 @@ HA; 33 парных раздела галереи; наложение и кар�
 node demo/smoke_settings_polish_955.mjs
 node demo/smoke_settings_polish_room_sensor_955.mjs
 node demo/smoke_settings_polish_led_climate_955.mjs
-node demo/smoke_settings_polish_vacuum_radar_955.mjs
+node demo/smoke_settings_polish_radar_vacuum_955.mjs
 ```
 
 Существующий аргумент `--case=<name>` сохранён для диагностики одного случая;
