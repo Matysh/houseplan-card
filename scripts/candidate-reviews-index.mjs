@@ -48,7 +48,14 @@ export function candidateReviewsIndex({ cwd = process.cwd() } = {}) {
   try {
     checked('tar', ['-x', '-f', '-', '-C', temp], { input: archive });
     const output = join(temp, INDEX);
-    const env = process.platform === 'win32' ? { SystemRoot: process.env.SystemRoot } : {};
+    // libuv fills absent Windows required_vars from the parent. Supply every
+    // one explicitly so PATH/user/transport data cannot leak into the export.
+    // https://github.com/libuv/libuv/blob/v1.x/src/win/process.c#L47-L59
+    const env = process.platform === 'win32' ? {
+      SystemRoot: process.env.SystemRoot, WINDIR: process.env.SystemRoot,
+      TEMP: temp, HOMEDRIVE: '', HOMEPATH: '', LOGONSERVER: '', PATH: '',
+      SYSTEMDRIVE: '', USERDOMAIN: '', USERNAME: '', USERPROFILE: '',
+    } : {};
     const run = (extra = []) => checked(process.execPath, [
       '--permission', `--allow-fs-read=${temp}`, `--allow-fs-write=${output}`,
       join(temp, GENERATOR), '--dir=docs/reviews', ...extra,

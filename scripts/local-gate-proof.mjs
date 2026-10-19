@@ -6,16 +6,17 @@ import { resolve, join } from 'node:path';
 import { contentInputKey } from './content-inputs.mjs';
 import { artifactTree } from './frontend-proof.mjs';
 import { reusableFrontendInputs } from './frontend-units.mjs';
+import { localGateEnvironment } from './local-gate-environment.mjs';
 
 export function localGateKey(root, env = process.env) {
   // Each Windows -> WSL invocation gets a new interoperability socket. It is
   // transport identity, not an input of this Linux build/pure-unit group. All
   // actual tool/PATH/options and unknown user variables still invalidate it.
-  const environment = Object.fromEntries(Object.entries(env).filter(([k]) => !/^GIT_/.test(k) && k !== 'WSL_INTEROP').sort(([a], [b]) => a.localeCompare(b)));
+  const environment = localGateEnvironment(env);
   const envHash = createHash('sha256').update(JSON.stringify(environment)).digest('hex');
   return contentInputKey(root, 'frontend', { environment: { node: process.version, platform: process.platform, arch: process.arch, argv: process.execArgv, envHash },
     select: reader => reusableFrontendInputs(root, reader),
-    extra: ['scripts/gate-small.mjs', 'scripts/local-gate-proof.mjs', 'scripts/frontend-units.mjs', 'scripts/content-inputs.mjs'] });
+    extra: ['scripts/gate-small.mjs', 'scripts/local-gate-proof.mjs', 'scripts/local-gate-environment.mjs', 'scripts/frontend-units.mjs', 'scripts/content-inputs.mjs'] });
 }
 function directory(root) {
   const gitDir = execFileSync('git', ['-C', root, 'rev-parse', '--absolute-git-dir'], { encoding: 'utf8' }).trim();

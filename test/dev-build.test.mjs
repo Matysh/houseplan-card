@@ -13,6 +13,7 @@ import { tmpdir } from 'node:os';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import { runPosix, shellPath } from './helpers/posix-shell.mjs';
 
 import {
   DEV_BUILD_INTEGRATION, DEV_BUILD_LABEL, DEV_BUILD_MANIFEST, DEV_BUILD_MARKER, DEV_BUILD_TARGET,
@@ -132,14 +133,14 @@ test('#657 стенд: update-dev-bundle.sh ставит бандл dev-build п
     const stand = join(root, 'stand');
     git(root, 'clone', '-q', '-b', 'dev', origin, stand);
     writeFileSync(join(stand, DEV_BUILD_TARGET, 'stale-orphan.js'), 'left over');
-    const run = spawnSync('bash', [STAND, stand], { encoding: 'utf8', env: { ...process.env, ...ENV } });
+    const run = runPosix('bash', [shellPath(STAND), shellPath(stand)], { env: { ...process.env, ...ENV } });
     assert.equal(run.status, 0, run.stderr);
     assert.equal(readFileSync(join(stand, DEV_BUILD_TARGET, 'houseplan-card.js'), 'utf8'), 'fresh card');
     assert.equal(existsSync(join(stand, DEV_BUILD_TARGET, 'houseplan-assets/c-HASH.js')), true);
     assert.equal(existsSync(join(stand, DEV_BUILD_TARGET, 'stale-orphan.js')), false, 'каталог заменён целиком');
     assert.match(run.stdout, new RegExp(head.slice(0, 8)));
 
-    const reset = spawnSync('bash', [STAND, '--reset', stand], { encoding: 'utf8', env: { ...process.env, ...ENV } });
+    const reset = runPosix('bash', [shellPath(STAND), '--reset', shellPath(stand)], { env: { ...process.env, ...ENV } });
     assert.equal(reset.status, 0, reset.stderr);
     assert.equal(git(stand, 'status', '--porcelain'), '', 'до pull рабочая копия чистая');
     assert.equal(readFileSync(join(stand, DEV_BUILD_TARGET, 'houseplan-card.js'), 'utf8'), 'card of the last beta');

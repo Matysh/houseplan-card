@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 960,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Make native Windows gate shell and environment fixtures executable without weakening refusal, isolation or local receipt inputs; preserve pre-push destination refs across auth subprocesses. No product behavior changes."
+}

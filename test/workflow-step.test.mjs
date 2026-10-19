@@ -9,16 +9,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { findStep, runStep, runnerArgv, workflowSteps } from './helpers/workflow-step.mjs';
+import { posixCommand } from './helpers/posix-shell.mjs';
 
 const WORKFLOWS = fileURLToPath(new URL('../.github/workflows/', import.meta.url));
 const TESTS = fileURLToPath(new URL('.', import.meta.url));
-const hasBash = () => process.platform !== 'win32' && spawnSync('bash', ['--version']).status === 0;
+const hasBash = () => spawnSync(posixCommand('bash'), ['--version']).status === 0;
 
 const WORKFLOW = [
   'name: x',
@@ -132,6 +133,21 @@ test('#766: каждый шаг каждого workflow разбирается �
   }
   // Свидетель разбора: тел `run:` — сотни, не ноль.
   assert.ok(runs > 150, `тел run: ${runs}`);
+});
+
+test('#960: real POSIX step reads paths with spaces, honors fixture PATH and propagates command refusal', t => {
+  const dir = mkdtempSync(join(tmpdir(), 'hp 960 shell '));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const data = join(dir, 'input file.txt');
+  writeFileSync(data, 'actual file bytes\n');
+  writeFileSync(join(dir, 'hp960-tool'), '#!/usr/bin/env bash\nprintf "fixture tool\\n"\n', { mode: 0o755 });
+  const options = { cwd: dir, prependPath: [dir], env: { ...process.env, DATA: data } };
+  const green = runStep({ shell: null }, 'cat "$DATA"\nhp960-tool\n', options);
+  assert.equal(green.status, 0, green.stderr);
+  assert.equal(green.stdout, 'actual file bytes\nfixture tool\n');
+  const red = runStep({ shell: null }, 'hp960-missing-command\necho must-not-run\n', options);
+  assert.equal(red.status, 127, red.stderr);
+  assert.equal(red.stdout, '');
 });
 
 /** Вызовы bash в тесте, которые исполняют тело своими флагами, а не обвязкой. */

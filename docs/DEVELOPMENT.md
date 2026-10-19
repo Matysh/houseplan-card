@@ -1868,9 +1868,12 @@ dist/test-build and the pure unit result for unchanged inputs, including dirty/
 untracked files, environment and policy; fresh groups and guards still execute.
 Receipts are invalidated before an attempt, sealed only after full success and
 unchanged inputs, expire after 24 hours and have no CI/review authority.
-Manual npm and pre-push use the same lifecycle entry; only Git's injected PATH
-prefix and WSL_INTEROP's per-invocation transport socket are normalized. User PATH,
-tool options and otherwise unknown environment variables still invalidate proof.
+Manual npm and pre-push use the same lifecycle entry. Git's injected exec-path
+prefix and WSL_INTEROP's per-invocation transport socket are normalized; Windows
+environment names compare without case (#960). User PATH, MSYS/tool options and
+otherwise unknown variables still invalidate proof. Git for Windows also adds
+shell search paths and MSYS metadata: that different environment conservatively
+runs the complete gate again instead of reusing a manual receipt.
 
 Night, merge-after-rebase and release readiness free the runner while pending.
 Completion/reconcile authenticate repository, source attempt/path, child SHA
@@ -1906,6 +1909,23 @@ release/publish-prerelease dispatch). Never clear a live claim to retry blindly.
   hook to avoid a duplicate build.
 
 ## Local Windows workstation
+
+Native workflow fixtures require Git for Windows (including Git Bash) and real
+`jq` on PATH (#960). Install jq once with `winget install --id jqlang.jq --exact
+--source winget`, then open a new terminal; this is the standalone upstream
+[Windows build](https://jqlang.org/download/). WSL's system32/bash.exe cannot
+execute files from a native Windows checkout. The fixture helper resolves Bash/sh
+from the active Git installation, keeps runner flags and script bytes unchanged,
+and gives explicit fixture tools precedence on PATH. It does not skip failed
+commands or replace jq. Shell interpolations use forward-slash paths; native
+Node still reads the same files. Existing native-Windows exclusions remain.
+
+Candidate reviews-index uses an explicit credential-free child environment.
+On Windows libuv fills absent required variables from the parent; empty PATH/user
+variables plus the export's own TEMP prevent that implicit inheritance. Only the
+Windows root remains necessary for Node; filesystem/process permissions still
+apply. Pre-push captures Git's ref stream before any child and isolates auth
+stdin, including when gh is a Windows executable reached through WSL interop.
 
 Sections resize smoke (#924) waits for the real mode-transition busy flag to
 clear before sampling steady geometry; it never waits for the asserted `auto`

@@ -218,9 +218,10 @@ ${readFileSync(usage, 'utf8')}`);
 // Заглушка набора: код выхода и журнал вызовов задаёт тест.
 const GATE_STUB = `import { appendFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { localGateEnvironment } from './local-gate-environment.mjs';
 const leaked = Object.keys(process.env).filter((key) => /^GIT_/i.test(key)).sort().join(',');
 if (process.env.HP_TEST_GATE_LOG) appendFileSync(process.env.HP_TEST_GATE_LOG, process.argv.slice(2).join(' ') + ' env:' + leaked + '\\n');
-if (process.env.HP_TEST_GATE_ENVS) appendFileSync(process.env.HP_TEST_GATE_ENVS, JSON.stringify(Object.fromEntries(Object.entries(process.env).map(([k,v]) => [k, createHash('sha256').update(v).digest('hex')]))) + '\\n');
+if (process.env.HP_TEST_GATE_ENVS) appendFileSync(process.env.HP_TEST_GATE_ENVS, JSON.stringify(Object.fromEntries(Object.entries(localGateEnvironment(process.env)).map(([k,v]) => [k, createHash('sha256').update(v).digest('hex')]))) + '\\n');
 process.exit(Number(process.env.HP_TEST_GATE_EXIT ?? 0));
 `;
 
@@ -230,11 +231,18 @@ test('настоящий .githooks/pre-push: красный gate:small оста�
   const dir = join(root, 'work');
   const origin = join(root, 'origin.git');
   const gateLog = join(root, 'gate.log');
+  const authInput = join(root, 'auth-stdin');
+  const bin = join(root, 'bin');
+  mkdirSync(bin);
+  // A subprocess may read until EOF, as Windows interop did in #957/#960.
+  // The hook must own the original ref stream before calling it, with no stdin
+  // passed to auth. Exit nonzero to keep this fixture entirely offline.
+  writeFileSync(join(bin, 'gh'), '#!/bin/sh\ncat > "$HP_TEST_AUTH_STDIN"\nexit 1\n', { mode: 0o755 });
   // gh без учётных данных: статус issue (п.8) проверяет CI, здесь он не нужен и
   // не должен ходить в сеть.
   // Свои GIT_* тест тоже не наследует: запущенный из хука (gate:small внутри
   // pre-push), он иначе писал бы в репозиторий хука, а не во временный.
-  const env = { ...gateEnv(process.env), GH_TOKEN: '', GITHUB_TOKEN: '', GH_CONFIG_DIR: join(root, 'gh'), HP_TEST_GATE_LOG: gateLog, HP_TEST_GATE_ENVS: join(root, 'envs.jsonl') };
+  const env = { ...gateEnv(process.env), PATH: `${bin}${delimiter}${process.env.PATH}`, GH_TOKEN: '', GITHUB_TOKEN: '', GH_CONFIG_DIR: join(root, 'gh'), HP_TEST_AUTH_STDIN: authInput, HP_TEST_GATE_LOG: gateLog, HP_TEST_GATE_ENVS: join(root, 'envs.jsonl') };
   delete env.HP_PREPUSH_GATE;
   const git = (...args) => {
     const r = spawnSync('git', ['-C', dir, ...args], { encoding: 'utf8', env });
@@ -265,6 +273,7 @@ test('настоящий .githooks/pre-push: красный gate:small оста�
     }
     chmodSync(join(dir, '.githooks/pre-push'), 0o755);
     write('scripts/gate-small.mjs', GATE_STUB);
+    write('scripts/local-gate-environment.mjs', readFileSync(join(REPO, 'scripts/local-gate-environment.mjs'), 'utf8'));
     write('package.json', JSON.stringify({ private: true, scripts: { 'gate:small': 'node scripts/gate-small.mjs' } }));
     commit('Base');
     git('remote', 'add', 'origin', origin);
@@ -279,6 +288,7 @@ test('настоящий .githooks/pre-push: красный gate:small оста�
     const red = push('issue/1-x', { HP_TEST_GATE_EXIT: '1' });
     assert.notEqual(red.status, 0, `красный набор пропустил push:\n${red.stderr}`);
     assert.match(red.stderr, /gate:small красный/);
+    assert.equal(readFileSync(authInput, 'utf8'), '', '#960: auth cannot consume the Git ref stream');
     assert.equal(remoteHas('issue/1-x'), false, 'ветка не должна была доехать');
     // Один прогон, от merge-base с origin/dev, и ни одной переменной git: хук
     // выставляет GIT_DIR, и без gateEnv юниты набора писали бы в этот репозиторий.
@@ -287,12 +297,19 @@ test('настоящий .githooks/pre-push: красный gate:small оста�
     const manual = spawnSync(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', 'gate:small', '--', `--base=${base}`],
       { cwd: dir, env: { ...env, HP_TEST_GATE_EXIT: '0' }, shell: process.platform === 'win32', encoding: 'utf8' });
     assert.equal(manual.status, 0, manual.stderr);
-    const green = push('issue/1-x', { HP_TEST_GATE_EXIT: '0' });
+    const green = push('HEAD:refs/heads/issue/1-x', { HP_TEST_GATE_EXIT: '0' });
     assert.equal(green.status, 0, green.stderr);
     assert.equal(remoteHas('issue/1-x'), true);
     assert.equal(gateCalls().length, 3);
     const samples = readFileSync(env.HP_TEST_GATE_ENVS, 'utf8').trim().split('\n').map(JSON.parse);
-    assert.deepEqual(samples[2], samples[1], '#954: manual npm and the real Git hook must present identical meaningful receipt environment');
+    if (process.platform === 'win32') {
+      // Git for Windows adds executable search paths and MSYS options. These
+      // are real tool inputs: retaining them means a conservative receipt miss,
+      // not a weaker proof made green by deleting arbitrary environment keys.
+      assert.notDeepEqual(samples[2], samples[1], '#960: changed Windows hook environment must invalidate the manual receipt');
+    } else {
+      assert.deepEqual(samples[2], samples[1], '#954: manual npm and the real Git hook must present identical meaningful receipt environment');
+    }
 
     write('scripts/y.mjs', 'export const y = 1;\n');
     commit('Add y\n\nIssue: #1\nUser-Visible: no');

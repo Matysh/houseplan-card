@@ -15,7 +15,7 @@ test('#845 real CI step executes both parities and propagates either failure',()
     +'if [ "$1" = "$HP_PARITY_FAIL" ]; then exit 19; fi\n',{mode:0o755});
   const check=(fail='',script=step.run)=>{
     writeFileSync(log,'');
-    const result=runStep(step,script,{cwd:dir,env:{...process.env,PATH:dir+':'+process.env.PATH,
+    const result=runStep(step,script,{cwd:dir,prependPath:[dir],env:{...process.env,
       HP_PARITY_LOG:log,HP_PARITY_FAIL:fail}});
     assert.equal(result.error,undefined);
     assert.equal(result.status,fail?19:0,result.stderr);

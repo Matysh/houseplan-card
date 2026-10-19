@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Native Windows gate fixtures (#960) execute Linux workflow shell bodies with
+Git Bash and real jq, preserving runner failure semantics. The credential-free
+candidate index prevents libuv's implicit Windows environment inheritance.
+Pre-push owns ref stdin before auth; receipt identity folds Windows key case
+but preserves tool/PATH differences, which may require a fresh hook gate.
+
 SPEC material retention (#957) preserves the original sealed commit/tree before
 document publication. Fresh delivery readers can fetch exact objects from
 immutable origin retention refs, including historical rescue refs; provenance

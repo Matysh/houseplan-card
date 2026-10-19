@@ -32,10 +32,10 @@
 // (потоковые `{…}`/`[…]`, якоря, кавычки на несколько строк), то он
 // отвергает с номером строки, а не угадывает.
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { posixCommand, runPosix, shellPath } from './posix-shell.mjs';
 
 /** Встроенные shell раннера; ключ — значение `shell:`. */
 export const RUNNER_SHELLS = Object.freeze({
@@ -261,15 +261,15 @@ export function stepCommand(step, script = step?.run) {
   const dir = mkdtempSync(join(tmpdir(), 'hp-step-'));
   const file = join(dir, step.shell === 'python' ? 'step.py' : 'step.sh');
   writeFileSync(file, script);
-  const [command, ...args] = runnerArgv(step.shell, file);
-  return { command, args, dir, file };
+  const [command, ...args] = runnerArgv(step.shell, shellPath(file));
+  return { command: posixCommand(command), args, dir, file };
 }
 
 /** Исполнить тело шага как раннер; результат — spawnSync. */
 export function runStep(step, script = step?.run, options = {}) {
   const { command, args, dir } = stepCommand(step, script);
   try {
-    return spawnSync(command, args, { encoding: 'utf8', ...options });
+    return runPosix(command, args, options);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

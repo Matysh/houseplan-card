@@ -77,7 +77,12 @@ test('#811 AC5: candidate environment excludes secrets and NODE_OPTIONS', (t) =>
   const repo = fixture(t, { source: generator({ before: `
 const forbidden = ${JSON.stringify(names)};
 if (forbidden.some(key => Object.hasOwn(process.env, key))) throw new Error('inherited secret or Node option');
-if (Object.keys(process.env).some(key => key !== 'SystemRoot')) throw new Error('unexpected inherited environment');
+const allowed = process.platform === 'win32' ? ['SYSTEMROOT', 'WINDIR', 'TEMP', 'HOMEDRIVE', 'HOMEPATH', 'LOGONSERVER', 'PATH', 'SYSTEMDRIVE', 'USERDOMAIN', 'USERNAME', 'USERPROFILE'] : [];
+if (Object.keys(process.env).some(key => !allowed.includes(key.toUpperCase()))) throw new Error('unexpected inherited environment');
+for (const key of ['HOMEDRIVE', 'HOMEPATH', 'LOGONSERVER', 'PATH', 'SYSTEMDRIVE', 'USERDOMAIN', 'USERNAME', 'USERPROFILE']) {
+  if (process.env[key]) throw new Error('Windows parent environment leaked: ' + key);
+}
+if (process.platform === 'win32' && process.env.TEMP !== process.cwd()) throw new Error('foreign temp directory');
 ` }) });
   const saved = new Map(names.map((name) => [name, process.env[name]]));
   try {

@@ -13,6 +13,7 @@ import { probeE2e } from '../scripts/e2e-gate.mjs';
 import { issueBodyDigest } from '../scripts/review-doc-guard.mjs';
 import { unitGroups, groupsAffectedBy } from '../scripts/unit-groups.mjs';
 import { findStep, runStep } from './helpers/workflow-step.mjs';
+import { shellPath } from './helpers/posix-shell.mjs';
 
 const root = new URL('..', import.meta.url);
 const a = 'a'.repeat(40), b = 'b'.repeat(40), c = 'c'.repeat(40), key = 'e'.repeat(64);
@@ -172,8 +173,8 @@ test('#856 actual completion runner refuses cancelled/foreign/failed-source even
   const step = findStep(wf, { name: 'Consume authenticated immutable continuation' });
   const execute = (source, event) => {
     writeFileSync(fixture, JSON.stringify({ parent: source, child: event, artifact }));
-    return runStep(step, step.run.replaceAll('${{ runner.temp }}/continuation-result', join(dir, 'result')), {
-      cwd: root, encoding: 'utf8', env: { ...process.env, PATH: bin + ':' + process.env.PATH,
+    return runStep(step, step.run.replaceAll('${{ runner.temp }}/continuation-result', shellPath(join(dir, 'result'))), {
+      cwd: root, encoding: 'utf8', prependPath: [bin], env: { ...process.env,
         REPO: repo, EVENT_ID: '30', FAKE_FIXTURE: fixture, FAKE_PENDING: pendingDir, FAKE_CALLS: calls,
         GH_TOKEN: 'fixture-token', HP_PROCESS_TOKEN: 'fixture-token', GITHUB_STEP_SUMMARY: join(dir, 'summary') },
     });

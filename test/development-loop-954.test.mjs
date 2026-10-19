@@ -15,13 +15,14 @@ import { directTransfer, discoverTransfers, transferProtocolMatches } from '../s
 import { runnerEnvironment, matchingProducerEnvironment, producerEnvironments } from '../scripts/ci-job-environment.mjs';
 import { buildCiProof, JOB_RULES, requiredCheckIds, resolveJobRules } from '../scripts/ci-proof.mjs';
 import { selectSmokes } from '../scripts/smoke-select.mjs';
+import { localGateEnvironment } from '../scripts/local-gate-environment.mjs';
 
 function fixture(t) {
   const root = mkdtempSync(join(tmpdir(), 'hp-954-fixture-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const put = (p, s) => { mkdirSync(join(root, p, '..'), { recursive: true }); writeFileSync(join(root, p), s); };
   const git = (...args) => execFileSync('git', ['-C', root, '-c', 'user.name=t', '-c', 'user.email=t@x', ...args], { encoding: 'utf8' }).trim();
-  for (const p of ['frontend-proof', 'frontend-units', 'content-inputs', 'check-inputs', 'local-gate-proof', 'gate-small', 'ci-proof', 'ci-job-environment']) put(`scripts/${p}.mjs`, '// fixture protocol');
+  for (const p of ['frontend-proof', 'frontend-units', 'content-inputs', 'check-inputs', 'local-gate-proof', 'local-gate-environment', 'gate-small', 'ci-proof', 'ci-job-environment']) put(`scripts/${p}.mjs`, '// fixture protocol');
   put('src/a.ts', 'export const a=1;'); put('test/a.test.mjs', 'import "../test-build/a.js";'); put('.nvmrc', '22'); put('.python-version', '3.14'); put('package.json', '{}');
   put('.github/workflows/validate.yml', 'name: fixture');
   git('init', '-q'); git('add', '.'); git('commit', '-qm', 'source');
@@ -61,6 +62,9 @@ test('#954 local receipt restores actual bytes across a commit, refuses data/env
   assert.equal(restoreLocalGate(root, key, 2000), true);
   assert.equal(readFileSync(join(root, 'dist/a.js'), 'utf8'), 'built');
   assert.notEqual(localGateKey(root, { ...environment, arbitraryOption: 'changed' }), key);
+  for (const changed of [{ PATH: 'another tool directory' }, { MSYS: 'disable_pcon' }, { MSYSTEM: 'MINGW64' }]) {
+    assert.notEqual(localGateKey(root, { ...environment, ...changed }), key, 'tool/search options cannot reuse the earlier PASS');
+  }
   assert.equal(localGateKey(root, { ...environment, WSL_INTEROP: '/run/WSL/another-interop' }), key,
     'WSL transport session is not a Linux build or pure-unit input');
   put('src/new.ts', 'untracked executable'); assert.notEqual(localGateKey(root, environment), key);
@@ -75,6 +79,17 @@ test('#954 local receipt restores actual bytes across a commit, refuses data/env
   assert.equal(restoreLocalGate(root, key, 2000), false);
   sealLocalGate(root, key, 1000); invalidateLocalGate(root);
   assert.equal(restoreLocalGate(root, key, 2000), false, 'a failed new attempt cannot expose the old PASS');
+});
+
+test('#960 receipt environment follows Windows key casing while preserving tool options and unknown inputs', () => {
+  const env = { Path: 'C:/tools;C:/Windows', ComSpec: 'C:/Windows/cmd.exe', custom: 'one' };
+  const key = localGateEnvironment(env, 'win32');
+  assert.deepEqual(localGateEnvironment({ PATH: env.Path, COMSPEC: env.ComSpec, CUSTOM: 'one' }, 'win32'), key);
+  for (const extra of [{ custom: 'two' }, { MSYS: 'disable_pcon' }, { MSYSTEM: 'MINGW64' }, { PATH: 'C:/other' }]) {
+    assert.notDeepEqual(localGateEnvironment({ ...key, ...Object.fromEntries(Object.entries(extra).map(([k,v]) => [k.toUpperCase(),v])) }, 'win32'), key);
+  }
+  assert.throws(() => localGateEnvironment({ Path: 'one', PATH: 'two' }, 'win32'), /conflicting environment key/);
+  assert.notDeepEqual(localGateEnvironment({ Path: 'one' }, 'linux'), localGateEnvironment({ PATH: 'one' }, 'linux'));
 });
 
 test('#954 real schema2 producer survives docs-only SHA, rejects source/env/foreign repository or tampered bytes', t => {

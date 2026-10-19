@@ -8,6 +8,7 @@ import { NOT_RUN_CONFLICT_RE, NOT_RUN_VALIDATE_RE, returnSignal } from '../scrip
 import { reviewRoute, routeComment } from '../scripts/process-track.mjs';
 import { OUTCOME_SIGNS, PUSH_REFUSAL, commentFor, describePushRefusal } from '../scripts/merge-candidate.mjs';
 import { findStep, runStep, workflowSteps } from './helpers/workflow-step.mjs';
+import { shellPath } from './helpers/posix-shell.mjs';
 
 // #496: ожидание детерминировано — одинаковое состояние молчит, смена метки и
 // события конвейера доставляются один раз, ничего не пишется.
@@ -51,10 +52,10 @@ function notRunComment(name, env) {
       .replace(/\$\{\{\s*github\.server_url\s*\}\}/g, 'https://github.com')
       .replace(/\$\{\{\s*github\.repository\s*\}\}/g, 'o/r')
       .replace(/\$\{\{\s*github\.run_id\s*\}\}/g, '1')
-      .replaceAll('/tmp/', `${root}/`);
+      .replaceAll('/tmp/', `${shellPath(root)}/`);
     assert.ok(!script.includes('${{'), `${name}: выражение раннера осталось без подстановки`);
     const capture = join(root, 'comment.md');
-    const r = runStep(step, script, { env: { PATH: `${bin}:${process.env.PATH}`, CAPTURE: capture, NUM: '7', ...env } });
+    const r = runStep(step, script, { prependPath: [bin], env: { ...process.env, CAPTURE: capture, NUM: '7', ...env } });
     assert.equal(r.status, 0, `${name}: ${r.stderr}`);
     return readFileSync(capture, 'utf8');
   } finally {

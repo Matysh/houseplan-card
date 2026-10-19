@@ -9,6 +9,10 @@ set -eu
 # Git feeds one line per ref on stdin:
 #   <local ref> <local sha> <remote ref> <remote sha>
 
+# Own stdin before any subprocess (notably Windows gh via WSL interop) can
+# consume it. Both gates must inspect these same original destination refs.
+refs=$(cat)
+
 repo_root=$(git rev-parse --show-toplevel)
 gate="$repo_root/scripts/process-gate.mjs"
 zero=$(printf '%040d' 0)
@@ -23,7 +27,7 @@ fi
 # hook people disable. Offline the checks that need no network still run, and the
 # strict pass happens in CI, where gh is always present.
 issues_flag=""
-if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
+if command -v gh >/dev/null 2>&1 && gh auth status </dev/null >/dev/null 2>&1; then
   issues_flag="--issues"
 else
   echo "process-gate: gh недоступен, проверка статуса issue пропущена — её выполнит CI" >&2
@@ -31,9 +35,6 @@ fi
 
 status=0
 gate_status=0
-
-# Строки git читаются один раз: их нужно и локальному набору, и процессному гейту.
-refs=$(cat)
 
 while read -r local_ref local_sha remote_ref remote_sha; do
   # An empty line (nothing on stdin) and deleting a remote branch push nothing to examine.
