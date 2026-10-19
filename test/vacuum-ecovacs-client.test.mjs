@@ -129,9 +129,17 @@ test('async preview belongs to the exact dialog, connection, user, source and ma
     if (s.runtime.host._markerDialog === s.dialog) assert.equal(s.dialog.busy, false);
   }
   const s = setup(), pending = loadVacuumImageFit(s.runtime, s.dev, 'image.map', 'floor');
-  s.resolve(preview); assert.deepEqual(await pending, preview);
+  s.resolve(preview); const loaded = await pending; assert.deepEqual(loaded, preview);
   assert.equal(s.dialog.busy, false);
-  s.runtime.host._vacFit = { markerId: 'm', source: 'image.map', mapId: 'floor', preview };
+  s.runtime.host._vacFit = { markerId: 'm', source: 'image.map', mapId: 'floor', preview: loaded };
+  assert.equal(vacuumImageFitCurrent(s.runtime), true);
+  const originalHass = s.runtime.host.hass;
+  s.runtime.host.hass = { ...originalHass, user: { id: 'other' } };
+  assert.equal(vacuumImageFitCurrent(s.runtime), false);
+  s.runtime.host.hass = originalHass;
+  s.dev.space = 'another-floor';
+  assert.equal(vacuumImageFitCurrent(s.runtime), false);
+  delete s.dev.space;
   assert.equal(vacuumImageFitCurrent(s.runtime), true);
   s.runtime.host._vacObservedMapId = () => 'other';
   assert.equal(vacuumImageFitCurrent(s.runtime), false);
