@@ -904,7 +904,9 @@ jobs:
     needs: [changes, frontend, reuse]
     if: needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.smoke != 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    # Leave room for the complete native-UI shard; each smoke still has its
+    # independent 180s timeout and every failed scenario fails the whole shard.
+    timeout-minutes: 25
     outputs:
       environment_1: ${{ steps.environment.outputs.environment_1 }}
       environment_2: ${{ steps.environment.outputs.environment_2 }}

@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 966,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Allow the full native browser smoke shard to complete after observed cancellation at the outer job window. Preserve the three shards, complete scenario loop, per-smoke 180s timeout, failure aggregation and all semantic/performance thresholds. No product behavior changes."
+}
