@@ -71,7 +71,8 @@ const state = () => page.evaluate(() => {
   const button = icon => card.renderRoot.querySelector('[data-hp="toolbar"] ha-icon[icon="' + icon + '"]')?.closest('button');
   return { mode: card._mode, tool: card._tool, space: card._space, undo: history.undoName, redo: history.redoName,
     size: history.size, path: card._path.length, chainRedo: card._wallChainRedo.length,
-    undoTitle: button('mdi:undo-variant')?.title ?? null, redoTitle: button('mdi:redo-variant')?.title ?? null };
+    undoTitle: button('mdi:undo-variant')?.getAttribute('aria-label') ?? null,
+    redoTitle: button('mdi:redo-variant')?.getAttribute('aria-label') ?? null };
 });
 const toasts = () => page.evaluate(() => window.__toasts.splice(0));
 /** Let the 500 ms deferred Save fire (or prove that nothing was armed). */
@@ -143,7 +144,8 @@ await pin('f2');
 const redoWrites = log.length;
 await key('Control+Shift+z'); await key('Control+y');
 now = await state();
-check('AC1 Redo (Ctrl+Shift+Z, Ctrl+Y): refused, kept, floor stays', [await toasts(), now.size, now.redo, now.space], [[PINNED], 0, SEGMENT, 'f2']);
+// Each shortcut is a separate occurrence, re-announced by #956 on the one notice.
+check('AC1 Redo (Ctrl+Shift+Z, Ctrl+Y): refused, kept, floor stays', [await toasts(), now.size, now.redo, now.space], [[PINNED, PINNED], 0, SEGMENT, 'f2']);
 await saved();
 check('AC1 Redo: nothing written', log.length - redoWrites, 0);
 await pin(null);
