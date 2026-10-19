@@ -122,6 +122,36 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id:'properties-reserves-empty-height-963',
+    guard:'node demo/smoke_ui_polish_963.mjs',
+    because:'#963 AC1: only mounted child layout after the 240ms transition exposes empty reserved section space across wall/column selections.',
+    patches:[{file:'src/editors/properties/styles.ts',find:'.hp-prop-group { min-height: 0; height: auto; }',replace:'.hp-prop-group { min-height: 220px; height: auto; }'}],
+  },
+  {
+    id:'editor-tooltip-opens-without-delay-963',
+    guard:'node demo/smoke_ui_polish_963.mjs',
+    because:'#963 AC4: trusted hover and actual popover visibility before/after 300ms prove the user-visible delay through the lazy import and browser timer.',
+    patches:[{file:'src/chrome-tooltip.ts',find:'    },300);',replace:'    },0);'}],
+  },
+  {
+    id:'editor-tooltip-survives-context-963',
+    guard:'node demo/smoke_ui_polish_963.mjs',
+    because:'#963 AC4/9: an armed header tooltip remains mounted across editor changes; only the actual card lifecycle cancels that delayed top-layer bubble.',
+    patches:[{file:'src/chrome-tooltip-lazy.ts',find:'  hostUpdated(): void { if (this.owner && !this.valid()) this.hide(); }',replace:'  hostUpdated(): void {}'}],
+  },
+  {
+    id:'background-stairs-stay-opaque-963',
+    guard:'node demo/smoke_ui_polish_963.mjs',
+    because:'#963 AC8: the computed standalone stair layer must join architecture opacity only in Background and restore in View; source data/geometry do not reveal the painted cascade.',
+    patches:[{file:'src/styles/plan.styles.ts',find:'.stage .hp-stairs-layer {',replace:'.stage .hp-stairs-layer-disabled {'}],
+  },
+  {
+    id:'column-rotation-target-shrunk-963',
+    guard:'node demo/smoke_ui_polish_963.mjs',
+    because:'#963 AC8: the transparent native target must remain larger than the bead and accept trusted rotation from outside the painted bead at two zooms.',
+    patches:[{file:'src/houseplan-editor-runtime.ts',find:'r=${rotationRadius}\n',replace:'r=${rotationRadius/4}\n'}],
+  },
+  {
     id:'vacuum-dock-toggle-shows-unaccepted-value-940',
     guard:'node demo/smoke_vacuum_dock_restart.mjs',
     because:'#940 AC13: trusted Space changes the native checked property before Lit renders; only the mounted control under a held/refused HA ACK exposes the unaccepted visual value.',
@@ -147,9 +177,9 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id:'settings-save-lettering-sits-low-955',
-    guard:'node demo/smoke_settings_polish_955.mjs --fast',
-    because:'#955: the visible lettering inside Save must be optically centred, not merely its font line box; a PNG ink-bound witness checks the actual button.',
-    patches:[{file:'src/styles/settings-dialogs.styles.ts',find:'transform:translateY(-.15em);',replace:'transform:none;'}],
+    guard:'node demo/smoke_ui_polish_963_reference.mjs',
+    because:'#963 supersedes the #955 optical shift with the approved unshifted footer. Paired PNG ink bounds use the frozen original prototype, genuine HA and identical four-language/two-theme rendering.',
+    patches:[{file:'src/styles/settings-dialogs.styles.ts',find:'.hpf-footer .hpf-save-label{transform:none;align-self:center;}',replace:'.hpf-footer .hpf-save-label{transform:translateY(.15em);align-self:center;}'}],
   },
   {
     id:'settings-help-orphans-last-line-955',

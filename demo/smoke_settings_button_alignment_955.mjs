@@ -5,7 +5,7 @@ import {installHpTestOnPage} from './helpers/hp-test.mjs';
 import {ensureHarnessEditorRuntime} from './editor-runtime-compat.mjs';
 import {installSettingsDeviceFixture,openSettingsDeviceDialog} from './helpers/settings-device-947-fixture.mjs';
 import {installSettingsSpaceFixture} from './helpers/settings-space-945-fixture.mjs';
-import {buttonPaint} from './helpers/button-paint.mjs';
+import {buttonPaint,approvedSavePaint} from './helpers/button-paint.mjs';
 import {assertFreshDemoBundle} from './bundle-freshness.mjs';
 import {checkAll,watchPage,finish} from './serve.mjs';
 import {fileURLToPath} from 'node:url';
@@ -40,7 +40,7 @@ for(const language of ['ru','en','de','fr']){
    for(const width of [1280,390]){
     await p.setViewportSize({width,height:900});await p.waitForTimeout(250);
     const paint=await buttonPaint(save),id=`${language}_${kind}_${width}`;
-    out[id]=paint.height>=44&&paint.textInkOffset!==null&&Math.abs(paint.textInkOffset)<=1.25&&Math.abs(paint.iconOffset)<=.25;
+    out[id]=approvedSavePaint(paint);
     if(!out[id])console.log('Save paint',id,paint);
    }
    await d.locator('.hpf-footer [data-hp=dialog-cancel]').click();

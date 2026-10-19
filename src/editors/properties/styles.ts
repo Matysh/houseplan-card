@@ -1,11 +1,12 @@
-import { css } from 'lit';
+import { css, unsafeCSS } from 'lit';
+import { settingsActionTransition, settingsActionHover } from '../../styles/settings-action.styles';
 
 /** Local geometry and palette from the immutable #931 approved reference. */
-export const propertiesStyles = css`
+export const propertiesStyles = unsafeCSS(css`
   ha-card[data-hp-properties-wide] { position: relative; }
   ha-card[data-hp-properties-wide] > .stage,
   ha-card[data-hp-properties-wide] .editorchrome { width: calc(100% - 360px); }
-  ha-card[data-hp-properties-wide] > .hdr > .head { padding-block: 8px; }
+  ha-card[data-hp-properties-wide] > .hdr > .head { width: calc(100% - 360px); box-sizing: border-box; padding-block: 8px; }
   .hp-properties {
     color-scheme: light dark;
     --prop-ink: light-dark(#28343c,var(--primary-text-color,#e6edf3));
@@ -26,7 +27,12 @@ export const propertiesStyles = css`
     --prop-disabled-label: light-dark(#aab3ba,var(--disabled-text-color,#5c7184));
     --prop-read-border: light-dark(#e7ecef,var(--divider-color,#2b3d4f));
     --prop-hint: light-dark(#8a969e,var(--secondary-text-color,#8aa0b3));
-    position: absolute; right: 0; top: calc(var(--hp-properties-top, 64px) - 1px); bottom: 0;
+    --hpf-surface: var(--card-background-color,#fff);
+    --hpf-accent: var(--hp-accent,var(--primary-color));
+    --hpf-tint: color-mix(in srgb,var(--hpf-accent) 10%,var(--hpf-surface));
+    --hpf-tint-line: color-mix(in srgb,var(--hpf-accent) 38%,var(--hpf-surface));
+    --hpf-danger: var(--error-color,#db543d);
+    position: absolute; right: 0; top: 0; bottom: 0;
     width: 360px; min-height: 0; display: flex; flex-direction: column;
     border-left: 1px solid var(--prop-border); background: var(--prop-bg);
     color: var(--prop-ink); font: 14px/1.4 'Segoe UI', Arial, sans-serif;
@@ -38,24 +44,15 @@ export const propertiesStyles = css`
   .hp-properties button, .hp-properties input, .hp-properties textarea, .hp-properties select { font-family: inherit; }
   .hp-properties button { cursor: pointer; }
   .hp-prop-icon { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
-  .hp-prop-head { flex: 0 0 auto; min-height: 108px; padding: 17px 23px 15px; }
-  .hp-prop-heading { display: flex; align-items: center; justify-content: space-between; gap: 5px; font-size: 13px; font-weight: 600; margin-bottom: 13px; }
-  .hp-prop-clear { border: 0; background: none; color: var(--prop-muted); font-size: 11px; font-weight: 400; display: flex; align-items: center; gap: 5px; padding: 0; }
-  .hp-prop-clear .hp-prop-icon { width: 13px; height: 13px; }
+  .hp-prop-head { flex: 0 0 auto; padding: 17px 23px 15px; }
   .hp-prop-title { font-size: 17px; font-weight: 600; letter-spacing: -.25px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .hp-prop-meta { font-size: 12px; color: var(--prop-muted); margin-top: 3px; overflow-wrap: anywhere; }
   .hp-prop-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
   .hp-prop-group { position: relative; padding: 16px 23px; border-top: 1px solid var(--prop-line); display: flex; flex-direction: column; }
-  .hp-prop-group.position, .hp-prop-group.geometry { min-height: 200px; }
-  .hp-prop-group.long-hint { min-height:232px; }
-  .hp-prop-group.appearance { min-height: 206px; }
-  .hp-prop-group.features { min-height: 180px; }
-  .hp-prop-group.collapsed { min-height: 0; }
+  .hp-prop-group { min-height: 0; height: auto; }
+  .hp-prop-group > * { flex-shrink: 0; }
   .hp-prop-group-title { display: flex; align-items: center; gap: 7px; margin: 0 0 12px; padding: 0; border: 0; background: none; color: inherit; font-size: 13px; line-height:1.4; font-weight: 650; letter-spacing: .08px; text-align: left; }
   .hp-prop-group-title .hp-prop-icon { width: 15px; height: 15px; color: var(--prop-muted); }
-  .hp-prop-group-title > span { margin-left: auto; font-size: 13px; font-weight: 400; color: var(--prop-muted); }
-  .hp-prop-group.collapsed .hp-prop-group-title { margin: 0; }
-  .hp-prop-group.collapsed .hp-prop-group-title > span { transform: rotate(180deg); }
   .hp-prop-fields { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); column-gap: 12px; row-gap: 10px; }
   .hp-prop-field { min-width: 0; }
   .hp-prop-field.wide { grid-column: 1 / -1; }
@@ -75,10 +72,7 @@ export const propertiesStyles = css`
   .hp-prop-field.disabled > label { color: var(--prop-disabled-label); }
   .hp-prop-field.disabled .hp-prop-control { background: var(--prop-disabled); border-color: var(--prop-disabled-line); color: var(--prop-disabled-ink); }
   .hp-prop-field.disabled .hp-prop-unit { color: inherit; }
-  .hp-prop-hint { font-size: 11px; line-height: 1.45; color: var(--prop-hint); margin: 0; }
-  .hp-prop-group.position > .hp-prop-hint, .hp-prop-group.geometry > .hp-prop-hint { position: absolute; bottom: 11px; left: 23px; right: 23px; }
-  .hp-prop-group.position > .hp-prop-hint { bottom: 12px; }
-  .hp-prop-group:has(.hp-prop-error) > .hp-prop-hint { position: static; padding-top: 12px; }
+  .hp-prop-group > .hp-prop-hint { position: static; font-size: 11px; line-height: 1.45; color: var(--prop-hint); margin: 12px 0 0; padding: 0; overflow-wrap: anywhere; }
   .hp-properties .hpf-colorfield { padding: 0 8px; gap: 5px; font-size: 12px; }
   .hp-properties .hpf-colorfield hp-color-opacity { width: 15px; height: 15px; flex: 0 0 15px; }
   .hp-properties .hpf-colorfield .hpf-hex { font-size: 12px; font-family: inherit; padding: 0; color: var(--prop-value); }
@@ -97,7 +91,7 @@ export const propertiesStyles = css`
   .hp-prop-choices > button { flex: 1; min-width: 0; overflow-wrap: anywhere; }
   .hp-prop-settings { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 39px; width: 100%; padding: 5px; border: 1px solid light-dark(#a4ccd2,var(--prop-accent)); background: light-dark(#f5fbfb,var(--prop-soft)); color: light-dark(#187e8d,var(--prop-accent)); border-radius: 5px; font-size: 12px; font-weight: 550; }
   .hp-prop-settings .hp-prop-icon { width: 16px; height: 16px; }
-  .hp-prop-group.features .hp-prop-hint { margin: 10px 0 0; padding: 0; text-align: justify; text-align-last: left; }
+  .hp-prop-group.features .hp-prop-hint { text-align: justify; text-align-last: left; }
   .hp-prop-variable { display: flex; align-items: center; justify-content: center; gap: 8px; height: 33px; min-height: 0; margin-top: 9px; color: var(--prop-accent); }
   .hp-prop-variable .hp-prop-icon { width: 16px; height: 16px; }
   .hp-prop-foot { flex: 0 0 auto; min-height: 122px; padding: 15px 23px; border-top: 1px solid var(--prop-line); background: var(--prop-bg); }
@@ -106,13 +100,13 @@ export const propertiesStyles = css`
   .hp-prop-action-wrap { position: relative; min-width: 0; }
   .hp-prop-action { width: 100%; min-height: 36px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--prop-border); border-radius: 5px; color: var(--prop-ro); background: var(--prop-bg); padding: 3px 6px; font-size: 12px; line-height: 1.25; }
   .hp-prop-action .hp-prop-icon { width: 16px; height: 16px; }
-  .hp-prop-action.delete { color: #a25757; border-color: #e6d9d9; }
-  .hp-prop-action.display_device { color:#187e8d; border-color:#a4ccd2; background:#f5fbfb; }
+  .hp-prop-action.delete { color: #a25757; border-color: var(--hpf-danger); }
   .hp-prop-action.display_device span { white-space:pre-line; }
   .hp-prop-action[aria-disabled='true'] { color: var(--prop-disabled-ink); background: var(--prop-disabled); border-color: var(--prop-line); cursor: default; }
-  .hp-prop-tooltip { display: none; position: absolute; left: 0; right: 0; bottom: calc(100% + 12px); padding: 12px 14px; background: #344750; color: #fff; border-radius: 6px; font-size: 12px; line-height: 1.55; white-space: pre-line; box-shadow: 0 4px 15px #263e4320; z-index: 2; }
-  .hp-prop-tooltip::after { content: ''; position: absolute; bottom: -6px; left: 50%; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid #344750; transform: translateX(-50%); }
-  .hp-prop-action-wrap:hover .hp-prop-tooltip, .hp-prop-action-wrap:focus-within .hp-prop-tooltip { display: block; }
+  .hp-prop-action.delete[aria-disabled='true'] { border-color: color-mix(in srgb,var(--hpf-danger) 35%,var(--prop-bg)); }
+  .hp-properties .hp-prop-action.delete:not(:disabled):not([aria-disabled='true']):is(:hover,:focus-visible) {
+    background: color-mix(in srgb,var(--hpf-danger) 9%,var(--hpf-surface)); color: var(--hpf-danger); border-color: var(--hpf-danger);
+  }
   .hp-prop-help { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; color: var(--prop-muted); font-size: 10px; }
   .hp-prop-help > div { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
   .hp-prop-help kbd { border: 1px solid var(--prop-line); border-radius: 3px; background: var(--prop-input); font: 10px/1.4 inherit; padding: 0 5px; }
@@ -121,9 +115,10 @@ export const propertiesStyles = css`
   .hp-properties button:focus-visible, .hp-properties select:focus-visible { outline: 2px solid var(--prop-accent); outline-offset: 2px; }
   .hp-prop-selection { stroke: #078a9e; fill: none; pointer-events: none; vector-effect: non-scaling-stroke; stroke-width: 1.7px; }
   .hp-prop-selection * { pointer-events: none; vector-effect: non-scaling-stroke; }
-  ha-card[data-hp-properties-wide] .dtframe:not(.hp-stair-frame) .dtbox,
-  ha-card[data-hp-properties-wide] .dtframe:not(.hp-stair-frame) .dtstem,
-  ha-card[data-hp-properties-wide] .dtframe:not(.hp-stair-frame) .dtknob,
+  @media(prefers-reduced-motion:reduce) { .hp-properties button { transition: none; } }
+  ha-card[data-hp-properties-wide] .dtframe:not(.hp-stair-frame):not(.hp-column-frame) .dtbox,
+  ha-card[data-hp-properties-wide] .dtframe:not(.hp-stair-frame):not(.hp-column-frame) .dtstem,
+  ha-card[data-hp-properties-wide] .dtframe:not(.hp-stair-frame):not(.hp-column-frame) .dtknob,
   ha-card[data-hp-properties-wide] .bdframe .bdbox,
   ha-card[data-hp-properties-wide] .bdframe .dtstem,
   ha-card[data-hp-properties-wide] .bdframe .bdknob { opacity: 0; }
@@ -149,4 +144,8 @@ export const propertiesStyles = css`
   .hp-prop-variable-footer .insert { background: #078a9e; color: #fff; border-color: #078a9e; }
   .hp-prop-variable-footer .hp-prop-icon { width:16px; height:16px; }
   .hp-prop-variable-footer button:disabled { opacity: .45; cursor: default; }
-`;
+`.cssText + `
+.hp-properties button{${settingsActionTransition}}
+.hp-properties button:not(:disabled):not([aria-disabled="true"]):is(:hover,:focus-visible){${settingsActionHover}}
+@media(prefers-reduced-motion:reduce){.hp-properties button{transition:none}}
+`);

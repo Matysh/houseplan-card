@@ -189,7 +189,13 @@ export function installHpTest(selectors) {
 
     async setTool(tool) {
       const c = need('setTool');
-      const button = find(c, 'tool', { tool });
+      let button = find(c, 'tool', { tool });
+      const group = ['merge','split','resize','delete-room'].includes(tool) ? 'rooms'
+        : ['line','rect','ellipse'].includes(tool) ? 'shapes' : null;
+      if (!button && group) {
+        const launcher = find(c, 'tool', { tool: group });
+        if (launcher) { launcher.click(); await settled(); button = find(c, 'tool', { tool }); }
+      }
       if (!button) throw missing('setTool', c, 'tool', { tool });
       button.click();
       await settled();

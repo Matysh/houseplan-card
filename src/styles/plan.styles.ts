@@ -26,6 +26,7 @@ export const planStyles = css`
     .stage.mode-decor {
       background: #ffffff;
     }
+    .stage.mode-plan.markup.tool-select { cursor: pointer; }
     .stage {
       position: relative;
       width: 100%;
@@ -1086,11 +1087,14 @@ export const planStyles = css`
     .dtframe .dt-ew { cursor: ew-resize; }
     .dtframe .dt-ns { cursor: ns-resize; }
     .dtfurnitureframe .dtrot,
-    .hp-stair-frame .dtrot {
+    .hp-stair-frame .dtrot,
+    .hp-column-frame .dtrot {
       cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M18.4 7.2A8 8 0 1 0 20 12' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='m15.5 3.8 3.2 3.5-4.6.8' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 12 12, grab;
     }
     .dtfurnitureframe .dtrot:active,
-    .hp-stair-frame .dtrot:active { cursor: grabbing; }
+    .hp-stair-frame .dtrot:active,
+    .hp-column-frame .dtrot:active { cursor: grabbing; }
+    .hp-column-frame { --hp-accent: #078a9e; }
     .dtframe .dtendpoint { cursor: crosshair; }
     .bdframe .dtrot { cursor: grab; }
     .dtarea {
@@ -1129,7 +1133,8 @@ export const planStyles = css`
     .stage .wallbodies,
     .stage .opening-tunnels,
     .stage .glow-pools-frame,
-    .stage .zero-walls {
+    .stage .zero-walls,
+    .stage .hp-stairs-layer {
       opacity: var(--hp-mode-architecture-opacity, 1);
     }
     .opening-preview {
@@ -1605,14 +1610,6 @@ export const planStyles = css`
       stroke: #24262d;
       stroke-width: 1.5;
       vector-effect: non-scaling-stroke;
-    }
-    .physical-chrome .rotate-handle {
-      fill: #24262d;
-      stroke: #ffc14d;
-      stroke-width: 2.5;
-      vector-effect: non-scaling-stroke;
-      pointer-events: all;
-      cursor: crosshair;
     }
     .drawwall.invalid input { border-color: var(--error-color, #db4437); }
     .drawwall .rangehint { margin-inline-start: 4px; font-size: 0.78em; opacity: 0.72; }

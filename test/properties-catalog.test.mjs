@@ -53,6 +53,8 @@ test('#931 every contour coordinate is readonly and independent free ends use st
   const contour=model({kind:'contour',value:space.wall_segments[0]});
   assert.ok(contour.groups[0].fields.every(f=>f.mode==='readonly'));
   assert.equal(fields(contour).cm.mode,undefined); assert.equal(contour.actions[0].disabled,'contour_delete_reason');
+  assert.equal(contour.groups.length,3,'#963 shared-node note must not leave an empty fourth section');
+  assert.equal(contour.groups[0].hint,'contour_context');
   const wall=model({kind:'partition',value:space.partitions[0]});
   assert.ok(wall.groups[0].fields.every(f=>!f.mode)); assert.equal(fields(wall).length.mode,'readonly');
   assert.equal(wall.groups.length,3,'no empty type/features group');
@@ -68,7 +70,12 @@ test('#931 column, stair and all opening variants expose only applicable control
     assert.equal(f.x.mode,'readonly'); assert.equal(f.gap.label,'wall_end_gap'); assert.equal(f.length.max,600);
     assert.equal(f.angle.mode,'readonly'); assert.equal(f.invert,undefined);
     if(type==='passage') assert.equal(m.groups.length,3);
-    else if(type==='gate') assert.equal(f.flip_h,undefined);
+    else if(type==='gate'||type==='window') {
+      assert.equal(f.flip_h,undefined);
+      assert.equal(f.flip_v.control,'choices');
+      assert.equal(f.flip_v.label,'opening_side');
+      assert.deepEqual(f.flip_v.options,[{value:'false',label:'A'},{value:'true',label:'B'}]);
+    }
     else assert.ok(f.flip_h);
   }
   const straight=fields(model({kind:'stair',value:space.stairs[0]}));

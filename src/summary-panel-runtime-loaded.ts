@@ -307,12 +307,12 @@ export class LoadedSummaryPanelRuntime {
         aria-label=${this.t('summary.controls')} @click=${stop} @dblclick=${stop}
         @pointerdown=${stop} @pointerup=${stop} @pointermove=${stop} @wheel=${stop}>
       <button type="button" @click=${() => void this.openDialog()}
-        title=${this.t('summary.settings')} aria-label=${this.t('summary.settings')}>
+          data-hp-tooltip=${this.t('summary.settings')} aria-label=${this.t('summary.settings')}>
         ${summaryIcon('settings')}
       </button>
       <button type="button" class=${this.local.show ? 'on' : ''}
         aria-pressed=${this.local.show ? 'true' : 'false'}
-        title=${toggleTitle} aria-label=${toggleTitle}
+          data-hp-tooltip=${toggleTitle} aria-label=${toggleTitle}
         @click=${() => this.saveLocal({ show: !this.local.show })}>
         ${summaryIcon('sidebar')}
       </button>

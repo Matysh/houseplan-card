@@ -25,6 +25,7 @@ import { canonicalPropertiesAngle } from './transforms';
 import { openingPropertiesCore, selectOpeningReference, refreshOpeningReference, propertiesOpeningSides } from './physical';
 import { patchPropertiesTarget, propertiesColor } from './patch';
 import { renderPropertiesSelection } from './selection';
+import { PropertiesSectionMotion } from './section-motion';
 import type { DevItem, Marker, ServerConfig } from '../../types';
 import type { HouseplanEditorRuntime } from '../../houseplan-editor-runtime';
 
@@ -61,7 +62,8 @@ export class PropertiesEditor {
   private handoff = false;
   private ratioLocked = true;
   private ratio: number | null = null;
-  private readonly collapsed = new Set<string>();
+  private readonly sectionMotion = new PropertiesSectionMotion();
+  private motionEpoch = 0;
   private textCaret = { start: 0, end: 0 };
   private variable: { identity: string; authority: object; original: string; start: number; end: number;
     entity: string; attribute: string; filter: string; open: boolean } | null = null;
@@ -137,6 +139,7 @@ export class PropertiesEditor {
     update();
   }
   dispose(): void {
+    this.motionEpoch++; this.sectionMotion.dispose();
     this.observer?.disconnect(); this.observed?.removeEventListener('pointerdown', this.pointerGuard, true);
     this.observer = null; this.observed = null; this.dimensionCache = null;
     this.selected = null; this.variable = null; this.fields.invalidate();
@@ -494,6 +497,11 @@ export class PropertiesEditor {
 
   render(): TemplateResult | typeof nothing {
     this.observe();
+    const motionEpoch = ++this.motionEpoch;
+    void this.host.updateComplete.then(() => {
+      if (motionEpoch === this.motionEpoch) this.sectionMotion.update(this.wide
+        ? this.host.renderRoot.querySelector<HTMLElement>('.hp-properties') : null);
+    });
     const owner = this.identity;
     if (this.selected && !owner) this.setSelection(null);
     this.fields.sync();
@@ -506,7 +514,6 @@ export class PropertiesEditor {
       && propertiesIdentityKey(this.identity) === propertiesIdentityKey(owner);
     const view = renderPropertiesSurface(model, {
       t: this.t, imperial: this.host._imperial, dark: this.host.hass?.themes?.darkMode, controller: this.fields, pickerLabels: this.host._colorPickerLabels,
-      collapsed: this.collapsed, toggleGroup: key => { this.collapsed.has(key) ? this.collapsed.delete(key) : this.collapsed.add(key); this.host.requestUpdate(); },
       clear: () => { if (current()) this.clear(); }, action: key => { if (current()) void this.fields.finishThen(() => this.action(key)); },
       edit: (field, raw, finish) => { if (current()) this.edit(field, raw, finish); },
       number: (field, value) => field.unit === 'cm' ? cmToField(value, this.host._imperial) : String(Number(value.toFixed(4))),

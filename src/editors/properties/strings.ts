@@ -9,7 +9,7 @@ const en = {
   point_a_x: 'Point A · X', point_a_y: 'Point A · Y', point_b_x: 'Point B · X', point_b_y: 'Point B · Y',
   wall_meta: '{space} · independent segment', decor_meta: 'Decor · {space}', contour_meta: 'Room outline · {space}',
   contour_named_meta: 'Outline of {room} · {space}',
-  contour_geometry_hint: 'Length and angle are calculated from points A and B.', contour_context: 'The points are shared with adjoining walls. Their positions change together.',
+  contour_geometry_hint: 'Length and angle are calculated from points A and B.', contour_context: 'Points A and B are the ends of this wall. Move their nodes on the plan: adjoining walls connected to them will move too.',
   door_features: 'Door', image_features: 'Image', backdrop_hint: 'Position of the floor image centre.',
   reset_hint: 'Restore the original position and size.', led_length: 'Strip length', led_position: 'Position is determined by the strip points.',
   led_device_hint: 'Displaying as an icon keeps the device and its settings.',
@@ -55,7 +55,7 @@ const ru: Record<Key, string> = {
   point_a_x: 'Точка A · X', point_a_y: 'Точка A · Y', point_b_x: 'Точка B · X', point_b_y: 'Точка B · Y',
   wall_meta: '{space} · отдельный участок', decor_meta: 'Декор · {space}', contour_meta: 'Контур комнаты · {space}',
   contour_named_meta: 'Контур «{room}» · {space}',
-  contour_geometry_hint: 'Длина и угол вычисляются по точкам A и B.', contour_context: 'Точки общие с соседними стенами. Их положение изменится вместе.',
+  contour_geometry_hint: 'Длина и угол вычисляются по точкам A и B.', contour_context: 'Точки A и B — концы выбранной стены. Перемещайте их узлы на плане: соединённые с ними соседние стены изменятся вместе.',
   door_features: 'Дверь', image_features: 'Изображение', backdrop_hint: 'Положение центра картинки плана.',
   reset_hint: 'Восстановить исходное положение и размер.', led_length: 'Длина ленты', led_position: 'Положение определяется точками ленты.',
   led_device_hint: 'При отображении значком устройство и его настройки сохраняются.',
@@ -95,7 +95,11 @@ const ru: Record<Key, string> = {
   text_placeholder: 'Текст на плане', variable_search: 'Поиск сущностей', none: '—',
 };
 export type PropertiesString = Key;
+const localized: Record<string, Partial<Record<Key,string>>> = {
+  de: { contour_context: 'A und B sind die Endpunkte der ausgewählten Wand. Verschieben Sie ihre Knoten im Plan: Verbundene Nachbarwände werden mitbewegt.', into_room: 'In den Raum „{name}“', outside: 'Nach außen' },
+  fr: { contour_context: 'A et B sont les extrémités du mur sélectionné. Déplacez leurs nœuds sur le plan : les murs voisins qui y sont reliés se déplaceront aussi.', into_room: 'Vers la pièce « {name} »', outside: 'Vers l’extérieur' },
+};
 export const PROPERTIES_KEYS = Object.keys(en) as Key[];
 export const propertiesT = (language: string, key: Key, vars?: Record<string, string | number>): string =>
   Object.prototype.hasOwnProperty.call(reused,key) ? t(langOf({language}),reused[key as keyof typeof reused],vars)
-    : subst((language === 'ru' ? ru : en)[key], vars);
+    : subst(language === 'ru' ? ru[key] : localized[language]?.[key] ?? en[key], vars);

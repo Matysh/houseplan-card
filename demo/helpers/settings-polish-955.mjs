@@ -4,7 +4,7 @@ import {installHpTestOnPage} from './hp-test.mjs';
 import {ensureHarnessEditorRuntime} from '../editor-runtime-compat.mjs';
 import {installSettingsDeviceFixture,openSettingsDeviceDialog} from './settings-device-947-fixture.mjs';
 import {installSettingsSpaceFixture} from './settings-space-945-fixture.mjs';
-import {buttonPaint} from './button-paint.mjs';
+import {buttonPaint,approvedSavePaint} from './button-paint.mjs';
 import {assertFreshDemoBundle} from '../bundle-freshness.mjs';
 import {checkAll,watchPage} from '../serve.mjs';
 import {mkdirSync,writeFileSync} from 'node:fs';
@@ -171,7 +171,7 @@ try{
     if((width===1280||width===390)&&height===900&&theme==='light'){
      await page.mouse.move(0,0);await page.waitForTimeout(180);
      const paint=await buttonPaint(d.locator('.hpf-footer .btn.on[data-hp=dialog-confirm]'));
-     out[`${name}_${width}_save_visible_content_centred`]=paint.height>=44&&paint.textInkOffset!==null&&Math.abs(paint.textInkOffset)<=1.25&&Math.abs(paint.iconOffset)<=.25;
+     out[`${name}_${width}_save_visible_content_centred`]=approvedSavePaint(paint);
      if(!out[`${name}_${width}_save_visible_content_centred`])console.log('Save paint',name,width,paint);
     }
    }

@@ -20,6 +20,7 @@ export interface EditorSecondaryModel {
 }
 
 export interface EditorToolbarGroupItem {
+  hint?: string;
   id: string;
   label: string;
   icon: string;
@@ -182,7 +183,7 @@ export class EditorSecondaryController {
           this.host.root()
             .querySelector<HTMLButtonElement>('.editor-group-item:not([disabled])')?.focus());
       }}
-      title=${activeItem ? copy.groupActive(group.label, activeItem.label) : group.label}>
+      data-hp-tooltip=${activeItem ? copy.groupActive(group.label, activeItem.label) : nothing} aria-label=${group.label}>
       <ha-icon icon=${group.icon}></ha-icon><span class="ml">${group.label}</span>
       <ha-icon class="group-chevron" icon="mdi:chevron-down"></ha-icon>
     </button>`;
@@ -206,13 +207,14 @@ export class EditorSecondaryController {
         @keydown=${(event: KeyboardEvent) => this._groupKeydown(event)}>
         ${group.items.map((item) => html`<button
           class="btn editor-group-item ${activeItemId === item.id ? 'on' : ''}"
+          data-hp=${item.role === 'tool' ? 'tool' : nothing} data-tool=${item.id === 'delroom' ? 'delete-room' : item.id}
           data-group-item=${item.id} ?disabled=${!!item.disabled}
           tabindex=${item.id === (activeItemId || firstEnabled) ? '0' : '-1'}
           aria-label=${item.disabled && item.disabledReason
             ? copy.disabledAction(item.label, item.disabledReason) : item.label}
           aria-pressed=${item.role === 'tool' || item.role === 'toggle'
             ? (activeItemId === item.id ? 'true' : 'false') : nothing}
-          title=${item.disabled ? item.disabledReason || item.label : item.label}
+          data-hp-tooltip=${item.disabled ? item.disabledReason || nothing : item.hint || nothing}
           @click=${(event: MouseEvent) => this._activateGroupItem(group, item.id, event)}>
           <ha-icon icon=${item.icon}></ha-icon><span>${item.label}</span>
         </button>`)}

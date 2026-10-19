@@ -10,6 +10,17 @@ integrity. The loopback static server never proxies HA or accepts writes.
 The regular demo, screenshots/golden harness and release bundles do not depend
 on this tool. Usage and limits: [UI Lab](../demo/ui-lab/README.md).
 
+Editor polish (#963) adds a panel-owned intrinsic-height motion controller:
+child ResizeObserver notifications coalesce into one frame; a new measurement
+retargets from the currently painted height. Disposal and reduced motion cancel
+animations. Static section headings carry no collapse state. Rooms/Shapes and
+history call the original commands through editor-secondary's context fence.
+The initial card contains a small tooltip event bridge; presentation loads on
+first use. One shadow-owned manual popover shares hp-help's surface tokens,
+preserves accessible names/descriptions and retires delayed work on context,
+focus, pointer, visibility and mount changes. No observers or UI Lab proxies
+are installed in product model/command paths.
+
 Editor Properties (#931) lives in lazy `src/editors/properties/`: a capability
 catalog and surface, targeted transform/physical adapters, card-local selection,
 field controller and one ordered command lane. Stable floor/editor/object/binding

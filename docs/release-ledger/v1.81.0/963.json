@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "issue": 963,
+  "baseStable": "v1.81.0",
+  "category": "line-fix",
+  "introducedBy": 931,
+  "rationale": "Carries the approved local UI Lab polish into the editor Properties/chrome and current-cycle settings. Preserves existing commands, stored model and View authority; no new feature or migration relative to the previous stable.",
+  "summary": {
+    "ru": "Редакторы и панели приведены к согласованному прототипу: компактные свойства, меню инструментов, единые подсказки и аккуратная шапка.",
+    "en": "Editors and panels follow the approved prototype with compact properties, grouped tools, shared help and tidy header actions."
+  }
+}

@@ -337,6 +337,7 @@ import {
 } from './space-order';
 import { ViewRuntimes, type ViewRuntimeHost } from './view-runtimes';
 import { HeaderMenu, headerMenuItems, renderHeaderActions, renderHiddenDevicesToggle } from './header-menu';
+import { LazyChromeTooltips } from './chrome-tooltip-lazy';
 import { HiddenDevicePreference, HiddenDeviceRoster, hiddenDevicePreferenceKey, hiddenDeviceStorage } from './hidden-device-visibility';
 import { isoWallMaterialVars, parseCssColor } from './iso-materials'; import { IsoFirstFrameState, isoPaperContext } from './iso-first-frame';
 import { renderIsoTileShadow } from './iso-tiles';
@@ -562,6 +563,11 @@ type FixedFloorState = FixedFloorSelection | { kind: 'pending'; value: unknown }
 const HANDLE_PAINT_ORDER = ['edges', 'corners'] as const;
 
 export class HouseplanCard extends LitElement {
+  constructor() {
+    super();
+    new LazyChromeTooltips(this, () => this._mode === 'view' ? `view:${this._space}`
+      : `${this._editorSecondaryContextId}:${JSON.stringify(this._editorRuntime?.properties.identity)}`);
+  }
   public requestUpdate(name?: PropertyKey, oldValue?: unknown, options?: PropertyDeclaration): void {
     if (name === 'hass') {
       if (this._configWriteContext.observe(this.hass)) {
@@ -8685,8 +8691,9 @@ export class HouseplanCard extends LitElement {
   // ================= shared editor secondary surface =================
 
   private get _editorToolbarGroups(): readonly EditorToolbarGroup[] {
+    if (this._mode === 'decor') return [this._editorRuntimeOrThrow()._shapesToolbarGroup()];
     if (this._mode !== 'plan') return [];
-    return [{
+    return [this._editorRuntimeOrThrow()._roomsToolbarGroup(), {
       id: 'opening',
       label: this._t('markup.opening'),
       icon: 'mdi:door',
@@ -10930,14 +10937,15 @@ export class HouseplanCard extends LitElement {
               </div>`
             : nothing}
           <span class="spacer"></span>
+          <div class="header-actions">
           <div class="zoomctl">
-            <button class="btn zb" data-hp="zoom-out" @click=${() => this._stepZoom(-1)} title=${this._t('title.zoom_out')}><ha-icon icon="mdi:minus"></ha-icon></button>
+            <button class="btn zb" data-hp="zoom-out" @click=${() => this._stepZoom(-1)} data-hp-tooltip=${this._t('title.zoom_out')} aria-label=${this._t('title.zoom_out')}><ha-icon icon="mdi:minus"></ha-icon></button>
             ${''/* docs/CANVAS.md §8: this IS «вписать всё» — the old "reset
                    zoom" renamed rather than duplicated. No longer disabled at
                    zoom 1: at zoom 1 panned off to the side it still has work. */}
             <button class="btn zb" data-hp="zoom-fit" @click=${() => this._fitAll()}
-              title=${this._t('title.zoom_fit')}><ha-icon icon="mdi:fit-to-page-outline"></ha-icon></button>
-            <button class="btn zb" data-hp="zoom-in" @click=${() => this._stepZoom(1)} title=${this._t('title.zoom_in')}><ha-icon icon="mdi:plus"></ha-icon></button>
+              data-hp-tooltip=${this._t('title.zoom_fit')} aria-label=${this._t('title.zoom_fit')}><ha-icon icon="mdi:fit-to-page-outline"></ha-icon></button>
+            <button class="btn zb" data-hp="zoom-in" @click=${() => this._stepZoom(1)} data-hp-tooltip=${this._t('title.zoom_in')} aria-label=${this._t('title.zoom_in')}><ha-icon icon="mdi:plus"></ha-icon></button>
           </div>
           ${this._kiosk ? nothing : renderHiddenDevicesToggle((k) => this._t(k), this._showHidden, () => this._setShowHidden(!this._showHidden))}
           ${this._norm && this._canEdit ? renderHeaderActions((k) => this._t(k), { settings: this._openSettingsDialog, pdf: this._openPdfDialog, support: this._openSupportDialog }) : nothing}
@@ -10948,6 +10956,7 @@ export class HouseplanCard extends LitElement {
             actions: { setMode: (m) => this._setMode(m), configureSpace: () => this._openSpaceDialog('edit', this._space), addSpace: () => this._openSpaceDialog('create'),
               settings: this._openSettingsDialog, pdf: this._openPdfDialog, support: this._openSupportDialog, toggleHidden: () => this._setShowHidden(!this._showHidden) },
           }), this._t('title.header_menu'))}
+          </div>
         </div>
         ${this._canEdit && !this._kiosk
           ? html`<div class="editorchrome ${this._editing || this._modeTransitionBusy ? 'open' : ''}${this._modeTransitionBusy ? ' transitioning' : ''}"

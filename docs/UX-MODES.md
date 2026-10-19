@@ -8,6 +8,16 @@
 
 ## Principle
 
+The approved #963 chrome places the right-hand header actions in one wrapping
+pool, with three44px zoom targets and the compact summary settings half-gear.
+Space navigation and editor switches remain separate. Rooms contains Merge,
+Split, Resize and Delete; Background's Shapes contains Line, Rectangle and
+Ellipse before Text. Undo/Redo are named icon buttons immediately before Close
+in all three editor bars. Editor/header hints use the common delayed hp-help
+surface in the top layer; visible tool captions do not repeat as tooltips.
+Wide Properties begins at the card title's lower edge, with static expanded
+headings and intrinsic section transitions (240ms, disabled for reduced motion).
+
 Devices editor (#866) has a session-local Snapping toggle (default ON) and
 Alt bypass for wall/device contacts only; #873 equal spacing remains independent.
 Dragging moves one marker, never its connected neighbours. Flat View/kiosk may

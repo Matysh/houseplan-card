@@ -52,10 +52,10 @@ try {
   check('properties.enter_blur_no_duplicate_history', await page.evaluate(() => window.__card._geometryHistory.size), history);
   await thickness.fill('101'); await thickness.press('Enter');
   check('properties.invalid_field_error', await panel.locator('[role="alert"]').count(), 1);
-  await panel.locator('.hp-prop-clear').click();
-  check('properties.invalid_blocks_selection_clear', await panel.locator('.hp-prop-title').innerText(), 'Независимая стена');
-  await thickness.press('Escape');
   const opening=card.locator('.opening[data-id="door"] .op-hit');
+  await opening.click();
+  check('properties.invalid_blocks_selection_change', await panel.locator('.hp-prop-title').innerText(), 'Независимая стена');
+  await thickness.press('Escape');
   await opening.click();
   check('properties.native_opening_hit_selected',await panel.locator('.hp-prop-title').innerText(),'Дверной проём');
   check('properties.opening_single_click_no_dialog',await card.locator('hp-dialog').count(),0);
@@ -198,7 +198,9 @@ try {
   check('properties.pending_text_saved_once',(await savedSpace()).decor.find(s=>s.id==='text').text,'Сохранение с задержкой');
   await select('decor','backdrop','properties');await finishField('opacity',0);
   check('properties.reset_uses_reference_glyph',await panel.locator('[data-property="reset"] path').getAttribute('d'),'M3 8h11a7 7 0 0 1 0 14M3 8l5-5M3 8l5 5');
-  check('properties.backdrop_delete_explains_action',(await panel.locator('.hp-prop-tooltip').innerText()).replace(/\s+/g,' '),'Чтобы убрать картинку, измените вид подложки в настройках пространства.');
+  await panel.locator('.delete').hover();
+  await card.locator('.hp-chrome-tooltip').waitFor({state:'visible'});
+  check('properties.backdrop_delete_explains_action',(await card.locator('.hp-chrome-tooltip').innerText()).replace(/\s+/g,' '),'Чтобы убрать картинку, измените вид подложки в настройках пространства.');
   check('properties.opacity_zero_saved',(await savedSpace()).plan_opacity,0);
   await panel.locator('[data-property="reset"] button').click();await page.evaluate(()=>window.__hpTest.waitForWrites());
   check('properties.reset_preserves_zero_opacity',(await savedSpace()).plan_opacity,0);

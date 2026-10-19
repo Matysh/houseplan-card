@@ -39,6 +39,13 @@ private inputs. It neither replaces demo/CI nor ships the cosmetic prototype
 from #963. The owner's existing laboratory and frozen reference remain separate;
 issue labels and the review pipeline own acceptance and merge status.
 
+Approved UI Lab polish (#963) uses normal editor render/command paths. Properties
+sections stay expanded at intrinsic height; Rooms/Shapes menus and history keep
+their existing commands. Header and editor hints use a card-local delayed
+top-layer tooltip. Reference comparisons reconstruct the frozen public prototype
+on the original Git bundle with synthetic data and pinned HA 20260930.4; private
+owner exports remain outside the repository. Task #964 owns the UI Lab tool.
+
 Nightly witness repair (#962) distinguishes card headings from navigation labels,
 native select layout from clipping, and ray-origin draft/preview from native
 radio checked state. Properties conflicts include sticky and no-op completion;

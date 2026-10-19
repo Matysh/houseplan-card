@@ -33,11 +33,11 @@ that transition events alone prove disposal.
 | --- | ---: | --- |
 | Performance threshold | 7 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 3 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
-| Paint, cascade and layer composition | 61 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 85 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
-| Responsive DOM layout | 54 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 211 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **421 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Paint, cascade and layer composition | 62 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
+| Pointer geometry and trusted interaction | 86 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Responsive DOM layout | 55 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
+| Custom-element and HA browser lifecycle | 213 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **426 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -109,6 +109,8 @@ usable manual fit whose handles and image element are otherwise present.
 
 #956 needs genuine modal top-layer paint: DOM visibility alone passed while the
 letters were hidden. Its oracle compares independently rendered foreground ink.
+
+- `background-stairs-stay-opaque-963`
 
 The #931 theme witness checks actual panel background and text colours for both
 browser schemes, absent HA mode and explicit HA overrides in either direction.
@@ -210,6 +212,8 @@ cold View is unchanged and no source-level check sees the unstyled editor.
 - `zigbee-topology-unknown-outline-ignores-plan-zoom`
 
 ### Pointer geometry and trusted interaction
+
+- `column-rotation-target-shrunk-963`
 
 - `settings-help-needs-host-hover-955`
 - `settings-ray-preview-is-passive-955`
@@ -357,6 +361,8 @@ toggles; ordinary fresh-click and fade/lifecycle controls remain in the smoke.
 
 ### Responsive DOM layout
 
+- `properties-reserves-empty-height-963`
+
 - `settings-opacity-caption-cropped-955`
 
 - `settings-led-actions-inherit-footer-border-955`
@@ -423,6 +429,9 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 - `space-delete-block-leaves-focus-behind`
 
 ### Custom-element and HA browser lifecycle
+
+- `editor-tooltip-opens-without-delay-963`
+- `editor-tooltip-survives-context-963`
 
 - `vacuum-dock-toggle-shows-unaccepted-value-940`
 

@@ -806,7 +806,14 @@ export const editorDialogsStyles = css`
       cursor: pointer;
     }
     .device-inbox-space-filter { min-width: 0; max-width: 100%; flex-wrap: wrap; }
-    .device-inbox-space-filter select { min-width: 0; max-width: 100%; width: 240px; }
+    .device-inbox-space-filter hp-settings-select {
+      width: 240px; max-width: 100%; font: inherit;
+      --hpf-surface: var(--card-background-color,#fff);
+      --hpf-control-surface: var(--hpf-surface); --hpf-line: var(--hp-line,var(--divider-color,#dce5e7));
+      --hpf-accent: var(--hp-accent,var(--primary-color)); --hpf-canvas: var(--secondary-background-color);
+      --hpf-tint: color-mix(in srgb,var(--hpf-accent) 10%,var(--hpf-surface));
+      --hpf-tint-line: color-mix(in srgb,var(--hpf-accent) 38%,var(--hpf-surface));
+    }
     .device-inbox-filter-help {
       display: inline-flex;
       align-items: center;

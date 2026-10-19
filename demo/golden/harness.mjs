@@ -1597,7 +1597,7 @@ export async function prepareGoldenScenario(page, scenario) {
       const handle = enabled.find((entry) =>
         Math.abs(+entry.getAttribute('cx') - 500) < 0.5
         && Math.abs(+entry.getAttribute('cy') - 335) < 0.5);
-      if (!handle || !disabled.length || disabled.some((entry) => !entry.querySelector('title'))) {
+      if (!handle || !disabled.length || disabled.some((entry) => !entry.getAttribute('data-hp-tooltip') || !entry.getAttribute('aria-label'))) {
         throw new Error(`golden safe Resize handle matrix is incomplete: ${scenario.id}`);
       }
       const svgRoot = card.renderRoot.querySelector('.stage svg');

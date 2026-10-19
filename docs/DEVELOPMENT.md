@@ -58,6 +58,26 @@ Ink contrast tolerates LCD/grayscale antialiasing and one-pixel raster phase,
 not absence of text. These are synthetic/headless checks, not manual assistive
 technology or physical-device acceptance.
 
+### Approved editor polish (#963)
+
+`demo/smoke_ui_polish_963.mjs` measures the expanded intrinsic panel, native
+commands/rotation, keyboard filter, tooltip timing/lifecycle, data preservation
+and narrow headers. `smoke_ui_polish_963_reference.mjs` reconstructs the exact
+approved prototype from immutable generic sources and the original public Git
+bundle (see `docs/design/963-ui-polish/README.md`). Both sides use synthetic
+fixtures, identical camera/font/DPR and official HA Frontend20260930.4. This
+task-only pin does not replace the ordinary HA harness pin. Use
+`HP_UI_963_HA_WHEEL` for an existing verified wheel; otherwise it downloads the
+pinned public package. `HP_QA_SEGOE_DIR` reads installed Windows fonts without
+copying them into the repository. Without it, both sides use official HA Roboto.
+`HP_UI_963_VIDEO=1` records the paired object switches. Reports, PNGs and video
+live in ignored `artifacts/ui-polish-963/`; owner exports are never inputs.
+
+The frozen #963 Save caption supersedes #955's optical Y offsets: text and check
+share the approved unshifted alignment in all four languages. Preserve the
+painted lettering comparison with the frozen reference when changing the footer;
+the icon, target size and other footer consumers retain their prior contracts.
+
 #940 vacuum source-first: a schema-valid explicit empty is a complete native
 value, not failed normalization. Keep that distinction before the normalizer
 loses it; all-invalid nonempty input must fail. Provider path/session authority
@@ -3699,14 +3719,13 @@ use identical data and font setup. Side-by-side, opacity overlay and a blurred,
 adjustable-threshold difference map support review; a pixel ratio alone never
 accepts the design. Shared checks cover all four forms and conditional profiles.
 
-Save uses an optical label adjustment independent of its HA icon's line box.
-The #955 smoke reads rendered PNG ink bounds inside the text region and the
-actual nested SVG centre; a centred anonymous text line was a false oracle.
-The unchanged-code witness observed2px lower lettering with pinned HA Roboto
-and3px with the Windows demo font, plus1.125px icon line-box drift. The common
-fix centres Roboto ink exactly and leaves at most1px with the demo font, with
-SVG centred in both. `--fast --demo-font` exercises that neighbour. The two
-new registry definitions are static checked only, never executed in development.
+The #955 optical label adjustment was superseded by the approved #963 unshifted
+footer. `buttonPaint` still measures actual PNG ink and the nested SVG centre;
+the four-form checks retain the44px target, visible lettering and centred label
+and check. The #963 paired fixture independently compares that lettering with
+the immutable prototype in all languages/themes. Its observed Roboto offsets
+are RU/FR2px, DE1.5px and EN0.5px on both sides. This is the approved geometry,
+not a relaxed comparison against a generated current-product reference.
 Wrapped help shares one final-word renderer; non-input field headings use the
 same inline layout, while real input labels retain their native for linkage.
 Emitted settings CSS drops redundant whitespace to stay inside the existing
@@ -3723,12 +3742,10 @@ label, instead of the intended10–30px range. The shared adjacent-subsection
 rule removes the extra18px, and the matrix measures the visible gap in every
 consumer rather than checking a CSS property name.
 
-The four dialog roots carry their resolved interface language. English Save
-captions use a smaller adjustment; Russian, German and French use the optical
-adjustment. `smoke_settings_button_alignment_955` verifies actual letter ink and
-nested SVG centres for all four forms at1280/390px in all four languages (32
-combinations). Before the English exception its visible letters sat1.5px high;
-afterwards the absolute offset is at most0.5px with HA Roboto. The shared
+The four dialog roots carry their resolved interface language.
+`smoke_settings_button_alignment_955` checks painted letters, label and nested
+SVG centres for all four forms at1280/390px in all four languages (32
+combinations), using the approved #963 alignment. The shared
 profile body actions also retain44px targets, checked across all seven cases.
 
 Paired screenshots exposed a second avoidable navigation line: the extra1px

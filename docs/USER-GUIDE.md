@@ -9,6 +9,17 @@ endpoints move only through node dragging. Opening width keeps its centre; its
 gap measures to the nearest opening edge from the physical corner/end marked
 on the plan, not from a guessed centreline endpoint.
 
+The full-height right column keeps every section expanded and fits its content.
+The shared A/B endpoint explanation lives beside Position. Windows offer the
+room/outside direction; doors keep their hinge choice. Selection retains frames
+and handles without extra object captions. Wall A/B, room names and your text
+remain visible.
+
+**Rooms** contains Merge, Split, Resize and Delete. Background's **Shapes** menu
+contains Line, Rectangle and Ellipse. Undo and Redo are icon buttons immediately
+before Close in every editor. Hover or keyboard focus opens delayed help;
+`Esc` dismisses it. Background dims stairs together with the walls.
+
 `Enter` or leaving a field applies one change; `Esc` cancels the draft. Invalid
 input or a failed save keeps the selection and explains the problem. Text uses
 `Enter` for a newline and `Ctrl/Cmd+Enter` to apply; **Insert HA variable** inserts

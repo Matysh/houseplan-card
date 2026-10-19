@@ -1,5 +1,6 @@
-import { LitElement, css, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
+import { LitElement, css, html, nothing, unsafeCSS, type PropertyValues, type TemplateResult } from 'lit';
 import { mdiHelpCircleOutline } from '@mdi/js';
+import { helpSurfaceStyle } from './styles/help-surface.styles';
 import { floatingViewport, placeFloatingSurface } from './floating-surface';
 import { FloatingSurfaceController } from './floating-surface-controller';
 import type { HpDialog, HpOverlayCloseReason } from './hp-dialog';
@@ -24,7 +25,7 @@ export class HpHelp extends LitElement {
     _forceFallback: { state: true },
   };
 
-  static styles = css`
+  static styles = unsafeCSS(css`
     :host {
       display: none;
       flex: none;
@@ -88,22 +89,7 @@ export class HpHelp extends LitElement {
       inset: auto;
       top: 0;
       left: 0;
-      width: max-content;
-      max-width: min(320px, calc(100vw - 16px));
-      max-height: calc(100vh - 16px);
       margin: 0;
-      box-sizing: border-box;
-      padding: 9px 11px;
-      overflow: auto;
-      color: var(--primary-text-color, #fff);
-      background: var(--card-background-color, #202126);
-      border: 1px solid var(--divider-color, rgb(255 255 255 / 0.2));
-      border-radius: 9px;
-      box-shadow: 0 8px 24px rgb(0 0 0 / 0.32);
-      font: 400 13px/1.4 system-ui, sans-serif;
-      text-align: start;
-      white-space: normal;
-      overflow-wrap: anywhere;
       opacity: 1;
       transform: translateY(0);
       transition: opacity 120ms ease, transform 120ms ease;
@@ -166,7 +152,7 @@ export class HpHelp extends LitElement {
         transition: none;
       }
     }
-  `;
+  `.cssText + `.tooltip{${helpSurfaceStyle}}`);
 
   text = '';
   ariaLabel = '';

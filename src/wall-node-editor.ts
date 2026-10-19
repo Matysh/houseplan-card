@@ -354,7 +354,8 @@ export class WallNodeEditor {
         return svg`<circle class="hp-node-handle" data-node=${n.key}
         cx=${x} cy=${y}
         r=${unitPx * 12} fill="transparent" style=${`cursor:${s ? 'grabbing' : n.supported && ctx.api ? 'grab' : 'not-allowed'}`}
-        ><title>${this.port.text(!ctx.api ? 'node_move_update_required' : !n.supported ? 'node_move_unsupported_junction' : 'node_move_hint')}</title></circle>
+        data-hp-tooltip=${this.port.text(!ctx.api ? 'node_move_update_required' : !n.supported ? 'node_move_unsupported_junction' : 'node_move_hint')}
+        aria-label=${this.port.text(!ctx.api ? 'node_move_update_required' : !n.supported ? 'node_move_unsupported_junction' : 'node_move_hint')}></circle>
         <circle data-node=${n.key} pointer-events="none" cx=${x} cy=${y} r=${unitPx * 3}
         fill=${s?.invalid && active ? '#e35d45' : 'var(--primary-color, #03a9f4)'} opacity=${s?.moved && active ? '.5' : '1'}/>`;
       })}

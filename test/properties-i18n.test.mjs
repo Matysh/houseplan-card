@@ -14,3 +14,15 @@ test('#931 all panel copy has RU/EN coverage with matching substitution contract
     for(const lang of ['ru','en'])assert.equal(propertiesT(lang,key),t(lang,canonical));
   for(const lang of ['ru','en'])assert.ok(!/Length|Длина/i.test(t(lang,'opening.length_label')));
 });
+
+test('#963 changed endpoint/direction/menu copy is translated in all four supported locales',()=>{
+  for(const lang of ['en','ru','de','fr']){
+    for(const key of ['contour_context','into_room','outside']){
+      const value=propertiesT(lang,key,{name:'Custom room'});
+      assert.ok(value.trim());assert.ok(!/\{\w+\}/.test(value));
+      if(lang!=='en')assert.notEqual(value,propertiesT('en',key,{name:'Custom room'}));
+    }
+    for(const key of ['markup.rooms','decor.shapes','markup.resize'])assert.ok(t(lang,key)!==key);
+    assert.ok(propertiesT(lang,'into_room',{name:'Custom room'}).includes('Custom room'));
+  }
+});

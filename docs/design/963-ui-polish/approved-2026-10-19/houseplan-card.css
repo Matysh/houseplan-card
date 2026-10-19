@@ -1,0 +1,305 @@
+/* Local prototype: editor sidebar sections stay expanded. */
+.hp-properties .hp-prop-group-title { cursor: default; }
+.hp-properties .hp-prop-group-title > span { display: none; }
+
+/* Settings footers: let flex centering align Save text with its checkmark. */
+hp-dialog .hpf-footer .btn .hpf-save-label {
+  transform: none;
+  align-self: center;
+}
+
+/* Full-height properties column starts directly below the House Plan title bar. */
+ha-card[data-hp-properties-wide] > .hp-properties { top: 0; }
+ha-card[data-hp-properties-wide] > .hdr > .head {
+  width: calc(100% - 360px);
+  box-sizing: border-box;
+}
+.hp-properties > .hp-prop-head { min-height: 0; }
+.hp-properties .hp-prop-heading { display: none; }
+
+/* Delete keeps a danger-coloured outline in both themes, including a muted disabled state. */
+.hp-properties .hp-prop-action.delete {
+  border-color: var(--hpf-danger, var(--error-color, #db543d));
+}
+.hp-properties .hp-prop-action.delete[aria-disabled='true'] {
+  border-color: color-mix(in srgb, var(--hpf-danger, var(--error-color, #db543d)) 35%, var(--prop-bg));
+}
+
+/* LED-strip conversion is a regular secondary action, just like Copy. */
+.hp-properties .hp-prop-action.display_device:not([aria-disabled='true']) {
+  color: var(--prop-ro);
+  border-color: var(--prop-border);
+  background: var(--prop-bg);
+}
+
+/* Keep selection frames/handles, without extra on-plan captions or their plates. */
+.stage .hp-prop-selection text,
+.stage .hp-prop-selection g:has(> text) {
+  display: none;
+}
+
+/* The door-hinge caption is hidden, so hide its diagonal leader as well. */
+.stage .hp-prop-selection > circle[fill='#078a9e'][stroke='white'] + path {
+  display: none;
+}
+
+/* Wall endpoint tags A/B stay visible; the wall's measurement caption stays hidden. */
+.stage .hp-prop-selection:has(> path[opacity='.2']) > g:has(> text),
+.stage .hp-prop-selection:has(> path[opacity='.2']) > g > text {
+  display: inline;
+}
+
+/* Square-column rotation matches the existing stair control, including its cursor. */
+.stage .physical-chrome[data-kind='square-selection'] { --hp-accent: #078a9e; }
+.stage .physical-chrome[data-kind='square-selection'] .stem {
+  stroke: var(--hp-accent);
+  stroke-width: 1.5;
+  opacity: 0.85;
+}
+.stage .physical-chrome[data-kind='square-selection'] .rotate-handle {
+  fill: transparent;
+  stroke: none;
+  touch-action: none;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M18.4 7.2A8 8 0 1 0 20 12' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='m15.5 3.8 3.2 3.5-4.6.8' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 12 12, grab;
+}
+.stage .physical-chrome[data-kind='square-selection'] .rotate-handle:active { cursor: grabbing; }
+.stage .physical-chrome .lab-column-rotate-knob {
+  fill: var(--hp-accent);
+  stroke: #fff;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+:host([data-pointer-hover]) .stage .physical-chrome .rotate-handle:hover + .lab-column-rotate-knob {
+  fill: #fff;
+  stroke: var(--hp-accent);
+}
+
+/* Zoom, visibility, settings, print/help and sidebar controls form one wrapping unit. */
+.hdr > .head > .lab-header-actions {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: 10px;
+  max-width: 100%;
+}
+.hdr > .head > .lab-header-actions > * { flex-shrink: 0; }
+
+/* Zoom uses the same 44px geometry, border and neutral paint as header actions. */
+.hdr > .head .zoomctl {
+  height: 44px;
+  box-sizing: border-box;
+  gap: 0;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: var(--rad-m);
+  background: transparent;
+}
+.hdr > .head .zoomctl .zb {
+  box-sizing: border-box;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  justify-content: center;
+  position: relative;
+  border: 1px solid var(--hp-line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--hp-txt);
+}
+.hdr > .head .zoomctl .zb + .zb { margin-inline-start: -1px; }
+.hdr > .head .zoomctl .zb:first-child { border-radius: var(--rad-m) 0 0 var(--rad-m); }
+.hdr > .head .zoomctl .zb:last-child { border-radius: 0 var(--rad-m) var(--rad-m) 0; }
+:host([data-pointer-hover]) .hdr > .head .zoomctl .zb:hover {
+  border-color: var(--hp-accent);
+  z-index: 1;
+}
+.hdr > .head .zoomctl .zb:focus-visible { z-index: 2; }
+
+/* Sidebar toggle follows the header buttons; its compact settings tab shows half a gear. */
+.hdr > .head .summary-control {
+  height: 44px;
+  box-sizing: border-box;
+  gap: 0;
+  border: 0;
+  border-radius: var(--rad-m);
+  background: transparent;
+  overflow: visible;
+}
+.hdr > .head .summary-control > button {
+  position: relative;
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--hp-line);
+  border-radius: 0;
+  color: var(--hp-txt);
+  background: transparent;
+  transition: .15s;
+}
+.hdr > .head .summary-control > button:first-child {
+  width: 24px;
+  overflow: hidden;
+  border-radius: var(--rad-m) 0 0 var(--rad-m);
+}
+.hdr > .head .summary-control > button:first-child > svg.summary-icon {
+  position: absolute;
+  right: -10px;
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+}
+.hdr > .head .summary-control > button:last-child {
+  margin-inline-start: -1px;
+  border-radius: 0 var(--rad-m) var(--rad-m) 0;
+}
+.hdr > .head .summary-control > button.on {
+  background: var(--primary-color);
+  color: var(--text-primary-color, #fff);
+  border-color: var(--hp-accent);
+}
+:host([data-pointer-hover]) .hdr > .head .summary-control > button:not(:disabled):hover {
+  border-color: var(--hp-accent);
+  z-index: 1;
+}
+.hdr > .head .summary-control > button:focus-visible { z-index: 2; }
+
+@media (max-width: 480px) {
+  .hdr > .head > .lab-header-actions { gap: 6px; }
+  .hdr > .head > .lab-header-actions > .header-action,
+  .hdr > .head > .lab-header-actions > .summary-control { display: none; }
+}
+
+/* Selection is not a drawing tool. Keep resize/drag handles' own cursors. */
+.stage.mode-plan.markup.tool-select { cursor: pointer; }
+
+/* Standalone stairs fade with the architecture, not with editable decor. */
+.stage .hp-stairs-layer { opacity: var(--hp-mode-architecture-opacity, 1); }
+
+/* Room commands are exposed by the native Rooms dropdown, not duplicated. */
+.planbar .editbar-tools > ha-icon.warn,
+.devbar .editbar-tools > ha-icon.warn,
+.planbar .editbar-tools > button:is([data-tool='merge'], [data-tool='split'], [data-tool='resize'], [data-tool='delete-room']) { display: none; }
+
+/* Keep Shapes where its three original tools were, before Text. */
+.decorbar .editbar-tools > button.dtool:is([data-tool='line'], [data-tool='rect'], [data-tool='ellipse']) { display: none; }
+.decorbar .editbar-tools > * { order: 2; }
+.decorbar .editbar-tools > :is([data-tool='select'], [data-tool='backdrop']) { order: 0; }
+.decorbar .editbar-tools > [data-editor-group='shapes'] { order: 1; }
+
+/* History belongs beside Close, exactly like the Device editor. */
+.planbar .editbar-tools > [data-lab-history-source],
+.decorbar .editbar-tools > [data-lab-history-source] { display: none; }
+
+/* Reuse the actual dialog-select component and its existing form-kit theme tokens. */
+.device-inbox-space-filter > hp-settings-select {
+  width: 240px;
+  max-width: 100%;
+  font: inherit;
+  --hpf-surface: var(--card-background-color, #fff);
+  --hpf-control-surface: var(--hpf-surface);
+  --hpf-line: var(--hp-line, var(--divider-color, #dce5e7));
+  --hpf-accent: var(--hp-accent, var(--primary-color));
+  --hpf-canvas: var(--secondary-background-color);
+  --hpf-tint: color-mix(in srgb, var(--hpf-accent) 10%, var(--hpf-surface));
+  --hpf-tint-line: color-mix(in srgb, var(--hpf-accent) 38%, var(--hpf-surface));
+}
+
+/* Shared tooltip presentation copied from hp-help.ts, not browser-native titles. */
+.lab-editor-tooltip,
+.tip[data-hp-live-tip],
+.hp-properties .hp-prop-tooltip {
+  width: max-content;
+  max-width: min(320px, calc(100vw - 16px));
+  box-sizing: border-box;
+  padding: 9px 11px;
+  color: var(--primary-text-color, #fff);
+  background: var(--card-background-color, #202126);
+  border: 1px solid var(--divider-color, rgb(255 255 255 / .2));
+  border-radius: 9px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / .32);
+  font: 400 13px/1.4 system-ui, sans-serif;
+  text-align: start;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.lab-editor-tooltip {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  max-height: calc(100vh - 16px);
+  overflow: auto;
+  pointer-events: none;
+  z-index: 2147483647;
+  opacity: 0;
+  transform: translateY(3px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+.lab-editor-tooltip.is-visible { opacity: 1; transform: translateY(0); }
+.lab-editor-tooltip[popover]:not(:popover-open) { display: none; }
+.hp-properties .hp-prop-tooltip { left: auto; right: 0; }
+.hp-properties .hp-prop-tooltip::after { display: none; }
+
+/* Every section uses its content height, without reserved empty space. */
+.hp-properties .hp-prop-scroll > .hp-prop-group { min-height: 0; height: auto; }
+.hp-properties .hp-prop-scroll > .hp-prop-group > * { flex-shrink: 0; }
+.hp-properties .hp-prop-scroll > .hp-prop-group > .hp-prop-hint {
+  position: static;
+  margin-top: 12px;
+  padding-top: 0;
+}
+
+/* Shared-node explanation belongs next to the endpoint coordinates. */
+.hp-properties .hp-prop-group[data-lab-shared-points-context],
+.hp-properties .hp-prop-group[data-lab-shared-points-position] > .hp-prop-hint:not([data-lab-shared-points-note]) {
+  display: none;
+}
+
+/* Disabled Delete: wait briefly, then fade in; fade out without delay. */
+.hp-properties .hp-prop-action-wrap:has(.delete[aria-disabled='true']) .hp-prop-tooltip {
+  display: block;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(3px);
+  transition: opacity 120ms ease, transform 120ms ease, visibility 0s linear 120ms;
+}
+.hp-properties .hp-prop-action-wrap:has(.delete[aria-disabled='true']):is(:hover, :focus-within) .hp-prop-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition-delay: 300ms;
+}
+
+/* Exact interaction rules/tokens from settings-action.styles.ts and form-kit.styles.ts. */
+.hp-properties button:not(.hp-prop-group-title) {
+  --hpf-surface: var(--card-background-color, #fff);
+  --hpf-accent: var(--hp-accent, var(--primary-color));
+  --hpf-tint: color-mix(in srgb, var(--hpf-accent) 10%, var(--hpf-surface));
+  --hpf-tint-line: color-mix(in srgb, var(--hpf-accent) 38%, var(--hpf-surface));
+  --hpf-danger: var(--error-color, #db543d);
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+.hp-properties button:not(.hp-prop-group-title):not(:disabled):not([aria-disabled='true']):is(:hover, :focus-visible) {
+  background: var(--hpf-tint, color-mix(in srgb, var(--primary-color, #03a9f4) 10%, transparent));
+  color: var(--hpf-accent, var(--primary-color, #03a9f4));
+  border-color: var(--hpf-accent, var(--primary-color, #03a9f4));
+  box-shadow: 0 0 0 1px var(--hpf-tint-line, var(--primary-color, #03a9f4));
+  filter: brightness(1.08);
+}
+.hp-properties button.hp-prop-action.delete:not(:disabled):not([aria-disabled='true']):is(:hover, :focus-visible) {
+  background: color-mix(in srgb, var(--hpf-danger) 9%, var(--hpf-surface));
+  color: var(--hpf-danger);
+  border-color: var(--hpf-danger);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hp-properties button:not(.hp-prop-group-title) { transition: none; }
+  .lab-editor-tooltip,
+  .hp-properties .hp-prop-action-wrap:has(.delete[aria-disabled='true']) .hp-prop-tooltip { transition: none; transform: none; }
+}

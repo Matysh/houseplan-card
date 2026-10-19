@@ -9,6 +9,10 @@
 
 - Keep save errors readable above Home Assistant and native dialogs without
   losing edits or changing retry behaviour. Nested dialogs share one notice. (#956)
+- Match the approved editor UI: compact Properties sections, Rooms and Shapes
+  menus, icon-only history, shared delayed tooltips and grouped header actions.
+  Clarify window opening sides, simplify selection cues, unify column rotation,
+  dim stairs in Background, and align Inbox filters and Save captions. (#963)
 
 - Prefer the integration's complete vacuum path and session information over
   inferred dock/time boundaries, including when opening a plan mid-cleanup.

@@ -12,6 +12,11 @@ The Background editor is a visual annotation layer. Its shapes, furniture,
 custom images, text and plan image never participate in rooms, wall geometry,
 light routing, device state or Home Assistant actions.
 
+The Shapes menu groups Line, Rectangle and Ellipse before Text (#963). Selection
+retains its native frame/handles without adding name/dimension captions; user
+text and normal room/device readings remain. Standalone stairs are contextual
+architecture at35% opacity here, and regain their normal opacity on leaving.
+
 | Invariant | Contract |
 |---|---|
 | Coordinates | Axis-aligned positions and ordinary shape dimensions are quantised to the space grid. A rotated ordinary-shape resize keeps its opposite world-space corner fixed and quantises dimensions; its derived unrotated storage origin is not post-snapped. Furniture is the explicit exception: resize is continuous, stores positive extents and projects crossing into `flip_h`/`flip_v`. |

@@ -223,10 +223,10 @@ const res = await page.evaluate(async () => {
     && popupRect.right <= innerWidth && popupRect.bottom <= innerHeight;
   trigger?.click();
   await popoverPicker?.updateComplete;
-  // seven tools (the six drawing ones + «Мебель», docs/FURNITURE.md) plus
-  // «Картинка-подложка», which f1 offers because it HAS a picture
-  // (docs/DECOR-EDITOR.md §3.2); a hand-drawn space still shows seven
-  out.toolBtns = sr().querySelectorAll('.decorbar .btn.dtool').length === 8;
+  // #963: three shape tools are reached through Shapes. Five persistent
+  // buttons remain here, including f1's existing backdrop-image command.
+  out.toolBtns = sr().querySelectorAll('.decorbar .btn.dtool').length === 5
+    && !!sr().querySelector('.decorbar [data-editor-group="shapes"]');
   // 2) нарисовать прямоугольник drag-ом (через прямые вызовы)
   c._decorTool = 'rect'; c._decorStyle = { color: '#ff0000', width: 3, fill: true }; await c.updateComplete;
   const g = c._gridPitch;
@@ -686,7 +686,8 @@ Object.assign(res, await page.evaluate(async () => {
   return {
     narrowToolbarKeepsToolsAndCloseApart: !!toolsRect && !!endRect
       && toolsRect.right <= endRect.left + 0.5
-      && sr().querySelectorAll('.decorbar .btn.dtool').length === 8
+      && sr().querySelectorAll('.decorbar .btn.dtool').length === 5
+      && !!sr().querySelector('.decorbar [data-editor-group="shapes"]')
       && !!sr().querySelector('.decorbar .barclose'),
     narrowToolbarKeepsDefaultPickerUsable: !!picker && popupInside,
     defaultPickerReadableInLightAndDark: themeStates.every(Boolean),

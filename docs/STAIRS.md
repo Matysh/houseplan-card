@@ -7,6 +7,12 @@ creates or changes anything on the target floor.
 
 ## User contract
 
+In Background, standalone stairs share the architecture's35% contextual opacity
+(#963); editable decor remains opaque. Other modes restore the original paint
+without writing any opacity into saved stairs. Selection keeps frames/handles
+but adds no object-name/dimension plate. Square columns share the stair rotation
+stem and bead, with the larger transparent native rotation hit target retained.
+
 On wide Plan cards (≥960 px), Properties exposes centre, continuous dimensions
 (30…10000 cm), angle, colours and direction. The rendered 3.6 px stroke stays
 fixed and its field is disabled. Native gestures, full-dialog entry, routing,

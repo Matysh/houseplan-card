@@ -29,7 +29,6 @@ export interface PropertiesSurface {
 export interface PropertiesSurfacePort {
   t(key: PropertiesString, vars?: Record<string, string | number>): string;
   imperial: boolean; dark?: boolean; controller: PropertiesFieldController; pickerLabels: ColorPickerLabels;
-  collapsed: Set<string>; toggleGroup(key: string): void;
   clear(): void; action(key: string): void;
   edit(field: PropertiesField, raw: string, finish?: boolean): void;
   number(field: PropertiesField, value: number): string;
@@ -138,21 +137,19 @@ export function renderPropertiesSurface(model: PropertiesSurface, port: Properti
   return html`<aside class="hp-properties" data-theme=${port.dark == null ? 'auto' : port.dark ? 'dark' : 'light'} data-hp="properties-panel" aria-label=${t('title')} ?inert=${inert}
     aria-busy=${String(!!controller.draft?.pending)} @pointerdown=${(e: Event) => e.stopPropagation()}
     @click=${(e: Event) => e.stopPropagation()} @wheel=${(e: Event) => e.stopPropagation()}>
-    <header class="hp-prop-head"><div class="hp-prop-heading">${t('title')}<button type="button" class="hp-prop-clear" @click=${() => port.clear()}>
-      ${propertiesIcon('close')}${t('clear')}</button></div><div class="hp-prop-title" title=${model.title}>${model.title}</div><div class="hp-prop-meta" title=${model.meta}>${model.meta}</div></header>
+    <header class="hp-prop-head"><div class="hp-prop-title" title=${model.title}>${model.title}</div><div class="hp-prop-meta" title=${model.meta}>${model.meta}</div></header>
     <div class="hp-prop-scroll">
-      ${repeat(model.groups, group => group.key, group => html`<section class="hp-prop-group ${group.key} ${group.hint==='gap_unavailable' ? 'long-hint' : ''} ${port.collapsed.has(group.key) ? 'collapsed' : ''}">
-        ${group.title ? html`<button type="button" class="hp-prop-group-title" aria-expanded=${String(!port.collapsed.has(group.key))}
-          @click=${() => port.toggleGroup(group.key)}>${propertiesIcon(group.icon ?? group.key)}${t(group.title)}<span>⌃</span></button>` : nothing}
-        ${port.collapsed.has(group.key) ? nothing : html`<div class="hp-prop-fields">${repeat(group.fields, field => field.key, field => fieldView(field, port))}</div>
-          ${group.hint ? html`<p class="hp-prop-hint">${t(group.hint)}</p>` : nothing}`}
+      ${repeat(model.groups, group => group.key, group => html`<section class="hp-prop-group ${group.key}">
+        ${group.title ? html`<h3 class="hp-prop-group-title">${propertiesIcon(group.icon ?? group.key)}${t(group.title)}</h3>` : nothing}
+        <div class="hp-prop-fields">${repeat(group.fields, field => field.key, field => fieldView(field, port))}</div>
+        ${group.hint ? html`<p class="hp-prop-hint">${t(group.hint)}</p>` : nothing}
       </section>`)}
     </div>
     <footer class="hp-prop-foot"><div class="hp-prop-actions ${model.actions.length === 1 ? 'solo' : ''}">
       ${model.actions.map(action => html`<div class="hp-prop-action-wrap"><button type="button" class="hp-prop-action ${action.key}"
-          aria-disabled=${String(!!action.disabled)} @click=${() => { if (!action.disabled) port.action(action.key); }}>
-          ${propertiesIcon(action.icon)}<span>${t(action.label)}</span></button>
-          ${action.disabled ? html`<span class="hp-prop-tooltip" role="tooltip">${t(action.disabled)}</span>` : nothing}</div>`)}
+          aria-disabled=${String(!!action.disabled)} data-hp-tooltip=${action.disabled ? t(action.disabled) : nothing}
+          @click=${() => { if (!action.disabled) port.action(action.key); }}>
+          ${propertiesIcon(action.icon)}<span>${t(action.label)}</span></button></div>`)}
       </div><div class="hp-prop-help"><div><kbd>${model.groups.some(group=>group.fields.some(field=>field.control==='text')) ? 'Ctrl Enter' : 'Enter'}</kbd>${t('apply')}</div><div><kbd>Esc</kbd>${t('cancel_input')}</div><div><kbd>Ctrl Z</kbd>${t('undo')}</div></div>
       ${controller.draft?.pending ? html`<span class="hp-prop-pending" role="status">${t('pending')}</span>` : nothing}
     </footer>

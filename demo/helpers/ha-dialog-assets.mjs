@@ -32,7 +32,7 @@ function visit(node, action) {
   }
 }
 
-function moduleIndex(assetRoot) {
+export function haDialogModuleIndex(assetRoot, requiredModule = HA_DIALOG_PIN.module) {
   const modules = new Map();
   for (const file of readdirSync(assetRoot).filter((name) => /^\d+\.[a-f0-9]+\.js$/.test(name)).sort()) {
     const code = readFileSync(join(assetRoot, file), 'utf8');
@@ -54,27 +54,28 @@ function moduleIndex(assetRoot) {
       modules.set(id, { file, bytes: code.length, dependencies: [...dependencies] });
     }
   }
-  if (!modules.has(HA_DIALOG_PIN.module)) throw new Error('Pinned authentic ha-dialog factory is absent');
+  if (!modules.has(requiredModule)) throw new Error('Pinned authentic ha-dialog factory is absent');
   return Object.fromEntries(modules);
 }
 
 /** Downloads only this allowlisted wheel; verified local wheels may avoid the download. */
 export async function prepareHaDialogAssets({
-  cacheDir = join(tmpdir(), `houseplan-ha-dialog-${HA_DIALOG_PIN.version}`),
+  pin = HA_DIALOG_PIN,
+  cacheDir = join(tmpdir(), `houseplan-ha-dialog-${pin.version}`),
   wheelPath = process.env.HP_HA_DIALOG_WHEEL,
 } = {}) {
-  const pin = readFileSync(join(REPO, 'tests_backend/requirements.txt'), 'utf8')
+  const version = readFileSync(join(REPO, 'tests_backend/requirements.txt'), 'utf8')
     .match(/^home-assistant-frontend==([^\s]+)$/m)?.[1];
-  if (pin !== HA_DIALOG_PIN.version) throw new Error(`HA frontend pin changed to ${pin}; update and re-verify the authentic fixture`);
+  if (pin === HA_DIALOG_PIN && version !== pin.version) throw new Error(`HA frontend pin changed to ${version}; update and re-verify the authentic fixture`);
   const cache = resolve(cacheDir);
   mkdirSync(cache, { recursive: true });
   const manifestPath = join(cache, 'manifest.json');
   if (existsSync(manifestPath)) {
     const manifestBytes = readFileSync(manifestPath);
-    if (digest(manifestBytes) !== HA_DIALOG_PIN.cacheManifestSha256) throw new Error('HA fixture cache manifest hash mismatch');
+    if (digest(manifestBytes) !== pin.cacheManifestSha256) throw new Error('HA fixture cache manifest hash mismatch');
     const manifest = JSON.parse(manifestBytes);
-    if (manifest.version !== pin || manifest.sha256 !== HA_DIALOG_PIN.sha256
-        || !manifest.files?.length || !manifest.modules?.[HA_DIALOG_PIN.module]) throw new Error('Invalid HA fixture cache manifest');
+    if (manifest.version !== pin.version || manifest.sha256 !== pin.sha256
+        || !manifest.files?.length || !manifest.modules?.[pin.module]) throw new Error('Invalid HA fixture cache manifest');
     for (const file of manifest.files) {
       const target = resolve(cache, file.path);
       if (!allowed(file.path) || !target.startsWith(cache + sep)
@@ -84,23 +85,23 @@ export async function prepareHaDialogAssets({
     }
     return { root: join(cache, 'hass_frontend'), manifest };
   }
-  const savedWheel = join(cache, `home_assistant_frontend-${pin}.whl`);
+  const savedWheel = join(cache, `home_assistant_frontend-${pin.version}.whl`);
   const local = wheelPath || (existsSync(savedWheel) ? savedWheel : null);
   let wheel;
   if (local) wheel = readFileSync(resolve(local));
   else {
-    console.log(`Downloading official HA frontend ${pin} (${HA_DIALOG_PIN.bytes} bytes), only for this explicit diagnostic`);
-    const response = await fetch(HA_DIALOG_PIN.url, { redirect: 'error', signal: AbortSignal.timeout(120000) });
-    if (!response.ok || Number(response.headers.get('content-length')) !== HA_DIALOG_PIN.bytes) throw new Error(`Unexpected wheel response: ${response.status}`);
+    console.log(`Downloading official HA frontend ${pin.version} (${pin.bytes} bytes), only for this explicit diagnostic`);
+    const response = await fetch(pin.url, { redirect: 'error', signal: AbortSignal.timeout(120000) });
+    if (!response.ok || Number(response.headers.get('content-length')) !== pin.bytes) throw new Error(`Unexpected wheel response: ${response.status}`);
     const parts = []; let size = 0;
     for await (const part of response.body) {
       size += part.length;
-      if (size > HA_DIALOG_PIN.bytes) throw new Error('Wheel exceeds authenticated size');
+      if (size > pin.bytes) throw new Error('Wheel exceeds authenticated size');
       parts.push(Buffer.from(part));
     }
     wheel = Buffer.concat(parts);
   }
-  if (wheel.length !== HA_DIALOG_PIN.bytes || digest(wheel) !== HA_DIALOG_PIN.sha256) throw new Error('Official wheel hash/size mismatch; refusing extraction');
+  if (wheel.length !== pin.bytes || digest(wheel) !== pin.sha256) throw new Error('Official wheel hash/size mismatch; refusing extraction');
   if (!local) writeFileSync(savedWheel, wheel, { flag: 'wx' });
   const { yauzl } = require('playwright-core/lib/utilsBundle');
   const files = [];
@@ -126,9 +127,9 @@ export async function prepareHaDialogAssets({
     });
   });
   const root = join(cache, 'hass_frontend');
-  const manifest = { version: pin, sha256: HA_DIALOG_PIN.sha256, url: HA_DIALOG_PIN.url,
-    files, modules: moduleIndex(join(root, 'frontend_latest')) };
-  if (digest(JSON.stringify(manifest)) !== HA_DIALOG_PIN.cacheManifestSha256) throw new Error('Rebuilt HA manifest differs from verified pin; refusing this cache');
+  const manifest = { version: pin.version, sha256: pin.sha256, url: pin.url,
+    files, modules: haDialogModuleIndex(join(root, 'frontend_latest'), pin.module) };
+  if (digest(JSON.stringify(manifest)) !== pin.cacheManifestSha256) throw new Error('Rebuilt HA manifest differs from verified pin; refusing this cache');
   writeFileSync(manifestPath, JSON.stringify(manifest));
   return { root, manifest };
 }

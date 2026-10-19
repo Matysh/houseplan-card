@@ -125,9 +125,9 @@ export function propertiesCatalog(target: PropertiesTarget | null, context: Prop
       geometry = [number('length', 'length', Math.hypot(wall.b[0] - wall.a[0], wall.b[1] - wall.a[1]) * factor, 'cm', { mode: 'readonly' }),
         number('cm', 'thickness', wall.cm, 'cm', { min: 0, max: 100 }),
         angle(canonicalPropertiesAngle(Math.atan2(wall.b[1] - wall.a[1], wall.b[0] - wall.a[0]) * 180 / Math.PI), true), disabled('scale', 'scale', '%')];
-      positionHint = target.kind === 'contour' ? 'contour_hint' : freedom.every(Boolean) ? undefined : 'connected_hint';
+      positionHint = target.kind === 'contour' ? 'contour_context' : freedom.every(Boolean) ? undefined : 'connected_hint';
       geometryHint = target.kind === 'contour' ? 'contour_geometry_hint' : 'wall_hint';
-      if (target.kind === 'contour') { actions[0].disabled = 'contour_delete_reason'; featureHint = 'contour_context'; }
+      if (target.kind === 'contour') actions[0].disabled = 'contour_delete_reason';
     } else if (target.kind === 'column') {
       kind = 'column'; const column = target.value;
       position = [numericPos('x', column.center[0]), numericPos('y', column.center[1])];
@@ -147,9 +147,7 @@ export function propertiesCatalog(target: PropertiesTarget | null, context: Prop
       if (opening.type !== 'passage') {
         featureTitle = opening.type === 'door' ? 'door_features' : opening.type;
         if (opening.type === 'door') features.push({ key: 'flip_h', label: 'hinge', value: opening.flip_h === true, control: 'toggle', icon: 'swap', wide: true });
-        if (opening.type === 'window') features.push({ key: 'flip_h', label: 'along_wall', value: opening.flip_h === true, control: 'toggle', wide: true },
-          { key: 'flip_v', label: 'across_wall', value: opening.flip_v === true, control: 'toggle', wide: true });
-        else features.push(choice('flip_v', 'opening_side', opening.flip_v === true, context.openingSides.map((label, i) => ({ value: String(!!i), label }))));
+        features.push(choice('flip_v', 'opening_side', opening.flip_v === true, context.openingSides.map((label, i) => ({ value: String(!!i), label }))));
       }
     } else if (target.kind === 'stair') {
       const stair = target.value; kind = stair.kind;

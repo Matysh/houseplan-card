@@ -69,15 +69,15 @@ export async function applyHaDialogTypography(page) {
 /** Starts a synthetic loopback-only page; `authentic:false` keeps native hp-dialog. */
 export async function launchHaDialogFixture({
   authentic = true, viewport = { width: 1600, height: 1000 },
-  cacheDir, wheelPath, assets, colorScheme = 'light', extraModules = [], hasTouch = false,
+  pin = HA_DIALOG_PIN, cacheDir, wheelPath, assets, colorScheme = 'light', extraModules = [], hasTouch = false, videoDir,
 } = {}) {
-  const ha = authentic ? assets || await prepareHaDialogAssets({ cacheDir, wheelPath }) : null;
+  const ha = authentic ? assets || await prepareHaDialogAssets({ pin, cacheDir, wheelPath }) : null;
   const errors = [], externalRequests = [], websocketAttempts = [];
   const server = createServer((request, response) => {
     let body, type = 'text/javascript';
     try {
       const pathname = decodeURIComponent(new URL(request.url, 'http://127.0.0.1').pathname);
-      if (pathname === '/ha505-bootstrap.mjs' && ha) body = `await (${bootstrap})(${JSON.stringify(HA_DIALOG_PIN)},${JSON.stringify(extraModules)});`;
+      if (pathname === '/ha505-bootstrap.mjs' && ha) body = `await (${bootstrap})(${JSON.stringify(pin)},${JSON.stringify(extraModules)});`;
       else if (pathname === '/ha505-static.html' && ha) {
         type = 'text/html'; body = '<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">';
       }
@@ -97,12 +97,12 @@ export async function launchHaDialogFixture({
         }
         body = readFileSync(file);
         type = MIME[extname(file)] || 'application/octet-stream';
-        if (ha && pathname === `/frontend_latest/${HA_DIALOG_PIN.app}`) {
+        if (ha && pathname === `/frontend_latest/${pin.app}`) {
           const source = body.toString();
-          if (source.split(HA_DIALOG_PIN.entry).length !== 2) throw new Error('Pinned HA app bootstrap changed');
+          if (source.split(pin.entry).length !== 2) throw new Error('Pinned HA app bootstrap changed');
           // The sole runtime instrumentation: expose its loader. The original
           // wheel and every component factory/CSS remain byte-for-byte intact.
-          body = source.replace(HA_DIALOG_PIN.entry, `window.__ha505Require=o;${HA_DIALOG_PIN.entry}`);
+          body = source.replace(pin.entry, `window.__ha505Require=o;${pin.entry}`);
         }
         if (ha && pathname === '/product.html') {
           const original = body.toString();
@@ -125,7 +125,7 @@ export async function launchHaDialogFixture({
   let browser;
   try {
     browser = await chromium.launch();
-    const context = await browser.newContext({ viewport, deviceScaleFactor: 1, colorScheme, hasTouch, timezoneId: 'Europe/Moscow', serviceWorkers: 'block' });
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1, colorScheme, hasTouch, timezoneId: 'Europe/Moscow', serviceWorkers: 'block', ...(videoDir ? {recordVideo:{dir:videoDir,size:viewport}} : {}) });
     await context.route('**/*', async (route) => {
       if (new URL(route.request().url()).origin !== url) {
         externalRequests.push(route.request().url()); await route.abort();

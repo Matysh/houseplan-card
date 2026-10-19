@@ -3611,8 +3611,8 @@ public _renderResizeLayer(
           @pointercancel=${(e: PointerEvent) => this._rszPointerCancel(e)}
           @lostpointercapture=${(e: PointerEvent) => this._rszPointerCancel(e)}
           @click=${disabled ? (e: Event) => this._rszDisabledActivate(e, resolution.reason) : null}
-          @keydown=${disabled ? (e: KeyboardEvent) => this._rszDisabledKey(e, resolution.reason) : null}>
-          <title>${reason}</title>
+          data-hp-tooltip=${reason} @keydown=${disabled ? (e: KeyboardEvent) => this._rszDisabledKey(e, resolution.reason) : null}>
+
         </circle>`);
         parts.push(svg`<g class="rszicon ${disabled ? 'disabled' : ''}" transform="translate(${mx} ${my}) rotate(${ang})"><path class="rszhalo" d="${iconD}"></path><path class="rszink" d="${iconD}"></path></g>`);
       }
@@ -4797,7 +4797,7 @@ public _renderDrawWallControl(): TemplateResult {
         @input=${(e: Event) => {
           this.host._drawWallField = (e.target as HTMLInputElement).value;
         }}
-        title=${this.host._t(this.host._tool === 'draw' ? 'markup.draw_wall_title'
+        data-hp-tooltip=${this.host._t(this.host._tool === 'draw' ? 'markup.draw_wall_title'
           : 'physical.column_size_title')} />
       <span class="opl">${this.host._t(this.host._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span>
       <span class="rangehint">${this.host._t('physical.allowed_range', {
@@ -4967,7 +4967,7 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
 public _withBackdropReset(model: EditorSecondaryModel | null): EditorSecondaryModel | null {
     if (!this.backdropGesture.transformed || this.backdropGesture.active || model?.kind === 'palette') return model;
     const contextId = this.host._editorSecondaryContextId;
-    const reset = html`<button class="btn bdreset" title=${this.host._t('decor.backdrop_reset')}
+    const reset = html`<button class="btn bdreset"
       @click=${() => this._runEditorContext(contextId, () => this.backdropGesture.resetTransform())}>
       <ha-icon icon="mdi:image-refresh-outline"></ha-icon>${this.host._t('decor.backdrop_reset')}
     </button>`;
@@ -4996,30 +4996,8 @@ public _renderEditorSecondary(): TemplateResult | typeof nothing {
     return this.host._editorSecondary.render(model, this.host._editorSecondaryDialogBlocked);
   }
 
-public _renderDecorBar(): TemplateResult {
-    const tools = [
-      ['select', 'mdi:cursor-default-outline', 'decor.select'],
-      // moving the picture is a TOOL (docs/DECOR-EDITOR.md §3.2) — offered only when
-      // there IS a picture, so a hand-drawn space's bar is unchanged
-      ...(this.backdropGesture.rect ? [['backdrop', 'mdi:image-move', 'decor.backdrop'] as const] : []),
-      ['line', 'mdi:vector-line', 'decor.line'],
-      ['rect', 'mdi:rectangle-outline', 'decor.rect'],
-      ['ellipse', 'mdi:ellipse-outline', 'decor.ellipse'],
-      ['text', 'mdi:format-text', 'decor.text'],
-      // the library sits next to the shapes it belongs with (docs/FURNITURE.md)
-      ['furniture', 'mdi:sofa-outline', 'decor.furniture'],
-      ...(this.host._haDecorAssetsApi === DECOR_ASSETS_API_VERSION
-        ? [['image', 'mdi:image-plus-outline', 'decor.image'] as const] : []),
-      ['erase', 'mdi:eraser', 'decor.erase'],
-    ] as const;
-    const undoName = this.host._geometryHistory.undoName;
-    const redoName = this.host._geometryHistory.redoName;
-    return html`<div class="editbar decorbar" data-hp="toolbar" data-kind="decor">
-      <div class="editbar-tools" tabindex="-1" ?inert=${this.host._modeTransitionBusy}>
-      ${tools.map(
-        ([t, ic, k]) => html`<button class="btn dtool ${this.host._decorTool === t ? 'on' : ''}" data-hp="tool" data-tool=${t}
-          data-editor-palette=${t === 'furniture' || t === 'image' ? t : nothing}
-          @click=${() => this.properties.invoke(() => {
+public _activateDecorTool(t: DecorTool): void {
+    void this.properties.invoke(() => {
             if ((t === 'furniture' || t === 'image') && this.host._decorTool === t) {
               this._clearFurniturePreview();
               this.host._furnPalette = null;
@@ -5046,12 +5024,50 @@ public _renderDecorBar(): TemplateResult {
               this.host._furnCategory = null;
             }
             if (t !== 'image') this.host._decorImagePalette = null;
-          })}
-          title=${this.host._t(k)}>
+    });
+  }
+
+public _shapesToolbarGroup(): EditorToolbarGroup {
+    return { id: 'shapes', label: this.host._t('decor.shapes'), icon: 'mdi:shape-outline',
+      activeItemId: ['line', 'rect', 'ellipse'].includes(this.host._decorTool) ? this.host._decorTool : undefined,
+      items: ([['line','mdi:vector-line','decor.line'],['rect','mdi:rectangle-outline','decor.rect'],['ellipse','mdi:ellipse-outline','decor.ellipse']] as const)
+        .map(([id,icon,key]) => ({id,icon,label:this.host._t(key),role:'tool',invoke:()=>this._activateDecorTool(id)})),
+    };
+  }
+
+public _roomsToolbarGroup(): EditorToolbarGroup {
+    return { id: 'rooms', label: this.host._t('markup.rooms'), icon: 'mdi:floor-plan',
+      activeItemId: ['merge','split','resize','delroom'].includes(this.host._tool) ? this.host._tool : undefined,
+      items: ([['merge','markup.merge','title.markup_merge','mdi:vector-union'],['split','markup.split','title.markup_split','mdi:vector-polyline-remove'],['resize','markup.resize','title.markup_resize','mdi:arrow-expand-all'],['delroom','btn.delete','title.markup_delroom','mdi:delete-outline']] as const)
+        .map(([id,key,hint,icon]) => ({id,icon,label:this.host._t(key),hint:this.host._t(hint),role:'tool',invoke:()=>this._activateMarkupTool(id)})),
+    };
+  }
+
+public _renderDecorBar(): TemplateResult {
+    const tools = [
+      ['select', 'mdi:cursor-default-outline', 'decor.select'],
+      // moving the picture is a TOOL (docs/DECOR-EDITOR.md §3.2) — offered only when
+      // there IS a picture, so a hand-drawn space's bar is unchanged
+      ...(this.backdropGesture.rect ? [['backdrop', 'mdi:image-move', 'decor.backdrop'] as const] : []),
+      ['text', 'mdi:format-text', 'decor.text'],
+      // the library sits next to the shapes it belongs with (docs/FURNITURE.md)
+      ['furniture', 'mdi:sofa-outline', 'decor.furniture'],
+      ...(this.host._haDecorAssetsApi === DECOR_ASSETS_API_VERSION
+        ? [['image', 'mdi:image-plus-outline', 'decor.image'] as const] : []),
+      ['erase', 'mdi:eraser', 'decor.erase'],
+    ] as const;
+    const undoName = this.host._geometryHistory.undoName;
+    const redoName = this.host._geometryHistory.redoName;
+    return html`<div class="editbar decorbar" data-hp="toolbar" data-kind="decor">
+      <div class="editbar-tools" tabindex="-1" ?inert=${this.host._modeTransitionBusy}>
+      ${tools.map(
+        ([t, ic, k]) => html`${t === 'text' ? this.host._editorToolbarGroups.map(group => this._renderEditorGroupLauncher(group)) : nothing}<button class="btn dtool ${this.host._decorTool === t ? 'on' : ''}" data-hp="tool" data-tool=${t}
+          data-editor-palette=${t === 'furniture' || t === 'image' ? t : nothing}
+          @click=${() => this._activateDecorTool(t)}
+          >
           <ha-icon icon=${ic}></ha-icon><span class="ml">${this.host._t(k)}</span>
         </button>`,
       )}
-      ${this.host._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
       <hp-color-opacity class="decor-default-color"
         .label=${this.host._t('decor.color')}
         .color=${this.host._decorStyle.color}
@@ -5061,17 +5077,17 @@ public _renderDecorBar(): TemplateResult {
         @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
           this._updateDecorStyle({ ...this.host._decorStyle, ...e.detail })}>
       </hp-color-opacity>
-      <button class="btn ghost" @click=${() => this._undoGeometry()} ?disabled=${!undoName || this.nodeMove?.busy}
-        title=${undoName ? this.host._t('history.undo_named', { name: undoName }) : this.host._t('history.undo_empty')}>
-        <ha-icon icon="mdi:undo-variant"></ha-icon>${this.host._t('history.undo')}
-      </button>
-      <button class="btn ghost" @click=${() => this._redoGeometry()} ?disabled=${!redoName || this.nodeMove?.busy}
-        title=${redoName ? this.host._t('history.redo_named', { name: redoName }) : this.host._t('history.redo_empty')}>
-        <ha-icon icon="mdi:redo-variant"></ha-icon>${this.host._t('history.redo')}
-      </button>
       </div>
       <div class="editbar-end">
-        <button class="btn barclose" title=${this.host._t('title.close_editor')} data-hp="editor-close"
+      <button class="btn ghost" @click=${() => this._undoGeometry()} ?disabled=${!undoName || this.nodeMove?.busy}
+        data-hp-tooltip=${undoName ? this.host._t('history.undo_named', { name: undoName }) : this.host._t('history.undo_empty')} aria-label=${undoName ? this.host._t('history.undo_named', { name: undoName }) : this.host._t('history.undo_empty')}>
+        <ha-icon icon="mdi:undo-variant" aria-hidden="true"></ha-icon>
+      </button>
+      <button class="btn ghost" @click=${() => this._redoGeometry()} ?disabled=${!redoName || this.nodeMove?.busy}
+        data-hp-tooltip=${redoName ? this.host._t('history.redo_named', { name: redoName }) : this.host._t('history.redo_empty')} aria-label=${redoName ? this.host._t('history.redo_named', { name: redoName }) : this.host._t('history.redo_empty')}>
+        <ha-icon icon="mdi:redo-variant" aria-hidden="true"></ha-icon>
+      </button>
+        <button class="btn barclose" data-hp-tooltip=${this.host._t('title.close_editor')} aria-label=${this.host._t('title.close_editor')} data-hp="editor-close"
           data-editor-navigation="view"
           @click=${() => this._setMode('view')}>
           <ha-icon icon="mdi:close"></ha-icon>
@@ -9888,7 +9904,7 @@ public _renderRoomGear(
     return html`<button class="rlgearbtn ${dragging ? 'dragging' : ''}"
       data-hp="room-settings" data-room=${r.id}
       style="left:${left}%;top:${top}%"
-      title=${this.host._t('room.settings_title')}
+      data-hp-tooltip=${this.host._t('room.settings_title')} aria-label=${this.host._t('room.settings_title')}
       @pointerdown=${(e: PointerEvent) => this.roomGear.pointerDown(e, r)}
       @pointermove=${(e: PointerEvent) => this.roomGear.pointerMove(e)}
       @pointerup=${(e: PointerEvent) => this.roomGear.pointerUp(e)}
@@ -10380,14 +10396,16 @@ public _renderPhysicalEditorLayer(): TemplateResult {
       const edge = [c.center[0] + ux * size / 2, c.center[1] + uy * size / 2];
       const handle = [edge[0] + ux * Math.max(g, unitsPerPx * 24),
         edge[1] + uy * Math.max(g, unitsPerPx * 24)];
-      return svg`<g class="physical-chrome" data-kind="square-selection">
+      const rotationRadius = Math.max(rotateHandleR, Math.max(view.w, view.h) * .018);
+      return svg`<g class="physical-chrome dtframe hp-column-frame" data-kind="square-selection">
         <path class="frame" d=${path(body)}></path>
         <circle class="move-dot" cx=${c.center[0]} cy=${c.center[1]} r=${handleR}></circle>
-        <line class="stem" x1=${edge[0]} y1=${edge[1]} x2=${handle[0]} y2=${handle[1]}></line>
-        <circle class="rotate-handle" cx=${handle[0]} cy=${handle[1]} r=${rotateHandleR}
+        <line class="dtstem" x1=${edge[0]} y1=${edge[1]} x2=${handle[0]} y2=${handle[1]}></line>
+        <circle class="rotate-handle dthandle dtrot" cx=${handle[0]} cy=${handle[1]} r=${rotationRadius}
           data-kind="rotate" @pointerdown=${(e: PointerEvent) => this.physicalGesture.rotateBegin(e, base)}
           @pointermove=${(e: PointerEvent) => this.physicalGesture.rotateMove(e)}
           @pointerup=${(e: PointerEvent) => this.physicalGesture.rotateEnd(e)}></circle>
+        <circle class="dtknob" aria-hidden="true" cx=${handle[0]} cy=${handle[1]} r=${rotationRadius/4}></circle>
       </g>`;
     })();
     return svg`<g class="physical-editor">${partitions}${columns}${ghost}${chrome}</g>`;
@@ -10748,64 +10766,47 @@ public _renderMarkupBar(): TemplateResult {
       : this.host._t('history.redo_empty');
     return html`<div class="editbar planbar" data-hp="toolbar" data-kind="plan">
       <div class="editbar-tools" tabindex="-1" ?inert=${this.host._modeTransitionBusy}>
-        <ha-icon icon="mdi:vector-square-edit" class="warn"></ha-icon>
         <span class="wallsgroup">
         <button class="btn ${this.host._tool === 'select' ? 'on' : ''}" data-hp="tool" data-tool="select"
           @click=${() => this._activateMarkupTool('select')}
-          title=${this.host._t('title.markup_select')}>
+          data-hp-tooltip=${this.host._t('title.markup_select')}>
           <ha-icon icon="mdi:cursor-default-outline"></ha-icon>${this.host._t('markup.select')}
         </button>
         <button class="btn ${this.host._tool === 'draw' ? 'on' : ''}" data-hp="tool" data-tool="draw"
           aria-pressed=${this.host._tool === 'draw' ? 'true' : 'false'}
           @click=${() => this._activateMarkupTool('draw')}
-          title=${this.host._t('title.markup_add')}>
+          data-hp-tooltip=${this.host._t('title.markup_add')}>
           <ha-icon icon="mdi:vector-polyline-plus"></ha-icon>${this.host._t('markup.add')}
         </button>
         <button class="btn ${this.host._tool === 'column' ? 'on' : ''}" data-hp="tool" data-tool="column"
           @click=${() => this._activateMarkupTool('column')}
-          title=${this.host._t('title.markup_column')}>
+          data-hp-tooltip=${this.host._t('title.markup_column')}>
           <ha-icon icon="mdi:vector-square"></ha-icon>${this.host._t('markup.column')}
         </button>
       </span>
-      <button class="btn ${this.host._tool === 'merge' ? 'on' : ''}" data-hp="tool" data-tool="merge"
-        @click=${() => this._activateMarkupTool('merge')}
-        title=${this.host._t('title.markup_merge')}>
-        <ha-icon icon="mdi:vector-union"></ha-icon>${this.host._t('markup.merge')}
-      </button>
-      <button class="btn ${this.host._tool === 'split' ? 'on' : ''}" data-hp="tool" data-tool="split"
-        @click=${() => this._activateMarkupTool('split')}
-        title=${this.host._t('title.markup_split')}>
-        <ha-icon icon="mdi:vector-polyline-remove"></ha-icon>${this.host._t('markup.split')}
-      </button>
-      <button class="btn ${this.host._tool === 'resize' ? 'on' : ''}" data-hp="tool" data-tool="resize"
-        @click=${() => this._activateMarkupTool('resize')}
-        title=${this.host._t('title.markup_resize')}>
-        <ha-icon icon="mdi:arrow-expand-all"></ha-icon>${this.host._t('markup.resize')}
-      </button>
+
+
+
       ${this.host._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
       <button class="btn ${this.host._tool === 'wallthick' ? 'on' : ''}" data-hp="tool" data-tool="wall-thickness"
         @click=${() => this._activateMarkupTool('wallthick')}
-        title=${this.host._t('title.markup_wallthick')}>
+        data-hp-tooltip=${this.host._t('title.markup_wallthick')}>
         <ha-icon icon="mdi:wall"></ha-icon>${this.host._t('markup.wallthick')}
       </button>
-      <button class="btn ${this.host._tool === 'delroom' ? 'on' : ''}" data-hp="tool" data-tool="delete-room"
-        @click=${() => this._activateMarkupTool('delroom')}
-        title=${this.host._t('title.markup_delroom')}>
-        <ha-icon icon="mdi:delete-outline"></ha-icon>${this.host._t('markup.delete_room')}
-      </button>
+
+      </div>
+      <div class="editbar-end">
       <button class="btn ghost" @click=${() => this._undoGeometry()}
         ?disabled=${!undoName || this.nodeMove?.busy}
-        title=${undoTitle} aria-label=${undoTitle}>
+        data-hp-tooltip=${undoTitle} aria-label=${undoTitle}>
         <ha-icon icon="mdi:undo-variant" aria-hidden="true"></ha-icon>
       </button>
       <button class="btn ghost" @click=${() => this._redoGeometry()}
         ?disabled=${!redoName || this.nodeMove?.busy}
-        title=${redoTitle} aria-label=${redoTitle}>
+        data-hp-tooltip=${redoTitle} aria-label=${redoTitle}>
         <ha-icon icon="mdi:redo-variant" aria-hidden="true"></ha-icon>
       </button>
-      </div>
-      <div class="editbar-end">
-        <button class="btn barclose" title=${this.host._t('title.close_editor')} data-hp="editor-close"
+        <button class="btn barclose" data-hp-tooltip=${this.host._t('title.close_editor')} aria-label=${this.host._t('title.close_editor')} data-hp="editor-close"
           data-editor-navigation="view"
           @click=${() => this._setMode('view')}>
           <ha-icon icon="mdi:close"></ha-icon>
@@ -10825,23 +10826,22 @@ public _renderDevicesBar(): TemplateResult {
       : this.host._t('history.redo_empty');
     return html`<div class="editbar devbar" data-hp="toolbar" data-kind="device">
       <div class="editbar-tools" tabindex="-1" ?inert=${this.host._modeTransitionBusy}>
-        <ha-icon icon="mdi:tune-variant" class="warn"></ha-icon>
         <button class="btn" data-hp="tool" data-tool="add-device" @click=${() => this._openMarkerDialog()}
-          title=${this.host._t('title.add_device')}>
+          data-hp-tooltip=${this.host._t('title.add_device')}>
           <ha-icon icon="mdi:plus-box-outline"></ha-icon>${this.host._t('devbar.add')}
         </button>
         ${this.host._ledButton()}
         <button class="btn ${this.host._deviceMagnets ? 'on' : ''}" data-hp="tool" data-tool="device-magnets"
           ?disabled=${!this.host._deviceContacts}
-          aria-pressed=${this.host._deviceMagnets ? 'true' : 'false'} title=${toolsT(langOf(this.host.hass, this.host._config?.language), 'editor.device_magnets_help')}
+          aria-pressed=${this.host._deviceMagnets ? 'true' : 'false'} data-hp-tooltip=${toolsT(langOf(this.host.hass, this.host._config?.language), 'editor.device_magnets_help')}
           @click=${() => { this.host._deviceMagnets = !this.host._deviceMagnets; this.host.requestUpdate(); }}>
           <ha-icon icon="mdi:magnet"></ha-icon>${toolsT(langOf(this.host.hass, this.host._config?.language), 'editor.device_magnets')}
         </button>
         <button class="btn ${this.host._showAll ? 'on' : ''}" data-hp="tool" data-tool="device-inbox" @click=${() => this._openDeviceInbox()}
-          title=${this.host._t('device_inbox.title')}>
+          >
           <ha-icon icon="mdi:devices"></ha-icon>${this.host._t('device_inbox.button')}
         </button>
-        <button class="btn" data-hp="tool" data-tool="icon-rules" @click=${() => this._openRulesDialog()} title=${this.host._t('title.icon_rules')}>
+        <button class="btn" data-hp="tool" data-tool="icon-rules" @click=${() => this._openRulesDialog()} >
           <ha-icon icon="mdi:shape-plus-outline"></ha-icon>${this.host._t('devbar.rules')}
         </button>
         ${this.host._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
@@ -10850,16 +10850,16 @@ public _renderDevicesBar(): TemplateResult {
         <button class="btn ghost" data-device-position-history="undo"
           @click=${() => this.host._undoDevicePosition()}
           ?disabled=${this.host._devicePositionBusy || !undoName}
-          title=${undoTitle} aria-label=${undoTitle}>
+          data-hp-tooltip=${undoTitle} aria-label=${undoTitle}>
           <ha-icon icon="mdi:undo-variant" aria-hidden="true"></ha-icon>
         </button>
         <button class="btn ghost" data-device-position-history="redo"
           @click=${() => this.host._redoDevicePosition()}
           ?disabled=${this.host._devicePositionBusy || !redoName}
-          title=${redoTitle} aria-label=${redoTitle}>
+          data-hp-tooltip=${redoTitle} aria-label=${redoTitle}>
           <ha-icon icon="mdi:redo-variant" aria-hidden="true"></ha-icon>
         </button>
-        <button class="btn barclose" title=${this.host._t('title.close_editor')} data-hp="editor-close"
+        <button class="btn barclose" data-hp-tooltip=${this.host._t('title.close_editor')} aria-label=${this.host._t('title.close_editor')} data-hp="editor-close"
           data-editor-navigation="view"
           @click=${() => this._setMode('view')}>
           <ha-icon icon="mdi:close"></ha-icon>
@@ -11092,7 +11092,7 @@ public _renderDeviceInbox(): TemplateResult {
         </div>
         <div class="device-inbox-filters">
           <label class="device-inbox-space-filter">${inboxT(this.host, 'device_inbox.space_filter')}
-            <select aria-label=${inboxT(this.host, 'device_inbox.space_filter')}
+            <hp-settings-select><select aria-label=${inboxT(this.host, 'device_inbox.space_filter')} ?disabled=${dialog.busy}
               @change=${(event: Event) => {
                 if (!dialog.busy) this.host._deviceInbox = { ...dialog,
                   spaceFilter: (event.target as HTMLSelectElement).value, selected: [], limit: 100 };
@@ -11101,7 +11101,7 @@ public _renderDeviceInbox(): TemplateResult {
               ${this.host._model.map((space) => html`<option value=${`space:${space.id}`}
                 .selected=${dialog.spaceFilter === `space:${space.id}`}>${space.title}</option>`)}
               <option value=${INBOX_NO_SPACE} .selected=${dialog.spaceFilter === INBOX_NO_SPACE}>${inboxT(this.host, 'device_inbox.no_space')}</option>
-            </select>
+            </select></hp-settings-select>
           </label>
           ${dialog.tab === 'on_plan' ? html`<label>
             <input type="checkbox" .checked=${dialog.onlyNew}
