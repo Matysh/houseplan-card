@@ -42,9 +42,9 @@ const res = await page.evaluate(async () => {
 
   c._showToast('contract smoke');
   await c.updateComplete;
+  // #956 establishes the empty live region before announcing its text.
+  await new Promise(resolve => requestAnimationFrame(resolve));
   out.toastHasStableKind = q('[data-hp="toast"][data-kind="message"]')?.textContent === 'contract smoke';
-  c._toast = null;
-  await c.updateComplete;
 
   const modeTools = {
     plan: ['select', 'draw', 'column', 'merge', 'split', 'resize', 'opening', 'wall-thickness', 'delete-room'],

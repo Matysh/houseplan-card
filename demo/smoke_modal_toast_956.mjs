@@ -93,6 +93,9 @@ try{
   out.childOwnsOnlyNotice=await notice.count()===1&&await confirm.locator('[data-hp=toast]').count()===1&&await notice.getAttribute('aria-live')==='off'&&await page.getByRole('alert').count()===0;
   const childPaint=await toastPaint(page,notice,'artifacts/956/confirm-'+(process.argv.includes('--native')?'native':'ha'));
   out.childNoticePainted=childPaint.painted;
+  // HA animates the departing parent before emitting its public closed event.
+  // Observe that physical phase before exercising Keep/reopen, not a fixed sleep.
+  if(!process.argv.includes('--native'))await dialog.locator('dialog').waitFor({state:'hidden'});
   // Cancel keeps editing; it must not be intercepted by the passive message.
   await confirm.locator('button[data-hp=dialog-cancel]').last().click();await confirm.waitFor({state:'detached'});
   await name.waitFor({state:'visible'});await dialog.locator('[data-hp=toast]').waitFor();await name.press('End');await name.type('!');await name.press('Backspace');
