@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 93, issue: 44. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 94, issue: 44. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -14,6 +14,7 @@
 | #958 | [CODE-REVIEW-958-r1.md](CODE-REVIEW-958-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #957 | [CODE-REVIEW-957-r1.md](CODE-REVIEW-957-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #956 | [SPEC-REVIEW-956-r1.md](SPEC-REVIEW-956-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #956 | [CODE-REVIEW-956-r1.md](CODE-REVIEW-956-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | 5 smoke с «прямым совпадением» не были прогнаны автором (закрыто при ревью) | `smoke_plan_drawing_repairs.mjs` `smoke_plan_snap_overlay.mjs` `smoke_room_autoclose.mjs` `smoke_unified_wall_tool.mjs` `smoke_wall_union_isolation.mjs` `docs/TESTING.md` `src/houseplan-card.ts` |
 | #955 | [SPEC-REVIEW-955-r1.md](SPEC-REVIEW-955-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | Не назван эффект на производительность/бюджеты (PROCESS.md §2.5, п. DoR). Файл: тело is… | — |
 | #955 | [SPEC-REVIEW-955-r2.md](SPEC-REVIEW-955-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #955 | [SPEC-REVIEW-955-r3.md](SPEC-REVIEW-955-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
