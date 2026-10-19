@@ -251,7 +251,7 @@ const out774 = await page.evaluate(async ({ fixture, layout, poly, frame, saved 
     await hp.settled();
     return svgOf();
   };
-  const toast = () => root().querySelector('[data-hp="toast"]')?.textContent?.trim() || '';
+  const toast = () => hp.toast()?.textContent?.trim() || '';
   const markerDialog = () => root().querySelector('[data-hp="dialog"][data-kind="marker"]');
   const acceptConfirm = async (confirm) => {
     const buttons = [...(confirm?.querySelectorAll('.danger-confirm-footer button')

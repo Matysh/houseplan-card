@@ -15,6 +15,7 @@
 import { readFileSync } from 'node:fs';
 import { launchColdView, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
 import { installSettingsDeviceFixture } from './helpers/settings-device-947-fixture.mjs';
+import {cardStyles,dialogsStyles} from '../test-build/styles.js';
 
 const manifest = JSON.parse(readFileSync('dist/houseplan-assets.json', 'utf8'));
 const runtimePath = manifest.files.map((file) => file.path)
@@ -199,10 +200,12 @@ function installHelpers() {
   };
 }
 
-/** Canonical slots (#805 p. 4): editor dialogs right after `dialogs` (5th sheet), tray right after `cardStyles`. */
+/** #805: follow the named eager dialogs sheet, including preceding #956 sheets. */
+const dialogSlot = cardStyles.flat(Infinity).indexOf(dialogsStyles) + 1;
+if (!dialogSlot) throw Error('The eager dialogs cascade anchor is missing');
 const canonical = (kinds, litSheets) => kinds.filter((kind) => kind === 'editor-dialogs').length === 1
   && kinds.filter((kind) => kind === 'editor-tray').length === 1
-  && kinds.indexOf('editor-dialogs') === 5 && kinds.indexOf('editor-tray') === litSheets + 1;
+  && kinds.indexOf('editor-dialogs') === dialogSlot && kinds.indexOf('editor-tray') === litSheets + 1;
 
 try {
   // ---- AC2 desktop cold View, kiosk card, space card; then AC3 settings; AC5 (i)/(ii)

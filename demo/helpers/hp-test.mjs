@@ -30,6 +30,7 @@ export const SELECTORS = Object.freeze({
   modeTab: '[data-hp="mode-tab"][data-mode="{mode}"]',
   editorClose: '[data-hp="editor-close"]',
   tool: '[data-hp="toolbar"] [data-hp="tool"][data-tool="{tool}"]',
+  toast: '[data-hp="toast"]',
   spaceTab: '[data-hp="space-tab"][data-id="{id}"]',
   roomSettings: '[data-hp="room-settings"][data-room="{room}"]',
   addDevice: '[data-hp="toolbar"] [data-hp="tool"][data-tool="add-device"]',
@@ -121,6 +122,13 @@ export function installHpTest(selectors) {
     /** Был ли `__hpTest` на странице ДО установки харнессом — бандл его определять не должен (P2). */
     preinstalled,
     settled,
+    /** The one rendered notice may belong to an active modal's shadow root. */
+    toast() { return find(need('toast'), 'toast'); },
+    async waitForToastClear() {
+      const c = need('waitForToastClear');
+      await waitFor('waitForToastClear', () => !find(c, 'toast'), () => 'предыдущее сообщение не исчезло');
+      await settled();
+    },
 
     /** #880: observe completed editor writes; never flush, cancel or clear them. */
     async waitForWrites({ timeoutMs = WAIT_MS } = {}) {

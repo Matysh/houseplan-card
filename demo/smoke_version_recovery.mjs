@@ -101,23 +101,20 @@ const lazyToastWithBanner = await page.evaluate(async () => {
   const onboardingFailed = card._onboardingRuntimeLoader.options.failed;
   if (!editorFailed || !onboardingFailed) throw new Error('lazy failure callbacks are unavailable');
   const clearToast = async () => {
-    clearTimeout(card._toastTimer);
-    card._toast = '';
-    card.requestUpdate();
-    await card.updateComplete;
+    await window.__hpTest.waitForToastClear();
   };
   await clearToast();
   editorFailed(new Error('terminal editor probe'), { terminal: true });
   onboardingFailed(new Error('terminal onboarding probe'), { terminal: true });
-  await card.updateComplete;
+  await window.__hpTest.settled();
   const terminalSuppressed = card._toast === ''
-    && !card.renderRoot.querySelector('.toast');
+    && !window.__hpTest.toast();
 
   editorFailed(new Error('retryable editor probe'), { terminal: false });
-  await card.updateComplete;
+  await window.__hpTest.settled();
   const retryMessage = `${card._t('editor.load_failed')} ${card._t('editor.retry_advice')}`;
   const nonTerminalPreserved = card._toast === retryMessage
-    && card.renderRoot.querySelector('.toast')?.textContent?.trim() === retryMessage;
+    && window.__hpTest.toast()?.textContent?.trim() === retryMessage;
   await clearToast();
   return { terminalSuppressed, nonTerminalPreserved };
 });
@@ -239,19 +236,15 @@ const configFailureAdoption = await page.evaluate(async () => {
 
 const terminalToastWithoutBanner = await page.evaluate(async () => {
   const card = window.__card;
-  clearTimeout(card._toastTimer);
-  card._toast = '';
-  card.requestUpdate();
-  await card.updateComplete;
+  await window.__hpTest.waitForToastClear();
   card._editorRuntimeLoader.options.failed(
     new Error('terminal editor without banner probe'), { terminal: true },
   );
-  await card.updateComplete;
+  await window.__hpTest.settled();
   const expected = `${card._t('editor.load_failed')} ${card._t('editor.refresh_advice')}`;
   const preserved = card._toast === expected
-    && card.renderRoot.querySelector('.toast')?.textContent?.trim() === expected;
-  clearTimeout(card._toastTimer);
-  card._toast = '';
+    && window.__hpTest.toast()?.textContent?.trim() === expected;
+  await window.__hpTest.waitForToastClear();
   return { preserved };
 });
 

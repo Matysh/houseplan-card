@@ -48,8 +48,8 @@ for (const language of ['ru', 'en']) {
     const interruptedCalls = calls.map(message => ({ type: message.type, id: message.device_id }));
     const after = await callWS({ type: 'houseplan/layout/get' });
     c.hass = original;
-    await c.updateComplete;
-    const toast = c.renderRoot.querySelector('[data-hp="toast"]')?.textContent.trim() || '';
+    await window.__hpTest.settled();
+    const toast = window.__hpTest.toast()?.textContent.trim() || '';
     const expected = language === 'ru'
       ? 'Контекст Home Assistant изменился. Повторите действие.'
       : 'Home Assistant context changed. Try again.';

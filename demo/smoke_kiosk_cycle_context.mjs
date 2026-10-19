@@ -127,9 +127,10 @@ await page.evaluate(async()=>window.__hpTest.setServerConfig(cfg=>{
   cfg.spaces.find(s=>s.id==='f1').openings=[];return cfg;
 }));
 await page.evaluate(()=>window.__oldCycleLock.click());
+await page.evaluate(()=>window.__hpTest.settled());
 checkAll(await page.evaluate(()=>({deletedDoorSendsNoService:window.__cycleCalls.length===0,
   changedTargetClosesPopup:!window.__card._openingInfo,
-  changedTargetHasExplanation:window.__card.shadowRoot.querySelector('[data-hp="toast"]')?.textContent.includes('target changed')})));
+  changedTargetHasExplanation:window.__hpTest.toast()?.textContent.includes('target changed')})));
 
 // Marker confirmation is scoped by the captured floor even when target ids stay identical.
 await page.locator('houseplan-card [data-hp="device"][data-id="cycle-light"]').click();

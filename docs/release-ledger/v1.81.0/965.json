@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 965,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Read native modal notice DOM and observe its normal publication/expiry in smoke witnesses after #956; retain relative cascade and first-frame checks when eager toast styles precede dialogs. Product behavior and performance thresholds are unchanged."
+}

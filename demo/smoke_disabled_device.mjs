@@ -45,7 +45,7 @@ const res = await page.evaluate(async () => {
   await paint();
   const showBlocked = /disabled|deactiv/i.test(c._toast)
     && c._markerDialog?.hideFromPlan === hiddenBeforeShow
-    && sr().querySelector('.toast')?.getAttribute('role') === 'alert';
+    && window.__hpTest.toast()?.getAttribute('role') === 'alert';
   c._markerDialog = null;
 
   window.__setRegistryDisabled('device', 'd_light1', null);

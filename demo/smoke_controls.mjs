@@ -71,12 +71,12 @@ const res = await page.evaluate(async () => {
   c._cancelDevicePressFeedback();
   const unavailableCalls = calls.length;
   c._clickDevice(new MouseEvent('click'), dev2());
-  await c.updateComplete;
+  await window.__hpTest.settled();
   const pluralToast = `Targets are unavailable: ${lights.map(targetLabel).join(', ')}. No action was performed`;
   out.unavailableTargetsStayNeutral = c._stateClass(dev2()) === '';
   out.unavailableTargetsNoService = calls.length === unavailableCalls;
   out.unavailableTargetsNoPress = c._devicePressAnimations.size === 0;
-  out.unavailableTargetsPluralToast = sr().querySelector('.toast')?.textContent?.trim() === pluralToast;
+  out.unavailableTargetsPluralToast = window.__hpTest.toast()?.textContent?.trim() === pluralToast;
 
   // One target uses the named singular copy. The same branch must win when
   // the target disappears after a confirmation dialog was opened.
@@ -84,9 +84,9 @@ const res = await page.evaluate(async () => {
   cfg.controls = [lights[0]];
   c._regSignature = ''; c._maybeRebuildDevices(); await c.updateComplete;
   c._clickDevice(new MouseEvent('click'), dev2());
-  await c.updateComplete;
+  await window.__hpTest.settled();
   const singularToast = `Target “${targetLabel(lights[0])}” is unavailable — no action was performed`;
-  out.unavailableTargetSingularToast = sr().querySelector('.toast')?.textContent?.trim() === singularToast;
+  out.unavailableTargetSingularToast = window.__hpTest.toast()?.textContent?.trim() === singularToast;
 
   await setSt({ [lights[0]]: 'off' });
   cfg.tap_confirm = true;
@@ -99,7 +99,8 @@ const res = await page.evaluate(async () => {
   confirm?.exec();
   await c.updateComplete;
   out.confirmRaceNoService = calls.length === confirmCalls;
-  out.confirmRaceUnavailableToast = sr().querySelector('.toast')?.textContent?.trim() === singularToast;
+  await window.__hpTest.settled();
+  out.confirmRaceUnavailableToast = window.__hpTest.toast()?.textContent?.trim() === singularToast;
   cfg.tap_confirm = false;
   cfg.controls = [...lights];
   c._tapConfirm = null;
