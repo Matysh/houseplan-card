@@ -25,6 +25,14 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Nightly witness repair (#962) distinguishes card headings from navigation labels,
+native select layout from clipping, and ray-origin draft/preview from native
+radio checked state. Properties conflicts include sticky and no-op completion;
+runtime mutation definitions retain TypeScript narrowing. Backend witnesses
+select the actual opacity test and report forbidden capture/transport calls
+through test assertions instead of stranding HA websocket tasks. Local checks
+establish ordinary PASS/static readiness; caught evidence remains nightly-only.
+
 Legacy review resume (#961) supplies trusted repository identity to the findings
 snapshot verifier. Completed sealed green reviews remain verified no-ops; their
 exact merge continuation owns completion. Corrupt/foreign evidence and current

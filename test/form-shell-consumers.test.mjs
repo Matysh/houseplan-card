@@ -16,3 +16,8 @@ test('#609 all five settings consumers opt into the shared form shell', () => {
     assert.match(source, new RegExp(`data-kind=["']${kind}["'][^>]*form-shell`), file);
   }
 });
+
+test('#962 the fills card owns its heading independently of the navigation caption', () => {
+  const source = readFileSync(new URL('../src/editors/general-settings-dialog.ts', import.meta.url), 'utf8');
+  assert.match(source, /formCard\(\{\s*id: 'fills',\s*title: st\('gs\.section_fills'\),/);
+});

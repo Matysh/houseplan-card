@@ -396,7 +396,7 @@ def test_decor_physical_style_and_backdrop_transform():
         v.SPACE_SCHEMA({**space, "plan_scale_x": 0})
 
 
-def test_backdrop_opacity_is_optional_finite_not_null():
+def test_plan_opacity_is_optional_finite_not_null():
     space = {"id": "s", "title": "S", "view_box": [0, 0, 1, 1], "rooms": []}
     assert "plan_opacity" not in v.SPACE_SCHEMA(space)
     for alpha in (0, 0.4, 1):

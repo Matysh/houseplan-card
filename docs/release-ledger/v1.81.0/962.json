@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 962,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Repair the ordinary guards and mutation definitions identified by the 2026-10-19 nightly report without changing product code, gate thresholds or nightly-only mutation execution."
+}

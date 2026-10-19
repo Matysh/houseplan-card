@@ -2202,6 +2202,34 @@ unknown neighbouring files and workflows remain guarded. The ordinary
 inventory and affected-check cases in `test/check-inputs.test.mjs` work even
 before the metadata file arrives from `main`.
 
+### Nightly witness repair (#962)
+
+The 2026-10-19 artifacts exposed different witness failures, not one product
+regression. The fills navigation label duplicated the card title, so a generic
+source substring could survive a missing card heading. The scoped form-card
+contract now checks the consumer's own heading. Native radio checked state can
+change without a Lit handler; the #955 smoke also reads the draft and rendered
+selected preview after both label click and keyboard selection. The #947 smoke
+measures each hidden native select's actual box as well as HA body overflow:
+clipping a padded/min-sized control is not zero layout extent.
+
+Properties completion tests cover an observed conflict after the external value
+returns, and a no-op draft whose baseline changed before sync. The image-ratio
+mutation uses a runtime condition so TypeScript still narrows the nullable ratio;
+the history mutation assigns size after copying so it retains the original
+optional/null field type. `pytest -k plan_opacity` selects the named opacity
+test, including null/bool/string/nonfinite refusals.
+
+The two support-v2 witnesses used `pytest.fail` inside HA websocket callbacks.
+That raises BaseException outside ordinary protocol error handling and strands
+the waiting client until the runner timeout. Capture now records entry and
+raises an ordinary support error; an inert async transport records entry and
+returns a local test ID. The test boundary asserts zero calls and the exact
+refusal response, with bounded waits. No external transport, timeout increase,
+outcome reclassification or skipped checks are needed. Ordinary tests and static
+readiness run during development; changed mutants are not executed or claimed
+caught before the next nightly run.
+
 ### Negative evidence in development and review (#905)
 
 The common policy in PROCESS §2.7, TESTING, the role digests and the actual

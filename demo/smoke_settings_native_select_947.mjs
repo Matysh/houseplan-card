@@ -24,6 +24,7 @@ try{
  for(const width of [320,390,1280]){
   await page.setViewportSize({width,height:900});
   out[`${width}_native_body_does_not_scroll_sideways`]=await dialog.evaluate(el=>{const ha=el.shadowRoot.querySelector('ha-dialog'),body=ha.shadowRoot.querySelector('.body');return body.scrollWidth<=body.clientWidth+1;});
+  out[`${width}_native_select_has_no_layout_extent`]=await dialog.locator('.radargroup hp-settings-select select').evaluateAll(nodes=>nodes.length>0&&nodes.every(el=>{const r=el.getBoundingClientRect();return r.width<=1&&r.height<=1;}));
  }
  await page.setViewportSize({width:320,height:900});
  const select=dialog.locator('.radargroup hp-settings-select').first();

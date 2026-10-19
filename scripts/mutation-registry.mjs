@@ -19654,7 +19654,7 @@ const MUTANT_DEFINITIONS = [
     id: 'properties-image-ratio-ignored',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/properties-transforms.test.mjs',
     because: '#931 AC4/AC8: locked image resize changes both axes atomically around the current centre.',
-    patches: [{file:'src/editors/properties/transforms.ts',find:"if (shape.kind === 'image' && ratio !== null)",replace:"if (shape.kind === 'image' && ratio !== null && false)"}],
+    patches: [{file:'src/editors/properties/transforms.ts',find:"if (shape.kind === 'image' && ratio !== null)",replace:"if (shape.kind === 'image' && ratio !== null && Number.isNaN(ratio))"}],
   },
   {
     id: 'properties-opening-reference-follows-nearest',
@@ -19666,7 +19666,7 @@ const MUTANT_DEFINITIONS = [
     id: 'properties-visual-history-rewinds-marker-siblings',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/properties-patch.test.mjs test/properties-editor.test.mjs',
     because: '#931 AC11: changed-key visual history cannot reset a later size/name or unknown field.',
-    patches: [{file:'src/device-position-history.ts',find:'  const result = { ...marker };',replace:'  const result = { ...marker, size: 1 };'}],
+    patches: [{file:'src/device-position-history.ts',find:'  const result = { ...marker };',replace:'  const result = { ...marker };\n  result.size = 1;'}],
   },
   {
     id: 'properties-null-opacity-becomes-zero',

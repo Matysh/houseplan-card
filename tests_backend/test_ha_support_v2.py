@@ -102,13 +102,24 @@ async def test_future_and_mixed_and_malformed_requests_fail_before_capture(
     hass, hass_ws_client, monkeypatch, extra
 ):
     await _setup(hass)
+    from custom_components.houseplan.support_package import SupportPackageError
+
+    captures = []
+
+    def capture(*args):
+        captures.append(args)
+        # A pytest.fail BaseException in HA's WS task leaves receive_json hung.
+        # Return an ordinary protocol error, then assert at the test boundary.
+        raise SupportPackageError("support_rejected")
+
     monkeypatch.setattr(
         "custom_components.houseplan.support_preview.capture_snapshot",
-        lambda *args: pytest.fail("invalid request reached snapshot capture"),
+        capture,
     )
     client = await hass_ws_client(hass)
     await client.send_json_auto_id({**_support_preview_request(), **extra})
-    response = await client.receive_json()
+    response = await asyncio.wait_for(client.receive_json(), timeout=10)
+    assert captures == [], "invalid request reached snapshot capture"
     assert (
         response["success"] is False and response["error"]["code"] == "support_rejected"
     )
@@ -164,11 +175,20 @@ async def test_nonadmin_writer_cannot_export_denied_facts_and_revocation_blocks_
     facts = json.loads(readable["text"])["diagnostics"]["devices"]["entities"]
     assert facts[0]["shape"] == "numeric" and facts[0]["exists"] is True
     denied["active"] = True
+    submitted = []
+
+    async def submit(*args, **kwargs):
+        submitted.append(kwargs)
+        return "hpr-test-no-transport"
+
     monkeypatch.setattr(
         "custom_components.houseplan.websocket_api.async_submit_report",
-        lambda *args, **kwargs: pytest.fail("read ACL revocation reached transport"),
+        submit,
     )
-    answer = await _support_submit_request(client, readable["token"], "v2-revoked-read")
+    answer = await asyncio.wait_for(
+        _support_submit_request(client, readable["token"], "v2-revoked-read"), timeout=10
+    )
+    assert submitted == [], "read ACL revocation reached transport"
     assert not answer["success"] and answer["error"]["code"] == "unauthorized"
 
 

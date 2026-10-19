@@ -149,9 +149,15 @@ try{
       out[prefix+'_moon_no_divider']=await d.locator('#gs-moon-status').evaluate(el=>getComputedStyle(el).borderTopWidth==='0px');
       const outer=d.locator('.hpf-ray-choice:has(input[value=outer])');
       if(width===1280&&height===900&&theme==='light'){
-       await outer.click();out.ray_preview_click=await d.locator('input[name=gs-sun-ray-origin][value=outer]').isChecked();
+       await outer.click();await settled();
+       out.ray_preview_click=await d.locator('input[name=gs-sun-ray-origin][value=outer]').isChecked()
+        &&await outer.locator('figure').evaluate(el=>el.classList.contains('is-selected'));
+       out.ray_preview_draft=await page.evaluate(()=>window.__card._settingsDialog.sunRayOrigin==='outer');
        await d.locator('input[name=gs-sun-ray-origin][value=outer]').focus();await page.keyboard.press('ArrowRight');
-       out.ray_native_keyboard=await d.locator('input[name=gs-sun-ray-origin][value=inner]').isChecked();
+       await settled();
+       out.ray_native_keyboard=await d.locator('input[name=gs-sun-ray-origin][value=inner]').isChecked()
+        &&await d.locator('.hpf-ray-choice:has(input[value=inner]) figure').evaluate(el=>el.classList.contains('is-selected'));
+       out.ray_keyboard_draft=await page.evaluate(()=>window.__card._settingsDialog.sunRayOrigin==='inner');
       }
      }
      if(name==='general'&&id==='plan'&&width===1280&&height===900){

@@ -72,6 +72,26 @@ test('#931 queued and late replies cannot write or clear another object/user/bin
   }
 });
 
+test('#962 an observed same-field conflict stays rejected even after the remote value returns', async () => {
+  const { state, controller: c } = setup(); c.edit('x', '30');
+  state.fields.x = 11; c.sync();
+  state.fields.x = 10; c.sync();
+  assert.equal(await c.finish(), false);
+  assert.equal(c.draft.error.key, 'external_change');
+  assert.equal(c.draft.raw, '30');
+  assert.equal(state.fields.x, 10); assert.deepEqual(state.commits, []);
+  c.cancel(); c.edit('x', '30');
+  assert.equal(await c.finish(), true); assert.equal(state.fields.x, 30);
+});
+
+test('#962 finishing a nominal no-op checks current external data before clearing the draft', async () => {
+  const { state, controller: c } = setup(); c.edit('x', '10');
+  state.fields.x = 11; // Finish must guard even before a read-side sync runs.
+  assert.equal(await c.finish(), false);
+  assert.equal(c.draft.error.key, 'external_change');
+  assert.equal(state.fields.x, 11); assert.deepEqual(state.commits, []);
+});
+
 test('#931 draft invalidation revokes a queued callback even if the same identity reappears', async () => {
   const { state, controller: c } = setup(); state.delay = deferred(); c.edit('x', '30');
   const pending = c.finish(); await Promise.resolve(); c.invalidate(); c.edit('x', '40');
