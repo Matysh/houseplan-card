@@ -26,6 +26,12 @@ const STAND = fileURLToPath(new URL('../demo/stand/update-dev-bundle.sh', import
 const TRACK_PATH = 'scripts/ha-track-dev.sh';
 const TRACK = fileURLToPath(new URL(`../${TRACK_PATH}`, import.meta.url));
 const ENV = { GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' };
+// #969: no detached maintenance may outlive a fixture Git command. Clone -c
+// writes local config before its fetch; the bare receiver is configured before push.
+const FIXTURE_GIT_CONFIG = [['receive.autogc', 'false'], ['maintenance.auto', 'false'], ['gc.auto', '0']];
+const CLONE_CONFIG = FIXTURE_GIT_CONFIG.flatMap(([key, value]) => ['--config', `${key}=${value}`]);
+// Native retries handle transient contention; exhaustion must still throw.
+const REMOVE_FIXTURE_TREE = Object.freeze({ recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
 const git = (cwd, ...args) => execFileSync('git', args, {
   cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, ...ENV },
 }).trim();
@@ -59,7 +65,8 @@ function fixture() {
   const origin = join(root, 'origin.git');
   const work = join(root, 'work');
   git(root, 'init', '--bare', '-q', '-b', 'dev', origin);
-  git(root, 'clone', '-q', origin, work);
+  for (const [key, value] of FIXTURE_GIT_CONFIG) git(origin, 'config', '--local', key, value);
+  git(root, 'clone', '-q', ...CLONE_CONFIG, origin, work);
   git(work, 'checkout', '-q', '-b', 'dev');
   mkdirSync(join(work, DEV_BUILD_TARGET, 'houseplan-assets'), { recursive: true });
   writeFileSync(join(work, DEV_BUILD_TARGET, 'houseplan-card.js'), 'card of the last beta');
@@ -75,6 +82,39 @@ function fixture() {
   git(work, 'push', '-q', '-u', 'origin', 'dev');
   return { root, origin, work, head: git(work, 'rev-parse', 'HEAD') };
 }
+
+function cloneStand(root, origin) {
+  const stand = join(root, 'stand');
+  git(root, 'clone', '-q', '-b', 'dev', ...CLONE_CONFIG, origin, stand);
+  return stand;
+}
+
+test('#969 dev-build: origin, work and stand own their Git maintenance and finish cleanup', () => {
+  const { root, origin, work, head } = fixture();
+  try {
+    const stand = cloneStand(root, origin);
+    for (const repo of [origin, work, stand]) {
+      for (const [key, expected] of [['receive.autogc', 'false'], ['maintenance.auto', 'false'], ['gc.auto', '0']]) {
+        assert.equal(git(repo, 'config', '--local', '--get', key), expected, `${repo}: ${key}`);
+      }
+    }
+    writeDist(work, 'cleanup contract');
+    publishDevBuild({ cwd: work, sha: head, log: () => {} });
+    git(stand, 'fetch', '-q', 'origin', 'dev-build');
+    assert.equal(git(stand, 'rev-parse', 'FETCH_HEAD'), git(origin, 'rev-parse', 'refs/heads/dev-build'));
+  } finally { rmSync(root, REMOVE_FIXTURE_TREE); }
+  assert.equal(existsSync(root), false, 'all three repositories are removed, not left for a later test');
+});
+
+test('#969 dev-build: an assertion failure survives cleanup and leaves no fixture behind', () => {
+  const { root } = fixture();
+  const sentinel = new assert.AssertionError({ message: 'ordinary fixture assertion failure' });
+  assert.throws(() => {
+    try { throw sentinel; }
+    finally { rmSync(root, REMOVE_FIXTURE_TREE); }
+  }, (error) => error === sentinel);
+  assert.equal(existsSync(root), false);
+});
 
 test('#657 parseArgs: значения по умолчанию и обе формы флагов', () => {
   assert.deepEqual(parseArgs(['--sha', 'x']), {
@@ -106,7 +146,7 @@ test('#657 dev-build: одна ветка без истории с бандло�
     const second = git(origin, 'rev-parse', 'refs/heads/dev-build');
     assert.notEqual(second, branchTip);
     assert.equal(git(origin, 'rev-list', '--count', second), '1');
-  } finally { rmSync(root, { recursive: true, force: true }); }
+  } finally { rmSync(root, REMOVE_FIXTURE_TREE); }
 });
 
 test('#657 dev-build: dev ушёл вперёд — прогон не пушит устаревшую сборку', () => {
@@ -122,7 +162,7 @@ test('#657 dev-build: dev ушёл вперёд — прогон не пушит
     assert.equal(git(origin, 'for-each-ref', 'refs/heads/dev-build'), '', 'ветка не создана');
     assert.match(lines.join('\n'), /публикует следующий прогон/);
     assert.throws(() => publishDevBuild({ cwd: work, sha: 'HEAD', log: () => {} }), /full commit SHA/);
-  } finally { rmSync(root, { recursive: true, force: true }); }
+  } finally { rmSync(root, REMOVE_FIXTURE_TREE); }
 });
 
 test('#657 стенд: update-dev-bundle.sh ставит бандл dev-build поверх рабочей копии и умеет вернуть её до pull', () => {
@@ -130,8 +170,7 @@ test('#657 стенд: update-dev-bundle.sh ставит бандл dev-build п
   try {
     writeDist(work, 'fresh card');
     publishDevBuild({ cwd: work, sha: head, log: () => {} });
-    const stand = join(root, 'stand');
-    git(root, 'clone', '-q', '-b', 'dev', origin, stand);
+    const stand = cloneStand(root, origin);
     writeFileSync(join(stand, DEV_BUILD_TARGET, 'stale-orphan.js'), 'left over');
     const run = runPosix('bash', [shellPath(STAND), shellPath(stand)], { env: { ...process.env, ...ENV } });
     assert.equal(run.status, 0, run.stderr);
@@ -144,7 +183,7 @@ test('#657 стенд: update-dev-bundle.sh ставит бандл dev-build п
     assert.equal(reset.status, 0, reset.stderr);
     assert.equal(git(stand, 'status', '--porcelain'), '', 'до pull рабочая копия чистая');
     assert.equal(readFileSync(join(stand, DEV_BUILD_TARGET, 'houseplan-card.js'), 'utf8'), 'card of the last beta');
-  } finally { rmSync(root, { recursive: true, force: true }); }
+  } finally { rmSync(root, REMOVE_FIXTURE_TREE); }
 });
 
 const backendOf = (repo, rev) => git(repo, 'ls-tree', '-r', '--name-only', rev, '--', DEV_BUILD_INTEGRATION)
@@ -172,7 +211,7 @@ test('#835 dev-build: вся интеграция источника, фронт
     assert.equal(marker.backendFiles, 3);
     assert.equal(marker.integrationTree, unlabelledIntegrationTree(origin, tip, head),
       'integrationTree — хеш дерева интеграции в самой ветке без метки #836');
-  } finally { rmSync(root, { recursive: true, force: true }); }
+  } finally { rmSync(root, REMOVE_FIXTURE_TREE); }
 });
 
 /**
@@ -191,7 +230,7 @@ function unlabelledIntegrationTree(repo, tip, source) {
     run('rm', '-q', '--cached', DEV_BUILD_LABEL);
     run('update-index', '--cacheinfo', `100644,${run('rev-parse', `${source}:${DEV_BUILD_MANIFEST}`)},${DEV_BUILD_MANIFEST}`);
     return run('rev-parse', `${run('write-tree')}:${DEV_BUILD_INTEGRATION}`);
-  } finally { rmSync(dir, { recursive: true, force: true }); }
+  } finally { rmSync(dir, REMOVE_FIXTURE_TREE); }
 }
 
 test('#836 dev-build: метка BUILD.json и +dev в манифесте, integrationTree без неё, источник не тронут', () => {
@@ -221,7 +260,7 @@ test('#836 dev-build: метка BUILD.json и +dev в манифесте, integ
     assert.equal(readFileSync(join(work, DEV_BUILD_MANIFEST), 'utf8'), SOURCE_MANIFEST);
     assert.equal(existsSync(join(work, DEV_BUILD_LABEL)), false);
     assert.equal(git(work, 'status', '--porcelain'), '?? dist/', 'рабочее дерево и индекс источника не тронуты');
-  } finally { rmSync(root, { recursive: true, force: true }); }
+  } finally { rmSync(root, REMOVE_FIXTURE_TREE); }
 });
 
 test('#836 dev-build: два источника с одной интеграцией и разными SHA — один integrationTree', () => {
@@ -241,7 +280,7 @@ test('#836 dev-build: два источника с одной интеграци
     assert.equal(second.changed, false, 'установка такой коммит не переставляет');
     const tip = git(origin, 'rev-parse', 'refs/heads/dev-build');
     assert.equal(JSON.parse(blob(origin, `${tip}:${DEV_BUILD_LABEL}`)).source, next, 'метка называет новый SHA');
-  } finally { rmSync(root, { recursive: true, force: true }); }
+  } finally { rmSync(root, REMOVE_FIXTURE_TREE); }
 });
 
 test('#836 dev-build: битый манифест или манифест без строковой version — отказ без push', () => {
@@ -259,7 +298,7 @@ test('#836 dev-build: битый манифест или манифест без
       writeDist(work, 'fresh card');
       assert.throws(() => publishDevBuild({ cwd: work, sha: git(work, 'rev-parse', 'HEAD'), log: () => {} }), error);
       assert.equal(git(origin, 'for-each-ref', 'refs/heads/dev-build'), '', 'ветка не создана');
-    } finally { rmSync(root, { recursive: true, force: true }); }
+    } finally { rmSync(root, REMOVE_FIXTURE_TREE); }
   }
 });
 
@@ -303,7 +342,7 @@ test('#835 dev-build: changed — только когда меняется то,
     assert.equal(publishHead().changed, true, 'новый фронтенд при том же дереве источника');
   } finally {
     if (saved === undefined) delete process.env.GITHUB_OUTPUT; else process.env.GITHUB_OUTPUT = saved;
-    rmSync(root, { recursive: true, force: true });
+    rmSync(root, REMOVE_FIXTURE_TREE);
   }
 });
 
@@ -316,7 +355,7 @@ test('#835 dev-build: без интеграции в дереве источни
     assert.throws(() => integrationIndexEntries(
       (args) => ({ ok: true, out: git(work, ...args) }), sha,
     ), /нет custom_components\/houseplan\/manifest\.json/);
-  } finally { rmSync(root, { recursive: true, force: true }); }
+  } finally { rmSync(root, REMOVE_FIXTURE_TREE); }
 });
 
 // --- scripts/ha-track-dev.sh: POSIX sh в контейнере HA (curl, tar) ---------
@@ -397,7 +436,7 @@ test('#835 ha-track-dev.sh: первая установка, повтор без
     assert.equal(back.status, 0, back.stderr);
     assert.match(back.stdout, /^updated /);
     assert.equal(readFileSync(join(t.installed, '__init__.py'), 'utf8'), 'VERSION = 2\n');
-  } finally { rmSync(root, { recursive: true, force: true }); }
+  } finally { rmSync(root, REMOVE_FIXTURE_TREE); }
 });
 
 test('#836 ha-track-dev.sh: метка едет с установленной копией; та же интеграция с новым SHA — unchanged и прежний SHA', { skip: NO_SH }, () => {
@@ -428,7 +467,7 @@ test('#836 ha-track-dev.sh: метка едет с установленной к
       assert.equal(again.stdout, `unchanged ${next} ${tree}\n`, 'та же интеграция — та же сборка');
       assert.equal(label().source, t.head, 'установленная копия хранит SHA, с которого её ставили');
     }
-  } finally { rmSync(root, { recursive: true, force: true }); }
+  } finally { rmSync(root, REMOVE_FIXTURE_TREE); }
 });
 
 test('#835 ha-track-dev.sh: битый архив и сборка старого формата не трогают установку', { skip: NO_SH }, () => {
@@ -459,5 +498,5 @@ test('#835 ha-track-dev.sh: битый архив и сборка старого
     assert.equal(readFileSync(join(t.installed, '__init__.py'), 'utf8'), before, 'установка не тронута');
     assert.equal(existsSync(join(t.config, '.houseplan-dev-next')), false);
     assert.equal(t.run(['--bogus']).status, 2, 'неизвестный аргумент');
-  } finally { rmSync(root, { recursive: true, force: true }); }
+  } finally { rmSync(root, REMOVE_FIXTURE_TREE); }
 });

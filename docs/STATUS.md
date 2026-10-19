@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.82.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.81.0` |
 | Latest prerelease tag | `v1.82.0-beta.2` |
-| Tests | Node unit 4910 · pure backend 548 · HA-harness backend 457 · browser smokes 393 (`npm run inventory`) |
+| Tests | Node unit 4913 · pure backend 548 · HA-harness backend 457 · browser smokes 393 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -258,6 +258,12 @@ remain visible and do not silently fall back to old refresh behavior.
 
 Ship-review fixtures (#925) disable automatic maintenance only in temporary
 repositories and use bounded cleanup retries, retaining errors on exhaustion.
+
+Dev-build fixtures (#969) also isolate their bare origin, working clone and
+stand before push/fetch. Native bounded cleanup retains failures; real local
+config/publish/fetch and assertion-failure cleanup checks supplement unchanged
+integrationTree and HA update/rollback assertions. The historical writer is
+not identified by a successful ordinary test.
 
 Presentation consistency (#907) shares the marker form's effective locale with
 its preview, maps the early placement context refusal to human text, and keeps

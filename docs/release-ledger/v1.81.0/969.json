@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 969,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Isolate automatic Git maintenance in temporary dev-build origin/work/stand fixtures and bound native directory cleanup retries without suppressing errors. Preserve all publisher, integrationTree and HA updater assertions; no product behavior changes."
+}

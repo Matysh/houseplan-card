@@ -2094,6 +2094,19 @@ real commit/push and completed cleanup, while all original patch-id/cherry-pick
 and workflow assertions remain. This hardens the known ENOTEMPTY cleanup path
 without claiming to establish or reproduce its historical race cause.
 
+Dev-build test repositories (#969) apply the same bounded-cleanup contract to
+their own bare origin, working clone and stand clone. `receive.autogc=false`,
+`maintenance.auto=false` and `gc.auto=0` are local fixture settings: the receiver
+is configured before the first push, and clone `--config` writes the settings
+before fetching. Their root/index `finally` blocks use the native ten-retry,
+50 ms linear-backoff removal options without suppressing exhaustion. Ordinary
+tests check all three local configs, real publish/fetch, completed removal and
+propagation of an assertion failure. The original integration-tree, stale-build,
+backend/dist and HA update/rollback assertions are unchanged. This does not
+claim to reproduce or identify the exact writer behind the historical CI
+`ENOTEMPTY` in `origin.git/objects/pack`; no owner/global config or production
+publisher/updater changes are needed.
+
 Owner decision on 2026-09-25: use only a one-time local garbage collection for
 the Windows clone. This issue does **not** introduce Git LFS, stop tracking
 `dist/**`, remove the committed integration bundle, or rewrite published Git
