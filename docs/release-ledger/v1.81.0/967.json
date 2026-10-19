@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 967,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Retain and observe browser smoke opening actions without returning pending promises through CDP; prove native garbage-collection and disposal behavior while preserving all existing first-frame, computed-style, cascade, remount/retry and failure oracles. No product behavior or gate ceiling changes."
+}

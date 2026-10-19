@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.82.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.81.0` |
 | Latest prerelease tag | `v1.82.0-beta.2` |
-| Tests | Node unit 4885 · pure backend 548 · HA-harness backend 457 · browser smokes 393 (`npm run inventory`) |
+| Tests | Node unit 4910 · pure backend 548 · HA-harness backend 457 · browser smokes 393 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -134,6 +134,11 @@ Kiosk smoke readiness (#949) separates the native CSS height timeline from
 Playwright's JS clock before the scenario begins. The bounded setup-only
 barrier does not wait for fit success or alter product timing/resize behavior;
 all original carousel/action assertions and red diagnostic evidence remain.
+
+Lazy-editor smoke actions (#967) retain their promise owner and observe a
+settled result without exporting a pending promise through CDP. Native GC,
+release, rejection and timeout witnesses preserve the existing first-frame,
+cascade, remount and retry oracles. Product code and gate ceilings do not change.
 
 Contact-outline zoom repair (#951) removes the inline SVG line-box offset and
 the independent fixed stroke. Full/static Flat contacts use the ordinary shell

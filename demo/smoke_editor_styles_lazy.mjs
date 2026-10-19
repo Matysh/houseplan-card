@@ -15,6 +15,7 @@
 import { readFileSync } from 'node:fs';
 import { launchColdView, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
 import { installSettingsDeviceFixture } from './helpers/settings-device-947-fixture.mjs';
+import { evaluateRetainedAction } from './helpers/retained-page-action.mjs';
 import {cardStyles,dialogsStyles} from '../test-build/styles.js';
 
 const manifest = JSON.parse(readFileSync('dist/houseplan-assets.json', 'utf8'));
@@ -207,10 +208,57 @@ const canonical = (kinds, litSheets) => kinds.filter((kind) => kind === 'editor-
   && kinds.filter((kind) => kind === 'editor-tray').length === 1
   && kinds.indexOf('editor-dialogs') === dialogSlot && kinds.indexOf('editor-tray') === litSheets + 1;
 
+/** Ordinary orphaned action fixture: no product/guard patch, only a weak owner. */
+function weakActionOwner() {
+  const owner = {};
+  owner.promise = new Promise(resolve => { owner.resolve = resolve; });
+  owner.promise.then(() => owner);
+  window.hp967WeakOwner = new WeakRef(owner);
+  return owner.promise;
+}
+
 try {
   // ---- AC2 desktop cold View, kiosk card, space card; then AC3 settings; AC5 (i)/(ii)
   const desktop = await open(DESKTOP);
   const page = desktop.page;
+  // #967: prove the CDP failure class and its repair on the actual pinned engine.
+  // GC is an ordinary environment input, not a mutation of product or oracle.
+  const cdp = await page.context().newCDPSession(page);
+  try {
+    const bare = page.evaluate(weakActionOwner)
+      .then(value => ({value}), error => ({error:error.message}));
+    await page.waitForFunction(() => !!window.hp967WeakOwner);
+    await cdp.send('HeapProfiler.collectGarbage');
+    let timer;
+    const bareResult = await Promise.race([
+      bare,
+      new Promise(resolve => {timer = setTimeout(() => resolve({error:'GC control did not settle'}), 3000);}),
+    ]);
+    clearTimeout(timer);
+    out.unrootedActionShowsCdpCollection = /Resulting promise was garbage collected/.test(bareResult.error || '');
+    await page.evaluate(() => {
+      window.hp967WeakOwner.deref()?.resolve('retire control');
+      delete window.hp967WeakOwner;
+    });
+
+    const retained = evaluateRetainedAction(page, weakActionOwner, 'GC action control')
+      .then(value => ({value}), error => ({error:error.message}));
+    await page.waitForFunction(() => !!window.hp967WeakOwner);
+    await cdp.send('HeapProfiler.collectGarbage');
+    const alive = await page.evaluate(() => {
+      const owner = window.hp967WeakOwner.deref();
+      owner?.resolve('retained');
+      return !!owner;
+    });
+    const retainedResult = await retained;
+    out.retainedActionSurvivesCdpCollection = alive && retainedResult.value === 'retained'
+      || retainedResult.error || 'action owner was collected';
+    await cdp.send('HeapProfiler.collectGarbage');
+    out.retainedActionReleasesItsOwner = await page.evaluate(() => !window.hp967WeakOwner.deref());
+  } finally {
+    await page.evaluate(() => {delete window.hp967WeakOwner;});
+    await cdp.detach();
+  }
   const cold = await page.evaluate(async () => {
     const card = window.__card;
     const kiosk = document.createElement('houseplan-card');
@@ -505,7 +553,7 @@ try {
         window.__hp805.watch(window.__card, selector, property);
       }, { selector: check.selector, property: check.property });
       console.log('opening first-frame surface',family.name,check.selector);
-      await session.page.evaluate(check.open);
+      await evaluateRetainedAction(session.page, check.open, `${family.name} ${check.selector}`);
       results.push(await frameOf(session.page));
     }
     const kinds = await session.page.evaluate(() => [...window.__card.renderRoot.adoptedStyleSheets].map(window.__hp805.kindOf));

@@ -2007,6 +2007,16 @@ no bypass; `HP_ALLOW_FOREIGN_CAPTURE` covers the platform only. The check never
 repairs a global install or a symlink: install the pinned browser with
 `npx playwright install chromium`.
 
+The lazy-editor style witness (#967) starts its first-frame observer before
+the opening action. `evaluateRetainedAction` owns a public JSHandle containing
+the action promise, polls only its settled status and reads the value/error
+synchronously; returning a pending promise through CDP is not a lifetime root.
+Both handles are disposed on completion/refusal, and a non-completing action
+fails a named 20-second cap rather than retrying. A pinned ordinary weak-owner
+GC control and release check complement the unchanged first-frame/cascade,
+remount/retry checks. They do not diagnose a historical CI failure as product
+regression or flake merely because a later repeat passed.
+
 The supported native setup is repository-scoped and does not change the
 machine's default Node, Python or persistent `PATH` (#557):
 
