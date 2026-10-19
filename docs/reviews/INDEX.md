@@ -1,9 +1,10 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 90, issue: 41. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 91, issue: 42. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
+| #962 | [CODE-REVIEW-962-r1.md](CODE-REVIEW-962-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #961 | [CODE-REVIEW-961-r1.md](CODE-REVIEW-961-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #961 | [CODE-REVIEW-961-r2.md](CODE-REVIEW-961-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #960 | [CODE-REVIEW-960-r1.md](CODE-REVIEW-960-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | Windows-ветка candidate-reviews-index.mjs не инъецируется по платформе, поэтому не испо… | `candidate-reviews-index.mjs` `scripts/candidate-reviews-index.mjs` `scripts/local-gate-environment.mjs` `test/development-loop-954.test.mjs` `test/candidate-reviews-index.test.mjs` `test/pre-push-gate.test.mjs` |
