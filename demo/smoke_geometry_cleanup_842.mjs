@@ -74,7 +74,7 @@ await ev(() => {
     const body = c.shadowRoot.querySelector('hp-confirm .danger-confirm-body[data-confirm-key="geometry-cleanup"]');
     return body ? body.textContent.replace(/\s+/g, ' ').trim() : null;
   };
-  state.toast = () => c.shadowRoot.querySelector('[data-hp="toast"]')?.textContent.trim() || '';
+  state.toast = () => window.__hpTest.toast()?.textContent.trim() || '';
 });
 
 const sets = () => ev(() => window.__842.sets.length);
