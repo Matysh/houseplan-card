@@ -8,6 +8,16 @@ import {installUiPolish963Fixture} from './ui-polish-963-fixture.mjs';
 import {watchPage} from '../serve.mjs';
 
 export const UI_963_BASE = '33a364d82e83963c8dc5bc961ea8f8025cb0a067';
+/** A CI smoke checkout is shallow; acquire only the immutable public base. */
+export function ensureUi963ReferenceCommit(cwd=fileURLToPath(new URL('../../',import.meta.url))) {
+  const options={cwd,encoding:'utf8',timeout:60000};
+  try {execFileSync('git',['cat-file','-e',`${UI_963_BASE}^{commit}`],{...options,stdio:'ignore'});}
+  catch {
+    console.log(`Fetching pinned public #963 reference commit ${UI_963_BASE}`);
+    execFileSync('git',['fetch','--no-tags','--depth=1','origin',UI_963_BASE],options);
+  }
+  return execFileSync('git',['rev-parse',`${UI_963_BASE}^{commit}`],options).trim();
+}
 const directory = fileURLToPath(new URL('../../docs/design/963-ui-polish/approved-2026-10-19/',import.meta.url));
 const verified = (file,hash) => {
   const bytes=readFileSync(directory+file);
@@ -28,6 +38,7 @@ export async function prepareUi963Page(page,url) {
 }
 /** Serves the original public Git bundle plus exact frozen prototype, never current implementation CSS. */
 export async function createUi963Reference(fixture) {
+  ensureUi963ReferenceCommit();
   const source=ui963ApprovedSources(), page=watchPage(await fixture.context.newPage());
   const files=new Set(execFileSync('git',['ls-tree','-r','--name-only',UI_963_BASE,'--','dist'],{encoding:'utf8'}).trim().split('\n').map(f=>f.slice(5)));
   const cache=new Map();

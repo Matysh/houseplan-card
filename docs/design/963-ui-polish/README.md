@@ -20,6 +20,7 @@ Run `demo/smoke_ui_polish_963_reference.mjs` after a fresh build. It rejects a
 stale product bundle and writes paired PNGs and geometry/paint measurements to
 ignored `artifacts/ui-polish-963/`. `HP_UI_963_VIDEO=1` records object switches;
 `HP_QA_SEGOE_DIR` supplies read-only installed Segoe UI, otherwise both pages
-use pinned HA Roboto. The original public Git bundle must be available in the
-clone's history. Execution results belong in issue #963; derived captures and
+use pinned HA Roboto. A shallow clone acquires the exact original public Git
+commit from `origin` when absent; no branch or mutable tag supplies the reference.
+Execution results belong in issue #963; derived captures and
 receipts stay outside the committed source tree.
