@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 964,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Preserve the reusable offline UI iteration tool as demo/ui-lab with synthetic defaults, pinned genuine HA components and explicit local-only private inputs. Existing demo, product behavior and the separately approved UI polish remain unchanged."
+}

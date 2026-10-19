@@ -7,6 +7,9 @@
   "scripts": {
     "build": "tsc --noEmit && rollup -c",
     "watch": "rollup -c --watch",
+    "ui-lab:prepare": "node demo/ui-lab/prepare-ha.mjs",
+    "ui-lab": "node demo/ui-lab/server.mjs",
+    "ui-lab:smoke": "node demo/ui-lab/smoke.mjs",
     "typecheck": "tsc --noEmit",
     "test": "tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/*.test.mjs",
     "benchmark:wall-model": "tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node scripts/benchmark-wall-segment-model.mjs",

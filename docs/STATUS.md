@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Offline UI Lab (#964) is a separate development tool under `demo/ui-lab/`, with
+synthetic defaults, real pinned HA controls, local-only state and explicit
+private inputs. It neither replaces demo/CI nor ships the cosmetic prototype
+from #963. The owner's existing laboratory and frozen reference remain separate;
+issue labels and the review pipeline own acceptance and merge status.
+
 Nightly witness repair (#962) distinguishes card headings from navigation labels,
 native select layout from clipping, and ray-origin draft/preview from native
 radio checked state. Properties conflicts include sticky and no-op completion;

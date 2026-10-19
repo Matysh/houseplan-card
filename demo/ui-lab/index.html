@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>House Plan · UI Lab</title>
+  <link rel="stylesheet" href="/theme.css">
+  <link rel="stylesheet" href="/theme-local.css">
+  <link rel="stylesheet" href="/lab.css">
+</head>
+<body>
+  <main id="product"><div id="loading">Загружаем интерфейс House Plan…</div></main>
+  <button id="lab-launcher" title="Панель стенда · Ctrl+Shift+L">UI LAB</button>
+  <aside id="lab-tools" hidden aria-label="Панель локального стенда">
+    <header><strong>House Plan · UI Lab</strong><button id="lab-close" aria-label="Закрыть панель стенда">×</button></header>
+    <p>Локальные демонстрационные данные. Сохранение и управление не затрагивают Home Assistant.</p>
+    <label>Тема<select id="lab-theme"><option value="dark">Тёмная</option><option value="light">Светлая</option></select></label>
+    <label>Язык<select id="lab-language"><option value="ru">Русский</option><option value="en">English</option><option value="de">Deutsch</option><option value="fr">Français</option></select></label>
+    <div class="shortcuts">
+      <button data-open="settings">Общие настройки</button><button data-open="space">Пространство</button>
+      <button data-open="device">Устройство</button><button data-open="room">Комната</button>
+      <button data-open="summary">Сводная панель</button><button data-open="pdf">Печать PDF</button>
+    </div>
+    <label><input type="checkbox" id="lab-styles" checked> Экспериментальные стили</label>
+    <div class="shortcuts"><button id="lab-export">Экспорт локальной сессии</button><button id="lab-import">Импорт локальной сессии</button><button id="lab-reset">Вернуть исходный снимок</button></div>
+    <input id="lab-import-file" type="file" accept="application/json,.json" hidden>
+    <p class="small">Запустите стенд с --overrides=&lt;папка&gt;: CSS из этой папки обновляется без закрытия форм. Без параметра экспериментальные стили пусты. Ctrl+Shift+L скрывает эту панель. Это не полная эмуляция backend: неподдерживаемые действия завершаются явной ошибкой.</p>
+    <output id="lab-status">Подготовка…</output>
+    <pre id="lab-provenance"></pre>
+  </aside>
+  <div id="lab-notice" role="status" hidden></div>
+  <dialog id="lab-confirm">
+    <h3 id="lab-confirm-title"></h3>
+    <p id="lab-confirm-message"></p>
+    <div><button id="lab-confirm-cancel">Отмена</button><button id="lab-confirm-accept">Подтвердить</button></div>
+  </dialog>
+  <script type="module" src="/app.mjs"></script>
+</body>
+</html>

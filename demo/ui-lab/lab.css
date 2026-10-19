@@ -1,0 +1,21 @@
+#loading { padding:32px; }
+#lab-launcher { position:fixed; z-index:200; bottom:12px; left:12px; padding:6px 10px; border:1px solid #e08a00; border-radius:8px; background:#17181ce8; color:#ffbb50; font:600 11px Roboto,sans-serif; cursor:pointer; opacity:.8; }
+#lab-tools { position:fixed; z-index:500; left:12px; bottom:48px; width:300px; max-height:calc(100vh - 80px); overflow:auto; padding:16px; box-sizing:border-box; border:1px solid #4c4e59; border-radius:14px; background:#1c1d21f5; color:#e4e4e7; box-shadow:0 12px 40px #0008; font:13px/1.5 Roboto,sans-serif; }
+#lab-tools[hidden],#lab-notice[hidden] { display:none; }
+#lab-tools header { display:flex; align-items:center; justify-content:space-between; }
+#lab-tools p { color:#a7a8b1; margin:10px 0; }
+#lab-tools label { display:block; margin:12px 0; }
+#lab-tools select { display:block; width:100%; padding:7px; margin-top:4px; background:#2e3038; color:#eee; border:1px solid #4c4e59; border-radius:6px; }
+#lab-tools button { cursor:pointer; background:#2e3038; color:#eee; border:1px solid #4c4e59; border-radius:6px; padding:7px; font:inherit; }
+#lab-tools button:hover { border-color:#e08a00; }
+#lab-tools .shortcuts { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:12px 0; }
+#lab-tools .small { font-size:11px; }
+#lab-tools pre { font:10px/1.5 monospace; color:#868994; white-space:pre-wrap; overflow-wrap:anywhere; }
+#lab-status { display:block; color:#8ed19e; font-size:11px; }
+#lab-notice { position:fixed; z-index:10000; bottom:20px; left:50%; transform:translateX(-50%); max-width:80vw; background:#272931; border:1px solid #e08a00; border-radius:10px; padding:12px 18px; font:14px Roboto,sans-serif; color:#eee; box-shadow:0 8px 30px #0006; }
+#lab-confirm { width:min(380px,85vw); background:#23242b; color:#e4e4e7; border:1px solid #e08a00; border-radius:14px; padding:22px; font:14px/1.5 Roboto,sans-serif; }
+#lab-confirm::backdrop { background:#0009; }
+#lab-confirm h3 { margin:0 0 12px; }
+#lab-confirm div { display:flex; justify-content:flex-end; gap:10px; }
+#lab-confirm button { border:1px solid #686a75; color:#eee; background:transparent; border-radius:7px; padding:8px 14px; cursor:pointer; }
+#lab-confirm #lab-confirm-accept { background:#e08a00; border-color:#e08a00; color:#111; }

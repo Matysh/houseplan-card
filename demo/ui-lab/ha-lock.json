@@ -1,0 +1,16 @@
+{
+  "version": "20260930.4",
+  "bytes": 110732939,
+  "sha256": "05c207fb6ce6720d1782766b54a67acdf4bab83f133a562204b972d062862fc8",
+  "url": "https://files.pythonhosted.org/packages/b4/ea/2074829fb00d53061804eae66303e2900319c348b4a92f239de7a537d6dc/home_assistant_frontend-20260930.4-py3-none-any.whl",
+  "manifestSha256": "0ab219a4a111d67c8e2573771749f3aa2097ca9d1a2fdb8db36081757292b936",
+  "app": "app.c430fdd756496c9c.js",
+  "entry": "o(26544);",
+  "modules": { "theme": "3184", "dialog": "37334", "icon": "33396", "card": "95788", "contexts": "66572" },
+  "translations": {
+    "en": "en-bde2221b5c81c706ba706840e394cca0.json",
+    "de": "de-9929532396bf804c2b18da38f7424b1b.json",
+    "fr": "fr-009a6e016520014f53d58754caa1bcd1.json",
+    "ru": "ru-b27f4a665b84ba27560f1d90c56bfd6a.json"
+  }
+}

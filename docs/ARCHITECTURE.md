@@ -1,5 +1,15 @@
 # House Plan architecture
 
+The offline UI Lab (#964) lives separately in `demo/ui-lab/`. It serves the
+checkout's built product and pinned official HA components against the existing
+synthetic fixture store, not a second product renderer or a Home Assistant
+server. Optional private fixtures/assets/theme/overrides are explicit local
+inputs; local session import/export owns only its dataset-scoped browser state.
+Runtime acquisition is an explicit preparation step with pinned archive/cache
+integrity. The loopback static server never proxies HA or accepts writes.
+The regular demo, screenshots/golden harness and release bundles do not depend
+on this tool. Usage and limits: [UI Lab](../demo/ui-lab/README.md).
+
 Editor Properties (#931) lives in lazy `src/editors/properties/`: a capability
 catalog and surface, targeted transform/physical adapters, card-local selection,
 field controller and one ordered command lane. Stable floor/editor/object/binding

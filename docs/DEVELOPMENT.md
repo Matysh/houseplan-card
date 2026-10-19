@@ -1,5 +1,17 @@
 # Development and deployment
 
+## Offline UI Lab (#964)
+
+For fast interface iterations use the separate [UI Lab](../demo/ui-lab/README.md):
+`npm run bundle:sync`, explicit `npm run ui-lab:prepare`, then `npm run ui-lab`.
+The genuine product bundle and pinned HA controls run against a synthetic/local
+mock, with theme/language, hot CSS overrides and session export/import. No real
+HA backend, device action or credentials are involved. Private fixture/assets
+remain outside Git; the established demo and CI capture paths are unchanged.
+The lab is a presentation tool, not evidence of backend correctness or release
+acceptance. Its focused checks are `node --test test/ui-lab-*.test.mjs` and
+`npm run ui-lab:smoke` after preparation; ordinary task gates still apply.
+
 #940 vacuum source-first: a schema-valid explicit empty is a complete native
 value, not failed normalization. Keep that distinction before the normalizer
 loses it; all-invalid nonempty input must fail. Provider path/session authority

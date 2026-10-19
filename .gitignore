@@ -10,6 +10,13 @@ __pycache__/
 artifacts/
 .agents/
 
+# UI Lab: optional private inputs, overrides, sessions and prepared runtimes.
+# The shared tool and synthetic fixture remain tracked in demo/ui-lab/.
+demo/ui-lab/private
+demo/ui-lab/.cache
+demo/ui-lab/exports
+demo/ui-lab/evidence
+
 # Копия бандла для стенда: её собирает `npm run bundle:sync`, а в репозитории
 # она только росла — 364 версии по 1.16 МБ за семь недель (#255). Обязательных
 # копий две: `dist/` (артефакт сборки) и `custom_components/` (её ставит HACS).
