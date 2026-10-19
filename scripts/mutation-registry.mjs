@@ -12074,7 +12074,7 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'toolbar-mode-zoom-gap-regresses',
     guard: 'node demo/smoke_toolbar_stable_width.mjs',
-    because: '#660 AC3: the modes-to-zoom distance is the specified compact 50/40.5 px, not the old flexible gap',
+    because: '#660/#963: same-row modes-to-zoom keeps compact 50/40.5 px, with an unconditional wide View witness; narrower layouts wrap the whole action pool',
     patches: [{
       file: 'src/styles/chrome.styles.ts',
       find: '    .head > .spacer { flex: 0 0 30px; }',

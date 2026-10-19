@@ -37,6 +37,11 @@ for (const width of WIDTHS) {
       const zoom = sr().querySelector('.zoomctl');
       const modesBox = modes?.getBoundingClientRect();
       const zoomBox = zoom?.getBoundingClientRect();
+      const pool = zoom?.parentElement;
+      const poolBox = pool?.getBoundingClientRect();
+      const controls = [...(pool?.children || [])].filter(el=>el.getClientRects().length).map(el=>el.getBoundingClientRect());
+      const intact = controls.length > 0 && Math.max(...controls.map(r=>r.top))-Math.min(...controls.map(r=>r.top)) <= 1;
+      const sameRow = modesBox && zoomBox && Math.min(modesBox.bottom,zoomBox.bottom)>Math.max(modesBox.top,zoomBox.top);
       const active = modes?.querySelector('.modetab.active');
       return {
         head: head().getBoundingClientRect().width,
@@ -44,6 +49,11 @@ for (const width of WIDTHS) {
         modesWidth: modesBox?.width ?? null,
         zoomLeft: zoomBox ? zoomBox.left - origin : null,
         gap: modesBox && zoomBox ? zoomBox.left - modesBox.right : null,
+        // #963 intentionally wraps this whole pool. Keep #660's exact gap
+        // on one row; on the next row every control must still stay together.
+        poolPlacement: intact && (sameRow
+          ? Math.abs(zoomBox.left-modesBox.right-(width <= 620 ? 40.5 : 50)) <= 1
+          : !!poolBox && !!modesBox && poolBox.top >= modesBox.bottom-1),
         slot: slot()?.getBoundingClientRect(),
         slotInside: slot()?.parentElement === modes,
         slotOrder: c._mode === 'view'
@@ -78,9 +88,8 @@ for (const width of WIDTHS) {
         await hp.setMode(next);
         await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         const now = measure();
-        const expectedGap = width <= 620 ? 40.5 : 50;
         steps.push({ next, stable: same(idle, now), inside: now.slotInside,
-          order: now.slotOrder, gap: phone || Math.abs(now.gap - expectedGap) <= 1 });
+          order: now.slotOrder, gap: phone || now.poolPlacement });
         if (next !== 'view' && cross()) {
           // На 390 px карточка демо-стенда шире окна (так и на dev) — докрутить × в видимую область.
           cross().scrollIntoView({ block: 'nearest', inline: 'nearest' });
@@ -99,7 +108,7 @@ for (const width of WIDTHS) {
     o.widthAndTabsStable = steps.every((s) => s.stable);
     o.closeSlotLivesInsideModes = idle.slotInside && idle.slotOrder
       && steps.every((s) => s.inside && s.order);
-    o.modeToZoomGapMatchesSpec = (phone || Math.abs(idle.gap - (width <= 620 ? 40.5 : 50)) <= 1)
+    o.modeToZoomPlacementMatchesSpec = (phone || idle.poolPlacement)
       && steps.every((s) => s.gap);
     // AC5/AC6: × виден, ≥ 24 × 24, глиф 13 px, центр слота — это ×, кнопки режимов без ×.
     o.crossVisibleAndSized = hits.length === 7 && hits.every((h) => h.visible && h.glyph13);
@@ -191,6 +200,18 @@ for (const width of WIDTHS) {
     await page.evaluate(() => window.__hpTest.setMode('view'));
   }
 }
+
+// Retain an unconditional #660 compact-gap witness when the whole pool fits.
+// The ordinary 780px fixture now intentionally wraps it under #963.
+await page.setViewportSize({width:2200,height:820});
+await page.addStyleTag({content:'#host{width:100%!important;margin:0!important;padding:0!important}'});
+Object.assign(out,await page.evaluate(async()=>{
+  await window.__hpTest.setMode('view');await window.__hpTest.settled();
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  const root=window.__card.shadowRoot,modes=root.querySelector('.modes').getBoundingClientRect(),zoom=root.querySelector('.zoomctl').getBoundingClientRect();
+  return {wideViewPoolSharesRow:Math.abs(modes.top+modes.height/2-zoom.top-zoom.height/2)<=1,
+    wideViewCompactGap50:Math.abs(zoom.left-modes.right-50)<=1};
+}));
 
 // AC1 в русской локали на широком окне.
 await page.setViewportSize({ width: 1400, height: 820 });
