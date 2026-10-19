@@ -336,20 +336,11 @@ Daycycle сохраняет все paired samples/RasterTask/env/SHA, прове
 
 ## Локальный набор перед пушем (#343)
 
-Native Windows (#960): нужны Git Bash и настоящий jq на PATH — установка описана
-в [DEVELOPMENT](DEVELOPMENT.md#local-windows-workstation). Workflow fixtures
-исполняют исходные тела с флагами раннера, включая отказ на ошибке; Windows не
-подменяется запуском WSL. `test/workflow-step.test.mjs` проверяет пробелы в путях,
-fixture PATH, `errexit` и различие implicit/explicit `pipefail`. Реальный push в
-`test/pre-push-gate.test.mjs` проверяет красный/зелёный гейт и auth-процесс, который
-пытается читать stdin: поток refs должен сохраниться, в том числе для HEAD:issue.
-Чужое окружение, секреты и NODE_OPTIONS остаются отрицательными случаями.
-
 Обязательный локальный набор — `npm run gate:small`; его состав живёт в
 `scripts/gate-small.mjs` и нигде больше не переписывается (#701). Хук `pre-push`
 гоняет его сам для веток задач — таблица «В хуке» ниже. Ручной
 `node scripts/pre-push-gate.mjs` из этого раздела — расширенный прогон:
-типы, юниты и смоки; мутантов в нём с #709 нет. Receipt/свежие группы (#954) — [DEVELOPMENT](DEVELOPMENT.md#frontend-producer-and-short-local-loops-856).
+типы, юниты и смоки; мутантов в нём с #709 нет. Receipt/свежие группы (#954) — [DEVELOPMENT](DEVELOPMENT.md#frontend-producer-and-short-local-loops-856); native Windows, Git Bash/jq и shell/env fixtures (#960) — [там же](DEVELOPMENT.md#local-windows-workstation).
 
 `mutation-gate --check` также сверяет структуру и числовые ячейки browser inventory
 общим с юнитом parser (#811). Membership и ориентир 200 остаются WARN;
