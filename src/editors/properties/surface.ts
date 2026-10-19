@@ -29,7 +29,7 @@ export interface PropertiesSurface {
 export interface PropertiesSurfacePort {
   t(key: PropertiesString, vars?: Record<string, string | number>): string;
   imperial: boolean; dark?: boolean; controller: PropertiesFieldController; pickerLabels: ColorPickerLabels;
-  clear(): void; action(key: string): void;
+  action(key: string): void;
   edit(field: PropertiesField, raw: string, finish?: boolean): void;
   number(field: PropertiesField, value: number): string;
   textSelection(input: HTMLTextAreaElement): void;

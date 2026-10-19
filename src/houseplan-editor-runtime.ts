@@ -5043,6 +5043,18 @@ public _roomsToolbarGroup(): EditorToolbarGroup {
     };
   }
 
+  private _renderGeometryHistory(): TemplateResult {
+    const actions = [
+      [this.host._geometryHistory.undoName, 'mdi:undo-variant', 'history.undo_named', 'history.undo_empty', () => this._undoGeometry()],
+      [this.host._geometryHistory.redoName, 'mdi:redo-variant', 'history.redo_named', 'history.redo_empty', () => this._redoGeometry()],
+    ] as const;
+    return html`${actions.map(([name, icon, named, empty, run]) => {
+      const title = name ? this.host._t(named, { name }) : this.host._t(empty);
+      return html`<button class="btn ghost" @click=${run} ?disabled=${!name || this.nodeMove?.busy}
+        data-hp-tooltip=${title} aria-label=${title}><ha-icon icon=${icon} aria-hidden="true"></ha-icon></button>`;
+    })}`;
+  }
+
 public _renderDecorBar(): TemplateResult {
     const tools = [
       ['select', 'mdi:cursor-default-outline', 'decor.select'],
@@ -5056,8 +5068,6 @@ public _renderDecorBar(): TemplateResult {
         ? [['image', 'mdi:image-plus-outline', 'decor.image'] as const] : []),
       ['erase', 'mdi:eraser', 'decor.erase'],
     ] as const;
-    const undoName = this.host._geometryHistory.undoName;
-    const redoName = this.host._geometryHistory.redoName;
     return html`<div class="editbar decorbar" data-hp="toolbar" data-kind="decor">
       <div class="editbar-tools" tabindex="-1" ?inert=${this.host._modeTransitionBusy}>
       ${tools.map(
@@ -5079,14 +5089,7 @@ public _renderDecorBar(): TemplateResult {
       </hp-color-opacity>
       </div>
       <div class="editbar-end">
-      <button class="btn ghost" @click=${() => this._undoGeometry()} ?disabled=${!undoName || this.nodeMove?.busy}
-        data-hp-tooltip=${undoName ? this.host._t('history.undo_named', { name: undoName }) : this.host._t('history.undo_empty')} aria-label=${undoName ? this.host._t('history.undo_named', { name: undoName }) : this.host._t('history.undo_empty')}>
-        <ha-icon icon="mdi:undo-variant" aria-hidden="true"></ha-icon>
-      </button>
-      <button class="btn ghost" @click=${() => this._redoGeometry()} ?disabled=${!redoName || this.nodeMove?.busy}
-        data-hp-tooltip=${redoName ? this.host._t('history.redo_named', { name: redoName }) : this.host._t('history.redo_empty')} aria-label=${redoName ? this.host._t('history.redo_named', { name: redoName }) : this.host._t('history.redo_empty')}>
-        <ha-icon icon="mdi:redo-variant" aria-hidden="true"></ha-icon>
-      </button>
+      ${this._renderGeometryHistory()}
         <button class="btn barclose" data-hp-tooltip=${this.host._t('title.close_editor')} aria-label=${this.host._t('title.close_editor')} data-hp="editor-close"
           data-editor-navigation="view"
           @click=${() => this._setMode('view')}>
@@ -10756,14 +10759,6 @@ public _renderPhysicalDialog(): TemplateResult {
   }
 
 public _renderMarkupBar(): TemplateResult {
-    const undoName = this.host._geometryHistory.undoName;
-    const redoName = this.host._geometryHistory.redoName;
-    const undoTitle = undoName
-      ? this.host._t('history.undo_named', { name: undoName })
-      : this.host._t('history.undo_empty');
-    const redoTitle = redoName
-      ? this.host._t('history.redo_named', { name: redoName })
-      : this.host._t('history.redo_empty');
     return html`<div class="editbar planbar" data-hp="toolbar" data-kind="plan">
       <div class="editbar-tools" tabindex="-1" ?inert=${this.host._modeTransitionBusy}>
         <span class="wallsgroup">
@@ -10796,16 +10791,7 @@ public _renderMarkupBar(): TemplateResult {
 
       </div>
       <div class="editbar-end">
-      <button class="btn ghost" @click=${() => this._undoGeometry()}
-        ?disabled=${!undoName || this.nodeMove?.busy}
-        data-hp-tooltip=${undoTitle} aria-label=${undoTitle}>
-        <ha-icon icon="mdi:undo-variant" aria-hidden="true"></ha-icon>
-      </button>
-      <button class="btn ghost" @click=${() => this._redoGeometry()}
-        ?disabled=${!redoName || this.nodeMove?.busy}
-        data-hp-tooltip=${redoTitle} aria-label=${redoTitle}>
-        <ha-icon icon="mdi:redo-variant" aria-hidden="true"></ha-icon>
-      </button>
+      ${this._renderGeometryHistory()}
         <button class="btn barclose" data-hp-tooltip=${this.host._t('title.close_editor')} aria-label=${this.host._t('title.close_editor')} data-hp="editor-close"
           data-editor-navigation="view"
           @click=${() => this._setMode('view')}>

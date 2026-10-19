@@ -1,9 +1,10 @@
+import { css } from 'lit';
 /** Shared, editor-only presentation for the four approved settings forms (#944).
  * Menus are owned by hp-settings-select; its hidden native child holds values only.
  */
 import{ settingsActionHover, settingsActionTransition, settingsPrimaryActionHover } from './settings-action.styles';
 export const settingsDialogCss = `
-  .hpf-button-help { display:inline-flex; align-items:center; gap:4px; }
+  ${css`.hpf-button-help { display:inline-flex; align-items:center; gap:4px; }
   .hpf-settings-form .vacpicker > summary { position:relative; margin-inline-end:24px; }
   .hpf-settings-form .vacpicker > summary > hp-help { position:absolute; inset-inline-start:calc(100% + 4px); top:50%; transform:translateY(-50%); }
 hp-dialog[settings-layout]{--hp-dialog-wide-width:610px;--hp-dialog-icon-size:40.48px;--hp-settings-help-size:22px;--hp-settings-help-scale:1.06;--hp-dialog-close-transition:160ms ease;--hp-dialog-close-hover-transform:rotate(90deg) scale(1.12);}
@@ -65,9 +66,9 @@ hp-dialog[settings-layout] .hpf-footer .btn > ha-icon{display:inline-flex;align-
 .hpf-settings-pane .btn{min-height:44px;box-sizing:border-box;}
 .hpf-settings-form button:not(:disabled),.hpf-settings-form select:not(:disabled),.hpf-footer button:not(:disabled),.hpf-footer a{cursor:pointer;}
 .hpf-settings-form button:not(:disabled):hover,.hpf-footer button:not(:disabled):hover{filter:brightness(1.08);}
-:is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn:not(:disabled){cursor:pointer;${settingsActionTransition}}
+:is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn:not(:disabled){cursor:pointer;`.cssText}${settingsActionTransition}}
 :is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn:not(:disabled):is(:hover,:focus-visible){${settingsActionHover}}
-:is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn.on:not(:disabled):is(:hover,:focus-visible){${settingsPrimaryActionHover}}
+:is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn.on:not(:disabled):is(:hover,:focus-visible){${settingsPrimaryActionHover}${css`}
 :is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn.danger:not(:disabled):is(:hover,:focus-visible){background:color-mix(in srgb,var(--hpf-danger) 9%,var(--hpf-surface));color:var(--hpf-danger);border-color:var(--hpf-danger);}
 .hpf-settings-form :disabled,.hpf-footer button:disabled{cursor:not-allowed;}
 .hpf-settings-form input:not([type=checkbox]):not([type=radio]):not([type=range]){cursor:text;}
@@ -186,5 +187,5 @@ hp-dialog[settings-layout] .hpf-footer-object .dialog-action-commit{grid-column:
 @media(prefers-reduced-motion:reduce){
 hp-dialog[settings-layout]{--hp-dialog-close-transition:none;--hp-dialog-close-hover-transform:none;}
 .hpf-settings-form *,hp-dialog[settings-layout] .hpf-footer .btn,.danger-confirm-footer .btn{transition:none!important;animation:none!important;}
-}
+}`.cssText}
 `;

@@ -166,17 +166,6 @@ export const planStyles = css`
         transition: none;
       }
     }
-    .zoomctl {
-      display: inline-flex;
-      gap: var(--sp-1);
-      background: rgba(127, 127, 127, 0.12);
-      border-radius: var(--rad-m);
-      padding: var(--sp-1);
-    }
-    .zoomctl .zb {
-      border: none;
-      padding: var(--sp-3) var(--sp-4);
-    }
     .zoomctl .zb[disabled] {
       opacity: 0.4;
       pointer-events: none;

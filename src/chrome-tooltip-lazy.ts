@@ -4,7 +4,7 @@ import type { ChromeTooltip } from './chrome-tooltip';
 type Host = ReactiveControllerHost & HTMLElement & { renderRoot: HTMLElement | DocumentFragment };
 /** View pays for the small event bridge; bubble code loads on its first use. */
 export class LazyChromeTooltips implements ReactiveController {
-  private root: HTMLElement | DocumentFragment | null = null;
+  private events: AbortController | null = null;
   private tooltip: ChromeTooltip | null = null;
   private load: Promise<typeof import('./chrome-tooltip')> | null = null;
   private epoch = 0;
@@ -15,6 +15,7 @@ export class LazyChromeTooltips implements ReactiveController {
   private readonly show = (event: Event): void => {
     if (event instanceof PointerEvent && event.pointerType !== 'mouse') return;
     const owner = event.composedPath().find((item): item is Element => item instanceof Element && item.hasAttribute('data-hp-tooltip'));
+    if (event instanceof FocusEvent && !owner?.matches(':focus-visible')) return;
     if (!owner?.getAttribute('data-hp-tooltip') || owner === this.owner) return;
     this.hide(); this.owner = owner; this.stamp = this.context(); this.text = owner.getAttribute('data-hp-tooltip')!;
     const epoch = this.epoch, rect = owner.getBoundingClientRect();
@@ -37,24 +38,18 @@ export class LazyChromeTooltips implements ReactiveController {
   };
   private readonly key = (event: Event): void => { if ((event as KeyboardEvent).key === 'Escape') this.hide(); };
   hostConnected(): void {
-    this.root = this.host.renderRoot;
-    for (const type of ['pointerover','focusin']) this.root.addEventListener(type,this.show,true);
-    for (const type of ['pointerout','focusout']) this.root.addEventListener(type,this.leave,true);
-    for (const type of ['pointerdown','wheel','scroll']) this.root.addEventListener(type,this.hide,true);
+    const root = this.host.renderRoot, { signal } = this.events = new AbortController();
+    for (const type of ['pointerover','focusin']) root.addEventListener(type,this.show,{capture:true,signal});
+    for (const type of ['pointerout','focusout']) root.addEventListener(type,this.leave,{capture:true,signal});
+    for (const type of ['pointerdown','wheel','scroll']) root.addEventListener(type,this.hide,{capture:true,passive:true,signal});
     const win = this.host.ownerDocument.defaultView;
-    for (const type of ['blur','resize','pagehide']) win?.addEventListener(type,this.hide);
-    win?.addEventListener('keydown',this.key,true);
-    this.host.ownerDocument.addEventListener('visibilitychange',this.hide);
+    for (const type of ['blur','resize','pagehide']) win?.addEventListener(type,this.hide,{signal});
+    win?.addEventListener('keydown',this.key,{capture:true,signal});
+    this.host.ownerDocument.addEventListener('visibilitychange',this.hide,{signal});
   }
   hostUpdated(): void { if (this.owner && !this.valid()) this.hide(); }
   hostDisconnected(): void {
     this.hide(); this.tooltip?.dispose(); this.tooltip = null;
-    for (const type of ['pointerover','focusin']) this.root?.removeEventListener(type,this.show,true);
-    for (const type of ['pointerout','focusout']) this.root?.removeEventListener(type,this.leave,true);
-    for (const type of ['pointerdown','wheel','scroll']) this.root?.removeEventListener(type,this.hide,true);
-    const win = this.host.ownerDocument.defaultView;
-    for (const type of ['blur','resize','pagehide']) win?.removeEventListener(type,this.hide);
-    win?.removeEventListener('keydown',this.key,true);
-    this.host.ownerDocument.removeEventListener('visibilitychange',this.hide); this.root = null;
+    this.events?.abort(); this.events = null;
   }
 }

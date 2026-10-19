@@ -4,7 +4,7 @@ import { t, langOf, type I18nKey } from '../../i18n';
 const reused = {title:'btn.properties',copy:'btn.copy',delete:'btn.delete',cancel:'btn.cancel',
   fill:'decor.fill',line:'decor.line',rect:'decor.rect',ellipse:'decor.ellipse',furniture:'decor.furniture'} as const satisfies Record<string,I18nKey>;
 const en = {
-  title: 'Properties', clear: 'Clear selection', empty: 'Nothing selected', empty_hint: 'Select an object on the plan to edit its properties.',
+  title: 'Properties',  empty: 'Nothing selected', empty_hint: 'Select an object on the plan to edit its properties.',
   position: 'Position', geometry: 'Geometry', appearance: 'Appearance',
   point_a_x: 'Point A · X', point_a_y: 'Point A · Y', point_b_x: 'Point B · X', point_b_y: 'Point B · Y',
   wall_meta: '{space} · independent segment', decor_meta: 'Decor · {space}', contour_meta: 'Room outline · {space}',
@@ -31,7 +31,7 @@ const en = {
   text_center_hint: 'Position of the text frame centre.', text_size_hint: 'Dimensions are calculated from the text and font.',
   image_hint: 'Position of the image frame centre.', led_hint: 'Change the strip shape using points on the plan.',
   hinge: 'Swap hinges', opening_side: 'Opening direction', side_a: 'Towards side A', side_b: 'Towards side B',
-  into_room: 'Into room “{name}”', outside: 'Outside', along_wall: 'Reflect along wall', across_wall: 'Reflect across wall',
+  into_room: 'Into room “{name}”', outside: 'Outside',
   direction: 'Direction', up: 'Up', down: 'Down', clockwise: 'Clockwise', counterclockwise: 'Counter-clockwise',
   reflection: 'Reflection', horizontal: 'Horizontal', vertical: 'Vertical', proportions: 'Proportions', keep_ratio: 'Keep proportions',
   device_settings: 'Open device settings', device_settings_hint: 'Double-clicking the device on the plan also opens its settings.',
@@ -42,15 +42,15 @@ const en = {
   insert_variable: 'Insert HA variable', entity: 'Entity', value: 'Value', state: 'State', preview: 'Preview', cancel: 'Cancel', insert: 'Insert',
   text_limit: 'The complete text must contain 1–200 characters.', invalid_number: 'Enter a finite number without suffixes.',
   invalid_color: 'Enter a valid HEX colour in the picker or press Esc.',
-  hinge_marker: 'Hinges',
+
   range: 'Allowed range: {min}–{max} {unit}.', external_change: 'The object was changed in another window.',
   save_error: 'Could not save. Your input has been kept; try again.', geometry_error: 'This geometry cannot be applied safely.',
-  pending: 'Saving…', history: 'Edit {name}', select_object: 'Select object', reference: 'From this corner', reference_end: 'From this wall end',
-  text_placeholder: 'Text on the plan', variable_search: 'Search entities', none: '—',
+  pending: 'Saving…', history: 'Edit {name}',
+   variable_search: 'Search entities', none: '—',
 };
 type Key = keyof typeof en;
 const ru: Record<Key, string> = {
-  title: 'Свойства', clear: 'Снять выделение', empty: 'Ничего не выбрано', empty_hint: 'Выберите объект на плане, чтобы изменить его свойства.',
+  title: 'Свойства',  empty: 'Ничего не выбрано', empty_hint: 'Выберите объект на плане, чтобы изменить его свойства.',
   position: 'Положение', geometry: 'Геометрия', appearance: 'Оформление',
   point_a_x: 'Точка A · X', point_a_y: 'Точка A · Y', point_b_x: 'Точка B · X', point_b_y: 'Точка B · Y',
   wall_meta: '{space} · отдельный участок', decor_meta: 'Декор · {space}', contour_meta: 'Контур комнаты · {space}',
@@ -77,7 +77,7 @@ const ru: Record<Key, string> = {
   text_center_hint: 'Положение центра рамки текста.', text_size_hint: 'Габариты вычисляются по тексту и шрифту.',
   image_hint: 'Положение центра рамки изображения.', led_hint: 'Перемещайте точки ленты на плане.',
   hinge: 'Переставить петли', opening_side: 'Открывание', side_a: 'К стороне A', side_b: 'К стороне B',
-  into_room: 'В комнату «{name}»', outside: 'Наружу', along_wall: 'Отразить вдоль стены', across_wall: 'Отразить поперёк стены',
+  into_room: 'В комнату «{name}»', outside: 'Наружу',
   direction: 'Направление', up: 'Вверх', down: 'Вниз', clockwise: 'По часовой стрелке', counterclockwise: 'Против часовой стрелки',
   reflection: 'Отражение', horizontal: 'Горизонтально', vertical: 'Вертикально', proportions: 'Пропорции', keep_ratio: 'Сохранять пропорции',
   device_settings: 'Открыть настройки устройства', device_settings_hint: 'Двойной клик по устройству на плане также открывает настройки.',
@@ -88,11 +88,11 @@ const ru: Record<Key, string> = {
   insert_variable: 'Вставить переменную HA', entity: 'Сущность', value: 'Значение', state: 'Состояние', preview: 'Предпросмотр', cancel: 'Отмена', insert: 'Вставить',
   text_limit: 'Весь текст должен содержать от 1 до 200 символов.', invalid_number: 'Введите конечное число без суффиксов.',
   invalid_color: 'Введите допустимый HEX-цвет в палитре или нажмите Esc.',
-  hinge_marker: 'Петли',
+
   range: 'Допустимый диапазон: {min}–{max} {unit}.', external_change: 'Объект изменён в другом окне.',
   save_error: 'Не удалось сохранить. Ввод сохранён; попробуйте ещё раз.', geometry_error: 'Эту геометрию нельзя безопасно применить.',
-  pending: 'Сохранение…', history: 'Изменить: {name}', select_object: 'Выбрать объект', reference: 'От этого угла', reference_end: 'От этого края стены',
-  text_placeholder: 'Текст на плане', variable_search: 'Поиск сущностей', none: '—',
+  pending: 'Сохранение…', history: 'Изменить: {name}',
+   variable_search: 'Поиск сущностей', none: '—',
 };
 export type PropertiesString = Key;
 const localized: Record<string, Partial<Record<Key,string>>> = {

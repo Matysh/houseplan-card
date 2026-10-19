@@ -60,6 +60,14 @@ technology or physical-device acceptance.
 
 ### Approved editor polish (#963)
 
+The shared history renderer and existing static CSS minifier keep this polish
+inside the unchanged bundle/connectedness bands. Summary/form-kit CSS wraps
+only static template pieces in `css` tags; interpolation boundaries keep their
+original whitespace. The existing frozen form-kit tests still compare the
+ordinary TypeScript output byte for byte. Rollup compacts those same static
+pieces without changing selectors, values or order. Caption-only selection
+formatters and unused translations leave the product with their removed UI.
+
 `demo/smoke_ui_polish_963.mjs` measures the expanded intrinsic panel, native
 commands/rotation, keyboard filter, tooltip timing/lifecycle, data preservation
 and narrow headers. `smoke_ui_polish_963_reference.mjs` reconstructs the exact
@@ -72,6 +80,8 @@ pinned public package. `HP_QA_SEGOE_DIR` reads installed Windows fonts without
 copying them into the repository. Without it, both sides use official HA Roboto.
 `HP_UI_963_VIDEO=1` records the paired object switches. Reports, PNGs and video
 live in ignored `artifacts/ui-polish-963/`; owner exports are never inputs.
+`smoke_ui_polish_963_touch.mjs` uses real touchscreen input: button focus from
+a tap must not arm keyboard help or suppress the original zoom action.
 
 The frozen #963 Save caption supersedes #955's optical Y offsets: text and check
 share the approved unshifted alignment in all four languages. Preserve the

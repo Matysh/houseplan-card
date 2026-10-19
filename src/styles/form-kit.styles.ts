@@ -1,3 +1,4 @@
+import { css } from 'lit';
 /**
  * Общий набор контролов формы (#594, шаг 1 эпика #591).
  *
@@ -111,7 +112,7 @@ export function formKitDisabledCss({ form }: FormKitCssOptions): string {
 
 /** Ряд-переключатель: подпись слева, переключатель справа. */
 export function formKitSwitchRowCss({ form, prefix }: FormKitCssOptions): string {
-  return `  ${form} .${prefix}-switch {
+  return `  ${form} .${prefix}${css`-switch {
     display: flex;
     min-width: 0;
     min-height: 54px;
@@ -121,7 +122,7 @@ export function formKitSwitchRowCss({ form, prefix }: FormKitCssOptions): string
     margin: 0;
     color: var(--primary-text-color);
     cursor: pointer;
-  }`;
+  }`.cssText}`;
 }
 
 /** Подпись ряда-переключателя: заголовок и пояснение мелким шрифтом. */
@@ -159,7 +160,7 @@ function extrasCss(options: FormKitCssOptions): string {
   return `  ${form} { display: grid; gap: 16px; }
   ${form} label { margin: 0; font-size: inherit; color: inherit; }
   ${form} .${p}-card { padding: 0; overflow: hidden; }
-  .${p}-head {
+  .${p}${css`-head {
     display: flex;
     min-width: 0;
     align-items: center;
@@ -167,7 +168,7 @@ function extrasCss(options: FormKitCssOptions): string {
     margin: 0;
     padding: 16px 16px 12px;
   }
-  .${p}-head h3 { margin: 0; font-size: 1.25rem; line-height: 1.3; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+  .`.cssText}${p}-head h3 { margin: 0; font-size: 1.25rem; line-height: 1.3; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
   .${p}-body { display: grid; gap: 15px; padding: 0 16px 16px; }
   .${p}-body:first-child { padding-top: 16px; }
   .${p}-sub { display: flex; align-items: center; gap: 4px; min-height: 28px; margin: 7px 0 -3px; }
@@ -181,13 +182,13 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
   .${p}-grid.${p}-grid-narrow { grid-template-columns: minmax(0, 1fr) 175px; }
   ${form} .${p}-input,
-  ${form} .${p}-select {
+  ${form} .${p}${css`-select {
     box-sizing: border-box;
     width: 100%;
     min-width: 0;
     min-height: 44px;
     padding: 8px 10px;
-    border: 1px solid var(${tokens.line});
+    border: 1px solid var(`.cssText}${tokens.line});
     border-radius: 7px;
     background: var(${tokens.surface});
     color: var(--primary-text-color);
@@ -195,7 +196,7 @@ function extrasCss(options: FormKitCssOptions): string {
     font-size: .875rem;
     line-height: 1.4;
   }
-  ${form} .${p}-select {
+  ${form} .${p}${css`-select {
     appearance: none;
     padding-right: 32px;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23888' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E");
@@ -203,7 +204,7 @@ function extrasCss(options: FormKitCssOptions): string {
     background-repeat: no-repeat;
     background-size: 12px 7px;
     cursor: pointer;
-  }
+  }`.cssText}
   ${form} .${p}-input:hover, ${form} .${p}-select:hover { border-color: var(${tokens.muted}); }
   ${form} .${p}-input:focus, ${form} .${p}-select:focus { border-color: var(${tokens.accent}); outline: none; }
   ${form} [aria-invalid="true"] { border-color: var(${tokens.danger}) !important; }
@@ -216,7 +217,7 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-field > .${p}-unit:not(.${p}-unit-wide) { justify-self: start; }
   .${p}-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
   .${p}-actions > input[type="file"] { display: none; }
-  .${p}-row {
+  .${p}${css`-row {
     display: flex;
     min-width: 0;
     min-height: 44px;
@@ -224,8 +225,8 @@ function extrasCss(options: FormKitCssOptions): string {
     justify-content: space-between;
     gap: 12px;
   }
-  .${p}-row > .${p}-label { min-width: 0; overflow-wrap: anywhere; }
-  .${p}-toggle {
+  .`.cssText}${p}-row > .${p}-label { min-width: 0; overflow-wrap: anywhere; }
+  .${p}${css`-toggle {
     display: grid;
     grid-template-columns: 28px minmax(0, 1fr) 44px;
     grid-template-rows: auto auto;
@@ -238,7 +239,7 @@ function extrasCss(options: FormKitCssOptions): string {
     color: var(--primary-text-color);
     cursor: pointer;
   }
-  .${p}-toggle.${p}-noicon { grid-template-columns: minmax(0, 1fr) 44px; }
+  .`.cssText}${p}-toggle.${p}-noicon { grid-template-columns: minmax(0, 1fr) 44px; }
   .${p}-toggle > .${p}-toggle-icon { grid-column: 1; grid-row: 1; display: flex; align-items: center; justify-content: center; width: 28px; color: var(${tokens.muted}); --mdc-icon-size: 19px; }
   .${p}-toggle > .${p}-toggle-title { grid-row: 1; display: flex; align-items: center; gap: 4px; min-width: 0; min-height: 28px; font-size: .875rem; font-weight: 600; line-height: 1.4; }
   .${p}-toggle > .${p}-toggle-title > span { min-width: 0; overflow-wrap: anywhere; }
@@ -252,7 +253,7 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-toggle:has(input:disabled) { cursor: default; }
   .${p}-toggle:has(input:disabled) > .${p}-toggle-title, .${p}-toggle:has(input:disabled) > .${p}-toggle-caption { opacity: .65; }
   .${p}-compact-list { display: grid; gap: 2px; }
-  .${p}-toggle > input {
+  .${p}${css`-toggle > input {
     appearance: none;
     position: relative;
     width: 44px;
@@ -265,18 +266,18 @@ function extrasCss(options: FormKitCssOptions): string {
     background: transparent;
     cursor: pointer;
   }
-  .${p}-toggle > input::before {
+  .`.cssText}${p}${css`-toggle > input::before {
     content: '';
     position: absolute;
     box-sizing: border-box;
     width: 36px;
     height: 22px;
     inset: 11px 4px;
-    border: 1px solid var(${tokens.line});
+    border: 1px solid var(`.cssText}${tokens.line});
     border-radius: 12px;
     background: color-mix(in srgb, var(${tokens.surface}) 65%, var(${tokens.muted}));
   }
-  .${p}-toggle > input::after {
+  .${p}${css`-toggle > input::after {
     content: '';
     position: absolute;
     width: 16px;
@@ -289,22 +290,22 @@ function extrasCss(options: FormKitCssOptions): string {
     transform: translateY(-50%);
     transition: left .15s;
   }
-  .${p}-toggle > input:checked::before { background: var(${tokens.accent}); border-color: var(${tokens.accent}); }
+  .`.cssText}${p}-toggle > input:checked::before { background: var(${tokens.accent}); border-color: var(${tokens.accent}); }
   .${p}-toggle > input:checked::after { left: 21px; }
   .${p}-toggle.${p}-compact > input { grid-row: 1; }
   .${p}-toggle > input:disabled { cursor: default; }
   .${p}-toggle > input:disabled::before { opacity: .4; }
-  .${p}-seg {
+  .${p}${css`-seg {
     display: flex;
     flex-wrap: wrap;
     min-width: 0;
     gap: 3px;
     padding: 3px;
-    border: 1px solid var(${tokens.line});
+    border: 1px solid var(`.cssText}${tokens.line});
     border-radius: 7px;
     background: var(${tokens.canvas});
   }
-  .${p}-seg label {
+  .${p}${css`-seg label {
     position: relative;
     display: flex;
     min-width: 0;
@@ -317,14 +318,14 @@ function extrasCss(options: FormKitCssOptions): string {
     padding: 4px 5px;
     border: 1px solid transparent;
     border-radius: 5px;
-    color: var(${tokens.muted});
+    color: var(`.cssText}${tokens.muted}${css`);
     font-size: .875rem;
     font-weight: 500;
     cursor: pointer;
     text-align: center;
     overflow-wrap: normal;
   }
-  .${p}-seg input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
+  .`.cssText}${p}-seg input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
   .${p}-seg label:has(input:checked) {
     background: var(${tokens.tint});
     border-color: var(${tokens.tintLine});
@@ -338,7 +339,7 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-seg .${p}-line { width: 25px; border-top: 2px solid currentColor; }
   .${p}-seg .${p}-line-dashed { border-top-style: dashed; }
   .${p}-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-  .${p}-tile {
+  .${p}${css`-tile {
     position: relative;
     display: flex;
     flex-direction: column;
@@ -347,7 +348,7 @@ function extrasCss(options: FormKitCssOptions): string {
     gap: 6px;
     min-height: 72px;
     padding: 10px 6px 9px;
-    border: 1px solid var(${tokens.line});
+    border: 1px solid var(`.cssText}${tokens.line});
     border-radius: 8px;
     background: var(${tokens.surface});
     color: var(${tokens.muted});
@@ -375,7 +376,7 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-colortile-meta .${p}-unit > input[type='number']::-webkit-inner-spin-button,
   .${p}-colortile-meta .${p}-unit > input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   .${p}-colortile-meta .${p}-unit > span { padding: 0 7px 0 0; font-size: .8125rem; }
-  .${p}-colorfield {
+  .${p}${css`-colorfield {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -384,7 +385,7 @@ function extrasCss(options: FormKitCssOptions): string {
     max-width: 100%;
     min-height: 44px;
     padding: 3px 10px 3px 3px;
-    border: 1px solid var(${tokens.line});
+    border: 1px solid var(`.cssText}${tokens.line});
     border-radius: 9px;
     background: var(${tokens.canvas});
   }
@@ -410,13 +411,13 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-radios input { width: 16px; height: 16px; margin: 0; accent-color: var(${tokens.accent}); cursor: pointer; }
   .${p}-radios label:has(input:checked) { color: var(${tokens.accent}); }
   .${p}-signal-visibility .${p}-radios label { min-height: 44px; min-width: 44px; }
-  .${p}-callout {
+  .${p}${css`-callout {
     display: flex;
     gap: 8px;
     margin: 0;
     padding: 11px 12px;
     border-radius: 8px;
-    background: var(${tokens.tint});
+    background: var(`.cssText}${tokens.tint});
     color: var(--primary-text-color);
     font-size: .875rem;
     line-height: 1.6;
@@ -465,8 +466,8 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-pick-ph { color: var(${tokens.muted}); }
   .${p}-panel { padding: 8px; border: 1px solid var(${tokens.line}); border-radius: 9px; background: var(${tokens.canvas}); }
   .${p}-list { display: flex; flex-direction: column; gap: 2px; max-height: 220px; margin-top: 6px; overflow: auto; }
-  .${p}-cand { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; min-height: 44px; padding: 8px 10px; border: 0; border-radius: 7px; background: none; color: var(--primary-text-color); font: inherit; font-size: .875rem; text-align: left; cursor: pointer; }
-  .${p}-cand > small { font-size: .8125rem; color: var(${tokens.muted}); }
+  .${p}${css`-cand { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; min-height: 44px; padding: 8px 10px; border: 0; border-radius: 7px; background: none; color: var(--primary-text-color); font: inherit; font-size: .875rem; text-align: left; cursor: pointer; }
+  .`.cssText}${p}-cand > small { font-size: .8125rem; color: var(${tokens.muted}); }
   .${p}-cand:hover { background: var(${tokens.surface}); }
   .${p}-cand.sel { background: var(${tokens.tint}); color: var(${tokens.accent}); }
   .${p}-cand:focus-visible { outline: 2px solid var(${tokens.accent}); outline-offset: -2px; }
@@ -539,7 +540,7 @@ export function formKitCss(
  * серый, тёмная — чуть светлее карточки. HA всегда задаёт свою переменную.
  * (Комментарий здесь, а не в CSS: строка листа уезжает в бандл как есть, #526.)
  */
-export const cardDialogFormKitTokens = `  hp-dialog .hpf-form {
+export const cardDialogFormKitTokens = `  ${css`hp-dialog .hpf-form {
     --hpf-surface: var(--card-background-color, #fff);
     --hpf-line: var(--hp-line, var(--divider-color, #dce5e7));
     --hpf-accent: var(--hp-accent, var(--primary-color));
@@ -548,5 +549,5 @@ export const cardDialogFormKitTokens = `  hp-dialog .hpf-form {
     --hpf-tint: color-mix(in srgb, var(--hpf-accent) 10%, var(--hpf-surface));
     --hpf-tint-line: color-mix(in srgb, var(--hpf-accent) 38%, var(--hpf-surface));
     --hpf-danger: var(--error-color, #db543d);
-  }
+  }`.cssText}
 `;

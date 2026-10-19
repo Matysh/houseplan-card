@@ -514,7 +514,7 @@ export class PropertiesEditor {
       && propertiesIdentityKey(this.identity) === propertiesIdentityKey(owner);
     const view = renderPropertiesSurface(model, {
       t: this.t, imperial: this.host._imperial, dark: this.host.hass?.themes?.darkMode, controller: this.fields, pickerLabels: this.host._colorPickerLabels,
-      clear: () => { if (current()) this.clear(); }, action: key => { if (current()) void this.fields.finishThen(() => this.action(key)); },
+      action: key => { if (current()) void this.fields.finishThen(() => this.action(key)); },
       edit: (field, raw, finish) => { if (current()) this.edit(field, raw, finish); },
       number: (field, value) => field.unit === 'cm' ? cmToField(value, this.host._imperial) : String(Number(value.toFixed(4))),
       textSelection: input => { this.textCaret = { start: input.selectionStart, end: input.selectionEnd }; },
@@ -549,17 +549,10 @@ export class PropertiesEditor {
     const device = target?.kind === 'device' ? target.value : null;
     const size = this.host._config?.icon_size ?? 2.5;
     const devicePoint = device ? this.host._livePos(device) : null;
-    const metricLabel = (render: number) => `${cmToField(render/NORM_W*this.host._cellCm*240,this.host._imperial)} ${this.t(this.host._imperial?'inch':'cm')}`;
     return renderPropertiesSelection(target, { unitPerPx: this.runtime._cssPxToRender(1), cellCm: this.host._cellCm,
-      textBox: this.host._dtBox, reference, referenceLabel: this.t(reference?.source === 'host-end' ? 'reference_end' : 'reference'),
-      referenceDistance: reference ? metricLabel(reference.distance) : '',
-      title: target?.kind==='decor' ? target.value.kind==='image' ? this.host._decorAssets.get(target.value.asset_id)?.name || this.t('image') : this.t(target.value.kind)
-        : target?.kind==='led' ? `${target.device?.name || this.t('led')} · ${this.t('led')}` : this.model().title,
-      wallDistance: target?.kind==='partition' ? metricLabel(Math.hypot(target.value.b[0]-target.value.a[0],target.value.b[1]-target.value.a[1])*NORM_W) : '',
-      hingeLabel: this.t('hinge_marker'),
+      textBox: this.host._dtBox, reference,
       device: device && devicePoint ? {x:devicePoint.x,y:devicePoint.y,
         radius:effectiveDeviceBaseSize(size>8?2.5:size)/100*iconUnit(this.host._spaceModel()!)*this.host._devicePresentation(device).scale/2} : null,
-      sideLabels: this.openingSides(target).fallback ? [this.t('side_a'), this.t('side_b')] : null,
     });
   }
   private async action(key: string): Promise<void> {

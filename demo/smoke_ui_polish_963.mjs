@@ -69,13 +69,24 @@ try {
   out.zoom_hover_affects_only_owner=await card.locator('.zoomctl button').evaluateAll((nodes,borders)=>nodes.every((el,i)=>i===2?getComputedStyle(el).borderColor!==borders[i]:getComputedStyle(el).borderColor===borders[i]),zoomBorders);
   await page.waitForTimeout(220);out.tooltip_opens=await tip.isVisible();
   await page.mouse.move(0,0);await page.waitForTimeout(150);out.tooltip_dismisses=!(await tip.isVisible());
-  await zoom.focus();await page.waitForTimeout(350);out.tooltip_keyboard=await tip.isVisible()&&await zoom.getAttribute('aria-label')!==null;
+  for(let i=0;i<100;i++){
+    await page.keyboard.press('Tab');
+    if(await zoom.evaluate(el=>el===el.getRootNode().activeElement))break;
+  }
+  await page.waitForTimeout(350);out.tooltip_keyboard=await tip.isVisible()&&await zoom.getAttribute('aria-label')!==null;
   await page.keyboard.press('Escape');await page.waitForTimeout(150);out.tooltip_escape=!(await tip.isVisible());
   await zoom.hover();await page.waitForTimeout(80);await page.mouse.move(0,0);await page.waitForTimeout(340);out.no_retired_tooltip=!(await tip.isVisible());
   await mode('view');out.stairs_restore_opacity=await card.locator('.hp-stairs-layer').evaluate(el=>getComputedStyle(el).opacity==='1');
   out.user_text_preserved=(await card.locator('.decorlayer').textContent()).includes('Keep this note');
   out.room_labels_preserved=(await card.locator('.roomlabel').allTextContents()).some(text=>text.includes('Gallery'));
   out.visual_actions_preserve_data=await page.evaluate(baseline=>JSON.stringify({config:window.__card._serverCfg,layout:window.__card._layout})===baseline,baseline);
+  const lamp=card.locator('.dev[data-id=lamp]');
+  out.value_badge_preserved=(await lamp.innerText()).includes('24');
+  await lamp.hover();await page.waitForTimeout(350);
+  const information=card.locator('[data-hp-live-tip]');
+  out.information_tooltip_content=await information.isVisible()&&(await information.innerText()).includes('Reading lamp');
+  out.information_tooltip_shared_surface=await information.evaluate(el=>{const s=getComputedStyle(el);return s.padding==='9px 11px'&&s.borderRadius==='9px'&&s.fontSize==='13px';});
+  await page.mouse.move(0,0);
   await mode('plan');await card.locator('[data-hp=wall-column][data-id=column]').click();await settle();
   const originalColumn=await page.evaluate(()=>structuredClone(window.__card._spaceModel().wall_columns.find(c=>c.id==='column')));
   for(const scale of [0,1]){
@@ -123,6 +134,15 @@ try {
     out[`header_${width}_one_action_row`]=await card.locator('.header-actions').count()>0&&await card.locator('.header-actions').evaluate(el=>{const boxes=[...el.children].filter(e=>getComputedStyle(e).display!=='none').map(e=>e.getBoundingClientRect());return boxes.length>0&&Math.max(...boxes.map(b=>b.top))-Math.min(...boxes.map(b=>b.top))<2;});
     if(width<=480)out[`phone_${width}_height`]=await card.locator('.head').evaluate(el=>el.getBoundingClientRect().height<=56);
   }
+  await page.setViewportSize({width:1440,height:1000});await settle();
+  await zoom.hover();await page.waitForTimeout(80);
+  const parent=await card.evaluateHandle(el=>el.parentElement),detached=await card.elementHandle();
+  await detached.evaluate(el=>el.remove());await page.mouse.move(0,0);
+  await parent.evaluate((el,card)=>el.append(card),detached);await parent.dispose();await detached.dispose();
+  await page.waitForFunction(()=>window.__card.isConnected&&!window.__card._booting);await settle();await page.waitForTimeout(350);
+  out.remount_retires_old_tooltip=!(await tip.isVisible());
+  await page.mouse.move(0,0);await zoom.hover();await page.waitForTimeout(350);
+  out.remount_tooltip_works=await tip.isVisible()&&await tip.count()===1;
   mkdirSync('artifacts/ui-polish-963',{recursive:true});writeFileSync('artifacts/ui-polish-963/behavior.json',JSON.stringify(out,null,2));
   await fixture.assertClean();checkAll(out);await finish(fixture.browser,out);
 } finally {await fixture.close();}

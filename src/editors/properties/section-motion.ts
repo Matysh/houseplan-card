@@ -2,7 +2,6 @@
 export class PropertiesSectionMotion {
   private root: HTMLElement | null = null;
   private observer: ResizeObserver | null = null;
-  private children = new Set<Element>();
   private sections = new Map<HTMLElement, { height: number; animation: Animation | null }>();
   private frame: number | null = null;
   private reduced: MediaQueryList | null = null;
@@ -24,12 +23,9 @@ export class PropertiesSectionMotion {
       this.reduced.addEventListener('change',this.motionChanged);
     }
     this.observer ??= new ResizeObserver(this.queue);
-    const children = new Set<Element>();
     const sections = new Set(root.querySelectorAll<HTMLElement>('.hp-prop-group'));
-    for (const section of sections) for (const child of section.children) children.add(child);
-    for (const child of this.children) if (!children.has(child)) this.observer.unobserve(child);
-    for (const child of children) if (!this.children.has(child)) this.observer.observe(child);
-    this.children = children;
+    this.observer.disconnect();
+    for (const section of sections) for (const child of section.children) this.observer.observe(child);
     for (const [section, state] of this.sections) if (!sections.has(section)) {
       state.animation?.cancel(); this.sections.delete(section);
     }
@@ -62,7 +58,7 @@ export class PropertiesSectionMotion {
   }
   dispose(): void {
     if (this.frame !== null) this.root?.ownerDocument.defaultView?.cancelAnimationFrame(this.frame);
-    this.frame = null; this.observer?.disconnect(); this.observer = null; this.children.clear();
+    this.frame = null; this.observer?.disconnect(); this.observer = null;
     this.reduced?.removeEventListener('change',this.motionChanged); this.reduced = null;
     for (const state of this.sections.values()) state.animation?.cancel();
     this.sections.clear(); this.root = null;

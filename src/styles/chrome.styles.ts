@@ -1,7 +1,8 @@
 /** Editor chrome: toolbars, tabs, menus and hints (#266, split from styles.ts). */
-import { css, type CSSResultGroup } from 'lit';
+import { css, unsafeCSS, type CSSResultGroup } from 'lit';
+import { helpSurfaceStyle } from './help-surface.styles';
 
-const chromeCoreStyles = css`
+const chromeCoreStyles = unsafeCSS(css`
     .hdr {
       position: sticky;
       top: var(--header-height, 56px);
@@ -150,7 +151,7 @@ const chromeCoreStyles = css`
     .head > .spacer { flex: 0 0 30px; }
     .head > .header-actions { display: inline-flex; align-items: center; flex: 0 0 auto; flex-wrap: nowrap; gap: 10px; max-width: 100%; }
     .head > .header-actions > * { flex-shrink: 0; }
-    .hdr > .head .zoomctl { height: 44px; box-sizing: border-box; gap: 0; padding: 0; overflow: visible; border: 0; border-radius: var(--rad-m); background: transparent; }
+    .hdr > .head .zoomctl { display: inline-flex; height: 44px; box-sizing: border-box; gap: 0; padding: 0; overflow: visible; border: 0; border-radius: var(--rad-m); background: transparent; }
     .hdr > .head .zoomctl .zb { box-sizing: border-box; width: 44px; min-width: 44px; height: 44px; min-height: 44px; padding: 0; justify-content: center; position: relative; border: 1px solid var(--hp-line); border-radius: 0; background: transparent; color: var(--hp-txt); }
     .hdr > .head .zoomctl .zb + .zb { margin-inline-start: -1px; }
     .hdr > .head .zoomctl .zb:first-child { border-radius: var(--rad-m) 0 0 var(--rad-m); }
@@ -520,15 +521,7 @@ const chromeCoreStyles = css`
     .tip {
       position: fixed;
       pointer-events: none;
-      background: var(--hp-bg);
-      border: 1px solid var(--hp-accent);
-      color: var(--hp-txt);
-      padding: var(--sp-3) 10px;
-      border-radius: var(--rad-m);
-      font-size: var(--fs-m);
-      box-shadow: var(--shadow-2);
       z-index: 60;
-      max-width: 260px;
     }
     .tip .m {
       color: var(--hp-muted);
@@ -559,7 +552,7 @@ const chromeCoreStyles = css`
     .view-runtime-notice > div { display: flex; flex-wrap: wrap; gap: 8px; }
     .view-runtime-functions { display: block; color: var(--hp-muted); }
     .view-runtime-notice .btn { min-width: 44px; min-height: 44px; }
-`;
+`.cssText + `.tip[data-hp-live-tip]{${helpSurfaceStyle}}`);
 
 /** #437 summary CSS lives with its lazy runtime in summary-panel-style.ts. */
 export const chromeStyles: CSSResultGroup = chromeCoreStyles;

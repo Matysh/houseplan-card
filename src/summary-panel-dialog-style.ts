@@ -1,7 +1,8 @@
+import { css } from 'lit';
 /** Installed into this summary dialog's shadow root by the lazy runtime.
  * Keeping even the scoped shell CSS lazy preserves the initial View budget. */
-export const summaryPanelDialogCss = String.raw`
-    /* #505: the summary form follows its own neutral, wide design. Keep
+export const summaryPanelDialogCss = `
+    ${css`/* #505: the summary form follows its own neutral, wide design. Keep
        every override scoped so the other editor/dialog surfaces stay intact. */
     :host([data-kind='summary']) ha-dialog {
       --ha-dialog-surface-background: var(--card-background-color, #fff);
@@ -36,5 +37,5 @@ export const summaryPanelDialogCss = String.raw`
     }
 
     :host([data-kind='summary']) .content { flex: 1 1 auto; }
-    :host([data-kind='summary']) .footer { flex-shrink: 0; }
+    :host([data-kind='summary']) .footer { flex-shrink: 0; }`.cssText}
 `;

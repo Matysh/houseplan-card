@@ -1,8 +1,9 @@
+import { css } from 'lit';
 import { summaryPanelEditorCss } from './summary-panel-editor-style';
 
 /** Lazy screen-space styles. The stage, not the viewport, chooses the anchor. */
-export const summaryPanelCss = String.raw`
-  .summary-control {
+export const summaryPanelCss = `
+  ${css`.summary-control {
     display: inline-flex;
     flex: 0 0 auto;
     border: 1px solid var(--divider-color);
@@ -197,6 +198,6 @@ export const summaryPanelCss = String.raw`
   }
   @media (prefers-reduced-motion: reduce) {
     .summary-control > button { transition: none; }
-  }
+  }`.cssText}
   ${summaryPanelEditorCss}
 `;

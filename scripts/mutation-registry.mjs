@@ -122,6 +122,12 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id:'editor-tooltip-arms-after-touch-focus-963',
+    guard:'node demo/smoke_ui_polish_963_touch.mjs',
+    because:'#963 AC4/9: a trusted touch tap also focuses the native button; only actual browser input modality exposes a delayed tooltip wrongly armed by non-keyboard focus.',
+    patches:[{file:'src/chrome-tooltip-lazy.ts',find:"    if (event instanceof FocusEvent && !owner?.matches(':focus-visible')) return;\n",replace:''}],
+  },
+  {
     id:'properties-reserves-empty-height-963',
     guard:'node demo/smoke_ui_polish_963.mjs',
     because:'#963 AC1: only mounted child layout after the 240ms transition exposes empty reserved section space across wall/column selections.',
@@ -17638,7 +17644,7 @@ const MUTANT_DEFINITIONS = [
     id: 'settings-toggle-track-box-model-603',
     guard: 'node demo/smoke_dialog_polish_603.mjs',
     because: '#603/#948: actual pseudo-element boxes must keep the knob centred in both states with a44px target; browser geometry is not proven by a CSS source assertion. The legacy temporary style probe is moved to nightly execution only.',
-    patches: [{file:'src/styles/form-kit.styles.ts', find:"  .${p}-toggle > input::before {\n    content: '';\n    position: absolute;\n    box-sizing: border-box;", replace:"  .${p}-toggle > input::before {\n    content: '';\n    position: absolute;\n    box-sizing: content-box;"}],
+    patches: [{file:'src/styles/form-kit.styles.ts', find:"-toggle > input::before {\n    content: '';\n    position: absolute;\n    box-sizing: border-box;", replace:"-toggle > input::before {\n    content: '';\n    position: absolute;\n    box-sizing: content-box;"}],
   },
   {
     id: 'M-615-tile',

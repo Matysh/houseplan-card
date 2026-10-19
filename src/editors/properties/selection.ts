@@ -8,9 +8,7 @@ import { decorPropertiesBox } from './transforms';
 export interface PropertiesSelectionContext {
   unitPerPx: number; cellCm: number;
   textBox: { x: number; y: number; w: number; h: number } | null;
-  reference: OpeningDimension | null; referenceLabel: string; referenceDistance: string;
-  title: string; wallDistance: string; hingeLabel: string;
-  sideLabels: [string, string] | null;
+  reference: OpeningDimension | null;
   device: { x: number; y: number; radius: number } | null;
 }
 

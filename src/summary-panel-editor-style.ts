@@ -1,3 +1,4 @@
+import { css } from 'lit';
 import {
   SUMMARY_PANEL_FORM_KIT, formKitCardsCss, formKitDisabledCss, formKitFocusCss,
   formKitSwitchCaptionCss, formKitSwitchRowCss,
@@ -12,7 +13,7 @@ import {
  * лист обязан совпасть с прежним побайтово (`test/form-kit.test.mjs`).
  */
 export const summaryPanelEditorCss = `
-  hp-dialog[data-kind='summary'] {
+  ${css`hp-dialog[data-kind='summary'] {
     --hp-dialog-wide-width: 920px;
     --ha-dialog-width-md: 920px;
     --summary-editor-surface: var(--card-background-color, #fff);
@@ -42,9 +43,9 @@ export const summaryPanelEditorCss = `
   .summary-editor *,
   .summary-editor-footer * { box-sizing: border-box; }
   .summary-editor h3 { margin: 0; font-size: 1rem; line-height: 1.3; }
-  .summary-editor p { margin: 0; overflow-wrap: anywhere; }
+  .summary-editor p { margin: 0; overflow-wrap: anywhere; }`.cssText}
 ${formKitCardsCss(SUMMARY_PANEL_FORM_KIT)}
-  .summary-general-grid {
+  ${css`.summary-general-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px 18px;
@@ -80,14 +81,14 @@ ${formKitCardsCss(SUMMARY_PANEL_FORM_KIT)}
   .summary-editor select { cursor: pointer; }
   .summary-editor [aria-invalid='true'] {
     border-color: var(--error-color, #db4437);
-  }
+  }`.cssText}
 ${formKitFocusCss(SUMMARY_PANEL_FORM_KIT)}
   .summary-editor button { font: inherit; }
 ${formKitDisabledCss(SUMMARY_PANEL_FORM_KIT)}
   .summary-editor svg { display: block; flex: 0 0 auto; width: 20px; height: 20px; }
 ${formKitSwitchRowCss(SUMMARY_PANEL_FORM_KIT)}
 ${formKitSwitchCaptionCss(SUMMARY_PANEL_FORM_KIT)}
-  /* The native checkbox itself is the visible 44px hit target. No hidden
+  ${css`/* The native checkbox itself is the visible 44px hit target. No hidden
      duplicate control or optimistic storage write is needed for the switch. */
   .summary-editor .summary-switch input {
     appearance: none;
@@ -391,5 +392,5 @@ ${formKitSwitchCaptionCss(SUMMARY_PANEL_FORM_KIT)}
     .summary-value-label { grid-column: 1 / -1; grid-row: 2; }
     .summary-source-field { grid-column: 1 / -1; grid-row: 3; }
     .summary-value-remove { grid-column: 3; grid-row: 1; }
-  }
+  }`.cssText}
 `;

@@ -10,7 +10,8 @@
 - Keep save errors readable above Home Assistant and native dialogs without
   losing edits or changing retry behaviour. Nested dialogs share one notice. (#956)
 - Match the approved editor UI: compact Properties sections, Rooms and Shapes
-  menus, icon-only history, shared delayed tooltips and grouped header actions.
+  menus, icon-only history, shared delayed tooltips, matching information
+  bubbles and grouped header actions. Touch taps keep their original actions.
   Clarify window opening sides, simplify selection cues, unify column rotation,
   dim stairs in Background, and align Inbox filters and Save captions. (#963)
 
