@@ -128,10 +128,12 @@ try {
     de:['Geräte auf dem Plan','Symbolregeln: welche MDI-Symbole Geräte nach Namen erhalten'],
     fr:['Appareils sur le plan','Règles d’icônes : quelle icône MDI attribuer aux appareils selon leur nom'],
   };
+  let hintsPreserveData=true;
   for(const [language,hints] of Object.entries(deviceHints)){
     await page.mouse.move(0,0);
     await page.evaluate(language=>window.__card.setConfig({...window.__card._config,language}),language);
     await mode('devices');await settle();
+    const hintBaseline=await page.evaluate(()=>JSON.stringify({config:window.__card._serverCfg,layout:window.__card._layout}));
     for(const [index,tool] of ['device-inbox','icon-rules'].entries()){
       const button=card.locator(`[data-tool=${tool}]`);
       await button.hover();await page.waitForTimeout(350);
@@ -141,10 +143,11 @@ try {
         &&await button.getAttribute('title')===null;
       await page.mouse.move(0,0);await page.waitForTimeout(150);
     }
+    hintsPreserveData=hintsPreserveData&&await page.evaluate(baseline=>JSON.stringify({config:window.__card._serverCfg,layout:window.__card._layout})===baseline,hintBaseline);
   }
   await page.evaluate(language=>window.__card.setConfig({...window.__card._config,language}),originalLanguage);
   await mode('devices');await settle();
-  out.device_hints_preserve_data=await page.evaluate(baseline=>JSON.stringify({config:window.__card._serverCfg,layout:window.__card._layout})===baseline,baseline);
+  out.device_hints_preserve_data=hintsPreserveData;
   await card.locator('[data-tool=device-inbox]').click();await settle();
   const inbox=card.locator('hp-dialog[data-kind=device-inbox]');
   const filter=inbox.locator('.device-inbox-space-filter hp-settings-select');
