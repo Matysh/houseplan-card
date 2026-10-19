@@ -3,6 +3,7 @@ import { anchorIssueBodyFrom, anchorTreeFrom, anchorVerdictFrom } from './review
 import { terminalTrailers } from './validate-commit-provenance.mjs';
 import { isMainModule } from './spawn-portable.mjs';
 import { findingsHeader, findingsLinkForBlob, findingsTextProblems } from './review-findings-policy.mjs';
+import { reviewMaterialTreeType } from './review-material.mjs';
 
 export const SPEC_DELIVERY_PHASE = 'spec-review/v1';
 const PUBLISHER = '209825114+claude[bot]@users.noreply.github.com';
@@ -83,7 +84,7 @@ export function readTaskCommit(commit, gitRunner) {
     if (doc) {
       result.specDocument = gitRunner(['show', `${commit.sha}:${doc}`]);
       const tree = anchorTreeFrom(result.specDocument);
-      result.specTreeType = tree ? gitRunner(['cat-file', '-t', tree]).trim() : null;
+      result.specTreeType = tree ? reviewMaterialTreeType(tree, gitRunner) : null;
       result.specStatus = gitRunner(['diff-tree', '--first-parent', '-m', '--root', '--no-commit-id', '-r', '--name-status', commit.sha, '--', doc]).trim().split('\t')[0];
       const match = /SPEC-REVIEW-([1-9]\d*)-r([1-9]\d*)\.md$/.exec(doc);
       const findings = `docs/reviews/findings/${match[1]}-spec-r${match[2]}.md`;

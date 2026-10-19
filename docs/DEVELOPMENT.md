@@ -3193,6 +3193,23 @@ The immutable trace remains in catalogue `specDeliveries`, outside implemented
 entries, prerelease membership, closure evidence and user milestone selection.
 Unknown/malformed phase or an unsuitable diff fails closed. The producer and
 both membership creation/verification use the same phase contract.
+
+Before publishing a SPEC, `review-material.mjs retain --sha=<commit> --tree=<tree>`
+retains the sealed original material at `refs/heads/review-material/spec-<tree>`
+(#957). A create-only lease prevents rewriting an existing ref; matching trees
+are idempotent. Retention failure stops document publication. These refs are
+permanent evidence, not task branches or release tags, and do not trigger Validate.
+Do not delete them when the task branch is merged or the review is archived.
+The shared delivery reader lazily fetches a missing tree from origin's retained
+refs; historical rescue refs such as `review-material/946-spec-r3-original` are
+accepted only when the advertised commit's root tree matches exactly. Existing
+objects need no network. A missing/mismatched tree remains an explicit refusal;
+publisher, exact SPEC/index/findings delta, body and verdict checks still run.
+Neither fetching objects nor retaining a ref changes membership or authorizes S8.
+`node --test --test-name-pattern='#957' test/task-delivery-903.test.mjs` exercises
+a real rebase plus single-branch fresh clone without alternates, immutable and
+legacy retention, create races, unavailable/wrong material and invalid publishers.
+
 Already published manifests may retain a SPEC/promotion SHA as ancillary trace
 alongside their own actual implementation SHA; verification requires that
 implementation evidence and still checks every listed SHA against the exact

@@ -25,6 +25,11 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+SPEC material retention (#957) preserves the original sealed commit/tree before
+document publication. Fresh delivery readers can fetch exact objects from
+immutable origin retention refs, including historical rescue refs; provenance
+and implementation-only membership remain strict. No product behavior changes.
+
 Settings polish (#955) uses common help, action, select and colour components
 across the four approved forms. Native comparisons retain the immutable mocks
 and identical synthetic data. The eight-scenario interaction matrix, ordinary

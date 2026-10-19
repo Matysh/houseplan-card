@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 957,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Retain original SPEC review material through rebases and recover exact Git objects in fresh checkouts without relaxing delivery provenance or changing product behavior."
+}

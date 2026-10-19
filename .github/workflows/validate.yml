@@ -6,6 +6,8 @@ on:
     # to the same SHA and must not duplicate the browser validation jobs.
     branches:
       - '**'
+      # #957: immutable object-retention refs are evidence, not new task work.
+      - '!review-material/**'
     # Документы ревью конвейер пишет пачками — 340 коммитов за месяц, и каждый
     # гонял лёгкую половину Validate впустую (≈15 часов раннера в месяц).
     # Релизного кандидата это не затрагивает: тег всегда стоит на коммите,

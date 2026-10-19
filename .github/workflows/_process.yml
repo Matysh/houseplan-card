@@ -1747,6 +1747,15 @@ jobs:
           # комментарием. Это тот же тихий отказ: шаг сообщал об успехе тем, что
           # ничего не сделал. Документ ложится туда же, где лежит само ТЗ.
           target="${BRANCH:-dev}"
+          # #957: retain sealed original material before publication can rebase
+          # away its last parent. The ref is immutable and content-addressed;
+          # failure stops publication, without accepting or rewriting evidence.
+          server="${GITHUB_SERVER_URL:-https://github.com}"
+          push_url="${server%%://*}://x-access-token:$TOKEN@${server#*://}/${{ github.repository }}"
+          if [ "$STAGE" = "spec" ]; then
+            REVIEW_MATERIAL_PUSH_URL="$push_url" node "$TOOLS/scripts/review-material.mjs" retain \
+              --sha="$MATERIAL_SHA" --tree="$MATERIAL_TREE"
+          fi
           if [ -z "$BRANCH" ]; then
             echo "::warning::ветки задачи нет — документ ревью ляжет в dev"
           fi
@@ -1862,8 +1871,6 @@ jobs:
           # метка не меняется.
           push_err="$RUNNER_TEMP/review-doc-push.stderr"
           # #766: хост push — сервер раннера (GITHUB_SERVER_URL), не зашитый github.com.
-          server="${GITHUB_SERVER_URL:-https://github.com}"
-          push_url="${server%%://*}://x-access-token:$TOKEN@${server#*://}/${{ github.repository }}"
           if ! git push -q "$push_url" \
                "HEAD:$target" 2> "$push_err"; then
             kind=$(node "$TOOLS/scripts/merge-candidate.mjs" --push-refusal="$push_err" --ref="$target" \
