@@ -68,6 +68,12 @@ ordinary TypeScript output byte for byte. Rollup compacts those same static
 pieces without changing selectors, values or order. Caption-only selection
 formatters and unused translations leave the product with their removed UI.
 
+The owner's 2026-10-19 size allowance raised the initial View ceiling by
+2317 B (323767→326084), retaining the 2000-B band and 352000-B hard wall.
+After the independently accepted #939 delta, the combined reference carries
+the same allowance: 325453 + 2317 = 327770 B. The raw-bundle and host-reference
+baselines retain #939's accepted values; #963 does not raise them.
+
 `demo/smoke_ui_polish_963.mjs` measures the expanded intrinsic panel, native
 commands/rotation, keyboard filter, tooltip timing/lifecycle, data preservation
 and narrow headers. `smoke_ui_polish_963_reference.mjs` reconstructs the exact
