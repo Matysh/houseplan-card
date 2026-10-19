@@ -1,5 +1,18 @@
 # Development and deployment
 
+#940 vacuum source-first: a schema-valid explicit empty is a complete native
+value, not failed normalization. Keep that distinction before the normalizer
+loses it; all-invalid nonempty input must fail. Provider path/session authority
+outranks inferred dock/grace boundaries. The collector's attempt fence is
+separate from run generation, because empty/new source observations can
+supersede an executor response without rotating a run. The fallback switch
+uses ACK-only staging on the existing serialized transport, preserves newer
+unrelated edits and rolls back the native checkbox immediately while pending.
+The form-kit event argument is optional; existing optimistic toggles are unchanged.
+Support schema changes are byte-identical in the relay; deploy its accepted
+version by the relay README before a HACS release sends the new reason/boolean.
+No relay deployment or real-device/GPU acceptance is implied by headless tests.
+
 The shared colour popup keeps the full opacity caption at intrinsic width;
 the adjacent range absorbs remaining space. The number input still reserves
 three digits and its native stepper. Both text and numeric content are measured

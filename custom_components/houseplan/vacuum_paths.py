@@ -93,6 +93,15 @@ def normalize_paths(raw: Any) -> Path:
     return out
 
 
+def attribute_snapshot(raw: Any, map_key: str) -> PathSnapshot:
+    """An explicit empty full value is data; all-invalid input is not."""
+    value = raw.get("path", raw.get("points")) if isinstance(raw, dict) else raw
+    paths = normalize_paths(raw)
+    if not paths and value != [] and value != ():
+        raise PathRejected("unsupported")
+    return snapshot("attributes", "full-path-v1", paths, map_key)
+
+
 @dataclass(frozen=True, slots=True)
 class PathSnapshot:
     """A complete value, not a delta. Private identity never goes on the bus."""
@@ -161,6 +170,8 @@ def dreame_snapshot(payload: Any) -> PathSnapshot:
             raise PathRejected("limited")
         chunks.append([chunk[i:i + 2] for i in range(1, len(chunk), 2)])
     paths = normalize_paths(chunks)
+    if raw and not paths:
+        raise PathRejected("unsupported")
     revision = data.get("frame_id")
     if isinstance(revision, bool) or not isinstance(revision, int):
         revision = None

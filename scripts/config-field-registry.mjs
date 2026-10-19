@@ -8,6 +8,16 @@
  */
 export const CONFIG_FIELD_REGISTRY = Object.freeze([
   {
+    id: 'markers[].vacuum.new_run_after_dock',
+    enforcedBy: 'validation.py + server trail lifecycle; #940',
+    selector: { path: ['markers', '*', 'vacuum', 'new_run_after_dock'] },
+    storage: 'House Plan server config', type: 'boolean | null', default: 'unset (= false)',
+    level: 'device marker', ui: 'Vacuum → Source and path display',
+    runtime: 'opt-in dock boundary for sampled positions only; integration path/session wins',
+    introduced: '#940', status: 'current', migration: 'none; reads never materialize a default',
+    compatibility: 'full/space transfer and copy preserve; older strict backends may reject the new field',
+  },
+  {
     id: 'spaces[].plan_opacity',
     enforcedBy: 'validation.py + properties panel + schema parity; #931',
     selector: { path: ['spaces', '*', 'plan_opacity'] },

@@ -3,6 +3,8 @@ import math
 import pathlib
 import uuid
 import json
+import copy
+import pytest
 from pure_imports import load_pure, HOUSEPLAN_ROOT
 paths = load_pure("hp_vacuum_paths", HOUSEPLAN_ROOT / "vacuum_paths.py")
 # TrailBook берётся без импорта: из trails.py читается текст и исполняется срез
@@ -20,6 +22,144 @@ exec(src[src.index("TRAIL_CAP"):src.index("class TrailRecorder")], ns)
 TrailBook = ns["TrailBook"]
 TRAIL_CAP = ns["TRAIL_CAP"]
 TRAIL_RESUME_GRACE_S = ns["TRAIL_RESUME_GRACE_S"]
+
+
+def test_940_first_native_snapshot_needs_no_locally_observed_reset():
+    book = TrailBook()
+    run, _ = book.ensure_run("robot", "floor", 1, "route", "camera.map")
+    native = paths.snapshot("attributes", "full-path-v1", [[[0, 0], [100, 0]]], "floor")
+    book.on_snapshot("robot", native, 2, "route", "floor", run["_generation"], False)
+    assert run["quality"]["source"] == "native"
+    assert run["paths"] == native.paths
+
+
+def test_940_native_empty_replaces_current_not_previous_or_sampled_reserve():
+    book = TrailBook()
+    run, _ = book.ensure_run("robot", "floor", 1, "route", "camera.map")
+    native = paths.snapshot("attributes", "full-path-v1", [[[i, 0] for i in range(10)]], "floor")
+    book.on_snapshot("robot", native, 2, "route", "floor", run["_generation"], True)
+    book.on_point("robot", "floor", 99, 99, 3, "route", "camera.map")
+    empty = paths.snapshot("attributes", "full-path-v1", [], "floor")
+    book.on_snapshot("robot", empty, 4, "route", "floor", run["_generation"], True)
+    public = paths.public_trails(book.data)["robot"]["current"]
+    assert public["paths"] == []
+    assert public["points"] == []
+    assert public["quality"]["source"] == "native"
+    assert "previous" not in book.data["robot"]
+
+
+def test_940_native_path_outranks_local_long_stop_boundary():
+    book = TrailBook()
+    run, _ = book.ensure_run("robot", "floor", 1, "route", "camera.map")
+    native = paths.snapshot("attributes", "full-path-v1", [[[0, 0], [100, 0]]], "floor")
+    book.on_snapshot("robot", native, 2, "route", "floor", run["_generation"], True)
+    book.end_run("robot", 3)
+    current, _ = book.ensure_run("robot", "floor", 3 + TRAIL_RESUME_GRACE_S + 1, "route", "camera.map")
+    assert current is run
+    assert current["paths"] == native.paths
+    assert "previous" not in book.data["robot"]
+
+
+@pytest.mark.parametrize("intermediate", [None, "idle", "paused", "error", "returning", "on", "unknown", "unavailable"])
+def test_940_dock_policy_splits_positions_once_with_neutral_intermediates(intermediate):
+    book = TrailBook()
+    book.configure_policy("robot", "vacuum.robot", True)
+    run, _ = book.ensure_run("robot", "floor", 1, "route", "camera.map", apply_policy=True)
+    book.on_point("robot", "floor", 1, 2, 2, "route", "camera.map")
+    book.observe_policy("robot", "docked")
+    book.end_run("robot", 3)
+    book.observe_policy("robot", intermediate)
+    if intermediate in ("returning", "on"):
+        assert book.ensure_run("robot", "floor", 4, "route", "camera.map", apply_policy=True)[0] is run
+    book.observe_policy("robot", "cleaning")
+    current, _ = book.ensure_run("robot", "floor", 5, "route", "camera.map", apply_policy=True)
+    assert current is not run and current["_generation"] != run["_generation"]
+    assert book.data["robot"]["previous"] is run
+    for _ in range(100):
+        book.configure_policy("robot", "vacuum.robot", True)
+        book.observe_policy("robot", "cleaning")
+        assert book.ensure_run("robot", "floor", 6, "route", "camera.map", apply_policy=True)[0] is current
+    assert book.data["robot"]["previous"] is run
+
+
+def test_940_policy_toggle_cancels_old_proof_and_does_not_retroactively_split():
+    book = TrailBook()
+    book.configure_policy("robot", "vacuum.robot", True)
+    first, _ = book.ensure_run("robot", "floor", 1, "route", "camera.map", apply_policy=True)
+    book.observe_policy("robot", "docked")
+    book.configure_policy("robot", "vacuum.robot", False)
+    book.configure_policy("robot", "vacuum.robot", True)
+    book.observe_policy("robot", "cleaning")
+    assert book.ensure_run("robot", "floor", 2, "route", "camera.map", apply_policy=True)[0] is first
+    book.observe_policy("robot", "docked")
+    stored = copy.deepcopy(book.data)
+    restarted = TrailBook(stored)
+    restarted.configure_policy("robot", "vacuum.robot", True)
+    restarted.observe_policy("robot", "cleaning")
+    current, _ = restarted.ensure_run("robot", "floor", 3, "route", "camera.map", apply_policy=True)
+    assert current["_generation"] != first["_generation"]
+    again = TrailBook(copy.deepcopy(restarted.data))
+    again.observe_policy("robot", "cleaning")
+    assert again.ensure_run("robot", "floor", 4, "route", "camera.map", apply_policy=True)[0]["_generation"] == current["_generation"]
+
+
+def test_940_native_and_real_session_boundaries_outrank_dock_policy():
+    book = TrailBook()
+    book.configure_policy("robot", "vacuum.robot", True)
+    cur, _ = book.ensure_run("robot", "floor", 1, "route", "camera.map", job_id="job-a", apply_policy=True)
+    native = paths.snapshot("attributes", "full-path-v1", [[[0, 0], [100, 0]]], "floor", job_id="job-a")
+    book.on_snapshot("robot", native, 2, "route", "floor", cur["_generation"], False)
+    book.observe_policy("robot", "docked")
+    book.end_run("robot", 3)
+    book.observe_policy("robot", "cleaning")
+    assert book.ensure_run("robot", "floor", 5000, "route", "camera.map", job_id="job-a", apply_policy=True)[0] is cur
+    next_job = paths.snapshot("attributes", "full-path-v1", [[[10, 10]]], "floor", job_id="job-b")
+    book.on_snapshot("robot", next_job, 5001, "route", "floor", cur["_generation"], False)
+    current = book.data["robot"]["current"]
+    assert current is not cur and book.data["robot"]["previous"] is cur
+    book.on_snapshot("robot", next_job, 5002, "route", "floor", current["_generation"], False)
+    assert book.data["robot"]["current"] is current and book.data["robot"]["previous"] is cur
+
+
+def test_940_native_empty_is_persistent_and_full_replacements_do_not_archive_versions():
+    book = TrailBook()
+    run, _ = book.ensure_run("robot", "floor", 1, "route", "camera.map")
+    for index, raw in enumerate(([[[0, 0], [10, 10]]], [], [], [[[20, 20]]], [], [[[30, 30]]], [[[30, 30], [40, 40]]])):
+        snap = paths.snapshot("attributes", "full-path-v1", raw, "floor")
+        book.on_snapshot("robot", snap, index + 2, "route", "floor", run["_generation"], False)
+        assert paths.public_trails(book.data)["robot"]["current"]["paths"] == raw
+        assert "previous" not in book.data["robot"]
+        restored = TrailBook(copy.deepcopy(book.data))
+        assert paths.public_trails(restored.data)["robot"]["current"]["paths"] == raw
+
+
+def test_940_rebinding_cancels_proof_and_native_authority_of_the_old_robot():
+    book = TrailBook()
+    book.configure_policy("robot", "vacuum.old", True)
+    cur, _ = book.ensure_run("robot", "floor", 1, "route", "camera.map")
+    book.on_snapshot("robot", paths.snapshot("attributes", "full-path-v1", [[[1, 1]]], "floor"),
+                     2, "route", "floor", cur["_generation"], True)
+    book.configure_policy("robot", "vacuum.new", True)
+    book.configure_policy("robot", "vacuum.new", False)
+    current, _ = book.ensure_run("robot", "floor", 3, "route", "camera.map", apply_policy=True)
+    assert current is not cur and current["quality"]["source"] == "positions"
+    assert not book.data["robot"]["_policy"]["armed"]
+
+
+def test_940_final_native_reads_keep_first_stop_and_stale_revisions_do_not_reopen_it():
+    book = TrailBook()
+    run, _ = book.ensure_run("robot", "floor", 1, "route", "camera.map")
+    first = paths.snapshot("attributes", "full-path-v1", [[[0, 0], [10, 0]]], "floor", revision=1, job_id="job")
+    book.on_snapshot("robot", first, 2, "route", "floor", run["_generation"], False, moving=True)
+    book.end_run("robot", 3)
+    final = paths.snapshot("attributes", "full-path-v1", [[[0, 0], [20, 0]]], "floor", revision=2, job_id="job")
+    assert book.on_snapshot("robot", final, 20, "route", "floor", run["_generation"], False, moving=False)
+    assert run["ended"] == 3
+    before = copy.deepcopy(book.data)
+    assert not book.on_snapshot("robot", first, 21, "route", "floor", run["_generation"], False, moving=True)
+    assert book.data == before
+    assert book.on_snapshot("robot", final, 5000, "route", "floor", run["_generation"], False, moving=True)
+    assert run["ended"] is None and "previous" not in book.data["robot"]
 
 
 def test_append_dedups_and_records():

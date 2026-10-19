@@ -33,7 +33,7 @@ or visible page. It never becomes a second camera or per-pointer Lit render.
 | Integration family | Position | Rooms / auto-calibration | Integration path | Map ID | Source discovery |
 |---|---:|---:|---:|---|---|
 | Xiaomi Cloud Map Extractor | Yes, when the attributes below are enabled | Yes | Yes, including `path.path` subpaths | `map_name` when exposed | Usually explicit camera selection |
-| dreame-vacuum (Tasshack) | Yes | Yes; explicit room `x/y` is the anchor | No | Vacuum `selected_map` fallback | Automatic on the same HA device |
+| dreame-vacuum (Tasshack) | Yes | Yes; explicit room `x/y` is the anchor | Yes, through the supported ordinary-camera serializer below | Vacuum `selected_map` fallback | Automatic on the same HA device |
 | Valetudo camera conventions | Yes | Yes when room data is exposed | No | Often `default`; no stable multi-floor promise | Automatic on the same HA device |
 | Roomba core `position` string | Not covered | No | No | — | not covered |
 
@@ -176,14 +176,24 @@ Numeric `0`, string `"0"` and an empty string are valid IDs.
 
 With a format-2 trail backend the current visible path has one authority:
 
-1. proven full server snapshot from the selected integration;
+1. complete server snapshot from the exact supported integration, including empty;
 2. server-sampled positions, with literal gaps;
 3. local positions only when the backend does not advertise format 2;
 4. no path.
 
 An old/missing backend keeps the integration → server → local compatibility
-order, but an HA attribute must not bypass the new server's run proof. Empty or
-bad snapshots retain last-good geometry and a separate reason. A malformed
+order; HA attributes never bypass a format-2 server. Source-first authority
+(#940, owner decision 2026-10-19) replaces the old local moving-reset proof:
+the first valid current native snapshot can be used when connecting mid-cleanup,
+without an invented job ID or observing the beginning of the path.
+An explicit valid empty is also a complete value: current paths/points, cached
+SVG and tip become empty, without substituting sampled positions. A retained
+separate previous run stays available in Always. Repeated empty values create
+no history slots. Even singleton → empty → singleton follows the provider;
+House Plan does not hide an actual empty response to prevent flicker.
+Absent/null/malformed/oversize/unavailable data and all-invalid nonempty input
+are errors or missing information, not empty. They retain the last accepted
+value (including accepted empty) and a separate reason. A malformed
 point splits a fragment; boolean/string/nonfinite coordinates are not points.
 Adjacent duplicates are removed; repeated visits are not. There is no index
 thinning, newest-64 pruning or every-other-point Store decimation (#872).
@@ -222,13 +232,32 @@ continuous, non-limited sampled fragment may have the existing animated live tip
 Server trails are recorded by `custom_components/houseplan/trails.py`, even
 with no card open. It stores current and one previous run in raw robot
 coordinates. An available non-moving state ends the visible current run
-immediately, but a new point on the same map within an inclusive 30-minute
-grace reopens that same run and keeps all earlier points. The first stop fixes
+immediately. For position-only sources without provider session information,
+a new point on the same map within an inclusive 30-minute grace reopens that
+same run and keeps all earlier points. The first stop fixes
 the timestamp: repeated dock/pause samples do not extend the window. A map
 change, a longer stop, malformed persisted time or wall-clock rollback starts a
 new run. `unavailable`, `unknown` and a missing state remain neutral. Without a
-vendor task id, two genuinely separate same-map cleanups started inside the
-grace may therefore appear as one run.
+vendor task id, two genuinely separate position-only same-map cleanups started
+inside the grace may therefore appear as one run. Native geometry and genuine
+provider session information outrank these heuristics: a dock visit or a long
+pause never truncates a native path. Full snapshots replace, never append to,
+the current geometry; digest/frame/map/receive time are not invented session IDs.
+
+**Device editor → Vacuum → Source and path display** offers **New path after
+docking when no integration path is available**. The optional shared
+`marker.vacuum.new_run_after_dock` is Off when absent/null/false; only true enables
+it. Without integration path/session authority, an observed real bound vacuum's
+`docked` followed by `cleaning` rotates current to previous once, even inside
+the grace. Idle/paused/error/returning/on/unknown/unavailable intermediates keep
+that proof; returning/on alone does not consume it. A service dock visit also
+splits this sampled path. Enabling mid-cleaning never retroactively clears it.
+Disabling, rebinding, removal or live Off cancels unconsumed proof; ordinary
+restart retains proof/consumption in the existing private Store. Native data
+always wins regardless of the toggle. Errors of a previously supported native
+channel do not silently switch its boundaries to positional heuristics.
+The setting applies after the ordinary config-write ACK. Unsupported backends
+show a disabled switch and update/restart guidance, retaining the saved value.
 
 Opening or reopening the card during cleaning restores positions already
 recorded on the server. If an old run has no route identity and an exact
@@ -241,18 +270,18 @@ from a camera that only supplies the current position.
 The position teleport guard splits when calibrated distance exceeds
 max(100 cm, 200 cm/s × trustworthy positive elapsed seconds). Unknown periods,
 map/source changes and pause/resume break fragments even without physical
-scale proof. Full snapshots require proof of the current generation: an
-observed schema-valid empty/reset path while moving, or already persisted
-provider-map identity in that same run. A first nonempty response after a late
-connection is **not** proof: diagnostics say `run_unverified` and positions
-continue. A map/frame id or receive timestamp is never invented as a job id.
+scale proof. Full snapshots require exact available source/map/route and known
+coordinates/schema, not proof of a locally observed cleanup start. Run generation
+and a separate collector attempt fence reject retired owners and reads superseded
+by newer source observations, including when the generation did not change.
+Provider revision checks remain separate from inferred cleanup boundaries.
 
 ### Provider passports (#872)
 
 | Provider | Proven channel/schema/coordinates | Live / final capability | Fallback |
 |---|---|---|---|
-| Dreame Vacuum / Tasshack 2.0.2 (`f5b8472b8e2e4bb3dff7bc2a81a5fd594eca9585`) | Exact registered ordinary camera, public `map_data_string(include_resources=False)`, `map_index == 0`, ordinary JSON `version:2`. Ordered chunks `[1/2/3,x,y,…]` (S/W/M; L continues the chunk). Raw millimetres, same axes/origin as `robot_position`; not pixel/Valetudo coordinates. Private provider key includes map_id/saved_map_id/map_index; frame_id orders revisions, not jobs. | Shared server read, active poll 30 s, minimum 10 s, timeout 10 s. An in-flight physical lease survives timeout/unload/reload. Backoff 30/60/120/300 s. On available stop, attempts at 0/15/45 s, ≤3 in 60 s under the same limits. No proven stable job id or explicit final marker: final remains **unconfirmed**. | Missing interface, unknown schema, non-current/saved/Wi-Fi/history/recovery, uncertain map/run, disabled/unavailable or timeout retain last-good and sampled positions. No token, self-HTTP, forced-update service or private coordinator. |
-| Xiaomi Cloud Map Extractor / generic attributes | Existing `path`, nested `path.path`/`path.points`, flat x/y tuples or x/y objects, optionally multiple fragments. Same saved source and raw coordinate system as position/calibration. Predicted goto is ignored. | Initial state and HA events; no added vendor poll. No fabricated job/final metadata. Reset/run proof as above. | Sampled positions; enable XCME `path` attribute if absent. |
+| Dreame Vacuum / Tasshack 2.0.2 (`f5b8472b8e2e4bb3dff7bc2a81a5fd594eca9585`) | Exact registered ordinary camera, public `map_data_string(include_resources=False)`, `map_index == 0`, ordinary JSON `version:2`. Ordered chunks `[1/2/3,x,y,…]` (S/W/M; L continues the chunk). Raw millimetres, same axes/origin as `robot_position`; not pixel/Valetudo coordinates. Private provider key includes map_id/saved_map_id/map_index; frame_id orders revisions, not jobs. | Shared server read, active poll 30 s, minimum 10 s, timeout 10 s; one initial stopped-source read uses the same lease. An in-flight physical lease survives timeout/unload/reload. Backoff 30/60/120/300 s. On available stop, attempts at 0/15/45 s, ≤3 in 60 s under the same limits. No proven stable job id or explicit final marker: final remains **unconfirmed**. | Missing interface or unverified coordinates/schema cannot establish native authority. A proven native channel retains last accepted geometry/empty on read error, not guessed dock boundaries. No token, self-HTTP, forced-update service or private coordinator. |
+| Xiaomi Cloud Map Extractor / generic attributes | Existing `path`, nested `path.path`/`path.points`, flat x/y tuples or x/y objects, optionally multiple fragments. Same saved source and raw coordinate system as position/calibration. Predicted goto is ignored. | Initial state and HA events; no added vendor poll. No fabricated job/final metadata. First valid nonempty/explicit empty follows source-first authority above. | Sampled positions if no path is supplied; enable XCME `path` attribute if absent. |
 | Valetudo / core Roborock | Existing compatible positions or generic attributes only. PNG path pixels are not structured path data. | No new raw-MQTT decoder, raster tracing or private coordinator access. | Positions or no path; native support is not claimed. |
 
 Primary pinned sources: [public camera bridge](https://github.com/Tasshack/dreame-vacuum/blob/f5b8472b8e2e4bb3dff7bc2a81a5fd594eca9585/custom_components/dreame_vacuum/camera.py),
@@ -265,7 +294,9 @@ acceptance. Personal maps are not committed or automatically attached to support
 The device editor's existing diagnostics separately show source health, path
 source, quality/reason, received/stored/drawn counts, last sample/snapshot time
 and whether the source explicitly confirmed the final snapshot. No new user
-controls, banners or cleanup commands are added.
+cleanup commands are added. Explicit empty reports **The integration reported
+an empty path**, native source and zero current received/stored/drawn points;
+a singleton has one received/stored point but no drawable line.
 The **Path display** row explains a suppressed path separately from recording
 quality: display mode or stop, unavailable/ambiguous/unassigned map, missing
 calibration, another floor, unmatched stored run, or insufficient consecutive
@@ -300,7 +331,7 @@ updates continue without an added timer or server request.
 
 ```text
 marker.vacuum = {
-  live?, trail?, trail_mode?, source?,
+  live?, trail?, trail_mode?, new_run_after_dock?, source?,
   calibration?: { [map_id]: [a,b,c,d,e,f] },   // legacy-read after #162
   map_routes?: [{ id, source, map_id, space, calibration? }],
   room_highlight?, segment_map?    // schema only: no runtime consumer (#12)

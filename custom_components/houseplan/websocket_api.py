@@ -1720,6 +1720,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             "support_api": SUPPORT_API_VERSION,
             "support_package_versions": list(PACKAGE_VERSIONS),
             "wall_node_move_api": 1,
+            "vacuum_dock_restart_api": 1,
             "decor_assets_api": DECOR_ASSETS_API_VERSION,
             "summary_panel_api": SUMMARY_PANEL_API_VERSION,
             **({"radar_stage1_api": 1} if rt.radar_coordinator is not None else {}),

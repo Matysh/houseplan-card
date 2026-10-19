@@ -269,6 +269,11 @@
       "nullable": true,
       "required": false
     },
+    "config.markers[].vacuum.new_run_after_dock": {
+      "nullable": true,
+      "required": false,
+      "type": "bool"
+    },
     "config.markers[].vacuum.room_highlight": {
       "nullable": true,
       "required": false,

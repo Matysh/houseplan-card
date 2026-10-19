@@ -127,7 +127,8 @@ export interface ToggleRowOptions {
   disabled?: boolean;
   /** Компактная строка для однотипных списков (§3.1 «Компактная строка»). */
   compact?: boolean;
-  onChange: (checked: boolean) => void;
+  /** Event lets an ACK-only owner restore the accepted native input value. */
+  onChange: (checked: boolean, event?: Event) => void;
   /** `id` чекбокса — для смоков и `aria-describedby`. */
   id?: string;
   /** An always-visible status may describe a switch without becoming its caption. */
@@ -157,7 +158,7 @@ export function toggleRow({
     ${caption && !compact ? html`<span class="hpf-toggle-caption" id=${captionId ?? nothing}>${caption}</span>` : nothing}
     <input type="checkbox" id=${id ?? nothing} .checked=${checked} ?disabled=${disabled}
       aria-label=${title} aria-describedby=${describedBy ?? captionId ?? nothing}
-      @change=${(e: Event) => onChange((e.target as HTMLInputElement).checked)} />
+      @change=${(e: Event) => onChange((e.target as HTMLInputElement).checked, e)} />
   </label>`;
 }
 

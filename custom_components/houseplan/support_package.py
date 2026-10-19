@@ -402,7 +402,7 @@ def _project_marker(ids: _Pseudonyms, marker: dict[str, Any]) -> dict[str, Any]:
     vacuum = marker.get("vacuum")
     if isinstance(vacuum, dict):
         out["vacuum"] = _copy_keys(
-            vacuum, ("live", "trail", "trail_mode", "room_highlight")
+            vacuum, ("live", "trail", "trail_mode", "room_highlight", "new_run_after_dock")
         )
     for key in ("value_source",):
         projected = _project_value_source(ids, marker.get(key))

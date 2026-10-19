@@ -209,9 +209,38 @@ class TrailBook:
                 total += count * 54 + 4096
         return total
 
+    def configure_policy(self, marker: str, vacuum: str, enabled: bool) -> bool:
+        """Bounded private proof belongs to the actual robot, never a browser."""
+        record = self.data.setdefault(marker, {})
+        old = record.get("_policy")
+        if isinstance(old, dict) and old.get("vacuum") == vacuum and old.get("enabled") is enabled:
+            return False
+        record["_policy"] = {"vacuum": vacuum, "enabled": enabled,
+                             "armed": False, "pending": False,
+                             "rebind": bool(isinstance(old, dict) and (old.get("rebind")
+                                            or old.get("vacuum") != vacuum and record.get("current")))}
+        return True
+
+    def observe_policy(self, marker: str, state: str | None, native: bool = False) -> bool:
+        record = self.data.get(marker) or {}
+        policy = record.get("_policy")
+        if not isinstance(policy, dict):
+            return False
+        current = record.get("current") or {}
+        authoritative = native or (current.get("quality") or {}).get("source") == "native" or current.get("_job_id")
+        before = (policy.get("armed"), policy.get("pending"))
+        if not policy.get("enabled") or authoritative:
+            policy.update(armed=False, pending=False)
+        elif state == "docked":
+            policy["armed"] = True
+        elif state == "cleaning" and policy.get("armed"):
+            policy.update(armed=False, pending=True)
+        return before != (policy.get("armed"), policy.get("pending"))
+
     def ensure_run(self, marker: str, map_id: str, now: float,
                    route_id: str = "", source: str = "", job_id: str | None = None,
-                   *, legacy: bool = False) -> tuple[dict[str, Any], bool]:
+                   *, legacy: bool = False, native: bool = False,
+                   apply_policy: bool = False) -> tuple[dict[str, Any], bool]:
         """Position and full-path providers share the same lifecycle authority."""
         rec = self.data.get(marker)
         if not isinstance(rec, dict):
@@ -224,14 +253,20 @@ class TrailBook:
                                      or cur.get("path_format", 1) not in (1, 2)):
             # Reading unknown future history may not destructively migrate it.
             return cur, False
+        authority = bool(native or cur and ((cur.get("quality") or {}).get("source") == "native"
+                                           or cur.get("_job_id")))
+        policy = rec.get("_policy") if apply_policy else None
+        force = bool(isinstance(policy, dict) and (policy.get("rebind")
+                     or policy.get("pending") and not authority))
         same_job = bool(job_id and cur and cur.get("_job_id") == job_id)
         changed_job = bool(job_id and cur and cur.get("_job_id") not in (None, job_id))
-        resumed = bool(cur and not changed_job and same_run_identity(cur, route_id, map_id, source, legacy=legacy)
-                       and (same_job or can_resume_trail_run(cur, map_id, now, route_id, source, legacy=legacy)))
+        resumed = bool(cur and cur.get("ended") is not None and not force and not changed_job
+                       and same_run_identity(cur, route_id, map_id, source, legacy=legacy)
+                       and (authority or same_job or can_resume_trail_run(cur, map_id, now, route_id, source, legacy=legacy)))
         if resumed and cur is not None:
             cur["ended"] = None
             cur["_gap_pending"] = True
-        if not cur or changed_job or (cur.get("ended") is not None and not resumed) \
+        if not cur or force or changed_job or (cur.get("ended") is not None and not resumed) \
                 or not same_run_identity(cur, route_id, map_id, source, legacy=legacy):
             if cur:
                 rec["previous"] = cur
@@ -254,6 +289,8 @@ class TrailBook:
             cur.pop("_native_identity", None)
         if job_id:
             cur["_job_id"] = job_id
+        if isinstance(policy, dict):
+            policy.update(pending=False, rebind=False)
         return cur, resumed
 
     def on_point(
@@ -331,35 +368,50 @@ class TrailBook:
             cur["_gap_pending"] = True
 
     def on_snapshot(self, marker: str, snap: PathSnapshot, now: float,
-                    route_id: str, map_id: str, generation: str, proven: bool, *, legacy: bool = False) -> bool:
-        """Replace a whole, proven snapshot; never append one or resurrect a run."""
+                    route_id: str, map_id: str, generation: str, proven: bool, *, legacy: bool = False,
+                    moving: bool | None = None) -> bool:
+        """The exact provider owns its complete path, including explicit empty."""
         cur = (self.data.get(marker) or {}).get("current")
         if not isinstance(cur, dict) or cur.get("path_format") != 2 \
                 or cur.get("_generation") != generation \
-                or not same_run_identity(cur, route_id, map_id, legacy=legacy) or not snap.paths:
+                or not same_run_identity(cur, route_id, map_id, legacy=legacy):
             return False
         identity = (snap.provider, snap.map_key)
         prior = cur.get("_native_identity")
-        if not proven and prior != list(identity):
-            return self.path_reason(marker, "run_unverified")
         if prior is not None and prior != list(identity):
             return self.path_reason(marker, "coordinates_unverified")
         previous_revision = cur.get("_native_revision")
+        job_changed = bool(snap.job_id and cur.get("_job_id") not in (None, snap.job_id))
+        job_bound = bool(snap.job_id and cur.get("_job_id") != snap.job_id)
         if snap.revision is not None and isinstance(previous_revision, int) \
-                and snap.revision < previous_revision:
+                and not job_bound and snap.revision < previous_revision:
             return False
+        resumed = False
+        if job_changed or moving is True and cur.get("ended") is not None:
+            # Native continuation has no local grace. Final reads on the dock,
+            # however, must not reopen the run or move its first-stop time.
+            cur, resumed = self.ensure_run(marker, map_id, now, route_id, str(cur.get("source") or ""),
+                                           snap.job_id, legacy=legacy, native=True)
+            if moving is False:
+                self.end_run(marker, now)
+        elif snap.job_id:
+            cur["_job_id"] = snap.job_id
+        native_count = sum(len(p) for p in snap.paths)
         if cur.get("_native_digest") == snap.digest:
-            changed = cur["quality"].get("reason") != "ok" \
+            reason = "ok" if snap.paths else "empty_integration"
+            changed = cur["quality"].get("reason") != reason \
+                or job_bound \
+                or cur["quality"].get("stored_points") != native_count \
                 or cur.get("_native_revision") != snap.revision \
                 or (snap.final and cur.get("final_status") != "confirmed")
             if changed:
-                cur["quality"]["reason"] = "ok"
+                cur["quality"]["reason"] = reason
+                cur["quality"]["stored_points"] = native_count
                 cur["received_at"] = now
                 cur["_native_revision"] = snap.revision
                 if snap.final:
                     cur["final_status"] = "confirmed"
-            return changed
-        native_count = sum(len(p) for p in snap.paths)
+            return changed or resumed
         if native_count > MAX_POINTS or len(snap.paths) > MAX_SEGMENTS \
                 or self._entry_bytes(cur, native_count) > MAX_ENTRY_BYTES:
             return self.path_reason(marker, "limited")
@@ -367,8 +419,9 @@ class TrailBook:
         # A proven full snapshot supersedes the sampled reserve; do not keep
         # a second unbounded copy of a now-complete run. The legacy projection
         # remains one contiguous native fragment, never flattened gaps.
-        cur.update(_position_paths=[], points=snap.paths[-1])
-        cur.update(paths=snap.paths, quality={"source": "native", "reason": "ok", "raw_points": native_count},
+        cur.update(_position_paths=[], points=snap.paths[-1] if snap.paths else [])
+        cur.update(paths=snap.paths, quality={"source": "native", "reason": "ok" if snap.paths else "empty_integration",
+                                           "raw_points": native_count, "stored_points": native_count},
                    provenance={"provider": snap.provider, "schema": snap.schema},
                    received_at=now, _native_identity=list(identity), _native_digest=snap.digest,
                    _native_revision=snap.revision, final_status="confirmed" if snap.final else "unconfirmed")
@@ -474,6 +527,8 @@ class TrailRecorder:
             health_pairs: set[tuple[str, str]] = set()
             routes_by_marker: dict[str, list[dict[str, Any]]] = {}
             explicit_route_markers: set[str] = set()
+            policy_markers: set[str] = set()
+            changed = False
             for m in cfg.get("markers") or []:
                 if m.get("removed") is True:
                     continue
@@ -482,6 +537,10 @@ class TrailRecorder:
                 if v.get("live") is False:
                     continue
                 marker_id = str(m.get("id"))
+                vac = self._vacuum_entity(m)
+                if vac:
+                    policy_markers.add(marker_id)
+                    changed |= self.book.configure_policy(marker_id, vac, v.get("new_run_after_dock") is True)
                 if isinstance(v.get("map_routes"), list):
                     explicit_route_markers.add(marker_id)
                 # #162: a multi-floor robot may publish each map through its own
@@ -494,13 +553,16 @@ class TrailRecorder:
                     sources.add(str(src))
                 if not sources:
                     continue
-                vac = self._vacuum_entity(m)
                 for source in sorted(sources):
                     health_pairs.add((marker_id, source))
                     if vac:
                         # HP-1540-03: append, never overwrite — every floor's
                         # marker records its own copy of the run
                         pairs.setdefault(source, []).append((marker_id, vac))
+            for marker, record in self.book.data.items():
+                if marker not in policy_markers and "_policy" in record:
+                    del record["_policy"]
+                    changed = True
             self._refresh_source_health(health_pairs)
             self.pairs = pairs
             self.routes_by_marker = routes_by_marker
@@ -511,7 +573,6 @@ class TrailRecorder:
             # next state change — otherwise the first seconds of the path are
             # lost.
             now = time.time()
-            changed = False
             for src in self.pairs:
                 changed |= self._sample(src, now)
             contexts = self._path_contexts()
@@ -774,12 +835,20 @@ class TrailRecorder:
         changed = False
         for marker, vac in self.pairs.get(src) or ():
             st_vac = self.hass.states.get(vac)
+            registry = er.async_get(self.hass)
+            vac_entry = registry.async_get(vac) if registry is not None and hasattr(registry, "async_get") else None
+            if getattr(vac_entry, "disabled_by", None) is not None:
+                st_vac = None
+            st_src = self.hass.states.get(src)
+            native = self._native_channel(src, st_src, vac)
+            validity = self.collector.channel_validity(src, vac, st_src.attributes.get("path") if st_src else None)
             owner = None
             if marker in self.explicit_route_markers:
                 owner = self._recording_route(marker, st_vac.attributes if st_vac else {})
                 if owner is not None and owner["source"] != src:
                     continue
                 if owner is None:
+                    changed |= self.book.observe_policy(marker, st_vac.state if st_vac else None)
                     # A lost/ambiguous owner can mark its own interruption, but
                     # an unrelated root event must not touch this run's lifecycle.
                     if self._current_route_source(marker) != src:
@@ -789,6 +858,7 @@ class TrailRecorder:
                     else:
                         self.book.mark_gap(marker)
                     continue
+            changed |= self.book.observe_policy(marker, st_vac.state if st_vac else None, native and validity is True)
             # "no state yet" is NOT "stopped": during HA boot the vacuum reads
             # unavailable and ending the run here would split one cleanup into
             # current+previous on every restart (observed live: 21 points
@@ -797,9 +867,19 @@ class TrailRecorder:
                 self.book.mark_gap(marker)
                 continue
             if st_vac.state not in MOVING_STATES:
+                # Native empty is meaningful on the dock too. Establish its
+                # exact owner once, without reopening an already ended run.
+                if native and st_src and self._source_failure_reason(src) is None:
+                    map_id = resolve_map_id(st_src.attributes, st_vac.attributes)
+                    route_id = str(owner["id"]) if owner else self._route_id(marker, src, map_id)
+                    current = (self.book.data.get(marker) or {}).get("current")
+                    if route_id and not same_run_identity(current, route_id, map_id, src,
+                                                          legacy=marker not in self.explicit_route_markers):
+                        self.book.ensure_run(marker, map_id, now, route_id, src,
+                                             legacy=marker not in self.explicit_route_markers, native=True)
+                        changed = True
                 changed |= self.book.end_run(marker, now)
                 continue
-            st_src = self.hass.states.get(src)
             if self._source_failure_reason(src) is not None or not st_src \
                     or st_src.state in ("unknown", "unavailable"):
                 self.book.mark_gap(marker)
@@ -809,8 +889,16 @@ class TrailRecorder:
             route_id = str(owner["id"]) if owner else self._route_id(marker, src, map_id)
             if route_id:
                 before = (self.book.data.get(marker) or {}).get("current")
+                if native and validity is None and same_run_identity(before, route_id, map_id, src,
+                                legacy=marker not in self.explicit_route_markers) \
+                        and (before.get("quality") or {}).get("source") != "native":
+                    # Classification is asynchronous. Do not consume dock proof
+                    # or lose the first stop timestamp before a first full read
+                    # proves native authority (or fails back to sampled data).
+                    continue
                 cur, resumed = self.book.ensure_run(
-                    marker, map_id, now, route_id, src, legacy=marker not in self.explicit_route_markers)
+                    marker, map_id, now, route_id, src, legacy=marker not in self.explicit_route_markers,
+                    native=native, apply_policy=True)
                 changed |= before is not cur or resumed
             raw = attrs.get("vacuum_position") or attrs.get("robot_position")
             # Server-side these attributes are often OBJECTS (Tasshack keeps a
@@ -836,6 +924,17 @@ class TrailRecorder:
                 legacy=marker not in self.explicit_route_markers,
             )
         return changed
+
+    def _native_channel(self, source: str, state: Any, vacuum: str) -> bool:
+        """Capability, not a guessed job or an empty-path inference."""
+        if state is None or state.state in ("unknown", "unavailable"):
+            return False
+        if isinstance(state.attributes.get("path"), (list, tuple, dict)):
+            return self.collector.channel_validity(source, vacuum, state.attributes["path"]) is not False
+        registry = er.async_get(self.hass)
+        entry = registry.async_get(source) if registry is not None and hasattr(registry, "async_get") else None
+        return getattr(entry, "platform", None) == "dreame_vacuum" \
+            and self.collector.has_camera_channel(source) and self.collector.channel_validity(source, vacuum) is not False
 
     def _recording_route(self, marker: str, vac_attrs: Any) -> dict[str, Any] | None:
         """Resolve across all exact available route sources, not event order."""
@@ -924,15 +1023,24 @@ class TrailRecorder:
         changed = False
         for marker, route, generation in context.markers:
             changed |= self.book.on_snapshot(marker, snap, now, route, context.map_id, generation, proven,
-                                             legacy=marker not in self.explicit_route_markers)
+                                             legacy=marker not in self.explicit_route_markers, moving=context.moving)
+            changed |= self.book.observe_policy(marker, None)
+        if changed:
+            self.collector.refresh(self._path_contexts())
         self._handle_sample_change(changed, now)
 
     def _path_reason(self, context: PathContext, reason: str) -> None:
         if context not in self._path_contexts() or self._closed:
             return
-        changed = False
+        # A first malformed/missing native answer did not establish authority.
+        # Resume positional policy with its still-intact stop/dock proof.
+        changed = self._sample(context.source, time.time()) if any(
+            ((self.book.data.get(marker) or {}).get("current", {}).get("quality") or {}).get("source") != "native"
+            for marker, _route, _generation in context.markers) else False
         for marker, _route, _generation in context.markers:
             changed |= self.book.path_reason(marker, reason)
+        if changed:
+            self.collector.refresh(self._path_contexts())
         self._handle_sample_change(changed, time.time())
 
     def _route_id(self, marker: str, source: str, map_id: str) -> str:

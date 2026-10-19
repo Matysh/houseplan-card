@@ -2203,14 +2203,17 @@ changes until **Apply**; manual fitting and Cancel remain available.
   data; points omitted by the integration are not invented.
 - Current and previous trails use bounded curves that preserve endpoints and
   gaps and deviate no more than 17.5 cm from the recorded polyline.
-- The new server prefers a full integration path proven to belong to the run,
-  then sampled positions. The browser reserve remains for old/unavailable
+- The new server prefers a complete integration path, including a valid empty
+  response, then sampled positions. Connecting during cleaning does not require
+  observing the beginning of the integration path. The browser reserve remains for old/unavailable
   backends. A complete native path gets no invented connector to the live puck.
 - Dreame Vacuum / Tasshack 2.0.2 can supply a complete path from the selected
   ordinary camera, without enabling a separate JSON entity or adding a token.
   The server reads it during cleaning and performs a bounded check after the
-  robot stops. Without proof of the current run, for example after connecting
-  late, it uses positions rather than a potentially old path.
+  robot stops. A dock visit or long pause never cuts a native path. Explicit
+  empty removes the current line until the next path; positions do not override
+  it. Missing data or a read error is not empty. Only structured data actually
+  exposed by the integration is supported, not hidden app history or map pixels.
 - **Live position** diagnostics show path source/quality, received/stored/drawn
   point counts and snapshot time. An unconfirmed final snapshot does not mean
   the path was lost: the integration may not provide a final marker. Upstream
@@ -2223,9 +2226,16 @@ changes until **Apply**; manual fitting and Cancel remain available.
   server, which continues recording with the plan closed. Correcting a map
   assignment lets new points accumulate automatically; older points of unknown
   origin are not joined to another map.
-- Stop, pause or docking hides the current trail in **During cleaning**. Motion
+- Stop, pause or docking hides the current trail in **During cleaning**. For
+  position-only sources without provider session information, motion
   on the same map within 30 minutes resumes that run; another map or a longer
   stop starts a new one. Mere entity unavailability does not end a run.
+- **Vacuum → Source and path display → New path after docking when no
+  integration path is available** is Off by default. It splits the sampled
+  fallback after an observed dock-to-cleaning cycle, including service visits.
+  Integration geometry/session information always takes priority. The shared
+  plan setting applies after HA accepts it; unsupported backends show disabled
+  update/restart guidance. Always retains the separate previous run.
 
 Deleting the marker erases its server trail immediately; adding it again starts
 from scratch. See [VACUUM.md](VACUUM.md) for the source and calibration contract.

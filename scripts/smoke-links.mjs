@@ -215,6 +215,12 @@ export const SMOKE_LINKS = [
       + 'clipboard fallback.',
   },
   {
+    files: ['src/vacuum-dock-restart-write.ts'],
+    smokes: ['smoke_vacuum_dock_restart.mjs'],
+    because: '#940: native keyboard input and held/refused HA ACKs prove the accepted-only policy, '
+      + 'capability fallback and both-client Flat/2.5D empty-path contract without calling the writer.',
+  },
+  {
     files: ['src/vacuum-routes.ts', 'src/vacuum-runtime-source.ts', 'src/vacuum-trail-diagnostics.ts',
       'src/editors/vacuum-path-diagnostics.ts', 'src/vacuum-trail-material.ts'],
     symbols: ['planVacuumOverlay', '_vacTrailDiagnostics', '_vacSource', '_vacObservedMapId'],

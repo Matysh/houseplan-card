@@ -31,13 +31,14 @@ test('#935 template preserves nested future settings and explicit external contr
   const marker = { id: 'lamp', binding: 'entity:light.lamp', room_id: 'r1', icon: 'mdi:star',
     controls: ['light.lamp', 'light.other', 'sensor.legacy', 'light.other'],
     glow_color: { c: '#123456', bri: .25 }, value_source: { kind: 'derived_marker_state', ref: 'marker:lamp' },
-    future: { list: [{ a: 2 }] }, vacuum: { map_routes: [{ id: 'route', space: 'f1', source: 'camera.map', map_id: '1' }] } };
+    future: { list: [{ a: 2 }] }, vacuum: { new_run_after_dock: true, map_routes: [{ id: 'route', space: 'f1', source: 'camera.map', map_id: '1' }] } };
   const source = device({ marker, icon: 'mdi:star', pdfs: [{ name: 'manual', url: '/api/houseplan/content/files/lamp/manual.pdf' }] });
   const before = structuredClone(source);
   const copy = virtualDeviceCopy(source, 'v_new', 'Lamp 2', [], hass, '#ffffff');
   assert.deepEqual(copy.controls, ['light.other', 'sensor.legacy', 'light.other']);
   assert.deepEqual(copy.glow_color, marker.glow_color);
   assert.equal(copy.value_source.ref, 'marker:v_new');
+  assert.equal(copy.vacuum.new_run_after_dock, true, '#940 copy preserves the optional vacuum choice');
   copy.future.list[0].a = 9; copy.vacuum.map_routes[0].space = 'f2'; copy.pdfs[0].name = 'changed';
   assert.deepEqual(source, before);
 });

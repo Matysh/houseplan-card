@@ -190,6 +190,7 @@ async def test_issue_803_node_protocol_apply_undo_redo_conflict_and_acl(
     await client.send_json_auto_id({"type": "houseplan/config/get"})
     snapshot = (await client.receive_json())["result"]
     assert snapshot["wall_node_move_api"] == 1
+    assert snapshot["vacuum_dock_restart_api"] == 1
     before = snapshot["config"]["spaces"][0]
     events = []
     unsubscribe = hass.bus.async_listen("houseplan_config_updated", lambda event: events.append(event.data))

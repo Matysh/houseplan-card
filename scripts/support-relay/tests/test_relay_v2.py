@@ -37,6 +37,10 @@ class V2TestCase(unittest.TestCase):
                 "co2_source": "entity:entity-case-1", "co2_source_kind": "entity",
             }}],
         }]
+        package["plan_backup"]["config"]["markers"] = [{
+            "id": "marker-case-1", "binding_kind": "entity", "binding": "entity:entity-case-1",
+            "vacuum": {"new_run_after_dock": True},
+        }]
         module.validate_package(package)
         positive = json.dumps(package).encode()
         status, payload = self.post(request_json(positive), positive)
@@ -47,6 +51,7 @@ class V2TestCase(unittest.TestCase):
             (("diagnostics", "environment", "opaque"), "secret"),
             (("diagnostics", "schema"), True),
             (("version",), 3),
+            (("plan_backup", "config", "markers"), [{"id": "marker-case-1", "vacuum": {"new_run_after_dock": "true"}}]),
             (("diagnostics", "devices", "entities"), [{"id": "sensor.raw", "shape": "numeric"}]),
             (("diagnostics", "vacuums"), [{"marker": "marker-case-1", "current": {"sample": {"kept_points": True}}}]),
             (("plan_backup", "config", "spaces"), [{"settings": {"label_co2": "true"}}]),

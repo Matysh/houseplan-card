@@ -144,6 +144,31 @@ def test_issue_943_legacy_darkness_survives_full_backup_without_forced_migration
 
 @pytest.mark.parametrize("value", [True, False])
 @pytest.mark.parametrize("kind", ["full", "space"])
+def test_issue940_dock_policy_survives_full_space_export_parse_and_import(tmp_path: Path, value: bool, kind: str) -> None:
+    config = _config()
+    config["markers"][0]["vacuum"] = {"new_run_after_dock": value, "trail_mode": "always"}
+    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+        {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
+        card_version="review", config_root=tmp_path)
+    parsed = parse_document(json.dumps(document).encode())
+    assert parsed["payload"]["config"]["markers"][0]["vacuum"]["new_run_after_dock"] is value
+    if kind == "space":
+        plan, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+            {"layout": {}, "rev": 3}, kind="space", space_id="ground", plan_only=True,
+            card_version="review", config_root=tmp_path)
+        assert plan["payload"]["config"]["markers"] == []
+        assert "new_run_after_dock" not in json.dumps(plan["payload"]["config"])
+    runtime = SimpleNamespace(instance_id="same", import_previews={})
+    current = _config()
+    current["markers"] = []
+    preview = create_preview(runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": current, "rev": 4}, current_layout_data={"layout": {}, "rev": 5}, config_root=tmp_path)
+    imported, _, _ = prepare_apply(get_candidate(runtime, preview["token"], "alice"), current, {}, confirm_missing_content=True)
+    assert any(marker.get("vacuum", {}).get("new_run_after_dock") is value for marker in imported["markers"])
+
+
+@pytest.mark.parametrize("value", [True, False])
+@pytest.mark.parametrize("kind", ["full", "space"])
 def test_issue_867_signal_override_survives_export_parse_and_import(tmp_path: Path, value: bool, kind: str) -> None:
     config = _config()
     config["markers"][0].update({"hide_signal": value, "hide_battery": True})

@@ -88,7 +88,7 @@ async def test_public_camera_bridge_only_exact_current_camera_and_no_resources(h
     collector.close()
 
 
-async def test_reset_proof_min_interval_active_poll_and_three_final_attempts(hass, monkeypatch):
+async def test_native_empty_min_interval_active_poll_and_three_final_attempts(hass, monkeypatch):
     clock, calls, accepted = Clock(), [], []
     monkeypatch.setattr(module, "async_call_later", clock.schedule)
     async def read(_source):
@@ -104,17 +104,17 @@ async def test_reset_proof_min_interval_active_poll_and_three_final_attempts(has
     clock.tick(9)
     assert calls == [0]
     clock.tick(1)
-    await settle(lambda: len(accepted) == 1)
-    assert accepted[0][2] is True
+    await settle(lambda: len(accepted) == 2)
+    assert accepted[0][1].paths == [] and accepted[1][2] is True
     clock.tick(30)
-    await settle(lambda: len(calls) == 3 and len(accepted) == 2)
+    await settle(lambda: len(calls) == 3 and len(accepted) == 3)
     collector.observe(context(moving=False))
     clock.tick(10)
-    await settle(lambda: len(calls) == 4 and len(accepted) == 3)
+    await settle(lambda: len(calls) == 4 and len(accepted) == 4)
     clock.tick(10)
-    await settle(lambda: len(calls) == 5 and len(accepted) == 4)
+    await settle(lambda: len(calls) == 5 and len(accepted) == 5)
     clock.tick(25)
-    await settle(lambda: len(calls) == 6 and len(accepted) == 5)
+    await settle(lambda: len(calls) == 6 and len(accepted) == 6)
     clock.tick(500)
     assert calls == [0, 10, 40, 50, 60, 85]
     assert all(b - a >= 10 for a, b in zip(calls, calls[1:]))
@@ -147,7 +147,7 @@ async def test_timeout_keeps_physical_lease_across_reload_and_discards_old_owner
     await settle(lambda: len(calls) == 2 and len(new_accept) == 1)
     assert not old_accept
     assert new_accept[0][0].markers[0][2] == "next-generation"
-    assert new_accept[0][2] is False
+    assert new_accept[0][2] is True, "first exact snapshot needs no local reset"
     new.close()
 
 
@@ -160,13 +160,14 @@ async def test_attribute_provider_gaps_reset_and_unavailable_late_result(hass, m
     collector.observe(current, attribute_path=[])
     await settle(lambda: collector.leases[(current.source, current.vacuum)].task is None)
     collector.observe(current, attribute_path={"path": [[0, 0], [1, 1], [True, 0], [10, 10], [11, 11]]})
-    await settle(lambda: len(accepted) == 1)
-    assert accepted[0][1].paths == [[[0, 0], [1, 1]], [[10, 10], [11, 11]]]
-    assert accepted[0][2] is True
+    await settle(lambda: len(accepted) == 2)
+    assert accepted[0][1].paths == []
+    assert accepted[1][1].paths == [[[0, 0], [1, 1]], [[10, 10], [11, 11]]]
+    assert accepted[1][2] is True
     collector.observe(current, attribute_path=[[0, 0], [2, 2]])
     collector.observe(replace(current, available=False))
     await settle(lambda: collector.leases[(current.source, current.vacuum)].task is None)
-    assert len(accepted) == 1
+    assert len(accepted) == 2
     collector.close()
 
 
@@ -177,8 +178,8 @@ def test_full_snapshot_book_lifecycle_budget_restart_and_private_projection():
     generation = run["_generation"]
     value = snapshot("dreame", "tasshack-2.0.2", [[[0, 0], [100, 0]], [[100, 10], [0, 10]]], "map", 1)
     assert book.on_snapshot("m", value, 2, "route", "floor", generation, False)
-    assert run["quality"]["reason"] == "run_unverified" and run["paths"] == []
-    assert book.on_snapshot("m", value, 2, "route", "floor", generation, True)
+    assert run["quality"]["reason"] == "ok" and run["paths"] == value.paths
+    assert not book.on_snapshot("m", value, 2, "route", "floor", generation, True)
     assert run["points"] == [[100, 10], [0, 10]]
     assert not book.on_snapshot("m", value, 3, "route", "floor", generation, True)
     book.on_point("m", "floor", 999, 999, 4, "route", "camera.map")
@@ -196,8 +197,9 @@ def test_full_snapshot_book_lifecycle_budget_restart_and_private_projection():
     assert resumed and new["_generation"] == generation
     restarted.end_run("m", 8)
     new, _ = restarted.ensure_run("m", "floor", 1810, "route", "camera.map")
-    assert not restarted.on_snapshot("m", fresher, 1811, "route", "floor", generation, True)
-    assert new["paths"] == []
+    assert new is restarted.data["m"]["current"] and new["_generation"] == generation
+    assert new["paths"] == fresher.paths and "previous" not in restarted.data["m"]
+    assert not restarted.on_snapshot("m", fresher, 1811, "route", "floor", "foreign-generation", True)
     restarted.delete("m")
     assert not restarted.on_snapshot("m", fresher, 1812, "route", "floor", new["_generation"], True)
     assert not restarted._counts

@@ -36,6 +36,27 @@ def client():
     }
 
 
+@pytest.mark.parametrize("flag", [None, False, True])
+def test_issue940_support_projects_only_public_boolean_and_bounded_empty_reason(flag):
+    from custom_components.houseplan.support_diagnostic_values import DiagnosticIds
+    from custom_components.houseplan.support_package import _project_marker
+    from custom_components.houseplan.support_wire_schema import QUALITY_REASON, VAC_CONFIG
+    marker = {"id": "robot", "binding": "entity:vacuum.private", "vacuum": {
+        "new_run_after_dock": flag, "_policy": {"vacuum": "vacuum.private", "job": "private-job"}}}
+    legacy = _project_marker(DiagnosticIds("940"), marker)
+    assert legacy["vacuum"] == {"new_run_after_dock": flag}
+    projected, _ = project({"spaces": [], "markers": [marker]})
+    projected["model_version"] = 10
+    assert projected["markers"][0]["vacuum"] == {"new_run_after_dock": flag}
+    validate(projected, CONFIG)
+    validate("empty_integration", QUALITY_REASON)
+    with pytest.raises(WireRejected):
+        validate({"new_run_after_dock": "true"}, VAC_CONFIG)
+    with pytest.raises(WireRejected):
+        validate({"new_run_after_dock": flag, "job": "private-job"}, VAC_CONFIG)
+    assert "private-job" not in json.dumps(projected)
+
+
 def test_closed_schema_accepts_projected_known_fields_and_raw_client_refs_only_on_input():
     config = {
         "model_version": 10,

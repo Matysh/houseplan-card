@@ -416,6 +416,20 @@ commands require a real HA administrator, independently of editor `admin_only`.
 
 ## Vacuum map routes (#162)
 
+#940 adds optional `marker.vacuum.new_run_after_dock: boolean | null`. Only exact
+true enables the position-only dock policy; absent/null/false remain Off with
+no read-default migration. Full/space transfer and marker copy retain it;
+plan-only transfer contains no markers. Optimize, calibration and unrelated
+edits preserve the setting. Native path/session information always wins.
+The new backend advertises `vacuum_dock_restart_api:1` in a fresh config/get;
+the full card clears this runtime capability on foreign HA/user replacement.
+Unsupported/unverified backends show a disabled switch while retaining true.
+The config/layout/model and trail Store versions stay unchanged; bounded dock
+proof is private Store metadata, not a public schema or exported history.
+Before a backend downgrade, back up and remove the unsupported field with the
+current writer: an older strict vacuum schema may reject it. Off reverts only
+the opt-in fallback; it does not disable source-first/explicit-empty behaviour.
+
 `marker.vacuum.map_routes` is an optional array of
 `{ id, source, map_id, space, calibration? }`, at most 32 per marker, with `id`
 and the pair `(source, map_id)` unique inside the marker. It requires no model
@@ -458,6 +472,10 @@ to an old writer may discard additive full geometry: back up the HA
 contain trails. `trail/get` advertises `trail_format:2` and only exposes an
 allowlist; source/job/token/raster fields stay private. Old clients ignore
 additive fields and old servers retain the existing browser fallback.
+Source-first empty updates expose empty paths/points and a bounded
+`empty_integration` reason in format 2, so old format-2 clients cannot resurrect
+the previous current from server geometry. Support/relay allowlists add only
+the public boolean and reason; matching relay deployment precedes HACS release.
 
 ## Stable wall identity — model v8 (#282)
 

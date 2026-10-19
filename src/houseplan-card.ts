@@ -563,6 +563,7 @@ export class HouseplanCard extends LitElement {
   public requestUpdate(name?: PropertyKey, oldValue?: unknown, options?: PropertyDeclaration): void {
     if (name === 'hass') {
       if (this._configWriteContext.observe(this.hass)) {
+        this._haVacuumDockRestartApi = null;
         this._loadOk = false; this._serverCanWrite = null; this._loadTries = 0;
         this._liveSyncConnection = null;
         this._saveConfigDebounced.cancel(); this._adoption.resetContext();
@@ -2121,6 +2122,7 @@ export class HouseplanCard extends LitElement {
   private _haSummaryPanelApi: number | null = null;
   private _haRadarStage1Api: number | null = null;
   private _haWallNodeMoveApi: number | null = null;
+  private _haVacuumDockRestartApi: number | null = null;
   private readonly _radarLive = new RadarLiveController(this);
   private _decorAssetSyncToken = 0;
   private _alignDialog: OptimizePlansDialogState | null = null;

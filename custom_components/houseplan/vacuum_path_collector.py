@@ -13,9 +13,8 @@ from homeassistant.helpers.event import async_call_later
 from .vacuum_paths import (
     PathRejected,
     PathSnapshot,
+    attribute_snapshot,
     dreame_snapshot,
-    normalize_paths,
-    snapshot,
 )
 
 MIN_READ_S = 10.0
@@ -54,9 +53,11 @@ class _Lease:
     stop_at: float | None = None
     finals: list[float] = field(default_factory=list)
     pending: bool = False
-    reset_map: str | None = None
     retired: bool = False
     attribute_value: Any = None
+    attribute_token: tuple[int, int | None] | None = None
+    attempt: int = 0
+    channel_valid: bool | None = None
 
 
 @dataclass(slots=True)
@@ -105,6 +106,29 @@ class PathCollector:
             raise PathRejected("unsupported")
         return payload
 
+    def has_camera_channel(self, source: str) -> bool:
+        """Inspect only the already-supported public ordinary-camera surface."""
+        from homeassistant.components.camera.helper import get_camera_from_entity_id
+        from homeassistant.exceptions import HomeAssistantError
+
+        try:
+            camera = get_camera_from_entity_id(self.hass, source)
+        except HomeAssistantError:
+            return False
+        index = getattr(camera, "map_index", None)
+        return not isinstance(index, bool) and index == 0 and callable(getattr(camera, "map_data_string", None))
+
+    @staticmethod
+    def _attribute_token(raw: Any) -> tuple[int, int | None]:
+        value = raw.get("path", raw.get("points")) if isinstance(raw, dict) else raw
+        return id(raw), len(value) if isinstance(value, (list, tuple)) else None
+
+    def channel_validity(self, source: str, vacuum: str, raw: Any = None) -> bool | None:
+        lease = self.leases.get((source, vacuum))
+        if lease is None or raw is not None and self._attribute_token(raw) != lease.attribute_token:
+            return None
+        return lease.channel_valid
+
     def refresh(self, contexts: list[PathContext]) -> None:
         expected = {(c.source, c.vacuum) for c in contexts}
         for key, lease in list(self.leases.items()):
@@ -127,11 +151,13 @@ class PathCollector:
             self.leases[key] = lease
         previous = lease.context
         identity_changed = previous.identity != context.identity or lease.retired
-        if identity_changed:
-            lease.reset_map = None
+        if identity_changed or previous.available != context.available:
+            lease.attempt += 1
             lease.finals.clear()
             lease.stop_at = None
             lease.attribute_value = None
+            lease.attribute_token = None
+            lease.channel_valid = None
         lease.context = context
         lease.retired = False
         if not context.available:
@@ -144,15 +170,23 @@ class PathCollector:
         elif previous.moving and not identity_changed:
             lease.stop_at = now
             lease.finals = [now + offset for offset in FINAL_OFFSETS_S]
-        if attribute_path is not None and attribute_path is not lease.attribute_value:
-            lease.attribute_value = attribute_path
-            if lease.task is None:
-                self._start(lease, attribute_path)
-            else:
-                lease.pending = True
+        if attribute_path is not None:
+            token = self._attribute_token(attribute_path)
+            if token != lease.attribute_token:
+                lease.attempt += 1
+                lease.channel_valid = None
+                lease.attribute_value = attribute_path
+                lease.attribute_token = token
+                if lease.task is None:
+                    self._start(lease, attribute_path)
+                else:
+                    lease.pending = True
             return
         if context.platform != "dreame_vacuum":
             return
+        if lease.started == float("-inf") and not context.moving and not lease.finals:
+            lease.stop_at = now
+            lease.finals = [now]
         if context.moving or lease.finals:
             lease.pending |= event or identity_changed or lease.started == float("-inf")
             self._schedule(lease)
@@ -211,6 +245,7 @@ class PathCollector:
         if lease.task is not None or self.closed or lease.retired or not lease.context.available:
             return
         context = lease.context
+        attempt = lease.attempt
         self._cancel_timer(lease)
         lease.pending = False
         if attribute_path is None:
@@ -218,9 +253,8 @@ class PathCollector:
 
         async def perform() -> PathSnapshot:
             if attribute_path is not None:
-                paths = await self.hass.async_add_executor_job(normalize_paths, attribute_path)
                 return await self.hass.async_add_executor_job(
-                    snapshot, "attributes", "full-path-v1", paths, context.map_id,
+                    attribute_snapshot, attribute_path, context.map_id,
                 )
             physical = self.physical.setdefault(context.source, _PhysicalRead())
             async with physical.lock:
@@ -261,7 +295,8 @@ class PathCollector:
             try:
                 await asyncio.wait_for(asyncio.shield(task), TIMEOUT_S)
             except TimeoutError:
-                if not self.closed and not lease.retired and lease.context.identity == context.identity:
+                if not self.closed and not lease.retired and lease.context.identity == context.identity and lease.attempt == attempt:
+                    lease.channel_valid = False
                     self.reason(context, "stale")
                     timed_out = True
                     self._backoff(lease)
@@ -274,25 +309,23 @@ class PathCollector:
         def done(completed: asyncio.Task[PathSnapshot]) -> None:
             lease.task = None
             current = not self.closed and not lease.retired and lease.context.available \
-                and lease.context.identity == context.identity
+                and lease.context.identity == context.identity and lease.attempt == attempt
             try:
                 result = completed.result()
             except (Exception, asyncio.CancelledError) as err:
                 if current:
+                    lease.channel_valid = False
                     self.reason(context, str(err) if isinstance(err, PathRejected) else "stale")
                     if not timed_out:
                         self._backoff(lease)
             else:
                 if current:
+                    lease.channel_valid = True
                     lease.failure_count = 0
                     lease.next_retry = 0
-                    if not result.paths:
-                        # A schema-validated reset is a run signal. Missing or
-                        # malformed path data must never arm this proof.
-                        lease.reset_map = result.map_key if context.moving else None
-                    else:
-                        proven = lease.reset_map == result.map_key
-                        self.accept(context, result, proven)
+                    # Complete provider data includes explicit empty; local
+                    # moving/reset observations no longer gate this authority.
+                    self.accept(context, result, True)
                     if result.final:
                         lease.finals.clear()
             if lease.retired and lease.task is None:

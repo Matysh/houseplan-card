@@ -88,7 +88,7 @@ def _vacuum(value: object, ids: DiagnosticIds) -> dict | None:
         return None
     out = _scalars(
         value,
-        booleans=("live", "trail", "room_highlight"),
+        booleans=("live", "trail", "room_highlight", "new_run_after_dock"),
         enums={"trail_mode": {"never", "cleaning", "always"}},
     )
     _refs(out, value, ids, {"source": "entity"})

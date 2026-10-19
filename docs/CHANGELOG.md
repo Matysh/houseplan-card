@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Prefer the integration's complete vacuum path and session information over
+  inferred dock/time boundaries, including when opening a plan mid-cleanup.
+  A valid empty response now removes the stale current trail. Add an optional
+  new path after docking for position-only fallback sources. (#940)
+
 ## v1.82.0-beta.2 — 2026-10-19
 
 - Keep the complete opacity caption visible beside the wider numeric field

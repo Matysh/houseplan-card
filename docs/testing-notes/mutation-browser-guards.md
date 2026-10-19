@@ -36,8 +36,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 59 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 85 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 54 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 210 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **418 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 211 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **419 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -412,6 +412,8 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 - `space-delete-block-leaves-focus-behind`
 
 ### Custom-element and HA browser lifecycle
+
+- `vacuum-dock-toggle-shows-unaccepted-value-940`
 
 - `inherited-glow-radius-materialized-by-render-947`
 - `saved-manual-radar-entry-hidden-947`
@@ -802,6 +804,11 @@ owner, with no settled copy surviving the next presented frame.
 The #931 witness crosses responsive unmount/remount of the real colour picker,
 its uncommitted internal HEX input and the card-local draft owner. A pure field
 controller cannot prove that the mounted custom element retains this input.
+
+The #940 witness crosses the native checkbox checked property, trusted Space,
+Lit property-part caching and a held/refused HA ACK. Pure writer units cover
+transport ownership but cannot prove that the mounted checkbox still displays
+the accepted value while its unchanged model awaits or rejects that write.
 
 The #930 witnesses cross native catalog selection, the stacked confirmation,
 authoritative HA config replacement and Lit/adoption rollback. The pure units

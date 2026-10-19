@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 940,
+  "baseStable": "v1.81.0",
+  "category": "major",
+  "rationale": "Adds a shared opt-in dock boundary for position-only sources and changes the stable vacuum path contract to prefer complete integration data/session information over local dock/grace heuristics. Also fixes stale current geometry after an explicit native empty, present in v1.81.0; not merely a repair of an intermediate feature.",
+  "summary": {
+    "ru": "Путь пылесоса следует данным интеграции; для отдельных позиций можно включить новый трек после базы.",
+    "en": "Vacuum paths follow integration data; position-only sources can start a new path after docking."
+  }
+}

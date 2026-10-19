@@ -83,6 +83,7 @@ export function diagnoseVacuumTrails(host: Host): Map<string, VacuumTrailDiagnos
     result.display = frame.count > 0 ? 'vac.trail_display_visible'
         : server?.current && !plan.currentRunMatches ? 'vac.trail_display_run'
         : frame.limited ? 'vac.path_limited'
+        : result.reason === 'empty_integration' ? 'vac.path_empty_integration'
         : result.raw > 0 || result.stored > 0 ? 'vac.trail_display_points' : 'vac.path_none';
   }
   return results;

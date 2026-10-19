@@ -7,6 +7,7 @@ export function renderVacuumPathDiagnostics(host: Pick<HouseplanEditorHostPort, 
   const sources = { native: 'vac.path_native', integration: 'vac.path_native',
     positions: 'vac.path_positions', server: 'vac.path_positions', local: 'vac.path_local', none: 'vac.path_none' } as const;
   const reasons = { ok: 'vac.path_ok', sampled: 'vac.path_sampled', none: 'vac.path_none',
+    empty_integration: 'vac.path_empty_integration',
     stale: 'vac.path_stale', limited: 'vac.path_limited', unsupported: 'vac.path_unsupported',
     coordinates_unverified: 'vac.path_coordinates_unverified', run_unverified: 'vac.path_run_unverified' } as const;
   return html`

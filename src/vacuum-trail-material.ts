@@ -45,7 +45,7 @@ export function selectVacuumTrail(
     return { path, native: server?.quality?.source === 'native',
       allowTip: !limited && server?.quality?.source !== 'native' && Array.isArray(tail) && tail.length >= 2,
       reason: limited ? 'limited' : server?.quality?.reason ?? (path.length ? 'sampled' : 'none'),
-      source: path.length ? server?.quality?.source ?? 'positions' : 'none' };
+      source: path.length || server?.quality?.source === 'native' ? server?.quality?.source ?? 'positions' : 'none' };
   }
   // An old/missing backend retains its documented compatible scenario, but
   // cannot become a format-2 authoritative writer through the browser.

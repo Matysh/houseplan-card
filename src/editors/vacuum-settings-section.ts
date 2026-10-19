@@ -9,6 +9,7 @@ import {renderVacuumMapsSection} from './vacuum-maps-section';
 import {renderVacuumPathDiagnostics} from './vacuum-path-diagnostics';
 import {field,formCard,subsection,toggleRow} from './form-kit';
 import {settingsCopy} from './settings-copy';
+import {saveVacuumDockRestart,vacuumDockRestartPending} from '../vacuum-dock-restart-write';
 
 export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:NonNullable<HouseplanEditorRuntime['host']['_markerDialog']>,toolsT:(key:ToolsI18nKey)=>string):TemplateResult|typeof nothing {
     const {st}=settingsCopy(runtime.host);
@@ -135,6 +136,14 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
               <option value=${mv} ?selected=${vacTrailMode(v) === mv}>${runtime.host._t(('vac.trail_' + mv) as I18nKey)}</option>`)}
           </select></hp-settings-select>`})}
         ` : nothing}
+        ${toggleRow({id:'marker-vacuum-dock-restart',title:runtime.host._t('vac.new_run_after_dock'),
+          caption:runtime.host._t(runtime.host._haVacuumDockRestartApi===1?'vac.new_run_after_dock_hint':'vac.new_run_after_dock_update'),
+          checked:v.new_run_after_dock===true,
+          disabled:runtime.host._haVacuumDockRestartApi!==1||!runtime.host._canEdit||runtime.host._kiosk||vacuumDockRestartPending(runtime.host,dev.id),
+          onChange:(on,event)=>{
+            if(event?.target instanceof HTMLInputElement) event.target.checked=v.new_run_after_dock===true;
+            void saveVacuumDockRestart(runtime,dev.id,on);
+          }})}
         <div class="vacbtns hpf-actions">
           ${tierA ? html`<button class="btn" ?disabled=${runtime.host._markerDialog?.busy} @click=${() => runtime._vacAutoCalibrate(dev)}>${runtime.host._t('vac.autocal')}</button>` : nothing}
           ${canUseSource

@@ -197,6 +197,8 @@ export interface Marker {
   vacuum?: {
     live?: boolean | null;
     trail?: boolean | null; // legacy bool; trail_mode wins
+    /** Only positional fallback without provider session/path authority (#940). */
+    new_run_after_dock?: boolean | null;
     trail_mode?: VacuumTrailMode | null;
     room_highlight?: boolean | null;
     source?: string | null;

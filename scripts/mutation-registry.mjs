@@ -77,6 +77,15 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id:'vacuum-dock-toggle-shows-unaccepted-value-940',
+    guard:'node demo/smoke_vacuum_dock_restart.mjs',
+    because:'#940 AC13: trusted Space changes the native checked property before Lit renders; only the mounted control under a held/refused HA ACK exposes the unaccepted visual value.',
+    patches:[{file:'src/editors/vacuum-settings-section.ts',
+      find:'            if(event?.target instanceof HTMLInputElement) event.target.checked=v.new_run_after_dock===true;',
+      replace:'            // Native checked property is left optimistic.',
+    }],
+  },
+  {
     id:'settings-opacity-caption-cropped-955',
     guard:'node demo/smoke_settings_polish_955.mjs --fast',
     because:'#955: computed font and flex allocation in the real popup must fit the complete opacity caption beside the three-digit native input; Russian transparency and intensity expose the ellipsis.',
@@ -1977,12 +1986,57 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'vacuum-native-first-map-is-job-proof',
-    guard: 'node scripts/backend-test-guard.mjs full_snapshot_book_lifecycle tests_backend/test_ha_vacuum_paths.py',
-    because: '#872 AC6: first nonempty retained map is not proof of the new cleanup.',
+    id: 'vacuum-source-first-requires-local-reset',
+    guard: 'node scripts/backend-test-guard.mjs 940_first_native tests_backend/test_trails.py',
+    because: '#940 supersedes the old #872 local-reset prerequisite: an exact full snapshot is authoritative without a fabricated job.',
     patches: [{ file: 'custom_components/houseplan/trails.py',
-      find: 'if not proven and prior != list(identity):',
-      replace: 'if False and not proven and prior != list(identity):',
+      find: '        prior = cur.get("_native_identity")\n',
+      replace: '        prior = cur.get("_native_identity")\n        if not proven and prior != list(identity):\n            return self.path_reason(marker, "run_unverified")\n',
+    }],
+  },
+  {
+    id: 'vacuum-source-empty-not-delivered',
+    guard: 'node scripts/backend-test-guard.mjs 940_report_empty tests_backend/test_ha_vacuum_source_first.py',
+    because: '#940 AC7/8: an explicit native empty must clear public current even without a later point or a browser.',
+    patches: [{ file: 'custom_components/houseplan/vacuum_path_collector.py',
+      find: '                    self.accept(context, result, True)\n',
+      replace: '                    if result.paths:\n                        self.accept(context, result, True)\n',
+    }],
+  },
+  {
+    id: 'vacuum-source-older-attempt-published',
+    guard: 'node scripts/backend-test-guard.mjs 940_delayed_attribute tests_backend/test_ha_vacuum_source_first.py',
+    because: '#940 AC11: a same-generation delayed executor must not publish an older full value after a newer source observation.',
+    patches: [{ file: 'custom_components/houseplan/vacuum_path_collector.py',
+      find: '                and lease.context.identity == context.identity and lease.attempt == attempt\n',
+      replace: '                and lease.context.identity == context.identity\n',
+    }],
+  },
+  {
+    id: 'vacuum-fallback-dock-proof-ignored',
+    guard: 'node scripts/backend-test-guard.mjs 940_dock_policy tests_backend/test_trails.py',
+    because: '#940 AC5: opted-in positional recording must split exactly once after the observed dock cycle.',
+    patches: [{ file: 'custom_components/houseplan/trails.py',
+      find: '                     or policy.get("pending") and not authority))',
+      replace: '                     or False and policy.get("pending") and not authority))',
+    }],
+  },
+  {
+    id: 'vacuum-native-long-stop-split',
+    guard: 'node scripts/backend-test-guard.mjs 940_native_path_outranks tests_backend/test_trails.py',
+    because: '#940 AC2: the local grace must not split or truncate a provider-owned path.',
+    patches: [{ file: 'custom_components/houseplan/trails.py',
+      find: '                       and (authority or same_job or can_resume_trail_run(cur, map_id, now, route_id, source, legacy=legacy)))',
+      replace: '                       and (same_job or can_resume_trail_run(cur, map_id, now, route_id, source, legacy=legacy)))',
+    }],
+  },
+  {
+    id: 'vacuum-invalid-attribute-clears-path',
+    guard: 'node scripts/backend-test-guard.mjs 940_invalid_nonempty tests_backend/test_ha_vacuum_source_first.py',
+    because: '#940 AC10: all-invalid nonempty data must not be interpreted as an authoritative empty.',
+    patches: [{ file: 'custom_components/houseplan/vacuum_paths.py',
+      find: '    if not paths and value != [] and value != ():',
+      replace: '    if False and not paths and value != [] and value != ():',
     }],
   },
   {
@@ -10978,8 +11032,9 @@ const MUTANT_DEFINITIONS = [
       + 'of rotating into previous; focused pure and recorder sequences must reject the old unconditional split',
     patches: [{
       file: 'custom_components/houseplan/trails.py',
-      find: '        resumed = bool(cur and not changed_job and same_run_identity(cur, route_id, map_id, source, legacy=legacy)\n'
-        + '                       and (same_job or can_resume_trail_run(cur, map_id, now, route_id, source, legacy=legacy)))',
+      find: '        resumed = bool(cur and cur.get("ended") is not None and not force and not changed_job\n'
+        + '                       and same_run_identity(cur, route_id, map_id, source, legacy=legacy)\n'
+        + '                       and (authority or same_job or can_resume_trail_run(cur, map_id, now, route_id, source, legacy=legacy)))',
       replace: '        resumed = False',
     }],
   },

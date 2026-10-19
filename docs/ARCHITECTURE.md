@@ -680,8 +680,16 @@ once (#871); calibration and trail-source arbitration remain separate.
 Full paths (#872) use a single backend `vacuum_path_collector.py` per saved
 source/robot with a HA-lifetime physical read lease, not one poll per card.
 `vacuum_paths.py` owns bounded ordinary JSON/attribute decoding and the public
-allowlist. Run generation in `TrailBook` fences reset proof, late responses
-and persistence. Frontend `vacuum-path-geometry.ts` owns immutable revision
+allowlist. #940 makes complete native snapshots (including explicit empty)
+authoritative without a locally observed reset/job. Native/session boundaries
+outrank dock/grace; only positional fallback uses the optional shared
+`new_run_after_dock` policy. Private per-marker dock proof survives Store v1;
+retired robot/route owners cannot inherit it. Run generation plus a distinct
+collector attempt fence reject late responses, including same-generation Off.
+Empty is published as empty geometry/revision, never as hidden stale paths
+requiring a new frontend. `vacuum-dock-restart-write.ts` uses the ordinary
+serialized transport but stages its isolated field only after ACK; capability
+is bound to the current HA, not warm cache. Frontend `vacuum-path-geometry.ts` owns immutable revision
 material and finite/ordered physical certification; `vacuum-trail-material.ts`
 is the server/legacy authority and `vacuum-trail-render.ts` memoizes commands.
 `vacuum-local-trail.ts` is a bounded position-only legacy reserve. Source

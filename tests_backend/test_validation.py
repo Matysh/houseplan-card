@@ -26,6 +26,22 @@ _HOUSEPLAN_ROOT = os.path.join(_PACKAGE_ROOT, "houseplan")
 v = load_pure("hp_validation", Path(_HOUSEPLAN_ROOT) / "validation.py")
 
 
+@pytest.mark.parametrize("value", [None, False, True])
+def test_issue940_optional_dock_policy_boolean_round_trips_without_a_read_default(value):
+    marker = {"id": "robot", "binding": "entity:vacuum.synthetic", "vacuum": {"new_run_after_dock": value}}
+    result = v.CONFIG_SCHEMA({"spaces": [], "markers": [marker]})
+    assert result["markers"][0]["vacuum"]["new_run_after_dock"] is value
+    marker["vacuum"] = {"live": True}
+    assert "new_run_after_dock" not in v.CONFIG_SCHEMA({"spaces": [], "markers": [marker]})["markers"][0]["vacuum"]
+
+
+@pytest.mark.parametrize("value", [0, 1, "true", "false", [], {}])
+def test_issue940_dock_policy_rejects_coercion(value):
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [], "markers": [{"id": "robot", "binding": "entity:vacuum.synthetic",
+                                                  "vacuum": {"new_run_after_dock": value}}]})
+
+
 def _stair_space(stairs):
     return {
         "id": "ground", "title": "Ground", "view_box": [0, 0, 1, 1],

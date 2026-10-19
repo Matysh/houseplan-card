@@ -144,6 +144,7 @@ QUALITY_REASON = enum(
     "unavailable",
     "stale",
     "empty",
+    "empty_integration",
     "error",
 )
 POINT = Array(NUMBER, 2, 2)
@@ -173,7 +174,7 @@ ROUTE = Object(
 )
 VAC_CONFIG = Object(
     {
-        **fields("live trail room_highlight", nullable(BOOL)),
+        **fields("live trail room_highlight new_run_after_dock", nullable(BOOL)),
         "trail_mode": nullable(enum("never", "cleaning", "always")),
         "source": REF_OR_NULL,
         "map_routes": nullable(Array(ROUTE)),

@@ -19,8 +19,8 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Generated | 2026-10-19 — rerun `node scripts/status-snapshot.mjs` for the current tree |
 | Version | **1.82.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.81.0` |
-| Latest prerelease tag | `v1.82.0-beta.1` |
-| Tests | Node unit 4864 · pure backend 536 · HA-harness backend 449 · browser smokes 388 (`npm run inventory`) |
+| Latest prerelease tag | `v1.82.0-beta.2` |
+| Tests | Node unit 4873 · pure backend 548 · HA-harness backend 457 · browser smokes 392 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -35,6 +35,14 @@ SPEC material retention (#957) preserves the original sealed commit/tree before
 document publication. Fresh delivery readers can fetch exact objects from
 immutable origin retention refs, including historical rescue refs; provenance
 and implementation-only membership remain strict. No product behavior changes.
+
+Vacuum source-first (#940): complete integration paths and supplied session
+boundaries outrank local dock/grace. Explicit empty clears current on all
+format-2 clients, without clearing a distinct previous run. A shared default-Off
+dock switch affects sampled fallback only, with ACK/permission/connection guards.
+Store version and raw/render budgets remain unchanged. S8/release authority
+remains in issue labels and independent review; matching support relay schema
+must be deployed before a HACS release uses the new boolean/empty reason.
 
 Settings polish (#955) uses common help, action, select and colour components
 across the four approved forms. Native comparisons retain the immutable mocks
