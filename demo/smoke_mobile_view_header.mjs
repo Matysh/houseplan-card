@@ -27,7 +27,7 @@ const header = () => page.evaluate(() => {
     oneRow: mids.length > 0 && Math.max(...mids) - Math.min(...mids) <= 6,
     title: shown(head.querySelector(':scope > .title')),
     tabs: shown(head.querySelector(':scope > .tabs')),
-    zoom: shown(head.querySelector(':scope > .zoomctl')),
+    zoom: shown(head.querySelector(':scope > .header-actions > .zoomctl')),
     modeSlot: shown(head.querySelector(':scope > .modes'))
       && Math.abs(head.querySelector(':scope > .modes').getBoundingClientRect().width - 24) <= 0.5,
     cross: shown(head.querySelector('[data-hp="editor-close"]')),

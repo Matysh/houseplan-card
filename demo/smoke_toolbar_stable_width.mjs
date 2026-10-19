@@ -27,7 +27,7 @@ for (const width of WIDTHS) {
     // вкладки пространств, зум и шестерёнка, их положение и меряется.
     const phone = width <= 480;
     const tabs = () => [...sr().querySelectorAll(phone
-      ? '.head > .tabs, .head > .zoomctl, [data-hp="header-menu"]' : '[data-hp="mode-tab"]')];
+      ? '.head > .tabs, .head > .header-actions > .zoomctl, [data-hp="header-menu"]' : '[data-hp="mode-tab"]')];
     await hp.setMode('view');
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     // Позиции — относительно левого края шапки: прокрутка страницы их не меняет.
