@@ -1,8 +1,8 @@
 {
   "schema": 3,
-  "matrixVersion": 79,
-  "acceptedAt": "2026-10-20T09:03:05.723Z",
-  "sourceFingerprint": "284d5d8e1608fc7dd0f586dd944ab4517cd475f53df12aef4cbd27b6f7a10fa6",
+  "matrixVersion": 80,
+  "acceptedAt": "2026-10-20T15:52:30.981Z",
+  "sourceFingerprint": "ef44a4fe3e163d459a852cd0713ebf632a08a8cb8874be448cb9a0bdf1b0a1cd",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,45 +10,18 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "284d5d8e1608fc7dd0f586dd944ab4517cd475f53df12aef4cbd27b6f7a10fa6",
-    "ci": null
-  },
-  "localAttestation": {
-    "schema": "houseplan-golden-wsl/v2",
-    "sha256": "cf49add089c571f56e868f02a58f129b39e206c4715baf07953b306c725c44bd",
-    "artifactSha256": "f25761eed5f3a4993d2f764320bdfee109b89510dc761e2f094bfed6c1fa48d1",
-    "createdAt": "2026-10-20T09:02:28.741Z",
-    "source": {
+    "buildFingerprint": "ef44a4fe3e163d459a852cd0713ebf632a08a8cb8874be448cb9a0bdf1b0a1cd",
+    "ci": {
       "repository": "Matysh/houseplan-card",
-      "branch": "issue/972-device-issue-reasons",
-      "commit": "410c8cc87584fd53e3ed56833cb1409a3a6cef73",
-      "tree": "5771b9fb6f5871ff39c7fcd472af6fa575839871",
-      "remoteSha": "410c8cc87584fd53e3ed56833cb1409a3a6cef73",
-      "clean": true,
-      "status": ""
-    },
-    "environment": {
-      "platform": "linux",
-      "arch": "x64",
-      "kernel": "6.18.33.2-microsoft-standard-WSL2",
-      "wsl": true,
-      "distro": "Ubuntu-24.04",
-      "filesystem": "ext2/ext3"
-    },
-    "toolchain": {
-      "node": "22.23.3",
-      "npm": "10.9.9",
-      "playwright": "1.62.0",
-      "browser": {
-        "version": "151.0.7922.34",
-        "resolvedExecutable": "/home/sergey/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell",
-        "executableSha256": "e11fc9ce65c96313476f7ee9844b6fb6a9220fb048693cfe9eee00acf4170a9f"
-      }
+      "run": 39449573965,
+      "attempt": 1,
+      "sha": "7be376ff2a2d72077656bf03633f7293addf28d7"
     }
   },
+  "localAttestation": null,
   "foreignCapture": null,
   "witnesses": {
-    "count": 206,
+    "count": 208,
     "floor": 10
   },
   "scenarios": {
@@ -222,6 +195,10 @@
     "large-house-zoom-040-dark": "fa4896e9967439767bef5856e130476c66e3d4dc67ee2e5095511047ed63330b",
     "large-house-zoom-250-dark": "b60cb412c91ff0b822c1c63415352f26c902643474d959e0189631bfe6a8ed5e",
     "large-house-warm-remount-dark": "31bcf222be1e53ba6074888ebc2cacf28af2a3090c250d6f0bf971b525dffcf9",
+    "device-state-source-standard-en": "fdc7c17295c1379fe0f4764b4afa0c507c60ac38fbef6300203e875d391dc958",
+    "device-state-source-manual-ru": "aa20bcebddf55cee0e08fc3e21d602c2dc0adbe5a1a5ab9066e81449f489f337",
+    "device-state-source-unknown-en": "c3f57afcb427fa2bcb3b5c5a1d0ca5ddadb14cf18c7f1311e5f5bd15a4a13a6d",
+    "device-state-source-protected-ru": "b5f686ae5a9fa706913b1cfedc437ccadc44343b264193c131ae894527dba0ca",
     "device-dialog-desktop-en": "a9695faf4b34479a0033481c6cba2b69c9fe871c4510bd5b6596b9f679f20f23",
     "device-dialog-mobile-ru": "66168a7ef90a910365328f92f39af445dd17a7e09686baed8fe7b2e0c9ff7680",
     "device-dialog-desktop-de": "c5570533f9840ccac9878833985e5ec31a2409f29cd2cd8fa2c1f4a175d0a2b8",
@@ -243,7 +220,7 @@
     "support-phone-success-dark-en": "f28af106e507f75897e6f78e8d2f37980774de3b1f3926a0d6285cf03da02340",
     "support-relay-error-light-en": "08c4cdc899c72c16deec32d22367f54738e2a65cd3848cbcd4d49b30fea62cff",
     "support-tablet-preview-dark-ru": "7dbcdc2eea4a137ef3d7861e81148b21fb5d6cc226daa93390178ba3c6da5158",
-    "device-ripple-color-popover-mobile-ru": "dc51a1153684795e34ce81acac6696bacf1f8d3bf538c54e3017c27e6afc8019",
+    "device-ripple-color-popover-mobile-ru": "9a80baebb44d01e2e5d9e39d9c758acae866cda9606a7e7397658bd0ad761826",
     "space-room-color-popover-desktop-ru": "5f88fe43c35082457d6cf05daf052d4c935a4e432514424a1762dcba9dfde5e5",
     "backup-full-preview-desktop-en": "3c3ad458a678086a83f1c3f92a645e842985e8d28589a4696b4235b6b3ecbd1e",
     "backup-plan-only-export-desktop-en": "e66c5aaf33bd587261c3d4ee1929858badc59b2302ac212ac5a43faa726705aa",
