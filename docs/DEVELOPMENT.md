@@ -12,6 +12,12 @@ range guards fresh; `--group=all` explicitly requests both. CI separates unit
 jobs and requires both job results in frontend proof. Trigger filtering moves
 to #980; nightly dispatch still covers both groups.
 
+The legacy producer search first compares mandatory unit-protocol inputs against
+the source commit with `git diff --quiet`. A mismatch makes its content key
+impossible before downloading any artifact. Without this filter, a partition
+change spent over five minutes retrieving old incompatible producers before
+the first build. The registry in #981 replaces the broader search separately.
+
 ## Icon state source (#977)
 
 Do not substitute the ordinary source into primary, controls or visualSources:

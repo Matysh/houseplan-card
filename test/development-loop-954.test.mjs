@@ -113,10 +113,17 @@ test('#954 real schema2 producer survives docs-only SHA, rejects source/env/fore
     if (p.includes('/git/commits/')) return { tree: { sha: tree } };
     return run;
   };
+  let downloadCount = 0;
   const restore = (env, consumerBranch = 'issue/954-consumer') => restoreFrontend({ root, repo, api, environment: env || environment, consumerBranch,
-    download: (_id, _name, out) => cpSync(producer, out, { recursive: true }) });
+    download: (_id, _name, out) => { downloadCount++; cpSync(producer, out, { recursive: true }); } });
   put('docs/reviews/review.md', 'review'); git('add', 'docs'); git('commit', '-qm', 'review');
   assert.equal(restore().reused, true);
+  const oldUnitProtocol = readFileSync(join(root, 'scripts/frontend-units.mjs'), 'utf8');
+  const downloadsBeforeProtocolChange = downloadCount;
+  put('scripts/frontend-units.mjs', '// different mandatory unit protocol');
+  assert.equal(restore().reused, false, 'a changed unit protocol refuses historical producers before artifact discovery');
+  assert.equal(downloadCount, downloadsBeforeProtocolChange, 'incompatible unit protocol must not download a producer');
+  put('scripts/frontend-units.mjs', oldUnitProtocol);
   put('test/git.test.mjs', 'import {readFileSync} from "node:fs"; import "../scripts/content-inputs.mjs";');
   assert.equal(frontendContentKey(root, environment), proof.key, 'new metadata test belongs to the always-fresh group');
   assert.equal(restore({ ...environment, imageVersion: 'two' }).reused, false);

@@ -98,6 +98,12 @@ export function restoreFrontend({ root = process.cwd(), repo, environment = prod
         }
         const source = execFileSync('git', ['-C', root, 'show', `${candidate.head_sha}:scripts/frontend-proof.mjs`], { encoding: 'utf8' });
         if (source.replace(/\r\n?/g, '\n') !== readFileSync(join(root, 'scripts/frontend-proof.mjs'), 'utf8').replace(/\r\n?/g, '\n')) continue;
+        // #982: these files are mandatory content-key inputs. Different
+        // classification/unit protocol cannot yield the current producer key.
+        // Reject it before downloading artifacts and walking historical files.
+        execFileSync('git', ['-C', root, 'diff', '--quiet', candidate.head_sha, '--',
+          'scripts/unit-groups.mjs', 'scripts/frontend-units.mjs',
+          'scripts/check-inputs.mjs', 'scripts/content-inputs.mjs'], { stdio: 'pipe' });
       } catch { continue; }
     }
     const dir = mkdtempSync(join(tmpdir(), 'hp-frontend-proof-'));
