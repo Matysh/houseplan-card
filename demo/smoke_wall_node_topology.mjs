@@ -2,6 +2,8 @@
 import assert from 'node:assert/strict';
 import { launch, finish } from './serve.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 import { applyNodeMove, prepareNodeMove, structuralWallNodes } from '../test-build/wall-node-move.js';
 const wall = (id, a, b, cm = 25) => ({ id, a, b, cm });
@@ -71,6 +73,37 @@ const mount = async cfg => {
   await page.evaluate(async () => { await window.__hpTest.setMode('plan'); await window.__hpTest.setTool('select'); });
   await page.waitForFunction(() => !window.__card._modeTransitionBusy && window.__card.renderRoot.querySelector('.hp-node-handle'));
   await page.evaluate(() => window.__hpTest.settled());
+  await page.evaluate(() => {
+    const card = window.__card, trace = window.__nodeGestureEvidence = { events: [] };
+    const snapshot = event => {
+      const stage = card._stageEl, svg = card.renderRoot.querySelector('svg.plan-svg'), node = card._editorRuntime?.nodeMove;
+      if (!stage || !svg || !node) return { mode: card._mode, missingStage: !stage, missingSvg: !svg, missingNode: !node };
+      const rect = stage.getBoundingClientRect(), pointer = event || trace.pointer;
+      return { loaded: card._loadOk, revision: card._cfgRev, mode: card._mode, tool: card._tool,
+        api: card._haWallNodeMoveApi, canEdit: !!card._canEdit, busy: node.busy, dragging: node.dragging,
+        activePointer: node.activePointerId, capture: pointer ? stage.hasPointerCapture(pointer.pointerId) : null,
+        focus: document.hasFocus(), modeBusy: card._modeTransitionBusy, bootSoft: card._bootSoft,
+        warmMode: card._warmModeRequest, view: card._view, vb: svg.getAttribute('viewBox'),
+        stage: [rect.x, rect.y, rect.width, rect.height, stage.clientWidth, stage.clientHeight],
+        point: pointer ? card._screenToVb(pointer.clientX - rect.left, pointer.clientY - rect.top) : null,
+        nodes: node.cache?.data?.nodes.map(item => ({ point: item.point, supported: item.supported })),
+        secondary: { group: card._editorSecondary?._openGroupId, kind: card._editorSecondary?._currentModel?.kind },
+        toast: card._toast, source: card._serverCfg?.spaces[0],
+        animations: stage.getAnimations().map(animation => ({ state: animation.playState, time: animation.currentTime,
+          duration: animation.effect?.getComputedTiming().duration })) };
+    };
+    window.__nodeGestureSnapshot = () => snapshot();
+    for (const type of ['pointerdown', 'gotpointercapture', 'lostpointercapture', 'pointercancel']) {
+      card.addEventListener(type, event => {
+        trace.pointer = { pointerId: event.pointerId, clientX: event.clientX, clientY: event.clientY,
+          pointerType: event.pointerType, isPrimary: event.isPrimary, button: event.button, buttons: event.buttons,
+          trusted: event.isTrusted };
+        trace.events.push({ type, ...trace.pointer, path: event.composedPath().slice(0, 7).map(element =>
+          element.tagName ? `${element.tagName}.${element.classList}` : element.nodeName), state: structuredClone(snapshot(event)) });
+        if (trace.events.length > 12) trace.events.shift();
+      }, { capture: true });
+    }
+  });
 };
 const screen = p => page.evaluate(p => {
   const svg = window.__card.renderRoot.querySelector('svg.plan-svg'), q = svg.createSVGPoint();
@@ -83,11 +116,13 @@ const drag = async (point, target) => {
   await page.locator(`houseplan-card .hp-node-handle[cx="${point[0] * 1000}"][cy="${point[1] * 1000}"]`).hover();
   await page.mouse.down();
   const captured = await page.evaluate(() => window.__card._editorRuntime.nodeMove.dragging);
-  if (!captured) console.error('diagnostic wall-node-press', await page.evaluate(() => {
-    const card = window.__card;
-    return { loaded: card._loadOk, revision: card._cfgRev, mode: card._mode, tool: card._tool,
-      api: card._haWallNodeMoveApi, busy: card._editorRuntime.nodeMove.busy, source: card._serverCfg.spaces[0] };
-  }));
+  if (!captured || !server.spaces[0].wall_segments) console.log('diagnostic wall-node-press', JSON.stringify(await page.evaluate(() =>
+    ({ final: window.__nodeGestureSnapshot(), events: window.__nodeGestureEvidence.events }))));
+  if (!captured) {
+    const directory = process.env.CI ? join(tmpdir(), 'smoke-logs') : 'artifacts/803-node';
+    mkdirSync(directory, { recursive: true });
+    await page.screenshot({ path: join(directory, 'wall-node-capture-refused.png') });
+  }
   assert.equal(captured, true,
     'one native press captures the ready wall-node handle');
   const end = await screen(target);
