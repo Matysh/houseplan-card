@@ -52,6 +52,14 @@ proven-owned links. Existing files are never overwritten or inferred unused.
 `backup_http.py` authenticates chunked upload/download. WS export opts in with
 `archive:true`; cancel, revalidate, Apply and Undo recheck ownership/HA-admin.
 
+ZIP import cancellation (#971) also accepts a client-known opaque operation id
+before a preview token exists. HTTP carries `X-Houseplan-Operation`; WS cancel
+uses exactly one of `operation_id` or legacy `token`. Cancellation is scoped to
+the HA user and exact import, waits for its own executor workers before private
+staging cleanup, and leaves a durable journal untouched. Bounded ten-minute
+tombstones reject a late upload, never a different tab's request. The client
+drains acknowledged cancellation before retry and retries a lost cancel ACK.
+
 `backup_transaction.py` extends the existing durable pair journal, not a
 parallel state engine: write → upload → coordinator lifecycle locks precede
 intent. Config/layout/files/cache converge before success/events; startup

@@ -43,6 +43,8 @@ export class BackupArchiveClient {
   private importAbort?: AbortController;
   private exportToken?: string;
   private importToken?: string;
+  private importOperation?: string;
+  private pendingImportCancels = new Set<string>();
   private cleanup: Promise<void> = Promise.resolve();
 
   public constructor(private readonly host: TransferHost) {}
@@ -62,8 +64,23 @@ export class BackupArchiveClient {
 
   public cancelImport(): void {
     this.importAbort?.abort();
-    if (this.importToken) this.discard(this.importToken);
+    if (this.importOperation) this.discardImport(this.importOperation);
+    else if (this.importToken) this.discard(this.importToken);
     this.importToken = undefined;
+    this.importOperation = undefined;
+  }
+
+  private discardImport(operation: string): void {
+    this.pendingImportCancels.add(operation);
+    this.cleanup = this.cleanup.then(() => this.flushImportCancels()).catch(() => undefined);
+  }
+
+  private async flushImportCancels(): Promise<void> {
+    for (const operation_id of this.pendingImportCancels) {
+      if (!this.host.hass) throw transferError('not_ready');
+      await this.host.hass.callWS({ type: 'houseplan/backup/cancel', operation_id });
+      this.pendingImportCancels.delete(operation_id);
+    }
   }
 
   public dispose(): void { this.cancelExport(); this.cancelImport(); }
@@ -90,24 +107,36 @@ export class BackupArchiveClient {
     const controller = new AbortController();
     this.importAbort = controller;
     await this.cleanup;
+    await this.flushImportCancels();
     if (controller.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
     const magic = new Uint8Array(await file.slice(0, 4).arrayBuffer());
     const zip = (magic[0] === 0x50 && magic[1] === 0x4b) || file.name.toLowerCase().endsWith('.zip');
     if (zip && this.host.hass?.user?.is_admin !== true) throw transferError('zip_admin_only');
-    const response = await this.fetch(zip ? '/api/houseplan/backup/import/preview'
-      : '/api/houseplan/import/preview?duplicate_policy=skip', {
-      method: 'POST', body: file, signal: controller.signal,
-      headers: { 'content-type': zip ? 'application/zip' : 'application/json' },
-    });
-    const fallback = response.status === 413 ? 'zip_limit' : zip ? 'zip_invalid' : 'invalid_format';
-    const data = await response.json().catch(() => { throw transferError(fallback); }) as PreviewReply & { error?: string };
-    if (!response.ok || data.error) throw transferError(data.error || fallback);
-    if (controller.signal.aborted) {
-      if (zip) this.discard(data.token);
-      throw new DOMException('Cancelled', 'AbortError');
+    if (controller.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
+    const operation = zip ? Array.from(crypto.getRandomValues(new Uint8Array(16)),
+      byte => byte.toString(16).padStart(2, '0')).join('') : undefined;
+    this.importOperation = operation;
+    try {
+      const response = await this.fetch(zip ? '/api/houseplan/backup/import/preview'
+        : '/api/houseplan/import/preview?duplicate_policy=skip', {
+        method: 'POST', body: file, signal: controller.signal,
+        headers: { 'content-type': zip ? 'application/zip' : 'application/json',
+          ...(operation ? { 'x-houseplan-operation': operation } : {}) },
+      });
+      const fallback = response.status === 413 ? 'zip_limit' : zip ? 'zip_invalid' : 'invalid_format';
+      const data = await response.json().catch(() => { throw transferError(fallback); }) as PreviewReply & { error?: string };
+      if (!response.ok || data.error) throw transferError(data.error || fallback);
+      if (controller.signal.aborted) {
+        if (zip) this.discard(data.token);
+        throw new DOMException('Cancelled', 'AbortError');
+      }
+      if (zip) this.importToken = data.token;
+      return data;
+    } catch (error: unknown) {
+      if (operation) this.discardImport(operation);
+      if (this.importOperation === operation) this.importOperation = undefined;
+      throw error;
     }
-    if (zip) this.importToken = data.token;
-    return data;
   }
 
   public async export(metadata: { card_version: string }, errorText: (error: unknown) => string): Promise<void> {

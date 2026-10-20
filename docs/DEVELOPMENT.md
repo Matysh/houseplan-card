@@ -374,6 +374,16 @@ collected" in CI at setMode; the component-reset step is now absent. Keyboard,
 
 ## Portable full backup (#936)
 
+Cancellation regression (#971): a ZIP upload has a random 32-hex operation id
+before HTTP starts. Cancel uses that exact user-scoped id even when the response
+body was aborted and no preview token arrived. Keep early-cancel tombstones
+bounded (64/user, 256 total) and expiring; cancellation repeats do not renew TTL.
+Never sweep all of a user's sessions to solve `zip_busy`. Cleanup must await
+that session's executor workers and respect a durable pending journal. Native
+archive smoke covers both a late reply and an aborted response body; the HA
+archive suite exercises real HTTP/WS cancel and immediate retry. Private support
+backups are not repository fixtures.
+
 Container v1: `manifest.json`, the old `document.json`, optional `zigbee.json`,
 deduplicated `images/<sha256>.<ext>`. Closed manifest descriptors bind actual
 sizes/hashes/refs and explicit incomplete reasons; transport `authSig` is

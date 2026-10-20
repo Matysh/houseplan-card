@@ -44,7 +44,8 @@ try {
   await page.evaluate(async fixture => {
     const initial = { model_version: 10, spaces: [], markers: [], settings: {} };
     const state = { config: structuredClone(initial), layout: {}, cr: 1, lr: 1, backup: null,
-      log: [], tokens: {}, exports: {}, incompleteExport: false, delayed: false, release: null };
+      log: [], tokens: {}, exports: {}, operations: {}, cancelled: [], incompleteExport: false,
+      delayed: false, delayedBody: false, release: null };
     const hass = window.__mkHass(), original = hass.callWS;
     hass.user = { id: 'synthetic-archive-admin', is_admin: true, name: 'Backup admin' };
     hass.language = 'en'; hass.locale = { language: 'en' }; hass.floors = {}; hass.areas = {};
@@ -67,12 +68,24 @@ try {
         return { archive: true, token, filename: state.incompleteExport ? 'copy-incomplete.zip' : 'copy.zip',
           ...structuredClone(selected.response.preview.archive) };
       }
-      if (message.type === 'houseplan/backup/cancel') { delete state.tokens[message.token]; delete state.exports[message.token]; return { ok: true }; }
+      if (message.type === 'houseplan/backup/cancel') {
+        if (message.operation_id) {
+          state.cancelled.push(message.operation_id);
+          delete state.tokens[state.operations[message.operation_id]];
+          delete state.operations[message.operation_id];
+        } else {
+          delete state.tokens[message.token]; delete state.exports[message.token];
+          for (const [id, token] of Object.entries(state.operations)) if (token === message.token) delete state.operations[id];
+        }
+        return { ok: true };
+      }
       if (message.type === 'houseplan/import/apply') {
         const selected = state.tokens[message.token];
         if (!selected) throw new Error('Unknown synthetic preview token');
         state.backup = { config: structuredClone(state.config), layout: structuredClone(state.layout) };
         state.config = structuredClone(selected.config); state.layout = structuredClone(selected.layout);
+        delete state.tokens[message.token];
+        for (const [id, token] of Object.entries(state.operations)) if (token === message.token) delete state.operations[id];
         state.cr++; state.lr++;
         return { kind: 'full', counts: selected.response.preview.counts, config_rev: state.cr, layout_rev: state.lr, can_undo: true };
       }
@@ -106,13 +119,26 @@ try {
         return new Response(Uint8Array.from(atob(selected.zip), c => c.charCodeAt(0)), { headers: { 'content-type': 'application/zip' } });
       }
       if (path !== '/api/houseplan/backup/import/preview') throw new Error('ZIP used the JSON endpoint');
+      const operation = init.headers['x-houseplan-operation'];
+      if (!/^[0-9a-f]{32}$/.test(operation)) throw new Error('ZIP lacks an early cancellation identity');
+      if (Object.keys(state.operations).length) return Response.json({ error: 'zip_busy' }, { status: 400 });
+      state.operations[operation] = 'pending';
       state.log.push({ type: 'archive-preview', filename: init.body.name });
       const selected = init.body.name.includes('incomplete') ? fixture.incomplete : fixture;
       if (state.delayed) { state.delayed = false; await new Promise(resolve => { state.release = resolve; }); }
+      if (state.cancelled.includes(operation)) return Response.json({ error: 'zip_cancelled' }, { status: 400 });
       const response = structuredClone(selected.response);
       response.token = init.body.name + ':' + state.log.length;
       response.expected_config_rev = state.cr; response.expected_layout_rev = state.lr;
       state.tokens[response.token] = selected;
+      state.operations[operation] = response.token;
+      if (state.delayedBody) {
+        state.delayedBody = false;
+        return { ok: true, status: 200, json: () => new Promise((_resolve, reject) => {
+          init.signal.addEventListener('abort', () => reject(new DOMException('Cancelled', 'AbortError')), { once: true });
+          state.readingBody = true;
+        }) };
+      }
       return Response.json(response);
     };
     window.archiveFixture = state;
@@ -184,6 +210,17 @@ try {
   await page.evaluate(() => window.archiveFixture.release());
   await page.evaluate(() => window.__hpTest.settled());
   out.cancelledPreviewCannotReplaceNew = await page.evaluate(token => window.__card._backupImportDialog.token === token, latest);
+  out.cancelledRequestDoesNotKeepServerSlot = await page.evaluate(() => Object.keys(window.archiveFixture.operations).length === 1);
+  await cancel();
+
+  await settings();
+  await page.evaluate(() => { window.archiveFixture.delayedBody = true; });
+  await choose('cancel-during-body.zip');
+  await page.waitForFunction(() => window.archiveFixture.readingBody === true);
+  await cancel();
+  await settings(); await choose('retry-immediately.zip'); await ready();
+  out.cancelDuringBodyAllowsImmediateRetry = await page.evaluate(() => Object.keys(window.archiveFixture.operations).length === 1
+    && window.__card._backupImportDialog.filename === 'retry-immediately.zip');
   await cancel();
 
   await settings();

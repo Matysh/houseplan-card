@@ -647,7 +647,8 @@ async def ws_export_create(hass: HomeAssistant, connection, msg: dict[str, Any])
 
 @websocket_api.websocket_command({
     vol.Required("type"): "houseplan/backup/cancel",
-    vol.Required("token"): str,
+    vol.Optional("token"): str,
+    vol.Optional("operation_id"): str,
 })
 @websocket_api.async_response
 async def ws_backup_cancel(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
@@ -662,6 +663,12 @@ async def ws_backup_cancel(hass: HomeAssistant, connection, msg: dict[str, Any])
         return
     service = get_backup_service(hass, rt)
     try:
+        if ("operation_id" in msg) == ("token" in msg):
+            raise ImportFailure("zip_invalid")
+        if "operation_id" in msg:
+            await service.cancel_import(_connection_user_id(connection), msg["operation_id"])
+            connection.send_result(msg["id"], {"ok": True})
+            return
         # Import UI knows its preview token, not the internal ZIP session token.
         session = service.sessions.get(msg["token"])
         if session is None:

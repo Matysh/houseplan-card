@@ -40,7 +40,8 @@ class HouseplanArchivePreviewView(HomeAssistantView):
         service = get_backup_service(hass, runtime)
         try:
             async with asyncio.timeout(IMPORT_PREVIEW_TTL_S):
-                result = await service.upload(str(user.id), request.content, request.content_length)
+                result = await service.upload(str(user.id), request.content, request.content_length,
+                    operation_id=request.headers.get("X-Houseplan-Operation", ""))
             if not archive_admin(hass, user):
                 candidate = runtime.import_previews.get(result["token"], {})
                 session = service.candidate_session(candidate, str(user.id))

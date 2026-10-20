@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Allow immediate ZIP-import retry after closing or cancelling its preview,
+  including cancellation before the server reply is received. (#971)
+
 ## v1.82.0-beta.3 — 2026-10-19
 
 - Add live position and native paths for supported official Ecovacs maps,

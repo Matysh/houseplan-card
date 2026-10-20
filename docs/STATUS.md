@@ -37,6 +37,11 @@ and tag-pinned RU/EN changelogs through the shared bookkeeping entry point.
 Proof refusal happens before issue operations; immutable membership, public
 asset verification and the per-tag retry marker keep their existing authority.
 
+ZIP preview cancellation (#971) knows the request identity before HTTP replies,
+so closing the import can release its exact server slot without waiting for TTL.
+Early cancellation rejects delayed uploads; worker-safe cleanup, user isolation,
+legacy token cancellation and durable Apply ownership remain enforced.
+
 Ecovacs (#939) reads a bounded, recognized official SVG through HA's public
 image API. Server-only numeric decoding feeds the existing recorder even with
 no open card; a writer-only sanitized PNG preview enables manual fit without

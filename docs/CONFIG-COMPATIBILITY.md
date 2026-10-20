@@ -22,6 +22,12 @@ Finish/recover a pending ZIP transaction before downgrading: older backends
 cannot interpret that journal or the ZIP container. No load-time model rewrite
 or file garbage collection is introduced.
 
+ZIP preview cancellation (#971) adds only an optional transport operation id:
+new uploads send `X-Houseplan-Operation`, and admin WS cancel accepts exactly one
+of `operation_id` or the existing `token`. Legacy uploads/token cancellation
+remain supported; no plan/container/store model, JSON bytes or durable journal
+shape changes. The id and short-lived cancellation records never enter backups.
+
 Room CO₂ (#920) adds optional `spaces[].settings.label_co2` (only exact `true`
 enables it, absence means off) and `rooms[].settings.co2_source` (missing,
 null or empty means automatic). Unknown saved source strings survive unrelated

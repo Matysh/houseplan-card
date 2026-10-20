@@ -5,6 +5,7 @@ import asyncio
 import copy
 import hashlib
 import os
+import re
 import secrets
 import shutil
 import stat
@@ -60,6 +61,7 @@ from .zigbee_topology import _enabled
 class ArchiveSession:
     owner: str
     kind: str
+    operation_id: str = ""
     session: str = field(default_factory=lambda: uuid4().hex)
     token: str = field(default_factory=lambda: secrets.token_urlsafe(32))
     expires: float = field(default_factory=lambda: time.time() + IMPORT_PREVIEW_TTL_S)
@@ -72,6 +74,7 @@ class ArchiveSession:
     preview_token: str = ""
     busy: bool = True
     archive_hash: str = ""
+    workers: set[asyncio.Future] = field(default_factory=set)
 
 
 class BackupService:
@@ -83,6 +86,7 @@ class BackupService:
         self._budget_lock = threading.Lock()
         self._abandoned_bytes = 0
         self._workers: set[asyncio.Future] = set()
+        self._cancelled_imports: dict[tuple[str, str], float] = {}
         self._unsub = async_track_time_interval(hass, self.sweep, timedelta(seconds=60))
 
     def reserve_bytes(self, session: ArchiveSession, delta: int) -> None:
@@ -99,6 +103,7 @@ class BackupService:
         self.reserve_bytes(session, 0)
         future = self.hass.async_add_executor_job(callback)
         self._workers.add(future)
+        session.workers.add(future)
         try:
             return await asyncio.shield(future)
         except asyncio.CancelledError:
@@ -110,12 +115,39 @@ class BackupService:
             raise
         finally:
             self._workers.discard(future)
+            session.workers.discard(future)
 
-    async def reserve(self, owner: str, kind: str) -> ArchiveSession:
+    @staticmethod
+    def validate_operation(operation_id: str) -> None:
+        if not isinstance(operation_id, str) or not re.fullmatch(r"[0-9a-f]{32}", operation_id):
+            raise fail()
+
+    async def cancel_import(self, owner: str, operation_id: str) -> None:
+        """Cancel exactly this user's request, even before its HTTP upload arrives."""
+        self.validate_operation(operation_id)
+        now = time.time()
+        self._cancelled_imports = {key: expiry for key, expiry in self._cancelled_imports.items()
+                                   if expiry > now}
+        key = (owner, operation_id)
+        if key not in self._cancelled_imports:
+            if (len(self._cancelled_imports) >= 256
+                    or sum(key[0] == owner for key in self._cancelled_imports) >= 64):
+                raise fail("zip_limit")
+            self._cancelled_imports[key] = now + IMPORT_PREVIEW_TTL_S
+        session = next((item for item in self.sessions.values()
+                        if item.owner == owner and item.kind == "import" and item.operation_id == operation_id), None)
+        if session is not None:
+            await self.release(session)
+
+    async def reserve(self, owner: str, kind: str, operation_id: str = "") -> ArchiveSession:
+        if operation_id:
+            self.validate_operation(operation_id)
         await self.sweep()
+        if operation_id and (owner, operation_id) in self._cancelled_imports:
+            raise fail("zip_cancelled")
         if self.closed or len(self.sessions) >= 2 or any(s.owner == owner for s in self.sessions.values()):
             raise fail("zip_busy")
-        session = ArchiveSession(owner, kind)
+        session = ArchiveSession(owner, kind, operation_id=operation_id)
         with self._budget_lock:
             self.sessions[session.token] = session
         try:
@@ -235,10 +267,10 @@ class BackupService:
             output.flush()
             os.fsync(output.fileno())
 
-    async def upload(self, owner: str, content, declared: int | None):
+    async def upload(self, owner: str, content, declared: int | None, *, operation_id: str = ""):
         if declared is not None and declared > MAX_ARCHIVE_BYTES:
             raise fail("zip_limit")
-        session = await self.reserve(owner, "import")
+        session = await self.reserve(owner, "import", operation_id)
         path = stage_folder(self.root, session.session) / "backup.zip"
         size = 0
         try:
@@ -276,6 +308,7 @@ class BackupService:
                 current_config_data=cd, current_layout_data=ld, config_root=self.root,
                 registry_snapshot=registry, portable_content=included))
             session.preview_token = response["token"]
+            self.reserve_bytes(session, 0)  # A cancelled worker's late result is not a new preview.
             candidate = self.runtime.import_previews[session.preview_token]
             candidate["archive"] = {"session": session.session, "cache_generation": generation,
                                     "manifest_digest": digest(json_bytes(session.manifest, 2 * 1024**2)),
@@ -299,6 +332,8 @@ class BackupService:
             if isinstance(archive, dict) and archive.get("session") == session.session:
                 return  # Durable recovery, not TTL, owns these bytes now.
             session.cancelled.set()
+            if session.workers:
+                await asyncio.gather(*session.workers, return_exceptions=True)
             with self._budget_lock:
                 self.sessions.pop(session.token, None)
             if session.preview_token:
@@ -306,6 +341,8 @@ class BackupService:
             await self.hass.async_add_executor_job(cleanup_stage, self.root, session.session)
 
     async def sweep(self, _now=None) -> None:
+        self._cancelled_imports = {key: expiry for key, expiry in self._cancelled_imports.items()
+                                   if expiry > time.time()}
         for session in list(self.sessions.values()):
             if not session.busy and session.expires <= time.time():
                 await self.release(session)

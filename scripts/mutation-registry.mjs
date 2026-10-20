@@ -235,6 +235,14 @@ const MUTANT_DEFINITIONS = [
       replace: 'return may_write(hass, user)' }],
   },
   {
+    id: 'backup-zip-early-cancel-resurrects-upload-971',
+    guard: 'python -m pytest tests_backend/test_ha_backup_archive.py -q -k early_cancel_does_not_resurrect',
+    because: '#971 AC1/AC2: an upload arriving after its exact early cancel cannot reserve a new slot or disturb a live request.',
+    patches: [{ file: 'custom_components/houseplan/backup_service.py',
+      find: 'if operation_id and (owner, operation_id) in self._cancelled_imports:',
+      replace: 'if False:' }],
+  },
+  {
     id: 'backup-zip-overwrites-changed-mesh-generation',
     guard: 'python -m pytest tests_backend/test_ha_backup_archive.py -q -k changed_cache_without_writes',
     because: '#936 AC7: an accepted Update/OFF after preview must cause a conflict, never replacement by the old candidate.',

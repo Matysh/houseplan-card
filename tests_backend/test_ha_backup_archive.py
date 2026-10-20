@@ -10,6 +10,7 @@ import json
 import os
 import stat
 import struct
+import threading
 import zipfile
 from pathlib import Path
 from types import SimpleNamespace
@@ -24,7 +25,7 @@ from custom_components.houseplan import websocket_api as wsapi
 from custom_components.houseplan.backup_archive import build_archive, read_archive
 from custom_components.houseplan.backup_files import stage_folder
 from custom_components.houseplan.backup_service import get_backup_service
-from custom_components.houseplan.const import DOMAIN
+from custom_components.houseplan.const import DOMAIN, OPTIMIZE_PENDING
 from custom_components.houseplan.import_export import ImportFailure, create_export
 from custom_components.houseplan.store import async_save_config_state
 from tests_backend import test_ha_zigbee_topology as zigbee_tests
@@ -363,6 +364,147 @@ async def test_real_http_zip_preview_accepts_bytes_not_mime_and_refuses_ordinary
                                        headers={"Content-Type": "application/json"})
     assert response.status == 200, await response.text()
     assert (await response.json())["preview"]["archive"]["complete"] is True
+
+
+async def test_cancel_before_reply_token_releases_http_preview_and_immediate_retry(hass, hass_client, tmp_path):
+    _, runtime = await setup(hass)
+    _, client = await http_user(hass, hass_client)
+    document, _ = sample(tmp_path / "source")
+    archive = tmp_path / "source.zip"
+    build_archive(archive, document, tmp_path / "source", {})
+    raw = archive.read_bytes()
+    operation = "a" * 32
+    response = await client.post("/api/houseplan/backup/import/preview", data=raw,
+                                 headers={"X-Houseplan-Operation": operation})
+    assert response.status == 200
+    # The browser has not consumed the response/preview token yet.
+    async with client.ws_connect("/api/websocket") as socket:
+        assert (await socket.receive_json())["type"] == "auth_required"
+        await socket.send_json({"type": "auth", "access_token": client.session.headers["Authorization"][7:]})
+        assert (await socket.receive_json())["type"] == "auth_ok"
+        await socket.send_json({"id": 971, "type": "houseplan/backup/cancel", "operation_id": operation})
+        result = await socket.receive_json()
+        assert result["success"] is True, result
+    service = get_backup_service(hass, runtime)
+    assert not service.sessions and not runtime.import_previews
+    await response.read()
+    retry = await client.post("/api/houseplan/backup/import/preview", data=raw,
+                              headers={"X-Houseplan-Operation": "b" * 32})
+    assert retry.status == 200, await retry.text()
+    assert (await retry.json())["preview"]["archive"]["complete"] is True
+
+
+async def test_early_cancel_does_not_resurrect_or_cancel_other_requests_or_owners(hass, tmp_path):
+    _, runtime = await setup(hass)
+    service = get_backup_service(hass, runtime)
+    document, _ = sample(tmp_path / "source")
+    archive = tmp_path / "source.zip"
+    build_archive(archive, document, tmp_path / "source", {})
+    raw = archive.read_bytes()
+    old, live = "a" * 32, "b" * 32
+    await service.cancel_import("alice", old)
+    with pytest.raises(ImportFailure, match="zip_cancelled"):
+        await service.upload("alice", Content(raw), len(raw), operation_id=old)
+    assert not service.sessions
+    response = await service.upload("alice", Content(raw), len(raw), operation_id=live)
+    await service.cancel_import("bob", live)
+    await service.cancel_import("alice", old)
+    assert response["token"] in runtime.import_previews
+    with pytest.raises(ImportFailure, match="zip_busy"):
+        await service.upload("alice", Content(raw), len(raw), operation_id="c" * 32)
+    await service.cancel_import("alice", live)
+    assert not service.sessions and not runtime.import_previews
+    await service.upload("bob", Content(raw), len(raw), operation_id=old)
+
+
+async def test_cancel_waits_for_its_own_worker_before_staging_cleanup(hass):
+    _, runtime = await setup(hass)
+    service = get_backup_service(hass, runtime)
+    operation = "c" * 32
+    session = await service.reserve("alice", "import", operation)
+    started, finish = threading.Event(), threading.Event()
+    folder = stage_folder(service.root, session.session)
+    def worker():
+        started.set()
+        assert finish.wait(5)
+        assert folder.exists(), "cancel removed staging while the worker still owned it"
+        (folder / "worker-done").write_bytes(b"finished")
+    running = asyncio.create_task(service.run(session, worker))
+    try:
+        await hass.async_add_executor_job(started.wait, 5)
+        cancelling = asyncio.create_task(service.cancel_import("alice", operation))
+        await asyncio.sleep(0)
+        assert not cancelling.done()
+        assert folder.exists()
+        finish.set()
+        await running
+        await cancelling
+        assert not folder.exists() and not service.sessions
+    finally:
+        finish.set()
+        await running
+
+
+async def test_cancelled_delayed_upload_cannot_damage_a_new_preview(hass, tmp_path):
+    _, runtime = await setup(hass)
+    service = get_backup_service(hass, runtime)
+    document, _ = sample(tmp_path / "source")
+    archive = tmp_path / "source.zip"
+    build_archive(archive, document, tmp_path / "source", {})
+    raw = archive.read_bytes()
+    started, release = asyncio.Event(), asyncio.Event()
+    class DelayedContent:
+        async def iter_chunked(self, _count):
+            started.set()
+            await release.wait()
+            yield raw
+    old = asyncio.create_task(service.upload("alice", DelayedContent(), len(raw), operation_id="d" * 32))
+    await started.wait()
+    await service.cancel_import("alice", "d" * 32)
+    fresh = await service.upload("alice", Content(raw), len(raw), operation_id="e" * 32)
+    release.set()
+    with pytest.raises(ImportFailure, match="zip_cancelled"):
+        await old
+    assert fresh["token"] in runtime.import_previews
+    assert len(service.sessions) == 1
+
+
+async def test_cancel_preserves_durable_import_and_bounds_early_cancel_records(hass):
+    _, runtime = await setup(hass)
+    service = get_backup_service(hass, runtime)
+    operation = "f" * 32
+    session = await service.reserve("alice", "import", operation)
+    folder = stage_folder(service.root, session.session)
+    await runtime.store.async_save({OPTIMIZE_PENDING: {"archive": {"session": session.session}}})
+    await service.cancel_import("alice", operation)
+    assert folder.exists() and session.token in service.sessions
+    assert not session.cancelled.is_set(), "durable recovery, not a closed dialog, owns this session"
+    await runtime.store.async_save({})
+    await service.release(session)
+    for index in range(63):
+        await service.cancel_import("alice", f"{index:032x}")
+    with pytest.raises(ImportFailure, match="zip_limit"):
+        await service.cancel_import("alice", "e" * 32)
+    expiry = service._cancelled_imports[("alice", operation)]
+    await service.cancel_import("alice", operation)
+    assert service._cancelled_imports[("alice", operation)] == expiry
+    service._cancelled_imports[("alice", operation)] = 0
+    await service.cancel_import("alice", "e" * 32)
+    with pytest.raises(ImportFailure, match="zip_invalid"):
+        await service.cancel_import("alice", "not-an-operation")
+
+
+async def test_operation_cancel_keeps_admin_and_exact_identity_guards(hass):
+    await setup(hass)
+    for message in ({"operation_id": "a" * 32}, {"operation_id": "bad"}, {},
+                    {"operation_id": "a" * 32, "token": "legacy-token"}):
+        ordinary = Connection(admin=False)
+        await wsapi.ws_backup_cancel.__wrapped__(hass, ordinary, {"id": 971, **message})
+        assert ordinary.error[0] == "unauthorized"
+    for message in ({"operation_id": "bad"}, {}, {"operation_id": "a" * 32, "token": "legacy-token"}):
+        admin = Connection()
+        await wsapi.ws_backup_cancel.__wrapped__(hass, admin, {"id": 971, **message})
+        assert admin.error[0] == "zip_invalid"
 
 
 @pytest.mark.parametrize("failed_store", ["config", "layout", "cache", "files"])

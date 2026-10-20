@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "issue": 971,
+  "baseStable": "v1.81.0",
+  "category": "line-fix",
+  "introducedBy": 936,
+  "rationale": "Repairs early-cancellation ownership in the portable ZIP backup introduced by #936 in the current 1.82 beta cycle; v1.81.0 has no ZIP import. No new user capability or stored model change."
+}

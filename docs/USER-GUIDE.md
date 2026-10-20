@@ -2588,8 +2588,9 @@ This is separate from the diagnostic JSON in **Help & feedback**.
 
 ZIP limits: 2 GiB compressed and unpacked, 1600 entries; existing individual
 image/storage limits still apply. Only one ZIP operation per user and two per
-installation may be active, with a ten-minute preview lifetime. Cancel and
-retry after a timeout; errors leave the accepted plan intact. Older House Plan
+installation may be active, with a ten-minute preview lifetime. Closing or
+cancelling a preview releases its operation so import can be retried immediately,
+without waiting ten minutes. Cancel and retry after a timeout; errors leave the accepted plan intact. Older House Plan
 versions cannot read this ZIP; their JSON import/export remains unchanged.
 
 With no spaces yet, choose **Import backup** next to **Add space** on the empty
