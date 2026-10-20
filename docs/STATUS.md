@@ -25,6 +25,10 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Icon state sources (#977) are optional per-marker settings. Own-device identity,
+ordinary-only samples, native safety/special-state priority and accepted-save
+authority are independent; Auto remains the default without migration.
+
 Device issue explanations (#972) distinguish the three verified Home Connect
 Local maintenance reminders from safety alarms. A passive yellow wrench and
 read-only source groups explain current causes in the info card and preview,

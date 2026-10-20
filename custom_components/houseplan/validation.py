@@ -967,6 +967,24 @@ def validate_marker_value_badges(
         if (validate_all or source != old_source) and source is not None:
             validate_source(source, "value_source")
 
+        state_source = marker.get("state_source")
+        old_state_source = None if validate_all else (old_marker or {}).get("state_source")
+        if state_source is not None and (validate_all or state_source != old_state_source):
+            valid = isinstance(state_source, dict)
+            entity_id = state_source.get("entity_id") if valid else None
+            valid = valid and isinstance(entity_id, str) and bool(_CONTROL_ENTITY_ID_RE.fullmatch(entity_id))
+            if valid and "active_states" in state_source:
+                states = state_source["active_states"]
+                valid = isinstance(states, list) and all(
+                    isinstance(state, str) and 1 <= len(state.strip()) <= 255
+                    and "\r" not in state and "\n" not in state
+                    and state.strip().lower() not in {"unknown", "unavailable", "__missing__"}
+                    for state in states
+                )
+                valid = valid and 1 <= len({state.strip() for state in states}) <= 32
+            if not valid:
+                raise MarkerControlError("invalid_state_source", "Invalid icon state source or active states")
+
 
 def validate_marker_vacuum_routes(
     config: dict, previous: dict | None = None, *, validate_all: bool = False,
@@ -2021,6 +2039,9 @@ MARKER_SCHEMA = vol.Schema(
             vol.Schema({}, extra=vol.ALLOW_EXTRA),
         ),
         # climate current_temperature: badge + room-average vote (off unless True)
+        # Structural reads preserve opaque legacy/future data; changed writes
+        # are checked by validate_marker_value_badges, without a live registry.
+        vol.Optional("state_source"): object,
         vol.Optional("use_climate_temp"): vol.Any(bool, None),
         # Per-marker battery indicator override; absence/False keeps global policy.
         vol.Optional("hide_battery"): bool,

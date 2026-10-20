@@ -167,7 +167,9 @@ function workAction(attrs: any): string {
 
 /** Classify the state of an already-selected appliance lifecycle role. The
  * generic classifier intentionally never sees the extra lifecycle verbs. */
-function applianceLifecycleVisualSample(hass: any, eid: string): EntityVisualSample {
+export function applianceLifecycleVisualSample(hass: {
+  states?: Readonly<Record<string, { state?: unknown; attributes?: Readonly<Record<string, unknown>> } | undefined>>;
+}, eid: string): EntityVisualSample {
   const st = hass?.states?.[eid];
   const state = st ? lower(st.state) : '__missing__';
   const base: EntityVisualSample = {

@@ -40,6 +40,7 @@ import {
 import { isManualVirtualLightMarker } from './virtual-light-state';
 import { classifyDeviceIssue, type ResolvedDeviceIssue } from './device-issues';
 import { PresentationLightFrame } from './presentation-light-frame';
+import { resolveMarkerStateSource, type ResolvedMarkerStateSource } from './marker-state-source';
 import {
   resolveDevicePresentationPolicy, resolvePresentationReason,
   type BindingPresentationLifecycle, type PresentationReason, type ValueFallbackReason,
@@ -170,6 +171,8 @@ export interface ResolvePresentationOptions {
 }
 
 export interface ResolvedDevicePresentation {
+  protectedFace?: boolean;
+  stateSource?: ResolvedMarkerStateSource;
   binding: string;
   sourceKind: PresentationSourceKind;
   visualSources: ResolvedPresentationSource[];
@@ -221,6 +224,8 @@ export interface ResolvedDevicePresentation {
 }
 
 export interface ResolvedPresentationSources {
+  protectedFace?: boolean;
+  stateSource?: ResolvedMarkerStateSource;
   sourceKind: PresentationSourceKind;
   decisionIds: readonly string[];
   visualSources: ResolvedPresentationSource[];
@@ -458,12 +463,21 @@ export function resolvePresentationSources(
     decisionIds.push('source.filtered_saved_controls');
   }
 
+  const protectedFace = sourceKind === 'cover' || visualSources.some(source =>
+    source.eid.startsWith('lock.') || (source.eid.startsWith('binary_sensor.')
+      && ['door', 'window', 'garage_door', 'opening'].includes(String(
+        visualHass?.states?.[source.eid]?.attributes?.device_class
+          || registryHass?.entities?.[source.eid]?.device_class || '',
+      ).toLowerCase())));
+  const stateSource = resolveMarkerStateSource(hass, registryHass, d, protectedFace);
   const criticalSources: ResolvedPresentationSource[] = [];
   for (const eid of d.entities || []) {
     const sample = entityVisualSample(visualHass, eid);
     if (sample.status !== 'alarm' || visualSources.some((source) => source.eid === eid)) continue;
     criticalSources.push(sourceOf(visualHass, eid, 'critical', sample));
   }
+  if (stateSource?.alarmSample && ![...visualSources, ...criticalSources].some(source => source.eid === stateSource.entityId))
+    criticalSources.push(sourceOf(visualHass, stateSource.entityId, 'critical', stateSource.alarmSample));
   if (criticalSources.length) decisionIds.push('source.critical_sibling');
   const issues: ResolvedDeviceIssue[] = [];
   const known = new Map([...visualSources, ...criticalSources].map(source => [source.eid, source]));
@@ -478,12 +492,24 @@ export function resolvePresentationSources(
       integrationDomain: source.integrationDomain, deviceClass, ...signal });
   }
   issues.sort((a, b) => a.eid.localeCompare(b.eid));
+  const nativeSamples = [...visualSources, ...criticalSources].map(source => source.sample);
+  let samples = nativeSamples;
+  if (stateSource && !protectedFace) {
+    const native = combineVisualSamples(nativeSamples);
+    const availability = sourceKind === 'controls' ? controllerAvailability(hass, d) : native.availability;
+    const ordinary = availability === 'unavailable'
+      ? { ...stateSource.sample, availability, status: 'neutral' as const, activity: 'none' as const, edge: 'none' as const }
+      : stateSource.sample;
+    samples = [ordinary, ...nativeSamples.filter(sample => sample.status === 'alarm')];
+  }
   return {
+    ...(stateSource ? { stateSource } : {}),
+    ...(protectedFace ? { protectedFace: true } : {}),
     sourceKind,
     decisionIds,
     visualSources,
     criticalSources,
-    samples: [...visualSources, ...criticalSources].map((source) => source.sample),
+    samples,
     issues,
   };
 }
@@ -661,7 +687,8 @@ function signatureOf(
   ].sort();
   const value = valueSource
     ? `${valueSource.kind}:${valueSource.sourceKey}:${valueSource.eid}:${valueSource.attribute || ''}` : 'none';
-  return [binding, sources.sourceKind, ...rows, `value:${value}`].join('\n');
+  return [binding, sources.sourceKind, ...rows,
+    ...(sources.stateSource ? [`state:${sources.stateSource.signature}`] : []), `value:${value}`].join('\n');
 }
 
 /** Formal signature used to decide whether a witnessed event window survives. */
@@ -889,6 +916,8 @@ export function resolveDevicePresentation(
   }
 
   const presentation: ResolvedDevicePresentation = {
+    ...(sources.protectedFace ? { protectedFace: true } : {}),
+    ...(sources.stateSource ? { stateSource: sources.stateSource } : {}),
     binding: d.marker?.binding
       || (d.bindingKind && d.bindingRef ? `${d.bindingKind}:${d.bindingRef}` : d.virtual ? 'virtual' : ''),
     sourceKind: sources.sourceKind,

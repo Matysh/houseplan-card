@@ -77,6 +77,18 @@ def test_archive_contains_real_deduplicated_images_and_snapshot(tmp_path: Path):
     assert [p.read_bytes() for p in result.blobs.values()] == [raw]
 
 
+def test_issue977_zip_preserves_state_source_without_granting_runtime_ownership(tmp_path: Path):
+    source, target = tmp_path / "source", tmp_path / "target"
+    target.mkdir()
+    document, _ = sample(source)
+    state_source = {"entity_id": "binary_sensor.own_running", "active_states": ["on"], "future": {"v": 3}}
+    document["payload"]["config"]["markers"][0]["state_source"] = state_source
+    archive = tmp_path / "state-source.zip"
+    build_archive(archive, document, source, {})
+    restored = read_archive(archive, target).document
+    assert restored["payload"]["config"]["markers"][0]["state_source"] == state_source
+
+
 def test_archive_missing_image_is_explicit_and_preserves_geometry(tmp_path: Path):
     source = tmp_path / "source"
     document, _ = sample(source)

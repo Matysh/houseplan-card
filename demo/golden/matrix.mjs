@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 79;
+export const GOLDEN_MATRIX_VERSION = 80;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -1210,6 +1210,23 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     zoom: 2.5, theme: 'dark', viewport: { width: 1180, height: 900 }, ...stage },
   { id: 'large-house-warm-remount-dark', fixture: 'large', space: 'perf-floor-2', mode: 'view',
     warmRemount: true, theme: 'dark', viewport: { width: 1180, height: 900 }, ...stage },
+  ...[
+    { id: 'device-state-source-standard-en', language: 'en', theme: 'light', mode: 'standard' },
+    { id: 'device-state-source-manual-ru', language: 'ru', theme: 'dark', mode: 'manual' },
+    { id: 'device-state-source-unknown-en', language: 'en', theme: 'dark', mode: 'unknown' },
+    { id: 'device-state-source-protected-ru', language: 'ru', theme: 'light', mode: 'protected' },
+  ].map(({ mode, ...spec }) => ({ ...spec, fixture: 'visual', space: 'golden-lighting', dialog: 'device',
+    deviceId: mode === 'protected' ? 'golden-presence' : 'golden-light-two',
+    deviceStateSource: mode, viewport: { width: 1180, height: 1200 }, ...page,
+    markerOverrides: [{ id: mode === 'protected' ? 'golden-presence' : 'golden-light-two',
+      space: 'golden-lighting', area: 'golden_light_left',
+      binding: mode === 'protected' ? 'device:golden-presence' : 'device:golden-light-two', display: 'icon_ripple',
+      state_source: { entity_id: mode === 'protected' ? 'binary_sensor.golden_presence' : 'light.golden_light_two',
+        ...(mode === 'manual' ? { active_states: ['on'] } : {}) },
+    }],
+    ...(mode === 'unknown' ? { stateOverrides: { 'light.golden_light_two': { state: 'unknown' } } }
+      : mode === 'protected' ? { stateOverrides: { 'binary_sensor.golden_presence': { attributes: { device_class: 'door' } } } } : {}),
+  })),
   { id: 'device-dialog-desktop-en', fixture: 'visual', space: 'golden-lighting',
     dialog: 'device', deviceId: 'golden-light-two', deviceLightControls: true,
     deviceName: 'Living room light controller with an intentionally long title',

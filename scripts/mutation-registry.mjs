@@ -77,6 +77,15 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'icon-state-source-invalid-write-977',
+    guard: 'python -m pytest tests_backend/test_validation.py -q -k issue977',
+    because: '#977 AC4/AC10: structural server validation must reject changed invalid sources while retaining untouched future blocks; UI validation alone is not authority.',
+    patches: [{ file: 'custom_components/houseplan/validation.py',
+      find: 'if not valid:\n                raise MarkerControlError("invalid_state_source", "Invalid icon state source or active states")',
+      replace: 'if False:\n                raise MarkerControlError("invalid_state_source", "Invalid icon state source or active states")',
+    }],
+  },
+  {
     id: 'device-maintenance-promoted-to-alarm-972',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-issues.test.mjs',
     because: '#972 AC1: the supplied off/ready fixture must remain a maintenance warning, without red alarm or work pulse.',

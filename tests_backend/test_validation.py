@@ -26,6 +26,35 @@ _HOUSEPLAN_ROOT = os.path.join(_PACKAGE_ROOT, "houseplan")
 v = load_pure("hp_validation", Path(_HOUSEPLAN_ROOT) / "validation.py")
 
 
+@pytest.mark.parametrize("source", [
+    None, {"entity_id": "sensor.run"},
+    {"entity_id": "sensor.run", "active_states": [" running ", "running", "Washing"], "future": {"v": 3}},
+    {"entity_id": "sensor.foreign", "active_states": ["🧹" * 255]},
+])
+def test_issue977_state_source_round_trip_and_structural_authority(source):
+    config = {"spaces": [], "markers": [{"id": "d", "binding": "device:d", "state_source": source}]}
+    result = v.CONFIG_SCHEMA(json.loads(json.dumps(config)))
+    v.validate_marker_value_badges(result, validate_all=True)
+    assert result["markers"][0]["state_source"] == source
+    assert "state_source" not in v.CONFIG_SCHEMA({"spaces": [], "markers": [{"id": "d", "binding": "device:d"}]})["markers"][0]
+
+
+@pytest.mark.parametrize("source", [
+    "future opaque", {}, {"entity_id": "bad"},
+    *[{"entity_id": "sensor.run", "active_states": states} for states in [
+        [], [""], ["unknown"], [" UNAVAILABLE "], ["a\nb"], [True], ["x" * 256], list(map(str, range(33))),
+    ]],
+])
+def test_issue977_invalid_changed_source_rejected_but_untouched_future_data_survives(source):
+    config = {"spaces": [], "markers": [{"id": "d", "binding": "device:d", "state_source": source}]}
+    result = v.CONFIG_SCHEMA(config)
+    v.validate_marker_value_badges(result, result)
+    with pytest.raises(v.MarkerControlError, match="Invalid icon state source"):
+        v.validate_marker_value_badges(result, {"markers": []})
+    with pytest.raises(v.MarkerControlError):
+        v.validate_marker_value_badges(result, validate_all=True)
+
+
 @pytest.mark.parametrize("value", [None, False, True])
 def test_issue940_optional_dock_policy_boolean_round_trips_without_a_read_default(value):
     marker = {"id": "robot", "binding": "entity:vacuum.synthetic", "vacuum": {"new_run_after_dock": value}}

@@ -1628,6 +1628,22 @@ availability remains independent from that aggregate work state.
 
 ## 12. Device visual states
 
+### Icon state source
+
+In device settings, open **Display on plan → Icon state source**, immediately
+after Display method. Auto keeps the existing logic. Choose an entity of the
+same physical device, for example the washer's running sensor instead of power.
+Standard behaviour uses Houseplan semantics; Active when… lists exact HA values
+such as `running` or `washing`, not formulas or numeric thresholds.
+
+The live preview explains the current source and result. Missing data means
+unknown activity, without silently selecting another source. Actions, readings,
+battery/Zigbee, Glow and room lighting are unchanged. Safety alarms retain priority;
+door/lock/cover faces keep their automatic special state. Virtual devices have
+no own HA entities. Choose Auto and save to restore the previous behaviour.
+
+### Indication layers
+
 Presentation uses one shared outer shell around three independent layers:
 stable core, icon or value, and optional activity pulse. Visual priority is
 **alarm → keyboard focus → selected → hover → semantic state → neutral**.

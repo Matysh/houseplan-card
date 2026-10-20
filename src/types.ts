@@ -171,6 +171,12 @@ export interface MarkerRadar {
 export const VACUUM_TRAIL_MODES = ['never', 'cleaning', 'always'] as const; // #33 parity
 export type VacuumTrailMode = (typeof VACUUM_TRAIL_MODES)[number];
 
+export interface MarkerStateSource {
+  entity_id: string;
+  active_states?: string[];
+  [key: string]: unknown;
+}
+
 export interface Marker {
   id: string;
   binding: string; // 'device:<id>' | 'entity:<eid>' | 'virtual'
@@ -247,6 +253,8 @@ export interface Marker {
   /** Explicit source for the `value` display face. Missing/null keeps the
    * historical automatic entity-state resolver. */
   value_source?: ValueBadgeSource | null;
+  /** #977 ordinary working/activity, never device actions or light output. */
+  state_source?: MarkerStateSource | null;
   /**
    * Climate devices (AC, thermostat) know the room temperature
    * (attributes.current_temperature). Opt-in per marker: show it as a badge

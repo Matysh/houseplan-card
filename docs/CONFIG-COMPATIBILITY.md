@@ -1,5 +1,17 @@
 # Config compatibility registry
 
+## Marker ordinary state source (#977)
+
+Optional `markers[].state_source = {entity_id, active_states?}`; absent/null
+is Auto. Changed writes validate a HA entity id and, when present, 1–32 unique
+trimmed states of at most 255 Unicode code points (no CR/LF or reserved states).
+Structural reads are opaque; untouched future blocks/keys remain lossless.
+Changed invalid blocks and full imports fail semantic validation. Server
+validation has no HA registry: runtime must prove ownership before reading.
+Full/space JSON/ZIP preserve the marker field; rebinding/copying never grants
+another device's authority. Closed support projections intentionally omit it.
+No migration, model-version bump or background write.
+
 Properties panel (#931) adds only optional `spaces[].plan_opacity`: a strict
 finite JSON number in [0,1]; null, booleans and numeric strings are rejected.
 Absence renders as 1 and stays absent until an explicit edit. Model v10 does not

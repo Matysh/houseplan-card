@@ -157,6 +157,7 @@ class HpDevicePreview extends LitElement {
   }
 
   private _sourceSummary(p: ResolvedDevicePresentation): string {
+    if (p.stateSource && !p.stateSource.protected) return `${p.stateSource.name} · ${p.stateSource.entityId}`;
     const sources = p.visualSources;
     if (!sources.length) return this._t('marker.preview.no_source');
     if (sources.length === 1) {
@@ -167,6 +168,7 @@ class HpDevicePreview extends LitElement {
   }
 
   private _stateSummary(p: ResolvedDevicePresentation): string {
+    if (p.stateSource && !p.stateSource.protected) return p.stateSource.stateText || this._t('marker.preview.no_state');
     if (!p.visualSources.length) return this._t('marker.preview.no_state');
     if (p.visualSources.length === 1) {
       return p.visualSources[0].stateText || this._t('marker.preview.no_state');
@@ -177,6 +179,35 @@ class HpDevicePreview extends LitElement {
 
   private _reason(reason: PresentationReason): string {
     return this._t((`marker.preview.reason.${reason}`) as I18nKey);
+  }
+
+  private _stateSourceExplanation(p: ResolvedDevicePresentation): string {
+    const source = p.stateSource;
+    if (!source) return '';
+    if (source.protected) return this._t('marker.preview.state_source_special');
+    const failures = {
+      pending: 'marker.preview.state_source_pending', missing: 'marker.preview.state_source_missing',
+      foreign: 'marker.preview.state_source_foreign', disabled: 'marker.preview.state_source_disabled',
+      unknown: 'marker.preview.state_source_unknown_state', invalid: 'marker.preview.state_source_invalid',
+      virtual: 'marker.preview.state_source_virtual',
+    } as const;
+    const suppressed = ['alarm', 'unavailable', 'static_icon', 'value_static_icon', 'live_states_disabled', 'ha_disabled', 'orphaned']
+      .includes(p.explanation.reason);
+    const active = source.sample.status === 'working' || source.sample.activity === 'presence'
+      || ['event', 'transition'].includes(p.activity);
+    const state = source.failure ? this._t(failures[source.failure])
+      : `${source.stateText}${source.stateText !== source.state ? ` (${source.state})` : ''}`;
+    const result = source.failure ? this._t('marker.preview.state_source_unknown', { entity: source.name, state })
+      : suppressed ? `${source.name} — ${state}.`
+      : this._t(active ? 'marker.preview.state_source_active' : 'marker.preview.state_source_inactive', { entity: source.name, state });
+    const rule = source.explicitStates
+      ? this._t(source.sample.status === 'working' ? 'marker.preview.state_source_matches' : 'marker.preview.state_source_no_match')
+      : this._t('marker.preview.state_source_standard_reason');
+    const semantic = source.sample.activity === 'presence' ? this._t('marker.preview.state_source_presence')
+      : source.sample.edge !== 'none' ? this._t('marker.preview.state_source_event') : '';
+    return [result, source.failure ? '' : rule, source.failure ? '' : semantic,
+      suppressed ? this._t('marker.preview.state_source_suppressed', { reason: this._reason(p.explanation.reason) }) : '',
+    ].filter(Boolean).join(' ');
   }
 
   private _sourceProvider(eid: string): string {
@@ -335,6 +366,7 @@ class HpDevicePreview extends LitElement {
           <div><span>${this._t('marker.preview.source')}</span><b>${this._sourceSummary(actual)}</b></div>
           <div><span>${this._t('marker.preview.current_state')}</span><b>${this._stateSummary(actual)}</b></div>
           <div><span>${this._t('marker.preview.result')}</span><b>${result}</b></div>
+          ${actual.stateSource ? html`<p class="previewnotice" data-state-source-explanation>${this._stateSourceExplanation(actual)}</p>` : nothing}
           ${actual.fallbackReason
             ? html`<p class="previewnotice">${this._reason(actual.fallbackReason)}</p>` : nothing}
           ${actual.explanation.notices.map((reason) => html`<p class="previewnotice">${this._reason(reason)}</p>`)}

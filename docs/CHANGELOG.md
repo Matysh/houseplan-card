@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Choose an own-device entity for ordinary icon activity, optionally list exact
+  active states and see the reason in the live preview. Device actions, safety
+  and special states, values and light output keep their existing sources. (#977)
+
 - Allow immediate ZIP-import retry after closing or cancelling its preview,
   including cancellation before the server reply is received. A failed ZIP
   cancellation after losing admin rights does not block legacy JSON import. (#971)

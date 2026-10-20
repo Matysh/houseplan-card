@@ -118,7 +118,7 @@ ERROR_CODES: frozenset[str] = frozenset({
     "invalid_space_id", "invalid_toggle_entity", "invalid_vacuum_map_route",
     "invalid_value_badge",
     "invalid_value_badge_attribute", "invalid_value_badge_position",
-    "invalid_value_badge_source", "invalid_value_source",
+    "invalid_value_badge_source", "invalid_value_source", "invalid_state_source",
     "invalid_value_source_attribute", "io_error", "marker_control_cycle",
     "marker_control_missing", "marker_control_not_light",
     "marker_control_self", "missing_content", "missing_plan", "no_backup",

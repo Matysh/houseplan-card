@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 977,
+  "baseStable": "v1.81.0",
+  "category": "major",
+  "rationale": "Adds an explicit own-device source and optional exact state list for ordinary icon activity, with explanatory preview. No such user override existed in v1.81.0.",
+  "summary": {
+    "ru": "Можно выбрать, какой датчик устройства определяет активность его значка.",
+    "en": "Choose which device entity determines its icon’s activity."
+  }
+}

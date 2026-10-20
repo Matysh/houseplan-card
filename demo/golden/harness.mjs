@@ -1986,7 +1986,7 @@ export async function prepareGoldenScenario(page, scenario) {
       card._openMarkerDialog(device);
       await card.updateComplete;
       const settings = card.renderRoot.querySelector('hp-dialog');
-      const target = scenario.deviceLightControls ? 'light' : scenario.deviceToggleEntity ? 'actions' : 'basics';
+      const target = scenario.deviceStateSource ? 'appearance' : scenario.deviceLightControls ? 'light' : scenario.deviceToggleEntity ? 'actions' : 'basics';
       const navigation = settings?.querySelector(`[data-section-target="${target}"]`);
       if (!navigation) throw new Error(`golden device settings section missing: ${target}`);
       navigation.click();
@@ -2020,6 +2020,27 @@ export async function prepareGoldenScenario(page, scenario) {
         const visibleRadius = radius.getBoundingClientRect();
         if (visibleRole.top < visibleBody.top - 1 || visibleRadius.bottom > visibleBody.bottom + 1)
           throw new Error('golden viewport does not show the complete device light-source controls');
+      }
+      if (scenario.deviceStateSource) {
+        const select = settings?.querySelector('#marker-state-source');
+        const preview = settings?.querySelector('hp-device-preview');
+        await preview?.updateComplete;
+        const explanation = preview?.renderRoot?.querySelector('[data-state-source-explanation]');
+        const protectedFace = scenario.deviceStateSource === 'protected';
+        if (!select || select.disabled !== protectedFace || !explanation?.textContent.trim())
+          throw new Error('golden state-source control/explanation missing');
+        const p = preview.presentation;
+        if (scenario.deviceStateSource === 'unknown' && p.stateSource?.failure !== 'unknown')
+          throw new Error('golden state-source unknown case silently fell back');
+        if (['standard', 'manual'].includes(scenario.deviceStateSource) && p.visual.status !== 'working')
+          throw new Error('golden state-source active case is not working');
+        if (protectedFace && !p.protectedFace) throw new Error('golden protected state-source face lost authority');
+        const body = settings.shadowRoot?.querySelector('.content');
+        if (!body) throw new Error('golden state-source scroller missing');
+        body.scrollTop += select.getBoundingClientRect().top - body.getBoundingClientRect().top - 40;
+        if (['unknown', 'protected'].includes(scenario.deviceStateSource))
+          body.scrollTop += preview.getBoundingClientRect().top - body.getBoundingClientRect().top - 12;
+        await frame();
       }
       if (scenario.deviceToggleEntity) {
         const dialog = card.renderRoot.querySelector('hp-dialog');

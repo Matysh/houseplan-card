@@ -1,5 +1,15 @@
 # Development and deployment
 
+## Icon state source (#977)
+
+Do not substitute the ordinary source into primary, controls or visualSources:
+that would retarget actions/RGB and conflate source loss with device loss.
+Use shared activity samples and a source signature. Server validation checks
+structure/delta; exact runtime ownership is separate. Witnesses:
+`test/marker-state-source.test.mjs`, `test_validation.py -k issue977` and
+`demo/smoke_marker_state_source.mjs`. Screenshot the page, not the display-contents
+hp-dialog host, and keep negative-input witnesses distinct from nightly mutants.
+
 ## Device issue explanations (#972)
 
 `device-issues.ts` classifies active HA alarm-capable states. Only `homeconnect_ws`

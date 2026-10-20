@@ -1,5 +1,12 @@
 # House Plan architecture
 
+Optional marker `state_source` (#977) changes ordinary presentation samples,
+not the binding/action/value/light graph. Shared resolution checks exact own
+registry identity before reading a state. Presentation metadata explains the
+same result in preview; snapshot row tracking and source signatures handle
+sibling/attribute/registry changes and retire stale short activity. Marker
+save uses the existing accepted-config/CAS/context boundary.
+
 The offline UI Lab (#964) lives separately in `demo/ui-lab/`. It serves the
 checkout's built product and pinned official HA components against the existing
 synthetic fixture store, not a second product renderer or a Home Assistant

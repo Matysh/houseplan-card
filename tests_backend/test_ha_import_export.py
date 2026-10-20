@@ -112,6 +112,23 @@ def _config() -> dict:
     return commit_wall_segment_model(legacy)[0]
 
 
+@pytest.mark.parametrize("kind,plan_only", [("full", False), ("space", False), ("space", True)])
+def test_issue977_state_source_full_space_json_and_plan_only(tmp_path: Path, kind: str, plan_only: bool) -> None:
+    config = _config()
+    source = {"entity_id": "binary_sensor.own_running", "active_states": ["on"], "future": {"v": 3}}
+    config["markers"][0]["state_source"] = source
+    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+        {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
+        plan_only=plan_only, card_version="review", config_root=tmp_path)
+    parsed = parse_document(json.dumps(document).encode())
+    markers = parsed["payload"]["config"]["markers"]
+    if plan_only:
+        assert markers == []
+        assert "binary_sensor.own_running" not in json.dumps(parsed)
+    else:
+        assert markers[0]["state_source"] == source
+
+
 def _config_with_decor_image(asset_id: str) -> tuple[dict, dict]:
     config = _config()
     shape = {

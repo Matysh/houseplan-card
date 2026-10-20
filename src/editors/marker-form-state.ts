@@ -8,6 +8,7 @@
  */
 import type { HouseplanEditorHostPort } from '../houseplan-editor-runtime';
 import { dialogDirty, dialogSession, forgetDialogBaseline, rememberDialogBaseline, stableKey } from './dialog-baseline';
+import { normalizeMarkerStateSource } from '../marker-state-source';
 
 export type MarkerDialogDraft = NonNullable<HouseplanEditorHostPort['_markerDialog']>;
 
@@ -36,7 +37,7 @@ export function restoreMarkerRadarRemoval(host: object, d: MarkerDialogDraft): M
 }
 
 export const MARKER_DIALOG_TRANSIENT_KEYS: ReadonlySet<string> = new Set([
-  'bindingOpen', 'bindingFilter', 'runFilter', 'controlsFilter', 'busy', 'tapHintAnnouncement', 'uploadId', 'autoIcon',
+  'bindingOpen', 'bindingFilter', 'runFilter', 'controlsFilter', 'busy', 'tapHintAnnouncement', 'uploadId', 'autoIcon', 'stateSourceFilter',
 ]);
 
 export function markerDraftKey(d: MarkerDialogDraft): string {
@@ -60,7 +61,7 @@ export function markerDirty(host: object, d: MarkerDialogDraft): boolean {
 export interface MarkerProblem {
   field: string;
   message: 'marker.error_binding' | 'marker.error_virtual_name'
-    | 'marker.error_run_target' | 'marker.error_value_badge_source';
+    | 'marker.error_run_target' | 'marker.error_value_badge_source' | 'marker.state_source_states_invalid';
 }
 
 /**
@@ -72,6 +73,9 @@ export interface MarkerProblem {
  */
 export function markerProblems(d: MarkerDialogDraft, effectiveTapAction = d.tapAction): MarkerProblem[] {
   const problems: MarkerProblem[] = [];
+  if (d.stateSourceTouched && d.stateSource != null && !normalizeMarkerStateSource(d.stateSource)) {
+    problems.push({ field: 'marker-state-source-states', message: 'marker.state_source_states_invalid' });
+  }
   if (d.binding === 'virtual' && !d.name.trim()) {
     problems.push({ field: 'marker-name', message: 'marker.error_virtual_name' });
   }

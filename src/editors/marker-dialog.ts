@@ -10,6 +10,7 @@ import { settingsSections, revealSettingsField } from './settings-sections';
 import { dialogSession } from './dialog-baseline';
 import { markerDirty, markerProblems, restoreMarkerRadarRemoval } from './marker-form-state';
 import { settingsCopy } from './settings-copy';
+import { renderMarkerStateSource } from './marker-state-source';
 
 import { resolveDevicePresentation } from '../device-presentation';
 import { effectiveShowLqi } from '../signal-visibility';
@@ -630,6 +631,10 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               ${t(DISPLAY_LABEL_KEYS[v])}
             </option>`)}
           </select></hp-settings-select>`,
+        })}
+        ${renderMarkerStateSource({ draft: d, registry: this.host._fullRegistryHass, hass: this.host._planHass,
+          protectedFace: previewPresentation?.protectedFace === true,
+          t: st, change: (next) => (this.host._markerDialog = next),
         })}
         ${toggleRow({
           id: 'marker-hide-battery', compact: true, icon: 'mdi:battery-off-outline',

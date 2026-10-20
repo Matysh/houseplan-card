@@ -180,6 +180,8 @@ export function captureRenderDeviceSnapshot(
       });
       presentations.set(presentationSnapshotKey(device.id, showLqi),
         reuse ? reuse.present(device.id, showLqi, build) : build());
+      const selected = presentations.get(presentationSnapshotKey(device.id, showLqi))?.stateSource;
+      if (selected && (!selected.failure || selected.failure === 'unknown')) entityIds.add(selected.entityId);
     }
     if (host._isVacDev(device)) {
       const selected = host._vacRuntimeSource(device, planHass);

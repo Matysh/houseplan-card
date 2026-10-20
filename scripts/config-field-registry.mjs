@@ -8,6 +8,16 @@
  */
 export const CONFIG_FIELD_REGISTRY = Object.freeze([
   {
+    id: 'markers[].state_source',
+    enforcedBy: 'validation.py + marker-state-source.ts + schema parity; #977',
+    selector: { path: ['markers', '*', 'state_source'] },
+    storage: 'House Plan server config', type: '{ entity_id: string; active_states?: string[] } | null', default: 'unset (= Auto)',
+    level: 'device marker', ui: 'Display on plan → Icon state source',
+    runtime: 'ordinary activity only; own-device authority checked before reading state; no automatic fallback',
+    introduced: '#977', status: 'current', migration: 'none; reads never materialize a default',
+    compatibility: 'full/space/ZIP round-trip; untouched future blocks lossless; closed support projections omit this field',
+  },
+  {
     id: 'markers[].vacuum.new_run_after_dock',
     enforcedBy: 'validation.py + server trail lifecycle; #940',
     selector: { path: ['markers', '*', 'vacuum', 'new_run_after_dock'] },

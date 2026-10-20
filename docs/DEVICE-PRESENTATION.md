@@ -1,5 +1,24 @@
 # Отображение маркера устройства: таблица решений
 
+## Manual ordinary state source (#977)
+
+`marker-state-source.ts` resolves optional `marker.state_source` independently
+of native action/value/control/light sources. Own-device authority is checked
+in O(1) before state reads; only editor candidate enumeration uses a cached
+registry ownership index. Diagnostic/config siblings need not enter the action
+roster. Foreign/disabled/missing sources give explicit unknown, never Auto.
+
+`resolvePresentationSources` replaces ordinary samples only, retaining native
+availability and critical samples. The resolved cover/lock/contact face is
+protected; an unrelated sibling capability does not protect a mixed light.
+A selected critical entity remains critical even for an explicit nonmatch.
+Native visualSources stay unchanged for icon, value and RGB/light graph.
+`stateSource` carries exact facts to preview; mode/list/owner/failure identity
+fences short activity. Full/incremental snapshots track sibling/attribute-only
+changes. Auto stays identical; manual standard mode reuses canonical domain,
+class and lifecycle semantics. Explicit states are exact raw equality, never
+thresholds/templates, and unknown/unavailable never match.
+
 ## Current alarm and service reasons (#972)
 
 `ResolvedDevicePresentation.issues` is a runtime-only, entity-deduplicated list of

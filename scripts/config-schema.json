@@ -198,6 +198,10 @@
       "required": false,
       "type": "str"
     },
+    "config.markers[].state_source": {
+      "required": false,
+      "type": "object"
+    },
     "config.markers[].tap_action": {
       "required": false,
       "variants": [
