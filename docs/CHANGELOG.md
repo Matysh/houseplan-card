@@ -3,7 +3,8 @@
 ## Unreleased
 
 - Allow immediate ZIP-import retry after closing or cancelling its preview,
-  including cancellation before the server reply is received. (#971)
+  including cancellation before the server reply is received. A failed ZIP
+  cancellation after losing admin rights does not block legacy JSON import. (#971)
 
 ## v1.82.0-beta.3 — 2026-10-19
 

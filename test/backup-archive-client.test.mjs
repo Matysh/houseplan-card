@@ -248,3 +248,22 @@ test('lost cancel ACK is retried before a fresh upload, and invalid replies are 
   assert.ok(nextIndex > calls.findLastIndex(row => row.operation_id === first));
   client.cancelImport();
 });
+
+test('losing ZIP admin rights cannot strand an otherwise permitted legacy JSON import', async () => {
+  const calls = [];
+  const owner = host({ user: { is_admin: true }, callWS: async message => {
+    calls.push(message);
+    if (!owner.hass.user.is_admin) throw Object.assign(new Error('not an admin'), { code: 'unauthorized' });
+    return {};
+  }, fetchWithAuth: async path => {
+    calls.push({ path });
+    return Response.json({ token: path.includes('/backup/') ? 'zip' : 'json', preview: {} });
+  } });
+  const client = new BackupArchiveClient(owner);
+  await client.preview(new File(['PK'], 'archive.zip'));
+  owner.hass.user.is_admin = false;
+  const next = await client.preview(new File(['{}'], 'old.json'));
+  assert.equal(next.token, 'json');
+  assert.ok(calls.some(row => row.operation_id));
+  assert.equal(calls.at(-1).path, '/api/houseplan/import/preview?duplicate_policy=skip');
+});

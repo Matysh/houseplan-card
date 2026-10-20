@@ -107,11 +107,11 @@ export class BackupArchiveClient {
     const controller = new AbortController();
     this.importAbort = controller;
     await this.cleanup;
-    await this.flushImportCancels();
     if (controller.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
     const magic = new Uint8Array(await file.slice(0, 4).arrayBuffer());
     const zip = (magic[0] === 0x50 && magic[1] === 0x4b) || file.name.toLowerCase().endsWith('.zip');
     if (zip && this.host.hass?.user?.is_admin !== true) throw transferError('zip_admin_only');
+    if (zip) await this.flushImportCancels();
     if (controller.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
     const operation = zip ? Array.from(crypto.getRandomValues(new Uint8Array(16)),
       byte => byte.toString(16).padStart(2, '0')).join('') : undefined;
