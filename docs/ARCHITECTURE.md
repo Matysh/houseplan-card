@@ -14,7 +14,8 @@ Owners retain their existing dirty/busy/Save decisions; only accepted state
 retirement asks the local Lit `dialogPresence` part to keep inert presentation
 until `HpDialog.beginExit()` finishes. No retained model/write authority, global
 DOM-removal interception or polling is involved. Permission invalidation bypasses
-the presentation phase. HA supplies its own reverse entrance; native fallback
+the presentation phase; warming locale/lost-space confirmation invalidation
+also removes the decision surface immediately. HA supplies its own reverse entrance; native fallback
 uses a180ms exit. A400ms deadline, cancellation, disconnect and reduced-motion
 complete safely; late callbacks belong only to their original exit run.
 Automatic return-focus styling is scoped to the actual opener until its next

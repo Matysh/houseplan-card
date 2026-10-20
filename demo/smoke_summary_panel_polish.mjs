@@ -152,15 +152,15 @@ try {
         const svg = button.querySelector('svg');
         const box = svg?.getBoundingClientRect();
         return !!button.getAttribute('aria-label') && !!svg?.getAttribute('viewBox')
-          && svg.getAttribute('aria-hidden') === 'true' && box.width >= 18 && box.width <= 22
-          && box.height >= 18 && box.height <= 22;
+          && svg.getAttribute('aria-hidden') === 'true' && box.width >= 18 && box.width <= 24
+          && box.height >= 18 && box.height <= 24;
       }),
-      // #963 explicitly crops the desktop settings tab to 24px; the toggle
-      // remains 44px. The independent kiosk pair below keeps both 44px targets.
-      headerControlGeometryMatches963: rects.length === 2
-        && Math.abs(rects[0].width-24) <= .5 && Math.abs(rects[1].width-44) <= .5
+      // #976 replaces the old cropped half gear with two complete44px targets.
+      headerControlGeometryMatches976: rects.length === 2
+        && Math.abs(rects[0].width-44) <= .5 && Math.abs(rects[1].width-44) <= .5
         && rects.every(rect=>Math.abs(rect.height-44) <= .5),
-      onlyToggleHasAccent: getComputedStyle(buttons[0]).backgroundColor !== getComputedStyle(buttons[1]).backgroundColor,
+      onlyToggleHasAccent: getComputedStyle(buttons[0]).borderColor !== getComputedStyle(buttons[1]).borderColor
+        && getComputedStyle(buttons[1]).backgroundColor === 'rgba(0, 0, 0, 0)',
       summaryOutsideCamera: !group.closest('.zoomwrap') && !f.panel()?.closest('.zoomwrap'),
     };
   });

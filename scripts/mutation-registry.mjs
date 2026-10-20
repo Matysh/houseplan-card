@@ -6639,7 +6639,7 @@ const MUTANT_DEFINITIONS = [
       + 'forever (#402)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '    return html`${body}${this._viewRuntimes.render()}${this._renderVersionBanner()}${dialogPresence(this._renderDangerConfirm())}`;',
+      find: "    return html`${body}${this._viewRuntimes.render()}${this._renderVersionBanner()}${dialogPresence(this._renderDangerConfirm(), this._syncDangerConfirmLocaleGate() !== 'warm' && !this._dangerConfirmMissingSpace())}`;",
       replace: '    return html`${body}${this._viewRuntimes.render()}${this._renderVersionBanner()}`;',
     }],
   },

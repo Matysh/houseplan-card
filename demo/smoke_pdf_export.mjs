@@ -268,6 +268,11 @@ const narrowLocales = await page.evaluate(async () => {
     };
     buttons[0]?.click();
     await settle();
+    // #976: accepted closing retains inert paint until the finite exit ends.
+    const closingAt = performance.now();
+    while (pdf?.isConnected && performance.now() - closingAt < 1000) {
+      await new Promise(resolve => requestAnimationFrame(resolve));
+    }
     metric.cancelCloses = !card.renderRoot.querySelector('hp-pdf-dialog');
     metrics.push(metric);
   }

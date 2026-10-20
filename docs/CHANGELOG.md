@@ -12,7 +12,8 @@
 - Match the approved UI Lab secondary surfaces: consistent Help, PDF, Devices
   and Icon rules, joined summary controls and cleaner sun previews. Dialogs
   close smoothly without a return-focus flash; failed operations retain drafts.
-  Background Delete activates with one click after a tool palette. (#976)
+  Background Delete activates with one click after a tool palette. Invalidated
+  confirmations disappear immediately rather than retaining stale decisions. (#976)
 
 - Allow immediate ZIP-import retry after closing or cancelling its preview,
   including cancellation before the server reply is received. A failed ZIP

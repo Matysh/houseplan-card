@@ -10669,7 +10669,7 @@ export class HouseplanCard extends LitElement {
   /** One stable Lit template site lets a nested `noChange` retain the body
    * while the independent confirmation child is removed during a warm gate. */
   private _renderRoot(body: TemplateResult | typeof noChange): TemplateResult {
-    return html`${body}${this._viewRuntimes.render()}${this._renderVersionBanner()}${dialogPresence(this._renderDangerConfirm())}`;
+    return html`${body}${this._viewRuntimes.render()}${this._renderVersionBanner()}${dialogPresence(this._renderDangerConfirm(), this._syncDangerConfirmLocaleGate() !== 'warm' && !this._dangerConfirmMissingSpace())}`;
   }
 
   protected render(): TemplateResult | typeof nothing | typeof noChange {

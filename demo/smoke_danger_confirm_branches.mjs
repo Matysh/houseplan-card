@@ -200,7 +200,9 @@ const out = await page.evaluate(async () => {
     await new Promise((resolve) => requestAnimationFrame(resolve));
     return { semantics, focused, stayedNative, cancelled: accepted === false };
   };
-  const dialogs = () => root().querySelectorAll('hp-confirm').length;
+  // Accepted exits briefly keep inert paint, not an actionable decision.
+  const dialogs = () => [...root().querySelectorAll('hp-confirm')]
+    .filter(element => !element.querySelector('hp-dialog')?.inert).length;
   const request = (key) => ({
     key,
     kind: 'destructive',
