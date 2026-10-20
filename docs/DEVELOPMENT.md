@@ -60,8 +60,11 @@ The measured raw bundle baseline moves3247518 →3266117 B (+18599 B,0.57%),
 including2192 B after the first976 build for bounded row menus and releasing
 native modal authority while retaining exit paint; its2000 B band is unchanged.
 Shared forms, locales and bounded accepted-close behavior account for the cost;
-no startup/performance improvement is claimed. Initial View331933 B remains
-under its unchanged330000+2000 rolling ceiling and352000 B absolute wall.
+no startup/performance improvement is claimed. The warm-camera aspect repair
+adds85 B gzip to Initial View (331933 →332018 B). Under the same standing
+minor-size allowance its rolling ceiling moves330000 →332018 B, while the
+2000 B band and352000 B absolute wall stay unchanged. This avoids byte-golfing
+the input-correctness fix; it is not a loading-speed improvement.
 All other monolith metrics and bands remain unchanged.
 
 ## Device issue explanations (#972)
