@@ -71,6 +71,16 @@ their central writer contracts. Missing/OFF snapshot replaces with empty cache.
 The frontend transfers opaque candidates/raw files; it never parses imported
 JSON or trusts browser-produced file paths. Legacy JSON and Help stay separate.
 
+Portable reference recovery (#973) lives in the pure `portable_recovery.py` seam,
+shared by export and materialized import candidates. Only known stale spatial
+references disable radar/vacuum live features; invalid control edges and dependent
+marker values are neutralized with a bounded report. Structural validation, ZIP
+security and ordinary Save/setup stay strict. Export works on a copied snapshot,
+then dry-runs the actual document through parser/materialization without a token
+or write. JSON/ZIP repair consent retains that snapshot. Import report and target
+share one digest; unchanged revalidation reuses the allocated space-copy IDs.
+Neither path invokes the geometric optimizer or changes source files/live stores.
+
 Approved settings presentation (#948) is scoped by `settings-layout`: its
 responsive shell, white/theme-derived controls and colour-plate delegation do
 not alter ordinary dialogs or onboarding. A colour plate activates the existing

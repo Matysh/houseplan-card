@@ -20,6 +20,21 @@ import voluptuous as vol
 from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.houseplan import import_export as import_export_api
+from custom_components.houseplan import websocket_api as wsapi
+from custom_components.houseplan.const import (
+    CONTENT_URL,
+    DEFAULT_CONFIG,
+    DOMAIN,
+    FILES_DIR,
+    FILES_URL,
+    MAX_IMPORT_PREVIEWS_PER_USER,
+    MAX_IMPORT_PREVIEWS_TOTAL,
+    PLAN_MODEL_VERSION,
+    PLANS_DIR,
+    PLANS_URL,
+)
+from custom_components.houseplan.http_api import KEY_HASS, HouseplanImportPreviewView
 from custom_components.houseplan.import_export import (
     ImportFailure,
     build_space_merge,
@@ -31,27 +46,15 @@ from custom_components.houseplan.import_export import (
     prepare_apply,
     revalidate_candidate,
 )
-from custom_components.houseplan import import_export as import_export_api
-from custom_components.houseplan import websocket_api as wsapi
-from custom_components.houseplan.http_api import HouseplanImportPreviewView, KEY_HASS
-from custom_components.houseplan.const import (
-    DEFAULT_CONFIG,
-    DOMAIN,
-    MAX_IMPORT_PREVIEWS_PER_USER,
-    MAX_IMPORT_PREVIEWS_TOTAL,
-    PLAN_MODEL_VERSION,
-    FILES_DIR, PLANS_DIR,
-    CONTENT_URL, FILES_URL, PLANS_URL,
-)
 from custom_components.houseplan.store import (
     async_save_layout_state,
     get_data,
     layout_store_payload,
     migrate_config_background_mode,
 )
+from custom_components.houseplan.vacuum_routes import effective_routes
 from custom_components.houseplan.validation import MAX_LAYOUT, MAX_MARKERS
 from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
-from custom_components.houseplan.vacuum_routes import effective_routes
 
 
 def test_issue_51_missing_decor_asset_stays_as_repairable_geometry(tmp_path: Path) -> None:
@@ -884,7 +887,8 @@ def test_full_preview_drops_dormant_broken_and_duplicate_links(tmp_path: Path) -
     )
     assert response["preview"]["dropped_marker_links"] == 3
     candidate = get_candidate(runtime, response["token"], "alice")
-    imported = candidate["document"]["payload"]["config"]
+    assert candidate["document"]["payload"]["config"] == document["payload"]["config"]
+    imported = candidate["target_config"]
     controller = next(marker for marker in imported["markers"] if marker["id"] == "controller")
     assert controller["controls"] == ["marker:dumb", "switch.keep"]
 
@@ -906,7 +910,7 @@ def test_full_import_rejects_duplicate_active_marker_ids(tmp_path: Path) -> None
 
 
 @pytest.mark.parametrize("kind", ["self", "cycle"])
-def test_full_preview_still_rejects_self_and_cycle(kind: str, tmp_path: Path) -> None:
+def test_full_preview_repairs_self_and_cycle_but_ordinary_write_stays_strict(kind: str, tmp_path: Path) -> None:
     document = _document(tmp_path)
     markers = document["payload"]["config"]["markers"]
     if kind == "self":
@@ -921,14 +925,21 @@ def test_full_preview_still_rejects_self_and_cycle(kind: str, tmp_path: Path) ->
             {"id": "b", "binding": "virtual", "is_light": True, "controls": ["marker:a"]},
         ])
         expected = "marker_control_cycle"
-    with pytest.raises(ImportFailure) as invalid:
-        create_preview(
-            SimpleNamespace(instance_id="instance-a", import_previews={}),
-            json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
-            current_config_data={"config": _config(), "rev": 1},
-            current_layout_data={"layout": {}, "rev": 1}, config_root=tmp_path,
-        )
+    with pytest.raises(wsapi.MarkerControlError) as invalid:
+        wsapi.validate_marker_controls(document["payload"]["config"], validate_all=True)
     assert invalid.value.code == expected
+    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    response = create_preview(
+        runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": _config(), "rev": 1},
+        current_layout_data={"layout": {}, "rev": 1}, config_root=tmp_path,
+    )
+    candidate = get_candidate(runtime, response["token"], "alice")
+    wsapi.validate_marker_controls(candidate["target_config"], validate_all=True)
+    assert response["preview"]["recovery"]["counts"] == {"controls": 1}
+    repaired = {marker["id"]: marker for marker in candidate["target_config"]["markers"]}
+    assert repaired["self" if kind == "self" else "b"]["controls"] is None
+    assert candidate["document"]["payload"]["config"]["markers"] == markers
 
 
 @pytest.mark.parametrize("kind", ["full", "space"])

@@ -56,6 +56,11 @@ private inputs. It neither replaces demo/CI nor ships the cosmetic prototype
 from #963. The owner's existing laboratory and frozen reference remain separate;
 issue labels and the review pipeline own acceptance and merge status.
 
+Portable reference recovery (#973) is shared by JSON/ZIP import and export.
+Known stale device dependencies are disabled/neutralized in a copied candidate,
+with a bounded report before Apply/download. Export verifies importability, never
+repairs live stores; ordinary Save, archive security and geometry remain strict.
+
 Approved UI Lab polish (#963) uses normal editor render/command paths. Properties
 sections stay expanded at intrinsic height; Rooms/Shapes menus and history keep
 their existing commands. Header and editor hints use a card-local delayed

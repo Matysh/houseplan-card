@@ -5,6 +5,10 @@
 - Allow immediate ZIP-import retry after closing or cancelling its preview,
   including cancellation before the server reply is received. A failed ZIP
   cancellation after losing admin rights does not block legacy JSON import. (#971)
+- Restore backups despite stale radar, vacuum-floor and device-control links,
+  preserving the plan and reporting disabled features or removed links. Export
+  validates and repairs only its copy, with explicit consent before downloading
+  a repaired backup; the working plan stays unchanged. (#973)
 
 ## v1.82.0-beta.3 — 2026-10-19
 

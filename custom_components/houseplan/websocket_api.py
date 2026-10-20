@@ -642,7 +642,8 @@ async def ws_export_create(hass: HomeAssistant, connection, msg: dict[str, Any])
         _LOGGER.exception("House Plan export failed")
         connection.send_error(msg["id"], "invalid_config", "Could not create export")
         return
-    connection.send_result(msg["id"], {"document": document, "filename": filename})
+    connection.send_result(msg["id"], {"document": document, "filename": filename,
+        **({"recovery": document["transfer"]["recovery"]} if document["transfer"].get("recovery") else {})})
 
 
 @websocket_api.websocket_command({

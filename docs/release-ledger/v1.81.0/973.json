@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 973,
+  "baseStable": "v1.81.0",
+  "category": "stable-fix",
+  "rationale": "Strict full-import radar and vacuum-route reference validation already exists in v1.81.0 and can strand a structurally valid plan because an optional device destination was deleted. Shared copy-only recovery also closes the old export/import validation gap, without modifying live stores or relaxing normal Save and ZIP security.",
+  "summary": {
+    "ru": "Восстановление бэкапов с устаревшими связями устройств и проверка экспортируемой копии с понятным отчётом об исправлениях.",
+    "en": "Recover backups with stale device links and validate exported copies with a clear repair report."
+  }
+}

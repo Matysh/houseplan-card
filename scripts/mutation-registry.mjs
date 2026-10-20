@@ -227,6 +227,14 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'portable-recovery-weakens-ordinary-radar-validation-973',
+    guard: 'python -m pytest tests_backend/test_portable_recovery.py -q -k dormant_radar_reference_tolerance',
+    because: '#973 AC4/AC8: transfer recovery may preserve dormant references, but normal Save/setup must still reject them.',
+    patches: [{ file: 'custom_components/houseplan/radar_validation.py',
+      find: 'dormant_transfer = allow_inactive_spatial_refs and obj["enabled"] is False',
+      replace: 'dormant_transfer = obj["enabled"] is False' }],
+  },
+  {
     id: 'backup-zip-opens-to-ordinary-editors',
     guard: 'python -m pytest tests_backend/test_ha_backup_archive.py -q -k real_http_zip_preview',
     because: '#936 AC5: a real authenticated household editor still cannot upload/admin-restore raw-mesh ZIP data.',

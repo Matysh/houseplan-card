@@ -36,7 +36,7 @@ from .const import (
     VERSION,
 )
 from .led_strips import led_strip_link_report, plan_only_strips, unbind_strips
-from .radar_validation import validate_marker_radars
+from .portable_recovery import prepare_portable_markers
 from .store import HouseplanData
 from .validation import (
     CONFIG_SCHEMA,
@@ -54,10 +54,6 @@ from .validation import (
     sanitize_filename,
     sanitize_marker_id,
     validate_active_marker_ids,
-    validate_marker_controls,
-    validate_marker_light_entities,
-    validate_marker_vacuum_routes,
-    validate_marker_value_badges,
     validate_opening_passages,
     validate_partition_opening_hosts,
 )
@@ -621,6 +617,14 @@ def create_export(
             layout = selected_layout
     elif kind != "full":
         raise ImportFailure("invalid_format", "Unknown export kind")
+    try:
+        recovery = prepare_portable_markers(config, validate_all=True)
+        validate_opening_passages(config, validate_all=True)
+    except (DuplicateMarkerIdError, MarkerControlError, OpeningPassageError) as err:
+        raise ImportFailure(err.code, str(err)) from err
+    except vol.Invalid as err:
+        raise ImportFailure("invalid_config", str(err)) from err
+    dropped_marker_links += recovery["counts"].get("controls", 0) + recovery["counts"].get("value", 0)
     document = {
         "format": FORMAT,
         "export_version": EXPORT_VERSION,
@@ -639,12 +643,23 @@ def create_export(
         "transfer": {
             "dropped_marker_links": dropped_marker_links,
             **({"plan_only": True} if plan_only else {}),
+            **({"recovery": recovery} if recovery["total"] else {}),
         },
     }
-    if len(json.dumps(
+    encoded = json.dumps(
         document, ensure_ascii=False, separators=(",", ":"), allow_nan=False
-    ).encode("utf-8")) > MAX_EXPORT_BYTES:
+    ).encode("utf-8")
+    if len(encoded) > MAX_EXPORT_BYTES:
         raise ImportFailure("too_large", "Export is larger than 8 MiB")
+    # Export and Import must agree on the actual portable document, not merely
+    # on its marker subtrees. This is a pure dry run: no preview token, staging,
+    # live config writes or HA registry-dependent repairs are involved.
+    checked = parse_document(encoded)
+    _materialize_import_candidate(
+        checked, {"spaces": [], "markers": [], "settings": {}}, {},
+        duplicate_policy="skip", same_source=True, content=[],
+        confirmation_required=False,
+    )
     filename = (
         f"houseplan-full-{stamp}.json" if kind == "full"
         else f"houseplan-space-{_safe_title(title)}-{stamp}.json"
@@ -746,6 +761,10 @@ def parse_document(raw: bytes) -> dict[str, Any]:
         **(document.get("transfer") or {}),
         "dropped_marker_links": dropped_marker_links,
     }
+    # Export's historical repair report is display metadata, not import input.
+    # Do not interpret, forward or trust an arbitrary shape from the file;
+    # the bounded report is rebuilt from the actual materialized candidate.
+    document["transfer"].pop("recovery", None)
     # Computed here, never trusted from the file.
     document["transfer"].pop("unbound_led_strips", None)
     if unbound_led_strips:
@@ -872,70 +891,6 @@ def _validate_plan_only_document(
         raise ImportFailure("invalid_format", "Plan-only export contains private content")
 
 
-def _drop_invalid_import_marker_links(
-    config: dict[str, Any], *, clean_ids: set[str] | None = None,
-) -> int:
-    """Drop import-only dormant/broken marker links without touching legacy data.
-
-    Self-links and cycles remain hard errors in ``validate_marker_controls``.
-    Missing, removed, non-light and duplicate targets are a normal loss of
-    import context and are removed with an explicit preview counter.
-    """
-    markers = config.get("markers") or []
-    by_id = {str(marker.get("id")): marker for marker in markers}
-    dropped = 0
-    for marker in markers:
-        marker_id = str(marker.get("id"))
-        if clean_ids is not None and marker_id not in clean_ids:
-            continue
-        controls = marker.get("controls")
-        if isinstance(controls, list):
-            kept: list[Any] = []
-            seen_targets: set[str] = set()
-            for ref in controls:
-                if not isinstance(ref, str) or not ref.startswith("marker:"):
-                    kept.append(ref)
-                    continue
-                target_id = ref[len("marker:"):]
-                # Preserve one self-link so the semantic validator returns the
-                # stable marker_control_self error instead of silently repairing it.
-                if target_id == marker_id:
-                    if target_id in seen_targets:
-                        dropped += 1
-                        continue
-                    seen_targets.add(target_id)
-                    kept.append(ref)
-                    continue
-                target = by_id.get(target_id)
-                if target_id in seen_targets or target is None or target.get("removed") is True \
-                        or target.get("is_light") is not True:
-                    dropped += 1
-                    continue
-                seen_targets.add(target_id)
-                kept.append(ref)
-            marker["controls"] = kept or None
-        badge = marker.get("value_badge")
-        source = badge.get("source") if isinstance(badge, dict) else None
-        if isinstance(source, dict) and source.get("kind") == "derived_marker_state":
-            ref = source.get("ref")
-            target_id = ref[len("marker:"):] if isinstance(ref, str) and ref.startswith("marker:") else ""
-            target = by_id.get(target_id)
-            if not target_id or target is None or target.get("removed") is True \
-                    or target.get("is_light") is not True:
-                badge["enabled"] = False
-                badge["source"] = None
-                dropped += 1
-        source = marker.get("value_source")
-        if isinstance(source, dict) and source.get("kind") == "derived_marker_state":
-            ref = source.get("ref")
-            target_id = ref[len("marker:"):] \
-                if isinstance(ref, str) and ref.startswith("marker:") else ""
-            target = by_id.get(target_id)
-            if not target_id or target is None or target.get("removed") is True \
-                    or target.get("is_light") is not True:
-                marker.pop("value_source", None)
-                dropped += 1
-    return dropped
 
 
 def _unique_title(base: str, existing: list[dict[str, Any]]) -> str:
@@ -1691,10 +1646,6 @@ def build_space_merge(
     merged_config = target_config
     merged_config.setdefault("spaces", []).append(space)
     merged_config.setdefault("markers", []).extend(output_markers)
-    dropped_marker_links += _drop_invalid_import_marker_links(
-        merged_config,
-        clean_ids={str(marker.get("id")) for marker in output_markers},
-    )
     merged_layout = {**target_layout, **output_layout}
     if len(merged_config.get("spaces") or []) > MAX_SPACES \
             or len(merged_config.get("markers") or []) > MAX_MARKERS \
@@ -1705,11 +1656,10 @@ def build_space_merge(
     except vol.Invalid as err:
         raise ImportFailure("invalid_config", str(err)) from err
     try:
-        validate_marker_controls(merged_config, current_config)
-        validate_marker_light_entities(merged_config, current_config)
-        validate_marker_radars(merged_config, current_config)
-        validate_marker_value_badges(merged_config, current_config)
-        validate_marker_vacuum_routes(merged_config, current_config)
+        recovery = prepare_portable_markers(
+            merged_config, current_config,
+            marker_ids={str(marker.get("id")) for marker in output_markers},
+        )
         validate_opening_passages(merged_config, current_config)
         validate_partition_opening_hosts(merged_config, current_config)
     except (
@@ -1729,6 +1679,7 @@ def build_space_merge(
         raise ImportFailure("capacity_exceeded", "Merged configuration exceeds the store limit")
     if dropped_marker_links:
         reference_report["droppedIncomingLinks"]["marker.links"] = dropped_marker_links
+    dropped_marker_links += recovery["counts"].get("controls", 0) + recovery["counts"].get("value", 0)
     return merged_config, merged_layout, {
         "space_id": new_space_id,
         "space_title": space["title"],
@@ -1743,6 +1694,7 @@ def build_space_merge(
             int(value) for value in reference_report["preservedUnresolved"].values()
         ),
         "reference_report": reference_report,
+        "recovery": recovery,
     }
 
 
@@ -1957,6 +1909,17 @@ def _materialize_import_candidate(
         config = CONFIG_SCHEMA(config)
     except vol.Invalid as err:
         raise ImportFailure("invalid_config", str(err)) from err
+    if prepared["kind"] == "full":
+        try:
+            recovery = prepare_portable_markers(config, validate_all=True)
+        except (DuplicateMarkerIdError, MarkerControlError) as err:
+            raise ImportFailure(err.code, str(err)) from err
+        except vol.Invalid as err:
+            raise ImportFailure("invalid_config", str(err)) from err
+        details["recovery"] = recovery
+        details["dropped_marker_links"] += (
+            recovery["counts"].get("controls", 0) + recovery["counts"].get("value", 0)
+        )
     try:
         validate_active_marker_ids(
             config,
@@ -2019,20 +1982,6 @@ def create_preview(
         validate_opening_passages(incoming_config, validate_all=True)
     except OpeningPassageError as err:
         raise ImportFailure(err.code, str(err)) from err
-    if document["kind"] == "full":
-        dropped_marker_links = _transfer_dropped_marker_links(document)
-        dropped_marker_links += _drop_invalid_import_marker_links(incoming_config)
-        document["transfer"]["dropped_marker_links"] = dropped_marker_links
-        try:
-            validate_marker_controls(incoming_config, validate_all=True)
-            validate_marker_light_entities(incoming_config, validate_all=True)
-            validate_marker_radars(incoming_config, validate_all=True)
-            validate_marker_value_badges(incoming_config, validate_all=True)
-            validate_marker_vacuum_routes(incoming_config, validate_all=True)
-        except MarkerControlError as err:
-            raise ImportFailure(err.code, str(err)) from err
-        except vol.Invalid as err:
-            raise ImportFailure("invalid_config", str(err)) from err
     content, confirmation = _content_state(document, same_source, config_root, portable_content)
     target_config, target_layout, details = _materialize_import_candidate(
         document, current_config, current_layout,
@@ -2129,11 +2078,15 @@ def revalidate_candidate(
     config_root: Path | None = None,
 ) -> dict[str, Any]:
     """Refresh target-dependent preview data without uploading the file again."""
+    if candidate.get("digest") != _candidate_digest(candidate):
+        raise ImportFailure("invalid_format", "Import preview candidate changed")
     document = candidate["document"]
     current_config = current_config_data.get("config") or {
         "spaces": [], "markers": [], "settings": {},
     }
     current_layout = current_layout_data.get("layout") or {}
+    previous_content = candidate.get("content")
+    previous_confirmation = candidate.get("confirmation_required")
     if config_root is not None:
         content, confirmation = _content_state(
             document, bool(candidate.get("same_source")), config_root,
@@ -2141,13 +2094,27 @@ def revalidate_candidate(
         )
         candidate["content"] = content
         candidate["confirmation_required"] = confirmation
-    target_config, target_layout, details = _materialize_import_candidate(
-        document, current_config, current_layout,
-        duplicate_policy=duplicate_policy,
-        same_source=bool(candidate.get("same_source")),
-        content=candidate.get("content") or [],
-        confirmation_required=bool(candidate.get("confirmation_required")),
+    unchanged = (
+        duplicate_policy == candidate.get("duplicate_policy")
+        and int(current_config_data.get("rev", 0)) == candidate.get("config_rev")
+        and int(current_layout_data.get("rev", 0)) == candidate.get("layout_rev")
+        and candidate.get("content") == previous_content
+        and candidate.get("confirmation_required") == previous_confirmation
     )
+    if unchanged:
+        # Fresh space-copy ids are allocated once, not anew every time the
+        # same preview is rechecked. Its report names exactly those ids.
+        target_config = _json_copy(candidate["target_config"])
+        target_layout = _json_copy(candidate["target_layout"])
+        details = _json_copy(candidate["details"])
+    else:
+        target_config, target_layout, details = _materialize_import_candidate(
+            document, current_config, current_layout,
+            duplicate_policy=duplicate_policy,
+            same_source=bool(candidate.get("same_source")),
+            content=candidate.get("content") or [],
+            confirmation_required=bool(candidate.get("confirmation_required")),
+        )
     candidate["duplicate_policy"] = duplicate_policy
     candidate["config_rev"] = int(current_config_data.get("rev", 0))
     candidate["layout_rev"] = int(current_layout_data.get("rev", 0))

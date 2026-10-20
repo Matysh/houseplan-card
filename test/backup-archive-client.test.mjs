@@ -7,6 +7,8 @@ import { LazyBackupArchiveClient } from '../test-build/backup-archive-lazy.js';
 const prepared = (complete = true) => ({ archive: true, token: 'owned', filename: 'copy.zip',
   complete, images: 1, missing: complete ? [] : [{ name: 'Kitchen', reason: 'missing' }], snapshot: [] });
 const state = () => ({ kind: 'full', planOnly: false, busy: false, error: '' });
+const recovery = () => ({ version: 1, total: 1, remaining: 0, counts: { radar: 1 },
+  examples: [{ kind: 'radar', marker_id: 'synthetic', name: '<synthetic radar>', count: 1 }] });
 function host(hass) {
   return { hass, isConnected: true, _space: 'one', _backupExportDialog: state(),
     _showToast() {}, _t: key => key };
@@ -43,6 +45,61 @@ test('incomplete ZIP needs a second distinctly labelled action, bound to its tok
   assert.equal(prepares, 1, 'confirmation must not silently prepare a different archive');
   assert.deepEqual(requests, [{ path: '/api/houseplan/backup/export/owned', body: { confirm_missing_content: true } }]);
   assert.equal(files[0].name, 'copy.zip');
+});
+
+test('repaired JSON waits for consent and downloads the same frozen document', async t => {
+  const files = downloads(t);
+  let prepares = 0;
+  const document = { payload: { config: { revision: 5 } } };
+  const owner = host({ user: { is_admin: false }, callWS: async () => {
+    prepares++;
+    return { document: structuredClone(document), filename: 'repaired.json', recovery: recovery() };
+  } });
+  const client = new BackupArchiveClient(owner);
+  await client.export({ card_version: 'test' }, String);
+  assert.equal(files.length, 0, 'repair is visible before the file is downloaded');
+  assert.deepEqual(owner._backupExportDialog.preparedJson.recovery, recovery());
+  document.payload.config.revision = 99; // Live data has changed after preparation.
+  await client.export({ card_version: 'test' }, String);
+  assert.equal(prepares, 1, 'consent must not switch to an unseen snapshot');
+  assert.equal(files[0].name, 'repaired.json');
+  assert.equal(JSON.parse(await files[0].blob.text()).payload.config.revision, 5);
+});
+
+test('complete repaired ZIP also requires consent without re-preparing its token', async t => {
+  const files = downloads(t), requests = [];
+  let prepares = 0;
+  const owner = host({ user: { is_admin: true }, callWS: async () => {
+    prepares++; return { ...prepared(), recovery: recovery() };
+  }, fetchWithAuth: async (path, init) => {
+    requests.push({ path, body: JSON.parse(init.body) });
+    return new Response('PK frozen', { headers: { 'content-type': 'application/zip' } });
+  } });
+  const client = new BackupArchiveClient(owner);
+  await client.export({ card_version: 'test' }, String);
+  assert.equal(files.length, 0);
+  assert.equal(requests.length, 0);
+  await client.export({ card_version: 'test' }, String);
+  assert.equal(prepares, 1);
+  assert.deepEqual(requests, [{ path: '/api/houseplan/backup/export/owned', body: { confirm_missing_content: false } }]);
+  assert.equal(files[0].name, 'copy.zip');
+});
+
+test('changing export scope discards JSON repair consent, including before lazy loading', async t => {
+  const files = downloads(t);
+  const owner = host({ user: { is_admin: false }, callWS: async () => ({
+    document: { old: true }, filename: 'old.json', recovery: recovery(),
+  }) });
+  const client = new BackupArchiveClient(owner);
+  await client.export({ card_version: 'test' }, String);
+  assert.ok(owner._backupExportDialog.preparedJson);
+  client.selectKind('space');
+  assert.equal(owner._backupExportDialog.preparedJson, undefined);
+  owner._backupExportDialog.preparedJson = { document: { old: true }, filename: 'old.json' };
+  const lazy = new LazyBackupArchiveClient(owner);
+  lazy.selectKind('full');
+  assert.equal(owner._backupExportDialog.preparedJson, undefined);
+  assert.equal(files.length, 0);
 });
 
 test('cancelled delayed prepare is discarded, never downloaded or reopened', async t => {

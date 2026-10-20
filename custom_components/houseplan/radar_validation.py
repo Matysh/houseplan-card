@@ -288,6 +288,7 @@ def _validate_radar(
     spaces: dict[str, dict[str, Any]],
     marker: dict[str, Any],
     registry: dict[str, dict[str, dict[str, Any]]] | None = None,
+    *, allow_inactive_spatial_refs: bool = False,
 ) -> None:
     obj = _mapping(radar, "marker.radar")
     if obj.get("version") != 1:
@@ -306,7 +307,9 @@ def _validate_radar(
         _invalid("radar.room_id is required")
     owner_space = str(marker.get("space") or "")
     space = spaces.get(owner_space)
-    if space is None or room_id not in {str(room.get("id")) for room in space.get("rooms") or []}:
+    dormant_transfer = allow_inactive_spatial_refs and obj["enabled"] is False
+    known_rooms = {str(room.get("id")) for room in (space or {}).get("rooms") or []}
+    if not dormant_transfer and (space is None or room_id not in known_rooms):
         _invalid("radar room must exist in the marker space")
     mount = _mapping(obj.get("mount"), "radar.mount")
     _identifier(mount.get("installation_id"), "radar installation id")
@@ -325,13 +328,14 @@ def _validate_radar(
     calibration_cell_cm = _finite(
         calibration.get("cell_cm"), "radar calibration cell_cm", 0.01, 1000,
     )
-    try:
-        space_cell_cm = float(space.get("cell_cm", 5))
-    except (TypeError, ValueError):
-        _invalid("radar owner space scale is invalid")
-    if not math.isfinite(space_cell_cm) or space_cell_cm <= 0 \
-            or not math.isclose(calibration_cell_cm, space_cell_cm, abs_tol=1e-9):
-        _invalid("radar calibration scale does not match the owner space")
+    if not dormant_transfer:
+        try:
+            space_cell_cm = float(space.get("cell_cm", 5))
+        except (TypeError, ValueError):
+            _invalid("radar owner space scale is invalid")
+        if not math.isfinite(space_cell_cm) or space_cell_cm <= 0 \
+                or not math.isclose(calibration_cell_cm, space_cell_cm, abs_tol=1e-9):
+            _invalid("radar calibration scale does not match the owner space")
     refs = calibration.get("refs")
     if calibration["method"] == "two_point":
         if not isinstance(refs, list) or len(refs) != 2:
@@ -367,8 +371,9 @@ def _validate_radar(
     allowed = obj.get("allowed_room_ids")
     if allowed is not None:
         room_ids = _array(allowed, "radar.allowed_room_ids", 32)
-        known = {str(room.get("id")) for room in space.get("rooms") or []}
-        if len(set(room_ids)) != len(room_ids) or any(value not in known for value in room_ids):
+        if any(not isinstance(value, str) or not value for value in room_ids) \
+                or len(set(room_ids)) != len(room_ids) \
+                or not dormant_transfer and any(value not in known_rooms for value in room_ids):
             _invalid("radar allowed rooms must be unique rooms in the marker space")
 
 
@@ -382,7 +387,8 @@ def _validate_settings(settings: Any) -> None:
 
 def validate_marker_radars(config: dict[str, Any], previous: dict[str, Any] | None = None,
                            *, validate_all: bool = False,
-                           registry: dict[str, dict[str, dict[str, Any]]] | None = None) -> None:
+                           registry: dict[str, dict[str, dict[str, Any]]] | None = None,
+                           allow_inactive_spatial_refs: bool = False) -> None:
     """Validate only newly created/changed known radar namespaces.
 
     This mirrors the project's lossless compatibility doctrine: untouched
@@ -404,7 +410,8 @@ def validate_marker_radars(config: dict[str, Any], previous: dict[str, Any] | No
         configured += 1
         old = previous_markers.get(marker_id, {}).get("radar", object())
         if validate_all or radar != old:
-            _validate_radar(radar, spaces, marker, registry)
+            _validate_radar(radar, spaces, marker, registry,
+                            allow_inactive_spatial_refs=allow_inactive_spatial_refs)
     if configured > MAX_RADARS:
         _invalid("at most 32 radars may be configured")
 

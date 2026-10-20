@@ -1,6 +1,6 @@
 /** Rare backup tools load on demand, not for every device/plan editor. */
 import { nothing } from 'lit';
-import type { BackupArchiveClient, renderArchiveSummary } from './backup-archive-client';
+import type { BackupArchiveClient, renderArchiveSummary, renderRecoveryReport } from './backup-archive-client';
 
 type ClientModule = typeof import('./backup-archive-client');
 type Host = ConstructorParameters<typeof BackupArchiveClient>[0];
@@ -35,7 +35,7 @@ export class LazyBackupArchiveClient {
     const state = this.host._backupExportDialog;
     if (!state || state.busy) return;
     this.cancelExport();
-    this.host._backupExportDialog = { ...state, kind, planOnly: false, archive: undefined, error: '' };
+    this.host._backupExportDialog = { ...state, kind, planOnly: false, archive: undefined, preparedJson: undefined, error: '' };
   }
 
   public async export(metadata: { card_version: string }, errorText: (error: unknown) => string): Promise<void> {
@@ -63,5 +63,8 @@ export class LazyBackupArchiveClient {
 
   public renderSummary(...args: Parameters<typeof renderArchiveSummary>): ReturnType<typeof renderArchiveSummary> {
     return this.module?.renderArchiveSummary(...args) ?? nothing;
+  }
+  public renderRecovery(...args: Parameters<typeof renderRecoveryReport>): ReturnType<typeof renderRecoveryReport> {
+    return this.module?.renderRecoveryReport(...args) ?? nothing;
   }
 }

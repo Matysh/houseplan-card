@@ -74,6 +74,7 @@ class ArchiveSession:
     preview_token: str = ""
     busy: bool = True
     archive_hash: str = ""
+    recovery: dict[str, Any] | None = None
     workers: set[asyncio.Future] = field(default_factory=set)
 
 
@@ -190,7 +191,8 @@ class BackupService:
                              "kind": row["ref"]["kind"], "owner_id": row["ref"]["owner_id"]}
                             for row in session.manifest["images"] if "reason" in row],
                 "snapshot": [{"obtained_at": item["obtained_at"]} for item in session.topics.values()],
-                "snapshot_ignored_off": bool(config is not None and not _enabled(config) and session.topics)}
+                "snapshot_ignored_off": bool(config is not None and not _enabled(config) and session.topics),
+                **({"recovery": copy.deepcopy(session.recovery)} if session.recovery else {})}
 
     def export_stream(self, session: ArchiveSession):
         """Verify the exact prepared bytes and keep the verified inode open."""
@@ -232,6 +234,7 @@ class BackupService:
                 create_export, self.runtime, cd, ld, kind="full", space_id=None,
                 card_version=card_version, config_root=self.root, build=build,
             ))
+            session.recovery = copy.deepcopy(document["transfer"].get("recovery"))
             def prepare():
                 strip_transport_credentials(document)
                 document["content_manifest"] = content_manifest(document["payload"]["config"], self.root)

@@ -2562,6 +2562,19 @@ but the map source's internal entity ID is removed from the response.
 
 ### Portable backup: full ZIP and JSON
 
+Stale device links do not have to block restoration of the whole plan. A radar
+with a missing room or stale calibration scale, or a vacuum map with a missing
+floor, is retained turned off with its settings. Invalid control links and
+dependent marker values are removed. The import report names the affected
+devices before confirmation; choose their destinations again after restoring.
+House Plan never guesses a room/floor or silently runs the geometry optimizer.
+
+Export performs the same checks on a copy without changing the working plan.
+When repairs are needed, review the report and choose **Download repaired
+backup**. This downloads the prepared snapshot, not newly read live data. Source
+files are not rewritten. Unsafe/corrupt archives, invalid types and conflicting
+geometry are still refused without changing the accepted plan.
+
 For Home Assistant administrators, **Full backup** creates a ZIP containing
 the complete model, used background images, custom-image decor, graphical
 device attachments and the saved Zigbee link snapshot. Images are copied, not

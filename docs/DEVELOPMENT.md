@@ -418,6 +418,18 @@ Proxy HTML/413 errors use stable translated backup codes; download also
 requires the authenticated endpoint's ZIP MIME instead of saving a login page.
 New mutation definitions are static-checked only; execution remains nightly.
 
+Portable recovery (#973) uses `portable_recovery.py` for both transfer directions,
+not a catch-all validation exception or the client geometry optimizer. Export
+dry-runs its real document against empty target state; JSON/ZIP repair consent
+keeps the prepared copy. Run `python -m pytest tests_backend/test_portable_recovery.py
+tests_backend/test_ha_portable_recovery.py tests_backend/test_ha_import_export.py
+tests_backend/test_ha_backup_archive.py` in the HA venv. The new native witness is
+`node demo/smoke_portable_recovery.mjs`: real chooser/dialogs, four locales and
+narrow width, actual backend-produced JSON/ZIP fixture, no invented success
+config. The HA test rereads both committed ZIP streams and verifies actual
+preview/materialized targets against the fixture. Private reproduction ZIPs
+remain outside the repository and are never applied to live HA during testing.
+
 `backup-archive-lazy.ts` loads ZIP UI/transfer code only for backup operations;
 localized new copy uses the existing tools namespace. No renderer/frame work.
 Owner approval for #936 accepts exact total 3,042,858 B and lazy editor

@@ -3,16 +3,24 @@ import { html, nothing, type TemplateResult } from 'lit';
 import type { I18nKey } from './i18n';
 import type { ToolsI18nKey } from './i18n/tools';
 
+export type RecoveryKind = 'radar' | 'vacuum' | 'controls' | 'value';
+export interface RecoveryReport {
+  version: number; total: number; remaining: number;
+  counts: Partial<Record<RecoveryKind, number>>;
+  examples: Array<{ kind: RecoveryKind; marker_id: string; name: string; count: number }>;
+}
 export interface ArchiveSummary {
   complete: boolean;
   images: number;
   missing: Array<{ name: string; reason: string; kind: string; owner_id: string }>;
   snapshot: Array<{ obtained_at: number }>;
   snapshot_ignored_off?: boolean;
+  recovery?: RecoveryReport;
 }
 export interface ArchiveExport extends ArchiveSummary { archive: true; token: string; filename: string }
 export interface BackupExportState {
   kind: 'full' | 'space'; planOnly: boolean; busy: boolean; error: string; archive?: ArchiveExport;
+  preparedJson?: LegacyExport;
 }
 interface TransferHass {
   user?: { is_admin?: boolean };
@@ -28,7 +36,7 @@ interface TransferHost {
   _showToast(message: string): void;
   _t(key: I18nKey, values?: Record<string, string>): string;
 }
-interface LegacyExport { archive?: false; document: unknown; filename: string }
+interface LegacyExport { archive?: false; document: unknown; filename: string; recovery?: RecoveryReport }
 interface PreviewReply {
   token: string; preview: Record<string, unknown>; expected_config_rev: number; expected_layout_rev: number;
 }
@@ -89,7 +97,7 @@ export class BackupArchiveClient {
     const state = this.host._backupExportDialog;
     if (!state || state.busy) return;
     this.cancelExport();
-    this.host._backupExportDialog = { ...state, kind, planOnly: false, archive: undefined, error: '' };
+    this.host._backupExportDialog = { ...state, kind, planOnly: false, archive: undefined, preparedJson: undefined, error: '' };
   }
 
   private fetch(path: string, init: RequestInit): Promise<Response> {
@@ -151,7 +159,7 @@ export class BackupArchiveClient {
     try {
       await this.cleanup;
       if (!owns()) return;
-      const result = state.archive || await hass.callWS<ArchiveExport | LegacyExport>({
+      const result = state.archive || state.preparedJson || await hass.callWS<ArchiveExport | LegacyExport>({
         type: 'houseplan/export/create', kind: state.kind,
         ...(state.kind === 'space' ? { space_id: host._space, plan_only: state.planOnly } : {}),
         ...(state.kind === 'full' && hass.user?.is_admin === true ? { archive: true } : {}),
@@ -164,7 +172,7 @@ export class BackupArchiveClient {
       let blob: Blob;
       if (result.archive === true) {
         this.exportToken = result.token;
-        if (!result.complete && !state.archive) {
+        if ((!result.complete || result.recovery?.total) && !state.archive) {
           host._backupExportDialog = { ...state, archive: result, busy: false, error: '' };
           return; // A second, distinctly labelled action is the consent.
         }
@@ -180,6 +188,10 @@ export class BackupArchiveClient {
         blob = await response.blob();
         if (this.exportEpoch === epoch) this.exportToken = undefined;
       } else {
+        if (result.recovery?.total && !state.preparedJson) {
+          host._backupExportDialog = { ...state, preparedJson: result, busy: false, error: '' };
+          return;
+        }
         blob = new Blob([JSON.stringify(result.document, null, 2) + '\n'], { type: 'application/json;charset=utf-8' });
       }
       if (!owns()) return;
@@ -194,10 +206,28 @@ export class BackupArchiveClient {
       if (owns()) {
         if (this.exportToken) this.discard(this.exportToken);
         this.exportToken = undefined;
-        host._backupExportDialog = { ...state, archive: undefined, busy: false, error: errorText(error) };
+        host._backupExportDialog = { ...state, archive: undefined, preparedJson: undefined, busy: false, error: errorText(error) };
       }
     }
   }
+}
+
+export function renderRecoveryReport(t: (key: ToolsI18nKey, values?: Record<string, string>) => string,
+  report?: RecoveryReport, exporting = false): TemplateResult | typeof nothing {
+  if (!report?.total) return nothing;
+  const reasons: Record<RecoveryKind, ToolsI18nKey> = {
+    radar: 'backup.recovery.reason.radar', vacuum: 'backup.recovery.reason.vacuum',
+    controls: 'backup.recovery.reason.controls', value: 'backup.recovery.reason.value',
+  };
+  return html`<div class="backupwarn" role="status" data-hp="backup-recovery">
+    <b>${t(exporting ? 'backup.recovery.export_title' : 'backup.recovery.import_title')}</b>
+    <p>${t(exporting ? 'backup.recovery.export_hint' : 'backup.recovery.import_hint')}</p>
+    <ul>${(Object.entries(report.counts) as Array<[RecoveryKind, number]>).map(([kind, count]) =>
+      html`<li>${t(reasons[kind])}: ${count}</li>`)}</ul>
+    <details><summary>${t('backup.recovery.details')}</summary><ul>
+      ${report.examples.slice(0, 24).map(row => html`<li>${row.name || row.marker_id} — ${t(reasons[row.kind])}</li>`)}
+    </ul>${report.remaining ? html`<p>${t('backup.recovery.more', { n: String(report.remaining) })}</p>` : nothing}</details>
+  </div>`;
 }
 
 export function renderArchiveSummary(t: (key: ToolsI18nKey, values?: Record<string, string>) => string,

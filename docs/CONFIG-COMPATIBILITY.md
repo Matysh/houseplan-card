@@ -28,6 +28,20 @@ of `operation_id` or the existing `token`. Legacy uploads/token cancellation
 remain supported; no plan/container/store model, JSON bytes or durable journal
 shape changes. The id and short-lived cancellation records never enter backups.
 
+Portable repair (#973) changes no persistent schema, model or ZIP version.
+Export and import share a copy-only recovery pass: stale radar owner/room/allowed
+rooms/scale leaves the known block disabled with its sources/mount/calibration
+intact; a vacuum route to a missing floor disables live positioning without
+rewriting its matrices or guessing a target. Invalid/self/cyclic marker controls
+and dependent marker values use explicit, reported neutralization. Only transfer
+validators accept these dormant spatial references; normal Save/setup/activation
+remain strict. Unknown compatible fields and temporarily absent HA entities are
+not removed. Optional `transfer.recovery` is export metadata, never a permission
+to skip checks: import discards this historical report without interpreting or
+forwarding its shape and recomputes a bounded report from the actual candidate.
+The report is digest-bound, and unchanged revalidation retains the same allocated
+copy IDs. Source archives and working config/layout are not rewritten by export.
+
 Room CO₂ (#920) adds optional `spaces[].settings.label_co2` (only exact `true`
 enables it, absence means off) and `rooms[].settings.co2_source` (missing,
 null or empty means automatic). Unknown saved source strings survive unrelated
@@ -1029,7 +1043,9 @@ self-reference, duplicates and cycles; an already stored broken legacy link is
 allowed to round-trip so unrelated edits cannot lock the plan. Deleting or
 rebinding a target removes or rewrites references atomically. A space export
 remaps links whose two ends are inside the exported space and reports/drops
-links leaving it; full export preserves them literally.
+links leaving it; full export preserves valid links literally. The explicit
+portable recovery report (#973) accounts for invalid/self/cyclic links removed
+from the copy; this is not a relaxation of ordinary control writes.
 
 `marker.value_badge` is an optional explicit value satellite. Its absence is
 the legacy compatibility state: the historical temperature/humidity heuristic

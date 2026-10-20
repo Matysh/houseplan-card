@@ -9106,6 +9106,7 @@ public async _applyBackupImport(): Promise<void> {
 
 public _renderBackupExportDialog(): TemplateResult {
     const d = this.host._backupExportDialog!;
+    const recovery = d.archive?.recovery || d.preparedJson?.recovery;
     const currentSpace = (this.host._serverCfg?.spaces || []).find((space) => space.id === this.host._space);
     return html`<hp-dialog .hass=${this.host.hass} data-kind="backup" .title=${this.host._t('backup.export_title')}
       icon="mdi:download" dismiss-on-scrim @hp-close=${() => this._closeBackupExport()}>
@@ -9122,14 +9123,18 @@ public _renderBackupExportDialog(): TemplateResult {
             ? this.host._t('backup.current_space_title', { title: currentSpace.title || currentSpace.id })
             : this.host._t('backup.no_current_space')}</span></label>
         ${d.kind === 'space' && currentSpace ? html`<label class="srcrow backupplanonly">
-          <input type="checkbox" .checked=${d.planOnly}
-            @change=${(event: Event) => (this.host._backupExportDialog = {
-              ...d, planOnly: (event.target as HTMLInputElement).checked,
-            })} />
+          <input type="checkbox" .checked=${d.planOnly} ?disabled=${d.busy}
+            @change=${(event: Event) => {
+              this.backupTransfer.selectKind('space');
+              this.host._backupExportDialog = {
+                ...this.host._backupExportDialog!, planOnly: (event.target as HTMLInputElement).checked,
+              };
+            }} />
           <span><b>${this.host._t('backup.plan_only')}</b><small>${this.host._t('backup.plan_only_hint')}</small></span>
         </label>` : nothing}
         ${d.kind === 'full' ? html`<div class="rhint">${this._toolsT(this.host.hass?.user?.is_admin === true ? 'backup.zip_format' : 'backup.json_legacy')}</div>` : nothing}
         ${this.backupTransfer.renderSummary((key, values) => this._toolsT(key, values), d.archive)}
+        ${this.backupTransfer.renderRecovery((key, values) => this._toolsT(key, values), recovery, true)}
         <div class="backupwarn">${d.kind === 'full' && this.host.hass?.user?.is_admin === true ? this._toolsT('backup.zip_privacy_warning') : this.host._t('backup.privacy_warning')}</div>
         ${d.error ? html`<div class="backuperror" role="alert">${d.error}</div>` : nothing}
       </div>
@@ -9138,7 +9143,7 @@ public _renderBackupExportDialog(): TemplateResult {
         <span class="spacer"></span>
         <button class="btn on" data-hp="dialog-confirm" ?disabled=${d.busy || (d.kind === 'space' && !currentSpace)}
           @click=${() => this._runBackupExport()}>
-          <ha-icon icon="mdi:download"></ha-icon>${d.busy ? this._toolsT('backup.zip_preparing') : d.archive && !d.archive.complete ? this._toolsT('backup.zip_download_incomplete') : this.host._t('backup.download')}
+          <ha-icon icon="mdi:download"></ha-icon>${d.busy ? this._toolsT('backup.zip_preparing') : recovery?.total ? this._toolsT('backup.recovery.download') : d.archive && !d.archive.complete ? this._toolsT('backup.zip_download_incomplete') : this.host._t('backup.download')}
         </button>
       </div>
     </hp-dialog>`;
@@ -9148,6 +9153,8 @@ public _renderBackupImportDialog(): TemplateResult {
     type ContentItem = { kind?: string; url: string; state?: string };
     const d = this.host._backupImportDialog!;
     const p = d.preview;
+    const droppedLinks = Math.max(0, (p?.dropped_marker_links || 0)
+      - (p?.recovery?.counts?.controls || 0) - (p?.recovery?.counts?.value || 0));
     const decorContent = ((p?.content || []) as ContentItem[])
       .filter((item) => item.kind === 'decor_asset');
     const decorAssetCount = new Set(decorContent.map((item) => item.url)).size;
@@ -9190,6 +9197,7 @@ public _renderBackupImportDialog(): TemplateResult {
             })}</span>
           </div>
           ${this.backupTransfer.renderSummary((key, values) => this._toolsT(key, values), p.archive as ArchiveSummary | undefined, true)}
+          ${this.backupTransfer.renderRecovery((key, values) => this._toolsT(key, values), p.recovery)}
           <div class="backupcounts">
             <span>${this.host._t('backup.count_spaces', { n: p.kind === 'full'
               ? `${p.current_counts?.spaces || 0} → ${counts.spaces || 0}` : String(counts.spaces || 0) })}</span>
@@ -9216,8 +9224,8 @@ public _renderBackupImportDialog(): TemplateResult {
           ${p.missing_areas?.length ? html`<div class="backupwarn">${this.host._t('backup.missing_areas', {
             areas: p.missing_areas.join(', '),
           })}</div>` : nothing}
-          ${p.dropped_marker_links ? html`<div class="backupwarn">${this.host._t('backup.dropped_marker_links', {
-            n: String(p.dropped_marker_links),
+          ${droppedLinks ? html`<div class="backupwarn">${this.host._t('backup.dropped_marker_links', {
+            n: String(droppedLinks),
           })}</div>` : nothing}
           ${this.host._ledNote(p)}
           ${draftMigration.room_drafts || draftMigration.room_draft_segments ? html`

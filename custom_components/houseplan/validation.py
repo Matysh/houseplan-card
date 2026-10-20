@@ -969,7 +969,8 @@ def validate_marker_value_badges(
 
 
 def validate_marker_vacuum_routes(
-    config: dict, previous: dict | None = None, *, validate_all: bool = False
+    config: dict, previous: dict | None = None, *, validate_all: bool = False,
+    allow_inactive_missing_space: bool = False,
 ) -> None:
     """Validate changed vacuum map routes; dormant future data round-trips.
 
@@ -1001,6 +1002,8 @@ def validate_marker_vacuum_routes(
         if not validate_all and routes == old_routes:
             continue
         problems = validate_marker_routes(marker_id, routes, space_ids)
+        if allow_inactive_missing_space and (marker.get("vacuum") or {}).get("live") is False:
+            problems = [problem for problem in problems if problem["reason"] != "unknown_space"]
         if problems:
             reasons = ", ".join(sorted({problem["reason"] for problem in problems}))
             # Literal, not the constant: the #42 scanner proves the emitted
