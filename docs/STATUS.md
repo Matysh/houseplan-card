@@ -25,6 +25,13 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Vacuum generation witness (#974) rejects a nonduplicate, newer native snapshot
+for a foreign generation and protects a replacement run after delete/recreate,
+both live and after JSON restoration. The same snapshot with the current
+generation is accepted, isolating the generation guard from digest/revision
+refusals. Product code and the registered nightly mutation remain unchanged;
+ordinary PASS and static applicability do not claim nightly caught evidence.
+
 Beta closing comments (#970) include the selected exact-candidate full CI proof
 and tag-pinned RU/EN changelogs through the shared bookkeeping entry point.
 Proof refusal happens before issue operations; immutable membership, public

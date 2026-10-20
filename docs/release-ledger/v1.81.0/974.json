@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 974,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Repair the existing vacuum generation witness after the 2026-10-20 nightly escape: use nonduplicate snapshots and cover delete/recreate with JSON restart, without changing product code or nightly-only mutation execution."
+}

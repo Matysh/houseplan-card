@@ -1,5 +1,21 @@
 # Development and deployment
 
+## Vacuum generation witness (#974)
+
+The `full_snapshot_book_lifecycle` backend guard must reject a foreign generation
+with a new digest and admissible revision. Repeating an accepted snapshot also
+returns false without the generation check and cannot witness that guard.
+The same candidate is then accepted with the current generation, ruling out
+digest/revision, provider/map and run-identity refusals as alternative causes.
+
+The delete/recreate case keeps marker, route, map and source equal, changes the
+run generation, and checks that an old reply leaves the replacement's complete
+stored data unchanged. It runs both live and after a JSON round trip; a current
+generation positive control must still update the path. Execute the existing
+`node scripts/backend-test-guard.mjs full_snapshot_book_lifecycle tests_backend/test_ha_vacuum_paths.py`
+in the pinned Linux HA harness. The mutation definition and guard stay intact;
+ordinary PASS and `mutation-gate.mjs --check` are not nightly caught evidence.
+
 ## Ecovacs image bridge (#939)
 
 Use the public `homeassistant.components.image.async_get_image`, never a

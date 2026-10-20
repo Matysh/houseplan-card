@@ -199,10 +199,45 @@ def test_full_snapshot_book_lifecycle_budget_restart_and_private_projection():
     new, _ = restarted.ensure_run("m", "floor", 1810, "route", "camera.map")
     assert new is restarted.data["m"]["current"] and new["_generation"] == generation
     assert new["paths"] == fresher.paths and "previous" not in restarted.data["m"]
-    assert not restarted.on_snapshot("m", fresher, 1811, "route", "floor", "foreign-generation", True)
+    # A repeated digest/revision also returns False without the generation guard.
+    # Use a new snapshot and prove that only its generation determines acceptance.
+    late = snapshot("dreame", "tasshack-2.0.2", [[[0, 0], [300, 0]]], "map", 3)
+    before = copy.deepcopy(restarted.data)
+    assert not restarted.on_snapshot("m", late, 1811, "route", "floor", "foreign-generation", True)
+    assert restarted.data == before, "a foreign generation must leave the stored run unchanged"
+    assert restarted.on_snapshot("m", late, 1811, "route", "floor", generation, True)
+    assert new["paths"] == late.paths
     restarted.delete("m")
-    assert not restarted.on_snapshot("m", fresher, 1812, "route", "floor", new["_generation"], True)
+    assert not restarted.on_snapshot("m", late, 1812, "route", "floor", new["_generation"], True)
     assert not restarted._counts
+
+
+@pytest.mark.parametrize("restart", [False, True], ids=["live", "json-restart"])
+def test_full_snapshot_book_lifecycle_late_predelete_reply_cannot_overwrite_new_run(restart):
+    """#974: matching marker/route/map/source cannot grant an old read a new run."""
+    book = TrailBook()
+    old, _ = book.ensure_run("m", "floor", 1, "route", "camera.map")
+    old_generation = old["_generation"]
+    initial = snapshot("dreame", "tasshack-2.0.2", [[[0, 0], [100, 0]]], "map", 1)
+    assert book.on_snapshot("m", initial, 2, "route", "floor", old_generation, True)
+    assert book.delete("m")
+    assert "m" not in book.data
+
+    current, resumed = book.ensure_run("m", "floor", 3, "route", "camera.map")
+    generation = current["_generation"]
+    assert not resumed and generation != old_generation
+    fresh = snapshot("dreame", "tasshack-2.0.2", [[[10, 10], [200, 10]]], "map", 2)
+    assert book.on_snapshot("m", fresh, 4, "route", "floor", generation, True)
+    if restart:
+        book = TrailBook(json.loads(json.dumps(book.data)))
+    before = copy.deepcopy(book.data)
+
+    # Higher revision and different geometry avoid duplicate/stale-frame refusals.
+    late = snapshot("dreame", "tasshack-2.0.2", [[[0, 0], [999, 999]]], "map", 3)
+    assert not book.on_snapshot("m", late, 5, "route", "floor", old_generation, True)
+    assert book.data == before, "a deleted run's reply must not alter its replacement"
+    assert book.on_snapshot("m", late, 5, "route", "floor", generation, True)
+    assert book.data["m"]["current"]["paths"] == late.paths
 
 
 def test_restart_sampled_run_retains_history_without_an_unobserved_connector():
