@@ -20,7 +20,7 @@ const out = await page.evaluate(async () => {
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
   const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-  const upd = async () => { c.requestUpdate(); await c.updateComplete; await frame(); await new Promise((r) => setTimeout(r, 40)); };
+  const upd = async () => { c.requestUpdate(); await window.__hpTest.settled(); };
   const dlg = () => sr().querySelector('hp-dialog[data-kind="room"]');
   const helpOf = (key) => dlg()?.querySelector(`hp-help[data-help-key="${key}"]`);
   const surfaceOf = (key) => helpOf(key)?.shadowRoot?.querySelector('.tooltip')

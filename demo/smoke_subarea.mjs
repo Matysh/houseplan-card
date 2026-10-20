@@ -34,6 +34,7 @@ const res = await page.evaluate(async () => {
   c._openMarkerDialog(dev); 
   out.reopenRoom = c._markerDialog?.room;
   c._markerDialog = null;
+  await window.__hpTest.settled();
 
   // Реальное HA-устройство с registry Area вручную переносится в комнату без
   // Area другого пространства. Registry metadata не должна вернуть его в f1.
@@ -58,6 +59,7 @@ const res = await page.evaluate(async () => {
   c._openMarkerDialog(moved); await c.updateComplete;
   out.haReopenRoom = c._markerDialog?.room === 'garden#@garden-shed-a';
   c._markerDialog = null;
+  await window.__hpTest.settled();
 
   // Защитный негативный кейс: transient runtime-пара с room_id из другого
   // пространства не роняет диалог и не переписывает сохранённый marker.

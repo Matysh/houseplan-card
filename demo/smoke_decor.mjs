@@ -407,7 +407,7 @@ const res = await page.evaluate(async () => {
   const otherShape = c._decorList.find((shape) => shape.id !== 'dcprobe');
   c._decorSel = otherShape?.id || null;
   c._decorShapeDialog = null;
-  c.requestUpdate(); await c.updateComplete;
+  c.requestUpdate(); await window.__hpTest.settled();
   staleInvoke();
   out.staleContextActionIsIgnored = staleInvokes === 0 && c._decorShapeDialog === null;
   c._decorSel = 'dcprobe'; c.requestUpdate(); await c.updateComplete;
@@ -435,7 +435,7 @@ const res = await page.evaluate(async () => {
   c._decorShapeDialog = {
     ...c._decorShapeDialog, color: '#123456', widthCm: 6.5, lineStyle: 'dashed',
   };
-  c._decorSaveShape(); await c.updateComplete;
+  c._decorSaveShape(); await window.__hpTest.settled();
   const editedProbe = c._decorList.find((x) => x.id === 'dcprobe');
   out.objectDialogSavesStyle = editedProbe?.color === '#123456'
     && editedProbe?.width_cm === 6.5 && editedProbe?.width === undefined
@@ -492,7 +492,7 @@ const res = await page.evaluate(async () => {
   c._decorEraseConfirm = null;
   c._decorSel = null;
   c._curSpaceCfg.decor = decorBefore;                 // сцена как была до пробы
-  c._decorTool = 'select'; await c.updateComplete;
+  c._decorTool = 'select'; await window.__hpTest.settled();
   out.decorRestored = c._decorList.length === decorBefore.length;
   // #447: Arrow is a separate rigid transaction, not a synthetic pointer
   // move. It preserves off-grid phase, bypasses both magnets and keeps one

@@ -11,7 +11,7 @@ const out = await page.evaluate(async () => {
   const o = {};
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
-  const upd = async () => { c.requestUpdate(); await c.updateComplete; await new Promise((r) => setTimeout(r, 30)); };
+  const upd = async () => { c.requestUpdate(); await window.__hpTest.settled(); };
   const dlg = () => sr().querySelector('hp-dialog[data-kind="settings"]');
   const q = (sel) => dlg()?.querySelector(sel);
   const qa = (sel) => [...(dlg()?.querySelectorAll(sel) || [])];

@@ -154,6 +154,11 @@ try {
     await expect(confirm).toHaveCount(0);
     await expect(shell).toBeVisible();
     await expect(input).toBeChecked({ checked: !before });
+    // Mouse dismissal must restore the last field, not the footer trigger.
+    await shell.locator('[slot="footer"] [data-hp="dialog-cancel"]').click();
+    await dialog('confirm').locator('[slot="footer"] [data-hp="dialog-cancel"]').click();
+    await expect(dialog('confirm')).toHaveCount(0);
+    await expect(input).toBeFocused();
     await input.setChecked(before);
     await close(shell);
     const second = await open('settings');
@@ -183,15 +188,21 @@ try {
     await message.focus();
     const contour = await message.evaluate(element => {
       const style = getComputedStyle(element);
-      return { outline: style.outlineStyle, shadow: style.boxShadow, border: style.borderTopWidth };
+      return { outline: style.outlineStyle, shadow: style.boxShadow, border: style.borderTopWidth,
+        minHeight:style.minHeight };
     });
     assert.equal(contour.outline, 'none');
     assert.ok(contour.shadow.includes('inset'));
     assert.equal(contour.border, '1px');
+    assert.equal(contour.minHeight, '120px');
     await shell.locator('.supportattach input').check();
     await expect(shell.locator('.supportpreview')).toBeVisible();
     await shell.locator('.supportpreview summary').click();
     await expect(shell.locator('.supportraw')).toHaveValue(previewText);
+    assert.deepEqual(await shell.locator('.supportraw').evaluate(element => {
+      const style=getComputedStyle(element);
+      return { minHeight:style.minHeight, monospace:style.fontFamily.includes('monospace') };
+    }), { minHeight:'220px', monospace:true });
     await page.evaluate(() => { window.__polishBackend.submitFailure = true; });
     await shell.locator('[data-hp="dialog-confirm"]').click();
     await expect(shell.locator('.supporterror')).toBeVisible();

@@ -46,7 +46,7 @@ const out = await page.evaluate(async () => {
     .find((node) => node.textContent.trim() === c._t('gs.sun_missing'));
   o.sunMissingStaysVisible = !!sunNote && sunNote.getBoundingClientRect().height > 0
     && !sr().querySelector('hp-dialog hp-help[data-help-key="gs.sun_missing.help"]');
-  c._settingsDialog = null; await c.updateComplete;
+  c._settingsDialog = null; await window.__hpTest.settled();
 
   // --- «Пространство»: карточки и три сегмента (стены, заливка, фон) -------
   c._openSpaceDialog('edit', c._space); await c.updateComplete;
@@ -59,7 +59,7 @@ const out = await page.evaluate(async () => {
   const select=sr().querySelector('select[name="space-zero-wall-style"]');
   select.value=zeroBefore==='solid'?'dashed':'solid';select.dispatchEvent(new Event('change',{bubbles:true}));await c.updateComplete;
   o.zeroWallSelectWritesItsOwnKey=c._spaceDialog.zeroWallStyle!==zeroBefore&&c._spaceDialog.title===titleBefore;
-  c._spaceDialog = null; await c.updateComplete;
+  c._spaceDialog = null; await window.__hpTest.settled();
 
   return o;
 });

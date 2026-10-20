@@ -297,7 +297,7 @@ const jitterDialog = async (session, type, closeVia = 'pointer') => {
       await footerButton(page, 'on').tap();
     } else await button.click();
   } else { await button.focus(); await page.keyboard.press(closeVia); }
-  await page.waitForTimeout(100);
+  await page.locator(DIALOG).waitFor({state:'detached'});
   out[`${name}FreshInputClosesDialog`] = !(await kioskState(page)).open;
   out[`${name}HoldNeverChangesPlanFrame`] = (await planViewBox(page)) === frame;
   out[`${name}UsesTrustedInput`] = await page.evaluate(({ type, pointer }) => {

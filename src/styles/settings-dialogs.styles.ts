@@ -233,8 +233,8 @@ hp-dialog.ui-dialog *:is(.supportlinks,.supportactions){gap:10px;}
 hp-dialog.ui-dialog .aboutlink{box-sizing:border-box;max-width:100%;min-height:40px;padding:8px 10px;gap:8px;border:1px solid transparent;border-radius:7px;font-size:13px;line-height:1.4;color:var(--hpf-accent);text-decoration:none;}
 hp-dialog.ui-dialog .aboutver .aboutlink{min-height:0;padding:1px 3px;}
 hp-dialog.ui-dialog .supportform > label:not(.srcrow){margin:6px 0 -4px;color:var(--primary-text-color);font-size:13px;line-height:22px;font-weight:600;}
-hp-dialog.ui-dialog .supportmessage{min-height:120px;}
-hp-dialog.ui-dialog .supportraw{min-height:220px;font-family:monospace;}
+hp-dialog.ui-dialog textarea.supportmessage{min-height:120px;}
+hp-dialog.ui-dialog textarea.supportraw{min-height:220px;font-family:monospace;}
 hp-dialog.ui-dialog .supportattach{display:flex;align-items:flex-start;gap:10px;margin:6px 0 0!important;font-size:13px;line-height:22px;color:var(--primary-text-color);cursor:pointer;}
 hp-dialog.ui-dialog .supportattach input{margin:2px 0;}
 hp-dialog.ui-dialog .supportattach:hover{color:var(--hpf-accent);}

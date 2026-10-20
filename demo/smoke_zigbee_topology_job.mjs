@@ -4,6 +4,7 @@
 import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { launch, check, finish } from './serve.mjs';
+import { installHpTestOnPage } from './helpers/hp-test.mjs';
 
 const { page, browser } = await launch({ width: 1000, height: 850 });
 const output = {};
@@ -41,13 +42,15 @@ await page.exposeFunction('__scanRpc', async (message) => {
   throw new Error(`unexpected fixture RPC: ${message.type}`);
 });
 
-const install = async (embedded = false) => page.evaluate(async (isEmbedded) => {
+const install = async (embedded = false) => {
+  await installHpTestOnPage(page);
+  return page.evaluate(async (isEmbedded) => {
   const card = window.__card;
   await card._ensureEditorRuntime();
   card._openSettingsDialog(); await card.updateComplete;
   (card.shadowRoot || card.renderRoot)
     .querySelector('hp-dialog[data-kind="settings"] [data-hp="dialog-cancel"]').click();
-  await card.updateComplete;
+  await window.__hpTest.settled();
   const original = card.hass;
   window.__scanCallbacks = new Set();
   window.__scanStats = { subscriptions: 0, active: 0, mqtt: 0 };
@@ -100,7 +103,8 @@ const install = async (embedded = false) => page.evaluate(async (isEmbedded) => 
     '--hpf-accent': '#f09600', '--hpf-canvas': '#f5f5f8',
   })) element.style.setProperty(key, value);
   document.body.append(element); await element.updateComplete;
-}, embedded);
+  }, embedded);
+};
 const settings = () => page.locator('#scan-settings');
 const refresh = () => settings().getByRole('button', { name: /Update map/ });
 const cancel = () => settings().locator('[data-hp="zigbee-scan-cancel"]');

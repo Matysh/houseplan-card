@@ -23,6 +23,7 @@ import type { ZigbeeTopologySettings } from '../zigbee-topology-settings';
 import { deviceBatteryModeOf, spaceDeviceBatteryModeOf, type DeviceBatteryMode } from '../device-battery-settings';
 import type { HouseplanEditorRuntime } from '../houseplan-editor-runtime';
 import { signalVisibilityModeOf, type SignalSpaceSettings } from '../signal-visibility';
+import type { HpDialog } from '../hp-dialog';
 
 export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): TemplateResult {
   ensureSettingsDialogStyles(this.host);
@@ -41,7 +42,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
   const close = () => { forgetGeneralBaseline(host); host._settingsDialog = null; };
   const requestClose = async (event: Event) => {
     if (!dirty || d.busy) { close(); return; }
-    const dialog = event.currentTarget as { rejectClose?: () => void } | null;
+    const dialog = (event.currentTarget as HTMLElement | null)?.closest<HpDialog>('hp-dialog');
     const discard = await host._confirmDanger({
       key: 'discard-settings-dialog', kind: 'warning',
       title: st('dialog.discard_title'), message: st('dialog.discard_message'),

@@ -124,7 +124,7 @@ export function renderSpaceForm(port: SpaceFormPort): SpaceFormParts {
    * закрывает сразу. `rejectClose` возвращает оболочку в открытое состояние. */
   const requestClose = async (event: Event) => {
     if (!dirty || d.busy) { close(); return; }
-    const dialog = event.currentTarget as { rejectClose?: () => void } | null;
+    const dialog = (event.currentTarget as HTMLElement | null)?.closest<HTMLElement & { rejectClose(): void }>('hp-dialog');
     const discard = await host._confirmDanger({
       key: 'discard-space-dialog', kind: 'warning',
       title: st('dialog.discard_title'), message: st('dialog.discard_message'),

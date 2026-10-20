@@ -7,8 +7,7 @@ const out = await page.evaluate(async () => {
   const root = () => card.shadowRoot || card.renderRoot;
   const update = async () => {
     card.requestUpdate();
-    await card.updateComplete;
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    await window.__hpTest.settled();
   };
   card._setMode('devices');
   await update();

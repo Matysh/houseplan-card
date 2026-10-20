@@ -59,5 +59,6 @@ await dialog.locator('.hpf-footer [data-hp=dialog-cancel]').click();await dialog
 await page.evaluate(()=>window.__hpTest.setMode('devices'));
 await page.locator('[data-hp=tool][data-tool=device-inbox]').filter({visible:true}).first().click();
 const inbox=page.locator('hp-dialog[data-kind=device-inbox]');
-output.catalogueKeepsExistingHelpSize=await inbox.locator('hp-help').filter({visible:true}).first().locator('.trigger').evaluate(el=>getComputedStyle(el).width==='32px');
+// #976 deliberately aligns the catalogue with the shared compact instant help.
+output.catalogueUsesSharedHelpSize=await inbox.locator('hp-help').filter({visible:true}).first().locator('.trigger').evaluate(el=>getComputedStyle(el).width==='22px');
 checkAll(output);await reference.close();await finish(browser,output);

@@ -23,8 +23,7 @@ for (const dpr of [1, 2]) {
           const hp = window.__hpTest;
           const root = () => c.shadowRoot || c.renderRoot;
           const settle = async () => {
-            c.requestUpdate(); await c.updateComplete;
-            await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            c.requestUpdate(); await hp.settled();
           };
           const waitFor = async (what, predicate) => {
             const deadline = performance.now() + 5000;

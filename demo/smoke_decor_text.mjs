@@ -59,7 +59,7 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   out.noSizePicker = !sr().querySelector('input[name="dtsize"]');
   out.textareaNotInput = !!sr().querySelector('hp-dialog textarea.dtarea');
-  c._decorTextDialog = null; await c.updateComplete;
+  c._decorTextDialog = null; await window.__hpTest.settled();
 
   // старый `size` продолжает рисоваться ровно как раньше: 'l' = 30px
   c._curSpaceCfg.decor = [
@@ -75,7 +75,7 @@ const res = await page.evaluate(async () => {
   // ================= 2. многострочный текст, по центру =====================
   c._decorTool = 'text';
   c._decorTextDialog = { x: 0.5, y: 0.5, text: '  Гараж\nпод ключ  ', color: '#223344' };
-  c._decorSaveText(); await c.updateComplete;
+  c._decorSaveText(); await window.__hpTest.settled();
   const multi = c._decorList.find((x) => x.text && x.text.includes('\n'));
   out.newlineStored = !!multi && multi.text === 'Гараж\nпод ключ'; // края обрезаны, середина цела
   const tsp = tspans(multi.id);
@@ -92,11 +92,11 @@ const res = await page.evaluate(async () => {
   // длинная строка НЕ переносится сама (docs/DECOR-EDITOR.md §5: никаких автопереносов)
   open(multi); await c.updateComplete;
   c._decorTextDialog = { ...c._decorTextDialog, text: 'x'.repeat(120) };
-  c._decorSaveText(); await c.updateComplete;
+  c._decorSaveText(); await window.__hpTest.settled();
   out.noAutoWrap = tspans(multi.id).length === 1;
   open(c._decorList.find((x) => x.id === multi.id)); await c.updateComplete;
   c._decorTextDialog = { ...c._decorTextDialog, text: 'Гараж\nпод ключ' };
-  c._decorSaveText(); await c.updateComplete;
+  c._decorSaveText(); await window.__hpTest.settled();
 
   // ================= 3. ручки масштаба и поворота ==========================
   c._decorTool = 'select'; c._decorSel = null; await c.updateComplete;

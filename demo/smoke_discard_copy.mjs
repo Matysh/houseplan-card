@@ -9,8 +9,7 @@ const out = await page.evaluate(async () => {
   const root = () => c.shadowRoot || c.renderRoot;
   const settle = async () => {
     c.requestUpdate();
-    await c.updateComplete;
-    await new Promise((resolve) => setTimeout(resolve, 70));
+    await window.__hpTest.settled();
   };
   c._config = { ...(c._config || {}), language: 'ru' };
   await c._ensureEditorRuntime();

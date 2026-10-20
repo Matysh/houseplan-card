@@ -17,7 +17,7 @@ const out = {}, trace = [], writes = [], documents = [];
 const draftName = 'Unsaved Reload Guard 848';
 const reloadSelector = 'houseplan-card [data-hp="view-runtime-reload"]';
 const markerSelector = 'houseplan-card hp-dialog[data-kind="marker"]';
-const confirmSelector = 'houseplan-card hp-confirm hp-dialog';
+const confirmSelector = 'houseplan-card hp-confirm hp-dialog:not([inert])';
 const settle = () => page.evaluate(() => window.__hpTest.settled());
 const record = async (phase) => {
   const observed = await page.evaluate(() => {

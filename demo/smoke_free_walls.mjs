@@ -28,7 +28,7 @@ const out = await page.evaluate(async () => {
   const c = window.__card;
   const PITCH = 1000 / 240;
   const nativePhysical = async (from, to) => {
-    await c.updateComplete;
+    await window.__hpTest.settled();
     // Config/dialog changes can still be fitting the SVG camera. Observe the
     // presented transform before choosing a native target; don't click where
     // its old screen coordinates happened to be while that fit was moving.

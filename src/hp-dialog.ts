@@ -310,7 +310,9 @@ export class HpDialog extends LitElement {
     .close ha-icon { transition:var(--hp-dialog-close-transition,none); }
     .hp-dialog-return-focus:focus-visible { outline:none!important; }
     @keyframes hp-backdrop-out { to { background:transparent; } }
-    dialog.exiting::backdrop { animation:hp-backdrop-out 180ms ease forwards; }
+    dialog.exiting { pointer-events:none; }
+    dialog.exiting:popover-open { display:block; }
+    dialog.exiting::backdrop { pointer-events:none; animation:hp-backdrop-out 180ms ease forwards; }
 
     :host([data-pointer-hover]) .close:hover,
     .close:focus-visible {
@@ -361,6 +363,7 @@ export class HpDialog extends LitElement {
   private readonly _exit = new DialogExitController();
   private _inertContents = new Map<HTMLElement, boolean>();
   private _exitAnimation?: Animation;
+  private _releasedModal = false;
   private _toastRoot: Node | null = null;
   private readonly _toastOwner: ToastOwner = {
     host: this, portal: () => this.renderRoot.querySelector('.toast-portal'),
@@ -418,6 +421,7 @@ export class HpDialog extends LitElement {
   }
 
   disconnectedCallback(): void {
+    const released = this._releasedModal;
     this.cancelExit();
     this._syncToastOwner(false);
     this._toastRoot = null;
@@ -439,7 +443,7 @@ export class HpDialog extends LitElement {
       const latest = focusSessions.get(root);
       if (!latest) return;
       if (!latest.dialogs.size) {
-        if (latest.opener?.isConnected) latest.opener.focus({ preventScroll: true });
+        if (!released && latest.opener?.isConnected) latest.opener.focus({ preventScroll: true });
         focusSessions.delete(root);
         return;
       }
@@ -447,8 +451,9 @@ export class HpDialog extends LitElement {
       // dialog-to-dialog replacement intentionally waits for the last dialog,
       // then restores the original trigger outside the whole modal session.
       const owner = opener?.closest('hp-dialog') as HpDialog | null;
-      if (opener?.isConnected && owner && latest.dialogs.has(owner)) {
-        opener.focus({ preventScroll: true });
+      if (!released && opener?.isConnected && owner && latest.dialogs.has(owner)) {
+        if (owner._restoreInputFocus) owner._focusInitial();
+        else opener.focus({ preventScroll: true });
       }
     });
   }
@@ -545,6 +550,12 @@ export class HpDialog extends LitElement {
   private _focusInitial = (): void => {
     if (this._closing) return;
     if (this._restoreInputFocus && this._lastInputFocus?.isConnected) {
+      // A rejected parent's close resolves before the child confirmation's
+      // accepted exit finishes. Its native modal still owns focus until the
+      // terminal; keep the restoration pending for disconnectedCallback.
+      const session = this._focusRoot && focusSessions.get(this._focusRoot);
+      if (session && [...session.dialogs].some(dialog => dialog !== this
+          && dialog._closing && !dialog._releasedModal && dialog._opener?.closest('hp-dialog') === this)) return;
       const input = this._lastInputFocus;
       const restore = () => {
         if (!this.isConnected || this._closing || !this._restoreInputFocus || this._lastInputFocus !== input) return;
@@ -611,7 +622,19 @@ export class HpDialog extends LitElement {
       this.requestUpdate();
     } else {
       const surface = this.renderRoot.querySelector<HTMLElement>('.surface');
-      this.renderRoot.querySelector('dialog')?.classList.add('exiting');
+      const dialog = this.renderRoot.querySelector('dialog');
+      dialog?.classList.add('exiting');
+      // Retain only paint, not native modal authority. A modeless top-layer
+      // popover can animate above its parent without trapping that parent's
+      // focus or swallowing the next action. Unsupported browsers retain the
+      // bounded modal exit; no cloning, document hooks or delayed commands.
+      if (dialog && typeof dialog.showPopover === 'function') {
+        dialog.close();
+        dialog.popover = 'manual';
+        this._releasedModal = true;
+        try { dialog.showPopover(); }
+        catch { run.complete(); return run.finished; }
+      }
       this._exitAnimation = surface?.animate([
         { opacity: 1, transform: 'translateY(0)' },
         { opacity: 0, transform: 'translateY(12px)' },
@@ -628,7 +651,11 @@ export class HpDialog extends LitElement {
     this._exit.cancel();
     this._exitAnimation?.cancel();
     this._exitAnimation = undefined;
-    this.renderRoot.querySelector('dialog')?.classList.remove('exiting');
+    const dialog = this.renderRoot.querySelector('dialog');
+    if (this._releasedModal && dialog?.matches(':popover-open')) dialog.hidePopover();
+    dialog?.removeAttribute('popover');
+    dialog?.classList.remove('exiting');
+    this._releasedModal = false;
     this._closing = false;
     this.inert = false;
     for (const [node, prior] of this._inertContents) node.inert = prior;

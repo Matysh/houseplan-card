@@ -21,7 +21,7 @@ const res = await page.evaluate(async () => {
   out.fallbackCheckbox = !!sr().querySelector('hp-dialog .hpf-toggle > input[type=checkbox]');
   out.fallbackRange = !!sr().querySelector('hp-dialog input[type=range]');
   out.fallbackNoHaSwitch = !sr().querySelector('hp-dialog ha-switch');
-  c._markerDialog = null; await c.updateComplete;
+  c._markerDialog = null; await window.__hpTest.settled();
 
   // --- 2) register stubs mimicking the HA contract -----------------------
   customElements.define('ha-switch', class extends HTMLElement {
@@ -74,7 +74,7 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   out.upstreamValueChangeEvt = c._markerDialog.size === 2.5;
 
-  c._markerDialog = null; await c.updateComplete;
+  c._markerDialog = null; await window.__hpTest.settled();
 
   // --- 6) #88: the leading-entity selector is contextual ---------------
   // Give one demo device a second controllable channel in the same registry
@@ -117,14 +117,14 @@ const res = await page.evaluate(async () => {
   } else {
     out.leadingUpdatesPreview = false;
   }
-  c._markerDialog = null; await c.updateComplete;
+  c._markerDialog = null; await window.__hpTest.settled();
   runtime._markerPreviewDevice = realPreview;
 
   const single = c._devices.find((device) => device.id === 'd_lamp');
   c._openMarkerDialog(single); await c.updateComplete;
   c._setMarkerLightRole('always'); await c.updateComplete;
   out.noLeadingSelectorForSingle = !sr().querySelector('hp-dialog #marker-light-entity');
-  c._markerDialog = null; await c.updateComplete;
+  c._markerDialog = null; await window.__hpTest.settled();
 
   // --- 7) Rebinding keeps lossless marker:* links -----------------------
   const rebindDevice = c._devices.find((item) => item.bindingKind !== 'virtual');
@@ -134,7 +134,7 @@ const res = await page.evaluate(async () => {
   sr().querySelector('hp-dialog input[name="bmode"]')?.click();
   await c.updateComplete;
   out.rebindKeepsMarkerLink = c._markerDialog.controls.includes('marker:future-passive-lamp');
-  c._markerDialog = null; await c.updateComplete;
+  c._markerDialog = null; await window.__hpTest.settled();
 
   // --- 8) #84: passive Always keeps and persists manual Glow -----------
   c._openMarkerDialog(); await c.updateComplete;
@@ -154,7 +154,7 @@ const res = await page.evaluate(async () => {
   const passiveFields = c._markerLightFields(c._markerDialog);
   out.passiveManualGlowPersists = c._markerDialog.glowMode === 'fixed'
     && passiveFields.glow_color?.bri === 0.42;
-  c._markerDialog = null; await c.updateComplete;
+  c._markerDialog = null; await window.__hpTest.settled();
 
   // --- 9) #180: general colour opacity now belongs to the shared picker ---
   c._openSettingsDialog(); await c.updateComplete;

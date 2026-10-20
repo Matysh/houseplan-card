@@ -35,8 +35,7 @@ const out = await page.evaluate(async () => {
   const onboarding = card._onboardingRuntime;
   const root = () => card.shadowRoot || card.renderRoot;
   const settle = async () => {
-    await card.updateComplete;
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    await window.__hpTest.settled();
   };
   const deepActive = () => {
     let active = document.activeElement;

@@ -86,6 +86,15 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'dialog-exit-keeps-native-authority-976',
+    guard: 'node demo/smoke_ui_polish_976.mjs',
+    because: '#976 AC4/12: retained confirmation paint must release native modality before its parent restores field focus, not only at terminal.',
+    patches: [{file:'src/hp-dialog.ts',
+      find: "if (dialog && typeof dialog.showPopover === 'function') {",
+      replace: "if (dialog && typeof dialog.showPopover === 'undefined') {",
+    }],
+  },
+  {
     id: 'inbox-menu-forgets-footer-976',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-inbox-menu.test.mjs',
     because: '#976 AC9: the menu is bounded by dialog chrome and the visual viewport, not the whole browser below its footer.',
@@ -6648,7 +6657,7 @@ const MUTANT_DEFINITIONS = [
       + 'forever (#402)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "    return html`${body}${this._viewRuntimes.render()}${this._renderVersionBanner()}${dialogPresence(this._renderDangerConfirm(), this._syncDangerConfirmLocaleGate() !== 'warm' && !this._dangerConfirmMissingSpace())}`;",
+      find: "    return html`${body}${this._viewRuntimes.render()}${this._renderVersionBanner()}${dialogPresence(this._renderDangerConfirm(), this._dangerConfirmAnimateExit)}`;",
       replace: '    return html`${body}${this._viewRuntimes.render()}${this._renderVersionBanner()}`;',
     }],
   },

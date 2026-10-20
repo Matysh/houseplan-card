@@ -2067,6 +2067,7 @@ export class HouseplanCard extends LitElement {
   } | { kind: 'run'; text: string; exec: () => void } | null = null;
   /** One eager confirmation owner shared by View, onboarding and lazy editors. */
   private _dangerConfirm: HpConfirmState | null = null;
+  private _dangerConfirmAnimateExit = true;
   /** Synchronize host/runtime language state and return the current branch. */
   private _syncDangerConfirmLocaleGate(): LanguageRenderGate {
     if (!this._config || !this.hass) return 'ready';
@@ -2098,12 +2099,20 @@ export class HouseplanCard extends LitElement {
     if (!this._config || !this.hass) return Promise.resolve(false);
     if (this._syncDangerConfirmLocaleGate() === 'warm') return Promise.resolve(false);
     if (this._dangerConfirmMissingSpace()) return Promise.resolve(false);
+    this._dangerConfirmAnimateExit = true;
     return this._dangerConfirmController.confirm(request);
   };
   private _cancelDangerConfirm = (): void => {
+    // Losing context/permission is not an accepted user dismissal. Retire
+    // both authority and presentation immediately, including a prior exit.
+    this._dangerConfirmAnimateExit = false;
     this._dangerConfirmController.cancel();
   };
   private _onDangerConfirmDecision = (event: CustomEvent<HpConfirmDecision>): void => {
+    if (event.detail.token !== this._dangerConfirm?.token) return;
+    // Release modal authority before the accepted decision resumes its owner
+    // (which may focus a validation warning or open the next dialog).
+    void (event.currentTarget as HTMLElement).querySelector<HpDialog>('hp-dialog')?.beginExit();
     this._dangerConfirmController.resolve(event.detail.token, event.detail.accepted);
   };
   private _onboardingShown = false; // the auto space dialog is shown once per session
@@ -10669,7 +10678,7 @@ export class HouseplanCard extends LitElement {
   /** One stable Lit template site lets a nested `noChange` retain the body
    * while the independent confirmation child is removed during a warm gate. */
   private _renderRoot(body: TemplateResult | typeof noChange): TemplateResult {
-    return html`${body}${this._viewRuntimes.render()}${this._renderVersionBanner()}${dialogPresence(this._renderDangerConfirm(), this._syncDangerConfirmLocaleGate() !== 'warm' && !this._dangerConfirmMissingSpace())}`;
+    return html`${body}${this._viewRuntimes.render()}${this._renderVersionBanner()}${dialogPresence(this._renderDangerConfirm(), this._dangerConfirmAnimateExit)}`;
   }
 
   protected render(): TemplateResult | typeof nothing | typeof noChange {

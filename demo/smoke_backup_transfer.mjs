@@ -100,6 +100,7 @@ const result = await page.evaluate(async () => {
     confirmMissing: false, busy: false, error: '',
   };
   await card.updateComplete;
+  await window.__hpTest.settled();
   const planOnlyPreview = {
     visible: root().querySelector('.backupplanonlystatus')?.textContent
       === card._t('backup.plan_only_preview'),

@@ -91,9 +91,18 @@ export function installHpTest(selectors) {
   const settled = async () => {
     const c = card();
     if (c?.updateComplete) await c.updateComplete;
+    // An accepted close intentionally retains inert presentation until its
+    // bounded exit terminal. "Settled" includes that terminal, not just Lit's
+    // state update; tests must not act through an old modal still animating.
+    await waitFor('settled', () => !deepAll(rootOf(c), 'hp-dialog[inert]').length,
+      () => 'принятое закрытие диалога не завершилось', 1500);
     await frame();
     await frame();
     if (c?.updateComplete) await c.updateComplete;
+    // An async Save can retire its owner during the frames above.
+    await waitFor('settled', () => !deepAll(rootOf(c), 'hp-dialog[inert]').length,
+      () => 'принятое закрытие диалога не завершилось', 1500);
+    await frame();
   };
   const waitFor = async (op, predicate, describe, ms = WAIT_MS) => {
     const deadline = performance.now() + ms;

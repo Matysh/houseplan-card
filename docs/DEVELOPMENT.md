@@ -23,6 +23,14 @@ not product mutations or reasons to rerun unrelated golden/full suites.
 whether Close/Save succeeds. Never retain write authority or replace global
 DOM removal to animate a dialog. `dialog-return-focus.ts` marks only the actual
 return button; the next real input restores ordinary keyboard focus styling.
+Accepted native confirmations release their modal authority immediately and
+retain only a non-interactive top-layer popover for the exit paint. Their token
+is retired before the action resumes; forced context cancellation removes the
+presentation immediately. Unsupported Popover API falls back to the bounded
+modal exit. A rejected parent's field focus follows the child exit terminal.
+The test facade's `settled()` includes retained exits; it never hides a missing
+terminal or clicks an inert shell. Other cards/reloaded documents need their
+own facade or an explicit terminal wait.
 Secondary controls reuse `settings-action.styles.ts`. Descendant pseudo-group
 selectors in tagged CSS use `*:is(...)`: the current minifier otherwise removes
 the significant space before a bare `:is(...)`.
@@ -41,9 +49,11 @@ only synthetic fixtures and locally generated synthetic comparisons are used.
 
 Under the owner's standing minor-size allowance the lazy-editor ceiling moves
 318054 →320340 B gzip (+2286 B,0.72%); its2000 B band stays unchanged.
-The measured raw bundle baseline moves3247518 →3263925 B (+16407 B,0.51%).
+The measured raw bundle baseline moves3247518 →3266117 B (+18599 B,0.57%),
+including2192 B after the first976 build for bounded row menus and releasing
+native modal authority while retaining exit paint; its2000 B band is unchanged.
 Shared forms, locales and bounded accepted-close behavior account for the cost;
-no startup/performance improvement is claimed. Initial View331663 B remains
+no startup/performance improvement is claimed. Initial View331933 B remains
 under its unchanged330000+2000 rolling ceiling and352000 B absolute wall.
 All other monolith metrics and bands remain unchanged.
 

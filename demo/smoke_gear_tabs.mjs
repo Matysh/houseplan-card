@@ -24,7 +24,7 @@ const res = await page.evaluate(async () => {
   icon.click(); await c.updateComplete;
   out.dialogOpens = !!c._spaceDialog;
   out.tabNotSwitched = c._space === cur;
-  c._spaceDialog = null; await c.updateComplete;
+  c._spaceDialog = null; await window.__hpTest.settled();
   // «+» — навигационное действие, а не инструмент редактора плана
   // (владелец 2026-08-04): кнопка есть во ВСЕХ режимах и кликабельна.
   const addBtn = () => sr().querySelector('.tab.tabadd');
@@ -46,7 +46,7 @@ const res = await page.evaluate(async () => {
   const b0 = addBtn();
   if (b0) { b0.click(); await c.updateComplete; }
   out.addOpensCreate = !!c._spaceDialog && c._spaceDialog.mode === 'create';
-  c._spaceDialog = null; await c.updateComplete;
+  c._spaceDialog = null; await window.__hpTest.settled();
   return out;
 });
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)

@@ -14,7 +14,9 @@
   close smoothly without a return-focus flash; failed operations retain drafts.
   Background Delete activates with one click after a tool palette. Invalidated
   confirmations disappear immediately rather than retaining stale decisions.
-  Device row actions stay reachable above the footer on small screens. (#976)
+  Device row actions stay reachable above the footer on small screens; feedback
+  message and JSON fields retain their intended height. Closing confirmations
+  no longer trap the next form's focus or validation warning. (#976)
 
 - Allow immediate ZIP-import retry after closing or cancelling its preview,
   including cancellation before the server reply is received. A failed ZIP

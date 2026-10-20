@@ -119,6 +119,7 @@ const result = await page.evaluate(async () => {
   card._settingsDialog = null;
   card.requestUpdate();
   await card.updateComplete;
+  await window.__hpTest.settled();
   out.settingsDisconnectClearsTimer = !settings.isConnected && settings._staleTimer === undefined;
 
   const frame = () => new Promise((resolve) => requestAnimationFrame(() =>
