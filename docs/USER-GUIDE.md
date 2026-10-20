@@ -575,6 +575,21 @@ form never saves it automatically.
 
 <!-- docs-section: input -->
 
+### Why a device reports an alarm
+
+The existing device info card lists all active alarm sources at the top: their
+names, reasons and Home Assistant states. Source details show the entity id,
+raw state and device class. Open source in Home Assistant opens that exact
+entity; it does not reset the alarm or change a device. Ordinary users and kiosk
+users can read these details with keyboard or touch. Device settings show the
+same actual reasons in the display preview.
+
+Verified Home Connect Local machine-care and filter-cleaning reminders appear
+as maintenance, with a passive yellow wrench to the left of the marker. They do
+not trigger red alarm pulsing while an appliance is off. Actual faults retain
+red priority; the card lists both groups when they coexist. Static display modes
+keep their neutral face while the card still explains current causes.
+
 ## 6. Navigation, zoom and input
 
 The canvas is effectively infinite: objects may be drawn outside the original

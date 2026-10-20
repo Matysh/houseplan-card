@@ -77,6 +77,33 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'device-maintenance-promoted-to-alarm-972',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-issues.test.mjs',
+    because: '#972 AC1: the supplied off/ready fixture must remain a maintenance warning, without red alarm or work pulse.',
+    patches: [{ file: 'src/device-issues.ts',
+      find: "if (reason) return { severity: 'maintenance', reason };",
+      replace: "if (reason) return { severity: 'alarm', reason };",
+    }],
+  },
+  {
+    id: 'device-issue-warning-intercepts-pointer-972',
+    guard: 'node demo/smoke_device_issue_reasons.mjs',
+    because: '#972 AC6: the passive service wrench cannot enlarge the actionable marker area.',
+    patches: [{ file: 'src/styles/devices.styles.ts',
+      find: 'color:#F0A00C; pointer-events:none;',
+      replace: 'color:#F0A00C; pointer-events:auto;',
+    }],
+  },
+  {
+    id: 'device-issue-opens-wrong-source-972',
+    guard: 'node demo/smoke_device_issue_reasons.mjs',
+    because: '#972 AC4: keyboard and touch navigation open the exact diagnostic source, with no service call.',
+    patches: [{ file: 'src/device-issues-view.ts',
+      find: '@click=${() => openSource(issue.eid)}',
+      replace: "@click=${() => openSource('switch.appliance_power')}",
+    }],
+  },
+  {
     id:'ecovacs-svg-resource-limit-939',
     guard:'node scripts/backend-test-guard.mjs resource_limits tests_backend/test_vacuum_ecovacs.py',
     because:'#939 AC5: the real over-limit payload must be rejected as limited before XML parsing; no temporary test limit is allowed.',

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 972,
+  "baseStable": "v1.81.0",
+  "category": "stable-fix",
+  "rationale": "v1.81.0 already treats all active problem binaries as alarms and hides diagnostic siblings from the ordinary info rows. This repairs that existing service/alarm confusion and makes current alarm causes visible; it is not limited to an intermediate beta regression.",
+  "summary": {
+    "ru": "Причины тревог видны в карточке устройства; напоминания об обслуживании Home Connect больше не вызывают красную пульсацию.",
+    "en": "Device cards explain alarm causes; Home Connect service reminders no longer trigger red alarm pulsing."
+  }
+}

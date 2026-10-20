@@ -1,4 +1,5 @@
 import { makeLargeHouseFixture } from '../fixtures/large-house.mjs';
+import { makeDeviceIssuesFixture } from '../fixtures/device-issues.mjs';
 import { makeDeviceContactsFixture, prepareDeviceContacts } from './device-contacts.mjs';
 import { fixtureWallKey, makeVisualMatrixFixture } from '../fixtures/visual-matrix.mjs';
 import { readFileSync } from 'node:fs';
@@ -46,7 +47,18 @@ const wallUnionIsolationFixture = JSON.parse(readFileSync(
 const cardVersion = '0.0.0-golden';
 const VERSION_RELOAD_ATTEMPT_KEY = 'houseplan-card:version-reload-target:v1';
 
-const fixtureFor = (scenario) => scenario.deviceContacts ? makeDeviceContactsFixture()
+const fixtureFor = (scenario) => scenario.deviceIssues ? (() => {
+  const fixture = makeVisualMatrixFixture(), sample = makeDeviceIssuesFixture();
+  fixture.devices = sample.devices; fixture.entities = sample.entities; fixture.states = sample.states;
+  fixture.devices.appliance.area_id = 'golden_light_left';
+  fixture.config.markers = [{ id: 'appliance', binding: 'device:appliance',
+    space: 'golden-lighting', display: 'icon_ripple', tap_action: 'info' }];
+  fixture.layout = { appliance: { s: 'golden-lighting', x: .3, y: .5 } };
+  if (scenario.deviceIssues === 'alarm') {
+    fixture.states['binary_sensor.appliance_aquastop_occurred'].state = 'on';
+  }
+  return fixture;
+})() : scenario.deviceContacts ? makeDeviceContactsFixture()
   : scenario.batteryBoard ? makeBatteryBoardFixture(scenario.batteryBoard)
   : scenario.batteryZigbeeOverlap ? makeBatteryZigbeeFixture()
   : scenario.fixture === 'large'
@@ -2573,6 +2585,21 @@ export async function prepareGoldenScenario(page, scenario) {
     }, scenario.hoverStair);
     if (!point) throw new Error(`golden hover stair missing: ${scenario.hoverStair}`);
     await page.mouse.move(point.x, point.y);
+  }
+  if (scenario.deviceIssues) {
+    const alarm = scenario.deviceIssues === 'alarm';
+    const face = page.locator('[data-hp="device"][data-id="appliance"]');
+    const warningCount = await face.locator('.device-maintenance').count();
+    const alarmCount = await face.locator('.device-pulse.alarm').count();
+    if (warningCount !== (alarm ? 0 : 1) || alarmCount !== (alarm ? 1 : 0)) {
+      throw new Error('golden maintenance/alarm priority is incorrect');
+    }
+  }
+  if (scenario.dialog === 'device-issues') {
+    await page.locator('[data-hp="device"][data-id="appliance"]').click();
+    await page.locator('hp-dialog[data-kind="info"] .device-issue').first().waitFor();
+    const count = await page.locator('hp-dialog[data-kind="info"] .device-issue').count();
+    if (count !== (scenario.deviceIssues === 'alarm' ? 2 : 1)) throw new Error('golden device issue explanation missing');
   }
   if (scenario.batteryBoard) result.batteryBoard = await prepareBatteryBoard(page, scenario);
   if (scenario.deviceContacts) result.deviceContacts = await prepareDeviceContacts(page);

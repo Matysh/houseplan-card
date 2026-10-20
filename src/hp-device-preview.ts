@@ -1,3 +1,4 @@
+import { renderDeviceIssues } from './device-issues-view';
 /** Live, read-only device display preview used by the marker editor. */
 import { LitElement, css, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import { cardStyles } from './styles';
@@ -229,7 +230,7 @@ class HpDevicePreview extends LitElement {
       const lqiBottom = shown.scale * (shown.valueBadge?.position === 'bottom' ? 1.55 : 0.95);
       bottom = Math.max(bottom, lqiBottom);
     }
-    if (shown.battery) {
+    if (shown.battery || shown.maintenance) {
       // Reserve a conservative full capsule, including uncapped long Text and
       // the old second metric. CSS does the exact placement; this is only the
       // preview camera's safe extent, never marker layout or a DOM measurement.
@@ -265,12 +266,14 @@ class HpDevicePreview extends LitElement {
       const shellTop = shown.valueBadge?.position === 'top' ? core - shellHeight
         : shown.valueBadge?.position === 'bottom' ? 0 : (core - shellHeight) / 2;
       const inset = core * .134375;
-      const bounds = withDeviceBatteryBounds({
+      const shellBounds = {
         left: shellLeft - core / 2 - inset,
         right: shellLeft + shellWidth - core / 2 + inset,
         top: shellTop - core / 2 - inset,
         bottom: shellTop + shellHeight - core / 2 + inset,
-      }, core * 1.26875);
+      };
+      const bounds = shown.battery ? withDeviceBatteryBounds(shellBounds, core * 1.26875) : shellBounds;
+      if (shown.maintenance) bounds.left = Math.min(bounds.left, shellBounds.left - core * 1.26875 * .67 - 3);
       // Existing camera coordinates use 54px compatibility units.
       left = Math.min(left, bounds.left / 54);
       right = Math.max(right, bounds.right / 54);
@@ -301,6 +304,7 @@ class HpDevicePreview extends LitElement {
       this._providerSummary(providers),
       this._stateSummary(actual),
       result,
+      actual.maintenance ? this._t('device.issues.maintenance_a11y') : '',
       actual.valueFullText || '',
       valueBadgeTitle(actual.valueBadge),
       actual.lqiText != null && actual.lqiBand
@@ -338,6 +342,9 @@ class HpDevicePreview extends LitElement {
             ? html`<p class="previewnotice">${this._t('marker.preview.reduced_motion')}</p>` : nothing}
         </div>
       </div>
+      ${renderDeviceIssues(actual, key => this._t(key), eid => this.dispatchEvent(
+        new CustomEvent('hass-more-info', { detail: { entityId: eid }, bubbles: true, composed: true }),
+      ))}
       ${actual.visualSources.length || actual.criticalSources.length
         ? html`<div class="previewdetails">
             <div class="previewtable">

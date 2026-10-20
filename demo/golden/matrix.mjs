@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 78;
+export const GOLDEN_MATRIX_VERSION = 79;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -191,6 +191,7 @@ export const OPENING_SYMBOL_EXISTING_GOLDEN_IMPACT = Object.freeze([
   'backup-plan-only-export-desktop-en',
   'optimize-preflight-dialog-dark-en',
   'optimize-preflight-dialog-light-ru',
+
 ]);
 
 const decorLayerFixture = [
@@ -273,6 +274,7 @@ export const STAGE6_ACCEPTANCE_SCENARIOS = Object.freeze([
     hoverDevice: 'golden-light-two',
     theme: 'light', viewport: { width: 1000, height: 900 }, ...stage,
   },
+
 ]);
 
 const LED_STRIPS_OFF = Object.fromEntries(['light.demo_led_strip', 'light.demo_led_strip_wall', 'light.demo_led_strip_corner', 'light.demo_led_strip_loop'].map((id) => [id, { state: 'off' }]));
@@ -1406,4 +1408,13 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'iso-led-strip-dark', fixture: 'visual', ledStrips: true, space: 'golden-led',
     mode: 'view', projection: 'iso', fillMode: 'none', language: 'en', theme: 'dark',
     viewport: { width: 1000, height: 760 }, ...stage },
+  ...['maintenance', 'alarm'].flatMap(deviceIssues => [
+    { id: `device-issues-${deviceIssues}-plan`, deviceIssues, fixture: 'visual',
+      space: 'golden-lighting', mode: 'view', language: 'ru', theme: 'dark',
+      viewport: { width: 900, height: 700 }, ...stage },
+    { id: `device-issues-${deviceIssues}-card`, deviceIssues, fixture: 'visual',
+      space: 'golden-lighting', mode: 'view', dialog: 'device-issues', language: 'ru', theme: 'dark',
+      viewport: { width: 900, height: 700 }, ...page },
+  ]),
+
 ]);

@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Device issue explanations (#972) distinguish the three verified Home Connect
+Local maintenance reminders from safety alarms. A passive yellow wrench and
+read-only source groups explain current causes in the info card and preview,
+including diagnostic siblings. Static marker appearance and existing actions stay
+under their display policies; the new diagnostic data is runtime-only.
+
 Vacuum generation witness (#974) rejects a nonduplicate, newer native snapshot
 for a foreign generation and protects a replacement run after delete/recreate,
 both live and after JSON restoration. The same snapshot with the current

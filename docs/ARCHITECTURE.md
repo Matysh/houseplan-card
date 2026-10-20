@@ -777,6 +777,14 @@ complete height chain and clip at the external slot instead (Key decision 1).
 
 ## Device markers
 
+`device-issues.ts` (#972) is the shared pure severity boundary for visual samples
+and the presentation’s complete current cause list. Only exact, integration-owned
+Home Connect maintenance keys lower a problem signal. `device-issues-view.ts`
+renders the same read-only groups in the info card and preview, while the shared
+face paints a passive service wrench. Captures freeze source values and registry
+metadata; static icon cards resolve detail only when opened. No persisted schema
+or new HA subscription is involved.
+
 `device-contact-{geometry,scene,snap,walls,collision,floor}` (#866) derive
 opening-aware physical contacts, a spatial index, connected components and a
 rounded union contour. A gesture moves one indexed marker and repaints only

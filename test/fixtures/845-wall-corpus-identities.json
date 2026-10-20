@@ -207,6 +207,10 @@
       "configs": 0
     },
     {
+      "file": "demo/fixtures/device-issues.mjs",
+      "configs": 0
+    },
+    {
       "file": "demo/fixtures/large-house.mjs",
       "configs": 1
     },

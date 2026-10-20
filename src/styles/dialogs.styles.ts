@@ -673,4 +673,25 @@ export const dialogsStyles = css`
         padding: var(--sp-4) var(--sp-5);
       }
     }
+
+  .device-issue-groups { display:grid; gap:12px; margin-bottom:16px; }
+  .device-issues { color:var(--primary-text-color); border:1px solid var(--divider-color);
+    border-left:4px solid #F0A00C; border-radius:10px; padding:12px; min-width:0; }
+  .device-issues.alarm { border-left-color:#F0410C; }
+  .device-issues h3 { display:flex; align-items:center; gap:8px; margin:0 0 10px; font-size:15px; }
+  .device-issues h3 ha-icon { color:#F0A00C; --mdc-icon-size:22px; flex:none; }
+  .device-issues.alarm h3 ha-icon { color:#F0410C; }
+  .device-issue { padding:8px 0; overflow-wrap:anywhere; }
+  .device-issue + .device-issue { border-top:1px solid var(--divider-color); }
+  .device-issue p { margin:4px 0; font-size:14px; }
+  .device-issue-state { font-size:13px; color:var(--secondary-text-color); }
+  .device-issue summary { min-height:44px; display:flex; align-items:center; cursor:pointer; font-size:13px; }
+  .device-issue summary::before { content:'▸'; margin-right:8px; }
+  .device-issue details[open] summary::before { content:'▾'; }
+  .device-issue code { display:block; font-size:12px; white-space:pre-wrap; margin:4px 0; }
+  .device-issue button { display:flex; align-items:center; gap:8px; min-height:44px; max-width:100%;
+    padding:8px 10px; border:1px solid var(--divider-color); border-radius:8px; cursor:pointer;
+    font:inherit; color:var(--primary-text-color); background:var(--card-background-color); text-align:left; }
+  .device-issue button:focus-visible, .device-issue summary:focus-visible { outline:2px solid var(--primary-color); }
+  .device-issue button ha-icon { flex:none; --mdc-icon-size:18px; }
 `;

@@ -1,5 +1,31 @@
 # Отображение маркера устройства: таблица решений
 
+## Current alarm and service reasons (#972)
+
+`ResolvedDevicePresentation.issues` is a runtime-only, entity-deduplicated list of
+active sources (source id/name, raw and HA-formatted state, device class, integration,
+severity and reason key). It includes actual visual sources and owned diagnostic
+siblings, without making ordinary configuration rows actionable. Clearing or
+unavailability removes the cause; hidden, disabled and orphaned markers cannot
+revive stale issues. The accepted immutable frame owns this list, including
+incremental updates and registry changes. Static icons retain the closed-card
+source fast path; opening their info card resolves details against that frame.
+
+All existing safety classes, sirens and triggered panels remain alarms. The only
+maintenance override is an active problem binary from `homeconnect_ws` with
+`binary_sensor_machinecarereminder`,
+`binary_sensor_machinecareandfiltercleaningreminder` or
+`binary_sensor_smartfiltercleaningreminder` as its exact translation key. When that
+key is absent, the exact `-<key>` unique-id suffix is accepted on the same platform.
+Names, entity ids, diagnostic category and substrings are never service evidence.
+
+An alarm wins on the plan. Maintenance alone adds a passive yellow wrench to the
+left of the whole shell, without changing genuine working/open/presence effects.
+`live_states: false` still shows it; both static modes suppress it. The top of
+the existing info card and the actual preview group all current causes by severity,
+with technical details and an exact-source HA more-info button. They never clear,
+acknowledge or control a source. Unknown alarm causes receive an honest fallback.
+
 Этот документ — developer-facing канон для issue
 [#267](https://github.com/Matysh/houseplan-card/issues/267). Пользовательские
 названия и обещания остаются в [USER-GUIDE.ru.md](USER-GUIDE.ru.md#12-визуальные-состояния-устройств);

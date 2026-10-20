@@ -1,3 +1,4 @@
+import { renderDeviceIssues } from './device-issues-view';
 /**
  * House Plan Card — an interactive house plan as a native Lovelace card.
  * Configuration sources:
@@ -11941,6 +11942,7 @@ export class HouseplanCard extends LitElement {
         ? this._t((`marker.state_a11y_${a11yState}`) as I18nKey) : '',
       presentation.pulse.kind !== 'none'
         ? this._t((`marker.pulse_a11y_${presentation.pulse.reason}`) as I18nKey) : '',
+      presentation.maintenance ? this._t('device.issues.maintenance_a11y') : '',
       presentation.valueFullText || presentation.valueText || '',
       valueBadgeTitle(presentation.valueBadge),
       presentation.lqiText != null && presentation.lqiBand
@@ -12890,6 +12892,14 @@ export class HouseplanCard extends LitElement {
 
   private _renderInfoCard(): TemplateResult {
     const d = this._infoCard!;
+    const acceptedDevice = this._renderDevices.find(device => device.id === d.id) || d;
+    const face = this._devicePresentation(acceptedDevice);
+    // A static marker keeps its cheap neutral face; its open card resolves
+    // details lazily against the same accepted state and registry snapshot.
+    const presentation = face.display === 'static_icon'
+      ? presentDevice(this as never, this._renderPlanHass, acceptedDevice, false, {
+          sourceDetails: true, registryHass: this._renderPlanHass,
+        }) : face;
     const st = d.primary ? this.hass.states[d.primary] : undefined;
     const stateTxt = st ? hassValue(this.hass, d.primary)?.text ?? st.state : null;
     const radar = isMarkerRadarV1(d.marker?.radar) ? d.marker.radar : null;
@@ -12901,6 +12911,7 @@ export class HouseplanCard extends LitElement {
       .title=${d.name} .icon=${d.icon} wide
       dismiss-on-scrim @hp-close=${this._closeInfoCard}>
         <div class="body">
+          ${renderDeviceIssues(presentation, key => this._t(key), eid => this._openMoreInfo(eid))}
           ${(() => {
             // Field feedback: on a wall tablet this card is for CONTROLLING the
             // home; model/links/manuals are reference material and belong below.

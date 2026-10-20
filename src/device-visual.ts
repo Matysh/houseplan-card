@@ -6,7 +6,7 @@
  * entities and combines them; transition timing stays in the card because it
  * needs the previous hass snapshot and repaint timers.
  */
-import { isAlarmState } from './logic';
+import { classifyDeviceIssue } from './device-issues';
 
 export type DeviceAvailability = 'available' | 'unavailable';
 export type DeviceStatus = 'neutral' | 'open' | 'working' | 'alarm';
@@ -197,7 +197,7 @@ export function entityVisualSample(hass: any, eid: string): EntityVisualSample {
   };
   if (base.availability === 'unavailable') return base;
 
-  if (isAlarmState(domain, dc, state)) {
+  if (classifyDeviceIssue(eid, state, dc, hass?.entities?.[eid])?.severity === 'alarm') {
     return { ...base, status: 'alarm' };
   }
 

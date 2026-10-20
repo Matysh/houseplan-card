@@ -1,5 +1,28 @@
 # Development and deployment
 
+## Device issue explanations (#972)
+
+`device-issues.ts` classifies active HA alarm-capable states. Only `homeconnect_ws`
+problem binaries with one of the three exact pinned Home Connect Local 1.12.5
+service translation keys are maintenance; an exact unique-id suffix is used only
+when no translation key exists. Unknown metadata retains alarm severity.
+`device-presentation` captures all current visual and critical sibling causes once;
+`device-issues-view` shares the read-only groups between the info card and preview.
+Static icon info resolves details lazily from the accepted snapshot. The passive
+yellow wrench is left of the complete shell, outside value, battery and LQI badges.
+No fields, polling, acknowledgement or service calls are added.
+
+Witnesses: `node --test test/device-issues.test.mjs`,
+`node demo/smoke_device_issue_reasons.mjs`; four `device-issues-*` golden scenes.
+The 55-state fixture anonymizes entity names; registry metadata is reconstructed
+from upstream commit `a950e5438d479df3b97582edb8901adf10ad8726`, not captured HA metadata.
+The initial View rolling ceiling moves 327895 → 330000 B gzip under the owner’s
+standing size permission: measured current graph 330002 B, 2107 B above the old
+ceiling. Its 2000 B band and absolute 352000 B wall remain. This is a size
+allowance for explanations/locales, with no loading speed improvement claimed.
+The raw bundle metric baseline moves 3231572 → 3241135 B (+9563 B, 0.30%);
+all delegate/port/harness metrics stay equal. Its 2000 B band stays enabled.
+
 ## Vacuum generation witness (#974)
 
 The `full_snapshot_book_lifecycle` backend guard must reject a foreign generation

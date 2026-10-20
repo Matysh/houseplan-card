@@ -150,6 +150,9 @@ export function renderDeviceFace(
         <ha-icon class="device-battery-icon"
           icon=${DEVICE_BATTERY_ICONS[presentation.battery.state]}></ha-icon>
       </span>` : nothing}
+      ${presentation.maintenance ? html`<span class="device-maintenance" aria-hidden="true">
+        <ha-icon icon="mdi:wrench-outline"></ha-icon>
+      </span>` : nothing}
     </span>
     ${presentation.lqiText != null
       ? html`<span class="${lqiClassName(presentation.valueBadge)}${presentation.lqiBand ? ` band-${presentation.lqiBand}` : ''}"

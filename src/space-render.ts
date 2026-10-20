@@ -649,6 +649,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       t(o.lang, (`marker.state_a11y_${a11yState}`) as any),
       presentation.pulse.kind !== 'none'
         ? t(o.lang, (`marker.pulse_a11y_${presentation.pulse.reason}`) as any) : '',
+      presentation.maintenance ? t(o.lang, 'device.issues.maintenance_a11y') : '',
       presentation.valueFullText || presentation.valueText || '',
       valueBadgeTitle(presentation.valueBadge),
       presentation.lqiText != null && presentation.lqiBand

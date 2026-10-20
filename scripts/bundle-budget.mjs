@@ -418,7 +418,9 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // chrome originally measured 326084 B gzip against 323767 (+2317).
 // Carry that approved delta onto #939's 325453 reference: 327770.
 // The 2000-B band and 352000-B hard budget stay put.
-export const INITIAL_VIEW_GZIP_CEILING = 327_895;
+// #972: owner-approved small increase for issue explanations and four locales.
+// Current measured initial View is 330002 B; keep the 2000 B band and absolute wall.
+export const INITIAL_VIEW_GZIP_CEILING = 330_000;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не

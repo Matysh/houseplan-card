@@ -38,6 +38,7 @@ import {
   DEVICE_PULSE_DEFAULT_SCALE, ordinaryDevicePulseColor, resolveDevicePulse, type ResolvedDevicePulse,
 } from './device-pulse';
 import { isManualVirtualLightMarker } from './virtual-light-state';
+import { classifyDeviceIssue, type ResolvedDeviceIssue } from './device-issues';
 import { PresentationLightFrame } from './presentation-light-frame';
 import {
   resolveDevicePresentationPolicy, resolvePresentationReason,
@@ -194,6 +195,9 @@ export interface ResolvedDevicePresentation {
   humText: string | null;
   valueBadge: ResolvedValueBadge | null;
   battery: ResolvedDeviceBattery | null;
+  /** Active causes from this same accepted frame, including diagnostic rows. */
+  issues: ResolvedDeviceIssue[];
+  maintenance: boolean;
   lqiText: string | null;
   /** System tooltip text ignores only the local plan-line opt-out. */
   lqiTipText: string | null;
@@ -222,12 +226,13 @@ export interface ResolvedPresentationSources {
   visualSources: ResolvedPresentationSource[];
   criticalSources: ResolvedPresentationSource[];
   samples: EntityVisualSample[];
+  issues: ResolvedDeviceIssue[];
 }
 
 const ACTIVITY_WINDOW_MS = 3300;
 const EMPTY_SOURCES: ResolvedPresentationSources = {
   sourceKind: 'none', decisionIds: ['source.skipped_static_fast_path'],
-  visualSources: [], criticalSources: [], samples: [],
+  visualSources: [], criticalSources: [], samples: [], issues: [],
 };
 
 function sourceName(hass: any, eid: string): string {
@@ -305,6 +310,8 @@ export function resolvePresentationSources(
   // User-hidden is a renderer concern. It must not erase the source graph used
   // by the design preview. HA-disabled devices already carry no active entities.
   const d = device.hidden && device.userHidden ? { ...device, hidden: false } : device;
+  const visualHass = registryHass === hass
+    ? hass : { ...hass, entities: registryHass?.entities || hass?.entities };
   let sourceKind: PresentationSourceKind = 'none';
   let visualSources: ResolvedPresentationSource[] = [];
   const decisionIds: string[] = [];
@@ -386,7 +393,7 @@ export function resolvePresentationSources(
   if (coverOwnsFace) {
     sourceKind = 'cover';
     decisionIds.push('source.cover');
-    visualSources = [sourceOf(hass, cover, 'cover')];
+    visualSources = [sourceOf(visualHass, cover, 'cover')];
   } else if (lights.length) {
     sourceKind = !manualVirtualFace && lights.some((source) => source.via === 'controls')
       ? 'controls' : 'light';
@@ -398,7 +405,7 @@ export function resolvePresentationSources(
     visualSources = lights.map((source) => {
       const role = source.via === 'controls' ? 'control'
         : source.via === 'forced' ? 'forced_light' : 'light';
-      if (!source.passive) return sourceOf(hass, source.eid, role);
+      if (!source.passive) return sourceOf(visualHass, source.eid, role);
       const state = source.on ? 'on' : 'off';
       return {
         eid: source.key,
@@ -429,8 +436,6 @@ export function resolvePresentationSources(
       // Registry metadata chooses the role, while the live hass snapshot owns
       // its state. Keep those authorities together for composite lifecycle
       // classification even during a frozen/partial registry projection.
-      const visualHass = registryHass === hass
-        ? hass : { ...registryHass, states: hass?.states || {} };
       const samples = entityVisualSamplesForDevice(visualHass, ids, d.entities);
       const hasLifecycle = ids.some((eid) => isApplianceLifecycleEntity(registryHass, eid));
       visualSources = samples.map((sample) => {
@@ -438,12 +443,12 @@ export function resolvePresentationSources(
           ? isDevicePowerSwitch(registryHass, sample.eid) ? 'power_gate'
             : isApplianceLifecycleEntity(registryHass, sample.eid) ? 'lifecycle' : 'device_role'
           : 'device_role';
-        return sourceOf(hass, sample.eid, role, sample);
+        return sourceOf(visualHass, sample.eid, role, sample);
       });
     } else if (d.primary) {
       sourceKind = 'primary';
       decisionIds.push('source.primary_fallback');
-      visualSources = [sourceOf(hass, d.primary, 'primary')];
+      visualSources = [sourceOf(visualHass, d.primary, 'primary')];
     } else {
       decisionIds.push('source.none');
     }
@@ -455,17 +460,31 @@ export function resolvePresentationSources(
 
   const criticalSources: ResolvedPresentationSource[] = [];
   for (const eid of d.entities || []) {
-    const sample = entityVisualSample(hass, eid);
+    const sample = entityVisualSample(visualHass, eid);
     if (sample.status !== 'alarm' || visualSources.some((source) => source.eid === eid)) continue;
-    criticalSources.push(sourceOf(hass, eid, 'critical', sample));
+    criticalSources.push(sourceOf(visualHass, eid, 'critical', sample));
   }
   if (criticalSources.length) decisionIds.push('source.critical_sibling');
+  const issues: ResolvedDeviceIssue[] = [];
+  const known = new Map([...visualSources, ...criticalSources].map(source => [source.eid, source]));
+  for (const eid of new Set([...known.keys(), ...d.entities])) {
+    if (eid.startsWith('marker:')) continue;
+    const st = hass?.states?.[eid];
+    const deviceClass = String(st?.attributes?.device_class || '').trim().toLowerCase();
+    const signal = classifyDeviceIssue(eid, st?.state, deviceClass, visualHass?.entities?.[eid]);
+    if (!signal) continue;
+    const source = known.get(eid) || sourceOf(visualHass, eid, 'device_role');
+    issues.push({ eid, name: source.name, state: source.state, stateText: source.stateText,
+      integrationDomain: source.integrationDomain, deviceClass, ...signal });
+  }
+  issues.sort((a, b) => a.eid.localeCompare(b.eid));
   return {
     sourceKind,
     decisionIds,
     visualSources,
     criticalSources,
     samples: [...visualSources, ...criticalSources].map((source) => source.sample),
+    issues,
   };
 }
 
@@ -900,6 +919,9 @@ export function resolveDevicePresentation(
     humText: hum == null ? null : String(hum),
     valueBadge,
     battery,
+    issues: effectiveHidden || haDisabled || orphaned ? [] : sources.issues,
+    maintenance: !neutralFace && !effectiveHidden && !policy.bindingUnavailable
+      && visual.status !== 'alarm' && sources.issues.some(issue => issue.severity === 'maintenance'),
     lqiText: !showMarkerSignalOf(d.marker) || lqi == null || valueBadge?.isLqi || value.source?.kind === 'derived_lqi'
       ? null : String(lqi),
     lqiTipText: lqi == null || valueBadge?.isLqi || value.source?.kind === 'derived_lqi' ? null : String(lqi),
