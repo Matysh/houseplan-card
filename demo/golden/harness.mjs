@@ -2589,6 +2589,10 @@ export async function prepareGoldenScenario(page, scenario) {
   if (scenario.deviceIssues) {
     const alarm = scenario.deviceIssues === 'alarm';
     const face = page.locator('[data-hp="device"][data-id="appliance"]');
+    if (!await face.locator('.device-core ha-icon').evaluate(icon =>
+      !!icon.shadowRoot?.querySelector('path')?.getAttribute('d'))) {
+      throw new Error('golden appliance icon has no painted path');
+    }
     const warningCount = await face.locator('.device-maintenance').count();
     const alarmCount = await face.locator('.device-pulse.alarm').count();
     if (warningCount !== (alarm ? 0 : 1) || alarmCount !== (alarm ? 1 : 0)) {

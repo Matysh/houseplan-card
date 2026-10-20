@@ -1410,10 +1410,10 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     viewport: { width: 1000, height: 760 }, ...stage },
   ...['maintenance', 'alarm'].flatMap(deviceIssues => [
     { id: `device-issues-${deviceIssues}-plan`, deviceIssues, fixture: 'visual',
-      space: 'golden-lighting', mode: 'view', language: 'ru', theme: 'dark',
+      space: 'golden-lighting', mode: 'view', iconSize: 5, language: 'ru', theme: 'dark',
       viewport: { width: 900, height: 700 }, ...stage },
     { id: `device-issues-${deviceIssues}-card`, deviceIssues, fixture: 'visual',
-      space: 'golden-lighting', mode: 'view', dialog: 'device-issues', language: 'ru', theme: 'dark',
+      space: 'golden-lighting', mode: 'view', iconSize: 5, dialog: 'device-issues', language: 'ru', theme: 'dark',
       viewport: { width: 900, height: 700 }, ...page },
   ]),
 
