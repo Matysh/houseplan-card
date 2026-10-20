@@ -248,6 +248,22 @@ try {
     await close(shell);
   });
 
+  await check('UI-009: last-row menu stays hit-testable above the footer at phone height', async () => {
+    await page.setViewportSize({ width:390, height:600 });
+    const bar = page.locator('[data-hp="toolbar"][data-kind="device"]');
+    await bar.locator('[data-tool="device-inbox"]').click();
+    const shell = dialog('device-inbox');
+    const menu = shell.locator('.device-inbox-menu').last();
+    await menu.locator('summary').scrollIntoViewIfNeeded();
+    await menu.locator('summary').click();
+    await expect.poll(() => menu.locator('.device-inbox-menu-items button').evaluateAll(elements => elements.every(element => {
+      const r = element.getBoundingClientRect();
+      return element.getRootNode().elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest('button') === element;
+    }))).toBe(true);
+    await close(shell);
+    await page.setViewportSize({ width:1280, height:900 });
+  });
+
   await check('UI-006: PDF download keeps options, emits one file and closes after success', async () => {
     await page.locator('[data-hp="editor-close"]').first().click();
     const shell = await open('pdf');

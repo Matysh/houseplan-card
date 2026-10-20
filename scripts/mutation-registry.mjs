@@ -86,6 +86,15 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'inbox-menu-forgets-footer-976',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-inbox-menu.test.mjs',
+    because: '#976 AC9: the menu is bounded by dialog chrome and the visual viewport, not the whole browser below its footer.',
+    patches: [{ file:'src/device-inbox-menu.ts',
+      find:'const bottom = Math.min(viewport.top + viewport.height, footer.top);',
+      replace:'const bottom = viewport.top + viewport.height;',
+    }],
+  },
+  {
     id: 'dialog-exit-stale-completion-976',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/dialog-exit.test.mjs',
     because: '#976 AC4: a cancelled old deadline must not finish the newly opened exit.',

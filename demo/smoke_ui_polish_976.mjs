@@ -77,6 +77,27 @@ try {
   }), [44, 44]);
   await shell('rules').locator('[data-hp="dialog-cancel"]').first().click();
   await expect(shell('rules')).toHaveCount(0);
+  await page.evaluate(async () => {
+    await window.__hpTest.setServerConfig(config => {
+      const source = config.markers.find(marker => marker.id === 'lamp');
+      config.markers.push(...Array.from({length:8}, (_, index) => ({...source,
+        id:`menu-${index}`, name:`Synthetic menu row ${index}`})));
+    });
+    await window.__hpTest.setLayout(layout => {
+      for (let i=0;i<8;i++) layout[`menu-${i}`]={s:'polish',x:.6+i*.03,y:.75};
+    });
+  });
+  await page.setViewportSize({ width:390, height:600 });
+  await page.locator('[data-tool="device-inbox"]').click();
+  const lastMenu = shell('device-inbox').locator('.device-inbox-menu').last();
+  await lastMenu.locator('summary').scrollIntoViewIfNeeded();
+  await lastMenu.locator('summary').click();
+  await expect.poll(() => lastMenu.locator('.device-inbox-menu-items button').evaluateAll(elements => elements.every(element => {
+    const r = element.getBoundingClientRect();
+    return element.getRootNode().elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest('button') === element;
+  }))).toBe(true);
+  await shell('device-inbox').locator('[data-hp="dialog-cancel"]').first().click();
+  await expect(shell('device-inbox')).toHaveCount(0);
   console.log('PASS #976 native: Help width/exit/return-focus, palette transitions, cursor and keyboard Rules');
 } finally {
   await finish(browser);

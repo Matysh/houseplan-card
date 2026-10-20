@@ -27,6 +27,12 @@ Secondary controls reuse `settings-action.styles.ts`. Descendant pseudo-group
 selectors in tagged CSS use `*:is(...)`: the current minifier otherwise removes
 the significant space before a bare `:is(...)`.
 
+Inbox row menus retain native details/buttons. On opening, the shared floating
+placement flips/shifts them inside the visible body between the dialog's own
+header and footer, intersected with the visual viewport. No HA-private scroller
+inspection or layout reads during render are needed; a last-row phone hit-test
+and pure viewport witness protect the boundary.
+
 Checks: `node --test test/dialog-exit.test.mjs test/editor-secondary.test.mjs`,
 `node demo/smoke_ui_polish_976.mjs` and the authentic-HA diagnostic documented
 in `demo/ui-lab/README.md`. Native/headless evidence is not a physical GPU claim.

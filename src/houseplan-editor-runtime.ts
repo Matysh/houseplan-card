@@ -16,6 +16,7 @@ import { wallThicknessSelection } from './wall-thickness-selection';
 import { PhysicalBodyGestureRuntime, type PhysicalBodyGesturePort } from './physical-body-gesture';
 import { BackdropFrameGestureRuntime, type BackdropPlan } from './backdrop-frame-gesture';
 import { displayVersion } from './card-version';
+import { positionInboxMenu } from './device-inbox-menu';
 import { entryBuildLabel } from './build-identity';
 import { finishWarmModeAdoption, resumeWarmMode, type WarmModeHost } from './warm-mode-adoption';
 import { deviceEditorAllowed } from './device-editor-access';
@@ -11177,7 +11178,7 @@ public _renderDeviceInbox(): TemplateResult {
                 ${primary}
                 ${row.canEdit || row.canHide || row.category === 'available'
                     || row.category === 'hidden' || this.host._bindingHasHaPage(row.binding) ? html`
-                  <details class="device-inbox-menu">
+                  <details class="device-inbox-menu" @toggle=${positionInboxMenu}>
                     <summary class="btn ghost" aria-label=${this.host._t('device_inbox.more_actions')}
                       title=${this.host._t('device_inbox.more_actions')}>
                       <ha-icon icon="mdi:dots-vertical"></ha-icon>
