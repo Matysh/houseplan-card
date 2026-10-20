@@ -6,6 +6,7 @@
 |---|---|---|---|---:|---:|---|---|
 | #974 | [CODE-REVIEW-974-r1.md](CODE-REVIEW-974-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #973 | [SPEC-REVIEW-973-r1.md](SPEC-REVIEW-973-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #972 | [SPEC-REVIEW-972-r1.md](SPEC-REVIEW-972-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #970 | [CODE-REVIEW-970-r1.md](CODE-REVIEW-970-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #969 | [CODE-REVIEW-969-r1.md](CODE-REVIEW-969-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | демонстрационный, не нагрузочный тест на "assertion survives cleanup" | `test/dev-build.test.mjs` `docs/process/REVIEWER.md` |
 | #968 | [CODE-REVIEW-968-r1.md](CODE-REVIEW-968-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
