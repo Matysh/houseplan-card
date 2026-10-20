@@ -59,14 +59,22 @@ const mount = async cfg => {
   await page.waitForFunction(() => window.__card?._booting === false && window.__card._space === 'topology');
   await page.evaluate(async () => { await window.__hpTest.setMode('plan'); await window.__hpTest.setTool('select'); });
   await page.waitForFunction(() => !window.__card._modeTransitionBusy && window.__card.renderRoot.querySelector('.hp-node-handle'));
+  await page.evaluate(() => window.__hpTest.settled());
 };
 const screen = p => page.evaluate(p => {
   const svg = window.__card.renderRoot.querySelector('svg.plan-svg'), q = svg.createSVGPoint();
   q.x = p[0] * 1000; q.y = p[1] * 1000; const out = q.matrixTransform(svg.getScreenCTM()); return { x: out.x, y: out.y };
 }, p);
 const drag = async (point, target) => {
-  const start = await screen(point), end = await screen(target);
-  await page.mouse.move(start.x, start.y); await page.mouse.down(); await page.mouse.move(end.x, end.y, { steps: 5 });
+  // A remounted card can finish its first layout after handles enter the DOM.
+  // Wait for this actual handle's stable, hittable box before the one native
+  // press; do not replay a missed gesture or relax any geometry/legacy oracle.
+  await page.locator(`houseplan-card .hp-node-handle[cx="${point[0] * 1000}"][cy="${point[1] * 1000}"]`).hover();
+  await page.mouse.down();
+  assert.equal(await page.evaluate(() => window.__card._editorRuntime.nodeMove.dragging), true,
+    'one native press captures the ready wall-node handle');
+  const end = await screen(target);
+  await page.mouse.move(end.x, end.y, { steps: 5 });
   await page.waitForFunction(() => window.__card._editorRuntime.nodeMove.preview !== null);
 };
 const idle = () => page.waitForFunction(() => !window.__card._editorRuntime.nodeMove.busy && !window.__card._editorRuntime.nodeMove.dragging);
