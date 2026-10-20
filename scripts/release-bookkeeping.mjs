@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { isMainModule } from './spawn-portable.mjs';
 import { MEMBERSHIP_FILE, verifyReleaseMembershipAgainstGit } from './release-membership.mjs';
+import { githubServerUrl } from './ci-proof.mjs';
+import { probeGreenWorkflow } from './release-gate.mjs';
 
 export const releaseCommentMarker = (tag) => `<!-- houseplan-release:${tag} -->`;
 
@@ -16,9 +18,12 @@ export function planIssueBookkeeping({ state, labels = [], comments = [] }, tag)
   };
 }
 
-export function finishManifestIssues({ manifest, tag, url, ops }) {
+export function finishManifestIssues({ manifest, repo, tag, url, ciUrl, ops }) {
+  if (!repo || !ciUrl) throw new Error('closing comments require repo and verified exact-SHA CI URL');
   const marker = releaseCommentMarker(tag);
-  const body = `Выпущено в \`${tag}\` · [релиз](${url})\n\n${marker}`;
+  const changelog = `${githubServerUrl()}/${repo}/blob/${encodeURIComponent(tag)}/docs/`;
+  const body = `Выпущено в \`${tag}\` · [релиз](${url}) · [CI точного кандидата](${ciUrl})\n\n`
+    + `[Changelog RU](${changelog}CHANGELOG.ru.md) · [Changelog EN](${changelog}CHANGELOG.md)\n\n${marker}`;
   for (const { number } of manifest.issues) {
     const action = planIssueBookkeeping(ops.load(number), tag);
     if (action.comment) ops.comment(number, body);
@@ -31,6 +36,17 @@ export function finishManifestIssues({ manifest, tag, url, ops }) {
       throw new Error(`bookkeeping for #${number} is incomplete after the attempted repair`);
     }
   }
+}
+
+/** Both publishers resolve the full release proof here, never a caller-supplied CI link. */
+export async function finishVerifiedManifestIssues({
+  manifest, repo, tag, candidate, url, token, ops, probe = probeGreenWorkflow,
+}) {
+  const verdict = await probe({ repo, sha: candidate, token });
+  if (verdict.status !== 'green' || !verdict.url) {
+    throw new Error(`Exact-SHA Validate proof is ${verdict.status} for ${candidate}: ${verdict.note}`);
+  }
+  finishManifestIssues({ manifest, repo, tag, url, ciUrl: verdict.url, ops });
 }
 
 const parseArgs = (args) => {
@@ -79,8 +95,8 @@ if (isMainModule(import.meta.url)) {
         comments: pages.flat().map((comment) => comment.body || ''),
       };
     };
-    finishManifestIssues({
-      manifest, tag, url,
+    await finishVerifiedManifestIssues({
+      manifest, repo, tag, candidate, url, token: run(['auth', 'token']),
       ops: {
         load,
         comment: (number, body) => run([

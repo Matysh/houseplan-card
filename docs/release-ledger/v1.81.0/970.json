@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 970,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Bring automatic beta issue-closing comments into line with PROCESS by linking the selected verified exact-candidate full CI and tag-pinned bilingual changelogs. Release bookkeeping only; no application behavior changes."
+}

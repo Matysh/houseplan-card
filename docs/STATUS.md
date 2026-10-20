@@ -25,6 +25,11 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Beta closing comments (#970) include the selected exact-candidate full CI proof
+and tag-pinned RU/EN changelogs through the shared bookkeeping entry point.
+Proof refusal happens before issue operations; immutable membership, public
+asset verification and the per-tag retry marker keep their existing authority.
+
 Ecovacs (#939) reads a bounded, recognized official SVG through HA's public
 image API. Server-only numeric decoding feeds the existing recorder even with
 no open card; a writer-only sanitized PNG preview enables manual fit without

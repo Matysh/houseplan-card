@@ -3159,6 +3159,15 @@ to the tagged candidate: stale assets are repaired, while a hidden per-release
 comment marker, manifest membership and postcondition check make comment,
 status-label removal and close individually repeatable (#547). ZIP inspection
 is implemented in Node and does not depend on the host's `tar`/`unzip` variant.
+Both publishers use `release-bookkeeping.mjs` for closing comments (#970).
+After public asset and HACS verification, it probes the existing full release
+CI policy again for the manifest's exact candidate before any issue operation.
+The comment links the selected green Validate proof, the release and both
+technical changelogs pinned to the release tag (`GITHUB_SERVER_URL` supplies
+the GitHub host). Missing, light-only, foreign or red proof refuses bookkeeping;
+the latest compatible full run still decides. The per-tag marker remains the
+idempotency key: retries repair labels/close without another comment, and
+already marked historical comments are not rewritten.
 A per-tag local lock and GitHub workflow
 concurrency reject parallel runs; the local lock is removed on normal exit and
 on handled `SIGHUP`/`SIGINT`/`SIGTERM` interruption (`SIGKILL` cannot be handled
