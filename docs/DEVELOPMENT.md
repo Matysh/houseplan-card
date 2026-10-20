@@ -67,6 +67,13 @@ minor-size allowance its rolling ceiling moves330000 →332018 B, while the
 the input-correctness fix; it is not a loading-speed improvement.
 All other monolith metrics and bands remain unchanged.
 
+Rebase on #977 (`dev`782c3d3cf) retains both features. The combined build measures
+Initial View333689 B gzip and lazy editor322218 B gzip, inside the ceilings/bands
+above. The upstream raw baseline3267000 B becomes3285837 B (+18837 B,0.58%)
+under the same minor-size allowance; the2000 B band and other metrics stay.
+This is measured merged-source cost, not a performance improvement or a reason
+to discard either task's accepted behavior.
+
 ## Device issue explanations (#972)
 
 `device-issues.ts` classifies active HA alarm-capable states. Only `homeconnect_ws`
