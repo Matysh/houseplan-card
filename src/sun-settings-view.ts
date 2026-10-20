@@ -11,7 +11,6 @@ export function renderSunRayOriginSegment(
   value: SunRayOrigin,
   translate: (key: I18nKey) => string,
   changed: (value: SunRayOrigin) => void,
-  selectedLabel = '',
 ): TemplateResult {
   return field({
     label: translate('gs.sun_ray_origin'),
@@ -29,7 +28,7 @@ export function renderSunRayOriginSegment(
           ${svg`<circle cx="64" cy=${origin === 'outer' ? 40 : 68} r="3.5" fill="var(--primary-color)" />
             <circle cx="104" cy=${origin === 'outer' ? 40 : 68} r="3.5" fill="var(--primary-color)" />`}
         </svg>
-        <figcaption>${translate(`gs.sun_ray_origin.${origin}`)}${origin === value && selectedLabel ? html` · ${selectedLabel}` : ''}</figcaption>
+        <figcaption>${translate(`gs.sun_ray_origin.${origin}`)}</figcaption>
       </figure></label>`)}</div>`,
   });
 }

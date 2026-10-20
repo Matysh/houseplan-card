@@ -30,6 +30,11 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/dialog-presence.ts', 'src/dialog-exit.ts', 'src/dialog-return-focus.ts', 'src/hp-dialog.ts', 'src/editor-secondary.ts', 'src/styles/settings-dialogs.styles.ts'],
+    smokes: ['smoke_ui_polish_976.mjs'],
+    because: '#976: native public controls execute accepted-close/focus paint, tool intention and keyboard rule actions; the browser consumer does not import those product helpers.',
+  },
+  {
     files: ['src/toast-presentation.ts', 'src/styles/toast.styles.ts'],
     symbols: ['ToastPresentation', 'setToastOwner'],
     smokes: ['smoke_modal_toast_956.mjs'],

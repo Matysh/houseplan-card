@@ -9,7 +9,9 @@
 ## Principle
 
 The approved #963 chrome places the right-hand header actions in one wrapping
-pool, with three44px zoom targets and the compact summary settings half-gear.
+pool, with three44px zoom targets and joined44px summary controls. The composite
+settings glyph shows a complete gear and panel; active toggles use an accent
+border, transparent face and normal icon colour (#976).
 Space navigation and editor switches remain separate. Rooms contains Merge,
 Split, Resize and Delete; Background's Shapes contains Line, Rectangle and
 Ellipse before Text. Undo/Redo are named icon buttons immediately before Close

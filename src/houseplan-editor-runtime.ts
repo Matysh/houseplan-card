@@ -27,6 +27,7 @@ import {
   CELL_CM_MAX, CELL_CM_MIN, renderSpaceSettingsDialog,
 } from './editors/space-settings-dialog';
 import { renderGeneralSettingsDialog } from './editors/general-settings-dialog';
+import { ensureSettingsDialogStyles } from './editors/settings-styles';
 import { renderRoomSettingsDialog } from './editors/room-settings-dialog';
 import { isCo2Entity } from './room-co2';
 import { newSpaceDialogDraft, savedSpaceDialogDraft, spaceDialogSettings } from './editors/space-dialog-draft';
@@ -5067,13 +5068,14 @@ public _renderDecorBar(): TemplateResult {
       ['furniture', 'mdi:sofa-outline', 'decor.furniture'],
       ...(this.host._haDecorAssetsApi === DECOR_ASSETS_API_VERSION
         ? [['image', 'mdi:image-plus-outline', 'decor.image'] as const] : []),
-      ['erase', 'mdi:eraser', 'decor.erase'],
+      ['erase', 'mdi:trash-can-outline', 'decor.erase'],
     ] as const;
     return html`<div class="editbar decorbar" data-hp="toolbar" data-kind="decor">
       <div class="editbar-tools" tabindex="-1" ?inert=${this.host._modeTransitionBusy}>
       ${tools.map(
         ([t, ic, k]) => html`${t === 'text' ? this.host._editorToolbarGroups.map(group => this._renderEditorGroupLauncher(group)) : nothing}<button class="btn dtool ${this.host._decorTool === t ? 'on' : ''}" data-hp="tool" data-tool=${t}
           data-editor-palette=${t === 'furniture' || t === 'image' ? t : nothing}
+          ?data-editor-tool-intent=${t !== 'furniture' && t !== 'image'}
           @click=${() => this._activateDecorTool(t)}
           >
           <ha-icon icon=${ic}></ha-icon><span class="ml">${this.host._t(k)}</span>
@@ -5100,10 +5102,11 @@ public _renderDecorBar(): TemplateResult {
     </div>`;
   }
 public _renderDecorEraseConfirm(): TemplateResult {
+    ensureSettingsDialogStyles(this.host);
     const pending = this.host._decorEraseConfirm!;
-    const kind = this.host._t(`decor.${pending.kind}` as any);
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="confirm" .title=${this.host._t('decor.erase_confirm_title')}
-      icon="mdi:eraser" dismiss-on-scrim @hp-close=${() => (this.host._decorEraseConfirm = null)}>
+    const kind = this.host._t(`decor.${pending.kind}` as I18nKey);
+    return html`<hp-dialog .hass=${this.host.hass} class="ui-dialog" form-shell settings-layout compact wide data-kind="confirm" .title=${this.host._t('decor.erase_confirm_title')}
+      icon="mdi:trash-can-outline" dismiss-on-scrim @hp-close=${() => (this.host._decorEraseConfirm = null)}>
         <div class="body"><p>${this.host._t('confirm.erase_decor', { kind })}</p></div>
         <div class="row" slot="footer">
           <span class="spacer"></span>
@@ -5111,7 +5114,7 @@ public _renderDecorEraseConfirm(): TemplateResult {
             ${this.host._t('btn.cancel')}
           </button>
           <button class="btn danger" data-hp="dialog-confirm" @click=${() => this._confirmDecorErase()}>
-            <ha-icon icon="mdi:eraser"></ha-icon>${this.host._t('decor.erase')}
+            <ha-icon icon="mdi:trash-can-outline"></ha-icon>${this.host._t('decor.erase')}
           </button>
         </div>
     </hp-dialog>`;
@@ -8649,6 +8652,7 @@ private _supportMessageKeydown(event: KeyboardEvent): void {
   }
 
 public _renderSupportDialog(): TemplateResult {
+    ensureSettingsDialogStyles(this.host);
     const state = this.host._supportDialog!;
     const lang = langOf(this.host.hass, this.host._config?.language);
     const guideUrl = lang === 'ru'
@@ -8669,7 +8673,7 @@ public _renderSupportDialog(): TemplateResult {
     const contactInvalid = state.errorCode === 'validation.contact_too_long';
     const messageInvalid = state.errorCode === 'validation.message_required'
       || state.errorCode === 'validation.message_too_long';
-    return html`<hp-dialog id="support-dialog" .hass=${this.host.hass} data-kind="support"
+    return html`<hp-dialog id="support-dialog" class="ui-dialog" form-shell settings-layout .hass=${this.host.hass} data-kind="support"
       .title=${this.host._t('support.title')} icon="mdi:help-circle-outline" wide dismiss-on-scrim
       @hp-close=${() => void this._closeSupportDialog()}>
         <div class="body supportbody">
@@ -9460,6 +9464,7 @@ public async _saveRules(): Promise<void> {
   }
 
 public _renderRulesDialog(): TemplateResult {
+    ensureSettingsDialogStyles(this.host);
     const d = this.host._rulesDialog!;
     const compiled = compileIconRules(d.rules);
     const testIcon = d.test.trim() ? iconFor(d.test, '', compiled) : null;
@@ -9470,7 +9475,7 @@ public _renderRulesDialog(): TemplateResult {
       [r[i], r[j]] = [r[j], r[i]];
       this._rulesSet(r);
     };
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="rules" .title=${this.host._t('rules.title')}
+    return html`<hp-dialog .hass=${this.host.hass} class="ui-dialog rules-dialog" form-shell settings-layout data-kind="rules" .title=${this.host._t('rules.title')}
       icon="mdi:shape-plus-outline" wide @hp-close=${() => (this.host._rulesDialog = null)}>
         <div class="body">
           <div class="rhint">${this.host._t('rules.hint')}</div>
@@ -9500,12 +9505,12 @@ public _renderRulesDialog(): TemplateResult {
                   this._rulesSet(rules);
                 }} />
               <ha-icon class="rprev" icon=${r.icon || 'mdi:chip'}></ha-icon>
-              <ha-icon class="ract" icon="mdi:arrow-up" title=${this.host._t('btn.up')}
-                @click=${() => move(i, -1)}></ha-icon>
-              <ha-icon class="ract" icon="mdi:arrow-down" title=${this.host._t('btn.down')}
-                @click=${() => move(i, 1)}></ha-icon>
-              <ha-icon class="ract del" icon="mdi:close" title=${this.host._t('btn.delete')}
-                @click=${() => this._rulesSet(d.rules.filter((_, j) => j !== i))}></ha-icon>
+              <button type="button" class="btn ract" aria-label=${this.host._t('btn.up')}
+                @click=${() => move(i, -1)}><ha-icon icon="mdi:arrow-up"></ha-icon></button>
+              <button type="button" class="btn ract" aria-label=${this.host._t('btn.down')}
+                @click=${() => move(i, 1)}><ha-icon icon="mdi:arrow-down"></ha-icon></button>
+              <button type="button" class="btn ract del" aria-label=${this.host._t('btn.delete')}
+                @click=${() => this._rulesSet(d.rules.filter((_, j) => j !== i))}><ha-icon icon="mdi:close"></ha-icon></button>
             </div>`;
           })}
           <button class="btn ghost" @click=${() => this._rulesSet([...d.rules, { pattern: '', icon: '' }])}>
@@ -10774,18 +10779,18 @@ public _renderMarkupBar(): TemplateResult {
     return html`<div class="editbar planbar" data-hp="toolbar" data-kind="plan">
       <div class="editbar-tools" tabindex="-1" ?inert=${this.host._modeTransitionBusy}>
         <span class="wallsgroup">
-        <button class="btn ${this.host._tool === 'select' ? 'on' : ''}" data-hp="tool" data-tool="select"
+        <button class="btn ${this.host._tool === 'select' ? 'on' : ''}" data-hp="tool" data-tool="select" data-editor-tool-intent
           @click=${() => this._activateMarkupTool('select')}
           data-hp-tooltip=${this.host._t('title.markup_select')}>
           <ha-icon icon="mdi:cursor-default-outline"></ha-icon>${this.host._t('markup.select')}
         </button>
-        <button class="btn ${this.host._tool === 'draw' ? 'on' : ''}" data-hp="tool" data-tool="draw"
+        <button class="btn ${this.host._tool === 'draw' ? 'on' : ''}" data-hp="tool" data-tool="draw" data-editor-tool-intent
           aria-pressed=${this.host._tool === 'draw' ? 'true' : 'false'}
           @click=${() => this._activateMarkupTool('draw')}
           data-hp-tooltip=${this.host._t('title.markup_add')}>
           <ha-icon icon="mdi:vector-polyline-plus"></ha-icon>${this.host._t('markup.add')}
         </button>
-        <button class="btn ${this.host._tool === 'column' ? 'on' : ''}" data-hp="tool" data-tool="column"
+        <button class="btn ${this.host._tool === 'column' ? 'on' : ''}" data-hp="tool" data-tool="column" data-editor-tool-intent
           @click=${() => this._activateMarkupTool('column')}
           data-hp-tooltip=${this.host._t('title.markup_column')}>
           <ha-icon icon="mdi:vector-square"></ha-icon>${this.host._t('markup.column')}
@@ -10795,7 +10800,7 @@ public _renderMarkupBar(): TemplateResult {
 
 
       ${this.host._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
-      <button class="btn ${this.host._tool === 'wallthick' ? 'on' : ''}" data-hp="tool" data-tool="wall-thickness"
+      <button class="btn ${this.host._tool === 'wallthick' ? 'on' : ''}" data-hp="tool" data-tool="wall-thickness" data-editor-tool-intent
         @click=${() => this._activateMarkupTool('wallthick')}
         data-hp-tooltip=${this.host._t('title.markup_wallthick')}>
         <ha-icon icon="mdi:wall"></ha-icon>${this.host._t('markup.wallthick')}
@@ -10824,22 +10829,22 @@ public _renderDevicesBar(): TemplateResult {
       : this.host._t('history.redo_empty');
     return html`<div class="editbar devbar" data-hp="toolbar" data-kind="device">
       <div class="editbar-tools" tabindex="-1" ?inert=${this.host._modeTransitionBusy}>
-        <button class="btn" data-hp="tool" data-tool="add-device" @click=${() => this._openMarkerDialog()}
+        <button class="btn" data-hp="tool" data-tool="add-device" data-editor-tool-intent @click=${() => this._openMarkerDialog()}
           data-hp-tooltip=${this.host._t('title.add_device')}>
           <ha-icon icon="mdi:plus-box-outline"></ha-icon>${this.host._t('devbar.add')}
         </button>
         ${this.host._ledButton()}
-        <button class="btn ${this.host._deviceMagnets ? 'on' : ''}" data-hp="tool" data-tool="device-magnets"
+        <button class="btn ${this.host._deviceMagnets ? 'on' : ''}" data-hp="tool" data-tool="device-magnets" data-editor-tool-intent
           ?disabled=${!this.host._deviceContacts}
           aria-pressed=${this.host._deviceMagnets ? 'true' : 'false'} data-hp-tooltip=${toolsT(langOf(this.host.hass, this.host._config?.language), 'editor.device_magnets_help')}
           @click=${() => { this.host._deviceMagnets = !this.host._deviceMagnets; this.host.requestUpdate(); }}>
           <ha-icon icon="mdi:magnet"></ha-icon>${toolsT(langOf(this.host.hass, this.host._config?.language), 'editor.device_magnets')}
         </button>
-        <button class="btn ${this.host._showAll ? 'on' : ''}" data-hp="tool" data-tool="device-inbox" @click=${() => this._openDeviceInbox()}
+        <button class="btn ${this.host._showAll ? 'on' : ''}" data-hp="tool" data-tool="device-inbox" data-editor-tool-intent @click=${() => this._openDeviceInbox()}
           data-hp-tooltip=${this.host._t('device_inbox.title')}>
           <ha-icon icon="mdi:devices"></ha-icon>${this.host._t('device_inbox.button')}
         </button>
-        <button class="btn" data-hp="tool" data-tool="icon-rules" @click=${() => this._openRulesDialog()} data-hp-tooltip=${this.host._t('title.icon_rules')}>
+        <button class="btn" data-hp="tool" data-tool="icon-rules" data-editor-tool-intent @click=${() => this._openRulesDialog()} data-hp-tooltip=${this.host._t('title.icon_rules')}>
           <ha-icon icon="mdi:shape-plus-outline"></ha-icon>${this.host._t('devbar.rules')}
         </button>
         ${this.host._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
@@ -11035,6 +11040,7 @@ public async _saveDiscoveryFilters(dialog: DeviceInboxDialogState): Promise<void
   }
 
 public _renderDeviceInbox(): TemplateResult {
+    ensureSettingsDialogStyles(this.host);
     let dialog = this.host._deviceInbox!;
     if (!dialog.busy && dialog.spaceFilter && dialog.spaceFilter !== INBOX_NO_SPACE
         && !this.host._model.some((space) => `space:${space.id}` === dialog.spaceFilter)) {
@@ -11062,7 +11068,7 @@ public _renderDeviceInbox(): TemplateResult {
       this._openMarkerDialog();
       if (!this.host._markerDialog) this._closeMarkerDialog();
     };
-    return html`<hp-dialog class="device-inbox-dialog" .hass=${this.host.hass}
+    return html`<hp-dialog class="device-inbox-dialog ui-dialog" form-shell settings-layout .hass=${this.host.hass}
       data-kind="device-inbox"
       .title=${this.host._t('device_inbox.title')} icon="mdi:devices" wide
       @hp-close=${() => (this.host._deviceInbox = null)}>

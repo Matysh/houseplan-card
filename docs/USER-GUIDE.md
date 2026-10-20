@@ -1,5 +1,18 @@
 # House Plan — complete user guide
 
+### Dialogs and tools
+
+Help, Devices, Icon rules and Print share the settings appearance, with one
+scrolling body and accessible header/footer actions. Accepted closing animates;
+reduced motion disables it. A failed Save or Continue editing keeps the live
+form and draft. Focus returns to the opener without a flashing ring; the next
+Tab restores ordinary keyboard focus styling.
+
+The Background trash tool is **Delete**. Another tool activates with one press
+after Shapes, Furniture or Image; pressing the canvas only dismisses a palette.
+Confirmation, cancellation and Undo/Redo are unchanged. The global palette
+defines preset scales; apply a preset to rooms in the space or room settings.
+
 ### Editor properties panel
 
 At a card width of 960 px or more, Plan, Devices and Background show a persistent

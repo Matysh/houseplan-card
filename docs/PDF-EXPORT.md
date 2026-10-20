@@ -1,5 +1,10 @@
 # PDF export
 
+The compact560px settings shell (#976) shares action/header styling, a single
+body scroller and accepted-close animation/focus behavior. Busy generation
+refuses dismissal; errors keep the form, and only successful download and
+preference saving close it. PDF geometry, options and preferences are unchanged.
+
 House Plan can save the current space as a one-page A4 architectural PDF.
 For administrators, the printer button appears in the card header between
 **General settings** and **Help & feedback**. The export is always a flat plan,

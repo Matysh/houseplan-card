@@ -31,7 +31,7 @@ export function ledEditorFor(card: LedCardPort, entry: string): LedStripEditor |
 /** «LED-лента» next to «Add» in the Devices editor (ТЗ §4 п.1); a second press leaves the tool. */
 export function ledButton(card: LedCardPort): TemplateResult {
   const tool = card._ledEditor?.tool;
-  return html`<button class="btn ${tool ? 'on' : ''}" data-hp="tool" data-tool="led-strip"
+  return html`<button class="btn ${tool ? 'on' : ''}" data-hp="tool" data-tool="led-strip" data-editor-tool-intent
     aria-pressed=${tool ? 'true' : 'false'} @click=${() => {
       if (tool) return card._ledEditor!.close();
       const entry = `tool${Date.now()}`, open = () => ledEditorFor(card, entry)?.open();

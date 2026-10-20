@@ -304,11 +304,15 @@ export class EditorSecondaryController {
   handleOutsideDismiss(event: Event): boolean {
     const onNavigation = eventPathHas(event, (element) =>
       (element as HTMLElement).hasAttribute('data-editor-navigation'));
-    if (onNavigation) {
-      // A close/editor-tab click is not an accidental canvas press. Collapse
-      // the transient surface, but let the same pointer sequence continue to
-      // the navigation handler so one deliberate click always navigates.
-      if (event.type === 'pointerdown') this.closeForNavigation();
+    const onToolIntent = !this._blocked && eventPathHas(event, (element) =>
+      element.hasAttribute('data-editor-tool-intent')
+      && !element.matches(':disabled, [aria-disabled="true"]')
+      && !element.closest('[inert]'));
+    if (onNavigation || onToolIntent) {
+      // Deliberate toolbar commands must retain their native activation. A
+      // palette dismiss may restore Select, so complete it before the command;
+      // keyboard clicks have no preceding pointerdown and do the same here.
+      if (event.type === 'pointerdown' || onToolIntent) this.closeForNavigation();
       else if (event.type === 'click' && this._dismissPointerTarget) this._clearDismissClick();
       return false;
     }

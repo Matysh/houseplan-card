@@ -2,7 +2,7 @@ import { css } from 'lit';
 /** Shared, editor-only presentation for the four approved settings forms (#944).
  * Menus are owned by hp-settings-select; its hidden native child holds values only.
  */
-import{ settingsActionHover, settingsActionTransition, settingsPrimaryActionHover } from './settings-action.styles';
+import{ settingsActionHover, settingsActionTransition, settingsPrimaryActionHover, settingsActionsCss, settingsInteractiveCss } from './settings-action.styles';
 export const settingsDialogCss = `
   ${css`.hpf-button-help { display:inline-flex; align-items:center; gap:4px; }
   .hpf-settings-form .vacpicker > summary { position:relative; margin-inline-end:24px; }
@@ -67,9 +67,9 @@ hp-dialog[settings-layout] .hpf-footer .btn > ha-icon{display:inline-flex;align-
 .hpf-settings-form button:not(:disabled),.hpf-settings-form select:not(:disabled),.hpf-footer button:not(:disabled),.hpf-footer a{cursor:pointer;}
 .hpf-settings-form button:not(:disabled):hover,.hpf-footer button:not(:disabled):hover{filter:brightness(1.08);}
 :is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn:not(:disabled){cursor:pointer;`.cssText}${settingsActionTransition}}
-:is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn:not(:disabled):is(:hover,:focus-visible){${settingsActionHover}}
-:is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn.on:not(:disabled):is(:hover,:focus-visible){${settingsPrimaryActionHover}${css`}
-:is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn.danger:not(:disabled):is(:hover,:focus-visible){background:color-mix(in srgb,var(--hpf-danger) 9%,var(--hpf-surface));color:var(--hpf-danger);border-color:var(--hpf-danger);}
+:is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn:not(:disabled):is(:hover,:focus-visible:not(.hp-dialog-return-focus)){${settingsActionHover}}
+:is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn.on:not(:disabled):is(:hover,:focus-visible:not(.hp-dialog-return-focus)){${settingsPrimaryActionHover}${css`}
+:is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn.danger:not(:disabled):is(:hover,:focus-visible:not(.hp-dialog-return-focus)){background:color-mix(in srgb,var(--hpf-danger) 9%,var(--hpf-surface));color:var(--hpf-danger);border-color:var(--hpf-danger);}
 .hpf-settings-form :disabled,.hpf-footer button:disabled{cursor:not-allowed;}
 .hpf-settings-form input:not([type=checkbox]):not([type=radio]):not([type=range]){cursor:text;}
 .hpf-settings-form input[type=range]{cursor:pointer;}
@@ -106,10 +106,12 @@ hp-dialog[settings-layout] .hpf-footer-object .dialog-action-danger .btn:not(:ho
 .hpf-ray-choice{position:relative;min-width:0;border-radius:8px;cursor:pointer;}
 .hpf-ray-examples figure{margin:0;min-width:0;border:1px solid var(--hpf-line);border-radius:8px;overflow:hidden;}
 .hpf-ray-examples figure.is-selected{border-color:var(--hpf-accent);}
-.hpf-ray-choice:is(:hover,:focus-within){box-shadow:0 0 0 2px var(--hpf-tint-line);}
-.hpf-ray-choice:hover figure{border-color:var(--hpf-accent);}
+.hpf-ray-choice:is(:hover,:focus-within){box-shadow:none;outline:none;}
+.hpf-ray-choice:hover figure:not(.is-selected){border-color:color-mix(in srgb,var(--hpf-accent) 60%,var(--hpf-line));}
+.hpf-ray-choice:focus-within figure{border-color:var(--hpf-accent);}
+.hpf-ray-choice figure{transition:border-color 160ms ease;}
 .hpf-ray-examples svg{display:block;width:100%;height:auto;}
-.hpf-ray-examples figcaption{font-size:12px;text-align:center;padding:6px;}
+.hpf-ray-examples figcaption{font-size:12px;text-align:center;padding:6px 6px 10px;}
 .hpf-background-grid figure{margin:0;min-width:0;}
 .hpf-settings-pane .hpf-body > .hpf-background-examples{border-top:0;padding-top:0;margin-top:0;}
 .hpf-background-stage{position:relative;border-radius:7px;height:100px;overflow:hidden;}
@@ -188,4 +190,67 @@ hp-dialog[settings-layout] .hpf-footer-object .dialog-action-commit{grid-column:
 hp-dialog[settings-layout]{--hp-dialog-close-transition:none;--hp-dialog-close-hover-transform:none;}
 .hpf-settings-form *,hp-dialog[settings-layout] .hpf-footer .btn,.danger-confirm-footer .btn{transition:none!important;animation:none!important;}
 }`.cssText}
+${settingsActionsCss('hp-dialog.ui-dialog .btn')}
+${settingsInteractiveCss('hp-dialog.ui-dialog *:is(.aboutlink,summary,.device-inbox-tabs button,.device-inbox-chips .chip button)')}
+${css`
+hp-dialog.ui-dialog[compact]{--hp-dialog-wide-width:560px;}
+hp-dialog.ui-dialog.rules-dialog{--hp-dialog-wide-width:860px;}
+hp-dialog.ui-dialog.device-inbox-dialog{--hp-dialog-wide-width:920px;}
+hp-dialog.ui-dialog *:is(.body,.device-inbox){box-sizing:border-box;min-width:0;max-height:none;overflow:visible;padding:20px;background:var(--hpf-surface);font-size:13px;line-height:1.5;}
+hp-dialog.ui-dialog .row[slot=footer]{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0;padding:12px 16px;border:0;background:var(--hpf-surface);}
+hp-dialog.ui-dialog .row[slot=footer] .spacer{flex:1;}
+hp-dialog.ui-dialog *:is(input[type=text],input[type=search],.supportmessage,.supportraw){box-sizing:border-box;min-width:0;min-height:44px;padding:10px 12px;border:1px solid var(--hpf-line);border-radius:7px;background:var(--hpf-surface);color:var(--primary-text-color);font:inherit;font-size:13px;line-height:22px;outline:none;box-shadow:none;cursor:text;transition:border-color 160ms ease,box-shadow 160ms ease;}
+hp-dialog.ui-dialog *:is(input[type=text],input[type=search],.supportmessage,.supportraw):hover{border-color:var(--hpf-accent);}
+hp-dialog.ui-dialog *:is(input[type=text],input[type=search],.supportmessage,.supportraw):focus{outline:none;border-color:var(--hpf-accent);box-shadow:inset 0 0 0 1px var(--hpf-accent);}
+hp-dialog.ui-dialog *:is([aria-invalid=true],input.bad){border-color:var(--error-color);}
+hp-dialog.ui-dialog input[type=checkbox]{width:18px;height:18px;margin:0;flex:none;accent-color:var(--hpf-accent);cursor:pointer;}
+hp-dialog.ui-dialog .device-inbox{gap:18px;}
+hp-dialog.ui-dialog .device-inbox-filters label{min-height:44px;gap:8px;}
+hp-dialog.ui-dialog .device-inbox-row{padding:14px;gap:12px;border-color:var(--hpf-line);border-radius:7px;}
+hp-dialog.ui-dialog *:is(.device-inbox-actions,.device-inbox-batch-actions){gap:10px;}
+hp-dialog.ui-dialog .device-inbox-tabs{gap:8px;padding:2px;margin:-2px;}
+hp-dialog.ui-dialog .device-inbox-tabs button{min-height:44px;padding:10px 14px;border-radius:7px;line-height:20px;}
+hp-dialog.ui-dialog .device-inbox-tabs button[aria-selected=true]{border-color:var(--hpf-accent);color:var(--hpf-accent);background:var(--hpf-tint);}
+hp-dialog.ui-dialog .device-inbox-discovery{padding:12px;border-radius:7px;}
+hp-dialog.ui-dialog .device-inbox-discovery > summary{padding:8px;margin:-4px;border:1px solid transparent;border-radius:7px;}
+hp-dialog.ui-dialog .device-inbox-chips .chip button{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;flex:0 0 28px;padding:0;border:1px solid transparent;border-radius:50%;}
+hp-dialog.ui-dialog .device-inbox-menu-items{padding:6px;border-color:var(--hpf-line);border-radius:7px;background:var(--hpf-surface);max-width:calc(100vw - 56px);}
+hp-dialog.ui-dialog .rhint{margin:0 0 18px;padding:8px 10px;border-inline-start:3px solid var(--info-color,var(--hpf-accent));background:color-mix(in srgb,var(--info-color,var(--hpf-accent)) 10%,var(--hpf-surface));font-size:12px;line-height:1.5;}
+hp-dialog.ui-dialog .rtest{gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+hp-dialog.ui-dialog .rtest .namein{flex:1 1 280px;}
+hp-dialog.ui-dialog .rrow{display:grid;grid-template-columns:minmax(150px,2fr) minmax(140px,1.4fr) 24px repeat(3,44px);gap:8px;margin:10px 0;}
+hp-dialog.ui-dialog .rprev{--mdc-icon-size:22px;}
+hp-dialog.ui-dialog .ract.btn{width:44px;height:44px;min-width:44px;padding:0;color:var(--secondary-text-color);}
+hp-dialog.ui-dialog .ract.del:is(:hover,:focus-visible:not(.hp-dialog-return-focus)){color:var(--error-color);border-color:var(--error-color);background:color-mix(in srgb,var(--error-color) 10%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--error-color) 38%,transparent);}
+hp-dialog.ui-dialog .rrow:last-of-type{margin-bottom:18px;}
+hp-dialog.ui-dialog .supportbody{display:grid;gap:0;}
+hp-dialog.ui-dialog .supportsection{gap:12px;}
+hp-dialog.ui-dialog .supportsection + .supportsection{margin-top:18px;padding-top:18px;border-top:1px solid var(--hpf-line);}
+hp-dialog.ui-dialog .supportsection h3{font-size:16px;line-height:1.45;margin:0 0 6px;}
+hp-dialog.ui-dialog *:is(.aboutver,.rhint){color:var(--secondary-text-color);font-size:12px;line-height:1.45;}
+hp-dialog.ui-dialog .aboutver{margin:0;}
+hp-dialog.ui-dialog *:is(.supportlinks,.supportactions){gap:10px;}
+hp-dialog.ui-dialog .aboutlink{box-sizing:border-box;max-width:100%;min-height:40px;padding:8px 10px;gap:8px;border:1px solid transparent;border-radius:7px;font-size:13px;line-height:1.4;color:var(--hpf-accent);text-decoration:none;}
+hp-dialog.ui-dialog .aboutver .aboutlink{min-height:0;padding:1px 3px;}
+hp-dialog.ui-dialog .supportform > label:not(.srcrow){margin:6px 0 -4px;color:var(--primary-text-color);font-size:13px;line-height:22px;font-weight:600;}
+hp-dialog.ui-dialog .supportmessage{min-height:120px;}
+hp-dialog.ui-dialog .supportraw{min-height:220px;font-family:monospace;}
+hp-dialog.ui-dialog .supportattach{display:flex;align-items:flex-start;gap:10px;margin:6px 0 0!important;font-size:13px;line-height:22px;color:var(--primary-text-color);cursor:pointer;}
+hp-dialog.ui-dialog .supportattach input{margin:2px 0;}
+hp-dialog.ui-dialog .supportattach:hover{color:var(--hpf-accent);}
+hp-dialog.ui-dialog *:is(.supportwarning,.supportstatus,.supportupdate){margin:6px 0 0;padding:8px 10px;border-radius:0;border-inline-start:3px solid var(--info-color,var(--hpf-accent));background:color-mix(in srgb,var(--info-color,var(--hpf-accent)) 10%,var(--hpf-surface));font-size:12px;line-height:1.45;}
+hp-dialog.ui-dialog .supportupdate{margin-top:18px;}
+hp-dialog.ui-dialog *:is(.supportwarning,.supportstatus,.supportupdate) ha-icon{color:var(--info-color,var(--hpf-accent));--mdc-icon-size:18px;}
+hp-dialog.ui-dialog *:is(.supportpreview,.supportmanual,.supporterror,.supportsuccess){gap:12px;padding:14px;border-radius:7px;font-size:13px;line-height:1.45;}
+hp-dialog.ui-dialog .supportpreview summary{padding:8px 10px;margin-inline:-4px;border:1px solid transparent;border-radius:7px;}
+@media(max-width:680px){
+hp-dialog.ui-dialog *:is(.body,.device-inbox){padding:18px 14px;}
+hp-dialog.ui-dialog .row[slot=footer]{padding:12px 14px;}
+hp-dialog.ui-dialog .rrow{grid-template-columns:minmax(0,1fr) repeat(3,44px);padding-bottom:14px;margin:14px 0;border-bottom:1px solid var(--hpf-line);}
+hp-dialog.ui-dialog .rrow *:is(.rpat,.ricon){grid-column:1 / -1;}
+hp-dialog.ui-dialog.rules-dialog .row[slot=footer] > button:first-child{margin-inline-end:auto;}
+hp-dialog.ui-dialog .supportlinks{align-items:stretch;flex-direction:column;}
+}
+@media(prefers-reduced-motion:reduce){hp-dialog.ui-dialog *:is(button,summary,input,textarea,a){transition:none;}}
+`.cssText}
 `;

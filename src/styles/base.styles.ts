@@ -3,6 +3,7 @@ import { css } from 'lit';
 import {toastStyles} from './toast.styles';
 
 export const baseStyles = [toastStyles, css`
+    .hp-dialog-return-focus:focus-visible { outline:none!important; }
     :host {
       --hp-bg: var(--card-background-color, #16212e);
       --hp-line: var(--divider-color, #2b3d4f);

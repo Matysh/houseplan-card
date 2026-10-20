@@ -16,6 +16,7 @@
  * Stored points are normalised (render units / NORM_W), like the layout.
  */
 import { html, nothing, svg, type TemplateResult } from 'lit';
+import { dialogPresence } from './dialog-presence';
 import { NORM_W } from './space-geometry';
 import { roomPoly } from './logic';
 import {
@@ -741,7 +742,7 @@ export class LedStripEditor {
       @pointerleave=${() => { this.hover = null; this.host.requestUpdate(); }}
       @click=${(e: MouseEvent) => e.stopPropagation()}
       @dblclick=${(e: MouseEvent) => e.stopPropagation()}
-      @contextmenu=${(e: MouseEvent) => e.preventDefault()}></div>` : nothing}${this.pickerDialog()}`;
+      @contextmenu=${(e: MouseEvent) => e.preventDefault()}></div>` : nothing}${dialogPresence(this.pickerDialog())}`;
   }
 
   /** The tray (ТЗ §4 п.7): the drawing operation, or the selected strip. */

@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "issue": 976,
+  "baseStable": "v1.81.0",
+  "category": "line-fix",
+  "introducedBy": 931,
+  "rationale": "Completes approved UI Lab polish of the current-cycle editor/settings redesign after #963. Existing commands, stored model and View authority remain; not a separately marketed feature relative to the previous stable.",
+  "summary": {
+    "ru": "Диалоги и второстепенные панели соответствуют согласованному стенду, с плавным закрытием и едиными элементами управления.",
+    "en": "Secondary dialogs and controls follow the approved UI Lab, with smooth accepted closing and consistent styling."
+  }
+}

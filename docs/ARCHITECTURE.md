@@ -9,6 +9,18 @@ save uses the existing accepted-config/CAS/context boundary.
 The form's current-state hint also checks the canonical candidate authority
 before looking up the saved entity, including stale or disabled choices (#978).
 
+Shared dialog presence (#976) separates a close request from an accepted terminal.
+Owners retain their existing dirty/busy/Save decisions; only accepted state
+retirement asks the local Lit `dialogPresence` part to keep inert presentation
+until `HpDialog.beginExit()` finishes. No retained model/write authority, global
+DOM-removal interception or polling is involved. Permission invalidation bypasses
+the presentation phase. HA supplies its own reverse entrance; native fallback
+uses a180ms exit. A400ms deadline, cancellation, disconnect and reduced-motion
+complete safely; late callbacks belong only to their original exit run.
+Automatic return-focus styling is scoped to the actual opener until its next
+input/blur, not a global keyboard-focus policy. Shared secondary forms reuse
+the settings action tokens; PDF imports those tokens across its shadow boundary.
+
 The offline UI Lab (#964) lives separately in `demo/ui-lab/`. It serves the
 checkout's built product and pinned official HA components against the existing
 synthetic fixture store, not a second product renderer or a Home Assistant

@@ -1097,10 +1097,9 @@ export const planStyles = css`
       cursor: crosshair;
     }
     .stage.mode-decor.dtool-erase,
-    .stage.mode-decor.dtool-erase .decorlayer .dshape {
-      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg transform='rotate(-45 12 12)'%3E%3Crect x='7' y='2' width='10' height='18' rx='2' fill='%23fff' stroke='%23111' stroke-width='1.5'/%3E%3Cpath d='M7 13h10v5a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2z' fill='%23ff9f43' stroke='%23111' stroke-width='1.5'/%3E%3C/g%3E%3C/svg%3E") 5 22, pointer;
+    .stage.mode-decor.dtool-erase .decorlayer * {
+      cursor: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20d%3D%22M2%202v23l6-6%204%209%204-2-4-9h9Z%22%20fill%3D%22%23111%22%20stroke%3D%22%23fff%22%20stroke-width%3D%221.5%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22m23%2020%206%206m0-6-6%206%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%225%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22m23%2020%206%206m0-6-6%206%22%20fill%3D%22none%22%20stroke%3D%22%23d83c3c%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E") 2 2, default;
     }
-    .stage.mode-decor .room { pointer-events: none; }
     /* Devices are landmarks in Background, never editing targets. The marker
        package deliberately re-enables pointer events on the core, its 44 px
        pseudo hit area and the visible capsule for View/Devices. A none on

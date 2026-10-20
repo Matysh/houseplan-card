@@ -16,6 +16,31 @@ browser smoke checks saved foreign/disabled choices and cancellation without
 changing the accepted configuration. These are ordinary negative inputs,
 not product mutations or reasons to rerun unrelated golden/full suites.
 
+## Secondary UI polish (#976)
+
+`dialog-presence.ts` owns only a Lit part's accepted-exit presentation;
+`dialog-exit.ts` owns its finite, idempotent completion. Owners still decide
+whether Close/Save succeeds. Never retain write authority or replace global
+DOM removal to animate a dialog. `dialog-return-focus.ts` marks only the actual
+return button; the next real input restores ordinary keyboard focus styling.
+Secondary controls reuse `settings-action.styles.ts`. Descendant pseudo-group
+selectors in tagged CSS use `*:is(...)`: the current minifier otherwise removes
+the significant space before a bare `:is(...)`.
+
+Checks: `node --test test/dialog-exit.test.mjs test/editor-secondary.test.mjs`,
+`node demo/smoke_ui_polish_976.mjs` and the authentic-HA diagnostic documented
+in `demo/ui-lab/README.md`. Native/headless evidence is not a physical GPU claim.
+The frozen owner's archive is read-only and stays outside the repository;
+only synthetic fixtures and locally generated synthetic comparisons are used.
+
+Under the owner's standing minor-size allowance the lazy-editor ceiling moves
+318054 →320340 B gzip (+2286 B,0.72%); its2000 B band stays unchanged.
+The measured raw bundle baseline moves3247518 →3263925 B (+16407 B,0.51%).
+Shared forms, locales and bounded accepted-close behavior account for the cost;
+no startup/performance improvement is claimed. Initial View331663 B remains
+under its unchanged330000+2000 rolling ceiling and352000 B absolute wall.
+All other monolith metrics and bands remain unchanged.
+
 ## Device issue explanations (#972)
 
 `device-issues.ts` classifies active HA alarm-capable states. Only `homeconnect_ws`

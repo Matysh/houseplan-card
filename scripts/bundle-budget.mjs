@@ -793,7 +793,9 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_940;
 // only the owner-approved editor reference is refreshed, not the2000B band.
 // #947/#931 joint tree carries the same Device-only +2313B onto that accepted
 // reference:312703+2313=315016. No added band or absolute budget.
-export const LAZY_EDITOR_GZIP_CEILING = 318_054;
+// #976: approved shared secondary forms and accepted-close lifecycle:
+// measured320340 B gzip (+2286 B); carry the measured cost only, band unchanged.
+export const LAZY_EDITOR_GZIP_CEILING = 320_340;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

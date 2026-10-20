@@ -1,5 +1,7 @@
-import { LitElement, css, html, nothing, type TemplateResult } from 'lit';
+import { LitElement, css, html, nothing, unsafeCSS, type TemplateResult } from 'lit';
+import { settingsActionsCss } from '../styles/settings-action.styles';
 import '../hp-dialog';
+import type { HpDialog } from '../hp-dialog';
 import type { ServerConfig, SpaceModel } from '../types';
 import type { PdfExportOptions, PdfRawSpace, PdfSharedWallGeometry } from './pdf-scene';
 
@@ -50,15 +52,15 @@ function loadOptions(): PdfExportOptions {
 
 export class HpPdfDialog extends LitElement {
   static properties = { context: { attribute: false } };
-  static styles = css`
-    :host { display: contents; }
+  static styles = [css`
+    :host { display:contents;--hp-dialog-icon-size:40.48px;--hp-dialog-close-transition:160ms ease;--hp-dialog-close-hover-transform:rotate(90deg) scale(1.12); }
     .body {
       display:grid;
       gap:12px;
       width:100%;
       max-width:100%;
       min-width:0;
-      padding:16px 20px;
+      padding:20px;
       box-sizing:border-box;
     }
     label {
@@ -68,13 +70,16 @@ export class HpPdfDialog extends LitElement {
       align-items:center;
       gap:12px;
       cursor:pointer;
+      font-size:13px;
+      line-height:22px;
+      transition:color 160ms ease;
     }
     label span { min-width:0; overflow-wrap:anywhere; }
-    input { width:20px; height:20px; flex:none; accent-color:var(--hp-accent,#d89300); }
+    input { width:18px; height:18px; margin:0; flex:none; accent-color:var(--hp-accent,#d89300); }
     .row {
       display:flex;
       align-items:center;
-      gap:8px;
+      gap:10px;
       width:100%;
       max-width:100%;
       min-width:0;
@@ -82,33 +87,17 @@ export class HpPdfDialog extends LitElement {
       box-sizing:border-box;
     }
     .spacer { flex:1; }
-    button {
-      min-width:0;
-      min-height:44px;
-      max-width:100%;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      border:1px solid var(--hp-line,rgb(127 127 127/.3));
-      border-radius:12px;
-      padding:0 18px;
-      box-sizing:border-box;
-      overflow-wrap:anywhere;
-      white-space:normal;
-      background:transparent;
-      color:inherit;
-      font:inherit;
-      cursor:pointer;
-    }
-    button.primary { background:var(--hp-accent,#d89300); color:var(--hp-on-accent,#111); border-color:transparent; }
-    button:disabled { opacity:.55; cursor:default; }
-    ha-icon { flex:none; margin-right:6px; }
+    input { cursor:pointer; }
+    label:has(input:not(:disabled)):hover { color:var(--primary-color); }
+    label:has(input:disabled),input:disabled { cursor:not-allowed;opacity:.5; }
+    @media(max-width:680px){.body{padding:18px 14px;}.row{padding:12px 14px;}}
+    @media(prefers-reduced-motion:reduce){:host{--hp-dialog-close-transition:none;--hp-dialog-close-hover-transform:none;}label{transition:none;}}
     @media (max-width:360px) {
       .row { display:grid; grid-template-columns:minmax(0,1fr); }
       .spacer { display:none; }
       button { width:100%; }
     }
-  `;
+  `, unsafeCSS(settingsActionsCss('button', '.primary'))];
   context!: PdfDialogContext;
   private options: PdfExportOptions | null = null;
   private busy = false;
@@ -148,9 +137,12 @@ export class HpPdfDialog extends LitElement {
         @change=${(event: Event) => this.setOption(key, (event.target as HTMLInputElement).checked)}>
       <span>${label}</span>
     </label>`;
-    return html`<hp-dialog .hass=${this.context.hass} data-kind="pdf"
+    return html`<hp-dialog .hass=${this.context.hass} form-shell settings-layout compact wide data-kind="pdf"
       title=${this.context.t('pdf.title')}
-      icon="mdi:printer-outline" dismiss-on-scrim @hp-close=${this.context.close}>
+      icon="mdi:printer-outline" dismiss-on-scrim @hp-close=${(event: Event) => {
+        if (this.busy) (event.currentTarget as HpDialog).rejectClose();
+        else this.context.close();
+      }}>
       <div class="body">
         ${option('dimensions', this.context.t('pdf.dimensions'))}
         ${option('decor', this.context.t('pdf.decor'))}

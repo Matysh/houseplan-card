@@ -337,7 +337,9 @@ export function installHpTest(selectors) {
     /** Закрыть диалог настоящим путём: Escape, крестик окна или кнопка «Отмена». */
     async close(dialog, { via = 'escape' } = {}) {
       const c = need('close');
-      const target = dialog || deepAll(rootOf(c), sel('dialog')).filter((d) => d.isConnected).at(-1);
+      // Accepted exits retain inert paint briefly. It is not an actionable
+      // dialog and must not mask a newly opened live editor behind that part.
+      const target = dialog || deepAll(rootOf(c), sel('dialog')).filter((d) => d.isConnected && !d.inert).at(-1);
       if (!target) throw missing('close', c, 'dialog');
       if (via === 'escape') {
         const origin = deepActive(target) || target;
@@ -359,7 +361,7 @@ export function installHpTest(selectors) {
         throw new Error(`__hpTest.close: неизвестный путь ${via}`);
       }
       await settled();
-      const confirmOf = () => deepAll(rootOf(c), sel('confirmDialog')).find((d) => d !== target) || null;
+      const confirmOf = () => deepAll(rootOf(c), sel('confirmDialog')).find((d) => d !== target && !d.inert) || null;
       await waitFor('close', () => !target.isConnected || confirmOf(),
         () => `диалог ${target.getAttribute('data-kind')} не закрылся через ${via}`);
       await settled();

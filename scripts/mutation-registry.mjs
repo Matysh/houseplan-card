@@ -86,6 +86,30 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'dialog-exit-stale-completion-976',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/dialog-exit.test.mjs',
+    because: '#976 AC4: a cancelled old deadline must not finish the newly opened exit.',
+    patches: [{ file: 'src/dialog-exit.ts', find: 'if (this.current !== run) return;', replace: 'if (false) return;' }],
+  },
+  {
+    id: 'dialog-exit-never-bounded-976',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/dialog-exit.test.mjs',
+    because: '#976 AC4: missing animation completion must settle at the declared finite deadline.',
+    patches: [{ file: 'src/dialog-exit.ts', find: 'else cancelTimer = this.schedule(run.complete, deadline);', replace: 'else cancelTimer = () => {};' }],
+  },
+  {
+    id: 'toolbar-dismiss-swallows-intent-976',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/editor-secondary.test.mjs',
+    because: '#976 AC10: explicit enabled native toolbar intent closes the palette without consuming the action; canvas/disabled/inert remain guarded.',
+    patches: [{ file: 'src/editor-secondary.ts', find: 'if (onNavigation || onToolIntent) {', replace: 'if (onNavigation) {' }],
+  },
+  {
+    id: 'dialog-return-focus-ring-flashes-976',
+    guard: 'node demo/smoke_ui_polish_976.mjs',
+    because: '#976 AC5 requires a browser: actual Escape/restored focus and its computed outline must differ from deliberate subsequent Tab focus, not a CSS source string.',
+    patches: [{ file: 'src/dialog-return-focus.ts', find: "opener.classList.add('hp-dialog-return-focus');", replace: "opener.classList.remove('hp-dialog-return-focus');" }],
+  },
+  {
     id: 'device-maintenance-promoted-to-alarm-972',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-issues.test.mjs',
     because: '#972 AC1: the supplied off/ready fixture must remain a maintenance warning, without red alarm or work pulse.',
@@ -701,7 +725,7 @@ const MUTANT_DEFINITIONS = [
     id: 'wall-dialog-back-inside-camera-layer',
     guard: compiledNodeSmoke('smoke_canvas_surface_gestures'),
     because: '#900 AC4 depends on measured intermediate DOM rectangles during live camera CSS projection, before the terminal viewBox clears that projection.',
-    patches: [{ file: 'src/houseplan-card.ts', find: '          </div>\n          ${this._wallDialog ? this._renderWallThickDialog() : nothing}', replace: '          ${this._wallDialog ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._renderWallThickDialog()}</div>` : nothing}\n          </div>' }],
+    patches: [{ file: 'src/houseplan-card.ts', find: '          </div>\n          ${dialogPresence(this._wallDialog ? this._renderWallThickDialog() : nothing)}', replace: '          ${dialogPresence(this._wallDialog ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._renderWallThickDialog()}</div>` : nothing)}\n          </div>' }],
   },
   {
     id: 'layout-full-read-ignores-overlapping-own-write',
@@ -1536,8 +1560,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_view_edit_permissions.mjs --only=warm',
     because: '#844 AC3: a retained View draft is not painted after permission is revoked.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: "${this._markerDialog && (this._mode !== 'view' || deviceEditorAllowed(this._canEdit, this._kiosk))",
-      replace: '${this._markerDialog' }],
+      find: "${dialogPresence(this._markerDialog && (this._mode !== 'view' || deviceEditorAllowed(this._canEdit, this._kiosk))",
+      replace: '${dialogPresence(this._markerDialog' }],
   },
   {
     id: 'room-area-link-confuses-writer-and-admin',
@@ -6615,7 +6639,7 @@ const MUTANT_DEFINITIONS = [
       + 'forever (#402)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '    return html`${body}${this._viewRuntimes.render()}${this._renderVersionBanner()}${this._renderDangerConfirm()}`;',
+      find: '    return html`${body}${this._viewRuntimes.render()}${this._renderVersionBanner()}${dialogPresence(this._renderDangerConfirm())}`;',
       replace: '    return html`${body}${this._viewRuntimes.render()}${this._renderVersionBanner()}`;',
     }],
   },

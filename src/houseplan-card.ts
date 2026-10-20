@@ -22,6 +22,7 @@ import { cache as litCache } from 'lit/directives/cache.js';
 import { keyed } from 'lit/directives/keyed.js';
 import { repeat } from 'lit/directives/repeat.js';
 import './hp-dialog';
+import { dialogPresence } from './dialog-presence';
 import type { HpDialog } from './hp-dialog';
 import {ToastPresentation} from './toast-presentation';
 import type { OptimizePlansDialogState } from './optimize-plans-dialog';
@@ -10668,7 +10669,7 @@ export class HouseplanCard extends LitElement {
   /** One stable Lit template site lets a nested `noChange` retain the body
    * while the independent confirmation child is removed during a warm gate. */
   private _renderRoot(body: TemplateResult | typeof noChange): TemplateResult {
-    return html`${body}${this._viewRuntimes.render()}${this._renderVersionBanner()}${this._renderDangerConfirm()}`;
+    return html`${body}${this._viewRuntimes.render()}${this._renderVersionBanner()}${dialogPresence(this._renderDangerConfirm())}`;
   }
 
   protected render(): TemplateResult | typeof nothing | typeof noChange {
@@ -10777,11 +10778,11 @@ export class HouseplanCard extends LitElement {
                 </div>`
             : html`<p class="muted">${this._t(this._serverStorage ? 'empty.read_only' : 'empty.install')}</p>`}
         </div>
-        ${this._spaceDialog
+        ${dialogPresence(this._spaceDialog
           ? (this._onboardingRuntime || this._editorRuntime) ? this._renderSpaceDialog() : nothing
-          : nothing}
-        ${this._importDialog ? this._onboardingRuntime ? this._renderImportDialog() : nothing : nothing}
-        ${this._backupImportDialog && this._editorRuntime ? this._renderBackupImportDialog() : nothing}
+          : nothing)}
+        ${dialogPresence(this._importDialog ? this._onboardingRuntime ? this._renderImportDialog() : nothing : nothing)}
+        ${dialogPresence(this._backupImportDialog && this._editorRuntime ? this._renderBackupImportDialog() : nothing)}
         <div data-hp="toast-portal"></div>
       </ha-card>`;
     }
@@ -11305,7 +11306,7 @@ export class HouseplanCard extends LitElement {
           </div>
           <div data-hp-live-editor-html></div>
           </div>
-          ${this._wallDialog ? this._renderWallThickDialog() : nothing}
+          ${dialogPresence(this._wallDialog ? this._renderWallThickDialog() : nothing)}
           <div class="zoombadge" data-hp-live-zoom hidden><span data-hp-live-zoom-value></span></div>
           ${this._renderFarHint()}
           ${this._renderHomeArrow(this._baseVb(projection, isoScene))}
@@ -11322,32 +11323,33 @@ export class HouseplanCard extends LitElement {
         </div>
 
         ${this._editorRuntime?.properties.render()}
-        ${this._editorRuntime?.deviceCopy.render()}
-        ${this._roomDialog ? this._editorRuntime ? this._renderRoomDialog() : nothing : nothing}
-        ${this._mergeDialog ? this._editorRuntime ? this._renderMergeDialog() : nothing : nothing}
-        ${this._openingDialog ? this._editorRuntime ? this._renderOpeningDialog() : nothing : nothing}
-        ${this._physicalDialog ? this._editorRuntime ? this._renderPhysicalDialog() : nothing : nothing}
-        ${this._partitionDeleteDialog ? this._editorRuntime ? this._renderPartitionDeleteDialog() : nothing : nothing}
-        ${this._roomDeleteDialog ? this._editorRuntime ? this._renderRoomDeleteDialog() : nothing : nothing}
-        ${this._openingInfo ? this._renderOpeningInfoCard() : nothing}
-        ${this._decorTextDialog ? this._editorRuntime ? this._renderDecorTextDialog() : nothing : nothing}
-        ${this._decorShapeDialog ? this._editorRuntime ? this._renderDecorShapeDialog() : nothing : nothing}
-        ${this._backdropDialog ? this._editorRuntime ? this._renderBackdropDialog() : nothing : nothing}
-        ${this._decorEraseConfirm ? this._editorRuntime ? this._renderDecorEraseConfirm() : nothing : nothing}
-        ${this._editorRuntime?.stairs.dialogOpen ? this._editorRuntime.stairs.renderDialog() : nothing}
-        ${this._spaceDialog
+        ${dialogPresence(this._editorRuntime?.deviceCopy.render())}
+        ${dialogPresence(this._roomDialog ? this._editorRuntime ? this._renderRoomDialog() : nothing : nothing)}
+        ${dialogPresence(this._mergeDialog ? this._editorRuntime ? this._renderMergeDialog() : nothing : nothing)}
+        ${dialogPresence(this._openingDialog ? this._editorRuntime ? this._renderOpeningDialog() : nothing : nothing)}
+        ${dialogPresence(this._physicalDialog ? this._editorRuntime ? this._renderPhysicalDialog() : nothing : nothing)}
+        ${dialogPresence(this._partitionDeleteDialog ? this._editorRuntime ? this._renderPartitionDeleteDialog() : nothing : nothing)}
+        ${dialogPresence(this._roomDeleteDialog ? this._editorRuntime ? this._renderRoomDeleteDialog() : nothing : nothing)}
+        ${dialogPresence(this._openingInfo ? this._renderOpeningInfoCard() : nothing)}
+        ${dialogPresence(this._decorTextDialog ? this._editorRuntime ? this._renderDecorTextDialog() : nothing : nothing)}
+        ${dialogPresence(this._decorShapeDialog ? this._editorRuntime ? this._renderDecorShapeDialog() : nothing : nothing)}
+        ${dialogPresence(this._backdropDialog ? this._editorRuntime ? this._renderBackdropDialog() : nothing : nothing)}
+        ${dialogPresence(this._decorEraseConfirm ? this._editorRuntime ? this._renderDecorEraseConfirm() : nothing : nothing)}
+        ${dialogPresence(this._editorRuntime?.stairs.dialogOpen ? this._editorRuntime.stairs.renderDialog() : nothing)}
+        ${dialogPresence(this._spaceDialog
           ? (this._onboardingRuntime || this._editorRuntime) ? this._renderSpaceDialog() : nothing
-          : nothing}
-        ${this._deviceInbox ? this._editorRuntime ? this._renderDeviceInbox() : nothing : nothing}
-        ${this._warmMarker.render((key) => this._t(key))}
-        ${this._markerDialog && (this._mode !== 'view' || deviceEditorAllowed(this._canEdit, this._kiosk))
-          ? this._editorRuntime ? this._renderMarkerDialog() : nothing : nothing}
-        ${this._backdropGuard
+          : nothing)}
+        ${dialogPresence(this._deviceInbox ? this._editorRuntime ? this._renderDeviceInbox() : nothing : nothing)}
+        ${dialogPresence(this._warmMarker.render((key) => this._t(key)))}
+        ${dialogPresence(this._markerDialog && (this._mode !== 'view' || deviceEditorAllowed(this._canEdit, this._kiosk))
+          ? this._editorRuntime ? this._renderMarkerDialog() : nothing : nothing,
+          this._mode !== 'view' || deviceEditorAllowed(this._canEdit, this._kiosk))}
+        ${dialogPresence(this._backdropGuard
           ? (this._editorRuntime
             ? this._editorRuntime._renderBackdropGuard()
             : this._onboardingRuntime?._renderBackdropGuard() ?? nothing)
-          : nothing}
-        ${this._vacCalConfirm ? this._editorRuntime ? html`<hp-dialog .hass=${this.hass} data-kind="vacuum"
+          : nothing)}
+        ${dialogPresence(this._vacCalConfirm ? this._editorRuntime ? html`<hp-dialog .hass=${this.hass} data-kind="vacuum"
           .title=${this._t('vac.residual_title')} icon="mdi:map-marker-alert-outline"
           dismiss-on-scrim aria-busy=${String(!!this._vacCalConfirm.busy)}
           @hp-close=${() => { if (!this._vacCalConfirm?.busy) this._vacCalConfirm = null; }}>
@@ -11365,24 +11367,24 @@ export class HouseplanCard extends LitElement {
                 <ha-icon icon="mdi:check"></ha-icon>${this._t('vac.apply_proposal')}
               </button>
             </div>
-        </hp-dialog>` : nothing : nothing}
-        ${this._infoCard ? this._renderInfoCard() : nothing}
-        ${this._rulesDialog ? this._editorRuntime ? this._renderRulesDialog() : nothing : nothing}
-        ${this._settingsDialog ? this._editorRuntime ? this._renderSettingsDialog() : nothing : nothing}
-        ${this._supportDialog ? this._editorRuntime ? this._renderSupportDialog() : nothing : nothing}
-        ${this._pdfDialog ? this._renderPdfDialog() : nothing}
-        ${this._alignDialog && this._editorRuntime ? this._editorRuntime.optimizePlans.render() : nothing}
-        ${this._backupExportDialog ? this._editorRuntime ? this._renderBackupExportDialog() : nothing : nothing}
-        ${this._backupImportDialog ? this._editorRuntime ? this._renderBackupImportDialog() : nothing : nothing}
-        ${this._importDialog ? this._onboardingRuntime ? this._renderImportDialog() : nothing : nothing}
+        </hp-dialog>` : nothing : nothing)}
+        ${dialogPresence(this._infoCard ? this._renderInfoCard() : nothing)}
+        ${dialogPresence(this._rulesDialog ? this._editorRuntime ? this._renderRulesDialog() : nothing : nothing)}
+        ${dialogPresence(this._settingsDialog ? this._editorRuntime ? this._renderSettingsDialog() : nothing : nothing)}
+        ${dialogPresence(this._supportDialog ? this._editorRuntime ? this._renderSupportDialog() : nothing : nothing)}
+        ${dialogPresence(this._pdfDialog ? this._renderPdfDialog() : nothing)}
+        ${dialogPresence(this._alignDialog && this._editorRuntime ? this._editorRuntime.optimizePlans.render() : nothing)}
+        ${dialogPresence(this._backupExportDialog ? this._editorRuntime ? this._renderBackupExportDialog() : nothing : nothing)}
+        ${dialogPresence(this._backupImportDialog ? this._editorRuntime ? this._renderBackupImportDialog() : nothing : nothing)}
+        ${dialogPresence(this._importDialog ? this._onboardingRuntime ? this._renderImportDialog() : nothing : nothing)}
         <div class="tip" data-hp-live-tip hidden></div>
         ${this._kiosk && !this._hasFixedFloor && this._kioskDots && this._model.length > 1
           ? html`<div class="kioskdots">
               ${this._model.map((m) => html`<span class="kdot ${m.id === this._space ? 'on' : ''}"></span>`)}
             </div>`
           : nothing}
-        ${this._kioskDialog ? this._renderKioskDialog() : nothing}
-        ${this._summary?.dialogOpen ? this._summary.renderDialog() : nothing}
+        ${dialogPresence(this._kioskDialog ? this._renderKioskDialog() : nothing)}
+        ${dialogPresence(this._summary?.dialogOpen ? this._summary.renderDialog() : nothing)}
         ${this._vacFit ? html`<div class="vaccalbar" aria-busy=${String(!!this._vacFit.busy)}>
           <span>${this._t('vac.fit_hint')}</span>
           <button class="btn ghostbtn" ?disabled=${this._vacFit.busy}
@@ -11394,7 +11396,7 @@ export class HouseplanCard extends LitElement {
           <button class="btn ghostbtn" ?disabled=${this._vacFit.busy}
             @click=${() => { this._vacFit = null; }}>${this._t('btn.cancel')}</button>
         </div>` : nothing}
-        ${this._tapConfirm
+        ${dialogPresence(this._tapConfirm
           ? html`<hp-dialog .hass=${this.hass} data-kind="confirm"
               .title=${this._tapConfirm.kind === 'toggle' ? this._tapConfirm.text : this._t('btn.run')}
               icon="mdi:alert-outline"
@@ -11413,7 +11415,7 @@ export class HouseplanCard extends LitElement {
                   </button>
                 </div>
             </hp-dialog>`
-          : nothing}
+          : nothing)}
         <div data-hp="toast-portal"></div>
       </ha-card>
     `;

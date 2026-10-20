@@ -1,4 +1,5 @@
 import { html, nothing, type TemplateResult } from 'lit';
+import { dialogPresence } from '../../dialog-presence';
 import { langOf } from '../../i18n';
 import { cmToField, setWallThickness, thicknessCmAt } from '../../wall-thickness';
 import { GRID_PITCH, GRID_STEP_N, NORM_W } from '../../canvas-constants';
@@ -533,7 +534,7 @@ export class PropertiesEditor {
         } else if (suspended?.draft!==this.fields.draft) this.suspendedColor=null;
       },
     }, this.host._editorSecondaryDialogBlocked || !!this.variable);
-    return html`${view}${this.renderVariable()}`;
+    return html`${view}${dialogPresence(this.renderVariable())}`;
   }
   selection(): TemplateResult | typeof nothing {
     if (!this.wide || !this.identity) return nothing;

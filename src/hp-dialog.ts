@@ -2,6 +2,8 @@ import { LitElement, css, html, nothing, type PropertyValues } from 'lit';
 import { live } from 'lit/directives/live.js';
 import {setToastOwner, toastRootOf, type ToastOwner} from './toast-presentation';
 import {toastStyles} from './styles/toast.styles';
+import { prepareDialogReturnFocus } from './dialog-return-focus';
+import { DialogExitController } from './dialog-exit';
 
 type FocusSession = {
   dialogs: Set<HpDialog>;
@@ -234,6 +236,11 @@ export class HpDialog extends LitElement {
     :host([settings-layout]) .header .close { order:-1; }
     :host([settings-layout]) .title-text { font-size:18px; }
     :host([settings-layout]) .content { background:var(--card-background-color,var(--hp-bg,#202126)); }
+    :host(.ui-dialog[settings-layout]) .header,
+    :host([data-kind=pdf][settings-layout]) .header { padding:12px 16px; }
+    :host([compact]) { --hp-dialog-wide-width:560px; }
+    :host([settings-layout][compact]) ha-dialog { --ha-dialog-min-height:0px; --ha-dialog-max-height:calc(100dvh - 48px); }
+    :host([settings-layout][compact]) .surface { height:auto; max-height:calc(100dvh - 48px); }
     /* #931: the compact HA-variable surface, scoped away from existing dialogs. */
     :host([properties-shell]) { --hp-dialog-wide-width:560px; }
     :host([properties-shell]) ha-dialog { --ha-dialog-width-md:560px; --ha-dialog-border-radius:10px; --ha-dialog-max-height:calc(100dvh - 48px); }
@@ -301,6 +308,9 @@ export class HpDialog extends LitElement {
       transition:var(--hp-dialog-close-transition,none);
     }
     .close ha-icon { transition:var(--hp-dialog-close-transition,none); }
+    .hp-dialog-return-focus:focus-visible { outline:none!important; }
+    @keyframes hp-backdrop-out { to { background:transparent; } }
+    dialog.exiting::backdrop { animation:hp-backdrop-out 180ms ease forwards; }
 
     :host([data-pointer-hover]) .close:hover,
     .close:focus-visible {
@@ -347,6 +357,10 @@ export class HpDialog extends LitElement {
   private _focusRoot: Node | null = null;
   private _useHaDialog: boolean | null = null;
   private _closing = false;
+  private _closeRequested = false;
+  private readonly _exit = new DialogExitController();
+  private _inertContents = new Map<HTMLElement, boolean>();
+  private _exitAnimation?: Animation;
   private _toastRoot: Node | null = null;
   private readonly _toastOwner: ToastOwner = {
     host: this, portal: () => this.renderRoot.querySelector('.toast-portal'),
@@ -404,6 +418,7 @@ export class HpDialog extends LitElement {
   }
 
   disconnectedCallback(): void {
+    this.cancelExit();
     this._syncToastOwner(false);
     this._toastRoot = null;
     this._restoreInputFocus = false;
@@ -458,7 +473,7 @@ export class HpDialog extends LitElement {
    * and a later reconnect/update gets another bounded reconciliation attempt.
    */
   private _ensureNativeModal(): boolean {
-    if (this._usesHaDialog() || !this.isConnected) return false;
+    if (this._usesHaDialog() || !this.isConnected || this._closing) return false;
     const dialog = this.renderRoot.querySelector<HTMLDialogElement>('dialog');
     if (!dialog?.isConnected) return false;
     try {
@@ -528,6 +543,7 @@ export class HpDialog extends LitElement {
   }
 
   private _focusInitial = (): void => {
+    if (this._closing) return;
     if (this._restoreInputFocus && this._lastInputFocus?.isConnected) {
       const input = this._lastInputFocus;
       const restore = () => {
@@ -551,33 +567,92 @@ export class HpDialog extends LitElement {
   };
 
   private _requestClose = (): void => {
-    if (this._closing) return;
-    this._closing = true;
-    this._syncToastOwner(false);
-    // HA's close control can dismiss the nested WebAwesome surface before the
-    // public ha-dialog.open property reflects that transition. Commit an
-    // explicit closed phase so a later rejectClose() has a real false -> true
-    // Lit transition and reopens the same physical modal deterministically.
-    if (this.isConnected) this.requestUpdate();
+    if (this._closing || this._closeRequested) return;
+    this._closeRequested = true;
+    // Owners run their existing dirty/busy guards first. Their accepted state
+    // retirement reaches dialogPresence; a refused close never animates away.
+    prepareDialogReturnFocus(this._opener);
     this.dispatchEvent(new CustomEvent('hp-close', { bubbles: true, composed: true }));
+    queueMicrotask(() => { this._closeRequested = false; });
   };
+
+  private _onHaHide = (event: Event): void => {
+    const owner = event.composedPath().find(node => node instanceof Element && node.localName === 'ha-dialog');
+    if (owner !== event.currentTarget || this._closing) return;
+    event.preventDefault();
+    this._requestClose();
+  };
+
+  private _onHaClosed = (event: Event): void => {
+    // A picker/popover may emit its own bubbling `closed`; it is not the
+    // terminal of this shell's accepted exit or a request to close its owner.
+    if (event.composedPath()[0] !== event.currentTarget) return;
+    if (this._closing) this._exit.current?.complete();
+    else this._requestClose();
+  };
+
+  /** Called only after the owner accepts closing, including footer Save. */
+  public beginExit(): Promise<void> {
+    if (this._exit.current) return this._exit.current.finished;
+    prepareDialogReturnFocus(this._opener);
+    this._closing = true;
+    this.inert = true;
+    for (const node of [...this.children, ...this.renderRoot.querySelectorAll('.surface, .header')]) {
+      if (!(node instanceof HTMLElement)) continue;
+      this._inertContents.set(node, node.inert);
+      node.inert = true;
+    }
+    this._syncToastOwner(false);
+    this.closeTransientOverlays();
+    const reduced = this.ownerDocument.defaultView?.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const run = this._exit.begin(reduced || !this.isConnected ? 0 : 400);
+    if (reduced || !this.isConnected) return run.finished;
+    if (this._usesHaDialog()) {
+      this.requestUpdate();
+    } else {
+      const surface = this.renderRoot.querySelector<HTMLElement>('.surface');
+      this.renderRoot.querySelector('dialog')?.classList.add('exiting');
+      this._exitAnimation = surface?.animate([
+        { opacity: 1, transform: 'translateY(0)' },
+        { opacity: 0, transform: 'translateY(12px)' },
+      ], { duration: 180, easing: 'ease', fill: 'forwards' });
+      if (this._exitAnimation) void this._exitAnimation.finished.then(
+        run.complete, run.complete,
+      );
+      else run.complete();
+    }
+    return run.finished;
+  }
+
+  public cancelExit(): void {
+    this._exit.cancel();
+    this._exitAnimation?.cancel();
+    this._exitAnimation = undefined;
+    this.renderRoot.querySelector('dialog')?.classList.remove('exiting');
+    this._closing = false;
+    this.inert = false;
+    for (const [node, prior] of this._inertContents) node.inert = prior;
+    this._inertContents.clear();
+    this._syncToastOwner();
+    if (this.isConnected) this.requestUpdate();
+  }
 
   /**
    * Let an owner reject an asynchronous close request (for example while a
    * save/send is in flight) and keep the same modal usable afterwards. The
-   * close request above first commits an explicit false phase; `live()` also
-   * reconciles a public property changed externally by an HA implementation.
+   * request itself keeps the surface alive; `live()` also reconciles a public
+   * property changed externally by an older HA implementation.
    */
   public rejectClose(): void {
-    this._closing = false;
+    this.cancelExit();
     this._syncToastOwner();
     this._restoreInputFocus = true;
     if (this.isConnected) {
       this.requestUpdate();
       void this.updateComplete.then(() => {
-        // HA restores its physical modal asynchronously. Consume the saved
-        // input only at @opened, not while its old surface is still hidden.
-        if (!this._usesHaDialog() && this.isConnected && !this._closing && this._restoreInputFocus) this._focusInitial();
+        // A refused close may never have hidden the physical modal. Restore
+        // the remembered field here as well as at HA's opened boundary.
+        if (this.isConnected && !this._closing && this._restoreInputFocus) this._focusInitial();
       });
     }
   }
@@ -690,7 +765,8 @@ export class HpDialog extends LitElement {
           .ariaLabelledBy=${this._titleId}
           .ariaDescribedBy=${this.describedBy}
           @opened=${this._focusInitial}
-          @closed=${this._requestClose}
+          @wa-hide=${this._onHaHide}
+          @closed=${this._onHaClosed}
         >
           ${haHeading}
           <slot></slot>
@@ -705,7 +781,8 @@ export class HpDialog extends LitElement {
         .preventScrimClose=${!this.dismissOnScrim}
         .ariaLabelledBy=${this._titleId}
         @opened=${this._focusInitial}
-        @closed=${this._requestClose}
+        @wa-hide=${this._onHaHide}
+        @closed=${this._onHaClosed}
       >
         ${haHeading}
         <slot></slot>

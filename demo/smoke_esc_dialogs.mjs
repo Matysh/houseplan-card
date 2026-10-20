@@ -49,7 +49,10 @@ const res = await page.evaluate(async () => {
   active?.dispatchEvent(new KeyboardEvent('keydown', {
     key: 'Escape', bubbles: true, composed: true, cancelable: true,
   }));
-  await c.updateComplete; await frame();
+  await c.updateComplete;
+  const closeDeadline = performance.now() + 1000;
+  while (hp.isConnected && performance.now() < closeDeadline) await frame();
+  await frame();
   out.restoreFocus = !c._settingsDialog && deepActive() === opener;
   opener.remove();
 

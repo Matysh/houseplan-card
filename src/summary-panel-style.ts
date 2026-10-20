@@ -12,8 +12,8 @@ export const summaryPanelCss = `
     background: var(--card-background-color, #fff);
   }
   .summary-control > button {
-    width: 46px;
-    height: 46px;
+    width: 44px;
+    height: 44px;
     margin: 0;
     padding: 0;
     display: inline-flex;
@@ -29,9 +29,10 @@ export const summaryPanelCss = `
   .summary-control > button:last-child { border-right: 0; }
   .summary-control > button:hover { background: var(--secondary-background-color); }
   .summary-control > button.on {
-    color: var(--text-primary-color, #fff);
-    background: var(--primary-color);
+    color: var(--primary-text-color);
+    background: transparent;
   }
+  .summary-control.kiosk > button.on { box-shadow:inset 0 0 0 1px var(--primary-color); }
   .summary-control > button:focus-visible {
     outline: 2px solid var(--primary-color);
     outline-offset: -3px;
@@ -43,6 +44,7 @@ export const summaryPanelCss = `
     flex: 0 0 auto;
     fill: none;
   }
+  svg.summary-settings-icon { width:24px; height:24px; }
   .summary-control.kiosk {
     position: absolute;
     z-index: 31;
@@ -201,10 +203,10 @@ export const summaryPanelCss = `
   }
     .hdr > .head .summary-control { height: 44px; box-sizing: border-box; gap: 0; border: 0; border-radius: var(--rad-m); background: transparent; overflow: visible; }
     .hdr > .head .summary-control > button { position: relative; box-sizing: border-box; width: 44px; height: 44px; margin: 0; padding: 0; border: 1px solid var(--hp-line); border-radius: 0; color: var(--hp-txt); background: transparent; }
-    .hdr > .head .summary-control > button:first-child { width: 24px; overflow: hidden; border-radius: var(--rad-m) 0 0 var(--rad-m); }
-    .hdr > .head .summary-control > button:first-child > svg.summary-icon { position: absolute; right: -10px; width: 20px; height: 20px; pointer-events: none; }
+    .hdr > .head .summary-control > button:first-child { overflow: visible; border-radius: var(--rad-m) 0 0 var(--rad-m); }
+    .hdr > .head .summary-control > button:first-child > svg.summary-settings-icon { transform:translate(1.5px,1.5px); pointer-events:none; }
     .hdr > .head .summary-control > button:last-child { margin-inline-start: -1px; border-radius: 0 var(--rad-m) var(--rad-m) 0; }
-    .hdr > .head .summary-control > button.on { background: var(--primary-color); color: var(--text-primary-color,#fff); border-color: var(--hp-accent); }
+    .hdr > .head .summary-control > button.on { z-index:1; background:transparent; color:var(--hp-txt); border-color:var(--hp-accent); }
     :host([data-pointer-hover]) .hdr > .head .summary-control > button:not(:disabled):hover { border-color: var(--hp-accent); z-index: 1; }
     .hdr > .head .summary-control > button:focus-visible { z-index: 2; }
 `.cssText}

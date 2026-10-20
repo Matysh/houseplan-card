@@ -8,6 +8,12 @@ comments can point at them (`docs/DECOR-EDITOR.md §3.2`).
 
 ## 1. Purpose and invariants
 
+The trash tool is **Delete** (#976), with a32px arrow/cross cursor (hotspot2,2)
+also over transparent decor hit shapes. It retains confirmation and named
+Undo/Redo. An enabled toolbar tool closes an open secondary menu and activates
+in the same native pointer/keyboard action; a canvas press only dismisses it.
+There is no synthetic replay click or bypass of disabled/inert controls.
+
 The Background editor is a visual annotation layer. Its shapes, furniture,
 custom images, text and plan image never participate in rooms, wall geometry,
 light routing, device state or Home Assistant actions.

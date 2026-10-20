@@ -31,6 +31,12 @@ authority are independent; Auto remains the default without migration.
 The settings form reuses that authority before reading its current-state hint
 (#978); stale foreign/disabled choices remain editable without exposing state.
 
+Secondary UI polish (#976) carries UI-001–UI-010 from the frozen laboratory into
+normal product paths: joined header controls, Help/PDF/Devices/Rules forms,
+sun previews and Background Delete. Accepted close retains inert presentation
+only; rejected/failed operations keep their live form. Independent review and
+issue labels, not this paragraph, determine merge/release acceptance.
+
 Device issue explanations (#972) distinguish the three verified Home Connect
 Local maintenance reminders from safety alarms. A passive yellow wrench and
 read-only source groups explain current causes in the info card and preview,

@@ -234,7 +234,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             title: st('gs.sun_rays'), caption: st(d.sunRays ? 'gs.sun_rays_override' : 'gs.sun_rays_override_off'),
             checked: d.sunRays, onChange: (v) => set({ sunRays: v }),
           })}
-          ${renderSunRayOriginSegment(d.sunRayOrigin, (key) => t(key), (sunRayOrigin) => set({ sunRayOrigin }), st('gs.preview_selected'))}
+          ${renderSunRayOriginSegment(d.sunRayOrigin, (key) => t(key), (sunRayOrigin) => set({ sunRayOrigin }))}
           ${toggleRow({ id: 'gs-moon', icon: 'mdi:moon-waning-crescent', title: st('gs.moon'),
             describedBy: 'gs-moon-status',
             checked: d.moon, onChange: (v) => set({ moon: v }),

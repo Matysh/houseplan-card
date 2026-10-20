@@ -151,6 +151,7 @@ const chromeCoreStyles = unsafeCSS(css`
     .head > .spacer { flex: 0 0 30px; }
     .head > .header-actions { display: inline-flex; align-items: center; flex: 0 0 auto; flex-wrap: nowrap; gap: 10px; max-width: 100%; }
     .head > .header-actions > * { flex-shrink: 0; }
+    .head .hidden-devices-button.on { background:transparent; color:var(--hp-txt); border-color:var(--hp-accent); }
     .hdr > .head .zoomctl { display: inline-flex; height: 44px; box-sizing: border-box; gap: 0; padding: 0; overflow: visible; border: 0; border-radius: var(--rad-m); background: transparent; }
     .hdr > .head .zoomctl .zb { box-sizing: border-box; width: 44px; min-width: 44px; height: 44px; min-height: 44px; padding: 0; justify-content: center; position: relative; border: 1px solid var(--hp-line); border-radius: 0; background: transparent; color: var(--hp-txt); }
     .hdr > .head .zoomctl .zb + .zb { margin-inline-start: -1px; }

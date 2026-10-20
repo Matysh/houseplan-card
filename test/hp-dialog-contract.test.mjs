@@ -26,12 +26,7 @@ test('#508 AC4: no other dialog opts in — flex-content stays a summary-dialog 
   assert.equal(optIns.length, 1, optIns.join('\n'));
 });
 
-test('#607: rejected authentic HA closes commit a false -> true open transition', () => {
-  const source = read('hp-dialog.ts');
-  assert.match(source, /import \{ live \} from 'lit\/directives\/live\.js';/);
-  const renders = source.match(/<ha-dialog[\s\S]*?>/g) || [];
-  assert.equal(renders.length, 2, 'two authentic HA render branches');
-  for (const render of renders) assert.match(render, /\.open=\$\{live\(!this\._closing\)\}/, render);
-  assert.match(source, /private _requestClose[\s\S]*?this\._closing = true;[\s\S]*?if \(this\.isConnected\) this\.requestUpdate\(\);[\s\S]*?dispatchEvent/);
-  assert.match(source, /public rejectClose\(\): void \{[\s\S]*?this\._closing = false;[\s\S]*?if \(this\.isConnected\) \{\s*this\.requestUpdate\(\);/);
-});
+// #976 replaces the old #607 source-text false→true transition assertion.
+// An unaccepted close now keeps its modal visible. Executable ownership/deadline
+// cases live in dialog-exit.test.mjs; real HA Continue/Discard and frame-level
+// closure are exercised by demo/ui-lab/verify-polish.mjs.

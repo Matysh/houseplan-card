@@ -9,6 +9,10 @@
 - Choose an own-device entity for ordinary icon activity, optionally list exact
   active states and see the reason in the live preview. Device actions, safety
   and special states, values and light output keep their existing sources. (#977)
+- Match the approved UI Lab secondary surfaces: consistent Help, PDF, Devices
+  and Icon rules, joined summary controls and cleaner sun previews. Dialogs
+  close smoothly without a return-focus flash; failed operations retain drafts.
+  Background Delete activates with one click after a tool palette. (#976)
 
 - Allow immediate ZIP-import retry after closing or cancelling its preview,
   including cancellation before the server reply is received. A failed ZIP
