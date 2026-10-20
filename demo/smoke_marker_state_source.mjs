@@ -9,7 +9,7 @@ const root = page.locator('#host > houseplan-card');
 const dialog = root.locator('hp-dialog[data-kind="marker"]');
 const settle = () => page.evaluate(() => window.__hpTest.settled());
 const open = async () => {
-  await page.evaluate(async () => { const c = window.__card; c._setMode('devices'); c._openMarkerDialog(c._devices.find(d => d.id === 'd_light1')); await c.updateComplete; });
+  await page.evaluate(async () => { await window.__hpTest.setMode('devices'); await window.__hpTest.openMarkerDialog('d_light1'); });
   await settingsSection(dialog, 'appearance'); await settle();
 };
 const explanation = () => dialog.locator('hp-device-preview').locator('[data-state-source-explanation]').textContent();
@@ -50,7 +50,7 @@ try {
     return m.state_source.entity_id === 'binary_sensor.hp977_work' && m.state_source.active_states.join() === 'washing' && m.ripple_color === '#1234ab';
   });
   await page.evaluate(async () => {
-    const c = window.__card; c._setMode('view');
+    const c = window.__card; await window.__hpTest.setMode('view');
     await customElements.whenDefined('houseplan-space-card');
     const mini = document.createElement('houseplan-space-card'); mini.setConfig({ type: 'custom:houseplan-space-card', space: 'f1', show_button: false });
     mini.hass = c.hass; document.body.append(mini); window.__mini977 = mini;
