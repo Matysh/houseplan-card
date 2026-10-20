@@ -2212,7 +2212,6 @@ export class HouseplanCard extends LitElement {
     display: DeviceDisplayMode;
     stateSource?: Marker['state_source'];
     stateSourceTouched?: boolean;
-    stateSourceFilter?: string;
     rippleColor: string; // '' = live/semantic automatic activity colour
     rippleSize: number;  // in icon diameters; package default 1.5
     size: number;        // icon size multiplier

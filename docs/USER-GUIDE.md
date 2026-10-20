@@ -1646,10 +1646,13 @@ availability remains independent from that aggregate work state.
 In device settings, open **Display on plan → Icon state source**, immediately
 after Display method. Auto keeps the existing logic. Choose an entity of the
 same physical device, for example the washer's running sensor instead of power.
-Standard behaviour uses Houseplan semantics; Active when… lists exact HA values
-such as `running` or `washing`, not formulas or numeric thresholds.
+There is no separate search: all own-device entities are in one list. In
+**Active when**, choose **Automatically** or **Set manually**. The question-mark
+help explains automatic type, class and state semantics. Manual mode accepts
+one exact HA state such as `running` or `washing`, not a formula or threshold.
 
-The live preview explains the current source and result. Missing data means
+The device image uses the full preview width, with integration, source, current
+state and activity explanations underneath. Missing data means
 unknown activity, without silently selecting another source. Actions, readings,
 battery/Zigbee, Glow and room lighting are unchanged. Safety alarms retain priority;
 door/lock/cover faces keep their automatic special state. Virtual devices have

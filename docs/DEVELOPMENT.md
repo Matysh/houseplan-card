@@ -9,12 +9,20 @@ structure/delta; exact runtime ownership is separate. Witnesses:
 `test/marker-state-source.test.mjs`, `test_validation.py -k issue977` and
 `demo/smoke_marker_state_source.mjs`. Screenshot the page, not the display-contents
 hp-dialog host, and keep negative-input witnesses distinct from nightly mutants.
-The form-only guard (#978) has cheap getter-trap regressions in
+The form-only guard (#978/#979) has cheap getter-trap regressions in
 `test/marker-state-source-form.test.mjs`: foreign, disabled and unproven sources
-must never be read, while proven own sources retain their live hints. The same
+must never be read, while proven own sources retain live option states. The same
 browser smoke checks saved foreign/disabled choices and cancellation without
 changing the accepted configuration. These are ordinary negative inputs,
 not product mutations or reasons to rerun unrelated golden/full suites.
+
+Activity form polish (#979) uses one manual input and the ordinary `hp-help`;
+do not reintroduce a filter, multi-state row state or a second validation path.
+The existing smoke observes Save/Cancel, own-source refusal and live preview,
+and captures RU/EN light/dark layouts with long names at 1280/720 widths in
+`demo/out/activity-preview-979/`. The full-width image is 192px high; its canvas
+retains intrinsic safe bounds and scrolling for large rings/badges. Backend,
+raw-state equality and the persisted array shape stay unchanged.
 
 ## Secondary UI polish (#976)
 

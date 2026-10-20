@@ -6,8 +6,11 @@ registry identity before reading a state. Presentation metadata explains the
 same result in preview; snapshot row tracking and source signatures handle
 sibling/attribute/registry changes and retire stale short activity. Marker
 save uses the existing accepted-config/CAS/context boundary.
-The form's current-state hint also checks the canonical candidate authority
-before looking up the saved entity, including stale or disabled choices (#978).
+Form options also check canonical candidate authority before looking up an
+entity, including stale or disabled choices (#978). UI polish (#979) removes
+the extra filter/current-state hint and writes a single manual state through
+the same accepted-save path. Preview has one column, with a bounded-height
+image above readable explanations; the resolver and stored schema are unchanged.
 
 Shared dialog presence (#976) separates a close request from an accepted terminal.
 Owners retain their existing dirty/busy/Save decisions; only accepted state

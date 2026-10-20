@@ -144,7 +144,6 @@ export function resolveMarkerStateSource(
 export interface MarkerStateSourceDraft {
   stateSource?: Marker['state_source'];
   stateSourceTouched?: boolean;
-  stateSourceFilter?: string;
 }
 export function markerStateSourceFields(draft: MarkerStateSourceDraft): Pick<Marker, 'state_source'> {
   if (draft.stateSourceTouched) {

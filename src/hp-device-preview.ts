@@ -432,11 +432,12 @@ class HpDevicePreview extends LitElement {
         font-weight: 700;
       }
       .previewbadge.example { color: var(--warning-color, #ffb300); }
-      .previewgrid { display: grid; grid-template-columns: minmax(120px, .65fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
-      .previewcanvas { position:relative; min-width:100%; margin:auto; }
+      .previewgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+      .previewcanvas { position:relative; min-width:100%; min-height:100%; margin:auto; }
       .previewstage {
         position: relative;
-        min-height: 168px;
+        height: 192px;
+        min-width: 0;
         border-radius: 12px;
         background: var(--secondary-background-color, rgba(0, 0, 0, 0.16));
         overflow: auto;
@@ -449,13 +450,13 @@ class HpDevicePreview extends LitElement {
       .previewstage .dev { left: 0; top: 0; cursor: default; pointer-events:none; }
       :host([data-pointer-hover]) .previewstage .dev:hover { z-index: 2; }
       .previewfacts { min-width: 0; display: grid; align-content: start; gap: 8px; }
-      .previewfacts > div { display: grid; grid-template-columns: minmax(115px, 0.8fr) minmax(0, 1.3fr); gap: 8px; }
+      .previewfacts > div { display: grid; grid-template-columns: minmax(0, 1fr); gap: 3px; }
       .previewfacts span { color: var(--secondary-text-color, #9aa0aa); }
       .previewfacts b { min-width: 0; overflow-wrap: anywhere; }
       .previewnotice { margin: 2px 0 0; color: var(--secondary-text-color, #9aa0aa); font-size: 13px; }
       .previewdetails { margin-top: 12px; }
       .previewtable { display: grid; gap: 8px; margin-top: 9px; }
-      .previewsource { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3px 10px; font-size: 13px; }
+      .previewsource { display: grid; grid-template-columns: minmax(0, 1fr); gap: 3px; font-size: 13px; }
       .previewsource > * { min-width: 0; overflow-wrap: anywhere; }
       .previewsource code { color: var(--secondary-text-color, #9aa0aa); }
       .previewdemo {
@@ -473,11 +474,6 @@ class HpDevicePreview extends LitElement {
       .previewdemos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
       .previewdemo:focus-visible { outline: 2px solid var(--primary-color, #03a9f4); outline-offset: 2px; }
       .previewdemo:disabled { opacity: 0.5; cursor: not-allowed; }
-      @media (max-width: 640px) {
-        .previewgrid { grid-template-columns: minmax(0, 1fr); }
-        .previewstage { min-height: 142px; }
-        .previewfacts > div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
-      }
     `,
   ];
 }

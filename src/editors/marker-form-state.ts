@@ -37,7 +37,7 @@ export function restoreMarkerRadarRemoval(host: object, d: MarkerDialogDraft): M
 }
 
 export const MARKER_DIALOG_TRANSIENT_KEYS: ReadonlySet<string> = new Set([
-  'bindingOpen', 'bindingFilter', 'runFilter', 'controlsFilter', 'busy', 'tapHintAnnouncement', 'uploadId', 'autoIcon', 'stateSourceFilter',
+  'bindingOpen', 'bindingFilter', 'runFilter', 'controlsFilter', 'busy', 'tapHintAnnouncement', 'uploadId', 'autoIcon',
 ]);
 
 export function markerDraftKey(d: MarkerDialogDraft): string {

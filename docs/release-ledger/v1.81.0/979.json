@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "issue": 979,
+  "baseStable": "v1.81.0",
+  "category": "line-fix",
+  "introducedBy": 977,
+  "rationale": "Polishes the icon state-source form introduced by #977 in the current 1.82 beta line. This feature did not exist in stable v1.81.0; omit this follow-up from the stable user changelog and milestone.",
+  "summary": {
+    "ru": "Упрощены настройка активности значка и компоновка превью устройства.",
+    "en": "Simplified icon activity settings and the device preview layout."
+  }
+}

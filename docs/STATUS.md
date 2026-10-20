@@ -25,6 +25,10 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Activity form polish (#979) removes separate entity search and multi-state
+controls, adds contextual Auto help and puts full-width preview facts below
+a bounded-height image. Source semantics and the persisted format are unchanged.
+
 Icon state sources (#977) are optional per-marker settings. Own-device identity,
 ordinary-only samples, native safety/special-state priority and accepted-save
 authority are independent; Auto remains the default without migration.

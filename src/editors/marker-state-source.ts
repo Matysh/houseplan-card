@@ -19,11 +19,7 @@ export function renderMarkerStateSource(options: {
   const candidates = markerStateSourceCandidates(d.binding, registry);
   const disabled = d.binding === 'virtual' || protectedFace;
   const explicit = source?.active_states !== undefined;
-  const states = Array.isArray(source?.active_states) ? source.active_states : [];
-  const filter = (d.stateSourceFilter || '').toLowerCase();
-  const setStates = (values: string[]) => change({ ...d, stateSource: { ...source, entity_id: eid, active_states: values }, stateSourceTouched: true });
-  // Candidate authority is rechecked before every render, including saved stale IDs.
-  const current = candidates.includes(eid) ? hass.states?.[eid]?.state : undefined;
+  const state = Array.isArray(source?.active_states) ? source.active_states[0] ?? '' : '';
   return html`<div data-state-source>
     ${field({ label: t('marker.state_source'), htmlFor: 'marker-state-source',
       hint: t(disabled ? protectedFace ? 'marker.state_source_special' : 'marker.state_source_virtual' : 'marker.state_source_help'),
@@ -32,18 +28,15 @@ export function renderMarkerStateSource(options: {
           ? { entity_id: (e.target as HTMLSelectElement).value } : null, stateSourceTouched: true })}>
         <option value="" ?selected=${disabled || source == null}>${t('marker.state_source_auto')}</option>
         ${!disabled && source != null && !candidates.includes(eid) ? html`<option selected value=${eid || '__invalid__'}>${eid || t('marker.state_source_invalid')}</option>` : nothing}
-        ${candidates.filter(id => !filter || id === eid || `${id} ${registry.entities?.[id]?.name || ''} ${hass.states?.[id]?.attributes?.friendly_name || ''}`.toLowerCase().includes(filter))
-          .map(id => html`<option value=${id} ?selected=${!disabled && id === eid}>
+        ${candidates.map(id => html`<option value=${id} ?selected=${!disabled && id === eid}>
             ${String(registry.entities?.[id]?.name || hass.states?.[id]?.attributes?.friendly_name || id)} · ${id} · ${String(hass.states?.[id]?.state ?? '—')}
           </option>`)}
       </select></hp-settings-select>`,
     })}
-    ${!disabled && candidates.length > 8 ? field({ label: t('marker.state_source_own_only'), htmlFor: 'marker-state-source-filter',
-      control: html`<input id="marker-state-source-filter" class="hpf-input" type="search" .value=${d.stateSourceFilter || ''}
-        @input=${(e: Event) => change({ ...d, stateSourceFilter: (e.target as HTMLInputElement).value })}>`,
-    }) : nothing}
     ${!disabled && source != null ? html`
       ${field({ label: t('marker.state_source_active_when'), htmlFor: 'marker-state-source-mode',
+        help: html`<hp-help instant data-help-key="marker.state_source_mode_help"
+          .text=${t('marker.state_source_mode_help')} .ariaLabel=${t('marker.state_source_mode_help.aria')}></hp-help>`,
         control: html`<hp-settings-select><select id="marker-state-source-mode"
           @change=${(e: Event) => {
             const next = { ...source, entity_id: eid }; delete next.active_states;
@@ -51,18 +44,13 @@ export function renderMarkerStateSource(options: {
             change({ ...d, stateSource: next, stateSourceTouched: true });
           }}>
           <option value="standard" ?selected=${!explicit}>${t('marker.state_source_standard')}</option>
-          <option value="states" ?selected=${explicit}>${t('marker.state_source_active_when')}</option>
+          <option value="states" ?selected=${explicit}>${t('marker.state_source_manual')}</option>
         </select></hp-settings-select>`,
       })}
       ${explicit ? html`<div class="hpf-field" id="marker-state-source-states">
-        <p class="hpf-hint">${t('marker.state_source_states_help')} <code>${String(current ?? '—')}</code></p>
-        ${states.map((state, index) => html`<div class="hpf-inline">
-          <input class="hpf-input" aria-label=${t('marker.state_source_active_when')} .value=${state}
-            @input=${(e: Event) => setStates(states.map((old, i) => i === index ? (e.target as HTMLInputElement).value : old))}>
-          <button type="button" class="btn ghost" aria-label=${t('marker.state_source_state_remove')}
-            @click=${() => setStates(states.filter((_, i) => i !== index))}>×</button>
-        </div>`)}
-        <button type="button" class="btn ghost" @click=${() => setStates([...states, ''])}>${t('marker.state_source_state_add')}</button>
+        <input class="hpf-input" aria-label=${t('marker.state_source_active_when')} .value=${state}
+          @input=${(e: Event) => change({ ...d, stateSource: { ...source, entity_id: eid,
+            active_states: [(e.target as HTMLInputElement).value] }, stateSourceTouched: true })}>
       </div>` : nothing}
       ${!normalizeMarkerStateSource(source) ? html`<p class="hpf-note hpf-note-warning" role="alert">${t('marker.state_source_states_invalid')}</p>` : nothing}
     ` : nothing}
