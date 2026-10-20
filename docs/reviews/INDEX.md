@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 115, issue: 56. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 117, issue: 56. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -10,6 +10,8 @@
 | #973 | [CODE-REVIEW-973-r1.md](CODE-REVIEW-973-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #973 | [CODE-REVIEW-973-r2.md](CODE-REVIEW-973-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #972 | [SPEC-REVIEW-972-r1.md](SPEC-REVIEW-972-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #972 | [CODE-REVIEW-972-r1.md](CODE-REVIEW-972-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | дублирующая запись в обоих changelog; demo/golden/matrix.mjs — у OPENING_SYMBOL_EXISTING_GOLDEN_IMPACT, STAGE6_ACCEPTANCE_SCE… | `docs/CHANGELOG.md` `docs/CHANGELOG.ru.md` `demo/golden/matrix.mjs` |
+| #972 | [CODE-REVIEW-972-r2.md](CODE-REVIEW-972-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #971 | [CODE-REVIEW-971-r1.md](CODE-REVIEW-971-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #971 | [CODE-REVIEW-971-r2.md](CODE-REVIEW-971-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #970 | [CODE-REVIEW-970-r1.md](CODE-REVIEW-970-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
