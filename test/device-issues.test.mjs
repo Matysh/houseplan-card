@@ -49,6 +49,7 @@ test('#972 AC2: only exact service semantics can lower a problem alarm', () => {
     assert.equal(classifyDeviceIssue(id, state, dc, registry).severity, 'alarm');
   }
   for (const state of ['off', 'unknown', 'unavailable']) assert.equal(classifyDeviceIssue(eid, state, 'problem', registry), null);
+  assert.deepEqual(classifyDeviceIssue(eid, 'on', 'problem', {}), { severity: 'alarm', reason: 'problem' });
 });
 
 test('#972 AC3/6: all concurrent sources deduplicate and alarms outrank maintenance', () => {

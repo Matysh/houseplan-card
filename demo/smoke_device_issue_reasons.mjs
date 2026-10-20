@@ -72,6 +72,11 @@ try {
   await marker.locator('.device-maintenance').waitFor();
   await state(maintenanceSource, 'off');
   check('last cleared issue removes all explanations', await info.locator('.device-issue').count(), 0);
+  await state('binary_sensor.appliance_aquastop_occurred', 'on');
+  await info.locator('.device-issues.alarm').waitFor();
+  check('a new alarm appears in the still-open card after all causes cleared',
+    await info.locator('.device-issue').getAttribute('data-source'), 'binary_sensor.appliance_aquastop_occurred');
+  await state('binary_sensor.appliance_aquastop_occurred', 'off');
   await state(maintenanceSource, 'on');
   await info.locator('.device-issue').waitFor();
   await page.keyboard.press('Escape');
@@ -104,8 +109,12 @@ try {
   await page.keyboard.press('Escape');
   // Normal user and kiosk both retain the same read-only explanation, touch needs no hover.
   await page.evaluate(async () => {
-    const card = window.__card;
-    card.hass = { ...card.hass, user: { ...card.hass.user, is_admin: false } };
+    const card = window.__card, original = card.hass;
+    card.hass = { ...original, user: { ...original.user, id: '972-reader', is_admin: false },
+      callWS: async message => {
+        const response = await original.callWS(message);
+        return message.type === 'houseplan/config/get' ? { ...response, can_write: false } : response;
+      } };
     card.setConfig({ type: 'custom:houseplan-card', language: 'en', kiosk: true, cycle: 0 });
     await window.__hpTest.settled();
   });
@@ -120,5 +129,5 @@ try {
     const cause = node.querySelector('.device-issues');
     return cause.scrollWidth <= cause.clientWidth + 1;
   }));
-  out.acceptedTransitions = 'maintenance → alarm+maintenance → maintenance → none → maintenance';
+  out.acceptedTransitions = 'maintenance → alarm+maintenance → maintenance → none → new alarm → maintenance';
 } finally { await finish(browser, out); }
