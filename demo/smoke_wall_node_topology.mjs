@@ -26,9 +26,15 @@ const scenarios = [
 ];
 let server, revision = 1, capability = true, canWrite = true, refused = false, writes = 0;
 const { page, browser } = await launch({ width: 1180, height: 920 });
-await page.exposeFunction('topologyWire', message => {
-  if (message.type === 'houseplan/config/get') return { config: structuredClone(server), rev: revision, can_write: canWrite,
-    ...(capability ? { wall_node_move_api: 1 } : {}) };
+await page.exposeFunction('topologyWire', async message => {
+  if (message.type === 'houseplan/config/get') {
+    const response = { config: structuredClone(server), rev: revision, can_write: canWrite,
+      ...(capability ? { wall_node_move_api: 1 } : {}) };
+    // Deliberately outlive an early warm render. Visible handles alone do not
+    // prove that this new legacy read has replaced the previous scenario.
+    if (!response.config.spaces[0].wall_segments) await new Promise(resolve => setTimeout(resolve, 900));
+    return response;
+  }
   if (message.type === 'houseplan/layout/get') return { layout: {}, rev: 1 };
   if (message.type !== 'houseplan/wall/node_move') return null;
   assert.equal(message.expected_rev, revision);
@@ -56,6 +62,11 @@ const mount = async cfg => {
     const card = document.createElement('houseplan-card'); card.setConfig({ type: 'custom:houseplan-card', language: 'en' });
     window.__card.remove(); document.getElementById('host').appendChild(card); window.__card = card; card.hass = hass;
   });
+  await page.waitForFunction(({ config, expectedRevision }) => {
+    const card = window.__card;
+    return card?._loadOk === true && card._cfgRev === expectedRevision
+      && JSON.stringify(card._serverCfg) === JSON.stringify(config);
+  }, { config: cfg, expectedRevision: revision });
   await page.waitForFunction(() => window.__card?._booting === false && window.__card._space === 'topology');
   await page.evaluate(async () => { await window.__hpTest.setMode('plan'); await window.__hpTest.setTool('select'); });
   await page.waitForFunction(() => !window.__card._modeTransitionBusy && window.__card.renderRoot.querySelector('.hp-node-handle'));
@@ -71,7 +82,13 @@ const drag = async (point, target) => {
   // press; do not replay a missed gesture or relax any geometry/legacy oracle.
   await page.locator(`houseplan-card .hp-node-handle[cx="${point[0] * 1000}"][cy="${point[1] * 1000}"]`).hover();
   await page.mouse.down();
-  assert.equal(await page.evaluate(() => window.__card._editorRuntime.nodeMove.dragging), true,
+  const captured = await page.evaluate(() => window.__card._editorRuntime.nodeMove.dragging);
+  if (!captured) console.error('diagnostic wall-node-press', await page.evaluate(() => {
+    const card = window.__card;
+    return { loaded: card._loadOk, revision: card._cfgRev, mode: card._mode, tool: card._tool,
+      api: card._haWallNodeMoveApi, busy: card._editorRuntime.nodeMove.busy, source: card._serverCfg.spaces[0] };
+  }));
+  assert.equal(captured, true,
     'one native press captures the ready wall-node handle');
   const end = await screen(target);
   await page.mouse.move(end.x, end.y, { steps: 5 });
