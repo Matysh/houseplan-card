@@ -253,7 +253,7 @@ export const devicesStyles = css`
       filter:drop-shadow(0 1px 1px rgb(0 0 0 / 65%));
     }
     .device-maintenance > ha-icon { --mdc-icon-size:calc(var(--device-shell-size) * .55);
-      width:100%; height:100%; pointer-events:none; }
+      width:100%; height:100%; line-height:0; pointer-events:none; }
     .device-battery[data-state="normal"] { color: #1DC21D; }
     .device-battery[data-state="warning"] { color: #F0A00C; }
     .device-battery[data-state="low"] { color: #F0410C; }

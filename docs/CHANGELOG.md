@@ -10,6 +10,7 @@
   validates and repairs only its copy, with explicit consent before downloading
   a repaired backup; the working plan stays unchanged. (#973)
 - Explain all active device alarm sources in the info card and preview. Verified Home Connect maintenance reminders use a passive yellow wrench instead of red alarm pulsing, including while the appliance is off. (#972)
+- Explain all active device alarm sources in the info card and preview. Verified Home Connect maintenance reminders use a passive yellow wrench instead of red alarm pulsing, including while the appliance is off. Keep its glyph aligned at every marker scale. (#972)
 
 ## v1.82.0-beta.3 — 2026-10-19
 

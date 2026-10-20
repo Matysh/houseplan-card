@@ -679,7 +679,7 @@ export const dialogsStyles = css`
     border-left:4px solid #F0A00C; border-radius:10px; padding:12px; min-width:0; }
   .device-issues.alarm { border-left-color:#F0410C; }
   .device-issues h3 { display:flex; align-items:center; gap:8px; margin:0 0 10px; font-size:15px; }
-  .device-issues h3 ha-icon { color:#F0A00C; --mdc-icon-size:22px; flex:none; }
+  .device-issues h3 ha-icon { color:#F0A00C; --mdc-icon-size:22px; flex:none; line-height:0; }
   .device-issues.alarm h3 ha-icon { color:#F0410C; }
   .device-issue { padding:8px 0; overflow-wrap:anywhere; }
   .device-issue + .device-issue { border-top:1px solid var(--divider-color); }

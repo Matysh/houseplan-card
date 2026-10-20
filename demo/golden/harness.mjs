@@ -52,8 +52,8 @@ const fixtureFor = (scenario) => scenario.deviceIssues ? (() => {
   fixture.devices = sample.devices; fixture.entities = sample.entities; fixture.states = sample.states;
   fixture.devices.appliance.area_id = 'golden_light_left';
   fixture.config.markers = [{ id: 'appliance', binding: 'device:appliance',
-    space: 'golden-lighting', display: 'icon_ripple', tap_action: 'info' }];
-  fixture.layout = { appliance: { s: 'golden-lighting', x: .3, y: .5 } };
+    space: 'golden-lighting', icon: 'mdi:dishwasher', display: 'icon_ripple', tap_action: 'info' }];
+  fixture.layout = { appliance: { s: 'golden-lighting', x: .23, y: .34 } };
   if (scenario.deviceIssues === 'alarm') {
     fixture.states['binary_sensor.appliance_aquastop_occurred'].state = 'on';
   }
@@ -2593,6 +2593,10 @@ export async function prepareGoldenScenario(page, scenario) {
     const alarmCount = await face.locator('.device-pulse.alarm').count();
     if (warningCount !== (alarm ? 0 : 1) || alarmCount !== (alarm ? 1 : 0)) {
       throw new Error('golden maintenance/alarm priority is incorrect');
+    }
+    if (!alarm && !await face.locator('.device-maintenance ha-icon').evaluate(icon =>
+      !!icon.shadowRoot?.querySelector('path')?.getAttribute('d'))) {
+      throw new Error('golden maintenance glyph has no painted path');
     }
   }
   if (scenario.dialog === 'device-issues') {

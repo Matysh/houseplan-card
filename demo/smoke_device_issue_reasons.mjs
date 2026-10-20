@@ -1,6 +1,7 @@
 // #972: real user input into the info card, accepted HA updates and read-only source navigation.
 import { launchColdView, check, finish, requirePinnedBrowser } from './serve.mjs';
 import { makeDeviceIssuesFixture, maintenanceSource } from './fixtures/device-issues.mjs';
+import { mdiWrenchOutline } from '@mdi/js';
 requirePinnedBrowser('device issue warning and explanation');
 const { page, browser } = await launchColdView({ width: 1000, height: 850 }, 1, [], { hasTouch: true });
 const out = {};
@@ -42,6 +43,8 @@ try {
     await window.__hpTest.settled();
   }, { eid, value });
   await marker.locator('.device-maintenance').waitFor();
+  check('service warning paints the official MDI wrench', await marker.locator('.device-maintenance ha-icon')
+    .evaluate((icon, expected) => icon.shadowRoot?.querySelector('path')?.getAttribute('d') === expected, mdiWrenchOutline));
   check('off appliance has passive warning and no alarm pulse', await marker.evaluate(node =>
     !node.classList.contains('alarm') && !node.querySelector('.device-pulse')
     && getComputedStyle(node.querySelector('.device-maintenance')).pointerEvents === 'none'));
