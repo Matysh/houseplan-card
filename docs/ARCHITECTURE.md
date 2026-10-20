@@ -1,5 +1,12 @@
 # House Plan architecture
 
+Unit execution (#982) uses a computed import/source-read partition rather than
+test filename lists. Product consumers own the build dependency; tooling jobs
+run independently. The complete frontend CI proof binds both unit job results,
+so moving work into a separate job cannot turn a missing/red unit set green.
+The local gate selects the required union from changed input domains and uses
+both sets for unknown inputs; full and nightly execution retain the full union.
+
 Optional marker `state_source` (#977) changes ordinary presentation samples,
 not the binding/action/value/light graph. Shared resolution checks exact own
 registry identity before reading a state. Presentation metadata explains the

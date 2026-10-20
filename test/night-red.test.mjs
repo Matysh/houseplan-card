@@ -96,7 +96,7 @@ function validateRun({ id, sha, at, conclusion = 'success', status = 'completed'
     smoke: skipped, smoke_done: skipped, golden: skipped, performance_smoke: skipped,
   };
   const proof = buildCiProof({ candidateSha: sha, candidateTree: TREE, runId: id, attempt: 1, event: 'workflow_dispatch', needs });
-  const jobs = greenJobs('preflight', 'changes', 'reuse', 'frontend');
+  const jobs = greenJobs('preflight', 'changes', 'reuse', 'frontend', 'tooling');
   if (full) jobs.push(...greenJobs('smoke', 'smoke_done', 'golden', 'performance_smoke'));
   return { run, context: { proof, jobs, reuseRuns: new Map() } };
 }

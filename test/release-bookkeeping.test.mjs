@@ -137,7 +137,7 @@ const workflow = validateJobs();
 const proofFixture = ({ id = 123, full = true, conclusion = 'success', headSha = candidate } = {}) => {
   const needs = {
     preflight: { result: 'success' }, changes: { result: 'success', outputs: { heavy: String(full), frontend: 'true' } },
-    reuse: { result: 'success', outputs: {} }, frontend: { result: 'success' },
+    reuse: { result: 'success', outputs: {} }, frontend: { result: 'success' }, tooling: { result: 'success' },
     smoke: { result: full ? 'success' : 'skipped' }, smoke_done: { result: full ? 'success' : 'skipped' },
     golden: { result: full ? 'success' : 'skipped' }, performance_smoke: { result: full ? 'success' : 'skipped' },
   };

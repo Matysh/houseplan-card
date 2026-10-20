@@ -156,7 +156,7 @@ const mergeProofContext = (row, sha, tree) => {
     },
   });
   const success = (name) => ({ name, conclusion: 'success' });
-  return { proof, reuseRuns: new Map(), jobs: ['preflight', 'changes', 'reuse', 'frontend', 'changed_mutants']
+  return { proof, reuseRuns: new Map(), jobs: ['preflight', 'changes', 'reuse', 'frontend', 'tooling', 'changed_mutants']
     .flatMap((id) => jobInstanceNames(WORKFLOW.get(id)).map(success)) };
 };
 

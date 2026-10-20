@@ -14,7 +14,7 @@ const TREE = 'b'.repeat(40);
 const WORKFLOW = validateJobs();
 const jobsOf = (...ids) => ids.flatMap((id) => jobInstanceNames(WORKFLOW.get(id)).map((name) => ({ name, conclusion: 'success' })));
 const MUTANT_JOBS = jobsOf('changed_mutants');
-const OTHER_JOBS = jobsOf('frontend');
+const OTHER_JOBS = jobsOf('frontend', 'tooling');
 const BASE_JOBS = jobsOf('preflight', 'changes', 'reuse');
 
 function fakeOps({ snapshots, onRef = [], jobsById = {} }) {

@@ -117,7 +117,7 @@ test('#954 real schema2 producer survives docs-only SHA, rejects source/env/fore
     download: (_id, _name, out) => cpSync(producer, out, { recursive: true }) });
   put('docs/reviews/review.md', 'review'); git('add', 'docs'); git('commit', '-qm', 'review');
   assert.equal(restore().reused, true);
-  put('test/git.test.mjs', 'import {readFileSync} from "node:fs";');
+  put('test/git.test.mjs', 'import {readFileSync} from "node:fs"; import "../scripts/content-inputs.mjs";');
   assert.equal(frontendContentKey(root, environment), proof.key, 'new metadata test belongs to the always-fresh group');
   assert.equal(restore({ ...environment, imageVersion: 'two' }).reused, false);
   run.repository.full_name = 'foreign/repo'; assert.equal(restore().reused, false); run.repository.full_name = repo;

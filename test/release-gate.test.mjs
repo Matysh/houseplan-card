@@ -28,7 +28,7 @@ const proofContext = ({ id, full = true, conclusion = 'success' }) => {
     performance_smoke: { result: full ? 'success' : 'skipped' }, backend: { result: full ? 'success' : 'skipped' },
   };
   const proof = buildCiProof({ candidateSha: SHA, candidateTree: TREE, runId: id, attempt: 1, event: 'workflow_dispatch', needs });
-  const jobs = greenJobs('preflight', 'changes', 'reuse', 'frontend', 'changed_mutants');
+  const jobs = greenJobs('preflight', 'changes', 'reuse', 'frontend', 'tooling', 'changed_mutants');
   if (full) jobs.push(...greenJobs('hacs', 'hassfest', 'smoke', 'smoke_done', 'golden', 'performance_smoke', 'backend'));
   const run = {
     databaseId: id, attempt: 1, status: 'completed', conclusion, event: 'workflow_dispatch',

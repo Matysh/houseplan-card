@@ -29,6 +29,11 @@ Activity form polish (#979) removes separate entity search and multi-state
 controls, adds contextual Auto help and puts full-width preview facts below
 a bounded-height image. Source semantics and the persisted format are unchanged.
 
+- #982 computes the product/tooling unit partition from imports and direct
+  source reads. CI executes separate unit jobs; the automatic local gate
+  selects the required union from changed inputs, retaining both on unknowns.
+  Nightly/full `npm test` retain every unit. Workflow trigger filtering is #980.
+
 Icon state sources (#977) are optional per-marker settings. Own-device identity,
 ordinary-only samples, native safety/special-state priority and accepted-save
 authority are independent; Auto remains the default without migration.

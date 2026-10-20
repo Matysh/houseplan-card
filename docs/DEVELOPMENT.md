@@ -1,5 +1,17 @@
 # Development and deployment
 
+## Computed unit partitions (#982)
+
+`npm run test:product` and `npm run test:tooling` share the import graph in
+`unit-groups.mjs`; `npm test` remains their complete union. Mixed consumers
+belong to product so emitted modules always have a producer. Direct reads of
+real source via `import.meta.url` count; source text inside synthetic fixture
+strings does not. A test with no discoverable repository inputs fails loudly.
+The mandatory `gate:small` computes the needed union from the diff, running
+range guards fresh; `--group=all` explicitly requests both. CI separates unit
+jobs and requires both job results in frontend proof. Trigger filtering moves
+to #980; nightly dispatch still covers both groups.
+
 ## Icon state source (#977)
 
 Do not substitute the ordinary source into primary, controls or visualSources:
@@ -2102,7 +2114,7 @@ in a disposable copy. `test/furniture-assets.test.mjs` protects import purity,
 the controlled write/read boundary, strict stale/missing refusal and exact
 explicit CLI output, including POSIX symlink entry. Product art is unchanged.
 
-`npm run gate:plan` derives suggested product/tooling subsets from the real diff
+`npm run gate:plan` derives required product/tooling sets from the real diff
 and the import/data dependency closure. Unknown inputs select both. Optional
 `npm run gate:tooling` does not build the product; `npm run gate:product` builds
 and runs every emitted-tree consumer. Their test-file union is exactly the

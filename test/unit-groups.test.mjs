@@ -1,0 +1,87 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, dirname } from 'node:path';
+import { unitGroups, groupsAffectedBy } from '../scripts/unit-groups.mjs';
+import { requiredUnitGroups } from '../scripts/gate-small.mjs';
+import { execFileSync } from 'node:child_process';
+
+function fixture(t, files) {
+  const root = mkdtempSync(join(tmpdir(), 'hp-unit-partition-982-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  for (const [file, code] of Object.entries(files)) {
+    mkdirSync(dirname(join(root, file)), { recursive: true });
+    writeFileSync(join(root, file), code);
+  }
+  return root;
+}
+
+test('#982 import closure changes the partition in both directions without an allowlist', t => {
+  const root = fixture(t, {
+    'test/case.test.mjs': "import '../scripts/subject.mjs';",
+    'scripts/subject.mjs': 'export const result = 1;',
+    'src/product.ts': 'export const result = 2;',
+  });
+  assert.deepEqual(unitGroups(root).tooling, ['test/case.test.mjs']);
+  writeFileSync(join(root, 'scripts/subject.mjs'), "import '../src/product.ts';");
+  assert.deepEqual(unitGroups(root).product, ['test/case.test.mjs']);
+  assert.deepEqual(unitGroups(root).tooling, []);
+  writeFileSync(join(root, 'scripts/subject.mjs'), 'export const result = 1;');
+  assert.deepEqual(unitGroups(root).tooling, ['test/case.test.mjs']);
+});
+
+test('#982 no repository inputs, unreadable imports, and empty fixtures refuse classification', t => {
+  const root = fixture(t, { 'test/case.test.mjs': "import assert from 'node:assert/strict'; assert.equal(1,1);" });
+  assert.throws(() => unitGroups(root), /unclassified.*case.test.mjs/);
+  writeFileSync(join(root, 'test/case.test.mjs'), "import '../scripts/missing.mjs';");
+  assert.throws(() => unitGroups(root), /unclassified/);
+});
+
+test('#982 actual source reads and cache-busted imports require product build; fixture strings do not', t => {
+  const root = fixture(t, {
+    'test/read.test.mjs': "import {readFileSync} from 'node:fs'; readFileSync(new URL('../src/product.ts', import.meta.url));",
+    'test/dynamic.test.mjs': 'import(new URL(`../test-build/product.js?case=${Date.now()}`, import.meta.url));',
+    'test/tool.test.mjs': "import '../scripts/subject.mjs'; const fixture = \"import '../src/product.ts';\";",
+    'test/opaque.test.mjs': "import '../scripts/subject.mjs'; import(runtimePath);",
+    'scripts/subject.mjs': 'export const result = 1;',
+    'src/product.ts': 'export const result = 2;',
+  });
+  const g = unitGroups(root);
+  assert.deepEqual(g.product, ['test/dynamic.test.mjs', 'test/opaque.test.mjs', 'test/read.test.mjs']);
+  assert.deepEqual(g.tooling, ['test/tool.test.mjs']);
+});
+
+test('#982 every real unit belongs to the required union, including new files', () => {
+  const g = unitGroups();
+  assert.deepEqual([...new Set([...g.product, ...g.tooling])].sort(), g.tests);
+  assert.equal(g.product.length + g.tooling.length, g.tests.length);
+  assert.ok(g.product.length && g.tooling.length);
+  assert.ok(g.tooling.includes('test/unit-groups.test.mjs'));
+  assert.ok(g.product.includes('test/device-issues.test.mjs'));
+  assert.deepEqual(groupsAffectedBy(['src/device-issues.ts'], g), ['product']);
+  assert.deepEqual(groupsAffectedBy(['scripts/task-packet.mjs'], g), ['tooling']);
+  assert.deepEqual(groupsAffectedBy(['docs/DEVELOPMENT.md'], g), []);
+  assert.deepEqual(groupsAffectedBy(['unmapped-input.xyz'], g), ['product', 'tooling']);
+  assert.deepEqual(groupsAffectedBy(['package-lock.json'], g), ['product', 'tooling']);
+});
+
+test('#982 required local gate observes the real git diff and untracked tests; unknown range fails closed', t => {
+  const root = fixture(t, {
+    'test/tool.test.mjs': "import '../scripts/subject.mjs';",
+    'test/product.test.mjs': "import '../src/product.ts';",
+    'scripts/subject.mjs': 'export const result = 1;',
+    'src/product.ts': 'export const result = 2;',
+  });
+  const git = (...args) => execFileSync('git', ['-C', root, '-c', 'user.name=fixture', '-c', 'user.email=fixture@example.invalid', ...args], { stdio: 'pipe' });
+  git('init', '-q'); git('add', '.'); git('commit', '-qm', 'fixture');
+  assert.deepEqual(requiredUnitGroups(root, 'HEAD'), []);
+  writeFileSync(join(root, 'src/product.ts'), 'export const result = 3;');
+  assert.deepEqual(requiredUnitGroups(root, 'HEAD'), ['product']);
+  writeFileSync(join(root, 'src/product.ts'), 'export const result = 2;');
+  writeFileSync(join(root, 'scripts/subject.mjs'), 'export const result = 3;');
+  assert.deepEqual(requiredUnitGroups(root, 'HEAD'), ['tooling']);
+  writeFileSync(join(root, 'test/new.test.mjs'), "import '../src/product.ts';");
+  assert.deepEqual(requiredUnitGroups(root, 'HEAD'), ['product', 'tooling']);
+  assert.deepEqual(requiredUnitGroups(root, 'missing-base'), ['product', 'tooling']);
+});

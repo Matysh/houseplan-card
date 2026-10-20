@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 982,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Compute product/tooling unit partitions from repository imports and direct source reads, choose the required local union by changed inputs, and execute the two sets as separate CI jobs without changing product behavior."
+}

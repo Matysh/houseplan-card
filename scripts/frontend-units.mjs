@@ -54,6 +54,10 @@ export function reusableFrontendInputs(root, reader) {
 if (isMainModule(import.meta.url)) {
   const plan = frontendUnitPlan();
   const group = process.argv.find(a => a.startsWith('--group='))?.slice(8);
+  if (process.argv.includes('--suite=product')) {
+    const product = new Set(unitGroups().product);
+    for (const key of ['fresh', 'reusable']) plan[key] = plan[key].filter(p => product.has(p));
+  }
   if (process.argv.includes('--plan')) console.log(JSON.stringify(plan, null, 2));
   else if (!['fresh', 'reusable'].includes(group)) { console.error('frontend-units --group=fresh|reusable | --plan'); process.exitCode = 2; }
   else if (plan[group].length) {

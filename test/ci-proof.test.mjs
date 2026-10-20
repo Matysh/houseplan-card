@@ -45,6 +45,7 @@ const names = {
   changes: namesOf('changes')[0],
   reuse: namesOf('reuse')[0],
   frontend: namesOf('frontend')[0],
+  tooling: namesOf('tooling')[0],
   hacs: namesOf('hacs')[0],
   hassfest: namesOf('hassfest')[0],
   smokeDone: namesOf('smoke_done')[0],
@@ -89,7 +90,7 @@ export function proofFixture({
     event: 'workflow_dispatch', needs,
   });
   const jobs = [success(names.preflight), success(names.changes), success(names.reuse)];
-  if (frontend) jobs.push(success(names.frontend));
+  if (frontend) jobs.push(success(names.frontend), success(names.tooling));
   if (integration) jobs.push(success(names.hacs), success(names.hassfest));
   if (mutants) jobs.push(...mutantJobs());
   if (full) jobs.push(...smokeJobs(), success(names.smokeDone), success(names.golden), success(names.performance));
@@ -124,6 +125,14 @@ test('#541 AC: one state machine gives review, merge and release the same termin
     assert.equal(evaluateCiProof({ ...full, run: { ...full.run, conclusion: 'cancelled' }, policy }).status, 'cancelled', policy.name);
     assert.equal(evaluateCiProof({ ...full, run: { ...full.run, conclusion: 'failure' }, policy }).status, 'failed', policy.name);
     assert.equal(evaluateCiProof({ ...full, candidate: { sha: SHA, tree: 'c'.repeat(40) }, policy }).status, 'stale', policy.name);
+  }
+});
+
+test('#982 frontend evidence requires both computed unit jobs; absent or red tooling is not green', () => {
+  const fixture = proofFixture();
+  for (const jobs of [fixture.jobs.filter(j => j.name !== names.tooling),
+    fixture.jobs.map(j => j.name === names.tooling ? { ...j, conclusion: 'failure' } : j)]) {
+    assert.equal(evaluateCiProof({ ...fixture, jobs, policy: CI_PROOF_POLICIES.review }).status, 'failed');
   }
 });
 

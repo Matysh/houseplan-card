@@ -232,7 +232,10 @@ test('#856 merge continuation does not apply a stale epoch/body/head/dev or repl
 });
 test('#856 local groups compose every unit file and preserve producer-before-consumer', t => {
   const dir = temp(t); mkdirSync(join(dir, 'test'));
-  writeFileSync(join(dir, 'test', 'pure.test.mjs'), 'export const x = 1;');
+  mkdirSync(join(dir, 'scripts')); mkdirSync(join(dir, 'src'));
+  writeFileSync(join(dir, 'scripts', 'pure.mjs'), 'export const x = 1;');
+  writeFileSync(join(dir, 'src', 'color.ts'), 'export const x = 1;');
+  writeFileSync(join(dir, 'test', 'pure.test.mjs'), "import '../scripts/pure.mjs';");
   writeFileSync(join(dir, 'test', 'product.test.mjs'), "import '../test-build/color.js';");
   const groups = unitGroups(dir);
   assert.deepEqual(groups.product, ['test/product.test.mjs']); assert.deepEqual(groups.tooling, ['test/pure.test.mjs']);

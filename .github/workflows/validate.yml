@@ -784,7 +784,7 @@ jobs:
             node scripts/fix-test-build.mjs
             node scripts/frontend-units.mjs --group=reusable
           fi
-          node scripts/frontend-units.mjs --group=fresh
+          node scripts/frontend-units.mjs --group=fresh --suite=product
       # Entry, manifest and every content-hashed chunk are one artifact (#337).
       # #657: the committed bundle changes only in a release candidate, so the
       # fresh build must equal it only there; elsewhere the committed copy
@@ -844,6 +844,18 @@ jobs:
   # всю интеграцию (scripts/ha-track-dev.sh). Опубликуется только голова:
   # если dev ушёл вперёд, пушит следующий прогон. Не вход доказательства:
   # стенд — не гейт, и сбой публикации не красит проверку кода.
+  tooling:
+    name: "Инструменты: вычисляемый набор юнитов"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with: { fetch-depth: 0, filter: 'blob:none' }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run test:tooling
+
   dev_build:
     name: "Бандл головы dev для стенда"
     needs: frontend
@@ -1386,7 +1398,7 @@ jobs:
   proof:
     name: "Доказательство выполненных проверок"
     if: always()
-    needs: [preflight, changes, reuse, hacs, hassfest, changed_mutants, frontend, smoke, smoke_done, golden, performance_smoke, geometry_parity, backend]
+    needs: [preflight, changes, reuse, hacs, hassfest, changed_mutants, frontend, tooling, smoke, smoke_done, golden, performance_smoke, geometry_parity, backend]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:

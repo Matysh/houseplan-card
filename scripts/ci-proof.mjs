@@ -49,7 +49,8 @@ export const JOB_RULES = Object.freeze({
   preflight: [{ job: 'preflight', name: 'Предполёт: документация, провенанс, процесс' }],
   changes: [{ job: 'changes', name: 'Классификация изменённых файлов' }],
   reuse: [{ job: 'reuse', name: 'Переиспользование: это дерево уже проверено' }],
-  frontend: [{ job: 'frontend', name: 'Фронтенд: типы, юниты, мутанты, синхрон бандла' }],
+  frontend: [{ job: 'frontend', name: 'Фронтенд: типы, юниты, мутанты, синхрон бандла' },
+    { job: 'tooling', name: 'Инструменты: вычисляемый набор юнитов' }],
   integration: [
     { job: 'hacs', name: 'HACS: валидация репозитория' },
     { job: 'hassfest', name: 'Hassfest: манифест интеграции' },

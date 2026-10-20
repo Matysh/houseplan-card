@@ -21,11 +21,12 @@
 // browser-consumers (смоки) — только после подготовки артефактов (build →
 // bundle-sync), потому что читают собранное дерево demo/srv/assets.
 
-import { spawn } from 'node:child_process';
+import { spawn, execFileSync } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { portableCommand } from './spawn-portable.mjs';
 import { localGateKey, restoreLocalGate, invalidateLocalGate, sealLocalGate } from './local-gate-proof.mjs';
+import { unitGroups, groupsAffectedBy } from './unit-groups.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const npm = 'npm';
@@ -33,10 +34,10 @@ const npm = 'npm';
 export function parseArgs(argv) {
   const base = argv.find((a) => a.startsWith('--base='))?.slice('--base='.length) || 'origin/dev';
   const smokes = argv.includes('--smokes');
-  const group = argv.find(a => a.startsWith('--group='))?.slice(8) || 'all';
-  if (!['all', 'product', 'tooling'].includes(group)) throw Error('unknown local gate group');
+  const group = argv.find(a => a.startsWith('--group='))?.slice(8) || 'auto';
+  if (!['auto', 'all', 'product', 'tooling'].includes(group)) throw Error('unknown local gate group');
   const jobs = Number(argv.find((a) => a.startsWith('--jobs='))?.slice('--jobs='.length) || 2);
-  return { base, smokes, jobs: Number.isInteger(jobs) && jobs > 0 ? jobs : 2, ...(group !== 'all' ? { group } : {}) };
+  return { base, smokes, jobs: Number.isInteger(jobs) && jobs > 0 ? jobs : 2, ...(group !== 'auto' ? { group } : {}) };
 }
 
 /**
@@ -91,6 +92,16 @@ export function postBuildSteps() {
   ];
 }
 
+/** #982: the automatic union is authoritative; unknown inputs select both. */
+export function requiredUnitGroups(cwd, base, group = 'auto') {
+  if (group !== 'auto') return group === 'all' ? ['product', 'tooling'] : [group];
+  try {
+    const files = execFileSync('git', ['diff', '--name-only', base], { cwd, encoding: 'utf8' }).trim().split('\n').filter(Boolean);
+    files.push(...execFileSync('git', ['ls-files', '--others', '--exclude-standard'], { cwd, encoding: 'utf8' }).trim().split('\n').filter(Boolean));
+    return groupsAffectedBy(files, unitGroups(cwd));
+  } catch { return ['product', 'tooling']; }
+}
+
 function runStep(step, cwd) {
   return new Promise((done) => {
     const started = Date.now();
@@ -116,24 +127,27 @@ export function summarize(results) {
   return { lines, failed };
 }
 
-export async function gateSmall({ cwd = ROOT, base = 'origin/dev', smokes = false, jobs = 2, group = 'all', log = console.log } = {}) {
+export async function gateSmall({ cwd = ROOT, base = 'origin/dev', smokes = false, jobs = 2, group = 'auto', log = console.log } = {}) {
   const started = Date.now();
+  const groups = requiredUnitGroups(cwd, base, group);
+  const productRequired = groups.includes('product');
+  log(`#982 required unit groups: ${groups.join(', ') || 'none (documentation only)'}`);
   let key = null, reused = false;
-  if (group === 'all') {
+  if (productRequired) {
     try { key = localGateKey(cwd); reused = restoreLocalGate(cwd, key); invalidateLocalGate(cwd); }
     catch { key = null; }
   }
   if (reused) log('local receipt: build + reusable product units restored; range/process/FS/Git units run fresh');
   log(`gate:small — база диапазона ${base}; параллельно: сборка, no-new-any, no-new-private-writes, smoke-select; после сборки: юниты и проверки артефакта${smokes ? `; затем bundle-sync и смоки по диффу (×${jobs})` : ''}`);
-  const planned = parallelSteps(base).filter(step => !(group === 'tooling' || reused) || !step.args.includes('build'));
-  if (group === 'tooling') planned.push({ name: 'tooling units (local subset)', cmd: process.execPath, args: ['scripts/unit-groups.mjs', '--group=tooling'] });
+  const planned = parallelSteps(base).filter(step => (productRequired && !reused) || !step.args.includes('build'));
   const parallel = await Promise.all(planned.map((step) => runStep(step, cwd)));
-  const buildOk = reused || parallel.find((r) => r.args.includes('build'))?.code === 0;
+  const buildOk = productRequired && (reused || parallel.find((r) => r.args.includes('build'))?.code === 0);
   const serial = [];
   if (buildOk) for (const step of postBuildSteps()) serial.push(await runStep(reused && step.args[0] === 'test'
-    ? { ...step, cmd: process.execPath, args: ['scripts/frontend-units.mjs', '--group=fresh'] }
-    : group === 'product' && step.args[0] === 'test'
+    ? { ...step, cmd: process.execPath, args: ['scripts/frontend-units.mjs', '--group=fresh', '--suite=product'] }
+    : step.args[0] === 'test'
       ? { ...step, cmd: process.execPath, args: ['scripts/unit-groups.mjs', '--group=product'] } : step, cwd));
+  if (groups.includes('tooling')) serial.push(await runStep({ name: 'tooling units', cmd: process.execPath, args: ['scripts/unit-groups.mjs', '--group=tooling'] }, cwd));
   // Browser-consumers — после подготовки артефактов (#496): bundle-sync раскладывает
   // собранное дерево в demo/srv/assets, смоки читают его и отказываются на несвежем.
   let selected = [];
@@ -179,9 +193,9 @@ export async function gateSmall({ cwd = ROOT, base = 'origin/dev', smokes = fals
     if (r.code !== 0 && !r.informational) { log(''); log(`--- ${r.name}`); log(r.out.trim()); }
   }
   log('');
-  log(`итого ${Math.round((Date.now() - started) / 1000)} с; упало: ${failed}${group === 'tooling'
-    ? ' (артефактные проверки не входят в локальный tooling subset)' : buildOk ? '' : ' (сверка бандла пропущена — сборка не прошла)'}`);
-  if (group !== 'all') log('LOCAL SUBSET ONLY: product + tooling compose the required union; push still requires full gate:small');
+  log(`итого ${Math.round((Date.now() - started) / 1000)} с; упало: ${failed}${!productRequired
+    ? ' (продуктовый артефакт не затронут)' : buildOk ? '' : ' (сверка бандла пропущена — сборка не прошла)'}`);
+  if (['product', 'tooling'].includes(group)) log('LOCAL SUBSET ONLY: automatic gate:small computes the required union from the diff');
   return { failed, results };
 }
 
