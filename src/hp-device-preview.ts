@@ -436,7 +436,7 @@ class HpDevicePreview extends LitElement {
       .previewcanvas { position:relative; min-width:100%; min-height:100%; margin:auto; }
       .previewstage {
         position: relative;
-        height: 192px;
+        height: 184px;
         min-width: 0;
         border-radius: 12px;
         background: var(--secondary-background-color, rgba(0, 0, 0, 0.16));

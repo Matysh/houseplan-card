@@ -20,7 +20,7 @@ Activity form polish (#979) uses one manual input and the ordinary `hp-help`;
 do not reintroduce a filter, multi-state row state or a second validation path.
 The existing smoke observes Save/Cancel, own-source refusal and live preview,
 and captures RU/EN light/dark layouts with long names at 1280/720 widths in
-`demo/out/activity-preview-979/`. The full-width image is 192px high; its canvas
+`demo/out/activity-preview-979/`. The full-width image is 184px high; its canvas
 retains intrinsic safe bounds and scrolling for large rings/badges. Backend,
 raw-state equality and the persisted array shape stay unchanged.
 

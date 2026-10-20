@@ -12,7 +12,7 @@ choice stays selected without reading its HA state (#978/#979). Its single
 manual input writes a singleton `active_states` array; Auto/Set manually and
 standard contextual help replace the multi-row editor. The shared format and
 resolver still accept their previous schema; no migration or legacy UI exists.
-Preview places its bounded-height (192px, scrollable for larger effects) image
+Preview places its bounded-height (184px, scrollable for larger effects) image
 above full-width facts instead of squeezing facts alongside the image.
 
 `resolvePresentationSources` replaces ordinary samples only, retaining native

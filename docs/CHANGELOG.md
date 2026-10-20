@@ -4,7 +4,7 @@
 
 - Simplify icon activity settings: no separate entity search, clear automatic
   and manual modes with contextual help, and one exact manual state. The
-  full-width preview now puts readable source and state explanations below
+  bounded full-width preview now puts readable source and state explanations below
   the device image. (#979)
 
 ## v1.82.0-beta.4 — 2026-10-21

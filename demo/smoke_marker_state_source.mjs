@@ -2,6 +2,8 @@
 import { mkdir } from 'node:fs/promises';
 import { launch, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
 import { settingsSection } from './helpers/settings-section.mjs';
+import { prepareGoldenScenario, resetGoldenStability } from './golden/harness.mjs';
+import { DOC_SCREENSHOTS } from './docs/screenshots.mjs';
 requirePinnedBrowser('icon state source form and preview');
 const { page, browser } = await launch({ width: 1280, height: 1100 });
 const out = {};
@@ -169,5 +171,24 @@ try {
   out.disabledHintHasNoState = await dialog.locator('#marker-state-source-states code').count() === 0
     && !/DISABLED_STATE_978/.test(await dialog.locator('#marker-state-source option:checked').textContent());
   await dialog.getByRole('button', { name: 'Отмена', exact: true }).click();
+  // #979: use the real canonical docs fixture/viewport and unchanged scroller.
+  // Long sources may scroll; the ordinary documentation preview must fit whole.
+  const docsScene = DOC_SCREENSHOTS.find(s => s.id === 'device-display-preview');
+  await page.setViewportSize(docsScene.viewport);
+  await prepareGoldenScenario(page, docsScene);
+  out.defaultPreviewFitsDocumentationViewport = await page.evaluate(async () => {
+    const c = window.__goldenCard, d = c.renderRoot.querySelector('hp-dialog');
+    d.querySelector('[data-section-target="appearance"]').click();
+    await c.updateComplete;
+    await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
+    const scroller = d.renderRoot.querySelector('.content'), p = d.querySelector('hp-device-preview');
+    await p.updateComplete;
+    const a = scroller.getBoundingClientRect(), b = p.getBoundingClientRect();
+    scroller.scrollTop += b.top - a.top - Math.min(180, Math.max(0, (a.height - b.height) / 2));
+    await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
+    const visible = p.getBoundingClientRect(), viewport = scroller.getBoundingClientRect();
+    return visible.top >= viewport.top - 1 && visible.bottom <= viewport.bottom + 1;
+  });
+  await resetGoldenStability(page);
   out.completed = true;
 } finally { checkAll(out); await finish(browser, out); }
