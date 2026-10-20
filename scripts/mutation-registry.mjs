@@ -86,6 +86,15 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'dialog-invalidated-confirmation-retains-paint-976',
+    guard: 'node demo/smoke_danger_confirm_branches.mjs',
+    because: '#976 AC4: a forced warm/context cancellation removes the decision surface in the same update; a controller-only assertion cannot observe retained browser paint.',
+    patches: [{file:'src/houseplan-card.ts',
+      find: 'this._dangerConfirmAnimateExit = false;',
+      replace: 'this._dangerConfirmAnimateExit = true;',
+    }],
+  },
+  {
     id: 'dialog-exit-keeps-native-authority-976',
     guard: 'node demo/smoke_ui_polish_976.mjs',
     because: '#976 AC4/12: retained confirmation paint must release native modality before its parent restores field focus, not only at terminal.',
