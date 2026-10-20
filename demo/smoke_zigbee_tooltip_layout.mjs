@@ -447,6 +447,11 @@ for (const provider of ['z2m', 'zha']) {
         await settle();
         const cleared = await sample('d_mower');
         out[`${pointerType}ClearsTooltipAndTopology`] = !cleared.tipVisible && cleared.badges.length === 0;
+        // This probe only changes pointer modality. Finish its synthetic
+        // gesture: a dangling down would legitimately open the device's
+        // long-press card later and cover the scroll/hit-test witness.
+        await marker('d_mower').dispatchEvent('pointercancel', { pointerType, pointerId: 82,
+          bubbles: true, composed: true, clientX: pointer.x, clientY: pointer.y });
         await hover('d_mower');
         await witness(`mouseRestoresAfter_${pointerType}`, 'd_mower');
       }

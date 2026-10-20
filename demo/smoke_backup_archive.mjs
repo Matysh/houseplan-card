@@ -15,7 +15,7 @@ await page.route('**/api/houseplan/content/**', route => route.fulfill({
   status: 200, contentType: 'image/png', body: Buffer.from(fixture.png, 'base64'),
 }));
 const out = {};
-const dialog = () => page.locator('hp-dialog[data-kind="backup"]');
+const dialog = () => page.locator('hp-dialog[data-kind="backup"]:not([inert])');
 const label = key => settingsLabels[key];
 async function settings() {
   await page.locator('[data-hp="settings"]').click();
@@ -36,8 +36,11 @@ async function ready() {
   await dialog().locator('[data-hp="archive-summary"]').waitFor();
 }
 async function cancel() {
+  const closing = await dialog().elementHandle();
   await dialog().locator('button.btn[data-hp="dialog-cancel"]').click();
-  await dialog().waitFor({ state: 'detached' });
+  // Do not mistake the newly inert selector for terminal physical removal.
+  await page.waitForFunction(element => !element.isConnected, closing);
+  await closing.dispose();
 }
 
 try {
