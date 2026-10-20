@@ -3,6 +3,7 @@
   "issue": 978,
   "baseStable": "v1.81.0",
   "category": "line-fix",
+  "introducedBy": 977,
   "rationale": "Repairs the settings-form hint of the manual icon state source added by #977 in the current development line. This feature did not exist in v1.81.0; omit from stable user changelog and milestone.",
   "summary": {
     "ru": "Подсказка источника состояния значка не читает чужие или отключённые сущности.",
