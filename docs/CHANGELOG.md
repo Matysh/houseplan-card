@@ -16,7 +16,8 @@
   confirmations disappear immediately rather than retaining stale decisions.
   Device row actions stay reachable above the footer on small screens; feedback
   message and JSON fields retain their intended height. Closing confirmations
-  no longer trap the next form's focus or validation warning. (#976)
+  no longer trap the next form's focus or validation warning. Warm editor
+  remounts reconcile a changed scene size so visible wall nodes stay clickable. (#976)
 
 - Allow immediate ZIP-import retry after closing or cancelling its preview,
   including cancellation before the server reply is received. A failed ZIP

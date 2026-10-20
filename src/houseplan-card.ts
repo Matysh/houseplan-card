@@ -842,6 +842,14 @@ export class HouseplanCard extends LitElement {
     const stage = this._stageEl; this._pendingRefitSize = null; this._warmModeRequest = 0;
     this._lastValidStageSize = stage && stage.clientWidth > 0 && stage.clientHeight > 0
       ? [stage.clientWidth, stage.clientHeight] : null;
+    const size = this._lastValidStageSize, view = this._view;
+    // The placement may resize without changing the window-keyed warm slot.
+    // Do not bless its new size with the old camera's aspect: SVG would
+    // letterbox while stage input still maps linearly to that camera.
+    if (size && view && view.w > 0 && view.h > 0
+        && Math.abs(view.h - view.w * size[1] / size[0]) * size[0] / view.w >= 0.5) {
+      this._applyView(this._zoom, view.x + view.w / 2, view.y + view.h / 2);
+    }
     this.requestUpdate();
   }
   public hass?: any;

@@ -47,6 +47,13 @@ in `demo/ui-lab/README.md`. Native/headless evidence is not a physical GPU claim
 The frozen owner's archive is read-only and stays outside the repository;
 only synthetic fixtures and locally generated synthetic comparisons are used.
 
+The wall-node fixture waits for its exact config revision and a painted camera
+matching the actual stage, not just visible handles. A real host-width change
+exposes the asynchronous-refit gap without writing private state. Warm release
+reconciles a changed stage aspect before declaring that size valid; identical
+geometry still restores the exact camera. Debug this with the targeted smoke,
+not repeated full-CI pushes.
+
 Under the owner's standing minor-size allowance the lazy-editor ceiling moves
 318054 →320340 B gzip (+2286 B,0.72%); its2000 B band stays unchanged.
 The measured raw bundle baseline moves3247518 →3266117 B (+18599 B,0.57%),

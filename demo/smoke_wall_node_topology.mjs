@@ -28,6 +28,19 @@ const scenarios = [
 ];
 let server, revision = 1, capability = true, canWrite = true, refused = false, writes = 0;
 const { page, browser } = await launch({ width: 1180, height: 920 });
+// Handles may already be stable while a warm camera still names the preceding
+// stage size. SVG then letterboxes that viewBox, unlike the stage's input map.
+// Observe the completed refit and its painted viewBox; never repair the camera
+// or replay a missed press from the fixture.
+const cameraReady = () => {
+  const card = window.__card, stage = card?._stageEl, view = card?._view;
+  const painted = card?.renderRoot.querySelector('svg.plan-svg')?.viewBox.baseVal;
+  if (!stage?.clientWidth || !stage.clientHeight || !view || !painted
+      || card._modeTransitionBusy || card._warmModeRequest || card._refitRaf) return false;
+  const errorPx = Math.abs(view.h - view.w * stage.clientHeight / stage.clientWidth) * stage.clientWidth / view.w;
+  return errorPx < 0.5 && ['x', 'y', 'w', 'h'].every((key, index) =>
+    Math.abs(view[key] - [painted.x, painted.y, painted.width, painted.height][index]) * stage.clientWidth / view.w < 0.01);
+};
 await page.exposeFunction('topologyWire', async message => {
   if (message.type === 'houseplan/config/get') {
     const response = { config: structuredClone(server), rev: revision, can_write: canWrite,
@@ -73,6 +86,18 @@ const mount = async cfg => {
   await page.evaluate(async () => { await window.__hpTest.setMode('plan'); await window.__hpTest.setTool('select'); });
   await page.waitForFunction(() => !window.__card._modeTransitionBusy && window.__card.renderRoot.querySelector('.hp-node-handle'));
   await page.evaluate(() => window.__hpTest.settled());
+  try { await page.waitForFunction(cameraReady); }
+  catch (error) {
+    console.log('diagnostic wall-node-camera', JSON.stringify(await page.evaluate(() => {
+      const card = window.__card, stage = card._stageEl, svg = card.renderRoot.querySelector('svg.plan-svg');
+      return { view: card._view, painted: svg?.getAttribute('viewBox'),
+        size: stage && [stage.clientWidth, stage.clientHeight], lastSize: card._lastValidStageSize,
+        mode: card._mode, busy: card._modeTransitionBusy, warm: card._warmModeRequest, soft: card._bootSoft,
+        refit: card._refitRaf, pending: card._pendingRefitSize, memo: card._warmVp,
+        header: card._hdrH, slot: card._warmSlot && { header: card._warmSlot.hdrH, stage: card._warmSlot.stageH } };
+    })));
+    throw error;
+  }
 };
 const screen = p => page.evaluate(p => {
   const svg = window.__card.renderRoot.querySelector('svg.plan-svg'), q = svg.createSVGPoint();
@@ -243,6 +268,17 @@ assert.equal(await page.evaluate(() => window.__card._geometryHistory.size), 0);
 assert.equal(await page.evaluate(() => window.__card.renderRoot.querySelectorAll('[data-hp-node-live]').length), 0);
 // Legacy input remains legacy on read/hover/preview/cancel; only its isolated
 // gesture snapshot materializes IDs. JSON export/import also retains unknowns.
+// A real layout input exposes the readiness gap without injecting private state:
+// DOM geometry changes synchronously, the production ResizeObserver refits later.
+const prematureReady = await page.evaluate(() => {
+  document.getElementById('host').style.width = '740px';
+  const card = window.__card, stage = card._stageEl;
+  return { handles: !!card.renderRoot.querySelector('.hp-node-handle'),
+    errorPx: Math.abs(card._view.h - card._view.w * stage.clientHeight / stage.clientWidth) * stage.clientWidth / card._view.w };
+});
+assert.equal(prematureReady.handles, true, 'visible handles alone falsely report ready during a real resize');
+assert.ok(prematureReady.errorPx > 0.5, 'real resize exposes the old camera before its asynchronous refit');
+await page.waitForFunction(cameraReady);
 const legacy = structuredClone(cycle.cfg); delete legacy.spaces[0].wall_segments;
 await mount(legacy); const legacyBefore = await page.evaluate(() => structuredClone(window.__card._serverCfg));
 const legacyWrites = writes; await drag(cycle.point, cycle.target);

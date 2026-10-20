@@ -86,6 +86,15 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'warm-remount-blesses-mismatched-camera-976',
+    guard: compiledNodeSmoke('smoke_wall_node_topology'),
+    because: '#976: a real host resize followed by warm legacy remount must align the painted camera and input before the first native node press.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: 'Math.abs(view.h - view.w * size[1] / size[0]) * size[0] / view.w >= 0.5',
+      replace: 'Math.abs(view.h - view.w * size[1] / size[0]) * size[0] / view.w >= Number.POSITIVE_INFINITY',
+    }],
+  },
+  {
     id: 'dialog-invalidated-confirmation-retains-paint-976',
     guard: 'node demo/smoke_danger_confirm_branches.mjs',
     because: '#976 AC4: a forced warm/context cancellation removes the decision surface in the same update; a controller-only assertion cannot observe retained browser paint.',
