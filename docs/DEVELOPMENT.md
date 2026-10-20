@@ -22,6 +22,10 @@ ceiling. Its 2000 B band and absolute 352000 B wall remain. This is a size
 allowance for explanations/locales, with no loading speed improvement claimed.
 The raw bundle metric baseline moves 3231572 → 3241135 B (+9563 B, 0.30%);
 all delegate/port/harness metrics stay equal. Its 2000 B band stays enabled.
+After the pipeline rebased onto #973 (`dev` 77d763f26), the generated baseline
+selected dev's 3237078 B value. The combined source measures 3247518 B in CI
+39401052477 (+10440 B, 0.32%); only `bundleBytes` is restored to this measured
+value under the same owner permission. The 2000 B band and other metrics remain.
 
 ## Vacuum generation witness (#974)
 
