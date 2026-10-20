@@ -1,18 +1,18 @@
-<!-- release: v1.82.0-beta.3 -->
+<!-- release: v1.82.0-beta.4 -->
 
 ## Основное
 
-- Редакторы и панели приведены к согласованному интерфейсу: компактные свойства, меню комнат и фигур, единые подсказки, аккуратная шапка и понятные стороны открывания окон.
-- Добавлена поддержка официальных карт Ecovacs с ручным совмещением изображения и живым путём. Полный путь и границы уборки от интеграции имеют приоритет; пустой ответ убирает устаревший след. Для позиционных источников доступно начало нового пути после базы.
-- Ошибки сохранения остаются видны поверх диалогов без потери правок.
+- Можно выбрать сущность своего устройства, которая определяет активность значка, и увидеть объяснение в превью. Управление, тревоги и свет сохраняют свои источники.
+- Доработаны диалоги помощи, PDF, устройств и правил иконок: единое оформление, плавное закрытие и доступные меню на небольших экранах.
+- Бэкапы восстанавливаются с устаревшими связями, ZIP-импорт можно повторить сразу после отмены. Карточка устройства объясняет тревоги и отличает напоминания об обслуживании.
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Editors and panels follow the approved interface: compact properties, Rooms and Shapes menus, shared tooltips, tidy header actions and clearer window opening sides.
-- Added official Ecovacs map support with manual image alignment and live trails. Complete integration paths and cleanup boundaries take priority; empty responses clear stale trails. Position-only sources can start a new trail after docking.
-- Save errors stay visible above dialogs without losing edits.
+- Choose which own-device entity determines ordinary icon activity and see why in the preview. Actions, alarms and light output retain their existing sources.
+- Help, PDF, Devices and Icon rules have consistent styling, smooth closing and reachable menus on smaller screens.
+- Backups recover stale links and ZIP imports can retry immediately after cancellation. Device cards explain alarms and distinguish maintenance reminders.
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.82.0-beta.3/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.82.0-beta.3/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.82.0-beta.4/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.82.0-beta.4/docs/CHANGELOG.md)

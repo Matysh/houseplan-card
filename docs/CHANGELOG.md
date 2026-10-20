@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.82.0-beta.4 — 2026-10-21
+
 - Do not read or expose a foreign or disabled saved icon-state source in the
   device settings form's current-state hint. Keep the saved choice available
   for explicit correction without changing it on read. (#978)
@@ -30,6 +32,10 @@
   Verified Home Connect maintenance reminders use a passive yellow wrench
   instead of red alarm pulsing, including while the appliance is off.
   Keep the service glyph aligned at every marker scale. (#972)
+
+- Release closing comments link the exact full CI proof and both pinned
+  changelogs. Strengthen vacuum generation witnesses and bound the
+  version-recovery QA action without relaxing its refusal checks. (#970, #974, #975)
 
 ## v1.82.0-beta.3 — 2026-10-19
 

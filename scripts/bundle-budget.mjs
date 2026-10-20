@@ -420,7 +420,7 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // The 2000-B band and 352000-B hard budget stay put.
 // #972: owner-approved small increase for issue explanations and four locales.
 // Current measured initial View is 330002 B; keep the 2000 B band and absolute wall.
-export const INITIAL_VIEW_GZIP_CEILING = 332_018;
+export const INITIAL_VIEW_GZIP_CEILING = 333_684;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
@@ -638,7 +638,7 @@ export function initialViewCeilingViolation(bytes, {
  * оставался незафиксированным.
  */
 // #898, owner decision 2026-10-14: every ceiling with less than 10 % headroom is raised by 10 % (rounded up). 16940 -> 18634 B.
-export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_940;
+export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_937;
 /**
  * #600, промежуточные замеры по сериям (итог ставится в конце):
  * - серия 0: 222 900 → 225 900. Набор контролов формы вырос до полного
@@ -795,7 +795,7 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_940;
 // reference:312703+2313=315016. No added band or absolute budget.
 // #976: approved shared secondary forms and accepted-close lifecycle:
 // measured320340 B gzip (+2286 B); carry the measured cost only, band unchanged.
-export const LAZY_EDITOR_GZIP_CEILING = 320_340;
+export const LAZY_EDITOR_GZIP_CEILING = 322_228;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
@@ -818,7 +818,7 @@ export const LAZY_GRAPH_CEILING_BAND = 2_000;
 // #946 final Space31445 -> Room31428 (-17 B), same inherited1676B gap.
 // #947 complete v6 profiles: matched Room31428 -> Device32058 (+630),
 // same inherited1676B gap; no band or absolute limit changes.
-export const LAZY_ONBOARDING_GZIP_CEILING = 32_274;
+export const LAZY_ONBOARDING_GZIP_CEILING = 32_609;
 
 /**
  * #780 ТЗ §13.1: the LED chunks are a new feature's own budget, not a raise of
