@@ -197,6 +197,13 @@ live in ignored `artifacts/ui-polish-963/`; owner exports are never inputs.
 `smoke_ui_polish_963_touch.mjs` uses real touchscreen input: button focus from
 a tap must not arm keyboard help or suppress the original zoom action.
 
+The authentic HA fixture must await bootstrap in both original scripts. Patch
+the product module before converting the plain stub script into another module;
+otherwise the first module gets two awaits and the product gets none. Slow HA
+can then replace HTMLElement after hp-dialog registration and throw an illegal
+constructor. The #955 Save-paint smoke keeps a delayed bootstrap input to cover
+this ordering; official HA factories, registry and style bytes are not patched.
+
 The frozen #963 Save caption supersedes #955's optical Y offsets: text and check
 share the approved unshifted alignment in all four languages. Preserve the
 painted lettering comparison with the frozen reference when changing the footer;

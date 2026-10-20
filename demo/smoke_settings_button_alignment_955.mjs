@@ -17,6 +17,9 @@ for(const language of ['ru','en','de','fr']){
  const f=await launchHaDialogFixture({viewport:{width:1280,height:900},extraModules:['16213']}),p=f.page;
  watchPage(p);
  try{
+  // A slow genuine HA bootstrap must finish before either product module runs.
+  // Without that barrier HA replaces HTMLElement after hp-dialog registration.
+  await p.route('**/ha505-bootstrap.mjs',async route=>{await new Promise(resolve=>setTimeout(resolve,600));await route.continue();});
   await p.goto(f.url+'/product.html');await applyHaDialogTypography(p);
   if(demoFont)await p.addStyleTag({content:"html,body{font-family:'Segoe UI',Roboto,Arial,sans-serif}"});
   if(lineHeight)await p.addStyleTag({content:`html,body{line-height:${lineHeight}}`});

@@ -110,10 +110,13 @@ export async function launchHaDialogFixture({
             throw new Error('Synthetic demo bootstrap changed; update the explicit fixture adapter');
           }
           body = original
+            // Patch the original product module before turning the stub script
+            // into a module too. Otherwise replace() hits the new first module
+            // twice and the product races HA's HTMLElement/registry bootstrap.
+            .replace('<script type="module">', '<script type="module">\nawait import("/ha505-bootstrap.mjs");')
             .replace(/<script>\r?\nclass HaIcon/, '<script type="module">\nawait import("/ha505-bootstrap.mjs");\nclass HaIcon')
             .replace("customElements.define('ha-icon',HaIcon);", "if(!customElements.get('ha-icon'))customElements.define('ha-icon',HaIcon);")
-            .replace("customElements.define('ha-card',HaCard);", "if(!customElements.get('ha-card'))customElements.define('ha-card',HaCard);")
-            .replace('<script type="module">', '<script type="module">\nawait import("/ha505-bootstrap.mjs");');
+            .replace("customElements.define('ha-card',HaCard);", "if(!customElements.get('ha-card'))customElements.define('ha-card',HaCard);");
         }
       }
       response.writeHead(200, { 'content-type': type.startsWith('text/') ? `${type}; charset=utf-8` : type, 'cache-control': 'no-store',
