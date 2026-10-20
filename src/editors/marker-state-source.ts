@@ -22,7 +22,8 @@ export function renderMarkerStateSource(options: {
   const states = Array.isArray(source?.active_states) ? source.active_states : [];
   const filter = (d.stateSourceFilter || '').toLowerCase();
   const setStates = (values: string[]) => change({ ...d, stateSource: { ...source, entity_id: eid, active_states: values }, stateSourceTouched: true });
-  const current = hass.states?.[eid]?.state;
+  // Candidate authority is rechecked before every render, including saved stale IDs.
+  const current = candidates.includes(eid) ? hass.states?.[eid]?.state : undefined;
   return html`<div data-state-source>
     ${field({ label: t('marker.state_source'), htmlFor: 'marker-state-source',
       hint: t(disabled ? protectedFace ? 'marker.state_source_special' : 'marker.state_source_virtual' : 'marker.state_source_help'),

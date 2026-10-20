@@ -28,6 +28,8 @@ Everything computable from the tree and git; regenerate, never edit by hand
 Icon state sources (#977) are optional per-marker settings. Own-device identity,
 ordinary-only samples, native safety/special-state priority and accepted-save
 authority are independent; Auto remains the default without migration.
+The settings form reuses that authority before reading its current-state hint
+(#978); stale foreign/disabled choices remain editable without exposing state.
 
 Device issue explanations (#972) distinguish the three verified Home Connect
 Local maintenance reminders from safety alarms. A passive yellow wrench and

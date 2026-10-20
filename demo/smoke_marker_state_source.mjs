@@ -40,6 +40,7 @@ try {
   await dialog.locator('#marker-state-source-states input').fill('washing'); await settle();
   out.exactNonmatch = /Icon inactive/.test(await explanation());
   await state('washing'); out.exactMatch = /Icon active/.test(await explanation());
+  out.currentHintTracksOwnSource = await dialog.locator('#marker-state-source-states code').textContent() === 'washing';
   await mkdir('demo/out/marker-state-source-977', { recursive: true });
   await page.screenshot({ path: 'demo/out/marker-state-source-977/manual-en.png' });
   // Persist via the actual form button; fake backend acceptance is observable.
@@ -69,5 +70,36 @@ try {
   await dialog.locator('[data-hp="dialog-confirm"]').click();
   await page.waitForFunction(() => !window.__card._markerDialog);
   out.autoClears = await page.evaluate(() => !Object.hasOwn(window.__card._serverCfg.markers.find(m => m.id === 'd_light1'), 'state_source'));
+  // #978: imported/stale own-source configuration must not expose an invalid row.
+  await page.evaluate(async () => {
+    const c = window.__card;
+    c.hass = { ...c.hass, states: { ...c.hass.states,
+      'binary_sensor.hp977_foreign': { ...c.hass.states['binary_sensor.hp977_foreign'], state: 'FOREIGN_STATE_978' },
+    } };
+    await window.__hpTest.setServerConfig(cfg => {
+      cfg.markers.find(m => m.id === 'd_light1').state_source = {
+        entity_id: 'binary_sensor.hp977_foreign', active_states: ['FOREIGN_STATE_978'],
+      }; return cfg;
+    });
+  });
+  await open();
+  out.foreignHintHasNoState = await dialog.locator('#marker-state-source-states code').textContent() === '—';
+  out.foreignIdStaysSelected = await dialog.locator('#marker-state-source').inputValue() === 'binary_sensor.hp977_foreign';
+  await dialog.getByRole('button', { name: 'Отмена', exact: true }).click();
+  await page.waitForFunction(() => !window.__card._markerDialog);
+  out.foreignCancelPreservesBlock = await page.evaluate(() =>
+    window.__card._serverCfg.markers.find(m => m.id === 'd_light1').state_source.active_states[0] === 'FOREIGN_STATE_978');
+  await page.evaluate(async () => {
+    window.__addRegistryEntity('binary_sensor.hp978_disabled', null, 'DISABLED_STATE_978', 'demo',
+      { device_id: 'd_light1', disabled_by: 'user', entity_category: 'diagnostic' }, { device_class: 'running' });
+    await window.__hpTest.setServerConfig(cfg => {
+      cfg.markers.find(m => m.id === 'd_light1').state_source = {
+        entity_id: 'binary_sensor.hp978_disabled', active_states: ['DISABLED_STATE_978'],
+      }; return cfg;
+    });
+  });
+  await open();
+  out.disabledHintHasNoState = await dialog.locator('#marker-state-source-states code').textContent() === '—';
+  await dialog.getByRole('button', { name: 'Отмена', exact: true }).click();
   out.completed = true;
 } finally { checkAll(out); await finish(browser, out); }

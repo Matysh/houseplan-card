@@ -6,6 +6,8 @@ registry identity before reading a state. Presentation metadata explains the
 same result in preview; snapshot row tracking and source signatures handle
 sibling/attribute/registry changes and retire stale short activity. Marker
 save uses the existing accepted-config/CAS/context boundary.
+The form's current-state hint also checks the canonical candidate authority
+before looking up the saved entity, including stale or disabled choices (#978).
 
 The offline UI Lab (#964) lives separately in `demo/ui-lab/`. It serves the
 checkout's built product and pinned official HA components against the existing

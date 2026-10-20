@@ -7,6 +7,8 @@ of native action/value/control/light sources. Own-device authority is checked
 in O(1) before state reads; only editor candidate enumeration uses a cached
 registry ownership index. Diagnostic/config siblings need not enter the action
 roster. Foreign/disabled/missing sources give explicit unknown, never Auto.
+The editor's current-state hint reads only canonical candidates; a saved
+ineligible choice stays selected without reading its HA state (#978).
 
 `resolvePresentationSources` replaces ordinary samples only, retaining native
 availability and critical samples. The resolved cover/lock/contact face is

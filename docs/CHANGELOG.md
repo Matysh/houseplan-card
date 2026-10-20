@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Do not read or expose a foreign or disabled saved icon-state source in the
+  device settings form's current-state hint. Keep the saved choice available
+  for explicit correction without changing it on read. (#978)
+
 - Choose an own-device entity for ordinary icon activity, optionally list exact
   active states and see the reason in the live preview. Device actions, safety
   and special states, values and light output keep their existing sources. (#977)

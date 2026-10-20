@@ -9,6 +9,12 @@ structure/delta; exact runtime ownership is separate. Witnesses:
 `test/marker-state-source.test.mjs`, `test_validation.py -k issue977` and
 `demo/smoke_marker_state_source.mjs`. Screenshot the page, not the display-contents
 hp-dialog host, and keep negative-input witnesses distinct from nightly mutants.
+The form-only guard (#978) has cheap getter-trap regressions in
+`test/marker-state-source-form.test.mjs`: foreign, disabled and unproven sources
+must never be read, while proven own sources retain their live hints. The same
+browser smoke checks saved foreign/disabled choices and cancellation without
+changing the accepted configuration. These are ordinary negative inputs,
+not product mutations or reasons to rerun unrelated golden/full suites.
 
 ## Device issue explanations (#972)
 
