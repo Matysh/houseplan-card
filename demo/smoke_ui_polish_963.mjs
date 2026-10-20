@@ -63,7 +63,8 @@ try {
   const tip=card.locator('.hp-chrome-tooltip');
   const zoom=card.locator('[data-hp=zoom-in]');
   out.zoom_target_sizes=await card.locator('.zoomctl button').evaluateAll(nodes=>nodes.length===3&&nodes.every(el=>{const r=el.getBoundingClientRect();return r.width===44&&r.height===44;}));
-  out.summary_half_gear=await card.locator('.summary-control').evaluate(el=>{const first=el.firstElementChild,icon=first.querySelector('svg');return first.getBoundingClientRect().width===24&&el.lastElementChild.getBoundingClientRect().width===44&&getComputedStyle(first).overflow==='hidden'&&getComputedStyle(icon).right==='-10px'&&icon.getBoundingClientRect().width===20;});
+  // #976 supersedes the cropped half-gear reference with the complete glyph.
+  out.summary_complete_controls=await card.locator('.summary-control').evaluate(el=>{const first=el.firstElementChild,icon=first.querySelector('svg');return first.getBoundingClientRect().width===44&&el.lastElementChild.getBoundingClientRect().width===44&&getComputedStyle(first).overflow==='visible'&&icon.getBoundingClientRect().width===24;});
   const zoomBorders=await card.locator('.zoomctl button').evaluateAll(nodes=>nodes.map(el=>getComputedStyle(el).borderColor));
   await zoom.hover();await page.waitForTimeout(180);out.tooltip_delay=!(await tip.isVisible());
   out.zoom_hover_affects_only_owner=await card.locator('.zoomctl button').evaluateAll((nodes,borders)=>nodes.every((el,i)=>i===2?getComputedStyle(el).borderColor!==borders[i]:getComputedStyle(el).borderColor===borders[i]),zoomBorders);
