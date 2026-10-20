@@ -1,8 +1,8 @@
 {
   "schema": 3,
-  "matrixVersion": 78,
-  "acceptedAt": "2026-10-19T11:13:25.407Z",
-  "sourceFingerprint": "a58f89dcae02c7437782668b0729c20ccbb56ba9dacbe8cfedb970c6c6409420",
+  "matrixVersion": 79,
+  "acceptedAt": "2026-10-20T09:03:05.723Z",
+  "sourceFingerprint": "284d5d8e1608fc7dd0f586dd944ab4517cd475f53df12aef4cbd27b6f7a10fa6",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,20 +10,20 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "a58f89dcae02c7437782668b0729c20ccbb56ba9dacbe8cfedb970c6c6409420",
+    "buildFingerprint": "284d5d8e1608fc7dd0f586dd944ab4517cd475f53df12aef4cbd27b6f7a10fa6",
     "ci": null
   },
   "localAttestation": {
     "schema": "houseplan-golden-wsl/v2",
-    "sha256": "38d9f88b6f574ee890414e774026157da54b64dd053ce1fa5e51821baf29ffcc",
-    "artifactSha256": "5968ad6e846a93101073c2c594aa9082f97c38a9edc3a44b9a6f36c209e1caca",
-    "createdAt": "2026-10-19T11:12:11.183Z",
+    "sha256": "cf49add089c571f56e868f02a58f129b39e206c4715baf07953b306c725c44bd",
+    "artifactSha256": "f25761eed5f3a4993d2f764320bdfee109b89510dc761e2f094bfed6c1fa48d1",
+    "createdAt": "2026-10-20T09:02:28.741Z",
     "source": {
       "repository": "Matysh/houseplan-card",
-      "branch": "issue/963-ui-polish",
-      "commit": "ad2b795c09781b22adefb92e7b5609ea14c8f3b7",
-      "tree": "9281b707d948eb16695626e43ca4e5e234208eb8",
-      "remoteSha": "ad2b795c09781b22adefb92e7b5609ea14c8f3b7",
+      "branch": "issue/972-device-issue-reasons",
+      "commit": "410c8cc87584fd53e3ed56833cb1409a3a6cef73",
+      "tree": "5771b9fb6f5871ff39c7fcd472af6fa575839871",
+      "remoteSha": "410c8cc87584fd53e3ed56833cb1409a3a6cef73",
       "clean": true,
       "status": ""
     },
@@ -36,8 +36,8 @@
       "filesystem": "ext2/ext3"
     },
     "toolchain": {
-      "node": "22.23.2",
-      "npm": "10.9.8",
+      "node": "22.23.3",
+      "npm": "10.9.9",
       "playwright": "1.62.0",
       "browser": {
         "version": "151.0.7922.34",
@@ -48,8 +48,8 @@
   },
   "foreignCapture": null,
   "witnesses": {
-    "skipped": true,
-    "reason": "Issue #963 approved 44px shared header and whole action-pool wrapping intentionally change the stage framing across the matrix. Only eight byte-identical witnesses remain; all changed frames are explicitly declared and reviewed, with independent immutable-prototype, native-action and touch proof."
+    "count": 206,
+    "floor": 10
   },
   "scenarios": {
     "isometric-stage6-light-lightfloor": "4944244250454b97f407232704bcd4a477393c440c50255f04cd51ba699e7f23",
@@ -263,6 +263,10 @@
     "led-strip-endcaps-zoom-light": "eee962aa7b98348121a0941f703babde8ddbb3acb21f9803f981ef40b630dcb5",
     "led-strip-rectangle-door-zoom-light": "b6a33929ebb1f52cc0c47a368c1f92f3b755e5ffa8d08f0ee0e5e2c5bb6638e4",
     "led-strip-off-light": "9bb4ec52651679d6366530049c9903973d8cc0dfce6f3e666b7f8251a500d83c",
-    "iso-led-strip-dark": "46400e005a4d44ebcbebc5c42f2f412d9d935d2b96b0630b09707bde459978f8"
+    "iso-led-strip-dark": "46400e005a4d44ebcbebc5c42f2f412d9d935d2b96b0630b09707bde459978f8",
+    "device-issues-maintenance-plan": "5a67c86b586c162de617e64c612e2cab30c2e59eb291565707cc2d413e9ca5a6",
+    "device-issues-maintenance-card": "e10006a18bbb5da126d4a1f5d3283137e266c66d3048601e4f508f8dbdb23650",
+    "device-issues-alarm-plan": "c3d7b1a4eb994d7a40ce2639ebd33fb3d8271ce81955d3e7d2e28c56e1cb1e0d",
+    "device-issues-alarm-card": "530784b3e1c50674e0576477b5662d98aefa55ca122856ed5488bb1018e1c085"
   }
 }
