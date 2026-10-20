@@ -61,6 +61,13 @@ Known stale device dependencies are disabled/neutralized in a copied candidate,
 with a bounded report before Apply/download. Export verifies importability, never
 repairs live stores; ordinary Save, archive security and geometry remain strict.
 
+Version-recovery QA (#975) retains its config/layout/asset refusal action with
+the shared test-only JSHandle runner and detaches the offscreen probe on every
+outcome. Original version/terminal-toast/kiosk/reload oracles stay intact;
+no retries or higher existing budgets hide the reported CDP failure. Only the
+formerly unbounded action gains a named deadline. The historical triggering
+await remains unknown, not an inferred product bug.
+
 Approved UI Lab polish (#963) uses normal editor render/command paths. Properties
 sections stay expanded at intrinsic height; Rooms/Shapes menus and history keep
 their existing commands. Header and editor hints use a card-local delayed

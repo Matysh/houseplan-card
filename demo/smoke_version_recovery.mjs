@@ -1,6 +1,7 @@
 // #462: the production full-card bundle owns version mismatch recovery in
 // ordinary View and kiosk. The static space card deliberately does not.
 import { launch, checkAll, finish } from './serve.mjs';
+import { evaluateRetainedAction } from './helpers/retained-page-action.mjs';
 
 const ATTEMPT_KEY = 'houseplan-card:version-reload-target:v1';
 const { page, browser } = await launch(
@@ -169,7 +170,9 @@ const buildReconciliation = await page.evaluate(async () => {
   return { version, running, other, stale, matching, oldBackend };
 });
 
-const configFailureAdoption = await page.evaluate(async () => {
+// #975: CDP's pending evaluate result does not own this action's lifetime.
+// Keep the existing config/layout/asset sequence and observe its settled result.
+const configFailureAdoption = await evaluateRetainedAction(page, async () => {
   const base = window.__card;
   const accepted = structuredClone(base._serverCfg);
   if (!accepted?.spaces?.length) throw new Error('AC6 config fixture has no space');
@@ -202,6 +205,7 @@ const configFailureAdoption = await page.evaluate(async () => {
     },
   };
   const mount = document.createElement('div');
+  mount.id = 'version-recovery-config-probe';
   mount.style.cssText = 'position:fixed;left:-2000px;top:0;width:800px;height:600px;visibility:hidden';
   document.body.appendChild(mount);
   mount.appendChild(probe);
@@ -232,6 +236,10 @@ const configFailureAdoption = await page.evaluate(async () => {
   clearTimeout(probe._loadRetryTimer);
   mount.remove();
   return { setBeforeLayoutFailure, clearBeforeAssetFailure, toast };
+}, 'configFailureAdoption').finally(async () => {
+  // Also detach the test-owned probe on refusal/deadline, not only success.
+  // Its normal disconnectedCallback owns cleanup of card timers/subscriptions.
+  await page.evaluate(() => document.getElementById('version-recovery-config-probe')?.remove());
 });
 
 const terminalToastWithoutBanner = await page.evaluate(async () => {

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 975,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Retain the version-recovery smoke's existing config-failure action through the already tested JSHandle runner, preserving all product oracles and adding deterministic offscreen fixture cleanup. No product, release payload, workflow, pins, retries or existing acceptance budgets change; the formerly unbounded action gains a named deadline.",
+  "summary": {
+    "ru": "Устойчивое время жизни тестового сценария восстановления версий без изменения продукта или ослабления проверок.",
+    "en": "Retain the version-recovery test action without changing the product or weakening its checks."
+  }
+}

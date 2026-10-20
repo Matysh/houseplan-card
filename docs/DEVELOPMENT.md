@@ -2128,6 +2128,19 @@ GC control and release check complement the unchanged first-frame/cascade,
 remount/retry checks. They do not diagnose a historical CI failure as product
 regression or flake merely because a later repeat passed.
 
+Version-recovery's config/layout/asset refusal probe (#975) uses the same
+`evaluateRetainedAction` boundary. Its original sequence and version, terminal
+toast and kiosk/reload assertions remain unchanged; a named 20-second action
+deadline replaces an unbounded pending CDP result, without retries. A Node-side
+`finally` also detaches the test-owned offscreen card on refusal/deadline, so
+the normal card disconnect cleans up its timers/subscriptions. The reported
+three CDP failures remain historical evidence: a clean local baseline on the
+same dev passed, and this change does not establish which original await was
+pending or attribute a product regression to #973. The retained runner's six
+unit cases and the existing native weak-owner GC control establish lifetime,
+exactly-once, original-error, timeout and handle-release behavior separately
+from the version-recovery product oracles.
+
 The supported native setup is repository-scoped and does not change the
 machine's default Node, Python or persistent `PATH` (#557):
 
