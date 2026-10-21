@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 80,
-  "acceptedAt": "2026-10-21T00:51:56.459Z",
-  "sourceFingerprint": "326b900b7bdf9b7972fd105d13f04592fe7c66f8892adacb5c9f3e409e87a126",
+  "acceptedAt": "2026-10-21T07:14:04.411Z",
+  "sourceFingerprint": "b48a0824f2e27924ef2bc4ed154d490844f9db2b2b893fecdb0476029c105176",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,18 +10,18 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "326b900b7bdf9b7972fd105d13f04592fe7c66f8892adacb5c9f3e409e87a126",
+    "buildFingerprint": "b48a0824f2e27924ef2bc4ed154d490844f9db2b2b893fecdb0476029c105176",
     "ci": {
       "repository": "Matysh/houseplan-card",
-      "run": 39519249202,
+      "run": 39559218220,
       "attempt": 1,
-      "sha": "10b5c93aabc53bf2dffb1a46f2cc0ab233d34f74"
+      "sha": "cc82ba107e52bc9f43090e08c5a5d7a229d71aee"
     }
   },
   "localAttestation": null,
   "foreignCapture": null,
   "witnesses": {
-    "count": 187,
+    "count": 189,
     "floor": 10
   },
   "scenarios": {
@@ -195,8 +195,8 @@
     "large-house-zoom-040-dark": "fa4896e9967439767bef5856e130476c66e3d4dc67ee2e5095511047ed63330b",
     "large-house-zoom-250-dark": "b60cb412c91ff0b822c1c63415352f26c902643474d959e0189631bfe6a8ed5e",
     "large-house-warm-remount-dark": "31bcf222be1e53ba6074888ebc2cacf28af2a3090c250d6f0bf971b525dffcf9",
-    "device-state-source-standard-en": "b06b592749ad4ba57f1775feef31ac2553d9b61d60ce105bcf6ea2dc7ffafb92",
-    "device-state-source-manual-ru": "c1f713f42da239338d1f4cfc06e842440e6f0704f9f23e1c5e9558654df19581",
+    "device-state-source-standard-en": "068ed0f8ec6555ed03ba8214952411e7efce8332abd6e280cf7d252d4af6ffb6",
+    "device-state-source-manual-ru": "dd64a5e4865800299833ceb7fddd0d4457f783044eaf91373b3b5fc33c53c19f",
     "device-state-source-unknown-en": "ddb20371d2e8c65cfdbd03a4c8b8508295cf3679bbc8b947ac9b62b9680e6365",
     "device-state-source-protected-ru": "df428d564915bc2afcb7ee570e4f6633ca470195ef78f9b528a5d27f8729e71a",
     "device-dialog-desktop-en": "a9695faf4b34479a0033481c6cba2b69c9fe871c4510bd5b6596b9f679f20f23",
@@ -220,7 +220,7 @@
     "support-phone-success-dark-en": "6465d8fcaa1217f780c184c3c62f26b0c3cb31490cdb69fff0174d7188e2f12f",
     "support-relay-error-light-en": "72dd6c8bdbb3eafe40dfe0b5448ab7c4d16f9c85966e30b13cbd0f9be972c175",
     "support-tablet-preview-dark-ru": "80459dc9b3180b40830dd5570dd46edb12a39ef5dcf1b0b10acabc1963ed207e",
-    "device-ripple-color-popover-mobile-ru": "9a80baebb44d01e2e5d9e39d9c758acae866cda9606a7e7397658bd0ad761826",
+    "device-ripple-color-popover-mobile-ru": "245a3f792922d693e3e02603e716eebba69f23de49b260cdac386a69bea71710",
     "space-room-color-popover-desktop-ru": "5f88fe43c35082457d6cf05daf052d4c935a4e432514424a1762dcba9dfde5e5",
     "backup-full-preview-desktop-en": "d5f424cf8b5cf589e6d5c353ebaad7e94924ec7e5bffe3f279fa0e2bb3af1a54",
     "backup-plan-only-export-desktop-en": "32670e701d02835fcff787ecf4d68eb008a2d3f26bc80a694cf6e25ffce74383",
