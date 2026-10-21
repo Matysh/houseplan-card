@@ -25,9 +25,10 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
-Activity form polish (#979) removes separate entity search and multi-state
-controls, adds contextual Auto help and puts full-width preview facts below
-a bounded-height image. Source semantics and the persisted format are unchanged.
+Activity form polish (#979/#991) keeps entity search inside the expanded shared
+source picker (#989), without an extra field in the closed form or multi-state
+controls. Contextual Auto help and full-width preview facts below a bounded-height
+image remain unchanged, as do source semantics and the persisted format.
 
 - #982 computes the product/tooling unit partition from imports and direct
   source reads. CI executes separate unit jobs; the automatic local gate
