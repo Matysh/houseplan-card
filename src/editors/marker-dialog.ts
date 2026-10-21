@@ -637,7 +637,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
         })}
         ${renderMarkerStateSource({ draft: d, registry: this.host._fullRegistryHass, hass: this.host._planHass,
           protectedFace: previewPresentation?.protectedFace === true,
-          t: st, change: (next) => (this.host._markerDialog = next),
+          t: st, searchPlaceholder: t('opening.search_ph'), emptyText: t('marker.nothing_found'),
+          change: (next) => { if (this.host._markerDialog === d) this.host._markerDialog = next; },
         })}
         ${toggleRow({
           id: 'marker-hide-battery', compact: true, icon: 'mdi:battery-off-outline',

@@ -1648,7 +1648,8 @@ availability remains independent from that aggregate work state.
 In device settings, open **Display on plan → Icon state source**, immediately
 after Display method. Auto keeps the existing logic. Choose an entity of the
 same physical device, for example the washer's running sensor instead of power.
-There is no separate search: all own-device entities are in one list. In
+Search by name or entity_id inside the expanded list; no extra search field
+appears in the closed form. Escape closes the list, not the settings dialog. In
 **Active when**, choose **Automatically** or **Set manually**. The question-mark
 help explains automatic type, class and state semantics. Manual mode accepts
 one exact HA state such as `running` or `washing`, not a formula or threshold.

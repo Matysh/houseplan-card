@@ -7,7 +7,7 @@ const ownRegistry = () => ({ entities: {
   'sensor.anchor': { device_id: 'own' },
   [eid]: { device_id: 'own' },
 } });
-const draft = (binding = 'device:own') => Object.freeze({ binding,
+const draft = (binding = 'device:own') => Object.freeze({ binding, stateSourceOpen: true,
   stateSource: Object.freeze({ entity_id: eid, active_states: Object.freeze(['washing']), future: 'keep' }),
 });
 // Observe real option values, not source text. The removed manual hint must not
@@ -17,15 +17,18 @@ function* templates(part) {
   if (Array.isArray(part.strings)) yield part;
   for (const child of Array.isArray(part) ? part : part.values || []) yield* templates(child);
 }
+function option(part, id = eid) {
+  return [...templates(part)].find(p => p.strings.join('').includes('role="option"')
+    && typeof p.values.at(-1) === 'string' && p.values.at(-1).startsWith(`${id} · `));
+}
 function optionState(part, id = eid) {
-  const option = [...templates(part)].find(p => p.strings[0].includes('<option value=') && p.values[0] === id);
-  return option?.values.at(-1);
+  return option(part, id)?.values.at(-1).slice(id.length + 3);
 }
 function render(d, registry, states) {
   let writes = 0;
   const before = structuredClone(d);
   const result = renderMarkerStateSource({ draft: d, registry, hass: { states },
-    protectedFace: false, t: key => key, change() { writes++; },
+    protectedFace: false, t: key => key, searchPlaceholder: 'Search', emptyText: 'No matches', change() { writes++; },
   });
   assert.equal(writes, 0, 'render must not commit or replace a saved source');
   assert.deepEqual(d, before, 'render must preserve the saved block and future keys');
@@ -91,7 +94,7 @@ test('#978 Auto never looks up an empty saved source', () => {
   const states = { [eid]: { state: 'washing' }, 'sensor.anchor': { state: 'idle' } };
   Object.defineProperty(states, '', { get() { throw new Error('empty source read'); } });
   for (const stateSource of [undefined, null]) {
-    const view = render(Object.freeze({ binding: 'device:own', stateSource }), ownRegistry(), states);
+    const view = render(Object.freeze({ binding: 'device:own', stateSource, stateSourceOpen: true }), ownRegistry(), states);
     assert.equal(optionState(view), 'washing');
   }
 });
@@ -100,9 +103,9 @@ test('#979 manual input writes one exact state without changing entity or future
   const d = draft();
   let changed;
   const view = renderMarkerStateSource({ draft: d, registry: ownRegistry(), hass: { states: {} },
-    protectedFace: false, t: key => key, change: value => { changed = value; },
+    protectedFace: false, t: key => key, searchPlaceholder: 'Search', emptyText: 'No matches', change: value => { changed = value; },
   });
-  const input = [...templates(view)].find(p => p.strings.join('').includes('@input='));
+  const input = [...templates(view)].find(p => p.strings[0].includes('id="marker-state-source-states"'));
   assert.ok(input);
   const onInput = input.values.find(v => typeof v === 'function');
   for (const value of ['heating', '', 'unknown', 'ON']) {
@@ -116,7 +119,7 @@ test('#979 manual input writes one exact state without changing entity or future
 test('#979 automatic clears only the condition and entity change clears the previous condition', () => {
   let changed;
   const view = renderMarkerStateSource({ draft: draft(), registry: ownRegistry(), hass: { states: {} },
-    protectedFace: false, t: key => key, change: value => { changed = value; },
+    protectedFace: false, t: key => key, searchPlaceholder: 'Search', emptyText: 'No matches', change: value => { changed = value; },
   });
   const modes = [...templates(view)].find(p => p.strings[0].includes('id="marker-state-source-mode"'));
   const selectMode = modes.values.find(v => typeof v === 'function');
@@ -124,10 +127,47 @@ test('#979 automatic clears only the condition and entity change clears the prev
   assert.deepEqual(changed.stateSource, { entity_id: eid, future: 'keep' });
   selectMode({ target: { value: 'states' } });
   assert.deepEqual(changed.stateSource.active_states, []);
-  const source = [...templates(view)].find(p => p.strings[0].includes('id="marker-state-source"'));
-  const selectSource = source.values.find(v => typeof v === 'function');
-  selectSource({ target: { value: 'sensor.anchor' } });
+  option(view, 'sensor.anchor').values.find(v => typeof v === 'function')();
   assert.deepEqual(changed.stateSource, { entity_id: 'sensor.anchor' });
-  selectSource({ target: { value: '' } });
+  const auto = [...templates(view)].find(p => p.strings.join('').includes('role="option"') && p.values.at(-2) === 'marker.state_source_auto');
+  auto.values.find(v => typeof v === 'function')();
   assert.equal(changed.stateSource, null);
+});
+
+test('#991 search is inside the open picker, filters names/IDs and always retains Auto', () => {
+  const registry = ownRegistry(); registry.entities[eid].name = 'Laundry';
+  const states = { [eid]: { state: 'washing' } };
+  for (const query of ['LAUNDRY', 'SENSOR.SELECTED']) {
+    const view = render({ ...draft(), stateSourceFilter: query }, registry, states);
+    assert.equal(optionState(view), 'washing');
+    assert.equal(optionState(view, 'sensor.anchor'), undefined);
+  }
+  const noMatch = [...templates(render({ ...draft(), stateSourceFilter: 'x'.repeat(255) }, registry, states))];
+  const options = noMatch.filter(p => p.strings.join('').includes('role="option"'));
+  assert.equal(options.length, 1);
+  assert.equal(options[0].values.at(-2), 'marker.state_source_auto');
+  const closed = [...templates(render({ ...draft(), stateSourceOpen: false }, registry, states))];
+  assert.equal(closed.some(p => p.strings.join('').includes('hpf-toolbar')), false);
+  assert.equal(closed.some(p => p.strings.join('').includes('role="option"')), false);
+});
+
+test('#991 choosing the current entity keeps its manual condition and future fields untouched', () => {
+  const d = draft(); let changed;
+  const view = renderMarkerStateSource({ draft: d, registry: ownRegistry(), hass: { states: {} },
+    protectedFace: false, t: key => key, searchPlaceholder: 'Search', emptyText: 'No matches', change: value => { changed = value; },
+  });
+  option(view).values.find(v => typeof v === 'function')();
+  assert.equal(changed.stateSource, d.stateSource);
+  assert.equal(changed.stateSourceTouched, undefined);
+  assert.equal(changed.stateSourceOpen, false);
+});
+
+test('#991 protected faces neither open the picker nor read own source states', () => {
+  const states = {};
+  Object.defineProperty(states, eid, { get() { throw new Error('protected state read'); } });
+  const view = renderMarkerStateSource({ draft: draft(), registry: ownRegistry(), hass: { states },
+    protectedFace: true, t: key => key, searchPlaceholder: 'Search', emptyText: 'No matches', change() { throw new Error('write'); },
+  });
+  assert.equal([...templates(view)].some(p => p.strings.join('').includes('role="option"')), false);
+  assert.equal(optionState(view), undefined);
 });

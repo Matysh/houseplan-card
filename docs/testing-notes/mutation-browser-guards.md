@@ -36,10 +36,14 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 67 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 88 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 55 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 219 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **439 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 220 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **440 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
+
+#991 adds `state-source-picker-escape-does-not-close-991` to custom-element and
+HA browser lifecycle: the real mounted picker must consume trusted Escape,
+close its panel and refocus the trigger without retiring the settings form.
 
 The measurements below are GitHub-hosted Linux runs from 2026-09-27. They are
 recorded separately from the policy limit: the limit proves that browser guards
@@ -458,6 +462,7 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 and open popover Escape from ordinary parent Escape. Actual DOM retargeting and
 capture order require the mounted Lit shell; the official-HA diagnostic separately
 checks selection and draft preservation. No mutation executes during development.
+- `state-source-picker-escape-does-not-close-991`
 
 - `warm-remount-blesses-mismatched-camera-976`
 

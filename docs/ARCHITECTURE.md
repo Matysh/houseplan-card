@@ -18,6 +18,10 @@ entity, including stale or disabled choices (#978). UI polish (#979) removes
 the extra filter/current-state hint and writes a single manual state through
 the same accepted-save path. Preview has one column, with a bounded-height
 image above readable explanations; the resolver and stored schema are unchanged.
+The owner refinement #991 restores search only inside the expanded shared
+source picker (#989), not as another form row. Its open/filter values are
+transient; choosing the same source retains manual conditions and future keys.
+The owner checks draft identity before accepting delayed overlay callbacks.
 
 Shared dialog presence (#976) separates a close request from an accepted terminal.
 Owners retain their existing dirty/busy/Save decisions; only accepted state

@@ -1,5 +1,5 @@
 import { html, nothing, type TemplateResult } from 'lit';
-import { field } from './form-kit';
+import { field, sourcePicker } from './form-kit';
 import type { MarkerDialogDraft } from './marker-form-state';
 import { markerStateSourceCandidates, normalizeMarkerStateSource, type StateSourceHass } from '../marker-state-source';
 import type { SettingsI18nKey } from '../i18n/settings';
@@ -11,27 +11,44 @@ export function renderMarkerStateSource(options: {
   hass: StateSourceHass;
   protectedFace: boolean;
   t: (key: SettingsI18nKey) => string;
+  searchPlaceholder: string;
+  emptyText: string;
   change: (draft: MarkerDialogDraft) => void;
 }): TemplateResult {
-  const { draft: d, registry, hass, protectedFace, t, change } = options;
+  const { draft: d, registry, hass, protectedFace, t, change, searchPlaceholder, emptyText } = options;
   const source = d.stateSource;
   const eid = typeof source?.entity_id === 'string' ? source.entity_id : '';
   const candidates = markerStateSourceCandidates(d.binding, registry);
   const disabled = d.binding === 'virtual' || protectedFace;
+  // Build rows only from proven eligible IDs; stale saved IDs never read HA state.
+  const rows = disabled ? [] : candidates.map(id => {
+    const entity = hass.states?.[id];
+    return { value: id, label: String(registry.entities?.[id]?.name || entity?.attributes?.friendly_name || id),
+      sub: `${id} · ${String(entity?.state ?? '—')}` };
+  });
+  const auto = { value: '', label: t('marker.state_source_auto'), sub: '' };
+  const query = (d.stateSourceFilter ?? '').trim().toLocaleLowerCase();
+  const open = !disabled && d.stateSourceOpen === true;
+  const current = disabled || source == null ? auto : rows.find(row => row.value === eid)
+    ?? { label: eid || t('marker.state_source_invalid'), sub: '' };
   const explicit = source?.active_states !== undefined;
   const state = Array.isArray(source?.active_states) ? source.active_states[0] ?? '' : '';
   return html`<div data-state-source>
     ${field({ label: t('marker.state_source'), htmlFor: 'marker-state-source',
       hint: t(disabled ? protectedFace ? 'marker.state_source_special' : 'marker.state_source_virtual' : 'marker.state_source_help'),
-      control: html`<hp-settings-select><select id="marker-state-source" ?disabled=${disabled}
-        @change=${(e: Event) => change({ ...d, stateSource: (e.target as HTMLSelectElement).value
-          ? { entity_id: (e.target as HTMLSelectElement).value } : null, stateSourceTouched: true })}>
-        <option value="" ?selected=${disabled || source == null}>${t('marker.state_source_auto')}</option>
-        ${!disabled && source != null && !candidates.includes(eid) ? html`<option selected value=${eid || '__invalid__'}>${eid || t('marker.state_source_invalid')}</option>` : nothing}
-        ${candidates.map(id => html`<option value=${id} ?selected=${!disabled && id === eid}>
-            ${String(registry.entities?.[id]?.name || hass.states?.[id]?.attributes?.friendly_name || id)} · ${id} · ${String(hass.states?.[id]?.state ?? '—')}
-          </option>`)}
-      </select></hp-settings-select>`,
+      control: sourcePicker({
+        id: 'marker-state-source', open, current, disabled,
+        placeholder: auto.label, ariaLabel: t('marker.state_source'),
+        filter: d.stateSourceFilter ?? '', filterPlaceholder: searchPlaceholder, emptyText,
+        candidates: [auto, ...rows.filter(row => !query || `${row.label} ${row.value}`.toLocaleLowerCase().includes(query))],
+        selected: disabled || source == null ? '' : eid || '__invalid__',
+        onToggle: () => change({ ...d, stateSourceOpen: !open }),
+        onClose: () => change({ ...d, stateSourceOpen: false }),
+        onFilter: value => change({ ...d, stateSourceFilter: value }),
+        onPick: value => change(value === eid && (value !== '' || source == null)
+          ? { ...d, stateSourceOpen: false }
+          : { ...d, stateSourceOpen: false, stateSource: value ? { entity_id: value } : null, stateSourceTouched: true }),
+      }),
     })}
     ${!disabled && source != null ? html`
       ${field({ label: t('marker.state_source_active_when'), htmlFor: 'marker-state-source-mode',

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Search own-device entities inside the expanded icon-state-source list;
+  Escape closes only the list, without adding another field to the form. (#991)
+
 - Keep the Home Assistant device list closed when it first appears. Escape
   closes only the expanded list and retains the device-creation draft. (#989)
 ### #990 — Unsaved-changes confirmation

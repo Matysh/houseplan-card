@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "issue": 991,
+  "baseStable": "v1.81.0",
+  "category": "line-fix",
+  "introducedBy": 977,
+  "rationale": "Refines the icon state-source selector introduced by #977 in the 1.82 beta line. The feature did not exist in stable v1.81.0; omit this refinement from the stable user changelog and milestone.",
+  "summary": {
+    "ru": "Поиск сущностей внутри раскрытого списка источника состояния значка.",
+    "en": "Search entities inside the expanded icon state-source list."
+  }
+}

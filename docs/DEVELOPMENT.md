@@ -54,12 +54,20 @@ changing the accepted configuration. These are ordinary negative inputs,
 not product mutations or reasons to rerun unrelated golden/full suites.
 
 Activity form polish (#979) uses one manual input and the ordinary `hp-help`;
-do not reintroduce a filter, multi-state row state or a second validation path.
+do not reintroduce an external filter, multi-state row state or a second validation path.
 The existing smoke observes Save/Cancel, own-source refusal and live preview,
 and captures RU/EN light/dark layouts with long names at 1280/720 widths in
 `demo/out/activity-preview-979/`. The full-width image is 184px high; its canvas
 retains intrinsic safe bounds and scrolling for large rings/badges. Backend,
 raw-state equality and the persisted array shape stay unchanged.
+
+Owner refinement #991 puts search inside the expanded shared `sourcePicker`
+from #989. `stateSourceOpen`/`stateSourceFilter` are transient draft fields,
+excluded from dirty and persistence. Picking the already selected source only
+closes the list: it must retain its manual condition and future fields. Retired
+callbacks cannot recreate an old form. Reuse `opening.search_ph` and the ordinary
+empty-list translation; no new dictionary or selection semantics. The existing
+smoke now also captures the open picker in both languages/themes at 360px.
 
 The release fixture `smoke_signal_visibility_ui` opens General settings through
 native locator clicks, then observes the real LQI control. Do not return a

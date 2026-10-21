@@ -14,6 +14,11 @@ standard contextual help replace the multi-row editor. The shared format and
 resolver still accept their previous schema; no migration or legacy UI exists.
 Preview places its bounded-height (184px, scrollable for larger effects) image
 above full-width facts instead of squeezing facts alongside the image.
+The searchable source picker (#991) filters only eligible entity names/IDs,
+keeps Auto available, and uses the shared #989 overlay lifecycle for Escape.
+Open/filter state does not dirty or serialize the marker; selecting the current
+entity does not reset its manual condition. Invalid saved IDs remain visible
+without reading their states. Virtual/protected faces keep the picker disabled.
 
 `resolvePresentationSources` replaces ordinary samples only, retaining native
 availability and critical samples. The resolved cover/lock/contact face is

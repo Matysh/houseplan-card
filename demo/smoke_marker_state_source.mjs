@@ -15,6 +15,16 @@ const open = async () => {
   await settingsSection(dialog, 'appearance'); await settle();
 };
 const explanation = () => dialog.locator('hp-device-preview').locator('[data-state-source-explanation]').textContent();
+const sourcePicker = () => dialog.locator('[data-state-source] .hpf-picker').first();
+const search = () => sourcePicker().locator('.hpf-panel input');
+const pickSource = async id => {
+  if (await dialog.locator('#marker-state-source').getAttribute('aria-expanded') !== 'true')
+    await dialog.locator('#marker-state-source').click();
+  await search().fill('');
+  await (id ? sourcePicker().getByRole('option').filter({ hasText: `${id} · ` })
+    : sourcePicker().getByRole('option').first()).click();
+  await settle();
+};
 const state = async value => {
   await page.evaluate(value => { const c = window.__card; const id = 'binary_sensor.hp977_work';
     c.hass = { ...c.hass, states: { ...c.hass.states, [id]: { ...c.hass.states[id], state: value } } };
@@ -55,6 +65,32 @@ const captureLayouts = async () => {
     });
     await preview.locator('.previewhead').scrollIntoViewIfNeeded();
     await dialog.locator('.surface').screenshot({ path: `demo/out/activity-preview-979/${width}-${language}-${dark ? 'dark' : 'light'}.png` });
+    await dialog.locator('#marker-state-source').click();
+    await search().fill('HP977_WORK');
+    out[`searchLayout${width}${language}`] = await search().isVisible()
+      && await sourcePicker().getByRole('option').count() === 2;
+    await sourcePicker().screenshot({ path: `demo/out/activity-preview-979/source-${width}-${language}.png` });
+    await search().focus(); await page.keyboard.press('Escape');
+  }
+  for (const [language, dark] of [['en', false], ['ru', true]]) {
+    await page.setViewportSize({ width: 360, height: 900 });
+    await page.evaluate(({ language, dark }) => {
+      const c = window.__card; c.setConfig({ ...c._config, language });
+      c.hass = { ...c.hass, themes: { ...c.hass.themes, darkMode: dark } };
+      const vars = dark ? { '--primary-text-color': '#e6e7eb', '--secondary-text-color': '#9aa4ad', '--card-background-color': '#202126', '--secondary-background-color': '#2b2d33', '--divider-color': '#3a3d45' }
+        : { '--primary-text-color': '#202124', '--secondary-text-color': '#5f6368', '--card-background-color': '#ffffff', '--secondary-background-color': '#e7eaee', '--divider-color': '#d7d9de' };
+      for (const [key, value] of Object.entries(vars)) c.style.setProperty(key, value);
+    }, { language, dark }); await settle();
+    await dialog.locator('#marker-state-source').click(); await search().fill('HP977_WORK');
+    out[`searchNarrow${language}`] = await sourcePicker().evaluate(node => {
+      const panel = node.querySelector('.hpf-panel'), input = panel?.querySelector('input');
+      return !!input && panel.getBoundingClientRect().right <= innerWidth
+        && panel.getBoundingClientRect().left >= 0 && panel.scrollWidth <= panel.clientWidth + 1
+        && input.getBoundingClientRect().width >= 100
+        && node.querySelectorAll('[role="option"]').length === 2;
+    });
+    await sourcePicker().screenshot({ path: `demo/out/activity-preview-979/source-360-${language}.png` });
+    await search().focus(); await page.keyboard.press('Escape');
   }
   await page.setViewportSize({ width: 1280, height: 1100 });
   await page.evaluate(() => window.__card.setConfig({ ...window.__card._config, language: 'en' }));
@@ -72,12 +108,36 @@ try {
   await open();
   out.sourceAfterDisplay = await dialog.locator('#marker-display').evaluate(node =>
     !!node.closest('.hpf-field')?.nextElementSibling?.matches('[data-state-source]'));
-  out.ownOnly = await dialog.locator('#marker-state-source option').evaluateAll(nodes =>
-    nodes.some(n => n.value === 'binary_sensor.hp977_work') && !nodes.some(n => n.value === 'binary_sensor.hp977_foreign'));
-  out.noSearchWithManyEntities = await dialog.locator('#marker-state-source option').count() > 8
-    && await dialog.locator('[data-state-source] input[type="search"]').count() === 0;
-  out.autoFirst = await dialog.locator('#marker-state-source option').first().getAttribute('value') === '';
-  await dialog.locator('#marker-state-source').selectOption('binary_sensor.hp977_work'); await settle();
+  out.initialClosedNoSearch = await dialog.locator('#marker-state-source').getAttribute('aria-expanded') === 'false'
+    && await search().count() === 0;
+  const cleanBefore = await page.evaluate(() => JSON.stringify({ source: window.__card._markerDialog.stateSource,
+    touched: window.__card._markerDialog.stateSourceTouched, saved: window.__card._serverCfg }));
+  const cleanSaveDisabled = await dialog.locator('[data-hp="dialog-confirm"]').isDisabled();
+  await dialog.locator('#marker-state-source').click();
+  out.searchInsidePanel = await search().isVisible()
+    && await dialog.locator('[data-state-source] > input').count() === 0
+    && await sourcePicker().getByRole('option').count() > 8;
+  out.ownOnly = await sourcePicker().getByRole('option').evaluateAll(nodes =>
+    nodes.some(n => n.textContent.includes('binary_sensor.hp977_work · '))
+      && !nodes.some(n => n.textContent.includes('binary_sensor.hp977_foreign')));
+  out.autoFirst = await sourcePicker().getByRole('option').first().locator('span').textContent() === 'Auto';
+  await search().fill('ACTUAL WORK');
+  out.filterNameCaseInsensitive = await sourcePicker().getByRole('option').count() === 2
+    && await sourcePicker().getByRole('option').last().textContent().then(s => s.includes('binary_sensor.hp977_work'));
+  await search().fill('BINARY_SENSOR.HP977_WORK');
+  out.filterIdCaseInsensitive = await sourcePicker().getByRole('option').count() === 2;
+  await search().fill('x'.repeat(255));
+  out.noMatchStillAuto = await sourcePicker().getByRole('option').count() === 1
+    && await sourcePicker().getByRole('option').first().locator('span').textContent() === 'Auto';
+  await search().fill('');
+  out.clearRestoresOwn = await sourcePicker().getByRole('option').count() > 8;
+  await search().focus(); await page.keyboard.press('Escape');
+  out.escapeClosesOnlyPicker = await dialog.isVisible() && await search().count() === 0
+    && await dialog.locator('#marker-state-source').evaluate(n => n.getRootNode().activeElement === n);
+  out.searchDoesNotDirty = cleanSaveDisabled && await dialog.locator('[data-hp="dialog-confirm"]').isDisabled()
+    && cleanBefore === await page.evaluate(() => JSON.stringify({ source: window.__card._markerDialog.stateSource,
+      touched: window.__card._markerDialog.stateSourceTouched, saved: window.__card._serverCfg }));
+  await pickSource('binary_sensor.hp977_work');
   out.twoClearModes = JSON.stringify(await dialog.locator('#marker-state-source-mode option').allTextContents())
     === JSON.stringify(['Automatically', 'Set manually']);
   const help = dialog.locator('hp-help[data-help-key="marker.state_source_mode_help"]');
@@ -98,6 +158,9 @@ try {
   await dialog.locator('#marker-state-source-states input').fill('washing'); await settle();
   out.exactNonmatch = /Icon inactive/.test(await explanation());
   await state('washing'); out.exactMatch = /Icon active/.test(await explanation());
+  await pickSource('binary_sensor.hp977_work');
+  out.sameSourceKeepsManual = await dialog.locator('#marker-state-source-mode').inputValue() === 'states'
+    && await dialog.locator('#marker-state-source-states input').inputValue() === 'washing';
   out.removedCurrentStateHint = await dialog.locator('#marker-state-source-states code').count() === 0;
   const preview = dialog.locator('hp-device-preview');
   out.previewFullWidthAboveFacts = await preview.evaluate(node => {
@@ -118,6 +181,19 @@ try {
     const m = window.__card._serverCfg.markers.find(m => m.id === 'd_light1');
     return m.state_source.entity_id === 'binary_sensor.hp977_work' && m.state_source.active_states.join() === 'washing' && m.ripple_color === '#1234ab';
   });
+  await open(); await pickSource('sensor.hp979_own_0');
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await root.locator('hp-confirm hp-dialog [data-hp="dialog-confirm"]').click();
+  await page.waitForFunction(() => !window.__card._markerDialog);
+  out.cancelSelectionPreservesSaved = await page.evaluate(() => {
+    const m = window.__card._serverCfg.markers.find(m => m.id === 'd_light1');
+    return m.state_source.entity_id === 'binary_sensor.hp977_work' && m.state_source.active_states.join() === 'washing';
+  });
+  await open();
+  out.reopenHasFreshPicker = await dialog.locator('#marker-state-source').getAttribute('aria-expanded') === 'false'
+    && await search().count() === 0;
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.waitForFunction(() => !window.__card._markerDialog);
   await page.evaluate(async () => {
     const c = window.__card; await window.__hpTest.setMode('view');
     await customElements.whenDefined('houseplan-space-card');
@@ -134,7 +210,7 @@ try {
   out.ruExplained = /Активность неизвестна/.test(await explanation());
   await page.screenshot({ path: 'demo/out/marker-state-source-977/unknown-ru.png' });
   // Editing a sibling setting/Cancel must not reset accepted custom state.
-  await dialog.locator('#marker-state-source').selectOption(''); await settle();
+  await pickSource('');
   await dialog.locator('[data-hp="dialog-confirm"]').click();
   await page.waitForFunction(() => !window.__card._markerDialog);
   out.autoClears = await page.evaluate(() => !Object.hasOwn(window.__card._serverCfg.markers.find(m => m.id === 'd_light1'), 'state_source'));
@@ -152,8 +228,8 @@ try {
   });
   await open();
   out.foreignHintHasNoState = await dialog.locator('#marker-state-source-states code').count() === 0
-    && !/FOREIGN_STATE_978/.test(await dialog.locator('#marker-state-source option:checked').textContent());
-  out.foreignIdStaysSelected = await dialog.locator('#marker-state-source').inputValue() === 'binary_sensor.hp977_foreign';
+    && !/FOREIGN_STATE_978/.test(await dialog.locator('#marker-state-source').textContent());
+  out.foreignIdStaysSelected = (await dialog.locator('#marker-state-source').textContent()).includes('binary_sensor.hp977_foreign');
   await dialog.getByRole('button', { name: 'Отмена', exact: true }).click();
   await page.waitForFunction(() => !window.__card._markerDialog);
   out.foreignCancelPreservesBlock = await page.evaluate(() =>
@@ -169,7 +245,7 @@ try {
   });
   await open();
   out.disabledHintHasNoState = await dialog.locator('#marker-state-source-states code').count() === 0
-    && !/DISABLED_STATE_978/.test(await dialog.locator('#marker-state-source option:checked').textContent());
+    && !/DISABLED_STATE_978/.test(await dialog.locator('#marker-state-source').textContent());
   await dialog.getByRole('button', { name: 'Отмена', exact: true }).click();
   // #979: use the real canonical docs fixture/viewport and unchanged scroller.
   // Long sources may scroll; the ordinary documentation preview must fit whole.
