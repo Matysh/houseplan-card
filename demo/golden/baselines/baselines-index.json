@@ -1,27 +1,29 @@
 {
   "schema": 3,
   "matrixVersion": 80,
-  "acceptedAt": "2026-10-21T20:55:08.902Z",
-  "sourceFingerprint": "965ea28e888c124d599097a10415860f6d1f1e73821fffbf749410d0af348d99",
+  "acceptedAt": "2026-10-21T22:00:54.657Z",
+  "sourceFingerprint": "9cb19e1ca2a1ed91ed4edcd46f8c1adf97735ce0d75e757d13d1a93c74181638",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
-  "acceptedOn": "linux",
+  "acceptedOn": "win32",
   "capture": {
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "965ea28e888c124d599097a10415860f6d1f1e73821fffbf749410d0af348d99",
+    "buildFingerprint": "9cb19e1ca2a1ed91ed4edcd46f8c1adf97735ce0d75e757d13d1a93c74181638",
     "ci": {
       "repository": "Matysh/houseplan-card",
-      "run": 39672735982,
+      "run": 39681901012,
       "attempt": 1,
-      "sha": "6d8ace47724b0ccb5cfd2527c107d7c7fe4f5e5b"
+      "sha": "49c3fb4424f9f80262b065ca168dcaebdd3f4ee3"
     }
   },
   "localAttestation": null,
-  "foreignCapture": null,
+  "foreignCapture": {
+    "reason": "Visually reviewed complete Linux CI artifact run 39681901012 for source 49c3fb442; acceptance runs on Windows, captured platform remains Linux"
+  },
   "witnesses": {
-    "count": 191,
+    "count": 187,
     "floor": 10
   },
   "scenarios": {
@@ -197,21 +199,21 @@
     "large-house-warm-remount-dark": "31bcf222be1e53ba6074888ebc2cacf28af2a3090c250d6f0bf971b525dffcf9",
     "device-state-source-standard-en": "428374805c064851f6f3ee9226ac78a0e71789df52f287a5820f457fc1f8f42a",
     "device-state-source-manual-ru": "bf5aa81db1ab91cb1b8d41e20424611ad9aed4dabbc60b64077200d9ab08bdd3",
-    "device-state-source-unknown-en": "ddb20371d2e8c65cfdbd03a4c8b8508295cf3679bbc8b947ac9b62b9680e6365",
-    "device-state-source-protected-ru": "df428d564915bc2afcb7ee570e4f6633ca470195ef78f9b528a5d27f8729e71a",
+    "device-state-source-unknown-en": "30fae02c941edbf7a11c26814ed1b13756796bfe0096d15ef51c8ccc6c06a530",
+    "device-state-source-protected-ru": "8acc556ad46d0da8afa1d4b8aebd73f53afbdf2c09967429b80d4c204e246d41",
     "device-dialog-desktop-en": "a9695faf4b34479a0033481c6cba2b69c9fe871c4510bd5b6596b9f679f20f23",
     "device-dialog-mobile-ru": "66168a7ef90a910365328f92f39af445dd17a7e09686baed8fe7b2e0c9ff7680",
     "device-dialog-desktop-de": "c5570533f9840ccac9878833985e5ec31a2409f29cd2cd8fa2c1f4a175d0a2b8",
     "room-temperature-dialog-desktop-en": "40ffc80e4f14210e0aa9cf4866b6846cb52bc95968a37d06d62169c309a7bff9",
-    "room-temperature-dialog-mobile-ru": "0183b0e7c8abde8e278527afecf49c9865184423be2f29906576c59d7b438e99",
-    "room-discard-dialog-mobile-ru": "14be27025f5dfbf1510116494af286dff3e74ddb8904886b4cbe4519355245c5",
+    "room-temperature-dialog-mobile-ru": "ea1ac52407989bd22ce11f3f5343d3371b55375db4896ef78a1966a814f01a50",
+    "room-discard-dialog-mobile-ru": "68c3404c2460e00f0580832d2c5bb624a51eea1af3567d5017afde86458d7fa5",
     "german-view-mobile-light": "34a0b5cfad805fe93aa85ed235b4f257a38f7410a99124792359cd818d21d464",
     "toggle-entity-dialog-desktop-en": "69262447805811f6959fcd053e97ae88024758e700cfe8feaf4c5e0de07f8724",
     "toggle-entity-dialog-mobile-ru": "a8c4d4f4cdf18a25903f60c6b6f7dc3e5f47dcc60ca8730a1303d16f7b4faca0",
     "device-help-popover-light-ru": "899b41f9b31340481f12e509bc0a503c6b3a81dc1e9fceaee72ae423b603fbc0",
     "decor-color-popover-mobile-ru": "1ca7c3253017c3e661ccb8942769a906f7894cce0e18bcd965aa696f24b70d28",
     "decor-color-popover-desktop-en": "214abb86b4dd9d9499802ff839622829189915564b75bdc67fe8d873d553d713",
-    "general-color-popover-desktop-en": "d5daf2939132f883d6f5dfba807546dec856ed3efd2d67c79cad26b13662d876",
+    "general-color-popover-desktop-en": "ba96b4e237fa3f768bddc0e53dc4033948e165d2e22522dc298b8ba72eb79ae3",
     "settings-help-zoom-200-en-light": "05419b89c672a4de7844fabd108111c56ce13c87525ad4f4e50f560f122daef8",
     "settings-help-zoom-200-ru-dark": "f1d49196e15bde11fb2aae4fa2c76eaf7cd650a1ec2fe1cd9dc6a7300bafff4d",
     "support-desktop-empty-light-en": "6e2b1e9f10c305ac3df212cc0cba0329316c7fa7c853decd98d4d53831cadf54",
