@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 80,
-  "acceptedAt": "2026-10-21T12:20:31.423Z",
-  "sourceFingerprint": "d3481570f54ba4e7ec35e2d24ceeed2699f76bc6cfdcae06c28900b6d6d4b862",
+  "acceptedAt": "2026-10-21T20:55:08.902Z",
+  "sourceFingerprint": "965ea28e888c124d599097a10415860f6d1f1e73821fffbf749410d0af348d99",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,18 +10,18 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "d3481570f54ba4e7ec35e2d24ceeed2699f76bc6cfdcae06c28900b6d6d4b862",
+    "buildFingerprint": "965ea28e888c124d599097a10415860f6d1f1e73821fffbf749410d0af348d99",
     "ci": {
       "repository": "Matysh/houseplan-card",
-      "run": 39595249086,
+      "run": 39672735982,
       "attempt": 1,
-      "sha": "7eea426cfd62614d6c1237f80fbaff424ee61c3a"
+      "sha": "6d8ace47724b0ccb5cfd2527c107d7c7fe4f5e5b"
     }
   },
   "localAttestation": null,
   "foreignCapture": null,
   "witnesses": {
-    "count": 190,
+    "count": 191,
     "floor": 10
   },
   "scenarios": {
@@ -80,10 +80,10 @@
     "day-cycle-day-dark": "1f3dcf0f98e8f4b390021b2c17f5074038f1ab987e1393cf56f3957e4522396f",
     "day-cycle-dusk-dark": "9e08958ee985b3daa075eb1d006f7ec82692e1ab9848fe5359becc66c0ac4e03",
     "day-cycle-night-dark": "b43c3aefcdcfc96b1c7ce6d1e9b7d0c3795301d462b1b89226ecafd2224a6ed3",
-    "day-cycle-night-moon-gibbous-dark": "49b2e4fb729f60c134f2b372848933d7ee0dd3bf90466655518f619d271d4791",
-    "day-cycle-dusk-moon-crescent-south-dark": "1ad011bb23b52d45b4d24d5b8ae08246b6ce29cf8cde85bb48e45069568cb642",
-    "static-bg-moon-gibbous-white-light": "0929a33920fa066e2cfbf34af8553fd394e6059db4885c5f0ef379cdc56fc32b",
-    "static-bg-moon-crescent-south-dark": "4edd3d2957d5ae4b4cf26bfe20b22185a07e544af52a3a9a4ac8d235b345a043",
+    "day-cycle-night-moon-gibbous-dark": "c593668e881b64e8d495a92391443d85ec47cffb86ad802b56906b6576b5719a",
+    "day-cycle-dusk-moon-crescent-south-dark": "1f2741beb1604db5385d479d6fa374d9bfdc12bd8c6f17592a70bd410537a356",
+    "static-bg-moon-gibbous-white-light": "99e9c3ee0769f8688b288a309b14f33da7d35b1bebb553fcb21df820a1a1da95",
+    "static-bg-moon-crescent-south-dark": "95a694cbd77b513a5de5f9397f8519ceca16369944a38c6d018dd1e31e6479a1",
     "geometry-plan-editor-dark": "7e9c5dd8b60930740de8de05cc649e0cd1a26ac18daa97fe8a0b5e454756b5a6",
     "safe-resize-handles-clamp-light": "80067e6efb16a73eaefd1eef449a294c9b159a8153735d27ad1436646b4e9b5f",
     "safe-resize-handles-clamp-dark": "b2c1bd2b192941f032a8d611568958c4560eb00f0276ad43f758d8b5432d5c99",
