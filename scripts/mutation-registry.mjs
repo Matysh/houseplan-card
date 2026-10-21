@@ -16555,6 +16555,33 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'dialog-picker-hide-closes-owner-988',
+    guard: 'node demo/smoke_dialog_modal_recovery.mjs',
+    because: '#988 AC3: a slotted picker lifecycle must not request closing its owner, while own-shell hide remains active.',
+    patches: [{ file: 'src/hp-dialog.ts',
+      find: 'if (event.target !== event.currentTarget) return;',
+      replace: 'if (false) return;',
+    }],
+  },
+  {
+    id: 'dialog-picker-escape-closes-owner-988',
+    guard: 'node demo/smoke_dialog_modal_recovery.mjs',
+    because: '#988 AC1/3: an open HA popover consumes Escape before the parent modal; no-open-popover Escape still closes.',
+    patches: [{ file: 'src/hp-dialog.ts',
+      find: "&& node.matches('wa-popover[open], [popover]:popover-open'))) return;",
+      replace: "&& node.matches('wa-popover[data-never-open]'))) return;",
+    }],
+  },
+  {
+    id: 'icon-picker-wrapper-restores-second-border-988',
+    guard: 'node demo/smoke_dialog_polish_605.mjs',
+    because: '#988 AC2: the authentic picker owns its border; a second wrapper border must remain unpainted without removing fallback focus.',
+    patches: [{ file: 'src/styles/form-kit.styles.ts',
+      find: '.${p}-iconfield-control:has(> ha-icon-picker) { border-color: transparent; background: transparent; }',
+      replace: '.${p}-iconfield-control:has(> ha-icon-picker) { border-color: currentColor; background: transparent; }',
+    }],
+  },
+  {
     id: 'hp-dialog-escape-does-not-close',
     guard: 'node demo/smoke_test_facade.mjs',
     because: 'путь закрытия Escape не проверял ни один из 260 смоков — они закрывали диалог присваиванием null; '

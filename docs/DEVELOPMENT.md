@@ -1,5 +1,19 @@
 # Development and deployment
 
+## HA icon-picker lifecycle (#988)
+
+Slotted HA pickers emit their own bubbling WebAwesome `wa-hide`; only the
+physical HA dialog's retargeted event may request closing the Houseplan form.
+An open native/HA popover consumes Escape before its parent; registered
+Houseplan overlays retain their existing priority. The icon-field wrapper
+retains geometry but paints no second border around the authentic picker.
+`demo/ui-lab/verify-icon-picker.mjs --ha-cache <verified runtime>` exercises the
+official 20260930.4 picker (not a fallback), real filtering/selection/clear,
+Save/Cancel, dirty close recovery and light/dark mouse/Tab focus. The public
+beta.5 before-witness used fingerprint
+`326b900b7bdf9b7972fd105d13f04592fe7c66f8892adacb5c9f3e409e87a126`:
+opening alone stayed open there, but selection and Escape closed the owner.
+
 ## Computed unit partitions (#982)
 
 `npm run test:product` and `npm run test:tooling` share the import graph in

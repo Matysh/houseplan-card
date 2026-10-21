@@ -684,6 +684,8 @@ chunks. Commands and gates: `DEVELOPMENT.md` › Build, › Tests, › Release.
 6. **One transient-surface contract (#68, #57).** `hp-dialog` keeps a scoped
    LIFO registry for help and colour-picker surfaces: Escape/toast close the top
    one first; a new one replaces the previous only inside the same dialog.
+   Slotted HA picker popovers retain their own Escape lifecycle (#988); their
+   bubbling hide does not become a request to close the surrounding form.
    `hp-help` and `hp-color-opacity` share `floating-surface.ts` placement and
    `floating-surface-controller.ts` (Popover top layer, dialog-owned portal
    fallback). Help is localized by the owning card and exists only when body and

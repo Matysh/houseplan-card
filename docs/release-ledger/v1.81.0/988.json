@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 988,
+  "baseStable": "v1.81.0",
+  "category": "stable-fix",
+  "rationale": "Mixed existing-field repair: the wa-hide dismissal regression belongs to the current beta line (#976), but v1.81.0 already has the same icon-field wrapper border and capture Escape interception. Removing its duplicate border and retaining the form when dismissing a nested picker improve the pre-existing stable icon field; stable summary omits the beta-only wa-hide regression.",
+  "summary": {
+    "ru": "Убрана двойная рамка выбора иконки; Escape внутри списка оставляет настройки устройства открытыми.",
+    "en": "Removed the duplicate icon-picker border; Escape inside its list keeps device settings open."
+  }
+}

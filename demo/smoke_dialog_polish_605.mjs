@@ -173,6 +173,8 @@ const icon = await page.evaluate(async () => {
   const style = picker && getComputedStyle(picker);
   const themed = !!style && style.getPropertyValue('--mdc-text-field-fill-color').trim() === 'transparent'
     && style.getPropertyValue('--ha-color-border-neutral-loud').trim() === 'transparent';
+  const haWrapperHasNoBorderPaint = !!picker
+    && getComputedStyle(picker.parentElement).borderTopColor === 'rgba(0, 0, 0, 0)';
   const iconValue = c._markerDialog.icon;
   picker?.dispatchEvent(new CustomEvent('value-changed', { detail: { value: 'mdi:home' } }));
   await refresh();
@@ -183,7 +185,7 @@ const icon = await page.evaluate(async () => {
   const clears = c._markerDialog.icon === '' && iconValue !== 'mdi:home';
   const rotation = root().querySelector('hp-dialog[data-kind="marker"] label[for="marker-angle"]')?.textContent.trim();
   c._markerDialog = null; await refresh();
-  return { fallback: !!fallback, onePreview, themed, selects, clears, rotation: rotation === 'Rotation' };
+  return { fallback: !!fallback, onePreview, themed, haWrapperHasNoBorderPaint, selects, clears, rotation: rotation === 'Rotation' };
 });
 for (const [key, ok] of Object.entries(icon)) result[`icon_${key}`] = ok;
 

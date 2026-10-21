@@ -606,6 +606,9 @@ export class HpDialog extends LitElement {
   };
 
   private _onHaHide = (event: Event): void => {
+    // HA's internal modal retargets to this ha-dialog. A slotted picker's
+    // popover has a different target and must never close the owning form.
+    if (event.target !== event.currentTarget) return;
     const owner = event.composedPath().find(node => node instanceof Element && node.localName === 'ha-dialog');
     if (owner !== event.currentTarget || this._closing) return;
     event.preventDefault();
@@ -744,10 +747,14 @@ export class HpDialog extends LitElement {
 
   private _onKeyDown = (event: KeyboardEvent): void => {
     if (event.key === 'Escape') {
-      event.preventDefault();
-      event.stopImmediatePropagation();
       this._pruneOverlays();
       const overlay = this._overlays[this._overlays.length - 1];
+      // Registered Houseplan overlays retain priority. An HA/native popover
+      // owns its own Escape before the surrounding dialog does.
+      if (!overlay && event.composedPath().some(node => node instanceof Element
+          && node.matches('wa-popover[open], [popover]:popover-open'))) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
       if (overlay) {
         this._closeOverlay(overlay, 'escape');
         return;

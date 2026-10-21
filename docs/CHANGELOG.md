@@ -9,6 +9,8 @@
 - Smoothly open the discard confirmation, match the settings close-button
   motion, and suppress only its automatic initial focus ring. Keyboard focus,
   reduced motion and Keep/Discard behaviour remain unchanged. (#990)
+- Keep device settings open while selecting, clearing or dismissing the Home
+  Assistant icon picker, and remove its duplicate field border. (#988)
 
 ## v1.82.0-beta.5 — 2026-10-21
 

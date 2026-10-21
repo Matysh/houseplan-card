@@ -481,6 +481,7 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-check > input { width: 18px; height: 18px; margin: 0; accent-color: var(${tokens.accent}); cursor: pointer; }
   .${p}-iconfield { display: flex; align-items: center; gap: 8px; min-width: 0; }
   .${p}-iconfield-control { box-sizing: border-box; display: flex; align-items: center; flex: 1 1 auto; min-width: 0; min-height: 44px; border: 1px solid var(${tokens.line}); border-radius: 7px; background: var(${tokens.canvas}); }
+  .${p}-iconfield-control:has(> ha-icon-picker) { border-color: transparent; background: transparent; }
   .${p}-iconfield-control:focus-within:not(:has(> ha-icon-picker)) { outline: 2px solid var(${tokens.accent}); outline-offset: 2px; }
   .${p}-iconfield-control > .${p}-input, .${p}-iconfield-control > ha-icon-picker { flex: 1 1 auto; min-width: 0; width: 100%; }
   ${form} .${p}-iconfield-control > .${p}-input { min-height: 42px; height: 42px; border: 0; background: transparent; }

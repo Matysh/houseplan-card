@@ -303,6 +303,36 @@ const narrowAndLateRegistration = await page.evaluate(async () => {
   // covers the real HA case where the nested modal closes before the public
   // property catches up.
   const lateHa = lateOrdinary.shadowRoot.querySelector('ha-dialog');
+  // #988: a slotted picker has its own lifecycle. These are ordinary inputs,
+  // not replacements for the separate official-HA selection witness.
+  let pickerCloseCount = 0;
+  const countPickerClose = () => { pickerCloseCount += 1; };
+  lateOrdinary.addEventListener('hp-close', countPickerClose);
+  const picker = document.createElement('section');
+  picker.attachShadow({ mode: 'open' }).innerHTML = '<button>Picker item</button>';
+  lateOrdinary.append(picker);
+  const childHide = new Event('wa-hide', { bubbles: true, composed: true, cancelable: true });
+  picker.shadowRoot.querySelector('button').dispatchEvent(childHide);
+  await settle(lateOrdinary);
+  const childHideKeepsOwner = pickerCloseCount === 0 && !childHide.defaultPrevented && lateHa.open;
+  const popover = document.createElement('wa-popover');
+  popover.setAttribute('open', '');
+  popover.innerHTML = '<input aria-label="Picker search">';
+  picker.shadowRoot.append(popover);
+  const childEscape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, composed: true, cancelable: true });
+  popover.querySelector('input').dispatchEvent(childEscape);
+  const childEscapeKeepsOwner = pickerCloseCount === 0 && !childEscape.defaultPrevented;
+  popover.removeAttribute('open');
+  const ownerEscape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, composed: true, cancelable: true });
+  popover.querySelector('input').dispatchEvent(ownerEscape);
+  await settle(lateOrdinary);
+  const ownerEscapeStillCloses = pickerCloseCount === 1 && ownerEscape.defaultPrevented;
+  const ownerHide = new Event('wa-hide', { bubbles: true, composed: true, cancelable: true });
+  lateHa.shadowRoot.querySelector('slot').dispatchEvent(ownerHide);
+  await settle(lateOrdinary);
+  const ownerHideStillCloses = pickerCloseCount === 2 && ownerHide.defaultPrevented;
+  lateOrdinary.removeEventListener('hp-close', countPickerClose);
+  picker.remove();
   let rejectedCloseCount = 0;
   lateOrdinary.addEventListener('hp-close', () => {
     rejectedCloseCount += 1;
@@ -350,6 +380,10 @@ const narrowAndLateRegistration = await page.evaluate(async () => {
     wideNativeFallbackFitsAndCentresOnNarrowViewport: wideFitsNarrowViewport,
     openFallbackDoesNotSwitchAfterLateHaRegistration: earlyStillNative,
     newOrdinaryUsesExactlyOneHaShell: newOrdinaryUsesOneHaShell,
+    childHideKeepsOwner,
+    childEscapeKeepsOwner,
+    ownerEscapeStillCloses,
+    ownerHideStillCloses,
     rejectedHaCloseReopensSameShell,
     repeatedRejectIsIdempotent,
     disconnectedRejectDoesNotReopen,
