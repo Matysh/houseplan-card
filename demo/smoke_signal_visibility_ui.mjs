@@ -27,17 +27,16 @@ for (const width of [360, 1280]) for (const language of ['ru', 'en']) for (const
       && !!window.__card?.shadowRoot.querySelector('ha-card[data-hp-mode]'));
     await page.evaluate(() => { void window.__hpTest.setMode('devices'); });
     await page.waitForFunction(()=>window.__card?.renderRoot.querySelector('ha-card[data-hp-mode]')?.getAttribute('data-hp-mode')==='devices');
-    await page.evaluate(async () => {
-      const card = window.__card;
-      // The same mobile menu is the public entry, not a private opening method.
-      let button = card.shadowRoot.querySelector('[data-hp="settings"]');
-      if (!button || !button.getBoundingClientRect().width) {
-        card.shadowRoot.querySelector('[data-hp="header-menu"]').click();
-        await window.__hpTest.settled();
-        button = card.shadowRoot.querySelector('[data-hp="header-menu-item"][data-id="settings"]');
-      }
-      button.click();
-    });
+    // Native clicks resolve the current visible control after lazy locale/mode
+    // work. A CDP-held settled() promise can be collected during that change;
+    // the actual settings field below, not that promise, is the entry oracle.
+    const settingsButton = page.locator('houseplan-card [data-hp="settings"]');
+    if (await settingsButton.isVisible()) {
+      await settingsButton.click();
+    } else {
+      await page.locator('houseplan-card [data-hp="header-menu"]').click();
+      await page.locator('houseplan-card [data-hp="header-menu-item"][data-id="settings"]').click();
+    }
     const general = page.locator('houseplan-card hp-dialog[data-kind="settings"]');
     const checkbox = general.locator('#gs-show-lqi');
     await checkbox.waitFor();

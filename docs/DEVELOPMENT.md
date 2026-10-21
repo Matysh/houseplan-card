@@ -24,6 +24,12 @@ and captures RU/EN light/dark layouts with long names at 1280/720 widths in
 retains intrinsic safe bounds and scrolling for large rings/badges. Backend,
 raw-state equality and the persisted array shape stay unchanged.
 
+The release fixture `smoke_signal_visibility_ui` opens General settings through
+native locator clicks, then observes the real LQI control. Do not return a
+CDP-held `settled()` promise across lazy locale/menu changes: Chromium may collect
+that promise before the visible entry is observed. Its eight cases and all
+keyboard, inheritance, target-size and localization oracles remain unchanged.
+
 ## Secondary UI polish (#976)
 
 `dialog-presence.ts` owns only a Lit part's accepted-exit presentation;
