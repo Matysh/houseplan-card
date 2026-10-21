@@ -51,8 +51,8 @@ export async function registryProbeCli({ root = process.cwd(), local = false } =
   const repo = process.env.GITHUB_REPOSITORY || 'Matysh/houseplan-card';
   const mode = process.env.REGISTRY_MODE || 'exact', allowed = !bool(process.env.REGISTRY_FRESH);
   const plan = registryInputs(root, { mode, perfSet: performanceSet(process.env) });
-  const store = fetchRegistry(root);
-  const token = process.env.GH_TOKEN || execFileSync('gh', ['auth', 'token'], { encoding: 'utf8' }).trim();
+  const store = allowed ? fetchRegistry(root) : { tip: null, read: () => null };
+  const token = allowed ? process.env.GH_TOKEN || execFileSync('gh', ['auth', 'token'], { encoding: 'utf8' }).trim() : '';
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), Math.max(1, 8000 - (Date.now() - started)));
   const source = registryApi({ repo, token, candidateSnapshot: plan._snapshot, mode: plan.mode, signal: controller.signal });

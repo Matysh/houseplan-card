@@ -10,7 +10,6 @@ import { producedRegistryRecords } from '../scripts/ci-registry-records.mjs';
 import { intentPolicy } from '../scripts/ci-registry-cli.mjs';
 import { buildCiProof, evaluateCiProof, JOB_RULES, resolveJobRules } from '../scripts/ci-proof.mjs';
 import { jobInstanceNames, validateJobs } from '../scripts/workflow-jobs.mjs';
-import { pathToFileURL } from 'node:url';
 
 const H = c => c.repeat(64), sha = 'a'.repeat(40), now = Date.parse('2026-10-21T03:00:00Z');
 function fixture(job = 'frontend') {
@@ -173,20 +172,27 @@ test('minting records requires actual producer stamps and never publishes inheri
   f.args.proof.checks.frontend.mode = 'executed'; needs.frontend.outputs.toolchain = '{}';
   assert.equal(producedRegistryRecords({ plans: [f.args.plan], proof: f.args.proof, needs }).length, 0);
 });
-test('unchanged pre-registry dev reader accepts the fresh additive v1 migration proof', async t => {
+test('unchanged pre-registry dev reader accepts the fresh additive v1 migration proof', t => {
   const root = temporary(t), archive = join(root, 'old-controller.tar');
   // Accepted immutable #980 dev snapshot; no historical code is modified.
   git(process.cwd(), ['archive', '--format=tar', '--output=' + archive,
     '2b151e454750b3b1413b794311ac375caa1426cc', 'scripts', '.github/workflows/validate.yml']);
-  execFileSync('tar', ['-xf', archive, '-C', root]);
-  const legacy = await import(pathToFileURL(join(root, 'scripts/ci-proof.mjs')).href);
+  // stdin avoids GNU tar interpreting a native Windows drive as a remote host.
+  execFileSync('tar', ['-xf', '-'], { cwd: root, input: readFileSync(archive) });
   const f = fixture(), workflow = validateJobs(), needs = {};
   for (const id of workflow.keys()) needs[id] = { result: 'success', outputs: {} };
   const proof = buildCiProof({ candidateSha: sha, candidateTree: 'c'.repeat(40), runId: 1234, attempt: 2, event: 'workflow_dispatch',
     needs, registry: { plan: f.args.plan } });
   const jobs = [...workflow.values()].flatMap(j => jobInstanceNames(j).map(name => ({ name, status: 'completed', conclusion: 'success' })));
   const run = { ...f.args.run, event: 'workflow_dispatch' };
-  assert.equal(legacy.evaluateCiProof({ run, proof, jobs }).status, 'green');
+  const historicalReader = [
+    "import { readFileSync } from 'node:fs';",
+    "import { evaluateCiProof } from './scripts/ci-proof.mjs';",
+    "console.log(JSON.stringify(evaluateCiProof(JSON.parse(readFileSync(0, 'utf8')))));",
+  ].join('\n');
+  const legacy = JSON.parse(execFileSync(process.execPath, ['--input-type=module', '-e', historicalReader],
+    { cwd: root, input: JSON.stringify({ run, proof, jobs }), encoding: 'utf8' }));
+  assert.equal(legacy.status, 'green');
   assert.equal(evaluateCiProof({ run, proof, jobs }).status, 'green');
   jobs.splice(jobs.findIndex(j => j.name === JOB_RULES.product_guards[0].name), 1);
   assert.equal(evaluateCiProof({ run, proof, jobs }).status, 'failed', 'new reader still requires fresh guards');
