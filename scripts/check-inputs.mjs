@@ -73,7 +73,6 @@ export const NOT_AN_INPUT = [
   ['demo/verify_ha_dialog_discard_recovery.mjs', 'явная тяжёлая диагностика настоящего ha-dialog для #607; запускается человеком'],
   ['demo/verify_ha_form_shell_609.mjs', 'явная тяжёлая диагностика оболочки форм в настоящем ha-dialog для #609; запускается человеком'],
   ['demo/verify_field_focus_870.mjs', 'явная offline-диагностика фокуса настоящего HA picker для #870; запускается человеком'],
-  ['demo/ui-lab/verify-icon-picker.mjs', 'явная offline-диагностика настоящего HA icon picker для #988; запускается человеком'],
   // demo/helpers/** больше не здесь (#629): их текст судит no-new-private-writes
   // в job frontend, так что фикстуры ha-dialog #505 стали её входом.
   ['demo/screencast_visual_continuity.mjs', 'ручной скринкаст'],
