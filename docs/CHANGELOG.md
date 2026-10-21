@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.82.0-beta.6 — 2026-10-21
+
 - Restore the native HA icon picker's themed field without a second focus
   outline, and space the manual “Active when” value from its selector. (#995)
 - Restore rooms with hosted doors/windows after deleting them with Keep walls:

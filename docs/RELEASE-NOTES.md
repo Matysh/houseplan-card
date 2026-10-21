@@ -1,16 +1,18 @@
-<!-- release: v1.82.0-beta.5 -->
+<!-- release: v1.82.0-beta.6 -->
 
 ## Основное
 
-- Настроить активность значка стало проще: один список сущностей устройства, понятные автоматический и ручной режимы, одно ручное состояние и подсказка.
-- Превью устройства стало просторнее: изображение на всю ширину, сведения об источнике и состоянии — под ним.
+- Исправлены отмена удаления и повторное создание комнаты с сохранёнными стенами: двери и окна больше не мешают сохранению.
+- Доработаны настройки устройств: выбор иконки не закрывает диалог, списки открываются по запросу, поиск источника состояния находится внутри списка.
+- На узкой шапке кнопки редакторов сворачиваются в иконки; подтверждение несохранённых изменений появляется плавно.
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Icon activity is easier to configure: one own-device entity list, clear automatic and manual modes, one exact manual state and contextual help.
-- The device preview has more room: a full-width image with source and state explanations underneath.
+- Fixed undoing room deletion and recreating a room with retained walls: hosted doors and windows no longer prevent saving.
+- Refined device settings: choosing an icon keeps the dialog open, lists open on request, and state-source search lives inside the list.
+- Editor buttons fold to icons in narrow headers; unsaved-changes confirmation opens smoothly.
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.82.0-beta.5/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.82.0-beta.5/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.82.0-beta.6/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.82.0-beta.6/docs/CHANGELOG.md)

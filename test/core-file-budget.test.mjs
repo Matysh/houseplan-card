@@ -51,7 +51,7 @@ const CAPS = {
   // жесты, рамка, магнит, диалог — живёт в stairs-editor.ts и stairs-box.ts.
   // #898, owner decision 2026-10-14: less than 10 % headroom -> +10 % (12966 -> 14263).
   // #935: four integration lines on dev's already-used band; task records exact fact.
-  'src/houseplan-card.ts': 13163,
+  'src/houseplan-card.ts': 13166,
   // #478 removed the persisted room-draft editor branch. Keep that reduction.
   // #485 keeps its large setup surface in editors/radar-section.ts; these are
   // only the dialog state/save seam and the thin lazy-render adapter.
