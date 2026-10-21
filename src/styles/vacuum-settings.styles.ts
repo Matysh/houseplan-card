@@ -36,7 +36,7 @@ export const vacuumSettingsCss = `
 .vacuum-profile .vacuum-add-current > button{width:100%;justify-content:center;margin:0;}
 .vacuum-profile .vacuum-map-note{margin:0;color:var(--secondary-text-color);font-size:12px;line-height:1.5;}
 .vacuum-profile .vacuum-add-reason{margin-top:-8px;}
-.vacuum-profile :is(.vacroute-sources,.hpf-profile-diagnostics) > summary{display:list-item;list-style-position:inside;min-height:44px;box-sizing:border-box;padding:10px 0;cursor:pointer;color:var(--secondary-text-color);font-weight:500;transition:color 160ms ease;}
+.vacuum-profile :is(.vacroute-sources,.hpf-profile-diagnostics) > summary{display:list-item;list-style-position:inside;min-height:44px;box-sizing:border-box;padding:10px 0;cursor:pointer;color:var(--primary-color);font-weight:500;transition:color 160ms ease;}
 .vacuum-profile .vacroute-sources{border-block:1px solid var(--divider-color);padding-block:6px;}
 .vacuum-profile :is(.vacroute-sources,.hpf-profile-diagnostics) > summary:hover{color:var(--primary-text-color);}
 .vacuum-profile :is(.vacroute-sources,.hpf-profile-diagnostics) > summary:focus-visible{outline:2px solid var(--primary-color);outline-offset:3px;}
@@ -44,7 +44,7 @@ export const vacuumSettingsCss = `
 .vacuum-profile .vacsource-list{display:grid;gap:8px;}
 .vacuum-profile .vacsource-list > button{width:100%;text-align:left;padding:12px;}
 .vacuum-profile .hpf-profile-diagnostics > .vacdiag{display:grid;gap:0;padding-top:8px;}
-.vacuum-profile .hpf-profile-diagnostics .vacdiag > div{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:14px;padding:10px 0;border-bottom:1px solid var(--divider-color);align-items:start;}
+.vacuum-profile .hpf-profile-diagnostics .vacdiag > div{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:14px;padding:6px 0;border-bottom:1px solid var(--divider-color);align-items:start;}
 .vacuum-profile .hpf-profile-diagnostics .vacdiag > div > b{text-align:right;overflow-wrap:anywhere;font-weight:400;}
 @media(max-width:480px){.vacuum-profile .vacroute{padding:12px;}.vacuum-profile .vacroute > .vacbtns{grid-template-columns:1fr;}.vacuum-profile .hpf-profile-diagnostics .vacdiag > div{grid-template-columns:1fr;gap:4px;}.vacuum-profile .hpf-profile-diagnostics .vacdiag > div > b{text-align:left;}}
 @media(prefers-reduced-motion:reduce){.vacuum-profile summary{transition:none;}}

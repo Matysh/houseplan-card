@@ -168,6 +168,10 @@ try {
     await expect(shell.locator('.vacuum-add-reason')).toContainText('уже добавлена');
     await shell.locator('.hpf-profile-diagnostics > summary').click();
     await expect(shell.locator('.hpf-profile-diagnostics .vacdiag')).toBeVisible();
+    const rowPadding=await shell.locator('.hpf-profile-diagnostics .vacdiag > div').first().evaluate(e=>{
+      const style=getComputedStyle(e);return [style.paddingTop,style.paddingBottom];
+    });
+    assert.deepEqual(rowPadding,['6px','6px'],'accepted compact diagnostic row spacing');
     await page.screenshot({path:fileURLToPath(new URL('maps.png',output))});
     for(const theme of ['light','dark']) for(const width of [390,712,1280]) {
       await page.setViewportSize({width,height:884});
