@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 981,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Authenticate content-addressed CI job evidence through an orphan Git registry and immutable source run artifacts, preserve fresh local range/filesystem guards and always fresh nightly/stable validation."
+}

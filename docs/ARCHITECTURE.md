@@ -1903,3 +1903,18 @@ proofs remain progress; missing product evidence never becomes green. The
 existing main workflow_run trigger receives all profiles through their shared
 display name, while its dev body checks actual workflow identity. Canonical full
 dispatch remains the fallback and the night/release authority.
+
+
+## Authenticated content proof index (#981)
+
+The orphan ci-proofs index maps a job/content address to an immutable source
+execution. Product identity excludes documentation/tooling/output domains;
+job identity additionally covers exact test/harness inputs, transitive trust
+code, actual tools/pins, the executing workflow recipe and performance set.
+The source artifact and actual direct producer jobs authenticate every mutable
+entry. Branch ancestry and commit SHA are provenance fields, not reuse keys.
+A beta-only normalized identity masks synchronized canonical version scalars;
+assembly and one real bundle smoke remain fresh. Night/stable deny reuse.
+The v1 proof extension is additive: trusted old controllers can consume fresh
+migration evidence, while new controllers also require actual fresh bundle/
+product guards and independently authenticate every inherited source.

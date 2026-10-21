@@ -4051,3 +4051,50 @@ missing/pending companions request canonical validation, red companions fail.
 Only canonical completed runs advance the old range/classification induction;
 a narrower push profile cannot erase an unjudged ancestor. Night and release
 continue to request full policy. The proof schema stays `houseplan-ci-proof/v1`.
+
+
+## Cross-branch CI proof registry (#981)
+
+`ci-proofs` is an orphan data branch excluded from every validation push entry.
+CI publishes `proofs/<job>/<key>.json` through a private Git index and a CAS push;
+a lost lease fetches the winning tip and merges addresses again. The checkout,
+index and task branch remain in place. Lookup uses one shallow fetch, then
+parallel cached source-API/artifact requests; it never scans recent run history
+or reads branch-scoped success caches. A JSON address is authenticated against
+the immutable ci-proof artifact and actual completed source attempt/jobs.
+
+After changing imports/test ownership, run `node scripts/ci-profiles.mjs --write`
+and `node scripts/ci-registry-inventory.mjs --write`. The committed inventory is
+computed with TypeScript during authoring/fresh guards; lookup needs no npm ci.
+Frontend job runs build/types/pure units only when no compatible source exists.
+Bundle distribution and product guards always assemble/verify the exact current
+bytes, run FS/Git/process units, range, budget/unused and backend manifest checks.
+A beta alias validates all seven existing synchronized release mirrors (root
+package/lock, lock root package, integration manifest/const, both CARD_VERSION
+literals) before masking their scalar values. Dependencies, formatting and all
+other bytes remain significant. A reused beta rebuilds its exact versioned
+bundle and emitted helpers, then runs one smoke on that bundle; changed trees
+run the complete demanded matrix. HACS/Hassfest remain fresh for candidates.
+
+`validate.yml` has `fresh=true` for explicit fresh execution; night always sends
+full=true/fresh=true, stable cannot reuse. `candidate=true` is validation-only
+and publishes no tag/release. Before the new reader reaches accepted dev,
+review/merge dispatches automatically use the fresh v1-compatible migration
+route. Additional registry fields preserve the legacy required-check ID list;
+new readers independently require fresh bundle/product-guard execution.
+The old transfer-marker CLI is frozen fail-closed. Old frontend proof helpers
+remain read compatibility; workflows no longer discover producers through them.
+
+Pre-push reads the same registry under its real local tools/platform and verifies
+restored dist/test-build inventories. Mismatched tools require fresh execution;
+no CI image/environment is invented. The private local receipt remains a local
+accelerator with fresh range/filesystem guards and grants no CI/review authority.
+
+Source authentication also compares immutable Git tree objects independently of
+both serialized keys. Product paths, job roots, closed inputs, transitive trust
+code and the computed inventory must match; beta allows only validated mirror
+scalars. Actual source/current workflow recipes include lookup, proof writing,
+fresh guards and bundle production. Canonical and product variants share a
+key over both registered recipe variants; the source records the variant that
+actually executed. Source Git/file API responses are cached per immutable SHA;
+local pre-push supplies its real committed snapshot, including unpublished HEAD.

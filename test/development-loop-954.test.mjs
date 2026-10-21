@@ -194,18 +194,18 @@ test('#954 actual producer stamps require all smoke shards; aggregation runner i
   assert.equal(producerEnvironments({ backend: { outputs: { environment: readFileSync(join(root, 'invalid'), 'utf8') } } }).backend, null);
 });
 
-test('#954 cache marker cannot override or replace independently verified transfer', t => {
+test('#954 retired marker CLI cannot grant a skip from cached or transfer JSON', t => {
   const { root, put } = fixture(t), marker = join(root, '.reuse-marker'), file = join(root, 'transfer.json');
   const cli = fileURLToPath(new URL('../scripts/check-proof-transfer.mjs', import.meta.url));
   put('.reuse-marker', 'SHA: foreign\nпрогон: https://github.com/foreign/r/actions/runs/99\nпопытка: 1\n');
-  put('transfer.json', '{}');
-  const run = () => execFileSync(process.execPath, [cli, '--job=backend', `--file=${file}`, `--marker=${marker}`],
-    { cwd: root, env: { ...process.env, GITHUB_OUTPUT: '' }, encoding: 'utf8' });
-  assert.match(run(), /accepted=false\nsource_run=\n/, 'raw cache hit must execute fresh');
-  put('transfer.json', JSON.stringify({ backend: { sourceRun: 11, sourceAttempt: 2, sourceSha: 'a'.repeat(40),
-    url: 'https://github.com/o/r/actions/runs/11' } }));
-  assert.match(run(), /accepted=true\nsource_run=11\nsource_attempt=2\n/);
-  assert.doesNotMatch(readFileSync(marker, 'utf8'), /foreign|runs\/99/, 'foreign cached source cannot shadow the verified source');
+  const original = readFileSync(marker, 'utf8');
+  for (const content of ['{}', JSON.stringify({ backend: { sourceRun: 11, sourceAttempt: 2, sourceSha: 'a'.repeat(40) } })]) {
+    put('transfer.json', content);
+    const result = execFileSync(process.execPath, [cli, '--job=backend', '--file=' + file, '--marker=' + marker],
+      { cwd: root, env: { ...process.env, GITHUB_OUTPUT: '' }, encoding: 'utf8' });
+    assert.match(result, /^backend=false$/m); assert.doesNotMatch(result, /=true|accepted=true|source_run=11/);
+    assert.equal(readFileSync(marker, 'utf8'), original, 'retired CLI cannot rewrite a cached source into authority');
+  }
 });
 
 test('#954 source stamp implementation must match too, not just the proof aggregator', t => {

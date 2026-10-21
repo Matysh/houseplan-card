@@ -27,6 +27,7 @@ import { fileURLToPath } from 'node:url';
 import { portableCommand } from './spawn-portable.mjs';
 import { localGateKey, restoreLocalGate, invalidateLocalGate, sealLocalGate } from './local-gate-proof.mjs';
 import { unitGroups, groupsAffectedBy } from './unit-groups.mjs';
+import { restoreLocalRegistry } from './local-registry-proof.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const npm = 'npm';
@@ -134,7 +135,14 @@ export async function gateSmall({ cwd = ROOT, base = 'origin/dev', smokes = fals
   log(`#982 required unit groups: ${groups.join(', ') || 'none (documentation only)'}`);
   let key = null, reused = false;
   if (productRequired) {
-    try { key = localGateKey(cwd); reused = restoreLocalGate(cwd, key); invalidateLocalGate(cwd); }
+    try {
+      key = localGateKey(cwd);
+      const registry = await restoreLocalRegistry(cwd);
+      reused = registry.reused || restoreLocalGate(cwd, key);
+      if (registry.reused) log('ci-proofs local source: run ' + registry.record.run + '/' + registry.record.attempt
+        + ', SHA ' + registry.record.sha + ', tree ' + registry.record.treeId);
+      invalidateLocalGate(cwd);
+    }
     catch { key = null; }
   }
   if (reused) log('local receipt: build + reusable product units restored; range/process/FS/Git units run fresh');

@@ -37,6 +37,7 @@ on:
       - '!test/check-inputs.test.mjs'
       - '!test/ci-profiles.test.mjs'
       - '!test/ci-proof.test.mjs'
+      - '!test/ci-registry-inputs.test.mjs'
       - '!test/clamped-wheel-lease.test.mjs'
       - '!test/classify-base.test.mjs'
       - '!test/classify-changes.test.mjs'
@@ -213,6 +214,7 @@ on:
       - '!test/check-inputs.test.mjs'
       - '!test/ci-profiles.test.mjs'
       - '!test/ci-proof.test.mjs'
+      - '!test/ci-registry-inputs.test.mjs'
       - '!test/clamped-wheel-lease.test.mjs'
       - '!test/classify-base.test.mjs'
       - '!test/classify-changes.test.mjs'
@@ -652,13 +654,15 @@ jobs:
       issues: read
     outputs:
       frontend: ${{ steps.classify.outputs.frontend }}
-      geometry_parity: ${{ steps.classify.outputs.geometry_parity }}
-      backend: ${{ steps.classify.outputs.backend }}
-      integration: ${{ steps.classify.outputs.integration }}
-      perf_iso: ${{ steps.classify.outputs.perf_iso }} # #473 §5
-      perf_interaction: ${{ steps.classify.outputs.perf_interaction }}
+      geometry_parity: ${{ steps.classify.outputs.geometry_parity == 'true' || inputs.full }}
+      backend: ${{ steps.classify.outputs.backend == 'true' || inputs.full }}
+      integration: ${{ steps.classify.outputs.integration == 'true' || steps.registry_policy.outputs.registry_mode == 'candidate' }}
+      perf_iso: ${{ steps.classify.outputs.perf_iso == 'true' || inputs.full }} # #473 §5
+      perf_interaction: ${{ steps.classify.outputs.perf_interaction == 'true' || inputs.full }}
       mutants: ${{ steps.classify.outputs.mutants }}
       unknown_inputs: ${{ steps.classify.outputs.unknown_inputs }}
+      registry_mode: ${{ steps.registry_policy.outputs.registry_mode }}
+      registry_fresh: ${{ steps.registry_policy.outputs.registry_fresh }}
       # Тяжёлые job только на кандидате/по кнопке/на PR (#479), см. шаг heavy.
       heavy: ${{ steps.heavy.outputs.heavy }}
       golden: ${{ steps.heavy.outputs.golden }}
@@ -720,6 +724,13 @@ jobs:
           merge_base=$(git merge-base origin/dev "$HEAD_SHA" || git rev-parse "$HEAD_SHA~1")
           node scripts/classify-base.mjs --head="$HEAD_SHA" \
             --merge-base="$merge_base" --runs=/tmp/validate-runs.json
+      - id: registry_policy
+        env:
+          HEAD_MESSAGE: ${{ github.event.head_commit.message }}
+          REF_NAME: ${{ github.ref_name }}
+          FRESH_INPUT: ${{ inputs.fresh }}
+          CANDIDATE_INPUT: ${{ inputs.candidate }}
+        run: node scripts/ci-registry-cli.mjs --policy
       - id: heavy
         env:
           GH_TOKEN: ${{ github.token }}
@@ -803,184 +814,72 @@ jobs:
             } >> "$GITHUB_STEP_SUMMARY"
           fi
 
-  # Переиспользование результата тяжёлой job (#208). Ключ = хеш содержимого
-  # всех входов job по единому manifest (#492, scripts/check-inputs.mjs):
-  # что собирает, что исполняет, что читает, чем запускается — включая
-  # `validate.yml`. Маркер в кэше пишет только успешный
-  # прогон с тем же ключом, поэтому попадание доказывает: job с побайтово теми
-  # же входами уже завершилась успешно.
-  #
-  # Это НЕ фильтр путей из job `changes` (на dev они отключены намеренно): там
-  # объём прогона угадывается по путям и «зелёный» начинает значить разное,
-  # здесь эквивалентность входов доказана хешем.
-  #
-  # Свойство, снимающее главный риск: релизный кандидат бампает версию, а
-  # CARD_VERSION и package.json входят в фингерпринт, поэтому ключи кандидата
-  # заведомо новые и полный набор гейтов перед бетой и релизом идёт всегда.
+  # #981: one orphan-index fetch, independently verified immutable sources.
 
   reuse:
     name: "Переиспользование: это дерево уже проверено"
-    # `changes` нужна ради набора профилей перф-смока (#473): ключ
-    # performance_smoke включает набор, иначе glow-only результат засчитался бы
-    # прогону, которому нужен изометрический профиль.
     needs: changes
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 1
     permissions:
       contents: read
       actions: read
     outputs:
-      smoke: ${{ steps.probe.outputs.smoke }}
-      golden: ${{ steps.probe.outputs.golden }}
-      performance_smoke: ${{ steps.probe.outputs.performance_smoke }}
-      geometry_parity: ${{ steps.probe.outputs.geometry_parity }}
+      frontend: ${{ steps.probe.outputs.frontend }}
+      frontend_key: ${{ steps.probe.outputs.frontend_key }}
+      frontend_record: ${{ steps.probe.outputs.frontend_record }}
+      frontend_source_run: ${{ steps.probe.outputs.frontend_source_run }}
+      frontend_source_attempt: ${{ steps.probe.outputs.frontend_source_attempt }}
+      frontend_source_sha: ${{ steps.probe.outputs.frontend_source_sha }}
       backend: ${{ steps.probe.outputs.backend }}
-      smoke_key: ${{ steps.keys.outputs.smoke }}
-      golden_key: ${{ steps.keys.outputs.golden }}
-      performance_smoke_key: ${{ steps.keys.outputs.performance_smoke }}
-      performance_smoke_set: ${{ steps.keys.outputs.performance_smoke_set }}
-      geometry_parity_key: ${{ steps.keys.outputs.geometry_parity }}
-      backend_key: ${{ steps.keys.outputs.backend }}
-      smoke_source_run: ${{ steps.p_smoke.outputs.source_run }}
-      smoke_source_attempt: ${{ steps.p_smoke.outputs.source_attempt }}
-      smoke_source_sha: ${{ steps.p_smoke.outputs.source_sha }}
-      golden_source_run: ${{ steps.p_golden.outputs.source_run }}
-      golden_source_attempt: ${{ steps.p_golden.outputs.source_attempt }}
-      golden_source_sha: ${{ steps.p_golden.outputs.source_sha }}
-      performance_smoke_source_run: ${{ steps.p_perf.outputs.source_run }}
-      performance_smoke_source_attempt: ${{ steps.p_perf.outputs.source_attempt }}
-      performance_smoke_source_sha: ${{ steps.p_perf.outputs.source_sha }}
-      geometry_parity_source_run: ${{ steps.p_geometry_parity.outputs.source_run }}
-      geometry_parity_source_attempt: ${{ steps.p_geometry_parity.outputs.source_attempt }}
-      geometry_parity_source_sha: ${{ steps.p_geometry_parity.outputs.source_sha }}
-      backend_source_run: ${{ steps.p_backend.outputs.source_run }}
-      backend_source_attempt: ${{ steps.p_backend.outputs.source_attempt }}
-      backend_source_sha: ${{ steps.p_backend.outputs.source_sha }}
+      backend_key: ${{ steps.probe.outputs.backend_key }}
+      backend_record: ${{ steps.probe.outputs.backend_record }}
+      backend_source_run: ${{ steps.probe.outputs.backend_source_run }}
+      backend_source_attempt: ${{ steps.probe.outputs.backend_source_attempt }}
+      backend_source_sha: ${{ steps.probe.outputs.backend_source_sha }}
+      geometry_parity: ${{ steps.probe.outputs.geometry_parity }}
+      geometry_parity_key: ${{ steps.probe.outputs.geometry_parity_key }}
+      geometry_parity_record: ${{ steps.probe.outputs.geometry_parity_record }}
+      geometry_parity_source_run: ${{ steps.probe.outputs.geometry_parity_source_run }}
+      geometry_parity_source_attempt: ${{ steps.probe.outputs.geometry_parity_source_attempt }}
+      geometry_parity_source_sha: ${{ steps.probe.outputs.geometry_parity_source_sha }}
+      smoke: ${{ steps.probe.outputs.smoke }}
+      smoke_key: ${{ steps.probe.outputs.smoke_key }}
+      smoke_record: ${{ steps.probe.outputs.smoke_record }}
+      smoke_source_run: ${{ steps.probe.outputs.smoke_source_run }}
+      smoke_source_attempt: ${{ steps.probe.outputs.smoke_source_attempt }}
+      smoke_source_sha: ${{ steps.probe.outputs.smoke_source_sha }}
+      golden: ${{ steps.probe.outputs.golden }}
+      golden_key: ${{ steps.probe.outputs.golden_key }}
+      golden_record: ${{ steps.probe.outputs.golden_record }}
+      golden_source_run: ${{ steps.probe.outputs.golden_source_run }}
+      golden_source_attempt: ${{ steps.probe.outputs.golden_source_attempt }}
+      golden_source_sha: ${{ steps.probe.outputs.golden_source_sha }}
+      performance_smoke: ${{ steps.probe.outputs.performance_smoke }}
+      performance_smoke_key: ${{ steps.probe.outputs.performance_smoke_key }}
+      performance_smoke_record: ${{ steps.probe.outputs.performance_smoke_record }}
+      performance_smoke_source_run: ${{ steps.probe.outputs.performance_smoke_source_run }}
+      performance_smoke_source_attempt: ${{ steps.probe.outputs.performance_smoke_source_attempt }}
+      performance_smoke_source_sha: ${{ steps.probe.outputs.performance_smoke_source_sha }}
+      python_version: ${{ steps.probe.outputs.python_version }}
+      plan: ${{ steps.probe.outputs.plan }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with: { fetch-depth: 0, filter: 'blob:none' }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with: { node-version: 22 }
-      - name: Ключи переиспользования
-        id: keys
-        env:
-          PERF_ISO: ${{ needs.changes.outputs.perf_iso }}
-          PERF_INTERACTION: ${{ needs.changes.outputs.perf_interaction }}
-        run: |
-          for job in smoke golden performance_smoke geometry_parity backend; do
-            key=$(node scripts/gate-reuse.mjs --job="$job")
-            echo "$job=$key" >> "$GITHUB_OUTPUT"
-            echo "$job: $key"
-          done
-          # Набор профилей перф-смока — часть ключа (#473 AC5).
-          set=glow
-          [ "$PERF_ISO" = "true" ] && set="$set-iso"
-          [ "$PERF_INTERACTION" = "true" ] && set="$set-interaction"
-          echo "performance_smoke_set=$set" >> "$GITHUB_OUTPUT"
-          echo "performance_smoke set: $set"
-      # Маркер восстанавливается во временный файл: #541 требует не только
-      # cache-hit, но и SHA/run исходного успешного job. Между lookup файл
-      # удаляется, чтобы один маркер не был принят за другой.
-      - name: Direct accepted producer transfer across branches
-        id: transfer
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PERF_ISO: ${{ needs.changes.outputs.perf_iso }}
-          PERF_INTERACTION: ${{ needs.changes.outputs.perf_interaction }}
-          TRANSFER_CHECKS: '{"smoke":"${{ needs.changes.outputs.heavy }}","golden":"${{ needs.changes.outputs.golden }}","performance_smoke":"${{ needs.changes.outputs.heavy }}","geometry_parity":"${{ needs.changes.outputs.geometry_parity }}","backend":"${{ needs.changes.outputs.backend }}"}'
-        run: node scripts/check-proof-transfer.mjs --repo="${{ github.repository }}"
-      - name: Маркер smoke
-        id: m_smoke
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: .reuse-marker
-          key: reuse-smoke-${{ steps.keys.outputs.smoke }}
-      - name: Доказательство источника smoke
-        id: p_smoke
-        if: steps.m_smoke.outputs.cache-hit == 'true' || steps.transfer.outputs.smoke == 'true'
-        run: node scripts/check-proof-transfer.mjs --job=smoke --marker=.reuse-marker
-      - name: Очистить маркер smoke перед следующим lookup
-        if: always()
-        run: rm -f .reuse-marker
-      - name: Маркер golden
-        id: m_golden
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: .reuse-marker
-          key: reuse-golden-${{ steps.keys.outputs.golden }}
-      - name: Доказательство источника golden
-        id: p_golden
-        if: steps.m_golden.outputs.cache-hit == 'true' || steps.transfer.outputs.golden == 'true'
-        run: node scripts/check-proof-transfer.mjs --job=golden --marker=.reuse-marker
-      - name: Очистить маркер golden перед следующим lookup
-        if: always()
-        run: rm -f .reuse-marker
-      - name: Маркер performance_smoke
-        id: m_perf
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: .reuse-marker
-          key: reuse-performance_smoke-${{ steps.keys.outputs.performance_smoke }}-${{ steps.keys.outputs.performance_smoke_set }}
-      - name: Доказательство источника performance_smoke
-        id: p_perf
-        if: steps.m_perf.outputs.cache-hit == 'true' || steps.transfer.outputs.performance_smoke == 'true'
-        run: node scripts/check-proof-transfer.mjs --job=performance_smoke --marker=.reuse-marker
-      - name: Очистить маркер performance_smoke перед следующим lookup
-        if: always()
-        run: rm -f .reuse-marker
-      - name: Маркер geometry_parity
-        id: m_geometry_parity
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: .reuse-marker
-          key: reuse-geometry_parity-${{ steps.keys.outputs.geometry_parity }}
-      - name: Доказательство источника geometry_parity
-        id: p_geometry_parity
-        if: steps.m_geometry_parity.outputs.cache-hit == 'true' || steps.transfer.outputs.geometry_parity == 'true'
-        run: node scripts/check-proof-transfer.mjs --job=geometry_parity --marker=.reuse-marker
-      - name: Очистить маркер geometry_parity перед следующим lookup
-        if: always()
-        run: rm -f .reuse-marker
-      - name: Маркер backend
-        id: m_backend
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: .reuse-marker
-          key: reuse-backend-${{ steps.keys.outputs.backend }}
-      - name: Доказательство источника backend
-        id: p_backend
-        if: steps.m_backend.outputs.cache-hit == 'true' || steps.transfer.outputs.backend == 'true'
-        run: node scripts/check-proof-transfer.mjs --job=backend --marker=.reuse-marker
-      - name: Очистить маркер backend
-        if: always()
-        run: rm -f .reuse-marker
-      - name: Что переиспользуем
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        id: python
+        with: { python-version-file: .python-version }
+      - name: Verify immutable registry producers
         id: probe
         env:
-          SMOKE: ${{ steps.p_smoke.outputs.accepted }}
-          GOLDEN: ${{ steps.p_golden.outputs.accepted }}
-          PERF: ${{ steps.p_perf.outputs.accepted }}
-          GEOMETRY_PARITY: ${{ steps.p_geometry_parity.outputs.accepted }}
-          BACKEND: ${{ steps.p_backend.outputs.accepted }}
-        run: |
-          # Пропуск обязан быть громким: молчаливый skip — тот самый тихий
-          # успех, который уже дважды стоил нам дня (#171, #207).
-          waive() {
-            if [ "$2" = "true" ]; then
-              echo "$1=true" >> "$GITHUB_OUTPUT"
-              echo "::notice::$1 не прогоняется: входы побайтово те же, что в предыдущем успешном прогоне (#208)"
-              echo "- **$1** переиспользована: входы не менялись" >> "$GITHUB_STEP_SUMMARY"
-            else
-              echo "$1=false" >> "$GITHUB_OUTPUT"
-              echo "- $1: прогоняется" >> "$GITHUB_STEP_SUMMARY"
-            fi
-          }
-          echo "### Переиспользование гейтов (#208)" >> "$GITHUB_STEP_SUMMARY"
-          waive smoke "$SMOKE"
-          waive golden "$GOLDEN"
-          waive performance_smoke "$PERF"
-          waive geometry_parity "$GEOMETRY_PARITY"
-          waive backend "$BACKEND"
+          GH_TOKEN: ${{ github.token }}
+          CI_PYTHON_VERSION: ${{ steps.python.outputs.python-version }}
+          REGISTRY_MODE: ${{ needs.changes.outputs.registry_mode }}
+          REGISTRY_FRESH: ${{ needs.changes.outputs.registry_fresh }}
+          PERF_ISO: ${{ needs.changes.outputs.perf_iso }}
+          PERF_INTERACTION: ${{ needs.changes.outputs.perf_interaction }}
+        run: node scripts/ci-registry-cli.mjs
 
   hacs:
     name: "HACS: валидация репозитория"
@@ -1029,10 +928,16 @@ jobs:
 
   frontend:
     name: "Фронтенд: типы, юниты, мутанты, синхрон бандла"
-    needs: changes
-    if: needs.changes.outputs.frontend == 'true'
+    needs: [changes, reuse]
+    if: needs.reuse.outputs.frontend != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 40
+    env:
+      CI_PYTHON_VERSION: ${{ needs.reuse.outputs.python_version }}
+    outputs:
+      recipe: ${{ steps.stamp.outputs.recipe }}
+      toolchain: ${{ steps.stamp.outputs.toolchain }}
+      inventory: ${{ steps.stamp.outputs.inventory }}
     steps:
       # Полная история без блобов (#342): гейт «новый код не добавляет any»
       # diff-aware, ему нужен диапазон, а содержимое старых ревизий — нет.
@@ -1045,16 +950,109 @@ jobs:
       - run: npm ci
       # #856: build already contains the identical root tsc --noEmit. The
       # emitted test config and noUnusedLocals remain independent contracts.
-      - name: Restore complete compatible frontend producer
-        id: producer
+      - name: Build
+        run: npm run build
+      # Часть unit-контрактов проверяет размеры реально поставляемых графов в
+      # dist/ (#438, #593, #627). В issue-ветке закоммиченный dist законно
+      # отстаёт от исходников (#657), поэтому юниты обязаны читать свежую
+      # сборку — тот же порядок закреплён локальным gate:small.
+      - name: Pure product units on fresh emitted modules
+        run: |
+          node scripts/ci-registry-inventory.mjs
+          npx tsc -p tsconfig.test.json
+          node scripts/fix-test-build.mjs
+          node scripts/frontend-units.mjs --group=reusable
+      - name: Stamp actual producer and byte inventories
+        id: stamp
+        run: node scripts/ci-registry-build.mjs --stamp
+      - name: Выложить бандл для браузерных job
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: producer-card-bundle
+          path: dist/
+          retention-days: 14
+          if-no-files-found: error
+      # Несколько браузерных контрактов импортируют чистые функции из
+      # скомпилированного тестового дерева. Оно создаётся `npm test`, но не
+      # входит в production-бандл и потому едет отдельным артефактом (#336).
+      - name: Выложить тестовые модули для смоков
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: producer-test-build
+          path: test-build/
+          retention-days: 14
+          if-no-files-found: error
+
+  # #657 (2б): бандл в дереве dev меняет только кандидат беты, поэтому стенд
+  # dev.houseplan.tech берёт его не из дерева, а из этого артефакта: после
+  # зелёного фронтенда на push в dev собранный `dist/` вместе с остальной
+  # интеграцией того же SHA (#835) публикуется в служебную ветку `dev-build`
+  # одним коммитом без истории (scripts/dev-build.mjs); стенд забирает из неё
+  # фронтенд (demo/stand/update-dev-bundle.sh), своя инсталляция владельца —
+  # всю интеграцию (scripts/ha-track-dev.sh). Опубликуется только голова:
+  # если dev ушёл вперёд, пушит следующий прогон. Не вход доказательства:
+  # стенд — не гейт, и сбой публикации не красит проверку кода.
+
+  bundle:
+    name: "Упаковка: свежие артефакты кандидата"
+    needs: [changes, reuse, frontend]
+    if: always() && needs.changes.result == 'success' && needs.reuse.result == 'success' && (needs.frontend.result == 'success' || needs.frontend.result == 'skipped')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with: { node-version: 22 }
+      - name: Remove committed release bundle
+        run: |
+          node -e "require('node:fs').rmSync('dist', { recursive: true, force: true })"
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        if: needs.reuse.outputs.frontend != 'true'
+        with: { name: producer-card-bundle, path: dist }
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        if: needs.reuse.outputs.frontend != 'true'
+        with: { name: producer-test-build, path: test-build }
+      - name: Restore authenticated producer or assemble exact beta bytes
         env:
           GH_TOKEN: ${{ github.token }}
-        run: node scripts/frontend-proof.mjs --repo="${{ github.repository }}"
-      # Долг типизации снимается при извлечении подсистем (#34), а не разовой
-      # заменой: в src/** его 1034 вхождения в 49 файлах. Гейт держит приращение
-      # на нуле — судит только добавленные строки (#342). Тем же диапазоном
-      # судится и приращение записей смоков в приватное состояние карточки
-      # (#629): больше двух тысяч старых не трогаем, новых не добавляем.
+          FRONTEND_REUSED: ${{ needs.reuse.outputs.frontend }}
+          FRONTEND_RECORD: ${{ needs.reuse.outputs.frontend_record }}
+          FRONTEND_INVENTORY: ${{ needs.frontend.outputs.inventory }}
+          REGISTRY_MODE: ${{ needs.changes.outputs.registry_mode }}
+        run: node scripts/ci-registry-build.mjs
+      - name: Fresh packaging contract
+        run: node scripts/bundle-policy.mjs --verify
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: card-bundle
+          path: dist/
+          retention-days: 14
+          if-no-files-found: error
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: card-test-build
+          path: test-build/
+          retention-days: 14
+          if-no-files-found: error
+
+  product_guards:
+    name: "Продукт: свежие проверки диапазона и упаковки"
+    needs: [changes, bundle]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with: { fetch-depth: 0, filter: 'blob:none' }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: Remove committed release bundle before current artifacts
+        run: |
+          node -e "require('node:fs').rmSync('dist', { recursive: true, force: true })"
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with: { name: card-bundle, path: dist }
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with: { name: card-test-build, path: test-build }
       - name: "Новый код не добавляет any и приватных записей в смоках"
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -1090,88 +1088,26 @@ jobs:
           node scripts/no-new-any.mjs --base "$base" --head "$HEAD_SHA" || status=1
           node scripts/no-new-private-writes.mjs --base "$base" --head "$HEAD_SHA" || status=1
           exit "$status"
-      - name: Build
-        if: steps.producer.outputs.reused != 'true'
-        run: npm run build
-      # Часть unit-контрактов проверяет размеры реально поставляемых графов в
-      # dist/ (#438, #593, #627). В issue-ветке закоммиченный dist законно
-      # отстаёт от исходников (#657), поэтому юниты обязаны читать свежую
-      # сборку — тот же порядок закреплён локальным gate:small.
-      - name: Unit tests
-        env:
-          REUSED: ${{ steps.producer.outputs.reused }}
+      - name: Fresh inventory, filesystem/process and packaging contracts
         run: |
-          set -euo pipefail
-          if [ "$REUSED" != "true" ]; then
-            npx tsc -p tsconfig.test.json
-            node scripts/fix-test-build.mjs
-            node scripts/frontend-units.mjs --group=reusable
-          fi
+          node scripts/ci-registry-inventory.mjs
+          node scripts/ci-profiles.mjs
           node scripts/frontend-units.mjs --group=fresh --suite=product
-      # Entry, manifest and every content-hashed chunk are one artifact (#337).
-      # #657: the committed bundle changes only in a release candidate, so the
-      # fresh build must equal it only there; elsewhere the committed copy
-      # legitimately lags and only the fresh dist is verified.
-      - name: Card bundle trees in sync
+          node scripts/bundle-budget.mjs
+          npm run lint:unused
+      - name: Fresh backend manifest and synchronized release mirrors
+        run: node scripts/ci-registry-build.mjs --manifest
+      - name: One smoke on actual assembled beta bundle
+        if: needs.changes.outputs.registry_mode == 'candidate'
         run: |
-          node scripts/bundle-policy.mjs --verify HEAD
-          npm run bundle:budget
-      # #624: `tsc --noUnusedLocals` чист вне порта/харнесса, шесть чисел
-      # связности монолита не выше scripts/monolith-baseline.json. После
-      # сборки — одно из чисел считает байты dist/.
-      - name: Мёртвый код и связность монолита
-        run: npm run lint:unused
-      - name: Seal fresh complete frontend producer
-        if: steps.producer.outputs.reused != 'true'
-        run: node scripts/frontend-proof.mjs --store --out="${{ runner.temp }}/frontend-proof"
-      - name: Retain frontend producer with byte inventory
-        if: steps.producer.outputs.reused != 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: frontend-proof-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/frontend-proof
-          include-hidden-files: true
-          retention-days: 1
-          if-no-files-found: error
-      # Бандл собирается один раз и уезжает артефактом (#336). Прежде каждая из
-      # пяти браузерных job собирала его заново: `bundle:sync` — это `tsc
-      # --noEmit` плюс rollup, около минуты на job.
-      #
-      # Подмену артефакта ловить не нужно отдельной проверкой: `assertFreshDemoBundle`
-      # сверяет вшитый в бандл отпечаток с `sourceFingerprint` выкачанного
-      # дерева, и каждая браузерная job делает это перед первым кадром.
-      - name: Выложить бандл для браузерных job
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: card-bundle
-          path: dist/
-          retention-days: 1
-          if-no-files-found: error
-      # Несколько браузерных контрактов импортируют чистые функции из
-      # скомпилированного тестового дерева. Оно создаётся `npm test`, но не
-      # входит в production-бандл и потому едет отдельным артефактом (#336).
-      - name: Выложить тестовые модули для смоков
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: card-test-build
-          path: test-build/
-          retention-days: 1
-          if-no-files-found: error
-
-  # #657 (2б): бандл в дереве dev меняет только кандидат беты, поэтому стенд
-  # dev.houseplan.tech берёт его не из дерева, а из этого артефакта: после
-  # зелёного фронтенда на push в dev собранный `dist/` вместе с остальной
-  # интеграцией того же SHA (#835) публикуется в служебную ветку `dev-build`
-  # одним коммитом без истории (scripts/dev-build.mjs); стенд забирает из неё
-  # фронтенд (demo/stand/update-dev-bundle.sh), своя инсталляция владельца —
-  # всю интеграцию (scripts/ha-track-dev.sh). Опубликуется только голова:
-  # если dev ушёл вперёд, пушит следующий прогон. Не вход доказательства:
-  # стенд — не гейт, и сбой публикации не красит проверку кода.
+          npx playwright install chromium
+          node scripts/bundle-sync.mjs
+          node demo/smoke_modes.mjs
 
   dev_build:
     name: "Бандл головы dev для стенда"
-    needs: frontend
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && needs.frontend.result == 'success'
+    needs: bundle
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && needs.bundle.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     continue-on-error: true
@@ -1224,7 +1160,7 @@ jobs:
 
   browser_selected:
     name: "Браузер: выбранные проверки push"
-    needs: [changes, frontend]
+    needs: [changes, bundle]
     if: needs.changes.outputs.browser_subset == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 25
@@ -1272,13 +1208,21 @@ jobs:
   smoke:
     name: Смоки в браузере (шард ${{ matrix.shard }} из 3)
     # Gated on `frontend` so a typecheck failure does not burn browser minutes.
-    needs: [changes, frontend, reuse]
+    needs: [changes, bundle, reuse]
     if: needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.smoke != 'true'
+    env:
+      CI_PYTHON_VERSION: ${{ needs.reuse.outputs.python_version }}
     runs-on: ubuntu-24.04
     # Leave room for the complete native-UI shard; each smoke still has its
     # independent 180s timeout and every failed scenario fails the whole shard.
     timeout-minutes: 25
     outputs:
+      recipe_1: ${{ steps.registry.outputs.recipe_1 }}
+      toolchain_1: ${{ steps.registry.outputs.toolchain_1 }}
+      recipe_2: ${{ steps.registry.outputs.recipe_2 }}
+      toolchain_2: ${{ steps.registry.outputs.toolchain_2 }}
+      recipe_3: ${{ steps.registry.outputs.recipe_3 }}
+      toolchain_3: ${{ steps.registry.outputs.toolchain_3 }}
       environment_1: ${{ steps.environment.outputs.environment_1 }}
       environment_2: ${{ steps.environment.outputs.environment_2 }}
       environment_3: ${{ steps.environment.outputs.environment_3 }}
@@ -1384,41 +1328,33 @@ jobs:
           name: smoke-logs-${{ matrix.shard }}
           path: /tmp/smoke-logs
 
-  # Маркер переиспользования пишется ОДИН раз и только когда прошли все шарды:
-  # частично прогнанная матрица не имеет права выглядеть как выполненная работа.
+  # Registry receipt is minted only after all three direct shards and smoke_done succeed.
+      - name: Stamp registry producer toolchain
+        id: registry
+        run: node scripts/ci-registry-cli.mjs --stamp-job=smoke --stamp-output=toolchain_${{ matrix.shard }}
 
   smoke_done:
     name: "Смоки: все шарды зелёные"
     needs: [changes, smoke, reuse]
     if: needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.smoke != 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 1
     steps:
-      - name: Записать маркер успеха
-        run: |
-          printf '%s\n' "smoke прогнана успешно (3 шарда)" \
-            "SHA: ${{ github.sha }}" \
-            "прогон: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-            "попытка: ${{ github.run_attempt }}" \
-            > .reuse-marker
-      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        # Гонка двух прогонов с одинаковым ключом даёт «Cache already exists».
-        # Это не отказ гейта: работа выполнена, маркер уже записал сосед — job
-        # краснеть из-за этого не должна.
-        continue-on-error: true
-        with:
-          path: .reuse-marker
-          key: reuse-smoke-${{ needs.reuse.outputs.smoke_key }}
+      - run: echo "All three direct smoke shards succeeded; no cache marker"
 
   golden:
     name: Golden-кадры против принятых эталонов
     # Deterministic visual correctness stays in every prerelease gate: it is
     # inexpensive and catches a different class of regressions than timings.
-    needs: [changes, frontend, reuse]
+    needs: [changes, bundle, reuse]
     if: needs.changes.outputs.golden == 'true' && needs.reuse.outputs.golden != 'true'
+    env:
+      CI_PYTHON_VERSION: ${{ needs.reuse.outputs.python_version }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     outputs:
+      recipe: ${{ steps.registry.outputs.recipe }}
+      toolchain: ${{ steps.registry.outputs.toolchain }}
       environment: ${{ steps.environment.outputs.environment }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -1457,11 +1393,6 @@ jobs:
       # Маркер предыдущего падения с ТЕМ ЖЕ ключом (#386). Восстанавливается до
       # прогона, потому что после падения шаги кэша уже не помогут отличить
       # виновника от свидетеля.
-      - name: Прежнее падение на тех же входах
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: .fail-marker
-          key: fail-golden-${{ needs.reuse.outputs.golden_key }}
       - name: Capture or verify golden matrix
         id: golden
         run: |
@@ -1485,45 +1416,18 @@ jobs:
       # «Run failed» называет коммит, который пушнули следующим: 29 августа так
       # был назван документ ревью `0f7b6f5`, а сцену без эталона добавил
       # `dbbe94ae`. Вердикт job не меняется — меняется только формулировка.
-      - name: Кто уронил golden
-        id: fail_note
-        if: failure()
-        env:
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: node scripts/gate-reuse.mjs --job=golden --note --marker=.fail-marker
-      - name: Запомнить первопричину
-        if: failure() && steps.fail_note.outputs.first == 'true'
-        # Гонка двух прогонов даёт «Cache already exists»; для маркера падения
-        # это тем более не отказ гейта — job и так красная по существу.
-        continue-on-error: true
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: .fail-marker
-          key: fail-golden-${{ needs.reuse.outputs.golden_key }}
-      # Маркер пишется последним шагом: он существует только если всё выше
-      # прошло. Кэш сохраняется post-шагом, то есть тоже лишь при успехе job.
-      - name: Записать маркер успеха
-        run: |
-          printf '%s\n' "golden прогнана успешно" \
-            "SHA: ${{ github.sha }}" \
-            "прогон: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-            "попытка: ${{ github.run_attempt }}" \
-            > .reuse-marker
-      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        # Гонка двух прогонов с одинаковым ключом даёт «Cache already exists».
-        # Это не отказ гейта: работа выполнена, маркер уже записал сосед — job
-        # краснеть из-за этого не должна.
-        continue-on-error: true
-        with:
-          path: .reuse-marker
-          key: reuse-golden-${{ needs.reuse.outputs.golden_key }}
+      - name: Stamp registry producer toolchain
+        id: registry
+        run: node scripts/ci-registry-cli.mjs --stamp-job=golden
 
   performance_smoke:
     name: "Перф-смок: бюджет времени кадра"
     # Candidate-only catastrophic-regression guard for ordinary pushes and
     # prereleases. The expensive same-runner comparison lives in performance.yml.
-    needs: [changes, frontend, reuse]
+    needs: [changes, bundle, reuse]
     if: needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.performance_smoke != 'true'
+    env:
+      CI_PYTHON_VERSION: ${{ needs.reuse.outputs.python_version }}
     runs-on: ubuntu-24.04
     # 15 минут не хватало, когда установка браузера шла через apt: замер
     # начинался на исходе окна (#206). Запас на холодный кэш — при попадании
@@ -1531,6 +1435,8 @@ jobs:
     # (#473) добавляют до двух замеров по 3 образца — окно расширено под них.
     timeout-minutes: 30
     outputs:
+      recipe: ${{ steps.registry.outputs.recipe }}
+      toolchain: ${{ steps.registry.outputs.toolchain }}
       environment: ${{ steps.environment.outputs.environment }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -1605,29 +1511,21 @@ jobs:
           path: artifacts/performance-smoke
       # Маркер пишется последним шагом: он существует только если всё выше
       # прошло. Кэш сохраняется post-шагом, то есть тоже лишь при успехе job.
-      - name: Записать маркер успеха
-        run: |
-          printf '%s\n' "performance_smoke прогнана успешно" \
-            "SHA: ${{ github.sha }}" \
-            "прогон: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-            "попытка: ${{ github.run_attempt }}" \
-            > .reuse-marker
-      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        # Гонка двух прогонов с одинаковым ключом даёт «Cache already exists».
-        # Это не отказ гейта: работа выполнена, маркер уже записал сосед — job
-        # краснеть из-за этого не должна.
-        continue-on-error: true
-        with:
-          path: .reuse-marker
-          key: reuse-performance_smoke-${{ needs.reuse.outputs.performance_smoke_key }}-${{ needs.reuse.outputs.performance_smoke_set }}
+      - name: Stamp registry producer toolchain
+        id: registry
+        run: node scripts/ci-registry-cli.mjs --stamp-job=performance_smoke
 
   geometry_parity:
     name: "Геометрия: TS/Python parity исполнена"
     needs: [changes, reuse]
     if: needs.changes.outputs.geometry_parity == 'true' && needs.reuse.outputs.geometry_parity != 'true'
+    env:
+      CI_PYTHON_VERSION: ${{ needs.reuse.outputs.python_version }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     outputs:
+      recipe: ${{ steps.registry.outputs.recipe }}
+      toolchain: ${{ steps.registry.outputs.toolchain }}
       environment: ${{ steps.environment.outputs.environment }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -1650,26 +1548,21 @@ jobs:
       - name: Stamp actual producer environment
         id: environment
         run: node scripts/ci-job-environment.mjs
-      - name: Записать маркер успеха
-        run: |
-          printf '%s\n' "geometry_parity прогнана успешно" \
-            "SHA: ${{ github.sha }}" \
-            "прогон: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-            "попытка: ${{ github.run_attempt }}" \
-            > .reuse-marker
-      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        continue-on-error: true
-        with:
-          path: .reuse-marker
-          key: reuse-geometry_parity-${{ needs.reuse.outputs.geometry_parity_key }}
+      - name: Stamp registry producer toolchain
+        id: registry
+        run: node scripts/ci-registry-cli.mjs --stamp-job=geometry_parity
 
   backend:
     name: "Бэкенд: pytest в Home Assistant"
     needs: [changes, reuse]
     if: needs.changes.outputs.backend == 'true' && needs.reuse.outputs.backend != 'true'
+    env:
+      CI_PYTHON_VERSION: ${{ needs.reuse.outputs.python_version }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     outputs:
+      recipe: ${{ steps.registry.outputs.recipe }}
+      toolchain: ${{ steps.registry.outputs.toolchain }}
       environment: ${{ steps.environment.outputs.environment }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -1734,34 +1627,19 @@ jobs:
           path: coverage.xml
       # Маркер пишется последним шагом: он существует только если всё выше
       # прошло. Кэш сохраняется post-шагом, то есть тоже лишь при успехе job.
-      - name: Записать маркер успеха
-        run: |
-          printf '%s\n' "backend прогнана успешно" \
-            "SHA: ${{ github.sha }}" \
-            "прогон: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-            "попытка: ${{ github.run_attempt }}" \
-            > .reuse-marker
-      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        # Гонка двух прогонов с одинаковым ключом даёт «Cache already exists».
-        # Это не отказ гейта: работа выполнена, маркер уже записал сосед — job
-        # краснеть из-за этого не должна.
-        continue-on-error: true
-        with:
-          path: .reuse-marker
-          key: reuse-backend-${{ needs.reuse.outputs.backend_key }}
-
-  # #541: общий conclusion workflow не говорит, какие условные job реально
-  # исполнились, а какие были законно переиспользованы. Этот всегда исполняемый
-  # финальный job публикует неизменяемый proof, привязанный к SHA/tree,
-  # run_id/run_attempt и фактическим outputs всех prerequisite job. Consumers
-  # review/merge/release принимают Validate только через scripts/ci-proof.mjs.
+      - name: Stamp registry producer toolchain
+        id: registry
+        run: node scripts/ci-registry-cli.mjs --stamp-job=backend
 
   proof:
     name: "Доказательство выполненных проверок"
     if: always()
-    needs: [preflight, changes, reuse, hacs, hassfest, changed_mutants, frontend, browser_selected, smoke, smoke_done, golden, performance_smoke, geometry_parity, backend]
+    needs: [preflight, changes, reuse, hacs, hassfest, changed_mutants, frontend, bundle, product_guards, browser_selected, smoke, smoke_done, golden, performance_smoke, geometry_parity, backend]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -1796,6 +1674,8 @@ jobs:
           CI_REQUIRED_PROFILES: ${{ steps.route.outputs.profiles }}
           REQUEST_FULL: ${{ inputs.full }}
           REQUEST_MUTANTS: ${{ inputs.mutants }}
+          REGISTRY_PLAN: ${{ needs.reuse.outputs.plan }}
+          CI_PYTHON_VERSION: ${{ needs.reuse.outputs.python_version }}
           NEEDS_JSON: ${{ toJSON(needs) }}
         run: node scripts/ci-proof.mjs --emit=artifacts/ci-proof/proof.json
       - name: Опубликовать proof точной попытки
@@ -1805,3 +1685,8 @@ jobs:
           path: artifacts/ci-proof/proof.json
           retention-days: 30
           if-no-files-found: error
+      - name: CAS publish immutable successful execution addresses
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/ci-registry-cli.mjs --publish-proof=artifacts/ci-proof/proof.json

@@ -56,51 +56,10 @@ export async function discoverTransfers({ root = process.cwd(), repo, environmen
   }
   return result;
 }
+// #981: historical fixture exports remain; this retired CLI grants no skip.
 if (isMainModule(import.meta.url)) {
-  const arg = k => process.argv.find(a => a.startsWith(`--${k}=`))?.slice(k.length + 3);
-  const file = resolve(arg('file') || 'artifacts/ci/transfer.json'), marker = arg('marker');
-  if (marker) {
-    const p = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8'))[arg('job')] : null;
-    let output = 'accepted=false\nsource_run=\nsource_attempt=\nsource_sha=\n';
-    // A cache hit is only a lookup hint, never independent authorization. A
-    // stale/foreign cached marker must not override the verified direct source.
-    if (p) {
-      writeFileSync(marker, `SHA: ${p.sourceSha}\nпрогон: ${p.url}\nпопытка: ${p.sourceAttempt}\n`);
-      const source = parseReuseMarker(readFileSync(marker, 'utf8'));
-      output = `accepted=true\nsource_run=${source.sourceRun}\nsource_attempt=${source.sourceAttempt}\nsource_sha=${source.sourceSha}\n`;
-    }
-    if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, output);
-    process.stdout.write(output);
-  } else {
-    const repo = arg('repo') || process.env.GITHUB_REPOSITORY, root = process.cwd();
-    const git = args => execFileSync('git', ['-C', root, ...args], { encoding: 'utf8' }).trim();
-    let result = {};
-    try {
-      const memo = new Map(), readers = new Map();
-      const requested = process.env.TRANSFER_CHECKS ? JSON.parse(process.env.TRANSFER_CHECKS) : null;
-      result = await discoverTransfers({ root, repo,
-        jobs: requested ? REUSE_JOBS.filter(j => requested[j] === true || requested[j] === 'true') : REUSE_JOBS,
-        performanceSet: ['glow', process.env.PERF_ISO === 'true' && 'iso', process.env.PERF_INTERACTION === 'true' && 'interaction'].filter(Boolean).join('-'),
-        api: p => JSON.parse(execFileSync('gh', ['api', p], { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 })),
-        contextOf: run => loadGithubProofContext({ repo, run, token: process.env.GH_TOKEN || process.env.GITHUB_TOKEN }),
-        ancestor: sha => { try {
-          git(['merge-base', '--is-ancestor', sha, 'HEAD']);
-          // The stamp producer is part of trust too, not only its aggregator.
-          return transferProtocolMatches(root, sha);
-        } catch { return false; } },
-        treeOf: sha => git(['rev-parse', `${sha}^{tree}`]),
-        keyOf: (job, ref = null) => {
-          const id = `${job}:${ref}`;
-          if (ref && !readers.has(ref)) readers.set(ref, inputReader(root, ref));
-          if (!memo.has(id)) memo.set(id, reuseKey(root, job, { ref, reader: readers.get(ref) }));
-          return memo.get(id);
-        },
-      });
-    } catch { /* API unavailable means no inherited execution. */ }
-    mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, JSON.stringify(result));
-    const output = REUSE_JOBS.map(j => `${j}=${Boolean(result[j])}`).join('\n') + '\n';
-    if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, output);
-    process.stdout.write(output);
-  }
+  const output = REUSE_JOBS.map(job => job + '=false').join('\n') + '\n';
+  if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, output);
+  process.stdout.write(output);
+  console.error('check-proof-transfer retired: use the authenticated ci-proofs registry');
 }

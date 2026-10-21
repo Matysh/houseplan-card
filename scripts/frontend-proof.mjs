@@ -35,23 +35,8 @@ export function frontendKey(root = process.cwd(), environment = producerEnvironm
 }
 export const frontendContentKey = (root = process.cwd(), environment = producerEnvironment(), ref = null) =>
   contentInputKey(root, 'frontend', { environment, ref, select: reader => reusableFrontendInputs(root, reader) });
-export function artifactTree(directory) {
-  if (!existsSync(directory) || lstatSync(directory).isSymbolicLink()) throw Error('missing/unsafe artifact tree');
-  const rows = [];
-  const walk = (dir, prefix = '') => {
-    for (const name of readdirSync(dir).sort()) {
-      const p = join(dir, name), rel = prefix + name, stat = lstatSync(p);
-      if (stat.isSymbolicLink()) throw Error('artifact symlink refused');
-      if (stat.isDirectory()) walk(p, rel + '/');
-      else if (stat.isFile()) rows.push([rel, stat.size, hash(readFileSync(p))]);
-      else throw Error('non-file artifact refused');
-      if (rows.length > 10000) throw Error('artifact inventory oversized');
-    }
-  };
-  walk(directory);
-  if (!rows.length) throw Error('empty producer artifact');
-  return hash(JSON.stringify(rows));
-}
+export { artifactTree } from './artifact-inventory.mjs';
+import { artifactTree } from './artifact-inventory.mjs';
 export function admissibleFrontendProof(proof, { key, fingerprint, environment, run, jobs, artifact, tree, now = Date.now(), repo, promotedSha = null, sourceCompatible = false }) {
   return [1, 2].includes(proof?.schema) && proof.outcome === 'success' && proof.reused === false
     && (proof.schema === 1 || sourceCompatible)

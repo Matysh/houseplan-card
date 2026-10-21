@@ -15,12 +15,17 @@ export function profilePaths(toolingTests) {
     product: ['**', ...[...DOCS_PATHS, ...tooling, ...BUILD_OUTPUT].map(p => '!' + p)] };
 }
 export function matchesPaths(file, patterns) {
+  return pathMatcher(patterns)(file);
+}
+/** Compile a stable policy once for bulk tree/key comparisons. */
+export function pathMatcher(patterns) {
+  const rules = patterns.map(pattern => ({ exclude: pattern.startsWith('!'),
+    regexp: globToRegExp(pattern.startsWith('!') ? pattern.slice(1) : pattern) }));
+  return file => {
   let included = false;
-  for (const pattern of patterns) {
-    const exclude = pattern.startsWith('!');
-    if (globToRegExp(exclude ? pattern.slice(1) : pattern).test(file)) included = !exclude;
-  }
+  for (const rule of rules) if (rule.regexp.test(file)) included = !rule.exclude;
   return included;
+  };
 }
 export function profilesForFiles(files, paths = readProfilePaths()) {
   return ['product', 'tooling', 'docs'].filter(profile => files.some(file => matchesPaths(file, paths[profile])));

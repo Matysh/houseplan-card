@@ -56,19 +56,19 @@ const newestFirst = (runs) => [...(Array.isArray(runs) ? runs : [])].sort((a, b)
 
 /** #541: proof-aware verdict shared with review and merge. */
 export async function classifyValidateProofs({
-  runs, repo, sha, tree, token, fetchImpl = fetch, expected = null,
+  runs, repo, sha, tree, token, fetchImpl = fetch, expected = null, fresh = false,
   // #573: reviewed run спрашивается у GitHub только вместе с ожиданиями (release)
   loadContext = (run) => loadGithubProofContext({ repo, run, token, fetchImpl, withReviewedRun: Boolean(expected) }),
 }) {
   const evaluations = [];
   for (const run of newestFirst(runs)) {
     if (run?.status !== 'completed' || run?.conclusion === 'cancelled') {
-      evaluations.push(evaluateCiProof({ run, candidate: { sha, tree }, policy: CI_PROOF_POLICIES.release }));
+      evaluations.push(evaluateCiProof({ run, candidate: { sha, tree }, policy: { ...CI_PROOF_POLICIES.release, fresh } }));
     } else {
       try {
         const context = await loadContext(run);
         evaluations.push(evaluateCiProof({
-          run, ...context, candidate: { sha, tree }, policy: CI_PROOF_POLICIES.release, expected,
+          run, ...context, candidate: { sha, tree }, policy: { ...CI_PROOF_POLICIES.release, fresh }, expected,
         }));
       } catch (error) {
         evaluations.push({
@@ -97,7 +97,7 @@ const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 
 /** One bounded snapshot for event continuations; pending/missing is never green. */
 export async function probeGreenWorkflow({ repo, sha, token, workflow = 'validate.yml', root = process.cwd(),
-  tree = null, expected = undefined, fetchImpl = fetch } = {}) {
+  tree = null, expected = undefined, fetchImpl = fetch, fresh = false } = {}) {
   if (!repo || !/^[a-f0-9]{40}$/.test(sha || '') || !token) throw Error('exact repo/SHA/token required');
   const readFetch = retryingReadFetch(fetchImpl);
   const response = await readFetch(workflowRunsUrl({ repo, workflow, sha }), { headers: {
@@ -107,7 +107,7 @@ export async function probeGreenWorkflow({ repo, sha, token, workflow = 'validat
   if (!response.ok) throw Error(`GitHub Actions API ${response.status}`);
   const payload = await response.json();
   const runs = workflow === 'validate.yml' ? registeredRuns(payload, { sha, productOnly: true }) : payload.workflow_runs || [];
-  if (workflow === 'validate.yml') return classifyValidateProofs({ runs, repo, sha,
+  if (workflow === 'validate.yml') return classifyValidateProofs({ runs, repo, sha, fresh,
     tree: tree || await githubCandidateTree({ repo, sha, token, fetchImpl: readFetch }), token, fetchImpl: readFetch,
     expected: expected === undefined ? candidateExpectations({ sha, root }) : expected });
   const run = latestRelevantRun(runs);
@@ -119,7 +119,7 @@ export async function probeGreenWorkflow({ repo, sha, token, workflow = 'validat
 
 export async function waitForGreenWorkflow({
   repo, sha, token, workflow = 'validate.yml', label = 'Validate', timeoutMs = 60 * 60 * 1000,
-  root = process.cwd(), fetchImpl = fetch,
+  root = process.cwd(), fetchImpl = fetch, fresh = false,
 }) {
   if (!repo || !sha || !token || !workflow) throw new Error('repo, sha, token and workflow are required');
   const deadline = Date.now() + timeoutMs;
@@ -146,7 +146,7 @@ export async function waitForGreenWorkflow({
     const runs = proofRequired ? registeredRuns(body, { sha, productOnly: true }) : Array.isArray(body?.workflow_runs) ? body.workflow_runs : [];
     const latest = latestRelevantRun(runs);
     const verdict = proofRequired
-      ? await classifyValidateProofs({ runs, repo, sha, tree, token, expected, fetchImpl: readFetch })
+      ? await classifyValidateProofs({ runs, repo, sha, tree, token, expected, fresh, fetchImpl: readFetch })
       : { status: classifyValidateRuns(runs) === 'success' ? 'green'
         : classifyValidateRuns(runs) === 'fail' ? 'failed' : 'pending', url: latest?.html_url, note: '' };
     if (verdict.status === 'failed') {
@@ -182,6 +182,7 @@ if (invokedDirectly) {
     sha,
     token: process.env.GH_TOKEN || process.env.GITHUB_TOKEN,
     workflow,
+    fresh: valueArg('fresh') === 'true',
     label,
   }).catch((err) => {
     console.error(`::error::${err instanceof Error ? err.message : String(err)}`);

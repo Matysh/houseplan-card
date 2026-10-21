@@ -1,0 +1,4163 @@
+{
+  "periodUTC": [
+    "2026-10-14",
+    "2026-10-21"
+  ],
+  "method": "all beta candidates by canonical Release trailer; up to 35 evenly spaced ordinary dev push runs; actual non-skipped job seconds, not billing rounding; dev push provenance is not inferred from its title",
+  "summary": {
+    "dev-push": {
+      "population": 113,
+      "sample": 35,
+      "machineMinutes": 293.88
+    },
+    "beta-candidate": {
+      "population": 12,
+      "sample": 12,
+      "machineMinutes": 667.83
+    }
+  },
+  "rows": [
+    {
+      "run": 38489082268,
+      "sha": "fd36019af216232e190c6f36d8491ebcdc617496",
+      "created": "2026-10-14T00:15:10Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#872)\n\nIssue: #872\nUser-Visible: no\n\n",
+      "machineSeconds": 638.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 18.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 21.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 28.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 47.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 301.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "success",
+          "seconds": 183.0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 14.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 38534363101,
+      "sha": "38bd1a639b7faa1864383e907b8e172d6e1023cf",
+      "created": "2026-10-14T08:20:03Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#844)\n\nIssue: #844\nUser-Visible: no\n\n",
+      "machineSeconds": 633.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 41.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 18.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 47.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 27.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 309.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "success",
+          "seconds": 145.0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 14.0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 38551544661,
+      "sha": "a30df32fd0c5132ad33579ea79b98ce52190c66a",
+      "created": "2026-10-14T10:43:21Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#869)\n\nIssue: #869\nUser-Visible: no\n\n",
+      "machineSeconds": 589.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 19.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 30.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 45.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 263.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 25.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "success",
+          "seconds": 160.0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 22.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 12.0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 38588263731,
+      "sha": "3895c885897d54092b7fc4656695744d64e2f029",
+      "created": "2026-10-14T15:19:15Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs: accept derived artifacts on dev for v1.81.0-beta.2\n\nПроизводные артефакты беты — одним коммитом на dev (PROCESS.md §8, §11.4, #697).\nПрогон: https://github.com/Matysh/houseplan-card/actions/runs/38587916309\nСкриншоты документации: отпечаток исходников; изменённые кадры: view-touch,space-create.\n\nIssue: #697\nUser-Visible: no\n\n",
+      "machineSeconds": 489.0,
+      "jobs": [
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 31.0
+        },
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 22.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 24.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 21.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 316.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 50.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 12.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 38592132431,
+      "sha": "ef1aeaf6cf94f2f692654e975a4ee18c40b143a7",
+      "created": "2026-10-14T15:45:29Z",
+      "kind": "beta-candidate",
+      "conclusion": "failure",
+      "message": "Release v1.81.0-beta.2 candidate\n\nPublish the accepted dev changes with synchronized versions, bilingual beta notes,\ncoherent production assets and ratchets tightened to the measured candidate.\nBeta-only manual field policy was independently accepted in #889 r2.\nReviewed documentation refresh: view-touch (#844), space-create (#875);\nall nine other frames remain byte-identical (run 38587916309).\nNo new functional product implementation or unreviewed golden changes.\n\nRelease: v1.81.0-beta.2\nIssue: #842\nIssue: #843\nIssue: #844\nIssue: #845\nIssue: #850\nIssue: #851\nIssue: #854\nIssue: #855\nIssue: #856\nIssue: #857\nIssue: #858\nIssue: #860\nIssue: #863\nIssue: #869\nIssue: #871\nIssue: #872\nIssue: #873\nIssue: #874\nIssue: #875\nIssue: #877\nIssue: #878\nIssue: #879\nIssue: #880\nIssue: #881\nIssue: #882\nIssue: #883\nIssue: #884\nIssue: #885\nIssue: #887\nIssue: #889\nUser-Visible: yes\n\n",
+      "machineSeconds": 3232.0,
+      "jobs": [
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 36.0
+        },
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 14.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 20.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 55.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 314.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 25.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "success",
+          "seconds": 168.0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "success",
+          "seconds": 34.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "success",
+          "seconds": 267.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "success",
+          "seconds": 206.0
+        },
+        {
+          "name": "Смоки в браузере (шард 2 из 3)",
+          "conclusion": "success",
+          "seconds": 683.0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 18.0
+        },
+        {
+          "name": "Смоки в браузере (шард 3 из 3)",
+          "conclusion": "failure",
+          "seconds": 663.0
+        },
+        {
+          "name": "Смоки в браузере (шард 1 из 3)",
+          "conclusion": "success",
+          "seconds": 715.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 14.0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 38634632712,
+      "sha": "506d58a03bb304482dfe05af5c6a9c9795c62ac7",
+      "created": "2026-10-14T20:44:39Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#897)\n\nIssue: #897\nUser-Visible: no\n\n",
+      "machineSeconds": 411.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 18.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 27.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 23.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 46.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 254.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 20.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 11.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 12.0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 38647047553,
+      "sha": "d5a8d4fff80adff9c6a16f79768acba32bf40b4e",
+      "created": "2026-10-14T22:21:14Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#891)\n\nIssue: #891\nUser-Visible: no\n\n",
+      "machineSeconds": 361.0,
+      "jobs": [
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 28.0
+        },
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 14.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 15.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 25.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 54.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 28.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "success",
+          "seconds": 171.0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 15.0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 11.0
+        }
+      ]
+    },
+    {
+      "run": 38662201219,
+      "sha": "3e10b8adea6e9bb8050826bc9141a3e58bc6ae2b",
+      "created": "2026-10-15T00:49:24Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#847)\n\nIssue: #847\nUser-Visible: no\n\n",
+      "machineSeconds": 453.0,
+      "jobs": [
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 27.0
+        },
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 289.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 25.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 51.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 17.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 14.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 14.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 38674150457,
+      "sha": "dced034b635f21293a0ce4af2eea97d37ee795fc",
+      "created": "2026-10-15T03:02:18Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#867)\n\nIssue: #867\nUser-Visible: no\n\n",
+      "machineSeconds": 679.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 23.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 27.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 15.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 50.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 307.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "success",
+          "seconds": 28.0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "success",
+          "seconds": 186.0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 15.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 12.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 38685614531,
+      "sha": "0dd6e8ec0fc5810610919f4ed8c92657d575e15f",
+      "created": "2026-10-15T05:13:21Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#893)\n\nIssue: #893\nUser-Visible: no\n\n",
+      "machineSeconds": 213.0,
+      "jobs": [
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 31.0
+        },
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 14.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 32.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 22.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 45.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "success",
+          "seconds": 28.0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 9.0
+        }
+      ]
+    },
+    {
+      "run": 38704367914,
+      "sha": "fcef2752bfea5ef8292dc14495ad1bc3a6fed2e9",
+      "created": "2026-10-15T08:15:26Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#848)\n\nIssue: #848\nUser-Visible: no\n\n",
+      "machineSeconds": 629.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 15.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 31.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 24.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 340.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 45.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 12.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "success",
+          "seconds": 136.0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 17.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 9.0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 38722226916,
+      "sha": "46e832402e87c5f54f49334407fb69186ae2faf7",
+      "created": "2026-10-15T10:42:59Z",
+      "kind": "dev-push",
+      "conclusion": "cancelled",
+      "message": "docs: accept derived artifacts on dev for v1.81.0-beta.3\n\nПроизводные артефакты беты — одним коммитом на dev (PROCESS.md §8, §11.4, #697).\nПрогон: https://github.com/Matysh/houseplan-card/actions/runs/38722014330\nСкриншоты документации: отпечаток исходников; изменённые кадры: device-display-preview,view-desktop,room-card,device-info,pdf-export.\n\nIssue: #697\nUser-Visible: no\n\n",
+      "machineSeconds": 458.0,
+      "jobs": [
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 26.0
+        },
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 19.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 47.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 24.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "cancelled",
+          "seconds": 313.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "cancelled",
+          "seconds": 0.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "cancelled",
+          "seconds": 0.0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "cancelled",
+          "seconds": 0.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "cancelled",
+          "seconds": 0.0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "cancelled",
+          "seconds": 0.0
+        }
+      ]
+    },
+    {
+      "run": 38722864495,
+      "sha": "1d3ef09dbf5a89726f2c3ea4cb7786b5f3b2f963",
+      "created": "2026-10-15T10:48:27Z",
+      "kind": "beta-candidate",
+      "conclusion": "success",
+      "message": "release: v1.81.0-beta.3 notes within the canonical four-bullet limit\n\nThe first local contract check refused five highlights per language.\nKeep four equivalent RU/EN highlights; no source, bundle or gate changes.\nThe earlier unpushed candidate is preserved in history, not rewritten.\n\nRelease: v1.81.0-beta.3\nIssue: #846\nIssue: #847\nIssue: #848\nIssue: #849\nIssue: #861\nIssue: #867\nIssue: #876\nIssue: #888\nIssue: #890\nIssue: #891\nIssue: #892\nIssue: #893\nIssue: #894\nIssue: #895\nIssue: #896\nIssue: #897\nIssue: #898\nIssue: #899\nUser-Visible: no\n\n",
+      "machineSeconds": 3405.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 29.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 27.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 56.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 231.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "success",
+          "seconds": 25.0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "success",
+          "seconds": 173.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "success",
+          "seconds": 262.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "success",
+          "seconds": 210.0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 19.0
+        },
+        {
+          "name": "Смоки в браузере (шард 3 из 3)",
+          "conclusion": "success",
+          "seconds": 773.0
+        },
+        {
+          "name": "Смоки в браузере (шард 2 из 3)",
+          "conclusion": "success",
+          "seconds": 682.0
+        },
+        {
+          "name": "Смоки в браузере (шард 1 из 3)",
+          "conclusion": "success",
+          "seconds": 869.0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "success",
+          "seconds": 5.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 15.0
+        }
+      ]
+    },
+    {
+      "run": 38750569350,
+      "sha": "1b95f78154a39b6838202234d3c017e1f2c2fb16",
+      "created": "2026-10-15T14:20:52Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#908)\n\nIssue: #908\nUser-Visible: no\n\n",
+      "machineSeconds": 516.0,
+      "jobs": [
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 36.0
+        },
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 22.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 51.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 337.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 29.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 11.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 14.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 38763260508,
+      "sha": "26c450e575e36c71c9513e98d849c50c3b67ba6f",
+      "created": "2026-10-15T15:46:21Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#910)\n\nIssue: #910\nUser-Visible: no\n\n",
+      "machineSeconds": 416.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 14.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 31.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 24.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 257.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 17.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 46.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 17.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 10.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 38781157556,
+      "sha": "facf77a16f78676af5e44442fc8eeb6fe4765d1c",
+      "created": "2026-10-15T17:54:05Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#909)\n\nIssue: #909\nUser-Visible: no\n\n",
+      "machineSeconds": 514.0,
+      "jobs": [
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 32.0
+        },
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 335.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 45.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 25.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 32.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 38802231596,
+      "sha": "d5ec5043688024e793e87fbc684171476733c370",
+      "created": "2026-10-15T20:28:30Z",
+      "kind": "dev-push",
+      "conclusion": "cancelled",
+      "message": "docs(reviews): индекс после сдвига каталога (#911)\n\nIssue: #911\nUser-Visible: no\n\n",
+      "machineSeconds": 381.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 14.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 25.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 26.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 15.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "cancelled",
+          "seconds": 241.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 52.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "cancelled",
+          "seconds": -1.0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "cancelled",
+          "seconds": -1.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "cancelled",
+          "seconds": -1.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "cancelled",
+          "seconds": -1.0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "cancelled",
+          "seconds": -1.0
+        }
+      ]
+    },
+    {
+      "run": 38802669914,
+      "sha": "05e8d5fa5cf19733109ee0e7d534516f9a476ef0",
+      "created": "2026-10-15T20:31:42Z",
+      "kind": "beta-candidate",
+      "conclusion": "cancelled",
+      "message": "Release v1.81.0-beta.4 candidate\n\nSynchronize versions, dated technical changelogs and bilingual beta notes.\nRefresh both production bundle copies and retain the approved budget centres;\nonly downward ratchet adjustments are kept.\n\nRelease: v1.81.0-beta.4\nIssue: #900\nIssue: #901\nIssue: #902\nIssue: #903\nIssue: #904\nIssue: #905\nIssue: #906\nIssue: #907\nIssue: #908\nIssue: #909\nIssue: #910\nIssue: #911\nIssue: #912\nUser-Visible: no\n\n",
+      "machineSeconds": 1154.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "failure",
+          "seconds": 34.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 23.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 352.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 15.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 48.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "success",
+          "seconds": 174.0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "success",
+          "seconds": 31.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "cancelled",
+          "seconds": 90.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "cancelled",
+          "seconds": 89.0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "Смоки в браузере (шард 1 из 3)",
+          "conclusion": "cancelled",
+          "seconds": 86.0
+        },
+        {
+          "name": "Смоки в браузере (шард 3 из 3)",
+          "conclusion": "cancelled",
+          "seconds": 86.0
+        },
+        {
+          "name": "Смоки в браузере (шард 2 из 3)",
+          "conclusion": "cancelled",
+          "seconds": 85.0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "cancelled",
+          "seconds": -1.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 13.0
+        }
+      ]
+    },
+    {
+      "run": 38803770996,
+      "sha": "caf81566e2190cfeea4facac9fb286fb11040a3d",
+      "created": "2026-10-15T20:39:52Z",
+      "kind": "beta-candidate",
+      "conclusion": "success",
+      "message": "Refresh v1.81.0-beta.4 documentation fingerprints\n\nAll eleven documentation frames match the committed decoded pixels.\nRefresh only their source fingerprints; preserve PNGs and golden baselines.\n\nRelease: v1.81.0-beta.4\nIssue: #900\nIssue: #901\nIssue: #902\nIssue: #903\nIssue: #904\nIssue: #905\nIssue: #906\nIssue: #907\nIssue: #908\nIssue: #909\nIssue: #910\nIssue: #911\nIssue: #912\nUser-Visible: no\n\n",
+      "machineSeconds": 3105.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 15.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 23.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 26.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 50.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 15.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 200.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки в браузере (шард 2 из 3)",
+          "conclusion": "success",
+          "seconds": 703.0
+        },
+        {
+          "name": "Смоки в браузере (шард 3 из 3)",
+          "conclusion": "success",
+          "seconds": 636.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "success",
+          "seconds": 255.0
+        },
+        {
+          "name": "Смоки в браузере (шард 1 из 3)",
+          "conclusion": "success",
+          "seconds": 1003.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "success",
+          "seconds": 148.0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "success",
+          "seconds": 6.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 12.0
+        }
+      ]
+    },
+    {
+      "run": 38861630264,
+      "sha": "877e49dc12e56a055b472a349437189d65c66349",
+      "created": "2026-10-16T06:30:48Z",
+      "kind": "dev-push",
+      "conclusion": "cancelled",
+      "message": "Release v1.81.0 candidate\n\nPromote owner-accepted beta.4 without product changes beyond versions; reconcile main ancestry and retain reviewed infrastructure and documentation. User-authored stable notes cover v1.80.1..v1.81.0.\n\nRelease: v1.81.0\nIssue: #916\nUser-Visible: yes\n\n",
+      "machineSeconds": 544.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 20.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 34.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 35.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "cancelled",
+          "seconds": 215.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 48.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 15.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "success",
+          "seconds": 33.0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "success",
+          "seconds": 135.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 14.0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "cancelled",
+          "seconds": -1.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "cancelled",
+          "seconds": -1.0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "cancelled",
+          "seconds": -1.0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "cancelled",
+          "seconds": -1.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "cancelled",
+          "seconds": -1.0
+        }
+      ]
+    },
+    {
+      "run": 38923131201,
+      "sha": "1bdc5a1a0828bf7bc01b291136e4d3bd61a25b8e",
+      "created": "2026-10-16T15:20:29Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#929)\n\nIssue: #929\nUser-Visible: no\n\n",
+      "machineSeconds": 194.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 19.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 29.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 25.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 17.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 39.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 41.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 11.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 38969187417,
+      "sha": "97692bdc007a799267ac77b4a5d2f8f2a71f07f1",
+      "created": "2026-10-16T21:24:45Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#922)\n\nIssue: #922\nUser-Visible: no\n\n",
+      "machineSeconds": 418.0,
+      "jobs": [
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 26.0
+        },
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 26.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 53.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 252.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 27.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 11.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 10.0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 38975420813,
+      "sha": "0461c1de8c79978ff30b95faeecbc2e0a6a51ab9",
+      "created": "2026-10-16T22:23:07Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#925)\n\nIssue: #925\nUser-Visible: no\n\n",
+      "machineSeconds": 495.0,
+      "jobs": [
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 27.0
+        },
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 15.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 343.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 26.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 49.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 10.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 12.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 38986886962,
+      "sha": "0ae2d6796ba207d299c1d5494f05f8bec67f0a62",
+      "created": "2026-10-17T00:33:03Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#941)\n\nIssue: #941\nUser-Visible: no\n\n",
+      "machineSeconds": 479.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 18.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 25.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 15.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 313.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 52.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 31.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 15.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 10.0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 39014448928,
+      "sha": "51440f6ff7429c205bc8d65325cd8ccec7ce87ba",
+      "created": "2026-10-17T07:39:30Z",
+      "kind": "beta-candidate",
+      "conclusion": "success",
+      "message": "release: prepare v1.82.0-beta.1\n\nPublish the reviewed device-contact and copy workflows, converter source\nupdates and accepted infrastructure work. Synchronize all seven version\nfields, bilingual prerelease notes, coherent production bundles and the\nstandard release ratchets. Documentation frames were accepted by the\ncanonical derived-artifact workflow with only the two declared changes.\n\nIssue: #866\nIssue: #917\nIssue: #921\nIssue: #922\nIssue: #923\nIssue: #924\nIssue: #925\nIssue: #926\nIssue: #927\nIssue: #929\nIssue: #935\nIssue: #937\nIssue: #941\nUser-Visible: yes\nRelease: v1.82.0-beta.1\n\n",
+      "machineSeconds": 3893.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 17.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 24.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 354.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 27.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 49.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "success",
+          "seconds": 30.0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "success",
+          "seconds": 177.0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "Смоки в браузере (шард 1 из 3)",
+          "conclusion": "success",
+          "seconds": 966.0
+        },
+        {
+          "name": "Смоки в браузере (шард 2 из 3)",
+          "conclusion": "success",
+          "seconds": 869.0
+        },
+        {
+          "name": "Смоки в браузере (шард 3 из 3)",
+          "conclusion": "success",
+          "seconds": 849.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "success",
+          "seconds": 222.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "success",
+          "seconds": 269.0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "success",
+          "seconds": 4.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 10.0
+        }
+      ]
+    },
+    {
+      "run": 39015913261,
+      "sha": "104a63f1e218eede610dd621a62346ceb3eab2e6",
+      "created": "2026-10-17T08:03:09Z",
+      "kind": "beta-candidate",
+      "conclusion": "success",
+      "message": "docs: classify post-stable review record maintenance\n\nComplete the catalogue for the previous stable review record and its archive.\nBoth deliveries are documentation-only; preserve the historical verdicts.\n\nIssue: #638\nIssue: #916\nUser-Visible: no\nRelease: v1.82.0-beta.1\n\n",
+      "machineSeconds": 532.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 28.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 54.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 33.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 20.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 355.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 15.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 11.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 39023608984,
+      "sha": "b873881b8e61721ad3d61f5b57eabad13315d21b",
+      "created": "2026-10-17T10:06:00Z",
+      "kind": "dev-push",
+      "conclusion": "failure",
+      "message": "docs(reviews): индекс после сдвига каталога (#918)\n\nIssue: #918\nUser-Visible: no\n\n",
+      "machineSeconds": 715.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 15.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "failure",
+          "seconds": 29.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 26.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 15.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 346.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 50.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "success",
+          "seconds": 183.0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "success",
+          "seconds": 21.0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 17.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 39051172737,
+      "sha": "00449be1ad83d2be015eb7b2411c6df5a131547d",
+      "created": "2026-10-17T16:50:39Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs: review document for #950\n\nIssue: #950\nUser-Visible: no\n\n",
+      "machineSeconds": 186.0,
+      "jobs": [
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 27.0
+        },
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 19.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 27.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 49.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 29.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 9.0
+        }
+      ]
+    },
+    {
+      "run": 39062663184,
+      "sha": "2cd185832c3741ca424dd3a879312001c759cdda",
+      "created": "2026-10-17T19:29:13Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#951)\n\nIssue: #951\nUser-Visible: no\n\n",
+      "machineSeconds": 546.0,
+      "jobs": [
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 29.0
+        },
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 14.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 15.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 379.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 54.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 27.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 12.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 39083029562,
+      "sha": "f48869643c29fa18203fd966f0788d629775f640",
+      "created": "2026-10-18T00:30:49Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#943)\n\nIssue: #943\nUser-Visible: no\n\n",
+      "machineSeconds": 602.0,
+      "jobs": [
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 26.0
+        },
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 19.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 21.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 50.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 205.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 29.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "success",
+          "seconds": 30.0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "success",
+          "seconds": 190.0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 17.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 15.0
+        }
+      ]
+    },
+    {
+      "run": 39119823713,
+      "sha": "4c6d6d48b7e347617e36918aa504fe82196f091f",
+      "created": "2026-10-18T10:34:59Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#948)\n\nIssue: #948\nUser-Visible: no\n\n",
+      "machineSeconds": 486.0,
+      "jobs": [
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 29.0
+        },
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 15.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 24.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 52.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 28.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 311.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 14.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 39154513627,
+      "sha": "77aa74fbde3f2def7174541c9c86db6a7afbb9c4",
+      "created": "2026-10-18T18:31:05Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#946)\n\nIssue: #946\nUser-Visible: no\n\n",
+      "machineSeconds": 482.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 17.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 30.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 53.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 305.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 23.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 28.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 14.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 12.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 39173819824,
+      "sha": "0031dd58ddca7fe7d77052198fd07d24e0690842",
+      "created": "2026-10-18T22:48:24Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#955)\n\nIssue: #955\nUser-Visible: no\n\n",
+      "machineSeconds": 611.0,
+      "jobs": [
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 30.0
+        },
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 18.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 431.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 34.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 28.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 43.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 14.0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 39176988294,
+      "sha": "1631bca2686404aba960153aa369416fd0c2f853",
+      "created": "2026-10-18T23:33:02Z",
+      "kind": "beta-candidate",
+      "conclusion": "failure",
+      "message": "Release v1.82.0-beta.2 candidate\n\nAll four settings dialogs and shared polish accepted independently; canonical documentation artifacts refreshed.\n\nRelease: v1.82.0-beta.2\nIssue: #697\nIssue: #918\nIssue: #919\nIssue: #920\nIssue: #928\nIssue: #930\nIssue: #931\nIssue: #936\nIssue: #942\nIssue: #943\nIssue: #945\nIssue: #946\nIssue: #947\nIssue: #948\nIssue: #949\nIssue: #950\nIssue: #951\nIssue: #952\nIssue: #953\nIssue: #954\nIssue: #955\nIssue: #958\nIssue: #959\nUser-Visible: yes\n\n",
+      "machineSeconds": 4694.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 14.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 27.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 192.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 30.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 612.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 44.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "success",
+          "seconds": 33.0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "success",
+          "seconds": 217.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "success",
+          "seconds": 140.0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 12.0
+        },
+        {
+          "name": "Смоки в браузере (шард 3 из 3)",
+          "conclusion": "failure",
+          "seconds": 994.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "success",
+          "seconds": 281.0
+        },
+        {
+          "name": "Смоки в браузере (шард 1 из 3)",
+          "conclusion": "success",
+          "seconds": 909.0
+        },
+        {
+          "name": "Смоки в браузере (шард 2 из 3)",
+          "conclusion": "failure",
+          "seconds": 1178.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 11.0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 39179923455,
+      "sha": "0cc07d070ad6d0f07d5587e99e138685a9a2689f",
+      "created": "2026-10-19T00:15:04Z",
+      "kind": "beta-candidate",
+      "conclusion": "success",
+      "message": "Keep page-error verdict explicit at every settings smoke entry\n\nEach bounded entry passes the real finish function through its callback.\nThe shared runner still invokes it once with the real browser and outcomes,\nthen closes the fixture in its unchanged finally block.\n\nIssue: #955\nUser-Visible: no\nRelease: v1.82.0-beta.2 candidate\n\n",
+      "machineSeconds": 1123.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 31.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 657.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 56.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 27.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 79.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "success",
+          "seconds": 35.0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "success",
+          "seconds": 195.0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 11.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 39180924445,
+      "sha": "72ab9a606f83f1d3c83997da63dc4e90574ceaed",
+      "created": "2026-10-19T00:28:25Z",
+      "kind": "beta-candidate",
+      "conclusion": "cancelled",
+      "message": "Release v1.82.0-beta.2 with bounded full settings smoke matrix\n\nRecord explicit entry-point browser finalization and request the mandatory\nfull prerelease gate with the exact canonical Release trailer. Product and\nbundle bytes are unchanged from the accepted settings candidate.\n\nIssue: #955\nUser-Visible: no\nRelease: v1.82.0-beta.2\n\n",
+      "machineSeconds": 4359.0,
+      "jobs": [
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 25.0
+        },
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 17.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 24.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 283.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 53.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 230.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки в браузере (шард 1 из 3)",
+          "conclusion": "success",
+          "seconds": 954.0
+        },
+        {
+          "name": "Смоки в браузере (шард 2 из 3)",
+          "conclusion": "cancelled",
+          "seconds": 1211.0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "success",
+          "seconds": 265.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "success",
+          "seconds": 167.0
+        },
+        {
+          "name": "Смоки в браузере (шард 3 из 3)",
+          "conclusion": "success",
+          "seconds": 1101.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 39183153853,
+      "sha": "33a364d82e83963c8dc5bc961ea8f8025cb0a067",
+      "created": "2026-10-19T00:58:14Z",
+      "kind": "beta-candidate",
+      "conclusion": "success",
+      "message": "Balance settings profile entries across the existing smoke shards\n\nMove the unchanged radar/vacuum entry before room/sensor in the sorted glob.\nThe longer pair moves to shard 1 and the shorter pair to shard 2, which hit\nthe whole-job time limit. Preserve all 391 cases and both timeout budgets.\n\nIssue: #955\nUser-Visible: no\nRelease: v1.82.0-beta.2\n\n",
+      "machineSeconds": 4231.0,
+      "jobs": [
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 21.0
+        },
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 17.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 27.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 159.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 326.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 55.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "success",
+          "seconds": 246.0
+        },
+        {
+          "name": "Смоки в браузере (шард 1 из 3)",
+          "conclusion": "success",
+          "seconds": 957.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "success",
+          "seconds": 204.0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "Смоки в браузере (шард 3 из 3)",
+          "conclusion": "success",
+          "seconds": 1111.0
+        },
+        {
+          "name": "Смоки в браузере (шард 2 из 3)",
+          "conclusion": "success",
+          "seconds": 1077.0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "success",
+          "seconds": 4.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 11.0
+        }
+      ]
+    },
+    {
+      "run": 39207088877,
+      "sha": "2e39ff2cc3ff0e2ec397010340f9cc8821c9f78b",
+      "created": "2026-10-19T05:56:02Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#957)\n\nIssue: #957\nUser-Visible: no\n\n",
+      "machineSeconds": 786.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 15.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 27.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 53.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 29.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 28.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 605.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 39219828055,
+      "sha": "e3fc7069ff41f311884a293081f6fc2491ad3206",
+      "created": "2026-10-19T08:01:25Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#961)\n\nIssue: #961\nUser-Visible: no\n\n",
+      "machineSeconds": 509.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 18.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 32.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 30.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 321.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 53.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 23.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 20.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 12.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 39256457806,
+      "sha": "2b92717619eb0371c609997791e47901f76166bd",
+      "created": "2026-10-19T13:00:03Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#965)\n\nIssue: #965\nUser-Visible: no\n\n",
+      "machineSeconds": 512.0,
+      "jobs": [
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 29.0
+        },
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 17.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 27.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 50.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 40.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 322.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 14.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 13.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 39274115714,
+      "sha": "cab6ce5e21629b43f8a7fe02f88170620f2fd34c",
+      "created": "2026-10-19T15:00:35Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#967)\n\nIssue: #967\nUser-Visible: no\n\n",
+      "machineSeconds": 523.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 36.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 321.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 29.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 30.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 62.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 14.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 15.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 39307470103,
+      "sha": "efdfc0f06498667e8893bd32866c93517ed1ec83",
+      "created": "2026-10-19T19:01:29Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#963)\n\nIssue: #963\nUser-Visible: no\n\n",
+      "machineSeconds": 527.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 19.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 38.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 29.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 326.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 57.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 27.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 17.0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 14.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 39310358771,
+      "sha": "41148d89fb50e3fdcac6f8e6536b74e7c0b6ca8c",
+      "created": "2026-10-19T19:21:53Z",
+      "kind": "beta-candidate",
+      "conclusion": "success",
+      "message": "Release v1.82.0-beta.3 candidate notes\n\nKeep the required grouped small-fixes bullet separate in both languages.\n\nIssue: #963\nUser-Visible: no\nRelease: v1.82.0-beta.3\n\n",
+      "machineSeconds": 4958.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 33.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 45.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 201.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 25.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 576.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "success",
+          "seconds": 33.0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "success",
+          "seconds": 192.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "success",
+          "seconds": 259.0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "Смоки в браузере (шард 3 из 3)",
+          "conclusion": "success",
+          "seconds": 1086.0
+        },
+        {
+          "name": "Смоки в браузере (шард 1 из 3)",
+          "conclusion": "success",
+          "seconds": 999.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "success",
+          "seconds": 236.0
+        },
+        {
+          "name": "Смоки в браузере (шард 2 из 3)",
+          "conclusion": "success",
+          "seconds": 1225.0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "success",
+          "seconds": 4.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 12.0
+        }
+      ]
+    },
+    {
+      "run": 39393559473,
+      "sha": "3cabc7552f86f048cd7e470a5f534e8e169dd6d5",
+      "created": "2026-10-20T08:27:42Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#971)\n\nIssue: #971\nUser-Visible: no\n\n",
+      "machineSeconds": 719.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 15.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 26.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 54.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 35.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 520.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 43.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 14.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 12.0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 39479651008,
+      "sha": "782c3d3cfcd7d3b8fa51cd0e768f692583c898e3",
+      "created": "2026-10-20T19:00:06Z",
+      "kind": "dev-push",
+      "conclusion": "success",
+      "message": "docs(reviews): индекс после сдвига каталога (#977)\n\nIssue: #977\nUser-Visible: no\n\n",
+      "machineSeconds": 652.0,
+      "jobs": [
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 27.0
+        },
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 20.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 262.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 129.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 59.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 93.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "success",
+          "seconds": 32.0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 16.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 14.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0
+        }
+      ]
+    },
+    {
+      "run": 39497001249,
+      "sha": "e01660458dc250f091d1161213ed19b9d6af5602",
+      "created": "2026-10-20T21:01:51Z",
+      "kind": "dev-push",
+      "conclusion": "cancelled",
+      "message": "docs: accept derived artifacts on dev for v1.82.0-beta.4\n\nПроизводные артефакты беты — одним коммитом на dev (PROCESS.md §8, §11.4, #697).\nПрогон: https://github.com/Matysh/houseplan-card/actions/runs/39496718476\nСкриншоты документации: отпечаток исходников; изменённые кадры: view-desktop,view-touch,room-contour-close,plan-context-tray,device-editor,device-display-preview,background-editor,device-info,pdf-export.\n\nIssue: #697\nUser-Visible: no\n\n",
+      "machineSeconds": 267.0,
+      "jobs": [
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 19.0
+        },
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 29.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 33.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 31.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "cancelled",
+          "seconds": 55.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "cancelled",
+          "seconds": 91.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "cancelled",
+          "seconds": 0.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 11.0
+        },
+        {
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "cancelled",
+          "seconds": 0.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "cancelled",
+          "seconds": 0.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "cancelled",
+          "seconds": -1.0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "cancelled",
+          "seconds": -1.0
+        }
+      ]
+    },
+    {
+      "run": 39497143161,
+      "sha": "b4815c509ac85522da13555687ab34f64316820c",
+      "created": "2026-10-20T21:02:52Z",
+      "kind": "beta-candidate",
+      "conclusion": "success",
+      "message": "Release v1.82.0-beta.4 candidate\n\nRelease: v1.82.0-beta.4\nIssue: #970\nIssue: #971\nIssue: #972\nIssue: #973\nIssue: #974\nIssue: #975\nIssue: #976\nIssue: #977\nIssue: #978\nUser-Visible: yes\n\n",
+      "machineSeconds": 5384.0,
+      "jobs": [
+        {
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 36.0
+        },
+        {
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 15.0
+        },
+        {
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 191.0
+        },
+        {
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 28.0
+        },
+        {
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 663.0
+        },
+        {
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 47.0
+        },
+        {
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0
+        },
+        {
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "success",
+          "seconds": 219.0
+        },
+        {
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "success",
+          "seconds": 32.0
+        },
+        {
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "success",
+          "seconds": 260.0
+        },
+        {
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "success",
+          "seconds": 228.0
+        },
+        {
+          "name": "Смоки в браузере (шард 3 из 3)",
+          "conclusion": "success",
+          "seconds": 1368.0
+        },
+        {
+          "name": "Смоки в браузере (шард 1 из 3)",
+          "conclusion": "success",
+          "seconds": 1020.0
+        },
+        {
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "success",
+          "seconds": 17.0
+        },
+        {
+          "name": "Смоки в браузере (шард 2 из 3)",
+          "conclusion": "success",
+          "seconds": 1245.0
+        },
+        {
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "success",
+          "seconds": 4.0
+        },
+        {
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 11.0
+        }
+      ]
+    }
+  ]
+}

@@ -1,28 +1,8 @@
-// Ключ переиспользования результата тяжёлой job (issue #208).
-//
-// Reusable job Validate — smoke, golden, performance_smoke, geometry_parity,
-// backend — прогонялись
-// на каждый push в dev, включая коммиты в документацию, workflows и процессные
-// скрипты, где бандл и оснастка побайтово те же. Ключ здесь отвечает на один
-// вопрос: «менялось ли хоть что-то, от чего результат этой job зависит».
-//
-// Ключ = хеш содержимого ВСЕХ входов job по единому manifest (#492,
-// scripts/check-inputs.mjs): исходники, которые job собирает, тесты и их
-// обёртки, фикстуры, конфиги инструментов, toolchain и протокол харнеса.
-// Совпал ключ с прогоном, который завершился успешно, — повторять нечего;
-// не совпал — гоняем.
-//
-// Почему это не фильтры путей из job `changes` (на dev они намеренно
-// отключены): там объём прогона угадывается по путям, и «зелёный» начинает
-// значить разное. Здесь эквивалентность входов ДОКАЗАНА хешем, а маркер успеха
-// пишет только успешный прогон с тем же ключом.
-//
-// Свойство, которое стоит знать: релизный кандидат (бета или стабильный релиз)
-// бампает версию — `package.json`/`CARD_VERSION` у браузерных job,
-// `package.json` у geometry_parity и `custom_components/houseplan/manifest.json`
-// у backend входят в manifest.
-// Значит ключ кандидата заведомо новый и полный набор гейтов прогоняется всегда.
-// Переиспользование физически не может ослабить релизный гейт.
+// Legacy #208/#492 content-key format, retained for historical proof readers.
+// Active CI decisions use ci-registry-inputs.mjs and the authenticated ci-proofs
+// orphan index (#981), including frontend and version-invariant beta aliases.
+// This historical key includes release versions; it is still the composite
+// evidence compatibility field, never a registry lookup or an actions/cache hit.
 
 import { createHash } from 'node:crypto';
 import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';

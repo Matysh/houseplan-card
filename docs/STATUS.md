@@ -837,6 +837,11 @@ Filters follow computed test ownership and unknown inputs remain conservative.
 Consumers check registered workflow paths and complete product evidence;
 canonical full dispatch remains available to S7, night and release.
 
+CI proof inheritance (#981) uses the portable orphan ci-proofs index, immutable
+source attempts and actual job outcomes. Frontend is reusable; filesystem/range
+and packaging guards stay fresh. Beta version aliases retain exact assembly,
+while night/stable always execute fresh full coverage.
+
 ## Where the rest lives
 
 - Scope and personas — `docs/SCOPE.md`; process, statuses and gates —

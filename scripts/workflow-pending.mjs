@@ -22,7 +22,7 @@ export function tagCommit(repo, tag, request = api) {
 export async function prepareReleasePending({ repo, candidate, tag, stable, workflow, out,
   probe = probeGreenWorkflow, e2e = probeE2e, external = e2eOps(), request = api, seal = sealContinuation } = {}) {
   const tree = git(['rev-parse', `${candidate}^{tree}`]);
-  const validate = await probe({ repo, sha: candidate, tree, token: process.env.GH_TOKEN });
+  const validate = await probe({ repo, sha: candidate, tree, token: process.env.GH_TOKEN, fresh: stable });
   const performance = stable ? await probe({ repo, sha: candidate, workflow: 'performance.yml', token: process.env.GH_TOKEN }) : { status: 'green' };
   if ([validate, performance].some(v => v.status === 'failed')) throw Error('release proof is red; owner must repair/re-run, no automatic publish');
   const integration = stable && validate.status === 'green' && performance.status === 'green'
@@ -50,7 +50,7 @@ if (isMainModule(import.meta.url)) {
       const candidate = api(`repos/${repo}/git/ref/heads/dev`).object.sha;
       const tree = api(`repos/${repo}/git/commits/${candidate}`).tree.sha;
       sealContinuation({ kind: 'night', repo, branch: 'dev', candidate, tree, producerPath: '.github/workflows/nightly.yml' }, out);
-      gh(['workflow', 'run', 'validate.yml', '--repo', repo, '--ref', 'dev', '-f', 'full=true']);
+      gh(['workflow', 'run', 'validate.yml', '--repo', repo, '--ref', 'dev', '-f', 'full=true', '-f', 'fresh=true']);
       result = { pending: true, candidate, note: 'queued, not a green night; follow exact full Validate' };
     } else result = await prepareReleasePending({ repo, candidate: arg('sha'), tag: arg('tag'), stable: arg('stable') === 'true', workflow: arg('workflow'), out });
     console.log(JSON.stringify(result));

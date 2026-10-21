@@ -77,6 +77,42 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'ci-registry-trusts-claimed-git-inputs',
+    guard: 'node --test --test-name-pattern="independent source Git" test/ci-registry-inputs.test.mjs',
+    because: '#981: serialized producer keys cannot stand in for actual source/candidate Git object equality.',
+    patches: [{ file: 'scripts/ci-registry-equivalence.mjs',
+      find: "    else throw Error('different actual Git input: ' + path);",
+      replace: '    else continue;',
+    }],
+  },
+  {
+    id: 'ci-registry-trusts-tampered-index',
+    guard: 'node --test test/ci-proof-registry.test.mjs',
+    because: '#981: a mutable orphan index cannot replace the immutable source execution record.',
+    patches: [{ file: 'scripts/ci-registry-verify.mjs',
+      find: '    || !proof.registry?.produced?.some(item => sameRecord(item, record)))',
+      replace: '    || false)',
+    }],
+  },
+  {
+    id: 'ci-registry-accepts-absent-actual-job',
+    guard: 'node --test test/ci-proof-registry.test.mjs',
+    because: '#981: successful metadata must not stand for an absent or incomplete producer job.',
+    patches: [{ file: 'scripts/ci-registry-verify.mjs',
+      find: "    return rows.length === 1 && rows[0].status === 'completed' && rows[0].conclusion === 'success';",
+      replace: '    return true;',
+    }],
+  },
+  {
+    id: 'ci-registry-masks-whole-json',
+    guard: 'node --test --test-name-pattern="JSON mask cannot erase" test/ci-registry-inputs.test.mjs',
+    because: '#981: beta equivalence masks synchronized version scalars while preserving dependency and other JSON bytes.',
+    patches: [{ file: 'scripts/ci-registry-inputs.mjs',
+      find: '  return text;',
+      replace: '  return \'"<masked-whole-json>"\';',
+    }],
+  },
+  {
     id: 'icon-state-source-invalid-write-977',
     guard: 'python -m pytest tests_backend/test_validation.py -q -k issue977',
     because: '#977 AC4/AC10: structural server validation must reject changed invalid sources while retaining untouched future blocks; UI validation alone is not authority.',
@@ -17387,7 +17423,7 @@ const MUTANT_DEFINITIONS = [
       + 'зелёная job с ДРУГИМИ входами засчитывается этому дереву',
     patches: [{
       file: 'scripts/ci-proof.mjs',
-      find: "      if (claim?.mode === 'reused' && claim.reuse?.key !== proof.evidence.keys?.[id])",
+      find: "      if (claim?.mode === 'reused' && !claim.reuse?.registry && claim.reuse?.key !== proof.evidence.keys?.[id])",
       replace: "      if (claim?.mode === 'reused' && claim.reuse?.key !== (proof.evidence.keys?.[id] ?? claim.reuse?.key) && false)",
     }],
   },

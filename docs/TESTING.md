@@ -478,15 +478,18 @@ tsc, юниты и смоки (мутантов с #709 нет). Решение 
 `performance_smoke`, `backend`) через корни и точки входа, а остальное
 вычисляет: от точек входа берётся замыкание — импорты транзитивно, строковые
 пути как листья, каталог по строке — все текстовые файлы под ним. Из этого
-manifest читают и `classify-changes.mjs` (job `changes`: job запускается,
-если дифф задел хотя бы один её вход), и `gate-reuse.mjs` (ключ реюза =
-хеш содержимого всех входов job). Два места не могут разойтись: до #492 у
+manifest читает `classify-changes.mjs` (job `changes`: job запускается,
+если дифф задел хотя бы один её вход). `ci-registry-inventory.mjs` вычисляет
+по нему входы реестра; frontend берёт только замкнутую чистую продуктовую группу.
+`gate-reuse.mjs` сохраняет исторический формат ключей для чтения старых proof. Два места не могут разойтись: до #492 у
 бэкенда ключ не знал relay, converter и schema, а golden/perf — `serve.mjs`,
 `demo.html` и compat-хелперов.
 
 Правила, которые стоит знать:
 
-- `validate.yml` — вход toolchain каждой job: правка workflow гоняет всё;
+- Workflow остаётся входом классификации; реестровый ключ #981 отдельно
+  хеширует фактическую execution recipe job и её producer bundle. Правка
+  постороннего tooling-job не обнуляет доказательство неизменного продукта;
 - `src/**` — вход только браузерных job, кроме точных cross-runtime входов
   `src/plan-optimizer.ts` и `src/logic.ts`, которые backend pytest читает для
   parity-контрактов; `demo/fixtures/large-house.mjs` и
@@ -494,8 +497,8 @@ manifest читают и `classify-changes.mjs` (job `changes`: job запуск
   pytest запускает их через Node dynamic import. Точные исключения не делают
   весь UI или каталог fixtures входом backend (#542); backend от остального UI
   не зависит, а
-  `custom_components/houseplan/manifest.json` (версия) держит правило «кандидат
-  релиза прогоняет всё» и для него;
+  `custom_components/houseplan/manifest.json` входит в продуктовую идентичность.
+  Beta alias адресно маскирует синхронные зеркала версии, stable/night fresh;
 - `assets/furniture/**` — вход `frontend` (#671); `assets/fonts/**` — явное исключение ручного `generate-pdf-font.mjs`;
 - **неизвестный охраняемый вход** — исполняемый файл под `scripts/`, `demo/`, `test/`, `tests_backend/`, `.github/`, `custom_components/`, `src/` либо tracked-файл под `assets/**`, которого нет в manifest ни
   одной проверки, — расширяет прогон до полного набора и называется
@@ -878,3 +881,29 @@ See `demo/performance/README.md` for commands and the budget-review contract.
 - [ ] HA log has zero houseplan errors/warnings after restart
 - [ ] `npm test` (frontend), `pytest tests_backend` (pure only without HA: `test_ha_*.py` are not collected, the run prints how many — #630), CI HA-harness — all green
 - [ ] README screenshots/GIF still match the current UI (synthetic home only)
+
+
+## Authenticated portable job proofs (#981)
+
+The six registry jobs are frontend, backend, geometry_parity, smoke, golden and
+performance_smoke. `ci-registry-inputs.mjs` bulk-reads committed Git objects,
+computes the shared product tree and each job's closed inputs, protocol import
+closure, actual tools/pins, effective workflow recipe and performance set.
+`ci-registry-inventory.mjs --write` updates the computed input manifest; fresh
+product guards verify it and generated workflows before any source is accepted.
+The mutable orphan index cannot grant PASS: source run/attempt/repository/
+workflow, direct actual job completion, immutable uploaded proof, TTL (seven
+days), byte inventories and companion profiles are verified independently.
+Only fresh direct producers receive records; selected browser progress and
+inherited evidence never seed a new chain. Success/failure cache marker CLI
+is retired; actual failed golden reports remain uploaded, without inferring
+causation from an unverified cached marker.
+
+New ordinary fixtures execute real Git merges, cross-branch index reads, an
+orphan first commit, colliding CAS writers and corrupt JSON input. They reject
+red/cancelled/incomplete/foreign/expired/tampered evidence and changed inputs,
+recipe, tools, full performance set or non-version release bytes. Three new
+mutation definitions are static checked only; execution/caught remains nightly.
+A historical unmodified #980 reader verifies the fresh additive v1 migration
+proof. While dev lacks the registry reader, ordinary review/merge dispatches
+stay fresh; explicit candidate diagnostics may exercise the new registry.

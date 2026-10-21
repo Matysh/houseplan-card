@@ -1,3 +1,4 @@
+import { performanceSet } from '../scripts/ci-registry-cli.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -82,11 +83,7 @@ const REUSE = VALIDATE.slice(VALIDATE.indexOf('\n  reuse:\n'), VALIDATE.indexOf(
 const perfSetOf = (outputs) => {
   const envOutput = Object.fromEntries([...REUSE.matchAll(/(PERF_\w+): \$\{\{ needs\.changes\.outputs\.(\w+) \}\}/g)]
     .map(([, env, output]) => [env, output]));
-  let set = REUSE.match(/^\s*set=(\w+)$/m)[1];
-  for (const [, env, suffix] of REUSE.matchAll(/\[ "\$(PERF_\w+)" = "true" \] && set="\$set-(\w+)"/g)) {
-    if (outputs[envOutput[env]] === 'true') set = `${set}-${suffix}`;
-  }
-  return set;
+  return performanceSet(Object.fromEntries(Object.entries(envOutput).map(([env, name]) => [env, outputs[name]])));
 };
 
 test('#770: правка только бюджета включает профиль, который он судит, и меняет ключ реюза', () => {

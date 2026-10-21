@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync, rmSync, lstatSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { contentInputKey } from './content-inputs.mjs';
-import { artifactTree } from './frontend-proof.mjs';
+import { artifactTree } from './artifact-inventory.mjs';
 import { reusableFrontendInputs } from './frontend-units.mjs';
 import { localGateEnvironment } from './local-gate-environment.mjs';
 

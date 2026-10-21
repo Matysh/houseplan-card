@@ -242,13 +242,17 @@ test('#856 local groups compose every unit file and preserve producer-before-con
   assert.deepEqual([...groups.product, ...groups.tooling].sort(), groups.tests);
   assert.deepEqual(groupsAffectedBy(['unknown.mjs'], groups), ['product', 'tooling']);
   const workflow = readFileSync(new URL('.github/workflows/validate.yml', root), 'utf8');
-  const frontend = workflow.slice(workflow.indexOf('\n  frontend:\n'), workflow.indexOf('\n  dev_build:\n'));
+  const frontend = workflow.slice(workflow.indexOf('\n  frontend:\n'), workflow.indexOf('\n  bundle:\n'));
+  const guards = workflow.slice(workflow.indexOf('\n  product_guards:\n'), workflow.indexOf('\n  tooling:\n'));
   assert.doesNotMatch(frontend, /run: npm run typecheck/);
   assert.match(frontend, /run: npm run build/); assert.match(frontend, /npx tsc -p tsconfig.test.json/);
-  assert.match(frontend, /frontend-units.mjs --group=reusable/); assert.match(frontend, /frontend-units.mjs --group=fresh/);
-  assert.match(frontend, /run: npm run lint:unused/);
-  const step = findStep(workflow, { name: 'Restore complete compatible frontend producer' });
-  const r = runStep(step, step.run.replace(/\$\{\{ github.repository \}\}/g, repo), { cwd: new URL('..', import.meta.url),
-    env: { ...process.env, ImageOS: '', ImageVersion: '' } });
-  assert.equal(r.status, 0); assert.match(r.stdout, /"reused":false/);
+  assert.match(frontend, /frontend-units.mjs --group=reusable/);
+  assert.doesNotMatch(frontend, /frontend-units.mjs --group=fresh/);
+  assert.match(guards, /frontend-units.mjs --group=fresh --suite=product/);
+  assert.match(guards, /npm run lint:unused/);
+  assert.match(guards, /needs: \[changes, bundle\]/);
+  const step = findStep(workflow, { name: 'Verify immutable registry producers' });
+  const r = runStep(step, step.run, { cwd: new URL('..', import.meta.url),
+    env: { ...process.env, GH_TOKEN: '', CI_PYTHON_VERSION: '', REGISTRY_MODE: 'exact', REGISTRY_FRESH: 'true' } });
+  assert.equal(r.status, 0); assert.match(r.stdout, /^frontend=false/m);
 });

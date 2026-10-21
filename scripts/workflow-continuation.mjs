@@ -228,7 +228,7 @@ export async function continueWorkflows({ repo, eventId, apply = false, out = nu
           state: () => p.kind === 'night' ? { dev: head(repo, 'dev') }
             : { branch: head(repo, p.stable ? 'main' : 'dev'), tag: tagCommit(repo, p.tag) },
           proof: async () => {
-            const validate = await probeGreenWorkflow({ repo, sha: p.candidate, tree: p.tree,
+            const validate = await probeGreenWorkflow({ repo, sha: p.candidate, tree: p.tree, fresh: p.kind === 'night' || p.stable === true,
               token: process.env.GH_TOKEN, expected: null });
             if (p.kind === 'night' || validate.status !== 'green') return validate;
             if (p.stable) {

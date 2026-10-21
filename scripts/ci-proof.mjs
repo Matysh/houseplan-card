@@ -14,6 +14,9 @@ import { reuseKey } from './gate-reuse.mjs';
 import { jobInstanceNames, staticNamePrefix, validateJobs } from './workflow-jobs.mjs';
 import { producerEnvironments } from './ci-job-environment.mjs';
 import { browserPlanExecution } from './browser-plan-proof.mjs';
+import { verifyRegistryRecord } from './ci-registry-verify.mjs';
+import { registryInputs } from './ci-registry-inputs.mjs';
+import { producedRegistryRecords } from './ci-registry-records.mjs';
 
 import { ciWorkflow, CI_WORKFLOWS, ciRunsUrl, registeredRuns, productWorkflow } from './ci-workflows.mjs';
 
@@ -52,6 +55,8 @@ export const JOB_RULES = Object.freeze({
   preflight: [{ job: 'preflight', name: 'Предполёт: документация, провенанс, процесс' }],
   changes: [{ job: 'changes', name: 'Классификация изменённых файлов' }],
   reuse: [{ job: 'reuse', name: 'Переиспользование: это дерево уже проверено' }],
+  bundle: [{ job: 'bundle', name: 'Упаковка: свежие артефакты кандидата' }],
+  product_guards: [{ job: 'product_guards', name: 'Продукт: свежие проверки диапазона и упаковки' }],
   frontend: [{ job: 'frontend', name: 'Фронтенд: типы, юниты, мутанты, синхрон бандла' },
     { job: 'tooling', name: 'Инструменты: вычисляемый набор юнитов' }],
   integration: [
@@ -259,11 +264,13 @@ export function requiredCheckIds({ request = {}, selection = {} } = {}) {
   return ids;
 }
 
+const registryRecord = text => { try { return JSON.parse(text); } catch { return null; } };
 const reuseClaim = (outputs, id) => ({
   key: outputs?.[`${id}_key`] || '',
   sourceRun: Number(outputs?.[`${id}_source_run`] || 0) || null,
   sourceAttempt: Number(outputs?.[`${id}_source_attempt`] || 0) || null,
   sourceSha: outputs?.[`${id}_source_sha`] || null,
+  ...(outputs?.[`${id}_record`] ? { registry: registryRecord(outputs[`${id}_record`]) } : {}),
 });
 
 /** Build the immutable JSON uploaded by the final Validate job. */
@@ -271,16 +278,18 @@ export function buildCiProof({
   candidateSha, candidateTree, runId, attempt, event, needs,
   requestedFull = false, requestedMutants = false, evidence = null,
   workflow = 'validate.yml', requiredProfiles = [],
+  registry = null,
 }) {
   const changes = needs?.changes?.outputs || {};
   const reuse = needs?.reuse?.outputs || {};
   const request = {
     full: asBool(requestedFull) || asBool(changes.heavy),
     mutants: asBool(requestedMutants) || asBool(changes.mutants_requested),
+    ...(asBool(changes.registry_fresh) ? { fresh: true } : {}),
   };
   if (asBool(changes.golden) && !request.full) request.golden = true;
   const selection = {
-    frontend: workflow === 'validate-product.yml' || asBool(changes.frontend),
+    frontend: Boolean(registry?.plan) || workflow === 'validate-product.yml' || asBool(changes.frontend),
     geometry_parity: asBool(changes.geometry_parity),
     backend: asBool(changes.backend),
     integration: asBool(changes.integration),
@@ -299,7 +308,11 @@ export function buildCiProof({
   executed('preflight');
   executed('changes');
   executed('reuse');
-  if (selection.frontend) executed('frontend');
+  if (selection.frontend) {
+    if (registry?.plan) executedOrReused('frontend');
+    else executed('frontend');
+  }
+  if (registry?.plan) { executed('bundle'); executed('product_guards'); }
   if (selection.integration) {
     checks.integration = {
       mode: 'executed',
@@ -325,7 +338,7 @@ export function buildCiProof({
   if (evidence?.keys) {
     for (const id of REUSE_JOBS) {
       if (checks[id]?.mode === 'executed') checks[id].key = evidence.keys[id] || null;
-      if (checks[id]?.mode === 'reused' && evidence.keys[id] && checks[id].reuse?.key !== evidence.keys[id]) {
+      if (checks[id]?.mode === 'reused' && !checks[id].reuse?.registry && evidence.keys[id] && checks[id].reuse?.key !== evidence.keys[id]) {
         throw new Error(`${id}: reuse marker key ${checks[id].reuse?.key} differs from the candidate key ${evidence.keys[id]}`);
       }
     }
@@ -341,6 +354,7 @@ export function buildCiProof({
     executedChecks: requiredChecks.filter((id) => checks[id]?.mode === 'executed'),
     reusedChecks: requiredChecks.filter((id) => checks[id]?.mode === 'reused'),
     checks,
+    ...(registry?.plan ? { registry: { schema: 1, plan: registry.plan, produced: [] } } : {}),
     ...(changes.browser_plan ? { browserPlan: browserPlanExecution(JSON.parse(changes.browser_plan), needs) } : {}),
     ...(evidence ? { evidence } : {}),
   };
@@ -365,7 +379,7 @@ function executedCheckIsGreen(rules, jobs) {
  */
 export function evaluateCiProof({
   run, proof, jobs = [], reuseRuns = new Map(), candidate = {}, policy, expected = null, reviewedRun = undefined,
-  workflowJobs = undefined, profileRuns = new Map(),
+  workflowJobs = undefined, profileRuns = new Map(), registryRepo = null,
 }) {
   const result = (status, note) => ({ status, note, url: runUrlOf(run) });
   if (!run) return result('missing', 'Validate run is missing');
@@ -390,6 +404,8 @@ export function evaluateCiProof({
   if (run?.event && proof.run?.event !== run.event)
     return result('stale', 'run event differs from proof event');
   if (policy?.full && !asBool(proof.request?.full)) return result('stale', 'proof is light; full gates were not requested');
+  if (policy?.fresh && !asBool(proof.request?.fresh)) return result('stale', 'proof has no explicit fresh execution policy');
+  if (policy?.fresh && proof.reusedChecks?.length) return result('stale', 'fresh policy requires every requested check to execute');
   if (policy?.golden && !asBool(proof.request?.full) && !asBool(proof.request?.golden)) return result('stale', 'proof has no requested golden check');
   if (policy?.mutants && !asBool(proof.request?.mutants)) return result('stale', 'proof has no requested mutant jobs');
   if (profile === 'product') {
@@ -428,7 +444,7 @@ export function evaluateCiProof({
   if (proof.evidence) {
     for (const id of REUSE_JOBS) {
       const claim = proof.checks?.[id];
-      if (claim?.mode === 'reused' && claim.reuse?.key !== proof.evidence.keys?.[id])
+      if (claim?.mode === 'reused' && !claim.reuse?.registry && claim.reuse?.key !== proof.evidence.keys?.[id])
         return result('failed', `${id}: reused marker key differs from the candidate content key`);
     }
   }
@@ -443,6 +459,17 @@ export function evaluateCiProof({
   }
   if (run.conclusion !== 'success')
     return result('failed', `Validate run ${runIdOf(run)} concluded ${run.conclusion || 'without success'}`);
+  // Additive v1 extension: old controllers can judge a fresh migration run.
+  // New controllers independently require these always-fresh jobs even though
+  // they are outside the legacy required/executed/reused ID lists.
+  if (proof.registry) {
+    if (proof.registry.schema !== 1 || !proof.registry.plan) return result('failed', 'unknown registry extension');
+    for (const id of ['bundle', 'product_guards']) {
+      if (proof.checks[id]?.mode !== 'executed' || proof.checks[id].result !== 'success'
+        || !executedCheckIsGreen(JOB_RULES[id].map(rule => ({ names: [rule.name] })), jobs))
+        return result('failed', id + ': mandatory fresh execution missing');
+    }
+  }
   if (proof.browserPlan) {
     try {
       const plan = proof.browserPlan.planned;
@@ -464,6 +491,22 @@ export function evaluateCiProof({
     if (!claim || claim.result !== 'success') return result('failed', `${id}: proof result is ${claim?.result || 'missing'}`);
     if (claim.mode === 'executed') {
       if (!executedCheckIsGreen(rules[id], jobs)) return result('failed', `${id}: claimed execution is absent, incomplete or not green`);
+      continue;
+    }
+    if (claim.mode === 'reused' && claim.reuse?.registry) {
+      if (policy?.fresh) return result('stale', id + ': fresh policy forbids reused execution');
+      const record = claim.reuse.registry, source = reuseRuns.get(reuseSourceKey(record.run, record.attempt));
+      if (!source || !proof.registry?.plan) return result('failed', id + ': registry source context missing');
+      const direct = resolveJobRules(workflowJobs, 'product')[id];
+      const verified = verifyRegistryRecord(record, { plan: proof.registry.plan, job: id,
+        repo: registryRepo || run.repository?.full_name, ...source, ...(source.registryEquivalence?.[id] || {}),
+        jobNames: direct.flatMap(rule => rule.names) });
+      if (!verified.accepted) return result('failed', id + ': ' + verified.reason);
+      if (record.key !== claim.reuse.key || record.run !== claim.reuse.sourceRun || record.attempt !== claim.reuse.sourceAttempt
+        || record.sha !== claim.reuse.sourceSha) return result('failed', id + ': registry claim identity mismatch');
+      if (id === 'frontend' && profile === 'full'
+        && !executedCheckIsGreen([{ names: [JOB_RULES.frontend.find(rule => rule.job === 'tooling').name] }], jobs))
+        return result('failed', 'fresh tooling is missing beside reused frontend');
       continue;
     }
     if (claim.mode !== 'reused'
@@ -591,11 +634,30 @@ export async function loadGithubProofContext({
     }
   }
   const reuseRuns = new Map();
+  let registrySource = null;
   for (const id of proof?.reusedChecks || []) {
     const sourceId = proof?.checks?.[id]?.reuse?.sourceRun;
     const sourceAttempt = proof?.checks?.[id]?.reuse?.sourceAttempt;
     const sourceKey = reuseSourceKey(sourceId, sourceAttempt);
-    if (!sourceId || !sourceAttempt || reuseRuns.has(sourceKey)) continue;
+    const record = proof?.checks?.[id]?.reuse?.registry;
+    if (!sourceId || !sourceAttempt) continue;
+    const previous = reuseRuns.get(sourceKey);
+    if (previous && (!record || previous.registryEquivalence?.[id])) continue;
+    if (record) {
+      try {
+        if (!registrySource) {
+          const { registryApi } = await import('./ci-proof-registry.mjs');
+          registrySource = registryApi({ repo, token, fetchImpl, apiBase, candidateSha: runShaOf(run), mode: proof.registry?.plan?.mode });
+        }
+        const context = await registrySource(record);
+        reuseRuns.set(sourceKey, { ...context, registryEquivalence: { ...previous?.registryEquivalence,
+          [id]: { sourceEquivalent: context.sourceEquivalent, actualWorkflowRecipe: context.actualWorkflowRecipe } } });
+      } catch {
+        reuseRuns.set(sourceKey, { ...(previous || { run: null, jobs: [] }),
+          registryEquivalence: { ...previous?.registryEquivalence, [id]: { sourceEquivalent: false, actualWorkflowRecipe: null } } });
+      }
+      continue;
+    }
     const sourceRun = await githubJson(
       `${apiBase}/repos/${repo}/actions/runs/${sourceId}/attempts/${sourceAttempt}`, token, fetchImpl,
     );
@@ -617,7 +679,7 @@ export async function loadGithubProofContext({
       reviewedRun = null;
     }
   }
-  return { proof, jobs, reuseRuns, profileRuns, ...(reviewedRun !== undefined ? { reviewedRun } : {}) };
+  return { proof, jobs, reuseRuns, profileRuns, registryRepo: repo, ...(reviewedRun !== undefined ? { reviewedRun } : {}) };
 }
 
 if (isMainModule(import.meta.url)) {
@@ -631,9 +693,10 @@ if (isMainModule(import.meta.url)) {
     process.stdout.write(output);
   } else if (emit) {
     const needs = JSON.parse(process.env.NEEDS_JSON || '{}');
+    const registry = process.env.REGISTRY_PLAN ? JSON.parse(process.env.REGISTRY_PLAN) : null;
     const reuseOutputs = needs?.reuse?.outputs || {};
     const evidence = localEvidence(process.cwd(), {
-      keys: Object.fromEntries(REUSE_JOBS.map((job) => [job, reuseOutputs[`${job}_key`] || null])),
+      keys: registry?.plan ? null : Object.fromEntries(REUSE_JOBS.map((job) => [job, reuseOutputs[`${job}_key`] || null])),
     });
     const proof = buildCiProof({
       candidateSha: process.env.CANDIDATE_SHA,
@@ -647,7 +710,17 @@ if (isMainModule(import.meta.url)) {
       requiredProfiles: JSON.parse(process.env.CI_REQUIRED_PROFILES || '[]'),
       requestedMutants: process.env.REQUEST_MUTANTS,
       evidence,
+      registry,
     });
+    if (registry?.plan) {
+      const plans = [registry.plan];
+      try {
+        plans.push(registryInputs(process.cwd(), { mode: registry.plan.mode === 'exact' ? 'candidate' : 'exact',
+          toolchain: registry.plan.toolchain, perfSet: registry.plan.perfSet }));
+      } catch { /* stable/unknown mirrors cannot receive a beta alias */ }
+      proof.registry.produced = producedRegistryRecords({ plans, proof, needs,
+        repo: process.env.GITHUB_REPOSITORY, workflowRevision: process.env.GITHUB_WORKFLOW_SHA });
+    }
     // Each stamp belongs to its actual producer job (all three for smoke), not
     // this aggregation runner. Legacy same-branch proofs keep their contract.
     proof.environments = producerEnvironments(needs);
