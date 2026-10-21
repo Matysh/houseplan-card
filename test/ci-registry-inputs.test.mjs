@@ -123,15 +123,19 @@ test('computed inventory and generated profiles match the executable source', ()
 });
 test('restoration verifies immutable byte inventories and refuses corruption before replacing artifacts', t => {
   const root = temporary(t), source = join(root, 'source'), consumer = join(root, 'consumer');
-  put(source, 'dist/entry.js', 'fresh bundle\n'); put(source, 'test-build/model.js', 'fresh emitted model\n');
+  put(source, 'dist/entry.js', 'fresh bundle\n'); put(source, 'test-build/model.js', 'fresh emitted model\n'); put(source, 'test-build/.tsbuildinfo', 'compiler state\n');
   put(consumer, 'dist/entry.js', 'previous bundle\n');
   const record = { run: 1234, inventory: { dist: artifactTree(join(source, 'dist')), testBuild: artifactTree(join(source, 'test-build')) } };
   const download = (run, name, dest) => {
     assert.equal(run, 1234);
     put(dest, name === 'producer-card-bundle' ? 'entry.js' : 'model.js', name === 'producer-card-bundle' ? 'fresh bundle\n' : 'fresh emitted model\n');
+    if (name === 'producer-test-build') put(dest, '.tsbuildinfo', 'compiler state\n');
   };
   restoreRegistryBuild({ root: consumer, repo: 'Matysh/houseplan-card', record, download });
   verifyRegistryBuild(record.inventory, consumer);
+  assert.throws(() => restoreRegistryBuild({ root: consumer, repo: 'Matysh/houseplan-card', record, download: (run, name, dest) => {
+    put(dest, name === 'producer-card-bundle' ? 'entry.js' : 'model.js', name === 'producer-card-bundle' ? 'fresh bundle\n' : 'fresh emitted model\n');
+  } }), /inventory mismatch/);
   assert.throws(() => restoreRegistryBuild({ root: consumer, repo: 'Matysh/houseplan-card',
     record: { ...record, inventory: { ...record.inventory, dist: '0'.repeat(64) } }, download }), /inventory mismatch/);
   assert.equal(readFileSync(join(consumer, 'dist/entry.js'), 'utf8'), 'fresh bundle\n');
