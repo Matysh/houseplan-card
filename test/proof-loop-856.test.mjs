@@ -166,7 +166,7 @@ test('#856 actual completion runner refuses cancelled/foreign/failed-source even
     'if(p.endsWith("/actions/runs/30"))value=f.child;',
     'else if(p.includes("/actions/artifacts?"))value={artifacts:[f.artifact]};',
     'else if(p.endsWith("/actions/runs/20"))value=f.parent;',
-    'else if(p.includes("/workflows/validate.yml/runs?"))value={workflow_runs:[f.child]};',
+    'else if(p.includes("/actions/runs?"))value={workflow_runs:[f.child]};',
     'else process.exit(43);process.stdout.write(JSON.stringify(value));',
   ].join('\n'), { mode: 0o755 });
   const wf = readFileSync(new URL('.github/workflows/_process-resume.yml', root), 'utf8');

@@ -150,7 +150,7 @@ for (const raw of [null, '', `[${issue}]`]) test(`#897/#961 actual resume CLI: $
     'else process.exit(43); process.stdout.write(JSON.stringify(value));',
   ].join('\n'), { mode: 0o755 });
   const execute = () => spawnSync(process.execPath, ['scripts/process-resume.mjs', '--repo=o/r', `--branch=${branch}`,
-    `--sha=${b}`, '--run-id=80', '--event=workflow_dispatch'], { encoding: 'utf8',
+    `--sha=${b}`, '--run-id=80', '--workflow-path=.github/workflows/validate.yml', '--event=workflow_dispatch'], { encoding: 'utf8',
     env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, FAKE_FIXTURE: fixture, FAKE_CALLS: calls, FAKE_ARTIFACTS: dir,
       GITHUB_OUTPUT: join(dir, 'output') } });
   const normal = execute(); assert.equal(normal.status, 0, normal.stderr); assert.match(normal.stdout, /action=noop/);

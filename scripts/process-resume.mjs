@@ -193,8 +193,8 @@ if (isMainModule(import.meta.url)) {
   const repo = arg('repo') || process.env.GITHUB_REPOSITORY;
   const branch = arg('branch');
   const sha = arg('sha');
-  if (!repo || !branch || !sha || !arg('run-id')) {
-    console.error('usage: process-resume.mjs --repo=<owner/repo> --branch=<issue/NN-slug> --sha=<sha> --run-id=<Validate id> --event=<event> --status=<status> [--apply=false]');
+  if (!repo || !branch || !sha || !arg('run-id') || !arg('workflow-path')) {
+    console.error('usage: process-resume.mjs --repo=<owner/repo> --branch=<issue/NN-slug> --sha=<sha> --run-id=<Validate id> --workflow-path=<registered path> --event=<event> --status=<status> [--apply=false]');
     process.exit(2);
   }
   const outcome = await resume({
