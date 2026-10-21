@@ -171,8 +171,12 @@ const icon = await page.evaluate(async () => {
   const onePreview = !!picker && field.querySelectorAll('.hpf-iconpreview').length === 0
     && !!picker.placeholder && Math.round(field.querySelector('.hpf-iconfield-control').getBoundingClientRect().height) === 44;
   const style = picker && getComputedStyle(picker);
+  // #995: HA owns the single themed border; only the outer wrapper is clear.
+  // The empty stand-in below has no shadow form, so witness its theme tokens.
   const themed = !!style && style.getPropertyValue('--mdc-text-field-fill-color').trim() === 'transparent'
-    && style.getPropertyValue('--ha-color-border-neutral-loud').trim() === 'transparent';
+    && !!style.getPropertyValue('--hpf-line').trim() && !!style.getPropertyValue('--hpf-canvas').trim()
+    && style.getPropertyValue('--ha-color-border-neutral-loud').trim() === style.getPropertyValue('--hpf-line').trim()
+    && style.getPropertyValue('--ha-color-form-background').trim() === style.getPropertyValue('--hpf-canvas').trim();
   const haWrapperHasNoBorderPaint = !!picker
     && getComputedStyle(picker.parentElement).borderTopColor === 'rgba(0, 0, 0, 0)';
   const iconValue = c._markerDialog.icon;

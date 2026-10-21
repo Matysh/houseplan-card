@@ -39,7 +39,12 @@ for(const control of [32,56,96]) for(const scene of designerContactCases){
   await page.evaluate(async({scene,factor})=>{
     const c=window.__card, space=c._space, k=window.__designerScale, ox=100,oy=100;
     await window.__hpTest.setServerConfig(cfg=>{
-      cfg.spaces=[{id:space,title:'Designer reference',view_box:[0,0,1,1],cell_cm:5,rooms:[],walls:[],wall_segments:[],openings:[],
+      // A common outer room keeps the 1 CSS px/reference-unit camera inside
+      // the real MIN_ZOOM=1/3 limit even for the tiny 32px cases. view_box is
+      // only an empty-plan hint, not a frame once content exists (CANVAS §4).
+      // Its walls stay outside every comparison crop and touch no device.
+      const frameRoom={id:'designer-frame',poly:[[0,0],[1,0],[1,.75],[0,.75]]};
+      cfg.spaces=[{id:space,title:'Designer reference',view_box:[0,0,1,1],cell_cm:5,rooms:[frameRoom],walls:[],wall_segments:[],openings:[],
         partitions:scene.walls.map(w=>w.w<=w.h?{id:w.id,a:[(ox+(w.x+w.w/2)*factor*k)/1000,(oy+w.y*factor*k)/1000],
           b:[(ox+(w.x+w.w/2)*factor*k)/1000,(oy+w.bottom*factor*k)/1000],cm:w.w*factor*k*1.2}
           :{id:w.id,a:[(ox+w.x*factor*k)/1000,(oy+(w.y+w.h/2)*factor*k)/1000],

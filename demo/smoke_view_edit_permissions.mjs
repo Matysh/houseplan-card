@@ -48,6 +48,15 @@ async function fixture({ admin = false, writer = false, kiosk = false, touch = f
     await window.__hpTest.setServerConfig(next);
     await window.__hpTest.waitForWrites();
     window.__844DeviceId = device.id;
+    if (showNames) {
+      // Keep the label clear of the independently draggable Room settings
+      // button at the centroid. Otherwise this permission test drags the gear.
+      const room = next.spaces.find(s => s.id === c._space).rooms.find(r => r.name && r.area);
+      const xs = room.poly.map(p => p[0]), ys = room.poly.map(p => p[1]);
+      await window.__hpTest.setLayout({ ...c._layout, [`rl_${room.id}`]: { s: c._space,
+        x: Math.min(...xs) + (Math.max(...xs) - Math.min(...xs)) / 4,
+        y: Math.min(...ys) + (Math.max(...ys) - Math.min(...ys)) / 4 } });
+    }
     window.__844Writes = [];
     c.requestUpdate(); await c.updateComplete;
     return device.id;
@@ -249,7 +258,9 @@ for (const role of [{ name: 'admin', admin: true, writer: true },
         history.pushState = () => { navigations++; };
         try { icon?.click(); c._clickRoom(r); } finally { history.pushState = old; }
         const b = icon?.getBoundingClientRect();
+        const hit = b && c.renderRoot.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);
         return { visible: !!icon, title: icon?.getAttribute('title') ?? '', navigations,
+          targetable: !!hit && (hit === icon || icon.contains(hit)),
           id: r.id, layout: c._layout[`rl_${r.id}`] ?? null,
           point: b ? { x: b.x + b.width / 2, y: b.y + b.height / 2 } : null };
       }, mode);
@@ -257,6 +268,7 @@ for (const role of [{ name: 'admin', admin: true, writer: true },
       checks[`area:${role.name}:${mode}:visibility`] = result.visible === !!visible;
       checks[`area:${role.name}:${mode}:navigation`] = result.navigations === (role.admin && !role.kiosk && mode === 'view' ? 2 : 0);
       if (mode === 'plan') {
+        checks[`area:${role.name}:plan-icon-hit-target`] = result.targetable;
         checks[`area:${role.name}:plan-no-link-title`] = result.title === '';
         if (result.point) {
           await f.page.mouse.move(result.point.x, result.point.y); await f.page.mouse.down();
