@@ -202,6 +202,24 @@ export class HpDialog extends LitElement {
       width: min(var(--hp-dialog-wide-width, 500px), 94vw);
     }
 
+    /* #990: the existing native exit reversed, only for unsaved-draft prompts. */
+    :host(.discard-confirm-dialog) {
+      --hp-dialog-close-transition: 160ms ease;
+      --hp-dialog-close-hover-transform: rotate(90deg) scale(1.12);
+    }
+    :host(.discard-confirm-dialog) .surface { animation: hp-discard-in 180ms ease; }
+    @keyframes hp-discard-in {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      :host(.discard-confirm-dialog) {
+        --hp-dialog-close-transition: none;
+        --hp-dialog-close-hover-transform: none;
+      }
+      :host(.discard-confirm-dialog) .surface { animation: none; }
+    }
+
     /* #600: диалоги настроек (атрибут form-shell) — оболочка референса. Ширина 560
        через переменную, которую уже читает :host([wide]); высота min(940,
        окно − 48); единственный скроллер — .content, тело формы высотой не

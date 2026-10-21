@@ -412,6 +412,12 @@ export const SMOKE_LINKS = [
       + 'still uses the fallback lock glyphs; source imports cannot prove the rendered dialog',
   },
   {
+    symbols: ['prepareDialogReturnFocus'],
+    files: ['src/hp-confirm.ts'],
+    smokes: ['smoke_discard_dialog_polish.mjs'],
+    because: '#990: the unsaved-confirmation consumer observes actual entrance/initial-ring paint, real Tab focus, close hover and reduced motion through public dialog controls, not a direct call to the automatic-focus helper.',
+  },
+  {
     symbols: ['rangeLine', 'committedRangeLineValue'],
     smokes: ['smoke_range_line_draft.mjs', 'smoke_dialog_config_parity.mjs'],
     because: '#608: the production-bundle witnesses type partial numeric text into real settings '

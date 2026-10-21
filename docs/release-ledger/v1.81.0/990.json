@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "issue": 990,
+  "baseStable": "v1.81.0",
+  "category": "line-fix",
+  "introducedBy": 976,
+  "rationale": "Completes the shared dialog-motion and automatic-focus polish introduced by #976 in the current 1.82 beta line. No new stable feature is introduced; omit this follow-up from the stable user changelog and milestone.",
+  "summary": {
+    "ru": "Плавное подтверждение отмены без сохранения и единый вид фокуса и крестика.",
+    "en": "Smooth unsaved-changes confirmation with consistent initial focus and close-button motion."
+  }
+}

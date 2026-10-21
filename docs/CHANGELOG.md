@@ -4,6 +4,11 @@
 
 - Keep the Home Assistant device list closed when it first appears. Escape
   closes only the expanded list and retains the device-creation draft. (#989)
+### #990 — Unsaved-changes confirmation
+
+- Smoothly open the discard confirmation, match the settings close-button
+  motion, and suppress only its automatic initial focus ring. Keyboard focus,
+  reduced motion and Keep/Discard behaviour remain unchanged. (#990)
 
 ## v1.82.0-beta.5 — 2026-10-21
 

@@ -3911,6 +3911,15 @@ and352000. Counter refs remain145/363/5564/103/101, actual hostRefs5574.
 The measured Device A is identical to28e4cece; the parent rebase changes
 accepted tests/review history and generated baselines, not product code.
 
+### Discard-confirmation polish (#990)
+
+`demo/smoke_discard_dialog_polish.mjs` observes the native confirmation in a
+real unsaved General settings flow: entrance mid-paint, automatic versus Tab
+focus, close hover, Back/Escape/X and Discard, reduced motion, and an unrelated
+warning. It retains screenshots at matching desktop/light and narrow/dark
+viewports. `HP_990_CAPTURE_DIR` can separate before/after captures; it changes
+only artifact destination, not product inputs or acceptance criteria.
+
 The native #947 smoke depends on `tests_backend/requirements.txt` solely for the
 verified Home Assistant frontend wheel pin. `check-inputs` asserts that exact
 one-file dependency; backend suites remain outside all browser inputs. Its page

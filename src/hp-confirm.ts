@@ -1,7 +1,8 @@
-import { LitElement, html } from 'lit';
+import { LitElement, html, type PropertyValues } from 'lit';
 
 import './hp-dialog';
 import type { HpConfirmDecision, HpConfirmRequest } from './danger-confirm';
+import { prepareDialogReturnFocus } from './dialog-return-focus';
 
 /** Presentation-only confirmation surface; state and mutations stay in the card. */
 export class HpConfirm extends LitElement {
@@ -29,12 +30,23 @@ export class HpConfirm extends LitElement {
     }));
   }
 
+  protected updated(changed: PropertyValues): void {
+    super.updated(changed);
+    if (!changed.has('request') && !changed.has('token')) return;
+    if (!this.request?.key.startsWith('discard-')) return;
+    // Keep safe cancel autofocus; suppress only its automatic paint until the
+    // next real input/blur, just like focus returned from a closed dialog.
+    const button = this.querySelector<HTMLButtonElement>('[autofocus]');
+    prepareDialogReturnFocus(button);
+  }
+
   protected render() {
     const request = this.request;
     if (!request) return null;
     const destructive = request.kind === 'destructive';
     const descriptionId = `hp-confirm-description-${this.token}`;
-    return html`<hp-dialog class="danger-confirm-dialog" data-kind="confirm"
+    const discard = request.key.startsWith('discard-');
+    return html`<hp-dialog class=${`danger-confirm-dialog${discard ? ' discard-confirm-dialog' : ''}`} data-kind="confirm"
       .hass=${this.hass}
       .title=${request.title}
       .alert=${true}

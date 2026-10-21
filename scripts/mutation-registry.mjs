@@ -20102,11 +20102,31 @@ const UNIT_GUARD_GROUPS = [
     'room-gear-drag-reopens-settings',
   ]],
 ];
+const discardConfirmMotionGuardCases = [
+  {
+    id: 'discard-confirm-initial-focus-ring-990',
+    guard: 'node demo/smoke_discard_dialog_polish.mjs',
+    because: '#990 AC2: automatic safe focus must have no ring, while real Tab focus remains visibly indicated; only mounted browser paint distinguishes these states.',
+    patches: [{ file: 'src/hp-confirm.ts',
+      find: '    prepareDialogReturnFocus(button);',
+      replace: "    button?.classList.remove('hp-dialog-return-focus');",
+    }],
+  },
+  {
+    id: 'discard-confirm-ignores-reduced-motion-990',
+    guard: 'node demo/smoke_discard_dialog_polish.mjs',
+    because: '#990 AC1/AC3: reduced motion must remove the real native entrance and close-hover transform, without removing ordinary motion.',
+    patches: [{ file: 'src/hp-dialog.ts',
+      find: '      :host(.discard-confirm-dialog) .surface { animation: none; }',
+      replace: '      :host(.discard-confirm-dialog) .surface { animation: hp-discard-in 180ms ease; }',
+    }],
+  },
+];
 const UNIT_GUARD_OVERRIDES = new Map(UNIT_GUARD_GROUPS.flatMap(([guard, ids]) => (
   ids.map((id) => [id, guard])
 )));
 
-export const MUTANTS = MUTANT_DEFINITIONS.map((mutant) => ({
+export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

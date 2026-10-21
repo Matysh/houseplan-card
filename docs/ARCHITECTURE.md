@@ -32,6 +32,14 @@ Automatic return-focus styling is scoped to the actual opener until its next
 input/blur, not a global keyboard-focus policy. Shared secondary forms reuse
 the settings action tokens; PDF imports those tokens across its shadow boundary.
 
+### Unsaved-confirmation presentation (#990)
+
+`hp-confirm` marks only existing `discard-*` requests for native entrance and
+settings-style close-button motion. The safe cancel autofocus is unchanged;
+the existing automatic-focus helper temporarily suppresses its ring until real
+keyboard/pointer input or blur. Motion is presentation-only and respects reduced
+motion. Dialog presence, decisions, dirty checks and saved state keep their owners.
+
 The offline UI Lab (#964) lives separately in `demo/ui-lab/`. It serves the
 checkout's built product and pinned official HA components against the existing
 synthetic fixture store, not a second product renderer or a Home Assistant
