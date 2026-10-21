@@ -25,6 +25,10 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+The owner opened the `v1.83.0` stable cycle from `v1.82.0` with milestone 9
+(`1.83`) for #1005. Post-stable documentation archive #674 is infrastructure
+in this cycle; its historical classifications remain unchanged.
+
 Zigbee incomplete-data explanations (#1005) use a native collapsed footer per
 source in General Settings. The shared diagnostic projection names actual
 warnings, mapping failures and unknown routes without changing route selection

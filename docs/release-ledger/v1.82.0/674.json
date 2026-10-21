@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 674,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "The post-v1.82.0 delivery archives the released 1.82 review line, repairs documentation links and rebuilds the review index. Compared with stable v1.82.0 it changes documentation organisation only, with no product behaviour or bundle changes. This new-cycle classification accounts for the post-stable archive commit, not older work already in the stable tag."
+}

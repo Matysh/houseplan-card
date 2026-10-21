@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1005,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 reports incomplete Zigbee diagnostic data without explaining it. This task improves that existing diagnostic behaviour with source-scoped, named reasons and preserved reported failed stages; route selection and scan behaviour stay unchanged.",
+  "summary": {
+    "ru": "В диагностике Zigbee добавлены конкретные причины неполноты данных отдельно для ZHA и топиков Zigbee2MQTT.",
+    "en": "Zigbee diagnostics now explain incomplete data separately for ZHA and Zigbee2MQTT topics."
+  }
+}
