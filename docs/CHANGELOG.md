@@ -14,6 +14,12 @@
   reduced motion and Keep/Discard behaviour remain unchanged. (#990)
 - Keep device settings open while selecting, clearing or dismissing the Home
   Assistant icon picker, and remove its duplicate field border. (#988)
+### #993 — Compact editor buttons in the header
+
+- When the House Plan header is 1024 px wide or narrower (in the panel: Home
+  Assistant without its sidebar), the Plan, Devices and Background editor
+  buttons show only their icons. The name stays in the tooltip and in the
+  button's accessible name; phones up to 480 px keep the gear menu. (#993)
 
 ## v1.82.0-beta.5 — 2026-10-21
 

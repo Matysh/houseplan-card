@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 993,
+  "baseStable": "v1.81.0",
+  "category": "stable-fix",
+  "rationale": "Polishes the header editor buttons already present in stable v1.81.0, which hid their labels by a window-width rule (max-width: 720px). The labels now hide by the header's own width (≤ 1024 px, container query) and each button gets its short label as accessible name. Old user-facing surface; include it in the stable user changelog and milestone.",
+  "summary": {
+    "ru": "Кнопки редакторов в шапке сворачиваются в иконки, когда шапка не шире 1024 px.",
+    "en": "Header editor buttons fold to icons when the header is 1024 px wide or narrower."
+  }
+}

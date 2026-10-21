@@ -387,6 +387,11 @@ Escape or a tap outside only closes it and never activates the plan below. In
 an editor the close button remains in the row, while the editor buttons live
 in the menu. Wider screens keep the regular header; kiosk has no header.
 
+When the header itself is 1024 px wide or narrower — in the panel that is Home
+Assistant without its sidebar, on a dashboard the card width — the editor
+buttons show only their icons. The name stays in the tooltip and is announced
+by screen readers. Wider than 1024 px the buttons show icon and label.
+
 ### Summary panel
 
 The two-part control at the end of the View header opens **Summary panel

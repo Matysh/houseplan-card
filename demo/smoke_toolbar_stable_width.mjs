@@ -6,6 +6,7 @@
 // (#195); × виден на обычных ширинах (721–1100 px — там раньше скрывался
 // счётчик). Режимы переключаются настоящими кнопками через фасад #629;
 // приватные поля карточки только читаются.
+import { readFileSync } from 'node:fs';
 import { launch, check, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 1400, height: 820 }, 1);
@@ -223,6 +224,83 @@ out.ru_noHeaderCount = await page.evaluate(async () => {
   const head = (c.shadowRoot || c.renderRoot).querySelector('.head');
   return !head.querySelector('.count') && !/\d+\s*устр\./.test(head.textContent || '');
 });
+
+// #993 AC1/AC2: кнопки редакторов сворачиваются в иконки по ширине шапки
+// (≤ 1024 px), а не окна; доступное имя — короткая подпись `mode.<m>`.
+const i18n = Object.fromEntries(['en', 'ru'].map((lang) => [lang,
+  JSON.parse(readFileSync(new URL(`../src/i18n/${lang}.json`, import.meta.url), 'utf8'))]));
+const MODES = ['plan', 'devices', 'decor'];
+const setLanguage = (language) => page.evaluate(async (language) => {
+  const c = window.__card;
+  c.hass = { ...c.hass, language, locale: { ...(c.hass.locale || {}), language } };
+  await window.__hpTest.setMode('view');
+  await window.__hpTest.settled();
+  await new Promise((resolve) => setTimeout(resolve, 300));
+}, language);
+// Ширина `#host` подбирается так, чтобы шапка `.hdr` была ровно `head` px.
+const headerAt = async (viewport, head) => {
+  await page.setViewportSize({ width: viewport, height: 820 });
+  return page.evaluate(async (head) => {
+    const host = document.getElementById('host');
+    const hdr = () => window.__card.shadowRoot.querySelector('.hdr');
+    const frame = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    for (let i = 0; i < 3; i++) {
+      const delta = host.getBoundingClientRect().width - hdr().getBoundingClientRect().width;
+      host.style.setProperty('width', `${head + delta}px`, 'important');
+      await window.__hpTest.settled();
+      await frame();
+    }
+    return hdr().getBoundingClientRect().width;
+  }, head);
+};
+const tabsState = () => page.evaluate(() => {
+  const sr = window.__card.shadowRoot;
+  return [...sr.querySelectorAll('[data-hp="mode-tab"]')].map((tab) => {
+    const r = tab.getBoundingClientRect();
+    const icon = tab.querySelector('ha-icon')?.getBoundingClientRect();
+    const label = tab.querySelector('.ml');
+    return { mode: tab.dataset.mode, visible: r.width > 0 && r.height > 0, icon: !!icon && icon.width > 0,
+      label: !!label && label.getClientRects().length > 0 && label.getBoundingClientRect().width > 0,
+      title: tab.getAttribute('title') };
+  });
+});
+const realClick = async (mode) => {
+  await page.locator(`[data-hp="mode-tab"][data-mode="${mode}"]`).click();
+  const ok = await page.evaluate(async (mode) => {
+    await window.__hpTest.settled();
+    const sr = window.__card.shadowRoot;
+    return sr.querySelector('ha-card')?.getAttribute('data-hp-mode') === mode
+      && sr.querySelector('.modetab.active')?.dataset.mode === mode;
+  }, mode);
+  await page.evaluate(async () => { await window.__hpTest.setMode('view'); await window.__hpTest.settled(); });
+  return ok;
+};
+await setLanguage('en');
+for (const [viewport, head, labels] of [[1400, 1025, true], [1400, 1024, false], [1400, 900, false],
+  [1400, 721, false], [1400, 600, false], [1280, 1024, false]]) {
+  const key = `ac993_v${viewport}_h${head}`;
+  const actual = await headerAt(viewport, head);
+  out[`${key}_headerWidth`] = Math.abs(actual - head) <= 0.5 ? true : actual;
+  const tabs = await tabsState();
+  out[`${key}_${labels ? 'iconAndLabel' : 'iconOnly'}`] = tabs.length === 3
+    && tabs.every((t) => t.visible && t.icon && t.label === labels) ? true : JSON.stringify(tabs);
+  out[`${key}_realClickSwitches`] = (await realClick('devices')) && (await realClick('plan'));
+}
+for (const language of ['en', 'ru']) {
+  await setLanguage(language);
+  // 680 px — и на окне ≤ 720 px, где подпись скрывалась и раньше.
+  for (const [viewport, head] of [[1600, 1400], [1600, 900], [700, 680]]) {
+    await headerAt(viewport, head);
+    const tabs = await tabsState();
+    const named = [];
+    for (const mode of MODES) {
+      named.push(await page.getByRole('button', { name: i18n[language][`mode.${mode}`], exact: true }).count());
+    }
+    out[`ac993_${language}_h${head}_nameIsLabel`] = named.every((n) => n === 1) ? true : named.join(',');
+    out[`ac993_${language}_h${head}_titleIsTip`] = MODES.every((mode) =>
+      tabs.find((t) => t.mode === mode)?.title === i18n[language][`mode.${mode}_tip`]);
+  }
+}
 
 for (const [name, value] of Object.entries(out)) check(name, value);
 await finish(browser, out);

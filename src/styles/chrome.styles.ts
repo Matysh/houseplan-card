@@ -4,6 +4,9 @@ import { helpSurfaceStyle } from './help-surface.styles';
 
 const chromeCoreStyles = unsafeCSS(css`
     .hdr {
+      /* #993: the editor buttons fold to icons by the header's own width — in
+         the panel that is Home Assistant minus its sidebar — not the window. */
+      container: hp-head / inline-size;
       position: sticky;
       top: var(--header-height, 56px);
       z-index: 20;
@@ -334,7 +337,9 @@ const chromeCoreStyles = unsafeCSS(css`
     .modetab.active + .editor-close-slot .closex:focus-visible {
       outline-color: var(--text-primary-color, #fff);
     }
-    @media (max-width: 720px) {
+    /* #993: ≤ 1024 px of header — icon only; the label stays in aria-label and
+       the tooltip. The ≤ 480 px window rules above (#616) are unchanged. */
+    @container hp-head (max-width: 1024px) {
       .modetab .ml { display: none; }
     }
     .editbar {
