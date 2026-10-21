@@ -59,6 +59,7 @@ test('one cold producer and verified bundle distribution precede all consumers (
   assert.match(bundle, /needs: \[changes, reuse, frontend\]/);
   assert.match(bundle, /if: always\(\).*needs\.frontend\.result == 'success'.*needs\.frontend\.result == 'skipped'/);
   assert.match(bundle, /ci-registry-build\.mjs/);
+  assert.match(bundle, /with: \{ fetch-depth: 0, filter: 'blob:none' \}/, 'bundle-policy inspects the actual parent diff');
   for (const id of ['dev_build', 'browser_selected', 'smoke', 'golden', 'performance_smoke', 'product_guards']) {
     const chunk = chunks.get(id);
     assert.match(chunk, /needs:.*bundle/, id + ' waits for authenticated artifacts');
