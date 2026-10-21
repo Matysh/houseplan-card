@@ -1,4 +1,5 @@
 /** #792: synthetic, data-driven reference boards; no renderer/CSS substitution. */
+// #983: goldenConnections assigns this inspector to batteryBoard scenarios.
 const STATES = ['normal', 'warning', 'low', 'unknown'];
 const VALUES = { normal: '80', warning: '40', low: '10', unknown: 'unavailable' };
 const COLORS = { normal: [29, 194, 29], warning: [240, 160, 12], low: [240, 65, 12], unknown: [112, 119, 129] };

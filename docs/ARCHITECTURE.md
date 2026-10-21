@@ -1865,3 +1865,11 @@ Room settings (#946) use the shared settings shell in its single-section mode. T
 
 
 Device settings (#947) reuse shared settings sections/controls. Hardware-only `recognizeRadarBinding` owns new-tab eligibility; `recognizeRadar` retains saved-profile runtime compatibility. A transient Details entry exposes persisted legacy profiles without reintroducing manual declaration. Preview uses the canonical presentation at scale=1; an unscaled scrollable canvas contains long faces/rings. Radius input editing state is UI-only and does not materialize inherited defaults. Radar setup reserves instruction height so phase changes do not move the measured map.
+
+## Selected browser progress (#983)
+
+Task-push browser evidence (#983) has an explicit selected scope independent
+of the complete CI-matrix receipt. Its plan follows a proven diff boundary,
+source/capture inputs and declared scene links; unknown links broaden. A
+selected worker cannot emit a reusable full receipt or satisfy full review/
+release policy, and its actual job outcome must match proof metadata.

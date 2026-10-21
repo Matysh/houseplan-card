@@ -3992,3 +3992,23 @@ typography, never injecting a fix into the component. The font stack falls back
 to Roboto when Segoe is absent; the actual Segoe neighbour was measured on
 Windows. The existing optical-lettering registry witness stays static checked
 only; no development mutation execution.
+
+## Browser progress checks on task pushes (#983)
+
+`task-ci-plan.mjs` separates intermediate push progress from complete matrix
+evidence. It reads the diff from the last proven green ancestor (`GREEN_BASE`),
+not merely the last push; cancelled pushes cannot silently lose their inputs.
+`ci:full` uses smoke-select and changed smoke entries. Unproven source/harness
+coverage expands to the full matrix. `ci:golden` uses the capture-input corpus
+and declared scene connections in `browser-push-plan.mjs`; no relevant inputs
+means no golden, unknown connections mean full golden. Baseline PNG identity
+connects directly to its scenario; a new/unknown ID broadens instead of skipping.
+
+The bounded worker never emits reusable full-matrix markers. It invokes the
+canonical diagnostic capture, removes its previous report first, and requires
+one matching passed baseline result with a valid complete baseline index.
+An error, missing report, diff, signal or timeout fails the job. It never
+accepts a baseline. `proof.json.browserPlan` records planned, executed and
+skipped scopes/reasons; actual selected-job success is checked independently
+of its claimed metadata. A partial push cannot satisfy a full S7/release policy.
+Explicit full dispatch, PR, night and release retain the complete matrix.

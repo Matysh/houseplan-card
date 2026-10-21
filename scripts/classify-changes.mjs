@@ -210,8 +210,13 @@ if (invokedDirectly) {
       refName: process.env.REF_NAME,
     };
     const { taskCiPlan, readTaskDemand } = await import('./task-ci-plan.mjs');
+    const { fullBrowserPlan } = await import('./browser-push-plan.mjs');
     const plan = taskCiPlan(inputs, { ...readTaskDemand({ refName: inputs.refName }), baseFull: heavyGatesRequested(inputs) });
     process.stdout.write(`heavy=${plan.full}\ngolden=${plan.golden}\n`);
+    if (process.argv.includes('--browser-plan')) {
+      process.stdout.write(`browser_subset=${Boolean(plan.browser && [plan.browser.golden, plan.browser.smoke].some(p => p.mode === 'selected'))}\n`);
+      process.stdout.write(`browser_plan=${JSON.stringify(plan.browser || fullBrowserPlan(plan.full, plan.golden))}\n`);
+    }
     const mutants = mutantsRequested({
       eventName: process.env.EVENT_NAME,
       headMessage: process.env.HEAD_MESSAGE,

@@ -1,4 +1,5 @@
 // UX modes shell (v1.25.0): view is display-only; plan/devices gate the tools.
+// #983 also uses this existing contract as a selected-push worker witness.
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const out = {};

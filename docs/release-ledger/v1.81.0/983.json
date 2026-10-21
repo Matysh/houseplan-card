@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 983,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Plan bounded task-push browser progress checks from proven changed inputs and scene links; require full fallback on unproven source coverage and retain complete S7/night/release evidence."
+}

@@ -13,6 +13,7 @@ import { BASELINE_OVERLAY, REUSE_JOBS, globToRegExp } from './check-inputs.mjs';
 import { reuseKey } from './gate-reuse.mjs';
 import { jobInstanceNames, staticNamePrefix, validateJobs } from './workflow-jobs.mjs';
 import { producerEnvironments } from './ci-job-environment.mjs';
+import { browserPlanExecution } from './browser-push-plan.mjs';
 
 export const CI_PROOF_SCHEMA = 'houseplan-ci-proof/v1';
 export const CI_PROOF_ARTIFACT_PREFIX = 'ci-proof';
@@ -72,6 +73,7 @@ export const JOB_RULES = Object.freeze({
  * или переименование любой — решение, а не тихое расхождение.
  */
 export const UNCONSUMED_JOBS = Object.freeze({
+  browser_selected: 'Браузер: выбранные проверки push',
   proof: 'Доказательство выполненных проверок',
   // #657: публикация бандла для стенда — не проверка кода и не вход proof.
   dev_build: 'Бандл головы dev для стенда',
@@ -335,6 +337,7 @@ export function buildCiProof({
     executedChecks: requiredChecks.filter((id) => checks[id]?.mode === 'executed'),
     reusedChecks: requiredChecks.filter((id) => checks[id]?.mode === 'reused'),
     checks,
+    ...(changes.browser_plan ? { browserPlan: browserPlanExecution(JSON.parse(changes.browser_plan), needs) } : {}),
     ...(evidence ? { evidence } : {}),
   };
 }
@@ -417,6 +420,16 @@ export function evaluateCiProof({
   }
   if (run.conclusion !== 'success')
     return result('failed', `Validate run ${runIdOf(run)} concluded ${run.conclusion || 'without success'}`);
+  if (proof.browserPlan) {
+    try {
+      const plan = proof.browserPlan.planned;
+      browserPlanExecution(plan, {});
+      for (const kind of ['smoke', 'golden']) if (plan[kind].mode === 'selected'
+        && (proof.browserPlan.executed?.[kind]?.result !== 'success'
+          || !executedCheckIsGreen([{ names: [UNCONSUMED_JOBS.browser_selected] }], jobs)))
+        return result('failed', `${kind}: selected push execution is missing or not green`);
+    } catch { return result('failed', 'invalid browser coverage metadata'); }
+  }
   let rules;
   try {
     rules = resolveJobRules(workflowJobs);

@@ -827,6 +827,10 @@ The feature surface and early milestones are described by the changelog and the
 user guide; the former parallel list is archived in
 [`legacy/docs/STATUS-FEATURES.md`](../legacy/docs/STATUS-FEATURES.md).
 
+- #983 separates selected task-push browser progress from full-matrix evidence.
+  Unknown source/scene links broaden the run; S7 full dispatch and nightly/release
+  retain complete coverage. The CI proof records the selection and skip reasons.
+
 ## Where the rest lives
 
 - Scope and personas — `docs/SCOPE.md`; process, statuses and gates —
