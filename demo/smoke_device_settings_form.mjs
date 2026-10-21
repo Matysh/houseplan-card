@@ -210,7 +210,8 @@ const out = await page.evaluate(async () => {
     && /1/.test(q('.hpf-status .hpf-link').textContent);
   await pickSeg('bmode', 'ha');
   o.createHaWithoutBindingIsAProblem = saveBtn().disabled === true && !!q('.hpf-status .hpf-link')
-    && !!q('.hpf-card[data-card="basics"] .hpf-error') && q('#marker-binding').getAttribute('aria-expanded') === 'true';
+    && !!q('.hpf-card[data-card="basics"] .hpf-error') && q('#marker-binding').getAttribute('aria-expanded') === 'false'
+    && !q('#marker-binding').closest('.hpf-picker').querySelector('.hpf-panel');
   q('.hpf-status .hpf-link').click(); await upd();
   o.reviewLinkFocusesBinding = (sr().activeElement ?? document.activeElement)?.id === 'marker-binding';
   await pickSeg('bmode', 'virtual');

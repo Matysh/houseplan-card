@@ -271,6 +271,8 @@ const res = await page.evaluate(async () => {
   addDialog.querySelector('input[name="bmode"][value="ha"]').click();
   await hp.settled();
   const bindingPicker = () => markerDialog()?.querySelector('#marker-binding')?.closest('.hpf-picker');
+  bindingPicker().querySelector('#marker-binding').click();
+  await hp.settled();
   await hp.input(bindingPicker().querySelector('.hpf-panel input.hpf-input'), haGroup);
   const candidate = [...bindingPicker().querySelectorAll('.hpf-cand')]
     .find((button) => button.textContent.includes('Hall group'));
