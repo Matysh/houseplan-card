@@ -934,11 +934,17 @@ jobs:
         if: steps.pw.outputs.cache-hit != 'true'
         run: npx playwright install chromium
       - name: Очистить закоммиченный dist перед артефактом
-        run: node -e "require('node:fs').rmSync('dist', { recursive: true, force: true })"
+        run: |
+          node -e "require('node:fs').rmSync('dist', { recursive: true, force: true })"
+      - name: Забрать собранный бандл
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: card-bundle
+          path: dist
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
-        with: { name: card-bundle, path: dist }
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
-        with: { name: card-test-build, path: test-build }
+        with:
+          name: card-test-build
+          path: test-build
       - run: node scripts/bundle-sync.mjs
       - name: Run selected progress checks
         env:

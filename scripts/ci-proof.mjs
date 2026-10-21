@@ -13,7 +13,7 @@ import { BASELINE_OVERLAY, REUSE_JOBS, globToRegExp } from './check-inputs.mjs';
 import { reuseKey } from './gate-reuse.mjs';
 import { jobInstanceNames, staticNamePrefix, validateJobs } from './workflow-jobs.mjs';
 import { producerEnvironments } from './ci-job-environment.mjs';
-import { browserPlanExecution } from './browser-push-plan.mjs';
+import { browserPlanExecution } from './browser-plan-proof.mjs';
 
 export const CI_PROOF_SCHEMA = 'houseplan-ci-proof/v1';
 export const CI_PROOF_ARTIFACT_PREFIX = 'ci-proof';

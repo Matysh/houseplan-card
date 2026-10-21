@@ -55,22 +55,22 @@ test('бандл собирается один раз и приезжает бр
   // ~10 джобо-минут на каждом непереиспользованном прогоне.
   const builds = [...workflow.matchAll(/^ +run: npm run (build|bundle:sync)$/gm)];
   assert.equal(builds.length, 1, 'бандл должен собираться ровно в одной job');
-  assert.equal(workflow.match(/name: card-bundle/g)?.length, 5,
-    'один upload и четыре download артефакта бандла (три браузерные job и стенд dev, #657)');
+  assert.equal(workflow.match(/name: card-bundle/g)?.length, 6,
+    'один upload и пять download артефакта бандла (включая выбранные push-проверки #983)');
   const cleanDownloads = workflow.match(
     /- name: Очистить закоммиченный dist перед артефактом\n\s+run: \|\n\s+node -e "require\('node:fs'\)\.rmSync\('dist', \{ recursive: true, force: true \}\)"\n\s+- name: Забрать собранный бандл\n\s+uses: actions\/download-artifact@[0-9a-f]+ # v7\n\s+with:\n\s+name: card-bundle\n\s+path: dist/g,
   ) || [];
-  assert.equal(cleanDownloads.length, 4,
+  assert.equal(cleanDownloads.length, 5,
     'каждый download свежего бандла обязан сначала удалить старые content-hashed чанки checkout');
-  assert.equal(workflow.match(/name: card-test-build/g)?.length, 2,
-    'один upload и один download тестового дерева для smoke job');
+  assert.equal(workflow.match(/name: card-test-build/g)?.length, 3,
+    'один upload и два download тестового дерева для full/selected smoke job');
   assert.match(workflow, /name: card-test-build\n\s+path: test-build\//,
     'frontend обязана публиковать созданное npm test дерево test-build');
   assert.match(workflow, /name: card-test-build\n\s+path: test-build(?:\n|\r)/,
     'smoke job обязана восстанавливать test-build в ожидаемый import path');
   // Каждая браузерная job раскладывает скачанный бандл по копиям: без этого
   // стенд читает вчерашний файл, а смок врёт согласованно (#236).
-  assert.equal(workflow.match(/node scripts\/bundle-sync\.mjs/g)?.length, 3);
+  assert.equal(workflow.match(/node scripts\/bundle-sync\.mjs/g)?.length, 4);
 });
 
 test('frontend собирает свежий dist до unit-контрактов бюджета (#663)', () => {
