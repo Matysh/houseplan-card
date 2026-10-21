@@ -115,6 +115,8 @@ try {
     await page.screenshot({path:fileURLToPath(new URL('trails.png',output))});
   });
   await check('AC2 real picker preview is local and does not write config',async()=>{
+    const second=await context.newPage();await second.goto(origin);
+    await second.waitForFunction(()=>window.__lab?.card?._serverCfg?.markers?.some(m=>m.id==='lab_robot'));
     const shell=await open();
     await expect(shell.locator('.vacuum-source-status')).toContainText('Статус:');
     assert.equal(await shell.locator('.vacuum-trail-color .trigger').getAttribute('title'),null);
@@ -125,6 +127,8 @@ try {
     assert.equal((await appearance('lab_robot')).alpha,'0.4');
     assert.equal((await appearance('second_robot')).stroke,'rgb(250, 102, 136)');
     assert.equal(await page.evaluate(()=>window.__vacuumProof.calls.filter(x=>x==='houseplan/config/set').length),count);
+    assert.equal(await second.evaluate(()=>window.__lab.card._serverCfg.markers.find(m=>m.id==='lab_robot').vacuum.trail_color),undefined);
+    await second.close();
     await page.screenshot({path:fileURLToPath(new URL('picker-result.png',output))});
   });
   await check('AC2 refused save keeps draft, retry commits, reload retains',async()=>{
@@ -169,6 +173,7 @@ try {
       await page.setViewportSize({width,height:884});
       await page.evaluate(theme=>{document.documentElement.dataset.theme=theme;window.__lab.card.hass={...window.__lab.card.hass,themes:{...window.__lab.card.hass.themes,darkMode:theme==='dark'}};},theme);
       assert.equal(await shell.locator('dialog').evaluate(e=>e.scrollWidth>e.clientWidth+1),false,`${theme} ${width} overflow`);
+      assert.equal(await shell.locator('.vacuum-profile').evaluate(e=>e.scrollWidth>e.clientWidth+1),false,`${theme} ${width} profile overflow`);
     }
     await page.emulateMedia({reducedMotion:'reduce'});
     await expect(shell.locator('.vacuum-trail-color')).toBeAttached();

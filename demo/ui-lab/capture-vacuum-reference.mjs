@@ -2,7 +2,7 @@
  * Output must be outside the checkout; private input and images stay local.
  */
 import {readFileSync,mkdirSync} from 'node:fs';
-import {resolve,relative} from 'node:path';
+import {resolve,relative,isAbsolute,sep} from 'node:path';
 import {pathToFileURL,fileURLToPath} from 'node:url';
 import {once} from 'node:events';
 import {parseArgs} from 'node:util';
@@ -14,7 +14,8 @@ import {assertFreshDemoBundle} from '../bundle-freshness.mjs';
 const {values:v}=parseArgs({options:Object.fromEntries(['fixture','theme','replay','ha-cache','output'].map(key=>[key,{type:'string'}]))});
 for(const key of ['fixture','replay','output']) if(!v[key]) throw Error(`--${key} required`);
 const repo=fileURLToPath(new URL('../../',import.meta.url));
-if(!relative(repo,resolve(v.output)).startsWith('..')) throw Error('Private output must stay outside the repository');
+const outputRelative=relative(repo,resolve(v.output));
+if(!isAbsolute(outputRelative)&&outputRelative!=='..'&&!outputRelative.startsWith(`..${sep}`)) throw Error('Private output must stay outside the repository');
 const fixture=JSON.parse(readFileSync(v.fixture,'utf8')),config=fixture.vacuumReplay;
 if(!config) throw Error('A captured vacuumReplay fixture is required');
 const {createVacuumReplay}=await import(pathToFileURL(resolve(v.replay)).href);

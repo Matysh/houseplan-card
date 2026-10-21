@@ -4,6 +4,7 @@ export const vacuumSettingsCss = `
 .vacuum-profile [data-card=vacuum] > .hpf-head{display:block;margin-bottom:0;}
 .vacuum-profile .vacuum-source-status{margin-top:6px;color:var(--secondary-text-color);font-size:13px;line-height:1.4;font-weight:400;}
 .vacuum-profile .hpf-body{gap:0;}
+.vacuum-profile .hpf-field{overflow-wrap:anywhere;}
 .vacuum-profile .hpf-body > :is(.hpf-field,.hpf-toggle,.vacuum-trail-color,.vacbtns,.hpf-profile-maproutes,.hpf-profile-diagnostics){margin:0;padding:var(--vacuum-section-space) 0;border-top:1px solid var(--hpf-line,var(--divider-color));}
 .vacuum-profile .hpf-body > .hpf-field:first-child{border-top:0;}
 .vacuum-profile .hpf-body > .hpf-sub{margin:0;padding:var(--vacuum-section-space) 0 0;border-top:1px solid var(--hpf-line,var(--divider-color));}
