@@ -8,6 +8,7 @@ import { renderDeviceIssues } from './device-issues-view';
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
 import { ledAnchor, ledRelease, ledRuntime, ledStripsByMarker, ledVisible } from './led-strip-gate';
+import { previewVacuumTrailStyle, vacuumTrailCss } from './vacuum-trail-style';
 import { visibleIconMarkers } from './device-icon-roster';
 import { roomCo2Text } from './room-co2';
 import { sceneGestureFromPath } from './canvas-surface-gestures';
@@ -2191,6 +2192,7 @@ export class HouseplanCard extends LitElement {
   private _deviceInboxReturn: DeviceInboxDialogState | null = null;
   private _deviceInboxMemo: { key: string; rows: DeviceInboxRow[] } | null = null;
   private _markerDialog: {
+    vacuumTrail?: import('./vacuum-trail-style').VacuumTrailStyle;
     devId?: string;      // the icon being edited (if any)
     /**
      * Folder attachments are uploaded into while this dialog is open. For a NEW
@@ -11851,11 +11853,12 @@ export class HouseplanCard extends LitElement {
     this._vacJumpOnce = false;
     const pucks: TemplateResult[] = [];
     const trails: TemplateResult[] = [];
-    const previousRuns: Array<{ path: VacPath; matrix: Affine }> = [];
+    const previousRuns: Array<{ path: VacPath; matrix: Affine; id: string; style: string }> = [];
     let trailBudget = VAC_RENDER_POINT_BUDGET;
     let hasTips = false;
     for (const d of devs) {
       if (d.hidden || !this._isVacDev(d)) continue;
+      const trailStyle = vacuumTrailCss(previewVacuumTrailStyle(d.id, d.marker?.vacuum, this._markerDialog));
       if (displayIsNeutral(normalizeDeviceDisplay(d.marker?.display))) continue;
       const fact = this._renderDeviceSnapshot?.facts.get(`vacuum:${d.id}`) as any;
       const selected = fact ?? this._vacRuntimeSource(d, this._renderPlanHass);
@@ -11883,7 +11886,7 @@ export class HouseplanCard extends LitElement {
       // the PREVIOUS run stays visible even at rest: users compare where the
       // robot has been against where it has not (owner call 2026-07-31)
       if (tmode === 'always' && srvPrev && plan.previous) {
-        previousRuns.push({ path: normalizeVacPath(srvPrev.path_format === 2 ? srvPrev.paths : srvPrev.points), matrix: plan.previous });
+        previousRuns.push({ path: normalizeVacPath(srvPrev.path_format === 2 ? srvPrev.paths : srvPrev.points), matrix: plan.previous, id: d.id, style: trailStyle });
       }
       // One arbitration authority: integration multi-subpath → server run →
       // local runtime. Only drawable segments participate.
@@ -11895,7 +11898,7 @@ export class HouseplanCard extends LitElement {
           trailBudget -= frame.count;
           const pathD = frame.d;
           // A single SVG path with several M commands keeps gaps literal.
-          if (pathD) trails.push(svg`<path class="case" d="${pathD}"></path><path class="core" d="${pathD}"></path>`);
+          if (pathD) trails.push(svg`<path data-vacuum-owner=${d.id} style=${trailStyle} class="core" d="${pathD}"></path>`);
           const last = raw[raw.length - 1];
           if (moving && current.allowTip && !current.native && !frame.limited && last?.length >= 2) {
             hasTips = true;
@@ -11903,7 +11906,7 @@ export class HouseplanCard extends LitElement {
             const [ax, ay] = applyAffine(matrix, anchor[0], anchor[1]);
             const point = [ax, ay];
             const a1 = point[0].toFixed(1), a2 = point[1].toFixed(1);
-            trails.push(svg`<line class="case tip" data-mid="${d.id}" x1="${a1}" y1="${a2}" x2="${a1}" y2="${a2}"></line><line class="core tip" data-mid="${d.id}" x1="${a1}" y1="${a2}" x2="${a1}" y2="${a2}"></line>`);
+            trails.push(svg`<line data-vacuum-owner=${d.id} style=${trailStyle} class="core tip" data-mid="${d.id}" x1="${a1}" y1="${a2}" x2="${a1}" y2="${a2}"></line>`);
           }
         }
       }
@@ -11926,7 +11929,7 @@ export class HouseplanCard extends LitElement {
     for (const previous of previousRuns) {
       const frame = this._vacTrailPathD(previous.path, previous.matrix, trailBudget);
       trailBudget -= frame.count;
-      if (frame.d) trails.unshift(svg`<g class="prev"><path class="case" d="${frame.d}"></path><path class="core" d="${frame.d}"></path></g>`);
+      if (frame.d) trails.unshift(svg`<g class="prev" data-vacuum-owner=${previous.id} style=${previous.style}><path class="core" d="${frame.d}"></path></g>`);
     }
     if (pucks.length && hasTips && this.isConnected && this.ownerDocument.visibilityState !== 'hidden') {
       if (!this._vacRaf) this._vacRafLoop();

@@ -8,6 +8,26 @@
  */
 export const CONFIG_FIELD_REGISTRY = Object.freeze([
   {
+    id: 'markers[].vacuum.trail_color',
+    enforcedBy: 'validation.py + vacuum-trail-style.ts; #1002',
+    selector: { path: ['markers', '*', 'vacuum', 'trail_color'] },
+    storage: 'House Plan server config', type: '#RRGGBB | null', default: 'unset (= #64B5F6)',
+    level: 'device marker', ui: 'Vacuum → Robot path colour',
+    runtime: 'current/previous path and sampled live tip; no effect on recording',
+    introduced: '#1002', status: 'current', migration: 'none; defaults stay absent until an explicit edit',
+    compatibility: 'full/space JSON/ZIP and copying preserve; closed support projection omits appearance; old strict backend may reject',
+  },
+  {
+    id: 'markers[].vacuum.trail_opacity',
+    enforcedBy: 'validation.py + vacuum-trail-style.ts; #1002',
+    selector: { path: ['markers', '*', 'vacuum', 'trail_opacity'] },
+    storage: 'House Plan server config', type: 'finite JSON number 0..1 | null', default: 'unset (= 0.70)',
+    level: 'device marker', ui: 'Vacuum → Robot path colour → Opacity',
+    runtime: 'path alpha; previous run additionally multiplied by 0.4; zero does not disable recording',
+    introduced: '#1002', status: 'current', migration: 'none; defaults stay absent until an explicit edit',
+    compatibility: 'full/space JSON/ZIP and copying preserve; closed support projection omits appearance; old strict backend may reject',
+  },
+  {
     id: 'markers[].state_source',
     enforcedBy: 'validation.py + marker-state-source.ts + schema parity; #977',
     selector: { path: ['markers', '*', 'state_source'] },

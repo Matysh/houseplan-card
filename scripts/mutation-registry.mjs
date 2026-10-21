@@ -141,6 +141,22 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'vacuum-trail-alpha-string-1002',
+    guard: 'node scripts/backend-test-guard.mjs invalid_alpha_rejected tests_backend/test_vacuum_trail_style.py',
+    because: '#1002 AC3: the backend boundary must refuse booleans and numeric strings rather than coerce them into opacity.',
+    patches: [{file:'custom_components/houseplan/validation.py',
+      find: 'vol.Optional("trail_opacity"): vol.Any(None, vol.All(_finite_number, vol.Range(min=0.0, max=1.0))),',
+      replace: 'vol.Optional("trail_opacity"): vol.Any(None, vol.Coerce(float)),'}],
+  },
+  {
+    id: 'vacuum-trail-scaling-stroke-1002',
+    guard: 'node demo/smoke_vacuum_style_1002.mjs',
+    because: '#1002 AC1/AC7: camera changes must retain screen-space trail thickness in Flat and 2.5D, including kiosk.',
+    patches: [{file:'src/styles/devices.styles.ts',
+      find: '.vactrail path {',
+      replace: '.vactrail path { vector-effect:none !important;'}],
+  },
+  {
     id: 'zigbee-incomplete-details-start-open-1005',
     guard: 'node demo/smoke_zigbee_incomplete_reasons.mjs',
     because: '#1005 AC1: native details must initially hide the technical text and open through trusted mouse/keyboard; this requires mounted Chromium details behaviour.',

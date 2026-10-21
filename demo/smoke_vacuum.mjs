@@ -67,7 +67,7 @@ const out = await page.evaluate(async () => {
       'camera.robo_map': { state: 'idle', attributes: mkAttrs(x, y) } } };
     await c.updateComplete; await new Promise((r) => setTimeout(r, 300));
   }
-  const trail = sr().querySelector('.vactrail path.case');
+  const trail = sr().querySelector('.vactrail path.core');
   // the trail LAGS one point behind the puck: after 3 telemetry points only
   // the first two are drawn — a segment never outruns the icon (owner)
   const localD = trail?.getAttribute('d') || '';
@@ -78,15 +78,13 @@ const out = await page.evaluate(async () => {
   c._applyView(1.35); c.requestUpdate(); await c.updateComplete;
   o.zoomTeleports = sr().querySelector('.vacpuck').classList.contains('jump');
   c._applyView(1); c.requestUpdate(); await c.updateComplete;
-  // casing pair: dark halo + light core with identical geometry — the trail
-  // must survive any room fill underneath (owner 2026-07-31)
+  // #1002: accepted UI-012–015 replaces the old black/white casing pair.
   const tcase = sr().querySelector('.vactrail .case');
   const tcore = sr().querySelector('.vactrail .core');
-  o.trailCasing = !!tcase && !!tcore
-    && tcase.getAttribute('d') === tcore.getAttribute('d')
-    && parseFloat(getComputedStyle(tcase).strokeWidth) > parseFloat(getComputedStyle(tcore).strokeWidth)
-    && getComputedStyle(tcase).stroke.includes('0, 0, 0')
-    && getComputedStyle(tcore).stroke.includes('255, 255, 255');
+  o.trailStyle = !tcase && !!tcore
+    && getComputedStyle(tcore).strokeWidth === '0.9px'
+    && getComputedStyle(tcore).strokeOpacity === '0.7'
+    && getComputedStyle(tcore).stroke === 'rgb(100, 181, 246)';
 
 
   // trail off via marker option
@@ -139,7 +137,7 @@ const out = await page.evaluate(async () => {
     'camera.robo_map': { state: 'idle', attributes: mkAttrs(1200, 1200) } } };
   c._regSignature = ''; c.requestUpdate(); await c.updateComplete;
   c.hass = { ...c.hass, states: { ...c.hass.states } }; await c.updateComplete;
-  const resumedD = sr().querySelector('.vactrail > path.case')?.getAttribute('d') || '';
+  const resumedD = sr().querySelector('.vactrail > path.core')?.getAttribute('d') || '';
   o.srvResumedCurrentKeepsEarlierPoints = (resumedD.match(/[ML]/g) || []).length === 4;
   o.srvResumedCurrentSmooth = (resumedD.match(/Q /g) || []).length === 2;
 
@@ -157,14 +155,12 @@ const out = await page.evaluate(async () => {
   await c.updateComplete;
   c.hass = { ...c.hass, states: { ...c.hass.states } }; await c.updateComplete;
   const prevG = sr().querySelector('.vactrail g.prev');
-  const prevCase = prevG?.querySelector('path.case');
   const prevCore = prevG?.querySelector('path.core');
-  const prevD = prevCase?.getAttribute('d') || '';
-  o.srvPrevRunShown = !!prevG && prevG.querySelectorAll('path').length === 2
-    && prevD === prevCore?.getAttribute('d')
+  const prevD = prevCore?.getAttribute('d') || '';
+  o.srvPrevRunShown = !!prevG && prevG.querySelectorAll('path').length === 1
     && (prevD.match(/M /g) || []).length === 1
     && (prevD.match(/Q /g) || []).length === 1;
-  const cur = sr().querySelector('.vactrail > path.case');
+  const cur = sr().querySelector('.vactrail > path.core');
   // 4 server points, the live tail trimmed while moving -> 3 rendered
   o.srvCurTrimmed = !!cur && (cur.getAttribute('d').match(/[ML]/g) || []).length === 3
     && (cur.getAttribute('d').match(/Q /g) || []).length === 1;
@@ -191,7 +187,7 @@ const out = await page.evaluate(async () => {
     } },
   } };
   await c.updateComplete;
-  const integrationD = sr().querySelector('.vactrail > path.case')?.getAttribute('d') || '';
+  const integrationD = sr().querySelector('.vactrail > path.core')?.getAttribute('d') || '';
   o.multiSubpathNoBridge = (integrationD.match(/M /g) || []).length === 2
     && integrationD.endsWith('475 575');
   o.integrationEndpointNoInventedTip = !sr().querySelector('line.tip');
@@ -199,7 +195,7 @@ const out = await page.evaluate(async () => {
     'vacuum.robo': { state: 'docked', attributes: { friendly_name: 'Робот' } },
   } };
   await c.updateComplete;
-  const restingIntegrationD = sr().querySelector('.vactrail > path.case')?.getAttribute('d') || '';
+  const restingIntegrationD = sr().querySelector('.vactrail > path.core')?.getAttribute('d') || '';
   o.integrationPathAlwaysAtRest = (restingIntegrationD.match(/M /g) || []).length === 2;
   // 'never' kills every line including the previous run
   cfg.markers.find((m) => m.id === 'e_vacuum_robo').vacuum.trail_mode = 'never';
@@ -285,7 +281,7 @@ checkAll(out, {
   puckPlateMatchesDev: true, puck80pct: true,
   noWedge: true, iconCentred: true, baseStaysDuringCleaning: true, trailDrawn: true,
   trailScaledByMatrix: true, trailBehindPuck: true, zoomTeleports: true,
-  trailCasing: true, trailToggleOff: true,
+  trailStyle: true, trailToggleOff: true,
   puckGoneWhenDocked: true, trailHiddenAfterDock: true, hiddenNoPuck: true,
   unknownMapNoPuck: true,
   srvEndedCurrentHiddenDefault: true, srvResumedCurrentKeepsEarlierPoints: true,

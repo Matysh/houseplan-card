@@ -20,8 +20,9 @@ import {
 } from '../vacuum-route-edit';
 import { isGeometryCleanupRefusal, supersedeDeferredWrite, type ConfigAdoption, type DeferredConfigWrite } from '../config-adoption';
 import type { OptimisticAttempt } from '../serialized-write-queue';
+import { settingsT, type SettingsI18nKey } from '../i18n/settings';
 
-interface SpaceRow { id?: unknown; name?: unknown }
+interface SpaceRow { id?: unknown; title?: unknown; name?: unknown }
 
 /** The narrow slice of the card this block reads and writes through. */
 export interface VacuumMapsCardHost {
@@ -54,7 +55,7 @@ const pendingRoute = new WeakMap<VacuumMapsHost, VacuumRouteDraft & { saving?: b
 
 const spaceName = (host: VacuumMapsCardHost, spaceId: string): string => {
   const space = (host._serverCfg?.spaces || []).find((item) => item?.id === spaceId);
-  return String(space?.name || space?.id || spaceId);
+  return String(space?.title || space?.name || space?.id || spaceId);
 };
 
 /**
@@ -69,6 +70,7 @@ export function renderVacuumMapsSection(
 ): TemplateResult | typeof nothing {
   const host = runtime.host;
   const lang = langOf(host.hass, host._config?.language);
+  const st = (key: SettingsI18nKey, vars?: Record<string, string | number>) => settingsT(lang, key, vars);
   const t = (key: string, vars?: Record<string, string>) => supportT(
     lang, key as SupportI18nKey, vars);
   const vacuum = dev.marker?.vacuum || {};
@@ -76,9 +78,9 @@ export function renderVacuumMapsSection(
   const rootSource: string = host._vacSource(dev) || '';
   const routes: VacuumMapRoute[] = effectiveRoutes(dev.id, vacuum, dev.space, rootSource);
   const spaces: Array<{ id: string; name: string }> = (host._serverCfg?.spaces || [])
-    .filter((space): space is { id: string; name?: unknown } =>
+    .filter((space): space is { id: string; title?: unknown; name?: unknown } =>
       typeof space?.id === 'string' && !!space.id)
-    .map((space) => ({ id: space.id, name: String(space.name || space.id) }));
+    .map((space) => ({ id: space.id, name: String(space.title || space.name || space.id) }));
   const spaceIds = new Set(spaces.map((space) => space.id));
   const observed = observedMapIds(routes, [rootSource],
     (source) => host._vacObservedMapId(dev, source));
@@ -213,7 +215,7 @@ export function renderVacuumMapsSection(
     if (resolution.kind === 'ambiguous' && resolution.routeIds.includes(route.id)) {
       return t('vac.route_status_ambiguous');
     }
-    return t('vac.route_status_ready');
+    return st('marker.vacuum_map_ready');
   };
 
   const canAddCurrent = !!rootSource && currentMapId !== undefined
@@ -266,7 +268,9 @@ export function renderVacuumMapsSection(
   const renderRoute = (route: VacuumMapRoute): TemplateResult => html`
     <li class="vacroute ${route.id === activeId ? 'on' : ''}" data-route-id=${route.id}>
       <div class="vacroute-head">
-        <b>${route.map_id || t('vac.route_map_default')}</b>
+        <b>${routes.findIndex((item) => item.id === route.id) === 0
+          ? st('marker.vacuum_first_map')
+          : st('marker.vacuum_map_number', { number: routes.findIndex((item) => item.id === route.id) + 1 })}</b>
         ${route.id === activeId
           ? html`<span class="vacroute-active">${t('vac.route_active')}</span>` : nothing}
       </div>
@@ -297,11 +301,13 @@ export function renderVacuumMapsSection(
   return html`
     <section class="hpf-profile-maproutes"><div class="hpf-sub"><h4>${title || t('vac.routes_section')}</h4></div>
     <div class="bindbox vacroutes">
-      <div class="vacdiag" role="status">
+      ${routes.length === 1 && resolution.kind === 'ready'
+        ? html`<p class="vacuum-map-summary" role="status">${st('marker.vacuum_one_map_ready')}</p>`
+        : html`<div class="vacdiag" role="status">
         <div><span>${t('vac.routes_current_map')}</span><b>${currentMapId === undefined
           ? t('vac.routes_no_map') : (currentMapId || t('vac.route_map_default'))}</b></div>
         <div><span>${t('vac.routes_status')}</span><b>${t(`vac.routes_state_${resolution.kind}`)}</b></div>
-      </div>
+      </div>`}
       ${validRows.length || draft ? html`<ul class="vacroute-list">
         ${draft ? html`
           <li class="vacroute pending">
@@ -335,12 +341,15 @@ export function renderVacuumMapsSection(
           <ul class="vacroute-list">${missingRows.map(renderRoute)}</ul>
         </section>` : nothing}
       ${!rows.length && !draft ? html`<div class="rhint">${t('vac.routes_empty')}</div>` : nothing}
-      <div class="vacbtns">
+      <div class="vacbtns vacuum-add-current">
         <button type="button" class="btn vacroute-add-current" ?disabled=${!canAddCurrent || !!draft}
           @click=${addCurrent}>${t('vac.route_add_current')}</button>
       </div>
+      ${!canAddCurrent || draft ? html`<p class="vacuum-map-note vacuum-add-reason">${st(draft
+        ? 'marker.vacuum_add_pending' : !rootSource ? 'marker.vacuum_add_no_source'
+          : currentMapId === undefined ? 'marker.vacuum_add_no_map' : 'marker.vacuum_add_current_already')}</p>` : nothing}
       ${spare.length ? html`<details class="vacroute-sources">
-        <summary class="btn ghostbtn">${t('vac.route_add_source')}</summary>
+        <summary>${t('vac.route_add_source')}</summary>
         <div class="rhint">${t('vac.route_add_source_hint')}</div>
         <div class="vacsource-list">
           ${spare.map((candidate) => {
@@ -360,7 +369,7 @@ export function renderVacuumMapsSection(
         <div class="warn">${t('vac.route_missing_space_hint')}</div>` : nothing}
       ${routes.some((route) => route.map_id === 'default') ? html`
         <div class="rhint">${t('vac.route_default_hint')}</div>` : nothing}
-      ${rows.length ? html`<div class="rhint">${t('vac.route_target_hint', {
+      ${rows.length ? html`<div class="vacuum-map-note">${st('marker.vacuum_dock_space_hint', {
         space: spaceName(host, dev.space),
       })}</div>` : nothing}
     </div></section>`;

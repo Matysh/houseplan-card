@@ -99,6 +99,6 @@
   "vac.route_default_hint": "The source reports no stable map id. Several floors cannot be told apart without another source or the robot's own selected map.",
   "vac.route_target_hint": "The dock stays in the “{space}” space regardless of the current map.",
   "vac.route_add_source": "Add a map source",
-  "vac.route_add_source_hint": "For integrations that give each map its own camera. The “All cameras” section above widens this list.",
+  "vac.route_add_source_hint": "If the integration creates a separate camera for each map, choose the camera below.",
   "vac.route_source_no_map": "no map reported"
 }

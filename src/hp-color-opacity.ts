@@ -36,6 +36,9 @@ const DEFAULT_LABELS: ColorPickerLabels = {
  */
 export class HpColorOpacity extends LitElement {
   public label = '';
+  /** Optional action label for a swatch with its readout outside the control. */
+  public triggerLabel = '';
+  public nativeTooltip = true;
   public opacityLabel = 'Opacity';
   public color = '#607d8b';
   public opacity = 1;
@@ -105,6 +108,8 @@ export class HpColorOpacity extends LitElement {
 
   static properties = {
     label: { type: String },
+    triggerLabel: { type: String, attribute: 'trigger-label' },
+    nativeTooltip: { type: Boolean, attribute: 'native-tooltip' },
     opacityLabel: { type: String, attribute: 'opacity-label' },
     color: { type: String },
     opacity: { type: Number },
@@ -916,8 +921,8 @@ export class HpColorOpacity extends LitElement {
     return html`
       ${this.label && !this.hideLabel ? html`<span class="label">${this.label}</span>` : nothing}
       <button class=${solid ? 'trigger solid' : 'trigger'} type="button" .disabled=${this.disabled}
-        aria-label=${title} aria-haspopup="dialog" aria-expanded=${this._open ? 'true' : 'false'}
-        title=${title} @click=${this._toggle}>
+        aria-label=${this.triggerLabel || title} aria-haspopup="dialog" aria-expanded=${this._open ? 'true' : 'false'}
+        title=${this.nativeTooltip ? title : nothing} @click=${this._toggle}>
         <span class="swatch" style=${this.allowNoFill && this.noFill
           ? 'background:linear-gradient(135deg,transparent 45%,currentColor 46%,currentColor 53%,transparent 54%)'
           : `background:${color};opacity:${solid ? 1 : this.showOpacity ? pct / 100 : 1}`}></span>

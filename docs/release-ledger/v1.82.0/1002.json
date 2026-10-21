@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1002,
+  "baseStable": "v1.82.0",
+  "category": "major",
+  "rationale": "Adds user-configurable per-vacuum trail colour and opacity and an accepted vacuum settings presentation, absent from stable v1.82.0. Optional fields need no data migration; existing trail arbitration and calibration remain unchanged.",
+  "summary": {
+    "ru": "Индивидуальные цвет и прозрачность тонкого пути пылесоса, обновлённые настройки и карты.",
+    "en": "Individual thin vacuum trail colour and opacity, refreshed settings and map cards."
+  }
+}

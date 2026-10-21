@@ -30,6 +30,11 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/vacuum-trail-style.ts', 'src/styles/vacuum-settings.styles.ts'],
+    smokes: ['smoke_vacuum_style_1002.mjs', 'smoke_vacuum.mjs'],
+    because: '#1002: mounted SVG ink, previous-run fading and camera invariants are observed without importing the style model. Authentic HA dialog acceptance additionally runs demo/ui-lab/verify-vacuum-1002.mjs.',
+  },
+  {
     files: ['src/hp-zigbee-topology-settings.ts', 'src/zigbee-topology-diagnostics.ts', 'src/zigbee-provider-routes.ts', 'src/zigbee-topology.ts'],
     smokes: ['smoke_zigbee_incomplete_reasons.mjs'],
     because: '#1005: public provider events and settings controls prove source-scoped reasons and their native footer presentation without importing the model.',

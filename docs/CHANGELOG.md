@@ -4,6 +4,9 @@
 
 - Show a waxing moon lit on the right and a waning moon on the left, keeping
   the north-up surface drawing unchanged across all backgrounds and cards. (#1006)
+- Give each vacuum its own path colour and transparency, with a thin unoutlined
+  blue default. Refresh the vacuum settings, map cards and diagnostics to match
+  the accepted UI Lab design; colour previews can be saved or discarded. (#1002)
 
 - Explain incomplete Zigbee diagnostic data in a collapsed “Why the data is
   incomplete” block at the end of each source section, including affected

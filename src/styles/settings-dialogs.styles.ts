@@ -1,4 +1,5 @@
 import { css } from 'lit';
+import { vacuumSettingsCss } from './vacuum-settings.styles';
 /** Shared, editor-only presentation for the four approved settings forms (#944).
  * Menus are owned by hp-settings-select; its hidden native child holds values only.
  */
@@ -240,4 +241,5 @@ hp-dialog.ui-dialog .supportlinks{align-items:stretch;flex-direction:column;}
 }
 @media(prefers-reduced-motion:reduce){hp-dialog.ui-dialog *:is(button,summary,input,textarea,a){transition:none;}}
 `.cssText}
+${vacuumSettingsCss}
 `;

@@ -201,6 +201,8 @@ export interface Marker {
   tap_confirm?: boolean | null;
   /** live robot vacuum (docs/VACUUM.md); absent on non-vacuum markers */
   vacuum?: {
+    trail_color?: string | null;
+    trail_opacity?: number | null;
     live?: boolean | null;
     trail?: boolean | null; // legacy bool; trail_mode wins
     /** Only positional fallback without provider session/path authority (#940). */

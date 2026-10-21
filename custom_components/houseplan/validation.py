@@ -1982,6 +1982,8 @@ MARKER_SCHEMA = vol.Schema(
             vol.Schema({
                 vol.Optional("live"): vol.Any(bool, None),
                 vol.Optional("trail"): vol.Any(bool, None),
+                vol.Optional("trail_color"): vol.Any(None, _COLOR),
+                vol.Optional("trail_opacity"): vol.Any(None, vol.All(_finite_number, vol.Range(min=0.0, max=1.0))),
                 vol.Optional("new_run_after_dock"): vol.Any(bool, None),
                 vol.Optional("trail_mode"): vol.Any(
                     None, vol.In(["never", "cleaning", "always"])

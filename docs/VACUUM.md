@@ -230,6 +230,25 @@ Numeric `0`, string `"0"` and an empty string are valid IDs.
 
 ## Paths and trails
 
+### Appearance (#1002)
+
+The accepted UI-012–015 appearance is a single `0.9` screen-pixel rounded
+stroke, without a casing, default `#64B5F6` at 70% opacity. Each vacuum has
+its own colour/opacity picker in device settings. Changes preview only that
+robot's current path, animated tip and previous path; the previous run keeps
+its additional `0.4` fading. Save commits after config ACK; discard restores
+the accepted appearance. An untouched dialog never materialises defaults.
+Source, map and calibration writes retain their existing immediate boundaries;
+the appearance save merges into the latest vacuum config, not its opening copy.
+
+Optional `trail_color` is `#RRGGBB`; `trail_opacity` is a finite numeric value
+in `[0,1]`, not a boolean or numeric string. Missing/null fields use defaults
+independently, including valid zero opacity. No migration or trail geometry
+change is involved. JSON/ZIP/space backup retains the fields through the
+ordinary config schema. Closed support projections intentionally omit these
+appearance-only fields. Older strict backends may reject them: update card and
+integration together, rather than retrying against an old backend.
+
 With a format-2 trail backend the current visible path has one authority:
 
 1. complete server snapshot from the exact supported integration, including empty;
@@ -387,7 +406,7 @@ updates continue without an added timer or server request.
 
 ```text
 marker.vacuum = {
-  live?, trail?, trail_mode?, new_run_after_dock?, source?,
+  live?, trail?, trail_mode?, trail_color?, trail_opacity?, new_run_after_dock?, source?,
   calibration?: { [map_id]: [a,b,c,d,e,f] },   // legacy-read after #162
   map_routes?: [{ id, source, map_id, space, calibration? }],
   room_highlight?, segment_map?    // schema only: no runtime consumer (#12)

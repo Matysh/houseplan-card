@@ -299,6 +299,11 @@
       "required": false,
       "type": "bool"
     },
+    "config.markers[].vacuum.trail_color": {
+      "nullable": true,
+      "opaque": "Match('\\\\A#[0-9a-fA-F]{6}\\\\Z', msg=None)",
+      "required": false
+    },
     "config.markers[].vacuum.trail_mode": {
       "enum": [
         "always",
@@ -306,6 +311,13 @@
         "never"
       ],
       "nullable": true,
+      "required": false
+    },
+    "config.markers[].vacuum.trail_opacity": {
+      "max": 1.0,
+      "min": 0.0,
+      "nullable": true,
+      "opaque": "<function _finite_number>",
       "required": false
     },
     "config.markers[].value_badge": {
