@@ -172,7 +172,11 @@ test('#957 pipeline retains sealed material before any SPEC publication and does
   assert.match(run.slice(0, retain), /if \[ "\$STAGE" = "spec" \]; then\s+REVIEW_MATERIAL_PUSH_URL="\$push_url" $/);
   assert.match(run.slice(retain), /--sha="\$MATERIAL_SHA" --tree="\$MATERIAL_TREE"/);
   const validate = parse(readFileSync(new URL('../.github/workflows/validate.yml', import.meta.url), 'utf8'));
-  assert.deepEqual(validate.on.push.branches, ['**', '!review-material/**']);
+  assert.equal(validate.on.push, undefined);
+  for (const profile of ['product', 'tooling', 'docs']) {
+    const file = new URL(`../.github/workflows/validate-${profile}.yml`, import.meta.url);
+    assert.deepEqual(parse(readFileSync(file, 'utf8')).on.push.branches, ['**', '!review-material/**', '!ci-proofs']);
+  }
 });
 
 for (const heading of ['# SPEC-REVIEW-2-r1', '# SPEC-REVIEW — issue #2, заход r1'])

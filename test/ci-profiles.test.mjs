@@ -22,6 +22,9 @@ test('#980 generated paths and job recipes are current; canonical full dispatch 
   const full = parse(readFileSync('.github/workflows/validate.yml', 'utf8'));
   assert.ok(full.on.workflow_dispatch); assert.equal(full.on.push, undefined);
   assert.ok(full.jobs.frontend && full.jobs.tooling && full.jobs.golden && full.jobs.smoke);
+  const resume = parse(readFileSync('.github/workflows/process-resume.yml', 'utf8'));
+  assert.ok(resume.on.workflow_run.workflows.includes(full.name));
+  for (const profile of ['product', 'docs', 'tooling']) assert.equal(parse(readFileSync(`.github/workflows/validate-${profile}.yml`, 'utf8')).name, full.name);
   const product = parse(readFileSync('.github/workflows/validate-product.yml', 'utf8'));
   assert.ok(product.jobs.frontend); assert.equal(product.jobs.tooling, undefined);
   assert.ok(product.jobs.proof.steps.some(s => /--candidate/.test(s.run || '')));
