@@ -868,9 +868,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          # Sparse files, complete HEAD blobs: key hashing never hydrates one
-          # missing blob at a time from a promisor remote.
-          filter: blob:limit=1g
+          # Input identity uses immutable blob OIDs; only trust code and beta
+          # scalar mirrors need bytes. Avoid downloading bundles and baselines.
+          filter: blob:none
           sparse-checkout-cone-mode: false
           sparse-checkout: |
             /scripts/
@@ -880,6 +880,10 @@ jobs:
             /package.json
             /package-lock.json
             /pyproject.toml
+            /custom_components/houseplan/manifest.json
+            /custom_components/houseplan/const.py
+            /src/houseplan-card.ts
+            /src/houseplan-editor-runtime.ts
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with: { node-version: 22 }
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
@@ -1056,6 +1060,7 @@ jobs:
   product_guards:
     name: "Продукт: свежие проверки диапазона и упаковки"
     needs: [changes, bundle]
+    if: always() && needs.changes.result == 'success' && needs.bundle.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -1124,8 +1129,8 @@ jobs:
 
   dev_build:
     name: "Бандл головы dev для стенда"
-    needs: bundle
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && needs.bundle.result == 'success'
+    needs: [bundle, product_guards]
+    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/dev' && needs.bundle.result == 'success' && needs.product_guards.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     continue-on-error: true
@@ -1179,7 +1184,7 @@ jobs:
   browser_selected:
     name: "Браузер: выбранные проверки push"
     needs: [changes, bundle]
-    if: needs.changes.outputs.browser_subset == 'true'
+    if: always() && needs.changes.result == 'success' && needs.bundle.result == 'success' && needs.changes.outputs.browser_subset == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -1227,7 +1232,7 @@ jobs:
     name: Смоки в браузере (шард ${{ matrix.shard }} из 3)
     # Gated on `frontend` so a typecheck failure does not burn browser minutes.
     needs: [changes, bundle, reuse]
-    if: needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.smoke != 'true'
+    if: always() && needs.changes.result == 'success' && needs.bundle.result == 'success' && needs.reuse.result == 'success' && needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.smoke != 'true'
     env:
       CI_PYTHON_VERSION: ${{ needs.reuse.outputs.python_version }}
     runs-on: ubuntu-24.04
@@ -1354,7 +1359,7 @@ jobs:
   smoke_done:
     name: "Смоки: все шарды зелёные"
     needs: [changes, smoke, reuse]
-    if: needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.smoke != 'true'
+    if: always() && needs.changes.result == 'success' && needs.smoke.result == 'success' && needs.reuse.result == 'success' && needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.smoke != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 1
     steps:
@@ -1365,7 +1370,7 @@ jobs:
     # Deterministic visual correctness stays in every prerelease gate: it is
     # inexpensive and catches a different class of regressions than timings.
     needs: [changes, bundle, reuse]
-    if: needs.changes.outputs.golden == 'true' && needs.reuse.outputs.golden != 'true'
+    if: always() && needs.changes.result == 'success' && needs.bundle.result == 'success' && needs.reuse.result == 'success' && needs.changes.outputs.golden == 'true' && needs.reuse.outputs.golden != 'true'
     env:
       CI_PYTHON_VERSION: ${{ needs.reuse.outputs.python_version }}
     runs-on: ubuntu-24.04
@@ -1443,7 +1448,7 @@ jobs:
     # Candidate-only catastrophic-regression guard for ordinary pushes and
     # prereleases. The expensive same-runner comparison lives in performance.yml.
     needs: [changes, bundle, reuse]
-    if: needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.performance_smoke != 'true'
+    if: always() && needs.changes.result == 'success' && needs.bundle.result == 'success' && needs.reuse.result == 'success' && needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.performance_smoke != 'true'
     env:
       CI_PYTHON_VERSION: ${{ needs.reuse.outputs.python_version }}
     runs-on: ubuntu-24.04

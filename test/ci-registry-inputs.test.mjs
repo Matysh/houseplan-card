@@ -5,7 +5,7 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve, sep } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { registryInputs, REGISTRY_JOBS, maskJsonScalars, versionNormalizer, jobRecipe, registryProtocolFiles } from '../scripts/ci-registry-inputs.mjs';
+import { registryInputs, registryReader, REGISTRY_JOBS, maskJsonScalars, versionNormalizer, jobRecipe, registryProtocolFiles } from '../scripts/ci-registry-inputs.mjs';
 import { profilePaths } from '../scripts/ci-profile-paths.mjs';
 import { registryInventory } from '../scripts/ci-registry-inventory.mjs';
 import { generatedProfiles } from '../scripts/ci-profiles.mjs';
@@ -116,6 +116,24 @@ test('producer fingerprints the workflow that actually executes, including gener
   assert.throws(() => producerRecipe(root, 'frontend', { GITHUB_REPOSITORY: 'Matysh/houseplan-card',
     GITHUB_WORKFLOW_REF: 'Matysh/houseplan-card/.github/workflows/foreign.yml@refs/heads/dev' }));
 });
+test('exact Git blob identity tracks binary bytes without hydrating them and refuses symbolic inputs', t => {
+  const root = repository(t), path = 'assets/large.bin';
+  put(root, path, Buffer.alloc(1024 * 1024, 17)); commit(root, 'binary product input');
+  const withoutBinaryReads = mode => {
+    const reader = registryReader(root), read = reader.read;
+    reader.read = name => { assert.notEqual(name, path, 'binary identity must use its actual Git content ID'); return read(name); };
+    return registryInputs(root, { reader, mode, toolchain: environment });
+  };
+  const exact = withoutBinaryReads('exact'), candidate = withoutBinaryReads('candidate');
+  put(root, path, Buffer.alloc(1024 * 1024, 18)); commit(root, 'same-size different binary bytes');
+  assert.notEqual(withoutBinaryReads('exact').treeId, exact.treeId);
+  assert.notEqual(withoutBinaryReads('candidate').keys.frontend, candidate.keys.frontend);
+  const oid = git(root, ['rev-parse', 'HEAD:' + path]);
+  git(root, ['update-index', '--cacheinfo', '120000,' + oid + ',' + path]);
+  git(root, ['commit', '-m', 'unsafe symbolic input mode']);
+  assert.throws(() => withoutBinaryReads('exact'), /symbolic input/);
+});
+
 test('computed inventory and generated profiles match the executable source', () => {
   const root = process.cwd();
   assert.deepEqual(JSON.parse(readFileSync('scripts/ci-registry-inventory.json', 'utf8')), registryInventory(root));

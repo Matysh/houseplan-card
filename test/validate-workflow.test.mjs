@@ -72,6 +72,41 @@ test('one cold producer and verified bundle distribution precede all consumers (
   assert.equal(workflow.match(/node scripts\/bundle-sync\.mjs/g)?.length, 5, 'four full/selected workers and one candidate smoke');
 });
 
+test('a reused frontend cannot suppress fresh guards, missing browser proofs or dev publication (#981)', () => {
+  for (const file of ['validate.yml', 'validate-product.yml']) {
+    const { chunks } = jobsOf(read(file));
+    const needs = { frontend: { result: 'skipped' }, bundle: { result: 'success' },
+      product_guards: { result: 'success' }, smoke: { result: 'success' },
+      changes: { result: 'success', outputs: { heavy: 'true', golden: 'true', browser_subset: 'true' } },
+      reuse: { result: 'success', outputs: { smoke: 'false', golden: 'false', performance_smoke: 'false' } } };
+    const github = { event_name: 'push', ref: 'refs/heads/dev' };
+    const eligible = id => {
+      const expression = chunks.get(id).match(/^    if: (.+)$/m)?.[1] || 'true';
+      // GHA adds implicit success() unless the condition has a status check;
+      // a skipped ancestor makes that implicit success false even after bundle.
+      const implicitSuccess = Object.values(needs).every(row => row.result === 'success');
+      if (!/\b(?:always|success|failure|cancelled)\(/.test(expression) && !implicitSuccess) return false;
+      return Function('needs', 'github', 'always', 'success', 'return (' + expression + ')')(
+        needs, github, () => true, () => implicitSuccess);
+    };
+    const consumers = ['product_guards', 'browser_selected', 'smoke', 'golden', 'performance_smoke', 'dev_build', 'smoke_done'];
+    for (const id of consumers) assert.equal(eligible(id), true, file + '/' + id + ': skipped producer, green assembled bundle');
+    needs.bundle.result = 'failure';
+    for (const id of consumers.filter(id => id !== 'smoke_done')) assert.equal(eligible(id), false, file + '/' + id + ': red bundle');
+    needs.bundle.result = 'success';
+    needs.product_guards.result = 'failure';
+    assert.equal(eligible('dev_build'), false, 'stand publication retains fresh guard authority');
+    needs.product_guards.result = 'success';
+    needs.smoke.result = 'failure';
+    assert.equal(eligible('smoke_done'), false, 'one failed direct shard cannot become PASS');
+    needs.smoke.result = 'success';
+    for (const id of ['smoke', 'golden', 'performance_smoke']) {
+      needs.reuse.outputs[id] = 'true';
+      assert.equal(eligible(id), false, file + '/' + id + ': authenticated producer suppresses the full worker');
+    }
+  }
+});
+
 test('fresh dist precedes pure units and filesystem/budget consumers (#663/#981)', () => {
   const { chunks } = jobsOf(read('validate.yml')), frontend = chunks.get('frontend'), guards = chunks.get('product_guards');
   assert.ok(frontend.indexOf('- name: Build') < frontend.indexOf('- name: Pure product units'));
@@ -92,8 +127,8 @@ test('#657 копии бандла сверяются только на рели
   assert.doesNotMatch(frontend, /bundle-tree\.mjs dist custom_components/,
     'безусловная сверка красила бы каждую задачу, не коммитящую бандл');
   const devBuild = workflow.slice(workflow.indexOf('\n  dev_build:\n'), workflow.indexOf('\n  smoke:\n'));
-  assert.match(devBuild, /if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/dev'/);
-  assert.match(devBuild, /needs: bundle/);
+  assert.match(devBuild, /if: always\(\) && github\.event_name == 'push' && github\.ref == 'refs\/heads\/dev'/);
+  assert.match(devBuild, /needs: \[bundle, product_guards\]/);
   assert.match(devBuild, /contents: write/);
   assert.match(devBuild, /name: card-bundle\n\s+path: dist/);
   assert.match(devBuild, /node scripts\/dev-build\.mjs --sha "\$GITHUB_SHA" --dist dist/);
@@ -450,7 +485,7 @@ test('#954 full smoke/performance stay on heavy; golden has an independent deman
     const chunk = text.slice(start, start + 600);
     assert.match(chunk, /needs: \[changes,/, `${job}: зависит от changes`);
     const output = job === 'golden' ? 'golden' : 'heavy';
-    assert.match(chunk, new RegExp(`if: needs\\.changes\\.outputs\\.${output} == 'true' &&`), `${job}: requested check`);
+    assert.match(chunk, new RegExp(`if: .*needs\\.changes\\.outputs\\.${output} == 'true' &&`), `${job}: requested check`);
   }
   assert.match(text, /heavy: \$\{\{ steps\.heavy\.outputs\.heavy \}\}/);
   assert.match(text, /classify-changes\.mjs --heavy/);

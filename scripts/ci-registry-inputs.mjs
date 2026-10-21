@@ -32,12 +32,13 @@ export function registryProtocolFiles(reader) {
   return [...reached].sort();
 }
 
-/** Bulk-read text objects once; binary assets stay lazy. No per-file git show. */
+/** Bulk-read control files once; ordinary input identity uses Git blob content IDs. */
 export function registryReader(root, ref = 'HEAD') {
   const rows = git(root, ['ls-tree', '-rz', '--full-tree', ref]).toString('utf8').split('\0').filter(Boolean)
     .map(row => { const m = /^(\d+) blob ([a-f0-9]{40})\t(.+)$/.exec(row); if (!m) throw Error('unsupported input tree'); return { mode: m[1], oid: m[2], path: m[3] }; });
   const tracked = rows.map(r => r.path), byPath = new Map(rows.map(r => [r.path, r]));
-  const textObjects = [...new Set(rows.filter(r => !BUILD_OUTPUT.some(p => matchesPaths(r.path, [p]))).map(r => r.oid))];
+  const controls = /^(?:scripts\/|\.github\/workflows\/|(?:package(?:-lock)?\.json|\.python-version|\.nvmrc|pyproject\.toml)$)/;
+  const textObjects = [...new Set(rows.filter(r => controls.test(r.path)).map(r => r.oid))];
   const data = git(root, ['cat-file', '--batch'], { input: textObjects.join('\n') + '\n' });
   const objects = new Map(); let offset = 0;
   for (const oid of textObjects) {
@@ -111,7 +112,7 @@ export function versionNormalizer(reader) {
     if (all.length !== 1 || all[0][2] !== version) throw Error('unsynchronized literal version mirror');
     masked.set(path, Buffer.from(text.replace(pattern, match => match.replace(version, '<release-version>'))));
   }
-  return { version, read: path => masked.get(path) || normalize(reader.read(path)) };
+  return { version, maskedPaths: new Set(masked.keys()), read: path => masked.get(path) || normalize(reader.read(path)) };
 }
 
 export function executionHeader(text) {
@@ -142,15 +143,22 @@ export function registryToolchain(reader, { node = process.versions.node, platfo
 
 export function registryInputs(root, { ref = 'HEAD', toolchain = null, mode = 'exact', reader = registryReader(root, ref), perfSet = 'glow-iso-interaction' } = {}) {
   const environment = toolchain || registryToolchain(reader);
-  const normalizer = mode === 'candidate' ? versionNormalizer(reader) : { read: p => normalize(reader.read(p)) };
+  const normalizer = mode === 'candidate' ? versionNormalizer(reader) : null;
   const inventory = JSON.parse(reader.text('scripts/ci-registry-inventory.json'));
   if (inventory.schema !== 1) throw Error('unknown input inventory');
   const domains = JSON.parse(reader.text('scripts/ci-profile-paths.json'));
   const productFiles = reader.tracked.filter(pathMatcher(domains.product));
-  const modes = new Map(reader.rows.map(row => [row.path, row.mode]));
+  const entriesByPath = new Map(reader.rows.map(row => [row.path, row]));
   const hashFiles = files => {
     const hash = createHash('sha256');
-    for (const path of [...new Set(files)].sort()) hash.update(path + '\0' + modes.get(path) + '\0').update(normalizer.read(path)).update('\0');
+    for (const path of [...new Set(files)].sort()) {
+      const entry = entriesByPath.get(path);
+      if (!entry || !['100644', '100755'].includes(entry.mode)) throw Error('missing/symbolic input: ' + path);
+      // A Git blob OID names bytes, never a commit or its ancestry. Only beta
+      // scalar masks require reading source bytes; all other bytes stay exact.
+      const content = normalizer?.maskedPaths.has(path) ? 'masked:' + digest(normalizer.read(path)) : 'git-blob:' + entry.oid;
+      hash.update(path + '\0' + entry.mode + '\0' + content + '\0');
+    }
     return hash.digest('hex');
   };
   const treeId = hashFiles(productFiles), keys = {}, recipes = {}, inventories = {};
