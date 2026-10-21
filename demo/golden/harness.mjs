@@ -2391,18 +2391,18 @@ export async function prepareGoldenScenario(page, scenario) {
       }
     }
     if (scenario.vacuumTrail) {
-      await until(() => !!card.renderRoot.querySelector('.vactrail > path.case'));
-      const currentCase = card.renderRoot.querySelector('.vactrail > path.case');
+      await until(() => !!card.renderRoot.querySelector('.vactrail > path.core'));
       const currentCore = card.renderRoot.querySelector('.vactrail > path.core');
-      const previousCase = card.renderRoot.querySelector('.vactrail .prev path.case');
       const previousCore = card.renderRoot.querySelector('.vactrail .prev path.core');
-      const currentD = currentCase?.getAttribute('d') || '';
-      const previousD = previousCase?.getAttribute('d') || '';
+      const currentD = currentCore?.getAttribute('d') || '';
+      const previousD = previousCore?.getAttribute('d') || '';
+      const ink = currentCore && getComputedStyle(currentCore);
       if ((currentD.match(/M /g) || []).length !== 2
           || (currentD.match(/Q /g) || []).length < 4
           || (previousD.match(/Q /g) || []).length < 2
-          || currentD !== currentCore?.getAttribute('d')
-          || previousD !== previousCore?.getAttribute('d')) {
+          || card.renderRoot.querySelector('.vactrail .case')
+          || ink?.stroke !== 'rgb(100, 181, 246)'
+          || ink?.strokeOpacity !== '0.7' || ink?.strokeWidth !== '0.9px') {
         throw new Error(`golden vacuum trail contract is incomplete: ${scenario.id}`);
       }
     }
