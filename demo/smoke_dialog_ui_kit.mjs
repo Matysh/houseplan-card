@@ -9,7 +9,8 @@ const build=await rollup({input:'demo/dialog-ui-kit.ts',plugins:[
  nodeResolve({extensions:['.mjs','.js','.json','.ts']}),
 ],onwarn(warning){if(warning.code!=='CIRCULAR_DEPENDENCY')console.warn(warning.message);}});
 const {output}=await build.generate({format:'es',inlineDynamicImports:true});await build.close();
-const {page,browser}=await launch({width:1280,height:900});
+const touch=process.argv.includes('--touch');
+const {page,browser}=await launch({width:1280,height:900},1,[],{hasTouch:touch});
 const out={},dir='artifacts/dialog-ui-kit-1007';mkdirSync(dir,{recursive:true});
 try {
  await page.addScriptTag({type:'module',content:output[0].code});
@@ -33,8 +34,10 @@ try {
  out.omittedSectionHasNoSeparator=await gallery.locator('[data-kit=conditional]').count()===0&&await gallery.locator('.hpf-section').count()===7;
  out.siblingDraftSurvivesOmission=await first.inputValue()==='Сохранённый черновик';
  const help=gallery.locator('.hpf-toggle hp-help .trigger'),toggle=gallery.locator('#kit-toggle');
- await help.click();out.helpDoesNotToggle=!(await toggle.isChecked());await page.keyboard.press('Escape');
- const picker=gallery.locator('details.kit-picker'),summary=picker.locator('summary'),pickerHelp=gallery.locator('.hpf-disclosure-with-help > hp-help .trigger');
+ if(touch){await help.scrollIntoViewIfNeeded();const r=await help.boundingBox();await page.touchscreen.tap(r.x+r.width/2,r.y+r.height/2);}
+ else await help.click();
+ out.helpDoesNotToggle=!(await toggle.isChecked());await page.keyboard.press('Escape');
+ const picker=gallery.locator('details.kit-picker'),summary=picker.locator('summary'),pickerHelp=gallery.locator('.hpf-disclosure-with-help hp-help .trigger');
  out.disclosureStartsClosed=!(await picker.evaluate(e=>e.open))&&!(await gallery.locator('[data-kit=pick]').isVisible());
  await page.mouse.move(0,0);const rest=await summary.evaluate(e=>({bg:getComputedStyle(e).backgroundColor,shadow:getComputedStyle(e).boxShadow}));
  await pickerHelp.hover();await page.waitForTimeout(40);

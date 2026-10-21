@@ -2,7 +2,9 @@
  * A section owns its separator; controls only own their internal layout.
  * Reused verbatim in the editor, embedded provider root and demo gallery.
  */
-export const dialogCompositionCss = `
+import { css } from 'lit';
+
+export const dialogCompositionCss = css`
 .hpf-settings-form {
   --hpf-section-space:18px;
   --hpf-group-space:12px;
@@ -27,14 +29,15 @@ export const dialogCompositionCss = `
   box-sizing:border-box; width:fit-content; max-width:100%; min-height:44px;
   padding:10px 0; color:var(--hpf-accent,var(--primary-color)); cursor:pointer;
   font:inherit; line-height:22px; overflow-wrap:anywhere;
-  transition:color 160ms ease;
+  transition:var(--hpf-disclosure-transition,color 160ms ease);
 }
 .hpf-disclosure > summary:is(:hover,:focus-visible) { color:var(--primary-text-color); }
 .hpf-disclosure > summary:focus-visible { outline:2px solid var(--hpf-accent,var(--primary-color)); outline-offset:2px; border-radius:3px; }
+.hpf-disclosure-compact { --hpf-disclosure-transition:background 160ms ease; }
+.hpf-disclosure.hpf-disclosure-compact > summary { font-size:12px; line-height:1.45; color:var(--secondary-text-color); }
+.hpf-disclosure.hpf-disclosure-compact > summary:is(:hover,:focus-visible) { background:var(--hpf-tint); }
 .hpf-disclosure-content { display:grid; gap:var(--hpf-group-space,12px); min-width:0; padding-block:var(--hpf-group-space,12px) 0; }
 .hpf-disclosure[open] > .hpf-disclosure-content { animation:hpf-disclosure-enter 160ms ease; }
-.hpf-disclosure-trigger { display:flex; align-items:center; gap:var(--hpf-help-gap,4px); min-width:0; }
-.hpf-disclosure-trigger > button { min-width:0; }
 .hpf-disclosure-with-help { display:grid; grid-template-columns:minmax(0,max-content) auto; align-items:center; column-gap:var(--hpf-help-gap,4px); min-width:0; }
 .hpf-disclosure-with-help > details { display:contents; }
 .hpf-disclosure-with-help > details::details-content { display:contents; }
@@ -47,4 +50,4 @@ export const dialogCompositionCss = `
   .hpf-disclosure > summary { transition:none; }
   .hpf-disclosure[open] > .hpf-disclosure-content { animation:none; }
 }
-`;
+`.cssText;

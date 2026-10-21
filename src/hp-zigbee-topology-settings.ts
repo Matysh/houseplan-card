@@ -289,7 +289,7 @@ export class HpZigbeeTopologySettings extends LitElement {
       ...model.reasons.map(reason => this._reasonLine(reason)),
       ...(model.refreshError ? [this._t('incomplete_refresh_error', { error: this._errorText(model.refreshError) })] : []),
     ].join('\n')).join('\n\n');
-    return html`<details class="hpf-disclosure incomplete" data-incomplete-provider=${provider}>
+    return html`<details class="hpf-disclosure hpf-disclosure-compact incomplete" data-incomplete-provider=${provider}>
       <summary class="status">${this._t('incomplete_title')}</summary>
       <div class="status incomplete-text">${text}</div>
     </details>`;

@@ -77,12 +77,36 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'dialog-kit-empty-sections-survive-1007',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/dialog-composition.test.mjs',
+    because: '#1007 AC2: empty conditional groups must not acquire section identity or a separator; pure entries preserve the following draft identity.',
+    patches: [{
+      file: 'src/editors/form-kit.ts',
+      find: '.filter(({ content }) => sectionHasContent(content));',
+      replace: '.filter(({ content }) => sectionHasContent(content) || true);',
+    }],
+  },
+  {
+    id: 'dialog-kit-help-inside-disclosure-1007',
+    guard: 'node demo/smoke_dialog_ui_kit.mjs',
+    because: '#1007 AC3: a visually adjacent Help must not remain a descendant of the summary; trusted pointer hover and computed ancestor paint require Chromium.',
+    patches: [{
+      file: 'src/editors/form-kit.ts',
+      find: '<summary class=${triggerClass}>${title}</summary>',
+      replace: '<summary class=${triggerClass}>${title}${help ?? nothing}</summary>',
+    }, {
+      file: 'src/editors/form-kit.ts',
+      find: '<div class="hpf-disclosure-with-help">${details}${help}</div>',
+      replace: '<div class="hpf-disclosure-with-help">${details}</div>',
+    }],
+  },
+  {
     id: 'zigbee-incomplete-details-start-open-1005',
     guard: 'node demo/smoke_zigbee_incomplete_reasons.mjs',
     because: '#1005 AC1: native details must initially hide the technical text and open through trusted mouse/keyboard; this requires mounted Chromium details behaviour.',
     patches: [{ file: 'src/hp-zigbee-topology-settings.ts',
-      find: '<details class="incomplete" data-incomplete-provider=${provider}>',
-      replace: '<details open class="incomplete" data-incomplete-provider=${provider}>' }],
+      find: '<details class="hpf-disclosure hpf-disclosure-compact incomplete" data-incomplete-provider=${provider}>',
+      replace: '<details open class="hpf-disclosure hpf-disclosure-compact incomplete" data-incomplete-provider=${provider}>' }],
   },
   {
     id: 'zigbee-incomplete-heading-enlarged-1005',

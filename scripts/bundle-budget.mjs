@@ -795,7 +795,10 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // reference:312703+2313=315016. No added band or absolute budget.
 // #976: approved shared secondary forms and accepted-close lifecycle:
 // measured320340 B gzip (+2286 B); carry the measured cost only, band unchanged.
-export const LAZY_EDITOR_GZIP_CEILING = 322_435;
+// #1007: measured joint tree325007 B gzip: shared section/disclosure composition,
+// migration of existing forms and cross-root action reuse. This refreshes the
+// lazy editor reference only; View ceilings, absolute limits and2000-B band stay.
+export const LAZY_EDITOR_GZIP_CEILING = 325_007;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

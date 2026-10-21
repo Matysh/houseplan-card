@@ -11,7 +11,6 @@
  * референса; расхождение с ним — находка, а не вкус.
  */
 import { html, nothing, type TemplateResult } from 'lit';
-import { repeat } from 'lit/directives/repeat.js';
 
 import { CARD_DIALOG_FORM_KIT, cardDialogFormKitTokens, formKitCss } from '../styles/form-kit.styles';
 import { colorTileInk } from './color-tile-ink';
@@ -90,9 +89,11 @@ export function formSectionEntries(sections: readonly FormSectionContent[]): { c
  * a heading and its fields in one template; do not style their outer margins.
  */
 export function formSections(sections: readonly FormSectionContent[]): TemplateResult {
-  const visible = formSectionEntries(sections);
-  return html`<div class="hpf-sections">${repeat(visible, item => item.index,
-    ({ content }) => html`<div class="hpf-section">${content}</div>`)}</div>`;
+  // Preserve one Lit child part per source position. Omitting a section clears
+  // that part instead of shifting the following controls to another identity.
+  const content: (TemplateResult | typeof nothing)[] = Array(sections.length).fill(nothing);
+  for (const entry of formSectionEntries(sections)) content[entry.index] = html`<div class="hpf-section">${entry.content}</div>`;
+  return html`<div class="hpf-sections">${content}</div>`;
 }
 
 /** Sibling Help has its own hover and activation zone. */

@@ -155,6 +155,7 @@ try {
       const summary = getComputedStyle(el.querySelector('summary')), body = getComputedStyle(el.querySelector('div'));
       const reference = getComputedStyle(el.parentElement.querySelector('[role="status"]'));
       return { same: ['fontFamily', 'fontSize', 'lineHeight', 'color'].every(key => summary[key] === reference[key] && body[key] === reference[key]),
+        computed: Object.fromEntries(['fontFamily','fontSize','lineHeight','color'].map(key=>[key,{summary:summary[key],body:body[key],reference:reference[key]}])),
         nativeMarker: summary.display === 'list-item' && summary.listStyleType === 'disclosure-open', size: summary.fontSize };
     });
     out[`${theme}StatusTypographyAndNativeTriangle`] = evidence[`${theme}Typography`].same

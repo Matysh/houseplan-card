@@ -12,6 +12,15 @@ after changing the browser clock: a hass update may reuse View's render memo.
 This headless proof does not claim physical GPU acceptance. Intentional moon
 golden changes require canonical Linux reviewed acceptance under `ci:golden`.
 
+## Shared dialog composition (#1007)
+
+The existing lazy form kit owns explicit sections, independent Help/action
+regions and disclosures; see [DIALOG-UI-KIT.md](DIALOG-UI-KIT.md). The measured
+joint editor graph reached 325007 B gzip during integration (previous lazy
+reference 322435 B). The reference carries this explained cost; the 2000-B band,
+initial View ceilings and absolute budgets are unchanged. The gallery bundles
+from sources only for development and is absent from the shipped runtime.
+
 ## Same-ID room-wall restoration (#996)
 
 Only ordinary config/set opts into `allow_room_wall_promotion`; there is no

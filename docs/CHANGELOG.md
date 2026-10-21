@@ -10,7 +10,8 @@
   nodes, reported scan failures and unresolved routes. (#1005)
 - Use shared dialog sections, spacing, action/help interactions and disclosures
   across settings and auxiliary dialogs; hidden fields keep a consistent layout. (#1007)
-  Existing Zigbee incomplete-data disclosures retain their content and styling.
+  Existing Zigbee incomplete-data disclosures retain compact status typography
+  and native controls across live theme changes.
 
 ## v1.82.0 — 2026-10-21
 
