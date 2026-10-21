@@ -2126,7 +2126,9 @@ the controlled write/read boundary, strict stale/missing refusal and exact
 explicit CLI output, including POSIX symlink entry. Product art is unchanged.
 
 `npm run gate:plan` derives required product/tooling sets from the real diff
-and the import/data dependency closure. Unknown inputs select both. Optional
+and the import/data dependency closure. Imported tools keep every computed
+consumer, including product tests; a scripts/ prefix cannot discard them.
+Unknown inputs select both. Optional
 `npm run gate:tooling` does not build the product; `npm run gate:product` builds
 and runs every emitted-tree consumer. Their test-file union is exactly the
 ordinary unit suite; neither subset alone replaces `npm run gate:small` or the

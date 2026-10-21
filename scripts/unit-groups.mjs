@@ -125,7 +125,8 @@ export function groupsAffectedBy(files, grouping) {
   for (const file of files) {
     if (/\.md$|^docs\//.test(file)) continue;
     if (/^(?:src|custom_components|demo|assets)\//.test(file)) { result.add('product'); continue; }
-    if (/^(?:scripts|\.github|\.githooks)\//.test(file)) { result.add('tooling'); continue; }
+    // Tool paths can also be runtime inputs of product tests. The computed
+    // consumers decide their required groups; an unowned tool fails closed.
     const tests = grouping.tests.filter(t => grouping.dependencies[t]?.includes(file));
     if (!tests.length && !/^(?:docs\/|README|PROCESS\.md|AGENTS\.md)/.test(file)) return ['product', 'tooling'];
     for (const t of tests) result.add(grouping.product.includes(t) ? 'product' : 'tooling');

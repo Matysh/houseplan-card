@@ -104,6 +104,13 @@ test('#982 every real unit belongs to the required union, including new files', 
   assert.deepEqual(groupsAffectedBy(['docs/DEVELOPMENT.md'], g), []);
   assert.deepEqual(groupsAffectedBy(['unmapped-input.xyz'], g), ['product', 'tooling']);
   assert.deepEqual(groupsAffectedBy(['package-lock.json'], g), ['product', 'tooling']);
+  // Selector input is data, not an invocation of the production CLI.
+  const modelTool = ['scripts', 'model-invariants.mjs'].join('/');
+  assert.ok(groupsAffectedBy([modelTool], g).includes('product'));
+  const productTools = [...new Set(g.product.flatMap(t => g.dependencies[t]))].filter(p => p.startsWith('scripts/'));
+  assert.ok(productTools.length > 0);
+  for (const tool of productTools) assert.ok(groupsAffectedBy([tool], g).includes('product'), `lost product consumer: ${tool}`);
+  assert.deepEqual(groupsAffectedBy(['scripts/new-unowned.mjs'], g), ['product', 'tooling']);
 });
 
 test('#982 required local gate observes the real git diff and untracked tests; unknown range fails closed', t => {
@@ -124,4 +131,23 @@ test('#982 required local gate observes the real git diff and untracked tests; u
   writeFileSync(join(root, 'test/new.test.mjs'), "import '../src/product.ts';");
   assert.deepEqual(requiredUnitGroups(root, 'HEAD'), ['product', 'tooling']);
   assert.deepEqual(requiredUnitGroups(root, 'missing-base'), ['product', 'tooling']);
+});
+
+test('#982 r1: the real local diff includes product tests importing a tool, including transitive shared tools', t => {
+  const root = fixture(t, {
+    'test/tool.test.mjs': "import '../scripts/shared.mjs';",
+    'test/product.test.mjs': "import '../src/product.ts'; import '../scripts/helper.mjs';",
+    'scripts/helper.mjs': "import './shared.mjs'; export const value = 1;",
+    'scripts/shared.mjs': 'export const result = 1;',
+    'src/product.ts': 'export const result = 2;',
+  });
+  const git = (...args) => execFileSync('git', ['-C', root, '-c', 'user.name=fixture', '-c', 'user.email=fixture@example.invalid', ...args], { stdio: 'pipe' });
+  git('init', '-q'); git('add', '.'); git('commit', '-qm', 'fixture');
+  writeFileSync(join(root, 'scripts/shared.mjs'), 'export const result = 3;');
+  assert.deepEqual(requiredUnitGroups(root, 'HEAD'), ['product', 'tooling']);
+  writeFileSync(join(root, 'scripts/shared.mjs'), 'export const result = 1;');
+  writeFileSync(join(root, 'scripts/helper.mjs'), "import './shared.mjs'; export const value = 2;");
+  assert.deepEqual(requiredUnitGroups(root, 'HEAD'), ['product']);
+  writeFileSync(join(root, 'scripts/new-unowned.mjs'), 'export const value = 4;');
+  assert.deepEqual(requiredUnitGroups(root, 'HEAD'), ['product', 'tooling']);
 });
