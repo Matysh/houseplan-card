@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 80,
-  "acceptedAt": "2026-10-20T15:52:30.981Z",
-  "sourceFingerprint": "ef44a4fe3e163d459a852cd0713ebf632a08a8cb8874be448cb9a0bdf1b0a1cd",
+  "acceptedAt": "2026-10-21T00:51:56.459Z",
+  "sourceFingerprint": "326b900b7bdf9b7972fd105d13f04592fe7c66f8892adacb5c9f3e409e87a126",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,18 +10,18 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "ef44a4fe3e163d459a852cd0713ebf632a08a8cb8874be448cb9a0bdf1b0a1cd",
+    "buildFingerprint": "326b900b7bdf9b7972fd105d13f04592fe7c66f8892adacb5c9f3e409e87a126",
     "ci": {
       "repository": "Matysh/houseplan-card",
-      "run": 39449573965,
+      "run": 39519249202,
       "attempt": 1,
-      "sha": "7be376ff2a2d72077656bf03633f7293addf28d7"
+      "sha": "10b5c93aabc53bf2dffb1a46f2cc0ab233d34f74"
     }
   },
   "localAttestation": null,
   "foreignCapture": null,
   "witnesses": {
-    "count": 208,
+    "count": 187,
     "floor": 10
   },
   "scenarios": {
@@ -195,10 +195,10 @@
     "large-house-zoom-040-dark": "fa4896e9967439767bef5856e130476c66e3d4dc67ee2e5095511047ed63330b",
     "large-house-zoom-250-dark": "b60cb412c91ff0b822c1c63415352f26c902643474d959e0189631bfe6a8ed5e",
     "large-house-warm-remount-dark": "31bcf222be1e53ba6074888ebc2cacf28af2a3090c250d6f0bf971b525dffcf9",
-    "device-state-source-standard-en": "fdc7c17295c1379fe0f4764b4afa0c507c60ac38fbef6300203e875d391dc958",
-    "device-state-source-manual-ru": "aa20bcebddf55cee0e08fc3e21d602c2dc0adbe5a1a5ab9066e81449f489f337",
-    "device-state-source-unknown-en": "c3f57afcb427fa2bcb3b5c5a1d0ca5ddadb14cf18c7f1311e5f5bd15a4a13a6d",
-    "device-state-source-protected-ru": "b5f686ae5a9fa706913b1cfedc437ccadc44343b264193c131ae894527dba0ca",
+    "device-state-source-standard-en": "b06b592749ad4ba57f1775feef31ac2553d9b61d60ce105bcf6ea2dc7ffafb92",
+    "device-state-source-manual-ru": "c1f713f42da239338d1f4cfc06e842440e6f0704f9f23e1c5e9558654df19581",
+    "device-state-source-unknown-en": "ddb20371d2e8c65cfdbd03a4c8b8508295cf3679bbc8b947ac9b62b9680e6365",
+    "device-state-source-protected-ru": "df428d564915bc2afcb7ee570e4f6633ca470195ef78f9b528a5d27f8729e71a",
     "device-dialog-desktop-en": "a9695faf4b34479a0033481c6cba2b69c9fe871c4510bd5b6596b9f679f20f23",
     "device-dialog-mobile-ru": "66168a7ef90a910365328f92f39af445dd17a7e09686baed8fe7b2e0c9ff7680",
     "device-dialog-desktop-de": "c5570533f9840ccac9878833985e5ec31a2409f29cd2cd8fa2c1f4a175d0a2b8",

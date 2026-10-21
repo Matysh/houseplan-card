@@ -135,6 +135,7 @@
       "device-display-preview"
     ],
     "witnesses": 10,
-    "floor": 2
+    "floor": 2,
+    "lastWriteWasFingerprintOnly": true
   }
 }
