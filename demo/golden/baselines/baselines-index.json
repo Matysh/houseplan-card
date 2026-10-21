@@ -1,29 +1,27 @@
 {
   "schema": 3,
   "matrixVersion": 80,
-  "acceptedAt": "2026-10-21T22:00:54.657Z",
-  "sourceFingerprint": "9cb19e1ca2a1ed91ed4edcd46f8c1adf97735ce0d75e757d13d1a93c74181638",
+  "acceptedAt": "2026-10-21T22:54:58.012Z",
+  "sourceFingerprint": "42e69f019096f5aef911114e5e04054bb1ef59fe2aabb91e655750e64d3387bd",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
-  "acceptedOn": "win32",
+  "acceptedOn": "linux",
   "capture": {
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "9cb19e1ca2a1ed91ed4edcd46f8c1adf97735ce0d75e757d13d1a93c74181638",
+    "buildFingerprint": "42e69f019096f5aef911114e5e04054bb1ef59fe2aabb91e655750e64d3387bd",
     "ci": {
       "repository": "Matysh/houseplan-card",
-      "run": 39681901012,
+      "run": 39688968781,
       "attempt": 1,
-      "sha": "49c3fb4424f9f80262b065ca168dcaebdd3f4ee3"
+      "sha": "d4020af2e74b1aaa7f87fc64f448bd78d3c1a732"
     }
   },
   "localAttestation": null,
-  "foreignCapture": {
-    "reason": "Visually reviewed complete Linux CI artifact run 39681901012 for source 49c3fb442; acceptance runs on Windows, captured platform remains Linux"
-  },
+  "foreignCapture": null,
   "witnesses": {
-    "count": 187,
+    "count": 189,
     "floor": 10
   },
   "scenarios": {
@@ -60,7 +58,7 @@
     "isometric-touch-kiosk-dark": "c8b78fc23b6d92bc0e229f34f648691147dba2b7456511e40959fe678e287d95",
     "isometric-large-warm-remount-dark": "941b588f6d68f51031aeedab24767e1b8cb2b78ecf84ab6241bc12a6076dcf87",
     "isometric-stage3-overlays-light": "26d484c5848b46991241d9c3f9147d8ba38fabea74e83abf34b7937c4683830b",
-    "isometric-stage3-overlays-dark": "11f3dba663555ede907efd91c72d209ed9a3b62db18bc871168a93252d74c72d",
+    "isometric-stage3-overlays-dark": "9d314b66ce83668a9f774a390a65f39b7bf5d9656714de5b3471e81478b3b2e7",
     "isometric-stage3-openings-dark": "35e5087c8a203a442856b93de21ef086bfb6e51aea89dd6924a595266fd5955b",
     "isometric-stage3-forced-colors-dark": "bbe1f1947e1e6df06bb5718821fb1fff63fd30d6be37c36d457c0c06e2270a79",
     "isometric-stage3-no-filter-dark": "8f1d5cc7714d1977dbc122e8e4ca0e522b78a0205176c92f55f3cc92c0793d62",
@@ -69,7 +67,7 @@
     "pdf-export-geometry-light": "c403a141cefb73e4653f2ffb9c346b4cfaa3de339b6c39c227ef1552ebde0048",
     "pdf-export-polish-light": "ed6685900355e20a4618e931d42d2e45a39ad44e4a2ab044fa5ee64ff56f12f4",
     "pdf-export-stepped-dimensions-light": "b9732b8b9c38153c564d0c93fbfbf44a8dd348c8667d2f8c2d14492e08e04f3e",
-    "vacuum-trail-smoothing-dark": "b4c94d06f362d588e91f9bd93deb3a076a8c67eeec2518d9a2e5d8b9ff243430",
+    "vacuum-trail-smoothing-dark": "d0625f6c51bdbbbdd86c6abb573e4ca8ef51f3186a17d11cfefdae59aa87558f",
     "room-label-parity-view-dark": "75815e9fc5a7b04d096739bf0c3af11725d95533391344a5a1112df7b0803e8f",
     "room-co2-flat-light": "1788b1bc0f5af75f3ce6178bae2feef76c0420f8b3002983bd577b75b3cbdfbe",
     "room-co2-iso-dark": "ac426ac8e76c6def861cf0d3f86dd32f9f98a0ef4ca2a10164aea9de259676ae",
