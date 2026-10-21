@@ -21,6 +21,9 @@ export const dialogCompositionCss = css`
   border-block-start:1px solid var(--hpf-line,var(--divider-color));
 }
 .hpf-section > .hpf-sub { margin:0; min-height:0; }
+.hpf-sections-plain > .hpf-section:not([hidden]) ~ .hpf-section:not([hidden]) {
+  padding-block-start:0; border-block-start:0;
+}
 .hpf-section > .hpf-sub h4 { margin:0; }
 .hpf-action-help { display:inline-flex; align-items:center; gap:var(--hpf-help-gap,4px); min-width:0; max-width:100%; }
 .hpf-action-help > hp-help { flex:none; }

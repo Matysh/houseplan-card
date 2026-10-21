@@ -2,8 +2,23 @@ import { launch, check, finish } from './serve.mjs';
 import { installStaticStability, resetGoldenStability } from './golden/static-stability.mjs';
 import { prepareGoldenScenario } from './golden/harness.mjs';
 import { GOLDEN_SCENARIOS } from './golden/matrix.mjs';
+import { compareInPage } from '../scripts/png-identical.mjs';
 const { page, browser } = await launch({ width: 1000, height: 820 });
 try {
+  const pngSamples = await page.evaluate(() => {
+    const png = (width, colour) => {
+      const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = 1;
+      const context = canvas.getContext('2d'); context.fillStyle = colour; context.fillRect(0, 0, width, 1);
+      return canvas.toDataURL('image/png').split(',')[1];
+    };
+    return { black: png(1, '#000'), white: png(1, '#fff'), wide: png(2, '#000') };
+  });
+  const pngBytes = key => Buffer.from(pngSamples[key], 'base64');
+  check('#1007 decoded PNG self comparison', await compareInPage(page, pngBytes('black'), pngBytes('black')),
+    { identical: true, differing: 0, sizeMismatch: false });
+  check('#1007 decoded PNG detects one different pixel', await compareInPage(page, pngBytes('black'), pngBytes('white')),
+    { identical: false, differing: 1, sizeMismatch: false });
+  check('#1007 decoded PNG detects dimensions', (await compareInPage(page, pngBytes('black'), pngBytes('wide'))).sizeMismatch);
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   const read = () => page.evaluate(() => {
     const node = window.__card.shadowRoot.querySelector('[data-hp="device"]');

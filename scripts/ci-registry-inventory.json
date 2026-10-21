@@ -1886,6 +1886,7 @@
       "scripts/fix-test-build.mjs",
       "scripts/gate-reuse.mjs",
       "scripts/model-invariants.mjs",
+      "scripts/png-identical.mjs",
       "scripts/sh3d-convert/easy-catalog.mjs",
       "scripts/sh3d-convert/easy-content.mjs",
       "scripts/sh3d-convert/easy-geometry.mjs",

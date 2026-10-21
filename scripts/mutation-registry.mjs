@@ -77,6 +77,26 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'png-comparison-reads-closed-bitmap-size-1007',
+    guard: 'node demo/smoke_capture_stability.mjs',
+    because: '#1007 AC6: ImageBitmap.close resets the native dimensions; known 1px and different-size PNG inputs must fail equality in the real decoder.',
+    patches: [{
+      file: 'scripts/png-identical.mjs',
+      find: 'return { width, height, data };',
+      replace: 'return { width: bitmap.width, height: bitmap.height, data };',
+    }],
+  },
+  {
+    id: 'dialog-kit-palette-divider-restored-1007',
+    guard: 'node demo/smoke_settings_mock_match_948.mjs',
+    because: '#1007 AC6: the approved palette has undivided subgroups; the real form must keep 18px grouping without introducing separator paint.',
+    patches: [{
+      file: 'src/styles/dialog-composition.styles.ts',
+      find: '.hpf-sections-plain > .hpf-section:not([hidden]) ~ .hpf-section:not([hidden]) {',
+      replace: '.hpf-sections-plain-disabled > .hpf-section:not([hidden]) ~ .hpf-section:not([hidden]) {',
+    }],
+  },
+  {
     id: 'room-font-controls-lose-section-composition-1007',
     guard: 'node demo/smoke_room_settings_946.mjs',
     because: '#1007 AC1/AC6: two mapped font controls must remain independent sections with the approved 18px separator; only mounted layout proves the composition.',

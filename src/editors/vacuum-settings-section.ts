@@ -97,20 +97,20 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
           ? html`<div class="warn vacsource-warning">
               <span>${runtime.host._t((`vac.source_banner_${resolution.status}`) as I18nKey)}</span>
               <button type="button" class="btn ghostbtn" @click=${openPicker}>${runtime.host._t('vac.choose_source')}</button>
-            </div>` : nothing}`,
-          showXcmeHint ? html`<div class="warn vacxcme">
+            </div>` : nothing}
+          ${showXcmeHint ? html`<div class="warn vacxcme">
           <b>${runtime.host._t('vac.xcme_hint')}</b>
           <pre>attributes:
   - vacuum_position
   - rooms
   - path
   - map_name</pre>
-        </div>` : nothing,
-          ecovacs ? html`<div class="rhint" data-hp="ecovacs-source-hint">${runtime.host._t(
+        </div>` : nothing}
+          ${ecovacs ? html`<div class="rhint" data-hp="ecovacs-source-hint">${runtime.host._t(
           !allowed ? 'vac.ecovacs_wrong_device' : !ecovacs.supported ? 'vac.ecovacs_update_backend'
             : ecovacs.frame?.reason ? 'vac.ecovacs_unsupported'
-              : !tele && v.live !== false ? 'vac.ecovacs_waiting' : 'vac.ecovacs_manual_hint')}</div>` : nothing,
-          disclosure({id:`vacpicker-${dev.id}`,className:'vacpicker',
+              : !tele && v.live !== false ? 'vac.ecovacs_waiting' : 'vac.ecovacs_manual_hint')}</div>` : nothing}
+          ${disclosure({id:`vacpicker-${dev.id}`,className:'vacpicker',
             title:runtime.host._t('vac.choose_source'),triggerClass:'btn ghostbtn',
             help:help('marker.vacuum_source_help',runtime.host._t('vac.choose_source')),
             content:html`<div class="vacsource-list">
@@ -135,15 +135,13 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
                   : html`<div class="rhint">${runtime.host._t('vac.all_cameras_empty')}</div>`)
                 : nothing}
             </details>
-          </div>`}),
-          tele || ecovacs ? html`
-          ${toggleRow({id:'marker-vacuum-live',title:runtime.host._t('vac.live'),help:help('marker.vacuum_live_help',runtime.host._t('vac.live')),checked:v.live!==false,onChange:on=>setVac({live:on?null:false})})}
-          ${field({label:runtime.host._t('vac.trail'),help:html`<hp-help instant data-help="vacuum-trail" .text=${toolsT('marker.vacuum_trail_help')} .ariaLabel=${st('dialog.help_for',{name:runtime.host._t('vac.trail')})}></hp-help>`,control:html`<hp-settings-select><select class="areasel"
+          </div>`})}`,
+          tele || ecovacs ? toggleRow({id:'marker-vacuum-live',title:runtime.host._t('vac.live'),help:help('marker.vacuum_live_help',runtime.host._t('vac.live')),checked:v.live!==false,onChange:on=>setVac({live:on?null:false})}) : nothing,
+          tele || ecovacs ? field({label:runtime.host._t('vac.trail'),help:html`<hp-help instant data-help="vacuum-trail" .text=${toolsT('marker.vacuum_trail_help')} .ariaLabel=${st('dialog.help_for',{name:runtime.host._t('vac.trail')})}></hp-help>`,control:html`<hp-settings-select><select class="areasel"
             @change=${(e: Event) => setVac({ trail_mode: (e.target as HTMLSelectElement).value, trail: null })}>
             ${(['never', 'cleaning', 'always'] as const).map((mv) => html`
               <option value=${mv} ?selected=${vacTrailMode(v) === mv}>${runtime.host._t(('vac.trail_' + mv) as I18nKey)}</option>`)}
-          </select></hp-settings-select>`})}
-        ` : nothing,
+          </select></hp-settings-select>`}) : nothing,
           toggleRow({id:'marker-vacuum-dock-restart',title:runtime.host._t('vac.new_run_after_dock'),
           caption:runtime.host._t(runtime.host._haVacuumDockRestartApi===1?'vac.new_run_after_dock_hint':'vac.new_run_after_dock_update'),
           checked:v.new_run_after_dock===true,

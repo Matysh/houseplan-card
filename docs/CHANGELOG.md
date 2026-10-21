@@ -14,6 +14,8 @@
   and native controls across live theme changes.
   Source-picker triggers retain the same padding and focus shape as ordinary actions.
   Conditional colour/brightness fields keep their separators and the approved toggle density.
+  Palette subgroups retain their undivided layout.
+  Context links and source headings stay grouped with their controls.
 
 ## v1.82.0 — 2026-10-21
 

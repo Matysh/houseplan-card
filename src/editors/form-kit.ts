@@ -88,12 +88,12 @@ export function formSectionEntries(sections: readonly FormSectionContent[]): { c
  * keep sibling controls mounted when a conditional section disappears. Group
  * a heading and its fields in one template; do not style their outer margins.
  */
-export function formSections(sections: readonly FormSectionContent[]): TemplateResult {
+export function formSections(sections: readonly FormSectionContent[], { dividers = true }: { dividers?: boolean } = {}): TemplateResult {
   // Preserve one Lit child part per source position. Omitting a section clears
   // that part instead of shifting the following controls to another identity.
   const content: (TemplateResult | typeof nothing)[] = Array(sections.length).fill(nothing);
   for (const entry of formSectionEntries(sections)) content[entry.index] = html`<div class="hpf-section">${entry.content}</div>`;
-  return html`<div class="hpf-sections">${content}</div>`;
+  return html`<div class=${dividers ? 'hpf-sections' : 'hpf-sections hpf-sections-plain'}>${content}</div>`;
 }
 
 /** Sibling Help has its own hover and activation zone. */

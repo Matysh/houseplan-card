@@ -195,7 +195,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           html`${subsection({ title: st('gs.light_group') })}${colorTiles([tile('light_on', 'gs.light_on'), tile('light_off', 'gs.light_off'), tile('light_none', 'gs.light_none')])}`,
           html`${subsection({ title: st('gs.temp_group') })}${colorTiles([tile('temp_cold', 'gs.temp_cold'), tile('temp_ok', 'gs.temp_ok'), tile('temp_hot', 'gs.temp_hot')])}`,
           html`${subsection({ title: st('gs.lqi_group') })}${colorTiles([tile('lqi_low', 'gs.lqi_low'), tile('lqi_high', 'gs.lqi_high')])}`,
-        ]),
+        ], { dividers: false }),
       })}` },
         { id: 'sun', title: st('gs.section_light'), body: html`${formCard({ id: 'sun', title: st('gs.section_light'), body: formSections([
           colorRow({ label: st('gs.default_light'), help:html`<hp-help instant .text=${st('gs.default_light_help')} .ariaLabel=${st('gs.default_light_help.aria')}></hp-help>`, picker: colorField({

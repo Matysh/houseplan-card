@@ -62,6 +62,7 @@ try {
   const checkbox=dialog.locator('#space-tile-labelCo2');await checkbox.check();await tick();
   out.co2PreviewIsText=await dialog.locator('.cpco2').textContent().then(t=>t.includes('CO₂')) && await dialog.locator('.cpco2 ha-icon').count()===0;
   await section('sun');
+  out.contextLinksStayWithTheirFields=await dialog.locator('[data-card="sun"] .hpf-context-links').evaluateAll(nodes=>nodes.length===2&&nodes.every(n=>!!n.closest('.hpf-section')?.querySelector('.hpf-field')));
   await select('space-bg-mode','');
   out.inheritedBackgroundReadOnly=await dialog.locator('[data-card="sun"] hp-color-opacity').count()===0;
   await select('space-north-mode','custom');

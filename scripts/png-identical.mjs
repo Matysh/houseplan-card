@@ -43,14 +43,16 @@ export async function compareInPage(page, committed, candidate) {
     const decode = async (base64) => {
       const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
       const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+      // close() detaches the bitmap and resets its dimensions to zero.
+      const { width, height } = bitmap;
       const canvas = document.createElement('canvas');
-      canvas.width = bitmap.width;
-      canvas.height = bitmap.height;
+      canvas.width = width;
+      canvas.height = height;
       const context = canvas.getContext('2d', { willReadFrequently: true });
       context.drawImage(bitmap, 0, 0);
-      const { data } = context.getImageData(0, 0, bitmap.width, bitmap.height);
+      const { data } = context.getImageData(0, 0, width, height);
       bitmap.close();
-      return { width: bitmap.width, height: bitmap.height, data };
+      return { width, height, data };
     };
     const result = compare(await decode(a), await decode(b));
     return { ...result, differing: Number.isFinite(result.differing) ? result.differing : -1 };

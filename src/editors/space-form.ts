@@ -376,12 +376,12 @@ function renderRoomCards(port: SpaceFormPort, d: SpaceDialogState, id: (n:string
       options:[{value:'inherit',label:st('space.inherited_value',{v:batteryLabel(inheritedBattery)})},
         ...(['all','low','off'] as const).map(value => ({value,label:batteryLabel(value)}))],
       onChange:deviceBatteryMode => set(port,{...d,deviceBatteryMode})})})}`,
-          field({label:t('space.show_lqi'),control:selectControl<SignalVisibilityMode>({
+          html`${field({label:t('space.show_lqi'),control:selectControl<SignalVisibilityMode>({
       name:id('show-lqi'),value:d.showLqiMode,ariaLabel:t('space.show_lqi'),
       options:[{value:'inherit',label:st('space.inherited_value',{v:st(globalSignalVisibleOf(host._settings) ? 'space.lqi_on' : 'space.lqi_off')})},
         {value:'on',label:st('space.lqi_on')},{value:'off',label:st('space.lqi_off')}],
-      onChange:showLqiMode => set(port,{...d,showLqiMode})})}),
-          port.openGeneral ? html`<div class="hpf-context-links">${sourceLink('display')}</div>` : nothing,
+      onChange:showLqiMode => set(port,{...d,showLqiMode})})})}
+          ${port.openGeneral ? html`<div class="hpf-context-links">${sourceLink('display')}</div>` : nothing}`,
         ])});
 }
 
@@ -394,7 +394,7 @@ function renderSunAndLight(port: SpaceFormPort, d: SpaceDialogState, id:(n:strin
     set(port,{...d,northDegInput:raw,...(n !== null && Number.isInteger(n) && n >= 0 && n <= 359 ? {northDeg:n} : {})});
   };
   return formCard({id:'sun',title:st('space.section_background'),body:spaceFormSections(port, [
-          field({label:st('space.background_label'),help:port.help('space.bg_mode.help'),control:html`${selectControl({
+          html`${spaceFormSections(port,[field({label:st('space.background_label'),help:port.help('space.bg_mode.help'),control:html`${selectControl({
       name:id('bg-mode'),value:d.bgMode ?? '',ariaLabel:st('space.background_label'),
       options:[{value:'',label:st('space.inherited_value',{v:t(bgModeOf(host._settings,{}) === 'static' ? 'gs.bg_static' : 'gs.bg_daynight')})},
         {value:'static',label:t('gs.bg_static')},{value:'daynight',label:t('gs.bg_daynight')}],
@@ -406,12 +406,12 @@ function renderSunAndLight(port: SpaceFormPort, d: SpaceDialogState, id:(n:strin
       picker:html`<hp-color-opacity .label=${t('space.bg_color')} hide-label flat-swatch .pickerLabels=${host._colorPickerLabels}
         .color=${d.bgColor || inheritedColor} .opacity=${1} .showOpacity=${false}
         @hp-color-opacity-change=${(e:CustomEvent<{color:string}>) => set(port,{...d,bgColor:e.detail.color})}></hp-color-opacity>`})})
-      : nothing,
-          port.openGeneral ? html`<div class="hpf-context-links">${textLink(st('space.open_general'),() => port.openGeneral!('plan'))}</div>` : nothing,
+      : nothing])}
+          ${port.openGeneral ? html`<div class="hpf-context-links">${textLink(st('space.open_general'),() => port.openGeneral!('plan'))}</div>` : nothing}`,
           field({label:t('space.sun_rays'),control:selectControl({name:id('sun-rays'),value:d.sunRays === null ? '' : d.sunRays ? '1' : '0',ariaLabel:t('space.sun_rays'),
       options:[{value:'',label:st('space.inherited_value',{v:t(sunRaysOn(host._settings,{}) ? 'space.sun_on' : 'space.sun_off')})},{value:'1',label:t('space.sun_on')},{value:'0',label:t('space.sun_off')}],
       onChange:v => set(port,{...d,sunRays:v === '' ? null : v === '1'})})}),
-          field({label:t('space.north'),help:port.help('space.north.help'),control:selectControl({name:id('north-mode'),value:d.northDeg === null ? 'inherit' : 'custom',ariaLabel:t('space.north'),
+          html`${spaceFormSections(port,[field({label:t('space.north'),help:port.help('space.north.help'),control:selectControl({name:id('north-mode'),value:d.northDeg === null ? 'inherit' : 'custom',ariaLabel:t('space.north'),
       options:[{value:'inherit',label:st('space.north_general',{v:inheritedNorth === null ? '—' : `${inheritedNorth}°`})},{value:'custom',label:st('space.north_custom')}],
       onChange:v => {const northDeg = v === 'custom' ? inheritedNorth ?? 0 : null;set(port,{...d,northDeg,northDegInput:northDeg === null ? '' : String(northDeg)});}})}),
           d.northDeg !== null ? html`<div class="hpf-field">
@@ -420,8 +420,8 @@ function renderSunAndLight(port: SpaceFormPort, d: SpaceDialogState, id:(n:strin
         : html`${compass(d.northDeg,t('space.north'))}${unitInput({id:id('north-deg'),value:d.northDegInput ?? String(d.northDeg),unit:'°',min:0,max:359,step:1,onInput:northInput})}`}
       ${port.northControl ? callout({text:st('gs.north_description')}) : nothing}
       ${northProblem ? html`<p class="hpf-error" role="alert">${st(northProblem.message)}</p>` : nothing}
-    </div>` : nothing,
-          port.openGeneral ? html`<div class="hpf-context-links">${textLink(st('space.open_general'),() => port.openGeneral!('sun'))}</div>` : nothing,
+    </div>` : nothing])}
+          ${port.openGeneral ? html`<div class="hpf-context-links">${textLink(st('space.open_general'),() => port.openGeneral!('sun'))}</div>` : nothing}`,
         ])});
 }
 
