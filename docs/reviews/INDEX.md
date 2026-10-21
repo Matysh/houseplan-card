@@ -7,6 +7,7 @@
 | #994 | [CODE-REVIEW-994-r1.md](CODE-REVIEW-994-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #990 | [CODE-REVIEW-990-r1.md](CODE-REVIEW-990-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #989 | [CODE-REVIEW-989-r1.md](CODE-REVIEW-989-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #988 | [CODE-REVIEW-988-r1.md](CODE-REVIEW-988-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #983 | [CODE-REVIEW-983-r1.md](CODE-REVIEW-983-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | защитные ветки unknownEntry/harnessChanged без собственного отрицательного случая; AC2 «потеря сцены в тесте» продемонстрирована только для golden-связей, не для smoke-ре… | `scripts/browser-push-plan.mjs` `demo/serve.mjs` `test/browser-push-plan.test.mjs` |
 | #982 | [CODE-REVIEW-982-r1.md](CODE-REVIEW-982-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | groupsAffectedBy теряет гарантию «общие входы требуют оба» для реальных shared-файлов s…; принято без правки | `scripts/unit-groups.mjs` `test/wall-thickness.test.mjs` `test/plan-optimizer.test.mjs` `test/near-axis.test.mjs` `test/geometry-corpus.test.mjs` `scripts/model-invariants.mjs` `test/model-invariants.test.mjs` `check-inputs.mjs` |
 | #982 | [CODE-REVIEW-982-r2.md](CODE-REVIEW-982-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
