@@ -1,9 +1,10 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 128, issue: 64. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 129, issue: 65. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
+| #990 | [CODE-REVIEW-990-r1.md](CODE-REVIEW-990-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #989 | [CODE-REVIEW-989-r1.md](CODE-REVIEW-989-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #983 | [CODE-REVIEW-983-r1.md](CODE-REVIEW-983-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | защитные ветки unknownEntry/harnessChanged без собственного отрицательного случая; AC2 «потеря сцены в тесте» продемонстрирована только для golden-связей, не для smoke-ре… | `scripts/browser-push-plan.mjs` `demo/serve.mjs` `test/browser-push-plan.test.mjs` |
 | #982 | [CODE-REVIEW-982-r1.md](CODE-REVIEW-982-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | groupsAffectedBy теряет гарантию «общие входы требуют оба» для реальных shared-файлов s…; принято без правки | `scripts/unit-groups.mjs` `test/wall-thickness.test.mjs` `test/plan-optimizer.test.mjs` `test/near-axis.test.mjs` `test/geometry-corpus.test.mjs` `scripts/model-invariants.mjs` `test/model-invariants.test.mjs` `check-inputs.mjs` |
