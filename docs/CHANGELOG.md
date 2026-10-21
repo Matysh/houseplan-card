@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Explain incomplete Zigbee diagnostic data in a collapsed “Why the data is
+  incomplete” block at the end of each source section, including affected
+  nodes, reported scan failures and unresolved routes. (#1005)
+
 ## v1.82.0 — 2026-10-21
 
 - Promote the tested v1.82.0-beta.6 product to stable without new visual or

@@ -6,7 +6,8 @@ import { ensureSettingsDialogStyles } from './editors/settings-styles';
 import {
   normalizeZ2mBaseTopic, type ZigbeeTopologySettings,
 } from './zigbee-topology-settings';
-import { mapTopologyNodes, resolveProviderUplinks, TOPOLOGY_STALE_MS } from './zigbee-topology';
+import { TOPOLOGY_STALE_MS } from './zigbee-topology';
+import { describeZigbeeTopology, type ZigbeeDiagnosticReason, type ZigbeeTopologyDiagnostics } from './zigbee-topology-diagnostics';
 import type { DevItem } from './types';
 import type { HaRegistrySnapshot } from './ha-binding-status';
 import type { ZigbeeTopologyHass, ZigbeeTopologyRuntimeSnapshot } from './zigbee-topology-runtime';
@@ -14,6 +15,7 @@ import { acquireIntegrationMetadata, integrationMetadataSnapshot } from './integ
 import { zigbeeIntegrationPresence } from './zigbee-integration-presence';
 
 const EMPTY_RUNTIME: ZigbeeTopologyRuntimeSnapshot = { revision: 0, topologies: [], states: {} };
+const EMPTY_DIAGNOSTICS: ZigbeeTopologyDiagnostics = { loaded: false, partial: false, hasKnownRoute: false, reasons: [] };
 
 export class HpZigbeeTopologySettings extends LitElement {
   static properties = {
@@ -102,6 +104,9 @@ export class HpZigbeeTopologySettings extends LitElement {
     .scan-row { border-top:1px solid var(--hpf-line,var(--divider-color)); padding-top:18px; margin-top:18px; }
     .scan-row .status,.scan-row .hint { grid-column:1/-1; }
     details > summary { cursor:pointer; padding:10px 0; color:var(--primary-color); }
+    .incomplete { min-width:0; overflow-wrap:anywhere; }
+    .incomplete > summary { color:var(--secondary-text-color,#9aa0aa); }
+    .incomplete-text { white-space:pre-wrap; padding-bottom:7px; }
     button:hover:not(:disabled) { background:var(--hpf-tint,color-mix(in srgb,var(--primary-color) 10%,transparent)); }
   `;
 
@@ -259,7 +264,45 @@ export class HpZigbeeTopologySettings extends LitElement {
     this._emit({ ...this.value, z2mBaseTopics: [...new Set(topics)].slice(0, 8) });
   }
 
-  private _status(key: string): string {
+  private _diagnosticModels(): Map<string, ZigbeeTopologyDiagnostics> {
+    // Names from a retired owner must not be painted before updated() releases
+    // its subscription. No fetch or global cache belongs to this projection.
+    const currentOwner = this._observing && this._owner === (this.hass?.connection || this.hass)
+      && this._userIdentity === `${this.hass?.user?.id || ''}:${this._admin}`;
+    return new Map(['zha', ...this._topics().map(topic => `z2m:${topic}`)].map(key => [key,
+      currentOwner ? describeZigbeeTopology({ current: this._snapshot.states[key],
+        topology: this._snapshot.topologies.find(item => key === 'zha'
+          ? item.provider === 'zha' : item.provider === 'z2m' && `z2m:${item.instanceId}` === key),
+        devices: this.devices, registry: this.registry }) : EMPTY_DIAGNOSTICS,
+    ]));
+  }
+
+  private _reasonLine(reason: ZigbeeDiagnosticReason): string {
+    const key = `incomplete_${reason.code}` as const;
+    let text = this._t(key);
+    if (reason.failedStages?.length) text += ` ${this._t('incomplete_stages', { stages: reason.failedStages.join(', ') })}`;
+    if (reason.code === 'provider_scan_failure' && (reason.unknownStage || !reason.failedStages?.length)) {
+      text += ` ${this._t('incomplete_stage_unknown')}`;
+    }
+    return `• ${reason.nodeLabel ? `${reason.nodeLabel}: ` : ''}${text}`;
+  }
+
+  private _incompleteDetails(provider: 'zha' | 'z2m', models: Map<string, ZigbeeTopologyDiagnostics>): TemplateResult | typeof nothing {
+    const groups = [...models].filter(([key, model]) => model.loaded && model.partial
+      && (provider === 'zha' ? key === 'zha' : key.startsWith('z2m:')));
+    if (!groups.length) return nothing;
+    const text = groups.map(([key, model]) => [
+      ...(provider === 'z2m' ? [this._t('incomplete_source', { source: key.slice(4) })] : []),
+      ...model.reasons.map(reason => this._reasonLine(reason)),
+      ...(model.refreshError ? [this._t('incomplete_refresh_error', { error: this._errorText(model.refreshError) })] : []),
+    ].join('\n')).join('\n\n');
+    return html`<details class="incomplete" data-incomplete-provider=${provider}>
+      <summary class="status">${this._t('incomplete_title')}</summary>
+      <div class="status incomplete-text">${text}</div>
+    </details>`;
+  }
+
+  private _status(key: string, diagnostics: ZigbeeTopologyDiagnostics): string {
     if (!this._admin) return this._t('status_idle');
     const current = this._snapshot.states[key];
     if (!current) return this._t('status_idle');
@@ -272,14 +315,10 @@ export class HpZigbeeTopologySettings extends LitElement {
     });
     const topology = this._snapshot.topologies.find((item) =>
       (key === 'zha' ? item.provider === 'zha' : `z2m:${item.instanceId}` === key));
-    const mappingPartial = !!topology && !!this.registry
-      && mapTopologyNodes(topology, this.devices, this.registry).warnings.length > 0;
-    const uplinks = topology ? [...resolveProviderUplinks(topology).values()] : [];
     const stale = current.stale || Date.now() - current.obtainedAt > TOPOLOGY_STALE_MS;
-    const partial = current.partial || mappingPartial || uplinks.some((route) => route.kind === 'unknown');
     return [phase, this._t(stale ? 'status_stale' : 'status_ready', { time }),
-      partial ? this._t('route_partial') : '',
-      topology && !uplinks.some((route) => route.kind === 'known') ? this._t('route_unknown') : '',
+      diagnostics.partial ? this._t('route_partial') : '',
+      topology && !diagnostics.hasKnownRoute ? this._t('route_unknown') : '',
       topology?.freshness === 'provider-cache' ? this._t('status_cache') : '',
       current.persistence === 'pending' ? this._t('storage_pending')
         : current.persistence === 'failed' ? this._t('storage_failed') : '',
@@ -308,14 +347,14 @@ export class HpZigbeeTopologySettings extends LitElement {
       : (`error_${error || 'provider'}`) as TopologyI18nKey);
   }
 
-  private _z2mRow(topic: string, mayLoad: boolean, embedded: boolean): TemplateResult {
+  private _z2mRow(topic: string, mayLoad: boolean, embedded: boolean, diagnostics: ZigbeeTopologyDiagnostics): TemplateResult {
     const key = `z2m:${topic}`, current = this._admin ? this._snapshot.states[key] : undefined;
     const active = current?.phase === 'loading' && !!current.jobId;
     const canCancel = active && this._runtime?.zigbeeScanCanCancel(current);
     const disconnected = this._snapshot.backendConnected === false && !this._snapshot.backendError;
     return html`<div class="scan-row" data-topic=${topic}>
       <div class="topic-head">
-        <div class="topic-meta"><strong>${topic}</strong><span class="status" role="status">${this._status(key)}</span></div>
+        <div class="topic-meta"><strong>${topic}</strong><span class="status" role="status">${this._status(key, diagnostics)}</span></div>
         <button class=${embedded ? 'btn ghost' : ''} ?disabled=${!mayLoad || this._invalidTopic || this._busy(key)}
           @click=${() => this._refreshZ2m(topic)}><ha-icon icon="mdi:refresh"></ha-icon>${this._t('z2m_update')}</button>
       </div>
@@ -343,6 +382,7 @@ export class HpZigbeeTopologySettings extends LitElement {
     const enabled = this.value.enabled;
     const mayLoad = admin && this.savedEnabled;
     const topics = this._topics();
+    const diagnostics = this._diagnosticModels();
     return html`
       <div class="section">${this._t('title')}${this._help()}</div>
       <label class="toggle">
@@ -366,8 +406,9 @@ export class HpZigbeeTopologySettings extends LitElement {
             <button ?disabled=${!mayLoad || this._busy('zha')} @click=${this._readZha}>
               <ha-icon icon="mdi:access-point-network"></ha-icon>${this._t('zha_read')}
             </button>
-            <span class="status">${this._status('zha')}</span>
+            <span class="status">${this._status('zha', diagnostics.get('zha')!)}</span>
           </div>
+          ${this._incompleteDetails('zha', diagnostics)}
         </div>
         <div class="provider">
           <div class="provider-title">${this._t('z2m')}</div>
@@ -377,7 +418,8 @@ export class HpZigbeeTopologySettings extends LitElement {
               this._editTopics((event.target as HTMLTextAreaElement).value)}></textarea>
           ${this._invalidTopic ? html`<div class="warning">${this._t('error_invalid_topic')}</div>` : nothing}
           <div class="warning">${this._t('z2m_warning')}</div>
-          ${topics.map(topic => this._z2mRow(topic, mayLoad, false))}
+          ${topics.map(topic => this._z2mRow(topic, mayLoad, false, diagnostics.get(`z2m:${topic}`)!))}
+          ${this._incompleteDetails('z2m', diagnostics)}
         </div>
       </div>` : nothing}
     `;
@@ -393,17 +435,19 @@ export class HpZigbeeTopologySettings extends LitElement {
     ensureSettingsDialogStyles(this);
     const admin = this._admin, enabled = this.value.enabled;
     const mayLoad = admin && this.savedEnabled;
+    const diagnostics = this._diagnosticModels();
     const presence = zigbeeIntegrationPresence(integrationMetadataSnapshot(this.hass), this.registry);
     const storedZha = this._snapshot.topologies.some(item => item.provider === 'zha') || !!this._snapshot.states.zha;
     const storedZ2m = this.value.z2mBaseTopics.length > 0 || this._snapshot.topologies.some(item => item.provider === 'z2m');
     const zha = html`<section class="hpf-provider">
       <div class="provider-heading"><h4>${this._t('zha')}</h4><p class="hpf-hint">${this._t('zha_hint')}</p></div>
-      <p class="status" role="status">${this._status('zha')}</p>
+      <p class="status" role="status">${this._status('zha', diagnostics.get('zha')!)}</p>
       <div class="hpf-actions">
         <button class="btn ghost" ?disabled=${!mayLoad || this._busy('zha')} @click=${this._readZha}>
           <ha-icon icon="mdi:access-point-network"></ha-icon>${this._t('zha_read')}
         </button>
       </div>
+      ${this._incompleteDetails('zha', diagnostics)}
     </section>`;
     const z2m = html`<section class="hpf-provider">
       <div class="hpf-sub"><h4>${this._t('z2m')}</h4></div>
@@ -415,7 +459,8 @@ export class HpZigbeeTopologySettings extends LitElement {
           .value=${this._topicText} @input=${(event: Event) => this._editTopics((event.target as HTMLTextAreaElement).value)}></textarea>
         ${this._invalidTopic ? html`<p class="hpf-error" role="alert">${this._t('error_invalid_topic')}</p>` : nothing}
       </div>
-      ${this._topics().map(topic => this._z2mRow(topic, mayLoad, true))}
+      ${this._topics().map(topic => this._z2mRow(topic, mayLoad, true, diagnostics.get(`z2m:${topic}`)!))}
+      ${this._incompleteDetails('z2m', diagnostics)}
     </section>`;
     return html`<div class="hpf-form hpf-settings-form"><section class="hpf-settings-pane"><div class="hpf-body">
       <label class="hpf-toggle hpf-noicon">

@@ -30,6 +30,11 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/hp-zigbee-topology-settings.ts', 'src/zigbee-topology-diagnostics.ts', 'src/zigbee-provider-routes.ts', 'src/zigbee-topology.ts'],
+    smokes: ['smoke_zigbee_incomplete_reasons.mjs'],
+    because: '#1005: public provider events and settings controls prove source-scoped reasons and their native footer presentation without importing the model.',
+  },
+  {
     files: ['src/dialog-presence.ts', 'src/dialog-exit.ts', 'src/dialog-return-focus.ts', 'src/hp-dialog.ts', 'src/editor-secondary.ts', 'src/styles/settings-dialogs.styles.ts', 'src/device-inbox-menu.ts'],
     smokes: ['smoke_ui_polish_976.mjs'],
     because: '#976: native public controls execute accepted-close/focus paint, tool intention and keyboard rule actions; the browser consumer does not import those product helpers.',

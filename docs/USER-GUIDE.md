@@ -493,6 +493,16 @@ not the provider's radio scan.
 Update and restart the House Plan integration as well as updating the card.
 
 After data is loaded, moving a real mouse over a mapped Zigbee marker shows
+links on the plan. If **Zigbee diagnostics** reports **Incomplete data**, expand
+**Why the data is incomplete** at the end of the ZHA section or after all
+Zigbee2MQTT topic rows. It lists affected nodes and known reasons, including
+reported failed read stages, ambiguous HA/plan mappings and unknown routes.
+Each MQTT topic has its own group. A missing route alone does not mean the
+device is off or faulty. Missing source details are stated explicitly. A failed
+ZHA refresh is separate from the retained snapshot's incomplete-data reasons.
+Opening the block does not start a scan.
+
+Moving a real mouse over a mapped Zigbee marker shows
 its parent (end device) or active next hop towards the coordinator (router),
 as reported by the integration. There is at most one outgoing arrow; confirmed
 incoming arrows show devices routing through this node. The coordinator has

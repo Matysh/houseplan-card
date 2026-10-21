@@ -1641,6 +1641,16 @@ The frontend derives elapsed time from server elapsed plus local monotonic time,
 without per-second map events or invented progress percentages. Mounted visible
 settings alone tick their timer; ordinary hass updates do not resubscribe.
 ZHA cache retrieval is never described as a fresh radio scan.
+Settings diagnostics (#1005) use the pure `zigbee-topology-diagnostics.ts`
+projection for both the short partial status and its native collapsed details.
+It combines current normalized warnings, exact registry/placement outcomes and
+resolved unknown-route reasons once per visible provider, deduplicating by
+reason and provider-scoped node identity. Optional warning metadata preserves
+bounded Z2M `failed` stage names and the three unmatched-device situations;
+route evidence, partial rules, raw Store payloads and saved settings are unchanged.
+Plain Lit text keeps provider labels inert. Each source footer belongs to its
+current connection/admin identity; Z2M topics stay separately named, and a
+failed ZHA refresh describes the retained snapshot separately from its error.
 The pointer-transparent overlay is a child of the `.devlayer` camera, projected
 once with the markers by `live-viewport.ts`; only the source and drawable
 neighbour markers are promoted above it, through transient attributes the

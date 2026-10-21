@@ -77,6 +77,30 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'zigbee-incomplete-details-start-open-1005',
+    guard: 'node demo/smoke_zigbee_incomplete_reasons.mjs',
+    because: '#1005 AC1: native details must initially hide the technical text and open through trusted mouse/keyboard; this requires mounted Chromium details behaviour.',
+    patches: [{ file: 'src/hp-zigbee-topology-settings.ts',
+      find: '<details class="incomplete" data-incomplete-provider=${provider}>',
+      replace: '<details open class="incomplete" data-incomplete-provider=${provider}>' }],
+  },
+  {
+    id: 'zigbee-incomplete-heading-enlarged-1005',
+    guard: 'node demo/smoke_zigbee_incomplete_reasons.mjs',
+    because: '#1005 AC1: source-footer summary must have the same computed 12px status typography in the real settings cascade and both themes.',
+    patches: [{ file: 'src/hp-zigbee-topology-settings.ts',
+      find: '.incomplete > summary { color:var(--secondary-text-color,#9aa0aa); }',
+      replace: '.incomplete > summary { color:var(--secondary-text-color,#9aa0aa); font-size:14px; }' }],
+  },
+  {
+    id: 'zigbee-incomplete-mixes-provider-groups-1005',
+    guard: 'node demo/smoke_zigbee_incomplete_reasons.mjs',
+    because: '#1005 AC4: actual ZHA and multiple Z2M events must reach only their own rendered footer and topic group through the mounted Lit consumer.',
+    patches: [{ file: 'src/hp-zigbee-topology-settings.ts',
+      find: "&& (provider === 'zha' ? key === 'zha' : key.startsWith('z2m:')));",
+      replace: "&& true);" }],
+  },
+  {
     id: 'room-promotion-coerces-json-booleans-to-numbers',
     guard: 'python3 -m pytest tests_backend/test_room_opening_host.py -k compares_unknown_metadata -q',
     because: '#996 AC3: future opening fields must retain JSON booleans, including in nested lists/objects.',

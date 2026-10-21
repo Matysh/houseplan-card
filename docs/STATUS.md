@@ -18,12 +18,17 @@ Everything computable from the tree and git; regenerate, never edit by hand
 |---|---|
 | Generated | 2026-10-21 — rerun `node scripts/status-snapshot.mjs` for the current tree |
 | Version | **1.82.0** in all 7 version sources (`scripts/release-contract.mjs`) |
-| Latest stable tag | `v1.81.0` |
-| Latest prerelease tag | `v1.82.0-beta.5` |
-| Tests | Node unit 5013 · pure backend 574 · HA-harness backend 483 · browser smokes 403 (`npm run inventory`) |
+| Latest stable tag | `v1.82.0` |
+| Latest prerelease tag | `v1.82.0-beta.6` |
+| Tests | Node unit 5024 · pure backend 574 · HA-harness backend 483 · browser smokes 404 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Zigbee incomplete-data explanations (#1005) use a native collapsed footer per
+source in General Settings. The shared diagnostic projection names actual
+warnings, mapping failures and unknown routes without changing route selection
+or scan behaviour; reported Z2M failed stages survive normalization.
 
 Device form follow-up (#995) restores the authentic HA icon field's fill and
 contour, leaves focus to that field (or the fallback wrapper), and applies the

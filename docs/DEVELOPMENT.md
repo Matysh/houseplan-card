@@ -2114,6 +2114,19 @@ the degradation is accepted.
 
 ## Zigbee mapping reuse witness (#906)
 
+For incomplete-data explanations (#1005), run
+`node --test test/zigbee-topology-diagnostics.test.mjs` after compiling test-build,
+then `node demo/smoke_zigbee_incomplete_reasons.mjs` after `bundle:sync`.
+The unit matrix executes all warning/unknown-route categories, exact mapping,
+failed-stage compatibility and deduplication at the 1000-node/6000-warning bounds.
+The pinned-browser witness opens actual General Settings, drives public HA/config
+inputs and provider events, and measures the native spoiler, status typography,
+light/dark narrow wrapping, escaped labels, topic separation and owner retirement.
+Its fixture counts real read/scan RPCs; opening details never starts a request.
+Screenshots and structured observations go to `artifacts/zigbee-incomplete-1005/`.
+Keep `smoke_zigbee_topology_job` and `smoke_settings_navigation` as neighbouring
+action/dirty-form witnesses. Mutation declarations are checked statically only.
+
 `test/zigbee-mapping-memo.test.mjs` executes the compiled overlay render and its
 post-render lifecycle with an ordinary provider fixture lacking direct device
 IDs. A Proxy counts real registry enumeration, not elapsed milliseconds: the

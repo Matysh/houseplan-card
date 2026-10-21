@@ -12,7 +12,13 @@ export interface ZigbeeTopologyLink {
 }
 export type ZigbeeTopologyWarningCode = 'invalid_payload' | 'duplicate_link' | 'self_link'
   | 'unmatched_device' | 'ambiguous_placement' | 'provider_scan_failure' | 'route_unknown' | 'route_unresolved';
-export interface ZigbeeTopologyWarning { code: ZigbeeTopologyWarningCode; nodeKey?: string }
+export interface ZigbeeTopologyWarning {
+  code: ZigbeeTopologyWarningCode; nodeKey?: string;
+  /** Diagnostic provenance only; neither routes nor partialness depend on it. */
+  failedStages?: string[];
+  unknownStage?: boolean;
+  mappingReason?: 'registry-missing' | 'registry-ambiguous' | 'placement-missing';
+}
 export interface ZigbeeUplinkEvidence {
   from: string;
   /** Missing target deliberately preserves an unresolvable claim, rather than discarding a conflict. */
@@ -90,8 +96,9 @@ function topologyOf(provider: ZigbeeProvider, instanceId: string, now: number): 
   return { provider, instanceId, obtainedAt: now, freshness: provider === 'zha' ? 'provider-cache' : 'fresh-scan',
     nodes: [], links: [], uplinkEvidence: [], warnings: [] };
 }
-function warn(topology: ZigbeeTopology, code: ZigbeeTopologyWarningCode, nodeKey?: string): void {
-  if (topology.warnings.length < TOPOLOGY_MAX_LINKS) topology.warnings.push({ code, ...(nodeKey ? { nodeKey } : {}) });
+function warn(topology: ZigbeeTopology, code: ZigbeeTopologyWarningCode, nodeKey?: string,
+  detail?: Pick<ZigbeeTopologyWarning, 'failedStages' | 'unknownStage'>): void {
+  if (topology.warnings.length < TOPOLOGY_MAX_LINKS) topology.warnings.push({ code, ...(nodeKey ? { nodeKey } : {}), ...detail });
   else if (code === 'route_unresolved') topology.warnings[topology.warnings.length - 1] = { code };
 }
 function keyOf(topology: ZigbeeTopology, ieee: string): string {
@@ -296,7 +303,16 @@ export function normalizeZ2mTopology(payload: unknown, baseTopic: string, now = 
       nwk: normalizeZigbeeNwk(value.networkAddress ?? value.network_address ?? value.id),
       name: topologyName(value.friendlyName ?? value.friendly_name),
       ...(typeof value.failed === 'boolean' ? { available: !value.failed } : {}) });
-    if (Array.isArray(value.failed) && value.failed.length) warn(topology, 'provider_scan_failure', key);
+    if (Array.isArray(value.failed) && value.failed.length) {
+      const stages = boundedArray(value.failed, TOPOLOGY_MAX_LINKS);
+      const failedStages = [...new Set((stages || []).filter((stage): stage is string =>
+        typeof stage === 'string' && !!stage.trim() && stage.trim().length <= 255).map(stage => stage.trim()))];
+      const unknownStage = !stages || stages.some(stage => typeof stage !== 'string'
+        || !stage.trim() || stage.trim().length > 255);
+      warn(topology, 'provider_scan_failure', key, {
+        ...(failedStages.length ? { failedStages } : {}), ...(unknownStage ? { unknownStage: true } : {}),
+      });
+    }
   }
   const addresses = indexAddresses(nodes.values());
   const endpoint = (flat: unknown, value: unknown): string | undefined => {

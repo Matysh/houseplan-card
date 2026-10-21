@@ -80,7 +80,10 @@ export function mapTopologyNodes(
   for (const node of topology.nodes) {
     if (node.available === false) { warnings.push({ code: 'provider_scan_failure', nodeKey: node.key }); continue; }
     const deviceIds = deviceIdsForNode(node, registry);
-    if (deviceIds.length !== 1) { warnings.push({ code: 'unmatched_device', nodeKey: node.key }); continue; }
+    if (deviceIds.length !== 1) {
+      warnings.push({ code: 'unmatched_device', nodeKey: node.key,
+        mappingReason: deviceIds.length ? 'registry-ambiguous' : 'registry-missing' }); continue;
+    }
     const deviceId = deviceIds[0];
     const physical = devices.filter((item) => drawable(item)
       && item.bindingKind === 'device' && item.bindingRef === deviceId);
@@ -91,7 +94,8 @@ export function mapTopologyNodes(
     // registry/DOM order. Duplicate device placements remain genuinely ambiguous.
     const representative = physical.length === 1 ? physical[0] : !physical.length ? entities[0] : undefined;
     if (!representative) {
-      warnings.push({ code: physical.length > 1 ? 'ambiguous_placement' : 'unmatched_device', nodeKey: node.key });
+      warnings.push({ code: physical.length > 1 ? 'ambiguous_placement' : 'unmatched_device', nodeKey: node.key,
+        ...(physical.length > 1 ? {} : { mappingReason: 'placement-missing' as const }) });
       continue;
     }
     placements.set(node.key, { markerId: representative.id, space: representative.space });
