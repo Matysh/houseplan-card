@@ -1,9 +1,11 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 123, issue: 60. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 125, issue: 61. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
+| #982 | [CODE-REVIEW-982-r1.md](CODE-REVIEW-982-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | groupsAffectedBy теряет гарантию «общие входы требуют оба» для реальных shared-файлов s…; принято без правки | `scripts/unit-groups.mjs` `test/wall-thickness.test.mjs` `test/plan-optimizer.test.mjs` `test/near-axis.test.mjs` `test/geometry-corpus.test.mjs` `scripts/model-invariants.mjs` `test/model-invariants.test.mjs` `check-inputs.mjs` |
+| #982 | [CODE-REVIEW-982-r2.md](CODE-REVIEW-982-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #979 | [CODE-REVIEW-979-r1.md](CODE-REVIEW-979-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #978 | [CODE-REVIEW-978-r1.md](CODE-REVIEW-978-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #977 | [SPEC-REVIEW-977-r1.md](SPEC-REVIEW-977-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | неверные пути i18n-файлов в «Файлы и архитектурная граница» (не блокирует) | `src/i18n/en.ts` `src/i18n/ru.ts` |
