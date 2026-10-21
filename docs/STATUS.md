@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.82.0-beta.5** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.81.0` |
 | Latest prerelease tag | `v1.82.0-beta.5` |
-| Tests | Node unit 5009 · pure backend 569 · HA-harness backend 481 · browser smokes 402 (`npm run inventory`) |
+| Tests | Node unit 5013 · pure backend 573 · HA-harness backend 483 · browser smokes 403 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions

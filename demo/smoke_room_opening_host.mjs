@@ -110,4 +110,4 @@ try {
 } finally {
   await browser.close();
 }
-finish();
+await finish();

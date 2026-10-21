@@ -135,6 +135,14 @@
       "configs": 0
     },
     {
+      "file": "test/fixtures/996-room-opening-host-candidates.json",
+      "configs": 12
+    },
+    {
+      "file": "test/fixtures/996-room-opening-host.json",
+      "configs": 1
+    },
+    {
       "file": "test/fixtures/config-lifecycle/current.json",
       "configs": 1
     },
@@ -2743,6 +2751,611 @@
             "p-host",
             "p-free"
           ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/996-room-opening-host-candidates.json/0/before",
+      "fingerprint": "4955a08519bb3ec170091f5aae839ccdd0bf47ef9e2524fd53469a1233427180",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-1",
+            "wall-2",
+            "wall-3",
+            "wall-4",
+            "wall-5",
+            "wall-6",
+            "wall-7"
+          ],
+          "rooms": [
+            {
+              "id": "room",
+              "walls": [
+                "wall-2",
+                "wall-4",
+                "wall-3",
+                "wall-1"
+              ]
+            },
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-5",
+                "wall-7",
+                "wall-6",
+                "wall-4"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "opening",
+              "host": {
+                "kind": "wall",
+                "id": "wall-2"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/996-room-opening-host-candidates.json/0/deleted",
+      "fingerprint": "3dba227e6587ab865c158f141886e7851de78049ccbd76319bc7c77100d7cf34",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-4",
+            "wall-5",
+            "wall-6",
+            "wall-7"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-5",
+                "wall-7",
+                "wall-6",
+                "wall-4"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "opening",
+              "host": {
+                "kind": "partition",
+                "id": "wall-2"
+              }
+            }
+          ],
+          "partitions": [
+            "wall-2",
+            "wall-3",
+            "wall-1"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/996-room-opening-host-candidates.json/0/recreated",
+      "fingerprint": "0fa5899a67df5eced69c03a1789e24dd2665a9d23ca9899fbf8bfcf578c15418",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-1",
+            "wall-2",
+            "wall-3",
+            "wall-4",
+            "wall-5",
+            "wall-6",
+            "wall-7"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-5",
+                "wall-7",
+                "wall-6",
+                "wall-4"
+              ]
+            },
+            {
+              "id": "recreated",
+              "walls": [
+                "wall-2",
+                "wall-4",
+                "wall-3",
+                "wall-1"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "opening",
+              "host": {
+                "kind": "wall",
+                "id": "wall-2"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/996-room-opening-host-candidates.json/1/before",
+      "fingerprint": "4955a08519bb3ec170091f5aae839ccdd0bf47ef9e2524fd53469a1233427180",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-1",
+            "wall-2",
+            "wall-3",
+            "wall-4",
+            "wall-5",
+            "wall-6",
+            "wall-7"
+          ],
+          "rooms": [
+            {
+              "id": "room",
+              "walls": [
+                "wall-2",
+                "wall-4",
+                "wall-3",
+                "wall-1"
+              ]
+            },
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-5",
+                "wall-7",
+                "wall-6",
+                "wall-4"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "opening",
+              "host": {
+                "kind": "wall",
+                "id": "wall-2"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/996-room-opening-host-candidates.json/1/deleted",
+      "fingerprint": "63350943390fa3a4a5afb64a5a17d7030472aba199a324bf151ef9626ed631e1",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-4",
+            "wall-5",
+            "wall-6",
+            "wall-7"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-5",
+                "wall-7",
+                "wall-6",
+                "wall-4"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "opening",
+              "host": {
+                "kind": "partition",
+                "id": "wall-2"
+              }
+            }
+          ],
+          "partitions": [
+            "wall-2",
+            "wall-3",
+            "wall-1"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/996-room-opening-host-candidates.json/1/recreated",
+      "fingerprint": "0fa5899a67df5eced69c03a1789e24dd2665a9d23ca9899fbf8bfcf578c15418",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-1",
+            "wall-2",
+            "wall-3",
+            "wall-4",
+            "wall-5",
+            "wall-6",
+            "wall-7"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-5",
+                "wall-7",
+                "wall-6",
+                "wall-4"
+              ]
+            },
+            {
+              "id": "recreated",
+              "walls": [
+                "wall-2",
+                "wall-4",
+                "wall-3",
+                "wall-1"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "opening",
+              "host": {
+                "kind": "wall",
+                "id": "wall-2"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/996-room-opening-host-candidates.json/2/before",
+      "fingerprint": "8e31fc2d7a800cba3bb5c2351555f9b3379212f3e68b4d0370837d174e01f979",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-1",
+            "wall-2",
+            "wall-3",
+            "wall-4",
+            "wall-5",
+            "wall-6",
+            "wall-7"
+          ],
+          "rooms": [
+            {
+              "id": "room",
+              "walls": [
+                "wall-2",
+                "wall-4",
+                "wall-3",
+                "wall-1"
+              ]
+            },
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-5",
+                "wall-7",
+                "wall-6",
+                "wall-4"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "opening",
+              "host": {
+                "kind": "wall",
+                "id": "wall-2"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/996-room-opening-host-candidates.json/2/deleted",
+      "fingerprint": "20ec3708d3e752eb8afc738d296230f18ef79cb844b75fc0bdee550787ca6562",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-4",
+            "wall-5",
+            "wall-6",
+            "wall-7"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-5",
+                "wall-7",
+                "wall-6",
+                "wall-4"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "opening",
+              "host": {
+                "kind": "partition",
+                "id": "wall-2"
+              }
+            }
+          ],
+          "partitions": [
+            "wall-2",
+            "wall-3",
+            "wall-1"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/996-room-opening-host-candidates.json/2/recreated",
+      "fingerprint": "c56301850acfb6888bef4651c339657b210ffbf23717adc164b06ad8aed524c9",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-1",
+            "wall-2",
+            "wall-3",
+            "wall-4",
+            "wall-5",
+            "wall-6",
+            "wall-7"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-5",
+                "wall-7",
+                "wall-6",
+                "wall-4"
+              ]
+            },
+            {
+              "id": "recreated",
+              "walls": [
+                "wall-2",
+                "wall-4",
+                "wall-3",
+                "wall-1"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "opening",
+              "host": {
+                "kind": "wall",
+                "id": "wall-2"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/996-room-opening-host-candidates.json/3/before",
+      "fingerprint": "8e31fc2d7a800cba3bb5c2351555f9b3379212f3e68b4d0370837d174e01f979",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-1",
+            "wall-2",
+            "wall-3",
+            "wall-4",
+            "wall-5",
+            "wall-6",
+            "wall-7"
+          ],
+          "rooms": [
+            {
+              "id": "room",
+              "walls": [
+                "wall-2",
+                "wall-4",
+                "wall-3",
+                "wall-1"
+              ]
+            },
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-5",
+                "wall-7",
+                "wall-6",
+                "wall-4"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "opening",
+              "host": {
+                "kind": "wall",
+                "id": "wall-2"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/996-room-opening-host-candidates.json/3/deleted",
+      "fingerprint": "9fc29d6db20146391928ab394f34b3f3371eced8470ed884850da0fd1802fb17",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-4",
+            "wall-5",
+            "wall-6",
+            "wall-7"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-5",
+                "wall-7",
+                "wall-6",
+                "wall-4"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "opening",
+              "host": {
+                "kind": "partition",
+                "id": "wall-2"
+              }
+            }
+          ],
+          "partitions": [
+            "wall-2",
+            "wall-3",
+            "wall-1"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/996-room-opening-host-candidates.json/3/recreated",
+      "fingerprint": "c56301850acfb6888bef4651c339657b210ffbf23717adc164b06ad8aed524c9",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-1",
+            "wall-2",
+            "wall-3",
+            "wall-4",
+            "wall-5",
+            "wall-6",
+            "wall-7"
+          ],
+          "rooms": [
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-5",
+                "wall-7",
+                "wall-6",
+                "wall-4"
+              ]
+            },
+            {
+              "id": "recreated",
+              "walls": [
+                "wall-2",
+                "wall-4",
+                "wall-3",
+                "wall-1"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "opening",
+              "host": {
+                "kind": "wall",
+                "id": "wall-2"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/996-room-opening-host.json",
+      "fingerprint": "4955a08519bb3ec170091f5aae839ccdd0bf47ef9e2524fd53469a1233427180",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-1",
+            "wall-2",
+            "wall-3",
+            "wall-4",
+            "wall-5",
+            "wall-6",
+            "wall-7"
+          ],
+          "rooms": [
+            {
+              "id": "room",
+              "walls": [
+                "wall-2",
+                "wall-4",
+                "wall-3",
+                "wall-1"
+              ]
+            },
+            {
+              "id": "neighbor",
+              "walls": [
+                "wall-5",
+                "wall-7",
+                "wall-6",
+                "wall-4"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "opening",
+              "host": {
+                "kind": "wall",
+                "id": "wall-2"
+              }
+            }
+          ],
+          "partitions": []
         }
       ]
     },
