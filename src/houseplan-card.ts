@@ -10952,7 +10952,7 @@ export class HouseplanCard extends LitElement {
                   ([m, ic]) => html`<button class="modetab ${this._mode === m ? 'active' : ''}"
                     data-hp="mode-tab" data-mode=${m} data-editor-navigation=${m}
                     title=${this._t(('mode.' + m + '_tip') as any)}
-                    aria-label=${this._t(('mode.' + m) as any)}
+                    aria-label=${this._t(`mode.${m}` as const)}
                     @click=${() => this._setMode(m)}>
                     <ha-icon icon=${ic}></ha-icon><span class="ml">${this._t(('mode.' + m) as any)}</span>
                   </button>${this._mode === m ? editorClose : nothing}`,
