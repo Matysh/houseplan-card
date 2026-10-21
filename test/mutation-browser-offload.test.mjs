@@ -141,7 +141,7 @@ test('#659 marker handlers preserve callouts, baselines and explicit user choice
     '&& (edit ? dirty : true);',
     '@click=${() => { void this._saveMarker(); }}',
     'const requestClose = () => { void this._requestMarkerDialogClose(); };',
-    "${effectiveTapAction === 'run' || effectiveTapAction === 'toggle'",
+    "effectiveTapAction === 'run' || effectiveTapAction === 'toggle'",
     "markerglowblock ${glowSourceDisabled ? 'hpf-disabled' : ''}",
     'valueBadgePosition: position,\n                  valueBadgeTouched: true,',
   );

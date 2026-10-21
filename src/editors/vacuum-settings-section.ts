@@ -7,7 +7,8 @@ import {readVacTelemetry,vacTrailMode,vacRoomNameMatchCount,type VacSourceCandid
 import {subst} from '../logic';
 import {renderVacuumMapsSection} from './vacuum-maps-section';
 import {renderVacuumPathDiagnostics} from './vacuum-path-diagnostics';
-import {field,formCard,subsection,toggleRow} from './form-kit';
+import {field,formCard,subsection,toggleRow, formSections, disclosure, actionHelp,
+} from './form-kit';
 import {settingsCopy} from './settings-copy';
 import {saveVacuumDockRestart,vacuumDockRestartPending} from '../vacuum-dock-restart-write';
 import {ecovacsSourceState,ecovacsSourceAllowed} from '../vacuum-ecovacs-client';
@@ -71,7 +72,7 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
       || (!!resolution.pinned && !!src?.startsWith('camera.') && !selected?.hasPosition);
     const openPicker = () => {
       const picker = [...runtime.host.renderRoot.querySelectorAll<HTMLDetailsElement>('details.vacpicker')]
-        .find((details) => details.dataset.devId === dev.id);
+        .find((details) => details.id === `vacpicker-${dev.id}`);
       if (!picker) return;
       picker.open = true;
       picker.querySelector<HTMLElement>('summary')?.focus();
@@ -89,31 +90,30 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
           ${renderVacuumPathDiagnostics(runtime.host, dev)}
           <div><span>${runtime.host._t('vac.diag_map')}</span><b>${tele?.mapId ?? 'default'}</b></div>
         </div>`;
-    return html`<div class="vacbox">${formCard({id:'vacuum',title:st('marker.section_vacuum'),body:html`
-        ${subsection({title:st('marker.vacuum_source_state')})}
-        ${field({label:runtime.host._t('vac.diag_source'),control:html`<span>${src || runtime.host._t('vac.source_none')}</span>`})}
-        ${field({label:runtime.host._t('vac.diag_status'),control:html`<span>${runtime.host._t((`vac.source_status_${resolution.status}`) as I18nKey)}</span>`})}
-        ${subsection({title:st('marker.vacuum_source_path')})}
-        ${(resolution.status === 'missing' || resolution.status === 'disabled' || resolution.status === 'unverified')
+    return html`<div class="vacbox">${formCard({id:'vacuum',title:st('marker.section_vacuum'),body:formSections([
+          html`${subsection({title:st('marker.vacuum_source_state')})}${field({label:runtime.host._t('vac.diag_source'),control:html`<span>${src || runtime.host._t('vac.source_none')}</span>`})}`,
+          field({label:runtime.host._t('vac.diag_status'),control:html`<span>${runtime.host._t((`vac.source_status_${resolution.status}`) as I18nKey)}</span>`}),
+          html`${subsection({title:st('marker.vacuum_source_path')})}${(resolution.status === 'missing' || resolution.status === 'disabled' || resolution.status === 'unverified')
           ? html`<div class="warn vacsource-warning">
               <span>${runtime.host._t((`vac.source_banner_${resolution.status}`) as I18nKey)}</span>
               <button type="button" class="btn ghostbtn" @click=${openPicker}>${runtime.host._t('vac.choose_source')}</button>
-            </div>` : nothing}
-        ${showXcmeHint ? html`<div class="warn vacxcme">
+            </div>` : nothing}`,
+          showXcmeHint ? html`<div class="warn vacxcme">
           <b>${runtime.host._t('vac.xcme_hint')}</b>
           <pre>attributes:
   - vacuum_position
   - rooms
   - path
   - map_name</pre>
-        </div>` : nothing}
-        ${ecovacs ? html`<div class="rhint" data-hp="ecovacs-source-hint">${runtime.host._t(
+        </div>` : nothing,
+          ecovacs ? html`<div class="rhint" data-hp="ecovacs-source-hint">${runtime.host._t(
           !allowed ? 'vac.ecovacs_wrong_device' : !ecovacs.supported ? 'vac.ecovacs_update_backend'
             : ecovacs.frame?.reason ? 'vac.ecovacs_unsupported'
-              : !tele && v.live !== false ? 'vac.ecovacs_waiting' : 'vac.ecovacs_manual_hint')}</div>` : nothing}
-        <details class="vacpicker" data-dev-id=${dev.id}>
-          <summary class="btn ghostbtn">${runtime.host._t('vac.choose_source')}<hp-help instant .text=${toolsT('marker.vacuum_source_help')} .ariaLabel=${st('dialog.help_for',{name:runtime.host._t('vac.choose_source')})} @click=${(e:Event)=>{e.preventDefault();e.stopPropagation();}}></hp-help></summary>
-          <div class="vacsource-list">
+              : !tele && v.live !== false ? 'vac.ecovacs_waiting' : 'vac.ecovacs_manual_hint')}</div>` : nothing,
+          disclosure({id:`vacpicker-${dev.id}`,className:'vacpicker',
+            title:runtime.host._t('vac.choose_source'),triggerClass:'btn ghostbtn',
+            help:help('marker.vacuum_source_help',runtime.host._t('vac.choose_source')),
+            content:html`<div class="vacsource-list">
             <button type="button" class="vacsource ${!resolution.pinned ? 'on' : ''}"
               @click=${() => setVac({ source: null })}>
               <span><b>${runtime.host._t('vac.source_auto')}</b><small>${runtime.host._t('vac.source_auto_hint')}</small></span>
@@ -135,33 +135,32 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
                   : html`<div class="rhint">${runtime.host._t('vac.all_cameras_empty')}</div>`)
                 : nothing}
             </details>
-          </div>
-        </details>
-        ${tele || ecovacs ? html`
+          </div>`}),
+          tele || ecovacs ? html`
           ${toggleRow({id:'marker-vacuum-live',title:runtime.host._t('vac.live'),help:help('marker.vacuum_live_help',runtime.host._t('vac.live')),checked:v.live!==false,onChange:on=>setVac({live:on?null:false})})}
           ${field({label:runtime.host._t('vac.trail'),help:html`<hp-help instant data-help="vacuum-trail" .text=${toolsT('marker.vacuum_trail_help')} .ariaLabel=${st('dialog.help_for',{name:runtime.host._t('vac.trail')})}></hp-help>`,control:html`<hp-settings-select><select class="areasel"
             @change=${(e: Event) => setVac({ trail_mode: (e.target as HTMLSelectElement).value, trail: null })}>
             ${(['never', 'cleaning', 'always'] as const).map((mv) => html`
               <option value=${mv} ?selected=${vacTrailMode(v) === mv}>${runtime.host._t(('vac.trail_' + mv) as I18nKey)}</option>`)}
           </select></hp-settings-select>`})}
-        ` : nothing}
-        ${toggleRow({id:'marker-vacuum-dock-restart',title:runtime.host._t('vac.new_run_after_dock'),
+        ` : nothing,
+          toggleRow({id:'marker-vacuum-dock-restart',title:runtime.host._t('vac.new_run_after_dock'),
           caption:runtime.host._t(runtime.host._haVacuumDockRestartApi===1?'vac.new_run_after_dock_hint':'vac.new_run_after_dock_update'),
           checked:v.new_run_after_dock===true,
           disabled:runtime.host._haVacuumDockRestartApi!==1||!runtime.host._canEdit||runtime.host._kiosk||vacuumDockRestartPending(runtime.host,dev.id),
           onChange:(on,event)=>{
             if(event?.target instanceof HTMLInputElement) event.target.checked=v.new_run_after_dock===true;
             void saveVacuumDockRestart(runtime,dev.id,on);
-          }})}
-        <div class="vacbtns hpf-actions">
+          }}),
+          html`<div class="vacbtns hpf-actions">
           ${tierA ? html`<button class="btn" ?disabled=${runtime.host._markerDialog?.busy} @click=${() => runtime._vacAutoCalibrate(dev)}>${runtime.host._t('vac.autocal')}</button>` : nothing}
           ${canUseSource && !!tele
             ? html`<button class="btn ghostbtn" ?disabled=${runtime.host._markerDialog?.busy} @click=${() => runtime._vacStartFit(dev)}>${runtime.host._t('vac.fit')}</button>`
             : nothing}
-          <span class="hpf-button-help"><a class="btn ghostbtn" href="https://github.com/Matysh/houseplan-card/blob/main/docs/VACUUM.md"
-            target="_blank" rel="noopener">${runtime.host._t('vac.documentation')}</a>${help('marker.vacuum_documentation_help',runtime.host._t('vac.documentation'))}</span>
-        </div>
-        ${tele ? renderVacuumMapsSection(runtime,dev,resolution,st('marker.vacuum_maps_calibration')) : nothing}
-        <details class="hpf-profile-diagnostics"><summary class="btn ghost">${st('marker.vacuum_diagnostics')}</summary>${diagnostics}</details>
-      `})}</div>`;
+          ${actionHelp(html`<a class="btn ghostbtn" href="https://github.com/Matysh/houseplan-card/blob/main/docs/VACUUM.md"
+            target="_blank" rel="noopener">${runtime.host._t('vac.documentation')}</a>`,help('marker.vacuum_documentation_help',runtime.host._t('vac.documentation')))}
+        </div>`,
+          tele ? renderVacuumMapsSection(runtime,dev,resolution,st('marker.vacuum_maps_calibration')) : nothing,
+          disclosure({className:'hpf-profile-diagnostics',title:st('marker.vacuum_diagnostics'),content:diagnostics}),
+        ])})}</div>`;
   }

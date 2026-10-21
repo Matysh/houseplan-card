@@ -8,7 +8,7 @@ import { roomTempThresholdDraft, strictNumber } from '../space-dialog';
 import type { HouseplanEditorRuntime } from '../houseplan-editor-runtime';
 import {
   colorField, colorRow, callout, selectControl, field, fieldGrid, footerStatus, formCard, rangeEnds,
-  rangeLine, segmented, sourcePicker, subsection, textLink, unitInput,
+  rangeLine, segmented, sourcePicker, subsection, textLink, unitInput, formSections,
 } from './form-kit';
 import { roomDirty, roomProblems } from './room-form-state';
 import { ensureSettingsDialogStyles } from './settings-styles';
@@ -153,8 +153,8 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
         ${formCard({
           id: 'fill',
           title: t('room.group_fill'),
-          body: html`
-            ${field({
+          body: formSections([
+          field({
               label: st('room.fill_mode_label'), help: shelp('room.group_fill.help'),
               control: selectControl<'' | RoomFillMode>({
                 name:'rfill',value:host._roomFill as '' | RoomFillMode,ariaLabel:t('room.fill_label'),
@@ -162,8 +162,8 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
                   ...(['none','custom','lqi','light','temp'] as const).map(value=>({value,label:fillLabel(value)}))],
                 onChange:setFill,
               }),
-            })}
-            ${host._roomFill === 'custom'
+            }),
+          host._roomFill === 'custom'
               ? colorRow({
                   label: customLabel,
                   picker: colorField({
@@ -179,8 +179,8 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
                       }}></hp-color-opacity>`,
                   }),
                 })
-              : nothing}
-            ${effectiveFill === 'temp'
+              : nothing,
+          effectiveFill === 'temp'
               ? html`<div class="hpf-field hpf-temprange">
                   <span class="hpf-label hpf-labelrow">${t('room.temp_range_label')}${shelp('room.temp_range.help')}</span>
                   <div class="hpf-temperature-range hpf-range-compact">${[
@@ -210,20 +210,25 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
                         @click=${() => {host._roomTempMin='';host._roomTempMax='';host.requestUpdate();}}>${t('room.temp_range_reset')}</button>${shelp('room.temp_range.help')}</div>`
                     : nothing}
                 </div>`
-              : nothing}`,
+              : nothing,
+        ]),
         })}
         ${formCard({
           id: 'sources',
           title: st('room.group_sources'),
           help: shelp('room.group_sources.help'),
-          body: html`${renderRoomSource(this, 'temp')}${renderRoomSource(this, 'hum')}${renderRoomSource(this, 'co2')}`,
+          body: formSections([
+          renderRoomSource(this, 'temp'),
+          renderRoomSource(this, 'hum'),
+          renderRoomSource(this, 'co2'),
+        ]),
         })}
         ${formCard({
           id: 'sizes',
           title: t('room.sizes_section'),
           help: shelp('room.sizes_section.help'),
-          body: html`
-            ${sizeRows.map(([key, labelKey, value, write]) => html`<div class="hpf-field">
+          body: formSections([
+          html`${sizeRows.map(([key, labelKey, value, write]) => html`<div class="hpf-field">
                 <span class="hpf-label hpf-labelrow"><label for=${`room-${key}-scale`}>${t(labelKey)}</label></span>
                 ${rangeLine({
                   id: `room-${key}-scale`, min: 50, max: 300, step: 5, value: pct(value), unit: '%', ariaLabel: t(labelKey),
@@ -231,9 +236,9 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
                   onInput: (n) => { write(n / 100); host.requestUpdate(); },
                 })}
                 ${rangeEnds('50%', '300%')}
-              </div>`)}
-            ${callout({text:st('room.sizes_hint',{name:pct(spaceDisplay.cardNameScale),metrics:pct(spaceDisplay.cardLabelScale)})})}
-            <div class="hpf-tint hpf-preview">${roomCardPreview(t, st('preview.room_name'), spaceDisplay.cardNameScale, host._roomNameScale, host._roomLabelScale, 820, spaceDisplay.cardLabelScale, {temp:true,hum:true,lqi:false,light:true,showName:true})}</div>`,
+              </div>`)}${callout({text:st('room.sizes_hint',{name:pct(spaceDisplay.cardNameScale),metrics:pct(spaceDisplay.cardLabelScale)})})}`,
+          html`<div class="hpf-tint hpf-preview">${roomCardPreview(t, st('preview.room_name'), spaceDisplay.cardNameScale, host._roomNameScale, host._roomLabelScale, 820, spaceDisplay.cardLabelScale, {temp:true,hum:true,lqi:false,light:true,showName:true})}</div>`,
+        ]),
         })}
         `}], st('dialog.section'))}
       </div>

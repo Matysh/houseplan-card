@@ -17874,8 +17874,8 @@ const MUTANT_DEFINITIONS = [
       + 'исправной, а стиль нулевых стен уезжает в конфиг при сохранении',
     patches: [{
       file: 'src/editors/space-form.ts',
-      find: "      onChange:v => set(port,{...d,fillMode:v})})})}",
-      replace: "      onChange:v => set(port,{...d,fillMode:v,zeroWallStyle:d.zeroWallStyle === 'solid' ? 'dashed' : 'solid'})})})}",
+      find: "onChange:v => set(port,{...d,fillMode:v})",
+      replace: "onChange:v => set(port,{...d,fillMode:v,zeroWallStyle:d.zeroWallStyle === 'solid' ? 'dashed' : 'solid'})",
     }],
   },
   {
@@ -17910,8 +17910,8 @@ const MUTANT_DEFINITIONS = [
       + 'начинает писать противоположное тому, что показывает',
     patches: [{
       file: 'src/editors/space-form.ts',
-      find: "      ${toggleRow({id:id('layer-decor'), title:st('space.layer_decor'), help:shelp('space.decor.help'),checked:!d.hideDecor, onChange:v => set(port,{...d,hideDecor:!v})})}`,",
-      replace: "      ${toggleRow({id:id('layer-decor'), title:st('space.layer_decor'), help:shelp('space.decor.help'),checked:!d.hideDecor, onChange:v => set(port,{...d,hideDecor:v})})}`,",
+      find: "checked:!d.hideDecor, onChange:v => set(port,{...d,hideDecor:!v})",
+      replace: "checked:!d.hideDecor, onChange:v => set(port,{...d,hideDecor:v})",
     }],
   },
   {
@@ -18311,8 +18311,8 @@ const MUTANT_DEFINITIONS = [
       + '(toggle/run); при «Do nothing» строке подтверждать нечего, и её показ — ложь формы',
     patches: [{
       file: 'src/editors/marker-dialog.ts',
-      find: "        ${effectiveTapAction === 'run' || effectiveTapAction === 'toggle'\n          ? toggleRow({",
-      replace: "        ${effectiveTapAction !== 'info'\n          ? toggleRow({",
+      find: "effectiveTapAction === 'run' || effectiveTapAction === 'toggle'\n          ? toggleRow({",
+      replace: "effectiveTapAction !== 'info'\n          ? toggleRow({",
     }],
   },
   {
@@ -18323,8 +18323,8 @@ const MUTANT_DEFINITIONS = [
       + 'живым на вид, а его контролы уже отключены',
     patches: [{
       file: 'src/editors/marker-dialog.ts',
-      find: "        <div class=\"hpf-block markerglowblock ${glowSourceDisabled ? 'hpf-disabled' : ''}\" aria-disabled=${glowSourceDisabled ? 'true' : 'false'}>",
-      replace: "        <div class=\"hpf-block markerglowblock ${passiveSource ? 'hpf-disabled' : ''}\" aria-disabled=${passiveSource ? 'true' : 'false'}>",
+      find: "<div class=\"hpf-block markerglowblock ${glowSourceDisabled ? 'hpf-disabled' : ''}\" aria-disabled=${glowSourceDisabled ? 'true' : 'false'}>",
+      replace: "<div class=\"hpf-block markerglowblock ${passiveSource ? 'hpf-disabled' : ''}\" aria-disabled=${passiveSource ? 'true' : 'false'}>",
     }],
   },
   {

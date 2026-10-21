@@ -520,6 +520,12 @@ clicks (`detail=0`); it cannot immobilise header/toolbar controls after a drag.
 
 ## Styles (#266)
 
+Dialog composition extends the existing form kit (#1007), documented in
+[DIALOG-UI-KIT.md](DIALOG-UI-KIT.md). Explicit sections own separators and outer
+spacing; fields own only their internal layout. Actions and independent Help
+reuse shared generators across shadow roots. Composition CSS is adopted with
+the lazy form kit and does not enter the eager View styles.
+
 The lazy `hp-settings-select` enhances a light-DOM select while retaining its
 value/change and option contract. It owns one accessible animated listbox;
 `FloatingSurfaceController` places it in the native top layer or the dialog's

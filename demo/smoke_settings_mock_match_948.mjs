@@ -29,7 +29,7 @@ await dialog.locator('[data-section-target=sun]').click();
 await page.evaluate(()=>window.__hpTest.settled());
 output.lightFieldComposition=await dialog.evaluate(el=>{const card=el.querySelector('[data-card=sun]'),color=card.querySelector('.hpf-colorrow'),label=color.querySelector('.hpf-labelrow'),picker=color.querySelector('.hpf-colorfield'),radius=card.querySelector('#gs-glow-radius').closest('.hpf-unit');return picker.getBoundingClientRect().top>label.getBoundingClientRect().bottom&&Math.abs(picker.getBoundingClientRect().width-card.getBoundingClientRect().width)<2&&Math.abs(radius.getBoundingClientRect().width-card.getBoundingClientRect().width)<2&&!!card.querySelector('.hpf-north-values .hpf-hint')&&[...card.querySelectorAll('.hpf-field .hpf-callout')].length>=2;});
 output.footerStatusFirst=await dialog.locator('.hpf-footer').evaluate(el=>el.firstElementChild.classList.contains('hpf-status')&&el.firstElementChild.textContent.trim().length>0);
-output.dividersKeepEqualToggleInsets=await dialog.locator('.hpf-body > .hpf-toggle:not(:first-child)').evaluateAll(nodes=>nodes.length>0&&nodes.every(n=>getComputedStyle(n).paddingTop==='18px'&&getComputedStyle(n).marginTop==='18px'));
+output.dividersKeepEqualToggleInsets=await dialog.locator('[data-card=sun] .hpf-section:has(> .hpf-toggle)').evaluateAll(nodes=>nodes.length>0&&nodes.every(n=>getComputedStyle(n).paddingTop==='18px'&&getComputedStyle(n).marginTop==='18px'));
 output.sectionDividerReachesBodyBottom=await dialog.locator('.hpf-settings-layout').evaluate(el=>Math.abs(el.getBoundingClientRect().bottom-el.querySelector('.hpf-settings-content').getBoundingClientRect().bottom)<2);
 const cancel=dialog.locator('.hpf-footer [data-hp=dialog-cancel]');
 for(const dark of [false,true]){

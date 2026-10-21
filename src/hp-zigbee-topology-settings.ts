@@ -1,8 +1,10 @@
-import { LitElement, css, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
+import { LitElement, css, html, nothing, unsafeCSS, type PropertyValues, type TemplateResult } from 'lit';
+import { settingsActionsCss } from './styles/settings-action.styles';
 import { langOf } from './i18n';
 import { hasTopologyTranslation, topologyT, type TopologyI18nKey } from './i18n/topology';
 import './hp-help';
 import { ensureSettingsDialogStyles } from './editors/settings-styles';
+import { disclosure, formSections } from './editors/form-kit';
 import {
   normalizeZ2mBaseTopic, type ZigbeeTopologySettings,
 } from './zigbee-topology-settings';
@@ -53,7 +55,7 @@ export class HpZigbeeTopologySettings extends LitElement {
   private _topicText = 'zigbee2mqtt';
   private _invalidTopic = false;
 
-  static styles = css`
+  static styles = [unsafeCSS(settingsActionsCss('button')), css`
     :host { display: block; color: inherit; font: inherit; }
     .section {
       margin-top: 18px;
@@ -77,11 +79,6 @@ export class HpZigbeeTopologySettings extends LitElement {
       color: var(--primary-text-color, inherit); background: var(--card-background-color, #202126);
       font: inherit;
     }
-    button {
-      display: inline-flex; align-items: center; gap: 6px; min-height: 36px;
-      border: 1px solid var(--divider-color, #666); border-radius: 9px; padding: 7px 11px;
-      color: inherit; background: transparent; cursor: pointer; font: inherit; font-weight: 600;
-    }
     button:disabled, textarea:disabled { opacity: .5; cursor: default; }
     .warning { color: var(--warning-color, #d89300); font-size: 12px; line-height: 1.45; }
     /* #600 embedded: примитивы набора внутри карточки; правила набора, которые
@@ -91,8 +88,6 @@ export class HpZigbeeTopologySettings extends LitElement {
       border-color: var(--hpf-line, var(--divider-color, #666)); background: var(--hpf-surface, var(--card-background-color, #202126)); }
     :host([embedded]) textarea[aria-invalid="true"] { border-color: var(--hpf-danger, var(--error-color, #db543d)); }
     :host([embedded]) .hpf-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
-    :host([embedded]) button { min-height: 44px; border-radius: 8px; padding: 9px 14px; font-weight: 400;
-      border-color: var(--hpf-line, var(--divider-color, #666)); }
     :host([embedded]) .hpf-hint { margin: 0; }
     .hpf-provider { display:grid; gap:12px; min-width:0; }
     .provider-heading { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 8px; }
@@ -103,12 +98,10 @@ export class HpZigbeeTopologySettings extends LitElement {
     .topic-head strong { overflow-wrap:anywhere; }
     .scan-row { border-top:1px solid var(--hpf-line,var(--divider-color)); padding-top:18px; margin-top:18px; }
     .scan-row .status,.scan-row .hint { grid-column:1/-1; }
-    details > summary { cursor:pointer; padding:10px 0; color:var(--primary-color); }
     .incomplete { min-width:0; overflow-wrap:anywhere; }
     .incomplete > summary { color:var(--secondary-text-color,#9aa0aa); }
     .incomplete-text { white-space:pre-wrap; padding-bottom:7px; }
-    button:hover:not(:disabled) { background:var(--hpf-tint,color-mix(in srgb,var(--primary-color) 10%,transparent)); }
-  `;
+  `];
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -462,20 +455,21 @@ export class HpZigbeeTopologySettings extends LitElement {
       ${this._topics().map(topic => this._z2mRow(topic, mayLoad, true, diagnostics.get(`z2m:${topic}`)!))}
       ${this._incompleteDetails('z2m', diagnostics)}
     </section>`;
-    return html`<div class="hpf-form hpf-settings-form"><section class="hpf-settings-pane"><div class="hpf-body">
-      <label class="hpf-toggle hpf-noicon">
+    return html`<div class="hpf-form hpf-settings-form"><section class="hpf-settings-pane"><div class="hpf-body">${formSections([
+      html`<label class="hpf-toggle hpf-noicon">
         <span class="hpf-toggle-title hpf-balanced"><span>${this._t('toggle')}</span>${this._help()}</span>
         <input type="checkbox" .checked=${enabled} ?disabled=${!admin} aria-label=${this._t('toggle')}
           @change=${(event: Event) => this._emit({ ...this.value, enabled: (event.target as HTMLInputElement).checked })} />
-      </label>
-      ${!admin ? html`<p class="hpf-hint">${this._t('admin_only')}</p>` : nothing}
-      ${enabled ? html`
+      </label>${!admin ? html`<p class="hpf-hint">${this._t('admin_only')}</p>` : nothing}`,
+      enabled ? html`
         ${!this.savedEnabled ? html`<div class="hpf-callout"><p>${this._t('save_first')}</p></div>` : nothing}
         ${presence.zha === 'unknown' || presence.z2m === 'unknown' ? html`<p class="hpf-hint">${this._t('discovery_unknown')}</p>` : nothing}
-        ${presence.zha !== 'absent' || storedZha ? zha : html`<details><summary>${this._t('zha_manual')}</summary>${zha}</details>`}
-        ${presence.z2m !== 'absent' || storedZ2m ? z2m : html`<details><summary>${this._t('z2m_manual')}</summary>${z2m}</details>`}
-      ` : nothing}
-    </div></section></div>`;
+        ${formSections([
+          presence.zha !== 'absent' || storedZha ? zha : disclosure({title:this._t('zha_manual'),content:zha}),
+          presence.z2m !== 'absent' || storedZ2m ? z2m : disclosure({title:this._t('z2m_manual'),content:z2m}),
+        ])}
+      ` : nothing,
+    ])}</div></section></div>`;
   }
 
 }

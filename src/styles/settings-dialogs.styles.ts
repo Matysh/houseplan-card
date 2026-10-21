@@ -4,9 +4,7 @@ import { css } from 'lit';
  */
 import{ settingsActionHover, settingsActionTransition, settingsPrimaryActionHover, settingsActionsCss, settingsInteractiveCss } from './settings-action.styles';
 export const settingsDialogCss = `
-  ${css`.hpf-button-help { display:inline-flex; align-items:center; gap:4px; }
-  .hpf-settings-form .vacpicker > summary { position:relative; margin-inline-end:24px; }
-  .hpf-settings-form .vacpicker > summary > hp-help { position:absolute; inset-inline-start:calc(100% + 4px); top:50%; transform:translateY(-50%); }
+  ${css`
 hp-dialog[settings-layout]{--hp-dialog-wide-width:610px;--hp-dialog-icon-size:40.48px;--hp-settings-help-size:22px;--hp-settings-help-scale:1.06;--hp-dialog-close-transition:160ms ease;--hp-dialog-close-hover-transform:rotate(90deg) scale(1.12);}
 hp-dialog:is([data-kind=space],[data-kind=marker])[settings-layout]{--hp-dialog-settings-height:780px;--hp-settings-chrome-height:176px;}
 hp-dialog .hpf-form.hpf-settings-form{display:block;padding:0;background:var(--hpf-surface);--hpf-control-surface:var(--hpf-surface);}
@@ -22,13 +20,10 @@ hp-dialog .hpf-form.hpf-settings-form{display:block;padding:0;background:var(--h
 .hpf-settings-pane .hpf-head{padding:0 0 18px;margin:0 0 18px;border-bottom:1px solid var(--hpf-line);}
 .hpf-settings-pane .hpf-head h3{font-size:16px;line-height:1.45;}
 .hpf-settings-pane .hpf-body{padding:0;gap:0;}
-.hpf-settings-pane .hpf-body > * + *{margin-top:18px;padding-top:18px;border-top:1px solid var(--hpf-line);}
 .hpf-settings-pane .hpf-sub{min-height:0;}
 .hpf-settings-pane .hpf-sub h4{font-size:14px;}
-.hpf-settings-pane .hpf-body > .hpf-sub + *{margin-top:12px;padding-top:0;border-top:0;}
 .hpf-settings-pane .hpf-labelrow,.hpf-settings-pane .hpf-field > .hpf-label{min-height:20px;color:var(--primary-text-color);font-size:13px;font-weight:600;}
-.hpf-settings-form .hpf-settings-pane .hpf-grid-stacked{grid-template-columns:minmax(0,1fr);gap:0;}
-.hpf-settings-form .hpf-settings-pane .hpf-grid-stacked > .hpf-field + .hpf-field,.hpf-settings-pane .markerglowvalue > .hpf-field + .hpf-field{margin-top:18px;padding-top:18px;border-top:1px solid var(--hpf-line);}
+.hpf-settings-form .hpf-settings-pane .hpf-grid-stacked{display:block;}
 .hpf-settings-pane .hpf-colorrow{grid-template-columns:minmax(0,1fr);align-items:stretch;min-height:0;}
 .hpf-settings-pane .hpf-colorfield{width:100%;box-sizing:border-box;}
 .hpf-settings-pane .hpf-colortile-labelled{padding:10px;gap:8px;align-content:start;}
@@ -39,7 +34,6 @@ hp-dialog .hpf-form.hpf-settings-form{display:block;padding:0;background:var(--h
 .hpf-settings-pane .hpf-colortile-labelled > .hpf-colortile-swatch{min-height:34px;}
 .hpf-settings-pane .hpf-colortile-labelled .hpf-colortile-meta{justify-content:flex-start;gap:4px;font-size:12px;}
 .hpf-settings-pane .hpf-colortile-labelled .hpf-hex{font-size:12px;}
-.hpf-settings-pane [data-card=fills] .hpf-body > .hpf-sub{border-top:0;padding-top:0;}
 .hpf-settings-pane .hpf-colorfield,.hpf-settings-form .hpf-input{background:var(--hpf-surface);}
 .hpf-settings-pane .hpf-colorfield{cursor:pointer;transition:border-color 160ms;}
 .hpf-settings-pane .hpf-colorfield:hover{border-color:var(--hpf-accent);}
@@ -48,24 +42,21 @@ hp-dialog[settings-layout] .hpf-footer .hpf-status{margin:0 auto 0 0;font-size:1
 hp-dialog[settings-layout] .hpf-footer .btn > ha-icon{display:inline-flex;align-items:center;line-height:1;}
 .hpf-footer .hpf-save-label{transform:none;align-self:center;}
 .hpf-settings-pane .hpf-toggle{grid-template-columns:minmax(0,1fr) 44px;min-height:44px;padding:0;}
-.hpf-settings-pane .hpf-body > .hpf-toggle:not(:first-child){padding-top:18px;}
-.hpf-settings-pane .hpf-body > .hpf-sub + .hpf-toggle{padding-top:0;}
 .hpf-settings-form .hpf-settings-pane .hpf-toggle > .hpf-toggle-title{grid-column:1;display:block;min-height:0;font-size:13px;line-height:22px;}
 .hpf-settings-pane .hpf-balanced{text-wrap:balance;}
 .hpf-settings-form .hpf-settings-pane .hpf-toggle > .hpf-toggle-title > span{overflow-wrap:normal;word-break:normal;}
 .hpf-settings-pane .hpf-toggle-title hp-help{vertical-align:top;margin-inline-start:4px;}
 .hpf-settings-pane .hpf-toggle-icon{display:none;}
 .hpf-settings-form .hpf-settings-pane .hpf-toggle > .hpf-toggle-caption{grid-column:1;}
-.hpf-settings-form .hpf-settings-pane .hpf-toggle > input{grid-area:1/2;}
-.hpf-settings-pane .hpf-body > #gs-moon-status{border-top:0;margin-top:8px;padding-top:8px;}
+.hpf-settings-form .hpf-settings-pane .hpf-toggle > input{grid-area:1/2;margin-block:-11px;}
+.hpf-settings-pane .hpf-toggle{min-height:22px;}
 .hpf-settings-pane .hpf-callout{padding:8px 10px;font-size:12px;line-height:1.45;border-inline-start:3px solid var(--info-color,var(--primary-color));border-radius:0;background:color-mix(in srgb,var(--info-color,var(--primary-color)) 10%,var(--hpf-surface));}
 .hpf-settings-pane .hpf-callout > ha-icon{display:none;}
 .hpf-settings-pane .hpf-callout p{margin:0;font-size:inherit;}
 .hpf-settings-pane .hpf-hint,.hpf-settings-pane .hpf-toggle-caption{font-size:12px;line-height:1.45;}
 .hpf-settings-pane .ghost{border:1px solid var(--hpf-line);}
-.hpf-settings-pane .btn{min-height:44px;box-sizing:border-box;}
+.hpf-settings-pane .btn{min-height:var(--hpf-action-height,44px);box-sizing:border-box;}
 .hpf-settings-form button:not(:disabled),.hpf-settings-form select:not(:disabled),.hpf-footer button:not(:disabled),.hpf-footer a{cursor:pointer;}
-.hpf-settings-form button:not(:disabled):hover,.hpf-footer button:not(:disabled):hover{filter:brightness(1.08);}
 :is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn:not(:disabled){cursor:pointer;`.cssText}${settingsActionTransition}}
 :is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn:not(:disabled):is(:hover,:focus-visible:not(.hp-dialog-return-focus)){${settingsActionHover}}
 :is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn.on:not(:disabled):is(:hover,:focus-visible:not(.hp-dialog-return-focus)){${settingsPrimaryActionHover}${css`}
@@ -87,7 +78,6 @@ hp-dialog[settings-layout] .hpf-footer .btn > ha-icon{display:inline-flex;align-
 .hpf-inherited-swatch{display:inline-block;width:24px;height:24px;border:1px solid var(--hpf-line);border-radius:5px;}
 .hpf-inherited-color{display:flex;align-items:center;gap:8px;color:var(--hpf-muted);font-size:12px;}
 .hpf-room-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 14px;margin-top:10px;}
-.hpf-settings-pane .hpf-body > .hpf-context-links{margin-top:8px;padding-top:0;border-top:0;}
 .hpf-context-links .hpf-link{font-size:12px;}
 hp-dialog[settings-layout] .hpf-footer-object{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;column-gap:8px;row-gap:10px;padding:12px 16px;}
 hp-dialog[settings-layout] .hpf-footer-object .hpf-status{grid-column:1 / -1;grid-row:1;}
@@ -113,7 +103,6 @@ hp-dialog[settings-layout] .hpf-footer-object .dialog-action-danger .btn:not(:ho
 .hpf-ray-examples svg{display:block;width:100%;height:auto;}
 .hpf-ray-examples figcaption{font-size:12px;text-align:center;padding:6px 6px 10px;}
 .hpf-background-grid figure{margin:0;min-width:0;}
-.hpf-settings-pane .hpf-body > .hpf-background-examples{border-top:0;padding-top:0;margin-top:0;}
 .hpf-background-stage{position:relative;border-radius:7px;height:100px;overflow:hidden;}
 .hpf-background-stage svg{position:absolute;inset:12px 10%;width:80%;height:76px;}
 .hpf-mini-floor{fill:color-mix(in srgb,var(--hpf-surface) 72%,transparent);stroke:var(--secondary-text-color);stroke-width:2;}
@@ -162,7 +151,6 @@ hp-dialog[data-kind=room][settings-layout] .hpf-grid{grid-template-columns:minma
 .hpf-settings-pane[data-settings-section=details] .hpf-grid{grid-template-columns:minmax(0,1fr);align-items:start;}
 .hpf-settings-pane .radargroup > legend{padding:0 0 18px;margin:0 0 18px;border-bottom:1px solid var(--hpf-line);width:100%;box-sizing:border-box;}
 .hpf-settings-pane .hpf-profile-target-heading{display:grid;align-items:center;gap:12px;justify-content:start;}
-.hpf-settings-pane .hpf-profile-target > * + *{margin-top:18px;padding-top:18px;border-top:1px solid var(--hpf-line);}
 .hpf-settings-pane .hpf-profile-diagnostics > .vacdiag,.hpf-settings-pane .hpf-profile-maproutes > .vacroutes{margin-top:12px;}
 .hpf-settings-pane .hpf-profile-diagnostics .vacdiag > div{padding:6px 0;}
 .hpf-settings-pane .hpf-profile-target-heading .btn{justify-self:start;}
@@ -209,7 +197,7 @@ hp-dialog.ui-dialog .device-inbox-filters label{min-height:44px;gap:8px;}
 hp-dialog.ui-dialog .device-inbox-row{padding:14px;gap:12px;border-color:var(--hpf-line);border-radius:7px;}
 hp-dialog.ui-dialog *:is(.device-inbox-actions,.device-inbox-batch-actions){gap:10px;}
 hp-dialog.ui-dialog .device-inbox-tabs{gap:8px;padding:2px;margin:-2px;}
-hp-dialog.ui-dialog .device-inbox-tabs button{min-height:44px;padding:10px 14px;border-radius:7px;line-height:20px;}
+hp-dialog.ui-dialog .device-inbox-tabs button{min-height:44px;padding:10px 14px;border:1px solid var(--hpf-line);border-radius:var(--hpf-action-radius,7px);background:transparent;color:var(--primary-text-color);font:inherit;font-size:13px;line-height:20px;}
 hp-dialog.ui-dialog .device-inbox-tabs button[aria-selected=true]{border-color:var(--hpf-accent);color:var(--hpf-accent);background:var(--hpf-tint);}
 hp-dialog.ui-dialog .device-inbox-discovery{padding:12px;border-radius:7px;}
 hp-dialog.ui-dialog .device-inbox-discovery > summary{padding:8px;margin:-4px;border:1px solid transparent;border-radius:7px;}

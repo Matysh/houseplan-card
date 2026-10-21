@@ -9,7 +9,7 @@ import { roomCardPreview } from './room-card-preview';
 import {
   callout, choiceCards, colorField, colorRow, compass, ensureFormKitStyles, field,
   fieldGrid, footerStatus, formCard, rangeLine, subsection,
-  textLink, toggleRow, unitInput, selectControl,
+  textLink, toggleRow, unitInput, selectControl, formSections, type FormSectionContent,
 } from './form-kit';
 
 import {
@@ -211,8 +211,8 @@ function renderBasics(port: SpaceFormPort, d: SpaceDialogState, id: (n: string) 
   return formCard({
     id: 'basics',
     title: st('space.section_plan'),
-    body: html`
-      ${fieldGrid([
+    body: spaceFormSections(port, [
+          fieldGrid([
         field({
           label: t('space.title_label'), htmlFor: id('title'),
           error: titleProblem ? st(titleProblem.message) : undefined,
@@ -243,9 +243,9 @@ function renderBasics(port: SpaceFormPort, d: SpaceDialogState, id: (n: string) 
             },
           }),
         }),
-      ], { narrow: true, stacked:!!port.northControl })}
-      ${scaleChanged ? callout({ kind: 'warning', text: st('space.scale_changed') }) : nothing}
-      ${port.northControl ? field({label:st('space.plan_source'),help:shelp('space.plan.help'),control:html`
+      ], { narrow: true, stacked:!!port.northControl }),
+          scaleChanged ? callout({ kind: 'warning', text: st('space.scale_changed') }) : nothing,
+          port.northControl ? field({label:st('space.plan_source'),help:shelp('space.plan.help'),control:html`
         <div id=${id('plan')} tabindex="-1" aria-invalid=${planProblem ? 'true' : nothing}>
           ${selectControl({name:id('plan-source'),value:d.source,ariaLabel:st('space.plan_source'),
             options:[{value:'file',label:t('space.source_file')},{value:'draw',label:t('space.source_draw')}],
@@ -256,13 +256,14 @@ function renderBasics(port: SpaceFormPort, d: SpaceDialogState, id: (n: string) 
           { value: 'draw', title: t('space.source_draw'), caption: st('space.source_draw_hint') },
           { value: 'file', title: t('space.source_file'), caption: st('space.source_file_hint') },
         ], (value) => set(port, switchSpacePlanSource(d, value)), st('space.plan_source'))}
-      </div>`}
-      ${d.source === 'file' ? port.northControl
+      </div>`,
+          d.source === 'file' ? port.northControl
         ? field({label:st('space.image_label'),help:shelp('space.image.help'),control:renderPlanUpload(port,d)})
-        : renderPlanUpload(port,d) : nothing}
-      ${d.source === 'draw' && d.planUrl ? callout({ text: st('space.plan_kept') }) : nothing}
-      ${planProblem ? html`<p class="hpf-error" role="alert">${st(planProblem.message)}</p>` : nothing}
-      ${toggleRow({id:id('layer-decor'), title:st('space.layer_decor'), help:shelp('space.decor.help'),checked:!d.hideDecor, onChange:v => set(port,{...d,hideDecor:!v})})}`,
+        : renderPlanUpload(port,d) : nothing,
+          d.source === 'draw' && d.planUrl ? callout({ text: st('space.plan_kept') }) : nothing,
+          planProblem ? html`<p class="hpf-error" role="alert">${st(planProblem.message)}</p>` : nothing,
+          toggleRow({id:id('layer-decor'), title:st('space.layer_decor'), help:shelp('space.decor.help'),checked:!d.hideDecor, onChange:v => set(port,{...d,hideDecor:!v})}),
+        ]),
   });
 }
 
@@ -324,24 +325,24 @@ function renderAppearance(port: SpaceFormPort, d: SpaceDialogState, id: (n: stri
             : {...d,tempMaxInput:raw,...(n !== null ? {tempMax:n} : {})});
         }})});
   };
-  return formCard({id:'appearance',title:st('space.section_rooms'),body:html`
-    ${toggleRow({id:id('show-borders'),title:st('space.borders_openings'),help:shelp('space.borders_openings_hint'),
-      checked:d.showBorders,onChange:v => set(port,{...touchSpaceDisplay(d,'showBorders',v),hideOpenings:!v})})}
-    ${field({label:st('space.virtual_walls'),help:port.help('space.zero_wall_style.help'),control:selectControl({
+  return formCard({id:'appearance',title:st('space.section_rooms'),body:spaceFormSections(port, [
+          toggleRow({id:id('show-borders'),title:st('space.borders_openings'),help:shelp('space.borders_openings_hint'),
+      checked:d.showBorders,onChange:v => set(port,{...touchSpaceDisplay(d,'showBorders',v),hideOpenings:!v})}),
+          field({label:st('space.virtual_walls'),help:port.help('space.zero_wall_style.help'),control:selectControl({
       name:id('zero-wall-style'),value:d.zeroWallStyle,ariaLabel:st('space.virtual_walls'),
       options:[{value:'dashed',label:st('space.virtual_dashed')},{value:'solid',label:st('space.virtual_solid')}],
-      onChange:v => set(port,{...d,zeroWallStyle:v})})})}
-    ${color('border')}
-    ${field({label:t('space.fill_label'),help:port.help('space.fill_mode.help'),control:selectControl({
+      onChange:v => set(port,{...d,zeroWallStyle:v})})}),
+          color('border'),
+          field({label:t('space.fill_label'),help:port.help('space.fill_mode.help'),control:selectControl({
       name:id('fill-mode'),value:d.fillMode === 'none' ? 'custom' : d.fillMode,ariaLabel:t('space.fill_label'),
       options:SPACE_FILL_UI_MODES.map(value => ({value,label:st(`space.fill_${value}`)})),
-      onChange:v => set(port,{...d,fillMode:v})})})}
-    ${d.fillMode === 'custom' || d.fillMode === 'none' ? color('fill') : nothing}
-    ${d.fillMode === 'temp' ? html`<div class="hpf-field">
+      onChange:v => set(port,{...d,fillMode:v})})}),
+          d.fillMode === 'custom' || d.fillMode === 'none' ? color('fill') : nothing,
+          d.fillMode === 'temp' ? html`<div class="hpf-field">
       <span class="hpf-label hpf-labelrow">${st('space.temp_range')}${shelp('space.comfort.help')}</span>
       <div class="hpf-temperature-range">${temperature('min')}${temperature('max')}</div>
-    </div>` : nothing}
-  `});
+    </div>` : nothing,
+        ])});
 }
 
 function renderRoomCards(port: SpaceFormPort, d: SpaceDialogState, id: (n:string) => string): TemplateResult {
@@ -361,29 +362,27 @@ function renderRoomCards(port: SpaceFormPort, d: SpaceDialogState, id: (n:string
   const inheritedBattery = deviceBatteryModeOf(host._settings);
   const batteryLabel = (mode: 'all'|'low'|'off') => st(`space.battery_${mode}`);
   const sourceLink = (section:string) => port.openGeneral ? textLink(st('space.open_general'),() => port.openGeneral!(section)) : nothing;
-  return formCard({id:'room-cards',title:st('space.section_metrics'),body:html`
-    ${toggleRow({id:id('show-names'),title:t('space.show_names'),help:shelp('space.names.help'),checked:d.showNames,
-      onChange:v => set(port,touchSpaceDisplay(d,'showNames',v))})}
-    <div class="hpf-field">${subsection({title:st('space.room_metrics')})}
+  return formCard({id:'room-cards',title:st('space.section_metrics'),body:spaceFormSections(port, [
+          toggleRow({id:id('show-names'),title:t('space.show_names'),help:shelp('space.names.help'),checked:d.showNames,
+      onChange:v => set(port,touchSpaceDisplay(d,'showNames',v))}),
+          html`<div class="hpf-field">${subsection({title:st('space.room_metrics')})}
       <p class="hpf-hint">${st('space.metrics_source_hint')}</p>
-      <div class="hpf-room-metrics">${tiles.map(tile => toggleRow({id:tile.id,title:tile.label,help:shelp(tile.helpKey),checked:tile.checked,disabled:!d.showNames,onChange:tile.onChange}))}</div></div>
-    ${subsection({title:st('space.font_sizes')})}
-    ${sizes}
-    <div class="hpf-tint hpf-preview">${roomCardPreview(t,st('preview.room_name'),d.cardNameScale,1,1,
-      d.labelCo2 ? 820 : undefined,d.cardLabelScale,{temp:d.labelTemp,hum:d.labelHum,lqi:d.labelLqi,light:d.labelLight,showName:d.showNames})}</div>
-    ${subsection({title:st('space.device_metrics')})}
-    ${field({label:st('space.device_battery'),control:selectControl<SpaceDeviceBatteryMode>({
+      <div class="hpf-room-metrics">${tiles.map(tile => toggleRow({id:tile.id,title:tile.label,help:shelp(tile.helpKey),checked:tile.checked,disabled:!d.showNames,onChange:tile.onChange}))}</div></div>`,
+          html`${subsection({title:st('space.font_sizes')})}${sizes}`,
+          html`<div class="hpf-tint hpf-preview">${roomCardPreview(t,st('preview.room_name'),d.cardNameScale,1,1,
+      d.labelCo2 ? 820 : undefined,d.cardLabelScale,{temp:d.labelTemp,hum:d.labelHum,lqi:d.labelLqi,light:d.labelLight,showName:d.showNames})}</div>`,
+          html`${subsection({title:st('space.device_metrics')})}${field({label:st('space.device_battery'),control:selectControl<SpaceDeviceBatteryMode>({
       name:id('battery-mode'),value:d.deviceBatteryMode,ariaLabel:st('space.device_battery'),
       options:[{value:'inherit',label:st('space.inherited_value',{v:batteryLabel(inheritedBattery)})},
         ...(['all','low','off'] as const).map(value => ({value,label:batteryLabel(value)}))],
-      onChange:deviceBatteryMode => set(port,{...d,deviceBatteryMode})})})}
-    ${field({label:t('space.show_lqi'),control:selectControl<SignalVisibilityMode>({
+      onChange:deviceBatteryMode => set(port,{...d,deviceBatteryMode})})})}`,
+          field({label:t('space.show_lqi'),control:selectControl<SignalVisibilityMode>({
       name:id('show-lqi'),value:d.showLqiMode,ariaLabel:t('space.show_lqi'),
       options:[{value:'inherit',label:st('space.inherited_value',{v:st(globalSignalVisibleOf(host._settings) ? 'space.lqi_on' : 'space.lqi_off')})},
         {value:'on',label:st('space.lqi_on')},{value:'off',label:st('space.lqi_off')}],
-      onChange:showLqiMode => set(port,{...d,showLqiMode})})})}
-    ${port.openGeneral ? html`<div class="hpf-context-links">${sourceLink('display')}</div>` : nothing}
-  `});
+      onChange:showLqiMode => set(port,{...d,showLqiMode})})}),
+          port.openGeneral ? html`<div class="hpf-context-links">${sourceLink('display')}</div>` : nothing,
+        ])});
 }
 
 function renderSunAndLight(port: SpaceFormPort, d: SpaceDialogState, id:(n:string) => string, problemFor:ProblemFor): TemplateResult {
@@ -394,34 +393,39 @@ function renderSunAndLight(port: SpaceFormPort, d: SpaceDialogState, id:(n:strin
     const n = strictNumber(raw);
     set(port,{...d,northDegInput:raw,...(n !== null && Number.isInteger(n) && n >= 0 && n <= 359 ? {northDeg:n} : {})});
   };
-  return formCard({id:'sun',title:st('space.section_background'),body:html`
-    ${field({label:st('space.background_label'),help:port.help('space.bg_mode.help'),control:html`${selectControl({
+  return formCard({id:'sun',title:st('space.section_background'),body:spaceFormSections(port, [
+          field({label:st('space.background_label'),help:port.help('space.bg_mode.help'),control:html`${selectControl({
       name:id('bg-mode'),value:d.bgMode ?? '',ariaLabel:st('space.background_label'),
       options:[{value:'',label:st('space.inherited_value',{v:t(bgModeOf(host._settings,{}) === 'static' ? 'gs.bg_static' : 'gs.bg_daynight')})},
         {value:'static',label:t('gs.bg_static')},{value:'daynight',label:t('gs.bg_daynight')}],
       onChange:v => set(port,{...d,bgMode:v === 'static' || v === 'daynight' ? v : null,...(v === '' ? {bgColor:null} : {})})})}
       ${d.bgMode === null && bgModeOf(host._settings,{}) === 'static' ? html`<div class="hpf-inherited-color">
         <span class="hpf-inherited-swatch" style=${`background:${inheritedColor}`} aria-hidden="true"></span>
-        <span>${st('space.inherited_color',{v:inheritedColor})}</span></div>` : nothing}`})}
-    ${d.bgMode === 'static' ? colorRow({label:t('space.bg_color'),picker:colorField({hex:d.bgColor || inheritedColor,
+        <span>${st('space.inherited_color',{v:inheritedColor})}</span></div>` : nothing}`}),
+          d.bgMode === 'static' ? colorRow({label:t('space.bg_color'),picker:colorField({hex:d.bgColor || inheritedColor,
       picker:html`<hp-color-opacity .label=${t('space.bg_color')} hide-label flat-swatch .pickerLabels=${host._colorPickerLabels}
         .color=${d.bgColor || inheritedColor} .opacity=${1} .showOpacity=${false}
         @hp-color-opacity-change=${(e:CustomEvent<{color:string}>) => set(port,{...d,bgColor:e.detail.color})}></hp-color-opacity>`})})
-      : nothing}
-    ${port.openGeneral ? html`<div class="hpf-context-links">${textLink(st('space.open_general'),() => port.openGeneral!('plan'))}</div>` : nothing}
-    ${field({label:t('space.sun_rays'),control:selectControl({name:id('sun-rays'),value:d.sunRays === null ? '' : d.sunRays ? '1' : '0',ariaLabel:t('space.sun_rays'),
+      : nothing,
+          port.openGeneral ? html`<div class="hpf-context-links">${textLink(st('space.open_general'),() => port.openGeneral!('plan'))}</div>` : nothing,
+          field({label:t('space.sun_rays'),control:selectControl({name:id('sun-rays'),value:d.sunRays === null ? '' : d.sunRays ? '1' : '0',ariaLabel:t('space.sun_rays'),
       options:[{value:'',label:st('space.inherited_value',{v:t(sunRaysOn(host._settings,{}) ? 'space.sun_on' : 'space.sun_off')})},{value:'1',label:t('space.sun_on')},{value:'0',label:t('space.sun_off')}],
-      onChange:v => set(port,{...d,sunRays:v === '' ? null : v === '1'})})})}
-    ${field({label:t('space.north'),help:port.help('space.north.help'),control:selectControl({name:id('north-mode'),value:d.northDeg === null ? 'inherit' : 'custom',ariaLabel:t('space.north'),
+      onChange:v => set(port,{...d,sunRays:v === '' ? null : v === '1'})})}),
+          field({label:t('space.north'),help:port.help('space.north.help'),control:selectControl({name:id('north-mode'),value:d.northDeg === null ? 'inherit' : 'custom',ariaLabel:t('space.north'),
       options:[{value:'inherit',label:st('space.north_general',{v:inheritedNorth === null ? '—' : `${inheritedNorth}°`})},{value:'custom',label:st('space.north_custom')}],
-      onChange:v => {const northDeg = v === 'custom' ? inheritedNorth ?? 0 : null;set(port,{...d,northDeg,northDegInput:northDeg === null ? '' : String(northDeg)});}})})}
-    ${d.northDeg !== null ? html`<div class="hpf-field">
+      onChange:v => {const northDeg = v === 'custom' ? inheritedNorth ?? 0 : null;set(port,{...d,northDeg,northDegInput:northDeg === null ? '' : String(northDeg)});}})}),
+          d.northDeg !== null ? html`<div class="hpf-field">
       ${port.northControl ? port.northControl({id:id('north-deg'),value:d.northDeg,raw:d.northDegInput ?? String(d.northDeg),label:t('space.north'),angleHint:st('gs.north_angle_hint'),invalid:!!northProblem,
         onInput:northInput,onChange:n => set(port,{...d,northDeg:n,northDegInput:String(n)})})
         : html`${compass(d.northDeg,t('space.north'))}${unitInput({id:id('north-deg'),value:d.northDegInput ?? String(d.northDeg),unit:'°',min:0,max:359,step:1,onInput:northInput})}`}
       ${port.northControl ? callout({text:st('gs.north_description')}) : nothing}
       ${northProblem ? html`<p class="hpf-error" role="alert">${st(northProblem.message)}</p>` : nothing}
-    </div>` : nothing}
-    ${port.openGeneral ? html`<div class="hpf-context-links">${textLink(st('space.open_general'),() => port.openGeneral!('sun'))}</div>` : nothing}
-  `});
+    </div>` : nothing,
+          port.openGeneral ? html`<div class="hpf-context-links">${textLink(st('space.open_general'),() => port.openGeneral!('sun'))}</div>` : nothing,
+        ])});
+}
+
+/** Onboarding keeps its original unsectioned layout. */
+function spaceFormSections(port: SpaceFormPort, rows: readonly FormSectionContent[]): TemplateResult {
+  return port.northControl ? formSections(rows) : html`${rows}`;
 }

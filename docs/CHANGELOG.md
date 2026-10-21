@@ -8,6 +8,8 @@
 - Explain incomplete Zigbee diagnostic data in a collapsed “Why the data is
   incomplete” block at the end of each source section, including affected
   nodes, reported scan failures and unresolved routes. (#1005)
+- Use shared dialog sections, spacing, action/help interactions and disclosures
+  across settings and auxiliary dialogs; hidden fields keep a consistent layout. (#1007)
 
 ## v1.82.0 — 2026-10-21
 

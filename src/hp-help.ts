@@ -171,7 +171,7 @@ export class HpHelp extends LitElement {
 
   connectedCallback(): void {
     super.connectedCallback();
-    if (this.closest('hp-dialog[settings-layout]')) this.instant = true;
+    if (this.closest('hp-dialog')) this.instant = true;
     this.addEventListener('keydown', this._keyDown, true);
   }
 
@@ -295,7 +295,11 @@ export class HpHelp extends LitElement {
     this._scheduleClose();
   }
 
-  private _triggerClick(): void {
+  private _triggerClick(event: Event): void {
+    // The help button can be next to a label or disclosure. Its activation
+    // never activates a containing label, action, or delegated dialog handler.
+    event.preventDefault();
+    event.stopPropagation();
     if (this._open) this._closeHelp();
     else {
       this._hoverOwned = false;

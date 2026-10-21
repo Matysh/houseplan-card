@@ -753,17 +753,6 @@ export const editorDialogsStyles = css`
     }
     .device-inbox-tabs button {
       flex: 0 0 auto;
-      border: 1px solid var(--hp-line);
-      border-radius: 999px;
-      background: transparent;
-      color: var(--hp-txt);
-      font: inherit;
-      padding: 8px 12px;
-      cursor: pointer;
-    }
-    .device-inbox-tabs button.on {
-      border-color: var(--hp-accent);
-      background: color-mix(in srgb, var(--hp-accent) 18%, transparent);
     }
     .device-inbox-tabs button span { color: var(--hp-muted); margin-inline-start: 4px; }
     /* #44: discovery-filters section on the Available tab */

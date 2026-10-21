@@ -11,10 +11,12 @@
  * референса; расхождение с ним — находка, а не вкус.
  */
 import { html, nothing, type TemplateResult } from 'lit';
+import { repeat } from 'lit/directives/repeat.js';
 
 import { CARD_DIALOG_FORM_KIT, cardDialogFormKitTokens, formKitCss } from '../styles/form-kit.styles';
 import { colorTileInk } from './color-tile-ink';
 import { sourcePickerOverlay } from './source-picker-overlay';
+import { dialogCompositionCss } from '../styles/dialog-composition.styles';
 
 /**
  * Лист набора живёт в ленивом редакторском графе, а не в `cardStyles` (#594 AC8).
@@ -26,7 +28,7 @@ import { sourcePickerOverlay } from './source-picker-overlay';
  * на `<style>` там, где конструируемых листов нет.
  */
 const FORM_KIT_CSS = cardDialogFormKitTokens
-  + formKitCss(CARD_DIALOG_FORM_KIT, { withSwitch: false });
+  + formKitCss(CARD_DIALOG_FORM_KIT, { withSwitch: false }) + dialogCompositionCss;
 const adopted = new WeakSet<ShadowRoot>();
 let sheet: CSSStyleSheet | null = null;
 
@@ -68,6 +70,56 @@ export interface FormCardOptions {
   body: TemplateResult | readonly (TemplateResult | typeof nothing)[];
   /** Машинное имя карточки для смоков и парных кадров (`data-card`). */
   id?: string;
+}
+
+export type FormSectionContent = TemplateResult | typeof nothing | null | undefined | false | readonly FormSectionContent[];
+
+function sectionHasContent(content: FormSectionContent): boolean {
+  return Array.isArray(content) ? content.some(sectionHasContent)
+    : content !== nothing && content != null && content !== false;
+}
+
+/** Keep the original identity while omitting empty conditional groups. */
+export function formSectionEntries(sections: readonly FormSectionContent[]): { content: FormSectionContent; index: number }[] {
+  return sections.map<{ content: FormSectionContent; index: number }>((content, index) => ({ content, index }))
+    .filter(({ content }) => sectionHasContent(content));
+}
+
+/** Explicit sections: omission never leaves an empty separator. Stable indexes
+ * keep sibling controls mounted when a conditional section disappears. Group
+ * a heading and its fields in one template; do not style their outer margins.
+ */
+export function formSections(sections: readonly FormSectionContent[]): TemplateResult {
+  const visible = formSectionEntries(sections);
+  return html`<div class="hpf-sections">${repeat(visible, item => item.index,
+    ({ content }) => html`<div class="hpf-section">${content}</div>`)}</div>`;
+}
+
+/** Sibling Help has its own hover and activation zone. */
+export function actionHelp(action: TemplateResult, help?: TemplateResult | typeof nothing): TemplateResult {
+  return html`<span class="hpf-action-help">${action}${help ?? nothing}</span>`;
+}
+
+export interface DisclosureOptions {
+  title: string;
+  content: TemplateResult;
+  id?: string;
+  className?: string;
+  open?: boolean;
+  onToggle?: (open: boolean) => void;
+  help?: TemplateResult | typeof nothing;
+  /** A picker trigger may use the existing action paint; information does not. */
+  triggerClass?: string;
+}
+
+/** Informational disclosure, distinct from an action button. */
+export function disclosure({ title, content, id, className = '', open = false, onToggle, help, triggerClass = '' }: DisclosureOptions): TemplateResult {
+  const details = html`<details class="hpf-disclosure ${className}" id=${id ?? nothing} ?open=${open}
+    @toggle=${(event: Event) => onToggle?.((event.currentTarget as HTMLDetailsElement).open)}>
+    <summary class=${triggerClass}>${title}</summary><div class="hpf-disclosure-content">${content}</div>
+  </details>`;
+  return help && help !== nothing
+    ? html`<div class="hpf-disclosure-with-help">${details}${help}</div>` : details;
 }
 
 /**
@@ -115,7 +167,7 @@ export function field({ label, htmlFor, help, control, hint, error }: FieldOptio
 export function fieldGrid(
   children: readonly (TemplateResult | typeof nothing)[], { narrow = false, stacked = false }: { narrow?: boolean; stacked?: boolean } = {},
 ): TemplateResult {
-  return html`<div class="hpf-grid ${narrow ? 'hpf-grid-narrow' : ''}${stacked ? ' hpf-grid-stacked' : ''}">${children}</div>`;
+  return html`<div class="hpf-grid ${narrow ? 'hpf-grid-narrow' : ''}${stacked ? ' hpf-grid-stacked' : ''}">${stacked ? formSections(children) : children}</div>`;
 }
 
 export interface ToggleRowOptions {

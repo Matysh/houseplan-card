@@ -37,7 +37,7 @@ try{
   const face=dialog.locator('hp-device-preview .previewstage .dev');
   out[`${name}_standard_preview_size`]=await face.evaluate(el=>Number(getComputedStyle(el).getPropertyValue('--dev-scale')||'1')===1);
   out[`${name}_no_fit_notice`]=!await dialog.locator('hp-device-preview .previewnotice').allTextContents().then(text=>text.some(t=>/78|уменьшен|scaled/i.test(t)));
-  out[`${name}_battery_then_signal`]=await dialog.evaluate(el=>el.querySelector('#marker-hide-battery').closest('.hpf-toggle').nextElementSibling?.contains(el.querySelector('#marker-hide-signal')));
+  out[`${name}_battery_then_signal`]=await dialog.evaluate(el=>el.querySelector('#marker-hide-battery').closest('.hpf-section').nextElementSibling?.contains(el.querySelector('#marker-hide-signal')));
   if(name==='led'){
    out.owned_led_note_is_contextual=await dialog.locator('.led-representation').evaluate(el=>!el.querySelector('.hpf-note,.hpf-callout')&&!!el.querySelector('hp-help[instant]')?.text?.trim());
    out.owned_led_action_after_icon=await dialog.evaluate(el=>{const icon=el.querySelector('.hpf-iconfield'),led=el.querySelector('[data-led-action="show-icon"]'),display=el.querySelector('#marker-display');return !!led&&!!(icon.compareDocumentPosition(led)&Node.DOCUMENT_POSITION_FOLLOWING)&&!!(led.compareDocumentPosition(display)&Node.DOCUMENT_POSITION_FOLLOWING);});
@@ -59,17 +59,17 @@ try{
    out.two_external_controls_use_device_names=linkedNames.length===2&&linkedNames.some(t=>t.includes('Потолочная лампа'))&&linkedNames.some(t=>t.includes('Торшер'))&&linkedNames.every(t=>!/light\.|marker:|device:/.test(t));
    out.action_guidance_uses_shared_note=await dialog.locator('#marker-toggle-hint.hpf-note').count()===1;
    out.confirmation_help_is_contextual=await dialog.locator('#marker-tap-confirm').evaluate(el=>!!el.closest('.hpf-toggle').querySelector('hp-help[instant]')&&!el.closest('.hpf-toggle').querySelector('.hpf-toggle-caption'));
-   await section('details');out.model_link_share_stacked_divider=await dialog.locator('#marker-link').evaluate(el=>getComputedStyle(el.closest('.hpf-field')).borderTopWidth==='1px');
+   await section('details');out.model_link_share_stacked_divider=await dialog.locator('#marker-link').evaluate(el=>getComputedStyle(el.closest('.hpf-section')).borderTopWidth==='1px');
    // Return to the exact approved values before visual capture.
    await close();await openSettingsDeviceDialog(page,id);
   }
   if(name==='climate')out.unavailable_stays_dash=(await dialog.locator('hp-device-preview .valtext').textContent()).trim()==='—';
   if(name==='vacuum')out.vacuum68and34=(await dialog.locator('hp-device-preview .valtext').textContent()).includes('68')&&(await dialog.locator('hp-device-preview .value-badge').textContent()).includes('34');
   if(name==='vacuum'){
-   await section('vacuum');out.vacuum_source_help_present=await dialog.locator('details.vacpicker > summary hp-help[instant]').count()===1;out.vacuum_live_help_present=await dialog.locator('#marker-vacuum-live').evaluate(el=>!!el.closest('.hpf-toggle').querySelector('hp-help[instant]'));out.vacuum_path_help_present=await dialog.locator('[data-help=vacuum-trail][instant]').count()===1;out.vacuum_profile_has_approved_heading=await dialog.locator('[data-card=vacuum] h3').textContent()==='Пылесос';
-   const picker=dialog.locator('details.vacpicker'),sourceHelp=picker.locator('summary hp-help');
+   await section('vacuum');out.vacuum_source_help_present=await dialog.locator('.hpf-disclosure-with-help:has(> details.vacpicker) > hp-help[instant]').count()===1;out.vacuum_live_help_present=await dialog.locator('#marker-vacuum-live').evaluate(el=>!!el.closest('.hpf-toggle').querySelector('hp-help[instant]'));out.vacuum_path_help_present=await dialog.locator('[data-help=vacuum-trail][instant]').count()===1;out.vacuum_profile_has_approved_heading=await dialog.locator('[data-card=vacuum] h3').textContent()==='Пылесос';
+   const picker=dialog.locator('details.vacpicker'),sourceHelp=dialog.locator('.hpf-disclosure-with-help:has(> details.vacpicker) > hp-help');
    await sourceHelp.locator('button.trigger').hover();await sourceHelp.locator('.tooltip').waitFor({state:'visible'});
-   out.vacuum_source_keeps_real_button=await picker.locator(':scope > summary').evaluate(el=>el.classList.contains('btn')&&!el.querySelector('.btn'));out.vacuum_documentation_keeps_normal_type=await dialog.locator('.vacbtns .hpf-button-help').evaluate(el=>!el.classList.contains('hpf-labelrow'));out.vacuum_documentation_help_present=await dialog.locator('.vacbtns .hpf-button-help hp-help[instant]').count()===1;out.vacuum_source_help_hover_keeps_picker_closed=!await picker.evaluate(el=>el.open);
+   out.vacuum_source_keeps_real_button=await picker.locator(':scope > summary').evaluate(el=>el.classList.contains('btn')&&!el.querySelector('.btn'));out.vacuum_documentation_keeps_normal_type=await dialog.locator('.vacbtns .hpf-action-help').evaluate(el=>!el.classList.contains('hpf-labelrow'));out.vacuum_documentation_help_present=await dialog.locator('.vacbtns .hpf-action-help hp-help[instant]').count()===1;out.vacuum_source_help_hover_keeps_picker_closed=!await picker.evaluate(el=>el.open);
    await sourceHelp.locator('button.trigger').click();out.vacuum_source_help_click_keeps_picker_closed=!await picker.evaluate(el=>el.open);
    await dialog.locator('[data-card=vacuum] h3').hover();
    const diagnostics=dialog.locator('.hpf-profile-diagnostics');out.vacuum_diagnostics_start_collapsed=!await diagnostics.locator('.vacdiag').isVisible();

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1007,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Unifies existing dialog composition and repairs inconsistent spacing, coupled help hover and disclosure/button styling present in stable v1.82.0. No settings model or plan behavior change; user-visible consistency and reusable primitives are delivered together.",
+  "summary": {
+    "ru": "Единые отступы, кнопки, подсказки и спойлеры в диалогах настроек.",
+    "en": "Consistent spacing, buttons, contextual help and disclosures across settings dialogs."
+  }
+}

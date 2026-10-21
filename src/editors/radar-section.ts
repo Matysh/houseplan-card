@@ -12,7 +12,7 @@ import {
 import { radarSetupFrame, type RadarSetupController } from '../radar-setup';
 import type { ContentItem } from '../space-geometry';
 import type { DevItem, SpaceModel } from '../types';
-import { callout, field, formCard, subsection, toggleRow } from './form-kit';
+import { callout, field, formCard, subsection, toggleRow, formSections } from './form-kit';
 
 interface RadarDialogSlice {
   devId?: string;
@@ -278,39 +278,37 @@ export function renderRadarSection(
   return html`<div class="radaradditional">
     <fieldset class="markerlightgroup radargroup hpf-card" data-card="radar">
     <legend class="hpf-head"><h3>${options.st('marker.section_radar')}</h3></legend>
-    <div class="hpf-body">
-    ${subsection({title:options.st('marker.radar_data'),help:options.help('radar.help')})}
-    ${toggleRow({id:'marker-radar-presence',title:options.t('radar.enabled'),checked:radar.enabled,onChange:(enabled)=>change({enabled},false)})}
-    ${toggleRow({id:'marker-radar-show-live',title:options.t('radar.show_live'),checked:radar.showLive,onChange:(showLive)=>change({showLive},false)})}
-    ${field({label:options.t('radar.profile'),help:help('marker.radar_profile_help',options.t('radar.profile')),htmlFor:'radar-profile',control:html`<hp-settings-select><select id="radar-profile" class="areasel" @change=${(event: Event) => change({
+    <div class="hpf-body">${formSections([
+          html`${subsection({title:options.st('marker.radar_data'),help:options.help('radar.help')})}${toggleRow({id:'marker-radar-presence',title:options.t('radar.enabled'),checked:radar.enabled,onChange:(enabled)=>change({enabled},false)})}`,
+          toggleRow({id:'marker-radar-show-live',title:options.t('radar.show_live'),checked:radar.showLive,onChange:(showLive)=>change({showLive},false)}),
+          field({label:options.t('radar.profile'),help:help('marker.radar_profile_help',options.t('radar.profile')),htmlFor:'radar-profile',control:html`<hp-settings-select><select id="radar-profile" class="areasel" @change=${(event: Event) => change({
       profile: (event.target as HTMLSelectElement).value as RadarEditorDraft['profile'],
     })}>
       ${(['esphome_ld2450_v1', 'cartesian_v1', 'polar_v1', 'range_v1', 'zones_v1', 'presence_v1'] as const)
         .map((profile) => html`<option value=${profile} ?selected=${profile === radar.profile}>
           ${options.t(`radar.profile_${profile}` as I18nKey)}
         </option>`)}
-    </select></hp-settings-select>`})}
-    ${field({label:options.t('radar.room'),help:help('marker.radar_room_help',options.t('radar.room')),htmlFor:'radar-room',control:html`<hp-settings-select><select id="radar-room" class="areasel" @change=${(event: Event) => change({
+    </select></hp-settings-select>`}),
+          field({label:options.t('radar.room'),help:help('marker.radar_room_help',options.t('radar.room')),htmlFor:'radar-room',control:html`<hp-settings-select><select id="radar-room" class="areasel" @change=${(event: Event) => change({
       roomId: (event.target as HTMLSelectElement).value,
     })}>
       <option value="" ?selected=${!radar.roomId}>${options.t('radar.room_choose')}</option>
       ${roomOptions.map((room) => html`<option value=${room.id || ''}
         ?selected=${room.id === radar.roomId}>${room.name}</option>`)}
-    </select></hp-settings-select>`})}
-
-    ${coordinateProfile ? radar.xEntities.map((xEntity, index) => html`
-      <section class="hpf-profile-target">
-      <div class="radartargetheading hpf-profile-target-heading">
+    </select></hp-settings-select>`}),
+          coordinateProfile ? radar.xEntities.map((xEntity, index) => html`
+      <section class="hpf-profile-target">${formSections([
+          html`<div class="radartargetheading hpf-profile-target-heading">
         <strong>${options.t('radar.target', { n: index + 1 })}</strong>
         ${radar.profile === 'cartesian_v1' && radar.xEntities.length > 1
-          ? html`<span class="hpf-button-help"><button class="btn ghost danger" type="button" title=${options.t('btn.delete')}
+          ? html`<span class="hpf-action-help"><button class="btn ghost danger" type="button" title=${options.t('btn.delete')}
               @click=${() => removeTarget(index)}>${options.st('marker.radar_remove_target',{n:index+1})}</button>${help('marker.radar_remove_target_help',options.st('marker.radar_remove_target',{n:index+1}))}</span>`
           : nothing}
-      </div>
-      ${field({label:options.t('radar.axis_x'),control:entitySelect(xEntity, candidates.numeric, (value) => setAxis('xEntities', index, value))})}
-      ${field({label:options.t('radar.axis_y'),control:entitySelect(radar.yEntities[index] || '', candidates.numeric,
-        (value) => setAxis('yEntities', index, value))})}
-      ${radar.profile === 'cartesian_v1' ? html`
+      </div>`,
+          field({label:options.t('radar.axis_x'),control:entitySelect(xEntity, candidates.numeric, (value) => setAxis('xEntities', index, value))}),
+          field({label:options.t('radar.axis_y'),control:entitySelect(radar.yEntities[index] || '', candidates.numeric,
+        (value) => setAxis('yEntities', index, value))}),
+          radar.profile === 'cartesian_v1' ? html`
         ${toggleRow({title:options.t('radar.swap_axes'),checked:radar.swapXY[index]===true,onChange:value=>setBoolAt('swapXY',index,value)})}
         <div class="colorrow radarcoordinates">
           <label>${options.t('radar.axis_x_sign')}<hp-settings-select><select class="areasel"
@@ -326,31 +324,31 @@ export function renderRadarSection(
             <option value="-1" ?selected=${radar.ySigns[index] === -1}>−1</option>
           </select></hp-settings-select></label>
         </div>
-      ` : nothing}
-      ${field({label:options.t('radar.presence_gate'),control:entitySelect(radar.slotPresenceEntities[index] || '', candidates.binary,
-        (value) => setStringAt('slotPresenceEntities', index, value), 'radar.source_optional')})}
-      </section>
-    `) : nothing}
-    ${radar.profile === 'cartesian_v1' && radar.xEntities.length < 8
+      ` : nothing,
+          field({label:options.t('radar.presence_gate'),control:entitySelect(radar.slotPresenceEntities[index] || '', candidates.binary,
+        (value) => setStringAt('slotPresenceEntities', index, value), 'radar.source_optional')}),
+        ])}</section>
+    `) : nothing,
+          radar.profile === 'cartesian_v1' && radar.xEntities.length < 8
       ? html`<button class="btn ghost" type="button" @click=${addTarget}>
           <ha-icon icon="mdi:plus"></ha-icon>${options.t('radar.add_target')}
-        </button>` : nothing}
-    ${radar.profile === 'polar_v1' ? html`
+        </button>` : nothing,
+          radar.profile === 'polar_v1' ? html`
       ${radar.distanceEntities.map((distanceEntity, index) => html`
-        <section class="hpf-profile-target">
-        <div class="radartargetheading hpf-profile-target-heading">
+        <section class="hpf-profile-target">${formSections([
+          html`<div class="radartargetheading hpf-profile-target-heading">
           <strong>${options.t('radar.target', { n: index + 1 })}</strong>
           ${radar.distanceEntities.length > 1 ? html`<button class="btn ghost danger" type="button"
             title=${options.t('btn.delete')} @click=${() => removeTarget(index)}>
             ${options.st('marker.radar_remove_target',{n:index+1})}</button>` : nothing}
-        </div>
-        ${field({label:options.t('radar.distance_source'),control:entitySelect(distanceEntity, candidates.numeric,
-          (value) => setStringAt('distanceEntities', index, value))})}
-        ${field({label:options.t('radar.angle_source'),control:entitySelect(radar.angleEntities[index] || '', candidates.numeric,
-          (value) => setStringAt('angleEntities', index, value))})}
-        ${field({label:options.t('radar.presence_gate'),control:entitySelect(radar.slotPresenceEntities[index] || '', candidates.binary,
-          (value) => setStringAt('slotPresenceEntities', index, value), 'radar.source_optional')})}
-        </section>
+        </div>`,
+          field({label:options.t('radar.distance_source'),control:entitySelect(distanceEntity, candidates.numeric,
+          (value) => setStringAt('distanceEntities', index, value))}),
+          field({label:options.t('radar.angle_source'),control:entitySelect(radar.angleEntities[index] || '', candidates.numeric,
+          (value) => setStringAt('angleEntities', index, value))}),
+          field({label:options.t('radar.presence_gate'),control:entitySelect(radar.slotPresenceEntities[index] || '', candidates.binary,
+          (value) => setStringAt('slotPresenceEntities', index, value), 'radar.source_optional')}),
+        ])}</section>
       `)}
       ${radar.distanceEntities.length < 8 ? html`<button class="btn ghost" type="button"
         @click=${addTarget}><ha-icon icon="mdi:plus"></ha-icon>${options.t('radar.add_target')}</button>` : nothing}
@@ -367,26 +365,26 @@ export function renderRadarSection(
         <option value="right" ?selected=${radar.angleZero === 'right'}>${options.t('radar.angle_right')}</option>
       </select></hp-settings-select>`})}
       ${toggleRow({title:options.t('radar.angle_clockwise'),checked:radar.angleClockwise,onChange:angleClockwise=>change({angleClockwise})})}
-    ` : nothing}
-    ${radar.profile === 'range_v1' ? html`
+    ` : nothing,
+          radar.profile === 'range_v1' ? html`
       ${radar.rangeEntities.map((entityId, index) => html`
-        <section class="hpf-profile-target">
-        <div class="radartargetheading hpf-profile-target-heading">
+        <section class="hpf-profile-target">${formSections([
+          html`<div class="radartargetheading hpf-profile-target-heading">
           <strong>${options.t('radar.range_channel', { n: index + 1 })}</strong>
           ${radar.rangeEntities.length > 1 ? html`<button class="btn ghost danger" type="button"
             title=${options.t('btn.delete')} @click=${() => removeRange(index)}>
             ${options.st('marker.radar_remove_target',{n:index+1})}</button>` : nothing}
-        </div>
-        ${field({label:options.t('radar.distance_source'),control:entitySelect(entityId, candidates.numeric,
-          (value) => setStringAt('rangeEntities', index, value))})}
-        ${field({label:options.t('radar.presence_gate'),control:entitySelect(radar.rangePresenceEntities[index] || '', candidates.binary,
-          (value) => setStringAt('rangePresenceEntities', index, value), 'radar.source_optional')})}
-        </section>
+        </div>`,
+          field({label:options.t('radar.distance_source'),control:entitySelect(entityId, candidates.numeric,
+          (value) => setStringAt('rangeEntities', index, value))}),
+          field({label:options.t('radar.presence_gate'),control:entitySelect(radar.rangePresenceEntities[index] || '', candidates.binary,
+          (value) => setStringAt('rangePresenceEntities', index, value), 'radar.source_optional')}),
+        ])}</section>
       `)}
       ${radar.rangeEntities.length < 2 ? html`<button class="btn ghost" type="button"
         @click=${addRange}><ha-icon icon="mdi:plus"></ha-icon>${options.t('radar.add_range')}</button>` : nothing}
-    ` : nothing}
-    ${radar.profile === 'zones_v1' ? html`
+    ` : nothing,
+          radar.profile === 'zones_v1' ? html`
       ${field({label:options.t('radar.zone_source'),control:entitySelect(radar.zoneEntity,
         radar.zoneKind === 'occupancy' ? candidates.binary : candidates.numeric,
         (zoneEntity) => change({ zoneEntity }))})}
@@ -397,41 +395,37 @@ export function renderRadarSection(
         <option value="occupancy" ?selected=${radar.zoneKind === 'occupancy'}>${options.t('radar.occupancy')}</option>
         <option value="count" ?selected=${radar.zoneKind === 'count'}>${options.t('radar.count')}</option>
       </select></hp-settings-select>`})}
-    ` : nothing}
-    ${subsection({title:options.st('marker.radar_sources')})}
-    ${field({label:options.t('radar.occupancy_source'),control:entitySelect(radar.occupancyEntity, candidates.binary,
-      (occupancyEntity) => change({ occupancyEntity }), 'radar.source_optional')})}
-    ${field({label:options.t('radar.count_source'),control:entitySelect(radar.countEntity, candidates.numeric,
-      (countEntity) => change({ countEntity }), 'radar.source_optional')})}
-    ${field({label:options.t('radar.availability_source'),control:entitySelect(radar.availabilityEntity, candidates.binary,
-      (availabilityEntity) => change({ availabilityEntity }), 'radar.source_optional')})}
-
-    ${subsection({title:options.t('radar.mount')})}
-    ${callout({text:options.t('radar.mount_hint')})}
-    <div class="colorrow radarcoordinates">
+    ` : nothing,
+          html`${subsection({title:options.st('marker.radar_sources')})}${field({label:options.t('radar.occupancy_source'),control:entitySelect(radar.occupancyEntity, candidates.binary,
+      (occupancyEntity) => change({ occupancyEntity }), 'radar.source_optional')})}`,
+          field({label:options.t('radar.count_source'),control:entitySelect(radar.countEntity, candidates.numeric,
+      (countEntity) => change({ countEntity }), 'radar.source_optional')}),
+          field({label:options.t('radar.availability_source'),control:entitySelect(radar.availabilityEntity, candidates.binary,
+      (availabilityEntity) => change({ availabilityEntity }), 'radar.source_optional')}),
+          html`${subsection({title:options.t('radar.mount')})}${callout({text:options.t('radar.mount_hint')})}`,
+          html`<div class="colorrow radarcoordinates">
       <label>X <input class="tempin" inputmode="decimal" .value=${radar.mountX}
         @input=${(event: Event) => change({ mountX: (event.target as HTMLInputElement).value })}></label>
       <label>Y <input class="tempin" inputmode="decimal" .value=${radar.mountY}
         @input=${(event: Event) => change({ mountY: (event.target as HTMLInputElement).value })}></label>
       <label>${options.t('radar.heading')} <input class="tempin" type="number" min="0" max="359.999" step="1"
         .value=${radar.heading} @input=${(event: Event) => change({ heading: (event.target as HTMLInputElement).value })}></label>
-    </div>
-    <div class="colorrow radarcoordinates">
+    </div>`,
+          html`<div class="colorrow radarcoordinates">
       <label>${options.t('radar.range_cm')} <input class="tempin" type="number" min="1" max="10000"
         .value=${radar.rangeCm} @input=${(event: Event) => change({ rangeCm: (event.target as HTMLInputElement).value })}></label>
       <label>${options.t('radar.fov_deg')} <input class="tempin" type="number" min="1" max="360"
         .value=${radar.fovDeg} @input=${(event: Event) => change({ fovDeg: (event.target as HTMLInputElement).value })}></label>
-    </div>
-    ${radar.profile !== 'esphome_ld2450_v1' && radar.profile !== 'zones_v1'
+    </div>`,
+          radar.profile !== 'esphome_ld2450_v1' && radar.profile !== 'zones_v1'
       && radar.profile !== 'presence_v1' ? html`
       ${field({label:options.t('radar.unit'),control:html`<hp-settings-select><select class="areasel" @change=${(event: Event) => change({
         unit: (event.target as HTMLSelectElement).value as RadarEditorDraft['unit'],
       })}>${(['mm', 'cm', 'm', 'in', 'ft'] as const).map((unit) => html`
         <option value=${unit} ?selected=${unit === radar.unit}>${unit}</option>`)}</select></hp-settings-select>`})}
-    ` : nothing}
-    ${toggleRow({id:'marker-radar-mirror',title:options.t('radar.mirror'),checked:radar.mirror,onChange:(mirror)=>change({mirror})})}
-    ${subsection({title:options.st('marker.radar_service')})}
-    <div class="row hpf-actions">
+    ` : nothing,
+          toggleRow({id:'marker-radar-mirror',title:options.t('radar.mirror'),checked:radar.mirror,onChange:(mirror)=>change({mirror})}),
+          html`${subsection({title:options.st('marker.radar_service')})}<div class="row hpf-actions">
       <button class="btn" type="button" @click=${() => configureOnPlan()}>
         <ha-icon icon="mdi:map-marker-radius"></ha-icon>${options.t('radar.configure_on_plan')}
       </button>
@@ -442,9 +436,9 @@ export function renderRadarSection(
         <ha-icon icon="mdi:radar"></ha-icon>
         ${radar.inspectBusy ? options.t('radar.checking') : options.t('radar.check_sources')}
       </button>
-    </div>
-    ${radar.inspectError ? html`<p class="error" role="alert">${radar.inspectError}</p>` : nothing}
-    ${radar.inspection?.frame ? html`<div class="radarinspection" aria-live="polite">
+    </div>`,
+          radar.inspectError ? html`<p class="error" role="alert">${radar.inspectError}</p>` : nothing,
+          radar.inspection?.frame ? html`<div class="radarinspection" aria-live="polite">
       <strong>${options.t('radar.health')}</strong>
       <span>${options.t(`radar.health_${radar.inspection.frame.health || 'unknown'}` as I18nKey)}</span>
       <span>${options.t('radar.live_summary', {
@@ -457,14 +451,14 @@ export function renderRadarSection(
         return html`<code>${source.entity_id}: ${source.state ?? '—'}${age == null ? ''
           : ` · ${options.t('radar.report_age', { seconds: age })}`}</code>`;
       })}
-    </div>` : nothing}
-    ${options.setup.render()}
-    <div class="row">
+    </div>` : nothing,
+          options.setup.render(),
+          html`<div class="row">
       <button class="btn danger" type="button" @click=${remove}>
         <ha-icon icon="mdi:radar-off"></ha-icon>${options.t('radar.remove')}
       </button>
-    </div>
-    </div>
+    </div>`,
+        ])}</div>
     </fieldset>
   </div>`;
 }

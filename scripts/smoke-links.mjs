@@ -35,6 +35,11 @@ export const SMOKE_LINKS = [
     because: '#1005: public provider events and settings controls prove source-scoped reasons and their native footer presentation without importing the model.',
   },
   {
+    files: ['src/editors/form-kit.ts', 'src/styles/dialog-composition.styles.ts', 'src/styles/settings-dialogs.styles.ts', 'src/hp-help.ts'],
+    smokes: ['smoke_dialog_ui_kit.mjs'],
+    because: '#1007: rendered section geometry, conditional omission, preserved draft, independent Help hover/click and disclosures across themes and narrow viewports; a string-level import match does not prove these outcomes.',
+  },
+  {
     files: ['src/dialog-presence.ts', 'src/dialog-exit.ts', 'src/dialog-return-focus.ts', 'src/hp-dialog.ts', 'src/editor-secondary.ts', 'src/styles/settings-dialogs.styles.ts', 'src/device-inbox-menu.ts'],
     smokes: ['smoke_ui_polish_976.mjs'],
     because: '#976: native public controls execute accepted-close/focus paint, tool intention and keyboard rule actions; the browser consumer does not import those product helpers.',

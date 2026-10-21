@@ -3,7 +3,7 @@ import { html, nothing, type TemplateResult } from 'lit';
 
 import {
   callout, colorField, field, fieldGrid, footerStatus, formCard, rangeEnds,
-  rangeLine, segmented, sourcePicker, subsection, textLink, tintBlock, toggleRow, unitInput,
+  rangeLine, segmented, sourcePicker, subsection, textLink, tintBlock, toggleRow, unitInput, formSections,
 } from './form-kit';
 import { ensureSettingsDialogStyles } from './settings-styles';
 import { settingsSections, revealSettingsField } from './settings-sections';
@@ -252,17 +252,17 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
     const basics = formCard({
       id: 'basics',
       title: st('marker.section_basics'),
-      body: html`
-        ${bindingBanner}
-        ${field({
+      body: formSections([
+          bindingBanner,
+          field({
           label: t('marker.name_label'), htmlFor: 'marker-name',
           error: nameProblem ? st(nameProblem.message) : undefined,
           control: html`<input id="marker-name" class="hpf-input" type="text" placeholder=${t('marker.name_ph')}
             aria-invalid=${nameProblem ? 'true' : nothing}
             .value=${d.name}
             @input=${(e: Event) => (this.host._markerDialog = { ...d, name: (e.target as HTMLInputElement).value })} />`,
-        })}
-        ${field({
+        }),
+          field({
           label: t('marker.binding_label'), help: shelp('marker.binding.help'),
           control: html`${segmented<'virtual' | 'ha'>({
             name: 'bmode',
@@ -297,10 +297,10 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               });
             },
           })}`,
-        })}
-        ${isVirtual ? nothing : field({label:st('marker.ha_device_label'),htmlFor:'marker-binding',
-          help:shelp('marker.binding_search_hint'),error:bindingProblem ? st(bindingProblem.message) : undefined,control:bindingPicker})}
-        ${field({
+        }),
+          isVirtual ? nothing : field({label:st('marker.ha_device_label'),htmlFor:'marker-binding',
+          help:shelp('marker.binding_search_hint'),error:bindingProblem ? st(bindingProblem.message) : undefined,control:bindingPicker}),
+          field({
           label: t('marker.room_label'), htmlFor: 'marker-room',
           help:html`<hp-help instant data-help-key="marker.room.help" .text=${d.room ? st('marker.room_hint_override') : isVirtual ? st('marker.room.help') : st('marker.room_hint_auto')} .ariaLabel=${st('marker.room.help.aria')}></hp-help>`,
           control: html`<hp-settings-select><select id="marker-room" class="hpf-select"
@@ -321,14 +321,15 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               (r) => html`<option value=${r.value} ?selected=${r.value === d.room}>${r.label}</option>`,
             )}
           </select></hp-settings-select>`,
-        })}
-        ${this.host._bindingHasClimate(d.binding)
+        }),
+          this.host._bindingHasClimate(d.binding)
           ? html`${subsection({title:st('marker.room_metrics')})}${toggleRow({
               id:'marker-use-climate-temp',compact:true,title:t('marker.use_climate_temp'),
               help:html`<hp-help instant data-help-key="marker.use_climate_temp_tip"
                 .text=${t('marker.use_climate_temp_tip')} .ariaLabel=${t('marker.use_climate_temp')}></hp-help>`,
               checked:d.useClimateTemp,onChange:(value)=>(this.host._markerDialog={...d,useClimateTemp:value}),
-            })}` : nothing}`,
+            })}` : nothing,
+        ]),
     });
 
     // --------------------------------------------------------- Tap action
@@ -400,8 +401,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
     const tap = formCard({
       id: 'tap',
       title: st('marker.section_actions'),
-      body: html`
-        ${field({
+      body: formSections([
+          field({
           label: t('marker.tap_label'), htmlFor: 'marker-tap-action',
           control: html`<hp-settings-select><select id="marker-tap-action" class="hpf-select"
             aria-describedby=${effectiveTapAction === 'toggle' ? 'marker-toggle-hint' : nothing}
@@ -421,10 +422,10 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             ? html`<span id="marker-toggle-hint" class="hpf-note" role="note">${toggleHintLines.map((line) => html`<span class="hpf-hint-line">${line}</span>`)}</span>
               <span class="sr-only" role="status" aria-live="polite">${d.tapHintAnnouncement}</span>`
             : undefined,
-        })}
-        ${toggleEntityField}
-        ${runTargetField}
-        ${effectiveTapAction === 'run' || effectiveTapAction === 'toggle'
+        }),
+          toggleEntityField,
+          runTargetField,
+          effectiveTapAction === 'run' || effectiveTapAction === 'toggle'
           ? toggleRow({
               id: 'marker-tap-confirm', icon: 'mdi:check-decagram-outline',
               title: t('marker.tap_confirm'),
@@ -432,8 +433,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               checked: d.tapConfirm,
               onChange: (v) => (this.host._markerDialog = { ...d, tapConfirm: v }),
             })
-          : nothing}
-        ${field({
+          : nothing,
+          field({
           label: t('marker.controls_label'), htmlFor: 'marker-controls-filter', help: this._help('marker.controls.help'),
           control: html`
             ${d.controls.length
@@ -465,7 +466,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                   </div></div>`
                 : nothing}
             </div>`,
-        })}`,
+        }),
+        ]),
     });
 
     // ----------------------------------------------------- Light and glow
@@ -514,8 +516,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
     const light = formCard({
       id: 'light',
       title: st('marker.section_light'),
-      body: html`
-        ${field({
+      body: formSections([
+          field({
           label: t('marker.light_role_label'), help: this._help('marker.light_role.help'),
           control: segmented<'auto' | 'always' | 'never'>({
             name: 'marker-light-role',
@@ -528,8 +530,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             ],
             onChange: (role) => this._setMarkerLightRole(role),
           }),
-        })}
-        ${d.lightRole === 'always' && (leadingEntities.length > 1 || staleLeading)
+        }),
+          d.lightRole === 'always' && (leadingEntities.length > 1 || staleLeading)
           ? html`<div class="markerleadingentity">${field({
               label: t('marker.light_entity_label'), htmlFor: 'marker-light-entity', help: this._help('marker.light_entity.help'),
               control: html`<hp-settings-select><select id="marker-light-entity" class="hpf-select"
@@ -552,8 +554,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                 ? note(t('marker.light_entity_missing', { entity: d.lightEntity, fallback: effectiveLeading || '—' }), 'warning')
                 : undefined,
             })}</div>`
-          : nothing}
-        <div class="hpf-block markerglowblock ${glowSourceDisabled ? 'hpf-disabled' : ''}" aria-disabled=${glowSourceDisabled ? 'true' : 'false'}>
+          : nothing,
+          html`<div class="hpf-block markerglowblock ${glowSourceDisabled ? 'hpf-disabled' : ''}" aria-disabled=${glowSourceDisabled ? 'true' : 'false'}>
           ${subsection({ title: t('marker.glow_color_label'), help: this._help('marker.glow_mode.help') })}
           ${segmented<'auto' | 'color' | 'fixed'>({
             name: 'marker-glow-mode',
@@ -585,6 +587,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             ? callout({ id: 'marker-glow-disabled-hint', kind: 'info', role: 'note', icon: 'mdi:information-outline', text: glowDisabledHint })
             : nothing}
         </div>`,
+        ]),
     });
 
     // --------------------------------------------------------- Appearance
@@ -610,8 +613,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
     const appearance = formCard({
       id: 'appearance',
       title: st('marker.section_appearance'),
-      body: html`
-        ${field({
+      body: formSections([
+          field({
           label: t('marker.icon_label'), htmlFor: 'marker-icon', help: shelp('marker.icon.help'),
           control: html`<div class="hpf-iconfield">
             <div class="hpf-iconfield-control">
@@ -620,9 +623,9 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               ${iconControl}
             </div>
           </div>`,
-        })}
-        ${this.host._ledSection(d.devId)}
-        ${field({
+        }),
+          this.host._ledSection(d.devId),
+          field({
           label: st('marker.display_method'), htmlFor: 'marker-display',
           help:html`<hp-help instant data-help-key="marker.display.help" .text=${`${st('marker.display.help')} ${t(DISPLAY_HINT_KEYS[d.display])}`} .ariaLabel=${st('marker.display.help.aria')}></hp-help>`,
           control: html`<hp-settings-select><select id="marker-display" class="hpf-select"
@@ -634,25 +637,25 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               ${t(DISPLAY_LABEL_KEYS[v])}
             </option>`)}
           </select></hp-settings-select>`,
-        })}
-        ${renderMarkerStateSource({ draft: d, registry: this.host._fullRegistryHass, hass: this.host._planHass,
+        }),
+          renderMarkerStateSource({ draft: d, registry: this.host._fullRegistryHass, hass: this.host._planHass,
           protectedFace: previewPresentation?.protectedFace === true,
           t: st, searchPlaceholder: t('opening.search_ph'), emptyText: t('marker.nothing_found'),
           change: (next) => { if (this.host._markerDialog === d) this.host._markerDialog = next; },
-        })}
-        ${toggleRow({
+        }),
+          toggleRow({
           id: 'marker-hide-battery', compact: true, icon: 'mdi:battery-off-outline',
           title: t('marker.hide_battery'), help:shelp('marker.hide_battery.help'),
           checked: d.hideBattery,
           onChange: (hidden) => (this.host._markerDialog = { ...d, hideBattery: hidden }),
-        })}
-        ${toggleRow({
+        }),
+          toggleRow({
           id: 'marker-hide-signal', compact: true, icon: 'mdi:signal-off',
           title: st('marker.hide_signal'), help: shelp('marker.hide_signal_help'),
           checked: d.hideSignal,
           onChange: (hidden) => (this.host._markerDialog = { ...d, hideSignal: hidden }),
-        })}
-        ${d.display === 'icon_ripple'
+        }),
+          d.display === 'icon_ripple'
           ? html`${field({
               label: t('marker.activity_color'),
               control: html`<div class="ripple-colorrow">${colorField({
@@ -674,8 +677,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               })}
               <p class="hpf-hint" role="note">${t('marker.activity_alarm_note')}</p>
             </div>`
-          : nothing}
-        ${displayWantsValue(d.display)
+          : nothing,
+          displayWantsValue(d.display)
           ? html`<div class="markervaluesource">${field({
               label: st('marker.value_source_instead'), htmlFor: 'marker-value-source', help: this._help('marker.value_source.help'),
               control: html`<hp-settings-select><select id="marker-value-source" class="hpf-select" ?disabled=${isVirtual}
@@ -704,11 +707,11 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                     ? html`<code class="hpf-mono">${selectedValueSourceCandidate.technical}</code>`
                     : undefined,
             })}</div>`
-          : nothing}
-        ${displayIsNeutral(d.display) && this.host._bindingHasAlarm(d.binding)
+          : nothing,
+          displayIsNeutral(d.display) && this.host._bindingHasAlarm(d.binding)
           ? callout({ kind: 'warning', role: 'note', icon: 'mdi:alert-outline', text: t('marker.static_alarm_warning') })
-          : nothing}
-        <div class="hpf-block markerbadgegroup">
+          : nothing,
+          html`<div class="hpf-block markerbadgegroup">
           ${subsection({ title: t('marker.value_badge_title'), help: this._help('marker.value_badge.help') })}
           ${toggleRow({
             id: 'marker-value-badge', compact: true, icon: displayIsNeutral(d.display) ? 'mdi:eye-off-outline' : 'mdi:card-text-outline',
@@ -775,9 +778,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               }),
             })}
           ` : nothing}
-        </div>
-        ${subsection({ title: t('marker.size_label'), help: shelp('marker.size.help') })}
-        ${fieldGrid([
+        </div>`,
+          html`${html`${subsection({ title: t('marker.size_label'), help: shelp('marker.size.help') })}${fieldGrid([
           html`<div class="hpf-field markersize">
             <span class="hpf-label hpf-labelrow"><label for="marker-size">${st('marker.size_short')}</label></span>
             ${rangeLine({
@@ -798,9 +800,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             })}
             ${rangeEnds('0°', '355°')}
           </div>`,
-        ])}
-        ${callout({text:st('marker.sources_explanation')})}
-        ${previewPresentation
+        ])}`}${callout({text:st('marker.sources_explanation')})}`,
+          previewPresentation
           // Q3 (решение владельца): hp-device-preview целиком — у него свой
           // заголовок «Display preview · Now» и свой блок на тинте, обёртка не нужна.
           ? html`<hp-device-preview
@@ -816,8 +817,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                 <ha-icon icon="mdi:eye-outline"></ha-icon>
                 <span>${t('marker.preview.select_source')}</span>
               </div>`,
-            })}
-        `,
+            }),
+        ]),
     });
 
     // ------------------------------------------------------------ Details
@@ -831,8 +832,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
     const details = formCard({
       id: 'details',
       title: st('marker.section_details'),
-      body: html`
-        ${fieldGrid([
+      body: formSections([
+          fieldGrid([
           field({
             label: t('marker.model_label'), htmlFor: 'marker-model',
             control: html`<input id="marker-model" class="hpf-input" type="text" placeholder=${t('marker.model_ph')}
@@ -846,14 +847,14 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               .value=${d.link}
               @input=${(e: Event) => (this.host._markerDialog = { ...d, link: (e.target as HTMLInputElement).value })} />`,
           }),
-        ], { stacked: true })}
-        ${field({
+        ], { stacked: true }),
+          field({
           label: t('marker.desc_label'), htmlFor: 'marker-description',
           control: html`<textarea id="marker-description" class="hpf-input" rows="4" placeholder=${t('marker.desc_ph')}
             .value=${d.description}
             @input=${(e: Event) => (this.host._markerDialog = { ...d, description: (e.target as HTMLTextAreaElement).value })}></textarea>`,
-        })}
-        ${field({
+        }),
+          field({
           label: t('marker.manuals_label'),
           control: html`
             ${d.pdfs.length
@@ -872,8 +873,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               <input type="file" hidden multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,application/pdf"
                 @change=${(e: Event) => this._pickMarkerFiles(e)} />
             </div>`,
-        })}
-        ${legacyRadar ? callout({
+        }),
+          legacyRadar ? callout({
           kind: 'warning',
           text: d.radarRemove ? toolsT(lang, 'marker.legacy_radar_removed_hint') : st('marker.legacy_radar_hint'),
           action: textLink(d.radarRemove ? toolsT(lang, 'marker.legacy_radar_restore') : st('marker.legacy_radar_open'), () => {
@@ -881,8 +882,9 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             legacyRadarPanels.set(this.host, { owner, open: true });
             this.host.requestUpdate();
           }),
-        }) : nothing}
-        ${legacyRadar && legacyPanel && legacyPanel.owner===owner && legacyPanel.open ? this._renderRadarSection(d,radarDevice,'additional') : nothing}`,
+        }) : nothing,
+          legacyRadar && legacyPanel && legacyPanel.owner===owner && legacyPanel.open ? this._renderRadarSection(d,radarDevice,'additional') : nothing,
+        ]),
     });
 
     const hidden = d.hideFromPlan || bindingStatus?.kind === 'ha_disabled';
