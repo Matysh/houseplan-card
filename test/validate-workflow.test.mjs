@@ -55,7 +55,7 @@ test('one cold producer and verified bundle distribution precede all consumers (
   assert.equal([...workflow.matchAll(/^ +run: npm run build$/gm)].length, 1);
   const frontend = chunks.get('frontend'), bundle = chunks.get('bundle');
   assert.match(frontend, /name: producer-card-bundle\n\s+path: dist\//);
-  assert.match(frontend, /name: producer-test-build\n\s+path: test-build\//);
+  assert.match(frontend, /name: producer-test-build\n\s+include-hidden-files: true\n\s+path: test-build\//);
   assert.match(bundle, /needs: \[changes, reuse, frontend\]/);
   assert.match(bundle, /if: always\(\).*needs\.frontend\.result == 'success'.*needs\.frontend\.result == 'skipped'/);
   assert.match(bundle, /ci-registry-build\.mjs/);
@@ -66,7 +66,7 @@ test('one cold producer and verified bundle distribution precede all consumers (
     const download = chunk.indexOf('name: card-bundle');
     assert.ok(clear > 0 && download > clear, id + ' removes stale hashed assets before download');
   }
-  assert.match(bundle, /name: card-test-build\n\s+path: test-build\//);
+  assert.match(bundle, /name: card-test-build\n\s+include-hidden-files: true\n\s+path: test-build\//);
   for (const id of ['smoke', 'browser_selected', 'product_guards']) assert.match(chunks.get(id), /name: card-test-build/);
   assert.equal(workflow.match(/node scripts\/bundle-sync\.mjs/g)?.length, 5, 'four full/selected workers and one candidate smoke');
 });
