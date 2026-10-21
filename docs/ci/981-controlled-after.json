@@ -1,0 +1,937 @@
+{
+  "schema": 1,
+  "measuredUtc": "2026-10-21T07:51:55.812615+00:00",
+  "method": "Controlled real executions after implementation; actual non-skipped job seconds without billing rounding. This is not a fabricated post-change week.",
+  "limits": "Controlled executions of the current implementation; not a post-change week or a traffic population. A real dev push is observed only after independent S8 merge.",
+  "before": {
+    "file": "981-before-week.json",
+    "ordinaryMeasuredRuns": 35,
+    "candidateMeasuredRuns": 12
+  },
+  "fullControlled": [
+    {
+      "run": 39561557339,
+      "attempt": 1,
+      "sha": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+      "path": ".github/workflows/validate.yml",
+      "event": "workflow_dispatch",
+      "conclusion": "success",
+      "created": "2026-10-21T07:22:49Z",
+      "machineSeconds": 4992.0,
+      "machineMinutes": 83.2,
+      "jobs": [
+        {
+          "id": 119093794008,
+          "name": "Инструменты: вычисляемый набор юнитов",
+          "conclusion": "success",
+          "seconds": 263.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119093794224,
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 27.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119093794295,
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 16.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119093915096,
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 6.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119093915194,
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 54.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119093915202,
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 25.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119093916327,
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119093974684,
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "success",
+          "seconds": 22.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119093974747,
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "success",
+          "seconds": 208.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119093974858,
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 63.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119094392335,
+          "name": "Упаковка: свежие артефакты кандидата",
+          "conclusion": "success",
+          "seconds": 21.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119094540484,
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "success",
+          "seconds": 169.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119094540487,
+          "name": "Смоки в браузере (шард 3 из 3)",
+          "conclusion": "success",
+          "seconds": 1301.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119094540491,
+          "name": "Смоки в браузере (шард 2 из 3)",
+          "conclusion": "success",
+          "seconds": 1268.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119094540493,
+          "name": "Продукт: свежие проверки диапазона и упаковки",
+          "conclusion": "success",
+          "seconds": 115.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119094540566,
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "success",
+          "seconds": 285.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119094540970,
+          "name": "Смоки в браузере (шард 1 из 3)",
+          "conclusion": "success",
+          "seconds": 1131.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119094542360,
+          "name": "Браузер: выбранные проверки push",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119095297299,
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119102976662,
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "success",
+          "seconds": 3.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119103013689,
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 15.0,
+          "runnerStarted": true
+        }
+      ],
+      "url": "https://github.com/Matysh/houseplan-card/actions/runs/39561557339"
+    },
+    {
+      "run": 39561608307,
+      "attempt": 1,
+      "sha": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+      "path": ".github/workflows/validate.yml",
+      "event": "workflow_dispatch",
+      "conclusion": "success",
+      "created": "2026-10-21T07:23:15Z",
+      "machineSeconds": 522.0,
+      "machineMinutes": 8.7,
+      "jobs": [
+        {
+          "id": 119103135387,
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 16.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119103135763,
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 15.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119103135833,
+          "name": "Инструменты: вычисляемый набор юнитов",
+          "conclusion": "success",
+          "seconds": 159.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119103256697,
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 13.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119103256700,
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 28.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119103256742,
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 51.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119103258335,
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119103358726,
+          "name": "Упаковка: свежие артефакты кандидата",
+          "conclusion": "success",
+          "seconds": 67.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119103360267,
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119103360399,
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119103360628,
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119103808544,
+          "name": "Продукт: свежие проверки диапазона и упаковки",
+          "conclusion": "success",
+          "seconds": 159.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119103810042,
+          "name": "Браузер: выбранные проверки push",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119103810901,
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119103811134,
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119103811173,
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119103811245,
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119104862049,
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 14.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119104863966,
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        }
+      ],
+      "url": "https://github.com/Matysh/houseplan-card/actions/runs/39561608307"
+    }
+  ],
+  "fullConsumer": {
+    "run": 39561608307,
+    "sha": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+    "status": "green",
+    "note": "release proof is complete",
+    "url": "https://github.com/Matysh/houseplan-card/actions/runs/39561608307",
+    "policy": "release",
+    "request": {
+      "full": true,
+      "mutants": false
+    },
+    "reused": [
+      "frontend",
+      "smoke",
+      "golden",
+      "performance_smoke",
+      "geometry_parity",
+      "backend"
+    ],
+    "fresh": [
+      {
+        "id": "bundle",
+        "mode": "executed",
+        "result": "success"
+      },
+      {
+        "id": "product_guards",
+        "mode": "executed",
+        "result": "success"
+      }
+    ],
+    "sources": [
+      {
+        "id": "frontend",
+        "key": "8f8f7f1e30d83835518f490eb58e3cc8086d98460c80db05cb91e59f01d83644",
+        "sourceRun": 39561557339,
+        "sourceAttempt": 1,
+        "sourceSha": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+        "registry": {
+          "schema": "houseplan-job-proof/v1",
+          "job": "frontend",
+          "key": "8f8f7f1e30d83835518f490eb58e3cc8086d98460c80db05cb91e59f01d83644",
+          "mode": "candidate",
+          "treeId": "4b698aafe39421fa60bcc320b346f0900f21e669ffdafb4febf89bd39535413e",
+          "outcome": "success",
+          "reused": false,
+          "repo": "Matysh/houseplan-card",
+          "workflow": ".github/workflows/validate.yml",
+          "run": 39561557339,
+          "attempt": 1,
+          "sha": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+          "toolchain": {
+            "node": "22.23.3",
+            "platform": "linux",
+            "arch": "x64",
+            "python": "3.14.8",
+            "pythonPin": "3.14",
+            "nodeFlags": [],
+            "nodeOptions": null,
+            "nodeEnv": null,
+            "locale": "en-US",
+            "timezone": "UTC",
+            "pins": "5500084151750cb19b2d641eef6e0a9543c2a38c892d38bc42a3799f6cca8d21"
+          },
+          "workflow_sha": "125195db2c5458e2141ddb7203ead1decb47eedb55ffdb028e9b305829861cd7",
+          "workflow_revision": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+          "created": "2026-10-21T07:46:52.456Z",
+          "inventory": {
+            "dist": "ae140e2e8cfd4b894d579ac17b5712aa52d48c6507f24fc0fb43cb5e9a96dd01",
+            "testBuild": "5ceb9d81cff3b7face5e946900947f26c0d94a80526524d9186a80a673c7c702",
+            "fingerprint": "4f8cc4f5ddfde87c1e5a60608e1b4c94a4820a3e73a0c590e6f7e7db6f7b2cc1"
+          }
+        }
+      },
+      {
+        "id": "smoke",
+        "key": "4299e3d6cbbcde34122b9afefa092ea35f8e10c7f12a2353c14ff2157f10804a",
+        "sourceRun": 39561557339,
+        "sourceAttempt": 1,
+        "sourceSha": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+        "registry": {
+          "schema": "houseplan-job-proof/v1",
+          "job": "smoke",
+          "key": "4299e3d6cbbcde34122b9afefa092ea35f8e10c7f12a2353c14ff2157f10804a",
+          "mode": "candidate",
+          "treeId": "4b698aafe39421fa60bcc320b346f0900f21e669ffdafb4febf89bd39535413e",
+          "outcome": "success",
+          "reused": false,
+          "repo": "Matysh/houseplan-card",
+          "workflow": ".github/workflows/validate.yml",
+          "run": 39561557339,
+          "attempt": 1,
+          "sha": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+          "toolchain": {
+            "node": "22.23.3",
+            "platform": "linux",
+            "arch": "x64",
+            "python": "3.14.8",
+            "pythonPin": "3.14",
+            "nodeFlags": [],
+            "nodeOptions": null,
+            "nodeEnv": null,
+            "locale": "en-US",
+            "timezone": "UTC",
+            "pins": "5500084151750cb19b2d641eef6e0a9543c2a38c892d38bc42a3799f6cca8d21"
+          },
+          "workflow_sha": "448b136c15a0c11b144e60a78272dd6dc1863fa97ed5407a6a20fdc76026793a",
+          "workflow_revision": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+          "created": "2026-10-21T07:46:52.456Z"
+        }
+      },
+      {
+        "id": "golden",
+        "key": "3067d4df44189a5980e6ddaa81c3501a2fcebce581a1749fb0d601ac271ee6c3",
+        "sourceRun": 39561557339,
+        "sourceAttempt": 1,
+        "sourceSha": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+        "registry": {
+          "schema": "houseplan-job-proof/v1",
+          "job": "golden",
+          "key": "3067d4df44189a5980e6ddaa81c3501a2fcebce581a1749fb0d601ac271ee6c3",
+          "mode": "candidate",
+          "treeId": "4b698aafe39421fa60bcc320b346f0900f21e669ffdafb4febf89bd39535413e",
+          "outcome": "success",
+          "reused": false,
+          "repo": "Matysh/houseplan-card",
+          "workflow": ".github/workflows/validate.yml",
+          "run": 39561557339,
+          "attempt": 1,
+          "sha": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+          "toolchain": {
+            "node": "22.23.3",
+            "platform": "linux",
+            "arch": "x64",
+            "python": "3.14.8",
+            "pythonPin": "3.14",
+            "nodeFlags": [],
+            "nodeOptions": null,
+            "nodeEnv": null,
+            "locale": "en-US",
+            "timezone": "UTC",
+            "pins": "5500084151750cb19b2d641eef6e0a9543c2a38c892d38bc42a3799f6cca8d21"
+          },
+          "workflow_sha": "58166516cf6457f9075aa22a319c32b900a7c542c292d4d8d0e069c9320b6d64",
+          "workflow_revision": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+          "created": "2026-10-21T07:46:52.456Z"
+        }
+      },
+      {
+        "id": "performance_smoke",
+        "key": "251d3fc4c06d2f43641fbdde04dfff858971600dc225b84d8dc3a61255fba268",
+        "sourceRun": 39561557339,
+        "sourceAttempt": 1,
+        "sourceSha": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+        "registry": {
+          "schema": "houseplan-job-proof/v1",
+          "job": "performance_smoke",
+          "key": "251d3fc4c06d2f43641fbdde04dfff858971600dc225b84d8dc3a61255fba268",
+          "mode": "candidate",
+          "treeId": "4b698aafe39421fa60bcc320b346f0900f21e669ffdafb4febf89bd39535413e",
+          "outcome": "success",
+          "reused": false,
+          "repo": "Matysh/houseplan-card",
+          "workflow": ".github/workflows/validate.yml",
+          "run": 39561557339,
+          "attempt": 1,
+          "sha": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+          "toolchain": {
+            "node": "22.23.3",
+            "platform": "linux",
+            "arch": "x64",
+            "python": "3.14.8",
+            "pythonPin": "3.14",
+            "nodeFlags": [],
+            "nodeOptions": null,
+            "nodeEnv": null,
+            "locale": "en-US",
+            "timezone": "UTC",
+            "pins": "5500084151750cb19b2d641eef6e0a9543c2a38c892d38bc42a3799f6cca8d21"
+          },
+          "workflow_sha": "28ca95684af55bb0885f4838875ce7f9c95914a1a1fd3696773d009c04a274f6",
+          "workflow_revision": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+          "created": "2026-10-21T07:46:52.456Z"
+        }
+      },
+      {
+        "id": "geometry_parity",
+        "key": "fb2a49961bb30648886a4e9e924bb1bba85248ae527478ff21a52edda9c14271",
+        "sourceRun": 39561557339,
+        "sourceAttempt": 1,
+        "sourceSha": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+        "registry": {
+          "schema": "houseplan-job-proof/v1",
+          "job": "geometry_parity",
+          "key": "fb2a49961bb30648886a4e9e924bb1bba85248ae527478ff21a52edda9c14271",
+          "mode": "candidate",
+          "treeId": "4b698aafe39421fa60bcc320b346f0900f21e669ffdafb4febf89bd39535413e",
+          "outcome": "success",
+          "reused": false,
+          "repo": "Matysh/houseplan-card",
+          "workflow": ".github/workflows/validate.yml",
+          "run": 39561557339,
+          "attempt": 1,
+          "sha": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+          "toolchain": {
+            "node": "22.23.3",
+            "platform": "linux",
+            "arch": "x64",
+            "python": "3.14.8",
+            "pythonPin": "3.14",
+            "nodeFlags": [],
+            "nodeOptions": null,
+            "nodeEnv": null,
+            "locale": "en-US",
+            "timezone": "UTC",
+            "pins": "5500084151750cb19b2d641eef6e0a9543c2a38c892d38bc42a3799f6cca8d21"
+          },
+          "workflow_sha": "04b4e947c67879686f0beb670deca09bf384db1ebab6ba04502e75fed961aa1c",
+          "workflow_revision": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+          "created": "2026-10-21T07:46:52.456Z"
+        }
+      },
+      {
+        "id": "backend",
+        "key": "080c535eb66670b714e5f45b8603f8794f086c81c7f50f7f9910e1a7b4859095",
+        "sourceRun": 39561557339,
+        "sourceAttempt": 1,
+        "sourceSha": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+        "registry": {
+          "schema": "houseplan-job-proof/v1",
+          "job": "backend",
+          "key": "080c535eb66670b714e5f45b8603f8794f086c81c7f50f7f9910e1a7b4859095",
+          "mode": "candidate",
+          "treeId": "4b698aafe39421fa60bcc320b346f0900f21e669ffdafb4febf89bd39535413e",
+          "outcome": "success",
+          "reused": false,
+          "repo": "Matysh/houseplan-card",
+          "workflow": ".github/workflows/validate.yml",
+          "run": 39561557339,
+          "attempt": 1,
+          "sha": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+          "toolchain": {
+            "node": "22.23.3",
+            "platform": "linux",
+            "arch": "x64",
+            "python": "3.14.8",
+            "pythonPin": "3.14",
+            "nodeFlags": [],
+            "nodeOptions": null,
+            "nodeEnv": null,
+            "locale": "en-US",
+            "timezone": "UTC",
+            "pins": "5500084151750cb19b2d641eef6e0a9543c2a38c892d38bc42a3799f6cca8d21"
+          },
+          "workflow_sha": "9d45fe39cf3fe87d5a052447580c95267e4b0639c42d983387d7663b1458e1bb",
+          "workflow_revision": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+          "created": "2026-10-21T07:46:52.456Z"
+        }
+      }
+    ]
+  },
+  "shortControlled": [
+    {
+      "run": 39560416712,
+      "attempt": 1,
+      "sha": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+      "path": ".github/workflows/validate.yml",
+      "event": "workflow_dispatch",
+      "conclusion": "success",
+      "created": "2026-10-21T07:12:51Z",
+      "machineSeconds": 865.0,
+      "machineMinutes": 14.42,
+      "jobs": [
+        {
+          "id": 119090062689,
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 17.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119090063106,
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 14.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119090063163,
+          "name": "Инструменты: вычисляемый набор юнитов",
+          "conclusion": "success",
+          "seconds": 260.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119090164177,
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 40.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119090164221,
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 9.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119090164294,
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 27.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119090166660,
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119090238524,
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "success",
+          "seconds": 28.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119090238607,
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "success",
+          "seconds": 88.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119090238701,
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "success",
+          "seconds": 211.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119090798779,
+          "name": "Упаковка: свежие артефакты кандидата",
+          "conclusion": "success",
+          "seconds": 13.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119090899990,
+          "name": "Продукт: свежие проверки диапазона и упаковки",
+          "conclusion": "success",
+          "seconds": 145.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119090902165,
+          "name": "Браузер: выбранные проверки push",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119090902328,
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119090902484,
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119090902614,
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119090903397,
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119091826929,
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 13.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119091828645,
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        }
+      ],
+      "url": "https://github.com/Matysh/houseplan-card/actions/runs/39560416712"
+    },
+    {
+      "run": 39560729684,
+      "attempt": 1,
+      "sha": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+      "path": ".github/workflows/validate.yml",
+      "event": "workflow_dispatch",
+      "conclusion": "success",
+      "created": "2026-10-21T07:15:33Z",
+      "machineSeconds": 537.0,
+      "machineMinutes": 8.95,
+      "jobs": [
+        {
+          "id": 119091928285,
+          "name": "Предполёт: документация, провенанс, процесс",
+          "conclusion": "success",
+          "seconds": 19.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119091928718,
+          "name": "Инструменты: вычисляемый набор юнитов",
+          "conclusion": "success",
+          "seconds": 183.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119091928722,
+          "name": "Классификация изменённых файлов",
+          "conclusion": "success",
+          "seconds": 19.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119092063963,
+          "name": "HACS: валидация репозитория",
+          "conclusion": "success",
+          "seconds": 50.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119092063973,
+          "name": "Переиспользование: это дерево уже проверено",
+          "conclusion": "success",
+          "seconds": 10.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119092064075,
+          "name": "Hassfest: манифест интеграции",
+          "conclusion": "success",
+          "seconds": 26.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119092066038,
+          "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119092151202,
+          "name": "Упаковка: свежие артефакты кандидата",
+          "conclusion": "success",
+          "seconds": 64.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119092152187,
+          "name": "Бэкенд: pytest в Home Assistant",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119092152293,
+          "name": "Геометрия: TS/Python parity исполнена",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119092153280,
+          "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119092572482,
+          "name": "Продукт: свежие проверки диапазона и упаковки",
+          "conclusion": "success",
+          "seconds": 153.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119092573836,
+          "name": "Браузер: выбранные проверки push",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119092573875,
+          "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119092574390,
+          "name": "Перф-смок: бюджет времени кадра",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119092574579,
+          "name": "Смоки: все шарды зелёные",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119092574975,
+          "name": "Golden-кадры против принятых эталонов",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        },
+        {
+          "id": 119093545384,
+          "name": "Доказательство выполненных проверок",
+          "conclusion": "success",
+          "seconds": 13.0,
+          "runnerStarted": true
+        },
+        {
+          "id": 119093547611,
+          "name": "Бандл головы dev для стенда",
+          "conclusion": "skipped",
+          "seconds": 0,
+          "runnerStarted": false
+        }
+      ],
+      "url": "https://github.com/Matysh/houseplan-card/actions/runs/39560729684"
+    }
+  ],
+  "local": {
+    "command": "git push --dry-run origin HEAD:refs/heads/issue/981-local-registry-oid",
+    "privateCommit": "e43c4dfb719c96fba04729be3d18cf289dad1029",
+    "published": false,
+    "gateSeconds": 154,
+    "failures": 0,
+    "producer": {
+      "schema": "houseplan-job-proof/v1",
+      "job": "frontend",
+      "key": "4e14913b42b69518361f4bdc1b1c6717dbd1ec68a09b7571abd8477a6e19a4ea",
+      "mode": "exact",
+      "treeId": "317a56786cb65d9733c577457123c62bf41cdb4ee5007774578ccd4a01c228e1",
+      "outcome": "success",
+      "reused": false,
+      "repo": "Matysh/houseplan-card",
+      "workflow": ".github/workflows/validate.yml",
+      "run": 39560416712,
+      "attempt": 1,
+      "sha": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+      "toolchain": {
+        "node": "22.23.3",
+        "platform": "linux",
+        "arch": "x64",
+        "python": "3.14.8",
+        "pythonPin": "3.14",
+        "nodeFlags": [],
+        "nodeOptions": null,
+        "nodeEnv": null,
+        "locale": "en-US",
+        "timezone": "UTC",
+        "pins": "5500084151750cb19b2d641eef6e0a9543c2a38c892d38bc42a3799f6cca8d21"
+      },
+      "workflow_sha": "125195db2c5458e2141ddb7203ead1decb47eedb55ffdb028e9b305829861cd7",
+      "workflow_revision": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+      "created": "2026-10-21T07:17:48.478Z",
+      "inventory": {
+        "dist": "ae140e2e8cfd4b894d579ac17b5712aa52d48c6507f24fc0fb43cb5e9a96dd01",
+        "testBuild": "5ceb9d81cff3b7face5e946900947f26c0d94a80526524d9186a80a673c7c702",
+        "fingerprint": "4f8cc4f5ddfde87c1e5a60608e1b4c94a4820a3e73a0c590e6f7e7db6f7b2cc1"
+      }
+    },
+    "fresh": [
+      "range/process/filesystem/Git units",
+      "bundle policy",
+      "bundle budget",
+      "unused",
+      "tooling units"
+    ]
+  },
+  "rejectedDiagnostic": {
+    "run": 39557393281,
+    "githubConclusion": "success",
+    "consumerConclusion": "failed",
+    "reason": "product_guards: mandatory fresh execution missing",
+    "correctedBy": "3d9efe3cdc2b3ae3fcf2eddfbdebb04b238a9eb5",
+    "reuseJobSecondsBeforeOptimization": 17,
+    "reuseJobSecondsShortAfterOptimization": 10
+  },
+  "orphanRoot": "ab2bb3e9e39cfacc7f80464d6290bd76deda08c0"
+}
