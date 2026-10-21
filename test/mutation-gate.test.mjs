@@ -758,9 +758,10 @@ test('#472 AC6: повторный отказ дописывает открыт�
   assert.ok(search > 0 && comment > search && create > search, 'поиск открытого issue идёт до create/comment');
 });
 
-test('#472 AC7: отсутствие Telegram-секретов не роняет job', () => {
-  const telegram = mutationWorkflow.slice(mutationWorkflow.indexOf('- name: Telegram'));
-  assert.match(telegram, /if \[ -z "\$TOKEN" \] \|\| \[ -z "\$CHAT" \]; then\n\s+echo "::warning::[^\n]*"\n\s+exit 0/);
+test('#994: отказ ночного гейта не пишет в Telegram — адресат только issue', () => {
+  assert.doesNotMatch(mutationWorkflow, /api\.telegram\.org|TELEGRAM_BOT_TOKEN|TELEGRAM_CHAT_ID|name: Telegram/);
+  const report = mutationWorkflow.slice(mutationWorkflow.indexOf('  report:'));
+  assert.match(report, /gh issue create/, 'issue по-прежнему заводится');
 });
 
 test('#472 AC8 / #623: Validate сверяет тонкий mutation-gate.yml между main и dev наравне с process.yml', () => {

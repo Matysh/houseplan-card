@@ -264,14 +264,16 @@ jobs:
           path: artifacts/mutation-green
           key: mutation-green-v1-${{ needs.material.outputs.tree }}-${{ job.workflow_sha }}-${{ github.run_id }}
 
-  # Адресат у отказа (#472). Только по расписанию: ручной dispatch остаётся
+  # Адресат у отказа (#472) — issue. Отчёт в Telegram-чат снят решением
+  # владельца 2026-10-21 (#994): это пользовательский канал проекта, тот же,
+  # что у релизных объявлений. Только по расписанию: ручной dispatch остаётся
   # для отладки самого гейта, его результат смотрят в прогоне — issue на
   # каждый такой отказ был бы шумом, который снова перестанут читать.
   #
   # Права job-уровня ЗАМЕНЯЮТ права workflow, а не дополняют (прецедент —
   # validate.yml, job с actions: read): перечислены все три.
   report:
-    name: "Отказ расписания: issue и Telegram"
+    name: "Отказ расписания: issue"
     needs: [material, mutants, evidence]
     # #620: ночь, принявшая доказательство прошлого зелёного прогона, отказом не
     # является — её шарды пропущены намеренно. Любой другой пропуск шардов
@@ -311,8 +313,7 @@ jobs:
             --workflow-sha=${{ job.workflow_sha }} \
             --run-id=${{ github.run_id }} --run-attempt=${{ github.run_attempt }} \
             --run-url="$RUN_URL" --ref=${{ needs.material.outputs.ref }} \
-            --body-out=artifacts/mutation-report.md \
-            --telegram-out=artifacts/mutation-telegram.txt >> "$GITHUB_OUTPUT"
+            --body-out=artifacts/mutation-report.md >> "$GITHUB_OUTPUT"
       # Одно issue, а не одно на неделю: открытое с тем же маркером в заголовке
       # получает комментарий, новое заводится только если открытого нет.
       - name: Issue — создать или дописать
@@ -335,22 +336,3 @@ jobs:
           fi
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "issue: $url"
-      # Тот же канал, что у релизов (announce.yml). Нет секретов — не отказ:
-      # issue уже заведено, а Telegram — второй адресат, не единственный.
-      - name: Telegram
-        if: always() && steps.issue.outcome == 'success'
-        env:
-          TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
-          ISSUE_URL: ${{ steps.issue.outputs.url }}
-        run: |
-          if [ -z "$TOKEN" ] || [ -z "$CHAT" ]; then
-            echo "::warning::TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID не заданы — оповещение пропущено, issue заведено"
-            exit 0
-          fi
-          TEXT=$(sed "s|(issue)|$ISSUE_URL|" artifacts/mutation-telegram.txt)
-          curl -sS --fail-with-body -X POST \
-            "https://api.telegram.org/bot$TOKEN/sendMessage" \
-            --data-urlencode "chat_id=$CHAT" \
-            --data-urlencode "text=$TEXT" \
-            -d disable_web_page_preview=true

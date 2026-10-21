@@ -9,8 +9,8 @@
  * (#465–#467). Механизм есть — его выход никто не читает.
  *
  * Этот модуль — чистая функция «логи шардов → отчёт» и тонкий CLI. Обвязка
- * (`gh issue`, `curl` в Telegram) остаётся в workflow, потому что у shell там
- * нет тестов, а у разбора логов — есть (урок #454).
+ * (`gh issue`) остаётся в workflow, потому что у shell там нет тестов, а у
+ * разбора логов — есть (урок #454). Отчёта в Telegram нет с #994.
  *
  * Две формы `FAIL` в логе раннера различаются явно:
  *
@@ -342,16 +342,6 @@ function interruptedLabel(shard) {
   return `**прерван — ${outcome}${detail}**`;
 }
 
-/** Короткий текст для Telegram: заголовок, сбежавшие, ссылка. */
-export function telegramSummary(report, issueUrl) {
-  const head = `⛔ houseplan-card: ${REPORT_TITLE_MARKER}`;
-  const escaped = report.escaped.length
-    ? `сбежали: ${report.escaped.slice(0, 8).join(', ')}${report.escaped.length > 8 ? ` +${report.escaped.length - 8}` : ''}`
-    : 'сбежавших не разобрано';
-  const shards = report.shards.filter((s) => s.status !== 'ok').map((s) => `${s.shard}:${s.status}`).join(' ');
-  return `${head}\n${escaped}\nшарды: ${shards || '—'}\n${issueUrl}`;
-}
-
 // #496: pathToFileURL, не `file://${argv}` — на Windows последнее давало
 // `file:///C:/C:/...`, CLI считал себя импортированным и молчал.
 const invokedDirectly = isMainModule(import.meta.url);
@@ -407,9 +397,6 @@ if (invokedDirectly) {
       const bodyPath = value('body-out', 'artifacts/mutation-report.md');
       mkdirSync(dirname(bodyPath), { recursive: true });
       writeFileSync(bodyPath, report.body, 'utf8');
-      const summaryPath = value('telegram-out', 'artifacts/mutation-telegram.txt');
-      mkdirSync(dirname(summaryPath), { recursive: true });
-      writeFileSync(summaryPath, telegramSummary(report, value('issue-url', '(issue)')), 'utf8');
       console.log(`title=${report.title}`);
       console.log(`marker=${REPORT_TITLE_MARKER}`);
       console.log(`body=${bodyPath}`);

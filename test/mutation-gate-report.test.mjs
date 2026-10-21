@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   REPORT_TITLE_MARKER, mutationGateReport, mutationShardEvidence, parseShardLogs,
-  telegramSummary, validateMutationShardEvidence,
+  validateMutationShardEvidence,
 } from '../scripts/mutation-gate-report.mjs';
 
 // #472. Еженедельный полный прогон падал дважды подряд, и никто не смотрел:
@@ -160,7 +160,6 @@ test('#604: лог без итоговой строки — прерван, а �
   assert.deepEqual(report.escaped, [], 'сбежавших из обрывка не выдумывается');
   assert.match(report.body, /\| 2 \| \*\*прерван — лог без итоговой строки; успешное завершение не доказано\*\* \|/);
   assert.match(report.body, /Прерванные шарды не дают полного доказательства/);
-  assert.match(telegramSummary(report, 'https://x/issues/9'), /2:interrupted/);
 });
 
 test('#604: исход шага cancelled прерывает шард даже при итоговой строке; failure без FAIL — красный', () => {
@@ -185,7 +184,6 @@ test('#795: cancelled с итогами 194/194 остаётся отказом 
   assert.match(report.body, /шаг cancelled \(таймаут или отмена\)/);
   assert.match(report.body, /итог в логе 194\/194 не подтверждает успешное завершение/);
   assert.doesNotMatch(report.body, /без итоговой строки|до итоговой строки|Сбежавших там не разобрано/);
-  assert.match(telegramSummary(report, 'https://x/issues/795'), /4:interrupted/);
 });
 
 test('#795: причины прерывания не смешивают отмену, пропуск и отсутствие итогов', () => {
@@ -226,16 +224,9 @@ test('#604: evidence несёт исход шага, агрегатор отве
   assert.throws(() => mutationShardEvidence({ ...expectedEvidence, shard: 1, runAttempt: 1, outcome: 'timed-out' }), /unknown shard outcome/);
 });
 
-test('сводка для Telegram коротка и ведёт на issue (#472)', () => {
-  const report = mutationGateReport({ ...meta, guards, logs: [
-    { shard: 1, text: 'FAIL alpha-mutant: тест остался зелёным на сломанном коде\n' },
-    { shard: 2, text: null },
-  ] });
-  const text = telegramSummary(report, 'https://x/issues/9');
-  assert.match(text, /alpha-mutant/);
-  assert.match(text, /2:missing/);
-  assert.match(text, /https:\/\/x\/issues\/9/);
-  assert.ok(text.length < 600);
+test('#994: отчётчик не готовит сводку для Telegram', async () => {
+  const module = await import('../scripts/mutation-gate-report.mjs');
+  assert.equal('telegramSummary' in module, false);
 });
 
 test('parseShardLogs терпит CRLF и пустой ввод (#472)', () => {
