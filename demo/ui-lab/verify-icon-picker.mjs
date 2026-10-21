@@ -1,4 +1,4 @@
-// #988: genuine pinned HA picker in the real marker form; synthetic home only.
+// #988/#995: genuine pinned HA picker in the real marker form; synthetic home only.
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -46,6 +46,12 @@ try {
     }
     await prepare('53214'); await require('53214');
     await customElements.whenDefined('ha-icon-picker');
+    // HA's real host supplies global spacing/radius/WebAwesome tokens in
+    // addition to theme defaults. Use the pinned official sheet, not invented
+    // test CSS: without it a genuine popup can still look unstyled in the lab.
+    const style = document.createElement('style');
+    style.textContent = require('3184').Q;
+    document.head.prepend(style);
   });
   const shell = () => page.locator('hp-dialog[data-kind="marker"]');
   const picker = () => shell().locator('ha-icon-picker');
@@ -86,19 +92,47 @@ try {
         await expect(trigger()).toBeFocused();
         const paint = await picker().evaluate(picker => {
           const wrapper = getComputedStyle(picker.parentElement);
+          const outer = getComputedStyle(picker.closest('.hpf-iconfield'));
+          const field = picker.shadowRoot.querySelector('ha-generic-picker').shadowRoot.querySelector('ha-picker-field');
+          const item = field.shadowRoot.querySelector('ha-combo-box-item');
+          const native = getComputedStyle(item), line = getComputedStyle(item, '::after');
           let active = document.activeElement;
           while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
           return { wrapperBorder: wrapper.borderTopColor, wrapperOutline: wrapper.outlineStyle,
+            outerOutline: outer.outlineStyle, fieldBackground: native.backgroundColor,
+            lineColor: line.backgroundColor, lineHeight: parseFloat(line.height),
             activeInPicker: picker.matches(':focus-within'), visibleFocus: !!active?.matches(':focus-visible') };
         });
+        console.log('field paint', theme, method, paint);
         assert.equal(paint.wrapperBorder, 'rgba(0, 0, 0, 0)', 'no second nested wrapper border');
         assert.equal(paint.wrapperOutline, 'none', 'no second wrapper focus ring');
+        assert.equal(paint.outerOutline, 'none', 'outer icon row must not add a second focus ring');
+        assert.notEqual(paint.fieldBackground, 'rgba(0, 0, 0, 0)', 'native field retains its themed fill');
+        assert.notEqual(paint.lineColor, 'rgba(0, 0, 0, 0)', 'native field retains its own visible contour');
+        assert.ok(paint.lineHeight >= 2, 'native field paints its own focus indicator');
         assert.equal(paint.activeInPicker, true, 'focus stays inside real HA picker');
         if (method === 'keyboard') assert.equal(paint.visibleFocus, true, 'keyboard focus remains visibly indicated');
         await page.mouse.move(2, 2);
         await picker().screenshot({ path: new URL(`${theme}-${method}.png`, output).pathname });
       });
     }
+    await check(`styled popup: ${theme}`, async () => {
+      await trigger().click();
+      await picker().locator('ha-picker-combo-box input').fill('mdi:fan');
+      await expect(picker().locator('ha-picker-combo-box ha-combo-box-item').filter({ hasText: /^\s*mdi:fan\s*$/ }).first()).toBeVisible();
+      const paint = await popup().evaluate(popover => {
+        const body = getComputedStyle(popover.shadowRoot.querySelector('[part="body"]'));
+        return { background: body.backgroundColor, borderColor: body.borderTopColor,
+          borderWidth: parseFloat(body.borderTopWidth), radius: parseFloat(body.borderTopLeftRadius), shadow: body.boxShadow };
+      });
+      console.log('popup paint', theme, paint);
+      await page.screenshot({ path: new URL(`${theme}-popup.png`, output).pathname });
+      assert.notEqual(paint.background, 'rgba(0, 0, 0, 0)', 'popup has an opaque themed surface');
+      assert.ok(paint.borderWidth <= 1, 'popup does not add a heavy nested frame');
+      assert.ok(paint.radius >= 7, 'popup has the dialog control rounding');
+      assert.notEqual(paint.shadow, 'none', 'popup is separated from fields underneath');
+      await page.keyboard.press('Escape'); await expect(shell()).toBeVisible();
+    });
   }
   await check('selection and clear retain other dirty fields; no write until Save', async () => {
     const before = await page.evaluate(() => JSON.stringify(window.__lab.mock.snapshot()));

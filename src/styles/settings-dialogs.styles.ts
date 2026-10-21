@@ -153,9 +153,9 @@ hp-dialog[data-kind=room][settings-layout] .hpf-grid{grid-template-columns:minma
 .hpf-settings-form .hpf-note-warning{border-color:var(--warning-color);background:color-mix(in srgb,var(--warning-color) 10%,var(--hpf-surface));}
 .hpf-settings-pane[data-settings-section=details] .hpf-field > .hpf-hint{margin-top:12px;}
 .hpf-settings-form .hpf-chip > button{flex:0 0 28px;width:28px;height:28px;min-width:28px;min-height:28px;padding:0;border-radius:50%;}
-.hpf-settings-form .hpf-iconfield:focus-within{outline:2px solid var(--hpf-accent);outline-offset:2px;border-radius:8px;}
 .hpf-settings-form .hpf-iconfield .hpf-input:focus-visible{outline:none;box-shadow:none;}
 .hpf-settings-form ha-icon-picker{--mdc-outlined-text-field-focus-outline-color:var(--hpf-accent);}
+.hpf-settings-pane [data-state-source]{display:grid;gap:18px;}
 .hpf-settings-pane .radargroup{border:0;margin:0;padding:0;min-width:0;display:block;}
 .hpf-settings-pane .radarsetup-head{height:112px;align-items:start;}
 .hpf-settings-pane .radarsetup-head strong{max-height:112px;overflow:auto;}

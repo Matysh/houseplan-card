@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "issue": 995,
+  "baseStable": "v1.81.0",
+  "category": "line-fix",
+  "introducedBy": 988,
+  "rationale": "Repairs the unstyled native icon field left by #988 in the current beta line and the activity-source manual-field spacing introduced by #977. The extra settings focus ring belongs to the #976 beta redesign. Stable v1.81.0 still used the visible outer icon-field border and had no manual activity source; omit these beta follow-ups from the stable user changelog and milestone.",
+  "summary": {
+    "ru": "Исправлены оформление выбора иконки и отступ ручного значения активности в настройках устройства.",
+    "en": "Fixed icon-picker styling and manual activity-value spacing in device settings."
+  }
+}

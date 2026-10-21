@@ -132,6 +132,8 @@ test('#597 собранный лист панели совпадает с зам
  * лист панели по-прежнему остаётся замороженным без изменений.
  * #876 adds only the scoped 44px signal-choice label rule, measured by its
  * native keyboard/localization matrix; the panel sheet remains unchanged.
+ * #995 restores the HA icon field's two themed paint tokens. Only those
+ * declared dialog-fixture values change; the panel remains byte-identical.
  */
 test('#597/#600 лист диалогов карточки совпадает с объявленным', () => {
   assert.equal(formKitCss(CARD_DIALOG_FORM_KIT, { withSwitch: false }), FROZEN_CARD_KIT_CSS);

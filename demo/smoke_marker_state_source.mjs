@@ -152,6 +152,12 @@ try {
   await dialog.locator('#marker-state-source-mode').selectOption('states');
   out.singleManualField = await dialog.locator('#marker-state-source-states input').count() === 1
     && await dialog.locator('#marker-state-source-states button, #marker-state-source-states .hpf-hint').count() === 0;
+  const manualGap = await dialog.locator('#marker-state-source-states input').evaluate(input => {
+    const mode = input.closest('[data-state-source]').querySelector('hp-settings-select');
+    return input.getBoundingClientRect().top - mode.getBoundingClientRect().bottom;
+  });
+  console.log('#995 manual field gap:', manualGap);
+  out.manualFieldHasFormSpacing = manualGap >= 12 && manualGap <= 24;
   out.emptyManualRejected = await dialog.locator('[data-state-source] [role="alert"]').isVisible();
   await dialog.locator('#marker-state-source-states input').fill('unknown'); await settle();
   out.reservedManualRejected = await dialog.locator('[data-state-source] [role="alert"]').isVisible();
@@ -161,6 +167,11 @@ try {
   await pickSource('binary_sensor.hp977_work');
   out.sameSourceKeepsManual = await dialog.locator('#marker-state-source-mode').inputValue() === 'states'
     && await dialog.locator('#marker-state-source-states input').inputValue() === 'washing';
+  await dialog.locator('#marker-state-source-mode').selectOption('standard');
+  out.automaticHidesManualField = await dialog.locator('#marker-state-source-states').count() === 0;
+  await dialog.locator('#marker-state-source-mode').selectOption('states');
+  await dialog.locator('#marker-state-source-states input').fill('washing');
+  out.manualCanBeRestored = await dialog.locator('#marker-state-source-states input').inputValue() === 'washing';
   out.removedCurrentStateHint = await dialog.locator('#marker-state-source-states code').count() === 0;
   const preview = dialog.locator('hp-device-preview');
   out.previewFullWidthAboveFacts = await preview.evaluate(node => {

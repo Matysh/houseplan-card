@@ -25,6 +25,10 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Device form follow-up (#995) restores the authentic HA icon field's fill and
+contour, leaves focus to that field (or the fallback wrapper), and applies the
+existing 18 px settings spacing inside the activity-source group.
+
 Activity form polish (#979/#991) keeps entity search inside the expanded shared
 source picker (#989), without an extra field in the closed form or multi-state
 controls. Contextual Auto help and full-width preview facts below a bounded-height

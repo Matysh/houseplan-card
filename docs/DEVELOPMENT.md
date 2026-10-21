@@ -2,6 +2,19 @@
 
 ## HA icon-picker lifecycle (#988)
 
+Follow-up #995 keeps the public HA fill/border tokens themed instead of
+transparent and removes the settings sheet's outer `.hpf-iconfield` focus ring.
+The inner wrapper already abstains around HA; the text fallback keeps that
+wrapper as its sole focus owner. The activity-source group uses the existing
+18 px settings interval, including between the manual selector and value.
+No HA shadow styles or event handlers are patched. The authentic diagnostic
+also loads the pinned HA theme module's official global sheet (`Q`), alongside
+theme defaults (`I`), so popup spacing, rounding and WebAwesome tokens really
+match the HA host. Its light/dark popup screenshots are ordinary visual evidence,
+not accepted golden baselines. `smoke_marker_state_source` measures the actual
+manual-control gap and exercises Auto/manual switching and Save; the device-form
+smoke checks the fallback's single visible focus owner.
+
 Slotted HA pickers emit their own bubbling WebAwesome `wa-hide`; only the
 physical HA dialog's retargeted event may request closing the Houseplan form.
 An open native/HA popover consumes Escape before its parent; registered

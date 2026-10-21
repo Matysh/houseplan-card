@@ -353,6 +353,8 @@ without inventing a version mismatch or another reload budget.
 Composite form focus (#870) belongs either to the native form-kit wrapper or
 the authentic HA picker, never both. The picker is styled through its public
 host contract; its private shadow DOM and event handlers remain untouched.
+The settings sheet adds no outer icon-row focus ring (#995). HA owns its themed
+fill/contour; the text fallback retains the form-kit wrapper's border and focus.
 
 Stable release prose (#840) has separate authored RU/EN histories in
 `docs/changelog_user_stable_{ru,en}.md`. `user-stable-changelog.mjs` extracts a

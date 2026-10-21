@@ -358,7 +358,7 @@
   .hpf-iconfield-control > .hpf-input, .hpf-iconfield-control > ha-icon-picker { flex: 1 1 auto; min-width: 0; width: 100%; }
   hp-dialog .hpf-form .hpf-iconfield-control > .hpf-input { min-height: 42px; height: 42px; border: 0; background: transparent; }
   hp-dialog .hpf-form .hpf-iconfield-control > .hpf-input:focus { outline: 0; }
-  .hpf-iconfield-control > ha-icon-picker { display: block; min-height: 42px; --mdc-text-field-fill-color: transparent; --mdc-text-field-idle-line-color: transparent; --mdc-text-field-hover-line-color: transparent; --mdc-text-field-height: 42px; --mdc-shape-small: 7px; --ha-color-form-background: transparent; --ha-color-border-neutral-loud: transparent; --md-list-item-one-line-container-height: 42px; --md-list-item-two-line-container-height: 42px; }
+  .hpf-iconfield-control > ha-icon-picker { display: block; min-height: 42px; --mdc-text-field-fill-color: transparent; --mdc-text-field-idle-line-color: transparent; --mdc-text-field-hover-line-color: transparent; --mdc-text-field-height: 42px; --mdc-shape-small: 7px; --ha-color-form-background: var(--hpf-canvas); --ha-color-border-neutral-loud: var(--hpf-line); --md-list-item-one-line-container-height: 42px; --md-list-item-two-line-container-height: 42px; }
   .hpf-iconpreview { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 42px; width: 42px; height: 42px; color: var(--hpf-muted); }
   .hpf-mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8125rem; }
   .hpf-hint > .hpf-link { padding: 0; }

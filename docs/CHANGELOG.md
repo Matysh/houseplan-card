@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Restore the native HA icon picker's themed field without a second focus
+  outline, and space the manual “Active when” value from its selector. (#995)
+
 - Search own-device entities inside the expanded icon-state-source list;
   Escape closes only the list, without adding another field to the form. (#991)
 
