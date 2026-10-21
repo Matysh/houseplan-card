@@ -154,7 +154,7 @@ test('#921: candidate-tree and proof-context GETs use the same bounded recovery,
         if (count === 1) throw brokenPipe();
         return Response.json({ jobs: [] });
       }
-      assert.match(url, /\/actions\/workflows\/validate.yml\/runs\?/);
+      assert.match(url, /\/actions\/runs\?/);
       return Response.json({ workflow_runs: [{ ...run(), path: '.github/workflows/validate.yml', run_attempt: 1 }] });
     },
   });
@@ -162,5 +162,5 @@ test('#921: candidate-tree and proof-context GETs use the same bounded recovery,
   assert.equal([...counts.keys()].filter(url => url.includes('/git/commits/')).length, 1);
   assert.equal([...counts.keys()].filter(url => url.includes('/artifacts?')).length, 1);
   assert.equal([...counts.keys()].filter(url => url.endsWith('/jobs?per_page=100')).length, 1);
-  for (const [url, count] of counts) assert.equal(count, url.includes('/workflows/') ? 1 : 2, url);
+  for (const [url, count] of counts) assert.equal(count, url.includes('/actions/runs?') ? 1 : 2, url);
 });

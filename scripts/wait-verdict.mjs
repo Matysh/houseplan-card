@@ -31,6 +31,7 @@
 // новый заход ревью конвейер запускает сам. Успешное слияние признака в
 // каталоге не имеет — о нём говорит метка S8 (код 0).
 
+import { listCiRuns } from './ci-workflows.mjs';
 import { spawnSync } from 'node:child_process';
 import { isMainModule } from './spawn-portable.mjs';
 import { outcomeOf } from './merge-candidate.mjs';
@@ -223,7 +224,7 @@ export function ghSnapshotReader({ number, repo, sha }) {
     };
     if (sha) {
       try {
-        const runs = gh(['run', 'list', '--repo', repo, '--workflow', 'validate.yml', '--commit', sha, '--limit', '5', '--json', 'status,conclusion,url']);
+        const runs = listCiRuns({ repo, sha, productOnly: true });
         const done = runs.find((r) => r.status === 'completed') || runs[0];
         if (done) snapshot.validate = { status: done.status, conclusion: done.conclusion, url: done.url };
       } catch { /* Validate — дополнение, не условие */ }

@@ -9008,7 +9008,7 @@ const MUTANT_DEFINITIONS = [
       + 'reused after a step is added and the new step never runs (#492 §5.4, the #430 class)',
     patches: [{
       file: 'scripts/check-inputs.mjs',
-      find: "const WORKFLOW = ['.github/workflows/validate.yml'];",
+        find: "const WORKFLOW = Object.keys(CI_WORKFLOWS).map(name => `.github/workflows/${name}`);",
       replace: 'const WORKFLOW = [];  // mutant: the workflow is nobody\'s input',
     }],
   },

@@ -15,6 +15,8 @@ import { jobInstanceNames, staticNamePrefix, validateJobs } from './workflow-job
 import { producerEnvironments } from './ci-job-environment.mjs';
 import { browserPlanExecution } from './browser-plan-proof.mjs';
 
+import { ciWorkflow, CI_WORKFLOWS, ciRunsUrl, registeredRuns, productWorkflow } from './ci-workflows.mjs';
+
 export const CI_PROOF_SCHEMA = 'houseplan-ci-proof/v1';
 export const CI_PROOF_ARTIFACT_PREFIX = 'ci-proof';
 export const CI_PROOF_STATES = Object.freeze([
@@ -88,8 +90,8 @@ export const MUTANT_JOB_PREFIX = JOB_RULES.mutants[0].name;
  * иначе ревью, слияние и релиз узнали бы о переименовании как о
  * «claimed execution is absent» (#622).
  */
-export function resolveJobRules(workflowJobs = validateJobs()) {
-  return Object.fromEntries(Object.entries(JOB_RULES).map(([id, rules]) => [id, rules.map((rule) => {
+export function resolveJobRules(workflowJobs = validateJobs(), profile = 'full') {
+  return Object.fromEntries(Object.entries(JOB_RULES).map(([id, rules]) => [id, rules.filter(rule => profile !== 'product' || rule.job !== 'tooling').map((rule) => {
     const job = workflowJobs.get(rule.job);
     if (!job) throw new Error(`${id}: validate.yml has no job ${rule.job}`);
     const actual = job.matrix ? staticNamePrefix(job.name) : job.name;
@@ -268,6 +270,7 @@ const reuseClaim = (outputs, id) => ({
 export function buildCiProof({
   candidateSha, candidateTree, runId, attempt, event, needs,
   requestedFull = false, requestedMutants = false, evidence = null,
+  workflow = 'validate.yml', requiredProfiles = [],
 }) {
   const changes = needs?.changes?.outputs || {};
   const reuse = needs?.reuse?.outputs || {};
@@ -330,7 +333,8 @@ export function buildCiProof({
   return {
     schema: CI_PROOF_SCHEMA,
     candidate: { sha: candidateSha, tree: candidateTree },
-    run: { id: Number(runId), attempt: Number(attempt), workflow: 'validate.yml', event },
+    run: { id: Number(runId), attempt: Number(attempt), workflow, event },
+    ...(workflow === 'validate-product.yml' ? { profile: 'product', requiredProfiles } : {}),
     request,
     selection,
     requiredChecks,
@@ -361,7 +365,7 @@ function executedCheckIsGreen(rules, jobs) {
  */
 export function evaluateCiProof({
   run, proof, jobs = [], reuseRuns = new Map(), candidate = {}, policy, expected = null, reviewedRun = undefined,
-  workflowJobs = undefined,
+  workflowJobs = undefined, profileRuns = new Map(),
 }) {
   const result = (status, note) => ({ status, note, url: runUrlOf(run) });
   if (!run) return result('missing', 'Validate run is missing');
@@ -369,11 +373,15 @@ export function evaluateCiProof({
   if (run.conclusion === 'cancelled') return result('cancelled', `Validate run ${runIdOf(run)} was cancelled`);
   if (!proof) return result('missing', `Validate run ${runIdOf(run)} has no proof artifact`);
   if (proof.schema !== CI_PROOF_SCHEMA) return result('stale', `unsupported proof schema ${proof.schema || 'missing'}`);
+  const workflow = ciWorkflow(proof.run?.workflow);
+  if (!workflow || run.path && ciWorkflow(run) !== workflow) return result('failed', 'foreign workflow path or proof workflow identity');
+  const profile = CI_WORKFLOWS[workflow];
+  if (['docs', 'tooling'].includes(profile)) return result('stale', `${profile} progress has no product authority; canonical validation required`);
   const identity = {
     runId: runIdOf(run), attempt: runAttemptOf(run), sha: candidate.sha || runShaOf(run), tree: candidate.tree,
   };
   if (proof.run?.id !== identity.runId || proof.run?.attempt !== identity.attempt
-    || proof.run?.workflow !== 'validate.yml' || proof.candidate?.sha !== identity.sha
+    || proof.candidate?.sha !== identity.sha
     || (identity.tree && proof.candidate?.tree !== identity.tree)) {
     return result('stale', 'proof does not belong to the candidate SHA/tree and run attempt');
   }
@@ -384,6 +392,21 @@ export function evaluateCiProof({
   if (policy?.full && !asBool(proof.request?.full)) return result('stale', 'proof is light; full gates were not requested');
   if (policy?.golden && !asBool(proof.request?.full) && !asBool(proof.request?.golden)) return result('stale', 'proof has no requested golden check');
   if (policy?.mutants && !asBool(proof.request?.mutants)) return result('stale', 'proof has no requested mutant jobs');
+  if (profile === 'product') {
+    if (!Array.isArray(proof.requiredProfiles) || !proof.requiredProfiles.includes('product')
+      || proof.requiredProfiles.some(p => !['product', 'tooling', 'docs'].includes(p)))
+      return result('failed', 'product profile has no complete event coverage plan');
+    for (const required of proof.requiredProfiles.filter(p => p !== 'product')) {
+      const companion = profileRuns.get(required);
+      if (!companion) return result('stale', `${required} profile for the event is missing; canonical validation required`);
+      if (runShaOf(companion.run) !== identity.sha || CI_WORKFLOWS[ciWorkflow(companion.run)] !== required)
+        return result('failed', `${required}: foreign companion identity`);
+      if (companion.run.status !== 'completed') return result('stale', `${required} profile is unproven; canonical validation required`);
+      const names = [JOB_RULES.preflight[0].name, ...(required === 'tooling' ? [JOB_RULES.frontend.find(r => r.job === 'tooling').name] : [])];
+      if (companion.run.conclusion !== 'success' || !executedCheckIsGreen(names.map(name => ({ names: [name] })), companion.jobs))
+        return result('failed', `${required}: companion checks absent or not green`);
+    }
+  }
   // #573: потребитель, у которого есть checkout кандидата (release), сверяет
   // составное evidence, а не верит ему. Proof без блока при наличии ожиданий
   // устарел. Объявленный run просмотра кадров проверяется ТОЛЬКО здесь же:
@@ -396,7 +419,7 @@ export function evaluateCiProof({
     const declared = proof.evidence.baselines?.reviewedRun ?? null;
     if (declared) {
       const source = reviewedRun?.run;
-      if (!source || runIdOf(source) !== declared || !/validate\.yml$/.test(String(source.path || source.workflow || 'validate.yml'))
+      if (!source || runIdOf(source) !== declared || !productWorkflow(source.path || source.workflow || 'validate.yml')
         || source.status !== 'completed' || source.conclusion === 'cancelled') {
         return result('failed', `Baseline-Reviewed run ${declared} is missing, cancelled or not a Validate run`);
       }
@@ -432,7 +455,7 @@ export function evaluateCiProof({
   }
   let rules;
   try {
-    rules = resolveJobRules(workflowJobs);
+    rules = resolveJobRules(workflowJobs, profile);
   } catch (error) {
     return result('failed', `job-name contract with validate.yml is broken (#622): ${error.message}`);
   }
@@ -555,6 +578,18 @@ export async function loadGithubProofContext({
     `${apiBase}/repos/${repo}/actions/runs/${runId}/jobs?per_page=100`, token, fetchImpl,
   );
   const jobs = jobsBody?.jobs || [];
+  const profileRuns = new Map();
+  if (proof?.run?.workflow === 'validate-product.yml') {
+    const rows = registeredRuns(await githubJson(`${apiBase}/${ciRunsUrl({ repo, sha: runShaOf(run) })}`, token, fetchImpl), { sha: runShaOf(run) });
+    for (const required of proof.requiredProfiles || []) {
+      if (!['docs', 'tooling'].includes(required)) continue;
+      const companion = rows.find(row => CI_WORKFLOWS[ciWorkflow(row)] === required);
+      if (companion) {
+        const body = await githubJson(`${apiBase}/repos/${repo}/actions/runs/${runIdOf(companion)}/jobs?per_page=100`, token, fetchImpl);
+        profileRuns.set(required, { run: companion, jobs: body.jobs || [] });
+      }
+    }
+  }
   const reuseRuns = new Map();
   for (const id of proof?.reusedChecks || []) {
     const sourceId = proof?.checks?.[id]?.reuse?.sourceRun;
@@ -582,7 +617,7 @@ export async function loadGithubProofContext({
       reviewedRun = null;
     }
   }
-  return { proof, jobs, reuseRuns, ...(reviewedRun !== undefined ? { reviewedRun } : {}) };
+  return { proof, jobs, reuseRuns, profileRuns, ...(reviewedRun !== undefined ? { reviewedRun } : {}) };
 }
 
 if (isMainModule(import.meta.url)) {
@@ -608,6 +643,8 @@ if (isMainModule(import.meta.url)) {
       event: process.env.CI_EVENT,
       needs,
       requestedFull: process.env.REQUEST_FULL,
+      workflow: process.env.CI_WORKFLOW || 'validate.yml',
+      requiredProfiles: JSON.parse(process.env.CI_REQUIRED_PROFILES || '[]'),
       requestedMutants: process.env.REQUEST_MUTANTS,
       evidence,
     });

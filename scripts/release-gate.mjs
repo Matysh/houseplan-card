@@ -1,6 +1,7 @@
 // Exact-SHA GitHub Actions gate used by release workflows. Prereleases require
 // Validate; stable releases additionally require the dedicated full
 // performance workflow.
+import { ciWorkflow, ciRunsUrl, registeredRuns } from './ci-workflows.mjs';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -88,7 +89,7 @@ export async function classifyValidateProofs({
 
 // #751: база — `GITHUB_API_URL` раннера (githubApiBase), не зашитый api.github.com.
 export const workflowRunsUrl = ({ repo, workflow, sha, apiBase = githubApiBase() }) => (
-  `${apiBase}/repos/${repo}/actions/workflows/${encodeURIComponent(workflow)}`
+  workflow === 'validate.yml' ? `${apiBase}/${ciRunsUrl({ repo, sha })}` : `${apiBase}/repos/${repo}/actions/workflows/${encodeURIComponent(workflow)}`
   + `/runs?head_sha=${encodeURIComponent(sha)}&per_page=100`
 );
 
@@ -104,7 +105,8 @@ export async function probeGreenWorkflow({ repo, sha, token, workflow = 'validat
     'X-GitHub-Api-Version': '2022-11-28',
   } });
   if (!response.ok) throw Error(`GitHub Actions API ${response.status}`);
-  const runs = (await response.json()).workflow_runs || [];
+  const payload = await response.json();
+  const runs = workflow === 'validate.yml' ? registeredRuns(payload, { sha, productOnly: true }) : payload.workflow_runs || [];
   if (workflow === 'validate.yml') return classifyValidateProofs({ runs, repo, sha,
     tree: tree || await githubCandidateTree({ repo, sha, token, fetchImpl: readFetch }), token, fetchImpl: readFetch,
     expected: expected === undefined ? candidateExpectations({ sha, root }) : expected });
@@ -141,7 +143,7 @@ export async function waitForGreenWorkflow({
     });
     if (!response.ok) throw new Error(`GitHub Actions API ${response.status}: ${await response.text()}`);
     const body = await response.json();
-    const runs = Array.isArray(body?.workflow_runs) ? body.workflow_runs : [];
+    const runs = proofRequired ? registeredRuns(body, { sha, productOnly: true }) : Array.isArray(body?.workflow_runs) ? body.workflow_runs : [];
     const latest = latestRelevantRun(runs);
     const verdict = proofRequired
       ? await classifyValidateProofs({ runs, repo, sha, tree, token, expected, fetchImpl: readFetch })

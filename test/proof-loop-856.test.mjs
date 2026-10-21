@@ -71,7 +71,7 @@ test('#856 real producer restore copies verified bytes; config/lock/pin/workflow
   const api = args => {
     const path = args[1];
     if (path.includes('/git/ref/heads/')) return { object: { sha: protectedHead } };
-    if (path.includes('/workflows/')) return { workflow_runs: [sourceRun] };
+    if (path.includes('/actions/runs?')) return { workflow_runs: [sourceRun] };
     if (path.includes('/artifacts')) return { artifacts: [sourceArtifact] };
     if (path.includes('/jobs')) return { jobs };
     if (path.includes('/git/commits/')) return { tree: { sha: tree } };

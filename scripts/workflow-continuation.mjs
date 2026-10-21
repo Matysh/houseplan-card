@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // #856: consume the existing sealed-artifact/request epoch machinery, no runner polling.
+import { ciWorkflow, ciRunsUrl, registeredRuns } from './ci-workflows.mjs';
 import { execFileSync } from 'node:child_process';
 import { appendFileSync } from 'node:fs';
 import { authenticatedContinuation, validContinuation } from './continuation-record.mjs';
@@ -173,8 +174,9 @@ export async function continueWorkflows({ repo, eventId, apply = false, out = nu
         outcomes.push({ action: 'noop', reason: 'invalid sealed identity/name' }); continue;
       }
       stage = 'child-authentication';
-      const eventWorkflow = event?.path === '.github/workflows/performance.yml' && p.kind === 'release' ? 'performance.yml' : 'validate.yml';
-      const childRuns = api(`repos/${repo}/actions/workflows/${eventWorkflow}/runs?head_sha=${p.candidate}&per_page=10`).workflow_runs || [];
+      const performance = event?.path === '.github/workflows/performance.yml' && p.kind === 'release';
+      const childRuns = performance ? api(`repos/${repo}/actions/workflows/performance.yml/runs?head_sha=${p.candidate}&per_page=10`).workflow_runs || []
+        : registeredRuns(api(ciRunsUrl({ repo, sha: p.candidate })), { sha: p.candidate, productOnly: true });
       const latest = childRuns.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at) || b.id - a.id)[0];
       const child = event || latest;
       if (!authenticatedContinuation(p, producer, child, repo) || child?.id !== latest?.id) {

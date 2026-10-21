@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { listCiRuns } from './ci-workflows.mjs';
 import { createHash } from 'node:crypto';
 import { inflateRawSync } from 'node:zlib';
 import {
@@ -416,10 +417,7 @@ if (invokedDirectly) {
   };
 
   const assertGreenValidate = async (sha) => {
-    const runs = ghJson([
-      'run', 'list', '--repo', repo, '--workflow', 'validate.yml', '--commit', sha,
-      '--limit', '100', '--json', 'databaseId,status,conclusion,url,headSha,event,attempt,startedAt,createdAt',
-    ]);
+    const runs = listCiRuns({ repo, sha, productOnly: true });
     const tree = run('git', ['rev-parse', `${sha}^{tree}`]).stdout;
     const token = run('gh', ['auth', 'token']).stdout;
     // #573: локальный публикатор стоит на checkout кандидата — сверяет evidence.

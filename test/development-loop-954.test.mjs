@@ -107,7 +107,7 @@ test('#954 real schema2 producer survives docs-only SHA, rejects source/env/fore
     path: '.github/workflows/validate.yml', repository: { full_name: repo }, head_repository: { full_name: repo } };
   const api = args => {
     const p = args[1];
-    if (p.includes('/workflows/')) return { workflow_runs: [run] };
+    if (p.includes('/actions/runs?')) return { workflow_runs: [run] };
     if (p.includes('/artifacts')) return { artifacts: [{ name: 'frontend-proof-11-1', expired: false, created_at: new Date().toISOString() }] };
     if (p.includes('/jobs')) return { jobs: [{ name: JOB_RULES.frontend[0].name, status: 'completed', conclusion: 'success' }] };
     if (p.includes('/git/commits/')) return { tree: { sha: tree } };
@@ -155,7 +155,7 @@ test('#954 transfer verifies direct executed source, exact tree/env/key/attempt 
     { context: { ...context, proof: { ...proof, environment, environments: {} } } },
     { context: { ...context, proof: { ...proof, checks: { backend: { ...proof.checks.backend, mode: 'reused' } } } } },
     { now: Date.now() + 86400001 }]) assert.equal(directTransfer({ ...input, ...delta }), null);
-  const options = { repo, environment, jobs: ['backend'], api: async p => p.includes('/workflows/') ? { workflow_runs: [run] } : run,
+  const options = { repo, environment, jobs: ['backend'], api: async p => p.includes('/actions/runs?') ? { workflow_runs: [run] } : run,
     contextOf: async () => context, ancestor: () => true, treeOf: () => tree, keyOf: () => key };
   assert.equal((await discoverTransfers(options)).backend.sourceRun, 11);
   assert.deepEqual(await discoverTransfers({ ...options, ancestor: () => false }), {});

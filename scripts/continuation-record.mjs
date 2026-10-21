@@ -1,4 +1,5 @@
 // #856: three existing consumers of Actions completion, no generic job platform.
+import { ciWorkflow } from './ci-workflows.mjs';
 import { createHash } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -26,7 +27,7 @@ export function validContinuation(p) {
       && (p.workflow !== 'publish-prerelease.yml' || !p.stable)
       && sha(p.dispatchSha) && (p.tagSha === null || p.tagSha === p.candidate)
       && typeof p.e2eDispatched === 'boolean' && Array.isArray(p.children) && p.children.length <= 20
-      && p.children.every(r => id(r.id) && id(r.attempt) && ['.github/workflows/validate.yml', '.github/workflows/performance.yml'].includes(r.path)));
+      && p.children.every(r => id(r.id) && id(r.attempt) && (['validate.yml', 'validate-product.yml'].includes(ciWorkflow(r.path)) || r.path === '.github/workflows/performance.yml')));
 }
 export function sealContinuation(fields, out, env = process.env, now = new Date()) {
   const p = { ...fields, schema: 1, producer: { run: Number(env.GITHUB_RUN_ID), attempt: Number(env.GITHUB_RUN_ATTEMPT),
@@ -49,7 +50,7 @@ export function authenticatedContinuation(p, producer, event, repo, now = Date.n
     && ['issues', 'schedule', 'workflow_dispatch', 'release'].includes(producer.event)
     && now >= Date.parse(p.createdAt) && now < Date.parse(p.expiresAt)
     && event?.repository?.full_name === repo && event.status === 'completed' && event.head_sha === p.candidate
-    && ['.github/workflows/validate.yml', '.github/workflows/performance.yml'].includes(event.path)
+    && (['validate.yml', 'validate-product.yml'].includes(ciWorkflow(event.path)) || event.path === '.github/workflows/performance.yml')
     && (Date.parse(event.created_at) >= Date.parse(producer.created_at)
       || p.kind === 'release' && p.children.some(r => Number(r.id) === Number(event.id)
         && Number(r.attempt) === Number(event.run_attempt) && r.path === event.path));

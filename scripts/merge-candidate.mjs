@@ -19,6 +19,7 @@
 // Решение (`decideMerge`) отделено от git и gh (`ops`), чтобы таблица
 // случаев §8.4 была юнит-тестом, а не верой в shell.
 
+import { listCiRuns } from './ci-workflows.mjs';
 import { spawnSync } from 'node:child_process';
 import { appendFileSync, chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -443,8 +444,11 @@ export function realOps({
       const ignored = new Set();
       const tree = await candidateTree(sha);
       while (now() - started < VALIDATE_TOTAL_MS) {
-        const r = exec('gh', ['run', 'list', '--repo', repo, '--workflow', workflow, '--commit', sha, '--json', 'databaseId,status,conclusion,url,event,headSha,attempt,startedAt,createdAt', '--limit', '10']);
-        const all = r.status === 0 && r.stdout ? JSON.parse(r.stdout) : [];
+        const all = listCiRuns({ repo, sha, productOnly: true }, (cmd, args) => {
+          const response = exec(cmd, args);
+          if (response.status !== 0) throw Error('CI run listing failed');
+          return response.stdout;
+        });
         const runs = all.filter((x) => (!event || x.event === event) && !ignored.has(x.databaseId));
         const run = runs.find((x) => x.databaseId === runId) || runs[0];
         if (run) {

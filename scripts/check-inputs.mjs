@@ -27,6 +27,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, posix, relative, resolve } from 'node:path';
 import { isMainModule } from './spawn-portable.mjs';
 import { relativeDependencies, scanJavaScript } from './relative-dependencies.mjs';
+import { CI_WORKFLOWS } from './ci-workflows.mjs';
 
 /** Корни, внутри которых файл считается исполняемым входом (§5.2). */
 export const EXECUTABLE_ROOTS = ['scripts', 'demo', 'test', 'tests_backend', '.github', 'custom_components', 'src'];
@@ -325,7 +326,7 @@ export const BUILD_INPUTS = ['src/**', 'package.json', 'package-lock.json', 'rol
 /** Протокол браузерного харнеса: страница, сервер, гард исключений, compat-хелперы. */
 const BROWSER_PROTOCOL = ['demo/serve.mjs', 'demo/srv/demo.html', 'demo/bundle-freshness.mjs',
   'demo/editor-runtime-compat.mjs', 'demo/iso-runtime-compat.mjs', 'demo/guard/*.mjs', 'demo/helpers/hp-test.mjs'];
-const WORKFLOW = ['.github/workflows/validate.yml'];
+const WORKFLOW = Object.keys(CI_WORKFLOWS).map(name => `.github/workflows/${name}`);
 /** Протокол реюза: кто считает ключ, тот и вход (§5.1 protocol). */
 const REUSE_PROTOCOL = ['scripts/gate-reuse.mjs', 'scripts/check-inputs.mjs', 'scripts/ci-proof.mjs'];
 /**
@@ -347,6 +348,7 @@ export const CHECKS = {
   preflight: {
     // документация, провенанс, процесс — всегда запускается; реюза нет
     entries: ['scripts/check-docs.mjs', 'scripts/process-gate.mjs', 'scripts/validate-commit-provenance.mjs',
+      'scripts/ci-profile-event.mjs', 'scripts/ci-profile-proof.mjs',
       'scripts/classify-base.mjs', 'scripts/classify-changes.mjs', 'scripts/check-inputs.mjs',
       'scripts/docs-freshness.mjs', 'scripts/review-doc-guard.mjs'],
     roots: ['docs/**', 'README.md', 'README.ru.md', 'PROCESS.md', 'AGENTS.md', 'CONTRIBUTING.md', ...WORKFLOW],

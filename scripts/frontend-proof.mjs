@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // #856: complete producer artifacts, not cache hits. Range guards always run fresh.
+import { productWorkflow, ciRunsUrl, registeredRuns } from './ci-workflows.mjs';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, lstatSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync, appendFileSync } from 'node:fs';
@@ -61,7 +62,7 @@ export function admissibleFrontendProof(proof, { key, fingerprint, environment, 
     && run.repository?.full_name === repo && run.head_repository?.full_name === repo
     && (['dev', 'main'].includes(run.head_branch) || /^issue\/[1-9]\d+-[\w-]+$/.test(run.head_branch || '')
       && (promotedSha === run.head_sha || proof.schema === 2 && sourceCompatible))
-    && run.path === '.github/workflows/validate.yml' && proof.sha === run.head_sha && proof.tree === tree
+    && productWorkflow(run.path) && proof.sha === run.head_sha && proof.tree === tree
     && hex(proof.sha, 40) && hex(proof.tree, 40) && String(proof.run) === String(run.id)
     && Number(proof.attempt) === Number(run.run_attempt)
     && artifact?.name === `frontend-proof-${run.id}-${run.run_attempt}` && artifact.expired === false
@@ -86,8 +87,8 @@ export function restoreFrontend({ root = process.cwd(), repo, environment = prod
   const localSha = execFileSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
   const promotedSha = ['dev', 'main'].includes(consumerBranch)
     && api(['api', `repos/${repo}/git/ref/heads/${consumerBranch}`]).object?.sha === localSha ? localSha : null;
-  const list = api(['api', `repos/${repo}/actions/workflows/validate.yml/runs?status=success&per_page=30`]);
-  for (const candidate of list.workflow_runs || []) {
+  const list = api(['api', ciRunsUrl({ repo, status: 'success', limit: 30 })]);
+  for (const candidate of registeredRuns(list, { productOnly: true, repo })) {
     if (String(candidate.id) === String(process.env.GITHUB_RUN_ID)) continue;
     if (candidate.head_sha !== localSha) {
       try {

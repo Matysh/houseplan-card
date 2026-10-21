@@ -511,10 +511,10 @@ function scriptedExec(snapshots) {
   let calls = 0;
   return {
     exec: (cmd, args) => {
-      if (cmd === 'gh' && args[0] === 'run' && args[1] === 'list') {
+      if (cmd === 'gh' && args[0] === 'api' && /actions\/runs\?/.test(args[1])) {
         const s = snapshots[Math.min(calls, snapshots.length - 1)];
         calls += 1;
-        return { status: 0, stdout: JSON.stringify(s), stderr: '' };
+        return { status: 0, stdout: JSON.stringify({ workflow_runs: s.map(r => ({ ...r, id: r.databaseId, head_sha: r.headSha, run_attempt: r.attempt, html_url: r.url, path: '.github/workflows/validate.yml' })) }), stderr: '' };
       }
       throw new Error(`unexpected ${cmd} ${args.join(' ')}`);
     },
@@ -822,7 +822,7 @@ test('#696: realOps with mutants=false dispatches a light Validate and accepts a
   const light = { databaseId: 5, attempt: 1, status: 'completed', conclusion: 'success', url: 'https://run/5', event: 'workflow_dispatch', headSha: sha };
   const exec = (cmd, args) => {
     if (cmd === 'gh' && args[0] === 'workflow' && args[1] === 'run') { dispatches.push(args.join(' ')); return { status: 0, stdout: '', stderr: '' }; }
-    if (cmd === 'gh' && args[0] === 'run' && args[1] === 'list') return { status: 0, stdout: JSON.stringify([light]), stderr: '' };
+    if (cmd === 'gh' && args[0] === 'api' && /actions\/runs\?/.test(args[1])) return { status: 0, stdout: JSON.stringify({ workflow_runs: [{ ...light, id: light.databaseId, head_sha: light.headSha, run_attempt: light.attempt, html_url: light.url, path: '.github/workflows/validate.yml' }] }), stderr: '' };
     throw new Error(`unexpected ${cmd} ${args.join(' ')}`);
   };
   let clock = 0;

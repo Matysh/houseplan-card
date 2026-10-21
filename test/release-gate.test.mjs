@@ -138,7 +138,7 @@ test('release gate can target the dedicated exact-SHA performance workflow', () 
 
 test('#751 AC2: workflowRunsUrl — база из apiBase или GITHUB_API_URL раннера', () => {
   const args = { repo: 'Matysh/houseplan-card', workflow: 'validate.yml', sha: 'abc' };
-  const tail = '/repos/Matysh/houseplan-card/actions/workflows/validate.yml/runs?head_sha=abc&per_page=100';
+  const tail = '/repos/Matysh/houseplan-card/actions/runs?per_page=100&head_sha=abc';
   assert.equal(workflowRunsUrl({ ...args, apiBase: 'https://ghe.example/api/v3' }), `https://ghe.example/api/v3${tail}`);
   const before = process.env.GITHUB_API_URL;
   try {

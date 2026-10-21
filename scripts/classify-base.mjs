@@ -30,6 +30,7 @@
 // гейтам диапазона (#388) на пуше прямо в dev опускаться некуда, и там фолбэк
 // остаётся прежним `before`, но с явной пометкой «недоказуемо».
 
+import { ciWorkflow } from './ci-workflows.mjs';
 import { execFileSync } from 'node:child_process';
 import { appendFileSync, readFileSync } from 'node:fs';
 
@@ -56,7 +57,7 @@ export function judgedShas(payload) {
   const runs = payload && Array.isArray(payload.workflow_runs) ? payload.workflow_runs : [];
   return new Set(
     runs
-      .filter((run) => run && run.status === 'completed' && run.conclusion !== 'cancelled'
+      .filter((run) => run && (!run.path || ciWorkflow(run) === 'validate.yml') && run.status === 'completed' && run.conclusion !== 'cancelled'
         && typeof run.head_sha === 'string')
       .map((run) => run.head_sha),
   );
@@ -72,7 +73,7 @@ export function greenShas(payload) {
   const runs = payload && Array.isArray(payload.workflow_runs) ? payload.workflow_runs : [];
   return new Set(
     runs
-      .filter((run) => run && run.conclusion === 'success' && typeof run.head_sha === 'string')
+      .filter((run) => run && (!run.path || ciWorkflow(run) === 'validate.yml') && run.conclusion === 'success' && typeof run.head_sha === 'string')
       .map((run) => run.head_sha),
   );
 }

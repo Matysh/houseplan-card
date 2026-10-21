@@ -15,6 +15,7 @@
 // иначе неотличим от потерянного запроса, а лишняя метка — это второй вызов
 // модели. Страховка на потерянное событие — process-reconcile (тот же маркер).
 import { execFileSync } from 'node:child_process';
+import { ciWorkflow } from './ci-workflows.mjs';
 import { appendFileSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -53,6 +54,7 @@ export function issueNumberFromBranch(branch) {
  * @returns {{action:'resume'|'noop', reason:string, run?:object, recheck?:boolean}}
  */
 export function decideResume({ labels = [], issue, request, branch, headSha, body, validateRun, sha, runs = [], pendingOf = () => null }) {
+  if (validateRun && Object.hasOwn(validateRun, 'path') && !ciWorkflow(validateRun.path)) return { action: 'noop', reason: 'foreign workflow path' };
   if (!['workflow_dispatch', 'push'].includes(validateRun?.event)) return { action: 'noop', reason: 'not a supported Validate event' };
   if (validateRun?.status !== 'completed') return { action: 'noop', reason: 'validate run is not completed' };
   if (validateRun?.headSha && sha && validateRun.headSha !== sha) return { action: 'noop', reason: 'validate run head differs from the material' };
@@ -197,7 +199,7 @@ if (isMainModule(import.meta.url)) {
   }
   const outcome = await resume({
     repo, branch, sha,
-    validateRun: { id: arg('run-id'), event: arg('event'), status: arg('status') || 'completed', headSha: sha },
+    validateRun: { id: arg('run-id'), path: arg('workflow-path'), event: arg('event'), status: arg('status') || 'completed', headSha: sha },
     apply: arg('apply') !== 'false',
   });
   const lines = [`action=${outcome.action}`, `issue=${outcome.issue ?? ''}`, `reason=${outcome.reason}`, `applied=${outcome.applied ? 'true' : 'false'}`];

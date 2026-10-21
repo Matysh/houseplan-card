@@ -18,6 +18,7 @@
  * возвращается сразу. Логика — чистая функция `validateGate`
  * поверх инъектируемых `ops`, чтобы тесты и мутанты гоняли её без gh.
  */
+import { listCiRuns } from './ci-workflows.mjs';
 import { spawnSync } from 'node:child_process';
 import { appendFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -162,7 +163,7 @@ export function realOps({ repo, workflow = 'validate.yml', token = process.env.G
   const fields = 'databaseId,status,conclusion,url,event,headSha,attempt,startedAt,createdAt';
   const parse = (r) => (r.status === 0 && r.stdout ? JSON.parse(r.stdout) : []);
   return {
-    listRuns: async (sha) => parse(sh('gh', ['run', 'list', '--repo', repo, '--workflow', workflow, '--commit', sha, '--json', fields, '--limit', '20'])),
+    listRuns: async (sha) => listCiRuns({ repo, sha, productOnly: true }),
     jobs: async (runId) => {
       const r = sh('gh', ['run', 'view', String(runId), '--repo', repo, '--json', 'jobs']);
       return r.status === 0 && r.stdout ? (JSON.parse(r.stdout).jobs || []).map((job) => ({ name: job.name, conclusion: job.conclusion })) : [];

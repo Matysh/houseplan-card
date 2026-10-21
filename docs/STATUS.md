@@ -831,6 +831,12 @@ user guide; the former parallel list is archived in
   Unknown source/scene links broaden the run; S7 full dispatch and nightly/release
   retain complete coverage. The CI proof records the selection and skip reasons.
 
+
+Path profiles (#980) separate product, tooling and docs push/PR entry points.
+Filters follow computed test ownership and unknown inputs remain conservative.
+Consumers check registered workflow paths and complete product evidence;
+canonical full dispatch remains available to S7, night and release.
+
 ## Where the rest lives
 
 - Scope and personas — `docs/SCOPE.md`; process, statuses and gates —

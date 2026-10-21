@@ -1873,3 +1873,18 @@ of the complete CI-matrix receipt. Its plan follows a proven diff boundary,
 source/capture inputs and declared scene links; unknown links broaden. A
 selected worker cannot emit a reusable full receipt or satisfy full review/
 release policy, and its actual job outcome must match proof metadata.
+
+## CI path profiles (#980)
+
+One generated path manifest binds GitHub ingress to computed test ownership.
+The canonical full job recipe stays in `validate.yml`; generated product jobs
+omit tooling, and the tooling/docs profiles omit product producers. Unknown
+paths remain product-conservative. Push ranges use the event's complete two-dot
+diff, preserving deletes and both sides of renames; unknown bases fail closed.
+
+Consumers select the registered workflow family by exact path. Product proofs
+require every companion profile in the candidate's coverage plan. Fast profile
+proofs remain progress; missing product evidence never becomes green. The
+existing main workflow_run trigger receives all profiles through their shared
+display name, while its dev body checks actual workflow identity. Canonical full
+dispatch remains the fallback and the night/release authority.

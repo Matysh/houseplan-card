@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // #954: bridge branch-scoped caches with authenticated, direct producer evidence.
+import { productWorkflow, ciRunsUrl, registeredRuns } from './ci-workflows.mjs';
 import { execFileSync } from 'node:child_process';
 import { appendFileSync, existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -24,7 +25,7 @@ export function transferProtocolMatches(root, sha) {
 export function directTransfer({ repo, run, context, job, key, sourceKey, tree, environment, performanceSet = 'glow', now = Date.now() }) {
   if (!REUSE_JOBS.includes(job) || !environment.imageOS || !environment.imageVersion) return null;
   if (run.repository?.full_name !== repo || run.head_repository?.full_name !== repo
-    || run.path !== '.github/workflows/validate.yml' || !/^(?:dev|main|issue\/[1-9]\d+-[\w-]+)$/.test(run.head_branch || '')) return null;
+    || !productWorkflow(run.path) || !/^(?:dev|main|issue\/[1-9]\d+-[\w-]+)$/.test(run.head_branch || '')) return null;
   if (!Number.isFinite(Date.parse(run.updated_at)) || now < Date.parse(run.updated_at) || now - Date.parse(run.updated_at) >= 86400000) return null;
   if (!matchingProducerEnvironment(context.proof?.environments?.[job], environment, job) || key !== sourceKey) return null;
   const claim = context.proof?.checks?.[job];
@@ -38,8 +39,8 @@ export async function discoverTransfers({ root = process.cwd(), repo, environmen
   contextOf, ancestor, treeOf, keyOf, jobs = REUSE_JOBS, performanceSet = 'glow', now = Date.now() }) {
   const result = {};
   if (!environment.imageOS || !environment.imageVersion || !jobs.length) return result;
-  const list = await api(`repos/${repo}/actions/workflows/validate.yml/runs?status=success&per_page=30`);
-  for (const row of list.workflow_runs || []) {
+  const list = await api(ciRunsUrl({ repo, status: 'success', limit: 30 }));
+  for (const row of registeredRuns(list, { productOnly: true, repo })) {
     if (jobs.every(j => result[j])) break;
     try {
       if (String(row.id) === String(process.env.GITHUB_RUN_ID) || !ancestor(row.head_sha)) continue;

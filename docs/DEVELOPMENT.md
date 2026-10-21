@@ -4012,3 +4012,24 @@ accepts a baseline. `proof.json.browserPlan` records planned, executed and
 skipped scopes/reasons; actual selected-job success is checked independently
 of its claimed metadata. A partial push cannot satisfy a full S7/release policy.
 Explicit full dispatch, PR, night and release retain the complete matrix.
+
+## Path profiles for push and PR (#980)
+
+`validate-product.yml`, `validate-tooling.yml` and `validate-docs.yml` are
+computed outputs of `node scripts/ci-profiles.mjs --write`. Edit the shared
+recipe in `validate.yml` and domains in `ci-profile-paths.mjs`; regenerate after
+adding or changing a test's ownership. `test/ci-profiles.test.mjs` detects drift.
+Product covers unknown inputs conservatively; known docs/tooling/output paths
+are excluded. Tooling unit filenames come from `unitGroups`, without a hand list.
+Tooling runs its no-build suite; `.github` changes also request HACS/Hassfest.
+Docs run preflight and publish progress in the same runner, without npm/build.
+
+The shared display name preserves the existing `workflow_run` trigger in main;
+`run-name` identifies the profile. Consumers register exact workflow paths in
+`ci-workflows.mjs`; a matching display name grants no authority. Full dispatch
+stays in `validate.yml`. Non-product proofs cannot satisfy product policy.
+A product proof names the profiles required by the complete candidate range;
+missing/pending companions request canonical validation, red companions fail.
+Only canonical completed runs advance the old range/classification induction;
+a narrower push profile cannot erase an unjudged ancestor. Night and release
+continue to request full policy. The proof schema stays `houseplan-ci-proof/v1`.

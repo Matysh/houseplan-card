@@ -18,6 +18,7 @@
 //
 //   node scripts/task-packet.mjs --issue 437 [--repo Matysh/houseplan-card] [--json]
 
+import { listCiRuns } from './ci-workflows.mjs';
 import { spawnSync } from 'node:child_process';
 import { isMainModule } from './spawn-portable.mjs';
 import {
@@ -569,7 +570,7 @@ export function collectInputs({ number, repo = 'Matysh/houseplan-card', cwd = pr
   let validate = null;
   if (branch) {
     try {
-      const runs = JSON.parse(sh('gh', ['run', 'list', '--repo', repo, '--workflow', 'validate.yml', '--commit', branch.tip, '--limit', '5', '--json', 'status,conclusion,url']));
+      const runs = listCiRuns({ repo, sha: branch.tip, productOnly: true });
       const green = runs.find((r) => r.status === 'completed' && r.conclusion === 'success');
       const running = runs.find((r) => r.status !== 'completed');
       validate = green ? { status: 'зелёный', url: green.url } : running ? { status: 'идёт', url: running.url }

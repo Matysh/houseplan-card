@@ -1,20 +1,7 @@
 name: Проверка (CI)
 
 on:
-  push:
-    # The branch commit is the release-gate authority. An annotated tag points
-    # to the same SHA and must not duplicate the browser validation jobs.
-    branches:
-      - '**'
-      # #957: immutable object-retention refs are evidence, not new task work.
-      - '!review-material/**'
-    # Документы ревью конвейер пишет пачками — 340 коммитов за месяц, и каждый
-    # гонял лёгкую половину Validate впустую (≈15 часов раннера в месяц).
-    # Релизного кандидата это не затрагивает: тег всегда стоит на коммите,
-    # который меняет версию и бандл, а не только `docs/reviews/**`.
-    paths-ignore:
-      - 'docs/reviews/**'
-  pull_request:
+  # Ordinary push/PR entry points are generated validate-{product,tooling,docs}.yml (#980).
   # Полный набор тяжёлых job по кнопке и по ночам (#479): nightly.yml делает
   # `gh workflow run validate.yml --ref dev -f full=true`.
   workflow_dispatch:
@@ -216,7 +203,7 @@ jobs:
           # «коммит судили», а не «вердикт был оправдательный». Упавший прогон
           # коммит судил; отменённый — нет, его отсеивает judgedShas (#388).
           for branch in dev main; do
-            gh api -X GET "repos/$REPO/actions/workflows/validate.yml/runs" \
+            gh api -X GET "repos/$REPO/actions/runs" \
               -f branch="$branch" -f status=completed -F per_page=100 \
               > "/tmp/validate-runs-$branch.json" || echo '{}' > "/tmp/validate-runs-$branch.json"
           done
@@ -382,7 +369,7 @@ jobs:
           # сторону БОЛЬШЕГО объёма проверок, а не меньшего.
           # Один запрос на оба режима: `completed` — надмножество `success`,
           # а нужный предикат применяет скрипт (#387 — успех, #388 — судимость).
-          gh api -X GET "repos/$REPO/actions/workflows/validate.yml/runs" \
+          gh api -X GET "repos/$REPO/actions/runs" \
             -f branch="$BRANCH" -f status=completed -F per_page=100 \
             > /tmp/validate-runs.json || echo '{}' > /tmp/validate-runs.json
           if [ "$REF" = "refs/heads/dev" ] || [ "$REF" = "refs/heads/main" ]; then
@@ -391,7 +378,7 @@ jobs:
             # frontend (#388, #619). #703: прогоны обеих интеграционных веток —
             # на `main` приходит SHA, уже судимый на `dev`.
             other=dev; [ "$BRANCH" = "dev" ] && other=main
-            gh api -X GET "repos/$REPO/actions/workflows/validate.yml/runs" \
+            gh api -X GET "repos/$REPO/actions/runs" \
               -f branch="$other" -f status=completed -F per_page=100 \
               > /tmp/validate-runs-other.json || echo '{}' > /tmp/validate-runs-other.json
             node scripts/classify-base.mjs --head="$HEAD_SHA" --mode=range \

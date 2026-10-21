@@ -146,7 +146,7 @@ jobs:
           IFS=$'\t' read -r path branch status url <<< "$meta"
           # Провенанс эталонов — завершённый Validate на dev: другой workflow
           # или ветка задачи доказательством для кандидата беты не являются.
-          if [ "$path" != ".github/workflows/validate.yml" ] || [ "$branch" != "dev" ] || [ "$status" != "completed" ]; then
+          if ! node --input-type=module -e 'import { productWorkflow } from "./scripts/ci-workflows.mjs"; process.exit(productWorkflow(process.argv[1]) ? 0 : 1)' "$path" || [ "$branch" != "dev" ] || [ "$status" != "completed" ]; then
             echo "::error::прогон $RUN — не завершённый Validate на dev ($path, $branch, $status)"
             exit 1
           fi

@@ -50,7 +50,8 @@ test('#697 бот: скриншоты принимаются по канону, 
 test('#697 бот: эталоны golden — только из завершённого Validate на dev', () => {
   const golden = step('Эталоны golden из прогона Validate');
   assert.match(golden, /if: inputs\.golden_run != ''/);
-  assert.match(golden, /\[ "\$path" != "\.github\/workflows\/validate\.yml" \] \|\| \[ "\$branch" != "dev" \] \|\| \[ "\$status" != "completed" \]/);
+  assert.match(golden, /productWorkflow\(process\.argv\[1\]\) \? 0 : 1/);
+  assert.match(golden, /"\$path" \|\| \[ "\$branch" != "dev" \] \|\| \[ "\$status" != "completed" \]/);
   assert.match(golden, /gh run download "\$RUN" --repo "\$\{\{ github\.repository \}\}" -n golden-images/);
   assert.match(golden, /node scripts\/golden-accept\.mjs "\$\{args\[@\]\}"/);
 });

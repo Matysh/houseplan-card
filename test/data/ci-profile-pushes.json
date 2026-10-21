@@ -1,0 +1,7 @@
+[
+  { "name": "docs-only", "files": ["docs/DEVELOPMENT.md", "PROCESS.md"], "profiles": ["docs"] },
+  { "name": "tooling-only", "files": ["scripts/task-packet.mjs", ".github/workflows/validate.yml"], "profiles": ["tooling"] },
+  { "name": "product-source", "files": ["src/logic.ts"], "profiles": ["product"] },
+  { "name": "merge-with-review-index", "files": ["src/logic.ts", "docs/reviews/INDEX.md"], "profiles": ["product", "docs"] },
+  { "name": "unknown-input", "files": ["new-runtime.data"], "profiles": ["product"] }
+]

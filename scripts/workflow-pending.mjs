@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // #856: producers record intent; only existing release workflows publish.
+import { productWorkflow, ciRunsUrl, registeredRuns } from './ci-workflows.mjs';
 import { execFileSync } from 'node:child_process';
 import { appendFileSync } from 'node:fs';
 import { sealContinuation } from './continuation-record.mjs';
@@ -31,10 +32,9 @@ export async function prepareReleasePending({ repo, candidate, tag, stable, work
   const dispatchSha = request(`repos/${repo}/git/ref/heads/${stable ? 'main' : 'dev'}`).object.sha;
   const tagSha = tagCommit(repo, tag, request);
   if (tagSha && tagSha !== candidate) throw Error('tag moved before pending record');
-  const children = ['validate.yml', ...(stable ? ['performance.yml'] : [])].flatMap(name =>
-    (request(`repos/${repo}/actions/workflows/${name}/runs?head_sha=${candidate}&per_page=10`).workflow_runs || [])
-      .filter(r => r.head_sha === candidate && r.repository?.full_name === repo && r.head_repository?.full_name === repo)
-      .map(r => ({ id: r.id, attempt: r.run_attempt, path: r.path })));
+  const ci = registeredRuns(request(ciRunsUrl({ repo, sha: candidate })), { sha: candidate, productOnly: true });
+  const performanceRuns = stable ? request(`repos/${repo}/actions/workflows/performance.yml/runs?head_sha=${candidate}&per_page=10`).workflow_runs || [] : [];
+  const children = [...ci, ...performanceRuns].map(r => ({ id: Number(r.id), attempt: Number(r.run_attempt), path: r.path }));
   seal({ kind: 'release', repo, candidate, tree, tag, stable, workflow, dispatchSha, tagSha, children,
     e2eDispatched: integration.dispatched === true,
     producerPath: `.github/workflows/${workflow}` }, out);

@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 980,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Route push and PR validation through generated product, tooling and docs path profiles, preserve canonical full dispatch and require registered workflow identity and complete product evidence before review, merge or release."
+}
