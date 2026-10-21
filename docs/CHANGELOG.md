@@ -12,6 +12,7 @@
   across settings and auxiliary dialogs; hidden fields keep a consistent layout. (#1007)
   Existing Zigbee incomplete-data disclosures retain compact status typography
   and native controls across live theme changes.
+  Source-picker triggers retain the same padding and focus shape as ordinary actions.
 
 ## v1.82.0 — 2026-10-21
 

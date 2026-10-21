@@ -3,7 +3,8 @@ import {rollup} from 'rollup';
 import {nodeResolve} from '@rollup/plugin-node-resolve';
 import ts from 'typescript';
 import {mkdirSync,writeFileSync} from 'node:fs';
-import {launch,checkAll,finish} from './serve.mjs';
+import {launch,checkAll,finish,requirePinnedBrowser} from './serve.mjs';
+requirePinnedBrowser();
 const build=await rollup({input:'demo/dialog-ui-kit.ts',plugins:[
  {name:'transpile-gallery',transform(code,id){if(id.endsWith('.ts'))return {code:ts.transpileModule(code,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,experimentalDecorators:true,useDefineForClassFields:false}}).outputText,map:null};}},
  nodeResolve({extensions:['.mjs','.js','.json','.ts']}),
@@ -12,6 +13,8 @@ const {output}=await build.generate({format:'es',inlineDynamicImports:true});awa
 const touch=process.argv.includes('--touch');
 const {page,browser}=await launch({width:1280,height:900},1,[],{hasTouch:touch});
 const out={},dir='artifacts/dialog-ui-kit-1007';mkdirSync(dir,{recursive:true});
+writeFileSync(dir+'/gallery.js',output[0].code);
+writeFileSync(dir+'/index.html','<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dialog UI kit</title><style>:root{--primary-color:#008aa5;--card-background-color:#fff;--primary-text-color:#223039;--secondary-text-color:#64747e;--divider-color:#dce2e6;--text-primary-color:#fff}body{font:14px/1.5 Arial,sans-serif}</style><body><script type="module" src="./gallery.js"></script></body></html>');
 try {
  await page.addScriptTag({type:'module',content:output[0].code});
  const gallery=page.locator('hp-dialog-kit-gallery'),dialog=gallery.locator('hp-dialog');
@@ -48,8 +51,9 @@ try {
  await summary.click();out.disclosureOpens=await picker.evaluate(e=>e.open)&&await gallery.locator('[data-kit=pick]').isVisible();
  await summary.focus();await page.keyboard.press('Enter');out.keyboardCloses=!(await picker.evaluate(e=>e.open));
  const action=gallery.locator('[data-kit=action]'),actionHelp=gallery.locator('.hpf-action-help hp-help .trigger');
- await actionHelp.click();out.actionHelpDoesNotAct=await gallery.evaluate(e=>e.value==='first');await page.keyboard.press('Escape');
- await action.click();out.actionStillWorks=await gallery.evaluate(e=>e.value==='action');
+ out.pickerTriggerKeepsActionInsets=await summary.evaluate((e,paint)=>{const s=getComputedStyle(e);return s.paddingLeft===paint.left&&s.paddingRight===paint.right&&s.borderRadius===paint.radius;},await action.evaluate(e=>{const s=getComputedStyle(e);return {left:s.paddingLeft,right:s.paddingRight,radius:s.borderRadius};}));
+ await actionHelp.click();out.actionHelpDoesNotAct=await gallery.evaluate(e=>e.actionCount===0);await page.keyboard.press('Escape');
+ await action.click();out.actionStillWorks=await gallery.evaluate(e=>e.actionCount===1);
  await page.emulateMedia({reducedMotion:'reduce'});await summary.click();
  out.reducedMotion=await picker.locator('.hpf-disclosure-content').evaluate(e=>getComputedStyle(e).animationName==='none');
  await page.emulateMedia({reducedMotion:'no-preference'});

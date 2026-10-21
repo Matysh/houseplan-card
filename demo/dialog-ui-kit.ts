@@ -7,23 +7,25 @@ import { ensureSettingsDialogStyles } from '../src/editors/settings-styles';
 import { settingsActionsCss } from '../src/styles/settings-action.styles';
 import { actionHelp, callout, disclosure, field, formCard, formSections, toggleRow, selectControl } from '../src/editors/form-kit';
 class DialogKitGallery extends LitElement {
-  static properties = { hiddenSection:{state:true}, reversed:{state:true}, checked:{state:true}, value:{state:true} };
+  static properties = { hiddenSection:{state:true}, reversed:{state:true}, checked:{state:true}, value:{state:true}, sourceValue:{state:true}, actionCount:{state:true} };
   hiddenSection=false;
   reversed=false;
   checked=false;
   value='first';
+  sourceValue='Датчик гостиной';
+  actionCount=0;
   connectedCallback() { super.connectedCallback(); ensureSettingsDialogStyles(this); }
   render() {
     const help=html`<hp-help instant data-pointer-hover text="Общее пояснение настройки" aria-label="Помощь"></hp-help>`;
     const sections=[
-      field({label:'Источник данных',htmlFor:'kit-source',control:html`<input id="kit-source" class="hpf-input" value="Датчик гостиной" />`}),
+      field({label:'Источник данных',htmlFor:'kit-source',control:html`<input id="kit-source" class="hpf-input" .value=${this.sourceValue} @input=${(e:Event)=>{this.sourceValue=(e.target as HTMLInputElement).value;}} />`}),
       this.hiddenSection ? nothing : field({label:'Условное поле',control:html`<input data-kit="conditional" class="hpf-input" value="21.5" />`}),
       toggleRow({id:'kit-toggle',title:'Очень длинное название настройки, которое занимает несколько строк на узком экране',caption:'Пояснение под настройкой',checked:this.checked,help,onChange:v=>{this.checked=v;}}),
       field({label:'Режим работы',control:selectControl({name:'kit-select',value:this.value,ariaLabel:'Режим работы',
         options:[{value:'first',label:'Первый вариант'},{value:'second',label:'Второй вариант'}],onChange:v=>{this.value=v;}})}),
       disclosure({title:'Диагностика',content:html`<p data-kit="diagnostics">Данные устройства доступны</p>`}),
       disclosure({title:'Источник и показ пути',triggerClass:'btn',className:'kit-picker',help,content:html`<button class="btn" data-kit="pick">Выбрать источник</button>`}),
-      html`<div class="hpf-actions">${actionHelp(html`<button class="btn" data-kit="action" @click=${()=>{this.value='action';}}>Проверить</button>`,help)}
+      html`<div class="hpf-actions">${actionHelp(html`<button class="btn" data-kit="action" @click=${()=>{this.actionCount++;}}>Проверить</button>`,help)}
         <button class="btn" disabled>Недоступно</button><button class="btn on" aria-busy="true">Сохранение…</button></div>`,
       callout({text:'Общая информационная плашка'}),
     ];

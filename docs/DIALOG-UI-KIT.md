@@ -116,6 +116,11 @@ node demo/smoke_dialog_ui_kit.mjs собирает галерею из дейс�
 теми же Lit/Rollup-зависимостями. Синтетические данные, без доступа к настоящему HA.
 Отчёт и кадры: artifacts/dialog-ui-kit-1007/. Статусы задач живут только в GitHub.
 
+Там же сохраняются index.html и gallery.js — интерактивная страница тех же
+компонентов, с переключением видимости группы и порядка. После запуска smoke
+её можно открыть через обычный HTTP-сервер, например:
+python -m http.server 8891 --directory artifacts/dialog-ui-kit-1007
+
 Проверяются геометрия секций, пустая группа, сохранность соседнего input,
 реальный hover Help и неизменившийся paint соседа, click/keyboard, native details,
 reduced-motion, 1280/390/320 px и light/dark/custom темы. Unit

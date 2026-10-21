@@ -27,12 +27,12 @@ export const dialogCompositionCss = css`
 .hpf-disclosure { min-width:0; }
 .hpf-disclosure > summary {
   box-sizing:border-box; width:fit-content; max-width:100%; min-height:44px;
-  padding:10px 0; color:var(--hpf-accent,var(--primary-color)); cursor:pointer;
-  font:inherit; line-height:22px; overflow-wrap:anywhere;
+  cursor:pointer; overflow-wrap:anywhere;
   transition:var(--hpf-disclosure-transition,color 160ms ease);
 }
-.hpf-disclosure > summary:is(:hover,:focus-visible) { color:var(--primary-text-color); }
-.hpf-disclosure > summary:focus-visible { outline:2px solid var(--hpf-accent,var(--primary-color)); outline-offset:2px; border-radius:3px; }
+.hpf-disclosure > summary:not(.btn) { padding:10px 0; color:var(--hpf-accent,var(--primary-color)); font:inherit; line-height:22px; }
+.hpf-disclosure > summary:not(.btn):is(:hover,:focus-visible) { color:var(--primary-text-color); }
+.hpf-disclosure > summary:not(.btn):focus-visible { outline:2px solid var(--hpf-accent,var(--primary-color)); outline-offset:2px; border-radius:3px; }
 .hpf-disclosure-compact { --hpf-disclosure-transition:background 160ms ease; }
 .hpf-disclosure.hpf-disclosure-compact > summary { font-size:12px; line-height:1.45; color:var(--secondary-text-color); }
 .hpf-disclosure.hpf-disclosure-compact > summary:is(:hover,:focus-visible) { background:var(--hpf-tint); }
