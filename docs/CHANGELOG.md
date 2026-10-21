@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## v1.82.0 — 2026-10-21
+
+- Promote the tested v1.82.0-beta.6 product to stable without new visual or
+  behavioural changes. See the authored RU/EN stable notes for the full 1.82 line.
+
 ## v1.82.0-beta.6 — 2026-10-21
 
 - Restore the native HA icon picker's themed field without a second focus

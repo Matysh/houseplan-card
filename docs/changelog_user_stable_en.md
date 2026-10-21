@@ -8,6 +8,27 @@ The 1.80.1 entry below is the owner's approved style example, translated into
 English. It does not rewrite the published release; its historical milestone
 collection has not yet been curated under the new rules.
 
+<!-- release: v1.82.0 -->
+<!-- base: v1.81.0 -->
+## Houseplan 1.82.0 release
+
+A major editor and settings update makes plans easier to style, devices easier to arrange, and full backups easier to transfer.
+
+🛠️ **Properties beside the plan.** One panel for precise object editing, plus redesigned Space, Room, Device and General settings with clear sections and previews. [#931](https://github.com/Matysh/houseplan-card/issues/931), [#945](https://github.com/Matysh/houseplan-card/issues/945), [#946](https://github.com/Matysh/houseplan-card/issues/946), [#947](https://github.com/Matysh/houseplan-card/issues/947), [#948](https://github.com/Matysh/houseplan-card/issues/948)
+
+🧲 **Neatly arranged devices.** Markers snap to walls and neighbours; copy devices, filter the catalog and apply batch actions. Reveal hidden devices with one button. [#866](https://github.com/Matysh/houseplan-card/issues/866), [#935](https://github.com/Matysh/houseplan-card/issues/935), [#930](https://github.com/Matysh/houseplan-card/issues/930), [#919](https://github.com/Matysh/houseplan-card/issues/919)
+
+💾 **Transfer and support with fewer files.** Full ZIP backups include images and saved Zigbee links. The Sweet Home 3D and Easy Floorplan converter is updated, and Help collects richer diagnostic reports. [#936](https://github.com/Matysh/houseplan-card/issues/936), [#937](https://github.com/Matysh/houseplan-card/issues/937), [#942](https://github.com/Matysh/houseplan-card/issues/942)
+
+🤖 **Vacuum routes.** Ecovacs support includes manual map alignment. Paths follow integration data; position-only sources can start a new trail after docking. [#939](https://github.com/Matysh/houseplan-card/issues/939), [#940](https://github.com/Matysh/houseplan-card/issues/940)
+
+🌡️ **Useful readings and activity.** Show room CO₂ alongside temperature and humidity, and choose which own-device entity determines icon activity. [#920](https://github.com/Matysh/houseplan-card/issues/920), [#977](https://github.com/Matysh/houseplan-card/issues/977)
+
+Fixed restoring vacuum trails, rooms with retained openings and backups with stale links. Device cards explain alarm causes; Home Connect service reminders no longer trigger red pulsing. Removed Home darkness while keeping lamp glow.
+
+[All user-facing changes in this release](https://github.com/Matysh/houseplan-card/issues?q=is%3Aissue%20milestone%3A%221.82%22)
+
+
 <!-- release: v1.81.0 -->
 <!-- base: v1.80.1 -->
 ## Houseplan 1.81.0 release

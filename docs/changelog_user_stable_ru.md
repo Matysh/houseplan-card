@@ -7,6 +7,27 @@
 Запись 1.80.1 ниже — утверждённый владельцем образец оформления. Она не меняет
 опубликованный релиз; его историческая подборка milestone ещё не пересобрана.
 
+<!-- release: v1.82.0 -->
+<!-- base: v1.81.0 -->
+## Релиз Houseplan 1.82.0
+
+Большое обновление редакторов и настроек: план проще оформлять, устройства — расставлять, а резервные копии — переносить целиком.
+
+🛠️ **Свойства рядом с планом.** Единая панель точной настройки объектов и обновлённые диалоги пространства, комнаты, устройства и общих параметров — с понятными разделами и превью. [#931](https://github.com/Matysh/houseplan-card/issues/931), [#945](https://github.com/Matysh/houseplan-card/issues/945), [#946](https://github.com/Matysh/houseplan-card/issues/946), [#947](https://github.com/Matysh/houseplan-card/issues/947), [#948](https://github.com/Matysh/houseplan-card/issues/948)
+
+🧲 **Аккуратная расстановка устройств.** Значки прилипают к стенам и соседям; доступны копирование, фильтр каталога и пакетные действия. Скрытые устройства можно показать одной кнопкой. [#866](https://github.com/Matysh/houseplan-card/issues/866), [#935](https://github.com/Matysh/houseplan-card/issues/935), [#930](https://github.com/Matysh/houseplan-card/issues/930), [#919](https://github.com/Matysh/houseplan-card/issues/919)
+
+💾 **Перенос и поддержка без лишних файлов.** Полная ZIP-копия включает картинки и сохранённые Zigbee-связи. Обновлён конвертер Sweet Home 3D и Easy Floorplan, расширен диагностический отчёт в помощи. [#936](https://github.com/Matysh/houseplan-card/issues/936), [#937](https://github.com/Matysh/houseplan-card/issues/937), [#942](https://github.com/Matysh/houseplan-card/issues/942)
+
+🤖 **Маршруты пылесосов.** Добавлена поддержка Ecovacs с ручной подгонкой карты. Путь следует данным интеграции; для источников отдельных позиций можно начинать новый трек после базы. [#939](https://github.com/Matysh/houseplan-card/issues/939), [#940](https://github.com/Matysh/houseplan-card/issues/940)
+
+🌡️ **Нужные показания и активность.** CO₂ отображается рядом с температурой и влажностью комнаты. Для активности значка можно выбрать сущность своего устройства. [#920](https://github.com/Matysh/houseplan-card/issues/920), [#977](https://github.com/Matysh/houseplan-card/issues/977)
+
+Исправили восстановление пути пылесоса, комнат с сохранёнными проёмами и бэкапов с устаревшими связями. Карточки объясняют причины тревог; сервисные напоминания Home Connect больше не вызывают красную пульсацию. Убрали «Темноту дома», сохранив свечение ламп.
+
+[Все пользовательские изменения релиза](https://github.com/Matysh/houseplan-card/issues?q=is%3Aissue%20milestone%3A%221.82%22)
+
+
 <!-- release: v1.81.0 -->
 <!-- base: v1.80.1 -->
 ## Релиз Houseplan 1.81.0
