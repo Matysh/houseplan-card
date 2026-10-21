@@ -3,10 +3,15 @@
 ## Computed unit partitions (#982)
 
 `npm run test:product` and `npm run test:tooling` share the import graph in
-`unit-groups.mjs`; `npm test` remains their complete union. Mixed consumers
-belong to product so emitted modules always have a producer. Direct reads of
-real source via `import.meta.url` count; source text inside synthetic fixture
-strings does not. A test with no discoverable repository inputs fails loudly.
+`unit-groups.mjs`; `npm test` remains their complete union. Actual product
+imports, emitted-module CLI targets and opaque test-owned dynamic imports
+belong to product so emitted modules have a producer. A tool may inspect raw
+product source as its dataset: a mixed data-only tooling consumer stays in
+tooling; a source-contract test/helper with no tool subject stays in product.
+Real URL expressions are parsed as JavaScript; text inside fixture/patch
+strings and the canonical mutation-registry leaf cannot import the product.
+Computed literal CLI tables follow their actual module imports. A test with
+no discoverable repository inputs fails loudly. `--list` explains ownership.
 The mandatory `gate:small` computes the needed union from the diff, running
 range guards fresh; `--group=all` explicitly requests both. CI separates unit
 jobs and requires both job results in frontend proof. Trigger filtering moves

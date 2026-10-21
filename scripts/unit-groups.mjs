@@ -3,8 +3,9 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { join, posix } from 'node:path';
-import { closure, trackedFiles, stripComments, referencesOf } from './check-inputs.mjs';
-import { relativeDependencies, scanJavaScript } from './relative-dependencies.mjs';
+import { closure, trackedFiles, referencesOf, LEAF_FILES } from './check-inputs.mjs';
+import { relativeDependencies } from './relative-dependencies.mjs';
+import ts from 'typescript';
 import { portableCommand, isMainModule } from './spawn-portable.mjs';
 
 export function unitGroups(root = process.cwd(), { tracked = trackedFiles(root), read = p => readFileSync(join(root, p), 'utf8'), tests = null } = {}) {
@@ -12,9 +13,11 @@ export function unitGroups(root = process.cwd(), { tracked = trackedFiles(root),
   const groups = { product: [], tooling: [] };
   const unclassified = [];
   const dependencies = {};
+  const ownership = {};
   const references = new Map(), source = new Map(), productInputs = new Map();
   const dynamicConsumers = new Set();
   const allTracked = [...new Set([...tracked, ...tests])];
+  const trackedSet = new Set(allTracked);
   const readOnce = p => { if (!source.has(p)) source.set(p, read(p)); return source.get(p); };
   const isProductInput = p => {
     if (!productInputs.has(p)) {
@@ -29,16 +32,46 @@ export function unitGroups(root = process.cwd(), { tracked = trackedFiles(root),
   // not make all its callers product consumers.
   const dependencyReferences = p => {
     if (references.has(p)) return;
-    const text = readOnce(p), code = stripComments(p, text);
-    const { tokens } = scanJavaScript(text);
-    for (let i = 0; i < tokens.length; i++) {
-      if (tokens[i].kind === 'identifier' && tokens[i].value === 'import' && tokens[i + 1]?.value === '('
-        && tokens[i + 2]?.kind !== 'string') dynamicConsumers.add(p);
-    }
+    if (LEAF_FILES.has(p)) { references.set(p, { code: [], data: [] }); return; }
+    const text = readOnce(p);
     const paths = new Set(relativeDependencies(text));
     const urls = new Set();
-    for (const m of code.matchAll(/new\s+URL\(\s*(['"`])([^'"`\n]+?)\1\s*,\s*import\.meta\.url\s*,?\s*\)/g)) urls.add(m[2]);
-    const edges = new Set(), data = new Set();
+    const joinedRoots = new Set();
+    const literals = new Set(), processEntries = new Set();
+    let computedScriptEntry = false;
+    const ast = ts.createSourceFile(p, text, ts.ScriptTarget.Latest, false,
+      p.endsWith('.ts') ? ts.ScriptKind.TS : ts.ScriptKind.JS);
+    const literal = node => node && (ts.isStringLiteralLike(node) ? node.text
+      : ts.isTemplateExpression(node) ? node.head.text : null);
+    const visit = node => {
+      if (ts.isStringLiteralLike(node)) literals.add(node.text);
+      if (ts.isTemplateExpression(node) && node.head.text === 'scripts/'
+        && node.templateSpans.length === 1 && node.templateSpans[0].literal.text === '.mjs') computedScriptEntry = true;
+      if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword
+        && !ts.isStringLiteralLike(node.arguments[0])) dynamicConsumers.add(p);
+      if (ts.isNewExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'URL'
+        && node.arguments?.[1]?.getText(ast).replace(/\s+/g, '') === 'import.meta.url') {
+        const value = literal(node.arguments[0]);
+        if (value !== null) urls.add(value);
+      }
+      if (ts.isCallExpression(node) && (ts.isIdentifier(node.expression) && node.expression.text === 'join'
+        || ts.isPropertyAccessExpression(node.expression) && node.expression.name.text === 'join')) {
+        const value = literal(node.arguments[1]);
+        if (['test', 'scripts', '.github', 'docs', 'src'].includes(value)) joinedRoots.add(value);
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(ast);
+    // A test's literal CLI table is executable input too: runNode([`scripts/
+    // ${name}.mjs`]) can import emitted production even without a JS import in
+    // the test. Resolve known names without running the CLI or guessing a test.
+    if (p.startsWith('test/') && /['"]node:child_process['"]/.test(text)) {
+      for (const value of literals) {
+        if (/^scripts\/[\w/-]+\.mjs$/.test(value) && trackedSet.has(value)) processEntries.add(value);
+        if (computedScriptEntry && /^[\w-]+$/.test(value) && trackedSet.has(`scripts/${value}.mjs`)) processEntries.add(`scripts/${value}.mjs`);
+      }
+    }
+    const edges = new Set(processEntries), data = new Set();
     for (const path of new Set([...paths, ...urls])) {
       if (!path.startsWith('.')) continue;
       let rel = posix.normalize(posix.join(posix.dirname(p), path.split(/[?#]/)[0]));
@@ -53,8 +86,8 @@ export function unitGroups(root = process.cwd(), { tracked = trackedFiles(root),
       const fallback = referencesOf(p, text);
       for (const path of fallback.data) if (allTracked.includes(path)) data.add(path);
       for (const path of fallback.code) if (allTracked.includes(path)) edges.add(path);
-      for (const m of code.matchAll(/join\(\s*\w+\s*,\s*['"](test|scripts|\.github|docs|src)['"]\s*\)/g)) {
-        for (const f of allTracked) if (f.startsWith(`${m[1]}/`)) data.add(f);
+      for (const directory of joinedRoots) {
+        for (const f of allTracked) if (f.startsWith(`${directory}/`)) data.add(f);
       }
     }
     references.set(p, { code: [...edges], data: [...data] });
@@ -64,14 +97,28 @@ export function unitGroups(root = process.cwd(), { tracked = trackedFiles(root),
     dependencyReferences(file);
     const inputs = closure(root, [file], { tracked: allTracked, read: readOnce, references });
     dependencies[file] = inputs;
-    // A producer/bundle consumer is never run before build. Unreadable or
-    // unresolved dynamic module dependencies are conservative product cases.
-    const product = inputs.some(isProductInput);
+    // A tool may inspect product files as its dataset without importing the
+    // product. Follow code edges for ownership; direct test/helper source reads
+    // still protect real source contracts. Opaque imports require the producer.
+    const codeInputs = new Set(), queue = [file];
+    while (queue.length) {
+      const entry = queue.pop();
+      if (codeInputs.has(entry)) continue;
+      codeInputs.add(entry);
+      queue.push(...(references.get(entry)?.code || []));
+    }
+    const codeReasons = [...codeInputs].filter(entry => /^(src|test-build|dist|custom_components)\//.test(entry)
+      || entry.startsWith('test/') && dynamicConsumers.has(entry));
+    const readReasons = [...codeInputs].filter(entry => entry.startsWith('test/'))
+      .flatMap(entry => (references.get(entry)?.data || []).filter(isProductInput));
+    const toolConsumer = [...codeInputs].some(entry => /^(scripts|\.github)\//.test(entry));
+    const product = codeReasons.length > 0 || !toolConsumer && readReasons.length > 0;
+    ownership[file] = { code: codeReasons, reads: [...new Set(readReasons)] };
     if (inputs.length === 1) unclassified.push(file);
     groups[product ? 'product' : 'tooling'].push(file);
   }
   if (unclassified.length) throw new Error(`unclassified tests without repository inputs: ${unclassified.join(', ')}`);
-  return { ...groups, tests, dependencies };
+  return { ...groups, tests, dependencies, ownership };
 }
 export function groupsAffectedBy(files, grouping) {
   const result = new Set();

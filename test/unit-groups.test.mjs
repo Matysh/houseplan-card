@@ -42,7 +42,7 @@ test('#982 actual source reads and cache-busted imports require product build; f
   const root = fixture(t, {
     'test/read.test.mjs': "import {readFileSync} from 'node:fs'; readFileSync(new URL('../src/product.ts', import.meta.url));",
     'test/dynamic.test.mjs': 'import(new URL(`../test-build/product.js?case=${Date.now()}`, import.meta.url));',
-    'test/tool.test.mjs': "import '../scripts/subject.mjs'; const fixture = \"import '../src/product.ts';\";",
+    'test/tool.test.mjs': "import '../scripts/subject.mjs'; const fixture = \"import '../src/product.ts'; new URL('../src/product.ts', import.meta.url);\";",
     'test/opaque.test.mjs': "import '../scripts/subject.mjs'; import(runtimePath);",
     'scripts/subject.mjs': 'export const result = 1;',
     'src/product.ts': 'export const result = 2;',
@@ -50,6 +50,46 @@ test('#982 actual source reads and cache-busted imports require product build; f
   const g = unitGroups(root);
   assert.deepEqual(g.product, ['test/dynamic.test.mjs', 'test/opaque.test.mjs', 'test/read.test.mjs']);
   assert.deepEqual(g.tooling, ['test/tool.test.mjs']);
+});
+
+test('#982 canonical mutation-registry leaf contains patch data, not imports of the real product', t => {
+  const root = fixture(t, {
+    'test/registry.test.mjs': "import '../scripts/mutation-registry.mjs';",
+    'scripts/mutation-registry.mjs': "export const patches = [{ find: \"new URL('../src/product.ts', import.meta.url)\" }];",
+    'src/product.ts': 'export const value = 1;',
+  });
+  const g = unitGroups(root);
+  assert.deepEqual(g.product, []);
+  assert.deepEqual(g.tooling, ['test/registry.test.mjs']);
+  assert.ok(g.dependencies['test/registry.test.mjs'].includes('scripts/mutation-registry.mjs'));
+  assert.ok(!g.dependencies['test/registry.test.mjs'].includes('src/product.ts'));
+});
+
+test('#982 a tool inspects source as data; importing that source or a test-owned read needs the producer', t => {
+  const root = fixture(t, {
+    'test/tool.test.mjs': "import '../scripts/subject.mjs';",
+    'test/source.test.mjs': "import {readFileSync} from 'node:fs'; readFileSync(new URL('../src/product.ts', import.meta.url));",
+    'test/mixed.test.mjs': "import '../scripts/subject.mjs'; import {readFileSync} from 'node:fs'; readFileSync(new URL('../src/product.ts', import.meta.url));",
+    'scripts/subject.mjs': "import {readFileSync} from 'node:fs'; export const text=readFileSync(new URL('../src/product.ts', import.meta.url));",
+    'src/product.ts': 'export const value = 1;',
+  });
+  let g = unitGroups(root);
+  assert.deepEqual(g.tooling, ['test/mixed.test.mjs', 'test/tool.test.mjs']);
+  assert.deepEqual(g.product, ['test/source.test.mjs']);
+  writeFileSync(join(root, 'scripts/subject.mjs'), "import '../src/product.ts';");
+  g = unitGroups(root);
+  assert.deepEqual(g.tooling, []);
+  assert.deepEqual(g.product, ['test/mixed.test.mjs', 'test/source.test.mjs', 'test/tool.test.mjs']);
+});
+
+test('#982 computed CLI tables follow their actual runtime imports before choosing a no-build job', t => {
+  const root = fixture(t, {
+    'test/cli.test.mjs': "import {spawn} from 'node:child_process'; const cases=['production-cli']; for(const name of cases) spawn(process.execPath,[`scripts/${name}.mjs`]);",
+    'scripts/production-cli.mjs': "import '../test-build/product.js';",
+    'src/product.ts': 'export const value = 1;',
+  });
+  assert.deepEqual(unitGroups(root).product, ['test/cli.test.mjs']);
+  assert.deepEqual(unitGroups(root).tooling, []);
 });
 
 test('#982 every real unit belongs to the required union, including new files', () => {
