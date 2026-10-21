@@ -10,7 +10,7 @@ page.setDefaultTimeout(15000);
 const artifacts = new URL('../artifacts/zigbee-incomplete-1005/', import.meta.url);
 mkdirSync(artifacts, { recursive: true });
 const out = { completed: false }, evidence = {};
-const topics = ['zigbee2mqtt', 'house/z2m'];
+const topics = ['zigbee2mqtt', 'house/<img src=x onerror=window.__topicInjected=1>/' + 'long-topic'.repeat(12)];
 const ieee = id => id.toString(16).padStart(16, '0');
 const hostile = '<img src=x onerror="window.__injected=1">' + 'LongRadio'.repeat(28);
 // Provider names already have a 255-character normalisation limit (#798).
@@ -125,11 +125,11 @@ try {
   out.exactRussianHeadingAndInitiallyCollapsed = await details('zha').locator('summary').innerText() === 'Почему данные неполные'
     && await details('z2m').locator('summary').innerText() === 'Почему данные неполные'
     && !await details('zha').evaluate(el => el.open) && !await details('z2m').evaluate(el => el.open);
-  out.providerFootersFollowAllControls = await settings().evaluate(el => {
+  out.providerFootersFollowAllControls = await settings().evaluate((el, lastTopic) => {
     const r = el.shadowRoot, zha = r.querySelector('[data-incomplete-provider="zha"]'), mqtt = r.querySelector('[data-incomplete-provider="z2m"]');
     return zha.parentElement.lastElementChild === zha && mqtt.parentElement.lastElementChild === mqtt
-      && mqtt.previousElementSibling.dataset.topic === 'house/z2m' && r.querySelectorAll('[data-incomplete-provider]').length === 2;
-  });
+      && mqtt.previousElementSibling.dataset.topic === lastTopic && r.querySelectorAll('[data-incomplete-provider]').length === 2;
+  }, topics[1]);
   const radioCalls = { reads: server.reads, scans: server.scans, cancels: server.cancels };
   await details('zha').locator('summary').click();
   await details('z2m').locator('summary').focus(); await page.keyboard.press('Enter');
@@ -143,7 +143,9 @@ try {
     && evidence.z2m.indexOf(topics[1]) < evidence.z2m.indexOf('Second topic radio')
     && !evidence.zha.includes('Second topic radio');
   out.providerLabelsRemainEscaped = await details('z2m').locator('img,script,svg').count() === 0
-    && await page.evaluate(() => !window.__injected);
+    && await settings().locator('.scan-row strong img, .scan-row strong script, .scan-row strong svg').count() === 0
+    && evidence.z2m.includes(topics[1]) && await settings().locator('.scan-row strong').last().innerText() === topics[1]
+    && await page.evaluate(() => !window.__injected && !window.__topicInjected);
   for (const [theme, paper, foreground, muted] of [['light', '#ffffff', '#17212b', '#667788'], ['dark', '#17212b', '#ffffff', '#aabbcc']]) {
     await root.evaluate((card, values) => {
       for (const [key, value] of Object.entries(values)) card.style.setProperty(key, value);
