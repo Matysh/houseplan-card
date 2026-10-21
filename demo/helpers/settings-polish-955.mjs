@@ -95,8 +95,11 @@ try{
      }));
      if(kind==='marker'&&id==='appearance')out[prefix+'_led_single_separator']=await d.locator('.led-representation').filter({visible:true}).evaluateAll(groups=>groups.every(group=>{
       const row=group.querySelector('.row'),button=row?.querySelector('button');if(!row||!button)return false;
-      const separators=[group,row].filter(n=>parseFloat(getComputedStyle(n).borderTopWidth)>0).length;
-      return separators===1&&Math.abs(button.getBoundingClientRect().left-group.getBoundingClientRect().left)<=.25;
+      // The explicit section owns the divider; neither the LED group nor its
+      // internal row may add a second one. Keep checking the visible result.
+      const section=group.closest('.hpf-section');if(!section)return false;
+      const separators=[section,group,row].filter(n=>parseFloat(getComputedStyle(n).borderTopWidth)>0).length;
+      return separators===1&&Math.abs(button.getBoundingClientRect().left-section.getBoundingClientRect().left)<=.25;
      }));
      if(name==='general'&&id==='zigbee')out[prefix+'_zigbee_wrap']=await toggles.first().evaluate(el=>{
       const span=el.querySelector('.hpf-toggle-title > span'),node=document.createTreeWalker(span,NodeFilter.SHOW_TEXT).nextNode();
