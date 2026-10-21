@@ -36,5 +36,16 @@ try {
     out[`${kiosk?'kiosk':'view'}-${iso?'iso':'flat'}-acceptedInk`]=ink.width==='0.9px'&&ink.alpha==='0.7'&&ink.color==='rgb(100, 181, 246)'&&ink.vector==='non-scaling-stroke';
     out[`${kiosk?'kiosk':'view'}-${iso?'iso':'flat'}-noCasing`]=await page.locator('.vactrail .case').count()===0;
   }
+  await page.evaluate(async()=>{
+    window.__card.setConfig({type:'custom:houseplan-card',language:'en',kiosk:false});
+    await window.__hpTest.setVolumetricView(false);
+    await window.__hpTest.setServerConfig(cfg=>({...cfg,markers:cfg.markers.map(m=>m.id==='e_vacuum_ink'
+      ? {...m,vacuum:{...m.vacuum,map_routes:null,calibration:{m1:[1,0,0,0,1,0],m2:[1,0,0,0,1,0]}}}:m)}));
+    await window.__hpTest.setMode('devices');
+    await window.__hpTest.openMarkerDialog('e_vacuum_ink');
+  });
+  await page.locator('[data-section-target=vacuum]').click();
+  await page.locator('.hpf-profile-diagnostics > summary').click();
+  out.legacyMapIdsInDiagnostics=(await page.locator('.hpf-profile-diagnostics').textContent()).includes('m2');
   checkAll(out);
 } finally {await finish(browser,out);}

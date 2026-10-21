@@ -13,6 +13,7 @@ import {settingsCopy} from './settings-copy';
 import {saveVacuumDockRestart,vacuumDockRestartPending} from '../vacuum-dock-restart-write';
 import {ecovacsSourceState,ecovacsSourceAllowed} from '../vacuum-ecovacs-client';
 import { previewVacuumTrailStyle } from '../vacuum-trail-style';
+import { effectiveRoutes } from '../vacuum-routes';
 
 export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:NonNullable<HouseplanEditorRuntime['host']['_markerDialog']>,toolsT:(key:ToolsI18nKey)=>string):TemplateResult|typeof nothing {
     const {st}=settingsCopy(runtime.host);
@@ -91,7 +92,8 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
           <div><span>${runtime.host._t('vac.diag_path')}</span><b>${tele?.nativePath || tele?.path.length ? runtime.host._t('common.yes') : runtime.host._t('common.no')}</b></div>
           ${renderVacuumPathDiagnostics(runtime.host, dev)}
           <div><span>${runtime.host._t('vac.diag_map')}</span><b>${tele?.mapId ?? 'default'}</b></div>
-          ${(v.map_routes || []).map(route=>html`<div><span>${route.id}</span><b>${route.map_id} · ${route.source}</b></div>`)}
+          ${effectiveRoutes(dev.id,v,dev.space,src).map((route,index)=>html`<div><span>${index
+            ? st('marker.vacuum_map_number',{number:index+1}) : st('marker.vacuum_first_map')}</span><b>${route.map_id} · ${route.source}</b></div>`)}
         </div>`;
     return html`<div class="vacbox vacuum-profile">${formCard({id:'vacuum',title:st('marker.section_vacuum'),
       help:html`<div class="vacuum-source-status">${st('marker.vacuum_status_inline',{status:runtime.host._t((`vac.source_status_${resolution.status}`) as I18nKey)})}</div>`,body:formSections([

@@ -141,6 +141,14 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'vacuum-legacy-map-diagnostics-1002',
+    guard: 'node demo/smoke_vacuum_style_1002.mjs',
+    because: '#1002 AC5: mounted diagnostics must expose IDs of inactive legacy calibration maps, not only explicit map_routes or the current telemetry map.',
+    patches: [{file:'src/editors/vacuum-settings-section.ts',
+      find: 'effectiveRoutes(dev.id,v,dev.space,src).map(',
+      replace: '(v.map_routes || []).map('}],
+  },
+  {
     id: 'vacuum-trail-alpha-string-1002',
     guard: 'node scripts/backend-test-guard.mjs invalid_alpha_rejected tests_backend/test_vacuum_trail_style.py',
     because: '#1002 AC3: the backend boundary must refuse booleans and numeric strings rather than coerce them into opacity.',

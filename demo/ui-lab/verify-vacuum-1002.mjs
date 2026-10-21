@@ -74,7 +74,7 @@ try {
         if(message.type==='houseplan/config/get') {
           if(scenario) {
             const marker=result.config.markers.find(m=>m.id==='lab_robot');
-            marker.vacuum={...marker.vacuum,...scenario,calibration:null};
+            marker.vacuum={...marker.vacuum,calibration:null,...scenario};
           }
           return {...result,vacuum_dock_restart_api:1};
         }
@@ -200,6 +200,13 @@ try {
     shell=await open();
     await expect(shell.locator('.vacroute-status').first()).not.toContainText('Готова');
     await expect(shell.locator('.vacroute')).toHaveCount(2);
+    await mount({map_routes:null,calibration:{m1:[1,0,0,0,1,0],m2:[1,0,0,0,1,0]}});
+    shell=await open();
+    await expect(shell.locator('.vacroute')).toHaveCount(2);
+    await shell.locator('.hpf-profile-diagnostics > summary').click();
+    await expect(shell.locator('.hpf-profile-diagnostics')).toContainText('m2');
+    await page.setViewportSize({width:390,height:884});
+    assert.equal(await shell.locator('.vacuum-profile').evaluate(e=>e.scrollWidth>e.clientWidth+1),false,'legacy diagnostics overflow');
   });
   assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
   console.log(`PASS #1002 ${checks.length} checks`);
