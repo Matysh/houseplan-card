@@ -77,6 +77,26 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'room-font-controls-lose-section-composition-1007',
+    guard: 'node demo/smoke_room_settings_946.mjs',
+    because: '#1007 AC1/AC6: two mapped font controls must remain independent sections with the approved 18px separator; only mounted layout proves the composition.',
+    patches: [{
+      file: 'src/editors/room-settings-dialog.ts',
+      find: '...sizeRows.map(([key, labelKey, value, write], index)',
+      replace: 'sizeRows.map(([key, labelKey, value, write], index)',
+    }],
+  },
+  {
+    id: 'marker-glow-fields-lose-section-composition-1007',
+    guard: 'node demo/smoke_device_settings_947.mjs',
+    because: '#1007 AC1/AC6: conditional fixed Glow colour/brightness need their real section separator; the approved device fixture measures the computed 18px insets in Chromium.',
+    patches: [{
+      file: 'src/editors/marker-dialog.ts',
+      find: '? html`<div class="markerglowvalue">${formSections([field({',
+      replace: '? html`<div class="markerglowvalue">${fieldGrid([field({',
+    }],
+  },
+  {
     id: 'dialog-kit-empty-sections-survive-1007',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/dialog-composition.test.mjs',
     because: '#1007 AC2: empty conditional groups must not acquire section identity or a separator; pure entries preserve the following draft identity.',

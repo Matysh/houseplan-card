@@ -30,6 +30,7 @@ for(const width of [320,390,1280]){
   await dlg.evaluate((el,p)=>{const c=el.getRootNode().host;['--card-background-color','--primary-background-color','--primary-text-color','--secondary-text-color','--divider-color','--primary-color'].forEach((k,i)=>c.style.setProperty(k,p[i]));},palette);
   await page.waitForTimeout(200);
   out[`${width}_${theme}`]=await dlg.evaluate(el=>{const surface=el.shadowRoot.querySelector('.surface'),content=el.shadowRoot.querySelector('.content');const cancel=el.querySelector('[data-hp=dialog-cancel]'),range=el.querySelector('.hpf-temperature-range');return surface.getBoundingClientRect().left>=-1&&surface.getBoundingClientRect().right<=innerWidth+1&&content.scrollWidth<=content.clientWidth+1&&cancel.getBoundingClientRect().bottom<=innerHeight+1&&getComputedStyle(cancel).cursor==='pointer'&&range.children[0].getBoundingClientRect().top===range.children[1].getBoundingClientRect().top;});
+  out[`${width}_${theme}_font_rows_keep_divider`]=await dlg.locator('#room-label-scale').evaluate(el=>{const s=getComputedStyle(el.closest('.hpf-section'));return s.borderTopWidth==='1px'&&s.marginTop==='18px'&&s.paddingTop==='18px';});
   if(width===390||width===1280){await dlg.evaluate(el=>{el.shadowRoot.querySelector('.content').scrollTop=0;});await dlg.locator('.surface').screenshot({path:`${dir}/room-${width}-${theme}-top.png`});await dlg.locator('[data-card=sizes]').scrollIntoViewIfNeeded();await dlg.locator('.surface').screenshot({path:`${dir}/room-${width}-${theme}-sizes.png`});}
  }
 }

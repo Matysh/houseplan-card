@@ -48,8 +48,7 @@ hp-dialog[settings-layout] .hpf-footer .btn > ha-icon{display:inline-flex;align-
 .hpf-settings-pane .hpf-toggle-title hp-help{vertical-align:top;margin-inline-start:4px;}
 .hpf-settings-pane .hpf-toggle-icon{display:none;}
 .hpf-settings-form .hpf-settings-pane .hpf-toggle > .hpf-toggle-caption{grid-column:1;}
-.hpf-settings-form .hpf-settings-pane .hpf-toggle > input{grid-area:1/2;margin-block:-11px;}
-.hpf-settings-pane .hpf-toggle{min-height:22px;}
+.hpf-settings-form .hpf-settings-pane .hpf-toggle > input{grid-area:1/2;}
 .hpf-settings-pane .hpf-callout{padding:8px 10px;font-size:12px;line-height:1.45;border-inline-start:3px solid var(--info-color,var(--primary-color));border-radius:0;background:color-mix(in srgb,var(--info-color,var(--primary-color)) 10%,var(--hpf-surface));}
 .hpf-settings-pane .hpf-callout > ha-icon{display:none;}
 .hpf-settings-pane .hpf-callout p{margin:0;font-size:inherit;}

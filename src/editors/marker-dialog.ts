@@ -472,7 +472,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
 
     // ----------------------------------------------------- Light and glow
     const glowValue = displayedGlowMode !== 'auto'
-      ? html`<div class="markerglowvalue">${field({
+      ? html`<div class="markerglowvalue">${formSections([field({
           label: t('marker.glow_color'),
           control: colorField({
             hex: d.glowColor, disabled: glowSourceDisabled,
@@ -487,8 +487,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                 };
               }}></hp-color-opacity>`,
           }),
-        })}
-        ${displayedGlowMode === 'fixed'
+        }),
+        displayedGlowMode === 'fixed'
           ? html`<div class="hpf-field">
               <span class="hpf-label hpf-labelrow"><label for="marker-glow-brightness">${t('marker.glow_brightness')}</label></span>
               ${rangeLine({
@@ -508,7 +508,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                 },
               })}
             </div>`
-          : nothing}</div>`
+          : nothing])}</div>`
       : nothing;
     const owner = dialogSession(this.host, 'marker');
     const radiusInput = radiusInputs.get(this.host);
@@ -656,7 +656,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           onChange: (hidden) => (this.host._markerDialog = { ...d, hideSignal: hidden }),
         }),
           d.display === 'icon_ripple'
-          ? html`${field({
+          ? formSections([field({
               label: t('marker.activity_color'),
               control: html`<div class="ripple-colorrow">${colorField({
                 hex: activityColor,
@@ -667,8 +667,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                     this.host._markerDialog = { ...d, rippleColor: e.detail.color };
                   }}></hp-color-opacity>`,
               })}</div>`,
-            })}
-            <div class="hpf-field ripple-sizerow">
+            }),
+            html`<div class="hpf-field ripple-sizerow">
               <span class="hpf-label hpf-labelrow"><label for="marker-ripple-size">${t('marker.ripple_size')}</label></span>
               ${rangeLine({
                 id: 'marker-ripple-size', min: 1, max: 8, step: 0.5, value: d.rippleSize, unit: '×', ariaLabel: t('marker.ripple_size'),
@@ -676,7 +676,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                 onInput: (n) => (this.host._markerDialog = { ...d, rippleSize: n }),
               })}
               <p class="hpf-hint" role="note">${t('marker.activity_alarm_note')}</p>
-            </div>`
+            </div>`])
           : nothing,
           displayWantsValue(d.display)
           ? html`<div class="markervaluesource">${field({

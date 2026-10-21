@@ -42,12 +42,17 @@ try{
    out.owned_led_note_is_contextual=await dialog.locator('.led-representation').evaluate(el=>!el.querySelector('.hpf-note,.hpf-callout')&&!!el.querySelector('hp-help[instant]')?.text?.trim());
    out.owned_led_action_after_icon=await dialog.evaluate(el=>{const icon=el.querySelector('.hpf-iconfield'),led=el.querySelector('[data-led-action="show-icon"]'),display=el.querySelector('#marker-display');return !!led&&!!(icon.compareDocumentPosition(led)&Node.DOCUMENT_POSITION_FOLLOWING)&&!!(led.compareDocumentPosition(display)&Node.DOCUMENT_POSITION_FOLLOWING);});
    out.led72=await dialog.locator('hp-device-preview .value-badge').textContent().then(t=>t.includes('72'));
+   const display=dialog.locator('#marker-display'),originalDisplay=await display.inputValue();
+   await display.selectOption('icon_ripple');await tick();
+   out.ripple_colour_and_size_keep_divider=await dialog.locator('.ripple-sizerow').evaluate(el=>{const section=el.closest('.hpf-section'),s=getComputedStyle(section);return s.borderTopWidth==='1px'&&s.paddingTop==='18px'&&s.marginTop==='18px';});
+   await display.selectOption(originalDisplay);await tick();
    const width=await face.locator('.device-core').evaluate(el=>el.getBoundingClientRect().width);
    await dialog.locator('#marker-size').fill('2');await dialog.locator('#marker-size').dispatchEvent('change');await tick();
    out.size_does_not_change_preview=await face.locator('.device-core').evaluate((el,width)=>Math.abs(el.getBoundingClientRect().width-width)<.01,width);
    await dialog.locator('#marker-angle').fill('75');await dialog.locator('#marker-angle').dispatchEvent('change');await tick();
    out.rotation_changes_only_icon=await face.evaluate(el=>{const icon=el.querySelector('.device-core > ha-icon');return getComputedStyle(icon).transform!=='none'&&getComputedStyle(el.querySelector('.value-badge')).rotate==='none';});
    await section('light');out.fixed65=await dialog.locator('#marker-glow-brightness').inputValue()==='65';
+   out.glow_colour_and_brightness_keep_divider=await dialog.locator('#marker-glow-brightness').evaluate(el=>{const section=el.closest('.hpf-section'),s=getComputedStyle(section);return !!section.closest('.markerglowvalue')&&s.borderTopWidth==='1px'&&s.paddingTop==='18px'&&s.marginTop==='18px';});
    out.radius_filled_but_not_materialized=await dialog.locator('#marker-glow-radius').inputValue().then(v=>Number(v)>0)&&await page.evaluate(()=>window.__card._markerDialog.glowRadius==='');
    const radiusField=dialog.locator('.hpf-field:has(#marker-glow-radius)');
    out.radius_caption_describes_inheritance=!(await radiusField.locator('.hpf-hint').innerText()).includes('Пусто:');

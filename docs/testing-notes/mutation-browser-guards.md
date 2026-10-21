@@ -111,9 +111,11 @@ mounted production hosts. Pure path strings cannot prove the lazy Lit binding
 or detect a mirrored painted use. They are registered, not executed in development.
 
 - `dialog-kit-help-inside-disclosure-1007`
+- `marker-glow-fields-lose-section-composition-1007`
+- `room-font-controls-lose-section-composition-1007`
 
 #1007: trusted Help hover must leave the adjacent summary paint unchanged;
-CSS ancestor hover is a browser effect.
+CSS ancestor hover and nested conditional Glow section geometry are browser effects.
 
 - `zigbee-incomplete-heading-enlarged-1005`
 - `discard-confirm-initial-focus-ring-990`

@@ -228,7 +228,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
           title: t('room.sizes_section'),
           help: shelp('room.sizes_section.help'),
           body: formSections([
-          html`${sizeRows.map(([key, labelKey, value, write]) => html`<div class="hpf-field">
+          ...sizeRows.map(([key, labelKey, value, write], index) => html`<div class="hpf-field">
                 <span class="hpf-label hpf-labelrow"><label for=${`room-${key}-scale`}>${t(labelKey)}</label></span>
                 ${rangeLine({
                   id: `room-${key}-scale`, min: 50, max: 300, step: 5, value: pct(value), unit: '%', ariaLabel: t(labelKey),
@@ -236,7 +236,9 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
                   onInput: (n) => { write(n / 100); host.requestUpdate(); },
                 })}
                 ${rangeEnds('50%', '300%')}
-              </div>`)}${callout({text:st('room.sizes_hint',{name:pct(spaceDisplay.cardNameScale),metrics:pct(spaceDisplay.cardLabelScale)})})}`,
+              </div>${index === sizeRows.length - 1
+                ? callout({text:st('room.sizes_hint',{name:pct(spaceDisplay.cardNameScale),metrics:pct(spaceDisplay.cardLabelScale)})})
+                : nothing}`),
           html`<div class="hpf-tint hpf-preview">${roomCardPreview(t, st('preview.room_name'), spaceDisplay.cardNameScale, host._roomNameScale, host._roomLabelScale, 820, spaceDisplay.cardLabelScale, {temp:true,hum:true,lqi:false,light:true,showName:true})}</div>`,
         ]),
         })}
