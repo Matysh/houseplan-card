@@ -1,0 +1,217 @@
+[
+  {
+    "id": 39530825970,
+    "sha": "9692c38dabea62884ad3a792aee484d32444ba30",
+    "branch": "issue/980-ci-profiles",
+    "workflow": ".github/workflows/validate-docs.yml",
+    "status": "completed",
+    "conclusion": "success",
+    "created": "2026-10-21T02:03:06Z",
+    "completed": "2026-10-21T02:03:28Z",
+    "wallSeconds": 22.0,
+    "machineSeconds": 18.0,
+    "jobs": [
+      {
+        "name": "Предполёт: документация, провенанс, процесс",
+        "conclusion": "success",
+        "seconds": 18.0
+      }
+    ]
+  },
+  {
+    "id": 39532225849,
+    "sha": "73b29526d4d2850ef1d6dfc88d072781a7bf510f",
+    "branch": "issue/980-ci-profiles",
+    "workflow": ".github/workflows/validate-tooling.yml",
+    "status": "completed",
+    "conclusion": "success",
+    "created": "2026-10-21T02:17:52Z",
+    "completed": "2026-10-21T02:22:21Z",
+    "wallSeconds": 269.0,
+    "machineSeconds": 289.0,
+    "jobs": [
+      {
+        "name": "Классификация профиля CI",
+        "conclusion": "success",
+        "seconds": 10.0
+      },
+      {
+        "name": "Инструменты: вычисляемый набор юнитов",
+        "conclusion": "success",
+        "seconds": 250.0
+      },
+      {
+        "name": "Предполёт: документация, провенанс, процесс",
+        "conclusion": "success",
+        "seconds": 16.0
+      },
+      {
+        "name": "Hassfest: манифест интеграции",
+        "conclusion": "skipped",
+        "seconds": 0
+      },
+      {
+        "name": "HACS: валидация репозитория",
+        "conclusion": "skipped",
+        "seconds": 0
+      },
+      {
+        "name": "Доказательство выполненных проверок",
+        "conclusion": "success",
+        "seconds": 13.0
+      }
+    ]
+  },
+  {
+    "id": 39533328473,
+    "sha": "73b29526d4d2850ef1d6dfc88d072781a7bf510f",
+    "branch": "issue/980-product-routing-probe",
+    "workflow": ".github/workflows/validate-docs.yml",
+    "status": "completed",
+    "conclusion": "success",
+    "created": "2026-10-21T02:29:47Z",
+    "completed": "2026-10-21T02:30:11Z",
+    "wallSeconds": 24.0,
+    "machineSeconds": 19.0,
+    "jobs": [
+      {
+        "name": "Предполёт: документация, провенанс, процесс",
+        "conclusion": "success",
+        "seconds": 19.0
+      }
+    ]
+  },
+  {
+    "id": 39533328394,
+    "sha": "73b29526d4d2850ef1d6dfc88d072781a7bf510f",
+    "branch": "issue/980-product-routing-probe",
+    "workflow": ".github/workflows/validate-product.yml",
+    "status": "completed",
+    "conclusion": "success",
+    "created": "2026-10-21T02:29:47Z",
+    "completed": "2026-10-21T02:34:17Z",
+    "wallSeconds": 270.0,
+    "machineSeconds": 587.0,
+    "jobs": [
+      {
+        "name": "Классификация изменённых файлов",
+        "conclusion": "success",
+        "seconds": 14.0
+      },
+      {
+        "name": "Предполёт: документация, провенанс, процесс",
+        "conclusion": "success",
+        "seconds": 19.0
+      },
+      {
+        "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+        "conclusion": "success",
+        "seconds": 232.0
+      },
+      {
+        "name": "HACS: валидация репозитория",
+        "conclusion": "success",
+        "seconds": 51.0
+      },
+      {
+        "name": "Hassfest: манифест интеграции",
+        "conclusion": "success",
+        "seconds": 36.0
+      },
+      {
+        "name": "Переиспользование: это дерево уже проверено",
+        "conclusion": "success",
+        "seconds": 25.0
+      },
+      {
+        "name": "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют",
+        "conclusion": "skipped",
+        "seconds": 0
+      },
+      {
+        "name": "Бэкенд: pytest в Home Assistant",
+        "conclusion": "success",
+        "seconds": 159.0
+      },
+      {
+        "name": "Геометрия: TS/Python parity исполнена",
+        "conclusion": "success",
+        "seconds": 38.0
+      },
+      {
+        "name": "Бандл головы dev для стенда",
+        "conclusion": "skipped",
+        "seconds": 0
+      },
+      {
+        "name": "Доказательство выполненных проверок",
+        "conclusion": "success",
+        "seconds": 13.0
+      },
+      {
+        "name": "Смоки в браузере (шард ${{ matrix.shard }} из 3)",
+        "conclusion": "skipped",
+        "seconds": 0
+      },
+      {
+        "name": "Перф-смок: бюджет времени кадра",
+        "conclusion": "skipped",
+        "seconds": 0
+      },
+      {
+        "name": "Golden-кадры против принятых эталонов",
+        "conclusion": "skipped",
+        "seconds": 0
+      },
+      {
+        "name": "Смоки: все шарды зелёные",
+        "conclusion": "skipped",
+        "seconds": 0
+      }
+    ]
+  },
+  {
+    "id": 39533328460,
+    "sha": "73b29526d4d2850ef1d6dfc88d072781a7bf510f",
+    "branch": "issue/980-product-routing-probe",
+    "workflow": ".github/workflows/validate-tooling.yml",
+    "status": "completed",
+    "conclusion": "success",
+    "created": "2026-10-21T02:29:47Z",
+    "completed": "2026-10-21T02:34:20Z",
+    "wallSeconds": 273.0,
+    "machineSeconds": 384.0,
+    "jobs": [
+      {
+        "name": "Предполёт: документация, провенанс, процесс",
+        "conclusion": "success",
+        "seconds": 28.0
+      },
+      {
+        "name": "Инструменты: вычисляемый набор юнитов",
+        "conclusion": "success",
+        "seconds": 254.0
+      },
+      {
+        "name": "Классификация профиля CI",
+        "conclusion": "success",
+        "seconds": 11.0
+      },
+      {
+        "name": "HACS: валидация репозитория",
+        "conclusion": "success",
+        "seconds": 49.0
+      },
+      {
+        "name": "Hassfest: манифест интеграции",
+        "conclusion": "success",
+        "seconds": 30.0
+      },
+      {
+        "name": "Доказательство выполненных проверок",
+        "conclusion": "success",
+        "seconds": 12.0
+      }
+    ]
+  }
+]
