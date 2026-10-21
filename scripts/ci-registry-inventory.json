@@ -1443,7 +1443,6 @@
       "demo/helpers/ui-polish-963-reference.mjs",
       "demo/helpers/vacuum-route-recovery.py",
       "demo/iso-runtime-compat.mjs",
-      "demo/out/vacuum-camera-871/frames.json",
       "demo/performance/budgets-led-strips.json",
       "demo/performance/card-contract.mjs",
       "demo/performance/evaluate.mjs",

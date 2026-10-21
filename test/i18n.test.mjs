@@ -133,7 +133,8 @@ test('i18n: lazy editor dictionaries carry matching keys and placeholders', () =
   // #598: `gs.hint` переехал из support в основной каталог как
   // `gs.card_fills.help` — «?» карточки читает его через `_t`, а не `supportT`.
   // #942 adds closed coverage/legacy categories in all four lazy dictionaries.
-  assert.equal(keys.length, 102);
+  // #1002 replaces two vacuum captions in the settings namespace.
+  assert.equal(keys.length, 100);
   assert.equal(Object.keys(en).filter((key) => key.startsWith('support.')).join(','), 'support.title');
   for (const { code } of LANGUAGE_REGISTRY) {
     const dictionary = supportDictionaries.get(code);
