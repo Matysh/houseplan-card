@@ -8,7 +8,8 @@
   blue default. Refresh the vacuum settings, map cards and diagnostics to match
   the accepted UI Lab design; colour previews can be saved or discarded.
   Diagnostics retain map IDs, including legacy calibration maps, with compact
-  rows and accent-coloured disclosure headings. (#1002)
+  rows and accent-coloured disclosure headings, using the shared dialog kit.
+  (#1002)
 
 - Explain incomplete Zigbee diagnostic data in a collapsed “Why the data is
   incomplete” block at the end of each source section, including affected

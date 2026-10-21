@@ -54,9 +54,11 @@ try {
     while(p&&getComputedStyle(p).overflowY!=='auto') p=p.assignedSlot||p.parentElement||p.getRootNode().host;
     if(p) p.scrollTop+=e.getBoundingClientRect().top-y;
   },y);
-  await align('.vacuum-profile .hpf-toggle',145);
+  await align('.vacuum-profile .hpf-section:has(> .hpf-toggle)',145);
+  await page.waitForTimeout(200); // let the native section scroll/focus state settle
   await page.screenshot({path:resolve(v.output,'settings.png')});
-  await align('.vacuum-trail-color',163);
+  await align('.vacuum-profile .hpf-section:has(> .vacuum-trail-color)',163);
+  await page.waitForTimeout(200);
   await page.screenshot({path:resolve(v.output,'maps.png')});
   console.log('PASS private accepted data at 70%, 712x884; local captures only');
 } finally {await browser.close();await new Promise(resolve=>server.close(resolve));}

@@ -827,7 +827,8 @@ Source health, map routing, path quality and final confirmation remain distinct.
 (#1002), independently of path arbitration. The owning marker dialog previews
 its current/previous/tip ink, and Save merges only touched appearance into the
 latest accepted vacuum record. Vacuum-only layout lives in lazy
-`styles/vacuum-settings.styles.ts`; the native colour picker is reused.
+`styles/vacuum-settings.styles.ts`; shared formSections/disclosure/actionHelp
+own section rhythm and interactions, while the native colour picker is reused.
 For explicit maps (#918), `vacuum-runtime-source.ts` composes route resolution
 with the same source's telemetry; both snapshot capture and live sampling use
 it. Backend observation remains broad, but only the uniquely matched source

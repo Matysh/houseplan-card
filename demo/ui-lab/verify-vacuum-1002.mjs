@@ -162,6 +162,12 @@ try {
     const shell=await open();
     await shell.locator('.vacuum-source-controls hp-help').click();
     assert.equal(await shell.locator('details.vacpicker').evaluate(e=>e.open),false);
+    const sourceSection=await shell.locator('details.vacpicker').evaluate(e=>{
+      const section=e.closest('.hpf-section'),style=getComputedStyle(section);
+      return {heading:!!section.querySelector('.hpf-sub'),margin:style.marginBlockStart,padding:style.paddingBlockStart};
+    });
+    assert.deepEqual(sourceSection,{heading:true,margin:'18px',padding:'18px'},'shared sections preserve accepted source rhythm');
+    assert.equal(await shell.locator('.hpf-section > .vacbtns').evaluate(e=>getComputedStyle(e).margin),'0px','actions do not add a second section gap');
     await shell.locator('.vacuum-trail-color').click();
     await shell.locator('.hpf-profile-maproutes').scrollIntoViewIfNeeded();
     await expect(shell.locator('.vacroute').first()).toContainText('Первая карта');

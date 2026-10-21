@@ -799,9 +799,9 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // migration of existing forms and cross-root action reuse. This refreshes the
 // lazy editor reference only; View ceilings, absolute limits and2000-B band stay.
 // #1002 accepted vacuum settings: scoped layout/copy and native colour/opacity
-// draft control. Carry its3278 B over the accepted #1007 reference;
+// draft control using #1007 sections. Joint tree326545 B gzip, +1538 B;
 // keep the 2000 B band unchanged. No new library or eager editor import.
-export const LAZY_EDITOR_GZIP_CEILING = 328_285;
+export const LAZY_EDITOR_GZIP_CEILING = 326_545;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

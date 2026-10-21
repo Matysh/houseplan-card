@@ -7,6 +7,7 @@
  * than in a core file.
  */
 import { TemplateResult, html, nothing } from 'lit';
+import { disclosure } from './form-kit';
 import type { HpConfirmRequest } from '../danger-confirm';
 import type { DevItem, Marker, ServerConfig } from '../types';
 import type { VacSourceCandidate, VacSourceResolution } from '../vacuum';
@@ -348,9 +349,8 @@ export function renderVacuumMapsSection(
       ${!canAddCurrent || draft ? html`<p class="vacuum-map-note vacuum-add-reason">${st(draft
         ? 'marker.vacuum_add_pending' : !rootSource ? 'marker.vacuum_add_no_source'
           : currentMapId === undefined ? 'marker.vacuum_add_no_map' : 'marker.vacuum_add_current_already')}</p>` : nothing}
-      ${spare.length ? html`<details class="vacroute-sources">
-        <summary>${t('vac.route_add_source')}</summary>
-        <div class="rhint">${t('vac.route_add_source_hint')}</div>
+      ${spare.length ? disclosure({className:'vacroute-sources',title:t('vac.route_add_source'),
+        content:html`<div class="rhint">${t('vac.route_add_source_hint')}</div>
         <div class="vacsource-list">
           ${spare.map((candidate) => {
             const mapId = host._vacObservedMapId(dev, candidate.entityId);
@@ -363,8 +363,7 @@ export function renderVacuumMapsSection(
                 : (mapId || t('vac.route_map_default'))}</span>
             </button>`;
           })}
-        </div>
-      </details>` : nothing}
+        </div>`}) : nothing}
       ${rows.some((route) => !spaceIds.has(route.space)) ? html`
         <div class="warn">${t('vac.route_missing_space_hint')}</div>` : nothing}
       ${routes.some((route) => route.map_id === 'default') ? html`
