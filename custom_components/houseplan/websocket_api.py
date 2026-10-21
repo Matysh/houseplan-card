@@ -1964,7 +1964,9 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             validate_marker_value_badges(msg["config"], data.get("config"))
             validate_marker_vacuum_routes(msg["config"], data.get("config"))
             validate_opening_passages(msg["config"], data.get("config"))
-            validate_partition_opening_hosts(msg["config"], data.get("config"))
+            validate_partition_opening_hosts(
+                msg["config"], data.get("config"), allow_room_wall_promotion=True,
+            )
             return validate_junction_limits(
                 msg["config"], data.get("config"),
                 baseline_counts=baseline_counts,

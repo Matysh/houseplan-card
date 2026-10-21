@@ -77,6 +77,24 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'room-promotion-rejects-safe-restoration',
+    guard: 'python3 -m pytest tests_backend/test_room_opening_host.py -k frontend_room_restoration -q',
+    because: '#996 AC1/AC2: the real frontend candidates must pass ordinary same-ID restoration, not only Optimize.',
+    patches: [{ file: 'custom_components/houseplan/validation.py',
+      find: 'proved = same_partition or same_wall or (',
+      replace: 'proved = same_partition or (',
+    }],
+  },
+  {
+    id: 'room-promotion-ignores-carrier-thickness',
+    guard: 'python3 -m pytest tests_backend/test_room_opening_host.py -k rejects_changed_carrier -q',
+    because: '#996 AC3: a representation-only transition cannot smuggle a new wall thickness.',
+    patches: [{ file: 'custom_components/houseplan/partition_promotion.py',
+      find: 'if not math.isfinite(cm) or cm <= 0 or cm != float(wall["cm"]):',
+      replace: 'if not math.isfinite(cm) or cm <= 0:',
+    }],
+  },
+  {
     id: 'ci-registry-trusts-claimed-git-inputs',
     guard: 'node --test --test-name-pattern="independent source Git" test/ci-registry-inputs.test.mjs',
     because: '#981: serialized producer keys cannot stand in for actual source/candidate Git object equality.',

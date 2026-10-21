@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 996,
+  "baseStable": "v1.81.0",
+  "category": "stable-fix",
+  "rationale": "Repairs the Keep walls deletion and ordinary Undo/recreation already present in v1.81.0: a full same-ID carrier promotion must not fail only because its opening changes from partition to room-wall representation. No format, new tool or migration is added.",
+  "summary": {
+    "ru": "Исправлено восстановление комнат с дверями и окнами после удаления с сохранением стен.",
+    "en": "Fixed restoring rooms with doors and windows after deleting them with Keep walls."
+  }
+}

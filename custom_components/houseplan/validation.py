@@ -22,6 +22,9 @@ from custom_components.houseplan.led_strips import (
     config_led_strip_links,
     preserve_led_strips,
 )
+from custom_components.houseplan.partition_promotion import (
+    same_partition_wall_promotion,
+)
 from custom_components.houseplan.vacuum_routes import validate_marker_routes
 
 # ---------- limits and extension sets ----------
@@ -713,14 +716,17 @@ def _safe_optimize_partition_rehost(
 
 
 def validate_partition_opening_hosts(
-    config: dict, previous: dict | None = None, *, allow_optimize_rehost: bool = False
+    config: dict, previous: dict | None = None, *, allow_optimize_rehost: bool = False,
+    allow_room_wall_promotion: bool = False,
 ) -> None:
     """Validate hosted-opening write deltas without rejecting legacy reads.
 
     Deleting the opening together with its partition remains valid. Surviving
     records keep their host, while new/direct geometry changes reserve half the
     actual wall depth at both endpoints. Rigid host translation and unrelated
-    edits round-trip existing near-end records unchanged.
+    edits round-trip existing near-end records unchanged. Ordinary config/set
+    may separately enable a full same-ID room-wall promotion proof; import and
+    Optimize never inherit that writer capability.
     """
     old_spaces = {
         str(space.get("id")): space for space in (previous or {}).get("spaces") or []
@@ -740,6 +746,9 @@ def validate_partition_opening_hosts(
             str(partition.get("id")): partition
             for partition in (old_space or {}).get("partitions") or []
         }
+        walls = {str(wall.get("id")): wall for wall in space.get("wall_segments") or []}
+        room_wall_ids = {wall_id for room in space.get("rooms") or []
+                         for wall_id in room.get("wall_ids") or []}
         for opening in space.get("openings") or []:
             opening_id = str(opening.get("id", ""))
             old = old_openings.get(opening_id)
@@ -755,7 +764,21 @@ def validate_partition_opening_hosts(
                     isinstance(host, dict) and host.get("kind") == "partition"
                     and not same_partition
                 )
-                proved = same_partition or (
+                # #996: Undo/recreation may promote the exact same physical
+                # carrier back into a room wall. This is not Optimize's broader
+                # rehost permission and cannot transfer or reshape a carrier.
+                same_wall = (
+                    allow_room_wall_promotion and old_space is not None and isinstance(host, dict)
+                    and host.get("kind") == "wall"
+                    and host.get("id") not in partitions
+                    and host.get("id") in room_wall_ids
+                    and space.get("cell_cm", 5) == old_space.get("cell_cm", 5)
+                    and same_partition_wall_promotion(
+                        old, opening, old_partitions.get(str(old_host.get("id", ""))),
+                        walls.get(str(host.get("id", ""))),
+                    )
+                )
+                proved = same_partition or same_wall or (
                     allow_optimize_rehost and old_space is not None
                     and (_safe_optimize_residual_rehost(
                         space, old_space, opening, old

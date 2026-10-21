@@ -1,5 +1,22 @@
 # Development and deployment
 
+## Same-ID room-wall restoration (#996)
+
+Only ordinary config/set opts into `allow_room_wall_promotion`; there is no
+client payload flag. A stdlib pure proof validates the resolved same-ID axes and
+opening before the existing writer persists anything. Import retains its default
+refusal and Optimize its separately proved policy. Do not replace the proof with
+the broader Optimize capability: it may allow a thicker envelope or residual IDs.
+
+`test/helpers/room-opening-host-fixture.mjs` runs production deletion, face
+reconciliation and wall identity; its four exact captures are replayed by the Node
+unit before Python/HA tests consume them without needing test-build in backend CI.
+`demo/smoke_room_opening_host.mjs` drives the real editor and uses the actual pure
+promotion proof at its fake HA boundary. This browser oracle intentionally does
+not claim complete schema/CAS/permissions coverage: `test_ha_room_opening_host.py`
+executes those through the real WebSocket writer and durable store. No private
+support export is a fixture. Iterate on those named tests, not the full suite.
+
 ## HA icon-picker lifecycle (#988)
 
 Follow-up #995 keeps the public HA fill/border tokens themed instead of

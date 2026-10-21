@@ -232,9 +232,14 @@ carriers have been reconciled (#804). A surviving partition or residual reserves
 its ID: only new room-edge hints that still claim that ID are cleared, preserving
 their slots. The common model barrier allocates new room-wall IDs; fully consumed
 carriers retain their usual promotion lineage. Existing room IDs and the global
-duplicate-ID guard are not relaxed. Ordinary config writes still reject changes
-to the kind or ID of a surviving partition-opening host; the narrowly proved
-Optimize rehost capability is not granted to room creation.
+duplicate-ID guard are not relaxed. Ordinary config writes still reject arbitrary
+changes to a surviving partition-opening host. The narrow #996 exception proves
+a fully consumed partition becoming a room wall with the same ID, unordered axis,
+positive thickness and resolved opening geometry/fields. It makes Keep walls
+deletion reversible through Undo/Redo and room recreation, including reversed
+axis endpoints. A surviving residual, different carrier, scale or geometry is not
+this exception. Only config/set opts into it server-side; import and Optimize
+keep their existing capabilities, not a new client flag.
 `src/wall-segment-model.ts` and `custom_components/houseplan/wall_segment_model.py`
 share `test/fixtures/282-wall-identity-parity.json`. Writer-bypass mutants in
 `scripts/mutation-registry.mjs` guard every structural writer entrance. A `cm:0`

@@ -1183,6 +1183,13 @@ Walls drawing and node movement (#885, `src/wall-end-align.ts`, in the
 explicit Optimize, locally in chain finish/room deletion, never in render or
 ordinary saves. Saves strip the legacy root `space.segments`.
 
+Ordinary config/set alone enables the pure same-ID partition→room-wall proof
+in `partition_promotion.py` (#996). The validator indexes current room-wall IDs
+and resolves both authoritative axes in the same space; no client capability or
+new persisted state is trusted. Only full promotion with unchanged scale, axis,
+positive depth and opening fields/geometry passes. This permits ordinary room
+Undo/Redo/recreation without granting import or Optimize a new rehost path.
+
 ### Stairs (#663)
 
 Separate Plan entity, not decor (`STAIRS.md`). Eager `StairViewRuntime`:

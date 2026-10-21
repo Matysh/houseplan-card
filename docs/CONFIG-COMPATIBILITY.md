@@ -558,6 +558,14 @@ ID. If a physical `config/set` is rejected, the frontend restores the earliest
 snapshot in that pending batch before attempting a best-effort authoritative
 reload; rejected draft geometry cannot be promoted by a later gesture (#314).
 
+Ordinary config/set also accepts a fully consumed independent wall promoted back
+to a room wall (#996) only after a server-side proof of the same space, carrier
+ID, scale, unordered axis, positive thickness and resolved opening geometry and
+settings. This repairs Keep walls → Undo/Redo/recreate without changing v10,
+reading or migrating any plan. Different IDs, partial residual rehosting and
+combined physical/opening edits retain the existing refusal. Import and Optimize
+do not opt into this ordinary-writer capability; their prior policies remain.
+
 ## Canonical zero-thickness walls — model v9 (#306)
 
 Model v9 removed the separate virtual-boundary representation. A contour atom,

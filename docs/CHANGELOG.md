@@ -4,6 +4,8 @@
 
 - Restore the native HA icon picker's themed field without a second focus
   outline, and space the manual “Active when” value from its selector. (#995)
+- Restore rooms with hosted doors/windows after deleting them with Keep walls:
+  Undo, Redo and recreation preserve the same wall and opening without a save error. (#996)
 
 - Search own-device entities inside the expanded icon-state-source list;
   Escape closes only the list, without adding another field to the form. (#991)
