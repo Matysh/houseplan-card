@@ -110,13 +110,13 @@ function terminatorOf(path) {
   return { outer: arcs[0], terminator: arcs[1] ?? null };
 }
 
-test('#661 AC3: the mask is the left half plus or minus the terminator half-ellipse', () => {
+test('#661 AC3 / #1006: either lit half plus or minus the terminator half-ellipse', () => {
+  for (const waxing of [false, true]) {
   for (const k of [0.03, 0.25, 0.5, 0.75, 0.97]) {
-    const path = moonPhasePath(k);
+    const path = moonPhasePath(k, waxing);
     const { outer, terminator } = terminatorOf(path);
-    // The lit half's outer arc runs along the box (r 256), counter-clockwise
-    // from the top: through the LEFT edge, never along the limb.
-    assert.deepEqual(outer, [256, 256, 0, 256, 512], `${k}: outer arc`);
+    // Along the box, never the limb; clockwise for waxing, counter-clockwise for waning.
+    assert.deepEqual(outer, [256, 256, waxing ? 1 : 0, 256, 512], `${k}: outer arc`);
     const rx = MOON_R * Math.abs(2 * k - 1);
     if (rx < 0.5) {
       assert.equal(terminator, null, `${k}: a half moon has a straight terminator`);
@@ -127,14 +127,15 @@ test('#661 AC3: the mask is the left half plus or minus the terminator half-elli
     assert.ok(Math.abs(trx - rx) < 0.01, `${k}: rx ${trx} vs ${rx}`);
     assert.equal(try_, MOON_R);
     assert.deepEqual([x, y], [256, 16], `${k}: the terminator ends at the north pole`);
-    // sweep 0 bulges right, into the dark side: the lit area grows past half.
-    const litShare = 0.5 + (sweep === 0 ? 1 : -1) * (trx / MOON_R) / 2;
+    const expands = sweep === (waxing ? 1 : 0);
+    const litShare = 0.5 + (expands ? 1 : -1) * (trx / MOON_R) / 2;
     assert.ok(Math.abs(litShare - k) < 1e-3, `${k}: lit share ${litShare}`);
+  }
   }
 });
 
-test('#661 AC3 (owner 2026-09-29): one lit side in both hemispheres, waxing or waning', () => {
-  // Sydney 2026-10-14 09:00Z: waxing crescent, 14 % — lit on the LEFT, like Moscow.
+test('#661 AC3 / #1006: north-up mask agrees across hemispheres and differs across directions', () => {
+  // Sydney 2026-10-14 09:00Z: waxing crescent, 14 % — lit on the RIGHT, like Moscow.
   const at = new Date('2026-10-14T09:00:00Z');
   const hosts = [fakeHost(SYDNEY), fakeHost(MOSCOW)];
   const sydney = renderMoon(hosts[0], ON, 'dusk', at);
@@ -142,13 +143,13 @@ test('#661 AC3 (owner 2026-09-29): one lit side in both hemispheres, waxing or w
   hosts.forEach(forgetHost);
   const pathOf = (result) => result.values.find((value) => typeof value === 'string' && value.startsWith('M256 0A256'));
   assert.equal(pathOf(sydney), pathOf(moscow));
-  assert.equal(pathOf(sydney), moonPhasePath(0.14));
-  // Waxing and waning at the same k draw the same state backwards.
+  assert.equal(pathOf(sydney), moonPhasePath(0.14, true));
+  // Waxing and waning at the same k are opposite masks, never mirrored art.
   const waxing = new Date('2026-10-21T18:00:00Z');
   const waning = new Date('2026-10-29T12:00:00Z');
   assert.equal(moonIllumination(waxing).waxing, true);
   assert.equal(moonIllumination(waning).waxing, false);
-  assert.equal(moonPhasePath(0.78), moonPhasePath(Math.round(0.78 * 100) / 100));
+  assert.notEqual(moonPhasePath(0.78, true), moonPhasePath(0.78, false));
 });
 
 test('#661 C5: the feathered terminator stops only for a full disc', () => {

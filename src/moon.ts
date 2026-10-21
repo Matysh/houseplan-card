@@ -108,6 +108,8 @@ export interface MoonView {
   visible: boolean;
   /** Illuminated fraction quantised to 0.01: the render changes only with the fingerprint (C3). */
   k: number;
+  /** North-up art: waxing is lit on the right, waning on the left (#1006). */
+  waxing: boolean;
 }
 
 const finite = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
@@ -118,12 +120,12 @@ const finite = (value: unknown): value is number => typeof value === 'number' &&
  * drawn. `settings` are the global settings, `config` is `hass.config`.
  */
 export function moonView(settings: unknown, phase: DayCyclePhase, config: unknown, now: Date): MoonView {
-  const { fraction } = moonIllumination(now);
+  const { fraction, waxing } = moonIllumination(now);
   const k = Math.round(fraction * 100) / 100;
   const { latitude, longitude } = (config ?? {}) as { latitude?: unknown; longitude?: unknown };
   if ((settings as { moon?: unknown } | null | undefined)?.moon !== true
-      || !finite(latitude) || !finite(longitude)) return { visible: false, k };
-  return { visible: moonShownAt(phase, moonPosition(now, latitude, longitude).altitude, fraction), k };
+      || !finite(latitude) || !finite(longitude)) return { visible: false, k, waxing };
+  return { visible: moonShownAt(phase, moonPosition(now, latitude, longitude).altitude, fraction), k, waxing };
 }
 
 /** #718 K7: why the moon is or is not shown — the first reason that holds, in this order. */
@@ -184,9 +186,10 @@ export function moonStatus(
   });
 }
 
-/** C3: equal fingerprint → no re-render. The lit side is fixed, so k is all the shape. */
+/** C3: equal fingerprint → no re-render; side matters except at an empty/full disc. */
 export function moonFingerprint(view: MoonView): string {
-  return `${view.visible ? 1 : 0}|${view.k.toFixed(2)}`;
+  const side = view.k > 0 && view.k < 1 && view.waxing ? 1 : 0;
+  return `${view.visible ? 1 : 0}|${view.k.toFixed(2)}|${side}`;
 }
 
 /** Disc of the designer's pack: `viewBox 0 0 512 512`, centre 256, radius 240. */
@@ -196,19 +199,21 @@ export const MOON_R = 240;
 export const MOON_SHARP_FROM = 0.995;
 
 /**
- * C5, owner 2026-09-29: the lit side is always the LEFT one, in both
- * hemispheres; waning runs the waxing states backwards. The lit region is the
- * left half of the box (its outer arc runs along the box, r 256, never along
- * the limb, so the art keeps its anti-aliased edge) plus or minus the
- * terminator half-ellipse `R × R·|2k−1|`: bulging right when k > 0.5.
+ * C5, #1006: north-up art, waxing lit right and waning left in both
+ * hemispheres. Only the mask's arc sweeps change; the art never transforms.
+ * The outer arc follows the box, r 256, never the limb, preserving the art's
+ * anti-aliased edge. Add/subtract the terminator half-ellipse
+ * `R × R·|2k−1|` for a gibbous/crescent phase respectively.
  */
-export function moonPhasePath(k: number): string {
+export function moonPhasePath(k: number, waxing: boolean): string {
+  // Keep the original empty/full mask, including its edge raster, on both sides of the cycle.
+  const right = waxing && k > 0 && k < 1;
   const c = MOON_BOX / 2;
   const top = c - MOON_R;
   const bottom = c + MOON_R;
   const rx = MOON_R * Math.abs(2 * Math.min(1, Math.max(0, k)) - 1);
   const terminator = rx < 0.5
     ? `L${c} ${top}`
-    : `A${rx.toFixed(2)} ${MOON_R} 0 0 ${k > 0.5 ? 0 : 1} ${c} ${top}`;
-  return `M${c} 0A${c} ${c} 0 0 0 ${c} ${MOON_BOX}L${c} ${bottom}${terminator}L${c} 0Z`;
+    : `A${rx.toFixed(2)} ${MOON_R} 0 0 ${(k > 0.5) === right ? 1 : 0} ${c} ${top}`;
+  return `M${c} 0A${c} ${c} 0 0 ${right ? 1 : 0} ${c} ${MOON_BOX}L${c} ${bottom}${terminator}L${c} 0Z`;
 }

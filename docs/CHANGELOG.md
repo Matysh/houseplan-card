@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Show a waxing moon lit on the right and a waning moon on the left, keeping
+  the north-up surface drawing unchanged across all backgrounds and cards. (#1006)
+
 - Explain incomplete Zigbee diagnostic data in a collapsed “Why the data is
   incomplete” block at the end of each source section, including affected
   nodes, reported scan failures and unresolved routes. (#1005)

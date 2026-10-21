@@ -2188,7 +2188,7 @@ around the plan, no gradients and no outline glow — only the moon is added.
 |---|---|
 | Daytime, moon below 3° above the horizon, or new moon (under 3 % lit) | No moon |
 | The moon rises above 3° or sets below it | Fades in/out over 2 seconds; immediately with reduced motion |
-| Phase | Changes continuously, every day; the lit side is always on the left, waning runs the same states backwards |
+| Phase | Changes continuously, every day; waxing is lit on the right, waning on the left. The drawing stays north up in both hemispheres; its surface never mirrors or rotates |
 | Space with its own static background | The same moon: same place, size and phase; the background keeps its colour |
 | Changing the background, or a tab with another background | The moon does not flicker and stays in place |
 | The plan covers the corner of the scene | The moon is behind the plan: the part of the disc in the margins shows; the plan, devices and labels are always on top |

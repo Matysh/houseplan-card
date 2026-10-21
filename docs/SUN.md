@@ -418,9 +418,11 @@ as in SunCalc, the topocentric parallax `h − π·cos h` with
 table and the query parameters are in the test).
 
 **Phase.** One designer image of the full moon (`assets/moon/houseplan-1.0.0`,
-art by JB) under an SVG mask. The lit side is **always the left one**, in both
-hemispheres; waning runs the waxing states backwards (owner 2026-09-29). The
-lit region is the left half of the box plus or minus the terminator
+art by JB) under an SVG mask. With the fixed north-up drawing, **waxing is lit
+on the right, waning on the left**, in both hemispheres (#1006 supersedes the
+2026-09-29 left-only simplification). Only the mask's arc sweeps change; the
+surface image and its container never mirror or rotate. The lit region is
+the corresponding half of the box plus or minus the terminator
 half-ellipse `R × R·|2k − 1|` (bulging into the dark side when `k > 0.5`); the
 half's outer arc runs along the box, never along the limb, so the disc keeps
 the art's own anti-aliased edge. The mask is a `<mask>`, not a `clipPath`
@@ -429,6 +431,11 @@ feathered by a Gaussian blur inside the mask (5 units of 512, about 2 px at
 200 px), except for a full disc (`k ≥ 0.995`). The phase is continuous in `k`,
 quantised to 0.01 only so the element changes when the fingerprint does. The
 dark side is the same art at 8 % opacity.
+
+The view carries the already computed `waxing` sign alongside `k`. The
+fingerprint includes that sign except at exactly empty/full rounded discs,
+where the two masks paint the same image. No second phase calculation or
+hemisphere-dependent orientation is introduced.
 
 **Place, size, layer.** Fixed top-left corner, box `min(200px, 25cqmin)` of the
 scene, inset 5 % of the box; it does not move with pan or zoom and never takes

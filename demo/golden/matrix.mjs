@@ -568,7 +568,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   // #661 AC7: the moon in its phase at the top-left of the scene, behind the
   // plan — the plan deliberately covers part of the disc (owner decision 7).
-  // The lit side is the left one in both hemispheres (owner 2026-09-29).
+    // #1006: waxing is lit on the right; north-up art stays fixed in both hemispheres.
   { id: 'day-cycle-night-moon-gibbous-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     bgMode: 'daynight', dayCycle: { phase: 'night', top: '#111a27' },
     moon: { clock: '2026-10-21T18:00:00Z', latitude: 55.75, longitude: 37.62, k: '0.79' },

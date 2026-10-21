@@ -1,5 +1,17 @@
 # Development and deployment
 
+## Moon phase direction (#1006)
+
+Keep the astronomy's `waxing` sign all the way to the mask and fingerprint.
+Mirror only the mask geometry by changing arc sweeps, never the art or host.
+`test/moon-phase-direction.test.mjs` uses selected NASA hourly data with the
+existing 2.5 percentage point tolerance. `demo/smoke_moon_phase_direction.mjs`
+rasterizes actual production SVGs for both directions on all hosts and compares
+lit details against the original designer SVG. Advance the normal 30 s ticker
+after changing the browser clock: a hass update may reuse View's render memo.
+This headless proof does not claim physical GPU acceptance. Intentional moon
+golden changes require canonical Linux reviewed acceptance under `ci:golden`.
+
 ## Same-ID room-wall restoration (#996)
 
 Only ordinary config/set opts into `allow_room_wall_promotion`; there is no

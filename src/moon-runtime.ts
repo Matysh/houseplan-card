@@ -123,7 +123,7 @@ export function renderMoon(
         <feGaussianBlur stdDeviation="5"></feGaussianBlur>
       </filter>
       <mask id="hp-moon-phase" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
-        <path d=${moonPhasePath(view.k)} fill="#fff"
+        <path d=${moonPhasePath(view.k, view.waxing)} fill="#fff"
           filter=${view.k >= MOON_SHARP_FROM ? nothing : 'url(#hp-moon-soft)'}></path>
       </mask>
     </defs>

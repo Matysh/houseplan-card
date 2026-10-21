@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1006,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 discards the calculated waxing sign and lights every moon phase on the left. Preserve that existing astronomy and fixed north-up art while correcting mask direction and invalidation.",
+  "summary": {
+    "ru": "Исправлена сторона освещения растущей и убывающей Луны без отражения рисунка поверхности.",
+    "en": "Correct waxing and waning moon illumination without mirroring the surface drawing."
+  }
+}

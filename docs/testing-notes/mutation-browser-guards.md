@@ -33,11 +33,11 @@ that transition events alone prove disposal.
 | --- | ---: | --- |
 | Performance threshold | 7 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 3 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
-| Paint, cascade and layer composition | 68 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
+| Paint, cascade and layer composition | 70 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 88 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 55 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
 | Custom-element and HA browser lifecycle | 222 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **443 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| **Total** | **445 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -102,6 +102,13 @@ premature counter snapshot. The unchanged Chromium probes still check the
 real Playwright page-error channel.
 
 ### Paint, cascade and layer composition
+
+- `moon-runtime-always-waning-1006`
+- `moon-art-mirrored-1006`
+
+The moon witnesses compare Chromium SVG pixels and fixed surface details in
+mounted production hosts. Pure path strings cannot prove the lazy Lit binding
+or detect a mirrored painted use. They are registered, not executed in development.
 
 - `zigbee-incomplete-heading-enlarged-1005`
 - `discard-confirm-initial-focus-ring-990`

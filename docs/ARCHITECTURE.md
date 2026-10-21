@@ -1,5 +1,11 @@
 # House Plan architecture
 
+Moon phase direction (#1006) travels from the existing astronomy calculation
+through `MoonView` and its fingerprint into the shared runtime's mask sweeps.
+Waxing lights the right half and waning the left; the north-up designer art is
+unchanged. Rounded empty/full discs normalize direction in the fingerprint.
+All background and host variants retain the same runtime and lifecycle.
+
 Unit execution (#982) uses a computed import/source-read partition rather than
 test filename lists. Product consumers own the build dependency; tooling jobs
 run independently. The complete frontend CI proof binds both unit job results,

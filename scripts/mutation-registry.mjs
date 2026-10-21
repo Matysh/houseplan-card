@@ -10067,11 +10067,44 @@ const MUTANT_DEFINITIONS = [
     id: 'moon-lit-side-flips',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="#661" test/moon.test.mjs',
-    because: '#661 AC3 (owner 2026-09-29): the lit side is always the left one, in both hemispheres',
+    because: '#1006 AC2: waxing/waning choose opposite outer mask sweeps with the matching terminator',
     patches: [{
       file: 'src/moon.ts',
-      find: '  return `M${c} 0A${c} ${c} 0 0 0 ${c} ${MOON_BOX}L${c} ${bottom}${terminator}L${c} 0Z`;',
-      replace: '  return `M${c} 0A${c} ${c} 0 0 1 ${c} ${MOON_BOX}L${c} ${bottom}${terminator}L${c} 0Z`;',
+      find: '  return `M${c} 0A${c} ${c} 0 0 ${right ? 1 : 0} ${c} ${MOON_BOX}L${c} ${bottom}${terminator}L${c} 0Z`;',
+      replace: '  return `M${c} 0A${c} ${c} 0 0 ${right ? 0 : 1} ${c} ${MOON_BOX}L${c} ${bottom}${terminator}L${c} 0Z`;',
+    }],
+  },
+  {
+    id: 'moon-runtime-always-waning-1006',
+    guard: 'node demo/smoke_moon_phase_direction.mjs',
+    because: '#1006 AC1/4: Chromium must paint opposite sides in the real lazy runtime across host/background '
+      + 'surfaces; pure mask tests cannot prove its Lit SVG binding and paint',
+    patches: [{
+      file: 'src/moon-runtime.ts',
+      find: 'moonPhasePath(view.k, view.waxing)',
+      replace: 'moonPhasePath(view.k, false)',
+    }],
+  },
+  {
+    id: 'moon-art-mirrored-1006',
+    guard: 'node demo/smoke_moon_phase_direction.mjs',
+    because: '#1006 AC3: lit landmarks must retain original coordinates in Chromium SVG use/mask paint; '
+      + 'the pixel comparison with immutable designer art detects a mirrored use independently of mask strings',
+    patches: [{
+      file: 'src/moon-runtime.ts',
+      find: '<use href="#hp-moon-art" mask="url(#hp-moon-phase)"></use>',
+      replace: '<use href="#hp-moon-art" transform="translate(512 0) scale(-1 1)" mask="url(#hp-moon-phase)"></use>',
+    }],
+  },
+  {
+    id: 'moon-fingerprint-loses-side-1006',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/moon-phase-direction.test.mjs',
+    because: '#1006 AC5: equal rounded share with the opposite direction must invalidate the rendered phase once',
+    patches: [{
+      file: 'src/moon.ts',
+      find: '  const side = view.k > 0 && view.k < 1 && view.waxing ? 1 : 0;',
+      replace: '  const side = 0;',
     }],
   },
   {

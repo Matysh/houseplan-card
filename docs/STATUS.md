@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.82.0** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.82.0-beta.6` |
-| Tests | Node unit 5024 · pure backend 574 · HA-harness backend 483 · browser smokes 404 (`npm run inventory`) |
+| Tests | Node unit 5027 · pure backend 574 · HA-harness backend 483 · browser smokes 405 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -28,6 +28,10 @@ Everything computable from the tree and git; regenerate, never edit by hand
 The owner opened the `v1.83.0` stable cycle from `v1.82.0` with milestone 9
 (`1.83`) for #1005. Post-stable documentation archive #674 is infrastructure
 in this cycle; its historical classifications remain unchanged.
+
+Moon phase direction (#1006) uses the existing waxing/waning calculation to
+light the right/left side respectively. Only mask geometry changes: north-up
+designer art, visibility, 30 s ticker and shared host/background runtime remain.
 
 Zigbee incomplete-data explanations (#1005) use a native collapsed footer per
 source in General Settings. The shared diagnostic projection names actual
