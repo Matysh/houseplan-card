@@ -47,14 +47,19 @@ export function intentPolicy(env = process.env, version = JSON.parse(readFileSyn
   return policy;
 }
 export async function registryProbeCli({ root = process.cwd(), local = false } = {}) {
+  const started = Date.now();
   const repo = process.env.GITHUB_REPOSITORY || 'Matysh/houseplan-card';
   const mode = process.env.REGISTRY_MODE || 'exact', allowed = !bool(process.env.REGISTRY_FRESH);
   const plan = registryInputs(root, { mode, perfSet: performanceSet(process.env) });
   const store = fetchRegistry(root);
   const token = process.env.GH_TOKEN || execFileSync('gh', ['auth', 'token'], { encoding: 'utf8' }).trim();
-  const source = registryApi({ repo, token, candidateSnapshot: plan._snapshot, mode: plan.mode });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), Math.max(1, 8000 - (Date.now() - started)));
+  const source = registryApi({ repo, token, candidateSnapshot: plan._snapshot, mode: plan.mode, signal: controller.signal });
   const jobs = local ? ['frontend'] : REGISTRY_JOBS;
-  const result = await probeRegistry({ root, repo, plan, jobs, allowed: allowed && (!local || cleanRegistryInputs(root, plan)), store, source });
+  let result;
+  try { result = await probeRegistry({ root, repo, plan, jobs, allowed: allowed && (!local || cleanRegistryInputs(root, plan)), store, source }); }
+  finally { clearTimeout(timer); }
   // Large path inventories stay in the committed generator output, never in a
   // Linux environment variable / GHA job output. Identity alone travels.
   delete result.plan.inventories;

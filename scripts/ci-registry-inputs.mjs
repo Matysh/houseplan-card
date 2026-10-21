@@ -133,7 +133,10 @@ export function registryToolchain(reader, { node = process.versions.node, platfo
   const lock = read('package-lock.json'), version = JSON.parse(lock).version;
   const pins = maskJsonScalars(lock, [['version'], ['packages', '', 'version']], version);
   python = python || execFileSync('python', ['-c', 'import platform; print(platform.python_version())'], { encoding: 'utf8' }).trim();
+  const format = new Intl.DateTimeFormat().resolvedOptions();
   return { node, platform, arch, python, pythonPin: read('.python-version').trim(),
+    nodeFlags: process.execArgv, nodeOptions: process.env.NODE_OPTIONS || null, nodeEnv: process.env.NODE_ENV || null,
+    locale: format.locale, timezone: format.timeZone,
     pins: digest(pins + read('.nvmrc') + read('.python-version') + read('pyproject.toml')) };
 }
 

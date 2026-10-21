@@ -11,7 +11,8 @@ const git = (root, args, options = {}) => execFileSync('git', ['-C', root, ...ar
   { maxBuffer: 8 * 1024 * 1024, stdio: ['pipe', 'pipe', 'pipe'], ...options }).toString('utf8').trim();
 export function fetchRegistry(root) {
   try {
-    git(root, ['fetch', '--quiet', '--no-tags', '--depth=1', 'origin', '+refs/heads/ci-proofs:refs/remotes/origin/ci-proofs']);
+    git(root, ['fetch', '--quiet', '--no-tags', '--depth=1', 'origin', '+refs/heads/ci-proofs:refs/remotes/origin/ci-proofs'],
+      { timeout: 3000, env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } });
     const tip = git(root, ['rev-parse', 'refs/remotes/origin/ci-proofs']);
     return { tip, read(job, key) {
       try { return JSON.parse(git(root, ['show', tip + ':' + registryPath(job, key)])); }
@@ -27,12 +28,13 @@ const namesOf = job => {
 const headers = token => ({ Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + token,
   'User-Agent': 'houseplan-ci-registry', 'X-GitHub-Api-Version': '2022-11-28' });
 export function registryApi({ repo, token, candidateSha = null, candidateSnapshot = null, mode = 'exact',
-  fetchImpl = fetch, apiBase = process.env.GITHUB_API_URL || 'https://api.github.com' }) {
+  fetchImpl = fetch, signal = null, apiBase = process.env.GITHUB_API_URL || 'https://api.github.com' }) {
   const pending = new Map();
+  const readSignal = () => signal ? AbortSignal.any([signal, AbortSignal.timeout(5000)]) : AbortSignal.timeout(5000);
   const request = path => {
     if (!pending.has(path)) pending.set(path, (async () => {
       const response = await fetchImpl(apiBase.replace(/\/+$/, '') + '/repos/' + repo + '/' + path,
-        { headers: headers(token), signal: AbortSignal.timeout(5000) });
+        { headers: headers(token), signal: readSignal() });
       if (!response.ok) throw Error('registry source API ' + response.status);
       return response.json();
     })());
@@ -87,7 +89,7 @@ export function registryApi({ repo, token, candidateSha = null, candidateSnapsho
     const downloadKey = 'artifact:' + artifact.id;
     if (!pending.has(downloadKey)) pending.set(downloadKey, (async () => {
       const response = await fetchImpl(artifact.archive_download_url,
-        { headers: headers(token), signal: AbortSignal.timeout(5000) });
+        { headers: headers(token), signal: readSignal() });
       if (!response.ok) throw Error('source artifact download failed');
       return readCiProofArtifact(Buffer.from(await response.arrayBuffer()));
     })());

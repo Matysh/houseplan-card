@@ -473,17 +473,11 @@ tsc, юниты и смоки (мутантов с #709 нет). Решение 
 
 ## Manifest входов: какие job запускать и что хешировать (#492)
 
-Один модуль, `scripts/check-inputs.mjs`, объявляет каждую проверку Validate
-(`preflight`, `frontend`, `changed_mutants`, `integration`, `smoke`, `golden`,
-`performance_smoke`, `backend`) через корни и точки входа, а остальное
-вычисляет: от точек входа берётся замыкание — импорты транзитивно, строковые
-пути как листья, каталог по строке — все текстовые файлы под ним. Из этого
-manifest читает `classify-changes.mjs` (job `changes`: job запускается,
-если дифф задел хотя бы один её вход). `ci-registry-inventory.mjs` вычисляет
-по нему входы реестра; frontend берёт только замкнутую чистую продуктовую группу.
-`gate-reuse.mjs` сохраняет исторический формат ключей для чтения старых proof. Два места не могут разойтись: до #492 у
-бэкенда ключ не знал relay, converter и schema, а golden/perf — `serve.mjs`,
-`demo.html` и compat-хелперов.
+`scripts/check-inputs.mjs` объявляет корни и точки входа проверок Validate.
+Замыкание импортов и строковых путей вычисляется; каталог раскрывается по данным.
+`classify-changes.mjs` выбирает jobs по этому manifest, а `ci-registry-inventory.mjs`
+вычисляет входы реестра; frontend берёт замкнутую чистую продуктовую группу.
+`gate-reuse.mjs` сохраняет только исторический формат ключей чтения старых proof.
 
 Правила, которые стоит знать:
 
@@ -883,27 +877,4 @@ See `demo/performance/README.md` for commands and the budget-review contract.
 - [ ] README screenshots/GIF still match the current UI (synthetic home only)
 
 
-## Authenticated portable job proofs (#981)
-
-The six registry jobs are frontend, backend, geometry_parity, smoke, golden and
-performance_smoke. `ci-registry-inputs.mjs` bulk-reads committed Git objects,
-computes the shared product tree and each job's closed inputs, protocol import
-closure, actual tools/pins, effective workflow recipe and performance set.
-`ci-registry-inventory.mjs --write` updates the computed input manifest; fresh
-product guards verify it and generated workflows before any source is accepted.
-The mutable orphan index cannot grant PASS: source run/attempt/repository/
-workflow, direct actual job completion, immutable uploaded proof, TTL (seven
-days), byte inventories and companion profiles are verified independently.
-Only fresh direct producers receive records; selected browser progress and
-inherited evidence never seed a new chain. Success/failure cache marker CLI
-is retired; actual failed golden reports remain uploaded, without inferring
-causation from an unverified cached marker.
-
-New ordinary fixtures execute real Git merges, cross-branch index reads, an
-orphan first commit, colliding CAS writers and corrupt JSON input. They reject
-red/cancelled/incomplete/foreign/expired/tampered evidence and changed inputs,
-recipe, tools, full performance set or non-version release bytes. Three new
-mutation definitions are static checked only; execution/caught remains nightly.
-A historical unmodified #980 reader verifies the fresh additive v1 migration
-proof. While dev lacks the registry reader, ordinary review/merge dispatches
-stay fresh; explicit candidate diagnostics may exercise the new registry.
+Реестр и проверки источника: [контракт #981](DEVELOPMENT.md#cross-branch-ci-proof-registry-981).

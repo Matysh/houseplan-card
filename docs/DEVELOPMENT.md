@@ -4098,3 +4098,10 @@ fresh guards and bundle production. Canonical and product variants share a
 key over both registered recipe variants; the source records the variant that
 actually executed. Source Git/file API responses are cached per immutable SHA;
 local pre-push supplies its real committed snapshot, including unpublished HEAD.
+
+Lookup's own checkout is sparse, with complete HEAD blobs; it never hydrates
+historical blobs one at a time. Network authentication has an eight-second
+lookup deadline and unavailable/slow sources fall back to fresh jobs. Actual
+Node flags/options, locale and timezone are part of the recorded environment;
+local reuse never substitutes CI image values. The proof publisher alone has
+contents:write and skips fork PR index writes.
