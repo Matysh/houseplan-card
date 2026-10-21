@@ -136,6 +136,7 @@
       "pdf-export"
     ],
     "witnesses": 9,
-    "floor": 2
+    "floor": 2,
+    "lastWriteWasFingerprintOnly": true
   }
 }

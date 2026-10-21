@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 80,
-  "acceptedAt": "2026-10-21T09:50:24.413Z",
-  "sourceFingerprint": "f27f0d45071488f062f9050a39715695151523c4a2086f4523b4cd41594676e9",
+  "acceptedAt": "2026-10-21T12:20:31.423Z",
+  "sourceFingerprint": "d3481570f54ba4e7ec35e2d24ceeed2699f76bc6cfdcae06c28900b6d6d4b862",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,18 +10,18 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "f27f0d45071488f062f9050a39715695151523c4a2086f4523b4cd41594676e9",
+    "buildFingerprint": "d3481570f54ba4e7ec35e2d24ceeed2699f76bc6cfdcae06c28900b6d6d4b862",
     "ci": {
       "repository": "Matysh/houseplan-card",
-      "run": 39578634279,
+      "run": 39595249086,
       "attempt": 1,
-      "sha": "37707c5c77a9dd6c0ad0b93f57306783b88f61f5"
+      "sha": "7eea426cfd62614d6c1237f80fbaff424ee61c3a"
     }
   },
   "localAttestation": null,
   "foreignCapture": null,
   "witnesses": {
-    "count": 141,
+    "count": 190,
     "floor": 10
   },
   "scenarios": {
@@ -195,8 +195,8 @@
     "large-house-zoom-040-dark": "fa4896e9967439767bef5856e130476c66e3d4dc67ee2e5095511047ed63330b",
     "large-house-zoom-250-dark": "b60cb412c91ff0b822c1c63415352f26c902643474d959e0189631bfe6a8ed5e",
     "large-house-warm-remount-dark": "31bcf222be1e53ba6074888ebc2cacf28af2a3090c250d6f0bf971b525dffcf9",
-    "device-state-source-standard-en": "068ed0f8ec6555ed03ba8214952411e7efce8332abd6e280cf7d252d4af6ffb6",
-    "device-state-source-manual-ru": "dd64a5e4865800299833ceb7fddd0d4457f783044eaf91373b3b5fc33c53c19f",
+    "device-state-source-standard-en": "428374805c064851f6f3ee9226ac78a0e71789df52f287a5820f457fc1f8f42a",
+    "device-state-source-manual-ru": "bf5aa81db1ab91cb1b8d41e20424611ad9aed4dabbc60b64077200d9ab08bdd3",
     "device-state-source-unknown-en": "ddb20371d2e8c65cfdbd03a4c8b8508295cf3679bbc8b947ac9b62b9680e6365",
     "device-state-source-protected-ru": "df428d564915bc2afcb7ee570e4f6633ca470195ef78f9b528a5d27f8729e71a",
     "device-dialog-desktop-en": "a9695faf4b34479a0033481c6cba2b69c9fe871c4510bd5b6596b9f679f20f23",
