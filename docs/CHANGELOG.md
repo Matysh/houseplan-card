@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.82.0-beta.5 — 2026-10-21
+
 - Simplify icon activity settings: no separate entity search, clear automatic
   and manual modes with contextual help, and one exact manual state. The
   bounded full-width preview now puts readable source and state explanations below
