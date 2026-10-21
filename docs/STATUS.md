@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.82.0** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.82.0-beta.6` |
-| Tests | Node unit 5027 · pure backend 574 · HA-harness backend 483 · browser smokes 405 (`npm run inventory`) |
+| Tests | Node unit 5029 · pure backend 574 · HA-harness backend 483 · browser smokes 406 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -37,6 +37,12 @@ Zigbee incomplete-data explanations (#1005) use a native collapsed footer per
 source in General Settings. The shared diagnostic projection names actual
 warnings, mapping failures and unknown routes without changing route selection
 or scan behaviour; reported Z2M failed stages survive normalization.
+
+Dialog composition (#1007) extends the existing lazy form kit with explicit
+sections, independent Help/action regions and shared disclosures. The four
+settings forms use one spacing contract; auxiliary dialogs retain their common
+shell and action styles. API, migration and visual fixtures: DIALOG-UI-KIT.md.
+Settings persistence and plan rendering are unchanged.
 
 Device form follow-up (#995) restores the authentic HA icon field's fill and
 contour, leaves focus to that field (or the fallback wrapper), and applies the
