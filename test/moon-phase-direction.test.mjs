@@ -1,11 +1,10 @@
 // #1006: an independent astronomical fixture, both mask sweeps and runtime invalidation.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import fixture from './fixtures/moon-nasa-2026.mjs';
 import { moonFingerprint, moonIllumination, moonPhasePath, moonView } from '../test-build/moon.js';
 import { moonTick, renderMoon } from '../test-build/moon-runtime.js';
 
-const fixture = JSON.parse(readFileSync(new URL('./fixtures/moon-nasa-2026.json', import.meta.url)));
 const home = { latitude: 55.75, longitude: 37.62 };
 const settings = { moon: true };
 const waxing = new Date('2026-10-21T17:54:54Z');

@@ -1,4 +1,5 @@
-{
+// Independent NASA reference data; not a persisted House Plan configuration.
+export default {
   "source": "https://svs.gsfc.nasa.gov/vis/a000000/a005500/a005587/mooninfo_2026.json",
   "description": "NASA SVS 5587 Moon Phase and Libration 2026; geocentric illuminated percent. nextPercent is the following UTC hour; direction follows its independent sign. Retrieved 2026-10-21.",
   "rows": [
@@ -53,4 +54,4 @@
       "nextPercent": 0.43
     }
   ]
-}
+};

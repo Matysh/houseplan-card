@@ -149,6 +149,24 @@ try {
   checks.fullProductionArtAndEdge = full.k === '1.00' && full.edges > 100 && full.edgeMismatch === 0
     && full.mismatches === 0 && !full.transformed;
   delete full.png; report.push({ full });
+  const hemispheres = [];
+  await page.clock.setSystemTime(new Date('2026-10-14T09:00:00Z'));
+  for (const config of [{ latitude: 55.75, longitude: 37.62 }, { latitude: -33.87, longitude: 151.21 }]) {
+    await page.evaluate(async config => {
+      const c = window.__phaseCard; c.hass = { ...c.hass, config: { ...c.hass.config, ...config } };
+      await c.updateComplete;
+    }, config);
+    await page.clock.runFor(30_000);
+    const moon = page.locator('houseplan-space-card .hp-moon');
+    const sample = await moon.evaluate(rasterSample, art);
+    const path = await moon.locator('mask path').getAttribute('d');
+    const shown = await moon.getAttribute('data-moon-visible');
+    delete sample.png; hemispheres.push({ ...sample, path, shown });
+  }
+  checks.hemispheresKeepNorthUpCrescent = hemispheres.every(s => s.k === '0.14' && s.right > s.left
+    && s.lit > 5000 && s.palette > 30 && s.mismatches === 0 && !s.transformed)
+    && hemispheres[0].path === hemispheres[1].path && hemispheres[1].shown === 'true';
+  report.push({ hemispheres });
   // Area uses the mathematical R=240 disc, independent of the designer's translucent rim.
   const disc = '<circle cx="256" cy="256" r="240" fill="white"/>';
   const discReference = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
