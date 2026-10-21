@@ -28,6 +28,30 @@ def _angle_equal(first: float, second: float) -> bool:
     return min(delta, 180 - delta) <= 1e-7
 
 
+def _same_json_fields(before: dict, after: dict) -> bool:
+    """JSON booleans are not numbers; numeric 1/1.0 round-trips remain equal.
+
+    An explicit stack handles nested future fields without a recursion limit.
+    Both inputs are already bounded JSON documents at the ordinary writer.
+    """
+    pending = [(before, after)]
+    while pending:
+        first, second = pending.pop()
+        if (isinstance(first, bool) or isinstance(second, bool)) and type(first) is not type(second):
+            return False
+        if isinstance(first, dict) and isinstance(second, dict):
+            if first.keys() != second.keys():
+                return False
+            pending.extend((value, second[key]) for key, value in first.items())
+        elif isinstance(first, list) and isinstance(second, list):
+            if len(first) != len(second):
+                return False
+            pending.extend(zip(first, second, strict=True))
+        elif first != second:
+            return False
+    return True
+
+
 def same_partition_wall_promotion(
     old_opening: dict, opening: dict, partition: dict | None, wall: dict | None,
 ) -> bool:
@@ -46,8 +70,10 @@ def same_partition_wall_promotion(
             or not set(partition).issubset(_WALL_KEYS) or not set(wall).issubset(_WALL_KEYS)):
         return False
     ignored = {"host", "x", "y", "angle"}
-    if ({key: value for key, value in old_opening.items() if key not in ignored}
-            != {key: value for key, value in opening.items() if key not in ignored}):
+    if not _same_json_fields(
+        {key: value for key, value in old_opening.items() if key not in ignored},
+        {key: value for key, value in opening.items() if key not in ignored},
+    ):
         return False
     try:
         cm = float(partition["cm"])

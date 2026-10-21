@@ -77,6 +77,15 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'room-promotion-coerces-json-booleans-to-numbers',
+    guard: 'python3 -m pytest tests_backend/test_room_opening_host.py -k compares_unknown_metadata -q',
+    because: '#996 AC3: future opening fields must retain JSON booleans, including in nested lists/objects.',
+    patches: [{ file: 'custom_components/houseplan/partition_promotion.py',
+      find: 'if (isinstance(first, bool) or isinstance(second, bool)) and type(first) is not type(second):',
+      replace: 'if False:',
+    }],
+  },
+  {
     id: 'room-promotion-rejects-safe-restoration',
     guard: 'python3 -m pytest tests_backend/test_room_opening_host.py -k frontend_room_restoration -q',
     because: '#996 AC1/AC2: the real frontend candidates must pass ordinary same-ID restoration, not only Optimize.',

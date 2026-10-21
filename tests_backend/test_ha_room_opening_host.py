@@ -44,12 +44,15 @@ async def test_issue_996_ordinary_history_and_recreation_are_durable(hass, hass_
     assert (await get_data(hass).config_store.async_load())["config"] == case["recreated"]
 
 
-@pytest.mark.parametrize("change", ["contact", "length", "thin", "shift", "wrong-carrier"])
+@pytest.mark.parametrize("change", ["contact", "length", "thin", "shift", "wrong-carrier", "future-type"])
 async def test_issue_996_unsafe_promotion_never_changes_store_or_revision(hass, hass_ws_client, change):
     await _setup(hass)
     client = await hass_ws_client(hass)
     case = CASES[0]
-    await client.send_json_auto_id({"type": "houseplan/config/set", "config": case["deleted"], "expected_rev": 0})
+    source = copy.deepcopy(case["deleted"])
+    if change == "future-type":
+        source["spaces"][0]["openings"][0]["future_metadata"] = {"enabled": True}
+    await client.send_json_auto_id({"type": "houseplan/config/set", "config": source, "expected_rev": 0})
     assert (await client.receive_json())["success"]
     runtime = get_data(hass)
     before = copy.deepcopy(await runtime.config_store.async_load())
@@ -69,6 +72,8 @@ async def test_issue_996_unsafe_promotion_never_changes_store_or_revision(hass, 
     elif change == "shift":
         opening["x"] += 0.01
         opening["host"]["t"] += 0.01 / (wall["b"][0] - wall["a"][0])
+    elif change == "future-type":
+        opening["future_metadata"] = {"enabled": 1}
     else:
         old_id = wall["id"]
         wall["id"] = opening["host"]["id"] = "wrong-carrier"

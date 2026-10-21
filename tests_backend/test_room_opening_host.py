@@ -123,3 +123,23 @@ def test_issue_996_promotion_does_not_grant_import_or_optimize_new_capabilities(
         validate_partition_opening_hosts(room_host_candidates["recreated"], room_host_candidates["deleted"])
     validate_partition_opening_hosts(room_host_candidates["recreated"], room_host_candidates["deleted"],
                                      allow_optimize_rehost=True)
+
+
+@pytest.mark.parametrize("old_meta,new_meta", [
+    ({"enabled": True}, {"enabled": 1}),
+    ({"nested": [{"enabled": False}]}, {"nested": [{"enabled": 0}]}),
+    ({"nested": [1]}, {"nested": [True]}),
+])
+def test_issue_996_promotion_compares_unknown_metadata_as_json_types(room_host_candidates, old_meta, new_meta):
+    before = copy.deepcopy(room_host_candidates["deleted"])
+    after = copy.deepcopy(room_host_candidates["recreated"])
+    before["spaces"][0]["openings"][0]["future_metadata"] = old_meta
+    after["spaces"][0]["openings"][0]["future_metadata"] = new_meta
+    with pytest.raises(PartitionOpeningHostError, match="host changed"):
+        validate_partition_opening_hosts(CONFIG_SCHEMA(after), CONFIG_SCHEMA(before), allow_room_wall_promotion=True)
+    after["spaces"][0]["openings"][0]["future_metadata"] = copy.deepcopy(old_meta)
+    # JSON number 1.0 legitimately becomes 1 through a browser round-trip;
+    # preserve that existing contract, but not a boolean disguised as a number.
+    before["spaces"][0]["openings"][0]["precision_metadata"] = 1.0
+    after["spaces"][0]["openings"][0]["precision_metadata"] = 1
+    validate_partition_opening_hosts(CONFIG_SCHEMA(after), CONFIG_SCHEMA(before), allow_room_wall_promotion=True)

@@ -7,6 +7,8 @@ client payload flag. A stdlib pure proof validates the resolved same-ID axes and
 opening before the existing writer persists anything. Import retains its default
 refusal and Optimize its separately proved policy. Do not replace the proof with
 the broader Optimize capability: it may allow a thicker envelope or residual IDs.
+Opening settings compare JSON types, including nested future fields: booleans
+must not alias Python's numeric 0/1. Numeric 1/1.0 still round-trips through JS.
 
 `test/helpers/room-opening-host-fixture.mjs` runs production deletion, face
 reconciliation and wall identity; its four exact captures are replayed by the Node
