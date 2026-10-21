@@ -121,6 +121,10 @@ test('#980 product proof cannot hide a missing/red tooling profile or spoof work
   const run = { id: 9, run_attempt: 1, path: '.github/workflows/validate-product.yml', head_sha: SHA, event: 'push', status: 'completed', conclusion: 'success' };
   const evaluate = (options = {}) => evaluateCiProof({ run, proof, jobs, candidate: { sha: SHA, tree: TREE }, policy: CI_PROOF_POLICIES.mergeLight, ...options });
   assert.notEqual(evaluate().status, 'green');
+  const forced = buildCiProof({ candidateSha: SHA, candidateTree: TREE, runId: 9, attempt: 1, event: 'push',
+    needs: { ...needs, changes: { result: 'success', outputs: {} } }, workflow: 'validate-product.yml', requiredProfiles: ['product'] });
+  assert.equal(forced.selection.frontend, true, 'the product ingress always owes a producer proof');
+  assert.equal(evaluate({ proof: forced, jobs: jobs.filter(j => j.name !== JOB_RULES.frontend[0].name) }).status, 'failed');
   const companion = { run: { ...run, id: 10, path: '.github/workflows/validate-tooling.yml' }, jobs: [
     { name: JOB_RULES.preflight[0].name, conclusion: 'success' }, { name: JOB_RULES.frontend.find(r => r.job === 'tooling').name, conclusion: 'success' }] };
   const profileRuns = new Map([['tooling', companion]]);

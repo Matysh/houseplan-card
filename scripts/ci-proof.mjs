@@ -280,7 +280,7 @@ export function buildCiProof({
   };
   if (asBool(changes.golden) && !request.full) request.golden = true;
   const selection = {
-    frontend: asBool(changes.frontend),
+    frontend: workflow === 'validate-product.yml' || asBool(changes.frontend),
     geometry_parity: asBool(changes.geometry_parity),
     backend: asBool(changes.backend),
     integration: asBool(changes.integration),
