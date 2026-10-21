@@ -82,7 +82,6 @@
   "vac.route_active": "Текущая",
   "vac.route_space": "Пространство",
   "vac.route_space_none": "не выбрано",
-  "vac.route_status_ready": "готова",
   "vac.route_status_needs_calibration": "нужна калибровка",
   "vac.route_status_ambiguous": "неоднозначна",
   "vac.route_status_missing_space": "пространство удалено",
@@ -97,7 +96,6 @@
   "vac.route_space_confirm": "Перенести",
   "vac.route_missing_space_hint": "Одна из карт ссылается на удалённое пространство: выберите новое или удалите карту. Пока ссылка не исправлена, робот на этой карте не рисуется.",
   "vac.route_default_hint": "Источник не сообщает стабильный идентификатор карты. Несколько этажей нельзя различить без другого источника или собственной карты робота.",
-  "vac.route_target_hint": "Док остаётся в пространстве «{space}» независимо от текущей карты.",
   "vac.route_add_source": "Добавить источник карты",
   "vac.route_add_source_hint": "Если интеграция создаёт отдельную камеру для каждой карты, выберите нужную камеру ниже.",
   "vac.route_source_no_map": "карта не читается"

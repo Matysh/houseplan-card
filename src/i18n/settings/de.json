@@ -287,7 +287,6 @@
   "marker.binding_search_hint.aria": "Hilfe: Home-Assistant-Gerät auswählen",
   "marker.room.help": "Wählen Sie einen Raum für das Gerät auf dem Plan. Verknüpfte Geräte können automatisch ihrem Home-Assistant-Bereich folgen.",
   "marker.room.help.aria": "Hilfe: Raum des Geräts",
-  "marker.vacuum_source_state": "Quelle und Status",
   "marker.vacuum_source_path": "Quelle und Pfadanzeige",
   "marker.vacuum_diagnostics": "Karten- und Routendiagnose",
   "marker.vacuum_maps_calibration": "Karten und Kalibrierung",

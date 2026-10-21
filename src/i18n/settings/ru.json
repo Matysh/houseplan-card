@@ -287,7 +287,6 @@
   "marker.binding_search_hint.aria": "Подсказка: выбор устройства Home Assistant",
   "marker.room.help": "Выберите комнату для размещения устройства на плане. Для привязанного устройства можно оставить автоматическое размещение по зоне Home Assistant.",
   "marker.room.help.aria": "Подсказка: комната устройства",
-  "marker.vacuum_source_state": "Источники и состояние",
   "marker.vacuum_source_path": "Источник и показ пути",
   "marker.vacuum_diagnostics": "Диагностика карты и маршрута",
   "marker.vacuum_maps_calibration": "Карты и калибровка",

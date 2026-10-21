@@ -448,6 +448,15 @@ commands require a real HA administrator, independently of editor `admin_only`.
 
 ## Vacuum map routes (#162)
 
+#1002 adds optional `marker.vacuum.trail_color: #RRGGBB | null` and
+`trail_opacity: number | null` (finite, 0–1; booleans/strings refused).
+Absent/null fields independently use `#64B5F6`/0.7 without materialising config
+or migrating Store versions. Full JSON/ZIP and space JSON retain appearance;
+closed support projections intentionally omit it. Untouched dialogs retain
+absence, and appearance saves preserve the latest source/routes/calibration.
+Old strict backends may reject the new fields: keep card and integration
+versions aligned, and back up before a downgrade.
+
 #940 adds optional `marker.vacuum.new_run_after_dock: boolean | null`. Only exact
 true enables the position-only dock policy; absent/null/false remain Off with
 no read-default migration. Full/space transfer and marker copy retain it;
