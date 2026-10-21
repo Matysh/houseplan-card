@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 994,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Nightly mutation gate failures no longer post to the Telegram chat (owner decision 2026-10-21); the report job keeps the issue as the only recipient, and the reporter drops the unused Telegram summary."
+}
