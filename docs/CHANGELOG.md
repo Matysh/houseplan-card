@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Keep the Home Assistant device list closed when it first appears. Escape
+  closes only the expanded list and retains the device-creation draft. (#989)
+
 ## v1.82.0-beta.5 — 2026-10-21
 
 - Simplify icon activity settings: no separate entity search, clear automatic

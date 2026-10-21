@@ -216,6 +216,9 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           selected: d.binding,
           emptyText: t('marker.nothing_found'),
           onToggle: () => (this.host._markerDialog = { ...d, bindingOpen: !d.bindingOpen }),
+          onClose: () => {
+            if (this.host._markerDialog === d) this.host._markerDialog = { ...d, bindingOpen: false };
+          },
           onFilter: (v) => (this.host._markerDialog = { ...d, bindingFilter: v }),
           onPick: (value) => {
             // #385(а): same-binding click is a no-op —
@@ -290,7 +293,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               this.host._markerDialog = this._announceToggleDraft({
                 ...d, bindingMode: 'ha',
                 binding: d.binding === 'virtual' ? '' : d.binding,
-                bindingOpen: d.binding === 'virtual' || !d.binding,
+                bindingOpen: false,
               });
             },
           })}`,

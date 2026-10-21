@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 989,
+  "baseStable": "v1.81.0",
+  "category": "stable-fix",
+  "rationale": "The same device binding sourcePicker in stable v1.81.0 opens automatically on virtual-to-HA and lacks a transient Escape registration. This fixes an existing stable workflow, not the new icon state-source feature in the 1.82 beta line.",
+  "summary": {
+    "ru": "Список HA-устройств открывается только по нажатию и закрывается по Escape без потери черновика.",
+    "en": "The HA device list opens only on request and closes with Escape without losing the draft."
+  }
+}

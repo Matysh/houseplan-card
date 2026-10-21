@@ -1392,7 +1392,9 @@ follow the current Home Assistant theme, including theme changes while open.
 
 **Basics** contains the name, Home Assistant binding, room and any applicable
 climate-source options under **Room metrics**. Binding is a **Virtual / Home Assistant**
-segment. The picker searches devices and, with **Show entities**, individual
+segment. The picker starts closed and opens only on request; Escape closes
+the expanded list, returns focus to its button and retains the form draft.
+The picker searches devices and, with **Show entities**, individual
 entities. Its selected binding occupies one row; search help belongs to the
 picker, while the binding-mode hint explains what the two modes mean. A required
 missing binding disables Save and shows the reason below the field.

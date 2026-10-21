@@ -7202,6 +7202,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'source-picker-escape-keeps-list-open',
+    guard: 'node demo/smoke_binding_ui.mjs',
+    because: 'The native keyboard witness crosses Lit insertion, hp-dialog capture, '
+      + 'transient-overlay retirement and actual focus return; a pure event mock '
+      + 'cannot prove that Escape closes the list before the dirty form (#989 AC3).',
+    patches: [{
+      file: 'src/editors/source-picker-overlay.ts',
+      find: '        this.onClose?.();',
+      replace: "        if (reason !== 'escape') this.onClose?.();",
+    }],
+  },
+  {
     id: 'release-proof-computed-for-every-commit',
     guard: 'node --test test/process-gate.test.mjs',
     because: 'gating the expensive diff proof on the SAME release predicate is the #385(v) '

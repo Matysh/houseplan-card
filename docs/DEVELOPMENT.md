@@ -55,6 +55,15 @@ keyboard, inheritance, target-size and localization oracles remain unchanged.
 
 ## Secondary UI polish (#976)
 
+Device creation binding (#989): `sourcePicker` accepts optional `onClose`, not
+an Escape toggle. Keep callback updates separate from registration, register only
+after insertion, and release on closure/disconnect. The owner uses
+`if (this.host._markerDialog === d)` before changing its draft; an accepted dialog
+retirement must never be undone by a stale overlay callback. Its native witness
+is `node demo/smoke_binding_ui.mjs`; add `--ha-cache /path/to/prepared/HA` to run
+the identical search/selection/Escape/draft scenario with pinned real HA dialogs.
+This checks UI behavior, not live-HA configuration or GPU acceptance.
+
 `dialog-presence.ts` owns only a Lit part's accepted-exit presentation;
 `dialog-exit.ts` owns its finite, idempotent completion. Owners still decide
 whether Close/Save succeeds. Never retain write authority or replace global

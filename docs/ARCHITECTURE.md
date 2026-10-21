@@ -682,6 +682,13 @@ chunks. Commands and gates: `DEVELOPMENT.md` › Build, › Tests, › Release.
    accessible label are both non-empty. Page-wide lazy runtimes — locales
    (#62, #400) and furniture artwork (#474, #593) — settle after two failed
    attempts into English / no artwork with one toast, never an inert card.
+
+   The device binding's inline `sourcePicker` (#989) opts into this same stack
+   through `onClose?: () => void`. Its lifecycle-only directive retains the latest
+   callback, releases registration when closed/detached and returns Escape focus
+   to the existing trigger. Owners must identity-check their current dialog before
+   closing so a retired form cannot be revived. Search and candidate rendering
+   remain inline; no new floating component or saved field is introduced.
 7. **One four-phase environment resolver.** `resolveDayCycle()` (`src/sun.ts`)
    and `src/day-cycle-render.ts` serve View, kiosk and the space card; plan
    content is never phase-filtered (`SUN.md` › Current four-phase background).

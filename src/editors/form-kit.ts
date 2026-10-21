@@ -14,6 +14,7 @@ import { html, nothing, type TemplateResult } from 'lit';
 
 import { CARD_DIALOG_FORM_KIT, cardDialogFormKitTokens, formKitCss } from '../styles/form-kit.styles';
 import { colorTileInk } from './color-tile-ink';
+import { sourcePickerOverlay } from './source-picker-overlay';
 
 /**
  * Лист набора живёт в ленивом редакторском графе, а не в `cardStyles` (#594 AC8).
@@ -623,6 +624,8 @@ export interface SourcePickerOptions {
   selected: string;
   emptyText: string;
   onToggle: () => void;
+  /** Opt into the existing dialog Escape stack; must only close, never toggle. */
+  onClose?: () => void;
   onFilter: (value: string) => void;
   onPick: (value: string) => void;
   /** `id` кнопки — для `<label for>` и смоков. */
@@ -640,9 +643,9 @@ export interface SourcePickerOptions {
  */
 export function sourcePicker({
   open, current, placeholder, ariaLabel, filter, filterPlaceholder, candidates, selected, emptyText,
-  onToggle, onFilter, onPick, id, toolbar, disabled = false, leading,
+  onToggle, onClose, onFilter, onPick, id, toolbar, disabled = false, leading,
 }: SourcePickerOptions): TemplateResult {
-  return html`<div class="hpf-picker ${open ? 'open' : ''}">
+  return html`<div class="hpf-picker ${open ? 'open' : ''}" ${sourcePickerOverlay(open, onClose)}>
     <button id=${id ?? nothing} type="button" class="hpf-select hpf-pick" aria-haspopup="listbox"
       aria-expanded=${open ? 'true' : 'false'} aria-label=${ariaLabel} ?disabled=${disabled} @click=${onToggle}>
       ${leading ?? nothing}
