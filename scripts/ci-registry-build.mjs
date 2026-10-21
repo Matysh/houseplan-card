@@ -32,17 +32,18 @@ export function restoreRegistryBuild({ root = process.cwd(), record, repo, downl
     }
   } finally { rmSync(temp, { recursive: true, force: true }); }
 }
-const run = args => {
-  const command = portableCommand('npm', args), result = spawnSync(command.cmd, command.args, { stdio: 'inherit' });
-  if (result.status !== 0) throw Error('candidate assembly failed');
-};
+export function runCandidateCommand(args, cwd = process.cwd()) {
+  const command = portableCommand('npm');
+  const result = spawnSync(command.cmd, args, { cwd, shell: command.shell, stdio: 'inherit' });
+  if (result.status !== 0) throw Error('candidate assembly failed', { cause: result.error });
+}
 export async function prepareRegistryBundle(env = process.env) {
   const reused = env.FRONTEND_REUSED === 'true';
   if (reused) {
     const record = JSON.parse(env.FRONTEND_RECORD);
     restoreRegistryBuild({ record, repo: env.GITHUB_REPOSITORY });
     if (env.REGISTRY_MODE === 'candidate') {
-      run(['ci']); run(['run', 'build']); run(['exec', '--', 'tsc', '-p', 'tsconfig.test.json']);
+      runCandidateCommand(['ci']); runCandidateCommand(['run', 'build']); runCandidateCommand(['exec', '--', 'tsc', '-p', 'tsconfig.test.json']);
       execFileSync(process.execPath, ['scripts/fix-test-build.mjs'], { stdio: 'inherit' });
     } else if (record.inventory.fingerprint !== sourceFingerprint()) throw Error('restored producer fingerprint differs');
   } else verifyRegistryBuild(JSON.parse(env.FRONTEND_INVENTORY), process.cwd());

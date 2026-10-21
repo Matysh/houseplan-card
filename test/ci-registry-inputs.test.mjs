@@ -10,7 +10,7 @@ import { profilePaths } from '../scripts/ci-profile-paths.mjs';
 import { registryInventory } from '../scripts/ci-registry-inventory.mjs';
 import { generatedProfiles } from '../scripts/ci-profiles.mjs';
 import { producerRecipe } from '../scripts/ci-registry-cli.mjs';
-import { verifyRegistryBuild, restoreRegistryBuild } from '../scripts/ci-registry-build.mjs';
+import { verifyRegistryBuild, restoreRegistryBuild, runCandidateCommand } from '../scripts/ci-registry-build.mjs';
 import { artifactTree } from '../scripts/artifact-inventory.mjs';
 import { sourceEquivalenceCommon, sourceEquivalenceJob } from '../scripts/ci-registry-equivalence.mjs';
 
@@ -140,6 +140,16 @@ test('restoration verifies immutable byte inventories and refuses corruption bef
     record: { ...record, inventory: { ...record.inventory, dist: '0'.repeat(64) } }, download }), /inventory mismatch/);
   assert.equal(readFileSync(join(consumer, 'dist/entry.js'), 'utf8'), 'fresh bundle\n');
 });
+test('candidate command executes the requested npm script and propagates a real failure', t => {
+  const root = temporary(t);
+  put(root, 'package.json', JSON.stringify({ scripts: { build: 'node build.mjs', broken: 'node broken.mjs' } }));
+  put(root, 'build.mjs', "import { writeFileSync } from 'node:fs'; writeFileSync('assembled.txt', 'candidate bytes');\n");
+  put(root, 'broken.mjs', 'process.exitCode = 7;\n');
+  runCandidateCommand(['run', 'build', '--silent'], root);
+  assert.equal(readFileSync(join(root, 'assembled.txt'), 'utf8'), 'candidate bytes');
+  assert.throws(() => runCandidateCommand(['run', 'broken', '--silent'], root), /candidate assembly failed/);
+});
+
 test('independent source Git objects authenticate docs inheritance and reject a counterfeit old key', async t => {
   const root = repository(t), original = identity(root), previous = original._snapshot;
   put(root, 'docs/new.md', 'documentation changes no runtime input\n'); commit(root, 'new material');
