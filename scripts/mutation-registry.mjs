@@ -14737,7 +14737,7 @@ const MUTANT_DEFINITIONS = [
     id: "bundle-policy-rule-off",
     guard: "node --test --test-name-pattern=\"#657 \u043f\u0440\u0430\u0432\u0438\u043b\u043e \u043a\u043e\u043c\u043c\u0438\u0442\u0430\" test/bundle-policy.test.mjs",
     because: "#657: a non-release commit must not carry the bundle \u2014 otherwise every task rebuilds and commits it again",
-    patches: [{ file: "scripts/bundle-policy.mjs", find: "  if (!files.some(isBundlePath)) return [];", replace: "  if (files.length >= 0) return [];" }],
+    patches: [{ file: "scripts/bundle-policy.mjs", find: "  if (!withoutRetiredDeletions(files, deletedFiles).some(isBundlePath)) return [];", replace: "  if (files.length >= 0) return [];" }],
   },
   {
     id: "bundle-policy-cutoff-inverted",
@@ -14749,13 +14749,13 @@ const MUTANT_DEFINITIONS = [
     id: "bundle-policy-always-compares",
     guard: "node --test --test-name-pattern=\"#657 CLI --verify\" test/bundle-policy.test.mjs",
     because: "#657: comparing the committed copy on an ordinary commit would redden every task that no longer commits the bundle",
-    patches: [{ file: "scripts/bundle-policy.mjs", find: "  return files.some(isBundlePath) || isCandidateSubject(subject);", replace: "  return files.length >= 0 || isCandidateSubject(subject);" }],
+    patches: [{ file: "scripts/bundle-policy.mjs", find: "  return withoutRetiredDeletions(files, deletedFiles).some(isBundlePath) || isCandidateSubject(subject);", replace: "  return files.length >= 0 || isCandidateSubject(subject);" }],
   },
   {
     id: "bundle-policy-candidate-not-compared",
     guard: "node --test --test-name-pattern=\"#657 \u0441\u0432\u0435\u0440\u043a\u0430 \u043a\u043e\u043f\u0438\u0439\" test/bundle-policy.test.mjs",
     because: "#657: a candidate whose bundle was forgotten must still be compared, or a stale bundle ships",
-    patches: [{ file: "scripts/bundle-policy.mjs", find: "  return files.some(isBundlePath) || isCandidateSubject(subject);", replace: "  return files.some(isBundlePath);" }],
+    patches: [{ file: "scripts/bundle-policy.mjs", find: "  return withoutRetiredDeletions(files, deletedFiles).some(isBundlePath) || isCandidateSubject(subject);", replace: "  return withoutRetiredDeletions(files, deletedFiles).some(isBundlePath);" }],
   },
   {
     id: "bundle-policy-fresh-check-off",
