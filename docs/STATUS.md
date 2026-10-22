@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.82.0** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.82.0-beta.6` |
-| Tests | Node unit 5057 · pure backend 579 · HA-harness backend 484 · browser smokes 411 (`npm run inventory`) |
+| Tests | Node unit 5062 · pure backend 579 · HA-harness backend 484 · browser smokes 411 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -34,6 +34,11 @@ save-all-then-load action. The scan/read waits for successful CAS acknowledgemen
 failed saves and retired UI contexts cannot start it. An already-enabled refresh
 does not save unrelated draft changes. No provider or backend policy changes.
 Late save completion cannot reacquire subscriptions on a detached settings form.
+
+Room/device form smoke oracles (#1013) measure stacked field/control boxes at
+all seven viewport widths against the accepted #1007 section spacing. Parsing
+the inactive grid-template string on a block container produced false failures.
+Product layout and all existing form behaviour checks are preserved.
 
 Single bundle snapshot (#1016): only the integration frontend is tracked.
 Root dist and demo assets are generated locally/CI; build budgets still judge

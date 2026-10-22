@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1013,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Repair obsolete room/device form smoke oracles after the accepted #1007 stacked layout. Only tests and documentation change; product behaviour, configuration and styling are unchanged.",
+  "summary": {
+    "ru": "Проверки форм комнаты и устройства измеряют реальную вертикальную компоновку вместо разбора строки CSS.",
+    "en": "Room and device form smokes measure the actual stacked layout instead of parsing a CSS string."
+  }
+}

@@ -77,6 +77,16 @@ golden changes require canonical Linux reviewed acceptance under `ci:golden`.
 
 ## Shared dialog composition (#1007)
 
+The room/device form smoke repair (#1013) replaces the stale column-count
+oracle with measured field/control boxes at all seven widths. The accepted
+stacked grid is a block; Chromium serializes its inactive column declaration
+as `minmax(0px, 1fr)`, so splitting on spaces falsely reported two columns.
+The shared test oracle checks visibility, full width, containment, order and
+37px section spacing. Ordinary negative rectangle inputs test the oracle
+without patching product code or executing mutants. Both form smokes retain
+their existing colour, draft/save/cancel, footer and overflow assertions and
+attest their actual launched Chromium. No product styles or golden change.
+
 The existing lazy form kit owns explicit sections, independent Help/action
 regions and disclosures; see [DIALOG-UI-KIT.md](DIALOG-UI-KIT.md). The measured
 joint editor graph reached 325007 B gzip during integration (previous lazy

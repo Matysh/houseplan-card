@@ -1,6 +1,8 @@
 // #947: shared device sections and the existing functional fields/save guards.
-import { launch, checkAll, finish } from './serve.mjs';
+import { launch, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
+import { stackedFieldChecks } from './helpers/stacked-fields.mjs';
 
+requirePinnedBrowser('#1013 device form geometry');
 const { page, browser } = await launch({ width: 1280, height: 900 });
 
 const out = await page.evaluate(async () => {
@@ -263,19 +265,28 @@ for (const width of [320, 390, 480, 560, 768, 1280, 1920]) {
     const sw = Math.round(surface.getBoundingClientRect().width);
     const expected = w >= 600 ? sw === 610 : w > 480 ? sw <= Math.round(w * 0.94) + 1 : sw === w;
     const noHorizontal = content.scrollWidth <= content.clientWidth + 1 && body.scrollWidth <= body.clientWidth + 1;
-    const gridCols = getComputedStyle(dlg.querySelector('.hpf-card[data-card="details"] .hpf-grid')).gridTemplateColumns.split(' ').length;
+    const grid = dlg.querySelector('.hpf-card[data-card="details"] .hpf-grid');
+    const layout = { container: grid.getBoundingClientRect().toJSON(), fields:
+      ['#marker-model', '#marker-link'].map((id) => {
+        const control = dlg.querySelector(id);
+        return { field: control.closest('.hpf-field').getBoundingClientRect().toJSON(),
+          control: control.getBoundingClientRect().toJSON() };
+      }) };
     const footer = dlg.querySelector('.dialog-action-footer');
     const footerVisible = footer.getBoundingClientRect().bottom <= innerHeight + 1;
     const segFits = [...dlg.querySelectorAll('.hpf-seg label')].every((l) => {
       const b = l.getBoundingClientRect(); return b.right <= content.getBoundingClientRect().right + 1;
     });
     c._markerDialog = null; c.requestUpdate(); await c.updateComplete;
-    return { sw, expected, noHorizontal, gridCols, footerVisible, segFits };
+    return { sw, expected, noHorizontal, layout, footerVisible, segFits };
   }, width);
   bands[`w${width}_surfaceWidth`] = m.expected;
   bands[`w${width}_noHorizontalScroll`] = m.noHorizontal;
   bands[`w${width}_footerVisible`] = m.footerVisible;
-  bands[`w${width}_detailsColumns`] = m.gridCols === 1;
+  console.log('device stacked layout', JSON.stringify({ width, ...m.layout }));
+  for (const [name, pass] of Object.entries(stackedFieldChecks(m.layout))) {
+    bands[`w${width}_details_${name}`] = pass;
+  }
   bands[`w${width}_segmentsFit`] = m.segFits;
 }
 

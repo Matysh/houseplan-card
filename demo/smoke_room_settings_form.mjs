@@ -1,6 +1,8 @@
 // #946: compact room form, one inherited fill select, independent sizing and existing save guards.
-import { launch, checkAll, finish } from './serve.mjs';
+import { launch, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
+import { stackedFieldChecks } from './helpers/stacked-fields.mjs';
 
+requirePinnedBrowser('#1013 room form geometry');
 const { page, browser } = await launch({ width: 1280, height: 900 });
 page.on('console', message => { if (message.text().startsWith('room overflow')) console.log(message.text()); });
 
@@ -198,19 +200,28 @@ for (const width of [320, 390, 480, 560, 768, 1280, 1920]) {
     const expected = w >= 600 ? sw === 610 : w > 480 ? sw <= Math.round(w * 0.94) + 1 : sw === w;
     const noHorizontal = content.scrollWidth <= content.clientWidth + 1 && body.scrollWidth <= body.clientWidth + 1;
     if (!noHorizontal) console.log('room overflow', JSON.stringify({width:w,content:[content.clientWidth,content.scrollWidth],body:[body.clientWidth,body.scrollWidth],nodes:[...body.querySelectorAll('*')].filter(n=>n.getBoundingClientRect().right>body.getBoundingClientRect().right+1).map(n=>({tag:n.tagName,cls:n.className,width:n.getBoundingClientRect().width,right:n.getBoundingClientRect().right})).slice(0,15)}));
-    const gridCols = getComputedStyle(dlg.querySelector('.hpf-card[data-card="basics"] .hpf-grid')).gridTemplateColumns.split(' ').length;
+    const grid = dlg.querySelector('.hpf-card[data-card="basics"] .hpf-grid');
+    const layout = { container: grid.getBoundingClientRect().toJSON(), fields:
+      ['#room-name', '#room-area'].map((id) => {
+        const control = dlg.querySelector(id);
+        return { field: control.closest('.hpf-field').getBoundingClientRect().toJSON(),
+          control: (control.closest('hp-settings-select') || control).getBoundingClientRect().toJSON() };
+      }) };
     const footer = dlg.querySelector('.dialog-action-footer');
     const footerVisible = footer.getBoundingClientRect().bottom <= innerHeight + 1;
     const segFits = [...dlg.querySelectorAll('.hpf-seg label')].every((l) => {
       const b = l.getBoundingClientRect(); return b.right <= content.getBoundingClientRect().right + 1;
     });
     c._roomDialogCancel(); c.requestUpdate(); await c.updateComplete;
-    return { sw, expected, noHorizontal, gridCols, footerVisible, segFits };
+    return { sw, expected, noHorizontal, layout, footerVisible, segFits };
   }, width);
   bands[`w${width}_surfaceWidth`] = m.expected;
   bands[`w${width}_noHorizontalScroll`] = m.noHorizontal;
   bands[`w${width}_footerVisible`] = m.footerVisible;
-  bands[`w${width}_basicsColumns`] = m.gridCols === 1;
+  console.log('room stacked layout', JSON.stringify({ width, ...m.layout }));
+  for (const [name, pass] of Object.entries(stackedFieldChecks(m.layout))) {
+    bands[`w${width}_basics_${name}`] = pass;
+  }
   bands[`w${width}_segmentsFit`] = m.segFits;
 }
 

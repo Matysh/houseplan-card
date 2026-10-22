@@ -1437,6 +1437,7 @@
       "demo/helpers/settings-polish-955.mjs",
       "demo/helpers/settings-section.mjs",
       "demo/helpers/settings-space-945-fixture.mjs",
+      "demo/helpers/stacked-fields.mjs",
       "demo/helpers/support-v2-fixture.py",
       "demo/helpers/toast-paint-956.mjs",
       "demo/helpers/ui-polish-963-fixture.mjs",
