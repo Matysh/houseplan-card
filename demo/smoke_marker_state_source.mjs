@@ -2,6 +2,7 @@
 import { mkdir } from 'node:fs/promises';
 import { launch, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
 import { settingsSection } from './helpers/settings-section.mjs';
+import { evaluateRetainedAction } from './helpers/retained-page-action.mjs';
 import { prepareGoldenScenario, resetGoldenStability } from './golden/harness.mjs';
 import { DOC_SCREENSHOTS } from './docs/screenshots.mjs';
 requirePinnedBrowser('icon state source form and preview');
@@ -106,8 +107,12 @@ try {
       cfg.markers.push({ id: 'd_light1', binding: 'device:d_light1', display: 'icon_ripple', ripple_color: '#1234ab' }); return cfg; });
   });
   await open();
-  out.sourceAfterDisplay = await dialog.locator('#marker-display').evaluate(node =>
-    !!node.closest('.hpf-field')?.nextElementSibling?.matches('[data-state-source]'));
+  out.sourceAfterDisplay = await dialog.locator('#marker-display').evaluate(node => {
+    // #1007 owns spacing with section wrappers; keep immediate order AND paint.
+    const source = node.closest('.hpf-section')?.nextElementSibling?.querySelector('[data-state-source]');
+    const picker = source?.querySelector('#marker-state-source');
+    return !!picker && picker.getBoundingClientRect().top >= node.getBoundingClientRect().bottom;
+  });
   out.initialClosedNoSearch = await dialog.locator('#marker-state-source').getAttribute('aria-expanded') === 'false'
     && await search().count() === 0;
   const cleanBefore = await page.evaluate(() => JSON.stringify({ source: window.__card._markerDialog.stateSource,
@@ -205,12 +210,14 @@ try {
     && await search().count() === 0;
   await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
   await page.waitForFunction(() => !window.__card._markerDialog);
-  await page.evaluate(async () => {
+  // #987: the historical :121 failure was this editor -> static-card action.
+  // CDP awaiting its pending result is not a lifetime root (#967/#975).
+  await evaluateRetainedAction(page, async () => {
     const c = window.__card; await window.__hpTest.setMode('view');
     await customElements.whenDefined('houseplan-space-card');
     const mini = document.createElement('houseplan-space-card'); mini.setConfig({ type: 'custom:houseplan-space-card', space: 'f1', show_button: false });
     mini.hass = c.hass; document.body.append(mini); window.__mini977 = mini;
-  }); await settle();
+  }, 'marker state-source static-card mount'); await settle();
   await page.waitForFunction(() => window.__mini977?.renderRoot?.querySelector('[data-id="d_light1"].on'));
   out.planStaticParity = await page.evaluate(() => [window.__card, window.__mini977].every(c => c.renderRoot.querySelector('[data-id="d_light1"].on')));
   await state('unknown');

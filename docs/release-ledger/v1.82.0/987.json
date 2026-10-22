@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 987,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Retains the marker state-source smoke's pending editor-to-static-card action through the existing test-only JSHandle runner and updates its unchanged field-order oracle for accepted section wrappers. No product code, shipped bundle, data or user behaviour changes.",
+  "summary": {
+    "ru": "Удержание async-действия проверки источника состояния значка без потери Promise через CDP.",
+    "en": "Retain the marker state-source smoke action without losing its pending promise through CDP."
+  }
+}

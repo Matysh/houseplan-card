@@ -2385,6 +2385,17 @@ unit cases and the existing native weak-owner GC control establish lifetime,
 exactly-once, original-error, timeout and handle-release behavior separately
 from the version-recovery product oracles.
 
+Marker state-source QA (#987) uses that same retained runner for the historical
+`smoke_marker_state_source` editor-to-static-card action (original line 121).
+The sequence remains `setMode('view')` → `whenDefined` → configure/append the
+static card → existing settled/plan-parity checks. The action has a named
+20-second deadline, no retries; existing assertion budgets do not increase.
+The initial current-dev run reached the final preview check without CDP loss;
+the original failing inner await and failure frequency therefore remain unknown.
+That run also found the field-order oracle still expecting pre-#1007 siblings:
+it now checks adjacent sections and the picker's painted position below Display,
+without dropping any original result or changing the accepted form.
+
 The supported native setup is repository-scoped and does not change the
 machine's default Node, Python or persistent `PATH` (#557):
 

@@ -124,6 +124,12 @@ no retries or higher existing budgets hide the reported CDP failure. Only the
 formerly unbounded action gains a named deadline. The historical triggering
 await remains unknown, not an inferred product bug.
 
+Marker state-source QA (#987) retains the editor-to-static-card action with the
+same test-only JSHandle runner. Original form, saved-source, main/static parity,
+unknown/foreign/disabled-source and preview checks remain; immediate field order
+is witnessed through the accepted #1007 section wrappers and painted positions.
+No retries, product changes or increases to existing acceptance budgets.
+
 Approved UI Lab polish (#963) uses normal editor render/command paths. Properties
 sections stay expanded at intrinsic height; Rooms/Shapes menus and history keep
 their existing commands. Header and editor hints use a card-local delayed
