@@ -39,9 +39,12 @@ const out = await page.evaluate(async () => {
   const globalInput = general.querySelector('#gs-show-lqi');
   results.globalDefaultOn = globalInput.checked;
   const battery = general.querySelector('[name="gs-device-battery"]');
+  // Shared form sections wrap individual rows; keep proving immediate semantic order.
+  const signalSection = globalInput.closest('.hpf-section');
+  const batterySection = battery?.closest('.hpf-section');
   results.globalImmediatelyAfterBattery = !!battery
     && !!(battery.closest('.hpf-field').compareDocumentPosition(globalInput.closest('.hpf-toggle')) & Node.DOCUMENT_POSITION_FOLLOWING)
-    && globalInput.closest('.hpf-toggle').previousElementSibling?.contains(battery);
+    && !!signalSection && !!batterySection && signalSection.previousElementSibling === batterySection;
   results.globalLocalized = globalInput.closest('.hpf-toggle').textContent.includes('Show Zigbee signal');
   await hp.close(general, { via: 'cancel' });
   await hp.setMode('view');

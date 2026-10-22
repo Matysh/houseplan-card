@@ -1227,8 +1227,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_signal_visibility_lifecycle.mjs',
     because: '#876 AC2: an actual mounted Lit settings dialog may close/reopen while its real queued HA write waits; only that old opening owns its completion. The observable retained new form and native input cannot be proved by a resolver-only unit.',
     patches: [{ file: 'src/houseplan-editor-runtime.ts',
-      find: "      if (dialogSession(this.host, 'settings') === owner) this.host._settingsDialog = null;",
-      replace: '      this.host._settingsDialog = null;' }],
+      find: '      if (current) {\n        if (options.keepOpen) {',
+      replace: '      if (true) {\n        if (options.keepOpen) {' }],
   },
   {
     id: 'light-frame-ignores-passive-source-change',

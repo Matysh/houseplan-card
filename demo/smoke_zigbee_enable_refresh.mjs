@@ -42,7 +42,7 @@ const setup = async (options = {}) => {
       callback({ kind: 'reset', session_id: 'enable-1031', revision: rpc.revision, topics: [] });
       return () => rpc.callbacks.delete(callback);
     };
-    card.hass = { ...original, language: opts.language || 'en',
+    card.hass = { ...original, language: opts.language || 'en', locale: { ...original.locale, language: opts.language || 'en' },
       callWS: async message => {
         if (message.type === 'houseplan/config/set') {
           rpc.saves.push(structuredClone(message)); rpc.events.push('save-start');
