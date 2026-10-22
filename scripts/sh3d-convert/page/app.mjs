@@ -15,8 +15,9 @@ import { readSh3d } from '../sh3d.mjs';
 import { ConvertError, MIN_HOUSEPLAN, convertHome } from '../convert.mjs';
 import { convertEasy, TOOL_VERSION } from '../easy.mjs';
 import { MAX_EASY_BYTES } from '../easy-read.mjs';
+import { convertPicture } from '../picture.mjs';
 import { EXTRA_TEXT } from './extra-text.mjs';
-export { convertHome, readSh3d, convertEasy };
+export { convertHome, readSh3d, convertEasy, convertPicture };
 
 const MAX_FILE_BYTES = 64 * 1024 * 1024;
 
@@ -146,7 +147,55 @@ function applyLanguage(next) {
     node.classList.toggle('on', node.dataset.lang === lang);
   }
   if (lastResult) renderResult(lastResult);
-  document.getElementById('drop').querySelector('h3').textContent = t(format() === 'easy' ? 'drop.easy' : 'drop.title');
+  const pasted = format() === 'picture' ? 'picture' : 'easy';
+  document.getElementById('drop').querySelector('h3').textContent = t(format() === 'sh3d' ? 'drop.title' : `drop.${pasted}`);
+  document.getElementById('paste-instructions').textContent = t(`${pasted}.instructions`);
+  document.getElementById('paste-label').textContent = t(`${pasted}.paste`);
+  renderPictureSize();
+}
+
+/** Image proportions for picture-elements: measured from a local file or typed. Never fetched. */
+const pictureSize = { width: null, height: null, measured: false, unreadable: false };
+function renderPictureSize() {
+  const status = document.getElementById('picture-size-status');
+  if (!status) return;
+  const { width, height, measured, unreadable } = pictureSize;
+  for (const key of ['width', 'height']) {
+    const input = document.getElementById(`picture-${key}`);
+    if (document.activeElement !== input) input.value = pictureSize[key] ?? '';
+    input.classList.toggle('measured', measured && pictureSize[key] !== null);
+  }
+  status.textContent = unreadable ? t('picture.size.unreadable')
+    : width && height ? t(measured ? 'picture.size.measured' : 'picture.size.manual', { width, height }) : t('picture.size.missing');
+}
+function pictureOptions() {
+  const { width, height } = pictureSize;
+  return width && height ? { imageWidth: width, imageHeight: height } : {};
+}
+async function measureImage(file) {
+  if (!file) return;
+  invalidate();
+  pictureSize.unreadable = false;
+  try {
+    // createImageBitmap decodes the local file in memory; nothing is uploaded or requested.
+    const bitmap = await createImageBitmap(file);
+    pictureSize.width = bitmap.width; pictureSize.height = bitmap.height; pictureSize.measured = true;
+    bitmap.close?.();
+  } catch {
+    pictureSize.width = null; pictureSize.height = null; pictureSize.measured = false; pictureSize.unreadable = true;
+  }
+  renderPictureSize();
+}
+function typedSize(key) {
+  const value = Number(document.getElementById(`picture-${key}`).value);
+  pictureSize[key] = Number.isInteger(value) && value > 0 ? value : null;
+  pictureSize.measured = false; pictureSize.unreadable = false;
+  invalidate(); renderPictureSize();
+}
+
+function convertText(text, sourceFormat) {
+  if (sourceFormat === 'picture') return convertPicture(text, { ...pictureOptions(), toolVersion: TOOL_VERSION });
+  return convertEasy(text, { toolVersion: TOOL_VERSION });
 }
 
 let lastResult = null;
@@ -259,14 +308,14 @@ async function handleFile(file) {
   show('error', false);
   show('result', false);
   try {
-    if (file.size > (sourceFormat === 'easy' ? MAX_EASY_BYTES : MAX_FILE_BYTES)) {
-      renderError(sourceFormat === 'easy' ? 'easy_file_too_large' : 'file_too_large');
+    if (file.size > (sourceFormat === 'sh3d' ? MAX_FILE_BYTES : MAX_EASY_BYTES)) {
+      renderError(sourceFormat === 'sh3d' ? 'file_too_large' : 'easy_file_too_large');
       return;
     }
     const bytes = new Uint8Array(await file.arrayBuffer());
     if (token !== generation) return;
-    const converted = sourceFormat === 'easy' ? convertEasy(new TextDecoder('utf-8', { fatal: true }).decode(bytes), { toolVersion: TOOL_VERSION })
-      : convertHome(await readSh3d(bytes), { toolVersion: TOOL_VERSION });
+    const converted = sourceFormat === 'sh3d' ? convertHome(await readSh3d(bytes), { toolVersion: TOOL_VERSION })
+      : convertText(new TextDecoder('utf-8', { fatal: true }).decode(bytes), sourceFormat);
     if (token !== generation) return;
     const { documents, report } = converted;
     renderResult({
@@ -286,15 +335,20 @@ export function mount() {
   const zone = document.getElementById('drop');
   document.getElementById('format').addEventListener('change', () => {
     invalidate(); input.value = '';
-    input.accept = format() === 'easy' ? '.yaml,.yml,.json,text/yaml,application/json' : '.sh3d,application/zip';
-    show('easy-input', format() === 'easy'); applyLanguage(lang);
+    input.accept = format() === 'sh3d' ? '.sh3d,application/zip' : '.yaml,.yml,.json,text/yaml,application/json';
+    show('easy-input', format() !== 'sh3d'); show('picture-size', format() === 'picture'); applyLanguage(lang);
   });
   document.getElementById('paste').addEventListener('input', invalidate);
   document.getElementById('convert-paste').addEventListener('click', () => {
     invalidate();
-    try { renderResult({ ...convertEasy(document.getElementById('paste').value, { toolVersion: TOOL_VERSION }), stem: 'easy-plan' }); }
+    const sourceFormat = format();
+    try { renderResult({ ...convertText(document.getElementById('paste').value, sourceFormat), stem: sourceFormat === 'picture' ? 'picture-plan' : 'easy-plan' }); }
     catch (error) { renderError(error.code || 'unknown', '', error.report); }
   });
+  const imageInput = document.getElementById('picture-image-file');
+  document.getElementById('picture-image').addEventListener('click', () => imageInput.click());
+  imageInput.addEventListener('change', () => measureImage(imageInput.files[0]));
+  for (const key of ['width', 'height']) document.getElementById(`picture-${key}`).addEventListener('input', () => typedSize(key));
   input.addEventListener('change', () => handleFile(input.files[0]));
   document.getElementById('pick').addEventListener('click', () => input.click());
   document.getElementById('retry').addEventListener('click', () => input.click());

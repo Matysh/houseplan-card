@@ -76,6 +76,10 @@ test('#446 конвертер внутри страницы даёт тот же
     for (const [index, document] of easy.documents.entries()) {
       assert.deepEqual(document, JSON.parse(readFileSync(root(`scripts/sh3d-convert/golden/easy-public-demo.space-${index + 1}.json`), 'utf8')));
     }
+    // #1022: the third source rides the same bundle; the page must convert it like the modules do.
+    const pictureInput = readFileSync(root('scripts/sh3d-convert/fixtures/picture-elements.yaml'), 'utf8');
+    const picture = bundle.convertPicture(pictureInput, { imageWidth: 1600, imageHeight: 1000, now: '1970-01-01T00:00:00Z', toolVersion: 'plan-convert 0.2' });
+    assert.deepEqual(picture.documents[0], JSON.parse(readFileSync(root('scripts/sh3d-convert/golden/picture-elements.space-1.json'), 'utf8')));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -91,7 +95,7 @@ test('#446 переводы полны: пустых подписей на ст�
   }
   assert.deepEqual(Object.keys(TEXT.ru).sort(), Object.keys(TEXT.en).sort(),
     'словари разъехались: часть страницы останется на другом языке');
-  for (const stem of ['easy-public-demo', 'easy-content']) {
+  for (const stem of ['easy-public-demo', 'easy-content', 'picture-elements']) {
     const report = JSON.parse(readFileSync(root(`scripts/sh3d-convert/golden/${stem}.report.json`), 'utf8'));
     for (const note of [...report.items, ...report.levels.flatMap(level => level.notes || [])])
       for (const language of ['ru', 'en']) assert(TEXT[language][`note.${note.code}`], `${language}: ${note.code}`);
