@@ -1136,6 +1136,7 @@
       "tests_backend/test_led_strips.py",
       "tests_backend/test_marker_hide_battery.py",
       "tests_backend/test_marker_hide_signal.py",
+      "tests_backend/test_picture_elements_convert.py",
       "tests_backend/test_plan_upload.py",
       "tests_backend/test_portable_recovery.py",
       "tests_backend/test_previous_data.py",
