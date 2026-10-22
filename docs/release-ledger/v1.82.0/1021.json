@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1021,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Prepare trusted provenance and review preflight to accept Git-proven retirement of the duplicate dist tree in #1016, without a fake release or a manual merge. No product or generated bundle changes.",
+  "summary": {
+    "ru": "Подготовка доверенной проверки к удалению дублирующей копии бандла.",
+    "en": "Prepare trusted validation for retiring the duplicate bundle snapshot."
+  }
+}

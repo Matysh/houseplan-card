@@ -78,7 +78,7 @@ export function isDocsOnlyCommit(changedFiles = []) {
   return changedFiles.length > 0 && changedFiles.every((file) => classify(file.replaceAll('\\', '/')) === 'C');
 }
 
-export function validateCommitMessage(message, changedFiles = [], { baselineIndex = undefined, authorDate = null } = {}) {
+export function validateCommitMessage(message, changedFiles = [], { baselineIndex = undefined, authorDate = null, deletedFiles = [] } = {}) {
   const trailers = terminalTrailers(message);
   const errors = [];
   const issues = trailers.get('Issue') || [];
@@ -107,7 +107,7 @@ export function validateCommitMessage(message, changedFiles = [], { baselineInde
   }
   // #657: бандл меняет только релизный кандидат. В хуке даты нет — судится
   // всегда; в истории коммиты раньше BUNDLE_RELEASE_ONLY_SINCE не судятся.
-  errors.push(...bundleCommitErrors(message, normalizedFiles, { authorDate }));
+  errors.push(...bundleCommitErrors(message, normalizedFiles, { authorDate, deletedFiles }));
   const changesGolden = changedFiles.some((file) =>
     /^demo\/golden\/baselines\/.*\.(png|json)$/.test(file.replaceAll('\\', '/')));
   if (changesGolden) {
@@ -203,13 +203,16 @@ function main(argv) {
     if (basename(messageFile) === 'MERGE_MSG') return;
     const amendBase = argv.includes('--staged') ? consumeAmendBase(messageFile) : null;
     const files = argv.includes('--staged')
-      ? git(['diff', '--cached', '--name-only', '--diff-filter=ACMR', ...(amendBase ? [amendBase] : [])]).split('\n').filter(Boolean)
+      ? git(['diff', '--cached', '--name-only', ...(amendBase ? [amendBase] : [])]).split('\n').filter(Boolean)
+      : [];
+    const deletedFiles = argv.includes('--staged')
+      ? git(['diff', '--cached', '--name-only', '--diff-filter=D', ...(amendBase ? [amendBase] : [])]).split('\n').filter(Boolean)
       : [];
     let baselineIndex;
     if (files.some((file) => /^demo\/golden\/baselines\/.*\.(png|json)$/.test(file))) {
       try { baselineIndex = git(['show', `:${BASELINE_INDEX}`]); } catch { baselineIndex = null; }
     }
-    validateOne('commit message', readFileSync(messageFile, 'utf8'), files, { baselineIndex });
+    validateOne('commit message', readFileSync(messageFile, 'utf8'), files, { baselineIndex, deletedFiles });
   }
   const rangeAt = argv.indexOf('--range');
   const githubRange = argv.includes('--github-range');
@@ -239,11 +242,13 @@ function main(argv) {
       const authorDate = git(['show', '-s', '--format=%aI', commit]);
       const files = git(['diff-tree', '--root', '--no-commit-id', '--name-only', '-r', commit])
         .split('\n').filter(Boolean);
+      const deletedFiles = git(['diff-tree', '--root', '--no-commit-id', '--name-only', '--diff-filter=D', '-r', commit])
+        .split('\n').filter(Boolean);
       let baselineIndex;
       if (files.some((file) => /^demo\/golden\/baselines\/.*\.(png|json)$/.test(file))) {
         try { baselineIndex = git(['show', `${commit}:${BASELINE_INDEX}`]); } catch { baselineIndex = null; }
       }
-      const errors = validateHistoricalCommit(commit, message, files, { baselineIndex, authorDate });
+      const errors = validateHistoricalCommit(commit, message, files, { baselineIndex, authorDate, deletedFiles });
       if (errors.length) throw new Error(`${commit}:\n- ${errors.join('\n- ')}`);
     }
   }

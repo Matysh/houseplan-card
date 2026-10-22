@@ -2621,6 +2621,9 @@ under `artifacts/907/`; these headless witnesses are not owner/real-GPU acceptan
 - IMPORTANT (audit lesson): the rollup typescript plugin reports a syntax error as a WARNING and still
   builds the bundle — a truncated file can "pass". That is why the build starts with `tsc --noEmit`,
   which fails on such errors. Always build with `npm run build`, never bare `rollup -c`.
+- The #1016 retirement is prepared separately by #1021: Git-proven deletions
+  of duplicate dist files need no fake Release trailer; other bundle changes
+  remain release-only, including deletion of installable frontend files.
 - The committed bundle changes only in a beta/release candidate (#657). Rollup writes
   `dist/houseplan-card.js`, `dist/houseplan-assets.json` and content-hashed chunks under
   `dist/houseplan-assets/`; `npm run bundle:sync` builds and lays that tree out into the

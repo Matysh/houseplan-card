@@ -50,6 +50,17 @@ test('#657 история до правила не переписывается:
   assert.deepEqual(bundleCommitErrors(WORK, ['dist/a.js']), [BUNDLE_RELEASE_ONLY_ERROR], 'хук: даты нет — судится всегда');
 });
 
+test('#1021 only proven dist deletions retire the duplicate without Release; HACS stays protected', () => {
+  const dist = 'dist/houseplan-card.js';
+  const frontend = 'custom_components/houseplan/frontend/houseplan-card.js';
+  assert.deepEqual(bundleCommitErrors(WORK, [dist], { deletedFiles: [dist] }), []);
+  assert.deepEqual(bundleCommitErrors(WORK, [dist]), [BUNDLE_RELEASE_ONLY_ERROR]);
+  assert.deepEqual(bundleCommitErrors(WORK, [dist, frontend], { deletedFiles: [dist, frontend] }), [BUNDLE_RELEASE_ONLY_ERROR]);
+  assert.deepEqual(validateCommitMessage(WORK, [dist], { deletedFiles: [dist] }), []);
+  assert.equal(committedBundleMustMatch({ files: [dist], deletedFiles: [dist] }), false);
+  assert.equal(committedBundleMustMatch({ subject: 'Release v1.83.0-beta.1 candidate', files: [dist], deletedFiles: [dist] }), true);
+});
+
 test('#657 правило исполняет validate-commit-provenance — и хук, и история', () => {
   assert.ok(validateCommitMessage(WORK, ['dist/houseplan-card.js']).includes(BUNDLE_RELEASE_ONLY_ERROR));
   assert.ok(!validateCommitMessage(RELEASE, ['dist/houseplan-card.js', 'docs/CHANGELOG.md', 'docs/CHANGELOG.ru.md'])
@@ -119,6 +130,25 @@ function fixture() {
   return root;
 }
 const cli = (root, ...args) => spawnSync(process.execPath, ['scripts/bundle-policy.mjs', ...args], { cwd: root, encoding: 'utf8' });
+
+test('#1021 actual Git deletion is not a release; staged provenance keeps frontend deletion protected', () => {
+  const root = fixture();
+  try {
+    git(root, 'rm', '-qr', 'dist');
+    const message = join(root, 'message.txt');
+    writeFileSync(message, WORK);
+    const hook = () => spawnSync(process.execPath, [fileURLToPath(new URL('../scripts/validate-commit-provenance.mjs', import.meta.url)),
+      '--message-file', message, '--staged'], { cwd: root, encoding: 'utf8' });
+    const retired = hook();
+    assert.equal(retired.status, 0, retired.stderr);
+    git(root, 'commit', '-q', '-m', WORK);
+    assert.equal(cli(root, '--must-match').status, 1, 'proven retirement does not claim a candidate');
+    git(root, 'rm', '-q', 'custom_components/houseplan/frontend/houseplan-card.js');
+    const rejected = hook();
+    assert.notEqual(rejected.status, 0);
+    assert.match(rejected.stderr, /changes only in a.*Release/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
 
 test('#657 CLI --verify: кандидат сверяет копии, обычный коммит — только свежую сборку', () => {
   const root = fixture();

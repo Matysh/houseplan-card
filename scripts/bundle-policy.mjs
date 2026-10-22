@@ -38,6 +38,12 @@ import { fileURLToPath } from 'node:url';
 import { compareBundleTrees, verifyBundleTree } from './bundle-tree.mjs';
 
 export const BUNDLE_ROOTS = Object.freeze(['dist/', 'custom_components/houseplan/frontend/']);
+// #1016 retires only the duplicate output tree, not the installable snapshot.
+// Missing Git deletion evidence keeps the historical release-only rule intact.
+const withoutRetiredDeletions = (files, deletedFiles = []) => {
+  const deleted = new Set(deletedFiles);
+  return files.filter(path => !(path.startsWith('dist/') && deleted.has(path)));
+};
 
 /** С этого момента (дата автора коммита) правило судит и историю. */
 export const BUNDLE_RELEASE_ONLY_SINCE = '2026-09-27T00:00:00Z';
@@ -75,9 +81,9 @@ export const isReleaseMessage = (message) => releaseTrailers(message).length > 0
  * проверке истории: коммит раньше `since` правилом не судится.
  */
 export function bundleCommitErrors(message, files = [], {
-  authorDate = null, since = BUNDLE_RELEASE_ONLY_SINCE,
+  authorDate = null, since = BUNDLE_RELEASE_ONLY_SINCE, deletedFiles = [],
 } = {}) {
-  if (!files.some(isBundlePath)) return [];
+  if (!withoutRetiredDeletions(files, deletedFiles).some(isBundlePath)) return [];
   if (authorDate && Date.parse(authorDate) < Date.parse(since)) return [];
   return isReleaseMessage(message) ? [] : [BUNDLE_RELEASE_ONLY_ERROR];
 }
@@ -111,8 +117,8 @@ export function assertCommittedBundleFresh(manifest, expectedFingerprint) {
  * да, если коммит бандл меняет (значит, он релизный по правилу выше) или
  * это кандидат — у кандидата бандл обязан быть свежим, даже если его забыли.
  */
-export function committedBundleMustMatch({ subject = '', files = [] } = {}) {
-  return files.some(isBundlePath) || isCandidateSubject(subject);
+export function committedBundleMustMatch({ subject = '', files = [], deletedFiles = [] } = {}) {
+  return withoutRetiredDeletions(files, deletedFiles).some(isBundlePath) || isCandidateSubject(subject);
 }
 
 function git(args, cwd) {
@@ -128,7 +134,9 @@ function commitShape(ref, cwd) {
   const subject = git(['show', '-s', '--format=%s', ref], cwd);
   const files = git(['diff-tree', '--root', '--no-commit-id', '--name-only', '-r', ref], cwd)
     .split('\n').filter(Boolean);
-  return { subject, files };
+  const deletedFiles = git(['diff-tree', '--root', '--no-commit-id', '--name-only', '--diff-filter=D', '-r', ref], cwd)
+    .split('\n').filter(Boolean);
+  return { subject, files, deletedFiles };
 }
 
 function main(argv, cwd = process.cwd()) {

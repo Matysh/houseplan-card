@@ -14779,7 +14779,7 @@ const MUTANT_DEFINITIONS = [
     id: "provenance-skips-bundle-rule",
     guard: "node --test --test-name-pattern=\"#657 \u043f\u0440\u0430\u0432\u0438\u043b\u043e \u0438\u0441\u043f\u043e\u043b\u043d\u044f\u0435\u0442 validate-commit-provenance\" test/bundle-policy.test.mjs",
     because: "#657: the commit-msg hook and the CI history check are where the bundle rule actually bites",
-    patches: [{ file: "scripts/validate-commit-provenance.mjs", find: "  errors.push(...bundleCommitErrors(message, normalizedFiles, { authorDate }));", replace: "  void bundleCommitErrors;" }],
+    patches: [{ file: "scripts/validate-commit-provenance.mjs", find: "  errors.push(...bundleCommitErrors(message, normalizedFiles, { authorDate, deletedFiles }));", replace: "  void bundleCommitErrors;" }],
   },
   {
     id: "bundle-sync-release-by-default",

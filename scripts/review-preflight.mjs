@@ -91,7 +91,7 @@ export function checkReviewInput(input, { ledgerReader = readMergeEntry, readObj
     catch (failure) { error('ledger', failure.message); }
     if (!Array.isArray(input.commits) || !input.commits.length) error('commits', 'Readable task commits required');
     for (const commit of input.commits || []) {
-      for (const message of validateCommitMessage(commit.message, commit.files)) error('commit.' + commit.sha, message);
+      for (const message of validateCommitMessage(commit.message, commit.files, { deletedFiles: commit.deletedFiles })) error('commit.' + commit.sha, message);
     }
     const parsed = parseHandoff(input.handoff);
     const handoff = parsed.text;
@@ -126,7 +126,8 @@ export function collectReviewInput(options, { git, api }) {
   const commits = options.stage === 'code' ? git(['rev-list', '--no-merges', base + '..' + currentSha])
     .split('\n').filter(Boolean).map((sha) => ({ sha,
       message: git(['show', '-s', '--format=%B', sha]),
-      files: git(['diff-tree', '--no-commit-id', '--name-only', '-r', sha]).split('\n').filter(Boolean) })) : [];
+      files: git(['diff-tree', '--no-commit-id', '--name-only', '-r', sha]).split('\n').filter(Boolean),
+      deletedFiles: git(['diff-tree', '--no-commit-id', '--name-only', '--diff-filter=D', '-r', sha]).split('\n').filter(Boolean) })) : [];
   const pages = options.stage === 'code' ? api('repos/' + options.repo + '/issues/' + options.issue + '/comments', true) : [];
   const selected = selectHandoff(pages);
   const handoff = selected.body;

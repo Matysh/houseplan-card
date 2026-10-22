@@ -46,6 +46,17 @@ test('#855 valid spec/code × ask/show/ship/infra matrix has no stage-foreign re
   assert.equal(run(input({ stage: 'spec', sha: undefined, tree: undefined, handoff: '', commits: [] })).ok, true);
 });
 
+test('#1021 preflight requires exact deletion evidence for dist and never exempts HACS', () => {
+  const dist = 'dist/houseplan-card.js', frontend = 'custom_components/houseplan/frontend/houseplan-card.js';
+  const data = (files, deletedFiles) => input({ infrastructure: true, files,
+    commits: [{ sha, files, deletedFiles, message: 'retire duplicate\n\nIssue: #7\nUser-Visible: no' }] });
+  assert.equal(run(data([dist], [dist])).ok, true);
+  assert.equal(run(data([dist], undefined)).ok, false);
+  assert.equal(run(data([dist], [])).ok, false);
+  assert.equal(run(data([dist, frontend], [dist, frontend])).ok, false);
+  assert.equal(run(data([frontend], [frontend])).ok, false);
+});
+
 test('#855 required sections, acceptance numbers and evidence give field-addressed errors', () => {
   const cases = [
     [input({ body: 'No spec' }), 'body.spec'],
@@ -219,7 +230,7 @@ test('#855 actual workflow shell: valid format reaches reviewer; malformed ledge
   assert.ok(model.line < findStep(workflow, { name: 'Review' }).line);
 });
 
-function collected(pages) {
+function collected(pages, files = 'scripts/change.mjs', deletedFiles = '') {
   const data = input({ infrastructure: true, files: ['scripts/change.mjs'] });
   return collectReviewInput(data, {
     api: endpoint => endpoint.endsWith('/comments') ? pages : { state: 'open', labels: ['S7-code-review', 'track:show'], body: data.body },
@@ -228,11 +239,22 @@ function collected(pages) {
       if (args[0] === 'merge-base') return 'c'.repeat(40);
       if (args[0] === 'rev-list') return sha;
       if (args[0] === 'show') return 'fix\n\nIssue: #7\nUser-Visible: no';
-      if (args[0] === 'diff' || args[0] === 'diff-tree') return 'scripts/change.mjs';
+      if (args[0] === 'diff-tree' && args.includes('--diff-filter=D')) return deletedFiles;
+      if (args[0] === 'diff' || args[0] === 'diff-tree') return files;
       assert.fail('unexpected git command ' + args.join(' '));
     },
   });
 }
+
+test('#1021 collector carries Git deletion inventory into trusted validation', () => {
+  const dist = 'dist/houseplan-card.js';
+  const retired = collected([[comment(handoff)]], dist, dist);
+  assert.deepEqual(retired.commits[0].deletedFiles, [dist]);
+  assert.equal(run(retired).ok, true);
+  const modified = collected([[comment(handoff)]], dist);
+  assert.deepEqual(modified.commits[0].deletedFiles, []);
+  assert.equal(run(modified).ok, false);
+});
 
 test('#904 colon/heading collection and validation share one grammar, including incomplete newest candidates', () => {
   for (const [older, newer] of [[handoff, headingHandoff], [headingHandoff, handoff], ['', headingHandoff]]) {

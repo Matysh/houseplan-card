@@ -25,6 +25,11 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Trusted provenance (#1021, prerequisite of #1016) accepts only Git-proven
+deletions of the duplicate dist tree without a Release trailer. The HACS
+snapshot remains protected, including staged deletions; this preparation does
+not itself remove or rebuild either bundle copy.
+
 Nightly witness maintenance (#1012) follows the accepted single-core vacuum
 trail and compact-dialog Help/disclosure cascade. An unscoped Help target keeps
 its existing default; the moon smoke retains the panel module import before
