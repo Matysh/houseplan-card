@@ -158,10 +158,10 @@ export class HpPdfDialog extends LitElement {
       const request: ExportRequest = this.format === 'pdf'
         ? { format: 'pdf', options: { ...this.options } }
         : { format: 'svg', options: { ...this.svgOptions } };
-      await this.context.save(request);
       if (this.format === 'pdf') {
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: 1, ...this.options })); } catch { /* optional */ }
       }
+      await this.context.save(request);
       this.context.close();
     } catch (error) {
       const code = error instanceof Error ? error.message : '';

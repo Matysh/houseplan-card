@@ -77,6 +77,14 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'svg-repeated-assets-unbudgeted-1036',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/svg-export.test.mjs',
+    because: '#1036 AC8: a cached image still occupies bytes on every embedded placement; the executed serializer must reject repeated placements above the image budget without fetching the same source again.',
+    patches: [{ file: 'src/pdf/svg-snapshot.ts',
+      find: 'embeddedBytes += asset.size; assertSvgBudget(embeddedBytes);',
+      replace: 'embeddedBytes += 0 * asset.size; assertSvgBudget(embeddedBytes);' }],
+  },
+  {
     id: 'svg-stale-context-downloads-1036',
     guard: 'node demo/smoke_svg_export.mjs',
     because: '#1036 AC7: only a real held browser asset fetch followed by a config event proves that the original View operation cannot download after its context retires.',

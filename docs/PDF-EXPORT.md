@@ -30,7 +30,8 @@ document, not a portable interactive HA card.
 
 Only the active space is captured, without application chrome, editor handles,
 hover cues or private data attributes. Script/event attributes are stripped;
-image references are embedded with a streamed 25 MB cumulative budget. Failed
+image references are embedded with a streamed 25 MB cumulative budget, including
+repeated placements of a cached image. Failed
 assets leave the dialog open rather than silently creating a partial file. A
 retired space/config/access context cannot complete an old SVG download. The
 file is named `houseplan-<space-name>-<YYYY-MM-DD>.svg`.

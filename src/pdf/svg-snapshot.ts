@@ -116,12 +116,13 @@ export function assertSvgBudget(bytes: number): void {
 
 /** Embed every referenced asset in the already detached, immutable frame. */
 export async function finishSvgView(svg: SVGSVGElement): Promise<string> {
-  const assets = new Map<string, Promise<string>>();
-  let bytes = 0;
-  const embed = (url: string): Promise<string> => {
-    if (url.startsWith('#')) return Promise.resolve(url);
-    const found = assets.get(url); if (found) return found;
-    const result = (async () => {
+  const assets = new Map<string, Promise<{ data: string; size: number }>>();
+  let bytes = 0, embeddedBytes = 0;
+  const embed = async (url: string): Promise<string> => {
+    if (url.startsWith('#')) return url;
+    let result = assets.get(url);
+    if (!result) {
+      result = (async () => {
       const parsed = new URL(url, location.href);
       if (!['http:', 'https:', 'data:', 'blob:'].includes(parsed.protocol)
         || ['http:', 'https:'].includes(parsed.protocol) && parsed.origin !== location.origin) throw new Error('svg.asset_failed');
@@ -143,12 +144,18 @@ export async function finishSvgView(svg: SVGSVGElement): Promise<string> {
       } catch (error) { await reader.cancel().catch(() => {}); throw error; }
       finally { reader.releaseLock(); }
       const blob = new Blob(parts, { type: mime });
-      return await new Promise<string>((resolve, reject) => {
+      const data = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader(); reader.onload = () => resolve(String(reader.result));
         reader.onerror = () => reject(new Error('svg.asset_failed')); reader.readAsDataURL(blob);
       });
-    })();
-    assets.set(url, result); return result;
+      return { data, size: blob.size };
+      })();
+      assets.set(url, result);
+    }
+    const asset = await result;
+    // Repeated placements repeat data URLs in the file even when fetched once.
+    embeddedBytes += asset.size; assertSvgBudget(embeddedBytes);
+    return asset.data;
   };
   for (const el of [svg, ...svg.querySelectorAll('*')]) {
     for (const attr of ['href', 'xlink:href', 'src']) {
