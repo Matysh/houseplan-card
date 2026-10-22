@@ -33,15 +33,15 @@ export async function loadVacuumImageFit(
     if (host._markerDialog !== dialog) return null;
     if (host.hass?.connection !== hass.connection || host.hass?.user?.id !== hass.user?.id
       || !sameSource(runtime, device.id, source, mapId) || markerIdentity(runtime, device.id) !== marker) {
-      host._showToast(host._t('vac.ecovacs_map_changed'));
+      host._showToast(host._t('vac.ecovacs_map_changed'), 'vac.ecovacs_map_changed');
       return null;
     }
     const preview = vacuumMapPreview(value, source, mapId);
-    if (!preview) host._showToast(host._t('vac.ecovacs_preview_error'));
+    if (!preview) host._showToast(host._t('vac.ecovacs_preview_error'), 'vac.ecovacs_preview_error');
     else owners.set(preview, { connection: hass.connection, user: hass.user?.id, marker });
     return preview;
   } catch {
-    if (host._markerDialog === dialog) host._showToast(host._t('vac.ecovacs_preview_error'));
+    if (host._markerDialog === dialog) host._showToast(host._t('vac.ecovacs_preview_error'), 'vac.ecovacs_preview_error');
     return null;
   } finally {
     if (host._markerDialog === dialog) {
@@ -58,6 +58,6 @@ export function vacuumImageFitCurrent(runtime: HouseplanEditorRuntime): boolean 
   if (owner && owner.connection === hass?.connection && owner.user === hass?.user?.id
     && owner.marker === markerIdentity(runtime, fit.markerId)
     && sameSource(runtime, fit.markerId, fit.source, fit.mapId)) return true;
-  runtime.host._showToast(runtime.host._t('vac.ecovacs_map_changed'));
+  runtime.host._showToast(runtime.host._t('vac.ecovacs_map_changed'), 'vac.ecovacs_map_changed');
   return false;
 }

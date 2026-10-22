@@ -133,7 +133,7 @@ export class HpPdfDialog extends LitElement {
     if (!this.context?.space) return nothing;
     const o = this.options || defaults();
     const option = (key: keyof PdfExportOptions, label: string) => html`<label>
-      <input type="checkbox" .checked=${o[key]} ?disabled=${this.busy}
+      <input data-hp="field" data-field=${`pdf-${key}`} type="checkbox" .checked=${o[key]} ?disabled=${this.busy}
         @change=${(event: Event) => this.setOption(key, (event.target as HTMLInputElement).checked)}>
       <span>${label}</span>
     </label>`;

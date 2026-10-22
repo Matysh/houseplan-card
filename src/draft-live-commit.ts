@@ -25,7 +25,7 @@ interface WallChainLiveHost<State, Geometry> {
     config: ServerConfig, spaceId: string,
     captureWallGeometry?: (geometry: Geometry) => void,
   ) => { ok: boolean };
-  _showToast: (message: string) => void;
+  _showToast: (message: string, id?: string) => void;
   _t: (key: I18nKey, vars?: Record<string, string | number>) => string;
 }
 
@@ -138,7 +138,7 @@ const rejectUnsafe = <State extends { spaceId: string }, Geometry extends Juncti
   Violation>(runtime: WallChainLiveCommitRuntime<State, Geometry, Violation>, before: State): false => {
   runtime._clearGeometryGesture();
   runtime._restoreGeometryStateLocal(before);
-  runtime.host._showToast(runtime.host._t('toast.geometry_unsafe'));
+  runtime.host._showToast(runtime.host._t('toast.geometry_unsafe'), 'toast.geometry_unsafe');
   return false;
 };
 

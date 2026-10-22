@@ -249,7 +249,7 @@ export class LoadedSummaryPanelRuntime {
     this.ensureMetrics();
     const blocks = visibleSummaryBlocks(config, this.host._space);
     const stop = (event: Event) => event.stopPropagation();
-    return html`<aside class="summary-overlay ${layout.side}" aria-label=${config.title}
+    return html`<aside class="summary-overlay ${layout.side}" data-hp="summary-panel" aria-label=${config.title}
         data-phase=${this.presentation.phase} ?inert=${!this.presentation.interactive}
         aria-hidden=${this.presentation.interactive ? 'false' : 'true'}
         style="--summary-height-cap:${Math.floor(layout.heightCap)}px;--summary-width-cap:${Math.floor(layout.availableWidth)}px;--summary-top:${layout.top}px;--summary-bottom:${layout.bottom}px"
@@ -264,7 +264,7 @@ export class LoadedSummaryPanelRuntime {
             // Скелет вместо текста ошибки, пока значения нет (#509): та же
             // плашка и та же высота строки, пульсирующий прямоугольник на
             // месте значения, плавная замена по готовности.
-            return html`<div class="summary-value">
+            return html`<div class="summary-value" data-hp="summary-metric" data-id=${value.id}>
               <span>${value.label}</span>${state.kind === 'pending'
                 ? html`<strong class="summary-value-pending" aria-hidden="true"><i></i></strong>`
                 : html`<strong>${state.kind === 'ready' ? state.text : this.t('summary.unavailable')}</strong>`}
@@ -306,11 +306,11 @@ export class LoadedSummaryPanelRuntime {
     return html`<div class="summary-control ${kiosk ? 'kiosk' : ''}" role="group"
         aria-label=${this.t('summary.controls')} @click=${stop} @dblclick=${stop}
         @pointerdown=${stop} @pointerup=${stop} @pointermove=${stop} @wheel=${stop}>
-      <button type="button" @click=${() => void this.openDialog()}
+      <button type="button" data-hp="summary-settings" @click=${() => void this.openDialog()}
           data-hp-tooltip=${this.t('summary.settings')} aria-label=${this.t('summary.settings')}>
         ${summaryIcon('settings')}
       </button>
-      <button type="button" class=${this.local.show ? 'on' : ''}
+      <button type="button" data-hp="summary-toggle" class=${this.local.show ? 'on' : ''}
         aria-pressed=${this.local.show ? 'true' : 'false'}
           data-hp-tooltip=${toggleTitle} aria-label=${toggleTitle}
         @click=${() => this.saveLocal({ show: !this.local.show })}>
@@ -489,7 +489,7 @@ export class LoadedSummaryPanelRuntime {
       }
     } catch { /* local preferences remain effective for this session */ }
     this.storageUnavailable = !stored;
-    if (!stored) this.host._showToast?.(this.t('summary.storage_unavailable'));
+    if (!stored) this.host._showToast?.(this.t('summary.storage_unavailable'), 'summary.storage_unavailable');
     this.host.requestUpdate();
   }
 

@@ -1,5 +1,13 @@
 # House Plan architecture
 
+The E2E DOM contract (#1011) projects existing scene/form state into test
+attributes. The JSON inventory stays outside the runtime graph. Form primitives
+pass stable identities to controls; the contact renderer identifies its existing
+contour owner. Camera metadata uses the actual SVG viewBox/CTM and base grid
+pitch. Toast identity travels alongside text through its existing presentation
+owner. No new listeners, observers, calculations or stored fields are introduced.
+
+
 `hp-color-opacity` owns the shared HSV presentation (#1008 / UI-016). Its Lit
 template derives a single resulting colour and S/V gradient endpoints from
 unrounded HSV; one class styles the three native ranges in both popover and

@@ -36,14 +36,72 @@
       "audience": ["test"]
     },
     "decor": {
-      "elements": ["ellipse", "image", "line", "path", "rect", "text"],
+      "elements": [
+        "ellipse",
+        "image",
+        "line",
+        "path",
+        "rect",
+        "text"
+      ],
       "since": "1.59.0-beta.3",
-      "audience": ["styling", "test"]
+      "audience": [
+        "styling",
+        "test"
+      ],
+      "attributes": {
+        "data-kind": [
+          "text",
+          "rect",
+          "ellipse",
+          "line",
+          "image",
+          "furniture",
+          "path"
+        ]
+      }
     },
     "device": {
-      "elements": ["div"],
+      "elements": [
+        "div"
+      ],
       "since": "1.59.0-beta.3",
-      "audience": ["styling", "test"]
+      "audience": [
+        "styling",
+        "test"
+      ],
+      "attributes": {
+        "data-selected": [
+          "true",
+          "false"
+        ]
+      },
+      "attributeMetadata": {
+        "data-hp-device-contact": {
+          "since": "1.83.0",
+          "value": "presence",
+          "meaning": "Contact contour, including contact with a wall; alone does not imply a device group.",
+          "audience": [
+            "test"
+          ]
+        },
+        "data-hp-device-component": {
+          "since": "1.83.0",
+          "value": "marker-id",
+          "meaning": "Owner marker id only while at least two devices form a contact group.",
+          "audience": [
+            "test"
+          ]
+        },
+        "data-selected": {
+          "since": "1.83.0",
+          "value": "true|false",
+          "meaning": "Existing editor selection",
+          "audience": [
+            "test"
+          ]
+        }
+      }
     },
     "dialog": {
       "elements": ["hp-dialog"],
@@ -185,9 +243,24 @@
       "audience": ["test"]
     },
     "space-tab": {
-      "elements": ["button"],
+      "elements": [
+        "button"
+      ],
       "since": "1.59.0-beta.3",
-      "audience": ["styling", "test"]
+      "audience": [
+        "styling",
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-space": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "space id",
+          "audience": [
+            "test"
+          ]
+        }
+      }
     },
     "stair": {
       "elements": ["g"],
@@ -205,11 +278,27 @@
       "audience": ["test"]
     },
     "toast": {
-      "elements": ["div"],
+      "elements": [
+        "div"
+      ],
       "since": "1.73.0-beta.7",
-      "audience": ["test"],
+      "audience": [
+        "test"
+      ],
       "attributes": {
-        "data-kind": ["message"]
+        "data-kind": [
+          "message"
+        ]
+      },
+      "attributeMetadata": {
+        "data-id": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "i18n key or message for composed/unkeyed text",
+          "audience": [
+            "test"
+          ]
+        }
       }
     },
     "toast-portal": {
@@ -218,9 +307,13 @@
       "audience": ["test"]
     },
     "tool": {
-      "elements": ["button"],
+      "elements": [
+        "button"
+      ],
       "since": "1.73.0-beta.7",
-      "audience": ["test"],
+      "audience": [
+        "test"
+      ],
       "attributes": {
         "data-tool": [
           "add-device",
@@ -228,24 +321,32 @@
           "column",
           "delete-room",
           "device-inbox",
+          "device-magnets",
+          "door",
           "draw",
           "ellipse",
           "erase",
           "furniture",
+          "gate",
           "icon-rules",
           "image",
+          "led-strip",
           "line",
           "merge",
           "opening",
+          "passage",
           "rect",
           "resize",
           "rooms",
           "select",
           "shapes",
+          "spiral",
           "split",
           "stairs",
+          "straight",
           "text",
-          "wall-thickness"
+          "wall-thickness",
+          "window"
         ]
       }
     },
@@ -316,6 +417,624 @@
       "elements": ["button"],
       "since": "1.73.0-beta.7",
       "audience": ["test"]
+    },
+    "action": {
+      "elements": [
+        "button",
+        "summary"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-action": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "stable semantic command id",
+          "audience": [
+            "test"
+          ]
+        },
+        "data-value": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "subject id/key for repeated actions",
+          "audience": [
+            "test"
+          ]
+        }
+      },
+      "attributes": {
+        "data-action": [
+          "backdrop-server-plans",
+          "backdrop-upload-open",
+          "backup-export-open",
+          "backup-import-details",
+          "backup-import-open",
+          "colour-confirm",
+          "device-catalog-add",
+          "device-catalog-add-virtual",
+          "device-catalog-disable",
+          "device-catalog-edit",
+          "device-catalog-find",
+          "device-catalog-hide",
+          "device-catalog-menu",
+          "device-catalog-more",
+          "device-catalog-open-ha",
+          "device-catalog-show",
+          "device-discovery-exclusion-remove",
+          "device-discovery-exclusions-reset",
+          "device-discovery-save",
+          "device-discovery-settings",
+          "furniture-palette-back",
+          "furniture-palette-close",
+          "gs-bg-reset",
+          "gs-reset",
+          "icon-rule-add",
+          "icon-rule-delete",
+          "icon-rule-down",
+          "icon-rule-up",
+          "icon-rules-reset",
+          "image-palette-close",
+          "image-palette-delete",
+          "image-palette-select",
+          "import-create-space",
+          "import-skip",
+          "marker-attachment-add",
+          "marker-attachment-remove",
+          "marker-control-remove",
+          "marker-delete",
+          "marker-visibility",
+          "opening-delete",
+          "opening-entity-open",
+          "opening-rebind",
+          "physical-delete",
+          "plan-optimization-undo",
+          "plan-optimize",
+          "properties-copy",
+          "properties-delete",
+          "properties-display_device",
+          "properties-insert-variable",
+          "properties-replace",
+          "radar-configure",
+          "radar-inspect",
+          "radar-installation-change",
+          "radar-range-add",
+          "radar-range-remove",
+          "radar-remove",
+          "radar-target-add",
+          "radar-target-remove",
+          "room-range-reset",
+          "space-copy",
+          "space-delete-devices",
+          "support-copy-id",
+          "support-copy-message",
+          "support-download",
+          "support-preview",
+          "support-refresh",
+          "vacuum-auto-calibrate",
+          "vacuum-details",
+          "vacuum-manual-calibrate",
+          "vacuum-route-add-current",
+          "vacuum-route-add-source",
+          "vacuum-route-calibrate",
+          "vacuum-route-cancel",
+          "vacuum-route-confirm",
+          "vacuum-route-delete",
+          "vacuum-source-open",
+          "zigbee-incomplete-reasons",
+          "zigbee-read-zha",
+          "zigbee-refresh-z2m"
+        ]
+      }
+    },
+    "image-upload": {
+      "elements": [
+        "input"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributes": {
+        "data-kind": [
+          "backdrop",
+          "decor"
+        ]
+      }
+    },
+    "furniture-item": {
+      "elements": [
+        "button"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-id": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "canonical furniture symbol id",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "furniture-category": {
+      "elements": [
+        "button"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-id": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "canonical furniture category id",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "field": {
+      "elements": [
+        "button",
+        "div",
+        "ha-icon-picker",
+        "ha-slider",
+        "ha-switch",
+        "hp-color-opacity",
+        "input",
+        "select",
+        "textarea"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-field": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "stable control id, name or capability key; see STYLING-HOOKS §7.8",
+          "audience": [
+            "test"
+          ]
+        },
+        "data-value": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "radio option value; range/number for colour-opacity",
+          "audience": [
+            "test"
+          ]
+        },
+        "data-slot": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "semantic radar target slot, when repeated",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "device-contact-contour": {
+      "elements": [
+        "path"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributes": {
+        "data-grouped": [
+          "true",
+          "false"
+        ]
+      },
+      "attributeMetadata": {
+        "data-component": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "owner marker id",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "device-catalog-select-all": {
+      "elements": [
+        "input"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ]
+    },
+    "device-catalog-select": {
+      "elements": [
+        "input"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-id": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "same row key",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "field-option": {
+      "elements": [
+        "button"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-field": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "owner field id",
+          "audience": [
+            "test"
+          ]
+        },
+        "data-value": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "option entity/id or empty Auto",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "settings-section": {
+      "elements": [
+        "button"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributes": {
+        "data-kind": [
+          "general",
+          "space",
+          "room",
+          "marker"
+        ]
+      },
+      "attributeMetadata": {
+        "data-section": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "existing settings section id",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "space-delete": {
+      "elements": [
+        "button"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ]
+    },
+    "vacuum-calibration-step": {
+      "elements": [
+        "svg"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributes": {
+        "data-step": [
+          "manual"
+        ]
+      }
+    },
+    "glow-layer": {
+      "elements": [
+        "g"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ]
+    },
+    "glow-pool": {
+      "elements": [
+        "g"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-entity": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "source entity id",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "stage": {
+      "elements": [
+        "svg"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-grid-step": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "positive finite number in SVG viewBox units",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "backdrop": {
+      "elements": [
+        "image"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ]
+    },
+    "vacuum-calibration": {
+      "elements": [
+        "div"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ]
+    },
+    "vacuum-calibration-action": {
+      "elements": [
+        "button"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributes": {
+        "data-action": [
+          "rotate",
+          "mirror",
+          "save",
+          "cancel"
+        ]
+      }
+    },
+    "vacuum-trail-segment": {
+      "elements": [
+        "g",
+        "line",
+        "path"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributes": {
+        "data-kind": [
+          "current",
+          "previous",
+          "tip"
+        ]
+      },
+      "attributeMetadata": {
+        "data-entity": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "vacuum entity id",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "vacuum-puck": {
+      "elements": [
+        "div"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-entity": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "vacuum entity id",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "vacuum-trail": {
+      "elements": [
+        "svg"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ]
+    },
+    "room-resize": {
+      "elements": [
+        "circle"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-room": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "room id",
+          "audience": [
+            "test"
+          ]
+        },
+        "data-edge": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "zero-based current polygon edge",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "device-history": {
+      "elements": [
+        "button"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributes": {
+        "data-action": [
+          "undo",
+          "redo"
+        ]
+      }
+    },
+    "device-catalog-row": {
+      "elements": [
+        "article"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-id": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "HA inbox row key or virtual marker id",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "summary-panel": {
+      "elements": [
+        "aside"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ]
+    },
+    "summary-metric": {
+      "elements": [
+        "div"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-id": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "configured summary value id",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "summary-settings": {
+      "elements": [
+        "button"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ]
+    },
+    "summary-toggle": {
+      "elements": [
+        "button"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ]
+    },
+    "wall-node-layer": {
+      "elements": [
+        "g"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributes": {
+        "data-state": [
+          "idle",
+          "captured",
+          "preview",
+          "invalid"
+        ]
+      }
+    },
+    "wall-node": {
+      "elements": [
+        "circle"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-node": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "existing geometry node key",
+          "audience": [
+            "test"
+          ]
+        }
+      }
     }
   },
   "rootAttributes": {

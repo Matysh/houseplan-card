@@ -20,7 +20,7 @@ export async function saveRoomEdit(runtime: HouseplanEditorRuntime): Promise<voi
   const spaceId = host._space, roomId = host._roomEditId;
   const candidate = JSON.parse(JSON.stringify(cfg)) as ServerConfig;
   const room = candidate.spaces.find(space => space.id === spaceId)?.rooms.find(room => room.id === roomId);
-  if (!room) { host._showToast(host._t('toast.conflict')); return; }
+  if (!room) { host._showToast(host._t('toast.conflict'), 'toast.conflict'); return; }
   room.name = host._nameSel.trim() || room.name;
   room.area = host._areaSel || null;
   // #581: preserve unknown/future settings and materialize legacy Glow, but
@@ -61,12 +61,12 @@ export async function saveRoomEdit(runtime: HouseplanEditorRuntime): Promise<voi
       host._nameSel = '';
       host._areaSel = '';
     }
-    host._showToast(host._t('toast.room_updated'));
+    host._showToast(host._t('toast.room_updated'), 'toast.room_updated');
   } catch (error) {
     restoreDeferred(host._rollbackOptimistic(attempt));
     host._regSignature = '';
     host._maybeRebuildDevices();
-    if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }));
+    if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
   } finally {
     if (saving.get(host) === owner) saving.delete(host);
     host.requestUpdate();

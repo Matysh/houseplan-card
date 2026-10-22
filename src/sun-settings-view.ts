@@ -16,7 +16,7 @@ export function renderSunRayOriginSegment(
     label: translate('gs.sun_ray_origin'),
     control: html`<div class="hpf-ray-examples" role="radiogroup" aria-label=${translate('gs.sun_ray_origin')}>${(['outer', 'inner'] as const).map(origin => html`
       <label class="hpf-ray-choice">
-      <input class="hpf-sr-only" type="radio" name="gs-sun-ray-origin" value=${origin}
+      <input data-hp="field" data-field="gs-sun-ray-origin" data-value=${origin} class="hpf-sr-only" type="radio" name="gs-sun-ray-origin" value=${origin}
         aria-label=${translate(`gs.sun_ray_origin.${origin}`)} .checked=${origin === value}
         @change=${() => changed(origin)} />
       <figure class=${origin === value ? 'is-selected' : ''}>

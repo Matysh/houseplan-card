@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import ts from 'typescript';
+import { templateTags, templateAttributeValues, toolVocabularyFromSources, resolveToolExpression, missingControlHooks } from '../scripts/data-hp-source.mjs';
 
 const root = new URL('../', import.meta.url);
 const contract = JSON.parse(readFileSync(new URL('docs/data-hp-contract.json', root), 'utf8'));
@@ -20,62 +20,11 @@ const sources = sourceFiles(srcDir).map((path) => ({
   text: readFileSync(path, 'utf8'),
 }));
 
-function stringResults(expression, file) {
-  if (ts.isStringLiteralLike(expression)) return [expression.text];
-  if (ts.isConditionalExpression(expression)) {
-    return [
-      ...stringResults(expression.whenTrue, file),
-      ...stringResults(expression.whenFalse, file),
-    ];
-  }
-  if (ts.isParenthesizedExpression(expression)
-      || ts.isAsExpression(expression)
-      || ts.isNonNullExpression(expression)
-      || ts.isSatisfiesExpression(expression)) {
-    return stringResults(expression.expression, file);
-  }
-  if (ts.isIdentifier(expression) && expression.text === 'nothing') return [];
-  throw new Error(`Unsupported dynamic data-hp expression in ${file}: ${expression.getText()}`);
-}
-
-function collectTemplateValues(source, file) {
-  const found = new Set();
-  const unit = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-  const inspectStatic = (text) => {
-    for (const match of text.matchAll(/\bdata-hp\s*=\s*["']([^"']+)["']/g)) found.add(match[1]);
-  };
-  const visit = (node) => {
-    if (ts.isTaggedTemplateExpression(node)) {
-      const template = node.template;
-      if (ts.isNoSubstitutionTemplateLiteral(template)) {
-        inspectStatic(template.text);
-      } else {
-        let preceding = template.head.text;
-        inspectStatic(preceding);
-        for (const span of template.templateSpans) {
-          if (/\bdata-hp\s*=\s*$/.test(preceding)) {
-            for (const value of stringResults(span.expression, file)) found.add(value);
-          }
-          preceding = span.literal.text;
-          inspectStatic(preceding);
-        }
-      }
-    }
-    ts.forEachChild(node, visit);
-  };
-  visit(unit);
-
-  for (const match of source.matchAll(/\.setAttribute\(\s*["']data-hp["']\s*,\s*["']([^"']+)["']\s*\)/g)) {
-    found.add(match[1]);
-  }
-  for (const match of source.matchAll(/\.dataset\.hp\s*=\s*["']([^"']+)["']/g)) {
-    found.add(match[1]);
-  }
-  return found;
-}
-
 const sourceValues = new Set(sources.flatMap(({ text, relative: file }) =>
-  [...collectTemplateValues(text, file)]));
+  [...templateAttributeValues(text, 'data-hp', file)]));
+const toolVocabulary = toolVocabularyFromSources(new Map(sources.map(s => [s.relative, s.text])));
+const sourceTools = new Set(sources.flatMap(({ text, relative: file }) =>
+  [...templateAttributeValues(text, 'data-tool', file, (expression, name) => resolveToolExpression(expression, name, toolVocabulary))]));
 
 const publicValues = new Set(Object.keys(contract.hooks));
 const internalValue = (value) => contract.internalExactValues.includes(value)
@@ -162,4 +111,45 @@ test('#489 dialog actions, editor tool vocabulary and panel hooks remain represe
   const panel = sources.find((entry) => entry.relative === 'houseplan-panel.ts')?.text || '';
   assert.match(panel, /menu\.dataset\.hp = 'panel-menu'/);
   assert.match(panel, /title\.dataset\.hp = 'panel-title'/);
+});
+
+// Ordinary negative input strings exercise the parser; no source, build or guard
+// is replaced for a run. Mutant execution remains the scheduled suite's job.
+test('#1011 data-tool inventory is symmetric and rejects unknown dynamic writers', () => {
+  const declared = new Set(contract.hooks.tool.attributes['data-tool']);
+  assert.deepEqual([...sourceTools].filter(v => !declared.has(v)), [], 'undeclared data-tool values');
+  assert.deepEqual([...declared].filter(v => !sourceTools.has(v)), [], 'missing data-tool values');
+  assert.throws(() => templateAttributeValues('html`<button data-tool=${arbitrary()}>x</button>`', 'data-tool'), /Unsupported dynamic/);
+});
+
+test('#1011 Lit reader keeps JS comparisons and nested templates out of tag parsing', () => {
+  const source = 'html`<input data-hp="field" data-field=${id} @input=${e => e.value > 0}><div>${html`<button data-tool="draw"></button>`}</div>`';
+  assert.deepEqual([...templateAttributeValues(source, 'data-hp')], ['field']);
+  assert.deepEqual([...templateAttributeValues(source, 'data-tool')], ['draw']);
+  const tags = templateTags(source);
+  assert.deepEqual(tags.map(t => t.name), ['input', 'div', 'button']);
+  assert.ok(tags.every(t => source.slice(t.start).startsWith('<' + t.name)));
+});
+
+const formSources = new Set([
+  'decor-image-editor.ts', 'editors/form-kit.ts', 'editors/general-settings-dialog.ts',
+  'editors/marker-dialog.ts', 'editors/marker-state-source.ts', 'editors/properties/editor.ts',
+  'editors/properties/surface.ts', 'editors/radar-section.ts', 'editors/room-settings-dialog.ts',
+  'editors/settings-north.ts', 'editors/settings-sections.ts', 'editors/space-form.ts',
+  'editors/vacuum-maps-section.ts', 'editors/vacuum-settings-section.ts',
+  'houseplan-editor-runtime.ts', 'houseplan-onboarding-runtime.ts', 'hp-color-opacity.ts',
+  'hp-zigbee-topology-settings.ts', 'pdf/hp-pdf-dialog.ts', 'sun-settings-view.ts',
+]);
+test('#1011 critical form sources expose a stable hook on every real control', () => {
+  const errors = sources.filter(s => formSources.has(s.relative)).flatMap(s => missingControlHooks(s.text, s.relative));
+  assert.deepEqual(errors, []);
+  assert.equal(sources.filter(s => formSources.has(s.relative)).length, formSources.size);
+});
+test('#1011 control coverage rejects ordinary malformed markup inputs', () => {
+  assert.equal(missingControlHooks('html`<input .value=${draft.name}>`', 'form.ts').length, 1);
+  assert.equal(missingControlHooks('html`<input data-hp="field" data-field="">`', 'form.ts').length, 1);
+  assert.equal(missingControlHooks('html`<input data-hp="field" data-field="marker-name">`', 'form.ts').length, 0);
+  for (const source of ["node.setAttribute('data-tool', choose());", 'node.dataset.tool = choose();', "node.dataset['tool'] = choose();"])
+    assert.throws(() => templateAttributeValues(source, 'data-tool'), /Unsupported dynamic/);
+  assert.deepEqual([...templateAttributeValues('node.innerHTML = \'<button data-tool="draw"></button>\';', 'data-tool')], ['draw']);
 });

@@ -672,14 +672,14 @@ export function renderGlowPools(input: {
         <feGaussianBlur stdDeviation="${input.feather.toFixed(4)}" edgeMode="none"></feGaussianBlur>
       </filter>
     </defs>
-    <g class="glowlayer glow-pools-frame" pointer-events="none" aria-hidden="true"
+    <g class="glowlayer glow-pools-frame" data-hp="glow-layer" pointer-events="none" aria-hidden="true"
       filter=${input.featherEnabled ? 'url(#hp-glowfeather)' : nothing}>
       <g class="glow-pools ${input.screenBlend ? 'blend-screen' : 'blend-normal'}"
         data-blend=${input.screenBlend ? 'screen' : 'normal'}
         data-feather-px="${GLOW_EDGE_FEATHER_PX}"
         clip-path=${enabledClip ? 'url(#hp-glow-enabled)' : nothing}>
         ${repeat(input.spots, (spot) => spot.key, (spot) => svg`
-          <g class="glow-spot ${spot.entering ? 'is-entering' : ''} ${spot.leaving ? 'is-leaving' : ''}"
+          <g data-hp="glow-pool" data-entity=${spot.sourceEid} class="glow-spot ${spot.entering ? 'is-entering' : ''} ${spot.leaving ? 'is-leaving' : ''}"
             data-glow-spot="${spot.domId}" data-glow-source="${spot.sourceEid}">
             <circle class="glow-pool"
               cx="${spot.pos.x}" cy="${spot.pos.y}" r="${spot.r}"

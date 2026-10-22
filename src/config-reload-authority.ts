@@ -183,7 +183,7 @@ export interface ConfigReloadHostPort {
   _adoptAuthoritative(input: GatedAdoptionInput): Promise<GatedAdoptionResult>;
   _maybeRebuildDevices(): void;
   _restoreZoom(): void;
-  _showToast(message: string): void;
+  _showToast(message: string, id?: string): void;
   _t(key: string, variables?: Record<string, unknown>): string;
   _errText(error: unknown): string;
   requestUpdate(): void;
@@ -272,7 +272,7 @@ export async function reloadConfigOnly(
   } catch (error: unknown) {
     if (!isCurrent()) return;
     settleCurrentAttempt = true;
-    host._showToast(host._t('toast.cfg_reload_failed', { err: host._errText(error) }));
+    host._showToast(host._t('toast.cfg_reload_failed', { err: host._errText(error) }), 'toast.cfg_reload_failed');
   } finally {
     // Adoption changes its own baseline, so remember the owned outcome rather
     // than re-evaluating the pre-adoption fingerprint after success.

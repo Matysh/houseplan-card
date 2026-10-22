@@ -85,7 +85,7 @@ export interface LedEditorHost {
     capture: (geometry: { geom: unknown; components: ReadonlyArray<{ geom: unknown }> }) => void): unknown;
   _rollbackOptimistic(attempt: OptimisticAttempt<ServerConfig>): boolean;
   _maybeRebuildDevices(): void;
-  _showToast(message: string): void;
+  _showToast(message: string, id?: string): void;
   _errText(error: unknown): string;
   requestUpdate(): void;
 }
@@ -261,7 +261,7 @@ export class LedStripEditor {
     const space = this.host._spaceModel();
     if (!space) return;
     if (stripsOf(this.host._serverCfg, space.id).length >= LED_MAX_STRIPS) {
-      this.host._showToast(this.t('led.limit_strips'));
+      this.host._showToast(this.t('led.limit_strips'), 'led.limit_strips');
       return;
     }
     this.tool = true;
@@ -377,7 +377,7 @@ export class LedStripEditor {
     const last = chain.points[chain.points.length - 1] || null;
     let p = this.snapPoint(this.rawPoint(e), e.shiftKey, last);
     if (!last) {
-      if (bodies.inside(p)) { this.host._showToast(this.t('led.stopped')); return; } // a start inside a body
+      if (bodies.inside(p)) { this.host._showToast(this.t('led.stopped'), 'led.stopped'); return; } // a start inside a body
     } else {
       const near = (q: Pt) => Math.hypot(p[0] - q[0], p[1] - q[1]) * this.perUnit <= HANDLE_PX * 1.5;
       // A click on the first point closes a chain of ≥ 3 distinct vertices.
@@ -397,12 +397,12 @@ export class LedStripEditor {
       }
       const hit = clampToBodies(last, p, bodies);
       if (!hit) return;
-      if (hit.stopped) this.host._showToast(this.t('led.stopped'));
+      if (hit.stopped) this.host._showToast(this.t('led.stopped'), 'led.stopped');
       p = hit.point;
       if (Math.hypot(p[0] - last[0], p[1] - last[1]) * this.perUnit < 0.5) return;
     }
     if (chain.points.length >= LED_MAX_POINTS) {
-      this.host._showToast(this.t('led.limit_points'));
+      this.host._showToast(this.t('led.limit_points'), 'led.limit_points');
       return;
     }
     chain.points.push(p);
@@ -476,7 +476,7 @@ export class LedStripEditor {
     const after = next(before ? clone(before) : null);
     if (same(before, after)) return true; // a no-op is no command
     if (after && !before && strips.length >= LED_MAX_STRIPS) {
-      this.host._showToast(this.t('led.limit_strips'));
+      this.host._showToast(this.t('led.limit_strips'), 'led.limit_strips');
       return false;
     }
     if (after && index >= 0) strips[index] = after;
@@ -520,7 +520,7 @@ export class LedStripEditor {
       restoreDeferred(this.host._rollbackOptimistic(attempt));
       this.host._regSignature = '';
       this.host._maybeRebuildDevices();
-      if (!isGeometryCleanupRefusal(error)) this.host._showToast(this.t('led.save_failed', { err: this.host._errText(error) }));
+      if (!isGeometryCleanupRefusal(error)) this.host._showToast(this.t('led.save_failed', { err: this.host._errText(error) }), 'led.save_failed');
       return false;
     } finally {
       this.busy = false;
@@ -553,7 +553,7 @@ export class LedStripEditor {
 
   async bind(stripId: string, markerId: string | null, spaceId = this.host._space): Promise<void> {
     const owner = markerId ? ownerOf(this.host._serverCfg, markerId) : null;
-    if (owner && owner.strip.id !== stripId) { this.host._showToast(this.t('led.taken')); return; }
+    if (owner && owner.strip.id !== stripId) { this.host._showToast(this.t('led.taken'), 'led.taken'); return; }
     const ok = await this.write(this.t('led.history_view'), spaceId, stripId,
       (strip) => (strip ? { ...strip, marker: markerId, ...(strip.active === false ? { active: true } : {}) } : null));
     if (ok) this.picker = null;
@@ -584,7 +584,7 @@ export class LedStripEditor {
   markerMoveBlocked(markerId: string | undefined, targetSpaceId: string): boolean {
     const owner = markerId ? ownerOf(this.host._serverCfg, markerId) : null;
     if (!owner || owner.spaceId === targetSpaceId) return false;
-    this.host._showToast(this.t('led.space'));
+    this.host._showToast(this.t('led.space'), 'led.space');
     return true;
   }
 

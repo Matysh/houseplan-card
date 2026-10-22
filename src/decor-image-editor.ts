@@ -124,11 +124,11 @@ export class DecorImageEditor<Snapshot> {
     try {
       classified = await classifyPlanFile(file, 2 * 1024 * 1024);
     } catch {
-      this.host._showToast(this.host._t('backup.error.invalid_image'));
+      this.host._showToast(this.host._t('backup.error.invalid_image'), 'backup.error.invalid_image');
       return;
     }
     if (classified.kind === 'reject') {
-      this.host._showToast(this.host._t('toast.plan_formats'));
+      this.host._showToast(this.host._t('toast.plan_formats'), 'toast.plan_formats');
       return;
     }
     if (classified.kind === 'guard') {
@@ -179,7 +179,7 @@ export class DecorImageEditor<Snapshot> {
     } catch (error) {
       this.host._showToast(this.host._t('decor.image_upload_failed', {
         err: this.host._errText(error),
-      }));
+      }), 'decor.image_upload_failed');
     } finally {
       this.host._decorAssetBusy = false;
     }
@@ -187,7 +187,7 @@ export class DecorImageEditor<Snapshot> {
 
   public async delete(asset: DecorAsset): Promise<void> {
     if (asset.used_by?.length) {
-      this.host._showToast(this.host._t('decor.image_in_use'));
+      this.host._showToast(this.host._t('decor.image_in_use'), 'decor.image_in_use');
       return;
     }
     const accepted = await this.host._confirmDanger({
@@ -223,7 +223,7 @@ export class DecorImageEditor<Snapshot> {
       this.host._decorAssets = new Map([...this.host._decorAssets, ...catalog]);
       this.host.requestUpdate();
     } catch {
-      this.host._showToast(this.host._t('backup.error.io_error'));
+      this.host._showToast(this.host._t('backup.error.io_error'), 'backup.error.io_error');
     }
   }
 
@@ -234,7 +234,7 @@ export class DecorImageEditor<Snapshot> {
       @pointerdown=${(event: Event) => event.stopPropagation()}>
       <div class="furnhd"><ha-icon icon="mdi:image-plus-outline"></ha-icon>${this.host._t('decor.image_title')}
         <span class="spacer"></span>
-        <button class="btn furnclose" title=${this.host._t('btn.close')} @click=${() => {
+        <button data-hp="action" data-action="image-palette-close" class="btn furnclose" title=${this.host._t('btn.close')} @click=${() => {
           this.host._decorImagePalette = null;
           this.hooks.clearFurniturePreview();
           this.host._decorTool = 'select';
@@ -245,7 +245,7 @@ export class DecorImageEditor<Snapshot> {
           <ha-icon icon="mdi:upload"></ha-icon>${this.host._t(
             this.host._decorAssetBusy ? 'decor.image_uploading' : 'decor.image_upload',
           )}
-          <input type="file" accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml"
+          <input data-hp="image-upload" data-kind="decor" type="file" accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml"
             ?disabled=${this.host._decorAssetBusy}
             @change=${(event: Event) => this.uploadFromInput(event)} />
         </label>
@@ -253,7 +253,7 @@ export class DecorImageEditor<Snapshot> {
           ${this.host._decorAssetCatalog.length ? nothing
             : html`<span class="furnhint imageempty">${this.host._t('decor.image_none')}</span>`}
           ${this.host._decorAssetCatalog.map((asset) => html`<div class="imageasset">
-            <button class="furnitem ${armed?.asset_id === asset.asset_id ? 'on' : ''}"
+            <button data-hp="action" data-action="image-palette-select" data-value=${asset.asset_id} class="furnitem ${armed?.asset_id === asset.asset_id ? 'on' : ''}"
               title=${asset.name} @click=${() => {
                 this.host._decorImagePalette = asset;
                 this.host.requestUpdate();
@@ -263,7 +263,7 @@ export class DecorImageEditor<Snapshot> {
                 'decor.image_used', { n: asset.used_by.length },
               )}</small>` : nothing}
             </button>
-            <button class="btn ghost imageassetdelete" title=${this.host._t('btn.delete')}
+            <button data-hp="action" data-action="image-palette-delete" data-value=${asset.asset_id} class="btn ghost imageassetdelete" title=${this.host._t('btn.delete')}
               ?disabled=${!!asset.used_by?.length}
               @click=${() => this.delete(asset)}><ha-icon icon="mdi:delete-outline"></ha-icon></button>
           </div>`)}
@@ -307,7 +307,7 @@ export class DecorImageEditor<Snapshot> {
       <div class="furnhd">
         <ha-icon icon="mdi:sofa-outline"></ha-icon>${this._tool('furn.title')}
         <span class="spacer"></span>
-        <button class="btn furnclose" title=${this.host._t('btn.close')}
+        <button data-hp="action" data-action="furniture-palette-close" class="btn furnclose" title=${this.host._t('btn.close')}
           @click=${() => {
             this.hooks.clearFurniturePreview();
             this.host._furnPalette = null;
@@ -320,7 +320,7 @@ export class DecorImageEditor<Snapshot> {
       </div>
       <div class="furnbody">
         ${category ? html`
-          <button class="btn ghost furnback" @click=${() => {
+          <button data-hp="action" data-action="furniture-palette-back" class="btn ghost furnback" @click=${() => {
             this.hooks.clearFurniturePreview();
             this.host._furnPalette = null;
             this.hooks.furnShiftDetach();
@@ -333,7 +333,7 @@ export class DecorImageEditor<Snapshot> {
           </div>
           <div class="furnrow furnvariants">
             ${variants.map((symbol) => html`<button
-              class="furnitem ${pal?.symbol === symbol.id ? 'on' : ''}" data-symbol=${symbol.id}
+              data-hp="furniture-item" data-id=${symbol.id} class="furnitem ${pal?.symbol === symbol.id ? 'on' : ''}" data-symbol=${symbol.id}
               title=${this._tool(`furn.sym_${symbol.id}` as ToolsI18nKey)}
               @click=${() => this.hooks.furnPick(symbol.id)}>
               ${preview(symbol.id)}<span>${this._tool(`furn.sym_${symbol.id}` as ToolsI18nKey)}</span>
@@ -343,7 +343,7 @@ export class DecorImageEditor<Snapshot> {
           <div class="furngroup" data-group=${group}>${this._tool(`furn.group_${group}` as ToolsI18nKey)}</div>
           <div class="furnrow furncategories">
             ${categories.filter((item) => item.group === group).map((item) => html`<button
-              class="furnitem furncategory" data-category=${item.id}
+              data-hp="furniture-category" data-id=${item.id} class="furnitem furncategory" data-category=${item.id}
               title=${this._tool(`furn.cat_${item.id}` as ToolsI18nKey)}
               @click=${() => {
                 this.hooks.clearFurniturePreview();
@@ -357,14 +357,14 @@ export class DecorImageEditor<Snapshot> {
       </div>
       ${pal ? html`<div class="furnsize">
         <label>${this._tool('furn.width')}<span class="furnunit">${unit}</span></label>
-        <input class="namein furnw" type="number" min="0.01" step="0.05"
+        <input data-hp="field" data-field="furniture-width" class="namein furnw" type="number" min="0.01" step="0.05"
           .value=${String(this.hooks.furnFieldValue(pal.w))}
           @input=${(event: Event) => (this.host._furnPalette = {
             ...pal,
             w: this.hooks.furnFieldToCm(Number((event.target as HTMLInputElement).value)),
           })} />
         <label>${this._tool('furn.depth')}<span class="furnunit">${unit}</span></label>
-        <input class="namein furnh" type="number" min="0.01" step="0.05"
+        <input data-hp="field" data-field="furniture-height" class="namein furnh" type="number" min="0.01" step="0.05"
           .value=${String(this.hooks.furnFieldValue(pal.h))}
           @input=${(event: Event) => (this.host._furnPalette = {
             ...pal,
@@ -434,7 +434,7 @@ export class DecorImageEditor<Snapshot> {
         <div class="body">
           ${dialog.kind === 'furniture' ? html`
             <label>${this._tool('furn.symbol')}</label>
-            <select class="namein"
+            <select data-hp="field" data-field="decor-symbol" class="namein"
               @change=${(event: Event) => (this.host._decorShapeDialog = {
                 ...dialog, symbol: (event.target as HTMLSelectElement).value,
               })}>
@@ -451,7 +451,7 @@ export class DecorImageEditor<Snapshot> {
               </optgroup>`)}
             </select>` : dialog.kind === 'image' ? html`
             <label>${this.host._t('decor.image_asset')}</label>
-            <select class="namein" .value=${dialog.assetId || ''}
+            <select data-hp="field" data-field="decor-asset" class="namein" .value=${dialog.assetId || ''}
               @change=${(event: Event) => (this.host._decorShapeDialog = {
                 ...dialog, assetId: (event.target as HTMLSelectElement).value,
               })}>
@@ -464,24 +464,24 @@ export class DecorImageEditor<Snapshot> {
             </div>` : nothing}
             <label class="btn ghost imageupload">
               <ha-icon icon="mdi:image-refresh-outline"></ha-icon>${this.host._t('decor.image_replace')}
-              <input type="file" accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml"
+              <input data-hp="image-upload" data-kind="decor" type="file" accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml"
                 ?disabled=${this.host._decorAssetBusy}
                 @change=${(event: Event) => this.uploadFromInput(event, true)} />
             </label>` : nothing}
           ${dialog.kind === 'image' ? html`
             <label>${this.host._t('space.opacity')}</label>
-            <input class="namein" type="range" min="0" max="1" step="0.01"
+            <input data-hp="field" data-field="decor-opacity" class="namein" type="range" min="0" max="1" step="0.01"
               .value=${String(dialog.opacity)}
               @input=${(event: Event) => (this.host._decorShapeDialog = {
                 ...dialog, opacity: Number((event.target as HTMLInputElement).value),
-              })} />` : html`<hp-color-opacity .label=${this.host._t('decor.color')}
+              })} />` : html`<hp-color-opacity data-hp="field" data-field="decor-color" .label=${this.host._t('decor.color')}
             .color=${dialog.color} .opacity=${dialog.opacity}
             .opacityLabel=${this.host._t('space.opacity')}
             .pickerLabels=${this.host._colorPickerLabels}
             @hp-color-opacity-change=${(event: CustomEvent<{ color: string; opacity: number }>) =>
               (this.host._decorShapeDialog = { ...dialog, ...event.detail })}></hp-color-opacity>`}
           ${dialog.kind !== 'image' ? html`<label>${this.host._t('decor.width')}</label>
-          <div class="colorrow"><input class="namein" type="number"
+          <div class="colorrow"><input data-hp="field" data-field="decor-stroke-width" class="namein" type="number"
             min=${this.host._decorSmallField(0.1)} max=${this.host._decorSmallField(100)} step="0.1"
             .value=${String(this.host._decorSmallField(dialog.widthCm))}
             @input=${(event: Event) => (this.host._decorShapeDialog = {
@@ -493,13 +493,13 @@ export class DecorImageEditor<Snapshot> {
           ${dialog.kind === 'line' ? html`
             <label>${this.host._t('decor.line_style')}</label>
             <div role="radiogroup" aria-label=${this.host._t('decor.line_style')}>
-              <label class="srcrow"><input type="radio" name="decor-line-style"
+              <label class="srcrow"><input data-hp="field" data-field="decor-line-style" type="radio" name="decor-line-style"
                 .checked=${dialog.lineStyle !== 'dashed'}
                 @change=${() => (this.host._decorShapeDialog = {
                   ...dialog, lineStyle: 'solid',
                 })} />
                 <span>${this.host._t('decor.line_style_solid')}</span></label>
-              <label class="srcrow"><input type="radio" name="decor-line-style"
+              <label class="srcrow"><input data-hp="field" data-field="decor-line-style" type="radio" name="decor-line-style"
                 .checked=${dialog.lineStyle === 'dashed'}
                 @change=${() => (this.host._decorShapeDialog = {
                   ...dialog, lineStyle: 'dashed',
@@ -507,7 +507,7 @@ export class DecorImageEditor<Snapshot> {
                 <span>${this.host._t('decor.line_style_dashed')}</span></label>
             </div>
             <label>${this.host._t('decor.length')}</label>
-            <div class="colorrow"><input class="namein" type="number" min="0.01" step="0.01"
+            <div class="colorrow"><input data-hp="field" data-field="decor-length" class="namein" type="number" min="0.01" step="0.01"
               .value=${String(this.host._decorLargeField(dialog.lengthCm || 0))}
               @input=${(event: Event) => (this.host._decorShapeDialog = {
                 ...dialog,
@@ -516,35 +516,35 @@ export class DecorImageEditor<Snapshot> {
               <span class="opl">${unit}</span></div>`
             : dialog.kind === 'furniture' || dialog.kind === 'image' ? html`
             <label>${this.host._t('decor.size')}</label>
-            <div class="colorrow"><input class="namein" type="number" step="any"
+            <div class="colorrow"><input data-hp="field" data-field="decor-width" class="namein" type="number" step="any"
               aria-invalid=${furnitureWcm === null ? 'true' : 'false'}
               .value=${dialog.sizeWField || ''}
               @input=${(event: Event) => this.furnitureSizeInput(
                 'w', (event.target as HTMLInputElement).value,
               )} />
-              <span>×</span><input class="namein" type="number" step="any"
+              <span>×</span><input data-hp="field" data-field="decor-height" class="namein" type="number" step="any"
               aria-invalid=${furnitureHcm === null ? 'true' : 'false'}
               .value=${dialog.sizeHField || ''}
               @input=${(event: Event) => this.furnitureSizeInput(
                 'h', (event.target as HTMLInputElement).value,
               )} />
               <span class="opl">${unit}</span></div>
-            <label class="dfill"><input type="checkbox" .checked=${!!dialog.flipH}
+            <label class="dfill"><input data-hp="field" data-field="decor-flip-horizontal" type="checkbox" .checked=${!!dialog.flipH}
               @change=${(event: Event) => this.furnitureFlip(
                 'w', (event.target as HTMLInputElement).checked,
               )} />${this.host._t('decor.flip_h')}</label>
-            <label class="dfill"><input type="checkbox" .checked=${!!dialog.flipV}
+            <label class="dfill"><input data-hp="field" data-field="decor-flip-vertical" type="checkbox" .checked=${!!dialog.flipV}
               @change=${(event: Event) => this.furnitureFlip(
                 'h', (event.target as HTMLInputElement).checked,
               )} />${this.host._t('decor.flip_v')}</label>` : html`
             <label>${this.host._t('decor.size')}</label>
-            <div class="colorrow"><input class="namein" type="number" min="0.01" step="0.01"
+            <div class="colorrow"><input data-hp="field" data-field="decor-size-width" class="namein" type="number" min="0.01" step="0.01"
               .value=${String(this.host._decorLargeField(dialog.sizeWCm || 0))}
               @input=${(event: Event) => (this.host._decorShapeDialog = {
                 ...dialog,
                 sizeWCm: this.host._decorLargeCm(Number((event.target as HTMLInputElement).value)),
               })} />
-              <span>×</span><input class="namein" type="number" min="0.01" step="0.01"
+              <span>×</span><input data-hp="field" data-field="decor-size-height" class="namein" type="number" min="0.01" step="0.01"
               .value=${String(this.host._decorLargeField(dialog.sizeHCm || 0))}
               @input=${(event: Event) => (this.host._decorShapeDialog = {
                 ...dialog,
@@ -552,16 +552,16 @@ export class DecorImageEditor<Snapshot> {
               })} />
               <span class="opl">${unit}</span></div>`}
           <label>${this.host._t('decor.angle')}</label>
-          <input class="namein" type="number" min="-180" max="180" step="1"
+          <input data-hp="field" data-field="decor-angle" class="namein" type="number" min="-180" max="180" step="1"
             .value=${dialog.angle}
             @input=${(event: Event) => (this.host._decorShapeDialog = {
               ...dialog, angle: (event.target as HTMLInputElement).value,
             })} />
-          ${canFill ? html`<label class="dfill"><input type="checkbox" .checked=${!!dialog.fill}
+          ${canFill ? html`<label class="dfill"><input data-hp="field" data-field="decor-fill" type="checkbox" .checked=${!!dialog.fill}
             @change=${(event: Event) => (this.host._decorShapeDialog = {
               ...dialog, fill: (event.target as HTMLInputElement).checked,
             })} />${this.host._t('decor.fill')}</label>
-            <hp-color-opacity .label=${this.host._t('decor.fill_color')}
+            <hp-color-opacity data-hp="field" data-field="decor-fill-color" .label=${this.host._t('decor.fill_color')}
               .color=${dialog.fillColor || dialog.color} .opacity=${dialog.fillOpacity ?? 0.25}
               .opacityLabel=${this.host._t('space.opacity')}
               .pickerLabels=${this.host._colorPickerLabels} .disabled=${!dialog.fill}

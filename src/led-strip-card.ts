@@ -18,7 +18,7 @@ interface LedCardPort {
   _devicePositionBusy: boolean;
   _devicePositionHistory: { undo(): unknown; redo(): unknown; clear(): void };
   _t(key: string, vars?: Record<string, string | number>): string;
-  _showToast(message: string): void;
+  _showToast(message: string, id?: string): void;
   requestUpdate(): void;
 }
 

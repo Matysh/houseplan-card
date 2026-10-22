@@ -44,7 +44,7 @@ export class HouseplanOnboardingRuntime {
 
   public _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
     if (!this.host._serverStorage || !this.host._serverCfg) {
-      this.host._showToast(this.host._t('toast.integration_missing'));
+      this.host._showToast(this.host._t('toast.integration_missing'), 'toast.integration_missing');
       return;
     }
     if (mode === 'edit') {
@@ -105,7 +105,7 @@ export class HouseplanOnboardingRuntime {
       if (current) this.host._spaceDialog = { ...current, saved: [], savedBusy: false };
       this.host._showToast(this.host._t('toast.plans_list_failed', {
         err: this.host._errText(error),
-      }));
+      }), 'toast.plans_list_failed');
     }
   };
 
@@ -169,7 +169,7 @@ export class HouseplanOnboardingRuntime {
     } catch (error: unknown) {
       this.host._showToast(this.host._t('toast.plan_delete_failed', {
         err: this.host._errText(error),
-      }));
+      }), 'toast.plan_delete_failed');
     }
   }
 
@@ -221,7 +221,7 @@ export class HouseplanOnboardingRuntime {
     if (!dialog || dialog.busy || !dialog.title.trim()) return;
     if (spaceDialogProblems(dialog, 'space-onboard', this.host._imperial).length) return;
     if (dialog.source === 'file' && !dialog.planFile && !dialog.planUrl) {
-      this.host._showToast(this.host._t('toast.plan_required'));
+      this.host._showToast(this.host._t('toast.plan_required'), 'toast.plan_required');
       return;
     }
     const wasFirst = dialog.mode === 'create' && (this.host._serverCfg?.spaces.length || 0) === 0;
@@ -312,7 +312,7 @@ export class HouseplanOnboardingRuntime {
       if (this.host._spaceDialog) this.host._spaceDialog = {
         ...this.host._spaceDialog, busy: false,
       };
-      this.host._showToast(this.host._t('toast.error', { err: this.host._errText(error) }));
+      this.host._showToast(this.host._t('toast.error', { err: this.host._errText(error) }), 'toast.error');
     }
   }
 
@@ -345,7 +345,7 @@ export class HouseplanOnboardingRuntime {
       this.host._importTotal = 0;
       this.host._commitSpace(this.host._serverCfg!.spaces[0]?.id || this.host._space);
       void this.host._requestMode('plan').then(() => {
-        this.host._showToast(this.host._t('import.done'));
+        this.host._showToast(this.host._t('import.done'), 'import.done');
       });
     }
   }
@@ -359,7 +359,7 @@ export class HouseplanOnboardingRuntime {
         <div class="body">
           <div class="rhint">${this.host._t('import.hint')}</div>
           ${dialog.floors.map((floor, index) => html`<label class="floorrow">
-            <input type="checkbox" .checked=${floor.checked}
+            <input data-hp="field" data-field="import-floor" data-value=${floor.id} type="checkbox" .checked=${floor.checked}
               @change=${(event: Event) => {
                 const floors = [...dialog.floors];
                 floors[index] = {
@@ -387,9 +387,9 @@ export class HouseplanOnboardingRuntime {
 
   private _rangeInput(
     min: number, max: number, step: number, value: number, change: (next: number) => void,
-    disabled = false, ariaLabel?: string,
+    disabled = false, ariaLabel?: string, fieldId?: string,
   ): TemplateResult {
-    return html`<input type="range" min=${min} max=${max} step=${step} .value=${String(value)}
+    return html`<input data-hp="field" data-field=${fieldId} type="range" min=${min} max=${max} step=${step} .value=${String(value)}
       ?disabled=${disabled} aria-label=${ariaLabel ?? nothing}
       @input=${(event: Event) => change(Number((event.target as HTMLInputElement).value))} />`;
   }
@@ -405,8 +405,8 @@ export class HouseplanOnboardingRuntime {
       host: this.host,
       idPrefix: 'onboarding-space',
       help: this._help.bind(this),
-      rangeInput: (min, max, step, value, onInput, disabled, ariaLabel) =>
-        this._rangeInput(min, max, step, value, onInput, disabled, ariaLabel),
+      rangeInput: (min, max, step, value, onInput, disabled, ariaLabel, fieldId) =>
+        this._rangeInput(min, max, step, value, onInput, disabled, ariaLabel, fieldId),
       pickPlanFile: (event) => this._pickPlanFile(event),
       toggleServerPlans: () => this._toggleServerPlans(),
       renderServerPlans: (dialog) => this._renderServerPlans(dialog),

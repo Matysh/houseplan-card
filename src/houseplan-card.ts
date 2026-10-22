@@ -1731,7 +1731,7 @@ export class HouseplanCard extends LitElement {
     this._saveConfig();
     if (!this._tabOrderWarned) {
       this._tabOrderWarned = true;
-      this._showToast(this._t('toast.space_order_changed'));
+      this._showToast(this._t('toast.space_order_changed'), 'toast.space_order_changed');
     }
   }
 
@@ -2711,8 +2711,8 @@ export class HouseplanCard extends LitElement {
     // the console warning from the shared LanguageRuntime.
     this._languageFailureUnsub?.();
     this._languageFailureUnsub = composeUnsub(subscribeLanguageLoadFailures(() => {
-      this._showToast(this._t('toast.locale_load_failed'));
-    }), subscribeFurnitureArtLoadFailures(() => this._showToast(this._t('toast.furniture_art_load_failed')))); // #474
+      this._showToast(this._t('toast.locale_load_failed'), 'toast.locale_load_failed');
+    }), subscribeFurnitureArtLoadFailures(() => this._showToast(this._t('toast.furniture_art_load_failed'), 'toast.furniture_art_load_failed'))); // #474
     super.connectedCallback();
     this._toastPresentation.connect(this.renderRoot as ShadowRoot);
     for (const type of ['pointerdown', 'wheel', 'keydown']) this.addEventListener(
@@ -2978,7 +2978,7 @@ export class HouseplanCard extends LitElement {
     if (e.key === 'Escape' && this._vacFit) {
       if (this._vacFit.busy) return;
       this._vacFit = null;
-      this._showToast(this._t('vac.cal_cancelled'));
+      this._showToast(this._t('vac.cal_cancelled'), 'vac.cal_cancelled');
       e.stopPropagation();
       return;
     }
@@ -4871,7 +4871,7 @@ export class HouseplanCard extends LitElement {
       return;
     }
     if (effectivelyHidden && status?.kind === 'unverified') {
-      this._showToast(this._t('toast.ha_binding_unverified'));
+      this._showToast(this._t('toast.ha_binding_unverified'), 'toast.ha_binding_unverified');
       return;
     }
     this._markerDialog = { ...d, hideFromPlan: !effectivelyHidden };
@@ -5038,7 +5038,7 @@ export class HouseplanCard extends LitElement {
         this._layout = { ...this._layout, [id]: pos };
         // Labels and markers share the exact point-write ACK/retirement owner.
         void this._persistDevicePlacement(id, pos)
-          .catch((e: unknown) => { if (isCurrent()) this._showToast(this._t('toast.pos_save_failed', { err: this._errText(e) })); });
+          .catch((e: unknown) => { if (isCurrent()) this._showToast(this._t('toast.pos_save_failed', { err: this._errText(e) }), 'toast.pos_save_failed'); });
       }
       this._cacheSnapshot();
     } else {
@@ -5244,7 +5244,7 @@ export class HouseplanCard extends LitElement {
         } catch (error: unknown) {
           deleteFailed = true;
           this._layout = applyDevicePlacement(this._layout, decision.id, before);
-          this._showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }));
+          this._showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }), 'toast.pos_save_failed');
         }
       }
 
@@ -5284,7 +5284,7 @@ export class HouseplanCard extends LitElement {
               restoreFailed.add(id);
               this._showToast(this._t('toast.pos_save_failed', {
                 err: this._errText(restoreError),
-              }));
+              }), 'toast.pos_save_failed');
             }
           }
           this._areaRelocationSyncKey = '';
@@ -5292,10 +5292,10 @@ export class HouseplanCard extends LitElement {
           const code = error && typeof error === 'object' && 'code' in error
             ? (error as { code?: unknown }).code : undefined;
           if (code === 'conflict') {
-            this._showToast(this._t('toast.conflict'));
+            this._showToast(this._t('toast.conflict'), 'toast.conflict');
             await this._reloadConfigOnly(true);
           } else if (!isGeometryCleanupRefusal(error)) {
-            this._showToast(this._t('toast.cfg_save_failed', { err: this._errText(error) }));
+            this._showToast(this._t('toast.cfg_save_failed', { err: this._errText(error) }), 'toast.cfg_save_failed');
           }
           if (restoreFailed.size && this._serverCfg) {
             const attentionSettings = this._settings;
@@ -5314,7 +5314,7 @@ export class HouseplanCard extends LitElement {
             } catch (attentionError: unknown) {
               this._showToast(this._t('toast.cfg_save_failed', {
                 err: this._errText(attentionError),
-              }));
+              }), 'toast.cfg_save_failed');
             }
           }
         }
@@ -5547,7 +5547,7 @@ export class HouseplanCard extends LitElement {
     }
     if (!this._devicePositionStateValid(target)) {
       this._devicePositionHistory.clear();
-      this._showToast(this._t('history.device_stale'));
+      this._showToast(this._t('history.device_stale'), 'history.device_stale');
       this.requestUpdate();
       return;
     }
@@ -5570,7 +5570,7 @@ export class HouseplanCard extends LitElement {
       this._previewDevicePlacement(target.deviceId, rollback);
       if (direction === 'undo') this._devicePositionHistory.redo();
       else this._devicePositionHistory.undo();
-      this._showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }));
+      this._showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }), 'toast.pos_save_failed');
     } finally {
       if (ownsPending()) { this._devicePositionBusy = false; this.requestUpdate(); }
     }
@@ -5680,11 +5680,11 @@ export class HouseplanCard extends LitElement {
 
   private _openMoreInfo(entityId?: string): void {
     if (!entityId) {
-      this._showToast(this._t('toast.no_entity'));
+      this._showToast(this._t('toast.no_entity'), 'toast.no_entity');
       return;
     }
     if (!this._planEntityAvailable(entityId)) {
-      this._showToast(this._t('toast.ha_disabled_action'));
+      this._showToast(this._t('toast.ha_disabled_action'), 'toast.ha_disabled_action');
       return;
     }
     // The native HA dialog has no reliable close event for this card.  Its
@@ -5822,7 +5822,7 @@ export class HouseplanCard extends LitElement {
         { spaceId: actionSpace, id: actionDevice.id });
       if (current && !current.hidden) return current;
       this._tapConfirm = null; this._closeInfoCard();
-      this._showToast(this._t('toast.tap_target_changed'));
+      this._showToast(this._t('toast.tap_target_changed'), 'toast.tap_target_changed');
       return null;
     };
     const action = projectedTapAction(
@@ -5862,13 +5862,13 @@ export class HouseplanCard extends LitElement {
             this.requestUpdate();
           }).catch((e: any) => this._showToast(this._t(
             'toast.virtual_light_toggle_failed', { err: this._errText(e) },
-          )));
+          ), 'toast.virtual_light_toggle_failed'));
           return;
         }
         const { command } = operation;
         this._startDevicePressFeedback(actionDevice.id);
         this.hass.callService(command.domain, command.service, command.data)
-          .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
+          .catch((e: unknown) => this._showToast(this._t('toast.error', { err: this._errText(e) }), 'toast.error'));
       };
       const name = toggleIntentName(initial) || actionDevice.name;
       if (actionDevice.marker?.tap_confirm) {
@@ -5887,7 +5887,7 @@ export class HouseplanCard extends LitElement {
             if (current && !toggleOperation(current)
                 && this._showUnavailableToggleTargets(current)) return;
             if (!current || !sameToggleOperationTargets(initial, current)) {
-              this._showToast(this._t('toast.tap_target_changed'));
+              this._showToast(this._t('toast.tap_target_changed'), 'toast.tap_target_changed');
               return;
             }
             execute(current); // current state decides the current direction
@@ -5913,7 +5913,7 @@ export class HouseplanCard extends LitElement {
       const svc = runServiceFor(target);
       const st = this.hass.states[target];
       if (!svc || !st) {
-        this._showToast(this._t('toast.run_target_missing'));
+        this._showToast(this._t('toast.run_target_missing'), 'toast.run_target_missing');
         return;
       }
       const name = st.attributes?.friendly_name || target;
@@ -5922,7 +5922,7 @@ export class HouseplanCard extends LitElement {
         if (!current) return;
         if (current.marker?.tap_target !== target) {
           this._tapConfirm = null; this._closeInfoCard();
-          this._showToast(this._t('toast.tap_target_changed')); return;
+          this._showToast(this._t('toast.tap_target_changed'), 'toast.tap_target_changed'); return;
         }
         if (!this._deviceBindingActive(current) || !this._planEntityAvailable(target)) return;
         this._startDevicePressFeedback(actionDevice.id);
@@ -5933,9 +5933,9 @@ export class HouseplanCard extends LitElement {
               actionDevice.id, 'event', this._activitySourceKey(actionDevice),
             );
             this.requestUpdate();
-            this._showToast(this._t('toast.run_started', { name }));
+            this._showToast(this._t('toast.run_started', { name }), 'toast.run_started');
           })
-          .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
+          .catch((e: unknown) => this._showToast(this._t('toast.error', { err: this._errText(e) }), 'toast.error'));
       });
       return;
     }
@@ -7326,7 +7326,7 @@ export class HouseplanCard extends LitElement {
       } catch (error: unknown) {
         if (!isCurrent()) return;
         this._previewDevicePlacement(d.id, drag.before);
-        this._showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }));
+        this._showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }), 'toast.pos_save_failed');
       } finally {
         if (ownsPending()) { this._devicePositionBusy = false; this.requestUpdate(); }
       }
@@ -7340,7 +7340,7 @@ export class HouseplanCard extends LitElement {
     this._cancelDeviceDrag();
   }
 
-  private _showToast(msg: string): void {
+  private _showToast(msg: string, id = 'message'): void {
     if (!this.isConnected) return;
     // A toast supersedes transient explanatory surfaces in this card only.
     // Dialogs own their portal/overlay registry, so another card stays intact.
@@ -7348,7 +7348,7 @@ export class HouseplanCard extends LitElement {
       dialog.closeTransientOverlays('toast');
     }
     this._toast = msg;
-    this._toastPresentation.show(this._toast);
+    this._toastPresentation.show(this._toast, id);
     clearTimeout(this._toastTimer);
     this._toastTimer = window.setTimeout(() => {
       this._toast = '';
@@ -8026,15 +8026,15 @@ export class HouseplanCard extends LitElement {
       if (e?.code === 'geometry-unsafe' || isGeometryCleanupRefusal(e)) {
         return; // already answered: the unsafe-geometry toast, or the #842 K3 question
       } else if (e?.code === 'wall_model_client_outdated') {
-        this._showToast(this._t('toast.wall_model_client_outdated'));
+        this._showToast(this._t('toast.wall_model_client_outdated'), 'toast.wall_model_client_outdated');
       } else if (e?.code === 'conflict') {
         // a real one now: another window wrote between our read and our write
-        this._showToast(this._t('toast.conflict'));
+        this._showToast(this._t('toast.conflict'), 'toast.conflict');
         if (!physicalRollback) {
           recoverConfigWriteConflict(this._editorRuntime, () => this._reloadConfigOnly(true));
         }
       } else {
-        this._showToast(this._t('toast.cfg_save_failed', { err: this._errText(e) }));
+        this._showToast(this._t('toast.cfg_save_failed', { err: this._errText(e) }), 'toast.cfg_save_failed');
       }
       if (physicalRollback) void this._reloadRejectedPhysicalWrite();
     });
@@ -10912,7 +10912,7 @@ export class HouseplanCard extends LitElement {
           <nav class="tabs" aria-label=${this._t('nav.spaces')} @pointermove=${(e: PointerEvent) => this._tabPointerMove(e)}>
             ${navigationSpaces.map(
               (s) => html`<button
-                data-hp="space-tab" data-id="${s.id}"
+                data-hp="space-tab" data-space=${s.id} data-id="${s.id}"
                 class="tab ${this._space === s.id ? 'active' : ''}${
                   this._tabDrag?.moved && this._tabDrag.id === s.id ? ' dragging' : ''}${
                   this._tabDrag?.moved && this._tabDrag.targetId === s.id
@@ -11036,7 +11036,7 @@ export class HouseplanCard extends LitElement {
               preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
               ${renderPaperShapes(paperShapes, 'hp-paper-outline-shapes')}
             </svg>` : nothing}
-          <svg class="plan-svg" data-hp-layer="plan"
+          <svg class="plan-svg" data-hp="stage" data-grid-step=${this._gridPitch} data-hp-layer="plan"
             data-hp-live-viewbox=${iso ? 'camera' : 'floor'}
             viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
             preserveAspectRatio="xMidYMid meet">
@@ -11063,7 +11063,7 @@ export class HouseplanCard extends LitElement {
               ? svg`<rect x="${view.x}" y="${view.y}" width="${view.w}" height="${view.h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
               : nothing}
             ${space.bg && backdropHref
-              ? svg`<image class="hp-backdrop" href="${backdropHref}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}"
+              ? svg`<image class="hp-backdrop" data-hp="backdrop" href="${backdropHref}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}"
                   opacity="${(space.bg.opacity ?? 1) * (modeVisual?.backdropOpacity ?? (this._mode === 'decor' && this._decorTool !== 'backdrop' ? 0.5 : 1))}"
                   @load=${() => this._onBackdropLoaded(space.bg!.href, backdropHref)}
                   transform=${space.bg.angle
@@ -11406,15 +11406,15 @@ export class HouseplanCard extends LitElement {
           : nothing}
         ${dialogPresence(this._kioskDialog ? this._renderKioskDialog() : nothing)}
         ${dialogPresence(this._summary?.dialogOpen ? this._summary.renderDialog() : nothing)}
-        ${this._vacFit ? html`<div class="vaccalbar" aria-busy=${String(!!this._vacFit.busy)}>
+        ${this._vacFit ? html`<div class="vaccalbar" data-hp="vacuum-calibration" aria-busy=${String(!!this._vacFit.busy)}>
           <span>${this._t('vac.fit_hint')}</span>
-          <button class="btn ghostbtn" ?disabled=${this._vacFit.busy}
+          <button class="btn ghostbtn" data-hp="vacuum-calibration-action" data-action="rotate" ?disabled=${this._vacFit.busy}
             @click=${() => this._vacFitTurn({ rot: ((this._vacFit!.p.rot + 90) % 360) as FitParams['rot'] })}>${this._t('vac.fit_rotate')}</button>
-          <button class="btn ghostbtn" ?disabled=${this._vacFit.busy}
+          <button class="btn ghostbtn" data-hp="vacuum-calibration-action" data-action="mirror" ?disabled=${this._vacFit.busy}
             @click=${() => this._vacFitTurn({ mir: !this._vacFit!.p.mir })}>${this._t('vac.fit_mirror')}</button>
-          <button class="btn" ?disabled=${this._vacFit.busy}
+          <button class="btn" data-hp="vacuum-calibration-action" data-action="save" ?disabled=${this._vacFit.busy}
             @click=${() => this._vacFitSave()}>${this._t('btn.save')}</button>
-          <button class="btn ghostbtn" ?disabled=${this._vacFit.busy}
+          <button class="btn ghostbtn" data-hp="vacuum-calibration-action" data-action="cancel" ?disabled=${this._vacFit.busy}
             @click=${() => { this._vacFit = null; }}>${this._t('btn.cancel')}</button>
         </div>` : nothing}
         ${dialogPresence(this._tapConfirm
@@ -11853,7 +11853,7 @@ export class HouseplanCard extends LitElement {
     this._vacJumpOnce = false;
     const pucks: TemplateResult[] = [];
     const trails: TemplateResult[] = [];
-    const previousRuns: Array<{ path: VacPath; matrix: Affine; id: string; style: string }> = [];
+    const previousRuns: Array<{ path: VacPath; matrix: Affine; id: string; entity: string | null; style: string }> = [];
     let trailBudget = VAC_RENDER_POINT_BUDGET;
     let hasTips = false;
     for (const d of devs) {
@@ -11886,7 +11886,7 @@ export class HouseplanCard extends LitElement {
       // the PREVIOUS run stays visible even at rest: users compare where the
       // robot has been against where it has not (owner call 2026-07-31)
       if (tmode === 'always' && srvPrev && plan.previous) {
-        previousRuns.push({ path: normalizeVacPath(srvPrev.path_format === 2 ? srvPrev.paths : srvPrev.points), matrix: plan.previous, id: d.id, style: trailStyle });
+        previousRuns.push({ path: normalizeVacPath(srvPrev.path_format === 2 ? srvPrev.paths : srvPrev.points), matrix: plan.previous, id: d.id, entity: this._vacEntity(d), style: trailStyle });
       }
       // One arbitration authority: integration multi-subpath → server run →
       // local runtime. Only drawable segments participate.
@@ -11898,7 +11898,7 @@ export class HouseplanCard extends LitElement {
           trailBudget -= frame.count;
           const pathD = frame.d;
           // A single SVG path with several M commands keeps gaps literal.
-          if (pathD) trails.push(svg`<path data-vacuum-owner=${d.id} style=${trailStyle} class="core" d="${pathD}"></path>`);
+          if (pathD) trails.push(svg`<path data-hp="vacuum-trail-segment" data-entity=${this._vacEntity(d)} data-kind="current" data-vacuum-owner=${d.id} style=${trailStyle} class="core" d="${pathD}"></path>`);
           const last = raw[raw.length - 1];
           if (moving && current.allowTip && !current.native && !frame.limited && last?.length >= 2) {
             hasTips = true;
@@ -11906,7 +11906,7 @@ export class HouseplanCard extends LitElement {
             const [ax, ay] = applyAffine(matrix, anchor[0], anchor[1]);
             const point = [ax, ay];
             const a1 = point[0].toFixed(1), a2 = point[1].toFixed(1);
-            trails.push(svg`<line data-vacuum-owner=${d.id} style=${trailStyle} class="core tip" data-mid="${d.id}" x1="${a1}" y1="${a2}" x2="${a1}" y2="${a2}"></line>`);
+            trails.push(svg`<line data-hp="vacuum-trail-segment" data-entity=${this._vacEntity(d)} data-kind="tip" data-vacuum-owner=${d.id} style=${trailStyle} class="core tip" data-mid="${d.id}" x1="${a1}" y1="${a2}" x2="${a1}" y2="${a2}"></line>`);
           }
         }
       }
@@ -11918,7 +11918,7 @@ export class HouseplanCard extends LitElement {
       const stale = rt && rt.lastTs > 0 && Date.now() - rt.lastTs > VAC_STALE_MS;
       const icon = d.marker?.icon || d.icon || 'mdi:robot-vacuum';
       pucks.push(html`<div
-        data-mid="${d.id}"
+        data-hp="vacuum-puck" data-entity=${this._vacEntity(d)} data-mid="${d.id}"
         class="vacpuck ${deviceThemeClass(this._renderPlanHass)} ${rt?.jump || jumpAll ? 'jump' : ''} ${stale ? 'stale' : ''}"
         style="left:${left}%;top:${top}%"
         title=${d.name}
@@ -11929,7 +11929,7 @@ export class HouseplanCard extends LitElement {
     for (const previous of previousRuns) {
       const frame = this._vacTrailPathD(previous.path, previous.matrix, trailBudget);
       trailBudget -= frame.count;
-      if (frame.d) trails.unshift(svg`<g class="prev" data-vacuum-owner=${previous.id} style=${previous.style}><path class="core" d="${frame.d}"></path></g>`);
+      if (frame.d) trails.unshift(svg`<g class="prev" data-hp="vacuum-trail-segment" data-entity=${previous.entity} data-kind="previous" data-vacuum-owner=${previous.id} style=${previous.style}><path class="core" d="${frame.d}"></path></g>`);
     }
     if (pucks.length && hasTips && this.isConnected && this.ownerDocument.visibilityState !== 'hidden') {
       if (!this._vacRaf) this._vacRafLoop();
@@ -11938,7 +11938,7 @@ export class HouseplanCard extends LitElement {
     }
     if (!pucks.length && !trails.length) return nothing;
     return html`
-      ${trails.length ? svg`<svg class="vactrail" data-hp-live-inherited-scene="camera" viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="none">${trails}</svg>` : nothing}
+      ${trails.length ? svg`<svg class="vactrail" data-hp="vacuum-trail" data-hp-live-inherited-scene="camera" viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="none">${trails}</svg>` : nothing}
       ${pucks}`;
   }
 
@@ -11982,6 +11982,7 @@ export class HouseplanCard extends LitElement {
              attribute binding REMOVES the attribute, so a virtual marker has
              no data-entity at all rather than "undefined". */}
       data-hp="device"
+      data-selected=${String(this._mode === 'devices' && this._selId === d.id)}
       data-id="${d.id}"
       data-entity=${d.primary || nothing}
       data-area=${d.area || nothing}
@@ -12705,7 +12706,7 @@ export class HouseplanCard extends LitElement {
       if (openingActionTargetCurrent(this._curSpaceCfg, this._space, context,
         this._openingInfo?.id, entityId)) return true;
       this._openingInfo = null; this._openingInfoSpace = null;
-      this._cancelDangerConfirm(); this._showToast(this._t('toast.tap_target_changed'));
+      this._cancelDangerConfirm(); this._showToast(this._t('toast.tap_target_changed'), 'toast.tap_target_changed');
       return false;
     };
     if (!currentTarget() || !this._openingEntityAvailable(entityId)) return;
@@ -12900,13 +12901,13 @@ export class HouseplanCard extends LitElement {
       if (this._mode !== 'view' || !this.isConnected || !this._configWriteContext.current(authority, this.hass)
           || !current || this._infoCard?.id !== context.id
           || infoCardRowContextKey(current, this._cardEntities(current)) !== key) {
-        this._showToast(this._t('toast.tap_target_changed')); return;
+        this._showToast(this._t('toast.tap_target_changed'), 'toast.tap_target_changed'); return;
       }
       const intent = resolveInfoRowToggleIntent(this._planHass, this._fullRegistryHass, eid);
       if (!intent.command || !sameToggleOperationTargets(initial, intent)) return;
       this._startDevicePressFeedback(current.id);
       this.hass.callService(intent.command.domain, intent.command.service, intent.command.data)
-        .catch((error: unknown) => this._showToast(this._t('toast.error', { err: this._errText(error) })));
+        .catch((error: unknown) => this._showToast(this._t('toast.error', { err: this._errText(error) }), 'toast.error'));
     };
     if (infoCardTapConfirmationRequired(device)) {
       this._tapConfirm = {

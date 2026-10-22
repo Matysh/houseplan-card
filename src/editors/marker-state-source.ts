@@ -54,7 +54,7 @@ export function renderMarkerStateSource(options: {
       ${field({ label: t('marker.state_source_active_when'), htmlFor: 'marker-state-source-mode',
         help: html`<hp-help instant data-help-key="marker.state_source_mode_help"
           .text=${t('marker.state_source_mode_help')} .ariaLabel=${t('marker.state_source_mode_help.aria')}></hp-help>`,
-        control: html`<hp-settings-select><select id="marker-state-source-mode"
+        control: html`<hp-settings-select><select data-hp="field" data-field="marker-state-source-mode" id="marker-state-source-mode"
           @change=${(e: Event) => {
             const next = { ...source, entity_id: eid }; delete next.active_states;
             if ((e.target as HTMLSelectElement).value === 'states') next.active_states = [];
@@ -65,7 +65,7 @@ export function renderMarkerStateSource(options: {
         </select></hp-settings-select>`,
       })}
       ${explicit ? html`<div class="hpf-field" id="marker-state-source-states">
-        <input class="hpf-input" aria-label=${t('marker.state_source_active_when')} .value=${state}
+        <input data-hp="field" data-field="marker-active-state" class="hpf-input" aria-label=${t('marker.state_source_active_when')} .value=${state}
           @input=${(e: Event) => change({ ...d, stateSource: { ...source, entity_id: eid,
             active_states: [(e.target as HTMLInputElement).value] }, stateSourceTouched: true })}>
       </div>` : nothing}

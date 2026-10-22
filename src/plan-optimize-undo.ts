@@ -17,7 +17,7 @@ interface UndoHost extends Pick<PlanOptimizeWriteHost,
   _configWriteGuard(pendingOnly?: boolean): () => boolean;
   _getAuthoritativeConfig(hass?: UndoHass, isCurrent?: () => boolean): Promise<AuthoritativeConfigResponse>;
   _adoptAuthoritative(input: GatedAdoptionInput): Promise<GatedAdoptionResult>;
-  _showToast(message: string): void;
+  _showToast(message: string, id?: string): void;
   _t(key: I18nKey, vars?: Record<string, string | number>): string;
   _errText(error: unknown): string;
 }
@@ -82,7 +82,7 @@ export class PlanOptimizationUndo {
       if (!isCurrent()) return;
       host._canOptimizeUndo = false;
       host._undoKind = null;
-      host._showToast(host._t('toast.error', { err: host._errText(error) }));
+      host._showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
     } finally {
       // A temporary HA gap may finish its own bookkeeping, never a foreign
       // authority or detached lifecycle's new operation (#890 pending semantics).

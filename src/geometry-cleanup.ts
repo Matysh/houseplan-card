@@ -197,7 +197,7 @@ export interface GeometryCleanupPort {
     readonly _saveConfigDebounced: { (): void; flush(): void };
     _confirmDanger(request: HpConfirmRequest): Promise<boolean>;
     _t(key: I18nKey, vars?: Record<string, string | number>): string;
-    _showToast(message: string): void;
+    _showToast(message: string, id?: string): void;
   };
   /** Bump the geometry epoch and (re)arm the one deferred write. */
   _saveConfig(): void;
@@ -248,7 +248,7 @@ async function askGeometryCleanup(runtime: GeometryCleanupPort, removal: Geometr
   host._saveConfigDebounced.flush();
   if (!current || current.fingerprint !== removal.fingerprint) return;
   host._writeChain.then(
-    () => host._showToast(host._t('toast.geometry_cleanup_done')),
+    () => host._showToast(host._t('toast.geometry_cleanup_done'), 'toast.geometry_cleanup_done'),
     () => undefined, // the deferred writer's ordinary failure policy already answered
   );
 }

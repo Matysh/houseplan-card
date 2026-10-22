@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.82.0** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.82.0-beta.6` |
-| Tests | Node unit 5040 · pure backend 579 · HA-harness backend 484 · browser smokes 408 (`npm run inventory`) |
+| Tests | Node unit 5044 · pure backend 579 · HA-harness backend 484 · browser smokes 409 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -35,6 +35,12 @@ the product producer even with no tracked dist; metadata strings do not.
 Crossing older tracked-dist history can leave chunks without their manifest;
 build cleanup recovers only flat hashed output bearing House Plan's build
 signature, keeps unknown files and refuses output-directory symlinks.
+
+The E2E DOM contract (#1011) covers scene identities, device contact groups,
+vacuum/decor/glow results, summary/navigation and real form controls. These are
+test attributes on existing elements, without UI, persistence or permission
+changes. External journeys and seeds remain #1010.
+
 
 Trusted provenance (#1021, prerequisite of #1016) accepts only Git-proven
 deletions of the duplicate dist tree without a Release trailer. The HACS

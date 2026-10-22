@@ -35,7 +35,7 @@ export interface InboxBatchHost<D extends InboxBatchDialog> extends InboxLanguag
   _regSignature: string;
   _deviceInboxMemo: unknown;
   _maybeRebuildDevices: () => void;
-  _showToast: (msg: string) => void;
+  _showToast: (msg: string, id?: string) => void;
   _t: (key: I18nKey, vars?: Record<string, string | number>) => string;
   _errText: (e: any) => string; // any-ok: mirrors the host port signature
   _canEdit?: boolean;
@@ -149,7 +149,7 @@ export async function writeInboxVisibility<D extends InboxBatchDialog>(
         : undefined;
       host._deviceInbox = { ...current, busy: undefined, selected };
     }
-    if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }));
+    if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
   }
 }
 
@@ -163,7 +163,7 @@ export function renderInboxBatchPanel<D extends InboxBatchDialog>(
   const visibilityAllowed = chosen.length > 0 && chosen.every((row) => dialog.tab === 'on_plan' ? row.canHide : row.canShow);
   return html`<div class="device-inbox-batch">
     <label class="device-inbox-select-all">
-      <input type="checkbox" .checked=${selectable.length > 0 && chosen.length === selectable.length}
+      <input data-hp="device-catalog-select-all" type="checkbox" .checked=${selectable.length > 0 && chosen.length === selectable.length}
         .indeterminate=${chosen.length > 0 && chosen.length < selectable.length}
         ?disabled=${!selectable.length}
         @change=${(event: Event) => selectAllInbox(host, deps, (event.target as HTMLInputElement).checked)} />
@@ -194,7 +194,7 @@ export function renderInboxRowSelect<D extends InboxBatchDialog>(
   const canSelect = view.selectableKeys.has(row.key);
   const hint = canSelect ? '' : inboxT(host, 'device_inbox.selection_changed');
   return html`<label class="device-inbox-select" title=${hint}>
-    <input type="checkbox" aria-label=${host._t('device_inbox.select_row', { name: row.name })}
+    <input data-hp="device-catalog-select" data-id=${row.kind === 'virtual' ? row.markerId : row.key} type="checkbox" aria-label=${host._t('device_inbox.select_row', { name: row.name })}
       .checked=${view.chosenKeys.has(row.key)} ?disabled=${!canSelect}
       @click=${(event: Event) => event.stopPropagation()}
       @change=${(event: Event) => toggleInboxSelection(host, row.key, (event.target as HTMLInputElement).checked)} />

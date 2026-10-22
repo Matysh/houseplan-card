@@ -1,5 +1,9 @@
 # #489 — Объявленный `data-hp`-контракт для UI и E2E
 
+> Historical specification. Compatible extensions for #1011 are documented in
+> [STYLING-HOOKS.md §7.8](../../docs/STYLING-HOOKS.md#78-e2e-scene-and-form-identities-1011)
+> and the current machine-readable contract; the original decisions below remain archival.
+
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/489
 - **Тип / приоритет:** feature + tests + docs / P2
 - **Трек:** полный; задача охватывает несколько UI-поверхностей и вводит новый

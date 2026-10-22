@@ -92,7 +92,7 @@ export class DeviceCopyEditor {
       cfg: contentFingerprint(h._serverCfg), layout: contentFingerprint(h._layout), x: 0, y: 0, target: null });
   }
   private async copy(m: Menu): Promise<void> {
-    if (this.busy || !this.unchanged(m)) { this.close(); this.host._showToast(this.t('device.copy_changed')); return; }
+    if (this.busy || !this.unchanged(m)) { this.close(); this.host._showToast(this.t('device.copy_changed'), 'device.copy_changed'); return; }
     const h = this.host;
     let id = '';
     const operation = ++this.operation;
@@ -159,7 +159,7 @@ export class DeviceCopyEditor {
           const dy = Math.max(view.y + pad - y, 0) - Math.max(y - (view.y + view.h - pad), 0);
           if (dx || dy) h._applyView(h._zoom, view.x + view.w / 2 - dx, view.y + view.h / 2 - dy);
         }
-        h._showToast(this.t('device.copy_created'));
+        h._showToast(this.t('device.copy_created'), 'device.copy_created');
         this.copied?.(id, m.id);
       }
     } catch (error) {
@@ -168,7 +168,7 @@ export class DeviceCopyEditor {
       if (sent) {
         try { await Promise.all([h._reloadConfigOnly(true), h._reloadLayoutOnly()]); } catch { /* retain the failure, never retry the write */ }
         if (h._serverCfg?.markers?.some(marker => marker.id === id) && h._layout[id]) {
-          if (this.contextCurrent(m)) { h._showToast(this.t('device.copy_created')); this.copied?.(id, m.id); }
+          if (this.contextCurrent(m)) { h._showToast(this.t('device.copy_created'), 'device.copy_created'); this.copied?.(id, m.id); }
           return;
         }
       }

@@ -40,7 +40,7 @@ export interface BackdropGuardState {
 
 export interface BackdropPickHost {
   _t: (key: I18nKey, vars?: Record<string, string | number>) => string;
-  _showToast: (text: string) => void;
+  _showToast: (text: string, id?: string) => void;
   _backdropGuard: BackdropGuardState | null;
   requestUpdate?: () => void;
 }
@@ -291,7 +291,7 @@ export function renderBackdropGuard(
       if (planLimitBytes !== undefined && out.blob.size > planLimitBytes) {
         if (!stillCurrent()) return;
         close();
-        host._showToast(host._t('toast.plan_too_large', { mb: planLimitBytes / 1048576 }));
+        host._showToast(host._t('toast.plan_too_large', { mb: planLimitBytes / 1048576 }), 'toast.plan_too_large');
         return;
       }
       const payload = await encodePlanFile(out.blob, out.ext, out.name);
@@ -303,7 +303,7 @@ export function renderBackdropGuard(
       // user just declined — staging stays clean, the toast says what happened.
       if (!stillCurrent()) return;
       close();
-      host._showToast(host._t('backdrop.downscale_failed'));
+      host._showToast(host._t('backdrop.downscale_failed'), 'backdrop.downscale_failed');
     }
   };
   return html`<hp-dialog .hass=${hass} data-kind="decor"

@@ -24,14 +24,17 @@ const setup=()=>{const root=new Root({localName:'houseplan-card'}),p=new ToastPr
 const owner=root=>{const portal=new NodeStub();return {host:new NodeStub(root),portal:()=>portal};};
 
 test('new text announces once; renders and owner changes preserve one non-live visible node',()=>{
- const {root,p}=setup(),a=owner(root),b=owner(root);p.show('first');flush();
+ const {root,p}=setup(),a=owner(root),b=owner(root);p.show('first','toast.saved');flush();
  const n=root.portal.children[0];assert.equal(n.textContent,'first');assert.equal(n.attributes.get('role'),'alert');
  p.refresh();assert.equal(root.portal.children[0],n);
+ assert.equal(n.dataset.id,'toast.saved');
  setToastOwner(root,a,true);assert.equal(a.portal().children[0],n);assert.equal(root.portal.children.length,0);
  assert.equal(n.attributes.get('aria-live'),'off');assert.equal(n.attributes.has('role'),false);
  setToastOwner(root,b,true);assert.equal(b.portal().children[0],n);assert.equal(a.portal().children.length,0);
  setToastOwner(root,b,false);assert.equal(a.portal().children[0],n);assert.equal(n.textContent,'first');
+ assert.equal(n.dataset.id,'toast.saved','moving the notice preserves its message identity');
  p.show('first');assert.equal(n.textContent,'');flush();assert.equal(n.textContent,'first');assert.equal(n.attributes.get('role'),'alert');
+ assert.equal(n.dataset.id,'message','unkeyed replacement must not retain the previous key');
  p.disconnect();
 });
 test('replacement and clear/disconnect retire pending frames, no resurrection or cross-card routing',()=>{

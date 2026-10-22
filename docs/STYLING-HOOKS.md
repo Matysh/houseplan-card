@@ -472,3 +472,61 @@ families include `iso-*`, `zigbee-topology-*`, `resize-*`, `plan-snap-*` and
 type itself by making every unfinished chain ordinary partitions. There is no
 current DOM state in which that legacy hook can appear; new tests use
 `partition`.
+
+### 7.8 E2E scene and form identities (#1011)
+
+The additional hooks below have audience `test` and `since: 1.83.0`. They add
+attributes to existing elements, without changing layout, actions, permission
+gates or saved data. Their complete elements/enums/identity metadata live in
+`data-hp-contract.json`. Existing hooks and internal prefixes remain intact.
+
+| Selector | Identity and meaning |
+|---|---|
+| `stage[data-grid-step]` | Actual plan SVG, its current viewBox/CTM and base snap pitch in SVG units; grid origin is (0,0). Use Flat projection for floor-coordinate clicks. |
+| `wall-node-layer[data-state]`, `wall-node[data-node]` | Existing node layer state and interactive node key; not the decorative outer circle. |
+| `room-resize[data-room][data-edge]` | Interactive hit circle, room id and current polygon edge index. Read its existing `aria-disabled`. |
+| `device[data-selected]` | Existing editor selection, as `true`/`false`. |
+| `device[data-hp-device-contact]` | Contact contour present, including contact with a wall. This alone does not establish a device group. |
+| `device[data-hp-device-component]`, `device-contact-contour[data-component][data-grouped]` | Group owner marker id on all members and the owner's existing contour; `data-grouped=true` means at least two devices. |
+| `device-history[data-action]` | Position undo/redo, preserving the old history attribute. |
+| `device-catalog-row[data-id]`, `device-catalog-select[data-id]`, `device-catalog-select-all` | HA inbox row key or virtual marker id, and actual selection checkboxes. |
+| `vacuum-trail`, `vacuum-trail-segment[data-entity][data-kind]`, `vacuum-puck[data-entity]` | Shared trail SVG, each current/previous/tip result's vacuum entity and the visible robot puck. Container presence alone does not identify one vacuum. |
+| `vacuum-calibration`, `vacuum-calibration-action[data-action]`, `vacuum-calibration-step[data-step]` | Existing manual fit bar, rotate/mirror/save/cancel and existing manual overlay. No wizard steps are invented. |
+| `backdrop`, `decor[data-kind][data-id]` | Existing backdrop image and every rendered decor branch, including passive image/furniture paths and erase hit shapes. Several SVG elements may identify one object. |
+| `furniture-category[data-id]`, `furniture-item[data-id]` | Existing canonical category and symbol buttons. |
+| `image-upload[data-kind]` | Existing backdrop/decor file input; attachment PDFs are not image uploads. |
+| `glow-layer`, `glow-pool[data-entity]` | Existing glow layer and source entity. A pool can remain through its existing fade-out; wait for settle before asserting absence. This is DOM presence, not pixel quality. |
+| `summary-panel`, `summary-settings`, `summary-toggle`, `summary-metric[data-id]` | Existing panel, desktop/kiosk controls and configured value id. Phone controls retain `header-menu-item`. |
+| `space-tab[data-space]`, `space-delete` | Space id (old `data-id` retained) and the existing deletion action/confirmation. |
+| `toast[data-id]` | Known i18n key, or `message` for composed/unkeyed text; no reverse lookup by translated text. Ownership/routing retains the key, replacement updates it. |
+| `settings-section[data-kind][data-section]` | Desktop settings navigation; mobile select uses `field[data-field="settings-section"]`. Hidden panes remain mounted. |
+| `field[data-field]`, `field-option[data-field][data-value]`, `action[data-action]` | Actual form control, option and secondary command. Repeated commands/options also identify their subject with `data-value`. |
+
+Scope fields to their owning dialog, Properties panel or custom component.
+Native controls use their existing semantic id/name (`gs-*`, `space-*`, `room-*`,
+`marker-*`, `support-*`); Properties uses `properties-<field.key>`. The four PDF
+checkboxes are `pdf-dimensions`, `pdf-decor`, `pdf-roomNames`, `pdf-backdrop`.
+Radio/options use their stable value, not translated labels. Radar target slots
+can additionally carry `data-slot`. A field hook does not expose private HA
+component internals.
+
+Colour hosts identify their owner: `gs-fill-<palette key>`, `gs-wall-fill`,
+`gs-bg-color`, `gs-glow-color`, `space-border-color`, `space-fill-color`,
+`space-bg-color`, `room-fill-color`, `marker-glow-color`,
+`marker-activity-color`, `decor-color`. Inside that host, existing controls use
+`colour-open`, `colour-sv`, `colour-hex`, `colour-hue`, `colour-saturation`,
+`colour-brightness`, `colour-opacity`, `colour-none`; the two opacity controls
+are distinguished by `data-value=range|number`. Confirmation is the existing
+`action[data-action="colour-confirm"]`.
+
+The current decor model has line/rect/ellipse/text/furniture/image. The `path`
+kind is reserved by the expanded enum, not a new persisted shape type; existing
+furniture SVG paths identify `furniture`. The added tool enum also declares
+existing opening/stair variants, `device-magnets` and `led-strip`.
+
+`schemaVersion: 1`, compatible additions and the one-stable-version removal
+policy remain unchanged. New per-hook `attributeMetadata` is additive and can
+be ignored by old readers. It documents open identities without replacing the
+old closed `attributes` arrays. The local test facade is not shipped. External
+E2E syncs the inventory from the installed product ref before contract lint
+and updates its kind collector for the new hook families (#1010).

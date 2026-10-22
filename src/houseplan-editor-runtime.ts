@@ -776,7 +776,7 @@ export interface HouseplanEditorHostPort {
   _showAll: boolean;
   _showHidden: boolean;
   _setShowHidden: (shown: boolean) => void;
-  _showToast: (msg: string) => void;
+  _showToast: (msg: string, id?: string) => void;
   _signer: ContentSigner;
   _space: string;
   _spaceDialog: SpaceDialogState | null;
@@ -1052,7 +1052,7 @@ export class HouseplanEditorRuntime {
         show: id => this._showGeometrySpace(id),
       });
       this.host.requestUpdate();
-    }).catch(() => { this.host._showToast(this.host._t('toast.geometry_unsafe')); })
+    }).catch(() => { this.host._showToast(this.host._t('toast.geometry_unsafe'), 'toast.geometry_unsafe'); })
       .finally(() => {
         this._nodeMoveLoad = null;
         // A Select return before the old import settles needs a new render;
@@ -1161,7 +1161,7 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
     if (this.host._mode === 'devices') this.host._cancelDeviceDrag();
     this.host._bootSoftCancel(); // navigation owns its own short, bounded transition
     if ((mode === 'plan' || mode === 'decor') && !this.host._norm) {
-      this.host._showToast(this.host._t('toast.markup_needs_server'));
+      this.host._showToast(this.host._t('toast.markup_needs_server'), 'toast.markup_needs_server');
       return;
     }
     if (this.host._wallFaceBatch) this._roomDialogCancel();
@@ -1352,7 +1352,7 @@ public _showPhysicalRange(max = this.host._drawWallMaxCm, min = 0): void {
       min: cmToField(min, this.host._imperial),
       max: cmToField(max, this.host._imperial),
       unit: this.host._t(this.host._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm'),
-    }));
+    }), 'toast.physical_range');
   }
 
 public _mergeSpacePartitions(sp: any, seedIds?: string[]): number {
@@ -1400,7 +1400,7 @@ public _finalizeWallChainPartitions(seedIds: readonly string[]): boolean {
         },
       );
     } catch {
-      this.host._showToast(this.host._t('toast.geometry_unsafe'));
+      this.host._showToast(this.host._t('toast.geometry_unsafe'), 'toast.geometry_unsafe');
       return false;
     }
     if (!result.report.changed) return true;
@@ -1467,7 +1467,7 @@ public _limitReached(kind: 'partition' | 'column'): boolean {
     const reached = kind === 'partition'
       ? (sp.partitions || []).length >= MAX_PARTITIONS
       : (sp.wall_columns || []).length >= MAX_WALL_COLUMNS;
-    if (reached) this.host._showToast(this.host._t('toast.physical_limit'));
+    if (reached) this.host._showToast(this.host._t('toast.physical_limit'), 'toast.physical_limit');
     return reached;
   }
 
@@ -1718,7 +1718,7 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null, cand
         try { safe = this.host._checkSpacePhysicalGeometry(candidate, spaceId).ok; proof = !safe; } catch { safe = false; }
         if (!safe) {
           this._rollbackRejectedPhysicalWrites([[spaceId, accepted]], proof);
-          this.host._showToast(this.host._t('toast.geometry_unsafe'));
+          this.host._showToast(this.host._t('toast.geometry_unsafe'), 'toast.geometry_unsafe');
           throw Object.assign(new Error('unsafe wall geometry'), { code: 'geometry-unsafe' });
         }
         accepted.fingerprint = exactFingerprint;
@@ -2081,7 +2081,7 @@ public _commitPhysicalGeometry(
     if (!legacySafe) {
       this._clearGeometryGesture();
       this._restoreGeometryStateLocal(before);
-      this.host._showToast(this.host._t('toast.geometry_unsafe'));
+      this.host._showToast(this.host._t('toast.geometry_unsafe'), 'toast.geometry_unsafe');
       return false;
     }
     let committedCandidate: any;
@@ -2157,7 +2157,7 @@ public _commitPhysicalGeometry(
     if (!safe) {
       this._clearGeometryGesture();
       this._restoreGeometryStateLocal(before);
-      this.host._showToast(this.host._t('toast.geometry_unsafe'));
+      this.host._showToast(this.host._t('toast.geometry_unsafe'), 'toast.geometry_unsafe');
       return false;
     }
     // #329: the owner's junction limits refuse the WRITE. An existing plan's
@@ -2354,7 +2354,7 @@ private _runNodeHistory(direction: 'undo' | 'redo'): void {
     if (this.nodeMove) { this.nodeMove.history(direction); return; }
     // A cold adapter is a temporary refusal: history stays, the import enables the next attempt.
     this._loadNodeMove();
-    this.host._showToast(this.host._t('history.unavailable'));
+    this.host._showToast(this.host._t('history.unavailable'), 'history.unavailable');
   }
 
 /** Undo and Redo share one transaction boundary: the first press cancels a live gesture. */
@@ -2467,12 +2467,12 @@ public _contourSelfIntersects(poly: number[][]): boolean {
 public _canAppendWallPoint(): boolean {
     if (this.host._drawWallCm == null) { this._showPhysicalRange(100); return false; }
     if (this.host._path.length >= MAX_WALL_CHAIN_POINTS) {
-      this.host._showToast(this.host._t('toast.physical_limit'));
+      this.host._showToast(this.host._t('toast.physical_limit'), 'toast.physical_limit');
       return false;
     }
     const spCfg = this.host._curSpaceCfg as any;
     if ((spCfg?.partitions || []).length >= MAX_PARTITIONS) {
-      this.host._showToast(this.host._t('toast.physical_limit'));
+      this.host._showToast(this.host._t('toast.physical_limit'), 'toast.physical_limit');
       return false;
     }
     return true;
@@ -2548,7 +2548,7 @@ public _markupClick(ev: MouseEvent): void {
       };
       this._syncPlanSnapActiveMarker(null);
       this._syncPlanSnapConflictMarkers(resolved.conflicts);
-      this.host._showToast(this.host._t('toast.plan_snap_ambiguous'));
+      this.host._showToast(this.host._t('toast.plan_snap_ambiguous'), 'toast.plan_snap_ambiguous');
       return;
     }
     let pt = resolved.point;
@@ -2765,7 +2765,7 @@ public _offerExistingWallFace(raw: number[]): boolean {
           });
           if (diagnostic.kind === 'repair') {
             this.host._wallRepairDiagnostic = diagnostic.proposal;
-            this.host._showToast(this.host._t('toast.wall_repair_too_large'));
+            this.host._showToast(this.host._t('toast.wall_repair_too_large'), 'toast.wall_repair_too_large');
             return true;
           }
         }
@@ -2798,7 +2798,7 @@ public _columnClick(raw: number[]): void {
       this.host._duplicateColumnTimer = window.setTimeout(() => {
         this.host._duplicateColumnId = null;
       }, 900);
-      this.host._showToast(this.host._t('toast.column_duplicate'));
+      this.host._showToast(this.host._t('toast.column_duplicate'), 'toast.column_duplicate');
       return;
     }
     const before = this._geometrySnapshot();
@@ -2854,7 +2854,7 @@ public _savePhysicalDialog = (): void => {
       const rawAngle = strictNumber(d.angle || '0');
       if (d.shape !== 'circle'
           && (rawAngle == null || rawAngle < 0 || rawAngle >= 90)) {
-        this.host._showToast(this.host._t('toast.physical_angle'));
+        this.host._showToast(this.host._t('toast.physical_angle'), 'toast.physical_angle');
         return;
       }
       const candidate: WallColumnCfg = d.shape === 'circle'
@@ -2863,7 +2863,7 @@ public _savePhysicalDialog = (): void => {
             angle: rawAngle! };
       if (model.wall_columns.some((c) => c.id !== d.id
           && sameColumnPlacement(c, candidate, this.host._gridPitch * 0.02))) {
-        this.host._showToast(this.host._t('toast.column_duplicate'));
+        this.host._showToast(this.host._t('toast.column_duplicate'), 'toast.column_duplicate');
         return;
       }
     }
@@ -2873,7 +2873,7 @@ public _savePhysicalDialog = (): void => {
       if (p && cmRaw === 0 && zeroWallHasOpening(sp.openings, {
         kind: 'partition', id: d.id,
       })) {
-        this.host._showToast(this.host._t('toast.zero_wall_opening_conflict'));
+        this.host._showToast(this.host._t('toast.zero_wall_opening_conflict'), 'toast.zero_wall_opening_conflict');
         return;
       }
       if (p) p.cm = cmRaw;
@@ -3381,7 +3381,7 @@ public _rszUp(ev: PointerEvent): void {
     }
     if (result.kind === 'rejected') {
       this.host._cfgEpoch++;
-      this.host._showToast(this.host._t('resize.commit_failed'));
+      this.host._showToast(this.host._t('resize.commit_failed'), 'resize.commit_failed');
       this.host.requestUpdate();
       return;
     }
@@ -3606,7 +3606,7 @@ public _renderResizeLayer(
         const resolution = this._rszResolution(r.id, i, renderSnapshot);
         const disabled = !resolution.enabled;
         const reason = disabled ? this._rszReasonText(resolution.reason) : this.host._t('title.markup_resize');
-        parts.push(svg`<circle class="rszhandle ${disabled ? 'disabled' : ''}"
+        parts.push(svg`<circle data-hp="room-resize" data-room=${r.id} data-edge=${i} class="rszhandle ${disabled ? 'disabled' : ''}"
           cx="${mx}" cy="${my}" r="${f(hr)}" tabindex="0" role="button"
           aria-disabled="${disabled ? 'true' : 'false'}" aria-label="${reason}"
           @pointerdown=${(e: PointerEvent) => this._rszEdgeDown(e, r.id, i)}
@@ -4795,7 +4795,7 @@ public _renderEditorGroupModel(group: EditorToolbarGroup): EditorSecondaryModel 
 public _renderDrawWallControl(): TemplateResult {
     const min = this.host._tool === 'column' ? 1 : 0;
     return html`<label class="drawwall ${this.host._drawWallCm == null ? 'invalid' : ''}">${this.host._t('wallthick.field')}
-      <input type="number" min=${cmToField(min, this.host._imperial)}
+      <input data-hp="field" data-field="wall-thickness" type="number" min=${cmToField(min, this.host._imperial)}
         max=${cmToField(this.host._drawWallMaxCm, this.host._imperial)} step="any"
         .value=${this.host._drawWallFieldValue}
         @input=${(e: Event) => {
@@ -4940,23 +4940,23 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
       }),
       content: html`
         ${draws ? html`
-          <hp-color-opacity .label=${this.host._t('decor.color')} .color=${this.host._decorStyle.color}
+          <hp-color-opacity data-hp="field" data-field="decor-color" .label=${this.host._t('decor.color')} .color=${this.host._decorStyle.color}
             .opacity=${this.host._decorStyle.opacity} .opacityLabel=${this.host._t('space.opacity')}
             .pickerLabels=${this.host._colorPickerLabels}
             @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
               this._updateDecorStyle({ ...this.host._decorStyle, ...e.detail })}></hp-color-opacity>
           <label class="drawwall">${this.host._t('decor.width')}
-            <input type="number" min=${this.host._decorSmallField(0.1)}
+            <input data-hp="field" data-field="decor-stroke-width" type="number" min=${this.host._decorSmallField(0.1)}
               max=${this.host._decorSmallField(100)} step="0.1"
               .value=${String(this.host._decorSmallField(this.host._decorStyle.widthCm))}
               @input=${(e: Event) => this._updateDecorStyle({ ...this.host._decorStyle,
                 widthCm: this.host._decorSmallCm(Number((e.target as HTMLInputElement).value)) })} />
             <span class="opl">${this.host._t(this.host._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span>
           </label>
-          ${canFill ? html`<label class="dfill"><input type="checkbox" .checked=${this.host._decorStyle.fill}
+          ${canFill ? html`<label class="dfill"><input data-hp="field" data-field="decor-fill" type="checkbox" .checked=${this.host._decorStyle.fill}
               @change=${(e: Event) => this._updateDecorStyle({ ...this.host._decorStyle,
                 fill: (e.target as HTMLInputElement).checked })} />${this.host._t('decor.fill')}</label>
-            <hp-color-opacity .label=${this.host._t('decor.fill_color')} .color=${this.host._decorStyle.fillColor}
+            <hp-color-opacity data-hp="field" data-field="decor-fill-color" .label=${this.host._t('decor.fill_color')} .color=${this.host._decorStyle.fillColor}
               .opacity=${this.host._decorStyle.fillOpacity} .opacityLabel=${this.host._t('space.opacity')}
               .pickerLabels=${this.host._colorPickerLabels}
               .disabled=${!this.host._decorStyle.fill}
@@ -5083,7 +5083,7 @@ public _renderDecorBar(): TemplateResult {
           <ha-icon icon=${ic}></ha-icon><span class="ml">${this.host._t(k)}</span>
         </button>`,
       )}
-      <hp-color-opacity class="decor-default-color"
+      <hp-color-opacity class="decor-default-color" data-hp="field" data-field="decor-color"
         .label=${this.host._t('decor.color')}
         .color=${this.host._decorStyle.color}
         .opacity=${this.host._decorStyle.opacity}
@@ -5133,7 +5133,7 @@ public _renderDecorTextDialog(): TemplateResult {
           ${''/* a textarea, not an input: the user's own line breaks are kept
                  and rendered (centred). Enter is a NEW LINE here, so saving
                  moved to Ctrl/Cmd+Enter and the button. */}
-          <textarea class="namein dtarea" rows="3" maxlength="200" .value=${d.text} autofocus
+          <textarea data-hp="field" data-field="decor-text" class="namein dtarea" rows="3" maxlength="200" .value=${d.text} autofocus
             @input=${(e: Event) => {
               const el = e.target as HTMLTextAreaElement;
               this._decorRememberTextSelection(el);
@@ -5147,24 +5147,24 @@ public _renderDecorTextDialog(): TemplateResult {
               e.stopPropagation();
               if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) this._decorSaveText();
             }}></textarea>
-          <hp-color-opacity .label=${this.host._t('decor.color')} .color=${d.color} .opacity=${d.opacity}
+          <hp-color-opacity data-hp="field" data-field="decor-color" .label=${this.host._t('decor.color')} .color=${d.color} .opacity=${d.opacity}
             .opacityLabel=${this.host._t('space.opacity')} .pickerLabels=${this.host._colorPickerLabels}
             @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
               (this.host._decorTextDialog = { ...d, ...e.detail })}></hp-color-opacity>
           <label>${this.host._t('decor.text_size')}</label>
-          <div class="colorrow"><input class="namein" type="number" min="0.1"
+          <div class="colorrow"><input data-hp="field" data-field="decor-text-size" class="namein" type="number" min="0.1"
             max=${this.host._decorSmallField(DECOR_TEXT_CM_MAX)} step="0.1"
             .value=${String(this.host._decorSmallField(d.sizeCm))}
             @input=${(e: Event) => (this.host._decorTextDialog = { ...d,
               sizeCm: this.host._decorTextCm(Number((e.target as HTMLInputElement).value)) })} />
             <span class="opl">${this.host._t(this.host._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span></div>
           <label>${this.host._t('decor.angle')}</label>
-          <input class="namein" type="number" min="-180" max="180" step="1" .value=${d.angle}
+          <input data-hp="field" data-field="decor-text-angle" class="namein" type="number" min="-180" max="180" step="1" .value=${d.angle}
             @input=${(e: Event) => (this.host._decorTextDialog = { ...d,
               angle: (e.target as HTMLInputElement).value })} />
           <label class="dispsection">${this.host._t('decor.live_group')}</label>
           <label>${this.host._t('decor.live_entity')}</label>
-          <input class="namein" type="text" list="hp-dtext-ents" placeholder=${this.host._t('decor.live_entity_ph')}
+          <input data-hp="field" data-field="decor-text-entity" class="namein" type="text" list="hp-dtext-ents" placeholder=${this.host._t('decor.live_entity_ph')}
             .value=${d.pickerEntity || ''}
             @input=${(e: Event) => (this.host._decorTextDialog = {
               ...d, pickerEntity: (e.target as HTMLInputElement).value,
@@ -5174,7 +5174,7 @@ public _renderDecorTextDialog(): TemplateResult {
           </datalist>
           ${ent ? html`
             <label>${this.host._t('decor.live_attr')}</label>
-            <select id="decor-live-attribute" class="namein" .value=${''}
+            <select data-hp="field" data-field="decor-live-attribute" id="decor-live-attribute" class="namein" .value=${''}
               @change=${(e: Event) => {
                 const value = (e.target as HTMLSelectElement).value;
                 if (value) this._decorInsertLiveVariable(value === '__state__' ? null : value);
@@ -5206,17 +5206,17 @@ public _renderBackdropDialog(): TemplateResult {
       icon="mdi:image-edit-outline" dismiss-on-scrim @hp-close=${() => (this.host._backdropDialog = null)}>
       <div class="body">
         <label>${this.host._t('decor.size')}</label>
-        <div class="colorrow"><input class="namein" type="number" min="0.01" step="0.01"
+        <div class="colorrow"><input data-hp="field" data-field="decor-frame-width" class="namein" type="number" min="0.01" step="0.01"
           .value=${String(this.host._decorLargeField(d.widthCm))}
           @input=${(e: Event) => (this.host._backdropDialog = { ...d,
             widthCm: this.host._decorLargeCm(Number((e.target as HTMLInputElement).value)) })} />
-          <span>×</span><input class="namein" type="number" min="0.01" step="0.01"
+          <span>×</span><input data-hp="field" data-field="decor-frame-height" class="namein" type="number" min="0.01" step="0.01"
           .value=${String(this.host._decorLargeField(d.heightCm))}
           @input=${(e: Event) => (this.host._backdropDialog = { ...d,
             heightCm: this.host._decorLargeCm(Number((e.target as HTMLInputElement).value)) })} />
           <span class="opl">${unit}</span></div>
         <label>${this.host._t('decor.angle')}</label>
-        <input class="namein" type="number" min="-180" max="180" step="1" .value=${d.angle}
+        <input data-hp="field" data-field="decor-frame-angle" class="namein" type="number" min="-180" max="180" step="1" .value=${d.angle}
           @input=${(e: Event) => (this.host._backdropDialog = { ...d,
             angle: (e.target as HTMLInputElement).value })} />
       </div>
@@ -5239,7 +5239,7 @@ public _deleteRoomClick(raw: number[]): void {
     if (!space) return;
     const room = [...space.rooms].reverse().find((r) => this._pointInRoom(raw, r));
     if (!room) {
-      this.host._showToast(this.host._t('toast.delete_room_pick'));
+      this.host._showToast(this.host._t('toast.delete_room_pick'), 'toast.delete_room_pick');
       return;
     }
     if (!room.id) return;
@@ -5271,7 +5271,7 @@ public _confirmRoomDelete = (keepWalls: boolean): void => {
       .filter((item) => !item.reusePartitionId)
       .map((item) => item.interval.key)).size;
     if (keepWalls && (sp.partitions || []).length + newCount > MAX_PARTITIONS) {
-      this.host._showToast(this.host._t('toast.physical_limit'));
+      this.host._showToast(this.host._t('toast.physical_limit'), 'toast.physical_limit');
       return;
     }
     const before = this._geometrySnapshot();
@@ -5392,7 +5392,7 @@ public _wallThickHit(raw: number[]): WallThickHit | null {
 public _wallThickClick(raw: number[]): void {
     const hit = this._wallThickHit(raw);
     if (!hit) {
-      this.host._showToast(this.host._t('toast.wallthick_pick'));
+      this.host._showToast(this.host._t('toast.wallthick_pick'), 'toast.wallthick_pick');
       return;
     }
     const cm = hit.cm;
@@ -5434,7 +5434,7 @@ public _wallThickApply(allRoom: boolean): void {
       if (cmRaw === 0 && zeroWallHasOpening(sp.openings, {
         kind: 'partition', id: partition.id,
       })) {
-        this.host._showToast(this.host._t('toast.zero_wall_opening_conflict'));
+        this.host._showToast(this.host._t('toast.zero_wall_opening_conflict'), 'toast.zero_wall_opening_conflict');
         return;
       }
       partition.cm = cmRaw;
@@ -5442,7 +5442,7 @@ public _wallThickApply(allRoom: boolean): void {
       const committed = this._commitPhysicalGeometry(
         this.host._t('history.wall_thickness'), before,
       );
-      if (committed) this.host._showToast(this.host._t('toast.wallthick_set'));
+      if (committed) this.host._showToast(this.host._t('toast.wallthick_set'), 'toast.wallthick_set');
       this.host.requestUpdate();
       return;
     }
@@ -5467,7 +5467,7 @@ public _wallThickApply(allRoom: boolean): void {
         return point.every(Number.isFinite) && distToSegment(point, target) <= eps;
       });
       if (blocked) {
-        this.host._showToast(this.host._t('toast.zero_wall_opening_conflict'));
+        this.host._showToast(this.host._t('toast.zero_wall_opening_conflict'), 'toast.zero_wall_opening_conflict');
         return;
       }
     }
@@ -5586,7 +5586,7 @@ public _renderWallThickDialog(): TemplateResult {
       @click=${(e: Event) => e.stopPropagation()}>
       <div class="row">
         <label>${this.host._t('wallthick.field')}</label>
-        <input type="number" min="0" max="100" step="any" .value=${d.value}
+        <input data-hp="field" data-field="object-opacity" type="number" min="0" max="100" step="any" .value=${d.value}
           @input=${(e: Event) => {
             this.host._wallDialog = { ...d, value: (e.target as HTMLInputElement).value };
           }}
@@ -5774,16 +5774,16 @@ public _openingClick(raw: number[]): void {
       if (this.host._openingJambBlockCm != null) {
         this.host._showToast(this.host._t('opening.partition_jamb_margin', {
           distance: formatLength(this.host._openingJambBlockCm, this.host._imperial),
-        }));
+        }), 'opening.partition_jamb_margin');
         return;
       }
       const eps = this.host._gridPitch * 1.5;
       const snap = snapToWall(raw, space.rooms, eps);
       if (snap && pointOnOpenCut(snap.x, snap.y, snap.angle, this.host._openCuts(), eps)) {
-        this.host._showToast(this.host._t('toast.opening_on_zero_wall'));
+        this.host._showToast(this.host._t('toast.opening_on_zero_wall'), 'toast.opening_on_zero_wall');
         return;
       }
-      this.host._showToast(this.host._t('toast.opening_no_wall'));
+      this.host._showToast(this.host._t('toast.opening_no_wall'), 'toast.opening_no_wall');
       return;
     }
     const rebound = this.host._openingRebindId
@@ -6042,9 +6042,9 @@ public _saveOpening(): void {
             distance: formatLength(
               (margin / this.host._gridPitch) * this.host._cellCm, this.host._imperial,
             ),
-          }));
+          }), 'opening.partition_jamb_margin');
         } else {
-          this.host._showToast(this.host._t('opening.partition_orphan'));
+          this.host._showToast(this.host._t('opening.partition_orphan'), 'opening.partition_orphan');
         }
         return;
       }
@@ -6056,14 +6056,14 @@ public _saveOpening(): void {
         return sibling ? [sibling] : [];
       });
       if (hostedOpeningIntervalsOverlap(resolution.resolved, siblings)) {
-        this.host._showToast(this.host._t('toast.opening_no_wall'));
+        this.host._showToast(this.host._t('toast.opening_no_wall'), 'toast.opening_no_wall');
         return;
       }
       Object.assign(o, materializePartitionOpening(o, resolution.resolved, NORM_W));
     } else if (Number(this.host._serverCfg?.model_version || 0) >= 9) {
       const host = resolveRoomOpeningHost(o, sp.wall_segments || []);
       if (!host) {
-        this.host._showToast(this.host._t('toast.opening_no_wall'));
+        this.host._showToast(this.host._t('toast.opening_no_wall'), 'toast.opening_no_wall');
         return;
       }
       o.host = host;
@@ -6197,7 +6197,7 @@ public _mergeClick(raw: number[]): void {
     const merged = pa && pb ? mergeRooms(pa, pb) : null;
     if (!merged) {
       // only rooms sharing a wall collapse into one outline (see mergeRooms)
-      this.host._showToast(this.host._t('toast.merge_not_adjacent'));
+      this.host._showToast(this.host._t('toast.merge_not_adjacent'), 'toast.merge_not_adjacent');
       this.host._mergeSel = null;
       return;
     }
@@ -6233,7 +6233,7 @@ public _commitMerge(): void {
     this.host._mergeDialog = null;
     this.host._regSignature = '';
     this.host._maybeRebuildDevices();
-    if (committed) this.host._showToast(this.host._t('toast.rooms_merged', { name: keep.name || '' }));
+    if (committed) this.host._showToast(this.host._t('toast.rooms_merged', { name: keep.name || '' }), 'toast.rooms_merged');
   }
 
 public _splitClick(raw: number[]): void {
@@ -6271,7 +6271,7 @@ public _splitClick(raw: number[]): void {
     if (!cur.length) {
       // the cut starts on a wall
       if (!onWall) {
-        this.host._showToast(this.host._t('toast.split_pick_wall'));
+        this.host._showToast(this.host._t('toast.split_pick_wall'), 'toast.split_pick_wall');
         return;
       }
       this.host._splitSel = { ...this.host._splitSel, pts: [wallPt!] };
@@ -6281,7 +6281,7 @@ public _splitClick(raw: number[]): void {
       // an interior click adds an intermediate vertex of the cut path
       const mid = this._snap(raw);
       if (!ptInside(mid, poly, eps)) {
-        this.host._showToast(this.host._t('toast.split_pick_inside'));
+        this.host._showToast(this.host._t('toast.split_pick_inside'), 'toast.split_pick_inside');
         return;
       }
       this.host._splitSel = { ...this.host._splitSel, pts: [...cur, mid] };
@@ -6290,7 +6290,7 @@ public _splitClick(raw: number[]): void {
     // a wall point finishes the cut
     const parts = splitRoomPath(poly, [...cur, wallPt!], eps);
     if (!parts) {
-      this.host._showToast(this.host._t('toast.split_bad_cut'));
+      this.host._showToast(this.host._t('toast.split_bad_cut'), 'toast.split_bad_cut');
       return;
     }
     this._resetRoomDialogFields();
@@ -6491,7 +6491,7 @@ public _applyWallFaceBatch(): void {
     if (!batch) return;
     if (!sp || !model) {
       this._dismissWallFaceBatch();
-      this.host._showToast(this.host._t('toast.geometry_unsafe'));
+      this.host._showToast(this.host._t('toast.geometry_unsafe'), 'toast.geometry_unsafe');
       return;
     }
     const abort = (message: string, vars?: Record<string, string | number>): void => {
@@ -6556,7 +6556,7 @@ public _applyWallFaceBatch(): void {
       this.host._nameSel = '';
       this.host._areaSel = '';
       this.host.requestUpdate();
-      this.host._showToast(this.host._t('toast.wall_chain_saved'));
+      this.host._showToast(this.host._t('toast.wall_chain_saved'), 'toast.wall_chain_saved');
       return;
     }
     const activePartitionIds = new Set(batch.activePartitionIds);
@@ -6774,7 +6774,7 @@ public _commitRoom(): void {
     };
     const abortMutation = (): void => {
       this._restoreGeometryStateLocal(before);
-      this.host._showToast(this.host._t('toast.geometry_unsafe'));
+      this.host._showToast(this.host._t('toast.geometry_unsafe'), 'toast.geometry_unsafe');
     };
     const H = this.host._spaceH;
     const wasSplit = !!this.host._pendingSplit;
@@ -6795,7 +6795,7 @@ public _commitRoom(): void {
       const main = sp.rooms.find((r: any) => r.id === this.host._pendingSplit!.roomId);
       if (!main) {
         forgetRoomBaseline(this.host);
-        this.host._showToast(this.host._t('toast.geometry_unsafe'));
+        this.host._showToast(this.host._t('toast.geometry_unsafe'), 'toast.geometry_unsafe');
         this.host._pendingSplit = null;
         this.host._splitSel = null;
         this.host._roomDialog = false;
@@ -7209,7 +7209,7 @@ private _inboxBatchDeps(): InboxBatchDeps {
           || inboxT(this.host, 'device_inbox.all_spaces'));
         } catch (error) {
           if (this.host._deviceInbox === owner && this.host._configWriteContext.current(claim, this.host.hass))
-            this.host._showToast(this.host._t('toast.error', { err: this.host._errText(error) }));
+            this.host._showToast(this.host._t('toast.error', { err: this.host._errText(error) }), 'toast.error');
         }
       },
     };
@@ -7264,7 +7264,7 @@ public _openMarkerDialog(d?: DevItem): void {
     this.host._vacAllCameraCache = null;
     if (d) this.host._ackNewDevice(d.id);
     if (!this.host._norm) {
-      this.host._showToast(this.host._t('toast.marker_needs_server'));
+      this.host._showToast(this.host._t('toast.marker_needs_server'), 'toast.marker_needs_server');
       return;
     }
     if (d) {
@@ -7510,13 +7510,13 @@ public async _pickMarkerFiles(ev: Event): Promise<void> {
         }
         uploaded.push({ name: json.name || file.name, url: json.url });
       } catch (e: any) {
-        this.host._showToast(this.host._t('toast.file_failed', { name: file.name, err: this.host._errText(e) }));
+        this.host._showToast(this.host._t('toast.file_failed', { name: file.name, err: this.host._errText(e) }), 'toast.file_failed');
       }
     }
     // the dialog might have closed during the upload — add only if it is still open
     if (uploaded.length && this.host._markerDialog) {
       this.host._markerDialog = { ...this.host._markerDialog, pdfs: [...this.host._markerDialog.pdfs, ...uploaded] };
-      this.host._showToast(this.host._t('toast.files_attached', { n: uploaded.length }));
+      this.host._showToast(this.host._t('toast.files_attached', { n: uploaded.length }), 'toast.files_attached');
     }
   }
 
@@ -7644,7 +7644,7 @@ public async _saveMarker(): Promise<void> {
       } else if (dlg.radar) {
         const radar = radarConfigFromDraft(dlg.radar, targetSpaceModel.cellCm || 5);
         if (!radar) {
-          this.host._showToast(this.host._t('radar.invalid'));
+          this.host._showToast(this.host._t('radar.invalid'), 'radar.invalid');
           return;
         }
         radarField = { radar };
@@ -7738,7 +7738,7 @@ public async _saveMarker(): Promise<void> {
           marker.pdfs = migratePdfUrls(marker.pdfs, fileSrc, id, mapping);
           cleanupOldFiles = Object.keys(mapping).length > 0;
         } catch (e: any) {
-          this.host._showToast(this.host._t('toast.files_migrate_failed', { err: this.host._errText(e) }));
+          this.host._showToast(this.host._t('toast.files_migrate_failed', { err: this.host._errText(e) }), 'toast.files_migrate_failed');
         }
       }
       // Rebinding changes source identity. Rewrite every marker:* edge in the
@@ -7806,7 +7806,7 @@ public async _saveMarker(): Promise<void> {
       // File copy is async: never install a candidate built from a replaced root.
       if (this.host._serverCfg !== cfg || this.host._cfgRev !== baseRevision || contentFingerprint(cfg) !== baseContent) {
         if (this.host._markerDialog === savingDraft) this.host._markerDialog = { ...savingDraft, busy: false };
-        this.host._showToast(this.host._t('toast.conflict'));
+        this.host._showToast(this.host._t('toast.conflict'), 'toast.conflict');
         return;
       }
       candidate = this._prepareConfigCandidate(candidate);
@@ -7851,7 +7851,7 @@ public async _saveMarker(): Promise<void> {
       }
       this.host._regSignature = '';
       this.host._maybeRebuildDevices();
-      this.host._showToast(this.host._t('toast.marker_saved'));
+      this.host._showToast(this.host._t('toast.marker_saved'), 'toast.marker_saved');
     } catch (e: any) {
       // audit L3: the dialog may have been closed (Esc) while the save was
       // in flight — spreading null yields a truthy husk and the renderer
@@ -7864,7 +7864,7 @@ public async _saveMarker(): Promise<void> {
         this.host.requestUpdate();
       }
       if (this.host._markerDialog === savingDraft) this.host._markerDialog = { ...savingDraft, busy: false };
-      if (!isGeometryCleanupRefusal(e)) this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
+      if (!isGeometryCleanupRefusal(e)) this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }), 'toast.error');
     }
   }
 
@@ -7880,14 +7880,14 @@ public async _deleteMarker(): Promise<void> {
       await deleteMarker(this);
     } catch (error) {
       if (this.host._configWriteContext.current(claim, this.host.hass))
-        this.host._showToast(this.host._t('toast.error', { err: this.host._errText(error) }));
+        this.host._showToast(this.host._t('toast.error', { err: this.host._errText(error) }), 'toast.error');
     }
   }
 
 public _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
     if (!this.properties.beforeIntent(() => this._openSpaceDialog(mode, spaceId), true)) return;
     if (!this.host._serverStorage || !this.host._serverCfg) {
-      this.host._showToast(this.host._t('toast.integration_missing'));
+      this.host._showToast(this.host._t('toast.integration_missing'), 'toast.integration_missing');
       return;
     }
     if (mode === 'edit') {
@@ -7957,7 +7957,7 @@ public _toggleServerPlans = async (): Promise<void> => {
     } catch (e: any) {
       const cur = this.host._spaceDialog;
       if (cur) this.host._spaceDialog = { ...cur, saved: [], savedBusy: false };
-      this.host._showToast(this.host._t('toast.plans_list_failed', { err: this.host._errText(e) }));
+      this.host._showToast(this.host._t('toast.plans_list_failed', { err: this.host._errText(e) }), 'toast.plans_list_failed');
     }
   };
 
@@ -8018,7 +8018,7 @@ public async _deleteServerPlan(name: string): Promise<void> {
       const d = this.host._spaceDialog;
       if (d?.saved) this.host._spaceDialog = { ...d, saved: d.saved.filter((p) => p.name !== name) };
     } catch (e: any) {
-      this.host._showToast(this.host._t('toast.plan_delete_failed', { err: this.host._errText(e) }));
+      this.host._showToast(this.host._t('toast.plan_delete_failed', { err: this.host._errText(e) }), 'toast.plan_delete_failed');
     }
   }
 
@@ -8054,7 +8054,7 @@ public async _saveSpaceDialog(): Promise<void> {
     if (!d || d.busy || !d.title.trim()) return;
     if (spaceDialogProblems(d, 'space-dialog', this.host._imperial).length) return;
     if (d.source === 'file' && !d.planFile && !d.planUrl) {
-      this.host._showToast(this.host._t('toast.plan_required'));
+      this.host._showToast(this.host._t('toast.plan_required'), 'toast.plan_required');
       return;
     }
     const wasFirst = d.mode === 'create' && (this.host._serverCfg?.spaces.length || 0) === 0;
@@ -8179,7 +8179,7 @@ public async _saveSpaceDialog(): Promise<void> {
       // then crashes, blanking the whole card. The toast below is the
       // only remaining signal, so it must still fire.
       if (this.host._spaceDialog) this.host._spaceDialog = { ...this.host._spaceDialog, busy: false };
-      if (!isGeometryCleanupRefusal(e)) this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
+      if (!isGeometryCleanupRefusal(e)) this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }), 'toast.error');
     }
   }
 
@@ -8273,7 +8273,7 @@ public _skipImport(): void {
       this.host._importTotal = 0;
       this.host._commitSpace(this.host._serverCfg!.spaces[0]?.id || this.host._space);
       this._setMode('plan');
-      this.host._showToast(this.host._t('import.done'));
+      this.host._showToast(this.host._t('import.done'), 'import.done');
     }
   }
 
@@ -8286,7 +8286,7 @@ public _renderImportDialog(): TemplateResult {
           <div class="rhint">${this.host._t('import.hint')}</div>
           ${d.floors.map(
             (f, i) => html`<label class="floorrow">
-              <input type="checkbox" .checked=${f.checked}
+              <input data-hp="field" data-field="import-floor" data-value=${f.id} type="checkbox" .checked=${f.checked}
                 @change=${(e: Event) => {
                   const floors = [...d.floors];
                   floors[i] = { ...f, checked: (e.target as HTMLInputElement).checked };
@@ -8298,7 +8298,7 @@ public _renderImportDialog(): TemplateResult {
           )}
         </div>
         <div class="row" slot="footer">
-          <button class="btn ghost" @click=${() => { this.host._importDialog = null; this._openSpaceDialog('create'); }}>
+          <button data-hp="action" data-action="import-create-space" class="btn ghost" @click=${() => { this.host._importDialog = null; this._openSpaceDialog('create'); }}>
             ${this.host._t('import.manual')}
           </button>
           <span class="spacer"></span>
@@ -8699,7 +8699,7 @@ public _renderSupportDialog(): TemplateResult {
             <section class="supportsection supportform" aria-labelledby="support-form-heading">
               <h3 id="support-form-heading">${st('support.form_group')}</h3>
               <label for="support-contact">${st('support.contact')}</label>
-              <input id="support-contact" class="namein" type="text" autocomplete="off"
+              <input data-hp="field" data-field="support-contact" id="support-contact" class="namein" type="text" autocomplete="off"
                 aria-invalid=${contactInvalid ? 'true' : 'false'}
                 aria-describedby=${contactInvalid ? 'support-error' : nothing}
                 .value=${state.contact} ?disabled=${busy || state.status === 'success'}
@@ -8707,7 +8707,7 @@ public _renderSupportDialog(): TemplateResult {
                   'contact', (event.target as HTMLInputElement).value,
                 )} />
               <label for="support-message">${st('support.message')}</label>
-              <textarea id="support-message" class="supportmessage" required
+              <textarea data-hp="field" data-field="support-message" id="support-message" class="supportmessage" required
                 aria-invalid=${messageInvalid ? 'true' : 'false'}
                 aria-describedby=${messageInvalid ? 'support-error' : nothing}
                 .value=${state.message} ?disabled=${busy || state.status === 'success'}
@@ -8716,7 +8716,7 @@ public _renderSupportDialog(): TemplateResult {
                   'message', (event.target as HTMLTextAreaElement).value,
                 )}></textarea>
               <label class="srcrow supportattach">
-                <input type="checkbox" .checked=${state.attach} aria-describedby="support-attach-hint"
+                <input data-hp="field" data-field="support-attach" type="checkbox" .checked=${state.attach} aria-describedby="support-attach-hint"
                   ?disabled=${busy || state.status === 'success'}
                   @change=${(event: Event) => void this._setSupportAttachment(
                     (event.target as HTMLInputElement).checked,
@@ -8753,15 +8753,15 @@ public _renderSupportDialog(): TemplateResult {
                     @toggle=${(event: Event) => this._supportPatch(state.draftId, {
                       rawOpen: (event.currentTarget as HTMLDetailsElement).open,
                     })}>
-                    <summary>${st('support.show_data')}</summary>
-                    ${state.rawOpen ? html`<textarea class="supportraw" readonly
+                    <summary data-hp="action" data-action="support-preview">${st('support.show_data')}</summary>
+                    ${state.rawOpen ? html`<textarea data-hp="field" data-field="support-preview-text" class="supportraw" readonly
                       .value=${state.preview.text}></textarea>` : nothing}
                   </details>
                   <div class="supportactions">
-                    <button type="button" class="btn ghost" @click=${() => this._downloadSupportPreview()}>
+                    <button data-hp="action" data-action="support-download" type="button" class="btn ghost" @click=${() => this._downloadSupportPreview()}>
                       <ha-icon icon="mdi:download"></ha-icon>${st('support.download')}
                     </button>
-                    <button type="button" class="btn ghost" @click=${() => void this._refreshSupportPreview()}
+                    <button data-hp="action" data-action="support-refresh" type="button" class="btn ghost" @click=${() => void this._refreshSupportPreview()}
                       ?disabled=${busy || state.status === 'success'}>
                       <ha-icon icon="mdi:refresh"></ha-icon>${st('support.refresh')}
                     </button>
@@ -8775,7 +8775,7 @@ public _renderSupportDialog(): TemplateResult {
                 </div>` : nothing}
               ${state.status === 'error' && state.attach && !state.preview ? html`
                 <div class="supportactions">
-                  <button type="button" class="btn ghost"
+                  <button data-hp="action" data-action="support-refresh" type="button" class="btn ghost"
                     @click=${() => void this._refreshSupportPreview()}>
                     <ha-icon icon="mdi:refresh"></ha-icon>${st('support.refresh')}
                   </button>
@@ -8784,10 +8784,10 @@ public _renderSupportDialog(): TemplateResult {
                 <div class="supportmanual">
                   <strong>${st('support.manual_recovery')}</strong>
                   <div class="supportactions">
-                    <button type="button" class="btn ghost" @click=${() => void this._copySupportText(
+                    <button data-hp="action" data-action="support-copy-message" type="button" class="btn ghost" @click=${() => void this._copySupportText(
                       state.message, 'support.message_copied',
                     )}>${st('support.copy_message')}</button>
-                    ${state.preview ? html`<button type="button" class="btn ghost"
+                    ${state.preview ? html`<button data-hp="action" data-action="support-download" type="button" class="btn ghost"
                       @click=${() => this._downloadSupportPreview()}>${st('support.download')}</button>` : nothing}
                     <a class="aboutlink" href="https://t.me/ha_houseplan" target="_blank" rel="noopener noreferrer">Telegram</a>
                     <a class="aboutlink" href="https://github.com/Matysh/houseplan-card/issues" target="_blank" rel="noopener noreferrer">GitHub</a>
@@ -8796,7 +8796,7 @@ public _renderSupportDialog(): TemplateResult {
               ${state.status === 'success' ? html`
                 <div id="support-receipt" class="supportsuccess" role="status" aria-live="polite" tabindex="-1">
                   <strong>${st('support.success', { id: state.reportId })}</strong>
-                  <button type="button" class="btn ghost" @click=${() => void this._copySupportText(
+                  <button data-hp="action" data-action="support-copy-id" type="button" class="btn ghost" @click=${() => void this._copySupportText(
                     state.reportId, 'support.id_copied',
                   )}>${st('support.copy_id')}</button>
                 </div>` : nothing}
@@ -9123,18 +9123,18 @@ public _renderBackupExportDialog(): TemplateResult {
       icon="mdi:download" dismiss-on-scrim @hp-close=${() => this._closeBackupExport()}>
       <div class="body backupbody">
         <div class="rhint">${this.host._t('backup.export_hint')}</div>
-        <label class="srcrow"><input type="radio" name="backup-kind" value="full"
+        <label class="srcrow"><input data-hp="field" data-field="backup-kind" data-value="full" type="radio" name="backup-kind" value="full"
           .checked=${d.kind === 'full'}
           ?disabled=${d.busy} @change=${() => this.backupTransfer.selectKind('full')} />
           <span>${this.host._t('backup.full')}</span></label>
-        <label class="srcrow"><input type="radio" name="backup-kind" value="space"
+        <label class="srcrow"><input data-hp="field" data-field="backup-kind" data-value="space" type="radio" name="backup-kind" value="space"
           .checked=${d.kind === 'space'} ?disabled=${d.busy || !currentSpace}
           @change=${() => this.backupTransfer.selectKind('space')} />
           <span>${currentSpace
             ? this.host._t('backup.current_space_title', { title: currentSpace.title || currentSpace.id })
             : this.host._t('backup.no_current_space')}</span></label>
         ${d.kind === 'space' && currentSpace ? html`<label class="srcrow backupplanonly">
-          <input type="checkbox" .checked=${d.planOnly} ?disabled=${d.busy}
+          <input data-hp="field" data-field="backup-plan-only" type="checkbox" .checked=${d.planOnly} ?disabled=${d.busy}
             @change=${(event: Event) => {
               this.backupTransfer.selectKind('space');
               this.host._backupExportDialog = {
@@ -9253,7 +9253,7 @@ public _renderBackupImportDialog(): TemplateResult {
             })}<br />${this.host._t('backup.preserved_unresolved_hint')}</div>
           ` : nothing}
           ${reportRows.length ? html`<details class="backupdetails">
-            <summary>${this.host._t('backup.import_details')}</summary>
+            <summary data-hp="action" data-action="backup-import-details">${this.host._t('backup.import_details')}</summary>
             <div>
               ${reportRows.map(([key, value]) => html`<span>${this.host._t(
                 `backup.import_detail.${key}`, { n: String(value) },
@@ -9269,9 +9269,9 @@ public _renderBackupImportDialog(): TemplateResult {
             <div class="backupsummary"><b>${this.host._t('backup.final_name')}</b><span>${p.space_title}</span></div>
             <div class="rhint">${this.host._t('backup.target_settings')}</div>
             ${p.duplicates ? html`<fieldset class="backupchoices"><legend>${this.host._t('backup.duplicates', { n: String(p.duplicates) })}</legend>
-              <label><input type="radio" name="duplicate-policy" .checked=${d.duplicatePolicy === 'skip'}
+              <label><input data-hp="field" data-field="duplicate-policy" type="radio" name="duplicate-policy" .checked=${d.duplicatePolicy === 'skip'}
                 @change=${() => this._setBackupDuplicatePolicy('skip')} />${this.host._t('backup.skip')}</label>
-              <label><input type="radio" name="duplicate-policy" .checked=${d.duplicatePolicy === 'virtual'}
+              <label><input data-hp="field" data-field="duplicate-policy" type="radio" name="duplicate-policy" .checked=${d.duplicatePolicy === 'virtual'}
                 @change=${() => this._setBackupDuplicatePolicy('virtual')} />${this.host._t('backup.virtual_copy')}</label>
             </fieldset>` : nothing}`}
           ${p.content?.length ? html`<div class="backupcontent">
@@ -9287,7 +9287,7 @@ public _renderBackupImportDialog(): TemplateResult {
             )}</span>`)}
           </div>` : nothing}
           ${p.confirmation_required ? html`<label class="srcrow backupconfirm">
-            <input type="checkbox" .checked=${d.confirmMissing}
+            <input data-hp="field" data-field="backup-confirm-missing" type="checkbox" .checked=${d.confirmMissing}
               @change=${(e: Event) => (this.host._backupImportDialog = { ...d, confirmMissing: (e.target as HTMLInputElement).checked })} />
             <span>${p.archive && !p.archive.complete ? this._toolsT('backup.zip_confirm_incomplete') : this.host._t(missingDecor.length
               ? 'backup.confirm_missing_images' : 'backup.confirm_detach')}</span>
@@ -9392,36 +9392,36 @@ public _updateDecorStyle(next: DecorStyle, immediate = false): void {
       if (!d.showRoomTooltip && this.host._tip?.room) this.host._tip = null;
       if (dialogSession(this.host, 'settings') === owner) this.host._settingsDialog = null;
       this.host.requestUpdate();
-      this.host._showToast(this.host._t('gs.saved'));
+      this.host._showToast(this.host._t('gs.saved'), 'gs.saved');
     } catch (e: any) {
       // Esc may close the dialog in flight; the toast must still fire (audit L3).
       // Never overwrite an authoritative conflict reload or newer edit (#439).
       if (attempt) this.host._rollbackOptimistic(attempt);
       if (this.host._settingsDialog && dialogSession(this.host, 'settings') === owner)
         this.host._settingsDialog = { ...this.host._settingsDialog, busy: false };
-      if (!isGeometryCleanupRefusal(e)) this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
+      if (!isGeometryCleanupRefusal(e)) this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }), 'toast.error');
     }
   }
 
-public _boolInput(checked: boolean, onChange: (v: boolean) => void, disabled = false): TemplateResult {
+public _boolInput(checked: boolean, onChange: (v: boolean) => void, disabled = false, fieldId = 'opening-option'): TemplateResult {
     const h = (e: Event) => onChange(!!(e.target as HTMLInputElement).checked);
     return customElements.get('ha-switch')
-      ? html`<ha-switch .checked=${checked} .disabled=${disabled} @change=${h}></ha-switch>`
-      : html`<input type="checkbox" .checked=${checked} ?disabled=${disabled} @change=${h} />`;
+      ? html`<ha-switch data-hp="field" data-field=${fieldId} .checked=${checked} .disabled=${disabled} @change=${h}></ha-switch>`
+      : html`<input data-hp="field" data-field=${fieldId} type="checkbox" .checked=${checked} ?disabled=${disabled} @change=${h} />`;
   }
 
 public _rangeInput(
     min: number, max: number, step: number, value: number,
-    onInput: (v: number) => void, disabled = false, ariaLabel?: string,
+    onInput: (v: number) => void, disabled = false, ariaLabel?: string, fieldId?: string,
   ): TemplateResult {
     const h = (e: Event) => {
       const n = Number((e.target as HTMLInputElement).value);
       if (Number.isFinite(n)) onInput(n);
     };
     return customElements.get('ha-slider')
-      ? html`<ha-slider .min=${min} .max=${max} .step=${step} .value=${value}
+      ? html`<ha-slider data-hp="field" data-field=${fieldId} .min=${min} .max=${max} .step=${step} .value=${value}
           .disabled=${disabled} aria-label=${ariaLabel || nothing} @input=${h} @change=${h}></ha-slider>`
-      : html`<input type="range" min=${min} max=${max} step=${step} .value=${String(value)}
+      : html`<input data-hp="field" data-field=${fieldId} type="range" min=${min} max=${max} step=${step} .value=${String(value)}
           ?disabled=${disabled} aria-label=${ariaLabel || nothing} @input=${h} />`;
   }
 
@@ -9455,14 +9455,14 @@ public async _saveRules(): Promise<void> {
       this.host._rulesDialog = null;
       this.host._regSignature = '';
       this.host._maybeRebuildDevices();
-      this.host._showToast(this.host._t('rules.saved'));
+      this.host._showToast(this.host._t('rules.saved'), 'rules.saved');
     } catch (e: any) {
       // audit L3: the dialog may have been closed (Esc) while the save was
       // in flight — spreading null yields a truthy husk and the renderer
       // then crashes, blanking the whole card. The toast below is the
       // only remaining signal, so it must still fire.
       if (this.host._rulesDialog) this.host._rulesDialog = { ...this.host._rulesDialog, busy: false };
-      if (!isGeometryCleanupRefusal(e)) this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
+      if (!isGeometryCleanupRefusal(e)) this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }), 'toast.error');
     }
   }
 
@@ -9483,7 +9483,7 @@ public _renderRulesDialog(): TemplateResult {
         <div class="body">
           <div class="rhint">${this.host._t('rules.hint')}</div>
           <div class="rtest">
-            <input class="namein" type="text" placeholder=${this.host._t('rules.test_ph')}
+            <input data-hp="field" data-field="icon-rules-test" class="namein" type="text" placeholder=${this.host._t('rules.test_ph')}
               .value=${d.test}
               @input=${(e: Event) => (this.host._rulesDialog = { ...d, test: (e.target as HTMLInputElement).value })} />
             ${testIcon ? html`<ha-icon icon=${testIcon}></ha-icon><span class="rtesticon">${testIcon}</span>` : nothing}
@@ -9491,7 +9491,7 @@ public _renderRulesDialog(): TemplateResult {
           ${d.rules.map((r, i) => {
             const bad = r.pattern.trim() !== '' && !isValidPattern(r.pattern);
             return html`<div class="rrow">
-              <input class="namein rpat ${bad ? 'bad' : ''}" type="text"
+              <input data-hp="field" data-field="icon-rule-pattern" class="namein rpat ${bad ? 'bad' : ''}" type="text"
                 placeholder=${this.host._t('rules.pattern_ph')}
                 title=${bad ? this.host._t('rules.invalid') : ''}
                 .value=${r.pattern}
@@ -9500,7 +9500,7 @@ public _renderRulesDialog(): TemplateResult {
                   rules[i] = { ...r, pattern: (e.target as HTMLInputElement).value };
                   this._rulesSet(rules);
                 }} />
-              <input class="namein ricon" type="text" placeholder=${this.host._t('rules.icon_ph')}
+              <input data-hp="field" data-field="icon-rule-icon" class="namein ricon" type="text" placeholder=${this.host._t('rules.icon_ph')}
                 .value=${r.icon}
                 @input=${(e: Event) => {
                   const rules = [...d.rules];
@@ -9508,20 +9508,20 @@ public _renderRulesDialog(): TemplateResult {
                   this._rulesSet(rules);
                 }} />
               <ha-icon class="rprev" icon=${r.icon || 'mdi:chip'}></ha-icon>
-              <button type="button" class="btn ract" aria-label=${this.host._t('btn.up')}
+              <button data-hp="action" data-action="icon-rule-up" data-value=${i} type="button" class="btn ract" aria-label=${this.host._t('btn.up')}
                 @click=${() => move(i, -1)}><ha-icon icon="mdi:arrow-up"></ha-icon></button>
-              <button type="button" class="btn ract" aria-label=${this.host._t('btn.down')}
+              <button data-hp="action" data-action="icon-rule-down" data-value=${i} type="button" class="btn ract" aria-label=${this.host._t('btn.down')}
                 @click=${() => move(i, 1)}><ha-icon icon="mdi:arrow-down"></ha-icon></button>
-              <button type="button" class="btn ract del" aria-label=${this.host._t('btn.delete')}
+              <button data-hp="action" data-action="icon-rule-delete" data-value=${i} type="button" class="btn ract del" aria-label=${this.host._t('btn.delete')}
                 @click=${() => this._rulesSet(d.rules.filter((_, j) => j !== i))}><ha-icon icon="mdi:close"></ha-icon></button>
             </div>`;
           })}
-          <button class="btn ghost" @click=${() => this._rulesSet([...d.rules, { pattern: '', icon: '' }])}>
+          <button data-hp="action" data-action="icon-rule-add" class="btn ghost" @click=${() => this._rulesSet([...d.rules, { pattern: '', icon: '' }])}>
             <ha-icon icon="mdi:plus"></ha-icon>${this.host._t('rules.add')}
           </button>
         </div>
         <div class="row" slot="footer">
-          <button class="btn ghost" @click=${() => this._rulesSet(DEFAULT_ICON_RULES.map((r) => ({ ...r })))}>
+          <button data-hp="action" data-action="icon-rules-reset" class="btn ghost" @click=${() => this._rulesSet(DEFAULT_ICON_RULES.map((r) => ({ ...r })))}>
             ${this.host._t('rules.reset')}
           </button>
           <span class="spacer"></span>
@@ -9569,14 +9569,14 @@ public async _vacAutoCalibrate(d: DevItem): Promise<void> {
     const src = this.host._vacSource(d);
     const tele = src ? readVacTelemetry(this.host.hass?.states[src]?.attributes) : null;
     if (!src || !tele || tele.rooms.length < 3) {
-      this.host._showToast(this.host._t('vac.autocal_no_rooms'));
+      this.host._showToast(this.host._t('vac.autocal_no_rooms'), 'vac.autocal_no_rooms');
       return;
     }
     const mapId = this._vacMapId(d, tele);
     const target = calibrationTarget(d.id, d.marker?.vacuum ?? null, d.space, src, mapId);
     const res = autoCalibrate(tele.rooms, this._vacPlanRoomAnchors(target.space));
     if (!res) {
-      this.host._showToast(this.host._t('vac.autocal_no_match'));
+      this.host._showToast(this.host._t('vac.autocal_no_match'), 'vac.autocal_no_match');
       return;
     }
     const rawSpace = this.host._serverCfg?.spaces?.find((space) => space.id === target.space);
@@ -9606,7 +9606,7 @@ public async _vacStartFit(d: DevItem, routeId = ''): Promise<void> {
     const src = this.host._vacSource(d);
     const tele = src ? readVacTelemetry(this.host._planHass?.states[src]?.attributes) : null;
     if (!src || !tele) {
-      this.host._showToast(this.host._t('vac.cal_need_pos'));
+      this.host._showToast(this.host._t('vac.cal_need_pos'), 'vac.cal_need_pos');
       return;
     }
     const mapId = this._vacMapId(d, tele);
@@ -10158,7 +10158,7 @@ public _renderOpeningDialog(): TemplateResult {
         || cur;
       const filtered = filterOpeningEntityCandidates(list, filter);
       return html`
-        <button type="button" class="dropbtn opening-entity-drop ${open ? 'open' : ''}"
+        <button data-hp="action" data-action="opening-entity-open" type="button" class="dropbtn opening-entity-drop ${open ? 'open' : ''}"
           data-opening-picker=${kind} aria-expanded=${open ? 'true' : 'false'}
           @click=${() => this._toggleOpeningEntityPicker(kind)}>
           ${cur
@@ -10168,18 +10168,18 @@ public _renderOpeningDialog(): TemplateResult {
         </button>
         ${open
           ? html`<div class="droppanel opening-entity-panel" data-opening-panel=${kind}>
-              <input class="namein opening-entity-search" type="text"
+              <input data-hp="field" data-field="led-picker-filter" class="namein opening-entity-search" type="text"
                 placeholder=${this.host._t('opening.search_ph')} .value=${filter}
                 @input=${(e: Event) => this._filterOpeningEntities(
                   kind, (e.target as HTMLInputElement).value,
                 )} />
               <div class="candlist">
-                <button type="button" class="cand opening-entity-candidate ${cur ? '' : 'sel'}"
+                <button data-hp="field-option" data-field=${`opening-${kind}-entity`} data-value="" type="button" class="cand opening-entity-candidate ${cur ? '' : 'sel'}"
                   data-opening-entity="" @click=${() => this._selectOpeningEntity(kind, '')}>
                   <span class="cl">${this.host._t('opening.none')}</span>
                 </button>
                 ${filtered.map((candidate) => html`
-                  <button type="button"
+                  <button data-hp="field-option" data-field=${`opening-${kind}-entity`} data-value=${candidate.value} type="button"
                     class="cand opening-entity-candidate ${candidate.value === cur ? 'sel' : ''}"
                     data-opening-entity=${candidate.value}
                     @click=${() => this._selectOpeningEntity(kind, candidate.value)}>
@@ -10208,25 +10208,25 @@ public _renderOpeningDialog(): TemplateResult {
                   : this.host._t('opening.host_partition')}</span>
             </div>` : nothing}
           <label>${this.host._t('opening.type_label')}</label>
-          <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'window'}
+          <label class="srcrow"><input data-hp="field" data-field="optype" type="radio" name="optype" .checked=${d.type === 'window'}
             @change=${() => (this.host._openingDialog = {
               ...d, type: 'window', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('window'),
               contactOpen: false, lockOpen: false,
             })} />
             <span>${this.host._t('opening.window')}</span></label>
-          <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'door'}
+          <label class="srcrow"><input data-hp="field" data-field="optype" type="radio" name="optype" .checked=${d.type === 'door'}
             @change=${() => (this.host._openingDialog = {
               ...d, type: 'door', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('door'),
               contactOpen: false, lockOpen: false,
             })} />
             <span>${this.host._t('opening.door')}</span></label>
-          <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'passage'}
+          <label class="srcrow"><input data-hp="field" data-field="optype" type="radio" name="optype" .checked=${d.type === 'passage'}
             @change=${() => (this.host._openingDialog = {
               ...d, type: 'passage', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('passage'),
               contactOpen: false, lockOpen: false,
             })} />
             <span>${this.host._t('opening.passage')}</span></label>
-          <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'gate'}
+          <label class="srcrow"><input data-hp="field" data-field="optype" type="radio" name="optype" .checked=${d.type === 'gate'}
             @change=${() => (this.host._openingDialog = {
               ...d, type: 'gate',
               lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('gate'), flipH: false,
@@ -10235,7 +10235,7 @@ public _renderOpeningDialog(): TemplateResult {
             <span>${this.host._t('opening.gate')}</span></label>
 
           <label>${this.host._t('opening.length_label')}</label>
-          <input class="namein tempin" type="number" min="20" max="600" step="5" .value=${String(d.lengthCm)}
+          <input data-hp="field" data-field="led-length" class="namein tempin" type="number" min="20" max="600" step="5" .value=${String(d.lengthCm)}
             @input=${(e: Event) => {
               const n = strictNumber((e.target as HTMLInputElement).value);
               if (n != null) this.host._openingDialog = { ...d, lengthCm: n, lengthTouched: true };
@@ -10274,13 +10274,13 @@ public _renderOpeningDialog(): TemplateResult {
         <div class="row dialog-action-footer" slot="footer">
           ${d.id
             ? html`<div class="dialog-action-group dialog-action-danger">
-                <button class="btn danger" @click=${() => this._deleteOpening()}>
+                <button data-hp="action" data-action="opening-delete" class="btn danger" @click=${() => this._deleteOpening()}>
                   <ha-icon icon="mdi:delete-outline"></ha-icon>${this.host._t('btn.delete')}
                 </button>
               </div>`
             : nothing}
           ${orphan
-            ? html`<button class="btn ghost" @click=${() => this._rebindPartitionOpening()}>
+            ? html`<button data-hp="action" data-action="opening-rebind" class="btn ghost" @click=${() => this._rebindPartitionOpening()}>
                 ${this.host._t('opening.rebind_partition')}
               </button>`
             : nothing}
@@ -10736,7 +10736,7 @@ public _renderPhysicalDialog(): TemplateResult {
       @hp-close=${() => (this.host._physicalDialog = null)}>
         <div class="body">
           ${column ? html`<label>${this.host._t('physical.shape')}</label>
-            <select class="areasel" @change=${(e: Event) => {
+            <select data-hp="field" data-field="physical-shape" class="areasel" @change=${(e: Event) => {
               const shape = (e.target as HTMLSelectElement).value as 'square' | 'circle';
               this.host._physicalDialog = { ...d, shape };
             }}>
@@ -10746,7 +10746,7 @@ public _renderPhysicalDialog(): TemplateResult {
           <label>${this.host._t(column
             ? d.shape === 'circle' ? 'physical.diameter' : 'physical.side'
             : 'wallthick.field')}</label>
-          <div class="row"><input class="namein tempin" type="number"
+          <div class="row"><input data-hp="field" data-field="physical-size" class="namein tempin" type="number"
             min=${cmToField(column ? 1 : 0, this.host._imperial)}
             max=${cmToField(column ? 150 : 100, this.host._imperial)} step="any" .value=${d.cm}
             @input=${(e: Event) => (this.host._physicalDialog = {
@@ -10755,7 +10755,7 @@ public _renderPhysicalDialog(): TemplateResult {
             <span class="opl">${this.host._t(this.host._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span></div>
           ${column && d.shape === 'square' ? html`
             <label>${this.host._t('physical.rotation')}</label>
-            <input class="namein tempin" type="number" min="0" max="89.999" step="5"
+            <input data-hp="field" data-field="physical-angle" class="namein tempin" type="number" min="0" max="89.999" step="5"
               .value=${d.angle || '0'}
               @input=${(e: Event) => (this.host._physicalDialog = {
                 ...d, angle: (e.target as HTMLInputElement).value,
@@ -10764,7 +10764,7 @@ public _renderPhysicalDialog(): TemplateResult {
         </div>
         <div class="row dialog-action-footer physicalfooter" slot="footer">
           <div class="dialog-action-group dialog-action-danger">
-            <button class="btn danger" @click=${() => this._deletePhysicalSelection()}>
+            <button data-hp="action" data-action="physical-delete" class="btn danger" @click=${() => this._deletePhysicalSelection()}>
               <ha-icon icon="mdi:delete-outline"></ha-icon>${this.host._t('btn.delete')}
             </button>
           </div>
@@ -10853,13 +10853,13 @@ public _renderDevicesBar(): TemplateResult {
         ${this.host._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
       </div>
       <div class="editbar-end">
-        <button class="btn ghost" data-device-position-history="undo"
+        <button class="btn ghost" data-hp="device-history" data-action="undo" data-device-position-history="undo"
           @click=${() => this.host._undoDevicePosition()}
           ?disabled=${this.host._devicePositionBusy || !undoName}
           data-hp-tooltip=${undoTitle} aria-label=${undoTitle}>
           <ha-icon icon="mdi:undo-variant" aria-hidden="true"></ha-icon>
         </button>
-        <button class="btn ghost" data-device-position-history="redo"
+        <button class="btn ghost" data-hp="device-history" data-action="redo" data-device-position-history="redo"
           @click=${() => this.host._redoDevicePosition()}
           ?disabled=${this.host._devicePositionBusy || !redoName}
           data-hp-tooltip=${redoTitle} aria-label=${redoTitle}>
@@ -10996,9 +10996,9 @@ public async _saveDiscoveryFilters(dialog: DeviceInboxDialogState): Promise<void
     const known = this._registryIntegrations().filter((name) => !draft.excluded.includes(name));
     return html`<details class="device-inbox-discovery" ?open=${dialog.filtersOpen}
         @toggle=${(event: Event) => patch({ filtersOpen: (event.target as HTMLDetailsElement).open })}>
-      <summary>${this.host._t('device_inbox.filters_title' as never)}</summary>
+      <summary data-hp="action" data-action="device-discovery-settings">${this.host._t('device_inbox.filters_title' as never)}</summary>
       <label class="srcrow">
-        <input type="checkbox" .checked=${draft.groupLights}
+        <input data-hp="field" data-field="led-group-lights" type="checkbox" .checked=${draft.groupLights}
           @change=${(event: Event) => patch({
             draftGroupLights: (event.target as HTMLInputElement).checked,
           })} />
@@ -11008,11 +11008,11 @@ public async _saveDiscoveryFilters(dialog: DeviceInboxDialogState): Promise<void
         <span>${this.host._t('device_inbox.filters_excluded' as never)}</span>
         <div class="device-inbox-chips">
           ${draft.excluded.map((name) => html`<span class="chip">${name}
-            <button type="button" aria-label="×"
+            <button data-hp="action" data-action="device-discovery-exclusion-remove" data-value=${name} type="button" aria-label="×"
               @click=${() => patch({ draftExcluded: draft.excluded.filter((x) => x !== name) })}>×</button>
           </span>`)}
         </div>
-        <input type="text" list="hp-discovery-integrations"
+        <input data-hp="field" data-field="led-title" type="text" list="hp-discovery-integrations"
           placeholder=${this.host._t('device_inbox.filters_search_ph' as never)}
           @change=${(event: Event) => {
             const input = event.target as HTMLInputElement;
@@ -11025,7 +11025,7 @@ public async _saveDiscoveryFilters(dialog: DeviceInboxDialogState): Promise<void
         <datalist id="hp-discovery-integrations">
           ${known.map((name) => html`<option value=${name}></option>`)}
         </datalist>
-        <button type="button" class="btn ghost" ?disabled=${draft.usesProductList}
+        <button data-hp="action" data-action="device-discovery-exclusions-reset" type="button" class="btn ghost" ?disabled=${draft.usesProductList}
           @click=${() => patch({ draftExcluded: null })}>
           ${this.host._t('device_inbox.filters_reset' as never)}
         </button>
@@ -11035,7 +11035,7 @@ public async _saveDiscoveryFilters(dialog: DeviceInboxDialogState): Promise<void
         · ${this.host._t('device_inbox.filters_preview_hide' as never, { count: String(preview.hide) })}
         · ${this.host._t('device_inbox.filters_preview_lights' as never, { count: String(preview.lights) })}
       </div>` : nothing}
-      <button type="button" class="btn on" ?disabled=${!draft.dirty}
+      <button data-hp="action" data-action="device-discovery-save" type="button" class="btn on" ?disabled=${!draft.dirty}
         @click=${() => this._saveDiscoveryFilters(dialog)}>
         ${this.host._t('device_inbox.filters_save' as never)}
       </button>
@@ -11077,19 +11077,19 @@ public _renderDeviceInbox(): TemplateResult {
       @hp-close=${() => (this.host._deviceInbox = null)}>
       <div class="device-inbox" ?inert=${!!dialog.busy}>
         <div class="device-inbox-head">
-          <input class="device-inbox-search" type="search" autofocus
+          <input data-hp="field" data-field="device-catalog-search" class="device-inbox-search" type="search" autofocus
             placeholder=${this.host._t('device_inbox.search')} .value=${dialog.search}
             @input=${(event: Event) => (this.host._deviceInbox = {
               ...dialog, search: (event.target as HTMLInputElement).value, limit: 100, selected: [],
             })} />
-          <button type="button" class="btn" @click=${openVirtual}>
+          <button data-hp="action" data-action="device-catalog-add-virtual" type="button" class="btn" @click=${openVirtual}>
             <ha-icon icon="mdi:map-marker-plus-outline"></ha-icon>
             ${this.host._t('device_inbox.add_virtual')}
           </button>
         </div>
         <div class="device-inbox-tabs" role="tablist" @keydown=${(event: KeyboardEvent) => this._deviceInboxTabKey(event)}>
           ${(['on_plan', 'available', 'hidden', 'readd'] as DeviceInboxCategory[]).map((tab) => html`
-            <button type="button" role="tab" aria-selected=${dialog.tab === tab ? 'true' : 'false'}
+            <button data-hp="field-option" data-field="device-catalog-tab" data-value=${tab} type="button" role="tab" aria-selected=${dialog.tab === tab ? 'true' : 'false'}
               class=${dialog.tab === tab ? 'on' : ''}
               @click=${() => (this.host._deviceInbox = {
                 ...dialog, tab, limit: 100, onlyNew: false, selected: [],
@@ -11099,7 +11099,7 @@ public _renderDeviceInbox(): TemplateResult {
         </div>
         <div class="device-inbox-filters">
           <label class="device-inbox-space-filter">${inboxT(this.host, 'device_inbox.space_filter')}
-            <hp-settings-select><select aria-label=${inboxT(this.host, 'device_inbox.space_filter')} ?disabled=${dialog.busy}
+            <hp-settings-select><select data-hp="field" data-field="device-catalog-space" aria-label=${inboxT(this.host, 'device_inbox.space_filter')} ?disabled=${dialog.busy}
               @change=${(event: Event) => {
                 if (!dialog.busy) this.host._deviceInbox = { ...dialog,
                   spaceFilter: (event.target as HTMLSelectElement).value, selected: [], limit: 100 };
@@ -11111,13 +11111,13 @@ public _renderDeviceInbox(): TemplateResult {
             </select></hp-settings-select>
           </label>
           ${dialog.tab === 'on_plan' ? html`<label>
-            <input type="checkbox" .checked=${dialog.onlyNew}
+            <input data-hp="field" data-field="device-catalog-new" type="checkbox" .checked=${dialog.onlyNew}
               @change=${(event: Event) => (this.host._deviceInbox = {
                 ...dialog, onlyNew: (event.target as HTMLInputElement).checked, limit: 100, selected: [],
               })} />${this.host._t('device_inbox.only_new')}
           </label>` : nothing}
           ${dialog.tab === 'available' ? html`<label>
-            <input type="checkbox" .checked=${dialog.showEntities}
+            <input data-hp="field" data-field="device-catalog-entities" type="checkbox" .checked=${dialog.showEntities}
               @change=${(event: Event) => {
                 this.host._deviceInboxMemo = null;
                 this.host._deviceInbox = {
@@ -11127,7 +11127,7 @@ public _renderDeviceInbox(): TemplateResult {
           </label>` : nothing}
           <span class="device-inbox-filter-help">
             <label>
-              <input type="checkbox" .checked=${this.host._showAll}
+              <input data-hp="field" data-field="device-catalog-show-all" type="checkbox" .checked=${this.host._showAll}
                 @change=${(event: Event) => {
                   const input = event.target as HTMLInputElement;
                   this.host._setShowHidden(input.checked);
@@ -11142,20 +11142,20 @@ public _renderDeviceInbox(): TemplateResult {
         <div class="device-inbox-results" aria-live="polite">
           ${visible.length ? visible.map((row) => {
             const primary = row.category === 'on_plan'
-              ? row.canFind ? html`<button type="button" class="btn" @click=${() => this._findInboxDevice(row)}>
+              ? row.canFind ? html`<button data-hp="action" data-action="device-catalog-find" data-value=${row.key} type="button" class="btn" @click=${() => this._findInboxDevice(row)}>
                   <ha-icon icon="mdi:crosshairs-gps"></ha-icon>${this.host._t('device_inbox.find')}</button>`
-                : html`<button type="button" class="btn" @click=${() => this._openInboxMarker(row)}
+                : html`<button data-hp="action" data-action="device-catalog-edit" data-value=${row.key} type="button" class="btn" @click=${() => this._openInboxMarker(row)}
                     ?disabled=${!row.canEdit}>${this.host._t('device_inbox.edit')}</button>`
               : row.category === 'hidden'
-                ? html`<button type="button" class="btn" @click=${() => this._setInboxHidden(row, false)}
+                ? html`<button data-hp="action" data-action="device-catalog-show" data-value=${row.key} type="button" class="btn" @click=${() => this._setInboxHidden(row, false)}
                     title=${row.canShow ? '' : this.host._t('device_inbox.show_disabled')}
                     ?disabled=${!row.canShow}>${this.host._t('device_inbox.show')}</button>`
-                : html`<button type="button" class="btn" @click=${() => this._openInboxMarker(row, true)}
+                : html`<button data-hp="action" data-action="device-catalog-add" data-value=${row.key} type="button" class="btn" @click=${() => this._openInboxMarker(row, true)}
                     ?disabled=${!row.canAdd}>${this.host._t(row.category === 'readd'
                       ? 'device_inbox.readd' : 'device_inbox.add')}</button>`;
             const status = row.status.kind === 'active' ? ''
               : this.host._t(`device_inbox.status_${row.status.kind}` as I18nKey);
-            return html`<article class=${batch.batchTab ? 'device-inbox-row has-select' : 'device-inbox-row'}
+            return html`<article data-hp="device-catalog-row" data-id=${row.kind === 'virtual' ? row.markerId : row.key} class=${batch.batchTab ? 'device-inbox-row has-select' : 'device-inbox-row'}
               data-key=${row.key} data-binding=${row.binding} data-category=${row.category} data-status=${row.kind === 'virtual' ? 'virtual' : row.status.kind}>
               ${renderInboxRowSelect(this.host, dialog, batch, row)}
               <ha-icon class="device-inbox-icon" .icon=${row.icon}></ha-icon>
@@ -11181,23 +11181,23 @@ public _renderDeviceInbox(): TemplateResult {
                 ${row.canEdit || row.canHide || row.category === 'available'
                     || row.category === 'hidden' || this.host._bindingHasHaPage(row.binding) ? html`
                   <details class="device-inbox-menu" @toggle=${positionInboxMenu}>
-                    <summary class="btn ghost" aria-label=${this.host._t('device_inbox.more_actions')}
+                    <summary data-hp="action" data-action="device-catalog-menu" data-value=${row.key} class="btn ghost" aria-label=${this.host._t('device_inbox.more_actions')}
                       title=${this.host._t('device_inbox.more_actions')}>
                       <ha-icon icon="mdi:dots-vertical"></ha-icon>
                     </summary>
                     <div class="device-inbox-menu-items">
                       ${row.canEdit && !(row.category === 'on_plan' && !row.canFind)
-                        ? html`<button type="button" class="btn ghost" @click=${() => this._openInboxMarker(row)}>
+                        ? html`<button data-hp="action" data-action="device-catalog-edit" data-value=${row.key} type="button" class="btn ghost" @click=${() => this._openInboxMarker(row)}>
                             ${this.host._t('device_inbox.edit')}</button>` : nothing}
-                      ${row.canHide ? html`<button type="button" class="btn ghost"
+                      ${row.canHide ? html`<button data-hp="action" data-action="device-catalog-hide" data-value=${row.key} type="button" class="btn ghost"
                         @click=${() => this._setInboxHidden(row, true)}>${this.host._t('device_inbox.hide')}</button>` : nothing}
-                      ${row.category === 'available' ? html`<button type="button" class="btn ghost"
+                      ${row.category === 'available' ? html`<button data-hp="action" data-action="device-catalog-disable" data-value=${row.key} type="button" class="btn ghost"
                         @click=${() => this._setInboxHidden(row, true)}>${this.host._t('device_inbox.hide_available')}</button>` : nothing}
-                      ${row.category === 'hidden' ? html`<button type="button" class="btn ghost"
+                      ${row.category === 'hidden' ? html`<button data-hp="action" data-action="device-catalog-find" data-value=${row.key} type="button" class="btn ghost"
                         title=${row.canFind ? '' : this.host._t('device_inbox.find_hidden_hint')}
                         ?disabled=${!row.canFind} @click=${() => this._findInboxDevice(row)}>
                         <ha-icon icon="mdi:crosshairs-gps"></ha-icon>${this.host._t('device_inbox.find')}</button>` : nothing}
-                      ${this.host._bindingHasHaPage(row.binding) ? html`<button type="button" class="btn ghost"
+                      ${this.host._bindingHasHaPage(row.binding) ? html`<button data-hp="action" data-action="device-catalog-open-ha" data-value=${row.key} type="button" class="btn ghost"
                         @click=${() => this.host._openBindingInHa(row.binding)}>${this.host._t('btn.open_in_ha')}</button>` : nothing}
                     </div>
                   </details>` : nothing}
@@ -11205,7 +11205,7 @@ public _renderDeviceInbox(): TemplateResult {
             </article>`;
           }) : html`<div class="device-inbox-empty">${this.host._t(emptyKey)}</div>`}
         </div>
-        ${filtered.length > visible.length ? html`<button type="button" class="btn device-inbox-more"
+        ${filtered.length > visible.length ? html`<button data-hp="action" data-action="device-catalog-more" type="button" class="btn device-inbox-more"
           @click=${() => (this.host._deviceInbox = { ...dialog, limit: dialog.limit + 100 })}>
           ${this.host._t('device_inbox.show_more')} (${filtered.length - visible.length})
         </button>` : nothing}
@@ -11567,7 +11567,7 @@ public _addControlRef(d: NonNullable<HouseplanEditorHostPort['_markerDialog']>, 
     if (ref.startsWith('marker:')) {
       const controllerId = this._markerDraft(d)?.id || d.devId || '';
       if (!controllerId) {
-        this.host._showToast(this.host._t('toast.marker_binding_required'));
+        this.host._showToast(this.host._t('toast.marker_binding_required'), 'toast.marker_binding_required');
         return;
       }
       const targetId = ref.slice('marker:'.length);
@@ -11576,7 +11576,7 @@ public _addControlRef(d: NonNullable<HouseplanEditorHostPort['_markerDialog']>, 
         ? [...this.host._markers.filter((marker) => marker.id !== controllerId), draft]
         : this.host._markers;
       if (markerControlWouldCycle(graph, controllerId, targetId)) {
-        this.host._showToast(this.host._t('toast.marker_control_cycle'));
+        this.host._showToast(this.host._t('toast.marker_control_cycle'), 'toast.marker_control_cycle');
         return;
       }
     }
@@ -11651,7 +11651,7 @@ public _renderMergeDialog(): TemplateResult {
       const r = rooms.find((x) => x.id === id);
       const area = r?.area ? this.host.hass.areas[r.area]?.name : null;
       return html`<label class="srcrow">
-        <input type="radio" name="mergekeep" .checked=${d.pick === key}
+        <input data-hp="field" data-field="mergekeep" type="radio" name="mergekeep" .checked=${d.pick === key}
           @change=${() => (this.host._mergeDialog = { ...d, pick: key })} />
         <span>${r?.name || ''} <span class="muted">· ${area || this.host._t('merge.no_area')}</span></span>
       </label>`;

@@ -30,8 +30,8 @@ export function renderSpaceSettingsDialog(this: HouseplanEditorRuntime): Templat
     openGeneral: section => { selectSettingsSection(this.host,'general',section); this._openSettingsDialog(); },
     // Ссылка на метод, не обёртка: контракт i18n требует литеральный ключ в каждом вызове _help.
     help: this._help.bind(this),
-    rangeInput: (min, max, step, value, onInput, disabled, ariaLabel) =>
-      this._rangeInput(min, max, step, value, onInput, disabled, ariaLabel),
+    rangeInput: (min, max, step, value, onInput, disabled, ariaLabel, fieldId) =>
+      this._rangeInput(min, max, step, value, onInput, disabled, ariaLabel, fieldId),
     pickPlanFile: (e) => this._pickPlanFile(e),
     toggleServerPlans: () => this._toggleServerPlans(),
     renderServerPlans: (dialog) => this._renderServerPlans(dialog),

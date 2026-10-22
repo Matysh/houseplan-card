@@ -28,7 +28,7 @@ interface NodeCardHost<TState> extends WallNodeWriteHost {
   _baseVb(): number[];
   _viewOr(vb: number[]): { w: number };
   _t(key: I18nKey, params?: Record<string, string | number>): string;
-  _showToast(text: string): void;
+  _showToast(text: string, id?: string): void;
   _cancelCameraTransition(commitTarget?: boolean, keepPresented?: boolean): void;
   _geometryHistory: NodeHistoryStack<TState> & { push(command: { name: string; before: TState; after: TState }): void };
   readonly _fillColors: { wall_fill: { c: string; a: number } };

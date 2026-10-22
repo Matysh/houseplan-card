@@ -801,7 +801,11 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // #1002 accepted vacuum settings: scoped layout/copy and native colour/opacity
 // draft control using #1007 sections. Joint tree326545 B gzip, +1538 B;
 // keep the 2000 B band unchanged. No new library or eager editor import.
-export const LAZY_EDITOR_GZIP_CEILING = 326_545;
+// #1011: declared test attributes and control identities on the existing lazy
+// forms. Measured joint graph329291 B gzip (+2746 B,0.84%); owner permits a
+// small justified limit increase instead of expensive string shaving. Keep
+// the existing2000-B band and all other graph/absolute budgets.
+export const LAZY_EDITOR_GZIP_CEILING = 329_291;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

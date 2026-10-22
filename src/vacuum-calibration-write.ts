@@ -51,7 +51,7 @@ export interface VacuumCalibrationWriteHost {
   _space: string;
   _commitSpace: (spaceId: string) => boolean;
   _maybeRebuildDevices: () => void;
-  _showToast: (message: string) => void;
+  _showToast: (message: string, id?: string) => void;
   _t: (key: I18nKey, vars?: Record<string, string | number>) => string;
   _errText: (error: unknown) => string;
   requestUpdate: () => unknown;
@@ -113,7 +113,7 @@ export async function saveVacuumMatrix(
   } catch (error) {
     restoreDeferred(host._rollbackOptimistic(attempt));
     rebuild(host);
-    if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.cfg_save_failed', { err: host._errText(error) }));
+    if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.cfg_save_failed', { err: host._errText(error) }), 'toast.cfg_save_failed');
     return false;
   }
 }
@@ -136,7 +136,7 @@ export async function saveAutomaticCalibration(
     const saved = await saveVacuumMatrix(
       runtime, request.markerId, request.source, request.mapId, request.matrix, request.routeId,
     );
-    if (saved) host._showToast(host._t('vac.autocal_done', { rooms: String(request.rooms) }));
+    if (saved) host._showToast(host._t('vac.autocal_done', { rooms: String(request.rooms) }), 'vac.autocal_done');
   } finally {
     automaticWrites.delete(runtime);
     if (busyDialog && host._markerDialog === busyDialog) {
@@ -182,7 +182,7 @@ export async function applyCalibrationProposal(
     host._vacCalConfirm = saved ? null : { ...proposal, busy: false };
     host.requestUpdate();
   }
-  if (saved) host._showToast(host._t('vac.autocal_done', { rooms: String(proposal.rooms) }));
+  if (saved) host._showToast(host._t('vac.autocal_done', { rooms: String(proposal.rooms) }), 'vac.autocal_done');
 }
 
 /** Save manual-fit parameters, retaining the exact overlay draft on rejection. */
@@ -203,5 +203,5 @@ export async function saveManualCalibration(
     host._vacFit = saved ? null : { ...fit, busy: false, drag: null };
     host.requestUpdate();
   }
-  if (saved) host._showToast(host._t('vac.cal_done'));
+  if (saved) host._showToast(host._t('vac.cal_done'), 'vac.cal_done');
 }

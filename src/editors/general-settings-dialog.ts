@@ -74,7 +74,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
     const label = t(labelKey);
     return colorTile({
       label, heading:helpLabel(label,help(st('gs.fill_palette_help'),label)), hex: v.c, opacity: v.a, opacityLabel: st('gs.opacity_of', { name: label }),
-      picker: html`<hp-color-opacity .label=${label} hide-label flat-swatch cover-swatch
+      picker: html`<hp-color-opacity data-hp="field" data-field=${`gs-fill-${key}`} .label=${label} hide-label flat-swatch cover-swatch
         .opacityLabel=${t('space.opacity')}
         .pickerLabels=${host._colorPickerLabels}
         .color=${v.c} .opacity=${v.a} .showOpacity=${true}
@@ -150,7 +150,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             picker: colorField({
               hex: d.colors.wall_fill.c, opacity: d.colors.wall_fill.a, opacityLabel: t('space.opacity'),
 
-              picker: html`<hp-color-opacity .label=${st('gs.wall_fill')} hide-label flat-swatch
+              picker: html`<hp-color-opacity data-hp="field" data-field="gs-wall-fill" .label=${st('gs.wall_fill')} hide-label flat-swatch
                 .opacityLabel=${t('space.opacity')} .pickerLabels=${host._colorPickerLabels}
                 .color=${d.colors.wall_fill.c} .opacity=${d.colors.wall_fill.a} .showOpacity=${true}
                 @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {
@@ -177,11 +177,11 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
 
                 control: html`<div class="hpf-color-with-action">${colorField({
                   hex: d.bgColor || host._stageBgHex(),
-                  picker: html`<hp-color-opacity .label=${t('gs.bg_color')} hide-label flat-swatch
+                  picker: html`<hp-color-opacity data-hp="field" data-field="gs-bg-color" .label=${t('gs.bg_color')} hide-label flat-swatch
                     .pickerLabels=${host._colorPickerLabels}
                     .color=${d.bgColor || host._stageBgHex()} .opacity=${1} .showOpacity=${false}
                     @hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => set({ bgColor: e.detail.color })}></hp-color-opacity>`,
-                })}<button class="btn ghost" type="button" @click=${() => set({ bgColor: null })}>${t('gs.bg_default')}</button></div>`,
+                })}<button data-hp="action" data-action="gs-bg-reset" class="btn ghost" type="button" @click=${() => set({ bgColor: null })}>${t('gs.bg_default')}</button></div>`,
               })
             : settingsBackgroundPreviews([st('gs.phase_dawn'), st('gs.phase_day'), st('gs.phase_dusk'), st('gs.phase_night')], [st('gs.daynight_source'), st('gs.daynight_rules'), st('gs.daynight_clock')]),
         ]),
@@ -200,7 +200,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
         { id: 'sun', title: st('gs.section_light'), body: html`${formCard({ id: 'sun', title: st('gs.section_light'), body: formSections([
           colorRow({ label: st('gs.default_light'), help:html`<hp-help instant .text=${st('gs.default_light_help')} .ariaLabel=${st('gs.default_light_help.aria')}></hp-help>`, picker: colorField({
             hex: d.colors.glow_light.c, opacity: d.colors.glow_light.a, opacityLabel: st('gs.light_intensity'),
-            picker: html`<hp-color-opacity .label=${t('gs.glow_light')} hide-label flat-swatch
+            picker: html`<hp-color-opacity data-hp="field" data-field="gs-glow-color" .label=${t('gs.glow_light')} hide-label flat-swatch
               .opacityLabel=${st('gs.light_intensity')} .pickerLabels=${host._colorPickerLabels}
               .color=${d.colors.glow_light.c} .opacity=${d.colors.glow_light.a} .showOpacity=${true}
               @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
@@ -261,30 +261,30 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
 
             <div class="hpf-actions">
               <span class="backupupload">
-                <button class="btn" type="button" @click=${(e: Event) =>
+                <button data-hp="action" data-action="backup-import-open" class="btn" type="button" @click=${(e: Event) =>
                   ((e.currentTarget as HTMLElement).nextElementSibling as HTMLInputElement | null)?.click()}>
                   <ha-icon icon="mdi:upload"></ha-icon>${st('backup.import_open')}
                 </button>
-                <input type="file" accept="application/json,.json,application/zip,.zip" @change=${(event: Event) => {
+                <input data-hp="field" data-field="backup-file" type="file" accept="application/json,.json,application/zip,.zip" @change=${(event: Event) => {
                   const input = event.target as HTMLInputElement;
                   const file = input.files?.[0]; input.value = '';
                   if (file && host._canImportBackup) void leaveFor(() => this._importBackupFile(file));
                 }} />
               </span>
-              <button class="btn" data-backup-action="export" @click=${() => leaveFor(() => this._openBackupExport())}>
+              <button data-hp="action" data-action="backup-export-open" class="btn" data-backup-action="export" @click=${() => leaveFor(() => this._openBackupExport())}>
                 <ha-icon icon="mdi:download"></ha-icon>${st('backup.export_open')}
               </button>
               ${undo.fullImport ? html`
-                <button class="btn" @click=${() => this._undoPlanOptimization()} ?disabled=${host._optimizeUndoBusy}>
+                <button data-hp="action" data-action="plan-optimization-undo" class="btn" @click=${() => this._undoPlanOptimization()} ?disabled=${host._optimizeUndoBusy}>
                   <ha-icon icon="mdi:undo-variant"></ha-icon>${st('backup.undo_import')}
                 </button>` : nothing}
             </div>` : nothing,
           html`<div class="hpf-actions">
-            <button class="btn" @click=${() => this.optimizePlans.open()} ?disabled=${!host._canEdit || host._kiosk}>
+            <button data-hp="action" data-action="plan-optimize" class="btn" @click=${() => this.optimizePlans.open()} ?disabled=${!host._canEdit || host._kiosk}>
               ${t('gs.align_all')}
             </button>
             ${undo.optimization ? html`
-              <button class="btn" @click=${() => this._undoPlanOptimization()} ?disabled=${!host._canOptimizeUndo || host._undoKind === 'import' || host._optimizeUndoBusy || !host._canEdit || host._kiosk}>
+              <button data-hp="action" data-action="plan-optimization-undo" class="btn" @click=${() => this._undoPlanOptimization()} ?disabled=${!host._canOptimizeUndo || host._undoKind === 'import' || host._optimizeUndoBusy || !host._canEdit || host._kiosk}>
                 ${st('gs.optimize_undo')}
               </button>` : nothing}
           </div>`,
@@ -301,7 +301,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
         ? { action: textLink(st('dialog.review_fields', { n: String(problems.length) }), reviewFirst) }
         : {text:st(dirty ? 'dialog.dirty' : 'dialog.saved')})}
       <div class="dialog-action-group">
-        <button class="btn ghost" @click=${() => set({
+        <button data-hp="action" data-action="gs-reset" class="btn ghost" @click=${() => set({
           colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: host._imperial ? 9.8 : 3,
           glowRadiusInput: String(host._imperial ? 9.8 : 3),
           bgColor: null, northDeg: null, northDegInput: '', bgMode: 'daynight', sunRays: false, sunRayOrigin: 'inner',

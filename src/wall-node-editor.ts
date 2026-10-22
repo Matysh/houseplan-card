@@ -338,7 +338,7 @@ export class WallNodeEditor {
       this.sourceCoverage = { axis: s.axis, unitPx, old: oldStrips.map(toPath), fixed: stripsFor(fixed, false).map(toPath) };
     }
     const coverage = this.sourceCoverage;
-    return svg`<g class="hp-node-layer" data-hp-node-state=${s ? s.invalid ? 'invalid' : s.moved ? 'preview' : 'captured' : 'idle'}>
+    return svg`<g class="hp-node-layer" data-hp="wall-node-layer" data-state=${s ? s.invalid ? 'invalid' : s.moved ? 'preview' : 'captured' : 'idle'} data-hp-node-state=${s ? s.invalid ? 'invalid' : s.moved ? 'preview' : 'captured' : 'idle'}>
       ${live && s?.moved ? svg`<defs>${nodeMask('hp-node-ghost-mask', svg`
           ${strips.map(poly => svg`<path d=${toPath(poly)} fill=${s.candidate && !s.outline ? '#808080' : 'black'}/>`)}
           ${coverage?.fixed.map(d => svg`<path d=${d} fill="white"/>`)}`)}
@@ -351,7 +351,7 @@ export class WallNodeEditor {
         const active = s?.plan.node.key === n.key;
         const point = live && active && p ? p : n.point;
         const x = point[0] * NORM_W, y = point[1] * NORM_W;
-        return svg`<circle class="hp-node-handle" data-node=${n.key}
+        return svg`<circle class="hp-node-handle" data-hp="wall-node" data-node=${n.key}
         cx=${x} cy=${y}
         r=${unitPx * 12} fill="transparent" style=${`cursor:${s ? 'grabbing' : n.supported && ctx.api ? 'grab' : 'not-allowed'}`}
         data-hp-tooltip=${this.port.text(!ctx.api ? 'node_move_update_required' : !n.supported ? 'node_move_unsupported_junction' : 'node_move_hint')}

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Extend the declared E2E selector contract to scene geometry, device groups,
+  vacuum/decor/light results, summary controls and settings fields. Interface,
+  behaviour and saved configuration are unchanged. (#1011)
+
+
 - Centre and unify the three colour-picker thumbs. Each shows the selected
   colour; saturation and brightness tracks now show their actual colour range. (#1008)
   Hover and keyboard focus share an accent ring that strengthens while dragging.

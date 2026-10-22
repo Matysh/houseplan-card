@@ -47,11 +47,11 @@ export function settingsSections(
       <nav class="hpf-settings-nav" aria-label=${navigationLabel}>
         ${sections.map((section, index) => html`
           ${section.specialized && !sections[index - 1]?.specialized ? html`<hr />` : nothing}
-          <button type="button" data-section-target=${section.id} aria-current=${section.id === selected ? 'page' : nothing}
+          <button type="button" data-hp="settings-section" data-kind=${kind} data-section=${section.id} data-section-target=${section.id} aria-current=${section.id === selected ? 'page' : nothing}
             @click=${() => selectSettingsSection(host, kind, section.id)}>${section.title}</button>`)}
       </nav>
       <label class="hpf-settings-mobile"><span class="hpf-sr-only">${navigationLabel}</span>
-        <hp-settings-select><select class="hpf-select" aria-label=${navigationLabel} .value=${selected}
+        <hp-settings-select><select class="hpf-select" data-hp="field" data-field="settings-section" aria-label=${navigationLabel} .value=${selected}
           @change=${(event: Event) => selectSettingsSection(host, kind, (event.target as HTMLSelectElement).value)}>
           ${sections.map(section => html`<option value=${section.id} ?selected=${section.id === selected}>${section.title}</option>`)}
         </select></hp-settings-select>

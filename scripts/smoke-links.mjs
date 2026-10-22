@@ -30,6 +30,13 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/editors/form-kit.ts', 'src/editors/settings-sections.ts', 'src/hp-color-opacity.ts',
+      'src/device-contact-render.ts', 'src/wall-node-editor.ts', 'src/glow-scene.ts',
+      'src/summary-panel-runtime-loaded.ts', 'src/pdf/hp-pdf-dialog.ts', 'src/toast-presentation.ts'],
+    smokes: ['smoke_e2e_hooks.mjs'],
+    because: '#1011: the declared hooks must identify real mounted controls, geometry and live owner results, including nested custom-element roots and modal toast routing.',
+  },
+  {
     files: ['src/vacuum-trail-style.ts', 'src/styles/vacuum-settings.styles.ts'],
     smokes: ['smoke_vacuum_style_1002.mjs', 'smoke_vacuum.mjs'],
     because: '#1002: mounted SVG ink, previous-run fading and camera invariants are observed without importing the style model. Authentic HA dialog acceptance additionally runs demo/ui-lab/verify-vacuum-1002.mjs.',

@@ -38,7 +38,7 @@ export interface VacuumMapsCardHost {
   _t: (key: I18nKey, vars?: Record<string, string | number>) => string;
   _errText: (error: unknown) => string;
   _maybeRebuildDevices: () => void;
-  _showToast: (message: string) => void;
+  _showToast: (message: string, id?: string) => void;
   _vacSource: (dev: DevItem) => string | null;
   _vacObservedMapId: (dev: DevItem, source: string) => string | undefined;
   _confirmDanger: (request: HpConfirmRequest) => Promise<boolean>;
@@ -121,7 +121,7 @@ export function renderVacuumMapsSection(
       host._regSignature = '';
       host._maybeRebuildDevices();
       host.requestUpdate();
-      if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.cfg_save_failed', { err: host._errText(error) }));
+      if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.cfg_save_failed', { err: host._errText(error) }), 'toast.cfg_save_failed');
       return false;
     }
   };
@@ -279,7 +279,7 @@ export function renderVacuumMapsSection(
       <div class="vacroute-status">${statusOf(route)}</div>
       <label class="srcrow">
         <span>${t('vac.route_space')}</span>
-        <hp-settings-select><select class="areasel" @change=${(event: Event) => {
+        <hp-settings-select><select data-hp="field" data-field="vacuum-map-action" class="areasel" @change=${(event: Event) => {
           const select = event.target as HTMLSelectElement;
           const next = select.value;
           select.value = route.space;
@@ -291,9 +291,9 @@ export function renderVacuumMapsSection(
         </select></hp-settings-select>
       </label>
       <div class="vacbtns">
-        <button type="button" class="btn ghostbtn"
+        <button data-hp="action" data-action="vacuum-route-calibrate" data-value=${route.id} type="button" class="btn ghostbtn"
           @click=${() => runtime._vacStartFit(dev, route.id)}>${host._t('vac.fit')}</button>
-        <button type="button" class="btn ghostbtn danger"
+        <button data-hp="action" data-action="vacuum-route-delete" data-value=${route.id} type="button" class="btn ghostbtn danger"
           @click=${() => void drop(route)}>${t('vac.route_delete')}</button>
       </div>
     </li>`;
@@ -316,7 +316,7 @@ export function renderVacuumMapsSection(
             <small>${draft.source}</small>
             <label class="srcrow">
               <span>${t('vac.route_space')}</span>
-              <hp-settings-select><select class="areasel vacroute-draft-space" ?disabled=${!!draft.saving}
+              <hp-settings-select><select data-hp="field" data-field="vacuum-map-space" class="areasel vacroute-draft-space" ?disabled=${!!draft.saving}
                 @change=${(event: Event) => selectDraftSpace((event.target as HTMLSelectElement).value)}>
                 <option value="" ?selected=${!draft.space}>${t('vac.route_space_none')}</option>
                 ${spaces.map((space) => html`
@@ -324,9 +324,9 @@ export function renderVacuumMapsSection(
               </select></hp-settings-select>
             </label>
             <div class="vacbtns">
-              <button type="button" class="btn ghostbtn" ?disabled=${!!draft.saving}
+              <button data-hp="action" data-action="vacuum-route-cancel" type="button" class="btn ghostbtn" ?disabled=${!!draft.saving}
                 @click=${cancelDraft}>${host._t('btn.cancel')}</button>
-              <button type="button" class="btn vacroute-draft-save"
+              <button data-hp="action" data-action="vacuum-route-confirm" type="button" class="btn vacroute-draft-save"
                 ?disabled=${!!draft.saving || !spaceIds.has(draft.space)}
                 @click=${() => void confirmDraft()}>${host._t('btn.save')}</button>
             </div>
@@ -343,7 +343,7 @@ export function renderVacuumMapsSection(
         </section>` : nothing}
       ${!rows.length && !draft ? html`<div class="rhint">${t('vac.routes_empty')}</div>` : nothing}
       <div class="vacbtns vacuum-add-current">
-        <button type="button" class="btn vacroute-add-current" ?disabled=${!canAddCurrent || !!draft}
+        <button data-hp="action" data-action="vacuum-route-add-current" type="button" class="btn vacroute-add-current" ?disabled=${!canAddCurrent || !!draft}
           @click=${addCurrent}>${t('vac.route_add_current')}</button>
       </div>
       ${!canAddCurrent || draft ? html`<p class="vacuum-map-note vacuum-add-reason">${st(draft
@@ -354,7 +354,7 @@ export function renderVacuumMapsSection(
         <div class="vacsource-list">
           ${spare.map((candidate) => {
             const mapId = host._vacObservedMapId(dev, candidate.entityId);
-            return html`<button type="button" class="vacsource"
+            return html`<button data-hp="action" data-action="vacuum-route-add-source" data-value=${candidate.entityId} type="button" class="vacsource"
               ?disabled=${mapId === undefined || !!draft}
               @click=${() => addSource(candidate)}>
               <span><b>${candidate.name}</b><small>${candidate.entityId}</small></span>

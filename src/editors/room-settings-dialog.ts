@@ -132,13 +132,13 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
             field({
               label: t('room.name_label'), htmlFor: 'room-name',
               error: nameProblem ? st(nameProblem.message) : undefined,
-              control: html`<input id="room-name" class="hpf-input" type="text" placeholder=${t('room.name_ph')}
+              control: html`<input data-hp="field" data-field="room-name" id="room-name" class="hpf-input" type="text" placeholder=${t('room.name_ph')}
                 .value=${host._nameSel} aria-invalid=${nameProblem ? 'true' : nothing}
                 @input=${(e: Event) => { host._nameSel = (e.target as HTMLInputElement).value; host.requestUpdate(); }} />`,
             }),
             field({
               label: st('room.area_optional'), htmlFor: 'room-area', help: shelp('room.group_basics.help'),
-              control: html`<hp-settings-select><select id="room-area" class="hpf-select" aria-label=${t('room.area_label')}
+              control: html`<hp-settings-select><select data-hp="field" data-field="room-area" id="room-area" class="hpf-select" aria-label=${t('room.area_label')}
                 @change=${(e: Event) => {
                   host._areaSel = (e.target as HTMLSelectElement).value;
                   if (!host._nameSel && host._areaSel) host._nameSel = host.hass.areas[host._areaSel]?.name || '';
@@ -168,7 +168,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
                   label: customLabel,
                   picker: colorField({
                     hex: customFill.c, opacity: customFill.a, opacityLabel: t('space.opacity'),
-                    picker: html`<hp-color-opacity .label=${customLabel} hide-label flat-swatch
+                    picker: html`<hp-color-opacity data-hp="field" data-field="room-fill-color" .label=${customLabel} hide-label flat-swatch
                       .opacityLabel=${t('space.opacity')}
                       .pickerLabels=${host._colorPickerLabels}
                       .color=${customFill.c}
@@ -206,7 +206,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
                   ${tempProblem ? html`<p class="hpf-error" role="alert">${st(tempProblem.message)}</p>` : nothing}
                   ${callout({text:`${t('gs.temp_cold')} · ${t('gs.temp_ok')} · ${t('gs.temp_hot')}`})}
                   ${host._roomTempMin.trim() || host._roomTempMax.trim()
-                    ? html`<div class="hpf-actions"><button class="btn ghost" data-room-range-reset
+                    ? html`<div class="hpf-actions"><button data-hp="action" data-action="room-range-reset" class="btn ghost" data-room-range-reset
                         @click=${() => {host._roomTempMin='';host._roomTempMax='';host.requestUpdate();}}>${t('room.temp_range_reset')}</button>${shelp('room.temp_range.help')}</div>`
                     : nothing}
                 </div>`
@@ -232,7 +232,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
                 <span class="hpf-label hpf-labelrow"><label for=${`room-${key}-scale`}>${t(labelKey)}</label></span>
                 ${rangeLine({
                   id: `room-${key}-scale`, min: 50, max: 300, step: 5, value: pct(value), unit: '%', ariaLabel: t(labelKey),
-                  slider: this._rangeInput(50, 300, 5, pct(value), (n) => { write(n / 100); host.requestUpdate(); }, false, t(labelKey)),
+                  slider: this._rangeInput(50, 300, 5, pct(value), (n) => { write(n / 100); host.requestUpdate(); }, false, t(labelKey), `room-${key}-scale-slider`),
                   onInput: (n) => { write(n / 100); host.requestUpdate(); },
                 })}
                 ${rangeEnds('50%', '300%')}

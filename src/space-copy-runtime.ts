@@ -130,10 +130,10 @@ function showCopyError(host: HouseplanEditorHostPort, error: unknown): void {
   }
   const code = (error as { code?: unknown } | null)?.code;
   if (code === 'wall_model_client_outdated') {
-    host._showToast(host._t('toast.wall_model_client_outdated'));
+    host._showToast(host._t('toast.wall_model_client_outdated'), 'toast.wall_model_client_outdated');
     return;
   }
-  if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }));
+  if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
 }
 
 /** Submit one guarded two-step operation: optional Optimize, then config Copy. */
@@ -170,7 +170,7 @@ export async function saveSpaceCopy(
       if (!setBusy(host, token, true)) return;
       if (host._cfgRev !== configRevision || host._layoutRev !== layoutRevision
         || contentFingerprint(host._serverCfg) !== configFingerprint || contentFingerprint(host._layout) !== layoutFingerprint) {
-        setBusy(host, token, false); host._showToast(host._t('space.copy_error_changed')); return;
+        setBusy(host, token, false); host._showToast(host._t('space.copy_error_changed'), 'space.copy_error_changed'); return;
       }
       optimized = optimize(
         host._serverCfg, host._layout, services.optimizeReferenceContext(),
@@ -186,7 +186,7 @@ export async function saveSpaceCopy(
       services.reportPreflightFailure(preflight, optimized.config);
       if (!preflight.ok) {
         setBusy(host, token, false);
-        host._showToast(host._t('space.copy_error_optimize_geometry'));
+        host._showToast(host._t('space.copy_error_optimize_geometry'), 'space.copy_error_optimize_geometry');
         return;
       }
       const accepted = await host._confirmDanger({
@@ -205,7 +205,7 @@ export async function saveSpaceCopy(
           || !host._serverCfg || contentFingerprint(host._serverCfg) !== configFingerprint
           || contentFingerprint(host._layout) !== layoutFingerprint) {
         setBusy(host, token, false);
-        host._showToast(host._t('space.copy_error_changed'));
+        host._showToast(host._t('space.copy_error_changed'), 'space.copy_error_changed');
         return;
       }
       services.clearGeometryGesture();
@@ -252,7 +252,7 @@ export async function saveSpaceCopy(
     host._primeDrawWallField();
     host._saveNav();
     host.requestUpdate();
-    host._showToast(host._t('toast.space_copied', { name: title }));
+    host._showToast(host._t('toast.space_copied', { name: title }), 'toast.space_copied');
   } catch (error) {
     if ((error as { code?: unknown } | null)?.code === 'conflict') {
       await Promise.all([host._reloadConfigOnly(true), host._reloadLayoutOnly()]);

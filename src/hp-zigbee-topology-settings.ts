@@ -290,7 +290,7 @@ export class HpZigbeeTopologySettings extends LitElement {
       ...(model.refreshError ? [this._t('incomplete_refresh_error', { error: this._errorText(model.refreshError) })] : []),
     ].join('\n')).join('\n\n');
     return html`<details class="hpf-disclosure hpf-disclosure-compact incomplete" data-incomplete-provider=${provider}>
-      <summary class="status">${this._t('incomplete_title')}</summary>
+      <summary data-hp="action" data-action="zigbee-incomplete-reasons" class="status">${this._t('incomplete_title')}</summary>
       <div class="status incomplete-text">${text}</div>
     </details>`;
   }
@@ -348,7 +348,7 @@ export class HpZigbeeTopologySettings extends LitElement {
     return html`<div class="scan-row" data-topic=${topic}>
       <div class="topic-head">
         <div class="topic-meta"><strong>${topic}</strong><span class="status" role="status">${this._status(key, diagnostics)}</span></div>
-        <button class=${embedded ? 'btn ghost' : ''} ?disabled=${!mayLoad || this._invalidTopic || this._busy(key)}
+        <button data-hp="action" data-action="zigbee-refresh-z2m" class=${embedded ? 'btn ghost' : ''} ?disabled=${!mayLoad || this._invalidTopic || this._busy(key)}
           @click=${() => this._refreshZ2m(topic)}><ha-icon icon="mdi:refresh"></ha-icon>${this._t('z2m_update')}</button>
       </div>
       ${!active ? html`<span class="hint">${this._t(this._snapshot.topologies.some(item => item.provider === 'z2m' && item.instanceId === topic)
@@ -381,10 +381,10 @@ export class HpZigbeeTopologySettings extends LitElement {
       <div class="section">${this._t('title')}${this._help()}</div>
       <label class="toggle">
         ${customElements.get('ha-switch')
-          ? html`<ha-switch .checked=${enabled} .disabled=${!admin}
+          ? html`<ha-switch data-hp="field" data-field="zigbee-enabled" .checked=${enabled} .disabled=${!admin}
               @change=${(event: Event) => this._emit({ ...this.value,
                 enabled: !!(event.target as HTMLInputElement).checked })}></ha-switch>`
-          : html`<input type="checkbox" .checked=${enabled} ?disabled=${!admin}
+          : html`<input data-hp="field" data-field="zigbee-enabled" type="checkbox" .checked=${enabled} ?disabled=${!admin}
               @change=${(event: Event) => this._emit({ ...this.value,
                 enabled: (event.target as HTMLInputElement).checked })} />`}
         <span>${this._t('toggle')}</span>
@@ -397,7 +397,7 @@ export class HpZigbeeTopologySettings extends LitElement {
           <div class="provider-title">${this._t('zha')}</div>
           <div class="hint">${this._t('zha_hint')}</div>
           <div class="actions">
-            <button ?disabled=${!mayLoad || this._busy('zha')} @click=${this._readZha}>
+            <button data-hp="action" data-action="zigbee-read-zha" ?disabled=${!mayLoad || this._busy('zha')} @click=${this._readZha}>
               <ha-icon icon="mdi:access-point-network"></ha-icon>${this._t('zha_read')}
             </button>
             <span class="status">${this._status('zha', diagnostics.get('zha')!)}</span>
@@ -407,7 +407,7 @@ export class HpZigbeeTopologySettings extends LitElement {
         <div class="provider">
           <div class="provider-title">${this._t('z2m')}</div>
           <label class="hint" for="z2m-topics">${this._t('z2m_topics')}</label>
-          <textarea id="z2m-topics" ?disabled=${!admin}
+          <textarea data-hp="field" data-field="z2m-topics" id="z2m-topics" ?disabled=${!admin}
             .value=${this._topicText} @input=${(event: Event) =>
               this._editTopics((event.target as HTMLTextAreaElement).value)}></textarea>
           ${this._invalidTopic ? html`<div class="warning">${this._t('error_invalid_topic')}</div>` : nothing}
@@ -437,7 +437,7 @@ export class HpZigbeeTopologySettings extends LitElement {
       <div class="provider-heading"><h4>${this._t('zha')}</h4><p class="hpf-hint">${this._t('zha_hint')}</p></div>
       <p class="status" role="status">${this._status('zha', diagnostics.get('zha')!)}</p>
       <div class="hpf-actions">
-        <button class="btn ghost" ?disabled=${!mayLoad || this._busy('zha')} @click=${this._readZha}>
+        <button data-hp="action" data-action="zigbee-read-zha" class="btn ghost" ?disabled=${!mayLoad || this._busy('zha')} @click=${this._readZha}>
           <ha-icon icon="mdi:access-point-network"></ha-icon>${this._t('zha_read')}
         </button>
       </div>
@@ -448,7 +448,7 @@ export class HpZigbeeTopologySettings extends LitElement {
       <p class="hpf-hint">${this._t('z2m_duration')}</p>
       <div class="hpf-field">
         <span class="hpf-label hpf-labelrow"><label for="z2m-topics">${this._t('z2m_topics')}</label>${this._help('topics_help','topics_help_aria')}</span>
-        <textarea id="z2m-topics" class="hpf-input" rows="2" spellcheck="false" ?disabled=${!admin}
+        <textarea data-hp="field" data-field="z2m-topics" id="z2m-topics" class="hpf-input" rows="2" spellcheck="false" ?disabled=${!admin}
           aria-invalid=${this._invalidTopic ? 'true' : nothing}
           .value=${this._topicText} @input=${(event: Event) => this._editTopics((event.target as HTMLTextAreaElement).value)}></textarea>
         ${this._invalidTopic ? html`<p class="hpf-error" role="alert">${this._t('error_invalid_topic')}</p>` : nothing}
@@ -459,7 +459,7 @@ export class HpZigbeeTopologySettings extends LitElement {
     return html`<div class="hpf-form hpf-settings-form"><section class="hpf-settings-pane"><div class="hpf-body">${formSections([
       html`<label class="hpf-toggle hpf-noicon">
         <span class="hpf-toggle-title hpf-balanced"><span>${this._t('toggle')}</span>${this._help()}</span>
-        <input type="checkbox" .checked=${enabled} ?disabled=${!admin} aria-label=${this._t('toggle')}
+        <input data-hp="field" data-field="zigbee-enabled" type="checkbox" .checked=${enabled} ?disabled=${!admin} aria-label=${this._t('toggle')}
           @change=${(event: Event) => this._emit({ ...this.value, enabled: (event.target as HTMLInputElement).checked })} />
       </label>${!admin ? html`<p class="hpf-hint">${this._t('admin_only')}</p>` : nothing}`,
       enabled ? html`

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1011,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Compatible test-only DOM metadata and completeness guards for existing surfaces. No user-visible behaviour, layout, permission, configuration or backend changes. Real-HA journeys and seeds remain #1010.",
+  "summary": {
+    "ru": "Расширен контракт DOM-селекторов для E2E и добавлены проверки полноты и работающих контролов.",
+    "en": "Expand the E2E DOM selector contract and check completeness and real bound controls."
+  }
+}

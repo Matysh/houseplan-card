@@ -72,7 +72,7 @@ export async function saveVacuumDockRestart(runtime: Runtime, markerId: string, 
     await write;
     return current();
   } catch (error) {
-    if (current()) host._showToast(host._t('toast.cfg_save_failed', { err: host._errText(error) }));
+    if (current()) host._showToast(host._t('toast.cfg_save_failed', { err: host._errText(error) }), 'toast.cfg_save_failed');
     return false;
   } finally {
     if (ownsPending()) host._writesPending--;

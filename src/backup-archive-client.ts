@@ -33,7 +33,7 @@ interface TransferHost {
   isConnected: boolean;
   _space: string;
   _backupExportDialog: BackupExportState | null;
-  _showToast(message: string): void;
+  _showToast(message: string, id?: string): void;
   _t(key: I18nKey, values?: Record<string, string>): string;
 }
 interface LegacyExport { archive?: false; document: unknown; filename: string; recovery?: RecoveryReport }
@@ -201,7 +201,7 @@ export class BackupArchiveClient {
       anchor.style.display = 'none'; document.body.append(anchor); anchor.click(); anchor.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 0);
       host._backupExportDialog = null;
-      host._showToast(host._t('backup.export_done'));
+      host._showToast(host._t('backup.export_done'), 'backup.export_done');
     } catch (error: unknown) {
       if (owns()) {
         if (this.exportToken) this.discard(this.exportToken);

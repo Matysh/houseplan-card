@@ -243,7 +243,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           },
           // Q8: «Show entities» — внутри панели выбора, рядом с поиском.
           toolbar: html`<label class="hpf-check" title=${t('marker.show_entities_tip')}>
-            <input id="marker-show-entities" type="checkbox" .checked=${d.showEntities}
+            <input data-hp="field" data-field="marker-show-entities" id="marker-show-entities" type="checkbox" .checked=${d.showEntities}
               @change=${(e: Event) => (this.host._markerDialog = { ...d, showEntities: (e.target as HTMLInputElement).checked })} />
             <span>${t('marker.show_entities')}</span>
           </label>`,
@@ -257,7 +257,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           field({
           label: t('marker.name_label'), htmlFor: 'marker-name',
           error: nameProblem ? st(nameProblem.message) : undefined,
-          control: html`<input id="marker-name" class="hpf-input" type="text" placeholder=${t('marker.name_ph')}
+          control: html`<input data-hp="field" data-field="marker-name" id="marker-name" class="hpf-input" type="text" placeholder=${t('marker.name_ph')}
             aria-invalid=${nameProblem ? 'true' : nothing}
             .value=${d.name}
             @input=${(e: Event) => (this.host._markerDialog = { ...d, name: (e.target as HTMLInputElement).value })} />`,
@@ -303,7 +303,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           field({
           label: t('marker.room_label'), htmlFor: 'marker-room',
           help:html`<hp-help instant data-help-key="marker.room.help" .text=${d.room ? st('marker.room_hint_override') : isVirtual ? st('marker.room.help') : st('marker.room_hint_auto')} .ariaLabel=${st('marker.room.help.aria')}></hp-help>`,
-          control: html`<hp-settings-select><select id="marker-room" class="hpf-select"
+          control: html`<hp-settings-select><select data-hp="field" data-field="marker-room" id="marker-room" class="hpf-select"
             @change=${(e: Event) => {
               const room = (e.target as HTMLSelectElement).value;
               const ref = parseRoomRef(room);
@@ -336,7 +336,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
     const toggleEntityField = effectiveTapAction === 'toggle' && (toggleEntities.length > 1 || staleToggleEntity)
       ? html`<div class="markertoggleentity">${field({
           label: t('marker.toggle_entity_label'), htmlFor: 'marker-toggle-entity', help: this._help('marker.toggle_entity.help'),
-          control: html`<hp-settings-select><select id="marker-toggle-entity" class="hpf-select"
+          control: html`<hp-settings-select><select data-hp="field" data-field="marker-toggle-entity" id="marker-toggle-entity" class="hpf-select"
             @change=${(e: Event) => {
               const next = {
                 ...d,
@@ -377,7 +377,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               ${d.tapTarget && !cur
                 ? callout({ kind: 'warning', role: 'status', text: t('marker.run_target_gone', { id: d.tapTarget }) })
                 : nothing}
-              <input id="marker-run-target" class="hpf-input" type="text" placeholder=${t('marker.run_search_ph')}
+              <input data-hp="field" data-field="marker-run-target" id="marker-run-target" class="hpf-input" type="text" placeholder=${t('marker.run_search_ph')}
                 aria-invalid=${runTargetProblem ? 'true' : nothing}
                 .value=${cur ? cur.label : d.runFilter}
                 @focus=${(e: Event) => { (e.target as HTMLInputElement).select(); }}
@@ -385,7 +385,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               ${!cur
                 ? html`<div class="hpf-panel"><div class="hpf-list" role="listbox" aria-label=${t('marker.run_target_label')}>
                     ${runCands.slice(0, 40).map(
-                      (c) => html`<button type="button" role="option" class="hpf-cand ${c.value === d.tapTarget ? 'sel' : ''}"
+                      (c) => html`<button data-hp="field-option" data-field="marker-run-target" data-value=${c.value} type="button" role="option" class="hpf-cand ${c.value === d.tapTarget ? 'sel' : ''}"
                         aria-selected=${c.value === d.tapTarget ? 'true' : 'false'}
                         @click=${() => (this.host._markerDialog = { ...d, tapTarget: c.value, runFilter: '' })}>
                         <span>${c.label}</span><small>${c.sub}</small>
@@ -404,7 +404,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
       body: formSections([
           field({
           label: t('marker.tap_label'), htmlFor: 'marker-tap-action',
-          control: html`<hp-settings-select><select id="marker-tap-action" class="hpf-select"
+          control: html`<hp-settings-select><select data-hp="field" data-field="marker-tap-action" id="marker-tap-action" class="hpf-select"
             aria-describedby=${effectiveTapAction === 'toggle' ? 'marker-toggle-hint' : nothing}
             @change=${(e: Event) => {
               const next = {
@@ -443,7 +443,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                     const info = this._controlRefInfo(eid);
                     return html`<span class="hpf-chip ${info.warning ? 'hpf-chip-warning' : ''}" title=${info.sub}>
                       <ha-icon icon=${info.icon} aria-hidden="true"></ha-icon><span>${info.label}</span>
-                      <button type="button" aria-label=${`${t('btn.delete')}: ${info.label}`} title=${t('btn.delete')}
+                      <button data-hp="action" data-action="marker-control-remove" data-value=${eid} type="button" aria-label=${`${t('btn.delete')}: ${info.label}`} title=${t('btn.delete')}
                         @click=${() => (this.host._markerDialog = this._announceToggleDraft({
                           ...d, controls: d.controls.filter((x) => x !== eid),
                         }))}><ha-icon icon="mdi:close"></ha-icon></button>
@@ -452,12 +452,12 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                 </div>`
               : nothing}
             <div class="hpf-picker ${controlCands.length || d.controlsFilter.trim() ? 'open' : ''}">
-              <input id="marker-controls-filter" class="hpf-input" type="text" autocomplete="off" placeholder=${t('marker.controls_filter')}
+              <input data-hp="field" data-field="marker-controls-filter" id="marker-controls-filter" class="hpf-input" type="text" autocomplete="off" placeholder=${t('marker.controls_filter')}
                 .value=${d.controlsFilter}
                 @input=${(e: Event) => (this.host._markerDialog = { ...d, controlsFilter: (e.target as HTMLInputElement).value })} />
               ${d.controlsFilter.trim()
                 ? html`<div class="hpf-panel"><div class="hpf-list" role="listbox" aria-label=${t('marker.controls_label')}>
-                    ${controlCands.map((candidate) => html`<button type="button" role="option" class="hpf-cand" aria-selected="false"
+                    ${controlCands.map((candidate) => html`<button data-hp="field-option" data-field="marker-controls" data-value=${candidate.value} type="button" role="option" class="hpf-cand" aria-selected="false"
                         @click=${() => this._addControlRef(d, candidate.value)}>
                         <span><ha-icon icon=${candidate.icon} aria-hidden="true"></ha-icon> ${candidate.label}</span>
                         <small>${candidate.sub}</small>
@@ -476,7 +476,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           label: t('marker.glow_color'),
           control: colorField({
             hex: d.glowColor, disabled: glowSourceDisabled,
-            picker: html`<hp-color-opacity .label=${t('marker.glow_color')} hide-label flat-swatch
+            picker: html`<hp-color-opacity data-hp="field" data-field="marker-glow-color" .label=${t('marker.glow_color')} hide-label flat-swatch
               .color=${d.glowColor} .opacity=${1} .showOpacity=${false}
               .pickerLabels=${this.host._colorPickerLabels}
               .disabled=${glowSourceDisabled}
@@ -499,7 +499,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                     ...d, glowMode: displayedGlowMode,
                     glowBrightness: n, glowBrightnessDrafted: true, glowTouched: true,
                   };
-                }, glowSourceDisabled, t('marker.glow_brightness')),
+                }, glowSourceDisabled, t('marker.glow_brightness'), 'marker-glow-brightness-slider'),
                 onInput: (n) => {
                   this.host._markerDialog = {
                     ...d, glowMode: displayedGlowMode,
@@ -534,7 +534,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           d.lightRole === 'always' && (leadingEntities.length > 1 || staleLeading)
           ? html`<div class="markerleadingentity">${field({
               label: t('marker.light_entity_label'), htmlFor: 'marker-light-entity', help: this._help('marker.light_entity.help'),
-              control: html`<hp-settings-select><select id="marker-light-entity" class="hpf-select"
+              control: html`<hp-settings-select><select data-hp="field" data-field="marker-light-entity" id="marker-light-entity" class="hpf-select"
                 @change=${(e: Event) => (this.host._markerDialog = {
                   ...d,
                   lightEntity: (e.target as HTMLSelectElement).value,
@@ -595,7 +595,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
       // Feed the effective icon to HA's picker so its field renders both
       // the glyph and the mdi:* label. autoIcon is presentation-only:
       // untouched dialogs still save d.icon as an empty auto override.
-      ? html`<ha-icon-picker id="marker-icon" .hass=${this.host.hass} .value=${d.icon || d.autoIcon}
+      ? html`<ha-icon-picker data-hp="field" data-field="marker-icon" id="marker-icon" .hass=${this.host.hass} .value=${d.icon || d.autoIcon}
           .placeholder=${d.autoIcon || 'mdi:shape-outline'}
           .fallbackPath=${undefined}
           @value-changed=${(e: CustomEvent<{ value?: string }>) => {
@@ -605,7 +605,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             if (!d.icon && icon === d.autoIcon) return;
             this.host._markerDialog = { ...d, icon };
           }}></ha-icon-picker>`
-      : html`<input id="marker-icon" class="hpf-input" type="text"
+      : html`<input data-hp="field" data-field="marker-icon" id="marker-icon" class="hpf-input" type="text"
           placeholder=${d.autoIcon || t('marker.icon_ph')}
           .value=${d.icon}
           @input=${(e: Event) => (this.host._markerDialog = { ...d, icon: (e.target as HTMLInputElement).value })} />`;
@@ -628,7 +628,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           field({
           label: st('marker.display_method'), htmlFor: 'marker-display',
           help:html`<hp-help instant data-help-key="marker.display.help" .text=${`${st('marker.display.help')} ${t(DISPLAY_HINT_KEYS[d.display])}`} .ariaLabel=${st('marker.display.help.aria')}></hp-help>`,
-          control: html`<hp-settings-select><select id="marker-display" class="hpf-select"
+          control: html`<hp-settings-select><select data-hp="field" data-field="marker-display" id="marker-display" class="hpf-select"
             @change=${(e: Event) => (this.host._markerDialog = {
               ...d,
               display: normalizeDeviceDisplay((e.target as HTMLSelectElement).value),
@@ -660,7 +660,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               label: t('marker.activity_color'),
               control: html`<div class="ripple-colorrow">${colorField({
                 hex: activityColor,
-                picker: html`<hp-color-opacity data-activity-color .label=${t('marker.activity_color')} hide-label flat-swatch
+                picker: html`<hp-color-opacity data-hp="field" data-field="marker-activity-color" data-activity-color .label=${t('marker.activity_color')} hide-label flat-swatch
                   .pickerLabels=${this.host._colorPickerLabels}
                   .color=${activityColor} .opacity=${1} .showOpacity=${false}
                   @hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => {
@@ -672,7 +672,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               <span class="hpf-label hpf-labelrow"><label for="marker-ripple-size">${t('marker.ripple_size')}</label></span>
               ${rangeLine({
                 id: 'marker-ripple-size', min: 1, max: 8, step: 0.5, value: d.rippleSize, unit: '×', ariaLabel: t('marker.ripple_size'),
-                slider: this._rangeInput(1, 8, 0.5, d.rippleSize, (n) => (this.host._markerDialog = { ...d, rippleSize: n }), false, t('marker.ripple_size')),
+                slider: this._rangeInput(1, 8, 0.5, d.rippleSize, (n) => (this.host._markerDialog = { ...d, rippleSize: n }), false, t('marker.ripple_size'), 'marker-ripple-size-slider'),
                 onInput: (n) => (this.host._markerDialog = { ...d, rippleSize: n }),
               })}
               <p class="hpf-hint" role="note">${t('marker.activity_alarm_note')}</p>
@@ -681,7 +681,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           displayWantsValue(d.display)
           ? html`<div class="markervaluesource">${field({
               label: st('marker.value_source_instead'), htmlFor: 'marker-value-source', help: this._help('marker.value_source.help'),
-              control: html`<hp-settings-select><select id="marker-value-source" class="hpf-select" ?disabled=${isVirtual}
+              control: html`<hp-settings-select><select data-hp="field" data-field="marker-value-source" id="marker-value-source" class="hpf-select" ?disabled=${isVirtual}
                 @change=${(e: Event) => (this.host._markerDialog = {
                   ...d,
                   valueSource: valueBadgeSourceFromKey((e.target as HTMLSelectElement).value),
@@ -736,7 +736,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             ${field({
               label: t('marker.value_badge_source'), htmlFor: 'marker-value-badge-source', help: this._help('marker.value_badge_source.help'),
               error: valueBadgeSourceProblem ? st(valueBadgeSourceProblem.message) : undefined,
-              control: html`<hp-settings-select><select id="marker-value-badge-source" class="hpf-select"
+              control: html`<hp-settings-select><select data-hp="field" data-field="marker-value-badge-source" id="marker-value-badge-source" class="hpf-select"
                 aria-invalid=${valueBadgeSourceProblem ? 'true' : nothing}
                 @change=${(e: Event) => (this.host._markerDialog = {
                   ...d,
@@ -784,7 +784,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             <span class="hpf-label hpf-labelrow"><label for="marker-size">${st('marker.size_short')}</label></span>
             ${rangeLine({
               id: 'marker-size', min: 0.5, max: 3, step: 0.1, value: Number(d.size.toFixed(1)), unit: '×', ariaLabel: st('marker.size_short'),
-              slider: this._rangeInput(0.5, 3, 0.1, d.size, (n) => (this.host._markerDialog = { ...d, size: n }), false, st('marker.size_short')),
+              slider: this._rangeInput(0.5, 3, 0.1, d.size, (n) => (this.host._markerDialog = { ...d, size: n }), false, st('marker.size_short'), 'marker-size-slider'),
               onInput: (n) => (this.host._markerDialog = { ...d, size: n }),
             })}
             ${rangeEnds('×0.5', '×3')}
@@ -795,7 +795,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                    line up with a wall that is not on a 10-degree grid. */}
             ${rangeLine({
               id: 'marker-angle', min: 0, max: 355, step: 5, value: d.angle, unit: '°', ariaLabel: t('marker.angle_label'),
-              slider: this._rangeInput(0, 355, 5, d.angle, (n) => (this.host._markerDialog = { ...d, angle: n }), false, t('marker.angle_label')),
+              slider: this._rangeInput(0, 355, 5, d.angle, (n) => (this.host._markerDialog = { ...d, angle: n }), false, t('marker.angle_label'), 'marker-angle-slider'),
               onInput: (n) => (this.host._markerDialog = { ...d, angle: n }),
             })}
             ${rangeEnds('0°', '355°')}
@@ -836,21 +836,21 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           fieldGrid([
           field({
             label: t('marker.model_label'), htmlFor: 'marker-model',
-            control: html`<input id="marker-model" class="hpf-input" type="text" placeholder=${t('marker.model_ph')}
+            control: html`<input data-hp="field" data-field="marker-model" id="marker-model" class="hpf-input" type="text" placeholder=${t('marker.model_ph')}
               .value=${d.model}
               @input=${(e: Event) => (this.host._markerDialog = { ...d, model: (e.target as HTMLInputElement).value })} />`,
           }),
           field({
             label: t('marker.link_label'), htmlFor: 'marker-link',
             hint: note(st('marker.link_hint'),'info'),
-            control: html`<input id="marker-link" class="hpf-input" type="url" placeholder="https://…"
+            control: html`<input data-hp="field" data-field="marker-link" id="marker-link" class="hpf-input" type="url" placeholder="https://…"
               .value=${d.link}
               @input=${(e: Event) => (this.host._markerDialog = { ...d, link: (e.target as HTMLInputElement).value })} />`,
           }),
         ], { stacked: true }),
           field({
           label: t('marker.desc_label'), htmlFor: 'marker-description',
-          control: html`<textarea id="marker-description" class="hpf-input" rows="4" placeholder=${t('marker.desc_ph')}
+          control: html`<textarea data-hp="field" data-field="marker-description" id="marker-description" class="hpf-input" rows="4" placeholder=${t('marker.desc_ph')}
             .value=${d.description}
             @input=${(e: Event) => (this.host._markerDialog = { ...d, description: (e.target as HTMLTextAreaElement).value })}></textarea>`,
         }),
@@ -861,16 +861,16 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               ? html`<div class="hpf-chips">
                   ${d.pdfs.map((p) => html`<span class="hpf-chip"><ha-icon icon="mdi:file-pdf-box" aria-hidden="true"></ha-icon>
                     <a href="${safeUrl(this.host._display(p.url)) || '#'}" target="_blank" rel="noreferrer noopener">${p.name}</a>
-                    <button type="button" aria-label=${`${t('btn.delete')}: ${p.name}`} title=${t('btn.delete')}
+                    <button data-hp="action" data-action="marker-attachment-remove" data-value=${p.url} type="button" aria-label=${`${t('btn.delete')}: ${p.name}`} title=${t('btn.delete')}
                       @click=${() => this._removeMarkerPdf(p.url)}><ha-icon icon="mdi:close"></ha-icon></button></span>`)}
                 </div>`
               : nothing}
             <div class="hpf-actions">
-              <button class="btn ghost filebtn" type="button" @click=${(e: Event) =>
+              <button data-hp="action" data-action="marker-attachment-add" class="btn ghost filebtn" type="button" @click=${(e: Event) =>
                 ((e.currentTarget as HTMLElement).nextElementSibling as HTMLInputElement | null)?.click()}>
                 <ha-icon icon="mdi:paperclip"></ha-icon>${t('btn.attach')}
               </button>
-              <input type="file" hidden multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,application/pdf"
+              <input data-hp="field" data-field="marker-attachments" type="file" hidden multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,application/pdf"
                 @change=${(e: Event) => this._pickMarkerFiles(e)} />
             </div>`,
         }),
@@ -917,7 +917,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             : {text:st(dirty ? 'dialog.dirty' : 'dialog.saved')})}
           <div class="dialog-action-group dialog-action-copy markeractions">
             ${d.devId
-              ? html`<button class="btn ghost" type="button"
+              ? html`<button data-hp="action" data-action="marker-visibility" class="btn ghost" type="button"
                   ?disabled=${d.busy || this._radarSetup.isActive()}
                   aria-pressed=${hidden ? 'true' : 'false'}
                   title=${t(hidden ? 'marker.show_tip' : 'marker.hide_tip')}
@@ -929,7 +929,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           </div>
           <div class="dialog-action-group dialog-action-danger markeractions">
             ${d.devId
-              ? html`<button class="btn ghost danger" type="button" ?disabled=${d.busy || this._radarSetup.isActive()}
+              ? html`<button data-hp="action" data-action="marker-delete" class="btn ghost danger" type="button" ?disabled=${d.busy || this._radarSetup.isActive()}
                   title=${t('marker.delete_tip')} @click=${() => this._deleteMarker()}>
                   <ha-icon icon="mdi:delete-outline"></ha-icon>${t('btn.delete')}
                 </button>`

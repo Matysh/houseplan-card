@@ -65,7 +65,7 @@ export interface SummaryPanelHost extends Node {
 
   _t(key: I18nKey): string;
   _errText(error: unknown): string;
-  _showToast?(message: string): void;
+  _showToast?(message: string, id?: string): void;
   _confirmDanger(request: {
     key: string;
     kind: 'warning';

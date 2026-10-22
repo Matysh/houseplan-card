@@ -6159,7 +6159,7 @@ const MUTANT_DEFINITIONS = [
       + 'a query with no matches; hiding it can trap a stale contact or lock on the opening',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '                <button type="button" class="cand opening-entity-candidate ${cur ? \'\' : \'sel\'}"\n'
+      find: '                <button data-hp="field-option" data-field=${`opening-${kind}-entity`} data-value="" type="button" class="cand opening-entity-candidate ${cur ? \'\' : \'sel\'}"\n'
         + '                  data-opening-entity="" @click=${() => this._selectOpeningEntity(kind, \'\')}>\n'
         + '                  <span class="cl">${this._t(\'opening.none\')}</span>\n'
         + '                </button>\n',
@@ -6664,7 +6664,7 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/houseplan-card.ts',
       find: "    this._languageFailureUnsub = composeUnsub(subscribeLanguageLoadFailures(() => {\n"
-        + "      this._showToast(this._t('toast.locale_load_failed'));\n"
+        + "      this._showToast(this._t('toast.locale_load_failed'), 'toast.locale_load_failed');\n"
         + '    }), ',
       replace: '    this._languageFailureUnsub = composeUnsub(',
     }],
@@ -8052,7 +8052,7 @@ const MUTANT_DEFINITIONS = [
         + '      // user just declined — staging stays clean, the toast says what happened.\n'
         + '      if (!stillCurrent()) return;\n'
         + '      close();\n'
-        + "      host._showToast(host._t('backdrop.downscale_failed'));\n"
+        + "      host._showToast(host._t('backdrop.downscale_failed'), 'backdrop.downscale_failed');\n"
         + '    }',
       replace: '    } catch {\n'
         + '      const payload = await encodePlanFile(guard.file, guard.ext, guard.file.name);\n'
@@ -16162,6 +16162,46 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'e2e-contract-dynamic-writer-silently-ignored-1011',
+    guard: 'node --test test/data-hp-contract.test.mjs',
+    because: 'an unsupported dynamic DOM writer must fail the declared selector inventory instead of silently dropping values from its completeness check (#1011)',
+    patches: [{
+      file: 'scripts/data-hp-source.mjs',
+      find: '  throw new Error(`Unsupported dynamic contract expression in ${file}: ${expression.getText()}`);',
+      replace: '  return [];',
+    }],
+  },
+  {
+    id: 'e2e-toast-keeps-no-key-1011',
+    guard: 'node --test test/toast-presentation.test.mjs',
+    because: 'the current toast must retain its known i18n key when routed to a modal and retire it on an unkeyed replacement (#1011)',
+    patches: [{
+      file: 'src/toast-presentation.ts',
+      find: '    notice.dataset.id = id;',
+      replace: "    notice.dataset.id = 'message';",
+    }],
+  },
+  {
+    id: 'e2e-marker-field-wrong-identity-1011',
+    guard: 'node demo/smoke_e2e_hooks.mjs',
+    because: 'the real mounted marker form must expose the working name input under its declared identity and retain the dirty Cancel lifecycle; a source inventory cannot prove the bound control (#1011)',
+    patches: [{
+      file: 'src/editors/marker-dialog.ts',
+      find: '<input data-hp="field" data-field="marker-name" id="marker-name"',
+      replace: '<input data-hp="field" data-field="marker-wrong-name" id="marker-name"',
+    }],
+  },
+  {
+    id: 'e2e-contact-contour-wrong-owner-1011',
+    guard: 'node demo/smoke_e2e_hooks.mjs',
+    because: 'the imperatively painted contact contour must identify the same owner and mounted participants as the live group; only the browser crosses that cached SVG/marker relationship (#1011)',
+    patches: [{
+      file: 'src/device-contact-render.ts',
+      find: 'data-component=${owner.marker.id} data-grouped=',
+      replace: "data-component=${owner.marker.id + '-wrong'} data-grouped=",
+    }],
+  },
+  {
     id: 'color-picker-confirm-click-through',
     guard: 'node demo/smoke_color_picker_consumers.mjs',
     because: 'the full-width confirmation inside a general-settings dialog must consume its own '
@@ -18508,9 +18548,9 @@ const MUTANT_DEFINITIONS = [
       + 'чекбоксы выглядит идентично и молча ломает стрелки и объявление скринридером',
     patches: [{
       file: 'src/editors/form-kit.ts',
-      // #600: у радиокнопки сегмента появился value — якорь дописан.
-      find: '      <input type="radio" name=${name} value=${option.value} .checked=${option.value === value}',
-      replace: '      <input type="checkbox" name=${name} value=${option.value} .checked=${option.value === value}',
+      // #1011: retain the test identity while changing the same radio semantics.
+      find: '      <input data-hp="field" data-field=${name} data-value=${option.value} type="radio" name=${name} value=${option.value} .checked=${option.value === value}',
+      replace: '      <input data-hp="field" data-field=${name} data-value=${option.value} type="checkbox" name=${name} value=${option.value} .checked=${option.value === value}',
     }],
   },
   {
@@ -19270,7 +19310,7 @@ const MUTANT_DEFINITIONS = [
     because: "#780 ТЗ §5: a marker bound to another strip cannot be taken silently",
     patches: [{
       file: 'src/led-strip-editor.ts',
-      find: "    if (owner && owner.strip.id !== stripId) { this.host._showToast(this.t('led.taken')); return; }",
+      find: "    if (owner && owner.strip.id !== stripId) { this.host._showToast(this.t('led.taken'), 'led.taken'); return; }",
       replace: "    void owner;",
     }],
   },

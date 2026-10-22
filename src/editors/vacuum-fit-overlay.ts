@@ -59,7 +59,7 @@ export function renderVacuumFitOverlay(
         <circle class="vacfitknob" cx=${hx.toFixed(1)} cy=${hy.toFixed(1)} r=${(radius / 4).toFixed(2)}></circle>`);
     }
   }
-  return html`<svg class="vacfit" viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
+  return html`<svg class="vacfit" data-hp="vacuum-calibration-step" data-step="manual" viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
     preserveAspectRatio="none"
     @pointerdown=${(event: PointerEvent) => runtime._vacFitPointer(event, view)}
     @pointermove=${(event: PointerEvent) => runtime._vacFitPointer(event, view)}

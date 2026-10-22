@@ -45,7 +45,7 @@ export interface SpaceFormPort {
   help(key: Extract<I18nKey, `${string}.help`>): TemplateResult | typeof nothing;
   rangeInput(
     min: number, max: number, step: number, value: number,
-    onInput: (v: number) => void, disabled?: boolean, ariaLabel?: string,
+    onInput: (v: number) => void, disabled?: boolean, ariaLabel?: string, fieldId?: string,
   ): TemplateResult;
   pickPlanFile(event: Event): void | Promise<void>;
   toggleServerPlans(): void | Promise<void>;
@@ -152,7 +152,7 @@ export function renderSpaceForm(port: SpaceFormPort): SpaceFormParts {
   const notices = d.deleteBlockers
     ? callout({ kind:'warning', role:'alert', id:id('delete-blocked'), focusable:true,
         text:t('space.delete_blocked', {n:String(d.deleteBlockers)}),
-        action:port.deleteSpace ? html`<button class="btn danger" ?disabled=${d.busy} @click=${() => port.deleteSpace!(true)}>${st('space.delete_with_devices')}</button>` : nothing })
+        action:port.deleteSpace ? html`<button data-hp="action" data-action="space-delete-devices" class="btn danger" ?disabled=${d.busy} @click=${() => port.deleteSpace!(true)}>${st('space.delete_with_devices')}</button>` : nothing })
     : nothing;
   return {
     sections, notices,
@@ -166,7 +166,7 @@ export function renderSpaceForm(port: SpaceFormPort): SpaceFormParts {
         : port.northControl ? {text:st(dirty ? 'dialog.dirty' : 'dialog.saved')} : {})}
       ${d.mode === 'edit' && port.copySpace
         ? html`<div class="dialog-action-group dialog-action-copy">
-            <button class="btn ghost hpf-mobile-icon" aria-label=${t('btn.copy')} title=${t('btn.copy')}
+            <button data-hp="action" data-action="space-copy" class="btn ghost hpf-mobile-icon" aria-label=${t('btn.copy')} title=${t('btn.copy')}
               @click=${() => port.copySpace!()} ?disabled=${d.busy}>
               <ha-icon icon="mdi:content-copy"></ha-icon><span class="hpf-action-label">${t('btn.copy')}</span>
             </button>
@@ -174,7 +174,7 @@ export function renderSpaceForm(port: SpaceFormPort): SpaceFormParts {
         : nothing}
       ${d.mode === 'edit' && port.deleteSpace
         ? html`<div class="dialog-action-group dialog-action-danger">
-            <button class="btn danger hpf-mobile-icon" aria-label=${t('btn.delete')} title=${t('btn.delete')}
+            <button data-hp="space-delete" class="btn danger hpf-mobile-icon" aria-label=${t('btn.delete')} title=${t('btn.delete')}
               @click=${() => port.deleteSpace!()} ?disabled=${d.busy}>
               <ha-icon icon="mdi:delete-outline"></ha-icon><span class="hpf-action-label">${t('btn.delete')}</span>
             </button>
@@ -182,7 +182,7 @@ export function renderSpaceForm(port: SpaceFormPort): SpaceFormParts {
         : nothing}
       <div class="dialog-action-group dialog-action-commit">
         ${host._importTotal > 0 && d.mode === 'create'
-          ? html`<button class="btn ghost" @click=${() => port.skipImport()}>${t('btn.skip')}</button>`
+          ? html`<button data-hp="action" data-action="import-skip" class="btn ghost" @click=${() => port.skipImport()}>${t('btn.skip')}</button>`
           : nothing}
         <button class="btn ghost" data-hp="dialog-cancel" @click=${requestClose}>${t('btn.cancel')}</button>
         <button class="btn on" data-hp="dialog-confirm" @click=${() => port.save()} ?disabled=${!canSave}
@@ -216,7 +216,7 @@ function renderBasics(port: SpaceFormPort, d: SpaceDialogState, id: (n: string) 
         field({
           label: t('space.title_label'), htmlFor: id('title'),
           error: titleProblem ? st(titleProblem.message) : undefined,
-          control: html`<input id=${id('title')} class="hpf-input" type="text" maxlength="80"
+          control: html`<input data-hp="field" data-field=${id('title')} id=${id('title')} class="hpf-input" type="text" maxlength="80"
             placeholder=${t('space.title_ph')} .value=${d.title}
             aria-invalid=${titleProblem ? 'true' : nothing}
             @input=${(e: Event) => set(port, { ...d, title: (e.target as HTMLInputElement).value })} />`,
@@ -279,14 +279,14 @@ function renderPlanUpload(port: SpaceFormPort, d: SpaceDialogState): TemplateRes
           : html`<span class="planname muted">${t('space.no_plan')}</span>`;
   const actions = html`
       <span class="fileupload">
-        <button class="btn filebtn" type="button" @click=${(e: Event) =>
+        <button data-hp="action" data-action="backdrop-upload-open" class="btn filebtn" type="button" @click=${(e: Event) =>
           ((e.currentTarget as HTMLElement).nextElementSibling as HTMLInputElement | null)?.click()}>
           <ha-icon icon="mdi:upload"></ha-icon>${d.planUrl || d.planFile ? port.northControl ? st('space.replace_image') : t('btn.replace') : t('btn.upload')}
         </button>
-        <input type="file" hidden accept=".svg,.png,.jpg,.jpeg,.webp,image/svg+xml,image/png,image/jpeg,image/webp"
+        <input data-hp="image-upload" data-kind="backdrop" type="file" hidden accept=".svg,.png,.jpg,.jpeg,.webp,image/svg+xml,image/png,image/jpeg,image/webp"
           @change=${(e: Event) => port.pickPlanFile(e)} />
       </span>
-      <button class="btn ghost" type="button" @click=${() => port.toggleServerPlans()}
+      <button data-hp="action" data-action="backdrop-server-plans" class="btn ghost" type="button" @click=${() => port.toggleServerPlans()}
         title=${t('space.pick_saved_hint')}>
         <ha-icon icon="mdi:folder-image"></ha-icon>${t('space.pick_saved')}
       </button>`;
@@ -306,7 +306,7 @@ function renderAppearance(port: SpaceFormPort, d: SpaceDialogState, id: (n: stri
     const label = kind === 'border' ? t('space.room_color') : t('space.custom_fill');
     return colorRow({label, help:shelp(kind === 'border' ? 'space.border_color.help' : 'space.fill_color.help'),picker:colorField({hex:kind === 'border' ? d.roomColor : fill.c,
       opacity:kind === 'border' ? d.roomOpacity : fill.a,
-      picker:html`<hp-color-opacity .label=${label} hide-label flat-swatch .opacityLabel=${t('space.opacity')}
+      picker:html`<hp-color-opacity data-hp="field" data-field=${id(`${kind}-color`)} .label=${label} hide-label flat-swatch .opacityLabel=${t('space.opacity')}
         .pickerLabels=${host._colorPickerLabels} .color=${kind === 'border' ? d.roomColor : fill.c}
         .opacity=${kind === 'border' ? d.roomOpacity : fill.a}
         @hp-color-opacity-change=${(e: CustomEvent<{color:string;opacity:number}>) => set(port, kind === 'border'
@@ -352,7 +352,7 @@ function renderRoomCards(port: SpaceFormPort, d: SpaceDialogState, id: (n:string
     const change = (n:number) => set(port,{...d,[key]:n/100});
     return field({label,help:shelp(index === 0 ? 'space.name_size.help' : 'space.metrics_size.help'),htmlFor:id(index === 0 ? 'name-font' : 'label-font'),control:rangeLine({
       id:id(index === 0 ? 'name-font' : 'label-font'),min:50,max:300,step:5,value,unit:'%',ariaLabel:label,
-      slider:port.rangeInput(50,300,5,value,change,false,label),onInput:change})});
+      slider:port.rangeInput(50,300,5,value,change,false,label,id(index === 0 ? 'name-font-slider' : 'label-font-slider')),onInput:change})});
   });
   const tiles = ([
     ['labelTemp',t('space.label_temp'),'space.metric_temp.help'],['labelHum',t('space.label_hum'),'space.metric_hum.help'],
@@ -403,7 +403,7 @@ function renderSunAndLight(port: SpaceFormPort, d: SpaceDialogState, id:(n:strin
         <span class="hpf-inherited-swatch" style=${`background:${inheritedColor}`} aria-hidden="true"></span>
         <span>${st('space.inherited_color',{v:inheritedColor})}</span></div>` : nothing}`}),
           d.bgMode === 'static' ? colorRow({label:t('space.bg_color'),picker:colorField({hex:d.bgColor || inheritedColor,
-      picker:html`<hp-color-opacity .label=${t('space.bg_color')} hide-label flat-swatch .pickerLabels=${host._colorPickerLabels}
+      picker:html`<hp-color-opacity data-hp="field" data-field="space-bg-color" .label=${t('space.bg_color')} hide-label flat-swatch .pickerLabels=${host._colorPickerLabels}
         .color=${d.bgColor || inheritedColor} .opacity=${1} .showOpacity=${false}
         @hp-color-opacity-change=${(e:CustomEvent<{color:string}>) => set(port,{...d,bgColor:e.detail.color})}></hp-color-opacity>`})})
       : nothing])}

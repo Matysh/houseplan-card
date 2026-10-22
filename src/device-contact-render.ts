@@ -187,7 +187,7 @@ export class DeviceContactRenderer {
         const d = s.marker.diameter;
         render(svg`<svg viewBox=${`${s.marker.x - d / 2} ${s.marker.y - d / 2} ${d} ${d}`}
           preserveAspectRatio="none" aria-hidden="true">
-          ${s === owner ? svg`<path class=${joined ? 'device-contact-contour grouped' : 'device-contact-contour'} d=${outline}></path>` : nothing}
+          ${s === owner ? svg`<path data-hp="device-contact-contour" data-component=${owner.marker.id} data-grouped=${String(joined)} class=${joined ? 'device-contact-contour grouped' : 'device-contact-contour'} d=${outline}></path>` : nothing}
           <path class="device-contact-hit" d=${contactOutline([own])}></path>
         </svg>`, item.ink);
         this.work.paints++;

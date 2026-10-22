@@ -45,13 +45,14 @@ export class ToastPresentation {
 
   refresh(): void { this._route(); }
 
-  show(message: string): void {
+  show(message: string, id = 'message'): void {
     if (!this._root) return;
     cancelAnimationFrame(this._frame);
     const notice = this._notice ||= document.createElement('div');
     notice.className = 'toast';
     notice.dataset.hp = 'toast';
     notice.dataset.kind = 'message';
+    notice.dataset.id = id;
     this._route();
     notice.setAttribute('role', 'alert');
     notice.setAttribute('aria-live', 'assertive');

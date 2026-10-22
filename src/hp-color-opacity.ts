@@ -899,7 +899,7 @@ export class HpColorOpacity extends LitElement {
           <span class="caption">${this.label || labels.title}</span>
           <span class="preview" aria-hidden="true"><span style=${`background:${color};opacity:${pct / 100}`}></span></span>
         </div>
-        <div class="sv-field" aria-hidden="true"
+        <div class="sv-field" aria-hidden="true" data-hp="field" data-field="colour-sv"
           style=${`--hp-picker-hue:${hueColor};--hp-picker-saturation:${this._saturation}%;--hp-picker-value:${100 - this._value}%`}
           @pointerdown=${(e: PointerEvent) => this._svPointerDown(e)}
           @pointermove=${(e: PointerEvent) => this._svPointerMove(e)}
@@ -910,7 +910,7 @@ export class HpColorOpacity extends LitElement {
         </div>
         <label class="control">
           <span class="control-head"><span class="caption">${labels.hue}</span><span class="control-value">${hue}°</span></span>
-          <input class="hsv-range hue-range" type="range" min="0" max="359" step="1" .value=${String(hue)}
+          <input data-hp="field" data-field="colour-hue" class="hsv-range hue-range" type="range" min="0" max="359" step="1" .value=${String(hue)}
             aria-label=${labels.hue} aria-valuetext=${`${hue}°`}
             style=${`--hp-picker-color:${color}`}
             @input=${(e: Event) => this._setHue(Number((e.target as HTMLInputElement).value))}
@@ -918,7 +918,7 @@ export class HpColorOpacity extends LitElement {
         </label>
         <label class="control">
           <span class="control-head"><span class="caption">${labels.saturation}</span><span class="control-value">${saturation}%</span></span>
-          <input class="hsv-range" type="range" min="0" max="100" step="1" .value=${String(saturation)}
+          <input data-hp="field" data-field="colour-saturation" class="hsv-range" type="range" min="0" max="100" step="1" .value=${String(saturation)}
             aria-label=${labels.saturation} aria-valuetext=${`${saturation}%`}
             style=${`--hp-picker-track:linear-gradient(to right,${saturationStart},${saturationEnd});--hp-picker-color:${color}`}
             @input=${(e: Event) => this._setSaturation(Number((e.target as HTMLInputElement).value))}
@@ -926,7 +926,7 @@ export class HpColorOpacity extends LitElement {
         </label>
         <label class="control">
           <span class="control-head"><span class="caption">${labels.value}</span><span class="control-value">${value}%</span></span>
-          <input class="hsv-range" type="range" min="0" max="100" step="1" .value=${String(value)}
+          <input data-hp="field" data-field="colour-brightness" class="hsv-range" type="range" min="0" max="100" step="1" .value=${String(value)}
             aria-label=${labels.value} aria-valuetext=${`${value}%`}
             style=${`--hp-picker-track:linear-gradient(to right,#000,${valueEnd});--hp-picker-color:${color}`}
             @input=${(e: Event) => this._setValue(Number((e.target as HTMLInputElement).value))}
@@ -934,7 +934,7 @@ export class HpColorOpacity extends LitElement {
         </label>
         <label class="control">
           <span class="caption">${labels.hex}</span>
-          <input type="text" inputmode="text" autocomplete="off" spellcheck="false"
+          <input data-hp="field" data-field="colour-hex" type="text" inputmode="text" autocomplete="off" spellcheck="false"
             .value=${this._hexDraft} aria-label=${labels.hex}
             aria-invalid=${this._hexInvalid ? 'true' : 'false'}
             aria-describedby=${this._hexInvalid ? 'hex-error' : nothing}
@@ -945,18 +945,18 @@ export class HpColorOpacity extends LitElement {
         </label>
         ${this.showOpacity ? html`<div class="row">
           <span class="caption">${this.opacityLabel}</span>
-          <input type="range" min="0" max="100" step="1" .value=${String(pct)}
+          <input data-hp="field" data-field="colour-opacity" data-value="range" type="range" min="0" max="100" step="1" .value=${String(pct)}
             aria-label=${this.opacityLabel} aria-valuetext=${`${pct}%`}
             @input=${(e: Event) => this._setOpacity(Number((e.target as HTMLInputElement).value) / 100)}
             @keydown=${(e: KeyboardEvent) => this._shiftRangeKey(e, pct, 0, 100, (next) => this._setOpacity(next / 100))} />
-          <input type="number" min="0" max="100" step="1" .value=${String(pct)}
+          <input data-hp="field" data-field="colour-opacity" data-value="number" type="number" min="0" max="100" step="1" .value=${String(pct)}
             aria-label=${`${this.opacityLabel}, %`}
             @change=${(e: Event) => this._setOpacity(Number((e.target as HTMLInputElement).value) / 100)} />
           <span class="pct">%</span>
         </div>` : nothing}
-        ${this.allowNoFill ? html`<label class="row"><input type="checkbox" .checked=${this.noFill}
+        ${this.allowNoFill ? html`<label class="row"><input data-hp="field" data-field="colour-none" type="checkbox" .checked=${this.noFill}
           @change=${(e: Event) => { this.noFill = (e.target as HTMLInputElement).checked; this._emit(this.color, this.opacity); }} />${this.noFillLabel}</label>` : nothing}
-        <button class="confirm" type="button" @click=${(e: Event) => this._confirm(e)}>${labels.confirm}</button>
+        <button class="confirm" type="button" data-hp="action" data-action="colour-confirm" @click=${(e: Event) => this._confirm(e)}>${labels.confirm}</button>
       </div>`;
   }
 
@@ -978,7 +978,7 @@ export class HpColorOpacity extends LitElement {
       : `${this.label || 'Color'}: ${color}`;
     return html`
       ${this.label && !this.hideLabel ? html`<span class="label">${this.label}</span>` : nothing}
-      <button class=${solid ? 'trigger solid' : 'trigger'} type="button" .disabled=${this.disabled}
+      <button data-hp="field" data-field="colour-open" class=${solid ? 'trigger solid' : 'trigger'} type="button" .disabled=${this.disabled}
         aria-label=${this.triggerLabel || title} aria-haspopup="dialog" aria-expanded=${this._open ? 'true' : 'false'}
         title=${this.nativeTooltip ? title : nothing} @click=${this._toggle}>
         <span class="swatch" style=${this.allowNoFill && this.noFill

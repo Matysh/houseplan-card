@@ -1,5 +1,36 @@
 # Development and deployment
 
+## Declared E2E hooks (#1011)
+
+`docs/data-hp-contract.json` and `STYLING-HOOKS.md` define the DOM contract.
+New test hooks use `since: 1.83.0`; the JSON stays outside the runtime graph.
+Fields inherit semantic ids/names/capability keys. Scope a field to its owning
+dialog/component and reveal its settings section before interacting. HA
+component internals remain private.
+
+`scripts/data-hp-source.mjs` parses Lit markup and DOM writers with TypeScript,
+including comparisons and nested templates. Contract tests check both directions
+of `data-hp`/`data-tool`, read the existing closed menus for three dynamic tool
+writers and reject unknown dynamic writers. Source form coverage checks actual
+controls; `demo/smoke_e2e_hooks.mjs` proves mounted bindings, Cancel/Discard,
+camera updates, contact ownership, vacuum calibration, colour/manual controls,
+Properties, PDF, summary, toast routing and phone navigation. Image/support
+payloads are synthetic; feedback is never submitted. Manual state uses one
+ordinary paste event; the facade's same-turn key burst is not a typing oracle.
+Mutation witnesses are only checked statically during development.
+The measured joint lazy editor graph is329291 B gzip (+2746 B against326545);
+its ceiling follows that fact under the owner's small-size-overage permission.
+The raw bundle reference is3331092 B (+18750 B,0.57%); existing bands and
+other limits remain intact. These bytes are declared attributes/identities.
+
+External journeys install a product ref, then sync and lint its exact contract
+(TESTING.md). The current external kind linter enumerates a subset of hooks;
+#1010 must collect kind enums from all hooks before using the new trail/upload
+selectors. Existing selectors and the schema-1 reader shape stay compatible.
+The facade stays outside release bundles. Golden should remain unchanged;
+this task does not authorize accepting different pixels.
+
+
 ## Shared HSV presentation (#1008)
 
 `demo/smoke_color_picker_presentation.mjs` samples actual pinned-Chromium

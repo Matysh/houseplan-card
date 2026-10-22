@@ -697,7 +697,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     const projection = projectDecorImage(shape, NORM_W, NORM_W);
     if (!projection) return [];
     const [x, y, w, h, opacity, transform] = projection;
-    return [svg`<image class="dimage" data-hp="decor"
+    return [svg`<image class="dimage" data-hp="decor" data-id=${shape.id} data-kind="image"
       href=${href} x=${x} y=${y} width=${w} height=${h}
       opacity=${opacity}
       @load=${() => o.assetLoaded?.(raw, href)}

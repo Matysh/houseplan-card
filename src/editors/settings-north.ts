@@ -57,7 +57,7 @@ export function settingsNorth({
     </button>
     <div class="hpf-north-values">
       ${unitInput({ id, value: raw, wide:true, min: 0, max: 359, step: 1, unit: '°', ariaLabel: label, invalid, onInput })}
-      <input type="range" min="0" max="359" step="1" .value=${String(angle)} aria-label=${label}
+      <input data-hp="field" data-field=${`${id}-slider`} type="range" min="0" max="359" step="1" .value=${String(angle)} aria-label=${label}
         @input=${(event: Event) => onChange(Number((event.target as HTMLInputElement).value))} />
       ${angleHint ? html`<p class="hpf-hint">${angleHint}</p>` : ''}
     </div>

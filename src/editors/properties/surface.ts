@@ -91,32 +91,32 @@ function fieldView(field: PropertiesField, port: PropertiesSurfacePort): Templat
       : field.value as { color: string; opacity: number; noFill?: boolean } | null;
     control = disabled || !color ? html`<div class="hp-prop-control hp-prop-color"><span class="hp-prop-swatch hp-prop-swatch-empty"></span><span>—</span></div>`
       : colorField({ hex: color.color.toUpperCase(), valueLabel: color.noFill ? t('no_fill') : undefined, opacity: color.opacity,
-        picker: html`<hp-color-opacity ${ref(el=>{if(el)port.attachColor(field.key,el as HpColorOpacity);})} .label=${label} .color=${color.color} .opacity=${color.opacity}
+        picker: html`<hp-color-opacity data-hp="field" data-field=${`properties-${field.key}`} ${ref(el=>{if(el)port.attachColor(field.key,el as HpColorOpacity);})} .label=${label} .color=${color.color} .opacity=${color.opacity}
           .allowNoFill=${color.noFill !== undefined} .noFill=${color.noFill ?? false} .noFillLabel=${t('no_fill')}
           .pickerLabels=${port.pickerLabels} .disabled=${pending} hide-label flat-swatch compact-swatch
           @hp-color-opacity-open=${() => port.edit(field, JSON.stringify(color))}
           @hp-color-opacity-change=${(e: CustomEvent) => port.edit(field, JSON.stringify(e.detail))}
           @hp-color-opacity-commit=${(e: CustomEvent) => port.edit(field, JSON.stringify(e.detail), true)}
           @hp-color-opacity-close=${() => { if (port.mayFinish() && controller.draft?.field === field.key) controller.cancel(); }}></hp-color-opacity>` });
-  } else if (field.control === 'action') control = html`<button id=${id} type="button" class="hp-prop-settings" ?disabled=${disabled}
+  } else if (field.control === 'action') control = html`<button data-hp="field" data-field=${`properties-${field.key}`} id=${id} type="button" class="hp-prop-settings" ?disabled=${disabled}
       @click=${() => port.action(field.action ?? field.key)}>${propertiesIcon(field.icon ?? 'settings')}${label}</button>`;
   else if (field.control === 'choices') control = html`<div class="hp-prop-choices" role="group" aria-label=${label}>
-      ${field.options?.map(option => html`<button type="button" class="hp-prop-choice ${value === option.value ? 'active' : ''}"
+      ${field.options?.map(option => html`<button data-hp="field" data-field=${`properties-${field.key}`} data-value=${option.value} type="button" class="hp-prop-choice ${value === option.value ? 'active' : ''}"
         aria-pressed=${String(value === option.value)} ?disabled=${disabled || readonly || pending}
         @click=${() => port.edit(field, option.value, true)}>${option.label}</button>`)}</div>`;
-  else if (field.control === 'select') control = html`<select id=${id} class="hp-prop-control" aria-label=${label} ?disabled=${disabled || readonly || pending}
+  else if (field.control === 'select') control = html`<select data-hp="field" data-field=${`properties-${field.key}`} id=${id} class="hp-prop-control" aria-label=${label} ?disabled=${disabled || readonly || pending}
       .value=${value} @change=${(e: Event) => port.edit(field, (e.target as HTMLSelectElement).value, true)}>
       ${field.options?.map(option => html`<option value=${option.value} ?selected=${value===option.value}>${option.label}</option>`)}</select>`;
-  else if (field.control === 'toggle') control = html`<button id=${id} type="button" class="hp-prop-choice ${field.value === true ? 'active' : ''}"
+  else if (field.control === 'toggle') control = html`<button data-hp="field" data-field=${`properties-${field.key}`} id=${id} type="button" class="hp-prop-choice ${field.value === true ? 'active' : ''}"
       aria-label=${label} aria-pressed=${String(field.value === true)} ?disabled=${disabled || readonly || pending}
       @click=${() => port.edit(field, String(field.value !== true), true)}>${field.icon ? propertiesIcon(field.icon) : nothing}${label}</button>`;
-  else if (field.control === 'text') control = html`<textarea id=${id} class="hp-prop-text" rows="2" maxlength="200" aria-label=${label} ?disabled=${pending}
+  else if (field.control === 'text') control = html`<textarea data-hp="field" data-field=${`properties-${field.key}`} id=${id} class="hp-prop-text" rows="2" maxlength="200" aria-label=${label} ?disabled=${pending}
       .value=${value} @input=${(e: Event) => port.edit(field, (e.target as HTMLTextAreaElement).value)}
       @select=${(e: Event) => port.textSelection(e.target as HTMLTextAreaElement)}
       @keyup=${(e: Event) => port.textSelection(e.target as HTMLTextAreaElement)}
       @click=${(e: Event) => port.textSelection(e.target as HTMLTextAreaElement)}></textarea>`;
   else control = disabled || field.value === null ? html`<div class="hp-prop-control"><span>—</span><span class="hp-prop-unit">${field.unit === 'cm' ? t(port.imperial ? 'inch' : 'cm') : field.unit}</span></div>`
-    : unitInput({ id, value, unit: field.unit === 'cm' ? t(port.imperial ? 'inch' : 'cm') : field.unit ?? '',
+    : unitInput({ id, fieldId: `properties-${field.key}`, value, unit: field.unit === 'cm' ? t(port.imperial ? 'inch' : 'cm') : field.unit ?? '',
       min: field.min === undefined ? undefined : field.min / (port.imperial && field.unit === 'cm' ? 2.54 : 1),
       max: field.max === undefined ? undefined : field.max / (port.imperial && field.unit === 'cm' ? 2.54 : 1),
       step: field.step === undefined ? 'any' : field.step / (port.imperial && field.unit === 'cm' ? 2.54 : 1), ariaLabel: label,
@@ -126,7 +126,7 @@ function fieldView(field: PropertiesField, port: PropertiesSurfacePort): Templat
       @keydown=${keydown} @focusout=${blur} @focusin=${() => port.enterField(field.key)} title=${field.reason ? t(field.reason) : nothing}>
     ${field.control === 'text' || field.control === 'toggle' || field.control === 'action' ? nothing : html`<label for=${id}>${label}${readonly ? propertiesIcon('lock') : nothing}</label>`}
     ${control}
-    ${field.control === 'text' ? html`<button type="button" class="hp-prop-variable" @pointerdown=${(e: Event) => e.preventDefault()}
+    ${field.control === 'text' ? html`<button data-hp="action" data-action="properties-insert-variable" type="button" class="hp-prop-variable" @pointerdown=${(e: Event) => e.preventDefault()}
       @click=${() => port.insertVariable()}>${propertiesIcon('variable')}${t('insert_variable')}</button>` : nothing}
     ${draft?.error ? html`<div class="hp-prop-error" role="alert">${t(draft.error.key as PropertiesString, draft.error.values)}</div>` : nothing}
   </div>`;
@@ -146,7 +146,7 @@ export function renderPropertiesSurface(model: PropertiesSurface, port: Properti
       </section>`)}
     </div>
     <footer class="hp-prop-foot"><div class="hp-prop-actions ${model.actions.length === 1 ? 'solo' : ''}">
-      ${model.actions.map(action => html`<div class="hp-prop-action-wrap"><button type="button" class="hp-prop-action ${action.key}"
+      ${model.actions.map(action => html`<div class="hp-prop-action-wrap"><button data-hp="action" data-action=${`properties-${action.key}`} type="button" class="hp-prop-action ${action.key}"
           aria-disabled=${String(!!action.disabled)} data-hp-tooltip=${action.disabled ? t(action.disabled) : nothing}
           @click=${() => { if (!action.disabled) port.action(action.key); }}>
           ${propertiesIcon(action.icon)}<span>${t(action.label)}</span></button></div>`)}

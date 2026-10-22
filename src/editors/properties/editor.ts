@@ -474,7 +474,7 @@ export class PropertiesEditor {
     const expected = marker && deviceVisualFields(marker, from.fields.map(field => field.key));
     if (!device || !marker || bindingOf(device) !== target.binding || marker.binding !== target.binding
       || device.bindingStatus?.kind === 'ha_disabled' || !samePropertiesValue(expected, from.fields)) {
-      restoreCursor(); host._showToast(this.t('external_change')); return;
+      restoreCursor(); host._showToast(this.t('external_change'), 'external_change'); return;
     }
     const authority = host._configWriteContext.claim(), previous = host._serverCfg!;
     const candidate: ServerConfig = structuredClone(previous);
@@ -491,7 +491,7 @@ export class PropertiesEditor {
       host._showToast(host._t(direction === 'undo' ? 'history.undone' : 'history.redone', { name: command.name }));
     } catch {
       if (host._configWriteContext.current(authority, host.hass)) {
-        restoreDeferred(host._rollbackOptimistic(attempt)); restoreCursor(); host._showToast(this.t('save_error'));
+        restoreDeferred(host._rollbackOptimistic(attempt)); restoreCursor(); host._showToast(this.t('save_error'), 'save_error');
       }
     } finally { if (host._configWriteContext.owns(authority)) { host._devicePositionBusy = false; host.requestUpdate(); } }
   }
@@ -639,7 +639,7 @@ export class PropertiesEditor {
           onPick: value => { dialog.entity = value; dialog.attribute = ''; dialog.open = false; this.host.requestUpdate(); },
         })}
         <label class="hp-prop-variable-label" for="hp-prop-variable-value">${this.t('value')}</label>
-        <select id="hp-prop-variable-value" class="hpf-select" .value=${dialog.attribute}
+        <select data-hp="field" data-field="hp-prop-variable-value" id="hp-prop-variable-value" class="hpf-select" .value=${dialog.attribute}
           @change=${(e: Event) => { dialog.attribute = (e.target as HTMLSelectElement).value; this.host.requestUpdate(); }}>
           <option value="" ?selected=${!dialog.attribute}>${this.t('state')}</option>${attributes.map(key => html`<option value=${key} ?selected=${dialog.attribute===key}>${key}</option>`)}
         </select>

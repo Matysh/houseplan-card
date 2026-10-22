@@ -80,7 +80,7 @@ export interface StairEditorHostPort {
   _decorStyle: { color: string; opacity: number };
   _suppressClick: boolean;
   requestUpdate(): void;
-  _showToast(message: string): void;
+  _showToast(message: string, id?: string): void;
   _t(key: I18nKey, vars?: Record<string, string | number>): string;
   _geometrySnapshot(): unknown;
   _recordGeometry(name: string, before: unknown): void;
@@ -219,7 +219,7 @@ export class StairEditorRuntime {
     const space = this.owner._curSpaceCfg as { stairs?: Stair[] } | null;
     if (!space) return false;
     if (this.stairs.length >= MAX_STAIRS_PER_SPACE) {
-      this.owner._showToast(this.owner._t('toast.physical_limit'));
+      this.owner._showToast(this.owner._t('toast.physical_limit'), 'toast.physical_limit');
       return false;
     }
     event.preventDefault();
@@ -262,7 +262,7 @@ export class StairEditorRuntime {
   public placeAt(point: number[]): void {
     const space = this.owner._curSpaceCfg as { stairs?: Stair[] } | null;
     if (!space || this.stairs.length >= MAX_STAIRS_PER_SPACE) {
-      this.owner._showToast(this.owner._t('toast.physical_limit'));
+      this.owner._showToast(this.owner._t('toast.physical_limit'), 'toast.physical_limit');
       return;
     }
     const before = this.owner._geometrySnapshot();

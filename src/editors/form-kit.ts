@@ -210,7 +210,7 @@ export function toggleRow({
     ${icon ? html`<span class="hpf-toggle-icon" aria-hidden="true"><ha-icon icon=${icon}></ha-icon></span>` : nothing}
     <span class="hpf-toggle-title">${helpLabel(title, help)}</span>
     ${caption && !compact ? html`<span class="hpf-toggle-caption" id=${captionId ?? nothing}>${caption}</span>` : nothing}
-    <input type="checkbox" id=${id ?? nothing} .checked=${checked} ?disabled=${disabled}
+    <input data-hp="field" data-field=${id ?? nothing} type="checkbox" id=${id ?? nothing} .checked=${checked} ?disabled=${disabled}
       aria-label=${title} aria-describedby=${describedBy ?? captionId ?? nothing}
       @change=${(e: Event) => onChange((e.target as HTMLInputElement).checked, e)} />
   </label>`;
@@ -274,7 +274,7 @@ export function segmented<T extends string>({
   return html`<div class="hpf-seg" role="radiogroup" aria-label=${ariaLabel ?? nothing}
       aria-disabled=${disabled ? 'true' : nothing}>
     ${options.map((option) => html`<label>
-      <input type="radio" name=${name} value=${option.value} .checked=${option.value === value}
+      <input data-hp="field" data-field=${name} data-value=${option.value} type="radio" name=${name} value=${option.value} .checked=${option.value === value}
         ?disabled=${disabled || !!option.disabled} aria-describedby=${option.describedBy ?? nothing}
         @change=${() => onChange(option.value)} />
       ${option.sample ? html`<span class="hpf-line ${option.sample === 'dashed' ? 'hpf-line-dashed' : ''}" aria-hidden="true"></span>` : nothing}
@@ -288,7 +288,7 @@ export function segmented<T extends string>({
 export function selectControl<T extends string>({
   name, value, options, onChange, ariaLabel, disabled = false,
 }: SegmentedOptions<T>): TemplateResult {
-  return html`<hp-settings-select><select class="hpf-select" id=${name} name=${name} .value=${value} aria-label=${ariaLabel ?? nothing}
+  return html`<hp-settings-select><select data-hp="field" data-field=${name} class="hpf-select" id=${name} name=${name} .value=${value} aria-label=${ariaLabel ?? nothing}
     ?disabled=${disabled} @change=${(event: Event) => onChange((event.target as HTMLSelectElement).value as T)}>
     ${options.map(option => html`<option value=${option.value} ?selected=${option.value === value} ?disabled=${option.disabled}>${option.label}</option>`)}
   </select></hp-settings-select>`;
@@ -313,7 +313,7 @@ export interface ValueTile {
 export function valueTiles(tiles: readonly ValueTile[], ariaLabel?: string): TemplateResult {
   return html`<div class="hpf-tiles" role="group" aria-label=${ariaLabel ?? nothing}>
     ${tiles.map((tile) => html`<label class="hpf-tile" title=${tile.title ?? nothing}>
-      <input type="checkbox" id=${tile.id ?? nothing} .checked=${tile.checked} ?disabled=${tile.disabled}
+      <input data-hp="field" data-field=${tile.id ?? nothing} type="checkbox" id=${tile.id ?? nothing} .checked=${tile.checked} ?disabled=${tile.disabled}
         aria-label=${tile.title ?? tile.label}
         @change=${(e: Event) => tile.onChange((e.target as HTMLInputElement).checked)} />
       <ha-icon icon=${tile.icon} aria-hidden="true"></ha-icon>
@@ -353,7 +353,7 @@ export function colorField({
     ${picker}
     <code class="hpf-hex">${valueLabel ?? hex.toUpperCase()}</code>
     ${pct === null ? nothing : onOpacity ? html`<span class="hpf-opacity">${opacityLabel ?? ''}
-      <span class="hpf-unit"><input type="number" inputmode="numeric" min="0" max="100" step="1"
+      <span class="hpf-unit"><input data-hp="field" data-field="colour-opacity" type="number" inputmode="numeric" min="0" max="100" step="1"
         .value=${String(pct)} ?disabled=${disabled} aria-label=${opacityLabel ?? 'Opacity'}
         @input=${(e: Event) => {
           const n = Number((e.target as HTMLInputElement).value);
@@ -396,7 +396,7 @@ export function colorTile({ label, heading, hex, opacity, opacityLabel, picker, 
     </div>
     <div class="hpf-colortile-meta">
       <code class="hpf-hex">${hex.toUpperCase()}</code>
-      ${onOpacity ? html`<span class="hpf-unit"><input type="number" inputmode="numeric" min="0" max="100" step="1"
+      ${onOpacity ? html`<span class="hpf-unit"><input data-hp="field" data-field="colour-opacity" type="number" inputmode="numeric" min="0" max="100" step="1"
         .value=${String(pct)} aria-label=${opacityLabel}
         @input=${(e: Event) => {
           const n = Number((e.target as HTMLInputElement).value);
@@ -441,7 +441,7 @@ export function radioRow<T extends string>({ label, help, name, value, options, 
   return html`<div class="hpf-inline hpf-wrap">
     <span class="hpf-labelrow">${label}${help ?? nothing}</span>
     <div class="hpf-radios" role="radiogroup" aria-label=${label}>
-      ${options.map((o) => html`<label><input type="radio" name=${name} .checked=${o.value === value}
+      ${options.map((o) => html`<label><input data-hp="field" data-field=${name} type="radio" name=${name} data-value=${o.value} .checked=${o.value === value}
         @change=${() => onChange(o.value)} /><span>${o.label}</span></label>`)}
     </div>
   </div>`;
@@ -473,6 +473,8 @@ export function callout({ text, kind = 'info', icon, action, role, id, focusable
 }
 
 export interface UnitInputOptions {
+  /** Stable test identity when it differs from the existing label target. */
+  fieldId?: string;
   id?: string;
   /** `aria-describedby` — объяснение состояния поля (например, почему оно отключено). */
   describedBy?: string;
@@ -496,11 +498,11 @@ export interface UnitInputOptions {
 
 /** Числовое поле с единицей внутри рамки (§3.1 «unit-inside»). */
 export function unitInput({
-  id, describedBy, value, unit, min, max, step, placeholder, ariaLabel, invalid, disabled, wide, readonly,
+  id, fieldId = id, describedBy, value, unit, min, max, step, placeholder, ariaLabel, invalid, disabled, wide, readonly,
   onInput, onChange,
 }: UnitInputOptions): TemplateResult {
   return html`<span class="hpf-unit ${wide ? 'hpf-unit-wide' : ''}">
-    <input id=${id ?? nothing} type="number" inputmode="decimal" .value=${value}
+    <input data-hp="field" data-field=${fieldId ?? nothing} id=${id ?? nothing} type="number" inputmode="decimal" .value=${value}
       aria-describedby=${describedBy ?? nothing}
       min=${min ?? nothing} max=${max ?? nothing} step=${step ?? nothing}
       placeholder=${placeholder ?? nothing} aria-label=${ariaLabel ?? nothing}
@@ -638,7 +640,7 @@ export function choiceCards<T extends string>(
 ): TemplateResult {
   return html`<div class="hpf-choices" role="radiogroup" aria-label=${ariaLabel ?? nothing}>
     ${options.map((o) => html`<label class="hpf-choice">
-      <input type="radio" name=${name} .checked=${o.value === value} @change=${() => onChange(o.value)} />
+      <input data-hp="field" data-field=${name} type="radio" name=${name} data-value=${o.value} .checked=${o.value === value} @change=${() => onChange(o.value)} />
       <strong>${o.title}</strong><small>${o.caption}</small>
     </label>`)}
   </div>`;
@@ -699,7 +701,7 @@ export function sourcePicker({
   onToggle, onClose, onFilter, onPick, id, toolbar, disabled = false, leading,
 }: SourcePickerOptions): TemplateResult {
   return html`<div class="hpf-picker ${open ? 'open' : ''}" ${sourcePickerOverlay(open, onClose)}>
-    <button id=${id ?? nothing} type="button" class="hpf-select hpf-pick" aria-haspopup="listbox"
+    <button data-hp="field" data-field=${id ?? nothing} id=${id ?? nothing} type="button" class="hpf-select hpf-pick" aria-haspopup="listbox"
       aria-expanded=${open ? 'true' : 'false'} aria-label=${ariaLabel} ?disabled=${disabled} @click=${onToggle}>
       ${leading ?? nothing}
       ${current
@@ -709,14 +711,14 @@ export function sourcePicker({
     ${open
       ? html`<div class="hpf-panel">
           <div class="hpf-toolbar">
-            <input class="hpf-input" type="text" autocomplete="off" placeholder=${filterPlaceholder}
+            <input data-hp="field" data-field=${id ? `${id}-filter` : 'source-filter'} class="hpf-input" type="text" autocomplete="off" placeholder=${filterPlaceholder}
               aria-label=${filterPlaceholder} .value=${filter}
               @input=${(e: Event) => onFilter((e.target as HTMLInputElement).value)} />
             ${toolbar ?? nothing}
           </div>
           <div class="hpf-list" role="listbox" aria-label=${ariaLabel}>
             ${candidates.length
-              ? candidates.map((c) => html`<button type="button" role="option" class="hpf-cand ${c.value === selected ? 'sel' : ''}"
+              ? candidates.map((c) => html`<button data-hp="field-option" data-field=${id ?? nothing} data-value=${c.value} type="button" role="option" class="hpf-cand ${c.value === selected ? 'sel' : ''}"
                   aria-selected=${c.value === selected ? 'true' : 'false'} @click=${() => onPick(c.value)}>
                   <span>${c.label}</span><small>${c.sub}</small>
                 </button>`)
