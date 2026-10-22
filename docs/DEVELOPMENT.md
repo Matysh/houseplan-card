@@ -113,6 +113,15 @@ not claim complete schema/CAS/permissions coverage: `test_ha_room_opening_host.p
 executes those through the real WebSocket writer and durable store. No private
 support export is a fixture. Iterate on those named tests, not the full suite.
 
+The room-opening browser oracle (#1028) honours `PYTHON`; otherwise native
+Windows uses `.venv-ci/Scripts/python.exe` when present, then `python`, while
+POSIX uses `python3`, matching the existing vacuum recovery smoke. It executes
+the same Python bridge once against the unchanged seed before launching the
+browser. An unavailable interpreter or broken bridge therefore fails at startup
+with its actual cause instead of being caught by config/set and surfacing as a
+30-second write timeout. The twelve physical transitions still execute the
+production proof; preflight is not counted as an accepted transition.
+
 ## HA icon-picker lifecycle (#988)
 
 Follow-up #995 keeps the public HA fill/border tokens themed instead of

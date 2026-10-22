@@ -1,18 +1,31 @@
 /** #996: real editor deletion, Undo/Redo and room recreation; real backend promotion proof. */
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { launch, check, finish } from './serve.mjs';
 
 const seed = JSON.parse(readFileSync(new URL('../test/fixtures/996-room-opening-host.json', import.meta.url), 'utf8'));
+const localPython = fileURLToPath(new URL('../.venv-ci/Scripts/python.exe', import.meta.url));
+const python = process.env.PYTHON || (process.platform === 'win32'
+  ? existsSync(localPython) ? localPython : 'python' : 'python3');
+function proveRoomOpeningHost(payload) {
+  try {
+    return JSON.parse(execFileSync(python,
+      [fileURLToPath(new URL('./helpers/partition-host-oracle.py', import.meta.url))], {
+        input: JSON.stringify(payload), encoding: 'utf8',
+      }));
+  } catch (cause) {
+    throw new Error(`Room-opening host Python oracle failed (${python}); set PYTHON to a working Python interpreter.`, { cause });
+  }
+}
+// Fail before opening the browser: a missing interpreter otherwise becomes a
+// caught config/set error and then an unrelated 30s settleWrites timeout (#1028).
+assert.deepEqual(proveRoomOpeningHost({ config: seed, previous: seed }), { ok: true, code: null });
 let { page, browser } = await launch({ width: 1400, height: 1000 });
 const accepted = [];
 const installOracle = () => page.exposeFunction('proveRoomOpeningHost', payload => {
-  const result = JSON.parse(execFileSync(process.env.PYTHON || 'python3',
-    [fileURLToPath(new URL('./helpers/partition-host-oracle.py', import.meta.url))], {
-      input: JSON.stringify(payload), encoding: 'utf8',
-    }));
+  const result = proveRoomOpeningHost(payload);
   if (result.ok) accepted.push(structuredClone(payload));
   return result;
 });
