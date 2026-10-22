@@ -2235,6 +2235,9 @@ The disconnect case first proves a live metadata lease, then requires both
 metadata and runtime subscriptions to stay released after the held save resolves.
 Each reload awaits the lazy editor runtime before opening settings; the harness
 two-frame `settled()` wait alone does not guarantee editor readiness on a cold load.
+After rebasing onto the #1011 semantic hooks, both the stable action/field hooks
+and toast identities remain intact. The combined build is 3,339,916 bytes
+(+4,501 versus that dev baseline, about 0.135%); only the byte ratchet is updated.
 
 For Zigbee route changes (#798), focused Node tests cover provider formats,
 conflicts, exact mapping and async lifecycle. After `bundle:sync`, run
