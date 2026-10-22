@@ -231,7 +231,7 @@ const resizePreviewWalls = (
   const solid = wallBodyNeedsSolid(depth, px)
     || wallHatchNeedsSolid(wallHatchStepUnits(host._cellCm), px);
   const stroke = display?.color || '#607d8b';
-  const fill = host._fillColors.wall_fill;
+  const fill = display.wallFill;
   const d = paths.join(' ');
   return svg`<g class="wallbodies hp-resize-preview-walls"
       style="--room-stroke:${stroke};--wall-fill:${fill.c};--wall-fill-op:${fill.a}">

@@ -28,6 +28,7 @@ import type { SettingsI18nKey } from '../i18n/settings';
 import type { HouseplanEditorHostPort } from '../houseplan-editor-runtime';
 import { settingsCopy } from './settings-copy';
 import { globalSignalVisibleOf, type SignalVisibilityMode } from '../signal-visibility';
+import { spaceDraftAppearanceOf } from '../room-appearance';
 /* #592: границы шага сетки живут рядом с полем, которое их показывает; кламп
  * записи в редакторском рантайме импортирует их отсюда — одно число, один
  * источник, и направление импорта то же, что у самой функции рисования. */
@@ -301,17 +302,23 @@ function renderPlanUpload(port: SpaceFormPort, d: SpaceDialogState): TemplateRes
 
 function renderAppearance(port: SpaceFormPort, d: SpaceDialogState, id: (n: string) => string, problemFor: ProblemFor): TemplateResult {
   const { host } = port, t = host._t.bind(host), { st,shelp } = settingsCopy(host);
-  const color = (kind: 'border' | 'fill') => {
-    const fill = d.customFill || DEFAULT_CUSTOM_FILL;
-    const label = kind === 'border' ? t('space.room_color') : t('space.custom_fill');
-    return colorRow({label, help:shelp(kind === 'border' ? 'space.border_color.help' : 'space.fill_color.help'),picker:colorField({hex:kind === 'border' ? d.roomColor : fill.c,
-      opacity:kind === 'border' ? d.roomOpacity : fill.a,
-      picker:html`<hp-color-opacity data-hp="field" data-field=${id(`${kind}-color`)} .label=${label} hide-label flat-swatch .opacityLabel=${t('space.opacity')}
-        .pickerLabels=${host._colorPickerLabels} .color=${kind === 'border' ? d.roomColor : fill.c}
-        .opacity=${kind === 'border' ? d.roomOpacity : fill.a}
+  const appearance = spaceDraftAppearanceOf(d, d.mode === 'edit' ? host._curSpaceCfg : undefined, host._settings);
+  const color = (kind: 'border' | 'fill' | 'name' | 'wall-fill') => {
+    const value = kind === 'border' ? {c:d.roomColor,a:d.roomOpacity} : kind === 'name' ? appearance.nameColor
+      : kind === 'wall-fill' ? appearance.wallFill : d.customFill || DEFAULT_CUSTOM_FILL;
+    const label = kind === 'border' ? t('space.room_color') : kind === 'name' ? st('space.name_color')
+      : kind === 'wall-fill' ? st('space.wall_fill') : t('space.custom_fill');
+    const fieldId = id(kind === 'wall-fill' ? 'wall-fill' : `${kind}-color`);
+    return colorRow({label, help:shelp(kind === 'border' ? 'space.border_color.help' : kind === 'name' ? 'space.name_color.help'
+      : kind === 'wall-fill' ? 'space.wall_fill.help' : 'space.fill_color.help'),picker:colorField({hex:value.c,
+      opacity:value.a,
+      picker:html`<hp-color-opacity data-hp="field" data-field=${fieldId} .label=${label} hide-label flat-swatch .opacityLabel=${t('space.opacity')}
+        .pickerLabels=${host._colorPickerLabels} .color=${value.c}
+        .opacity=${value.a}
         @hp-color-opacity-change=${(e: CustomEvent<{color:string;opacity:number}>) => set(port, kind === 'border'
           ? {...d,roomColor:e.detail.color,roomOpacity:e.detail.opacity}
-          : {...d,customFill:{c:e.detail.color,a:e.detail.opacity}})}></hp-color-opacity>`})});
+          : {...d,[kind === 'name' ? 'nameColor' : kind === 'wall-fill' ? 'wallFill' : 'customFill']:
+            {...value,c:e.detail.color,a:e.detail.opacity}})}></hp-color-opacity>`})});
   };
   const temperature = (side: 'min' | 'max') => {
     const fieldId = id(`temp-${side}`), problem = problemFor(fieldId);
@@ -333,11 +340,13 @@ function renderAppearance(port: SpaceFormPort, d: SpaceDialogState, id: (n: stri
       options:[{value:'dashed',label:st('space.virtual_dashed')},{value:'solid',label:st('space.virtual_solid')}],
       onChange:v => set(port,{...d,zeroWallStyle:v})})}),
           color('border'),
+          color('name'),
           field({label:t('space.fill_label'),help:port.help('space.fill_mode.help'),control:selectControl({
       name:id('fill-mode'),value:d.fillMode === 'none' ? 'custom' : d.fillMode,ariaLabel:t('space.fill_label'),
       options:SPACE_FILL_UI_MODES.map(value => ({value,label:st(`space.fill_${value}`)})),
       onChange:v => set(port,{...d,fillMode:v})})}),
           d.fillMode === 'custom' || d.fillMode === 'none' ? color('fill') : nothing,
+          color('wall-fill'),
           d.fillMode === 'temp' ? html`<div class="hpf-field">
       <span class="hpf-label hpf-labelrow">${st('space.temp_range')}${shelp('space.comfort.help')}</span>
       <div class="hpf-temperature-range">${temperature('min')}${temperature('max')}</div>
@@ -370,7 +379,8 @@ function renderRoomCards(port: SpaceFormPort, d: SpaceDialogState, id: (n:string
       <div class="hpf-room-metrics">${tiles.map(tile => toggleRow({id:tile.id,title:tile.label,help:shelp(tile.helpKey),checked:tile.checked,disabled:!d.showNames,onChange:tile.onChange}))}</div></div>`,
           html`${subsection({title:st('space.font_sizes')})}${sizes}`,
           html`<div class="hpf-tint hpf-preview">${roomCardPreview(t,st('preview.room_name'),d.cardNameScale,1,1,
-      d.labelCo2 ? 820 : undefined,d.cardLabelScale,{temp:d.labelTemp,hum:d.labelHum,lqi:d.labelLqi,light:d.labelLight,showName:d.showNames})}</div>`,
+      d.labelCo2 ? 820 : undefined,d.cardLabelScale,{temp:d.labelTemp,hum:d.labelHum,lqi:d.labelLqi,light:d.labelLight,showName:d.showNames},
+      spaceDraftAppearanceOf(d,d.mode === 'edit' ? host._curSpaceCfg : undefined,host._settings).nameColor)}</div>`,
           html`${subsection({title:st('space.device_metrics')})}${field({label:st('space.device_battery'),control:selectControl<SpaceDeviceBatteryMode>({
       name:id('battery-mode'),value:d.deviceBatteryMode,ariaLabel:st('space.device_battery'),
       options:[{value:'inherit',label:st('space.inherited_value',{v:batteryLabel(inheritedBattery)})},

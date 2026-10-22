@@ -748,6 +748,13 @@ avoid it entirely.
 
 ### Space settings
 
+The four room-appearance colours belong only to this space; wall fill is no
+longer in General Settings. Room Settings → **Name color** offers **As in the
+space / Custom color**, affecting both name and readings. Returning to inherit
+removes only this caption override, not room fill or font sizes. Alpha zero is
+an explicit colour, not inheritance. Existing plans retain their colours and
+opacity before the first save; a space colour change keeps room overrides.
+
 | Card | Setting | Result |
 |---|---|---|
 | Scale | Centimetres or inches per cell | Converts the grid to physical dimensions and area; a new space starts at 1 cm or 1 in according to HA units |
@@ -755,7 +762,8 @@ avoid it entirely.
 | Appearance | Zero-thickness walls | **Dashed / Solid**, with a line sample |
 | Appearance | Visible layers | Separate switches for **Decorative layer** and **Doors, windows and gates**; hiding symbols does not disable sunlight, light transport or sensors |
 | Appearance → Visible layers | Zigbee signal next to devices | Use general settings (showing its current On/Off value), On or Off; an explicit space choice wins over the shared/card preference |
-| Appearance | Room colour and fill | Colour/opacity plus None, Custom, Zigbee, Lights or Temperature; temperature adds two °C bounds and a legend |
+| Room appearance | Wall color / Name color | Independent wall lines/outlines/hatching and entire room captions (names and readings), each with opacity |
+| Room appearance | Custom room fill / Wall fill color | Custom room colour is used in Custom mode. Wall-body colour below hatching immediately follows it and is available in every fill mode; Zigbee, Lights and Temperature remain unchanged |
 | Room cards | Show room names | Draws room cards in View, kiosk and the static card; no fallback label remains when off |
 | Room cards | Temperature, humidity, signal and light | Four metric tiles; they are disabled until names are on |
 | Room cards | Card font size | 50–300% slider, exact number, reset and a live sample |
@@ -832,7 +840,7 @@ fully nested island room is supported.
 
 The room dialog is grouped into four cards: the first has no heading (display
 name and Home Assistant area side by side), followed by **Fill**, **Sensor
-sources** (temperature, humidity and CO₂) and **Font sizes**. The area help is next
+sources** (temperature, humidity and CO₂) and **Room caption** (colour and font sizes). The area help is next
 to its field; the other cards keep their `?` beside their heading.
 
 **Fill** starts with an **As the space** switch row: while it is on, the room

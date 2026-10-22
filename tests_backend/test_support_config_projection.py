@@ -28,6 +28,20 @@ def project(config):
     return result, ids
 
 
+def test_issue1037_caption_and_wall_colors_survive_closed_support_projection():
+    from custom_components.houseplan.support_wire_schema import CONFIG, validate
+    color = {"c": "#123456", "a": 0, "private": "must disappear"}
+    source = {"spaces": [{"id": "s", "title": "Private", "settings": {"name_color": color, "wall_fill": color},
+                          "rooms": [{"id": "r", "name": "Private", "settings": {"name_color": color}}]}]}
+    result, _ = project(source)
+    result["model_version"] = 10
+    validate(result, CONFIG)
+    space = result["spaces"][0]
+    assert space["settings"]["name_color"] == {"c": "#123456", "a": 0}
+    assert space["settings"]["wall_fill"] == {"c": "#123456", "a": 0}
+    assert space["rooms"][0]["settings"]["name_color"] == {"c": "#123456", "a": 0}
+
+
 def test_issue_920_co2_source_is_pseudonymized_and_fits_the_closed_wire_schema():
     from custom_components.houseplan.support_wire_schema import CONFIG, validate
 

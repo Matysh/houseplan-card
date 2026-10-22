@@ -1,5 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+
+test('wall fill retirement names the data-field namespace, not a fictitious data-hp hook (#1037)', () => {
+  const c = JSON.parse(readFileSync(new URL('../docs/data-hp-contract.json', import.meta.url), 'utf8'));
+  assert.equal(c.schemaVersion, 1);
+  const retired = c.hooks.field.attributeMetadata['data-field'].retiredValues['gs-wall-fill'];
+  assert.equal(retired.ownerDialogKind, 'settings');
+  assert.equal(retired.replacementDialogKind, 'space');
+  assert.equal(retired.replacementField, 'space-wall-fill');
+  assert.equal(retired.issue, 1037);
+  assert.ok(retired.retainThrough.includes('following stable'));
+  assert.equal(c.hooks['gs-wall-fill'], undefined);
+  assert.equal(c.retiredHooks['gs-wall-fill'], undefined);
+});
 import { readdirSync, readFileSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';

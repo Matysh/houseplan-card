@@ -24,8 +24,8 @@ const result = await page.evaluate(async () => {
   const tempCold = pickerByLabel(dialog, card._t('gs.temp_cold'));
   const globalBg = pickerByLabel(dialog, card._t('gs.bg_color'));
   // #943 retires the room-darkness control, keeping the remaining pickers.
-  out.generalSettingsUsesElevenUnifiedPickers = generalPickers.length === 11
-    && generalPickers.filter((picker) => picker.showOpacity).length === 10
+  out.generalSettingsUsesTenUnifiedPickers = generalPickers.length === 10
+    && generalPickers.filter((picker) => picker.showOpacity).length === 9
     && globalBg?.showOpacity === false
     && nativeColors() === 0;
   const previousTemp = { ...card._settingsDialog.colors.temp_cold };

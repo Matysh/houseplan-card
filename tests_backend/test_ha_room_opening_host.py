@@ -8,6 +8,7 @@ from homeassistant.auth.const import GROUP_ID_READ_ONLY
 from test_ha_websocket import _access_token_for_group, _setup
 
 from custom_components.houseplan.store import get_data
+from custom_components.houseplan.room_appearance import normalize_room_appearance
 
 
 CASES = json.loads((Path(__file__).parents[1] / "test/fixtures/996-room-opening-host-candidates.json").read_text())
@@ -33,7 +34,7 @@ async def test_issue_996_ordinary_history_and_recreation_are_durable(hass, hass_
         saved = (await client.receive_json())["result"]
         durable = await get_data(hass).config_store.async_load()
         assert saved["rev"] == rev == durable["rev"]
-        assert saved["config"] == durable["config"] == candidate
+        assert saved["config"] == durable["config"] == normalize_room_appearance(candidate)
     await client.send_json_auto_id({"type": "houseplan/config/set", "config": case["deleted"], "expected_rev": rev - 1})
     stale = await client.receive_json()
     assert not stale["success"] and stale["error"]["code"] == "conflict"
@@ -41,7 +42,7 @@ async def test_issue_996_ordinary_history_and_recreation_are_durable(hass, hass_
     await readonly.send_json_auto_id({"type": "houseplan/config/set", "config": case["deleted"], "expected_rev": rev})
     denied = await readonly.receive_json()
     assert not denied["success"] and denied["error"]["code"] == "unauthorized"
-    assert (await get_data(hass).config_store.async_load())["config"] == case["recreated"]
+    assert (await get_data(hass).config_store.async_load())["config"] == normalize_room_appearance(case["recreated"])
 
 
 @pytest.mark.parametrize("change", ["contact", "length", "thin", "shift", "wrong-carrier", "future-type"])

@@ -530,14 +530,29 @@ Text links expose semantic actions such as `review-fields` and
 `open-general-settings[data-value=<section>]`; LED commands use `led-*` and
 the LED picker uses `field-option[data-field="led-device"][data-value=<id>]`.
 
-Colour hosts identify their owner: `gs-fill-<palette key>`, `gs-wall-fill`,
-`gs-bg-color`, `gs-glow-color`, `space-border-color`, `space-fill-color`,
-`space-bg-color`, `room-fill-color`, `marker-glow-color`,
+Colour hosts identify their owner: `gs-fill-<palette key>`,
+`gs-bg-color`, `gs-glow-color`, `space-border-color`, `space-name-color`,
+`space-fill-color`, `space-wall-fill`, `space-bg-color`, `room-fill-color`,
+`room-name-color`, `marker-glow-color`,
 `marker-activity-color`, `decor-color`. Inside that host, existing controls use
 `colour-open`, `colour-sv`, `colour-hex`, `colour-hue`, `colour-saturation`,
 `colour-brightness`, `colour-opacity`, `colour-none`; the two opacity controls
 are distinguished by `data-value=range|number`. Confirmation is the existing
 `action[data-action="colour-confirm"]`.
+
+`space-border-color` remains wall lines/hatching; captions now have their own
+`space-name-color`. `room-name-color-mode` selects inherit/own; the
+`room-name-color` picker exists only for own. The shared onboarding form keeps
+its `onboarding-space-*` namespace. #1037 removes the pre-stable global
+`gs-wall-fill` field and replaces it with Space Settings `space-wall-fill`.
+This is a **data-field value** retirement on the active `data-hp="field"` hook,
+not a retired data-hp value. Its mapping is required at
+`hooks.field.attributeMetadata["data-field"].retiredValues["gs-wall-fill"]` in
+the JSON contract. Retain it through at least one following stable after the
+first stable containing #1037; do not auto-delete. The field was never published
+in stable (absent at v1.82.0). Existing stable-hook transition policy is unchanged.
+There is no hidden global testing duplicate or local control pretending to
+change all floors. Saved legacy global colours have a separate read contract.
 
 The current decor model has line/rect/ellipse/text/furniture/image. The `path`
 kind is reserved by the expanded enum, not a new persisted shape type; existing

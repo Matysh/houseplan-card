@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1037,
+  "baseStable": "v1.82.0",
+  "category": "major",
+  "rationale": "Independent per-space captions and wall fills with a room caption override add user capabilities and relocate a setting.",
+  "summary": {
+    "ru": "Независимые цвета стен, подписей и заливок в пространстве, собственный цвет подписи комнаты с сохранением прежнего вида.",
+    "en": "Independent wall, caption and fill colours per space, with room caption overrides and preserved legacy appearance."
+  }
+}

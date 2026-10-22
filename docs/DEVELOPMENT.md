@@ -1,5 +1,17 @@
 # Development and deployment
 
+## Room appearance (#1037)
+
+Shared compatibility corpus: `test/fixtures/room-appearance.json`, consumed by
+`test/room-appearance.test.mjs` and `tests_backend/test_room_appearance.py`.
+Run those plus the ordinary validation/support/import-export suites after any
+colour-model change. `demo/smoke_room_appearance.mjs` exercises actual colour
+pickers, local/inherited captions, zero alpha, Save/Cancel and Flat/2.5D paint;
+`demo/smoke_e2e_hooks.mjs` checks the stable semantic hosts. Build and
+`node scripts/bundle-sync.mjs` before smokes. Update the generated schema with
+`python scripts/dump-config-schema.py`; closed support schema and its relay copy
+must remain byte-identical. Full HA harness proof requires pinned Linux CI.
+
 ## Declared E2E hooks (#1011)
 
 `docs/data-hp-contract.json` and `STYLING-HOOKS.md` define the DOM contract.

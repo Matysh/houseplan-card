@@ -1,4 +1,5 @@
 import { renderDeviceIssues } from './device-issues-view';
+import { roomNameColorOf, spaceDraftAppearanceOf } from './room-appearance';
 /**
  * House Plan Card — an interactive house plan as a native Lovelace card.
  * Configuration sources:
@@ -1975,6 +1976,7 @@ export class HouseplanCard extends LitElement {
   private _roomFill: '' | 'none' | 'lqi' | 'light' | 'temp' | 'custom' = ''; // '' = inherit
   /** null = inherit the space custom color; value = explicit room override. */
   private _roomCustomFill: FillColorEntry | null = null;
+  private _roomNameColor: FillColorEntry | null = null;
   private _roomTempMin = ''; private _roomTempMax = ''; private _roomTempSrc = ''; // blank inherits; zero is explicit
   private _roomHumSrc = '';
   private _roomCo2Src = '';
@@ -2670,6 +2672,7 @@ export class HouseplanCard extends LitElement {
     _roomEditId: { state: true },
     _roomFill: { state: true },
     _roomCustomFill: { state: true },
+    _roomNameColor: { state: true },
     _roomTempMin: { state: true }, _roomTempMax: { state: true },
     _roomTempSrc: { state: true },
     _roomHumSrc: { state: true },
@@ -3725,7 +3728,8 @@ export class HouseplanCard extends LitElement {
       case 'room': {
         const r = d.data;
         this._roomEditId = r.editId; this._roomFill = r.fill;
-        this._roomCustomFill = r.customFill || null; this._roomTempMin = r.tempMin || '';
+        this._roomCustomFill = r.customFill || null; this._roomNameColor = r.nameColor || null;
+        this._roomTempMin = r.tempMin || '';
         this._roomTempMax = r.tempMax || ''; this._roomTempSrc = r.tempSrc;
         this._roomHumSrc = r.humSrc; this._roomCo2Src = r.co2Src || '';
         this._roomSrcOpen = r.srcOpen; this._roomSrcFilter = r.srcFilter;
@@ -9037,7 +9041,7 @@ export class HouseplanCard extends LitElement {
 
   /** Pending space-dialog values projected through the production resolver. */
   private _spaceDisplayForRender(): SpaceDisplay {
-    const current = spaceDisplayOf(this._curSpaceCfg);
+    const current = spaceDisplayOf(this._curSpaceCfg, this._settings);
     const dialog = this._spaceDialog;
     if (!dialog || dialog.mode !== 'edit' || dialog.spaceId !== this._space) return current;
     return {
@@ -9048,6 +9052,7 @@ export class HouseplanCard extends LitElement {
       hideOpenings: !dialog.showBorders,
       color: dialog.roomColor,
       opacity: dialog.roomOpacity,
+      ...spaceDraftAppearanceOf(dialog,this._curSpaceCfg,this._settings),
       fill: dialog.fillMode,
       customFill: dialog.customFill ? customFillOf(dialog.customFill) : DEFAULT_CUSTOM_FILL,
       glow: dialog.glowEnabled,
@@ -9137,7 +9142,7 @@ export class HouseplanCard extends LitElement {
     // hold stripes, and stripes too close to tell apart (#230 §8.4).
     const solid = wallBodyNeedsSolid(united.depthUnits, px)
       || wallHatchNeedsSolid(wallHatchStepUnits(this._cellCm), px);
-    const wf = this._fillColors.wall_fill;
+    const wf = disp.wallFill;
     // Fill colour UNDER the hatch (owner 2026-08-05): both, never one instead
     // of the other. When the body is thinner than ~3px on screen the hatch
     // collapses into noise — keep the solid fill alone.
@@ -11018,7 +11023,7 @@ export class HouseplanCard extends LitElement {
           data-hp-iso-stage=${iso ? '4' : nothing} data-hp-iso-structural-builds=${iso ? this._isoStructuralBuildCount : nothing}
           data-hp-iso-readiness=${this._isoFirstFrame.readiness(this._desiredProjection, projection, !!this._isoSceneRuntime) ?? nothing}
           ?inert=${this._modeTransitionBusy}
-          style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this._containerOwnedHeight ? 'auto' : this._kiosk ? '100dvh' : this._bootSoft && this._warmVp && this._warmSlot?.stageH ? `${this._warmSlot.stageH}px` : `calc(100dvh - ${this._hdrH}px)`}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--hp-cell-visual-scale:${gridVisualScale(this._cellCm)};--wall-fill:${this._fillColors.wall_fill.c};--wall-fill-op:${this._fillColors.wall_fill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1};--hp-mode-view-weight:${modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0)};--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}${iso ? `;${isoWallMaterialVars(this._fillColors.wall_fill.c)}` : ''}"
+          style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this._containerOwnedHeight ? 'auto' : this._kiosk ? '100dvh' : this._bootSoft && this._warmVp && this._warmSlot?.stageH ? `${this._warmSlot.stageH}px` : `calc(100dvh - ${this._hdrH}px)`}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--hp-cell-visual-scale:${gridVisualScale(this._cellCm)};--wall-fill:${disp.wallFill.c};--wall-fill-op:${disp.wallFill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1};--hp-mode-view-weight:${modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0)};--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}${iso ? `;${isoWallMaterialVars(disp.wallFill.c)}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
           @pointerdown=${(e: PointerEvent) => { this._notePointer(e); this._stagePointerDown(e); }}
@@ -12236,7 +12241,10 @@ export class HouseplanCard extends LitElement {
     const point = isoPlacement?.visualScene ?? [p.x, p.y];
     const left = ((point[0] - view.x) / view.w) * 100;
     const top = ((point[1] - view.y) / view.h) * 100;
-    const op = Math.min(1, disp.opacity + 0.25);
+    const nameColor = this._roomDialog && this._roomEditId === r.id
+      ? roomNameColorOf(disp.nameColor, { settings: { name_color: this._roomNameColor } })
+      : roomNameColorOf(disp.nameColor, r);
+    const op = nameColor.a;
     const k = this._labelScale(r);
     // Optional metrics row. Temperature/humidity and light sources may use an
     // explicit room_id even when this room has no HA Area. LQI remains area-only.
@@ -12292,7 +12300,7 @@ export class HouseplanCard extends LitElement {
       role=${this._mode === 'view' && !separateAreaAction ? 'button' : nothing}
       tabindex=${this._mode === 'view' && !separateAreaAction ? '0' : nothing}
       aria-label=${this._mode === 'view' && !separateAreaAction ? this._t('room.fit_action', { name: r.name || '' }) : nothing}
-      style="left:${left}%;top:${top}%;color:${disp.color};opacity:${op};--rl-scale:${k};--rl-space:${disp.cardNameScale};--rl-name:${clampScale(r.settings?.name_scale)};--rl-meta:${clampScale(r.settings?.label_scale) * disp.cardLabelScale / disp.cardNameScale}"
+      style="left:${left}%;top:${top}%;color:${nameColor.c};opacity:${op};--rl-scale:${k};--rl-space:${disp.cardNameScale};--rl-name:${clampScale(r.settings?.name_scale)};--rl-meta:${clampScale(r.settings?.label_scale) * disp.cardLabelScale / disp.cardNameScale}"
       @keydown=${this._mode === 'view' && !separateAreaAction && r.id
         ? (e: KeyboardEvent) => this._roomLabelKey(e, r.id!) : nothing}
       @pointerdown=${this._markup

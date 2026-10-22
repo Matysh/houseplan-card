@@ -1600,6 +1600,16 @@ lives in pure helpers (`spaceDisplayOf`, `roomFillModeOf`, `roomGlowOf`,
 `roomTempRangeOf`, `sourceValue`, `resolveToggleIntent`), never inline in render;
 each tier keeps its own dialog (General settings, space, room, marker).
 
+Explicit exception (#1037): architectural wall lines/hatching (`room_color` and
+`room_opacity`), wall-body fill (`wall_fill`) and caption base (`name_color`) are
+space-local, with no ongoing global inheritance. Only caption colour has a room
+override; room names and readings share its colour/alpha, preserving special
+state colours. `room-appearance.ts` and Python `room_appearance.py` own legacy
+projection. The old global wall fill is consumed only when materialising a
+legacy document, never after the local value exists. Main, static/embedded,
+2.5D and live-editor paint consume the same resolved local values; PDF keeps
+its separate printing palette. No geometry cache or HA entity source changes.
+
 ## Schema as the source of truth (#33)
 
 The Voluptuous schema in `custom_components/houseplan/validation.py` is the

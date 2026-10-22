@@ -12,6 +12,7 @@ export interface RoomCfg {
     fill_mode?: 'none' | 'lqi' | 'light' | 'temp' | 'custom' | 'glow' | null;
     /** Explicit custom fill; absent/null uses the space custom fill. */
     custom_fill?: { c: string; a: number } | null;
+    name_color?: { c: string; a: number } | null;
     /** Independent per-room Glow override; null/absent inherits the space. */
     glow?: boolean | null;
     /** 'device:<id>' or 'entity:<eid>'; unset = average over the room sensors. */

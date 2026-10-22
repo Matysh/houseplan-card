@@ -237,8 +237,9 @@ def _space_settings(value: object) -> dict[str, Any]:
         out["show_lqi_mode"] = value["show_lqi_mode"]
     if isinstance(value, dict) and value.get("show_device_battery_mode") in ("inherit", "all", "low", "off"):
         out["show_device_battery_mode"] = value["show_device_battery_mode"]
-    if isinstance(value, dict) and "custom_fill" in value:
-        out["custom_fill"] = _custom_fill(value.get("custom_fill"))
+    for key in ("custom_fill", "name_color", "wall_fill"):
+        if isinstance(value, dict) and key in value:
+            out[key] = _custom_fill(value.get(key))
     return out
 
 
@@ -246,8 +247,9 @@ def _room_settings(ids: _Pseudonyms, value: object) -> dict[str, Any]:
     out = _copy_keys(value, ("fill_mode", "glow", "name_scale", "label_scale"))
     if not isinstance(value, dict):
         return out
-    if "custom_fill" in value:
-        out["custom_fill"] = _custom_fill(value.get("custom_fill"))
+    for key in ("custom_fill", "name_color"):
+        if key in value:
+            out[key] = _custom_fill(value.get(key))
     for key in ("temp_source", "hum_source", "co2_source"):
         source = value.get(key)
         if source:

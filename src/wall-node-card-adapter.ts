@@ -120,9 +120,9 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeMoveHistory
     scene: (space, before) => {
       if (!geometry || geometry.candidate !== space || geometry.source !== before) return null;
       if (geometry.next.geometry.status === 'failed-core' || geometry.next.geometry.status === 'degraded-extra') return null;
-      const display = spaceDisplayOf(before);
+      const display = spaceDisplayOf(before, host._serverCfg?.settings);
       return nodePreviewScene(geometry.before, geometry.next, { px: 1 / (editor.unitsPerPixel * NORM_W),
-        color: display.color, fill: host._fillColors.wall_fill.c, opacity: host._fillColors.wall_fill.a,
+        color: display.color, fill: display.wallFill.c, opacity: display.wallFill.a,
         amount: opening => host._openingAmt(opening) });
     },
     paintOpportunity: async () => { await host.updateComplete;

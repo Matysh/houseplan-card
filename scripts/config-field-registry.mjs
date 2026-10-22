@@ -8,6 +8,29 @@
  */
 export const CONFIG_FIELD_REGISTRY = Object.freeze([
   {
+    id:'settings.fill_colors.wall_fill',selector:{path:['settings','fill_colors','wall_fill']},
+    schema:'allow-extra',enforcedBy:'validation.py palette map + room_appearance.py; #1037',
+    storage:'House Plan server config',type:'legacy {c,a}',default:'opaque white',level:'legacy global',
+    ui:'none; replaced by Space → Room appearance → Wall fill color',
+    runtime:'read only when a source space has no local wall_fill; never overrides materialised local fields',
+    introduced:'legacy; retired by #1037',status:'deprecated-read',
+    migration:'materialise source effective value into each space before extraction or an ordinary write',
+    compatibility:'accepted in old full backups and untouched global extensions; not ongoing inheritance',
+  },
+  ...[
+    ['space.settings.name_color', ['spaces','*','settings','name_color'], 'space', 'Space → Room appearance → Name color', 'legacy room_color with min(1, room_opacity + 0.25)'],
+    ['space.settings.wall_fill', ['spaces','*','settings','wall_fill'], 'space', 'Space → Room appearance → Wall fill color', 'legacy global wall fill or opaque white'],
+    ['rooms[].settings.name_color', ['spaces','*','rooms','*','settings','name_color'], 'room', 'Room → Name color', 'absent/null (= space caption colour)'],
+  ].map(([id,path,level,ui,defaultValue]) => ({
+    id, selector:{path}, level, ui, default:defaultValue,
+    enforcedBy:'validation.py + room-appearance.ts / room_appearance.py; #1037',
+    storage:'House Plan server config', type:'{c: #RRGGBB, a: finite number 0..1}; room also null',
+    runtime:'independent wall body or complete caption; alpha zero is explicit',
+    introduced:'#1037',status:'current',
+    migration:'copy-only legacy projection at read/transfer/write boundaries; ordinary save persists',
+    compatibility:'optional additive fields, no model/store bump; JSON/ZIP, plan-only, copies and closed support projection retain',
+  })),
+  {
     id: 'markers[].vacuum.trail_color',
     enforcedBy: 'validation.py + vacuum-trail-style.ts; #1002',
     selector: { path: ['markers', '*', 'vacuum', 'trail_color'] },

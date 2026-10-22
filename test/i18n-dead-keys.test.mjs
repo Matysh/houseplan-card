@@ -78,7 +78,7 @@ test('help accessibility copy is derived from every literal help consumer', () =
   // отображения, размер и поворот) — 34 → 38.
   // #948 removes the three redundant fill/backup/maintenance help popups.
   // #945 v7 restores field-specific help; keep every accessible name counted.
-  assert.equal(consumers.derivedHelpAria.size, 34, '#945 final Space v7 has 34 literal help consumers');
+  assert.equal(consumers.derivedHelpAria.size, 35, '#1037 adds room caption help; dynamic space colour help retains its own aria keys');
   for (const key of consumers.derivedHelpAria) {
     assert.equal(typeof dictionary[key], 'string', `${key} must accompany its .help consumer`);
   }

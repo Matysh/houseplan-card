@@ -32,6 +32,7 @@ import { ensureSettingsDialogStyles } from './editors/settings-styles';
 import { renderRoomSettingsDialog } from './editors/room-settings-dialog';
 import { isCo2Entity } from './room-co2';
 import { newSpaceDialogDraft, savedSpaceDialogDraft, spaceDialogSettings } from './editors/space-dialog-draft';
+import { normalizeRoomAppearance } from './room-appearance';
 import { calibrationTarget, planVacuumFit } from './vacuum-route-edit';
 import {
   cancelHouseplanPointerMove, flushHouseplanPointerMove, queueHouseplanPointerMove,
@@ -746,6 +747,7 @@ export interface HouseplanEditorHostPort {
   _rlResize: { id: string; space: string; k0: number; cx: number; cy: number; d0: number; } | null;
   _roomCenter: (r: RoomCfg) => number[];
   _roomCustomFill: FillColorEntry | null;
+  _roomNameColor: FillColorEntry | null;
   _roomDeleteDialog: { roomId: string; name: string; } | null;
   _roomDialog: boolean;
   _roomEditId: string | null;
@@ -1114,7 +1116,7 @@ public resumeWarmMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate: bool
 public warmRoomDraft() {
   const host = this.host;
   return {
-    editId: host._roomEditId, fill: host._roomFill, customFill: host._roomCustomFill,
+    editId: host._roomEditId, fill: host._roomFill, customFill: host._roomCustomFill, nameColor: host._roomNameColor,
     tempMin: host._roomTempMin, tempMax: host._roomTempMax, tempSrc: host._roomTempSrc,
     humSrc: host._roomHumSrc, co2Src: host._roomCo2Src, srcOpen: host._roomSrcOpen, srcFilter: host._roomSrcFilter,
     nameScale: host._roomNameScale, labelScale: host._roomLabelScale,
@@ -7895,7 +7897,7 @@ public _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
     if (mode === 'edit') {
       const sp = this.host._serverCfg!.spaces.find((x: any) => x.id === spaceId);
       if (!sp) return;
-      this.host._spaceDialog = savedSpaceDialogDraft(sp, this.host._imperial, this.host._serverCfg?.settings?.bg_mode);
+      this.host._spaceDialog = savedSpaceDialogDraft(sp, this.host._imperial, this.host._serverCfg?.settings?.bg_mode, this.host._serverCfg?.settings);
     } else {
       this.host._spaceDialog = newSpaceDialogDraft(this.host._imperial);
     }
@@ -8124,7 +8126,7 @@ public async _saveSpaceDialog(): Promise<void> {
       }
       // Persist exactly what the dialog showed. Source defaults are projected
       // visibly while editing the create state, never hidden here at Save.
-      sp.settings = spaceDialogSettings(d, sp.settings);
+      sp.settings = spaceDialogSettings(d, sp.settings, cfg.settings);
       // This is a geometry policy of the space, not a visual room setting.
       sp.zero_wall_style = d.zeroWallStyle;
       sp.cell_cm = Number.isFinite(d.cellCm) && d.cellCm > 0
@@ -9389,7 +9391,7 @@ public _updateDecorStyle(next: DecorStyle, immediate = false): void {
       // Old configs may still contain this accepted field, but weather no
       // longer affects sunlight; saving general settings cleans it up.
       delete settings.weather_entity;
-      const nextConfig = { ...cfg, settings };
+      const nextConfig = { ...normalizeRoomAppearance(cfg), settings };
       attempt = this.host._adoption.beginOptimistic(cfg, nextConfig);
       this.host._serverCfg = nextConfig;
       await this._saveConfigNow(attempt);
@@ -9722,6 +9724,7 @@ public _resetRoomDialogFields(): void {
     this.host._roomEditId = null;
     this.host._roomFill = '';
     this.host._roomCustomFill = null;
+    this.host._roomNameColor = null;
     this.host._roomTempMin = ''; this.host._roomTempMax = '';
     this.host._roomTempSrc = '';
     this.host._roomHumSrc = '';
@@ -9748,6 +9751,7 @@ public _openRoomEdit(r: RoomCfg): void {
     const rawCustom = this.host._roomFill === 'custom' ? r.settings?.custom_fill : null;
     this.host._roomCustomFill = rawCustom && typeof rawCustom === 'object'
       ? customFillOf(rawCustom, spaceDisplayOf(this.host._curSpaceCfg).customFill) : null;
+    this.host._roomNameColor = r.settings?.name_color ? { ...r.settings.name_color } : null;
     [this.host._roomTempMin, this.host._roomTempMax] = roomTempThresholdInputValues(r.settings);
     this.host._roomTempSrc = r.settings?.temp_source || '';
     this.host._roomHumSrc = r.settings?.hum_source || '';
@@ -9764,6 +9768,7 @@ public _roomSettingsFromDialog(): RoomCfg['settings'] {
     const st: any = {};
     if (this.host._roomFill) st.fill_mode = this.host._roomFill;
     if (this.host._roomFill === 'custom' && this.host._roomCustomFill) st.custom_fill = this.host._roomCustomFill; // #581
+    if (this.host._roomNameColor) st.name_color = this.host._roomNameColor;
     if (this.host._roomTempSrc) st.temp_source = this.host._roomTempSrc;
     if (this.host._roomHumSrc) st.hum_source = this.host._roomHumSrc;
     if (this.host._roomCo2Src) st.co2_source = this.host._roomCo2Src;

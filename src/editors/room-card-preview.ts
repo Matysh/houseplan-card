@@ -1,15 +1,17 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import type { I18nKey } from '../i18n';
 import { roomCo2Text } from '../room-co2';
+import type { AppearanceColor } from '../room-appearance';
 
 /** Editor/onboarding-only sample; never part of the cold View graph. */
 export function roomCardPreview(
   t: (key: I18nKey, vars?: Record<string, string | number>) => string,
   name: string, spaceScale: number, nameScale: number, labelScale: number, co2?: number | null, labelSpaceScale = spaceScale,
   metrics?: {temp:boolean; hum:boolean; lqi:boolean; light:boolean; showName:boolean},
+  color?: AppearanceColor,
 ): TemplateResult {
   const base = (metrics ? 16 : 18) * spaceScale;
-  return html`<div class="cardpreview">
+  return html`<div class="cardpreview" style=${color ? `color:${color.c};opacity:${color.a}` : ''}>
     <span class="cpname" style="font-size:${(base * nameScale).toFixed(1)}px">
       ${metrics?.showName === false ? nothing : name}</span>
     <span class="cpmeta" style="font-size:${((metrics ? 12 : 18 * 0.62) * labelSpaceScale * labelScale).toFixed(1)}px">

@@ -15,6 +15,7 @@ from custom_components.houseplan.backup_archive import build_archive, read_archi
 from custom_components.houseplan.backup_files import new_stage, plan_files
 from custom_components.houseplan.backup_service import get_backup_service
 from custom_components.houseplan.const import DOMAIN
+from custom_components.houseplan.room_appearance import normalize_room_appearance
 from custom_components.houseplan.import_export import (
     ImportFailure,
     create_export,
@@ -225,5 +226,5 @@ def test_native_wire_fixture_is_real_backend_recovery_not_an_invented_success(tm
         candidate = get_candidate(runtime, response["token"], "test")
         assert response["preview"]["counts"] == fixture["response"]["preview"]["counts"]
         assert response["preview"]["recovery"] == fixture["response"]["preview"]["recovery"]
-        assert candidate["target_config"] == fixture["config"]
+        assert candidate["target_config"] == normalize_room_appearance(fixture["config"])
         assert candidate["target_layout"] == fixture["layout"]

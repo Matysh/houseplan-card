@@ -25,6 +25,10 @@ from custom_components.houseplan.led_strips import (
 from custom_components.houseplan.partition_promotion import (
     same_partition_wall_promotion,
 )
+from custom_components.houseplan.room_appearance import (
+    normalize_room_appearance,
+    preserve_space_appearance,
+)
 from custom_components.houseplan.vacuum_routes import validate_marker_routes
 
 # ---------- limits and extension sets ----------
@@ -1247,6 +1251,13 @@ _CUSTOM_FILL = vol.Schema(
     }
 )
 
+# New appearance entries are strict but preserve compatible future siblings.
+_APPEARANCE_COLOR = vol.Schema(
+    {vol.Required("c"): _COLOR,
+     vol.Required("a"): vol.All(_finite_number, vol.Range(min=0.0, max=1.0))},
+    extra=vol.ALLOW_EXTRA,
+)
+
 
 # generous caps: the product targets 20-200 devices and a handful of floors
 MAX_SPACES = 50
@@ -1412,6 +1423,7 @@ ROOM_SCHEMA = vol.All(
                     {
                         vol.Optional("fill_mode"): vol.Any(None, vol.In(["none", "lqi", "light", "temp", "custom", "glow"])),
                         vol.Optional("custom_fill"): vol.Any(None, _CUSTOM_FILL),
+                        vol.Optional("name_color"): vol.Any(None, _APPEARANCE_COLOR),
                         vol.Optional("glow"): vol.Any(bool, None),
                         vol.Optional("temp_source"): vol.Any(str, None),
                         vol.Optional("hum_source"): vol.Any(str, None),
@@ -1463,6 +1475,8 @@ SPACE_DISPLAY_SCHEMA = vol.Schema(
         vol.Optional("show_borders"): bool,
         vol.Optional("show_names"): bool,
         vol.Optional("room_color"): _COLOR,
+        vol.Optional("name_color"): _APPEARANCE_COLOR,
+        vol.Optional("wall_fill"): _APPEARANCE_COLOR,
         # per-space background around the plan; absent = inherit the global one
         vol.Optional("bg_color"): _COLOR,
         vol.Optional("room_opacity"): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
@@ -2357,7 +2371,8 @@ def prepare_ordinary_summary_candidate(
     """
     preserve_summary_panel_namespace(candidate, previous)
     preserve_led_strips(candidate, previous)
-    checked = normalize(candidate)
+    preserve_space_appearance(candidate, previous)
+    checked = normalize_room_appearance(normalize(candidate))
     validate_summary_panel_references(checked, previous, readable_entity_ids)
     return checked
 

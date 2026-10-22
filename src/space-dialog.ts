@@ -2,6 +2,7 @@ import { roomTempRangeOf, type FillColorEntry, type RoomTempRange } from './logi
 import type { SpaceDeviceBatteryMode } from './device-battery-settings';
 import type { ZeroWallStyle } from './types';
 import type { SignalVisibilityMode } from './signal-visibility';
+import { DEFAULT_NAME_COLOR, DEFAULT_WALL_FILL } from './room-appearance';
 
 export type SpacePlanSource = 'file' | 'draw';
 
@@ -33,6 +34,8 @@ export interface SpaceDialogState {
   hideOpenings: boolean;
   roomColor: string;
   roomOpacity: number;
+  nameColor: FillColorEntry;
+  wallFill: FillColorEntry;
   bgColor: string | null;
   bgMode: 'static' | 'daynight' | null;
   northDeg: number | null;
@@ -87,6 +90,9 @@ export function createEmptySpaceConfig(id: string, title: string): Record<string
     view_box: [0, 0, 1, 1],
     rooms: [],
     wall_segments: [],
+    settings: { room_color: '#55606c', room_opacity: 0.55,
+      name_color: { ...DEFAULT_NAME_COLOR }, wall_fill: { ...DEFAULT_WALL_FILL },
+      fill_mode: 'custom', custom_fill: { c: '#607d8b', a: 0 } },
   };
 }
 

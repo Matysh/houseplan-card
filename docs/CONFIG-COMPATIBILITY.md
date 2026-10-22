@@ -1,5 +1,36 @@
 # Config compatibility registry
 
+## Independent room appearance (#1037)
+
+Additive optional `space.settings.name_color` and `space.settings.wall_fill`
+store `{c: '#RRGGBB', a: finite JSON number 0..1}`. New writes reject null,
+booleans, strings and out-of-range alpha; zero is explicit. Compatible unknown
+siblings survive ordinary writes. `room.settings.name_color` additionally accepts
+null/absence, meaning inherit the complete space caption colour. Reset removes
+only this key, independently of `fill_mode/custom_fill`. Room custom fill still
+requires the room's own custom mode.
+
+Legacy wall lines keep `room_color/room_opacity`. Missing caption colour resolves
+to that colour with `min(1, oldOpacity + 0.25)`; missing wall-body colour resolves
+to the source document's old `settings.fill_colors.wall_fill`, then white/1.
+Python `normalize_room_appearance` returns an idempotent detached copy; config/get
+projects it before selecting fields or a floor, without saving or changing rev.
+Ordinary writes and export/import materialise this copy; import does so before
+extracting/remapping a floor, preventing the target's global palette leaking in.
+Ordinary previous-aware writers preserve missing new space keys from previous
+effective values, but never preserve an intentionally removed room override.
+The frontend also materialises legacy values before a General Settings save.
+Geometry-only CONFIG_SCHEMA validation stays appearance-neutral; it validates
+the new optional values but never adds defaults to a geometry operation.
+
+New UI-created spaces have explicit slate wall lines/.55, slate captions/.8,
+white wall bodies/1 and custom room fill/0. Copies keep source appearance.
+Full/space JSON/ZIP, plan-only transfer and the closed diagnostic projection
+retain these fields. No model-v10, store or archive version bump. The legacy
+global wall-fill field is accepted for read compatibility, not ongoing inheritance.
+Old versions cannot reproduce separate captions/per-floor wall fills after
+downgrade; keep the original backup for an exact old appearance.
+
 ## Marker ordinary state source (#977)
 
 Optional `markers[].state_source = {entity_id, active_states?}`; absent/null

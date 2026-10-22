@@ -7,6 +7,7 @@
  * Geometry/model math lives in space-geometry.ts (pure, unit-tested).
  */
 import { html, svg, nothing, type TemplateResult } from 'lit';
+import { roomNameColorOf } from './room-appearance';
 import { keyed } from 'lit/directives/keyed.js';
 import { repeat } from 'lit/directives/repeat.js';
 import {
@@ -296,7 +297,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     }
     return null;
   }
-  const disp = spaceDisplayOf(o.cfg.spaces.find((s: any) => s.id === o.spaceId));
+  const disp = spaceDisplayOf(o.cfg.spaces.find((s: any) => s.id === o.spaceId), o.cfg.settings);
   const colors = fillColorsOf(o.cfg.settings);
   const storedDecor = (o.cfg.settings as { decor_default_style?: Record<string, unknown> })
     ?.decor_default_style;
@@ -681,10 +682,11 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
           const p = labelPos(r, space.id, o.layout, o.cfg);
           const left = ((p.x - vb[0]) / vb[2]) * 100;
           const top = ((p.y - vb[1]) / vb[3]) * 100;
-          const op = Math.min(1, disp.opacity + 0.25);
+          const nameColor = roomNameColorOf(disp.nameColor, r);
+          const op = nameColor.a;
           return html`<div class="roomlabel"
             data-hp="room-label" data-id=${r.id || nothing} data-area=${r.area || nothing}
-            style="left:${left}%;top:${top}%;color:${disp.color};opacity:${op}">${r.name}</div>`;
+            style="left:${left}%;top:${top}%;color:${nameColor.c};opacity:${op}">${r.name}</div>`;
         })
     : [];
 
@@ -961,7 +963,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   return html`
     <div class="hp-static-stage${dayCycle ? ` daycycle phase-${dayCycle.phase}` : ''}"
       ?inert=${!!o.inert}
-      style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''};--hp-cell-visual-scale:${gridVisualScale(cellCm)};--wall-fill:${colors.wall_fill.c};--wall-fill-op:${colors.wall_fill.a}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}">
+      style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''};--hp-cell-visual-scale:${gridVisualScale(cellCm)};--wall-fill:${disp.wallFill.c};--wall-fill-op:${disp.wallFill.a}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}">
       ${renderDayCycleEnvironment(dayCycle, 1, moonLayer(o.moonHost, o.cfg?.settings, dayCycle))}
       ${moonLayer(o.moonHost, o.cfg?.settings, moonSky, 1)}
       ${dayCycle && paperShapes.length ? svg`<svg class="hp-paper-outline-svg"
@@ -1019,7 +1021,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
           ? svg`<g class="wallbodies" style="--room-stroke:${wallStroke}">
               ${wallUnion.paths.map((component) => svg`
                 <path class="wallbody-fill" data-component=${component.id} d="${component.d}"
-                  fill="${colors.wall_fill.c}" fill-opacity="${colors.wall_fill.a}"
+                  fill="${disp.wallFill.c}" fill-opacity="${disp.wallFill.a}"
                   fill-rule=${component.fillRule} stroke="none" pointer-events="none"></path>
                 <path class="wallbody ${solidWall ? 'solid' : ''}"
                   data-hp="wall" data-id="union" data-kind="union" data-component=${component.id}

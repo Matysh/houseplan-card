@@ -8,6 +8,7 @@ import { spaceDeviceBatteryModeOf, writeSpaceDeviceBatterySetting } from '../dev
 import { northDegOf } from '../sun';
 import { signalVisibilityModeOf, writeSpaceSignalVisibility, type SignalSpaceSettings } from '../signal-visibility';
 import { zeroWallStyleOf } from '../zero-walls';
+import { DEFAULT_NAME_COLOR, DEFAULT_WALL_FILL, spaceDraftAppearanceOf } from '../room-appearance';
 
 interface SavedSpace {
   id: string; title: string; plan_url?: string | null; cell_cm?: number;
@@ -20,6 +21,7 @@ export function newSpaceDialogDraft(imperial: boolean): SpaceDialogState {
     mode: 'create', title: '', planUrl: null, planFile: null,
     ...initialSpaceDisplayDraft(), hideDecor: false, hideOpenings: false, zeroWallStyle: 'dashed',
     roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'custom',
+    nameColor: { ...DEFAULT_NAME_COLOR }, wallFill: { ...DEFAULT_WALL_FILL },
     customFill: { ...DEFAULT_CUSTOM_FILL, a: 0 }, glowEnabled: true, bgColor: null,
     bgMode: 'daynight', northDeg: null, northDegInput: '', sunRays: null,
     tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
@@ -30,8 +32,8 @@ export function newSpaceDialogDraft(imperial: boolean): SpaceDialogState {
   };
 }
 
-export function savedSpaceDialogDraft(sp: SavedSpace, imperial: boolean, globalMode?: unknown): SpaceDialogState {
-  const disp = spaceDisplayOf(sp), north = northDegOf({}, sp.settings);
+export function savedSpaceDialogDraft(sp: SavedSpace, imperial: boolean, globalMode?: unknown, general?: unknown): SpaceDialogState {
+  const disp = spaceDisplayOf(sp, general), north = northDegOf({}, sp.settings);
   const storedCustom = sp.settings?.custom_fill && typeof sp.settings.custom_fill === 'object'
     ? customFillOf(sp.settings.custom_fill) : null;
   const cellCm = Number(sp.cell_cm) > 0 ? Number(sp.cell_cm) : 5;
@@ -40,6 +42,7 @@ export function savedSpaceDialogDraft(sp: SavedSpace, imperial: boolean, globalM
     source: sp.plan_url ? 'file' : 'draw', showBorders: disp.showBorders, showNames: disp.showNames,
     zeroWallStyle: zeroWallStyleOf(sp), displayTouched: true,
     hideDecor: disp.hideDecor, hideOpenings: disp.hideOpenings, roomColor: disp.color, roomOpacity: disp.opacity,
+    nameColor: disp.nameColor, wallFill: disp.wallFill,
     fillMode: disp.fill === 'none' ? 'custom' : disp.fill,
     customFill: disp.fill === 'none' ? { ...(storedCustom || DEFAULT_CUSTOM_FILL), a: 0 } : storedCustom,
     glowEnabled: disp.glow, bgColor: disp.bgColor,
@@ -56,13 +59,16 @@ export function savedSpaceDialogDraft(sp: SavedSpace, imperial: boolean, globalM
 }
 
 /** Preserve unknown saved fields; both space writers materialise the same flags. */
-export function spaceDialogSettings(d: SpaceDialogState, previous?: Record<string, unknown>): Record<string, unknown> {
+export function spaceDialogSettings(d: SpaceDialogState, previous?: Record<string, unknown>, general?: unknown): Record<string, unknown> {
+  const appearance = spaceDraftAppearanceOf(d,{settings:previous},general);
   const settings: Record<string, unknown> & SignalSpaceSettings & { show_device_battery_mode?: unknown } = {
     ...previous,
     show_borders: d.showBorders,
     show_names: d.showNames,
     hide_decor: d.hideDecor || undefined, hide_openings: !d.showBorders || undefined,
     room_color: d.roomColor, room_opacity: d.roomOpacity, bg_color: d.bgColor || undefined,
+    name_color: { ...((previous?.name_color as Record<string, unknown> | undefined) || {}), ...appearance.nameColor },
+    wall_fill: { ...((previous?.wall_fill as Record<string, unknown> | undefined) || {}), ...appearance.wallFill },
     bg_mode: d.bgMode || undefined, north_deg: d.northDeg ?? undefined, sun_rays: d.sunRays ?? undefined,
     fill_mode: d.fillMode, custom_fill: d.customFill || undefined, glow_enabled: true,
     temp_min: Number.isFinite(d.tempMin) ? Math.min(d.tempMin, d.tempMax) : DEFAULT_TEMP_MIN,

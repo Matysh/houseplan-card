@@ -6,6 +6,11 @@
   dialog. SVG keeps the displayed projection, colours and optional devices,
   with transparent, current or custom background; PDF printing and its browser
   preferences are unchanged. (#1036)
+- Configure wall lines/hatching, room captions, custom room fills and wall-body
+  fills independently in each space. A room can override its entire caption
+  (name and readings). Existing colours and opacity are preserved. Wall fill
+  moved out of General Settings; the pre-stable `gs-wall-fill` E2E field is
+  replaced by `space-wall-fill` in Space Settings. (#1037)
 
 - Extend the declared E2E selector contract to scene geometry, device groups,
   vacuum/decor/light results, summary controls and settings fields. Interface,

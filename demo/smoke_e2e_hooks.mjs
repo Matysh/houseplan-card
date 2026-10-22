@@ -118,7 +118,15 @@ try {
         const fill = dialog.querySelector('[data-hp="field"][data-field="rfill"]');
         fill.value = 'custom'; fill.dispatchEvent(new Event('change', { bubbles: true })); await settle();
         o.roomCustomColour = !!dialog.querySelector('[data-hp="field"][data-field="room-fill-color"]');
+        const mode = dialog.querySelector('[data-field="room-name-color-mode"]');
+        mode.value = 'own'; mode.dispatchEvent(new Event('change',{bubbles:true})); await settle();
+        o.roomCaptionOwnHook = !!dialog.querySelector('[data-field="room-name-color"]');
       }
+      if (family === 'space') {
+        o.spaceColourIdentities = ['space-border-color','space-name-color','space-wall-fill']
+          .every(id=>!!dialog.querySelector(`[data-hp="field"][data-field="${id}"]`));
+      }
+      if (family === 'general') o.retiredWallFillAbsent = !dialog.querySelector('[data-field="gs-wall-fill"]');
       if (family === 'marker') {
         const display = dialog.querySelector('[data-hp="field"][data-field="marker-display"]');
         display.value = 'icon_ripple'; display.dispatchEvent(new Event('change', { bubbles: true })); await settle();

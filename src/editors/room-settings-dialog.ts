@@ -79,7 +79,8 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
   const batchProgress = faceBatch && faceBatch.candidates.length > 1
     ? t('room.queue_progress', { current: faceBatch.index + 1, total: faceBatch.candidates.length })
     : '';
-  const spaceDisplay = spaceDisplayOf(host._curSpaceCfg);
+  const spaceDisplay = spaceDisplayOf(host._curSpaceCfg, host._settings);
+  const nameColor = host._roomNameColor || spaceDisplay.nameColor;
   const effectiveFill = host._roomFill || spaceDisplay.fill;
   const customFill = host._roomCustomFill || spaceDisplay.customFill;
   const tempValid = roomTempThresholdDraft(host._roomTempMin, host._roomTempMax).valid;
@@ -228,6 +229,19 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
           title: t('room.sizes_section'),
           help: shelp('room.sizes_section.help'),
           body: formSections([
+          field({label:st('room.name_color'),help:shelp('room.name_color.help'),control:selectControl({
+            name:'room-name-color-mode',value:host._roomNameColor ? 'own' : 'inherit',ariaLabel:st('room.name_color'),
+            options:[{value:'inherit',label:st('room.name_color_inherit')},{value:'own',label:st('room.name_color_own')}],
+            onChange:value => { host._roomNameColor = value === 'own' ? { ...spaceDisplay.nameColor } : null; host.requestUpdate(); },
+          })}),
+          host._roomNameColor ? colorRow({label:st('room.name_color'),picker:colorField({
+            hex:nameColor.c,opacity:nameColor.a,picker:html`<hp-color-opacity data-hp="field" data-field="room-name-color"
+              .label=${st('room.name_color')} hide-label flat-swatch .opacityLabel=${t('space.opacity')}
+              .pickerLabels=${host._colorPickerLabels} .color=${nameColor.c} .opacity=${nameColor.a}
+              @hp-color-opacity-change=${(e:CustomEvent<{color:string;opacity:number}>) => {
+                host._roomNameColor={...host._roomNameColor,c:e.detail.color,a:e.detail.opacity};host.requestUpdate();
+              }}></hp-color-opacity>`,
+          })}) : nothing,
           ...sizeRows.map(([key, labelKey, value, write], index) => html`<div class="hpf-field">
                 <span class="hpf-label hpf-labelrow"><label for=${`room-${key}-scale`}>${t(labelKey)}</label></span>
                 ${rangeLine({
@@ -239,7 +253,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
               </div>${index === sizeRows.length - 1
                 ? callout({text:st('room.sizes_hint',{name:pct(spaceDisplay.cardNameScale),metrics:pct(spaceDisplay.cardLabelScale)})})
                 : nothing}`),
-          html`<div class="hpf-tint hpf-preview">${roomCardPreview(t, st('preview.room_name'), spaceDisplay.cardNameScale, host._roomNameScale, host._roomLabelScale, 820, spaceDisplay.cardLabelScale, {temp:true,hum:true,lqi:false,light:true,showName:true})}</div>`,
+          html`<div class="hpf-tint hpf-preview">${roomCardPreview(t, st('preview.room_name'), spaceDisplay.cardNameScale, host._roomNameScale, host._roomLabelScale, 820, spaceDisplay.cardLabelScale, {temp:true,hum:true,lqi:false,light:true,showName:true},nameColor)}</div>`,
         ]),
         })}
         `}], st('dialog.section'))}

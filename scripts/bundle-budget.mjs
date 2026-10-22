@@ -834,6 +834,9 @@ export const LAZY_GRAPH_CEILING_BAND = 2_000;
 // #1036: sharing select/colour-overlay leaves changes chunk/compression grouping,
 // including the existing onboarding space form. Measured35356 B; no SVG runtime
 // or PDF writer enters this graph. Preserve the2000-B band and initial limits.
+// #1037: independent caption/wall-body pickers in the shared Space form,
+// legacy projection and lazy translated help. Owner permits minor growth.
+// Pre-rebase measurement35,187 B; retain the larger accepted #1036 ceiling.
 export const LAZY_ONBOARDING_GZIP_CEILING = 35_356;
 
 /**

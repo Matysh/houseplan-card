@@ -50,7 +50,7 @@ export class HouseplanOnboardingRuntime {
     if (mode === 'edit') {
       const sp = this.host._serverCfg.spaces.find((space) => space.id === spaceId);
       if (!sp) return;
-      this.host._spaceDialog = savedSpaceDialogDraft(sp, this.host._imperial, this.host._serverCfg?.settings?.bg_mode);
+      this.host._spaceDialog = savedSpaceDialogDraft(sp, this.host._imperial, this.host._serverCfg?.settings?.bg_mode, this.host._serverCfg?.settings);
       return;
     }
     this.host._spaceDialog = newSpaceDialogDraft(this.host._imperial);
@@ -270,7 +270,7 @@ export class HouseplanOnboardingRuntime {
         delete space.plan_scale_y;
         delete space.plan_angle;
       }
-      space.settings = spaceDialogSettings(dialog, space.settings);
+      space.settings = spaceDialogSettings(dialog, space.settings, this.host._serverCfg?.settings);
       space.zero_wall_style = dialog.zeroWallStyle;
       space.cell_cm = Number.isFinite(dialog.cellCm) && dialog.cellCm > 0
         ? Math.max(CELL_CM_MIN, Math.min(CELL_CM_MAX, dialog.cellCm)) : 5;

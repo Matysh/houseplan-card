@@ -1301,6 +1301,21 @@
       "required": false,
       "type": "float"
     },
+    "config.spaces[].rooms[].settings.name_color": {
+      "allowExtra": true,
+      "nullable": true,
+      "required": false
+    },
+    "config.spaces[].rooms[].settings.name_color.a": {
+      "max": 1.0,
+      "min": 0.0,
+      "opaque": "<function _finite_number>",
+      "required": true
+    },
+    "config.spaces[].rooms[].settings.name_color.c": {
+      "opaque": "Match('\\\\A#[0-9a-fA-F]{6}\\\\Z', msg=None)",
+      "required": true
+    },
     "config.spaces[].rooms[].settings.name_scale": {
       "max": 3,
       "min": 0.5,
@@ -1441,6 +1456,20 @@
       "required": false,
       "type": "bool"
     },
+    "config.spaces[].settings.name_color": {
+      "allowExtra": true,
+      "required": false
+    },
+    "config.spaces[].settings.name_color.a": {
+      "max": 1.0,
+      "min": 0.0,
+      "opaque": "<function _finite_number>",
+      "required": true
+    },
+    "config.spaces[].settings.name_color.c": {
+      "opaque": "Match('\\\\A#[0-9a-fA-F]{6}\\\\Z', msg=None)",
+      "required": true
+    },
     "config.spaces[].settings.north_deg": {
       "nullable": true,
       "opaque": "<function _north_deg>",
@@ -1497,6 +1526,20 @@
     "config.spaces[].settings.temp_min": {
       "required": false,
       "type": "float"
+    },
+    "config.spaces[].settings.wall_fill": {
+      "allowExtra": true,
+      "required": false
+    },
+    "config.spaces[].settings.wall_fill.a": {
+      "max": 1.0,
+      "min": 0.0,
+      "opaque": "<function _finite_number>",
+      "required": true
+    },
+    "config.spaces[].settings.wall_fill.c": {
+      "opaque": "Match('\\\\A#[0-9a-fA-F]{6}\\\\Z', msg=None)",
+      "required": true
     },
     "config.spaces[].stairs": {
       "required": false

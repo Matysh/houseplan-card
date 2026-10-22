@@ -95,6 +95,7 @@ from .radar_validation import (
     validate_marker_radars,
 )
 from .registry_snapshot import import_registry_snapshot
+from .room_appearance import normalize_room_appearance
 from .store import (
     LAYOUT_STORE_CORE_KEYS,
     HouseplanData,
@@ -1692,7 +1693,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     async with rt.write_lock:
         data = await rt.config_store.async_load() or {}
         layout_data = await rt.store.async_load() or {}
-        config = {**DEFAULT_CONFIG, **data.get("config", {})}
+        config = normalize_room_appearance({**DEFAULT_CONFIG, **data.get("config", {})})
         config_rev = int(data.get("rev", 0))
         try:
             virtual_lights = await (

@@ -120,6 +120,24 @@ const MUTANT_DEFINITIONS = [
       replace: '&& this._space === space.id && this._serverCfg === config && stage.isConnected' }],
   },
   {
+    id: 'room-appearance-alpha-coerces-bool-1037',
+    guard: 'python -m pytest tests_backend/test_room_appearance.py -q -k new_space_fields',
+    because: '#1037: new appearance alpha is a strict JSON number; booleans/strings must not become accepted opacity.',
+    patches: [{ file: 'custom_components/houseplan/validation.py',
+      find: 'vol.Required("a"): vol.All(_finite_number, vol.Range(min=0.0, max=1.0))',
+      replace: 'vol.Required("a"): vol.All(_finite, vol.Range(min=0.0, max=1.0))',
+    }],
+  },
+  {
+    id: 'room-caption-paints-wall-colour-1037',
+    guard: 'node demo/smoke_room_appearance.mjs',
+    because: '#1037: actual computed CSS of the mounted Lit room caption and metric children must follow the independent caption picker rather than wall paint, across preview/Save and Flat/2.5D; a pure resolver cannot prove the renderer consumed it.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: 'color:${nameColor.c};opacity:${op};--rl-scale:',
+      replace: 'color:${disp.color};opacity:${op};--rl-scale:',
+    }],
+  },
+  {
     id: 'ci-python-producer-resolves-minor-again-1032',
     guard: 'node --test test/ci-profiles.test.mjs',
     because: 'Python producers must install the exact patch from the shared plan even when runner caches contain different patches; the ordinary workflow contract rejects independent minor/file resolution without weakening the actual-version stamp (#1032)',
@@ -10103,7 +10121,7 @@ const MUTANT_DEFINITIONS = [
       + 'must enter preview and storage through the same canonical schema as the live card',
     patches: [{
       file: 'custom_components/houseplan/import_export.py',
-      find: '        config = CONFIG_SCHEMA(config_candidate)',
+      find: '        config = _appearance_config(config_candidate)',
       replace: '        config = config_candidate',
     }],
   },

@@ -37,6 +37,7 @@ from .const import (
 )
 from .led_strips import led_strip_link_report, plan_only_strips, unbind_strips
 from .portable_recovery import prepare_portable_markers
+from .room_appearance import normalize_room_appearance
 from .store import HouseplanData
 from .validation import (
     CONFIG_SCHEMA,
@@ -63,6 +64,16 @@ from .wall_segment_model import (
 )
 
 FORMAT = "houseplan-export"
+
+
+def _appearance_config(config: dict[str, Any]) -> dict[str, Any]:
+    """Validate, then materialise source appearance before extraction/merge.
+
+    Geometry-only CONFIG_SCHEMA callers deliberately remain appearance-neutral.
+    """
+    return normalize_room_appearance(CONFIG_SCHEMA(config))
+
+
 _PROTO_KEYS = {"__proto__", "prototype", "constructor"}
 _SAFE_FILE = re.compile(r"[^A-Za-z0-9._-]+")
 _LIVE_TEXT_TOKEN = re.compile(r"\{([^{}\r\n]+)\}")
@@ -88,7 +99,7 @@ _SPACE_PLAN_FIELDS = (
     "zero_wall_style",
 )
 _SPACE_DISPLAY_FIELDS = (
-    "show_borders", "show_names", "room_color", "bg_color", "room_opacity",
+    "show_borders", "show_names", "room_color", "bg_color", "room_opacity", "name_color", "wall_fill",
     "fill_mode", "custom_fill", "glow_enabled", "temp_min", "temp_max",
     "show_lqi", "show_lqi_mode", "hide_decor", "hide_openings", "label_temp", "label_hum",
     "label_co2", "label_lqi", "label_light", "card_font_scale", "card_name_scale", "card_label_scale",
@@ -97,7 +108,7 @@ _SPACE_DISPLAY_FIELDS = (
 )
 _ROOM_PLAN_FIELDS = ("id", "name", "open_to", "x", "y", "w", "h", "poly", "wall_ids")
 _ROOM_DISPLAY_FIELDS = (
-    "fill_mode", "custom_fill", "glow", "temp_min", "temp_max", "name_scale", "label_scale",
+    "fill_mode", "custom_fill", "glow", "temp_min", "temp_max", "name_scale", "label_scale", "name_color",
 )
 _DECOR_COMMON_FIELDS = ("id", "kind", "color", "opacity", "width_cm", "width")
 _DECOR_KIND_FIELDS = {
@@ -524,7 +535,7 @@ def create_export(
     try:
         raw_config["model_version"] = model_version
         config, _ = commit_wall_segment_model(raw_config)
-        config = CONFIG_SCHEMA(config)
+        config = _appearance_config(config)
     except (WallSegmentMigrationError, vol.Invalid) as err:
         code = err.code if isinstance(err, WallSegmentMigrationError) else "invalid_config"
         raise ImportFailure(code, str(err)) from err
@@ -725,7 +736,7 @@ def parse_document(raw: bytes) -> dict[str, Any]:
             led_strip_link_report(config_candidate)["unbound"]
             if isinstance(config_candidate, dict) else 0
         )
-        config = CONFIG_SCHEMA(config_candidate)
+        config = _appearance_config(config_candidate)
         config.pop("model_version", None)
     except (vol.Invalid, TypeError, ValueError) as err:
         raise ImportFailure("invalid_config", str(err)) from err
@@ -867,7 +878,7 @@ def _validate_plan_only_document(
     spaces = config.get("spaces") or []
     if len(spaces) != 1 or config.get("markers") != []:
         raise ImportFailure("invalid_format", "Plan-only export has invalid owners")
-    expected_config = CONFIG_SCHEMA({
+    expected_config = _appearance_config({
         "spaces": [_project_plan_only_space(spaces[0])],
         "markers": [],
     })
@@ -1652,7 +1663,7 @@ def build_space_merge(
             or len(merged_layout) > MAX_LAYOUT:
         raise ImportFailure("capacity_exceeded", "Merged plan exceeds an item limit")
     try:
-        merged_config = CONFIG_SCHEMA(merged_config)
+        merged_config = _appearance_config(merged_config)
     except vol.Invalid as err:
         raise ImportFailure("invalid_config", str(err)) from err
     try:
@@ -1906,7 +1917,7 @@ def _materialize_import_candidate(
         + led_strip_link_report(config)["unbound"]
     )
     try:
-        config = CONFIG_SCHEMA(config)
+        config = _appearance_config(config)
     except vol.Invalid as err:
         raise ImportFailure("invalid_config", str(err)) from err
     if prepared["kind"] == "full":

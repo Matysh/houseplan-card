@@ -3,6 +3,7 @@
  */
 import { union } from 'polyclip-ts';
 import { generatedRgbColor, safeStoredColor } from './color';
+import { spaceAppearanceOf } from './room-appearance';
 import { signalVisibilityModeOf, signalVisibilityOverrideOf } from './signal-visibility';
 
 /** Zigbee LQI color: ≤40 — red, ≥180 — green, in between — an hsl gradient. */
@@ -1260,7 +1261,9 @@ export interface SpaceDisplay {
   showBorders: boolean;
   showNames: boolean;
   color: string;    // hex like #3ea6ff
-  opacity: number;  // 0..1 — applied to borders, names and fills
+  opacity: number;  // 0..1 — wall lines/hatching
+  nameColor: FillColorEntry;
+  wallFill: FillColorEntry;
   fill: RoomFillMode;
   /** Resolved space-level custom fill; rooms may override it. */
   customFill: FillColorEntry;
@@ -1363,7 +1366,7 @@ export function roomTempRangeOf(
 }
 
 /** Resolve a space's display settings; spaces without a plan default to visible markup. */
-export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
+export function spaceDisplayOf(spaceCfg: any, general?: unknown): SpaceDisplay {
   const s = spaceCfg?.settings || {};
   const noPlan = !spaceCfg?.plan_url;
   const legacyGlow = s.fill_mode === 'glow';
@@ -1372,6 +1375,7 @@ export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
   const fontScale = (value: unknown) => typeof value === 'number' && Number.isFinite(value) && value > 0
     ? clampScale(value) : legacyFontScale;
   return {
+    ...spaceAppearanceOf(spaceCfg, general),
     showBorders: s.show_borders ?? noPlan,
     showNames: s.show_names ?? noPlan,
     color: safeStoredColor(s.room_color, DEFAULT_ROOM_COLOR),

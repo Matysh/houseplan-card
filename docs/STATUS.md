@@ -31,6 +31,12 @@ custom colour picker, embeds local resources and rejects stale completions.
 The SVG smoke compares offline output to the same flat/2.5D frame; it does not
 claim compatibility with editors lacking foreignObject support.
 
+Room appearance (#1037) separates space-local wall lines/hatching, captions and
+wall-body fills. Room caption overrides cover names and readings together.
+Legacy colours/alpha are projected copy-only; background/2.5D settings relocation
+remains #1027, not part of this task. DOM retirement belongs to data-field
+metadata (`gs-wall-fill` → space `space-wall-fill`), not data-hp retiredHooks.
+
 CI Python producers (#1032) install the exact patch resolved once by the shared
 reuse bootstrap. Different runner-image caches do not select a second patch;
 actual-version stamping and registry trust/reuse policy remain strict.

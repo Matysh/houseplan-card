@@ -56,6 +56,9 @@ test('a fresh space is a complete empty v8/v9 wall-model document (#324)', () =>
     view_box: [0, 0, 1, 1],
     rooms: [],
     wall_segments: [],
+    settings: { room_color: '#55606c', room_opacity: 0.55,
+      name_color: { c: '#55606c', a: 0.8 }, wall_fill: { c: '#ffffff', a: 1 },
+      fill_mode: 'custom', custom_fill: { c: '#607d8b', a: 0 } },
   });
 });
 

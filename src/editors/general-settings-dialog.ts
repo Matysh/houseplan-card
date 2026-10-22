@@ -146,19 +146,6 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             title: t('gs.volumetric_view'), help: help(st('gs.volumetric_view_hint'),t('gs.volumetric_view')),
             checked: d.volumetricView, onChange: (v) => set({ volumetricView: v }),
           }),
-          colorRow({
-            label: st('gs.wall_fill'), help:help(st('gs.wall_help'),st('gs.wall_fill')),
-            picker: colorField({
-              hex: d.colors.wall_fill.c, opacity: d.colors.wall_fill.a, opacityLabel: t('space.opacity'),
-
-              picker: html`<hp-color-opacity data-hp="field" data-field="gs-wall-fill" .label=${st('gs.wall_fill')} hide-label flat-swatch
-                .opacityLabel=${t('space.opacity')} .pickerLabels=${host._colorPickerLabels}
-                .color=${d.colors.wall_fill.c} .opacity=${d.colors.wall_fill.a} .showOpacity=${true}
-                @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {
-                  this._setFillColor('wall_fill', { c: e.detail.color, a: e.detail.opacity });
-                }}></hp-color-opacity>`,
-            }),
-          }),
           field({
             label: st('gs.bg_mode'), help: this._help('gs.bg_mode.help'),
             control: selectControl({

@@ -2,7 +2,7 @@
  * #649 (docs/ISOMETRIC.md, Stage 6): presentation colours of the 2.5D View
  * that follow the user's data, never the Home Assistant theme.
  *
- * - Walls: the top face is the user's `fill_colors.wall_fill` colour, the side
+ * - Walls: the top face is the space's resolved `settings.wall_fill` colour, the side
  *   faces are the same colour darkened per channel. With the default white
  *   this is the designer lab's matte look (#c5c5c0 → #999b97 sides).
  * - Floor lightness: relative luma of the room floor (its fill composited over

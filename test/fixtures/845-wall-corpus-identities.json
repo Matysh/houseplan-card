@@ -191,6 +191,10 @@
       "configs": 0
     },
     {
+      "file": "test/fixtures/room-appearance.json",
+      "configs": 0
+    },
+    {
       "file": "test/fixtures/space-delete-with-markers.json",
       "configs": 10
     },

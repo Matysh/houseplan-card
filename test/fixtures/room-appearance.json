@@ -1,0 +1,6 @@
+[
+  {"space":{},"general":{},"nameColor":{"c":"#55606c","a":0.8},"wallFill":{"c":"#ffffff","a":1}},
+  {"space":{"settings":{"room_color":"#123456","room_opacity":0.2}},"general":{"fill_colors":{"wall_fill":{"c":"#456789","a":0.3}}},"nameColor":{"c":"#123456","a":0.45},"wallFill":{"c":"#456789","a":0.3}},
+  {"space":{"settings":{"room_color":"#abcdef","room_opacity":0.9}},"general":{},"nameColor":{"c":"#abcdef","a":1},"wallFill":{"c":"#ffffff","a":1}},
+  {"space":{"settings":{"name_color":{"c":"#112233","a":0},"wall_fill":{"c":"#334455","a":0}}},"general":{"fill_colors":{"wall_fill":{"c":"#ffffff","a":1}}},"nameColor":{"c":"#112233","a":0},"wallFill":{"c":"#334455","a":0}}
+]

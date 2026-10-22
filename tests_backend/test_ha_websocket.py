@@ -20,6 +20,7 @@ from homeassistant.auth.const import GROUP_ID_READ_ONLY, GROUP_ID_USER
 from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from pytest_homeassistant_custom_component.typing import WebSocketGenerator
+from custom_components.houseplan.room_appearance import normalize_room_appearance
 
 from custom_components.houseplan.const import (
     CONF_ADMIN_ONLY,
@@ -1542,6 +1543,7 @@ async def test_plan_optimize_persists_exact_storage_roundtrip_target(
     ).read_text(encoding="utf-8"))
     source = fixture["input"]
     expected = fixture["expected"]
+    expected["config"] = normalize_room_appearance(expected["config"])
 
     await _setup(hass)
     client = await hass_ws_client(hass)

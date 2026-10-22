@@ -318,6 +318,8 @@ SPACE_SETTINGS = Object(
         "fill_mode": nullable(FILL),
         "bg_mode": nullable(enum("static", "daynight")),
         "custom_fill": nullable(FILL_COLOR),
+        "name_color": FILL_COLOR,
+        "wall_fill": FILL_COLOR,
         "show_lqi_mode": enum("inherit", "on", "off"),
         "show_device_battery_mode": enum("inherit", "all", "low", "off"),
     }
@@ -335,6 +337,7 @@ ROOM = Object(
             {
                 "fill_mode": nullable(FILL),
                 "custom_fill": nullable(FILL_COLOR),
+                "name_color": nullable(FILL_COLOR),
                 "glow": nullable(BOOL),
                 **fields("name_scale label_scale temp_min temp_max", nullable(NUMBER)),
                 **fields(

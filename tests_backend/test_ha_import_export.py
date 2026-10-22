@@ -54,6 +54,7 @@ from custom_components.houseplan.store import (
 )
 from custom_components.houseplan.vacuum_routes import effective_routes
 from custom_components.houseplan.validation import MAX_LAYOUT, MAX_MARKERS
+from custom_components.houseplan.room_appearance import normalize_room_appearance
 from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
 
 
@@ -113,6 +114,31 @@ def _config() -> dict:
 
 
 @pytest.mark.parametrize("kind,plan_only", [("full", False), ("space", False), ("space", True)])
+def test_issue1037_appearance_survives_transfer_without_target_global_leak(tmp_path, kind, plan_only):
+    source = _config()
+    source["settings"]["fill_colors"] = {"wall_fill": {"c": "#112233", "a": 0}}
+    source["spaces"][0]["settings"] = {"room_color": "#456789", "room_opacity": 0.2, "future": 7}
+    source["spaces"][0]["rooms"][0]["settings"] = {"name_color": {"c": "#abcdef", "a": 0}}
+    before = copy.deepcopy(source)
+    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": source, "rev": 2},
+        {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
+        plan_only=plan_only, card_version="review", config_root=tmp_path)
+    parsed = parse_document(json.dumps(document).encode())
+    space = parsed["payload"]["config"]["spaces"][0]
+    assert space["settings"]["name_color"] == {"c": "#456789", "a": 0.45}
+    assert space["settings"]["wall_fill"] == {"c": "#112233", "a": 0}
+    assert space["rooms"][0]["settings"]["name_color"] == {"c": "#abcdef", "a": 0}
+    assert source == before
+    if kind == "space":
+        target = _config()
+        target["settings"]["fill_colors"] = {"wall_fill": {"c": "#ffffff", "a": 1}}
+        target_before = copy.deepcopy(target["settings"])
+        merged, _layout, _details = build_space_merge(parsed, target, {}, "skip")
+        assert merged["spaces"][-1]["settings"]["wall_fill"] == {"c": "#112233", "a": 0}
+        assert merged["settings"] == target_before
+
+
+@pytest.mark.parametrize("kind,plan_only", [("full", False), ("space", False), ("space", True)])
 def test_issue977_state_source_full_space_json_and_plan_only(tmp_path: Path, kind: str, plan_only: bool) -> None:
     config = _config()
     source = {"entity_id": "binary_sensor.own_running", "active_states": ["on"], "future": {"v": 3}}
@@ -158,7 +184,7 @@ def test_issue_943_legacy_darkness_survives_full_backup_without_forced_migration
         current_config_data={"config": _config(), "rev": 4}, current_layout_data={"layout": {}, "rev": 5}, config_root=tmp_path)
     imported, _, _ = prepare_apply(get_candidate(runtime, preview["token"], "alice"), _config(), {}, confirm_missing_content=True)
     assert imported["settings"]["fill_colors"] == config["settings"]["fill_colors"]
-    assert imported["spaces"][0]["settings"] == config["spaces"][0]["settings"]
+    assert imported["spaces"][0]["settings"] == normalize_room_appearance(config)["spaces"][0]["settings"]
     assert config == before
 
 
@@ -1230,6 +1256,7 @@ def test_plan_only_export_projects_geometry_and_round_trips_room_labels(tmp_path
     assert exported["settings"] == {
         "show_names": True, "north_deg": 90, "sun_rays": True, "bg_mode": "static",
         "label_co2": True, "hide_openings": True,
+        "name_color": {"c": "#55606c", "a": 0.8}, "wall_fill": {"c": "#ffffff", "a": 1},
     }
     room = exported["rooms"][0]
     assert "area" not in room and "future_room" not in room
@@ -1409,7 +1436,7 @@ def test_full_export_import_round_trip_restores_model_version(tmp_path: Path) ->
         candidate, {"spaces": [], "markers": []}, {}, confirm_missing_content=False,
     )
     assert config["model_version"] == document["model_version"] == PLAN_MODEL_VERSION
-    assert config == _config()
+    assert config == normalize_room_appearance(_config())
 
 
 def test_issue_836_dev_label_rides_the_envelope_and_imports(tmp_path: Path) -> None:
@@ -1441,7 +1468,7 @@ def test_issue_836_dev_label_rides_the_envelope_and_imports(tmp_path: Path) -> N
     config, _layout, _details = prepare_apply(
         candidate, {"spaces": [], "markers": []}, {}, confirm_missing_content=False,
     )
-    assert config == _config()
+    assert config == normalize_room_appearance(_config())
     assert "build" not in config
 
 
@@ -2530,6 +2557,28 @@ class _Connection:
 
     def send_error(self, _msg_id: int, code: str, message: str) -> None:
         self.error = (code, message)
+
+
+@pytest.mark.parametrize("projection", [{}, {"space_id": "ground", "fields": ["spaces"]}])
+async def test_issue1037_get_materialises_legacy_colour_without_storage_or_revision_write(hass, projection):
+    await _setup(hass)
+    rt = get_data(hass)
+    config = _config()
+    config["settings"]["fill_colors"] = {"wall_fill": {"c": "#112233", "a": 0}}
+    config["spaces"][0]["settings"] = {"room_color": "#456789", "room_opacity": 0.2}
+    await rt.config_store.async_save({"config": config, "rev": 31})
+    await rt.store.async_save({"layout": {}, "rev": 7})
+    before_config, before_layout = copy.deepcopy(await rt.config_store.async_load()), copy.deepcopy(await rt.store.async_load())
+    for _ in range(2):
+        response = _Connection()
+        await wsapi.ws_config_get.__wrapped__(hass, response, {"id": 1037, "type": "houseplan/config/get", **projection})
+        assert response.error is None
+        assert response.result["rev"] == 31
+        settings = response.result["config"]["spaces"][0]["settings"]
+        assert settings["name_color"] == {"c": "#456789", "a": 0.45}
+        assert settings["wall_fill"] == {"c": "#112233", "a": 0}
+    assert await rt.config_store.async_load() == before_config
+    assert await rt.store.async_load() == before_layout
 
 
 async def _candidate(

@@ -35,6 +35,12 @@ export const SMOKE_LINKS = [
     because: '#1036: real format selection/download must retain PDF and produce the standalone View SVG; offline screenshot comparison and options/errors cannot be inferred from helper names.',
   },
   {
+    files: ['src/room-appearance.ts','src/editors/space-dialog-draft.ts','src/editors/space-form.ts',
+      'src/editors/room-settings-dialog.ts','src/editors/room-save.ts'],
+    smokes: ['smoke_room_appearance.mjs','smoke_e2e_hooks.mjs'],
+    because: '#1037: semantic colour hosts must drive actual draft/accepted caption and wall paint; the smoke observes computed CSS, real shared picker inputs, local/room inheritance and transfer-neutral unrelated floors.',
+  },
+  {
     symbols: ['_renderWallThickDialog', '_renderDrawWallControl', '_renderOpeningDialog', '_renderDiscoveryFilters'],
     smokes: ['smoke_wallthick_standalone.mjs', 'smoke_e2e_primitive_fields.mjs', 'smoke_opening_entity_search.mjs', 'smoke_discovery_filters.mjs'],
     because: '#1011 r3: semantic field ids must identify the bound physical dimension, opening picker or discovery setting; real inputs and existing wire/Undo/Cancel checks prove more than the presence of a field hook.',

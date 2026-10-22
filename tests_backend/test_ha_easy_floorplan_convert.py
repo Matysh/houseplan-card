@@ -12,6 +12,7 @@ from custom_components.houseplan.import_export import create_export, create_prev
 from custom_components.houseplan.store import get_data
 from custom_components.houseplan import websocket_api as wsapi
 from custom_components.houseplan.validation import CONFIG_SCHEMA
+from custom_components.houseplan.room_appearance import normalize_room_appearance
 
 GOLDEN = Path(__file__).resolve().parent.parent / "scripts/sh3d-convert/golden"
 
@@ -71,7 +72,7 @@ async def test_issue_937_ha_applies_exports_and_deduplicates_without_changing_ex
         return (await runtime.config_store.async_load())["config"]
 
     first = await import_it("skip")
-    assert first["spaces"][0] == before["spaces"][0]
+    assert first["spaces"][0] == normalize_room_appearance(before)["spaces"][0]
     assert first["settings"] == before["settings"]
     expected = document["payload"]["config"]
     assert len(first["markers"]) == len(expected["markers"])

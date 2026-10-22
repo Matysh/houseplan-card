@@ -633,6 +633,17 @@
           "since": "1.83.0",
           "value": "string",
           "meaning": "stable control id, name or capability key for the bound quantity; wall-thickness is cm/in, column-size is side/diameter, opening-length is cm, opening-{contact|lock}-entity-filter searches that picker, device-discovery-{group-lights|exclusion} controls discovery; see STYLING-HOOKS §7.8",
+            "retiredValues": {
+              "gs-wall-fill": {
+                "since": "1.83.0",
+                "ownerDialogKind": "settings",
+                "replacementDialogKind": "space",
+                "replacementField": "space-wall-fill",
+                "issue": 1037,
+                "reason": "Wall fill moved to each space; this is not a change-all-floors control. Never published in stable.",
+                "retainThrough": "At least one following stable after the first stable containing #1037; no automatic deletion."
+              }
+            },
           "audience": [
             "test"
           ]

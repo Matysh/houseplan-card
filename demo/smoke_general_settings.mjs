@@ -13,8 +13,8 @@ const res = await page.evaluate(async () => {
   c._spaceDialog = null;
   // 1) диалог общих настроек: инвентарь строк и групп (обновлён фичей «Солнце»)
   c._openSettingsDialog(); await c.updateComplete;
-  // #600 §5: инвентарь цветов — плитки (`.hpf-colortile`) и одна плашка стены
-  // (`.hpf-colorrow`); радиус свечения и фон — поля набора. Прежний `.gsrow`
+  // #1037: wall fill is now in Space settings, not a General colour row.
+  // Radius and background remain here. The old `.gsrow`
   // считал всё подряд, теперь каждая поверхность считается своим классом.
   const optimizeAction = [...sr().querySelectorAll('hp-dialog [data-card="data"] .hpf-actions button')]
     .find((button) => button.textContent.trim() === c._t('gs.align_all'));
@@ -91,7 +91,7 @@ const res = await page.evaluate(async () => {
 });
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
 checkAll(res, {
-  "rows": 14, // 9 плиток без затемнения #943 + прежние остальные контролы
+  "rows": 13, // #1037 moves one wall-fill row into Space; other controls remain
                // + «Оптимизировать планы» по действию, а не удалённому #605 классу alignall
   "cards": ["Information on the plan", "Appearance and background", "Room fills", "Light, Sun and Moon", "Zigbee diagnostics", "Backups and maintenance"],
   "groups": ["Lights", "Temperature", "Zigbee signal"],
