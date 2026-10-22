@@ -297,7 +297,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     }
     return null;
   }
-  const disp = spaceDisplayOf(o.cfg.spaces.find((s: any) => s.id === o.spaceId), o.cfg.settings);
+  const disp = spaceDisplayOf(o.cfg.spaces.find(s => s.id === o.spaceId), o.cfg.settings);
   const colors = fillColorsOf(o.cfg.settings);
   const storedDecor = (o.cfg.settings as { decor_default_style?: Record<string, unknown> })
     ?.decor_default_style;

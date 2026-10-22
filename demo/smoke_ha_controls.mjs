@@ -160,10 +160,10 @@ const res = await page.evaluate(async () => {
   c._openSettingsDialog(); await c.updateComplete;
   const generalPickers = [...sr().querySelectorAll('hp-dialog hp-color-opacity')];
   // #943 removes only the room-darkness picker, not the shared opacity UI.
-  out.gsUnifiedPickers = generalPickers.length === 11
-    && generalPickers.filter((picker) => picker.showOpacity).length === 10;
+  out.gsUnifiedPickers = generalPickers.length === 10
+    && generalPickers.filter((picker) => picker.showOpacity).length === 9;
   out.gsNoLegacyHaOpacitySliders = sr().querySelectorAll('hp-dialog ha-slider').length === 0;
-  generalPickers[0].dispatchEvent(new CustomEvent('hp-color-opacity-change', {
+  generalPickers.find(picker => picker.dataset.field === 'gs-fill-light_on').dispatchEvent(new CustomEvent('hp-color-opacity-change', {
     detail: { color: '#123456', opacity: 0.55 }, bubbles: true, composed: true,
   }));
   await c.updateComplete;

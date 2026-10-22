@@ -98,6 +98,6 @@ checkAll(res, {
   "atticSquare": true,
   // New spaces keep the product default (Glow on), but store it independently
   // from the ordinary data fill.
-  "atticSettings": {"show_borders": true, "show_names": true, "room_color": "#55606c", "room_opacity": 0.55, "bg_mode": "daynight", "fill_mode": "custom", "custom_fill": {"c": "#607d8b", "a": 0}, "glow_enabled": true, "temp_min": 20, "temp_max": 25, "card_name_scale": 1, "card_label_scale": 1, "label_temp": false, "label_hum": false, "label_co2": false, "label_lqi": false, "label_light": false},
+  "atticSettings": {"room_color": "#55606c", "room_opacity": 0.55, "name_color": {"c":"#55606c","a":0.8}, "wall_fill": {"c":"#ffffff","a":1}, "fill_mode":"custom", "custom_fill":{"c":"#607d8b","a":0}, "show_borders":true, "show_names":true, "bg_mode":"daynight", "glow_enabled":true, "temp_min":20, "temp_max":25, "card_name_scale":1, "card_label_scale":1, "label_temp":false, "label_hum":false, "label_co2":false, "label_lqi":false, "label_light":false},
 });
 await finish(browser, res);

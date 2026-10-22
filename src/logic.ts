@@ -1365,10 +1365,21 @@ export function roomTempRangeOf(
   return { min: Math.min(rawMin, rawMax), max: Math.max(rawMin, rawMax) };
 }
 
+interface SpaceDisplayInput {
+  plan_url?: unknown;
+  settings?: {
+    show_borders?: boolean;
+    show_names?: boolean;
+    show_lqi?: unknown;
+    show_lqi_mode?: unknown;
+    [key: string]: unknown;
+  };
+}
+
 /** Resolve a space's display settings; spaces without a plan default to visible markup. */
-export function spaceDisplayOf(spaceCfg: any, general?: unknown): SpaceDisplay {
-  const s = spaceCfg?.settings || {};
-  const noPlan = !spaceCfg?.plan_url;
+export function spaceDisplayOf(spaceCfg: unknown, general?: unknown): SpaceDisplay {
+  const s = (spaceCfg as SpaceDisplayInput | null | undefined)?.settings || {};
+  const noPlan = !(spaceCfg as SpaceDisplayInput | null | undefined)?.plan_url;
   const legacyGlow = s.fill_mode === 'glow';
   const legacyFontScale = typeof s.card_font_scale === 'number' && s.card_font_scale > 0
     ? Math.min(3, Math.max(0.5, s.card_font_scale)) : 1;
@@ -1380,7 +1391,7 @@ export function spaceDisplayOf(spaceCfg: any, general?: unknown): SpaceDisplay {
     showNames: s.show_names ?? noPlan,
     color: safeStoredColor(s.room_color, DEFAULT_ROOM_COLOR),
     opacity: typeof s.room_opacity === 'number' ? Math.min(1, Math.max(0, s.room_opacity)) : DEFAULT_ROOM_OPACITY,
-    fill: ['lqi', 'light', 'temp', 'custom'].includes(s.fill_mode) ? s.fill_mode : 'none',
+    fill: ['lqi', 'light', 'temp', 'custom'].includes(s.fill_mode as string) ? s.fill_mode as RoomFillMode : 'none',
     customFill: customFillOf(s.custom_fill),
     // Explicit new data wins. Reading an old config never writes it back.
     glow: typeof s.glow_enabled === 'boolean' ? s.glow_enabled : legacyGlow,
