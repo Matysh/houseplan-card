@@ -50,7 +50,8 @@ async function renderPdfGoldenPage(page, semanticContract = null) {
     await dialog.updateComplete;
     dialog.context.now = new Date('2026-09-07T00:00:00Z');
     await dialog.context.save({
-      dimensions: true, roomNames: true, decor: false, backdrop: false,
+      format: 'pdf',
+      options: { dimensions: true, roomNames: true, decor: false, backdrop: false },
     });
     dialog.context.close();
     await card.updateComplete;
