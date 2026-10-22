@@ -6,6 +6,9 @@
   vacuum/decor/light results, summary controls and settings fields. Interface,
   behaviour and saved configuration are unchanged. (#1011)
 
+- Load Zigbee topology immediately after enabling links without reopening settings.
+  The explicit action saves all dialog changes before updating Z2M or reading
+  ZHA, keeps settings open, and never loads after a failed save. (#1031)
 
 - Centre and unify the three colour-picker thumbs. Each shows the selected
   colour; saturation and brightness tracks now show their actual colour range. (#1008)

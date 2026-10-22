@@ -1630,6 +1630,12 @@ overlay bridge; the overlay chunk loads only for a saved
 `settings.zigbee_topology.enabled === true`, a real HA admin, full-card View and
 a non-kiosk surface. General Settings loads provider transport only when an
 enabled setting needs status or the admin presses a provider action.
+When only the draft enables links (#1031), provider actions explicitly save all
+General Settings through the owner's validated CAS writer before loading. A
+keep-open save advances the accepted draft baseline without replacing its dialog
+session or discarding later edits. `zigbee-topology-action.ts` coalesces clicks
+and retires the continuation on section, session, identity or connection changes;
+provider/backend authorization and already-enabled read-only refresh stay intact.
 `zigbee-topology.ts` normalises ZHA and Zigbee2MQTT into directional observations
 and provider evidence (#798): Parent/reverse Child for end devices, active
 destination-zero routes for routers. NWK addresses are provider-scoped; exact

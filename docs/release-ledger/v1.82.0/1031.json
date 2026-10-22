@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1031,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 leaves Zigbee provider actions disabled after enabling links in General Settings. Explicit save-all-then-load actions repair this existing workflow without reopening the dialog or relaxing backend authorization.",
+  "summary": {
+    "ru": "После включения связей Zigbee можно сразу сохранить настройки и обновить карту, не закрывая диалог.",
+    "en": "After enabling Zigbee links, settings can be saved and the map refreshed without reopening the dialog."
+  }
+}

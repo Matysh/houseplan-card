@@ -4,7 +4,7 @@
  */
 import type { HouseplanEditorHostPort } from '../houseplan-editor-runtime';
 import { strictNumber } from '../space-dialog';
-import { dialogDirty, forgetDialogBaseline, rememberDialogBaseline, stableKey } from './dialog-baseline';
+import { acceptDialogBaseline, dialogDirty, forgetDialogBaseline, rememberDialogBaseline, stableKey } from './dialog-baseline';
 
 export type GeneralSettingsDraft = NonNullable<HouseplanEditorHostPort['_settingsDialog']>;
 
@@ -21,6 +21,10 @@ export function generalDraftKey(d: GeneralSettingsDraft): string {
 
 export function rememberGeneralBaseline(host: object, d: GeneralSettingsDraft): void {
   rememberDialogBaseline(host, 'settings', generalDraftKey(d));
+}
+
+export function acceptGeneralBaseline(host: object, d: GeneralSettingsDraft, owner: object | undefined): boolean {
+  return acceptDialogBaseline(host, 'settings', generalDraftKey(d), owner);
 }
 
 export function forgetGeneralBaseline(host: object): void {

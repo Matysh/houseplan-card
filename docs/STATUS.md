@@ -25,6 +25,11 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Zigbee enable-and-refresh (#1031) keeps General Settings open after an explicit
+save-all-then-load action. The scan/read waits for successful CAS acknowledgement;
+failed saves and retired UI contexts cannot start it. An already-enabled refresh
+does not save unrelated draft changes. No provider or backend policy changes.
+
 Single bundle snapshot (#1016): only the integration frontend is tracked.
 Root dist and demo assets are generated locally/CI; build budgets still judge
 fresh output, publishers use frontend or byte-parity-verified fresh output. No product,

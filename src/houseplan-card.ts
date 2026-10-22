@@ -10319,7 +10319,7 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._setFillColor(key, patch);
   }
 
-  private async _saveSettingsDialog(): Promise<void> {
+  private async _saveSettingsDialog(): Promise<boolean> {
     return this._editorRuntimeOrThrow()._saveSettingsDialog();
   }
 

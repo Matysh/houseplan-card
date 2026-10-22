@@ -10,6 +10,7 @@ import { ensureSettingsDialogStyles } from './settings-styles';
 import { settingsNorth } from './settings-north';
 import { settingsBackgroundPreviews } from './settings-background-previews';
 import { forgetGeneralBaseline, generalDirty, generalProblems, settingsUndoVisibility, type GeneralSettingsDraft } from './general-form-state';
+import { dialogSession } from './dialog-baseline';
 import { moonStatusOf, moonStatusText } from './moon-status';
 import { langOf, type I18nKey } from '../i18n';
 import { settingsT, type SettingsI18nKey } from '../i18n/settings';
@@ -250,6 +251,12 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
         body: formSections([
           html`<hp-zigbee-topology-settings embedded .language=${lang} .active=${selectedSettingsSection(host, 'general') === 'zigbee'} .hass=${host.hass} .value=${d.zigbeeTopology}
           .savedEnabled=${zigbeeTopologySettingsOf(host._settings).enabled} .devices=${host._devices} .registry=${host._haRegistry}
+          .settingsSession=${dialogSession(host, 'settings')} .settingsBusy=${d.busy} .canPrepareLoad=${canSave}
+          .prepareLoad=${async () => {
+            const saved = await this._saveSettingsDialog({ keepOpen: true });
+            await host.updateComplete;
+            return saved;
+          }}
           @hp-topology-settings-change=${(event: CustomEvent<ZigbeeTopologySettings>) => set({ zigbeeTopology: event.detail })}></hp-zigbee-topology-settings>`,
         ]),
       })}` },

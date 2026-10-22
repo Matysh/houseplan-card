@@ -13968,6 +13968,26 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'zigbee-enable-refresh-retains-retired-section-1031',
+    guard: 'node demo/smoke_zigbee_enable_refresh.mjs',
+    because: '#1031 AC4: leaving and returning to a real Lit settings section during a held owner CAS save must retire the old scan continuation; the mounted component lifecycle and owner callback cannot be proved by the pure gate alone.',
+    patches: [{
+      file: 'src/hp-zigbee-topology-settings.ts',
+      find: '        || previous.enabled !== this.value.enabled || previous.topics !== this._topicText)) this._loadGate.invalidate();',
+      replace: '        || previous.enabled !== this.value.enabled || previous.topics !== this._topicText)) this.requestUpdate();',
+    }],
+  },
+  {
+    id: 'zigbee-enable-refresh-skips-accepted-baseline-1031',
+    guard: 'node demo/smoke_zigbee_enable_refresh.mjs',
+    because: '#1031 AC5: the mounted General Settings owner must keep the successful save clean and close without a discard modal, while preserving later dirty edits; pure baseline tests cannot prove the owner advances the rendered form baseline.',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '          acceptGeneralBaseline(this.host, d, owner);',
+      replace: '          void owner; // mutant: leave the pre-save baseline',
+    }],
+  },
+  {
     id: 'zigbee-background-scan-restores-ten-minute-deadline',
     guard: 'node scripts/backend-test-guard.mjs issue_800_background_15_minutes_two_clients_and_reopen '
       + 'tests_backend/test_ha_zigbee_topology.py',

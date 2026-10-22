@@ -15,6 +15,7 @@ import type { HaRegistrySnapshot } from './ha-binding-status';
 import type { ZigbeeTopologyHass, ZigbeeTopologyRuntimeSnapshot } from './zigbee-topology-runtime';
 import { acquireIntegrationMetadata, integrationMetadataSnapshot } from './integration-provider';
 import { zigbeeIntegrationPresence } from './zigbee-integration-presence';
+import { ZigbeeTopologyLoadGate } from './zigbee-topology-action';
 
 const EMPTY_RUNTIME: ZigbeeTopologyRuntimeSnapshot = { revision: 0, topologies: [], states: {} };
 const EMPTY_DIAGNOSTICS: ZigbeeTopologyDiagnostics = { loaded: false, partial: false, hasKnownRoute: false, reasons: [] };
@@ -28,6 +29,10 @@ export class HpZigbeeTopologySettings extends LitElement {
     embedded: { type: Boolean, reflect: true },
     pointerHover: { type: Boolean, attribute: 'data-pointer-hover', reflect: true },
     savedEnabled: { type: Boolean, attribute: 'saved-enabled' },
+    settingsSession: { attribute: false },
+    settingsBusy: { type: Boolean },
+    canPrepareLoad: { type: Boolean },
+    prepareLoad: { attribute: false },
     devices: { attribute: false },
     registry: { attribute: false },
     active: { type: Boolean },
@@ -37,6 +42,10 @@ export class HpZigbeeTopologySettings extends LitElement {
   language?: string;
   value: ZigbeeTopologySettings = { enabled: false, z2mBaseTopics: [] };
   savedEnabled = false;
+  settingsSession?: object;
+  settingsBusy = false;
+  canPrepareLoad = false;
+  prepareLoad?: () => Promise<boolean>;
   pointerHover = false;
   devices: readonly DevItem[] = [];
   registry?: HaRegistrySnapshot;
@@ -54,6 +63,8 @@ export class HpZigbeeTopologySettings extends LitElement {
   private _runtimePending?: Promise<typeof import('./zigbee-topology-runtime')>;
   private _topicText = 'zigbee2mqtt';
   private _invalidTopic = false;
+  private _loadGate = new ZigbeeTopologyLoadGate();
+  private _loadContext?: { owner: object; identity: string; session?: object; active: boolean; enabled: boolean; topics: string };
 
   static styles = [unsafeCSS(settingsActionsCss('button')), css`
     :host { display: block; color: inherit; font: inherit; }
@@ -96,6 +107,7 @@ export class HpZigbeeTopologySettings extends LitElement {
     .topic-meta { display:grid; gap:7px; min-width:0; }
     .topic-head { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:center; }
     .topic-head strong { overflow-wrap:anywhere; }
+    .save-and-load { white-space:normal; max-width:240px; }
     .scan-row { border-top:1px solid var(--hpf-line,var(--divider-color)); padding-top:18px; margin-top:18px; }
     .scan-row .status,.scan-row .hint { grid-column:1/-1; }
     .incomplete { min-width:0; overflow-wrap:anywhere; }
@@ -121,6 +133,7 @@ export class HpZigbeeTopologySettings extends LitElement {
   }
 
   disconnectedCallback(): void {
+    this._loadGate.invalidate();
     document.removeEventListener('visibilitychange', this._visibilityChanged);
     this._releaseRuntime();
     this._metadataRelease?.();
@@ -131,6 +144,12 @@ export class HpZigbeeTopologySettings extends LitElement {
   protected updated(): void {
     const owner = this.hass?.connection || this.hass;
     const identity = `${this.hass?.user?.id || ''}:${this._admin}`;
+    const previous = this._loadContext;
+    if (previous && (previous.owner !== owner || previous.identity !== identity
+        || previous.session !== this.settingsSession || previous.active !== this.active
+        || previous.enabled !== this.value.enabled || previous.topics !== this._topicText)) this._loadGate.invalidate();
+    this._loadContext = { owner, identity, session: this.settingsSession,
+      active: this.active, enabled: this.value.enabled, topics: this._topicText };
     const metadataWanted = this.active && this.embedded && this._admin;
     if (this._metadataRelease && (!metadataWanted || owner !== this._metadataOwner || identity !== this._metadataIdentity)) {
       this._metadataRelease(); this._metadataRelease = undefined;
@@ -169,6 +188,11 @@ export class HpZigbeeTopologySettings extends LitElement {
   }
 
   private get _admin(): boolean { return this.hass?.user?.is_admin === true; }
+  private get _actionsBusy(): boolean { return this.settingsBusy || this._loadGate.pending; }
+  private get _mayLoad(): boolean {
+    return this._admin && this.active && this.value.enabled && !this._actionsBusy
+      && (this.savedEnabled || (!!this.prepareLoad && this.canPrepareLoad && !this._invalidTopic));
+  }
   private get _observing(): boolean { return this.isConnected && this.active && this.value.enabled && this.savedEnabled && this._admin; }
   public embedded = false;
 
@@ -235,7 +259,7 @@ export class HpZigbeeTopologySettings extends LitElement {
   }
 
   private _emit(value: ZigbeeTopologySettings): void {
-    if (!this._admin) return;
+    if (!this._admin || this._actionsBusy) return;
     this.dispatchEvent(new CustomEvent('hp-topology-settings-change', {
       detail: value, bubbles: true, composed: true,
     }));
@@ -323,15 +347,30 @@ export class HpZigbeeTopologySettings extends LitElement {
   }
 
   private async _readZha(): Promise<void> {
-    const generation = this._generation;
-    const runtime = await this._ensureRuntime();
-    if (generation === this._generation && this._observing) void runtime.readZhaTopology(this.hass);
+    await this._load('zha');
   }
 
   private async _refreshZ2m(topic: string): Promise<void> {
-    const generation = this._generation;
-    const runtime = await this._ensureRuntime();
-    if (generation === this._generation && this._observing) void runtime.refreshZ2mTopology(this.hass, topic);
+    await this._load('z2m', topic);
+  }
+
+  private async _load(provider: 'zha' | 'z2m', topic?: string): Promise<void> {
+    if (!this._mayLoad || (provider === 'z2m' && this._invalidTopic)) return;
+    const owner = this.hass?.connection || this.hass, user = this.hass?.user?.id, session = this.settingsSession;
+    await this._loadGate.run({
+      current: () => this.isConnected && this.active && this.value.enabled && this._admin && !this.settingsBusy
+        && (this.hass?.connection || this.hass) === owner && this.hass?.user?.id === user
+        && this.settingsSession === session && (provider === 'zha' || (!this._invalidTopic && this._topics().includes(topic!))),
+      prepare: this.savedEnabled ? undefined : this.prepareLoad,
+      changed: () => this.requestUpdate(),
+      load: async current => {
+        const generation = this._generation;
+        const runtime = await this._ensureRuntime();
+        if (!current() || generation !== this._generation || !this._observing) return;
+        if (provider === 'zha') await runtime.readZhaTopology(this.hass);
+        else await runtime.refreshZ2mTopology(this.hass, topic!);
+      },
+    });
   }
 
   private _errorText(error?: import('./zigbee-topology-runtime').ZigbeeTopologyErrorCode): string {
@@ -348,8 +387,9 @@ export class HpZigbeeTopologySettings extends LitElement {
     return html`<div class="scan-row" data-topic=${topic}>
       <div class="topic-head">
         <div class="topic-meta"><strong>${topic}</strong><span class="status" role="status">${this._status(key, diagnostics)}</span></div>
-        <button data-hp="action" data-action="zigbee-refresh-z2m" class=${embedded ? 'btn ghost' : ''} ?disabled=${!mayLoad || this._invalidTopic || this._busy(key)}
-          @click=${() => this._refreshZ2m(topic)}><ha-icon icon="mdi:refresh"></ha-icon>${this._t('z2m_update')}</button>
+        <button data-hp="action" data-action="zigbee-refresh-z2m" class=${`${embedded ? 'btn ghost' : ''} ${!this.savedEnabled && this.prepareLoad ? 'save-and-load' : ''}`}
+          ?disabled=${!mayLoad || this._invalidTopic || this._busy(key)}
+          @click=${() => this._refreshZ2m(topic)}><ha-icon icon="mdi:refresh"></ha-icon>${this._t(!this.savedEnabled && this.prepareLoad ? 'save_and_update' : 'z2m_update')}</button>
       </div>
       ${!active ? html`<span class="hint">${this._t(this._snapshot.topologies.some(item => item.provider === 'z2m' && item.instanceId === topic)
         ? 'scan_replace_hint' : this._snapshot.backendConnected === true ? 'scan_new_hint' : 'scan_unknown_hint')}</span>` : nothing}
@@ -374,17 +414,17 @@ export class HpZigbeeTopologySettings extends LitElement {
     if (this.embedded) return this._renderEmbedded();
     const admin = this._admin;
     const enabled = this.value.enabled;
-    const mayLoad = admin && this.savedEnabled;
+    const mayLoad = this._mayLoad;
     const topics = this._topics();
     const diagnostics = this._diagnosticModels();
     return html`
       <div class="section">${this._t('title')}${this._help()}</div>
       <label class="toggle">
         ${customElements.get('ha-switch')
-          ? html`<ha-switch data-hp="field" data-field="zigbee-enabled" .checked=${enabled} .disabled=${!admin}
+          ? html`<ha-switch data-hp="field" data-field="zigbee-enabled" .checked=${enabled} .disabled=${!admin || this._actionsBusy}
               @change=${(event: Event) => this._emit({ ...this.value,
                 enabled: !!(event.target as HTMLInputElement).checked })}></ha-switch>`
-          : html`<input data-hp="field" data-field="zigbee-enabled" type="checkbox" .checked=${enabled} ?disabled=${!admin}
+          : html`<input data-hp="field" data-field="zigbee-enabled" type="checkbox" .checked=${enabled} ?disabled=${!admin || this._actionsBusy}
               @change=${(event: Event) => this._emit({ ...this.value,
                 enabled: (event.target as HTMLInputElement).checked })} />`}
         <span>${this._t('toggle')}</span>
@@ -392,13 +432,13 @@ export class HpZigbeeTopologySettings extends LitElement {
       <div class="hint">${this._t('hint')}</div>
       ${!admin ? html`<div class="hint">${this._t('admin_only')}</div>` : nothing}
       ${enabled ? html`<div class="providers">
-        ${!this.savedEnabled ? html`<div class="hint">${this._t('save_first')}</div>` : nothing}
+        ${!this.savedEnabled ? html`<div class="hint">${this._t(this.prepareLoad ? 'save_and_load_help' : 'save_first')}</div>` : nothing}
         <div class="provider">
           <div class="provider-title">${this._t('zha')}</div>
           <div class="hint">${this._t('zha_hint')}</div>
           <div class="actions">
-            <button data-hp="action" data-action="zigbee-read-zha" ?disabled=${!mayLoad || this._busy('zha')} @click=${this._readZha}>
-              <ha-icon icon="mdi:access-point-network"></ha-icon>${this._t('zha_read')}
+            <button data-hp="action" data-action="zigbee-read-zha" class=${!this.savedEnabled && this.prepareLoad ? 'save-and-load' : ''} ?disabled=${!mayLoad || this._busy('zha')} @click=${this._readZha}>
+              <ha-icon icon="mdi:access-point-network"></ha-icon>${this._t(!this.savedEnabled && this.prepareLoad ? 'save_and_read_zha' : 'zha_read')}
             </button>
             <span class="status">${this._status('zha', diagnostics.get('zha')!)}</span>
           </div>
@@ -407,7 +447,7 @@ export class HpZigbeeTopologySettings extends LitElement {
         <div class="provider">
           <div class="provider-title">${this._t('z2m')}</div>
           <label class="hint" for="z2m-topics">${this._t('z2m_topics')}</label>
-          <textarea data-hp="field" data-field="z2m-topics" id="z2m-topics" ?disabled=${!admin}
+          <textarea data-hp="field" data-field="z2m-topics" id="z2m-topics" ?disabled=${!admin || this._actionsBusy}
             .value=${this._topicText} @input=${(event: Event) =>
               this._editTopics((event.target as HTMLTextAreaElement).value)}></textarea>
           ${this._invalidTopic ? html`<div class="warning">${this._t('error_invalid_topic')}</div>` : nothing}
@@ -428,7 +468,7 @@ export class HpZigbeeTopologySettings extends LitElement {
   private _renderEmbedded(): TemplateResult {
     ensureSettingsDialogStyles(this);
     const admin = this._admin, enabled = this.value.enabled;
-    const mayLoad = admin && this.savedEnabled;
+    const mayLoad = this._mayLoad;
     const diagnostics = this._diagnosticModels();
     const presence = zigbeeIntegrationPresence(integrationMetadataSnapshot(this.hass), this.registry);
     const storedZha = this._snapshot.topologies.some(item => item.provider === 'zha') || !!this._snapshot.states.zha;
@@ -437,8 +477,8 @@ export class HpZigbeeTopologySettings extends LitElement {
       <div class="provider-heading"><h4>${this._t('zha')}</h4><p class="hpf-hint">${this._t('zha_hint')}</p></div>
       <p class="status" role="status">${this._status('zha', diagnostics.get('zha')!)}</p>
       <div class="hpf-actions">
-        <button data-hp="action" data-action="zigbee-read-zha" class="btn ghost" ?disabled=${!mayLoad || this._busy('zha')} @click=${this._readZha}>
-          <ha-icon icon="mdi:access-point-network"></ha-icon>${this._t('zha_read')}
+        <button data-hp="action" data-action="zigbee-read-zha" class=${`btn ghost ${!this.savedEnabled && this.prepareLoad ? 'save-and-load' : ''}`} ?disabled=${!mayLoad || this._busy('zha')} @click=${this._readZha}>
+          <ha-icon icon="mdi:access-point-network"></ha-icon>${this._t(!this.savedEnabled && this.prepareLoad ? 'save_and_read_zha' : 'zha_read')}
         </button>
       </div>
       ${this._incompleteDetails('zha', diagnostics)}
@@ -448,7 +488,7 @@ export class HpZigbeeTopologySettings extends LitElement {
       <p class="hpf-hint">${this._t('z2m_duration')}</p>
       <div class="hpf-field">
         <span class="hpf-label hpf-labelrow"><label for="z2m-topics">${this._t('z2m_topics')}</label>${this._help('topics_help','topics_help_aria')}</span>
-        <textarea data-hp="field" data-field="z2m-topics" id="z2m-topics" class="hpf-input" rows="2" spellcheck="false" ?disabled=${!admin}
+        <textarea data-hp="field" data-field="z2m-topics" id="z2m-topics" class="hpf-input" rows="2" spellcheck="false" ?disabled=${!admin || this._actionsBusy}
           aria-invalid=${this._invalidTopic ? 'true' : nothing}
           .value=${this._topicText} @input=${(event: Event) => this._editTopics((event.target as HTMLTextAreaElement).value)}></textarea>
         ${this._invalidTopic ? html`<p class="hpf-error" role="alert">${this._t('error_invalid_topic')}</p>` : nothing}
@@ -459,11 +499,11 @@ export class HpZigbeeTopologySettings extends LitElement {
     return html`<div class="hpf-form hpf-settings-form"><section class="hpf-settings-pane"><div class="hpf-body">${formSections([
       html`<label class="hpf-toggle hpf-noicon">
         <span class="hpf-toggle-title hpf-balanced"><span>${this._t('toggle')}</span>${this._help()}</span>
-        <input data-hp="field" data-field="zigbee-enabled" type="checkbox" .checked=${enabled} ?disabled=${!admin} aria-label=${this._t('toggle')}
+        <input data-hp="field" data-field="zigbee-enabled" type="checkbox" .checked=${enabled} ?disabled=${!admin || this._actionsBusy} aria-label=${this._t('toggle')}
           @change=${(event: Event) => this._emit({ ...this.value, enabled: (event.target as HTMLInputElement).checked })} />
       </label>${!admin ? html`<p class="hpf-hint">${this._t('admin_only')}</p>` : nothing}`,
       enabled ? html`
-        ${!this.savedEnabled ? html`<div class="hpf-callout"><p>${this._t('save_first')}</p></div>` : nothing}
+        ${!this.savedEnabled ? html`<div class="hpf-callout"><p>${this._t(this.prepareLoad ? 'save_and_load_help' : 'save_first')}</p></div>` : nothing}
         ${presence.zha === 'unknown' || presence.z2m === 'unknown' ? html`<p class="hpf-hint">${this._t('discovery_unknown')}</p>` : nothing}
         ${formSections([
           presence.zha !== 'absent' || storedZha ? zha : disclosure({title:this._t('zha_manual'),content:zha}),

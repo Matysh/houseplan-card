@@ -33,6 +33,13 @@ export function dialogSession(host: object, kind: DialogKind): object | undefine
   return sessions.get(host)?.get(kind);
 }
 
+/** A successful keep-open save advances this form's baseline, not its identity. */
+export function acceptDialogBaseline(host: object, kind: DialogKind, key: string, owner: object | undefined): boolean {
+  if (!owner || dialogSession(host, kind) !== owner) return false;
+  baselines.get(host)!.set(kind, key);
+  return true;
+}
+
 /** Read-only transfer hook for a warm remount. The key is still page-memory only. */
 export function dialogBaseline(host: object, kind: DialogKind): string | undefined {
   return baselines.get(host)?.get(kind);

@@ -44,8 +44,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 79 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 88 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 55 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 228 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **461 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 230 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **463 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -497,6 +497,9 @@ The #1011 witnesses resolve real controls and their bound quantities (including
 wall thickness through room/partition Apply wire values and Undo) across Lit/custom-element roots and
 native Cancel/Discard, and the imperatively painted SVG owner's relationship to
 the mounted markers. A source vocabulary alone cannot establish those links.
+
+- `zigbee-enable-refresh-retains-retired-section-1031`
+- `zigbee-enable-refresh-skips-accepted-baseline-1031`
 
 - `color-picker-render-erases-placement-1008`
 

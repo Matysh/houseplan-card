@@ -2225,6 +2225,13 @@ declarations only outside the nightly executor; use `mutation-gate --check`.
 
 ## Local contour in 5 minutes (локальный контур за 5 минут, #633)
 
+For the enable-and-refresh settings flow (#1031), run
+`node --test test/zigbee-topology-action.test.mjs` after compiling test-build,
+and `node demo/smoke_zigbee_enable_refresh.mjs` after build + bundle sync. The
+smoke uses the real General Settings owner with delayed/refused CAS replies;
+it checks save-before-load, clean/dirty baselines, retired contexts, keyboard
+activation and translated 360px layouts. It uses synthetic data, not a live HA.
+
 For Zigbee route changes (#798), focused Node tests cover provider formats,
 conflicts, exact mapping and async lifecycle. After `bundle:sync`, run
 `node demo/smoke_zigbee_topology_hover.mjs` in WSL/Linux: it checks solid arrows,

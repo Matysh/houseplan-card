@@ -474,7 +474,12 @@ separate button on the card.
 
 For an occasional Zigbee placement check, an administrator can enable
 **General settings → Show Zigbee links when hovering over a device**. The option
-is off by default. Load the provider snapshot there: **Read ZHA data** reads
+is off by default. If links have not yet been saved as enabled, **Save settings
+and update map** and **Save settings and read ZHA** explicitly save all changes
+in the current dialog, keep it open, and load data only after saving succeeds.
+If saving fails, no load starts; correct the error and retry. The toggle alone
+neither saves settings nor starts a scan. Once enabling has been saved,
+**Read ZHA data** reads
 ZHA's existing cache, while **Update map** starts an explicit Zigbee2MQTT raw
 network-map scan for each entered base topic (default `zigbee2mqtt`). The latter
 may take many minutes when collecting routes. The scan continues in Home Assistant

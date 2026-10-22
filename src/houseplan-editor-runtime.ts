@@ -136,7 +136,7 @@ import {
   roomTempThresholdDraft, roomTempThresholdInputValues, strictNumber, type SpaceDialogState,
 } from './space-dialog';
 import { rememberSpaceDialogBaseline, spaceDialogProblems } from './editors/space-form-state';
-import { generalProblems, moonDraftOf, rememberGeneralBaseline, writeMoonSetting } from './editors/general-form-state';
+import { acceptGeneralBaseline, generalProblems, moonDraftOf, rememberGeneralBaseline, writeMoonSetting } from './editors/general-form-state';
 import {
   deviceBatteryModeOf, markerBatteryFields, writeDeviceBatterySetting, type DeviceBatteryMode,
 } from './device-battery-settings';
@@ -9344,11 +9344,13 @@ public _updateDecorStyle(next: DecorStyle, immediate = false): void {
     this._saveConfig();
   }
 
-  public async _saveSettingsDialog(): Promise<void> {
+  public async _saveSettingsDialog(options: { keepOpen?: boolean } = {}): Promise<boolean> {
     const d = this.host._settingsDialog;
-    if (!d || d.busy || !this.host._canEdit || this.host._kiosk) return;
-    if (generalProblems(d).length) return;
+    if (!d || d.busy || !this.host._canEdit || this.host._kiosk) return false;
+    if (generalProblems(d).length) return false;
     const owner = dialogSession(this.host, 'settings');
+    const connection = this.host.hass?.connection || this.host.hass;
+    const user = this.host.hass?.user?.id;
     this.host._settingsDialog = { ...d, busy: true };
     let attempt: OptimisticAttempt<ServerConfig> | null = null;
     try {
@@ -9392,9 +9394,17 @@ public _updateDecorStyle(next: DecorStyle, immediate = false): void {
       this.host._serverCfg = nextConfig;
       await this._saveConfigNow(attempt);
       if (!d.showRoomTooltip && this.host._tip?.room) this.host._tip = null;
-      if (dialogSession(this.host, 'settings') === owner) this.host._settingsDialog = null;
+      const current = !!this.host._settingsDialog && dialogSession(this.host, 'settings') === owner
+        && (this.host.hass?.connection || this.host.hass) === connection && this.host.hass?.user?.id === user;
+      if (current) {
+        if (options.keepOpen) {
+          acceptGeneralBaseline(this.host, d, owner);
+          this.host._settingsDialog = { ...this.host._settingsDialog!, busy: false };
+        } else this.host._settingsDialog = null;
+      }
       this.host.requestUpdate();
       this.host._showToast(this.host._t('gs.saved'), 'gs.saved');
+      return current && this.host._canEdit && !this.host._kiosk;
     } catch (e: any) {
       // Esc may close the dialog in flight; the toast must still fire (audit L3).
       // Never overwrite an authoritative conflict reload or newer edit (#439).
@@ -9402,6 +9412,7 @@ public _updateDecorStyle(next: DecorStyle, immediate = false): void {
       if (this.host._settingsDialog && dialogSession(this.host, 'settings') === owner)
         this.host._settingsDialog = { ...this.host._settingsDialog, busy: false };
       if (!isGeometryCleanupRefusal(e)) this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }), 'toast.error');
+      return false;
     }
   }
 
