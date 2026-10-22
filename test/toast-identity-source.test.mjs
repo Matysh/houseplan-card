@@ -3,13 +3,14 @@ import assert from 'node:assert/strict';
 import {readFileSync,readdirSync} from 'node:fs';
 import {join,relative} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {missingToastIdentities} from '../scripts/toast-identity-source.mjs';
+import {missingToastIdentities,knownToastWrappers} from '../scripts/toast-identity-source.mjs';
 
 test('#1011 every known translated toast call and forwarding adapter carries identity', () => {
   const root=fileURLToPath(new URL('../src/',import.meta.url));
   const walk=dir=>readdirSync(dir,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()
     ?walk(join(dir,entry.name)):entry.name.endsWith('.ts')?[join(dir,entry.name)]:[]);
-  assert.deepEqual(walk(root).flatMap(path=>missingToastIdentities(readFileSync(path,'utf8'),relative(root,path))),[]);
+  const wrappers=knownToastWrappers(readFileSync(join(root,'houseplan-editor-runtime.ts'),'utf8'));
+  assert.deepEqual(walk(root).flatMap(path=>missingToastIdentities(readFileSync(path,'utf8'),relative(root,path),wrappers)),[]);
 });
 
 test('#1011 ordinary negative inputs expose literals, helper keys, branches, aliases and forwarding loss', () => {
@@ -44,4 +45,16 @@ test('#1011 external/composed text uses message without reverse lookup', () => {
     "host._showToast(host._t('pdf.failed')+' '+advice);",
     "host._showToast(`${host._t('a')} ${host._t('b')}`);",
   ]) assert.deepEqual(missingToastIdentities(source),[],source);
+});
+
+test('#1011 single-key label wrappers derive identity from their source and substitute caller arguments',()=>{
+  const source='class Runtime {_junctionLimitLabel(item){return this._t(`junction.limit_${item.rule}`)} _rszReasonText(why){return this._t(`resize.disabled.${why}`)}}';
+  const wrappers=knownToastWrappers(source);
+  assert.equal(missingToastIdentities('host._showToast(rt._junctionLimitLabel(rows[0]));','caller.ts',wrappers).length,1);
+  assert.equal(missingToastIdentities('host._showToast(rt._rszReasonText(reason),"wrong");','caller.ts',wrappers).length,1);
+  assert.deepEqual(missingToastIdentities('host._showToast(rt._junctionLimitLabel(rows[0]),`junction.limit_${rows[0].rule}`);','caller.ts',wrappers),[]);
+  assert.deepEqual(missingToastIdentities('host._showToast(rt._rszReasonText(reason),`resize.disabled.${reason}`);','caller.ts',wrappers),[]);
+  const changed=knownToastWrappers(source.replace('junction.limit_','junction.changed_'));
+  assert.equal(missingToastIdentities('host._showToast(rt._junctionLimitLabel(rows[0]),`junction.limit_${rows[0].rule}`);','caller.ts',changed).length,1);
+  assert.throws(()=>knownToastWrappers(source.replace('return this._t(`resize.disabled.${why}`)','return unknown()')),/Unsupported toast label/);
 });

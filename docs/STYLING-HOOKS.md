@@ -541,6 +541,6 @@ E2E syncs the inventory from the installed product ref before contract lint
 and updates its kind collector for the new hook families (#1010).
 
 Toast identity follows the actual key through direct/helper translations,
-conditional keys and toast ports. No translated-text reverse lookup is used.
+conditional keys, single-key junction/Resize labels and toast ports. No translated-text reverse lookup is used.
 `test/toast-identity-source.test.mjs` checks senders and forwarding adapters;
 the inbox and history smokes observe ids after real operations/refusals.

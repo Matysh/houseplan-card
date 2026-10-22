@@ -32,7 +32,7 @@ interface WallChainLiveHost<State, Geometry> {
 export interface WallChainLiveCommitRuntime<
   State extends { spaceId: string },
   Geometry extends JunctionSharedGeometry,
-  Violation,
+  Violation extends { readonly rule: string },
 > {
   host: WallChainLiveHost<State, Geometry>;
   _commitPhysicalGeometry: (
@@ -61,7 +61,7 @@ export interface WallChainLiveCommitRuntime<
 export function commitWallChainFinishGeometry<
   State extends { spaceId: string },
   Geometry extends JunctionSharedGeometry,
-  Violation,
+  Violation extends { readonly rule: string },
 >(
   runtime: WallChainLiveCommitRuntime<State, Geometry, Violation>,
   name: string,
@@ -119,7 +119,7 @@ export function commitWallChainFinishGeometry<
   if (introduced.length) {
     runtime._clearGeometryGesture();
     runtime._restoreGeometryStateLocal(before);
-    host._showToast(runtime._junctionLimitLabel(introduced[0]));
+    host._showToast(runtime._junctionLimitLabel(introduced[0]), `junction.limit_${introduced[0].rule}`);
     return false;
   }
 
@@ -135,7 +135,7 @@ export function commitWallChainFinishGeometry<
 }
 
 const rejectUnsafe = <State extends { spaceId: string }, Geometry extends JunctionSharedGeometry,
-  Violation>(runtime: WallChainLiveCommitRuntime<State, Geometry, Violation>, before: State): false => {
+  Violation extends { readonly rule: string }>(runtime: WallChainLiveCommitRuntime<State, Geometry, Violation>, before: State): false => {
   runtime._clearGeometryGesture();
   runtime._restoreGeometryStateLocal(before);
   runtime.host._showToast(runtime.host._t('toast.geometry_unsafe'), 'toast.geometry_unsafe');
@@ -146,7 +146,7 @@ const rejectUnsafe = <State extends { spaceId: string }, Geometry extends Juncti
 export function commitWallChainSegmentGeometry<
   State extends { spaceId: string },
   Geometry extends JunctionSharedGeometry,
-  Violation,
+  Violation extends { readonly rule: string },
 >(
   runtime: WallChainLiveCommitRuntime<State, Geometry, Violation>,
   name: string,
@@ -205,7 +205,7 @@ export function commitWallChainSegmentGeometry<
   if (introduced.length) {
     runtime._clearGeometryGesture();
     runtime._restoreGeometryStateLocal(before);
-    host._showToast(runtime._junctionLimitLabel(introduced[0]));
+    host._showToast(runtime._junctionLimitLabel(introduced[0]), `junction.limit_${introduced[0].rule}`);
     return false;
   }
 

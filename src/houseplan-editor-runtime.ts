@@ -2171,7 +2171,7 @@ public _commitPhysicalGeometry(
     if (introduced.length) {
       this._clearGeometryGesture();
       this._restoreGeometryStateLocal(before);
-      this.host._showToast(this._junctionLimitLabel(introduced[0]));
+      this.host._showToast(this._junctionLimitLabel(introduced[0]), `junction.limit_${introduced[0].rule}`);
       return false;
     }
     adoptWallSegmentModelCandidateInPlace(liveCandidate, committedCandidate);
@@ -3277,7 +3277,7 @@ public _rszEdgeDown(ev: PointerEvent, roomId: string, edge: number): void {
     const rooms = this._rszRooms();
     const resolution = this._rszResolution(roomId, edge);
     if (!resolution.enabled) {
-      this.host._showToast(this._rszReasonText(resolution.reason));
+      this.host._showToast(this._rszReasonText(resolution.reason), `resize.disabled.${resolution.reason}`);
       return;
     }
     capturePointer(ev);
@@ -3312,7 +3312,7 @@ public _rszReasonText(reason: SafeResizeReason): string {
 public _rszDisabledActivate(ev: Event, reason: SafeResizeReason): void {
     ev.stopPropagation();
     ev.preventDefault();
-    this.host._showToast(this._rszReasonText(reason));
+    this.host._showToast(this._rszReasonText(reason), `resize.disabled.${reason}`);
   }
 
 public _rszDisabledKey(ev: KeyboardEvent, reason: SafeResizeReason): void {
