@@ -211,7 +211,7 @@ export class DecorImageEditor<Snapshot> {
       this.host.requestUpdate();
     } catch (error) {
       this.host._showToast((error as { code?: string })?.code === 'in_use'
-        ? this.host._t('decor.image_in_use') : this.host._t('backup.error.io_error'));
+        ? this.host._t('decor.image_in_use') : this.host._t('backup.error.io_error'), ((error as { code?: string })?.code === 'in_use') ? ('decor.image_in_use') : ('backup.error.io_error'));
     }
   }
 

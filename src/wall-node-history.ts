@@ -28,7 +28,7 @@ export interface NodeHistoryPort<T extends { nodeMove?: NodeMoveHistory }> {
   show(space: string): void;
   write(history: NodeMoveHistory, basis: NodeWriteBasis): Promise<ServerConfig>;
   text(key: string, params?: Record<string, string>): string;
-  toast(text: string): void;
+  toast(text: string, id?: string): void;
 }
 
 export type NodeHistoryRefusal = 'conflict' | 'outdated' | 'incompatible' | 'unavailable';
@@ -46,10 +46,10 @@ export async function runNodeHistory<T extends { nodeMove?: NodeMoveHistory }>(
   const command = undo ? stack.peekUndo() : stack.peekRedo();
   const history = command && (undo ? command.before : command.after).nodeMove;
   if (!command || !history) return;
-  if (!port.api()) { port.toast(port.text('node_move_update_required')); return; }
+  if (!port.api()) { port.toast(port.text('node_move_update_required'), 'node_move_update_required'); return; }
   const space = history.beforeSpace.id, epoch = port.epoch();
   // Refused before anything is sent; the active floor and the history stay.
-  if (!port.canShow(space)) { port.toast(port.text('history.space_pinned')); return; }
+  if (!port.canShow(space)) { port.toast(port.text('history.space_pinned'), 'history.space_pinned'); return; }
   let config: ServerConfig;
   try {
     // Undo expects the accepted move's floor, Redo the accepted Undo's floor.
@@ -61,7 +61,10 @@ export async function runNodeHistory<T extends { nodeMove?: NodeMoveHistory }>(
     port.toast(port.text(refusal === 'outdated'
       ? undo ? 'history.node_outdated_undo' : 'history.node_outdated_redo'
       : refusal === 'conflict' ? 'history.conflict' : refusal === 'incompatible'
-        ? 'node_move_update_required' : 'history.unavailable'));
+        ? 'node_move_update_required' : 'history.unavailable'), refusal === 'outdated'
+      ? undo ? 'history.node_outdated_undo' : 'history.node_outdated_redo'
+      : refusal === 'conflict' ? 'history.conflict' : refusal === 'incompatible'
+        ? 'node_move_update_required' : 'history.unavailable');
     return;
   }
   if (!(undo ? stack.confirmUndo(command) : stack.confirmRedo(command))) stack.removeWhere(item => item === command);
@@ -69,5 +72,5 @@ export async function runNodeHistory<T extends { nodeMove?: NodeMoveHistory }>(
   const opposite = (undo ? command.after : command.before).nodeMove;
   if (opposite) opposite.floor = nodeFloorFingerprint(config.spaces.find(item => item.id === space));
   port.show(space);
-  port.toast(port.text(undo ? 'history.undone' : 'history.redone', { name: command.name }));
+  port.toast(port.text(undo ? 'history.undone' : 'history.redone', { name: command.name }), undo ? 'history.undone' : 'history.redone');
 }

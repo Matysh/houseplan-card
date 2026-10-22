@@ -4867,7 +4867,8 @@ export class HouseplanCard extends LitElement {
     const effectivelyHidden = d.hideFromPlan || status?.kind === 'ha_disabled';
     if (effectivelyHidden && status?.kind === 'ha_disabled') {
       this._showToast(this._t(status.reason === 'entity'
-        ? 'toast.ha_disabled_show_entity' : 'toast.ha_disabled_show_device'));
+        ? 'toast.ha_disabled_show_entity' : 'toast.ha_disabled_show_device'), status.reason === 'entity'
+        ? 'toast.ha_disabled_show_entity' : 'toast.ha_disabled_show_device');
       return;
     }
     if (effectivelyHidden && status?.kind === 'unverified') {
@@ -5564,7 +5565,7 @@ export class HouseplanCard extends LitElement {
       if (!isCurrent()) return;
       this._showToast(this._t(direction === 'undo' ? 'history.undone' : 'history.redone', {
         name: command.name,
-      }));
+      }), direction === 'undo' ? 'history.undone' : 'history.redone');
     } catch (error: unknown) {
       if (!isCurrent()) return;
       this._previewDevicePlacement(target.deviceId, rollback);
@@ -5673,7 +5674,8 @@ export class HouseplanCard extends LitElement {
     if (status.kind === 'active') return true;
     if (notify) {
       this._showToast(this._t(status.kind === 'ha_disabled'
-        ? 'toast.ha_disabled_action' : 'toast.ha_binding_unverified'));
+        ? 'toast.ha_disabled_action' : 'toast.ha_binding_unverified'), status.kind === 'ha_disabled'
+        ? 'toast.ha_disabled_action' : 'toast.ha_binding_unverified');
     }
     return false;
   }
@@ -5952,7 +5954,7 @@ export class HouseplanCard extends LitElement {
     if (!names.length) return false;
     this._showToast(names.length === 1
       ? this._t('toast.toggle_target_unavailable', { name: names[0] })
-      : this._t('toast.toggle_targets_unavailable', { names: names.join(', ') }));
+      : this._t('toast.toggle_targets_unavailable', { names: names.join(', ') }), (names.length === 1) ? ('toast.toggle_target_unavailable') : ('toast.toggle_targets_unavailable'));
     return true;
   }
 
@@ -10239,7 +10241,7 @@ export class HouseplanCard extends LitElement {
         return room ? this._cleanFloor(room, contour, space).area : undefined;
       },
       t: (key, vars) => this._t(key as I18nKey, vars),
-      toast: (message) => this._showToast(message),
+      toast: (message, id) => this._showToast(message, id),
       close: () => { this._pdfDialog = false; this.requestUpdate(); },
     });
   }

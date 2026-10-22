@@ -37,6 +37,12 @@ export const SMOKE_LINKS = [
     because: '#1011: the declared hooks must identify real mounted controls, geometry and live owner results, including nested custom-element roots and modal toast routing.',
   },
   {
+    files: ['src/marker-deletion.ts', 'src/geometry-history-step.ts', 'src/wall-node-history.ts',
+      'src/wall-node-card-adapter.ts', 'src/toast-presentation.ts'],
+    smokes: ['smoke_device_inbox_delete.mjs', 'smoke_node_history_context.mjs'],
+    because: '#1011 AC4: known keys must reach the mounted toast after a real deletion/refusal or history operation, across forwarding ports; presenter-only units cannot prove the caller boundary.',
+  },
+  {
     files: ['src/vacuum-trail-style.ts', 'src/styles/vacuum-settings.styles.ts'],
     smokes: ['smoke_vacuum_style_1002.mjs', 'smoke_vacuum.mjs'],
     because: '#1002: mounted SVG ink, previous-run fading and camera invariants are observed without importing the style model. Authentic HA dialog acceptance additionally runs demo/ui-lab/verify-vacuum-1002.mjs.',

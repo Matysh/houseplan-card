@@ -82,7 +82,7 @@ test('930 deletion candidate is immutable, leaves exact HA tombstone and retains
 
 function harness() {
   let resolve;
-  const calls = [], toasts = [];
+  const calls = [], toasts = [], toastIds = [];
   const host = { _serverCfg: config(), _canEdit: true, _kiosk: false, isConnected: true,
     _deviceInbox: { tab: 'on_plan', search: '', onlyNew: false, limit: 100, selected: ['virtual:v1'] },
     hass: { connection: {}, user: { id: 'owner' }, callWS: async msg => { calls.push(msg.type); return {}; } },
@@ -90,7 +90,7 @@ function harness() {
     _layout: { v1: { x: .2, y: .2, s: 'a' } }, _defPos: {}, _dirtyPos: new Set(), _sentPos: new Map(),
     _activityRt: new Map(), _vacRt: new Map(), _vacSrvTrails: {}, _infoCard: null,
     _devicePositionHistory: { clear() {} }, _cancelDeviceDrag() {}, _maybeRebuildDevices() {},
-    _showToast: text => toasts.push(text), _t: key => key, _errText: error => error.message,
+    _showToast: (text,id) => {toasts.push(text);toastIds.push(id);}, _t: key => key, _errText: error => error.message,
     _noteLayoutRev() {}, _saveConfigDebounced: { pending: () => false, cancel() {} },
     _confirmDanger: () => new Promise(done => { resolve = done; }),
     _rollbackOptimistic(attempt) {
@@ -105,7 +105,7 @@ function harness() {
     _saveConfigNow: async () => { calls.push('config/set'); },
   };
   let rows = buildDeviceInbox({ ...base, markers: host._serverCfg.markers }).filter(r => r.key === 'virtual:v1');
-  return { runtime, host, calls, toasts, accept: () => resolve(true), cancel: () => resolve(false),
+  return { runtime, host, calls, toasts, toastIds, accept: () => resolve(true), cancel: () => resolve(false),
     rows: () => rows, setRows: value => { rows = value; } };
 }
 test('930 Cancel/replaced dialog/moved target/lost rights/foreign HA write nothing', async () => {
@@ -123,6 +123,7 @@ test('930 Cancel/replaced dialog/moved target/lost rights/foreign HA write nothi
     await pending;
     assert.deepEqual(h.calls, [], scenario);
     assert.deepEqual(h.host._serverCfg, before, scenario);
+    if (scenario==='move'||scenario==='rights') assert.deepEqual(h.toastIds,['device_inbox.selection_changed']);
   }
 });
 test('930 config refusal restores entire LED/control graph, preserves selection and cleans no files/position', async () => {
@@ -141,6 +142,7 @@ test('930 success writes once before cleanup and removes only target', async () 
   assert.deepEqual(h.host._deviceInbox.selected, []);
   assert.equal(h.host._layout.v1, undefined);
   assert.ok(h.host._serverCfg.markers.find(m => m.id === 'v2'));
+  assert.deepEqual(h.toastIds,['device_inbox.batch_deleted']);
 });
 
 test('930 late success never closes or clears a replacement catalog', async () => {

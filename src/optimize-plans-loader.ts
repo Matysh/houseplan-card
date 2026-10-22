@@ -63,7 +63,7 @@ export class LazyOptimizePlansDialog {
   public get clipboardFallback(): string | null { return this.dialog?.clipboardFallback ?? null; }
   public open(): Promise<void> {
     if (!this.port.canWrite()) {
-      this.port.showToast(settingsT(this.lang(), 'gs.optimize_write_required'));
+      this.port.showToast(settingsT(this.lang(), 'gs.optimize_write_required'), 'gs.optimize_write_required');
       return Promise.resolve();
     }
     const connection = this.port.source().connection;

@@ -116,6 +116,7 @@ out.deleteVirtualOnly = !deleted.config.markers.some(m => m.id === 'q930_0')
   && deleted.config.markers.some(m => m.id === 'q930_1')
   && deleted.config.markers.filter(m => m.id.startsWith('q930_')).length === 154;
 out.successClearsChoice = !deleted.selected.length && await card.locator('.device-inbox-row').count() === 0;
+out.deleteToastHasKey = await card.locator('[data-hp="toast"]').getAttribute('data-id') === 'device_inbox.batch_deleted';
 out.oneCommitThenCleanup = await page.evaluate(start => {
   const messages = window.__inbox930.writes.slice(start);
   return messages[0]?.type === 'houseplan/config/set'
@@ -154,6 +155,7 @@ await page.waitForFunction(() => !window.__card._deviceInbox?.busy); await settl
 const stale = await snapshot();
 out.staleConfirmationRefusesMovedTarget = stale.writes === beforeStale
   && stale.config.markers.some(marker => marker.id === 'q930_2' && marker.space === b);
+out.staleToastHasKey = await card.locator('[data-hp="toast"]').getAttribute('data-id') === 'device_inbox.selection_changed';
 await page.evaluate(async id => { await window.__hpTest.setServerConfig(cfg => {
   cfg.spaces = cfg.spaces.filter(s => s.id !== id); return cfg;
 }); }, a);

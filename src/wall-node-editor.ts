@@ -25,7 +25,7 @@ export interface WallNodeEditorPort {
   root(): ParentNode;
   document: Document;
   text(key: string, params?: Record<string, string>): string;
-  toast(text: string): void;
+  toast(text: string, id?: string): void;
   freezeViewport(): void;
   changed(): void;
   validate(space: NodeMoveSpace, before: NodeMoveSpace, final: boolean): boolean;
@@ -140,9 +140,9 @@ export class WallNodeEditor {
     const hit = pickWallNode(data.nodes, this.port.screenPoint(ev), this.port.unitsPerPixel());
     if (!hit.node && !hit.ambiguous) return false;
     ev.preventDefault(); ev.stopImmediatePropagation();
-    if (hit.ambiguous) { this.port.toast(this.port.text('node_move_ambiguous')); return true; }
-    if (!ctx.api) { this.port.toast(this.port.text('node_move_update_required')); return true; }
-    if (!hit.node!.supported) { this.port.toast(this.port.text('node_move_unsupported_junction')); return true; }
+    if (hit.ambiguous) { this.port.toast(this.port.text('node_move_ambiguous'), 'node_move_ambiguous'); return true; }
+    if (!ctx.api) { this.port.toast(this.port.text('node_move_update_required'), 'node_move_update_required'); return true; }
+    if (!hit.node!.supported) { this.port.toast(this.port.text('node_move_unsupported_junction'), 'node_move_unsupported_junction'); return true; }
     const splitIds: Record<string, string> = {};
     if (hit.node!.passing === 2) for (const wall of hit.node!.walls) if (!sameNodePoint(wall.a, hit.node!.point)
         && !sameNodePoint(wall.b, hit.node!.point)) {
@@ -249,7 +249,7 @@ export class WallNodeEditor {
     if (!this.current(s)) { if (this.session === s) this.cancel(); return; }
     if (!s.moved || !s.candidate || s.invalid || JSON.stringify(this.port.config()) !== s.configIdentity
         || !this.port.validate(s.candidate, s.plan.source, true)) {
-      if (s.invalid) this.port.toast(this.port.text(`node_move_${s.invalid}`));
+      if (s.invalid) this.port.toast(this.port.text(`node_move_${s.invalid}`), `node_move_${s.invalid}`);
       this.cancel(); return;
     }
     const history: NodeMoveHistory = { beforeSpace: s.plan.source,
@@ -264,7 +264,7 @@ export class WallNodeEditor {
       if (this.current(s)) {
         const key = nodeDragRefusalKey(error);
         this.port.toast(this.port.text(key, key === 'node_move_invalid'
-          ? { reason: this.port.text('toast.geometry_unsafe') } : undefined));
+          ? { reason: this.port.text('toast.geometry_unsafe') } : undefined), key);
       }
     } finally {
       this.busy = false;

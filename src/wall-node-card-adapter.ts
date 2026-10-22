@@ -65,7 +65,7 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeMoveHistory
   const text = (key: string, params?: Record<string, string>): string => key.startsWith('node_move_')
     ? toolsT(language(), key as ToolsI18nKey, params || { reason: host._t('toast.geometry_unsafe') })
     : host._t(key as I18nKey, params);
-  const toast = (message: string): void => host._showToast(message);
+  const toast = (message: string, id?: string): void => host._showToast(message, id);
   const write = (history: NodeMoveHistory, basis: NodeWriteBasis | null): Promise<ServerConfig> => {
     retire(); return writeWallNode(host, history, basis ?? nodeWriteBasis(host, history.beforeSpace.id));
   };

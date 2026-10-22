@@ -21,10 +21,16 @@ ordinary paste event; the facade's same-turn key burst is not a typing oracle.
 `demo/smoke_e2e_primitive_fields.mjs` exercises id-less radar/Properties
 callers and the north dial without creating new DOM ids or saving drafts.
 Mutation witnesses are only checked statically during development.
+`toast-identity-source.mjs` checks translated senders, helper/conditional keys
+and forwarding ports across all sources; composed/external text keeps message.
+The inbox smoke observes successful and refused deletion toast ids; history
+checks actual Undo/Redo ids through its ports. Unit tests invoke the deletion
+helper and reject ordinary unkeyed/incorrect-key/forwarding-loss inputs.
 The initial joint lazy-editor measurement329291 B gzip (+2746 B against326545)
-set its ceiling under the owner's small-size-overage permission; final329664 B
-stays within its existing2000 B band. Raw bundle3332933 B stays within the band
-of reference3331092 B (raised from3312342 B,0.57%). Other limits remain intact.
+set its ceiling under the owner's small-size-overage permission; final329807 B
+stays within its existing2000 B band. Raw reference3335415 B follows the final
+measurement (from3312342 B,+0.70%, including known toast ids and forwarding);
+the owner-authorized metadata addition preserves the2000 B band. Other limits remain intact.
 These bytes are declared attributes/identities.
 
 External journeys install a product ref, then sync and lint its exact contract

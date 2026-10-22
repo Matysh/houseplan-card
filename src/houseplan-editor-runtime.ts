@@ -930,7 +930,7 @@ export class HouseplanEditorRuntime {
         host._physicalSel = selection; return true;
       },
       openDialog: (kind, id) => this._openPhysicalDialog(kind, id),
-      toast: (key) => host._showToast(host._t(key)),
+      toast: (key) => host._showToast(host._t(key), key),
       publish: (phase) => this._publishGesture(phase), now: () => performance.now(),
     });
     this.backdropGesture = new BackdropFrameGestureRuntime({
@@ -939,7 +939,7 @@ export class HouseplanEditorRuntime {
       point: (event) => this._svgPoint(event), snap: (point) => this._snap(point),
       gridPitch: () => host._gridPitch, snapshot: () => this._geometrySnapshot(),
       record: (key, before) => this._recordGeometry(host._t(key), before),
-      save: () => this._saveConfig(), toast: (key) => host._showToast(host._t(key)),
+      save: () => this._saveConfig(), toast: (key) => host._showToast(host._t(key), key),
       configChanged: () => { host._cfgEpoch++; },
       publish: (phase) => {
         // A retained cancel can leave Lit remembering the previous true class.
@@ -1010,7 +1010,7 @@ export class HouseplanEditorRuntime {
       integrationVersion: () => host._haIntegrationVersion,
       cardVersion: () => displayVersion(CARD_VERSION),
       requestUpdate: () => host.requestUpdate(),
-      showToast: (message) => host._showToast(message),
+      showToast: (message, id) => host._showToast(message, id),
       errorText: (error) => host._errText(error),
       checkGeometry: (config) => host._checkOptimizeGeometry(config),
       referenceContext: (removeLive, removeInvalid) => this._optimizeReferenceContext(removeLive, removeInvalid),
@@ -1946,7 +1946,7 @@ public _showWallModelMigrationBlocked(error: unknown): void {
     const key = this._hasLegacyZeroWallFields()
       ? 'toast.zero_wall_migration_blocked'
       : 'toast.wall_model_migration_blocked';
-    this.host._showToast(this.host._t(key, { reason: this._wallModelBlockerLabel(error) }));
+    this.host._showToast(this.host._t(key, { reason: this._wallModelBlockerLabel(error) }), key);
   }
 
 public _limitSegmentsOf(space: any): LimitSegment[] {
@@ -2382,7 +2382,7 @@ public _stepGeometryHistory(direction: 'undo' | 'redo'): HistoryApply | null {
       stack: host._geometryHistory,
       apply: (state) => this._applyGeometryState(state, true),
       text: (key, params) => host._t(key as I18nKey, params),
-      toast: (text) => host._showToast(text),
+      toast: (text, id) => host._showToast(text, id),
     }, direction);
     const pending = command && host._pendingPhysicalWrites.get(command.before.spaceId);
     if (outcome === true && pending && command && position && physicalHistoryChanged(command.before, command.after))
@@ -2688,7 +2688,7 @@ public _offerWallFaces(
         this.host._wallRepairDiagnostic = repair.proposals[0] || null;
         this.host._showToast(this.host._t(
           this.host._drawWallCm === 0 ? 'toast.zero_wall_ambiguous' : 'toast.wall_repair_ambiguous',
-        ));
+        ), this.host._drawWallCm === 0 ? 'toast.zero_wall_ambiguous' : 'toast.wall_repair_ambiguous');
         return;
       }
       if (repair.kind === 'repair') {
@@ -2750,7 +2750,7 @@ public _offerExistingWallFace(raw: number[]): boolean {
           this.host._wallRepairDiagnostic = result.proposals[0] || null;
           this.host._showToast(this.host._t(
             this.host._drawWallCm === 0 ? 'toast.zero_wall_ambiguous' : 'toast.wall_repair_ambiguous',
-          ));
+          ), this.host._drawWallCm === 0 ? 'toast.zero_wall_ambiguous' : 'toast.wall_repair_ambiguous');
           return true;
         }
         if (result.kind === 'repair') {
@@ -3354,7 +3354,7 @@ private _rszMoveNow(ev: PointerEvent): void {
         this.host._showToast(this.host._rszLimitViolation
           ? `${this.host._t('resize.limit_stopped')} — `
             + this._junctionLimitLabel(this.host._rszLimitViolation)
-          : this.host._t('resize.preview_failed'));
+          : this.host._t('resize.preview_failed'), (this.host._rszLimitViolation) ? ('message') : ('resize.preview_failed'));
       }
       this.host.requestUpdate();
       return;
@@ -5531,7 +5531,7 @@ public _wallThickApply(allRoom: boolean): void {
     else delete sp.walls;
     this.host._wallDialog = null;
     if (this._commitPhysicalGeometry(this.host._t('history.wall_thickness'), before))
-      this.host._showToast(this.host._t(cmRaw === 0 ? 'toast.wallthick_cleared' : 'toast.wallthick_set'));
+      this.host._showToast(this.host._t(cmRaw === 0 ? 'toast.wallthick_cleared' : 'toast.wallthick_set'), cmRaw === 0 ? 'toast.wallthick_cleared' : 'toast.wallthick_set');
     this.host.requestUpdate();
   }
 
@@ -6495,7 +6495,7 @@ public _applyWallFaceBatch(): void {
       return;
     }
     const abort = (message: string, vars?: Record<string, string | number>): void => {
-      this.host._showToast(this.host._t(message as any, vars));
+      this.host._showToast(this.host._t(message as I18nKey, vars), message);
       this._dismissWallFaceBatch();
     };
     if (batch.spaceId !== this.host._space
@@ -6748,7 +6748,7 @@ public _applyWallFaceBatch(): void {
     }
     this.host._showToast(this.host._t(accepted.length ? 'toast.wall_rooms_saved' : 'toast.wall_chain_saved', {
       n: accepted.length,
-    }));
+    }), accepted.length ? 'toast.wall_rooms_saved' : 'toast.wall_chain_saved');
   }
 
 /** A refused creation cannot leave a valid-looking form with no draft (#874). */
@@ -6950,7 +6950,7 @@ public _commitRoom(): void {
       boundArea
         ? this.host._t('toast.room_saved', { n: roomsN, added })
         : this.host._t('toast.room_saved_no_area', { n: roomsN }),
-    );
+    (boundArea) ? ('toast.room_saved') : ('toast.room_saved_no_area'));
   }
 
 public _cancelPath(): void {
@@ -7591,7 +7591,8 @@ public async _saveMarker(): Promise<void> {
       const replacingWithInactive = !previous || previous.binding !== dlg.binding;
       if (status.kind !== 'active' && replacingWithInactive) {
         this.host._showToast(this.host._t(status.kind === 'ha_disabled'
-          ? 'toast.ha_disabled_add' : 'toast.ha_binding_unverified'));
+          ? 'toast.ha_disabled_add' : 'toast.ha_binding_unverified'), status.kind === 'ha_disabled'
+          ? 'toast.ha_disabled_add' : 'toast.ha_binding_unverified');
         return;
       }
       // Saving metadata for an already-disabled binding is allowed, but a
@@ -7599,7 +7600,8 @@ public async _saveMarker(): Promise<void> {
       if (status.kind === 'ha_disabled' && previous?.hidden === true && !dlg.hideFromPlan) {
         this.host._markerDialog = { ...dlg, hideFromPlan: true };
         this.host._showToast(this.host._t(status.reason === 'entity'
-          ? 'toast.ha_disabled_show_entity' : 'toast.ha_disabled_show_device'));
+          ? 'toast.ha_disabled_show_entity' : 'toast.ha_disabled_show_device'), status.reason === 'entity'
+          ? 'toast.ha_disabled_show_entity' : 'toast.ha_disabled_show_device');
         return;
       }
     }
@@ -8148,9 +8150,9 @@ public async _saveSpaceDialog(): Promise<void> {
         this.host._path = [];
         this.host._cursorPt = null;
         this._primeDrawWallField();
-        this.host._showToast(this.host._t(wasFirst && !this.host._importTotal ? 'toast.space_added_onboard' : 'import.done'));
+        this.host._showToast(this.host._t(wasFirst && !this.host._importTotal ? 'toast.space_added_onboard' : 'import.done'), wasFirst && !this.host._importTotal ? 'toast.space_added_onboard' : 'import.done');
       } else {
-        this.host._showToast(d.mode === 'create' ? this.host._t('toast.space_added') : this.host._t('toast.space_saved'));
+        this.host._showToast(d.mode === 'create' ? this.host._t('toast.space_added') : this.host._t('toast.space_saved'), (d.mode === 'create') ? ('toast.space_added') : ('toast.space_saved'));
         // A freshly created space is empty — View has nothing to show. Open
         // the plan editor (draw tool) so the user can mark rooms immediately,
         // same as the first-space onboard path above.
@@ -8579,9 +8581,9 @@ private async _copySupportText(text: string, successKey: SupportI18nKey): Promis
     const lang = langOf(this.host.hass, this.host._config?.language);
     try {
       await navigator.clipboard.writeText(text);
-      this.host._showToast(supportT(lang, successKey));
+      this.host._showToast(supportT(lang, successKey), successKey);
     } catch {
-      this.host._showToast(supportT(lang, 'support.copy_failed'));
+      this.host._showToast(supportT(lang, 'support.copy_failed'), 'support.copy_failed');
     }
   }
 
@@ -8911,7 +8913,7 @@ public _optimizeReferenceContext(
 
 public async _undoPlanOptimization(): Promise<void> {
     if (!this.host._canEdit || this.host._kiosk) {
-      this.host._showToast(settingsT(langOf(this.host.hass, this.host._config?.language), 'gs.optimize_write_required'));
+      this.host._showToast(settingsT(langOf(this.host.hass, this.host._config?.language), 'gs.optimize_write_required'), 'gs.optimize_write_required');
       return;
     }
     return this.optimizationUndo.run();
@@ -9084,7 +9086,7 @@ public async _applyBackupImport(): Promise<void> {
         spaces: String(outcomeCounts?.spaces || 0), rooms: String(outcomeCounts?.rooms || 0),
         markers: String(outcomeCounts?.markers || 0),
         refs: String(result.repaired_target_refs || 0),
-      }));
+      }), result.kind === 'space' ? 'backup.space_done' : 'backup.full_done');
     } catch (error: any) {
       if (!this._ownsBackupImport(request)) return;
       if (error?.code === 'conflict' && this.host._backupImportDialog?.token) {
@@ -11634,7 +11636,7 @@ public _renderRadarSection(d: NonNullable<HouseplanEditorHostPort['_markerDialog
       toolsT: key => this._toolsT(key),
       help: (key) => this._help(key),
       boolInput: (value, change) => this._boolInput(value, change),
-      toast: (message) => this.host._showToast(message),
+      toast: (message, id) => this.host._showToast(message, id),
       setup: this._radarSetup,
       configRev: this.host._cfgRev,
     }, placement);

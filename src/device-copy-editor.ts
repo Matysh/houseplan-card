@@ -179,7 +179,7 @@ export class DeviceCopyEditor {
         : detail.code === 'unauthorized' ? 'device.copy_access'
         : linksFailed ? 'device.copy_links_failed'
         : detail.code === 'unknown_command' ? 'device.copy_backend' : 'device.copy_failed');
-      h._showToast(this.t(key));
+      h._showToast(this.t(key), key);
     } finally {
       if (operation === this.operation) {
         this.busy = false; this.busyContext = null;

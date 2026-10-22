@@ -77,7 +77,7 @@ export class PlanOptimizationUndo {
       host._maybeRebuildDevices();
       host._cacheSnapshot();
       host.requestUpdate();
-      host._showToast(host._t(undoKind === 'import' ? 'backup.import_undone' : 'gs.optimize_undone'));
+      host._showToast(host._t(undoKind === 'import' ? 'backup.import_undone' : 'gs.optimize_undone'), undoKind === 'import' ? 'backup.import_undone' : 'gs.optimize_undone');
     } catch (error) {
       if (!isCurrent()) return;
       host._canOptimizeUndo = false;

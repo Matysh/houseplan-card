@@ -97,6 +97,7 @@ const step = async (label, run, direction) => {
   await run(); await idle(); await settled();
   check(`${label}: exactly one accepted ${direction}`, nodeLog().slice(before), [`${direction === 'Undo' ? 'undo' : 'apply'}@${revision - 1}`]);
   check(`${label}: ${direction} toast after acceptance`, (await toasts()).at(-1), `${direction === 'Undo' ? 'Undone' : 'Redone'}: ${MOVE}`);
+  check(`${label}: toast key after acceptance`, await page.locator('houseplan-card [data-hp="toast"]').getAttribute('data-id'), direction === 'Undo' ? 'history.undone' : 'history.redone');
 };
 
 // ---- the node move itself (Plan/Select is still the only capture context)

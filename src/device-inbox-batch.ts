@@ -136,7 +136,7 @@ export async function writeInboxVisibility<D extends InboxBatchDialog>(
     }
     host._showToast(batch
       ? host._t(hidden ? 'device_inbox.batch_hidden' : 'device_inbox.batch_shown', { count: String(applied.changed) })
-      : host._t('device_inbox.saved'));
+      : host._t('device_inbox.saved'), (batch) ? (hidden ? 'device_inbox.batch_hidden' : 'device_inbox.batch_shown') : ('device_inbox.saved'));
   } catch (error) {
     if (host._serverCfg === cfg) cfg.markers = previousMarkers; // #618 B8 rollback
     refreshRows();

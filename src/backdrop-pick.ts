@@ -86,7 +86,7 @@ export async function encodePlanFile(blob: Blob, ext: string, name: string): Pro
  */
 export async function stagePlanFile(host: BackdropPickHost, file: File): Promise<PlanFilePayload | null> {
   const refuse = (key: I18nKey, vars?: Record<string, string | number>): null => {
-    host._showToast(host._t(key, vars));
+    host._showToast(host._t(key, vars), key);
     return null;
   };
   const classified = await classifyPlanFile(file, MAX_PLAN_BYTES);

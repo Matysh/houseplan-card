@@ -93,7 +93,8 @@ export async function ledHistory(
   } else {
     if (result === 'stale') card._devicePositionHistory.clear();
     card._showToast(card._t(result === 'stale' ? 'history.device_stale'
-      : direction === 'undo' ? 'history.undone' : 'history.redone', { name: command.name }));
+      : direction === 'undo' ? 'history.undone' : 'history.redone', { name: command.name }), result === 'stale' ? 'history.device_stale'
+      : direction === 'undo' ? 'history.undone' : 'history.redone');
   }
   card.requestUpdate();
 }

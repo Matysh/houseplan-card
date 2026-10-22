@@ -175,13 +175,13 @@ export async function deleteInboxSelection(
   if (!host._canEdit || host._kiosk || navigation !== runtime.navigationIntent
       || signature !== inboxDeletionSignature(selectedRows())) {
     host._deviceInbox = { ...pending, busy: undefined, selected: [] };
-    host._showToast(inboxT(host, 'device_inbox.selection_changed')); return;
+    host._showToast(inboxT(host, 'device_inbox.selection_changed'), 'device_inbox.selection_changed'); return;
   }
   try {
     await commitDeletion(runtime, rows.map((row) => ({ id: (row.deviceId || row.markerId)!, binding: row.binding })));
     if (!current()) return;
     if (host._deviceInbox === pending) host._deviceInbox = { ...pending, busy: undefined, selected: [] };
-    host._showToast(inboxT(host, 'device_inbox.batch_deleted', { count: rows.length }));
+    host._showToast(inboxT(host, 'device_inbox.batch_deleted', { count: rows.length }), 'device_inbox.batch_deleted');
   } catch (error) {
     if (!current()) return;
     if (host._deviceInbox === pending) host._deviceInbox = { ...pending, busy: undefined };

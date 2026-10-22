@@ -76,7 +76,7 @@ export interface OptimizePlansDialogPort {
   /** `displayVersion(CARD_VERSION)` of the runtime; no second copy here */
   cardVersion(): string;
   requestUpdate(): void;
-  showToast(message: string): void;
+  showToast(message: string, id?: string): void;
   errorText(error: unknown): string;
   checkGeometry(config: ServerConfig): OptimizeGeometryPreflightResult;
   referenceContext(removeLiveMissingPositions: boolean, removeInvalidMissingPositions?: boolean): SpaceReferenceRepairContext;
@@ -206,7 +206,7 @@ export class OptimizePlansDialog {
     try {
       await navigator.clipboard.writeText(text);
       if (this.fallbacks.delete(dialog)) this.port.requestUpdate();
-      this.port.showToast(this.port.t('gs.preflight_copied'));
+      this.port.showToast(this.port.t('gs.preflight_copied'), 'gs.preflight_copied');
     } catch {
       // Insecure context / embedded webview: surface the block inline so the
       // owner can select and copy it by hand.
@@ -222,7 +222,7 @@ export class OptimizePlansDialog {
   public preview(removeLiveMissingPositions: boolean, removeInvalidMissingPositions = false): void {
     const config = this.port.config();
     if (!this.port.canWrite()) {
-      this.port.showToast(this.port.t('gs.optimize_write_required'));
+      this.port.showToast(this.port.t('gs.optimize_write_required'), 'gs.optimize_write_required');
       return;
     }
     if (!this.port.planReady() || !config) return;
@@ -284,7 +284,7 @@ export class OptimizePlansDialog {
   private refreshChanged(d: OptimizePlansDialogState): boolean {
     if (this.options.sourceMatches(d.source, this.port.source())) return false;
     this.preview(false, false);
-    this.port.showToast(this.port.t('gs.optimize_preview_changed'));
+    this.port.showToast(this.port.t('gs.optimize_preview_changed'), 'gs.optimize_preview_changed');
     return true;
   }
 
@@ -315,14 +315,14 @@ export class OptimizePlansDialog {
   public async run(): Promise<void> {
     let d = this.port.dialog();
     if (!this.port.canWrite()) {
-      this.port.showToast(this.port.t('gs.optimize_write_required'));
+      this.port.showToast(this.port.t('gs.optimize_write_required'), 'gs.optimize_write_required');
       return;
     }
     if (d?.retrying) return; // #869: the re-check may still rebuild this preview
     if (!d || d.busy || !this.port.config() || !d.changed || !d.preflight?.ok) return;
     if (!this.options.sourceMatches(d.source, this.port.source())) {
       this.preview(false, false);
-      this.port.showToast(this.port.t('gs.optimize_preview_changed'));
+      this.port.showToast(this.port.t('gs.optimize_preview_changed'), 'gs.optimize_preview_changed');
       return;
     }
     const fingerprint = contentFingerprint(d.config);
@@ -345,7 +345,7 @@ export class OptimizePlansDialog {
         this.preview(false, false);
         this.port.showToast(this.port.t('gs.optimize_invalid_done', {
           n: String(d.report.invalidPositionsRemoved.length),
-        }));
+        }), 'gs.optimize_invalid_done');
       } else this.port.setDialog(null);
       if (d.removeInvalidMissingPositions) return;
       this.port.showToast(this.port.t('gs.align_done', {
@@ -359,20 +359,20 @@ export class OptimizePlansDialog {
           + d.report.positionsRemapped + d.report.markersDetached
           + d.report.orphanRoomLabelsRemoved + d.report.orphanDevicePositionsRemoved
           + d.report.orphanGroupPositionsRemoved + d.report.invalidPositionsRemoved.length),
-      }));
+      }), 'gs.align_done');
     } catch (e: any) { // any-ok: ответ WS HA не типизирован, code читается как у всех писателей конфига
       const current = this.port.dialog();
       if (current !== pending) return;
       if (e?.code === 'optimize_preview_changed') {
         if (this.port.canWrite()) this.preview(false, false);
         else this.port.setDialog({ ...pending, busy: false });
-        this.port.showToast(this.port.t(this.port.canWrite()
-          ? 'gs.optimize_preview_changed' : 'gs.optimize_write_required'));
+        const key = this.port.canWrite() ? 'gs.optimize_preview_changed' : 'gs.optimize_write_required';
+        this.port.showToast(this.port.t(key), key);
         return;
       }
       if (current) this.port.setDialog({ ...current, busy: false });
       if (e?.code === 'wall_model_client_outdated') {
-        this.port.showToast(this.port.t('toast.wall_model_client_outdated'));
+        this.port.showToast(this.port.t('toast.wall_model_client_outdated'), 'toast.wall_model_client_outdated');
         return;
       }
       if (e?.code === 'conflict') {
@@ -380,7 +380,7 @@ export class OptimizePlansDialog {
         if (this.port.dialog() !== current && this.port.dialog()?.source !== current.source) return;
         if (this.port.canWrite()) this.preview(false, false);
       }
-      if (!isGeometryCleanupRefusal(e)) this.port.showToast(this.port.t('toast.error', { err: this.port.errorText(e) }));
+      if (!isGeometryCleanupRefusal(e)) this.port.showToast(this.port.t('toast.error', { err: this.port.errorText(e) }), 'toast.error');
     }
   }
 

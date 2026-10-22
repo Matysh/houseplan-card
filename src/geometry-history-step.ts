@@ -34,7 +34,7 @@ export interface OrdinaryHistoryPort<T> {
   stack: OrdinaryHistoryStack<T>;
   apply(state: T): HistoryApply;
   text(key: string, params?: Record<string, string>): string;
-  toast(text: string): void;
+  toast(text: string, id?: string): void;
 }
 
 /** One attempt and one toast; `null` when there is nothing to undo/redo. */
@@ -49,12 +49,12 @@ export function runOrdinaryHistory<T>(port: OrdinaryHistoryPort<T>, direction: '
   if (outcome === true) {
     // Identity, not position: a command that is no longer next leaves; a newer top stays.
     if (!(undo ? stack.confirmUndo(command) : stack.confirmRedo(command))) stack.removeWhere(mine);
-    port.toast(port.text(undo ? 'history.undone' : 'history.redone', { name }));
+    port.toast(port.text(undo ? 'history.undone' : 'history.redone', { name }), undo ? 'history.undone' : 'history.redone');
   } else if (historyUnfit(outcome)) {
     // Out of the direction it is in, never into the opposite one; the order of the rest is kept.
     stack.removeWhere(mine);
     port.toast(port.text(undo ? 'history.removed_undo' : 'history.removed_redo',
-      { name, reason: port.text(REASON[outcome]) }));
-  } else port.toast(port.text(outcome === 'pinned' ? 'history.space_pinned' : 'history.unavailable'));
+      { name, reason: port.text(REASON[outcome]) }), undo ? 'history.removed_undo' : 'history.removed_redo');
+  } else port.toast(port.text(outcome === 'pinned' ? 'history.space_pinned' : 'history.unavailable'), outcome === 'pinned' ? 'history.space_pinned' : 'history.unavailable');
   return outcome;
 }

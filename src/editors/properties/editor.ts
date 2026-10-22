@@ -488,7 +488,7 @@ export class PropertiesEditor {
         && contentFingerprint(host._serverCfg) === attempt.attemptedFingerprint);
       if (!host._configWriteContext.current(authority, host.hass)) return;
       if (host._space !== target.spaceId) { host._commitSpace(target.spaceId); host._restoreZoom(); }
-      host._showToast(host._t(direction === 'undo' ? 'history.undone' : 'history.redone', { name: command.name }));
+      host._showToast(host._t(direction === 'undo' ? 'history.undone' : 'history.redone', { name: command.name }), direction === 'undo' ? 'history.undone' : 'history.redone');
     } catch {
       if (host._configWriteContext.current(authority, host.hass)) {
         restoreDeferred(host._rollbackOptimistic(attempt)); restoreCursor(); host._showToast(this.t('save_error'), 'save_error');

@@ -23,7 +23,7 @@ export interface PdfDialogContext {
   resolveInnerContour?: (roomId: string) => number[][] | null | undefined;
   resolveRoomArea?: (roomId: string, contour: number[][]) => number | undefined;
   t: (key: string, vars?: Record<string, string | number>) => string;
-  toast: (message: string) => void;
+  toast: (message: string, id?: string) => void;
   close: () => void;
   save: (options: PdfExportOptions) => Promise<void>;
   /** Deterministic harness seam; production leaves this unset. */
@@ -122,7 +122,7 @@ export class HpPdfDialog extends LitElement {
     } catch (error) {
       const code = error instanceof Error ? error.message : 'pdf.failed';
       const key = code === 'pdf.too_large' || code === 'pdf.asset_failed' ? code : 'pdf.failed';
-      this.context.toast(this.context.t(key));
+      this.context.toast(this.context.t(key), key);
     } finally {
       this.busy = false;
       this.requestUpdate();

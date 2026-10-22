@@ -125,7 +125,7 @@ export function renderSpaceCopyDialog(
 
 function showCopyError(host: HouseplanEditorHostPort, error: unknown): void {
   if (error instanceof SpaceCopyError) {
-    host._showToast(host._t(ERROR_KEYS[error.code]));
+    host._showToast(host._t(ERROR_KEYS[error.code]), ERROR_KEYS[error.code]);
     return;
   }
   const code = (error as { code?: unknown } | null)?.code;

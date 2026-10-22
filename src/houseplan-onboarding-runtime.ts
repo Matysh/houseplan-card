@@ -291,10 +291,12 @@ export class HouseplanOnboardingRuntime {
         this.host._cursorPt = null;
         this.host._primeDrawWallField();
         this.host._showToast(this.host._t(wasFirst && !wasImport
-          ? 'toast.space_added_onboard' : 'import.done'));
+          ? 'toast.space_added_onboard' : 'import.done'), wasFirst && !wasImport
+          ? 'toast.space_added_onboard' : 'import.done');
       } else {
         this.host._showToast(this.host._t(dialog.mode === 'create'
-          ? 'toast.space_added' : 'toast.space_saved'));
+          ? 'toast.space_added' : 'toast.space_saved'), dialog.mode === 'create'
+          ? 'toast.space_added' : 'toast.space_saved');
         if (dialog.mode === 'create') {
           if (this.host._mode !== 'plan') await this.host._requestMode('plan');
           else {

@@ -54,7 +54,7 @@ export interface RadarSectionOptions {
   toolsT(key:ToolsI18nKey): string;
   help(key: 'radar.help'): TemplateResult | typeof nothing;
   boolInput(value: boolean, change: (value: boolean) => void): TemplateResult;
-  toast(message: string): void;
+  toast(message: string, id?: string): void;
   setup: RadarSetupController;
   configRev: number;
 }
@@ -170,7 +170,7 @@ export function renderRadarSection(
     if (radar.inspectBusy || !space) return;
     const config = radarConfigFromDraft(radar, space.cellCm || 5);
     if (!config) {
-      options.toast(options.t('radar.invalid'));
+      options.toast(options.t('radar.invalid'), 'radar.invalid');
       return;
     }
     options.updateDialog({ radar: { ...radar, inspectBusy: true, inspectError: undefined } });
@@ -202,16 +202,16 @@ export function renderRadarSection(
   const configureOnPlan = (draft = radar) => {
     const room = roomOptions.find((candidate) => candidate.id === draft.roomId);
     if (!space || !room || !radarConfigFromDraft(draft, space.cellCm || 5)) {
-      options.toast(options.t('radar.invalid'));
+      options.toast(options.t('radar.invalid'), 'radar.invalid');
       return;
     }
     if (!Array.isArray(room.poly) || room.poly.length < 3) {
-      options.toast(options.t('radar.no_contour'));
+      options.toast(options.t('radar.no_contour'), 'radar.no_contour');
     }
     if (!options.setup.begin(
       device.marker?.id || device.id, draft, room, space.cellCm || 5, options.configRev,
       radarSetupFrame(space, room, options.contentItems(space)),
-    )) options.toast(options.t('radar.invalid'));
+    )) options.toast(options.t('radar.invalid'), 'radar.invalid');
   };
   const changeInstallation = () => configureOnPlan({
     ...radar,
