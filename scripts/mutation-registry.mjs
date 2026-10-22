@@ -77,6 +77,33 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'svg-stale-context-downloads-1036',
+    guard: 'node demo/smoke_svg_export.mjs',
+    because: '#1036 AC7: only a real held browser asset fetch followed by a config event proves that the original View operation cannot download after its context retires.',
+    patches: [{ file: 'src/pdf/pdf-export.ts',
+      find: "if (!source.isCurrent()) throw new Error('svg.cancelled');",
+      replace: "if (false && !source.isCurrent()) throw new Error('svg.cancelled');" }],
+  },
+  {
+    id: 'svg-device-choice-ignored-1036',
+    guard: 'node demo/smoke_svg_export.mjs',
+    because: '#1036 AC5: mounted device, LED, vacuum and radar layers must all disappear from an actual default SVG download; helper defaults alone cannot prove the capture filter.',
+    patches: [{ file: 'src/pdf/svg-snapshot.ts',
+      find: '|| (!options.devices && el.matches(DEVICE))',
+      replace: '|| (false && !options.devices && el.matches(DEVICE))' }],
+  },
+  {
+    id: 'svg-editor-view-fence-disabled-1036',
+    guard: 'node demo/smoke_svg_export.mjs',
+    because: '#1036 AC10: invoking Print from each real editor must show the View-required message rather than downloading editor DOM; the host and snapshot fences must be exercised together.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: "if (!stage || this._mode !== 'view') throw new Error('svg.view_required');",
+      replace: "if (!stage) throw new Error('svg.view_required');" },
+    { file: 'src/houseplan-card.ts',
+      find: "&& this._mode === 'view' && this._space === space.id && this._serverCfg === config && stage.isConnected",
+      replace: '&& this._space === space.id && this._serverCfg === config && stage.isConnected' }],
+  },
+  {
     id: 'ci-python-producer-resolves-minor-again-1032',
     guard: 'node --test test/ci-profiles.test.mjs',
     because: 'Python producers must install the exact patch from the shared plan even when runner caches contain different patches; the ordinary workflow contract rejects independent minor/file resolution without weakening the actual-version stamp (#1032)',

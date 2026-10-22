@@ -1,6 +1,7 @@
 // #1036: the actual dialog/download, then a standalone file with no HA runtime.
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import assert from 'node:assert/strict';
 import { launchColdView, check, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
 import { fixtureWallKey } from './fixtures/wall-key.mjs';
 
@@ -239,8 +240,12 @@ const downloadCount = downloads.length;
 await dialog.locator('[data-hp="dialog-confirm"]').click(); await seenAsset;
 check('busy-action-disabled', await dialog.locator('[data-hp="dialog-confirm"]').isDisabled());
 await page.evaluate(() => window.__hpTest.setServerConfig(cfg => { cfg.spaces[0].title += ' changed'; return cfg; }));
+const retiredOutcome = Promise.race([
+  page.waitForFunction(() => window.__hpTest.toast()?.getAttribute('data-id') === 'svg.cancelled').then(() => 'cancelled'),
+  page.waitForEvent('download').then(() => 'download'),
+]);
 releaseAsset();
-await page.waitForFunction(() => window.__hpTest.toast()?.getAttribute('data-id') === 'svg.cancelled');
+assert.equal(await retiredOutcome, 'cancelled', 'retired SVG operation must not download');
 check('retired-context-no-download', downloads.length, downloadCount);
 await page.unroute(assetUrl);
 await dialog.locator('.row > [data-hp="dialog-cancel"]').click();
@@ -249,8 +254,12 @@ for (const mode of ['plan', 'devices', 'decor']) {
   await page.evaluate(mode => window.__hpTest.setMode(mode), mode);
   await open(); await selectSvg();
   const count = downloads.length;
+  const editorOutcome = Promise.race([
+    page.waitForFunction(() => window.__hpTest.toast()?.getAttribute('data-id') === 'svg.view_required').then(() => 'refused'),
+    page.waitForEvent('download').then(() => 'download'),
+  ]);
   await dialog.locator('[data-hp="dialog-confirm"]').click();
-  await page.waitForFunction(() => window.__hpTest.toast()?.getAttribute('data-id') === 'svg.view_required');
+  assert.equal(await editorOutcome, 'refused', 'SVG must refuse an editor frame');
   check(`editor-svg-refused-${mode}`, downloads.length, count);
   check(`editor-stays-${mode}`, await page.locator('ha-card[data-hp-mode]').getAttribute('data-hp-mode'), mode);
   check(`editor-draft-dialog-retained-${mode}`, await dialog.count(), 1);
