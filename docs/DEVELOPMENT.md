@@ -30,10 +30,10 @@ The inbox smoke observes successful and refused deletion toast ids; history
 checks actual Undo/Redo ids through its ports. Unit tests invoke the deletion
 helper and reject ordinary unkeyed/incorrect-key/forwarding-loss inputs.
 The initial joint lazy-editor measurement329291 B gzip (+2746 B against326545)
-set its ceiling under the owner's small-size-overage permission; final329845 B
+set its ceiling under the owner's small-size-overage permission; final329906 B
 stays within its existing2000 B band. Raw reference3335415 B follows the final
 measurement (from3312342 B,+0.70%, including known toast ids and forwarding);
-final3335563 B stays within the preserved2000 B band. Other limits remain intact.
+final3335895 B stays within the preserved2000 B band. Other limits remain intact.
 These bytes are declared attributes/identities.
 
 External journeys install a product ref, then sync and lint its exact contract
