@@ -20,10 +20,16 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.82.0** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.82.0-beta.6` |
-| Tests | Node unit 5062 · pure backend 579 · HA-harness backend 484 · browser smokes 411 (`npm run inventory`) |
+| Tests | Node unit 5064 · pure backend 579 · HA-harness backend 484 · browser smokes 412 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Print download (#1036) combines unchanged PDF with a static SVG of the current
+View. SVG starts with devices off and transparent background, offers the shared
+custom colour picker, embeds local resources and rejects stale completions.
+The SVG smoke compares offline output to the same flat/2.5D frame; it does not
+claim compatibility with editors lacking foreignObject support.
 
 CI Python producers (#1032) install the exact patch resolved once by the shared
 reuse bootstrap. Different runner-image caches do not select a second patch;

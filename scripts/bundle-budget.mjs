@@ -805,7 +805,10 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // forms. Measured joint graph329291 B gzip (+2746 B,0.84%); owner permits a
 // small justified limit increase instead of expensive string shaving. Keep
 // the existing2000-B band and all other graph/absolute budgets.
-export const LAZY_EDITOR_GZIP_CEILING = 329_291;
+// #1036: sharing the existing select/form-kit and colour picker with Print
+// changes Rollup's shared leaves. Measured lazy editor331681 B (+2390 B,0.73%);
+// the SVG runtime remains outside initial View/editor. Keep the2000-B band.
+export const LAZY_EDITOR_GZIP_CEILING = 331_681;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
@@ -828,7 +831,10 @@ export const LAZY_GRAPH_CEILING_BAND = 2_000;
 // #946 final Space31445 -> Room31428 (-17 B), same inherited1676B gap.
 // #947 complete v6 profiles: matched Room31428 -> Device32058 (+630),
 // same inherited1676B gap; no band or absolute limit changes.
-export const LAZY_ONBOARDING_GZIP_CEILING = 32_928;
+// #1036: sharing select/colour-overlay leaves changes chunk/compression grouping,
+// including the existing onboarding space form. Measured35356 B; no SVG runtime
+// or PDF writer enters this graph. Preserve the2000-B band and initial limits.
+export const LAZY_ONBOARDING_GZIP_CEILING = 35_356;
 
 /**
  * #780 ТЗ §13.1: the LED chunks are a new feature's own budget, not a raise of

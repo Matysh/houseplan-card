@@ -1,5 +1,42 @@
 # PDF export
 
+## Print download dialog and SVG (#1036)
+
+The shared dialog is titled **Download file for printing**. Its first UI-kit
+select chooses **PDF - architectural plan** or **SVG - current view**; the action
+is **Download** in either mode. The first checkbox fades between dimensions/areas
+and devices, with independent values and reduced-motion support. PDF browser
+preferences remain compatible. SVG starts afresh each opening with devices off,
+decor/names/backdrop on and transparent background.
+
+SVG captures the displayed View area, including its camera, Flat/2.5D projection,
+colours, alpha and visible layers. It neither fits nor changes the live plan.
+Devices include their badges, locks, LED representations, radar and vacuum trails;
+room labels remain independent. Light effects are part of plan appearance. Hidden
+View layers are never restored by export. Editor mode must be closed before SVG
+export; PDF remains available there.
+
+SVG background is **Transparent**, **As on the plan** or **Custom color**. Only
+Custom color shows the shared HEX/opacity picker below the select. This is the
+document background, independent of the backdrop image or room paper/fills.
+
+The lazy exporter detaches one synchronous rendered frame before embedding local
+image resources, preserving alpha. Native plan SVG geometry stays vector; HTML
+labels/markers use standard SVG foreignObject with resolved styles, flattened
+icon shadows and an embedded Roboto subset. Standalone browser rendering/printing
+needs no HA connection. Editors that do not support foreignObject may omit those
+HTML overlays; the native architecture remains editable SVG. This is a static
+document, not a portable interactive HA card.
+
+Only the active space is captured, without application chrome, editor handles,
+hover cues or private data attributes. Script/event attributes are stripped;
+image references are embedded with a streamed 25 MB cumulative budget. Failed
+assets leave the dialog open rather than silently creating a partial file. A
+retired space/config/access context cannot complete an old SVG download. The
+file is named `houseplan-<space-name>-<YYYY-MM-DD>.svg`.
+
+The remaining sections describe the unchanged **PDF** mode.
+
 The compact560px settings shell (#976) shares action/header styling, a single
 body scroller and accepted-close animation/focus behavior. Busy generation
 refuses dismissal; errors keep the form, and only successful download and

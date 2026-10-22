@@ -136,6 +136,11 @@ the file — and if a future version wants to reclaim that space, it asks.
   model, drawing tools or all-spaces document workflow; its purpose is to hand
   the already maintained House Plan geometry to an installer, insurer or
   renovation contractor.
+  The owner extended this read-only exception on 2026-10-22 in
+  [#1036](https://github.com/Matysh/houseplan-card/issues/1036): one static SVG
+  of the displayed View of the active space, retaining vector plan geometry
+  and current appearance for printing/documents. It adds no all-spaces export,
+  CAD tools, second geometry/appearance model or writes to Home Assistant.
 - A general dashboard framework (menus, popups, theming engine) → Bubble Card,
   Dwains and friends. A narrow exception approved on 2026-09-03 for
   [#437](https://github.com/Matysh/houseplan-card/issues/437) is a configurable

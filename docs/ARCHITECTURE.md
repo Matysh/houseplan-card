@@ -1,5 +1,14 @@
 # House Plan architecture
 
+Print export (#1036) keeps the PDF scene/writer independent from a lazy SVG View
+snapshot. The card supplies a read-only stage/context fence, not export geometry.
+The exporter freezes computed styles and flattened icon shadows synchronously,
+then embeds local assets in the detached frame with a streamed budget. Native
+scene SVGs retain their layers and HTML overlays use foreignObject. Completion
+rechecks the original config/space/writer context before creating a download;
+neither renderer state nor config/layout is mutated. Shared select, colour picker
+and settings shell own the export form presentation.
+
 The E2E DOM contract (#1011) projects existing scene/form state into test
 attributes. The JSON inventory stays outside the runtime graph. Form primitives
 pass stable identities to controls; the contact renderer identifies its existing

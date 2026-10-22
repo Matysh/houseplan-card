@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Download an architectural PDF or an SVG of the current View from one print
+  dialog. SVG keeps the displayed projection, colours and optional devices,
+  with transparent, current or custom background; PDF printing is unchanged. (#1036)
+
 - Extend the declared E2E selector contract to scene geometry, device groups,
   vacuum/decor/light results, summary controls and settings fields. Interface,
   behaviour and saved configuration are unchanged. (#1011)

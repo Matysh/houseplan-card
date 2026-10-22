@@ -30,6 +30,11 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/pdf/svg-snapshot.ts', 'src/pdf/export-options.ts', 'src/pdf/hp-pdf-dialog.ts', 'src/pdf/pdf-export.ts'],
+    smokes: ['smoke_svg_export.mjs', 'smoke_pdf_export.mjs'],
+    because: '#1036: real format selection/download must retain PDF and produce the standalone View SVG; offline screenshot comparison and options/errors cannot be inferred from helper names.',
+  },
+  {
     symbols: ['_renderWallThickDialog', '_renderDrawWallControl', '_renderOpeningDialog', '_renderDiscoveryFilters'],
     smokes: ['smoke_wallthick_standalone.mjs', 'smoke_e2e_primitive_fields.mjs', 'smoke_opening_entity_search.mjs', 'smoke_discovery_filters.mjs'],
     because: '#1011 r3: semantic field ids must identify the bound physical dimension, opening picker or discovery setting; real inputs and existing wire/Undo/Cancel checks prove more than the presence of a field hook.',

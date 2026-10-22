@@ -184,10 +184,10 @@ const rememberedNames = await page.evaluate(() => {
 const narrowLocales = await page.evaluate(async () => {
   const card = window.__card;
   const expected = {
-    en: { cancel: 'Cancel', save: 'Save' },
-    ru: { cancel: 'Отмена', save: 'Сохранить' },
-    de: { cancel: 'Abbrechen', save: 'Speichern' },
-    fr: { cancel: 'Annuler', save: 'Enregistrer' },
+    en: { cancel: 'Cancel', save: 'Download' },
+    ru: { cancel: 'Отмена', save: 'Скачать' },
+    de: { cancel: 'Abbrechen', save: 'Herunterladen' },
+    fr: { cancel: 'Annuler', save: 'Télécharger' },
   };
   const settle = async () => {
     await card.updateComplete;

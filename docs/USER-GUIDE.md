@@ -2451,7 +2451,22 @@ the card size; the field may be removed safely.
 
 ## 19. Plan maintenance
 
-### Save the current space as PDF
+### Download a file for printing: PDF or SVG
+
+Choose the file format at the top. **PDF - architectural plan** retains the
+existing architectural sheet. **SVG - current view** saves the displayed View
+area, projection, colours and opacity without changing the camera. Switch out of
+an editor before exporting SVG. Live states/animations become a static frame.
+
+Devices start unchecked for SVG; decor, room labels and backdrop are independent.
+Hidden View layers are not restored. Background can be **Transparent** (default),
+**As on the plan** or **Custom color**, which reveals the shared colour/opacity
+picker below the list. This affects the document background, not room fills or
+the backdrop image. Press **Download**.
+
+SVG opens in a browser without HA. Editors lacking SVG foreignObject support may
+omit HTML labels/markers; plan geometry remains vector. The following describes
+the unchanged PDF mode.
 
 Administrators can press the printer button between **General settings** and
 **Help & feedback** to download the current space as a clean one-page A4 plan.

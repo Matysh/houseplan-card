@@ -3451,6 +3451,12 @@ SHA is the authority; these are sandbox numbers.
 
 ## Release
 
+The print/SVG export witness is `node demo/smoke_svg_export.mjs` (#1036), after
+`npm run bundle:sync`. Optional `HP_SVG_EVIDENCE_DIR` stores private SVG/PNG pairs
+and the mobile dialog. It uses the pinned browser, real controls/downloads and a
+network-blocked standalone SVG page; comparison keeps the same synthetic View
+frame/projection. `node demo/smoke_pdf_export.mjs` protects the existing PDF path.
+
 This section is the only home of the release mechanics; `docs/STATUS.md`,
 `docs/ARCHITECTURE.md`, `AGENTS.md` and `CONTRIBUTING.md` link here instead of
 retelling it. The process side — when an issue closes, what a stable commit may

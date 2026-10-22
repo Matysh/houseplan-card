@@ -8,6 +8,7 @@ import { projectDecorImage } from '../decor-assets';
 import type { DecorShape } from '../editors/decor/types';
 import { pdfLocalDate } from './pdf-date';
 import { assertPdfRasterBudget } from './pdf-raster';
+import { captureSvgView, finishSvgView } from './svg-snapshot';
 
 export const PDF_EXPORT_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
@@ -98,7 +99,21 @@ export class PdfExportRuntime {
     let complete!: PdfDialogContext;
     complete = {
       ...context,
-      save: async (options) => { await exportSpacePdf(context, options, complete.now || new Date()); },
+      save: async (request) => {
+        const now = complete.now || new Date();
+        if (request.format === 'pdf') { await exportSpacePdf(context, request.options, now); return; }
+        if (!context.svgSource) throw new Error('svg.view_required');
+        const source = context.svgSource();
+        const frame = captureSvgView(source, request.options);
+        const text = await finishSvgView(frame);
+        if (!source.isCurrent()) throw new Error('svg.cancelled');
+        const url = URL.createObjectURL(new Blob([text], { type: 'image/svg+xml;charset=utf-8' }));
+        try {
+          const anchor = document.createElement('a');
+          anchor.href = url; anchor.download = `houseplan-${slug(context.space.title)}-${pdfLocalDate(now)}.svg`;
+          document.body.append(anchor); anchor.click(); anchor.remove();
+        } finally { setTimeout(() => URL.revokeObjectURL(url), 0); }
+      },
     };
     return html`<hp-pdf-dialog .context=${complete}></hp-pdf-dialog>`;
   }

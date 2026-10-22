@@ -10232,6 +10232,15 @@ export class HouseplanCard extends LitElement {
       hass: this.hass,
       backdropUrl: space.bg ? this._display(space.bg.href) : '',
       decorAssets,
+      svgSource: () => {
+        const stage = this._stageEl;
+        if (!stage || this._mode !== 'view') throw new Error('svg.view_required');
+        if (this._booting || this._bootFading || this._modeTransitionBusy
+          || this._continuity.overlayBlocksInteraction || stage.classList.contains('hpiso-pending')) throw new Error('svg.not_ready');
+        const config = this._serverCfg;
+        return { stage, isCurrent: () => this.isConnected && this._canEdit && this._norm
+          && this._mode === 'view' && this._space === space.id && this._serverCfg === config && stage.isConnected };
+      },
       sharedWallGeometry,
       resolveInnerContour: (roomId) => this._innerRoomContour(
         space, roomId, openCuts, sharedWallGeometry?.roomGeom, sharedWallGeometry?.multiWallNodes,

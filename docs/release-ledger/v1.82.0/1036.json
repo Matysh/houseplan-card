@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1036,
+  "baseStable": "v1.82.0",
+  "category": "major",
+  "rationale": "Adds a user-facing SVG current-view download alongside the existing architectural PDF, including independent device/layer choices and transparent/current/custom backgrounds. No configuration migration or PDF geometry change.",
+  "summary": {
+    "ru": "Скачивание SVG текущего вида плана с выбором устройств и фона в общем диалоге печати.",
+    "en": "Download the current plan View as SVG with device and background choices in the shared print dialog."
+  }
+}
