@@ -77,6 +77,14 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'svg-invalid-colour-completes-1036',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/svg-export.test.mjs',
+    because: '#1036 AC3: execute the real dialog save handler with a picker that refuses completion; neither generation nor closing may begin. The browser separately covers invalid HEX across outside-close/reopen.',
+    patches: [{ file: 'src/pdf/hp-pdf-dialog.ts',
+      find: "&& this.renderRoot.querySelector<HpColorOpacity>('hp-color-opacity')?.prepareCompletion() === false) return;",
+      replace: "&& false && this.renderRoot.querySelector<HpColorOpacity>('hp-color-opacity')?.prepareCompletion() === false) return;" }],
+  },
+  {
     id: 'svg-repeated-assets-unbudgeted-1036',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/svg-export.test.mjs',
     because: '#1036 AC8: a cached image still occupies bytes on every embedded placement; the executed serializer must reject repeated placements above the image budget without fetching the same source again.',

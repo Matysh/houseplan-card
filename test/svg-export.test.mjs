@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { svgDefaults } from '../test-build/pdf/export-options.js';
 import { assertSvgBudget, finishSvgView } from '../test-build/pdf/svg-snapshot.js';
+import { HpPdfDialog } from '../test-build/pdf/hp-pdf-dialog.js';
 
 test('SVG defaults exclude devices and keep independent mutable drafts', () => {
   const first = svgDefaults(), second = svgDefaults();
@@ -40,4 +41,20 @@ test('SVG asset budget accepts exact limit and rejects corrupt or excessive tota
   for (const n of [NaN, Infinity, -1, 25 * 1024 * 1024 + 1]) {
     assert.throws(() => assertSvgBudget(n), /svg.too_large/);
   }
+});
+
+test('the real download handler refuses an unfinished custom colour', async () => {
+  let saved = 0, closed = 0;
+  const dialog = Object.create(HpPdfDialog.prototype);
+  Object.defineProperties(dialog, {
+    options: { value: { dimensions: true, decor: false, roomNames: true, backdrop: true } },
+    format: { value: 'svg' },
+    svgOptions: { value: { ...svgDefaults(), background: 'custom' } },
+    busy: { value: false, writable: true },
+    renderRoot: { value: { querySelector: () => ({ prepareCompletion: () => false }) } },
+    requestUpdate: { value: () => {} },
+    context: { value: { save: async () => { saved++; }, close: () => { closed++; } } },
+  });
+  await dialog.save();
+  assert.equal(saved, 0); assert.equal(closed, 0); assert.equal(dialog.busy, false);
 });
