@@ -175,19 +175,30 @@ try {
     && await page.evaluate(() => window.__picker.opacity === .01);
 
   await page.evaluate(() => { window.__picker.remove(); });
+  const savedBefore = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
   // Each real settings family supplies the same actual component/template.
   for (const family of ['general', 'space', 'room', 'device', 'decor']) {
     await page.evaluate(async family => {
-      const c = window.__card;
-      if (family === 'general') c._openSettingsDialog();
-      if (family === 'space') c._openSpaceDialog('edit', c._space);
-      if (family === 'room') c._openRoomEdit(c._curSpaceCfg.rooms[0]);
-      if (family === 'device') { await window.__hpTest.setMode('devices'); c._openMarkerDialog(); }
-      if (family === 'decor') { await window.__hpTest.setMode('decor'); c._decorTool = 'line'; c.requestUpdate(); }
-      await window.__hpTest.settled();
+      const c = window.__card, hp = window.__hpTest;
+      if (family === 'general') {
+        let button = c.renderRoot.querySelector('[data-hp="settings"]');
+        if (!button) {
+          c.renderRoot.querySelector('[data-hp="header-menu"]').click(); await hp.settled();
+          button = c.renderRoot.querySelector('[data-hp="header-menu-item"][data-id="settings"]');
+        }
+        button.click();
+      }
+      if (family === 'space') await hp.openSpaceDialog('edit', c._space);
+      if (family === 'room') { await hp.setMode('plan'); await hp.openRoomEdit(c._curSpaceCfg.rooms[0].id); }
+      if (family === 'device') { await hp.setMode('devices'); await hp.openMarkerDialog(); }
+      if (family === 'decor') { await hp.setMode('decor'); await hp.setTool('line'); }
+      await hp.settled();
       const dialog = c.renderRoot.querySelector('hp-dialog');
-      if (family === 'room') { c._roomFill = 'custom'; c.requestUpdate(); await c.updateComplete; }
-      if (family === 'device') { c._markerDialog = { ...c._markerDialog, display: 'icon_ripple' }; c.requestUpdate(); await c.updateComplete; }
+      if (family === 'room' || family === 'device') {
+        const input = dialog.querySelector(family === 'room' ? 'select[name="rfill"]' : '#marker-display');
+        input.value = family === 'room' ? 'custom' : 'icon_ripple';
+        input.dispatchEvent(new Event('change', { bubbles: true, composed: true })); await hp.settled();
+      }
       const p = family === 'decor' ? c.renderRoot.querySelector('.editor-secondary hp-color-opacity')
         : dialog.querySelector('hp-color-opacity');
       if (!p) throw new Error(`no picker in ${family}`);
@@ -201,13 +212,19 @@ try {
       input.value = '#66cc66'; input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
     }, family);
     await paint(`consumer-${family}`, '#66cc66');
-    await page.evaluate(async () => {
-      const c = window.__card; window.__picker.closePicker();
-      // No persistence: teardown test drafts, existing consumer/save smokes cover commit.
-      c._settingsDialog = null; c._spaceDialog = null; c._roomDialog = false; c._markerDialog = null;
-      c.requestUpdate(); await c.updateComplete;
-    });
+    await page.evaluate(async family => {
+      const c = window.__card, hp = window.__hpTest; window.__picker.closePicker();
+      if (family === 'decor') { await hp.setMode('view'); return; }
+      const { confirm } = await hp.close(undefined, { via: 'cancel' });
+      if (confirm) { confirm.querySelector('[data-hp="dialog-confirm"]').click(); await hp.settled(); }
+      const until = performance.now() + 3000;
+      while (c.renderRoot.querySelector('hp-dialog')) {
+        if (performance.now() > until) throw new Error('settings did not close after discard');
+        await new Promise(requestAnimationFrame);
+      }
+    }, family);
   }
+  out.consumerCancelDoesNotPersist = await page.evaluate(before => JSON.stringify(window.__card._serverCfg) === before, savedBefore);
   await page.setViewportSize({ width: 320, height: 760 });
   // An absent browser capability is an environment input, not a source mutation.
   await page.evaluate(async () => {

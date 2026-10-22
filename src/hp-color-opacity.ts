@@ -378,7 +378,7 @@ export class HpColorOpacity extends LitElement {
       outline: none;
       --hp-picker-thumb-shadow: 0 0 0 1px rgb(0 0 0 / .8), 0 0 0 4px color-mix(in srgb, var(--primary-color, #03a9f4) 42%, transparent);
     }
-    .hsv-range:active {
+    :host([data-pointer-hover]) .hsv-range:active, .hsv-range:active {
       cursor: grabbing;
       --hp-picker-thumb-shadow: 0 0 0 1px rgb(0 0 0 / .8), 0 0 0 4px color-mix(in srgb, var(--primary-color, #03a9f4) 65%, transparent);
     }
