@@ -23,7 +23,7 @@
  *
  *   node scripts/bundle-policy.mjs --must-match [<ref>]   # код 0 — сверять копии, 1 — нет
  *   node scripts/bundle-policy.mjs --verify [<ref>]       # сборка dist цела; копии равны, если --must-match
- *   node scripts/bundle-policy.mjs --clean                # вернуть бандл к закоммиченному (npm run bundle:clean)
+ *   node scripts/bundle-policy.mjs --clean                # вернуть HACS к снимку; ignored dist оставить
  *
  * Само правило коммита исполняет `validate-commit-provenance.mjs` — в хуке
  * `commit-msg` по индексу и в CI по диапазону истории.
@@ -38,6 +38,17 @@ import { fileURLToPath } from 'node:url';
 import { compareBundleTrees, verifyBundleTree } from './bundle-tree.mjs';
 
 export const BUNDLE_ROOTS = Object.freeze(['dist/', 'custom_components/houseplan/frontend/']);
+export const COMMITTED_BUNDLE_ROOT = 'custom_components/houseplan/frontend';
+
+/** Judge Git inventory, not ignored local build files (#1016). */
+export function assertSingleCommittedBundle(files) {
+  if (files.some(path => path === 'dist' || path.startsWith('dist/'))) {
+    throw new Error('dist must remain untracked build output (#1016)');
+  }
+  if (!files.includes(`${COMMITTED_BUNDLE_ROOT}/houseplan-assets.json`)) {
+    throw new Error('committed HACS bundle manifest is missing');
+  }
+}
 // #1016 retires only the duplicate output tree, not the installable snapshot.
 // Missing Git deletion evidence keeps the historical release-only rule intact.
 const withoutRetiredDeletions = (files, deletedFiles = []) => {
@@ -145,7 +156,7 @@ function main(argv, cwd = process.cwd()) {
     const ref = argv[at + 1] && !argv[at + 1].startsWith('--') ? argv[at + 1] : 'HEAD';
     const must = committedBundleMustMatch(commitShape(ref, cwd));
     console.log(must
-      ? `${ref}: коммит меняет бандл или это кандидат — закоммиченные копии обязаны совпасть со сборкой`
+      ? `${ref}: коммит меняет бандл или это кандидат — закоммиченный HACS обязан совпасть со сборкой`
       : `${ref}: бандл не меняется — закоммиченная копия законно отстаёт, судится только свежая сборка (#657)`);
     return must ? 0 : 1;
   }
@@ -165,10 +176,9 @@ function main(argv, cwd = process.cwd()) {
     return 0;
   }
   if (argv.includes('--clean')) {
-    // Сборка переписывает отслеживаемый dist/ (и custom_components при
-    // --release): перед обычным коммитом это вернуть. Новые чанки с новыми
-    // хешами — неотслеживаемые файлы, их убирает clean в тех же корнях.
-    const roots = BUNDLE_ROOTS.map((root) => root.replace(/\/$/, ''));
+    // #1016: dist is ignored output. Preserve it for smokes/proof receipts;
+    // restore only the release-only HACS snapshot, including new chunks.
+    const roots = [COMMITTED_BUNDLE_ROOT];
     git(['checkout', '--', ...roots], cwd);
     git(['clean', '-fdq', '--', ...roots], cwd);
     console.log(`бандл возвращён к закоммиченному: ${roots.join(', ')} (#657)`);

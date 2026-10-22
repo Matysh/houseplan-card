@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1016,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Retire the tracked duplicate dist output and keep only the HACS frontend snapshot. Adapt committed-asset readers, cleanup, publication and inventory proofs without changing product sources, bundle payload, release safety or rewriting history. Identical Git objects were already deduplicated; no blob-history saving is claimed.",
+  "summary": {
+    "ru": "Один закоммиченный снимок бандла вместо двух путей; dist остаётся локальным артефактом.",
+    "en": "Keep one committed bundle snapshot; dist remains local build output."
+  }
+}

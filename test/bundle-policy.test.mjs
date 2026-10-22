@@ -116,23 +116,25 @@ function writeBundle(root, dir, card) {
   })}\n`);
 }
 
-function fixture() {
+function fixture({ legacyDist = false } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'hp-bundle-policy-'));
   mkdirSync(join(root, 'scripts'));
   for (const [from, name] of [[POLICY, 'bundle-policy.mjs'], [TREE, 'bundle-tree.mjs']]) {
     writeFileSync(join(root, 'scripts', name), readFileSync(from));
   }
   git(root, 'init', '-q', '-b', 'dev');
+  writeFileSync(join(root, '.gitignore'), '/dist\n');
   writeBundle(root, 'dist', 'card v1');
   writeBundle(root, 'custom_components/houseplan/frontend', 'card v1');
   git(root, 'add', '-A');
+  if (legacyDist) git(root, 'add', '-f', 'dist');
   git(root, 'commit', '-q', '-m', RELEASE);
   return root;
 }
 const cli = (root, ...args) => spawnSync(process.execPath, ['scripts/bundle-policy.mjs', ...args], { cwd: root, encoding: 'utf8' });
 
 test('#1021 actual Git deletion is not a release; staged provenance keeps frontend deletion protected', () => {
-  const root = fixture();
+  const root = fixture({ legacyDist: true });
   try {
     git(root, 'rm', '-qr', 'dist');
     const message = join(root, 'message.txt');
@@ -170,16 +172,20 @@ test('#657 CLI --verify: кандидат сверяет копии, обычн�
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test('#657 CLI --clean возвращает бандл к закоммиченному и убирает новые чанки', () => {
+test('#1016 CLI --clean restores only HACS; leaves ignored build and unrelated files intact', () => {
   const root = fixture();
   try {
     writeBundle(root, 'dist', 'card rebuilt');
     mkdirSync(join(root, 'dist/houseplan-assets'), { recursive: true });
     writeFileSync(join(root, 'dist/houseplan-assets/new-HASH.js'), 'chunk');
+    writeBundle(root, 'custom_components/houseplan/frontend', 'release rebuilt');
+    writeFileSync(join(root, 'custom_components/houseplan/frontend/houseplan-extra.js'), 'orphan');
     writeFileSync(join(root, 'notes.txt'), 'keep me');
     const run = cli(root, '--clean');
     assert.equal(run.status, 0, run.stderr);
-    assert.equal(readFileSync(join(root, 'dist/houseplan-card.js'), 'utf8'), 'card v1');
+    assert.equal(readFileSync(join(root, 'dist/houseplan-card.js'), 'utf8'), 'card rebuilt');
+    assert.equal(readFileSync(join(root, 'dist/houseplan-assets/new-HASH.js'), 'utf8'), 'chunk');
+    assert.equal(readFileSync(join(root, 'custom_components/houseplan/frontend/houseplan-card.js'), 'utf8'), 'card v1');
     assert.equal(git(root, 'status', '--porcelain', '--', 'dist', 'custom_components'), '');
     assert.equal(readFileSync(join(root, 'notes.txt'), 'utf8'), 'keep me', 'вне корней бандла ничего не трогается');
   } finally { rmSync(root, { recursive: true, force: true }); }

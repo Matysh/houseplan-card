@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
   BUNDLE_CEILINGS, CORE_BAND, CORE_BUDGET_FILE, BUNDLE_BUDGET_FILE, formatRow, ratchetRows, ratchetState,
-  readConst, readCoreCaps, rewriteConst, rewriteCoreCaps,
+  readConst, readCoreCaps, rewriteConst, rewriteCoreCaps, ratchetBundleRoot,
 } from '../scripts/ratchets.mjs';
 import { METRIC_NAMES } from '../scripts/monolith-metrics.mjs';
 
@@ -63,7 +63,14 @@ test('#699 публикация беты напоминает о храпови�
   const local = read('scripts/release-prerelease.mjs');
   const main = local.slice(local.indexOf('const main = async'));
   assert.match(main, /'scripts\/ratchets\.mjs', 'report', '--warn'/);
-  assert.match(main, /'scripts\/ratchets\.mjs', 'report', '--warn'\], \{ allowFailure: true, inherit: true \}\)/);
+  assert.match(main, /'scripts\/ratchets\.mjs', 'report', '--warn', '--committed'\], \{ allowFailure: true, inherit: true \}\)/);
+});
+
+test('#1016 release report uses the committed snapshot; tightening still requires a fresh build', () => {
+  assert.equal(ratchetBundleRoot('report'), 'dist');
+  assert.equal(ratchetBundleRoot('tighten'), 'dist');
+  assert.equal(ratchetBundleRoot('report', { committed: true }), 'custom_components/houseplan/frontend');
+  assert.throws(() => ratchetBundleRoot('tighten', { committed: true }), /read-only/);
 });
 
 test('#699 r1 M1: runbook беты опускает храповики при подготовке кандидата, до публикации', () => {

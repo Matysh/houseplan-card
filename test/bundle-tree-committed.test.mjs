@@ -6,7 +6,8 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
-import { compareBundleTrees, readBundleManifest, verifyBundleTree } from '../scripts/bundle-tree.mjs';
+import { readBundleManifest, verifyBundleTree } from '../scripts/bundle-tree.mjs';
+import { assertSingleCommittedBundle, COMMITTED_BUNDLE_ROOT } from '../scripts/bundle-policy.mjs';
 
 // #349. Логика проверки дерева бандла существовала и была написана правильно —
 // но применялась только к синтетической фикстуре в tmpdir(). Поэтому манифест,
@@ -17,13 +18,11 @@ import { compareBundleTrees, readBundleManifest, verifyBundleTree } from '../scr
 // Здесь те же функции спрашиваются о НАСТОЯЩЕМ дереве репозитория.
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
-const COPIES = ['dist', 'custom_components/houseplan/frontend'];
+const COPIES = [COMMITTED_BUNDLE_ROOT];
 
 // #657: судится ЗАКОММИЧЕННЫЙ снимок, а не диск. С #657 бандл в дереве меняет
-// только кандидат, и после обычного `npm run build` отслеживаемый `dist/` на
-// диске законно новее `custom_components/houseplan/frontend` — сравнение диска
-// красило бы любую сборку. Снимок HEAD обязан быть цел и равен себе в обеих
-// копиях всегда: его ставит HACS и его публикует бета.
+// только кандидат. Единственный снимок HEAD должен быть цел: его ставит HACS
+// и публикует бета; локальный ignored dist может быть новее или отсутствовать.
 function committedCopies() {
   const listed = spawnSync('git', ['-C', ROOT, 'ls-tree', '-r', '-z', '--name-only', 'HEAD', '--', ...COPIES], { encoding: 'utf8' });
   if (listed.status !== 0) return null;
@@ -37,7 +36,7 @@ function committedCopies() {
   return root;
 }
 
-test('манифест бандла не ссылается в никуда, обе копии целы и равны (#349)', () => {
+test('единственный поставляемый бандл цел и не ссылается в никуда (#349/#1016)', () => {
   const committed = committedCopies();
   // Без git (распакованный архив) — проверяется то, что лежит на диске, громко.
   if (!committed) console.log('ПРОПУЩЕНО: git недоступен, судится диск вместо закоммиченного снимка');
@@ -48,13 +47,21 @@ test('манифест бандла не ссылается в никуда, о�
       // sha256 совпадает с манифестом, путь не выходит за корень копии.
       assert.doesNotThrow(() => verifyBundleTree(resolve(base, copy)), `${copy}: дерево бандла битое`);
     }
-    assert.doesNotThrow(
-      () => compareBundleTrees(resolve(base, COPIES[0]), resolve(base, COPIES[1])),
-      'копии бандла разошлись: HACS ставит вторую, а сверяется первая',
-    );
   } finally {
     if (committed) rmSync(committed, { recursive: true, force: true });
   }
+});
+
+test('#1016 индекс содержит один снимок; даже принудительно добавленный dist запрещён', () => {
+  const listed = spawnSync('git', ['-C', ROOT, 'ls-files', '-z'], { encoding: 'utf8' });
+  assert.equal(listed.status, 0, 'Git inventory is required for the single-copy check');
+  assert.doesNotThrow(() => assertSingleCommittedBundle(listed.stdout.split('\0').filter(Boolean)));
+  const manifest = `${COMMITTED_BUNDLE_ROOT}/houseplan-assets.json`;
+  assert.doesNotThrow(() => assertSingleCommittedBundle([manifest]));
+  for (const duplicate of ['dist', 'dist/houseplan-card.js', 'dist/houseplan-assets/chunk.js']) {
+    assert.throws(() => assertSingleCommittedBundle([manifest, duplicate]), /untracked build output/);
+  }
+  assert.throws(() => assertSingleCommittedBundle([]), /manifest is missing/);
 });
 
 test('каждый файл манифеста отслеживается git, а не только лежит на диске (#349)', () => {

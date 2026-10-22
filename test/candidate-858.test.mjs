@@ -300,15 +300,15 @@ test('#858 actual publisher workflow steps refuse an unprepared candidate before
 test('#858 candidate inspects actual first-parent merge delta and committed bundle, not issue title', t => {
   const dir = temp(t); const put = (p, v) => { mkdirSync(join(dir, p, '..'), { recursive: true }); writeFileSync(join(dir, p), v); };
   git(dir, 'init', '-q', '-b', 'dev');
-  // The fixture supplies one coherent synthetic projection to BOTH copies;
-  // the real task checkout deliberately keeps its committed frontend unchanged.
-  for (const tree of ['dist','custom_components/houseplan/frontend']) cpSync(join(root, 'dist'), join(dir, tree), { recursive: true });
+  // A candidate must work from the one committed snapshot, with no local dist.
+  put('.gitignore', '/dist\n');
+  cpSync(join(root, 'custom_components/houseplan/frontend'), join(dir, 'custom_components/houseplan/frontend'), { recursive: true });
   for (const p of ['package.json','package-lock.json','.nvmrc','.python-version','tests_backend/requirements.txt','.github/workflows/validate.yml','demo/golden/matrix.mjs',
     ...new Set(Object.values(NATIVE_PROFILES).flat().map(c => c.script))]) put(p, readFileSync(join(root,p)));
   put('src/dummy.ts','export const a = 1;');
   put('docs/release-ledger/cycle.json', JSON.stringify({ schema: 1, baseStable: 'v1.80.1', targetStable: 'v1.81.0', milestone: { number: 1, title: '1.81' } }));
-  const sync = () => { const m = JSON.parse(readFileSync(join(dir,'dist/houseplan-assets.json'))); m.fingerprint = sourceFingerprint(dir);
-    for (const tree of ['dist','custom_components/houseplan/frontend']) put(`${tree}/houseplan-assets.json`, JSON.stringify(m)); };
+  const sync = () => { const m = JSON.parse(readFileSync(join(dir,'custom_components/houseplan/frontend/houseplan-assets.json'))); m.fingerprint = sourceFingerprint(dir);
+    put('custom_components/houseplan/frontend/houseplan-assets.json', JSON.stringify(m)); };
   sync(); git(dir,'add','.'); git(dir,'commit','-qm','base'); git(dir,'tag','v1.80.1');
   // #903: an unrelated accepted SPEC must stay traceable without becoming a
   // release implementation or requiring a premature agent classification.
@@ -340,7 +340,10 @@ test('#858 candidate inspects actual first-parent merge delta and committed bund
   put('src/untracked.ts','unsafe');
   assert.throws(() => candidateInputs({ root: dir, publicationCheck: true }), /clean exact-candidate/);
   rmSync(join(dir,'src/untracked.ts')); rmSync(join(dir,'houseplan.zip'));
-  put('dist/houseplan-card.js','corrupt'); assert.throws(() => candidateInputs({ root: dir }), /clean exact-candidate/);
+  put('dist/houseplan-card.js','corrupt');
+  assert.deepEqual(candidateInputs({ root: dir }), inputs, 'ignored local output cannot replace the committed candidate');
+  put('custom_components/houseplan/frontend/houseplan-card.js','corrupt');
+  assert.throws(() => candidateInputs({ root: dir }), /clean exact-candidate/);
 });
 
 // #916: candidate policy consumes the explicit owner decision without

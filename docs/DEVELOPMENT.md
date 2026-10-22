@@ -2643,17 +2643,33 @@ under `artifacts/907/`; these headless witnesses are not owner/real-GPU acceptan
 - The #1016 retirement is prepared separately by #1021: Git-proven deletions
   of duplicate dist files need no fake Release trailer; other bundle changes
   remain release-only, including deletion of installable frontend files.
-- The committed bundle changes only in a beta/release candidate (#657). Rollup writes
+- The only committed bundle is `custom_components/houseplan/frontend/` (#1016),
+  changed only in a beta/release candidate (#657). Rollup writes ignored
   `dist/houseplan-card.js`, `dist/houseplan-assets.json` and content-hashed chunks under
   `dist/houseplan-assets/`; `npm run bundle:sync` builds and lays that tree out into the
-  untracked demo copy, and `npm run bundle:clean` restores the tracked `dist/` before an
-  ordinary commit (the `commit-msg` hook refuses bundle paths without a `Release:`
+  untracked demo copy, and `npm run bundle:clean` restores only the integration
+  snapshot, preserving local dist for smokes/proof receipts (the `commit-msg`
+  hook refuses bundle changes without a `Release:`
   trailer). The candidate runs `npm run bundle:release`, which also updates the
   integration snapshot `custom_components/houseplan/frontend`.
   `node scripts/bundle-policy.mjs --verify HEAD` is the check CI and `gate:small` run:
   build integrity always, byte parity with the committed copy only on a commit that
   changes the bundle or is a candidate; `node scripts/bundle-tree.mjs dist
   custom_components/houseplan/frontend` stays the read-only parity check of release automation.
+  `test/bundle-tree-committed.test.mjs` checks the Git inventory for a forbidden
+  second dist copy, then verifies the committed frontend manifest and every
+  payload blob, independent of any local build. Candidate readiness and the local
+  publisher read that snapshot. Both existing publisher workflows keep their
+  build → mandatory dist/frontend byte-parity → stage sequence: their standalone
+  JS is byte-identical to the saved snapshot and ZIP comes from Git. Those
+  workflows need no edits. Publisher ratchet reporting uses
+  `node scripts/ratchets.mjs report --warn --committed`, including bundleBytes.
+  Tightening and ordinary budget checks still require a fresh dist build.
+  Validate/proof artifacts, dev-build, bundle-sync, performance comparison and
+  UI Lab keep using generated dist. Historical fixed-SHA readers stay unchanged.
+  This removes duplicate paths/checkout bytes, not duplicate Git blob storage:
+  identical dist/frontend trees already have the same object ID. No history is
+  rewritten, and converter-local `scripts/sh3d-convert/dist` stays tracked.
 - The first-space/import dialog is a separate `houseplan-onboarding-runtime-*`
   chunk. Do not fold it into `houseplan-editor-runtime-*`: empty-install
   onboarding is a View prerequisite, while a configured View must request
@@ -3452,8 +3468,8 @@ receipts are unavailable; no automatic retry, baseline acceptance or diagnostic
 category changes gate colour. Errors preserve the original red gate outcome.
 
 Prepare the candidate as usual: synchronize every version field, add dated RU
-and EN changelog sections, update the production bundle snapshots with
-`npm run bundle:release` (since #657 the only commit that may change them; it
+and EN changelog sections, update the one production frontend snapshot with
+`npm run bundle:release` (since #657 the only commit that may change it; it
 carries the `Release:` trailer), then lower the ratchets to the candidate's
 facts with `node scripts/ratchets.mjs tighten` (#699: it rewrites the core line
 caps, the gzip graph ceilings and `scripts/monolith-baseline.json` from the

@@ -15,7 +15,8 @@
  * `test/core-file-budget.test.mjs` (CAPS), gzip-графы — в
  * `scripts/bundle-budget.mjs`, числа связности — в
  * `scripts/monolith-baseline.json`. Бандл и `bundleBytes` меряются по
- * собранному `dist/`: на кандидате он закоммичен свежим (`npm run bundle:release`).
+ * свежему `dist/`; издатель с `report --committed` читает единственный
+ * поставляемый frontend-снимок, не требуя локального результата Rollup (#1016).
  *
  * `report --warn` печатает `::warning::` на рыхлые и вышедшие в полосу потолки
  * и всегда выходит с 0: это напоминание публикации беты, а не её гейт.
@@ -23,6 +24,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { isMainModule } from './spawn-portable.mjs';
+import { COMMITTED_BUNDLE_ROOT } from './bundle-policy.mjs';
 import {
   INITIAL_VIEW_CEILING_BAND, LAZY_GRAPH_CEILING_BAND,
 } from './bundle-budget.mjs';
@@ -115,17 +117,22 @@ export function formatRow(row) {
   return `${row.kind.padEnd(8)} ${row.name}: факт ${row.fact ?? '—'} · потолок ${row.ceiling ?? '—'}${sign} — ${STATE_TEXT[row.state]}`;
 }
 
-function measure(root) {
+export function ratchetBundleRoot(command, { committed = false } = {}) {
+  if (committed && command !== 'report') throw new Error('--committed is read-only: report only');
+  return committed ? COMMITTED_BUNDLE_ROOT : 'dist';
+}
+
+function measure(root, bundleRoot) {
   const coreSource = readFileSync(resolve(root, CORE_BUDGET_FILE), 'utf8');
   const bundleSource = readFileSync(resolve(root, BUNDLE_BUDGET_FILE), 'utf8');
   const coreCaps = readCoreCaps(coreSource);
   const coreFacts = Object.fromEntries(Object.keys(coreCaps).map((file) => [
     file, existsSync(resolve(root, file)) ? readFileSync(resolve(root, file), 'utf8').split('\n').length : undefined,
   ]));
-  const manifestPath = resolve(root, 'dist/houseplan-assets.json');
+  const manifestPath = resolve(root, bundleRoot, 'houseplan-assets.json');
   const bundleFacts = existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, 'utf8')) : {};
   const bundleCeilings = Object.fromEntries(BUNDLE_CEILINGS.map((entry) => [entry.name, readConst(bundleSource, entry.name)]));
-  const { metrics } = collectMetrics(root);
+  const { metrics } = collectMetrics(root, { distDir: bundleRoot });
   const baseline = readBaseline(root) || {};
   return { coreSource, bundleSource, coreCaps, coreFacts, bundleFacts, bundleCeilings, metrics, baseline };
 }
@@ -134,7 +141,8 @@ if (isMainModule(import.meta.url)) {
   const [command] = process.argv.slice(2);
   const root = process.cwd();
   try {
-    const m = measure(root);
+    const bundleRoot = ratchetBundleRoot(command, { committed: process.argv.includes('--committed') });
+    const m = measure(root, bundleRoot);
     const rows = ratchetRows(m);
     if (command === 'report') {
       const warn = process.argv.includes('--warn');

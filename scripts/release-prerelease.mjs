@@ -262,22 +262,16 @@ if (invokedDirectly) {
   const sha256Path = (name) => sha256Bytes(readFileSync(name));
   const committedFile = (sha, name) => runBytes('git', ['show', `${sha}:${name}`]);
   const assertBundleSnapshots = (sha) => {
-    // Копия стенда (`demo/srv/assets`) больше не коммитится (#255): её собирает
-    // `npm run bundle:sync` перед браузерными прогонами. В релиз входят ровно
-    // две копии — артефакт сборки и та, что ставит HACS.
-    const distManifestBytes = committedFile(sha, 'dist/houseplan-assets.json');
+    // #1016: publish the one committed HACS snapshot, never local dist output.
     const frontendManifestBytes = committedFile(
       sha, 'custom_components/houseplan/frontend/houseplan-assets.json',
     );
-    if (!distManifestBytes.equals(frontendManifestBytes)) {
-      throw new Error('Committed bundle manifests differ');
-    }
     const manifest = assertBundleManifest(
-      JSON.parse(distManifestBytes.toString('utf8')),
+      JSON.parse(frontendManifestBytes.toString('utf8')),
       'committed bundle manifest',
     );
     const listed = new Set(manifest.files.map((file) => file.path));
-    for (const tree of ['dist', 'custom_components/houseplan/frontend']) {
+    for (const tree of ['custom_components/houseplan/frontend']) {
       const rootNames = run('git', ['ls-tree', '-r', '--name-only', `${sha}:${tree}`]).stdout
         .split(/\r?\n/).filter(Boolean);
       const orphan = rootNames.find((name) => (
@@ -290,10 +284,8 @@ if (invokedDirectly) {
           || file.path.includes('..') || file.path.includes('\\')) {
         throw new Error(`Committed bundle asset path is invalid: ${String(file?.path)}`);
       }
-      const dist = committedFile(sha, `dist/${file.path}`);
       const frontend = committedFile(sha, `custom_components/houseplan/frontend/${file.path}`);
-      if (!dist.equals(frontend)) throw new Error(`Committed bundle asset differs: ${file.path}`);
-      const actual = sha256Bytes(dist);
+      const actual = sha256Bytes(frontend);
       if (actual !== file.sha256) {
         throw new Error(`Committed bundle asset hash mismatch: ${file.path}`);
       }
@@ -306,7 +298,7 @@ if (invokedDirectly) {
   };
 
   const materializeCommittedBundle = (sha, expectedSha256, artifactsDir) => {
-    const contents = committedFile(sha, 'dist/houseplan-card.js');
+    const contents = committedFile(sha, 'custom_components/houseplan/frontend/houseplan-card.js');
     const actual = sha256Bytes(contents);
     if (actual !== expectedSha256)
       throw new Error(`Committed bundle hash ${actual} != preflight ${expectedSha256}`);
@@ -516,7 +508,7 @@ if (invokedDirectly) {
     }).manifest;
     const existingRelease = releaseView();
     // #699: храповики с полосой опускает до факта бета — напоминание, не гейт.
-    run(process.execPath, ['scripts/ratchets.mjs', 'report', '--warn'], { allowFailure: true, inherit: true });
+    run(process.execPath, ['scripts/ratchets.mjs', 'report', '--warn', '--committed'], { allowFailure: true, inherit: true });
 
     console.log(JSON.stringify({
       ready: true, tag, version: contract.version, sha, branch, bundleSha256,

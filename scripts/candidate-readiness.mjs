@@ -5,8 +5,8 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { readCatalogue } from './release-ledger.mjs';
 import { issueBodyDigest } from './review-doc-guard.mjs';
-import { verifyBundleTree, compareBundleTrees } from './bundle-tree.mjs';
-import { assertCommittedBundleFresh } from './bundle-policy.mjs';
+import { verifyBundleTree } from './bundle-tree.mjs';
+import { assertCommittedBundleFresh, COMMITTED_BUNDLE_ROOT } from './bundle-policy.mjs';
 import { sourceFingerprint } from './source-fingerprint.mjs';
 import { goldenAcceptanceRefusal } from './golden-acceptance.mjs';
 import { GOLDEN_SCENARIOS } from '../demo/golden/matrix.mjs';
@@ -201,8 +201,7 @@ export function candidateInputs({ candidate = 'HEAD', root = process.cwd(), gitR
     issueFiles[entry.issue] = files;
     issueMaterials[entry.issue] = digest(files.map(f => [f, git(['ls-tree', sha, '--', f])]));
   }
-  const manifest = verifyBundleTree(resolve(root, 'dist'));
-  compareBundleTrees(resolve(root, 'dist'), resolve(root, 'custom_components/houseplan/frontend'));
+  const manifest = verifyBundleTree(resolve(root, COMMITTED_BUNDLE_ROOT));
   assertCommittedBundleFresh(manifest, sourceFingerprint(root));
   const pins = Object.fromEntries(['.nvmrc', '.python-version', 'package-lock.json', 'tests_backend/requirements.txt',
     '.github/workflows/validate.yml', 'demo/golden/matrix.mjs'].map(f => [f, digest(git(['show', `${sha}:${f}`]))]));

@@ -601,7 +601,7 @@ houseplan-card/
 │  ├─ editor-runtime-loader.ts · version-recovery*.ts · build-identity.ts · editor-secondary.ts  # lazy loader; #462/#836; tray
 │  ├─ editor.ts · space-editor.ts        # Lovelace GUI config editors of both cards
 │  └─ editors/ · render/ · styles/ · i18n/  # settings dialogs, SVG projections, sheets, locales
-├─ dist/                                 # two stable entries, houseplan-assets.json, hashed chunks
+├─ dist/                                 # ignored Rollup output: entries, manifest, hashed chunks
 ├─ demo/                                 # demo rig and smokes; golden/ (HP-QA-01), performance/
 ├─ scripts/ · .github/workflows/         # build/bundle gates, release-*.mjs; CI and release
 ├─ custom_components/houseplan/          # the HA integration
@@ -612,12 +612,15 @@ houseplan-card/
 │  ├─ import_export.py · decor_assets.py · plans.py  # backup/import, decor images, plan blobs
 │  ├─ trails.py · vacuum_routes.py · radar*.py · virtual_lights.py  # live-subsystem backends
 │  ├─ config_flow.py · const.py · system_health.py · diagnostics.py · repairs.py · support_*.py
-│  └─ frontend/                          # release-only snapshot of dist (#657)
+│  └─ frontend/                          # only tracked bundle; release-only snapshot (#657/#1016)
 └─ docs/                                 # this documentation
 ```
 
 Rollup emits two stable roots, `houseplan-card.js` and `houseplan-panel.js`,
 plus hashed chunks and `dist/houseplan-assets.json` (graph, sizes, SHA-256).
+Only `custom_components/houseplan/frontend/` is committed and installed by HACS;
+`dist/` and the demo copy remain build artifacts. Release verification compares
+fresh output with that one snapshot; budgets still judge the fresh build.
 The panel imports the card chunk by its hashed name, never through the card's
 unversioned facade: entries are served without `Cache-Control`, and a stale
 facade once ran an old card against the current backend (#535). Both roots keep

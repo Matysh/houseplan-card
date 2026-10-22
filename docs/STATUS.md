@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Single bundle snapshot (#1016): only the integration frontend is tracked.
+Root dist and demo assets are generated locally/CI; build budgets still judge
+fresh output, publishers use frontend or byte-parity-verified fresh output. No product,
+package payload or Git history rewrite is involved. Identical copies already
+shared Git objects, so this simplifies checkout/support, not blob-history size.
+
 Trusted provenance (#1021, prerequisite of #1016) accepts only Git-proven
 deletions of the duplicate dist tree without a Release trailer. The HACS
 snapshot remains protected, including staged deletions; this preparation does

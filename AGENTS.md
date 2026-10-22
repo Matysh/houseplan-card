@@ -3,7 +3,8 @@
 House Plan is one HACS package with two parts plus a demo harness:
 
 - **Lovelace card** (`src/`, TypeScript + Lit) — the primary product, bundled to
-  the entry, manifest and hashed chunks under `dist/`.
+  the entry, manifest and hashed chunks under ignored `dist/`; the only tracked
+  release snapshot is `custom_components/houseplan/frontend/` (#1016).
 - **Storage integration** (`custom_components/houseplan/`, Python) — the Home
   Assistant backend.
 - **Demo harness** (`demo/`) — a Playwright page (`demo/srv/demo.html`) that

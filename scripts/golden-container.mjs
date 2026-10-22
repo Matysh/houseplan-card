@@ -50,8 +50,7 @@ const inner = [
   'npm ci --no-audit --no-fund',
   'npm run bundle:sync',
   `npm run golden:${mode}`,
-  // Сборка переписала отслеживаемый dist/ хозяйского дерева: с #657 его
-  // меняет только кандидат, поэтому после съёмки он возвращается.
+  // Restore only the release-only HACS snapshot (#657/#1016); dist is ignored.
   'npm run bundle:clean',
 ].join(' && ');
 

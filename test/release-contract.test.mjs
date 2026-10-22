@@ -283,7 +283,7 @@ test('release ZIP inspection is portable and does not depend on tar', () => {
     // manifest-driven verifier owns completeness of its hashed asset tree.
     assert.ok(entry.length > 100);
     assert.match(entry.toString('utf8'), /__HOUSEPLAN_BUILD_FINGERPRINT__/);
-    const committedResult = spawnSync('git', ['show', 'HEAD:dist/houseplan-card.js'], {
+    const committedResult = spawnSync('git', ['show', 'HEAD:custom_components/houseplan/frontend/houseplan-card.js'], {
       cwd: root,
       // The production bundle is larger than Node's spawnSync default buffer.
       // A truncated stdout can still be non-empty and produce a misleading
