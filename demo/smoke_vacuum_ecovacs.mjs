@@ -19,7 +19,7 @@ try {
    bounds:[0,0,100,80],native_path:true,reason:null};
   const run={route_id:'ecovacs-route',map_id:'floor',path_format:2,paths:[[[10,10],[50,10],[50,40]],[[60,40],[80,50]]],
    points:[[60,40],[80,50]],quality:{source:'native',reason:'ok',raw_points:5},received_at:1700000000};
-  window.__ecovacs={frame,run,writes:0,reject:false,hold:null,notify:null,oldBackend:false};
+  window.__ecovacs={frame,run,image,writes:0,reject:false,hold:null,notify:null,oldBackend:false};
   const baseSubscribe=old.hass.connection.subscribeEvents.bind(old.hass.connection);
   const hass={...old.hass,connection:{...old.hass.connection,subscribeEvents:async(cb,event)=>{
    if(event==='houseplan_trail_updated'){window.__ecovacs.notify=cb;return()=>{};}
@@ -33,7 +33,7 @@ try {
      ...(e.oldBackend?{}:{vacuum_source_format:1,vacuum_sources:{[source]:e.frame}})};
     if(m.type==='houseplan/vacuum/map_preview'){
      if(e.hold)await e.hold;
-     return{source,map_id:'floor',bounds:[0,0,100,80],revision:'a'.repeat(64),image};
+     return{source,map_id:'floor',bounds:[0,0,100,80],revision:'a'.repeat(64),image:e.image};
     }
     if(m.type==='houseplan/config/set'){e.writes++;if(e.reject)throw Error('synthetic ACK rejection');}
     return baseWS(m);
@@ -63,13 +63,21 @@ try {
   await page.locator('[data-section-target="vacuum"]').click();
   await page.locator('.vacbtns button').filter({hasText:'Fit manually'}).first().click();
   await page.waitForSelector('[data-hp="vacuum-map-preview"]');
+  // #1009: the fit exists before the accepted device-dialog exit has finished.
+  // Its retained modal/backdrop darkens the raster in a locator screenshot on
+  // Windows. Wait for that presentation to retire, not an arbitrary paint delay.
+  await page.locator('hp-dialog[data-kind="marker"]').waitFor({state:'detached'});
  };
  await start();
  out.fourHandles=await page.locator('.vacfithandle').count()===4;
  out.noGuessedRooms=await page.locator('.vacfit polygon,.vacfit text').count()===0;
  const raster=page.locator('[data-hp="vacuum-map-preview"]');
- const shot=PNG.sync.read(await raster.screenshot());
- let blue=0;for(let i=0;i<shot.data.length;i+=4)if(shot.data[i+2]-shot.data[i]>50&&shot.data[i+2]-shot.data[i+1]>40)blue++;
+ const bluePixels=async()=>{
+  const shot=PNG.sync.read(await raster.screenshot());
+  let blue=0;for(let i=0;i<shot.data.length;i+=4)if(shot.data[i+2]-shot.data[i]>50&&shot.data[i+2]-shot.data[i+1]>40)blue++;
+  return blue;
+ };
+ const blue=await bluePixels();
  out.rasterReallyPainted=blue>1000;
  const before=await raster.getAttribute('transform');
  await page.locator('.vaccalbar button').nth(0).click();
@@ -82,6 +90,18 @@ try {
  const writes=await page.evaluate(()=>window.__ecovacs.writes);
  await page.locator('.vaccalbar button').nth(3).click();
  out.cancelDoesNotSave=await page.evaluate(n=>window.__ecovacs.writes===n,writes);
+ // Ordinary negative preview input: DOM bounds/handles still exist, but the
+ // transparent PNG must fail the very same pixel predicate as the blue map.
+ png.data.fill(0);
+ await page.evaluate(image=>{window.__ecovacs.image=image;},
+  'data:image/png;base64,'+PNG.sync.write(png).toString('base64'));
+ await start();
+ const transparentBlue=await bluePixels();
+ out.transparentRasterNotPainted=await raster.isVisible()
+  &&await page.locator('.vacfithandle').count()===4&&transparentBlue<=1000;
+ console.log('Ecovacs preview pixels',JSON.stringify({blue,transparentBlue,threshold:1000}));
+ await page.locator('.vaccalbar button').nth(3).click();
+ await page.evaluate(image=>{window.__ecovacs.image=image;},image);
  await start();
  await page.evaluate(()=>{window.__ecovacs.reject=true;});
  await page.locator('.vaccalbar button').nth(2).click();

@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1009,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Waits for the retained device-dialog exit before the Ecovacs smoke captures raster pixels and adds a transparent-PNG negative fixture. Only browser guard and testing documentation change; product code, user behaviour and the blue-pixel threshold remain unchanged relative to stable v1.82.0."
+}
