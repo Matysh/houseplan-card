@@ -2665,6 +2665,10 @@ under `artifacts/907/`; these headless witnesses are not owner/real-GPU acceptan
   workflows need no edits. Publisher ratchet reporting uses
   `node scripts/ratchets.mjs report --warn --committed`, including bundleBytes.
   Tightening and ordinary budget checks still require a fresh dist build.
+  The computed unit partition also follows actual compiled-output FS reads in
+  transitive tools, even when dist/test-build files are absent or ignored. The
+  Select-only node budget belongs to the build-backed product lane; output
+  declarations and fixture strings alone still belong to no-build tooling.
   Validate/proof artifacts, dev-build, bundle-sync, performance comparison and
   UI Lab keep using generated dist. Historical fixed-SHA readers stay unchanged.
   This removes duplicate paths/checkout bytes, not duplicate Git blob storage:

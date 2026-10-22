@@ -16,6 +16,7 @@ export function unitGroups(root = process.cwd(), { tracked = trackedFiles(root),
   const ownership = {};
   const references = new Map(), source = new Map(), productInputs = new Map();
   const dynamicConsumers = new Set();
+  const artifactConsumers = new Set();
   const allTracked = [...new Set([...tracked, ...tests])];
   const trackedSet = new Set(allTracked);
   const readOnce = p => { if (!source.has(p)) source.set(p, read(p)); return source.get(p); };
@@ -52,7 +53,18 @@ export function unitGroups(root = process.cwd(), { tracked = trackedFiles(root),
       if (ts.isNewExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'URL'
         && node.arguments?.[1]?.getText(ast).replace(/\s+/g, '') === 'import.meta.url') {
         const value = literal(node.arguments[0]);
-        if (value !== null) urls.add(value);
+        if (value !== null) {
+          urls.add(value);
+          const rel = posix.normalize(posix.join(posix.dirname(p), value.split(/[?#]/)[0]));
+          if (/^(dist|test-build)\//.test(rel)) artifactConsumers.add(p);
+        }
+      }
+      // Compiled output is a producer dependency even when it is untracked.
+      // Follow actual FS reads in transitive tools, not fixture/manifest strings.
+      if (ts.isCallExpression(node) && (ts.isIdentifier(node.expression) && node.expression.text === 'readFileSync'
+        || ts.isPropertyAccessExpression(node.expression) && node.expression.name.text === 'readFileSync')) {
+        const value = literal(node.arguments[0]);
+        if (typeof value === 'string' && /^(dist|test-build)\//.test(posix.normalize(value))) artifactConsumers.add(p);
       }
       if (ts.isCallExpression(node) && (ts.isIdentifier(node.expression) && node.expression.text === 'join'
         || ts.isPropertyAccessExpression(node.expression) && node.expression.name.text === 'join')) {
@@ -108,7 +120,7 @@ export function unitGroups(root = process.cwd(), { tracked = trackedFiles(root),
       queue.push(...(references.get(entry)?.code || []));
     }
     const codeReasons = [...codeInputs].filter(entry => /^(src|test-build|dist|custom_components)\//.test(entry)
-      || entry.startsWith('test/') && dynamicConsumers.has(entry));
+      || artifactConsumers.has(entry) || entry.startsWith('test/') && dynamicConsumers.has(entry));
     const readReasons = [...codeInputs].filter(entry => entry.startsWith('test/'))
       .flatMap(entry => (references.get(entry)?.data || []).filter(isProductInput));
     const toolConsumer = [...codeInputs].some(entry => /^(scripts|\.github)\//.test(entry));

@@ -65,6 +65,29 @@ test('#982 canonical mutation-registry leaf contains patch data, not imports of 
   assert.ok(!g.dependencies['test/registry.test.mjs'].includes('src/product.ts'));
 });
 
+test('#1016 untracked compiled-output readers need the producer, including transitive tools', t => {
+  const root = fixture(t, {
+    'test/budget.test.mjs': "import '../scripts/wrapper.mjs';",
+    'scripts/wrapper.mjs': "import './budget.mjs';",
+    'scripts/budget.mjs': "import {readFileSync} from 'node:fs'; readFileSync('dist/houseplan-assets.json');",
+    'test/metadata.test.mjs': "import '../scripts/metadata.mjs';",
+    'scripts/metadata.mjs': 'export const outputs=["dist/**", "test-build/**", "readFileSync(\'dist/data.json\')"];',
+  });
+  // There is deliberately no dist or test-build, tracked or on disk.
+  for (const code of [
+    "import {readFileSync} from 'node:fs'; readFileSync('dist/houseplan-assets.json');",
+    "import fs from 'node:fs'; fs.readFileSync('./dist/chunk.js');",
+    "import {readFileSync} from 'node:fs'; readFileSync(new URL('../dist/houseplan-assets.json', import.meta.url));",
+    "import {readFileSync} from 'node:fs'; readFileSync(new URL('../test-build/model.js', import.meta.url));",
+  ]) {
+    writeFileSync(join(root, 'scripts/budget.mjs'), code);
+    const g = unitGroups(root);
+    assert.deepEqual(g.product, ['test/budget.test.mjs']);
+    assert.deepEqual(g.tooling, ['test/metadata.test.mjs']);
+    assert.ok(g.ownership['test/budget.test.mjs'].code.includes('scripts/budget.mjs'));
+  }
+});
+
 test('#982 a tool inspects source as data; importing that source or a test-owned read needs the producer', t => {
   const root = fixture(t, {
     'test/tool.test.mjs': "import '../scripts/subject.mjs';",
@@ -99,6 +122,7 @@ test('#982 every real unit belongs to the required union, including new files', 
   assert.ok(g.product.length && g.tooling.length);
   assert.ok(g.tooling.includes('test/unit-groups.test.mjs'));
   assert.ok(g.product.includes('test/device-issues.test.mjs'));
+  assert.ok(g.product.includes('test/wall-node-bundle.test.mjs'), 'real bundle budget must never run in the no-build tooling lane');
   assert.deepEqual(groupsAffectedBy(['src/device-issues.ts'], g), ['product']);
   assert.deepEqual(groupsAffectedBy(['scripts/task-packet.mjs'], g), ['tooling']);
   assert.deepEqual(groupsAffectedBy(['docs/DEVELOPMENT.md'], g), []);

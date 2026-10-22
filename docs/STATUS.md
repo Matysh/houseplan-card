@@ -30,6 +30,8 @@ Root dist and demo assets are generated locally/CI; build budgets still judge
 fresh output, publishers use frontend or byte-parity-verified fresh output. No product,
 package payload or Git history rewrite is involved. Identical copies already
 shared Git objects, so this simplifies checkout/support, not blob-history size.
+Transitive compiled-output readers (including the Select-only budget) require
+the product producer even with no tracked dist; metadata strings do not.
 
 Trusted provenance (#1021, prerequisite of #1016) accepts only Git-proven
 deletions of the duplicate dist tree without a Release trailer. The HACS
