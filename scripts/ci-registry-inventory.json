@@ -1542,6 +1542,7 @@
       "demo/smoke_drag_bounds.mjs",
       "demo/smoke_draw_wall_thickness.mjs",
       "demo/smoke_e2e_hooks.mjs",
+      "demo/smoke_e2e_primitive_fields.mjs",
       "demo/smoke_edge_cases.mjs",
       "demo/smoke_edit_walk.mjs",
       "demo/smoke_editor_draft_exit.mjs",

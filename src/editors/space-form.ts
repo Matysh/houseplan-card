@@ -162,7 +162,7 @@ export function renderSpaceForm(port: SpaceFormPort): SpaceFormParts {
     body: html`<div class="body hpf-form">${sections.map(section => section.body)}${notices}</div>`,
     footer: html`<div class="row dialog-action-footer hpf-footer hpf-footer-space ${port.northControl ? 'hpf-footer-object' : ''}" slot="footer">
       ${footerStatus(problems.length
-        ? { action: textLink(st('dialog.review_fields', { n: String(problems.length) }), reviewFirst) }
+        ? { action: textLink(st('dialog.review_fields', { n: String(problems.length) }), reviewFirst, {action:'review-fields'}) }
         : port.northControl ? {text:st(dirty ? 'dialog.dirty' : 'dialog.saved')} : {})}
       ${d.mode === 'edit' && port.copySpace
         ? html`<div class="dialog-action-group dialog-action-copy">
@@ -361,7 +361,7 @@ function renderRoomCards(port: SpaceFormPort, d: SpaceDialogState, id: (n:string
     onChange:(v:boolean) => set(port,{...d,[key]:v})}));
   const inheritedBattery = deviceBatteryModeOf(host._settings);
   const batteryLabel = (mode: 'all'|'low'|'off') => st(`space.battery_${mode}`);
-  const sourceLink = (section:string) => port.openGeneral ? textLink(st('space.open_general'),() => port.openGeneral!(section)) : nothing;
+  const sourceLink = (section:string) => port.openGeneral ? textLink(st('space.open_general'),() => port.openGeneral!(section),{action:'open-general-settings',value:section}) : nothing;
   return formCard({id:'room-cards',title:st('space.section_metrics'),body:spaceFormSections(port, [
           toggleRow({id:id('show-names'),title:t('space.show_names'),help:shelp('space.names.help'),checked:d.showNames,
       onChange:v => set(port,touchSpaceDisplay(d,'showNames',v))}),
@@ -407,7 +407,7 @@ function renderSunAndLight(port: SpaceFormPort, d: SpaceDialogState, id:(n:strin
         .color=${d.bgColor || inheritedColor} .opacity=${1} .showOpacity=${false}
         @hp-color-opacity-change=${(e:CustomEvent<{color:string}>) => set(port,{...d,bgColor:e.detail.color})}></hp-color-opacity>`})})
       : nothing])}
-          ${port.openGeneral ? html`<div class="hpf-context-links">${textLink(st('space.open_general'),() => port.openGeneral!('plan'))}</div>` : nothing}`,
+          ${port.openGeneral ? html`<div class="hpf-context-links">${textLink(st('space.open_general'),() => port.openGeneral!('plan'),{action:'open-general-settings',value:'plan'})}</div>` : nothing}`,
           field({label:t('space.sun_rays'),control:selectControl({name:id('sun-rays'),value:d.sunRays === null ? '' : d.sunRays ? '1' : '0',ariaLabel:t('space.sun_rays'),
       options:[{value:'',label:st('space.inherited_value',{v:t(sunRaysOn(host._settings,{}) ? 'space.sun_on' : 'space.sun_off')})},{value:'1',label:t('space.sun_on')},{value:'0',label:t('space.sun_off')}],
       onChange:v => set(port,{...d,sunRays:v === '' ? null : v === '1'})})}),
@@ -421,7 +421,7 @@ function renderSunAndLight(port: SpaceFormPort, d: SpaceDialogState, id:(n:strin
       ${port.northControl ? callout({text:st('gs.north_description')}) : nothing}
       ${northProblem ? html`<p class="hpf-error" role="alert">${st(northProblem.message)}</p>` : nothing}
     </div>` : nothing])}
-          ${port.openGeneral ? html`<div class="hpf-context-links">${textLink(st('space.open_general'),() => port.openGeneral!('sun'))}</div>` : nothing}`,
+          ${port.openGeneral ? html`<div class="hpf-context-links">${textLink(st('space.open_general'),() => port.openGeneral!('sun'),{action:'open-general-settings',value:'sun'})}</div>` : nothing}`,
         ])});
 }
 

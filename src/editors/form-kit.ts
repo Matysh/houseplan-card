@@ -187,6 +187,9 @@ export interface ToggleRowOptions {
   id?: string;
   /** An always-visible status may describe a switch without becoming its caption. */
   describedBy?: string;
+  /** Test metadata must not create a new DOM id or label association. */
+  fieldId?: string;
+  fieldSlot?: number;
 }
 
 /** Keep contextual help on the final text line, never on an empty line. */
@@ -203,14 +206,14 @@ export function helpLabel(label: string, help?: TemplateResult | typeof nothing)
  * остаётся тем, что смоки умеют переключать.
  */
 export function toggleRow({
-  icon, title, caption, help, checked, disabled = false, compact = false, onChange, id, describedBy,
+  icon, title, caption, help, checked, disabled = false, compact = false, onChange, id, describedBy, fieldId = id, fieldSlot,
 }: ToggleRowOptions): TemplateResult {
   const captionId = id && caption ? `${id}-caption` : undefined;
   return html`<label class="hpf-toggle ${icon ? '' : 'hpf-noicon'} ${compact ? 'hpf-compact' : ''}">
     ${icon ? html`<span class="hpf-toggle-icon" aria-hidden="true"><ha-icon icon=${icon}></ha-icon></span>` : nothing}
     <span class="hpf-toggle-title">${helpLabel(title, help)}</span>
     ${caption && !compact ? html`<span class="hpf-toggle-caption" id=${captionId ?? nothing}>${caption}</span>` : nothing}
-    <input data-hp="field" data-field=${id ?? nothing} type="checkbox" id=${id ?? nothing} .checked=${checked} ?disabled=${disabled}
+    <input data-hp="field" data-field=${fieldId ?? nothing} data-slot=${fieldSlot ?? nothing} type="checkbox" id=${id ?? nothing} .checked=${checked} ?disabled=${disabled}
       aria-label=${title} aria-describedby=${describedBy ?? captionId ?? nothing}
       @change=${(e: Event) => onChange((e.target as HTMLInputElement).checked, e)} />
   </label>`;
@@ -359,7 +362,7 @@ export function colorField({
           const n = Number((e.target as HTMLInputElement).value);
           if (Number.isFinite(n)) onOpacity(Math.min(1, Math.max(0, n / 100)));
         }} /><span>%</span></span></span>` : html`<span class="hpf-opacity" aria-label=${opacityLabel ?? nothing}>${pct}%</span>`}
-    ${resetLabel && onReset ? html`<button class="hpf-link" type="button" ?disabled=${disabled} @click=${onReset}>${resetLabel}</button>` : nothing}
+    ${resetLabel && onReset ? html`<button data-hp="action" data-action="colour-reset" class="hpf-link" type="button" ?disabled=${disabled} @click=${onReset}>${resetLabel}</button>` : nothing}
   </div>`;
 }
 
@@ -596,8 +599,8 @@ export function compass(deg: number | null, label: string): TemplateResult {
 }
 
 /** Текстовая ссылка-действие (Reset, Clear, «Use general settings»). */
-export function textLink(label: string, onClick: () => void, { disabled = false }: { disabled?: boolean } = {}): TemplateResult {
-  return html`<button class="hpf-link" type="button" ?disabled=${disabled} @click=${onClick}>${label}</button>`;
+export function textLink(label: string, onClick: () => void, { action, value, disabled = false }: { action: string; value?: string; disabled?: boolean }): TemplateResult {
+  return html`<button data-hp="action" data-action=${action} data-value=${value ?? nothing} class="hpf-link" type="button" ?disabled=${disabled} @click=${onClick}>${label}</button>`;
 }
 
 export interface FooterStatusOptions {
@@ -613,6 +616,7 @@ export function footerStatus({ text, action }: FooterStatusOptions): TemplateRes
 }
 
 export interface ChipOptions {
+  value: string;
   icon?: string;
   label: string;
   removeLabel: string;
@@ -620,11 +624,11 @@ export interface ChipOptions {
 }
 
 /** Чип выбранного элемента с кнопкой удаления (§3.1 «Чипы»). */
-export function chip({ icon, label, removeLabel, onRemove }: ChipOptions): TemplateResult {
+export function chip({ value, icon, label, removeLabel, onRemove }: ChipOptions): TemplateResult {
   return html`<span class="hpf-chip">
     ${icon ? html`<ha-icon icon=${icon} aria-hidden="true"></ha-icon>` : nothing}
     <span>${label}</span>
-    <button type="button" aria-label=${removeLabel} title=${removeLabel} @click=${onRemove}><ha-icon icon="mdi:close"></ha-icon></button>
+    <button data-hp="action" data-action="chip-remove" data-value=${value} type="button" aria-label=${removeLabel} title=${removeLabel} @click=${onRemove}><ha-icon icon="mdi:close"></ha-icon></button>
   </span>`;
 }
 
@@ -685,6 +689,8 @@ export interface SourcePickerOptions {
   onPick: (value: string) => void;
   /** `id` кнопки — для `<label for>` и смоков. */
   id?: string;
+  /** Stable test identity when the existing control has no DOM id. */
+  fieldId?: string;
   /** Дополнение к строке поиска в панели (например, чекбокс «Show entities»). */
   toolbar?: TemplateResult | typeof nothing;
   /** Отключённая кнопка: панель не открывается. */
@@ -698,10 +704,10 @@ export interface SourcePickerOptions {
  */
 export function sourcePicker({
   open, current, placeholder, ariaLabel, filter, filterPlaceholder, candidates, selected, emptyText,
-  onToggle, onClose, onFilter, onPick, id, toolbar, disabled = false, leading,
+  onToggle, onClose, onFilter, onPick, id, fieldId = id, toolbar, disabled = false, leading,
 }: SourcePickerOptions): TemplateResult {
   return html`<div class="hpf-picker ${open ? 'open' : ''}" ${sourcePickerOverlay(open, onClose)}>
-    <button data-hp="field" data-field=${id ?? nothing} id=${id ?? nothing} type="button" class="hpf-select hpf-pick" aria-haspopup="listbox"
+    <button data-hp="field" data-field=${fieldId ?? nothing} id=${id ?? nothing} type="button" class="hpf-select hpf-pick" aria-haspopup="listbox"
       aria-expanded=${open ? 'true' : 'false'} aria-label=${ariaLabel} ?disabled=${disabled} @click=${onToggle}>
       ${leading ?? nothing}
       ${current
@@ -711,14 +717,14 @@ export function sourcePicker({
     ${open
       ? html`<div class="hpf-panel">
           <div class="hpf-toolbar">
-            <input data-hp="field" data-field=${id ? `${id}-filter` : 'source-filter'} class="hpf-input" type="text" autocomplete="off" placeholder=${filterPlaceholder}
+            <input data-hp="field" data-field=${fieldId ? `${fieldId}-filter` : 'source-filter'} class="hpf-input" type="text" autocomplete="off" placeholder=${filterPlaceholder}
               aria-label=${filterPlaceholder} .value=${filter}
               @input=${(e: Event) => onFilter((e.target as HTMLInputElement).value)} />
             ${toolbar ?? nothing}
           </div>
           <div class="hpf-list" role="listbox" aria-label=${ariaLabel}>
             ${candidates.length
-              ? candidates.map((c) => html`<button data-hp="field-option" data-field=${id ?? nothing} data-value=${c.value} type="button" role="option" class="hpf-cand ${c.value === selected ? 'sel' : ''}"
+              ? candidates.map((c) => html`<button data-hp="field-option" data-field=${fieldId ?? nothing} data-value=${c.value} type="button" role="option" class="hpf-cand ${c.value === selected ? 'sel' : ''}"
                   aria-selected=${c.value === selected ? 'true' : 'false'} @click=${() => onPick(c.value)}>
                   <span>${c.label}</span><small>${c.sub}</small>
                 </button>`)

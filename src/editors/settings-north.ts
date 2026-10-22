@@ -15,7 +15,7 @@ export function settingsNorth({
     if (Math.hypot(x, y) > 8) onChange((Math.round(Math.atan2(x, -y) * 180 / Math.PI) + 360) % 360);
   };
   return html`<div class="hpf-north-control">
-    <button class="hpf-north-dial ${value === null ? 'hpf-unset' : ''}" type="button" role="slider" aria-label=${label}
+    <button data-hp="field" data-field=${`${id}-dial`} class="hpf-north-dial ${value === null ? 'hpf-unset' : ''}" type="button" role="slider" aria-label=${label}
       aria-valuemin="0" aria-valuemax="359" aria-valuenow=${angle}
       @keydown=${(event: KeyboardEvent) => {
         const delta = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[event.key];

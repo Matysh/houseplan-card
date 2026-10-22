@@ -510,6 +510,15 @@ Radio/options use their stable value, not translated labels. Radar target slots
 can additionally carry `data-slot`. A field hook does not expose private HA
 component internals.
 
+Id-less shared controls receive test identity without a new DOM id:
+`radar-swap-axes[data-slot]`, `radar-angle-clockwise`,
+`properties-variable-entity` (and its `-filter`), and `<north-field>-dial`.
+Form coverage includes buttons and checks identity at primitive call sites,
+including imported aliases, rather than trusting the shared template alone.
+Text links expose semantic actions such as `review-fields` and
+`open-general-settings[data-value=<section>]`; LED commands use `led-*` and
+the LED picker uses `field-option[data-field="led-device"][data-value=<id>]`.
+
 Colour hosts identify their owner: `gs-fill-<palette key>`, `gs-wall-fill`,
 `gs-bg-color`, `gs-glow-color`, `space-border-color`, `space-fill-color`,
 `space-bg-color`, `room-fill-color`, `marker-glow-color`,

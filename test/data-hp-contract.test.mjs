@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { templateTags, templateAttributeValues, toolVocabularyFromSources, resolveToolExpression, missingControlHooks } from '../scripts/data-hp-source.mjs';
+import { templateTags, templateAttributeValues, toolVocabularyFromSources, resolveToolExpression, missingControlHooks, missingPrimitiveIdentities } from '../scripts/data-hp-source.mjs';
 
 const root = new URL('../', import.meta.url);
 const contract = JSON.parse(readFileSync(new URL('docs/data-hp-contract.json', root), 'utf8'));
@@ -138,17 +138,36 @@ const formSources = new Set([
   'editors/settings-north.ts', 'editors/settings-sections.ts', 'editors/space-form.ts',
   'editors/vacuum-maps-section.ts', 'editors/vacuum-settings-section.ts',
   'houseplan-editor-runtime.ts', 'houseplan-onboarding-runtime.ts', 'hp-color-opacity.ts',
+  'led-strip-card.ts', 'led-strip-editor.ts',
   'hp-zigbee-topology-settings.ts', 'pdf/hp-pdf-dialog.ts', 'sun-settings-view.ts',
 ]);
 test('#1011 critical form sources expose a stable hook on every real control', () => {
-  const errors = sources.filter(s => formSources.has(s.relative)).flatMap(s => missingControlHooks(s.text, s.relative));
+  const errors = sources.filter(s => formSources.has(s.relative)).flatMap(s => [
+    ...missingControlHooks(s.text, s.relative), ...missingPrimitiveIdentities(s.text, s.relative),
+  ]);
   assert.deepEqual(errors, []);
   assert.equal(sources.filter(s => formSources.has(s.relative)).length, formSources.size);
+});
+
+test('#1011 shared primitive callers supply identities, not only their templates', () => {
+  for (const source of [
+    'toggleRow({title:"Swap",checked:true,onChange:fn});',
+    'sourcePicker({open:true});', 'unitInput(options);', 'rangeLine({id:""});',
+    'selectControl({name:undefined});', 'segmented({name:nothing});', 'radioRow({name:null});',
+    'toggleRow({id:"valid",fieldId:nothing});', 'sourcePicker({id:"valid",...options});',
+    'import {toggleRow as toggle} from "./form-kit"; toggle({});',
+    'import * as kit from "./form-kit"; kit.sourcePicker({});',
+  ]) assert.equal(missingPrimitiveIdentities(source, 'form.ts').length, 1, source);
+  assert.deepEqual(missingPrimitiveIdentities(
+    'toggleRow({fieldId:"radar-swap-axes",fieldSlot:index}); sourcePicker({fieldId:"properties-variable-entity"}); unitInput({id}); rangeLine({id:"range"});',
+  ), []);
 });
 test('#1011 control coverage rejects ordinary malformed markup inputs', () => {
   assert.equal(missingControlHooks('html`<input .value=${draft.name}>`', 'form.ts').length, 1);
   assert.equal(missingControlHooks('html`<input data-hp="field" data-field="">`', 'form.ts').length, 1);
   assert.equal(missingControlHooks('html`<input data-hp="field" data-field="marker-name">`', 'form.ts').length, 0);
+  assert.equal(missingControlHooks('html`<button @click=${submit}>Insert</button>`', 'form.ts').length, 1);
+  assert.equal(missingControlHooks('html`<button data-hp="dialog-confirm">Insert</button>`', 'form.ts').length, 0);
   for (const source of ["node.setAttribute('data-tool', choose());", 'node.dataset.tool = choose();', "node.dataset['tool'] = choose();"])
     assert.throws(() => templateAttributeValues(source, 'data-tool'), /Unsupported dynamic/);
   assert.deepEqual([...templateAttributeValues('node.innerHTML = \'<button data-tool="draw"></button>\';', 'data-tool')], ['draw']);

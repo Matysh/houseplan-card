@@ -12,16 +12,20 @@ component internals remain private.
 including comparisons and nested templates. Contract tests check both directions
 of `data-hp`/`data-tool`, read the existing closed menus for three dynamic tool
 writers and reject unknown dynamic writers. Source form coverage checks actual
-controls; `demo/smoke_e2e_hooks.mjs` proves mounted bindings, Cancel/Discard,
+controls (including buttons) and identity arguments at shared primitive calls;
+`demo/smoke_e2e_hooks.mjs` proves mounted bindings, Cancel/Discard,
 camera updates, contact ownership, vacuum calibration, colour/manual controls,
 Properties, PDF, summary, toast routing and phone navigation. Image/support
 payloads are synthetic; feedback is never submitted. Manual state uses one
 ordinary paste event; the facade's same-turn key burst is not a typing oracle.
+`demo/smoke_e2e_primitive_fields.mjs` exercises id-less radar/Properties
+callers and the north dial without creating new DOM ids or saving drafts.
 Mutation witnesses are only checked statically during development.
-The measured joint lazy editor graph is329291 B gzip (+2746 B against326545);
-its ceiling follows that fact under the owner's small-size-overage permission.
-The raw bundle reference is3331092 B (+18750 B,0.57%); existing bands and
-other limits remain intact. These bytes are declared attributes/identities.
+The initial joint lazy-editor measurement329291 B gzip (+2746 B against326545)
+set its ceiling under the owner's small-size-overage permission; final329664 B
+stays within its existing2000 B band. Raw bundle3332933 B stays within the band
+of reference3331092 B (raised from3312342 B,0.57%). Other limits remain intact.
+These bytes are declared attributes/identities.
 
 External journeys install a product ref, then sync and lint its exact contract
 (TESTING.md). The current external kind linter enumerates a subset of hooks;

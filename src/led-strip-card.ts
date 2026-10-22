@@ -57,7 +57,7 @@ export function ledSection(card: LedCardPort, devId: string): TemplateResult | t
   if (card._ledEditor) return card._ledEditor.markerSection(devId);
   if (owned) { ledEditorFor(card, 'dialog'); return nothing; }
   return html`<div class="hpf-group led-representation" data-led-representation="icon">
-    <div class="row" style="flex-wrap:wrap;gap:6px"><button class="btn ghost" type="button" data-led-action="show-strip"
+    <div class="row" style="flex-wrap:wrap;gap:6px"><button data-hp="action" data-action="led-show-strip" class="btn ghost" type="button" data-led-action="show-strip"
       @click=${() => {
         const entry = `tool${Date.now()}`, go = () => ledEditorFor(card, entry)?.convertFromDialog(devId);
         if (ledEditorModule(entry, go)) go();

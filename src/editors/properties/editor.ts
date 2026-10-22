@@ -630,7 +630,7 @@ export class PropertiesEditor {
       .hass=${this.host.hass} .title=${this.t('insert_variable')} @hp-close=${() => this.closeVariable()}>
       <div class="hp-prop-variable-body hpf-form">
         <div class="hp-prop-variable-label">${this.t('entity')}</div>
-        ${sourcePicker({ open: dialog.open, current: current ? { label: current.attributes?.friendly_name || dialog.entity, sub: dialog.entity } : null,
+        ${sourcePicker({ fieldId: 'properties-variable-entity', open: dialog.open, current: current ? { label: current.attributes?.friendly_name || dialog.entity, sub: dialog.entity } : null,
           leading: propertiesIcon(current?.attributes?.device_class === 'temperature' || dialog.entity.includes('temperature') ? 'temperature' : 'settings'),
           placeholder: this.t('entity'), ariaLabel: this.t('entity'), filter: dialog.filter, filterPlaceholder: this.t('variable_search'),
           candidates, selected: dialog.entity, emptyText: this.t('none'),
@@ -647,8 +647,8 @@ export class PropertiesEditor {
         ${text.length > 200 ? html`<p role="alert" class="hp-prop-error">${this.t('text_limit')}</p>` : nothing}
         ${error ? html`<p role="alert" class="hp-prop-error">${this.t(error.key as PropertiesString, error.values)}</p>` : nothing}
       </div>
-      <div class="hp-prop-variable-footer" slot="footer"><button type="button" @click=${() => this.closeVariable()}>${this.t('cancel')}</button>
-        <button type="button" class="insert" ?disabled=${!valid || !!this.fields.draft?.pending || !!error}
+      <div class="hp-prop-variable-footer" slot="footer"><button data-hp="dialog-cancel" type="button" @click=${() => this.closeVariable()}>${this.t('cancel')}</button>
+        <button data-hp="dialog-confirm" type="button" class="insert" ?disabled=${!valid || !!this.fields.draft?.pending || !!error}
           @click=${async () => {
             if (this.variable !== dialog || !valid) return;
             this.fields.edit('text', text);

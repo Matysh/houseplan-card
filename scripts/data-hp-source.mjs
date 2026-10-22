@@ -144,7 +144,7 @@ export function resolveToolExpression(expression, file, vocabulary) {
 }
 
 export const FORM_CONTROL_ELEMENTS = new Set([
-  'input', 'select', 'textarea', 'ha-switch', 'ha-slider', 'ha-icon-picker', 'hp-color-opacity',
+  'input', 'select', 'textarea', 'button', 'ha-switch', 'ha-slider', 'ha-icon-picker', 'hp-color-opacity',
 ]);
 
 /** Source coverage complements runtime input/lifecycle proofs. It deliberately
@@ -154,7 +154,7 @@ export function missingControlHooks(source, file) {
   for (const tag of templateTags(source, file)) {
     if (!FORM_CONTROL_ELEMENTS.has(tag.name)) continue;
     const hook = tag.attributes.get('data-hp');
-    if (!hook || hook.expression || !['field', 'image-upload', 'device-catalog-select', 'device-catalog-select-all'].includes(hook.text)) {
+    if (!hook || hook.expression || !(tag.name === 'button' ? hook.text : ['field', 'image-upload', 'device-catalog-select', 'device-catalog-select-all'].includes(hook.text))) {
       errors.push(`${file}:${source.slice(0, tag.start).split('\n').length}: ${tag.name} lacks a control hook`);
       continue;
     }
@@ -165,5 +165,65 @@ export function missingControlHooks(source, file) {
       }
     }
   }
+  return errors;
+}
+
+/** A hook in a shared template does not prove that its caller supplies an id.
+ * Check that second boundary too; opaque option objects cannot prove coverage.
+ * Dynamic id values still need mounted identity/lifecycle evidence. */
+export function missingPrimitiveIdentities(source, file = 'source.ts') {
+  const keys = new Map([
+    ['toggleRow', ['fieldId', 'id']], ['sourcePicker', ['fieldId', 'id']],
+    ['unitInput', ['fieldId', 'id']], ['rangeLine', ['id']],
+    ['selectControl', ['name']], ['segmented', ['name']], ['radioRow', ['name']],
+  ]);
+  const unit = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const aliases = new Map([...keys.keys()].map(name => [name, name]));
+  const namespaces = new Set(), errors = [];
+  const unwrap = node => node && (ts.isParenthesizedExpression(node) || ts.isAsExpression(node)
+    || ts.isSatisfiesExpression(node) || ts.isNonNullExpression(node)) ? unwrap(node.expression) : node;
+  const usable = raw => {
+    const node = unwrap(raw);
+    if (!node || node.kind === ts.SyntaxKind.NullKeyword) return false;
+    if (ts.isStringLiteralLike(node)) return /^[a-z][a-zA-Z0-9-]*$/.test(node.text);
+    if (ts.isIdentifier(node)) return !['undefined', 'nothing'].includes(node.text);
+    if (ts.isConditionalExpression(node)) return usable(node.whenTrue) && usable(node.whenFalse);
+    return ![ts.SyntaxKind.TrueKeyword, ts.SyntaxKind.FalseKeyword, ts.SyntaxKind.NumericLiteral].includes(node.kind);
+  };
+  for (const node of unit.statements) {
+    if (!ts.isImportDeclaration(node) || !/\/form-kit(?:\.js)?$/.test(node.moduleSpecifier.text)) continue;
+    const bindings = node.importClause?.namedBindings;
+    if (bindings && ts.isNamedImports(bindings)) for (const binding of bindings.elements) {
+      const name = (binding.propertyName ?? binding.name).text;
+      if (keys.has(name)) aliases.set(binding.name.text, name);
+    }
+    if (bindings && ts.isNamespaceImport(bindings)) namespaces.add(bindings.name.text);
+  }
+  const visit = node => {
+    if (ts.isCallExpression(node)) {
+      const call = node.expression;
+      const name = ts.isIdentifier(call) ? aliases.get(call.text)
+        : ts.isPropertyAccessExpression(call) && ts.isIdentifier(call.expression) && namespaces.has(call.expression.text)
+          ? call.name.text : undefined;
+      if (keys.has(name)) {
+        const options = unwrap(node.arguments[0]);
+        const properties = new Map();
+        const literal = options && ts.isObjectLiteralExpression(options);
+        if (literal) for (const property of options.properties) {
+          if (ts.isPropertyAssignment(property)) properties.set(
+            ts.isStringLiteralLike(property.name) ? property.name.text : property.name.getText(unit), property.initializer);
+          if (ts.isShorthandPropertyAssignment(property)) properties.set(property.name.text, property.name);
+        }
+        // fieldId overrides the DOM id; explicit undefined uses its default.
+        const identity = keys.get(name).map(key => properties.get(key)).find(value =>
+          value && !(ts.isIdentifier(unwrap(value)) && unwrap(value).text === 'undefined'));
+        if (!literal || options.properties.some(ts.isSpreadAssignment) || !usable(identity)) {
+          errors.push(`${file}:${unit.getLineAndCharacterOfPosition(node.getStart(unit)).line + 1}: ${name} call lacks stable identity`);
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(unit);
   return errors;
 }

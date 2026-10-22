@@ -627,7 +627,7 @@ tighten` опускает потолки ядер, графов бандла и 
 релиз остаётся черновиком, ассеты не публикуются. В цикле разработки и на бетах не участвует.
 
 Перед E2E: ref продукта → `npm run contract:sync -- --ref=<тот же ref>` → `npm run contract:lint` (#1011).
-Селекторы, фасад и ограничения внешнего lint — [STYLING-HOOKS §7.8](STYLING-HOOKS.md#78-e2e-scene-and-form-identities-1011).
+Селекторы, call-site/button coverage, фасад и ограничения внешнего lint — [STYLING-HOOKS §7.8](STYLING-HOOKS.md#78-e2e-scene-and-form-identities-1011); `node demo/smoke_e2e_primitive_fields.mjs` проверяет id-less controls.
 
 ## Environments matrix
 

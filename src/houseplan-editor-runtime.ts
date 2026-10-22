@@ -4828,11 +4828,11 @@ public _renderPlanSecondary(): EditorSecondaryModel | null {
         ariaLabel: this.host._t('editor.context_actions', { object: label }),
         visibleLabel: label,
         content: html`
-          <button class="btn ghost" @click=${() => this._runEditorContext(contextId, () => {
+          <button data-hp="action" data-action="physical-properties" class="btn ghost" @click=${() => this._runEditorContext(contextId, () => {
             const current = this.host._physicalSel;
             if (current) this._openPhysicalDialog(current.kind, current.id);
           })}><ha-icon icon="mdi:tune"></ha-icon>${this.host._t('btn.properties')}</button>
-          <button class="btn danger" @click=${() => this._runEditorContext(contextId, () => this._deletePhysicalSelection())}>
+          <button data-hp="action" data-action="physical-delete" class="btn danger" @click=${() => this._runEditorContext(contextId, () => this._deletePhysicalSelection())}>
             <ha-icon icon="mdi:delete-outline"></ha-icon>${this.host._t('btn.delete')}
           </button>`,
       };
@@ -4863,7 +4863,7 @@ public _renderPlanSecondary(): EditorSecondaryModel | null {
         ${drawHint ? html`<span class="hint">${drawHint}</span>` : nothing}
         ${hintKey ? html`<span class="hint">${this.host._t(hintKey as any)}</span>` : nothing}
         ${this.host._tool === 'draw' && this.host._path.length
-          ? html`<button class="btn ghost" @click=${() => this._runEditorContext(contextId, () => {
+          ? html`<button data-hp="action" data-action="wall-chain-reset" class="btn ghost" @click=${() => this._runEditorContext(contextId, () => {
               if (this._finishWallChainForNavigation(() => this._activateMarkupTool('select'))) this.host.requestUpdate();
             })}>
               ${this.host._t('btn.reset')}
@@ -4918,11 +4918,11 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
         ariaLabel: this.host._t('editor.context_actions', { object: label }),
         visibleLabel: label,
         content: html`
-          <button class="btn ghost" @click=${() => this._runEditorContext(contextId, () => {
+          <button data-hp="action" data-action="decor-properties" class="btn ghost" @click=${() => this._runEditorContext(contextId, () => {
             const current = this.host._dtSel;
             if (current) this._openDecorProperties(current);
           })}><ha-icon icon="mdi:tune"></ha-icon>${this.host._t('btn.properties')}</button>
-          <button class="btn danger" @click=${() => this._runEditorContext(contextId, () => this._decorDeleteSel())}>
+          <button data-hp="action" data-action="decor-delete" class="btn danger" @click=${() => this._runEditorContext(contextId, () => this._decorDeleteSel())}>
             <ha-icon icon="mdi:delete-outline"></ha-icon>${this.host._t('btn.delete')}
           </button>`,
       };
@@ -4971,7 +4971,7 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
 public _withBackdropReset(model: EditorSecondaryModel | null): EditorSecondaryModel | null {
     if (!this.backdropGesture.transformed || this.backdropGesture.active || model?.kind === 'palette') return model;
     const contextId = this.host._editorSecondaryContextId;
-    const reset = html`<button class="btn bdreset"
+    const reset = html`<button data-hp="action" data-action="backdrop-reset" class="btn bdreset"
       @click=${() => this._runEditorContext(contextId, () => this.backdropGesture.resetTransform())}>
       <ha-icon icon="mdi:image-refresh-outline"></ha-icon>${this.host._t('decor.backdrop_reset')}
     </button>`;
@@ -5052,9 +5052,9 @@ public _roomsToolbarGroup(): EditorToolbarGroup {
       [this.host._geometryHistory.undoName, 'mdi:undo-variant', 'history.undo_named', 'history.undo_empty', () => this._undoGeometry()],
       [this.host._geometryHistory.redoName, 'mdi:redo-variant', 'history.redo_named', 'history.redo_empty', () => this._redoGeometry()],
     ] as const;
-    return html`${actions.map(([name, icon, named, empty, run]) => {
+    return html`${actions.map(([name, icon, named, empty, run], index) => {
       const title = name ? this.host._t(named, { name }) : this.host._t(empty);
-      return html`<button class="btn ghost" @click=${run} ?disabled=${!name || this.nodeMove?.busy}
+      return html`<button data-hp="action" data-action=${index === 0 ? 'geometry-undo' : 'geometry-redo'} class="btn ghost" @click=${run} ?disabled=${!name || this.nodeMove?.busy}
         data-hp-tooltip=${title} aria-label=${title}><ha-icon icon=${icon} aria-hidden="true"></ha-icon></button>`;
     })}`;
   }
@@ -5596,12 +5596,12 @@ public _renderWallThickDialog(): TemplateResult {
         <span class="opl">${this.host._t(this.host._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span>
       </div>
       <div class="row">
-        ${d.source.kind === 'room' ? html`<button class="btn ghost"
+        ${d.source.kind === 'room' ? html`<button data-hp="action" data-action="wall-thickness-apply-room" class="btn ghost"
           @click=${() => this._wallThickApply(true)}>
           ${this.host._t('wallthick.apply_room')}
         </button>` : nothing}
         <span class="spacer"></span>
-        <button class="btn on" @click=${() => this._wallThickApply(false)}>
+        <button data-hp="action" data-action="wall-thickness-apply" class="btn on" @click=${() => this._wallThickApply(false)}>
           <ha-icon icon="mdi:check"></ha-icon>
         </button>
       </div>
@@ -8037,9 +8037,9 @@ public _renderServerPlans(d: NonNullable<typeof this.host._spaceDialog>): Templa
               ? ' · ' + this.host._t('space.used_by', { list: p.used_by.join(', ') })
               : ''}</span>
           </div>
-          <button class="btn ghost" @click=${() => this._useServerPlan(p.url)}
+          <button data-hp="action" data-action="plan-saved-use" data-value=${p.name} class="btn ghost" @click=${() => this._useServerPlan(p.url)}
             ?disabled=${p.url === d.planUrl}>${this.host._t('btn.use')}</button>
-          <button class="btn ghost danger"
+          <button data-hp="action" data-action="plan-saved-delete" data-value=${p.name} class="btn ghost danger"
             title=${p.used_by.length || p.url === d.planUrl ? this.host._t('space.in_use') : this.host._t('btn.delete')}
             ?disabled=${p.used_by.length > 0 || p.url === d.planUrl}
             @click=${() => this._deleteServerPlan(p.name)}>

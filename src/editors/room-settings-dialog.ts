@@ -253,7 +253,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
             </div>`
           : nothing}
         ${footerStatus(problems.length
-          ? { action: textLink(st('dialog.review_fields', { n: String(problems.length) }), reviewFirst) }
+          ? { action: textLink(st('dialog.review_fields', { n: String(problems.length) }), reviewFirst, {action:'review-fields'}) }
           : {text:st(dirty ? 'dialog.dirty' : 'dialog.saved')})}
         <div class="dialog-action-group dialog-action-commit">
           <button class="btn ghost" data-hp="dialog-cancel" @click=${requestClose}>${t('btn.cancel')}</button>

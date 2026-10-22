@@ -195,7 +195,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           kind: 'warning', role: 'status', icon: 'mdi:power-plug-off-outline',
           text: t(`marker.ha_disabled_${bindingStatus.reason}` as I18nKey),
           action: canOpenBindingInHa
-            ? textLink(t('btn.open_in_ha'), () => this.host._openBindingInHa(d.binding))
+            ? textLink(t('btn.open_in_ha'), () => this.host._openBindingInHa(d.binding), {action:'open-in-ha'})
             : undefined,
         })
       : bindingStatus?.kind === 'unverified' && !!d.binding
@@ -881,7 +881,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             if (d.radarRemove) this.host._markerDialog = restoreMarkerRadarRemoval(this.host, d);
             legacyRadarPanels.set(this.host, { owner, open: true });
             this.host.requestUpdate();
-          }),
+          }, {action:d.radarRemove ? 'radar-legacy-restore' : 'radar-legacy-open'}),
         }) : nothing,
           legacyRadar && legacyPanel && legacyPanel.owner===owner && legacyPanel.open ? this._renderRadarSection(d,radarDevice,'additional') : nothing,
         ]),
@@ -913,7 +913,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
         </div>
         <div class="row dialog-action-footer hpf-footer hpf-footer-object" slot="footer">
           ${footerStatus(problems.length
-            ? { action: textLink(st('dialog.review_fields', { n: String(problems.length) }), reviewFirst) }
+            ? { action: textLink(st('dialog.review_fields', { n: String(problems.length) }), reviewFirst, {action:'review-fields'}) }
             : {text:st(dirty ? 'dialog.dirty' : 'dialog.saved')})}
           <div class="dialog-action-group dialog-action-copy markeractions">
             ${d.devId

@@ -761,9 +761,9 @@ export class LedStripEditor {
         content: html`<span class="hint" data-led-hint>${n
           ? this.t(touch ? 'led.points_touch' : 'led.points', { n })
           : `${this.t(touch ? 'led.start_touch' : 'led.start')}. ${this.t('led.hint')}`}</span>
-          ${n ? html`<button class="btn" data-led-action="finish" @click=${() => void this.finish()}>
+          ${n ? html`<button data-hp="action" data-action="led-finish" class="btn" data-led-action="finish" @click=${() => void this.finish()}>
             <ha-icon icon="mdi:check"></ha-icon>${this.t('led.finish')}</button>` : nothing}
-          ${this.chain?.convert ? html`<button class="btn ghost" data-led-action="cancel" @click=${() => {
+          ${this.chain?.convert ? html`<button data-hp="action" data-action="led-cancel" class="btn ghost" data-led-action="cancel" @click=${() => {
             this.chain = null; this.tool = false; this.host.requestUpdate();
           }}>${this.t('led.cancel')}</button>` : nothing}`,
       };
@@ -774,7 +774,7 @@ export class LedStripEditor {
     const device = this.device(strip.marker);
     const label = device?.name || this.t('led.unbound');
     const button = (action: string, icon: string, text: string, run: () => void, cls = 'ghost') =>
-      html`<button class="btn ${cls}" data-led-action=${action} ?disabled=${this.busy} @click=${run}>
+      html`<button data-hp="action" data-action=${`led-${action}`} class="btn ${cls}" data-led-action=${action} ?disabled=${this.busy} @click=${run}>
         <ha-icon icon=${icon}></ha-icon>${text}</button>`;
     return {
       contextId: `led-${strip.id}`,
@@ -817,7 +817,7 @@ export class LedStripEditor {
         ${devices.length ? devices.map((d) => {
           const owner = ownerOf(this.host._serverCfg, d.id);
           const taken = !!owner && owner.strip.id !== stripId;
-          return html`<button class="btn ghost led-pick ${current.marker === d.id ? 'on' : ''}"
+          return html`<button data-hp="field-option" data-field="led-device" data-value=${d.id} class="btn ghost led-pick ${current.marker === d.id ? 'on' : ''}"
             data-led-pick=${d.id} ?disabled=${taken || this.busy} title=${taken ? this.t('led.taken') : d.name}
             style="justify-content:flex-start" @click=${() => void this.bind(stripId, d.id)}>
             <ha-icon icon=${d.icon || 'mdi:lightbulb'}></ha-icon>${d.name}${taken
@@ -825,10 +825,10 @@ export class LedStripEditor {
         }) : html`<div class="hint">${this.t('led.pick_empty')}</div>`}
       </div>
       <div class="row" slot="footer">
-        <button class="btn" data-led-action="new-device" @click=${() => this.newDevice(stripId)}>
+        <button data-hp="action" data-action="led-new-device" class="btn" data-led-action="new-device" @click=${() => this.newDevice(stripId)}>
           <ha-icon icon="mdi:plus-box-outline"></ha-icon>${this.t('led.pick_new')}</button>
         <span class="spacer"></span>
-        <button class="btn ghost" data-led-action="later" @click=${close}>${this.t('led.later')}</button>
+        <button data-hp="action" data-action="led-later" class="btn ghost" data-led-action="later" @click=${close}>${this.t('led.later')}</button>
       </div>
     </hp-dialog>`;
   }
@@ -891,7 +891,7 @@ export class LedStripEditor {
     const active = !!owner && owner.strip.active !== false;
     const then = (action: () => unknown) => async () => { if (await this.leaveDialog()) await action(); };
     const button = (name: string, icon: string, text: string, run: () => unknown, cls = 'ghost') =>
-      html`<button class="btn ${cls}" type="button" data-led-action=${name} ?disabled=${this.busy}
+      html`<button data-hp="action" data-action=${`led-${name}`} class="btn ${cls}" type="button" data-led-action=${name} ?disabled=${this.busy}
         @click=${then(run)}><ha-icon icon=${icon}></ha-icon>${text}</button>`;
     return html`<div class="hpf-group led-representation" data-led-representation=${active ? 'strip' : 'icon'}>
       <div class="row" style="flex-wrap:wrap;gap:4px">

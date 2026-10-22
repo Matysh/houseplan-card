@@ -298,7 +298,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
     </div>
     <div class="row dialog-action-footer hpf-footer" slot="footer">
       ${footerStatus(problems.length
-        ? { action: textLink(st('dialog.review_fields', { n: String(problems.length) }), reviewFirst) }
+        ? { action: textLink(st('dialog.review_fields', { n: String(problems.length) }), reviewFirst, {action:'review-fields'}) }
         : {text:st(dirty ? 'dialog.dirty' : 'dialog.saved')})}
       <div class="dialog-action-group">
         <button data-hp="action" data-action="gs-reset" class="btn ghost" @click=${() => set({

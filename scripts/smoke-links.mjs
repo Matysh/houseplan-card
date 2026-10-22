@@ -33,7 +33,7 @@ export const SMOKE_LINKS = [
     files: ['src/editors/form-kit.ts', 'src/editors/settings-sections.ts', 'src/hp-color-opacity.ts',
       'src/device-contact-render.ts', 'src/wall-node-editor.ts', 'src/glow-scene.ts',
       'src/summary-panel-runtime-loaded.ts', 'src/pdf/hp-pdf-dialog.ts', 'src/toast-presentation.ts'],
-    smokes: ['smoke_e2e_hooks.mjs'],
+    smokes: ['smoke_e2e_hooks.mjs', 'smoke_e2e_primitive_fields.mjs'],
     because: '#1011: the declared hooks must identify real mounted controls, geometry and live owner results, including nested custom-element roots and modal toast routing.',
   },
   {

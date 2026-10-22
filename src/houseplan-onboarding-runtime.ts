@@ -191,9 +191,9 @@ export class HouseplanOnboardingRuntime {
               ? ` · ${this.host._t('space.used_by', { list: plan.used_by.join(', ') })}`
               : ''}</span>
           </div>
-          <button class="btn ghost" @click=${() => this._useServerPlan(plan.url)}
+          <button data-hp="action" data-action="plan-saved-use" data-value=${plan.name} class="btn ghost" @click=${() => this._useServerPlan(plan.url)}
             ?disabled=${plan.url === dialog.planUrl}>${this.host._t('btn.use')}</button>
-          <button class="btn ghost danger"
+          <button data-hp="action" data-action="plan-saved-delete" data-value=${plan.name} class="btn ghost danger"
             title=${plan.used_by.length || plan.url === dialog.planUrl
               ? this.host._t('space.in_use') : this.host._t('btn.delete')}
             ?disabled=${plan.used_by.length > 0 || plan.url === dialog.planUrl}
@@ -372,7 +372,7 @@ export class HouseplanOnboardingRuntime {
           </label>`)}
         </div>
         <div class="row" slot="footer">
-          <button class="btn ghost" @click=${() => {
+          <button data-hp="action" data-action="import-manual" class="btn ghost" @click=${() => {
             this.host._importDialog = null;
             this._openSpaceDialog('create');
           }}>${this.host._t('import.manual')}</button>

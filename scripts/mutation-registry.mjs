@@ -16172,6 +16172,36 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'e2e-contract-primitive-call-identity-1011',
+    guard: 'node --test test/data-hp-contract.test.mjs',
+    because: 'a shared control template with a hook cannot cover callers that omit its identity; ordinary missing, opaque and aliased call inputs must be rejected (#1011)',
+    patches: [{
+      file: 'scripts/data-hp-source.mjs',
+      find: '        if (!literal || options.properties.some(ts.isSpreadAssignment) || !usable(identity)) {',
+      replace: '        if (false) {',
+    }],
+  },
+  {
+    id: 'e2e-contract-button-coverage-1011',
+    guard: 'node --test test/data-hp-contract.test.mjs',
+    because: 'ordinary buttons, including button-shaped value controls, must not disappear from critical form coverage (#1011)',
+    patches: [{
+      file: 'scripts/data-hp-source.mjs',
+      find: "  'input', 'select', 'textarea', 'button', 'ha-switch', 'ha-slider', 'ha-icon-picker', 'hp-color-opacity',",
+      replace: "  'input', 'select', 'textarea', 'ha-switch', 'ha-slider', 'ha-icon-picker', 'hp-color-opacity',",
+    }],
+  },
+  {
+    id: 'e2e-primitive-field-id-not-forwarded-1011',
+    guard: 'node demo/smoke_e2e_primitive_fields.mjs',
+    because: 'a caller may supply a valid test-only identity while the mounted shared primitive still drops it; real repeated radar controls and unchanged DOM ids must be observed after bound actions (#1011)',
+    patches: [{
+      file: 'src/editors/form-kit.ts',
+      find: '    <input data-hp="field" data-field=${fieldId ?? nothing} data-slot=${fieldSlot ?? nothing} type="checkbox"',
+      replace: '    <input data-hp="field" data-field=${id ?? nothing} data-slot=${fieldSlot ?? nothing} type="checkbox"',
+    }],
+  },
+  {
     id: 'e2e-toast-keeps-no-key-1011',
     guard: 'node --test test/toast-presentation.test.mjs',
     because: 'the current toast must retain its known i18n key when routed to a modal and retire it on an unkeyed replacement (#1011)',

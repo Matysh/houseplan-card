@@ -311,7 +311,7 @@ export function renderRadarSection(
           field({label:options.t('radar.axis_y'),control:entitySelect('radar-y-source', radar.yEntities[index] || '', candidates.numeric,
         (value) => setAxis('yEntities', index, value), undefined, index)}),
           radar.profile === 'cartesian_v1' ? html`
-        ${toggleRow({title:options.t('radar.swap_axes'),checked:radar.swapXY[index]===true,onChange:value=>setBoolAt('swapXY',index,value)})}
+        ${toggleRow({fieldId:'radar-swap-axes',fieldSlot:index,title:options.t('radar.swap_axes'),checked:radar.swapXY[index]===true,onChange:value=>setBoolAt('swapXY',index,value)})}
         <div class="colorrow radarcoordinates">
           <label>${options.t('radar.axis_x_sign')}<hp-settings-select><select data-hp="field" data-field="radar-x-sign" data-slot=${index} class="areasel"
             @change=${(event: Event) => setSignAt('xSigns', index,
@@ -366,7 +366,7 @@ export function renderRadarSection(
         <option value="forward" ?selected=${radar.angleZero === 'forward'}>${options.t('radar.angle_forward')}</option>
         <option value="right" ?selected=${radar.angleZero === 'right'}>${options.t('radar.angle_right')}</option>
       </select></hp-settings-select>`})}
-      ${toggleRow({title:options.t('radar.angle_clockwise'),checked:radar.angleClockwise,onChange:angleClockwise=>change({angleClockwise})})}
+      ${toggleRow({fieldId:'radar-angle-clockwise',title:options.t('radar.angle_clockwise'),checked:radar.angleClockwise,onChange:angleClockwise=>change({angleClockwise})})}
     ` : nothing,
           radar.profile === 'range_v1' ? html`
       ${radar.rangeEntities.map((entityId, index) => html`
