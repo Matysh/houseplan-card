@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 80,
-  "acceptedAt": "2026-10-21T22:54:58.012Z",
-  "sourceFingerprint": "42e69f019096f5aef911114e5e04054bb1ef59fe2aabb91e655750e64d3387bd",
+  "acceptedAt": "2026-10-22T06:43:47.038Z",
+  "sourceFingerprint": "5ee05883c7418b2f1a47e7babed6a875216781dd06429e445785bf0ee9a15173",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,18 +10,45 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "42e69f019096f5aef911114e5e04054bb1ef59fe2aabb91e655750e64d3387bd",
-    "ci": {
+    "buildFingerprint": "5ee05883c7418b2f1a47e7babed6a875216781dd06429e445785bf0ee9a15173",
+    "ci": null
+  },
+  "localAttestation": {
+    "schema": "houseplan-golden-wsl/v2",
+    "sha256": "ab34e542375da831d3633b395a7cb37832d6ec19b71afe38c1b3cae47dd4e04f",
+    "artifactSha256": "203a39150907daa3f9b98884106eeb0c8d0a594e65778273814b443b1f9e1cb5",
+    "createdAt": "2026-10-22T06:42:58.322Z",
+    "source": {
       "repository": "Matysh/houseplan-card",
-      "run": 39688968781,
-      "attempt": 1,
-      "sha": "d4020af2e74b1aaa7f87fc64f448bd78d3c1a732"
+      "branch": "issue/1008-color-picker-polish",
+      "commit": "7111e9d06163106bf014c697de2843728f236fa6",
+      "tree": "93d49832407234b3ba825b965d7b38ca1cdc750f",
+      "remoteSha": "7111e9d06163106bf014c697de2843728f236fa6",
+      "clean": true,
+      "status": ""
+    },
+    "environment": {
+      "platform": "linux",
+      "arch": "x64",
+      "kernel": "6.18.33.2-microsoft-standard-WSL2",
+      "wsl": true,
+      "distro": "Ubuntu-24.04",
+      "filesystem": "ext2/ext3"
+    },
+    "toolchain": {
+      "node": "22.23.3",
+      "npm": "10.9.9",
+      "playwright": "1.62.0",
+      "browser": {
+        "version": "151.0.7922.34",
+        "resolvedExecutable": "/home/sergey/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell",
+        "executableSha256": "e11fc9ce65c96313476f7ee9844b6fb6a9220fb048693cfe9eee00acf4170a9f"
+      }
     }
   },
-  "localAttestation": null,
   "foreignCapture": null,
   "witnesses": {
-    "count": 189,
+    "count": 184,
     "floor": 10
   },
   "scenarios": {
@@ -209,9 +236,9 @@
     "toggle-entity-dialog-desktop-en": "69262447805811f6959fcd053e97ae88024758e700cfe8feaf4c5e0de07f8724",
     "toggle-entity-dialog-mobile-ru": "a8c4d4f4cdf18a25903f60c6b6f7dc3e5f47dcc60ca8730a1303d16f7b4faca0",
     "device-help-popover-light-ru": "899b41f9b31340481f12e509bc0a503c6b3a81dc1e9fceaee72ae423b603fbc0",
-    "decor-color-popover-mobile-ru": "1ca7c3253017c3e661ccb8942769a906f7894cce0e18bcd965aa696f24b70d28",
-    "decor-color-popover-desktop-en": "214abb86b4dd9d9499802ff839622829189915564b75bdc67fe8d873d553d713",
-    "general-color-popover-desktop-en": "ba96b4e237fa3f768bddc0e53dc4033948e165d2e22522dc298b8ba72eb79ae3",
+    "decor-color-popover-mobile-ru": "a0d6a5e0f6ba7869a8c78ec6ea38494a42c0a5cdb073511458577240ac32183b",
+    "decor-color-popover-desktop-en": "ccce36695943a8bd4f9040127646556016e38589148712b00da0ebc04045606a",
+    "general-color-popover-desktop-en": "1f5f5e68e833960685923af381331783ec9069054b28b74a19f50a031365b966",
     "settings-help-zoom-200-en-light": "05419b89c672a4de7844fabd108111c56ce13c87525ad4f4e50f560f122daef8",
     "settings-help-zoom-200-ru-dark": "f1d49196e15bde11fb2aae4fa2c76eaf7cd650a1ec2fe1cd9dc6a7300bafff4d",
     "support-desktop-empty-light-en": "6e2b1e9f10c305ac3df212cc0cba0329316c7fa7c853decd98d4d53831cadf54",
@@ -220,8 +247,8 @@
     "support-phone-success-dark-en": "6465d8fcaa1217f780c184c3c62f26b0c3cb31490cdb69fff0174d7188e2f12f",
     "support-relay-error-light-en": "90653ec56fbb89bfb5eec22043d4eead35280c84b9194d80dd1104cf6a0d6103",
     "support-tablet-preview-dark-ru": "1f19e04b73cf6f48850d191f719b63e6309a4d20cd725a8e4af864a83f23db4f",
-    "device-ripple-color-popover-mobile-ru": "245a3f792922d693e3e02603e716eebba69f23de49b260cdac386a69bea71710",
-    "space-room-color-popover-desktop-ru": "62e17a3c2f9d979ffec341239a666c668d5919a34f00ad962eea4ad3a5fe3a0e",
+    "device-ripple-color-popover-mobile-ru": "97a520829aebb31dba153790dc05be512edf30f2e4cd80157112085448dc7dd2",
+    "space-room-color-popover-desktop-ru": "29882b5d2aea2eaadcdfadd4e6b89f5c7437af3e411732d8628acec739076bbb",
     "backup-full-preview-desktop-en": "dd28e0a460fdc232b36470c6bab1f6267ccaae0316f8ef1e1f2cde985616bee0",
     "backup-plan-only-export-desktop-en": "1987c01ec3af2d282e7de6505fb35bc5784ec45bc2df5eed786305bd6d371bd4",
     "backup-space-preview-mobile-ru": "5fe0037ab7c98d260ca132aa097bc79405c753a7adc318c9746e94229b8904a3",
