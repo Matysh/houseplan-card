@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1022,
+  "baseStable": "v1.82.0",
+  "category": "major",
+  "rationale": "Adds a third external migration path: one Home Assistant picture-elements card becomes a House Plan space with the backdrop reference and devices, value badges and live labels at the card's percentage positions, with image proportions measured locally and a loss report before download. Serves administrators moving the most common community floorplan; tooling-class implementation deployed with the converter site, as #937.",
+  "summary": {
+    "ru": "Внешний конвертер переносит карточку picture-elements: подложка ссылкой, устройства и подписи на своих местах, потери перечислены до скачивания.",
+    "en": "The external converter brings a picture-elements card into House Plan: backdrop reference, devices and labels at their positions, losses listed before download."
+  }
+}

@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sweet Home 3D / Easy Floorplan → House Plan</title>
-<meta name="description" content="Convert Sweet Home 3D and Easy Floorplan plans locally in your browser into current House Plan import documents.">
+<title>Sweet Home 3D / Easy Floorplan / picture-elements → House Plan</title>
+<meta name="description" content="Convert Sweet Home 3D, Easy Floorplan and Home Assistant picture-elements plans locally in your browser into current House Plan import documents.">
 <meta name="robots" content="index,follow">
 <meta name="theme-color" content="#0b1420">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏠</text></svg>">
@@ -48,6 +48,10 @@
   .input{display:block;width:100%;min-width:0;max-width:100%;font:inherit;color:var(--text);
     background:var(--panel-solid);border:1px solid var(--line-strong);border-radius:12px;padding:12px;margin:8px 0 16px}
   textarea.input{min-height:180px;resize:vertical;font:14px ui-monospace,monospace}
+  .size-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:8px 0}
+  .size-field{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:14px}
+  .size-field .input{width:110px;margin:0}
+  .size-field .input.measured{border-color:var(--ok)}
   .level,.notes{overflow-wrap:anywhere}
   .btn:disabled{opacity:.5;cursor:not-allowed}
   .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -86,10 +90,25 @@
   <select id="format" class="input">
     <option value="sh3d">Sweet Home 3D (.sh3d)</option>
     <option value="easy">Easy Floorplan (YAML / JSON)</option>
+    <option value="picture">Home Assistant picture-elements (YAML / JSON)</option>
   </select>
+  <div id="picture-size" class="card" hidden>
+    <p data-i18n="picture.size.why"></p>
+    <div class="size-row">
+      <button id="picture-image" type="button" class="btn" data-i18n="picture.size.image"></button>
+      <input id="picture-image-file" type="file" accept="image/*" hidden>
+      <span class="muted" data-i18n="picture.size.or"></span>
+      <label class="size-field"><span data-i18n="picture.size.width"></span>
+        <input id="picture-width" class="input" type="number" min="1" max="20000" step="1" inputmode="numeric"></label>
+      <span class="muted">×</span>
+      <label class="size-field"><span data-i18n="picture.size.height"></span>
+        <input id="picture-height" class="input" type="number" min="1" max="20000" step="1" inputmode="numeric"></label>
+    </div>
+    <p id="picture-size-status" class="muted" data-i18n="picture.size.missing"></p>
+  </div>
   <div id="easy-input" class="card" hidden>
-    <p data-i18n="easy.instructions"></p>
-    <label for="paste" data-i18n="easy.paste"></label>
+    <p id="paste-instructions" data-i18n="easy.instructions"></p>
+    <label for="paste" id="paste-label" data-i18n="easy.paste"></label>
     <textarea id="paste" class="input" spellcheck="false"></textarea>
     <button id="convert-paste" type="button" class="btn primary" data-i18n="easy.convert"></button>
   </div>

@@ -191,6 +191,11 @@
   Colour updates keep the popup in place throughout the input frame.
   Keyboard focus remains visible under the pointer in high contrast mode.
 
+- The external plan converter accepts a Home Assistant `picture-elements`
+  card: the image becomes the backdrop reference and the state icons, badges
+  and labels become devices and live text at the same positions. The page
+  measures the image file locally or takes the size typed in; everything it
+  cannot carry is listed before download. (#1022)
 - Show a waxing moon lit on the right and a waning moon on the left, keeping
   the north-up surface drawing unchanged across all backgrounds and cards. (#1006)
 - Give each vacuum its own path colour and transparency, with a thin unoutlined

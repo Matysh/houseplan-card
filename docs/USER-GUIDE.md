@@ -3054,6 +3054,30 @@ Signed URLs, unknown query parameters and fragments after `#` are omitted with
 a loss report. Use an ordinary image link without an access key, or replace the
 backdrop after importing.
 
+### Importing from a picture-elements card
+
+The third source on the same page is the standard Home Assistant
+`picture-elements` card: paste the YAML of one card from the card editor
+(“Show code editor”), or choose its YAML/JSON file. Not the whole dashboard
+and not a stack: the converter reads exactly one `type: picture-elements`.
+
+The card has no geometry, so what transfers is the backdrop (a reference, as
+for Easy Floorplan) and the elements at their positions: `state-icon` and
+`icon` with an entity become devices, `state-badge` a device with its value
+badge, `state-label` live text with prefix and suffix; `title` becomes the
+device name, `tap_action` toggle / more-info / none transfer, other actions
+become “show information”. Rooms, walls, Area bindings and the scale do not
+exist in the source: trace the rooms and set the scale in the editor afterwards
+— the devices stay where they are.
+
+picture-elements positions are percentages of the image, so the page needs
+the image proportions: choose the image file (only its width and height are
+read, the file goes nowhere) or type the size in pixels. Without it the
+conversion does not start. Not transferred, each named in the report:
+`conditional` layers, `image` elements and state-dependent image swapping (use
+glow for lights), `service-button`, custom cards, CSS other than `left`/`top`,
+hold and double-tap actions, positions in pixels or outside the image.
+
 ### Storage locations
 
 | Data | Location |

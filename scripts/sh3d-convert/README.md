@@ -15,6 +15,14 @@ support for an older backend just because it can read export-v2 envelopes.
 - Easy accepts one `custom:easy-floorplan-card` YAML/JSON object, never searches
   an entire dashboard. Nonempty `floors` wins over legacy arrays. A shared frame
   and cm/unit coefficient preserve offsets and proportions across floors.
+- picture-elements (#1022) accepts one `type: picture-elements` card object:
+  the `image` becomes the backdrop reference and `state-icon` / `icon` (with an
+  entity) / `state-badge` / `state-label` elements become markers and live text
+  at `left`/`top` percentages of the image. Positions need the image
+  proportions: the caller measures the file locally (`imageWidth`/`imageHeight`)
+  or passes `aspect`; nothing is guessed. No rooms, walls or scale (1 cm/unit,
+  `scale_default`). `conditional`, `image`, `service-button`, custom cards,
+  px positions and CSS other than left/top are reported, never approximated.
 - Scale: median ordinary single-swing door -> 90 cm; otherwise median known
   furniture dimension ratios; otherwise 1 cm/unit. It is an estimate, not a
   physical measurement. There is no mandatory calibration step; the user can

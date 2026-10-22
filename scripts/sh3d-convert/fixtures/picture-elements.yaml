@@ -1,0 +1,105 @@
+# A typical community floorplan card: one image, state icons, a badge, labels,
+# an image swapped by state, a conditional layer and a custom card (#1022).
+type: picture-elements
+title: Ground floor
+image: /local/floorplan/ground.png
+elements:
+  - type: state-icon
+    entity: light.living_room
+    title: Living room light
+    tap_action:
+      action: toggle
+    style:
+      left: 25%
+      top: 40%
+  - type: state-icon
+    entity: switch.kitchen_kettle
+    icon: mdi:kettle
+    hold_action:
+      action: more-info
+    style:
+      left: 62.5%
+      top: 30%
+      "--mdc-icon-size": 40px
+  - type: state-badge
+    entity: sensor.living_temperature
+    style:
+      left: 30%
+      top: 55%
+  - type: state-label
+    entity: sensor.outdoor_temperature
+    prefix: "Outside "
+    suffix: " °C"
+    style:
+      left: 90%
+      top: 8%
+      color: white
+  - type: state-label
+    entity: climate.hall
+    attribute: current_temperature
+    style:
+      left: 50%
+      top: 50%
+      transform: translate(0%, 0%)
+  - type: icon
+    icon: mdi:cctv
+    entity: camera.porch
+    tap_action:
+      action: navigate
+      navigation_path: /lovelace/cameras
+    style:
+      left: 5%
+      top: 95%
+  - type: icon
+    icon: mdi:information
+    title: Decorative icon
+    style:
+      left: 10%
+      top: 10%
+  - type: image
+    entity: light.hall
+    state_image:
+      "on": /local/floorplan/hall-on.png
+      "off": /local/floorplan/transparent.png
+    style:
+      left: 50%
+      top: 50%
+      width: 100%
+  - type: conditional
+    conditions:
+      - entity: sun.sun
+        state: below_horizon
+    elements:
+      - type: image
+        image: /local/floorplan/night.png
+        style:
+          left: 50%
+          top: 50%
+  - type: service-button
+    title: Movie scene
+    service: scene.turn_on
+    target:
+      entity_id: scene.movie
+    style:
+      left: 80%
+      top: 80%
+  - type: custom:button-card
+    entity: lock.front_door
+    style:
+      left: 15%
+      top: 70%
+  - type: state-icon
+    entity: binary_sensor.garage
+    style:
+      left: 120px
+      top: 40%
+  - type: state-icon
+    entity: not an entity
+    style:
+      left: 70%
+      top: 70%
+  - type: state-icon
+    entity: light.stairs
+    style:
+      left: 101%
+      top: 5%

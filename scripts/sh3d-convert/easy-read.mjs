@@ -50,8 +50,9 @@ function checkTree(root) {
   walk(root, 0, '$');
 }
 
-/** No network, source URL resolution, implicit card search or execution. */
-export function readEasy(text) {
+/** Bounded YAML/JSON of ONE card for every card reader: no network, source URL
+ * resolution, implicit card search or execution. Returns the plain object. */
+export function readCard(text) {
   if (typeof text !== 'string' || !text.trim()) fail('easy_empty', '$');
   if (new TextEncoder().encode(text).length > MAX_EASY_BYTES) fail('easy_file_too_large', '$');
   // Directives are not useful in a card config. This is an input restriction,
@@ -69,7 +70,13 @@ export function readEasy(text) {
   if (document.errors.length || document.warnings.length) fail('easy_invalid_yaml', '$');
   checkTree(document.contents);
   const config = document.toJS({ maxAliasCount: 0 });
-  if (!record(config) || config.type !== 'custom:easy-floorplan-card') fail('easy_not_card', '$.type');
+  if (!record(config)) fail('easy_not_card', '$.type');
+  return config;
+}
+
+export function readEasy(text) {
+  const config = readCard(text);
+  if (config.type !== 'custom:easy-floorplan-card') fail('easy_not_card', '$.type');
   for (const key of ['width', 'height']) {
     if (config[key] !== undefined && (typeof config[key] !== 'number' || !(config[key] > 0)))
       fail('easy_invalid_size', `$.${key}`);

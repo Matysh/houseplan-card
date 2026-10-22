@@ -1,0 +1,225 @@
+{
+  "format": "houseplan-export",
+  "export_version": 2,
+  "kind": "space",
+  "created_at": "1970-01-01T00:00:00Z",
+  "card_version": "plan-convert 0.2",
+  "integration_version": "plan-convert 0.2",
+  "model_version": 10,
+  "payload": {
+    "config": {
+      "spaces": [
+        {
+          "id": "picture-1",
+          "title": "Ground floor",
+          "cell_cm": 10,
+          "view_box": [
+            0.146666667,
+            0.271666667,
+            0.706666667,
+            0.456666667
+          ],
+          "rooms": [],
+          "partitions": [],
+          "decor": [
+            {
+              "id": "picture-1-element-sensor-outdoor-temperature",
+              "kind": "text",
+              "x": 0.7666666666666667,
+              "y": 0.325,
+              "text": "Outside {sensor.outdoor_temperature} °C",
+              "size_cm": 16,
+              "angle": 0,
+              "color": "#ffffff"
+            },
+            {
+              "id": "picture-1-element-climate-hall",
+              "kind": "text",
+              "x": 0.5,
+              "y": 0.5,
+              "text": "{climate.hall:current_temperature}",
+              "size_cm": 16,
+              "angle": 0,
+              "color": "#808080"
+            }
+          ],
+          "settings": {
+            "glow_enabled": true
+          },
+          "plan_url": "/local/floorplan/ground.png",
+          "plan_aspect": 1.6,
+          "plan_x": 0.166666667,
+          "plan_y": 0.104166667,
+          "plan_scale_x": 0.666666667,
+          "plan_scale_y": 0.666666667,
+          "wall_segments": []
+        }
+      ],
+      "markers": [
+        {
+          "id": "picture-1-element-living-room-light",
+          "binding": "entity:light.living_room",
+          "space": "picture-1",
+          "tap_action": "toggle",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          },
+          "name": "Living room light"
+        },
+        {
+          "id": "picture-1-element-switch-kitchen-kettle",
+          "binding": "entity:switch.kitchen_kettle",
+          "space": "picture-1",
+          "tap_action": "toggle",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          },
+          "icon": "mdi:kettle"
+        },
+        {
+          "id": "picture-1-element-sensor-living-temperature",
+          "binding": "entity:sensor.living_temperature",
+          "space": "picture-1",
+          "tap_action": "info",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": true,
+            "position": "bottom",
+            "source": {
+              "kind": "entity_state",
+              "entity_id": "sensor.living_temperature"
+            }
+          }
+        },
+        {
+          "id": "picture-1-element-camera-porch",
+          "binding": "entity:camera.porch",
+          "space": "picture-1",
+          "tap_action": "info",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          },
+          "icon": "mdi:cctv"
+        },
+        {
+          "id": "picture-1-element-not-an-entity",
+          "binding": "virtual",
+          "space": "picture-1",
+          "tap_action": "info",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          },
+          "name": "Device"
+        }
+      ]
+    },
+    "layout": {
+      "picture-1-element-living-room-light": {
+        "s": "picture-1",
+        "x": 0.333333333,
+        "y": 0.458333333
+      },
+      "picture-1-element-switch-kitchen-kettle": {
+        "s": "picture-1",
+        "x": 0.583333333,
+        "y": 0.416666667
+      },
+      "picture-1-element-sensor-living-temperature": {
+        "s": "picture-1",
+        "x": 0.366666667,
+        "y": 0.520833333
+      },
+      "picture-1-element-camera-porch": {
+        "s": "picture-1",
+        "x": 0.2,
+        "y": 0.6875
+      },
+      "picture-1-element-not-an-entity": {
+        "s": "picture-1",
+        "x": 0.633333333,
+        "y": 0.583333333
+      }
+    }
+  },
+  "placement_manifest": [
+    {
+      "layout_id": "picture-1-element-living-room-light",
+      "space_id": "picture-1",
+      "owner": "marker",
+      "owner_id": "picture-1-element-living-room-light",
+      "binding": "entity:light.living_room",
+      "label": "Living room light",
+      "icon": null
+    },
+    {
+      "layout_id": "picture-1-element-switch-kitchen-kettle",
+      "space_id": "picture-1",
+      "owner": "marker",
+      "owner_id": "picture-1-element-switch-kitchen-kettle",
+      "binding": "entity:switch.kitchen_kettle",
+      "label": null,
+      "icon": "mdi:kettle"
+    },
+    {
+      "layout_id": "picture-1-element-sensor-living-temperature",
+      "space_id": "picture-1",
+      "owner": "marker",
+      "owner_id": "picture-1-element-sensor-living-temperature",
+      "binding": "entity:sensor.living_temperature",
+      "label": null,
+      "icon": null
+    },
+    {
+      "layout_id": "picture-1-element-camera-porch",
+      "space_id": "picture-1",
+      "owner": "marker",
+      "owner_id": "picture-1-element-camera-porch",
+      "binding": "entity:camera.porch",
+      "label": null,
+      "icon": "mdi:cctv"
+    },
+    {
+      "layout_id": "picture-1-element-not-an-entity",
+      "space_id": "picture-1",
+      "owner": "marker",
+      "owner_id": "picture-1-element-not-an-entity",
+      "binding": "virtual",
+      "label": "Device",
+      "icon": null
+    }
+  ],
+  "content_manifest": [
+    {
+      "kind": "plan",
+      "owner": "space",
+      "owner_id": "picture-1",
+      "field": "plan_url",
+      "url": "/local/floorplan/ground.png",
+      "storage": "external",
+      "exists_at_export": null
+    }
+  ]
+}

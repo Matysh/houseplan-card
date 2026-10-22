@@ -1,0 +1,103 @@
+{
+  "levels": [
+    {
+      "id": "main",
+      "title": "Ground floor",
+      "notes": [
+        {
+          "code": "element_style_skipped",
+          "id": "picture-1-element-switch-kitchen-kettle",
+          "fields": "--mdc-icon-size"
+        },
+        {
+          "code": "secondary_actions_skipped",
+          "id": "picture-1-element-switch-kitchen-kettle"
+        },
+        {
+          "code": "state_label_as_text",
+          "id": "picture-1-element-sensor-outdoor-temperature"
+        },
+        {
+          "code": "element_transform_ignored",
+          "id": "picture-1-element-climate-hall"
+        },
+        {
+          "code": "state_label_as_text",
+          "id": "picture-1-element-climate-hall"
+        },
+        {
+          "code": "action_fallback_info",
+          "id": "picture-1-element-camera-porch"
+        },
+        {
+          "code": "element_type_skipped",
+          "id": "picture-1-element-decorative-icon",
+          "type": "icon"
+        },
+        {
+          "code": "element_image_skipped",
+          "id": "picture-1-element-light-hall"
+        },
+        {
+          "code": "element_conditional_skipped",
+          "id": "picture-1-element-conditional",
+          "count": 1
+        },
+        {
+          "code": "element_type_skipped",
+          "id": "picture-1-element-movie-scene",
+          "type": "service-button"
+        },
+        {
+          "code": "element_custom_skipped",
+          "id": "picture-1-element-lock-front-door",
+          "type": "custom:button-card"
+        },
+        {
+          "code": "element_position_unsupported",
+          "id": "picture-1-element-binary-sensor-garage"
+        },
+        {
+          "code": "binding_virtualized",
+          "id": "picture-1-element-not-an-entity"
+        },
+        {
+          "code": "element_position_outside",
+          "id": "picture-1-element-light-stairs"
+        },
+        {
+          "code": "picture_lights_hint",
+          "count": 1
+        },
+        {
+          "code": "image_external_reference",
+          "id": "main"
+        }
+      ],
+      "spaceId": "picture-1",
+      "cellCm": 10,
+      "rooms": 0,
+      "walls": 0,
+      "openings": 0,
+      "devices": 5,
+      "decor": 2
+    }
+  ],
+  "items": [
+    {
+      "code": "scale_default",
+      "cmPerUnit": 1,
+      "count": 0
+    },
+    {
+      "code": "picture_compatibility"
+    },
+    {
+      "code": "picture_size_measured",
+      "width": 1600,
+      "height": 1000
+    }
+  ],
+  "toolVersion": "plan-convert 0.2",
+  "minHouseplan": "1.81.0"
+}
