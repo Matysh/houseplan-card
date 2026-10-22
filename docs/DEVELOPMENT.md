@@ -10,6 +10,8 @@ and endpoints; checks reduced-motion paint, forced-colors focus, native alpha,
 all five settings/decor consumers and the absent-Popover portal at 320px.
 Input checks also read placement inline properties immediately after Lit updates,
 before RAF can hide an accidental popup-position reset.
+Forced-colors checks keep the pointer on the keyboard-focused range so the
+hover cascade cannot silently suppress its high-contrast outline.
 Synthetic frames/report: artifacts/color-picker-presentation/. The unchanged
 dev red witness preceded product edits; private UI-016 files remain local.
 Existing picker/consumer/activity and selected settings smokes own validation,

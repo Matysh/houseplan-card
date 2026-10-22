@@ -467,7 +467,7 @@ export class HpColorOpacity extends LitElement {
         outline: 1px solid CanvasText;
         forced-color-adjust: none;
       }
-      .hsv-range:focus-visible {
+      :host([data-pointer-hover]) .hsv-range:focus-visible, .hsv-range:focus-visible {
         outline: 2px solid Highlight;
         outline-offset: 1px;
       }

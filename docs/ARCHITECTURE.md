@@ -6,6 +6,7 @@ unrounded HSV; one class styles the three native ranges in both popover and
 portal roots. Colour properties belong to the inputs: Lit must not replace the
 surface's inline style owned by the placement controller. Opacity keeps its native range; consumers, events and persistence
 are unchanged. No observers or per-dialog picker overrides are introduced.
+Forced-colors focus matches the gated hover specificity and overrides it.
 
 Moon phase direction (#1006) travels from the existing astronomy calculation
 through `MoonView` and its fingerprint into the shared runtime's mask sweeps.

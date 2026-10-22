@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.82.0** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.82.0-beta.6` |
-| Tests | Node unit 5032 · pure backend 579 · HA-harness backend 484 · browser smokes 408 (`npm run inventory`) |
+| Tests | Node unit 5036 · pure backend 579 · HA-harness backend 484 · browser smokes 408 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -40,6 +40,7 @@ The shared HSV picker (#1008) follows accepted UI-016: centred 20px thumbs on
 10px tracks, resulting-colour centres and live saturation/brightness gradients.
 All settings/decor consumers retain their existing draft and overlay owners.
 Input-only colour styles preserve controller-owned popup coordinates before RAF.
+Forced-colors keyboard focus retains its outline when the pointer also hovers.
 
 The owner opened the `v1.83.0` stable cycle from `v1.82.0` with milestone 9
 (`1.83`) for #1005. Post-stable documentation archive #674 is infrastructure

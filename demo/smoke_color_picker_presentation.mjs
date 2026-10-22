@@ -169,8 +169,10 @@ try {
   out.reducedMotion = near(firstMotion.sampled[0].halo, lastMotion.sampled[0].halo, 1)
     && !near(firstMotion.sampled[0].halo, idleMotion.sampled[0].halo, 8);
   await page.emulateMedia({ forcedColors: 'active' });
+  await ranges.nth(1).hover();
   await ranges.nth(1).focus(); await page.keyboard.press('ArrowRight');
   out.forcedColorsFocus = await ranges.nth(1).evaluate(e => e.matches(':focus-visible')
+    && e.matches(':hover')
     && getComputedStyle(e).outlineStyle === 'solid' && getComputedStyle(e).outlineWidth === '2px');
   await page.emulateMedia({ forcedColors: 'none' });
 

@@ -16151,6 +16151,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'color-picker-forced-focus-loses-hover-1008',
+    guard: 'node demo/smoke_color_picker_presentation.mjs',
+    because: 'in forced-colors the real keyboard focus outline must survive a coincident mouse '
+      + 'hover; only the browser cascade under that media/input combination proves it (#1008)',
+    patches: [{
+      file: 'src/hp-color-opacity.ts',
+      find: '      :host([data-pointer-hover]) .hsv-range:focus-visible, .hsv-range:focus-visible {\n        outline: 2px solid Highlight;',
+      replace: '      .hsv-range:focus-visible {\n        outline: 2px solid Highlight;',
+    }],
+  },
+  {
     id: 'color-picker-confirm-click-through',
     guard: 'node demo/smoke_color_picker_consumers.mjs',
     because: 'the full-width confirmation inside a general-settings dialog must consume its own '
