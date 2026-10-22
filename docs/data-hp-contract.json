@@ -632,7 +632,7 @@
         "data-field": {
           "since": "1.83.0",
           "value": "string",
-          "meaning": "stable control id, name or capability key; see STYLING-HOOKS §7.8",
+          "meaning": "stable control id, name or capability key for the bound quantity; wall-thickness is cm/in, column-size is side/diameter, opening-length is cm, opening-{contact|lock}-entity-filter searches that picker, device-discovery-{group-lights|exclusion} controls discovery; see STYLING-HOOKS §7.8",
           "audience": [
             "test"
           ]

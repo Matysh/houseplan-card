@@ -14,6 +14,14 @@ try {
       return !dialog.isConnected;
     };
     await hp.setVolumetricView(false);
+    await hp.setMode('plan');
+    for (const [tool, field] of [['draw', 'wall-thickness'], ['column', 'column-size']]) {
+      await hp.setTool(tool);
+      const control = root.querySelector(`[data-hp="field"][data-field="${field}"]`);
+      o[`${tool}DimensionIdentity`] = control?.type === 'number'
+        && control.value === c._drawWallFieldValue;
+    }
+    await hp.setTool('select');
     const space = c._serverCfg.spaces[0], room = space.rooms[0], area = room.area || 'living_room';
     window.__addRegistryDevice('hooks-radar-fields', 'Synthetic radar', 'Generic radar', area);
     for (const [id, value] of [['sensor.hooks_radar_x', '1000'], ['sensor.hooks_radar_y', '2000']]) {

@@ -4795,7 +4795,7 @@ public _renderEditorGroupModel(group: EditorToolbarGroup): EditorSecondaryModel 
 public _renderDrawWallControl(): TemplateResult {
     const min = this.host._tool === 'column' ? 1 : 0;
     return html`<label class="drawwall ${this.host._drawWallCm == null ? 'invalid' : ''}">${this.host._t('wallthick.field')}
-      <input data-hp="field" data-field="wall-thickness" type="number" min=${cmToField(min, this.host._imperial)}
+      <input data-hp="field" data-field=${this.host._tool === 'column' ? 'column-size' : 'wall-thickness'} type="number" min=${cmToField(min, this.host._imperial)}
         max=${cmToField(this.host._drawWallMaxCm, this.host._imperial)} step="any"
         .value=${this.host._drawWallFieldValue}
         @input=${(e: Event) => {
@@ -5586,7 +5586,7 @@ public _renderWallThickDialog(): TemplateResult {
       @click=${(e: Event) => e.stopPropagation()}>
       <div class="row">
         <label>${this.host._t('wallthick.field')}</label>
-        <input data-hp="field" data-field="object-opacity" type="number" min="0" max="100" step="any" .value=${d.value}
+        <input data-hp="field" data-field="wall-thickness" type="number" min="0" max="100" step="any" .value=${d.value}
           @input=${(e: Event) => {
             this.host._wallDialog = { ...d, value: (e.target as HTMLInputElement).value };
           }}
@@ -9271,9 +9271,9 @@ public _renderBackupImportDialog(): TemplateResult {
             <div class="backupsummary"><b>${this.host._t('backup.final_name')}</b><span>${p.space_title}</span></div>
             <div class="rhint">${this.host._t('backup.target_settings')}</div>
             ${p.duplicates ? html`<fieldset class="backupchoices"><legend>${this.host._t('backup.duplicates', { n: String(p.duplicates) })}</legend>
-              <label><input data-hp="field" data-field="duplicate-policy" type="radio" name="duplicate-policy" .checked=${d.duplicatePolicy === 'skip'}
+              <label><input data-hp="field" data-field="duplicate-policy" data-value="skip" type="radio" name="duplicate-policy" .checked=${d.duplicatePolicy === 'skip'}
                 @change=${() => this._setBackupDuplicatePolicy('skip')} />${this.host._t('backup.skip')}</label>
-              <label><input data-hp="field" data-field="duplicate-policy" type="radio" name="duplicate-policy" .checked=${d.duplicatePolicy === 'virtual'}
+              <label><input data-hp="field" data-field="duplicate-policy" data-value="virtual" type="radio" name="duplicate-policy" .checked=${d.duplicatePolicy === 'virtual'}
                 @change=${() => this._setBackupDuplicatePolicy('virtual')} />${this.host._t('backup.virtual_copy')}</label>
             </fieldset>` : nothing}`}
           ${p.content?.length ? html`<div class="backupcontent">
@@ -9405,7 +9405,7 @@ public _updateDecorStyle(next: DecorStyle, immediate = false): void {
     }
   }
 
-public _boolInput(checked: boolean, onChange: (v: boolean) => void, disabled = false, fieldId = 'opening-option'): TemplateResult {
+public _boolInput(checked: boolean, onChange: (v: boolean) => void, disabled: boolean, fieldId: string): TemplateResult {
     const h = (e: Event) => onChange(!!(e.target as HTMLInputElement).checked);
     return customElements.get('ha-switch')
       ? html`<ha-switch data-hp="field" data-field=${fieldId} .checked=${checked} .disabled=${disabled} @change=${h}></ha-switch>`
@@ -10170,7 +10170,7 @@ public _renderOpeningDialog(): TemplateResult {
         </button>
         ${open
           ? html`<div class="droppanel opening-entity-panel" data-opening-panel=${kind}>
-              <input data-hp="field" data-field="led-picker-filter" class="namein opening-entity-search" type="text"
+              <input data-hp="field" data-field=${`opening-${kind}-entity-filter`} class="namein opening-entity-search" type="text"
                 placeholder=${this.host._t('opening.search_ph')} .value=${filter}
                 @input=${(e: Event) => this._filterOpeningEntities(
                   kind, (e.target as HTMLInputElement).value,
@@ -10210,25 +10210,25 @@ public _renderOpeningDialog(): TemplateResult {
                   : this.host._t('opening.host_partition')}</span>
             </div>` : nothing}
           <label>${this.host._t('opening.type_label')}</label>
-          <label class="srcrow"><input data-hp="field" data-field="optype" type="radio" name="optype" .checked=${d.type === 'window'}
+          <label class="srcrow"><input data-hp="field" data-field="optype" data-value="window" type="radio" name="optype" .checked=${d.type === 'window'}
             @change=${() => (this.host._openingDialog = {
               ...d, type: 'window', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('window'),
               contactOpen: false, lockOpen: false,
             })} />
             <span>${this.host._t('opening.window')}</span></label>
-          <label class="srcrow"><input data-hp="field" data-field="optype" type="radio" name="optype" .checked=${d.type === 'door'}
+          <label class="srcrow"><input data-hp="field" data-field="optype" data-value="door" type="radio" name="optype" .checked=${d.type === 'door'}
             @change=${() => (this.host._openingDialog = {
               ...d, type: 'door', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('door'),
               contactOpen: false, lockOpen: false,
             })} />
             <span>${this.host._t('opening.door')}</span></label>
-          <label class="srcrow"><input data-hp="field" data-field="optype" type="radio" name="optype" .checked=${d.type === 'passage'}
+          <label class="srcrow"><input data-hp="field" data-field="optype" data-value="passage" type="radio" name="optype" .checked=${d.type === 'passage'}
             @change=${() => (this.host._openingDialog = {
               ...d, type: 'passage', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('passage'),
               contactOpen: false, lockOpen: false,
             })} />
             <span>${this.host._t('opening.passage')}</span></label>
-          <label class="srcrow"><input data-hp="field" data-field="optype" type="radio" name="optype" .checked=${d.type === 'gate'}
+          <label class="srcrow"><input data-hp="field" data-field="optype" data-value="gate" type="radio" name="optype" .checked=${d.type === 'gate'}
             @change=${() => (this.host._openingDialog = {
               ...d, type: 'gate',
               lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('gate'), flipH: false,
@@ -10237,7 +10237,7 @@ public _renderOpeningDialog(): TemplateResult {
             <span>${this.host._t('opening.gate')}</span></label>
 
           <label>${this.host._t('opening.length_label')}</label>
-          <input data-hp="field" data-field="led-length" class="namein tempin" type="number" min="20" max="600" step="5" .value=${String(d.lengthCm)}
+          <input data-hp="field" data-field="opening-length" class="namein tempin" type="number" min="20" max="600" step="5" .value=${String(d.lengthCm)}
             @input=${(e: Event) => {
               const n = strictNumber((e.target as HTMLInputElement).value);
               if (n != null) this.host._openingDialog = { ...d, lengthCm: n, lengthTouched: true };
@@ -10254,7 +10254,7 @@ public _renderOpeningDialog(): TemplateResult {
             ? html`<label>${this.host._t('opening.contact_label')}</label>
                 ${picker('contact', this._contactCandidates())}
                 ${d.contact
-                  ? html`<label class="srcrow">${this._boolInput(d.invert, (v) => (this.host._openingDialog = { ...d, invert: v }))}
+                  ? html`<label class="srcrow">${this._boolInput(d.invert, (v) => (this.host._openingDialog = { ...d, invert: v }), false, 'opening-contact-invert')}
                       <span>${this.host._t('opening.invert')}</span></label>`
                   : nothing}`
             : nothing}
@@ -10265,11 +10265,11 @@ public _renderOpeningDialog(): TemplateResult {
             : nothing}
 
           ${d.type !== 'gate' && d.type !== 'passage'
-            ? html`<label class="srcrow">${this._boolInput(d.flipH, (v) => (this.host._openingDialog = { ...d, flipH: v }))}
+            ? html`<label class="srcrow">${this._boolInput(d.flipH, (v) => (this.host._openingDialog = { ...d, flipH: v }), false, 'opening-flip-horizontal')}
                 <span>${this.host._t('opening.flip_h')}</span></label>`
             : nothing}
           ${d.type !== 'passage'
-            ? html`<label class="srcrow">${this._boolInput(d.flipV, (v) => (this.host._openingDialog = { ...d, flipV: v }))}
+            ? html`<label class="srcrow">${this._boolInput(d.flipV, (v) => (this.host._openingDialog = { ...d, flipV: v }), false, 'opening-flip-vertical')}
                 <span>${this.host._t('opening.flip_v')}</span></label>`
             : nothing}
         </div>
@@ -11000,7 +11000,7 @@ public async _saveDiscoveryFilters(dialog: DeviceInboxDialogState): Promise<void
         @toggle=${(event: Event) => patch({ filtersOpen: (event.target as HTMLDetailsElement).open })}>
       <summary data-hp="action" data-action="device-discovery-settings">${this.host._t('device_inbox.filters_title' as never)}</summary>
       <label class="srcrow">
-        <input data-hp="field" data-field="led-group-lights" type="checkbox" .checked=${draft.groupLights}
+        <input data-hp="field" data-field="device-discovery-group-lights" type="checkbox" .checked=${draft.groupLights}
           @change=${(event: Event) => patch({
             draftGroupLights: (event.target as HTMLInputElement).checked,
           })} />
@@ -11014,7 +11014,7 @@ public async _saveDiscoveryFilters(dialog: DeviceInboxDialogState): Promise<void
               @click=${() => patch({ draftExcluded: draft.excluded.filter((x) => x !== name) })}>×</button>
           </span>`)}
         </div>
-        <input data-hp="field" data-field="led-title" type="text" list="hp-discovery-integrations"
+        <input data-hp="field" data-field="device-discovery-exclusion" type="text" list="hp-discovery-integrations"
           placeholder=${this.host._t('device_inbox.filters_search_ph' as never)}
           @change=${(event: Event) => {
             const input = event.target as HTMLInputElement;
@@ -11635,7 +11635,7 @@ public _renderRadarSection(d: NonNullable<HouseplanEditorHostPort['_markerDialog
       st: settingsCopy(this.host).st,
       toolsT: key => this._toolsT(key),
       help: (key) => this._help(key),
-      boolInput: (value, change) => this._boolInput(value, change),
+      boolInput: (value, change, fieldId) => this._boolInput(value, change, false, fieldId),
       toast: (message, id) => this.host._showToast(message, id),
       setup: this._radarSetup,
       configRev: this.host._cfgRev,
@@ -11653,7 +11653,7 @@ public _renderMergeDialog(): TemplateResult {
       const r = rooms.find((x) => x.id === id);
       const area = r?.area ? this.host.hass.areas[r.area]?.name : null;
       return html`<label class="srcrow">
-        <input data-hp="field" data-field="mergekeep" type="radio" name="mergekeep" .checked=${d.pick === key}
+        <input data-hp="field" data-field="mergekeep" data-value=${key} type="radio" name="mergekeep" .checked=${d.pick === key}
           @change=${() => (this.host._mergeDialog = { ...d, pick: key })} />
         <span>${r?.name || ''} <span class="muted">· ${area || this.host._t('merge.no_area')}</span></span>
       </label>`;

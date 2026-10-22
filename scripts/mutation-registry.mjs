@@ -16162,6 +16162,16 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'e2e-wall-thickness-field-wrong-quantity-1011',
+    guard: 'node demo/smoke_wallthick_standalone.mjs',
+    because: 'an existing room wall and independent partition must expose their actual thickness under wall-thickness, including real input, Apply wire centimetres and Undo; an open string inventory cannot establish the semantic meaning of a mounted control (#1011 r3)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '        <input data-hp="field" data-field="wall-thickness" type="number" min="0" max="100" step="any" .value=${d.value}',
+      replace: '        <input data-hp="field" data-field="object-opacity" type="number" min="0" max="100" step="any" .value=${d.value}',
+    }],
+  },
+  {
     id: 'e2e-contract-dynamic-writer-silently-ignored-1011',
     guard: 'node --test test/data-hp-contract.test.mjs',
     because: 'an unsupported dynamic DOM writer must fail the declared selector inventory instead of silently dropping values from its completeness check (#1011)',

@@ -46,8 +46,9 @@ const out = await page.evaluate(async () => {
   // AC1: тумблер группировки
   const runtime = c._editorRuntime;
   const dialog = () => c._deviceInbox;
-  const toggle = root().querySelector('.device-inbox-discovery .srcrow input');
+  const toggle = root().querySelector('[data-hp="field"][data-field="device-discovery-group-lights"]');
   result.toggleDefaultOn = !!toggle?.checked;
+  result.noUnrelatedLedFields = !section.querySelector('[data-field^="led-"]');
   toggle.checked = false;
   toggle.dispatchEvent(new Event('change', { bubbles: true }));
   await c.updateComplete;
@@ -67,9 +68,9 @@ const out = await page.evaluate(async () => {
   await c._writeChain;
   writes.length = 0;
   const beforeExcluded = runtime._discoveryFilterState(dialog()).excluded.length;
-  c._deviceInbox = { ...dialog(), draftExcluded: [
-    ...runtime._discoveryFilterState(dialog()).excluded, anyIntegration,
-  ] };
+  const exclusion = root().querySelector('[data-hp="field"][data-field="device-discovery-exclusion"]');
+  exclusion.value = anyIntegration;
+  exclusion.dispatchEvent(new Event('change', { bubbles: true }));
   await c.updateComplete;
   const preview = runtime._discoveryFilterPreview(dialog());
   result.previewHides = preview.hide > 0;
@@ -129,7 +130,7 @@ const out = await page.evaluate(async () => {
   c._closeDeviceInbox?.();
   return result;
 });
-checkAll(out, ['sectionOnAvailable', 'toggleDefaultOn', 'previewHides', 'previewLightsCounted',
+checkAll(out, ['sectionOnAvailable', 'toggleDefaultOn', 'noUnrelatedLedFields', 'previewHides', 'previewLightsCounted',
   'oneWrite', 'writeCarriesBoth', 'markersUntouched', 'secondWrite', 'defaultsRemoveKeys',
   'reasonNamesIntegration']);
 await finish(browser);

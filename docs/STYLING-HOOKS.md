@@ -510,6 +510,17 @@ Radio/options use their stable value, not translated labels. Radar target slots
 can additionally carry `data-slot`. A field hook does not expose private HA
 component internals.
 
+Field identities describe the bound quantity, not its HTML type or range.
+`wall-thickness` measures wall thickness in the active cm/in units (drawing
+and the existing-wall dialog); `column-size` measures a new column's side or
+diameter. Opening picker filters are `opening-contact-entity-filter` and
+`opening-lock-entity-filter`; `opening-length` is cm, and `opening-contact-invert`,
+`opening-flip-horizontal`, `opening-flip-vertical` identify different toggles.
+Discovery uses `device-discovery-group-lights`
+and `device-discovery-exclusion` (adds an excluded integration), not LED fields.
+Every radio field carries its canonical option in `data-value`, including
+`optype`, `decor-line-style`, `duplicate-policy` and `mergekeep`.
+
 Id-less shared controls receive test identity without a new DOM id:
 `radar-swap-axes[data-slot]`, `radar-angle-clockwise`,
 `properties-variable-entity` (and its `-filter`), and `<north-field>-dial`.

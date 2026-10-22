@@ -53,7 +53,7 @@ export interface RadarSectionOptions {
   st(key: SettingsI18nKey, vars?: Record<string, string | number>): string;
   toolsT(key:ToolsI18nKey): string;
   help(key: 'radar.help'): TemplateResult | typeof nothing;
-  boolInput(value: boolean, change: (value: boolean) => void): TemplateResult;
+  boolInput(value: boolean, change: (value: boolean) => void, fieldId: string): TemplateResult;
   toast(message: string, id?: string): void;
   setup: RadarSetupController;
   configRev: number;

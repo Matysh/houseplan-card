@@ -39,7 +39,7 @@ signature, keeps unknown files and refuses output-directory symlinks.
 The E2E DOM contract (#1011) covers scene identities, device contact groups,
 vacuum/decor/glow results, summary/navigation and real form controls. These are
 test attributes on existing elements, without UI, persistence or permission
-changes. External journeys and seeds remain #1010.
+changes. Semantic field checks cover wall/column dimensions, opening pickers and toggles, discovery settings and radio option identities. External journeys and seeds remain #1010.
 
 
 Trusted provenance (#1021, prerequisite of #1016) accepts only Git-proven

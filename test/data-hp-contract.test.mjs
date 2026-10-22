@@ -168,6 +168,9 @@ test('#1011 control coverage rejects ordinary malformed markup inputs', () => {
   assert.equal(missingControlHooks('html`<input data-hp="field" data-field="marker-name">`', 'form.ts').length, 0);
   assert.equal(missingControlHooks('html`<button @click=${submit}>Insert</button>`', 'form.ts').length, 1);
   assert.equal(missingControlHooks('html`<button data-hp="dialog-confirm">Insert</button>`', 'form.ts').length, 0);
+  assert.equal(missingControlHooks('html`<input data-hp="field" data-field="choice" type="radio">`', 'form.ts').length, 1);
+  assert.equal(missingControlHooks('html`<input data-hp="field" data-field="choice" type="radio" data-value="">`', 'form.ts').length, 1);
+  assert.equal(missingControlHooks('html`<input data-hp="field" data-field="choice" type="radio" data-value=${option.key}>`', 'form.ts').length, 0);
   for (const source of ["node.setAttribute('data-tool', choose());", 'node.dataset.tool = choose();', "node.dataset['tool'] = choose();"])
     assert.throws(() => templateAttributeValues(source, 'data-tool'), /Unsupported dynamic/);
   assert.deepEqual([...templateAttributeValues('node.innerHTML = \'<button data-tool="draw"></button>\';', 'data-tool')], ['draw']);

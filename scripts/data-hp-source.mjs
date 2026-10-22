@@ -163,6 +163,11 @@ export function missingControlHooks(source, file) {
       if (!identity || (!identity.expression && !/^[a-z][a-zA-Z0-9-]*$/.test(identity.text))) {
         errors.push(`${file}:${source.slice(0, tag.start).split('\n').length}: field lacks stable identity`);
       }
+      const value = tag.attributes.get('data-value');
+      if (tag.name === 'input' && tag.attributes.get('type')?.text === 'radio'
+          && (!value || (!value.expression && !value.text))) {
+        errors.push(`${file}:${source.slice(0, tag.start).split('\n').length}: radio field lacks stable option value`);
+      }
     }
   }
   return errors;

@@ -12,7 +12,7 @@ const out = await page.evaluate(async () => {
     await new Promise((resolve) => requestAnimationFrame(resolve));
   };
   const search = async (kind, query) => {
-    const input = sr().querySelector(`[data-opening-panel="${kind}"] .opening-entity-search`);
+    const input = sr().querySelector(`[data-hp="field"][data-field="opening-${kind}-entity-filter"]`);
     input.value = query;
     input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
     await settle();
@@ -72,6 +72,10 @@ const out = await page.evaluate(async () => {
     realDoorFixtureExists: true,
     bothPickersShown: sr().querySelectorAll('.opening-entity-drop').length === 2,
     panelsInitiallyClosed: !sr().querySelector('.opening-entity-panel'),
+    noUnrelatedLedFields: !sr().querySelector('hp-dialog[data-kind="opening"] [data-field^="led-"]'),
+    openingLengthIdentity: sr().querySelector('[data-hp="field"][data-field="opening-length"]')?.value === String(c._openingDialog.lengthCm),
+    typeOptionsHaveIdentity: [...sr().querySelectorAll('[data-hp="field"][data-field="optype"]')]
+      .map(el => el.dataset.value).sort().join(',') === 'door,gate,passage,window',
   };
 
   sr().querySelector('[data-opening-picker="contact"]').click();
@@ -95,6 +99,14 @@ const out = await page.evaluate(async () => {
     && !sr().querySelector('[data-opening-panel="contact"]');
   result.closedButtonExplainsEntityId = sr().querySelector('[data-opening-picker="contact"] .ref')
     ?.textContent === 'binary_sensor.hp301_window';
+  for (const [field, key] of [['opening-contact-invert', 'invert'], ['opening-flip-horizontal', 'flipH'], ['opening-flip-vertical', 'flipV']]) {
+    const selector = `[data-hp="field"][data-field="${field}"]`;
+    const before = c._openingDialog[key];
+    sr().querySelector(selector).click(); await settle();
+    result[`${field}Binding`] = c._openingDialog[key] !== before;
+    sr().querySelector(selector).click(); await settle();
+    result[`${field}Restored`] = c._openingDialog[key] === before;
+  }
 
   sr().querySelector('[data-opening-picker="contact"]').click();
   await settle();

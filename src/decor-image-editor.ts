@@ -493,13 +493,13 @@ export class DecorImageEditor<Snapshot> {
           ${dialog.kind === 'line' ? html`
             <label>${this.host._t('decor.line_style')}</label>
             <div role="radiogroup" aria-label=${this.host._t('decor.line_style')}>
-              <label class="srcrow"><input data-hp="field" data-field="decor-line-style" type="radio" name="decor-line-style"
+              <label class="srcrow"><input data-hp="field" data-field="decor-line-style" data-value="solid" type="radio" name="decor-line-style"
                 .checked=${dialog.lineStyle !== 'dashed'}
                 @change=${() => (this.host._decorShapeDialog = {
                   ...dialog, lineStyle: 'solid',
                 })} />
                 <span>${this.host._t('decor.line_style_solid')}</span></label>
-              <label class="srcrow"><input data-hp="field" data-field="decor-line-style" type="radio" name="decor-line-style"
+              <label class="srcrow"><input data-hp="field" data-field="decor-line-style" data-value="dashed" type="radio" name="decor-line-style"
                 .checked=${dialog.lineStyle === 'dashed'}
                 @change=${() => (this.host._decorShapeDialog = {
                   ...dialog, lineStyle: 'dashed',

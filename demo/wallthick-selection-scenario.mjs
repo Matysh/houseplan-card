@@ -93,7 +93,9 @@ export async function wallthickSelectionScenario(page) {
     check(`911 AC1 ${kind} public click opens dialog`, result.dialog);
     check(`911 AC1 ${kind} target band persists away from pointer`, result.bands === 1 && result.targetFilled);
     const before = await state();
-    const input = page.locator('.wallthick-dlg input');
+    const input = page.locator('.wallthick-dlg [data-hp="field"][data-field="wall-thickness"]');
+    check(`1011 ${kind} existing wall has one thickness field`, await input.count(), 1);
+    check(`1011 ${kind} thickness is not object opacity`, await page.locator('.wallthick-dlg [data-field="object-opacity"]').count(), 0);
     await input.fill('88'); await input.focus(); await settle();
     await page.mouse.move(...await point(200, 350)); await settle();
     check(`911 AC1 ${kind} input draft and neighbour hover retain current physical target`, await bandAt(x, y)
@@ -136,7 +138,7 @@ export async function wallthickSelectionScenario(page) {
   for (const [kind, x, y, selector] of [['partition', 450, 600, '.wallthick-dlg button.on'],
     ['room', 450, 150, '.wallthick-dlg button.ghost']]) {
     await opening(x, y); const before = await state();
-    await page.locator('.wallthick-dlg input').fill('27');
+    await page.locator('.wallthick-dlg [data-hp="field"][data-field="wall-thickness"]').fill('27');
     await page.locator(selector).click(); await page.evaluate(() => window.__hpTest.waitForWrites()); await settle();
     const after = await state();
     check(`911 AC4 ${kind} Apply clears selection with one config/history transaction`,

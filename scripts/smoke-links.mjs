@@ -30,6 +30,11 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['_renderWallThickDialog', '_renderDrawWallControl', '_renderOpeningDialog', '_renderDiscoveryFilters'],
+    smokes: ['smoke_wallthick_standalone.mjs', 'smoke_e2e_primitive_fields.mjs', 'smoke_opening_entity_search.mjs', 'smoke_discovery_filters.mjs'],
+    because: '#1011 r3: semantic field ids must identify the bound physical dimension, opening picker or discovery setting; real inputs and existing wire/Undo/Cancel checks prove more than the presence of a field hook.',
+  },
+  {
     files: ['src/editors/form-kit.ts', 'src/editors/settings-sections.ts', 'src/hp-color-opacity.ts',
       'src/device-contact-render.ts', 'src/wall-node-editor.ts', 'src/glow-scene.ts',
       'src/summary-panel-runtime-loaded.ts', 'src/pdf/hp-pdf-dialog.ts', 'src/toast-presentation.ts'],
