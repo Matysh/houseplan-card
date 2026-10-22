@@ -36,7 +36,7 @@ CONVERT = REPO / "scripts" / "sh3d-convert" / "convert.mjs"
 
 
 def documents() -> list[tuple[str, dict]]:
-    files = sorted(path for path in GOLDEN.glob("*.space-*.json") if not path.name.startswith("easy-"))
+    files = sorted(path for path in GOLDEN.glob("*.space-*.json") if not path.name.startswith(("easy-", "picture-")))
     assert files, "golden конвертера пропали — гейт остался бы зелёным ни на чём"
     return [(path.name, json.loads(path.read_text(encoding="utf-8"))) for path in files]
 

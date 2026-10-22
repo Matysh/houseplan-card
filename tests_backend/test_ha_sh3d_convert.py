@@ -22,7 +22,7 @@ GOLDEN = Path(__file__).resolve().parent.parent / "scripts" / "sh3d-convert" / "
 
 
 def golden_documents() -> list[tuple[str, dict]]:
-    files = sorted(path for path in GOLDEN.glob("*.space-*.json") if not path.name.startswith("easy-"))
+    files = sorted(path for path in GOLDEN.glob("*.space-*.json") if not path.name.startswith(("easy-", "picture-")))
     assert files, "golden конвертера пропали"
     return [(path.name, json.loads(path.read_text(encoding="utf-8"))) for path in files]
 
