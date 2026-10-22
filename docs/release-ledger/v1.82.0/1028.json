@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1028,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Repair the room-opening browser smoke's Python command selection and startup diagnostics on native Windows. Only the smoke and documentation change; room deletion, opening promotion, configuration and all product behaviour remain unchanged relative to v1.82.0.",
+  "summary": {
+    "ru": "Браузерная проверка удаления комнаты использует доступный Python на Windows и сразу сообщает об ошибке запуска backend oracle.",
+    "en": "The room deletion browser smoke uses an available Python on Windows and reports backend oracle startup failures directly."
+  }
+}
