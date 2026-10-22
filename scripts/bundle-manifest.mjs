@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, lstatSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { dirname, posix, relative, resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
 
@@ -568,23 +569,59 @@ export function entryFallbackPlugin() {
   };
 }
 
-/** Remove only files named by the previous generated manifest. */
+/** Remove inventoried output and recognizable orphaned House Plan chunks (#1016). */
 export function cleanBundleOutputPlugin(outputRoot = 'dist') {
+  // Load the parser only for cleanup, not for callers of manifest/payload helpers.
+  const require = createRequire(import.meta.url);
+  const ownsBuildSignature = (name, code) => {
+    if (!code.includes('__HOUSEPLAN_BUILD_FINGERPRINT__')) return false;
+    const ts = require('typescript');
+    const ownsAssignment = expression => {
+      if (!ts.isBinaryExpression(expression)) return false;
+      if (expression.operatorToken.kind === ts.SyntaxKind.CommaToken) {
+        return ownsAssignment(expression.left) || ownsAssignment(expression.right);
+      }
+      const left = expression.left;
+      return expression.operatorToken.kind === ts.SyntaxKind.EqualsToken
+        && ts.isPropertyAccessExpression(left) && ts.isIdentifier(left.expression)
+        && left.expression.text === 'globalThis' && left.name.text === '__HOUSEPLAN_BUILD_FINGERPRINT__'
+        && ts.isStringLiteral(expression.right) && /^[a-f0-9]{64}$/.test(expression.right.text);
+    };
+    const ast = ts.createSourceFile(name, code, ts.ScriptTarget.Latest, false, ts.ScriptKind.JS);
+    return ast.statements.some(statement => ts.isExpressionStatement(statement) && ownsAssignment(statement.expression));
+  };
   return {
     name: 'houseplan-clean-bundle-output',
     buildStart() {
       const root = resolve(outputRoot);
+      if (!existsSync(root)) return;
+      if (lstatSync(root).isSymbolicLink()) throw new Error('bundle output root is a symlink');
       const manifestPath = resolve(root, 'houseplan-assets.json');
-      if (!existsSync(manifestPath)) return;
-      const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+      const assetsRoot = resolve(root, 'houseplan-assets');
+      if (existsSync(assetsRoot) && lstatSync(assetsRoot).isSymbolicLink()) {
+        throw new Error('bundle assets directory is a symlink');
+      }
+      const manifest = existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, 'utf8')) : null;
+      const managed = new Set();
       for (const file of manifest?.files || []) {
         const path = resolve(root, String(file.path || ''));
         const rel = relative(root, path);
         if (!rel || rel.startsWith('..') || rel.includes(':')) {
           throw new Error(`previous bundle path escapes output root: ${file.path}`);
         }
-        rmSync(path, { force: true });
+        managed.add(path);
       }
+      // Crossing old tracked-dist history can overwrite/remove the manifest
+      // without removing ignored chunks. Recover only our flat hashed output
+      // with its emitted build signature; unknown files remain fail-closed.
+      for (const entry of existsSync(assetsRoot) ? readdirSync(assetsRoot, { withFileTypes: true }) : []) {
+        if (!entry.isFile() || !/^[\w][\w.-]*-[\w-]{8}\.js$/.test(entry.name)) continue;
+        const path = resolve(assetsRoot, entry.name);
+        if (ownsBuildSignature(entry.name, readFileSync(path, 'utf8'))) {
+          managed.add(path);
+        }
+      }
+      for (const path of managed) rmSync(path, { force: true });
       rmSync(manifestPath, { force: true });
     },
   };

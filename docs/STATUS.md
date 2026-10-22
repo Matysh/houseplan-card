@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.82.0** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.82.0-beta.6` |
-| Tests | Node unit 5036 · pure backend 579 · HA-harness backend 484 · browser smokes 408 (`npm run inventory`) |
+| Tests | Node unit 5040 · pure backend 579 · HA-harness backend 484 · browser smokes 408 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -32,6 +32,9 @@ package payload or Git history rewrite is involved. Identical copies already
 shared Git objects, so this simplifies checkout/support, not blob-history size.
 Transitive compiled-output readers (including the Select-only budget) require
 the product producer even with no tracked dist; metadata strings do not.
+Crossing older tracked-dist history can leave chunks without their manifest;
+build cleanup recovers only flat hashed output bearing House Plan's build
+signature, keeps unknown files and refuses output-directory symlinks.
 
 Trusted provenance (#1021, prerequisite of #1016) accepts only Git-proven
 deletions of the duplicate dist tree without a Release trailer. The HACS

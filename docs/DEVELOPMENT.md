@@ -2669,6 +2669,12 @@ under `artifacts/907/`; these headless witnesses are not owner/real-GPU acceptan
   transitive tools, even when dist/test-build files are absent or ignored. The
   Select-only node budget belongs to the build-backed product lane; output
   declarations and fixture strings alone still belong to no-build tooling.
+  Builds also recover orphaned flat hashed House Plan chunks if an old
+  tracked-dist checkout overwrote/removed their manifest: both the output name
+  and emitted build-fingerprint signature must match. Unknown files are kept
+  (and still rejected by the integrity guard); output-directory symlinks are
+  refused before cleanup. Only generated files inside the explicit output root
+  are removed, not the HACS snapshot or arbitrary directory contents.
   Validate/proof artifacts, dev-build, bundle-sync, performance comparison and
   UI Lab keep using generated dist. Historical fixed-SHA readers stay unchanged.
   This removes duplicate paths/checkout bytes, not duplicate Git blob storage:
