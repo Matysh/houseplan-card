@@ -1599,6 +1599,15 @@ test/node-refusal.test.mjs`, `node demo/smoke_wall_chain_history.mjs`,
 `node demo/smoke_node_history_context.mjs`, and `pytest
 tests_backend/test_ha_websocket.py -k 'issue_891 or issue_803'`.
 
+The node-history smoke's two-Undo toast witness (#1030) observes the first
+rendered `history.undone` message before sending the second native key. The
+toast presenter intentionally replaces a pending announcement before its next
+animation frame; a MutationObserver cannot recover a first message that never
+entered the DOM. This is a visible-result barrier, not a sleep or a wait for the
+config write. The wire order, exact snapshots, both message texts and original
+assertions remain unchanged; do not add retries or queue notices in the product
+to satisfy the old observer's assumption.
+
 `src/geometry-history-step.ts` is one ordinary Undo/Redo attempt over the real
 `CommandStack`: `_applyGeometryState` returns `true` or a reason; `retry` and
 `pinned` keep the command, `space`/`state`/`geometry` remove exactly that object.

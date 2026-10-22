@@ -206,7 +206,16 @@ await page.evaluate(() => window.__hpTest.setTool('draw'));
 for (const p of [[0.3, 0.85], [0.7, 0.85]]) { const at = await screen(p); await page.mouse.click(at.x, at.y); }
 await page.keyboard.press('Escape');
 const quickAt = log.length;
-await page.keyboard.press('Control+z'); await page.keyboard.press('Control+z');
+await page.keyboard.press('Control+z');
+// ToastPresentation deliberately supersedes a pending announcement before its
+// next frame. Observe the first visible result before the next native key, not
+// the config write: a DOM observer cannot recover text that was never painted.
+await page.waitForFunction(() => {
+  const toast = window.__hpTest.toast();
+  return toast?.textContent?.trim() === 'Undone: Add wall segment'
+    && toast.getAttribute('data-id') === 'history.undone';
+});
+await page.keyboard.press('Control+z');
 await idle(); await page.waitForFunction(() => !window.__card._saveConfigDebounced.pending()); await idle(); await settled();
 const quick = log.slice(quickAt).map(e => `${e.type}@${e.rev}${e.refused ? '!' : ''}`);
 check('AC2: the own write goes first, then exactly one node Undo with the revision after it',

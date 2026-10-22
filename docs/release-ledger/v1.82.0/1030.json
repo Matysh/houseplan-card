@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1030,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Synchronize the node-history browser smoke with the first visible Undo notice before the second native key. Only the smoke and documentation change; the latest-notice presentation policy, history commands, persistence and geometry remain unchanged relative to v1.82.0.",
+  "summary": {
+    "ru": "Браузерная проверка двух Undo дожидается первого видимого сообщения, сохраняя исходные проверки команд и порядка записей.",
+    "en": "The two-Undo browser witness observes the first visible notice while retaining the original command and write-order assertions."
+  }
+}
