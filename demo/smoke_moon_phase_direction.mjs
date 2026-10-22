@@ -2,6 +2,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { moonPhasePath } from '../src/moon.ts';
 import { launch, requirePinnedBrowser, checkAll, finish } from './serve.mjs';
+import { evaluateRetainedAction } from './helpers/retained-page-action.mjs';
 
 requirePinnedBrowser('1006 moon direction and fixed surface landmarks');
 const art = readFileSync(new URL('../assets/moon/houseplan-1.0.0/moon.svg', import.meta.url), 'utf8');
@@ -79,12 +80,16 @@ try {
     }, bg);
     for (const surface of ['view', 'panel', 'kiosk', 'static-space']) {
       await page.clock.setSystemTime(new Date(dates[0][1]));
-      await page.evaluate(async surface => {
+      // #1012: historical GC at :82 crossed the pending dynamic import here.
+      // Hold that action explicitly (#967); mounting itself is synchronous.
+      if (surface === 'panel') await evaluateRetainedAction(page, async () => {
+        await import('/assets/houseplan-panel.js');
+      }, 'moon phase panel module');
+      await page.evaluate(surface => {
         window.__phaseHost?.remove(); window.__card.style.display = surface === 'view' ? '' : 'none';
         let host, card;
         if (surface === 'view') card = window.__card;
         else if (surface === 'panel') {
-          await import('/assets/houseplan-panel.js');
           host = document.createElement('houseplan-panel');
           host.panel = { component_name: 'houseplan-panel' }; host.narrow = false;
           host.route = { path: '/houseplan' }; host.hass = window.__card.hass;

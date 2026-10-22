@@ -175,10 +175,11 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'zigbee-incomplete-heading-enlarged-1005',
     guard: 'node demo/smoke_zigbee_incomplete_reasons.mjs',
-    because: '#1005 AC1: source-footer summary must have the same computed 12px status typography in the real settings cascade and both themes.',
+    because: '#1005 AC1/#1012: source-footer summary must keep computed 12px status typography in both themes. '
+      + 'The local override must outrank the accepted #1007 shared compact disclosure rule; the old lower-specificity patch was masked by that cascade.',
     patches: [{ file: 'src/hp-zigbee-topology-settings.ts',
-      find: '.incomplete > summary { color:var(--secondary-text-color,#9aa0aa); }',
-      replace: '.incomplete > summary { color:var(--secondary-text-color,#9aa0aa); font-size:14px; }' }],
+      find: ':host .incomplete > summary { color:var(--secondary-text-color,#9aa0aa); }',
+      replace: ':host .incomplete.hpf-disclosure.hpf-disclosure-compact > summary { color:var(--secondary-text-color,#9aa0aa); font-size:14px; }' }],
   },
   {
     id: 'zigbee-incomplete-mixes-provider-groups-1005',
@@ -17934,8 +17935,8 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'settings-help-size-leaks-into-catalogue-948',
     guard: 'node demo/smoke_settings_mock_match_948.mjs',
-    because: '#948 AC1: settings-only help sizing must preserve the catalogue. The guard measures computed dimensions '
-      + 'in inherited CSS across custom-element shadow roots and actual dialog contexts; a pure unit cannot observe that cascade.',
+    because: '#948 AC1/#976/#1012: settings and catalogue intentionally share 22px compact help, while an unscoped public hp-help keeps its 32px default. '
+      + 'The historical id now guards that remaining scope boundary through actual computed custom-element dimensions; a pure unit cannot observe inherited CSS.',
     patches: [{
       file: 'src/hp-help.ts',
       find: '    .trigger {\n      width: var(--hp-settings-help-size,32px);',

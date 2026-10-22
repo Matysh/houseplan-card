@@ -62,4 +62,11 @@ await page.locator('[data-hp=tool][data-tool=device-inbox]').filter({visible:tru
 const inbox=page.locator('hp-dialog[data-kind=device-inbox]');
 // #976 deliberately aligns the catalogue with the shared compact instant help.
 output.catalogueUsesSharedHelpSize=await inbox.locator('hp-help').filter({visible:true}).first().locator('.trigger').evaluate(el=>getComputedStyle(el).width==='22px');
+// #1012: the catalogue is now intentionally compact. A real unscoped public
+// control still needs its default 32px target; compact tokens must not leak.
+await page.evaluate(()=>{const help=document.createElement('hp-help');help.id='unscoped-help-1012';help.text='Unscoped help';help.ariaLabel='Help';document.body.append(help);});
+const unscoped=page.locator('#unscoped-help-1012');
+await unscoped.locator('.trigger').waitFor();
+output.unscopedHelpKeepsDefaultTarget=await unscoped.locator('.trigger').evaluate(el=>getComputedStyle(el).width==='32px'&&getComputedStyle(el).height==='32px');
+await unscoped.evaluate(el=>el.remove());
 checkAll(output);await reference.close();await finish(browser,output);

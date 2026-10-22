@@ -16,6 +16,14 @@ suite. The original #659 conversions also use `test/mutation-browser-offload.tes
 new behavioral witnesses execute the consumer directly where possible. Catching the mutant
 is verified by the nightly run under PROCESS §2.7, not by a development-time mutation run.
 
+Witness repair #1012 preserves the two historical IDs. After #976, compact
+catalogue Help is deliberately 22px; `settings-help-size-leaks-into-catalogue-948`
+now additionally measures the public unscoped 32px target that still depends on
+the default. After #1007, `zigbee-incomplete-heading-enlarged-1005` needs a local
+override strong enough to beat the shared compact-disclosure cascade. The same
+mounted typography guard still requires 12px in both themes. No browser guard
+is added/removed; local static/ordinary success is not nightly caught evidence.
+
 `led-unbound-in-view` moved to `test/led-strip-runtime.test.mjs` in #791: its guard
 requires a non-null marker absent from runtime devices, whereas the browser's
 `marker: null` fixture exits before the mutated guard. The Node witness checks the

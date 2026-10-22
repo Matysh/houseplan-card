@@ -2307,6 +2307,24 @@ release/publish-prerelease dispatch). Never clear a live claim to retry blindly.
 
 ## Local Windows workstation
 
+Nightly witness repair (#1012) keeps the original 2026-10-22 run's red/escaped
+outcomes separate from ordinary local proof. `smoke_isometric_live_touch`
+observes #1002's single owner-addressed core path, no casing, Flat/2.5D geometry,
+both native corners and the exact endpoint; it no longer requires removed paint.
+`smoke_moon_phase_direction` retains only the historical pending panel import
+with `evaluateRetainedAction` and mounts each surface synchronously. Its masks,
+clock, art/edge/area/hemisphere oracles and tolerances remain unchanged. A clean
+WSL baseline reached the end, so it does not establish the original GC frequency.
+
+The historical `settings-help-size-leaks-into-catalogue-948` ID now also checks
+an ordinary unscoped public `hp-help` target (32px): #976 intentionally made the
+catalogue compact (22px), so expecting it to expose a changed default is obsolete.
+Both real compact-dialog checks remain. The Zigbee heading witness targets an
+authoritative local 14px override: #1007's shared compact-disclosure specificity
+masked the old weaker override. Its existing two-theme 12px guard is unchanged.
+IDs/guard commands remain, counts do not change; static readiness is not caught
+evidence. No mutated product, bundle or guard runs outside the nightly workflow.
+
 Native workflow fixtures require Git for Windows (including Git Bash) and real
 `jq` on PATH (#960). Install jq once with `winget install --id jqlang.jq --exact
 --source winget`, then open a new terminal; this is the standalone upstream

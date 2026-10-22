@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1012,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Repairs nightly test witnesses for the accepted trail, compact-help and disclosure contracts, and retains the moon smoke's pending module import. Product code, shipped assets, configuration, timing budgets and workflow execution policies are unchanged.",
+  "summary": {
+    "ru": "Актуализация ночных свидетелей пути, подсказок и Zigbee; удержание async-загрузки в проверке Луны.",
+    "en": "Update nightly trail, help and Zigbee witnesses; retain the moon smoke's async module load."
+  }
+}

@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Nightly witness maintenance (#1012) follows the accepted single-core vacuum
+trail and compact-dialog Help/disclosure cascade. An unscoped Help target keeps
+its existing default; the moon smoke retains the panel module import before
+synchronous mounting. Product behavior, assertions/tolerances and workflow policy
+are not relaxed; ordinary/static proof does not claim nightly mutation capture.
+
 The owner opened the `v1.83.0` stable cycle from `v1.82.0` with milestone 9
 (`1.83`) for #1005. Post-stable documentation archive #674 is infrastructure
 in this cycle; its historical classifications remain unchanged.
