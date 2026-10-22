@@ -210,11 +210,13 @@ for (const retire of ['disconnect', 'session', 'connection', 'user', 'permission
   await page.evaluate(async kind => {
     const c = window.__card, source = (c.shadowRoot || c.renderRoot).querySelector('hp-zigbee-topology-settings');
     const el = document.createElement('hp-zigbee-topology-settings');
-    el.hass = source.hass; el.value = { enabled: true, z2mBaseTopics: ['zigbee2mqtt'] }; el.savedEnabled = false;
+    el.hass = source.hass; el.embedded = true;
+    el.value = { enabled: true, z2mBaseTopics: ['zigbee2mqtt'] }; el.savedEnabled = false;
     el.settingsSession = {}; el.canPrepareLoad = true;
-    const current = window.__standalone1031 = { el, saves: 0 };
+    const current = window.__standalone1031 = { el, saves: 0, hadMetadata: false };
     el.prepareLoad = () => { current.saves++; return new Promise(resolve => { current.resolve = resolve; }); };
     document.body.append(el); await el.updateComplete;
+    current.hadMetadata = typeof el._metadataRelease === 'function';
     [...el.shadowRoot.querySelectorAll('button')].find(b => /update map/i.test(b.textContent)).click();
     await el.updateComplete;
     if (kind === 'disconnect') el.remove();
@@ -227,6 +229,10 @@ for (const retire of ['disconnect', 'session', 'connection', 'user', 'permission
     current.resolve(true); await window.__hpTest.settled();
   }, retire);
   record(`${retire}PreventsLateScan`, await page.evaluate(() => window.__standalone1031.saves === 1 && window.__enableRpc.starts === 0));
+  if (retire === 'disconnect') record('detachedSaveCannotReacquireMetadata', await page.evaluate(() => {
+    const { el, hadMetadata } = window.__standalone1031;
+    return hadMetadata && !el.isConnected && !el._metadataRelease && !el._unsubscribe && !el._loadGate.pending;
+  }));
 }
 
 await setup();

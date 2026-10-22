@@ -150,7 +150,7 @@ export class HpZigbeeTopologySettings extends LitElement {
         || previous.enabled !== this.value.enabled || previous.topics !== this._topicText)) this._loadGate.invalidate();
     this._loadContext = { owner, identity, session: this.settingsSession,
       active: this.active, enabled: this.value.enabled, topics: this._topicText };
-    const metadataWanted = this.active && this.embedded && this._admin;
+    const metadataWanted = this.isConnected && this.active && this.embedded && this._admin;
     if (this._metadataRelease && (!metadataWanted || owner !== this._metadataOwner || identity !== this._metadataIdentity)) {
       this._metadataRelease(); this._metadataRelease = undefined;
     }
@@ -362,7 +362,7 @@ export class HpZigbeeTopologySettings extends LitElement {
         && (this.hass?.connection || this.hass) === owner && this.hass?.user?.id === user
         && this.settingsSession === session && (provider === 'zha' || (!this._invalidTopic && this._topics().includes(topic!))),
       prepare: this.savedEnabled ? undefined : this.prepareLoad,
-      changed: () => this.requestUpdate(),
+      changed: () => { if (this.isConnected) this.requestUpdate(); },
       load: async current => {
         const generation = this._generation;
         const runtime = await this._ensureRuntime();

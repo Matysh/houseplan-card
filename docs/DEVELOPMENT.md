@@ -2231,6 +2231,8 @@ and `node demo/smoke_zigbee_enable_refresh.mjs` after build + bundle sync. The
 smoke uses the real General Settings owner with delayed/refused CAS replies;
 it checks save-before-load, clean/dirty baselines, retired contexts, keyboard
 activation and translated 360px layouts. It uses synthetic data, not a live HA.
+The disconnect case first proves a live metadata lease, then requires both
+metadata and runtime subscriptions to stay released after the held save resolves.
 
 For Zigbee route changes (#798), focused Node tests cover provider formats,
 conflicts, exact mapping and async lifecycle. After `bundle:sync`, run

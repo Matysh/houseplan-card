@@ -1636,6 +1636,8 @@ keep-open save advances the accepted draft baseline without replacing its dialog
 session or discarding later edits. `zigbee-topology-action.ts` coalesces clicks
 and retires the continuation on section, session, identity or connection changes;
 provider/backend authorization and already-enabled read-only refresh stay intact.
+Detached settings components cannot request late renders or reacquire a metadata
+lease when that save finishes; metadata ownership also checks connectivity.
 `zigbee-topology.ts` normalises ZHA and Zigbee2MQTT into directional observations
 and provider evidence (#798): Parent/reverse Child for end devices, active
 destination-zero routes for routers. NWK addresses are provider-scoped; exact

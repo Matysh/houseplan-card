@@ -14008,6 +14008,20 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'zigbee-enable-refresh-detached-reacquires-metadata-1031',
+    guard: 'node demo/smoke_zigbee_enable_refresh.mjs',
+    because: '#1031 AC4: a detached Lit settings component must not reacquire its metadata subscription after a held save completes; a pure gate cannot prove custom-element updated/disconnected callbacks and provider lease ownership.',
+    patches: [{
+      file: 'src/hp-zigbee-topology-settings.ts',
+      find: '    const metadataWanted = this.isConnected && this.active && this.embedded && this._admin;',
+      replace: '    const metadataWanted = this.active && this.embedded && this._admin;',
+    }, {
+      file: 'src/hp-zigbee-topology-settings.ts',
+      find: '      changed: () => { if (this.isConnected) this.requestUpdate(); },',
+      replace: '      changed: () => this.requestUpdate(),',
+    }],
+  },
+  {
     id: 'zigbee-background-scan-restores-ten-minute-deadline',
     guard: 'node scripts/backend-test-guard.mjs issue_800_background_15_minutes_two_clients_and_reopen '
       + 'tests_backend/test_ha_zigbee_topology.py',

@@ -29,6 +29,7 @@ Zigbee enable-and-refresh (#1031) keeps General Settings open after an explicit
 save-all-then-load action. The scan/read waits for successful CAS acknowledgement;
 failed saves and retired UI contexts cannot start it. An already-enabled refresh
 does not save unrelated draft changes. No provider or backend policy changes.
+Late save completion cannot reacquire subscriptions on a detached settings form.
 
 Single bundle snapshot (#1016): only the integration frontend is tracked.
 Root dist and demo assets are generated locally/CI; build budgets still judge
