@@ -13988,6 +13988,26 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'zigbee-enabled-refresh-resaves-unrelated-draft-1031',
+    guard: 'node demo/smoke_zigbee_enable_refresh.mjs',
+    because: '#1031 AC3: a real Lit provider action with saved links enabled must not invoke the owner CAS writer for another edited field; only the mounted owner callback proves which persisted settings are sent.',
+    patches: [{
+      file: 'src/hp-zigbee-topology-settings.ts',
+      find: '      prepare: this.savedEnabled ? undefined : this.prepareLoad,',
+      replace: '      prepare: this.prepareLoad,',
+    }],
+  },
+  {
+    id: 'zigbee-enable-refresh-ignores-form-policy-1031',
+    guard: 'node demo/smoke_zigbee_enable_refresh.mjs',
+    because: '#1031 AC6: invalid form state must disable the mounted provider action before its real owner callback can run; the pure load gate does not decide the component-to-General-Settings form policy.',
+    patches: [{
+      file: 'src/hp-zigbee-topology-settings.ts',
+      find: '      && (this.savedEnabled || (!!this.prepareLoad && this.canPrepareLoad && !this._invalidTopic));',
+      replace: '      && (this.savedEnabled || !!this.prepareLoad);',
+    }],
+  },
+  {
     id: 'zigbee-background-scan-restores-ten-minute-deadline',
     guard: 'node scripts/backend-test-guard.mjs issue_800_background_15_minutes_two_clients_and_reopen '
       + 'tests_backend/test_ha_zigbee_topology.py',
