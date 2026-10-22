@@ -9,8 +9,9 @@ test('#1011 every known translated toast call and forwarding adapter carries ide
   const root=fileURLToPath(new URL('../src/',import.meta.url));
   const walk=dir=>readdirSync(dir,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()
     ?walk(join(dir,entry.name)):entry.name.endsWith('.ts')?[join(dir,entry.name)]:[]);
-  const wrappers=knownToastWrappers(readFileSync(join(root,'houseplan-editor-runtime.ts'),'utf8'));
-  assert.deepEqual(walk(root).flatMap(path=>missingToastIdentities(readFileSync(path,'utf8'),relative(root,path),wrappers)),[]);
+  const modules=walk(root).map(path=>({file:relative(root,path),source:readFileSync(path,'utf8')}));
+  const wrappers=knownToastWrappers(modules.map(module=>module.source));
+  assert.deepEqual(modules.flatMap(module=>missingToastIdentities(module.source,module.file,wrappers)),[]);
 });
 
 test('#1011 ordinary negative inputs expose literals, helper keys, branches, aliases and forwarding loss', () => {
@@ -56,5 +57,15 @@ test('#1011 single-key label wrappers derive identity from their source and subs
   assert.deepEqual(missingToastIdentities('host._showToast(rt._rszReasonText(reason),`resize.disabled.${reason}`);','caller.ts',wrappers),[]);
   const changed=knownToastWrappers(source.replace('junction.limit_','junction.changed_'));
   assert.equal(missingToastIdentities('host._showToast(rt._junctionLimitLabel(rows[0]),`junction.limit_${rows[0].rule}`);','caller.ts',changed).length,1);
-  assert.throws(()=>knownToastWrappers(source.replace('return this._t(`resize.disabled.${why}`)','return unknown()')),/Unsupported toast label/);
+  const opaque=knownToastWrappers(source.replace('`resize.disabled.${why}`','this.key'));
+  assert.throws(()=>missingToastIdentities('host._showToast(rt._rszReasonText(reason));','caller.ts',opaque),/Unsupported toast wrapper/);
+});
+
+test('#1011 wrapper inventory survives module moves, class extraction and renaming without source anchors',()=>{
+  const method='class Old {format(item){return this._t(`junction.limit_${item.rule}`)}}';
+  const before=knownToastWrappers([method]);
+  const after=knownToastWrappers(['export function renamed(item){return t(`junction.limit_${item.rule}`)}']);
+  assert.deepEqual(missingToastIdentities('host._showToast(old.format(rows[0]),`junction.limit_${rows[0].rule}`);','one.ts',before),[]);
+  assert.deepEqual(missingToastIdentities('host._showToast(renamed(rows[0]),`junction.limit_${rows[0].rule}`);','different-module.ts',after),[]);
+  assert.equal(missingToastIdentities('host._showToast(renamed(rows[0]));','different-module.ts',after).length,1);
 });

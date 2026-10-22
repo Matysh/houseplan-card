@@ -16233,8 +16233,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node --test test/toast-identity-source.test.mjs',
     because: 'single-key label helpers must derive the same identity from their implementation and caller arguments; treating them as opaque text loses the known key (#1011 r2)',
     patches: [{ file: 'scripts/toast-identity-source.mjs',
-      find: '    const wrapper = wrappers.get(callName(node.expression));',
-      replace: '    const wrapper = undefined;',
+      find: '    const candidates = wrappers.get(callName(node.expression));',
+      replace: '    const candidates = undefined;',
     }],
   },
   {

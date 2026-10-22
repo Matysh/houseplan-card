@@ -24,6 +24,8 @@ Mutation witnesses are only checked statically during development.
 `toast-identity-source.mjs` checks translated senders, helper/conditional keys
 and forwarding ports across all sources. Single-key junction/Resize label
 wrappers derive keys from their source and caller arguments; composed/external text keeps message.
+Wrapper discovery is a module-wide structural AST inventory without file/class/name
+anchors; tests prove method extraction, module moves and renaming (#624).
 The inbox smoke observes successful and refused deletion toast ids; history
 checks actual Undo/Redo ids through its ports. Unit tests invoke the deletion
 helper and reject ordinary unkeyed/incorrect-key/forwarding-loss inputs.

@@ -31,8 +31,10 @@ export function translatedToastKey(raw, seen = new Set(), wrappers = new Map()) 
   if (ts.isCallExpression(node)) {
     const index = translators.get(callName(node.expression));
     if (index !== undefined) return node.arguments[index];
-    const wrapper = wrappers.get(callName(node.expression));
-    if (wrapper) {
+    const candidates = wrappers.get(callName(node.expression));
+    if (candidates) {
+      const keys=candidates.map(wrapper=>{
+      if(wrapper.unsupported)throw Error(`Unsupported toast wrapper ${callName(node.expression)}`);
       const key = unwrap(wrapper.key), start = key.getStart(), patches = [];
       const visit = child => {
         if (ts.isIdentifier(child) && wrapper.parameters.includes(child.text)
@@ -50,6 +52,10 @@ export function translatedToastKey(raw, seen = new Set(), wrappers = new Map()) 
       for(const patch of patches.sort((a,b)=>b.start-a.start))text=text.slice(0,patch.start)+patch.text+text.slice(patch.end);
       const parsed=ts.createSourceFile('toast-key.ts',`const id=(${text});`,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
       return unwrap(parsed.statements[0].declarationList.declarations[0].initializer);
+      });
+      if(keys.some(key=>JSON.stringify(fingerprint(key))!==JSON.stringify(fingerprint(keys[0]))))
+        throw Error(`Ambiguous toast wrapper ${callName(node.expression)}`);
+      return keys[0];
     }
   }
   if (ts.isConditionalExpression(node)) {
@@ -59,22 +65,34 @@ export function translatedToastKey(raw, seen = new Set(), wrappers = new Map()) 
   if (ts.isIdentifier(node)) return translatedToastKey(constant(node), seen, wrappers);
 }
 
-/** These existing labels return a single translation. Derive their key from
- * their source, not a second hardcoded namespace table or translated output. */
-export function knownToastWrappers(source, file='houseplan-editor-runtime.ts') {
-  const names=new Set(['_junctionLimitLabel','_rszReasonText']), wrappers=new Map();
-  const unit=ts.createSourceFile(file,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
-  const visit=node=>{
-    if(ts.isMethodDeclaration(node)&&names.has(node.name.getText(unit))){
-      const returns=node.body?.statements.filter(ts.isReturnStatement)??[];
-      const key=returns.length===1?translatedToastKey(returns[0].expression):undefined;
-      if(!key||key.choice)throw Error(`Unsupported toast label ${node.name.getText(unit)}`);
-      wrappers.set(node.name.getText(unit),{parameters:node.parameters.map(p=>p.name.getText(unit)),key});
-    }
-    ts.forEachChild(node,visit);
-  };
-  visit(unit);
-  for(const name of names)if(!wrappers.has(name))throw Error(`Missing toast label ${name}`);
+/** Structural inventory: no file/class/method-name anchors. A pure translation
+ * wrapper may move to an exported function or be renamed with its callers. */
+export function knownToastWrappers(sources) {
+  const wrappers=new Map();
+  for(const source of typeof sources==='string'?[sources]:sources){
+    const unit=ts.createSourceFile('module.ts',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+    const visit=node=>{
+      if(ts.isMethodDeclaration(node)||ts.isFunctionDeclaration(node)||ts.isArrowFunction(node)||ts.isFunctionExpression(node)){
+        const name=node.name?.getText(unit)??node.parent?.name?.getText(unit);
+        const returns=node.body&&ts.isBlock(node.body)?node.body.statements.filter(ts.isReturnStatement):[];
+        const expression=node.body&&!ts.isBlock(node.body)?node.body:returns.length===1?returns[0].expression:undefined;
+        const key=expression?translatedToastKey(expression):undefined;
+        if(name&&key){
+          const parameters=node.parameters.map(p=>p.name.getText(unit));let unsupported=!!key.choice;
+          const check=child=>{
+            if(child.kind===ts.SyntaxKind.ThisKeyword||ts.isCallExpression(child))unsupported=true;
+            if(ts.isIdentifier(child)&&!parameters.includes(child.text)
+              &&!(ts.isPropertyAccessExpression(child.parent)&&child.parent.name===child))unsupported=true;
+            ts.forEachChild(child,check);
+          };
+          if(!key.choice)check(unwrap(key));
+          wrappers.set(name,[...(wrappers.get(name)??[]),{parameters,key,unsupported}]);
+        }
+      }
+      ts.forEachChild(node,visit);
+    };
+    visit(unit);
+  }
   return wrappers;
 }
 
