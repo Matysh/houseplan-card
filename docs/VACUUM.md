@@ -116,6 +116,16 @@ not enter trail storage, config, backups or support reports. No storage version
 or user config migration is introduced. Auto-building House Plan from a robot
 map is outside this feature.
 
+The Ecovacs raster smoke (`node demo/smoke_vacuum_ecovacs.mjs`, #1009) waits
+for the accepted device-dialog exit to detach before capturing the fit image.
+On native Windows the retained modal darkened an earlier screenshot enough to
+fail the original predicate: more than 1000 pixels with B−R > 50 and B−G > 40.
+The predicate is unchanged. A transparent PNG response follows the same
+screenshot/count path and must yield at most 1000 matching pixels despite its
+visible bounds and four handles. No platform skip, fixed delay or pixel retry
+is used. The pinned headless browser remains attested; this harness proof does
+not establish a user-visible rendering failure or physical GPU acceptance.
+
 Choosing a candidate stores `marker.vacuum.source`. A stored source is pinned:
 it is never silently replaced when it becomes missing, disabled, unavailable,
 unverified or unsupported. Restoring the same HA entity restores operation

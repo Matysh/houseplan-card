@@ -10,17 +10,6 @@ golden, а то, чего автоматика не видит, собрано �
 
 Evidence claims: [короткий checklist](DEVELOPMENT.md#evidence-accuracy-and-historical-errata-910) — execution/reuse/equivalence/unknown, raw и true exit.
 
-Ecovacs raster proof (`node demo/smoke_vacuum_ecovacs.mjs`, #1009) waits for
-the accepted device-dialog exit to detach before capturing the SVG image.
-Presence/bounds alone can precede the retained modal's last paint: on native
-Windows its darkened screenshot failed the existing blue-pixel predicate.
-The predicate remains more than 1000 pixels with B−R > 50 and B−G > 40.
-A transparent PNG response exercises the same screenshot/count path and must
-contain at most 1000 matching pixels despite a visible box and four fit handles.
-No platform skip, arbitrary sleep, retry-until-green or product override is used;
-the launcher still attests the pinned browser. This is headless harness proof,
-not evidence about a physical GPU or a user-visible Ecovacs rendering failure.
-
 ## Правила для новых тестов (issue #85) — обязательны
 
 Fixture/capture fidelity (#896): `demo-fixture.test.mjs` covers saved independent
