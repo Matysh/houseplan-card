@@ -1443,6 +1443,8 @@
       "demo/helpers/ui-polish-963-reference.mjs",
       "demo/helpers/vacuum-route-recovery.py",
       "demo/iso-runtime-compat.mjs",
+      "demo/out/marker-state-source-977/manual-en.png",
+      "demo/out/marker-state-source-977/unknown-ru.png",
       "demo/performance/budgets-led-strips.json",
       "demo/performance/card-contract.mjs",
       "demo/performance/evaluate.mjs",

@@ -374,7 +374,7 @@ const out = await page.evaluate(async () => {
   await original.updateComplete;
   const fallbackRaised = root(original).querySelector('[data-hp-iso-raised="true"][data-id]');
   const fallbackId = fallbackRaised?.getAttribute('data-id');
-  root(original).querySelector('[data-entity="light.ceiling"]')?.click();
+  root(original).querySelector('[data-hp="device"][data-entity="light.ceiling"]')?.click();
   await frame();
   result.unsupportedDecorationKeepsIsoStructure = !!root(original).querySelector('[data-hp="iso-walls"]')
     && !!root(original).querySelector('[data-hp="iso-openings"]');
@@ -396,10 +396,10 @@ const out = await page.evaluate(async () => {
     callService: async (domain, service, data) => calls.push({ domain, service, data }),
   };
   await original.updateComplete;
-  root(original).querySelector('[data-entity="light.ceiling"]')?.click();
+  root(original).querySelector('[data-hp="device"][data-entity="light.ceiling"]')?.click();
   await frame();
   await window.__hpTest.setVolumetricView(false);
-  root(original).querySelector('[data-entity="light.ceiling"]')?.click();
+  root(original).querySelector('[data-hp="device"][data-entity="light.ceiling"]')?.click();
   await frame();
   result.flatIsoActionParity = calls.length === 2
     && JSON.stringify(calls[0]) === JSON.stringify(calls[1]);
