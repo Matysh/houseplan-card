@@ -17,6 +17,45 @@ import { importClosure } from './helpers/import-closure.mjs';
 const cases = JSON.parse(readFileSync(new URL('./data/ci-profile-pushes.json', import.meta.url), 'utf8'));
 const SHA = 'a'.repeat(40), TREE = 'b'.repeat(40), ROOT = process.cwd();
 
+test('#1032 Python producers install the exact patch from their shared immutable plan', () => {
+  const planned = '${{ needs.reuse.outputs.python_version }}';
+  const assertProducer = job => {
+    assert.ok(job.needs.includes('reuse'));
+    assert.equal(job.env.CI_PYTHON_VERSION, planned);
+    const python = job.steps.filter(step => /^actions\/setup-python@/.test(step.uses || ''));
+    assert.equal(python.length, 1);
+    assert.deepEqual(python[0].with, { 'python-version': planned });
+    // Ordinary expression-binding inputs: either image may have the other
+    // patch cached, but neither producer is allowed to resolve that minor again.
+    for (const [resolved, cached] of [['3.14.8', '3.14.9'], ['3.14.9', '3.14.8']]) {
+      const context = { [planned]: resolved };
+      const requested = context[python[0].with['python-version']];
+      assert.equal(requested, resolved);
+      assert.notEqual(requested, cached);
+      assert.equal(context[job.env.CI_PYTHON_VERSION], requested);
+    }
+  };
+  for (const name of ['validate.yml', 'validate-product.yml']) {
+    const workflow = parse(readFileSync(`.github/workflows/${name}`, 'utf8'));
+    const bootstrap = workflow.jobs.reuse.steps.find(step => step.id === 'python');
+    assert.equal(bootstrap.with['python-version'], readFileSync('.python-version', 'utf8').trim());
+    // A registry/API fallback must not erase the already resolved runtime.
+    assert.equal(workflow.jobs.reuse.outputs.python_version, '${{ steps.python.outputs.python-version }}');
+    const probe = workflow.jobs.reuse.steps.find(step => step.id === 'probe');
+    assert.equal(probe.env.CI_PYTHON_VERSION, '${{ steps.python.outputs.python-version }}');
+    for (const id of ['backend', 'geometry_parity']) {
+      assertProducer(workflow.jobs[id]);
+      // Ordinary configuration inputs, not edits to a workflow for execution.
+      for (const wrong of [{ 'python-version-file': '.python-version' },
+        { 'python-version': '3.14' }, { 'python-version': '3.14.8' }]) {
+        const fixture = structuredClone(workflow.jobs[id]);
+        fixture.steps.find(step => /^actions\/setup-python@/.test(step.uses || '')).with = wrong;
+        assert.throws(() => assertProducer(fixture), { name: 'AssertionError' });
+      }
+    }
+  }
+});
+
 test('#980 generated paths and job recipes are current; canonical full dispatch retains both partitions', () => {
   for (const [file, expected] of generatedProfiles()) assert.equal(readFileSync(file, 'utf8').replace(/\r\n/g, '\n'), expected, file);
   const full = parse(readFileSync('.github/workflows/validate.yml', 'utf8'));

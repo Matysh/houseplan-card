@@ -1988,3 +1988,10 @@ assembly and one real bundle smoke remain fresh. Night/stable deny reuse.
 The v1 proof extension is additive: trusted old controllers can consume fresh
 migration evidence, while new controllers also require actual fresh bundle/
 product guards and independently authenticate every inherited source.
+
+Python-producing jobs (#1032) install the exact patch selected by the reuse
+bootstrap, not an independently resolved minor from their runner cache. The
+bootstrap exports its actual setup-python version even when the registry probe
+falls back to fresh execution. Producer stamps still compare the actual Python
+runtime with that plan. Node remains an actual-runtime stamp; a different Node
+or Python stamp cannot mint a reusable record. No trust or proof schema changes.

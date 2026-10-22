@@ -311,7 +311,10 @@ test('#548: TS/Python parity — отдельная clean-runner job без ти
   assert.match(job, /needs: \[changes, reuse\]/);
   assert.match(job, /if: needs\.changes\.outputs\.geometry_parity == 'true'/);
   assert.match(job, /node-version-file: \.nvmrc/);
-  assert.match(job, /python-version-file: \.python-version/);
+  // #1032: bootstrap разрешает minor один раз; producer ставит ту же точную patch.
+  assert.match(job, /python-version: \$\{\{ needs\.reuse\.outputs\.python_version \}\}/);
+  assert.match(job, /CI_PYTHON_VERSION: \$\{\{ needs\.reuse\.outputs\.python_version \}\}/);
+  assert.doesNotMatch(job, /python-version-file:/);
   assert.match(job, /npx --no-install tsc -p tsconfig\.junction-parity\.json/);
   assert.match(job, /python tests_backend\/junction_parity\.py --build-dir=test-build\/junction-parity/);
   assert.match(job, /ci-registry-cli\.mjs --stamp-job=geometry_parity/);

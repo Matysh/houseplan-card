@@ -20,10 +20,14 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.82.0** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.82.0-beta.6` |
-| Tests | Node unit 5051 · pure backend 579 · HA-harness backend 484 · browser smokes 410 (`npm run inventory`) |
+| Tests | Node unit 5057 · pure backend 579 · HA-harness backend 484 · browser smokes 411 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+CI Python producers (#1032) install the exact patch resolved once by the shared
+reuse bootstrap. Different runner-image caches do not select a second patch;
+actual-version stamping and registry trust/reuse policy remain strict.
 
 Zigbee enable-and-refresh (#1031) keeps General Settings open after an explicit
 save-all-then-load action. The scan/read waits for successful CAS acknowledgement;

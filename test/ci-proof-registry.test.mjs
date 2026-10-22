@@ -167,6 +167,12 @@ test('minting records requires actual producer stamps and never publishes inheri
   f.args.proof.run.workflow = 'validate.yml';
   const records = producedRegistryRecords({ plans: [f.args.plan], proof: f.args.proof, needs, repo: f.args.repo, workflowRevision: sha });
   assert.equal(records.length, 1);
+  for (const field of ['node', 'python']) {
+    needs.frontend.outputs.toolchain = JSON.stringify({ ...f.args.plan.toolchain, [field]: '99.0.0' });
+    assert.equal(producedRegistryRecords({ plans: [f.args.plan], proof: f.args.proof, needs }).length, 0,
+      `a different actual ${field} cannot mint a reusable producer`);
+  }
+  needs.frontend.outputs.toolchain = JSON.stringify(f.args.plan.toolchain);
   f.args.proof.checks.frontend.mode = 'reused';
   assert.equal(producedRegistryRecords({ plans: [f.args.plan], proof: f.args.proof, needs }).length, 0);
   f.args.proof.checks.frontend.mode = 'executed'; needs.frontend.outputs.toolchain = '{}';

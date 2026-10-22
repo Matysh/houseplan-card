@@ -2436,6 +2436,13 @@ them from `validate.yml`, `tests_backend/requirements.txt` and the lockfile, and
 `npm run toolchain:check` compares the machine with them (#496). `.nvmrc` and
 `.python-version` carry the same values for nvm/uv/pyenv; a test keeps them equal.
 
+CI resolves the existing Python minor once in `reuse` (#1032). Backend and
+geometry parity install that exact `needs.reuse.outputs.python_version`, so
+different runner-image caches cannot independently select different patches.
+That output comes directly from setup-python, including a registry/API fallback.
+The actual-version stamp still rejects mismatches; Node records its actual
+`process.versions.node`, and no toolchain version or trust rule is relaxed.
+
 Chromium is judged by the browser that actually runs (#827, F33), not by the
 existence of `chromium.executablePath()`: that is the full Chromium, while the
 standard headless `chromium.launch()` starts the separate headless shell

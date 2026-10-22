@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1032,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Install the exact Python patch resolved by the immutable CI plan in backend and geometry producers. Keep the existing 3.14 minor, strict actual-version stamp, trust and reuse rules, without product changes.",
+  "summary": {
+    "ru": "Согласовать Python в CI с точной версией общего плана проверки.",
+    "en": "Install the CI plan's exact Python patch in its producers."
+  }
+}

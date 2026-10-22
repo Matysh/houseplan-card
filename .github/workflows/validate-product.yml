@@ -865,7 +865,7 @@ jobs:
       performance_smoke_source_run: ${{ steps.probe.outputs.performance_smoke_source_run }}
       performance_smoke_source_attempt: ${{ steps.probe.outputs.performance_smoke_source_attempt }}
       performance_smoke_source_sha: ${{ steps.probe.outputs.performance_smoke_source_sha }}
-      python_version: ${{ steps.probe.outputs.python_version }}
+      python_version: ${{ steps.python.outputs.python-version }}
       plan: ${{ steps.probe.outputs.plan }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -890,7 +890,7 @@ jobs:
         with: { node-version: 22 }
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         id: python
-        with: { python-version-file: .python-version }
+        with: { python-version: "3.14" }
       - name: Verify immutable registry producers
         id: probe
         env:
@@ -1560,7 +1560,7 @@ jobs:
           cache: npm
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
-          python-version-file: .python-version
+          python-version: ${{ needs.reuse.outputs.python_version }}
       - run: npm ci
       - name: Компилировать TS-зеркала стыков и идентичности/переноса стен
         run: |
@@ -1596,7 +1596,8 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with: { node-version: 22 }
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
-        with: { python-version: "3.14" }
+        with:
+          python-version: ${{ needs.reuse.outputs.python_version }}
       - run: |
           # Точные версии — в tests_backend/requirements.txt (#392): без них
           # резолвер выбирает набор сам, и «зелёный backend» значит разное

@@ -77,6 +77,23 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'ci-python-producer-resolves-minor-again-1032',
+    guard: 'node --test test/ci-profiles.test.mjs',
+    because: 'Python producers must install the exact patch from the shared plan even when runner caches contain different patches; the ordinary workflow contract rejects independent minor/file resolution without weakening the actual-version stamp (#1032)',
+    patches: [
+      {
+        file: '.github/workflows/validate.yml',
+        find: '          python-version: ${{ needs.reuse.outputs.python_version }}\n      - run: npm ci\n      - name: Компилировать TS-зеркала стыков и идентичности/переноса стен',
+        replace: '          python-version: "3.14"\n      - run: npm ci\n      - name: Компилировать TS-зеркала стыков и идентичности/переноса стен',
+      },
+      {
+        file: '.github/workflows/validate-product.yml',
+        find: '          python-version: ${{ needs.reuse.outputs.python_version }}\n      - run: npm ci\n      - name: Компилировать TS-зеркала стыков и идентичности/переноса стен',
+        replace: '          python-version: "3.14"\n      - run: npm ci\n      - name: Компилировать TS-зеркала стыков и идентичности/переноса стен',
+      },
+    ],
+  },
+  {
     id: 'png-comparison-reads-closed-bitmap-size-1007',
     guard: 'node demo/smoke_capture_stability.mjs',
     because: '#1007 AC6: ImageBitmap.close resets the native dimensions; known 1px and different-size PNG inputs must fail equality in the real decoder.',
