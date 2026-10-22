@@ -1,10 +1,12 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 25, issue: 14. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 27, issue: 14. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | #1031 | [SPEC-REVIEW-1031-r1.md](SPEC-REVIEW-1031-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1031 | [CODE-REVIEW-1031-r1.md](CODE-REVIEW-1031-r1.md) | code · r1 | 🔴 красный | 1 | 0 | новый целевой smoke не проходит на материале ревью; заявленные «43 PASS» не воспроизвод… | `demo/smoke_zigbee_enable_refresh.mjs` `demo/smoke_zigbee_topology_job.mjs` `zigbee-topology-action.ts` `scripts/ci-registry-inventory.json` |
+| #1031 | [CODE-REVIEW-1031-r2.md](CODE-REVIEW-1031-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #1029 | [SPEC-REVIEW-1029-r1.md](SPEC-REVIEW-1029-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1021 | [CODE-REVIEW-1021-r1.md](CODE-REVIEW-1021-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1016 | [CODE-REVIEW-1016-r1.md](CODE-REVIEW-1016-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | устаревшая формулировка в docs/TESTING.md:385 | `docs/TESTING.md` `bundle-sync.mjs` `AGENTS.md` `PROCESS.md` `docs/ARCHITECTURE.md` `docs/DEVELOPMENT.md` `docs/STATUS.md` `docs/process/AUTHOR.md` |
