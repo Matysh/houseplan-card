@@ -3,7 +3,8 @@
 `hp-color-opacity` owns the shared HSV presentation (#1008 / UI-016). Its Lit
 template derives a single resulting colour and S/V gradient endpoints from
 unrounded HSV; one class styles the three native ranges in both popover and
-portal roots. Opacity keeps its native range; consumers, events and persistence
+portal roots. Colour properties belong to the inputs: Lit must not replace the
+surface's inline style owned by the placement controller. Opacity keeps its native range; consumers, events and persistence
 are unchanged. No observers or per-dialog picker overrides are introduced.
 
 Moon phase direction (#1006) travels from the existing astronomy calculation

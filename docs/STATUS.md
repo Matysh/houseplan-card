@@ -39,6 +39,7 @@ are not relaxed; ordinary/static proof does not claim nightly mutation capture.
 The shared HSV picker (#1008) follows accepted UI-016: centred 20px thumbs on
 10px tracks, resulting-colour centres and live saturation/brightness gradients.
 All settings/decor consumers retain their existing draft and overlay owners.
+Input-only colour styles preserve controller-owned popup coordinates before RAF.
 
 The owner opened the `v1.83.0` stable cycle from `v1.82.0` with milestone 9
 (`1.83`) for #1005. Post-stable documentation archive #674 is infrastructure

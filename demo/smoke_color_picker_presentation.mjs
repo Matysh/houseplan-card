@@ -68,9 +68,15 @@ async function paint(label, selected, endpoints) {
 async function hsv(h, s, v) {
   await page.evaluate(async values => {
     for (const [i, value] of values.entries()) {
-      const input = window.__picker._surface().querySelectorAll('.control input[type="range"]')[i];
+      const surface = window.__picker._surface();
+      const owned = ['left', 'top', 'maxWidth', 'maxHeight'];
+      const before = owned.map(key => surface.style[key]);
+      const input = surface.querySelectorAll('.control input[type="range"]')[i];
       input.value = String(value); input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
       await window.__picker.updateComplete;
+      // Read before requestAnimationFrame: settling first would hide a placement reset.
+      window.__placementStable &&= surface === window.__picker._surface()
+        && surface.isConnected && owned.every((key, i) => surface.style[key] === before[i]);
     }
   }, [h, s, v]);
 }
@@ -79,7 +85,7 @@ try {
   await page.evaluate(async () => {
     const p = document.createElement('hp-color-opacity'); p.id = 'presentation-probe'; p.pointerHover = true;
     p.style.cssText = 'position:fixed;left:80px;top:60px'; p.color = '#66cc66';
-    document.body.append(p); window.__picker = p; window.__events = [];
+    document.body.append(p); window.__picker = p; window.__events = []; window.__placementStable = true;
     p.addEventListener('hp-color-opacity-change', e => window.__events.push(e.detail));
     await p.updateComplete; await p.togglePicker();
   });
@@ -235,6 +241,8 @@ try {
     window.__picker = p; await p.updateComplete; await p.togglePicker();
   });
   await paint('fallback-320', '#66cc66');
+  await hsv(240, 50, 80);
+  await paint('fallback-320-updated', '#6666cc', [['#cccccc', '#0000cc'], ['#000000', '#8080ff']]);
   out.fallbackUsesPortal = await page.evaluate(() => !!document.querySelector('[data-hp-overlay="color-opacity"]')
     && !window.__picker._surface().hasAttribute('popover'));
   await page.evaluate(() => {
@@ -242,6 +250,7 @@ try {
     Object.defineProperty(HTMLElement.prototype, 'showPopover', window.__savedPopover);
   });
   out.fallbackCloses = await page.evaluate(() => !window.__picker.pickerOpen);
+  out.colorUpdatesPreserveControllerPlacementBeforePaint = await page.evaluate(() => window.__placementStable);
 } finally {
   writeFileSync(`${output}/report.json`, JSON.stringify(report, null, 2));
   checkAll(out);

@@ -894,8 +894,7 @@ export class HpColorOpacity extends LitElement {
     const saturation = Math.round(this._saturation);
     const value = Math.round(this._value);
     return html`
-      <div class="picker" popover=${usePopover ? 'manual' : nothing} role="dialog" aria-label=${labels.title}
-        style=${`--hp-picker-color:${color}`}>
+      <div class="picker" popover=${usePopover ? 'manual' : nothing} role="dialog" aria-label=${labels.title}>
         <div class="picker-head">
           <span class="caption">${this.label || labels.title}</span>
           <span class="preview" aria-hidden="true"><span style=${`background:${color};opacity:${pct / 100}`}></span></span>
@@ -913,6 +912,7 @@ export class HpColorOpacity extends LitElement {
           <span class="control-head"><span class="caption">${labels.hue}</span><span class="control-value">${hue}°</span></span>
           <input class="hsv-range hue-range" type="range" min="0" max="359" step="1" .value=${String(hue)}
             aria-label=${labels.hue} aria-valuetext=${`${hue}°`}
+            style=${`--hp-picker-color:${color}`}
             @input=${(e: Event) => this._setHue(Number((e.target as HTMLInputElement).value))}
             @keydown=${(e: KeyboardEvent) => this._shiftRangeKey(e, hue, 0, 359, (next) => this._setHue(next))} />
         </label>
@@ -920,7 +920,7 @@ export class HpColorOpacity extends LitElement {
           <span class="control-head"><span class="caption">${labels.saturation}</span><span class="control-value">${saturation}%</span></span>
           <input class="hsv-range" type="range" min="0" max="100" step="1" .value=${String(saturation)}
             aria-label=${labels.saturation} aria-valuetext=${`${saturation}%`}
-            style=${`--hp-picker-track:linear-gradient(to right,${saturationStart},${saturationEnd})`}
+            style=${`--hp-picker-track:linear-gradient(to right,${saturationStart},${saturationEnd});--hp-picker-color:${color}`}
             @input=${(e: Event) => this._setSaturation(Number((e.target as HTMLInputElement).value))}
             @keydown=${(e: KeyboardEvent) => this._shiftRangeKey(e, saturation, 0, 100, (next) => this._setSaturation(next))} />
         </label>
@@ -928,7 +928,7 @@ export class HpColorOpacity extends LitElement {
           <span class="control-head"><span class="caption">${labels.value}</span><span class="control-value">${value}%</span></span>
           <input class="hsv-range" type="range" min="0" max="100" step="1" .value=${String(value)}
             aria-label=${labels.value} aria-valuetext=${`${value}%`}
-            style=${`--hp-picker-track:linear-gradient(to right,#000,${valueEnd})`}
+            style=${`--hp-picker-track:linear-gradient(to right,#000,${valueEnd});--hp-picker-color:${color}`}
             @input=${(e: Event) => this._setValue(Number((e.target as HTMLInputElement).value))}
             @keydown=${(e: KeyboardEvent) => this._shiftRangeKey(e, value, 0, 100, (next) => this._setValue(next))} />
         </label>

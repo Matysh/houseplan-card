@@ -16124,8 +16124,8 @@ const MUTANT_DEFINITIONS = [
       + 'including HEX and achromatic states in the actual Lit/fallback cascade (#1008)',
     patches: [{
       file: 'src/hp-color-opacity.ts',
-      find: 'style=${`--hp-picker-color:${color}`}>',
-      replace: 'style=${`--hp-picker-color:${hueColor}`}>',
+      find: 'style=${`--hp-picker-color:${color}`}',
+      replace: 'style=${`--hp-picker-color:${hueColor}`}',
     }],
   },
   {
@@ -16137,6 +16137,17 @@ const MUTANT_DEFINITIONS = [
       file: 'src/hp-color-opacity.ts',
       find: 'const saturationEnd = hsvToHex({ h: this._hue, s: 100, v: this._value });',
       replace: 'const saturationEnd = hsvToHex({ h: this._hue, s: 100, v: 100 });',
+    }],
+  },
+  {
+    id: 'color-picker-render-erases-placement-1008',
+    guard: 'node demo/smoke_color_picker_presentation.mjs',
+    because: 'the real Lit update must retain controller-owned left/top/maxWidth/maxHeight '
+      + 'before RAF; a settled screenshot would hide a popup resetting to viewport origin (#1008)',
+    patches: [{
+      file: 'src/hp-color-opacity.ts',
+      find: '<div class="picker" popover=${usePopover ? \'manual\' : nothing} role="dialog" aria-label=${labels.title}>',
+      replace: '<div class="picker" popover=${usePopover ? \'manual\' : nothing} role="dialog" aria-label=${labels.title} style=${`--hp-picker-color:${color}`}>',
     }],
   },
   {

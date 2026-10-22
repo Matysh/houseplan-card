@@ -5,6 +5,7 @@
 - Centre and unify the three colour-picker thumbs. Each shows the selected
   colour; saturation and brightness tracks now show their actual colour range. (#1008)
   Hover and keyboard focus share an accent ring that strengthens while dragging.
+  Colour updates keep the popup in place throughout the input frame.
 
 - Show a waxing moon lit on the right and a waning moon on the left, keeping
   the north-up surface drawing unchanged across all backgrounds and cards. (#1006)
