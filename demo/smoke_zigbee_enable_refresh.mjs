@@ -29,6 +29,8 @@ const record = (name, value) => { results[name] = value; checkAll({ [name]: valu
 const setup = async (options = {}) => {
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.__card?._booting === false);
+  // Reload retires the lazy editor runtime; its readiness is not part of the two-frame settled helper.
+  await page.evaluate(() => window.__card._ensureEditorRuntime());
   await installHpTestOnPage(page);
   await page.evaluate(async opts => {
     const card = window.__card, original = card.hass;

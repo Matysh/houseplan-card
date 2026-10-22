@@ -2233,6 +2233,8 @@ it checks save-before-load, clean/dirty baselines, retired contexts, keyboard
 activation and translated 360px layouts. It uses synthetic data, not a live HA.
 The disconnect case first proves a live metadata lease, then requires both
 metadata and runtime subscriptions to stay released after the held save resolves.
+Each reload awaits the lazy editor runtime before opening settings; the harness
+two-frame `settled()` wait alone does not guarantee editor readiness on a cold load.
 
 For Zigbee route changes (#798), focused Node tests cover provider formats,
 conflicts, exact mapping and async lifecycle. After `bundle:sync`, run
