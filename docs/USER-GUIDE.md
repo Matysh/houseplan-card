@@ -1,5 +1,12 @@
 # House Plan — complete user guide
 
+### Choosing a colour
+
+The Hue, Saturation and Brightness thumbs show the same selected colour.
+Saturation runs from gray to saturated; Brightness runs from black to bright.
+Use the colour field or HEX as well; opacity stays separate. Save changes with
+the settings dialog's Save action.
+
 ### Dialogs and tools
 
 Help, Devices, Icon rules and Print share the settings appearance, with one

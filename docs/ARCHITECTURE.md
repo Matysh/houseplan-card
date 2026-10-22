@@ -1,5 +1,11 @@
 # House Plan architecture
 
+`hp-color-opacity` owns the shared HSV presentation (#1008 / UI-016). Its Lit
+template derives a single resulting colour and S/V gradient endpoints from
+unrounded HSV; one class styles the three native ranges in both popover and
+portal roots. Opacity keeps its native range; consumers, events and persistence
+are unchanged. No observers or per-dialog picker overrides are introduced.
+
 Moon phase direction (#1006) travels from the existing astronomy calculation
 through `MoonView` and its fingerprint into the shared runtime's mask sweeps.
 Waxing lights the right half and waning the left; the north-up designer art is

@@ -1480,6 +1480,7 @@
       "demo/smoke_cold_view_vacuum.mjs",
       "demo/smoke_color_picker.mjs",
       "demo/smoke_color_picker_consumers.mjs",
+      "demo/smoke_color_picker_presentation.mjs",
       "demo/smoke_config_authority.mjs",
       "demo/smoke_config_reload_race.mjs",
       "demo/smoke_config_writer.mjs",

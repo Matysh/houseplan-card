@@ -1,5 +1,20 @@
 # Development and deployment
 
+## Shared HSV presentation (#1008)
+
+`demo/smoke_color_picker_presentation.mjs` samples actual pinned-Chromium
+screenshots, independently checking centred white 20px rims, resulting-colour
+centres, 10px tracks and H/S/V RGB interpolation. It drives real mouse/keyboard
+hover, focus, drag, HEX and SV input in light/dark/custom themes, black/white/gray
+and endpoints; checks reduced-motion paint, forced-colors focus, native alpha,
+all five settings/decor consumers and the absent-Popover portal at 320px.
+Synthetic frames/report: artifacts/color-picker-presentation/. The unchanged
+dev red witness preceded product edits; private UI-016 files remain local.
+Existing picker/consumer/activity and selected settings smokes own validation,
+save/cancel and lifecycle regression coverage. Firefox pseudo-elements share
+the rules but no executed Firefox/device-GPU proof is claimed. Registered
+mutation witnesses are checked statically; development never executes mutants.
+
 ## Moon phase direction (#1006)
 
 Keep the astronomy's `waxing` sign all the way to the mask and fingerprint.

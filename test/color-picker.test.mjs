@@ -88,23 +88,8 @@ test('the shared component keeps its API and contains no nested native color pic
   }
 });
 
-test('the hue range exposes one cyclic spectrum without restyling other ranges', () => {
-  const component = readFileSync(new URL('../src/hp-color-opacity.ts', import.meta.url), 'utf8');
-  const spectrum = component.match(/\.hue-range\s*\{[\s\S]*?\n\s*\}/)?.[0] || '';
-  assert.match(spectrum, /--hp-picker-hue-track:\s*linear-gradient\(to right/);
-  for (const stop of ['#f00 0%', '#ff0 16.667%', '#0f0 33.333%', '#0ff 50%',
-    '#00f 66.667%', '#f0f 83.333%', '#f00 100%']) assert.ok(spectrum.includes(stop), stop);
-  assert.match(component, /\.hue-range::\-webkit-slider-runnable-track\s*\{[\s\S]*?height:\s*10px;[\s\S]*?background:\s*var\(--hp-picker-hue-track\);/);
-  assert.match(component, /\.hue-range::\-moz-range-track\s*\{[\s\S]*?height:\s*10px;[\s\S]*?background:\s*var\(--hp-picker-hue-track\);/);
-  assert.match(component, /\.hue-range::\-moz-range-progress\s*\{[\s\S]*?background:\s*transparent;/);
-  assert.match(component, /\.hue-range::\-webkit-slider-thumb\s*\{[\s\S]*?border-radius:\s*50%;[\s\S]*?box-shadow:\s*var\(--hp-picker-hue-thumb-shadow\);/);
-  assert.match(component, /\.hue-range::\-moz-range-thumb\s*\{[\s\S]*?border-radius:\s*50%;[\s\S]*?box-shadow:\s*var\(--hp-picker-hue-thumb-shadow\);/);
-  assert.match(spectrum, /--hp-picker-hue-thumb-shadow:[\s\S]*?card-background-color[\s\S]*?primary-text-color/);
-  assert.match(component, /@media \(forced-colors:\s*active\)[\s\S]*?background:\s*Canvas;/);
-  assert.match(component, /class="hue-range" type="range" min="0" max="359" step="1"/);
-  const commonRange = component.match(/input\[type='range'\]\s*\{[\s\S]*?\n\s*\}/)?.[0] || '';
-  assert.doesNotMatch(commonRange, /linear-gradient|hp-picker-hue-track/);
-});
+// #1008: the real spectrum, thumb contrast and alpha isolation are checked in
+// smoke_color_picker_presentation; stylesheet spelling is not a paint oracle.
 
 /**
  * #600: цвет и размер пульса — два поля набора друг под другом (плашка цвета

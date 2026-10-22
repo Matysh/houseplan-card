@@ -39,6 +39,7 @@ export class HpColorOpacity extends LitElement {
   /** Optional action label for a swatch with its readout outside the control. */
   public triggerLabel = '';
   public nativeTooltip = true;
+  public pointerHover = false;
   public opacityLabel = 'Opacity';
   public color = '#607d8b';
   public opacity = 1;
@@ -110,6 +111,7 @@ export class HpColorOpacity extends LitElement {
     label: { type: String },
     triggerLabel: { type: String, attribute: 'trigger-label' },
     nativeTooltip: { type: Boolean, attribute: 'native-tooltip' },
+    pointerHover: { type: Boolean, attribute: 'data-pointer-hover', reflect: true },
     opacityLabel: { type: String, attribute: 'opacity-label' },
     color: { type: String },
     opacity: { type: Number },
@@ -307,42 +309,78 @@ export class HpColorOpacity extends LitElement {
       accent-color: var(--primary-color, #03a9f4);
       touch-action: none;
     }
+    input.hsv-range {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 100%;
+      height: 32px;
+      min-height: 32px;
+      margin: -1px 0;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      cursor: pointer;
+      outline: none;
+      --hp-picker-thumb-shadow: 0 0 0 1px rgb(0 0 0 / .8), 0 1px 3px rgb(0 0 0 / .35);
+    }
     .hue-range {
-      accent-color: var(--hp-picker-hue, #f00);
-      --hp-picker-hue-track: linear-gradient(to right,
+      --hp-picker-track: linear-gradient(to right,
         #f00 0%, #ff0 16.667%, #0f0 33.333%, #0ff 50%,
         #00f 66.667%, #f0f 83.333%, #f00 100%);
-      --hp-picker-hue-thumb-shadow:
-        0 0 0 2px var(--card-background-color, #202126),
-        0 0 0 3px var(--primary-text-color, #fff);
     }
-    .hue-range::-webkit-slider-runnable-track {
+    .hsv-range::-webkit-slider-runnable-track {
       height: 10px;
       box-sizing: border-box;
-      border: 1px solid var(--divider-color, #666);
+      border: 0;
       border-radius: 999px;
-      background: var(--hp-picker-hue-track);
+      background: var(--hp-picker-track);
+      box-shadow: inset 0 0 0 1px rgb(0 0 0 / .28);
     }
-    .hue-range::-moz-range-track {
+    .hsv-range::-moz-range-track {
       height: 10px;
       box-sizing: border-box;
-      border: 1px solid var(--divider-color, #666);
+      border: 0;
       border-radius: 999px;
-      background: var(--hp-picker-hue-track);
+      background: var(--hp-picker-track);
+      box-shadow: inset 0 0 0 1px rgb(0 0 0 / .28);
     }
-    .hue-range::-moz-range-progress {
+    .hsv-range::-moz-range-progress {
       height: 10px;
       border: 0;
       border-radius: 999px;
       background: transparent;
     }
-    .hue-range::-webkit-slider-thumb {
+    .hsv-range::-webkit-slider-thumb {
+      appearance: none;
+      -webkit-appearance: none;
+      box-sizing: border-box;
+      width: 20px;
+      height: 20px;
+      margin-top: -5px;
+      border: 2px solid #fff;
       border-radius: 50%;
-      box-shadow: var(--hp-picker-hue-thumb-shadow);
+      background: var(--hp-picker-color);
+      box-shadow: var(--hp-picker-thumb-shadow);
+      transition: box-shadow 120ms ease;
     }
-    .hue-range::-moz-range-thumb {
+    .hsv-range::-moz-range-thumb {
+      box-sizing: border-box;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #fff;
       border-radius: 50%;
-      box-shadow: var(--hp-picker-hue-thumb-shadow);
+      background: var(--hp-picker-color);
+      box-shadow: var(--hp-picker-thumb-shadow);
+      transition: box-shadow 120ms ease;
+    }
+    :host([data-pointer-hover]) .hsv-range:hover, .hsv-range:focus-visible {
+      outline: none;
+      --hp-picker-thumb-shadow: 0 0 0 1px rgb(0 0 0 / .8), 0 0 0 4px color-mix(in srgb, var(--primary-color, #03a9f4) 42%, transparent);
+    }
+    .hsv-range:active {
+      cursor: grabbing;
+      --hp-picker-thumb-shadow: 0 0 0 1px rgb(0 0 0 / .8), 0 0 0 4px color-mix(in srgb, var(--primary-color, #03a9f4) 65%, transparent);
     }
     input[type='text'],
     input[type='number'] {
@@ -364,7 +402,7 @@ export class HpColorOpacity extends LitElement {
       min-width: 5.5em;
       flex: none;
     }
-    input:focus-visible,
+    input:not(.hsv-range):focus-visible,
     .sv-field:focus-visible {
       outline: 2px solid var(--primary-color, #03a9f4);
       outline-offset: 1px;
@@ -404,21 +442,34 @@ export class HpColorOpacity extends LitElement {
     }
     @media (prefers-reduced-motion: reduce) {
       .picker,.confirm { transition: none !important; }
+      .hsv-range::-webkit-slider-thumb { transition: none; }
+      .hsv-range::-moz-range-thumb { transition: none; }
     }
     @media (forced-colors: active) {
-      .hue-range::-webkit-slider-runnable-track {
-        border-color: ButtonText;
+      .hsv-range::-webkit-slider-runnable-track {
+        border: 1px solid ButtonText;
         background: Canvas;
       }
-      .hue-range::-moz-range-track {
-        border-color: ButtonText;
+      .hsv-range::-moz-range-track {
+        border: 1px solid ButtonText;
         background: Canvas;
       }
-      .hue-range::-webkit-slider-thumb {
+      .hsv-range::-webkit-slider-thumb {
         box-shadow: none;
+        border-color: Canvas;
+        outline: 1px solid CanvasText;
+        forced-color-adjust: none;
+        margin-top: -6px;
       }
-      .hue-range::-moz-range-thumb {
+      .hsv-range::-moz-range-thumb {
         box-shadow: none;
+        border-color: Canvas;
+        outline: 1px solid CanvasText;
+        forced-color-adjust: none;
+      }
+      .hsv-range:focus-visible {
+        outline: 2px solid Highlight;
+        outline-offset: 1px;
       }
       .confirm {
         border-color: ButtonText;
@@ -578,7 +629,8 @@ export class HpColorOpacity extends LitElement {
 
   private _renderFallback(): void {
     const styleText = HpColorOpacity.styles.map(style => style.cssText).join('\n');
-    this._floating.renderFallback(this._pickerTemplate(false), styleText);
+    const root = this._floating.renderFallback(this._pickerTemplate(false), styleText);
+    root?.host.toggleAttribute('data-pointer-hover', this.pointerHover);
   }
 
   private _positionPicker(): boolean {
@@ -834,12 +886,16 @@ export class HpColorOpacity extends LitElement {
     const pct = Math.round(Math.min(1, Math.max(0, Number(this.opacity) || 0)) * 100);
     const color = hsvToHex({ h: this._hue, s: this._saturation, v: this._value });
     const hueColor = hsvToHex({ h: this._hue, s: 100, v: 100 });
+    const saturationStart = hsvToHex({ h: this._hue, s: 0, v: this._value });
+    const saturationEnd = hsvToHex({ h: this._hue, s: 100, v: this._value });
+    const valueEnd = hsvToHex({ h: this._hue, s: this._saturation, v: 100 });
     const labels = this._labels();
     const hue = Math.round(this._hue);
     const saturation = Math.round(this._saturation);
     const value = Math.round(this._value);
     return html`
-      <div class="picker" popover=${usePopover ? 'manual' : nothing} role="dialog" aria-label=${labels.title}>
+      <div class="picker" popover=${usePopover ? 'manual' : nothing} role="dialog" aria-label=${labels.title}
+        style=${`--hp-picker-color:${color}`}>
         <div class="picker-head">
           <span class="caption">${this.label || labels.title}</span>
           <span class="preview" aria-hidden="true"><span style=${`background:${color};opacity:${pct / 100}`}></span></span>
@@ -855,22 +911,24 @@ export class HpColorOpacity extends LitElement {
         </div>
         <label class="control">
           <span class="control-head"><span class="caption">${labels.hue}</span><span class="control-value">${hue}°</span></span>
-          <input class="hue-range" type="range" min="0" max="359" step="1" .value=${String(hue)}
-            aria-label=${labels.hue} aria-valuetext=${`${hue}°`} style=${`--hp-picker-hue:${hueColor}`}
+          <input class="hsv-range hue-range" type="range" min="0" max="359" step="1" .value=${String(hue)}
+            aria-label=${labels.hue} aria-valuetext=${`${hue}°`}
             @input=${(e: Event) => this._setHue(Number((e.target as HTMLInputElement).value))}
             @keydown=${(e: KeyboardEvent) => this._shiftRangeKey(e, hue, 0, 359, (next) => this._setHue(next))} />
         </label>
         <label class="control">
           <span class="control-head"><span class="caption">${labels.saturation}</span><span class="control-value">${saturation}%</span></span>
-          <input type="range" min="0" max="100" step="1" .value=${String(saturation)}
+          <input class="hsv-range" type="range" min="0" max="100" step="1" .value=${String(saturation)}
             aria-label=${labels.saturation} aria-valuetext=${`${saturation}%`}
+            style=${`--hp-picker-track:linear-gradient(to right,${saturationStart},${saturationEnd})`}
             @input=${(e: Event) => this._setSaturation(Number((e.target as HTMLInputElement).value))}
             @keydown=${(e: KeyboardEvent) => this._shiftRangeKey(e, saturation, 0, 100, (next) => this._setSaturation(next))} />
         </label>
         <label class="control">
           <span class="control-head"><span class="caption">${labels.value}</span><span class="control-value">${value}%</span></span>
-          <input type="range" min="0" max="100" step="1" .value=${String(value)}
+          <input class="hsv-range" type="range" min="0" max="100" step="1" .value=${String(value)}
             aria-label=${labels.value} aria-valuetext=${`${value}%`}
+            style=${`--hp-picker-track:linear-gradient(to right,#000,${valueEnd})`}
             @input=${(e: Event) => this._setValue(Number((e.target as HTMLInputElement).value))}
             @keydown=${(e: KeyboardEvent) => this._shiftRangeKey(e, value, 0, 100, (next) => this._setValue(next))} />
         </label>

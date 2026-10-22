@@ -16107,6 +16107,39 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'color-picker-hsv-thumb-below-track-1008',
+    guard: 'node demo/smoke_color_picker_presentation.mjs',
+    because: 'UI-016 centres the native 20px range thumb on its 10px track; only Chromium-painted '
+      + 'pixels can prove the vertical white rim and selected centre, not a CSS string (#1008)',
+    patches: [{
+      file: 'src/hp-color-opacity.ts',
+      find: '      margin-top: -5px;',
+      replace: '      margin-top: 0;',
+    }],
+  },
+  {
+    id: 'color-picker-hsv-thumb-loses-result-color-1008',
+    guard: 'node demo/smoke_color_picker_presentation.mjs',
+    because: 'all three native pseudo-element centres must paint the current resulting colour, '
+      + 'including HEX and achromatic states in the actual Lit/fallback cascade (#1008)',
+    patches: [{
+      file: 'src/hp-color-opacity.ts',
+      find: 'style=${`--hp-picker-color:${color}`}>',
+      replace: 'style=${`--hp-picker-color:${hueColor}`}>',
+    }],
+  },
+  {
+    id: 'color-picker-saturation-ignores-brightness-1008',
+    guard: 'node demo/smoke_color_picker_presentation.mjs',
+    because: 'the painted saturation track must use current brightness at both ends; the browser '
+      + 'oracle samples independent RGB endpoints away from the thumb in real themes (#1008)',
+    patches: [{
+      file: 'src/hp-color-opacity.ts',
+      find: 'const saturationEnd = hsvToHex({ h: this._hue, s: 100, v: this._value });',
+      replace: 'const saturationEnd = hsvToHex({ h: this._hue, s: 100, v: 100 });',
+    }],
+  },
+  {
     id: 'color-picker-confirm-click-through',
     guard: 'node demo/smoke_color_picker_consumers.mjs',
     because: 'the full-width confirmation inside a general-settings dialog must consume its own '

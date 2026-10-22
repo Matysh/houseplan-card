@@ -52,11 +52,9 @@ const result = await page.evaluate(async () => {
   const hueStyle = getComputedStyle(hue);
   out.hueTrackContract = hue?.classList.contains('hue-range')
     && hue.min === '0' && hue.max === '359' && hue.step === '1'
-    && hueStyle.getPropertyValue('--hp-picker-hue-track').includes('linear-gradient')
-    && hue.getBoundingClientRect().height >= 40;
-  const thumbShadow = hueStyle.getPropertyValue('--hp-picker-hue-thumb-shadow');
-  out.hueThumbContrastContract = thumbShadow.includes('0 0 0 2px')
-    && thumbShadow.includes('0 0 0 3px');
+    && hueStyle.getPropertyValue('--hp-picker-track').includes('linear-gradient')
+    && hue.getBoundingClientRect().height === 32;
+  // #1008: painted centre/ring/geometry is proved by smoke_color_picker_presentation.
   ranges()[1].value = '100';
   ranges()[1].dispatchEvent(new Event('input', { bubbles: true, composed: true }));
   ranges()[2].value = '100';

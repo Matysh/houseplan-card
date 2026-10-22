@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1008,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 has a misaligned hue thumb and platform-native saturation/brightness ranges. Restore a coherent existing colour-selection surface using the owner-approved UI-016, without new settings or data.",
+  "summary": {
+    "ru": "Выровнены бегунки колор-пикера, добавлены выбранный цвет и градиенты насыщенности и яркости.",
+    "en": "Align colour-picker thumbs and show the selected colour with live saturation and brightness gradients."
+  }
+}

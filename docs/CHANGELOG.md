@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Centre and unify the three colour-picker thumbs. Each shows the selected
+  colour; saturation and brightness tracks now show their actual colour range. (#1008)
+
 - Show a waxing moon lit on the right and a waning moon on the left, keeping
   the north-up surface drawing unchanged across all backgrounds and cards. (#1006)
 - Give each vacuum its own path colour and transparency, with a thin unoutlined
