@@ -13,7 +13,7 @@ import { BASELINE_OVERLAY, REUSE_JOBS, globToRegExp } from './check-inputs.mjs';
 import { reuseKey } from './gate-reuse.mjs';
 import { jobInstanceNames, staticNamePrefix, validateJobs } from './workflow-jobs.mjs';
 import { producerEnvironments } from './ci-job-environment.mjs';
-import { browserPlanExecution } from './browser-plan-proof.mjs';
+import { browserPlanExecution, isTaskBrowserPlan } from './browser-plan-proof.mjs';
 import { verifyRegistryRecord } from './ci-registry-verify.mjs';
 import { registryInputs } from './ci-registry-inputs.mjs';
 import { producedRegistryRecords } from './ci-registry-records.mjs';
@@ -412,7 +412,7 @@ export function evaluateCiProof({
     return result('stale', 'pending visual changes require baseline acceptance and strict candidate validation');
   if (policy?.fresh && !asBool(proof.request?.fresh)) return result('stale', 'proof has no explicit fresh execution policy');
   if (policy?.fresh && proof.reusedChecks?.length) return result('stale', 'fresh policy requires every requested check to execute');
-  const taskGolden = policy?.task && proof.browserPlan?.planned?.scope === 'task'
+  const taskGolden = policy?.task && isTaskBrowserPlan(proof.browserPlan?.planned)
     && proof.browserPlan.planned.golden?.mode === 'selected'
     && proof.browserPlan.planned.golden.ids?.length > 0;
   if (policy?.golden && !asBool(proof.request?.full) && !asBool(proof.request?.golden) && !taskGolden)

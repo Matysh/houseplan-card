@@ -1,12 +1,18 @@
 // #983: scripts-only proof validation, also loaded by archived merge tools.
+export const isTaskBrowserPlan = plan => plan?.scope === 'task'
+  || plan?.scope === 'push' && plan?.coverageScope === 'task';
+
 export function browserPlanExecution(plan, needs) {
   if (!plan) return null;
   if (plan.schema !== 1 || !['push', 'task', 'full'].includes(plan.scope)) throw Error('invalid browser coverage plan');
+  if (plan.coverageScope !== undefined && (plan.coverageScope !== 'task' || !['push', 'task'].includes(plan.scope)))
+    throw Error('invalid browser coverage scope');
   const executed = {}, skipped = {};
   for (const kind of ['smoke', 'golden']) {
     if (!plan[kind] || !['none', 'selected', 'full'].includes(plan[kind].mode) || !Array.isArray(plan[kind].ids)
       || new Set(plan[kind].ids).size !== plan[kind].ids.length
       || plan[kind].mode === 'selected' && !plan[kind].ids.length) throw Error(`invalid ${kind} coverage`);
+    if (isTaskBrowserPlan(plan) && plan[kind].mode === 'full') throw Error('task coverage cannot claim a full browser matrix');
     if (kind === 'golden' && plan[kind].intent !== undefined) {
       if (!Array.isArray(plan[kind].intent)) throw Error('invalid golden intent');
       const expected = new Map();
@@ -25,6 +31,11 @@ export function browserPlanExecution(plan, needs) {
     else executed[kind] = { mode: plan[kind].mode, ids: plan[kind].ids,
       result: job?.result || 'missing', reason: plan[kind].reason };
   }
-  return { planned: plan, executed, skipped };
+  // The protected dev controller must read a task's proof before that task can
+  // update it. Keep the v1 selected-plan wire scope understood by old readers;
+  // the additive marker preserves task semantics for current readers. Neither
+  // scope grants a complete-matrix receipt or changes request.full/golden.
+  const planned = plan.scope === 'task' ? { ...plan, scope: 'push', coverageScope: 'task' } : plan;
+  return { planned, executed, skipped };
 }
 
