@@ -423,7 +423,7 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // #1003: pinned Windows source build336142 B, reference333938 (+2204).
 // Owner's standing minor-growth permission; reflow/render/writer stay lazy.
 // The2000 B band and352000 B absolute wall remain unchanged.
-export const INITIAL_VIEW_GZIP_CEILING = 336_209;
+export const INITIAL_VIEW_GZIP_CEILING = 336_203;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
@@ -641,7 +641,7 @@ export function initialViewCeilingViolation(bytes, {
  * оставался незафиксированным.
  */
 // #898, owner decision 2026-10-14: every ceiling with less than 10 % headroom is raised by 10 % (rounded up). 16940 -> 18634 B.
-export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_939;
+export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_943;
 /**
  * #600, промежуточные замеры по сериям (итог ставится в конце):
  * - серия 0: 222 900 → 225 900. Набор контролов формы вырос до полного
@@ -817,7 +817,7 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_939;
 // #1003 after merging #1035: actual integrated editor339023 B, +4585 B
 // against dev's measured334438 B. Account for the owner-approved contact
 // reference/reflow/writer cost; keep the same band and absolute budgets.
-export const LAZY_EDITOR_GZIP_CEILING = 339_062;
+export const LAZY_EDITOR_GZIP_CEILING = 339_040;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
@@ -846,7 +846,7 @@ export const LAZY_GRAPH_CEILING_BAND = 2_000;
 // #1037: independent caption/wall-body pickers in the shared Space form,
 // legacy projection and lazy translated help. Owner permits minor growth.
 // Pre-rebase measurement35,187 B; retain the larger accepted #1036 ceiling.
-export const LAZY_ONBOARDING_GZIP_CEILING = 35_778;
+export const LAZY_ONBOARDING_GZIP_CEILING = 35_772;
 
 /**
  * #780 ТЗ §13.1: the LED chunks are a new feature's own budget, not a raise of
