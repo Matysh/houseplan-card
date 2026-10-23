@@ -1,5 +1,6 @@
 /** Own-radio diagnostics; never expands a marker's functional/action roster. */
 import { averageLqi } from './logic';
+import { directSignalReadings, type DirectSignalReadings, type SignalRuntimeHass } from './device-signal-runtime';
 
 interface SignalEntity {
   readonly device_id?: string | null;
@@ -9,7 +10,7 @@ interface SignalState {
   readonly state?: unknown;
   readonly attributes?: Readonly<Record<string, unknown>>;
 }
-export interface DeviceSignalHass {
+export interface DeviceSignalHass extends SignalRuntimeHass {
   readonly states?: Readonly<Record<string, SignalState | undefined>>;
   readonly entities?: Readonly<Record<string, SignalEntity | undefined>>;
   readonly devices?: Readonly<Record<string, { readonly disabled_by?: unknown } | undefined>>;
@@ -27,6 +28,7 @@ export interface DeviceSignalContext {
   readonly entities: NonNullable<DeviceSignalHass['entities']>;
   readonly devices: NonNullable<DeviceSignalHass['devices']>;
   readonly entityIdsByDevice: ReadonlyMap<string, readonly string[]>;
+  readonly direct: DirectSignalReadings;
 }
 const EMPTY = Object.freeze({});
 const EMPTY_IDS: readonly string[] = Object.freeze([]);
@@ -50,7 +52,7 @@ export function createDeviceSignalContext(
     index = next; indices.set(entities, index);
   }
   return { states: activeHass?.states || EMPTY, entities,
-    devices: registryHass?.devices || EMPTY, entityIdsByDevice: index };
+    devices: registryHass?.devices || EMPTY, entityIdsByDevice: index, direct: directSignalReadings(activeHass) };
 }
 
 function bindingOf(device: DeviceSignalDevice): { kind: string; ref: string } | null {
@@ -106,6 +108,9 @@ export function deviceLqi(
   hass: DeviceSignalHass, device: DeviceSignalDevice,
   context = createDeviceSignalContext(hass),
 ): number | null {
+  const physical = deviceSignalPhysicalId(device, context);
+  const direct = physical && context.devices[physical] && context.devices[physical]?.disabled_by == null ? context.direct[physical] : undefined;
+  if (direct?.available) return Math.round(direct.lqi);
   const inheritsDiagnostics = bindingOf(device)?.kind === 'entity';
   const ids = deviceSignalEntityIds(device, context).filter((id) => {
     const registry = context.entities[id];
@@ -118,7 +123,15 @@ export function deviceLqi(
     return !!state && (!inheritsDiagnostics
       || (state.state !== 'unknown' && state.state !== 'unavailable'));
   });
-  return lqiFor(context, ids);
+  return lqiFor(context, ids) ?? (direct ? Math.round(direct.lqi) : null);
+}
+
+export function deviceSignalSource(device: DeviceSignalDevice, context: DeviceSignalContext): { provider: 'z2m' | 'zha'; stale: boolean } | null {
+  const id = deviceSignalPhysicalId(device, context);
+  const reading = id ? context.direct[id] : undefined;
+  if (!reading || context.devices[id!]?.disabled_by != null) return null;
+  const fallback = deviceLqi(context, device, { ...context, direct: EMPTY });
+  return reading.available || fallback == null ? { provider: reading.provider, stale: !reading.available } : null;
 }
 
 export function showMarkerSignalOf(marker: { hide_signal?: unknown } | null | undefined): boolean {

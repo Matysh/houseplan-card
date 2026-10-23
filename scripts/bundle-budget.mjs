@@ -423,7 +423,10 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // #1003: pinned Windows source build336142 B, reference333938 (+2204).
 // Owner's standing minor-growth permission; reflow/render/writer stay lazy.
 // The2000 B band and352000 B absolute wall remain unchanged.
-export const INITIAL_VIEW_GZIP_CEILING = 336_203;
+// #1029 on integrated #1049 dev: the shared connection/user LQI feed, strict
+// atomic projection decoder and existing-surface invalidation measure339368 B.
+// Keep the2000-B band and352000-B absolute wall; no new editor graph is eager.
+export const INITIAL_VIEW_GZIP_CEILING = 339_368;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не

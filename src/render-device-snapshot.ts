@@ -1,5 +1,6 @@
 import type { ResolvedDevicePresentation } from './device-presentation';
 import type { DevItem } from './types';
+import { directSignalReadings, type DirectSignalReadings } from './device-signal-runtime';
 import { createDeviceSignalContext, deviceSignalEntityIds, type DeviceSignalContext } from './device-signal';
 import { isVacuumPathMaterial, ownVacuumPathInput } from './vacuum-path-geometry';
 import {
@@ -18,6 +19,7 @@ export interface RenderDeviceSnapshot {
     config?: any;
     locale?: any;
     themes?: any;
+    zigbeeLqi?: DirectSignalReadings;
   }>;
   readonly devices: readonly DevItem[];
   /** Devices with captured vacuum facts, sharing the same cloned roster rows. */
@@ -198,6 +200,7 @@ export function createRenderDeviceSnapshot(options: {
     config: cloneFact(options.hass?.config, memo),
     locale: cloneFact(options.hass?.locale, memo),
     themes: cloneFact(options.hass?.themes, memo),
+    zigbeeLqi: directSignalReadings(options.hass),
   });
   const devices = cloneFact(options.devices, memo);
   const vacuumDevices = Object.freeze(devices.filter((device) =>

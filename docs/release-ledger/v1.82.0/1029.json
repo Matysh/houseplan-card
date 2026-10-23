@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "issue": 1029,
+  "baseStable": "v1.82.0",
+  "category": "major",
+  "rationale": "Adds passive own-device LQI from Zigbee2MQTT and cached ZHA without diagnostic entities. One entry-owned volatile runtime, authenticated minimal projection and shared resolver serve all existing LQI surfaces; HA remains the fallback. Stable v1.82.0 requires state/attribute diagnostics.",
+  "summary": {
+    "ru": "Zigbee-сигнал напрямую из Zigbee2MQTT и ZHA без включения диагностических сущностей.",
+    "en": "Read Zigbee signal directly from Zigbee2MQTT and ZHA without enabling diagnostic entities."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "2a00265ef00a121412b22fe06105ecb3e625506c84404d38d156585e9d6dce9b",
+    "golden": [
+      { "id": "direct-zigbee-lqi-flat-dark", "expectation": "new", "reason": "Own direct LQI 137 and real zero without HA diagnostics, with existing room signal fill in Flat." },
+      { "id": "direct-zigbee-lqi-iso-dark", "expectation": "new", "reason": "The same direct LQI readings and room fill in 2.5D; existing HA-fed frames are not intentionally changed." }
+    ],
+    "smokes": ["smoke_direct_zigbee_lqi.mjs"]
+  }
+}

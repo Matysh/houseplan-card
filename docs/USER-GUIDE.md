@@ -1830,6 +1830,20 @@ suppressed diagnostics.
 
 ### Zigbee signal visibility
 
+House Plan reads each device's own LQI directly from Zigbee2MQTT or ZHA;
+enabling diagnostic entities is not required. This works independently of
+Zigbee links, including for household users and authenticated read-only kiosks.
+For a custom Zigbee2MQTT base topic, enter it in the existing General settings
+Zigbee topics field; it is available with links off and no scan is needed.
+ZHA reads already cached values every 30 seconds without contacting the radio.
+
+After a House Plan/HA restart, a first value may need the device's next message
+when no retained/cached value exists. Available Home Assistant diagnostics are
+the fallback. A disconnected direct source may retain its last known number,
+with an explanation in the tooltip; reading it does not mean it was measured
+now. A real LQI of zero is shown as zero. Values remain in memory only and are
+excluded from backups and exports.
+
 **General settings → Display → Show Zigbee signal**, immediately below battery
 status, controls system signal numbers for the whole home. It defaults to On.
 In **Space settings → Appearance → Visible layers**, choose **Use general

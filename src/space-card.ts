@@ -25,6 +25,7 @@ import { normalizeDeviceDisplay, openingEntityReferences, referencedContentUrls 
 import { acquireHaRegistries, activeRegistryHass, fullRegistryHass, haRegistrySnapshot } from './ha-binding-status';
 import { createDeviceBatteryContext } from './device-battery';
 import { createDeviceSignalContext } from './device-signal';
+import { DeviceSignalController } from './device-signal-runtime';
 import { deviceBatteryModeOf } from './device-battery-settings';
 import { resolvedLightSources } from './devices';
 import { ledRelease, ledStripsByMarker } from './led-strip-gate';
@@ -89,6 +90,10 @@ interface SpaceCardConfig {
 }
 
 class HouseplanSpaceCard extends LitElement {
+  constructor() {
+    super();
+    new DeviceSignalController(this, () => this.hass, () => { this._hassSequence++; });
+  }
   private _contactRuntime: LiveRuntime | null = null;
   private readonly _contactBoundary = new ViewRuntimeBoundary(this, liveRuntimeCode, {
     owner: () => this, current: (owner) => owner === this && this.isConnected,

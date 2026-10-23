@@ -63,7 +63,7 @@
   "zha_manual": "Configurer ZHA manuellement",
   "z2m_manual": "Configurer Zigbee2MQTT manuellement",
   "scan_unknown_hint": "Si une carte est enregistrée pour ce topic, elle sera supprimée avant le scan. La requête continue en arrière-plan et peut durer environ 10 minutes ou plus.",
-  "topics_help": "Indiquez les sujets MQTT de base de vos instances Zigbee2MQTT, un par ligne, par exemple zigbee2mqtt.",
+  "topics_help": "Indiquez les sujets MQTT de base de vos instances Zigbee2MQTT, un par ligne, par exemple zigbee2mqtt. Les valeurs du signal utilisent cette liste même si les liaisons sont désactivées ; aucune analyse n’est nécessaire.",
   "topics_help_aria": "Aide : sujets de base Zigbee2MQTT",
   "incomplete_title": "Pourquoi les données sont incomplètes",
   "incomplete_invalid_payload": "La source a fourni un enregistrement invalide ou non pris en charge.",

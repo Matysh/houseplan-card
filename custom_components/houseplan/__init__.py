@@ -59,6 +59,9 @@ async def _async_flush_runtime(
     zigbee = getattr(entry.runtime_data, "zigbee_coordinator", None)
     if zigbee is not None:
         await zigbee.async_close()
+    lqi = getattr(entry.runtime_data, "zigbee_lqi", None)
+    if lqi is not None:
+        await lqi.async_close()
 
     recorder = hass.data.get(DOMAIN, {}).get("trail_recorder")
     if recorder is not None:
@@ -309,6 +312,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
     await async_setup_panel_registration(
         hass, entry, panel_path, identity=data.build_identity
     )
+
+    # Start passive subscriptions only after all fallible setup work, directly
+    # before installing their shared stop/unload owner.
+    from .zigbee_lqi import ZigbeeLqiCoordinator
+    data.zigbee_lqi = ZigbeeLqiCoordinator(hass, entry)
+    await data.zigbee_lqi.async_setup(config_payload.get("config") or {})
 
     async def _flush_on_stop(_event) -> None:
         stop_listener[0] = None

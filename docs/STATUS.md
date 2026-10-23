@@ -20,10 +20,15 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5178 · pure backend 622 · HA-harness backend 516 · browser smokes 423 (`npm run inventory`) |
+| Tests | Node unit 5189 · pure backend 625 · HA-harness backend 526 · browser smokes 424 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Direct Zigbee LQI (#1029) uses passive Z2M and cached ZHA without enabling
+diagnostic entities. Its minimal household-readable feed is independent of
+admin-only topology and never persists live readings. Existing HA readings
+remain the fallback; all existing LQI surfaces share one resolver.
 
 Continuous vacuum tails (#1049) supplement unchanged native snapshots with a
 bounded shared observed-position window. A witnessed pinned Dreame task start

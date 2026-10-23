@@ -29,7 +29,7 @@ import {
   type DeviceBatteryContext, type ResolvedDeviceBattery,
 } from './device-battery';
 import { showMarkerBatteryOf } from './device-battery-settings';
-import { createDeviceSignalContext, deviceLqi, showMarkerSignalOf, type DeviceSignalContext } from './device-signal';
+import { createDeviceSignalContext, deviceLqi, deviceSignalSource, showMarkerSignalOf, type DeviceSignalContext } from './device-signal';
 import {
   resolveDeviceValueBadge, resolveValueSource, valueBadgeSourceKey,
   type ResolvedValueBadge,
@@ -204,6 +204,7 @@ export interface ResolvedDevicePresentation {
   lqiText: string | null;
   /** System tooltip text ignores only the local plan-line opt-out. */
   lqiTipText: string | null;
+  lqiSource?: { provider: 'z2m' | 'zha'; stale: boolean } | null;
   lqiColor: string | null;
   lqiBand: DeviceLqiBand | null;
   lightColor: string | null;
@@ -954,6 +955,7 @@ export function resolveDevicePresentation(
     lqiText: !showMarkerSignalOf(d.marker) || lqi == null || valueBadge?.isLqi || value.source?.kind === 'derived_lqi'
       ? null : String(lqi),
     lqiTipText: lqi == null || valueBadge?.isLqi || value.source?.kind === 'derived_lqi' ? null : String(lqi),
+    lqiSource: lqi == null ? null : deviceSignalSource(d, signalContext),
     lqiColor: lqi == null ? null : markerLqiColor(lqi),
     lqiBand: lqi == null ? null : markerLqiBand(lqi),
     lightColor,
