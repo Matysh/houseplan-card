@@ -102,6 +102,10 @@ const facts = async (xml) => page.evaluate((text) => {
     devices: doc.querySelectorAll('.dev').length,
     vacuum: doc.querySelectorAll('.vactrail,.vacpuck').length,
     led: doc.querySelectorAll('.led-strips').length,
+    ledCutouts: [...doc.querySelectorAll('.led-body[mask]')].filter(el => {
+      const id = el.getAttribute('mask').match(/#([^)'"\s]+)/)?.[1];
+      return id && doc.getElementById(id)?.localName === 'mask';
+    }).length,
     radar: doc.querySelectorAll('.radar-target,.radar-ranges').length,
     labels: doc.querySelectorAll('.roomlabel').length,
     backdrop: doc.querySelectorAll('.hp-backdrop').length,
@@ -139,6 +143,9 @@ for (const iso of [false, true]) {
       cfg.spaces[0].settings.bg_mode = 'daynight'; return cfg;
     });
     await window.__hpTest.setVolumetricView(true);
+    card.hass = { ...card.hass, states: { ...card.hass.states,
+      'light.ceiling': { ...card.hass.states['light.ceiling'], state: 'off' } } };
+    await card.updateComplete;
   });
   await ready();
   await page.mouse.move(995, 5);
@@ -153,6 +160,7 @@ for (const iso of [false, true]) {
   const f = await facts(saved.xml);
   check(`devices-${iso ? 'iso' : 'flat'}`, f.devices > 0);
   check(`vacuum-led-radar-${iso}`, f.vacuum > 0 && f.led > 0 && f.radar > 0);
+  check(`#1043 off LED cutout survives standalone SVG-${iso}`, f.ledCutouts, iso ? 1 : 0);
   check(`svg-extension-${iso}`, saved.name.endsWith('.svg'));
   const after = await page.evaluate(() => ({
     config: JSON.stringify(window.__card._serverCfg), layout: JSON.stringify(window.__card._layout),

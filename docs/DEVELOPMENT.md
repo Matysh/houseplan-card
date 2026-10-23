@@ -2709,7 +2709,9 @@ archive. The wizard cannot recover an archive automatically.
 ## Tests
 
 Off LED fill (#1043): `smoke_led_strip_tube` compares actual tube pixels with
-an independent 70%-opaque inner-band reference, retaining the on-state oracle.
+an independent Canvas reference that erases the body beneath the 70%-opaque
+inner band, including transparent, white and coloured backgrounds; it retains
+the on-state oracle. This catches opacity applied over the dark outline itself.
 `smoke_led_strip_glow` checks off/on/unavailable/on opacity through public HA
 updates in both themes and projections, as well as the static-card combinations.
 

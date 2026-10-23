@@ -309,6 +309,11 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
     </style>
     ${repeat(ordered, (view) => view.strip.id, (view) => {
       const { t, path, d } = ledStripePath(view.strip, input.faces, input.d);
+      const off = view.state === 'off';
+      const cutout = `hp-led-off-${Array.from(view.strip.id, c => c.codePointAt(0)!.toString(16)).join('-')}`;
+      const xs = path.points.map(p => p[0]), ys = path.points.map(p => p[1]), pad = input.d * 2;
+      const mx = Math.min(...xs) - pad, my = Math.min(...ys) - pad;
+      const mw = Math.max(...xs) - mx + pad, mh = Math.max(...ys) - my + pad;
       const unavailable = view.state === 'unavailable';
       const core = unavailable ? UNAVAILABLE
         : view.state === 'on' && view.appearance ? view.appearance.c : CORE_IDLE;
@@ -320,19 +325,25 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
       const lifted = iso ? `translate(0 ${-iso.lift})` : nothing;
       return svg`<g class="led-strip state-${view.state}" data-led-strip="${view.strip.id}"
           data-marker="${dev.id}" data-state="${view.state}" data-closed="${path.closed ? 'true' : 'false'}">
+        ${off ? svg`<defs><mask id="${cutout}" maskUnits="userSpaceOnUse" x="${mx}" y="${my}" width="${mw}" height="${mh}">
+          <rect x="${mx}" y="${my}" width="${mw}" height="${mh}" fill="white"></rect>
+          <path d="${d}" fill="none" stroke="black" stroke-width="${t / 2}"
+            stroke-linecap="round" stroke-linejoin="round"></path>
+        </mask></defs>` : nothing}
+        <g transform=${lifted}><g class="led-body" mask=${off ? `url(#${cutout})` : nothing}>
         ${iso ? svg`<path class="led-iso-shadow" d="${d}" fill="none" stroke="black"
           stroke-opacity="${iso.shadow.opacity}" stroke-width="${t}" stroke-linecap="round"
           stroke-linejoin="round" filter="url(#hp-led-iso-shadow)" pointer-events="none"
-          transform="translate(${iso.shadow.dx} ${iso.shadow.dy - iso.lift})"></path>
+          transform="translate(${iso.shadow.dx} ${iso.shadow.dy})"></path>
           ${[1, 0.5].map((k) => svg`<path class="led-iso-edge" d="${d}" fill="none" stroke="${iso.edge}"
           stroke-width="${t}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"
-          transform="translate(0 ${-iso.lift + iso.depth * k})"></path>`)}` : nothing}
-        <g transform=${lifted}>
+          transform="translate(0 ${iso.depth * k})"></path>`)}` : nothing}
         <path class="led-outline" d="${d}" fill="none" stroke="${OUTLINE}" stroke-width="${t}"
           stroke-linecap="round" stroke-linejoin="round"
           stroke-dasharray=${unavailable ? `${t * 2} ${t * 1.5}` : nothing}></path>
+        </g>
         <path class="led-core" d="${d}" fill="none" stroke="${core}" stroke-width="${t / 2}"
-          stroke-opacity="${view.state === 'off' ? 0.7 : 1}"
+          stroke-opacity="${off ? 0.7 : 1}"
           stroke-linecap="round" stroke-linejoin="round"
           stroke-dasharray=${unavailable ? `${t * 2} ${t * 1.5}` : nothing}></path>
         <path class="led-focus" d="${d}" stroke-width="${t * 1.6}" stroke-linecap="round"

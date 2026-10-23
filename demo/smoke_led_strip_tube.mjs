@@ -110,28 +110,52 @@ for (const scenario of scenarios) {
           const minY = Math.floor(Math.min(...expectedCorners.map(p => p[1])) - 8);
           const width = Math.ceil(Math.max(...expectedCorners.map(p => p[0])) - minX + 8);
           const height = Math.ceil(Math.max(...expectedCorners.map(p => p[1])) - minY + 8);
-          const raster = async body => {
+          const raster = async (body, background = null) => {
             const image = new Image();
-            const xml = `<svg xmlns="http://www.w3.org/2000/svg" width="${width * 2}" height="${height * 2}" viewBox="${minX} ${minY} ${width} ${height}">${body}</svg>`;
+            const xml = `<svg xmlns="http://www.w3.org/2000/svg" width="${width * 2}" height="${height * 2}" viewBox="${minX} ${minY} ${width} ${height}">${background ? `<rect x="${minX}" y="${minY}" width="${width}" height="${height}" fill="${background}"/>` : ''}${body}</svg>`;
             image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(xml)}`;
             await image.decode();
             const canvas = document.createElement('canvas'); canvas.width = width * 2; canvas.height = height * 2;
             const context = canvas.getContext('2d'); context.drawImage(image, 0, 0);
             return context.getImageData(0, 0, canvas.width, canvas.height).data;
           };
-          // #1043: the inner white band is 30% transparent only while off.
-          const expectedMarkup = `<path d="${expectedD}" fill="none" stroke="#383838" stroke-width="${outlineWidth}" stroke-linecap="round" stroke-linejoin="round"/><path d="${expectedD}" fill="none" stroke="#FFFFFF" stroke-opacity="${state === 'off' ? 0.7 : 1}" stroke-width="${coreWidth}" stroke-linecap="round" stroke-linejoin="round"/>`;
+          // #1043: independent Canvas composition. Erase the inner band from
+          // the dark body BEFORE painting translucent white, revealing the plan.
+          const referenceCanvas = document.createElement('canvas');
+          referenceCanvas.width = width * 2; referenceCanvas.height = height * 2;
+          const ctx = referenceCanvas.getContext('2d'); ctx.scale(2, 2); ctx.translate(-minX, -minY);
+          const referencePath = new Path2D(expectedD);
+          ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = outlineWidth;
+          ctx.strokeStyle = '#383838'; ctx.stroke(referencePath);
+          ctx.lineWidth = coreWidth;
+          if (state === 'off') { ctx.globalCompositeOperation = 'destination-out'; ctx.stroke(referencePath); }
+          ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = state === 'off' ? 0.7 : 1;
+          ctx.strokeStyle = '#FFFFFF'; ctx.stroke(referencePath);
+          const body = [group.querySelector('defs'), outline.closest('.led-body') || outline, core]
+            .filter(Boolean).map(node => new XMLSerializer().serializeToString(node)).join('');
           const [painted, reference] = await Promise.all([
-            raster(new XMLSerializer().serializeToString(outline) + new XMLSerializer().serializeToString(core)),
-            raster(expectedMarkup),
+            raster(body),
+            referenceCanvas.getContext('2d').getImageData(0, 0, width * 2, height * 2).data,
           ]);
           let badPixels = 0;
           for (let i = 0; i < painted.length; i += 4) {
             if ([0, 1, 2, 3].some(channel => Math.abs(painted[i + channel] - reference[i + channel]) > 16)) badPixels++;
           }
+          const backgroundDiffs = {};
+          for (const background of ['#ffffff', '#2d597a']) {
+            const backdrop = document.createElement('canvas'); backdrop.width = width * 2; backdrop.height = height * 2;
+            const bg = backdrop.getContext('2d'); bg.fillStyle = background; bg.fillRect(0, 0, backdrop.width, backdrop.height);
+            bg.drawImage(referenceCanvas, 0, 0);
+            const expected = bg.getImageData(0, 0, backdrop.width, backdrop.height).data;
+            const actual = await raster(body, background);
+            backgroundDiffs[background] = 0;
+            for (let i = 0; i < actual.length; i += 4) {
+              if ([0, 1, 2, 3].some(c => Math.abs(actual[i + c] - expected[i + c]) > 16)) backgroundDiffs[background]++;
+            }
+          }
           return { d, corners, closed: /Z\s*$/i.test(d), length: outline.getTotalLength(),
             widths: [Number(outline.getAttribute('stroke-width')), Number(core.getAttribute('stroke-width'))],
-            coreD: core.getAttribute('d'), badPixels,
+            coreD: core.getAttribute('d'), badPixels, backgroundDiffs,
             openingPresent: !!window.__card.shadowRoot.querySelector('[data-hp="opening"][data-id="tube-door"][data-kind="door"]'),
             saved: window.__card._serverCfg.spaces[0].led_strips[0].points };
         }, { expectedCorners, outlineWidth, coreWidth, state });
@@ -143,6 +167,8 @@ for (const scenario of scenarios) {
           actual.corners.some(q => Math.hypot(p[0] - q[0], p[1] - q[1]) < 1e-4)));
         check(`${label}: no extra travel from a hook, backtrack or door notch`, Math.abs(actual.length - expectedLength) < 0.003);
         check(`${label}: expected tube pixels`, actual.badPixels, 0);
+        check(`${label}: white/coloured backgrounds show through the fill`, actual.backgroundDiffs,
+          { '#ffffff': 0, '#2d597a': 0 });
         check(`${label}: outline/core share geometry`, actual.coreD, actual.d);
         check(`${label}: physical outline/core widths`, actual.widths, [outlineWidth, coreWidth]);
         check(`${label}: saved geometry is untouched`, actual.saved, points);

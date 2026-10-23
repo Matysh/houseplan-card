@@ -26,7 +26,8 @@ Everything computable from the tree and git; regenerate, never edit by hand
 ## Current cycle and standing decisions
 
 Off LED strips (#1043) use 70% inner-band opacity through the shared live/static
-renderer. On/unavailable paint, outline, geometry and interactions stay unchanged.
+renderer, with the dark body cut out beneath the core so the real plan shows
+through. On/unavailable paint, rim, geometry and interactions stay unchanged.
 
 Service checks (#1040) separate main's delivery acknowledgement from execution
 on dev. Immutable bounded receipts and native-token once-only claims preserve
