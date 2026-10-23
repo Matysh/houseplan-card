@@ -814,9 +814,10 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // #1035: paired order actions, the context-menu owner and editor-only translations
 // measure 334438 B gzip. Owner permits small limit increases instead of costly
 // reductions; keep the 2000 B band, absolute budgets and all predicates intact.
-// #1003's pre-rebase 336216-B measurement is not the integrated tree. Keep
-// dev's reference here; measure both changes together after this rebase.
-export const LAZY_EDITOR_GZIP_CEILING = 334_400;
+// #1003 after merging #1035: actual integrated editor339023 B, +4585 B
+// against dev's measured334438 B. Account for the owner-approved contact
+// reference/reflow/writer cost; keep the same band and absolute budgets.
+export const LAZY_EDITOR_GZIP_CEILING = 339_023;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

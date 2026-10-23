@@ -32,6 +32,12 @@ Actual HA tests run in WSL on Linux Python 3.14.7 against this task checkout.
 Native Windows cannot import the HA harness (`fcntl`); a plugin-isolated pure
 test is not a substitute. Tests do not write real HA or frozen UI Lab files.
 
+Final rebase after #1035, on dev a5be21b84: View336197 B gzip, editor339023 B
+(dev measured334438 B, +4585 B). The latter reference is set to339023 with the
+same2000-B band. Monolith dev5991/3374160 → integrated6038/3397461
+(hostRefs+47, raw+23301); the other four counters stay145/368/102/101.
+This combines both reviewed feature costs; no band or absolute wall is raised.
+
 ## Service-check branch isolation (#1040)
 
 The main branch's service ingress acknowledges delivery, not the result of dev

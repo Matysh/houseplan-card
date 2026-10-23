@@ -99,12 +99,32 @@ a historical size absent from the document. New/materialised bases survive cold
 reload. Fallback search is deterministic and bounded, not an optimal global
 packing solver. No claim that this change makes initial loading faster.
 
+### Final integration with #1035
+
+While the accepted-baseline CI ran, #1035 merged into dev a5be21b84. The ask
+branch was rebased before S7. No product conflict required a code rewrite;
+the inventory retains both tasks' IDs and its counts are regenerated from the
+actual list (1800 total definitions / 479 browser guards). Focused anchor and
+inventory tests pass. Cost is remeasured and recorded in DEVELOPMENT.md and
+issue comment 6363231248; existing bands are unchanged. Accepted PNGs from both
+tasks are retained: conflict resolution keeps the #1003 acceptance provenance
+and the already accepted #1035 scenario hashes, not invented image hashes or a
+claim that the older capture contained the newly merged product. The integrated
+tree must pass its own complete Linux capture before S7.
+
+The new decor_order and 13 critical contact/geometry/owner scripts are rerun
+against a fresh integrated bundle; the earlier 39-script evidence is not
+represented as a full post-rebase run of unrelated workflows. Final CI and
+execution results are linked in the canonical handoff.
+
 ## smoke-select decision record
 
 Command: `node scripts/smoke-select.mjs --base origin/dev --head HEAD --json`.
 Base dev 7b00292ec; executable product range through 29f45c464.
-The output selects 138 direct plus 7 registered scripts, union **145**, out of
-419 available. Every selected row has a decision below. Specific added witnesses
+The initial output selects 138 direct plus 7 registered scripts, union **145**,
+out of 419 available. After rebasing on dev a5be21b84 (#1035), it selects 139
+direct + 7 registered, union **146**, out of 420: the new decor_order is executed
+as well. Every selected row has a decision below. Specific added witnesses
 also run: smoke_device_contact_editor_frame (not selected by static reachability).
 All logs named here use synthetic fixtures; this is not a claim of a full
 419-script pre-release run. Shared private revision/loading names are broad
@@ -136,6 +156,7 @@ matches, not evidence that 145 feature workflows changed.
 | smoke_daycycle_raster.mjs | _cfgRev | Not run: common config/revision/loading owner match, not a changed workflow here. Pair/CAS/ACL exercised by contact writer units, HA harness and config_authority/post_write_adoption/pageshow/layout_sync smokes; this separate feature flow is unchanged. |
 | smoke_decor_default_persist.mjs | _cfgRev | Not run: common config/revision/loading owner match, not a changed workflow here. Pair/CAS/ACL exercised by contact writer units, HA harness and config_authority/post_write_adoption/pageshow/layout_sync smokes; this separate feature flow is unchanged. |
 | smoke_decor_layer_order.mjs | wallKey | Not run: shared key/normalised-unit symbol match; wall model, CAD tool and import paths of this scenario are unchanged. Finite masonry/corner/opening negatives, wall_key_roundtrip and golden matrix exercise the changed consumer. |
+| smoke_decor_order.mjs | _loadOk | Executed after the #1035 rebase: actual overlapping-object hit order and new property-panel actions; PASS. |
 | smoke_device_contact_composition.mjs | _deviceContacts | Executed: PASS (command below; fixture call/DOM/geometry assertions, not a source-name oracle). |
 | smoke_device_contact_corners.mjs | _deviceContacts | Executed: PASS (command below; fixture call/DOM/geometry assertions, not a source-name oracle). |
 | smoke_device_contact_designer.mjs | _deviceContacts | Executed: PASS (command below; fixture call/DOM/geometry assertions, not a source-name oracle). |
