@@ -89,6 +89,19 @@ images were preserved, with 193 byte-identical environment witnesses (floor 10).
 The initial clipped capture was never accepted. Final exact-SHA full Validate
 is recorded separately in the issue handoff.
 
+The first full Validate found an obsolete action-list comparison in
+`smoke_ui_polish_963_reference`: the immutable #963 prototype predates the two
+intentional #1035 actions. The comparator retains exact ordered state/text/paint
+equality for every original action (the public old prototype has no data-action)
+and permits exactly front/back by their new hook IDs only for decor.
+Both new actions must match the immutable reference's enabled neutral action or
+disabled control, reached through ordinary selection/mode input in both themes.
+No reference CSS/source was patched. Unrelated stale appearance smokes from the
+#1037 colour relocation are tracked separately in #1042.
+`node demo/smoke_ui_polish_963_reference.mjs` on genuine pinned HA frontend
+20260930.4 → PASS, including all older scenes, enabled/disabled new actions in
+both themes, and Save text/geometry in RU/EN/DE/FR.
+
 `node scripts/mutation-gate.mjs --check` is a static registry check only:
 execution 0, caught unknown. No mutant or temporary implementation substitution
 was executed during development.

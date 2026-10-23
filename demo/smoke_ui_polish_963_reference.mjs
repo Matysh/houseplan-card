@@ -48,7 +48,7 @@ const metrics=p=>p.locator('houseplan-card [data-hp=properties-panel]').evaluate
    heading:el.querySelector('.hp-prop-group-title')?.textContent.trim(),box:rect(el),
    hint:[...el.querySelectorAll('.hp-prop-hint')].filter(e=>getComputedStyle(e).display!=='none').map(e=>({text:e.textContent.trim(),box:rect(e)})),
    fields:[...el.querySelectorAll('[data-property]')].filter(e=>getComputedStyle(e).display!=='none').map(e=>({key:e.dataset.property,box:rect(e)})),
- })), title:panel.querySelector('.hp-prop-title')?.textContent.trim(),actions:[...panel.querySelectorAll('.hp-prop-action')].map(el=>{const s=getComputedStyle(el);return {text:el.textContent.trim(),border:s.borderColor,color:s.color,background:s.backgroundColor};})};
+ })), title:panel.querySelector('.hp-prop-title')?.textContent.trim(),line:getComputedStyle(panel.querySelector('.hp-prop-foot')).borderTopColor,actions:[...panel.querySelectorAll('.hp-prop-action')].map(el=>{const s=getComputedStyle(el);return {key:el.dataset.action,disabled:el.matches(':disabled,[aria-disabled="true"]'),text:el.textContent.trim(),border:s.borderColor,color:s.color,background:s.backgroundColor};})};
 });
 try{
  await prepareUi963Page(page,fixture.url);await assertFreshDemoBundle(page,fileURLToPath(new URL('..',import.meta.url)));
@@ -59,6 +59,16 @@ try{
  ['device','devices','.dev[data-id=lamp]'],['led','devices','[data-led-select=led]'],['contour','plan','@contour']];
  for(const [name,colors]of Object.entries(palettes)){
   for(const p of [reference,page])await theme(p,colors);
+  // #1035 adds two decor actions. Keep the immutable oracle for every older
+  // action, and compare the new ones with genuine enabled/disabled reference
+  // controls reached through ordinary mode/selection input, never a CSS patch.
+  await select(reference,'devices','.dev[data-id=lamp]');
+  const neutral=(await metrics(reference)).actions[0];
+  await reference.evaluate(async()=>{await window.__hpTest.setMode('view');await window.__hpTest.setMode('plan');});
+  await reference.waitForFunction(()=>!window.__card._modeTransitionBusy);
+  const disabled=(await metrics(reference)).actions.find(a=>a.disabled);
+  out[name+'_reference_action_witnesses']=neutral?.text==='Копировать'&&!neutral.disabled&&!!disabled;
+  console.log(name,'action references',JSON.stringify({neutral,disabled}));
   for(const [scene,mode,selector]of scenes){
    for(const p of [reference,page])await select(p,mode,selector);
    const approved=await metrics(reference),actual=await metrics(page),prefix=name+'_'+scene;
@@ -67,7 +77,15 @@ try{
    out[prefix+'_panel']=near(approved.panel,actual.panel);
    out[prefix+'_section_geometry']=approved.groups.length===actual.groups.length&&approved.groups.every((group,i)=>near(group.box,actual.groups[i].box));
    out[prefix+'_field_geometry']=approved.groups.every((group,i)=>group.fields.length===actual.groups[i]?.fields.length&&group.fields.every((f,j)=>f.key===actual.groups[i].fields[j].key&&near(f.box,actual.groups[i].fields[j].box)));
-   out[prefix+'_action_paint']=JSON.stringify(approved.actions)===JSON.stringify(actual.actions);
+   const addedKeys=mode==='decor'?['properties-decor-front','properties-decor-back']:[];
+   const added=actual.actions.filter(a=>addedKeys.includes(a.key));
+   // The public old prototype predates data-action; compare its complete
+   // ordered semantic paint/state records without requiring that newer hook.
+   const legacyPaint=actions=>actions.map(({key,...paint})=>paint);
+   out[prefix+'_action_paint']=JSON.stringify(legacyPaint(approved.actions))===JSON.stringify(legacyPaint(actual.actions.filter(a=>!addedKeys.includes(a.key))));
+   if(mode==='decor')out[prefix+'_order_action_paint']=JSON.stringify(added.map(a=>a.key))===JSON.stringify(addedKeys)&&added.every(a=>
+    neutral&&disabled&&a.border===(a.disabled?approved.line:neutral.border)&&a.color===(a.disabled?disabled.color:neutral.color)
+      &&a.background===(a.disabled?disabled.background:neutral.background));
    measurements.push({scene:prefix,approved,actual});
    console.log(prefix,JSON.stringify(Object.fromEntries(Object.entries(out).filter(([k])=>k.startsWith(prefix)))));
    for(const [p,label]of [[reference,'approved'],[page,'product']])await p.screenshot({path:join(output,`${prefix}-${label}.png`)});
