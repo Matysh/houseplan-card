@@ -20989,6 +20989,14 @@ const decorLine1046Cases = [
     because:'#1046 AC5: real keyboard Undo/Redo crosses card gesture routing, Lit repaint and the common geometry writer; pure session restoration cannot prove that integration.',
     patches:[{file:'src/houseplan-editor-runtime.ts',find:'if (outcome === true && command) this.decorLine.restore(',
       replace:'if (outcome === true && command && !lineToken) this.decorLine.restore('}] },
+  { id:'decor-line-lost-capture-ignored-1046', guard:'node demo/smoke_decor_line_click.mjs',
+    because:'#1046 AC4: mounted stage lostpointercapture must retire the click token before a compatibility click; the pure session unit cannot prove DOM routing.',
+    patches:[{file:'src/houseplan-card.ts',find:'            if (this._editorRuntime?.decorLine.owns(e.pointerId)) this._stagePointerCancel(e);',
+      replace:'            if (false && this._editorRuntime?.decorLine.owns(e.pointerId)) this._stagePointerCancel(e);'}] },
+  { id:'decor-line-escape-keeps-session-1046', guard:'node demo/smoke_decor_line_click.mjs',
+    because:'#1046 AC3: real Escape must end the Line owner before Properties consumes the shortcut, while preserving stored lines and the tool.',
+    patches:[{file:'src/houseplan-card.ts',find:'      e.preventDefault(); this._editorRuntime.decorLine.reset(); return;',
+      replace:'      e.preventDefault(); return;'}] },
 ];
 
 export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases].map((mutant) => ({

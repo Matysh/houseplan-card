@@ -42,10 +42,10 @@ that transition events alone prove disposal.
 | Performance threshold | 7 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 82 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 91 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Pointer geometry and trusted interaction | 93 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 57 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
 | Custom-element and HA browser lifecycle | 243 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **484 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| **Total** | **486 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -283,6 +283,13 @@ cold View is unchanged and no source-level check sees the unstyled editor.
 These #1047 witnesses draw A/B/C through real mouse gestures and check the
 Properties owner, frame geometry, subsequent field write and Escape before
 pointer release. Direct calls to selection/commit would bypass the regression.
+
+- `decor-line-lost-capture-ignored-1046`
+- `decor-line-escape-keeps-session-1046`
+
+These #1046 witnesses need the actual stage/keyboard routing and Properties
+owner; controller-only dispatch cannot prove their mounted event priority.
+Registered for nightly execution, not executed during development.
 
 - `decor-right-button-arms-transform-1035`
 
