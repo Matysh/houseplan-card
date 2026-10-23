@@ -1,5 +1,9 @@
 # House Plan architecture
 
+The config-authority browser witness (#1052) isolates late foreign-event reads
+from already-started mandatory and optional capability reads. It observes the
+transport boundary without changing the production subscription or writer.
+
 Decor creation (#1047) keeps native selection authoritative for the current
 Properties target even when the previous object still exists. Field completion
 continues to fence selection changes; other editors retain their explicit owner.

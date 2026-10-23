@@ -25,6 +25,10 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Config-authority smoke (#1052) compares reads across the late-A boundary;
+the independent direct-LQI capability probe no longer looks like a stale-event
+reload. Mandatory paired loading and all authority assertions remain covered.
+
 Direct Zigbee LQI (#1029) uses passive Z2M and cached ZHA without enabling
 diagnostic entities. Its minimal household-readable feed is independent of
 admin-only topology and never persists live readings. Existing HA readings

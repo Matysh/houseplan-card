@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1052,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Repair the config-authority smoke's stale fixed request-count oracle after the independent direct-LQI capability probe added by #1029. Require the mandatory pair to start and preserve read counts across late A completion/events; product code, transport guards, writer behaviour, fixtures and timeouts do not change."
+}
