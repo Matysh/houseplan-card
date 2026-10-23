@@ -1535,6 +1535,7 @@
       "demo/smoke_device_battery_performance.mjs",
       "demo/smoke_device_battery_tooltip.mjs",
       "demo/smoke_device_battery_zigbee.mjs",
+      "demo/smoke_device_contact_corners.mjs",
       "demo/smoke_device_contact_designer.mjs",
       "demo/smoke_device_contact_reflow.mjs",
       "demo/smoke_device_contact_walls.mjs",

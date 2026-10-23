@@ -54,7 +54,8 @@ const dragged=await work();
 checkAll({dragNoFullIndexBuild:dragged.render.rebuilds===dragBase.render.rebuilds,
   dragNoFaceMeasure:dragged.render.measurements===dragBase.render.measurements,
   // Grid fallback coalesces adjacent raw samples to the same canonical point.
-  dragUsesIncrementalMoves:dragged.scene.moves>0&&dragged.scene.moves<=60,
+  dragUsesIncrementalMoves:dragged.scene.moves-dragBase.scene.moves>0
+    &&dragged.scene.moves-dragBase.scene.moves<=60,
   localPairsNotAllPlanSquared:dragged.scene.pairs-ticks.scene.pairs<60*200});
 await page.keyboard.press('Escape');await page.mouse.up();await settle();
 check('cancel-keeps-all-200-positions',isDeepStrictEqual(await page.evaluate(()=>window.__card._layout),point.layout),true);
@@ -86,4 +87,4 @@ const decor=await page.evaluate(async()=>{
 checkAll({decorPreviewActuallyChanges:decor.changed,decorNoMasonryRebuild:decor.walls===0,
   decorNoContactRebuild:decor.contacts===0,decorCancelRestores:decor.restored,
   decorKeepsAllPositions:decor.layout,decorKeepsContactInk:decor.ink});
-await finish(browser,{before,ticks,value,dragged,after:await work()});
+await finish(browser,{before,ticks,value,dragBase,dragged,after:await work()});

@@ -99,7 +99,7 @@ for(const control of [32,56,96]) for(const scene of designerContactCases){
     const samples=[]; const ns='http://www.w3.org/2000/svg';
     for(const [index,d] of [...paths,...free].entries()){
       const p=document.createElementNS(ns,'path');p.setAttribute('d',d);const length=p.getTotalLength();
-      for(let i=0;i<2000;i++){const q=p.getPointAtLength(length*i/2000);samples.push([(q.x-(index<paths.length?100:0))/k,(q.y-(index<paths.length?100:0))/k]);}
+      for(let i=0;i<4000;i++){const q=p.getPointAtLength(length*i/4000);samples.push([(q.x-(index<paths.length?100:0))/k,(q.y-(index<paths.length?100:0))/k]);}
     }
     const cores=[...root.querySelectorAll('.dev[data-id^="designer-"]')].map(el=>{
       const b=el.querySelector('.device-core').getBoundingClientRect();return{id:el.dataset.id,center:world(b.x+b.width/2,b.y+b.height/2).map(x=>x/k),d:b.width/rect.width*v.w/k};
@@ -117,10 +117,18 @@ for(const control of [32,56,96]) for(const scene of designerContactCases){
   await ref.setContent(`<style>${styles}</style><div class="picture" style="width:448px;height:214px;transform:scale(${factor});transform-origin:0 0">
     <svg viewBox="0 0 448 214">${scene.walls.map(w=>`<rect x="${w.x}" y="${w.y}" width="${w.w}" height="${w.h}" fill="#d0d2d3"/>`).join('')}</svg>
     <svg class="group-layer" viewBox="0 0 448 214">${shells}</svg>${nodes}</div>`);
-  const expected=await ref.evaluate(factor=>[...document.querySelectorAll('.group-shell')].flatMap(p=>{
+  const closedExpected=await ref.evaluate(factor=>[...document.querySelectorAll('.group-shell')].flatMap(p=>{
     const length=p.getTotalLength(),m=p.getCTM(),out=[];
-    for(let i=0;i<2000;i++){const q=p.getPointAtLength(length*i/2000),t=new DOMPoint(q.x,q.y).matrixTransform(m);out.push([t.x*factor,t.y*factor]);}return out;
+    for(let i=0;i<4000;i++){const q=p.getPointAtLength(length*i/4000),t=new DOMPoint(q.x,q.y).matrixTransform(m);out.push([t.x*factor,t.y*factor]);}return out;
   }),factor);
+  // #1003 deliberately removes only finite wall-owned straight stroke. Keep
+  // the frozen #866 renderer intact; adapt its sampled comparison externally,
+  // using only the fixture rectangles, never production contact geometry.
+  const expected=closedExpected.filter(([x,y])=>!scene.walls.some(w=>
+    ((Math.abs(x-w.x*factor)<.001||Math.abs(x-w.right*factor)<.001)
+      &&y>w.y*factor+.001&&y<w.bottom*factor-.001)
+    ||((Math.abs(y-w.y*factor)<.001||Math.abs(y-w.bottom*factor)<.001)
+      &&x>w.x*factor+.001&&x<w.right*factor-.001)));
   const directed=(from,to)=>Math.sqrt(from.reduce((max,p)=>Math.max(max,to.reduce((best,q)=>Math.min(best,(p[0]-q[0])**2+(p[1]-q[1])**2),Infinity)),0));
   const error=Math.max(directed(actual.samples,expected),directed(expected,actual.samples));
   const coreError=Math.max(...actual.cores.map(a=>{const d=scene.devices.find(d=>d.id===a.id);return Math.max(Math.abs(a.d-d.size*factor*80/103),Math.hypot(a.center[0]-d.x*factor,a.center[1]-d.y*factor));}));
@@ -130,7 +138,8 @@ for(const control of [32,56,96]) for(const scene of designerContactCases){
   await page.screenshot({path:`${dir}/${name}-production.png`,clip:crop});
   await ref.screenshot({path:`${dir}/${name}-reference.png`,clip:{x:0,y:0,width:448*factor,height:214*factor}});
   matrix.push({scene:scene.id,title:scene.title,control,boundaryError:error,coreError,productionScale:actual.scale,
-    production:`${name}-production.png`,reference:`${name}-reference.png`,pass:error<=1&&coreError<=1,actualPaths:actual.paths,free:actual.free});
+    production:`${name}-production.png`,reference:`${name}-reference.png`,pass:error<=1&&coreError<=1,
+    omittedWallSamples:closedExpected.length-expected.length,actualPaths:actual.paths,free:actual.free});
   writeFileSync(`${dir}/comparison.json`,JSON.stringify(matrix,null,2));
   check(`${name}:boundary<=1CSSpx`,error<=1,true); check(`${name}:core<=1CSSpx`,coreError<=1,true);
   check(`${name}:control-size`,Math.abs(actual.scale-1)<=.01,true);
