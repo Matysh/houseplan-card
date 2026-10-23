@@ -20790,6 +20790,12 @@ const discardConfirmMotionGuardCases = [
 ];
 const contact1003GuardCases=[
   {
+    id:'contact-drag-value-frame-deferred-1003',guard:'node demo/smoke_device_contact_live_drag.mjs',
+    because:'#1003 AC11: actual captured pointer ownership, live HA text/face refresh and one terminal group write cross the deferred HA frame boundary; a resolver unit cannot prove that mounted path.',
+    patches:[{file:'src/live-interaction-runtime.ts',
+      find:'      && !contactValueFrameChanged(this.host,this.contacts,before,after);',replace:'      && true;'}],
+  },
+  {
     id:'contact-contour-only-forces-axis-frame-1003',guard:'node demo/smoke_device_contact_editor_frame.mjs',
     because:'#1003 AC14/AC15: only the mounted room-resize live/axis layer lifecycle exposes a spurious contact-only rerender duplicating measured edges and leaders.',
     patches:[{file:'src/device-contact-card.ts',find:'    if(wasReflowed||renderer.reflowed)host.requestUpdate();',

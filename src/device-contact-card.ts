@@ -10,6 +10,7 @@ import type { ResolvedDevicePresentation } from './device-presentation';
 import type { DeviceHitController } from './device-hit-owner';
 import { floorGeometryKeyReader, type FloorKeySource } from './floor-geometry-key';
 import { contentFingerprint } from './visual-continuity';
+import type { HassRenderSnapshot } from './render-invalidation';
 
 interface ContactCard extends FloorKeySource {
   renderRoot: ParentNode;
@@ -26,7 +27,29 @@ interface ContactCard extends FloorKeySource {
   _devicePresentation(d: DevItem): ResolvedDevicePresentation;
   _invalidateDeviceHitGeometry(): void;
   _layout: Record<string,{x:number;y:number;s?:string;contact_basis?:unknown}>;
+  _deviceDrag?: {id:string;pointerId:number;moved:boolean;lastPointer?:{clientX:number;clientY:number;altKey:boolean}} | null;
+  _pointerMoveNow(ev:PointerEvent,d:DevItem):void;
   requestUpdate(): void;
+}
+/** Keep ordinary HA ticks deferred during gestures. Only values consumed by
+ * the held component may refresh its actual faces without losing capture. */
+export function contactValueFrameChanged(value:object,renderer:DeviceContactRenderer,
+  before:HassRenderSnapshot|null|undefined,after:HassRenderSnapshot|null|undefined):boolean {
+  const host=value as ContactCard,id=host._deviceDrag?.id;
+  if(!id||!host._renderDevices||!before||!after)return false;
+  const members=new Set(renderer.scene?.component(id)??[id]);
+  for(const d of host._renderDevices)if(members.has(d.id)){
+    const p=host._devicePresentation(d),ids=new Set<string>();
+    if(p.valueSource?.eid)ids.add(p.valueSource.eid);
+    const source=p.valueBadge?.source;
+    if(source?.kind==='entity_state'||source?.kind==='entity_attribute')ids.add(source.entity_id);
+    if(p.tempText||p.humText||d.marker?.use_climate_temp
+        ||source?.kind==='derived_lqi'||p.valueSource?.kind==='derived_lqi')for(const eid of d.entities)ids.add(eid);
+    if(source?.kind==='derived_marker_state'||p.valueSource?.kind==='derived_marker_state')
+      for(const s of p.visualSources)ids.add(s.eid);
+    for(const eid of ids)if(before.states?.[eid]!==after.states?.[eid])return true;
+  }
+  return false;
 }
 const wallCache = new WeakMap<object, { key: string; walls: ReturnType<typeof deviceContactWalls>; masonry: ContactMasonry }>();
 const wallKeys = new WeakMap<object, (spaceId: string) => string>();
@@ -62,6 +85,10 @@ export function syncHouseplanDeviceContacts(value: object, renderer: DeviceConta
     })) });
   if (changed) {
     host._invalidateDeviceHitGeometry();
+    const drag=host._deviceDrag,d=drag&&host._renderDevices.find(d=>d.id===drag.id);
+    if(drag?.moved&&drag.lastPointer&&d)host._pointerMoveNow(new PointerEvent('pointermove',{
+      ...drag.lastPointer,pointerId:drag.pointerId,
+    }),d);
     // Painting a contour alone must not interrupt another editor's live layer.
     if(wasReflowed||renderer.reflowed)host.requestUpdate();
   }

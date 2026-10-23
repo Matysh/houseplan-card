@@ -15,7 +15,7 @@ import { lightWork } from './devices';
 import { lightGeometryFingerprint } from './glow-scene';
 import type { DevItem } from './types';
 import { DeviceContactRenderer } from './device-contact-render';
-import { syncHouseplanDeviceContacts } from './device-contact-card';
+import { contactValueFrameChanged, syncHouseplanDeviceContacts } from './device-contact-card';
 
 export const LIVE_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
@@ -81,7 +81,8 @@ export class LiveRuntime {
     intake: () => void,
   ): boolean {
     const change = classifyHassRenderChange(before, after, dependencies);
-    const defer = change === 'state' && this.active();
+    const defer = change === 'state' && this.active()
+      && !contactValueFrameChanged(this.host,this.contacts,before,after);
     if (defer) this.deferredHass = true;
     const render = change !== 'none' && !defer;
     // Preserve ReactiveElement's ordering for snapshots which are about to

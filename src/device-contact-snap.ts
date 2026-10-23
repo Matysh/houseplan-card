@@ -19,7 +19,9 @@ export class DeviceContactMagnet {
   public resolve(x: number, y: number, px: number, py: number, enabled = true): DeviceContactProposal | null {
     this.hint = null;
     if (!enabled || ![x, y, px, py].every(Number.isFinite) || px <= 0 || py <= 0) { this.held = null; return null; }
-    const raw = { ...this.marker, x, y }, candidates: (DeviceContactProposal & { distance: number })[] = [];
+    // HA can change the dragged face while the pointer is still captured.
+    const metric=this.scene.shapes.get(this.marker.id)?.marker??this.marker;
+    const raw = { ...metric, x, y }, candidates: (DeviceContactProposal & { distance: number })[] = [];
     const add = (p: DeviceContactProposal): void => {
       const distance = Math.hypot((p.x - x) * px, (p.y - y) * py);
       const limit = p.kind === 'wall' ? (p.key === this.held ? 9 : 6) : (p.key === this.held ? 22 : 14);

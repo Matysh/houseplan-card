@@ -1,8 +1,19 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { syncHouseplanDeviceContacts } from '../test-build/device-contact-card.js';
+import { contactValueFrameChanged,syncHouseplanDeviceContacts } from '../test-build/device-contact-card.js';
 import { spaceModels } from '../test-build/space-geometry.js';
 import { floorGeometryKeyReader } from '../test-build/floor-geometry-key.js';
+
+test('#1003 only the held component value rows bypass ordinary gesture deferral',()=>{
+  const before={states:{'sensor.a':{state:'23'},'sensor.other':{state:'0'}}};
+  const host={_deviceDrag:{id:'a'},_renderDevices:[{id:'a',entities:['sensor.a']}],
+    _devicePresentation:()=>({valueBadge:{source:{kind:'entity_state',entity_id:'sensor.a'}}})};
+  const renderer={scene:{component:()=>['a']}};
+  assert.equal(contactValueFrameChanged(host,renderer,before,{states:{...before.states,'sensor.a':{state:'123'}}}),true);
+  assert.equal(contactValueFrameChanged(host,renderer,before,{states:{...before.states,'sensor.other':{state:'1'}}}),false);
+  host._deviceDrag=null;
+  assert.equal(contactValueFrameChanged(host,renderer,before,{states:{'sensor.a':{state:'123'}}}),false);
+});
 
 test('#935 contact walls stay warm for decor edits, but follow every architectural input', () => {
   const raw = { id: 'floor', cell_cm: 5, rooms: [], partitions: [],

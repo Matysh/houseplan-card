@@ -34,6 +34,15 @@ test('#1003 AC2 old recognition is explicit; new contact never accepts stored sl
   assert.equal(joinedContactSide(a,c),'right');
 });
 
+test('#1003 AC11 a captured resolver uses the current HA face, not its pointerdown width',()=>{
+  const a=marker('a',100),b=marker('b',200),scene=new DeviceContactScene([a,b],[]);
+  const magnet=new DeviceContactMagnet(scene,a,canonical);
+  const wide={...a,box:{...a.box,right:35}};scene.replace(wide);
+  const snap=magnet.resolve(150,200,1,1);
+  assert.equal(snap.kind,'device');
+  assert.equal(joinedContactSide(deriveContactShape({...wide,x:snap.x,y:snap.y},[]),scene.shapes.get('b')),'right');
+});
+
 test('#1003 AC4/AC8/AC10 shared normalised contour/hit keeps wall, free end and L void',()=>{
   const a=deriveContactShape(marker('a',25.75,200),[left]),b=deriveContactShape(marker('b',70.75,200),[left]);
   const saved=JSON.stringify([a,b]),[x,y]=contactContourShapes([a,b]);

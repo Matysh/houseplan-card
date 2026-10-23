@@ -31,6 +31,7 @@ def test_new_valid_basis_and_read_are_lossless():
 
 @pytest.mark.parametrize("patch", [
     {"diameter": 0}, {"diameter": True}, {"diameter": float("nan")}, {"diameter": 10001},
+    {"diameter": 10**1000},
     {"v": True}, {"at": {"x": 0.3, "y": 0.3, "s": "floor"}},
     {"box": [0, 0, 0, 1]}, {"box": [0, 0, float("inf"), 1]}, {"box": [0, 0, 1]},
     {"diameter": 1e-12, "box": [-5000, -5000, 5000, 5000]},

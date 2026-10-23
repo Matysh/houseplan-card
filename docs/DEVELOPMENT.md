@@ -24,6 +24,9 @@ identity and render-only invalidation fixes; it does not enlarge any band.
 Initial View is 336150 B gzip and lazy editor 336799 B, still inside the above
 references and their unchanged 2000-B bands. These are local Windows numbers,
 not a claim of a Linux byte-identical build or a performance improvement.
+The final held-HA-value guard variant measures hostRefs6015, raw3387987,
+View336182 B and editor336810 B; it stays within those recorded references and
+unchanged bands, so it introduces no further ceiling increase.
 
 Actual HA tests run in WSL on Linux Python 3.14.7 against this task checkout.
 Native Windows cannot import the HA harness (`fcntl`); a plugin-isolated pure

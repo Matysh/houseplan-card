@@ -11,7 +11,7 @@ import voluptuous as vol
 
 def _number(value: Any, limit: float) -> TypeGuard[int | float]:
     return (isinstance(value, (int, float)) and not isinstance(value, bool)
-            and math.isfinite(value) and abs(value) <= limit)
+            and abs(value) <= limit and math.isfinite(value))
 
 
 def valid_contact_basis(value: Any) -> TypeGuard[dict[str, Any]]:
