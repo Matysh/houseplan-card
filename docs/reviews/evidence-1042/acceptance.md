@@ -22,7 +22,9 @@ Chromium 151.0.7922.34:
   leaving legacy wall colour unchanged. All earlier dirty/cancel/save/rollback,
   sibling preservation and battery preference assertions remain active.
 - `node demo/smoke_room_dimming_removed.mjs` → PASS, 28 checks: explicit legacy
-  fixture colours become exactly the expected `name_color` and `wall_fill` on
+  **space** `room_color=#c84927`, `room_opacity=0.25` and **general**
+  `fill_colors.wall_fill={c:#143a52,a:0.35}` become exactly the independent literal
+  `name_color={c:#c84927,a:0.5}` and `wall_fill={c:#143a52,a:0.35}` on
   Save; the complete remaining spaces/config equality remains strict. Cancel
   still preserves raw config, only one explicit Save writes, and the retired
   dimming pixels/roles remain absent.
@@ -34,3 +36,9 @@ Chromium 151.0.7922.34:
 Source count and registered guards are unchanged. `mutation-gate --check` is
 static readiness only (execution 0, caught unknown); no mutants were executed.
 The full local gate and exact push CI are recorded in the issue handoff.
+
+Review M1 correction: removed the unused general `border_color` input. Both
+materialized results now differ from defaults in colour and alpha, so ignoring
+either legacy input cannot satisfy the ordinary strict equality. The +0.25
+name-alpha convention is the accepted #1037 contract; expected literals do not
+call the production resolver. No mutant was executed to make this claim.
