@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.83.0-beta.1 — 2026-10-23
+
 - Make the inner fill of switched-off LED strips 30% transparent to the plan
   background; lit strips and the opaque rim keep their previous appearance. (#1043)
 - Name the backup export button **Download**: it saves a ZIP or JSON depending

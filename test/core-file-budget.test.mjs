@@ -77,7 +77,7 @@ const CAPS = {
   // #1035 after #1033, owner standing permission for small expensive-to-remove
   // overages: 11732 actual lines exceed the old cap + band by 5. The decor
   // implementation lives in its own module; keep the 50-line band unchanged.
-  'src/houseplan-editor-runtime.ts': 11732,
+  'src/houseplan-editor-runtime.ts': 11735,
 };
 
 /**

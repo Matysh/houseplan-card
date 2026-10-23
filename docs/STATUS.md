@@ -17,10 +17,10 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Item | State |
 |---|---|
 | Generated | 2026-10-23 — rerun `node scripts/status-snapshot.mjs` for the current tree |
-| Version | **1.82.0** in all 7 version sources (`scripts/release-contract.mjs`) |
+| Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.82.0-beta.6` |
-| Tests | Node unit 5092 · pure backend 603 · HA-harness backend 500 · browser smokes 415 (`npm run inventory`) |
+| Tests | Node unit 5162 · pure backend 607 · HA-harness backend 506 · browser smokes 420 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions

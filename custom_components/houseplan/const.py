@@ -60,7 +60,7 @@ SCHEDULED_GRACE_S = 30 * 24 * 3600
 FILES_DIR = "houseplan/files"
 ASSETS_DIR = "houseplan/assets"
 CONF_ADMIN_ONLY = "admin_only"
-VERSION = "1.82.0"
+VERSION = "1.83.0-beta.1"
 DECOR_ASSETS_API_VERSION = 1
 SUMMARY_PANEL_API_VERSION = 1
 
