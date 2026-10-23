@@ -20,7 +20,8 @@
   panel, plus a four-action decor context menu. Right-click selects its object;
   order commands retain that selection. Copies appear beside their source and
   share the uploaded image file while keeping independent properties. All
-  commands use the existing saved order and Undo/Redo. (#1035)
+  commands use the existing saved order and Undo/Redo. Secondary actions remain
+  fully visible in narrow panels. (#1035)
 
 - Download an architectural PDF or an SVG of the current View from one print
   dialog. SVG keeps the displayed projection, colours and optional devices,

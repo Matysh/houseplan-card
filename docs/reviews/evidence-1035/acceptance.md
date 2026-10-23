@@ -63,6 +63,14 @@ Editor-only strings use the existing lazy tools namespace. The small editor
 budget increase is recorded in the issue under the owner's standing permission;
 bands, absolute budgets and rejection predicates remain active.
 
+The first pushed Golden capture exposed internal clipping of Delete in the
+secondary surface. The corrected grid stacks Properties, the paired order actions
+and Delete. The narrow smoke now measures all four actual button rectangles
+against both the visible panel and viewport, rather than only document scroll
+width. `decor-order-pair-clips-delete-1035` registers that regression for nightly;
+it was not executed as a mutant during development. Final Golden acceptance must
+use the corrected capture, never the clipped initial frames.
+
 `node scripts/mutation-gate.mjs --check` is a static registry check only:
 execution 0, caught unknown. No mutant or temporary implementation substitution
 was executed during development.

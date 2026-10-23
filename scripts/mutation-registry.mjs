@@ -85,6 +85,15 @@ const MUTANT_DEFINITIONS = [
       replace: "    if (node.matches('.rlname')) (copy as HTMLElement).style.justifyContent = 'flex-start';" }],
   },
   {
+    id: 'decor-order-pair-clips-delete-1035',
+    guard: 'node demo/smoke_decor_order.mjs',
+    because: '#1035 AC1: actual button boxes must remain inside the narrow secondary surface; document scrollWidth alone cannot detect its internal clipping. Chromium owns responsive sizing. Nightly execution only.',
+    patches: [{ file: 'src/editor-secondary.styles.ts',
+      find: 'grid-template-columns: repeat(2, minmax(0, 1fr));',
+      replace: 'grid-template-columns: repeat(2, 180px);',
+    }],
+  },
+  {
     id: 'decor-menu-accepts-stale-revision-1035',
     guard: 'node demo/smoke_decor_order.mjs',
     because: '#1035 AC3: a retained menu button must not copy after an external config revision; the ordinary detached-button interaction checks the saved array/history, not source text. Nightly execution only.',

@@ -260,6 +260,14 @@ try {
   await select('blue');
   await page.waitForFunction(()=>window.__card._decorSel==='blue');
   check('order.narrow_actions_exist',await card.locator('[data-action="decor-front"]').count(),1);
+  check('order.narrow_all_actions_visible',await card.locator('.editor-secondary').evaluate(el=>{
+    const panel=el.getBoundingClientRect();
+    return ['decor-properties','decor-front','decor-back','decor-delete'].every(action=>{
+      const button=el.querySelector(`[data-action="${action}"]`),r=button?.getBoundingClientRect();
+      return r&&r.width>0&&r.height>0&&r.left>=Math.max(panel.left,0)&&r.right<=Math.min(panel.right,innerWidth)
+        &&r.top>=Math.max(panel.top,0)&&r.bottom<=Math.min(panel.bottom,innerHeight);
+    });
+  }));
   check('order.narrow_no_horizontal_overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   writeFileSync('artifacts/decor-order/config.json',JSON.stringify(await page.evaluate(async()=>
     (await window.__card.hass.callWS({type:'houseplan/config/get'})).config),null,2)+'\n');

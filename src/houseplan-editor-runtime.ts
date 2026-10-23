@@ -4923,11 +4923,12 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
         ariaLabel: this.host._t('editor.context_actions', { object: label }),
         visibleLabel: label,
         content: html`
+          <div class="decor-selection-actions">
           <button data-hp="action" data-action="decor-properties" class="btn ghost" @click=${() => this._runEditorContext(contextId, () => {
             const current = this.host._dtSel;
             if (current) this._openDecorProperties(current);
           })}><ha-icon icon="mdi:tune"></ha-icon>${this.host._t('btn.properties')}</button>
-          <div style="display:flex;gap:8px">
+          <div class="decor-order-pair">
             ${(['front', 'back'] as const).map(direction => html`<button class="btn ghost" data-hp="action" data-action=${`decor-${direction}`}
               ?disabled=${(direction === 'front' ? this.host._decorList[this.host._decorList.length - 1] : this.host._decorList[0])?.id === selected.id}
               @click=${() => this._runEditorContext(contextId, () => this.decorOrder.command(selected.id, direction))}>
@@ -4935,7 +4936,7 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
           </div>
           <button data-hp="action" data-action="decor-delete" class="btn danger" @click=${() => this._runEditorContext(contextId, () => this._decorDeleteSel())}>
             <ha-icon icon="mdi:delete-outline"></ha-icon>${this.host._t('btn.delete')}
-          </button>`,
+          </button></div>`,
       };
     }
 
