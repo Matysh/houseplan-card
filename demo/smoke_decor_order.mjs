@@ -59,6 +59,7 @@ try {
     await window.__hpTest.setServerConfig(cfg => {
       cfg.spaces = [{ id:'order', title:'Decor order', view_box:[0,0,1,1], cell_cm:5, rooms:[], decor:[
         { id:'red',kind:'rect',x:.1,y:.1,w:.3,h:.2,fill:true,fill_color:'#ff0000',fill_opacity:1,color:'#ff0000' },
+        { id:'green',kind:'rect',x:.24,y:.19,w:.15,h:.13,fill:true,fill_color:'#00ff00',fill_opacity:1,color:'#00ff00' },
         { id:'blue',kind:'rect',x:.2,y:.15,w:.3,h:.2,fill:true,fill_color:'#0000ff',fill_opacity:1,color:'#0000ff' },
         { id:'line',kind:'line',x1:.1,y1:.45,x2:.4,y2:.45,color:'#111111',width_cm:5 },
         { id:'ellipse',kind:'ellipse',x:.6,y:.1,w:.15,h:.1,fill:true,fill_color:'#dddddd',fill_opacity:1 },
@@ -110,6 +111,9 @@ try {
   check('order.menu_order_keeps_selection',(await state()).selected,'red');
   check('order.back_pixels_blue',await colorAt('red',.65,.65),[0,0,255]);
   check('order.menu_one_history',(await state()).history,original.history+2);
+  await open('red',.65,.65);
+  check('order.back_hit_targets_visible_top_of_three',(await state()).selected,'blue');
+  await page.keyboard.press('Escape');
   await card.locator('[data-action="geometry-undo"]').click(); await settle();
   check('order.undo_front',(await state()).ids,[...original.ids.slice(1),'red']);
   await card.locator('[data-action="geometry-redo"]').click(); await settle();

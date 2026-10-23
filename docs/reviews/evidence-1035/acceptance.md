@@ -72,6 +72,9 @@ it was not executed as a mutant during development. Final Golden acceptance must
 use the corrected capture, never the clipped initial frames.
 The ordinary valid width edit followed by Bring to front also completes both
 operations with the first click, while invalid input still refuses the command.
+The overlap fixture has three rectangles sharing the raster probe point (red,
+green, blue), as AC2 requires. After Send to back the same screen point both
+paints blue and opens blue's actual menu; the other objects retain their order.
 
 Corrected full Linux capture: [CI 39908393076](https://github.com/Matysh/houseplan-card/actions/runs/39908393076),
 source `7514b35e8427c506e99339b76a1194e1ecfadb84`, matrix 80 / Chromium
