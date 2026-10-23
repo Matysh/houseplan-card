@@ -220,6 +220,55 @@ function fixture(t) {
 
 const outputOf = (out, key) => out.match(new RegExp(`^${key}=(.*)$`, 'm'))?.[1];
 
+test('#1044 review check guidance consumes the validated proof and never creates a spec test gate', t => {
+  const text = workflow();
+  const step = findStep(text, { id: 'validated' }, '_process.yml');
+  const definition = named(prepareSteps(), 'Контекст проверок для ревью');
+  for (const binding of ['STAGE: ${{ needs.guard.outputs.stage }}',
+    'MATERIAL_SHA: ${{ steps.material.outputs.sha }}', 'VALIDATE_RESULT: ${{ steps.gate.outputs.result }}',
+    'VALIDATE_URL: ${{ steps.gate.outputs.url }}', 'VALIDATE_NOTE: ${{ steps.gate.outputs.note }}'])
+    assert.ok(definition.env.includes(binding), binding);
+  assert.doesNotMatch(step.run, /gh\s+run\s+list/, 'a raw successful workflow cannot replace the accepted proof');
+  assert.doesNotMatch(text, /Если зелёного прогона на этом SHA нет — прогоняешь сам/,
+    'the shared prompt must not override the stage-specific guidance');
+  const root = mkdtempSync(join(tmpdir(), 'hp-1044-review-guidance-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  let attempt = 0;
+  const run = (values) => {
+    const output = join(root, `output-${attempt++}`).replaceAll('\\', '/');
+    const result = runStep(step, step.run, { cwd: root, encoding: 'utf8', env: {
+      ...process.env, STAGE: 'code', MATERIAL_SHA: 'a'.repeat(40),
+      VALIDATE_RESULT: 'green', VALIDATE_URL: 'https://github.com/o/r/actions/runs/42',
+      VALIDATE_NOTE: 'accepted product profile with compatible proof reuse', ...values, GITHUB_OUTPUT: output,
+    } });
+    let note = ''; try { note = readFileSync(output, 'utf8'); } catch { /* failed preparation has no note */ }
+    return { ...result, note };
+  };
+  // A spec may live on a review-only SHA with no CI at all. Even a stray CI
+  // result must not turn assessment of its AC into generic code validation.
+  for (const values of [{ VALIDATE_RESULT: 'skipped', VALIDATE_URL: '' }, { VALIDATE_RESULT: 'green' }]) {
+    const spec = run({ ...values, STAGE: 'spec' });
+    assert.equal(spec.status, 0, spec.stderr);
+    assert.match(spec.note, /Этап spec: оценивается ТЗ/);
+    assert.match(spec.note, /не является причиной запускать tsc, build, npm test или gate:small/);
+    assert.match(spec.note, /конкретный непокрытый вопрос.*адресную проверку/);
+    assert.doesNotMatch(spec.note, /План проверок материала.*подтверждён/);
+  }
+  const code = run({});
+  assert.equal(code.status, 0, code.stderr);
+  assert.ok(code.note.includes('https://github.com/o/r/actions/runs/42'));
+  assert.ok(code.note.includes('accepted product profile with compatible proof reuse'));
+  assert.match(code.note, /не повторяй их/);
+  assert.match(code.note, /Дополнительный прогон нужен только для конкретного AC/);
+  for (const values of ['skipped', 'failed', 'missing', 'pending', 'success', '']
+    .map(VALIDATE_RESULT => ({ VALIDATE_RESULT })).concat({ VALIDATE_URL: '' })) {
+    const refused = run(values);
+    assert.notEqual(refused.status, 0, JSON.stringify(values));
+    assert.match(refused.stdout, /требует proof, принятый validate-gate/);
+    assert.equal(refused.note, '', 'missing authority cannot become a local-test fallback');
+  }
+});
+
 test('#765 AC2: шаги prepare на ветке, отставшей от dev и подменившей review-doc-guard.mjs, исполняют dev', (t) => {
   if (!hasTools()) { t.skip('bash/tar/git недоступны'); return; }
   const fx = fixture(t);
