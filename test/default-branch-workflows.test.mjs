@@ -121,7 +121,7 @@ function triggers(name) {
 }
 
 const workflows = readdirSync(DIR).filter((name) => /\.ya?ml$/.test(name)).sort();
-const bodies = workflows.filter((name) => name.startsWith('_'));
+const bodies = workflows.filter((name) => name.startsWith('_') && name !== '_service-event.yml');
 const fromDefaultBranch = workflows
   .filter((name) => !name.startsWith('_') && triggers(name).some((event) => DEFAULT_BRANCH_EVENTS.has(event)));
 const THIN = [...fromDefaultBranch.filter((name) => !SELF_CONSISTENT.has(name)), ...DISPATCH_BEFORE_PROMOTION].sort();
@@ -178,12 +178,16 @@ for (const name of THIN) {
       assert.ok(['name', 'run-name', 'on', 'permissions', 'concurrency', 'jobs'].includes(key), `${name}: лишний ключ ${key}`);
     }
     const jobs = children(caller.get('jobs'), 2);
-    assert.equal(jobs.size, 1, `${name}: ровно одна вызывающая job`);
-    const [job] = jobs.values();
+    assert.equal(jobs.size, 2, `${name}: доставка и отдельное исполнение`);
+    const router = children(jobs.get('event'), 4);
+    assert.equal(router.get('uses')?.value, `${OWN_REPO}/.github/workflows/_service-event.yml@dev`);
+    const job = jobs.get('dev');
     const keys = children(job, 4);
     for (const key of keys.keys()) {
-      assert.ok(['name', 'if', 'permissions', 'uses', 'with', 'secrets'].includes(key), `${name}: у вызывающей job лишний ключ ${key}`);
+      assert.ok(['name', 'if', 'needs', 'concurrency', 'permissions', 'uses', 'with', 'secrets'].includes(key), `${name}: у вызывающей job лишний ключ ${key}`);
     }
+    assert.equal(keys.get('needs')?.value, 'event');
+    assert.equal(keys.get('if')?.value, "needs.event.outputs.accepted == 'true'");
     assert.equal(keys.get('uses')?.value, `${OWN_REPO}/.github/workflows/${body}@dev`, `${name}: тело берётся из dev`);
     assert.equal(keys.get('secrets')?.value, 'inherit', `${name}: секреты тела наследуются`);
     assert.ok(existsSync(join(DIR, body)), `${body} существует`);
@@ -203,12 +207,12 @@ for (const name of THIN) {
     const callee = topBlocks(read(body));
     const callerTop = permissionMap(caller.get('permissions'), 2);
     const calleeTop = permissionMap(callee.get('permissions'), 2);
-    assert.deepEqual(sorted(callerTop), sorted(calleeTop), 'права уровня workflow совпадают');
+    assert.deepEqual(callerTop, { contents: 'read' }, 'main ingress has no ambient write permissions');
     const effective = [...children(callee.get('jobs'), 2).values()].map((job) => {
       const own = children(job, 4).get('permissions');
       return own ? permissionMap(own, 6) : calleeTop;
     });
-    const [callerJob] = children(caller.get('jobs'), 2).values();
+    const callerJob = children(caller.get('jobs'), 2).get('dev');
     const granted = permissionMap(children(callerJob, 4).get('permissions') || [], 6);
     assert.deepEqual(sorted(granted), sorted(unionPermissions(effective)),
       'потолок вызывающей job = объединение прав job тела: шире — лишнее, уже — отказ GitHub на старте');
@@ -220,23 +224,21 @@ for (const name of THIN) {
     const dispatchInputs = [...(children(dispatch, 4).get('inputs') ? children(children(dispatch, 4).get('inputs'), 6).keys() : [])];
     const call = children(topBlocks(read(body)).get('on'), 2).get('workflow_call') || [];
     const callInputs = [...(children(call, 4).get('inputs') ? children(children(call, 4).get('inputs'), 6).keys() : [])];
-    assert.deepEqual(callInputs.sort(), [...dispatchInputs].sort(), `${body}: те же входы, что у ручного запуска`);
-    const [callerJob] = children(caller.get('jobs'), 2).values();
+    assert.deepEqual(callInputs.sort(), [...dispatchInputs.filter(key => key !== 'delivery'), 'source_event', 'source_event_name'].sort(), `${body}: business inputs plus verified context`);
+    const callerJob = children(caller.get('jobs'), 2).get('dev');
     const withBlock = children(callerJob, 4).get('with') || [];
     const forwarded = children(withBlock, 6);
-    assert.deepEqual([...forwarded.keys()].sort(), [...dispatchInputs].sort(), `${name}: передаётся каждый вход`);
+    assert.deepEqual([...forwarded.keys()].sort(), [...callInputs].sort(), `${name}: передаётся каждый вход`);
     for (const [input, rest] of forwarded) {
-      assert.match(rest.value, new RegExp(`^\\$\\{\\{ inputs\\.${input}\\b`), `${name}: ${input} берётся из входа запуска`);
+      assert.match(rest.value, /needs\.event\.outputs\./, `${name}: ${input} берётся из verified receiver, not caller JSON`);
     }
   });
 
   test(`#623: фильтр вызывающей job ${name} совпадает с фильтром тела`, () => {
-    const [callerJob] = children(topBlocks(read(name)).get('jobs'), 2).values();
+    const callerJob = children(topBlocks(read(name)).get('jobs'), 2).get('event');
     const condition = children(callerJob, 4).get('if')?.value;
-    if (!condition) return;
-    const [first] = children(topBlocks(read(body)).get('jobs'), 2).values();
-    assert.equal(children(first, 4).get('if')?.value, condition,
-      `${name}: if повторяет стража тела — иначе посторонние события либо поднимут тело, либо потеряют запуск`);
+    if (condition) assert.match(condition, /github\.event_name == 'workflow_dispatch'/,
+      `${name}: allow the authenticated worker event as well as native ingress`);
   });
 }
 
@@ -245,7 +247,7 @@ test('#623: у каждого тела есть свой тонкий вызыв
   for (const name of workflows) {
     const calls = [...read(name).matchAll(/uses:\s*(\S*\/\.github\/workflows\/_[\w.-]+\.ya?ml@\S+|\.\/\.github\/workflows\/_[\w.-]+\.ya?ml)/g)]
       .map((match) => match[1]);
-    const expected = THIN.includes(name) ? [`${OWN_REPO}/.github/workflows/_${name}@dev`] : [];
+    const expected = THIN.includes(name) ? [`${OWN_REPO}/.github/workflows/_service-event.yml@dev`, `${OWN_REPO}/.github/workflows/_${name}@dev`] : [];
     assert.deepEqual(calls, expected, `${name}: тела вызываются только своими тонкими файлами`);
   }
 });

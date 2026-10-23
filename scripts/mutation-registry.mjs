@@ -15302,7 +15302,7 @@ const MUTANT_DEFINITIONS = [
       + 'main — ровно то зеркалирование, которое снимает задача',
     patches: [{
       file: '.github/workflows/process.yml',
-      find: '    uses: Matysh/houseplan-card/.github/workflows/_process.yml@dev # #623: тело конвейера из dev',
+      find: '    uses: Matysh/houseplan-card/.github/workflows/_process.yml@dev # #1040: reviewed execution body from dev',
       replace: '    uses: ./.github/workflows/_process.yml',
     }],
   },
@@ -15313,8 +15313,8 @@ const MUTANT_DEFINITIONS = [
       + 'лишнее право каждой job тела без собственного блока permissions',
     patches: [{
       file: '.github/workflows/mutation-gate.yml',
-      find: '      issues: write\n    uses: Matysh/houseplan-card/.github/workflows/_mutation-gate.yml@dev',
-      replace: '      issues: write\n      contents: write\n    uses: Matysh/houseplan-card/.github/workflows/_mutation-gate.yml@dev',
+      find: '      contents: read\n      actions: read\n      issues: write',
+      replace: '      contents: read\n      actions: write\n      issues: write',
     }],
   },
   {
@@ -15324,8 +15324,8 @@ const MUTANT_DEFINITIONS = [
       + 'CLAUDE_CODE_OAUTH_TOKEN — конвейер падает на первом шаге с меткой',
     patches: [{
       file: '.github/workflows/process-reconcile.yml',
-      find: '    secrets: inherit\n',
-      replace: '',
+      find: '      apply: ${{ fromJSON(needs.event.outputs.parameters).apply }}\n    secrets: inherit\n',
+      replace: '      apply: ${{ fromJSON(needs.event.outputs.parameters).apply }}\n',
     }],
   },
   {

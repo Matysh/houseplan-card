@@ -1131,12 +1131,13 @@ test('#827 AC4: событие labeled с ci:golden раунда не запус
     const m = /\n    if: (.+)\n/.exec(text.slice(at));
     assert.ok(m, `${job}: if`);
     return (label) => {
-      const js = m[1].replaceAll('github.event.label.name', JSON.stringify(label)).replaceAll(' == ', ' === ').replaceAll(' != ', ' !== ');
+      const js = m[1].replaceAll('fromJSON(inputs.source_event || toJSON(github.event))', 'github.event')
+        .replaceAll('github.event_name', '"issues"').replaceAll('github.event.label.name', JSON.stringify(label)).replaceAll(' == ', ' === ').replaceAll(' != ', ' !== ');
       assert.match(js, /^[\s"'\w:=!|&()-]+$/, `разбираемое выражение: ${m[1]}`);
       return Function(`return (${js});`)();
     };
   };
-  const caller = condition(read(join(dirname(WORKFLOW), 'process.yml'), 'utf8'), 'dev');
+  const caller = condition(read(join(dirname(WORKFLOW), 'process.yml'), 'utf8'), 'event');
   const guard = condition(read(WORKFLOW, 'utf8'), 'guard');
   for (const label of ['ci:golden', 'ci:full', 'track:show', 'P2']) {
     assert.equal(caller(label), false, `${label}: вызов тела`);

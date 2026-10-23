@@ -19,6 +19,16 @@ on:
   # #623: тело вызывается тонким файлом `process-resume.yml` из ветки по умолчанию
   # по ссылке `@dev`; триггеры, run-name и concurrency живут там.
   workflow_call:
+    inputs:
+      source_event:
+        description: Authenticated routing context from the dev receiver; empty for legacy callers
+        type: string
+        required: false
+        default: ""
+      source_event_name:
+        type: string
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -27,7 +37,7 @@ permissions:
 jobs:
   continuation:
     name: Exact pending candidate completion
-    if: github.event.workflow_run.repository.full_name == github.repository && github.event.workflow_run.head_repository.full_name == github.repository
+    if: fromJSON(inputs.source_event || toJSON(github.event)).workflow_run.repository.full_name == github.repository && fromJSON(inputs.source_event || toJSON(github.event)).workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -51,7 +61,7 @@ jobs:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           HP_PROCESS_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           REPO: ${{ github.repository }}
-          EVENT_ID: ${{ github.event.workflow_run.id }}
+          EVENT_ID: ${{ fromJSON(inputs.source_event || toJSON(github.event)).workflow_run.id }}
         run: node scripts/workflow-continuation.mjs --repo="$REPO" --run-id="$EVENT_ID" --apply=true --out="${{ runner.temp }}/continuation-result"
       - name: Retain continuation outcome for idempotent consumers
         if: always()
@@ -63,11 +73,11 @@ jobs:
           retention-days: 1
   resume:
     name: "Разбудить раунд, ждавший этот Validate"
-    if: contains(fromJSON('["workflow_dispatch", "push"]'), github.event.workflow_run.event) && startsWith(github.event.workflow_run.head_branch, 'issue/')
+    if: contains(fromJSON('["workflow_dispatch", "push"]'), fromJSON(inputs.source_event || toJSON(github.event)).workflow_run.event) && startsWith(fromJSON(inputs.source_event || toJSON(github.event)).workflow_run.head_branch, 'issue/')
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
-      group: process-resume-${{ github.event.workflow_run.head_branch }}
+      group: process-resume-${{ fromJSON(inputs.source_event || toJSON(github.event)).workflow_run.head_branch }}
       cancel-in-progress: false
     steps:
       # Код берётся из dev, как у reconcile: после штатного слияния действует
@@ -86,12 +96,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           REPO: ${{ github.repository }}
-          BRANCH: ${{ github.event.workflow_run.head_branch }}
-          SHA: ${{ github.event.workflow_run.head_sha }}
-          EVENT: ${{ github.event.workflow_run.event }}
-          STATUS: ${{ github.event.workflow_run.status }}
-          VALIDATE_RUN_ID: ${{ github.event.workflow_run.id }}
-          WORKFLOW_PATH: ${{ github.event.workflow_run.path }}
+          BRANCH: ${{ fromJSON(inputs.source_event || toJSON(github.event)).workflow_run.head_branch }}
+          SHA: ${{ fromJSON(inputs.source_event || toJSON(github.event)).workflow_run.head_sha }}
+          EVENT: ${{ fromJSON(inputs.source_event || toJSON(github.event)).workflow_run.event }}
+          STATUS: ${{ fromJSON(inputs.source_event || toJSON(github.event)).workflow_run.status }}
+          VALIDATE_RUN_ID: ${{ fromJSON(inputs.source_event || toJSON(github.event)).workflow_run.id }}
+          WORKFLOW_PATH: ${{ fromJSON(inputs.source_event || toJSON(github.event)).workflow_run.path }}
         # #751: без pipefail код конвейера — код tee, и исключение скрипта (gh,
         # API) проходило зелёным шагом: событие возобновления терялось до
         # прохода process-reconcile.

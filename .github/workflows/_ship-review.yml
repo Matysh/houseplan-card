@@ -21,6 +21,15 @@ on:
   # файла в ветке по умолчанию GitHub не даёт запустить workflow_dispatch вовсе.
   workflow_call:
     inputs:
+      source_event:
+        description: Authenticated routing context from the dev receiver; empty for legacy callers
+        type: string
+        required: false
+        default: ""
+      source_event_name:
+        type: string
+        required: false
+        default: ""
       # #727: `nightly` — зарезервированное значение (ночной режим, candidate обязателен).
       tag:
         description: "Beta tag the review is for, for example v1.79.0-beta.1"
@@ -200,6 +209,8 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          # #1040: authenticated main-to-dev dispatch is started by this bot.
+          allowed_bots: "github-actions[bot]"
           path_to_claude_code_executable: ${{ steps.claude_bin.outputs.path }}
           prompt: |
             Ты ревьюер кода проекта House Plan. Язык ответа — русский.

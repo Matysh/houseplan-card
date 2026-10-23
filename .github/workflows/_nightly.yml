@@ -4,6 +4,16 @@ name: "Ночной полный прогон dev · тело (#623)"
 
 on:
   workflow_call:
+    inputs:
+      source_event:
+        description: Authenticated routing context from the dev receiver; empty for legacy callers
+        type: string
+        required: false
+        default: ""
+      source_event_name:
+        type: string
+        required: false
+        default: ""
 
 permissions:
   actions: write
@@ -16,9 +26,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: "Сдвиг старта ночи против расписания"
-        if: github.event_name == 'schedule'
+        if: (inputs.source_event_name || github.event_name) == 'schedule'
         env:
-          SCHEDULE: ${{ github.event.schedule }}
+          SCHEDULE: ${{ fromJSON(inputs.source_event || toJSON(github.event)).schedule }}
         run: |
           set -euo pipefail
           read -r minute hour _ <<< "$SCHEDULE"

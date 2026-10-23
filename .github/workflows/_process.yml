@@ -23,6 +23,16 @@ on:
   # #623: тело вызывается тонким файлом `process.yml` из ветки по умолчанию
   # по ссылке `@dev`; триггеры, run-name и concurrency живут там.
   workflow_call:
+    inputs:
+      source_event:
+        description: Authenticated routing context from the dev receiver; empty for legacy callers
+        type: string
+        required: false
+        default: ""
+      source_event_name:
+        type: string
+        required: false
+        default: ""
 
 # Concurrency стоит на job, а не на workflow (#499). На уровне workflow в
 # группу issue попадал КАЖДЫЙ прогон — и от `polish`, и от `P2`, и от метки,
@@ -47,11 +57,11 @@ jobs:
       issues: write
     # Только статусные метки этапов ревью запускают конвейер (#499). Остальные
     # события помечаются skipped и не занимают место в группе concurrency.
-    if: github.event.label.name == 'S4-spec-review' || github.event.label.name == 'S7-code-review'
+    if: fromJSON(inputs.source_event || toJSON(github.event)).label.name == 'S4-spec-review' || fromJSON(inputs.source_event || toJSON(github.event)).label.name == 'S7-code-review'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
-      group: process-issue-${{ github.event.issue.number }}
+      group: process-issue-${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
       cancel-in-progress: false
     outputs:
       stage: ${{ steps.decide.outputs.stage }}
@@ -74,8 +84,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           REPO: ${{ github.repository }}
-          LABEL: ${{ github.event.label.name }}
-          NUM: ${{ github.event.issue.number }}
+          LABEL: ${{ fromJSON(inputs.source_event || toJSON(github.event)).label.name }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
         run: |
           # Контроллер идемпотентен (#499): событие только будит его, а состояние
           # читается ТЕКУЩЕЕ, не из снимка события. Прогон мог простоять в
@@ -309,7 +319,7 @@ jobs:
     if: needs.guard.outputs.stage != ''
     runs-on: ubuntu-24.04
     concurrency:
-      group: process-issue-${{ github.event.issue.number }}
+      group: process-issue-${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
       cancel-in-progress: false
     # Ожидание Validate не отнимает бюджет у модели (#551). Сам gate может
     # ждать 45 минут; подготовке оставлен отдельный запас на checkout/rebase.
@@ -419,7 +429,7 @@ jobs:
       - name: Перейти на ветку задачи
         id: branch
         env:
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
         run: |
           # Свежая по последнему коммиту, а не первая по алфавиту: на #150 рядом
           # жили ветка ТЗ и ветка реализации, и head -1 выбрал устаревшую.
@@ -467,7 +477,7 @@ jobs:
         id: track
         env:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           STAGE: ${{ needs.guard.outputs.stage }}
           LABELS: ${{ needs.guard.outputs.labels }}
           BRANCH: ${{ steps.branch.outputs.name }}
@@ -517,7 +527,7 @@ jobs:
           # #539: тем же токеном спрашивается REST — через него идёт и диспатч.
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           BRANCH: ${{ steps.branch.outputs.name }}
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           TRACK: ${{ steps.track.outputs.track }}
           TOOLS: ${{ steps.tools.outputs.dir }}
           # rebase, в отличие от commit, не принимает -c user.*: он запускает
@@ -659,7 +669,7 @@ jobs:
         id: material
         if: steps.rebase.outputs.conflict != 'true' && steps.rebase.outputs.refused == ''
         env:
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           REPO: ${{ github.repository }}
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           TOOLS: ${{ steps.tools.outputs.dir }}
@@ -682,7 +692,7 @@ jobs:
           echo "specs=$specs" >> "$GITHUB_OUTPUT"
           # Тело issue — материал ревью ТЗ (#517): с переходом на ТЗ в теле это
           # единственный якорь, доказывающий «вердикт вынесен на этом тексте».
-          # Читается здесь, а не из github.event.issue.body: между событием
+          # Читается здесь, а не из fromJSON(inputs.source_event || toJSON(github.event)).issue.body: между событием
           # метки и вызовом модели проходят минуты (ребейз, гейт #510, ожидание
           # Validate), и снимок события описывал бы не тот текст.
           body=$(mktemp)
@@ -706,7 +716,7 @@ jobs:
         if: steps.rebase.outputs.conflict != 'true' && steps.rebase.outputs.refused == ''
         env:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           REPO: ${{ github.repository }}
           STAGE: ${{ needs.guard.outputs.stage }}
           TRACK: ${{ steps.track.outputs.track }}
@@ -741,7 +751,7 @@ jobs:
         id: reuse
         if: steps.rebase.outputs.conflict != 'true' && steps.rebase.outputs.refused == '' && steps.preflight.outputs.ok == 'true' && needs.guard.outputs.stage == 'code'
         env:
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           # Правка ТЗ между раундами обязана отменять повторное применение
           # зелёного вердикта: иначе вызов модели пропускается и находку
           # «ТЗ менялось» некому напечатать (#517 AC6).
@@ -763,7 +773,7 @@ jobs:
         if: steps.rebase.outputs.conflict == 'true'
         env:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           BRANCH: ${{ steps.branch.outputs.name }}
           CONFLICTS: ${{ steps.rebase.outputs.conflicts }}
         run: |
@@ -800,7 +810,7 @@ jobs:
         if: steps.rebase.outputs.refused == 'workflow'
         env:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           COMMENT: ${{ steps.rebase.outputs.refusal_comment }}
         run: |
           gh issue comment "$NUM" --repo "${{ github.repository }}" --body-file "$COMMENT"
@@ -864,7 +874,7 @@ jobs:
         id: pending
         if: steps.rebase.outputs.conflict != 'true' && steps.gate.outputs.proceed == 'pending'
         env:
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           STAGE: ${{ needs.guard.outputs.stage }}
           BRANCH: ${{ steps.branch.outputs.name }}
           SHA: ${{ steps.material.outputs.sha }}
@@ -901,7 +911,7 @@ jobs:
         if: steps.rebase.outputs.conflict != 'true' && steps.gate.outputs.proceed == 'false'
         env:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           BRANCH: ${{ steps.branch.outputs.name }}
           SHA: ${{ steps.material.outputs.sha }}
           RESULT: ${{ steps.gate.outputs.result }}
@@ -971,7 +981,7 @@ jobs:
         id: spec_body
         if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true' && needs.guard.outputs.stage == 'code'
         env:
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           DIGEST: ${{ steps.material.outputs.issue_body }}
           TOOLS: ${{ steps.tools.outputs.dir }}
         run: |
@@ -1002,7 +1012,7 @@ jobs:
         env:
           HP_REVIEW_OUTSIDE_FINDINGS_FILE_ISSUES: ${{ vars.HP_REVIEW_OUTSIDE_FINDINGS_FILE_ISSUES }}
           REPO: ${{ github.repository }}
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           STAGE: ${{ needs.guard.outputs.stage }}
           CYCLE: ${{ needs.guard.outputs.cycle }}
           TOOLS: ${{ steps.tools.outputs.dir }}
@@ -1012,7 +1022,7 @@ jobs:
         id: prepared
         if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true' && steps.track.outputs.ship != 'true'
         env:
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           STAGE: ${{ needs.guard.outputs.stage }}
           CYCLE: ${{ needs.guard.outputs.cycle }}
           BRANCH: ${{ steps.branch.outputs.name }}
@@ -1098,7 +1108,7 @@ jobs:
     if: needs.prepare.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true' && needs.prepare.outputs.ship != 'true'
     runs-on: ubuntu-24.04
     concurrency:
-      group: process-issue-${{ github.event.issue.number }}
+      group: process-issue-${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
       cancel-in-progress: false
     # Весь бюджет принадлежит модели и её локальным проверкам; ожидания Validate
     # в этом job больше нет (#551).
@@ -1127,12 +1137,12 @@ jobs:
       - name: Получить контракт подготовленного материала
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: review-prepared-${{ github.event.issue.number }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: review-prepared-${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/review-prepared
 
       - name: Проверить контракт и exact material
         env:
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           STAGE: ${{ needs.guard.outputs.stage }}
           CYCLE: ${{ needs.guard.outputs.cycle }}
           BRANCH: ${{ needs.prepare.outputs.branch }}
@@ -1173,7 +1183,7 @@ jobs:
           # Terminal S3/S6 refusal has no next workflow: deliberately GITHUB_TOKEN.
           # S4/S7 wakeups always use the PAT, with no permission broadening here.
           GH_TOKEN: ${{ github.token }}
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           REPO: ${{ github.repository }}
           STAGE: ${{ needs.guard.outputs.stage }}
           TRACK: ${{ needs.prepare.outputs.track }}
@@ -1210,7 +1220,7 @@ jobs:
         id: env_needs
         env:
           GH_TOKEN: ${{ github.token }}
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           STAGE: ${{ needs.guard.outputs.stage }}
           TRACK: ${{ needs.prepare.outputs.track }}
         run: |
@@ -1274,7 +1284,7 @@ jobs:
       - name: "Передать типизированное назначение находок (#926)"
         env:
           REPO: ${{ github.repository }}
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           STAGE: ${{ needs.guard.outputs.stage }}
           CYCLE: ${{ needs.guard.outputs.cycle }}
           FINDINGS_POLICY_SNAPSHOT: ${{ needs.prepare.outputs.findings_policy_snapshot }}
@@ -1300,11 +1310,13 @@ jobs:
           # репозиторий, ни постановки метки, ни комментария. Строку нельзя
           # снять, не вернув модели право двигать процесс.
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          # #1040: authenticated main-to-dev dispatch is started by this bot.
+          allowed_bots: "github-actions[bot]"
           path_to_claude_code_executable: ${{ steps.claude_bin.outputs.path }}
           prompt: |
             Ты ревьюер проекта House Plan. Язык ответа — русский.
 
-            Issue: #${{ github.event.issue.number }}
+            Issue: #${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
             Репозиторий: ${{ github.repository }}
             Этап: ${{ needs.guard.outputs.stage }}
               spec — ревью ТЗ (PROCESS.md §2.4)
@@ -1357,7 +1369,7 @@ jobs:
                  файла в материале нет — читай PROCESS.md §2.4, §2.7, §2.10,
                  §4, §7.2, §8, §12. Задача правит сам конвейер, гейты или
                  процесс — PROCESS.md целиком, §10 в первую очередь.
-              4. Тело issue #${{ github.event.issue.number }} — точный снимок
+              4. Тело issue #${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }} — точный снимок
                  в REVIEW_CONTEXT; все текущие комментарии — из GitHub.
               5. Если меняется видимое поведение — docs/USER-GUIDE.ru.md:
                  терминология интерфейса берётся оттуда, а не изобретается.
@@ -1529,7 +1541,7 @@ jobs:
         env:
           SOURCE: ${{ runner.temp }}/review-document.md
           OUT: ${{ steps.review.outputs.structured_output }}
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           STAGE: ${{ needs.guard.outputs.stage }}
           CYCLE: ${{ needs.guard.outputs.cycle }}
           USAGE_DETAILS: ${{ steps.usage.outputs.details }}
@@ -1588,7 +1600,7 @@ jobs:
     if: always() && needs.guard.outputs.stage != ''
     runs-on: ubuntu-24.04
     concurrency:
-      group: process-issue-${{ github.event.issue.number }}
+      group: process-issue-${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
       cancel-in-progress: false
     # Слияние кандидата при ушедшем dev может само ждать Validate до 45 минут;
     # оно не должно обрывать уже оплаченный model review (#551).
@@ -1666,7 +1678,7 @@ jobs:
         if: steps.ready.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true' && needs.prepare.outputs.ship != 'true'
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: review-result-${{ github.event.issue.number }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: review-result-${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/review-result
 
       - name: Проверить полноту и происхождение результата
@@ -1679,7 +1691,7 @@ jobs:
         # inline-shell в `scripts/review-result-gate.mjs` ради враждебных
         # фикстур — в YAML её нельзя прогнать ни одним отрицательным случаем.
         env:
-          ISSUE: ${{ github.event.issue.number }}
+          ISSUE: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           STAGE: ${{ needs.guard.outputs.stage }}
           CYCLE: ${{ needs.guard.outputs.cycle }}
           BRANCH: ${{ needs.prepare.outputs.branch }}
@@ -1714,7 +1726,7 @@ jobs:
         env:
           TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           BRANCH: ${{ needs.prepare.outputs.branch }}
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           STAGE: ${{ needs.guard.outputs.stage }}
           CYCLE: ${{ needs.guard.outputs.cycle }}
           SOURCE: ${{ runner.temp }}/review-result/review-document.md
@@ -1935,7 +1947,7 @@ jobs:
       - name: "Материал раунда воспроизводим (#413)"
         if: steps.ready.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true' && needs.prepare.outputs.ship != 'true'
         env:
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           STAGE: ${{ needs.guard.outputs.stage }}
           CYCLE: ${{ needs.guard.outputs.cycle }}
           BRANCH: ${{ needs.prepare.outputs.branch }}
@@ -1965,7 +1977,7 @@ jobs:
           MATERIAL: ${{ needs.prepare.outputs.material_sha }}
           VALIDATE_URL: ${{ needs.prepare.outputs.validate_url }}
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           # #726: маршрут вердикта — трек и его подтверждение владельцем (шаг
           # трека), бюджет этапа (guard), ветка материала с документами ревью.
           TRACK: ${{ needs.prepare.outputs.track }}
@@ -2071,7 +2083,7 @@ jobs:
         if: steps.ready.outputs.proceed == 'true' && needs.guard.outputs.stage == 'code'
         env:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           MATERIAL: ${{ needs.prepare.outputs.material_sha }}
           GREEN: ${{ steps.decide.outputs.green }}
         run: |
@@ -2102,7 +2114,7 @@ jobs:
           HP_PROCESS_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           BRANCH: ${{ needs.prepare.outputs.branch }}
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           MATERIAL_SHA: ${{ needs.prepare.outputs.material_sha }}
           # #696: show/ship сливаются по лёгкому Validate на кандидате.
           MATERIAL_BODY: ${{ needs.prepare.outputs.material_issue_body }}
@@ -2135,7 +2147,7 @@ jobs:
         env:
           # Именно PAT: с GITHUB_TOKEN следующий шаг конвейера не запустится.
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           FROM: ${{ steps.decide.outputs.from }}
           TOOLS: ${{ steps.tools.outputs.dir }}
           # Зелёное код-ревью без слияния ведёт не в S8-merged, а обратно к
@@ -2176,7 +2188,7 @@ jobs:
           TOOLS: ${{ steps.tools.outputs.dir }}
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           REPO: ${{ github.repository }}
-          NUM: ${{ github.event.issue.number }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           STAGE: ${{ needs.guard.outputs.stage }}
           BRANCH: ${{ needs.prepare.outputs.branch }}
           MATERIAL: ${{ needs.prepare.outputs.material_sha }}
@@ -2216,5 +2228,5 @@ jobs:
 
           Если вердикт выше всё же опубликован — перестановку метки выполняет чат обслуживания или владелец, но не автор задачи: автор не толкует вердикт о своей же работе.
           EOF
-          gh issue comment "${{ github.event.issue.number }}" \
+          gh issue comment "${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}" \
             --repo "${{ github.repository }}" --body-file /tmp/failure.md

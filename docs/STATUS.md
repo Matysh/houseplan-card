@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Service checks (#1040) separate main's delivery acknowledgement from execution
+on dev. Immutable bounded receipts and native-token once-only claims preserve
+origin/epoch authority without push-CI recursion. Operational failures stay red
+on dev; historical runs/artifacts are retained, not repainted or deleted.
+Activation is a separate infrastructure-only main delivery after code review,
+not a promotion of unreleased product changes or a release.
 Device form follow-up (#995) restores the authentic HA icon field's fill and
 contour, leaves focus to that field (or the fallback wrapper), and applies the
 existing 18 px settings spacing inside the activity-source group.
