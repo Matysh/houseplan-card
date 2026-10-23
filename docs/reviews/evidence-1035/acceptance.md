@@ -76,7 +76,7 @@ The overlap fixture has three rectangles sharing the raster probe point (red,
 green, blue), as AC2 requires. After Send to back the same screen point both
 paints blue and opens blue's actual menu; the other objects retain their order.
 
-Corrected full Linux capture: [CI 39908393076](https://github.com/Matysh/houseplan-card/actions/runs/39908393076),
+Initial corrected full Linux capture: [CI 39908393076](https://github.com/Matysh/houseplan-card/actions/runs/39908393076),
 source `7514b35e8427c506e99339b76a1194e1ecfadb84`, matrix 80 / Chromium
 151.0.7922.34. All four changed baseline/candidate pairs were visually inspected:
 `tray-medium-selection-ru`, `furniture-transform-light`,
@@ -88,6 +88,13 @@ Linux, with exactly these four explicit `--expect-change` IDs; 216 baseline
 images were preserved, with 193 byte-identical environment witnesses (floor 10).
 The initial clipped capture was never accepted. Final exact-SHA full Validate
 is recorded separately in the issue handoff.
+
+Final rebase includes merged #1042 and #1043 on dev `937dd3568c988d023e2a679e5f572021b3ce6dd2`.
+The baseline conflict was resolved with the complete dev set, including both
+new LED off-fill frames. The earlier four-frame acceptance above is historical;
+the decor frames must be recaptured/accepted from the combined current source
+through the same reviewed command before the final full Validate. No composite
+index or copied candidate hashes were written by hand.
 
 The first full Validate found an obsolete action-list comparison in
 `smoke_ui_polish_963_reference`: the immutable #963 prototype predates the two
