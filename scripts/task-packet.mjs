@@ -281,8 +281,8 @@ export function requiredChecks({ risk = null, changedFiles = [], smokes = null, 
     // #827: без метки её ставит конвейер на S7 до выбора Validate — автору
     // остаётся знать, что ревью начнётся после golden на материале.
     out.push({ command: 'метка `ci:golden`', reason: labels.includes('ci:golden')
-      ? 'стоит: golden на ветке и приёмка сдвинутых кадров в задаче (§5.1)'
-      : 'поставит конвейер на S7 (#827): визуальный риск в пути отрисовки — ревью после Validate с golden (§5.1, §8)' });
+      ? 'стоит: целевые Golden-сцены и visual в release-ledger; глобальные эталоны принимает бета (#1044, §5.1)'
+      : 'поставит конвейер на S7 (#827): визуальный риск — целевые Golden-сцены и visual в release-ledger до ревью (#1044, §5.1, §8)' });
   }
   return out;
 }

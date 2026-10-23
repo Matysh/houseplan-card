@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // #856: consume the existing sealed-artifact/request epoch machinery, no runner polling.
-import { ciWorkflow, ciRunsUrl, registeredRuns } from './ci-workflows.mjs';
+import { CI_WORKFLOWS, ciWorkflow, ciRunsUrl, registeredRuns } from './ci-workflows.mjs';
 import { execFileSync } from 'node:child_process';
 import { appendFileSync } from 'node:fs';
-import { authenticatedContinuation, validContinuation } from './continuation-record.mjs';
+import { authenticatedContinuation, pinnedMergeValidation, validContinuation } from './continuation-record.mjs';
 import { artifactNames, issueEvents, latestReviewRequest, loadSealedArtifact, processRuns, reviewRunsForRequest, relabel } from './process-reconcile.mjs';
 import { issueBodyDigest } from './review-doc-guard.mjs';
 import { moveStatusLabel } from './status-label.mjs';
@@ -69,6 +69,8 @@ export async function resumeMergeContinuation(p, { state, proof, merge, move, co
   const fresh = mergeContinuationDecision(p, await state());
   if (fresh.action !== decision.action) return { action: 'noop', reason: 'state changed before write' };
   decision = fresh;
+  if (decision.action === 'merge' && verdict?.status === 'pending')
+    return { action: 'pending', reason: `candidate proof pending: ${verdict.note || 'required profile is running'}` };
   if (decision.action === 'merge' && verdict?.status !== 'green')
     decision = { action: 'return', reason: `candidate proof ${verdict?.status || 'missing'}: ${verdict?.note || 'not complete'}` };
   if (decision.action === 'merge') {
@@ -156,6 +158,32 @@ export function diagnoseOnce(p, failure, { page, comment, fresh }) {
   throw Error('diagnostic history exceeds bounded scan; marker absence unknown');
 }
 
+/** A profile completion may wake a merge, but never supplies product authority.
+ * Its identity must equal the independently fetched companion of this exact
+ * product proof. The normal producer/epoch checks still apply to the product. */
+export function authenticatedMergeCompanion(p, producer, event, product, context, repo, now = Date.now()) {
+  if (p.kind !== 'merge' || !authenticatedContinuation(p, producer, product, repo, now)
+    || ciWorkflow(product) !== 'validate-product.yml') return false;
+  const profile = CI_WORKFLOWS[ciWorkflow(event)];
+  if (!['docs', 'tooling'].includes(profile)) return false;
+  const proof = context?.proof;
+  if (proof?.run?.workflow !== 'validate-product.yml' || Number(proof.run.id) !== Number(product.id)
+    || Number(proof.run.attempt) !== Number(product.run_attempt)
+    || proof.candidate?.sha !== p.candidate || proof.candidate?.tree !== p.tree
+    || !proof.requiredProfiles?.includes(profile)) return false;
+  const companion = context.profileRuns?.get(profile)?.run;
+  return Boolean(companion && Number(event.id) === Number(companion.id)
+    && Number(event.run_attempt) === Number(companion.run_attempt) && event.path === companion.path
+    && event.head_sha === p.candidate && companion.head_sha === p.candidate
+    && event.head_branch === p.branch && companion.head_branch === p.branch && product.head_branch === p.branch
+    && event.event === 'push' && companion.event === 'push' && product.event === 'push'
+    && event.status === 'completed' && companion.status === 'completed' && event.conclusion === companion.conclusion
+    && event.repository?.full_name === repo && event.head_repository?.full_name === repo
+    && companion.repository?.full_name === repo && companion.head_repository?.full_name === repo
+    && event.created_at === companion.created_at
+    && (Date.parse(event.created_at) >= Date.parse(producer.created_at) || pinnedMergeValidation(p, product)));
+}
+
 export async function continueWorkflows({ repo, eventId, apply = false, out = null }) {
   if (!/^[\w.-]+\/[\w.-]+$/.test(repo || '') || eventId && !/^[1-9]\d*$/.test(String(eventId))) throw Error('invalid event identity');
   const event = eventId ? api(`repos/${repo}/actions/runs/${eventId}`) : null;
@@ -178,11 +206,21 @@ export async function continueWorkflows({ repo, eventId, apply = false, out = nu
       const childRuns = performance ? api(`repos/${repo}/actions/workflows/performance.yml/runs?head_sha=${p.candidate}&per_page=10`).workflow_runs || []
         : registeredRuns(api(ciRunsUrl({ repo, sha: p.candidate })), { sha: p.candidate, productOnly: true });
       const latest = childRuns.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at) || b.id - a.id)[0];
-      const child = event || latest;
+      const companionEvent = p.kind === 'merge' && ['docs', 'tooling'].includes(CI_WORKFLOWS[ciWorkflow(event)]);
+      const child = companionEvent ? latest : event || latest;
       if (!authenticatedContinuation(p, producer, child, repo) || child?.id !== latest?.id) {
         outcomes.push({ kind: p.kind, producer: producer.id, action: 'noop', code: 'stale-or-foreign-child',
           reason: 'producer/child attempt, identity or newest completion differs; no authority' });
         continue;
+      }
+      let mergeContext;
+      if (companionEvent) {
+        mergeContext = await loadGithubProofContext({ repo, run: child, token: process.env.GH_TOKEN });
+        if (!authenticatedMergeCompanion(p, producer, event, child, mergeContext, repo)) {
+          outcomes.push({ kind: p.kind, producer: producer.id, action: 'noop', code: 'stale-or-foreign-companion',
+            reason: 'completion is not the exact required companion of the current product proof' });
+          continue;
+        }
       }
       if (p.kind !== 'merge' && child.conclusion === 'cancelled') {
         outcomes.push({ kind: p.kind, producer: producer.id, action: 'noop', reason: 'cancelled completion grants no dispatch authority' });
@@ -207,8 +245,8 @@ export async function continueWorkflows({ repo, eventId, apply = false, out = nu
         };
         const result = await resumeMergeContinuation(p, {
           state,
-          proof: async () => evaluateCiProof({ run: child, ...await loadGithubProofContext({ repo, run: child, token: process.env.GH_TOKEN }),
-            candidate: { sha: p.candidate, tree: p.tree }, policy: p.policy === 'merge' ? CI_PROOF_POLICIES.merge : CI_PROOF_POLICIES.mergeLight }),
+          proof: async () => evaluateCiProof({ run: child, ...(mergeContext || await loadGithubProofContext({ repo, run: child, token: process.env.GH_TOKEN })),
+            candidate: { sha: p.candidate, tree: p.tree }, policy: p.policy === 'merge' ? CI_PROOF_POLICIES.merge : { ...CI_PROOF_POLICIES.mergeLight, task: true } }),
           merge: () => mergeReviewedCandidate(p, ops, { secrets: [token, process.env.GH_TOKEN] }),
           move: (from, to) => moveStatusLabel({ repo, issue: p.issue, from, to }),
           comment: body => gh(['api', '--method', 'POST', `repos/${repo}/issues/${p.issue}/comments`, '--input', '-'], { input: JSON.stringify({ body }) }),

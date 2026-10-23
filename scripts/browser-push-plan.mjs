@@ -1,9 +1,10 @@
-// #983: a selected push is progress evidence, never a full-matrix receipt.
+// #1044: bounded task evidence on every track; completeness belongs to release.
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { selectSmokes } from './smoke-select.mjs';
+import { selectSmokes, VISUAL_MINIMUM } from './smoke-select.mjs';
 import { fingerprintCorpus, postCaptureInputs } from './source-fingerprint.mjs';
 import { GOLDEN_SCENARIOS } from '../demo/golden/matrix.mjs';
+import { readTaskVisualIntent, readPendingVisualIntents } from './task-visual-intent.mjs';
 
 export function goldenConnections(scenarios = GOLDEN_SCENARIOS) {
   return {
@@ -13,43 +14,53 @@ export function goldenConnections(scenarios = GOLDEN_SCENARIOS) {
   };
 }
 
-export function browserPushPlan({ files, diffText, labels = [], render = false,
+export function browserPushPlan({ files, diffText, labels = [], render = false, issue,
   root = process.cwd(), corpus = fingerprintCorpus(root), scenarios = GOLDEN_SCENARIOS,
-  links = goldenConnections(scenarios), smokeSelection = selectSmokes(diffText, { root }) }) {
-  const allScenes = scenarios.map(s => s.id).sort();
-  const sceneSet = new Set(allScenes);
+  links = goldenConnections(scenarios), smokeSelection = selectSmokes(diffText, { root }),
+  visualIntent = readTaskVisualIntent({ root, issue }), pendingVisual = null }) {
+  if (labels.includes('ci:full')) return fullBrowserPlan(true, true);
+  const sceneSet = new Set(scenarios.map(s => s.id));
   const relevant = new Set([...corpus, 'demo/golden/baselines/baselines-index.json']);
   const postCapture = new Set(postCaptureInputs());
   const goldenFiles = files.filter(f => relevant.has(f) || /^(?:src|assets)\//.test(f)
     || /^demo\/golden\/baselines\//.test(f)
     || /^demo\/(?:fixtures|golden)\/.*\.mjs$/.test(f) && !postCapture.has(f));
-  const goldenDemand = labels.includes('ci:golden') || labels.includes('ci:full') || render;
+  const goldenDemand = labels.includes('ci:golden') || render || Boolean(visualIntent?.golden.length);
   let golden = { mode: 'none', ids: [], reason: goldenDemand ? 'no golden inputs changed' : 'no golden demand' };
-  if (goldenDemand && goldenFiles.length) {
+  if (goldenDemand && (goldenFiles.length || visualIntent?.golden.length)) {
     const unknown = goldenFiles.filter(f => !Array.isArray(links[f]) || !links[f].length
       || links[f].some(id => !sceneSet.has(id)));
-    golden = unknown.length
-      ? { mode: 'full', ids: allScenes, reason: 'unproven golden connection', fallback: unknown }
-      : { mode: 'selected', ids: [...new Set(goldenFiles.flatMap(f => links[f]))].sort(), reason: 'declared golden connections' };
+    const declared = visualIntent?.golden || [];
+    if (unknown.length && !declared.length) throw Error('Task visual scope is not declared for '
+      + unknown.join(', ') + '. Add visual.golden scene IDs and reasons to this issue release-ledger entry '
+      + '(baselineIndex: node scripts/task-visual-intent.mjs --baseline-index). Full regression runs before beta.');
+    const mapped = goldenFiles.flatMap(f => (links[f] || []).filter(id => sceneSet.has(id)));
+    const changedScenes = [...diffText.matchAll(/^\+[^+].*?\bid:\s*['"]([^'"]+)['"]/gm)]
+      .map(match => match[1]).filter(id => sceneSet.has(id));
+    const ids = [...new Set([...mapped, ...declared.map(item => item.id), ...changedScenes])].sort();
+    for (const id of ids) if (!sceneSet.has(id)) throw Error(`Unknown declared golden scene: ${id}`);
+    const pending = pendingVisual || readPendingVisualIntents({ root });
+    const intent = [...pending.golden, ...declared.map(item => ({ ...item, issue: visualIntent.issue || issue }))]
+      .filter((item, index, values) => ids.includes(item.id)
+        && values.findIndex(other => other.id === item.id && other.issue === item.issue) === index);
+    golden = { mode: 'selected', ids, intent, reason: declared.length ? 'task visual intent and connected scenes' : 'declared golden connections',
+      ...(unknown.length ? { unresolved: unknown } : {}) };
   }
-  let smoke = { mode: 'none', ids: [], reason: labels.includes('ci:full') ? 'no smoke inputs changed' : 'no full demand' };
-  if (labels.includes('ci:full')) {
-    const allSmokes = readdirSync(join(root, 'demo')).filter(f => /^smoke_.*\.mjs$/.test(f)).sort();
-    const selected = [...new Set([...(smokeSelection.direct || []), ...(smokeSelection.registered || [])]
-      .map(item => typeof item === 'string' ? item : item.smoke).filter(Boolean))].sort();
-    const changedSmokes = files.filter(f => /^demo\/smoke_[\w-]+\.mjs$/.test(f)).map(f => f.slice(5));
-    const ids = [...new Set([...selected, ...changedSmokes])].sort();
-    const unknownSource = files.some(f => /^src\//.test(f)) && (smokeSelection.unproven || !ids.length);
-    const unknownEntry = ids.some(id => !allSmokes.includes(id));
-    const harnessChanged = files.some(f => /^demo\//.test(f) && !/^demo\/smoke_/.test(f)
-      && !/^demo\/(golden|docs|stand)\//.test(f));
-    smoke = unknownSource || unknownEntry || harnessChanged
-      ? { mode: 'full', ids: allSmokes,
-        reason: unknownSource ? 'unproven source connection' : unknownEntry ? 'removed or unknown smoke entry' : 'shared browser harness changed' }
-      : ids.length ? { mode: 'selected', ids, reason: 'smoke-select and changed smoke entries' } : smoke;
-  }
-  if (smoke.mode === 'full') golden = { mode: 'full', ids: allScenes, reason: 'full matrix after conservative smoke fallback' };
-  return { schema: 1, scope: 'push', labels: [...labels].sort(), files: [...files].sort(), golden, smoke };
+  const allSmokes = new Set(readdirSync(join(root, 'demo')).filter(f => /^smoke_.*\.mjs$/.test(f)));
+  const selected = [...(smokeSelection.direct || []), ...(smokeSelection.registered || [])]
+    .map(item => typeof item === 'string' ? item : item.smoke).filter(Boolean);
+  const changedSmokes = files.filter(f => /^demo\/smoke_[\w-]+\.mjs$/.test(f))
+    .map(f => f.slice(5)).filter(id => allSmokes.has(id));
+  const unknownSource = files.some(f => /^src\//.test(f)) && (smokeSelection.unproven || !smokeSelection.noExecutableDiff && !selected.length);
+  const harnessChanged = files.some(f => /^demo\//.test(f) && !/^demo\/smoke_/.test(f)
+    && !/^demo\/(golden|docs|stand)\//.test(f));
+  const fallback = unknownSource || harnessChanged ? VISUAL_MINIMUM : [];
+  const ids = [...new Set([...selected, ...changedSmokes, ...(visualIntent?.smokes || []), ...fallback])].sort();
+  for (const id of ids) if (!allSmokes.has(id)) throw Error(`Unknown selected smoke: ${id}; update the task smoke connection`);
+  const smoke = ids.length ? { mode: 'selected', ids,
+    reason: fallback.length ? 'connected smokes and bounded visual minimum' : 'smoke-select, changed entries and task intent' }
+    : { mode: 'none', ids: [], reason: 'no related browser smoke' };
+  return { schema: 1, scope: 'task', labels: [...labels].sort(), files: [...files].sort(), golden, smoke };
 }
 
 export { browserPlanExecution } from './browser-plan-proof.mjs';

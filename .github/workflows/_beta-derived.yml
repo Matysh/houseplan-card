@@ -139,14 +139,21 @@ jobs:
           path: ${{ runner.temp }}/docs-candidate
           if-no-files-found: ignore
           retention-days: 7
+      - name: Собрать ожидаемые изменения задач для беты
+        id: visual_intent
+        if: inputs.golden_run != ''
+        env:
+          EXPECT_CHANGE: ${{ inputs.golden_expect_change }}
+          EXPECT_NEW: ${{ inputs.golden_expect_new }}
+        run: node scripts/task-visual-intent.mjs --acceptance
       - name: Эталоны golden из прогона Validate
         id: golden
         if: inputs.golden_run != ''
         env:
           GH_TOKEN: ${{ github.token }}
           RUN: ${{ inputs.golden_run }}
-          EXPECT_CHANGE: ${{ inputs.golden_expect_change }}
-          EXPECT_NEW: ${{ inputs.golden_expect_new }}
+          EXPECT_CHANGE: ${{ steps.visual_intent.outputs.expect_change }}
+          EXPECT_NEW: ${{ steps.visual_intent.outputs.expect_new }}
         run: |
           set -euo pipefail
           case "$RUN" in ''|*[!0-9]*) echo "::error::golden_run — числовой id прогона Validate"; exit 1 ;; esac
@@ -179,8 +186,8 @@ jobs:
           DOCS_EXPECT: ${{ inputs.docs_expect_change }}
           GOLDEN_CHANGED: ${{ steps.golden.outputs.changed }}
           GOLDEN_URL: ${{ steps.golden.outputs.url }}
-          GOLDEN_EXPECT_CHANGE: ${{ inputs.golden_expect_change }}
-          GOLDEN_EXPECT_NEW: ${{ inputs.golden_expect_new }}
+          GOLDEN_EXPECT_CHANGE: ${{ steps.visual_intent.outputs.expect_change }}
+          GOLDEN_EXPECT_NEW: ${{ steps.visual_intent.outputs.expect_new }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           # Хук pre-push гоняет process-gate; gate:small здесь не нужен —
           # продуктового кода коммит не несёт.

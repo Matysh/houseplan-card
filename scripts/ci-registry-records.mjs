@@ -1,12 +1,12 @@
 // Immutable records embedded in proof.json BEFORE their index is published.
-import { REGISTRY_SCHEMA, sameRecord } from './ci-registry-verify.mjs';
+import { REGISTRY_SCHEMA, sameRecord, completeRegistryCoverage } from './ci-registry-verify.mjs';
 import { REGISTRY_JOBS } from './ci-registry-inputs.mjs';
 const json = value => { try { return JSON.parse(value); } catch { return null; } };
 export function producedRegistryRecords({ plans, proof, needs, repo, workflowRevision, created = new Date().toISOString() }) {
   const records = [];
   for (const plan of plans) for (const job of REGISTRY_JOBS) {
     if (proof.checks[job]?.mode !== 'executed' || proof.checks[job].result !== 'success') continue;
-    if (['smoke', 'golden', 'performance_smoke'].includes(job) && proof.request.full !== true) continue;
+    if (!completeRegistryCoverage(proof, job)) continue;
     const outputs = needs[job]?.outputs || {}, stamps = job === 'smoke'
       ? [1, 2, 3].map(n => json(outputs['toolchain_' + n])) : [json(outputs.toolchain)];
     if (!stamps.every(stamp => sameRecord(stamp, plan.toolchain))) continue;

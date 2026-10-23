@@ -18,6 +18,7 @@ import { readFileSync } from 'node:fs';
 import { isMainModule } from './spawn-portable.mjs';
 
 import { checksAffectedBy } from './check-inputs.mjs';
+import { taskCheckScope } from './task-check-scope.mjs';
 
 /**
  * Выходы job `changes` → проверка manifest (#492 §5.2). Job запускается, если
@@ -70,9 +71,10 @@ export const PERF_PROFILES = {
 export const CLASSIFIERS = {
   ...Object.fromEntries(Object.keys(CHECK_OF_OUTPUT).map((name) => [name, null])),
   ...PERF_PROFILES,
+  tooling: null,
 };
 
-export const OUTPUTS = [...Object.keys(CHECK_OF_OUTPUT), ...Object.keys(PERF_PROFILES)];
+export const OUTPUTS = [...Object.keys(CHECK_OF_OUTPUT), ...Object.keys(PERF_PROFILES), 'tooling'];
 
 /**
  * Список файлов → выходы job `changes` ('true'/'false' по каждому ключу) плюс
@@ -90,6 +92,12 @@ export function classifyChanges(files, { root = process.cwd(), manifest } = {}) 
   for (const [name, pattern] of Object.entries(PERF_PROFILES)) {
     result[name] = unknown.length || list.some((file) => pattern.test(file)) ? 'true' : 'false';
   }
+  // Complete browser/performance regression is decided separately by explicit
+  // full intent. A tooling policy edit alone does not require the HA harness.
+  const scope = taskCheckScope({ files: list }, { root, ...(manifest ? { manifest } : {}) });
+  result.tooling = String(scope.tooling);
+  result.backend = String(scope.backend);
+  result.geometry_parity = String(scope.geometry_parity);
   result.unknown = unknown;
   return result;
 }
@@ -114,10 +122,8 @@ export function heavyGatesRequested({ eventName, headMessage, fullInput, refName
   if (eventName === 'pull_request') return true;
   if (eventName === 'workflow_dispatch') return String(fullInput) === 'true';
   if (eventName === 'schedule') return true;
-  // #697: на ветке задачи трейлер `Release:` тяжёлый набор больше не включает.
-  // Его там носит только приёмка эталонов, а golden на ветке задачи — по метке
-  // `ci:golden`: конвейер ревью диспатчит Validate с `full=true` сам. Кандидат
-  // беты и релиза собирается на `dev` — там трейлер работает как прежде.
+  // #1044: на ветке задачи ci:golden выбирает целевые сцены. Полный набор
+  // запрашивает ci:full; Release-трейлер действует на кандидате в dev.
   if (isTaskBranch(refName)) return false;
   return hasReleaseTrailer(headMessage);
 }
@@ -167,8 +173,7 @@ export function mutantsRequested() {
  */
 export function screenshotsGateMode(inputs) {
   // #760: на ветке задачи — только предупреждение, даже при `full=true`.
-  // Конвейер диспатчит полный Validate для `ci:golden`, а отпечаток на `dev`
-  // между бетами законно устаревает (#479): строгий режим заставлял каждую
+  // Отпечаток на `dev` между бетами законно устаревает (#479): строгий режим заставлял каждую
   // визуальную задачу переснимать кадры после любого сдвига `dev`. Кандидат
   // собирается на `dev` — там режим прежний.
   if (isTaskBranch(inputs?.refName)) return 'warn';

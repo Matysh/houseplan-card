@@ -668,7 +668,7 @@ test('#707 AC5: заметка риска ревьюеру show/ask', () => {
   assert.match(riskNote({ track: 'ask', risk }), /Трек ask: сверь, что каждый класс ниже покрыт AC ТЗ/);
   const render = classifyRisk(diffOf([{ path: 'src/render/paper-scene.ts', add: [[3, '  const scale = 2;']] }]));
   // #827: без метки её ставит конвейер — ревьюер сверяет сдвиг кадров, а не просит метку.
-  assert.match(riskNote({ track: 'show', risk: render }), /Визуальный риск в пути отрисовки плана: конвейер поставил ci:golden \(#827\), и Validate на этом материале прогнал golden/);
+  assert.match(riskNote({ track: 'show', risk: render }), /Визуальный риск в пути отрисовки плана: конвейер поставил ci:golden \(#827\); Validate проверяет целевые сцены/);
   assert.doesNotMatch(riskNote({ track: 'show', risk: render, labels: ['ci:golden'] }), /ci:golden/);
   assert.equal(riskNote({ track: 'show', risk: classifyRisk(VISUAL) }), '', 'visual/ui — ни вопроса трека, ни golden');
   assert.equal(riskNote({ track: 'show', risk: classifyRisk('') }), '');
@@ -1092,7 +1092,7 @@ const s7render = (over = {}) => decideTrack({
   diff: RENDER, comments: [], owner: 'Matysh', runUrl: 'https://run/9', ...over,
 });
 
-test('#827 AC4: шаг трека ставит ci:golden при visual/render — полный набор, причина с путями, один раз', () => {
+test('#1044: шаг трека ставит ci:golden при visual/render — целевые сцены, причина с путями, один раз', () => {
   const added = s7render();
   assert.equal(added.golden, 'add');
   assert.equal(added.full, false, 'golden mandatory, unrelated full smoke matrix not requested');
@@ -1100,15 +1100,16 @@ test('#827 AC4: шаг трека ставит ci:golden при visual/render �
   assert.equal(added.track, 'show', 'трек по визуальному риску не меняется');
   assert.match(added.goldenComment, /^\*\*Конвейер поставил `ci:golden` \(#827\)\.\*\* Изменённые участки — путь отрисовки плана/);
   assert.match(added.goldenComment, /- visual \(render\): src\/live-hover\.ts:69 · участок live-hover \(render\)/);
-  assert.match(added.goldenComment, /лёгкий Validate без golden доказательством не считается/);
-  assert.match(added.goldenComment, /Совместимое полное доказательство на том же материале переиспользуется, а не повторяется/);
+  assert.match(added.goldenComment, /требуют целевые Golden-сцены на этом материале/);
+  assert.match(added.goldenComment, /Совместимое доказательство выбранного плана переиспользуется/);
+  assert.match(added.goldenComment, /Глобальные эталоны принимает бета/);
   assert.match(added.goldenComment, /\[Прогон\]\(https:\/\/run\/9\)\.\n\n<!-- hp:golden-added -->\n$/);
   assert.match(added.note, /конвейер поставил ci:golden \(#827\)/);
-  // Повтор события: метка уже стоит — ни флага, ни комментария; полный набор — по метке.
+  // Повтор события: метка уже стоит — ни флага, ни комментария.
   const again = s7render({ labels: ['track:show', 'S7-code-review', 'P2', 'bug', 'ci:golden'] });
   assert.deepEqual({ golden: again.golden, full: again.full, comment: again.goldenComment }, { golden: 'present', full: false, comment: '' });
   assert.doesNotMatch(again.note, /ci:golden/);
-  // ci:full полный набор и так даёт, но контракт метки ci:golden (приёмка кадров в задаче) — тот же.
+  // ci:full полный набор и так даёт; визуальное намерение задачи остаётся явным.
   assert.equal(s7render({ labels: ['track:ask', 'ci:full'] }).golden, 'add');
   // ship: visual ship не повышает, но слияние без модели тоже ждёт golden на материале.
   const ship = s7render({ labels: ['track:ship', 'S7-code-review'] });

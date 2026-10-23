@@ -103,7 +103,7 @@ rasterizes actual production SVGs for both directions on all hosts and compares
 lit details against the original designer SVG. Advance the normal 30 s ticker
 after changing the browser clock: a hass update may reuse View's render memo.
 This headless proof does not claim physical GPU acceptance. Intentional moon
-golden changes require canonical Linux reviewed acceptance under `ci:golden`.
+golden changes use selected `ci:golden` evidence; canonical Linux acceptance is before beta.
 
 ## Shared dialog composition (#1007)
 
@@ -4321,23 +4321,55 @@ only; no development mutation execution.
 
 ## Browser progress checks on task pushes (#983)
 
-`task-ci-plan.mjs` separates intermediate push progress from complete matrix
-evidence. It reads the diff from the last proven green ancestor (`GREEN_BASE`),
-not merely the last push; cancelled pushes cannot silently lose their inputs.
-`ci:full` uses smoke-select and changed smoke entries. Unproven source/harness
-coverage expands to the full matrix. `ci:golden` uses the capture-input corpus
-and declared scene connections in `browser-push-plan.mjs`; no relevant inputs
-means no golden, unknown connections mean full golden. Baseline PNG identity
-connects directly to its scenario; a new/unknown ID broadens instead of skipping.
+`task-ci-plan.mjs` uses the same bounded task plan for push, S7 and merge on
+ship/show/ask (#1044). It reads the complete task diff from its merge base with
+`origin/dev`, not merely the last push; range guards retain their separate
+`GREEN_BASE`. Smokes come from changed entries,
+smoke-select and declared AC; unproven source/shared harness coverage adds the
+bounded visual minimum. `ci:full` explicitly requests the full matrix.
+`ci:golden` requests connected scenes plus the issue's visual intent. An unknown
+render connection requires an explicit scene plan, with an actionable error;
+it never silently skips the change or expands to every Golden scene.
 
-The bounded worker never emits reusable full-matrix markers. It invokes the
-canonical diagnostic capture, removes its previous report first, and requires
-one matching passed baseline result with a valid complete baseline index.
-An error, missing report, diff, signal or timeout fails the job. It never
-accepts a baseline. `proof.json.browserPlan` records planned, executed and
-skipped scopes/reasons; actual selected-job success is checked independently
-of its claimed metadata. A partial push cannot satisfy a full S7/release policy.
-Explicit full dispatch, PR, night and release retain the complete matrix.
+Store visual intent in the existing `docs/release-ledger/<previous-stable>/<NN>.json`
+entry. Obtain `baselineIndex` with `node scripts/task-visual-intent.mjs --baseline-index`:
+
+```json
+"visual": {
+  "schema": 1,
+  "baselineIndex": "<SHA-256 printed by the command>",
+  "golden": [
+    { "id": "geometry-view-dark-fit", "expectation": "change", "reason": "Opening jamb now reaches its wall face" }
+  ],
+  "smokes": ["smoke_modes.mjs"]
+}
+```
+
+Use `change` for an existing frame and `new` for a new scene; include a concrete
+reason for each. The current task's scenes and connected cases are captured;
+pending intents of earlier tasks are considered only for those selected scenes.
+`node scripts/task-visual-intent.mjs` prints the aggregate for the current cycle
+and accepted index. A new accepted index expires the old intents; after a rebase
+onto it, refresh the task's plan only if an intended change remains outstanding.
+
+The selected worker uses canonical capture and its semantic assertions, verifies
+each existing baseline hash/browser, and allows only the declared pixel delta
+or declared missing new baseline. Errors, undeclared differences, missing output,
+signals and timeouts fail. New pending scenes may make the complete baseline
+index stale; that does not invalidate a checked individual frame. It writes
+`artifacts/browser-selected/golden/` (frames, diffs and per-scene reports), never
+global baselines. The author reviews those images and records IDs, observed
+changes and artifact/run link in the handoff. A green expected-delta check alone
+does not say that a person reviewed the image.
+
+`proof.json.browserPlan` records selected coverage, intent and actual job result.
+Compatible task proof serves S7/merge; it never proves release completeness.
+Nightly captures the full matrix and distinguishes declared pending visual drift
+from errors/unexpected changes. Its pending visual result cannot mint a reusable
+accepted-Golden producer or satisfy release policy. Before beta, beta-derived
+aggregates current pending intent with explicit release inputs; canonical full
+acceptance still requires complete Linux provenance, all scene checks, environment
+witnesses and review of the combined result. Undeclared changes refuse acceptance.
 
 ## Path profiles for push and PR (#980)
 
@@ -4385,7 +4417,9 @@ bundle and emitted helpers, then runs one smoke on that bundle; changed trees
 run the complete demanded matrix. HACS/Hassfest remain fresh for candidates.
 
 `validate.yml` has `fresh=true` for explicit fresh execution; night always sends
-full=true/fresh=true, stable cannot reuse. `candidate=true` is validation-only
+full=true/fresh=true, an actual stable candidate cannot reuse. A stable version
+string on an ordinary issue/dev task does not make it a stable release.
+`candidate=true` is validation-only
 and publishes no tag/release. Before the new reader reaches accepted dev,
 review/merge dispatches automatically use the fresh v1-compatible migration
 route. Additional registry fields preserve the legacy required-check ID list;

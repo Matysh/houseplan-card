@@ -85,6 +85,16 @@ product never sets the seam (`src/card-version.ts`).
 
 ## Diagnostic workflow
 
+On every development track (#1044), `ci:golden` requests selected scenes and
+semantic assertions. Expected differences/new scenes live in the issue's
+release-ledger `visual` field; the schema, baseline-index hash command and
+handoff evidence are documented in
+[DEVELOPMENT](../../docs/DEVELOPMENT.md#browser-progress-checks-on-task-pushes-983).
+The worker preserves selected frames/diffs under `artifacts/browser-selected/`
+for review. It never accepts global baselines. Full verification, undeclared
+scene checks and baseline acceptance belong to the beta candidate; nightly
+pending drift does not become release proof.
+
 Build and copy the exact current source first:
 
 ```bash
@@ -113,14 +123,14 @@ Linux baseline was reviewed and accepted during the v1.60.3-beta.1 gate.
 
 ## Attested WSL acceptance with one GitHub round trip (#641)
 
-Accepting from the `golden-images` CI artifact still works and is still the
-safest route: unpack it and pass `--from=...`. It costs two full CI runs per
-visual fix, though — one to produce the artifact and one to verify the accepted
-baseline — and at matrix version 48 that toll is paid often.
+Accepting from the `golden-images` CI artifact remains the release path:
+unpack it and pass `--from=...`. Capture and final verification are paid once
+per beta batch, not for each visual task. The attested WSL path can remove the
+expected-red artifact transport run when preparing that batch.
 
 A local capture is admissible only through the repository's WSL/ext4 clone,
 because admissibility is now *proved* rather than assumed. Publish the named
-issue branch first and leave its worktree clean. The command refuses native
+release preparation branch first and leave its worktree clean. The command refuses native
 Windows, `/mnt/c`, a detached/dirty/unpublished SHA, pin drift and a stale build;
 it then captures the complete current matrix and refuses undeclared changes,
 missing frames or an insufficient byte-identical witness floor:
@@ -128,8 +138,8 @@ missing frames or an insufficient byte-identical witness floor:
 ```bash
 cd ~/houseplan-card
 git fetch origin
-git switch issue/<NN>-<slug>
-git pull --ff-only origin issue/<NN>-<slug>
+git switch dev
+git pull --ff-only origin dev
 npm run golden:wsl:capture -- --expect-change=<the scenarios you changed>
 
 # Review artifacts/golden/actual and diff, then use exactly the same intent.
@@ -168,7 +178,7 @@ Use either that local trailer or the existing `Baseline-Reviewed: <GitHub run
 URL>`, never both. The local digest must match
 `baselines-index.json.localAttestation.sha256`, which the commit hook and CI
 provenance job verify. Push the accepted baseline commit and wait for a full
-GitHub Validate on that exact SHA before S7/merge/release. That final run
+GitHub Validate on that exact SHA before the beta release. That final run
 captures and checks the matrix independently; the WSL path removes only the
 earlier expected-red artifact-transport run.
 

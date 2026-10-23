@@ -269,29 +269,24 @@ test('#735 switchCycle times warmed navigation and fails on a floor build inside
     'the judged number of switches is the number the window makes');
 });
 
-test('#347: a rewritten before forces the full run instead of guessing the range', () => {
-  // Force-push kills github.event.before; the merge-base fallback then
-  // guessed a range that hid a real custom_components/** diff behind two doc
-  // files, and the heavy jobs silently skipped while the run stayed green —
-  // the #171/#207 class of silent pass. The contract: a non-zero before that
-  // no longer exists switches classification to an unconditional full run
-  // with a loud step-summary note, and the merge-base fallback remains ONLY
-  // for the genuinely new branch (zero before).
+test('#1044: rewritten task pushes retain the complete task range without requesting full performance', () => {
+  // #347 originally expanded a missing event.before to every family. Task
+  // scope now comes from the complete task diff; unprovable ranges fail.
+  // validate-workflow.test.mjs executes this shell with a missing before.
   const workflow = readWorkflow('validate.yml');
   const classify = workflow.slice(
-    workflow.indexOf('Классификация изменённых файлов'),
-    workflow.indexOf('reuse:'),
+    workflow.indexOf('      - id: classify'),
+    workflow.indexOf('\n  reuse:'),
   );
-  // Полный прогон — `classify-changes.mjs --all`: все выходы true (#473 вынес
-  // список выходов из inline-shell, ветка force-push идёт тем же путём).
-  assert.ok(
-    /force-push[\s\S]*?node scripts\/classify-changes\.mjs --all >> "\$GITHUB_OUTPUT"/.test(classify),
-    'мёртвый before обязан включать полный прогон, не merge-base-угадывание');
-  assert.ok(classify.includes('GITHUB_STEP_SUMMARY'),
-    'пропуск классификации обязан быть громким в summary');
-  const fallback = classify.slice(classify.indexOf('Новая ветка'));
-  assert.ok(!fallback.includes('cat-file'),
-    'merge-base-фолбэк остаётся только для нулевого before — без повторной проверки существования');
+  assert.doesNotMatch(classify, /\$BEFORE_SHA/);
+  assert.match(classify, /refs\/heads\/issue\/\*\)[\s\S]*base=\$\(git merge-base origin\/dev "\$HEAD_SHA"\)/);
+  assert.match(classify, /::error::Classification needs a proven ancestor:[\s\S]*exit 1/);
+  assert.equal(classify.match(/classify-changes\.mjs --all/g)?.length, 1,
+    'only intentional full regression may expand every family');
+  assert.match(classify, /if \[ "\$FULL" = "true" \]; then[\s\S]*?classify-changes\.mjs --all/);
+  const performance = workflow.slice(workflow.indexOf('\n  performance_smoke:'), workflow.indexOf('\n  geometry_parity:'));
+  assert.match(performance, /needs\.changes\.outputs\.heavy == 'true'/,
+    'path classification never requests full performance by itself');
 });
 
 test('#780 led-strips-v1: the derived fixture converts devices without adding icons, the budget is the ТЗ table', async () => {

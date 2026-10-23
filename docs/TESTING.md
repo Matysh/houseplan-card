@@ -378,7 +378,7 @@ node scripts/pre-push-gate.mjs --max-smokes=3
 - **громко перечисляет, чего не проверял** — молчаливый пропуск дважды стоил
   проекту дня (#171, #207), а «Verified» без названной команды и её результата
   доказательством не является;
-- **не претендует на полноту.** Golden, полная матрица смоков, HA-харнесс —
+- **не претендует на полноту.** Полная Golden, матрица смоков, HA-харнесс —
   heavy-набор Validate на кандидате; весь мутационный реестр — ночное
   расписание (#513), а не этот набор.
 
@@ -688,9 +688,9 @@ and golden are not real-GPU observations; owner field QA is optional (#929). Ful
 `npm run golden:capture` records the data-only scenarios from
 `demo/golden/matrix.mjs` into ignored `artifacts/golden/actual/`; it never
 changes a reviewed image and fails if any scenario itself errors.
-`golden:verify` always compares the complete matrix (a diagnostic
-`--scenario` is capture-only) with
-`demo/golden/baselines/`, writes high-contrast pixel diffs and fails on a
+`golden:verify` is the full release comparison (`--scenario` is capture-only).
+All tracks use selected scenes, semantic assertions and [declared expected changes](DEVELOPMENT.md#browser-progress-checks-on-task-pushes-983) for task push/S7/merge.
+Full verification compares `demo/golden/baselines/`, writes high-contrast pixel diffs and fails on a
 missing image, changed dimensions, excessive diff, scenario error or stale
 matrix manifest. It also refuses a different Chromium build and baseline PNGs
 whose hashes no longer match the reviewed manifest; both modes first judge the launched browser against the pin (#827), and each scene line carries `sha256=` of the frame and `diff=`/`ratio=`/`maxDelta=` against the baseline. `golden:accept --
@@ -710,7 +710,7 @@ font rendering, animations and caret are deterministic. The separate CI job
 captures review candidates until the first baseline is accepted; after that it
 automatically runs blocking verification. Review and accept the
 `golden-images` CI artifact rather than treating a developer OS raster as the
-canonical set. See `demo/golden/README.md`.
+canonical set. Global baselines are accepted before beta, never by task previews.
 
 ## Large-house performance gate
 

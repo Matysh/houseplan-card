@@ -13,59 +13,88 @@ import { findStep, runStep } from './helpers/workflow-step.mjs';
 
 const empty = { direct: [], registered: [], unproven: false, noExecutableDiff: true };
 const make = (options) => browserPushPlan({ files: [], diffText: '', corpus: ['src/known.ts', 'demo/golden/device-battery.mjs'],
-  smokeSelection: empty, ...options });
+  smokeSelection: empty, pendingVisual: { golden: [] }, ...options });
 
-test('#983 unrelated tests/docs do not run golden despite demand; full dispatch/PR remain full', () => {
+test('#1044 unrelated tests/docs do not run golden; explicit full stays full', () => {
   for (const file of ['test/subject.test.mjs', 'docs/DEVELOPMENT.md']) {
-    const plan = make({ files: [file], labels: ['ci:golden', 'ci:full'] });
+    const plan = make({ files: [file], labels: ['ci:golden'] });
     assert.equal(plan.golden.mode, 'none'); assert.equal(plan.smoke.mode, 'none');
   }
+  assert.equal(make({ files: [], labels: ['ci:full'] }).scope, 'full');
   for (const eventName of ['workflow_dispatch', 'pull_request', 'schedule']) {
     assert.deepEqual(taskCiPlan({ refName: 'issue/983-test', eventName }, { baseFull: true }), { full: true, golden: true });
   }
 });
 
-test('#983 a real dedicated golden input selects its declared scenes; removed/unknown links broaden', () => {
+test('#1044 connected scenes stay targeted; missing render scope needs intent, never full fallback', () => {
   const plan = make({ files: ['demo/golden/device-battery.mjs'], labels: ['ci:golden'] });
   assert.equal(plan.golden.mode, 'selected');
   assert.deepEqual(plan.golden.ids, GOLDEN_SCENARIOS.filter(s => s.batteryBoard).map(s => s.id).sort());
   assert.ok(plan.golden.ids.length > 0 && plan.golden.ids.length < GOLDEN_SCENARIOS.length);
-  const missing = make({ files: ['demo/golden/device-battery.mjs'], labels: ['ci:golden'], links: {} });
-  assert.equal(missing.golden.mode, 'full');
-  assert.equal(missing.golden.ids.length, GOLDEN_SCENARIOS.length);
+  assert.throws(() => make({ files: ['demo/golden/device-battery.mjs'], labels: ['ci:golden'], links: {} }), /Task visual scope is not declared/);
   assert.ok(goldenConnections()['demo/fixtures/device-issues.mjs'].length === 4);
-  assert.equal(make({ files: ['src/deleted-module.ts'], corpus: [], labels: ['ci:golden'] }).golden.mode, 'full',
-    'a deleted source cannot disappear from coverage merely because it left the current corpus');
+  assert.throws(() => make({ files: ['src/deleted-module.ts'], corpus: [], labels: ['ci:golden'] }), /Task visual scope is not declared/);
 });
 
-test('#983 ci:full uses smoke-select entries; empty/unknown source selection cannot turn green empty', () => {
-  const known = make({ files: ['src/known.ts'], labels: ['ci:full'], smokeSelection: {
+test('#1044 ordinary tasks use smoke-select; uncertainty gets the bounded minimum', () => {
+  const known = make({ files: ['src/known.ts'], smokeSelection: {
     ...empty, direct: [{ smoke: 'smoke_modes.mjs' }], noExecutableDiff: false,
   } });
   assert.equal(known.smoke.mode, 'selected'); assert.deepEqual(known.smoke.ids, ['smoke_modes.mjs']);
-  for (const selection of [empty, { ...empty, unproven: true }]) {
-    const fallback = make({ files: ['src/known.ts'], labels: ['ci:full'], smokeSelection: selection });
-    assert.equal(fallback.smoke.mode, 'full'); assert.equal(fallback.golden.mode, 'full');
-    assert.ok(fallback.smoke.ids.length > 100);
+  for (const selection of [{ ...empty, noExecutableDiff: false }, { ...empty, unproven: true }]) {
+    const fallback = make({ files: ['src/known.ts'], smokeSelection: selection });
+    assert.equal(fallback.smoke.mode, 'selected'); assert.equal(fallback.golden.mode, 'none');
+    assert.ok(fallback.smoke.ids.length > 0 && fallback.smoke.ids.length < 10);
   }
 });
 
 test('#983 selected plans cannot supply a complete golden proof, ignore a diff, or escape a known entry', () => {
   const plan = make({ files: ['demo/golden/device-battery.mjs'], labels: ['ci:golden'] });
   assert.equal(validateSelectedPlan(plan), plan);
-  assert.throws(() => validateSelectedPlan({ ...plan, golden: { mode: 'selected', ids: [] } }), /empty/);
+  assert.throws(() => validateSelectedPlan({ ...plan, golden: { mode: 'selected', ids: [] } }), /coverage|empty/);
   assert.throws(() => validateSelectedPlan({ ...plan, smoke: { mode: 'selected', ids: ['../src/other.mjs'] } }), /unknown/);
   const id = plan.golden.ids[0];
   for (const report of [{}, { baselineManifest: { valid: true }, results: [{ id, status: 'different' }] },
     { baselineManifest: { valid: false }, results: [{ id, status: 'passed' }] }]) assert.equal(selectedGoldenPassed(report, id), false);
   const single = { ...plan, golden: { ...plan.golden, ids: [id] } };
-  const good = () => ({ baselineManifest: { valid: true }, results: [{ id, status: 'passed' }] });
-  assert.equal(runSelected(single, { run: () => ({ status: 0 }), report: good, prepare() {}, log() {} }).outcome, 'success');
-  assert.equal(runSelected(single, { run: () => ({ status: null, signal: 'SIGTERM' }), report: good, prepare() {}, log() {} }).outcome, 'failure');
-  assert.equal(runSelected(single, { run: () => ({ status: 0 }), report: () => ({}), prepare() {}, log() {} }).outcome, 'failure');
+  const good = () => ({ chromium: 'pinned', buildFingerprint: 'source', baselineManifest: { present: true, valid: true, chromium: 'pinned' },
+    results: [{ id, status: 'passed', actualSha256: 'a'.repeat(64), baselineSha256: 'b'.repeat(64) }] });
+  assert.equal(runSelected(single, { run: () => ({ status: 0 }), report: good, prepare() {}, preserve() {}, log() {} }).outcome, 'success');
+  assert.equal(runSelected(single, { run: () => ({ status: null, signal: 'SIGTERM' }), report: good, prepare() {}, preserve() {}, log() {} }).outcome, 'failure');
+  assert.equal(runSelected(single, { run: () => ({ status: 0 }), report: () => ({}), prepare() {}, preserve() {}, log() {} }).outcome, 'failure');
   const proof = browserPlanExecution(plan, { browser_selected: { result: 'success' } });
   assert.equal(proof.executed.golden.mode, 'selected'); assert.equal(proof.executed.golden.result, 'success');
-  assert.equal(proof.skipped.smoke, 'no full demand');
+  assert.equal(proof.skipped.smoke, 'no related browser smoke');
+});
+
+test('#1044 task intent selects its scenes and carries earlier pending changes only in that scope', () => {
+  const id = 'geometry-view-dark-fit', other = 'geometry-view-light-fit';
+  const intent = { issue: 1044, golden: [{ id, expectation: 'change', reason: 'Correct the opening depth' }], smokes: ['smoke_modes.mjs'] };
+  for (const track of ['ship', 'show', 'ask']) {
+    const plan = make({ files: ['src/known.ts'], render: true, labels: [`track:${track}`], visualIntent: intent,
+      pendingVisual: { golden: [{ id, issue: 1043, expectation: 'change', reason: 'Earlier opening symbol fix' },
+        { id: other, issue: 1042, expectation: 'change', reason: 'Unrelated pending scene' }] } });
+    assert.equal(plan.scope, 'task'); assert.equal(plan.golden.mode, 'selected');
+    assert.deepEqual(plan.golden.ids, [id]); assert.deepEqual(plan.golden.intent.map(item => item.issue), [1043, 1044]);
+    assert.deepEqual(plan.smoke.ids, ['smoke_modes.mjs']);
+  }
+  assert.throws(() => make({ files: ['src/known.ts'], render: true,
+    visualIntent: { ...intent, golden: [{ ...intent.golden[0], id: 'nonexistent' }] } }), /Unknown declared/);
+});
+
+test('#1044 intentional pixels/new scenes pass task evidence; runtime, checksum and undeclared differences fail', () => {
+  const id = 'geometry-view-dark-fit', intent = [{ id, issue: 1044, expectation: 'change', reason: 'New geometry' }];
+  const report = { chromium: 'pinned', buildFingerprint: 'source', baselineManifest: { present: true, valid: false, chromium: 'pinned' },
+    results: [{ id, status: 'different', actualSha256: 'a'.repeat(64), baselineSha256: 'b'.repeat(64) }] };
+  assert.equal(selectedGoldenPassed(report, id, intent), true, 'unrelated pending matrix additions do not invalidate a checked frame');
+  assert.equal(selectedGoldenPassed(report, id), false);
+  for (const status of ['invalid-baseline', 'error', 'missing-baseline']) {
+    assert.equal(selectedGoldenPassed({ ...report, results: [{ ...report.results[0], status }] }, id, intent), false);
+  }
+  assert.equal(selectedGoldenPassed({ ...report, results: [{ ...report.results[0], error: 'semantic assertion failed' }] }, id, intent), false);
+  const added = { ...report, results: [{ ...report.results[0], status: 'missing-baseline' }] };
+  assert.equal(selectedGoldenPassed(added, id, [{ ...intent[0], expectation: 'new' }]), true);
+  assert.equal(selectedGoldenPassed({ ...report, chromium: 'foreign' }, id, intent), false);
 });
 
 test('#983 actual heavy CLI emits complete structured plan when explicitly requested', () => {
@@ -97,7 +126,7 @@ test('#983 actual workflow step emits the plan and retains all full-dispatch gat
   assert.equal(plan.smoke.mode, 'full'); assert.equal(plan.golden.mode, 'full');
 });
 
-test('#983 real proof policies refuse partial progress for S7/full; missing selected execution fails', () => {
+test('#1044 task proof accepts exact selected execution for S7; full release still requires full coverage', () => {
   const plan = make({ files: ['demo/golden/device-battery.mjs'], labels: ['ci:golden'] });
   const sha = 'a'.repeat(40), tree = 'b'.repeat(40);
   const needs = { preflight: { result: 'success' }, reuse: { result: 'success' },
@@ -109,10 +138,18 @@ test('#983 real proof policies refuse partial progress for S7/full; missing sele
     status: 'completed', conclusion: 'success', event: 'push' }, policy: CI_PROOF_POLICIES.release };
   assert.equal(evaluateCiProof(context).status, 'stale');
   const baseJobs = ['preflight', 'changes', 'reuse'].map(id => ({ name: JOB_RULES[id][0].name, conclusion: 'success' }));
-  const light = { ...context, policy: CI_PROOF_POLICIES.reviewLight, jobs: baseJobs };
+  const light = { ...context, policy: { ...CI_PROOF_POLICIES.reviewLight, task: true, golden: true }, jobs: baseJobs };
   assert.equal(evaluateCiProof(light).status, 'failed', 'a claimed selected success is not the actual job');
-  assert.equal(evaluateCiProof({ ...light, jobs: [...baseJobs,
-    { name: UNCONSUMED_JOBS.browser_selected, conclusion: 'success' }] }).status, 'green');
+  const green = { ...light, jobs: [...baseJobs,
+    { name: UNCONSUMED_JOBS.browser_selected, conclusion: 'success' }] };
+  assert.equal(evaluateCiProof(green).status, 'green');
+  for (const execution of [{ mode: 'full', ids: plan.golden.ids, result: 'success' },
+    { mode: 'selected', ids: plan.golden.ids.slice(1), result: 'success' },
+    { mode: 'selected', ids: [...plan.golden.ids, 'unplanned-scene'], result: 'success' }]) {
+    const altered = structuredClone(proof);
+    altered.browserPlan.executed.golden = execution;
+    assert.equal(evaluateCiProof({ ...green, proof: altered }).status, 'failed');
+  }
   const missing = buildCiProof({ candidateSha: sha, candidateTree: tree, runId: 3, attempt: 1, event: 'push',
     needs: { ...needs, browser_selected: { result: 'skipped' } } });
   assert.equal(missing.browserPlan.executed.golden.result, 'skipped');

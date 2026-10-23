@@ -40,13 +40,18 @@ test('#954 reusable product units exclude FS/Git/process/dynamic readers; every 
   assert.equal(frontendUnitPlan('.', { grouping, read: () => { throw Error('missing'); } }).reusable.length, 0);
 });
 
-test('#954 full/golden plans independent; unknown demand broadens rather than silently skips', () => {
+test('#1044 task scope is explicit on every track; full is an intentional request', () => {
   const input = { refName: 'issue/954-x' };
-  assert.deepEqual(taskCiPlan(input, { labels: ['ci:golden'] }), { full: false, golden: true });
-  assert.deepEqual(taskCiPlan(input, { risk: { visual: { render: true } } }), { full: false, golden: true });
-  for (const options of [{ labels: ['ci:full'] }, { unknown: true }, { baseFull: true }])
+  for (const options of [{ labels: ['ci:golden'] }, { unknown: true }, { risk: { visual: { render: true } } }])
+    assert.throws(() => taskCiPlan(input, options), /Task check plan is unknown/);
+  for (const options of [{ labels: ['ci:full'] }, { baseFull: true }])
     assert.deepEqual(taskCiPlan(input, options), { full: true, golden: true });
-  assert.deepEqual(taskCiPlan(input, { risk: { visual: { ui: true } } }), { full: false, golden: false });
+  for (const track of ['ship', 'show', 'ask']) for (const eventName of ['push', 'workflow_dispatch']) {
+    const plan = taskCiPlan({ ...input, eventName }, { files: [], diffText: '', labels: [`track:${track}`],
+      browserOptions: { smokeSelection: { direct: [], registered: [], noExecutableDiff: true } } });
+    assert.equal(plan.full, false); assert.equal(plan.golden, false);
+    assert.equal(plan.browser.scope, 'task');
+  }
   assert.deepEqual(requiredCheckIds({ request: { golden: true } }), ['preflight', 'changes', 'reuse', 'golden']);
   assert.ok(requiredCheckIds({ request: { full: true } }).includes('smoke'));
 });

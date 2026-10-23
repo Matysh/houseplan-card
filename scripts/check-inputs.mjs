@@ -379,7 +379,7 @@ export const CHECKS = {
     reuse: true,
   },
   golden: {
-    entries: ['demo/golden/run.mjs'],
+    entries: ['demo/golden/run.mjs', 'scripts/golden-regression.mjs'],
     roots: [...BUILD_INPUTS, ...BASELINE_OVERLAY, ...BROWSER_PROTOCOL, ...REUSE_PROTOCOL, ...WORKFLOW],
     reuse: true,
   },

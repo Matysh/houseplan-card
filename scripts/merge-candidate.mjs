@@ -20,6 +20,7 @@
 // случаев §8.4 была юнит-тестом, а не верой в shell.
 
 import { listCiRuns } from './ci-workflows.mjs';
+import { profilesForFiles } from './ci-profile-paths.mjs';
 import { spawnSync } from 'node:child_process';
 import { appendFileSync, chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -35,7 +36,7 @@ import { commitCandidateReviewsIndex } from './candidate-reviews-index.mjs';
 import { normalizeBrowserGuardCounts } from './mutation-browser-inventory.mjs';
 import { BROWSER_GUARD_INVENTORY } from './mutation-browser-policy.mjs';
 import { readMergeEntry, reconcileEntry, ghApi } from './release-ledger.mjs';
-import { sealContinuation } from './continuation-record.mjs';
+import { sealContinuation, validMergeValidation } from './continuation-record.mjs';
 import { issueEvents, latestReviewRequest, processRuns, reviewRunsForRequest } from './process-reconcile.mjs';
 import { issueBodyDigest } from './review-doc-guard.mjs';
 
@@ -370,6 +371,19 @@ export function realOps({
     revParse: (ref) => must(git('rev-parse', ref), `rev-parse ${ref}`),
     mergeBase: (a, b) => must(git('merge-base', a, b), 'merge-base'),
     diffNames: (from, to, pathspec = []) => must(git('diff', '--name-only', from, to, '--', ...pathspec), 'diff').split('\n').filter(Boolean),
+    productPushExpected: (from, to) => {
+      try {
+        const files = must(git('diff', '--no-renames', '--name-only', from, to), 'push diff').split('\n').filter(Boolean);
+        const count = Number(must(git('rev-list', '--count', `${from}..${to}`), 'push commits').trim());
+        // GitHub bypasses path filtering for pushes over 1,000 commits; do not
+        // predict its bounded diff behavior for large/unknown push ranges.
+        if (!Number.isSafeInteger(count) || count < 0 || count > 1000 || files.length > 300) return true;
+        const paths = JSON.parse(must(git('show', `${to}:scripts/ci-profile-paths.json`), 'push profile paths'));
+        if (!['product', 'tooling', 'docs'].every(profile => Array.isArray(paths[profile])
+          && paths[profile].length && paths[profile].every(p => typeof p === 'string'))) return true;
+        return profilesForFiles(files, paths).includes('product');
+      } catch { return true; }
+    },
     // Документы ревью — не часть патча (#516): кандидат несёт свой
     // CODE-REVIEW-N-rK.md, материал — нет, и без pathspec их patch-id
     // расходились на каждом сдвиге dev; `reviewedFresh` судит так же.
@@ -438,7 +452,7 @@ export function realOps({
       const r = exec('gh', ['workflow', 'run', workflow, '--repo', repo, '--ref', ref, '-f', 'full=false', '-f', `mutants=${withMutants ? 'true' : 'false'}`]);
       if (r.status !== 0) throw new Error(`gh workflow run ${workflow}: ${r.stderr || r.stdout}`);
     },
-    waitValidate: async (sha, { event = 'workflow_dispatch', wait = true } = {}) => {
+    waitValidate: async (sha, { event = 'workflow_dispatch', wait = true, expectPush = true } = {}) => {
       const started = now();
       let runId = null;
       const ignored = new Set();
@@ -449,8 +463,13 @@ export function realOps({
           if (response.status !== 0) throw Error('CI run listing failed');
           return response.stdout;
         });
-        const runs = all.filter((x) => (!event || x.event === event) && !ignored.has(x.databaseId));
+        // A task's existing canonical dispatch is just as useful as its product
+        // push. Both are judged by the same immutable proof below; do not start
+        // another producer merely because it entered through another workflow.
+        const runs = all.filter((x) => (!event || x.event === event
+          || !mutants && event === 'push' && x.event === 'workflow_dispatch') && !ignored.has(x.databaseId));
         const run = runs.find((x) => x.databaseId === runId) || runs[0];
+        const validation = run && { id: Number(run.databaseId), attempt: Number(run.attempt), path: run.path };
         if (run) {
           runId = run.databaseId;
           if (run.status === 'completed') {
@@ -458,18 +477,26 @@ export function realOps({
             try { context = await proofContext(run); }
             catch { context = { proof: null, jobs: [], reuseRuns: new Map() }; }
             const verdict = evaluateCiProof({
-              run, ...context, candidate: { sha, tree }, policy: mutants ? CI_PROOF_POLICIES.merge : CI_PROOF_POLICIES.mergeLight,
+              run, ...context, candidate: { sha, tree }, policy: mutants ? CI_PROOF_POLICIES.merge : { ...CI_PROOF_POLICIES.mergeLight, task: true },
             });
             if (verdict.status === 'green' || verdict.status === 'failed')
               return { result: verdict.status, url: verdict.url, note: verdict.note };
+            if (verdict.status === 'pending') {
+              if (!wait) return { result: 'pending', url: verdict.url, runId: verdict.runId, note: verdict.note, validation };
+              await sleep(20_000);
+              continue;
+            }
             ignored.add(run.databaseId);
             runId = null;
             continue;
           }
-        } else if (now() - started > VALIDATE_APPEAR_MS) {
+        } else if (event === 'push' && expectPush === false || now() - started > VALIDATE_APPEAR_MS) {
           return { result: 'missing', url: null };
         }
-        if (!wait) return { result: 'pending', url: run?.url || null, runId: run?.databaseId || null };
+        // GitHub registers a push asynchronously. Even the event-driven caller
+        // must discover its exact run before deferring; an empty first listing
+        // is not evidence that a second dispatch is needed (#1044).
+        if (!wait && run) return { result: 'pending', url: run.url || null, runId: run.databaseId, validation };
         await sleep(20_000);
       }
       return { result: 'failed', url: runId ? `run ${runId} (timeout)` : null };
@@ -573,6 +600,7 @@ async function mergeAttempts({ branch, material, issue, ops, maxAttempts = MAX_A
     // while the green verdict still applies; a changed diff first needs a
     // new review. The index commit is included in the exact Validate SHA.
     if (patchIdEqual) candidate = ops.freshIndex(candidate);
+    const expectPush = mutants ? true : ops.productPushExpected?.(tip, candidate) !== false;
     // кандидат публикуется в ветку в любом случае: он и есть то, что должно
     // ехать в dev, и Validate стартует именно от этого push
     if (!ops.pushWithLease(candidate, branch, tip)) {
@@ -593,24 +621,26 @@ async function mergeAttempts({ branch, material, issue, ops, maxAttempts = MAX_A
     let result;
     let url;
     let runId;
+    let validation;
     if (mutants) {
       ops.dispatchValidate(branch);
       ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);
-      ({ result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch', wait: !defer }));
+      ({ result, url, runId, validation } = await ops.waitValidate(candidate, { event: 'workflow_dispatch', wait: !defer }));
     } else {
       ops.log(`лёгкий Validate на кандидате ${candidate.slice(0, 8)} — ждём push-прогон`);
-      ({ result, url, runId } = await ops.waitValidate(candidate, { event: 'push', wait: !defer }));
+      ({ result, url, runId, validation } = await ops.waitValidate(candidate, { event: 'push', wait: !defer, expectPush }));
       if (result === 'missing') {
         ops.log('push-прогона на кандидате нет — лёгкий dispatch');
         ops.dispatchValidate(branch);
-        ({ result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch', wait: !defer }));
+        ({ result, url, runId, validation } = await ops.waitValidate(candidate, { event: 'workflow_dispatch', wait: !defer }));
       }
     }
     if (result === 'pending' && defer) {
-      // No push run yet (including docs/reviews paths-ignore): one dispatch,
-      // then sealed completion, never a runner sleeping for run discovery.
-      if (!mutants && !runId) ops.dispatchValidate(branch);
-      ops.defer({ branch, material, candidate, dev: devNow, issue, policy: mutants ? 'merge' : 'merge-light' });
+      // Discovery has found the producer (or its required companion). The
+      // sealed continuation waits for completion without launching a duplicate.
+      if (!Number.isSafeInteger(runId) || runId < 1) throw Error('pending Validate has no exact run id');
+      if (!validMergeValidation(validation)) throw Error('pending Validate has no exact product run/attempt identity');
+      ops.defer({ branch, material, candidate, dev: devNow, issue, policy: mutants ? 'merge' : 'merge-light', validation });
       ops.log('точный кандидат ожидает event completion; runner освобождён, S7 не переигрывается');
       return { merged: false, to: null, action: 'pending', candidate };
     }

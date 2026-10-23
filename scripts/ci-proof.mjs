@@ -288,11 +288,15 @@ export function buildCiProof({
     ...(asBool(changes.registry_fresh) ? { fresh: true } : {}),
   };
   if (asBool(changes.golden) && !request.full) request.golden = true;
+  if (asBool(needs?.golden?.outputs?.pending_visual)) request.pendingVisual = true;
   const selection = {
     frontend: Boolean(registry?.plan) || workflow === 'validate-product.yml' || asBool(changes.frontend),
     geometry_parity: asBool(changes.geometry_parity),
     backend: asBool(changes.backend),
     integration: asBool(changes.integration),
+    // An explicit false is the new task contract; absent means legacy full
+    // frontend+tooling coverage. Full regressions always require both groups.
+    ...(changes.tooling !== undefined ? { tooling: request.full || asBool(changes.tooling) } : {}),
   };
   const checks = {};
   const executed = (id, result = jobResult(needs, id)) => {
@@ -404,20 +408,31 @@ export function evaluateCiProof({
   if (run?.event && proof.run?.event !== run.event)
     return result('stale', 'run event differs from proof event');
   if (policy?.full && !asBool(proof.request?.full)) return result('stale', 'proof is light; full gates were not requested');
+  if (policy?.name === 'release' && proof.request?.pendingVisual)
+    return result('stale', 'pending visual changes require baseline acceptance and strict candidate validation');
   if (policy?.fresh && !asBool(proof.request?.fresh)) return result('stale', 'proof has no explicit fresh execution policy');
   if (policy?.fresh && proof.reusedChecks?.length) return result('stale', 'fresh policy requires every requested check to execute');
-  if (policy?.golden && !asBool(proof.request?.full) && !asBool(proof.request?.golden)) return result('stale', 'proof has no requested golden check');
+  const taskGolden = policy?.task && proof.browserPlan?.planned?.scope === 'task'
+    && proof.browserPlan.planned.golden?.mode === 'selected'
+    && proof.browserPlan.planned.golden.ids?.length > 0;
+  if (policy?.golden && !asBool(proof.request?.full) && !asBool(proof.request?.golden) && !taskGolden)
+    return result('stale', 'proof has no requested golden check');
   if (policy?.mutants && !asBool(proof.request?.mutants)) return result('stale', 'proof has no requested mutant jobs');
+  if (asBool(proof.request?.full) && proof.selection?.tooling === false)
+    return result('failed', 'full regression cannot omit tooling tests');
   if (profile === 'product') {
     if (!Array.isArray(proof.requiredProfiles) || !proof.requiredProfiles.includes('product')
       || proof.requiredProfiles.some(p => !['product', 'tooling', 'docs'].includes(p)))
       return result('failed', 'product profile has no complete event coverage plan');
+    if (asBool(proof.request?.full) && !proof.requiredProfiles.includes('tooling'))
+      return result('stale', 'full product proof has no tooling coverage plan; canonical validation required');
     for (const required of proof.requiredProfiles.filter(p => p !== 'product')) {
       const companion = profileRuns.get(required);
       if (!companion) return result('stale', `${required} profile for the event is missing; canonical validation required`);
       if (runShaOf(companion.run) !== identity.sha || CI_WORKFLOWS[ciWorkflow(companion.run)] !== required)
         return result('failed', `${required}: foreign companion identity`);
-      if (companion.run.status !== 'completed') return result('stale', `${required} profile is unproven; canonical validation required`);
+      if (companion.run.status !== 'completed') return { ...result('pending', `${required} profile is still running`),
+        url: runUrlOf(companion.run), runId: runIdOf(companion.run) };
       const names = [JOB_RULES.preflight[0].name, ...(required === 'tooling' ? [JOB_RULES.frontend.find(r => r.job === 'tooling').name] : [])];
       if (companion.run.conclusion !== 'success' || !executedCheckIsGreen(names.map(name => ({ names: [name] })), companion.jobs))
         return result('failed', `${required}: companion checks absent or not green`);
@@ -476,13 +491,16 @@ export function evaluateCiProof({
       browserPlanExecution(plan, {});
       for (const kind of ['smoke', 'golden']) if (plan[kind].mode === 'selected'
         && (proof.browserPlan.executed?.[kind]?.result !== 'success'
+          || proof.browserPlan.executed[kind].mode !== 'selected'
+          || !Array.isArray(proof.browserPlan.executed[kind].ids)
+          || !sameSet(proof.browserPlan.executed[kind].ids, plan[kind].ids)
           || !executedCheckIsGreen([{ names: [UNCONSUMED_JOBS.browser_selected] }], jobs)))
         return result('failed', `${kind}: selected push execution is missing or not green`);
     } catch { return result('failed', 'invalid browser coverage metadata'); }
   }
   let rules;
   try {
-    rules = resolveJobRules(workflowJobs, profile);
+    rules = resolveJobRules(workflowJobs, proof.selection?.tooling === false ? 'product' : profile);
   } catch (error) {
     return result('failed', `job-name contract with validate.yml is broken (#622): ${error.message}`);
   }
@@ -504,7 +522,7 @@ export function evaluateCiProof({
       if (!verified.accepted) return result('failed', id + ': ' + verified.reason);
       if (record.key !== claim.reuse.key || record.run !== claim.reuse.sourceRun || record.attempt !== claim.reuse.sourceAttempt
         || record.sha !== claim.reuse.sourceSha) return result('failed', id + ': registry claim identity mismatch');
-      if (id === 'frontend' && profile === 'full'
+      if (id === 'frontend' && profile === 'full' && proof.selection?.tooling !== false
         && !executedCheckIsGreen([{ names: [JOB_RULES.frontend.find(rule => rule.job === 'tooling').name] }], jobs))
         return result('failed', 'fresh tooling is missing beside reused frontend');
       continue;

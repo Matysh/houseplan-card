@@ -310,13 +310,9 @@ jobs:
           [ "$REVIEWS_INDEX" = "skipped" ] || check "индекс ревью совпадает с каталогом" "$REVIEWS_INDEX"
           exit $fail
 
-  # Классификация изменённых путей: тяжёлые job идут только там, где менялось
-  # относящееся к ним. НА DEV ФИЛЬТРОВ НЕТ: гейт беты принимает «зелёный Validate
-  # на точном SHA», и если объём прогона зависит от diff, «зелёный» перестаёт
-  # значить одно и то же — кандидат релиза (манифесты + changelog) пропустил бы
-  # браузерные тесты, а прогон с пропущенными job всё равно success. Фильтры
-  # экономят на ветках задач, где Validate — ранний сигнал: настоящую приёмку
-  # там делает код-ревью, которое гоняет гейты само (#127).
+  # #1044: обычная задача и интеграционный push выбирают семейства по диффу.
+  # Полная регрессия запрашивается явно кандидатом, ночью или full=true;
+  # release proof проверяет этот объём отдельно от зелёного статуса workflow.
   changes:
     name: Классификация изменённых файлов
     runs-on: ubuntu-24.04
@@ -329,8 +325,9 @@ jobs:
       issues: read
     outputs:
       frontend: ${{ steps.classify.outputs.frontend }}
-      geometry_parity: ${{ steps.classify.outputs.geometry_parity == 'true' || inputs.full }}
-      backend: ${{ steps.classify.outputs.backend == 'true' || inputs.full }}
+      tooling: ${{ steps.classify.outputs.tooling == 'true' || steps.heavy.outputs.heavy == 'true' }}
+      geometry_parity: ${{ steps.classify.outputs.geometry_parity == 'true' || steps.heavy.outputs.heavy == 'true' }}
+      backend: ${{ steps.classify.outputs.backend == 'true' || steps.heavy.outputs.heavy == 'true' }}
       integration: ${{ steps.classify.outputs.integration == 'true' || steps.registry_policy.outputs.registry_mode == 'candidate' }}
       perf_iso: ${{ steps.classify.outputs.perf_iso == 'true' || inputs.full }} # #473 §5
       perf_interaction: ${{ steps.classify.outputs.perf_interaction == 'true' || inputs.full }}
@@ -383,10 +380,9 @@ jobs:
             -f branch="$BRANCH" -f status=completed -F per_page=100 \
             > /tmp/validate-runs.json || echo '{}' > /tmp/validate-runs.json
           if [ "$REF" = "refs/heads/dev" ] || [ "$REF" = "refs/heads/main" ]; then
-            # На интеграционных ветках классифицировать нечего (всё true), но
-            # база диапазона нужна гейту «новый код не добавляет any» в job
-            # frontend (#388, #619). #703: прогоны обеих интеграционных веток —
-            # на `main` приходит SHA, уже судимый на `dev`.
+            # Доказанная база нужна классификации и гейтам диапазона (#388).
+            # #703: прогоны обеих интеграционных веток — на `main` приходит
+            # SHA, уже судимый на `dev`.
             other=dev; [ "$BRANCH" = "dev" ] && other=main
             gh api -X GET "repos/$REPO/actions/runs" \
               -f branch="$other" -f status=completed -F per_page=100 \
@@ -415,7 +411,7 @@ jobs:
           FULL_INPUT: ${{ inputs.full }}
           MUTANTS_INPUT: ${{ inputs.mutants }}
           REF_NAME: ${{ github.ref_name }}
-          GREEN_BASE: ${{ steps.base.outputs.base }}
+          GREEN_BASE: ${{ steps.base.outputs.base || steps.base.outputs.range_base }}
         # #751: без pipefail упавший classify-changes оставлял heavy пустым —
         # тяжёлые job молча пропускались, а job changes зеленела.
         run: |
@@ -424,52 +420,40 @@ jobs:
       - id: classify
         env:
           EVENT_NAME: ${{ github.event_name }}
-          BEFORE_SHA: ${{ github.event.before }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          GREEN_BASE: ${{ steps.base.outputs.base }}
+          GREEN_BASE: ${{ steps.base.outputs.base || steps.base.outputs.range_base }}
           HEAD_SHA: ${{ github.sha }}
           REF: ${{ github.ref }}
+          FULL: ${{ steps.heavy.outputs.heavy }}
         run: |
-          if [ "$REF" = "refs/heads/dev" ] || [ "$REF" = "refs/heads/main" ]; then
-            echo "dev/main: без фильтров, всё true"
+          set -o pipefail
+          if [ "$FULL" = "true" ]; then
+            echo "full regression: all check families"
             node scripts/classify-changes.mjs --all >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          zero=$(printf '%040d' 0)
-          # #347: непустой before, которого больше не существует, — это
-          # force-push (ребейз/аменд переписал историю ветки). Диапазон в этом
-          # случае НЕ угадывается: merge-base после переписанной истории уже
-          # выдавал «изменились только два doc-файла» при реальном диффе в
-          # custom_components/**, и тяжёлые job тихо скипались, а общий статус
-          # рана оставался success — ровно класс тихого пропуска #171/#207.
-          # Force-push редок, полный прогон дешевле ложного «зелёного».
-          #
-          # Проверка сохранена как есть и после #387: там база стала доказуемой
-          # (зелёный предок), но механизм, из-за которого merge-base врал на
-          # переписанной истории, не разобран до конца. Снимать защиту, не
-          # объяснив её, — способ получить #347 второй раз.
-          if [ -n "$BEFORE_SHA" ] && [ "$BEFORE_SHA" != "$zero" ] \
-             && ! git cat-file -e "$BEFORE_SHA" 2>/dev/null; then
-            echo "force-push: before=$BEFORE_SHA переписан — полный прогон без классификации"
-            {
-              echo "### Классификация изменённых файлов"
-              echo "\`before\` (=$BEFORE_SHA) переписан force-push'ем: диапазон недоказуем,"
-              echo "все тяжёлые job запускаются без фильтра путей (#347)."
-            } >> "$GITHUB_STEP_SUMMARY"
-            node scripts/classify-changes.mjs --all >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          # Диапазон считается от последнего ДОКАЗАННО зелёного предка (#387),
-          # а не от головы предыдущего пуша: его прогон штатно отменяется
-          # следующим пушем. PR — исключение: там база задана событием.
+          # Ветка задачи всегда судится целиком от origin/dev, включая ранние
+          # изменения до последнего зелёного push. Переписанный event.before
+          # после rebase не меняет этот диапазон и не требует всех семейств.
+          # Интеграционный push использует доказанную базу диапазона (#388).
           base="$GREEN_BASE"
-          if [ "$EVENT_NAME" = "pull_request" ]; then base="$BASE_SHA"; fi
-          if [ -z "$base" ]; then
-            echo "база не определена — полный прогон без классификации"
-            node scripts/classify-changes.mjs --all >> "$GITHUB_OUTPUT"
-            exit 0
+          case "$REF" in
+            refs/heads/issue/*)
+              base=$(git merge-base origin/dev "$HEAD_SHA") || {
+                echo "::error::Task range is unproven: fetch origin/dev and retry, or explicitly request full=true."
+                exit 1
+              }
+              ;;
+            *) if [ "$EVENT_NAME" = "pull_request" ]; then base="$BASE_SHA"; fi ;;
+          esac
+          if [ -z "$base" ] || ! git merge-base --is-ancestor "$base" "$HEAD_SHA"; then
+            echo "::error::Classification needs a proven ancestor: resolve the Git base and retry, or explicitly request full=true."
+            exit 1
           fi
-          files=$(git diff --name-only "$base" "$HEAD_SHA")
+          files=$(git diff --name-only "$base" "$HEAD_SHA") || {
+            echo "::error::Cannot read the complete task range; fetch the missing Git objects and retry."
+            exit 1
+          }
           printf '%s\n' "$files" | head -50
           # Решение — в scripts/classify-changes.mjs по единому manifest входов
           # (#492 §5.2): там оно проверяемо unit-тестом, здесь — только
@@ -477,13 +461,13 @@ jobs:
           printf '%s\n' "$files" | node scripts/classify-changes.mjs > /tmp/classify.out
           tee -a "$GITHUB_OUTPUT" < /tmp/classify.out
           # Файл, которого нет в manifest ни одной проверки, — не «не влияет»,
-          # а «неизвестно»: прогон расширен до полного набора, и это видно в
-          # summary, а не только в логе.
+          # а «неизвестно»: расширяются затронутые семейства, и это видно в
+          # summary. Полные browser/performance-наборы задаёт только heavy.
           unknown=$(sed -n 's/^unknown_inputs=//p' /tmp/classify.out)
           if [ -n "$unknown" ]; then
             {
               echo "### Неизвестные входы (#492)"
-              echo "Файлы, которых нет в manifest ни одной проверки — прогон расширен до полного набора:"
+              echo "Файлы, которых нет в manifest ни одной проверки — расширены затронутые семейства:"
               for f in $unknown; do echo "- \`$f\`"; done
               echo "Впишите файл в \`CHECKS\` или \`NOT_AN_INPUT\` (scripts/check-inputs.mjs) с причиной."
             } >> "$GITHUB_STEP_SUMMARY"
@@ -800,6 +784,8 @@ jobs:
 
   tooling:
     name: "Инструменты: вычисляемый набор юнитов"
+    needs: changes
+    if: needs.changes.outputs.tooling == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -1059,6 +1045,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     outputs:
+      pending_visual: ${{ steps.golden.outputs.pending_visual }}
       recipe: ${{ steps.registry.outputs.recipe }}
       toolchain: ${{ steps.registry.outputs.toolchain }}
       environment: ${{ steps.environment.outputs.environment }}
@@ -1096,24 +1083,20 @@ jobs:
           path: dist
       - name: Разложить бандл по копиям
         run: node scripts/bundle-sync.mjs
-      # Маркер предыдущего падения с ТЕМ ЖЕ ключом (#386). Восстанавливается до
-      # прогона, потому что после падения шаги кэша уже не помогут отличить
-      # виновника от свидетеля.
+      # Полный capture на dev допускает только накопленные visual intents.
+      # Кандидат/main проверяются строго; pending_visual не даёт release proof.
       - name: Capture or verify golden matrix
         id: golden
-        run: |
-          if find demo/golden/baselines -maxdepth 1 -name '*.png' -print -quit | grep -q .; then
-            echo "has_baselines=true" >> "$GITHUB_OUTPUT"
-            npm run golden:verify
-          else
-            echo "has_baselines=false" >> "$GITHUB_OUTPUT"
-            npm run golden:capture
-          fi
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          CANDIDATE_INPUT: ${{ inputs.candidate }}
+          HEAD_MESSAGE: ${{ github.event.head_commit.message }}
+        run: node scripts/golden-regression.mjs
       - name: Stamp actual producer environment
         id: environment
         run: node scripts/ci-job-environment.mjs
       - name: Upload golden candidates/diffs
-        if: failure() || steps.golden.outputs.has_baselines == 'false'
+        if: failure() || steps.golden.outputs.has_baselines == 'false' || steps.golden.outputs.pending_visual == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: golden-images
