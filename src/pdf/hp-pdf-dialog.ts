@@ -63,6 +63,9 @@ export class HpPdfDialog extends LitElement {
   static styles = [css`
     :host { display:contents;--hp-dialog-icon-size:40.48px;--hp-dialog-close-transition:160ms ease;--hp-dialog-close-hover-transform:rotate(90deg) scale(1.12); }
     .body {
+      --hpf-surface:var(--card-background-color,#fff);
+      --hpf-control-surface:var(--hpf-surface);
+      --hpf-tint:color-mix(in srgb,var(--primary-color,#03a9f4) 10%,var(--hpf-surface));
       display:grid;
       gap:12px;
       width:100%;

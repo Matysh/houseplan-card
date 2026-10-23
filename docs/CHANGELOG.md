@@ -4,6 +4,8 @@
 
 ## v1.83.0-beta.1 — 2026-10-23
 
+- Print-dialog format and background selectors retain readable contrast in the
+  light theme, including without additional Home Assistant colour variables. (#1036)
 - Make the inner fill of switched-off LED strips 30% transparent to the plan
   background; lit strips and the opaque rim keep their previous appearance. (#1043)
 - Name the backup export button **Download**: it saves a ZIP or JSON depending

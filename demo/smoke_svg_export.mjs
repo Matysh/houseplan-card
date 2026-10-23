@@ -293,5 +293,32 @@ const narrow = await dialog.locator('hp-dialog').evaluate(el => {
 check('320px-dialog-fits', narrow);
 check('shared-close-pointer', await dialog.locator('hp-dialog button.close').evaluate(el => getComputedStyle(el).cursor), 'pointer');
 check('shared-select-pointer', await dialog.locator('hp-settings-select').first().locator('button').evaluate(el => getComputedStyle(el).cursor), 'pointer');
+// Minimal HA theme tokens, as in the canonical documentation capture. The
+// print dialog must not pair light-theme text with the select's dark fallback.
+for (const [theme, foreground, surface] of [['light', '#202124', '#ffffff'], ['dark', '#e6e7eb', '#202126']]) {
+  await page.evaluate(({ foreground, surface }) => {
+    for (const owner of [document.documentElement, window.__card]) {
+      owner.style.setProperty('--primary-text-color', foreground);
+      owner.style.setProperty('--card-background-color', surface);
+      owner.style.setProperty('--secondary-background-color', 'initial');
+    }
+  }, { foreground, surface });
+  await page.mouse.move(0, 0);
+  for (const name of ['export-format', 'export-background']) {
+    const control = field(name).locator('..');
+    const contrast = await control.locator('button').evaluate(el => {
+      const luma = color => {
+        const rgb = color.match(/[\d.]+/g).slice(0, 3).map(Number).map(v => {
+          const c = v / 255; return c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4;
+        });
+        return rgb[0] * .2126 + rgb[1] * .7152 + rgb[2] * .0722;
+      };
+      const style = getComputedStyle(el), a = luma(style.color), b = luma(style.backgroundColor);
+      return (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
+    });
+    check(`${theme}-${name}-readable-text`, contrast >= 4.5);
+    console.log(`${theme}-${name}-contrast=${contrast.toFixed(2)}`);
+  }
+}
 if (output) await page.screenshot({ path: resolve(output, 'dialog-mobile.png') });
 await finish(browser, { default: noFacts, minimal: min });
