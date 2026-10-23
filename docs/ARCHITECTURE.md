@@ -1,5 +1,9 @@
 # House Plan architecture
 
+SVG caption alignment (#1039) is a detached presentation correction after the
+HA Area affordance is filtered out. The remaining name centres in the frozen
+row width; live room-label CSS, geometry, actions and layout storage are untouched.
+
 Print export (#1036) keeps the PDF scene/writer independent from a lazy SVG View
 snapshot. The card supplies a read-only stage/context fence, not export geometry.
 The exporter freezes computed styles and flattened icon shadows synchronously,

@@ -28,6 +28,10 @@ needs no HA connection. Editors that do not support foreignObject may omit those
 HTML overlays; the native architecture remains editable SVG. This is a static
 document, not a portable interactive HA card.
 
+Room captions omit the HA Area action. The detached name row centres its text
+in the frozen caption width so readings remain directly below it (#1039).
+The source View keeps its existing name/action layout and hit targets.
+
 Only the active space is captured, without application chrome, editor handles,
 hover cues or private data attributes. Script/event attributes are stripped;
 image references are embedded with a streamed 25 MB cumulative budget, including

@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "issue": 1039,
+  "baseStable": "v1.82.0",
+  "category": "line-fix",
+  "introducedBy": 1036,
+  "rationale": "Corrects room-caption alignment after the new SVG exporter removes the HA Area action while retaining its frozen row width. SVG export was introduced by #1036 after stable v1.82.0; live linked captions are unchanged."
+}

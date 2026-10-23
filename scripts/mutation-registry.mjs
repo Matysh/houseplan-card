@@ -77,6 +77,14 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'svg-caption-retains-area-action-gap-1039',
+    guard: 'node demo/smoke_room_metrics_alignment.mjs',
+    because: '#1039: only an independently opened real SVG download exposes the frozen name-row width after the HA Area action is stripped; live linked captions must retain their existing composite centre.',
+    patches: [{ file: 'src/pdf/svg-snapshot.ts',
+      find: "    if (node.matches('.rlname')) (copy as HTMLElement).style.justifyContent = 'center';",
+      replace: "    if (node.matches('.rlname')) (copy as HTMLElement).style.justifyContent = 'flex-start';" }],
+  },
+  {
     id: 'svg-invalid-colour-completes-1036',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/svg-export.test.mjs',
     because: '#1036 AC3: execute the real dialog save handler with a picker that refuses completion; neither generation nor closing may begin. The browser separately covers invalid HEX across outside-close/reopen.',

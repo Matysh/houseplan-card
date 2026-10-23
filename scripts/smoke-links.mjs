@@ -30,6 +30,11 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/pdf/svg-snapshot.ts'],
+    smokes: ['smoke_room_metrics_alignment.mjs'],
+    because: '#1039: compare text/readings centres in real offline SVG downloads after chrome removal, while preserving live captions with an Area action; computed source styles alone cannot prove the exported layout.',
+  },
+  {
     files: ['src/pdf/svg-snapshot.ts', 'src/pdf/export-options.ts', 'src/pdf/hp-pdf-dialog.ts', 'src/pdf/pdf-export.ts'],
     smokes: ['smoke_svg_export.mjs', 'smoke_pdf_export.mjs'],
     because: '#1036: real format selection/download must retain PDF and produce the standalone View SVG; offline screenshot comparison and options/errors cannot be inferred from helper names.',

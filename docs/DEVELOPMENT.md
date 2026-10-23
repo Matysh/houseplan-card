@@ -3463,6 +3463,12 @@ SHA is the authority; these are sandbox numbers.
 
 ## Release
 
+`node demo/smoke_room_metrics_alignment.mjs` (#1039) checks live room captions
+and independently opened offline SVG downloads across projections, scales and
+roles. `HP_ROOM_ALIGNMENT_EVIDENCE_DIR` optionally keeps a private SVG/PNG pair.
+The live caption with an Area action intentionally keeps its composite centre;
+the exported name has no action and centres over its readings.
+
 The print/SVG export witness is `node demo/smoke_svg_export.mjs` (#1036), after
 `npm run bundle:sync`. Optional `HP_SVG_EVIDENCE_DIR` stores private SVG/PNG pairs
 and the mobile dialog. It uses the pinned browser, real controls/downloads and a

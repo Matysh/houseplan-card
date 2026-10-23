@@ -66,6 +66,9 @@ export function captureSvgView(source: SvgViewSource, options: SvgExportOptions)
       : node.shadowRoot ? node.shadowRoot.childNodes : node.childNodes;
     for (const child of children) { const next = clone(child); if (next) copy.appendChild(next); }
     pseudo('::after');
+    // The HA action is omitted, but the frozen row width still includes it.
+    // Centre the remaining name without changing the live caption or anchor.
+    if (node.matches('.rlname')) (copy as HTMLElement).style.justifyContent = 'center';
     return copy;
   };
 

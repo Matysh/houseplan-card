@@ -1737,6 +1737,7 @@
       "demo/smoke_room_fit.mjs",
       "demo/smoke_room_gear_drag.mjs",
       "demo/smoke_room_link.mjs",
+      "demo/smoke_room_metrics_alignment.mjs",
       "demo/smoke_room_opening_host.mjs",
       "demo/smoke_room_resize.mjs",
       "demo/smoke_room_save_retry_946.mjs",

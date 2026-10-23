@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Centre room names over their readings in downloaded SVG files after omitting
+  the Home Assistant Area link. Live captions with the link keep their existing
+  alignment and actions. (#1039)
+
 - Download an architectural PDF or an SVG of the current View from one print
   dialog. SVG keeps the displayed projection, colours and optional devices,
   with transparent, current or custom background; PDF printing and its browser
