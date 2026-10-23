@@ -116,6 +116,11 @@ The new decor_order and 13 critical contact/geometry/owner scripts are rerun
 against a fresh integrated bundle; the earlier 39-script evidence is not
 represented as a full post-rebase run of unrelated workflows. Final CI and
 execution results are linked in the canonical handoff.
+The post-rebase pre-push caught one further integration cost: root13219 lines
+versus reference13166 +50 (3 lines over). Under the owner's standing permission
+for small expensive-to-remove growth, its reference is explicitly13219 and
+the50-line band is unchanged, with the reason recorded in DEVELOPMENT.md and
+the issue. No product code is compressed or unrelated refactor introduced.
 
 ## smoke-select decision record
 

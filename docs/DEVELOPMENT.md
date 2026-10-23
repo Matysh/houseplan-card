@@ -37,6 +37,10 @@ Final rebase after #1035, on dev a5be21b84: View336197 B gzip, editor339023 B
 same2000-B band. Monolith dev5991/3374160 → integrated6038/3397461
 (hostRefs+47, raw+23301); the other four counters stay145/368/102/101.
 This combines both reviewed feature costs; no band or absolute wall is raised.
+The root is13219 lines,53 above reference13166 (3 beyond its50-line band).
+Under the same standing small-growth permission, core reference is13219;
+CORE_BAND remains50. This records host adoption/history integration, not a
+claim of decomposition or a reason to compress readable code for three lines.
 
 ## Service-check branch isolation (#1040)
 
