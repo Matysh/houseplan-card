@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 51, issue: 26. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 52, issue: 26. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -22,6 +22,7 @@
 | #1033 | [SPEC-REVIEW-1033-r1.md](SPEC-REVIEW-1033-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | К3 «ровно одна подходящая стена» противоречит | `wall_segment_model.py` `docs/CONFIG-COMPATIBILITY.md` |
 | #1033 | [SPEC-REVIEW-1033-r2.md](SPEC-REVIEW-1033-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | К6 защищает только «проём без носителя», но тот же код | `custom_components/houseplan/wall_segment_model.py` `src/wall-segment-model.ts` |
 | #1033 | [SPEC-REVIEW-1033-r3.md](SPEC-REVIEW-1033-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #1033 | [CODE-REVIEW-1033-r1.md](CODE-REVIEW-1033-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1032 | [CODE-REVIEW-1032-r1.md](CODE-REVIEW-1032-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1031 | [SPEC-REVIEW-1031-r1.md](SPEC-REVIEW-1031-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1031 | [CODE-REVIEW-1031-r1.md](CODE-REVIEW-1031-r1.md) | code · r1 | 🔴 красный | 1 | 0 | новый целевой smoke не проходит на материале ревью; заявленные «43 PASS» не воспроизвод… | `demo/smoke_zigbee_enable_refresh.mjs` `demo/smoke_zigbee_topology_job.mjs` `zigbee-topology-action.ts` `scripts/ci-registry-inventory.json` |
