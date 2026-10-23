@@ -121,7 +121,7 @@ try {
     await assertSelected(`creation.furniture.${i}`);
     check(`creation.furniture.${i}.kind`,(await state()).decor.at(-1).kind,'furniture');
   }
-  await page.evaluate(()=>{
+  await page.evaluate(async()=>{
     const c=window.__card,id='b'.repeat(64),url=`/api/houseplan/content/assets/_/${id}.svg`;
     const asset={asset_id:id,name:'selection.svg',mime:'image/svg+xml',width:100,height:50,bytes:100,url,used_by:[]};
     const content='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50"><rect width="100" height="50" fill="orange"/></svg>');
@@ -129,9 +129,10 @@ try {
     c.hass={...c.hass,callWS:async message=>{
       if(message.type==='houseplan/assets/list'||message.type==='houseplan/assets/resolve')return {assets:[asset]};
       if(message.type==='houseplan/content/sign')return {urls:Object.fromEntries(message.paths.map(p=>[p,p===url?content:p]))};
-      return call(message);
+      const result=await call(message);
+      return message.type==='houseplan/config/get'?{...result,decor_assets_api:1}:result;
     }};
-    c._haDecorAssetsApi=1;c.requestUpdate();
+    await window.__hpTest.setServerConfig(cfg=>cfg);
   });
   await settle();
   for(let i=0;i<2;i++) {
