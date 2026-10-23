@@ -70,7 +70,10 @@ const CAPS = {
   // the existing backup ownership integration adds 33 (12107 total).
   // The M1 scope fix adds no runtime lines; preserve CORE_BAND = 50.
   // #898, owner decision 2026-10-14: less than 10 % headroom -> +10 % (12131 -> 13345).
-  'src/houseplan-editor-runtime.ts': 11677,
+  // #1035 after #1033, owner standing permission for small expensive-to-remove
+  // overages: 11732 actual lines exceed the old cap + band by 5. The decor
+  // implementation lives in its own module; keep the 50-line band unchanged.
+  'src/houseplan-editor-runtime.ts': 11732,
 };
 
 /**

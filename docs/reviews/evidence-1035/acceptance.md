@@ -113,6 +113,10 @@ The author rebase kept the complete new dev baseline set, including #1033's
 backup-download frame and both LED frames; the four decor frames require another
 current-source capture/acceptance below. The previous full run was cancelled as
 superseded. Monolith baseline conflict uses upstream as prescribed by #698.
+The combined runtime measures 11732 lines, five above the old 11677 + 50 band.
+The owner's standing permission for minor costly-to-remove overages sets the
+explicit runtime cap to 11732; the 50-line band and rejection predicate stay
+unchanged. The feature implementation remains in dedicated modules.
 
 The first full Validate found an obsolete action-list comparison in
 `smoke_ui_polish_963_reference`: the immutable #963 prototype predates the two
