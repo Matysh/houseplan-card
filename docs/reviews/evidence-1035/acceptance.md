@@ -106,6 +106,14 @@ are unchanged. `npm run golden:accept -- --reviewed` in WSL Linux accepted exact
 those four IDs from the complete CI artifact: 216 images preserved, including
 both merged LED frames; 193 byte-identical environment witnesses (floor 10).
 
+The subsequent merge of #1033 advanced dev to
+`7b00292ec8caf58585fce8097ce4e4e41a9b8adb` while full Validate was running.
+Pre-model rebase refused the Golden index conflict without invoking a model.
+The author rebase kept the complete new dev baseline set, including #1033's
+backup-download frame and both LED frames; the four decor frames require another
+current-source capture/acceptance below. The previous full run was cancelled as
+superseded. Monolith baseline conflict uses upstream as prescribed by #698.
+
 The first full Validate found an obsolete action-list comparison in
 `smoke_ui_polish_963_reference`: the immutable #963 prototype predates the two
 intentional #1035 actions. The comparator retains exact ordered state/text/paint
