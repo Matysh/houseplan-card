@@ -28,6 +28,9 @@ export function materialIdentity(root = process.cwd()) {
   const recipeFiles = Object.fromEntries(recipe.map(path => [path, digestBytes(readFileSync(resolve(root, path)))]));
   return { sha: git(['rev-parse', 'HEAD']), tree: git(['rev-parse', 'HEAD^{tree}']),
     sourceFingerprint: sourceFingerprint(root), node: process.versions.node, mapRecipe: hashMapRecipe,
+    platform: process.platform, arch: process.arch, executable: process.execPath,
+    nodePath: process.env.NODE_PATH || null,
+    rollupVersion: JSON.parse(readFileSync(resolve(root, 'node_modules/rollup/package.json'), 'utf8')).version,
     recipeFiles, recipeHash: digestBytes(JSON.stringify(recipeFiles)) };
 }
 

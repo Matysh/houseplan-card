@@ -22,7 +22,13 @@ export function diagnosticCompleteness(inventory, invocations, index) {
 /** Preserve native V8 function/block semantics; source-map points are witnesses,
  * not guessed TS execution. Unmapped/generated spans stay unknown. */
 export function buildCoverageReport({ root = process.cwd(), artifactDir, inventory, invocations, index }) {
-  const rows = new Map(), issues = [], actualScripts = [], cache = new Map();
+  const rows = new Map(), issues = [], actualScripts = [], cache = new Map(), observedScripts = new Map(), staleSources = new Set();
+  for (const file of index.files) for (const source of file.sources.filter(source => source.product)) {
+    const path = resolve(root, source.path);
+    try { if (digestBytes(readFileSync(path)) !== source.contentHash) staleSources.add(source.path); }
+    catch { staleSources.add(source.path); }
+  }
+  for (const path of staleSources) issues.push({ reason: 'current-source-differs-from-captured-candidate', path });
   const read = path => { try { return json(path); } catch (error) {
     issues.push({ reason: 'unreadable-raw-payload', path, detail: String(error) }); return {};
   } };
@@ -40,6 +46,13 @@ export function buildCoverageReport({ root = process.cwd(), artifactDir, invento
   };
   const observe = (script, source, family, owner) => {
     const identity = identifyScript(index, { url: script.url, source });
+    const hash = identity.hash || (typeof source === 'string' ? digestBytes(source) : null);
+    const observedKey = `${family}:${script.url}:${identity.status}:${hash || ''}`;
+    if (!observedScripts.has(observedKey)) observedScripts.set(observedKey, {
+      family, url: script.url, status: identity.status, reason: identity.reason, actualSourceHash: hash, samples: 0, owners: [],
+    });
+    const observed = observedScripts.get(observedKey); observed.samples++;
+    if (observed.owners.length < 12 && !observed.owners.includes(owner)) observed.owners.push(owner);
     if (identity.status === 'external') return;
     if (identity.status !== 'verified') { issues.push({ ...identity, owner }); return; }
     actualScripts.push({ owner, family, url: script.url, path: identity.canonical, jsHash: identity.hash });
@@ -67,6 +80,7 @@ export function buildCoverageReport({ root = process.cwd(), artifactDir, invento
   };
   for (const invocation of invocations) {
     if (!invocation.directory) continue;
+    invocation.pages = []; invocation.browsers = [];
     const dir = resolve(artifactDir, invocation.directory), files = walkFiles(dir);
     const sources = new Map();
     for (const path of files.filter(p => /node-sources-.*\.json(?:\.gz)?$/.test(p))) {
@@ -76,6 +90,8 @@ export function buildCoverageReport({ root = process.cwd(), artifactDir, invento
     if (!recorders.length) invocation.issues.push({ reason: 'missing-recorder' });
     for (const meta of recorders) {
       invocation.issues.push(...(meta.issues || []));
+      invocation.pages.push(...(meta.pages || []).map(page => ({ ...page, pid: meta.pid, threadId: meta.threadId })));
+      invocation.browsers.push(...(meta.browsers || []));
       if (!meta.ended || meta.exitCode !== 0) invocation.issues.push({ reason: 'recorder-not-finalized', pid: meta.pid });
       for (const page of meta.pages || []) {
         if (!page.early || !page.saved || page.error || !page.raw?.length
@@ -118,7 +134,7 @@ export function buildCoverageReport({ root = process.cwd(), artifactDir, invento
     }
     for (const definition of definitions) {
       const { start, end, witnesses, ...location } = definition;
-      const field = family => witnesses.some(r => r[family] > 0) ? 'observed'
+      const field = family => staleSources.has(rel) ? 'unknown' : witnesses.some(r => r[family] > 0) ? 'observed'
         : completeness.complete && witnesses.some(r => r[family] === 0) ? 'zero-observed' : 'unknown';
       functions.push({ ...location, unit: field('unit'), smoke: field('smoke'), golden: field('golden') });
     }
@@ -128,7 +144,7 @@ export function buildCoverageReport({ root = process.cwd(), artifactDir, invento
       : row[family] === 0 && completeness.complete ? { status: 'zero-observed', maxCount: 0 } : { status: 'unknown' };
   }
   return { schema: COVERAGE_SCHEMA, authority: 'diagnostic-only', semanticApproval: false,
-    identity: index.identity, inventoryDigest: inventory.digest, completeness, actualScripts,
+    identity: index.identity, inventoryDigest: inventory.digest, completeness, actualScripts, observedScripts: [...observedScripts.values()],
     functions, nativeMappedRanges: observed, invocations,
     files: walkFiles(resolve(root, 'src')).filter(path => path.endsWith('.ts')).map(path => path.slice(resolve(root).length + 1).replaceAll('\\', '/')).map(path => ({ path,
       functions: functions.filter(f => f.path === path).length,

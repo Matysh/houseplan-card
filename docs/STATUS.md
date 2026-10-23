@@ -31,6 +31,8 @@ the complete computed unit/smoke/Golden diagnostic preserves actual source/map
 identity and marks missing/failed collection unknown. Its nightly artifact is
 isolated from ordinary proof and release verdicts. The first product cleanup
 is restricted to unused form-kit onOpacity after #1051 S8.
+Measured raw retention requires a 4-GiB diagnostic bound; interrupted or
+environment-invalid collections remain incomplete and separate from product PASS.
 
 Direct Zigbee LQI (#1029) uses passive Z2M and cached ZHA without enabling
 diagnostic entities. Its minimal household-readable feed is independent of

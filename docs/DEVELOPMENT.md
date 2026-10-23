@@ -12,6 +12,9 @@ compared and restored; the nightly read-only job uses its immutable intent SHA.
 The artifact has no gate/release/mutation authority. Recipe, limits, provenance,
 interpretation and the separately measured form-kit cleanup are documented in
 `docs/audits/parallel-paths-1018.md` and the issue handoff.
+Measured raw V8 retention required a bounded 4-GiB compressed artifact budget;
+the collector/job/upload limits are 105/135/15 minutes. Interrupted runs begin
+in incomplete state, and generated smoke captures under demo/out stay ignored.
 
 ## Direct Zigbee LQI #1029
 

@@ -45,9 +45,14 @@ node scripts/coverage-diagnostic.mjs --sha=<40-character-SHA> --out=artifacts/di
 ```
 
 The same command runs in a separate read-only nightly job on the nightly
-intent's pinned candidate, with 90-minute job/75-minute collection bounds,
+intent's pinned candidate, with 135-minute job/105-minute collection bounds
+(including preparation), a reserved 15-minute always-upload step,
 per-case timeouts, at most four units/two smokes/one Golden process and a
-512-MiB retained compressed-payload bound. Every current product unit, every
+4-GiB retained compressed-payload bound and one-day artifact retention. The first
+Windows run measured 364 MiB after about 420 of 980 cases, proving the initial
+512-MiB bound insufficient. That run is retained as incomplete; the full repeat
+uses pinned Linux/WSL Node, browser attestation and an isolated Rollup native
+runtime via NODE_PATH. Product thresholds remain unchanged. Every product unit, every
 demo/smoke_*.mjs and every Golden scenario/variant comes from the existing
 computed registries. Golden capture is a coverage input; it never accepts PNGs
 or updates baseline indexes. Existing performance thresholds remain unchanged.

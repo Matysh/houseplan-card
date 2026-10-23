@@ -43,14 +43,14 @@ if (process.env.HP_DIAGNOSTIC_COVERAGE === '1' && process.env.HP_COVERAGE_DIR) {
   await new Promise(resolveReady => session.post('Debugger.enable', error => {
     if (error) issue('node-debugger-unavailable', error.message); resolveReady();
   }));
-  const saveNode = () => {
+  const saveNode = (flush = true) => {
     // One current snapshot per isolate; native V8 samples retain their separate intervals.
     const name = resolve(dir, `node-sources-${suffix}.json`);
     const data = JSON.stringify({ schema: COVERAGE_SCHEMA, pid: process.pid, threadId, pendingSources, sources });
     if (Buffer.byteLength(data) <= MAX_BYTES) writeFileSync(name, data); else issue('node-source-capacity');
-    takeCoverage(); metadata();
+    if (flush) takeCoverage(); metadata();
   };
-  const heartbeat = setInterval(saveNode, 5000); heartbeat.unref();
+  const heartbeat = setInterval(saveNode, 30000); heartbeat.unref();
 
   const flushPage = async (page, final = true) => {
     const state = pages.get(page);
@@ -151,6 +151,8 @@ if (process.env.HP_DIAGNOSTIC_COVERAGE === '1' && process.env.HP_COVERAGE_DIR) {
       if (!info.early) meta.issues.push({ reason: 'page-start-not-proved-early', page: info.id });
     }
     if (pendingSources) meta.issues.push({ reason: 'unfinished-node-sources', count: pendingSources });
-    saveNode(); metadata(); session.disconnect();
+    // Native V8 writes its final interval after JS exit handlers; taking it
+    // here would also create a redundant all-zero automatic exit sample.
+    saveNode(false); metadata(); session.disconnect();
   });
 }

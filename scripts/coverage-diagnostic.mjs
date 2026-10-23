@@ -55,11 +55,13 @@ export async function diagnosticRun({ root = process.cwd(), sha, out = 'artifact
   mkdirSync(artifactDir, { recursive: true });
   const save = (name, value) => writeFileSync(inside(artifactDir, name), typeof value === 'string' ? value : JSON.stringify(value, null, 2));
   const state = { schema: COVERAGE_SCHEMA, authority: 'diagnostic-only', semanticApproval: false,
-    identity, pins: pinsFromSources(), inventory, invocations: [], builds: [], issues: [], started: Date.now() };
+    identity, pins: pinsFromSources(), inventory, invocations: [], builds: [], issues: [], started: Date.now(),
+    limits: { collectionMinutes: 105, compressedRawBytes: 4 * 1024 ** 3, unitConcurrency: 4, smokeConcurrency: 2, goldenConcurrency: 1 },
+    completeness: { complete: false, reasons: [{ reason: 'collection-in-progress-or-interrupted' }] } };
   save('run.json', state); save('inventory.json', inventory);
   const controller = new AbortController(), cancel = () => controller.abort();
   process.once('SIGINT', cancel); process.once('SIGTERM', cancel);
-  const totalTimer = setTimeout(cancel, 75 * 60 * 1000); totalTimer.unref();
+  const totalTimer = setTimeout(cancel, state.limits.collectionMinutes * 60 * 1000); totalTimer.unref();
   const env = { ...process.env, HP_DIAGNOSTIC_COVERAGE: '1' };
   const normal = { ...process.env }; delete normal.HP_DIAGNOSTIC_COVERAGE;
   let index = { identity, files: [], issues: [{ reason: 'build-not-complete' }] }, normalManifest;
@@ -96,7 +98,7 @@ export async function diagnosticRun({ root = process.cwd(), sha, out = 'artifact
     const preload = pathToFileURL(resolve(root, 'scripts/coverage-preload.mjs')).href;
     let compressedBytes = 0;
     const execute = async expected => {
-      if (controller.signal.aborted || compressedBytes > 512 * 1024 * 1024) {
+      if (controller.signal.aborted || compressedBytes >= state.limits.compressedRawBytes) {
         state.invocations.push({ ...expected, directory: '', status: 'skipped', issues: [{ reason: 'bounded-run-exhausted' }] }); return;
       }
       const number = inventory.cases.indexOf(expected), directory = resolve(artifactDir, 'cases', String(number).padStart(4, '0'));
@@ -124,7 +126,7 @@ export async function diagnosticRun({ root = process.cwd(), sha, out = 'artifact
         }
         const buffer = readFileSync(path), packed = gzipSync(buffer);
         const metadata = /recorder-/.test(path);
-        if (!metadata && compressedBytes + packed.length > 512 * 1024 * 1024) {
+        if (!metadata && compressedBytes + packed.length > state.limits.compressedRawBytes) {
           record.issues.push({ reason: 'artifact-capacity', path: slash(relative(artifactDir, path)) });
           controller.abort();
         } else { writeFileSync(`${path}.gz`, packed); if (!metadata) compressedBytes += packed.length; }

@@ -49,15 +49,28 @@ test('mapped V8 merger preserves family columns, actual retry identity, native b
   const report = buildCoverageReport({ root, artifactDir, inventory, invocations: invocation(), index });
   assert.equal(report.completeness.complete, true);
   assert.equal(report.functions[0].smoke, 'observed'); assert.equal(report.functions[0].unit, 'unknown');
+  assert.ok(report.observedScripts.some(s => s.status === 'verified' && s.family === 'smoke'));
+  assert.equal(report.invocations[0].pages.length, 1);
   assert.equal(report.nativeMappedRanges.find(r => r.kind === 'branch').smoke.status, 'zero-observed');
   const missing = { ...inventory, cases: [...inventory.cases, { id: 'missing' }] };
   const partial = buildCoverageReport({ root, artifactDir, inventory: missing, invocations: invocation(), index });
   assert.equal(partial.completeness.complete, false);
   assert.equal(partial.functions[0].smoke, 'observed');
   assert.equal(partial.nativeMappedRanges.find(r => r.kind === 'branch').smoke.status, 'unknown');
+  file('recorder-1-0.json', { ended: 1, exitCode: 0, issues: [], pages: [{ early: false, saved: false }] });
+  assert.equal(buildCoverageReport({ root, artifactDir, inventory, invocations: invocation(), index }).completeness.complete, false);
+  file('recorder-1-0.json', { ended: 1, exitCode: 0, issues: [], pages: [{ early: true, saved: true, raw: ['browser-1-0-1-1.json'] }] });
   raw.entries[0].source += '//foreign'; file('browser-1-0-1-1.json', raw);
   const foreign = buildCoverageReport({ root, artifactDir, inventory, invocations: invocation(), index });
   assert.equal(foreign.completeness.complete, false); assert.equal(foreign.functions[0].smoke, 'unknown');
+  raw.entries[0].source = text; file('browser-1-0-1-1.json', raw);
+  file('node-sources-101-2.json', { pid: 101, threadId: 2, sources: { 4: { source: text } } });
+  file('coverage-101-123-2.json', { result: [{ ...raw.entries[0], scriptId: '4' }] });
+  const node = buildCoverageReport({ root, artifactDir, inventory, invocations: invocation().map(c => ({ ...c, family: 'unit' })), index });
+  assert.equal(node.functions[0].unit, 'observed');
+  writeFileSync(resolve(root, 'src/probe.ts'), text + '// changed after capture');
+  const stale = buildCoverageReport({ root, artifactDir, inventory, invocations: invocation(), index });
+  assert.equal(stale.completeness.complete, false); assert.equal(stale.functions[0].smoke, 'unknown');
   writeFileSync(resolve(root, 'test-build/probe.js.map'), '{}');
   assert.equal(indexGeneratedFiles({ root, paths: ['test-build/probe.js'], identity: {} }).valid, false);
 });
@@ -95,7 +108,8 @@ test('nightly job uses exact immutable intent with read permissions and uncondit
   const workflow = YAML.parse(readFileSync('.github/workflows/_nightly.yml', 'utf8'));
   const job = workflow.jobs['diagnostic-coverage'];
   assert.equal(job['continue-on-error'], true);
-  assert.deepEqual(job.permissions, { contents: 'read' }); assert.ok(job['timeout-minutes'] <= 90);
+  assert.deepEqual(job.permissions, { contents: 'read' }); assert.ok(job['timeout-minutes'] <= 135);
+  assert.equal(job.steps.find(s => s.uses?.startsWith('actions/upload-artifact'))['timeout-minutes'], 15);
   assert.equal(job.steps.find(s => s.uses?.startsWith('actions/checkout')).with.ref, '${{ needs.dispatch.outputs.candidate }}');
   assert.equal(job.steps.find(s => s.uses?.startsWith('actions/upload-artifact')).if, 'always()');
   assert.match(job.steps.find(s => s.env?.CANDIDATE).run, /coverage-diagnostic\.mjs --sha=/);
@@ -122,4 +136,3 @@ test('#1018 AC3 fix-test-build composes extension insertions; normal import byte
   writeFileSync(path, input); patchImports(dir, { coverage: false });
   assert.equal(readFileSync(path, 'utf8'), mapped.code);
 });
-

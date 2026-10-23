@@ -8,6 +8,7 @@ __pycache__/
 .pytest_cache/
 .venv-backend/
 artifacts/
+demo/out/
 .agents/
 
 # UI Lab: optional private inputs, overrides, sessions and prepared runtimes.

@@ -70,7 +70,7 @@ jobs:
     needs: dispatch
     if: needs.dispatch.outputs.candidate != ''
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 135
     # Artifact completeness is visible in this job/report, and cannot fail the
     # existing full-Validate/ship continuation owned by the dispatch intent.
     continue-on-error: true
@@ -94,9 +94,10 @@ jobs:
         run: node scripts/coverage-diagnostic.mjs --sha="$CANDIDATE"
       - name: Preserve partial diagnostic even on failure
         if: always()
+        timeout-minutes: 15
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: diagnostic-coverage-${{ needs.dispatch.outputs.candidate }}-${{ github.run_attempt }}
           path: artifacts/diagnostic-coverage
           if-no-files-found: warn
-          retention-days: 7
+          retention-days: 1
