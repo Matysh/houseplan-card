@@ -321,6 +321,14 @@ test('#872 five isolated clients each cache four 100k routes without global fron
     computations, elapsedMs: +(performance.now()-started).toFixed(2)}));
 });
 
+test('#1049 changing a tail quota does not rescan the complete native geometry', () => {
+  const cache = new VacuumPathGeometryCache();
+  const raw = normalizeVacPath(Array.from({length:100000},(_,i)=>[i,i%2*100]));
+  for(let budget=20000;budget>19990;budget--) cache.resolve(raw,[1,0,0,0,1,0],1,budget);
+  assert.equal(cache.computations,1);
+  assert.equal(cache.resolve(raw,[1,0,0,0,1,0],1,19990).rawPoints,100000);
+});
+
 test('#872 SVG uses exact endpoint text and cached commands, not unconditional one decimal', () => {
   const cache = new VacuumPathGeometryCache();
   const raw = normalizeVacPath([[0.000123456789, 0], [1.23456789, 2.1234567]]);

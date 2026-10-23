@@ -101,6 +101,23 @@ test('#1048 retained native is distinguished from current data without changing 
   assert.equal(f.diagnose().receivedAt, 200);
 });
 
+test('#1049 hybrid/pending diagnostics keep native and observed counts separate in four languages', () => {
+  const f=fixture();Object.assign(f.run.quality,{source:'native',reason:'ok'});
+  f.run.live_tail={version:1,epoch:'one',paths:[[[90,0,1000],[110,0,2000],[110,10,3000]]],waiting:false,limited:false};
+  const shown=f.diagnose();
+  assert.equal(shown.display,'vac.trail_display_hybrid');assert.equal(shown.provisional,3);
+  assert.equal(shown.liveReceivedAt,3);assert.equal(shown.raw,12);assert.equal(shown.stored,12);
+  f.run.live_tail.waiting=true;
+  assert.equal(f.diagnose().display,'vac.trail_display_pending');
+  for(const lang of ['en','ru','de','fr']){
+    const template=renderVacuumPathDiagnostics({_t:key=>t(lang,key),_vacTrailDiagnostics:f.diagnose},f.device);
+    assert.ok(template.values.join(' ').includes(t(lang,'vac.trail_display_pending')));
+    for(const key of ['vac.diag_trail_live_points','vac.diag_trail_live_received'])assert.notEqual(t(lang,key),key);
+  }
+  f.device.marker.vacuum.trail_mode='never';
+  assert.equal(f.diagnose().display,'vac.trail_display_mode');assert.equal(f.diagnose().rendered,0);
+});
+
 test('#918 diagnostics count the actual shared current frame, including trim and roster quota', () => {
   const f = fixture();
   const args = { telemetry: f.runtimeSource.telemetry, server: f.run, local: [], serverFormat: 2,

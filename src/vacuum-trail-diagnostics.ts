@@ -7,15 +7,17 @@ import { vacTrailMode, type VacPath } from './vacuum';
 import { planVacuumOverlay, type VacuumRouteResolution } from './vacuum-routes';
 import { VAC_RENDER_POINT_BUDGET } from './vacuum-path-geometry';
 import { currentVacuumTrailFrame, selectVacuumTrail } from './vacuum-trail-material';
+import type { VacuumLivePending } from './vacuum-live-tail';
 
 export interface VacuumTrailDiagnostic {
   source: string; reason: string; raw: number; stored: number; rendered: number;
   receivedAt?: number; final: boolean; display: I18nKey;
+  provisional?: number; liveReceivedAt?: number;
 }
 type Host = Pick<HouseplanEditorHostPort, '_vacSrvTrails' | '_vacTrailFormat'
   | '_devices' | '_isVacDev' | '_vacRuntimeSource'
   | '_space' | '_vacGeometryCache' | '_cellCm' | '_gridPitch'> & {
-    readonly _vacRt: ReadonlyMap<string, { moving: boolean; material: VacPath }>;
+    readonly _vacRt: ReadonlyMap<string, { moving: boolean; material: VacPath; livePending?: VacuumLivePending }>;
   };
 
 function routeDisplayReason(resolution: VacuumRouteResolution, unavailable: boolean): I18nKey | null {
@@ -72,17 +74,22 @@ export function diagnoseVacuumTrails(host: Host): Map<string, VacuumTrailDiagnos
       rootSource: d.marker?.vacuum?.source ?? null, serverCurrent: server?.current ?? null,
       serverPrevious: server?.previous ?? null, explicitRoutes: Array.isArray(d.marker?.vacuum?.map_routes) });
     if (!plan.live) continue;
-    const { frame } = currentVacuumTrailFrame({ telemetry,
+    const { frame, provisional, liveReceivedAt, waiting } = currentVacuumTrailFrame({ telemetry,
       server: plan.currentRunMatches ? server?.current ?? null : null,
       local: host._vacRt.get(d.id)?.material ?? [], serverFormat: host._vacTrailFormat,
+      livePending: host._vacRt.get(d.id)?.livePending,
       moving, matrix: plan.live, cache: host._vacGeometryCache,
       cmPerUnit: host._cellCm / host._gridPitch, budget });
     budget -= frame.count;
     result.rendered = frame.count;
+    result.provisional = provisional;
+    result.liveReceivedAt = liveReceivedAt == null ? undefined : liveReceivedAt / 1000;
     if (frame.limited) result.reason = 'limited';
     const retained = result.source === 'native'
       && ['stale', 'coordinates_unverified', 'unsupported', 'run_unverified'].includes(result.reason);
-    result.display = frame.count > 0 ? retained ? 'vac.trail_display_retained' : 'vac.trail_display_visible'
+    result.display = waiting ? 'vac.trail_display_pending'
+        : frame.count > 0 && provisional ? 'vac.trail_display_hybrid'
+        : frame.count > 0 ? retained ? 'vac.trail_display_retained' : 'vac.trail_display_visible'
         : server?.current && !plan.currentRunMatches ? 'vac.trail_display_run'
         : frame.limited ? 'vac.path_limited'
         : result.reason === 'empty_integration' ? 'vac.path_empty_integration'

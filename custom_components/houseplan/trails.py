@@ -26,6 +26,7 @@ from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN
 from .vacuum_ecovacs_reader import EcovacsReader, automatic_ecovacs_source, ecovacs_pair
+from .vacuum_live_tail import acknowledge_live, append_live, ensure_live, observe_task
 from .vacuum_path_collector import PathCollector, PathContext
 from .vacuum_paths import (
     MAX_ENTRY_BYTES,
@@ -154,7 +155,11 @@ class TrailBook:
                         if quality.get("source") == "positions":
                             run["_position_paths"] = paths
                         else:
-                            run["_position_paths"] = normalize_paths(run.get("_position_paths", []))
+                            run["_position_paths"] = []
+                            live = ensure_live(run)
+                            live["gap"] = True
+                            if slot == "current":
+                                live["waiting"] = True
                         run["points"] = paths[-1] if paths else []
                     else:
                         run["points"] = paths[-1] if paths else []
@@ -204,6 +209,10 @@ class TrailBook:
                 if id(run) in self._opaque_sizes:
                     total += self._opaque_sizes[id(run)]
                     continue
+                # Constant upper bound, not a scan/copy of full native on each
+                # positional event. Includes private metric+timestamp columns.
+                if "_live_tail" in run:
+                    total += 512 * 140 + 4096
                 if run is replaced:
                     total += replacement_count * 2 * 54 + 4096
                     continue
@@ -297,11 +306,31 @@ class TrailBook:
             policy.update(pending=False, rebind=False)
         return cur, resumed
 
+    def begin_native_task(self, marker: str, now: float) -> bool:
+        """Consume an independently witnessed task boundary exactly once."""
+        record = self.data.get(marker) or {}
+        old = record.get("current")
+        if not isinstance(old, dict) or old.get("path_format") != 2 \
+                or (old.get("quality") or {}).get("source") != "native":
+            return False
+        old["ended"] = old.get("ended") or now
+        current = {key: old[key] for key in ("map_id", "route_id", "source", "provenance", "_native_identity")
+                   if key in old}
+        current.update(started=now, ended=None, path_format=2, paths=[], points=[],
+                       quality={"source": "native", "reason": "run_unverified", "raw_points": 0, "stored_points": 0},
+                       _generation=uuid.uuid4().hex, _awaiting_digest=old.get("_native_digest"),
+                       final_status="unconfirmed")
+        ensure_live(current)["waiting"] = True
+        ensure_live(current)["since"] = now * 1000
+        record.update(previous=old, current=current)
+        self._prune_counts()
+        return True
+
     def on_point(
         self, marker: str, map_id: str, x: float, y: float, now: float,
         route_id: str = "", source: str = "",
         gap: bool = False, physical_cm: tuple[float, float] | None = None,
-        *, legacy: bool = False,
+        *, legacy: bool = False, sample_ms: float | None = None,
     ) -> bool:
         if any(number(value) is None for value in (x, y, now)):
             self.mark_gap(marker)
@@ -315,6 +344,11 @@ class TrailBook:
             cur.update(path_format=2, paths=[cur.get("points", [])],
                        quality={"source": "positions", "reason": "sampled"},
                        _generation=uuid.uuid4().hex)
+        if cur["quality"]["source"] == "native":
+            since = number(ensure_live(cur).get("since"))
+            if since is not None and (sample_ms if sample_ms is not None else now * 1000) < since:
+                self.mark_gap(marker)
+                return resumed
         positions = cur.setdefault("_position_paths", cur["paths"] if cur["quality"]["source"] == "positions" else [])
         if physical_cm is not None and any(number(v) is None for v in physical_cm):
             physical_cm = None
@@ -335,6 +369,14 @@ class TrailBook:
         if physical_cm is not None:
             cur["_last_sample"] = [*physical_cm, now]
         gap |= bool(cur.pop("_gap_pending", False))
+        if cur["quality"]["source"] == "native":
+            if self._entry_bytes() + 512 * 140 + 4096 > MAX_ENTRY_BYTES:
+                live = ensure_live(cur)
+                changed = not live["limited"]
+                live["limited"] = True
+                return changed or resumed
+            return append_live(cur, x, y, sample_ms if sample_ms is not None else now * 1000,
+                               physical_cm, gap) or resumed
         if gap and positions and positions[-1]:
             if len(positions) >= MAX_SEGMENTS:
                 cur["quality"]["reason"] = "limited"
@@ -373,7 +415,7 @@ class TrailBook:
 
     def on_snapshot(self, marker: str, snap: PathSnapshot, now: float,
                     route_id: str, map_id: str, generation: str, proven: bool, *, legacy: bool = False,
-                    moving: bool | None = None) -> bool:
+                    moving: bool | None = None, endpoint_cm: tuple[float, float] | None = None) -> bool:
         """The exact provider owns its complete path, including explicit empty."""
         cur = (self.data.get(marker) or {}).get("current")
         if not isinstance(cur, dict) or cur.get("path_format") != 2 \
@@ -386,6 +428,8 @@ class TrailBook:
         schema = provenance.get("schema") if isinstance(provenance, dict) else None
         if not same_native_coordinates(prior, snap, schema):
             return self.path_reason(marker, "coordinates_unverified")
+        if snap.paths and cur.get("_awaiting_digest") and cur["_awaiting_digest"] == snap.digest:
+            return False  # cached geometry from the completed task is not new
         previous_revision = cur.get("_native_revision")
         job_changed = bool(snap.job_id and cur.get("_job_id") not in (None, snap.job_id))
         job_bound = bool(snap.job_id and cur.get("_job_id") != snap.job_id)
@@ -404,15 +448,18 @@ class TrailBook:
         elif snap.job_id:
             cur["_job_id"] = snap.job_id
         native_count = sum(len(p) for p in snap.paths)
+        live = ensure_live(cur)
+        was_waiting = live["waiting"]
         if cur.get("_native_digest") == snap.digest:
             reason = "ok" if snap.paths else "empty_integration"
-            changed = cur["quality"].get("reason") != reason \
+            changed = was_waiting or cur["quality"].get("reason") != reason \
                 or job_bound \
                 or cur["quality"].get("stored_points") != native_count \
                 or cur.get("_native_revision") != snap.revision \
                 or prior != list(identity) \
                 or (snap.final and cur.get("final_status") != "confirmed")
             if changed:
+                live["waiting"] = False
                 cur["quality"]["reason"] = reason
                 cur["quality"]["stored_points"] = native_count
                 cur["received_at"] = now
@@ -425,6 +472,9 @@ class TrailBook:
                 or self._entry_bytes(cur, native_count) > MAX_ENTRY_BYTES:
             return self.path_reason(marker, "limited")
         self._counts[id(snap.paths)] = (snap.paths, native_count)
+        cur.pop("_awaiting_digest", None)
+        live["waiting"] = False
+        acknowledge_live(cur, snap.paths[-1][-1] if snap.paths else None, endpoint_cm, snap.read_started_ms)
         # A proven full snapshot supersedes the sampled reserve; do not keep
         # a second unbounded copy of a now-complete run. The legacy projection
         # remains one contiguous native fragment, never flattened gaps.
@@ -905,6 +955,41 @@ class TrailRecorder:
                         self.book.mark_gap(marker)
                     continue
             changed |= self.book.observe_policy(marker, st_vac.state if st_vac else None, native and validity is True)
+            record = self.book.data.setdefault(marker, {})
+            current = record.get("current")
+            map_id = resolve_map_id(st_src.attributes if st_src else {}, st_vac.attributes if st_vac else {})
+            route_id = str(owner["id"]) if owner else self._route_id(marker, src, map_id)
+            definition = next((r for r in self.routes_by_marker.get(marker, []) if r["id"] == route_id), {})
+            activity_owner = (src, vac, map_id, route_id, repr(definition.get("calibration")),
+                              repr((self._spaces.get(definition.get("space")) or {}).get("cell_cm")))
+            verified = bool(st_vac and st_src and st_src.state not in ("unknown", "unavailable")
+                            and self._source_failure_reason(src) is None and route_id
+                            and getattr(entry, "platform", None) == "dreame_vacuum"
+                            and getattr(vac_entry, "platform", None) == "dreame_vacuum"
+                            and self.collector.has_camera_channel(src)
+                            and isinstance(current, dict) and current.get("path_format") == 2
+                            and (current.get("provenance") or {}).get("provider") == "dreame"
+                            and same_run_identity(current, route_id, map_id, src,
+                                                  legacy=marker not in self.explicit_route_markers))
+            activity_changed, boundary = observe_task(record, activity_owner, st_vac.state if st_vac else "",
+                                                      dict(st_vac.attributes) if st_vac else {}, now,
+                                                      verified=verified)
+            changed |= activity_changed
+            if boundary:
+                changed |= self.book.begin_native_task(marker, now)
+                current = record.get("current")
+            if isinstance(current, dict) and current.get("path_format") == 2 \
+                    and (current.get("quality") or {}).get("source") == "native":
+                if current.get("_live_owner") != list(activity_owner):
+                    old_live = ensure_live(current)
+                    waiting, since = old_live["waiting"], number(old_live.get("since"))
+                    current.pop("_live_tail", None)
+                    ensure_live(current)["waiting"] = waiting or bool(current.get("_awaiting_digest"))
+                    if since is not None:
+                        ensure_live(current)["since"] = since
+                    current["_live_owner"] = list(activity_owner)
+                    current["_gap_pending"] = True
+                    changed = True
             # "no state yet" is NOT "stopped": during HA boot the vacuum reads
             # unavailable and ending the run here would split one cleanup into
             # current+previous on every restart (observed live: 21 points
@@ -968,6 +1053,7 @@ class TrailRecorder:
                 source=src if route_id else "",
                 physical_cm=self._physical_point(marker, route_id, x, y),
                 legacy=marker not in self.explicit_route_markers,
+                sample_ms=int(st_src.last_updated.timestamp() * 1000) if st_src and hasattr(st_src, "last_updated") else None,
             )
         return changed
 
@@ -1074,7 +1160,9 @@ class TrailRecorder:
         changed = False
         for marker, route, generation in context.markers:
             changed |= self.book.on_snapshot(marker, snap, now, route, context.map_id, generation, proven,
-                                             legacy=marker not in self.explicit_route_markers, moving=context.moving)
+                                             legacy=marker not in self.explicit_route_markers, moving=context.moving,
+                                             endpoint_cm=self._physical_point(marker, route, *snap.paths[-1][-1])
+                                             if snap.paths else None)
             changed |= self.book.observe_policy(marker, None)
         if changed:
             self.collector.refresh(self._path_contexts())

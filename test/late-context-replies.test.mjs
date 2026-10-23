@@ -155,6 +155,7 @@ for (const mode of ['connection', 'aba', 'detach']) test(`#901 wiring: public HA
   context.observe(hass);
   const host = { hass, isConnected: true, _configWriteContext: context,
     _liveSyncConnection: null, _liveSyncGeneration: 0, _liveSyncAttempt: null,
+    _vacRt: new Map(),
     _vacSrvTrails: { fresh: { current: { points: [[1, 2]] } } }, _vacTrailFormat: 2,
     updates: 0, requestUpdate() { this.updates++; } };
   HouseplanCard.prototype._ensureLiveSyncSubscriptions.call(host);

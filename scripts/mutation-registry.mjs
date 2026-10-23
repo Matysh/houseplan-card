@@ -20859,7 +20859,36 @@ const UNIT_GUARD_OVERRIDES = new Map(UNIT_GUARD_GROUPS.flatMap(([guard, ids]) =>
   ids.map((id) => [id, guard])
 )));
 
-export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases].map((mutant) => ({
+const vacuumLive1049Cases = [
+  {id:'vacuum-live-prestart-position-relabelled-1049',
+    guard:'node scripts/backend-test-guard.mjs new_epoch_does_not_relabel tests_backend/test_vacuum_live_tail.py',
+    because:'#1049 AC4: a cached dock coordinate cannot be labelled as a fresh observation of the new cleanup.',
+    patches:[{file:'custom_components/houseplan/vacuum_live_tail.py',
+      find:'if finite(live.get("since")) and stamp < live["since"]:',replace:'if False:'}]},
+  {id:'vacuum-live-future-prefix-consumed-1049',
+    guard:'node scripts/backend-test-guard.mjs only_unique_covered_prefix tests_backend/test_vacuum_live_tail.py',
+    because:'#1049 AC2: a late native response cannot consume observations newer than its request-start watermark.',
+    patches:[{file:'custom_components/houseplan/vacuum_live_tail.py',
+      find:'sample[2] <= read_started and len(sample) == 5',replace:'len(sample) == 5'}]},
+  {id:'vacuum-live-ambiguous-prefix-consumed-1049',
+    guard:'node scripts/backend-test-guard.mjs ambiguous_revisit tests_backend/test_vacuum_live_tail.py',
+    because:'#1049 AC3: revisiting an endpoint does not prove which prefix the snapshot covered.',
+    patches:[{file:'custom_components/houseplan/vacuum_live_tail.py',find:'if len(candidates) != 1:',replace:'if not candidates:'}]},
+  {id:'vacuum-live-service-dock-arms-task-1049',
+    guard:'node scripts/backend-test-guard.mjs service_docking tests_backend/test_vacuum_live_tail.py',
+    because:'#1049 AC5: service washing and paused active jobs must not create a new task.',
+    patches:[{file:'custom_components/houseplan/vacuum_live_tail.py',
+      find:'terminal = state in ("docked", "idle") and attrs.get("started") is False',
+      replace:'terminal = state in ("docked", "idle")'}]},
+  {id:'vacuum-live-old-owner-joined-1049',guard:'node --test test/vacuum-live-tail.test.mjs',
+    because:'#1049 AC6: changing a calibration/source owner blocks the previous provisional epoch.',
+    patches:[{file:'src/vacuum-live-tail.ts',find:'const changedOwner = !!old && old.owner !== owner;',replace:'const changedOwner = false;'}]},
+  {id:'vacuum-live-cap-missing-1049',guard:'node --test test/vacuum-live-tail.test.mjs',
+    because:'#1049 AC8: additional position observations are bounded independently of complete native history.',
+    patches:[{file:'src/vacuum-live-tail.ts',find:'VAC_LIVE_POINTS = 512',replace:'VAC_LIVE_POINTS = 100000'}]},
+];
+
+export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

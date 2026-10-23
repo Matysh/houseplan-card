@@ -271,8 +271,10 @@ order; HA attributes never bypass a format-2 server. Source-first authority
 (#940, owner decision 2026-10-19) replaces the old local moving-reset proof:
 the first valid current native snapshot can be used when connecting mid-cleanup,
 without an invented job ID or observing the beginning of the path.
-An explicit valid empty is also a complete value: current paths/points, cached
-SVG and tip become empty, without substituting sampled positions. A retained
+An explicit valid empty is also a complete value: native paths/points and their
+cached SVG become empty. Old format-2 clients show no tip; #1049 capable clients
+may independently show fresh current observations, never resurrect old native.
+A retained
 separate previous run stays available in Always. Repeated empty values create
 no history slots. Even singleton → empty → singleton follows the provider;
 House Plan does not hide an actual empty response to prevent flicker.
@@ -305,8 +307,9 @@ most 2 cm after affine calibration. Reversals over 90° and endpoints survive.
 Smoothing uses the remaining 15.5 cm allowance; shortest-roundtrip SVG numbers
 add no unconditional decimal quantization. With an unverifiable physical
 transform no physical simplification/smoothing claim is made. Native full paths
-are neither target-trimmed nor connected synthetically to the puck. Only a
-continuous, non-limited sampled fragment may have the existing animated live tip.
+are never target-trimmed or connected directly to a remote puck. With the
+additive #1049 capability, an independently observed current tail may carry
+the animated tip; old format-2 servers retain the no-native-tip behavior.
 
 | Display mode | While moving | After movement stops |
 |---|---|---|
@@ -386,7 +389,50 @@ When an errored native value remains drawable, **Path display** explicitly says
 that the last accepted path is being shown and new data has not been accepted.
 Its reason, time and received/stored/drawn counts remain those of the actual
 retained geometry. Accepted current data restores the ordinary display status;
-explicit empty clears the current SVG/tip without reviving old points.
+explicit empty clears native geometry without reviving old points. A separate
+fresh positional tail is allowed by #1049, below.
+
+### Continuous provisional tail (#1049)
+
+`vacuum_live_tail.py` owns a separate 512-sample / 32-fragment window, never
+appended to native raw paths or their counts/provenance/finality. Its public
+`live_tail` version 1 contains only an opaque epoch, bounded `[x,y,HA-ms]`
+samples and waiting/limited flags; `trail/get` also advertises
+`live_tail_format:1` while retaining `trail_format:2`. Private physical samples,
+task proof, generation, source and job identifiers never escape the allowlist.
+
+A repeated native digest/frame does not clear this tail. A changed native value
+may consume only a uniquely matching endpoint in the bounded observed window,
+within 2 cm of calibrated coordinates and no newer than the physical read's
+start watermark. Ambiguous revisits or missing scale/watermark keep literal
+subpath gaps, never a guessed chord. Explicit empty clears only native; repeated
+empty and failed reads do not erase fresh positional observations. The renderer
+paints native and provisional in one opacity group, reserving tail quota first;
+the static tail lags the latest target while the existing RAF follows the actual
+animated puck. Full-native projection/simplification is cached independently
+of changing tail budgets. RAF neither rescans geometry nor reads the provider.
+
+For the pinned registered Dreame ordinary camera/robot only, an observed finished
+available dock/idle with typed `started:false` and all pause/wash/return-to-wash
+flags false arms a task proof. A subsequent moving `started:true` consumes it
+once, rotates previous and starts a fresh pending current. Active-task service
+docking does not arm it. Cached identical nonempty old native is withheld until
+changed geometry or explicit empty; late old-generation reads cannot restore it.
+This is a local witnessed boundary, not a vendor job ID. Without proof, a current
+provider value remains authoritative, including attach mid-cleanup. After a
+backend restart stored native is withheld until a current read; it is not erased
+from Store. Movement clears inherited retry backoff once, not the 10 s physical
+read minimum or shared lease. Later failures use normal backoff again.
+
+The shared reserve survives ordinary card reloads without browser writes or
+polls. Local pending observations supplement only the same HA user/connection,
+source/map/route/calibration and public epoch. Stop, unknown periods, context
+changes and teleports break chains. Native quotas remain unchanged; only the
+oldest provisional prefix may be dropped at its own bound, with `limited`.
+Diagnostics distinguish native counts/time from observed tail counts/time and
+explain hybrid/pending display in en/ru/de/fr. No config, model or Store-version
+migration is involved; unknown future runs remain untouched. See issue #1049
+for the explicit replacement of #940/#1048's blanket no-native-tip rule.
 
 ### Provider passports (#872)
 

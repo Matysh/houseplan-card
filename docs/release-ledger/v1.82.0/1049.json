@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "issue": 1049,
+  "baseStable": "v1.82.0",
+  "category": "major",
+  "rationale": "Adds a bounded shared provisional trail alongside exact integration geometry and a typed new-task boundary. Stable v1.82.0 did not have this hybrid behavior; native history, configuration and physical read rates remain unchanged.",
+  "summary": {
+    "ru": "Непрерывный живой хвост робота между снимками интеграции и свежий след при подтверждённом старте уборки.",
+    "en": "Continuous live robot tail between integration snapshots and a fresh trail at a proven cleanup start."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "2a00265ef00a121412b22fe06105ecb3e625506c84404d38d156585e9d6dce9b",
+    "golden": [
+      {"id": "vacuum-live-tail-turn-dark", "expectation": "new", "reason": "Native geometry and turning provisional tail form one styled current trail ending at the robot."},
+      {"id": "vacuum-live-tail-pending-dialog-dark", "expectation": "new", "reason": "Actual diagnostics distinguish waiting native data from fresh observed positions and their counts."}
+    ],
+    "smokes": ["smoke_vacuum_live_tail.mjs"]
+  }
+}

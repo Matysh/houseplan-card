@@ -2963,7 +2963,7 @@ async def ws_trail_get(hass: HomeAssistant, connection: websocket_api.ActiveConn
     """Current + previous runs and raw coordinates, without source entity ids."""
     rec = hass.data.get(DOMAIN, {}).get("trail_recorder")
     connection.send_result(
-        msg["id"], {"trail_format": 2, "trails": _public_trails(rec.book.data) if rec else {},
+        msg["id"], {"trail_format": 2, "live_tail_format": 1, "trails": _public_trails(rec.book.data) if rec else {},
                     "vacuum_source_format": 1, "vacuum_sources": rec.ecovacs.public() if rec else {}}
     )
 

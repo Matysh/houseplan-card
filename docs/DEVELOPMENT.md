@@ -4379,6 +4379,12 @@ only; no development mutation execution.
 
 ## Browser progress checks on task pushes (#983)
 
+For delayed vacuum paths (#1049), `node demo/smoke_vacuum_live_tail.mjs` is the
+focused animation/pixel witness (View/kiosk, Flat/2.5D); do not debug it through
+the whole smoke suite. Its new selected Golden scenes are
+`vacuum-live-tail-turn-dark` and `vacuum-live-tail-pending-dialog-dark`.
+Task pushes collect them without accepting global baselines.
+
 `task-ci-plan.mjs` uses the same bounded task plan for push, S7 and merge on
 ship/show/ask (#1044). It reads the complete task diff from its merge base with
 `origin/dev`, not merely the last push; range guards retain their separate

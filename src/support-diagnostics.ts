@@ -21,7 +21,7 @@ type Host = HouseplanEditorHostPort & {
 };
 type Row = Record<string, unknown>;
 interface VacuumFrame extends VacuumRuntimeSource {
-  runtime: { trail: VacPath; moving: boolean } | null;
+  runtime: { trail: VacPath; moving: boolean; livePending?: import('./vacuum-live-tail').VacuumLivePending } | null;
   server: VacuumServerBook[string] | null;
 }
 
@@ -164,13 +164,15 @@ export function collectSupportDiagnostics(host: Host): SupportDiagnosticInput {
   // paint. The shared #918 decision code must not borrow a newer run/position.
   const frames = new Map<string, VacuumFrame>();
   const frameRuns: VacuumServerBook = {};
-  const frameRuntime = new Map<string, { moving: boolean; material: VacPath }>();
+  const frameRuntime = new Map<string, { moving: boolean; material: VacPath;
+    livePending?: import('./vacuum-live-tail').VacuumLivePending }>();
   for (const d of devices) {
     const frame = snapshot?.facts.get(`vacuum:${d.id}`) as VacuumFrame | undefined;
     if (!frame || !host._isVacDev(d)) continue;
     frames.set(d.id, frame);
     if (frame.server) frameRuns[d.id] = frame.server;
-    if (frame.runtime) frameRuntime.set(d.id, { moving: frame.runtime.moving, material: frame.runtime.trail });
+    if (frame.runtime) frameRuntime.set(d.id, { moving: frame.runtime.moving, material: frame.runtime.trail,
+      livePending: frame.runtime.livePending });
   }
   const diagnostics = diagnoseVacuumTrails({ _devices: devices.filter(d => frames.has(d.id)), _vacSrvTrails: frameRuns,
     _vacRt: frameRuntime, _vacTrailFormat: host._vacTrailFormat, _isVacDev: d => host._isVacDev(d),

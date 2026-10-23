@@ -884,6 +884,16 @@ is the server/legacy authority and `vacuum-trail-render.ts` memoizes commands.
 diagnostics are a read-only projection in `vacuum-trail-diagnostics.ts`;
 their UI lives in lazy `editors/vacuum-path-diagnostics.ts`, not either monolith.
 Source health, map routing, path quality and final confirmation remain distinct.
+Hybrid trails (#1049) keep a bounded private shared window in
+`vacuum_live_tail.py`, with a closed additive public capability. The pure
+`vacuum-live-tail.ts` owns local pending observations and epoch/cursor fences;
+`currentVacuumTrailFrame` composes both parts under one quota/opacity owner.
+Native projection is cached independently of its changing remaining budget.
+Typed pinned Dreame activity consumes a separate persisted task proof once;
+request-start watermarks and unique calibrated endpoints acknowledge only an
+observed prefix. Neither transport metadata nor positional timestamps become
+vendor job IDs. Restart-pending raw native stays in Store, not on the plan until
+the first current read. No card write or additional physical poll is introduced.
 `vacuum-trail-style.ts` owns optional per-marker ink defaults and draft merging
 (#1002), independently of path arbitration. The owning marker dialog previews
 its current/previous/tip ink, and Save merges only touched appearance into the

@@ -170,23 +170,34 @@ export interface VacuumRenderGeometry {
 
 export class VacuumPathGeometryCache {
   private values = new WeakMap<object, Map<string, VacuumRenderGeometry>>();
+  private projections = new WeakMap<object, Map<string, { path: VacPath; rawPoints: number; reducedPoints: number }>>();
   computations = 0;
 
   resolve(raw: VacPath, matrix: Affine, cmPerUnit: number, budget: number): VacuumRenderGeometry {
     const key = `${matrix.join(',')}|${cmPerUnit}|${budget}`;
     const cached = this.values.get(raw)?.get(key);
     if (cached) return cached;
-    this.computations++;
     const matrixValid = matrix.length === 6 && matrix.every(Number.isFinite);
     const valid = matrixValid && Number.isFinite(cmPerUnit) && cmPerUnit > 0
       && Math.abs(matrix[0] * matrix[4] - matrix[1] * matrix[3]) > 1e-12;
-    const calibrated: VacPath = matrixValid ? raw.map((segment) => segment.map(([x, y]): Pt => [
-      matrix[0] * x + matrix[1] * y + matrix[2], matrix[3] * x + matrix[4] * y + matrix[5],
-    ])).filter((segment) => segment.every((point) => point.every(Number.isFinite))) : [];
-    const rawPoints = raw.reduce((sum, segment) => sum + segment.length, 0);
-    const reduced = valid ? calibrated.map((p) => simplifyOrderedPath(p, VAC_SIMPLIFY_CM / cmPerUnit)) : calibrated;
+    const projectionKey = `${matrix.join(',')}|${cmPerUnit}`;
+    let projection = this.projections.get(raw)?.get(projectionKey);
+    if (!projection) {
+      this.computations++;
+      const calibrated: VacPath = matrixValid ? raw.map((segment) => segment.map(([x, y]): Pt => [
+        matrix[0] * x + matrix[1] * y + matrix[2], matrix[3] * x + matrix[4] * y + matrix[5],
+      ])).filter((segment) => segment.every((point) => point.every(Number.isFinite))) : [];
+      const path = freezeVacuumPath(valid ? calibrated.map((p) => simplifyOrderedPath(p, VAC_SIMPLIFY_CM / cmPerUnit)) : calibrated);
+      projection = { rawPoints: raw.reduce((sum, segment) => sum + segment.length, 0),
+        path, reducedPoints: path.reduce((sum, segment) => sum + segment.length, 0) };
+      const projections = this.projections.get(raw) ?? new Map();
+      if (projections.size >= 4) projections.delete(projections.keys().next().value!);
+      projections.set(projectionKey, projection);
+      this.projections.set(raw, projections);
+    }
+    const { path: reduced, rawPoints } = projection;
     const capacity = Number.isFinite(budget) ? Math.max(0, Math.floor(budget)) : 0;
-    const limited = reduced.reduce((sum, p) => sum + p.length, 0) > capacity;
+    const limited = projection.reducedPoints > capacity;
     // Reserve one point for the real latest endpoint, isolated from the prefix.
     // A zero remaining scene quota can only report limited in diagnostics.
     let available = Math.max(0, capacity - (limited ? 1 : 0));

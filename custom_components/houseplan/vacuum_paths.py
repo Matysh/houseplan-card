@@ -4,8 +4,10 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
+
+from custom_components.houseplan.vacuum_live_tail import project_live
 
 MAX_POINTS = 100_000
 MAX_SEGMENTS = 1024
@@ -115,6 +117,7 @@ class PathSnapshot:
     digest: str
     job_id: str | None = None
     final: bool = False
+    read_started_ms: float | None = field(default=None, compare=False)
 
 
 def snapshot(provider: str, schema: str, paths: Path, map_key: str,
@@ -245,6 +248,12 @@ def public_trails(value: Any) -> dict[str, Any]:
             if isinstance(run.get("path_format"), bool) or run.get("path_format", 1) not in (1, 2):
                 continue
             exposed = {key: item for key, item in run.items() if key in PUBLIC_RUN_KEYS}
+            live = project_live(run.get("_live_tail"))
+            if live is not None:
+                exposed["live_tail"] = live
+                if slot == "current" and live["waiting"]:
+                    # Old clients also must not display stored native as fresh.
+                    exposed.update(paths=[], points=[])
             for key, allowed in (
                 ("quality", {"source", "reason", "raw_points", "stored_points", "rendered_points"}),
                 ("provenance", {"provider", "schema", "coordinate_space"}),

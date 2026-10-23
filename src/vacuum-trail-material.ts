@@ -1,6 +1,8 @@
 import { normalizeVacPath, resolveCurrentVacPath, trimVacPathTarget, type Affine, type VacPath } from './vacuum';
 import { ownVacuumPathInput, vacuumPathLimited, type VacuumPathGeometryCache } from './vacuum-path-geometry';
 import { vacuumTrailSvg, type VacuumSvgFrame } from './vacuum-trail-render';
+import { liveLast, ownVacuumLiveTail, vacuumLiveGeometry, type VacuumLiveTail, type VacuumLivePending } from './vacuum-live-tail';
+import { freezeVacuumPath } from './vacuum-path-geometry';
 
 export interface VacuumServerRun {
   points?: unknown;
@@ -12,6 +14,7 @@ export interface VacuumServerRun {
   route_id?: string;
   map_id?: string;
   revision?: string;
+  live_tail?: VacuumLiveTail;
 }
 export type VacuumServerBook = Record<string, { current?: VacuumServerRun; previous?: VacuumServerRun }>;
 
@@ -26,7 +29,8 @@ export function vacuumTrailMaterial(raw: unknown): VacuumServerBook {
       if (!run || typeof run !== 'object' || Array.isArray(run)) continue;
       const value = run as VacuumServerRun;
       if (value.path_format != null && value.path_format !== 1 && value.path_format !== 2) continue;
-      record[key] = { ...value, points: ownVacuumPathInput(value.points), paths: ownVacuumPathInput(value.paths) };
+      record[key] = { ...value, points: ownVacuumPathInput(value.points), paths: ownVacuumPathInput(value.paths),
+        live_tail: ownVacuumLiveTail(value.live_tail) };
     }
     book[id] = record;
   }
@@ -36,7 +40,7 @@ export function vacuumTrailMaterial(raw: unknown): VacuumServerBook {
 export function selectVacuumTrail(
   telemetry: { path?: unknown } | null, server: VacuumServerRun | null,
   local: unknown, serverFormat: number,
-): { path: VacPath; native: boolean; allowTip: boolean; reason: string; source: string } {
+): { path: VacPath; native: boolean; allowTip: boolean; reason: string; source: string; hybrid?: boolean } {
   if (serverFormat >= 2) {
     const path = normalizeVacPath(server?.paths);
     const fragments = server?.paths;
@@ -62,14 +66,33 @@ export function currentVacuumTrailFrame(input: {
   telemetry: { path?: unknown } | null;
   server: VacuumServerRun | null;
   local: unknown;
+  livePending?: VacuumLivePending;
   serverFormat: number;
   moving: boolean;
   matrix: Affine;
   cache: VacuumPathGeometryCache;
   cmPerUnit: number;
   budget: number;
-}): { current: ReturnType<typeof selectVacuumTrail>; path: VacPath; frame: VacuumSvgFrame } {
+}): { current: ReturnType<typeof selectVacuumTrail>; path: VacPath; frame: VacuumSvgFrame;
+  provisional?: number; liveReceivedAt?: number; waiting?: boolean } {
   const current = selectVacuumTrail(input.telemetry, input.server, input.local, input.serverFormat);
+  const live = input.server?.live_tail;
+  if (input.serverFormat >= 2 && current.native && live) {
+    const fresh = vacuumLiveGeometry(live, input.livePending);
+    const end = liveLast(liveLast(fresh.path));
+    const target = (input.telemetry as { pos?: { x: number; y: number } } | null)?.pos;
+    const tip = input.moving && !!end && !!target && end[0] === target.x && end[1] === target.y
+      && (liveLast(fresh.path)?.length ?? 0) >= 2 && input.budget >= 2;
+    const path = tip ? freezeVacuumPath(fresh.path.map((p, i) => i === fresh.path.length - 1 ? p.slice(0, -1) : p)) : fresh.path;
+    const tail = vacuumTrailSvg(input.cache, path, input.matrix, input.cmPerUnit, Math.max(0, input.budget - (tip ? 1 : 0)));
+    const count = tail.count + (tip && !tail.limited ? 1 : 0);
+    const native = vacuumTrailSvg(input.cache, live.waiting ? [] : current.path, input.matrix, input.cmPerUnit,
+      Math.max(0, input.budget - count));
+    return { current: { ...current, hybrid: true, allowTip: tip && !tail.limited }, path: path.length ? path : current.path,
+      frame: { d: `${native.d} ${tail.d}`.trim(), count: native.count + count,
+        rawPoints: native.rawPoints + fresh.count, limited: native.limited || tail.limited || fresh.limited },
+      provisional: fresh.count, liveReceivedAt: fresh.receivedAt, waiting: live.waiting };
+  }
   const path = input.moving && !current.native && current.allowTip && current.source !== 'local'
     ? trimVacPathTarget(current.path) : current.path;
   const frame = vacuumTrailSvg(input.cache, path, input.matrix, input.cmPerUnit, input.budget);

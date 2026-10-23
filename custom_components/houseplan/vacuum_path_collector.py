@@ -4,7 +4,7 @@ from __future__ import annotations
 import asyncio
 import time
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 from homeassistant.core import HomeAssistant, callback
@@ -165,6 +165,12 @@ class PathCollector:
             lease.pending = False
             return
         if context.moving:
+            if not previous.moving:
+                # A new movement gets its first read without yesterday's
+                # retry delay; the physical camera lease still enforces 10 s.
+                lease.failure_count = 0
+                lease.next_retry = 0
+                lease.pending = True
             lease.finals.clear()
             lease.stop_at = None
         elif previous.moving and not identity_changed:
@@ -253,9 +259,11 @@ class PathCollector:
 
         async def perform() -> PathSnapshot:
             if attribute_path is not None:
-                return await self.hass.async_add_executor_job(
+                started_ms = time.time() * 1000
+                value = await self.hass.async_add_executor_job(
                     attribute_snapshot, attribute_path, context.map_id,
                 )
+                return replace(value, read_started_ms=started_ms)
             physical = self.physical.setdefault(context.source, _PhysicalRead())
             async with physical.lock:
                 # If an owner was cancelled externally, drain its physical
@@ -277,6 +285,7 @@ class PathCollector:
                 async def physical_read() -> Any:
                     return await self.read_camera(context.source)
                 physical.started = self.clock()
+                started_ms = time.time() * 1000
                 physical.task = self.hass.async_create_background_task(physical_read(), "houseplan vacuum camera read")
                 owned = physical.task
                 try:
@@ -284,7 +293,8 @@ class PathCollector:
                 finally:
                     if owned.done() and physical.task is owned:
                         physical.task = None
-            return await self.hass.async_add_executor_job(dreame_snapshot, payload)
+            value = await self.hass.async_add_executor_job(dreame_snapshot, payload)
+            return replace(value, read_started_ms=started_ms)
 
         task = self.hass.async_create_background_task(perform(), "houseplan vacuum native path")
         lease.task = task

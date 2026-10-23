@@ -9,6 +9,7 @@ import pytest
 from pure_imports import HOUSEPLAN_ROOT, load_pure
 
 paths = load_pure("hp_vacuum_paths", HOUSEPLAN_ROOT / "vacuum_paths.py")
+live = load_pure("hp_vacuum_live", HOUSEPLAN_ROOT / "vacuum_live_tail.py")
 # TrailBook берётся без импорта: из trails.py читается текст и исполняется срез
 # до класса TrailRecorder — только он тянет Home Assistant. Ни sys.path, ни
 # sys.modules при этом не трогаются намеренно (#393): правка импорт-машины
@@ -21,6 +22,7 @@ ns = {"Any": object, "annotations": None, "math": math, "uuid": uuid, "json": js
       "PathSnapshot": paths.PathSnapshot, "number": paths.number,
       "same_native_coordinates": paths.same_native_coordinates,
       "is_current_dreame_snapshot": paths.is_current_dreame_snapshot,
+      "ensure_live": live.ensure_live, "append_live": live.append_live, "acknowledge_live": live.acknowledge_live,
       "normalize_paths": paths.normalize_paths, "PathRejected": paths.PathRejected}
 exec(src[src.index("TRAIL_CAP"):src.index("class TrailRecorder")], ns)
 TrailBook = ns["TrailBook"]
@@ -134,7 +136,11 @@ def test_940_native_empty_is_persistent_and_full_replacements_do_not_archive_ver
         assert paths.public_trails(book.data)["robot"]["current"]["paths"] == raw
         assert "previous" not in book.data["robot"]
         restored = TrailBook(copy.deepcopy(book.data))
-        assert paths.public_trails(restored.data)["robot"]["current"]["paths"] == raw
+    assert paths.public_trails(restored.data)["robot"]["current"]["paths"] == []  # pending current read after restart
+    assert restored.data["robot"]["current"]["paths"] == raw  # native Store is not erased
+    cur = restored.data["robot"]["current"]
+    restored.on_snapshot("robot", snap, 100, "route", "floor", cur["_generation"], True)
+    assert paths.public_trails(restored.data)["robot"]["current"]["paths"] == raw
 
 
 def test_940_rebinding_cancels_proof_and_native_authority_of_the_old_robot():

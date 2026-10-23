@@ -950,6 +950,7 @@ export function prepareGoldenFixture(scenario) {
         vacuum_position: { x: 850, y: 760, a: 0 },
         path: { path: structuredClone(scenario.vacuumTrail.current) },
       },
+      ...(scenario.vacuumLive ? {last_updated:new Date(3000).toISOString()} : {}),
     };
     fixture.layout[deviceId] = { s: scenario.space, x: 0.12, y: 0.84 };
     fixture.config.markers = [...(fixture.config.markers || []), {
@@ -1074,6 +1075,11 @@ export async function prepareGoldenScenario(page, scenario) {
               map_id: 'golden-trail', started: 2, ended: null, path_format: 2,
               paths: structuredClone(scenario.vacuumTrail.current),
               quality: { source: 'native', reason: scenario.vacuumRetained ? 'coordinates_unverified' : 'ok' },
+              ...(scenario.vacuumLive ? {live_tail:{version:1,epoch:'golden-current-task',
+                waiting:!!scenario.vacuumPending,limited:false,
+                paths:[[[520,420,1000],[850,420,2000],[850,760,3000]]]},
+                quality:{source:'native',reason:scenario.vacuumPending?'run_unverified':'ok',
+                  raw_points:scenario.vacuumPending?0:4,stored_points:scenario.vacuumPending?0:4}} : {}),
               ...(scenario.vacuumRetained ? { received_at: 100 } : {}), final_status: 'unconfirmed',
             },
             previous: {
@@ -1987,11 +1993,21 @@ export async function prepareGoldenScenario(page, scenario) {
       card._openMarkerDialog(device);
       await card.updateComplete;
       const settings = card.renderRoot.querySelector('hp-dialog');
-      const target = scenario.vacuumRetained ? 'vacuum' : scenario.deviceStateSource ? 'appearance' : scenario.deviceLightControls ? 'light' : scenario.deviceToggleEntity ? 'actions' : 'basics';
+      const target = scenario.vacuumRetained || scenario.vacuumLive ? 'vacuum' : scenario.deviceStateSource ? 'appearance' : scenario.deviceLightControls ? 'light' : scenario.deviceToggleEntity ? 'actions' : 'basics';
       const navigation = settings?.querySelector(`[data-section-target="${target}"]`);
       if (!navigation) throw new Error(`golden device settings section missing: ${target}`);
       navigation.click();
       await card.updateComplete;
+      if (scenario.vacuumPending) {
+        const details=settings.querySelector('.hpf-profile-diagnostics');
+        details?.querySelector('summary')?.click();
+        await card.updateComplete;
+        const info=card._vacTrailDiagnostics(device),body=settings.shadowRoot?.querySelector('.content');
+        if (!body || !details?.open || info.display!=='vac.trail_display_pending' || info.provisional!==3)
+          throw new Error('golden pending native/live diagnostics are not shown');
+        body.scrollTop += details.getBoundingClientRect().top-body.getBoundingClientRect().top-12;
+        await frame();
+      }
       if (scenario.vacuumRetained) {
         const details = settings.querySelector('.hpf-profile-diagnostics');
         details?.querySelector('summary')?.click();
@@ -2408,7 +2424,14 @@ export async function prepareGoldenScenario(page, scenario) {
         throw new Error(`golden day-cycle contract did not render: ${scenario.id}`);
       }
     }
-    if (scenario.vacuumTrail) {
+    if (scenario.vacuumLive) {
+      await until(()=>!!card.renderRoot.querySelector('.vactrail .hybrid path.core'));
+      const device=card._devices.find(item=>item.id==='golden-vacuum-trail');
+      const info=card._vacTrailDiagnostics(device);
+      if(info.provisional!==3 || !(info.rendered>0)
+        || !card.renderRoot.querySelector('.vactrail .hybrid line.tip'))
+        throw new Error(`golden live-tail contract is incomplete: ${scenario.id}`);
+    } else if (scenario.vacuumTrail) {
       await until(() => !!card.renderRoot.querySelector('.vactrail > path.core'));
       const currentCore = card.renderRoot.querySelector('.vactrail > path.core');
       const previousCore = card.renderRoot.querySelector('.vactrail .prev path.core');

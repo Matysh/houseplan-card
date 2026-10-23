@@ -7,6 +7,18 @@ from pure_imports import HOUSEPLAN_ROOT, load_pure
 codec = load_pure("hp_vacuum_paths_872", HOUSEPLAN_ROOT / "vacuum_paths.py")
 
 
+def test_live_tail_projection_never_exposes_private_metric_or_task_fields():
+    run = {"path_format": 2, "paths": [[[1, 2]]], "points": [[1, 2]],
+           "_live_tail": {"version": 1, "epoch": "public-opaque", "waiting": True,
+                          "paths": [[[1, 2, 3000, 40, 50]]], "source": "secret", "job": "secret"},
+           "_task_activity": {"owner": ["secret"], "armed": True}, "_awaiting_digest": "secret"}
+    public = codec.public_trails({"m": {"current": run}})["m"]["current"]
+    assert public["paths"] == [] and public["points"] == []
+    assert public["live_tail"]["paths"] == [[[1, 2, 3000]]]
+    assert "secret" not in json.dumps(public)
+    assert run["paths"] == [[[1, 2]]], "read projection must not destroy stored native"
+
+
 def test_dreame_ordinary_chunks_keep_type_boundaries_and_raw_units():
     value = codec.dreame_snapshot(json.dumps({
         "version": 2, "map_id": 12, "frame_id": 8, "path": [

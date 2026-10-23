@@ -589,6 +589,15 @@ Source-first empty updates expose empty paths/points and a bounded
 the previous current from server geometry. Support/relay allowlists add only
 the public boolean and reason; matching relay deployment precedes HACS release.
 
+#1049 adds private bounded activity/pending/provisional fields to known Store-v1
+runs, not plan JSON/ZIP or config/model versions. `trail_format:2` is unchanged;
+`live_tail_format:1` and optional closed per-run `live_tail` are additive. Old
+clients ignore the new tail; new clients without the capability keep the prior
+format-2 behavior. Native raw data is retained across downgrade; the temporary
+tail may be lost by an old writer. Restart/new-task pending native is projected
+as empty paths/points even to old clients until a current read, never silently
+deleted from Store. Unknown future whole-run formats are not rewritten.
+
 ## Stable wall identity — model v8 (#282)
 
 #845 aligns the existing browser/server materialization contract, without a

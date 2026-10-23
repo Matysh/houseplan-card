@@ -23,6 +23,16 @@ test('#1048 retained-path diagnostics get a distinct dialog scene, not a changed
   assert.notEqual(ordinary.vacuumRetained, true);
 });
 
+test('#1049 selected goldens exercise the live plan and actual pending diagnostic dialog',()=>{
+  const plan=GOLDEN_SCENARIOS.find(s=>s.id==='vacuum-live-tail-turn-dark');
+  const dialog=GOLDEN_SCENARIOS.find(s=>s.id==='vacuum-live-tail-pending-dialog-dark');
+  assert.equal(plan.vacuumLive,true);assert.equal(plan.capture,'stage');
+  assert.equal(dialog.vacuumPending,true);assert.equal(dialog.dialog,'device');
+  assert.equal(dialog.deviceId,'golden-vacuum-trail');assert.deepEqual(dialog.vacuumTrail.current,[]);
+  const fixture=prepareGoldenFixture(dialog);
+  assert.ok(fixture.states['camera.golden_vacuum_trail_map'].last_updated);
+});
+
 test('golden matrix has stable unique ids and bounded comparison thresholds', () => {
   assert.equal(Number.isInteger(GOLDEN_MATRIX_VERSION) && GOLDEN_MATRIX_VERSION > 0, true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.id)).size, GOLDEN_SCENARIOS.length);
@@ -473,7 +483,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 81);
+  assert.equal(GOLDEN_MATRIX_VERSION, 82);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -967,7 +977,7 @@ test('issue 570 Stage 4 reuses the historical iso goldens for visual handoff cov
 
 test('#673 Stage 6 designer acceptance scenes are canonical golden entries', () => {
   const ids = STAGE6_ACCEPTANCE_SCENARIOS.map((scenario) => scenario.id);
-  assert.equal(GOLDEN_MATRIX_VERSION, 81);
+  assert.equal(GOLDEN_MATRIX_VERSION, 82);
   assert.deepEqual(ids, [
     'isometric-stage6-light-lightfloor',
     'isometric-stage6-light-darkfloor',

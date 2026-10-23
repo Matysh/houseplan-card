@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 81;
+export const GOLDEN_MATRIX_VERSION = 82;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -530,6 +530,14 @@ export const GOLDEN_SCENARIOS = Object.freeze([
       previous: [[160, 760], [300, 650], [420, 740], [560, 600]],
     },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  ...[false, true].map(pending => ({
+    id: pending ? 'vacuum-live-tail-pending-dialog-dark' : 'vacuum-live-tail-turn-dark',
+    fixture: 'visual', space: 'golden-geometry', mode: 'view', language: 'en', vacuumLive: true,
+    vacuumPending: pending,
+    ...(pending ? {dialog:'device',deviceId:'golden-vacuum-trail'} : {}),
+    vacuumTrail: {current: pending ? [] : [[[180,220],[360,220],[360,420],[520,420]]], previous:[]},
+    theme:'dark',viewport:{width:1200,height:1000},...(pending ? page : stage),
+  })),
   { id: 'vacuum-retained-path-diagnostics-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     dialog: 'device', deviceId: 'golden-vacuum-trail', vacuumRetained: true, language: 'en',
     vacuumTrail: {

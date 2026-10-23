@@ -50,7 +50,8 @@ export interface RenderSnapshotHost {
   _virtualLights: VirtualLightSnapshot;
   _activityRt: ReadonlyMap<string, PresentationActivityRuntime>;
   _reducedMotion: boolean;
-  _vacRt: ReadonlyMap<string, { material: unknown; lastTs: number; moving: boolean; jump: boolean }>;
+  _vacRt: ReadonlyMap<string, { material: unknown; lastTs: number; moving: boolean; jump: boolean;
+    livePending?: import('./vacuum-live-tail').VacuumLivePending }>;
   _vacSrvTrails: Record<string, unknown>;
   _isVacDev(device: DevItem): boolean;
   _vacRuntimeSource(device: DevItem, planHass: any): VacuumRuntimeSource; // any-ok: card projection
@@ -195,6 +196,7 @@ export function captureRenderDeviceSnapshot(
           lastTs: runtime.lastTs,
           moving: runtime.moving,
           jump: runtime.jump,
+          livePending: runtime.livePending,
         } : null,
         server: host._vacSrvTrails[device.id] || null,
       });

@@ -108,6 +108,7 @@ import { resolveVacuumRuntimeSource, type VacuumRuntimeSource } from './vacuum-r
 import { syncVacuumTips } from './vacuum-view';
 import { VacuumPathGeometryCache, VAC_RENDER_POINT_BUDGET } from './vacuum-path-geometry';
 import { recordLocalVacuumPosition, type LocalVacuumPath } from './vacuum-local-trail';
+import { recordVacuumLivePosition, type VacuumLivePending } from './vacuum-live-tail';
 import { currentVacuumTrailFrame, vacuumTrailMaterial, type VacuumServerBook } from './vacuum-trail-material';
 import { vacuumTrailSvg, type VacuumSvgFrame } from './vacuum-trail-render';
 import { diagnoseVacuumTrail, type VacuumTrailDiagnostic } from './vacuum-trail-diagnostics';
@@ -2320,7 +2321,7 @@ export class HouseplanCard extends LitElement {
   /** live-vacuum runtime per marker: RAW robot coords (matrix applied at render) */
   private _vacRt = new Map<string, LocalVacuumPath & {
     lastKey: string; lastTs: number; moving: boolean; jump: boolean; gap: boolean;
-    mapKey: string; endedTs: number; lastPos: VacPt | null }>();
+    mapKey: string; endedTs: number; lastPos: VacPt | null; livePending?: VacuumLivePending }>();
   /** view signature of the previous vacuum render: a changed view (zoom, pan,
       space switch) or a tab return must TELEPORT the puck — animating left/top
       through a viewport change reads as «едет через весь план» (owner). */
@@ -2802,6 +2803,9 @@ export class HouseplanCard extends LitElement {
   }
 
   public disconnectedCallback(): void {
+    for (const runtime of this._vacRt.values()) {
+      if (runtime.livePending) { runtime.gap = true; runtime.livePending.gap = true; }
+    }
     this._kioskCarousel.dispose();
     for (const type of ['pointerdown', 'wheel', 'keydown']) this.removeEventListener(
       type, this._kioskInteraction, true,
@@ -4576,6 +4580,9 @@ export class HouseplanCard extends LitElement {
     const connection = this.hass?.connection;
     if (!connection) return;
     if (connection !== this._liveSyncConnection) {
+      for (const runtime of this._vacRt.values()) {
+        if (runtime.livePending) { delete runtime.livePending; runtime.gap = true; }
+      }
       this._unsubCfg?.();
       this._unsubCfg = null;
       this._unsubLayout?.();
@@ -11495,9 +11502,9 @@ export class HouseplanCard extends LitElement {
     const response = packet as { trails?: unknown; trail_format?: number } | null;
     this._vacSrvTrails = vacuumTrailMaterial(response?.trails);
     this._vacTrailFormat = response?.trail_format === 2 ? 2 : 1;
-    const imageRobots = adoptEcovacsSources(this, packet, context);
+    adoptEcovacsSources(this, packet, context);
     this._planHassMemo = null;
-    if (imageRobots.size) this._vacTick(imageRobots);
+    this._vacTick();
     this.requestUpdate();
   }
 
@@ -11708,7 +11715,11 @@ export class HouseplanCard extends LitElement {
   private _vacTick(robots?: ReadonlySet<string>): void {
     if (!this.hass) return;
     for (const d of this._displayDevices) {
-      if (d.hidden || !this._isVacDev(d)) continue;
+      if (d.hidden || !this._isVacDev(d)) {
+        const pending = this._vacRt.get(d.id)?.livePending;
+        if (pending) pending.gap = true;
+        continue;
+      }
       if (robots && !robots.has(this._vacEntity(d) || '')) continue;
       if (displayIsNeutral(normalizeDeviceDisplay(d.marker?.display))) {
         this._vacRt.delete(d.id);
@@ -11727,10 +11738,12 @@ export class HouseplanCard extends LitElement {
       }
       if (!vacuumState || vacuumState === 'unknown' || vacuumState === 'unavailable') {
         rt.gap = true;
+        if (rt.livePending) rt.livePending.gap = true;
         continue;
       }
       if (!src) {
         rt.gap = true;
+        if (rt.livePending) rt.livePending.gap = true;
         if (!moving && rt.moving) rt.endedTs = Date.now();
         rt.moving = moving;
         continue;
@@ -11753,6 +11766,7 @@ export class HouseplanCard extends LitElement {
       }
       rt.moving = moving;
       const pos = tele?.pos;
+      const liveGap = rt.gap;
       if (moving && pos) {
         const key = pos.x + ':' + pos.y;
         if (key !== rt.lastKey) {
@@ -11774,6 +11788,16 @@ export class HouseplanCard extends LitElement {
           rt.lastPos = [pos.x, pos.y];
         }
       }
+      const live = this._vacSrvTrails[d.id]?.current?.live_tail;
+      const route = selected.resolution.kind === 'ready' ? selected.resolution.route : null;
+      const matrix = route?.calibration;
+      const physical = pos && matrix && matrix.every(Number.isFinite)
+        ? applyAffine(matrix, pos.x, pos.y).map(v => v * this._cellCm / this._gridPitch) as VacPt : undefined;
+      const owner = JSON.stringify([src, vacEnt, selected.mapId, route?.id, matrix, this._cellCm,
+        this._liveSyncGeneration, this.hass.user?.id]);
+      rt.livePending = recordVacuumLivePosition(rt.livePending, live, owner,
+        moving && pos ? [pos.x, pos.y] : null, Date.parse(this.hass.states[src]?.last_updated ?? ''),
+        liveGap || rt.jump, physical);
     }
   }
 
@@ -11939,21 +11963,24 @@ export class HouseplanCard extends LitElement {
       if (showCur && matrix) {
         const { current, path: raw, frame } = currentVacuumTrailFrame({ telemetry: tele, server: srvCur,
           local: rt?.material ?? rt?.trail ?? [], serverFormat: this._vacTrailFormat, moving, matrix,
+          livePending: rt?.livePending,
           cache: this._vacGeometryCache, cmPerUnit: this._cellCm / this._gridPitch, budget: trailBudget });
         if (raw.length) {
           trailBudget -= frame.count;
           const pathD = frame.d;
           // A single SVG path with several M commands keeps gaps literal.
-          if (pathD) trails.push(svg`<path data-hp="vacuum-trail-segment" data-entity=${this._vacEntity(d)} data-kind="current" data-vacuum-owner=${d.id} style=${trailStyle} class="core" d="${pathD}"></path>`);
+          const pieces: unknown[] = [];
+          if (pathD) pieces.push(svg`<path data-hp="vacuum-trail-segment" data-entity=${this._vacEntity(d)} data-kind="current" data-vacuum-owner=${d.id} style=${trailStyle} class="core" d="${pathD}"></path>`);
           const last = raw[raw.length - 1];
-          if (moving && current.allowTip && !current.native && !frame.limited && last?.length >= 2) {
+          if (moving && current.allowTip && (!current.native || current.hybrid) && (!frame.limited || current.hybrid) && last?.length >= (current.hybrid ? 1 : 2)) {
             hasTips = true;
             const anchor = last[last.length - 1];
             const [ax, ay] = applyAffine(matrix, anchor[0], anchor[1]);
             const point = [ax, ay];
             const a1 = point[0].toFixed(1), a2 = point[1].toFixed(1);
-            trails.push(svg`<line data-hp="vacuum-trail-segment" data-entity=${this._vacEntity(d)} data-kind="tip" data-vacuum-owner=${d.id} style=${trailStyle} class="core tip" data-mid="${d.id}" x1="${a1}" y1="${a2}" x2="${a1}" y2="${a2}"></line>`);
+            pieces.push(svg`<line data-hp="vacuum-trail-segment" data-entity=${this._vacEntity(d)} data-kind="tip" data-vacuum-owner=${d.id} style=${trailStyle} class="core tip" data-mid="${d.id}" x1="${a1}" y1="${a2}" x2="${a1}" y2="${a2}"></line>`);
           }
+          trails.push(current.hybrid ? svg`<g class="hybrid" style=${trailStyle}>${pieces}</g>` : svg`${pieces}`);
         }
       }
       if (!moving || !tele?.pos || !matrix) continue;

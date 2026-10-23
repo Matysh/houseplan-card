@@ -639,6 +639,8 @@ export const devicesStyles = css`
       stroke-opacity: var(--hp-vacuum-trail-opacity);
       stroke-width: 0.9;
     }
+    .vactrail g.hybrid { opacity: var(--hp-vacuum-trail-opacity); }
+    .vactrail g.hybrid .core { stroke-opacity: 1; }
     .devicepreview-empty {
       min-height: 82px;
       margin: 4px 0 14px;
