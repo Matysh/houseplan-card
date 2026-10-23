@@ -96,6 +96,16 @@ the decor frames must be recaptured/accepted from the combined current source
 through the same reviewed command before the final full Validate. No composite
 index or copied candidate hashes were written by hand.
 
+Final combined-source acceptance: [CI 39929979196](https://github.com/Matysh/houseplan-card/actions/runs/39929979196),
+source `fb979670721fca738b4cd300558ff74ba156b7f3`, fingerprint
+`03fc4536c5d6a1e84970c80ac7088b622080ad969d0d8a28de581b9172053087`,
+matrix 80 / Chromium 151.0.7922.34 / Linux x64. All four current baseline/candidate
+pairs listed above were visually inspected again. Properties, both order actions
+and Delete fit inside the selected-object surfaces; the colour dialogs themselves
+are unchanged. `npm run golden:accept -- --reviewed` in WSL Linux accepted exactly
+those four IDs from the complete CI artifact: 216 images preserved, including
+both merged LED frames; 193 byte-identical environment witnesses (floor 10).
+
 The first full Validate found an obsolete action-list comparison in
 `smoke_ui_polish_963_reference`: the immutable #963 prototype predates the two
 intentional #1035 actions. The comparator retains exact ordered state/text/paint
