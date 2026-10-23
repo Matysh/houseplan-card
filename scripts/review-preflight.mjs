@@ -9,7 +9,8 @@ import { issueBodyDigest } from './review-doc-guard.mjs';
 import { readMergeEntry } from './release-ledger.mjs';
 import { validateCommitMessage } from './validate-commit-provenance.mjs';
 import { moveStatusLabel } from './status-label.mjs';
-import { labelTrack } from './process-track.mjs';
+import { labelTrack, parseNumstat } from './process-track.mjs';
+import { sourceReplacementWarnings } from './source-replacement.mjs';
 import { HANDOFF_FIELDS, handoffDigest, handoffSnapshot, parseHandoff, selectHandoff, validHandoffProvenance } from './review-handoff.mjs';
 
 export const PREFLIGHT_SCHEMA = 'houseplan-review-preflight/v2';
@@ -110,7 +111,8 @@ export function checkReviewInput(input, { ledgerReader = readMergeEntry, readObj
       catch { error('handoff.link', 'Missing material artifact: ' + match[1]); }
     }
   }
-  return { schema: PREFLIGHT_SCHEMA, ok: errors.length === 0, semanticApproval: false,
+  const warnings = input.stage === 'code' ? sourceReplacementWarnings(input.commits, input.handoff) : [];
+  return { schema: PREFLIGHT_SCHEMA, ok: errors.length === 0, semanticApproval: false, warnings,
     identity: { issue: input.issue, stage: input.stage, track: input.track,
       infrastructure: input.infrastructure, sha: input.sha, tree: input.tree, bodyDigest: digest,
       handoff: input.stage === 'code' ? input.handoffProvenance ?? null : null }, errors };
@@ -126,6 +128,7 @@ export function collectReviewInput(options, { git, api }) {
   const commits = options.stage === 'code' ? git(['rev-list', '--no-merges', base + '..' + currentSha])
     .split('\n').filter(Boolean).map((sha) => ({ sha,
       message: git(['show', '-s', '--format=%B', sha]),
+      sourceFiles: parseNumstat(git(['show', '--no-renames', '--numstat', '--format=', sha])),
       files: git(['diff-tree', '--no-commit-id', '--name-only', '-r', sha]).split('\n').filter(Boolean),
       deletedFiles: git(['diff-tree', '--no-commit-id', '--name-only', '--diff-filter=D', '-r', sha]).split('\n').filter(Boolean) })) : [];
   const pages = options.stage === 'code' ? api('repos/' + options.repo + '/issues/' + options.issue + '/comments', true) : [];
@@ -194,6 +197,7 @@ if (isMainModule(import.meta.url)) {
         'repos/' + options.repo + '/issues/' + options.issue + '/comments', '--input', '-'],
       { input: JSON.stringify({ body }), encoding: 'utf8' }),
     });
+    for (const warning of result.warnings) console.warn('Предупреждение: ' + warning);
     console.log(JSON.stringify(result));
     process.exitCode = result.ok ? 0 : 1;
   } catch (error) {

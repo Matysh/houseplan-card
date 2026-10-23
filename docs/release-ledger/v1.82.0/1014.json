@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1014,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Require removal or an explicit retained-path explanation when replacing code, add advisory source-growth hints and reproducible source churn metrics without changing product code, gate verdicts, tracks or ship limits."
+}

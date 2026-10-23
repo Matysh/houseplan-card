@@ -30,6 +30,8 @@ import {
 } from './process-track.mjs';
 import { CALL_CONTEXT_LINES, selectSmokes } from './smoke-select.mjs';
 import { roleEntry } from './entry-cost.mjs';
+import { parseSourceCommitLog, sourceReplacementWarnings } from './source-replacement.mjs';
+import { selectHandoff } from './review-handoff.mjs';
 
 export const STATUS_LABELS = ['S1-new', 'S2-analysis', 'S3-spec', 'S4-spec-review', 'S5-ready', 'S6-in-progress', 'S7-code-review', 'S8-merged'];
 
@@ -392,6 +394,7 @@ export function buildPacket(inputs) {
     risk,
     checks: requiredChecks({ risk: risk.computed ? risk : null, changedFiles, smokes: branch?.smokes ?? null, labels }),
     changelog: branch ? changelogState({ commits: branch.commits || [], changedFiles, risk: risk.computed ? risk : null }) : null,
+    sourceReplacementWarnings: sourceReplacementWarnings(branch?.commits || [], branch?.handoff || ''),
     verdict,
     acceptance: acs,
     unverified: unverified.map((a) => a.id),
@@ -443,6 +446,7 @@ export function renderPacket(p) {
   for (const d of p.decisions) L.push(`- ${d.at?.slice(0, 16) || ''} — ${d.head}${d.url ? ` (${d.url})` : ''}`);
   L.push('');
   L.push('## Материал');
+  for (const warning of p.sourceReplacementWarnings || []) L.push(`- Предупреждение: ${warning}`);
   if (!p.material) L.push('- ветки issue/NN-* на origin нет — материал не запушен');
   else {
     const m = p.material;
@@ -521,8 +525,11 @@ export function collectInputs({ number, repo = 'Matysh/houseplan-card', cwd = pr
     // #707: риск по изменённым участкам, смоки и трейлеры — по тому же диффу от
     // merge-base, что судит конвейер на S7.
     const diff = sh('git', ['-c', 'core.quotePath=false', 'diff', '--unified=0', '-M', '--no-color', '--no-ext-diff', '--no-textconv', `${base}..${ref}`], { cwd });
-    const commits = sh('git', ['log', '--format=%B%x1e', `${base}..${ref}`], { cwd })
-      .split('\x1e').map((message) => message.trim()).filter(Boolean).map((message) => ({ message }));
+    const commits = parseSourceCommitLog(sh('git', ['log', '--no-renames', '--numstat',
+      '--format=%x1e%H%x1f%cI%x1f%B%x1f', `${base}..${ref}`], { cwd }))
+      .map(commit => ({ ...commit, message: commit.body }));
+    const handoff = selectHandoff(JSON.parse(sh('gh', ['api', '--paginate', '--slurp',
+      `repos/${repo}/issues/${number}/comments?per_page=100`]))).body;
     const merge = behind > 0 ? readMergeState({ cwd, onto: 'origin/dev', ref }) : { clean: true, conflicts: [] };
     let smokes = null;
     try {
@@ -549,7 +556,7 @@ export function collectInputs({ number, repo = 'Matysh/houseplan-card', cwd = pr
     }
     branch = {
       name, tip, base, ahead, behind, treeWithoutReviews, infrastructure,
-      changedFiles, diff, commits, smokes, mergeClean: merge.clean, conflicts: merge.conflicts,
+      changedFiles, diff, commits, handoff, smokes, mergeClean: merge.clean, conflicts: merge.conflicts,
     };
   }
   // #729: SPEC-REVIEW — отдельный вход `specDocs` из ветки на origin и из

@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5174 · pure backend 622 · HA-harness backend 516 · browser smokes 422 (`npm run inventory`) |
+| Tests | Node unit 5179 · pure backend 622 · HA-harness backend 516 · browser smokes 422 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -30,6 +30,11 @@ bounded shared observed-position window. A witnessed pinned Dreame task start
 withholds cached old current geometry; service docking does not rotate jobs.
 Native raw counts/finality and provisional diagnostics remain separate. The
 new capability is additive; no config/model/Store-version migration or new poll.
+
+Source replacement (#1014): replacements remove the old path in the same
+commit, or the handoff names its location, reason and removal issue. Source
+growth above 3× deletions produces advice only; review judges the explanation.
+Weekly metrics and the stable line-review brief share Git source churn counts.
 
 Dreame native recovery (#1048) accepts the current ordinary-camera full path
 across compatible transport map/frame resets, without clearing history or

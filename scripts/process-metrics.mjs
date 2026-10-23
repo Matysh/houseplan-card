@@ -38,7 +38,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { isMainModule } from './spawn-portable.mjs';
 import { classify } from './change-classes.mjs';
-import { labelTrack, parseNumstat } from './process-track.mjs';
+import { labelTrack } from './process-track.mjs';
 import { issueTrailers } from './release-membership.mjs';
 import { USAGE_KEYS, lastUsageIn } from './model-usage.mjs';
 import { lastModelDetailsIn, formatModelDetails, modelSummary } from './model-usage-details.mjs';
@@ -46,7 +46,8 @@ import { ANCHOR_MARKER, verdictDeclaration } from './review-doc-guard.mjs';
 import { SHIP_REVIEW_ANCHOR, parseAnchorBlock } from './ship-review.mjs';
 import { PIPELINE_EVENTS } from './wait-verdict.mjs';
 import { OUTCOME_SIGNS, outcomeOf } from './merge-candidate.mjs';
-import { committedBundleMustMatch, isReleaseMessage } from './bundle-policy.mjs';
+import { isBetaCommit, parseSourceCommitLog, renderSourceGrowth, sourceGrowthMetrics } from './source-replacement.mjs';
+export { BETA_DERIVED_SUBJECT, isBetaCommit } from './source-replacement.mjs';
 
 export const STATUS_LABELS = ['S1-new', 'S2-analysis', 'S3-spec', 'S4-spec-review', 'S5-ready', 'S6-in-progress', 'S7-code-review', 'S8-merged'];
 const PROCESS_RUN = /^process #(\d+) · (S4-spec-review|S7-code-review)(?: ·|$)/;
@@ -559,10 +560,7 @@ export function tokenDocs(reviewDocs = [], { added = null, since, until } = {}) 
 
 /** `git log --format=%x1e%H%x1f%cI%x1f%B%x1f --numstat` → коммиты с трейлерами и строками. */
 export function parseGitLog(text = '') {
-  return String(text).split('\x1e').filter((record) => record.trim()).map((record) => {
-    const [sha, date, body = '', numstat = ''] = record.split('\x1f');
-    return { sha: sha.trim(), date: date?.trim() || null, body, issues: issueTrailers(body), files: parseNumstat(numstat) };
-  }).filter((commit) => /^[0-9a-f]{7,64}$/.test(commit.sha));
+  return parseSourceCommitLog(text).map(commit => ({ ...commit, issues: issueTrailers(commit.body) }));
 }
 
 /** Коммиты `ref` с `since` (дата коммиттера) — с `--numstat`, без переименований. */
@@ -576,26 +574,6 @@ export function readCommits(git, { ref = 'origin/dev', since } = {}) {
 const countsToVolume = (path) => ['A', 'B'].includes(classify(path));
 /** Файл задачи для признака инфраструктуры (#752): A, B, C, кроме документов ревью — их пишет конвейер. */
 const isTaskFile = (path) => ['A', 'B', 'C'].includes(classify(path)) && !String(path).startsWith('docs/reviews/');
-
-/**
- * Подпись коммита бота `beta-derived` (#697). Константы у конвейера нет —
- * сообщение собирает `_beta-derived.yml`; копию держит контрактный тест.
- */
-export const BETA_DERIVED_SUBJECT = /^docs: accept derived artifacts on dev for v\d/;
-
-/**
- * Коммит беты, а не задачи (#752): он несёт трейлеры всех задач линии.
- * Кандидат беты или релиза — трейлер `Release:` и подпись кандидата либо
- * изменённый бандл (`committedBundleMustMatch`: с #657 бандл меняет только
- * кандидат); коммит бота `beta-derived` — по подписи. Прочий коммит с
- * `Release:` (приёмка эталонов, перепривязка тестов к бете) — коммит задачи.
- */
-export function isBetaCommit(commit) {
-  const body = String(commit?.body ?? '');
-  const subject = body.split('\n', 1)[0];
-  if (BETA_DERIVED_SUBJECT.test(subject)) return true;
-  return isReleaseMessage(body) && committedBundleMustMatch({ subject, files: (commit?.files || []).map((file) => file.path) });
-}
 
 /**
  * Изменения задачи по коммитам с трейлером `Issue: #NN`, кроме коммитов беты
@@ -977,6 +955,8 @@ export function buildReport({
   const dist = (values) => values.reduce((acc, value) => (acc[value] = (acc[value] || 0) + 1, acc), {});
   return {
     since, until,
+    sourceGrowth: sourceGrowthMetrics(commits.filter(commit => !isBetaCommit(commit)
+      && at(commit.date) >= at(since) && at(commit.date) <= at(until))),
     issues: {
       closed: perIssue.length,
       completed: completed.length,
@@ -1090,6 +1070,7 @@ export function renderMarkdown(report) {
     for (const { source, ...d } of report.modelObservations) lines.push(`- ${source}: ${modelSummary(formatModelDetails(d))}`);
   }
   if (report.compare) renderCompare(lines, report.compare);
+  if (report.sourceGrowth) lines.push('', renderSourceGrowth(report.sourceGrowth));
   return `${lines.join('\n')}\n`;
 }
 
@@ -1369,6 +1350,20 @@ export function fetchSnapshot({ repo, since, until, gh = ghJson, git = null, com
 
 if (isMainModule(import.meta.url)) {
   const arg = (name, fallback) => process.argv.find((a) => a.startsWith(`--${name}=`))?.slice(name.length + 3) ?? fallback;
+  const sourceRange = arg('source-range');
+  if (sourceRange) {
+    if (!/^[\w./-]+\.\.[\w./-]+$/u.test(sourceRange) || sourceRange.split('..').some(ref => ref.startsWith('-'))) {
+      console.error('source-range requires base..candidate Git refs'); process.exit(2);
+    }
+    const git = args => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
+    for (const ref of sourceRange.split('..')) git(['rev-parse', '--verify', '--end-of-options', ref + '^{commit}']);
+    const metrics = sourceGrowthMetrics(readCommits(git, { ref: sourceRange }).filter(commit => !isBetaCommit(commit)));
+    const markdown = renderSourceGrowth(metrics, sourceRange);
+    for (const [path, text] of [[arg('output'), markdown], [arg('json'), JSON.stringify({ range: sourceRange, ...metrics }, null, 2) + '\n']]) {
+      if (path) { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, text); }
+    }
+    process.stdout.write(markdown); process.exit(0);
+  }
   const repo = arg('repo', process.env.GITHUB_REPOSITORY);
   const compare = { cutover: arg('compare', TRACKS_CUTOVER), days: Number(arg('compare-days', String(COMPARE_DAYS))) };
   if (!repo || !Number.isFinite(at(compare.cutover)) || !(compare.days > 0)) {
