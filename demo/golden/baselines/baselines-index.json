@@ -1,29 +1,27 @@
 {
   "schema": 3,
   "matrixVersion": 80,
-  "acceptedAt": "2026-10-23T07:53:58.579Z",
-  "sourceFingerprint": "e21a61bbb81ebe8f05c20427728b42b53dbe46bcbf4a483b8d4c89d8f23c8717",
+  "acceptedAt": "2026-10-23T08:46:30.856Z",
+  "sourceFingerprint": "2421937ca9864a50793854fb6af04bb5ce8b13acd5556dcf2b38fb869719113c",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
-  "acceptedOn": "win32",
+  "acceptedOn": "linux",
   "capture": {
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "e21a61bbb81ebe8f05c20427728b42b53dbe46bcbf4a483b8d4c89d8f23c8717",
+    "buildFingerprint": "2421937ca9864a50793854fb6af04bb5ce8b13acd5556dcf2b38fb869719113c",
     "ci": {
       "repository": "Matysh/houseplan-card",
-      "run": 39919670818,
+      "run": 39925838271,
       "attempt": 1,
-      "sha": "d66bc06f7349be122366b038cf8130058ee88a6b"
+      "sha": "69e539106bd8913e00b1a291e08b435393b11f72"
     }
   },
   "localAttestation": null,
-  "foreignCapture": {
-    "reason": "Acceptance on Windows only: copy reviewed original Linux CI PNG bytes from run 39919670818; no Windows capture is accepted. 195 unchanged byte-identical witnesses verify the capture environment."
-  },
+  "foreignCapture": null,
   "witnesses": {
-    "count": 193,
+    "count": 196,
     "floor": 10
   },
   "scenarios": {
@@ -225,7 +223,7 @@
     "device-ripple-color-popover-mobile-ru": "97a520829aebb31dba153790dc05be512edf30f2e4cd80157112085448dc7dd2",
     "space-room-color-popover-desktop-ru": "975f4c4c6cfd9f4ad452e6b1948c433594226ffc7c76f8336627f64a3b230682",
     "backup-full-preview-desktop-en": "dd28e0a460fdc232b36470c6bab1f6267ccaae0316f8ef1e1f2cde985616bee0",
-    "backup-plan-only-export-desktop-en": "1987c01ec3af2d282e7de6505fb35bc5784ec45bc2df5eed786305bd6d371bd4",
+    "backup-plan-only-export-desktop-en": "3f6940468d145620f4eab6a3636c8ca4b09b57c246aaacaeba5d4703628d61a1",
     "backup-space-preview-mobile-ru": "5fe0037ab7c98d260ca132aa097bc79405c753a7adc318c9746e94229b8904a3",
     "optimize-preflight-dialog-dark-en": "a861e076abee60b631ce60f3fb7bd427ae2b041211c0aa769ed6f2515eab0722",
     "optimize-preflight-dialog-light-ru": "a67b254397aa4ad47a26348c2365176348d09a91e6054b7ad03e87834337ba06",
