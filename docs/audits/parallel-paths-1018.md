@@ -52,7 +52,10 @@ per-case timeouts, at most four units/two smokes/one Golden process and a
 Windows run measured 364 MiB after about 420 of 980 cases, proving the initial
 512-MiB bound insufficient. That run is retained as incomplete; the full repeat
 uses pinned Linux/WSL Node, browser attestation and an isolated Rollup native
-runtime via NODE_PATH. Product thresholds remain unchanged. Every product unit, every
+runtime via NODE_PATH. Product thresholds remain unchanged. The diagnostic
+smoke timeout is read from the canonical validate-product runner (180 seconds),
+and history subjects are read from one pinned Git log before candidate selection.
+Every product unit, every
 demo/smoke_*.mjs and every Golden scenario/variant comes from the existing
 computed registries. Golden capture is a coverage input; it never accepts PNGs
 or updates baseline indexes. Existing performance thresholds remain unchanged.

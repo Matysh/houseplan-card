@@ -33,6 +33,8 @@ isolated from ordinary proof and release verdicts. The first product cleanup
 is restricted to unused form-kit onOpacity after #1051 S8.
 Measured raw retention requires a 4-GiB diagnostic bound; interrupted or
 environment-invalid collections remain incomplete and separate from product PASS.
+Diagnostic smoke timeouts follow the canonical product runner; a restarted
+collection repeats the complete inventory on a new clean SHA.
 
 Direct Zigbee LQI (#1029) uses passive Z2M and cached ZHA without enabling
 diagnostic entities. Its minimal household-readable feed is independent of

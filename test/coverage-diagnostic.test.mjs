@@ -30,6 +30,10 @@ test('computed scope is the entire existing product unit, smoke and golden inven
   assert.deepEqual(inventory.cases.filter(c => c.family === 'smoke').map(c => c.script),
     readdirSync('demo').filter(p => /^smoke_.*\.mjs$/.test(p)).sort().map(p => `demo/${p}`));
   assert.deepEqual(inventory.cases.filter(c => c.family === 'golden').map(c => c.variant), GOLDEN_SCENARIOS);
+  const canonicalSeconds = Number(readFileSync(inventory.smokeTimeout.source, 'utf8')
+    .match(/timeout --kill-after=\d+s (\d+)s node "\$f"/)[1]);
+  assert.equal(inventory.smokeTimeout.milliseconds, canonicalSeconds * 1000);
+  assert.ok(inventory.cases.filter(c => c.family === 'smoke').every(c => c.timeoutMs === canonicalSeconds * 1000));
 });
 test('mapped V8 merger preserves family columns, actual retry identity, native branches and unknown incomplete zeros', t => {
   const root = fixture(t), artifactDir = resolve(root, 'artifacts'), text = 'export function yes(flag){return flag ? 1 : 2;}\n';

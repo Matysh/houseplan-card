@@ -26,10 +26,14 @@ export function historicalCandidates({ root = process.cwd(), candidate = 'HEAD',
   if (!ancestor(baseSha, sha) || boundaries.some((b, i) => !ancestor(i ? boundaries[i - 1].sha : baseSha, b.sha) || !ancestor(b.sha, sha))) {
     throw Error('Stable boundaries must form an ancestral chain to candidate');
   }
-  const inRange = git(['rev-list', `${baseSha}..${sha}`]).split('\n').filter(Boolean), range = new Set(inRange);
+  // One pinned log avoids a Git process per unrelated commit (especially costly
+  // for a Windows linked worktree read through WSL's native-Git bridge).
+  const subjects = new Map(git(['log', '--format=%H%x09%s', `${baseSha}..${sha}`]).split('\n')
+    .filter(Boolean).map(line => [line.slice(0, 40), line.slice(41)]));
+  const inRange = [...subjects.keys()], range = new Set(inRange);
   const rows = [];
   for (const commit of [...new Set([...inRange, ...seeds.map(pin)])]) {
-    const subject = git(['show', '-s', '--format=%s', commit]), seed = seeds.some(s => commit.startsWith(s));
+    const subject = subjects.get(commit) ?? git(['show', '-s', '--format=%s', commit]), seed = seeds.some(s => commit.startsWith(s));
     if (!seed && !/^(fix|refactor)(\([^)]*\))?:/i.test(subject)) continue;
     const files = git(['show', '--format=', '--numstat', commit, '--', 'src']).split('\n')
       .map(line => line.match(/^(\d+)\t(\d+)\t(src\/.+)$/)).filter(Boolean)
