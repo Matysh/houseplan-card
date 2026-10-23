@@ -90,6 +90,29 @@ test('#1029 AC6 malformed atomic snapshots refuse to replace valid measurements'
   assert.equal(normalizeDirectSignalReadings(Object.fromEntries(Array.from({ length: 1501 }, (_, i) => [i, reading(4)]))), null);
 });
 
+test('#1029 AC15 HA asynchronous unsubscribe rejection is contained after release, revoke and pending cancellation', async () => {
+  for (const mode of ['release', 'revoked', 'pending']) {
+    const f = fixture();
+    let complete, releases = 0;
+    const remove = async () => { releases++; throw new Error('invalid_subscription'); };
+    f.hass.connection.subscribeMessage = (callback) => {
+      f.callbacks.push(callback);
+      return mode === 'pending' ? new Promise(resolve => { complete = () => resolve(remove); }) : Promise.resolve(remove);
+    };
+    const stop = subscribeDirectSignal(f.hass, () => {});
+    await settle();
+    if (mode === 'revoked') {
+      f.send({ device: reading(90) });
+      f.callbacks[0]({ kind: 'closed', session_id: 's', revision: 1 });
+    }
+    stop(); complete?.(); await settle();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(releases, 1, mode);
+    assert.equal(f.events.size, 0, mode);
+    assert.deepEqual(directSignalReadings(f.hass), {}, mode);
+  }
+});
+
 function ownDevice(id, entity, markerId = id) {
   return { id: markerId, name: markerId, model: '', icon: 'mdi:toggle-switch', entities: [entity], primary: entity,
     area: 'room', space: 'floor', bindingKind: 'device', bindingRef: id, bindingStatus: { kind: 'active' },

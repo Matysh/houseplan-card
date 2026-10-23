@@ -4411,6 +4411,10 @@ Their semantic checks require both numbers before capture. The focused
 `smoke_direct_zigbee_lqi.mjs` additionally compares direct and HA reading pixels
 in both projections on the same connection. Only the two new frames are declared
 pending; existing HA-fed frames have no intentional delta.
+HA's WebSocket unsubscribe callback is asynchronous and can reject a server
+revocation with `invalid_subscription`; direct-feed teardown contains both
+sync throws and rejected promises. The runtime unit covers release, server
+closed and late resolution after cancellation with that real callback shape.
 
 For delayed vacuum paths (#1049), `node demo/smoke_vacuum_live_tail.mjs` is the
 focused animation/pixel witness (View/kiosk, Flat/2.5D); do not debug it through

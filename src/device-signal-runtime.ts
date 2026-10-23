@@ -10,7 +10,7 @@ export interface DirectSignalReading {
 }
 export type DirectSignalReadings = Readonly<Record<string, DirectSignalReading>>;
 interface SignalConnection {
-  subscribeMessage?: (callback: (message: unknown) => void, message: { type: string }) => Promise<() => void>;
+  subscribeMessage?: (callback: (message: unknown) => void, message: { type: string }) => Promise<() => void | Promise<void>>;
   addEventListener?: (event: string, callback: () => void) => void;
   removeEventListener?: (event: string, callback: () => void) => void;
 }
@@ -24,7 +24,7 @@ export interface SignalRuntimeHass {
 interface Cache {
   identity: string; generation: number; readings: DirectSignalReadings;
   listeners: Set<() => void>; session?: string; revision: number;
-  pending?: Promise<void>; remove?: () => void; removeEvents?: () => void;
+  pending?: Promise<void>; remove?: () => void | Promise<void>; removeEvents?: () => void;
   unsupported?: boolean; timer?: ReturnType<typeof setTimeout>; retries: number;
 }
 const EMPTY: DirectSignalReadings = Object.freeze({});
@@ -32,7 +32,10 @@ const caches = new WeakMap<object, Cache>();
 const identityOf = (hass: SignalRuntimeHass): string => `${hass.user?.id || ''}:${hass.user?.is_admin === true}:${hass.user?.is_active !== false}`;
 const record = (value: unknown): Record<string, unknown> | null => value !== null && typeof value === 'object'
   && !Array.isArray(value) ? value as Record<string, unknown> : null;
-function cleanup(remove?: () => void): void { try { remove?.(); } catch { /* A lost connection is already retired. */ } }
+function cleanup(remove?: () => void | Promise<void>): void {
+  try { void Promise.resolve(remove?.()).catch(() => {}); }
+  catch { /* A lost or server-revoked subscription is already retired. */ }
+}
 function notify(cache: Cache): void { for (const listener of cache.listeners) listener(); }
 function retire(cache: Cache): void {
   cache.generation++; cleanup(cache.remove); cache.remove = undefined;
