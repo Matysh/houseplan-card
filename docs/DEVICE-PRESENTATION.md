@@ -300,6 +300,37 @@ catalogue the marker stays «On the plan».
 
 ### Derived Flat contacts (#866)
 
+#### Contact reflow and contour (#1003)
+
+The accepted UI-017 r3 is the base appearance; the owner's 2026-10-23
+amendments add live reflow and the common free edge of equal-diameter vertical
+icon/value rows. Normalisation changes empty shell padding, never core centres,
+actual text or an arbitrary L-shaped group's empty corner. Ink and individual
+hit silhouettes use that same projection. Only finite wall-coincident stroke
+segments disappear; the hit stays closed. All-virtual groups and wall/corner
+singletons use `4 3` dashes; any physical member makes a group solid.
+
+New placement has one exact face-derived contact target, not a saved capture
+interval. A perpendicular corner can own two finite wall faces, also when the
+corner is inclined. Content stays upright. Legacy loose contacts remain readable
+until explicit movement normalises the affected component. Temporary guide lines
+remain, but the redundant “Join outlines” / “Attach to wall” labels are gone.
+
+`device-contact-layout` derives effective positions from a stable reference,
+not the previous displayed frame: value/units/unavailable/size changes reflow
+connected members with a deterministic ID anchor, preferring wall/corner support.
+No live tick writes layout/config or creates history. If the geometry cannot fit,
+contacts may separate safely (owner decision), retaining their latent reference
+so shrinking can restore them. Unrelated groups and HA/room bindings do not move.
+The full card's shared position reader and static adapter expose these effective
+positions to paint/hit/selection/overlays. 2.5D retains authored individual tiles.
+
+Applicable references are materialised only on explicit edits; see
+CONFIG-COMPATIBILITY.md. A cold legacy load cannot reconstruct an unknown earlier
+text width: its first observed face is the session reference.
+Metrics are bounded and font-context aware;
+unchanged fitted geometry reuses indexes and solver results.
+
 The frozen designer handoff governs the shared outer silhouette. A free core
 keeps D and its historical 101.5/80 outer-shell ratio; contact calibration changes
 only empty outer space, never shrinks the core. Connected shells have one neutral

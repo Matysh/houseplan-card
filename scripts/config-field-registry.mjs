@@ -8,6 +8,15 @@
  */
 export const CONFIG_FIELD_REGISTRY = Object.freeze([
   {
+    id:'layout.*.contact_basis',selector:{path:['layout','*','contact_basis']},schema:'allow-extra',
+    enforcedBy:'contact_basis.py delta validation + device-contact-basis.ts; #1003',
+    storage:'House Plan layout',type:'v1 reference {at:{x,y,s},diameter,box:[l,t,r,b],legacy?:boolean}',
+    default:'absent',level:'device layout entry',ui:'none; materialised by explicit relevant edit/drag',
+    runtime:'derive Flat contact reflow; s is space ID, matching authored x/y/s required',
+    introduced:'#1003',status:'current',migration:'no read rewrite; legacy first reference is session-local',
+    compatibility:'JSON/ZIP/Optimize preserve; copy-space remaps matching at.s; malformed/future blocks remain inert/lossless',
+  },
+  {
     id:'settings.fill_colors.wall_fill',selector:{path:['settings','fill_colors','wall_fill']},
     schema:'allow-extra',enforcedBy:'validation.py palette map + room_appearance.py; #1037',
     storage:'House Plan server config',type:'legacy {c,a}',default:'opaque white',level:'legacy global',

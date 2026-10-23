@@ -1,8 +1,5 @@
 /** Optional editor adapters; none belongs to the initial View graph. */
 import { svg, type TemplateResult } from 'lit';
-import { langOf } from './i18n';
-import { toolsT } from './i18n/tools';
-import { contactBounds } from './device-contact-scene';
 import { positionableIconMarkers } from './device-icon-roster';
 import { ledStripsByMarker } from './led-strip-gate';
 import { effectiveDeviceBaseSize } from './device-marker-geometry';
@@ -44,15 +41,10 @@ export function deviceContactMaintenanceFaces(value: object): DeviceContactFaceE
   }
   return out;
 }
-export function renderDeviceContactGuide(value: object, units: (px: number) => number): TemplateResult | null {
+export function renderDeviceContactGuide(value: object): TemplateResult | null {
   const host = value as ContactEditor, contact = host._deviceDrag?.contact?.hint;
   if (!contact) return null;
-  const shape = host._deviceContacts?.scene?.shapes.get(host._deviceDrag!.id);
-  const box = shape ? contactBounds(shape) : null;
-  const x = box ? box.right + units(8) : contact.line[2], y = box ? box.top - units(8) : contact.line[3];
-  return svg`<g class="device-contact-guide" pointer-events="none" aria-hidden="true">
+  return svg`<g class="device-contact-guide" data-device-snap=${contact.kind} pointer-events="none" aria-hidden="true">
     <line class="alignline" x1=${contact.line[0]} y1=${contact.line[1]} x2=${contact.line[2]} y2=${contact.line[3]}></line>
-    <text class="spacinglabel" data-device-snap=${contact.kind} x=${x} y=${y} font-size=${units(12)}>${
-      toolsT(langOf(host.hass,host._config?.language),contact.kind==='wall'?'editor.device_snap_wall':'editor.device_snap_join')}</text>
   </g>` as unknown as TemplateResult;
 }

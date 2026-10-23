@@ -1,7 +1,10 @@
+import {contentFingerprint} from './visual-continuity';
+
 export interface DevicePlacement {
   x: number;
   y: number;
   s?: string;
+  contact_basis?: unknown;
 }
 
 export interface DeviceLayoutEntry extends Record<string, unknown> {
@@ -17,6 +20,7 @@ export interface DevicePositionState {
   deviceId: string;
   spaceId: string;
   placement: DevicePlacement | null;
+  related?: Array<{deviceId:string;spaceId:string;placement:DevicePlacement|null}>;
 }
 
 /** #931: only changed visual keys, including absence/null, belong to this command. */
@@ -52,6 +56,7 @@ export function devicePlacement(layout: DeviceLayout, deviceId: string): DeviceP
     x: entry.x,
     y: entry.y,
     ...(typeof entry.s === 'string' ? { s: entry.s } : {}),
+    ...(Object.prototype.hasOwnProperty.call(entry,'contact_basis') ? {contact_basis:structuredClone(entry.contact_basis)} : {}),
   };
 }
 
@@ -60,7 +65,8 @@ export function sameDevicePlacement(
   right: DevicePlacement | null,
 ): boolean {
   if (left === null || right === null) return left === right;
-  return left.x === right.x && left.y === right.y && left.s === right.s;
+  return left.x === right.x && left.y === right.y && left.s === right.s
+    && contentFingerprint(left.contact_basis)===contentFingerprint(right.contact_basis);
 }
 
 /**
@@ -84,11 +90,13 @@ export function applyDevicePlacement(
   delete current.x;
   delete current.y;
   delete current.s;
+  delete current.contact_basis;
   const entry: DeviceLayoutEntry = {
     ...current,
     x: placement.x,
     y: placement.y,
     ...(placement.s !== undefined ? { s: placement.s } : {}),
+    ...(Object.prototype.hasOwnProperty.call(placement,'contact_basis') ? {contact_basis:structuredClone(placement.contact_basis)} : {}),
   };
   return { ...layout, [deviceId]: entry };
 }

@@ -12,6 +12,12 @@
   place without a wall after confirmation. An opening without a wall is never
   placed over another opening. Older versions refuse a ZIP whose SVG background
   they would not have packed themselves. (#1033)
+- Device contacts snap to both wall faces in a corner and use an exact pitch.
+  Groups reflow as values or sizes change, may safely separate if they cannot
+  fit, and keep their applicable reference on reload. Virtual-only contours
+  stay dashed; wall-coincident strokes, small contour teeth and the mobile
+  two-row value step are removed. Live updates do not save or add Undo entries.
+  (#1003)
 
 - Centre room names over their readings in downloaded SVG files after omitting
   the Home Assistant Area link. Live captions with the link keep their existing

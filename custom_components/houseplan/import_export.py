@@ -1289,7 +1289,9 @@ def _repair_target_space_refs(
         if isinstance(position, dict):
             mapped_space = replace(key, "layout.space", position.get("s"), resolve_space)
             if mapped_space is not None:
-                position["s"] = mapped_space
+                from .contact_basis import remap_contact_basis
+                position = remap_contact_basis(position, mapped_space)
+                layout[key] = position
         new_key: str | None = None
         category = ""
         if key.startswith("rl_"):
@@ -1667,7 +1669,8 @@ def build_space_merge(
                 reference_report, "incoming", "layout.space", new_key,
                 old_layout_space,
             )
-        output_layout[new_key] = {**pos, "s": new_space_id}
+        from .contact_basis import remap_contact_basis
+        output_layout[new_key] = remap_contact_basis(pos, new_space_id)
 
     merged_config = target_config
     merged_config.setdefault("spaces", []).append(space)

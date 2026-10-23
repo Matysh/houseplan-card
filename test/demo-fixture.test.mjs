@@ -62,6 +62,16 @@ test('#896 first-only recreated method and revision-only persistence fail the ex
 });
 
 const run = { card: 0, kind: 0, phase: 'on', node: 1, event: 'transitionrun', elapsed: 0, listenerAt: 0, deliveredAt: 20 };
+test('#1003 fixture config+basis publication is atomic and both revisions are checked',()=>{
+  const store=createFixtureStore({markers:[{id:'a'}]},{a:{x:.1,y:.2,s:'f'},foreign:{x:.8,y:.9,s:'upper'}});
+  const read=()=>[store.handle({type:'houseplan/config/get'}),store.handle({type:'houseplan/layout/get'})];
+  const before=read(),request={type:'houseplan/config/set',expected_rev:1,expected_layout_rev:0,
+    config:{markers:[{id:'a',size:2}]},contact_layout:{a:{x:.1,y:.2,s:'f',contact_basis:{v:1}}}};
+  assert.throws(()=>store.handle(request),{code:'conflict'});assert.deepEqual(read(),before);
+  const answer=store.handle({...request,expected_layout_rev:1});
+  assert.equal(answer.rev,2);assert.equal(answer.layout_rev,2);
+  assert.deepEqual(read()[1].layout.foreign,before[1].layout.foreign);
+});
 const end = { ...run, event: 'transitionend', elapsed: .5, deliveredAt: 520 };
 const options = { card: 0, kind: 0, phase: 'on', startedAt: 10, deadlineMs: 750 };
 test('#896 transition diagnostic: delivered completion, delayed delivery, missing and wrong-node end', () => {

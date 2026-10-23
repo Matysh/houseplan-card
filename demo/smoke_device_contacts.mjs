@@ -29,7 +29,7 @@ await page.evaluate(async () => {
   const original = c.hass.callWS;
   window.__contactWrites = [];
   c.hass = { ...c.hass, callWS: async (message) => {
-    if (message.type === 'houseplan/layout/update') {
+    if (['houseplan/layout/update','houseplan/layout/set'].includes(message.type)) {
       if(window.__contactRefuseNext){window.__contactRefuseNext=false;throw new Error('contact write refused');}
       window.__contactWrites.push(structuredClone(message));
     }
@@ -50,7 +50,8 @@ const state = () => page.evaluate(() => {
   const visible = (selector) => [...sr.querySelectorAll(selector)]
     .filter(n => n.closest('.hp-editor-only-layer')?.style.opacity !== '0');
   return { layout: structuredClone(c._layout['contact-m']), history: c._devicePositionHistory.size,
-    writes: window.__contactWrites.length, guides: visible('[data-device-snap]').map(n=>n.textContent.trim()),
+    writes: window.__contactWrites.length, guides: visible('[data-device-snap]').filter(n=>n.querySelector('line')).map(n=>n.dataset.deviceSnap),
+    guideText:visible('[data-device-snap]').map(n=>n.textContent.trim()).join(''),
     components: ['a','b','m'].map(id=>sr.querySelector(`[data-id="contact-${id}"]`)?.dataset.hpDeviceComponent || null),
     contours: sr.querySelectorAll('.device-contact-contour.grouped').length,
     drag: !!c._deviceDrag, work: structuredClone(c._deviceContacts.work),
@@ -68,15 +69,17 @@ const before = await state(), from = await client('contact-m'), to = await clien
 await page.mouse.move(from.x,from.y); await page.mouse.down();
 await page.mouse.move(to.x+3,to.y,{steps:12}); await settle();
 const preview = await state();
-checkAll({ previewContactGuide: preview.guides.includes('Join outlines'), noWriteDuringDrag: preview.writes===before.writes,
+checkAll({ previewContactGuide: preview.guides.includes('device'), noDuplicateGuideLabel:preview.guideText==='',noWriteDuringDrag: preview.writes===before.writes,
   connectedPreview: preview.components.every(id=>id==='contact-a'), noMeasurementDuringDrag: preview.work.measurements===before.work.measurements });
 check('group-has-no-duplicate-individual-frames',await page.evaluate(()=>[...window.__card.renderRoot
   .querySelectorAll('.dev[data-hp-device-contact] .device-shell-frame')].every(n=>getComputedStyle(n).opacity==='0')),true);
+check('all-virtual-contact-is-dashed',await page.evaluate(()=>[...window.__card.renderRoot
+  .querySelectorAll('.device-contact-contour.grouped')].every(n=>n.getAttribute('stroke-dasharray')==='4 3')),true);
 await page.screenshot({ path: `${dir}/join-preview.png` });
 await page.keyboard.down('Alt'); await settle();
 check('Alt-removes-contact-guide', (await state()).guides.length, 0);
 await page.keyboard.up('Alt'); await settle();
-check('Alt-release-restores-contact-guide', (await state()).guides.includes('Join outlines'), true);
+check('Alt-release-restores-contact-guide', (await state()).guides.includes('device'), true);
 await page.mouse.up(); await settle();
 const dropped = await state();
 writeFileSync(`${dir}/drop.json`, JSON.stringify({ before, preview, dropped, from, to },null,2));
@@ -121,7 +124,7 @@ await page.evaluate(()=>{const c=window.__card;c.setConfig({...c._config,languag
   await page.mouse.move(start.x,start.y);await page.mouse.down();
   await page.mouse.move(start.x+140,start.y+60,{steps:6});
   await page.mouse.move(target.x+3,target.y,{steps:6});await settle();
-  check('ru-contact-guide-visible',(await state()).guides.includes('Общая обводка'),true);
+  check('ru-contact-guide-visible',(await state()).guides.includes('device'),true);
   await page.keyboard.press('Escape');await page.mouse.up();await settle();
 }
 await page.evaluate(()=>{const c=window.__card;c.setConfig({...c._config,language:'en'});});await settle();

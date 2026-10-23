@@ -1,5 +1,25 @@
 # Development and deployment
 
+## Device contacts #1003 — local evidence
+
+The task's pinned Windows Node 22.23.3 source build measured initial View
+336142 B gzip against reference 333938 (+2204 B), lazy editor 336216 against
+331681 (+4535 B). Under the owner's standing minor-growth permission, carry
+these deltas into the rolling references; the 2000 B bands and 352000 B View
+absolute wall are unchanged. Reflow geometry/DOM and the group
+writer stay lazy; effective-position/history orchestration lives in the root.
+This is accounting, not a loading-speed improvement.
+
+The contact pair/batch adapter adds 39 host references (5963 → 6002), and all
+new reference/reflow/writer modules add 21037 raw bytes to the monolith inventory
+(3360827 → 3381864); these references account for affected-member history/CAS,
+not new delegating wrappers. The same commit records these measured baselines;
+metric bands and all other dimensions remain unchanged.
+
+Actual HA tests run in WSL on Linux Python 3.14.7 against this task checkout.
+Native Windows cannot import the HA harness (`fcntl`); a plugin-isolated pure
+test is not a substitute. Tests do not write real HA or frozen UI Lab files.
+
 ## Service-check branch isolation (#1040)
 
 The main branch's service ingress acknowledges delivery, not the result of dev

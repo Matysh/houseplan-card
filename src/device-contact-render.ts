@@ -1,7 +1,7 @@
 /** Shared Flat DOM adapter. Face geometry is measured only on metric invalidation. */
 import { nothing, render, svg } from 'lit';
 import {
-  contactContains, contactOutline, joinedContactSide,
+  contactContains, contactContourShapes, contactOutline, joinedContactSide,
   type ContactMarker, type ContactRect, type ContactShape, type ContactWall,
 } from './device-contact-geometry';
 import { contactBounds, DeviceContactScene } from './device-contact-scene';
@@ -12,6 +12,8 @@ import type { ResolvedDevicePresentation } from './device-presentation';
 import { deviceContactFloor } from './device-contact-floor';
 import type { SpaceModel } from './types';
 import { adoptDeviceContactStyles } from './device-contact.styles';
+import { contactBasisMarker } from './device-contact-basis';
+import { DeviceContactLayout } from './device-contact-layout';
 
 export interface DeviceContactFrame {
   key: string;
@@ -20,6 +22,9 @@ export interface DeviceContactFrame {
   walls?: readonly ContactWall[];
   masonry?: ContactMasonry;
   floor?: { config: unknown; model: SpaceModel };
+  space?: string;
+  layout?: Readonly<Record<string,{x:number;y:number;s?:string;contact_basis?:unknown}|undefined>>;
+  invalidate?: () => void;
 }
 interface MeasuredMarker { element: HTMLElement; ink: HTMLElement }
 const metricKey = (shell: Element | null | undefined): string => shell
@@ -43,6 +48,22 @@ export class DeviceContactRenderer {
   private elements = new Map<string, MeasuredMarker>();
   private frameKey = '';
   private floorKey = '';
+  private readonly layout = new DeviceContactLayout();
+  private authored = new Map<string,ContactMarker>();
+  private fontContext = '';
+  private fontDocument: Document | null = null;
+  private invalidate: (() => void) | undefined;
+  private readonly fontsChanged = (): void => {
+    this.metrics.clear(); this.frameKey=''; this.invalidate?.();
+  };
+
+  /** Never return a previous snapshot's effective point for a newly authored drag. */
+  public position(id:string, point:{x:number;y:number}):{x:number;y:number} {
+    const source=this.authored.get(id), shape=this.scene?.shapes.get(id);
+    return source && shape && source.x===point.x && source.y===point.y
+      ? {x:shape.marker.x,y:shape.marker.y} : point;
+  }
+  public reference(id:string):ContactMarker|undefined { return this.layout.reference(id); }
 
   /** Optimize supplies positive owner/face evidence for all floors, including
    * ones not currently mounted. Uses this same production face/metric cache. */
@@ -59,6 +80,11 @@ export class DeviceContactRenderer {
   }
 
   public clear(): void {
+    this.retireElements(); this.layout.clear(); this.authored.clear();
+    this.fontDocument?.fonts?.removeEventListener('loadingdone',this.fontsChanged);
+    this.fontDocument=null;this.invalidate=undefined;
+  }
+  private retireElements():void {
     for (const { element, ink } of this.elements.values()) {
       element.removeAttribute('data-hp-device-contact');
       element.removeAttribute('data-hp-device-component');
@@ -70,11 +96,23 @@ export class DeviceContactRenderer {
   public sync(root: ParentNode, frame: DeviceContactFrame): boolean {
     if (!frame.enabled) { const active = !!this.scene; if (active) this.clear(); return active; }
     adoptDeviceContactStyles(root);
+    this.invalidate=frame.invalidate;
+    const doc=(root as ShadowRoot).ownerDocument;
+    if(doc!==this.fontDocument) {
+      this.fontDocument?.fonts?.removeEventListener('loadingdone',this.fontsChanged);
+      this.fontDocument=doc;
+      doc?.fonts?.addEventListener('loadingdone',this.fontsChanged);
+    }
+    const host=(root as ShadowRoot).host;
+    const font=host?doc.defaultView?.getComputedStyle(host):null;
+    const context=font?[font.fontFamily,font.fontWeight,font.fontStyle,font.fontStretch,font.letterSpacing].join('|'):'';
+    if(context!==this.fontContext){this.metrics.clear();this.fontContext=context;this.frameKey='';}
     const floor = frame.floor ? deviceContactFloor(frame.floor.config, frame.floor.model) : null;
     if (floor && !floor.safe) { const active = !!this.scene; if (active) this.clear(); return active; }
     const nodes = new Map([...root.querySelectorAll<HTMLElement>('.devlayer > .dev[data-hp="device"][data-id]')]
       .map((node) => [node.dataset.id!, node]));
     const key = frame.key + '|' + frame.markers.map((m) => [m.id, m.x, m.y, m.diameter,
+      m.virtual,JSON.stringify(frame.layout?.[m.id]?.contact_basis),
       metricKey(nodes.get(m.id)?.querySelector('.device-shell'))].join(':')).join('|');
     if (key === this.frameKey && frame.markers.every((m) => this.elements.get(m.id)?.element === nodes.get(m.id))) return false;
     const measured: ContactMarker[] = [];
@@ -98,20 +136,39 @@ export class DeviceContactRenderer {
       const box = Object.fromEntries(Object.entries(metric).map(([k,v]) => [k, v * m.diameter])) as unknown as ContactRect;
       measured.push({ ...m, box }); nextElements.set(m.id, { element, ink });
     }
+    const bases=new Map<string,ContactMarker>();
+    for(const m of measured) {
+      const basis=frame.space ? contactBasisMarker(m,frame.layout?.[m.id],frame.space) : null;
+      if(basis){bases.set(m.id,basis);m.precise=basis.precise;}
+    }
+    this.authored=new Map(measured.map(m=>[m.id,m]));
+    const walls=frame.walls || floor?.walls || [],masonry=frame.masonry || floor?.masonry || [];
+    const effective=this.layout.resolve(measured,walls,masonry,bases,frame.key);
     const previous = this.scene;
     const sameGeometry = previous && this.floorKey === frame.key && measured.length === previous.shapes.size
-      && measured.every((m) => {
+      && effective.every((m) => {
         const old = previous.shapes.get(m.id)?.marker;
-        return old && old.x === m.x && old.y === m.y && old.diameter === m.diameter
+        return old && old.x === m.x && old.y === m.y && old.diameter === m.diameter && old.virtual===m.virtual && old.precise===m.precise
           && (['left','right','top','bottom'] as const).every((side) => old.box[side] === m.box[side])
           && this.elements.get(m.id)?.element === nextElements.get(m.id)?.element;
       });
     // A new value can have the exact same fitted box. Refresh its metric key,
     // not the complete spatial graph; the shared face already paints the text.
     if (sameGeometry) { this.elements = nextElements; this.frameKey = key; return false; }
-    this.clear(); this.elements = nextElements;
+    const reusable=previous && this.floorKey===frame.key && effective.length===previous.shapes.size
+      && effective.every(m=>previous.shapes.has(m.id)&&this.elements.get(m.id)?.element===nextElements.get(m.id)?.element);
+    if(reusable) {
+      const affected=new Set<string>();
+      for(const m of effective){const old=previous.shapes.get(m.id)!.marker;
+        if(old.x!==m.x||old.y!==m.y||old.diameter!==m.diameter||old.virtual!==m.virtual||old.precise!==m.precise
+          || ['left','right','top','bottom'].some(side=>old.box[side as keyof ContactRect]!==m.box[side as keyof ContactRect]))
+          for(const id of previous.replace(m))affected.add(id);
+      }
+      this.elements=nextElements;this.frameKey=key;this.paint(affected);return true;
+    }
+    this.retireElements(); this.elements = nextElements;
     this.frameKey = key; this.floorKey = frame.key;
-    this.scene = new DeviceContactScene(measured, frame.walls || floor?.walls || [], frame.masonry || floor?.masonry);
+    this.scene = new DeviceContactScene(effective, walls, masonry, true);
     this.work.rebuilds++; this.paint(this.scene.shapes.keys());
     return true;
   }
@@ -162,11 +219,13 @@ export class DeviceContactRenderer {
 
   private paint(ids: Iterable<string>): void {
     const scene = this.scene!;
-    for (const group of scene.components(ids)) {
+    for (const rawGroup of scene.components(ids)) {
+      const group=contactContourShapes(rawGroup);
       const joined = group.length > 1;
       const owner = group[0];
       const active = joined || Object.keys(owner.walls).length > 0;
-      const outline = active ? contactOutline(group) : '';
+      const outline = active ? contactOutline(group,true) : '';
+      const virtual=group.every(s=>s.marker.virtual===true);
       for (const s of group) {
         const item = this.elements.get(s.marker.id); if (!item) continue;
         const custom = joined || Object.keys(s.walls).length > 0;
@@ -176,7 +235,7 @@ export class DeviceContactRenderer {
         if (!custom) { this.hitShapes.delete(item.element); render(nothing, item.ink); continue; }
         const sides: ContactShape['walls'] = { ...s.walls };
         for (const id of scene.edges.get(s.marker.id) || []) {
-          const side = joinedContactSide(s, scene.shapes.get(id)!); if (side) sides[side] = 'device';
+          const side = joinedContactSide(scene.shapes.get(s.marker.id)!, scene.shapes.get(id)!,false); if (side) sides[side] = 'device';
         }
         const own = { ...s, walls: sides };
         const normalized: ContactShape = { ...own, marker: { ...s.marker, x: 0, y: 0, diameter: 1 },
@@ -187,7 +246,7 @@ export class DeviceContactRenderer {
         const d = s.marker.diameter;
         render(svg`<svg viewBox=${`${s.marker.x - d / 2} ${s.marker.y - d / 2} ${d} ${d}`}
           preserveAspectRatio="none" aria-hidden="true">
-          ${s === owner ? svg`<path data-hp="device-contact-contour" data-component=${owner.marker.id} data-grouped=${String(joined)} class=${joined ? 'device-contact-contour grouped' : 'device-contact-contour'} d=${outline}></path>` : nothing}
+          ${s === owner ? svg`<path data-hp="device-contact-contour" data-component=${owner.marker.id} data-grouped=${String(joined)} class=${joined ? 'device-contact-contour grouped' : 'device-contact-contour'} stroke-dasharray=${virtual?'4 3':'none'} d=${outline}></path>` : nothing}
           <path class="device-contact-hit" d=${contactOutline([own])}></path>
         </svg>`, item.ink);
         this.work.paints++;

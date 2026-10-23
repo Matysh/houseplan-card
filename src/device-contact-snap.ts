@@ -1,6 +1,6 @@
 /** One gesture's wall/device resolver; the existing #873 remains the fallback. */
 import {
-  CONTACT_EPS, contactAtWall, contactBoxIn, contactCoresOverlap, contactRotate, contactShapeJoinDepth,
+  CONTACT_EPS, contactAtCorner, contactAtWall, contactBoxIn, contactCoresOverlap, contactRotate, contactShapeJoinDepth,
   contactWallsNear, deriveContactShape, freeContactShape, joinedContactSide, rotatedContactCapsule, validContactMarker,
   type ContactMarker, type ContactShape,
 } from './device-contact-geometry';
@@ -31,7 +31,14 @@ export class DeviceContactMagnet {
       if (!this.valid(shape, neighbors)) return;
       candidates.push({ ...p, ...stored, distance });
     };
-    for (const wall of contactWallsNear(raw, this.scene.walls, 9 / Math.min(px,py))) for (const p of contactAtWall(raw, wall)) {
+    const walls = contactWallsNear(raw, this.scene.walls, 12 / Math.min(px,py));
+    for(const p of contactAtCorner(raw,walls)) {
+      const stored=this.canonical(p.x,p.y);
+      const shape=deriveContactShape({...raw,...stored},this.scene.walls);
+      if(!Object.values(p.shape.walls).every(id=>Object.values(shape.walls).includes(id))) continue;
+      add({...stored,kind:'wall',key:p.key,line:p.line});
+    }
+    for (const wall of walls) for (const p of contactAtWall(raw, wall)) {
       add({ x: p.x, y: p.y, kind: 'wall', key: p.key, line: p.line });
     }
     const near = this.scene.query(contactBounds(freeContactShape(raw)), 22 / Math.min(px, py));
@@ -63,6 +70,7 @@ export class DeviceContactMagnet {
       });
     }
     candidates.sort((a, b) => {
+      if(a.key.startsWith('corner:')!==b.key.startsWith('corner:')) return a.key.startsWith('corner:')?-1:1;
       if (a.key === this.held && b.key !== this.held) return -1;
       if (b.key === this.held && a.key !== this.held) return 1;
       if (Math.abs(a.distance - b.distance) > CONTACT_EPS) return a.distance - b.distance;

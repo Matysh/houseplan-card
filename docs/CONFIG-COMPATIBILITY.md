@@ -273,6 +273,33 @@ Snapping is session-local, ON by default; Alt bypasses only wall/device magnets.
 An older client reads the same positions and shows independent shells; exact
 contact preservation through an older Optimize is not promised.
 
+#1003 adds optional `layout.<marker-id>.contact_basis` (no model/store version
+bump). Version 1 contains `at: {x,y,s}`, `diameter`, `box: [left,top,right,bottom]`
+in normalised plan units and optional `legacy: true`. Here `s` is the **space ID**,
+not a group/attachment ID. Only a valid block matching the entry's exact authored
+x/y/s participates. `legacy` records the old loose recognition of an explicitly
+materialised legacy component; a new drag writes an exact reference instead.
+No values, HA bindings, shell angle or displayed live positions are stored.
+
+Reads never migrate a document. Malformed/stale/future blocks remain inert and
+lossless; changed known-v1 writes validate finite bounds/shape/identity and a 2 KiB
+block limit. Full/space JSON/ZIP retain the extension. Copy-space remaps `at.s`
+only for a valid matching basis. Optimize uses the reference face when proving a
+contact, not the possibly changed live value; removed wall hosts get no exemption.
+Old frontends may drop constraints on an explicit point edit and cannot reproduce
+the new reflow, but continue reading ordinary x/y/s. Older backends preserve
+unknown layout siblings; the new paired materialisation is sent only after
+`config/get.device_contact_api === 1` advertises support.
+
+The first relevant metric settings Save can send optional `contact_layout` and
+`expected_layout_rev` on existing `config/set`. Both revisions are checked before
+its durable pair commit. An explicit multi-member drag/Undo uses a fresh **full**
+`layout/get` plus `layout/set` CAS (`expected_rev`, `expected_config_rev`), patches
+only its named placements and preserves foreign-floor/unknown siblings. It never
+uses an active-floor projection as the replacement body. No live rendering writes
+occur. Cancel/refusal restores the local draft; a lost ACK is reconciled by a read,
+not a wholesale replay. These extensions add no new endpoint or permission path.
+
 ## Device battery indicators (#792, #807)
 
 `settings.show_device_battery` is an optional global setting, enabled by

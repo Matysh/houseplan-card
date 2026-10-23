@@ -5405,9 +5405,10 @@ export class HouseplanCard extends LitElement {
   }
 
   /** Device position in render units of the current space. */
-  private _pos(d: DevItem): { x: number; y: number } {
+  private _pos(d: DevItem, contacts = true): { x: number; y: number } {
     const captured = this._renderDeviceSnapshot?.positions.get(d.id);
-    return captured ? { x: captured.x, y: captured.y } : this._livePos(d);
+    const point=captured ? { x: captured.x, y: captured.y } : this._livePos(d);
+    return !contacts || this._renderProjection==='iso' ? point : this._deviceContacts?.position(d.id,point) ?? point;
   }
 
   private _livePos(d: DevItem): { x: number; y: number } {
@@ -5474,10 +5475,16 @@ export class HouseplanCard extends LitElement {
   private async _persistDevicePlacement(
     deviceId: string,
     placement: DevicePlacement | null,
+    related?:DevicePositionState['related'],
   ): Promise<void> {
     const isCurrent = this._layoutIO.guard();
     if (this._serverStorage && (!isCurrent() || !this._loadOk)) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
     this._layout = applyDevicePlacement(this._layout, deviceId, placement);
+    if(related?.length) {
+      const {persistContactPlacements}=await import('./device-contact-write');
+      if(!isCurrent())throw new Error('contact write context changed');
+      return persistContactPlacements(this,{deviceId,spaceId:placement?.s??this._space,placement,related});
+    }
     if (this._serverStorage) {
       const settled = this._layoutIO.begin();
       const ownsPending = this._layoutIO.guard(true);
@@ -5550,7 +5557,7 @@ export class HouseplanCard extends LitElement {
         return this._editorRuntime?.properties.restoreVisual(direction, command, position);
       return ledHistory(this as never, direction, command); // #780
     }
-    if (!this._devicePositionStateValid(target)) {
+    if (!this._devicePositionStateValid(target) || target.related?.some(s=>!this._devicePositionStateValid(s))) {
       this._devicePositionHistory.clear();
       this._showToast(this._t('history.device_stale'), 'history.device_stale');
       this.requestUpdate();
@@ -5558,14 +5565,16 @@ export class HouseplanCard extends LitElement {
     }
 
     const rollback = devicePlacement(this._layout, target.deviceId);
+    const relatedRollback=target.related?.map(s=>({...s,placement:devicePlacement(this._layout,s.deviceId)}));
     if (target.spaceId !== this._space) {
       this._commitSpace(target.spaceId);
       this._restoreZoom();
     }
     this._devicePositionBusy = true;
     this._previewDevicePlacement(target.deviceId, target.placement);
+    for(const s of target.related??[])this._previewDevicePlacement(s.deviceId,s.placement);
     try {
-      await this._persistDevicePlacement(target.deviceId, target.placement);
+      await this._persistDevicePlacement(target.deviceId, target.placement,target.related);
       if (!isCurrent()) return;
       this._showToast(this._t(direction === 'undo' ? 'history.undone' : 'history.redone', {
         name: command.name,
@@ -5573,6 +5582,7 @@ export class HouseplanCard extends LitElement {
     } catch (error: unknown) {
       if (!isCurrent()) return;
       this._previewDevicePlacement(target.deviceId, rollback);
+      for(const s of relatedRollback??[])this._previewDevicePlacement(s.deviceId,s.placement);
       if (direction === 'undo') this._devicePositionHistory.redo();
       else this._devicePositionHistory.undo();
       this._showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }), 'toast.pos_save_failed');
@@ -7239,6 +7249,7 @@ export class HouseplanCard extends LitElement {
       oy: p.y,
       moved: false,
       before: devicePlacement(this._layout, d.id),
+      contactMembers:this._deviceContacts?.scene?.component(d.id),
       start: this._devicePlacementForCanvas(d, p.x, p.y, true),
       spacing: this._editorRuntime?._deviceSpacing(d, (x, y) => this._devicePlacementForCanvas(d, x, y)) ?? null, // #873
       contact: this._editorRuntime?._deviceContact(d, (x, y) => {
@@ -7317,22 +7328,25 @@ export class HouseplanCard extends LitElement {
     const ownsPending = this._layoutIO.guard(true);
     void this._editorRuntimeOrThrow()._visualCommand(async () => {
       if (!isCurrent() || !ownsPending()) return;
+      let movement:{before:DevicePositionState;after:DevicePositionState}={
+        before:{deviceId:drag.id,spaceId:drag.spaceId,placement:drag.before},
+        after:{deviceId:drag.id,spaceId:drag.spaceId,placement:after},
+      };
       try {
-        await this._persistDevicePlacement(d.id, after);
+        const {prepareContactMove}=await import('./device-contact-write');
+        if(!isCurrent()||!ownsPending())return;
+        movement=prepareContactMove(this,drag,after);
+        for(const s of [movement.after,...movement.after.related??[]])this._previewDevicePlacement(s.deviceId,s.placement);
+        await this._persistDevicePlacement(d.id, movement.after.placement,movement.after.related);
         if (!isCurrent()) return;
         const name = this._t('history.device_move', { name: drag.displayName });
         this._devicePositionHistory.push({
           name,
-          before: {
-            deviceId: drag.id, spaceId: drag.spaceId, placement: drag.before,
-          },
-          after: {
-            deviceId: drag.id, spaceId: drag.spaceId, placement: after,
-          },
+          before:movement.before,after:movement.after,
         });
       } catch (error: unknown) {
         if (!isCurrent()) return;
-        this._previewDevicePlacement(d.id, drag.before);
+        for(const s of [movement.before,...movement.before.related??[]])this._previewDevicePlacement(s.deviceId,s.placement);
         this._showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }), 'toast.pos_save_failed');
       } finally {
         if (ownsPending()) { this._devicePositionBusy = false; this.requestUpdate(); }
@@ -7869,16 +7883,25 @@ export class HouseplanCard extends LitElement {
    * this boundary makes View-owned metadata writes and strict editor writes
    * converge on the same payload contract without making View load the editor.
    */
-  private async _sendConfigCandidate(candidate: ServerConfig): Promise<void> {
+  private async _sendConfigCandidate(candidate: ServerConfig, contactLayout?:DeviceLayout): Promise<void> {
     const isCurrent = this._configWriteGuard();
     if (!isCurrent() || !this._loadOk) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
     const canonicalCandidate = canonicalizeConfigGeometry(candidate);
-    const response = await this.hass.callWS({
-      type: 'houseplan/config/set', config: canonicalCandidate, expected_rev: this._cfgRev,
-    });
-    if (!isCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
-    this._adoption.acceptConfigWrite(canonicalCandidate, response);
-    this._cacheSnapshot();
+    const finish=contactLayout?this._layoutIO.begin():()=>undefined;
+    try {
+      const response = await this.hass.callWS({
+        type: 'houseplan/config/set', config: canonicalCandidate, expected_rev: this._cfgRev,
+        ...(contactLayout?{contact_layout:contactLayout,expected_layout_rev:this._layoutRev}:{}),
+      });
+      if (!isCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
+      this._adoption.acceptConfigWrite(canonicalCandidate, response);
+      if(contactLayout)for(const [id,pos] of Object.entries((response as {contact_layout?:DeviceLayout})?.contact_layout??{})) {
+        this._layout=applyDevicePlacement(this._layout,id,pos);
+        this._adoption.acceptLayoutPosition(id,pos,(response as {layout_rev?:number}).layout_rev);
+      }
+      if(contactLayout)this._adoption.refreshLayoutFingerprint();
+      this._cacheSnapshot();
+    } finally {finish();}
   }
 
   public _configWriteGuard(pendingOnly = false): () => boolean {

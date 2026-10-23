@@ -203,6 +203,7 @@ export interface StaticGlowRuntime {
 
 export interface StaticRenderOpts {
   contactFrame?: (frame: DeviceContactFrame) => void;
+  contactPosition?: (id:string,point:{x:number;y:number})=>{x:number;y:number};
   hass: any;
   registry?: HaRegistrySnapshot;
   cfg: ServerConfig;
@@ -633,13 +634,16 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   // Static's cheap paint union historically cuts only passages. Contact/hit
   // safety uses the shared canonical inputs for every door/window opening.
   o.contactFrame?.({ key: `${space.id}|${contentFingerprint(spCfg)}|${disp.showBorders}`, enabled: true,
+    space:space.id,layout:o.layout,
     floor: disp.showBorders ? { config: spCfg, model: space } : undefined,
     markers: iconDevs.filter((d) => d.bindingStatus?.kind !== 'ha_disabled').map((d) => ({
       id: d.id, ...markerPos(d, o.layout, o.cfg, defPos, space, areaRelocationIds),
+      virtual:d.virtual===true||d.bindingKind==='virtual',
       diameter: deviceBasePct / 100 * iconUnit(space) * presentationOf(d).scale,
     })) });
   const markers = keyed(space.id, repeat(iconDevs, (d) => d.id, (d) => {
-    const p = markerPos(d, o.layout, o.cfg, defPos, space, areaRelocationIds);
+    const authored = markerPos(d, o.layout, o.cfg, defPos, space, areaRelocationIds);
+    const p=o.contactPosition?.(d.id,authored)??authored;
     const left = ((p.x - vb[0]) / vb[2]) * 100;
     const top = ((p.y - vb[1]) / vb[3]) * 100;
     const presentation = presentationOf(d);
@@ -807,9 +811,10 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       defaultRadiusUnits: (defaultRadiusCm / cellCm) * GRID_PITCH,
       cellCm,
       gridPitch: GRID_PITCH,
-      position: (device) => markerPos(
-        device, o.layout, o.cfg, defPos, space, areaRelocationIds,
-      ),
+      position: (device) => {
+        const authored=markerPos(device,o.layout,o.cfg,defPos,space,areaRelocationIds);
+        return o.contactPosition?.(device.id,authored)??authored;
+      },
     });
     const seen = new Set<string>();
     const spots: GlowSpot[] = [];

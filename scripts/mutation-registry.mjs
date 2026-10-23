@@ -1779,8 +1779,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_config_authority.mjs',
     because: '#890 AC6: a delayed transport reply across the actual HA/Lit intake lifecycle cannot authorize a different connection or install its old revisions.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: "    if (!isCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });\n    this._adoption.acceptConfigWrite(canonicalCandidate, response);",
-      replace: '    this._adoption.acceptConfigWrite(canonicalCandidate, response);' }],
+      find: "      if (!isCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });\n      this._adoption.acceptConfigWrite(canonicalCandidate, response);",
+      replace: '      this._adoption.acceptConfigWrite(canonicalCandidate, response);' }],
   },
   {
     id: 'vacuum-route-write-forgets-canonical-attempt',
@@ -2647,8 +2647,8 @@ const MUTANT_DEFINITIONS = [
       + '&& node --test --test-name-pattern="#879 AC1/3/4" test/room-device-discovery.test.mjs',
     because: '#879 AC1/AC4: the durable baseline must be in the same accepted config as the room, not only in local state.',
     patches: [{ file: 'src/houseplan-editor-runtime.ts',
-      find: 'await this.host._sendConfigCandidate(discoveryWrite?.config || candidate);',
-      replace: 'await this.host._sendConfigCandidate(candidate);',
+      find: 'await this.host._sendConfigCandidate(discoveryWrite?.config || candidate,contactLayout);',
+      replace: 'await this.host._sendConfigCandidate(candidate,contactLayout);',
     }],
   },
   {
@@ -20788,11 +20788,41 @@ const discardConfirmMotionGuardCases = [
     }],
   },
 ];
+const contact1003GuardCases=[
+  {
+    id:'contact-virtual-dash-lost-1003',guard:'node demo/smoke_device_contacts.mjs',
+    because:'#1003 AC3: only mounted production SVG/CSS proves a virtual group paints dashed rather than merely deriving virtual membership.',
+    patches:[{file:'src/device-contact-render.ts',find:"stroke-dasharray=${virtual?'4 3':'none'}",replace:"stroke-dasharray=${virtual?'none':'none'}"}],
+  },
+  {
+    id:'contact-effective-point-not-painted-1003',guard:'node demo/smoke_device_contact_reflow.mjs',
+    because:'#1003 AC5/AC10: actual DOM centres must remain registered to reflowed SVG after trusted settings Save and cold Lit mount; pure solver tests cannot prove its consumer.',
+    patches:[{file:'src/houseplan-card.ts',
+      find:"    return !contacts || this._renderProjection==='iso' ? point : this._deviceContacts?.position(d.id,point) ?? point;",
+      replace:"    return !contacts || this._renderProjection==='iso' ? point : point;"}],
+  },
+  {
+    id:'contact-pair-layout-cas-skipped-1003',
+    guard:'node scripts/backend-test-guard.mjs contact_conflict_or_invalid_basis tests_backend/test_ha_device_contacts.py',
+    because:'#1003 AC11: authenticated config/set must reject stale layout revision without changing either durable half.',
+    patches:[{file:'custom_components/houseplan/websocket_api.py',
+      find:'            if "contact_layout" not in msg or msg.get("expected_layout_rev") != layout_rev:',
+      replace:'            if "contact_layout" not in msg:'}],
+  },
+  {
+    id:'contact-pair-basis-validation-skipped-1003',
+    guard:'node scripts/backend-test-guard.mjs contact_conflict_or_invalid_basis tests_backend/test_ha_device_contacts.py',
+    because:'#1003 AC12: leaf validation alone does not prove config/set invokes it before committing the pair.',
+    patches:[{file:'custom_components/houseplan/websocket_api.py',
+      find:'                validate_contact_bases(msg["contact_layout"], layout_data.get("layout", {}))',
+      replace:'                validate_contact_bases({}, {})'}],
+  },
+];
 const UNIT_GUARD_OVERRIDES = new Map(UNIT_GUARD_GROUPS.flatMap(([guard, ids]) => (
   ids.map((id) => [id, guard])
 )));
 
-export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases].map((mutant) => ({
+export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

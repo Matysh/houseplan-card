@@ -22,9 +22,11 @@ interface ContactCard extends FloorKeySource {
   _spaceDisplayForRender(): { showBorders: boolean };
   _wallUnionGeometry(): { components: readonly { geom: ContactMasonry }[] } | null;
   _zeroWalls(): { lines: number[][] };
-  _pos(d: DevItem): { x: number; y: number };
+  _pos(d: DevItem, contacts?:boolean): { x: number; y: number };
   _devicePresentation(d: DevItem): ResolvedDevicePresentation;
   _invalidateDeviceHitGeometry(): void;
+  _layout: Record<string,{x:number;y:number;s?:string;contact_basis?:unknown}>;
+  requestUpdate(): void;
 }
 const wallCache = new WeakMap<object, { key: string; walls: ReturnType<typeof deviceContactWalls>; masonry: ContactMasonry }>();
 const wallKeys = new WeakMap<object, (spaceId: string) => string>();
@@ -53,8 +55,9 @@ export function syncHouseplanDeviceContacts(value: object, renderer: DeviceConta
   const base = effectiveDeviceBaseSize(size > 8 ? 2.5 : size) / 100 * iconUnit(space)
     * (host._mode === 'view' ? host._kioskScale.icon : 1);
   const changed = renderer.sync(host.renderRoot, { key, enabled: true, walls: wall.walls, masonry: wall.masonry,
+    space:space.id,layout:host._layout,invalidate:()=>host.requestUpdate(),
     markers: positionableIconMarkers(host._renderDevices, space.id, ledStripsByMarker(space)).map((d) => ({
-      id: d.id, ...host._pos(d), diameter: base * host._devicePresentation(d).scale,
+      id: d.id, ...host._pos(d,false), virtual:d.virtual===true||d.bindingKind==='virtual', diameter: base * host._devicePresentation(d).scale,
     })) });
-  if (changed) host._invalidateDeviceHitGeometry();
+  if (changed) {host._invalidateDeviceHitGeometry();host.requestUpdate();}
 }

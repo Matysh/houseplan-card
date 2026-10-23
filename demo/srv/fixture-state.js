@@ -21,7 +21,7 @@ export function createFixtureStore(config, layout, emit = () => {}) {
     advanceOptimizer() { return { config_rev: ++configRev, layout_rev: ++layoutRev }; },
     handle(m, registryEntities = []) {
       switch (m.type) {
-        case 'houseplan/config/get': return { config: structuredClone(cfg), rev: configRev, can_write: true };
+        case 'houseplan/config/get': return { config: structuredClone(cfg), rev: configRev, can_write: true, device_contact_api: 1 };
         case 'houseplan/layout/get': return { layout: structuredClone(positions), rev: layoutRev };
         case 'houseplan/marker/copy': {
           cas({ expected_rev: m.expected_config_rev }, configRev);
@@ -42,12 +42,21 @@ export function createFixtureStore(config, layout, emit = () => {}) {
         }
         case 'houseplan/config/set': {
           cas(m, configRev);
+          if (m.contact_layout) cas({expected_rev:m.expected_layout_rev},layoutRev);
           const next = structuredClone(m.config);
-          if (!equal(next, cfg)) { cfg = next; configRev++; changed('config'); }
-          return { ok: true, rev: configRev };
+          const nextPositions=m.contact_layout ? {...positions,...structuredClone(m.contact_layout)} : positions;
+          const configChanged=!equal(next,cfg),layoutChanged=!equal(nextPositions,positions);
+          // Publish neither half before both CAS checks and both candidates exist.
+          cfg=next;positions=nextPositions;
+          if(configChanged)configRev++;
+          if(layoutChanged)layoutRev++;
+          if(configChanged)changed('config');
+          if(layoutChanged)changed('layout');
+          return { ok: true, rev: configRev,...(m.contact_layout?{layout_rev:layoutRev,contact_layout:structuredClone(m.contact_layout)}:{}) };
         }
         case 'houseplan/layout/set': {
           cas(m, layoutRev);
+          if(Object.hasOwn(m,'expected_config_rev'))cas({expected_rev:m.expected_config_rev},configRev);
           const next = structuredClone(m.layout);
           if (!equal(next, positions)) { positions = next; layoutRev++; changed('layout'); }
           return { ok: true, rev: layoutRev };

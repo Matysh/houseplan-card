@@ -1301,6 +1301,14 @@ and its other entities remain deleted. The complete device stays available in
 
 ### Device editor
 
+- **Magnets** (#866, #1003) start enabled for this session. A marker snaps to
+  a visible wall face, both faces of a corner, or an exact neighbour pitch.
+  Hold **Alt** to bypass these magnets; equal spacing is independent. Flat
+  groups reflow when a value or size changes and may separate safely if they
+  cannot fit. All-virtual contours are dashed, mixed groups solid; wall-owned
+  boundary strokes are omitted. Actions and dragging remain individual.
+  Turning magnets off does not dissolve contacts. 2.5D keeps individual tiles.
+
 - drag a marker to save its server-side position. One completed drag creates
   one position-history step; a cancelled, unchanged or failed drag creates
   none;

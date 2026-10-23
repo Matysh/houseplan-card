@@ -52,6 +52,7 @@ from .const import (
     SUPPORT_PREVIEW_TTL_S,
     VERSION,
 )
+from .contact_basis import validate_contact_bases
 from .coordinate_canonicalization import (
     canonicalize_config_geometry,
     canonicalize_layout_geometry,
@@ -971,6 +972,7 @@ async def ws_layout_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         vol.Required("type"): "houseplan/layout/set",
         vol.Required("layout"): LAYOUT_SCHEMA,
         vol.Optional("expected_rev"): int,
+        vol.Optional("expected_config_rev"): int,
     }
 )
 @websocket_api.async_response
@@ -994,6 +996,10 @@ async def ws_layout_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             return
         config_data = resolved.config_data
         data = resolved.layout_data
+        if ("expected_config_rev" in msg
+                and msg["expected_config_rev"] != int(config_data.get("rev", 0))):
+            connection.send_error(msg["id"], "conflict", "Device configuration changed elsewhere")
+            return
         current_rev = int(data.get("rev", 0))
         if "expected_rev" not in msg and current_rev:
             # #356: without the revision the client read, a wholesale write is
@@ -1014,6 +1020,11 @@ async def ws_layout_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             )
             return
         layout = _live_layout(config_data.get("config") or {}, msg["layout"])
+        try:
+            validate_contact_bases(layout, data.get("layout", {}))
+        except vol.Invalid as err:
+            connection.send_error(msg["id"], "invalid_format", str(err))
+            return
         if layout == data.get("layout", {}):
             connection.send_result(msg["id"], {"ok": True, "rev": current_rev})
             return
@@ -1081,6 +1092,11 @@ async def ws_layout_update(hass: HomeAssistant, connection, msg: dict[str, Any])
             return
         data = resolved.layout_data
         layout = data.get("layout", {})
+        try:
+            validate_contact_bases({msg["device_id"]: msg["pos"]}, layout)
+        except vol.Invalid as err:
+            connection.send_error(msg["id"], "invalid_format", str(err))
+            return
         if layout.get(msg["device_id"]) == msg["pos"]:
             connection.send_result(msg["id"], {"ok": True, "rev": int(data.get("rev", 0))})
             return
@@ -1732,6 +1748,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             "support_package_versions": list(PACKAGE_VERSIONS),
             "wall_node_move_api": 1,
             "vacuum_dock_restart_api": 1,
+            "device_contact_api": 1,
             "decor_assets_api": DECOR_ASSETS_API_VERSION,
             "summary_panel_api": SUMMARY_PANEL_API_VERSION,
             **({"radar_stage1_api": 1} if rt.radar_coordinator is not None else {}),
@@ -1871,6 +1888,8 @@ def _readable_entity_ids(hass: HomeAssistant, connection) -> set[str]:
         # therefore runs inside the write lock before CONFIG_SCHEMA.
         vol.Required("config"): dict,
         vol.Optional("expected_rev"): int,
+        vol.Optional("contact_layout"): LAYOUT_SCHEMA,
+        vol.Optional("expected_layout_rev"): int,
     }
 )
 @websocket_api.async_response
@@ -1903,6 +1922,19 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             return
         data = resolved.config_data
         current_rev = data.get("rev", 0)
+        contact_layout = None
+        layout_data = resolved.layout_data
+        layout_rev = int(layout_data.get("rev", 0))
+        if "contact_layout" in msg or "expected_layout_rev" in msg:
+            if "contact_layout" not in msg or msg.get("expected_layout_rev") != layout_rev:
+                connection.send_error(msg["id"], "conflict", "Device layout changed elsewhere")
+                return
+            try:
+                validate_contact_bases(msg["contact_layout"], layout_data.get("layout", {}))
+            except vol.Invalid as err:
+                connection.send_error(msg["id"], "invalid_format", str(err))
+                return
+            contact_layout = {**(layout_data.get("layout") or {}), **msg["contact_layout"]}
         if "expected_rev" not in msg and current_rev:
             # #340: a request without the revision it read is indistinguishable
             # from a stale writer.  Keep the schema field optional only for an
@@ -2004,7 +2036,10 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
                 "Plan file no longer exists: " + ", ".join(sorted(missing)),
             )
             return
-        if msg["config"] == data.get("config"):
+        if contact_layout is not None:
+            contact_layout = _live_layout(msg["config"], contact_layout)
+        if (msg["config"] == data.get("config")
+                and (contact_layout is None or contact_layout == layout_data.get("layout", {}))):
             # A semantic no-op still has to reconcile Repairs with external
             # file-system changes. It must not create a revision, event, or
             # discard the optimizer snapshot merely to refresh diagnostics.
@@ -2013,17 +2048,41 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
                 from .repairs import async_check_plan_files
 
                 hass.async_create_task(async_check_plan_files(hass, entry))
-            connection.send_result(msg["id"], {"ok": True, "rev": int(current_rev)})
+            unchanged: dict[str, Any] = {"ok": True, "rev": int(current_rev)}
+            if contact_layout is not None:
+                unchanged["layout_rev"] = layout_rev
+                unchanged["contact_layout"] = {key: contact_layout.get(key) for key in msg["contact_layout"]}
+            connection.send_result(msg["id"], unchanged)
             return
-        new_rev = current_rev + 1
+        new_rev = current_rev + (msg["config"] != data.get("config"))
         from .zigbee_topology import ZigbeeScanError
 
         try:
-            await async_save_config_state(
-                rt, msg["config"], new_rev, previous_rev=int(current_rev),
-            )
+            if contact_layout is None:
+                await async_save_config_state(
+                    rt, msg["config"], new_rev, previous_rev=int(current_rev),
+                )
+            else:
+                if not _check_write(hass, connection):
+                    connection.send_error(msg["id"], "unauthorized", "Editing permission was lost")
+                    return
+                original_metadata = _layout_metadata(layout_data)
+                final_metadata = {k: v for k, v in original_metadata.items()
+                                  if k not in {_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING}}
+                next_layout_rev = layout_rev + (contact_layout != layout_data.get("layout", {}))
+                await _commit_pair(rt, {
+                    "kind": "device_contact", "config": msg["config"], "layout": contact_layout,
+                    "config_rev": new_rev, "layout_rev": next_layout_rev, "final_metadata": final_metadata,
+                }, {
+                    "kind": "device_contact_rollback", "config": data.get("config") or DEFAULT_CONFIG,
+                    "layout": layout_data.get("layout") or {}, "config_rev": current_rev,
+                    "layout_rev": layout_rev, "final_metadata": original_metadata,
+                })
         except ZigbeeScanError as err:
             connection.send_error(msg["id"], err.code, str(err))
+            return
+        except PairCommitFailure:
+            connection.send_error(msg["id"], "commit_failed", "Device contact save failed; reload the plan")
             return
         # The candidate just became the stored document: its counts are the
         # next write's baseline (#330 §4.2).
@@ -2052,6 +2111,8 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         # marker between this commit and the ownership decision (#335).
         await _purge_trail_recorder(hass, msg["config"])
     hass.bus.async_fire("houseplan_config_updated", {"rev": new_rev})
+    if contact_layout is not None:
+        hass.bus.async_fire("houseplan_layout_updated", {"rev": next_layout_rev})
     _refresh_trail_recorder(hass)
     # refresh repair issues (broken plan references) without waiting for a restart
     entry = get_entry(hass)
@@ -2060,6 +2121,9 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
 
         hass.async_create_task(async_check_plan_files(hass, entry))
     result: dict[str, Any] = {"ok": True, "rev": new_rev}
+    if contact_layout is not None:
+        result["layout_rev"] = next_layout_rev
+        result["contact_layout"] = {key: contact_layout.get(key) for key in msg["contact_layout"]}
     if any(led_report.values()):
         result["led_strips"] = led_report
     connection.send_result(msg["id"], result)

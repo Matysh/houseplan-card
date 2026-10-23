@@ -301,7 +301,7 @@ export class PropertiesEditor {
     const openingSides = this.openingSides(target);
     return propertiesCatalog(target, {
       space: host._curSpaceCfg as PropertiesSpace, cellCm: host._cellCm, t: this.t,
-      position: d => { const p = host._livePos(d); return { x: p.x / NORM_W, y: p.y / NORM_W }; },
+      position: d => { const raw=host._livePos(d),p=host._deviceContacts?.position(d.id,raw)??raw; return { x: p.x / NORM_W, y: p.y / NORM_W }; },
       textBox: shape => host._dtBox?.id === shape.id ? { w: host._dtBox.w / NORM_W, h: host._dtBox.h / NORM_W } : { w: 0, h: 0 },
       fontCm: shape => host._decorTextSizeCm(shape), imageName: id => host._decorAssets.get(id)?.name ?? '',
       textName: shape => {
@@ -430,8 +430,9 @@ export class PropertiesEditor {
     const owned = () => this.allowed && host._configWriteContext.current(authority, host.hass) && !!this.target(identity);
     const name = this.t('history', { name: device.name });
     if (field === 'x' || field === 'y') {
-      const before = devicePlacement(host._layout, device.id), position = host._livePos(device);
-      const after = { ...(before ?? { x: position.x / NORM_W, y: position.y / NORM_W, s: device.space }),
+      const before = devicePlacement(host._layout, device.id), raw = host._livePos(device);
+      const position=host._deviceContacts?.position(device.id,raw)??raw;
+      const after = { x: position.x / NORM_W, y: position.y / NORM_W, s: device.space,
         [field]: value / (host._cellCm * 240) };
       host._devicePositionBusy = true;
       try {
@@ -549,7 +550,8 @@ export class PropertiesEditor {
     const reference = this.reference(target);
     const device = target?.kind === 'device' ? target.value : null;
     const size = this.host._config?.icon_size ?? 2.5;
-    const devicePoint = device ? this.host._livePos(device) : null;
+    const rawPoint = device ? this.host._livePos(device) : null;
+    const devicePoint=device&&rawPoint?this.host._deviceContacts?.position(device.id,rawPoint)??rawPoint:null;
     return renderPropertiesSelection(target, { unitPerPx: this.runtime._cssPxToRender(1), cellCm: this.host._cellCm,
       textBox: this.host._dtBox, reference,
       device: device && devicePoint ? {x:devicePoint.x,y:devicePoint.y,

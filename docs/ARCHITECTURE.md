@@ -928,6 +928,19 @@ one canonical point through preview and the existing writer/history. Optimize
 receives positive all-floor face evidence and rechecks contacts against its
 candidate geometry; no groups, rotations or attachments enter storage.
 
+#1003 extends this with `device-contact-basis` (optional authored reference) and
+`device-contact-layout` (stable-anchor, bounded derived reflow). The rendered
+position is separate from authored storage and is shared by full/static marker
+paint and individual hit/selection/overlays. No live write/Undo loop is allowed.
+Unchanged geometry skips the solver; measured-face replacement updates affected
+scene components. The normalised empty contour shell is also the hit geometry.
+The lazy `device-contact-write` materialises relevant references during explicit
+edits only. Multi-member movement is one full-layout CAS over a fresh complete
+read; settings that first need references use `config/set`'s optional pair extension
+and the existing durable transaction recovery. See CONFIG-COMPATIBILITY.md for
+identity, unknown-extension, downgrade and transfer rules. There is no durable
+group ID, constraint store, polling worker or alternate renderer.
+
 `device-icon-roster.ts` is the pure shared eligibility boundary between painted
 icons and editor alignment/equal-spacing references (#893). The editor reads
 the same render-device snapshot and active LED replacement map as the canvas;

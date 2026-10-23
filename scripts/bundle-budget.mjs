@@ -420,7 +420,10 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // The 2000-B band and 352000-B hard budget stay put.
 // #972: owner-approved small increase for issue explanations and four locales.
 // Current measured initial View is 330002 B; keep the 2000 B band and absolute wall.
-export const INITIAL_VIEW_GZIP_CEILING = 333_938;
+// #1003: pinned Windows source build336142 B, reference333938 (+2204).
+// Owner's standing minor-growth permission; reflow/render/writer stay lazy.
+// The2000 B band and352000 B absolute wall remain unchanged.
+export const INITIAL_VIEW_GZIP_CEILING = 336_142;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
@@ -811,6 +814,8 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // #1035: paired order actions, the context-menu owner and editor-only translations
 // measure 334438 B gzip. Owner permits small limit increases instead of costly
 // reductions; keep the 2000 B band, absolute budgets and all predicates intact.
+// #1003's pre-rebase 336216-B measurement is not the integrated tree. Keep
+// dev's reference here; measure both changes together after this rebase.
 export const LAZY_EDITOR_GZIP_CEILING = 334_400;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 

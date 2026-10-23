@@ -24,7 +24,7 @@ export class DeviceContactScene {
   private readonly cells = new Map<string, string[]>();
   private readonly size: number;
   public constructor(markers: readonly ContactMarker[], public readonly walls: readonly ContactWall[],
-    public readonly masonry: ContactMasonry = []) {
+    public readonly masonry: ContactMasonry = [], private readonly legacy = false) {
     const valid = markers.filter(validContactMarker);
     this.size = Math.max(1, ...valid.map((m) => m.diameter * 2));
     for (const m of valid) {
@@ -61,7 +61,7 @@ export class DeviceContactScene {
     for (const n of this.query(contactBounds(s), CONTACT_EPS)) {
       if (n.marker.id === s.marker.id) continue;
       this.work.pairs++;
-      if (joinedContactSide(s, n) && !contactCoresOverlap(s.marker, n.marker)) {
+      if (joinedContactSide(s, n, !this.legacy||s.marker.precise===true||n.marker.precise===true) && !contactCoresOverlap(s.marker, n.marker)) {
         this.edges.get(s.marker.id)!.add(n.marker.id);
         this.edges.get(n.marker.id)!.add(s.marker.id);
       }
@@ -82,6 +82,12 @@ export class DeviceContactScene {
     const old = this.shapes.get(id);
     if (!old || !Number.isFinite(x) || !Number.isFinite(y)) return new Set();
     if (old.marker.x === x && old.marker.y === y) return new Set();
+    return this.replace({...old.marker,x,y});
+  }
+  /** Replace one measured face without rebuilding unrelated spatial buckets. */
+  public replace(marker: ContactMarker): Set<string> {
+    const id=marker.id, old=this.shapes.get(id);
+    if(!old || !validContactMarker(marker)) return new Set();
     const affected = new Set(this.component(id));
     for (const key of this.cells.get(id) || []) {
       const bucket = this.buckets.get(key); bucket?.delete(id);
@@ -89,7 +95,7 @@ export class DeviceContactScene {
     }
     for (const neighbor of this.edges.get(id) || []) this.edges.get(neighbor)?.delete(id);
     this.edges.set(id, new Set());
-    const s = deriveContactShape({ ...old.marker, x, y }, this.walls);
+    const s = deriveContactShape(marker, this.walls);
     this.shapes.set(id, s); this.insert(s); this.connect(s); this.work.moves++;
     for (const next of this.component(id)) affected.add(next);
     return affected;

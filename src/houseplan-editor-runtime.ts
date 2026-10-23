@@ -283,6 +283,7 @@ import { SpacingMagnet, spacingMarkers, spacingRows } from './device-spacing'; /
 import { DeviceContactMagnet } from './device-contact-snap';
 import type { DeviceContactRenderer } from './device-contact-render';
 import { deviceContactAlt, deviceContactMaintenanceFaces, renderDeviceContactGuide } from './device-contact-editor';
+import { contactConfigPatch } from './device-contact-write';
 import { positionableIconMarkers } from './device-icon-roster';
 import { ledStripsByMarker } from './led-strip-gate';
 import { markerStateSourceFields, normalizeMarkerStateSource } from './marker-state-source';
@@ -839,7 +840,7 @@ export interface HouseplanEditorHostPort {
   _wallUnionPool: Map<string, { key: string; value: ReturnType<typeof wallBodiesUnionPath>; }>;
   _writeChain: Promise<void>;
   _writesPending: number;
-  _sendConfigCandidate: (candidate: ServerConfig) => Promise<void>;
+  _sendConfigCandidate: (candidate: ServerConfig, contactLayout?:DeviceLayout) => Promise<void>;
   _configWriteGuard: (pendingOnly?: boolean) => () => boolean;
   _writeConfig: () => Promise<void>;
   _requestMode: (mode: 'view' | 'plan' | 'devices' | 'decor', animate?: boolean) => Promise<void>;
@@ -1735,7 +1736,9 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null, cand
       this.host._adoption.stageConfigCandidate(candidate);
       const discoveryWrite = this.roomDeviceDiscovery?.prepare(candidate);
       try {
-        await this.host._sendConfigCandidate(discoveryWrite?.config || candidate);
+        const contactLayout=discoveryWrite?.placements.length ? undefined
+          : await contactConfigPatch(this.host,discoveryWrite?.config || candidate);
+        await this.host._sendConfigCandidate(discoveryWrite?.config || candidate,contactLayout);
       } catch (error) {
         if (!isCurrent()) throw error;
         if (discoveryWrite?.placements.length) {
@@ -10063,7 +10066,7 @@ public _deviceSpacing(d: DevItem, place: (x: number, y: number) => DevicePlaceme
 }
 
 public _renderAlignGuides(): TemplateResult {
-    const contactGuide = renderDeviceContactGuide(this.host,px=>this._cssPxToRender(px));
+    const contactGuide = renderDeviceContactGuide(this.host);
     if (contactGuide) return contactGuide;
     const pt = this.host._alignPoint;
     // #873: equal-spacing rows are drawn and labelled here, in the guides layer

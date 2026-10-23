@@ -40,5 +40,6 @@ export interface DeviceDragState {
   /** #873: the equal-spacing magnet lives and dies with the gesture. */
   spacing: SpacingMagnet<DevicePlacement> | null;
   contact: DeviceContactMagnet | null;
+  contactMembers?: readonly string[];
   lastPointer?: { clientX: number; clientY: number; altKey: boolean };
 }

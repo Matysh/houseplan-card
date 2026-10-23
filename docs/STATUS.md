@@ -400,6 +400,14 @@ wall/device contact bypasses grid rounding. Session Snapping/Alt does not disabl
 equal spacing. Unchanged fitted geometry reuses the index even when value text
 changes. The previous 2.5D tiles and saved positions remain unchanged.
 
+#1003 adds exact two-face corners and stable-reference reflow for Flat contacts.
+Optional per-entry `contact_basis` is materialised only by an explicit edit;
+live metrics never write or add history. Tight geometry may release contacts.
+All-virtual contours stay dashed, wall-owned strokes are omitted, and shared
+ink/hit normalisation removes small teeth and the short-row mobile step.
+Multi-member movement and first settings materialisation retain pair/CAS safety;
+the original frozen UI-017 r3 reference is unchanged.
+
 The next accounting cycle is 1.82 against stable `v1.81.0`, using the owner's
 existing milestone 1.82 (#7). Nightly witness repair (#917) is infrastructure
 only, excluded from the user-facing milestone/changelog. Its five definitions

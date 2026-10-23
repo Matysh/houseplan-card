@@ -6,6 +6,9 @@ export type ContactPoint = [number, number];
 export interface ContactRect { left: number; top: number; right: number; bottom: number }
 export interface ContactMarker {
   id: string; x: number; y: number; diameter: number;
+  virtual?: boolean;
+  /** Materialised/new placement uses exact pitch; old layouts retain recognition. */
+  precise?: boolean;
   /** Whole contact face, relative to the stored core centre; no satellites.
    * Standalone DOM uses the existing free face until a true contact exists. */
   box: ContactRect;
@@ -88,6 +91,23 @@ export function contactAtWall(marker: ContactMarker, wall: ContactWall): WallCon
       const direction=contactRotate([0,side>0?-1:1],angle);
       shape.walls={ [direction[0]<0?'left':'right']:wall.id };
     }
+    // Perpendicular faces share one canonical basis. The face contents stay
+    // upright; only the empty contact field turns with an inclined wall.
+    const quarter = Math.round(shape.angle / (Math.PI / 2)) * Math.PI / 2;
+    if (Math.abs(quarter) > 1e-9) {
+      const points = [[shape.box.left,shape.box.top],[shape.box.right,shape.box.top],
+        [shape.box.right,shape.box.bottom],[shape.box.left,shape.box.bottom]]
+        .map(p => contactRotate(p as ContactPoint, quarter));
+      const directions: Record<ContactSide, ContactPoint> = {top:[0,-1],right:[1,0],bottom:[0,1],left:[-1,0]};
+      const edges: ContactShape['walls'] = {};
+      for (const side of Object.keys(shape.walls) as ContactSide[]) {
+        const v = contactRotate(directions[side], quarter);
+        edges[Math.abs(v[0]) > .5 ? v[0] < 0 ? 'left' : 'right' : v[1] < 0 ? 'top' : 'bottom'] = shape.walls[side];
+      }
+      shape.box = {left:Math.min(...points.map(p=>p[0])),right:Math.max(...points.map(p=>p[0])),
+        top:Math.min(...points.map(p=>p[1])),bottom:Math.max(...points.map(p=>p[1]))};
+      shape.angle -= quarter; shape.walls = edges;
+    }
     return { shape, x, y, key: `wall:${wall.id}:${side}`,
       line: [x + a[0], y + a[1], x + b[0], y + b[1]] as [number, number, number, number] };
   });
@@ -114,6 +134,28 @@ export function deriveContactShape(marker: ContactMarker, walls: readonly Contac
   for (const p of found.slice(1)) if (near(p.shape.angle, shape.angle)) Object.assign(shape.walls, p.shape.walls);
   return { ...shape, marker };
 }
+/** Intersections are proposals only: both finite original faces must accept. */
+export function contactAtCorner(marker: ContactMarker, walls: readonly ContactWall[]): WallContact[] {
+  const planes=walls.flatMap(wall=>{
+    const dx=wall.b[0]-wall.a[0],dy=wall.b[1]-wall.a[1],length=Math.hypot(dx,dy);
+    if(length<=CONTACT_EPS) return [];
+    const reach=Math.hypot(marker.box.right-marker.box.left,marker.box.bottom-marker.box.top)*2;
+    const tx=dx/length,ty=dy/length;
+    return contactAtWall(marker,{...wall,a:[wall.a[0]-tx*reach,wall.a[1]-ty*reach],
+      b:[wall.b[0]+tx*reach,wall.b[1]+ty*reach]}).map(p=>({wall,p,n:[-ty,tx]}));
+  });
+  const out: WallContact[]=[];
+  for(let i=0;i<planes.length;i++) for(let j=i+1;j<planes.length;j++) {
+    const a=planes[i],b=planes[j],det=a.n[0]*b.n[1]-a.n[1]*b.n[0];
+    if(a.wall.id===b.wall.id||Math.abs(det)<.1) continue;
+    const u=a.n[0]*a.p.x+a.n[1]*a.p.y,v=b.n[0]*b.p.x+b.n[1]*b.p.y;
+    const x=(u*b.n[1]-a.n[1]*v)/det,y=(a.n[0]*v-u*b.n[0])/det;
+    const shape=deriveContactShape({...marker,x,y},walls),ids=Object.values(shape.walls);
+    if(ids.includes(a.wall.id)&&ids.includes(b.wall.id)) out.push({x,y,shape,
+      key:`corner:${[a.p.key,b.p.key].sort().join('|')}`,line:a.p.line});
+  }
+  return out;
+}
 export function contactBoxIn(shape: ContactShape, angle = shape.angle): ContactRect {
   const p = contactRotate([shape.marker.x, shape.marker.y], -angle);
   return { left: p[0] + shape.box.left, right: p[0] + shape.box.right,
@@ -130,13 +172,15 @@ export function contactShapeJoinDepth(a: ContactShape, b: ContactShape, side: Co
     : x.top-a.box.top+b.box.bottom-y.bottom;
   return contactJoinDepth(a.marker,b.marker)+extra;
 }
-export function joinedContactSide(a: ContactShape, b: ContactShape): ContactSide | null {
+export function joinedContactSide(a: ContactShape, b: ContactShape, exact = true): ContactSide | null {
   if (!near(a.angle, b.angle)) return null;
   const x = contactBoxIn(a), y = contactBoxIn(b);
   const depth = Math.max(contactShapeJoinDepth(a,b,'right'),contactShapeJoinDepth(a,b,'left'),
     contactShapeJoinDepth(a,b,'top'),contactShapeJoinDepth(a,b,'bottom'));
   const overlap = (lo: number, hi: number, lo2: number, hi2: number) => Math.min(hi, hi2) - Math.max(lo, lo2);
-  const close = (d: number, side: ContactSide) => d >= -CONTACT_EPS && d <= contactShapeJoinDepth(a,b,side) + CONTACT_EPS;
+  const close = (d: number, side: ContactSide) => exact
+    ? near(d, contactShapeJoinDepth(a,b,side))
+    : d >= -CONTACT_EPS && d <= contactShapeJoinDepth(a,b,side) + CONTACT_EPS;
   const align = (lo: number, hi: number, lo2: number, hi2: number) => near(lo, lo2) || near(hi, hi2) || near(lo + hi, lo2 + hi2);
   if (overlap(x.top, x.bottom, y.top, y.bottom) > depth + CONTACT_EPS && align(x.top, x.bottom, y.top, y.bottom)) {
     if (x.left < y.left && close(x.right - y.left,'right')) return 'right';
@@ -168,8 +212,76 @@ export function contactContains(shape: ContactShape, point: ContactPoint,
   }
   return true;
 }
-/** Rounded convex corners, square concave/wall corners. Never a group bbox. */
-export function contactOutline(shapes: readonly ContactShape[]): string {
+/** Normalise empty contact padding, never core centres or actual contents.
+ * The returned shapes are also the individual hit geometry, not SVG-only ink. */
+export function contactContourShapes(shapes: readonly ContactShape[]): ContactShape[] {
+  if (!shapes.length) return [];
+  const angle = shapes[0].angle;
+  const boxes = shapes.map(s => contactBoxIn(s, angle));
+  for (const edge of ['top','bottom','left','right'] as const) {
+    const sorted = boxes.map((b,i)=>({value:b[edge],i})).sort((a,b)=>a.value-b.value || a.i-b.i);
+    for (let start=0; start<sorted.length;) {
+      let end=start+1;
+      const first=sorted[start], minD=shapes[first.i].marker.diameter;
+      while(end<sorted.length && sorted[end].value-first.value<=Math.min(minD,shapes[sorted[end].i].marker.diameter)*.02) end++;
+      const indices=sorted.slice(start,end).map(v=>v.i);
+      const locked=indices.filter(i=>shapes[i].walls[edge]).map(i=>boxes[i][edge]);
+      if (indices.length>1 && (!locked.length || Math.max(...locked)-Math.min(...locked)<=CONTACT_EPS)) {
+        const target=locked[0] ?? (edge==='top'||edge==='left' ? first.value : sorted[end-1].value);
+        for (const i of indices) boxes[i][edge]=target;
+      }
+      start=end;
+    }
+  }
+  // A compact column of equal-diameter icon+value rows shares its free outer
+  // edge. Do not turn an L or genuinely different-size group into a bbox.
+  const corePoints=shapes.map(s=>contactRotate([s.marker.x,s.marker.y],-angle));
+  if (shapes.length>1 && shapes.every((s,i)=>near(s.marker.diameter,shapes[0].marker.diameter)
+      && near(corePoints[i][0],corePoints[0][0]))) {
+    const left=Math.min(...boxes.map(b=>b.left)), right=Math.max(...boxes.map(b=>b.right));
+    for(let i=0;i<boxes.length;i++) {
+      if(!shapes[i].walls.left) boxes[i].left=left;
+      if(!shapes[i].walls.right) boxes[i].right=right;
+    }
+  }
+  const radii=shapes.map(s=>s.radius), low=Math.min(...radii), high=Math.max(...radii);
+  const radius=high-low<=Math.min(...shapes.map(s=>s.marker.diameter))*.02 ? high : low;
+  return shapes.map((s,i)=>{
+    const p=contactRotate([s.marker.x,s.marker.y],-angle), b=boxes[i];
+    return {...s, box:{left:b.left-p[0],right:b.right-p[0],top:b.top-p[1],bottom:b.bottom-p[1]}, radius};
+  });
+}
+
+/** Visible portions of a straight boundary, excluding finite wall contacts. */
+function freeBoundary(a: ContactPoint, b: ContactPoint, shapes: readonly ContactShape[]): ContactPoint[][] {
+  const dx=b[0]-a[0],dy=b[1]-a[1],length=Math.hypot(dx,dy);
+  if(length<=1e-9) return [];
+  const intervals: [number,number][]=[];
+  for(const s of shapes) {
+    const box=contactBoxIn(s,shapes[0].angle);
+    const edges: Record<ContactSide,[ContactPoint,ContactPoint]>={
+      top:[[box.left,box.top],[box.right,box.top]],bottom:[[box.left,box.bottom],[box.right,box.bottom]],
+      left:[[box.left,box.top],[box.left,box.bottom]],right:[[box.right,box.top],[box.right,box.bottom]]};
+    for(const side of Object.keys(s.walls) as ContactSide[]) {
+      const [p,q]=edges[side];
+      if(Math.abs((p[0]-a[0])*dy-(p[1]-a[1])*dx)>CONTACT_EPS*length
+          || Math.abs((q[0]-a[0])*dy-(q[1]-a[1])*dx)>CONTACT_EPS*length) continue;
+      const u=((p[0]-a[0])*dx+(p[1]-a[1])*dy)/length**2;
+      const v=((q[0]-a[0])*dx+(q[1]-a[1])*dy)/length**2;
+      const lo=Math.max(0,Math.min(u,v)),hi=Math.min(1,Math.max(u,v));
+      if(hi>lo) intervals.push([lo,hi]);
+    }
+  }
+  intervals.sort((a,b)=>a[0]-b[0]);
+  const point=(t:number):ContactPoint=>[a[0]+dx*t,a[1]+dy*t],out:ContactPoint[][]=[];
+  let end=0;
+  for(const [lo,hi] of intervals) { if(lo>end+1e-9) out.push([point(end),point(lo)]); end=Math.max(end,hi); }
+  if(end<1-1e-9) out.push([point(end),b]);
+  return out;
+}
+/** Rounded convex corners, square concave/wall corners. Never a group bbox.
+ * Stroke is deliberately open where a wall owns the boundary; hit remains closed. */
+export function contactOutline(shapes: readonly ContactShape[], stroke = false): string {
   if (!shapes.length) return '';
   const angle = shapes[0].angle;
   const boxes = shapes.map((s) => contactBoxIn(s, angle));
@@ -187,14 +299,29 @@ export function contactOutline(shapes: readonly ContactShape[]): string {
     const points = closed.slice(0, -1);
     const area = points.reduce((sum, p, i) => { const q = points[(i + 1) % points.length]; return sum + p[0] * q[1] - q[0] * p[1]; }, 0);
     if ((area > 0) !== (ringIndex === 0)) points.reverse();
-    return points.map((p, i) => {
+    const corners = points.map((p, i) => {
       const prev = points[(i + points.length - 1) % points.length], next = points[(i + 1) % points.length];
       const u: ContactPoint = [p[0] - prev[0], p[1] - prev[1]], v: ContactPoint = [next[0] - p[0], next[1] - p[1]];
       const lu = Math.hypot(...u), lv = Math.hypot(...v);
       const r = u[0] * v[1] - u[1] * v[0] > 0 && !wallCorner(p) ? Math.min(radius, lu / 2, lv / 2) : 0;
       const entry: ContactPoint = [p[0] - u[0] * r / lu, p[1] - u[1] * r / lu];
       const exit: ContactPoint = [p[0] + v[0] * r / lv, p[1] + v[1] * r / lv];
-      return `${i ? 'L' : 'M'}${fmt(entry)} ${r ? `A${r} ${r} 0 0 1 ${fmt(exit)}` : `L${fmt([p[0], p[1]])}`}`;
-    }).join(' ') + ' Z';
+      return {entry,exit,r};
+    });
+    if(!stroke) return corners.map(({entry,exit,r},i)=>`${i?'L':'M'}${fmt(entry)} ${r?`A${r} ${r} 0 0 1 ${fmt(exit)}`:`L${fmt(exit)}`}`).join(' ')+' Z';
+    let cursor:ContactPoint|null=null;
+    const start=(p:ContactPoint):string=>{
+      if(cursor&&near(cursor[0],p[0])&&near(cursor[1],p[1]))return '';
+      cursor=p;return `M${fmt(p)} `;
+    };
+    return corners.map(({entry,exit,r},i)=>{
+      const prev=corners[(i+corners.length-1)%corners.length].exit;
+      const lines=freeBoundary(prev,entry,shapes).map(([a,b])=>{
+        const segment=`${start(a)}L${fmt(b)}`;cursor=b;return segment;
+      }).join(' ');
+      const arc=r?`${start(entry)}A${r} ${r} 0 0 1 ${fmt(exit)}`:'';
+      if(r)cursor=exit;
+      return `${lines} ${arc}`;
+    }).join(' ');
   })).join(' ');
 }
