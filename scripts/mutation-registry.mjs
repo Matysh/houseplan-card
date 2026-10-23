@@ -14683,7 +14683,7 @@ const MUTANT_DEFINITIONS = [
       + 'is what guarantees the skipped tick is replayed afterwards (#451, #458)',
     patches: [{
       file: 'src/live-interaction-runtime.ts',
-      find: "    const defer = change === 'state' && this.active();",
+      find: "    const defer = change === 'state' && this.active()\n      && !contactValueFrameChanged(this.host,this.contacts,before,after);",
       replace: '    const defer = false;',
     }],
   },

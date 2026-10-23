@@ -7312,9 +7312,8 @@ export class HouseplanCard extends LitElement {
     const drag = this._deviceDrag;
     if (!drag || drag.id !== d.id || drag.pointerId !== ev.pointerId) return;
     this._editorRuntimeOrThrow()._flushPointerMove('device');
-    if(drag.moved&&drag.lastPointer)this._pointerMoveNow(new PointerEvent('pointermove',{
-      ...drag.lastPointer,pointerId:drag.pointerId,
-    }),d);
+    // Revalidate at the released pointer's actual coordinates and modifiers.
+    if(drag.moved&&Number.isFinite(ev.clientX)&&Number.isFinite(ev.clientY))this._pointerMoveNow(ev,d);
     this._deviceDrag = null;
     const after = devicePlacement(this._layout, d.id);
     if (!drag.moved || after === null || sameDevicePlacement(after, drag.start)) {
