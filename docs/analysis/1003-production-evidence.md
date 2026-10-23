@@ -32,11 +32,11 @@ by these tests. Logs and synthetic screenshots are in ignored artifacts/1003/.
 - `node scripts/mutation-gate.mjs --check`: static registry check PASS,
   1797 definitions / 476 browser guards at this material. **No mutants executed;
   caught status unknown.** Five registry warnings are not a caught verdict.
-- `npm run gate:small` ran green earlier; the later pre-push caught an obsolete
-  mutation anchor and a one-line root budget overrun. Both are fixed at
-  29f45c464; their focused tests pass. The fresh enabled pre-push and exact-SHA
-  Linux CI are mandatory before handoff, and their final results belong in the
-  canonical handoff comment, not an inference from the earlier run.
+- The enabled pre-push ran `npm run gate:small` at e594c183c: **232 seconds,
+  0 failures**, including product and tooling units. An earlier run caught an
+  obsolete mutation anchor and a one-line root budget overrun; both were fixed
+  at 29f45c464 without increasing a ceiling. Exact-SHA Linux CI and golden
+  acceptance results belong in the canonical handoff comment.
 
 ## AC and negative witnesses
 
@@ -78,7 +78,19 @@ the battery calibration fixture cold-remounts before measurement rather than
 turning calibration into a live resize of an existing group. Pixel oracles and
 their thresholds are unchanged. Run 39935339661 then reported 218 PASS / 2
 intended contour differences / 0 errors. That older artifact is not accepted
-for later product source; final capture and acceptance must use current material.
+for later product source. The final complete Linux artifact of run
+[39939441946](https://github.com/Matysh/houseplan-card/actions/runs/39939441946)
+captures e594c183c with fingerprint
+51f4ec1df33b88827a9ab720772700ffaa07bed8141792eaf5c6b655ca5165ba:
+218 passed, only device-contacts-designer-light/dark different, no errors.
+Both actual images and the contour diff were inspected: dashed virtual shells,
+free edges, real protrusions, L voids and wall hatching remain; only the intended
+contour policy changes. Their PNG hashes match the previously inspected captures
+(light 0c42f812913a2b8278ac15a4c829717713e36d6667d16006ded7b7c6480a9f86,
+dark d7a5e244b622a247f95dbb4a2f8daa188818dd3df16474796925309ea9ec26c5).
+Acceptance uses the complete artifact in Linux with exactly those two declared
+changes, keeps the other 218 references and records 191 byte-identical witnesses
+(floor 10). No witness bypass or foreign-platform override is used.
 
 Headless touch/pinch/orientation and real computed SVG/DOM geometry do not prove
 every mobile GPU's rasterisation. No owner GPU approval is required. Legacy
@@ -245,4 +257,3 @@ matches, not evidence that 145 feature workflows changed.
 | smoke_zero_divider_taper.mjs | wallKey | Not run: shared key/normalised-unit symbol match; wall model, CAD tool and import paths of this scenario are unchanged. Finite masonry/corner/opening negatives, wall_key_roundtrip and golden matrix exercise the changed consumer. |
 | smoke_zigbee_incomplete_reasons.mjs | _loadOk | Not run: common config/revision/loading owner match, not a changed workflow here. Pair/CAS/ACL exercised by contact writer units, HA harness and config_authority/post_write_adoption/pageshow/layout_sync smokes; this separate feature flow is unchanged. |
 | smoke_zigbee_topology_hover.mjs | Owner | Not run: common device/render owner symbol. Its specific feature contract is unchanged; effective coordinates and hit ownership are exercised by contacts/reflow/live_drag/hit_capsules, ordinary gestures by modes and history, Flat/Iso consumers by space_card/isometric_live_touch plus full golden. |
-

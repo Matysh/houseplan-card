@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 80,
-  "acceptedAt": "2026-10-23T09:59:53.398Z",
-  "sourceFingerprint": "2cf7aa4f9835f719858ea1e532b3e74a159c550e0f17137b7427bc6db17eba6c",
+  "acceptedAt": "2026-10-23T10:38:11.677Z",
+  "sourceFingerprint": "51f4ec1df33b88827a9ab720772700ffaa07bed8141792eaf5c6b655ca5165ba",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,18 +10,18 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "2cf7aa4f9835f719858ea1e532b3e74a159c550e0f17137b7427bc6db17eba6c",
+    "buildFingerprint": "51f4ec1df33b88827a9ab720772700ffaa07bed8141792eaf5c6b655ca5165ba",
     "ci": {
       "repository": "Matysh/houseplan-card",
-      "run": 39934872695,
+      "run": 39939441946,
       "attempt": 1,
-      "sha": "628b6e0cc9f559602224e0a9392e723c107596f4"
+      "sha": "e594c183caf5e8a5b81c673c68b057e806b49d46"
     }
   },
   "localAttestation": null,
   "foreignCapture": null,
   "witnesses": {
-    "count": 190,
+    "count": 191,
     "floor": 10
   },
   "scenarios": {
@@ -231,8 +231,8 @@
     "optimize-orphan-references-light-ru": "cca541db0a025fed02d1b03525652d278df6695bcf11933e856a76467578fae9",
     "card-editor-invalid-default-floor-light-en": "670d01d9a7feabe70391cde9dc00c57e5e8ef29e45e6496a2bc791e0fdfcfe06",
     "card-editor-invalid-default-floor-dark-ru": "01828da5c582231b16495ad17c98a84b1038813fe82a843c5cb466781a0ce214",
-    "device-contacts-designer-light": "8ee81419ae69236156c2936b2bba3bbfafd3dfd29e4e6605b3bf86a801a53d58",
-    "device-contacts-designer-dark": "a9f0ecf372f99c2e66a915a1c18bb3c5dca4bf79e4087003aea82dd21a98c77c",
+    "device-contacts-designer-light": "0c42f812913a2b8278ac15a4c829717713e36d6667d16006ded7b7c6480a9f86",
+    "device-contacts-designer-dark": "d7a5e244b622a247f95dbb4a2f8daa188818dd3df16474796925309ea9ec26c5",
     "led-strip-design-reference-off-light": "deba32520b77694a8c0a093c722b866cb0b49980f1bbd2eca8c7a65474502123",
     "led-strip-design-reference-on-light": "a79c6fe973104021570afdb41912e831d133a361898d5c900d7813dab6cdac32",
     "lighting-led-strip-glow-dark": "ec774c9b6f1c2875aea3369a2001b35ea1cca3a2072acc2b2462aaf196209952",
