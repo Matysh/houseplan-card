@@ -109,6 +109,8 @@ export function editorWriteHarness({ config, rev = 1, reject = null, marker = nu
   const runtime = Object.create(HouseplanEditorRuntime.prototype);
   // This focused writer harness skips the DOM-heavy runtime constructor.
   runtime.physicalWriteHistory = new PhysicalWriteHistory();
+  // This writer-only shell has no armed Line session or window listeners.
+  runtime.decorLine = { reset() {} };
   runtime.host = host;
   // The card's deferred writer and its background failure policy.
   host._saveConfigDebounced = deferredWrite(() => {

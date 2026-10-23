@@ -110,7 +110,7 @@ try {
   await page.evaluate(()=>window.__hpTest.openSpaceDialog('edit','line'));
   check('line.modal_owns_input',(await state()).blocked);
   p=await point(600,400);
-  await card.locator('hp-dialog[data-kind="space"] [data-hp="dialog-cancel"]').click();await settle();
+  await card.locator('hp-dialog[data-kind="space"] button.btn[data-hp="dialog-cancel"]').click();await settle();
   await card.locator('.stage').evaluate((el,p)=>el.dispatchEvent(new MouseEvent('click',{bubbles:true,composed:true,
     clientX:p.x,clientY:p.y})),p);await settle();
   check('line.modal_tail_no_write',(await state()).decor.length,0);

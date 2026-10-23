@@ -33,7 +33,7 @@ test('clicks accept independent segments; up, hover and short points cannot writ
 test('Shift retains exact rays across octants and rejects incompatible magnets', () => {
   for (const [raw, expected] of [ [[45, 12], [50, 10]], [[42, 35], [40, 40]],
     [[12, 45], [10, 50]], [[-25, 40], [-20, 40]], [[-40, -20], [-30, -30]],
-    [[40, -30], [50, -30]] ]) {
+    [[40, -30], [50, -30]], [[-40, 10], [-40, 10]], [[10, -40], [10, -40]] ]) {
     const end = decorLineEnd([10, 10], raw, 10, true, [raw[0] + 2, raw[1] + 1]);
     assert.deepEqual(end, expected);
   }
