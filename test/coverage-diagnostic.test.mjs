@@ -2,7 +2,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { resolve } from 'node:path';
+import { resolve, join } from 'node:path';
+import { patchImports } from '../scripts/fix-test-build.mjs';
+import { lineOffsets, positionAt } from '../scripts/coverage-maps.mjs';
+import { TraceMap, originalPositionFor } from '@jridgewell/trace-mapping';
 import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { editMappedSource } from '../scripts/coverage-maps.mjs';
@@ -100,3 +103,23 @@ test('nightly job uses exact immutable intent with read permissions and uncondit
     try { assert.doesNotMatch(readFileSync(path, 'utf8'), /diagnostic-coverage|coverage-diagnostic/); } catch (error) { if (error.code !== 'ENOENT') throw error; }
   }
 });
+
+test('#1018 AC3 fix-test-build composes extension insertions; normal import bytes remain identical', t => {
+  const dir = mkdtempSync(join(tmpdir(), 'hp-coverage-imports-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const input = 'const before=112233;import{a}from "./first";import{b}from "./second";const after=445566;';
+  const path = join(dir, 'fixture.js');
+  writeFileSync(path, input); writeFileSync(`${path}.map`, JSON.stringify(editMappedSource(input, [], { id: 'src/fixture.ts' }).map));
+  patchImports(dir, { coverage: true });
+  const mapped = { code: readFileSync(path, 'utf8'), map: JSON.parse(readFileSync(`${path}.map`, 'utf8')) };
+  for (const token of ['112233', '445566']) {
+    const at = positionAt(mapped.code.indexOf(token), lineOffsets(mapped.code));
+    const expected = positionAt(input.indexOf(token), lineOffsets(input));
+    const found = originalPositionFor(new TraceMap(mapped.map), {line: at.line + 1, column: at.column});
+    assert.equal(found.line, expected.line + 1); assert.equal(found.column, expected.column);
+  }
+  assert.ok(mapped.code.includes('./first.js')); assert.ok(mapped.code.includes('./second.js'));
+  writeFileSync(path, input); patchImports(dir, { coverage: false });
+  assert.equal(readFileSync(path, 'utf8'), mapped.code);
+});
+

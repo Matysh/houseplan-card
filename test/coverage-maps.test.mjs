@@ -1,15 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { rollup } from 'rollup';
 import terser from '@rollup/plugin-terser';
 import { TraceMap, originalPositionFor } from '@jridgewell/trace-mapping';
 import { editMappedSource, replacementEdits, replaceChunkSource, lineOffsets, positionAt } from '../scripts/coverage-maps.mjs';
 import { cssTemplateMinifier } from '../scripts/css-template-minifier.mjs';
-import { buildFingerprintPlugin, entryFallbackPlugin, editorRuntimeRetryUrlPlugin, NAMESPACE_LOCALE_CHUNKS, VIEW_RUNTIME_RETRY_CHUNKS } from '../scripts/bundle-manifest.mjs';
-import { patchImports } from '../scripts/fix-test-build.mjs';
+import { buildFingerprintPlugin } from '../scripts/bundle-manifest.mjs';
 
 const original = (mapped, token, occurrence = 0) => {
   let offset = -1;
@@ -55,58 +51,4 @@ test('#1018 AC3 actual fingerprint → CSS → Rollup → terser maps keep indep
     assert.equal(chunk.map.sourcesContent[0], source);
     assert.ok(!chunk.code.includes('remove'));
   } finally { await bundle.close(); }
-});
-
-test('#1018 AC3 real fallback rewrite preserves panel source after inserted catch code and leaves fallback generated', () => {
-  const cardSource = 'export{Card}from"./houseplan-assets/main-12345678.js";';
-  const panelSource = 'const headSentinel=123;import"./houseplan-assets/main-12345678.js";const tailSentinel=456;';
-  const card = { type: 'chunk', isEntry: true, fileName: 'houseplan-card.js', facadeModuleId: '/src/houseplan-card.ts',
-    imports: [], ...editMappedSource(cardSource, [], { id: 'generated-facade', generated: true }) };
-  const panel = { type: 'chunk', isEntry: true, fileName: 'houseplan-panel.js', facadeModuleId: '/src/houseplan-panel.ts',
-    imports: [], ...editMappedSource(panelSource, [], { id: '/src/houseplan-panel.ts' }) };
-  const bundle = { [card.fileName]: card, [panel.fileName]: panel, [`${panel.fileName}.map`]: { type: 'asset', source: '' } };
-  entryFallbackPlugin({ coverage: true }).generateBundle({}, bundle);
-  expectAt(panel, panelSource, 'headSentinel'); expectAt(panel, panelSource, 'tailSentinel');
-  assert.equal(original(panel, 'connectedCallback').source, null);
-  assert.equal(original(card, 'connectedCallback').source, null);
-  assert.deepEqual(JSON.parse(bundle[`${panel.fileName}.map`].source), JSON.parse(JSON.stringify(panel.map)));
-});
-
-test('#1018 AC3 fix-test-build composes extension insertions; normal import bytes remain identical', t => {
-  const dir = mkdtempSync(join(tmpdir(), 'hp-coverage-imports-'));
-  t.after(() => rmSync(dir, { recursive: true, force: true }));
-  const input = 'const before=112233;import{a}from "./first";import{b}from "./second";const after=445566;';
-  const path = join(dir, 'fixture.js');
-  writeFileSync(path, input); writeFileSync(`${path}.map`, JSON.stringify(editMappedSource(input, [], { id: 'src/fixture.ts' }).map));
-  patchImports(dir, { coverage: true });
-  const mapped = { code: readFileSync(path, 'utf8'), map: JSON.parse(readFileSync(`${path}.map`, 'utf8')) };
-  expectAt(mapped, input, '112233'); expectAt(mapped, input, '445566');
-  assert.ok(mapped.code.includes('./first.js')); assert.ok(mapped.code.includes('./second.js'));
-  writeFileSync(path, input); patchImports(dir, { coverage: false });
-  assert.equal(readFileSync(path, 'utf8'), mapped.code);
-});
-
-test('#1018 AC3 actual raw retry URL plugin keeps sentinels before/after different-length URLs and map asset synchronized', () => {
-  const names = ['EDITOR', 'ONBOARDING', 'ISO', 'DE', 'FR', 'FURNITURE_ART', 'PDF', 'MOON', 'LED', 'LED_FIELD', 'LED_EDITOR'];
-  const modules = ['houseplan-editor-runtime', 'houseplan-onboarding-runtime', 'iso-scene-render', 'i18n/de', 'i18n/fr',
-    'furniture-plan-art.generated', 'pdf/pdf-export', 'moon-runtime', 'led-strip-runtime', 'led-strip-field', 'led-strip-editor'];
-  const source = 'const before=114466;' + names.map(name => `import("__HOUSEPLAN_${name}_RETRY_ASSET__");`).join('')
-    + NAMESPACE_LOCALE_CHUNKS.map(entry => `import("${entry.token}?retry");`).join('')
-    + VIEW_RUNTIME_RETRY_CHUNKS.map(entry => `import("${entry.token}");`).join('') + 'const after=339977;';
-  const owner = { type: 'chunk', fileName: 'houseplan-assets/owner.js', modules: {},
-    ...editMappedSource(source, [], { id: '/src/owner.ts' }) };
-  const bundle = { [owner.fileName]: owner, [`${owner.fileName}.map`]: { type: 'asset', source: '' } };
-  const targets = [...modules.map((module, n) => ({ module: `/src/${module}.ts`, name: names[n] })),
-    ...NAMESPACE_LOCALE_CHUNKS.map((entry, n) => ({ module: entry.module, name: `locale${n}` })),
-    ...VIEW_RUNTIME_RETRY_CHUNKS.map((entry, n) => ({ module: entry.module, name: `view${n}` }))];
-  for (const target of targets) {
-    const fileName = `houseplan-assets/${target.name}-different-length-HASH.js`;
-    bundle[fileName] = { type: 'chunk', fileName, modules: { [`/repo${target.module}`]: {} }, code: '',
-      exports: target.name === 'EDITOR' ? ['EDITOR_RUNTIME_FINGERPRINT', 'EDITOR_LANGUAGE_RUNTIME', 'HouseplanEditorRuntime'] : [] };
-  }
-  editorRuntimeRetryUrlPlugin({ coverage: true }).generateBundle({}, bundle);
-  expectAt(owner, source, '114466'); expectAt(owner, source, '339977');
-  assert.ok(!owner.code.includes('__HOUSEPLAN_')); assert.ok(owner.code.includes('?retry'));
-  assert.equal(original(owner, 'EDITOR-different').source, null);
-  assert.deepEqual(JSON.parse(bundle[`${owner.fileName}.map`].source), JSON.parse(JSON.stringify(owner.map)));
 });

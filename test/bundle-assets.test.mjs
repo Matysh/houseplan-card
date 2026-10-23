@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
+import { editMappedSource, lineOffsets, positionAt } from '../scripts/coverage-maps.mjs';
+import { TraceMap, originalPositionFor } from '@jridgewell/trace-mapping';
 
 import {
   buildBundleManifest, buildFingerprintPlugin, editorRuntimeRetryUrlPlugin,
@@ -1435,4 +1437,58 @@ test('#627 AC3 проверка владения краснеет на кажд�
   const real = namespaceLocaleMarkers();
   assert.equal(real.length, 20);
   assert.equal(new Set(real.map((entry) => entry.text)).size, 20);
+});
+
+
+// Final output mapping is a bundle contract: these virtual chunks never read
+// the product monolith as text. The fallback and raw retry plugin names are
+// real so late-transform source offsets are exercised, not a copied rewrite.
+const mapOriginal1018 = (mapped, token) => {
+  const at = positionAt(mapped.code.indexOf(token), lineOffsets(mapped.code));
+  assert.ok(mapped.code.includes(token));
+  return originalPositionFor(new TraceMap(mapped.map), {line: at.line + 1, column: at.column});
+};
+const expectMapAt1018 = (mapped, source, token) => {
+  const at = positionAt(source.indexOf(token), lineOffsets(source));
+  const found = mapOriginal1018(mapped, token);
+  assert.equal(found.line, at.line + 1, token); assert.equal(found.column, at.column, token);
+};
+test('#1018 AC3 real fallback rewrite preserves panel source after inserted catch code and leaves fallback generated', () => {
+  const cardSource = 'export{Card}from"./houseplan-assets/main-12345678.js";';
+  const panelSource = 'const headSentinel=123;import"./houseplan-assets/main-12345678.js";const tailSentinel=456;';
+  const card = { type: 'chunk', isEntry: true, fileName: 'houseplan-card.js', facadeModuleId: '/src/houseplan-card.ts',
+    imports: [], ...editMappedSource(cardSource, [], { id: 'generated-facade', generated: true }) };
+  const panel = { type: 'chunk', isEntry: true, fileName: 'houseplan-panel.js', facadeModuleId: '/src/houseplan-panel.ts',
+    imports: [], ...editMappedSource(panelSource, [], { id: '/src/houseplan-panel.ts' }) };
+  const bundle = { [card.fileName]: card, [panel.fileName]: panel, [`${panel.fileName}.map`]: { type: 'asset', source: '' } };
+  entryFallbackPlugin({ coverage: true }).generateBundle({}, bundle);
+  expectMapAt1018(panel, panelSource, 'headSentinel'); expectMapAt1018(panel, panelSource, 'tailSentinel');
+  assert.equal(mapOriginal1018(panel, 'connectedCallback').source, null);
+  assert.equal(mapOriginal1018(card, 'connectedCallback').source, null);
+  assert.deepEqual(JSON.parse(bundle[`${panel.fileName}.map`].source), JSON.parse(JSON.stringify(panel.map)));
+});
+
+test('#1018 AC3 actual raw retry URL plugin keeps sentinels before/after different-length URLs and map asset synchronized', () => {
+  const names = ['EDITOR', 'ONBOARDING', 'ISO', 'DE', 'FR', 'FURNITURE_ART', 'PDF', 'MOON', 'LED', 'LED_FIELD', 'LED_EDITOR'];
+  const modules = ['houseplan-editor-runtime', 'houseplan-onboarding-runtime', 'iso-scene-render', 'i18n/de', 'i18n/fr',
+    'furniture-plan-art.generated', 'pdf/pdf-export', 'moon-runtime', 'led-strip-runtime', 'led-strip-field', 'led-strip-editor'];
+  const source = 'const before=114466;' + names.map(name => `import("__HOUSEPLAN_${name}_RETRY_ASSET__");`).join('')
+    + NAMESPACE_LOCALE_CHUNKS.map(entry => `import("${entry.token}?retry");`).join('')
+    + VIEW_RUNTIME_RETRY_CHUNKS.map(entry => `import("${entry.token}");`).join('') + 'const after=339977;';
+  const owner = { type: 'chunk', fileName: 'houseplan-assets/owner.js', modules: {},
+    ...editMappedSource(source, [], { id: '/src/owner.ts' }) };
+  const bundle = { [owner.fileName]: owner, [`${owner.fileName}.map`]: { type: 'asset', source: '' } };
+  const targets = [...modules.map((module, n) => ({ module: `/src/${module}.ts`, name: names[n] })),
+    ...NAMESPACE_LOCALE_CHUNKS.map((entry, n) => ({ module: entry.module, name: `locale${n}` })),
+    ...VIEW_RUNTIME_RETRY_CHUNKS.map((entry, n) => ({ module: entry.module, name: `view${n}` }))];
+  for (const target of targets) {
+    const fileName = `houseplan-assets/${target.name}-different-length-HASH.js`;
+    bundle[fileName] = { type: 'chunk', fileName, modules: { [`/repo${target.module}`]: {} }, code: '',
+      exports: target.name === 'EDITOR' ? ['EDITOR_RUNTIME_FINGERPRINT', 'EDITOR_LANGUAGE_RUNTIME', 'HouseplanEditorRuntime'] : [] };
+  }
+  editorRuntimeRetryUrlPlugin({ coverage: true }).generateBundle({}, bundle);
+  expectMapAt1018(owner, source, '114466'); expectMapAt1018(owner, source, '339977');
+  assert.ok(!owner.code.includes('__HOUSEPLAN_')); assert.ok(owner.code.includes('?retry'));
+  assert.equal(mapOriginal1018(owner, 'EDITOR-different').source, null);
+  assert.deepEqual(JSON.parse(bundle[`${owner.fileName}.map`].source), JSON.parse(JSON.stringify(owner.map)));
 });

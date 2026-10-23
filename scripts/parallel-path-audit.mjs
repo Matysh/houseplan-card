@@ -41,7 +41,17 @@ export function historicalCandidates({ root = process.cwd(), candidate = 'HEAD',
     const cycle = range.has(commit) ? boundaries.find(b => ancestor(commit, b.sha))?.ref || 'unreleased' : 'seed/outside-range';
     const issue = git(['show', '-s', '--format=%B', commit]).match(/(?:Issue:\s*#?|\(#)(\d+)/)?.[1] || null;
     const review = reviews?.entries?.find(r => r.sha === commit) || null;
-    rows.push({ sha: commit, issue: issue && +issue, subject, files, added, deleted, formula, seed, cycle,
+    let currentReferences = [];
+    if (review?.callers) {
+      try {
+        currentReferences = git(['grep', '-n', '-F', review.callers, sha, '--', 'src', ':(exclude)src/i18n/**'])
+          .split('\n').filter(Boolean).map(line => {
+            const match = line.match(/^[a-f0-9]{40}:(.+?):(\d+):(.*)$/);
+            return match && { sha, path: match[1], line: +match[2], excerpt: match[3].trim() };
+          }).filter(Boolean);
+      } catch { /* no references is a fact, never semantic removal approval */ }
+    }
+    rows.push({ sha: commit, issue: issue && +issue, subject, files, added, deleted, formula, seed, cycle, currentReferences,
       review: review ? { ...review, auditedCandidate: reviews.candidate,
         stillExact: reviews.candidate === sha, authority: 'manual author review at auditedCandidate; recheck callers if material changes' }
         : { decision: 'needs-witness', reason: 'No recorded semantic classification for this exact commit; insertion ratio is only a candidate signal.' } });
