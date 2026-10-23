@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 697,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "The delivery after stable v1.82.0 accepts three canonical documentation screenshots and their current source fingerprint for v1.83.0-beta.1. The reviewed frames show the already delivered device-preview spacing, decor order controls and print format dialog; the print theme repair is separately accounted under #1036. This generated documentation acceptance introduces no additional runtime behavior and is excluded from the stable user changelog and milestone."
+}
