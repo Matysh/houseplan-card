@@ -8,6 +8,7 @@ import { optimizePlans, PLAN_MODEL_VERSION } from '../test-build/plan-optimizer.
 import { deviceContactFloor } from '../test-build/device-contact-floor.js';
 import { DeviceContactScene } from '../test-build/device-contact-scene.js';
 import { DeviceContactMagnet } from '../test-build/device-contact-snap.js';
+import {makeContactBasis} from '../test-build/device-contact-basis.js';
 import { spaceModels } from '../test-build/space-geometry.js';
 import { wallKey } from '../test-build/wall-thickness.js';
 
@@ -17,6 +18,19 @@ const faces = ['a','b','unrelated'].map(id=>({id,space:'floor',diameterRatio:.08
 const space = {id:'floor',title:'Floor',view_box:[0,0,1,1],rooms:[]};
 const config = () => ({model_version:PLAN_MODEL_VERSION, spaces:[structuredClone(space)], settings:{},
   markers:faces.map(f=>({id:f.id,binding:'virtual',space:'floor',name:f.id}))});
+
+test('#1003 Optimize proves materialised reference contacts despite a wider live face',()=>{
+  const cfg=config(),layout=structuredClone(fixture.layout);
+  for(const id of ['a','b']){
+    const p=layout[id];
+    p.contact_basis=makeContactBasis({id,x:p.x*1000,y:p.y*1000,diameter:80,
+      box:{left:-50.75,right:50.75,top:-50.75,bottom:50.75}},'floor');
+  }
+  const wide=faces.map(f=>({...f,box:f.id==='a'?{...f.box,right:2}:f.box}));
+  const result=optimizePlans(cfg,layout,{deviceContactFaces:wide});
+  assert.deepEqual(result.layout.a,layout.a);assert.deepEqual(result.layout.b,layout.b);
+  assert.deepEqual(optimizePlans(result.config,result.layout,{deviceContactFaces:wide}).layout,result.layout);
+});
 
 test('#866 Optimize protects proved contacts only, including exact future siblings and other floors', () => {
   const cfg = config(), input = structuredClone(fixture.layout), before = structuredClone(input);

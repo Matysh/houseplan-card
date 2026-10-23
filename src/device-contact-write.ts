@@ -81,7 +81,10 @@ export async function persistContactPlacements(value:object,state:DevicePosition
   const sent=new Map<string,DeviceLayout[string]|null>();
   try {
     if(!current()||!host._loadOk)throw new Error('contact write context changed');
-    if(!host._serverStorage){for(const c of changes)host._layout=applyDevicePlacement(host._layout,c.deviceId,c.placement);host._persistLocalLayout();return;}
+    if(!host._serverStorage){
+      for(const c of changes)host._adoption.stageLocalLayout(applyDevicePlacement(host._layout,c.deviceId,c.placement));
+      host._persistLocalLayout();return;
+    }
     const accepted=host._adoption.snapshot(undefined)?.layout;
     if(!accepted)throw new Error('no accepted layout authority');
     const expected=new Map(changes.map(c=>[c.deviceId,devicePlacement(accepted,c.deviceId)]));
@@ -110,7 +113,7 @@ export async function persistContactPlacements(value:object,state:DevicePosition
     if(!current())throw new Error('contact write context changed');
     if(typeof response?.rev!=='number')throw new Error('invalid contact write acknowledgement');
     for(const [id,pos] of sent) {
-      host._layout=applyDevicePlacement(host._layout,id,pos);
+      host._adoption.stageLocalLayout(applyDevicePlacement(host._layout,id,pos));
       host._adoption.acceptLayoutPosition(id,pos,response?.rev);
     }
     host._adoption.refreshLayoutFingerprint();host._cacheSnapshot();host.requestUpdate();

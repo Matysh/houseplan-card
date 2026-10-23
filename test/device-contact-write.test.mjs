@@ -13,7 +13,8 @@ function fixture(){
   const host={_layout:structuredClone(initial),_layoutRev:7,_cfgRev:3,_space:'floor',_serverStorage:true,_loadOk:true,
     _sentPos:new Map(),_layoutIO:new LayoutWriteReload(()=>()=>active),
     _adoption:{snapshot:()=>({layout:accepted,config:{markers:[{id:'a',size:1}]}}),
-      acceptLayoutPosition:(id,pos)=>{accepted[id]=structuredClone(pos);},refreshLayoutFingerprint:()=>{}},
+      acceptLayoutPosition:(id,pos)=>{accepted[id]=structuredClone(pos);},refreshLayoutFingerprint:()=>{},
+      stageLocalLayout:layout=>{host._layout=layout;}},
     _cacheSnapshot:()=>{},requestUpdate:()=>{},_persistLocalLayout:()=>{},hass:{callWS:async message=>{
       calls.push(structuredClone(message));
       if(message.type==='houseplan/layout/get')return {layout:structuredClone(saved),rev:7};

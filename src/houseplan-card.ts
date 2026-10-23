@@ -7333,9 +7333,11 @@ export class HouseplanCard extends LitElement {
         after:{deviceId:drag.id,spaceId:drag.spaceId,placement:after},
       };
       try {
-        const {prepareContactMove}=await import('./device-contact-write');
-        if(!isCurrent()||!ownsPending())return;
-        movement=prepareContactMove(this,drag,after);
+        if(this._deviceContacts?.scene?.shapes.has(d.id)) {
+          const {prepareContactMove}=await import('./device-contact-write');
+          if(!isCurrent()||!ownsPending())return;
+          movement=prepareContactMove(this,drag,after);
+        }
         for(const s of [movement.after,...movement.after.related??[]])this._previewDevicePlacement(s.deviceId,s.placement);
         await this._persistDevicePlacement(d.id, movement.after.placement,movement.after.related);
         if (!isCurrent()) return;
@@ -7896,7 +7898,7 @@ export class HouseplanCard extends LitElement {
       if (!isCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
       this._adoption.acceptConfigWrite(canonicalCandidate, response);
       if(contactLayout)for(const [id,pos] of Object.entries((response as {contact_layout?:DeviceLayout})?.contact_layout??{})) {
-        this._layout=applyDevicePlacement(this._layout,id,pos);
+        this._previewDevicePlacement(id,pos);
         this._adoption.acceptLayoutPosition(id,pos,(response as {layout_rev?:number}).layout_rev);
       }
       if(contactLayout)this._adoption.refreshLayoutFingerprint();
