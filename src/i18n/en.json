@@ -1147,6 +1147,7 @@
   "vac.diag_trail_quality": "Trail quality",
   "vac.diag_trail_display": "Path display",
   "vac.trail_display_visible": "Shown",
+  "vac.trail_display_retained": "Showing the last accepted path; new data has not been accepted",
   "vac.trail_display_mode": "Hidden by the selected display mode",
   "vac.trail_display_stopped": "Hidden: cleaning has stopped",
   "vac.trail_display_route": "The source and map could not be matched to the plan",

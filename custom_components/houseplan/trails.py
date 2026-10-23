@@ -34,8 +34,10 @@ from .vacuum_paths import (
     MAX_SEGMENTS,
     PathRejected,
     PathSnapshot,
+    is_current_dreame_snapshot,
     normalize_paths,
     number,
+    same_native_coordinates,
 )
 from .vacuum_routes import effective_routes, recording_route
 
@@ -380,14 +382,17 @@ class TrailBook:
             return False
         identity = (snap.provider, snap.map_key)
         prior = cur.get("_native_identity")
-        if prior is not None and prior != list(identity):
+        provenance = cur.get("provenance")
+        schema = provenance.get("schema") if isinstance(provenance, dict) else None
+        if not same_native_coordinates(prior, snap, schema):
             return self.path_reason(marker, "coordinates_unverified")
         previous_revision = cur.get("_native_revision")
         job_changed = bool(snap.job_id and cur.get("_job_id") not in (None, snap.job_id))
         job_bound = bool(snap.job_id and cur.get("_job_id") != snap.job_id)
         if snap.revision is not None and isinstance(previous_revision, int) \
-                and not job_bound and snap.revision < previous_revision:
-            return False
+                and not job_bound and not is_current_dreame_snapshot(snap) \
+                and snap.revision < previous_revision:
+            return self.path_reason(marker, "stale")
         resumed = False
         if job_changed or moving is True and cur.get("ended") is not None:
             # Native continuation has no local grace. Final reads on the dock,
@@ -405,12 +410,14 @@ class TrailBook:
                 or job_bound \
                 or cur["quality"].get("stored_points") != native_count \
                 or cur.get("_native_revision") != snap.revision \
+                or prior != list(identity) \
                 or (snap.final and cur.get("final_status") != "confirmed")
             if changed:
                 cur["quality"]["reason"] = reason
                 cur["quality"]["stored_points"] = native_count
                 cur["received_at"] = now
                 cur["_native_revision"] = snap.revision
+                cur["_native_identity"] = list(identity)
                 if snap.final:
                     cur["final_status"] = "confirmed"
             return changed or resumed

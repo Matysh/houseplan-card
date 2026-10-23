@@ -2274,6 +2274,13 @@ line — the general hint stays.
 
 ## 16. Robot vacuums
 
+Dreame's current full path continues updating after transport map/frame resets
+between cleanups, without deleting the marker/history or recalibrating. If a
+new snapshot is rejected while the previous path remains visible, diagnostics
+say that the last accepted path is being shown, with its actual reason and
+time. A fresh robot position does not by itself prove a fresh path; no invented
+line is added to connect a retained native path to the robot.
+
 Official Ecovacs works with the verified map format (first example: X1 Omni).
 Choose this robot's `image.*` source; the global list is now **All cameras and
 maps**. Once telemetry arrives, **Fit manually** shows the translucent floor

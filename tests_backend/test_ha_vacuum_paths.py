@@ -117,7 +117,7 @@ async def test_native_empty_min_interval_active_poll_and_three_final_attempts(ha
     await settle(lambda: len(calls) == 6 and len(accepted) == 6)
     clock.tick(500)
     assert calls == [0, 10, 40, 50, 60, 85]
-    assert all(b - a >= 10 for a, b in zip(calls, calls[1:]))
+    assert all(b - a >= 10 for a, b in zip(calls, calls[1:], strict=False))
     assert not any(value.final for _, value, _ in accepted)
     collector.close()
 
@@ -263,7 +263,8 @@ def test_snapshot_wrong_map_revision_and_corrupt_run_are_isolated(monkeypatch):
     first = snapshot("dreame", "v2", [[[0, 0], [1, 1]]], "floor-a", 10)
     assert book.on_snapshot("m", first, 2, "route", "floor", generation, True)
     old = snapshot("dreame", "v2", [[[0, 0], [10, 10]]], "floor-a", 9)
-    assert not book.on_snapshot("m", old, 3, "route", "floor", generation, True)
+    assert book.on_snapshot("m", old, 3, "route", "floor", generation, True)
+    assert run["quality"]["reason"] == "stale", "a rejected generic revision must not remain ok"
     foreign = snapshot("dreame", "v2", [[[0, 0], [20, 20]]], "floor-b", 11)
     assert book.on_snapshot("m", foreign, 4, "route", "floor", generation, True)
     assert run["paths"] == first.paths and run["quality"]["reason"] == "coordinates_unverified"

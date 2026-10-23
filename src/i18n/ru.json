@@ -1147,6 +1147,7 @@
   "vac.diag_trail_quality": "Качество маршрута",
   "vac.diag_trail_display": "Отображение пути",
   "vac.trail_display_visible": "Показан",
+  "vac.trail_display_retained": "Показан последний принятый путь; новые данные не приняты",
   "vac.trail_display_mode": "Скрыт выбранным режимом показа",
   "vac.trail_display_stopped": "Скрыт: уборка остановлена",
   "vac.trail_display_route": "Не удалось сопоставить источник и карту с планом",

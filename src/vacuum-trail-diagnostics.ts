@@ -80,7 +80,9 @@ export function diagnoseVacuumTrails(host: Host): Map<string, VacuumTrailDiagnos
     budget -= frame.count;
     result.rendered = frame.count;
     if (frame.limited) result.reason = 'limited';
-    result.display = frame.count > 0 ? 'vac.trail_display_visible'
+    const retained = result.source === 'native'
+      && ['stale', 'coordinates_unverified', 'unsupported', 'run_unverified'].includes(result.reason);
+    result.display = frame.count > 0 ? retained ? 'vac.trail_display_retained' : 'vac.trail_display_visible'
         : server?.current && !plan.currentRunMatches ? 'vac.trail_display_run'
         : frame.limited ? 'vac.path_limited'
         : result.reason === 'empty_integration' ? 'vac.path_empty_integration'

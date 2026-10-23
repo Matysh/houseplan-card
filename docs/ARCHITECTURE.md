@@ -837,6 +837,14 @@ normative limits: [`specs/485-radar-presence-stage1.md`](specs/485-radar-presenc
 
 ### Robot vacuums
 
+Native recovery (#1048) separates the pinned ordinary Dreame camera's saved
+coordinate floor/slot from its volatile transport map/frame fields.
+`vacuum_paths.py` compares existing private tuples without a Store migration;
+`trails.py` trusts current full values ordered by the serialized collector's
+context/attempt/generation fences, not a lifetime Dreame frame counter. Foreign
+coordinate maps and other passports remain fail-closed. Retained-error display
+is derived by the shared diagnostics consumer, without another path or timer.
+
 Official Ecovacs images (#939) add a separate bounded SVG decoder
 `vacuum_ecovacs.py` and HA reader `vacuum_ecovacs_reader.py`. The reader proves
 same-device registry identity, owns one HA-lifetime physical read per source,

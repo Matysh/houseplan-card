@@ -1,11 +1,13 @@
 """TrailBook: the pure part of the server-side vacuum trails."""
+import copy
+import json
 import math
 import pathlib
 import uuid
-import json
-import copy
+
 import pytest
-from pure_imports import load_pure, HOUSEPLAN_ROOT
+from pure_imports import HOUSEPLAN_ROOT, load_pure
+
 paths = load_pure("hp_vacuum_paths", HOUSEPLAN_ROOT / "vacuum_paths.py")
 # TrailBook берётся без импорта: из trails.py читается текст и исполняется срез
 # до класса TrailRecorder — только он тянет Home Assistant. Ни sys.path, ни
@@ -17,6 +19,8 @@ ns = {"Any": object, "annotations": None, "math": math, "uuid": uuid, "json": js
       "MAX_POINTS": paths.MAX_POINTS, "MAX_SEGMENTS": paths.MAX_SEGMENTS,
       "MAX_JSON_BYTES": paths.MAX_JSON_BYTES, "MAX_ENTRY_BYTES": paths.MAX_ENTRY_BYTES,
       "PathSnapshot": paths.PathSnapshot, "number": paths.number,
+      "same_native_coordinates": paths.same_native_coordinates,
+      "is_current_dreame_snapshot": paths.is_current_dreame_snapshot,
       "normalize_paths": paths.normalize_paths, "PathRejected": paths.PathRejected}
 exec(src[src.index("TRAIL_CAP"):src.index("class TrailRecorder")], ns)
 TrailBook = ns["TrailBook"]
@@ -156,7 +160,8 @@ def test_940_final_native_reads_keep_first_stop_and_stale_revisions_do_not_reope
     assert book.on_snapshot("robot", final, 20, "route", "floor", run["_generation"], False, moving=False)
     assert run["ended"] == 3
     before = copy.deepcopy(book.data)
-    assert not book.on_snapshot("robot", first, 21, "route", "floor", run["_generation"], False, moving=True)
+    assert book.on_snapshot("robot", first, 21, "route", "floor", run["_generation"], False, moving=True)
+    before["robot"]["current"]["quality"]["reason"] = "stale"
     assert book.data == before
     assert book.on_snapshot("robot", final, 5000, "route", "floor", run["_generation"], False, moving=True)
     assert run["ended"] is None and "previous" not in book.data["robot"]

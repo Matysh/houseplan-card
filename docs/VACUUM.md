@@ -361,6 +361,33 @@ and a separate collector attempt fence reject retired owners and reads supersede
 by newer source observations, including when the generation did not change.
 Provider revision checks remain separate from inferred cleanup boundaries.
 
+### Dreame current-value recovery (#1048)
+
+The pinned Tasshack ordinary camera returns a complete current value, not
+partial frames for House Plan to assemble. Its transport `map_id` can change
+while `saved_map_id` still identifies the same saved floor. For this passport
+only, the existing private three-field tuple is compared as
+`(saved_map_id ?? map_id, map_index)`, preserving zero and exact types. A
+restored ordinary tuple `[36,null,1]` and live `[1,36,1]` belong to the same
+coordinates; another saved floor or slot does not. Opaque/foreign passports
+retain exact identity checks. Store reads do not rewrite private identities.
+
+The ordinary camera's `frame_id` is not a lifetime sequence across cleanups or
+integration restarts. A valid current full read from the surviving serialized
+collector owner may replace the previous path even with a smaller frame.
+Attempt, context, route/calibration and generation fences still reject late
+read completions; this exception never orders jobs or creates a history slot.
+Other passports retain their revision guard, with `stale` on rejection rather
+than silently retaining `ok`. No new reads, timers or guessed connectors are
+introduced. This cannot correct stale data that the provider itself returns
+as its current complete value.
+
+When an errored native value remains drawable, **Path display** explicitly says
+that the last accepted path is being shown and new data has not been accepted.
+Its reason, time and received/stored/drawn counts remain those of the actual
+retained geometry. Accepted current data restores the ordinary display status;
+explicit empty clears the current SVG/tip without reviving old points.
+
 ### Provider passports (#872)
 
 | Provider | Proven channel/schema/coordinates | Live / final capability | Fallback |

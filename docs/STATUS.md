@@ -25,6 +25,11 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Dreame native recovery (#1048) accepts the current ordinary-camera full path
+across compatible transport map/frame resets, without clearing history or
+recalibrating. Saved coordinate floor/slot and serial collector ownership
+remain separate fences. Diagnostics distinguish retained errored geometry.
+
 Off LED strips (#1043) use 70% inner-band opacity through the shared live/static
 renderer, with the dark body cut out beneath the core so the real plan shows
 through. On/unavailable paint, rim, geometry and interactions stay unchanged.

@@ -73,6 +73,34 @@ test('#918 valid sampled final=false and native without position have drawable c
   }
 });
 
+test('#1048 retained native is distinguished from current data without changing its counters', () => {
+  const f = fixture();
+  Object.assign(f.run.quality, { source: 'native', reason: 'ok' });
+  f.run.received_at = 100;
+  const current = f.diagnose();
+  assert.equal(current.display, 'vac.trail_display_visible');
+  for (const reason of ['stale', 'coordinates_unverified', 'unsupported', 'run_unverified']) {
+    f.run.quality.reason = reason;
+    const info = f.diagnose();
+    assert.equal(info.display, 'vac.trail_display_retained');
+    assert.equal(info.reason, reason);
+    assert.equal(info.receivedAt, 100);
+    assert.deepEqual([info.raw, info.stored, info.rendered], [current.raw, current.stored, current.rendered]);
+    for (const lang of ['en', 'ru', 'de', 'fr']) {
+      const template = renderVacuumPathDiagnostics({ _t: (key) => t(lang, key),
+        _vacTrailDiagnostics: () => info }, f.device);
+      assert.ok(template.values.join(' ').includes(t(lang, 'vac.trail_display_retained')));
+      assert.doesNotMatch(template.values.join(' '), /vac\./);
+    }
+  }
+  f.run.quality.reason = 'limited';
+  assert.notEqual(f.diagnose().display, 'vac.trail_display_retained');
+  f.run.quality.reason = 'ok';
+  f.run.received_at = 200;
+  assert.equal(f.diagnose().display, 'vac.trail_display_visible');
+  assert.equal(f.diagnose().receivedAt, 200);
+});
+
 test('#918 diagnostics count the actual shared current frame, including trim and roster quota', () => {
   const f = fixture();
   const args = { telemetry: f.runtimeSource.telemetry, server: f.run, local: [], serverFormat: 2,

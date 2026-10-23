@@ -1,5 +1,16 @@
 # Development and deployment
 
+## Dreame native recovery #1048
+
+The ordinary-camera saved coordinate floor/slot is compared separately from
+volatile map/frame metadata. No new provider polling, public format or Store
+migration is introduced. `test_ha_vacuum_native_lifecycle.py` covers old Store
+recovery through the actual HA recorder/collector and synthetic camera reads;
+`smoke_vacuum_native_lifecycle.mjs` separately covers current/retained/empty
+geometry and the real diagnostics dialog in View/kiosk Flat/2.5D. These are
+synthetic offline proofs, not a deployment to the owner's HA. The focused
+pre-fix run reproduced 19 geometry failures with 4 foreign-map controls passing.
+
 ## Device contacts #1003 — local evidence
 
 The task's pinned Windows Node 22.23.3 source build measured initial View

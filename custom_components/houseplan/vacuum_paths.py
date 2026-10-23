@@ -11,6 +11,7 @@ MAX_POINTS = 100_000
 MAX_SEGMENTS = 1024
 MAX_JSON_BYTES = 8 * 1024 * 1024
 MAX_ENTRY_BYTES = 64 * 1024 * 1024
+DREAME_SCHEMA = "tasshack-2.0.2"
 Path = list[list[list[float]]]
 
 
@@ -125,6 +126,44 @@ def snapshot(provider: str, schema: str, paths: Path, map_key: str,
     return PathSnapshot(provider, schema, paths, map_key, revision, digest, job_id, final)
 
 
+def dreame_coordinate_key(map_key: Any) -> tuple[str | int, str | int | None] | None:
+    """Only the pinned ordinary serializer's saved floor/slot is permanent.
+
+    map_id is a live transport map while saved_map_id names its saved floor.
+    A restored ordinary map can put that same floor in map_id instead. Keep
+    the old three-field Store representation; normalize only for comparison.
+    """
+    if not isinstance(map_key, str) or len(map_key) > 1024:
+        return None
+    try:
+        fields = json.loads(map_key)
+    except (ValueError, RecursionError):
+        return None
+    if not isinstance(fields, list) or len(fields) != 3 or fields[0] is None or any(
+        value is not None and (type(value) not in (str, int) or len(str(value)) > 256)
+        for value in fields
+    ):
+        return None
+    return fields[1] if fields[1] is not None else fields[0], fields[2]
+
+
+def is_current_dreame_snapshot(value: PathSnapshot) -> bool:
+    """These full reads are ordered by the collector, not a lifetime frame id."""
+    return value.provider == "dreame" and value.schema == DREAME_SCHEMA \
+        and dreame_coordinate_key(value.map_key) is not None
+
+
+def same_native_coordinates(prior: Any, value: PathSnapshot, schema: str | None) -> bool:
+    identity = [value.provider, value.map_key]
+    if prior is None or prior == identity:
+        return True
+    if not is_current_dreame_snapshot(value) or schema != DREAME_SCHEMA \
+            or not isinstance(prior, list) or len(prior) != 2 or prior[0] != "dreame":
+        return False
+    old = dreame_coordinate_key(prior[1])
+    return old is not None and old == dreame_coordinate_key(value.map_key)
+
+
 def dreame_snapshot(payload: Any) -> PathSnapshot:
     """Tasshack 2.0.2 ordinary camera serializer, pinned in docs/VACUUM.md.
 
@@ -180,7 +219,7 @@ def dreame_snapshot(payload: Any) -> PathSnapshot:
     # map_id alone can repeat across floors; these are private provider map
     # coordinates, never replacements for the saved HA route/map id.
     map_key = json.dumps(map_fields, separators=(",", ":"))
-    return snapshot("dreame", "tasshack-2.0.2", paths, map_key, revision)
+    return snapshot("dreame", DREAME_SCHEMA, paths, map_key, revision)
 
 
 PUBLIC_RUN_KEYS = frozenset({

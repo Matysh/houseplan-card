@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1048,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Repairs the stable v1.82.0 native lifecycle fences that retain an old Dreame full path after compatible transport map/frame changes. The saved-coordinate and async owner guards remain; no new user setting or provider is introduced.",
+  "summary": {
+    "ru": "Исправлено зависание старого пути Dreame между уборками; диагностика явно отмечает удержанный снимок с ошибкой.",
+    "en": "Fix stale Dreame trails across cleanups and identify retained errored paths in diagnostics."
+  }
+}

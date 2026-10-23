@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Recover the current Dreame path after transport map/frame resets instead of
+  leaving a previous cleanup's trail behind the moving robot. Diagnostics now
+  identify an errored last-accepted path explicitly. No history reset or
+  recalibration is needed. (#1048)
+
 ## v1.83.0-beta.1 — 2026-10-23
 
 - Print-dialog format and background selectors retain readable contrast in the

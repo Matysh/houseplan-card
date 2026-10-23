@@ -1,5 +1,16 @@
 # Config compatibility registry
 
+## Dreame native recovery (#1048)
+
+No config/model/Store/public trail format changes. The existing private
+three-field provider tuple is normalized only for bounded coordinate-identity
+comparison in the pinned ordinary Dreame passport; reads do not rewrite it.
+A valid accepted snapshot updates the normal run and debounce. Old known-format
+native values with a high frame recover without deleting Store or re-saving
+calibration. Unknown formats and private/public projections retain their rules.
+An old writer can restore the old transport-fence bug after downgrade; the
+update performs no destructive downgrade migration or trail-store reset.
+
 ## Independent room appearance (#1037)
 
 Additive optional `space.settings.name_color` and `space.settings.wall_fill`

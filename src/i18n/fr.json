@@ -1147,6 +1147,7 @@
   "vac.diag_trail_quality": "Qualité du trajet",
   "vac.diag_trail_display": "Affichage du trajet",
   "vac.trail_display_visible": "Affiché",
+  "vac.trail_display_retained": "Dernier trajet accepté affiché ; les nouvelles données n’ont pas été acceptées",
   "vac.trail_display_mode": "Masqué par le mode d’affichage sélectionné",
   "vac.trail_display_stopped": "Masqué : nettoyage arrêté",
   "vac.trail_display_route": "La source et la carte n’ont pas pu être associées au plan",

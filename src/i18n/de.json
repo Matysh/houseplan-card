@@ -1147,6 +1147,7 @@
   "vac.diag_trail_quality": "Pfadqualität",
   "vac.diag_trail_display": "Pfadanzeige",
   "vac.trail_display_visible": "Sichtbar",
+  "vac.trail_display_retained": "Der zuletzt akzeptierte Pfad wird angezeigt; neue Daten wurden nicht akzeptiert",
   "vac.trail_display_mode": "Durch den gewählten Anzeigemodus ausgeblendet",
   "vac.trail_display_stopped": "Ausgeblendet: Reinigung angehalten",
   "vac.trail_display_route": "Quelle und Karte konnten keinem Grundriss zugeordnet werden",

@@ -2,7 +2,6 @@
 import json
 
 import pytest
-
 from pure_imports import HOUSEPLAN_ROOT, load_pure
 
 codec = load_pure("hp_vacuum_paths_872", HOUSEPLAN_ROOT / "vacuum_paths.py")
@@ -79,3 +78,44 @@ def test_public_run_is_an_allowlist_not_recursive_secret_blacklist():
     assert run["source"] == "camera.secret"
     assert codec.public_trails({"m": {"current": {"path_format": 7, "points": geometry[-1]}}}) == {"m": {}}
     assert codec.public_trails({"m": {"current": {"path_format": True, "points": geometry[-1]}}}) == {"m": {}}
+
+
+@pytest.mark.parametrize("old,new,equal", [
+    ([1, 36, 1], [2, 36, 1], True),
+    ([36, None, 1], [1, 36, 1], True),
+    ([1, 0, 0], [2, 0, 0], True),
+    ([1, 0, 0], [2, 2, 0], False),
+    ([0, None, 0], [1, 0, 0], True),
+    ([1, 36, 1], [1, 77, 1], False),
+    ([1, 36, 1], [1, 36, 2], False),
+    ([1, 36, 1], [1, "36", 1], False),
+    ([1, 36, 1], [1, 36, "1"], False),
+    ([1, None, 1], [2, None, 1], False),
+])
+def test_1048_only_the_saved_coordinate_floor_and_slot_are_permanent(old, new, equal):
+    prior = ["dreame", json.dumps(old)]
+    value = codec.snapshot("dreame", "tasshack-2.0.2", [], json.dumps(new))
+    assert codec.same_native_coordinates(prior, value, "tasshack-2.0.2") is equal
+    assert prior == ["dreame", json.dumps(old)], "normalization is read-only"
+    assert codec.is_current_dreame_snapshot(value)
+
+
+@pytest.mark.parametrize("key", [None, True, "opaque", "[]", "[1,36]", "[1,36,1,2]",
+                                 "[null,36,1]", "[true,36,1]", "[1,false,1]", "[1,36,true]",
+                                 "[1.0,36,1]", '[1,36,{}]', " " * 1025,
+                                 json.dumps([1, "x" * 257, 1])])
+def test_1048_opaque_and_malformed_coordinate_keys_never_get_guessed(key):
+    assert codec.dreame_coordinate_key(key) is None
+    value = codec.snapshot("dreame", "tasshack-2.0.2", [], key)
+    assert not codec.is_current_dreame_snapshot(value)
+    assert not codec.same_native_coordinates(["dreame", "[1,36,1]"], value, "tasshack-2.0.2")
+
+
+@pytest.mark.parametrize("provider,schema,old_schema", [
+    ("attributes", "tasshack-2.0.2", "tasshack-2.0.2"),
+    ("dreame", "future", "tasshack-2.0.2"),
+    ("dreame", "tasshack-2.0.2", "future"),
+])
+def test_1048_unverified_provider_passports_keep_exact_identity(provider, schema, old_schema):
+    value = codec.snapshot(provider, schema, [], "[2,36,1]")
+    assert not codec.same_native_coordinates(["dreame", "[1,36,1]"], value, old_schema)
