@@ -1,9 +1,11 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 42, issue: 22. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 44, issue: 23. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
+| #1040 | [CODE-REVIEW-1040-r1.md](CODE-REVIEW-1040-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1040 | [CODE-REVIEW-1040-r2.md](CODE-REVIEW-1040-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | docs/release-ledger/v1.81.0/1040.json не достигает заявленной цели и противоречит сам себе | `docs/release-ledger/v1.81.0/1040.json` `scripts/release-ledger.mjs` `docs/release-ledger/cycle.json` `v1.82.0/1040.json` `v1.81.0/1040.json` `merge-candidate.mjs` `release-contract.mjs` |
 | #1039 | [CODE-REVIEW-1039-r1.md](CODE-REVIEW-1039-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1037 | [SPEC-REVIEW-1037-r1.md](SPEC-REVIEW-1037-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | не называет затронутый DOM/test-identity контракт docs/STYLING-HOOKS.md | `docs/STYLING-HOOKS.md` `demo/smoke_e2e_hooks.mjs` `docs/reviews/CODE-REVIEW-1011-r3.md` `space-form.ts` `general-settings-dialog.ts` `room-settings-dialog.ts` `STYLING-HOOKS.md` `AGENTS.md` |
 | #1037 | [SPEC-REVIEW-1037-r2.md](SPEC-REVIEW-1037-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | удаление gs-wall-fill не адресует механизм retiredHooks и «compatible transition», на к… | `docs/STYLING-HOOKS.md` `docs/data-hp-contract.json` `data-hp-contract.json` |
