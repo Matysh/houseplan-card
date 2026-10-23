@@ -5,6 +5,15 @@ on:
   # по ссылке `@dev`; триггеры, run-name и concurrency живут там.
   workflow_call:
     inputs:
+      source_event:
+        description: Authenticated routing context from the dev receiver; empty for legacy callers
+        type: string
+        required: false
+        default: ""
+      source_event_name:
+        type: string
+        required: false
+        default: ""
       apply:
         description: "Повторно будить потерянные запросы и публиковать диагностику"
         required: false
@@ -39,7 +48,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           REPO: ${{ github.repository }}
-          APPLY: ${{ github.event_name == 'schedule' || inputs.apply == true }}
+          APPLY: ${{ (inputs.source_event_name || github.event_name) == 'schedule' || inputs.apply == true }}
         run: |
           mkdir -p artifacts/process-reconcile
           node scripts/process-reconcile.mjs \
@@ -76,7 +85,7 @@ jobs:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           HP_PROCESS_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           REPO: ${{ github.repository }}
-          APPLY: ${{ github.event_name == 'schedule' || inputs.apply == true }}
+          APPLY: ${{ (inputs.source_event_name || github.event_name) == 'schedule' || inputs.apply == true }}
         run: node scripts/workflow-continuation.mjs --repo="$REPO" --apply="$APPLY" --out="${{ runner.temp }}/continuation-result"
       - name: Retain continuation outcome
         if: always()

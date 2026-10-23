@@ -25,6 +25,13 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Service checks (#1040) separate main's delivery acknowledgement from execution
+on dev. Immutable bounded receipts and native-token once-only claims preserve
+origin/epoch authority without push-CI recursion. Operational failures stay red
+on dev; historical runs/artifacts are retained, not repainted or deleted.
+Activation is a separate infrastructure-only main delivery after code review,
+not a promotion of unreleased product changes or a release.
+
 SVG captions (#1039) centre the remaining name over its readings after removing
 the HA Area action. Live captions with that action retain their existing layout.
 The browser witness measures both live geometry and offline SVG downloads.

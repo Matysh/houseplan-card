@@ -1,0 +1,97 @@
+name: Service event delivery and authenticated context
+
+on:
+  workflow_call:
+    inputs:
+      workflow:
+        required: true
+        type: string
+      parameters:
+        required: true
+        type: string
+    outputs:
+      accepted:
+        value: ${{ jobs.receive.outputs.accepted }}
+      event:
+        value: ${{ jobs.receive.outputs.event }}
+      event_name:
+        value: ${{ jobs.receive.outputs.event_name }}
+      parameters:
+        value: ${{ jobs.receive.outputs.parameters }}
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    name: Deliver from main (not an execution verdict)
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: write
+    env:
+      SERVICE_WORKFLOW: ${{ inputs.workflow }}
+      SERVICE_INPUTS: ${{ inputs.parameters }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: dev
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+      - name: Validate source context / claim authenticated delivery
+        id: prepare
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SERVICE_DIRECTORY: ${{ runner.temp }}/service-event
+        run: node scripts/service-event.mjs prepare
+      - name: Preserve immutable routing receipt before dispatch
+        if: steps.prepare.outputs.relay == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ steps.prepare.outputs.artifact }}
+          path: ${{ runner.temp }}/service-event
+          if-no-files-found: error
+          retention-days: 7
+      - name: Dispatch execution on dev (not a work verdict)
+        if: steps.prepare.outputs.relay == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SERVICE_DIRECTORY: ${{ runner.temp }}/service-event
+        run: node scripts/service-event.mjs dispatch
+  receive:
+    name: Authenticate and claim execution on dev
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: read
+    outputs:
+      accepted: ${{ steps.prepare.outputs.accepted }}
+      event: ${{ steps.prepare.outputs.event }}
+      event_name: ${{ steps.prepare.outputs.event_name }}
+      parameters: ${{ steps.prepare.outputs.parameters }}
+    env:
+      SERVICE_WORKFLOW: ${{ inputs.workflow }}
+      SERVICE_INPUTS: ${{ inputs.parameters }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: dev
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+      - name: Validate source context / claim authenticated delivery
+        id: prepare
+        env:
+          # Native token ref writes cannot trigger push CI; dispatch is explicit.
+          GH_TOKEN: ${{ github.token }}
+          SERVICE_DIRECTORY: ${{ runner.temp }}/service-event
+        run: node scripts/service-event.mjs prepare

@@ -640,7 +640,8 @@ test('#726 AC6: CLI --anchor дописывает маршрут из --route и
 });
 
 test('конвейер: посторонняя метка не входит в concurrency, guard читает текущие метки (#499)', () => {
-  const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
+  const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8')
+    .replaceAll('fromJSON(inputs.source_event || toJSON(github.event))', 'github.event');
   // Concurrency — на job, не на workflow: иначе любой `labeled` вытеснял ожидающий S7.
   const head = workflow.slice(0, workflow.indexOf('\njobs:'));
   assert.doesNotMatch(head, /^concurrency:/m, 'concurrency на уровне workflow снова пустит в группу все метки');
@@ -847,8 +848,8 @@ test('#555: bounded reconciler wakes only lost review requests and emits one mac
   const agents = read('AGENTS.md');
 
   assert.match(processWorkflow,
-    /run-name: "process #\$\{\{ github\.event\.issue\.number \}\} · \$\{\{ github\.event\.label\.name \}\}/,
-    'run identity includes issue and requested stage');
+    /run-name: .*fromJSON\(inputs\.delivery \|\| '\{\}'\)\.title/,
+    'verified receiver title includes issue and stage; ingress is separately prefixed relay');
   assert.match(caller, /cron: '7,37 \* \* \* \*'/);
   assert.match(caller, /workflow_dispatch:/);
   assert.match(workflow, /ref: dev/);

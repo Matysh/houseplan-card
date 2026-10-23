@@ -270,9 +270,14 @@ export function processRuns(repo, issues = [], { since = null, getJson = ghJson 
     if (!added) throw new Error('process history pagination made no progress');
     if (batch.length < 100 || batch.every((raw) => at(raw.created_at) < oldest)) break;
   }
-  return [...rows.values()].filter((raw) => raw.event === 'issues' && at(raw.created_at) >= oldest).map((raw) => {
+  return [...rows.values()].filter((raw) => (raw.event === 'issues'
+    || (raw.event === 'workflow_dispatch' && raw.head_branch === 'dev'))
+    && at(raw.created_at) >= oldest).map((raw) => {
     const stable = parseProcessRun(raw);
     if (stable) return stable;
+    // #1040: ingress titles are prefixed with relay, never review executions.
+    // A new dispatched execution must carry the exact canonical process title.
+    if (raw.event === 'workflow_dispatch' || String(raw.display_title || '').startsWith('relay ')) return null;
     // Runs created before #555 used the issue title as display_title. Accept
     // that legacy identity only when it names exactly one current S4/S7 issue;
     // title ambiguity must never wake a potentially different task.

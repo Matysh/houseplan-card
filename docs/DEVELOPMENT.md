@@ -1,5 +1,23 @@
 # Development and deployment
 
+## Service-check branch isolation (#1040)
+
+The main branch's service ingress acknowledges delivery, not the result of dev
+work. `node scripts/service-workflows.mjs --write` regenerates its eight mirrored
+files; the no-argument command checks byte consistency. A receiver validates the
+exact origin run/attempt and receipt before a single `service-delivery/*` claim.
+Do not delete failed runs or claim refs to obtain a green badge. A real delivery
+failure stays red; an ambiguous POST is not blindly retried. Review recovery uses
+the normal fresh S4/S7 request and existing pending/reconcile guards.
+
+Deployment: accept B/C material through the ordinary review/merge pipeline, then
+deliver only that reviewed infrastructure patch onto the current stable main.
+Keep product/version files identical to the previous main, regenerate profile
+filters for that tree if needed, confirm mirrored ingress parity, and wait for
+main's exact-SHA CI/status rollup. No release or tag is created. Old native callers
+stay compatible during this transition. For a read-only live probe use a direct
+dev `process-metrics.yml` dispatch; never rerun an accepted model review for colour.
+
 ## Room appearance (#1037)
 
 Shared compatibility corpus: `test/fixtures/room-appearance.json`, consumed by

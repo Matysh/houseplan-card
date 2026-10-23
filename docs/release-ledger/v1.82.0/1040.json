@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1040,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Bind service execution checks to dev rather than the stable main commit. Preserve authentic failures, historical evidence, review epochs, permissions and release gates; no product or version changes.",
+  "summary": {
+    "ru": "Отделить результаты рабочего конвейера dev от индикатора проверок main.",
+    "en": "Isolate dev service execution checks from the stable main status."
+  }
+}

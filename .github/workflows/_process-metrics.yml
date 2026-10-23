@@ -17,6 +17,15 @@ on:
   # по ссылке `@dev`; триггеры, run-name и concurrency живут там.
   workflow_call:
     inputs:
+      source_event:
+        description: Authenticated routing context from the dev receiver; empty for legacy callers
+        type: string
+        required: false
+        default: ""
+      source_event_name:
+        type: string
+        required: false
+        default: ""
       days:
         description: "Окно в днях"
         required: false

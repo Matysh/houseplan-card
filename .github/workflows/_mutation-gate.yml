@@ -35,6 +35,15 @@ on:
   # по ссылке `@dev`; триггеры, run-name и concurrency живут там.
   workflow_call:
     inputs:
+      source_event:
+        description: Authenticated routing context from the dev receiver; empty for legacy callers
+        type: string
+        required: false
+        default: ""
+      source_event_name:
+        type: string
+        required: false
+        default: ""
       ref:
         description: "Git ref whose mutation guards must be proved"
         required: false
@@ -62,19 +71,19 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || 'dev' }}
+          ref: ${{ (inputs.source_event_name || github.event_name) == 'workflow_dispatch' && inputs.ref || 'dev' }}
           fetch-depth: 0
       - name: Зафиксировать commit и tree
         id: identity
         run: |
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           echo "tree=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
-          echo "ref=${{ github.event_name == 'workflow_dispatch' && inputs.ref || 'dev' }}" >> "$GITHUB_OUTPUT"
+          echo "ref=${{ (inputs.source_event_name || github.event_name) == 'workflow_dispatch' && inputs.ref || 'dev' }}" >> "$GITHUB_OUTPUT"
       # #620: самый свежий маркер зелёного прогона этого tree и этого workflow.
       # Ключ уникален на прогон (кэш неизменяем), восстанавливается по префиксу —
       # иначе перепроверка после недели не смогла бы освежить маркер.
       - name: Маркер зелёного прогона этого дерева
-        if: github.event_name == 'schedule'
+        if: (inputs.source_event_name || github.event_name) == 'schedule'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: artifacts/mutation-green
@@ -89,7 +98,7 @@ jobs:
       - name: Нужен ли прогон
         id: reuse
         env:
-          EVENT_NAME: ${{ github.event_name }}
+          EVENT_NAME: ${{ (inputs.source_event_name || github.event_name) }}
           TREE: ${{ steps.identity.outputs.tree }}
           WORKFLOW_SHA: ${{ job.workflow_sha }}
           RUN_URL_BASE: ${{ github.server_url }}/${{ github.repository }}/actions/runs
@@ -257,7 +266,7 @@ jobs:
             --sha=${{ needs.material.outputs.sha }} \
             --workflow-sha=${{ job.workflow_sha }} \
             --run-id=${{ github.run_id }} --run-attempt=${{ github.run_attempt }} \
-            --event=${{ github.event_name }}
+            --event=${{ (inputs.source_event_name || github.event_name) }}
       - name: Сохранить маркер
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
@@ -278,7 +287,7 @@ jobs:
     # #620: ночь, принявшая доказательство прошлого зелёного прогона, отказом не
     # является — её шарды пропущены намеренно. Любой другой пропуск шардов
     # (упал material) по-прежнему заводит issue.
-    if: always() && github.event_name == 'schedule' && needs.material.outputs.reuse != 'true' && (needs.mutants.result != 'success' || needs.evidence.result != 'success')
+    if: always() && (inputs.source_event_name || github.event_name) == 'schedule' && needs.material.outputs.reuse != 'true' && (needs.mutants.result != 'success' || needs.evidence.result != 'success')
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:

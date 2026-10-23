@@ -108,10 +108,11 @@ test('#636 workflows: prepare exits pending with a sealed marker, resume relabel
   assert.match(process, /sha256sum pending\.json > manifest\.sha256/);
   assert.match(process, /Validate красный — вернуть автору без ревью\n\s+if: steps\.rebase\.outputs\.conflict != 'true' && steps\.gate\.outputs\.proceed == 'false'/);
   assert.match(resumeCaller, /workflow_run:\n\s+workflows: \["Проверка \(CI\)", "Полные бенчмарки производительности"\]\n\s+types: \[completed\]/);
-  assert.match(resumeWf, /contains\(fromJSON\('\["workflow_dispatch", "push"\]'\), github\.event\.workflow_run\.event\) && startsWith\(github\.event\.workflow_run\.head_branch, 'issue\/'\)/);
+  const contextWf = resumeWf.replaceAll('fromJSON(inputs.source_event || toJSON(github.event))', 'github.event');
+  assert.match(contextWf, /contains\(fromJSON\('\["workflow_dispatch", "push"\]'\), github\.event\.workflow_run\.event\) && startsWith\(github\.event\.workflow_run\.head_branch, 'issue\/'\)/);
   assert.match(resumeWf, /GH_TOKEN: \$\{\{ secrets\.HP_PROCESS_TOKEN \}\}/);
   assert.match(resumeWf, /node scripts\/process-resume\.mjs/);
-  assert.match(resumeWf, /VALIDATE_RUN_ID: \$\{\{ github\.event\.workflow_run\.id \}\}/);
+  assert.match(contextWf, /VALIDATE_RUN_ID: \$\{\{ github\.event\.workflow_run\.id \}\}/);
   assert.match(resumeWf, /--run-id="\$VALIDATE_RUN_ID"/);
   const oldResume = resumeWf.slice(resumeWf.indexOf('\n  resume:\n'));
   assert.ok(!/issues: write/.test(oldResume), 'legacy resume remains read-only; writes use HP_PROCESS_TOKEN');

@@ -657,7 +657,7 @@ test('#458 у каждого модуля горячего пути отрисо
 import { readFileSync as readWorkflowFile } from 'node:fs';
 const mutationWorkflow = readWorkflowFile(
   new URL('../.github/workflows/_mutation-gate.yml', import.meta.url), 'utf8',
-);
+).replaceAll('(inputs.source_event_name || github.event_name)', 'github.event_name');
 // #623: триггеры и concurrency — у тонкого вызывающего файла, тело — в `_mutation-gate.yml`.
 const mutationCaller = readWorkflowFile(
   new URL('../.github/workflows/mutation-gate.yml', import.meta.url), 'utf8',
@@ -673,7 +673,8 @@ test('#513 AC1: полный мутационный прогон идёт каж
 });
 
 test('#472 AC1: у расписания и ручного запуска разные concurrency-группы', () => {
-  assert.match(mutationCaller, /^concurrency:\n  group: mutation-gate-\$\{\{ github\.event_name \}\}/m);
+  assert.match(mutationCaller, /concurrency:\n      group: \$\{\{ format\('mutation-gate-\{0\}', needs\.event\.outputs\.event_name\) \}\}/);
+  assert.match(mutationCaller, /source_event_name: \$\{\{ needs\.event\.outputs\.event_name \}\}/, 'concurrency and body use the same authenticated source event');
 });
 
 test('#472 AC2 / #549: каждый шард сохраняет лог и identity при любом исходе', () => {

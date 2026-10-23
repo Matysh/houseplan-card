@@ -1,5 +1,16 @@
 # House Plan architecture
 
+Default-branch service events (#1040) use the eight mirrored ingress recipes
+from `scripts/service-workflows.mjs`. `_service-event.yml` has a main sender
+with Actions-dispatch permission and a separate dev receiver with native-token
+ref-write/read-artifact permission; operational jobs retain their old ceilings.
+The sender stores only bounded routing identity. The receiver verifies the
+immutable source attempt/artifact and claims the delivery/current review epoch
+once before passing context into the existing reusable bodies. Native-token
+claim refs do not trigger push workflows. A dispatch acknowledgement is not a
+model/test verdict, and ambiguous writes are not retried. Legacy native calls
+remain compatible for staged activation; historical review runs remain readable.
+
 SVG caption alignment (#1039) is a detached presentation correction after the
 HA Area affordance is filtered out. The remaining name centres in the frozen
 row width; live room-label CSS, geometry, actions and layout storage are untouched.

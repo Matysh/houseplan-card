@@ -23,6 +23,15 @@ on:
   # файла в ветке по умолчанию GitHub не даёт запустить workflow_dispatch вовсе.
   workflow_call:
     inputs:
+      source_event:
+        description: Authenticated routing context from the dev receiver; empty for legacy callers
+        type: string
+        required: false
+        default: ""
+      source_event_name:
+        type: string
+        required: false
+        default: ""
       tag:
         description: "Beta tag these artifacts are for, for example v1.79.0-beta.1"
         required: true

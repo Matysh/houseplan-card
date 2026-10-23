@@ -25,8 +25,10 @@ test('#697 бот: только по кнопке, прав на запись у
   for (const text of [CALLER, WORKFLOW]) {
     assert.doesNotMatch(text, /^\s+(push|schedule|workflow_run):/m);
     assert.match(text, /permissions:\n\s+contents: read\n\s+actions: read\n/);
-    assert.doesNotMatch(text, /contents: write/);
   }
+  assert.doesNotMatch(WORKFLOW, /contents: write/, 'artifact publisher itself remains read-only; only delivery CAS gets a native write token');
+  const execution = CALLER.slice(CALLER.indexOf('\n  dev:\n'));
+  assert.doesNotMatch(execution, /contents: write/, 'delivery permission must not leak to publishing');
   const commit = step('Коммит в dev');
   // #766: хост — сервер раннера (GITHUB_SERVER_URL), не зашитый github.com.
   assert.match(commit, /push_url="\$\{server%%:\/\/\*\}:\/\/x-access-token:\$TOKEN@\$\{server#\*:\/\/\}\/\$\{\{ github\.repository \}\}"/);
