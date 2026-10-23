@@ -20974,6 +20974,10 @@ const vacuumLive1049Cases = [
 ];
 
 const decorLine1046Cases = [
+  { id:'decor-line-server-history-retains-anchor-1046', guard:'node --test test/node-history-runtime.test.mjs',
+    because:'#1046 AC5: a foreign server node command must retire the active Line owner before its asynchronous history write.',
+    patches:[{file:'src/houseplan-editor-runtime.ts',find:"private _runNodeHistory(direction: 'undo' | 'redo'): void {\n    this.decorLine.reset();",
+      replace:"private _runNodeHistory(direction: 'undo' | 'redo'): void {"}] },
   { id:'decor-line-synthetic-click-accepted-1046', guard:'node --test test/decor-line-drawing.test.mjs',
     because:'#1046 AC4: a click without its own clean pointer pair cannot author a segment.',
     patches:[{file:'src/editors/decor/line-drawing.ts',find:'if (!ready || suppressed || !this.sync() || this.port.blocked()',

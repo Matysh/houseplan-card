@@ -2381,6 +2381,7 @@ public _showGeometrySpace(spaceId: string, preserveWallChainRedo = false): void 
   }
 
 private _runNodeHistory(direction: 'undo' | 'redo'): void {
+    this.decorLine.reset();
     // An unfinished Draw/Split draft owns the first press; a node step never lands on it.
     if (this.host._path.length || this.host._splitSel?.pts?.length) { this._clearGeometryGesture(); return; }
     if (this.nodeMove) { this.nodeMove.history(direction); return; }

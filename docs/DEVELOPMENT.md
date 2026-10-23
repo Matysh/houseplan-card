@@ -98,6 +98,8 @@ touch delivery, external config reload and View inertness. Its data/history,
 native/Properties ID and painted SVG frame are the oracles. Ordinary negative
 input is permitted; registered guard witnesses are checked statically only.
 `test/decor-line-drawing.test.mjs` covers the pure endpoint/session contract;
+`test/node-history-runtime.test.mjs` covers a foreign server-command Undo/Redo
+retiring the Line owner before its asynchronous write;
 existing decor/order smokes retain non-Line coverage. No full regression or
 baseline acceptance is part of this task; no backend or migration is needed.
 
