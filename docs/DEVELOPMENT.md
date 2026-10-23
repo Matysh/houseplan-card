@@ -1,5 +1,30 @@
 # Development and deployment
 
+## Direct Zigbee LQI #1029
+
+Run `node --test test/device-signal-runtime.test.mjs test/device-signal.test.mjs`
+after test compilation, and the real Linux HA subset
+`python -m pytest tests_backend/test_ha_zigbee_lqi.py tests_backend/test_zigbee_lqi_model.py -q`.
+The adapters exercise both gateway shapes (HA 2024.6 and current gateway proxy)
+with fake radios, not a real radio installation. All MQTT receive/status callbacks
+must carry HA `@callback`: an unmarked function runs registry/cache code in an
+executor despite looking correct in a direct fake callback invocation. The fake
+transport explicitly checks that public HA callback classification.
+
+`node demo/smoke_direct_zigbee_lqi.mjs` proves the public subscription without HA
+LQI states, shared full/static/preview updates, zero, derived badges, Flat/2.5D,
+kiosk and no radio commands. Its same-connection direct/HA screenshot comparison
+holds the camera/layout authority constant; replacing the connection itself
+correctly triggers a plan reload and is a different scenario. PNGs/evidence live
+under `artifacts/direct-zigbee-lqi-1029/`; no global baselines are changed.
+The 200-radio/600-marker/four-consumer HA witness checks exact subscription counts,
+coalescing and unload, with ordinary negative inputs for source/ACL/payload guards.
+Registered mutation witnesses are readiness-only during task work.
+Integrated with #1049, the initial View graph measures339368 B gzip against
+the old336203-B ceiling. Its reference moves to the measured fact; the2000-B
+band and352000-B absolute budget stay unchanged. Total JS measures3410642 B,
+with other monolith counters inside their existing bands.
+
 ## Dreame native recovery #1048
 
 The ordinary-camera saved coordinate floor/slot is compared separately from

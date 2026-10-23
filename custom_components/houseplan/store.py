@@ -118,6 +118,8 @@ class HouseplanData:
     radar_coordinator: Any | None = None
     # #912: volatile MQTT jobs own a separate entry-scoped durable map Store.
     zigbee_coordinator: Any | None = None
+    # #1029: independent volatile passive own-radio values, never a Store.
+    zigbee_lqi: Any | None = None
     # #936: private ZIP sessions; no archive bytes or tokens enter config/export.
     backup_service: Any | None = None
     backup_root: str = ""
@@ -245,6 +247,10 @@ async def async_save_config_state(
         await zigbee.async_save_config(canonical_config, save_config)
     else:
         await save_config()
+
+    lqi = getattr(runtime, "zigbee_lqi", None)
+    if lqi is not None:
+        await lqi.async_config_saved(canonical_config)
 
     # The config is already durable at this point.  Reconciliation remains a
     # separate Store write; an interrupted pair is detected from config_rev on

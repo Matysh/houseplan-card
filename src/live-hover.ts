@@ -94,6 +94,7 @@ const deviceTipContent = (
     device.model,
     presentation.valueBadge?.fullText || '',
     presentation.lqiTipText != null ? `LQI ${presentation.lqiTipText}` : '',
+    presentation.lqiSource?.stale ? host._t('tip.signal_last_known') : '',
   ].filter(Boolean).join(' · ');
   const battery = deviceBatteryTipText(device,
     createDeviceBatteryContext(host._renderPlanHass, host._fullRegistryHass), (key, vars) => host._t(key, vars),

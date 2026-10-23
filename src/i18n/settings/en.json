@@ -200,7 +200,7 @@
   "dialog.help_for": "Help: {name}",
   "gs.fill_palette_help": "Used by rooms with the corresponding fill mode. Choose the mode in space or room settings.",
   "gs.battery_help": "The default device mode. A space can override it, and a device can hide its own battery indicator.",
-  "gs.signal_help": "System LQI numbers beside devices. Does not hide Zigbee fills, room metrics, a selected LQI badge or Zigbee links.",
+  "gs.signal_help": "House Plan reads signal directly from Zigbee2MQTT or ZHA; diagnostic entities are not required. After restart, the first value may wait for the next device message. Available Home Assistant data is the fallback. Visibility does not hide Zigbee fills, room metrics, selected LQI values/badges or links.",
   "gs.global_value_caption": "Global value for the whole installation",
   "space.section_rooms": "Room appearance",
   "space.inherited_value": "General settings · {v}",
@@ -303,5 +303,6 @@
   "marker.radar_sources": "Common sources",
   "marker.radar_service": "Checks and maintenance",
   "marker.radar_remove_target": "Remove target slot {n}",
-  "marker.room_metrics": "Room metrics"
+  "marker.room_metrics": "Room metrics",
+  "gs.signal_help.aria": "Help: Zigbee signal"
 }

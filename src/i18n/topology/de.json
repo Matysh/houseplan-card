@@ -63,7 +63,7 @@
   "zha_manual": "ZHA manuell einrichten",
   "z2m_manual": "Zigbee2MQTT manuell einrichten",
   "scan_unknown_hint": "Falls für dieses Topic eine Karte gespeichert ist, wird sie vor dem Scan gelöscht. Die Anfrage läuft im Hintergrund und kann etwa 10 Minuten oder länger dauern.",
-  "topics_help": "MQTT-Basisthemen Ihrer Zigbee2MQTT-Instanzen, eines pro Zeile, zum Beispiel zigbee2mqtt.",
+  "topics_help": "MQTT-Basisthemen der Zigbee2MQTT-Instanzen eingeben, eines pro Zeile, z. B. zigbee2mqtt. Signalwerte nutzen diese Liste auch bei ausgeschalteten Verbindungen; ein Scan ist nicht nötig.",
   "topics_help_aria": "Hilfe: Zigbee2MQTT-Basisthemen",
   "incomplete_title": "Warum die Daten unvollständig sind",
   "incomplete_invalid_payload": "Die Quelle hat einen ungültigen oder nicht unterstützten Eintrag geliefert.",

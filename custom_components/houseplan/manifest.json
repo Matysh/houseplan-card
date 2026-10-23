@@ -3,7 +3,8 @@
   "name": "House Plan",
   "after_dependencies": [
     "lovelace",
-    "mqtt"
+    "mqtt",
+    "zha"
   ],
   "codeowners": [
     "@Matysh"

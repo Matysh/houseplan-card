@@ -475,6 +475,22 @@ may legitimately carry a broken transfer reference for later replacement.
 
 ## Contextual Zigbee topology (#54)
 
+Own-device LQI (#1029) has independent capability `zigbee_lqi_api:1` and an
+authenticated read-only `houseplan/zigbee_lqi/subscribe` projection. Household,
+admin and system-read-only users can read represented physical devices; no raw
+inventory, IEEE, routes, MQTT topics/credentials or arbitrary topic parameter
+crosses that boundary. The three topology commands retain their admin-only ACL.
+The current room/marker scope includes hidden markers and exact entity parents.
+
+This feed is volatile entry memory, not config/layout/backup/browser storage.
+There is no new model field or migration. Existing `z2m_base_topics` serves
+passive LQI independently of topology `enabled`; OFF/cache clear does not clear
+LQI, and reset returns to the default `zigbee2mqtt` topic in a new generation.
+New clients with older backends use the HA state/attribute fallback without
+issuing an unsupported subscription. Old clients continue using HA data.
+Connection/user changes discard the client projection, integration unload clears
+the server cache, and snapshot session/revision prevent stale callback reuse.
+
 `settings.zigbee_topology` is an optional global object. Only exact
 `enabled: true` activates the admin-only full-card View layer; absence,
 malformed values and older configs are off. `z2m_base_topics` is a bounded list

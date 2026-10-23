@@ -200,7 +200,7 @@
   "dialog.help_for": "Hilfe: {name}",
   "gs.fill_palette_help": "Für Räume mit dem entsprechenden Füllmodus. Den Modus wählen Sie beim Bereich oder Raum.",
   "gs.battery_help": "Standard für Geräte. Ein Bereich kann ihn überschreiben; ein Gerät kann seine Batterieanzeige ausblenden.",
-  "gs.signal_help": "LQI-Zahlen neben Geräten. Zigbee-Füllungen, Raumwerte, gewählte LQI-Badges und Verbindungen bleiben sichtbar.",
+  "gs.signal_help": "House Plan liest das Signal direkt aus Zigbee2MQTT oder ZHA; Diagnose-Entitäten sind nicht nötig. Nach einem Neustart kann der erste Wert auf die nächste Gerätenachricht warten. Verfügbare Home-Assistant-Daten dienen als Ersatz. Zigbee-Füllungen, Raumwerte, gewählte LQI-Werte/Badges und Verbindungen bleiben unabhängig.",
   "gs.global_value_caption": "Globaler Wert für die gesamte Installation",
   "space.section_rooms": "Raumdarstellung",
   "space.inherited_value": "Allgemeine Einstellungen · {v}",
@@ -303,5 +303,6 @@
   "marker.radar_sources": "Gemeinsame Quellen",
   "marker.radar_service": "Prüfung und Wartung",
   "marker.radar_remove_target": "Zielslot {n} entfernen",
-  "marker.room_metrics": "Raumwerte"
+  "marker.room_metrics": "Raumwerte",
+  "gs.signal_help.aria": "Hilfe: Zigbee-Signal"
 }

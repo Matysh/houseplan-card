@@ -364,8 +364,12 @@ or saved positions; full and static cards share these rules.
   automatic face resolver; absent `value_badge` keeps the legacy
   temperature/humidity satellite. Bottom badges stack above the system LQI row;
   a derived-LQI badge or value source suppresses that row.
-- LQI: `device-signal.ts` (also re-exported by `devices.ts`) averages Z2M `*_linkquality`, ZHA `*_lqi`/unit `lqi` sensors
-  or a `linkquality`/`lqi` attribute. `logic.ts::lqiColor()` maps 40→180 to hue
+- LQI: `device-signal.ts` (also re-exported by `devices.ts`) first resolves the
+  exact own-radio direct reading (#1029), then averages existing HA
+  `*_linkquality`, `*_lqi`/unit `lqi` sensors or a `linkquality`/`lqi` attribute
+  as the compatibility fallback. Available direct data win without averaging
+  sources. A disconnected direct cache is used only without a HA fallback;
+  its tooltip identifies the last known value. `logic.ts::lqiColor()` maps 40→180 to hue
   0→120; `markerLqiColor()` delegates to it; `markerLqiBand()` is marker-only
   accessibility metadata.
 - #867: an entity marker's diagnostic roster uses its exact registry
@@ -378,6 +382,11 @@ or saved positions; full and static cards share these rules.
   Exact `marker.hide_signal:true` hides only `lqiText`; `lqiTipText`, explicitly
   selected derived LQI and topology remain. The effective `showSignal` still gates
   system line/tooltip and ordinary static/LED policies remain unchanged.
+  The direct feed is independent of system-line visibility and topology:
+  device/entity aliases of one physical radio still contribute once per room.
+  Runtime revision invalidates frozen presentations and value candidates even
+  without a `hass.states` tick; a saved `derived_lqi` remains selectable during
+  temporary loss. No diagnostic entities are created or enabled.
 - Face geometry: the saved coordinate is the icon-core centre; Text is
   shell-centred and a Double shell extends around the anchored core. The
   101.5/80 shell/core ratio (`--device-shell-size`), shared centre, Light/Dark

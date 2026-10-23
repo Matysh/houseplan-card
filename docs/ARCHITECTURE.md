@@ -1,5 +1,17 @@
 # House Plan architecture
 
+Direct LQI (#1029) is a separate entry-owned volatile coordinator with passive
+exact-topic MQTT subscriptions and one 30-second cached-memory ZHA read cycle.
+The ZHA adapter supports the HA 2024.6 gateway and current gateway proxy without
+importing ZHA/zigpy or invoking radio APIs. Registry/config-entry plus exact IEEE
+identify a device; friendly names only address confirmed MQTT inventory entries.
+Ambiguity fails closed, source generations retire old addresses, and observers
+receive coalesced immutable session/revision snapshots of represented devices.
+No inventory, credentials or topology crosses the read-only feed. The shared
+frontend connection/user subscription supplies `device-signal.ts`, frozen
+presentations, room aggregates, preview and value candidates. Existing HA
+diagnostics remain the fallback; optional providers cannot prevent plan loading.
+
 Default-branch service events (#1040) use the eight mirrored ingress recipes
 from `scripts/service-workflows.mjs`. `_service-event.yml` has a main sender
 with Actions-dispatch permission and a separate dev receiver with native-token

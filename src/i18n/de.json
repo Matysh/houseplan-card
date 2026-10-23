@@ -1359,5 +1359,6 @@
   "svg.too_large": "SVG-Bilder überschreiten das Limit von 25 MB.",
   "svg.view_required": "Wechseln Sie zum Exportieren in den Ansichtsmodus.",
   "svg.cancelled": "Export abgebrochen: Plan oder Zugriffsrechte wurden geändert.",
-  "svg.not_ready": "Der Plan wird noch geladen. Laden Sie ihn nach Abschluss erneut herunter."
+  "svg.not_ready": "Der Plan wird noch geladen. Laden Sie ihn nach Abschluss erneut herunter.",
+  "tip.signal_last_known": "Letzter bekannter Wert, Quelle nicht verfügbar"
 }
