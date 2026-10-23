@@ -73,6 +73,19 @@ use the corrected capture, never the clipped initial frames.
 The ordinary valid width edit followed by Bring to front also completes both
 operations with the first click, while invalid input still refuses the command.
 
+Corrected full Linux capture: [CI 39908393076](https://github.com/Matysh/houseplan-card/actions/runs/39908393076),
+source `7514b35e8427c506e99339b76a1194e1ecfadb84`, matrix 80 / Chromium
+151.0.7922.34. All four changed baseline/candidate pairs were visually inspected:
+`tray-medium-selection-ru`, `furniture-transform-light`,
+`decor-color-popover-mobile-ru`, `decor-color-popover-desktop-en`. Only the
+secondary actions behind the unchanged colour dialogs differ in the latter two.
+Properties, both order actions and Delete are visible in the selected-object
+surfaces. Acceptance ran through `npm run golden:accept -- --reviewed` in WSL
+Linux, with exactly these four explicit `--expect-change` IDs; 216 baseline
+images were preserved, with 193 byte-identical environment witnesses (floor 10).
+The initial clipped capture was never accepted. Final exact-SHA full Validate
+is recorded separately in the issue handoff.
+
 `node scripts/mutation-gate.mjs --check` is a static registry check only:
 execution 0, caught unknown. No mutant or temporary implementation substitution
 was executed during development.
