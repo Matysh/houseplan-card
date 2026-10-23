@@ -70,6 +70,8 @@ against both the visible panel and viewport, rather than only document scroll
 width. `decor-order-pair-clips-delete-1035` registers that regression for nightly;
 it was not executed as a mutant during development. Final Golden acceptance must
 use the corrected capture, never the clipped initial frames.
+The ordinary valid width edit followed by Bring to front also completes both
+operations with the first click, while invalid input still refuses the command.
 
 `node scripts/mutation-gate.mjs --check` is a static registry check only:
 execution 0, caught unknown. No mutant or temporary implementation substitution

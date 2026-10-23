@@ -93,12 +93,12 @@ export const editorSecondaryStyles = css`
     min-width: 0;
     max-width: 100%;
   }
-  .decor-selection-actions .decor-order-pair {
+  .editor-secondary .decor-selection-actions .decor-order-pair {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--sp-3);
   }
-  .decor-selection-actions .btn { min-width: 0; white-space: normal; }
+  .editor-secondary .decor-selection-actions .btn { min-width: 0; white-space: normal; }
   .editor-secondary.kind-palette {
     width: min(760px, 100%);
     align-items: stretch;

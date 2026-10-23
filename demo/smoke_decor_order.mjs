@@ -147,6 +147,12 @@ try {
   check('order.invalid_field_no_history',(await state()).history,invalidBefore.history);
   await width.press('Escape');
 
+  // A valid edit followed by an order action completes both on the first click.
+  const validWidth=Number(await width.inputValue())+5;
+  await width.fill(String(validWidth));
+  await panel.locator('[data-action="properties-decor-front"]').click(); await settle();
+  check('order.valid_field_then_front',(await state()).ids.at(-1),'blue');
+
   for (const id of ['red','line','ellipse','text','furniture','image']) {
     // For a line the midpoint is on the painted stroke; all others have a body.
     await open(id,.8,.8);
@@ -269,6 +275,7 @@ try {
     });
   }));
   check('order.narrow_no_horizontal_overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  await page.screenshot({path:'artifacts/decor-order/secondary-narrow.png'});
   writeFileSync('artifacts/decor-order/config.json',JSON.stringify(await page.evaluate(async()=>
     (await window.__card.hass.callWS({type:'houseplan/config/get'})).config),null,2)+'\n');
   await open('blue',.8,.8);stale=await menu.locator('[data-action="decor-copy"]').elementHandle();
