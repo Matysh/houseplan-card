@@ -54,20 +54,26 @@ try {
   const xField=panel.locator('[data-field="properties-x"]');
   await xField.fill('55'); await xField.press('Enter'); await settle();
   check('line.properties_preserves_previous',(await state()).decor[0],first);
+  check('line.properties_changes_latest',JSON.stringify((await state()).decor[1])!==JSON.stringify(s.decor[1]));
   const dirtyBefore=await state(), length=panel.locator('[data-property="length"] input');
   await length.fill('0'); await click(800,600);
   check('line.invalid_field_no_draw',(await state()).decor,dirtyBefore.decor);
   check('line.invalid_field_error',await panel.locator('[role="alert"]').count(),1);
   await length.press('Escape'); await settle();
   await reset(); await click(200,250); await click(450,300); await click(700,450);
+  const chain=(await state()).decor;
   await key('Control+z'); s=await state();
   check('line.active_undo_one',s.decor.length,1);
+  check('line.active_undo_exact',s.decor,chain.slice(0,1));
   check('line.active_undo_anchor',closePoint(s.anchor,[s.decor[0].x2*1000,s.decor[0].y2*1000]));
   await key('Control+Shift+z'); s=await state(); check('line.active_redo_one',s.decor.length,2);
+  check('line.active_redo_exact',s.decor,chain);
   check('line.active_redo_anchor',closePoint(s.anchor,[s.decor[1].x2*1000,s.decor[1].y2*1000]));
   await esc(); s=await state(); check('line.escape_keeps_lines',s.decor.length,2);
   check('line.escape_ends',s.active,false); check('line.escape_keeps_tool',s.tool,'line');
+  check('line.escape_no_history',s.history,2);
   await key('Control+z'); await key('Control+Shift+z'); check('line.completed_history_no_revival',(await state()).active,false);
+  check('line.completed_history_exact',(await state()).decor,chain);
 
   await reset(); await click(250,250);
   let p=await point(443,328); await page.mouse.move(p.x,p.y); await page.waitForTimeout(50);
@@ -130,4 +136,13 @@ try {
   check('line.external_revision_clears_anchor',(await state()).active,false);
   await page.evaluate(()=>window.__hpTest.setMode('view'));
   await click(400,400);await click(700,500);check('line.view_inert',(await state()).decor,saved);
+  await page.evaluate(async()=>{const c=window.__card;c.setConfig({...c._config,kiosk:true});await c.updateComplete;});
+  await click(400,400);await click(700,500);check('line.kiosk_inert',(await state()).decor,saved);
+  await page.evaluate(async()=>{const c=window.__card;c.setConfig({...c._config,kiosk:false});await c.updateComplete;
+    await window.__hpTest.setMode('decor');});await tool('line');await click(200,250);
+  await page.evaluate(async()=>{const c=window.__card,call=c.hass.callWS.bind(c.hass);
+    c.hass={...c.hass,callWS:async msg=>{const result=await call(msg);return msg.type==='houseplan/config/get'?{...result,can_write:false}:result;}};
+    await window.__hpTest.setServerConfig(cfg=>cfg);});
+  await click(600,400);check('line.permission_loss_inert',(await state()).decor,saved);
+  check('line.permission_loss_ends_session',(await state()).active,false);
 } finally { await finish(browser); }
