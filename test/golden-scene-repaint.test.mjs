@@ -72,7 +72,7 @@ test('only the opted-in scene repaints twice then restores and paints twice befo
 test('every other matrix scene keeps the original screenshot path without evaluate or repaint', async () => {
   await withPage({}, async ({ page, options, png, frames, state }) => {
     const otherScenes = GOLDEN_SCENARIOS.filter(({ id }) => id !== target.id);
-    assert.equal(otherScenes.length, 219);
+    assert.equal(otherScenes.length, 220);
     for (const scenario of otherScenes)
       assert.strictEqual(await captureGoldenFrame(page, scenario, options), png);
     assert.deepEqual(frames, []);

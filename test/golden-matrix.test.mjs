@@ -9,6 +9,20 @@ import {
 import { fixtureWallKey } from '../demo/fixtures/visual-matrix.mjs';
 import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
+test('#1048 retained-path diagnostics get a distinct dialog scene, not a changed baseline', () => {
+  const scene = GOLDEN_SCENARIOS.find(item => item.id === 'vacuum-retained-path-diagnostics-dark');
+  assert.ok(scene);
+  assert.equal(scene.vacuumRetained, true);
+  assert.equal(scene.dialog, 'device');
+  assert.equal(scene.deviceId, 'golden-vacuum-trail');
+  assert.equal(scene.theme, 'dark');
+  assert.equal(scene.capture, 'page');
+  assert.equal(scene.vacuumTrail.current.length, 2);
+  assert.ok(scene.vacuumTrail.current.every(fragment => fragment.length > 2));
+  const ordinary = GOLDEN_SCENARIOS.find(item => item.id === 'vacuum-trail-smoothing-dark');
+  assert.notEqual(ordinary.vacuumRetained, true);
+});
+
 test('golden matrix has stable unique ids and bounded comparison thresholds', () => {
   assert.equal(Number.isInteger(GOLDEN_MATRIX_VERSION) && GOLDEN_MATRIX_VERSION > 0, true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.id)).size, GOLDEN_SCENARIOS.length);
@@ -459,7 +473,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 80);
+  assert.equal(GOLDEN_MATRIX_VERSION, 81);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -953,7 +967,7 @@ test('issue 570 Stage 4 reuses the historical iso goldens for visual handoff cov
 
 test('#673 Stage 6 designer acceptance scenes are canonical golden entries', () => {
   const ids = STAGE6_ACCEPTANCE_SCENARIOS.map((scenario) => scenario.id);
-  assert.equal(GOLDEN_MATRIX_VERSION, 80);
+  assert.equal(GOLDEN_MATRIX_VERSION, 81);
   assert.deepEqual(ids, [
     'isometric-stage6-light-lightfloor',
     'isometric-stage6-light-darkfloor',
