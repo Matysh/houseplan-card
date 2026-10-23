@@ -1,11 +1,12 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 50, issue: 26. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 51, issue: 26. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | #1042 | [CODE-REVIEW-1042-r1.md](CODE-REVIEW-1042-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | «эффективные legacy-цвета» в smoke_room_dimming_removed.mjs доказаны не тем, чем заявлено | `smoke_room_dimming_removed.mjs` `demo/smoke_room_dimming_removed.mjs` `docs/reviews/evidence-1042/acceptance.md` `src/editors/space-form.ts` `src/room-appearance.ts` `src/logic.ts` `evidence-1042/acceptance.md` |
 | #1042 | [CODE-REVIEW-1042-r2.md](CODE-REVIEW-1042-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #1042 | [CODE-REVIEW-1042-r3.md](CODE-REVIEW-1042-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
 | #1040 | [CODE-REVIEW-1040-r1.md](CODE-REVIEW-1040-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1040 | [CODE-REVIEW-1040-r2.md](CODE-REVIEW-1040-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | docs/release-ledger/v1.81.0/1040.json не достигает заявленной цели и противоречит сам себе | `docs/release-ledger/v1.81.0/1040.json` `scripts/release-ledger.mjs` `docs/release-ledger/cycle.json` `v1.82.0/1040.json` `v1.81.0/1040.json` `merge-candidate.mjs` `release-contract.mjs` |
 | #1039 | [CODE-REVIEW-1039-r1.md](CODE-REVIEW-1039-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
