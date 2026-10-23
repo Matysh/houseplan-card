@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 638,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "The post-v1.82.0 commit records the independent review document and regenerated index for the already published stable 1.82.0 line. It changes documentation only, with no runtime behavior. This historical report and its recorded limitations are preserved; it is not a review verdict for the new 1.83.0 beta line."
+}
