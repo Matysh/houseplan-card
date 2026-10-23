@@ -16,6 +16,15 @@ new reference/reflow/writer modules add 21037 raw bytes to the monolith inventor
 not new delegating wrappers. The same commit records these measured baselines;
 metric bands and all other dimensions remain unchanged.
 
+After the rebase on dev `7b00292ec` (backup repairs), #698 kept dev's generated
+reference at the conflict. The final integrated build is measured again:
+hostRefs 5968→6008 (+40), raw bundleBytes 3363984→3386886 (+22902).
+The refreshed reference records that integration, including exact terminal
+identity and render-only invalidation fixes; it does not enlarge any band.
+Initial View is 336150 B gzip and lazy editor 336799 B, still inside the above
+references and their unchanged 2000-B bands. These are local Windows numbers,
+not a claim of a Linux byte-identical build or a performance improvement.
+
 Actual HA tests run in WSL on Linux Python 3.14.7 against this task checkout.
 Native Windows cannot import the HA harness (`fcntl`); a plugin-isolated pure
 test is not a substitute. Tests do not write real HA or frozen UI Lab files.
